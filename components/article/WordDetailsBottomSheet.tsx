@@ -11,7 +11,7 @@ import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
 import { useColors } from '@/hooks/theme/useColors';
-import { ToastType } from '@/types/enums';
+
 import { audioCache } from '@/services/audioCache';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { useBottomSheetVisibility } from '@/hooks/ui/useBottomSheetVisibility';
@@ -96,7 +96,7 @@ export function WordDetailsBottomSheet({
 
     // Show toast on add (optimistic feedback)
     if (!wasInStudyList) {
-      showToast(STRINGS.WORD_ADDED_TO_PRACTICE, undefined, ToastType.SUCCESS);
+      showToast(STRINGS.WORD_ADDED_TO_PRACTICE);
     }
 
     try {
@@ -232,7 +232,5 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     width: '100%',
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
   },
 });

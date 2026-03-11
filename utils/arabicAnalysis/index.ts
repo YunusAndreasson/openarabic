@@ -34,7 +34,7 @@ export {
 } from './validation';
 
 // Edge Cases
-export { isPureParticleCombination, isSingleStandaloneComponent } from './edgeCases';
+export { isSingleStandaloneComponent } from './edgeCases';
 
 // English Matching
 export { hasEnglishMatch } from './englishMatching';

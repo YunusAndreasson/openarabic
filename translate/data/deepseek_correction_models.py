@@ -40,7 +40,6 @@ class WordInput(BaseModel):
 
     arabic: str
     english: str
-    pos: str
     essential: str
     essential_translation: str
 
@@ -65,11 +64,11 @@ class SentenceCorrectionInput(BaseModel):
 
 
 class WordCorrection(BaseModel):
-    """Correction for a single word translation."""
+    """Correction for a single word translation (only include words that were changed)."""
 
     model_config = ConfigDict(strict=True, extra="forbid")
 
-    arabic: str = Field(description="Original Arabic word (unchanged)")
+    arabic: str = Field(description="Original Arabic word (used to match)")
     corrected_english: str = Field(
         description="Fixed English translation (may be multi-word for morphemes)"
     )
@@ -77,10 +76,7 @@ class WordCorrection(BaseModel):
     corrected_essential_translation: str = Field(
         description="Fixed English translation of essential form"
     )
-    was_corrected: bool = Field(description="Whether any changes were made")
-    correction_reason: str | None = Field(
-        default=None, description="Why correction was needed"
-    )
+    correction_reason: str = Field(description="Why correction was needed")
 
 
 class SentenceCorrectionResponse(BaseModel):
@@ -96,13 +92,8 @@ class SentenceCorrectionResponse(BaseModel):
         default=None, description="Fixed Arabic with diacritics (if needed)"
     )
     word_corrections: list[WordCorrection] = Field(
-        description="Per-word corrections (one entry per word in original)"
-    )
-    overall_quality: float = Field(
-        ge=0.0, le=1.0, description="Quality score from 0.0 to 1.0"
-    )
-    issues_found: list[str] = Field(
-        default_factory=list, description="List of issues that were corrected"
+        default_factory=list,
+        description="Only words that were corrected (omit unchanged words)",
     )
     issues_unfixable: list[str] = Field(
         default_factory=list, description="Issues that could not be auto-corrected"

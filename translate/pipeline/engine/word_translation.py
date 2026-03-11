@@ -4,16 +4,16 @@ import logging
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from data.config import MAX_PARALLEL_API_CALLS
+from data.config import MAX_PARALLEL_API_CALLS, MODEL_OTHER
 from data.models import WordTranslation, WordTranslationResult
 from data.pipeline_types import (
     TashkeelResults,
     TranslationResults,
     WordTranslationResults,
 )
-from data.schemas import WORD_BY_WORD_USER_PROMPT
+from data.schemas import GENERAL_SYSTEM_PROMPT, WORD_BY_WORD_USER_PROMPT
 from utils.batch_context import get_batch_prefix, pipeline_stats
-from utils.responses_api import ResponsesAPIManager
+from utils.responses_api import call_response_api
 from utils.text import filter_arabic_words
 
 from .helpers import (
@@ -115,16 +115,6 @@ def _build_word_translation_message(
     semantic_context = ""
     if all_sentences and indices and i < len(indices):
         orig_index = indices[i]
-        # Compute key terms (for future use / logging)
-        important_words = [w for w in arabic_words if len(w) > 3]
-        for j in range(
-            max(0, orig_index - 1),
-            min(len(all_sentences), orig_index + 2),
-        ):
-            if j != orig_index:
-                for _word in important_words:
-                    pass  # key_terms tracking preserved for future use
-
         context_sentences = []
         for j in range(
             max(0, orig_index - 1),
@@ -159,10 +149,8 @@ def _translate_words_single_sentence(
     translation_result: object,
     all_sentences: list[str] | None,
     indices: list[int] | None,
-    conversation_manager: ResponsesAPIManager,
-    base_response_id: str,
 ) -> tuple[int, WordTranslationResult]:
-    """Translate words for a single sentence with retries (thread-safe)."""
+    """Translate words for a single sentence with retry logic (standalone API call)."""
     max_retries = 3
     attempt = 0
     while attempt < max_retries:
@@ -170,8 +158,12 @@ def _translate_words_single_sentence(
             message = _build_word_translation_message(
                 i, tashkeel_result, translation_result, all_sentences, indices
             )
-            response = conversation_manager.continue_conversation_parallel(
-                base_response_id, message, response_model=WordTranslationResult
+            messages = [
+                {"role": "system", "content": GENERAL_SYSTEM_PROMPT},
+                {"role": "user", "content": message},
+            ]
+            response = call_response_api(
+                messages, response_model=WordTranslationResult, model=MODEL_OTHER
             )
             result = _parse_word_translation_response(response, i)
             return i, result
@@ -187,7 +179,8 @@ def _translate_words_single_sentence(
                 f"  ⚠ Sentence {i} failed (attempt {attempt}/{max_retries}): {err}"
             )
             time.sleep(1)
-    raise AssertionError("Unreachable")
+    # Unreachable, but satisfies type checker
+    raise RuntimeError(f"Translation failed for sentence {i}")
 
 
 def batch_translate_words(
@@ -196,7 +189,6 @@ def batch_translate_words(
     translations: TranslationResults,
     all_sentences: list[str] | None = None,
     indices: list[int] | None = None,
-    conversation_manager: ResponsesAPIManager | None = None,
 ) -> WordTranslationResults:
     """Translate individual words with context from full sentence translation."""
     # Set phase for word-by-word translation tracking
@@ -205,14 +197,8 @@ def batch_translate_words(
     token_tracker.set_phase("Word-by-Word Translation")
     logger.info(f"  → {get_batch_prefix()}Word-by-word translation...")
 
-    if not (conversation_manager and conversation_manager.current_response_id):
-        raise RuntimeError(
-            f"Conversation manager not properly initialized. "
-            f"current_response_id: {getattr(conversation_manager, 'current_response_id', None) if conversation_manager else None}"
-        )
-
-    base_response_id = conversation_manager.current_response_id
-    indexed_results: dict[int, WordTranslationResult] = {}
+    # Process all sentences in parallel with standalone API calls
+    indexed_results: list[tuple[int, WordTranslationResult]] = []
 
     with ThreadPoolExecutor(max_workers=MAX_PARALLEL_API_CALLS) as executor:
         futures = {
@@ -223,16 +209,23 @@ def batch_translate_words(
                 translations[i],
                 all_sentences,
                 indices,
-                conversation_manager,
-                base_response_id,
             ): i
             for i in range(len(sentences))
         }
         for future in as_completed(futures):
-            idx, result = future.result()
-            indexed_results[idx] = result
+            idx = futures[future]
+            try:
+                indexed_results.append(future.result())
+            except Exception as e:
+                raise RuntimeError(
+                    f"Word translation failed for sentence {idx}: {e}"
+                ) from e
 
-    processed_results = [indexed_results[i] for i in range(len(sentences))]
+    # Sort by index to maintain original order
+    indexed_results.sort(key=lambda x: x[0])
+    processed_results: WordTranslationResults = [
+        result for _, result in indexed_results
+    ]
 
     # Basic validation - ensure we have results for all sentences
     if len(processed_results) != len(sentences):

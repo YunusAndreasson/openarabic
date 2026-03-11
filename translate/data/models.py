@@ -435,7 +435,24 @@ class TextMetadata(BaseModel):
     title: str = Field(description="Concise English title (3–7 words)")
     summary: str = Field(description="One-sentence summary of main content")
     difficulty_level: DifficultyLevel = Field(description="Difficulty rating (1–5)")
+    category: str = Field(
+        default="aqeedah", description="Detected Islamic text category"
+    )
     total_units: int = Field(default=0, description="Total number of units", ge=0)
+
+    @field_validator("category")
+    @classmethod
+    def _validate_category(_cls, v: str) -> str:
+        """Validate that category is one of the valid Islamic text categories"""
+        from .config import VALID_CATEGORIES
+
+        if v not in VALID_CATEGORIES:
+            import logging
+
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Invalid category '{v}', defaulting to 'aqeedah'")
+            return "aqeedah"
+        return v
 
     @field_validator("difficulty_level", mode="before")
     @classmethod
@@ -467,23 +484,6 @@ class SplitResult(TextMetadata):
     units: list[str] = Field(
         default_factory=list, description="Array of text units/sentences"
     )
-    category: str = Field(
-        default="aqeedah", description="Detected Islamic text category"
-    )
-
-    @field_validator("category")
-    @classmethod
-    def _validate_category(_cls, v: str) -> str:
-        """Validate that category is one of the valid Islamic text categories"""
-        from .config import VALID_CATEGORIES
-
-        if v not in VALID_CATEGORIES:
-            import logging
-
-            logger = logging.getLogger(__name__)
-            logger.warning(f"Invalid category '{v}', defaulting to 'aqeedah'")
-            return "aqeedah"
-        return v
 
 
 class ArticleData(BaseModel):

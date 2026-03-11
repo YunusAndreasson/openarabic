@@ -113,6 +113,7 @@ export const STRINGS = {
     ihsan: { display: 'I\u1E25s\u0101n', subtitle: 'Spiritual Excellence' },
     quran: { display: 'Qur\u02BE\u0101n', subtitle: 'Quranic Studies' },
     seerah: { display: 'S\u012Brah', subtitle: 'History & Biography' },
+    tafsir: { display: 'Tafs\u012Br', subtitle: 'Quranic Exegesis' },
   } as Record<string, { display: string; subtitle: string }>,
   // Author display names with proper transliteration (no honorific titles for mobile space)
   AUTHORS: {
@@ -135,10 +136,10 @@ export const STRINGS = {
   // Section headers for Explore tab
   SECTION_CATEGORIES: 'Topics',
   SECTION_GETTING_STARTED: 'Getting started',
-  SECTION_FEATURED: 'Fresh reads',
-  SECTION_LONG_READS: 'Long reads',
+  SECTION_FEATURED: 'Featured',
+  SECTION_LONG_READS: 'Deep dives',
   SECTION_BEGINNER_FRIENDLY: 'Beginner friendly',
-  SECTION_SHORT_READS: 'Short reads',
+  SECTION_SHORT_READS: 'Quick reads',
   SECTION_ADVANCED: 'Advanced',
   // Difficulty levels
   DIFFICULTY_BEGINNER: 'Beginner',
@@ -184,7 +185,7 @@ export const STRINGS = {
   REMOVED_FROM_BOOKMARKS: 'Removed from playlist',
   // Word action buttons
   ADD_TO_PRACTICE: 'Add to practice',
-  REMOVE_FROM_PRACTICE: 'Remove from practice',
+  REMOVE_FROM_PRACTICE: 'In practice',
   WORD_ADDED_TO_PRACTICE: 'Saved to Practice tab',
   CHECK_EMAIL_CONFIRMATION: 'Check your email to confirm',
   SUCCESS: 'Success',

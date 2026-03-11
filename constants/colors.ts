@@ -145,17 +145,17 @@ const sepiaPureOKLCH = {
 
 /**
  * Grammar Color Family - Dedicated educational palette for grammar concept coloring
- * Hue range: 65-270° (golden → green → cyan → blue → purple-violet) - Extended sage-centric harmony
+ * Hue range: 50-270° (golden → green → cyan → blue → purple-violet) - Extended sage-centric harmony
  * 12 perceptually distinct colors with 15-25° spacing for visual clarity
- * Common pairs (و+ي, ب+suffix) get 25° separation to prevent confusion
+ * Common co-occurring pairs get 40°+ separation (definiteArticle↔preposition = 40°)
  * Lightness adjusts per theme: light (0.52-0.62), dark (+0.08), sepia (-0.02-0.04)
- * Chroma varies 0.08-0.13 to enhance distinction while maintaining cohesion
+ * Chroma alternates high/low in the green band (125-200°) for perceptual distinction
  */
 const grammarOKLCH = {
   golden: {
-    light: { l: 0.6, c: 0.11, h: 65 },
-    dark: { l: 0.68, c: 0.11, h: 65 },
-    sepia: { l: 0.58, c: 0.09, h: 68 },
+    light: { l: 0.6, c: 0.11, h: 50 },
+    dark: { l: 0.68, c: 0.11, h: 50 },
+    sepia: { l: 0.58, c: 0.09, h: 53 },
   },
   amber: {
     light: { l: 0.58, c: 0.12, h: 90 },
@@ -168,34 +168,34 @@ const grammarOKLCH = {
     sepia: { l: 0.6, c: 0.11, h: 113 },
   },
   olive: {
-    light: { l: 0.52, c: 0.1, h: 125 },
-    dark: { l: 0.6, c: 0.1, h: 125 },
-    sepia: { l: 0.5, c: 0.08, h: 128 },
+    light: { l: 0.52, c: 0.14, h: 125 },
+    dark: { l: 0.6, c: 0.14, h: 125 },
+    sepia: { l: 0.5, c: 0.12, h: 128 },
   },
   yellowGreen: {
-    light: { l: 0.58, c: 0.11, h: 140 },
-    dark: { l: 0.66, c: 0.11, h: 140 },
-    sepia: { l: 0.56, c: 0.09, h: 142 },
+    light: { l: 0.62, c: 0.08, h: 140 },
+    dark: { l: 0.7, c: 0.08, h: 140 },
+    sepia: { l: 0.6, c: 0.06, h: 142 },
   },
   sage: {
-    light: { l: 0.56, c: 0.09, h: 155 },
-    dark: { l: 0.64, c: 0.09, h: 155 },
-    sepia: { l: 0.54, c: 0.07, h: 157 },
+    light: { l: 0.52, c: 0.14, h: 155 },
+    dark: { l: 0.6, c: 0.14, h: 155 },
+    sepia: { l: 0.5, c: 0.12, h: 157 },
   },
   mintGreen: {
-    light: { l: 0.58, c: 0.1, h: 170 },
-    dark: { l: 0.66, c: 0.1, h: 170 },
-    sepia: { l: 0.56, c: 0.08, h: 172 },
+    light: { l: 0.62, c: 0.08, h: 170 },
+    dark: { l: 0.7, c: 0.08, h: 170 },
+    sepia: { l: 0.6, c: 0.06, h: 172 },
   },
   seafoam: {
-    light: { l: 0.54, c: 0.11, h: 185 },
-    dark: { l: 0.62, c: 0.11, h: 185 },
-    sepia: { l: 0.52, c: 0.09, h: 187 },
+    light: { l: 0.52, c: 0.14, h: 185 },
+    dark: { l: 0.6, c: 0.14, h: 185 },
+    sepia: { l: 0.5, c: 0.12, h: 187 },
   },
   teal: {
-    light: { l: 0.56, c: 0.12, h: 200 },
-    dark: { l: 0.64, c: 0.12, h: 200 },
-    sepia: { l: 0.54, c: 0.1, h: 202 },
+    light: { l: 0.62, c: 0.08, h: 200 },
+    dark: { l: 0.7, c: 0.08, h: 200 },
+    sepia: { l: 0.6, c: 0.06, h: 202 },
   },
   skyBlue: {
     light: { l: 0.58, c: 0.1, h: 225 },
@@ -394,19 +394,19 @@ const elevation = {
  * Factory function to create grammar color palette for any theme variant.
  * Single source of truth for grammar role → color mapping.
  *
- * Frequency-based assignment with maximum hue separation for roles that appear together:
- *   - preposition: amber (90°) - High frequency (15 uses)
- *   - possessive: sage (155°) - High frequency (13 uses) - 65° from prep
- *   - particle: lime (110°) - Medium-high frequency (9 uses) - 20° from prep
- *   - interrogative: seafoam (185°) - Medium frequency (8 uses) - 75° from particle
- *   - verbConjugation: mintGreen (170°) - Medium frequency (5 uses)
- *   - negation: olive (125°) - Medium frequency (5 uses)
- *   - subjectPrefix: skyBlue (225°) - Low frequency (4 uses) - 135° from amber
- *   - plural: yellowGreen (140°) - Low frequency (4 uses)
- *   - demonstrative: teal (200°) - Low frequency (4 uses)
- *   - conjunction: periwinkle (250°) - Low frequency (4 uses) - 25° from subjectPrefix
- *   - futureTense: violet (270°) - Very low frequency (2 uses)
- *   - definiteArticle: golden (65°) - Rare (1 use) - 25° from prep
+ * Frequency-based assignment with maximum hue separation for co-occurring roles:
+ *   - definiteArticle: golden (50°) - 40° from preposition (co-occur in بِالْحَقِّ)
+ *   - preposition: amber (90°) - Highest frequency (27x)
+ *   - particle: lime (110°) - 20° from prep
+ *   - negation: olive (125°) - High C, low L for contrast with neighbors
+ *   - plural: yellowGreen (140°) - Low C, high L (alternating pattern)
+ *   - possessive: sage (155°) - High C, low L; 2nd highest frequency (24x)
+ *   - verbConjugation: mintGreen (170°) - Low C, high L (alternating pattern)
+ *   - interrogative: seafoam (185°) - High C, low L
+ *   - demonstrative: teal (200°) - Low C, high L
+ *   - subjectPrefix: skyBlue (225°) - 25° gap
+ *   - conjunction: periwinkle (250°) - 3rd highest frequency (26x)
+ *   - futureTense: violet (270°) - Lowest frequency (1x)
  */
 const createGrammarColors = (variant: 'light' | 'dark' | 'sepia') => ({
   preposition: basePalette.grammar.amber[variant],

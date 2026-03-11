@@ -21,7 +21,6 @@ from data.pipeline_types import (
     TranslationResults,
     WordTranslationResults,
 )
-from utils.responses_api import ResponsesAPIManager
 from utils.validation import (
     validate_final_translation,
     validate_tashkeel_added,
@@ -32,13 +31,12 @@ from utils.validation import (
 def run_full_translation(
     batch_sentences: list[str],
     batch_contexts: list[str | None],
-    conversation_manager: ResponsesAPIManager | None = None,
 ) -> TranslationResults:
     """Translate a batch of sentences and validate the results."""
     from pipeline.engine import batch_translate_full_sentences
 
     translations = batch_translate_full_sentences(
-        batch_sentences, batch_contexts, conversation_manager
+        batch_sentences, batch_contexts
     )
     validate_translation_results(batch_sentences, translations, "Full Translation")
     return translations
@@ -50,7 +48,6 @@ def apply_tashkeel(
     all_sentences: list[str] | None = None,
     batch_indices: list[int] | None = None,
     context_cache: Any = None,
-    conversation_manager: ResponsesAPIManager | None = None,
 ) -> TashkeelResults:
     """Add diacritics to sentences and validate the results."""
     from pipeline.engine import batch_add_tashkeel
@@ -61,7 +58,6 @@ def apply_tashkeel(
         all_sentences,
         batch_indices,
         context_cache,
-        conversation_manager,
     )
 
     # Validate that tashkeel was actually added and break pipeline if not
@@ -77,7 +73,6 @@ def translate_words(
     all_sentences: list[str] | None = None,
     batch_indices: list[int] | None = None,
     context_cache: Any = None,
-    conversation_manager: ResponsesAPIManager | None = None,
 ) -> WordTranslationResults:
     """Generate word-by-word translations and validate them."""
     from pipeline.engine import batch_translate_words
@@ -88,7 +83,6 @@ def translate_words(
         translation_results,
         all_sentences,
         batch_indices,
-        conversation_manager,
     )
     # Validate word translation results strictly via existing validator
     validate_translation_results(
@@ -171,8 +165,29 @@ def create_sentence_translation(
     final_word_translations: list[WordTranslation] = []
 
     if refined_words_data and isinstance(refined_words_data, list):
-        # refined_words_data is list[WordTranslation] - use directly
-        final_word_translations = list(refined_words_data)
+        # Use refined words but preserve tashkeel arabic from stage 3 when
+        # refinement strips diacritics (common: model returns bare arabic)
+        original_words = word_options_result.word_translations
+        original_by_bare = {}
+        for w in original_words:
+            bare = "".join(
+                c for c in w.arabic if not ("\u064B" <= c <= "\u0652")
+            )
+            original_by_bare[bare] = w.arabic
+
+        for refined_word in refined_words_data:
+            has_tashkeel = any(
+                "\u064B" <= c <= "\u0652" for c in refined_word.arabic
+            )
+            if not has_tashkeel:
+                bare = "".join(
+                    c
+                    for c in refined_word.arabic
+                    if not ("\u064B" <= c <= "\u0652")
+                )
+                if bare in original_by_bare:
+                    refined_word.arabic = original_by_bare[bare]
+            final_word_translations.append(refined_word)
     else:
         # Use word translations from the result
         word_opts_list = word_options_result.word_translations
@@ -274,7 +289,6 @@ def refine_translations(
     translation_results: TranslationResults,
     tashkeel_results: TashkeelResults,
     word_options_results: WordTranslationResults,
-    conversation_manager: ResponsesAPIManager | None = None,
 ) -> list[SentenceTranslation]:
     """Refine translations using previous results and return final objects."""
     from pipeline.engine import batch_refine_translations
@@ -285,7 +299,7 @@ def refine_translations(
         tashkeel_results,
         word_options_results,
     )
-    refinement_results = batch_refine_translations(inputs, conversation_manager)
+    refinement_results = batch_refine_translations(inputs)
     results: list[SentenceTranslation] = []
     for i in range(len(batch_sentences)):
         refinement = (

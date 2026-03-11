@@ -38,7 +38,7 @@ export function ThemedButton({
   onPress,
   size = 'medium', // Most common value - hardcoded
   enableOptimisticLoading = false, // Only enable when explicitly requested
-  uppercase = true, // Default to uppercase for most buttons
+  uppercase = false, // Sentence case — modern 2026 standard
   ...props
 }: ThemedButtonProps): JSX.Element {
   const colors = useColors();

@@ -49,7 +49,6 @@ export function SocialAuthButtons({ appleAuth, googleAuth }: SocialAuthButtonsPr
           icon="logo-apple"
           loading={appleLoading}
           disabled={appleLoading || googleLoading}
-          uppercase={false}
           style={styles.button}
           testID="apple-sign-in-button"
           accessibilityLabel="Sign in with Apple"
@@ -64,7 +63,6 @@ export function SocialAuthButtons({ appleAuth, googleAuth }: SocialAuthButtonsPr
         icon="logo-google"
         loading={googleLoading}
         disabled={isIOS ? appleLoading || googleLoading : googleLoading}
-        uppercase={false}
         style={styles.button}
         testID="google-sign-in-button"
         accessibilityLabel="Sign in with Google"

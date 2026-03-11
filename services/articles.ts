@@ -36,6 +36,7 @@ const LIST_VIEW_COLUMNS = `
   summary,
   audio_url,
   audio_url_bilingual,
+  book,
   category:categories!inner(id, name),
   author:authors!inner(id, name)
 `;
@@ -57,6 +58,7 @@ const DETAIL_VIEW_COLUMNS = `
   summary,
   audio_url,
   audio_url_bilingual,
+  book,
   category:categories!inner(id, name),
   author:authors!inner(id, name),
   article_sentences(

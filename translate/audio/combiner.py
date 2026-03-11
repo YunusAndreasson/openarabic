@@ -27,19 +27,23 @@ def create_bilingual_audio(
     try:
         from pydub import AudioSegment
 
-        # Load audio segments
-        english_segment = AudioSegment.from_mp3(io.BytesIO(english_audio))
-        arabic_segment = AudioSegment.from_mp3(io.BytesIO(arabic_audio))
+        # Load audio segments, fading each out to remove end-of-segment clicks
+        english_segment = AudioSegment.from_mp3(io.BytesIO(english_audio)).fade_out(60)
+        arabic_segment = AudioSegment.from_mp3(io.BytesIO(arabic_audio)).fade_out(60)
 
-        # Create pause segment
-        pause_segment = AudioSegment.silent(duration=pause_duration_ms)
+        # Create pause matching the audio properties to avoid sample rate mismatch
+        pause_segment = AudioSegment.silent(
+            duration=pause_duration_ms,
+            frame_rate=english_segment.frame_rate,
+        ).set_channels(english_segment.channels).set_sample_width(english_segment.sample_width)
 
         # Combine: English + Pause + Arabic
         bilingual_audio = english_segment + pause_segment + arabic_segment
+        bilingual_audio = bilingual_audio.fade_out(150)
 
-        # Export as MP3
+        # Export as MP3 at 128kbps to match ElevenLabs output quality
         output = io.BytesIO()
-        bilingual_audio.export(output, format="mp3")
+        bilingual_audio.export(output, format="mp3", bitrate="128k")
         output.seek(0)
 
         return output.read()
@@ -77,17 +81,16 @@ def create_multi_audio_with_delays(
         if len(audio_segments) == 1:
             return audio_segments[0]
 
-        # Load all audio segments
+        # Load all audio segments, fading each one out to remove end-of-segment clicks
         segments = []
         for i, audio_data in enumerate(audio_segments):
             if audio_data:
                 try:
                     segment = AudioSegment.from_mp3(io.BytesIO(audio_data))
+                    segment = segment.fade_out(60)
                     segments.append(segment)
-                    # Segment loaded successfully
                 except Exception as e:
                     logger.error(f"Failed to load segment {i + 1}: {e}")
-                    # Skip this segment
                     continue
             else:
                 logger.warning(f"Empty audio data for segment {i + 1}, skipping")
@@ -96,17 +99,22 @@ def create_multi_audio_with_delays(
             logger.error("No valid audio segments found")
             return b""
 
-        # Create delay segment (500ms as per config)
-        delay_segment = AudioSegment.silent(duration=delay_ms)
+        # Create delay matching the audio properties to avoid sample rate mismatch
+        ref = segments[0]
+        delay_segment = AudioSegment.silent(
+            duration=delay_ms,
+            frame_rate=ref.frame_rate,
+        ).set_channels(ref.channels).set_sample_width(ref.sample_width)
 
         # Combine all segments with delays between them
         combined = segments[0]
         for i in range(1, len(segments)):
             combined = combined + delay_segment + segments[i]
+        combined = combined.fade_out(150)
 
-        # Export as MP3
+        # Export as MP3 at 128kbps to match ElevenLabs output quality
         output = io.BytesIO()
-        combined.export(output, format="mp3")
+        combined.export(output, format="mp3", bitrate="128k")
         output.seek(0)
 
         logger.info(

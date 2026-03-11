@@ -92,7 +92,7 @@ export const getSelectedStyle = (isSelected: boolean, color: string): ViewStyle 
  */
 export const createButtonTextStyle = (size: 'small' | 'medium' | 'large' = 'medium'): TextStyle => {
   const baseStyle: TextStyle = {
-    fontWeight: FONT_WEIGHTS.HEAVY,
+    fontWeight: FONT_WEIGHTS.SEMIBOLD,
     textAlign: 'center',
   };
 
@@ -101,20 +101,20 @@ export const createButtonTextStyle = (size: 'small' | 'medium' | 'large' = 'medi
       return {
         ...baseStyle,
         fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-        letterSpacing: LETTER_SPACING.WIDE,
+        letterSpacing: LETTER_SPACING.NORMAL,
       };
     case 'large':
       return {
         ...baseStyle,
         fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-        letterSpacing: LETTER_SPACING.EXTRA_WIDE,
+        letterSpacing: LETTER_SPACING.SLIGHT_POSITIVE,
       };
     case 'medium':
     default:
       return {
         ...baseStyle,
         fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-        letterSpacing: LETTER_SPACING.EXTRA_WIDE,
+        letterSpacing: LETTER_SPACING.SLIGHT_POSITIVE,
       };
   }
 };

@@ -34,7 +34,6 @@ from utils.file_utils import (
     read_json_file,
     write_json_file,
 )
-from utils.responses_api import ResponsesAPIManager
 
 logger = logging.getLogger(__name__)
 
@@ -106,6 +105,7 @@ def create_metadata(split_data: SplitResult) -> TextMetadata:
         title=split_data.title,
         summary=split_data.summary,
         difficulty_level=split_data.difficulty_level,
+        category=split_data.category,
         total_units=split_data.total_units,
     )
 
@@ -117,7 +117,6 @@ def process_batch(
     all_sentences: list[str] | None = None,
     batch_indices: list[int] | None = None,
     context_cache: Any = None,
-    conversation_manager: ResponsesAPIManager | None = None,
     article_context: ArticleContext | None = None,
 ) -> list[SentenceTranslation]:
     """Process a single batch of sentences."""
@@ -130,9 +129,7 @@ def process_batch(
 
     try:
         # Step 1: Run full translation
-        translations = _run_translation_step(
-            batch_sentences, batch_contexts, conversation_manager
-        )
+        translations = _run_translation_step(batch_sentences, batch_contexts)
 
         # Step 2: Apply tashkeel
         tashkeel = _run_tashkeel_step(
@@ -141,7 +138,6 @@ def process_batch(
             all_sentences,
             batch_indices,
             context_cache,
-            conversation_manager,
             start_index,
         )
 
@@ -153,7 +149,6 @@ def process_batch(
             all_sentences,
             batch_indices,
             context_cache,
-            conversation_manager,
             start_index,
         )
 
@@ -164,7 +159,6 @@ def process_batch(
             translations,
             tashkeel,
             word_options,
-            conversation_manager,
         )
 
         # Step 5: Correct with DeepSeek (auto-fix morpheme alignment issues)
@@ -185,10 +179,9 @@ def process_batch(
 def _run_translation_step(
     batch_sentences: list[str],
     batch_contexts: list[str | None],
-    conversation_manager: ResponsesAPIManager | None,
 ) -> TranslationResults:
     """Run the full translation step for a batch."""
-    return run_full_translation(batch_sentences, batch_contexts, conversation_manager)
+    return run_full_translation(batch_sentences, batch_contexts)
 
 
 def _run_tashkeel_step(
@@ -197,7 +190,6 @@ def _run_tashkeel_step(
     all_sentences: list[str] | None,
     batch_indices: list[int],
     context_cache: Any,
-    conversation_manager: ResponsesAPIManager | None,
     start_index: int,
 ) -> TashkeelResults:
     """Run the tashkeel step for a batch."""
@@ -207,7 +199,6 @@ def _run_tashkeel_step(
         all_sentences,
         batch_indices,
         context_cache,
-        conversation_manager,
     )
 
 
@@ -218,7 +209,6 @@ def _run_word_translation_step(
     all_sentences: list[str] | None,
     batch_indices: list[int],
     context_cache: Any,
-    conversation_manager: ResponsesAPIManager | None,
     start_index: int,
 ) -> WordTranslationResults:
     """Run the word translation step for a batch."""
@@ -229,14 +219,12 @@ def _run_word_translation_step(
         all_sentences,
         batch_indices,
         context_cache,
-        conversation_manager,
     )
 
 
 def process_batches(
     all_units: list[str] | list[dict[str, Any]],
     batch_size: int,
-    conversation_manager: ResponsesAPIManager | None = None,
     article_context: ArticleContext | None = None,
 ) -> tuple[list[SentenceTranslation], list[str]]:
     """Process all batches in parallel and return results and errors."""
@@ -269,7 +257,6 @@ def process_batches(
                 sentences,
                 batch["indices"],
                 context_cache,
-                conversation_manager,
                 article_context,
             )
             results.extend(batch_results)
@@ -337,7 +324,6 @@ def translate_file(
     input_file: str,
     output_file: str,
     batch_size: int = MAX_TRANSLATION_BATCH_SIZE,
-    use_conversation_continuity: bool = True,
 ) -> bool | None:
     """Translate a file containing split sentences."""
     try:
@@ -354,34 +340,6 @@ def translate_file(
         metadata = create_metadata(split_data)
         all_units = split_data.units
 
-        # Initialize conversation manager for document-level continuity
-        # Skip conversation continuity when using Claude CLI (stateless calls)
-        conversation_manager = None
-        from data.config import USE_CLAUDE_CLI
-
-        if use_conversation_continuity and not USE_CLAUDE_CLI:
-            from utils.responses_api import ResponsesAPIManager
-
-            conversation_manager = ResponsesAPIManager()
-
-            # Start document-level conversation with full text
-            sentences: list[str] = []
-            for unit in all_units:
-                # Handle union type: list[str] | list[dict[str, Any]]
-                if isinstance(unit, str):
-                    sentences.append(unit)
-                else:
-                    sentences.append(unit.get("text", ""))  # type: ignore[unreachable]
-
-            conversation_manager.start_document_conversation(sentences)
-
-            # Check if conversation manager was properly initialized
-            if not conversation_manager.current_response_id:
-                logger.error(
-                    "Conversation manager failed to initialize - no response_id set"
-                )
-                raise RuntimeError("Conversation manager initialization failed")
-
         # Build article context for DeepSeek correction
         article_context = ArticleContext(
             title=metadata.title or "",
@@ -396,7 +354,7 @@ def translate_file(
             missing_count = 0
         else:
             results, errors = process_batches(
-                all_units, batch_size, conversation_manager, article_context
+                all_units, batch_size, article_context
             )
             actual_count, missing_count = validate_results(results, all_units)
 
@@ -464,16 +422,10 @@ def main() -> None:
         default=MAX_TRANSLATION_BATCH_SIZE,
         help=f"Batch size for processing (default: {MAX_TRANSLATION_BATCH_SIZE})",
     )
-    parser.add_argument(
-        "--no-conversation-continuity",
-        action="store_true",
-        help="Disable conversation continuity optimization",
-    )
-
     args = parser.parse_args()
 
     success = translate_file(
-        args.input, args.output, args.batch_size, not args.no_conversation_continuity
+        args.input, args.output, args.batch_size
     )
     if success:
         logger.info(

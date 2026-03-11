@@ -5,6 +5,7 @@
 import { ARABIC_PREFIXES, ComponentType, GrammaticalRole } from '@/constants/arabicWordComponents';
 
 import { findComponent } from './componentDetection';
+import { VALIDATION_CONFIG } from './constants';
 import { hasEnglishMatch } from './englishMatching';
 import { normalizeEnglish } from './normalization';
 import type { AnalyzedComponent } from './types';
@@ -13,6 +14,15 @@ import {
   isFormWithSuffixPattern,
   isHighRiskPreposition,
 } from './validation';
+
+/** Possessive indicators for shadda-based suffix detection (Validation 0) */
+const POSSESSIVE_INDICATORS = ['my', 'me', 'of me'];
+
+/** Single-letter prefixes that can appear after ال but are part of roots, not prepositions */
+const SINGLE_LETTER_PREPOSITION_SET = new Set(['ب', 'ل', 'ك', 'م']);
+
+/** Single-letter conjunctions/prepositions that can be confused with root radicals */
+const SINGLE_LETTER_CONJUNCTION_SET = new Set(['و', 'ف', 'ب', 'ل']);
 
 /**
  * Detects multiple prefixes in sequence from an Arabic word
@@ -27,6 +37,7 @@ export function detectPrefixes(
 ): { prefixes: AnalyzedComponent[]; remainingArabic: string } {
   const detectedPrefixes: AnalyzedComponent[] = [];
   let remaining = normalizedArabic;
+  const lowerEnglish = english.toLowerCase();
 
   // Track which roles we've seen to prevent duplicates
   const seenRoles = new Set<GrammaticalRole>();
@@ -57,9 +68,7 @@ export function detectPrefixes(
       // Then use the shortened form to allow suffix detection
       if (isFormWithSuffixPattern(prefixMatch.arabicMatch) && remainingAfterPrefix === '') {
         // Check if English has possessive pronouns that would match the suffix
-        const possessiveIndicators = ['my', 'me', 'of me'];
-        const lowerEnglish = english.toLowerCase();
-        const hasPossessivePronoun = possessiveIndicators.some(p => lowerEnglish.includes(p));
+        const hasPossessivePronoun = POSSESSIVE_INDICATORS.some(p => lowerEnglish.includes(p));
 
         // Check if original Arabic ends with shadda (indicating possessive suffix like يّ)
         const hasShadda = originalArabic?.includes('ّ') ?? false;
@@ -120,7 +129,6 @@ export function detectPrefixes(
       // BUT: ل + ل is VALID for regular nouns like للقلم (for the pen)
       const hasLamPrefix = detectedPrefixes.some(p => p.arabicMatch === 'ل');
       const isSingleLamMatch = prefixMatch.arabicMatch === 'ل'; // Not 'ال'
-      const lowerEnglish = english.toLowerCase();
       const isDivineName =
         lowerEnglish.includes('god') ||
         lowerEnglish.includes('allah') ||
@@ -132,6 +140,15 @@ export function detectPrefixes(
         // Reject this match to keep الله intact
         continueDetection = false;
         continue;
+      }
+
+      // 3a-2. Assimilated definite article: لل = لِ + الْ (for the)
+      // When ل appears after a ل preposition (non-divine), the second ل is the
+      // definite article with elided alef, not another preposition.
+      // Override role and English for correct educational coloring (golden, not amber).
+      if (hasLamPrefix && isSingleLamMatch) {
+        role = GrammaticalRole.DEFINITE_ARTICLE;
+        prefixMatch.englishMatches = ['the'];
       }
 
       // 3b. مما (mimma) - من + ما assimilation
@@ -169,7 +186,7 @@ export function detectPrefixes(
       const isSingleLetterPreposition =
         role === GrammaticalRole.PREPOSITION &&
         prefixMatch.arabicMatch.length === 1 &&
-        ['ب', 'ل', 'ك', 'م'].includes(prefixMatch.arabicMatch);
+        SINGLE_LETTER_PREPOSITION_SET.has(prefixMatch.arabicMatch);
 
       if (hasDefiniteArticle && isSingleLetterPreposition) {
         // Already have definite article, and this is a single-letter preposition
@@ -268,9 +285,11 @@ export function detectPrefixes(
       // conjunctions/prepositions (و، ف، ب، ل) if they would leave < 3 chars remaining.
       // This prevents splitting root radicals that happen to match prefix patterns.
       const hasSubjectMarker = detectedPrefixes.some(p =>
-        ['ي', 'ت', 'ن', 'أ'].includes(p.arabicMatch),
+        VALIDATION_CONFIG.SUBJECT_MARKERS.includes(
+          p.arabicMatch as (typeof VALIDATION_CONFIG.SUBJECT_MARKERS)[number],
+        ),
       );
-      const isSingleLetterConjunctionOrPreposition = ['و', 'ف', 'ب', 'ل'].includes(
+      const isSingleLetterConjunctionOrPreposition = SINGLE_LETTER_CONJUNCTION_SET.has(
         prefixMatch.arabicMatch,
       );
 
@@ -297,14 +316,16 @@ export function detectPrefixes(
       //
       // Strategy: If current match is a subject marker (ي، ت، ن، أ) and we already
       // have a future tense (س، سوف) or negation (لا، لم، لن) prefix, suppress it.
-      const FUTURE_TENSE_PREFIXES = ['س', 'سوف'];
-      const NEGATION_PREFIXES = ['لا', 'لم', 'لن'];
       const hasFutureOrNegationPrefix = detectedPrefixes.some(
         p =>
-          FUTURE_TENSE_PREFIXES.includes(p.arabicMatch) ||
-          NEGATION_PREFIXES.includes(p.arabicMatch),
+          (VALIDATION_CONFIG.FUTURE_TENSE_PREFIXES as readonly string[]).includes(
+            p.arabicMatch,
+          ) ||
+          (VALIDATION_CONFIG.NEGATION_PREFIXES as readonly string[]).includes(p.arabicMatch),
       );
-      const isSubjectMarkerMatch = ['ي', 'ت', 'ن', 'أ'].includes(prefixMatch.arabicMatch);
+      const isSubjectMarkerMatch = VALIDATION_CONFIG.SUBJECT_MARKERS.includes(
+        prefixMatch.arabicMatch as (typeof VALIDATION_CONFIG.SUBJECT_MARKERS)[number],
+      );
 
       if (hasFutureOrNegationPrefix && isSubjectMarkerMatch) {
         // Subject marker is implicit in the verb after future/negation - don't detect separately

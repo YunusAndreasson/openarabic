@@ -60,6 +60,7 @@ export interface Database {
           audio_url: string;
           audio_url_bilingual: string | null;
           author_id: number;
+          book: string | null;
           category_id: number;
           content_hash: string;
           created_at: string;
@@ -73,6 +74,7 @@ export interface Database {
           audio_url: string;
           audio_url_bilingual?: string | null;
           author_id: number;
+          book?: string | null;
           category_id: number;
           content_hash: string;
           created_at?: string;
@@ -86,6 +88,7 @@ export interface Database {
           audio_url?: string;
           audio_url_bilingual?: string | null;
           author_id?: number;
+          book?: string | null;
           category_id?: number;
           content_hash?: string;
           created_at?: string;

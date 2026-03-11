@@ -444,6 +444,13 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
 
   // Standalone subject pronouns (when appearing after prefixes like و، ف)
   // These are treated as suffixes to enable coloring in combinations like وهو "and he"
+  //
+  // NOTE: These intentionally duplicate POSSESSIVE suffixes (هم, هن, هما) with different
+  // English trigger words. The analysis engine matches based on which English words appear
+  // in the translation, enabling context-dependent role assignment:
+  //   - English has "they/he/she" (subject) → GENERIC wins → verbConjugation color
+  //   - English has "their/his/her" (possessor) → POSSESSIVE wins → possessive color
+  // Example: وهم "and they" → generic | كتابهم "their book" → possessive
   {
     arabic: 'هو',
     english: ['he', 'it', 'him'],
@@ -772,20 +779,20 @@ export const COMPONENT_TYPE_CONFIG = {
  * Uses dedicated grammar.* color palette (65-188° hue range) for sage-centric harmony
  */
 export const GRAMMATICAL_ROLE_COLORS = {
-  [GrammaticalRole.PREPOSITION]: 'grammar.preposition' as const, // Amber-green (85°) [15 uses]
-  [GrammaticalRole.POSSESSIVE]: 'grammar.possessive' as const, // Cool sage (160°) [13 uses]
-  [GrammaticalRole.PARTICLE]: 'grammar.particle' as const, // Teal (172°) [9 uses]
-  [GrammaticalRole.INTERROGATIVE]: 'grammar.interrogative' as const, // Lime (105°) [8 uses]
-  [GrammaticalRole.VERB_CONJUGATION]: 'grammar.verbConjugation' as const, // Core sage (150°) [5 uses]
-  [GrammaticalRole.NEGATION]: 'grammar.negation' as const, // Olive (125°) [5 uses]
-  [GrammaticalRole.SUBJECT_PREFIX]: 'grammar.subjectPrefix' as const, // Cyan-green (180°) [4 uses]
-  [GrammaticalRole.PLURAL]: 'grammar.plural' as const, // Yellow-sage (140°) [4 uses]
-  [GrammaticalRole.DEMONSTRATIVE]: 'grammar.demonstrative' as const, // Sage-2 (155°) [4 uses]
-  [GrammaticalRole.CONJUNCTION]: 'grammar.conjunction' as const, // Blue-sage (165°) [4 uses]
-  [GrammaticalRole.FUTURE_TENSE]: 'grammar.futureTense' as const, // Cool cyan (188°) [2 uses]
-  [GrammaticalRole.DEFINITE_ARTICLE]: 'grammar.definiteArticle' as const, // Golden (65°) [1 use]
-  [GrammaticalRole.CASE_ENDING]: 'grammar.particle' as const, // Diacritic case markers (ُ, َ, ِ)
-  [GrammaticalRole.GENERIC]: 'grammar.verbConjugation' as const, // Standalone pronouns (هو, هي, هم, etc.)
+  [GrammaticalRole.PREPOSITION]: 'grammar.preposition' as const, // amber (90°)
+  [GrammaticalRole.POSSESSIVE]: 'grammar.possessive' as const, // sage (155°)
+  [GrammaticalRole.PARTICLE]: 'grammar.particle' as const, // lime (110°)
+  [GrammaticalRole.INTERROGATIVE]: 'grammar.interrogative' as const, // seafoam (185°)
+  [GrammaticalRole.VERB_CONJUGATION]: 'grammar.verbConjugation' as const, // mintGreen (170°)
+  [GrammaticalRole.NEGATION]: 'grammar.negation' as const, // olive (125°)
+  [GrammaticalRole.SUBJECT_PREFIX]: 'grammar.subjectPrefix' as const, // skyBlue (225°)
+  [GrammaticalRole.PLURAL]: 'grammar.plural' as const, // yellowGreen (140°)
+  [GrammaticalRole.DEMONSTRATIVE]: 'grammar.demonstrative' as const, // teal (200°)
+  [GrammaticalRole.CONJUNCTION]: 'grammar.conjunction' as const, // periwinkle (250°)
+  [GrammaticalRole.FUTURE_TENSE]: 'grammar.futureTense' as const, // violet (270°)
+  [GrammaticalRole.DEFINITE_ARTICLE]: 'grammar.definiteArticle' as const, // golden (50°)
+  [GrammaticalRole.CASE_ENDING]: 'grammar.particle' as const, // Aliases to particle — diacritics typically use inheritColorFrom instead
+  [GrammaticalRole.GENERIC]: 'grammar.verbConjugation' as const, // Aliases to verbConjugation — standalone pronouns (هو, هي, etc.)
 } as const;
 
 /**

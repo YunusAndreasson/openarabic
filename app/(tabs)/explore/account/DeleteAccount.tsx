@@ -107,7 +107,6 @@ const DeleteAccountScreen: FC = () => {
           disabled={!confirmationText || loading}
           loading={loading}
           style={[styles.deleteButton, { backgroundColor: colors.error }]}
-          uppercase={false}
         />
       </ThemedView>
     </ThemedView>

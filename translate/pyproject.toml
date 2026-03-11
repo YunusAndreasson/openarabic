@@ -106,6 +106,7 @@ ignore = [
     "C901",   # too complex
     "S101",   # Use of assert detected (allow in tests)
     "S603",   # subprocess call with untrusted input (legitimate uses)
+    "S607",   # partial executable path (claude CLI from PATH)
     "TC001",  # Import typing only in TYPE_CHECKING
     "TC002",  # Import typing only in TYPE_CHECKING
     "TC003",  # Import typing only in TYPE_CHECKING

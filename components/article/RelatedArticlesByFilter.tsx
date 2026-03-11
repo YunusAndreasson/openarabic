@@ -123,9 +123,17 @@ export const RelatedArticlesByFilter = memo<RelatedArticlesByFilterProps>(
       });
     }, [selectedArticles, progressMap]);
 
-    // Limit to requested number of unread/low-progress articles
+    // Limit to requested number of unread/low-progress articles, deduplicating by image
     const relatedArticles = useMemo(() => {
-      return unreadOrLowProgressArticles.slice(0, maxArticles);
+      const seen = new Set<string>();
+      return unreadOrLowProgressArticles
+        .filter(article => {
+          if (!article.image_url) return true;
+          if (seen.has(article.image_url)) return false;
+          seen.add(article.image_url);
+          return true;
+        })
+        .slice(0, maxArticles);
     }, [unreadOrLowProgressArticles, maxArticles]);
 
     // Navigation handler - dismiss current modal then push new one

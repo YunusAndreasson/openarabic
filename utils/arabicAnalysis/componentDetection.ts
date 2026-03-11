@@ -24,6 +24,9 @@ import {
 /** Normalize alef variants (إ/آ/ٱ → ا) for hamza-insensitive pattern comparison.
  * NOT أ — single-char prefix أ must stay distinct from prosthetic alef ا. */
 const ALEF_VARIANTS_REGEX = /[إآٱ]/g;
+
+/** Pre-compiled regex for "the" word boundary check in bracket injection */
+const THE_WORD_REGEX = /\bthe\b/;
 const normalizeAlef = (s: string): string => s.replace(ALEF_VARIANTS_REGEX, 'ا');
 
 /**
@@ -35,8 +38,6 @@ export function findComponent(
   components: WordComponent[],
   type: ComponentType,
 ): AnalyzedComponent | undefined {
-  let best: AnalyzedComponent | undefined;
-
   for (const component of components) {
     const pattern = component.arabic;
 
@@ -145,8 +146,9 @@ export function findComponent(
 
     if (matches) {
       const englishMatches = hasEnglishMatch(english, component.english, arabic, pattern);
-      if (englishMatches.length > 0 && (!best || pattern.length > best.arabicMatch.length)) {
-        best = {
+      if (englishMatches.length > 0) {
+        // Component arrays are sorted longest-first, so the first match is the longest.
+        return {
           component,
           arabicMatch: pattern,
           englishMatches,
@@ -157,7 +159,7 @@ export function findComponent(
     }
   }
 
-  return best;
+  return undefined;
 }
 
 /**
@@ -256,8 +258,7 @@ export function shouldInjectBracket(normalizedArabic: string, englishTranslation
   }
 
   const lowerEnglish = englishTranslation.toLowerCase();
-  const theWordRegex = /\bthe\b/;
-  if (theWordRegex.test(lowerEnglish)) {
+  if (THE_WORD_REGEX.test(lowerEnglish)) {
     return false;
   }
 
@@ -298,9 +299,11 @@ export function analyzeDiacriticMatches(
     const overlap = normalizedDiacriticMatches.filter(diacriticMatch => {
       return componentMatchesLower.some(componentMatch => {
         if (componentMatch === diacriticMatch) return true;
-        const escapedMatch = diacriticMatch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const wordBoundaryRegex = new RegExp(`\\b${escapedMatch}\\b`, 'i');
-        return wordBoundaryRegex.test(componentMatch);
+        // Check if diacriticMatch appears as a whole word in a multi-word component match
+        // (e.g., "he" in "he is") — uses split instead of regex for performance
+        return componentMatch
+          .split(/\s+/)
+          .some(word => word === diacriticMatch);
       });
     });
 

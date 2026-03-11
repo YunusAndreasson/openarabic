@@ -6,34 +6,6 @@ import { normalizeArabic } from './normalization';
 import type { AnalyzedComponent } from './types';
 
 /**
- * Check if this is a pure particle combination with no compositional root
- *
- * UPDATED: This filter is now disabled.
- *
- * Core principle: If there are 2 English words AND 2 Arabic parts, we SHOULD color it
- * to show the composition, regardless of whether they're "particles" or not.
- *
- * Examples that SHOULD be colored:
- *   - وهو "and he" - و (and) + هو (he) = 2 parts → COLOR IT ✓
- *   - فهو "so it" - ف (so) + هو (it) = 2 parts → COLOR IT ✓
- *   - ولا "and not" - و (and) + لا (not) = 2 parts → COLOR IT ✓
- *
- * The composition itself is educational, even if both parts are particles/pronouns.
- *
- * @param prefixes - Detected prefixes (unused now)
- * @param remaining - Remaining text after removing components (unused now)
- * @returns false - this filter is disabled
- */
-export function isPureParticleCombination(
-  _prefixes: AnalyzedComponent[],
-  _remaining: string,
-): boolean {
-  // DISABLED: Always return false to allow all compositions to be colored
-  // The core principle is: if there are 2 parts, show them with colors
-  return false;
-}
-
-/**
  * Check if analysis result represents a single standalone component with no compositional structure
  *
  * Core principle: Color-coding is educational when it shows how Arabic words are COMPOSED
