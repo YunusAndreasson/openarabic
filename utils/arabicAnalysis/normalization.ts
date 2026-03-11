@@ -69,6 +69,14 @@ export function normalizeEnglish(text: string): string {
   return normalized;
 }
 
+// Pre-compiled contraction regexes (avoids creating 39 RegExp objects per call)
+const CONTRACTION_REGEXES = Object.entries(CONTRACTION_MAP).map(
+  ([contraction, expansion]) => ({
+    regex: new RegExp(`\\b${contraction}\\b`, 'g'),
+    expansion,
+  }),
+);
+
 /**
  * Expands contractions in English text BEFORE normalization
  * This preserves apostrophes for contraction lookup before they're removed
@@ -79,10 +87,8 @@ export function normalizeEnglish(text: string): string {
 export function expandContractions(text: string): string {
   let expanded = text.toLowerCase();
 
-  // Replace each contraction with its expanded form
-  for (const [contraction, expansion] of Object.entries(CONTRACTION_MAP)) {
-    // Use word boundary regex to avoid partial matches
-    const regex = new RegExp(`\\b${contraction}\\b`, 'g');
+  for (const { regex, expansion } of CONTRACTION_REGEXES) {
+    regex.lastIndex = 0;
     expanded = expanded.replace(regex, expansion);
   }
 

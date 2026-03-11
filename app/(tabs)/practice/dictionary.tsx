@@ -137,7 +137,7 @@ export default function DictionaryScreen(): JSX.Element {
             }
             ListEmptyComponent={ListEmptyComponent}
             contentContainerStyle={contentContainerStyle}
-            showsVerticalScrollIndicator={false}
+            showsVerticalScrollIndicator={true}
             removeClippedSubviews={true}
             drawDistance={LAYOUT.CARD.HEIGHT.VOCABULARY_ITEM * LIST_DRAW_DISTANCE_MULTIPLIER}
             // v2 performance optimizations

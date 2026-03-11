@@ -250,7 +250,6 @@ def _prepare_sentence_input(
         WordInput(
             arabic=w.arabic,
             english=_get_str_value(w.english),
-            pos=w.pos.value if hasattr(w.pos, "value") else str(w.pos),
             essential=w.essential,
             essential_translation=_get_str_value(w.essential_translation),
         )
@@ -311,39 +310,21 @@ def _apply_corrections(
         translation.word_by_word, correction.word_corrections, idx
     )
 
-    # Update verification status based on quality score
-    _update_verification_status(translation, correction)
+    # Update verification status
+    if correction.issues_unfixable:
+        translation.verification_status = VerificationStatus.NEEDS_REVIEW
+        translation.verification_issues.extend(correction.issues_unfixable)
+        pipeline_stats.record_needs_review(translation.index)
+    elif corrections_applied > 0:
+        translation.verification_status = VerificationStatus.SUCCESS
+    # else: no corrections, keep existing status
 
     # Track corrections in pipeline stats
     pipeline_stats.record_correction(corrections_applied)
 
     # Print summary with Rich styling
     level = "info" if corrections_applied else "debug"
-    print_correction_summary(
-        idx, corrections_applied, correction.overall_quality, level
-    )
-
-
-def _update_verification_status(
-    translation: SentenceTranslation, correction: SentenceCorrectionResponse
-) -> None:
-    """Update verification status based on correction results."""
-    match correction:
-        case _ if correction.issues_unfixable:
-            translation.verification_status = VerificationStatus.NEEDS_REVIEW
-            translation.verification_issues.extend(correction.issues_unfixable)
-            pipeline_stats.record_needs_review(translation.index)
-        case _ if correction.overall_quality >= 0.8:
-            translation.verification_status = VerificationStatus.SUCCESS
-        case _ if correction.overall_quality >= 0.5:
-            translation.verification_status = VerificationStatus.PARTIAL
-            translation.verification_issues.extend(
-                f"Corrected: {issue}" for issue in correction.issues_found
-            )
-        case _:
-            translation.verification_status = VerificationStatus.NEEDS_REVIEW
-            translation.verification_issues.extend(correction.issues_found)
-            pipeline_stats.record_needs_review(translation.index)
+    print_correction_summary(idx, corrections_applied, 1.0, level)
 
 
 def _apply_word_corrections(
@@ -358,9 +339,6 @@ def _apply_word_corrections(
     corrections_applied = 0
 
     for wc in corrections:
-        if not wc.was_corrected:
-            continue
-
         # Try exact match first, then normalized match
         word = words_by_arabic.get(wc.arabic)
         if word is None:

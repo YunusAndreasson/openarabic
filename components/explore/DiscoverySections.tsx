@@ -48,6 +48,16 @@ function seededRandom(seed: number): () => number {
   };
 }
 
+function deduplicateByImageUrl(articles: Article[]): Article[] {
+  const seen = new Set<string>();
+  return articles.filter(article => {
+    if (!article.image_url) return true;
+    if (seen.has(article.image_url)) return false;
+    seen.add(article.image_url);
+    return true;
+  });
+}
+
 function shuffleAndSlice<T>(items: T[], count: number, sectionSeed: number): T[] {
   if (items.length === 0) return [];
   const rand = seededRandom(sectionSeed);
@@ -92,8 +102,22 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
     // Seed per section: APP_SESSION_ID XOR'd with a unique offset per section
     const baseSeed = APP_SESSION_ID;
 
+    // Beginner Friendly (difficulty 1-3)
+    const beginnerArticles = deduplicateByImageUrl(shuffleAndSlice(
+      unreadArticles.filter(a => a.difficulty_level <= BEGINNER_MAX_DIFFICULTY),
+      MAX_ARTICLES_PER_SECTION,
+      baseSeed ^ 3,
+    ));
+    if (beginnerArticles.length > 0) {
+      result.push({
+        key: 'beginner',
+        title: STRINGS.SECTION_BEGINNER_FRIENDLY,
+        articles: beginnerArticles,
+      });
+    }
+
     // Short Reads (< 10 sentences, ~2 min)
-    const shortArticles = shuffleAndSlice(
+    const shortArticles = deduplicateByImageUrl(shuffleAndSlice(
       unreadArticles.filter(
         a =>
           a.article_sentences.length > 0 &&
@@ -101,7 +125,7 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
       ),
       MAX_ARTICLES_PER_SECTION,
       baseSeed ^ 1,
-    );
+    ));
     if (shortArticles.length > 0) {
       result.push({
         key: 'short-reads',
@@ -111,11 +135,11 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
     }
 
     // Long Reads (>= 15 sentences, ~4+ min)
-    const longArticles = shuffleAndSlice(
+    const longArticles = deduplicateByImageUrl(shuffleAndSlice(
       unreadArticles.filter(a => a.article_sentences.length >= LONG_ARTICLE_MIN_SENTENCES),
       MAX_ARTICLES_PER_SECTION,
       baseSeed ^ 2,
-    );
+    ));
     if (longArticles.length > 0) {
       result.push({
         key: 'long-reads',
@@ -124,26 +148,12 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
       });
     }
 
-    // Beginner Friendly (difficulty 1-3)
-    const beginnerArticles = shuffleAndSlice(
-      unreadArticles.filter(a => a.difficulty_level <= BEGINNER_MAX_DIFFICULTY),
-      MAX_ARTICLES_PER_SECTION,
-      baseSeed ^ 3,
-    );
-    if (beginnerArticles.length > 0) {
-      result.push({
-        key: 'beginner',
-        title: STRINGS.SECTION_BEGINNER_FRIENDLY,
-        articles: beginnerArticles,
-      });
-    }
-
     // Advanced (difficulty >= 4)
-    const advancedArticles = shuffleAndSlice(
+    const advancedArticles = deduplicateByImageUrl(shuffleAndSlice(
       unreadArticles.filter(a => a.difficulty_level >= ADVANCED_MIN_DIFFICULTY),
       MAX_ARTICLES_PER_SECTION,
       baseSeed ^ 4,
-    );
+    ));
     if (advancedArticles.length > 0) {
       result.push({
         key: 'advanced',

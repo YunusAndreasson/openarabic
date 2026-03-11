@@ -160,6 +160,60 @@ class OpenRouterClient:
             logger.error(f"Content: {content}")
             raise ValueError(f"Invalid JSON in response: {e}") from e
 
+    def validate_words_batch(
+        self, words_data: list[dict[str, Any]], retry_count: int = 0
+    ) -> dict[str, Any]:
+        """Validate a batch of word translations for morphological accuracy.
+
+        Checks that each English translation exposes the correct number of Arabic
+        morphemes so the grammar color-coding system can highlight them.
+
+        Args:
+            words_data: List of word dicts (word_id, arabic_word, current_english, …)
+            retry_count: Current retry attempt (affects prompt strictness)
+
+        Returns:
+            dict: Parsed validation results with suggested improvements
+        """
+        system_prompt = self._build_validation_system_prompt(retry_count)
+        user_prompt = self._build_validation_user_prompt(words_data)
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
+        estimated_tokens = int(len(words_data) * 100 * 1.2)
+        max_tokens = max(8000, min(estimated_tokens, 32000))
+        response = self.call_api(messages, max_tokens=max_tokens, temperature=0.1)
+        return self.parse_json_response(response)
+
+    @staticmethod
+    def _build_validation_system_prompt(retry_count: int) -> str:  # noqa: ARG004
+        """System prompt for word-translation morpheme validation."""
+        return """You are an expert Arabic linguist validating Arabic-to-English word translations.
+
+CORE RULE: Every Arabic morpheme (prefix, root, suffix) must map to a separate English word.
+Single-word English translations for multi-morpheme Arabic words BLOCK color-coding in the learning app.
+
+PRIORITY FIXES (triggers color-coding for students):
+- Missing subject pronouns in verbs: يَكْتُبُ → "he writes" not "writes"
+- Missing conjunctions: وَقَالَ → "and he said" not "said"
+- Missing prepositions: فِيهِ → "in it" not "therein"
+- Condensed forms: "thereof" → "of it", "therein" → "in it", "thereof" → "of it"
+- Missing future marker: سَيَكْتُبُ → "he will write" not "he writes"
+- Missing negation word: لَمْ يَقُلْ → "he did not say" not "he said not"
+
+CONSERVATIVE: Only flag clear morpheme-count mismatches. Do NOT change correct translations.
+Return JSON: {"validations": [{"word_id": int, "is_correct": bool, "issues": [], "suggested_english": null_or_str, "reasoning": str}]}"""
+
+    def _build_validation_user_prompt(self, words_data: list[dict[str, Any]]) -> str:
+        """User prompt listing words to validate."""
+        words_json = json.dumps(words_data, ensure_ascii=False, indent=2)
+        return f"""Validate these Arabic word translations for morphological accuracy:
+
+{words_json}
+
+Return ONLY valid JSON matching: {{"validations": [{{"word_id": int, "is_correct": bool, "issues": [], "suggested_english": null, "reasoning": str}}]}}"""
+
     def correct_translations_batch(
         self,
         sentences_data: list["SentenceCorrectionInput"],
@@ -227,6 +281,7 @@ FOR FULL SENTENCE TRANSLATIONS (full_translation):
 ✅ FIX only:
 - Obvious mistranslations (wrong meaning)
 - Broken grammar
+- Remove any comments, footnotes, brackets, or translator notes from the text (e.g., "[i.e. ...]", "[lit. ...]", "[Translator's note: ...]", "(meaning ...)")
 ✓ KEEP as-is:
 - Natural English phrasing (prioritize fluency for audio)
 - Style choices, word order, synonyms
@@ -243,8 +298,9 @@ Bad correction example: "This is what I tell you" → "He is what I say to you" 
 
 CONTEXT: ISLAMIC TEXTS FOR AUDIO
 - Classical Islamic scholarly texts (aqeedah, fiqh, tafsir, etc.)
-- All translations will be converted to audio (text-to-speech)
-- Ensure translations sound natural when read aloud
+- All translations will be read aloud via text-to-speech
+- Ensure translations sound natural when spoken
+- NEVER leave comments, footnotes, brackets, or translator notes in English text (e.g., "[i.e. ...]", "[lit. ...]", "[Translator's note: ...]", "(meaning ...)"). Remove any such artifacts — the text must be clean for audio.
 - Preserve religious terminology (e.g., "slave" for عبد when referring to servant of Allah)
 - Maintain scholarly tone and precision
 - Common terms: Allah, Prophet, Messenger, scholars, predecessors (salaf), etc.
@@ -341,9 +397,12 @@ QUALITY CHECK:
 - Full translation: Correct meaning? Correct grammar? Sounds natural when read aloud?
 
 RESPONSE FORMAT:
-- Return unchanged fields as-is
-- Set was_corrected=true ONLY for words you actually changed
+- word_corrections: ONLY include words you actually changed. Omit unchanged words entirely.
 - High overall_quality (0.9+) if only minor word-splitting needed
+
+OUTPUT RULES:
+- Return ONLY the corrected JSON. No comments, no explanations, no notes about what you changed or why.
+- Do NOT add any text before or after the JSON object.
 
 REMEMBER: Only fix what is CLEARLY wrong. When uncertain, keep original."""
 
@@ -372,7 +431,7 @@ Start with {{ and end with }}. Nothing else."""
         """
         # Serialize Pydantic models to JSON (model_dump for Pydantic v2)
         sentences_dicts = [s.model_dump(exclude_none=True) for s in sentences_data]
-        sentences_json = json.dumps(sentences_dicts, ensure_ascii=False, indent=2)
+        sentences_json = json.dumps(sentences_dicts, ensure_ascii=False)
 
         # Build article context section if available and non-empty
         context_section = ""
@@ -403,18 +462,16 @@ REQUIRED OUTPUT FORMAT (valid JSON only):
       "corrected_full_translation": "<fixed English translation>",
       "corrected_tashkeel": "<fixed Arabic with diacritics>" or null if unchanged,
       "word_corrections": [
+        // ONLY include words that were actually corrected. Omit unchanged words. Empty array if no word corrections.
         {{
           "arabic": "<original Arabic word>",
           "corrected_english": "<fixed English - may be multi-word>",
           "corrected_essential": "<fixed root form>",
           "corrected_essential_translation": "<fixed root translation>",
-          "was_corrected": <boolean>,
-          "correction_reason": "<why it was fixed>" or null if unchanged
+          "correction_reason": "<why it was fixed>"
         }}
       ],
-      "overall_quality": <float 0.0-1.0>,
-      "issues_found": ["<list of issues that were corrected>"],
-      "issues_unfixable": ["<list of issues that couldn't be auto-fixed>"]
+      "issues_unfixable": ["<issues that couldn't be auto-fixed>"]
     }}
   ]
 }}
@@ -438,12 +495,6 @@ CRITICAL CORRECTIONS TO MAKE:
    - Future سَ → add "will"
    - Past negation لَمْ → use "did not"
    - Dual number → add "two"
-
-SCORING GUIDE:
-- 0.9-1.0: No corrections needed
-- 0.7-0.89: Minor corrections (1-2 morpheme issues)
-- 0.5-0.69: Moderate corrections (multiple issues)
-- Below 0.5: Major corrections needed
 
 Return ONLY the JSON object. No markdown, no code blocks, no extra text."""
 

@@ -8,7 +8,10 @@ import json
 import logging
 import os
 import subprocess
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    pass
 
 from data.config import CLAUDE_CLI_MODEL
 
@@ -113,3 +116,61 @@ def call_claude_cli(
     except Exception as e:
         logger.error(f"Claude CLI call failed: {e}")
         return {"data": {}, "success": False, "error": str(e)}
+
+
+_VALIDATION_SYSTEM_PROMPT = """You are an expert Arabic linguist validating Arabic-to-English word translations.
+
+CORE RULE: Every Arabic morpheme (prefix, root, suffix) must map to a separate English word.
+Single-word English translations for multi-morpheme Arabic words BLOCK color-coding in the learning app.
+
+PRIORITY FIXES (triggers color-coding for students):
+- Missing subject pronouns in verbs: يَكْتُبُ → "he writes" not "writes"
+- Missing conjunctions: وَقَالَ → "and he said" not "said"
+- Missing prepositions: فِيهِ → "in it" not "therein"
+- Condensed forms: "thereof" → "of it", "therein" → "in it"
+- Missing future marker: سَيَكْتُبُ → "he will write" not "he writes"
+- Missing negation word: لَمْ يَقُلْ → "he did not say" not "he said not"
+
+CONSERVATIVE: Only flag clear morpheme-count mismatches. Do NOT change correct translations."""
+
+
+def validate_words_batch(
+    words_data: list[dict[str, Any]], retry_count: int = 0  # noqa: ARG001
+) -> dict[str, Any]:
+    """Validate word translations for morpheme-to-English alignment using Claude CLI.
+
+    Drop-in replacement for OpenRouterClient.validate_words_batch().
+    Compatible with validate_with_retry(): takes (data, retry_count) → dict.
+
+    Args:
+        words_data: List of word dicts with word_id, arabic_word, current_english, etc.
+        retry_count: Unused (kept for API compatibility with validate_with_retry).
+
+    Returns:
+        dict: {"validations": [...]} matching ValidationBatchResponse schema.
+
+    Raises:
+        ValueError: If Claude CLI call fails or returns an error.
+    """
+    from data.validation_models import ValidationBatchResponse
+
+    words_json = json.dumps(words_data, ensure_ascii=False, indent=2)
+    user_prompt = f"""Validate these Arabic word translations for morphological accuracy:
+
+{words_json}
+
+Return ONLY valid JSON with a "validations" array matching the required schema."""
+
+    messages = [
+        {"role": "system", "content": _VALIDATION_SYSTEM_PROMPT},
+        {"role": "user", "content": user_prompt},
+    ]
+
+    result = call_claude_cli(messages, response_model=ValidationBatchResponse)
+
+    if not result["success"]:
+        raise ValueError(
+            f"Claude CLI validation failed: {result.get('error', 'Unknown error')}"
+        )
+
+    return result["data"]  # {"validations": [...]}

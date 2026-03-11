@@ -1,11 +1,13 @@
 import logging
 import os
+import re
 import sys
 from typing import Any
 
 from data.config import (
     DEFAULT_INPUT_FILE,
     DEFAULT_SPLIT_OUTPUT_FILE,
+    MAX_UNIT_WORD_COUNT,
     MODEL_ANALYSIS,
     SPLIT_DIR,
 )
@@ -78,6 +80,90 @@ def parse_split_response(response: dict[str, Any]) -> SplitResult:
     )
 
 
+def _split_long_unit(unit: str, max_words: int) -> list[str]:
+    """Split a single unit that exceeds max_words into smaller chunks.
+
+    Strategy:
+    1. Split at Arabic comma (،) or semicolon (؛)
+    2. Split at Latin comma/semicolon
+    3. Split at sentence-initial conjunctions (و, فَ, ثم)
+    4. Fall back to midpoint split
+    """
+    words = unit.split()
+    if len(words) <= max_words:
+        return [unit]
+
+    # Strategy 1: Split at Arabic/Latin punctuation
+    for punct in ("،", "؛", ",", ";"):
+        if punct in unit:
+            parts = unit.split(punct)
+            if len(parts) >= 2:
+                # Rejoin into two halves, keeping punctuation with the left side
+                mid = len(parts) // 2
+                left = punct.join(parts[:mid]) + punct
+                right = punct.join(parts[mid:])
+                left, right = left.strip(), right.strip()
+                if left and right:
+                    # Recursively ensure each half is under the limit
+                    return _split_long_unit(left, max_words) + _split_long_unit(
+                        right, max_words
+                    )
+
+    # Strategy 2: Split at a conjunction word boundary (و, فَ, ثم at start of a word)
+    # Look for conjunctions that start a new clause near the middle
+    mid_idx = len(words) // 2
+    best_split = None
+    best_dist = len(words)
+    for i in range(1, len(words)):
+        word = words[i]
+        # Match standalone conjunctions or words starting with wa-/fa- prefix
+        if re.match(r"^(ثم|ثُمَّ)$", word) or (
+            len(word) > 2 and re.match(r"^[وف]", word)
+        ):
+            dist = abs(i - mid_idx)
+            if dist < best_dist:
+                best_dist = dist
+                best_split = i
+
+    if best_split is not None:
+        left = " ".join(words[:best_split]).strip()
+        right = " ".join(words[best_split:]).strip()
+        if left and right:
+            return _split_long_unit(left, max_words) + _split_long_unit(
+                right, max_words
+            )
+
+    # Strategy 3: Fall back to midpoint split
+    left = " ".join(words[:mid_idx]).strip()
+    right = " ".join(words[mid_idx:]).strip()
+    return _split_long_unit(left, max_words) + _split_long_unit(right, max_words)
+
+
+def _enforce_max_unit_length(units: list[str], max_words: int) -> list[str]:
+    """Check all units and re-split any that exceed max_words."""
+    result: list[str] = []
+    resplit_count = 0
+    for unit in units:
+        word_count = len(unit.split())
+        if word_count > max_words:
+            logger.warning(
+                f"Unit exceeds {max_words} words ({word_count}), re-splitting: "
+                f"{unit[:80]}..."
+            )
+            sub_units = _split_long_unit(unit, max_words)
+            result.extend(sub_units)
+            resplit_count += 1
+        else:
+            result.append(unit)
+
+    if resplit_count > 0:
+        logger.info(
+            f"Re-split {resplit_count} oversized unit(s): "
+            f"{len(units)} -> {len(result)} total units"
+        )
+    return result
+
+
 def split_text_into_sentences(text: str) -> SplitResult:
     """Use GPT-4.1 to intelligently split text into learner-friendly units and analyze content"""
     if not text or len(text.strip()) == 0:
@@ -91,7 +177,13 @@ def split_text_into_sentences(text: str) -> SplitResult:
         model=MODEL_ANALYSIS,
     )
 
-    return parse_split_response(response)
+    result = parse_split_response(response)
+
+    # Enforce max unit length — re-split any oversized units
+    result.units = _enforce_max_unit_length(result.units, MAX_UNIT_WORD_COUNT)
+    result.total_units = len(result.units)
+
+    return result
 
 
 def split_file(input_file: str, output_file: str) -> SplitResult:

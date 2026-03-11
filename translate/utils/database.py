@@ -1,6 +1,7 @@
 import logging
 import os
 import shutil
+import time
 from pathlib import Path
 from typing import Any
 
@@ -60,6 +61,38 @@ except (ImportError, OSError):
     pass
 
 logger = logging.getLogger(__name__)
+
+_UPLOAD_MAX_RETRIES = 3
+_UPLOAD_RETRY_DELAY = 5
+
+
+def _upload_audio_with_retry(filename: str, audio_data: bytes) -> str:
+    """Upload audio to Supabase storage with retry logic.
+
+    Returns the public storage URL on success, raises on failure.
+    """
+    last_error: Exception | None = None
+    for attempt in range(1, _UPLOAD_MAX_RETRIES + 1):
+        try:
+            get_supabase_client().storage.from_("audio").upload(
+                filename,
+                audio_data,
+                file_options={"content-type": "audio/mpeg"},
+            )
+            return get_storage_url(filename)
+        except Exception as e:
+            last_error = e
+            if attempt < _UPLOAD_MAX_RETRIES:
+                logger.warning(
+                    f"Audio upload attempt {attempt}/{_UPLOAD_MAX_RETRIES} failed: {e}. "
+                    f"Retrying in {_UPLOAD_RETRY_DELAY}s..."
+                )
+                time.sleep(_UPLOAD_RETRY_DELAY)
+            else:
+                logger.error(
+                    f"Audio upload failed after {_UPLOAD_MAX_RETRIES} attempts: {e}"
+                )
+    raise last_error  # type: ignore[misc]
 
 
 def extract_root_info(word: WordData) -> tuple[str, str | None, str | None]:
@@ -290,7 +323,9 @@ def insert_article_sentences(
                 )
                 progress_tracker.update(1)
 
-            cleaned_arabic = clean_arabic_text(translation["original"])
+            cleaned_arabic = clean_arabic_text(
+                translation.get("tashkeel") or translation["original"]
+            )
 
             # Generate individual sentence audio to satisfy database constraints
             arabic_text = translation.get("tashkeel") or translation["original"]
@@ -313,14 +348,11 @@ def insert_article_sentences(
                 )
 
                 if arabic_response and arabic_response.get("audio"):
-                    # Upload Arabic audio to Supabase storage
+                    # Upload Arabic audio to Supabase storage (with retry)
                     try:
-                        get_supabase_client().storage.from_("audio").upload(
-                            arabic_filename,
-                            arabic_response["audio"],
-                            file_options={"content-type": "audio/mpeg"},
+                        arabic_audio_url = _upload_audio_with_retry(
+                            arabic_filename, arabic_response["audio"]
                         )
-                        arabic_audio_url = get_storage_url(arabic_filename)
                     except Exception as e:
                         logger.warning(f"Failed to upload Arabic sentence audio: {e}")
                 else:
@@ -352,14 +384,11 @@ def insert_article_sentences(
                 )
 
                 if english_response and english_response.get("audio"):
-                    # Upload English audio to Supabase storage
+                    # Upload English audio to Supabase storage (with retry)
                     try:
-                        get_supabase_client().storage.from_("audio").upload(
-                            english_filename,
-                            english_response["audio"],
-                            file_options={"content-type": "audio/mpeg"},
+                        english_audio_url = _upload_audio_with_retry(
+                            english_filename, english_response["audio"]
                         )
-                        english_audio_url = get_storage_url(english_filename)
                     except Exception as e:
                         logger.warning(f"Failed to upload English sentence audio: {e}")
                 else:
@@ -397,13 +426,10 @@ def insert_article_sentences(
                     )
 
                     if bilingual_audio:
-                        # Upload bilingual audio to Supabase storage
-                        get_supabase_client().storage.from_("audio").upload(
-                            bilingual_filename,
-                            bilingual_audio,
-                            file_options={"content-type": "audio/mpeg"},
+                        # Upload bilingual audio to Supabase storage (with retry)
+                        bilingual_audio_url = _upload_audio_with_retry(
+                            bilingual_filename, bilingual_audio
                         )
-                        bilingual_audio_url = get_storage_url(bilingual_filename)
                     else:
                         bilingual_audio_url = None
                         logger.warning(

@@ -226,7 +226,7 @@ export default function PlaylistScreen(): JSX.Element {
             alwaysBounceVertical={true}
             overScrollMode="always"
             contentInsetAdjustmentBehavior="never"
-            showsVerticalScrollIndicator={false}
+            showsVerticalScrollIndicator={true}
             contentContainerStyle={listContainerStyle}
             ItemSeparatorComponent={ItemSeparator}
 
@@ -246,7 +246,7 @@ export default function PlaylistScreen(): JSX.Element {
             alwaysBounceVertical={true}
             overScrollMode="always"
             contentInsetAdjustmentBehavior="never"
-            showsVerticalScrollIndicator={false}
+            showsVerticalScrollIndicator={true}
             contentContainerStyle={listContainerStyle}
             ItemSeparatorComponent={ItemSeparator}
 

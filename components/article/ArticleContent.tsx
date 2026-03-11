@@ -96,6 +96,12 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     letterSpacing: TEXT_STYLES.AUTHOR_BYLINE.letterSpacing,
   },
+  bookText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    letterSpacing: TEXT_STYLES.AUTHOR_BYLINE.letterSpacing,
+    marginTop: LAYOUT.SPACING.TINY,
+    fontStyle: 'italic',
+  },
 });
 
 // Static constants for better performance
@@ -211,6 +217,11 @@ const ArticleContentInternal = function ArticleContent({
         <ThemedText type="label" weight="medium" colorName="authorText" style={styles.authorText}>
           {metadataText}
         </ThemedText>
+        {article.book && (
+          <ThemedText type="label" weight="normal" colorName="authorText" style={styles.bookText}>
+            {article.book}
+          </ThemedText>
+        )}
       </View>
 
       {/* Summary section - positioned between author and content for natural reading flow */}

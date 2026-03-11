@@ -4,20 +4,20 @@
 
 import { VALIDATION_CONFIG } from './constants';
 
-/**
- * Check if a character is a weak letter (often used as vowel in Arabic)
- */
-export function isWeakLetter(char: string): boolean {
-  return VALIDATION_CONFIG.WEAK_LETTERS.includes(
-    char as (typeof VALIDATION_CONFIG.WEAK_LETTERS)[number],
-  );
-}
+/** Set of weak letters for O(1) lookup in countConsonants */
+const WEAK_LETTER_SET = new Set<string>(VALIDATION_CONFIG.WEAK_LETTERS);
 
 /**
  * Count consonants in Arabic text (excluding weak letters ا، و، ي)
  */
 export function countConsonants(text: string): number {
-  return text.split('').filter(ch => !isWeakLetter(ch)).length;
+  let count = 0;
+  for (let i = 0; i < text.length; i++) {
+    if (!WEAK_LETTER_SET.has(text[i]!)) {
+      count++;
+    }
+  }
+  return count;
 }
 
 /**
@@ -72,18 +72,16 @@ export function isFormWithSuffixPattern(arabicMatch: string): boolean {
   );
 }
 
-/**
- * Get the shortened preposition form for suffix attachment
- * على/علي → عل, لدى/لدي → لد, إلى/إلي → إل
- */
+/** Pre-computed shortened preposition forms (على/علي → عل, لدى/لدي → لد, إلى/إلي → إل) */
+const SHORTENED_FORMS: Record<string, string> = {
+  علي: 'عل',
+  على: 'عل',
+  لدي: 'لد',
+  لدى: 'لد',
+  إلي: 'إل',
+  إلى: 'إل',
+};
+
 export function getShortenedPrepositionForm(fullForm: string): string | undefined {
-  const shortenedForms: Record<string, string> = {
-    علي: 'عل',
-    على: 'عل',
-    لدي: 'لد',
-    لدى: 'لد',
-    إلي: 'إل',
-    إلى: 'إل',
-  };
-  return shortenedForms[fullForm];
+  return SHORTENED_FORMS[fullForm];
 }

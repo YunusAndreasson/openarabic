@@ -49,6 +49,7 @@ Core Rules (apply in every phase):
 - English-only output for all English fields (title, summary, translations, notes); no Arabic script or transliterations.
 - All content will be read aloud via text-to-speech; use natural, flowing language.
 - No parenthetical Arabic terms in English output.
+- NEVER add commentary, footnotes, or translator notes inside English translations. No brackets like [i.e. ...], [meaning ...], [lit. ...], [Translator's note: ...]. The translation must be clean text only.
 
 Word-by-word translations: expand Arabic morphology into explicit multi-word English (e.g., فيه → "in it", not "therein").
 Full sentence translations: prioritize natural, fluent English suitable for audio.
@@ -99,8 +100,9 @@ Guidelines:
    - Complete thoughts, distinct clauses, punctuation
    - The sentences will be read aloud via text-to-speech, so ensure they flow naturally when spoken
    - Avoid awkward breaks that would sound unnatural in audio
+   - IMPORTANT: Each unit must be 15 words or fewer. Break longer sentences at clause boundaries (commas, conjunctions like و/ف/ثم)
 2. Special handling:
-   - Keep Quran verses intact
+   - Quran verses may be split at ayah boundaries to stay under 15 words
    - Break long narrator chains
    - Keep brief prayers whole
    - Keep tightly related phrases together
@@ -123,6 +125,8 @@ For each sentence, provide:
    - Simple vocabulary; English-only output (for audiobook reading)
    - Natural, flowing language suitable for text-to-speech
    - Prioritize fluent English over literal word-for-word rendering
+   - FORBIDDEN: Do NOT add parenthetical explanations, clarifications, or glosses (e.g., "(i.e., ...)", "(meaning ...)", "(peace be upon him)"). No brackets, footnotes, or translator comments (e.g., "[lit. ...]", "[Translator's note: ...]"). Translate cleanly without inline commentary.
+   - All translations will be read aloud via text-to-speech — ensure they sound natural when spoken.
 2. notes:
    - Brief context or grammar observations
 3. uncertainties:
@@ -155,6 +159,8 @@ Input text:
 WORD_BY_WORD_USER_PROMPT = (
     """Translate Arabic words individually with informative, user-friendly explanations.
 
+CRITICAL: Only translate words from the Tashkeel line below. Do NOT include words from the surrounding context sentences. The context is provided only to help you understand meaning — never translate it.
+
 Guidelines:
 - Preserve exact Arabic formatting in arabic
 - Provide 1-3 concise options for english and essential_translation when not finalized
@@ -186,7 +192,7 @@ Checklist:
 - Single best choice per word (no arrays, no synonyms); English-only across all outputs
 - Preserve correct diacritics on essential forms
 - word_by_word: explicit multi-word English mirroring Arabic morphology (e.g., فيه → "in it")
-- full_translation: natural, fluent English suitable for audio
+- full_translation: natural, fluent English suitable for audio (will be read aloud via text-to-speech). No parenthetical explanations, glosses, brackets, or translator comments — translate cleanly.
 - Fix only real grammatical errors; maintain consistency across tashkeel, translations, and word entries
 - Notes concise (<= 20 words); at most 2 uncertainties per sentence if needed
 

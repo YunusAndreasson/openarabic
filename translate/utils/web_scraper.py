@@ -118,8 +118,66 @@ def try_extract_json_data(html: str) -> dict[str, Any] | None:
     return None
 
 
+def _extract_page_text(html: str) -> str:
+    """Extract clean Arabic text from a single usul.ai page, preserving structure.
+
+    Usul.ai renders content in <div class="block"> elements, but some content
+    is also embedded in RSC script payloads. We extract from DOM blocks first,
+    then supplement with any additional Arabic text from script tags.
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    arabic_pattern = re.compile(r"[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]")
+
+    paragraphs: list[str] = []
+
+    # Extract from reader blocks (DOM-rendered content)
+    reader = soup.find(class_="reader-page")
+    if reader:
+        for block in reader.find_all(class_="block"):
+            text = block.get_text(strip=True)
+            if text and len(text) > 10 and arabic_pattern.search(text):
+                paragraphs.append(text)
+
+    # Also extract Arabic text from RSC script payloads
+    # Usul.ai embeds page text as raw chunks like "1d:T959,<arabic text>"
+    for script in soup.find_all("script"):
+        script_text = script.string or ""
+        if "self.__next_f.push" not in script_text:
+            continue
+        if len(arabic_pattern.findall(script_text)) < 500:
+            continue
+
+        # Extract Arabic sentences from the script payload
+        # Split on common sentence boundaries in Arabic text
+        # First, isolate Arabic text segments (runs of Arabic + punctuation)
+        arabic_run = re.compile(
+            r"(?:[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]"
+            r"[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\s\.,،؛:؟!»«\(\)\[\]٠-٩0-9]*){20,}"
+        )
+        for match in arabic_run.finditer(script_text):
+            segment = match.group().strip()
+            if len(segment) > 50 and segment not in "\n".join(paragraphs):
+                paragraphs.append(segment)
+
+    if paragraphs:
+        return "\n\n".join(paragraphs)
+
+    # Fallback: generic extraction for non-usul.ai pages
+    for tag in soup(["script", "style", "nav", "header", "footer", "button"]):
+        tag.decompose()
+
+    text = soup.get_text(separator="\n", strip=True)
+    lines = []
+    for line in text.split("\n"):
+        line = line.strip()
+        if arabic_pattern.search(line) and len(line) > 20:
+            lines.append(line)
+
+    return "\n\n".join(lines)
+
+
 def fetch_all_usul_pages(
-    base_url: str, max_pages: int = 100, skip_pages: int = 0
+    base_url: str, max_pages: int = 100, skip_pages: int = 0, max_fetch_pages: int = 15
 ) -> str:
     """Fetch all pages from a paginated Usul.ai text.
 
@@ -129,34 +187,39 @@ def fetch_all_usul_pages(
         skip_pages: Number of pages to skip from the start (e.g., 10 to skip intro)
 
     Returns:
-        Combined Arabic text from all pages
+        Combined Arabic text from all pages with sentence structure preserved
     """
-    all_arabic = []
-    arabic_pattern = re.compile(r"[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]+")
+    all_pages: list[str] = []
+    arabic_word_pattern = re.compile(r"[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]+")
     start_page = skip_pages + 1
 
     if skip_pages:
         logger.info(f"Skipping first {skip_pages} pages, starting at page {start_page}")
 
     for page in range(start_page, max_pages + 1):
+        if len(all_pages) >= max_fetch_pages:
+            logger.info(f"Reached max_fetch_pages={max_fetch_pages}, stopping")
+            break
         url = f"{base_url}/{page}"
         try:
             html = fetch_url(url)
-            # Extract Arabic words from this page
-            words = arabic_pattern.findall(html)
-            if len(words) < 50:  # Too few words, probably hit the end
+            # Quick word count check on raw HTML to detect end of book
+            words = arabic_word_pattern.findall(html)
+            if len(words) < 50:
                 logger.info(f"Page {page}: only {len(words)} words - stopping")
                 break
-            all_arabic.extend(words)
-            logger.info(f"Page {page}: {len(words)} words (total: {len(all_arabic)})")
+            # Extract structured text preserving paragraphs
+            page_text = _extract_page_text(html)
+            if page_text:
+                all_pages.append(page_text)
+            logger.info(f"Page {page}: {len(words)} words (total pages: {len(all_pages)})")
         except requests.exceptions.HTTPError as e:
             if "404" in str(e):
                 logger.info(f"Page {page}: not found - stopping")
                 break
             raise
 
-    # Reconstruct text with spaces
-    return " ".join(all_arabic)
+    return "\n\n".join(all_pages)
 
 
 def extract_from_usul_ai(

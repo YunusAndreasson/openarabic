@@ -24,7 +24,7 @@ export interface BaseButtonProps extends Omit<PressableProps, 'style'>, BaseAnim
   size?: ButtonSize;
   /** Enable optimistic loading - immediately show loading when pressed */
   enableOptimisticLoading?: boolean;
-  /** Whether to transform text to uppercase (default: true) */
+  /** Whether to transform text to uppercase (default: false) */
   uppercase?: boolean;
 }
 

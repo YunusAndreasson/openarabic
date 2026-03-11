@@ -4,7 +4,7 @@ import { GestureDetector } from 'react-native-gesture-handler';
 import type { AnimatedStyle as ReanimatedAnimatedStyle } from 'react-native-reanimated';
 import Animated, { interpolateColor, useAnimatedStyle } from 'react-native-reanimated';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { SPRING_CONFIG } from '@/constants/animation';
 
@@ -70,6 +70,7 @@ interface ReviewCardProps {
   translation?: string;
   showTranslation?: boolean;
   onReplayAudio?: () => void; // Handler for tapping word to replay audio
+  wordKey?: string; // Triggers gesture reset on word change without remounting
   // Background props
   fullScreenBackground?: boolean; // When true, renders background layer only for full-screen flash
 }
@@ -84,17 +85,24 @@ export function ReviewCard({
   translation,
   showTranslation = false,
   onReplayAudio,
+  wordKey,
   fullScreenBackground = false,
 }: ReviewCardProps) {
   const colors = useColors();
 
   // ===== SWIPE GESTURE HOOK (v2 OPTIMIZED) =====
-  const { gesture: panGesture, translateX } = useSwipeGesture({
+  const { gesture: panGesture, translateX, isAnimatingRef } = useSwipeGesture({
     enabled: !isUpdating,
     onSwipeLeft,
     onSwipeRight,
     springConfig: SPRING_CONFIG.CARD,
   });
+
+  // Reset gesture state when word changes (avoids full remount via key prop)
+  useEffect(() => {
+    translateX.set(0);
+    isAnimatingRef.set(false);
+  }, [wordKey, translateX, isAnimatingRef]);
 
   // ===== BACKGROUND FLASH COLORS (memoized to avoid worklet re-serialization) =====
   const flashColors = useMemo(

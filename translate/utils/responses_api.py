@@ -12,7 +12,7 @@ from typing import Any
 
 from openai import OpenAI
 
-from data.config import MODEL_OTHER
+from data.config import API_SERVICE_TIER, MODEL_OTHER
 from utils.retry import retry_operation
 
 logger = logging.getLogger(__name__)
@@ -247,27 +247,35 @@ token_tracker = TokenUsageTracker()
 
 
 class ResponsesAPIManager:
-    def __init__(self, model: str = MODEL_OTHER):
+    def __init__(
+        self,
+        model: str = MODEL_OTHER,
+        service_tier: str = "auto",
+    ):
         """
         Initialize the Responses API manager with Structured Outputs support.
 
         Args:
             model: The model to use for responses (must support structured outputs)
+            service_tier: API service tier ("auto" or "flex" for 50% cost discount).
         """
         load_api_keys()
         self.client = OpenAI()
         self.model = model
+        self.service_tier = service_tier
         self.current_response_id: str | None = None
         self.logger = logging.getLogger(__name__)
 
     @retry_operation(max_attempts=3, delay=2, backoff=2)
     def _call_parse(self, **kwargs: Any) -> Any:
         """Call responses.parse with retry."""
+        kwargs.setdefault("service_tier", self.service_tier)
         return self.client.responses.parse(**kwargs)
 
     @retry_operation(max_attempts=3, delay=2, backoff=2)
     def _call_create(self, **kwargs: Any) -> Any:
         """Call responses.create with retry."""
+        kwargs.setdefault("service_tier", self.service_tier)
         return self.client.responses.create(**kwargs)
 
     def _extract_usage(self, response: Any) -> dict[str, Any]:
@@ -559,6 +567,8 @@ SENTENCES TO TRANSLATE:
             document_prompt += """
 REQUIREMENTS:
 - Provide accurate English translations
+- All translations will be read aloud via text-to-speech — use natural, flowing language
+- NEVER add comments, footnotes, brackets, or translator notes in English text (e.g., "[i.e. ...]", "[lit. ...]", "[Translator's note: ...]"). Clean text only.
 - Include word-by-word breakdown with parts of speech (pos)
 - Extract essential Arabic forms for each word (essential)
 - Provide essential translations (essential_translation)
@@ -651,7 +661,7 @@ def call_response_api(
             response_model=response_model,
         )
 
-    manager = ResponsesAPIManager(model=model)
+    manager = ResponsesAPIManager(model=model, service_tier=API_SERVICE_TIER)
 
     try:
         result = manager.start_conversation(

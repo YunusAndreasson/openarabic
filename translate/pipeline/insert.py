@@ -141,18 +141,26 @@ def process_json_file(file_path: str, category_id: int | None = None) -> int:
         )
         return existing_article_id
 
-    # Get a random image URL for the article
-    from utils.storage import get_random_article_image_url
+    # Match an image to this article using the catalog
+    from utils.image_matcher import match_image
 
-    image_url = get_random_article_image_url()
+    title = data.get("metadata", {}).get("title", "")
+    summary = data.get("metadata", {}).get("summary", "")
+    image_url = match_image(category, title, summary)
     if not image_url:
-        logger.error("No random image available - images should always be available")
+        logger.error("No image matched from catalog — catalog may be empty or missing")
         raise ValueError(
-            "Failed to get random image for article - images bucket is empty or inaccessible"
+            "Failed to match an image for article — run scripts/catalog_images.py first"
         )
 
     # Convert dict translations back to SentenceTranslation objects for validation
     translations = [SentenceTranslation(**t) for t in data["translations"]]
+
+    if not translations:
+        raise ValueError(
+            "No translations found in file — translation phase likely failed "
+            "(check for API quota or upstream errors)"
+        )
 
     # Validate translations before processing
     logger.info("  → Validating translations...")
@@ -254,6 +262,11 @@ def process_json_file(file_path: str, category_id: int | None = None) -> int:
     )
 
     archive_files(file_path, article_id)
+
+    # Invalidate usage cache so next article gets updated counts
+    from utils.image_matcher import invalidate_usage_cache
+
+    invalidate_usage_cache()
 
     return article_id
 

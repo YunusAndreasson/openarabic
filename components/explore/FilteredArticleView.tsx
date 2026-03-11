@@ -58,6 +58,30 @@ const STATIC_STYLES = StyleSheet.create({
 const FooterComponent = () => <View style={STATIC_STYLES.footerSpacer} />;
 
 /**
+ * Reorders articles so no two consecutive items share the same image_url.
+ * Preserves all articles — does not remove duplicates.
+ */
+function spreadByImageUrl(articles: Article[]): Article[] {
+  if (articles.length === 0) return [];
+  const result: Article[] = [];
+  const remaining = [...articles];
+  let lastImageUrl: string | null = null;
+
+  while (remaining.length > 0) {
+    const nextIdx = remaining.findIndex(a => !a.image_url || a.image_url !== lastImageUrl);
+    if (nextIdx === -1) {
+      result.push(...remaining);
+      break;
+    }
+    const next = remaining[nextIdx] as Article;
+    result.push(next);
+    lastImageUrl = next.image_url ?? null;
+    remaining.splice(nextIdx, 1);
+  }
+  return result;
+}
+
+/**
  * Groups articles by progress state and flattens them with section headers
  */
 function groupArticlesWithHeaders(
@@ -90,21 +114,21 @@ function groupArticlesWithHeaders(
 
   if (continueReading.length > 0) {
     listItems.push({ type: 'header', id: 'header-continue', title: STRINGS.CONTINUE_READING });
-    continueReading.forEach(article => {
+    spreadByImageUrl(continueReading).forEach(article => {
       listItems.push({ type: 'article', id: `article-${article.id}`, data: article });
     });
   }
 
   if (unread.length > 0) {
     listItems.push({ type: 'header', id: 'header-unread', title: STRINGS.UNREAD });
-    unread.forEach(article => {
+    spreadByImageUrl(unread).forEach(article => {
       listItems.push({ type: 'article', id: `article-${article.id}`, data: article });
     });
   }
 
   if (completed.length > 0) {
     listItems.push({ type: 'header', id: 'header-completed', title: STRINGS.COMPLETED });
-    completed.forEach(article => {
+    spreadByImageUrl(completed).forEach(article => {
       listItems.push({ type: 'article', id: `article-${article.id}`, data: article });
     });
   }

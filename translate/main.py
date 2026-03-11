@@ -197,7 +197,9 @@ Pipeline Phases:
   4. Word Audio: Cut and upload individual word audio clips
 
 Examples:
-  python main.py --extract --url URL --author 15   # Extract passages from URL
+  python main.py --extract --url URL --author 15   # Extract from URL (uses Claude CLI)
+  python main.py --extract --file book.txt --author 2  # Extract from local file
+  python main.py --extract --url URL --author 15 --use-deepseek  # Use DeepSeek instead
   python main.py --full                            # Process ALL inbox files end-to-end (recommended)
   python main.py --split                           # Split all files from inbox
   python main.py --translate                       # Translate split files
@@ -210,13 +212,20 @@ Examples:
         "-e",
         "--extract",
         action="store_true",
-        help="Extract passages from a URL (pre-inbox phase)",
+        help="Extract passages from a URL or local file (pre-inbox phase)",
     )
     parser.add_argument(
         "--url",
         type=str,
         metavar="URL",
         help="URL to extract passages from (requires --extract)",
+    )
+    parser.add_argument(
+        "--file",
+        type=str,
+        metavar="PATH",
+        dest="file_path",
+        help="Local file to extract passages from (requires --extract)",
     )
     parser.add_argument(
         "-a",
@@ -231,6 +240,11 @@ Examples:
         default=10,
         metavar="N",
         help="Pages to skip from book start (default: 10, skips author intro)",
+    )
+    parser.add_argument(
+        "--use-deepseek",
+        action="store_true",
+        help="Use DeepSeek instead of Claude CLI for extraction",
     )
     parser.add_argument(
         "-s",
@@ -276,18 +290,31 @@ def main() -> None:
 
     # Handle extract phase separately (it's interactive and doesn't chain)
     if args.extract:
-        if not args.url or not args.author:
-            print_error("--extract requires both --url and --author")
+        if not args.author:
+            print_error("--extract requires --author")
+            sys.exit(1)
+        if not args.url and not args.file_path:
+            print_error("--extract requires either --url or --file")
             print_status(
-                "Example: python main.py --extract --url 'https://...' --author 15"
+                "Examples:\n"
+                "  python main.py --extract --url 'https://...' --author 15\n"
+                "  python main.py --extract --file book.txt --author 15"
             )
             sys.exit(1)
 
-        from pipeline.extract import extract_from_url
+        from pipeline.extract import extract_from_source
 
-        _load_api_keys()
+        # Only load API keys if using DeepSeek (Claude CLI needs no keys)
+        if args.use_deepseek:
+            _load_api_keys()
         try:
-            extract_from_url(args.url, args.author, skip_pages=args.skip_pages)
+            extract_from_source(
+                author_key=args.author,
+                url=args.url,
+                file_path=args.file_path,
+                skip_pages=args.skip_pages,
+                use_deepseek=args.use_deepseek,
+            )
         except Exception as e:
             print_error(f"Extraction failed: {e}")
             sys.exit(1)

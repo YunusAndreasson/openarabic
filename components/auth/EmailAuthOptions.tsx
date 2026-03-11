@@ -26,7 +26,6 @@ export function EmailAuthOptions(): JSX.Element {
         variant="outlined"
         title={STRINGS.SIGN_IN_WITH_EMAIL}
         icon="mail-outline"
-        uppercase={false}
         testID="navigate-to-sign-in-button"
         accessibilityLabel="Go to sign in screen"
         onPress={handleSignIn}
@@ -36,7 +35,6 @@ export function EmailAuthOptions(): JSX.Element {
         variant="outlined"
         title={STRINGS.CREATE_ACCOUNT_WITH_EMAIL}
         icon="mail-outline"
-        uppercase={false}
         style={styles.createAccountButton}
         testID="navigate-to-sign-up-button"
         accessibilityLabel="Go to create account screen"

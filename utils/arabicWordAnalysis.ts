@@ -66,7 +66,6 @@ import {
   resolveOverlap,
   shouldInjectBracket,
   // Edge Cases
-  isPureParticleCombination,
   isSingleStandaloneComponent,
   // Normalization
   expandContractions,
@@ -89,6 +88,14 @@ import {
   OVERLAP_REJECTION,
   WORD_COUNT,
 } from './arabicAnalysis/validationConstants';
+
+/** Subject pronouns that indicate verb conjugation, not suffix attachment */
+const SUBJECT_PRONOUN_SET = new Set(['he', 'she', 'it', 'i', 'we', 'you', 'they']);
+
+/** Object/possessive pronouns that indicate valid suffix attachment */
+const OBJECT_POSSESSIVE_SET = new Set([
+  'his', 'her', 'its', 'it', 'my', 'our', 'your', 'you', 'their', 'him', 'me', 'us', 'them',
+]);
 import { normalizeTranslation } from './arabicAnalysis/translationNormalization';
 
 // Re-export types and functions for backwards compatibility
@@ -224,26 +231,10 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
       // Check if English contains subject pronouns (these belong to verb conjugation, not suffixes)
       // Only check for pronouns that match the high-risk suffix (he/she/it/i)
       // Don't check "we" (נا suffix is almost always valid) or "you" (varied usage)
-      const subjectPronouns = ['he', 'she', 'it', 'i', 'we', 'you', 'they'];
-      const objectPossessivePronouns = [
-        'his',
-        'her',
-        'its',
-        'it', // Can be object pronoun: "he sees it"
-        'my',
-        'our',
-        'your',
-        'you', // Can be object pronoun: "I see you", "to you"
-        'their',
-        'him',
-        'me',
-        'us',
-        'them',
-      ];
       const englishWords = normalizedEnglish.toLowerCase().split(/\s+/);
-      const hasSubjectPronoun = englishWords.some(word => subjectPronouns.includes(word));
+      const hasSubjectPronoun = englishWords.some(word => SUBJECT_PRONOUN_SET.has(word));
       const hasObjectPossessivePronoun = englishWords.some(word =>
-        objectPossessivePronouns.includes(word),
+        OBJECT_POSSESSIVE_SET.has(word),
       );
 
       if (hasSubjectPronoun && !hasObjectPossessivePronoun) {
@@ -257,7 +248,7 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
           match.toLowerCase().split(/\s+/),
         );
         const suffixClaimsObjectPronoun = englishWords.some(
-          word => objectPossessivePronouns.includes(word) && suffixEnglishWords.includes(word),
+          word => OBJECT_POSSESSIVE_SET.has(word) && suffixEnglishWords.includes(word),
         );
 
         if (!suffixClaimsObjectPronoun) {
@@ -376,22 +367,16 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
     normalized,
   );
 
-  // Check if this is a pure particle combination (conjunction + pronoun)
-  const isPureParticles = isPureParticleCombination(finalPrefixes, remaining.trim());
-
   const result: WordAnalysis = {
     original: { arabic, english: normalizedEnglish },
     prefixes: finalPrefixes, // Array of prefixes
     infix,
     suffix: resolvedSuffix,
     diacritic: resolvedDiacritic,
-    // Override hasComponents to false if:
-    // 1. Single standalone component (entire word is one particle)
-    // 2. Pure particle combination (conjunction + pronoun, no root)
-    hasComponents:
-      isStandalone || isPureParticles
-        ? false
-        : Boolean(finalPrefixes.length > 0 || infix || resolvedSuffix || resolvedDiacritic),
+    // Override hasComponents to false if single standalone component (entire word is one particle)
+    hasComponents: isStandalone
+      ? false
+      : Boolean(finalPrefixes.length > 0 || infix || resolvedSuffix || resolvedDiacritic),
     remainingArabic: remaining.trim(),
     remainingEnglish,
     hasBracketInjection,

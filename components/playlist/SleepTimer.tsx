@@ -118,7 +118,6 @@ export function SleepTimer({
                     variant={selectedMinutes === minutes ? 'filled' : 'outlined'}
                     onPress={handleOptionSelect(minutes)}
                     style={styles.optionButton}
-                    uppercase={false}
                   />
                 </View>
               ))}

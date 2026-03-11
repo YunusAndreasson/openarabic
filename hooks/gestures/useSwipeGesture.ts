@@ -2,12 +2,11 @@ import { useCallback, useMemo } from 'react';
 import type { PanGesture } from 'react-native-gesture-handler';
 import { Gesture } from 'react-native-gesture-handler';
 import type { SharedValue } from 'react-native-reanimated';
-import { useSharedValue, withSpring } from 'react-native-reanimated';
+import { useSharedValue, withDelay, withSpring } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { SPRING_CONFIG } from '@/constants/animation';
 import { SCREEN_WIDTH } from '@/constants/layout';
-import { useTimerCleanup } from '@/hooks/utils/useTimerCleanup';
 import { GESTURE_CONFIG, GESTURE_CONSTANTS } from '@/utils/gestureUtils';
 
 export interface SwipeGestureOptions {
@@ -54,7 +53,6 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
 
   const translateX = useSharedValue(0);
   const isAnimatingRef = useSharedValue(false);
-  const { setTimer } = useTimerCleanup();
 
   // Optimized reset function (worklet-ready)
   const resetPosition = useCallback(() => {
@@ -67,25 +65,20 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
     );
   }, [translateX, isAnimatingRef, springConfig]);
 
-  // Optimized swipe handler with minimal JS bridging
-  const handleSwipeComplete = useCallback(
+  // JS-only callback for swipe actions (reset stays on UI thread)
+  const handleSwipeAction = useCallback(
     (isRight: boolean) => {
-      // Trigger the swipe action immediately
       if (isRight) {
         onSwipeRight();
       } else {
         onSwipeLeft();
       }
 
-      // Call optional completion handler
       if (onSwipeComplete) {
         onSwipeComplete(isRight);
       }
-
-      // Reset position after a brief delay
-      setTimer('swipeReset', resetPosition, GESTURE_CONSTANTS.RESET_DELAY);
     },
-    [onSwipeLeft, onSwipeRight, onSwipeComplete, resetPosition],
+    [onSwipeLeft, onSwipeRight, onSwipeComplete],
   );
 
   // Optimized gesture handler with v2 best practices
@@ -141,8 +134,18 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
 
             if (Math.abs(translationX) > swipeThreshold || hasSignificantVelocity) {
               const isRight = translationX > 0;
-              // Trigger swipe completion immediately for snappy response
-              scheduleOnRN(handleSwipeComplete, isRight);
+              // Fire JS callbacks for business logic
+              scheduleOnRN(handleSwipeAction, isRight);
+              // Reset position entirely on UI thread (no JS bridge round-trip)
+              isAnimatingRef.set(true);
+              translateX.set(
+                withDelay(
+                  GESTURE_CONSTANTS.RESET_DELAY,
+                  withSpring(0, springConfig, () => {
+                    isAnimatingRef.set(false);
+                  }),
+                ),
+              );
             } else {
               // Simple reset on UI thread with spring animation
               isAnimatingRef.set(true);
@@ -160,7 +163,7 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
       activeOffsetX,
       isAnimatingRef,
       translateX,
-      handleSwipeComplete,
+      handleSwipeAction,
       maxTranslationRatio,
       swipeThresholdRatio,
       springConfig,

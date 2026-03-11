@@ -41,15 +41,15 @@ describe('ThemedButton', () => {
     test('renders with title text', () => {
       const { getByText } = render(<ThemedButton title="Submit" onPress={mockOnPress} />);
 
-      expect(getByText('SUBMIT')).toBeTruthy(); // uppercase by default
+      expect(getByText('Submit')).toBeTruthy(); // sentence case by default (uppercase=false)
     });
 
-    test('renders with lowercase text when uppercase is false', () => {
+    test('renders with uppercase text when uppercase is true', () => {
       const { getByText } = render(
-        <ThemedButton title="Submit" onPress={mockOnPress} uppercase={false} />,
+        <ThemedButton title="Submit" onPress={mockOnPress} uppercase={true} />,
       );
 
-      expect(getByText('Submit')).toBeTruthy();
+      expect(getByText('SUBMIT')).toBeTruthy(); // uppercase=true transforms text
     });
 
     test('renders with icon', () => {
@@ -66,7 +66,7 @@ describe('ThemedButton', () => {
     test('renders filled variant by default with background color', () => {
       const { getByText } = render(<ThemedButton title="Filled" onPress={mockOnPress} />);
 
-      const textElement = getByText('FILLED');
+      const textElement = getByText('Filled');
       expect(textElement).toBeTruthy();
 
       // Filled variant should render text with appropriate color
@@ -78,7 +78,7 @@ describe('ThemedButton', () => {
         <ThemedButton title="Outlined" variant="outlined" onPress={mockOnPress} />,
       );
 
-      const textElement = getByText('OUTLINED');
+      const textElement = getByText('Outlined');
       expect(textElement).toBeTruthy();
 
       // Outlined variant should have border but transparent background
@@ -89,7 +89,7 @@ describe('ThemedButton', () => {
         <ThemedButton title="Disabled" variant="filled" disabled onPress={mockOnPress} />,
       );
 
-      expect(getByText('DISABLED')).toBeTruthy();
+      expect(getByText('Disabled')).toBeTruthy();
       // Disabled state uses colors.disabled for text
     });
   });
@@ -100,7 +100,7 @@ describe('ThemedButton', () => {
         <ThemedButton title="Small" size="small" onPress={mockOnPress} />,
       );
 
-      const textElement = getByText('SMALL');
+      const textElement = getByText('Small');
       expect(textElement).toBeTruthy();
       // Small size uses 'label' text type
     });
@@ -108,7 +108,7 @@ describe('ThemedButton', () => {
     test('renders medium size by default', () => {
       const { getByText } = render(<ThemedButton title="Medium" onPress={mockOnPress} />);
 
-      const textElement = getByText('MEDIUM');
+      const textElement = getByText('Medium');
       expect(textElement).toBeTruthy();
       // Medium size uses 'bodyBold' text type
     });
@@ -118,7 +118,7 @@ describe('ThemedButton', () => {
         <ThemedButton title="Large" size="large" onPress={mockOnPress} />,
       );
 
-      const textElement = getByText('LARGE');
+      const textElement = getByText('Large');
       expect(textElement).toBeTruthy();
       // Large size uses 'heading3' text type
     });
@@ -128,7 +128,7 @@ describe('ThemedButton', () => {
     test('calls onPress when pressed', () => {
       const { getByText } = render(<ThemedButton title="Click Me" onPress={mockOnPress} />);
 
-      fireEvent.press(getByText('CLICK ME'));
+      fireEvent.press(getByText('Click Me'));
 
       expect(mockOnPress).toHaveBeenCalledTimes(1);
     });
@@ -138,7 +138,7 @@ describe('ThemedButton', () => {
         <ThemedButton title="Disabled" disabled onPress={mockOnPress} />,
       );
 
-      fireEvent.press(getByText('DISABLED'));
+      fireEvent.press(getByText('Disabled'));
 
       expect(mockOnPress).not.toHaveBeenCalled();
     });
@@ -150,7 +150,7 @@ describe('ThemedButton', () => {
         <ThemedButton title="Submit" enableOptimisticLoading onPress={mockOnPress} />,
       );
 
-      expect(getByText('SUBMIT')).toBeTruthy();
+      expect(getByText('Submit')).toBeTruthy();
     });
   });
 

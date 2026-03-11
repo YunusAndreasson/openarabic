@@ -19,7 +19,10 @@
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "cf:deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
-    "analyze": "ANALYZE=true next build"
+    "analyze": "ANALYZE=true next build",
+    "expand": "NODE_PATH=$(pwd)/node_modules/.pnpm/@supabase+supabase-js@2.98.0/node_modules:$(pwd)/node_modules/.pnpm node scripts/expand-translations.js",
+    "expand:apply": "NODE_PATH=$(pwd)/node_modules/.pnpm/@supabase+supabase-js@2.98.0/node_modules:$(pwd)/node_modules/.pnpm node scripts/expand-translations.js --apply",
+    "expand:llm": "NODE_PATH=$(pwd)/node_modules/.pnpm/@supabase+supabase-js@2.98.0/node_modules:$(pwd)/node_modules/.pnpm node scripts/expand-translations.js --prepare-llm"
   },
   "engines": {
     "node": ">=22.0.0",

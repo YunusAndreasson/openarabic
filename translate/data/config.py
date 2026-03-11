@@ -99,18 +99,18 @@ TRANSLATION_RETRY_ATTEMPTS = 3
 # Author mapping for inbox folders and file prefixes
 AUTHOR_FOLDER_MAPPING = {
     "1_al_imam_an_nawawi": "an-Nawawi",
-    "2_ibn_al_qayyim": "Ibn al-Qayyim al-Jawziyyah",
+    "2_ibn_al_qayyim": "Ibn al-Qayyim",
     "3_ibn_taymiyyah": "Ibn Taymiyyah",
     "4_ibn_al_jawzi": "Ibn al-Jawzi",
     "5_ibn_kathir": "Ibn Kathir",
     "6_al_imam_al_bukhari": "al-Imam al-Bukhari",
-    "7_al_imam_muslim": "al-Imam Muslim",
-    "8_ibn_hajar_al_asqalani": "Ibn Hajar al-Asqalani",
-    "9_al_imam_malik": "al-Imam Malik",
-    "10_al_imam_ash_shafii": "al-Imam ash-Shafii",
-    "11_al_imam_ahmad_ibn_hanbal": "al-Imam Ahmad ibn Hanbal",
-    "12_al_imam_at_tirmidhi": "al-Imam at-Tirmidhi",
-    "13_al_imam_as_suyuti": "al-Imam as-Suyuti",
+    "7_al_imam_muslim": "Muslim",
+    "8_ibn_hajar_al_asqalani": "Ibn Hajar",
+    "9_al_imam_malik": "Malik",
+    "10_al_imam_ash_shafii": "ash-Shafii",
+    "11_al_imam_ahmad_ibn_hanbal": "Ahmad ibn Hanbal",
+    "12_al_imam_at_tirmidhi": "at-Tirmidhi",
+    "13_al_imam_as_suyuti": "as-Suyuti",
     "14_at_tabari": "at-Tabari",
     "15_al_imam_al_dhahabi": "adh-Dhahabi",
 }
@@ -137,9 +137,13 @@ OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 DEEPSEEK_MODEL = "deepseek/deepseek-v3.2"  # Latest DeepSeek v3.2 model
 VALIDATION_MAX_RETRIES = 3
 
+# Split phase configuration
+MAX_UNIT_WORD_COUNT = 15  # Maximum words per unit; longer units are re-split
+
 # Batch processing configuration
 MAX_TRANSLATION_BATCH_SIZE = 12  # Maximum sentences per translation batch
 DEEPSEEK_CORRECTION_BATCH_SIZE = 5  # Sentences per DeepSeek correction batch
+MAX_PARALLEL_API_CALLS = 6  # Max concurrent API calls for standalone stages
 
-# Parallelism: max concurrent API calls within a pipeline step
-MAX_PARALLEL_API_CALLS = 4
+# API optimization
+API_SERVICE_TIER = "default"  # Standard tier for regular latency

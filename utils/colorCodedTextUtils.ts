@@ -204,7 +204,13 @@ export const generateColorCodedSegments = ({
 
     // Track duplicates (start:end) to avoid overlapping duplicates
     const seen = new Set<string>();
+    // Once a candidate matches for this component, stop trying other candidates.
+    // This prevents over-coloring where a single Arabic component (e.g., ي with triggers
+    // "he/it/is") would color multiple English words ("he" AND "is") for one component.
+    // Multiple occurrences of the SAME candidate are still colored (e.g., "and...and").
+    let matchedForSection = false;
     for (const candidate of candidates) {
+      if (matchedForSection) break;
       let fromIndex = 0;
       while (fromIndex <= searchText.length) {
         const idx = searchText.indexOf(candidate, fromIndex);
@@ -218,6 +224,7 @@ export const generateColorCodedSegments = ({
           (nextIdx === searchText.length || isNonLetter(nextChar));
 
         if (isValidMatch) {
+          matchedForSection = true;
           const key = `${idx}:${idx + candidate.length}`;
           if (!seen.has(key)) {
             seen.add(key);
