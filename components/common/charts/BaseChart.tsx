@@ -4,8 +4,8 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
+import { FONTS } from '@/constants/fonts';
 import {
-  FONT_WEIGHTS,
   LAYOUT,
   LETTER_SPACING,
   LINE_HEIGHT_MULTIPLIERS,
@@ -149,12 +149,12 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     marginBottom: 2,
-    fontWeight: FONT_WEIGHTS.SEMIBOLD,
+    fontFamily: FONTS.ENGLISH_SEMIBOLD,
   },
   summaryValue: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LINE_HEIGHT_MULTIPLIERS.NORMAL,
-    fontWeight: FONT_WEIGHTS.REGULAR,
+    fontFamily: FONTS.ENGLISH,
   },
   emptyContainer: {
     alignItems: 'center',

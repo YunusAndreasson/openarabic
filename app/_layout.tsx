@@ -26,6 +26,9 @@ import madinaFont from '@/assets/fonts/Madina.otf';
 import nastaliqFont from '@/assets/fonts/Nastaliq.ttf';
 import notoSansFont from '@/assets/fonts/NotoSans.ttf';
 import scheherazadeFont from '@/assets/fonts/Scheherazade.ttf';
+import interRegular from '@/assets/fonts/Inter-Regular.ttf';
+import interSemiBold from '@/assets/fonts/Inter-SemiBold.ttf';
+import interBold from '@/assets/fonts/Inter-Bold.ttf';
 import { ThemedText } from '@/components/ThemedText';
 import { AudioErrorBoundary, MiniPlayer } from '@/components/audio';
 import { SleepTimer } from '@/components/playlist';
@@ -189,6 +192,9 @@ function AppContent() {
     DigitalKhattNewMadinaRegular: madinaFont,
     'ScheherazadeNew-Regular': scheherazadeFont,
     'NotoNastaliqUrdu-Regular': nastaliqFont,
+    'Inter-Regular': interRegular,
+    'Inter-SemiBold': interSemiBold,
+    'Inter-Bold': interBold,
   });
 
   // Centralized system UI theme management

@@ -3,7 +3,8 @@ import type { JSX } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { FONT_WEIGHTS, LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { FONTS } from '@/constants/fonts';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { getCategoryDisplayName, getCategorySubtitle } from '@/utils/stringUtils';
 
@@ -84,7 +85,7 @@ const compactCardStyles = StyleSheet.create({
     gap: 2,
   },
   label: {
-    fontWeight: FONT_WEIGHTS.SEMIBOLD,
+    fontFamily: FONTS.ENGLISH_SEMIBOLD,
   },
   subtitle: {
     opacity: 0.7,
@@ -99,7 +100,7 @@ const compactCardStyles = StyleSheet.create({
     marginLeft: LAYOUT.SPACING.SMALL,
   },
   countText: {
-    fontWeight: FONT_WEIGHTS.SEMIBOLD,
+    fontFamily: FONTS.ENGLISH_SEMIBOLD,
     textAlign: 'center',
   },
 });

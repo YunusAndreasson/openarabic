@@ -4,7 +4,6 @@ import { StyleSheet, Text } from 'react-native';
 
 import { FONTS } from '@/constants/fonts';
 import {
-  FONT_WEIGHTS,
   LAYOUT,
   LETTER_SPACING,
   LINE_HEIGHT_MULTIPLIERS,
@@ -55,15 +54,13 @@ const styles = StyleSheet.create({
   body: {
     fontFamily: FONTS.ENGLISH,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: FONT_WEIGHTS.REGULAR,
     letterSpacing: LETTER_SPACING.NORMAL,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.NORMAL,
     opacity: TEXT_OPACITY.PRIMARY,
   },
   bodyBold: {
-    fontFamily: FONTS.ENGLISH,
+    fontFamily: FONTS.ENGLISH_SEMIBOLD,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: FONT_WEIGHTS.SEMIBOLD,
     letterSpacing: LETTER_SPACING.TIGHT,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.NORMAL,
     opacity: TEXT_OPACITY.PRIMARY,
@@ -71,47 +68,41 @@ const styles = StyleSheet.create({
   caption: {
     fontFamily: FONTS.ENGLISH,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: FONT_WEIGHTS.MEDIUM,
     letterSpacing: LETTER_SPACING.SLIGHT_POSITIVE, // 0.1 - MD3 body-small standard for mixed-case
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LINE_HEIGHT_MULTIPLIERS.LOOSE,
     opacity: LAYOUT.OPACITY.HIGH, // Secondary text best practice (~70%)
   },
   heading1: {
-    fontFamily: FONTS.ENGLISH,
+    fontFamily: FONTS.ENGLISH_BOLD,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
-    fontWeight: FONT_WEIGHTS.BOLD,
     letterSpacing: LETTER_SPACING.TIGHT,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * LINE_HEIGHT_MULTIPLIERS.TIGHT,
     opacity: TEXT_OPACITY.PRIMARY,
   },
   heading2: {
-    fontFamily: FONTS.ENGLISH,
+    fontFamily: FONTS.ENGLISH_BOLD,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
-    fontWeight: FONT_WEIGHTS.BOLD,
     letterSpacing: TEXT_STYLES.SECTION_HEADER.letterSpacing,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * TEXT_STYLES.SECTION_HEADER.lineHeightMultiplier,
     opacity: TEXT_OPACITY.PRIMARY,
   },
   heading3: {
-    fontFamily: FONTS.ENGLISH,
+    fontFamily: FONTS.ENGLISH_SEMIBOLD,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    fontWeight: FONT_WEIGHTS.SEMIBOLD,
     letterSpacing: TEXT_STYLES.CARD_TITLE.letterSpacing,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * TEXT_STYLES.CARD_TITLE.lineHeightMultiplier,
     opacity: TEXT_OPACITY.PRIMARY,
   },
   label: {
-    fontFamily: FONTS.ENGLISH,
+    fontFamily: FONTS.ENGLISH_SEMIBOLD,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: FONT_WEIGHTS.SEMIBOLD,
     letterSpacing: LETTER_SPACING.RELAXED,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LINE_HEIGHT_MULTIPLIERS.NORMAL,
     opacity: TEXT_OPACITY.SECONDARY,
   },
   overline: {
-    fontFamily: FONTS.ENGLISH,
+    fontFamily: FONTS.ENGLISH_SEMIBOLD,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    fontWeight: FONT_WEIGHTS.SEMIBOLD,
     letterSpacing: LETTER_SPACING.ULTRA_WIDE * 2, // ~9% of font size - within 5-12% best practice for all-caps
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY * LINE_HEIGHT_MULTIPLIERS.NORMAL,
     opacity: LAYOUT.OPACITY.HOVER, // Auxiliary labels - visible but not competing with primary content
@@ -131,12 +122,12 @@ const BASE_STYLE_MAP = {
   overline: styles.overline,
 } as const;
 
-/** Maps semantic weight names to valid React Native fontWeight values */
-const WEIGHT_MAP = {
-  bold: '700',
-  medium: '500',
-  normal: '400',
-  semibold: '600',
+/** Maps semantic weight names to Source Sans 3 font families */
+const WEIGHT_FONT_MAP = {
+  bold: FONTS.ENGLISH_BOLD,
+  medium: FONTS.ENGLISH,
+  normal: FONTS.ENGLISH,
+  semibold: FONTS.ENGLISH_SEMIBOLD,
 } as const satisfies Record<NonNullable<ThemedTextProps['weight']>, string>;
 
 /**
@@ -184,7 +175,7 @@ export function ThemedText({
       return [
         getArabicTextStyle(fontSize, {}, selectedArabicFont),
         textColor && { color: textColor },
-        weight && { fontWeight: WEIGHT_MAP[weight] },
+        weight && { fontFamily: WEIGHT_FONT_MAP[weight] },
         align && { textAlign: align },
         style,
       ].filter(Boolean) as StyleProp<TextStyle>;
@@ -201,7 +192,7 @@ export function ThemedText({
       baseStyle,
       { opacity: getEnhancedOpacity(baseOpacity, isDarkMode) },
       textColor && { color: textColor },
-      weight && { fontWeight: WEIGHT_MAP[weight] },
+      weight && { fontFamily: WEIGHT_FONT_MAP[weight] },
       align && { textAlign: align },
       style,
     ].filter(Boolean) as StyleProp<TextStyle>;

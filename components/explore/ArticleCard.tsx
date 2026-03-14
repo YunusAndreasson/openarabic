@@ -6,7 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { EnhancedImage } from '@/components/ui/EnhancedImage';
 import { TIMING_CONSTANTS } from '@/constants/animation';
-import { FONT_WEIGHTS, LAYOUT, SCREEN_WIDTH, TEXT_STYLES } from '@/constants/layout';
+import { LAYOUT, SCREEN_WIDTH, TEXT_STYLES } from '@/constants/layout';
 import { getArticleRoute } from '@/constants/routes';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
@@ -66,7 +66,6 @@ const styles = StyleSheet.create({
 // Typography style for title using constants (2026: bolder, larger headlines)
 const TITLE_STYLE = {
   fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE, // 24px - larger for hero card prominence
-  fontWeight: FONT_WEIGHTS.BOLD, // Bolder for 2026 trend
   letterSpacing: TEXT_STYLES.CARD_TITLE.letterSpacing,
   lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
 };
@@ -122,7 +121,7 @@ export function ArticleCard({
         </Canvas>
 
         <View style={styles.overlayTextContainer}>
-          <ThemedText colorName="cardOverlayHeading" numberOfLines={2} style={TITLE_STYLE}>
+          <ThemedText colorName="cardOverlayHeading" numberOfLines={2} weight="bold" style={TITLE_STYLE}>
             {title}
           </ThemedText>
 

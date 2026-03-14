@@ -1,7 +1,8 @@
 import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { Platform, Text, View } from 'react-native';
 
-import { FONT_WEIGHTS, LAYOUT } from '@/constants/layout';
+import { FONTS } from '@/constants/fonts';
+import { LAYOUT } from '@/constants/layout';
 
 /**
  * Centralized navigation configuration for consistent styling across the app
@@ -44,7 +45,7 @@ export function createNavigationOptions(
               <Text
                 style={{
                   color: colors.headingText,
-                  fontWeight: FONT_WEIGHTS.BOLD,
+                  fontFamily: FONTS.ENGLISH_BOLD,
                   fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
                 }}
                 numberOfLines={1}

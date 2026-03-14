@@ -6,7 +6,8 @@ import Animated from 'react-native-reanimated';
 import { ThemedText } from '@/components/ThemedText';
 import { DeleteButton } from '@/components/playlist';
 import { ColorDot } from '@/components/ui/ColorDot';
-import { FONT_WEIGHTS, LAYOUT } from '@/constants/layout';
+import { FONTS } from '@/constants/fonts';
+import { LAYOUT } from '@/constants/layout';
 import { useEditModeCardAnimation } from '@/hooks/cards';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -148,7 +149,7 @@ const styles = StyleSheet.create({
   },
   englishText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: FONT_WEIGHTS.SEMIBOLD,
+    fontFamily: FONTS.ENGLISH_SEMIBOLD,
     textAlign: 'left',
     includeFontPadding: false,
     lineHeight: Math.round(LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.1),

@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
+import { FONTS } from '@/constants/fonts';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
@@ -172,6 +173,6 @@ const styles = StyleSheet.create({
   },
   tooltipValue: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: 'bold',
+    fontFamily: FONTS.ENGLISH_BOLD,
   },
 });

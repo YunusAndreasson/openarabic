@@ -129,6 +129,9 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
     fontManager,
   ]);
 
+  // Extra vertical space for Arabic diacritics (shadda, tanwin) that extend above the line
+  const DIACRITICS_PADDING = 8;
+
   const canvasDimensions = useMemo(() => {
     if (!paragraph) {
       return { width: 60, height: 40 };
@@ -136,7 +139,7 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
 
     return {
       width: Math.ceil(paragraph.getMaxIntrinsicWidth() * 1.05),
-      height: Math.ceil(paragraph.getHeight()),
+      height: Math.ceil(paragraph.getHeight()) + DIACRITICS_PADDING,
     };
   }, [paragraph]);
 
@@ -194,7 +197,7 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
             <SkiaParagraph
               paragraph={paragraph}
               x={0}
-              y={0}
+              y={DIACRITICS_PADDING}
               width={canvasDimensions.width}
             />
           )}

@@ -10,8 +10,8 @@ import { ThemedText } from '@/components/ThemedText';
 import { DeleteButton } from './DeleteButton';
 import { DragHandle, type DragHandleProps } from './DragHandle';
 import { TIMING_CONSTANTS } from '@/constants/animation';
+import { FONTS } from '@/constants/fonts';
 import {
-  FONT_WEIGHTS,
   getEnhancedOpacity,
   LAYOUT,
   TEXT_OPACITY,
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
     letterSpacing: TEXT_STYLES.CARD_TITLE.letterSpacing,
   },
   secondaryText: {
-    fontWeight: FONT_WEIGHTS.MEDIUM,
+    fontFamily: FONTS.ENGLISH,
     letterSpacing: TEXT_STYLES.AUTHOR_BYLINE.letterSpacing,
     flex: 1,
   },

@@ -54,32 +54,32 @@ describe('ThemedText', () => {
   });
 
   describe('Text Types', () => {
-    test('renders heading1 type with large font and bold weight', () => {
+    test('renders heading1 type with large font and bold family', () => {
       const { getByText } = render(<ThemedText type="heading1">Heading 1</ThemedText>);
 
       const element = getByText('Heading 1');
-      expect(element).toHaveStyle({ fontSize: 32, fontWeight: '700' });
+      expect(element).toHaveStyle({ fontSize: 32, fontFamily: 'Inter-Bold' });
     });
 
     test('renders heading2 type with appropriate font size', () => {
       const { getByText } = render(<ThemedText type="heading2">Heading 2</ThemedText>);
 
       const element = getByText('Heading 2');
-      expect(element).toHaveStyle({ fontSize: 24, fontWeight: '700' });
+      expect(element).toHaveStyle({ fontSize: 24, fontFamily: 'Inter-Bold' });
     });
 
-    test('renders heading3 type with semibold weight', () => {
+    test('renders heading3 type with semibold family', () => {
       const { getByText } = render(<ThemedText type="heading3">Heading 3</ThemedText>);
 
       const element = getByText('Heading 3');
-      expect(element).toHaveStyle({ fontSize: 18, fontWeight: '600' });
+      expect(element).toHaveStyle({ fontSize: 18, fontFamily: 'Inter-SemiBold' });
     });
 
-    test('renders bodyBold type with semibold weight', () => {
+    test('renders bodyBold type with semibold family', () => {
       const { getByText } = render(<ThemedText type="bodyBold">Bold text</ThemedText>);
 
       const element = getByText('Bold text');
-      expect(element).toHaveStyle({ fontSize: 16, fontWeight: '600' });
+      expect(element).toHaveStyle({ fontSize: 16, fontFamily: 'Inter-SemiBold' });
     });
 
     test('renders caption type with smaller font', () => {
@@ -89,11 +89,11 @@ describe('ThemedText', () => {
       expect(element).toHaveStyle({ fontSize: 13 });
     });
 
-    test('renders label type with semibold weight', () => {
+    test('renders label type with semibold family', () => {
       const { getByText } = render(<ThemedText type="label">Label text</ThemedText>);
 
       const element = getByText('Label text');
-      expect(element).toHaveStyle({ fontSize: 13, fontWeight: '600' });
+      expect(element).toHaveStyle({ fontSize: 13, fontFamily: 'Inter-SemiBold' });
     });
 
     test('renders overline type with uppercase transform', () => {
@@ -154,7 +154,7 @@ describe('ThemedText', () => {
       const { getByText } = render(<ThemedText weight="bold">Bold weight</ThemedText>);
 
       const element = getByText('Bold weight');
-      expect(element).toHaveStyle({ fontWeight: '700' });
+      expect(element).toHaveStyle({ fontFamily: 'Inter-Bold' });
     });
 
     test('applies text alignment center', () => {

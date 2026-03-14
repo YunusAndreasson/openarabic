@@ -2,7 +2,8 @@ import { Canvas } from '@shopify/react-native-skia';
 import type { ReactNode } from 'react';
 import { StyleSheet, TouchableWithoutFeedback, View } from 'react-native';
 
-import { FONT_WEIGHTS, LAYOUT, STATUS_INDICATOR } from '@/constants/layout';
+import { FONTS } from '@/constants/fonts';
+import { LAYOUT, STATUS_INDICATOR } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { DataPoint } from '@/types/ui/chart.types';
 
@@ -118,7 +119,7 @@ const styles = StyleSheet.create({
     marginRight: LAYOUT.CHART.BADGE_DOT_MARGIN,
   },
   badgeText: {
-    fontWeight: FONT_WEIGHTS.SEMIBOLD,
+    fontFamily: FONTS.ENGLISH_SEMIBOLD,
   },
   cursor: {
     position: 'absolute',

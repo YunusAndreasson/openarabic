@@ -7,7 +7,8 @@ import { EnhancedImage } from '@/components/ui/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
 import { IconButton } from '@/components/ui';
 import { TIMING_CONFIG, TIMING_CONSTANTS } from '@/constants/animation';
-import { FONT_WEIGHTS, LAYOUT, TEXT_STYLES } from '@/constants/layout';
+import { FONTS } from '@/constants/fonts';
+import { LAYOUT, TEXT_STYLES } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { withAlpha } from '@/utils/colorUtils';
 import { formatSecondsToClock, safePercent } from '@/utils/dateTimeUtils';
@@ -238,7 +239,7 @@ const styles = StyleSheet.create({
 
   artist: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: FONT_WEIGHTS.MEDIUM,
+    fontFamily: FONTS.ENGLISH,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL + LAYOUT.SPACING.HALF_TINY,
     marginBottom: LAYOUT.SPACING.TINY,
   },

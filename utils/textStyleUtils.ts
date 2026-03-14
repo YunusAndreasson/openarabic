@@ -1,6 +1,7 @@
 import type { TextStyle, ViewStyle } from 'react-native';
 
-import { FONT_WEIGHTS, getArabicTextStyle, LAYOUT, LETTER_SPACING } from '@/constants/layout';
+import { FONTS } from '@/constants/fonts';
+import { getArabicTextStyle, LAYOUT, LETTER_SPACING } from '@/constants/layout';
 
 // ===== TEXT STYLE CONSTANTS =====
 export const TEXT_STYLE_CONSTANTS = {
@@ -92,7 +93,7 @@ export const getSelectedStyle = (isSelected: boolean, color: string): ViewStyle 
  */
 export const createButtonTextStyle = (size: 'small' | 'medium' | 'large' = 'medium'): TextStyle => {
   const baseStyle: TextStyle = {
-    fontWeight: FONT_WEIGHTS.SEMIBOLD,
+    fontFamily: FONTS.ENGLISH_SEMIBOLD,
     textAlign: 'center',
   };
 

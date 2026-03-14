@@ -93,7 +93,7 @@ export const TYPOGRAPHY_HIERARCHY = {
     TIGHT: 1.2,
     NORMAL: 1.4,
     LOOSE: 1.6,
-    ARABIC: 2.2, // Moved from LAYOUT.TYPOGRAPHY for consistency
+    ARABIC: 2.2, // Standard Arabic line height multiplier
   },
 
   MICRO_ADJUSTMENTS: {

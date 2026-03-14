@@ -6,7 +6,8 @@ import { ThemedText } from '@/components/ThemedText';
 import { ArticleSentence } from '@/components/article/ArticleSentence';
 import { BaseCard } from '@/components/common';
 import { ColorDot, HeaderIconButton } from '@/components/ui';
-import { FONT_WEIGHTS, LAYOUT } from '@/constants/layout';
+import { FONTS } from '@/constants/fonts';
+import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
 import { useColors } from '@/hooks/theme/useColors';
@@ -184,7 +185,7 @@ const styles = StyleSheet.create({
   },
   englishText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: FONT_WEIGHTS.SEMIBOLD,
+    fontFamily: FONTS.ENGLISH_SEMIBOLD,
     includeFontPadding: false,
     lineHeight: Math.round(LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.1),
   },

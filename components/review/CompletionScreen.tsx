@@ -7,8 +7,8 @@ import Animated, { FadeIn, FadeInUp, ZoomIn } from 'react-native-reanimated';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { TIMING_CONFIG, TIMING_CONSTANTS } from '@/constants/animation';
+import { FONTS } from '@/constants/fonts';
 import {
-  FONT_WEIGHTS,
   getThemeAwareElevation,
   LAYOUT,
   LINE_HEIGHT_MULTIPLIERS,
@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
 
   metricText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: FONT_WEIGHTS.SEMIBOLD,
+    fontFamily: FONTS.ENGLISH_SEMIBOLD,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.NORMAL,
     textAlign: 'left',
   },
