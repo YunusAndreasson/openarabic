@@ -214,7 +214,7 @@ const ArticleContentInternal = function ArticleContent({
 
       {/* Metadata line - author, category, and reading time */}
       <View style={authorContainerStyle}>
-        <ThemedText type="label" weight="medium" colorName="authorText" style={styles.authorText}>
+        <ThemedText type="body" colorName="authorText" style={styles.authorText}>
           {metadataText}
         </ThemedText>
         {article.book && (
@@ -228,8 +228,7 @@ const ArticleContentInternal = function ArticleContent({
       {article.summary && (
         <View style={styles.summaryContainer}>
           <ThemedText
-            type="body"
-            weight="normal"
+            type="caption"
             colorName="subtitleText"
             style={styles.summaryText}
           >

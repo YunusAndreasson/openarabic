@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
   body: {
     fontFamily: FONTS.ENGLISH,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    letterSpacing: LETTER_SPACING.NORMAL,
+    letterSpacing: LETTER_SPACING.SLIGHT_POSITIVE,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.NORMAL,
     opacity: TEXT_OPACITY.PRIMARY,
   },

@@ -12,6 +12,9 @@ import type { ColoredSegment } from '@/types/vocabulary.types';
 /** Strut height multiplier for consistent Arabic diacritics spacing */
 const STRUT_HEIGHT_MULTIPLIER = 1.8;
 
+/** Subtle letter spacing for improved Arabic readability (0.15px) */
+const ARABIC_LETTER_SPACING = 0.15;
+
 const makeParagraphStyle = (
   fontFamily: string,
   fontSize: number,
@@ -47,7 +50,7 @@ export const buildColoredParagraph = (config: ParagraphConfig): SkParagraph | nu
     fontManager,
     textDirection = TextDirection.RTL,
     maxWidth = 2000,
-    letterSpacing = 0,
+    letterSpacing = ARABIC_LETTER_SPACING,
   } = config;
 
   if (segments.length === 0) {
@@ -106,6 +109,7 @@ export const buildSimpleParagraph = (
       color: Skia.Color(color),
       fontFamilies: [fontFamily],
       fontSize,
+      letterSpacing: ARABIC_LETTER_SPACING,
     });
     builder.addText(text);
     builder.pop();
