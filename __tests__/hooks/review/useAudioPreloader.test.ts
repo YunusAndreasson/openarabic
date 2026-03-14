@@ -10,7 +10,8 @@
 import { describe, expect, it, jest, beforeEach } from '@jest/globals';
 import { renderHook } from '@testing-library/react-native';
 
-// Mock dependencies BEFORE imports
+// expo-audio is mocked via moduleNameMapper → __mocks__/expo-audio.js
+
 jest.mock('@/services/audioCache', () => ({
   audioCache: {
     getAudio: jest.fn(),

@@ -66,7 +66,15 @@ import { setTheme } from '@/store/themeSlice';
 import { handleError } from '@/utils/errorHandling';
 import { createNavigationOptions } from '@/utils/navigation';
 import { PERSISTENCE_OPTIONS } from '@/utils/queryPersistence';
-import * as Notifications from 'expo-notifications';
+import type * as NotificationsModule from 'expo-notifications';
+
+// expo-notifications is unavailable in Expo Go on Android (SDK 53+).
+let Notifications: typeof NotificationsModule | null = null;
+try {
+  Notifications = require('expo-notifications');
+} catch {
+  // expo-notifications unavailable in Expo Go on Android (SDK 53+)
+}
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -326,6 +334,8 @@ function AppContent() {
 
     const handleColdStartNotification = async () => {
       try {
+        if (!Notifications) return;
+
         const response = await Notifications.getLastNotificationResponseAsync();
 
         if (response) {
@@ -490,6 +500,13 @@ function AppContent() {
               options={createNavigationOptions(colors, {
                 headerShown: false,
                 freezeOnBlur: true, // Optimize article screen when backgrounded
+              })}
+            />
+            <Stack.Screen
+              name="review"
+              options={createNavigationOptions(colors, {
+                headerShown: false,
+                freezeOnBlur: true,
               })}
             />
 

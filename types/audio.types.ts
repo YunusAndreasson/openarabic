@@ -14,8 +14,8 @@ export interface EnhancedAudioTrack {
   audioUrl: string;
   /** Title of the article (used for display) */
   title: string;
+  /** Author name for lock screen display (optional) */
+  artist?: string;
   /** Image URL for instant artwork display (optional but recommended) */
   imageUrl?: string;
-  /** Duration of the audio track in seconds (optional until loaded) */
-  duration?: number;
 }

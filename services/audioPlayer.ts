@@ -1,5 +1,6 @@
 import {
   createAudioPlayer,
+  preload,
   setAudioModeAsync,
   setIsAudioActiveAsync,
   type AudioPlayer,
@@ -254,7 +255,7 @@ class SimpleAudioService {
   /**
    * Reset audio session for recovery from corruption
    */
-  async resetAudioSession(): Promise<void> {
+  private async resetAudioSession(): Promise<void> {
     try {
       // Stop current playback
       await this.stopInternal();
@@ -285,6 +286,11 @@ class SimpleAudioService {
       return;
     }
 
+    // Fast path: player already loaded (common after replace() with cached audio)
+    if (player.isLoaded) {
+      return;
+    }
+
     const READY_TIMEOUT_MS = 5000; // 5 second timeout
 
     return new Promise<void>((resolve, reject) => {
@@ -307,41 +313,38 @@ class SimpleAudioService {
           }
         },
       );
+
+      // Check again after listener is set up (race condition: loaded between checks)
+      if (player.isLoaded) {
+        clearTimeout(timeout);
+        readySubscription.remove();
+        resolve();
+      }
     });
   }
 
   /**
-   * Create fresh audio player for a track
-   * No caching - audio files are already cached locally by audioCache service
+   * Ensure a player exists, creating one if needed or reusing the existing one.
+   * Uses replace() to swap audio source without recreating the native player.
    */
-  private async createFreshPlayer(audioUrl: string): Promise<AudioPlayer> {
-    // Properly clean up previous player to prevent memory leaks
+  private ensurePlayer(audioUrl: string): AudioPlayer {
     if (this.currentPlayer) {
-      const oldPlayer = this.currentPlayer;
-
-      // Clear event subscription from previous player
-      this.stopEventSubscription();
-
-      // Null references immediately
-      this.currentPlayer = null;
-      this.currentTrack = null;
-
-      // Properly dispose of old player to free memory
+      // Reuse existing player - pause and swap source
       try {
-        oldPlayer.pause();
-        oldPlayer.remove();
+        this.currentPlayer.pause();
       } catch {
-        // Ignore cleanup errors
+        // Ignore pause errors
       }
+      this.currentPlayer.replace(audioUrl);
+      return this.currentPlayer;
     }
 
-    // Create fresh player (audio is already cached locally, so this is fast)
+    // Create new player (first play or after destroy/error)
     const playerOptions: AudioPlayerOptions = {
       updateInterval: 500,
     };
-    const newPlayer = createAudioPlayer(audioUrl, playerOptions);
-
-    return newPlayer;
+    this.currentPlayer = createAudioPlayer(audioUrl, playerOptions);
+    return this.currentPlayer;
   }
 
   /**
@@ -352,8 +355,6 @@ class SimpleAudioService {
   async play(
     track: EnhancedAudioTrack,
     options: {
-      skipPolling?: boolean;
-      immediateStatus?: boolean;
       skipLoadingState?: boolean;
       isRetry?: boolean;
     } = {},
@@ -373,8 +374,11 @@ class SimpleAudioService {
       // Configure audio session first (should be pre-configured for faster playback)
       await this.configureAudioSession();
 
-      // Create fresh player (old player already cleaned up in createFreshPlayer)
-      this.currentPlayer = await this.createFreshPlayer(track.audioUrl);
+      // Stop event subscription from previous track before reusing player
+      this.stopEventSubscription();
+
+      // Reuse existing player or create new one
+      const player = this.ensurePlayer(track.audioUrl);
       this.currentTrack = track;
 
       // IMMEDIATE FEEDBACK: Update status to loading right away
@@ -397,9 +401,7 @@ class SimpleAudioService {
       }
 
       // Set up event subscription BEFORE playing to catch immediate failures
-      if (!options.skipPolling) {
-        this.startEventSubscription();
-      }
+      this.startEventSubscription();
 
       // CRITICAL FIX: Wait for player to be ready using native status updates
       // This prevents ~1-20% of playback failures where play() is called before player is initialized
@@ -408,7 +410,7 @@ class SimpleAudioService {
       // Start playback (fresh player starts at position 0)
       // Wrap in try-catch to handle cases where play() fails even after ready check
       try {
-        this.currentPlayer.play();
+        player.play();
       } catch (playError) {
         // If play() fails synchronously, throw to trigger retry logic
         throw new Error(`Failed to start playback: ${playError}`);
@@ -426,18 +428,26 @@ class SimpleAudioService {
         duration: 0,
       });
 
+      // Preload next playlist track in native memory for faster transition
+      this.preloadNextTrack();
+
       return true;
     } catch (error) {
       // RESET: Clear progress on play error
       this.updateStatus(RESET_AUDIO_STATUS);
 
+      // Destroy player on error so retry gets a fresh one
       if (this.currentPlayer) {
         try {
-          await this.stopInternal();
+          this.currentPlayer.pause();
+          this.currentPlayer.remove();
         } catch {
           // Ignore cleanup errors
         }
+        this.currentPlayer = null;
+        this.currentTrack = null;
       }
+      this.stopEventSubscription();
 
       // CRITICAL FIX: Try to recover from audio session corruption (only on first attempt)
       if (!options.isRetry) {
@@ -496,6 +506,25 @@ class SimpleAudioService {
       this.initialPlaylistLength = 0;
       this.resetSleepTimerExpired();
       throw error;
+    }
+  }
+
+  /**
+   * Preload the next playlist track in native memory for faster transition
+   */
+  private preloadNextTrack(): void {
+    if (!this.isPlaylistMode) return;
+
+    const nextIndex = this.currentPlaylistIndex + 1;
+    const nextTrack = this.playlist[nextIndex];
+    if (nextTrack) {
+      try {
+        preload(nextTrack.audioUrl).catch(() => {
+          // Non-critical — playback will still work without preload
+        });
+      } catch {
+        // Non-critical — preload is an optimization
+      }
     }
   }
 
@@ -650,7 +679,6 @@ class SimpleAudioService {
         playing?: boolean;
         currentTime?: number;
         duration?: number;
-        bufferedPosition?: number;
         isLoaded?: boolean;
         isBuffering?: boolean;
         playbackState?: string;
@@ -776,17 +804,26 @@ class SimpleAudioService {
   private activateLockScreen(track: EnhancedAudioTrack): void {
     if (!this.currentPlayer) return;
     try {
-      this.currentPlayer.setActiveForLockScreen(true, {
-        title: track.title,
-        artworkUrl: track.imageUrl,
-      });
+      this.currentPlayer.setActiveForLockScreen(
+        true,
+        {
+          title: track.title,
+          artist: track.artist,
+          artworkUrl: track.imageUrl,
+        },
+        {
+          showSeekForward: this.isPlaylistMode,
+          showSeekBackward: this.isPlaylistMode,
+        },
+      );
     } catch {
       // Non-critical — lock screen controls are best-effort
     }
   }
 
   /**
-   * Internal stop method
+   * Internal stop method - disposes player fully.
+   * Player reuse via replace() only happens within ensurePlayer() during active playback.
    */
   private async stopInternal(): Promise<void> {
     this.stopEventSubscription();
@@ -794,7 +831,6 @@ class SimpleAudioService {
     if (this.currentPlayer) {
       const player = this.currentPlayer;
       this.currentPlayer = null;
-      this.currentTrack = null;
 
       try {
         player.clearLockScreenControls();
@@ -803,9 +839,8 @@ class SimpleAudioService {
       } catch {
         // Silent failure - callers don't always catch
       }
-    } else {
-      this.currentTrack = null;
     }
+    this.currentTrack = null;
   }
 
   /**

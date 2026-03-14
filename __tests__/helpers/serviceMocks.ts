@@ -20,6 +20,7 @@
  * - Branded ID support for type safety
  */
 
+import type { EnhancedAudioTrack } from '@/types/audio.types';
 import type { ArticleId, RootId, UserId } from '@/types/branded.types';
 import type { Tables } from '@/types/database.types';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -178,29 +179,17 @@ export const createReadingListMock = (
 // ============================================================================
 
 /**
- * Enhanced audio track type (used by audioPlaylist service)
- */
-export interface EnhancedAudioTrack {
-  url: string;
-  articleId: ArticleId | null;
-  title: string;
-  artist: string;
-  artwork?: string;
-  duration?: number;
-}
-
-/**
  * Creates a mock enhanced audio track
  */
 export const createEnhancedAudioTrackMock = (
   overrides: Partial<EnhancedAudioTrack> = {},
 ): EnhancedAudioTrack => ({
-  url: 'https://example.com/audio.mp3',
+  id: 'article-1',
+  audioUrl: 'https://example.com/audio.mp3',
   articleId: 1 as ArticleId,
   title: 'Test Article',
   artist: 'Test Author',
-  artwork: 'https://example.com/image.jpg',
-  duration: 120,
+  imageUrl: 'https://example.com/image.jpg',
   ...overrides,
 });
 

@@ -274,7 +274,7 @@ const ArticleContentInternal = function ArticleContent({
   };
 
   return (
-    <>
+    <View style={styles.content}>
       <Animated.View style={[styles.flexOne, MOUNT_FADE_IN_STYLE]}>
         {sortedSentences.length > 0 ? (
           <View style={listContainerStyle}>
@@ -336,7 +336,7 @@ const ArticleContentInternal = function ArticleContent({
           onClose={onClose}
         />
       )}
-    </>
+    </View>
   );
 };
 

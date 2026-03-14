@@ -15,6 +15,6 @@ describe('ROUTE_PATHS - /(tabs) prefix', () => {
   });
 
   test('getPracticeReviewRoute keeps path without /(tabs) (modal route)', () => {
-    expect(getPracticeReviewRoute()).toBe('/practice/review');
+    expect(getPracticeReviewRoute()).toBe('/review');
   });
 });

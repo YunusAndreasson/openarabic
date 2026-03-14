@@ -36,7 +36,15 @@
 
 import NetInfo from '@react-native-community/netinfo';
 import * as BackgroundTask from 'expo-background-task';
-import * as Notifications from 'expo-notifications';
+import type * as NotificationsModule from 'expo-notifications';
+
+// expo-notifications is unavailable in Expo Go on Android (SDK 53+).
+let Notifications: typeof NotificationsModule | null = null;
+try {
+  Notifications = require('expo-notifications');
+} catch {
+  // expo-notifications unavailable in Expo Go on Android (SDK 53+)
+}
 import * as TaskManager from 'expo-task-manager';
 
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
@@ -76,7 +84,7 @@ TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
       limit: 100,
     });
 
-    if (dueWords && dueWords.length > 0) {
+    if (dueWords && dueWords.length > 0 && Notifications) {
       // Schedule local notification for due words
       await Notifications.scheduleNotificationAsync({
         content: {

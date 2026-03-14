@@ -27,6 +27,8 @@ jest.mock('expo-audio', () => ({
   createAudioPlayer: jest.fn(),
   setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
   setIsAudioActiveAsync: jest.fn().mockResolvedValue(undefined),
+  preload: jest.fn().mockResolvedValue(undefined),
+  clearAllPreloadedSources: jest.fn().mockResolvedValue(undefined),
 }));
 
 // Mock AppState addEventListener - must be defined before mock
@@ -78,6 +80,7 @@ describe('audioPlayer service', () => {
     play: jest.Mock;
     pause: jest.Mock;
     remove: jest.Mock;
+    replace: jest.Mock;
     seekTo: jest.Mock;
     addListener: jest.Mock;
     setActiveForLockScreen: jest.Mock;
@@ -91,7 +94,6 @@ describe('audioPlayer service', () => {
     audioUrl: 'https://example.com/audio1.mp3',
     title: 'Test Article 1',
     imageUrl: 'https://example.com/image1.jpg',
-    duration: 120,
   };
 
   const testTrack2: EnhancedAudioTrack = {
@@ -99,7 +101,6 @@ describe('audioPlayer service', () => {
     articleId: 2,
     audioUrl: 'https://example.com/audio2.mp3',
     title: 'Test Article 2',
-    duration: 90,
   };
 
   const testTrack3: EnhancedAudioTrack = {
@@ -107,7 +108,6 @@ describe('audioPlayer service', () => {
     articleId: 3,
     audioUrl: 'https://example.com/audio3.mp3',
     title: 'Test Article 3',
-    duration: 150,
   };
 
   beforeEach(() => {
@@ -121,6 +121,7 @@ describe('audioPlayer service', () => {
       play: jest.fn(),
       pause: jest.fn(),
       remove: jest.fn(),
+      replace: jest.fn(),
       seekTo: jest.fn().mockResolvedValue(undefined),
       setActiveForLockScreen: jest.fn(),
       clearLockScreenControls: jest.fn(),
@@ -238,40 +239,21 @@ describe('audioPlayer service', () => {
       expect(loadingStateSeen).toBeFalsy();
     });
 
-    test('should clean up previous player when switching tracks', async () => {
+    test('should reuse player via replace() when switching tracks', async () => {
       await audioService.play(testTrack);
-      const firstPlayer = mockPlayer;
 
-      // Create new mock player for second track
-      // CRITICAL: Must fire ready status to prevent waitForPlayerReady from hanging
-      let statusCallback:
-        | ((status: { isLoaded?: boolean; playbackState?: string }) => void)
-        | null = null;
-      const secondPlayer = {
-        play: jest.fn(),
-        pause: jest.fn(),
-        remove: jest.fn(),
-        seekTo: jest.fn(),
-        addListener: jest.fn((event, callback) => {
-          if (event === 'playbackStatusUpdate') {
-            statusCallback = callback;
-            // Automatically fire ready status
-            process.nextTick(() => {
-              if (statusCallback) {
-                statusCallback({ isLoaded: true, playbackState: 'ready' });
-              }
-            });
-          }
-          return { remove: jest.fn() };
-        }),
-      };
-      mockCreateAudioPlayer.mockReturnValueOnce(secondPlayer);
+      // Player should be created once for the first track
+      expect(mockCreateAudioPlayer).toHaveBeenCalledTimes(1);
 
       await audioService.play(testTrack2);
 
-      expect(firstPlayer.pause).toHaveBeenCalled();
-      expect(firstPlayer.remove).toHaveBeenCalled();
-      expect(mockCreateAudioPlayer).toHaveBeenCalledWith(testTrack2.audioUrl, expect.any(Object));
+      // Should reuse existing player via replace(), not create a new one
+      expect(mockCreateAudioPlayer).toHaveBeenCalledTimes(1);
+      expect(mockPlayer.replace).toHaveBeenCalledWith(testTrack2.audioUrl);
+      // Player should be paused before replacing source
+      expect(mockPlayer.pause).toHaveBeenCalled();
+      // Player should NOT be removed (kept alive for reuse)
+      expect(mockPlayer.remove).not.toHaveBeenCalled();
     });
 
     test('should handle play errors gracefully', async () => {
@@ -404,7 +386,7 @@ describe('audioPlayer service', () => {
   });
 
   describe('Stop Functionality', () => {
-    test('should stop playback and reset state', async () => {
+    test('should stop playback and dispose player', async () => {
       await audioService.play(testTrack);
       await audioService.stop();
 

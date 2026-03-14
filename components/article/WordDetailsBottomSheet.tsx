@@ -12,6 +12,8 @@ import { STRINGS } from '@/constants/strings';
 import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
 import { useColors } from '@/hooks/theme/useColors';
 
+import { preload } from 'expo-audio';
+
 import { audioCache } from '@/services/audioCache';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { useBottomSheetVisibility } from '@/hooks/ui/useBottomSheetVisibility';
@@ -67,10 +69,13 @@ export function WordDetailsBottomSheet({
         const fullAudioUrl = generateStorageUrl('audio', word.audio_url);
         if (!fullAudioUrl) return;
 
-        // Prefetch and cache audio in background - no await to avoid blocking
-        audioCache.getAudio(fullAudioUrl).catch(() => {
-          // Silent fail for background prefetch - user can still manually play
-        });
+        // Prefetch to disk cache, then buffer in native memory for instant playback
+        audioCache
+          .getAudio(fullAudioUrl)
+          .then(localPath => preload(localPath))
+          .catch(() => {
+            // Silent fail for background prefetch - user can still manually play
+          });
       } catch {
         // Silent fail for background prefetch
       }

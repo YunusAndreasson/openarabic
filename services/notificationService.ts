@@ -36,8 +36,9 @@
  * - Both: May have system-level notification blocking
  */
 
-import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+
+import type * as NotificationsModule from 'expo-notifications';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { Colors } from '@/constants/colors';
@@ -47,35 +48,46 @@ import { analytics } from '@/services/analytics';
 import type { ReminderTime } from '@/types/notifications.types';
 import { handleError } from '@/utils/errorHandling';
 
+// expo-notifications is unavailable in Expo Go on Android (SDK 53+).
+// Use a guarded require so the module-level throw doesn't crash the app.
+let Notifications: typeof NotificationsModule | null = null;
+try {
+  Notifications = require('expo-notifications');
+} catch {
+  // Running in Expo Go on Android – notifications unavailable
+}
+
 // Configure notification behavior with Expo best practices
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-  // Optimize for battery and performance
-  handleSuccess: (_notificationId: string) => {
-    // Notification scheduled successfully - minimal logging for performance
-  },
-  handleError: (notificationId: string, error: Error) => {
-    // Handle scheduling errors gracefully
-    handleError(error, {
-      analyticsEventName: ANALYTICS_EVENTS.NOTIFICATION_SCHEDULING_FAILED,
-      sentryTags: { location: 'notifications', notificationId },
-      sentryExtra: { notificationId },
-      showToast: false, // Silent failure for notifications
-      sentrySeverity: 'warning',
-    });
-  },
-});
+if (Notifications) {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+    // Optimize for battery and performance
+    handleSuccess: (_notificationId: string) => {
+      // Notification scheduled successfully - minimal logging for performance
+    },
+    handleError: (notificationId: string, error: Error) => {
+      // Handle scheduling errors gracefully
+      handleError(error, {
+        analyticsEventName: ANALYTICS_EVENTS.NOTIFICATION_SCHEDULING_FAILED,
+        sentryTags: { location: 'notifications', notificationId },
+        sentryExtra: { notificationId },
+        showToast: false, // Silent failure for notifications
+        sentrySeverity: 'warning',
+      });
+    },
+  });
+}
 
 let isInitialized = false;
-let notificationSubscription: Notifications.Subscription | null = null;
-let responseSubscription: Notifications.Subscription | null = null;
-let droppedSubscription: Notifications.Subscription | null = null;
+let notificationSubscription: { remove: () => void } | null = null;
+let responseSubscription: { remove: () => void } | null = null;
+let droppedSubscription: { remove: () => void } | null = null;
 let navigationCallback: ((path: string) => void) | null = null;
 
 // Set navigation callback from app layout
@@ -90,6 +102,7 @@ export function clearNotificationNavigationCallback(): void {
 
 // Initialize notifications during app startup (Expo best practice)
 export async function initializeNotifications(): Promise<boolean> {
+  if (!Notifications) return false;
   if (isInitialized) return true;
 
   try {
@@ -142,6 +155,7 @@ export async function initializeNotifications(): Promise<boolean> {
 
 // Set up notification listeners (Expo best practice)
 function setupNotificationListeners(): void {
+  if (!Notifications) return;
   // Clean up existing subscriptions before creating new ones
   if (notificationSubscription) {
     notificationSubscription.remove();
@@ -215,6 +229,7 @@ export function cleanupNotifications(): void {
 }
 
 async function initialize(): Promise<boolean> {
+  if (!Notifications) return false;
   if (isInitialized) return true;
 
   try {
@@ -249,6 +264,7 @@ async function initialize(): Promise<boolean> {
 }
 
 export async function scheduleReminder(reminderTime: ReminderTime): Promise<string | null> {
+  if (!Notifications) return null;
   try {
     // Initialize notifications if not already done
     const initialized = await initialize();
@@ -316,6 +332,7 @@ export async function scheduleReminder(reminderTime: ReminderTime): Promise<stri
 }
 
 async function cancelReminder(): Promise<void> {
+  if (!Notifications) return;
   try {
     await Notifications.cancelAllScheduledNotificationsAsync();
   } catch (error) {
@@ -325,6 +342,7 @@ async function cancelReminder(): Promise<void> {
 
 // Optimized badge management functions using Expo best practices
 export async function setAppBadgeCount(count: number): Promise<boolean> {
+  if (!Notifications) return false;
   try {
     // Validate input
     const validCount = Math.max(0, Math.floor(count));
@@ -342,6 +360,7 @@ export async function setAppBadgeCount(count: number): Promise<boolean> {
 }
 
 export async function clearAppBadge(): Promise<boolean> {
+  if (!Notifications) return false;
   try {
     await Notifications.setBadgeCountAsync(0);
     return true;
@@ -355,6 +374,7 @@ export async function clearAppBadge(): Promise<boolean> {
 }
 
 export async function ensurePermissions(): Promise<boolean> {
+  if (!Notifications) return false;
   try {
     // First check current permissions (more efficient than always requesting)
     const existing = await Notifications.getPermissionsAsync();
@@ -439,6 +459,7 @@ export async function ensurePermissions(): Promise<boolean> {
 
 // Efficient permission check for badge-only access
 export async function canUseBadge(): Promise<boolean> {
+  if (!Notifications) return false;
   try {
     const { status, ios } = await Notifications.getPermissionsAsync();
 

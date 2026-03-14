@@ -255,11 +255,11 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
 
   // Auto-start animation if enabled - using UI thread
   useEffect(() => {
-    if (autoStart && isMounted.value) {
+    if (autoStart) {
       // Set directly to target without initial flash to prevent visual glitch
       opacity.set(withDelay(MIN_MOUNT_DELAY, withTiming(1, timingConfig)));
     }
-  }, [autoStart, opacity, timingConfig, isMounted]);
+  }, [autoStart, opacity, timingConfig]);
 
   return {
     opacity,

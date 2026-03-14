@@ -37,12 +37,6 @@ export default function StudyLayout(): JSX.Element {
           ),
         })}
       />
-      <Stack.Screen
-        name="review"
-        options={createNavigationOptions(colors, {
-          headerShown: false,
-        })}
-      />
     </Stack>
   );
 }

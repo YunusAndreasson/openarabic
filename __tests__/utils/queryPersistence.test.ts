@@ -86,16 +86,16 @@ describe('Query Persistence', () => {
         expect(shouldDehydrateQuery(query)).toBeTruthy();
       });
 
-      test('should persist articles query', () => {
+      test('should NOT persist articles query (too large for Android CursorWindow)', () => {
         const query = createMockQuery(['articles']);
-        expect(shouldDehydrateQuery(query)).toBeTruthy();
+        expect(shouldDehydrateQuery(query)).toBeFalsy();
       });
     });
 
     describe('filtered article keys', () => {
-      test('should persist filtered-articles query', () => {
+      test('should NOT persist filtered-articles query (too large for Android CursorWindow)', () => {
         const query = createMockQuery(['filtered-articles', { category: 1 }]);
-        expect(shouldDehydrateQuery(query)).toBeTruthy();
+        expect(shouldDehydrateQuery(query)).toBeFalsy();
       });
     });
 

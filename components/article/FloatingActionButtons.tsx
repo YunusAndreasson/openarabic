@@ -1,28 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { memo, startTransition, useOptimistic } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const GLASS_AVAILABLE = isLiquidGlassAvailable();
 const GlassContainer = GLASS_AVAILABLE ? GlassView : View;
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
-
-const CLOSE_BUTTON_STYLE = {
-  position: 'absolute' as const,
-  top: LAYOUT.SPACING.LARGE,
-  left: LAYOUT.SPACING.LARGE,
-  zIndex: LAYOUT.Z_INDEX.OVERLAY,
-};
-
-const ACTION_BUTTONS_STYLE = {
-  position: 'absolute' as const,
-  top: LAYOUT.SPACING.LARGE,
-  right: LAYOUT.SPACING.LARGE,
-  zIndex: LAYOUT.Z_INDEX.OVERLAY,
-  flexDirection: 'row' as const,
-  gap: LAYOUT.SPACING.TINY,
-};
 import { useColors } from '@/hooks/theme/useColors';
 
 export interface FloatingActionButtonsProps {
@@ -38,6 +23,26 @@ export interface FloatingActionButtonsProps {
 export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
   ({ isInReadingList, onToggleReadingList, onClose }) => {
     const colors = useColors();
+    const insets = useSafeAreaInsets();
+    const buttonTop = Platform.OS === 'android'
+      ? insets.top
+      : LAYOUT.SPACING.LARGE;
+
+    const closeButtonStyle = {
+      position: 'absolute' as const,
+      top: buttonTop,
+      left: LAYOUT.SPACING.LARGE,
+      zIndex: LAYOUT.Z_INDEX.OVERLAY,
+    };
+
+    const actionButtonsStyle = {
+      position: 'absolute' as const,
+      top: buttonTop,
+      right: LAYOUT.SPACING.LARGE,
+      zIndex: LAYOUT.Z_INDEX.OVERLAY,
+      flexDirection: 'row' as const,
+      gap: LAYOUT.SPACING.TINY,
+    };
 
     // React 19: Use native useOptimistic for immediate UI feedback
     const [optimisticIsInReadingList, setOptimisticBookmark] = useOptimistic(
@@ -68,7 +73,7 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
     return (
       <>
         {/* Close button - top left */}
-        <Pressable onPress={onClose} hitSlop={LAYOUT.HIT_SLOP.MEDIUM} style={CLOSE_BUTTON_STYLE}>
+        <Pressable onPress={onClose} hitSlop={LAYOUT.HIT_SLOP.MEDIUM} style={closeButtonStyle}>
           <GlassContainer
             style={[styles.glassButton, fallbackButtonStyle]}
             {...(GLASS_AVAILABLE && { isInteractive: true })}
@@ -85,7 +90,7 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
         <Pressable
           onPress={handleOptimisticToggle}
           hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-          style={ACTION_BUTTONS_STYLE}
+          style={actionButtonsStyle}
         >
           <GlassContainer
             style={[

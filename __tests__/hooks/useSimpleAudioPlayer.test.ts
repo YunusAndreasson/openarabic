@@ -58,7 +58,6 @@ const createMockTrack = (overrides: Partial<EnhancedAudioTrack> = {}): EnhancedA
   id: 'track-1',
   audioUrl: 'https://example.com/audio/track1.mp3',
   title: 'Test Track',
-  duration: 120,
   ...overrides,
 });
 

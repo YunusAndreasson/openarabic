@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { clearAllPreloadedSources, preload } from 'expo-audio';
+
 import { audioCache } from '@/services/audioCache';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { generateStorageUrl } from '@/utils/storageUtils';
@@ -88,7 +90,13 @@ export const useAudioPreloader = (
         // Process current batch in parallel
         const batchPromises = batch.map(async url => {
           try {
-            await audioCache.getAudio(url);
+            const localPath = await audioCache.getAudio(url);
+            // Buffer in native memory for near-instant playback
+            try {
+              await preload(localPath);
+            } catch {
+              // preload is an enhancement - disk cache is sufficient
+            }
             trackProgress();
             return true;
           } catch {
@@ -133,12 +141,20 @@ export const useAudioPreloader = (
     preloadSessionAudio(wordQueue);
   }, [wordQueue, isPreloading, isSessionComplete, isComplete, preloadSessionAudio]);
 
-  // Reset preload flag when session completes
+  // Reset preload flag and clear native preloaded sources when session completes
   useEffect(() => {
     if (isSessionComplete) {
       hasPreloadedRef.current = false;
       lastPreloadedWordsRef.current = '';
       setIsComplete(false);
+      // Free native memory used by preloaded audio
+      try {
+        clearAllPreloadedSources().catch(() => {
+          // Non-critical cleanup
+        });
+      } catch {
+        // Non-critical cleanup
+      }
     }
   }, [isSessionComplete]);
 

@@ -197,7 +197,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   }
 
   return (
-    <>
+    <View style={FLEX_ONE_STYLE}>
       {articleContentProps ? <ArticleContent {...articleContentProps} /> : null}
 
       <WordTooltip {...tooltipProps} />
@@ -209,7 +209,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
         onAddToStudy={handleAddWordToStudy}
         isInStudyList={isInStudyList}
       />
-    </>
+    </View>
   );
 }, ArticleScreenContentComparison);
 
@@ -223,7 +223,7 @@ export default function ArticleScreen(): JSX.Element {
 
   return (
     <ToastProvider>
-      <SafeAreaView style={containerStyle} edges={['top']}>
+      <SafeAreaView style={containerStyle} edges={[]}>
         <ArticleScreenContent id={id ?? ''} />
       </SafeAreaView>
     </ToastProvider>

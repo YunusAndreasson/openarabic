@@ -17,7 +17,7 @@ export const ROUTE_PATHS = {
   PRIVACY: '/(tabs)/explore/account/privacy',
   LEGAL: '/(tabs)/explore/account/legal',
 
-  PRACTICE_REVIEW: '/practice/review',
+  PRACTICE_REVIEW: '/review',
   PRACTICE_DICTIONARY: '/(tabs)/practice/dictionary',
 } as const;
 

@@ -246,7 +246,7 @@ describe('UI flow', () => {
       const handleStart = async () => {
         try {
           await startReview();
-          router.push('/practice/review');
+          router.push('/review');
         } catch {
           setError(true);
         }

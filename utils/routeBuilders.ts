@@ -1,7 +1,7 @@
 import type { ArticleId, CategoryId, RootId } from '@/types/branded.types';
 
 // Inlined to avoid require cycle: routes.ts -> routeBuilders.ts -> routes.ts
-const PRACTICE_REVIEW_PATH = '/practice/review';
+const PRACTICE_REVIEW_PATH = '/review';
 
 export const getArticleRoute = (
   id: ArticleId,

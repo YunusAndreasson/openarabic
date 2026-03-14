@@ -269,8 +269,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     const track = {
       id: `review-${Date.now()}`,
       audioUrl: localPath,
-      title: 'Review Audio', // Assuming a default title for now
-      duration: 0,
+      title: 'Review Audio',
     };
 
     try {

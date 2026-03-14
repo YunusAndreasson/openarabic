@@ -119,7 +119,6 @@ export {
   // Audio track factories
   createEnhancedAudioTrackMock,
   createEnhancedAudioTracksMock,
-  type EnhancedAudioTrack,
   // User/Auth factories
   createUserMock,
   createSessionMock,

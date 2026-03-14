@@ -13,8 +13,8 @@ const MAX_AGE = 1000 * 60 * 60 * 24 * 7; // 7 days
 const PERSIST_KEYS = new Set([
   'categories', // Static data - safe to persist
   'authors', // Static data - safe to persist
-  'articles', // Static content - safe to persist
-  'filtered-articles', // Derived from static articles - safe to persist
+  // 'articles' and 'filtered-articles' excluded: too large for Android's 2MB CursorWindow limit
+  // They are fetched fresh on app start anyway
   // 'readingList' - EXCLUDED: User-specific & auth-dependent, causes hydration errors
   // Note: 'reading-progress-bulk' is excluded (see EXCLUDED_KEYS) to prevent HMR hydration errors
 ]);
@@ -35,6 +35,7 @@ export const queryPersister = createAsyncStoragePersister({
   serialize: JSON.stringify,
   deserialize: JSON.parse,
 });
+
 
 /**
  * Clears all persisted React Query cache from AsyncStorage
@@ -110,3 +111,6 @@ export const PERSISTENCE_OPTIONS = {
     shouldDehydrateQuery,
   },
 } as const;
+
+// Clear legacy oversized cache that exceeds Android's CursorWindow limit
+clearPersistedQueryCache();

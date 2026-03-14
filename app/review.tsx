@@ -2,7 +2,7 @@ import { useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { TextStyle, ViewStyle } from 'react-native';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -194,7 +194,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
         {/* UI chrome - header and bottom actions, positioned above background */}
         <View style={baseStyles.uiChromeOverlay}>
           {/* Progress header at top of screen */}
-          <View style={baseStyles.headerPadding}>
+          <View style={[baseStyles.headerPadding, Platform.OS === 'android' && { paddingTop: insets.top }]}>
             <ReviewHeader maxProgress={maxProgress} progress={progress} onClose={handleClose} />
           </View>
 

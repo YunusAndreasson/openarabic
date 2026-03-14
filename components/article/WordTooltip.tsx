@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useCallback, useRef, useState } from 'react';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { WORD_TOOLTIP_ANIMATION_DURATION } from '@/components/article/SkiaArabicWord';
@@ -98,6 +99,18 @@ export function WordTooltip({
   onOpenWordDetails,
 }: WordTooltipProps) {
   const colors = useColors();
+  const containerRef = useRef<View>(null);
+  const [containerOffset, setContainerOffset] = useState({ x: 0, y: 0 });
+
+  // Measure the container's window position to correct coordinate system differences on Android
+  const handleLayout = useCallback(() => {
+    if (Platform.OS !== 'android') return;
+    containerRef.current?.measureInWindow((x, y) => {
+      if (x !== undefined && y !== undefined) {
+        setContainerOffset({ x, y });
+      }
+    });
+  }, []);
 
   // Clean text by removing punctuation for display
   const cleanedText = cleanWordText(text);
@@ -123,9 +136,17 @@ export function WordTooltip({
     if (!layout) return DEFAULT_DIMENSIONS;
     if (layout.x < 0 || layout.y < 0 || layout.x > SCREEN_WIDTH) return DEFAULT_DIMENSIONS;
 
+    // Convert window coordinates to container-relative coordinates (fixes Android offset)
+    const adjustedLayout: TooltipLayout = {
+      x: layout.x - containerOffset.x,
+      y: layout.y - containerOffset.y,
+      width: layout.width,
+      height: layout.height,
+    };
+
     const displayedText = coloredSegments.map(s => s.text).join('');
     return calculateTooltipDimensions(
-      layout as TooltipLayout,
+      adjustedLayout,
       displayedText,
       false,
       undefined,
@@ -163,7 +184,7 @@ export function WordTooltip({
   if (!visible || !layout) return null;
 
   return (
-    <View style={CONTAINER_STYLE} pointerEvents="box-none">
+    <View ref={containerRef} onLayout={handleLayout} style={CONTAINER_STYLE} pointerEvents="box-none">
       <Pressable
         onPress={onOpenWordDetails}
         disabled={!onOpenWordDetails}

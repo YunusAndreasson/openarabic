@@ -37,7 +37,7 @@ const selectAudioUrl = (
 // Helper function to create enhanced audio track
 const createEnhancedTrack = async (
   articleId: ArticleId,
-  article: { title: string; image_url: string },
+  article: { title: string; image_url: string; author?: { name: string } },
   audioUrl: string,
 ): Promise<EnhancedAudioTrack> => {
   const fullAudioUrl = generateStorageUrl('audio', audioUrl);
@@ -48,6 +48,7 @@ const createEnhancedTrack = async (
     articleId,
     audioUrl: cachedAudioUrl,
     title: article.title,
+    artist: article.author?.name,
     imageUrl: generateStorageUrl('images', article.image_url),
   };
 };
