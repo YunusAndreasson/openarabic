@@ -158,10 +158,10 @@ export const ICON_CONTAINER = {
 } as const;
 
 /**
- * Progress threshold for considering an article completed (95%)
- * Provides leeway for users who read to the last sentence or two
+ * Progress threshold for considering an article completed (90%)
+ * Articles above this threshold are treated as finished and excluded from "Continue Reading"
  */
-export const COMPLETION_THRESHOLD = 95;
+export const COMPLETION_THRESHOLD = 90;
 
 export const LAYOUT = {
   /** Left/right screen edge padding for all content (12px) */

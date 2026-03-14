@@ -185,12 +185,17 @@ export function useArticleScreen({
       for (const item of viewableItems) {
         if (
           typeof item.index === 'number' &&
-          item.index > 0 && // Skip ListHeaderComponent (index 0 in FlashList v2)
-          item.isViewable === true
+          item.index > 0 // Skip ListHeaderComponent (index 0 in FlashList v2)
         ) {
           const sentenceIndex = item.index - 1;
           if (sentenceIndex >= 0 && sentenceIndex < totalSentences) {
-            maxVisibleSentenceIndex = Math.max(maxVisibleSentenceIndex, sentenceIndex);
+            // For the last sentence, count it as viewed even if partially visible
+            // (the viewability threshold can prevent it from registering at the bottom)
+            const isVisible =
+              item.isViewable === true || sentenceIndex === totalSentences - 1;
+            if (isVisible) {
+              maxVisibleSentenceIndex = Math.max(maxVisibleSentenceIndex, sentenceIndex);
+            }
           }
         }
       }
@@ -279,27 +284,16 @@ export function useArticleScreen({
       // Double RAF ensures FlashList layout is complete (v2 best practice)
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          // If scrolling to last 2 items, use scrollToEnd (more reliable)
-          const isNearEnd = targetIndex >= maxIndex - 2;
-
-          if (isNearEnd) {
-            try {
-              scrollViewRef.current?.scrollToEnd({ animated: true });
-            } catch {
-              // Silent error - scroll failed
-            }
-          } else {
-            try {
-              const approximateItemHeight = 100;
-              const headerHeight = 400;
-              const offset = headerHeight + targetIndex * approximateItemHeight;
-              scrollViewRef.current?.scrollToOffset({
-                offset,
-                animated: true,
-              });
-            } catch {
-              // Silent error - scroll failed
-            }
+          try {
+            // scrollToIndex accounts for actual item heights and header
+            // +1 offset because FlashList index 0 = ListHeaderComponent
+            scrollViewRef.current?.scrollToIndex({
+              index: targetIndex,
+              animated: true,
+              viewPosition: 0, // Place target at top of viewport
+            });
+          } catch {
+            // Silent error - scroll failed
           }
 
           // Show toast

@@ -157,7 +157,7 @@ describe('articleUtils', () => {
       // Note: calculateProgressPercentage does (lastSentenceRead + 1) / totalSentences
       // - In-progress: 94% (id 8), 75% (id 4), 50% (id 1), 25% (id 5), 1% (id 2)
       // - Not-opened: 0% (id 6 - no entry)
-      // - Completed: 100% (id 3), 95% (id 7)
+      // - Completed: 100% (id 3), 90% (id 7)
       const progressMap = new Map([
         [1, { last_sentence_read: 49, total_sentences: 100 }], // (49+1)/100 = 50%
         [2, { last_sentence_read: 0, total_sentences: 100 }], // (0+1)/100 = 1% (in-progress)
@@ -165,15 +165,15 @@ describe('articleUtils', () => {
         [4, { last_sentence_read: 74, total_sentences: 100 }], // (74+1)/100 = 75%
         [5, { last_sentence_read: 24, total_sentences: 100 }], // (24+1)/100 = 25%
         // No entry for id 6 - returns 0% (not-opened)
-        [7, { last_sentence_read: 94, total_sentences: 100 }], // (94+1)/100 = 95%
-        [8, { last_sentence_read: 93, total_sentences: 100 }], // (93+1)/100 = 94%
+        [7, { last_sentence_read: 89, total_sentences: 100 }], // (89+1)/100 = 90%
+        [8, { last_sentence_read: 88, total_sentences: 100 }], // (88+1)/100 = 89%
       ]);
 
       const result = sortArticlesByProgress(extendedArticles, progressMap);
 
       // Validate complete sorting order
-      // Top tier: In-progress articles (1-94%, sorted descending)
-      expect(result[0].id).toBe(8); // 94% - highest in-progress
+      // Top tier: In-progress articles (1-89%, sorted descending)
+      expect(result[0].id).toBe(8); // 89% - highest in-progress
       expect(result[1].id).toBe(4); // 75%
       expect(result[2].id).toBe(1); // 50%
       expect(result[3].id).toBe(5); // 25%
@@ -182,12 +182,12 @@ describe('articleUtils', () => {
       // Middle tier: Not-opened articles (0%)
       expect(result[5].id).toBe(6); // 0% - no entry
 
-      // Bottom tier: Completed articles (>=95%, sorted descending)
+      // Bottom tier: Completed articles (>=90%, sorted descending)
       expect(result[6].id).toBe(3); // 100%
-      expect(result[7].id).toBe(7); // 95% - at threshold
+      expect(result[7].id).toBe(7); // 90% - at threshold
     });
 
-    test('should treat 94% as in-progress but 95%+ as completed', () => {
+    test('should treat 89% as in-progress but 90%+ as completed', () => {
       const extendedArticles: Article[] = [
         { ...mockArticles[0], id: 1 },
         { ...mockArticles[1], id: 2 },
@@ -197,13 +197,13 @@ describe('articleUtils', () => {
         { ...mockArticles[1], id: 6 },
       ];
 
-      // Test edge cases around 95% completion threshold
+      // Test edge cases around 90% completion threshold
       // Note: calculateProgressPercentage does (lastSentenceRead + 1) / totalSentences
       const progressMap = new Map([
         [1, { last_sentence_read: 0, total_sentences: 100 }], // (0+1)/100 = 1% in-progress
         // No entry for id 2 - returns 0% (not-opened)
-        [3, { last_sentence_read: 93, total_sentences: 100 }], // (93+1)/100 = 94% in-progress
-        [4, { last_sentence_read: 94, total_sentences: 100 }], // (94+1)/100 = 95% completed
+        [3, { last_sentence_read: 88, total_sentences: 100 }], // (88+1)/100 = 89% in-progress
+        [4, { last_sentence_read: 89, total_sentences: 100 }], // (89+1)/100 = 90% completed
         [5, { last_sentence_read: 98, total_sentences: 100 }], // (98+1)/100 = 99% completed
         [6, { last_sentence_read: 99, total_sentences: 100 }], // (99+1)/100 = 100% completed
       ]);
@@ -211,17 +211,17 @@ describe('articleUtils', () => {
       const result = sortArticlesByProgress(extendedArticles, progressMap);
 
       // Validate edge cases are categorized correctly
-      // In-progress tier (1-94%, sorted descending)
-      expect(result[0].id).toBe(3); // 94% - highest in-progress
+      // In-progress tier (1-89%, sorted descending)
+      expect(result[0].id).toBe(3); // 89% - highest in-progress
       expect(result[1].id).toBe(1); // 1% - lowest in-progress
 
       // Not-opened tier (0%)
       expect(result[2].id).toBe(2); // 0% - not opened (no entry)
 
-      // Completed tier (95%+, sorted descending)
+      // Completed tier (90%+, sorted descending)
       expect(result[3].id).toBe(6); // 100%
       expect(result[4].id).toBe(5); // 99%
-      expect(result[5].id).toBe(4); // 95% - at threshold
+      expect(result[5].id).toBe(4); // 90% - at threshold
     });
   });
 

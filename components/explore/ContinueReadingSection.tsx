@@ -17,7 +17,7 @@ import { getArticleMetadataWithoutCategory } from '@/utils/stringUtils';
 
 const CARD_WIDTH = SCREEN_WIDTH * 0.7;
 const CARD_SPACING = LAYOUT.SPACING.SMALL;
-const MAX_ARTICLES = 10;
+const MAX_ARTICLES = 5;
 
 interface ContinueReadingSectionProps {
   articlesData: Article[];
@@ -46,8 +46,8 @@ const ContinueReadingSectionComponent: FC<ContinueReadingSectionProps> = ({ arti
       return { articles: [], sectionLabel: '', isContinueReading: false };
     }
 
-    // Find articles with partial progress (1-94%)
-    const continueReadingArticles: { article: Article; progress: number }[] = [];
+    // Find articles with partial progress (1-89%)
+    const continueReadingArticles: { article: Article; progress: number; updatedAt: string }[] = [];
 
     for (const article of articlesData) {
       const progressData = progressMap.get(article.id as ArticleId);
@@ -57,15 +57,19 @@ const ContinueReadingSectionComponent: FC<ContinueReadingSectionProps> = ({ arti
           progressData.total_sentences,
         );
         if (percentage > 0 && percentage < COMPLETION_THRESHOLD) {
-          continueReadingArticles.push({ article, progress: percentage });
+          continueReadingArticles.push({
+            article,
+            progress: percentage,
+            updatedAt: progressData.updated_at ?? '',
+          });
         }
       }
     }
 
     // If we have in-progress articles, show "Continue Reading"
     if (continueReadingArticles.length > 0) {
-      // Sort by highest progress first (closest to completion)
-      continueReadingArticles.sort((a, b) => b.progress - a.progress);
+      // Sort by most recently read first
+      continueReadingArticles.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
       return {
         articles: continueReadingArticles.slice(0, MAX_ARTICLES),
         sectionLabel: STRINGS.CONTINUE_READING,

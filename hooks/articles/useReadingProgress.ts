@@ -188,6 +188,10 @@ export function useReadingProgress({
     progressLastSentence: progress?.last_sentence_read ?? 0,
   });
 
+  // Stable ref for queryClient so unmount cleanup can invalidate cache
+  const queryClientRef = useRef(queryClient);
+  queryClientRef.current = queryClient;
+
   // Update refs whenever values change
   useEffect(() => {
     unmountDataRef.current = {
@@ -222,13 +226,20 @@ export function useReadingProgress({
 
         // Save progress if we're at a different position than last recorded
         if (validFinalSentenceIndex !== lastRecorded && data.userId) {
-          // Save final progress without logging
+          // Save final progress and invalidate cache so Explore tab updates immediately
           readingProgressService
             .updateProgress({
               userId: data.userId,
               articleId: data.articleId,
               lastSentenceRead: validFinalSentenceIndex,
               totalSentences: data.totalSentences,
+            })
+            .then(() => {
+              if (data.userId) {
+                queryClientRef.current.invalidateQueries({
+                  queryKey: readingProgressQueries.bulk(data.userId).queryKey,
+                });
+              }
             })
             .catch(() => {
               // Silent error - final progress save failed
