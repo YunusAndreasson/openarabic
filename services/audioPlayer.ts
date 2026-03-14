@@ -403,17 +403,14 @@ class SimpleAudioService {
       // Set up event subscription BEFORE playing to catch immediate failures
       this.startEventSubscription();
 
-      // CRITICAL FIX: Wait for player to be ready using native status updates
-      // This prevents ~1-20% of playback failures where play() is called before player is initialized
-      await this.waitForPlayerReady();
-
-      // Start playback (fresh player starts at position 0)
-      // Wrap in try-catch to handle cases where play() fails even after ready check
+      // Try immediate playback first (works for cached/local audio)
+      // Only fall back to waitForPlayerReady if play() fails synchronously
       try {
         player.play();
-      } catch (playError) {
-        // If play() fails synchronously, throw to trigger retry logic
-        throw new Error(`Failed to start playback: ${playError}`);
+      } catch {
+        // Player not ready yet — wait for native loading then retry
+        await this.waitForPlayerReady();
+        player.play();
       }
 
       // Activate lock screen controls with track metadata
