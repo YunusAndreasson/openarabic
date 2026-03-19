@@ -76,7 +76,7 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
         <Pressable onPress={onClose} hitSlop={LAYOUT.HIT_SLOP.MEDIUM} style={closeButtonStyle}>
           <GlassContainer
             style={[styles.glassButton, fallbackButtonStyle]}
-            {...(GLASS_AVAILABLE && { isInteractive: true })}
+            {...(GLASS_AVAILABLE && { isInteractive: true, glassEffectStyle: 'clear' })}
           >
             <Ionicons
               name="close"

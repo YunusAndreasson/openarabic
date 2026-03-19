@@ -159,10 +159,13 @@ export function useAuthForm(): UseAuthFormReturn {
       });
       if (error) {
         if (!isMountedRef.current) return;
+        // "User already registered" is expected user behavior, not a system error
+        const isAlreadyRegistered = error.message?.toLowerCase().includes('already registered');
         setPasswordError(error.message);
         handleError(error, {
           toastMessage: `${STRINGS.ACCOUNT_CREATION_FAILED}. ${error.message}`,
           analyticsEventName: 'Sign_Up_Error',
+          captureSentry: !isAlreadyRegistered,
           sentrySeverity: 'error',
         });
       } else {
@@ -246,14 +249,19 @@ export function useAuthForm(): UseAuthFormReturn {
 
       if (error) {
         if (!isMountedRef.current) return;
-        Sentry.captureException(error, {
-          tags: { location: 'password_reset' },
-          level: 'warning',
-        });
+        // Supabase rate limiting is expected user behavior (spamming reset button), not a system error
+        const isRateLimit = error.message?.includes('you can only request this after');
+        if (!isRateLimit) {
+          Sentry.captureException(error, {
+            tags: { location: 'password_reset' },
+            level: 'warning',
+          });
+        }
         handleError(error, {
-          toastMessage: STRINGS.RESET_PASSWORD_ERROR,
+          toastMessage: isRateLimit ? STRINGS.PLEASE_TRY_AGAIN : STRINGS.RESET_PASSWORD_ERROR,
           analyticsEventName: 'Password_Reset_Error',
-          sentrySeverity: 'error',
+          captureSentry: false, // Already handled above or skipped for rate limits
+          sentrySeverity: 'warning',
         });
       } else {
         if (!isMountedRef.current) return;

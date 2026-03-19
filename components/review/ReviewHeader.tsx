@@ -77,7 +77,7 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({ progress, maxProgress, onC
         <Pressable onPress={handleClose} hitSlop={LAYOUT.HIT_SLOP.MEDIUM}>
           <GlassContainer
             style={[STATIC_STYLES.closeButton, fallbackButtonStyle]}
-            {...(GLASS_AVAILABLE && { isInteractive: true })}
+            {...(GLASS_AVAILABLE && { isInteractive: true, glassEffectStyle: 'clear' })}
           >
             <Ionicons
               name="close"

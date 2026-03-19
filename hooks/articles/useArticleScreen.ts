@@ -129,9 +129,9 @@ export function useArticleScreen({
       handleError(error as Error, { toastMessage: STRINGS.FAILED_TO_STOP_AUDIO_ON_CLOSE });
     }
 
-    // Check if we can go back, otherwise navigate to library home
-    if (router.canGoBack()) {
-      router.back();
+    // Dismiss the modal screen, or navigate to library home if not dismissible
+    if (router.canDismiss()) {
+      router.dismiss();
     } else {
       router.push(ROUTE_PATHS.EXPLORE_TAB);
     }

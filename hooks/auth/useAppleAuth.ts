@@ -5,6 +5,7 @@ import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
 import { useOAuthProvider, type OAuthSignInResult } from '@/hooks/auth/useOAuthProvider';
+import { isCancellationError } from '@/utils/authUtils';
 
 /** Native Apple Auth is unavailable in Expo Go or non-iOS */
 const isAppleAuthAvailable = Platform.OS === 'ios' && Constants.appOwnership !== 'expo';
@@ -174,6 +175,11 @@ export function useAppleAuth(): UseAppleAuthReturn {
     },
 
     handleProviderError: (error: unknown) => {
+      // User cancellations (error 1001) are expected — let useOAuthProvider handle silently
+      if (isCancellationError(error)) {
+        return undefined;
+      }
+
       // Extract comprehensive Apple native error details
       const errorObj = error && typeof error === 'object' ? error : {};
 

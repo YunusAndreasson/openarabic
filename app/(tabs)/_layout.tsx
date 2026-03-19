@@ -38,6 +38,7 @@ export default function TabLayout(): JSX.Element {
     return (
       <NativeTabs
         tintColor={colors.tint}
+        badgeBackgroundColor={colors.tint}
         iconColor={{
           default: colors.tabIconDefault,
           selected: colors.tint,
@@ -60,6 +61,7 @@ export default function TabLayout(): JSX.Element {
   return (
     <Tabs
       screenOptions={{
+        animation: 'fade', // Smooth cross-fade transition between tabs
         tabBarActiveTintColor: colors.tint,
         tabBarInactiveTintColor: colors.tabIconDefault,
         tabBarStyle: {

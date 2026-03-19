@@ -20,7 +20,9 @@
 jest.mock('expo-router', () => ({
   router: {
     canGoBack: jest.fn(),
+    canDismiss: jest.fn(),
     back: jest.fn(),
+    dismiss: jest.fn(),
     push: jest.fn(),
   },
 }));
@@ -142,8 +144,8 @@ describe('useArticleScreen Hook', () => {
       hadExistingProgressOnMount: false,
     } as any);
 
-    jest.mocked(router.canGoBack).mockReturnValue(true);
-    jest.mocked(router.back).mockImplementation(jest.fn());
+    jest.mocked(router.canDismiss).mockReturnValue(true);
+    jest.mocked(router.dismiss).mockImplementation(jest.fn());
     jest.mocked(router.push).mockImplementation(jest.fn());
     jest.mocked(stopAudioSafely).mockResolvedValue(undefined);
     jest.mocked(handleError).mockImplementation(jest.fn());
@@ -355,8 +357,8 @@ describe('useArticleScreen Hook', () => {
   });
 
   describe('Navigation & Close', () => {
-    test('closes article and goes back when router can go back', async () => {
-      jest.mocked(router.canGoBack).mockReturnValue(true);
+    test('closes article and dismisses modal when router can dismiss', async () => {
+      jest.mocked(router.canDismiss).mockReturnValue(true);
 
       const { result } = renderHook(() =>
         useArticleScreen({
@@ -370,12 +372,12 @@ describe('useArticleScreen Hook', () => {
       });
 
       expect(stopAudioSafely).toHaveBeenCalledWith(true);
-      expect(router.back).toHaveBeenCalled();
+      expect(router.dismiss).toHaveBeenCalled();
       expect(router.push).not.toHaveBeenCalled();
     });
 
-    test('navigates to explore tab when router cannot go back', async () => {
-      jest.mocked(router.canGoBack).mockReturnValue(false);
+    test('navigates to explore tab when router cannot dismiss', async () => {
+      jest.mocked(router.canDismiss).mockReturnValue(false);
 
       const { result } = renderHook(() =>
         useArticleScreen({
@@ -389,7 +391,7 @@ describe('useArticleScreen Hook', () => {
       });
 
       expect(stopAudioSafely).toHaveBeenCalledWith(true);
-      expect(router.back).not.toHaveBeenCalled();
+      expect(router.dismiss).not.toHaveBeenCalled();
       expect(router.push).toHaveBeenCalledWith('/(tabs)/explore');
     });
 
@@ -412,7 +414,7 @@ describe('useArticleScreen Hook', () => {
       ).resolves.not.toThrow();
 
       expect(handleError).toHaveBeenCalledWith(error, expect.any(Object));
-      expect(router.back).toHaveBeenCalled(); // Should still navigate
+      expect(router.dismiss).toHaveBeenCalled(); // Should still navigate
     });
   });
 

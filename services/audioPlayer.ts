@@ -795,24 +795,34 @@ class SimpleAudioService {
     }
   }
 
+  // Track whether lock screen has been activated for the current player
+  private lockScreenActive = false;
+
   /**
    * Activate lock screen controls with track metadata (best-effort)
+   * Uses updateLockScreenMetadata for subsequent tracks in a playlist
+   * to avoid the heavier setActiveForLockScreen re-activation
    */
   private activateLockScreen(track: EnhancedAudioTrack): void {
     if (!this.currentPlayer) return;
     try {
-      this.currentPlayer.setActiveForLockScreen(
-        true,
-        {
-          title: track.title,
-          artist: track.artist,
-          artworkUrl: track.imageUrl,
-        },
-        {
+      const metadata = {
+        title: track.title,
+        artist: track.artist,
+        artworkUrl: track.imageUrl,
+      };
+
+      if (this.lockScreenActive) {
+        // Lock screen already active — just update metadata (lighter call)
+        this.currentPlayer.updateLockScreenMetadata(metadata);
+      } else {
+        // First activation — full setup with controls configuration
+        this.currentPlayer.setActiveForLockScreen(true, metadata, {
           showSeekForward: this.isPlaylistMode,
           showSeekBackward: this.isPlaylistMode,
-        },
-      );
+        });
+        this.lockScreenActive = true;
+      }
     } catch {
       // Non-critical — lock screen controls are best-effort
     }
@@ -831,6 +841,7 @@ class SimpleAudioService {
 
       try {
         player.clearLockScreenControls();
+        this.lockScreenActive = false;
         player.pause();
         player.remove();
       } catch {
@@ -886,6 +897,7 @@ class SimpleAudioService {
 
     // Reset internal state to prevent stale references
     this.audioSessionConfigured = false;
+    this.lockScreenActive = false;
     this.isPlaylistMode = false;
     this.playlist = [];
     this.currentPlaylistIndex = 0;

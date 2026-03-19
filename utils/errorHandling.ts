@@ -9,7 +9,12 @@ import { ToastType } from '@/types/enums';
  * Useful for catch blocks where the error type is unknown.
  */
 export function toError(error: unknown): Error {
-  return error instanceof Error ? error : new Error(String(error));
+  if (error instanceof Error) return error;
+  // Handle plain objects with a message property (e.g. Supabase error objects)
+  if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') {
+    return new Error(error.message);
+  }
+  return new Error(String(error));
 }
 
 // Store toast handler globally - updated to support types

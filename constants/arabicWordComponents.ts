@@ -745,6 +745,17 @@ export const ARABIC_DIACRITICS: WordComponent[] = [
     type: ComponentType.DIACRITIC,
     role: GrammaticalRole.CASE_ENDING,
   },
+
+  // 3rd person masculine singular past tense (ــَ) - final fatha
+  // The fatha on the last radical marks the default past tense form ("he did")
+  // Safe from false positives: English word-boundary matching ensures "he" only matches
+  // as a standalone token (e.g., "he said"), not as a substring (e.g., "the book")
+  {
+    arabic: 'َ',
+    english: ['he'],
+    type: ComponentType.DIACRITIC,
+    role: GrammaticalRole.VERB_CONJUGATION,
+  },
 ];
 
 /**

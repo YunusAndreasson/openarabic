@@ -11,6 +11,7 @@ import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { ToastType } from '@/types/enums';
+import { errorFeedback, successFeedback } from '@/utils/haptics';
 
 interface ToastProps {
   visible: boolean;
@@ -91,6 +92,10 @@ export function Toast({
     }
 
     if (visible) {
+      // Haptic feedback for error and success toasts
+      if (type === ToastType.ERROR) errorFeedback();
+      else if (type === ToastType.SUCCESS) successFeedback();
+
       timerRef.current = setTimeout(() => {
         onCloseRef.current();
       }, duration);
@@ -102,12 +107,12 @@ export function Toast({
         timerRef.current = null;
       }
     };
-  }, [visible, duration]);
+  }, [visible, duration, type]);
 
   const config = TOAST_CONFIG[type];
   const backgroundColor = config.colorKey
     ? (colors[config.colorKey] as string) || colors.tint
-    : colors.card;
+    : colors.elevation2; // Use elevated surface so info toast doesn't blend with screen background
   const textColor = config.colorKey ? colors.white : colors.text;
 
   const maxToastWidth = SCREEN_WIDTH * MAX_TOAST_WIDTH_RATIO;

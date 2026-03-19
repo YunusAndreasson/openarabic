@@ -8,14 +8,12 @@ import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import {
   APP_SESSION_ID,
   articleQueries,
-  CACHE_TIMES,
   fsrsQueries,
   readingProgressQueries,
 } from '@/constants/queries';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { articlesService } from '@/services/articles';
-import { bookmarkService } from '@/services/bookmark';
 import { readingProgressService } from '@/services/readingProgress';
 import type { Article } from '@/types/articles.types';
 import type { ArticleId } from '@/types/branded.types';
@@ -138,10 +136,13 @@ export const useAppPreloader = (): AppPreloaderResult => {
       }
 
       // Prefetch bookmark images for instant loading when user opens bookmarks
+      // Uses ensureQueryData to reuse the TanStack Query cache and prevent N+1 API calls
       if (user?.id) {
         InteractionManager.runAfterInteractions(async () => {
           try {
-            const readingList = await bookmarkService.getReadingList(user.id);
+            const readingList = await queryClient.ensureQueryData(
+              readingProgressQueries.readingList(user.id),
+            );
             if (readingList.length > 0) {
               const imagePrefetches = readingList
                 .map(item => String(item.articles.image_url))
@@ -160,19 +161,12 @@ export const useAppPreloader = (): AppPreloaderResult => {
       }
 
       // Preload user's FSRS data if available
+      // Uses ensureQueryData to reuse in-flight/cached queries from useAppBadge's useFSRSQueries
+      // (which mounts in the same render cycle), preventing N+1 API calls to study_words
       if (user?.id) {
         try {
-          // CRITICAL: Force refresh due words on app open to get latest calculations
-          await queryClient.fetchQuery({
-            ...fsrsQueries.due(user.id, 1),
-            staleTime: 0, // Always fetch fresh data on app open
-          });
-
-          // Also refresh all words for accurate memory strength calculation
-          await queryClient.fetchQuery({
-            ...fsrsQueries.all(user.id),
-            staleTime: 0, // Always fetch fresh data on app open
-          });
+          await queryClient.ensureQueryData(fsrsQueries.due(user.id));
+          await queryClient.ensureQueryData(fsrsQueries.all(user.id));
 
           // Preload featured articles to prevent glitching when library loads
           try {
@@ -193,12 +187,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
         setTimeout(() => {
           const backgroundPromises = [
             queryClient.ensureQueryData(articleQueries.authors()),
-            queryClient.prefetchQuery({
-              queryKey: readingProgressQueries.readingList(user.id).queryKey,
-              queryFn: () => bookmarkService.getReadingList(user.id),
-              ...CACHE_TIMES.MEDIUM,
-              retry: 2,
-            }),
+            queryClient.ensureQueryData(readingProgressQueries.readingList(user.id)),
           ];
 
           // Don't await - let these load in background
@@ -295,18 +284,15 @@ export const useAppPreloader = (): AppPreloaderResult => {
       if (!allArticles || allArticles.length === 0) return false;
 
       // Get user's study words to determine selection strategy
-      const allStudyWords = await queryClient.fetchQuery({
-        ...fsrsQueries.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
-        staleTime: 180000,
-      });
+      // Use ensureQueryData to reuse cached data from useAppBadge/preloader
+      const allStudyWords = await queryClient.ensureQueryData(
+        fsrsQueries.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
+      );
 
       const hasAnyStudyWords = allStudyWords.length > 0;
 
-      // Get due words for intelligent selection
-      const dueWords = await queryClient.fetchQuery({
-        ...fsrsQueries.due(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
-        staleTime: 60000, // 1 minute for due words
-      });
+      // Get due words for intelligent selection (already cached from preloader)
+      const dueWords = await queryClient.ensureQueryData(fsrsQueries.due(user.id));
 
       const dueWordRootIds = new Set(dueWords.map(word => word.root_id));
 

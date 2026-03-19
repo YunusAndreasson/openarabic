@@ -154,6 +154,7 @@ export const STRINGS = {
   CONTINUE_READING: 'Continue reading',
   MORE_FROM_AUTHOR: 'More from {author}',
   MORE_FROM_CATEGORY: 'More in {category}',
+  SOURCE_BOOK: 'Source: {book}',
   UNREAD: 'Unread',
   COMPLETED: 'Completed',
   SET_TIME: 'Set time',

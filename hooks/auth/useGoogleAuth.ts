@@ -3,6 +3,7 @@ import NetInfo from '@react-native-community/netinfo';
 import * as Sentry from '@sentry/react-native';
 import { useEffect, useState } from 'react';
 import { useOAuthProvider, type OAuthSignInResult } from '@/hooks/auth/useOAuthProvider';
+import { isCancellationError } from '@/utils/authUtils';
 
 /** Native Google Sign In is unavailable in Expo Go */
 const isExpoGo = Constants.appOwnership === 'expo';
@@ -154,20 +155,23 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
           const isInternalError = errorCode === 8;
           const shouldRetry = isInternalError && signInAttempt < maxRetries;
 
-          Sentry.captureException(signInError, {
-            tags: {
-              location: 'google_auth',
-              step: 'google_signin',
-              attempt: signInAttempt + 1,
-              willRetry: shouldRetry,
-            },
-            level: shouldRetry ? 'warning' : 'error',
-            extra: {
-              errorCode,
-              errorMessage:
-                signInError instanceof Error ? signInError.message : String(signInError),
-            },
-          });
+          // Skip Sentry for user cancellations — useOAuthProvider handles these silently
+          if (!isCancellationError(signInError)) {
+            Sentry.captureException(signInError, {
+              tags: {
+                location: 'google_auth',
+                step: 'google_signin',
+                attempt: signInAttempt + 1,
+                willRetry: shouldRetry,
+              },
+              level: shouldRetry ? 'warning' : 'error',
+              extra: {
+                errorCode,
+                errorMessage:
+                  signInError instanceof Error ? signInError.message : String(signInError),
+              },
+            });
+          }
 
           if (shouldRetry) {
             signInAttempt++;
@@ -180,12 +184,14 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
 
       if (!userInfo?.data?.idToken) {
         // Log what we actually received for debugging
+        // Downgraded to warning: this is typically a Google Play Services environmental issue
+        // on low-end Android devices, not an app bug
         Sentry.captureException(new Error('Google Sign-In completed but no ID token returned'), {
           tags: {
             location: 'google_auth',
             step: 'token_validation',
           },
-          level: 'error',
+          level: 'warning',
           extra: {
             hasUser: !!userInfo?.data?.user,
             hasServerAuthCode: !!userInfo?.data?.serverAuthCode,

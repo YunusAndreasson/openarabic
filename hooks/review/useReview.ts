@@ -573,7 +573,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
           } else if (fromRemember) {
             router.replace(ROUTE_PATHS.PRACTICE_TAB);
           } else {
-            router.back();
+            router.dismiss();
           }
         }
         mounted.current = false;

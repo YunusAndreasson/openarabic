@@ -275,43 +275,41 @@ describe('audioPlayer service', () => {
       expect(status.isPlaying).toBeFalsy();
     });
 
-    test('should wait for player readiness before playing', async () => {
-      // Mock player with listener that simulates readiness
+    test('should fall back to waitForPlayerReady when immediate play throws', async () => {
+      // Mock player where play() throws on first call (not ready), succeeds on second
       let statusCallback:
         | ((status: { isLoaded?: boolean; playbackState?: string }) => void)
         | null = null;
       const mockRemoveListener = jest.fn();
+      let playCallCount = 0;
       const mockPlayerWithListener = {
         ...mockPlayer,
+        play: jest.fn(() => {
+          playCallCount++;
+          if (playCallCount === 1) {
+            throw new Error('Player not ready');
+          }
+        }),
         addListener: jest.fn((event, callback) => {
           if (event === 'playbackStatusUpdate') {
             statusCallback = callback;
+            // Simulate player becoming ready shortly after listener is added
+            process.nextTick(() => {
+              if (statusCallback) {
+                statusCallback({ isLoaded: true, playbackState: 'ready' });
+              }
+            });
           }
           return { remove: mockRemoveListener };
         }),
       };
       mockCreateAudioPlayer.mockReturnValueOnce(mockPlayerWithListener);
 
-      // Start play (should wait for readiness)
-      const playPromise = audioService.play(testTrack);
+      // Start play — first call throws, then waits for ready, then retries
+      await audioService.play(testTrack);
 
-      // Give it a moment to set up the listener
-      await new Promise(resolve => setTimeout(resolve, 10));
-
-      // Verify play() hasn't been called yet (waiting for readiness)
-      expect(mockPlayerWithListener.play).not.toHaveBeenCalled();
-
-      // Simulate player becoming ready
-      if (statusCallback) {
-        statusCallback({ isLoaded: true, playbackState: 'ready' });
-      }
-
-      // Wait for play to complete
-      await playPromise;
-
-      // Now play() should have been called
-      expect(mockPlayerWithListener.play).toHaveBeenCalled();
-      expect(mockRemoveListener).toHaveBeenCalled(); // Listener should be cleaned up
+      // play() should have been called twice: immediate attempt + retry after ready
+      expect(mockPlayerWithListener.play).toHaveBeenCalledTimes(2);
     });
 
     test('should resolve immediately if player is ready with playbackState', async () => {

@@ -24,6 +24,7 @@ import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import { calculateHeaderHeight } from '@/utils/gradientUtils';
+import { STRINGS } from '@/constants/strings';
 import { getArticleMetadata } from '@/utils/stringUtils';
 
 // Animated version of FlashList for UI-thread scroll handling
@@ -219,7 +220,7 @@ const ArticleContentInternal = function ArticleContent({
         </ThemedText>
         {article.book && (
           <ThemedText type="label" weight="normal" colorName="authorText" style={styles.bookText}>
-            {article.book}
+            {STRINGS.SOURCE_BOOK.replace('{book}', article.book)}
           </ThemedText>
         )}
       </View>

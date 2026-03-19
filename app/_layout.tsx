@@ -82,6 +82,9 @@ try {
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
 
+// Smooth fade-out transition when hiding the splash screen
+SplashScreen.setOptions({ fade: true, duration: 400 });
+
 // Sync React Query online status with device connectivity
 onlineManager.setEventListener((setOnline: (online: boolean) => void) => {
   return NetInfo.addEventListener((state: NetInfoState) => {

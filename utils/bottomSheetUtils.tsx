@@ -79,7 +79,7 @@ const BlurBackdropComponent = ({ animatedIndex, style }: BottomSheetBackdropProp
         <BlurView
           intensity={intensity}
           tint={tint}
-          blurMethod="dimezisBlurView"
+          blurMethod="dimezisBlurViewSdk31Plus"
           style={styles.blur}
         />
       </Animated.View>
