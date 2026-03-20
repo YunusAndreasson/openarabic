@@ -1,5 +1,5 @@
 {
-  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "$schema": "https://unpkg.com/knip@6/schema.json",
   "entry": [
     "app/**/*.{ts,tsx}",
     "components/**/*.{ts,tsx}",
@@ -24,30 +24,16 @@
   ],
   "ignore": [
     "plugins/**",
-    "patches/**",
-    "docs/**",
-    "translate/**",
-    "supabase/migrations/**",
-    "assets/**",
-    "**/*.d.ts",
-    "types/database.types.ts",
-    "__mocks__/**",
-    "__perf__/**",
-    "babel.config.js",
-    "metro.config.js",
-    "metro.config.cjs",
-    "jest.config.js",
-    "jest.setup.js",
-    "expo-router/entry",
-    "expo/**",
-    ".github/workflows/**",
-    "@expo/metro-config",
-    "metro-minify-terser",
     "scripts/**",
-    "admin-dashboard/**"
+    "metro.config.js"
+  ],
+  "ignoreDependencies": [
+    "expo-constants",
+    "babel-preset-expo",
+    "babel-jest"
   ],
   "ignoreExportsUsedInFile": false,
   "includeEntryExports": false,
-  "ignoreBinaries": ["supabase", "gh"],
+  "ignoreBinaries": ["supabase", "gh", "list"],
   "exclude": ["duplicates"]
 }
