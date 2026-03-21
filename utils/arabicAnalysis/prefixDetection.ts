@@ -112,6 +112,46 @@ export function detectPrefixes(
         continue;
       }
 
+      // VALIDATION 1b: Prevent same single-letter prefix appearing twice
+      // Arabic never stacks the same single letter as a prefix twice.
+      // Example: بلبناني → ب + لبناني (ل is root, not preposition)
+      // Example: ففعلوا → ف + فعلوا (second ف is root of فعل, not conjunction)
+      //
+      // Exception: لل is the assimilated definite article (ل preposition + ال article).
+      // Validation 3a-2 below relabels the second ل as DEFINITE_ARTICLE.
+      if (prefixMatch.arabicMatch.length === 1) {
+        const sameLetterAlreadyDetected = detectedPrefixes.some(
+          p => p.arabicMatch === prefixMatch.arabicMatch,
+        );
+        // Allow لل (assimilated article), reject all other same-letter duplicates
+        if (sameLetterAlreadyDetected && prefixMatch.arabicMatch !== 'ل') {
+          continueDetection = false;
+          continue;
+        }
+        // For single-letter prepositions: also reject different-letter duplicates
+        // (only one preposition per word — بل is never ب+ل as two prepositions)
+        if (
+          role === GrammaticalRole.PREPOSITION &&
+          SINGLE_LETTER_PREPOSITION_SET.has(prefixMatch.arabicMatch)
+        ) {
+          const isLamAfterLam =
+            prefixMatch.arabicMatch === 'ل' &&
+            detectedPrefixes.some(p => p.arabicMatch === 'ل');
+          if (!isLamAfterLam) {
+            const hasSingleLetterPreposition = detectedPrefixes.some(
+              p =>
+                p.role === GrammaticalRole.PREPOSITION &&
+                p.arabicMatch.length === 1 &&
+                SINGLE_LETTER_PREPOSITION_SET.has(p.arabicMatch),
+            );
+            if (hasSingleLetterPreposition) {
+              continueDetection = false;
+              continue;
+            }
+          }
+        }
+      }
+
       // VALIDATION 2: Prevent consuming entire word as prefixes in specific cases
       // 2a. Prevent breaking known nouns like "بال" (mind)
       // Specific case: after detecting "ال", don't detect "ب" if it would leave "ال" as root
@@ -175,23 +215,12 @@ export function detectPrefixes(
         continue;
       }
 
-      // VALIDATION 4: Prevent single-letter prepositions AFTER definite article
-      // Arabic grammar: Prepositions come BEFORE ال (e.g., بال = bi-al), not after
-      // Example: "البركة" (al-baraka) = ال + بركة, NOT ال + ب + ركة
-      // Example: "المعاني" (al-ma'ani) = ال + معاني, NOT ال + م + عاني
-      // The ب in بركة is part of the root ب-ر-ك (blessing), not a preposition
-      // The م in معاني is part of the root م-ع-ن (meaning), not a preposition
-      // "of" in English comes from the genitive case (kasra), not from these letters
-      const hasDefiniteArticle = seenRoles.has(GrammaticalRole.DEFINITE_ARTICLE);
-      const isSingleLetterPreposition =
-        role === GrammaticalRole.PREPOSITION &&
-        prefixMatch.arabicMatch.length === 1 &&
-        SINGLE_LETTER_PREPOSITION_SET.has(prefixMatch.arabicMatch);
-
-      if (hasDefiniteArticle && isSingleLetterPreposition) {
-        // Already have definite article, and this is a single-letter preposition
-        // Reject this match - prepositions come before ال, not after
-        // Stop detection to preserve the root
+      // VALIDATION 4: No prefixes AFTER definite article
+      // Arabic grammar: The definite article (ال or assimilated لل) always immediately
+      // precedes the noun. Nothing comes between the article and the root.
+      // Example: "البركة" = ال + بركة, NOT ال + ب + ركة (ب is root)
+      // Example: "للفرجة" = ل + ل + فرجة, NOT ل + ل + ف + رجة (ف is root)
+      if (seenRoles.has(GrammaticalRole.DEFINITE_ARTICLE)) {
         continueDetection = false;
         continue;
       }
@@ -226,111 +255,75 @@ export function detectPrefixes(
         }
       }
 
-      // VALIDATION 6: Prevent splitting يت (Form VI verb pattern: يَتَفَاعَلُ)
-      // Arabic verb morphology: يَتَ together indicates Form VI (mutual/reciprocal action)
-      // Example: يَتَدَارَسُ (ya-ta-dārasu) = "studying together" (Form VI from root د-ر-س)
-      // Correct: و + يتدارس (conjunction + Form VI verb)
-      // Incorrect: و + ي + ت + دارس (conjunction + subject prefix + subject prefix + root)
-      //
-      // Form VI characteristics:
-      //   - Present tense: يَتَفَاعَلُ (ya-ta-fāʿalu) - 3rd person masculine singular
-      //   - Past tense: تَفَاعَلَ (ta-fāʿala)
-      //   - The تَ in Form VI is part of the verb form pattern, not a separate subject marker
-      //
-      // Examples where this applies:
-      //   - يَتَعَاوَنُ (ya-taʿāwanu) = "he cooperates" (Form VI from ع-و-ن)
-      //   - يَتَبَادَلُ (ya-tabādalu) = "he exchanges" (Form VI from ب-د-ل)
-      //   - يَتَشَارَكُ (ya-tashāraku) = "he shares" (Form VI from ش-ر-ك)
-      //
-      // Strategy: Look ahead when matching ي to see if ت follows immediately
-      // If ي is followed by ت, reject ي to keep يت together
-      const isYaMatch = prefixMatch.arabicMatch === 'ي';
-      const isTaMatch = prefixMatch.arabicMatch === 'ت';
+      // VALIDATIONS 6-8: Subject marker handling
+      // Subject markers (ي، ت، ن، أ) are verb conjugation prefixes (he/she/we/I).
+      // They're valid colorable prefixes, but detection must stop after them to prevent
+      // cascading into the verb root.
+      const isCurrentSubjectMarker = VALIDATION_CONFIG.SUBJECT_MARKERS.includes(
+        prefixMatch.arabicMatch as (typeof VALIDATION_CONFIG.SUBJECT_MARKERS)[number],
+      );
 
-      if (isYaMatch && remainingAfterPrefix.startsWith('ت')) {
-        // Matched ي and next char is ت - this is Form VI pattern
-        // Reject ي to keep يت together as part of the verb form
-        continueDetection = false;
-        continue;
-      }
-
-      if (isTaMatch) {
-        // Check if ي was previously detected - if so, this is the ت that should have been kept with ي
-        const hasYaPrefix = detectedPrefixes.some(p => p.arabicMatch === 'ي');
-        if (hasYaPrefix) {
-          // Already detected ي, now seeing ت - this is Form VI pattern (fallback check)
-          // This shouldn't happen if the ي check above worked, but added for safety
+      if (isCurrentSubjectMarker) {
+        // VALIDATION 6: Form V/VI verb patterns (يَتَفَعَّلُ / يَتَفَاعَلُ)
+        // When subject marker is followed by ت, the ت is part of the verb form (not a prefix).
+        // Accept the subject marker but stop detection to prevent ت from being a second prefix.
+        // Examples: يتكلم "he speaks" → [ي] + تكلم, تتكلم "she speaks" → [ت] + تكلم
+        if (remainingAfterPrefix.startsWith('ت')) {
           continueDetection = false;
-          continue;
+        }
+
+        // VALIDATION 8: After future tense (س/سوف) or negation (لا/لم/لن)
+        // The subject marker IS valid — accept it but stop further detection.
+        // Examples: سيذهب "he will go" → [س,ي] + ذهب, لايعلم "does not know" → [لا,ي] + علم
+        const hasFutureOrNegation = detectedPrefixes.some(
+          p =>
+            (VALIDATION_CONFIG.FUTURE_TENSE_PREFIXES as readonly string[]).includes(
+              p.arabicMatch,
+            ) ||
+            (VALIDATION_CONFIG.NEGATION_PREFIXES as readonly string[]).includes(p.arabicMatch),
+        );
+        if (hasFutureOrNegation) {
+          continueDetection = false;
         }
       }
 
       // VALIDATION 7: Prevent conjunctions/prepositions after subject markers with insufficient root
-      // Problem: Form V/Form II verbs have root radicals (و، ي) that match conjunction/preposition patterns
-      // Example: تَوَدَّدَ (ta-waddada) = Form V verb from root و-د-د (to show affection)
-      // Incorrect: و + ت + و + دد (3 prefixes, treating و as conjunction twice)
-      // Correct: و + تودد (1 prefix + Form V verb, where second و is first radical)
-      //
-      // Form V characteristics:
-      //   - Pattern: تَفَعَّلَ (ta-faʿʿala) - reflexive/intensive form
-      //   - First radical can be و or ي, which match conjunction patterns
-      //   - After subject marker ت, the following و/ي is part of the root, not a prefix
-      //
-      // Examples where this applies:
-      //   - وَتَوَدَّدْ = و (and) + تودد (Form V: you show affection)
-      //   - وَيَوَدُّ = و (and) + يود (he loves) - و is root radical, not conjunction
-      //   - فَتَبَيَّنَ = ف (so) + تبين (Form V: it became clear) - ي is root radical
-      //
-      // Strategy: After detecting subject marker (ت، ي، ن، أ), don't allow single-letter
-      // conjunctions/prepositions (و، ف، ب، ل) if they would leave < 3 chars remaining.
-      // This prevents splitting root radicals that happen to match prefix patterns.
+      // After a subject marker, single-letter conjunctions (و، ف، ب، ل) with < 3 chars remaining
+      // are likely root radicals, not prefixes.
+      // Example: وتودد → و + تودد (Form V), NOT و + ت + و + دد
       const hasSubjectMarker = detectedPrefixes.some(p =>
         VALIDATION_CONFIG.SUBJECT_MARKERS.includes(
           p.arabicMatch as (typeof VALIDATION_CONFIG.SUBJECT_MARKERS)[number],
         ),
       );
-      const isSingleLetterConjunctionOrPreposition = SINGLE_LETTER_CONJUNCTION_SET.has(
-        prefixMatch.arabicMatch,
-      );
 
-      if (hasSubjectMarker && isSingleLetterConjunctionOrPreposition) {
-        // Check if accepting this prefix would leave insufficient root structure
-        if (remainingAfterPrefix.length < 3) {
-          // Would leave < 3 chars - this "prefix" is likely a root radical
-          // Example: After detecting و + ت, seeing another و with "دد" remaining
-          // The second و is part of root و-د-د, not a conjunction
+      if (
+        hasSubjectMarker &&
+        SINGLE_LETTER_CONJUNCTION_SET.has(prefixMatch.arabicMatch) &&
+        remainingAfterPrefix.length < 3
+      ) {
+        continueDetection = false;
+        continue;
+      }
+
+      // VALIDATION 9: Prevent future/negation after subject marker
+      // Arabic word order: future/negation ALWAYS precedes subject marker (سيذهب not يسذهب)
+      // If a subject marker (ي/ت/ن/أ) was already detected, any following س/لا/لم/لن
+      // is a root letter, not a future/negation prefix.
+      // Example: يَسَّرَ "He will make easy" → ي(subject) + سّر(root), NOT ي+س(future)+ر
+      // Example: يسمعه "will hear it" → ي(subject) + سمع(root), NOT ي+س(future)+مع
+      if (hasSubjectMarker) {
+        const isFutureOrNegation =
+          (VALIDATION_CONFIG.FUTURE_TENSE_PREFIXES as readonly string[]).includes(
+            prefixMatch.arabicMatch,
+          ) ||
+          (VALIDATION_CONFIG.NEGATION_PREFIXES as readonly string[]).includes(
+            prefixMatch.arabicMatch,
+          );
+        if (isFutureOrNegation) {
           continueDetection = false;
           continue;
         }
-      }
-
-      // VALIDATION 8: Suppress subject marker after future tense or negation prefixes
-      // Problem: ي subject marker detected after س/سوف/لا/لم/لن is redundant
-      // The future/negation prefix already implies the verb conjugation form
-      // Example: سيذهب (he will go) = س (future) + يذهب (he goes)
-      //   - Correct: detect [س] - future prefix indicates the tense
-      //   - Incorrect: detect [س, ي] - ي is implicit in the verb form, not a separate prefix
-      // Example: لايعرف (does not know) = لا (not) + يعرف (he knows)
-      //   - Correct: detect [لا] - negation prefix
-      //   - Incorrect: detect [لا, ي] - ي is part of the verb, not an additional prefix
-      //
-      // Strategy: If current match is a subject marker (ي، ت، ن، أ) and we already
-      // have a future tense (س، سوف) or negation (لا، لم، لن) prefix, suppress it.
-      const hasFutureOrNegationPrefix = detectedPrefixes.some(
-        p =>
-          (VALIDATION_CONFIG.FUTURE_TENSE_PREFIXES as readonly string[]).includes(
-            p.arabicMatch,
-          ) ||
-          (VALIDATION_CONFIG.NEGATION_PREFIXES as readonly string[]).includes(p.arabicMatch),
-      );
-      const isSubjectMarkerMatch = VALIDATION_CONFIG.SUBJECT_MARKERS.includes(
-        prefixMatch.arabicMatch as (typeof VALIDATION_CONFIG.SUBJECT_MARKERS)[number],
-      );
-
-      if (hasFutureOrNegationPrefix && isSubjectMarkerMatch) {
-        // Subject marker is implicit in the verb after future/negation - don't detect separately
-        continueDetection = false;
-        continue;
       }
 
       // All validations passed - accept this prefix

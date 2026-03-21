@@ -100,14 +100,14 @@ describe('Fahuwa Pattern Investigation', () => {
       expect(result).toBe('and she');
     });
 
-    test('should normalize "fahum" to "so they"', () => {
+    test('should NOT normalize "fahum" — فهم is ambiguous (root: to understand)', () => {
       const result = normalizeTranslation('فهم', 'fahum');
-      expect(result).toBe('so they');
+      expect(result).toBe('fahum'); // Keep original — فهم could be root word
     });
 
-    test('should normalize "wahum" to "and they"', () => {
+    test('should NOT normalize "wahum" — وهم is ambiguous (root: illusion)', () => {
       const result = normalizeTranslation('وهم', 'wahum');
-      expect(result).toBe('and they');
+      expect(result).toBe('wahum'); // Keep original — وهم could be root word
     });
   });
 

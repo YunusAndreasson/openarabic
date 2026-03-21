@@ -1,6 +1,6 @@
-import { ComponentType, ICON_TO_COMPONENT_TYPE } from '@/constants/arabicWordComponents';
+import { ICON_TO_COMPONENT_TYPE } from '@/constants/arabicWordComponents';
 import { CONTRACTION_EXPANSIONS, EXPANSION_TO_CONTRACTION } from '@/constants/contractions';
-import { BRACKET_TYPE, POSITIONAL_SCORE } from '@/constants/positionalScoring';
+import { BRACKET_TYPE } from '@/constants/positionalScoring';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import type { formatWordAnalysis, WordAnalysis } from '@/utils/arabicWordAnalysis';
 import { resolveColorName, shouldApplyColorCoding } from '@/utils/colorResolution';
@@ -95,40 +95,11 @@ export const generateColorCodedSegments = ({
     color: string;
     componentType?: string;
     isBracketInjection?: boolean;
+    /** Section processing order — earlier sections (prefixes) win ties over later ones (suffixes) */
+    sectionIndex: number;
   }[] = [];
 
-  /**
-   * Score a match based on component type and position in text
-   * Prefixes score higher at START, suffixes score higher at END
-   *
-   * Uses constants from constants/positionalScoring.ts for maintainability
-   */
-  const getPositionalScore = (
-    match: { start: number; end: number; componentType?: string },
-    textLength: number,
-  ): number => {
-    // Bracket injection always has highest priority
-    if (match.componentType === BRACKET_TYPE) {
-      return POSITIONAL_SCORE.BRACKET_INJECTION;
-    }
 
-    if (!match.componentType || textLength === 0) {
-      return POSITIONAL_SCORE.NEUTRAL;
-    }
-
-    const relativePosition = match.start / textLength;
-
-    if (match.componentType === ComponentType.PREFIX) {
-      // Prefixes score higher at start: OPTIMAL_POSITION at position 0 → MIN at end
-      return POSITIONAL_SCORE.OPTIMAL_POSITION - relativePosition;
-    } else if (match.componentType === ComponentType.SUFFIX) {
-      // Suffixes score higher at end: MIN at position 0 → OPTIMAL_POSITION at end
-      return POSITIONAL_SCORE.MIN + relativePosition;
-    }
-
-    // Neutral score for infix/diacritic (can appear anywhere)
-    return POSITIONAL_SCORE.NEUTRAL;
-  };
 
   // Add bracket color coding for [the] injection
   // Display as "the" without brackets in the colored segment
@@ -141,13 +112,15 @@ export const generateColorCodedSegments = ({
         color: colors.tint, // Use tint color for definite article
         componentType: BRACKET_TYPE, // Special type for bracket injection
         isBracketInjection: true, // Flag to remove brackets when displaying
+        sectionIndex: -1, // Bracket injection has highest priority
       });
     }
   }
 
-  // Process each component section
-  for (const section of componentSections) {
-    if (!section.englishPart) continue;
+  // Process each component section (order matters: prefixes first, then suffix/infix/diacritic)
+  for (let sectionIdx = 0; sectionIdx < componentSections.length; sectionIdx++) {
+    const section = componentSections[sectionIdx];
+    if (!section?.englishPart) continue;
 
     const searchText = displayedText.toLowerCase();
     const colorValue = section.colorName
@@ -158,27 +131,21 @@ export const generateColorCodedSegments = ({
     // Uses ICON_TO_COMPONENT_TYPE from arabicWordComponents.ts (single source of truth)
     const componentType = section.icon ? ICON_TO_COMPONENT_TYPE[section.icon] : undefined;
 
-    // Split possible multiple english matches like "his / its / it"
-    // Also split compound patterns like "and the" into individual words
+    // Split slash-separated alternatives like "his / its / it"
+    // Also split compound patterns like "of him" into individual words for matching
+    // BUT keep compound intact if it's a contraction expansion (e.g., "do not" → "don't")
     const baseCandidates = section.englishPart
       .toLowerCase()
       .split('/')
       .flatMap(s => {
         const trimmed = s.trim();
-        // Split space-separated compound patterns into individual words
-        // BUT keep compound intact if it's a potential contraction target (e.g., "do not")
+        if (!trimmed) return [];
         if (trimmed.includes(' ')) {
-          // Check if this compound is a contraction expansion (e.g., "do not" from "don't")
-          // O(1) lookup using pre-computed Set
           const isContractionExpansion = CONTRACTION_EXPANSIONS.has(trimmed);
-
           if (isContractionExpansion) {
-            // Keep compound for contraction matching (e.g., "do not" → matches "don't")
             return [trimmed];
-          } else {
-            // Split into individual words for separate coloring (e.g., "and the" → ["and", "the"])
-            return trimmed.split(/\s+/);
           }
+          return trimmed.split(/\s+/);
         }
         return [trimmed];
       })
@@ -203,14 +170,10 @@ export const generateColorCodedSegments = ({
     }
 
     // Track duplicates (start:end) to avoid overlapping duplicates
+    // Collect ALL candidate match positions for this section.
+    // Overlap resolution (section ordering) + per-section limiting (below) handle conflicts.
     const seen = new Set<string>();
-    // Once a candidate matches for this component, stop trying other candidates.
-    // This prevents over-coloring where a single Arabic component (e.g., ي with triggers
-    // "he/it/is") would color multiple English words ("he" AND "is") for one component.
-    // Multiple occurrences of the SAME candidate are still colored (e.g., "and...and").
-    let matchedForSection = false;
     for (const candidate of candidates) {
-      if (matchedForSection) break;
       let fromIndex = 0;
       while (fromIndex <= searchText.length) {
         const idx = searchText.indexOf(candidate, fromIndex);
@@ -224,7 +187,6 @@ export const generateColorCodedSegments = ({
           (nextIdx === searchText.length || isNonLetter(nextChar));
 
         if (isValidMatch) {
-          matchedForSection = true;
           const key = `${idx}:${idx + candidate.length}`;
           if (!seen.has(key)) {
             seen.add(key);
@@ -232,7 +194,8 @@ export const generateColorCodedSegments = ({
               start: idx,
               end: idx + candidate.length,
               color: colorValue,
-              componentType, // Store component type for positional scoring
+              componentType,
+              sectionIndex: sectionIdx,
             });
           }
           // Move past this match to find further non-overlapping matches
@@ -244,46 +207,49 @@ export const generateColorCodedSegments = ({
     }
   }
 
-  // Sort and filter overlapping matches using positional scoring
-  // When matches overlap, keep the one with the highest positional score
-  const textLength = displayedText.length;
-  const sortedByPosition = [...matchPositions].sort((a, b) => a.start - b.start);
+  // Greedy section-ordered assignment:
+  // Process sections in order (prefixes first, then suffix). Each section claims
+  // ONE non-conflicting position. Earlier sections get priority, matching
+  // the left-to-right correspondence between Arabic and English.
+  const claimedRanges: { start: number; end: number }[] = [];
+  const finalMatches: typeof matchPositions = [];
 
-  const selectedMatches: typeof matchPositions = [];
-  let i = 0;
+  const isOverlapping = (start: number, end: number) =>
+    claimedRanges.some(r => start < r.end && end > r.start);
 
-  while (i < sortedByPosition.length) {
-    const current = sortedByPosition[i];
-    if (!current) break;
+  // Group match positions by section, preserving text position order within each group
+  const bySectionIndex = new Map<number, typeof matchPositions>();
+  for (const m of matchPositions) {
+    const list = bySectionIndex.get(m.sectionIndex) ?? [];
+    list.push(m);
+    bySectionIndex.set(m.sectionIndex, list);
+  }
 
-    // Find all matches that overlap with current
-    const overlapping = [current];
-    let j = i + 1;
+  // Process sections in order (sorted by sectionIndex)
+  const sectionIndices = [...bySectionIndex.keys()].sort((a, b) => a - b);
+  for (const si of sectionIndices) {
+    const candidates = bySectionIndex.get(si) ?? [];
+    candidates.sort((a, b) => a.start - b.start);
 
-    while (j < sortedByPosition.length) {
-      const next = sortedByPosition[j];
-      if (!next || next.start >= current.end) break; // No overlap
-      overlapping.push(next);
-      j++;
-    }
-
-    // If multiple matches overlap, choose the one with highest positional score
-    if (overlapping.length > 1) {
-      const bestMatch = overlapping.reduce((best, match) => {
-        const bestScore = getPositionalScore(best, textLength);
-        const matchScore = getPositionalScore(match, textLength);
-        return matchScore > bestScore ? match : best;
-      });
-      selectedMatches.push(bestMatch);
-      // Skip all overlapping matches
-      i = j;
-    } else {
-      selectedMatches.push(current);
-      i++;
+    // Find the first non-overlapping candidate, then also accept all other matches
+    // of the SAME word (e.g., "from" in "from from" → both colored).
+    let matchedWord: string | undefined;
+    for (const candidate of candidates) {
+      if (!isOverlapping(candidate.start, candidate.end)) {
+        const word = displayedText.substring(candidate.start, candidate.end).toLowerCase();
+        if (!matchedWord) {
+          matchedWord = word;
+        }
+        // Accept this match if it's the same word as the first match (repeated occurrences)
+        if (word === matchedWord) {
+          finalMatches.push(candidate);
+          claimedRanges.push({ start: candidate.start, end: candidate.end });
+        }
+      }
     }
   }
 
-  const sortedMatches = selectedMatches.sort((a, b) => a.start - b.start);
+  const sortedMatches = finalMatches.sort((a, b) => a.start - b.start);
 
   // Build final segments
   const parts: ColoredTextSegment[] = [];

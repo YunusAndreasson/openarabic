@@ -276,19 +276,20 @@ describe('Translation Expansion: Verified Patterns', () => {
 });
 
 describe('KNOWN LIMITATIONS (documented for guide accuracy)', () => {
-  test('يتولد → "it arises": prefix ambiguity with double subject markers', () => {
-    expect(hasColoring('يتولد', 'it arises')).toBe(false);
+  test('يتولد → "it arises": ي is now correctly detected as subject prefix (Form V verb)', () => {
+    expect(hasColoring('يتولد', 'it arises')).toBe(true);
   });
 
   test('يرى → "he sees": now colors correctly (2-char root, 2 consonants with ى)', () => {
     expect(hasColoring('يرى', 'he sees')).toBe(true);
   });
 
-  test('سيعلم: only س detected as prefix, ي absorbed', () => {
+  test('سيعلم: both س and ي detected as prefixes', () => {
     const a = analyzeArabicWord('سيعلم', 'he will know');
     expect(a.hasComponents).toBe(true);
-    expect(a.prefixes.length).toBe(1);
+    expect(a.prefixes.length).toBe(2);
     expect(a.prefixes[0]?.arabicMatch).toBe('س');
+    expect(a.prefixes[1]?.arabicMatch).toBe('ي');
   });
 
   test('Standalone لا/لن skip coloring (pure particles, no root)', () => {

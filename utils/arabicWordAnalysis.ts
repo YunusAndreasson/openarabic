@@ -111,9 +111,11 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
   // This enables proper component detection and consistent coloring
   const normalizedEnglish = normalizeTranslation(arabic, english);
 
-  // Create cache key from normalized Arabic and NORMALIZED English
+  // Create cache key from ORIGINAL Arabic (preserves diacritics for correct reconstruction)
+  // and normalized English. Different diacritizations of the same word get separate cache
+  // entries because reconstruction uses the original text for display.
   const normalized = normalizeArabic(arabic);
-  const cacheKey = `${normalized}|${normalizedEnglish}`;
+  const cacheKey = `${arabic}|${normalizedEnglish}`;
 
   // Check cache first
   const cachedResult = ANALYSIS_CACHE.get(cacheKey);

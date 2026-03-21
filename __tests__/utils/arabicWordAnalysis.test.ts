@@ -966,30 +966,32 @@ describe('2025 Pattern Enhancements', () => {
   });
 
   describe('Form VI Verb Pattern (يَتَفَاعَلُ)', () => {
-    test('should not split يت into separate prefixes for Form VI verbs', () => {
+    test('should detect ي as subject prefix and stop before ت in Form VI verbs', () => {
       // Form VI present tense: يَتَدَارَسُونَهُ = "and studying it"
-      // Should detect: و (conjunction) + يتدارسون (Form VI verb) + ه (object pronoun)
+      // Should detect: و (conjunction) + ي (subject prefix) + تدارسون (Form VI verb stem)
       // Should NOT detect: و + ي + ت as three separate prefixes
+      // The ي IS a valid subject prefix; ت is part of the verb form
       const analysis = analyzeArabicWord('وَيَتَدَارَسُونَهُ', 'and studying it');
 
-      // Should only have ONE prefix (و), not three (و + ي + ت)
-      expect(analysis.prefixes).toHaveLength(1);
+      // Should have TWO prefixes (و + ي), not three (و + ي + ت)
+      expect(analysis.prefixes).toHaveLength(2);
       expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
-      expect(analysis.prefixes[0]?.englishMatches).toContain('and');
+      expect(analysis.prefixes[1]?.arabicMatch).toBe('ي');
 
-      // The يت should remain part of the verb stem (not detected as prefixes)
-      // Remaining should start with يت
-      expect(analysis.remainingArabic).toMatch(/^يت/);
+      // The ت should remain part of the verb stem (not detected as prefix)
+      expect(analysis.remainingArabic).toMatch(/^تدارسون/);
     });
 
-    test('should not split يت for other Form VI examples', () => {
+    test('should detect ي as subject prefix for Form VI examples', () => {
       // يَتَعَاوَنُ = "he cooperates" (Form VI from root ع-و-ن)
       const analysis1 = analyzeArabicWord('يَتَعَاوَنُ', 'he cooperates');
-      expect(analysis1.prefixes).toHaveLength(0); // No prefixes, يت is part of Form VI pattern
+      expect(analysis1.prefixes).toHaveLength(1); // ي is subject prefix
+      expect(analysis1.prefixes[0]?.arabicMatch).toBe('ي');
 
       // يَتَبَادَلُ = "he exchanges" (Form VI from root ب-د-ل)
       const analysis2 = analyzeArabicWord('يَتَبَادَلُ', 'he exchanges');
-      expect(analysis2.prefixes).toHaveLength(0); // No prefixes, يت is part of Form VI pattern
+      expect(analysis2.prefixes).toHaveLength(1); // ي is subject prefix
+      expect(analysis2.prefixes[0]?.arabicMatch).toBe('ي');
     });
 
     test('should still allow ي and ت as separate prefixes in non-Form VI contexts', () => {

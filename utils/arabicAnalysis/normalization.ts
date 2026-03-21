@@ -85,8 +85,15 @@ const CONTRACTION_REGEXES = Object.entries(CONTRACTION_MAP).map(
  * @returns Text with contractions expanded (e.g., "don't know" → "do not know")
  */
 export function expandContractions(text: string): string {
-  let expanded = text.toLowerCase();
+  const lower = text.toLowerCase();
 
+  // Fast path: no apostrophe means no contractions possible
+  // Skips 39 regex replacements for ~95% of Arabic translations
+  if (!lower.includes("'")) {
+    return lower;
+  }
+
+  let expanded = lower;
   for (const { regex, expansion } of CONTRACTION_REGEXES) {
     regex.lastIndex = 0;
     expanded = expanded.replace(regex, expansion);

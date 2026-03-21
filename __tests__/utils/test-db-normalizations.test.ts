@@ -20,21 +20,30 @@ describe('Database Translation Normalizations', () => {
     });
   });
 
-  describe('فقد (fa + qad)', () => {
-    const translations = ['and so', 'then', 'then indeed', 'so has', 'as he has', 'so indeed'];
+  describe('فقد — ambiguous: ف+قد (so indeed) OR root فقد (to lose)', () => {
+    // فقد is NOT normalized because it's also a common root word (to lose/miss).
+    // When the English contains "so" or "then", ف still matches directly without normalization.
+    it('should NOT normalize (ambiguous root word)', () => {
+      expect(normalizeTranslation('فقد', 'and so')).toBe('and so');
+      expect(normalizeTranslation('فقد', 'then')).toBe('then');
+      expect(normalizeTranslation('فقد', 'he lost')).toBe('he lost');
+    });
 
-    translations.forEach(translation => {
-      it(`should normalize "${translation}" to "so indeed"`, () => {
-        const result = normalizeTranslation('فقد', translation);
-        expect(result).toBe('so indeed');
-      });
+    it('should still detect ف when English has matching triggers', () => {
+      // "so indeed" — ف matches "so", قد matches "indeed"
+      const a = analyzeArabicWord('فقد', 'so indeed');
+      expect(a.hasComponents).toBeTruthy();
+      expect(a.prefixes.some(p => p.arabicMatch === 'ف')).toBeTruthy();
 
-      it(`should detect ف in فقد "${translation}"`, () => {
-        const analysis = analyzeArabicWord('فقد', translation);
-        expect(analysis.hasComponents).toBeTruthy();
-        const hasFa = analysis.prefixes.some(p => p.arabicMatch === 'ف');
-        expect(hasFa).toBeTruthy();
-      });
+      // "then he" — ف matches "then"
+      const b = analyzeArabicWord('فقد', 'then he');
+      expect(b.hasComponents).toBeTruthy();
+    });
+
+    it('should NOT detect ف when English has no matching triggers', () => {
+      // "he lost" — no trigger for ف, and قد is a root letter
+      const a = analyzeArabicWord('فقد', 'he lost');
+      expect(a.prefixes.some(p => p.arabicMatch === 'ف')).toBeFalsy();
     });
   });
 

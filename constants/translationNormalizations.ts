@@ -113,11 +113,9 @@ export const TRANSLATION_NORMALIZATION_RULES: TranslationNormalizationRule[] = [
     normalizedEnglish: 'and indeed',
     description: 'و (and) + إن (indeed)',
   },
-  {
-    arabic: 'فقد',
-    normalizedEnglish: 'so indeed',
-    description: 'ف (so) + قد (indeed/already)',
-  },
+  // NOTE: فقد intentionally EXCLUDED — ambiguous:
+  // فقد = ف+قد (so indeed) OR root فقد (to lose/miss)
+  // When used as compound, ف will match "so" and قد will match "indeed" directly.
   {
     arabic: 'وقد',
     normalizedEnglish: 'and indeed',
@@ -179,16 +177,10 @@ export const TRANSLATION_NORMALIZATION_RULES: TranslationNormalizationRule[] = [
     normalizedEnglish: 'and she',
     description: 'و (and) + هي (she)',
   },
-  {
-    arabic: 'فهم',
-    normalizedEnglish: 'so they',
-    description: 'ف (so) + هم (they)',
-  },
-  {
-    arabic: 'وهم',
-    normalizedEnglish: 'and they',
-    description: 'و (and) + هم (they)',
-  },
+  // NOTE: فهم and وهم intentionally EXCLUDED — they are ambiguous:
+  // فهم = ف+هم (so they) OR root فهم (to understand)
+  // وهم = و+هم (and they) OR root وهم (illusion/delusion)
+  // When used as compounds, ف/و will match "so/and" and هم will match "they" directly.
   {
     arabic: 'فهن',
     normalizedEnglish: 'so they',

@@ -199,9 +199,9 @@ const OTHER_PREFIXES = [
   }, // broader auxiliaries for gating, includes subjunctive 'to'
   {
     arabic: 'ت',
-    english: ['you', 'she', 'it', 'does', 'is'],
+    english: ['you', 'she', 'it', 'does', 'is', 'to'],
     role: GrammaticalRole.SUBJECT_PREFIX,
-  }, // 'it' for 3rd person feminine singular (inanimate objects)
+  }, // 'it' for 3rd person feminine singular; 'to' for subjunctive (أن تفعل → "to do")
   { arabic: 'أ', english: ['I', 'do', 'am'], role: GrammaticalRole.SUBJECT_PREFIX },
   { arabic: 'ن', english: ['we', 'are', 'do'], role: GrammaticalRole.SUBJECT_PREFIX },
   // Aspect particles & common compounds
@@ -372,13 +372,13 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
   },
   {
     arabic: 'ك',
-    english: ['your', 'yours', 'of you', 'you'],
+    english: ['your', 'yours', 'of you', 'of your', 'you'],
     role: GrammaticalRole.POSSESSIVE,
     type: ComponentType.SUFFIX,
   },
   {
     arabic: 'ه',
-    english: ['his', 'its', 'it', 'of him', 'him', 'himself', 'he', 'their', 'whose'],
+    english: ['his', 'its', 'it', 'of him', 'of his', 'of it', 'of its', 'him', 'himself', 'he', 'their', 'whose'],
     role: GrammaticalRole.POSSESSIVE,
     type: ComponentType.SUFFIX,
   },
@@ -391,7 +391,7 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
   },
   {
     arabic: 'ها',
-    english: ['her', 'hers', 'its', 'it', 'of her', 'their', 'them'],
+    english: ['her', 'hers', 'its', 'it', 'of her', 'of it', 'of its', 'of their', 'their', 'them'],
     role: GrammaticalRole.POSSESSIVE,
     type: ComponentType.SUFFIX,
   },
@@ -412,13 +412,13 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
   },
   {
     arabic: 'كم',
-    english: ['your', 'yours', 'you all', 'you'],
+    english: ['your', 'yours', 'of your', 'you all', 'you'],
     role: GrammaticalRole.POSSESSIVE,
     type: ComponentType.SUFFIX,
   },
   {
     arabic: 'هم',
-    english: ['their', 'theirs', 'them'],
+    english: ['their', 'theirs', 'of their', 'them'],
     role: GrammaticalRole.POSSESSIVE,
     type: ComponentType.SUFFIX,
   },

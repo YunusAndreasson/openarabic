@@ -9,12 +9,7 @@
 export type { AnalyzedComponent, WordAnalysis } from './types';
 
 // Constants (only export what's used externally or by other modules)
-export {
-  DIACRITIC_REGEX,
-  STANDALONE_PRONOUNS,
-  VALIDATION_CONFIG,
-  WHITESPACE_REGEX,
-} from './constants';
+export { DIACRITIC_REGEX, VALIDATION_CONFIG, WHITESPACE_REGEX } from './constants';
 
 // Cache
 export { ANALYSIS_CACHE, cacheWithLRUEviction, clearAnalysisCache } from './cache';

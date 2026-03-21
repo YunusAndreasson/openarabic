@@ -6,43 +6,36 @@ import { analyzeArabicWord } from '@/utils/arabicWordAnalysis';
 import { normalizeTranslation } from '@/utils/arabicAnalysis/translationNormalization';
 
 describe('Faqad (فقد) Normalization', () => {
-  describe('Normalization', () => {
-    test('should normalize "faqad" to "so indeed"', () => {
+  describe('Normalization — فقد is ambiguous (removed from normalization map)', () => {
+    test('should NOT normalize "faqad" — فقد could be root (to lose)', () => {
       const result = normalizeTranslation('فقد', 'faqad');
-      expect(result).toBe('so indeed');
+      expect(result).toBe('faqad'); // Keep original
     });
 
-    test('should normalize "fa qad" (with space) to "so indeed"', () => {
+    test('should NOT normalize "fa qad" — فقد could be root (to lose)', () => {
       const result = normalizeTranslation('فقد', 'fa qad');
-      expect(result).toBe('so indeed');
+      expect(result).toBe('fa qad'); // Keep original
     });
 
-    test('should normalize "waqad" to "and indeed"', () => {
+    test('should normalize "waqad" to "and indeed" — وقد is unambiguous', () => {
       const result = normalizeTranslation('وقد', 'waqad');
       expect(result).toBe('and indeed');
     });
   });
 
-  describe('Component detection after normalization', () => {
-    test('should detect ف in فقد "faqad"', () => {
-      const analysis = analyzeArabicWord('فقد', 'faqad');
-
-      console.log('\n📊 فقد + "faqad":');
-      console.log('  Normalized to:', normalizeTranslation('فقد', 'faqad'));
-      console.log('  hasComponents:', analysis.hasComponents);
-      console.log(
-        '  Prefixes:',
-        analysis.prefixes.map(p => `${p.arabicMatch} (${p.englishMatches.join('/')})`).join(', '),
-      );
-      console.log('  Suffix:', analysis.suffix?.arabicMatch || 'none');
-
-      // Should detect ف as prefix
+  describe('Component detection', () => {
+    test('should detect ف in فقد when English has trigger ("so indeed")', () => {
+      const analysis = analyzeArabicWord('فقد', 'so indeed');
       const hasFa = analysis.prefixes.some(
         p => p.arabicMatch === 'ف' && p.englishMatches.includes('so'),
       );
-
       expect(hasFa).toBeTruthy();
       expect(analysis.hasComponents).toBeTruthy();
+    });
+
+    test('should NOT detect ف in فقد when English means "to lose"', () => {
+      const analysis = analyzeArabicWord('فقد', 'he lost');
+      expect(analysis.prefixes.some(p => p.arabicMatch === 'ف')).toBeFalsy();
     });
 
     test('should detect و in وقد "waqad"', () => {

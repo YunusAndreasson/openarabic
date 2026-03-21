@@ -92,15 +92,16 @@ export const PREFIX_CASES: GroundTruthCase[] = [
     source: 'test',
   },
 
-  // Preposition في (in)
+  // Preposition في (in) + definite article
   {
     arabic: 'فيالبيت',
     english: 'in the house',
-    expectedPrefixes: ['في'],
+    expectedPrefixes: ['في', 'ال'],
     expectedSuffix: null,
     expectedHasComponents: true,
     category: 'prefix',
     source: 'test',
+    note: 'Multi-prefix: preposition + definite article',
   },
 
   // Preposition من (from)
@@ -167,33 +168,35 @@ export const PREFIX_CASES: GroundTruthCase[] = [
     source: 'test',
   },
 
-  // Future tense س (will)
+  // Future tense س (will) + subject prefix ي (he)
   {
     arabic: 'سيذهب',
     english: 'he will go',
-    expectedPrefixes: ['س'],
+    expectedPrefixes: ['س', 'ي'],
     expectedSuffix: null,
     expectedHasComponents: true,
     category: 'prefix',
     source: 'test',
+    note: 'Future + subject: both colored to show "will" + "he"',
   },
 
-  // Future tense سوف (will)
+  // Future tense سوف (will) + subject prefix ي (he)
   {
     arabic: 'سوفيذهب',
     english: 'he will go',
-    expectedPrefixes: ['سوف'],
+    expectedPrefixes: ['سوف', 'ي'],
     expectedSuffix: null,
     expectedHasComponents: true,
     category: 'prefix',
     source: 'test',
+    note: 'Future + subject: both colored to show "will" + "he"',
   },
 
-  // Negation لا (not)
+  // Negation لا (not) + subject prefix ي (he)
   {
     arabic: 'لايعرف',
     english: 'does not know',
-    expectedPrefixes: ['لا'],
+    expectedPrefixes: ['لا', 'ي'],
     expectedSuffix: null,
     expectedHasComponents: true,
     category: 'prefix',
@@ -674,26 +677,26 @@ export const NONE_CASES: GroundTruthCase[] = [
     note: 'Single word - و is root letter in و-ل-د',
   },
 
-  // Pure particle combinations - no root to show
+  // Conjunction + pronoun combinations - colored to show two distinct components
   {
     arabic: 'وهو',
     english: 'and he',
-    expectedPrefixes: [],
-    expectedSuffix: null,
-    expectedHasComponents: false,
-    category: 'none',
+    expectedPrefixes: ['و'],
+    expectedSuffix: 'هو',
+    expectedHasComponents: true,
+    category: 'combined',
     source: 'test',
-    note: 'Pure particle combination: conjunction + pronoun, no compositional insight',
+    note: 'Conjunction + pronoun: two components, two English words → color both',
   },
   {
     arabic: 'فهي',
     english: 'then she',
-    expectedPrefixes: [],
-    expectedSuffix: null,
-    expectedHasComponents: false,
-    category: 'none',
+    expectedPrefixes: ['ف'],
+    expectedSuffix: 'هي',
+    expectedHasComponents: true,
+    category: 'combined',
     source: 'test',
-    note: 'Pure particle combination: conjunction + pronoun',
+    note: 'Conjunction + pronoun: two components, two English words → color both',
   },
 
   // Single standalone particles (no composition to show)

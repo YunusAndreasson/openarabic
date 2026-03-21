@@ -75,36 +75,63 @@ export function getComponentColorName(
 }
 
 /**
- * Get the appropriate color name for a diacritic based on color inheritance
- * Must match the exact color logic used by the component it inherits from (including role-based colors)
+ * Get a deduplicated color name — if this color was already used by another component,
+ * fall back to the type-based color to ensure visual distinction.
+ *
+ * Problem: Two prepositions (ب + ل) both get grammar.preposition (same amber color),
+ * making it impossible to see which Arabic part maps to which English word.
+ * Solution: The second one falls back to the type color (e.g., PREFIX → tint/sage).
+ */
+function deduplicateColor(
+  colorName: string,
+  usedColors: Set<string>,
+  fallbackType: ComponentType,
+): string {
+  if (!usedColors.has(colorName)) {
+    usedColors.add(colorName);
+    return colorName;
+  }
+  // Conflict — use type-based fallback for visual distinction
+  const fallback = COMPONENT_TYPE_CONFIG[fallbackType].colorName;
+  usedColors.add(fallback);
+  return fallback;
+}
+
+/**
+ * Get the appropriate color name for a diacritic based on color inheritance.
+ * When the diacritic inherits from another component, it must use the SAME deduped color
+ * that was assigned to that component (not the raw role color).
+ *
+ * @param usedColors - The dedup set from the parent rendering context, to ensure
+ *   the diacritic gets the same color the inherited component was actually rendered with.
  */
 export function getDiacriticColorName(
   diacritic: AnalyzedComponent | undefined,
   analysis?: WordAnalysis,
+  usedColors?: Set<string>,
 ): string {
   if (!diacritic) return 'text';
 
-  // If diacritic inherits color from a related component, use that component's color logic
+  // If diacritic inherits color from a related component, use that component's DEDUPED color
   if (diacritic.inheritColorFrom === ComponentType.SUFFIX && analysis?.suffix) {
-    // Match suffix color logic: use role-based color if available, otherwise type-based
-    return getComponentColorName(analysis.suffix, ComponentType.SUFFIX);
+    const baseColor = getComponentColorName(analysis.suffix, ComponentType.SUFFIX);
+    return usedColors ? deduplicateColor(baseColor, usedColors, ComponentType.SUFFIX) : baseColor;
   }
 
   if (diacritic.inheritColorFrom === ComponentType.PREFIX && analysis?.prefixes) {
-    // Match prefix color logic: also uses role-based colors
     // Use LAST prefix for grammatical correctness (e.g., preposition → genitive kasra)
-    // In multi-prefix words like وَلِلْبَيْتِ (and for the house), the genitive ِ relates
-    // to the preposition ل (last prefix), not the conjunction و (first prefix)
-    const prefix = analysis.prefixes[analysis.prefixes.length - 1]; // Get last prefix (most grammatically relevant for diacritic)
-    return getComponentColorName(prefix, ComponentType.PREFIX);
+    const prefix = analysis.prefixes[analysis.prefixes.length - 1];
+    const baseColor = getComponentColorName(prefix, ComponentType.PREFIX);
+    // The last prefix's color may have been deduped — look it up in usedColors
+    // If it's already used, it means this prefix was rendered with this color → reuse it
+    // (deduplicateColor returns the same color if already in the set)
+    return usedColors ? deduplicateColor(baseColor, usedColors, ComponentType.PREFIX) : baseColor;
   }
 
   if (diacritic.inheritColorFrom) {
-    // Fallback for other component types (infix, etc.)
     return COMPONENT_TYPE_CONFIG[diacritic.inheritColorFrom].colorName;
   }
 
-  // Otherwise use the diacritic's own color
   return COMPONENT_TYPE_CONFIG[ComponentType.DIACRITIC].colorName;
 }
 
@@ -148,6 +175,7 @@ function splitWithDiacritic(
   mainColorName: string,
   mainType: string,
   analysis: WordAnalysis,
+  usedColors?: Set<string>,
 ): Segment[] {
   if (analysis.diacritic && text.endsWith(analysis.diacritic.arabicMatch)) {
     const mainText = text.substring(0, text.length - analysis.diacritic.arabicMatch.length);
@@ -157,7 +185,7 @@ function splitWithDiacritic(
     }
     segments.push({
       text: analysis.diacritic.arabicMatch,
-      colorName: getDiacriticColorName(analysis.diacritic, analysis),
+      colorName: getDiacriticColorName(analysis.diacritic, analysis, usedColors),
       type: 'diacritic',
     });
     return segments;
@@ -172,6 +200,9 @@ export function reconstructWithColors(analysis: WordAnalysis) {
   const segments: { text: string; colorName: string; type: string }[] = [];
   const { arabic } = analysis.original;
   let processed = 0;
+
+  // Track used colors to deduplicate (e.g., two prepositions both getting amber)
+  const usedColors = new Set<string>();
 
   // Add all prefix segments with role-based colors
   if (analysis.prefixes && analysis.prefixes.length > 0) {
@@ -194,8 +225,8 @@ export function reconstructWithColors(analysis: WordAnalysis) {
         originalEnd = Math.min(mappedEnd, arabic.length);
       }
 
-      // Use role-based color if available, otherwise fall back to type-based color
-      const colorName = getComponentColorName(prefix, ComponentType.PREFIX);
+      const baseColor = getComponentColorName(prefix, ComponentType.PREFIX);
+      const colorName = deduplicateColor(baseColor, usedColors, ComponentType.PREFIX);
 
       segments.push({
         text: arabic.substring(processed, originalEnd),
@@ -226,6 +257,7 @@ export function reconstructWithColors(analysis: WordAnalysis) {
         getComponentColorName(analysis.suffix, ComponentType.SUFFIX),
         'suffix',
         analysis,
+        usedColors,
       ),
     );
   } else if (analysis.infix) {
@@ -234,7 +266,7 @@ export function reconstructWithColors(analysis: WordAnalysis) {
     const infixEnd = addInfixToSegments(remainingText, analysis.infix.arabicMatch, infixColorName, segments);
 
     if (infixEnd < remainingText.length) {
-      segments.push(...splitWithDiacritic(remainingText.substring(infixEnd), 'arabicText', 'root', analysis));
+      segments.push(...splitWithDiacritic(remainingText.substring(infixEnd), 'arabicText', 'root', analysis, usedColors));
     }
   } else if (analysis.suffix) {
     // Original suffix-only logic
@@ -257,18 +289,19 @@ export function reconstructWithColors(analysis: WordAnalysis) {
         getComponentColorName(analysis.suffix, ComponentType.SUFFIX),
         'suffix',
         analysis,
+        usedColors,
       ),
     );
   } else if (processed < arabic.length && analysis.remainingArabic) {
     // Add remaining text as root ONLY if analysis detected a root
     // (Don't add phantom roots when all text is consumed by prefixes)
     const remainingText = arabic.substring(processed);
-    segments.push(...splitWithDiacritic(remainingText, 'arabicText', 'root', analysis));
+    segments.push(...splitWithDiacritic(remainingText, 'arabicText', 'root', analysis, usedColors));
   }
 
   // Handle diacritic-only case (no other components)
   if (analysis.diacritic && segments.length === 0) {
-    segments.push(...splitWithDiacritic(arabic, 'arabicText', 'root', analysis));
+    segments.push(...splitWithDiacritic(arabic, 'arabicText', 'root', analysis, usedColors));
   }
 
   // Fallback: if no segments, add whole word
@@ -298,11 +331,14 @@ export function formatWordAnalysis(analysis: WordAnalysis) {
     icon?: string;
   }[] = [{ type: 'original', content: englishForDisplay }];
 
+  // Track used colors to deduplicate (e.g., two prepositions both getting amber)
+  const usedColors = new Set<string>();
+
   // Add all prefixes with role-based colors
   if (analysis.prefixes) {
     analysis.prefixes.forEach(prefix => {
-      // Use role-based color if role is defined, otherwise fall back to type-based color
-      const colorName = getComponentColorName(prefix, ComponentType.PREFIX);
+      const baseColor = getComponentColorName(prefix, ComponentType.PREFIX);
+      const colorName = deduplicateColor(baseColor, usedColors, ComponentType.PREFIX);
 
       sections.push({
         type: 'components',
@@ -315,18 +351,21 @@ export function formatWordAnalysis(analysis: WordAnalysis) {
   }
 
   if (analysis.infix) {
+    const baseColor = COMPONENT_TYPE_CONFIG[ComponentType.INFIX].colorName;
+    const colorName = deduplicateColor(baseColor, usedColors, ComponentType.INFIX);
+
     sections.push({
       type: 'components',
       arabicPart: analysis.infix.arabicMatch,
       englishPart: analysis.infix.englishMatches.join(' / '),
-      colorName: COMPONENT_TYPE_CONFIG[ComponentType.INFIX].colorName,
+      colorName,
       icon: COMPONENT_TYPE_CONFIG[ComponentType.INFIX].icon,
     });
   }
 
   if (analysis.suffix) {
-    // Use role-based color if role is defined, otherwise fall back to type-based color
-    const colorName = getComponentColorName(analysis.suffix, ComponentType.SUFFIX);
+    const baseColor = getComponentColorName(analysis.suffix, ComponentType.SUFFIX);
+    const colorName = deduplicateColor(baseColor, usedColors, ComponentType.SUFFIX);
 
     sections.push({
       type: 'components',
@@ -338,9 +377,9 @@ export function formatWordAnalysis(analysis: WordAnalysis) {
   }
 
   if (analysis.diacritic) {
-    // If diacritic inherits color from related component, use that color instead
-    // Must use getDiacriticColorName to get role-based colors (e.g., violet for POSSESSIVE)
-    const colorName = getDiacriticColorName(analysis.diacritic, analysis);
+    // Diacritics use inheritance logic — deduplicate the result
+    const baseColor = getDiacriticColorName(analysis.diacritic, analysis, usedColors);
+    const colorName = deduplicateColor(baseColor, usedColors, ComponentType.DIACRITIC);
 
     sections.push({
       type: 'components',

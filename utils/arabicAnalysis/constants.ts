@@ -88,20 +88,3 @@ export const VALIDATION_CONFIG = {
   /** Negation prefixes */
   NEGATION_PREFIXES: ['لا', 'لم', 'لن'] as const,
 } as const;
-
-/**
- * Standalone pronouns that should not be treated as roots in pure particle combinations
- *
- * These are independent pronouns (subject/object) that, when combined with only a
- * conjunction/particle prefix (و، ف، etc.), create pure particle combinations
- * that provide no compositional insight.
- *
- * Examples of what SHOULD NOT be colored:
- *   - وَهُوَ = و (and) + هُوَ (he) → pure particles, no root-based word
- *   - فَهِيَ = ف (then) + هِيَ (she) → pure particles, no root-based word
- *
- * Note: These pronouns ARE colored when attached to prepositions or with suffixes:
- *   - بِهِ = ب (with) + ه (him) → shows preposition + pronoun attachment ✓
- *   - هُوَ + suffix would be colored ✓
- */
-export const STANDALONE_PRONOUNS = ['هو', 'هي', 'هم', 'هن', 'هما', 'انتم', 'انتن', 'انتما', 'نحن'];
