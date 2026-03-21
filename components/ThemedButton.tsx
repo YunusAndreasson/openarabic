@@ -10,6 +10,7 @@ import { PRESS_ANIMATION_BUTTON, usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { ThemedButtonProps } from '@/types/ui/button.types';
+import { lightFeedback } from '@/utils/haptics';
 import { createPadding } from '@/utils/layoutUtils';
 import { createButtonTextStyle } from '@/utils/textStyleUtils';
 
@@ -61,6 +62,7 @@ export function ThemedButton({
   // Create the press handler with optional optimistic loading
   const pressHandler = (event: GestureResponderEvent) => {
     if (onPress && !disabled && !isActuallyLoading) {
+      lightFeedback();
       if (enableOptimisticLoading) {
         setOptimisticLoading(true);
         onPress(event);

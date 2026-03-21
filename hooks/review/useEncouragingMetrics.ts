@@ -10,7 +10,7 @@ export interface EncouragingMetric {
   text: string;
   icon: ComponentProps<typeof Ionicons>['name'];
   color: string;
-  type: 'due' | 'daily_streak' | 'mastery';
+  type: 'due' | 'duration' | 'daily_streak' | 'mastery';
 }
 
 export interface EncouragingMetricsResult {
@@ -18,10 +18,20 @@ export interface EncouragingMetricsResult {
   educationalText: string;
 }
 
+/** Format session duration into a human-readable string */
+const formatDuration = (ms: number): string => {
+  const totalSeconds = Math.round(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  if (minutes === 0) return `${seconds}s`;
+  if (seconds === 0) return `${minutes}m`;
+  return `${minutes}m ${seconds}s`;
+};
+
 /**
  * Build an array of encouraging metric objects for the review completion screen.
- * Shows exactly 3 metrics matching the Practice tab's traffic light pattern:
- * Red (Due) → Yellow (Streak) → Green (Mastered)
+ * Shows up to 4 metrics:
+ * Red (Due) → Blue (Duration) → Yellow (Streak) → Green (Mastered)
  *
  * Also returns contextual educational text based on session performance.
  *
@@ -53,6 +63,17 @@ export const useEncouragingMetrics = (
       color: colors.error,
       type: 'due',
     });
+
+    // 🔵 BLUE - Session duration
+    const sessionDuration = Date.now() - metrics.startTime;
+    if (sessionDuration > 0) {
+      trafficLightMetrics.push({
+        text: `${formatDuration(sessionDuration)} session`,
+        icon: 'hourglass-outline',
+        color: colors.info,
+        type: 'duration',
+      });
+    }
 
     // 🟡 YELLOW - Daily study streak
     if (dailyStreak > 1) {

@@ -29,9 +29,6 @@ const ENTERING_ICON = ZoomIn.duration(TIMING_CONFIG.FAST.duration).springify();
 const ENTERING_TITLE = FadeInUp.delay(TIMING_CONSTANTS.STAGGER.BASE).duration(
   TIMING_CONFIG.FAST.duration,
 );
-const ENTERING_SUBTITLE = FadeInUp.delay(TIMING_CONSTANTS.STAGGER.FAST).duration(
-  TIMING_CONFIG.FAST.duration,
-);
 const ENTERING_EDUCATIONAL = FadeInUp.delay(TIMING_CONSTANTS.STAGGER.MEDIUM).duration(
   TIMING_CONFIG.FAST.duration,
 );
@@ -50,7 +47,6 @@ const ENTERING_METRICS = Array.from({ length: 5 }, (_, index) =>
 
 interface CompletionScreenProps {
   title?: string;
-  subtitle?: string;
   buttonText?: string;
   iconName?: ComponentProps<typeof Ionicons>['name'];
   iconSize?: number;
@@ -62,7 +58,6 @@ interface CompletionScreenProps {
 
 export const CompletionScreen: FC<CompletionScreenProps> = ({
   title = STRINGS.SESSION_COMPLETE,
-  subtitle,
   buttonText = UiAction.CONTINUE,
   iconName = 'checkmark-circle',
   iconSize = LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE,
@@ -97,14 +92,6 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
             {title}
           </ThemedText>
         </Animated.View>
-
-        {subtitle && (
-          <Animated.View entering={ENTERING_SUBTITLE}>
-            <ThemedText colorName="subtitleText" style={styles.subtitleText} type="heading3">
-              {subtitle}
-            </ThemedText>
-          </Animated.View>
-        )}
 
         {/* Educational text - contextual based on session performance */}
         <Animated.View entering={ENTERING_EDUCATIONAL}>
@@ -224,13 +211,7 @@ const styles = StyleSheet.create({
 
   titleText: {
     textAlign: 'center',
-    marginBottom: LAYOUT.SPACING.SMALL, // Tight grouping with subtitle
-  },
-
-  subtitleText: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    textAlign: 'center',
-    marginBottom: LAYOUT.SPACING.SMALL, // Tight grouping with educational text
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
 
   educationalText: {

@@ -105,14 +105,12 @@ describe('CompletionScreen Component', () => {
   const createMockMetrics = (overrides: Partial<SessionMetrics> = {}): SessionMetrics => ({
     wordsReviewed: 10,
     wordsKnown: 8,
-    wordsVague: 1,
-    wordsUnknown: 1,
+    wordsUnknown: 2,
     currentStreak: 5,
     longestStreak: 5,
     masteredWords: 3,
-    totalTime: 120000, // 2 minutes
-    averageTime: 12000, // 12 seconds per word
     averageStabilityIncrease: 2.5,
+    startTime: Date.now() - 120000, // 2 minutes ago
     ...overrides,
   });
 
@@ -132,12 +130,6 @@ describe('CompletionScreen Component', () => {
       const { getByText } = render(<CompletionScreen title="Great Job!" />);
 
       expect(getByText('Great Job!')).toBeTruthy();
-    });
-
-    test('renders with custom subtitle', () => {
-      const { getByText } = render(<CompletionScreen subtitle="You reviewed 10 words" />);
-
-      expect(getByText('You reviewed 10 words')).toBeTruthy();
     });
 
     test('renders success icon', () => {
@@ -268,12 +260,11 @@ describe('CompletionScreen Component', () => {
       );
     });
 
-    test('does not call review completion for generic screens', () => {
+    test('calls useReviewCompletion with shouldExecute=true when no metrics', () => {
       useReviewCompletion.mockClear();
 
-      render(<CompletionScreen useThemedView={true} />);
+      render(<CompletionScreen />);
 
-      // When useThemedView is true, shouldExecute is now true (code behavior changed)
       expect(useReviewCompletion).toHaveBeenCalledWith(undefined, true);
     });
   });
@@ -365,7 +356,6 @@ describe('CompletionScreen Component', () => {
       const metrics = createMockMetrics({
         wordsReviewed: 10,
         wordsKnown: 10,
-        wordsVague: 0,
         wordsUnknown: 0,
       });
 
@@ -403,24 +393,12 @@ describe('CompletionScreen Component', () => {
       expect(queryByText('Session complete')).toBeFalsy();
     });
 
-    test('handles empty subtitle', () => {
-      expect(() => render(<CompletionScreen subtitle="" />)).not.toThrow();
-    });
-
     test('handles very long title', () => {
       const longTitle = 'A'.repeat(200);
 
       const { getByText } = render(<CompletionScreen title={longTitle} />);
 
       expect(getByText(longTitle)).toBeTruthy();
-    });
-
-    test('handles very long subtitle', () => {
-      const longSubtitle = 'B'.repeat(300);
-
-      const { getByText } = render(<CompletionScreen subtitle={longSubtitle} />);
-
-      expect(getByText(longSubtitle)).toBeTruthy();
     });
 
     test('handles special characters in title', () => {
@@ -457,19 +435,9 @@ describe('CompletionScreen Component', () => {
 
       useReviewCompletion.mockClear();
 
-      render(<CompletionScreen sessionMetrics={metrics} useThemedView={false} />);
+      render(<CompletionScreen sessionMetrics={metrics} />);
 
-      // Should execute review completion (shouldExecute = true)
       expect(useReviewCompletion).toHaveBeenCalledWith(metrics, true);
-    });
-
-    test('should not execute review completion for generic flows', () => {
-      useReviewCompletion.mockClear();
-
-      render(<CompletionScreen useThemedView={true} />);
-
-      // Code behavior: shouldExecute is now true regardless of useThemedView
-      expect(useReviewCompletion).toHaveBeenCalledWith(undefined, true);
     });
 
     test('should display metrics in order of importance', () => {

@@ -22,6 +22,7 @@ describe('useEncouragingMetrics', () => {
     error: '#FF0000',
     warning: '#FFAA00',
     success: '#00FF00',
+    info: '#0088FF',
   };
 
   const baseMetrics: SessionMetrics = {
@@ -68,7 +69,7 @@ describe('useEncouragingMetrics', () => {
   });
 
   describe('Traffic light metrics structure', () => {
-    test('should return exactly 3 metrics in traffic light order', () => {
+    test('should return 3 metrics when session duration is 0', () => {
       const { result } = renderHook(() =>
         useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 5),
       );
@@ -79,14 +80,30 @@ describe('useEncouragingMetrics', () => {
       expect(result.current?.metrics[2].type).toBe('mastery');
     });
 
-    test('should use correct colors for each metric type', () => {
+    test('should return 4 metrics including duration when session has elapsed time', () => {
+      // startTime 2 minutes ago
+      const metricsWithDuration: SessionMetrics = { ...baseMetrics, startTime: -120000 };
       const { result } = renderHook(() =>
-        useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 5),
+        useEncouragingMetrics(metricsWithDuration, mockColors as ThemeColors, 5),
+      );
+
+      expect(result.current?.metrics).toHaveLength(4);
+      expect(result.current?.metrics[0].type).toBe('due');
+      expect(result.current?.metrics[1].type).toBe('duration');
+      expect(result.current?.metrics[2].type).toBe('daily_streak');
+      expect(result.current?.metrics[3].type).toBe('mastery');
+    });
+
+    test('should use correct colors for each metric type', () => {
+      const metricsWithDuration: SessionMetrics = { ...baseMetrics, startTime: -120000 };
+      const { result } = renderHook(() =>
+        useEncouragingMetrics(metricsWithDuration, mockColors as ThemeColors, 5),
       );
 
       expect(result.current?.metrics[0].color).toBe(mockColors.error);
-      expect(result.current?.metrics[1].color).toBe(mockColors.warning);
-      expect(result.current?.metrics[2].color).toBe(mockColors.success);
+      expect(result.current?.metrics[1].color).toBe(mockColors.info);
+      expect(result.current?.metrics[2].color).toBe(mockColors.warning);
+      expect(result.current?.metrics[3].color).toBe(mockColors.success);
     });
   });
 
@@ -114,6 +131,45 @@ describe('useEncouragingMetrics', () => {
       );
 
       expect(result.current?.metrics[0].icon).toBe('time');
+    });
+  });
+
+  describe('Duration metric (BLUE)', () => {
+    test('should show formatted duration for a 2-minute session', () => {
+      const metricsWithDuration: SessionMetrics = { ...baseMetrics, startTime: -120000 };
+      const { result } = renderHook(() =>
+        useEncouragingMetrics(metricsWithDuration, mockColors as ThemeColors, 0),
+      );
+
+      expect(result.current?.metrics[1].text).toBe('2m session');
+      expect(result.current?.metrics[1].icon).toBe('hourglass-outline');
+    });
+
+    test('should show seconds only for short sessions', () => {
+      const metricsWithDuration: SessionMetrics = { ...baseMetrics, startTime: -45000 };
+      const { result } = renderHook(() =>
+        useEncouragingMetrics(metricsWithDuration, mockColors as ThemeColors, 0),
+      );
+
+      expect(result.current?.metrics[1].text).toBe('45s session');
+    });
+
+    test('should show minutes and seconds for mixed duration', () => {
+      const metricsWithDuration: SessionMetrics = { ...baseMetrics, startTime: -150000 };
+      const { result } = renderHook(() =>
+        useEncouragingMetrics(metricsWithDuration, mockColors as ThemeColors, 0),
+      );
+
+      expect(result.current?.metrics[1].text).toBe('2m 30s session');
+    });
+
+    test('should skip duration metric when session duration is 0', () => {
+      const { result } = renderHook(() =>
+        useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 0),
+      );
+
+      const durationMetric = result.current?.metrics.find(m => m.type === 'duration');
+      expect(durationMetric).toBeUndefined();
     });
   });
 
