@@ -9,7 +9,6 @@ import { DEFAULT_TOAST_DURATION, TIMING_CONFIG } from '@/constants/animation';
 import { FONTS } from '@/constants/fonts';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { ToastType } from '@/types/enums';
 import { errorFeedback, successFeedback } from '@/utils/haptics';
 
@@ -73,7 +72,6 @@ export function Toast({
   type = ToastType.INFO,
   position = 'top',
 }: ToastProps) {
-  const isDarkMode = useIsDarkMode();
   const colors = useColors();
   const insets = useSafeAreaInsets();
 
@@ -150,8 +148,8 @@ export function Toast({
             maxWidth: maxToastWidth,
             backgroundColor,
             shadowColor: colors.shadow,
-            borderWidth: isDarkMode ? 1 : 0,
-            borderColor: isDarkMode ? colors.border : colors.transparent,
+            borderWidth: 1,
+            borderColor: colors.toastBorder,
           },
         ]}
       >

@@ -38,7 +38,7 @@ export default function TabLayout(): JSX.Element {
     return (
       <NativeTabs
         tintColor={colors.tint}
-        badgeBackgroundColor={colors.tint}
+        badgeBackgroundColor={colors.error}
         iconColor={{
           default: colors.tabIconDefault,
           selected: colors.tint,

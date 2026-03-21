@@ -1,9 +1,10 @@
 import type { FlashListRef } from '@shopify/flash-list';
 import { useLocalSearchParams } from 'expo-router';
 import type { JSX, RefObject } from 'react';
-import { memo, useCallback, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { LayoutRectangle } from 'react-native';
 import { View } from 'react-native';
+import { useSharedValue } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
@@ -12,6 +13,7 @@ import {
   WordTooltip,
   ArticleContent,
 } from '@/components/article';
+import { ComponentErrorBoundary } from '@/components/common/ComponentErrorBoundary';
 import { ToastProvider, useTutorialContext, useToast } from '@/components/providers';
 import { PulsatingLoader } from '@/components/ui';
 import { TutorialId } from '@/constants/tutorials';
@@ -22,8 +24,6 @@ import type { SentenceWord } from '@/types/vocabulary.types';
 
 // Static constants to prevent recreation
 const FLEX_ONE_STYLE = { flex: 1 } as const;
-
-const ARTICLE_SETTINGS = { showEnglish: true } as const;
 
 // Static styles for loading container
 const LOADING_CONTAINER_STYLE = {
@@ -80,6 +80,13 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   // Track if user manually dismissed the tutorial card
   const [isTutorialCardDismissed, setIsTutorialCardDismissed] = useState(false);
 
+  // SharedValue for active word ID — drives per-word opacity on UI thread
+  // without causing React re-renders across all sentences
+  const activeWordIdSV = useSharedValue<string | number | null>(null);
+  useEffect(() => {
+    activeWordIdSV.value = activeTooltip?.word.id ?? null;
+  }, [activeTooltip?.word.id, activeWordIdSV]);
+
   // Handle tutorial card dismissal
   const handleDismissTutorial = useCallback(() => {
     setIsTutorialCardDismissed(true);
@@ -100,8 +107,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     [showWordTapTutorial, completeTutorial, handleWordPress],
   );
 
-  const settings = ARTICLE_SETTINGS;
-
   // Memoize renderSentenceItem to prevent unnecessary recreations
   const renderSentenceItem = useCallback(
     ({ item, index }: { item: Tables<'article_sentences'>; index: number }) => {
@@ -120,12 +125,11 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
           key={item.id}
           sentence={item}
           words={words}
-          settings={settings}
           colors={colors}
           onWordPress={handleWordPressWithTutorial}
           showTutorialCard={showTutorialCard}
           onDismissTutorial={handleDismissTutorial}
-          activeWordId={activeTooltip?.word.id}
+          activeWordIdSV={activeWordIdSV}
         />
       );
     },
@@ -133,11 +137,10 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       sentenceWordsMap,
       colors,
       handleWordPressWithTutorial,
-      settings,
       showWordTapTutorial,
       isTutorialCardDismissed,
       handleDismissTutorial,
-      activeTooltip?.word.id,
+      activeWordIdSV,
     ],
   );
 
@@ -168,7 +171,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       scrollViewRef: scrollViewRef as RefObject<FlashListRef<Tables<'article_sentences'>>>,
       isInReadingList,
       onToggleReadingList: handleToggleReadingListWithFeedback,
-      showEnglish: true,
       onClose: handleClose,
       onFlashListLoad: handleFlashListLoad,
     };
@@ -224,7 +226,9 @@ export default function ArticleScreen(): JSX.Element {
   return (
     <ToastProvider>
       <SafeAreaView style={containerStyle} edges={[]}>
-        <ArticleScreenContent id={id ?? ''} />
+        <ComponentErrorBoundary componentName="ArticleScreen">
+          <ArticleScreenContent id={id ?? ''} />
+        </ComponentErrorBoundary>
       </SafeAreaView>
     </ToastProvider>
   );

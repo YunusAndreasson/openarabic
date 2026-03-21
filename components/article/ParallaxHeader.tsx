@@ -6,7 +6,6 @@ import { Canvas, LinearGradient, Rect, vec } from '@shopify/react-native-skia';
 
 import { EnhancedImage } from '@/components/ui/EnhancedImage';
 import { SCREEN_WIDTH } from '@/constants/layout';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { Article } from '@/types/articles.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import {
@@ -71,7 +70,6 @@ const ParallaxHeaderComparison = (
  */
 const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors, scrollY }) => {
   const insets = useSafeAreaInsets();
-  const isDarkMode = useIsDarkMode();
 
   // Calculate dynamic height including safe area for proper image display
   const headerHeight = useMemo(() => {
@@ -102,15 +100,15 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors, scr
     [article.image_url],
   );
 
-  // Enhanced gradient for better text visibility - different approach for light vs dark mode
+  // Enhanced gradient for better text visibility (theme-aware via colors.gradientOverlay)
   const imageGradientColors = useMemo(() => {
-    return createImageGradientColors(colors, isDarkMode);
-  }, [colors, isDarkMode]);
+    return createImageGradientColors(colors);
+  }, [colors]);
 
-  // Background gradient colors for smooth transition to content with memoization
+  // Background gradient colors for smooth transition to content
   const backgroundGradientColors = useMemo(() => {
-    return createBackgroundGradientColors(colors, isDarkMode);
-  }, [colors, isDarkMode]);
+    return createBackgroundGradientColors(colors);
+  }, [colors]);
 
   // Animated parallax and pull-to-stretch effect
   const animatedImageStyle = useAnimatedStyle(() => {

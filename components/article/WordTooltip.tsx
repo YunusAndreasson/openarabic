@@ -2,7 +2,6 @@ import { useCallback, useRef, useState } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
-import { WORD_TOOLTIP_ANIMATION_DURATION } from '@/components/article/SkiaArabicWord';
 import { ThemedText } from '@/components/ThemedText';
 import { FONTS } from '@/constants/fonts';
 import {
@@ -23,7 +22,8 @@ import {
 import { cleanWordText } from '@/utils/stringUtils';
 
 // Module-level constants - zero per-render allocations
-const FADE_IN_ANIMATION = FadeIn.duration(WORD_TOOLTIP_ANIMATION_DURATION);
+// Quick fade-in — short enough that the transparency flash is imperceptible
+const ENTER_ANIMATION = FadeIn.duration(100);
 
 const STATIC_STYLES = StyleSheet.create({
   overlay: {
@@ -185,35 +185,36 @@ export function WordTooltip({
 
   return (
     <View ref={containerRef} onLayout={handleLayout} style={CONTAINER_STYLE} pointerEvents="box-none">
-      <Pressable
-        onPress={onOpenWordDetails}
-        disabled={!onOpenWordDetails}
-        hitSlop={LAYOUT.HIT_SLOP.SMALL}
-        style={({ pressed }) => ({ opacity: pressed ? LAYOUT.OPACITY.HIGH : 1 })}
+      <Animated.View
+        entering={ENTER_ANIMATION}
+        style={dynamicStyles.tooltip}
+        testID="word-tooltip"
       >
-        <Animated.View
-          entering={FADE_IN_ANIMATION}
-          style={dynamicStyles.tooltip}
-          testID="word-tooltip"
+        <Pressable
+          onPress={onOpenWordDetails}
+          disabled={!onOpenWordDetails}
+          hitSlop={LAYOUT.HIT_SLOP.SMALL}
+          style={({ pressed }) => [
+            STATIC_STYLES.contentContainer,
+            { transform: [{ scale: pressed ? 0.96 : 1 }] },
+          ]}
         >
-          <View style={dynamicStyles.arrow} />
-          <View style={STATIC_STYLES.contentContainer}>
-            <View style={STATIC_STYLES.textContainer}>
-              <ThemedText skipDefaultColor style={STATIC_STYLES.singleLineText}>
-                {coloredSegments.map(segment => (
-                  <ThemedText
-                    key={segment.key}
-                    skipDefaultColor
-                    style={[STATIC_STYLES.singleLineText, { color: segment.color }]}
-                  >
-                    {segment.text}
-                  </ThemedText>
-                ))}
-              </ThemedText>
-            </View>
+          <View style={STATIC_STYLES.textContainer}>
+            <ThemedText skipDefaultColor style={STATIC_STYLES.singleLineText}>
+              {coloredSegments.map(segment => (
+                <ThemedText
+                  key={segment.key}
+                  skipDefaultColor
+                  style={[STATIC_STYLES.singleLineText, { color: segment.color }]}
+                >
+                  {segment.text}
+                </ThemedText>
+              ))}
+            </ThemedText>
           </View>
-        </Animated.View>
-      </Pressable>
+        </Pressable>
+        <View style={dynamicStyles.arrow} />
+      </Animated.View>
     </View>
   );
 }

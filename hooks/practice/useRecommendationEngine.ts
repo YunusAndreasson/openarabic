@@ -113,38 +113,38 @@ function getMilestoneMessage(masteredWords: number, currentStreak?: number): str
 function getWordMilestoneText(target: number): string {
   switch (target) {
     case 10:
-      return "🎉 10 words mastered! You've built a foundation for long-term memory.";
+      return "10 words mastered! You've built a foundation for long-term memory.";
     case 25:
-      return "🎉 25 words mastered! Building your first 25 takes real dedication—you've proven you can learn Arabic consistently.";
+      return "25 words mastered! Building your first 25 takes real dedication—you've proven you can learn Arabic consistently.";
     case 50:
-      return '🎉 50 words mastered! A strong start. Reviewing at increasing intervals moves these words into long-term memory.';
+      return '50 words mastered! A strong start. Reviewing at increasing intervals moves these words into long-term memory.';
     case 100:
-      return '🎉 100 words mastered! A vocabulary this size makes reading Arabic noticeably easier.';
+      return '100 words mastered! A vocabulary this size makes reading Arabic noticeably easier.';
     case 200:
-      return '🎉 200 words mastered! You now recognize many of the most frequent Arabic words. Reading becomes genuinely enjoyable.';
+      return '200 words mastered! You now recognize many of the most frequent Arabic words. Reading becomes genuinely enjoyable.';
     case 300:
-      return "🎉 300 words mastered! You've reached intermediate vocabulary. Context clues now help you guess unfamiliar words.";
+      return "300 words mastered! You've reached intermediate vocabulary. Context clues now help you guess unfamiliar words.";
     case 500:
-      return '🎉 500 words mastered! A rich vocabulary that makes Arabic texts far more accessible.';
+      return '500 words mastered! A rich vocabulary that makes Arabic texts far more accessible.';
     default:
-      return `🎉 ${target} words mastered!`;
+      return `${target} words mastered!`;
   }
 }
 
 function getStreakMilestoneText(streak: number): string {
   switch (streak) {
     case 7:
-      return '🔥 7-day streak! One week of consistency—keep building this daily habit.';
+      return '7-day streak! One week of consistency—keep building this daily habit.';
     case 30:
-      return '🔥 30-day streak! A full month. Your brain has adapted to expect daily Arabic practice—this is now becoming automatic.';
+      return '30-day streak! A full month. Your brain has adapted to expect daily Arabic practice—this is now becoming automatic.';
     case 60:
-      return "🔥 60-day streak! Two months of daily practice. At this point, skipping a day would feel wrong. That's habit formation at work.";
+      return "60-day streak! Two months of daily practice. At this point, skipping a day would feel wrong. That's habit formation at work.";
     case 100:
-      return '🔥 100-day streak! This level of consistency is truly exceptional. Arabic is now part of your daily life.';
+      return '100-day streak! This level of consistency is truly exceptional. Arabic is now part of your daily life.';
     case 365:
-      return "🔥 365-day streak! A full year of daily practice. You've proven extraordinary dedication to learning Arabic.";
+      return "365-day streak! A full year of daily practice. You've proven extraordinary dedication to learning Arabic.";
     default:
-      return `🔥 ${streak}-day streak!`;
+      return `${streak}-day streak!`;
   }
 }
 

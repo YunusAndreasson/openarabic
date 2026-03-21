@@ -3,6 +3,7 @@ import type { ComponentRef, RefObject } from 'react';
 import { createRef, memo, useMemo, useRef } from 'react';
 import type { LayoutRectangle, StyleProp, ViewStyle } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
+import type { SharedValue } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { SkiaArabicWord as ArabicWord } from '@/components/article/SkiaArabicWord';
@@ -23,15 +24,12 @@ interface ArticleSentenceProps {
   };
   words: SentenceWord[];
   onWordPress?: (word: SentenceWord, layout?: LayoutRectangle) => void;
-  settings: {
-    showEnglish: boolean;
-  };
   colors: ThemeColors;
   containerStyle?: StyleProp<ViewStyle>;
   showTutorialCard?: boolean;
   onDismissTutorial?: () => void;
-  /** ID of the word currently shown in the tooltip */
-  activeWordId?: string | number | null;
+  /** SharedValue tracking the active word ID — drives opacity on UI thread without re-renders */
+  activeWordIdSV?: SharedValue<string | number | null>;
   /** Root ID to highlight as target word (used in dictionary sentence examples) */
   highlightRootId?: RootId | null;
 }
@@ -40,12 +38,11 @@ const ArticleSentenceInternal = function ArticleSentence({
   sentence,
   words,
   onWordPress,
-  settings,
   colors: propColors,
   containerStyle,
   showTutorialCard = false,
   onDismissTutorial,
-  activeWordId,
+  activeWordIdSV,
   highlightRootId,
 }: ArticleSentenceProps) {
   const defaultColors = useColors();
@@ -85,9 +82,6 @@ const ArticleSentenceInternal = function ArticleSentence({
       // Highlight the first word when tutorial is showing
       const isFirstWord = index === 0;
 
-      // Check if this word is currently active (shown in tooltip)
-      const isActive = activeWordId != null && word.id === activeWordId;
-
       // Check if this word is the target word (for dictionary sentence examples)
       const isTargetWord = highlightRootId != null && word.root_id === highlightRootId;
 
@@ -98,16 +92,16 @@ const ArticleSentenceInternal = function ArticleSentence({
           onTooltipOpen={onWordPress}
           wordRef={wordRef}
           isHighlighted={isFirstWord && showTutorialCard}
-          isActive={isActive}
+          activeWordIdSV={activeWordIdSV}
           isTargetWord={isTargetWord}
         />
       );
     });
-  }, [words, onWordPress, sentence.id, showTutorialCard, activeWordId, highlightRootId]);
+  }, [words, onWordPress, sentence.id, showTutorialCard, activeWordIdSV, highlightRootId]);
 
   return (
     <View style={[styles.container, containerStyle]}>
-      {settings.showEnglish && sentence.english && (
+      {sentence.english && (
         <ThemedText style={englishTextStyle}>{sentence.english}</ThemedText>
       )}
 

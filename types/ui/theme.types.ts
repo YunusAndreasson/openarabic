@@ -26,15 +26,14 @@ export interface ThemeColors {
 
   tint: string;
   tintBackground: string;
+  onTint: string;
   tabIconDefault: string;
   tabIconSelected: string;
   icon: string;
   disabled: string;
+  disabledButtonBg: string;
   transparent: string;
-  overlay: string;
-  modalOverlay: string;
   borderOverlay: string;
-  buttonOverlay: string;
   shadow: string;
   elevation0: string;
   elevation1: string;
@@ -42,18 +41,17 @@ export interface ThemeColors {
   elevation3: string;
   white: string;
   black: string;
-  textOverlay: string;
   textShadowDark: string;
   textShadowLight: string;
   info: string;
   accent: string;
   violet: string;
-  indigo: string;
-  coral: string;
 
   modalIndicator: string;
 
   backdropOverlay: string;
+  toastBorder: string;
+  gradientOverlay: string;
   wordTooltipBg: string;
   wordTooltipText: string;
   wordTooltipBorder: string;
@@ -67,7 +65,6 @@ export interface ThemeColors {
   progressBackground: string;
   readingProgressIndicator: string;
   readingProgressBackground: string;
-  interactiveSecondary: string;
   completionSuccess: string;
 
   // Chart UI colors - simplified (main chart colors use tint directly)

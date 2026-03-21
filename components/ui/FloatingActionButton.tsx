@@ -7,7 +7,6 @@ import { initialWindowMetrics } from 'react-native-safe-area-context';
 import { LAYOUT } from '@/constants/layout';
 import { PRESS_ANIMATION_BUTTON, usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { mediumFeedback } from '@/utils/haptics';
 
 const FAB_SIZE = 56;
@@ -27,11 +26,10 @@ export function FloatingActionButton({
   loading,
 }: FloatingActionButtonProps): JSX.Element {
   const colors = useColors();
-  const isDarkMode = useIsDarkMode();
   const { animatedStyle, handlePressIn, handlePressOut } =
     usePressAnimation(PRESS_ANIMATION_BUTTON);
 
-  const iconColor = isDarkMode ? colors.black : colors.white;
+  const iconColor = colors.onTint;
 
   return (
     <AnimatedPressable

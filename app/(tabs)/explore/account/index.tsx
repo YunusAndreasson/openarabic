@@ -1,9 +1,9 @@
 // External Libraries
 import { TimePicker } from '@/components/ui';
+import * as StoreReview from 'expo-store-review';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState, type FC } from 'react';
 import { Alert, StyleSheet } from 'react-native';
-
 
 import { THEME_OPTIONS } from '@/components/ui/ThemePicker';
 import { ThemedView } from '@/components/ThemedView';
@@ -39,7 +39,7 @@ import {
 } from '@/types/enums';
 import { formatBytes } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
-import { errorFeedback, selectionFeedback, successFeedback } from '@/utils/haptics';
+import { errorFeedback, lightFeedback, selectionFeedback, successFeedback } from '@/utils/haptics';
 
 // Helper function for enum validation
 function validateEnumValue<T>(value: unknown, validValues: readonly T[], defaultValue: T): T {
@@ -166,6 +166,33 @@ const AccountScreen: FC = () => {
     },
     [dispatch],
   );
+
+  // Rate app handler
+  const handleRequestReview = useCallback(async () => {
+    try {
+      const isAvailable = await StoreReview.isAvailableAsync();
+      if (!isAvailable) {
+        handleError(new Error('StoreReview not available'), {
+          analyticsEventName: 'Store_Review_Not_Available',
+          sentryTags: { location: 'account', action: 'store_review' },
+          sentryExtra: { storeUrl: StoreReview.storeUrl() },
+          sentrySeverity: 'info',
+          showToast: false,
+        });
+        return;
+      }
+      await new Promise(resolve => setTimeout(resolve, 100));
+      await StoreReview.requestReview();
+      lightFeedback();
+    } catch (error) {
+      handleError(error as Error, {
+        analyticsEventName: 'Store_Review_Request_Failed',
+        sentryTags: { location: 'account', action: 'store_review' },
+        showToast: true,
+        sentrySeverity: 'warning',
+      });
+    }
+  }, []);
 
   const handlePickerSelect = useCallback(
     (value: string | number) => {
@@ -325,6 +352,12 @@ const AccountScreen: FC = () => {
             onPress={() => handlePickerOpen('dailyWordLimit')}
           />
           <SettingsCard
+            icon="school"
+            label={STRINGS.RESET_TUTORIALS}
+            rightType="none"
+            onPress={handleResetTutorials}
+          />
+          <SettingsCard
             icon="notifications"
             label={STRINGS.STUDY_REMINDERS}
             rightType="toggle"
@@ -360,7 +393,18 @@ const AccountScreen: FC = () => {
           />
         </SettingsSection>
 
-        {/* Support - Help and assistance */}
+        {/* Storage - Cache management */}
+        <SettingsSection title={STRINGS.STORAGE_SECTION}>
+          <SettingsCard
+            icon="trash-outline"
+            label={STRINGS.CLEAR_CACHE}
+            subtitle={formattedCacheSize}
+            rightType="none"
+            onPress={handleClearCache}
+          />
+        </SettingsSection>
+
+        {/* Support - Help, assistance, and rating */}
         <SettingsSection title={AccountSection.SUPPORT}>
           <SettingsCard
             icon="help-circle"
@@ -374,26 +418,19 @@ const AccountScreen: FC = () => {
             rightType="chevron"
             onPress={handleSupportContact}
           />
+          <SettingsCard
+            icon="star"
+            label={STRINGS.RATE_APP}
+            rightType="none"
+            onPress={handleRequestReview}
+          />
         </SettingsSection>
 
-        {/* About - Legal, social, and rating */}
+        {/* Legal + Community (split sections rendered by AboutSection) */}
         <AboutSection />
 
-        {/* Storage & Account - Data management and session */}
-        <SettingsSection title={STRINGS.STORAGE_ACCOUNT_SECTION}>
-          <SettingsCard
-            icon="trash-outline"
-            label={STRINGS.CLEAR_CACHE}
-            subtitle={formattedCacheSize}
-            rightType="none"
-            onPress={handleClearCache}
-          />
-          <SettingsCard
-            icon="school"
-            label={STRINGS.RESET_TUTORIALS}
-            rightType="none"
-            onPress={handleResetTutorials}
-          />
+        {/* Account - Session management */}
+        <SettingsSection title={STRINGS.ACCOUNT}>
           <SettingsCard
             icon="log-out"
             label={STRINGS.SIGN_OUT}

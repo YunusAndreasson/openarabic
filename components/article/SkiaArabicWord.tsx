@@ -1,7 +1,7 @@
 import { memo, useEffect, useMemo, useRef, type ComponentRef, type RefObject } from 'react';
-import type { LayoutRectangle, ViewStyle } from 'react-native';
+import type { LayoutRectangle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import Animated, { type SharedValue, useAnimatedStyle } from 'react-native-reanimated';
 
 import { Pressable } from 'react-native-gesture-handler';
 import { Canvas, Paragraph as SkiaParagraph, TextDirection } from '@shopify/react-native-skia';
@@ -10,6 +10,7 @@ import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useSkiaFonts } from '@/hooks/theme/useSkiaFonts';
 import { useArabicWord } from '@/hooks/vocabulary';
+import type { ReanimatedCSSAnimationStyle } from '@/types/ui/base.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { buildColoredParagraph, buildSimpleParagraph } from '@/utils/skiaParagraphBuilder';
 import { getSelectedStyle } from '@/utils/textStyleUtils';
@@ -20,7 +21,6 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 export const WORD_TOOLTIP_ANIMATION_DURATION = 150;
 
 // Module-level constant — no per-render allocation
-// Type assertion needed: Reanimated v4 CSS animations aren't in ViewStyle
 const HIGHLIGHT_ANIMATION_STYLE = {
   animationName: {
     '0%': { opacity: LAYOUT.OPACITY.SUBTLE },
@@ -30,7 +30,7 @@ const HIGHLIGHT_ANIMATION_STYLE = {
   animationIterationCount: 'infinite' as const,
   animationDirection: 'alternate' as const,
   animationTimingFunction: 'ease-in-out',
-} as unknown as ViewStyle;
+} as ReanimatedCSSAnimationStyle;
 
 interface SkiaArabicWordProps {
   word: SentenceWord;
@@ -39,8 +39,8 @@ interface SkiaArabicWordProps {
   testID?: string;
   /** When true, shows a pulsing highlight to draw attention (used for tutorial) */
   isHighlighted?: boolean;
-  /** When true, shows a static highlight indicating word is active (shown in tooltip) */
-  isActive?: boolean;
+  /** SharedValue tracking the active word ID — drives opacity on UI thread without re-renders */
+  activeWordIdSV?: SharedValue<string | number | null>;
   /** When true, shows a subtle tint background to mark this as the target word (used for dictionary sentence examples) */
   isTargetWord?: boolean;
 }
@@ -51,7 +51,7 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
   wordRef,
   testID,
   isHighlighted = false,
-  isActive = false,
+  activeWordIdSV,
   isTargetWord = false,
 }: SkiaArabicWordProps) {
   const colors = useColors();
@@ -60,14 +60,13 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
   // Prevent memory leaks from async callbacks on unmounted components
   const isMountedRef = useRef(true);
 
-  // Active word opacity — useAnimatedStyle required because AnimatedPressable
-  // (RNGestureHandlerButton) doesn't support CSS transitions
-  const activeStyle = useAnimatedStyle(
-    () => ({
-      opacity: isActive ? LAYOUT.OPACITY.HIGH : LAYOUT.OPACITY.FULL,
-    }),
-    [isActive],
-  );
+  // Active word opacity — derived from SharedValue on UI thread, no React re-renders
+  const wordId = word.id;
+  const activeStyle = useAnimatedStyle(() => {
+    'worklet';
+    const isActive = activeWordIdSV?.value === wordId;
+    return { opacity: isActive ? LAYOUT.OPACITY.HIGH : LAYOUT.OPACITY.FULL };
+  });
 
   // Use our existing hook for word selection state
   const { isSelected } = useArabicWord({ word });

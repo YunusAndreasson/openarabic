@@ -68,7 +68,7 @@ const tintOKLCH = {
  * Follows Material Design 3 and iOS HIG best practices
  */
 const disabledOKLCH = {
-  universal: { l: 0.46, c: 0.014, h: 160 }, // Desaturated grey-green - tuned to blend better with sage backgrounds
+  universal: { l: 0.49, c: 0.014, h: 160 }, // Desaturated grey-green - tuned for visibility on dark elevation3 (L: 0.265)
 } as const;
 
 /**
@@ -446,8 +446,6 @@ const lightColors: ThemeColors = {
   info: basePalette.azure.light, // Blue for stable/good state - distinct from Mastered green
   accent: basePalette.indigo.light, // Distinct from info - used for interactive accents (e.g., diacritics)
   violet: basePalette.violet.light,
-  indigo: basePalette.indigo.light,
-  coral: basePalette.coral.light, // Reserved for future grammar concepts
 
   // Text hierarchy
   englishText: basePalette.forest.medium,
@@ -463,17 +461,16 @@ const lightColors: ThemeColors = {
   // Interactive elements
   tint: basePalette.tint.primary,
   tintBackground: withAlpha(basePalette.tint.primary, opacity.medium),
+  onTint: basePalette.pure.white, // Text/icon color on tint backgrounds
   tabIconDefault: basePalette.forest.lighter,
   tabIconSelected: basePalette.tint.primary,
   icon: basePalette.forest.light,
   disabled: basePalette.disabled.universal,
+  disabledButtonBg: basePalette.sage.light, // Disabled filled button surface
 
   // Overlays
   transparent: basePalette.pure.transparent,
-  overlay: withAlpha(basePalette.sage.lighter, opacity.modal),
-  modalOverlay: withAlpha(basePalette.sage.lighter, opacity.full),
   borderOverlay: withAlpha(basePalette.tint.primary, opacity.border),
-  buttonOverlay: withAlpha(basePalette.tint.primary, opacity.medium),
   backdropOverlay: withAlpha(basePalette.forest.dark, opacity.backdrop),
 
   // Elevation system
@@ -484,6 +481,8 @@ const lightColors: ThemeColors = {
   elevation3: elevation.light.level3,
 
   // Reading experience
+  toastBorder: basePalette.pure.transparent, // No border needed in light mode
+  gradientOverlay: basePalette.sage.lighter, // Base color for image/background gradients
   wordTooltipBg: basePalette.pure.white,
   wordTooltipText: basePalette.forest.darkest,
   wordTooltipBorder: basePalette.sage.light,
@@ -499,7 +498,6 @@ const lightColors: ThemeColors = {
   progressBackground: withAlpha(basePalette.tint.primary, opacity.border),
   readingProgressIndicator: basePalette.forest.lighter,
   readingProgressBackground: withAlpha(basePalette.forest.lighter, opacity.border),
-  interactiveSecondary: basePalette.forest.light,
   completionSuccess: basePalette.semantic.success,
 
   // Chart UI colors
@@ -519,7 +517,6 @@ const lightColors: ThemeColors = {
   cardOverlayAuthor: withAlpha(basePalette.pure.white, opacity.shadow),
 
   // Utility colors
-  textOverlay: withAlpha(basePalette.tint.primary, opacity.subtle),
   textShadowDark: withAlpha(basePalette.forest.dark, opacity.shadow),
   textShadowLight: withAlpha(basePalette.pure.white, opacity.shadow),
   modalIndicator: basePalette.forest.lighter,
@@ -549,8 +546,6 @@ const darkColors: ThemeColors = {
   info: basePalette.azure.dark, // Blue for stable/good state - distinct from Mastered green (dark mode)
   accent: basePalette.indigo.dark, // Distinct from info - used for interactive accents (e.g., diacritics)
   violet: basePalette.violet.dark,
-  indigo: basePalette.indigo.dark,
-  coral: basePalette.coral.dark, // Reserved for future grammar concepts
 
   // Text hierarchy
   englishText: textHierarchy.dark.subtitle,
@@ -566,17 +561,16 @@ const darkColors: ThemeColors = {
   // Interactive elements
   tint: basePalette.tint.primaryDark,
   tintBackground: withAlpha(basePalette.tint.primaryDark, opacity.medium),
+  onTint: basePalette.pure.black, // Dark text/icon on lighter tint in dark mode
   tabIconDefault: basePalette.forest.light, // Increased from forest.medium for better dark mode visibility
   tabIconSelected: basePalette.tint.primaryDark,
   icon: basePalette.forest.lighter, // Palette-based for consistency (matches light/sepia pattern)
   disabled: basePalette.disabled.universal,
+  disabledButtonBg: elevation.dark.level1, // Elevated surface for ~3:1 contrast with disabled text
 
   // Overlays
   transparent: basePalette.pure.transparent,
-  overlay: withAlpha(basePalette.sage.darkest, opacity.modal),
-  modalOverlay: withAlpha(basePalette.sage.darkest, opacity.full),
   borderOverlay: withAlpha(basePalette.tint.primaryDark, opacity.border),
-  buttonOverlay: withAlpha(basePalette.tint.primaryDark, opacity.medium),
   backdropOverlay: withAlpha(basePalette.sage.darkest, opacity.darkBackdrop),
 
   // Elevation system
@@ -587,6 +581,8 @@ const darkColors: ThemeColors = {
   elevation3: elevation.dark.level3,
 
   // Reading experience
+  toastBorder: basePalette.sage.medium, // Subtle border for toast visibility on dark surfaces
+  gradientOverlay: basePalette.pure.black, // Dark overlay base for image/background gradients
   wordTooltipBg: basePalette.sage.medium,
   wordTooltipText: basePalette.pure.white,
   wordTooltipBorder: basePalette.forest.light, // Premium 2025: subtle brighter border (L: 0.576 vs bg L: 0.265)
@@ -602,7 +598,6 @@ const darkColors: ThemeColors = {
   progressBackground: withAlpha(basePalette.tint.primaryDark, opacity.border),
   readingProgressIndicator: basePalette.forest.light, // L: 0.576 - visible on elevation1 cards (0.39 delta vs 0.08 with sage.medium)
   readingProgressBackground: withAlpha(basePalette.forest.light, opacity.border),
-  interactiveSecondary: textHierarchy.dark.metadata,
   completionSuccess: basePalette.semantic.successDark,
 
   // Chart UI colors
@@ -622,7 +617,6 @@ const darkColors: ThemeColors = {
   cardOverlayAuthor: withAlpha(basePalette.pure.white, opacity.shadow),
 
   // Utility colors
-  textOverlay: withAlpha(basePalette.tint.primaryDark, opacity.subtle),
   textShadowDark: withAlpha(basePalette.pure.black, opacity.shadow),
   textShadowLight: withAlpha(basePalette.pure.white, opacity.shadow),
   modalIndicator: basePalette.forest.light,
@@ -652,8 +646,6 @@ const sepiaColors: ThemeColors = {
   info: basePalette.azure.sepia, // Blue-gray for stable/good state - distinct from Mastered (sepia mode)
   accent: basePalette.indigo.sepia, // Distinct from info - used for interactive accents (e.g., diacritics)
   violet: basePalette.violet.sepia,
-  indigo: basePalette.indigo.sepia,
-  coral: basePalette.coral.sepia, // Reserved for future grammar concepts
 
   // Text hierarchy
   englishText: basePalette.autumn.medium,
@@ -669,17 +661,16 @@ const sepiaColors: ThemeColors = {
   // Interactive elements
   tint: basePalette.autumn.accent.primary,
   tintBackground: withAlpha(basePalette.autumn.accent.primary, opacity.medium),
+  onTint: basePalette.sepiaPure.white, // Light text/icon on warm tint backgrounds
   tabIconDefault: basePalette.autumn.lighter,
   tabIconSelected: basePalette.autumn.accent.primary,
   icon: basePalette.autumn.light,
   disabled: basePalette.disabled.universal,
+  disabledButtonBg: basePalette.autumn.paper.light, // Disabled filled button surface
 
   // Overlays
   transparent: basePalette.pure.transparent,
-  overlay: withAlpha(basePalette.autumn.paper.lighter, opacity.modal),
-  modalOverlay: withAlpha(basePalette.autumn.paper.lighter, opacity.full),
   borderOverlay: withAlpha(basePalette.autumn.accent.primary, opacity.border),
-  buttonOverlay: withAlpha(basePalette.autumn.accent.primary, opacity.medium),
   backdropOverlay: withAlpha(basePalette.autumn.dark, opacity.backdrop),
 
   // Elevation system
@@ -690,6 +681,8 @@ const sepiaColors: ThemeColors = {
   elevation3: elevation.sepia.level3,
 
   // Reading experience
+  toastBorder: basePalette.pure.transparent, // No border needed in sepia mode
+  gradientOverlay: basePalette.autumn.paper.lighter, // Warm base for image/background gradients
   wordTooltipBg: basePalette.sepiaPure.white,
   wordTooltipText: basePalette.autumn.darkest,
   wordTooltipBorder: basePalette.autumn.paper.light,
@@ -705,7 +698,6 @@ const sepiaColors: ThemeColors = {
   progressBackground: withAlpha(basePalette.autumn.accent.primary, opacity.border),
   readingProgressIndicator: basePalette.autumn.lighter,
   readingProgressBackground: withAlpha(basePalette.autumn.lighter, opacity.border),
-  interactiveSecondary: basePalette.autumn.light,
   completionSuccess: basePalette.autumn.semantic.success,
 
   // Chart UI colors
@@ -725,7 +717,6 @@ const sepiaColors: ThemeColors = {
   cardOverlayAuthor: withAlpha(basePalette.sepiaPure.white, opacity.shadow),
 
   // Utility colors
-  textOverlay: withAlpha(basePalette.autumn.accent.primary, opacity.subtle),
   textShadowDark: withAlpha(basePalette.autumn.dark, opacity.shadow),
   textShadowLight: withAlpha(basePalette.sepiaPure.white, opacity.shadow),
   modalIndicator: basePalette.autumn.lighter,

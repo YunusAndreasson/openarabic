@@ -8,7 +8,6 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { PRESS_ANIMATION_BUTTON, usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { ThemedButtonProps } from '@/types/ui/button.types';
 import { lightFeedback } from '@/utils/haptics';
 import { createPadding } from '@/utils/layoutUtils';
@@ -43,7 +42,6 @@ export function ThemedButton({
   ...props
 }: ThemedButtonProps): JSX.Element {
   const colors = useColors();
-  const isDarkMode = useIsDarkMode();
 
   const { animatedStyle, handlePressIn, handlePressOut } =
     usePressAnimation(PRESS_ANIMATION_BUTTON);
@@ -76,7 +74,7 @@ export function ThemedButton({
   };
 
   // Single source of truth for text/icon color
-  const textColorName = disabled ? 'disabled' : variant === 'filled' ? (isDarkMode ? 'black' : 'white') : 'tint';
+  const textColorName = disabled ? 'disabled' : variant === 'filled' ? 'onTint' : 'tint';
   const textColor = colors[textColorName];
   const iconSize = ICON_SIZE_MAP[size];
 
@@ -84,16 +82,7 @@ export function ThemedButton({
   const androidRipple =
     Platform.OS === 'android'
       ? {
-          color:
-            variant === 'filled'
-              ? 'rgba(255, 255, 255, 0.12)' // White ripple on colored background
-              : `rgba(${
-                  colors.tint
-                    .replace('#', '')
-                    .match(/.{2}/g)
-                    ?.map(x => parseInt(x, 16))
-                    .join(', ') || '86, 128, 102'
-                }, 0.12)`, // Tint color ripple
+          color: colors.navigationRipple,
           borderless: false,
           radius: LAYOUT.ANDROID.TOUCH_TARGET.RIPPLE_RADIUS,
         }
@@ -105,12 +94,7 @@ export function ThemedButton({
     size === 'large' && styles.buttonLarge,
     size === 'small' && styles.buttonSmall,
     variant === 'filled' && {
-      backgroundColor:
-        isActuallyLoading || disabled
-          ? isDarkMode
-            ? colors.elevation1 // Darker bg in dark mode for ~3:1 contrast with disabled text
-            : colors.cardBorder
-          : colors.tint,
+      backgroundColor: isActuallyLoading || disabled ? colors.disabledButtonBg : colors.tint,
       borderWidth: LAYOUT.BORDER.WIDTH.THIN,
       borderColor: isActuallyLoading || disabled ? colors.cardBorder : colors.tint,
     },
