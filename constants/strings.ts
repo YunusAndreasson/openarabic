@@ -160,25 +160,76 @@ export const STRINGS = {
   SET_TIME: 'Set time',
   // Playlist tab empty state - minimal one-tap start
   BOOKMARKS_EMPTY_TITLE: 'Nothing saved yet',
-  BOOKMARKS_EMPTY_HINT: 'Tap the headset on any text\nto add it here',
+  BOOKMARKS_EMPTY_HINT: 'Tap the headphones on any article\nto add it here',
   // Practice tab empty state - minimal one-tap start
-  START_REVIEW: 'Start Review',
-  PLAY_ALL: 'Play All',
+  START_REVIEW: 'Start review',
+  PLAY_ALL: 'Play all',
   STUDY_LIST_EMPTY_TITLE: 'No words yet',
   STUDY_LIST_EMPTY_HINT: 'Tap any word while reading\nto save it for practice',
   // Welcome toasts when navigating from empty states
-  EXPLORE_WELCOME_FROM_PLAYLIST: 'Tap the headset on any article to add it to your playlist',
+  EXPLORE_WELCOME_FROM_PLAYLIST: 'Tap the headphones on any article to add it to your playlist',
   // Success toasts for empty state actions
   WORDS_ADDED_SUCCESS: 'Ready for your first practice session',
   ARTICLES_ADDED_SUCCESS: 'Ready for your first listen',
   ERROR_LOADING_DATA: "Couldn't load data. " + tryAgain,
   // Success messages - encouraging and celebration-focused
   SESSION_COMPLETE: 'Session complete',
-  SESSION_COMPLETE_EDUCATIONAL_STRONG:
-    "You're building strong recall — words return at optimal intervals",
-  SESSION_COMPLETE_EDUCATIONAL_DEFAULT: 'Words return at optimal intervals for long-term memory',
-  SESSION_COMPLETE_EDUCATIONAL_KEEP_AT_IT:
-    'Each review strengthens your memory — keep at it',
+  // Completion screen educational text pools (teach SRS concepts based on session performance)
+  SESSION_ED_STRONG_POOL: [
+    'Strong recall means your intervals are growing. Some of these words won\'t need review for weeks.',
+    'When you remember a word easily, the algorithm pushes the next review further out — that\'s how it becomes permanent.',
+    'Your brain just proved it can retrieve these words under pressure. That act of retrieval is what builds long-term memory.',
+    'Successful recall is more powerful than re-reading. You\'re training your brain to find these words when you need them.',
+  ] as const,
+  SESSION_ED_DEFAULT_POOL: [
+    'A mix of known and forgotten is actually ideal. Struggling to recall makes the memory stronger than getting it right easily.',
+    'Words you forgot will come back sooner. Words you knew get more time off. The system adapts to exactly where you are.',
+    'Every word you couldn\'t recall is now scheduled for an earlier return. That\'s the algorithm protecting you from forgetting.',
+    'Forgetting isn\'t failure — it\'s information. The system uses it to find the perfect moment for your next review.',
+  ] as const,
+  SESSION_ED_STRUGGLE_POOL: [
+    'Difficult sessions build the strongest memories. Words you struggled with will get shorter intervals until they stick.',
+    'Your brain is working hard, and that\'s exactly what learning looks like. These words will come back sooner for extra practice.',
+    'The algorithm noticed these words need more repetition and will schedule more frequent reviews. That extra practice is what makes them stick.',
+    'Every time you see a word again after forgetting, the memory trace gets deeper. You\'re building foundations right now.',
+  ] as const,
+  SESSION_ED_PERFECT:
+    'Perfect session. The algorithm will space your next reviews further apart — you\'ve earned longer breaks.',
+  SESSION_ED_BIG_STABILITY_JUMP:
+    'Your words grew significantly stronger this session. Some jumped from days to weeks between reviews.',
+  // Recommendation engine message pools (forward-looking guidance for Practice tab)
+  RECOMMENDATION_LOW_RETENTION_POOL: [
+    'Forgetting is part of the process. Reviewing right at this difficulty point creates the strongest memories.',
+    'Your brain builds stronger connections when you retrieve words right before forgetting. Now is the ideal time.',
+    'Struggling to recall makes the next recall easier. Review now and you\'ll remember longer.',
+  ] as const,
+  RECOMMENDATION_DUE_MANY_POOL: [
+    'Your words are at the perfect point for review — just starting to fade, which makes recall practice most effective.',
+    'Each word is scheduled based on how well you know it. Harder words come back sooner, easier ones wait longer.',
+    'Reviewing now extends each word\'s memory by days. The more times you successfully recall, the longer the next interval.',
+  ] as const,
+  RECOMMENDATION_DUE_FEW_POOL: [
+    'A quick review now builds the habit. Consistency matters more than session size.',
+    'Short sessions are just as effective as long ones. Every successful recall strengthens the memory trace.',
+  ] as const,
+  RECOMMENDATION_HEAVY_LOAD_POOL: [
+    'Most of your words are still young memories. Let them mature through review before adding more — quality over quantity.',
+    'Your brain has a daily learning budget. Focus on strengthening current words — new ones stick better when existing ones are solid.',
+  ] as const,
+  RECOMMENDATION_MODERATE_LOAD_POOL: [
+    'Your vocabulary is growing steadily. A few more words won\'t overwhelm your schedule, but reviews always come first.',
+    'Half your words are approaching long-term memory. Each successful review roughly doubles the time until the next one.',
+  ] as const,
+  RECOMMENDATION_SMALL_CAUGHT_UP_POOL: [
+    'Great time to explore articles and add words you\'re curious about. Words learned from context stick better than random lists.',
+    'You have room for more words. The system handles the scheduling — you just need to find words that interest you.',
+    'Each new word you add gets its own personalized schedule. Start with words you\'ve seen in articles.',
+  ] as const,
+  RECOMMENDATION_BALANCED_POOL: [
+    'Longer gaps between reviews mean your brain is encoding these more deeply.',
+    'Your mastered words now have intervals of 5+ days. Each successful review pushes those intervals even longer.',
+    'No reviews right now means your words are consolidating — your brain is strengthening the connections in the background.',
+  ] as const,
   METRIC_FIRST_SESSION_TODAY: 'First session today!',
   METRIC_WORDS_IMPROVING: (count: number) =>
     `${count} ${count === 1 ? 'word' : 'words'} strengthened`,
@@ -187,7 +238,7 @@ export const STRINGS = {
   // Word action buttons
   ADD_TO_PRACTICE: 'Add to practice',
   REMOVE_FROM_PRACTICE: 'In practice',
-  WORD_ADDED_TO_PRACTICE: 'Saved to Practice tab',
+  WORD_ADDED_TO_PRACTICE: 'Saved to practice',
   CHECK_EMAIL_CONFIRMATION: 'Check your email to confirm',
   SUCCESS: 'Success',
   NEW_RECOMMENDATION_SELECTED: 'New recommendation',
@@ -308,16 +359,16 @@ export const STRINGS = {
   SIGN_IN_WITH_EMAIL: 'Sign in with email',
   CREATE_ACCOUNT_WITH_EMAIL: 'Create account with email',
   CONTINUE_WITH: 'or',
-  MEMORY_STRENGTH: 'Memory Strength',
-  WORD_MASTERY: 'Mastered Words',
+  MEMORY_STRENGTH: 'Memory strength',
+  WORD_MASTERY: 'Mastered words',
   // Practice bottom sheet subtitles (concise: what it shows + why it matters)
   MEMORY_STRENGTH_SUBTITLE:
-    "Amount of words you're likely to remember — stay above 75% before adding new",
-  WORD_MASTERY_SUBTITLE: "Words you'll remember long-term",
+    "Number of words you're likely to remember — stay above 75% before adding new words",
+  WORD_MASTERY_SUBTITLE: "Words you'll remember without review",
   DUE_WORDS_FORECAST_SUBTITLE: 'Reviews per day based on your pace',
-  DUE_WORDS_FORECAST: 'Words Due',
+  DUE_WORDS_FORECAST: 'Words due',
   // Study Streak
-  STREAK_LABEL: 'Day Streak',
+  STREAK_LABEL: 'Day streak',
   // Study Streak Bottom Sheet
   STUDY_STREAK_ACTIVE_SUBTITLE: 'Keep the momentum going',
   STUDY_STREAK_INACTIVE_SUBTITLE: 'Start your practice habit',
@@ -328,7 +379,7 @@ export const STRINGS = {
   STUDY_STREAK_CHART_DESCRIPTION: 'Each bar is a day you practiced',
   LOADING_STREAK: 'Loading streak…',
   FAILED_TO_LOAD_STREAK: "Couldn't load streak. Try again",
-  STUDY_STREAK_EMPTY_STATE: 'Complete sessions to build your streak',
+  STUDY_STREAK_EMPTY_STATE: 'Complete a review to start your streak',
   // Chart Empty States (action + outcome, concise)
   EMPTY_STATE_MASTERY: 'Practice 5 words to see your strength trend',
   EMPTY_STATE_LEARNED: 'Complete reviews to track your progress',
@@ -337,7 +388,7 @@ export const STRINGS = {
   EMPTY_STATE_DUE_WORDS: 'Add words to see your upcoming reviews',
   EMPTY_STATE_GENERAL: 'Add words to start tracking your progress',
   // Word Sentences Bottom Sheet (dictionary sentence examples)
-  NO_SENTENCE_EXAMPLES: 'No sentence examples found',
+  NO_SENTENCE_EXAMPLES: 'No sentence examples yet',
   PLAY_AUDIO: 'Play audio',
   // Chart Dynamic Message Suffixes (concatenated with numbers)
   WORDS_NEED_URGENT_REVIEW: '% due for review',
@@ -452,7 +503,7 @@ export const STRINGS = {
   PLEASE_SIGN_IN_TO_ADD_ROOTS: 'Sign in to add roots',
   ERROR_EMPTY_EMAIL: 'Enter your email address',
   // Practice button disabled messages - concise guidance
-  COMPLETE_DUE_FIRST: 'Complete your due words first',
+  COMPLETE_DUE_FIRST: 'Review your due words first',
   HELP_SEARCH_PLACEHOLDER: 'Search help articles',
   HELP_SEARCH_RESULTS_SINGULAR: 'result',
   HELP_SEARCH_RESULTS_PLURAL: 'results',

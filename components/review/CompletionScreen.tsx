@@ -109,7 +109,7 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
         {/* Educational text - contextual based on session performance */}
         <Animated.View entering={ENTERING_EDUCATIONAL}>
           <ThemedText colorName="secondary" style={styles.educationalText} type="body">
-            {encouragingResult?.educationalText ?? STRINGS.SESSION_COMPLETE_EDUCATIONAL_DEFAULT}
+            {encouragingResult?.educationalText ?? STRINGS.SESSION_ED_DEFAULT_POOL[0]}
           </ThemedText>
         </Animated.View>
       </View>

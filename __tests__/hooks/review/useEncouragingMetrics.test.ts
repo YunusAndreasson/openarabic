@@ -6,12 +6,16 @@
  * - renderHook from @testing-library/react-native
  */
 
-import { describe, expect, it } from '@jest/globals';
+import { describe, expect, it, jest, beforeEach, afterEach } from '@jest/globals';
 import { renderHook } from '@testing-library/react-native';
 
+import { STRINGS } from '@/constants/strings';
 import { useEncouragingMetrics } from '@/hooks/review/useEncouragingMetrics';
 import type { SessionMetrics } from '@/types/review.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
+
+// Fix Date.now for deterministic pool selection (dayIndex = 0 → pool[0])
+const FIXED_NOW = 0;
 
 describe('useEncouragingMetrics', () => {
   const mockColors: Partial<ThemeColors> = {
@@ -28,7 +32,18 @@ describe('useEncouragingMetrics', () => {
     longestStreak: 3,
     currentStreak: 2,
     masteredWords: 1,
+    startTime: FIXED_NOW,
   };
+
+  let dateNowSpy: ReturnType<typeof jest.spyOn>;
+
+  beforeEach(() => {
+    dateNowSpy = jest.spyOn(Date, 'now').mockReturnValue(FIXED_NOW);
+  });
+
+  afterEach(() => {
+    dateNowSpy.mockRestore();
+  });
 
   describe('Returns null for invalid inputs', () => {
     test('should return null when sessionMetrics is undefined', () => {
@@ -192,7 +207,7 @@ describe('useEncouragingMetrics', () => {
   });
 
   describe('Contextual educational text', () => {
-    test('should return strong recall text when known ratio >= 70%', () => {
+    test('should return strong pool text when known ratio >= 70%', () => {
       const strongMetrics: SessionMetrics = {
         ...baseMetrics,
         wordsReviewed: 10,
@@ -203,10 +218,10 @@ describe('useEncouragingMetrics', () => {
         useEncouragingMetrics(strongMetrics, mockColors as ThemeColors, 0),
       );
 
-      expect(result.current?.educationalText).toContain('strong recall');
+      expect(result.current?.educationalText).toBe(STRINGS.SESSION_ED_STRONG_POOL[0]);
     });
 
-    test('should return keep at it text when known ratio < 40%', () => {
+    test('should return struggle pool text when known ratio < 40%', () => {
       const weakMetrics: SessionMetrics = {
         ...baseMetrics,
         wordsReviewed: 10,
@@ -217,10 +232,10 @@ describe('useEncouragingMetrics', () => {
         useEncouragingMetrics(weakMetrics, mockColors as ThemeColors, 0),
       );
 
-      expect(result.current?.educationalText).toContain('keep at it');
+      expect(result.current?.educationalText).toBe(STRINGS.SESSION_ED_STRUGGLE_POOL[0]);
     });
 
-    test('should return default text for moderate performance', () => {
+    test('should return default pool text for moderate performance', () => {
       const moderateMetrics: SessionMetrics = {
         ...baseMetrics,
         wordsReviewed: 10,
@@ -231,7 +246,62 @@ describe('useEncouragingMetrics', () => {
         useEncouragingMetrics(moderateMetrics, mockColors as ThemeColors, 0),
       );
 
-      expect(result.current?.educationalText).toContain('optimal intervals');
+      expect(result.current?.educationalText).toBe(STRINGS.SESSION_ED_DEFAULT_POOL[0]);
+    });
+
+    test('should return perfect session text for flawless session with 5+ words', () => {
+      const perfectMetrics: SessionMetrics = {
+        ...baseMetrics,
+        wordsReviewed: 8,
+        wordsKnown: 8,
+        wordsUnknown: 0,
+        longestStreak: 8, // matches wordsReviewed (perfect)
+      };
+      const { result } = renderHook(() =>
+        useEncouragingMetrics(perfectMetrics, mockColors as ThemeColors, 0),
+      );
+
+      expect(result.current?.educationalText).toBe(STRINGS.SESSION_ED_PERFECT);
+    });
+
+    test('should return big stability jump text when average stability increase is high', () => {
+      const bigJumpMetrics: SessionMetrics = {
+        ...baseMetrics,
+        wordsReviewed: 10,
+        wordsKnown: 8,
+        wordsUnknown: 2,
+        averageStabilityIncrease: 4.0,
+        longestStreak: 5, // not perfect (5 !== 10)
+      };
+      const { result } = renderHook(() =>
+        useEncouragingMetrics(bigJumpMetrics, mockColors as ThemeColors, 0),
+      );
+
+      expect(result.current?.educationalText).toBe(STRINGS.SESSION_ED_BIG_STABILITY_JUMP);
+    });
+
+    test('should rotate messages on different days', () => {
+      const strongMetrics: SessionMetrics = {
+        ...baseMetrics,
+        wordsReviewed: 10,
+        wordsKnown: 8,
+        wordsUnknown: 2,
+      };
+
+      // Day 0 -> pool[0]
+      dateNowSpy.mockReturnValue(0);
+      const { result: result1 } = renderHook(() =>
+        useEncouragingMetrics(strongMetrics, mockColors as ThemeColors, 0),
+      );
+
+      // Day 1 -> pool[1]
+      dateNowSpy.mockReturnValue(86400000);
+      const { result: result2 } = renderHook(() =>
+        useEncouragingMetrics(strongMetrics, mockColors as ThemeColors, 0),
+      );
+
+      expect(result1.current?.educationalText).toBe(STRINGS.SESSION_ED_STRONG_POOL[0]);
+      expect(result2.current?.educationalText).toBe(STRINGS.SESSION_ED_STRONG_POOL[1]);
     });
   });
 

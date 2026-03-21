@@ -104,13 +104,29 @@ export const useEncouragingMetrics = (
     }
 
     // Contextual educational text based on performance
+    // Day-based rotation for variety (same message all day, different tomorrow)
+    const dayIndex = Math.floor(Date.now() / 86400000);
+
     let educationalText: string;
-    if (knownRatio >= 0.7) {
-      educationalText = STRINGS.SESSION_COMPLETE_EDUCATIONAL_STRONG;
+
+    // Contextual overrides checked first (special session achievements)
+    if (
+      knownRatio >= 0.7 &&
+      metrics.longestStreak === metrics.wordsReviewed &&
+      metrics.wordsReviewed >= 5
+    ) {
+      educationalText = STRINGS.SESSION_ED_PERFECT;
+    } else if (knownRatio >= 0.7 && metrics.averageStabilityIncrease >= 3.0) {
+      educationalText = STRINGS.SESSION_ED_BIG_STABILITY_JUMP;
+    } else if (knownRatio >= 0.7) {
+      const pool = STRINGS.SESSION_ED_STRONG_POOL;
+      educationalText = pool[dayIndex % pool.length] ?? pool[0];
     } else if (knownRatio < 0.4) {
-      educationalText = STRINGS.SESSION_COMPLETE_EDUCATIONAL_KEEP_AT_IT;
+      const pool = STRINGS.SESSION_ED_STRUGGLE_POOL;
+      educationalText = pool[dayIndex % pool.length] ?? pool[0];
     } else {
-      educationalText = STRINGS.SESSION_COMPLETE_EDUCATIONAL_DEFAULT;
+      const pool = STRINGS.SESSION_ED_DEFAULT_POOL;
+      educationalText = pool[dayIndex % pool.length] ?? pool[0];
     }
 
     return { metrics: trafficLightMetrics, educationalText };

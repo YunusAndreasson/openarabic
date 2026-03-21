@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { STRINGS } from '@/constants/strings';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { calculateNextDueDate } from '@/utils/fsrsUtils';
 import { isHardWord } from '@/utils/wordClassification';
@@ -25,8 +26,10 @@ const MODERATE_LOAD_RATIO = 0.5;
 const SMALL_VOCABULARY_THRESHOLD = 50;
 const MANY_DUE_THRESHOLD = 5;
 
-// Milestone targets
+// Milestone targets and celebration windows
 const WORD_MILESTONES = [10, 25, 50, 100, 200, 300, 500];
+const WORD_MILESTONE_WINDOW = 3;
+const STREAK_MILESTONES = [7, 30, 60, 100, 365];
 
 /**
  * Count words that are hard (forgotten 2+ times) using shared isHardWord logic
@@ -62,18 +65,6 @@ function getNextMilestone(masteredWords: number): { target: number; remaining: n
 }
 
 /**
- * Check if user has reviewed any word today
- */
-function hasReviewedToday(studyWords: StudyWord[]): boolean {
-  const today = new Date();
-  const todayStr = today.toDateString();
-  return studyWords.some(w => {
-    if (!w.fsrs_last_review) return false;
-    return new Date(w.fsrs_last_review).toDateString() === todayStr;
-  });
-}
-
-/**
  * Format next due date for display
  */
 function formatNextDue(nextDue: Date | null): string {
@@ -85,55 +76,82 @@ function formatNextDue(nextDue: Date | null): string {
 }
 
 /**
- * Check for milestone achievements and return celebration message
+ * Select a message from a pool using deterministic day-based rotation.
+ * Same message all day, different tomorrow. No storage needed.
+ */
+function selectFromPool(pool: readonly string[], dayIndex: number): string {
+  return pool[dayIndex % pool.length] ?? pool[0] ?? '';
+}
+
+/**
+ * Check for milestone achievements using a celebration window.
+ * Word milestones show for WORD_MILESTONE_WINDOW words past the target.
+ * Streak milestones show on the exact day only.
+ * Checks highest milestone first to avoid showing stale lower ones.
  */
 function getMilestoneMessage(masteredWords: number, currentStreak?: number): string | null {
-  // Check word milestones (exact matches to avoid repeated messages)
-  if (masteredWords === 10) {
-    return "🎉 10 words mastered! You've built a foundation for long-term memory.";
-  }
-  if (masteredWords === 25) {
-    return "🎉 25 words mastered! Building your first 25 takes real dedication—you've proven you can learn Arabic consistently.";
-  }
-  if (masteredWords === 50) {
-    return '🎉 50 words mastered! A strong start. Reviewing at increasing intervals moves these words into long-term memory.';
-  }
-  if (masteredWords === 100) {
-    return '🎉 100 words mastered! A vocabulary this size makes reading Arabic noticeably easier.';
-  }
-  if (masteredWords === 200) {
-    return '🎉 200 words mastered! You now recognize many of the most frequent Arabic words. Reading becomes genuinely enjoyable.';
-  }
-  if (masteredWords === 300) {
-    return "🎉 300 words mastered! You've reached intermediate vocabulary. Context clues now help you guess unfamiliar words.";
-  }
-  if (masteredWords === 500) {
-    return '🎉 500 words mastered! A rich vocabulary that makes Arabic texts far more accessible.';
+  // Check word milestones (highest first, with celebration window)
+  for (let i = WORD_MILESTONES.length - 1; i >= 0; i--) {
+    const target = WORD_MILESTONES[i];
+    if (target !== undefined && masteredWords >= target && masteredWords < target + WORD_MILESTONE_WINDOW) {
+      return getWordMilestoneText(target);
+    }
   }
 
-  // Check streak milestones
-  if (currentStreak === 7) {
-    return '🔥 7-day streak! One week of consistency—keep building this daily habit.';
-  }
-  if (currentStreak === 30) {
-    return '🔥 30-day streak! A full month. Your brain has adapted to expect daily Arabic practice—this is now becoming automatic.';
-  }
-  if (currentStreak === 60) {
-    return "🔥 60-day streak! Two months of daily practice. At this point, skipping a day would feel wrong. That's habit formation at work.";
-  }
-  if (currentStreak === 100) {
-    return '🔥 100-day streak! This level of consistency is truly exceptional. Arabic is now part of your daily life.';
-  }
-  if (currentStreak === 365) {
-    return "🔥 365-day streak! A full year of daily practice. You've proven extraordinary dedication to learning Arabic.";
+  // Check streak milestones (exact match only — streaks increment daily)
+  if (currentStreak) {
+    for (let i = STREAK_MILESTONES.length - 1; i >= 0; i--) {
+      if (currentStreak === STREAK_MILESTONES[i]) {
+        return getStreakMilestoneText(currentStreak);
+      }
+    }
   }
 
   return null;
 }
 
+function getWordMilestoneText(target: number): string {
+  switch (target) {
+    case 10:
+      return "🎉 10 words mastered! You've built a foundation for long-term memory.";
+    case 25:
+      return "🎉 25 words mastered! Building your first 25 takes real dedication—you've proven you can learn Arabic consistently.";
+    case 50:
+      return '🎉 50 words mastered! A strong start. Reviewing at increasing intervals moves these words into long-term memory.';
+    case 100:
+      return '🎉 100 words mastered! A vocabulary this size makes reading Arabic noticeably easier.';
+    case 200:
+      return '🎉 200 words mastered! You now recognize many of the most frequent Arabic words. Reading becomes genuinely enjoyable.';
+    case 300:
+      return "🎉 300 words mastered! You've reached intermediate vocabulary. Context clues now help you guess unfamiliar words.";
+    case 500:
+      return '🎉 500 words mastered! A rich vocabulary that makes Arabic texts far more accessible.';
+    default:
+      return `🎉 ${target} words mastered!`;
+  }
+}
+
+function getStreakMilestoneText(streak: number): string {
+  switch (streak) {
+    case 7:
+      return '🔥 7-day streak! One week of consistency—keep building this daily habit.';
+    case 30:
+      return '🔥 30-day streak! A full month. Your brain has adapted to expect daily Arabic practice—this is now becoming automatic.';
+    case 60:
+      return "🔥 60-day streak! Two months of daily practice. At this point, skipping a day would feel wrong. That's habit formation at work.";
+    case 100:
+      return '🔥 100-day streak! This level of consistency is truly exceptional. Arabic is now part of your daily life.';
+    case 365:
+      return "🔥 365-day streak! A full year of daily practice. You've proven extraordinary dedication to learning Arabic.";
+    default:
+      return `🔥 ${streak}-day streak!`;
+  }
+}
+
 /**
- * Enriched recommendation engine with educational context and smart insights
- * Leverages FSRS data to provide actionable, educational, and encouraging messages
+ * Enriched recommendation engine with educational context and smart insights.
+ * Messages are forward-looking and avoid restating data visible in the gauge/stat cards.
+ * Uses day-based rotation for variety within each state.
  */
 export function useRecommendationEngine({
   studyWords = [],
@@ -148,14 +166,15 @@ export function useRecommendationEngine({
     const nextDue = calculateNextDueDate(studyWords);
     const nextDueText = formatNextDue(nextDue);
     const isLowRetention = currentRetention < LOW_RETENTION_THRESHOLD;
-    const memoryStrength = Math.round(currentRetention);
     const hasManyDue = dueWordsCount >= MANY_DUE_THRESHOLD;
+
+    // Day-based rotation for message variety
+    const dayIndex = Math.floor(Date.now() / 86400000);
 
     // Smart insights calculations
     const hardWordsCount = countHardWords(studyWords);
     const tomorrowDue = countUpcomingDue(studyWords, 1);
     const milestone = getNextMilestone(masteredWords);
-    const reviewedToday = hasReviewedToday(studyWords);
 
     // Calculate learning load ratio for granular consolidation messages
     const learningRatio = totalWords > 0 ? learningWords / totalWords : 0;
@@ -182,54 +201,60 @@ export function useRecommendationEngine({
       };
     }
 
-    // State 2: Due words + low memory strength - urgent
+    // State 2: Due words + low memory strength - reframe as opportunity
     if (dueWordsCount > 0 && isLowRetention) {
+      const baseMessage = selectFromPool(STRINGS.RECOMMENDATION_LOW_RETENTION_POOL, dayIndex);
       const hardWordsContext =
-        hardWordsCount >= 3 ? ` ${hardWordsCount} difficult words need extra attention.` : '';
+        hardWordsCount >= 3 ? ` ${hardWordsCount} words need extra reps.` : '';
       return {
-        message: `Memory Strength at ${memoryStrength}% — words at risk of being forgotten. Review now to rebuild.${hardWordsContext}`,
+        message: `${baseMessage}${hardWordsContext}`,
         type: 'review',
       };
     }
 
-    // State 3: Due words (normal) - review with upcoming load preview
+    // State 3: Due words (normal) - explain why reviewing now matters
     if (dueWordsCount > 0) {
       const upcomingContext = tomorrowDue > 0 ? ` ${tomorrowDue} more tomorrow.` : '';
 
       if (hasManyDue) {
+        const baseMessage = selectFromPool(STRINGS.RECOMMENDATION_DUE_MANY_POOL, dayIndex);
         return {
-          message: `${dueWordsCount} words due at ${memoryStrength}% Memory Strength — review now to stay ahead of the forgetting curve.${upcomingContext}`,
+          message: `${baseMessage}${upcomingContext}`,
           type: 'review',
         };
       }
+      const baseMessage = selectFromPool(STRINGS.RECOMMENDATION_DUE_FEW_POOL, dayIndex);
       return {
-        message: `Just ${dueWordsCount} word${dueWordsCount === 1 ? '' : 's'} due. Quick review keeps your ${memoryStrength}% Memory Strength strong.${upcomingContext}`,
+        message: `${baseMessage}${upcomingContext}`,
         type: 'review',
       };
     }
 
     // State 4a: Heavy learning load (>70%) - brain at capacity
     if (isHeavyLoad) {
+      const baseMessage = selectFromPool(STRINGS.RECOMMENDATION_HEAVY_LOAD_POOL, dayIndex);
       return {
-        message: `${learningWords} words in active learning — focus on reviews before adding more. Next batch due ${nextDueText}.`,
+        message: `${baseMessage} Next batch due ${nextDueText}.`,
         type: 'consolidate',
       };
     }
 
     // State 4b: Moderate learning load (50-70%) - balanced guidance
     if (isModerateLoad) {
+      const baseMessage = selectFromPool(STRINGS.RECOMMENDATION_MODERATE_LOAD_POOL, dayIndex);
       const milestoneHint =
         milestone && milestone.remaining <= 5
           ? ` Just ${milestone.remaining} away from ${milestone.target} mastered!`
           : '';
       return {
-        message: `${learningWords} words growing stronger. You can add a few more, but prioritize reviews when due.${milestoneHint}`,
+        message: `${baseMessage}${milestoneHint}`,
         type: 'consolidate',
       };
     }
 
-    // State 5: Small vocabulary, caught up - encourage growth with milestone context
+    // State 5: Small vocabulary, caught up - encourage growth
     if (totalWords < SMALL_VOCABULARY_THRESHOLD) {
+      const baseMessage = selectFromPool(STRINGS.RECOMMENDATION_SMALL_CAUGHT_UP_POOL, dayIndex);
       const milestoneHint =
         milestone && milestone.remaining <= 5
           ? ` Just ${milestone.remaining} away from ${milestone.target}!`
@@ -238,25 +263,23 @@ export function useRecommendationEngine({
         currentStreak && currentStreak > 0 ? ` ${currentStreak}-day streak going strong!` : '';
 
       return {
-        message: `All caught up at ${memoryStrength}% Memory Strength! With ${totalWords} words, you have room to grow from articles you enjoy.${milestoneHint}${streakContext}`,
+        message: `${baseMessage}${milestoneHint}${streakContext}`,
         type: 'add_words',
       };
     }
 
-    // State 6: Established vocabulary, caught up - explain optimization with streak context
+    // State 6: Established vocabulary, caught up - forward-looking with streak context
+    const baseMessage = selectFromPool(STRINGS.RECOMMENDATION_BALANCED_POOL, dayIndex);
     const milestoneHint =
       milestone && milestone.remaining <= 10
         ? ` ${milestone.remaining} more to reach ${milestone.target}!`
         : '';
     const streakContext =
-      currentStreak && currentStreak > 0 && reviewedToday
-        ? ` ${currentStreak}-day streak grows stronger!`
-        : currentStreak && currentStreak > 0
-          ? ` ${currentStreak}-day streak protected.`
-          : '';
+      currentStreak && currentStreak > 0 ? ` ${currentStreak}-day streak going strong!` : '';
+    const nextDueContext = nextDue ? ` Next review ${nextDueText}.` : '';
 
     return {
-      message: `All caught up with ${masteredWords} words mastered! Next review ${nextDueText} — longer gaps build deeper memory.${milestoneHint}${streakContext}`,
+      message: `${baseMessage}${nextDueContext}${milestoneHint}${streakContext}`,
       type: 'balanced',
     };
   }, [studyWords, dueWordsCount, currentRetention, learningWords, masteredWords, currentStreak]);
