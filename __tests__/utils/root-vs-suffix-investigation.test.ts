@@ -286,19 +286,16 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
    * CATEGORY 6: Diacritic Color Inheritance on Pronoun Suffixes
    */
   describe('🎨 DIACRITIC COLOR INHERITANCE: Pronoun Suffixes', () => {
-    test('should make diacritic inherit suffix color in عَلَيْهِ (in him)', () => {
+    test('should detect prefix and suffix in عَلَيْهِ (in him)', () => {
       // Preposition: علي (form of على before suffix: alef maksura → yeh)
-      // Pronoun suffix ه with genitive case marker ِ
+      // Pronoun suffix ه — kasra ِ is genitive case but not independently detected
+      // (standalone "in" removed from kasra English matches to prevent false coloring)
       const analysis = analyzeArabicWord('عَلَيْهِ', 'in him');
 
-      // Should detect prefix, suffix, and diacritic
+      // Should detect prefix and suffix
       expect(analysis.prefixes.length).toBeGreaterThan(0);
-      expect(analysis.prefixes[0]?.arabicMatch).toBe('علي'); // علي (not على) - alef maksura becomes yeh before suffixes
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('علي');
       expect(analysis.suffix?.arabicMatch).toBe('ه');
-      expect(analysis.diacritic?.arabicMatch).toBe('ِ');
-
-      // Diacritic should inherit color from suffix (both purple/violet)
-      expect(analysis.diacritic?.inheritColorFrom).toBe(ComponentType.SUFFIX);
     });
 
     test('should make diacritic inherit suffix color in كِتَابَهُ (his book)', () => {

@@ -422,14 +422,13 @@ describe('arabicWordAnalysis', () => {
       expect(analysis.hasComponents).toBeTruthy();
     });
 
-    test('should detect kasra at end with "in" correspondence', () => {
+    test('should not detect standalone kasra with "in" (removed from kasra English matches)', () => {
       const analysis = analyzeArabicWord('المدرسةِ', 'in the school'); // Kasra at end
 
-      expect(analysis.diacritic).toBeDefined();
-      expect(analysis.diacritic?.component.type).toBe('diacritic');
-      expect(analysis.diacritic?.arabicMatch).toBe('ِ');
-      expect(analysis.diacritic?.englishMatches).toContain('in');
+      // Kasra no longer matches standalone "in" — only compound forms like "of his"
+      // The definite article ال is still detected
       expect(analysis.hasComponents).toBeTruthy();
+      expect(analysis.diacritic).toBeUndefined();
     });
 
     test('should detect damma at end with "he" correspondence', () => {
@@ -471,8 +470,7 @@ describe('arabicWordAnalysis', () => {
       }
       expect(analysis.suffix).toBeDefined();
       expect(analysis.suffix?.arabicMatch).toBe('ه');
-      expect(analysis.diacritic).toBeDefined();
-      expect(analysis.diacritic?.arabicMatch).toBe('ِ');
+      // Kasra no longer detected independently (standalone "in" removed from kasra matches)
       expect(analysis.hasComponents).toBeTruthy();
     });
 

@@ -573,9 +573,8 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
     test('should handle empty prefix + suffix + contraction', () => {
       const analysis = analyzeArabicWord('ه', "it's");
 
-      // "ه" suffix with contracted "it's" (it is)
-      expect(analysis.hasComponents).toBeTruthy();
-      expect(analysis.suffix?.arabicMatch).toBe('ه');
+      // "ه" alone is a standalone pronoun, not a suffix — no prefix means nothing to attach to
+      expect(analysis.hasComponents).toBeFalsy();
     });
 
     test('should handle multiple edge cases at once', () => {
