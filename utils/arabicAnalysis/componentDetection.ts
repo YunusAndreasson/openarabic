@@ -103,9 +103,13 @@ export function findComponent(
     if (matches && type === ComponentType.SUFFIX) {
       if (isHighRiskSuffix(pattern)) {
         const remaining = arabic.slice(0, arabic.length - pattern.length);
-        const isLikelyPrefixOnly = remaining.length <= 1;
+        // When remaining is 0, the word is entirely prefix+suffix (أنّه, فيه, بها, لها).
+        // Allow these — the English match check later still gates correctness.
+        // Only block when remaining is exactly 1 char (ambiguous single letter).
+        const isPrefixSuffixCompound = remaining.length === 0;
+        const isLikelyPrefixOnly = remaining.length === 1;
 
-        if (!isLikelyPrefixOnly) {
+        if (!isLikelyPrefixOnly && !isPrefixSuffixCompound) {
           const startsWithSubjectMarker = isSubjectMarker(remaining.charAt(0));
           const possessivePronouns = ['my', 'your', 'his', 'her', 'its', 'our', 'their'];
           const englishWords = english.toLowerCase().split(/\s+/);
@@ -246,7 +250,11 @@ export function findDiacritic(arabic: string, english: string): AnalyzedComponen
 /**
  * Determines if bracket injection ([the]) should be applied for definite article
  */
-export function shouldInjectBracket(normalizedArabic: string, englishTranslation: string): boolean {
+export function shouldInjectBracket(
+  normalizedArabic: string,
+  englishTranslation: string,
+  originalArabic?: string,
+): boolean {
   const hasDefiniteArticle =
     normalizedArabic.startsWith('ال') ||
     normalizedArabic.startsWith('بال') ||
@@ -254,6 +262,13 @@ export function shouldInjectBracket(normalizedArabic: string, englishTranslation
     normalizedArabic.startsWith('كال');
 
   if (!hasDefiniteArticle) {
+    return false;
+  }
+
+  // Tanween (ً ٌ ٍ) and definite article are mutually exclusive in Arabic grammar.
+  // If the original word has tanween, the ال is part of the root (e.g., آلاف, آلة), not an article.
+  const textToCheck = originalArabic || normalizedArabic;
+  if (/[\u064B\u064C\u064D]/.test(textToCheck)) {
     return false;
   }
 

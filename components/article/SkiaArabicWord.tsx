@@ -158,6 +158,17 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
     }
   };
 
+  // Long press: dump full debug info to console for color-coding diagnosis
+  const handleLongPress = () => {
+    if (!__DEV__) return;
+    const segs = word.coloredSegments || [];
+    console.warn(
+      `[WordDebug] "${word.word_form}" (${word.english})\n` +
+        `  segments: ${JSON.stringify(segs.map(s => ({ text: s.text, type: s.type, color: s.color })))}\n` +
+        `  root_id: ${word.root_id}, position: ${word.position}, id: ${word.id}`,
+    );
+  };
+
   // Memoize styles that depend on state to prevent recreation
   const containerStyle = useMemo(
     () => [
@@ -190,6 +201,7 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
         style={[containerStyle, activeStyle]}
         testID={testID}
         onPress={handlePress}
+        onLongPress={handleLongPress}
       >
         <Canvas style={canvasStyle} pointerEvents="none">
           {paragraph && (

@@ -46,6 +46,8 @@
  * - WordAnalysis - Complete analysis result
  */
 
+import * as Sentry from '@sentry/react-native';
+
 import { ARABIC_SUFFIXES, ComponentType, GrammaticalRole } from '@/constants/arabicWordComponents';
 import type { ColoredSegment } from '@/types/vocabulary.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
@@ -125,7 +127,7 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
 
   // Check for bracket injection using shared logic FIRST
   // Bracket injection can turn single words into multi-word phrases
-  const hasBracketInjection = shouldInjectBracket(normalized, normalizedEnglish);
+  const hasBracketInjection = shouldInjectBracket(normalized, normalizedEnglish, arabic);
 
   // CRITICAL: Single-word rule - no color-coding for educational clarity
   // This is the single source of truth for the single-word check
@@ -214,6 +216,18 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
     }
   }
 
+  // UNIVERSAL: A suffix that consumes the entire word with no prefix is a standalone pronoun, not a suffix.
+  // Example: "هُوَ" (he/it) → suffix "هو" leaves nothing → it's a pronoun, not a suffix.
+  if (suffix && detectedPrefixes.length === 0) {
+    const leftover = remainingAfterPrefixes.substring(
+      0,
+      remainingAfterPrefixes.length - suffix.arabicMatch.length,
+    );
+    if (leftover.length === 0) {
+      suffix = undefined;
+    }
+  }
+
   // ADDITIONAL VALIDATION: Prevent high-risk suffix matching subject pronouns when no prefix exists
   // Example: "כרה" (he hates) → NO prefix, "he" is verb conjugation, not suffix ה
   // Example: "וجه" (he faced) → NO prefix, "he" is verb conjugation, not suffix ה
@@ -229,7 +243,10 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
       remainingAfterPrefixes.length - suffix.arabicMatch.length,
     );
 
-    if (remainingAfterSuffix.length < MIN_REMAINING_LENGTH.HIGH_RISK_SUFFIX) {
+    // When remaining is 0 AND prefixes exist, it's a prefix+suffix compound (أنّه, فيه, بها).
+    // Skip subject-pronoun validation — the suffix IS the pronoun, not a verb conjugation marker.
+    const isPrefixSuffixCompound = remainingAfterSuffix.length === 0 && detectedPrefixes.length > 0;
+    if (!isPrefixSuffixCompound && remainingAfterSuffix.length < MIN_REMAINING_LENGTH.HIGH_RISK_SUFFIX) {
       // Check if English contains subject pronouns (these belong to verb conjugation, not suffixes)
       // Only check for pronouns that match the high-risk suffix (he/she/it/i)
       // Don't check "we" (נا suffix is almost always valid) or "you" (varied usage)
@@ -389,6 +406,44 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
   return result;
 }
 
+// Dedup set to avoid flooding Sentry with the same word
+const reportedMismatches = new Set<string>();
+
+/**
+ * Report a color mismatch to Sentry for debugging.
+ * Includes full context so we can reproduce and fix the analysis bug.
+ */
+function reportColorMismatch(
+  arabicWord: string,
+  english: string,
+  segments: ColoredSegment[],
+  sections: { type: string; arabicPart?: string; englishPart?: string; colorName?: string }[],
+  analysis: WordAnalysis,
+): void {
+  const key = `${arabicWord}|${english}`;
+  if (reportedMismatches.has(key)) return;
+  reportedMismatches.add(key);
+
+  try {
+    Sentry.withScope(scope => {
+      scope.setLevel('warning');
+      scope.setTag('component', 'arabicWordAnalysis');
+      scope.setTag('issue', 'color-mismatch');
+      scope.setExtra('arabicWord', arabicWord);
+      scope.setExtra('english', english);
+      scope.setExtra('segments', segments.map(s => ({ text: s.text, type: s.type, color: s.color })));
+      scope.setExtra('sections', sections.filter(s => s.type === 'components'));
+      scope.setExtra('prefixes', analysis.prefixes?.map(p => ({ arabic: p.arabicMatch, role: p.role })));
+      scope.setExtra('suffix', analysis.suffix ? { arabic: analysis.suffix.arabicMatch, role: analysis.suffix.role } : null);
+      scope.setExtra('diacritic', analysis.diacritic ? { arabic: analysis.diacritic.arabicMatch, role: analysis.diacritic.role } : null);
+      scope.setExtra('remainingArabic', analysis.remainingArabic);
+      Sentry.captureMessage(`Color mismatch: "${arabicWord}" (${english})`);
+    });
+  } catch {
+    // Sentry unavailable — silently continue
+  }
+}
+
 /**
  * Pre-computes colored segments for a word given theme colors
  * Used during data loading to avoid computing during render
@@ -400,7 +455,7 @@ export function computeColoredSegments(
 ): ColoredSegment[] {
   // Apply bracket injection if needed
   const normalizedArabic = normalizeArabic(arabicWord);
-  const processedEnglish = shouldInjectBracket(normalizedArabic, englishTranslation)
+  const processedEnglish = shouldInjectBracket(normalizedArabic, englishTranslation, arabicWord)
     ? `[the] ${englishTranslation}`
     : englishTranslation;
 
@@ -412,15 +467,45 @@ export function computeColoredSegments(
     return [{ text: arabicWord, color: colors.arabicText, type: 'root' as const }];
   }
 
+  const plain = [{ text: arabicWord, color: colors.arabicText, type: 'root' as const }];
+
   const formatted = formatWordAnalysis(analysis);
   if (!formatted?.reconstructedArabic) {
-    return [{ text: arabicWord, color: colors.arabicText, type: 'root' as const }];
+    return plain;
   }
 
-  // Use resolveColorName for single source of truth color resolution
-  return formatted.reconstructedArabic.segments.map(segment => ({
+  // Resolve segment colors
+  const segments = formatted.reconstructedArabic.segments.map(segment => ({
     text: segment.text,
     color: resolveColorName(segment.colorName, colors),
     type: segment.type as ColoredSegment['type'],
   }));
+
+  // Skip coloring when the word is a single colored segment with no breakdown.
+  // Example: "لَا" = 1 prefix segment covering the entire word → nothing to learn from coloring.
+  // This does NOT affect multi-segment words like "فِيهِ" (prefix + suffix = 2 segments).
+  if (segments.length === 1 && segments[0]?.type !== 'root') {
+    return plain;
+  }
+
+  // Safety net: the number of distinct non-default colors in Arabic must match
+  // the number of English component sections. An inherited diacritic shares its
+  // parent's color, so it doesn't add a new distinct color — just reinforces the same one.
+  const defaultColors = new Set([colors.arabicText, colors.text]);
+  const distinctArabicColors = new Set(
+    segments.map(s => s.color).filter(c => !defaultColors.has(c)),
+  ).size;
+  const englishComponentCount = formatted.sections.filter(s => s.type === 'components').length;
+
+  if (distinctArabicColors !== englishComponentCount) {
+    if (__DEV__) {
+      console.warn(
+        `[ColorMismatch] "${arabicWord}" (${englishTranslation}): ${distinctArabicColors} Arabic colors vs ${englishComponentCount} English components → falling back to plain`,
+      );
+    }
+    reportColorMismatch(arabicWord, englishTranslation, segments, formatted.sections, analysis);
+    return plain;
+  }
+
+  return segments;
 }

@@ -215,6 +215,15 @@ export function detectPrefixes(
         continue;
       }
 
+      // Block م + من (meem followed by man)
+      // Example: مِمَّنْ (from whoever) = من + من with assimilated ن
+      // After detecting م (shortened من), leave من as root (= مَن "who/whoever")
+      const isManMatch = prefixMatch.arabicMatch === 'من';
+      if (hasMeemPrefix && isManMatch) {
+        continueDetection = false;
+        continue;
+      }
+
       // VALIDATION 4: No prefixes AFTER definite article
       // Arabic grammar: The definite article (ال or assimilated لل) always immediately
       // precedes the noun. Nothing comes between the article and the root.

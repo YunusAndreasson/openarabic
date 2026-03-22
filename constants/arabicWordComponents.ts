@@ -659,17 +659,21 @@ export const ARABIC_DIACRITICS: WordComponent[] = [
   },
 
   // Kasra (ــِ) - short "i" vowel, often indicates genitive case
+  // NOTE: standalone prepositions ('of', 'in', 'with') removed — they are English grammar
+  // connecting the noun to its context, not translations of the kasra itself.
+  // Kasra is detected via inheritance from the governing preposition/construct.
   {
     arabic: 'ِ', // Kasra at end of word
-    english: ['in', 'of', 'with'],
+    english: ['of his', 'of its', 'of her', 'of their'],
     type: ComponentType.DIACRITIC,
     role: GrammaticalRole.CASE_ENDING,
   },
 
   // Damma (ــُ) - short "u" vowel, often indicates nominative case
+  // NOTE: 'of' removed — damma doesn't mean "of"
   {
     arabic: 'ُ', // Damma at end of word
-    english: ['he', 'it', 'they', 'of'],
+    english: ['he', 'it', 'they'],
     type: ComponentType.DIACRITIC,
     role: GrammaticalRole.CASE_ENDING,
   },

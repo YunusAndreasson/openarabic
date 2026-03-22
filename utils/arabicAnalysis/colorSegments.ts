@@ -108,24 +108,21 @@ function deduplicateColor(
 export function getDiacriticColorName(
   diacritic: AnalyzedComponent | undefined,
   analysis?: WordAnalysis,
-  usedColors?: Set<string>,
+  _usedColors?: Set<string>,
 ): string {
   if (!diacritic) return 'text';
 
   // If diacritic inherits color from a related component, use that component's DEDUPED color
+  // When inheriting, use the parent component's color directly — no deduplication.
+  // The whole point of inheritance is that the diacritic shares the parent's color.
   if (diacritic.inheritColorFrom === ComponentType.SUFFIX && analysis?.suffix) {
-    const baseColor = getComponentColorName(analysis.suffix, ComponentType.SUFFIX);
-    return usedColors ? deduplicateColor(baseColor, usedColors, ComponentType.SUFFIX) : baseColor;
+    return getComponentColorName(analysis.suffix, ComponentType.SUFFIX);
   }
 
   if (diacritic.inheritColorFrom === ComponentType.PREFIX && analysis?.prefixes) {
     // Use LAST prefix for grammatical correctness (e.g., preposition → genitive kasra)
     const prefix = analysis.prefixes[analysis.prefixes.length - 1];
-    const baseColor = getComponentColorName(prefix, ComponentType.PREFIX);
-    // The last prefix's color may have been deduped — look it up in usedColors
-    // If it's already used, it means this prefix was rendered with this color → reuse it
-    // (deduplicateColor returns the same color if already in the set)
-    return usedColors ? deduplicateColor(baseColor, usedColors, ComponentType.PREFIX) : baseColor;
+    return getComponentColorName(prefix, ComponentType.PREFIX);
   }
 
   if (diacritic.inheritColorFrom) {
@@ -331,63 +328,103 @@ export function formatWordAnalysis(analysis: WordAnalysis) {
     icon?: string;
   }[] = [{ type: 'original', content: englishForDisplay }];
 
-  // Track used colors to deduplicate (e.g., two prepositions both getting amber)
-  const usedColors = new Set<string>();
+  // Build a lookup from segment type → colorName using the ACTUAL segments
+  // produced by reconstructWithColors. This ensures English sections use the
+  // exact same colors as the Arabic rendering (single source of truth).
+  const segmentColorByType = new Map<string, string[]>();
+  if (reconstructedArabic) {
+    for (const seg of reconstructedArabic.segments) {
+      const list = segmentColorByType.get(seg.type) || [];
+      list.push(seg.colorName);
+      segmentColorByType.set(seg.type, list);
+    }
+  }
 
-  // Add all prefixes with role-based colors
+  // Check which component types actually appear as segments.
+  // splitWithDiacritic can absorb a suffix entirely into a diacritic segment
+  // (when the suffix text IS the diacritic), so we only add English sections
+  // for component types that produced actual segments.
+  const hasDiacriticSegment = segmentColorByType.has('diacritic');
+  const hasSuffixSegment = segmentColorByType.has('suffix');
+
+  // Counters to pull correct color from multi-segment types (e.g., multiple prefixes)
+  const typeIndex = new Map<string, number>();
+  function getSegmentColor(type: string, fallback: string): string {
+    const colors = segmentColorByType.get(type);
+    if (!colors) return fallback;
+    const idx = typeIndex.get(type) || 0;
+    typeIndex.set(type, idx + 1);
+    return colors[idx] ?? fallback;
+  }
+
+  // Add all prefixes with colors from actual segments
   if (analysis.prefixes) {
     analysis.prefixes.forEach(prefix => {
-      const baseColor = getComponentColorName(prefix, ComponentType.PREFIX);
-      const colorName = deduplicateColor(baseColor, usedColors, ComponentType.PREFIX);
-
+      const fallbackColor = getComponentColorName(prefix, ComponentType.PREFIX);
       sections.push({
         type: 'components',
         arabicPart: prefix.arabicMatch,
         englishPart: prefix.englishMatches.join(' / '),
-        colorName,
+        colorName: getSegmentColor('prefix', fallbackColor),
         icon: COMPONENT_TYPE_CONFIG[ComponentType.PREFIX].icon,
       });
     });
   }
 
   if (analysis.infix) {
-    const baseColor = COMPONENT_TYPE_CONFIG[ComponentType.INFIX].colorName;
-    const colorName = deduplicateColor(baseColor, usedColors, ComponentType.INFIX);
-
+    const fallbackColor = COMPONENT_TYPE_CONFIG[ComponentType.INFIX].colorName;
     sections.push({
       type: 'components',
       arabicPart: analysis.infix.arabicMatch,
       englishPart: analysis.infix.englishMatches.join(' / '),
-      colorName,
+      colorName: getSegmentColor('infix', fallbackColor),
       icon: COMPONENT_TYPE_CONFIG[ComponentType.INFIX].icon,
     });
   }
 
-  if (analysis.suffix) {
-    const baseColor = getComponentColorName(analysis.suffix, ComponentType.SUFFIX);
-    const colorName = deduplicateColor(baseColor, usedColors, ComponentType.SUFFIX);
-
+  // Add suffix section only if it produced a segment
+  if (analysis.suffix && hasSuffixSegment) {
+    const fallbackColor = getComponentColorName(analysis.suffix, ComponentType.SUFFIX);
     sections.push({
       type: 'components',
       arabicPart: analysis.suffix.arabicMatch,
       englishPart: analysis.suffix.englishMatches.join(' / '),
-      colorName,
+      colorName: getSegmentColor('suffix', fallbackColor),
       icon: COMPONENT_TYPE_CONFIG[ComponentType.SUFFIX].icon,
     });
   }
 
-  if (analysis.diacritic) {
-    // Diacritics use inheritance logic — deduplicate the result
-    const baseColor = getDiacriticColorName(analysis.diacritic, analysis, usedColors);
-    const colorName = deduplicateColor(baseColor, usedColors, ComponentType.DIACRITIC);
+  // Add diacritic section only if it produced a segment.
+  // If the diacritic inherits a color that already exists in a previous section,
+  // merge it into that section instead of creating a duplicate color row.
+  if (analysis.diacritic && hasDiacriticSegment) {
+    const diacriticFallback = COMPONENT_TYPE_CONFIG[ComponentType.DIACRITIC].colorName;
+    const diacriticColor = getSegmentColor('diacritic', diacriticFallback);
 
-    sections.push({
-      type: 'components',
-      arabicPart: analysis.diacritic.arabicMatch,
-      englishPart: analysis.diacritic.englishMatches.join(' / '),
-      colorName,
-      icon: COMPONENT_TYPE_CONFIG[ComponentType.DIACRITIC].icon,
-    });
+    const parentSection = sections.find(
+      s => s.type === 'components' && s.colorName === diacriticColor,
+    );
+
+    if (parentSection) {
+      // Merge into existing section: append Arabic part, deduplicate English
+      parentSection.arabicPart = (parentSection.arabicPart || '') + analysis.diacritic.arabicMatch;
+      const existing = new Set((parentSection.englishPart || '').split(' / '));
+      for (const e of analysis.diacritic.englishMatches) {
+        if (!existing.has(e)) {
+          parentSection.englishPart = parentSection.englishPart
+            ? `${parentSection.englishPart} / ${e}`
+            : e;
+        }
+      }
+    } else {
+      sections.push({
+        type: 'components',
+        arabicPart: analysis.diacritic.arabicMatch,
+        englishPart: analysis.diacritic.englishMatches.join(' / '),
+        colorName: diacriticColor,
+        icon: COMPONENT_TYPE_CONFIG[ComponentType.DIACRITIC].icon,
+      });
+    }
   }
 
   if (analysis.remainingArabic && analysis.remainingEnglish) {

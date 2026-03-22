@@ -1,0 +1,80 @@
+[
+  {
+    "wordForm": "آخَذَهُ",
+    "english": "He takes him to account",
+    "issueType": "SEGMENT_COUNT_MISMATCH",
+    "details": "arabicColoredSegments=2 vs englishComponents=1\n    arabicSegments: [{\"text\":\"ه\",\"type\":\"suffix\",\"color\":\"grammar.possessive\"},{\"text\":\"ُ\",\"type\":\"diacritic\",\"color\":\"grammar.possessive\"}]\n    englishSections: [{\"arabic\":\"هُ\",\"english\":\"him / he\",\"color\":\"grammar.possessive\"}]"
+  },
+  {
+    "wordForm": "أَبَاحَهُ",
+    "english": "permitted it",
+    "issueType": "SEGMENT_COUNT_MISMATCH",
+    "details": "arabicColoredSegments=2 vs englishComponents=1\n    arabicSegments: [{\"text\":\"ه\",\"type\":\"suffix\",\"color\":\"grammar.possessive\"},{\"text\":\"ُ\",\"type\":\"diacritic\",\"color\":\"grammar.possessive\"}]\n    englishSections: [{\"arabic\":\"هُ\",\"english\":\"it\",\"color\":\"grammar.possessive\"}]"
+  },
+  {
+    "wordForm": "أَبْلَاهُمُ",
+    "english": "may He test them",
+    "issueType": "SEGMENT_COUNT_MISMATCH",
+    "details": "arabicColoredSegments=2 vs englishComponents=1\n    arabicSegments: [{\"text\":\"هُم\",\"type\":\"suffix\",\"color\":\"grammar.possessive\"},{\"text\":\"ُ\",\"type\":\"diacritic\",\"color\":\"grammar.possessive\"}]\n    englishSections: [{\"arabic\":\"همُ\",\"english\":\"them / he\",\"color\":\"grammar.possessive\"}]"
+  },
+  {
+    "wordForm": "أَثْبَتَهُ",
+    "english": "he affirmed it",
+    "issueType": "SEGMENT_COUNT_MISMATCH",
+    "details": "arabicColoredSegments=2 vs englishComponents=1\n    arabicSegments: [{\"text\":\"ه\",\"type\":\"suffix\",\"color\":\"grammar.possessive\"},{\"text\":\"ُ\",\"type\":\"diacritic\",\"color\":\"grammar.possessive\"}]\n    englishSections: [{\"arabic\":\"هُ\",\"english\":\"it / he\",\"color\":\"grammar.possessive\"}]"
+  },
+  {
+    "wordForm": "أَثَرِهِ",
+    "english": "of its effect",
+    "issueType": "SEGMENT_COUNT_MISMATCH",
+    "details": "arabicColoredSegments=2 vs englishComponents=1\n    arabicSegments: [{\"text\":\"ه\",\"type\":\"suffix\",\"color\":\"grammar.possessive\"},{\"text\":\"ِ\",\"type\":\"diacritic\",\"color\":\"grammar.possessive\"}]\n    englishSections: [{\"arabic\":\"هِ\",\"english\":\"its / of its / of\",\"color\":\"grammar.possessive\"}]"
+  },
+  {
+    "wordForm": "أَحْرَزَهُ",
+    "english": "taken it",
+    "issueType": "SEGMENT_COUNT_MISMATCH",
+    "details": "arabicColoredSegments=2 vs englishComponents=1\n    arabicSegments: [{\"text\":\"ه\",\"type\":\"suffix\",\"color\":\"grammar.possessive\"},{\"text\":\"ُ\",\"type\":\"diacritic\",\"color\":\"grammar.possessive\"}]\n    englishSections: [{\"arabic\":\"هُ\",\"english\":\"it\",\"color\":\"grammar.possessive\"}]"
+  },
+  {
+    "wordForm": "أَحْمِلُهُ",
+    "english": "I carry it",
+    "issueType": "SEGMENT_COUNT_MISMATCH",
+    "details": "arabicColoredSegments=3 vs englishComponents=2\n    arabicSegments: [{\"text\":\"أَ\",\"type\":\"prefix\",\"color\":\"grammar.subjectPrefix\"},{\"text\":\"ه\",\"type\":\"suffix\",\"color\":\"grammar.possessive\"},{\"text\":\"ُ\",\"type\":\"diacritic\",\"color\":\"grammar.possessive\"}]\n    englishSections: [{\"arabic\":\"أ\",\"english\":\"I\",\"color\":\"grammar.subjectPrefix\"},{\"arabic\":\"هُ\",\"english\":\"it\",\"color\":\"grammar.possessive\"}]"
+  },
+  {
+    "wordForm": "أَخْتَصِرَهُ",
+    "english": "I abridge it",
+    "issueType": "SEGMENT_COUNT_MISMATCH",
+    "details": "arabicColoredSegments=3 vs englishComponents=2\n    arabicSegments: [{\"text\":\"أَ\",\"type\":\"prefix\",\"color\":\"grammar.subjectPrefix\"},{\"text\":\"ه\",\"type\":\"suffix\",\"color\":\"grammar.possessive\"},{\"text\":\"ُ\",\"type\":\"diacritic\",\"color\":\"grammar.possessive\"}]\n    englishSections: [{\"arabic\":\"أ\",\"english\":\"I\",\"color\":\"grammar.subjectPrefix\"},{\"arabic\":\"هُ\",\"english\":\"it\",\"color\":\"grammar.possessive\"}]"
+  },
+  {
+    "wordForm": "أَخَذَهُ",
+    "english": "he took him",
+    "issueType": "SEGMENT_COUNT_MISMATCH",
+    "details": "arabicColoredSegments=2 vs englishComponents=1\n    arabicSegments: [{\"text\":\"ه\",\"type\":\"suffix\",\"color\":\"grammar.possessive\"},{\"text\":\"ُ\",\"type\":\"diacritic\",\"color\":\"grammar.possessive\"}]\n    englishSections: [{\"arabic\":\"هُ\",\"english\":\"him / he\",\"color\":\"grammar.possessive\"}]"
+  },
+  {
+    "wordForm": "أَخِيهِ",
+    "english": "of his brother",
+    "issueType": "SEGMENT_COUNT_MISMATCH",
+    "details": "arabicColoredSegments=2 vs englishComponents=1\n    arabicSegments: [{\"text\":\"يه\",\"type\":\"suffix\",\"color\":\"grammar.possessive\"},{\"text\":\"ِ\",\"type\":\"diacritic\",\"color\":\"grammar.possessive\"}]\n    englishSections: [{\"arabic\":\"يهِ\",\"english\":\"his / of\",\"color\":\"grammar.possessive\"}]"
+  },
+  {
+    "wordForm": "أَدَّاهُ",
+    "english": "it leads him",
+    "issueType": "SEGMENT_COUNT_MISMATCH",
+    "details": "arabicColoredSegments=2 vs englishComponents=1\n    arabicSegments: [{\"text\":\"ه\",\"type\":\"suffix\",\"color\":\"grammar.possessive\"},{\"text\":\"ُ\",\"type\":\"diacritic\",\"color\":\"grammar.possessive\"}]\n    englishSections: [{\"arabic\":\"هُ\",\"english\":\"it / him\",\"color\":\"grammar.possessive\"}]"
+  },
+  {
+    "wordForm": "أَرْسَلَهُ",
+    "english": "sent it",
+    "issueType": "SEGMENT_COUNT_MISMATCH",
+    "details": "arabicColoredSegments=2 vs englishComponents=1\n    arabicSegments: [{\"text\":\"ه\",\"type\":\"suffix\",\"color\":\"grammar.possessive\"},{\"text\":\"ُ\",\"type\":\"diacritic\",\"color\":\"grammar.possessive\"}]\n    englishSections: [{\"arabic\":\"هُ\",\"english\":\"it\",\"color\":\"grammar.possessive\"}]"
+  },
+  {
+    "wordForm": "أَرْضِهِ",
+    "english": "of his land",
+    "issueType": "SEGMENT_COUNT_MISMATCH",
+    "details": "arabicColoredSegments=2 vs englishComponents=1\n    arabicSegments: [{\"text\":\"ه\",\"type\":\"suffix\",\"color\":\"grammar.possessive\"},{\"text\":\"ِ\",\"type\":\"diacritic\",\"color\":\"grammar.possessive\"}]\n    englishSections: [{\"arabic\":\"هِ\",\"english\":\"his / of his / of\",\"color\":\"grammar.possessive\"}]"
+  }
+]

@@ -40,7 +40,7 @@ export function useArabicWordAnalysis(
     if (!enabled || !arabicWord || !englishTranslation) return null;
 
     const normalizedArabicWord = normalizeArabic(arabicWord);
-    const hasBracketInjection = shouldInjectBracket(normalizedArabicWord, englishTranslation);
+    const hasBracketInjection = shouldInjectBracket(normalizedArabicWord, englishTranslation, arabicWord);
     const processedEnglish = hasBracketInjection
       ? `[the] ${englishTranslation}`
       : englishTranslation;
