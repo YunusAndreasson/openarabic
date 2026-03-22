@@ -77,7 +77,10 @@ jest.mock('@/components/providers', () => ({
 }));
 
 jest.mock('@/utils/haptics', () => ({
-  selectionFeedback: () => mockSelectionFeedback(),
+  lightFeedback: jest.fn(),
+  mediumFeedback: jest.fn(),
+  successFeedback: jest.fn(),
+  selectionFeedback: jest.fn(),
   errorFeedback: jest.fn(),
 }));
 
@@ -348,7 +351,8 @@ describe('Reading to Dictionary Flow', () => {
       });
 
       expect(addResult!).toBeTruthy();
-      expect(mockSelectionFeedback).toHaveBeenCalled();
+      const { selectionFeedback } = require('@/utils/haptics');
+      expect(selectionFeedback).toHaveBeenCalled();
       expect(mockHandleRootPress).toHaveBeenCalledWith(mockWord.root_id);
     });
 

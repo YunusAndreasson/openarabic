@@ -61,7 +61,11 @@ jest.mock('@/hooks/vocabulary', () => ({
 }));
 
 jest.mock('@/utils/haptics', () => ({
-  errorFeedback: mockErrorFeedback,
+  lightFeedback: jest.fn(),
+  mediumFeedback: jest.fn(),
+  successFeedback: jest.fn(),
+  selectionFeedback: jest.fn(),
+  errorFeedback: jest.fn(),
 }));
 
 jest.mock('@/utils/errorHandling', () => ({

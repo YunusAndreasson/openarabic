@@ -43,7 +43,11 @@ jest.mock('@/services/audioPlayer', () => ({
 }));
 
 jest.mock('@/utils/haptics', () => ({
+  lightFeedback: jest.fn(),
+  mediumFeedback: jest.fn(),
   successFeedback: jest.fn(),
+  selectionFeedback: jest.fn(),
+  errorFeedback: jest.fn(),
 }));
 
 import { useQueryClient } from '@tanstack/react-query';

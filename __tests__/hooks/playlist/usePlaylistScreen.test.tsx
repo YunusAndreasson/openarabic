@@ -87,8 +87,11 @@ jest.mock('@/services/analytics', () => ({
 
 // Mock haptics
 jest.mock('@/utils/haptics', () => ({
+  lightFeedback: jest.fn(),
   mediumFeedback: jest.fn(),
+  successFeedback: jest.fn(),
   selectionFeedback: jest.fn(),
+  errorFeedback: jest.fn(),
 }));
 
 // Mock error handling

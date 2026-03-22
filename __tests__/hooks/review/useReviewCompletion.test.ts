@@ -37,7 +37,11 @@ jest.mock('@/services/analytics', () => ({
 }));
 
 jest.mock('@/utils/haptics', () => ({
+  lightFeedback: jest.fn(),
+  mediumFeedback: jest.fn(),
   successFeedback: jest.fn(),
+  selectionFeedback: jest.fn(),
+  errorFeedback: jest.fn(),
 }));
 
 jest.mock('react-native', () => ({

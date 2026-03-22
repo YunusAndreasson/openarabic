@@ -17,6 +17,16 @@ export const mockExpoHaptics = () => {
   }));
 };
 
+export const mockHaptics = () => {
+  jest.mock('@/utils/haptics', () => ({
+    lightFeedback: jest.fn(),
+    mediumFeedback: jest.fn(),
+    successFeedback: jest.fn(),
+    selectionFeedback: jest.fn(),
+    errorFeedback: jest.fn(),
+  }));
+};
+
 /**
  * Mock expo-router
  * Used in: flow tests, integration tests

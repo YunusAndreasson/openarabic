@@ -46,8 +46,11 @@ jest.mock('@/components/ThemedText', () => {
 const mockLightFeedback = jest.fn();
 const mockSelectionFeedback = jest.fn();
 jest.mock('@/utils/haptics', () => ({
-  lightFeedback: () => mockLightFeedback(),
-  selectionFeedback: () => mockSelectionFeedback(),
+  lightFeedback: jest.fn(),
+  mediumFeedback: jest.fn(),
+  successFeedback: jest.fn(),
+  selectionFeedback: jest.fn(),
+  errorFeedback: jest.fn(),
 }));
 
 // Mock text style utils

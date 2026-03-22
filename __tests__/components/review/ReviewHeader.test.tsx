@@ -39,7 +39,11 @@ jest.mock('@/components/common', () => {
 // Mock haptics
 const mockSelectionFeedback = jest.fn();
 jest.mock('@/utils/haptics', () => ({
-  selectionFeedback: () => mockSelectionFeedback(),
+  lightFeedback: jest.fn(),
+  mediumFeedback: jest.fn(),
+  successFeedback: jest.fn(),
+  selectionFeedback: jest.fn(),
+  errorFeedback: jest.fn(),
 }));
 
 // Mock expo vector icons

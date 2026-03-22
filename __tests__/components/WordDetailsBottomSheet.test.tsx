@@ -17,15 +17,22 @@
  */
 
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
-import * as Haptics from 'expo-haptics';
 import React from 'react';
 
-import { mockExpoHaptics } from '@/__tests__/setup/commonMocks';
+import { selectionFeedback } from '@/utils/haptics';
+
 import { WordDetailsBottomSheet } from '@/components/article/WordDetailsBottomSheet';
 import type { SentenceWord } from '@/types/vocabulary.types';
 
-// Mock dependencies
-mockExpoHaptics();
+// Mock haptics at the utility level (not expo-haptics) since selectionFeedback
+// has a shouldTriggerHaptic guard that blocks calls without a Redux store
+jest.mock('@/utils/haptics', () => ({
+  lightFeedback: jest.fn(),
+  mediumFeedback: jest.fn(),
+  successFeedback: jest.fn(),
+  selectionFeedback: jest.fn(),
+  errorFeedback: jest.fn(),
+}));
 
 // Use shared mock factory from componentMocks.tsx
 jest.mock('@/hooks/theme/useColors', () =>
@@ -147,7 +154,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       });
 
       expect(mockOnAddToStudy).toHaveBeenCalledWith(mockWord);
-      expect(Haptics.selectionAsync).toHaveBeenCalled();
+      expect(selectionFeedback).toHaveBeenCalled();
     });
   });
 

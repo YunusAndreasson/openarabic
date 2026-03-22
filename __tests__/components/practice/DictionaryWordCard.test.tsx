@@ -45,8 +45,11 @@ jest.mock('@/hooks/cards', () => ({
 }));
 
 jest.mock('@/utils/haptics', () => ({
-  selectionFeedback: jest.fn(),
   lightFeedback: jest.fn(),
+  mediumFeedback: jest.fn(),
+  successFeedback: jest.fn(),
+  selectionFeedback: jest.fn(),
+  errorFeedback: jest.fn(),
 }));
 
 jest.mock('@/utils/layoutUtils', () => ({

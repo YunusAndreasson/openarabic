@@ -27,7 +27,11 @@ jest.mock('@/hooks/animations', () =>
 );
 
 jest.mock('@/utils/haptics', () => ({
+  lightFeedback: jest.fn(),
+  mediumFeedback: jest.fn(),
+  successFeedback: jest.fn(),
   selectionFeedback: jest.fn(),
+  errorFeedback: jest.fn(),
 }));
 
 describe('Toggle', () => {
