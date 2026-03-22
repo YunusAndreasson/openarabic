@@ -79,7 +79,7 @@ export const AppearanceSection = memo<AppearanceSectionProps>(({ onThemePress, o
           onPress={onLanguagePress}
         />
         <SettingsCard
-          icon="cellular"
+          icon="phone-portrait-outline"
           label={STRINGS.HAPTICS}
           rightType="toggle"
           toggleValue={hapticsEnabled}

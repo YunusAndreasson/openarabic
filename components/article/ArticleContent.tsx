@@ -2,7 +2,7 @@ import type { FlashListProps, FlashListRef } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
 import { useQueryClient } from '@tanstack/react-query';
 import { memo, useCallback, type ComponentType, type ReactElement, type RefObject } from 'react';
-import type { NativeScrollEvent, NativeSyntheticEvent, ViewStyle, ViewToken } from 'react-native';
+import type { NativeScrollEvent, NativeSyntheticEvent, ViewToken } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,6 +22,7 @@ import {
 import { useArticleScrollHandler } from '@/hooks/articles/useArticleScrollHandler';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
+import type { ReanimatedCSSAnimationStyle } from '@/types/ui/base.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import { calculateHeaderHeight } from '@/utils/gradientUtils';
 import { STRINGS } from '@/constants/strings';
@@ -33,7 +34,6 @@ const AnimatedFlashList = Animated.createAnimatedComponent(
 );
 
 // Mount fade-in — CSS @keyframes, module-level so no per-render allocation
-// Type assertion needed: Reanimated v4 CSS animations aren't in ViewStyle
 const MOUNT_FADE_IN_STYLE = {
   animationName: {
     from: { opacity: 0 },
@@ -41,7 +41,7 @@ const MOUNT_FADE_IN_STYLE = {
   },
   animationDuration: `${TIMING_CONFIG.FAST.duration}ms`,
   animationFillMode: 'forwards' as const,
-} as unknown as ViewStyle;
+} as ReanimatedCSSAnimationStyle;
 
 // Comfortable reading space constant
 const COMFORTABLE_READING_SPACE = MIN_TOUCH_TARGET.MEDIUM;
@@ -133,8 +133,6 @@ interface ArticleContentProps {
   onClose: () => void;
   // FlashList ready callback for scroll-to-position
   onFlashListLoad: () => void;
-  // Show English alongside Arabic
-  showEnglish: boolean;
 }
 
 const ArticleContentInternal = function ArticleContent({
@@ -148,7 +146,6 @@ const ArticleContentInternal = function ArticleContent({
   scrollViewRef,
   isInReadingList,
   onToggleReadingList,
-  showEnglish,
   onClose,
   onFlashListLoad,
 }: ArticleContentProps) {
@@ -319,7 +316,6 @@ const ArticleContentInternal = function ArticleContent({
               bounces={true}
               overScrollMode="always"
               extraData={{
-                showEnglish, // Track English visibility for proper recycling
                 themeMode: colors.text, // Track theme changes via stable color value
               }}
               onLoad={onFlashListLoad}

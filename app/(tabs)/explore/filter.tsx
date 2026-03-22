@@ -2,7 +2,6 @@ import { ErrorState } from '@/components/common';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
-import { useMemo } from 'react';
 
 import { ThemedView } from '@/components/ThemedView';
 import { FilteredArticleView } from '@/components/explore';
@@ -17,20 +16,16 @@ export default function FilterScreen(): JSX.Element {
   const filterId = parseInt(id ?? '', 10);
 
   const {
-    data: allArticles = [],
+    data: articles = [],
     isFetching,
     error,
     refetch,
   } = useQuery({
     ...articleQueries.all(),
+    select: data => (filterId > 0 ? data.filter(article => article.category.id === filterId) : []),
     refetchOnMount: false,
     refetchOnReconnect: true,
   });
-
-  const articles = useMemo(() => {
-    if (!allArticles.length || filterId <= 0) return [];
-    return allArticles.filter(article => article.category.id === filterId);
-  }, [allArticles, filterId]);
 
   if (error) {
     return (

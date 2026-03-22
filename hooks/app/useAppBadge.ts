@@ -102,8 +102,7 @@ export function useAppBadge(): void {
 
       // Update badge when app comes to foreground if we have due words
       if (nextAppState === 'active' && isAuthenticated && !isLoading && dueWords) {
-        const dueWordsCount = dueWords.length ?? 0;
-        updateBadgeDebounced(dueWordsCount);
+        updateBadgeDebounced(dueWords.length);
       }
     });
 
@@ -122,7 +121,7 @@ export function useAppBadge(): void {
       if (event.type === 'updated' && event.query.queryKey === queryKey) {
         const newDueWords = event.query.state.data as StudyWord[] | undefined;
         if (newDueWords && appStateRef.current === 'active') {
-          updateBadgeDebounced(newDueWords.length ?? 0);
+          updateBadgeDebounced(newDueWords.length);
         }
       }
     });

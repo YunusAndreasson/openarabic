@@ -145,7 +145,7 @@ export function createServiceErrorConfigs<
   };
 
   for (const operation in operationsConfig) {
-    if (Object.prototype.hasOwnProperty.call(operationsConfig, operation)) {
+    if (Object.hasOwn(operationsConfig, operation)) {
       const op = operation as CrudOperation;
       configs[operation as keyof T] = createServiceErrorConfig(
         resourceName,

@@ -135,7 +135,7 @@ export function useArticleScreen({
     } else {
       router.push(ROUTE_PATHS.EXPLORE_TAB);
     }
-  }, []);
+  }, [stopAudioSafely]);
 
   // Reading progress
   const isActive = Boolean(article) && !isLoadingArticle;

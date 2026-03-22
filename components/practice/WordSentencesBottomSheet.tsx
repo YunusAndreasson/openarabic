@@ -16,7 +16,6 @@ import type { StudyWord } from '@/types/vocabulary.types';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 import { getStabilityProgressColor } from '@/utils/urgencyScore';
 
-const SENTENCE_SETTINGS = { showEnglish: true } as const;
 
 interface WordSentencesBottomSheetProps {
   /** Controls modal visibility */
@@ -134,7 +133,6 @@ export const WordSentencesBottomSheet = memo<WordSentencesBottomSheetProps>(
                       audio_url: sentence.audio_url,
                     }}
                     words={sentence.sentence_words}
-                    settings={SENTENCE_SETTINGS}
                     colors={colors}
                     highlightRootId={word?.root_id}
                     containerStyle={styles.sentenceContainer}

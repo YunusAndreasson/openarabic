@@ -197,7 +197,9 @@ export function useProvideAuth(): AuthResult {
 
         if (event === 'SIGNED_OUT') {
           // Stop audio to prevent stale playback state
-          simpleAudioService.stop().catch(() => undefined);
+          simpleAudioService.stop().catch(() => {
+            // Silent failure — audio may not be playing
+          });
           setSession(null);
           setIsLoading(false);
         } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {

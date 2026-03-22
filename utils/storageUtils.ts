@@ -12,12 +12,6 @@ import { isNonEmptyString } from './stringUtils';
 export type StorageBucket = 'images' | 'audio';
 
 /**
- * Validate if a path is a non-empty string
- * Handles null, undefined, and empty strings consistently
- */
-export const isValidStoragePath = isNonEmptyString;
-
-/**
  * Generate the full URL for a Supabase storage object
  *
  * Uses the official Supabase Storage SDK `getPublicUrl` method for reliable,
@@ -50,7 +44,7 @@ export const generateStorageUrl = (
   path: string | null | undefined,
 ): string => {
   // Handle invalid inputs consistently - return empty string
-  if (!isValidStoragePath(path)) {
+  if (!isNonEmptyString(path)) {
     return '';
   }
 

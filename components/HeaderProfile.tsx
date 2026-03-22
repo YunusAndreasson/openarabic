@@ -13,6 +13,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { handleError } from '@/utils/errorHandling';
 import { getSafeStorage } from '@/utils/safeAsyncStorage';
+import { getFirstNameFromEmail } from '@/utils/stringUtils';
 
 // iOS 26 UIBarButton has fixed 36pt glass container
 // Profile fills the glass container completely
@@ -21,16 +22,6 @@ const IOS_GLASS_SIZE = 36;
 interface HeaderProfileProps {
   size?: number;
 }
-
-const getFirstNameFromEmail = (email: string): string => {
-  const name = email.split('@')[0];
-  if (!name) return 'U';
-  return name.charAt(0).toUpperCase() + name.slice(1);
-};
-
-const getInitials = (name: string): string => {
-  return name.charAt(0).toUpperCase();
-};
 
 export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
   const colors = useColors();
@@ -49,10 +40,7 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
   }, []);
 
   const profilePhotoStyle = useMemo(
-    () => [
-      styles.baseProfilePhoto,
-      { width: effectiveSize, height: effectiveSize, borderRadius: effectiveSize / 2 },
-    ],
+    () => ({ width: effectiveSize, height: effectiveSize, borderRadius: effectiveSize / 2 }),
     [effectiveSize],
   );
 
@@ -88,7 +76,7 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
   if (!user) return null;
 
   const firstName = getFirstNameFromEmail(user.email || '');
-  const initials = getInitials(firstName);
+  const initials = firstName.charAt(0).toUpperCase();
 
   // iOS: Use 36pt container to match glass, Android: use content size
   const containerStyle = isIOS
@@ -130,10 +118,7 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
               <ThemedText
                 type="label"
                 weight="bold"
-                style={[
-                  styles.baseInitialsText,
-                  { fontSize: effectiveSize * 0.45, color: colors.background },
-                ]}
+                style={{ fontSize: effectiveSize * 0.45, color: colors.background }}
               >
                 {initials}
               </ThemedText>
@@ -161,12 +146,5 @@ const styles = StyleSheet.create({
   initialsContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  // Pre-computed base styles for better performance
-  baseProfilePhoto: {
-    // Width, height, and borderRadius applied dynamically
-  },
-  baseInitialsText: {
-    // Font size and color applied dynamically
   },
 });

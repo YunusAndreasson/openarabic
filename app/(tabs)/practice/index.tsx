@@ -67,15 +67,13 @@ export default function PracticeScreen(): JSX.Element {
       );
       const hasDueWords = queryClient.getQueryData(fsrsQueries.due(user.id).queryKey);
 
+      hasPrefetchedRef.current = true;
+
       // Only fetch if we're missing either data set
       if (!hasStudyWords || !hasDueWords) {
-        hasPrefetchedRef.current = true;
         InteractionManager.runAfterInteractions(() => {
           prefetchVocabularyData();
         });
-      } else {
-        // Mark as prefetched even if data exists to prevent future calls
-        hasPrefetchedRef.current = true;
       }
     }, [user?.id, prefetchVocabularyData, queryClient]),
   );

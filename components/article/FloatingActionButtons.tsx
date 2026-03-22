@@ -9,6 +9,7 @@ const GlassContainer = GLASS_AVAILABLE ? GlassView : View;
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import { lightFeedback, selectionFeedback } from '@/utils/haptics';
 
 export interface FloatingActionButtonsProps {
   isInReadingList: boolean;
@@ -51,12 +52,18 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
     );
 
     const handleOptimisticToggle = () => {
+      selectionFeedback();
       // React 19: Optimistic update in transition for immediate UI feedback
       startTransition(() => {
         setOptimisticBookmark(!optimisticIsInReadingList);
       });
       // Fire async operation independently (don't await in transition)
       onToggleReadingList();
+    };
+
+    const handleClose = () => {
+      lightFeedback();
+      onClose();
     };
 
     // Fallback background for non-iOS-26 platforms
@@ -73,7 +80,7 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
     return (
       <>
         {/* Close button - top left */}
-        <Pressable onPress={onClose} hitSlop={LAYOUT.HIT_SLOP.MEDIUM} style={closeButtonStyle}>
+        <Pressable onPress={handleClose} hitSlop={LAYOUT.HIT_SLOP.MEDIUM} style={closeButtonStyle}>
           <GlassContainer
             style={[styles.glassButton, fallbackButtonStyle]}
             {...(GLASS_AVAILABLE && { isInteractive: true, glassEffectStyle: 'clear' })}

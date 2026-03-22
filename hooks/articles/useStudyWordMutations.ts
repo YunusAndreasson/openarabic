@@ -24,6 +24,14 @@ interface StudyWordContext {
   previousStudyWords: StudyWord[];
 }
 
+interface FSRSWordSnapshot {
+  fsrs_due: string | null;
+  fsrs_last_review: string;
+  fsrs_stability?: number | null;
+  fsrs_difficulty?: number | null;
+  fsrs_reps?: number | null;
+}
+
 interface StudyWordMutationsResult {
   handleWordPress: (wordId: RootId) => void;
   handleRootPress: (rootId: RootId) => Promise<boolean | undefined>;
@@ -65,25 +73,22 @@ export const useStudyWordMutations = (
         fsrsQueries.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS).queryKey,
       );
       if (Array.isArray(all)) {
-        const words = all as {
-          fsrs_due: string | null;
-          fsrs_last_review: string;
-          fsrs_stability?: number | null;
-          fsrs_difficulty?: number | null;
-          fsrs_reps?: number | null;
-        }[];
+        const words = all as FSRSWordSnapshot[];
 
         // Don't apply capacity restrictions for users with 100 or fewer words
         if (words.length <= 100) return false;
 
         if (words.length === 0) return false;
-        const valid = words.filter(w => w.fsrs_stability != null && w.fsrs_difficulty != null);
+        const valid = words.filter(
+          (w): w is typeof w & { fsrs_stability: number; fsrs_difficulty: number } =>
+            w.fsrs_stability != null && w.fsrs_difficulty != null,
+        );
         let capacityScore: number;
         if (valid.length >= Math.max(1, Math.floor(words.length * 0.5))) {
           const avgStability =
-            valid.reduce((s, w) => s + (w.fsrs_stability ?? 0), 0) / valid.length;
+            valid.reduce((s, w) => s + w.fsrs_stability, 0) / valid.length;
           const avgDifficulty =
-            valid.reduce((s, w) => s + (w.fsrs_difficulty ?? 5), 0) / valid.length;
+            valid.reduce((s, w) => s + w.fsrs_difficulty, 0) / valid.length;
           const avgReps = valid.reduce((s, w) => s + (w.fsrs_reps ?? 0), 0) / valid.length;
           const stabilityFactor = Math.min(avgStability / 30, 1) * 45;
           const repsFactor = Math.min(avgReps / 10, 1) * 30;

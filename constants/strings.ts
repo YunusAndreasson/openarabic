@@ -68,8 +68,9 @@ export const STRINGS = {
   // Account section titles - now imported directly from enums in components
   ACCOUNT: 'Account',
   APPEARANCE_SECTION: 'Appearance',
-  STORAGE_ACCOUNT_SECTION: 'Account',
-  DANGER_ZONE_SECTION: 'Data',
+  STORAGE_SECTION: 'Storage',
+  DANGER_ZONE_SECTION: 'Danger Zone',
+  LEGAL_SECTION: 'Legal',
   RESET_READING_PROGRESS_DESCRIPTION: 'Start fresh with all articles',
   DELETE_ACCOUNT_DESCRIPTION: 'Permanently remove your account and data',
   // Social Media
@@ -396,8 +397,6 @@ export const STRINGS = {
   // Account - Support section
   HELP_CENTER: 'Help center',
   CONTACT_SUPPORT: 'Contact support',
-  // Account - About section
-  ABOUT_SECTION: 'About',
   NO_EMAIL: 'No email',
   BYTE_UNITS: ['Bytes', 'KB', 'MB', 'GB'] as const,
   ERROR_PRIORITY_QUEUE_LENGTH_MISMATCH: 'Items and priorities arrays must have the same length',

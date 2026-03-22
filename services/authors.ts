@@ -29,10 +29,7 @@ export const authorsService = {
     );
 
     // Filter to only authors that have articles
-    const authorIdsWithArticles = new Set(articleAuthors?.map(a => a.author_id) ?? []);
-    const authorsWithArticles =
-      allAuthors?.filter(author => authorIdsWithArticles.has(author.id)) ?? [];
-
-    return authorsWithArticles;
+    const authorIdsWithArticles = new Set(articleAuthors.map(a => a.author_id));
+    return allAuthors.filter(author => authorIdsWithArticles.has(author.id));
   },
 };

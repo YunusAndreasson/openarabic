@@ -38,3 +38,10 @@ export interface BaseComponentProps extends BaseStyleProps {
  * Type to help with animated style casting
  */
 export type AnimatedStyleProp<T> = AnimatedStyle<T> | StyleProp<T>;
+
+/**
+ * Reanimated v4 CSS keyframe animations use properties (animationName, animationDuration, etc.)
+ * that aren't part of React Native's ViewStyle. This type enables clean casting at animation
+ * definition sites instead of repeating `as unknown as ViewStyle`.
+ */
+export type ReanimatedCSSAnimationStyle = ViewStyle & Record<string, unknown>;
