@@ -498,11 +498,6 @@ export function computeColoredSegments(
   const englishComponentCount = formatted.sections.filter(s => s.type === 'components').length;
 
   if (distinctArabicColors !== englishComponentCount) {
-    if (__DEV__) {
-      console.warn(
-        `[ColorMismatch] "${arabicWord}" (${englishTranslation}): ${distinctArabicColors} Arabic colors vs ${englishComponentCount} English components → falling back to plain`,
-      );
-    }
     reportColorMismatch(arabicWord, englishTranslation, segments, formatted.sections, analysis);
     return plain;
   }
