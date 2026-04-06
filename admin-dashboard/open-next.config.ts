@@ -10,7 +10,7 @@ export default {
     },
   },
   edgeExternals: ['node:crypto'],
-  proxy: {
+  middleware: {
     external: true,
     override: {
       wrapper: 'cloudflare-edge',

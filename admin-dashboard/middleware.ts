@@ -7,7 +7,7 @@ const isPublicRoute = (path: string) => {
   return PUBLIC_ROUTES.includes(path) || path.startsWith('/read/');
 };
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Allow access to public routes without authentication
