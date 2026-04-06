@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import type { Database } from '@/lib/database.types';
 import { ArabicWord } from '@/components/arabic-word';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { Play, Pause } from 'lucide-react';
 
 type ArticleSentence = Database['public']['Tables']['article_sentences']['Row'];
@@ -99,17 +100,19 @@ export function SentencePair({ sentence, words, isLast = false }: SentencePairPr
           className="flex-1 text-2xl md:text-[28px] leading-[1.9] text-right text-foreground"
         >
           {words.length > 0 ? (
-            words.map((word, index) => (
-              <span key={word.id}>
-                <ArabicWord
-                  wordForm={word.word_form}
-                  english={word.english}
-                  grammarNote={word.grammar_note}
-                />
-                {/* Add space between words */}
-                {index < words.length - 1 && ' '}
-              </span>
-            ))
+            <TooltipProvider delayDuration={200}>
+              {words.map((word, index) => (
+                <span key={word.id}>
+                  <ArabicWord
+                    wordForm={word.word_form}
+                    english={word.english}
+                    grammarNote={word.grammar_note}
+                  />
+                  {/* Add space between words */}
+                  {index < words.length - 1 && ' '}
+                </span>
+              ))}
+            </TooltipProvider>
           ) : (
             // Fallback to full sentence if no words available
             <span

@@ -12,15 +12,14 @@ const nextConfig: NextConfig = {
   compress: true,
   poweredByHeader: false,
 
+  // React Compiler (moved to top-level in Next.js 16)
+  reactCompiler: true,
+
   experimental: {
-    reactCompiler: true,
     optimizePackageImports: ['lucide-react', '@radix-ui/react-dialog', '@radix-ui/react-select'],
-    scrollRestoration: true,
-    cssChunking: 'strict', // Strict CSS chunking for optimal loading
-    ppr: false, // Partial Prerendering (not needed for this app)
   },
 
-  // Turbopack configuration (Next.js 15.5+)
+  // Turbopack configuration
   turbopack: {
     rules: {
       '*.svg': {

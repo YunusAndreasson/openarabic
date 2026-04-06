@@ -15,17 +15,31 @@ type Author = Database['public']['Tables']['authors']['Row'];
 /**
  * Homepage - Server component that fetches initial data
  * Renders on Cloudflare Workers for optimal performance
- * Passes server-fetched data to client component for hydration
+ * Category filtering is driven by URL searchParams for shareability and back/forward support
  */
-export default async function PublicArticlesPage() {
-  // Fetch initial articles, categories, authors, and detect platform in parallel on the server
+export default async function PublicArticlesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string }>;
+}) {
+  const { category } = await searchParams;
+  const categoryId = category ? parseInt(category, 10) : null;
+
+  // Build the articles query with optional category filter
+  let articlesQuery = supabase
+    .from('articles')
+    .select('*, authors(name), categories(name)')
+    .order('created_at', { ascending: false })
+    .range(0, ITEMS_PER_PAGE - 1);
+
+  if (categoryId) {
+    articlesQuery = articlesQuery.eq('category_id', categoryId);
+  }
+
+  // Fetch articles, categories, authors, and detect platform in parallel
   const [articlesResult, categoriesResult, authorsResult, platformInfo] =
     await Promise.all([
-      supabase
-        .from('articles')
-        .select('*, authors(name), categories(name)')
-        .order('created_at', { ascending: false })
-        .range(0, ITEMS_PER_PAGE - 1),
+      articlesQuery,
       supabase.from('categories').select('*').order('name'),
       supabase.from('authors').select('*').order('name'),
       detectPlatform(),
@@ -47,13 +61,13 @@ export default async function PublicArticlesPage() {
     console.error('Error fetching authors:', authorsError);
   }
 
-  // Pass server-fetched data to client component
   return (
     <ArticlesClient
       initialArticles={(articles as Article[]) || []}
       initialCategories={(categories as Category[]) || []}
       initialAuthors={(authors as Author[]) || []}
       platformInfo={platformInfo}
+      selectedCategoryId={categoryId}
     />
   );
 }

@@ -73,9 +73,6 @@ export function PublicHeader({
           {/* Logo + Brand Name */}
           <Link
             href="/"
-            onClick={() => {
-              onSelectCategory(null);
-            }}
             className="flex items-center gap-2 flex-shrink-0 hover:opacity-80 active:opacity-60 transition-opacity duration-150 group"
             title="Home"
           >
