@@ -87,9 +87,6 @@ jest.mock('@/utils/storageUtils', () => ({
     if (path.startsWith('http://') || path.startsWith('https://')) return path;
     return `https://example.com/storage/audio/${path}`;
   }),
-  isValidStoragePath: jest.fn((path: unknown): path is string => {
-    return typeof path === 'string' && path.trim().length > 0;
-  }),
 }));
 
 jest.mock('@/services/supabase', () => ({

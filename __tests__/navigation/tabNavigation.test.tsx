@@ -2,20 +2,58 @@ import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import * as React from 'react';
 import { Platform } from 'react-native';
 
-// Force Android platform in tests to use Tabs instead of NativeTabs
+// Default Platform.OS to 'android' for these tests; the NativeTabs mock below
+// behaves identically across platforms so the choice is mostly cosmetic.
 jest.spyOn(Platform, 'select').mockImplementation(obj => obj.android ?? obj.default);
 Object.defineProperty(Platform, 'OS', { get: () => 'android' });
 
 // Mock expo-router/unstable-native-tabs before it's imported by TabLayout
 jest.mock('expo-router/unstable-native-tabs', () => {
   const React = require('react');
-  const NativeTabs = ({ children }: { children: React.ReactNode }) =>
-    React.createElement('View', null, children);
+  const { Text, TouchableOpacity } = require('react-native');
+  const screens = {
+    explore: require('../../app/(tabs)/explore/index.tsx').default,
+    playlist: require('../../app/(tabs)/playlist/index.tsx').default,
+    practice: require('../../app/(tabs)/practice/index.tsx').default,
+  };
+
+  const NativeTabs = ({ children }: { children: React.ReactNode }) => {
+    const triggers = React.Children.toArray(children).filter(
+      (child: any) => child?.props?.name,
+    ) as Array<React.ReactElement<{ name: keyof typeof screens; children: React.ReactNode }>>;
+
+    const [activeName, setActiveName] = React.useState(triggers[0]?.props.name ?? 'explore');
+    const Active = screens[activeName];
+
+    const tabBar = triggers.map(child => {
+      const labelChild = React.Children.toArray(child.props.children).find(
+        (c: any) => c?.type?.displayName === 'NativeTabsLabel' || c?.props?.children != null,
+      ) as React.ReactElement<{ children: string }> | undefined;
+      const title = typeof labelChild?.props?.children === 'string' ? labelChild.props.children : child.props.name;
+
+      return React.createElement(
+        TouchableOpacity,
+        {
+          key: child.props.name,
+          testID: `tab-${child.props.name}`,
+          onPress: () => setActiveName(child.props.name),
+        },
+        React.createElement(Text, null, title),
+      );
+    });
+
+    return React.createElement(React.Fragment, null, ...tabBar, Active && React.createElement(Active));
+  };
+
   const Trigger = ({ children }: { children: React.ReactNode }) =>
     React.createElement('View', null, children);
   Trigger.Icon = () => null;
-  Trigger.Label = () => null;
-  Trigger.Badge = () => null;
+  const Label = ({ children }: { children: React.ReactNode }) => React.createElement(Text, null, children);
+  (Label as any).displayName = 'NativeTabsLabel';
+  Trigger.Label = Label;
+  Trigger.Badge = ({ children }: { children: React.ReactNode }) =>
+    React.createElement(Text, { testID: 'tab-badge' }, children);
+  Trigger.VectorIcon = () => null;
   NativeTabs.Trigger = Trigger;
   return { NativeTabs };
 });

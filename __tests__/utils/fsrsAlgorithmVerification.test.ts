@@ -5,7 +5,7 @@
  * algorithm is implemented correctly. Any bugs here directly impact user learning.
  *
  * Tests verify:
- * 1. Retrievability calculation (R = exp(-t/S))
+ * 1. Retrievability via ts-fsrs forgetting_curve: R(t,S) = (1 + FACTOR × t/(9×S))^DECAY
  * 2. Algorithm correctness against known values
  * 3. Mathematical properties and invariants
  * 4. Edge cases and boundary conditions
@@ -28,10 +28,9 @@ import type { StudyWord } from '@/types/vocabulary.types';
 import { calculateRetrievability, calculateRetrievabilityForecast } from '@/utils/fsrsUtils';
 
 describe('FSRS Algorithm Verification', () => {
-  describe('Retrievability Formula: R = exp(-t/S)', () => {
+  describe('Retrievability Formula: FSRS forgetting curve', () => {
     test('calculates retrievability correctly for known values', () => {
       // Test case 1: Stability = 10 days, 1 day elapsed
-      // R = exp(-1/10) ≈ 0.905
       const word1 = createTestWord({
         fsrs_stability: 10,
         fsrs_last_review: '2024-01-01T00:00:00Z',
@@ -40,10 +39,9 @@ describe('FSRS Algorithm Verification', () => {
       const lastReview1 = new Date('2024-01-01T00:00:00Z');
 
       const result1 = calculateRetrievability(word1, targetDate1, lastReview1);
-      expect(result1).toBeCloseTo(0.905, 3);
+      expect(result1).toBeCloseTo(0.985682, 3);
 
       // Test case 2: Stability = 5 days, 2 days elapsed
-      // R = exp(-2/5) = exp(-0.4) ≈ 0.670
       const word2 = createTestWord({
         fsrs_stability: 5,
         fsrs_last_review: '2024-01-01T00:00:00Z',
@@ -52,10 +50,10 @@ describe('FSRS Algorithm Verification', () => {
       const lastReview2 = new Date('2024-01-01T00:00:00Z');
 
       const result2 = calculateRetrievability(word2, targetDate2, lastReview2);
-      expect(result2).toBeCloseTo(0.67, 3);
+      expect(result2).toBeCloseTo(0.950264, 3);
 
       // Test case 3: Stability = 1 day, 1 day elapsed
-      // R = exp(-1/1) = exp(-1) ≈ 0.368
+      // In FSRS, R = 0.9 when t = S (by design)
       const word3 = createTestWord({
         fsrs_stability: 1,
         fsrs_last_review: '2024-01-01T00:00:00Z',
@@ -64,7 +62,7 @@ describe('FSRS Algorithm Verification', () => {
       const lastReview3 = new Date('2024-01-01T00:00:00Z');
 
       const result3 = calculateRetrievability(word3, targetDate3, lastReview3);
-      expect(result3).toBeCloseTo(0.368, 3);
+      expect(result3).toBeCloseTo(0.9, 3);
     });
 
     test('returns 1.0 for freshly reviewed words (t = 0)', () => {
@@ -80,7 +78,7 @@ describe('FSRS Algorithm Verification', () => {
       expect(result).toBeCloseTo(1.0, 3);
     });
 
-    test('approaches 0 as time increases far beyond stability', () => {
+    test('decreases significantly as time increases far beyond stability', () => {
       const word = createTestWord({
         fsrs_stability: 1,
         fsrs_last_review: '2024-01-01T00:00:00Z',
@@ -92,8 +90,8 @@ describe('FSRS Algorithm Verification', () => {
 
       const result = calculateRetrievability(word, targetDate, lastReview);
 
-      // R = exp(-10/1) = exp(-10) ≈ 0.000045
-      expect(result).toBeLessThan(0.001);
+      // FSRS power-law decay is slower than exponential — R ≈ 0.693 at t=10, S=1
+      expect(result).toBeLessThan(0.75);
       expect(result).toBeGreaterThan(0);
     });
 
@@ -109,8 +107,7 @@ describe('FSRS Algorithm Verification', () => {
 
       const result = calculateRetrievability(word, targetDate, lastReview);
 
-      // R = exp(-0.5/10) = exp(-0.05) ≈ 0.951
-      expect(result).toBeCloseTo(0.951, 3);
+      expect(result).toBeCloseTo(0.992648, 3);
     });
   });
 
@@ -186,7 +183,7 @@ describe('FSRS Algorithm Verification', () => {
       expect(highR).toBeGreaterThan(lowR);
     });
 
-    test('retrievability at t = stability is always e^(-1) ≈ 0.368', () => {
+    test('retrievability at t = stability is always 0.9 (FSRS design property)', () => {
       fc.assert(
         fc.property(
           fc.float({ min: Math.fround(0.1), max: Math.fround(100), noNaN: true }), // Stability
@@ -197,14 +194,13 @@ describe('FSRS Algorithm Verification', () => {
             });
 
             // Set target date to exactly stability days after last review
-            // Use milliseconds for fractional day support
             const lastReview = new Date('2024-01-01T00:00:00Z');
             const targetDate = new Date(lastReview.getTime() + stability * 24 * 60 * 60 * 1000);
 
             const result = calculateRetrievability(word, targetDate, lastReview);
 
-            // R = exp(-t/S) = exp(-S/S) = exp(-1) ≈ 0.368
-            expect(result).toBeCloseTo(0.368, 2);
+            // In FSRS, stability is defined as the interval where R = 0.9
+            expect(result).toBeCloseTo(0.9, 2);
 
             return true;
           },
@@ -256,8 +252,8 @@ describe('FSRS Algorithm Verification', () => {
 
       const result = calculateRetrievability(word, targetDate, lastReview);
 
-      // R = exp(-0.25/0.1) = exp(-2.5) ≈ 0.082
-      expect(result).toBeCloseTo(0.082, 2);
+      // FSRS power-law: S=0.1, t=0.25 => R ≈ 0.826
+      expect(result).toBeCloseTo(0.826, 2);
       expect(result).toBeGreaterThan(0);
       expect(result).toBeLessThan(1);
     });
@@ -273,8 +269,8 @@ describe('FSRS Algorithm Verification', () => {
 
       const result = calculateRetrievability(word, targetDate, lastReview);
 
-      // R = exp(-30/365) ≈ 0.920
-      expect(result).toBeCloseTo(0.92, 2);
+      // FSRS: S=365, t=30 => R ≈ 0.988
+      expect(result).toBeCloseTo(0.988, 2);
     });
 
     test('handles dates in the past (negative time elapsed)', () => {
@@ -443,7 +439,7 @@ describe('FSRS Algorithm Verification', () => {
      * These tests document exact FSRS calculation outputs for reference.
      * They serve as regression tests and documentation of algorithm behavior.
      *
-     * IMPORTANT: Values are mathematically derived from the formula R = exp(-t/S)
+     * IMPORTANT: Values are from ts-fsrs forgetting_curve: R(t,S) = (1 + FACTOR × t/(9×S))^DECAY
      * Only update after verifying the new values are correct.
      */
 
@@ -453,63 +449,63 @@ describe('FSRS Algorithm Verification', () => {
         stability: 5,
         daysElapsed: 0,
         expectedR: 1.0,
-        formula: 'exp(-0/5)',
+        formula: 'forgetting_curve(0, 5)',
         description: 'Perfect recall immediately after review',
       },
       {
         scenario: 'early review (1 day with S=10)',
         stability: 10,
         daysElapsed: 1,
-        expectedR: 0.904837,
-        formula: 'exp(-1/10)',
+        expectedR: 0.985682,
+        formula: 'forgetting_curve(1, 10)',
         description: 'Minimal forgetting after 1 day',
       },
       {
         scenario: 'medium interval (5 days with S=10)',
         stability: 10,
         daysElapsed: 5,
-        expectedR: 0.606531,
-        formula: 'exp(-5/10)',
-        description: 'Moderate retention at half-stability',
+        expectedR: 0.940344,
+        formula: 'forgetting_curve(5, 10)',
+        description: 'Good retention at half-stability',
       },
       {
         scenario: 'at stability threshold (t=S)',
         stability: 10,
         daysElapsed: 10,
-        expectedR: 0.367879,
-        formula: 'exp(-10/10) = exp(-1)',
-        description: 'Canonical 36.8% recall at t=S',
+        expectedR: 0.9,
+        formula: 'forgetting_curve(10, 10)',
+        description: 'FSRS defines stability as interval where R=0.9',
       },
       {
         scenario: 'overdue review (15 days with S=10)',
         stability: 10,
         daysElapsed: 15,
-        expectedR: 0.22313,
-        formula: 'exp(-15/10)',
-        description: 'Significant forgetting beyond stability',
+        expectedR: 0.869825,
+        formula: 'forgetting_curve(15, 10)',
+        description: 'Gradual forgetting beyond stability',
       },
       {
         scenario: 'very overdue (30 days with S=10)',
         stability: 10,
         daysElapsed: 30,
-        expectedR: 0.049787,
-        formula: 'exp(-30/10)',
-        description: 'Nearly forgotten after 3× stability',
+        expectedR: 0.809388,
+        formula: 'forgetting_curve(30, 10)',
+        description: 'Power-law decay is slower than exponential',
       },
       {
         scenario: 'low stability word (2 days with S=2)',
         stability: 2,
         daysElapsed: 2,
-        expectedR: 0.367879,
-        formula: 'exp(-2/2) = exp(-1)',
-        description: 'Fast forgetting for unstable memories',
+        expectedR: 0.9,
+        formula: 'forgetting_curve(2, 2)',
+        description: 'R=0.9 at t=S for any stability',
       },
       {
         scenario: 'high stability word (10 days with S=100)',
         stability: 100,
         daysElapsed: 10,
-        expectedR: 0.904837,
-        formula: 'exp(-10/100)',
+        expectedR: 0.985682,
+        formula: 'forgetting_curve(10, 100)',
         description: 'Excellent retention for well-learned words',
       },
     ])('reference: $scenario', ({ stability, daysElapsed, expectedR, formula, description }) => {

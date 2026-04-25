@@ -26,7 +26,7 @@ export function getCurrentArticleId(): number | undefined {
  */
 export function isAudioBusy(): boolean {
   const status = simpleAudioService.getStatus();
-  return status.isLoading;
+  return !status.isLoaded || status.isBuffering;
 }
 
 /**
@@ -37,7 +37,8 @@ export function isAudioBusy(): boolean {
 export async function stopAudioSafely(throwOnError: boolean = false): Promise<void> {
   try {
     const status = simpleAudioService.getStatus();
-    if (status.isPlaying || status.isLoading) {
+    const isLoadingOrPlaying = status.playing || !status.isLoaded || status.isBuffering;
+    if (isLoadingOrPlaying) {
       await simpleAudioService.stop();
     }
   } catch (error) {

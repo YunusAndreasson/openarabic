@@ -9,34 +9,48 @@ interface SFSymbolConfig {
 }
 
 /**
+ * Ionicons name pair used for the Android NativeTabs `src` slot
+ * (rendered through NativeTabs.Trigger.VectorIcon)
+ */
+interface IoniconsConfig {
+  readonly default: string;
+  readonly selected: string;
+}
+
+/**
  * Tab icon configuration with Ionicons and SF Symbols
  */
 interface TabIconDefinition {
   readonly filled: string;
   readonly outline: string;
   readonly sf: SFSymbolConfig;
+  readonly ion: IoniconsConfig;
 }
 
 /**
  * Tab icon mapping for consistent icons across the app
- * Uses Ionicons icon names with filled/outline variants
- * SF Symbols are used for iOS native tabs (liquid glass effect)
+ * - `sf`  → SF Symbols, used by iOS NativeTabs (liquid glass)
+ * - `ion` → Ionicons, used by Android NativeTabs via VectorIcon
+ * - `filled`/`outline` → kept for any non-tab Ionicons usage in the app
  */
 const TAB_ICONS = {
   EXPLORE: {
     filled: 'compass',
     outline: 'compass-outline',
     sf: { default: 'safari', selected: 'safari.fill' },
+    ion: { default: 'compass-outline', selected: 'compass' },
   },
   PLAYLIST: {
     filled: 'headset',
     outline: 'headset-outline',
     sf: { default: 'headphones', selected: 'headphones' },
+    ion: { default: 'headset-outline', selected: 'headset' },
   },
   PRACTICE: {
     filled: 'school',
     outline: 'school-outline',
     sf: { default: 'graduationcap', selected: 'graduationcap.fill' },
+    ion: { default: 'school-outline', selected: 'school' },
   },
 } as const satisfies Record<string, TabIconDefinition>;
 

@@ -1,4 +1,4 @@
-import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,8 +16,8 @@ import { preload } from 'expo-audio';
 
 import { audioCache } from '@/services/audioCache';
 import type { SentenceWord } from '@/types/vocabulary.types';
-import { useBottomSheetVisibility } from '@/hooks/ui/useBottomSheetVisibility';
-import { BottomSheetBackdrop, COMMON_BOTTOM_SHEET_PROPS } from '@/utils/bottomSheetUtils';
+import { useBottomSheetModalVisibility } from '@/hooks/ui/useBottomSheetVisibility';
+import { BottomSheetBackdrop, COMMON_BOTTOM_SHEET_MODAL_PROPS } from '@/utils/bottomSheetUtils';
 import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
 import { generateStorageUrl } from '@/utils/storageUtils';
@@ -41,7 +41,7 @@ export function WordDetailsBottomSheet({
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { showToast } = useToast();
-  const bottomSheetRef = useBottomSheetVisibility(isVisible && !!word);
+  const bottomSheetRef = useBottomSheetModalVisibility(isVisible && !!word);
   // Use consolidated word audio playback hook
   const playWordAudio = useWordAudioPlayback({ showErrorToast: true });
 
@@ -121,12 +121,11 @@ export function WordDetailsBottomSheet({
 
 
   return (
-    <BottomSheet
+    <BottomSheetModal
       ref={bottomSheetRef}
-      index={-1}
-      {...COMMON_BOTTOM_SHEET_PROPS}
+      {...COMMON_BOTTOM_SHEET_MODAL_PROPS}
       enableDynamicSizing={true}
-      onClose={onClose}
+      onDismiss={onClose}
       backdropComponent={BottomSheetBackdrop}
       backgroundStyle={[styles.background, { backgroundColor: colors.elevation1 }]}
       handleIndicatorStyle={{ backgroundColor: colors.modalIndicator }}
@@ -193,7 +192,7 @@ export function WordDetailsBottomSheet({
           </>
         )}
       </BottomSheetView>
-    </BottomSheet>
+    </BottomSheetModal>
   );
 }
 

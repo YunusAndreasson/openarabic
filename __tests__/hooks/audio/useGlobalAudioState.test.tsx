@@ -59,7 +59,7 @@ describe('useGlobalAudioState Hook', () => {
 
     // Mock useSimpleAudioPlayer
     jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-      isPlaying: false,
+      playing: false,
       isLoading: false,
       currentTime: 0,
       duration: 0,
@@ -114,7 +114,7 @@ describe('useGlobalAudioState Hook', () => {
     test('initializes with idle state when not playing', () => {
       const { result } = renderHook(() => useGlobalAudioState());
 
-      expect(result.current.isPlaying).toBeFalsy();
+      expect(result.current.playing).toBeFalsy();
       expect(result.current.audioState).toBe(AUDIO_STATES.IDLE);
       expect(result.current.isLoading).toBeFalsy();
       expect(result.current.currentArticle).toBeNull();
@@ -124,7 +124,7 @@ describe('useGlobalAudioState Hook', () => {
 
     test('reflects playing state from audio player', () => {
       jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        isPlaying: true,
+        playing: true,
         isLoading: false,
         currentTime: 30,
         duration: 120,
@@ -139,7 +139,7 @@ describe('useGlobalAudioState Hook', () => {
 
       const { result } = renderHook(() => useGlobalAudioState());
 
-      expect(result.current.isPlaying).toBeTruthy();
+      expect(result.current.playing).toBeTruthy();
       expect(result.current.audioState).toBe(AUDIO_STATES.PLAYING);
       expect(result.current.position).toBe(30);
       expect(result.current.duration).toBe(120);
@@ -147,7 +147,7 @@ describe('useGlobalAudioState Hook', () => {
 
     test('reflects loading state from audio player', () => {
       jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        isPlaying: false,
+        playing: false,
         isLoading: true,
         currentTime: 0,
         duration: 0,
@@ -158,7 +158,7 @@ describe('useGlobalAudioState Hook', () => {
 
       const { result } = renderHook(() => useGlobalAudioState());
 
-      expect(result.current.isPlaying).toBeFalsy();
+      expect(result.current.playing).toBeFalsy();
       expect(result.current.audioState).toBe(AUDIO_STATES.LOADING);
       expect(result.current.isLoading).toBeTruthy();
     });
@@ -431,7 +431,7 @@ describe('useGlobalAudioState Hook', () => {
       } as any);
 
       jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        isPlaying: true,
+        playing: true,
         isLoading: false,
         currentTime: 30,
         duration: 120,
@@ -444,7 +444,7 @@ describe('useGlobalAudioState Hook', () => {
 
       // Audio stops
       jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        isPlaying: false,
+        playing: false,
         isLoading: false,
         currentTime: 30,
         duration: 120,
@@ -470,7 +470,7 @@ describe('useGlobalAudioState Hook', () => {
       } as any);
 
       jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        isPlaying: false,
+        playing: false,
         isLoading: true, // Still loading
         currentTime: 0,
         duration: 0,
@@ -494,7 +494,7 @@ describe('useGlobalAudioState Hook', () => {
       } as any);
 
       jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        isPlaying: false,
+        playing: false,
         isLoading: false,
         currentTime: 0,
         duration: 0,
@@ -521,7 +521,7 @@ describe('useGlobalAudioState Hook', () => {
 
     test('returns default position for single article not in playlist', () => {
       jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        isPlaying: true,
+        playing: true,
         isLoading: false,
         currentTime: 30,
         duration: 120,
@@ -544,7 +544,7 @@ describe('useGlobalAudioState Hook', () => {
 
     test('calculates position from reading list queue', () => {
       jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        isPlaying: true,
+        playing: true,
         isLoading: false,
         currentTime: 30,
         duration: 120,
@@ -567,7 +567,7 @@ describe('useGlobalAudioState Hook', () => {
 
     test('uses playlist info when in playlist mode', () => {
       jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        isPlaying: true,
+        playing: true,
         isLoading: false,
         currentTime: 30,
         duration: 120,
@@ -600,7 +600,7 @@ describe('useGlobalAudioState Hook', () => {
 
     test('resolves article from cache', () => {
       jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        isPlaying: true,
+        playing: true,
         isLoading: false,
         currentTime: 30,
         duration: 120,
@@ -635,7 +635,7 @@ describe('useGlobalAudioState Hook', () => {
 
     test('falls back to reading list when cache is empty', () => {
       jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        isPlaying: true,
+        playing: true,
         isLoading: false,
         currentTime: 30,
         duration: 120,
@@ -675,7 +675,7 @@ describe('useGlobalAudioState Hook', () => {
 
     test('falls back to track metadata when cache and reading list are empty', () => {
       jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        isPlaying: true,
+        playing: true,
         isLoading: false,
         currentTime: 30,
         duration: 120,
@@ -705,7 +705,7 @@ describe('useGlobalAudioState Hook', () => {
 
     test('preserves last valid article during transitions (flicker prevention)', () => {
       jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        isPlaying: true,
+        playing: true,
         isLoading: false,
         currentTime: 30,
         duration: 120,
@@ -734,7 +734,7 @@ describe('useGlobalAudioState Hook', () => {
 
       // Transition to loading state (currentTrack becomes null temporarily)
       jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        isPlaying: false,
+        playing: false,
         isLoading: true,
         currentTime: 0,
         duration: 0,
@@ -751,7 +751,7 @@ describe('useGlobalAudioState Hook', () => {
 
     test('clears last valid article when truly stopped', () => {
       jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        isPlaying: true,
+        playing: true,
         isLoading: false,
         currentTime: 30,
         duration: 120,
@@ -779,7 +779,7 @@ describe('useGlobalAudioState Hook', () => {
 
       // Fully stop (not playing, not loading, no track)
       jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        isPlaying: false,
+        playing: false,
         isLoading: false,
         currentTime: 0,
         duration: 0,
@@ -863,7 +863,7 @@ describe('useGlobalAudioState Hook', () => {
 
     test('handles single-item reading list', () => {
       jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        isPlaying: true,
+        playing: true,
         isLoading: false,
         currentTime: 30,
         duration: 120,
@@ -886,7 +886,7 @@ describe('useGlobalAudioState Hook', () => {
 
     test('handles invalid article ID (non-numeric)', () => {
       jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        isPlaying: true,
+        playing: true,
         isLoading: false,
         currentTime: 30,
         duration: 120,
@@ -902,7 +902,7 @@ describe('useGlobalAudioState Hook', () => {
 
     test('handles null article ID', () => {
       jest.mocked(useSimpleAudioPlayer).mockReturnValue({
-        isPlaying: true,
+        playing: true,
         isLoading: false,
         currentTime: 30,
         duration: 120,

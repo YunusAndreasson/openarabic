@@ -1,12 +1,7 @@
 'use client';
 
 import { ArticleCard } from './article-card';
-import type { Database } from '@/lib/database.types';
-
-type Article = Database['public']['Tables']['articles']['Row'] & {
-  authors: { name: string } | null;
-  categories: { name: string } | null;
-};
+import type { Article } from '@/lib/types';
 
 interface ArticleGridProps {
   articles: Article[];

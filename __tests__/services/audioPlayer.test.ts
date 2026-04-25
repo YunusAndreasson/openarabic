@@ -162,8 +162,9 @@ describe('audioPlayer service', () => {
     test('should initialize with idle state', () => {
       const status = audioService.getStatus();
 
-      expect(status.isPlaying).toBeFalsy();
-      expect(status.isLoading).toBeFalsy();
+      expect(status.playing).toBeFalsy();
+      expect(status.isLoaded).toBeFalsy();
+      expect(status.isBuffering).toBeFalsy();
       expect(status.currentTime).toBe(0);
       expect(status.duration).toBe(0);
       expect(status.currentTrack).toBeNull();
@@ -197,7 +198,7 @@ describe('audioPlayer service', () => {
       expect(mockPlayer.play).toHaveBeenCalled();
 
       const status = audioService.getStatus();
-      expect(status.isPlaying).toBeTruthy();
+      expect(status.playing).toBeTruthy();
       expect(status.currentTrack).toEqual(testTrack);
     });
 
@@ -216,7 +217,9 @@ describe('audioPlayer service', () => {
     test('should set loading state when playing new track', async () => {
       let loadingStateSeen = false;
       audioService.subscribe(status => {
-        if (status.isLoading) {
+        // The "loading state" the service emits explicitly sets isBuffering: true.
+        // Plain "not yet loaded" (initial isLoaded: false) is not what we check for.
+        if (status.isBuffering) {
           loadingStateSeen = true;
         }
       });
@@ -229,7 +232,9 @@ describe('audioPlayer service', () => {
     test('should skip loading state when skipLoadingState option is true', async () => {
       let loadingStateSeen = false;
       audioService.subscribe(status => {
-        if (status.isLoading) {
+        // The "loading state" the service emits explicitly sets isBuffering: true.
+        // Plain "not yet loaded" (initial isLoaded: false) is not what we check for.
+        if (status.isBuffering) {
           loadingStateSeen = true;
         }
       });
@@ -272,7 +277,7 @@ describe('audioPlayer service', () => {
       expect(mockHandleError).toHaveBeenCalled();
 
       const status = audioService.getStatus();
-      expect(status.isPlaying).toBeFalsy();
+      expect(status.playing).toBeFalsy();
     });
 
     test('should fall back to waitForPlayerReady when immediate play throws', async () => {
@@ -392,7 +397,7 @@ describe('audioPlayer service', () => {
       expect(mockPlayer.remove).toHaveBeenCalled();
 
       const status = audioService.getStatus();
-      expect(status.isPlaying).toBeFalsy();
+      expect(status.playing).toBeFalsy();
       expect(status.currentTrack).toBeNull();
       expect(status.currentTime).toBe(0);
       expect(status.duration).toBe(0);
@@ -418,7 +423,7 @@ describe('audioPlayer service', () => {
 
       // State should be reset even if pause failed
       const status = audioService.getStatus();
-      expect(status.isPlaying).toBeFalsy();
+      expect(status.playing).toBeFalsy();
       expect(status.currentTrack).toBeNull();
     });
   });
@@ -466,7 +471,9 @@ describe('audioPlayer service', () => {
     test('should skip loading state for playlist start', async () => {
       let loadingStateSeen = false;
       audioService.subscribe(status => {
-        if (status.isLoading) {
+        // The "loading state" the service emits explicitly sets isBuffering: true.
+        // Plain "not yet loaded" (initial isLoaded: false) is not what we check for.
+        if (status.isBuffering) {
           loadingStateSeen = true;
         }
       });
@@ -543,7 +550,7 @@ describe('audioPlayer service', () => {
       expect(playlistInfo.isPlaylistMode).toBeFalsy();
 
       const status = audioService.getStatus();
-      expect(status.isPlaying).toBeFalsy();
+      expect(status.playing).toBeFalsy();
     });
 
     test('should prevent duplicate track advancement from race conditions', async () => {
@@ -591,7 +598,7 @@ describe('audioPlayer service', () => {
       expect(playlistInfo.isPlaylistMode).toBeFalsy();
 
       const status = audioService.getStatus();
-      expect(status.isPlaying).toBeFalsy();
+      expect(status.playing).toBeFalsy();
     });
 
     test('should reset sleep timer when starting new playlist', async () => {
@@ -613,7 +620,7 @@ describe('audioPlayer service', () => {
 
       expect(listener).toHaveBeenCalled();
       const lastCall = listener.mock.calls[listener.mock.calls.length - 1][0];
-      expect(lastCall.isPlaying).toBeTruthy();
+      expect(lastCall.playing).toBeTruthy();
       expect(lastCall.currentTrack).toEqual(testTrack);
 
       unsubscribe();
@@ -713,7 +720,7 @@ describe('audioPlayer service', () => {
       });
 
       const status = audioService.getStatus();
-      expect(status.isPlaying).toBeFalsy();
+      expect(status.playing).toBeFalsy();
       expect(status.didJustFinish).toBeTruthy();
       expect(status.currentTime).toBe(120);
     });

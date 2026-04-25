@@ -2,60 +2,23 @@
 
 import { Moon, Sun, Monitor } from 'lucide-react';
 import { useEffect, useState } from 'react';
-
-type Theme = 'light' | 'dark' | 'system';
+import { useTheme } from '@/components/providers/theme-provider';
 
 export function ThemeToggle() {
+  const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const [theme, setTheme] = useState<Theme>('system');
 
-  useEffect(() => {
-    setMounted(true);
-    // Get theme from localStorage, default to 'system' if not set
-    const stored = localStorage.getItem('openarabic-theme') as Theme | null;
-    if (stored) {
-      setTheme(stored);
-    } else {
-      // First visit - default to system and persist it
-      localStorage.setItem('openarabic-theme', 'system');
-      setTheme('system');
-    }
-  }, []);
+  useEffect(() => setMounted(true), []);
 
   const cycleTheme = () => {
-    let newTheme: Theme;
-    if (theme === 'light') {
-      newTheme = 'dark';
-    } else if (theme === 'dark') {
-      newTheme = 'system';
-    } else {
-      newTheme = 'light';
-    }
-
-    setTheme(newTheme);
-    localStorage.setItem('openarabic-theme', newTheme);
-
-    // Apply theme to document
-    const root = window.document.documentElement;
-    root.classList.remove('light', 'dark');
-
-    if (newTheme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light';
-      root.classList.add(systemTheme);
-    } else {
-      root.classList.add(newTheme);
-    }
+    if (theme === 'light') setTheme('dark');
+    else if (theme === 'dark') setTheme('system');
+    else setTheme('light');
   };
 
-  // Render placeholder during SSR to prevent hydration mismatch
+  // Render empty placeholder during SSR to prevent hydration mismatch
   if (!mounted) {
-    return (
-      <div className="w-8 h-8 flex-shrink-0" aria-hidden="true">
-        {/* Empty placeholder */}
-      </div>
-    );
+    return <div className="w-8 h-8 flex-shrink-0" aria-hidden="true" />;
   }
 
   return (

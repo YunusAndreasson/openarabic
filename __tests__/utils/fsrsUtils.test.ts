@@ -35,8 +35,8 @@ describe('fsrsUtils', () => {
 
       const result = calculateRetrievability(word, targetDate, lastReviewDate);
 
-      // R = exp(-1/10) ≈ 0.905
-      expect(result).toBeCloseTo(0.905, 3);
+      // FSRS forgetting curve: S=10, t=1 => R ≈ 0.986
+      expect(result).toBeCloseTo(0.985682, 3);
     });
 
     test('should return 0 for words without review history', () => {

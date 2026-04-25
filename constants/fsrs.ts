@@ -47,11 +47,9 @@ export const OPTIMIZED_FSRS_CONFIG = {
   request_retention: 0.95,
   maximum_interval: 180,
   enable_fuzz: true,
-  // TODO: Research enable_short_term behavior in ts-fsrs v5
-  // The ts-fsrs documentation doesn't clearly explain what this parameter does
-  // Current setting (true) is working correctly with session-based learning
-  // May affect short-term vs long-term memory modeling
+  // enable_short_term=true keeps short-term memory steps (learning/relearning)
+  // active in ts-fsrs v5. Disabling would skip directly to long-term scheduling.
+  // Current setting works correctly with our session-based learning flow.
   enable_short_term: true,
-  timeout: 120000,
   // Use library defaults for weights and derived options to avoid version drift
 } as const;

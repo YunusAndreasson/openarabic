@@ -40,10 +40,6 @@ class WordValidationResponse(BaseModel):
         default=None,
         description="Suggested English translation if issues found (null if correct)",
     )
-    suggested_grammar_note: str | None = Field(
-        default=None,
-        description="Suggested grammar note if issues found (null if correct)",
-    )
     reasoning: str = Field(
         description="Detailed explanation of the validation decision"
     )
@@ -68,10 +64,33 @@ class ValidationImprovement(BaseModel):
     original_english: str = Field(description="Original English translation")
     original_grammar_note: str | None = Field(description="Original grammar note")
     suggested_english: str = Field(description="Suggested improved translation")
-    suggested_grammar_note: str | None = Field(description="Suggested improved note")
     status: str = Field(
         default="pending",
         description="Review status: pending/approved/rejected",
+    )
+
+
+class ImprovementReview(BaseModel):
+    """Review verdict for a single suggested improvement."""
+
+    model_config = ConfigDict(strict=True, extra="forbid")
+
+    id: int = Field(description="Improvement ID from database")
+    approve: bool = Field(
+        description="True to approve, False to reject"
+    )
+    reason: str = Field(
+        description="Brief reason for the verdict (1 sentence)"
+    )
+
+
+class ImprovementReviewBatchResponse(BaseModel):
+    """Batch response for improvement reviews."""
+
+    model_config = ConfigDict(strict=True, extra="forbid")
+
+    reviews: list[ImprovementReview] = Field(
+        description="List of review verdicts, one per input improvement"
     )
 
 

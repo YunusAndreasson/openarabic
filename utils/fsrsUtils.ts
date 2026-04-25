@@ -1,11 +1,18 @@
+import { fsrs, generatorParameters } from 'ts-fsrs';
+
 import {
   CRITICAL_RETRIEVABILITY_THRESHOLD,
   DEFAULT_SESSION_COOLDOWN_HOURS,
+  OPTIMIZED_FSRS_CONFIG,
   TREND_CHANGE_THRESHOLD,
   URGENT_RETRIEVABILITY_THRESHOLD,
 } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { normalizeTimestamp } from '@/utils/dateTimeUtils';
+
+// Shared FSRS instance for retrievability calculations
+// Uses the same config as the review engine for consistency
+const FSRS_INSTANCE = fsrs(generatorParameters(OPTIMIZED_FSRS_CONFIG));
 
 export interface RetrievabilityForecast {
   date: Date;
@@ -23,8 +30,9 @@ export interface DueWordsForecast {
 }
 
 /**
- * Calculate retrievability using FSRS formula
- * R = exp(-t/S) where t = days since review, S = stability
+ * Calculate retrievability using the official FSRS forgetting curve
+ * R(t,S) = (1 + FACTOR × t/(9×S))^DECAY
+ * Uses ts-fsrs library for algorithm consistency with the review engine
  */
 export function calculateRetrievability(
   word: StudyWord,
@@ -32,19 +40,16 @@ export function calculateRetrievability(
   lastReviewDate?: Date,
 ): number {
   const stability = word.fsrs_stability ?? 0;
-  const lastReview = lastReviewDate ?? new Date(word.fsrs_last_review);
+  if (!word.fsrs_last_review && !lastReviewDate) return 0;
+  const lastReview = lastReviewDate ?? new Date(word.fsrs_last_review as string);
 
-  if (!lastReview || stability <= 0) {
+  if (Number.isNaN(lastReview.getTime()) || stability <= 0) {
     return 0;
   }
 
   const daysSinceReview = (targetDate.getTime() - lastReview.getTime()) / (1000 * 60 * 60 * 24);
 
-  // Correct FSRS retrievability formula: R = exp(-t/S)
-  // where t = days since review, S = stability
-  const retrievability = Math.exp(-daysSinceReview / stability);
-
-  return Math.max(0, Math.min(1, retrievability));
+  return Math.max(0, Math.min(1, FSRS_INSTANCE.forgetting_curve(daysSinceReview, stability)));
 }
 
 /**
@@ -74,19 +79,12 @@ export function calculateRetrievabilityForecast(
   days: number = 7,
 ): RetrievabilityForecast[] {
   // Filter to only include words that have been reviewed
-  const validWords = studyWords
-    .filter(w => w.fsrs_last_review && (w.fsrs_reps ?? 0) > 0)
-    .map(w => {
-      // We know fsrs_last_review is not null here due to the filter above
-      const lastReview = w.fsrs_last_review;
-      if (!lastReview) return null; // This should never happen due to filter, but TypeScript safety
-
-      return {
-        ...w,
-        lastReviewDate: new Date(lastReview),
-      };
-    })
-    .filter((w): w is NonNullable<typeof w> => w !== null); // Remove any null entries
+  const validWords = studyWords.reduce<(StudyWord & { lastReviewDate: Date })[]>((acc, w) => {
+    if (w.fsrs_last_review && (w.fsrs_reps ?? 0) > 0) {
+      acc.push({ ...w, lastReviewDate: new Date(w.fsrs_last_review) });
+    }
+    return acc;
+  }, []);
 
   // Generate future dates for forecasting
   const dates = generateForecastDates(days);
@@ -240,7 +238,7 @@ export function calculateDueWordsTrend(
   const futureData = dueWordsData.slice(1);
 
   const currentDue = todayData?.dueWords || 0;
-  const peakDue = Math.max(...futureData.map(d => d.dueWords));
+  const peakDue = futureData.reduce((max, d) => Math.max(max, d.dueWords), 0);
 
   // Calculate trend based on whether due words will increase significantly
   const change = peakDue - currentDue;
@@ -257,16 +255,16 @@ export function calculateNextDueDate(studyWords: StudyWord[]): Date | null {
   if (studyWords.length === 0) return null;
 
   const now = new Date();
-  const validDueDates = studyWords
-    .filter(word => word.fsrs_due != null)
-    .map(word => {
-      const dueStr = normalizeTimestamp(word.fsrs_due);
-      return dueStr ? new Date(dueStr) : null;
-    })
-    .filter((date): date is Date => date !== null && date.getTime() > now.getTime());
+  let earliestMs = Infinity;
+  for (const word of studyWords) {
+    if (word.fsrs_due == null) continue;
+    const dueStr = normalizeTimestamp(word.fsrs_due);
+    if (!dueStr) continue;
+    const dueMs = new Date(dueStr).getTime();
+    if (dueMs > now.getTime() && dueMs < earliestMs) {
+      earliestMs = dueMs;
+    }
+  }
 
-  if (validDueDates.length === 0) return null;
-
-  // Find the earliest due date
-  return new Date(Math.min(...validDueDates.map(d => d.getTime())));
+  return earliestMs === Infinity ? null : new Date(earliestMs);
 }

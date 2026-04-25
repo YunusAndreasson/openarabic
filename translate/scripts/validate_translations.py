@@ -119,6 +119,51 @@ def validate_article_translations(
         return False
 
 
+def validate_last_n_articles(n: int, verbose: bool = False) -> int:
+    """Validate the last N articles by creation order.
+
+    Returns the number of successfully validated articles.
+    """
+    if verbose:
+        logging.getLogger().setLevel(logging.INFO)
+
+    from utils.config_common import get_supabase_client
+
+    client = get_supabase_client()
+    response = (
+        client.table("articles")
+        .select("id")
+        .order("id", desc=True)
+        .limit(n)
+        .execute()
+    )
+
+    if not response.data:
+        print("No articles found.")
+        return 0
+
+    # Reverse to process oldest first
+    article_ids = [a["id"] for a in reversed(response.data)]
+    print(f"Validating last {len(article_ids)} articles (IDs {article_ids[0]}–{article_ids[-1]})")
+
+    success_count = 0
+    failed_count = 0
+
+    for article_id in tqdm(article_ids, desc="Validating articles", unit="article"):
+        try:
+            if validate_article_translations(article_id, verbose):
+                success_count += 1
+            else:
+                failed_count += 1
+        except Exception as e:
+            if verbose:
+                logger.error(f"Article {article_id}: {e}")
+            failed_count += 1
+
+    print(f"\nDone: {success_count} succeeded, {failed_count} failed")
+    return success_count
+
+
 def validate_all_articles(verbose: bool = False, start_from: int = 1) -> int:
     """Validate all articles in the database.
 
@@ -168,6 +213,11 @@ def main() -> int:
     parser.add_argument("--article-id", type=int, help="Validate a single article")
     parser.add_argument("--all", action="store_true", help="Validate all articles")
     parser.add_argument(
+        "--last",
+        type=int,
+        help="Validate the last N articles (by creation order)",
+    )
+    parser.add_argument(
         "--start-from",
         type=int,
         default=1,
@@ -177,7 +227,7 @@ def main() -> int:
 
     args = parser.parse_args()
 
-    if not args.article_id and not args.all:
+    if not args.article_id and not args.all and not args.last:
         parser.print_help()
         return 1
 
@@ -187,6 +237,10 @@ def main() -> int:
     if args.article_id:
         ok = validate_article_translations(args.article_id, verbose=args.verbose)
         return 0 if ok else 1
+
+    if args.last:
+        count = validate_last_n_articles(args.last, args.verbose)
+        return 0 if count > 0 else 1
 
     count = validate_all_articles(args.verbose, args.start_from)
     return 0 if count > 0 else 1

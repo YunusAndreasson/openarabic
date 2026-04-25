@@ -134,7 +134,7 @@ export const usePlaylistScreen = () => {
   useRefreshOnFocus(readingListQuery.refetch);
   useRefreshOnFocus(enhancedTracksQuery.refetch);
 
-  const isCurrentlyPlaying = simpleAudioService.getStatus().isPlaying;
+  const isCurrentlyPlaying = simpleAudioService.getStatus().playing;
 
   // STABILIZATION: Enhanced handlePlayAll with better state management
   const handlePlayAll = useCallback(
@@ -147,7 +147,7 @@ export const usePlaylistScreen = () => {
       const currentPlaybackMode = playbackMode;
       const currentTracks = sortedEnhancedTracks;
 
-      const isCurrentlyPlayingNow = currentStatus.isPlaying;
+      const isCurrentlyPlayingNow = currentStatus.playing;
 
       if (isAudioBusy()) {
         return;

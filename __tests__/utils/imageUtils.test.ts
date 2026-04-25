@@ -11,7 +11,8 @@
 
 import { beforeEach, describe, expect, test, jest } from '@jest/globals';
 
-import { generateStorageUrl, isValidStoragePath } from '../../utils/storageUtils';
+import { generateStorageUrl } from '../../utils/storageUtils';
+import { isNonEmptyString } from '../../utils/stringUtils';
 import { supabase } from '../../services/supabase';
 
 // Mock supabase storage for URL generation tests
@@ -38,25 +39,25 @@ beforeEach(() => {
 });
 
 describe('storageUtils', () => {
-  describe('isValidStoragePath', () => {
+  describe('isNonEmptyString', () => {
     test('should return false for null/undefined', () => {
-      expect(isValidStoragePath(null)).toBeFalsy();
-      expect(isValidStoragePath(undefined)).toBeFalsy();
+      expect(isNonEmptyString(null)).toBeFalsy();
+      expect(isNonEmptyString(undefined)).toBeFalsy();
     });
 
     test('should return false for non-string input', () => {
-      expect(isValidStoragePath(123)).toBeFalsy();
-      expect(isValidStoragePath({})).toBeFalsy();
+      expect(isNonEmptyString(123)).toBeFalsy();
+      expect(isNonEmptyString({})).toBeFalsy();
     });
 
     test('should return false for empty strings', () => {
-      expect(isValidStoragePath('')).toBeFalsy();
-      expect(isValidStoragePath('   ')).toBeFalsy();
+      expect(isNonEmptyString('')).toBeFalsy();
+      expect(isNonEmptyString('   ')).toBeFalsy();
     });
 
     test('should return true for valid paths', () => {
-      expect(isValidStoragePath('test.jpg')).toBeTruthy();
-      expect(isValidStoragePath('folder/file.mp3')).toBeTruthy();
+      expect(isNonEmptyString('test.jpg')).toBeTruthy();
+      expect(isNonEmptyString('folder/file.mp3')).toBeTruthy();
     });
   });
 

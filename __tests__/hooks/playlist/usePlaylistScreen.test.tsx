@@ -54,7 +54,7 @@ jest.mock('@/components/providers', () => ({
 // Mock services - define inline to avoid hoisting issues
 jest.mock('@/services/audioPlayer', () => ({
   simpleAudioService: {
-    getStatus: jest.fn(() => ({ isPlaying: false, currentUrl: null })),
+    getStatus: jest.fn(() => ({ playing: false, currentUrl: null })),
     stop: jest.fn().mockResolvedValue(undefined),
     play: jest.fn().mockResolvedValue(true),
     playPlaylist: jest.fn().mockResolvedValue(true),
@@ -195,7 +195,7 @@ describe('usePlaylistScreen', () => {
 
     // Reset service mocks
     jest.mocked(mockSimpleAudioService.getStatus).mockReturnValue({
-      isPlaying: false,
+      playing: false,
       currentUrl: null,
     });
   });
@@ -313,7 +313,7 @@ describe('usePlaylistScreen', () => {
 
     test('stops playback when already playing all', async () => {
       jest.mocked(mockSimpleAudioService.getStatus).mockReturnValue({
-        isPlaying: true,
+        playing: true,
         currentUrl: null,
       });
 
@@ -475,7 +475,7 @@ describe('usePlaylistScreen', () => {
       const { getCurrentArticleId } = require('@/utils/audioUtils');
       jest.mocked(getCurrentArticleId).mockReturnValue(1);
       jest.mocked(mockSimpleAudioService.getStatus).mockReturnValue({
-        isPlaying: true,
+        playing: true,
         currentUrl: null,
       });
 

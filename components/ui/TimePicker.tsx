@@ -1,4 +1,4 @@
-import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import type { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useCallback, useState } from 'react';
@@ -11,8 +11,8 @@ import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { useBottomSheetDynamicStyles } from '@/hooks/ui/useBottomSheetDynamicStyles';
-import { useBottomSheetVisibility } from '@/hooks/ui/useBottomSheetVisibility';
-import { BottomSheetBackdrop, COMMON_BOTTOM_SHEET_PROPS } from '@/utils/bottomSheetUtils';
+import { useBottomSheetModalVisibility } from '@/hooks/ui/useBottomSheetVisibility';
+import { BottomSheetBackdrop, COMMON_BOTTOM_SHEET_MODAL_PROPS } from '@/utils/bottomSheetUtils';
 
 export interface TimePickerProps {
   isVisible: boolean;
@@ -31,7 +31,7 @@ export function TimePicker({
 }: TimePickerProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const bottomSheetRef = useBottomSheetVisibility(isVisible);
+  const bottomSheetRef = useBottomSheetModalVisibility(isVisible);
 
   // Create initial date from hour and minute
   const initialDate = new Date();
@@ -78,13 +78,12 @@ export function TimePicker({
 
   // Unified bottom sheet with native picker for both platforms
   return (
-    <BottomSheet
+    <BottomSheetModal
       ref={bottomSheetRef}
-      index={-1}
-      {...COMMON_BOTTOM_SHEET_PROPS}
+      {...COMMON_BOTTOM_SHEET_MODAL_PROPS}
       enableDynamicSizing={true}
       onChange={handleChange}
-      onClose={onClose}
+      onDismiss={onClose}
       backgroundStyle={dynamicStyles.bottomSheet}
       handleIndicatorStyle={dynamicStyles.indicator}
       backdropComponent={BottomSheetBackdrop}
@@ -125,7 +124,7 @@ export function TimePicker({
           <ThemedButton title={STRINGS.SET_TIME} onPress={handleConfirm} />
         </View>
       </BottomSheetView>
-    </BottomSheet>
+    </BottomSheetModal>
   );
 }
 

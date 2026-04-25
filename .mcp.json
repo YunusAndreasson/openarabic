@@ -12,6 +12,10 @@
     "sentry": {
       "type": "http",
       "url": "https://mcp.sentry.dev/sse"
+    },
+    "tarteel": {
+      "type": "http",
+      "url": "https://mcp.tarteel.ai/mcp"
     }
   }
 }

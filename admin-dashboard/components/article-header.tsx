@@ -4,16 +4,11 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Share2, Check } from 'lucide-react';
-import type { Database } from '@/lib/database.types';
 import { normalizeImageUrl, formatDate, estimateReadTime } from '@/lib/article-utils';
 import { useTheme } from '@/components/providers/theme-provider';
 import { shareArticle, canShare } from '@/utils/share';
 import { ARTICLE_HEADER_BLUR } from '@/lib/blur-placeholder';
-
-type Article = Database['public']['Tables']['articles']['Row'] & {
-  authors: { name: string } | null;
-  categories: { name: string } | null;
-};
+import type { Article } from '@/lib/types';
 
 interface ArticleHeaderProps {
   article: Article;
@@ -23,7 +18,6 @@ interface ArticleHeaderProps {
 export function ArticleHeader({ article, showSummary = true }: ArticleHeaderProps) {
   const { isDark } = useTheme();
   const [shareSuccess, setShareSuccess] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
 
   const handleShare = async () => {
     const articleUrl = `${window.location.origin}/read/${article.id}`;
@@ -48,12 +42,11 @@ export function ArticleHeader({ article, showSummary = true }: ArticleHeaderProp
         fill
         priority
         fetchPriority="high"
-        className={`object-cover motion-safe:transition-all motion-safe:duration-700 motion-safe:ease-[cubic-bezier(0.23,1,0.32,1)] motion-safe:hover:scale-105 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+        className="object-cover img-fade-in motion-safe:transition-all motion-safe:duration-700 motion-safe:ease-[cubic-bezier(0.23,1,0.32,1)] motion-safe:hover:scale-105"
         sizes="100vw"
         quality={90}
         placeholder="blur"
         blurDataURL={ARTICLE_HEADER_BLUR}
-        onLoad={() => setImageLoaded(true)}
       />
 
       {/* Theme-aware Gradient Overlay */}

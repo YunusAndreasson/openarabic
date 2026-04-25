@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import type { Database } from '@/lib/database.types';
+import type { Category } from '@/lib/types';
 import { ThemeToggle } from './theme-toggle';
 import {
   Dialog,
@@ -12,8 +12,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Filter, MessageCircle, Info, Mail } from 'lucide-react';
-
-type Category = Database['public']['Tables']['categories']['Row'];
 
 interface PublicHeaderProps {
   categories: Category[];
@@ -65,7 +63,7 @@ export function PublicHeader({
 
   return (
     <header
-      className={`sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md view-transition-stable transition-transform duration-300 ease-out ${!isVisible ? '-translate-y-full' : 'translate-y-0'}`}
+      className={`sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md transition-transform duration-300 ease-out ${!isVisible ? '-translate-y-full' : 'translate-y-0'}`}
       style={{ viewTransitionName: 'header' }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

@@ -67,6 +67,7 @@ export interface Database {
           difficulty_level: number;
           id: number;
           image_url: string;
+          published: boolean;
           summary: string;
           title: string;
         };
@@ -81,6 +82,7 @@ export interface Database {
           difficulty_level: number;
           id?: number;
           image_url: string;
+          published?: boolean;
           summary: string;
           title: string;
         };
@@ -95,6 +97,7 @@ export interface Database {
           difficulty_level?: number;
           id?: number;
           image_url?: string;
+          published?: boolean;
           summary?: string;
           title?: string;
         };

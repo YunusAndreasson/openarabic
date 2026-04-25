@@ -43,21 +43,27 @@ export const useSimpleAudioPlayer = () => {
     await simpleAudioService.preconfigureAudioSession();
   }, [isMountedRef]);
 
+  // isLoading is derived (not stored): the service now mirrors expo-audio's
+  // native AudioStatus, which exposes isLoaded + isBuffering. We gate on
+  // currentTrack so the initial "nothing loaded yet" state isn't reported
+  // as loading.
+  const currentTrack = status?.currentTrack ?? null;
+  const isLoaded = status?.isLoaded ?? false;
+  const isBuffering = status?.isBuffering ?? false;
+  const isLoading = currentTrack !== null && (!isLoaded || isBuffering);
+
   return {
-    // Status with safe defaults
-    isPlaying: status?.isPlaying ?? false,
-    isLoading: status?.isLoading ?? false,
+    playing: status?.playing ?? false,
+    isLoading,
     currentTime: status?.currentTime ?? 0,
     duration: status?.duration ?? 0,
-    currentTrack: status?.currentTrack ?? null,
+    currentTrack,
 
-    // Actions
     play,
     stop,
     seekTo,
     preconfigureAudioSession,
 
-    // Full status object for advanced use cases
     status,
   };
 };

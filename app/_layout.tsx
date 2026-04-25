@@ -13,6 +13,7 @@ import { Stack, useNavigationContainerRef, useRouter, useSegments } from 'expo-r
 import * as NavigationBar from 'expo-navigation-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import * as Updates from 'expo-updates';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, Platform, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -172,6 +173,13 @@ Sentry.init({
     return event;
   },
 });
+
+// Correlate Sentry events with the OTA update they ran on, so a bad release shows up
+// as a single tag-filterable cohort instead of having to cross-reference build numbers.
+Sentry.setTag('expo_update_id', Updates.updateId ?? 'embedded');
+Sentry.setTag('expo_update_channel', Updates.channel ?? 'unknown');
+Sentry.setTag('expo_update_runtime_version', Updates.runtimeVersion ?? 'unknown');
+Sentry.setTag('expo_update_is_embedded', String(Updates.isEmbeddedLaunch));
 
 function AppContent() {
   const dispatch = useAppDispatch();
@@ -580,8 +588,8 @@ const AudioOverlays = memo(function AudioOverlays() {
   const rawShouldShow = useMemo(
     () =>
       Boolean(globalAudioState.currentArticle) &&
-      (globalAudioState.isPlaying || globalAudioState.audioState === 'loading'),
-    [globalAudioState.currentArticle, globalAudioState.isPlaying, globalAudioState.audioState],
+      (globalAudioState.playing || globalAudioState.audioState === 'loading'),
+    [globalAudioState.currentArticle, globalAudioState.playing, globalAudioState.audioState],
   );
 
   // STABILIZATION: Show immediately, hide with delay to prevent mount/unmount flicker

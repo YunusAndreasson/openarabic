@@ -60,8 +60,8 @@ describe('audioUtils', () => {
     test('should return article ID when a track is playing', () => {
       simpleAudioServiceMock.getStatus.mockReturnValue({
         currentTrack: { articleId: 123 } as any,
-        isPlaying: true,
-        isLoading: false,
+        playing: true,
+        isLoaded: true, isBuffering: false,
         currentTime: 0,
         duration: 100,
       });
@@ -74,8 +74,8 @@ describe('audioUtils', () => {
     test('should return undefined when no track is playing', () => {
       simpleAudioServiceMock.getStatus.mockReturnValue({
         currentTrack: null,
-        isPlaying: false,
-        isLoading: false,
+        playing: false,
+        isLoaded: true, isBuffering: false,
         currentTime: 0,
         duration: 0,
       });
@@ -88,8 +88,8 @@ describe('audioUtils', () => {
     test('should parse string article IDs to numbers', () => {
       simpleAudioServiceMock.getStatus.mockReturnValue({
         currentTrack: { articleId: '456' as any },
-        isPlaying: true,
-        isLoading: false,
+        playing: true,
+        isLoaded: true, isBuffering: false,
         currentTime: 0,
         duration: 100,
       });
@@ -104,8 +104,8 @@ describe('audioUtils', () => {
     test('should return true when audio is loading', () => {
       simpleAudioServiceMock.getStatus.mockReturnValue({
         currentTrack: null,
-        isPlaying: false,
-        isLoading: true,
+        playing: false,
+        isLoaded: false, isBuffering: true,
         currentTime: 0,
         duration: 0,
       });
@@ -116,8 +116,8 @@ describe('audioUtils', () => {
     test('should return false when audio is not loading', () => {
       simpleAudioServiceMock.getStatus.mockReturnValue({
         currentTrack: null,
-        isPlaying: false,
-        isLoading: false,
+        playing: false,
+        isLoaded: true, isBuffering: false,
         currentTime: 0,
         duration: 0,
       });
@@ -130,8 +130,8 @@ describe('audioUtils', () => {
     test('should stop audio when playing', async () => {
       simpleAudioServiceMock.getStatus.mockReturnValue({
         currentTrack: {} as any,
-        isPlaying: true,
-        isLoading: false,
+        playing: true,
+        isLoaded: true, isBuffering: false,
         currentTime: 10,
         duration: 100,
       });
@@ -145,8 +145,8 @@ describe('audioUtils', () => {
     test('should stop audio when loading', async () => {
       simpleAudioServiceMock.getStatus.mockReturnValue({
         currentTrack: null,
-        isPlaying: false,
-        isLoading: true,
+        playing: false,
+        isLoaded: false, isBuffering: true,
         currentTime: 0,
         duration: 0,
       });
@@ -160,8 +160,8 @@ describe('audioUtils', () => {
     test('should not stop audio when not playing or loading', async () => {
       simpleAudioServiceMock.getStatus.mockReturnValue({
         currentTrack: null,
-        isPlaying: false,
-        isLoading: false,
+        playing: false,
+        isLoaded: true, isBuffering: false,
         currentTime: 0,
         duration: 0,
       });
@@ -174,8 +174,8 @@ describe('audioUtils', () => {
     test('should silently catch errors by default', async () => {
       simpleAudioServiceMock.getStatus.mockReturnValue({
         currentTrack: {} as any,
-        isPlaying: true,
-        isLoading: false,
+        playing: true,
+        isLoaded: true, isBuffering: false,
         currentTime: 10,
         duration: 100,
       });
@@ -187,8 +187,8 @@ describe('audioUtils', () => {
     test('should throw errors when throwOnError is true', async () => {
       simpleAudioServiceMock.getStatus.mockReturnValue({
         currentTrack: {} as any,
-        isPlaying: true,
-        isLoading: false,
+        playing: true,
+        isLoaded: true, isBuffering: false,
         currentTime: 10,
         duration: 100,
       });

@@ -93,7 +93,7 @@ jest.mock('@/hooks/audio/useSimpleAudioPlayer', () => ({
     play: jest.fn().mockResolvedValue(undefined),
     stop: jest.fn().mockResolvedValue(undefined),
     pause: jest.fn().mockResolvedValue(undefined),
-    getStatus: jest.fn().mockResolvedValue({ isPlaying: false }),
+    getStatus: jest.fn().mockResolvedValue({ playing: false }),
   }),
 }));
 

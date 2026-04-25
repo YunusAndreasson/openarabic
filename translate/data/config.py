@@ -23,7 +23,7 @@ MODEL_VERIFICATION = "gpt-5-mini"
 
 # Claude CLI configuration - use Claude CLI (via Max subscription) instead of OpenAI API
 USE_CLAUDE_CLI = False
-CLAUDE_CLI_MODEL = "sonnet"  # "sonnet", "opus", or "haiku"
+CLAUDE_CLI_MODEL = "haiku"  # "sonnet", "opus", or "haiku"
 
 # Directory structure
 ROOT_DIR = os.path.abspath(

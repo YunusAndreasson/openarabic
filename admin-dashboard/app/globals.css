@@ -255,14 +255,19 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
-/* Layout Stability - Prevent shifts */
-.view-transition-stable {
+/* Prevent CLS from off-screen images */
+img:not([fetchpriority="high"]) {
   content-visibility: auto;
 }
 
-/* Prevent CLS from images */
-img {
-  content-visibility: auto;
+/* CSS-only image fade-in using @starting-style */
+.img-fade-in {
+  opacity: 1;
+  transition: opacity 0.5s ease-out;
+
+  @starting-style {
+    opacity: 0;
+  }
 }
 
 /* Branded Pulsating Loader - Sage Green Circle */

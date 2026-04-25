@@ -32,11 +32,16 @@ const mockSimpleAudioService = jest.mocked(simpleAudioService);
 
 describe('useAudioSubscription', () => {
   const mockInitialStatus: AudioStatus = {
-    isPlaying: false,
-    isLoading: false,
+    playing: false,
     currentTime: 0,
     duration: 0,
     currentTrack: null,
+    isLoaded: true,
+    isBuffering: false,
+    playbackState: 'idle',
+    timeControlStatus: 'paused',
+    reasonForWaitingToPlay: '',
+    didJustFinish: false,
   };
 
   let subscribeCallback: ((status: AudioStatus) => void) | null = null;
@@ -77,34 +82,36 @@ describe('useAudioSubscription', () => {
   });
 
   describe('Status updates', () => {
-    test('should update status when isPlaying changes', () => {
+    test('should update status when playing changes', () => {
       const { result } = renderHook(() => useAudioSubscription());
 
       const newStatus: AudioStatus = {
         ...mockInitialStatus,
-        isPlaying: true,
+        playing: true,
       };
 
       act(() => {
         subscribeCallback?.(newStatus);
       });
 
-      expect(result.current.status.isPlaying).toBeTruthy();
+      expect(result.current.status.playing).toBeTruthy();
     });
 
-    test('should update status when isLoading changes', () => {
+    test('should update status when buffering changes', () => {
       const { result } = renderHook(() => useAudioSubscription());
 
       const newStatus: AudioStatus = {
         ...mockInitialStatus,
-        isLoading: true,
+        isLoaded: false,
+        isBuffering: true,
       };
 
       act(() => {
         subscribeCallback?.(newStatus);
       });
 
-      expect(result.current.status.isLoading).toBeTruthy();
+      expect(result.current.status.isBuffering).toBeTruthy();
+      expect(result.current.status.isLoaded).toBeFalsy();
     });
 
     test('should update status when currentTime changes by >= 0.1', () => {
@@ -178,7 +185,7 @@ describe('useAudioSubscription', () => {
 
       const newStatus: AudioStatus = {
         ...mockInitialStatus,
-        isPlaying: true,
+        playing: true,
       };
 
       act(() => {
@@ -186,7 +193,7 @@ describe('useAudioSubscription', () => {
       });
 
       // Status should not have changed
-      expect(result.current.status.isPlaying).toBeFalsy();
+      expect(result.current.status.playing).toBeFalsy();
     });
   });
 

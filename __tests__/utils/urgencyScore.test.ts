@@ -11,44 +11,9 @@
 
 import { describe, expect, test } from '@jest/globals';
 
-import { calculateStabilityProgress, getStabilityProgressColor } from '@/utils/urgencyScore';
+import { getStabilityProgressColor } from '@/utils/urgencyScore';
 
 describe('urgencyScore', () => {
-  describe('calculateStabilityProgress', () => {
-    test('should return 0 for null stability', () => {
-      expect(calculateStabilityProgress(null)).toBe(0);
-    });
-
-    test('should return 0 for undefined stability', () => {
-      expect(calculateStabilityProgress(undefined)).toBe(0);
-    });
-
-    test('should return 0 for stability of 0', () => {
-      expect(calculateStabilityProgress(0)).toBe(0);
-    });
-
-    test('should return 100 for stability of 10', () => {
-      expect(calculateStabilityProgress(10)).toBe(100);
-    });
-
-    test('should clamp stability above 10 to 100%', () => {
-      expect(calculateStabilityProgress(15)).toBe(100);
-      expect(calculateStabilityProgress(100)).toBe(100);
-    });
-
-    test('should clamp negative stability to 0%', () => {
-      expect(calculateStabilityProgress(-5)).toBe(0);
-      expect(calculateStabilityProgress(-100)).toBe(0);
-    });
-
-    test('should calculate correct percentage for values between 0-10', () => {
-      expect(calculateStabilityProgress(5)).toBe(50);
-      expect(calculateStabilityProgress(2.5)).toBe(25);
-      expect(calculateStabilityProgress(7.5)).toBe(75);
-      expect(calculateStabilityProgress(1)).toBe(10);
-    });
-  });
-
   describe('getStabilityProgressColor', () => {
     test('should return error for null stability', () => {
       expect(getStabilityProgressColor(null)).toBe('error');

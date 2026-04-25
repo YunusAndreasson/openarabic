@@ -4,20 +4,6 @@
  */
 
 /**
- * Calculate stability progress percentage for progress bar display
- * Returns 0-100 representing progress from new word (0) to fully mastered (10+)
- *
- * @param stability - FSRS stability value (0-10+)
- * @returns Progress percentage (0-100)
- */
-export function calculateStabilityProgress(stability: number | null | undefined): number {
-  const safeStability = stability ?? 0;
-  // Clamp to 0-10 range and convert to percentage
-  const clampedStability = Math.max(0, Math.min(10, safeStability));
-  return (clampedStability / 10) * 100;
-}
-
-/**
  * Get progress bar color based on stability level
  * Uses semantic colors to show learning progression
  *

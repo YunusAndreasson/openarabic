@@ -1,18 +1,12 @@
 'use client';
 
-import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import type { Database } from '@/lib/database.types';
 import { generateSlug } from '@/lib/slugify';
 import { normalizeImageUrl, formatDate, estimateReadTime } from '@/lib/article-utils';
 import { useTheme } from '@/components/providers/theme-provider';
 import { ARTICLE_CARD_BLUR } from '@/lib/blur-placeholder';
-
-type Article = Database['public']['Tables']['articles']['Row'] & {
-  authors: { name: string } | null;
-  categories: { name: string } | null;
-};
+import type { Article } from '@/lib/types';
 
 interface ArticleCardProps {
   article: Article;
@@ -22,12 +16,10 @@ interface ArticleCardProps {
 
 export function ArticleCard({ article, priority = false, showCategoryPill = true }: ArticleCardProps) {
   const { isDark } = useTheme();
-  const [imageLoaded, setImageLoaded] = useState(false);
 
   return (
     <Link
       href={`/read/${generateSlug(article.title, article.id)}`}
-      prefetch={true}
       className="group block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg"
       aria-label={`Read article: ${article.title}`}
     >
@@ -42,13 +34,12 @@ export function ArticleCard({ article, priority = false, showCategoryPill = true
             src={normalizeImageUrl(article.image_url)}
             alt={article.title}
             fill
-            className={`object-cover transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+            className="object-cover img-fade-in"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             priority={priority}
             fetchPriority={priority ? 'high' : undefined}
             placeholder="blur"
             blurDataURL={ARTICLE_CARD_BLUR}
-            onLoad={() => setImageLoaded(true)}
           />
 
           {/* Gradient overlay - only in dark mode */}

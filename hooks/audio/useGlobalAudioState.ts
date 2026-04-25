@@ -23,7 +23,7 @@ interface MiniPlayerArticle {
 
 export interface GlobalAudioState {
   // Audio state
-  isPlaying: boolean;
+  playing: boolean;
   audioState: string;
   isLoading: boolean;
   currentArticle: MiniPlayerArticle | null;
@@ -89,10 +89,10 @@ export function useGlobalAudioState(): GlobalAudioState {
 
   // Auto-cancel sleep timer when audio stops
   useEffect(() => {
-    if (!audioPlayer.isPlaying && !audioPlayer.isLoading && sleepTimer.state.isActive) {
+    if (!audioPlayer.playing && !audioPlayer.isLoading && sleepTimer.state.isActive) {
       sleepTimer.actions.cancelTimer();
     }
-  }, [audioPlayer.isPlaying, audioPlayer.isLoading, sleepTimer.state.isActive, sleepTimer.actions]);
+  }, [audioPlayer.playing, audioPlayer.isLoading, sleepTimer.state.isActive, sleepTimer.actions]);
 
   // Get current article ID from audio player
   const currentArticleId = audioPlayer.currentTrack?.articleId ?? null;
@@ -123,7 +123,7 @@ export function useGlobalAudioState(): GlobalAudioState {
   const playlistInfo = useMemo(() => {
     // Recompute when playback state or current track changes so indices stay accurate
     return simpleAudioService.getPlaylistInfo();
-  }, [audioPlayer.currentTrack?.id, audioPlayer.isPlaying, audioPlayer.isLoading]);
+  }, [audioPlayer.currentTrack?.id, audioPlayer.playing, audioPlayer.isLoading]);
 
   // Enhanced queue position that considers actual playlist state
   const enhancedQueuePosition = useMemo(() => {
@@ -143,7 +143,7 @@ export function useGlobalAudioState(): GlobalAudioState {
   const currentArticle = useMemo(() => {
     if (!currentArticleId) {
       // Only clear if we're truly stopping (not just transitioning states)
-      if (!audioPlayer.isPlaying && !audioPlayer.isLoading) {
+      if (!audioPlayer.playing && !audioPlayer.isLoading) {
         lastValidArticleRef.current = null;
       }
       return lastValidArticleRef.current;
@@ -178,7 +178,7 @@ export function useGlobalAudioState(): GlobalAudioState {
     }
 
     // Last resort: metadata-only fallback while loading
-    if (audioPlayer.currentTrack?.title && (audioPlayer.isPlaying || audioPlayer.isLoading)) {
+    if (audioPlayer.currentTrack?.title && (audioPlayer.playing || audioPlayer.isLoading)) {
       const article = {
         id: currentArticleId,
         title: audioPlayer.currentTrack.title,
@@ -197,7 +197,7 @@ export function useGlobalAudioState(): GlobalAudioState {
     queryClient,
     user?.id,
     audioPlayer.currentTrack?.title,
-    audioPlayer.isPlaying,
+    audioPlayer.playing,
     audioPlayer.isLoading,
   ]);
 
@@ -236,8 +236,8 @@ export function useGlobalAudioState(): GlobalAudioState {
   }, [audioPlayer]);
 
   return {
-    isPlaying: audioPlayer.isPlaying,
-    audioState: audioPlayer.isPlaying
+    playing: audioPlayer.playing,
+    audioState: audioPlayer.playing
       ? AUDIO_STATES.PLAYING
       : audioPlayer.isLoading
         ? AUDIO_STATES.LOADING

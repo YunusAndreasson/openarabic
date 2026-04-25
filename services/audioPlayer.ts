@@ -30,8 +30,7 @@ const AUDIO_MODE_CONFIG = {
 
 // Reset audio status constant for consistent state clearing
 const RESET_AUDIO_STATUS = {
-  isPlaying: false,
-  isLoading: false,
+  playing: false,
   currentTime: 0,
   duration: 0,
   isLoaded: false,
@@ -73,14 +72,13 @@ class SimpleAudioService {
   // APP STATE SUPPORT: Track app state for background audio handling
   private appStateSubscription: ReturnType<typeof AppState.addEventListener> | null = null;
 
-  // Current audio status
+  // Current audio status — mirrors expo-audio's native AudioStatus shape
+  // (see https://docs.expo.dev/versions/v55.0.0/sdk/audio) plus currentTrack.
   private status: AudioStatus = {
-    isPlaying: false,
-    isLoading: false,
+    playing: false,
     currentTime: 0,
     duration: 0,
     currentTrack: null,
-    // Native states
     isLoaded: false,
     isBuffering: false,
     playbackState: 'idle',
@@ -118,15 +116,15 @@ class SimpleAudioService {
    */
   private async safeActivateAudioSession(context: {
     location: string;
-    isPlaying?: boolean;
+    playing?: boolean;
     isPlaylistMode?: boolean;
   }): Promise<void> {
     const appState = AppState.currentState;
     // Default to 'active' if AppState.currentState is undefined (test environments)
     const isAppActive = appState === 'active' || appState === undefined;
-    const isPlaying = context.isPlaying ?? this.status.isPlaying;
+    const playing = context.playing ?? this.status.playing;
     const isPlaylistMode = context.isPlaylistMode ?? this.isPlaylistMode;
-    const shouldBePlaying = isPlaying || isPlaylistMode;
+    const shouldBePlaying = playing || isPlaylistMode;
 
     // Skip activation if app is in background and not actively playing
     // iOS may reject activation in these scenarios, which is expected behavior
@@ -151,7 +149,7 @@ class SimpleAudioService {
             operation: 'setIsAudioActiveAsync',
             location: context.location,
             appState,
-            isPlaying,
+            playing,
             isPlaylistMode,
             shouldBePlaying,
             errorMessage,
@@ -174,7 +172,7 @@ class SimpleAudioService {
       // Ensure audio is active at the OS level (only if app is active)
       await this.safeActivateAudioSession({
         location: 'configureAudioSession',
-        isPlaying: false,
+        playing: false,
         isPlaylistMode: false,
       });
 
@@ -211,10 +209,10 @@ class SimpleAudioService {
         if (nextAppState === 'background' || nextAppState === 'inactive') {
           // App is going to background - ensure audio session stays active
           // Only attempt if we're actively playing (iOS may reject otherwise)
-          if (this.status.isPlaying || this.isPlaylistMode) {
+          if (this.status.playing || this.isPlaylistMode) {
             await this.safeActivateAudioSession({
               location: 'AppState.background',
-              isPlaying: this.status.isPlaying,
+              playing: this.status.playing,
               isPlaylistMode: this.isPlaylistMode,
             });
             // Re-configure audio session to maintain background playback
@@ -234,15 +232,15 @@ class SimpleAudioService {
         // Don't log AppState listener errors to Sentry - they're often expected
         // (e.g., iOS rejecting audio activation in certain system states)
         // Only log if it's a critical error that prevents playback
-        const isPlaying = this.status.isPlaying || this.isPlaylistMode;
-        if (isPlaying && nextAppState === 'active') {
+        const playing = this.status.playing || this.isPlaylistMode;
+        if (playing && nextAppState === 'active') {
           // Only log if we're trying to play and app became active
           await handleError(error as Error, {
             showToast: false,
             sentryExtra: {
               operation: 'AppState.addEventListener',
               appState: nextAppState,
-              isPlaying,
+              playing,
               isPlaylistMode: this.isPlaylistMode,
             },
           });
@@ -366,7 +364,7 @@ class SimpleAudioService {
       if (now - this.lastActivationTime > this.ACTIVATION_THROTTLE) {
         await this.safeActivateAudioSession({
           location: 'play',
-          isPlaying: false, // Not playing yet, but about to
+          playing: false, // Not playing yet, but about to
           isPlaylistMode: false,
         });
       }
@@ -386,8 +384,7 @@ class SimpleAudioService {
       // FLICKER FIX: Skip loading state for playlist starts (audio is cached, loads instantly)
       if (!options.skipLoadingState) {
         this.updateStatus({
-          isLoading: true,
-          isPlaying: false,
+          playing: false,
           currentTrack: this.currentTrack,
           currentTime: 0,
           duration: 0,
@@ -419,7 +416,7 @@ class SimpleAudioService {
       // Update status to playing (actual state will come from event subscription)
       // Note: Native states (isLoaded, isBuffering) will be updated by event subscription
       this.updateStatus({
-        isPlaying: true,
+        playing: true,
         currentTrack: this.currentTrack,
         currentTime: 0,
         duration: 0,
@@ -578,7 +575,7 @@ class SimpleAudioService {
   async stop(): Promise<void> {
     try {
       // IMMEDIATE FEEDBACK: Update status immediately when stop is called
-      this.updateStatus({ isPlaying: false, isLoading: false });
+      this.updateStatus({ playing: false });
 
       // PLAYLIST SUPPORT: Reset playlist state when stopping
       this.resetPlaylistState();
@@ -684,21 +681,11 @@ class SimpleAudioService {
         didJustFinish?: boolean;
       }) => {
         try {
-          // Extract all native values from expo-audio playbackStatusUpdate
-          const isPlaying = nativeStatus.playing ?? false;
           const currentTime = nativeStatus.currentTime ?? 0;
           const duration = nativeStatus.duration ?? 0;
-          const isLoaded = nativeStatus.isLoaded ?? false;
-          const isBuffering = nativeStatus.isBuffering ?? false;
-          const playbackState = nativeStatus.playbackState ?? 'unknown';
-          const timeControlStatus = nativeStatus.timeControlStatus ?? 'paused';
-          const reasonForWaitingToPlay = nativeStatus.reasonForWaitingToPlay ?? '';
           const didJustFinish = nativeStatus.didJustFinish ?? false;
 
-          // Derive isLoading from native states (more accurate than custom logic)
-          const isLoading = !isLoaded || isBuffering;
-
-          // Add safety checks for invalid values
+          // Guard against NaN/Infinity from native — observed during seek/replace.
           const safeCurrentTime =
             isNaN(currentTime) || !isFinite(currentTime) ? 0 : Math.max(0, currentTime);
           const safeDuration = isNaN(duration) || !isFinite(duration) ? 0 : Math.max(0, duration);
@@ -739,42 +726,32 @@ class SimpleAudioService {
             // Single track has finished playing, reset status but keep player for potential replay
             this.stopEventSubscription();
             this.updateStatus({
-              isPlaying: false,
-              isLoading: false,
+              playing: false,
               currentTime: safeDuration,
               duration: safeDuration,
-              isLoaded,
+              isLoaded: nativeStatus.isLoaded ?? false,
               isBuffering: false,
               playbackState: 'ended',
-              timeControlStatus,
-              reasonForWaitingToPlay,
+              timeControlStatus: nativeStatus.timeControlStatus ?? 'paused',
+              reasonForWaitingToPlay: nativeStatus.reasonForWaitingToPlay ?? '',
               didJustFinish: true,
             });
             return;
           }
 
-          // Only update if values have changed meaningfully (reduce UI churn but stay smooth)
-          const hasChanged =
-            Math.abs(this.status.currentTime - safeCurrentTime) > 0.1 ||
-            Math.abs(this.status.duration - safeDuration) > 0.1 ||
-            this.status.isPlaying !== isPlaying ||
-            this.status.isLoaded !== isLoaded ||
-            this.status.isBuffering !== isBuffering;
-
-          if (hasChanged) {
-            this.updateStatus({
-              isPlaying,
-              currentTime: safeCurrentTime,
-              duration: safeDuration,
-              isLoading,
-              isLoaded,
-              isBuffering,
-              playbackState,
-              timeControlStatus,
-              reasonForWaitingToPlay,
-              didJustFinish,
-            });
-          }
+          // Native updateInterval (500ms) caps emission rate; the hook layer dedupes
+          // identical values via setState(prev => prev). No JS throttle needed here.
+          this.updateStatus({
+            playing: nativeStatus.playing ?? false,
+            currentTime: safeCurrentTime,
+            duration: safeDuration,
+            isLoaded: nativeStatus.isLoaded ?? false,
+            isBuffering: nativeStatus.isBuffering ?? false,
+            playbackState: nativeStatus.playbackState ?? 'unknown',
+            timeControlStatus: nativeStatus.timeControlStatus ?? 'paused',
+            reasonForWaitingToPlay: nativeStatus.reasonForWaitingToPlay ?? '',
+            didJustFinish,
+          });
         } catch {
           // Stop subscription on error
           this.stopEventSubscription();
@@ -906,21 +883,19 @@ class SimpleAudioService {
   }
 }
 
+// Mirrors expo-audio's native AudioStatus shape (see expo-audio docs) plus currentTrack.
+// Field names match the native event payload so there's no translation layer.
 export interface AudioStatus {
-  // Player state
-  isPlaying: boolean;
-  isLoading: boolean; // Derived from !isLoaded || isBuffering
+  playing: boolean;
   currentTime: number;
   duration: number;
   currentTrack: EnhancedAudioTrack | null;
-
-  // Native expo-audio states (from AudioPlayer.playbackStatusUpdate)
-  isLoaded: boolean; // Whether audio has finished loading and is ready to play
-  isBuffering: boolean; // Whether player is currently buffering data
-  playbackState: string; // 'ready' | 'ended' | 'buffering' | 'idle' | 'unknown'
-  timeControlStatus: string; // 'playing' | 'paused' | 'waiting'
-  reasonForWaitingToPlay: string; // Why player is waiting (if applicable)
-  didJustFinish: boolean; // Whether audio just finished playing
+  isLoaded: boolean;
+  isBuffering: boolean;
+  playbackState: string;
+  timeControlStatus: string;
+  reasonForWaitingToPlay: string;
+  didJustFinish: boolean;
 }
 
 // Export singleton instance

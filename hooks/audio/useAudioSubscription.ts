@@ -17,12 +17,16 @@ export function useAudioSubscription() {
     const unsubscribe = simpleAudioService.subscribe(newStatus => {
       if (!isMountedRef.current) return;
 
+      // Dedup at the React boundary so identical-status events don't re-render.
+      // The service no longer pre-throttles; native updateInterval (500ms) is the
+      // only upstream cap.
       setStatus(prev => {
         if (!prev) return newStatus;
 
         const didChange =
-          prev.isPlaying !== newStatus.isPlaying ||
-          prev.isLoading !== newStatus.isLoading ||
+          prev.playing !== newStatus.playing ||
+          prev.isLoaded !== newStatus.isLoaded ||
+          prev.isBuffering !== newStatus.isBuffering ||
           Math.abs(prev.currentTime - newStatus.currentTime) >= 0.1 ||
           Math.floor(prev.duration) !== Math.floor(newStatus.duration) ||
           (prev.currentTrack?.id ?? null) !== (newStatus.currentTrack?.id ?? null);

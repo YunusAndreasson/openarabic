@@ -9,6 +9,8 @@ import type { BaseComponentProps } from './base.types';
 export interface BaseCardProps extends BaseComponentProps {
   /** Optional callback when card is long pressed */
   onLongPress?: () => void;
+  /** Fired the moment a press starts — useful for prefetch hints */
+  onPressIn?: () => void;
   /** Shadow size for the card */
   shadowSize?: 'large' | 'medium' | 'none' | 'small' | 'subtle';
   /** Additional styling for the content container */

@@ -23,6 +23,7 @@ export const BaseCard: FC<BaseCardProps> = ({
   children,
   style,
   onPress,
+  onPressIn,
   onLongPress,
   loading = false,
   shadowSize = 'medium',
@@ -35,6 +36,14 @@ export const BaseCard: FC<BaseCardProps> = ({
 
   // Press animation - using shared preset for zero allocations
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation(PRESS_ANIMATION_CARD);
+
+  const handlePressInWithCallback = useMemo(() => {
+    if (!onPressIn) return handlePressIn;
+    return () => {
+      onPressIn();
+      handlePressIn();
+    };
+  }, [onPressIn, handlePressIn]);
 
   // Memoize card style - flat return avoids extra object allocation
   const cardStyle = useMemo(() => {
@@ -81,7 +90,7 @@ export const BaseCard: FC<BaseCardProps> = ({
         android_ripple={rippleConfig}
         style={PRESSABLE_STYLE}
         onPress={onPress}
-        onPressIn={handlePressIn}
+        onPressIn={handlePressInWithCallback}
         onPressOut={handlePressOut}
         onLongPress={onLongPress}
       >

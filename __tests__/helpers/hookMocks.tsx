@@ -66,14 +66,14 @@ export const createAudioPlayerMock = (
     play: jest.Mock;
     stop: jest.Mock;
     preconfigureAudioSession: jest.Mock;
-    isPlaying: boolean;
+    playing: boolean;
     currentUrl: string | null;
   }> = {},
 ) => ({
   play: jest.fn().mockResolvedValue(true),
   stop: jest.fn().mockResolvedValue(undefined),
   preconfigureAudioSession: jest.fn().mockResolvedValue(undefined),
-  isPlaying: false,
+  playing: false,
   currentUrl: null,
   ...overrides,
 });

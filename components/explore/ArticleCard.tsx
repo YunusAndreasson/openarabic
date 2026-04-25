@@ -1,6 +1,7 @@
 import { BaseCard } from '@/components/common';
 import { Canvas, LinearGradient, Rect, vec } from '@shopify/react-native-skia';
 import { useRouter } from 'expo-router';
+import { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -11,7 +12,6 @@ import { getArticleRoute } from '@/constants/routes';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
 import type { ArticleCardProps as BaseArticleCardProps } from '@/types/ui/card.types';
-import { handleError } from '@/utils/errorHandling';
 import { getArticleMetadata } from '@/utils/stringUtils';
 
 // Static constants - computed once at module load
@@ -89,20 +89,23 @@ export function ArticleCard({
   // Generate article route - featured articles start from beginning
   const articleHref = getArticleRoute(article.id, article.title, isFeaturedArticle);
 
-  // Handle navigation with router.push to avoid Link navigation errors
-  const handlePress = () => {
-    try {
-      router.push(articleHref);
-    } catch (error) {
-      handleError(error as Error, {
-        showToast: false,
-        analyticsProperties: { articleId: article.id, href: articleHref },
-      });
-    }
-  };
+  const handlePress = useCallback(() => {
+    router.push(articleHref);
+  }, [router, articleHref]);
+
+  // Warm the route on press-in: ~50ms head start before push, useful when the
+  // article query isn't already populated by the app preloader.
+  const handlePressIn = useCallback(() => {
+    router.prefetch(articleHref);
+  }, [router, articleHref]);
 
   return (
-    <BaseCard style={style} testID={testID} onPress={handlePress}>
+    <BaseCard
+      style={style}
+      testID={testID}
+      onPress={handlePress}
+      onPressIn={handlePressIn}
+    >
       <View style={styles.imageContainer}>
         <EnhancedImage
           style={styles.image}

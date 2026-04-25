@@ -149,11 +149,9 @@ def save_validation_improvements(
                 skipped_count += 1
                 continue
 
-            # Prepare record for insertion (no grammar note - only English)
             record = {
                 "sentence_word_id": word_id,
                 "suggested_english": suggested_english,
-                "suggested_grammar_note": None,  # Skip grammar notes
                 "status": "pending",
             }
 

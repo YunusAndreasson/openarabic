@@ -72,7 +72,7 @@ describe('useGlobalAudioState', () => {
   };
 
   const mockAudioPlayer = {
-    isPlaying: false,
+    playing: false,
     audioState: 'idle',
     isLoading: false,
     currentTrack: null,
@@ -138,7 +138,7 @@ describe('useGlobalAudioState', () => {
     test('should return initial audio state', () => {
       const { result } = renderHook(() => useGlobalAudioState());
 
-      expect(result.current.isPlaying).toBeFalsy();
+      expect(result.current.playing).toBeFalsy();
       expect(result.current.audioState).toBe('idle');
       expect(result.current.isLoading).toBeFalsy();
       expect(result.current.position).toBe(0);
@@ -253,7 +253,7 @@ describe('useGlobalAudioState', () => {
       mockUseSimpleAudioPlayer.mockReturnValue({
         ...mockAudioPlayer,
         currentTrack: mockTrack,
-        isPlaying: true, // Mark as playing so article is shown
+        playing: true, // Mark as playing so article is shown
       } as never);
 
       const { result } = renderHook(() => useGlobalAudioState());

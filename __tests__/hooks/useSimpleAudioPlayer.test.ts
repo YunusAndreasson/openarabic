@@ -14,7 +14,7 @@
  * - Audio playback (play, stop)
  * - Seeking to position
  * - Audio session configuration
- * - Status subscription (isPlaying, isLoading, currentTime, duration, currentTrack)
+ * - Status subscription (playing, isLoading, currentTime, duration, currentTrack)
  * - Mount safety (prevent calls after unmount)
  *
  * This hook is CRITICAL for:
@@ -62,12 +62,13 @@ const createMockTrack = (overrides: Partial<EnhancedAudioTrack> = {}): EnhancedA
 });
 
 const createMockStatus = (overrides: Partial<AudioStatus> = {}): AudioStatus => ({
-  isPlaying: false,
-  isLoading: false,
+  playing: false,
   currentTime: 0,
   duration: 0,
   currentTrack: null,
-  isLoaded: false,
+  // isLoaded defaults to true so the hook's derived isLoading reads as false
+  // for "idle" baseline statuses; tests opt in to a buffering state explicitly.
+  isLoaded: true,
   isBuffering: false,
   playbackState: 'idle',
   timeControlStatus: 'paused',
@@ -103,7 +104,7 @@ describe('useSimpleAudioPlayer Hook', () => {
     test('should initialize with default status', () => {
       const { result } = renderHook(() => useSimpleAudioPlayer());
 
-      expect(result.current.isPlaying).toBeFalsy();
+      expect(result.current.playing).toBeFalsy();
       expect(result.current.isLoading).toBeFalsy();
       expect(result.current.currentTime).toBe(0);
       expect(result.current.duration).toBe(0);
@@ -120,7 +121,7 @@ describe('useSimpleAudioPlayer Hook', () => {
     });
 
     test('should return status object', () => {
-      const mockStatus = createMockStatus({ isPlaying: true });
+      const mockStatus = createMockStatus({ playing: true });
       useAudioSubscription.mockReturnValue({
         status: mockStatus,
         isMounted: true,
@@ -307,18 +308,22 @@ describe('useSimpleAudioPlayer Hook', () => {
   describe('Status Subscription', () => {
     test('should reflect playing status', () => {
       useAudioSubscription.mockReturnValue({
-        status: createMockStatus({ isPlaying: true }),
+        status: createMockStatus({ playing: true }),
         isMounted: true,
       });
 
       const { result } = renderHook(() => useSimpleAudioPlayer());
 
-      expect(result.current.isPlaying).toBeTruthy();
+      expect(result.current.playing).toBeTruthy();
     });
 
     test('should reflect loading status', () => {
       useAudioSubscription.mockReturnValue({
-        status: createMockStatus({ isLoading: true }),
+        status: createMockStatus({
+          currentTrack: createMockTrack(),
+          isLoaded: false,
+          isBuffering: true,
+        }),
         isMounted: true,
       });
 
@@ -369,7 +374,7 @@ describe('useSimpleAudioPlayer Hook', () => {
 
       const { result } = renderHook(() => useSimpleAudioPlayer());
 
-      expect(result.current.isPlaying).toBeFalsy();
+      expect(result.current.playing).toBeFalsy();
       expect(result.current.isLoading).toBeFalsy();
       expect(result.current.currentTime).toBe(0);
       expect(result.current.duration).toBe(0);
@@ -377,7 +382,7 @@ describe('useSimpleAudioPlayer Hook', () => {
     });
 
     test('should update when status changes', () => {
-      const initialStatus = createMockStatus({ isPlaying: false, currentTime: 0 });
+      const initialStatus = createMockStatus({ playing: false, currentTime: 0 });
       useAudioSubscription.mockReturnValue({
         status: initialStatus,
         isMounted: true,
@@ -385,11 +390,11 @@ describe('useSimpleAudioPlayer Hook', () => {
 
       const { result, rerender } = renderHook(() => useSimpleAudioPlayer());
 
-      expect(result.current.isPlaying).toBeFalsy();
+      expect(result.current.playing).toBeFalsy();
       expect(result.current.currentTime).toBe(0);
 
       // Update status
-      const updatedStatus = createMockStatus({ isPlaying: true, currentTime: 30 });
+      const updatedStatus = createMockStatus({ playing: true, currentTime: 30 });
       useAudioSubscription.mockReturnValue({
         status: updatedStatus,
         isMounted: true,
@@ -397,7 +402,7 @@ describe('useSimpleAudioPlayer Hook', () => {
 
       rerender();
 
-      expect(result.current.isPlaying).toBeTruthy();
+      expect(result.current.playing).toBeTruthy();
       expect(result.current.currentTime).toBe(30);
     });
   });
@@ -540,7 +545,7 @@ describe('useSimpleAudioPlayer Hook', () => {
   describe('Status Properties', () => {
     test('should expose all status properties', () => {
       const fullStatus = createMockStatus({
-        isPlaying: true,
+        playing: true,
         isLoading: false,
         currentTime: 45,
         duration: 180,
@@ -558,7 +563,7 @@ describe('useSimpleAudioPlayer Hook', () => {
 
       const { result } = renderHook(() => useSimpleAudioPlayer());
 
-      expect(result.current.isPlaying).toBeTruthy();
+      expect(result.current.playing).toBeTruthy();
       expect(result.current.isLoading).toBeFalsy();
       expect(result.current.currentTime).toBe(45);
       expect(result.current.duration).toBe(180);
@@ -568,7 +573,7 @@ describe('useSimpleAudioPlayer Hook', () => {
 
     test('should handle partial status updates', () => {
       const partialStatus = createMockStatus({
-        isPlaying: true,
+        playing: true,
         // Other fields use defaults
       });
 
@@ -579,7 +584,7 @@ describe('useSimpleAudioPlayer Hook', () => {
 
       const { result } = renderHook(() => useSimpleAudioPlayer());
 
-      expect(result.current.isPlaying).toBeTruthy();
+      expect(result.current.playing).toBeTruthy();
       expect(result.current.isLoading).toBeFalsy();
       expect(result.current.currentTime).toBe(0);
     });

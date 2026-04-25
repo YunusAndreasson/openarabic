@@ -3,23 +3,14 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import type { Database } from '@/lib/database.types';
 import { PublicHeader } from '@/components/public-header';
 import { ArticleGrid } from '@/components/article-grid';
 import { Footer } from '@/components/footer';
 import { AppDownloadCTA } from '@/components/app-download-cta';
-import { usePageTitle } from '@/hooks/usePageTitle';
 import { ITEMS_PER_PAGE } from '@/lib/constants';
 import { BookDownloads } from '@/components/book-downloads';
 import type { PlatformInfo } from '@/lib/platform-detection';
-
-type Article = Database['public']['Tables']['articles']['Row'] & {
-  authors: { name: string } | null;
-  categories: { name: string } | null;
-};
-
-type Category = Database['public']['Tables']['categories']['Row'];
-type Author = Database['public']['Tables']['authors']['Row'];
+import type { Article, Category, Author } from '@/lib/types';
 
 interface ArticlesClientProps {
   initialArticles: Article[];
@@ -56,13 +47,6 @@ export function ArticlesClient({
     setPage(1);
     setHasMore(initialArticles.length === ITEMS_PER_PAGE);
   }, [initialArticles]);
-
-  // Dynamic page title based on selected category
-  const selectedCategory = initialCategories.find(c => c.id === selectedCategoryId);
-  const pageTitle = selectedCategory
-    ? `${selectedCategory.name} Articles - OpenArabic`
-    : 'OpenArabic - Learn Arabic Through Reading';
-  usePageTitle(pageTitle);
 
   const fetchMoreArticles = useCallback(async (pageNum: number) => {
     try {
