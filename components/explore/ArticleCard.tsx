@@ -18,6 +18,9 @@ import { getArticleMetadata } from '@/utils/stringUtils';
 const CARD_WIDTH = SCREEN_WIDTH - LAYOUT.SCREEN_HORIZONTAL_PADDING * 2;
 const IMAGE_HEIGHT = Math.round(CARD_WIDTH / 1.618); // Golden ratio
 const GRADIENT_HEIGHT = Math.round(IMAGE_HEIGHT * 0.6);
+// Skia Canvas occasionally leaves a 1px hairline when stacked over an image;
+// extend the gradient 2px past the container to swallow the seam.
+const GRADIENT_OVERSHOOT = 2;
 
 type ArticleCardProps = Omit<
   BaseArticleCardProps,
@@ -34,8 +37,8 @@ const styles = StyleSheet.create({
     paddingBottom: LAYOUT.SPACING.LARGE, // 16px - breathing room at card bottom
   },
   gradientOverlay: {
-    bottom: -2, // Extend past container to prevent sub-pixel gap
-    height: GRADIENT_HEIGHT + 2,
+    bottom: -GRADIENT_OVERSHOOT,
+    height: GRADIENT_HEIGHT + GRADIENT_OVERSHOOT,
     left: 0,
     position: 'absolute',
     right: 0,
@@ -114,7 +117,7 @@ export function ArticleCard({
           transition={TIMING_CONSTANTS.TRANSITION_DELAY}
         />
         <Canvas style={styles.gradientOverlay} pointerEvents="none">
-          <Rect x={0} y={0} width={CARD_WIDTH} height={GRADIENT_HEIGHT + 2}>
+          <Rect x={0} y={0} width={CARD_WIDTH} height={GRADIENT_HEIGHT + GRADIENT_OVERSHOOT}>
             <LinearGradient
               start={vec(0, 0)}
               end={vec(0, GRADIENT_HEIGHT)}

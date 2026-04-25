@@ -23,7 +23,6 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useToast } from '@/components/providers/ToastProvider';
 import type { CategoryId } from '@/types/branded.types';
 import { handleError } from '@/utils/errorHandling';
-import { mediumFeedback } from '@/utils/haptics';
 
 const FOOTER_COMPONENT = <BrandFooter />;
 
@@ -100,8 +99,8 @@ export default function ExploreScreen(): JSX.Element {
     if (isRefreshing) return;
 
     setIsRefreshing(true);
-    mediumFeedback();
-
+    // No custom haptic — RefreshControl already fires the system pull-to-refresh
+    // haptic when the user crosses the threshold on iOS.
     try {
       // Force complete cache invalidation for immediate data update using helpers
       const baseQueries = articleQueries.invalidateAll(queryClient);

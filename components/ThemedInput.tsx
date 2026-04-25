@@ -1,13 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps, Ref } from 'react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { GestureResponderEvent, TextInputProps } from 'react-native';
 import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import { errorFeedback } from '@/utils/haptics';
 
 interface ThemedInputProps extends TextInputProps {
   icon?: ComponentProps<typeof Ionicons>['name'];
@@ -74,14 +73,6 @@ export function ThemedInput({
 }: ThemedInputProps) {
   const colors = useColors();
   const [isFocused, setIsFocused] = useState(false);
-  const prevErrorRef = useRef(error);
-
-  useEffect(() => {
-    if (error && !prevErrorRef.current) {
-      errorFeedback();
-    }
-    prevErrorRef.current = error;
-  }, [error]);
 
   const containerStyles = useMemo(
     () => [

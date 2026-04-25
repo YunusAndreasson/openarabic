@@ -10,7 +10,6 @@ import { FONTS } from '@/constants/fonts';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { ToastType } from '@/types/enums';
-import { errorFeedback, successFeedback } from '@/utils/haptics';
 
 interface ToastProps {
   visible: boolean;
@@ -90,10 +89,9 @@ export function Toast({
     }
 
     if (visible) {
-      // Haptic feedback for error and success toasts
-      if (type === ToastType.ERROR) errorFeedback();
-      else if (type === ToastType.SUCCESS) successFeedback();
-
+      // No auto-haptic here: toasts almost always follow a user action that
+      // already fired its own haptic. Callers that need a haptic for unsolicited
+      // toasts (e.g. background errors) should trigger it explicitly.
       timerRef.current = setTimeout(() => {
         onCloseRef.current();
       }, duration);

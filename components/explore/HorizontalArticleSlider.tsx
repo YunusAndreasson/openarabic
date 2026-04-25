@@ -5,7 +5,6 @@ import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { MAX_FEATURED_ARTICLES } from '@/hooks/articles/useMultipleFeaturedArticles';
 
 import { ArticleCard } from './ArticleCard';
-import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
 import { buildArticleCardProps } from '@/utils/articleUtils';
 
@@ -16,34 +15,34 @@ interface HorizontalArticleSliderProps {
 // Calculate card width based on screen width and spacing
 const CARD_SPACING = LAYOUT.SPACING.SMALL; // 8px
 const CARD_WIDTH = SCREEN_WIDTH * 0.8; // 80% of screen width for better visibility
-// Fixed height for article cards in horizontal slider
-// Reduced since title/author now overlay the image
-const BASE_CONTENT_HEIGHT = LAYOUT.SPACING.XXXLARGE * 5.5;
+// Fixed height for article cards in horizontal slider.
+// Title/author overlay the image, so content area only needs to fit the summary
+// (caption type, ~4 lines) plus vertical padding. 5.5 × XXXLARGE (48px) = 264px
+// matches the empirically-tuned content height; keep as a named constant.
+const CONTENT_HEIGHT_UNITS = 5.5; // multiples of LAYOUT.SPACING.XXXLARGE
+const BASE_CONTENT_HEIGHT = LAYOUT.SPACING.XXXLARGE * CONTENT_HEIGHT_UNITS;
 const CARD_HEIGHT = LAYOUT.CARD.HEIGHT.LIST_ITEM + BASE_CONTENT_HEIGHT;
+
+// Card style override: BaseCard already applies background, shadowColor, and the
+// MEDIUM elevation. Slider cards want SUBTLE elevation instead and need to fill
+// their fixed-dimension parent container — declared once at module scope.
+const SLIDER_CARD_STYLE = {
+  width: '100%',
+  height: '100%',
+  ...LAYOUT.ELEVATION.SUBTLE,
+} as const;
 
 /**
  * Horizontal slider displaying multiple articles in a swipeable ScrollView.
  * Uses ScrollView with snapToOffsets for precise snap behavior.
  */
 const HorizontalArticleSliderComponent: FC<HorizontalArticleSliderProps> = ({ articles }) => {
-  const colors = useColors();
-
   const displayArticles = articles.slice(0, MAX_FEATURED_ARTICLES);
 
   // Compute snap offsets for each card position
   const snapOffsets = useMemo(
     () => displayArticles.map((_, index) => index * (CARD_WIDTH + CARD_SPACING)),
     [displayArticles.length],
-  );
-
-  // Pre-compute card styles to avoid recreation on each render
-  const cardStyle = useMemo(
-    () => [
-      styles.card,
-      { backgroundColor: colors.card },
-      { ...LAYOUT.ELEVATION.SUBTLE, shadowColor: colors.shadow },
-    ],
-    [colors.card, colors.shadow],
   );
 
   if (!articles.length) return null;
@@ -57,9 +56,6 @@ const HorizontalArticleSliderComponent: FC<HorizontalArticleSliderProps> = ({ ar
         decelerationRate="fast"
         snapToOffsets={snapOffsets}
         snapToAlignment="start"
-        scrollEventThrottle={16}
-        bounces={true}
-        overScrollMode="always"
       >
         {displayArticles.map((article, index) => (
           <View
@@ -69,7 +65,7 @@ const HorizontalArticleSliderComponent: FC<HorizontalArticleSliderProps> = ({ ar
             <ArticleCard
               article={article}
               {...buildArticleCardProps(article)}
-              style={cardStyle}
+              style={SLIDER_CARD_STYLE}
               testID={`slider-article-${article.id}`}
               isFeaturedArticle={true}
             />
@@ -82,7 +78,7 @@ const HorizontalArticleSliderComponent: FC<HorizontalArticleSliderProps> = ({ ar
 
 const styles = StyleSheet.create({
   scrollContainer: {
-    paddingTop: LAYOUT.SPACING.TINY,
+    // Label-to-cards gap is owned by SectionLabel.paddingBottom (8px) — match other sliders.
     paddingRight: LAYOUT.SCREEN_HORIZONTAL_PADDING,
   },
   cardContainerFirst: {
@@ -93,11 +89,6 @@ const styles = StyleSheet.create({
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
     marginLeft: CARD_SPACING,
-  },
-  card: {
-    width: '100%',
-    height: '100%',
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
 });
 

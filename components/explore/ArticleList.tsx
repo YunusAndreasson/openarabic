@@ -16,8 +16,9 @@ interface ArticleListProps {
 
 /**
  * ArticleList component that renders featured articles and filter sections.
- * Uses ScrollView since there are no list items - all content is in header/footer.
- * Featured articles use their own horizontal FlashList for proper virtualization.
+ * Uses ScrollView since there are no list items — all content is in header/footer.
+ * Each horizontal section (featured, continue reading, discovery) renders its own
+ * inner ScrollView; we don't need FlashList here.
  */
 export function ArticleList({
   onRefresh,

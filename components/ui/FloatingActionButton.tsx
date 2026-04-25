@@ -7,7 +7,7 @@ import { initialWindowMetrics } from 'react-native-safe-area-context';
 import { LAYOUT } from '@/constants/layout';
 import { PRESS_ANIMATION_BUTTON, usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
-import { mediumFeedback } from '@/utils/haptics';
+import { lightFeedback } from '@/utils/haptics';
 
 const FAB_SIZE = 56;
 const BOTTOM_INSET = initialWindowMetrics?.insets.bottom ?? 0;
@@ -34,7 +34,7 @@ export function FloatingActionButton({
   return (
     <AnimatedPressable
       onPress={() => {
-        mediumFeedback();
+        lightFeedback();
         onPress();
       }}
       onPressIn={handlePressIn}

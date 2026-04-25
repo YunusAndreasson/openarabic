@@ -13,7 +13,7 @@ import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { ContextualHelpType, SwipeTutorialStep, TUTORIAL_STEP_HEIGHT } from '@/constants/tutorials';
 import { useColors } from '@/hooks/theme/useColors';
-import { successFeedback } from '@/utils/haptics';
+import { lightFeedback } from '@/utils/haptics';
 
 import {
   TutorialIntroStep,
@@ -71,7 +71,7 @@ export function SwipeGestureTutorial({
 
   const handleFullTutorialNext = useCallback(() => {
     if (isLastStep) {
-      successFeedback();
+      lightFeedback();
       setCurrentStep(SwipeTutorialStep.INTRO);
       onDismiss();
     } else {

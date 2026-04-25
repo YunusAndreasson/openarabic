@@ -38,15 +38,18 @@ const forestOKLCH = {
 
 /**
  * Sage Backgrounds - Neutral green-tinted surfaces
- * Dark mode: Premium 2025 - deeper backgrounds with ~4% lightness steps
- * Higher chroma (0.020-0.026) for visible sage tint on dark backgrounds
+ * Dark mode: deep backgrounds with ~4% lightness steps from darkest → medium,
+ * plus an `outline` tier (+0.04 above medium) reserved for borders so they
+ * remain distinct from elevation3 surfaces.
+ * Higher chroma (0.020-0.026) for visible sage tint on dark backgrounds.
  * Hue range: 151-167° (subtle green tint)
  */
 const sageOKLCH = {
-  darkest: { l: 0.145, c: 0.02, h: 160.0 }, // Premium 2025: deeper + more chroma for visible tint
-  dark: { l: 0.185, c: 0.022, h: 158.0 }, // Premium 2025: +4% L step
-  mediumDark: { l: 0.225, c: 0.024, h: 156.0 }, // Premium 2025: +4% L step
-  medium: { l: 0.265, c: 0.026, h: 155.0 }, // Premium 2025: +4% L step
+  darkest: { l: 0.145, c: 0.02, h: 160.0 }, // Dark background (elevation0)
+  dark: { l: 0.185, c: 0.022, h: 158.0 }, // +4% L step (elevation1 / cards)
+  mediumDark: { l: 0.225, c: 0.024, h: 156.0 }, // +4% L step (elevation2)
+  medium: { l: 0.265, c: 0.026, h: 155.0 }, // +4% L step (elevation3 / tooltips)
+  outline: { l: 0.305, c: 0.022, h: 154.0 }, // +4% above medium — dedicated dark-mode border
   light: { l: 0.95, c: 0.0116, h: 162.0 }, // #E8F1EC (unchanged)
   lighter: { l: 0.9715, c: 0.0066, h: 160.1 }, // #F2F7F4 (unchanged)
   lightest: { l: 0.9833, c: 0.0025, h: 165.1 }, // #F8FAF9 (unchanged)
@@ -58,8 +61,8 @@ const sageOKLCH = {
  * Chroma increased ~15% for more vibrant 2025 aesthetic
  */
 const tintOKLCH = {
-  primary: { l: 0.5624, c: 0.0622, h: 156.2 }, // More vibrant sage (2025 trend)
-  primaryDark: { l: 0.7323, c: 0.0644, h: 151.5 }, // More vibrant sage (2025 trend)
+  primary: { l: 0.5624, c: 0.0622, h: 156.2 }, // Vibrant sage for light mode
+  primaryDark: { l: 0.7323, c: 0.085, h: 151.5 }, // Higher chroma so CTAs pop on deep dark surfaces
 } as const;
 
 /**
@@ -68,7 +71,7 @@ const tintOKLCH = {
  * Follows Material Design 3 and iOS HIG best practices
  */
 const disabledOKLCH = {
-  universal: { l: 0.49, c: 0.014, h: 160 }, // Desaturated grey-green - tuned for visibility on dark elevation3 (L: 0.265)
+  universal: { l: 0.55, c: 0.014, h: 160 }, // Desaturated grey-green; ~4:1 against dark elevation1 buttons
 } as const;
 
 /**
@@ -76,11 +79,11 @@ const disabledOKLCH = {
  */
 const semanticOKLCH = {
   error: { l: 0.568, c: 0.2002, h: 26.4 }, // #D32F2F
-  errorDark: { l: 0.6427, c: 0.2153, h: 28.8 }, // #F44336
-  success: { l: 0.5498, c: 0.0799, h: 151.8 }, // #4C7F5A
-  successDark: { l: 0.6728, c: 0.0764, h: 152.1 }, // #72A47F
-  warning: { l: 0.65, c: 0.12, h: 84.2 }, // Darker, more saturated for better contrast (~6.8:1)
-  warningDark: { l: 0.76, c: 0.11, h: 88.4 }, // Adjusted to maintain dark mode hierarchy
+  errorDark: { l: 0.6427, c: 0.18, h: 28.8 }, // Slightly toned down so it doesn't dominate next to success
+  success: { l: 0.5498, c: 0.12, h: 151.8 }, // Higher chroma so positive feedback reads as colored, not gray
+  successDark: { l: 0.6728, c: 0.13, h: 152.1 }, // Balanced against errorDark for symmetric semantic weight
+  warning: { l: 0.65, c: 0.12, h: 84.2 }, // ~6.8:1 contrast
+  warningDark: { l: 0.76, c: 0.11, h: 88.4 }, // Maintains dark mode hierarchy
 } as const;
 
 /**
@@ -132,7 +135,7 @@ const coralOKLCH = {
  */
 const pureOKLCH = {
   white: { l: 0.9965, c: 0.004, h: 157.0 }, // Sage-green brand tint
-  black: { l: 0.1, c: 0.012, h: 150.9 }, // Premium 2025: darker for proper shadows on deep backgrounds
+  black: { l: 0.04, c: 0.005, h: 150.9 }, // Near-true black for deep shadows, OLED-friendly gradients
 } as const;
 
 /**
@@ -270,11 +273,13 @@ const textHierarchyOKLCH = {
     subtleLabel: { l: 0.62, c: 0.028, h: 160.0 }, // Subtle labels that should recede
   },
   dark: {
-    subtitle: { l: 0.93, c: 0.014, h: 157.0 }, // Premium 2025: slightly more chroma for tint
-    metadata: { l: 0.87, c: 0.014, h: 157.0 }, // Premium 2025: -6% L step
-    caption: { l: 0.85, c: 0.014, h: 157.0 }, // Readable content (summaries, descriptions)
-    subtleLabel: { l: 0.72, c: 0.014, h: 157.0 }, // Dimmest text level - labels that should recede
-    secondaryMetadata: { l: 0.75, c: 0.014, h: 157.0 }, // Secondary metadata (chevrons, chart labels)
+    // Even 6% lightness steps so each tier is perceptually distinct.
+    // Order (most prominent → recede): subtitle > metadata > caption > secondaryMetadata > subtleLabel.
+    subtitle: { l: 0.93, c: 0.014, h: 157.0 },
+    metadata: { l: 0.87, c: 0.014, h: 157.0 },
+    caption: { l: 0.81, c: 0.014, h: 157.0 },
+    secondaryMetadata: { l: 0.75, c: 0.014, h: 157.0 },
+    subtleLabel: { l: 0.69, c: 0.014, h: 157.0 },
   },
   sepia: {
     subtitle: { l: 0.3337, c: 0.0476, h: 51.1 }, // #4A2F1F
@@ -359,7 +364,7 @@ const opacity = {
   overlay: 0.52,
   backdrop: 0.68,
   shadow: 0.75,
-  darkBackdrop: 0.85,
+  darkBackdrop: 0.7, // Dark-mode modal scrim — opaque enough to obscure content, light enough to feel modern
   modal: 0.92,
   header: 0.96,
   full: 0.97,
@@ -535,9 +540,9 @@ const darkColors: ThemeColors = {
   text: basePalette.pure.white,
   secondaryText: textHierarchy.dark.subtitle,
   textTertiary: textHierarchy.dark.caption,
-  border: basePalette.sage.medium,
+  border: basePalette.sage.outline,
   card: basePalette.sage.dark,
-  cardBorder: basePalette.sage.medium,
+  cardBorder: basePalette.sage.outline,
 
   // Semantic colors
   error: basePalette.semantic.errorDark,
@@ -581,11 +586,11 @@ const darkColors: ThemeColors = {
   elevation3: elevation.dark.level3,
 
   // Reading experience
-  toastBorder: basePalette.sage.medium, // Subtle border for toast visibility on dark surfaces
-  gradientOverlay: basePalette.pure.black, // Dark overlay base for image/background gradients
+  toastBorder: basePalette.sage.outline, // Subtle border for toast visibility on dark surfaces
+  gradientOverlay: basePalette.pure.black, // True-black overlay base for image/background gradients
   wordTooltipBg: basePalette.sage.medium,
   wordTooltipText: basePalette.pure.white,
-  wordTooltipBorder: basePalette.forest.light, // Premium 2025: subtle brighter border (L: 0.576 vs bg L: 0.265)
+  wordTooltipBorder: basePalette.forest.light, // Brighter border (L: 0.576 vs tooltip bg L: 0.265)
   wordTooltipShadow: withAlpha(basePalette.pure.black, opacity.active),
 
   // Navigation
@@ -596,8 +601,8 @@ const darkColors: ThemeColors = {
   // UI semantics
   progressIndicator: basePalette.tint.primaryDark,
   progressBackground: withAlpha(basePalette.tint.primaryDark, opacity.border),
-  readingProgressIndicator: basePalette.forest.light, // L: 0.576 - visible on elevation1 cards (0.39 delta vs 0.08 with sage.medium)
-  readingProgressBackground: withAlpha(basePalette.forest.light, opacity.border),
+  readingProgressIndicator: basePalette.forest.light, // L: 0.576 — visible on elevation1 cards
+  readingProgressBackground: basePalette.sage.medium, // Solid track; alpha-blended forest.light was near-invisible
   completionSuccess: basePalette.semantic.successDark,
 
   // Chart UI colors

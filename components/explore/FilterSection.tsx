@@ -82,13 +82,13 @@ const compactCardStyles = StyleSheet.create({
   },
   labelGroup: {
     flex: 1,
-    gap: 2,
+    gap: LAYOUT.SPACING.HALF_TINY,
   },
   label: {
     fontFamily: FONTS.ENGLISH_SEMIBOLD,
   },
   subtitle: {
-    opacity: 0.7,
+    opacity: LAYOUT.OPACITY.HIGH,
   },
   countBadge: {
     alignItems: 'center',

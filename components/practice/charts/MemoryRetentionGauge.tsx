@@ -12,7 +12,7 @@ import {
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { ThemedText } from '@/components/ThemedText';
-import { SPRING_CONFIG, TIMING_CONFIG } from '@/constants/animation';
+import { SPRING_CONFIG } from '@/constants/animation';
 import { MEMORY_CAPACITY_THRESHOLDS } from '@/constants/fsrs';
 import { FONTS } from '@/constants/fonts';
 import { LAYOUT, LETTER_SPACING, MIN_TOUCH_TARGET } from '@/constants/layout';
@@ -20,7 +20,7 @@ import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { mediumFeedback, successFeedback } from '@/utils/haptics';
+import { successFeedback } from '@/utils/haptics';
 
 interface MemoryRetentionGaugeProps {
   studyWords: StudyWord[];
@@ -91,10 +91,10 @@ export function MemoryRetentionGauge({ studyWords = [], onInfoPress }: MemoryRet
     const isNowGreen = next >= MEMORY_CAPACITY_THRESHOLDS.GOOD;
 
     if (wasBelowGreen && isNowGreen && !hasTriggeredGreenHapticRef.current) {
-      // Trigger celebratory haptic feedback when entering green area
-      // Sequence: success + medium impact for a strong dopamine hit
+      // Single success notification on crossing the green threshold.
+      // Sequenced double-haptics read as gimmicky in 2026 — the system Success
+      // pattern is already a triple-tap and gives plenty of feedback on its own.
       successFeedback();
-      setTimeout(() => mediumFeedback(), TIMING_CONFIG.FAST.duration); // Small delay for distinct feel
       hasTriggeredGreenHapticRef.current = true;
     }
 
