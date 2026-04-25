@@ -17,14 +17,11 @@ const PLAYBACK_STATUS_UPDATE = 'playbackStatusUpdate';
 
 // Audio mode configuration for consistent behavior across iOS and Android
 const AUDIO_MODE_CONFIG = {
-  // Common
   shouldPlayInBackground: true,
-  // iOS
   playsInSilentMode: true,
   allowsRecording: false,
+  // Unified field replaces the deprecated interruptionModeIOS / interruptionModeAndroid pair
   interruptionMode: 'doNotMix' as const,
-  // Android
-  interruptionModeAndroid: 'doNotMix' as const,
   shouldRouteThroughEarpiece: false,
 };
 
@@ -400,6 +397,11 @@ class SimpleAudioService {
       // Set up event subscription BEFORE playing to catch immediate failures
       this.startEventSubscription();
 
+      // Activate lock screen controls BEFORE play() so Android registers the
+      // foreground service before any chance of backgrounding (docs: without
+      // this, Android kills background playback after ~3 minutes).
+      this.activateLockScreen(track);
+
       // Try immediate playback first (works for cached/local audio)
       // Only fall back to waitForPlayerReady if play() fails synchronously
       try {
@@ -409,9 +411,6 @@ class SimpleAudioService {
         await this.waitForPlayerReady();
         player.play();
       }
-
-      // Activate lock screen controls with track metadata
-      this.activateLockScreen(track);
 
       // Update status to playing (actual state will come from event subscription)
       // Note: Native states (isLoaded, isBuffering) will be updated by event subscription

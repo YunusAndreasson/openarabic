@@ -188,7 +188,12 @@ export const FeedbackForm = memo(() => {
 
             {screenshotUri ? (
               <View style={styles.screenshotPreview}>
-                <Image source={{ uri: screenshotUri }} style={styles.screenshotImage} />
+                <Image
+                  source={{ uri: screenshotUri }}
+                  style={styles.screenshotImage}
+                  contentFit="cover"
+                  cachePolicy="none"
+                />
                 <Pressable
                   onPress={handleRemoveScreenshot}
                   style={[

@@ -84,6 +84,7 @@ export function TimePicker({
       enableDynamicSizing={true}
       onChange={handleChange}
       onDismiss={onClose}
+      containerStyle={styles.modalContainer}
       backgroundStyle={dynamicStyles.bottomSheet}
       handleIndicatorStyle={dynamicStyles.indicator}
       backdropComponent={BottomSheetBackdrop}
@@ -131,6 +132,9 @@ export function TimePicker({
 TimePicker.displayName = 'TimePicker';
 
 const styles = StyleSheet.create({
+  modalContainer: {
+    zIndex: LAYOUT.Z_INDEX.MODAL, // Render above the MiniPlayer
+  },
   container: {
     paddingTop: LAYOUT.SPACING.SMALL,
   },

@@ -311,7 +311,6 @@ const ArticleContentInternal = function ArticleContent({
               viewabilityConfig={viewabilityConfig}
               scrollEventThrottle={SCROLL_THROTTLE}
               showsVerticalScrollIndicator={true}
-              removeClippedSubviews={true}
               alwaysBounceVertical={true}
               bounces={true}
               overScrollMode="always"

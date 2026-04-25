@@ -1,15 +1,3 @@
 {
-  "hooks": {
-    "Stop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "prompt",
-            "prompt": "If you made any file edits and the user has not explicitly asked you to skip validation, remind the user that you should run /validate before committing."
-          }
-        ]
-      }
-    ]
-  }
+  "hooks": {}
 }

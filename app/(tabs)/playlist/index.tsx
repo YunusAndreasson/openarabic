@@ -239,7 +239,6 @@ export default function PlaylistScreen(): JSX.Element {
             data={sortedReadingList}
             drawDistance={ITEM_HEIGHT * 3}
             keyExtractor={memoizedKeyExtractor}
-            removeClippedSubviews={true}
             scrollEventThrottle={64}
             // iOS best practice: Allow natural bounce behavior for tactile feedback
             bounces={true}

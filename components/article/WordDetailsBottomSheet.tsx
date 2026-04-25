@@ -1,5 +1,5 @@
-import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
-import { useCallback, useEffect, useState } from 'react';
+import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
+import { startTransition, useCallback, useEffect, useOptimistic } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -16,8 +16,8 @@ import { preload } from 'expo-audio';
 
 import { audioCache } from '@/services/audioCache';
 import type { SentenceWord } from '@/types/vocabulary.types';
-import { useBottomSheetModalVisibility } from '@/hooks/ui/useBottomSheetVisibility';
-import { BottomSheetBackdrop, COMMON_BOTTOM_SHEET_MODAL_PROPS } from '@/utils/bottomSheetUtils';
+import { useBottomSheetVisibility } from '@/hooks/ui/useBottomSheetVisibility';
+import { BottomSheetBackdrop, COMMON_BOTTOM_SHEET_PROPS } from '@/utils/bottomSheetUtils';
 import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
 import { generateStorageUrl } from '@/utils/storageUtils';
@@ -41,24 +41,16 @@ export function WordDetailsBottomSheet({
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { showToast } = useToast();
-  const bottomSheetRef = useBottomSheetModalVisibility(isVisible && !!word);
+  const bottomSheetRef = useBottomSheetVisibility(isVisible && !!word);
   // Use consolidated word audio playback hook
   const playWordAudio = useWordAudioPlayback({ showErrorToast: true });
 
-  // Optimistic state for instant UI feedback
-  const [optimisticIsInStudyList, setOptimisticIsInStudyList] = useState(isInStudyList);
-
-  // OPTIMIZED: Sync optimistic state with prop changes only when value actually changes
-  // This prevents unnecessary re-renders when prop object changes but value is the same
-  useEffect(() => {
-    setOptimisticIsInStudyList(prev => {
-      // Only update if value actually changed - prevents extra render
-      if (prev !== isInStudyList) {
-        return isInStudyList;
-      }
-      return prev;
-    });
-  }, [isInStudyList]);
+  // React 19: useOptimistic auto-reverts when the underlying prop unchanged after the
+  // transition settles, so no manual revert/sync code is needed.
+  const [optimisticIsInStudyList, setOptimisticIsInStudyList] = useOptimistic(
+    isInStudyList,
+    (_state, newValue: boolean) => newValue,
+  );
 
   // Prefetch and cache audio when sheet opens for instant playback
   useEffect(() => {
@@ -91,41 +83,34 @@ export function WordDetailsBottomSheet({
   }, [word, playWordAudio]);
 
   // Handle add to study with optimistic update for instant feedback
-  const handleAddToStudy = async () => {
+  const handleAddToStudy = () => {
     if (!word) return;
 
-    // Instant UI feedback - use functional update to avoid stale closure
-    const wasInStudyList = optimisticIsInStudyList;
-    setOptimisticIsInStudyList(prev => !prev);
+    const newValue = !optimisticIsInStudyList;
     selectionFeedback();
 
-    // Show toast on add (optimistic feedback)
-    if (!wasInStudyList) {
+    if (newValue) {
       showToast(STRINGS.WORD_ADDED_TO_PRACTICE);
     }
 
-    try {
-      const success = await onAddToStudy(word);
-
-      // If operation failed (e.g., daily limit reached), revert optimistic update
-      if (!success) {
-        setOptimisticIsInStudyList(prev => !prev);
+    startTransition(async () => {
+      setOptimisticIsInStudyList(newValue);
+      try {
+        await onAddToStudy(word);
+      } catch (error) {
+        handleError(error as Error, { toastMessage: 'Failed to update study list' });
       }
-      // Success - optimistic state should now match actual state
-    } catch (error) {
-      // Revert optimistic update on error - use functional update
-      setOptimisticIsInStudyList(prev => !prev);
-      handleError(error as Error, { toastMessage: 'Failed to update study list' });
-    }
+    });
   };
 
 
   return (
-    <BottomSheetModal
+    <BottomSheet
       ref={bottomSheetRef}
-      {...COMMON_BOTTOM_SHEET_MODAL_PROPS}
+      index={-1}
+      {...COMMON_BOTTOM_SHEET_PROPS}
       enableDynamicSizing={true}
-      onDismiss={onClose}
+      onClose={onClose}
       backdropComponent={BottomSheetBackdrop}
       backgroundStyle={[styles.background, { backgroundColor: colors.elevation1 }]}
       handleIndicatorStyle={{ backgroundColor: colors.modalIndicator }}
@@ -192,7 +177,7 @@ export function WordDetailsBottomSheet({
           </>
         )}
       </BottomSheetView>
-    </BottomSheetModal>
+    </BottomSheet>
   );
 }
 

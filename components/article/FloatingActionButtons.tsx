@@ -53,12 +53,13 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
 
     const handleOptimisticToggle = () => {
       selectionFeedback();
-      // React 19: Optimistic update in transition for immediate UI feedback
-      startTransition(() => {
-        setOptimisticBookmark(!optimisticIsInReadingList);
+      const newValue = !optimisticIsInReadingList;
+      // React 19: keep the async work inside the transition so the optimistic
+      // value stays committed until the parent prop has caught up.
+      startTransition(async () => {
+        setOptimisticBookmark(newValue);
+        await onToggleReadingList();
       });
-      // Fire async operation independently (don't await in transition)
-      onToggleReadingList();
     };
 
     const handleClose = () => {

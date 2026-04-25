@@ -138,7 +138,6 @@ export default function DictionaryScreen(): JSX.Element {
             ListEmptyComponent={ListEmptyComponent}
             contentContainerStyle={contentContainerStyle}
             showsVerticalScrollIndicator={true}
-            removeClippedSubviews={true}
             drawDistance={LAYOUT.CARD.HEIGHT.VOCABULARY_ITEM * LIST_DRAW_DISTANCE_MULTIPLIER}
             // v2 performance optimizations
             maxItemsInRecyclePool={40} // Control memory usage for vocabulary lists

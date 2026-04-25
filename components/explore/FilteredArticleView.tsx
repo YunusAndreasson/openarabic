@@ -229,7 +229,6 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
         data={listData}
         drawDistance={ITEM_HEIGHT * LIST_DRAW_DISTANCE_MULTIPLIER}
         keyExtractor={(item: ListItem) => item.id}
-        removeClippedSubviews={true}
         scrollEventThrottle={SCROLL_EVENT_THROTTLE}
         showsVerticalScrollIndicator={true}
         contentContainerStyle={listContentStyle}

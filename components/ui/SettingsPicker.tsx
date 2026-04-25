@@ -56,6 +56,7 @@ function SettingsPickerComponent<T>({
       {...COMMON_BOTTOM_SHEET_MODAL_PROPS}
       enableDynamicSizing={true}
       onDismiss={onClose}
+      containerStyle={styles.modalContainer}
       backgroundStyle={dynamicStyles.bottomSheet}
       handleIndicatorStyle={dynamicStyles.indicator}
       backdropComponent={BottomSheetBackdrop}
@@ -134,6 +135,9 @@ function SettingsPickerComponent<T>({
 export const SettingsPicker = SettingsPickerComponent;
 
 const styles = StyleSheet.create({
+  modalContainer: {
+    zIndex: LAYOUT.Z_INDEX.MODAL, // Render above the MiniPlayer
+  },
   header: {
     ...LAYOUT.BOTTOM_SHEET.HEADER,
     marginBottom: LAYOUT.SPACING.MEDIUM,
