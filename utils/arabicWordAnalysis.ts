@@ -195,24 +195,35 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
     const suffixEnglishWords = suffix.englishMatches
       .filter(match => !match.includes(' ')) // Only single-word patterns
       .map(match => match.toLowerCase());
-    const hasOverlap = suffixEnglishWords.some(word => prefixEnglishWords.has(word));
+    const overlappingWords = suffixEnglishWords.filter(word => prefixEnglishWords.has(word));
 
-    if (hasOverlap) {
-      // Overlap detected - check if remaining is too short
-      const remainingAfterSuffix = remainingAfterPrefixes.substring(
-        0,
-        remainingAfterPrefixes.length - suffix.arabicMatch.length,
+    if (overlappingWords.length > 0) {
+      // If any overlapping word appears ≥2 times in the English translation, the
+      // prefix and suffix can each claim a distinct occurrence — e.g.,
+      // يَشُقُّهَا "it splits it open" where 'it' is both subject (prefix ي) and
+      // object (suffix ها). Skip the false-positive rejection in that case.
+      const englishTokens = normalizedEnglish.toLowerCase().split(/\s+/);
+      const hasRepeatedOverlap = overlappingWords.some(
+        word => englishTokens.filter(token => token === word).length >= 2,
       );
 
-      // If remaining is exactly 2 chars and there's English overlap, likely a false positive
-      // Real case: "يكره" → ي(he) + كره, removing ה leaves "كر" (2 chars) - FALSE POSITIVE
-      // Valid case: "يكتبه" → ي + كتبה, removing ה leaves "כתב" (3+ chars) - OK
-      // EXCEPTION: Allow 0-1 chars (prefix+suffix compounds like מִנָּא = מן + נא with no root)
-      if (isCriticalLength(remainingAfterSuffix, OVERLAP_REJECTION.CRITICAL_LENGTH)) {
-        suffix = undefined; // Reject this suffix as false positive
+      if (!hasRepeatedOverlap) {
+        // Overlap detected - check if remaining is too short
+        const remainingAfterSuffix = remainingAfterPrefixes.substring(
+          0,
+          remainingAfterPrefixes.length - suffix.arabicMatch.length,
+        );
+
+        // If remaining is exactly 2 chars and there's English overlap, likely a false positive
+        // Real case: "يكره" → ي(he) + كره, removing ה leaves "كر" (2 chars) - FALSE POSITIVE
+        // Valid case: "يكتبه" → ي + كتبה, removing ה leaves "כتب" (3+ chars) - OK
+        // EXCEPTION: Allow 0-1 chars (prefix+suffix compounds like מِنָّا = מن + נا with no root)
+        if (isCriticalLength(remainingAfterSuffix, OVERLAP_REJECTION.CRITICAL_LENGTH)) {
+          suffix = undefined; // Reject this suffix as false positive
+        }
+        // If length is 0-1, it's a valid prefix+suffix compound (keep suffix)
+        // If length is 3+, it's valid (keep suffix)
       }
-      // If length is 0-1, it's a valid prefix+suffix compound (keep suffix)
-      // If length is 3+, it's valid (keep suffix)
     }
   }
 
@@ -388,14 +399,13 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
 
   const result: WordAnalysis = {
     original: { arabic, english: normalizedEnglish },
-    prefixes: finalPrefixes, // Array of prefixes
-    infix,
-    suffix: resolvedSuffix,
-    diacritic: resolvedDiacritic,
-    // Override hasComponents to false if single standalone component (entire word is one particle)
+    prefixes: isStandalone ? [] : finalPrefixes,
+    infix: isStandalone ? undefined : infix,
+    suffix: isStandalone ? undefined : resolvedSuffix,
+    diacritic: isStandalone ? undefined : resolvedDiacritic,
     hasComponents: isStandalone
       ? false
-      : Boolean(finalPrefixes.length > 0 || infix || resolvedSuffix || resolvedDiacritic),
+      : Boolean(finalPrefixes.length > 0 || infix || resolvedSuffix),
     remainingArabic: remaining.trim(),
     remainingEnglish,
     hasBracketInjection,

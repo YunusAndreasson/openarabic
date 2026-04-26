@@ -63,6 +63,16 @@ translate/core/temp_audio/
 .reassure
 .jest-cache/
 
+# Autoresearch / eval-corpus build artifacts (raw + per-batch labeled output;
+# the canonical labeled fixture lives at __tests__/fixtures/grammarGroundTruth.db.ts)
+scripts/output/
+
+# Native build directories
+android/
+
+# Cloudflare Wrangler cache (admin-dashboard)
+admin-dashboard/.wrangler/
+
 # Publish directory - generated files
 publish/output/
 publish/arabic_words.csv

@@ -335,6 +335,35 @@ export function detectPrefixes(
         }
       }
 
+      // VALIDATION 5a: Reject ف+'for' when ب already detected.
+      // ب prepositions like "for" already consumed the trigger; the ف on the remaining stem
+      // is a root letter (e.g., بِفُلاَنٍ "for someone" — ف is root letter of فلان).
+      if (
+        prefixMatch.arabicMatch === 'ف' &&
+        prefixMatch.englishMatches.length === 1 &&
+        prefixMatch.englishMatches[0]?.toLowerCase() === 'for' &&
+        detectedPrefixes.some(p => p.arabicMatch === 'ب')
+      ) {
+        continueDetection = false;
+        continue;
+      }
+
+      // VALIDATION 5b: Gated ف+'and' acceptance.
+      // ف is a sequential conjunction ("so/then/and"); when its sole English match is 'and',
+      // reject if a و prefix has already been detected in the same word.
+      // Catches وَفَسَادُ "and corruption" where ف is a root letter (root ف-س-د) but the
+      // English "and" would otherwise match — و has already consumed the conjunction, so a
+      // second 'and'-only match on ف is structurally impossible.
+      if (
+        prefixMatch.arabicMatch === 'ف' &&
+        prefixMatch.englishMatches.length === 1 &&
+        prefixMatch.englishMatches[0]?.toLowerCase() === 'and' &&
+        detectedPrefixes.some(p => p.arabicMatch === 'و')
+      ) {
+        continueDetection = false;
+        continue;
+      }
+
       // All validations passed - accept this prefix
       seenRoles.add(role);
 

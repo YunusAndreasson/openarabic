@@ -30,6 +30,74 @@ const THE_WORD_REGEX = /\bthe\b/;
 const normalizeAlef = (s: string): string => s.replace(ALEF_VARIANTS_REGEX, 'ا');
 
 /**
+ * Productive plural-marker suffixes — morphologically present in Arabic regardless
+ * of whether English uses an exact word equivalent. English typically marks plural
+ * with -s, not a separate word, so strict English-trigger matching misses real
+ * plural suffixes like الْمُسْلِمُونَ "the Muslims" or الظُّلُمَاتِ "the darknesses".
+ *
+ * The bypass below accepts these suffixes without an English trigger but only when:
+ *   - English is multi-word (single-word translations stay uncolored anyway)
+ *   - Remaining stem is ≥4 chars OR starts with ال (filters out short words like
+ *     يَكُونُ "will be" where ون is a modal verb ending, not a plural marker).
+ */
+const PRODUCTIVE_PLURAL_SUFFIXES = new Set(['ون', 'ين', 'ات', 'وا']);
+const PRODUCTIVE_PLURAL_MIN_STEM_LENGTH = 4;
+const PRODUCTIVE_PLURAL_DEFINITE_PREFIX = 'ال';
+
+/**
+ * Pronoun suffixes eligible for the prefix+suffix-compound bypass — fires when
+ * the entire remaining arabic IS the suffix (preposition + pronoun compound
+ * like بِهِ "as such", لَهُ "for it"). The standalone-pronoun rejection in
+ * arabicWordAnalysis.ts catches the no-prefix case. Only fires after the full
+ * component iteration to avoid short-circuiting better English-trigger matches.
+ */
+const PRONOUN_COMPOUND_SUFFIXES = new Set([
+  'ه', 'ها', 'هم', 'هما', 'هن', 'ك', 'كم', 'كما', 'كن', 'نا', 'ي',
+]);
+const PRONOUN_TOKENS_BLOCKING_BYPASS = new Set([
+  'i', 'me', 'my', 'mine',
+  'you', 'your', 'yours',
+  'he', 'him', 'his',
+  'she', 'her', 'hers',
+  'it', 'its',
+  'we', 'us', 'our', 'ours',
+  'they', 'them', 'their', 'theirs',
+]);
+
+/**
+ * Words where ال is morphologically fused into the stem (proper nouns, relative
+ * pronouns, vocative compounds) and must not be detected as a separable definite
+ * article. Used by the ال-bypass below.
+ */
+const FUSED_AL_WORDS = new Set([
+  'الله', // Allah / God — proper noun
+  'اللهم', // O Allah — fused vocative
+  'الذي', // who / which — relative pronoun
+  'الذين', // those who — plural relative pronoun
+  'التي', // who / which (feminine) — relative pronoun
+  'اللاتي', // those (feminine plural) — relative pronoun
+  'اللواتي', // those (feminine plural) — relative pronoun
+  'اللذان', // those two (masculine dual) — relative pronoun
+  'اللتان', // those two (feminine dual) — relative pronoun
+  // Hamza-on-alef forms that look like ال after normalization (إ/آ/ٱ → ا).
+  // The matcher receives already-normalized input and cannot tell these apart
+  // from genuine ال-prefixed words, so we list them explicitly.
+  'الى', // ← إلى, preposition "to"
+  'اليه', // ← إليه, "to him"
+  'اليها', // ← إليها, "to her/it"
+  'اليهم', // ← إليهم, "to them"
+  'الا', // ← إلا, "except"
+  'اله', // ← إله, "god"
+  'الها', // ← إلها, "god" (acc)
+  'الهي', // ← إلهي, "my god"
+]);
+const DEFINITE_ARTICLE_MIN_WORD_LENGTH = 4;
+
+const ENGLISH_TOKEN_REGEX = /\s+/;
+const isMultiWordEnglish = (english: string): boolean =>
+  english.trim().split(ENGLISH_TOKEN_REGEX).filter(Boolean).length >= 2;
+
+/**
  * Unified function to find components (prefix, infix, suffix, or diacritic)
  */
 export function findComponent(
@@ -38,6 +106,7 @@ export function findComponent(
   components: WordComponent[],
   type: ComponentType,
 ): AnalyzedComponent | undefined {
+  let pronounCompoundCandidate: AnalyzedComponent | undefined;
   for (const component of components) {
     const pattern = component.arabic;
 
@@ -112,8 +181,13 @@ export function findComponent(
         if (!isLikelyPrefixOnly && !isPrefixSuffixCompound) {
           const startsWithSubjectMarker = isSubjectMarker(remaining.charAt(0));
           const possessivePronouns = ['my', 'your', 'his', 'her', 'its', 'our', 'their'];
+          // Object/oblique pronouns indicating same referent as a possessive suffix.
+          // Used to relax the fa3eel guard so words like إِلَيْهِ "toward him" /
+          // عَلَيْهِ "against him" — where ـيه genuinely is stem+suffix — match.
+          const objectPronouns = ['me', 'him', 'her', 'them', 'us'];
           const englishWords = english.toLowerCase().split(/\s+/);
           const hasPossessivePronoun = englishWords.some(word => possessivePronouns.includes(word));
+          const hasObjectPronoun = englishWords.some(word => objectPronouns.includes(word));
 
           const hasHiddenPrefix =
             startsWithSubjectMarker && remaining.length <= 3 && !hasPossessivePronoun;
@@ -127,7 +201,7 @@ export function findComponent(
           const minConsonantsRequired =
             remaining.length === 2
               ? VALIDATION_CONFIG.SUFFIX_VALIDATION.MIN_CONSONANTS_2CHAR
-              : hasPossessivePronoun
+              : hasPossessivePronoun || hasObjectPronoun
                 ? VALIDATION_CONFIG.SUFFIX_VALIDATION.MIN_CONSONANTS_2CHAR
                 : VALIDATION_CONFIG.SUFFIX_VALIDATION.MIN_CONSONANTS_3PLUS;
           const hasEnoughConsonants = countConsonants(remaining) >= minConsonantsRequired;
@@ -139,7 +213,11 @@ export function findComponent(
             VALIDATION_CONFIG.PREPOSITIONS_WITH_SUFFIXES as readonly string[]
           ).includes(remaining);
 
-          const isFa3eelPattern = potentialFa3eelPattern && !isKnownPreposition;
+          const isFa3eelPattern =
+            potentialFa3eelPattern &&
+            !isKnownPreposition &&
+            !hasPossessivePronoun &&
+            !hasObjectPronoun;
 
           if (!minLengthSatisfied || !hasEnoughConsonants || isFa3eelPattern) {
             matches = false;
@@ -160,10 +238,70 @@ export function findComponent(
           role: component.role,
         };
       }
+      // Productive-plural-marker bypass (see PRODUCTIVE_PLURAL_SUFFIXES docblock above)
+      if (
+        type === ComponentType.SUFFIX &&
+        PRODUCTIVE_PLURAL_SUFFIXES.has(pattern) &&
+        isMultiWordEnglish(english)
+      ) {
+        const stem = arabic.slice(0, arabic.length - pattern.length);
+        const stemQualifies =
+          stem.length >= PRODUCTIVE_PLURAL_MIN_STEM_LENGTH ||
+          stem.startsWith(PRODUCTIVE_PLURAL_DEFINITE_PREFIX);
+        if (stemQualifies) {
+          return {
+            component,
+            arabicMatch: pattern,
+            englishMatches: [],
+            matchedInEnglish: false,
+            role: component.role,
+          };
+        }
+      }
+      // Definite-article ال bypass: in genitive constructions ("of X"), English
+      // often elides "the" but Arabic still has ال. Accept on long-enough
+      // multi-word translations, except for fused forms (الله / الذي / etc).
+      if (
+        type === ComponentType.PREFIX &&
+        pattern === 'ال' &&
+        isMultiWordEnglish(english) &&
+        arabic.length >= DEFINITE_ARTICLE_MIN_WORD_LENGTH &&
+        !FUSED_AL_WORDS.has(arabic)
+      ) {
+        return {
+          component,
+          arabicMatch: pattern,
+          englishMatches: [],
+          matchedInEnglish: false,
+          role: component.role,
+        };
+      }
+      // Pronoun-compound candidate (deferred — see PRONOUN_COMPOUND_SUFFIXES docblock).
+      // Recorded but not returned: a later component in the iteration may match an
+      // English trigger and produce a better result.
+      if (
+        !pronounCompoundCandidate &&
+        type === ComponentType.SUFFIX &&
+        PRONOUN_COMPOUND_SUFFIXES.has(pattern) &&
+        arabic.length === pattern.length &&
+        isMultiWordEnglish(english)
+      ) {
+        const englishTokens = english.toLowerCase().split(/\s+/);
+        const hasBlockingPronoun = englishTokens.some(t => PRONOUN_TOKENS_BLOCKING_BYPASS.has(t));
+        if (!hasBlockingPronoun) {
+          pronounCompoundCandidate = {
+            component,
+            arabicMatch: pattern,
+            englishMatches: [],
+            matchedInEnglish: false,
+            role: component.role,
+          };
+        }
+      }
     }
   }
 
-  return undefined;
+  return pronounCompoundCandidate;
 }
 
 /**

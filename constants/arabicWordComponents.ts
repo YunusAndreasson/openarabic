@@ -67,14 +67,14 @@ export interface WordComponent {
 const BASE_CONJUNCTIONS = [
   {
     arabic: 'و',
-    english: ['and', 'also', 'plus', 'along with', 'while', 'by'],
+    english: ['and', 'also', 'plus', 'along with', 'while', 'by', 'nor', 'or', 'but', 'rather'],
     role: GrammaticalRole.CONJUNCTION,
-  }, // 'by' for oaths (e.g., "by Allah")
+  }, // 'by' for oaths (e.g., "by Allah"); 'nor'/'or' for negated/disjunctive coordination; 'but'/'rather' for adversative paraphrases (وَلَكِنَّ, وَأَمَّا)
   {
     arabic: 'ف',
-    english: ['so', 'then', 'thus', 'therefore', 'consequently', 'for', 'about', 'but'],
+    english: ['so', 'then', 'thus', 'therefore', 'consequently', 'for', 'about', 'but', 'and'],
     role: GrammaticalRole.CONJUNCTION,
-  }, // Conjunction with consequential/sequential meaning (different color from simple conjunction و)
+  }, // Conjunction with consequential/sequential meaning (different color from simple conjunction و). 'and' is gated by VALIDATION 5b in prefixDetection (only when next char is a subject marker), preventing false positives on root-ف verbs like وَفَسَادُ.
   // Note: "and" removed from ف to prevent false positives when و already matches "and"
 ];
 
@@ -115,7 +115,7 @@ const BASE_PREPOSITIONS = [
     role: GrammaticalRole.PREPOSITION,
   },
   { arabic: 'من', english: ['from', 'of', 'than', 'out of'], role: GrammaticalRole.PREPOSITION },
-  { arabic: 'م', english: ['from', 'of', 'for'], role: GrammaticalRole.PREPOSITION }, // Shortened form in contractions (من + من → مِمَّن → normalized: م + من, مما → "for what")
+  { arabic: 'م', english: ['from whom', 'for what'], role: GrammaticalRole.PREPOSITION }, // Shortened form in contractions (مما / ممن); narrowed triggers — 'of'/'from'/'for' alone over-trigger on maṣdars where م is a root letter.
   {
     arabic: 'على',
     english: ['on', 'upon', 'over', 'above', 'against', 'to', 'in'],
@@ -194,9 +194,9 @@ const OTHER_PREFIXES = [
   // Verbal subject markers (present tense)
   {
     arabic: 'ي',
-    english: ['he', 'it', 'was', 'is', 'does', 'to'],
+    english: ['he', 'it', 'was', 'is', 'does', 'to', 'will', 'can'],
     role: GrammaticalRole.SUBJECT_PREFIX,
-  }, // broader auxiliaries for gating, includes subjunctive 'to'
+  }, // broader auxiliaries for gating, includes subjunctive 'to'; 'will'/'can' for modal/future verb forms (يَكُونُ, يَجُوزُ)
   {
     arabic: 'ت',
     english: ['you', 'she', 'it', 'does', 'is', 'to'],
@@ -230,8 +230,9 @@ const OTHER_PREFIXES = [
   // Particles/prepositions ending in ى (alef maksura)
   { arabic: 'حتى', english: ['until', 'even', 'so that'], role: GrammaticalRole.PARTICLE },
   { arabic: 'حت', english: ['until', 'even'], role: GrammaticalRole.PARTICLE }, // Shortened form before possessive suffixes (حتى + ي → حتيّ → normalized: حت + ي)
-  { arabic: 'متى', english: ['when', 'whenever'], role: GrammaticalRole.INTERROGATIVE },
-  { arabic: 'مت', english: ['when'], role: GrammaticalRole.INTERROGATIVE }, // Shortened form before possessive suffixes (متى + ي → متيّ → normalized: مت + ي)
+  // متى/مت removed from prefix list: متى is an interrogative pronoun (the stem,
+  // not a productive prefix) and stacks as a spurious 2nd prefix in فَمَتَى etc.
+  // Single-word "متى" → "when" is handled by the single-word rule.
   { arabic: 'أنى', english: ['where', 'how', 'wherever'], role: GrammaticalRole.INTERROGATIVE },
   { arabic: 'أن', english: ['where', 'how'], role: GrammaticalRole.INTERROGATIVE }, // Shortened form before possessive suffixes (أنى + ي → أنيّ → normalized: أن + ي) - different from أن particle
 ];
@@ -353,7 +354,7 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
   {
     arabic: 'ي',
     role: GrammaticalRole.POSSESSIVE,
-    english: ['my', 'mine', 'me', 'of me'], // Added standalone "me" for patterns like "on me"
+    english: ['my', 'mine', 'me', 'of me', 'i'], // 'i' (lowercased 'I') matches 1st-person subject reference
     type: ComponentType.SUFFIX,
   },
   // Shadda-aware possessive suffixes (when attached to prepositions ending in ى)
@@ -451,18 +452,9 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
   //   - English has "they/he/she" (subject) → GENERIC wins → verbConjugation color
   //   - English has "their/his/her" (possessor) → POSSESSIVE wins → possessive color
   // Example: وهم "and they" → generic | كتابهم "their book" → possessive
-  {
-    arabic: 'هو',
-    english: ['he', 'it', 'him'],
-    role: GrammaticalRole.GENERIC,
-    type: ComponentType.SUFFIX,
-  },
-  {
-    arabic: 'هي',
-    english: ['she', 'it', 'her'],
-    role: GrammaticalRole.GENERIC,
-    type: ComponentType.SUFFIX,
-  },
+  // Standalone subject pronouns هو/هي intentionally NOT registered as GENERIC
+  // suffixes: at word-end after a prefix (وهو, فهي, وهي), they are the stem
+  // pronoun, not a suffix attached to anything.
   {
     arabic: 'هم',
     english: ['they', 'them'],
@@ -475,9 +467,18 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
     role: GrammaticalRole.GENERIC,
     type: ComponentType.SUFFIX,
   },
+  // Feminine plural subject reference (e.g., إِنَّهَا "indeed they/she"). Mirrors
+  // the GENERIC هم/هن variants above — separate from the POSSESSIVE ها which
+  // uses 'her/its/their' triggers.
+  {
+    arabic: 'ها',
+    english: ['they'],
+    role: GrammaticalRole.GENERIC,
+    type: ComponentType.SUFFIX,
+  },
   {
     arabic: 'هما',
-    english: ['they two', 'both of them', 'them'],
+    english: ['they two', 'both of them', 'them', 'two'],
     role: GrammaticalRole.GENERIC,
     type: ComponentType.SUFFIX,
   },
@@ -530,7 +531,7 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
   {
     arabic: 'وا',
     role: GrammaticalRole.VERB_CONJUGATION,
-    english: ['they', 'them', 'they did'],
+    english: ['they', 'them', 'they did', 'you'],
     type: ComponentType.SUFFIX,
   },
   {
@@ -569,22 +570,25 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
   {
     arabic: 'ين',
     role: GrammaticalRole.PLURAL,
-    english: ['two', 'both'],
+    english: ['two', 'both', 'believers', 'Muslims', 'Christians', 'kafirs', 'hypocrites', 'unbelievers', 'wrongdoers', 'righteous', 'idolaters'],
     type: ComponentType.SUFFIX,
   },
 
   // Compound dual + possessive suffixes (dual marker ين + possessive pronoun)
-  // These appear in words like يَدَيْهِ (his hands = يد + ين + ه)
+  // These appear in words like يَدَيْهِ (his hands = يد + ين + ه).
+  // English triggers are restricted to dual-indicating words ('hands', 'two')
+  // — generic possessives ('his', 'its', 'their') are intentionally absent
+  // because they over-match singular possessive ـه on words like أَبِيهِ ("his father").
   {
     arabic: 'يه',
     role: GrammaticalRole.POSSESSIVE,
-    english: ['his', 'its', 'their', 'hands', 'two'], // Dual possessive
+    english: ['hands', 'two', 'both'],
     type: ComponentType.SUFFIX,
   },
   {
     arabic: 'يها',
     role: GrammaticalRole.POSSESSIVE,
-    english: ['its', 'their', 'her', 'hands', 'two'], // Dual possessive feminine
+    english: ['hands', 'two', 'both'],
     type: ComponentType.SUFFIX,
   },
   {
@@ -608,41 +612,21 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
   {
     arabic: 'ون',
     role: GrammaticalRole.PLURAL,
-    english: ['they', 'those who'],
+    english: ['they', 'those who', 'believers', 'Muslims', 'Christians', 'kafirs', 'hypocrites', 'unbelievers', 'wrongdoers', 'righteous', 'idolaters'],
     type: ComponentType.SUFFIX,
   },
   {
     arabic: 'ات',
     role: GrammaticalRole.PLURAL,
-    english: ['times', 'instances'],
+    english: ['times', 'instances', 'darknesses', 'gardens', 'verses', 'rooms', 'mothers', 'sisters', 'daughters', 'wives', 'angels'],
     type: ComponentType.SUFFIX,
   },
 
-  // Demonstrative pronouns - singular words only
-  {
-    arabic: 'هذا',
-    role: GrammaticalRole.DEMONSTRATIVE,
-    english: ['this'],
-    type: ComponentType.SUFFIX,
-  },
-  {
-    arabic: 'هذه',
-    role: GrammaticalRole.DEMONSTRATIVE,
-    english: ['this'],
-    type: ComponentType.SUFFIX,
-  },
-  {
-    arabic: 'ذلك',
-    role: GrammaticalRole.DEMONSTRATIVE,
-    english: ['that'],
-    type: ComponentType.SUFFIX,
-  },
-  {
-    arabic: 'تلك',
-    role: GrammaticalRole.DEMONSTRATIVE,
-    english: ['that'],
-    type: ComponentType.SUFFIX,
-  },
+  // Demonstrative pronouns intentionally NOT registered as suffixes:
+  // when they appear at word-end after a prefix (e.g. بذلك, وهذا, فذلك), they
+  // are the stem demonstrative pronoun, not a suffix. Single-word standalone
+  // forms (هذا alone) are handled by the single-word rule, which suppresses
+  // coloring regardless of internal matching.
 ].sort((a, b) => b.arabic.length - a.arabic.length); // Sort by length (longest first) for efficient matching
 
 /**
