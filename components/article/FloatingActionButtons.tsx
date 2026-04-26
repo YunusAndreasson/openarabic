@@ -9,7 +9,7 @@ const GlassContainer = GLASS_AVAILABLE ? GlassView : View;
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import { lightFeedback, selectionFeedback } from '@/utils/haptics';
+import { selectionFeedback } from '@/utils/haptics';
 
 export interface FloatingActionButtonsProps {
   isInReadingList: boolean;
@@ -63,7 +63,6 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
     };
 
     const handleClose = () => {
-      lightFeedback();
       onClose();
     };
 

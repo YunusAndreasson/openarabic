@@ -14,7 +14,7 @@
  * - Official TanStack Query v5 pattern
  */
 
-import { queryOptions, type QueryClient } from '@tanstack/react-query';
+import { queryOptions, skipToken, type Query, type QueryClient } from '@tanstack/react-query';
 
 /**
  * Unique session identifier generated once per app launch.
@@ -36,6 +36,13 @@ import { studySessionStreakService } from '@/services/studyStreak';
 import { sentencesService } from '@/services/sentences';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { ArticleId, RootId } from '@/types/branded.types';
+
+/**
+ * Predicate for invalidateQueries: skip queries whose queryFn is `skipToken`.
+ * Without this, invalidating a key that matches a disabled (skipToken) query
+ * forces a refetch and throws "Attempted to invoke queryFn when set to skipToken".
+ */
+const isFetchableQuery = (query: Query): boolean => query.options.queryFn !== skipToken;
 
 /**
  * React Query configuration constants
@@ -145,7 +152,10 @@ export const fsrsQueries = {
    * Use after: completing practice session, adding/removing words
    */
   invalidateAll: (queryClient: QueryClient, userId: string) => {
-    return queryClient.invalidateQueries({ queryKey: ['fsrs-words', userId] });
+    return queryClient.invalidateQueries({
+      queryKey: ['fsrs-words', userId],
+      predicate: isFetchableQuery,
+    });
   },
 } as const;
 
@@ -228,9 +238,9 @@ export const articleQueries = {
    */
   invalidateAll: (queryClient: QueryClient) => {
     return Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['articles'] }),
-      queryClient.invalidateQueries({ queryKey: ['categories'] }),
-      queryClient.invalidateQueries({ queryKey: ['authors'] }),
+      queryClient.invalidateQueries({ queryKey: ['articles'], predicate: isFetchableQuery }),
+      queryClient.invalidateQueries({ queryKey: ['categories'], predicate: isFetchableQuery }),
+      queryClient.invalidateQueries({ queryKey: ['authors'], predicate: isFetchableQuery }),
     ]);
   },
 } as const;
@@ -289,8 +299,14 @@ export const readingProgressQueries = {
    */
   invalidateAll: (queryClient: QueryClient, userId: string) => {
     return Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['readingList', userId] }),
-      queryClient.invalidateQueries({ queryKey: ['reading-progress-bulk', userId] }),
+      queryClient.invalidateQueries({
+        queryKey: ['readingList', userId],
+        predicate: isFetchableQuery,
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ['reading-progress-bulk', userId],
+        predicate: isFetchableQuery,
+      }),
     ]);
   },
 } as const;
@@ -318,7 +334,10 @@ export const audioQueries = {
    * Use after: reading list changes, audio preference changes
    */
   invalidateAll: (queryClient: QueryClient, userId: string) => {
-    return queryClient.invalidateQueries({ queryKey: ['enhancedAudioTracks', userId] });
+    return queryClient.invalidateQueries({
+      queryKey: ['enhancedAudioTracks', userId],
+      predicate: isFetchableQuery,
+    });
   },
 } as const;
 
@@ -363,8 +382,14 @@ export const studyStreakQueries = {
    */
   invalidateAll: (queryClient: QueryClient, userId: string) => {
     return Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['study-streak', userId] }),
-      queryClient.invalidateQueries({ queryKey: ['study-streak-history', userId] }),
+      queryClient.invalidateQueries({
+        queryKey: ['study-streak', userId],
+        predicate: isFetchableQuery,
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ['study-streak-history', userId],
+        predicate: isFetchableQuery,
+      }),
     ]);
   },
 } as const;

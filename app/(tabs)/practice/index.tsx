@@ -30,7 +30,6 @@ import { useBottomSheetManager } from '@/hooks/ui';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { FloatingActionButton } from '@/components/ui';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
-import { lightFeedback } from '@/utils/haptics';
 import { calculateWordCategories } from '@/utils/wordClassification';
 
 type BottomSheetKey = 'memory' | 'due' | 'streak' | 'mastered';
@@ -107,7 +106,6 @@ export default function PracticeScreen(): JSX.Element {
 
   const handleStartReview = useCallback(() => {
     if (!user) return;
-    lightFeedback();
     router.push(getPracticeReviewRoute());
   }, [user, router]);
 

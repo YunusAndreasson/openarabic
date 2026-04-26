@@ -1,4 +1,5 @@
 import { ProgressBar } from '@/components/common';
+import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
@@ -14,6 +15,9 @@ import { withAlpha } from '@/utils/colorUtils';
 import { formatSecondsToClock, safePercent } from '@/utils/dateTimeUtils';
 import { generateStorageUrl } from '@/utils/storageUtils';
 import { formatAuthorCategory } from '@/utils/stringUtils';
+
+const GLASS_AVAILABLE = isLiquidGlassAvailable();
+const CardSurface = GLASS_AVAILABLE ? GlassView : View;
 
 export interface MiniPlayerProps {
   /** Current article being played */
@@ -99,8 +103,10 @@ const MiniPlayerComponent = ({
   const cardStyle = [
     styles.card,
     {
-      backgroundColor: colors.elevation2,
-      borderWidth: StyleSheet.hairlineWidth,
+      // On iOS 26 the GlassView provides the surface; skip the opaque fill so
+      // the liquid-glass effect shows the tab bar/content behind it.
+      backgroundColor: GLASS_AVAILABLE ? 'transparent' : colors.elevation2,
+      borderWidth: GLASS_AVAILABLE ? 0 : StyleSheet.hairlineWidth,
       borderColor: withAlpha(colors.border, 0.5),
       ...LAYOUT.ELEVATION.MEDIUM,
       shadowColor: colors.shadow,
@@ -115,7 +121,10 @@ const MiniPlayerComponent = ({
       exiting={FadeOutDown.duration(TIMING_CONFIG.MEDIUM.duration)}
       style={CONTAINER_STYLE}
     >
-      <View style={cardStyle}>
+      <CardSurface
+        style={cardStyle}
+        {...(GLASS_AVAILABLE && { glassEffectStyle: 'regular' as const })}
+      >
         {/* Main Content Row */}
         <View style={styles.contentRow}>
           {/* Artwork Thumbnail */}
@@ -202,7 +211,7 @@ const MiniPlayerComponent = ({
             backgroundColor={colors.border}
           />
         </View>
-      </View>
+      </CardSurface>
     </Animated.View>
   );
 };

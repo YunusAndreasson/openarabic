@@ -22,6 +22,7 @@ import type { ReviewStateRefs, ReviewTimeRefs, SessionMetrics } from '@/types/re
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
+import { lightFeedback } from '@/utils/haptics';
 import { generateStorageUrl } from '@/utils/storageUtils';
 
 interface UseReviewProps {
@@ -538,6 +539,8 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
   const handleClose = useCallback(() => {
     const mounted = { current: true };
+
+    lightFeedback();
 
     // Stop any playing audio when closing
     stopAudioSafely();

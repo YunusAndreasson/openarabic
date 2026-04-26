@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { JSX } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { initialWindowMetrics } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LAYOUT } from '@/constants/layout';
 import { PRESS_ANIMATION_BUTTON, usePressAnimation } from '@/hooks/animations';
@@ -10,8 +10,6 @@ import { useColors } from '@/hooks/theme/useColors';
 import { lightFeedback } from '@/utils/haptics';
 
 const FAB_SIZE = 56;
-const BOTTOM_INSET = initialWindowMetrics?.insets.bottom ?? 0;
-const FAB_BOTTOM = LAYOUT.BOTTOM_BAR.HEIGHT + BOTTOM_INSET + LAYOUT.SPACING.TINY;
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface FloatingActionButtonProps {
@@ -26,10 +24,15 @@ export function FloatingActionButton({
   loading,
 }: FloatingActionButtonProps): JSX.Element {
   const colors = useColors();
+  const insets = useSafeAreaInsets();
   const { animatedStyle, handlePressIn, handlePressOut } =
     usePressAnimation(PRESS_ANIMATION_BUTTON);
 
   const iconColor = colors.onTint;
+  // FAB sits inside a tab screen whose content area is already offset above
+  // the native tab bar, so insets.bottom + a small gap is the right offset on
+  // every device — no per-platform math.
+  const fabBottom = insets.bottom + LAYOUT.SPACING.TINY;
 
   return (
     <AnimatedPressable
@@ -44,6 +47,7 @@ export function FloatingActionButton({
         styles.fab,
         animatedStyle,
         {
+          bottom: fabBottom,
           backgroundColor: colors.tint,
           shadowColor: colors.shadow,
         },
@@ -66,7 +70,6 @@ const styles = StyleSheet.create({
   fab: {
     alignItems: 'center',
     borderRadius: FAB_SIZE / 2,
-    bottom: FAB_BOTTOM,
     height: FAB_SIZE,
     justifyContent: 'center',
     position: 'absolute',
