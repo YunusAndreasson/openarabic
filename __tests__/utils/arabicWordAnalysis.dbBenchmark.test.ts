@@ -19,25 +19,30 @@ import { describe, expect, test } from '@jest/globals';
 import { ALL_DB_CASES, DB_TEST_CASES, DB_TRAIN_CASES } from '@/__tests__/fixtures/grammarGroundTruth.db';
 import { runBenchmark } from '@/utils/benchmarkUtils';
 
-// Thresholds set ~0.5pp below current measured values (98.04 / 88.24 / 92.88 / 97.64 train,
-// 99.18 / 85.82 / 92.02 / 94.22 test) so natural variance does not flake CI.
+// Thresholds reflect the honest, UI-symmetric analyzer. The benchmark gates on
+// `analysis.hasComponents` (utils/benchmarkUtils.ts), so it scores exactly what the
+// UI paints. Current measured: train 95.90 / 82.65 / 88.78 / 91.04; test 97.44 / 80.85 /
+// 88.37 / 88.44. Set ~0.5pp below so natural variance does not flake CI. The first-class
+// gate is arabicGrammar.uiInvariant.test.ts (every kept component renders on BOTH sides).
+// This dbBenchmark is a secondary signal — useful for tracking analyzer-side changes
+// during tuning, but never the deciding metric.
 const THRESHOLDS = {
   train: {
-    precision: 0.975,
-    recall: 0.875,
-    f1Score: 0.925,
-    hasComponentsAccuracy: 0.97,
+    precision: 0.95,
+    recall: 0.82,
+    f1Score: 0.88,
+    hasComponentsAccuracy: 0.905,
   },
   test: {
-    precision: 0.985,
-    recall: 0.85,
-    f1Score: 0.915,
-    hasComponentsAccuracy: 0.94,
+    precision: 0.97,
+    recall: 0.80,
+    f1Score: 0.875,
+    hasComponentsAccuracy: 0.88,
   },
   byBucket: {
-    multiWordHasComponents: { hasComponentsAccuracy: 0.985, precision: 0.995 },
+    multiWordHasComponents: { hasComponentsAccuracy: 0.94, precision: 0.96 },
     singleWord: { hasComponentsAccuracy: 1.0 },
-    longPhrase: { hasComponentsAccuracy: 0.97 },
+    longPhrase: { hasComponentsAccuracy: 0.92 },
   },
 };
 

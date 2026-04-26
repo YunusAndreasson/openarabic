@@ -387,26 +387,132 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
   //
   // Performance benefit: Saves expensive color segment generation and rendering
   // for words that provide no educational value when colored.
+  // UI-symmetry filter: drop any component whose englishMatches is empty.
+  // The Arabic-side renderer paints a component whenever it exists; the English-side
+  // renderer (utils/colorCodedTextUtils.ts) only paints when englishMatches finds the
+  // tokens in the displayed English. Bypass paths in componentDetection.ts (productive
+  // plural, ال-elision, pronoun-compound) emit components with englishMatches=[] for
+  // analyzer-recall reasons — this surfaces in the UI as Arabic-painted-no-English-painted,
+  // a P0 visual asymmetry. Keep the analyzer's pairing invariant honest by dropping those
+  // components before downstream consumers (renderer + benchmark) see them.
+  //
+  // Also drop components whose englishMatches reference tokens NOT actually in the displayed
+  // English (e.g., ال bypass setting englishMatches=['the'] when the english elides "the").
+  // Use the expanded form so contractions like "don't" still allow matches on 'not'.
+  const lowerEnglish = expandContractions(normalizedEnglish).toLowerCase();
+  const englishContainsAnyMatch = (matches: readonly string[]) =>
+    matches.some(m => {
+      const t = m.toLowerCase();
+      return new RegExp(`(^|[^\\p{L}])${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^\\p{L}]|$)`, 'u').test(lowerEnglish);
+    });
+
+  const isVisible = (c: AnalyzedComponent | undefined): c is AnalyzedComponent =>
+    !!c && c.englishMatches.length > 0 && englishContainsAnyMatch(c.englishMatches);
+
+  let visiblePrefixes = finalPrefixes.filter(isVisible);
+  let visibleSuffix = isVisible(resolvedSuffix) ? resolvedSuffix : undefined;
+  let visibleInfix = isVisible(infix) ? infix : undefined;
+  let visibleDiacritic = isVisible(resolvedDiacritic) ? resolvedDiacritic : undefined;
+
+  // Occurrence-aware filter: when two components claim the same English word and that word
+  // appears fewer times than the number of claimers, only the higher-priority component (prefix
+  // > infix > suffix; left-to-right within prefixes) survives. The renderer cannot paint the
+  // same English token in two different colors — without this, تَصْبِرُوا "you are patient" would
+  // show ت + وا both colored in Arabic but only one "you" painted in English (asymmetric).
+  // یَشُقُّهَا "it splits it open" stays whole because English has two "it"s.
+  const countOccurrences = (token: string) => {
+    const re = new RegExp(
+      `(^|[^\\p{L}])${token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^\\p{L}]|$)`,
+      'gu',
+    );
+    return (lowerEnglish.match(re) ?? []).length;
+  };
+  const remainingOccurrences = new Map<string, number>();
+  const ensureToken = (t: string) => {
+    if (!remainingOccurrences.has(t)) remainingOccurrences.set(t, countOccurrences(t));
+  };
+  const claimOne = (c: AnalyzedComponent): boolean => {
+    for (const m of c.englishMatches) {
+      const t = m.toLowerCase();
+      ensureToken(t);
+      const remaining = remainingOccurrences.get(t) ?? 0;
+      if (remaining > 0) {
+        remainingOccurrences.set(t, remaining - 1);
+        return true;
+      }
+    }
+    return false;
+  };
+  const claimedPrefixes: AnalyzedComponent[] = [];
+  for (const p of visiblePrefixes) {
+    if (claimOne(p)) claimedPrefixes.push(p);
+  }
+  visiblePrefixes = claimedPrefixes;
+  if (visibleInfix && !claimOne(visibleInfix)) visibleInfix = undefined;
+  if (visibleSuffix && !claimOne(visibleSuffix)) visibleSuffix = undefined;
+  // Diacritics that inherit color from another component merge into that component's
+  // section in formatWordAnalysis (lines 397-428 of colorSegments.ts). If the parent
+  // component is still visible, the diacritic shares its claim and rides along. If the
+  // parent was filtered out, the diacritic falls back to a fresh color slot — drop it
+  // unless it can claim its own English occurrence to keep both sides paired.
+  if (visibleDiacritic) {
+    const parentStillVisible =
+      (visibleDiacritic.inheritColorFrom === ComponentType.SUFFIX && visibleSuffix) ||
+      (visibleDiacritic.inheritColorFrom === ComponentType.PREFIX && visiblePrefixes.length > 0) ||
+      (visibleDiacritic.inheritColorFrom === ComponentType.INFIX && visibleInfix);
+    if (!parentStillVisible && !claimOne(visibleDiacritic)) {
+      visibleDiacritic = undefined;
+    }
+  }
+
+  // Recompute remaining text using only the *visible* components so reconstruction
+  // doesn't expand a single prefix to consume the whole word (line 215-217 in
+  // colorSegments.ts uses remainingArabic to decide that).
+  //
+  // When no components were filtered out, reuse the analyzer's already-computed `remaining`
+  // — it accounts for hamza-normalization quirks (إ → ا) that a naive startsWith comparison
+  // on prefixMatch.arabicMatch can miss.
+  const droppedCount =
+    finalPrefixes.length - visiblePrefixes.length +
+    (resolvedSuffix && !visibleSuffix ? 1 : 0) +
+    (infix && !visibleInfix ? 1 : 0);
+  let visibleRemaining: string;
+  if (droppedCount === 0) {
+    visibleRemaining = remaining;
+  } else {
+    visibleRemaining = normalized;
+    for (const p of visiblePrefixes) {
+      visibleRemaining = visibleRemaining.substring(p.arabicMatch.length);
+    }
+    if (visibleSuffix) {
+      visibleRemaining = visibleRemaining.substring(0, visibleRemaining.length - visibleSuffix.arabicMatch.length);
+    }
+  }
+
   const isStandalone = isSingleStandaloneComponent(
     {
-      prefixes: finalPrefixes,
-      suffix: resolvedSuffix,
-      infix,
-      diacritic: resolvedDiacritic,
+      prefixes: visiblePrefixes,
+      suffix: visibleSuffix,
+      infix: visibleInfix,
+      diacritic: visibleDiacritic,
     },
     normalized,
   );
 
+  // Preserve detected components on the WordAnalysis even when isStandalone — non-render
+  // consumers (analytics, debugging, downstream tools) need to see what was actually
+  // detected. Render decisions key on `hasComponents`, which is the single visibility flag.
+  // The legacy benchmark was rewritten to gate on hasComponents (utils/benchmarkUtils.ts).
   const result: WordAnalysis = {
     original: { arabic, english: normalizedEnglish },
-    prefixes: isStandalone ? [] : finalPrefixes,
-    infix: isStandalone ? undefined : infix,
-    suffix: isStandalone ? undefined : resolvedSuffix,
-    diacritic: isStandalone ? undefined : resolvedDiacritic,
+    prefixes: visiblePrefixes,
+    infix: visibleInfix,
+    suffix: visibleSuffix,
+    diacritic: visibleDiacritic,
     hasComponents: isStandalone
       ? false
-      : Boolean(finalPrefixes.length > 0 || infix || resolvedSuffix),
-    remainingArabic: remaining.trim(),
+      : Boolean(visiblePrefixes.length > 0 || visibleInfix || visibleSuffix || visibleDiacritic),
+    remainingArabic: visibleRemaining.trim(),
     remainingEnglish,
     hasBracketInjection,
   };

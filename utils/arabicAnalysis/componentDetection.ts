@@ -213,11 +213,11 @@ export function findComponent(
             VALIDATION_CONFIG.PREPOSITIONS_WITH_SUFFIXES as readonly string[]
           ).includes(remaining);
 
-          const isFa3eelPattern =
-            potentialFa3eelPattern &&
-            !isKnownPreposition &&
-            !hasPossessivePronoun &&
-            !hasObjectPronoun;
+          // The relaxation now only fires when `remaining` is a known preposition
+          // (إلي, علي, لدي) — those are the genuine ـيه stem+suffix cases (إِلَيْهِ
+          // "toward him"). Tightening earlier "any English pronoun" relaxation prevents
+          // FPs like سفيه "his foolish" where ه is a root letter.
+          const isFa3eelPattern = potentialFa3eelPattern && !isKnownPreposition;
 
           if (!minLengthSatisfied || !hasEnoughConsonants || isFa3eelPattern) {
             matches = false;

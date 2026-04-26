@@ -452,9 +452,23 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
   //   - English has "they/he/she" (subject) → GENERIC wins → verbConjugation color
   //   - English has "their/his/her" (possessor) → POSSESSIVE wins → possessive color
   // Example: وهم "and they" → generic | كتابهم "their book" → possessive
-  // Standalone subject pronouns هو/هي intentionally NOT registered as GENERIC
-  // suffixes: at word-end after a prefix (وهو, فهي, وهي), they are the stem
-  // pronoun, not a suffix attached to anything.
+  // Subject pronouns هو/هي register as GENERIC suffixes so combinations like وهو
+  // "and he", فهي "then she", وهي "and she" can show composition. The UI-symmetry
+  // filter in arabicWordAnalysis.ts (englishContainsAnyMatch) ensures these only
+  // surface when the English actually contains the corresponding pronoun, so they
+  // do not fire as false positives on root-final occurrences without that English token.
+  {
+    arabic: 'هو',
+    english: ['he', 'it', 'him'],
+    role: GrammaticalRole.GENERIC,
+    type: ComponentType.SUFFIX,
+  },
+  {
+    arabic: 'هي',
+    english: ['she', 'it', 'her'],
+    role: GrammaticalRole.GENERIC,
+    type: ComponentType.SUFFIX,
+  },
   {
     arabic: 'هم',
     english: ['they', 'them'],
@@ -622,11 +636,34 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
     type: ComponentType.SUFFIX,
   },
 
-  // Demonstrative pronouns intentionally NOT registered as suffixes:
-  // when they appear at word-end after a prefix (e.g. بذلك, وهذا, فذلك), they
-  // are the stem demonstrative pronoun, not a suffix. Single-word standalone
-  // forms (هذا alone) are handled by the single-word rule, which suppresses
-  // coloring regardless of internal matching.
+  // Demonstrative pronouns registered as suffixes for combinations like بهذا, وهذا,
+  // فذلك etc. The UI-symmetry filter in arabicWordAnalysis.ts ensures these only
+  // surface when the corresponding English ('this'/'that') is in the displayed text,
+  // so they do not over-trigger on root-final occurrences.
+  {
+    arabic: 'هذا',
+    role: GrammaticalRole.DEMONSTRATIVE,
+    english: ['this'],
+    type: ComponentType.SUFFIX,
+  },
+  {
+    arabic: 'هذه',
+    role: GrammaticalRole.DEMONSTRATIVE,
+    english: ['this'],
+    type: ComponentType.SUFFIX,
+  },
+  {
+    arabic: 'ذلك',
+    role: GrammaticalRole.DEMONSTRATIVE,
+    english: ['that'],
+    type: ComponentType.SUFFIX,
+  },
+  {
+    arabic: 'تلك',
+    role: GrammaticalRole.DEMONSTRATIVE,
+    english: ['that'],
+    type: ComponentType.SUFFIX,
+  },
 ].sort((a, b) => b.arabic.length - a.arabic.length); // Sort by length (longest first) for efficient matching
 
 /**

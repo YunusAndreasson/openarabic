@@ -227,21 +227,48 @@ export const generateColorCodedSegments = ({
 
   // Process sections in order (sorted by sectionIndex)
   const sectionIndices = [...bySectionIndex.keys()].sort((a, b) => a - b);
+
+  // Pre-compute which sections claim each English word so we can distribute repeated
+  // occurrences across claiming sections instead of letting the first claim them all.
+  // Example: يَشُقُّهَا "it splits it open" — prefix ي and suffix ها both claim "it".
+  // English has two "it"s; without this, the prefix's section would greedily take both
+  // and paint them in the prefix color, leaving the suffix's color asymmetric (Arabic
+  // span colored, English span uncolored).
+  const wordClaimingSections = new Map<string, Set<number>>();
+  for (const m of matchPositions) {
+    const word = displayedText.substring(m.start, m.end).toLowerCase();
+    const set = wordClaimingSections.get(word) ?? new Set<number>();
+    set.add(m.sectionIndex);
+    wordClaimingSections.set(word, set);
+  }
+
   for (const si of sectionIndices) {
     const candidates = bySectionIndex.get(si) ?? [];
     candidates.sort((a, b) => a.start - b.start);
 
     // Find the first non-overlapping candidate, then also accept all other matches
-    // of the SAME word (e.g., "from" in "from from" → both colored).
+    // of the SAME word (e.g., "from" in "from from" → both colored). But STOP claiming
+    // additional occurrences of a word once a later section also claims that word —
+    // those occurrences belong to the later section.
     let matchedWord: string | undefined;
     for (const candidate of candidates) {
       if (!isOverlapping(candidate.start, candidate.end)) {
         const word = displayedText.substring(candidate.start, candidate.end).toLowerCase();
+        const claimingSections = wordClaimingSections.get(word);
+        const isSharedWithLaterSection =
+          claimingSections != null && [...claimingSections].some(s => s > si);
+
         if (!matchedWord) {
           matchedWord = word;
+          finalMatches.push(candidate);
+          claimedRanges.push({ start: candidate.start, end: candidate.end });
+          // If this word is also claimed by a later section, leave its repeat
+          // occurrences (if any) for that later section.
+          if (isSharedWithLaterSection) break;
+          continue;
         }
-        // Accept this match if it's the same word as the first match (repeated occurrences)
-        if (word === matchedWord) {
+        // Repeat-of-same-word: only claim if no later section also claims it.
+        if (word === matchedWord && !isSharedWithLaterSection) {
           finalMatches.push(candidate);
           claimedRanges.push({ start: candidate.start, end: candidate.end });
         }

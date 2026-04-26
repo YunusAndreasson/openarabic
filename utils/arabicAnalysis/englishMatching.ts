@@ -37,6 +37,14 @@ export function shouldRejectWholeTranslationMatch(
     return false;
   }
 
+  // Multi-word triggers (e.g., 'for what', 'from whom') are designed to match exactly
+  // small contracted Arabic forms (مما, ممن). Allow them to consume the whole translation
+  // even when the Arabic word is longer than the component, because the trigger phrase
+  // *is* the meaning. Single-word triggers stay subject to the rejection (Rule 3).
+  if (candidate.includes(' ')) {
+    return false;
+  }
+
   // Rule 2: Check if this is a standalone particle (component = entire Arabic word)
   if (arabicWord && componentPattern) {
     const normalizedArabicWord = normalizeArabic(arabicWord);

@@ -175,10 +175,13 @@ export function runBenchmark(cases: GroundTruthCase[]): BenchmarkResult {
   for (const testCase of cases) {
     const analysis = analyzeArabicWord(testCase.arabic, testCase.english);
 
-    // Get detected components
-    const detectedPrefixes = analysis.prefixes.map(p => p.arabicMatch);
-    const detectedSuffix = analysis.suffix?.arabicMatch ?? null;
-    const detectedInfix = analysis.infix?.arabicMatch ?? null;
+    // Gate on hasComponents: when the analyzer says false, the UI paints nothing,
+    // so the benchmark must score nothing too — otherwise the metric drifts from
+    // user-visible truth. Components remain on the WordAnalysis for non-render
+    // consumers (debugging, analytics) but are invisible to scoring.
+    const detectedPrefixes = analysis.hasComponents ? analysis.prefixes.map(p => p.arabicMatch) : [];
+    const detectedSuffix = analysis.hasComponents ? analysis.suffix?.arabicMatch ?? null : null;
+    const detectedInfix = analysis.hasComponents ? analysis.infix?.arabicMatch ?? null : null;
 
     // Compare prefixes
     const prefixResult = comparePrefixes(detectedPrefixes, testCase.expectedPrefixes);
