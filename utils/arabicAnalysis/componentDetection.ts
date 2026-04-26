@@ -343,31 +343,21 @@ export function findInfix(
   const result = findComponent(remainingArabic, english, ARABIC_INFIXES, ComponentType.INFIX);
 
   if (result) {
+    const tokenize = (match: string): string[] => match.toLowerCase().split(ENGLISH_TOKEN_REGEX);
     const claimedWords = new Set<string>();
+    const claim = (match: string) => {
+      for (const word of tokenize(match)) claimedWords.add(word);
+    };
 
-    prefixes.forEach(prefix => {
-      prefix.englishMatches.forEach(match => {
-        match
-          .toLowerCase()
-          .split(/\s+/)
-          .forEach(word => claimedWords.add(word));
-      });
-    });
-
+    for (const prefix of prefixes) {
+      for (const match of prefix.englishMatches) claim(match);
+    }
     if (suffix) {
-      suffix.englishMatches.forEach(match => {
-        match
-          .toLowerCase()
-          .split(/\s+/)
-          .forEach(word => claimedWords.add(word));
-      });
+      for (const match of suffix.englishMatches) claim(match);
     }
 
     const allClaimed = result.englishMatches.every(match =>
-      match
-        .toLowerCase()
-        .split(/\s+/)
-        .every(word => claimedWords.has(word)),
+      tokenize(match).every(word => claimedWords.has(word)),
     );
 
     if (allClaimed) {

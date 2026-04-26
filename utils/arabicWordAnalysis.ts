@@ -85,7 +85,6 @@ import {
   type WordAnalysis,
 } from './arabicAnalysis';
 import {
-  isCriticalLength,
   MIN_REMAINING_LENGTH,
   OVERLAP_REJECTION,
   WORD_COUNT,
@@ -98,6 +97,30 @@ const SUBJECT_PRONOUN_SET = new Set(['he', 'she', 'it', 'i', 'we', 'you', 'they'
 const OBJECT_POSSESSIVE_SET = new Set([
   'his', 'her', 'its', 'it', 'my', 'our', 'your', 'you', 'their', 'him', 'me', 'us', 'them',
 ]);
+
+const REGEX_ESCAPE_RE = /[.*+?^${}()|[\]\\]/g;
+const escapeRegex = (s: string): string => s.replace(REGEX_ESCAPE_RE, '\\$&');
+
+/** Cached word-boundary regexes for English token matching. Keyed by lowercased token.
+ *  English vocabulary in component triggers is small and bounded, so these caches stay tiny. */
+const TOKEN_BOUNDARY_REGEX_CACHE = new Map<string, RegExp>();
+const TOKEN_BOUNDARY_REGEX_GLOBAL_CACHE = new Map<string, RegExp>();
+function getTokenBoundaryRegex(token: string): RegExp {
+  let re = TOKEN_BOUNDARY_REGEX_CACHE.get(token);
+  if (!re) {
+    re = new RegExp(`(^|[^\\p{L}])${escapeRegex(token)}([^\\p{L}]|$)`, 'u');
+    TOKEN_BOUNDARY_REGEX_CACHE.set(token, re);
+  }
+  return re;
+}
+function getTokenBoundaryRegexGlobal(token: string): RegExp {
+  let re = TOKEN_BOUNDARY_REGEX_GLOBAL_CACHE.get(token);
+  if (!re) {
+    re = new RegExp(`(^|[^\\p{L}])${escapeRegex(token)}([^\\p{L}]|$)`, 'gu');
+    TOKEN_BOUNDARY_REGEX_GLOBAL_CACHE.set(token, re);
+  }
+  return re;
+}
 import { normalizeTranslation } from './arabicAnalysis/translationNormalization';
 
 // Re-export types and functions for backwards compatibility
@@ -218,7 +241,7 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
         // Real case: "يكره" → ي(he) + كره, removing ה leaves "كر" (2 chars) - FALSE POSITIVE
         // Valid case: "يكتبه" → ي + كتبה, removing ה leaves "כتب" (3+ chars) - OK
         // EXCEPTION: Allow 0-1 chars (prefix+suffix compounds like מِنָّا = מن + נا with no root)
-        if (isCriticalLength(remainingAfterSuffix, OVERLAP_REJECTION.CRITICAL_LENGTH)) {
+        if (remainingAfterSuffix.length === OVERLAP_REJECTION.CRITICAL_LENGTH) {
           suffix = undefined; // Reject this suffix as false positive
         }
         // If length is 0-1, it's a valid prefix+suffix compound (keep suffix)
@@ -401,10 +424,7 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
   // Use the expanded form so contractions like "don't" still allow matches on 'not'.
   const lowerEnglish = expandContractions(normalizedEnglish).toLowerCase();
   const englishContainsAnyMatch = (matches: readonly string[]) =>
-    matches.some(m => {
-      const t = m.toLowerCase();
-      return new RegExp(`(^|[^\\p{L}])${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^\\p{L}]|$)`, 'u').test(lowerEnglish);
-    });
+    matches.some(m => getTokenBoundaryRegex(m.toLowerCase()).test(lowerEnglish));
 
   const isVisible = (c: AnalyzedComponent | undefined): c is AnalyzedComponent =>
     !!c && c.englishMatches.length > 0 && englishContainsAnyMatch(c.englishMatches);
@@ -420,13 +440,8 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
   // same English token in two different colors — without this, تَصْبِرُوا "you are patient" would
   // show ت + وا both colored in Arabic but only one "you" painted in English (asymmetric).
   // یَشُقُّهَا "it splits it open" stays whole because English has two "it"s.
-  const countOccurrences = (token: string) => {
-    const re = new RegExp(
-      `(^|[^\\p{L}])${token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^\\p{L}]|$)`,
-      'gu',
-    );
-    return (lowerEnglish.match(re) ?? []).length;
-  };
+  const countOccurrences = (token: string) =>
+    (lowerEnglish.match(getTokenBoundaryRegexGlobal(token)) ?? []).length;
   const remainingOccurrences = new Map<string, number>();
   const ensureToken = (t: string) => {
     if (!remainingOccurrences.has(t)) remainingOccurrences.set(t, countOccurrences(t));

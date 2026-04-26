@@ -110,9 +110,3 @@ export const WORD_COUNT = {
   SINGLE: 1,
 } as const;
 
-/**
- * Helper function to check if text is exactly a critical length
- */
-export function isCriticalLength(text: string, criticalLength: number): boolean {
-  return text.length === criticalLength;
-}
