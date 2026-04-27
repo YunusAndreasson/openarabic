@@ -2,7 +2,9 @@ import type { NativeStackNavigationOptions } from '@react-navigation/native-stac
 import { Platform, Text, View } from 'react-native';
 
 import { FONTS } from '@/constants/fonts';
-import { LAYOUT } from '@/constants/layout';
+
+// UIKit nav bar title is 17pt semibold; M3 small top app bar is 22pt.
+const NATIVE_TITLE_FONT_SIZE = Platform.OS === 'ios' ? 17 : 22;
 
 /**
  * Centralized navigation configuration for consistent styling across the app
@@ -34,26 +36,27 @@ export function createNavigationOptions(
   const baseOptions: NativeStackNavigationOptions = {
     headerStyle: { backgroundColor: colors.background },
     // iOS 26+: soft blur cutoff at the top edge of scroll content as it passes
-    // under the nav bar. Bottom edge explicitly hidden — the tab bar / bottom
-    // accessory chrome already handles that boundary, and the default
-    // `automatic` rendering can create visible artifacts above the tab bar.
+    // under the nav bar. Modals are full-screen so bottom is left at the
+    // platform default; tab roots opt into `bottom: 'hidden'` themselves to
+    // avoid artifacts above the tab bar / bottom accessory.
     // No-op on iOS <26 and Android.
     ...(Platform.OS === 'ios' && {
-      scrollEdgeEffects: { top: 'soft', bottom: 'hidden' },
+      scrollEdgeEffects: { top: 'soft' },
     }),
-    ...(Platform.OS === 'android' && { headerTitleAlign: 'left' }),
-    // Custom headerTitle for left-aligned large title on both platforms
+    // Force left-aligned title on both platforms. UIKit centers nav bar titles
+    // and ignores `headerTitleAlign`, so we render via custom `headerTitle` at
+    // native sizes (17pt iOS / 22pt Android) wrapped in a flex:1 View.
     ...(title
       ? {
           headerTitle: () => (
-            <View style={{ flex: 1, alignItems: 'flex-start' }}>
+            <View style={{ flex: 1 }}>
               <Text
+                numberOfLines={1}
                 style={{
                   color: colors.headingText,
-                  fontFamily: FONTS.ENGLISH_BOLD,
-                  fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
+                  fontFamily: FONTS.ENGLISH_SEMIBOLD,
+                  fontSize: NATIVE_TITLE_FONT_SIZE,
                 }}
-                numberOfLines={1}
               >
                 {title}
               </Text>

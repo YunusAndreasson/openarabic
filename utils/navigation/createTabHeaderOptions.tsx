@@ -1,4 +1,5 @@
 import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
+import { Platform } from 'react-native';
 
 import { createNavigationOptions } from './navigationOptions';
 
@@ -35,5 +36,11 @@ export function createTabHeaderOptions({
     isRegularScreen: true,
     title,
     headerRight: rightComponent,
+    // Tab roots sit above the tab bar / iOS 26 bottom accessory; explicitly
+    // hide the bottom edge effect to avoid artifacts where scroll content
+    // meets that chrome. Only relevant on iOS 26+.
+    ...(Platform.OS === 'ios' && {
+      scrollEdgeEffects: { top: 'soft', bottom: 'hidden' },
+    }),
   });
 }
