@@ -187,3 +187,4 @@ export default function ExploreScreen(): JSX.Element {
 export const options: NativeStackNavigationOptions = {
   headerShown: false,
 };
+

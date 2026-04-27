@@ -41,6 +41,12 @@ export interface MiniPlayerProps {
   /** Playback controls */
   onPlayPause: () => void;
   onTimerPress: () => void;
+  /**
+   * When true, render as flat content (no floating absolute wrapper, no glass surface,
+   * no enter/exit animation). The host container — e.g. `NativeTabs.BottomAccessory`
+   * on iOS 26+ — provides positioning, blur material, and transition animations.
+   */
+  embedded?: boolean;
 }
 
 // Layout constants
@@ -66,6 +72,7 @@ const MiniPlayerComparison = (prev: MiniPlayerProps, next: MiniPlayerProps): boo
   if (prev.article.id !== next.article.id) return false;
   if (prev.isTimerActive !== next.isTimerActive) return false;
   if (prev.duration !== next.duration) return false;
+  if (prev.embedded !== next.embedded) return false;
   if (Math.floor(prev.position) !== Math.floor(next.position)) return false;
   if (
     prev.queuePosition?.current !== next.queuePosition?.current ||
@@ -84,6 +91,7 @@ const MiniPlayerComponent = ({
   queuePosition,
   onPlayPause,
   onTimerPress,
+  embedded = false,
 }: MiniPlayerProps) => {
   const colors = useColors();
 
@@ -100,31 +108,28 @@ const MiniPlayerComponent = ({
   const timerIconColor = isTimerActive ? colors.white : colors.tint;
   const stopButtonColor = withAlpha(colors.tint, 0.12);
 
-  const cardStyle = [
-    styles.card,
-    {
-      // On iOS 26 the GlassView provides the surface; skip the opaque fill so
-      // the liquid-glass effect shows the tab bar/content behind it.
-      backgroundColor: GLASS_AVAILABLE ? 'transparent' : colors.elevation2,
-      borderWidth: GLASS_AVAILABLE ? 0 : StyleSheet.hairlineWidth,
-      borderColor: withAlpha(colors.border, 0.5),
-      ...LAYOUT.ELEVATION.MEDIUM,
-      shadowColor: colors.shadow,
-    },
-  ];
+  // When embedded (e.g. inside NativeTabs.BottomAccessory), the host container
+  // owns the surface, blur, shadow, and corner radius — render flat content only.
+  const cardStyle = embedded
+    ? [styles.embeddedCard]
+    : [
+        styles.card,
+        {
+          // On iOS 26 the GlassView provides the surface; skip the opaque fill so
+          // the liquid-glass effect shows the tab bar/content behind it.
+          backgroundColor: GLASS_AVAILABLE ? 'transparent' : colors.elevation2,
+          borderWidth: GLASS_AVAILABLE ? 0 : StyleSheet.hairlineWidth,
+          borderColor: withAlpha(colors.border, 0.5),
+          ...LAYOUT.ELEVATION.MEDIUM,
+          shadowColor: colors.shadow,
+        },
+      ];
 
-  return (
-    <Animated.View
-      entering={FadeInUp.delay(TIMING_CONSTANTS.TRANSITION_DELAY).duration(
-        TIMING_CONFIG.GENTLE.duration,
-      )}
-      exiting={FadeOutDown.duration(TIMING_CONFIG.MEDIUM.duration)}
-      style={CONTAINER_STYLE}
-    >
-      <CardSurface
-        style={cardStyle}
-        {...(GLASS_AVAILABLE && { glassEffectStyle: 'regular' as const })}
-      >
+  const Surface = embedded ? View : CardSurface;
+  const surfaceProps = embedded || !GLASS_AVAILABLE ? {} : { glassEffectStyle: 'regular' as const };
+
+  const inner = (
+    <Surface style={cardStyle} {...surfaceProps}>
         {/* Main Content Row */}
         <View style={styles.contentRow}>
           {/* Artwork Thumbnail */}
@@ -211,7 +216,22 @@ const MiniPlayerComponent = ({
             backgroundColor={colors.border}
           />
         </View>
-      </CardSurface>
+    </Surface>
+  );
+
+  if (embedded) {
+    return inner;
+  }
+
+  return (
+    <Animated.View
+      entering={FadeInUp.delay(TIMING_CONSTANTS.TRANSITION_DELAY).duration(
+        TIMING_CONFIG.GENTLE.duration,
+      )}
+      exiting={FadeOutDown.duration(TIMING_CONFIG.MEDIUM.duration)}
+      style={CONTAINER_STYLE}
+    >
+      {inner}
     </Animated.View>
   );
 };
@@ -225,6 +245,13 @@ const styles = StyleSheet.create({
     height: MINI_PLAYER_HEIGHT,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
+  },
+
+  // For NativeTabs.BottomAccessory hosting (iOS 26+): host owns surface chrome.
+  embeddedCard: {
+    height: MINI_PLAYER_HEIGHT,
+    overflow: 'hidden',
+    backgroundColor: 'transparent',
   },
 
   contentRow: {

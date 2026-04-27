@@ -54,4 +54,5 @@ module.exports = {
   withSpring: value => value,
   withTiming: value => value,
   runOnJS: fn => fn,
+  cubicBezier: () => 'linear',
 };

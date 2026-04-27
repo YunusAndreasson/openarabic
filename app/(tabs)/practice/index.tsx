@@ -50,7 +50,6 @@ export default function PracticeScreen(): JSX.Element {
   // Add ref to prevent infinite re-renders
   const hasPrefetchedRef = useRef(false);
 
-
   // Prefetch vocabulary data on first focus (deduped via ref)
   // Note: useReview.handleClose already invalidates queries when returning from review,
   // so we don't need to refetch here - React Query's staleTime handles freshness
@@ -172,7 +171,6 @@ export default function PracticeScreen(): JSX.Element {
         ]}
         scrollViewProps={{
           showsVerticalScrollIndicator: false,
-          contentInsetAdjustmentBehavior: 'never' as const,
         }}
       >
         <Animated.View

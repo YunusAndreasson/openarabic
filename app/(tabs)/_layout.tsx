@@ -3,18 +3,27 @@ import { Fragment, useEffect } from 'react';
 import { Platform } from 'react-native';
 
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { isLiquidGlassAvailable } from 'expo-glass-effect';
 import { router } from 'expo-router';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 
+import { GlobalMiniPlayer } from '@/components/audio';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { TAB_SCREENS } from '@/constants/tabs';
 import { useAuth } from '@/hooks/auth';
+import { useShouldShowMiniPlayer } from '@/hooks/audio/useShouldShowMiniPlayer';
 import { useColors } from '@/hooks/theme';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
+
+// iOS 26+ supports `NativeTabs.BottomAccessory` and the liquid-glass tab bar that
+// integrates with the accessory's minimize-on-scroll behavior. Use it as the home
+// for the MiniPlayer there; older iOS / Android keep the floating overlay.
+const HAS_BOTTOM_ACCESSORY = isLiquidGlassAvailable();
 
 export default function TabLayout(): JSX.Element {
   const { session, isLoading } = useAuth();
   const colors = useColors();
+  const showMiniPlayer = useShouldShowMiniPlayer();
 
   // Get due words count using the same hook as the practice screen
   const { dueWords } = useFSRSQueries({ userId: session?.user?.id });
@@ -78,6 +87,11 @@ export default function TabLayout(): JSX.Element {
           )}
         </NativeTabs.Trigger>
       ))}
+      {HAS_BOTTOM_ACCESSORY && showMiniPlayer && (
+        <NativeTabs.BottomAccessory>
+          <GlobalMiniPlayer embedded />
+        </NativeTabs.BottomAccessory>
+      )}
     </NativeTabs>
   );
 }

@@ -31,11 +31,16 @@ export function createNavigationOptions(
 ): NativeStackNavigationOptions {
   const { isRegularScreen, title, ...restOverrides } = options;
 
-  // Use native header elements to enable iOS 26 liquid glass
   const baseOptions: NativeStackNavigationOptions = {
-    headerStyle: {
-      backgroundColor: colors.background,
-    },
+    headerStyle: { backgroundColor: colors.background },
+    // iOS 26+: soft blur cutoff at the top edge of scroll content as it passes
+    // under the nav bar. Bottom edge explicitly hidden — the tab bar / bottom
+    // accessory chrome already handles that boundary, and the default
+    // `automatic` rendering can create visible artifacts above the tab bar.
+    // No-op on iOS <26 and Android.
+    ...(Platform.OS === 'ios' && {
+      scrollEdgeEffects: { top: 'soft', bottom: 'hidden' },
+    }),
     ...(Platform.OS === 'android' && { headerTitleAlign: 'left' }),
     // Custom headerTitle for left-aligned large title on both platforms
     ...(title

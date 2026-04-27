@@ -129,6 +129,13 @@ jest.mock('expo-file-system', () => ({
   writeAsStringAsync: jest.fn().mockResolvedValue(undefined),
 }));
 
+// Mini-player visibility hook is a thin wrapper over useGlobalAudioState which
+// pulls in the full audio + playlist + toast stack. Tests don't exercise the
+// player; stub it to false so layouts that gate on it stay inert.
+jest.mock('@/hooks/audio/useShouldShowMiniPlayer', () => ({
+  useShouldShowMiniPlayer: () => false,
+}));
+
 // Mock audio cache service
 jest.mock('@/services/audioCache', () => ({
   audioCache: {
@@ -321,6 +328,9 @@ jest.mock('react-native-reanimated', () => {
       in: jest.fn(fn => fn),
       inOut: jest.fn(fn => fn),
     },
+
+    // CSS-style easing helper used at module scope (e.g. ProgressBar.tsx)
+    cubicBezier: jest.fn(() => 'linear'),
 
     // Animated components
     createAnimatedComponent: component =>
