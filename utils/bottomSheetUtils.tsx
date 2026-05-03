@@ -8,10 +8,10 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Extrapolation,
   interpolate,
-  runOnJS,
   useAnimatedReaction,
   useAnimatedStyle,
 } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import { useBlurProps } from '@/hooks/ui/useBlurProps';
 
@@ -41,7 +41,7 @@ const BlurBackdropComponent = ({ animatedIndex, style }: BottomSheetBackdropProp
   const tapHandler = useMemo(
     () =>
       Gesture.Tap().onEnd(() => {
-        runOnJS(close)();
+        scheduleOnRN(close);
       }),
     [close],
   );
@@ -62,7 +62,7 @@ const BlurBackdropComponent = ({ animatedIndex, style }: BottomSheetBackdropProp
     () => animatedIndex.value <= DISAPPEARS_ON_INDEX,
     (shouldDisable, previous) => {
       if (shouldDisable !== previous) {
-        runOnJS(handleContainerTouchability)(shouldDisable);
+        scheduleOnRN(handleContainerTouchability, shouldDisable);
       }
     },
     [],
