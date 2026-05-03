@@ -8,7 +8,7 @@ import { InteractionManager, StyleSheet } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { ThemedView } from '@/components/ThemedView';
-import { ErrorState } from '@/components/common';
+import { ErrorState, type GenericBottomSheetHandle } from '@/components/common';
 import {
   DueWordsBottomSheet,
   MemoryRetentionBottomSheet,
@@ -26,13 +26,10 @@ import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useStudyStreak } from '@/hooks/practice/useStudyStreak';
-import { useBottomSheetManager } from '@/hooks/ui';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { FloatingActionButton } from '@/components/ui';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 import { calculateWordCategories } from '@/utils/wordClassification';
-
-type BottomSheetKey = 'memory' | 'due' | 'streak' | 'mastered';
 
 export default function PracticeScreen(): JSX.Element {
   const { user } = useAuth();
@@ -40,8 +37,15 @@ export default function PracticeScreen(): JSX.Element {
   const queryClient = useQueryClient();
   const { prefetchVocabularyData } = useAppPreloader();
 
-  // Bottom sheet visibility management (only one sheet visible at a time)
-  const { showSheet, hideSheet, isVisible } = useBottomSheetManager<BottomSheetKey>();
+  // Bottom sheet refs — imperative present()/dismiss() per @gorhom/bottom-sheet docs.
+  // The previous state-based useEffect approach was unreliable: setActiveSheet(sameValue)
+  // is a no-op so the effect didn't re-fire on repeat taps, and the modal could be
+  // unmounted at the moment present() ran. Refs sidestep both issues entirely; the
+  // library's `stackBehavior: 'replace'` already enforces the "only one open" rule.
+  const memorySheetRef = useRef<GenericBottomSheetHandle>(null);
+  const dueSheetRef = useRef<GenericBottomSheetHandle>(null);
+  const streakSheetRef = useRef<GenericBottomSheetHandle>(null);
+  const masteredSheetRef = useRef<GenericBottomSheetHandle>(null);
 
   // Fetch study streak data
   const { streak } = useStudyStreak();
@@ -93,11 +97,11 @@ export default function PracticeScreen(): JSX.Element {
   // Don't show error if user is not authenticated yet - this is expected during auth flow
   const shouldShowError = error && user;
 
-  // Bottom sheet press handlers
-  const handleMemoryStrengthInfo = useCallback(() => showSheet('memory'), [showSheet]);
-  const handleDuePress = useCallback(() => showSheet('due'), [showSheet]);
-  const handleStreakPress = useCallback(() => showSheet('streak'), [showSheet]);
-  const handleMasteredPress = useCallback(() => showSheet('mastered'), [showSheet]);
+  // Bottom sheet press handlers — imperatively present via ref
+  const handleMemoryStrengthInfo = useCallback(() => memorySheetRef.current?.present(), []);
+  const handleDuePress = useCallback(() => dueSheetRef.current?.present(), []);
+  const handleStreakPress = useCallback(() => streakSheetRef.current?.present(), []);
+  const handleMasteredPress = useCallback(() => masteredSheetRef.current?.present(), []);
 
   // Fix: Use the actual due words data count instead of database view
   // This ensures consistency between display and practice session
@@ -204,11 +208,11 @@ export default function PracticeScreen(): JSX.Element {
         <FloatingActionButton icon="flash" onPress={handleStartReview} />
       )}
 
-      {/* Coordinated Bottom Sheets - only one can be visible at a time */}
-      <MemoryRetentionBottomSheet isVisible={isVisible('memory')} onClose={hideSheet} />
-      <DueWordsBottomSheet isVisible={isVisible('due')} onClose={hideSheet} />
-      <StudyStreakBottomSheet isVisible={isVisible('streak')} onClose={hideSheet} />
-      <WordsMasteredBottomSheet isVisible={isVisible('mastered')} onClose={hideSheet} />
+      {/* Coordinated Bottom Sheets — stackBehavior: 'replace' enforces one-at-a-time */}
+      <MemoryRetentionBottomSheet ref={memorySheetRef} />
+      <DueWordsBottomSheet ref={dueSheetRef} />
+      <StudyStreakBottomSheet ref={streakSheetRef} />
+      <WordsMasteredBottomSheet ref={masteredSheetRef} />
     </ThemedView>
   );
 }

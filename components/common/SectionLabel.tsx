@@ -4,6 +4,8 @@ import type { FC } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 
+type SectionLabelDensity = 'comfortable' | 'compact' | 'first';
+
 interface SectionLabelProps {
   /** The label text (will be uppercased automatically) */
   title: string;
@@ -11,7 +13,20 @@ interface SectionLabelProps {
   subtitle?: string;
   /** Optional container style override */
   style?: StyleProp<ViewStyle>;
+  /**
+   * Vertical rhythm:
+   * - `comfortable` (default): 24px top — clear separation between top-level sections
+   * - `compact`: 16px top — for back-to-back rails inside the same group
+   * - `first`: 12px top — for the first section on a screen (avoids extra gap below header)
+   */
+  density?: SectionLabelDensity;
 }
+
+const DENSITY_TOP_PADDING: Record<SectionLabelDensity, number> = {
+  comfortable: LAYOUT.SPACING.XLARGE, // 24
+  compact: LAYOUT.SPACING.LARGE, // 16
+  first: LAYOUT.SPACING.MEDIUM, // 12
+};
 
 /**
  * Subtle uppercase section label for filter lists and grouped content.
@@ -19,8 +34,13 @@ interface SectionLabelProps {
  *
  * Example: CATEGORIES, AUTHORS, DIFFICULTY, CONTINUE READING, UNREAD
  */
-export const SectionLabel: FC<SectionLabelProps> = ({ title, subtitle, style }) => (
-  <View style={[styles.container, style]}>
+export const SectionLabel: FC<SectionLabelProps> = ({
+  title,
+  subtitle,
+  style,
+  density = 'comfortable',
+}) => (
+  <View style={[styles.container, { paddingTop: DENSITY_TOP_PADDING[density] }, style]}>
     <ThemedText type="overline">{title}</ThemedText>
     {subtitle ? (
       <ThemedText type="caption" variant="secondary" style={styles.subtitle}>
@@ -34,7 +54,6 @@ SectionLabel.displayName = 'SectionLabel';
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: LAYOUT.SPACING.XLARGE, // 24px - clear section separation
     paddingBottom: LAYOUT.SPACING.SMALL, // 8px
     paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING, // 12px
   },

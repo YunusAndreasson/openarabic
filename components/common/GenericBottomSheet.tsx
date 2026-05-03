@@ -1,6 +1,6 @@
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
-import type { FC, ReactNode } from 'react';
-import { useEffect, useMemo, useRef } from 'react';
+import type { ReactNode } from 'react';
+import { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
@@ -16,10 +16,8 @@ const BOTTOM_SHEET_PROPS = {
 } as const;
 
 export interface GenericBottomSheetProps {
-  /** Controls bottom sheet visibility */
-  isVisible: boolean;
-  /** Callback when sheet is dismissed */
-  onClose: () => void;
+  /** Optional callback fired after the sheet finishes dismissing */
+  onClose?: () => void;
   /** Optional title - renders BottomSheetHeader if provided */
   title?: string;
   /** Optional subtitle - requires title to be provided */
@@ -29,80 +27,73 @@ export interface GenericBottomSheetProps {
 }
 
 /**
+ * Imperative handle exposed to parents — call `.present()` from a press handler
+ * to open and `.dismiss()` to close. Matches the @gorhom/bottom-sheet
+ * docs-recommended pattern of controlling the modal via a ref rather than
+ * routing visibility through React state, which is fragile when modals
+ * remount, dismiss animations race, or the same sheet is requested twice.
+ */
+export interface GenericBottomSheetHandle {
+  present: () => void;
+  dismiss: () => void;
+}
+
+/**
  * Generic bottom sheet component that consolidates all common bottom sheet patterns.
  *
- * Use this component for any bottom sheet that needs:
- * - Standard visibility control (present/dismiss)
- * - Optional title/subtitle header
- * - Custom content
+ * Imperative API — open via ref:
  *
  * @example
- * // With title and subtitle
- * <GenericBottomSheet
- *   isVisible={isVisible}
- *   onClose={onClose}
- *   title="Chart Title"
- *   subtitle="Chart description"
- * >
- *   <MyChart data={data} />
+ * ```tsx
+ * const sheetRef = useRef<GenericBottomSheetHandle>(null);
+ * <Button onPress={() => sheetRef.current?.present()} />
+ * <GenericBottomSheet ref={sheetRef} title="Chart">
+ *   <MyChart />
  * </GenericBottomSheet>
- *
- * @example
- * // With title only
- * <GenericBottomSheet
- *   isVisible={isVisible}
- *   onClose={onClose}
- *   title="Sleep Timer"
- * >
- *   <TimerOptions />
- * </GenericBottomSheet>
- *
+ * ```
  */
-export const GenericBottomSheet: FC<GenericBottomSheetProps> = ({
-  isVisible,
-  onClose,
-  title,
-  subtitle,
-  children,
-}) => {
-  const colors = useColors();
-  const bottomSheetRef = useRef<BottomSheetModal>(null);
+export const GenericBottomSheet = forwardRef<GenericBottomSheetHandle, GenericBottomSheetProps>(
+  function GenericBottomSheet({ onClose, title, subtitle, children }, ref) {
+    const colors = useColors();
+    const bottomSheetRef = useRef<BottomSheetModal>(null);
 
-  useEffect(() => {
-    if (isVisible) {
-      bottomSheetRef.current?.present();
-    } else {
-      bottomSheetRef.current?.dismiss();
-    }
-  }, [isVisible]);
+    useImperativeHandle(
+      ref,
+      () => ({
+        present: () => bottomSheetRef.current?.present(),
+        dismiss: () => bottomSheetRef.current?.dismiss(),
+      }),
+      [],
+    );
 
-  const dynamicStyles = useMemo(
-    () => ({
-      bottomSheet: [styles.bottomSheet, { backgroundColor: colors.elevation1 }],
-      indicator: [styles.indicator, { backgroundColor: colors.modalIndicator }],
-    }),
-    [colors.elevation1, colors.modalIndicator],
-  );
+    const dynamicStyles = useMemo(
+      () => ({
+        bottomSheet: [styles.bottomSheet, { backgroundColor: colors.elevation1 }],
+        indicator: [styles.indicator, { backgroundColor: colors.modalIndicator }],
+      }),
+      [colors.elevation1, colors.modalIndicator],
+    );
 
-  return (
-    <BottomSheetModal
-      ref={bottomSheetRef}
-      onDismiss={onClose}
-      containerStyle={styles.modalContainer}
-      backgroundStyle={dynamicStyles.bottomSheet}
-      handleIndicatorStyle={dynamicStyles.indicator}
-      backdropComponent={BottomSheetBackdrop}
-      {...BOTTOM_SHEET_PROPS}
-    >
-      <BottomSheetView style={styles.container}>
-        <BottomSheetErrorBoundary sheetName={title ?? 'Generic'}>
-          {title ? <BottomSheetHeader title={title} subtitle={subtitle || ''} /> : null}
-          {children}
-        </BottomSheetErrorBoundary>
-      </BottomSheetView>
-    </BottomSheetModal>
-  );
-};
+    return (
+      <BottomSheetModal
+        ref={bottomSheetRef}
+        onDismiss={onClose}
+        containerStyle={styles.modalContainer}
+        backgroundStyle={dynamicStyles.bottomSheet}
+        handleIndicatorStyle={dynamicStyles.indicator}
+        backdropComponent={BottomSheetBackdrop}
+        {...BOTTOM_SHEET_PROPS}
+      >
+        <BottomSheetView style={styles.container}>
+          <BottomSheetErrorBoundary sheetName={title ?? 'Generic'}>
+            {title ? <BottomSheetHeader title={title} subtitle={subtitle || ''} /> : null}
+            {children}
+          </BottomSheetErrorBoundary>
+        </BottomSheetView>
+      </BottomSheetModal>
+    );
+  },
+);
 
 GenericBottomSheet.displayName = 'GenericBottomSheet';
 

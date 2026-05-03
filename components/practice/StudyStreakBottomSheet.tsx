@@ -1,23 +1,19 @@
-import { memo, useMemo } from 'react';
+import { forwardRef, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import {
   BottomSheetHeader,
   BottomSheetStateHandler,
   GenericBottomSheet,
+  type GenericBottomSheetHandle,
 } from '@/components/common';
 import { StreakChart, StreakMetrics } from '@/components/explore';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useStudyStreakHistory } from '@/hooks/practice/useStudyStreakHistory';
 
-interface StudyStreakBottomSheetProps {
-  isVisible: boolean;
-  onClose: () => void;
-}
-
-export const StudyStreakBottomSheet = memo<StudyStreakBottomSheetProps>(
-  ({ isVisible, onClose }) => {
+export const StudyStreakBottomSheet = forwardRef<GenericBottomSheetHandle>(
+  function StudyStreakBottomSheet(_props, ref) {
     const {
       streakHistory,
       isLoading: isStreakLoading,
@@ -36,7 +32,7 @@ export const StudyStreakBottomSheet = memo<StudyStreakBottomSheetProps>(
     }, [streakHistory]);
 
     return (
-      <GenericBottomSheet isVisible={isVisible} onClose={onClose}>
+      <GenericBottomSheet ref={ref}>
         <BottomSheetStateHandler
           isLoading={isStreakLoading}
           isError={isStreakError}

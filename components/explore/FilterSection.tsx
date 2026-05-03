@@ -10,7 +10,17 @@ import { getCategoryDisplayName, getCategorySubtitle } from '@/utils/stringUtils
 
 const styles = StyleSheet.create({
   filterSectionContainer: {
-    gap: LAYOUT.SPACING.SMALL, // 8px - consistent with Practice screen
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    rowGap: LAYOUT.SPACING.SMALL,
+    columnGap: LAYOUT.SPACING.SMALL,
+  },
+  // Two-column grid using flexBasis. The 1px deduction keeps rounding-safe so two
+  // siblings + an 8px column gap never overflow the parent row.
+  gridItem: {
+    flexBasis: '49%',
+    flexGrow: 1,
+    minWidth: 0,
   },
 });
 
@@ -115,13 +125,14 @@ export function FilterSection({ items, onSelect, filterType }: FilterSectionProp
   return (
     <View style={styles.filterSectionContainer}>
       {items.map(item => (
-        <CompactNavCard
-          key={`filter-${item.id}`}
-          count={item.count}
-          label={getCategoryDisplayName(item.name)}
-          subtitle={getCategorySubtitle(item.name)}
-          onPress={handleSelect(item.id, item.name)}
-        />
+        <View key={`filter-${item.id}`} style={styles.gridItem}>
+          <CompactNavCard
+            count={item.count}
+            label={getCategoryDisplayName(item.name)}
+            subtitle={getCategorySubtitle(item.name)}
+            onPress={handleSelect(item.id, item.name)}
+          />
+        </View>
       ))}
     </View>
   );

@@ -46,6 +46,13 @@ const MOUNT_FADE_IN_STYLE = {
 // Comfortable reading space constant
 const COMFORTABLE_READING_SPACE = MIN_TOUCH_TARGET.MEDIUM;
 
+/**
+ * How much the title block overlaps the parallax hero gradient at the bottom.
+ * Tuned so the title sits inside the gradient fade-out (not under the bright
+ * image area), giving a magazine-style hero / title relationship.
+ */
+const TITLE_HERO_OVERLAP = LAYOUT.SPACING.XXXLARGE + LAYOUT.SPACING.SMALL; // 56
+
 // Static styles for better performance
 const styles = StyleSheet.create({
   content: {
@@ -59,17 +66,16 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   titleContainer: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    marginTop: -LAYOUT.SPACING.XLARGE, // Reduced overlap for less aggressive positioning
-    paddingBottom: LAYOUT.SPACING.SMALL, // Increased from TINY for better spacing
+    paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
+    marginTop: -TITLE_HERO_OVERLAP,
+    paddingBottom: LAYOUT.SPACING.SMALL,
     zIndex: LAYOUT.Z_INDEX.OVERLAY,
   },
   titleText: {
-    width: '100%', // Full width for title without button interference
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXHUGE, // Larger title (34px)
-    letterSpacing: -0.5, // Tighter tracking for refined modern look
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXHUGE * 1.15, // Better multi-line spacing
-    // textShadowColor applied inline via colors.textShadow for theme consistency
+    width: '100%',
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXHUGE, // 38
+    letterSpacing: LETTER_SPACING.EXTRA_TIGHT, // -0.5
+    lineHeight: Math.round(LAYOUT.TYPOGRAPHY.SCALE.XXHUGE * LINE_HEIGHT_MULTIPLIERS.TIGHT), // 1.2 — multi-line spacing
     textShadowOffset: LAYOUT.TEXT_SHADOW.offset,
     textShadowRadius: LAYOUT.TEXT_SHADOW.radius,
   },
@@ -77,14 +83,14 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
   authorContainer: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
     paddingBottom: LAYOUT.SPACING.SMALL,
     zIndex: LAYOUT.Z_INDEX.OVERLAY,
   },
   summaryContainer: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.LARGE, // Increased breathing room
-    marginTop: LAYOUT.SPACING.SMALL, // Added margin for separation
+    paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
+    paddingBottom: LAYOUT.SPACING.LARGE,
+    marginTop: LAYOUT.SPACING.SMALL,
     zIndex: LAYOUT.Z_INDEX.OVERLAY,
   },
   summaryText: {
@@ -172,23 +178,19 @@ const ArticleContentInternal = function ArticleContent({
   // React Compiler auto-memoizes
   const rightOverlayPadding = MIN_TOUCH_TARGET.MEDIUM + LAYOUT.SPACING.LARGE;
 
-  // React Compiler auto-memoizes
-  const titleContainerStyle = [
-    styles.titleContainer,
-    {
-      paddingRight: rightOverlayPadding,
-      marginTop: -(LAYOUT.SPACING.XXXLARGE + LAYOUT.SPACING.SMALL),
-    },
-  ];
+  // React Compiler auto-memoizes — title needs extra right padding so it never sits
+  // under the floating action buttons in the top-right corner.
+  const titleContainerStyle = [styles.titleContainer, { paddingRight: rightOverlayPadding }];
 
   // React Compiler auto-memoizes
   const authorContainerStyle = [styles.authorContainer, { paddingRight: rightOverlayPadding }];
 
+  // 1px solid divider at full border opacity — the previous hairline + 50% opacity
+  // was effectively invisible in light mode and a smudge in dark mode.
   const dividerStyle = {
-    height: StyleSheet.hairlineWidth,
+    height: LAYOUT.BORDER.WIDTH.NORMAL,
     backgroundColor: colors.border,
-    opacity: LAYOUT.OPACITY.MEDIUM,
-    marginHorizontal: LAYOUT.SPACING.MEDIUM,
+    marginHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
     marginTop: LAYOUT.SPACING.TINY,
     marginBottom: LAYOUT.SPACING.MEDIUM,
   } as const;

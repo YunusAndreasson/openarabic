@@ -1,26 +1,36 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, View } from 'react-native';
 
+import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+
+interface EmptyStateAction {
+  label: string;
+  onPress: () => void;
+  icon?: keyof typeof Ionicons.glyphMap;
+}
 
 interface EmptyStateProps {
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
   hint: string;
   iconSize?: number;
+  /** Optional primary CTA shown below the hint */
+  action?: EmptyStateAction;
 }
 
 /**
  * Generic empty state component used across the app.
- * Displays an icon, title, and hint message.
+ * Displays an icon, title, hint message, and optional primary action.
  */
 export function EmptyState({
   icon,
   title,
   hint,
   iconSize = LAYOUT.BUTTON.ICON_SIZE.HERO,
+  action,
 }: EmptyStateProps) {
   const colors = useColors();
 
@@ -40,6 +50,17 @@ export function EmptyState({
         </ThemedText>
       </View>
 
+      {action && (
+        <View style={styles.actionContainer}>
+          <ThemedButton
+            title={action.label}
+            icon={action.icon}
+            onPress={action.onPress}
+            variant="filled"
+            size="medium"
+          />
+        </View>
+      )}
     </View>
   );
 }
@@ -70,5 +91,9 @@ const styles = StyleSheet.create({
   hint: {
     textAlign: 'center',
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LINE_HEIGHT_MULTIPLIERS.LOOSE, // 1.6x for better readability
+  },
+  actionContainer: {
+    marginTop: LAYOUT.SPACING.XLARGE,
+    minWidth: 200,
   },
 });

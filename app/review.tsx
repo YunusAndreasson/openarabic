@@ -207,7 +207,12 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
               right: LAYOUT.SPACING.LARGE,
             }}
           >
-            <ReviewBottomActions onShowContextualHelp={handleShowContextualHelp} />
+            <ReviewBottomActions
+              onPressLeft={handleSwipeLeft}
+              onPressRight={handleSwipeRight}
+              onShowContextualHelp={handleShowContextualHelp}
+              disabled={isUpdating}
+            />
           </View>
         </View>
 

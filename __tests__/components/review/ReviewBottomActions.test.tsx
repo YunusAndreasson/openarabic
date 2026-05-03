@@ -1,11 +1,8 @@
 /**
  * ReviewBottomActions Component Tests
  *
- * Tests review action buttons (Don't Know, Know).
- * Note: Hint button was removed - hesitation detection replaces tap-to-reveal.
- *
- * Modern Jest 29 Patterns:
- * - ✅ @jest/globals explicit imports
+ * Tests the full-width action buttons that mirror the swipe gestures.
+ * Tap = submit answer (haptic feedback). Long-press = surface contextual help.
  */
 
 import { fireEvent, render } from '@testing-library/react-native';
@@ -32,13 +29,14 @@ jest.mock('@/hooks/theme/useColors', () =>
   }),
 );
 
-// Mock haptics
+// Mock haptics — capture the actual functions invoked by the component
 const mockLightFeedback = jest.fn();
+const mockSelectionFeedback = jest.fn();
 jest.mock('@/utils/haptics', () => ({
-  lightFeedback: jest.fn(),
+  lightFeedback: () => mockLightFeedback(),
+  selectionFeedback: () => mockSelectionFeedback(),
   mediumFeedback: jest.fn(),
   successFeedback: jest.fn(),
-  selectionFeedback: jest.fn(),
   errorFeedback: jest.fn(),
 }));
 
@@ -68,6 +66,8 @@ jest.mock('@/constants/tutorials', () => ({
 }));
 
 describe('ReviewBottomActions', () => {
+  const mockOnPressLeft = jest.fn();
+  const mockOnPressRight = jest.fn();
   const mockOnShowContextualHelp = jest.fn();
 
   beforeEach(() => {
@@ -75,72 +75,103 @@ describe('ReviewBottomActions', () => {
   });
 
   describe('Rendering', () => {
-    test('renders two action indicators (left and right)', () => {
+    test('renders two labeled action buttons', () => {
       const { getByText } = render(<ReviewBottomActions />);
 
       expect(getByText("Don't Know")).toBeTruthy();
       expect(getByText('Know')).toBeTruthy();
     });
 
-    test('renders chevron icons for left and right actions', () => {
+    test('renders close and checkmark icons for the action buttons', () => {
       const { getByTestId } = render(<ReviewBottomActions />);
 
-      expect(getByTestId('icon-chevron-back')).toBeTruthy();
-      expect(getByTestId('icon-chevron-forward')).toBeTruthy();
+      expect(getByTestId('icon-close')).toBeTruthy();
+      expect(getByTestId('icon-checkmark')).toBeTruthy();
     });
   });
 
-  describe("Left Indicator (Don't Know)", () => {
-    test('calls onShowContextualHelp when pressed', () => {
+  describe("Left button (Don't Know)", () => {
+    test('calls onPressLeft when pressed', () => {
+      const { getByText } = render(<ReviewBottomActions onPressLeft={mockOnPressLeft} />);
+
+      fireEvent.press(getByText("Don't Know"));
+
+      expect(mockOnPressLeft).toHaveBeenCalledTimes(1);
+    });
+
+    test('triggers light haptic feedback on press', () => {
+      const { getByText } = render(<ReviewBottomActions onPressLeft={mockOnPressLeft} />);
+
+      fireEvent.press(getByText("Don't Know"));
+
+      expect(mockLightFeedback).toHaveBeenCalledTimes(1);
+    });
+
+    test('long-press surfaces SWIPE_LEFT contextual help', () => {
       const { getByText } = render(
         <ReviewBottomActions onShowContextualHelp={mockOnShowContextualHelp} />,
+      );
+
+      fireEvent(getByText("Don't Know"), 'longPress');
+
+      expect(mockOnShowContextualHelp).toHaveBeenCalledWith('swipe_left');
+    });
+  });
+
+  describe('Right button (Know)', () => {
+    test('calls onPressRight when pressed', () => {
+      const { getByText } = render(<ReviewBottomActions onPressRight={mockOnPressRight} />);
+
+      fireEvent.press(getByText('Know'));
+
+      expect(mockOnPressRight).toHaveBeenCalledTimes(1);
+    });
+
+    test('triggers selection haptic feedback on press', () => {
+      const { getByText } = render(<ReviewBottomActions onPressRight={mockOnPressRight} />);
+
+      fireEvent.press(getByText('Know'));
+
+      expect(mockSelectionFeedback).toHaveBeenCalledTimes(1);
+    });
+
+    test('long-press surfaces SWIPE_RIGHT contextual help', () => {
+      const { getByText } = render(
+        <ReviewBottomActions onShowContextualHelp={mockOnShowContextualHelp} />,
+      );
+
+      fireEvent(getByText('Know'), 'longPress');
+
+      expect(mockOnShowContextualHelp).toHaveBeenCalledWith('swipe_right');
+    });
+  });
+
+  describe('Disabled state', () => {
+    test('does not call onPressLeft when disabled', () => {
+      const { getByText } = render(
+        <ReviewBottomActions onPressLeft={mockOnPressLeft} disabled />,
       );
 
       fireEvent.press(getByText("Don't Know"));
 
-      expect(mockOnShowContextualHelp).toHaveBeenCalledTimes(1);
+      expect(mockOnPressLeft).not.toHaveBeenCalled();
     });
 
-    test('does not trigger haptic feedback when pressed', () => {
+    test('does not call onPressRight when disabled', () => {
       const { getByText } = render(
-        <ReviewBottomActions onShowContextualHelp={mockOnShowContextualHelp} />,
-      );
-
-      fireEvent.press(getByText("Don't Know"));
-
-      // Haptics removed for review interactions (2025 UX best practice)
-      expect(mockLightFeedback).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('Right Indicator (Know)', () => {
-    test('calls onShowContextualHelp when pressed', () => {
-      const { getByText } = render(
-        <ReviewBottomActions onShowContextualHelp={mockOnShowContextualHelp} />,
+        <ReviewBottomActions onPressRight={mockOnPressRight} disabled />,
       );
 
       fireEvent.press(getByText('Know'));
 
-      expect(mockOnShowContextualHelp).toHaveBeenCalledTimes(1);
-    });
-
-    test('does not trigger haptic feedback when pressed', () => {
-      const { getByText } = render(
-        <ReviewBottomActions onShowContextualHelp={mockOnShowContextualHelp} />,
-      );
-
-      fireEvent.press(getByText('Know'));
-
-      // Haptics removed for review interactions (2025 UX best practice)
-      expect(mockLightFeedback).not.toHaveBeenCalled();
+      expect(mockOnPressRight).not.toHaveBeenCalled();
     });
   });
 
-  describe('No Handlers', () => {
+  describe('No handlers', () => {
     test('renders without handlers', () => {
       const { getByText } = render(<ReviewBottomActions />);
 
-      // Should render without errors
       expect(getByText("Don't Know")).toBeTruthy();
       expect(getByText('Know')).toBeTruthy();
     });
@@ -148,17 +179,8 @@ describe('ReviewBottomActions', () => {
     test('pressing buttons without handlers does not throw', () => {
       const { getByText } = render(<ReviewBottomActions />);
 
-      // Should not throw
       fireEvent.press(getByText("Don't Know"));
       fireEvent.press(getByText('Know'));
-    });
-  });
-
-  describe('Visual Elements', () => {
-    test('renders with correct structure', () => {
-      const { toJSON } = render(<ReviewBottomActions />);
-
-      expect(toJSON()).toBeTruthy();
     });
   });
 });

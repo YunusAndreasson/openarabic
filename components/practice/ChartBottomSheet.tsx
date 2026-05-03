@@ -1,15 +1,11 @@
-import { memo, useMemo, type ComponentType } from 'react';
+import { forwardRef, useMemo, type ComponentType } from 'react';
 
-import { GenericBottomSheet } from '@/components/common';
+import { GenericBottomSheet, type GenericBottomSheetHandle } from '@/components/common';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import type { StudyWord } from '@/types/vocabulary.types';
 
 interface ChartBottomSheetProps {
-  /** Controls bottom sheet visibility */
-  isVisible: boolean;
-  /** Callback when sheet is dismissed */
-  onClose: () => void;
   /** Bottom sheet title */
   title: string;
   /** Bottom sheet subtitle */
@@ -29,25 +25,26 @@ interface ChartBottomSheetProps {
  * 3. Optionally filter/transform words
  * 4. Render chart in GenericBottomSheet
  *
- * This eliminates ~90 lines of duplication across 3+ chart bottom sheet components.
+ * Imperative — open via the forwarded ref.
  *
  * @example
  * ```tsx
- * export const DueWordsBottomSheet = memo<BottomSheetProps>(({ isVisible, onClose }) => (
- *   <ChartBottomSheet
- *     isVisible={isVisible}
- *     onClose={onClose}
- *     title={STRINGS.DUE_WORDS_FORECAST}
- *     subtitle={STRINGS.DUE_WORDS_FORECAST_SUBTITLE}
- *     ChartComponent={DueWordsPrognosisChart}
- *     filterWords={words => words.filter(w => w?.root_id != null)}
- *     queryLimit={1000}
- *   />
- * ));
+ * const ref = useRef<GenericBottomSheetHandle>(null);
+ * <Button onPress={() => ref.current?.present()} />
+ * <ChartBottomSheet
+ *   ref={ref}
+ *   title={STRINGS.DUE_WORDS_FORECAST}
+ *   subtitle={STRINGS.DUE_WORDS_FORECAST_SUBTITLE}
+ *   ChartComponent={DueWordsPrognosisChart}
+ *   filterWords={words => words.filter(w => w?.root_id != null)}
+ * />
  * ```
  */
-export const ChartBottomSheet = memo<ChartBottomSheetProps>(
-  ({ isVisible, onClose, title, subtitle, ChartComponent, filterWords, queryLimit = 1000 }) => {
+export const ChartBottomSheet = forwardRef<GenericBottomSheetHandle, ChartBottomSheetProps>(
+  function ChartBottomSheet(
+    { title, subtitle, ChartComponent, filterWords, queryLimit = 1000 },
+    ref,
+  ) {
     const { user } = useAuth();
 
     // Fetch study words for the current user
@@ -63,7 +60,7 @@ export const ChartBottomSheet = memo<ChartBottomSheetProps>(
     }, [allWords, filterWords]);
 
     return (
-      <GenericBottomSheet isVisible={isVisible} onClose={onClose} title={title} subtitle={subtitle}>
+      <GenericBottomSheet ref={ref} title={title} subtitle={subtitle}>
         <ChartComponent studyWords={studyWords} />
       </GenericBottomSheet>
     );

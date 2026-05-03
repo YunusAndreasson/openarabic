@@ -123,7 +123,7 @@ const ContinueReadingSectionComponent: FC<ContinueReadingSectionProps> = ({ arti
 
   return (
     <View>
-      <SectionLabel title={sectionLabel} style={styles.sectionLabel} />
+      <SectionLabel title={sectionLabel} density="first" />
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -154,10 +154,6 @@ const ContinueReadingSectionComponent: FC<ContinueReadingSectionProps> = ({ arti
 };
 
 const styles = StyleSheet.create({
-  sectionLabel: {
-    // Reduced top padding since this is the first section on the page
-    paddingTop: LAYOUT.SPACING.MEDIUM,
-  },
   scrollContent: {
     paddingRight: LAYOUT.SCREEN_HORIZONTAL_PADDING,
   },

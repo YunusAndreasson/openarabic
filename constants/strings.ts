@@ -167,6 +167,7 @@ export const STRINGS = {
   PLAY_ALL: 'Play all',
   STUDY_LIST_EMPTY_TITLE: 'No words yet',
   STUDY_LIST_EMPTY_HINT: 'Tap any word while reading\nto save it for practice',
+  BROWSE_ARTICLES: 'Browse articles',
   // Welcome toasts when navigating from empty states
   EXPLORE_WELCOME_FROM_PLAYLIST: 'Tap the headphones on any article to add it to your playlist',
   // Success toasts for empty state actions

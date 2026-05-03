@@ -55,7 +55,6 @@ MetricCard.displayName = 'MetricCard';
 const styles = StyleSheet.create({
   card: {
     flex: 1,
-    // Note: borderRadius is applied by BaseCard wrapper
   },
   cardWrapper: {
     alignItems: 'center',

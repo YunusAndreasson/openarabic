@@ -1,101 +1,152 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { ComponentProps, FC } from 'react';
+import type { FC } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { FONTS } from '@/constants/fonts';
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { ContextualHelpType } from '@/constants/tutorials';
 import { useColors } from '@/hooks/theme/useColors';
 import { ReviewAction } from '@/types/enums';
+import { withAlpha } from '@/utils/colorUtils';
+import { lightFeedback, selectionFeedback } from '@/utils/haptics';
 
 const BOTTOM_ACTIONS_CONSTANTS = {
   ICON_SIZE: LAYOUT.BUTTON.ICON_SIZE.MEDIUM,
-  TINT_OPACITY: '20', // 12.5% opacity
-  CONTAINER_HEIGHT: LAYOUT.REVIEW.BOTTOM_ACTIONS_HEIGHT,
-  MAX_INDICATOR_WIDTH: LAYOUT.REVIEW.INDICATOR_MAX_WIDTH,
-  TEXT_LINE_HEIGHT: LAYOUT.SPACING.LARGE,
+  BUTTON_HEIGHT: LAYOUT.BUTTON.HEIGHT.LARGE, // 48 — generous tap target
+  TINT_BG_OPACITY: LAYOUT.OPACITY.FAINT, // 0.15 — subtle tinted surface
+  PRESSED_BG_OPACITY: LAYOUT.OPACITY.SUBTLE, // 0.3 — feedback when pressed
 } as const;
 
 const STATIC_STYLES = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'flex-end',
     width: '100%',
-    paddingBottom: LAYOUT.SPACING.LARGE,
-    paddingHorizontal: LAYOUT.SPACING.XLARGE,
-    height: BOTTOM_ACTIONS_CONSTANTS.CONTAINER_HEIGHT,
+    gap: LAYOUT.SPACING.MEDIUM,
   },
-  indicatorContainer: {
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    opacity: LAYOUT.OPACITY.MEDIUM,
-    maxWidth: BOTTOM_ACTIONS_CONSTANTS.MAX_INDICATOR_WIDTH,
-    height: '100%',
-  },
-  swipeIndicator: {
-    width: MIN_TOUCH_TARGET.SMALL,
-    height: MIN_TOUCH_TARGET.SMALL,
-    borderRadius: MIN_TOUCH_TARGET.SMALL / 2,
+  button: {
+    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: LAYOUT.SPACING.TINY,
+    height: BOTTOM_ACTIONS_CONSTANTS.BUTTON_HEIGHT,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    gap: LAYOUT.SPACING.SMALL,
+    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
   },
-  indicatorText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    fontFamily: FONTS.ENGLISH,
-    textAlign: 'center',
-    lineHeight: BOTTOM_ACTIONS_CONSTANTS.TEXT_LINE_HEIGHT,
+  buttonLabel: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
   },
-});
-
-const createIconProps = (name: ComponentProps<typeof Ionicons>['name'], color: string) => ({
-  name,
-  size: BOTTOM_ACTIONS_CONSTANTS.ICON_SIZE,
-  color,
 });
 
 interface ReviewBottomActionsProps {
+  onPressLeft?: () => void;
+  onPressRight?: () => void;
   onShowContextualHelp?: (helpType: ContextualHelpType) => void;
+  disabled?: boolean;
 }
 
-export const ReviewBottomActions: FC<ReviewBottomActionsProps> = ({ onShowContextualHelp }) => {
+/**
+ * Full-width action buttons mirroring the swipe gestures in the review card.
+ * Tap submits the answer (same as swipe). Long-press surfaces contextual help.
+ */
+export const ReviewBottomActions: FC<ReviewBottomActionsProps> = ({
+  onPressLeft,
+  onPressRight,
+  onShowContextualHelp,
+  disabled = false,
+}) => {
   const colors = useColors();
 
-  const tintError = colors.error + BOTTOM_ACTIONS_CONSTANTS.TINT_OPACITY;
-  const tintSuccess = colors.success + BOTTOM_ACTIONS_CONSTANTS.TINT_OPACITY;
-
-  const leftIndicatorStyle = [STATIC_STYLES.swipeIndicator, { backgroundColor: tintError }];
-  const rightIndicatorStyle = [STATIC_STYLES.swipeIndicator, { backgroundColor: tintSuccess }];
-
-  const leftTextStyle = [STATIC_STYLES.indicatorText, { color: colors.error }];
-  const rightTextStyle = [STATIC_STYLES.indicatorText, { color: colors.success }];
+  const leftBg = withAlpha(colors.error, BOTTOM_ACTIONS_CONSTANTS.TINT_BG_OPACITY);
+  const rightBg = withAlpha(colors.success, BOTTOM_ACTIONS_CONSTANTS.TINT_BG_OPACITY);
+  const leftBgPressed = withAlpha(colors.error, BOTTOM_ACTIONS_CONSTANTS.PRESSED_BG_OPACITY);
+  const rightBgPressed = withAlpha(colors.success, BOTTOM_ACTIONS_CONSTANTS.PRESSED_BG_OPACITY);
+  const leftBorder = withAlpha(colors.error, LAYOUT.OPACITY.LIGHT);
+  const rightBorder = withAlpha(colors.success, LAYOUT.OPACITY.LIGHT);
 
   const handleLeftPress = () => {
-    onShowContextualHelp?.(ContextualHelpType.SWIPE_LEFT);
+    if (disabled) return;
+    lightFeedback();
+    onPressLeft?.();
   };
 
   const handleRightPress = () => {
+    if (disabled) return;
+    selectionFeedback();
+    onPressRight?.();
+  };
+
+  const handleLeftLongPress = () => {
+    onShowContextualHelp?.(ContextualHelpType.SWIPE_LEFT);
+  };
+
+  const handleRightLongPress = () => {
     onShowContextualHelp?.(ContextualHelpType.SWIPE_RIGHT);
   };
 
   return (
     <View style={STATIC_STYLES.container}>
-      {/* Left indicator - Unknown (tappable to show contextual help) */}
-      <Pressable style={STATIC_STYLES.indicatorContainer} onPress={handleLeftPress}>
-        <View style={leftIndicatorStyle}>
-          <Ionicons {...createIconProps('chevron-back', colors.error)} />
-        </View>
-        <ThemedText style={leftTextStyle}>{ReviewAction.DONT_KNOW}</ThemedText>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={ReviewAction.DONT_KNOW}
+        accessibilityHint="Tap to mark as unknown. Long-press for help."
+        hitSlop={LAYOUT.HIT_SLOP.SMALL}
+        onPress={handleLeftPress}
+        onLongPress={handleLeftLongPress}
+        disabled={disabled}
+        style={({ pressed }) => [
+          STATIC_STYLES.button,
+          {
+            backgroundColor: pressed ? leftBgPressed : leftBg,
+            borderColor: leftBorder,
+            opacity: disabled ? LAYOUT.OPACITY.SUBTLE : LAYOUT.OPACITY.FULL,
+          },
+        ]}
+      >
+        <Ionicons
+          name="close"
+          size={BOTTOM_ACTIONS_CONSTANTS.ICON_SIZE}
+          color={colors.error}
+        />
+        <ThemedText
+          skipDefaultColor
+          weight="semibold"
+          style={[STATIC_STYLES.buttonLabel, { color: colors.error }]}
+        >
+          {ReviewAction.DONT_KNOW}
+        </ThemedText>
       </Pressable>
 
-      {/* Right indicator - Known (tappable to show contextual help) */}
-      <Pressable style={STATIC_STYLES.indicatorContainer} onPress={handleRightPress}>
-        <View style={rightIndicatorStyle}>
-          <Ionicons {...createIconProps('chevron-forward', colors.success)} />
-        </View>
-        <ThemedText style={rightTextStyle}>{ReviewAction.KNOW}</ThemedText>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={ReviewAction.KNOW}
+        accessibilityHint="Tap to mark as known. Long-press for help."
+        hitSlop={LAYOUT.HIT_SLOP.SMALL}
+        onPress={handleRightPress}
+        onLongPress={handleRightLongPress}
+        disabled={disabled}
+        style={({ pressed }) => [
+          STATIC_STYLES.button,
+          {
+            backgroundColor: pressed ? rightBgPressed : rightBg,
+            borderColor: rightBorder,
+            opacity: disabled ? LAYOUT.OPACITY.SUBTLE : LAYOUT.OPACITY.FULL,
+          },
+        ]}
+      >
+        <Ionicons
+          name="checkmark"
+          size={BOTTOM_ACTIONS_CONSTANTS.ICON_SIZE}
+          color={colors.success}
+        />
+        <ThemedText
+          skipDefaultColor
+          weight="semibold"
+          style={[STATIC_STYLES.buttonLabel, { color: colors.success }]}
+        >
+          {ReviewAction.KNOW}
+        </ThemedText>
       </Pressable>
     </View>
   );

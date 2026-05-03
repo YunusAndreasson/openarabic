@@ -1,24 +1,21 @@
-import { memo } from 'react';
+import { forwardRef } from 'react';
 
 import { ChartBottomSheet } from './ChartBottomSheet';
 import { RetrievabilityChart } from './charts';
 import { STRINGS } from '@/constants/strings';
+import type { GenericBottomSheetHandle } from '@/components/common';
 
-interface MemoryRetentionBottomSheetProps {
-  isVisible: boolean;
-  onClose: () => void;
-}
-
-export const MemoryRetentionBottomSheet = memo<MemoryRetentionBottomSheetProps>(
-  ({ isVisible, onClose }) => (
-    <ChartBottomSheet
-      isVisible={isVisible}
-      onClose={onClose}
-      title={STRINGS.MEMORY_STRENGTH}
-      subtitle={STRINGS.MEMORY_STRENGTH_SUBTITLE}
-      ChartComponent={RetrievabilityChart}
-    />
-  ),
+export const MemoryRetentionBottomSheet = forwardRef<GenericBottomSheetHandle>(
+  function MemoryRetentionBottomSheet(_props, ref) {
+    return (
+      <ChartBottomSheet
+        ref={ref}
+        title={STRINGS.MEMORY_STRENGTH}
+        subtitle={STRINGS.MEMORY_STRENGTH_SUBTITLE}
+        ChartComponent={RetrievabilityChart}
+      />
+    );
+  },
 );
 
 MemoryRetentionBottomSheet.displayName = 'MemoryRetentionBottomSheet';

@@ -86,7 +86,7 @@ export function WordDisplay({ word, style, translation, onWordPress }: WordDispl
   };
 
   const translationTextProps = {
-    variant: 'error' as const,
+    colorName: 'englishText' as const,
     type: 'heading2' as const,
     children: translation ? capitalizeFirstLetter(translation) : translation,
   };

@@ -25,9 +25,11 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
   ({ isInReadingList, onToggleReadingList, onClose }) => {
     const colors = useColors();
     const insets = useSafeAreaInsets();
-    const buttonTop = Platform.OS === 'android'
-      ? insets.top
-      : LAYOUT.SPACING.LARGE;
+    // The buttons sit at the screen corners (left/right edges), so on iOS the
+    // dynamic island / notch — which is centered — doesn't overlap them, and a
+    // 16px offset from the screen top keeps them visually tight against the
+    // hero. Android has a full-width status bar, so we still need insets.top.
+    const buttonTop = Platform.OS === 'android' ? insets.top : LAYOUT.SPACING.LARGE;
 
     const closeButtonStyle = {
       position: 'absolute' as const,

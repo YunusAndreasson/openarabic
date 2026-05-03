@@ -96,18 +96,11 @@ export function ArticleCard({
     router.push(articleHref);
   }, [router, articleHref]);
 
-  // Warm the route on press-in: ~50ms head start before push, useful when the
-  // article query isn't already populated by the app preloader.
-  const handlePressIn = useCallback(() => {
-    router.prefetch(articleHref);
-  }, [router, articleHref]);
-
   return (
     <BaseCard
       style={style}
       testID={testID}
       onPress={handlePress}
-      onPressIn={handlePressIn}
     >
       <View style={styles.imageContainer}>
         <EnhancedImage

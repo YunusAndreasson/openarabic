@@ -8,6 +8,7 @@ export { EmailLink } from './EmailLink';
 export { EmptyState } from './EmptyState';
 export { ErrorState } from './ErrorState';
 export { GenericBottomSheet } from './GenericBottomSheet';
+export type { GenericBottomSheetHandle } from './GenericBottomSheet';
 export { ListSeparator } from './ListSeparator';
 export { MetricCard } from './MetricCard';
 export { ProgressBar } from './ProgressBar';

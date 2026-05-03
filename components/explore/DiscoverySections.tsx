@@ -176,9 +176,12 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
 
   return (
     <View>
-      {sections.map(section => (
+      {sections.map((section, sectionIndex) => (
         <View key={section.key}>
-          <SectionLabel title={section.title} />
+          <SectionLabel
+            title={section.title}
+            density={sectionIndex === 0 ? 'comfortable' : 'compact'}
+          />
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
