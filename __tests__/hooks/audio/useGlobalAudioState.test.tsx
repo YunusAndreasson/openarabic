@@ -28,7 +28,7 @@ import { renderHook, waitFor, act } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import type { QueryClient } from '@tanstack/react-query';
 
-import { useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
+import { GlobalAudioStateProvider, useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
 import { AUDIO_STATES } from '@/constants/audio';
 
 const { useAuth } = require('@/hooks/auth/useAuth');
@@ -112,7 +112,9 @@ describe('useGlobalAudioState Hook', () => {
 
   describe('Initialization & Basic State', () => {
     test('initializes with idle state when not playing', () => {
-      const { result } = renderHook(() => useGlobalAudioState());
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       expect(result.current.playing).toBeFalsy();
       expect(result.current.audioState).toBe(AUDIO_STATES.IDLE);
@@ -137,7 +139,9 @@ describe('useGlobalAudioState Hook', () => {
         preconfigureAudioSession: mockPreconfigureAudioSession,
       } as any);
 
-      const { result } = renderHook(() => useGlobalAudioState());
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       expect(result.current.playing).toBeTruthy();
       expect(result.current.audioState).toBe(AUDIO_STATES.PLAYING);
@@ -156,7 +160,9 @@ describe('useGlobalAudioState Hook', () => {
         preconfigureAudioSession: mockPreconfigureAudioSession,
       } as any);
 
-      const { result } = renderHook(() => useGlobalAudioState());
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       expect(result.current.playing).toBeFalsy();
       expect(result.current.audioState).toBe(AUDIO_STATES.LOADING);
@@ -164,15 +170,18 @@ describe('useGlobalAudioState Hook', () => {
     });
 
     test('initializes sleep timer as inactive', () => {
-      const { result } = renderHook(() => useGlobalAudioState());
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       expect(result.current.isTimerActive).toBeFalsy();
-      expect(result.current.showSleepTimerModal).toBeFalsy();
       expect(result.current.sleepTimerEndTime).toBe(0);
     });
 
     test('initializes with default queue position', () => {
-      const { result } = renderHook(() => useGlobalAudioState());
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       expect(result.current.queuePosition).toEqual({
         current: 1,
@@ -183,7 +192,9 @@ describe('useGlobalAudioState Hook', () => {
 
   describe('Play/Pause Actions', () => {
     test('onPlayPause stops audio playback', async () => {
-      const { result } = renderHook(() => useGlobalAudioState());
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       await act(async () => {
         await result.current.onPlayPause();
@@ -193,7 +204,9 @@ describe('useGlobalAudioState Hook', () => {
     });
 
     test('preconfigureAudioSession calls audio player method', async () => {
-      const { result } = renderHook(() => useGlobalAudioState());
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       await act(async () => {
         await result.current.preconfigureAudioSession();
@@ -204,61 +217,49 @@ describe('useGlobalAudioState Hook', () => {
   });
 
   describe('Sleep Timer Modal', () => {
-    test('onTimerPress opens sleep timer modal', () => {
-      const { result } = renderHook(() => useGlobalAudioState());
+    test('onTimerPress calls present on the sleep-timer ref', () => {
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
+
+      const present = jest.fn();
+      const dismiss = jest.fn();
+      result.current.sleepTimerRef.current = { present, dismiss };
 
       act(() => {
         result.current.onTimerPress();
       });
 
-      expect(result.current.showSleepTimerModal).toBeTruthy();
+      expect(present).toHaveBeenCalledTimes(1);
     });
 
-    test('onSleepTimerSet starts timer and keeps modal open', () => {
-      const { result } = renderHook(() => useGlobalAudioState());
+    test('onSleepTimerSet starts timer (modal kept open by component to show countdown)', () => {
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       act(() => {
         result.current.onSleepTimerSet(30);
       });
 
       expect(mockStartTimer).toHaveBeenCalledWith(30);
-      // Modal stays open to show countdown
     });
 
-    test('onSleepTimerCancel cancels timer and closes modal', () => {
-      const { result } = renderHook(() => useGlobalAudioState());
-
-      // Open modal first
-      act(() => {
-        result.current.onTimerPress();
+    test('onSleepTimerCancel cancels timer and dismisses modal via ref', () => {
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
       });
 
-      expect(result.current.showSleepTimerModal).toBeTruthy();
+      const present = jest.fn();
+      const dismiss = jest.fn();
+      result.current.sleepTimerRef.current = { present, dismiss };
 
-      // Cancel timer
       act(() => {
         result.current.onSleepTimerCancel();
       });
 
       expect(mockCancelTimer).toHaveBeenCalledTimes(1);
-      expect(result.current.showSleepTimerModal).toBeFalsy();
-    });
-
-    test('onSleepTimerClose just closes modal without canceling', () => {
-      const { result } = renderHook(() => useGlobalAudioState());
-
-      // Open modal
-      act(() => {
-        result.current.onTimerPress();
-      });
-
-      // Close without canceling
-      act(() => {
-        result.current.onSleepTimerClose();
-      });
-
-      expect(mockCancelTimer).not.toHaveBeenCalled();
-      expect(result.current.showSleepTimerModal).toBeFalsy();
+      expect(dismiss).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -277,7 +278,7 @@ describe('useGlobalAudioState Hook', () => {
         } as any;
       });
 
-      renderHook(() => useGlobalAudioState());
+      renderHook(() => useGlobalAudioState(), { wrapper: GlobalAudioStateProvider });
 
       // Simulate timer completion
       act(() => {
@@ -301,7 +302,7 @@ describe('useGlobalAudioState Hook', () => {
         } as any;
       });
 
-      renderHook(() => useGlobalAudioState());
+      renderHook(() => useGlobalAudioState(), { wrapper: GlobalAudioStateProvider });
 
       act(() => {
         timerCallback?.();
@@ -330,7 +331,7 @@ describe('useGlobalAudioState Hook', () => {
         totalTracks: 5,
       });
 
-      renderHook(() => useGlobalAudioState());
+      renderHook(() => useGlobalAudioState(), { wrapper: GlobalAudioStateProvider });
 
       act(() => {
         timerCallback?.();
@@ -368,7 +369,7 @@ describe('useGlobalAudioState Hook', () => {
         totalTracks: 0,
       });
 
-      renderHook(() => useGlobalAudioState());
+      renderHook(() => useGlobalAudioState(), { wrapper: GlobalAudioStateProvider });
 
       act(() => {
         timerCallback?.();
@@ -393,7 +394,7 @@ describe('useGlobalAudioState Hook', () => {
         } as any;
       });
 
-      renderHook(() => useGlobalAudioState());
+      renderHook(() => useGlobalAudioState(), { wrapper: GlobalAudioStateProvider });
 
       // First completion
       act(() => {
@@ -440,7 +441,9 @@ describe('useGlobalAudioState Hook', () => {
         preconfigureAudioSession: mockPreconfigureAudioSession,
       } as any);
 
-      const { rerender } = renderHook(() => useGlobalAudioState());
+      const { rerender } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       // Audio stops
       jest.mocked(useSimpleAudioPlayer).mockReturnValue({
@@ -479,7 +482,7 @@ describe('useGlobalAudioState Hook', () => {
         preconfigureAudioSession: mockPreconfigureAudioSession,
       } as any);
 
-      renderHook(() => useGlobalAudioState());
+      renderHook(() => useGlobalAudioState(), { wrapper: GlobalAudioStateProvider });
 
       expect(mockCancelTimer).not.toHaveBeenCalled();
     });
@@ -503,7 +506,7 @@ describe('useGlobalAudioState Hook', () => {
         preconfigureAudioSession: mockPreconfigureAudioSession,
       } as any);
 
-      renderHook(() => useGlobalAudioState());
+      renderHook(() => useGlobalAudioState(), { wrapper: GlobalAudioStateProvider });
 
       expect(mockCancelTimer).not.toHaveBeenCalled();
     });
@@ -511,7 +514,9 @@ describe('useGlobalAudioState Hook', () => {
 
   describe('Queue Position Tracking', () => {
     test('returns default position when no article is playing', () => {
-      const { result } = renderHook(() => useGlobalAudioState());
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       expect(result.current.queuePosition).toEqual({
         current: 1,
@@ -534,7 +539,9 @@ describe('useGlobalAudioState Hook', () => {
         sortedEnhancedTracks: [{ articleId: 1 }, { articleId: 2 }, { articleId: 3 }],
       } as any);
 
-      const { result } = renderHook(() => useGlobalAudioState());
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       expect(result.current.queuePosition).toEqual({
         current: 1,
@@ -557,7 +564,9 @@ describe('useGlobalAudioState Hook', () => {
         sortedEnhancedTracks: [{ articleId: 1 }, { articleId: 2 }, { articleId: 3 }],
       } as any);
 
-      const { result } = renderHook(() => useGlobalAudioState());
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       expect(result.current.queuePosition).toEqual({
         current: 2,
@@ -582,7 +591,9 @@ describe('useGlobalAudioState Hook', () => {
         totalTracks: 10,
       });
 
-      const { result } = renderHook(() => useGlobalAudioState());
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       expect(result.current.queuePosition).toEqual({
         current: 3, // currentIndex + 1
@@ -593,7 +604,9 @@ describe('useGlobalAudioState Hook', () => {
 
   describe('Current Article Resolution', () => {
     test('returns null when no article is playing', () => {
-      const { result } = renderHook(() => useGlobalAudioState());
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       expect(result.current.currentArticle).toBeNull();
     });
@@ -622,7 +635,9 @@ describe('useGlobalAudioState Hook', () => {
         return null;
       });
 
-      const { result } = renderHook(() => useGlobalAudioState());
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       expect(result.current.currentArticle).toEqual({
         id: 1,
@@ -662,7 +677,9 @@ describe('useGlobalAudioState Hook', () => {
         return null;
       });
 
-      const { result } = renderHook(() => useGlobalAudioState());
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       expect(result.current.currentArticle).toEqual({
         id: 1,
@@ -691,7 +708,9 @@ describe('useGlobalAudioState Hook', () => {
 
       mockGetQueryData.mockReturnValue(null);
 
-      const { result } = renderHook(() => useGlobalAudioState());
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       // When track has title/imageUrl, uses track metadata with empty author (no cache data)
       expect(result.current.currentArticle).toEqual({
@@ -727,7 +746,9 @@ describe('useGlobalAudioState Hook', () => {
         return null;
       });
 
-      const { result, rerender } = renderHook(() => useGlobalAudioState());
+      const { result, rerender } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       const validArticle = result.current.currentArticle;
       expect(validArticle).not.toBeNull();
@@ -773,7 +794,9 @@ describe('useGlobalAudioState Hook', () => {
         return null;
       });
 
-      const { result, rerender } = renderHook(() => useGlobalAudioState());
+      const { result, rerender } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       expect(result.current.currentArticle).not.toBeNull();
 
@@ -810,7 +833,9 @@ describe('useGlobalAudioState Hook', () => {
         } as any;
       });
 
-      const { unmount } = renderHook(() => useGlobalAudioState());
+      const { unmount } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       // Trigger timer completion to set timeout
       act(() => {
@@ -830,7 +855,9 @@ describe('useGlobalAudioState Hook', () => {
     });
 
     test('does not throw on unmount', () => {
-      const { unmount } = renderHook(() => useGlobalAudioState());
+      const { unmount } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       expect(() => unmount()).not.toThrow();
     });
@@ -842,7 +869,9 @@ describe('useGlobalAudioState Hook', () => {
         user: undefined,
       } as any);
 
-      const { result } = renderHook(() => useGlobalAudioState());
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       expect(result.current).toBeDefined();
       expect(result.current.currentArticle).toBeNull();
@@ -853,7 +882,9 @@ describe('useGlobalAudioState Hook', () => {
         sortedEnhancedTracks: [],
       } as any);
 
-      const { result } = renderHook(() => useGlobalAudioState());
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       expect(result.current.queuePosition).toEqual({
         current: 1,
@@ -876,7 +907,9 @@ describe('useGlobalAudioState Hook', () => {
         sortedEnhancedTracks: [{ articleId: 1 }],
       } as any);
 
-      const { result } = renderHook(() => useGlobalAudioState());
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       expect(result.current.queuePosition).toEqual({
         current: 1,
@@ -895,7 +928,9 @@ describe('useGlobalAudioState Hook', () => {
         preconfigureAudioSession: mockPreconfigureAudioSession,
       } as any);
 
-      const { result } = renderHook(() => useGlobalAudioState());
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       expect(result.current.currentArticle).toBeNull();
     });
@@ -911,7 +946,9 @@ describe('useGlobalAudioState Hook', () => {
         preconfigureAudioSession: mockPreconfigureAudioSession,
       } as any);
 
-      const { result } = renderHook(() => useGlobalAudioState());
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       expect(result.current.currentArticle).toBeNull();
     });

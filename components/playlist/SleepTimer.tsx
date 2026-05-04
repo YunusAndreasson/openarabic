@@ -1,5 +1,5 @@
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
-import { useCallback, useEffect, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -8,19 +8,21 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
-import { useBottomSheetModalVisibility } from '@/hooks/ui/useBottomSheetVisibility';
 import { BottomSheetBackdrop, COMMON_BOTTOM_SHEET_MODAL_PROPS } from '@/utils/bottomSheetUtils';
 import { lightFeedback, successFeedback } from '@/utils/haptics';
 import { formatSecondsToClock } from '@/utils/dateTimeUtils';
 
 export interface SleepTimerProps {
-  isVisible: boolean;
-  onClose: () => void;
   onTimerSet: (minutes: number) => void;
   onTimerCancel: () => void;
   isTimerActive?: boolean;
   /** Unix timestamp (ms) when timer expires */
   endTime?: number;
+}
+
+export interface SleepTimerHandle {
+  present: () => void;
+  dismiss: () => void;
 }
 
 const timerOptions = [5, 10, 15, 30, 45, 60]; // minutes
@@ -35,48 +37,53 @@ function getRemainingSeconds(endTime: number): number {
   return Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
 }
 
-export function SleepTimer({
-  isVisible,
-  onClose,
-  onTimerSet,
-  onTimerCancel,
-  isTimerActive = false,
-  endTime = 0,
-}: SleepTimerProps) {
-  const bottomSheetRef = useBottomSheetModalVisibility(isVisible);
+export const SleepTimer = forwardRef<SleepTimerHandle, SleepTimerProps>(function SleepTimer(
+  { onTimerSet, onTimerCancel, isTimerActive = false, endTime = 0 },
+  ref,
+) {
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
   const colors = useColors();
   const insets = useSafeAreaInsets();
 
+  useImperativeHandle(
+    ref,
+    () => ({
+      present: () => bottomSheetRef.current?.present(),
+      dismiss: () => bottomSheetRef.current?.dismiss(),
+    }),
+    [],
+  );
+
   const [selectedMinutes, setSelectedMinutes] = useState<number>(DEFAULT_SELECTED_MINUTES);
+  const [isPresented, setIsPresented] = useState(false);
 
   // Local countdown — only ticks when modal is visible and timer is active
   const [displaySeconds, setDisplaySeconds] = useState(() => getRemainingSeconds(endTime));
 
   useEffect(() => {
-    if (!isTimerActive || !endTime || !isVisible) {
+    if (!isTimerActive || !endTime || !isPresented) {
       setDisplaySeconds(getRemainingSeconds(endTime));
       return;
     }
 
-    // Sync immediately then tick every second
     setDisplaySeconds(getRemainingSeconds(endTime));
     const interval = setInterval(() => {
       setDisplaySeconds(getRemainingSeconds(endTime));
     }, COUNTDOWN_INTERVAL);
 
     return () => clearInterval(interval);
-  }, [isTimerActive, endTime, isVisible]);
+  }, [isTimerActive, endTime, isPresented]);
 
   const handleSetTimer = () => {
     successFeedback();
     onTimerSet(selectedMinutes);
-    onClose();
+    bottomSheetRef.current?.dismiss();
   };
 
   const handleCancelTimer = () => {
     lightFeedback();
     onTimerCancel();
-    onClose();
+    bottomSheetRef.current?.dismiss();
   };
 
   const handleOptionSelect = useCallback(
@@ -89,7 +96,7 @@ export function SleepTimer({
       ref={bottomSheetRef}
       {...COMMON_BOTTOM_SHEET_MODAL_PROPS}
       enableDynamicSizing={true}
-      onDismiss={onClose}
+      onChange={index => setIsPresented(index >= 0)}
       backdropComponent={BottomSheetBackdrop}
       containerStyle={styles.modalContainer}
       backgroundStyle={[
@@ -146,7 +153,9 @@ export function SleepTimer({
       </BottomSheetView>
     </BottomSheetModal>
   );
-}
+});
+
+SleepTimer.displayName = 'SleepTimer';
 
 const styles = StyleSheet.create({
   modalContainer: {
@@ -204,5 +213,3 @@ const styles = StyleSheet.create({
     width: '100%',
   },
 });
-
-SleepTimer.displayName = 'SleepTimer';

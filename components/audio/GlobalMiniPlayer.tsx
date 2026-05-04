@@ -5,17 +5,7 @@ import { useShouldShowMiniPlayer } from '@/hooks/audio/useShouldShowMiniPlayer';
 
 import { MiniPlayer } from './MiniPlayer';
 
-interface GlobalMiniPlayerProps {
-  /**
-   * When true, render without the floating absolute-positioned wrapper —
-   * suited for embedding inside `NativeTabs.BottomAccessory` (iOS 26+).
-   */
-  embedded?: boolean;
-}
-
-export const GlobalMiniPlayer = memo(function GlobalMiniPlayer({
-  embedded = false,
-}: GlobalMiniPlayerProps) {
+export const GlobalMiniPlayer = memo(function GlobalMiniPlayer() {
   const globalAudioState = useGlobalAudioState();
   const shouldShow = useShouldShowMiniPlayer();
 
@@ -25,7 +15,6 @@ export const GlobalMiniPlayer = memo(function GlobalMiniPlayer({
 
   return (
     <MiniPlayer
-      embedded={embedded}
       article={globalAudioState.currentArticle}
       isTimerActive={globalAudioState.isTimerActive}
       position={globalAudioState.position}

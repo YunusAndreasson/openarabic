@@ -26,6 +26,10 @@ export function getCurrentArticleId(): number | undefined {
  */
 export function isAudioBusy(): boolean {
   const status = simpleAudioService.getStatus();
+  // With no current track the service is idle, not busy. The default
+  // `isLoaded: false` from a freshly-mounted service must not be read as
+  // "still loading" — that would block the very first play attempt.
+  if (!status.currentTrack) return false;
   return !status.isLoaded || status.isBuffering;
 }
 

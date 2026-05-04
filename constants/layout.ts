@@ -211,7 +211,7 @@ export const LAYOUT = {
     },
     IMAGE: {
       MINI_PLAYER: TOUCH_TARGETS.LARGE + SPACING_SCALE.SMALL, // 48 + 8 = 56 (increased from 40 for better balance)
-      MINI_PLAYER_ARTWORK: BASE_UNIT * 22, // 88 - MiniPlayer album artwork (balanced with 8px padding)
+      MINI_PLAYER_ARTWORK: BASE_UNIT * 14, // 56 - MiniPlayer album artwork (modern compact thumb)
       THUMBNAIL: {
         WIDTH: BASE_UNIT * 20, // 80 - bookmark/list thumbnails (2025: larger for visual prominence)
         HEIGHT: BASE_UNIT * 15, // 60 - 4:3 aspect ratio

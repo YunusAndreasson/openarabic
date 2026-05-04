@@ -61,7 +61,8 @@ describe('audioUtils', () => {
       simpleAudioServiceMock.getStatus.mockReturnValue({
         currentTrack: { articleId: 123 } as any,
         playing: true,
-        isLoaded: true, isBuffering: false,
+        isLoaded: true,
+        isBuffering: false,
         currentTime: 0,
         duration: 100,
       });
@@ -75,7 +76,8 @@ describe('audioUtils', () => {
       simpleAudioServiceMock.getStatus.mockReturnValue({
         currentTrack: null,
         playing: false,
-        isLoaded: true, isBuffering: false,
+        isLoaded: true,
+        isBuffering: false,
         currentTime: 0,
         duration: 0,
       });
@@ -89,7 +91,8 @@ describe('audioUtils', () => {
       simpleAudioServiceMock.getStatus.mockReturnValue({
         currentTrack: { articleId: '456' as any },
         playing: true,
-        isLoaded: true, isBuffering: false,
+        isLoaded: true,
+        isBuffering: false,
         currentTime: 0,
         duration: 100,
       });
@@ -101,11 +104,12 @@ describe('audioUtils', () => {
   });
 
   describe('isAudioBusy', () => {
-    test('should return true when audio is loading', () => {
+    test('should return true when a track is buffering', () => {
       simpleAudioServiceMock.getStatus.mockReturnValue({
-        currentTrack: null,
+        currentTrack: {} as any,
         playing: false,
-        isLoaded: false, isBuffering: true,
+        isLoaded: false,
+        isBuffering: true,
         currentTime: 0,
         duration: 0,
       });
@@ -113,11 +117,25 @@ describe('audioUtils', () => {
       expect(isAudioBusy()).toBeTruthy();
     });
 
-    test('should return false when audio is not loading', () => {
+    test('should return false when a track is fully loaded', () => {
+      simpleAudioServiceMock.getStatus.mockReturnValue({
+        currentTrack: {} as any,
+        playing: false,
+        isLoaded: true,
+        isBuffering: false,
+        currentTime: 0,
+        duration: 0,
+      });
+
+      expect(isAudioBusy()).toBeFalsy();
+    });
+
+    test('should return false in the initial idle state (no track loaded)', () => {
       simpleAudioServiceMock.getStatus.mockReturnValue({
         currentTrack: null,
         playing: false,
-        isLoaded: true, isBuffering: false,
+        isLoaded: false,
+        isBuffering: false,
         currentTime: 0,
         duration: 0,
       });
@@ -131,7 +149,8 @@ describe('audioUtils', () => {
       simpleAudioServiceMock.getStatus.mockReturnValue({
         currentTrack: {} as any,
         playing: true,
-        isLoaded: true, isBuffering: false,
+        isLoaded: true,
+        isBuffering: false,
         currentTime: 10,
         duration: 100,
       });
@@ -146,7 +165,8 @@ describe('audioUtils', () => {
       simpleAudioServiceMock.getStatus.mockReturnValue({
         currentTrack: null,
         playing: false,
-        isLoaded: false, isBuffering: true,
+        isLoaded: false,
+        isBuffering: true,
         currentTime: 0,
         duration: 0,
       });
@@ -161,7 +181,8 @@ describe('audioUtils', () => {
       simpleAudioServiceMock.getStatus.mockReturnValue({
         currentTrack: null,
         playing: false,
-        isLoaded: true, isBuffering: false,
+        isLoaded: true,
+        isBuffering: false,
         currentTime: 0,
         duration: 0,
       });
@@ -175,7 +196,8 @@ describe('audioUtils', () => {
       simpleAudioServiceMock.getStatus.mockReturnValue({
         currentTrack: {} as any,
         playing: true,
-        isLoaded: true, isBuffering: false,
+        isLoaded: true,
+        isBuffering: false,
         currentTime: 10,
         duration: 100,
       });
@@ -188,7 +210,8 @@ describe('audioUtils', () => {
       simpleAudioServiceMock.getStatus.mockReturnValue({
         currentTrack: {} as any,
         playing: true,
-        isLoaded: true, isBuffering: false,
+        isLoaded: true,
+        isBuffering: false,
         currentTime: 10,
         duration: 100,
       });

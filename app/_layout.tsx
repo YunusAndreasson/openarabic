@@ -32,7 +32,6 @@ import interSemiBold from '@/assets/fonts/Inter-SemiBold.ttf';
 import interBold from '@/assets/fonts/Inter-Bold.ttf';
 import { ThemedText } from '@/components/ThemedText';
 import { AudioErrorBoundary, GlobalMiniPlayer } from '@/components/audio';
-import { isLiquidGlassAvailable } from 'expo-glass-effect';
 import { SleepTimer } from '@/components/playlist';
 import {
   AuthProvider,
@@ -49,7 +48,7 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppBadge } from '@/hooks/app/useAppBadge';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
-import { useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
+import { GlobalAudioStateProvider, useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useSystemUITheme } from '@/hooks/theme/useSystemUITheme';
@@ -490,55 +489,57 @@ function AppContent() {
     <NavigationThemeProvider value={navigationTheme}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <FSRSDataProvider userId={session?.user?.id}>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              headerTitle: '',
-              headerShadowVisible: false,
-              freezeOnBlur: true,
-              contentStyle: { backgroundColor: colors.background },
-            }}
-          >
-            <Stack.Screen
-              name="(tabs)"
-              options={{
-                animation: 'none', // Disable animation to prevent black screen
-                freezeOnBlur: false, // Keep tabs active
-              }}
-            />
-            <Stack.Screen
-              name="auth"
-              options={{
-                animation: 'fade',
-                freezeOnBlur: false, // Keep auth screen active
-              }}
-            />
-            <Stack.Screen
-              name="article/[id]"
-              options={createNavigationOptions(colors, {
+          <GlobalAudioStateProvider>
+            <Stack
+              screenOptions={{
                 headerShown: false,
-                freezeOnBlur: true, // Optimize article screen when backgrounded
-              })}
-            />
-            <Stack.Screen
-              name="review"
-              options={createNavigationOptions(colors, {
-                headerShown: false,
+                headerTitle: '',
+                headerShadowVisible: false,
                 freezeOnBlur: true,
-              })}
+                contentStyle: { backgroundColor: colors.background },
+              }}
+            >
+              <Stack.Screen
+                name="(tabs)"
+                options={{
+                  animation: 'none', // Disable animation to prevent black screen
+                  freezeOnBlur: false, // Keep tabs active
+                }}
+              />
+              <Stack.Screen
+                name="auth"
+                options={{
+                  animation: 'fade',
+                  freezeOnBlur: false, // Keep auth screen active
+                }}
+              />
+              <Stack.Screen
+                name="article/[id]"
+                options={createNavigationOptions(colors, {
+                  headerShown: false,
+                  freezeOnBlur: true, // Optimize article screen when backgrounded
+                })}
+              />
+              <Stack.Screen
+                name="review"
+                options={createNavigationOptions(colors, {
+                  headerShown: false,
+                  freezeOnBlur: true,
+                })}
+              />
+
+              {/* Audio overlays - mini-player and sleep timer */}
+            </Stack>
+
+            {/* Audio overlays are isolated to prevent root re-renders on audio ticks */}
+            <AudioOverlays />
+
+            <StatusBar
+              style={isDark ? 'light' : 'dark'}
+              backgroundColor={colors.background}
+              translucent={false}
             />
-
-            {/* Audio overlays - mini-player and sleep timer */}
-          </Stack>
-
-          {/* Audio overlays are isolated to prevent root re-renders on audio ticks */}
-          <AudioOverlays />
-
-          <StatusBar
-            style={isDark ? 'light' : 'dark'}
-            backgroundColor={colors.background}
-            translucent={false}
-          />
+          </GlobalAudioStateProvider>
         </FSRSDataProvider>
       </View>
     </NavigationThemeProvider>
@@ -570,10 +571,6 @@ const styles = StyleSheet.create({
   },
 });
 
-// On iOS 26+ the MiniPlayer is hosted inside `NativeTabs.BottomAccessory` (see
-// app/(tabs)/_layout.tsx). On older iOS / Android we keep the floating overlay.
-const HOSTED_BY_BOTTOM_ACCESSORY = isLiquidGlassAvailable();
-
 const AudioOverlays = memo(function AudioOverlays() {
   const globalAudioState = useGlobalAudioState();
 
@@ -590,14 +587,13 @@ const AudioOverlays = memo(function AudioOverlays() {
 
   return (
     <AudioErrorBoundary>
-      {!HOSTED_BY_BOTTOM_ACCESSORY && <GlobalMiniPlayer />}
+      <GlobalMiniPlayer />
 
       {/* SleepTimer rendered last to ensure it overlays everything */}
       <SleepTimer
-        isVisible={globalAudioState.showSleepTimerModal}
+        ref={globalAudioState.sleepTimerRef}
         isTimerActive={globalAudioState.isTimerActive}
         endTime={globalAudioState.sleepTimerEndTime}
-        onClose={globalAudioState.onSleepTimerClose}
         onTimerSet={handleSleepTimerSet}
         onTimerCancel={globalAudioState.onSleepTimerCancel}
       />

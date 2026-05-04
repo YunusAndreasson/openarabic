@@ -3,6 +3,7 @@ import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EnhancedImage } from '@/components/ui/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
@@ -41,30 +42,11 @@ export interface MiniPlayerProps {
   /** Playback controls */
   onPlayPause: () => void;
   onTimerPress: () => void;
-  /**
-   * When true, render as flat content (no floating absolute wrapper, no glass surface,
-   * no enter/exit animation). The host container — e.g. `NativeTabs.BottomAccessory`
-   * on iOS 26+ — provides positioning, blur material, and transition animations.
-   */
-  embedded?: boolean;
 }
 
 // Layout constants
 const MINI_PLAYER_HEIGHT = LAYOUT.CARD.HEIGHT.MINI_PLAYER;
 const PROGRESS_HEIGHT = LAYOUT.PROGRESS_BAR.HEIGHT;
-
-// Static container style - positioned to cover tab bar and floating buttons
-const CONTAINER_STYLE = [
-  StyleSheet.create({
-    container: {
-      position: 'absolute' as const,
-      left: LAYOUT.SCREEN_HORIZONTAL_PADDING,
-      right: LAYOUT.SCREEN_HORIZONTAL_PADDING,
-      zIndex: LAYOUT.Z_INDEX.HEADER,
-    },
-  }).container,
-  { bottom: LAYOUT.BOTTOM_BAR.HEIGHT - LAYOUT.SPACING.LARGE - LAYOUT.SPACING.TINY },
-];
 
 // Custom memo comparison — keeps the one optimization React Compiler can't do:
 // skip re-renders for sub-second position changes (position updates 2x/sec but display shows seconds)
@@ -72,7 +54,6 @@ const MiniPlayerComparison = (prev: MiniPlayerProps, next: MiniPlayerProps): boo
   if (prev.article.id !== next.article.id) return false;
   if (prev.isTimerActive !== next.isTimerActive) return false;
   if (prev.duration !== next.duration) return false;
-  if (prev.embedded !== next.embedded) return false;
   if (Math.floor(prev.position) !== Math.floor(next.position)) return false;
   if (
     prev.queuePosition?.current !== next.queuePosition?.current ||
@@ -91,9 +72,13 @@ const MiniPlayerComponent = ({
   queuePosition,
   onPlayPause,
   onTimerPress,
-  embedded = false,
 }: MiniPlayerProps) => {
   const colors = useColors();
+  const insets = useSafeAreaInsets();
+
+  // Float above the native tab bar. `insets.bottom` covers the home-indicator
+  // area on iOS; `BOTTOM_BAR.HEIGHT` is the tab bar's own intrinsic height.
+  const containerBottom = insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.TINY;
 
   // React Compiler auto-memoizes these derivations
   const imageUrl = generateStorageUrl('images', article.image_url);
@@ -108,120 +93,107 @@ const MiniPlayerComponent = ({
   const timerIconColor = isTimerActive ? colors.white : colors.tint;
   const stopButtonColor = withAlpha(colors.tint, 0.12);
 
-  // When embedded (e.g. inside NativeTabs.BottomAccessory), the host container
-  // owns the surface, blur, shadow, and corner radius — render flat content only.
-  const cardStyle = embedded
-    ? [styles.embeddedCard]
-    : [
-        styles.card,
-        {
-          // On iOS 26 the GlassView provides the surface; skip the opaque fill so
-          // the liquid-glass effect shows the tab bar/content behind it.
-          backgroundColor: GLASS_AVAILABLE ? 'transparent' : colors.elevation2,
-          borderWidth: GLASS_AVAILABLE ? 0 : StyleSheet.hairlineWidth,
-          borderColor: withAlpha(colors.border, 0.5),
-          ...LAYOUT.ELEVATION.MEDIUM,
-          shadowColor: colors.shadow,
-        },
-      ];
+  const cardStyle = [
+    styles.card,
+    {
+      // On iOS 26 the GlassView provides the surface; skip the opaque fill so
+      // the liquid-glass effect shows the tab bar/content behind it.
+      backgroundColor: GLASS_AVAILABLE ? 'transparent' : colors.elevation2,
+      borderWidth: GLASS_AVAILABLE ? 0 : StyleSheet.hairlineWidth,
+      borderColor: withAlpha(colors.border, 0.5),
+      ...LAYOUT.ELEVATION.MEDIUM,
+      shadowColor: colors.shadow,
+    },
+  ];
 
-  const Surface = embedded ? View : CardSurface;
-  const surfaceProps = embedded || !GLASS_AVAILABLE ? {} : { glassEffectStyle: 'regular' as const };
+  const surfaceProps = GLASS_AVAILABLE ? { glassEffectStyle: 'regular' as const } : {};
 
   const inner = (
-    <Surface style={cardStyle} {...surfaceProps}>
-        {/* Main Content Row */}
-        <View style={styles.contentRow}>
-          {/* Artwork Thumbnail */}
-          <View style={styles.artworkContainer}>
-            <EnhancedImage
-              source={imageUrl}
-              style={styles.artwork}
-              transition={TIMING_CONSTANTS.TRANSITION_DELAY}
-              recyclingKey={`miniplayer-${article.id}`}
-            />
-          </View>
-
-          {/* Text Content Column */}
-          <View style={styles.textColumn}>
-            <ThemedText
-              colorName="headingText"
-              style={styles.title}
-              type="heading3"
-              numberOfLines={2}
-              ellipsizeMode="tail"
-            >
-              {article.title}
-            </ThemedText>
-
-            <ThemedText
-              colorName="secondaryText"
-              style={styles.artist}
-              type="caption"
-              numberOfLines={1}
-              ellipsizeMode="tail"
-            >
-              {formatAuthorCategory(article.author, article.category)}
-            </ThemedText>
-
-            {/* Time and queue position */}
-            <View style={styles.timeAndQueueRow}>
-              <ThemedText colorName="textTertiary" style={styles.timeDisplay} type="caption">
-                {timeDisplay}
-              </ThemedText>
-              {queueDisplay && (
-                <>
-                  <ThemedText colorName="textTertiary" type="caption">
-                    •
-                  </ThemedText>
-                  <ThemedText
-                    colorName="textTertiary"
-                    style={styles.queuePosition}
-                    type="caption"
-                  >
-                    {queueDisplay}
-                  </ThemedText>
-                </>
-              )}
-            </View>
-          </View>
-
-          {/* Controls */}
-          <View style={styles.controlsContainer}>
-            <IconButton
-              icon="timer"
-              onPress={onTimerPress}
-              backgroundColor={timerButtonColor}
-              iconColor={timerIconColor}
-              iconSize={LAYOUT.BUTTON.ICON_SIZE.LARGE}
-              hapticType="light"
-            />
-            <IconButton
-              icon="stop"
-              onPress={onPlayPause}
-              backgroundColor={stopButtonColor}
-              iconColor={colors.tint}
-              iconSize={LAYOUT.BUTTON.ICON_SIZE.LARGE}
-              hapticType="light"
-            />
-          </View>
-        </View>
-
-        {/* Progress Bar - at bottom */}
-        <View style={styles.progressContainer} pointerEvents="none">
-          <ProgressBar
-            progress={progressPercentage}
-            height={PROGRESS_HEIGHT}
-            fillColor={colors.tint}
-            backgroundColor={colors.border}
+    <CardSurface style={cardStyle} {...surfaceProps}>
+      {/* Main Content Row */}
+      <View style={styles.contentRow}>
+        {/* Artwork Thumbnail */}
+        <View style={styles.artworkContainer}>
+          <EnhancedImage
+            source={imageUrl}
+            style={styles.artwork}
+            transition={TIMING_CONSTANTS.TRANSITION_DELAY}
+            recyclingKey={`miniplayer-${article.id}`}
           />
         </View>
-    </Surface>
-  );
 
-  if (embedded) {
-    return inner;
-  }
+        {/* Text Content Column */}
+        <View style={styles.textColumn}>
+          <ThemedText
+            colorName="headingText"
+            style={styles.title}
+            type="heading3"
+            numberOfLines={2}
+            ellipsizeMode="tail"
+          >
+            {article.title}
+          </ThemedText>
+
+          <ThemedText
+            colorName="secondaryText"
+            style={styles.artist}
+            type="caption"
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {formatAuthorCategory(article.author, article.category)}
+          </ThemedText>
+
+          {/* Time and queue position */}
+          <View style={styles.timeAndQueueRow}>
+            <ThemedText colorName="textTertiary" style={styles.timeDisplay} type="caption">
+              {timeDisplay}
+            </ThemedText>
+            {queueDisplay && (
+              <>
+                <ThemedText colorName="textTertiary" type="caption">
+                  •
+                </ThemedText>
+                <ThemedText colorName="textTertiary" style={styles.queuePosition} type="caption">
+                  {queueDisplay}
+                </ThemedText>
+              </>
+            )}
+          </View>
+        </View>
+
+        {/* Controls */}
+        <View style={styles.controlsContainer}>
+          <IconButton
+            icon="timer"
+            onPress={onTimerPress}
+            backgroundColor={timerButtonColor}
+            iconColor={timerIconColor}
+            iconSize={LAYOUT.BUTTON.ICON_SIZE.LARGE}
+            hapticType="light"
+          />
+          <IconButton
+            icon="pause"
+            onPress={onPlayPause}
+            backgroundColor={stopButtonColor}
+            iconColor={colors.tint}
+            iconSize={LAYOUT.BUTTON.ICON_SIZE.LARGE}
+            hapticType="light"
+          />
+        </View>
+      </View>
+
+      {/* Progress Bar - at bottom */}
+      <View style={styles.progressContainer} pointerEvents="none">
+        <ProgressBar
+          progress={progressPercentage}
+          height={PROGRESS_HEIGHT}
+          fillColor={colors.tint}
+          backgroundColor={colors.border}
+        />
+      </View>
+    </CardSurface>
+  );
 
   return (
     <Animated.View
@@ -229,7 +201,7 @@ const MiniPlayerComponent = ({
         TIMING_CONFIG.GENTLE.duration,
       )}
       exiting={FadeOutDown.duration(TIMING_CONFIG.MEDIUM.duration)}
-      style={CONTAINER_STYLE}
+      style={[styles.container, { bottom: containerBottom }]}
     >
       {inner}
     </Animated.View>
@@ -241,17 +213,17 @@ export const MiniPlayer = memo<MiniPlayerProps>(MiniPlayerComponent, MiniPlayerC
 MiniPlayer.displayName = 'MiniPlayer';
 
 const styles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    left: LAYOUT.SCREEN_HORIZONTAL_PADDING,
+    right: LAYOUT.SCREEN_HORIZONTAL_PADDING,
+    zIndex: LAYOUT.Z_INDEX.HEADER,
+  },
+
   card: {
     height: MINI_PLAYER_HEIGHT,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
-  },
-
-  // For NativeTabs.BottomAccessory hosting (iOS 26+): host owns surface chrome.
-  embeddedCard: {
-    height: MINI_PLAYER_HEIGHT,
-    overflow: 'hidden',
-    backgroundColor: 'transparent',
   },
 
   contentRow: {
@@ -259,7 +231,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: LAYOUT.SPACING.SMALL,
-    paddingBottom: PROGRESS_HEIGHT,
+    paddingTop: PROGRESS_HEIGHT,
   },
 
   textColumn: {
@@ -308,7 +280,7 @@ const styles = StyleSheet.create({
 
   progressContainer: {
     position: 'absolute',
-    bottom: 0,
+    top: 0,
     left: 0,
     right: 0,
     height: PROGRESS_HEIGHT,
@@ -321,6 +293,6 @@ const styles = StyleSheet.create({
   artwork: {
     width: LAYOUT.CARD.IMAGE.MINI_PLAYER_ARTWORK,
     height: LAYOUT.CARD.IMAGE.MINI_PLAYER_ARTWORK,
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
 });

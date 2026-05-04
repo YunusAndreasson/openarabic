@@ -51,7 +51,7 @@ jest.mock('@/utils/haptics', () => ({
 }));
 
 import { useQueryClient } from '@tanstack/react-query';
-import { useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
+import { GlobalAudioStateProvider, useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -136,7 +136,9 @@ describe('useGlobalAudioState', () => {
 
   describe('Initial state', () => {
     test('should return initial audio state', () => {
-      const { result } = renderHook(() => useGlobalAudioState());
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       expect(result.current.playing).toBeFalsy();
       expect(result.current.audioState).toBe('idle');
@@ -146,15 +148,18 @@ describe('useGlobalAudioState', () => {
     });
 
     test('should return null currentArticle when no track is playing', () => {
-      const { result } = renderHook(() => useGlobalAudioState());
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       expect(result.current.currentArticle).toBeNull();
     });
 
     test('should return initial sleep timer state', () => {
-      const { result } = renderHook(() => useGlobalAudioState());
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
-      expect(result.current.showSleepTimerModal).toBeFalsy();
       expect(result.current.isTimerActive).toBeFalsy();
       expect(result.current.sleepTimerEndTime).toBe(0);
     });
@@ -168,7 +173,9 @@ describe('useGlobalAudioState', () => {
         totalTracks: 5,
       });
 
-      const { result } = renderHook(() => useGlobalAudioState());
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       expect(result.current.queuePosition.current).toBe(3); // 1-indexed
       expect(result.current.queuePosition.total).toBe(5);
@@ -177,41 +184,33 @@ describe('useGlobalAudioState', () => {
 
   describe('Actions', () => {
     test('should provide onPlayPause action', () => {
-      const { result } = renderHook(() => useGlobalAudioState());
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       expect(typeof result.current.onPlayPause).toBe('function');
     });
 
-    test('should provide onTimerPress action that opens modal', () => {
-      const { result } = renderHook(() => useGlobalAudioState());
+    test('should provide onTimerPress that calls present() on the sleep-timer ref', () => {
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
+
+      const present = jest.fn();
+      const dismiss = jest.fn();
+      result.current.sleepTimerRef.current = { present, dismiss };
 
       act(() => {
         result.current.onTimerPress();
       });
 
-      expect(result.current.showSleepTimerModal).toBeTruthy();
-    });
-
-    test('should provide onSleepTimerClose action that closes modal', () => {
-      const { result } = renderHook(() => useGlobalAudioState());
-
-      // Open modal first
-      act(() => {
-        result.current.onTimerPress();
-      });
-
-      expect(result.current.showSleepTimerModal).toBeTruthy();
-
-      // Close modal
-      act(() => {
-        result.current.onSleepTimerClose();
-      });
-
-      expect(result.current.showSleepTimerModal).toBeFalsy();
+      expect(present).toHaveBeenCalledTimes(1);
     });
 
     test('should provide onSleepTimerSet action', () => {
-      const { result } = renderHook(() => useGlobalAudioState());
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       act(() => {
         result.current.onSleepTimerSet(30);
@@ -221,7 +220,9 @@ describe('useGlobalAudioState', () => {
     });
 
     test('should provide onSleepTimerCancel action', () => {
-      const { result } = renderHook(() => useGlobalAudioState());
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       act(() => {
         result.current.onSleepTimerCancel();
@@ -231,7 +232,9 @@ describe('useGlobalAudioState', () => {
     });
 
     test('should provide preconfigureAudioSession action', async () => {
-      const { result } = renderHook(() => useGlobalAudioState());
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       await act(async () => {
         await result.current.preconfigureAudioSession();
@@ -256,7 +259,9 @@ describe('useGlobalAudioState', () => {
         playing: true, // Mark as playing so article is shown
       } as never);
 
-      const { result } = renderHook(() => useGlobalAudioState());
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       // When playing with track metadata, it shows article from track data
       expect(result.current.currentArticle).toEqual({
@@ -279,7 +284,9 @@ describe('useGlobalAudioState', () => {
         actions: mockSleepTimer.actions,
       });
 
-      const { result } = renderHook(() => useGlobalAudioState());
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       expect(result.current.isTimerActive).toBeTruthy();
       expect(result.current.sleepTimerEndTime).toBeGreaterThan(0);
@@ -288,7 +295,9 @@ describe('useGlobalAudioState', () => {
 
   describe('Cleanup', () => {
     test('should cleanup timeout on unmount', () => {
-      const { unmount } = renderHook(() => useGlobalAudioState());
+      const { unmount } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
 
       unmount();
 

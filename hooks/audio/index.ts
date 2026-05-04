@@ -1,4 +1,4 @@
-export { useGlobalAudioState } from './useGlobalAudioState';
+export { GlobalAudioStateProvider, useGlobalAudioState } from './useGlobalAudioState';
 export { useSimpleAudioPlayer } from './useSimpleAudioPlayer';
 export { useSleepTimer } from './useSleepTimer';
 export { useWordAudioPlayback } from './useWordAudioPlayback';

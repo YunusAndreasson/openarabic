@@ -1,6 +1,16 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  type ReactNode,
+  type RefObject,
+} from 'react';
 
+import type { SleepTimerHandle } from '@/components/playlist';
 import { AUDIO_STATES } from '@/constants/audio';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
@@ -37,30 +47,36 @@ export interface GlobalAudioState {
   };
 
   // Sleep timer state
-  showSleepTimerModal: boolean;
   isTimerActive: boolean;
   sleepTimerEndTime: number;
+  /** Ref to the SleepTimer modal — AudioOverlays attaches it to the rendered sheet. */
+  sleepTimerRef: RefObject<SleepTimerHandle | null>;
 
   // Actions
   onPlayPause: () => void;
   onTimerPress: () => void;
   onSleepTimerSet: (minutes: number) => void;
   onSleepTimerCancel: () => void;
-  onSleepTimerClose: () => void;
   preconfigureAudioSession: () => Promise<void>;
 }
 
 /**
- * Global audio state hook - provides unified audio state across the app
- * Integrates with mini-player, sleep timer, and navigation
+ * Internal hook — owns the actual audio/sleep-timer state. Must be invoked
+ * exactly once per app via `GlobalAudioStateProvider`. Components consume
+ * via `useGlobalAudioState`, which reads from context. This avoids the
+ * duplicate-state bug where each call site had its own `showSleepTimerModal`
+ * (and its own `useSleepTimer`) so taps on the MiniPlayer's timer button
+ * never reached the SleepTimer modal renderer.
  */
-export function useGlobalAudioState(): GlobalAudioState {
+function useGlobalAudioStateInternal(): GlobalAudioState {
   const { user } = useAuth();
   const audioPlayer = useSimpleAudioPlayer();
   const queryClient = useQueryClient();
 
-  // Sleep timer modal state
-  const [showSleepTimerModal, setShowSleepTimerModal] = useState(false);
+  // Imperative handle to the SleepTimer modal. Avoids the state-based
+  // useEffect → present() pattern which silently no-ops when the same
+  // value is set twice (gesture-dismiss → tap → tap again).
+  const sleepTimerRef = useRef<SleepTimerHandle | null>(null);
 
   // Get reading list for queue tracking
   const { sortedEnhancedTracks } = usePlaylistScreen();
@@ -70,7 +86,7 @@ export function useGlobalAudioState(): GlobalAudioState {
   // Sleep timer integration
   const sleepTimer = useSleepTimer(() => {
     successFeedback(); // Haptic feedback when timer completes
-    setShowSleepTimerModal(false); // Close modal when timer completes
+    sleepTimerRef.current?.dismiss();
 
     // CRITICAL FIX: Mark sleep timer as expired instead of stopping immediately
     // This allows the current track to finish naturally while preventing playlist progression
@@ -78,13 +94,17 @@ export function useGlobalAudioState(): GlobalAudioState {
 
     // Force stop after a reasonable delay (30 seconds)
     // This ensures we don't get stuck if audio never stops naturally
-    setTimer('forceStop', () => {
-      // Only stop if we're still in playlist mode (track didn't finish yet)
-      const playlistInfo = simpleAudioService.getPlaylistInfo();
-      if (playlistInfo.isPlaylistMode) {
-        audioPlayer.stop();
-      }
-    }, 30000);
+    setTimer(
+      'forceStop',
+      () => {
+        // Only stop if we're still in playlist mode (track didn't finish yet)
+        const playlistInfo = simpleAudioService.getPlaylistInfo();
+        if (playlistInfo.isPlaylistMode) {
+          audioPlayer.stop();
+        }
+      },
+      30000,
+    );
   });
 
   // Auto-cancel sleep timer when audio stops
@@ -210,7 +230,7 @@ export function useGlobalAudioState(): GlobalAudioState {
   }, [audioPlayer.stop]);
 
   const handleTimerPress = useCallback(() => {
-    setShowSleepTimerModal(true);
+    sleepTimerRef.current?.present();
   }, []);
 
   // Sleep timer handlers
@@ -224,12 +244,8 @@ export function useGlobalAudioState(): GlobalAudioState {
 
   const handleSleepTimerCancel = useCallback(() => {
     sleepTimer.actions.cancelTimer();
-    setShowSleepTimerModal(false);
+    sleepTimerRef.current?.dismiss();
   }, [sleepTimer.actions]);
-
-  const handleSleepTimerClose = useCallback(() => {
-    setShowSleepTimerModal(false);
-  }, []);
 
   const handlePreconfigureAudioSession = useCallback(async () => {
     await audioPlayer.preconfigureAudioSession();
@@ -248,13 +264,29 @@ export function useGlobalAudioState(): GlobalAudioState {
     position: audioPlayer.currentTime,
     duration: audioPlayer.duration,
     isTimerActive: sleepTimer.state.isActive,
-    showSleepTimerModal,
     sleepTimerEndTime: sleepTimer.state.endTime,
+    sleepTimerRef,
     onPlayPause: handlePlayPause,
     onTimerPress: handleTimerPress,
     onSleepTimerSet: handleSleepTimerSet,
     onSleepTimerCancel: handleSleepTimerCancel,
-    onSleepTimerClose: handleSleepTimerClose,
     preconfigureAudioSession: handlePreconfigureAudioSession,
   };
+}
+
+const GlobalAudioStateContext = createContext<GlobalAudioState | null>(null);
+
+export function GlobalAudioStateProvider({ children }: { children: ReactNode }) {
+  const value = useGlobalAudioStateInternal();
+  return (
+    <GlobalAudioStateContext.Provider value={value}>{children}</GlobalAudioStateContext.Provider>
+  );
+}
+
+export function useGlobalAudioState(): GlobalAudioState {
+  const ctx = useContext(GlobalAudioStateContext);
+  if (!ctx) {
+    throw new Error('useGlobalAudioState must be used within GlobalAudioStateProvider');
+  }
+  return ctx;
 }
