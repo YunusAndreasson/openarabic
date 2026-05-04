@@ -228,7 +228,10 @@ describe('CompletionScreen Component', () => {
         currentStreak: 0,
       });
 
-      useEncouragingMetrics.mockReturnValue({ metrics: [], educationalText: 'Words return at optimal intervals for long-term memory' });
+      useEncouragingMetrics.mockReturnValue({
+        metrics: [],
+        educationalText: 'Words return at optimal intervals for long-term memory',
+      });
 
       const { queryByText } = render(<CompletionScreen sessionMetrics={metrics} />);
 

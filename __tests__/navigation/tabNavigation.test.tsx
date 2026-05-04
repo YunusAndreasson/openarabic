@@ -29,7 +29,10 @@ jest.mock('expo-router/unstable-native-tabs', () => {
       const labelChild = React.Children.toArray(child.props.children).find(
         (c: any) => c?.type?.displayName === 'NativeTabsLabel' || c?.props?.children != null,
       ) as React.ReactElement<{ children: string }> | undefined;
-      const title = typeof labelChild?.props?.children === 'string' ? labelChild.props.children : child.props.name;
+      const title =
+        typeof labelChild?.props?.children === 'string'
+          ? labelChild.props.children
+          : child.props.name;
 
       return React.createElement(
         TouchableOpacity,
@@ -42,13 +45,19 @@ jest.mock('expo-router/unstable-native-tabs', () => {
       );
     });
 
-    return React.createElement(React.Fragment, null, ...tabBar, Active && React.createElement(Active));
+    return React.createElement(
+      React.Fragment,
+      null,
+      ...tabBar,
+      Active && React.createElement(Active),
+    );
   };
 
   const Trigger = ({ children }: { children: React.ReactNode }) =>
     React.createElement('View', null, children);
   Trigger.Icon = () => null;
-  const Label = ({ children }: { children: React.ReactNode }) => React.createElement(Text, null, children);
+  const Label = ({ children }: { children: React.ReactNode }) =>
+    React.createElement(Text, null, children);
   (Label as any).displayName = 'NativeTabsLabel';
   Trigger.Label = Label;
   Trigger.Badge = ({ children }: { children: React.ReactNode }) =>

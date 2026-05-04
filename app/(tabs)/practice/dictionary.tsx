@@ -13,7 +13,11 @@ import {
   MemoryStrengthLegend,
   WordSentencesBottomSheet,
 } from '@/components/practice';
-import { LIST_DRAW_DISTANCE_MULTIPLIER, TIMING_CONFIG, TIMING_CONSTANTS } from '@/constants/animation';
+import {
+  LIST_DRAW_DISTANCE_MULTIPLIER,
+  TIMING_CONFIG,
+  TIMING_CONSTANTS,
+} from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useStudyWordMutations } from '@/hooks/articles/useStudyWordMutations';

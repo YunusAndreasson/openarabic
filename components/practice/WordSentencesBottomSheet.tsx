@@ -16,7 +16,6 @@ import type { StudyWord } from '@/types/vocabulary.types';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 import { getStabilityProgressColor } from '@/utils/urgencyScore';
 
-
 interface WordSentencesBottomSheetProps {
   /** Controls modal visibility */
   isVisible: boolean;
@@ -88,11 +87,7 @@ export const WordSentencesBottomSheet = memo<WordSentencesBottomSheetProps>(
           >
             {/* Word Section - Arabic, English, and memory dot */}
             <View style={styles.wordSection}>
-              <ThemedText
-                type="arabic"
-                weight="semibold"
-                style={styles.arabicText}
-              >
+              <ThemedText type="arabic" weight="semibold" style={styles.arabicText}>
                 {arabicText}
               </ThemedText>
 

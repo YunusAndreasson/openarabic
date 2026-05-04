@@ -191,8 +191,7 @@ export function useArticleScreen({
           if (sentenceIndex >= 0 && sentenceIndex < totalSentences) {
             // For the last sentence, count it as viewed even if partially visible
             // (the viewability threshold can prevent it from registering at the bottom)
-            const isVisible =
-              item.isViewable === true || sentenceIndex === totalSentences - 1;
+            const isVisible = item.isViewable === true || sentenceIndex === totalSentences - 1;
             if (isVisible) {
               maxVisibleSentenceIndex = Math.max(maxVisibleSentenceIndex, sentenceIndex);
             }
@@ -242,7 +241,6 @@ export function useArticleScreen({
   const handleScrollEnd = useCallback(() => {
     // No-op: viewable items callback handles all position tracking
   }, []);
-
 
   // Sync sentence index (for any other features that might use it)
   useEffect(() => {

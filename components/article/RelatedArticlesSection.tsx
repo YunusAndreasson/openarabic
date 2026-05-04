@@ -20,7 +20,6 @@ interface RelatedArticlesSectionProps {
    * Maximum number of related articles to show per section (default: 5)
    */
   maxArticles?: number;
-
 }
 
 /**

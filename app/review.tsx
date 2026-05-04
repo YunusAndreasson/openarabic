@@ -176,45 +176,50 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
 
   return (
     <View style={[baseStyles.container, { backgroundColor: colors.background }]}>
-        {/* Full-screen swipe background + word content */}
-        <ReviewCard
-          wordKey={currentWordKey}
-          word={currentSentence.wordForm}
-          onSwipeLeft={handleSwipeLeft}
-          onSwipeRight={handleSwipeRight}
-          opacityStyle={transparentStyle}
-          isUpdating={isUpdating}
-          testID="review-card"
-          translation={currentMeaning}
-          showTranslation={showTranslation}
-          onReplayAudio={handleReplayAudio}
-          fullScreenBackground={true}
-        />
+      {/* Full-screen swipe background + word content */}
+      <ReviewCard
+        wordKey={currentWordKey}
+        word={currentSentence.wordForm}
+        onSwipeLeft={handleSwipeLeft}
+        onSwipeRight={handleSwipeRight}
+        opacityStyle={transparentStyle}
+        isUpdating={isUpdating}
+        testID="review-card"
+        translation={currentMeaning}
+        showTranslation={showTranslation}
+        onReplayAudio={handleReplayAudio}
+        fullScreenBackground={true}
+      />
 
-        {/* UI chrome - header and bottom actions, positioned above background */}
-        <View style={baseStyles.uiChromeOverlay}>
-          {/* Progress header at top of screen */}
-          <View style={[baseStyles.headerPadding, Platform.OS === 'android' && { paddingTop: insets.top }]}>
-            <ReviewHeader maxProgress={maxProgress} progress={progress} onClose={handleClose} />
-          </View>
-
-          {/* Bottom actions */}
-          <View
-            style={{
-              position: 'absolute',
-              bottom: insets.bottom + LAYOUT.SPACING.LARGE,
-              left: LAYOUT.SPACING.LARGE,
-              right: LAYOUT.SPACING.LARGE,
-            }}
-          >
-            <ReviewBottomActions
-              onPressLeft={handleSwipeLeft}
-              onPressRight={handleSwipeRight}
-              onShowContextualHelp={handleShowContextualHelp}
-              disabled={isUpdating}
-            />
-          </View>
+      {/* UI chrome - header and bottom actions, positioned above background */}
+      <View style={baseStyles.uiChromeOverlay}>
+        {/* Progress header at top of screen */}
+        <View
+          style={[
+            baseStyles.headerPadding,
+            Platform.OS === 'android' && { paddingTop: insets.top },
+          ]}
+        >
+          <ReviewHeader maxProgress={maxProgress} progress={progress} onClose={handleClose} />
         </View>
+
+        {/* Bottom actions */}
+        <View
+          style={{
+            position: 'absolute',
+            bottom: insets.bottom + LAYOUT.SPACING.LARGE,
+            left: LAYOUT.SPACING.LARGE,
+            right: LAYOUT.SPACING.LARGE,
+          }}
+        >
+          <ReviewBottomActions
+            onPressLeft={handleSwipeLeft}
+            onPressRight={handleSwipeRight}
+            onShowContextualHelp={handleShowContextualHelp}
+            disabled={isUpdating}
+          />
+        </View>
+      </View>
 
       {/* Contextual help overlay - shown when tapping bottom buttons */}
       <SwipeGestureTutorial

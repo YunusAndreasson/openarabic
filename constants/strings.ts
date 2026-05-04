@@ -178,37 +178,37 @@ export const STRINGS = {
   SESSION_COMPLETE: 'Session complete',
   // Completion screen educational text pools (teach SRS concepts based on session performance)
   SESSION_ED_STRONG_POOL: [
-    'Strong recall means your intervals are growing. Some of these words won\'t need review for weeks.',
-    'When you remember a word easily, the algorithm pushes the next review further out — that\'s how it becomes permanent.',
+    "Strong recall means your intervals are growing. Some of these words won't need review for weeks.",
+    "When you remember a word easily, the algorithm pushes the next review further out — that's how it becomes permanent.",
     'Your brain just proved it can retrieve these words under pressure. That act of retrieval is what builds long-term memory.',
-    'Successful recall is more powerful than re-reading. You\'re training your brain to find these words when you need them.',
+    "Successful recall is more powerful than re-reading. You're training your brain to find these words when you need them.",
   ] as const,
   SESSION_ED_DEFAULT_POOL: [
     'A mix of known and forgotten is actually ideal. Struggling to recall makes the memory stronger than getting it right easily.',
     'Words you forgot will come back sooner. Words you knew get more time off. The system adapts to exactly where you are.',
-    'Every word you couldn\'t recall is now scheduled for an earlier return. That\'s the algorithm protecting you from forgetting.',
-    'Forgetting isn\'t failure — it\'s information. The system uses it to find the perfect moment for your next review.',
+    "Every word you couldn't recall is now scheduled for an earlier return. That's the algorithm protecting you from forgetting.",
+    "Forgetting isn't failure — it's information. The system uses it to find the perfect moment for your next review.",
   ] as const,
   SESSION_ED_STRUGGLE_POOL: [
     'Difficult sessions build the strongest memories. Words you struggled with will get shorter intervals until they stick.',
-    'Your brain is working hard, and that\'s exactly what learning looks like. These words will come back sooner for extra practice.',
+    "Your brain is working hard, and that's exactly what learning looks like. These words will come back sooner for extra practice.",
     'The algorithm noticed these words need more repetition and will schedule more frequent reviews. That extra practice is what makes them stick.',
-    'Every time you see a word again after forgetting, the memory trace gets deeper. You\'re building foundations right now.',
+    "Every time you see a word again after forgetting, the memory trace gets deeper. You're building foundations right now.",
   ] as const,
   SESSION_ED_PERFECT:
-    'Perfect session. The algorithm will space your next reviews further apart — you\'ve earned longer breaks.',
+    "Perfect session. The algorithm will space your next reviews further apart — you've earned longer breaks.",
   SESSION_ED_BIG_STABILITY_JUMP:
     'Your words grew significantly stronger this session. Some jumped from days to weeks between reviews.',
   // Recommendation engine message pools (forward-looking guidance for Practice tab)
   RECOMMENDATION_LOW_RETENTION_POOL: [
     'Forgetting is part of the process. Reviewing right at this difficulty point creates the strongest memories.',
     'Your brain builds stronger connections when you retrieve words right before forgetting. Now is the ideal time.',
-    'Struggling to recall makes the next recall easier. Review now and you\'ll remember longer.',
+    "Struggling to recall makes the next recall easier. Review now and you'll remember longer.",
   ] as const,
   RECOMMENDATION_DUE_MANY_POOL: [
     'Your words are at the perfect point for review — just starting to fade, which makes recall practice most effective.',
     'Each word is scheduled based on how well you know it. Harder words come back sooner, easier ones wait longer.',
-    'Reviewing now extends each word\'s memory by days. The more times you successfully recall, the longer the next interval.',
+    "Reviewing now extends each word's memory by days. The more times you successfully recall, the longer the next interval.",
   ] as const,
   RECOMMENDATION_DUE_FEW_POOL: [
     'A quick review now builds the habit. Consistency matters more than session size.',
@@ -219,13 +219,13 @@ export const STRINGS = {
     'Your brain has a daily learning budget. Focus on strengthening current words — new ones stick better when existing ones are solid.',
   ] as const,
   RECOMMENDATION_MODERATE_LOAD_POOL: [
-    'Your vocabulary is growing steadily. A few more words won\'t overwhelm your schedule, but reviews always come first.',
+    "Your vocabulary is growing steadily. A few more words won't overwhelm your schedule, but reviews always come first.",
     'Half your words are approaching long-term memory. Each successful review roughly doubles the time until the next one.',
   ] as const,
   RECOMMENDATION_SMALL_CAUGHT_UP_POOL: [
-    'Great time to explore articles and add words you\'re curious about. Words learned from context stick better than random lists.',
+    "Great time to explore articles and add words you're curious about. Words learned from context stick better than random lists.",
     'You have room for more words. The system handles the scheduling — you just need to find words that interest you.',
-    'Each new word you add gets its own personalized schedule. Start with words you\'ve seen in articles.',
+    "Each new word you add gets its own personalized schedule. Start with words you've seen in articles.",
   ] as const,
   RECOMMENDATION_BALANCED_POOL: [
     'Longer gaps between reviews mean your brain is encoding these more deeply.',
@@ -406,7 +406,8 @@ export const STRINGS = {
   CLEAR_CACHE_BUTTON: 'Clear cache',
   NO_CACHE: 'No cache',
   NO_CACHED_FILES: 'Nothing to clear',
-  CLEAR_CACHE_CONFIRMATION: 'This removes {size} of cached audio, articles, and app data. Everything reloads when needed.',
+  CLEAR_CACHE_CONFIRMATION:
+    'This removes {size} of cached audio, articles, and app data. Everything reloads when needed.',
   CLEAR_CACHE_SUCCESS: 'Cache cleared',
   // Reading progress management
   RESET_READING_PROGRESS: 'Reset reading progress',

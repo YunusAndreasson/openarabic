@@ -152,7 +152,7 @@ export const FAQ_DATA: FAQCategoryData[] = [
       },
       {
         id: 'scope',
-        question: "What’s the scope of this app?",
+        question: 'What’s the scope of this app?',
         answer:
           'OpenArabic is a language tool for reading and vocabulary—not a religious guide. For theological questions, consult qualified scholars and reliable references.',
         category: FAQCategoryEnum.LEARNING_APPROACH,

@@ -28,10 +28,13 @@ interface AppearanceSectionProps {
  *
  * Includes: Theme, Arabic font, display language, haptics toggle.
  */
-export const AppearanceSection = memo<AppearanceSectionProps>(({ onThemePress, onLanguagePress }) => {
+export const AppearanceSection = memo<AppearanceSectionProps>(
+  ({ onThemePress, onLanguagePress }) => {
     const dispatch = useAppDispatch();
     const currentTheme = useAppSelectorShallow(state => state.theme.theme);
-    const currentLanguage = useAppSelectorShallow(state => state.settings.displayLanguagePreference);
+    const currentLanguage = useAppSelectorShallow(
+      state => state.settings.displayLanguagePreference,
+    );
     const currentArabicFont = useAppSelectorShallow(state => state.settings.arabicFont);
     const hapticsEnabled = useAppSelectorShallow(state => state.settings.hapticsEnabled);
     const currentThemeText = useMemo(() => {

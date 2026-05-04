@@ -1,11 +1,7 @@
 import { Stack } from 'expo-router';
 import type { JSX } from 'react';
 
-import {
-  CloseButton,
-  DictionaryButton,
-  EditModeButton,
-} from '@/components/ui';
+import { CloseButton, DictionaryButton, EditModeButton } from '@/components/ui';
 import { useColors } from '@/hooks/theme/useColors';
 import { createNavigationOptions, createTabHeaderOptions } from '@/utils/navigation';
 import { useEditMode } from '@/hooks/ui/useEditMode';

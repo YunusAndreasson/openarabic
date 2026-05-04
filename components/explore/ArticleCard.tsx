@@ -97,11 +97,7 @@ export function ArticleCard({
   }, [router, articleHref]);
 
   return (
-    <BaseCard
-      style={style}
-      testID={testID}
-      onPress={handlePress}
-    >
+    <BaseCard style={style} testID={testID} onPress={handlePress}>
       <View style={styles.imageContainer}>
         <EnhancedImage
           style={styles.image}
@@ -120,7 +116,12 @@ export function ArticleCard({
         </Canvas>
 
         <View style={styles.overlayTextContainer}>
-          <ThemedText colorName="cardOverlayHeading" numberOfLines={2} weight="bold" style={TITLE_STYLE}>
+          <ThemedText
+            colorName="cardOverlayHeading"
+            numberOfLines={2}
+            weight="bold"
+            style={TITLE_STYLE}
+          >
             {title}
           </ThemedText>
 

@@ -91,7 +91,11 @@ export function ReviewCard({
   const colors = useColors();
 
   // ===== SWIPE GESTURE HOOK (v2 OPTIMIZED) =====
-  const { gesture: panGesture, translateX, isAnimatingRef } = useSwipeGesture({
+  const {
+    gesture: panGesture,
+    translateX,
+    isAnimatingRef,
+  } = useSwipeGesture({
     enabled: !isUpdating,
     onSwipeLeft,
     onSwipeRight,

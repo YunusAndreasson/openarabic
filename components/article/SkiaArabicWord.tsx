@@ -178,7 +178,11 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
       {/* Pulsing highlight for tutorial */}
       {isHighlighted && (
         <Animated.View
-          style={[styles.highlightOverlay, { backgroundColor: colors.tint }, HIGHLIGHT_ANIMATION_STYLE]}
+          style={[
+            styles.highlightOverlay,
+            { backgroundColor: colors.tint },
+            HIGHLIGHT_ANIMATION_STYLE,
+          ]}
         />
       )}
       {/* Static subtle highlight for target word in sentence examples */}

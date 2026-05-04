@@ -13,7 +13,11 @@ import type { Article } from '@/types/articles.types';
 import type { ArticleId } from '@/types/branded.types';
 import { generateStorageUrl } from '@/utils/storageUtils';
 import { calculateProgressPercentage } from '@/utils/progressUtils';
-import { getArticleMetadata, getAuthorDisplayName, getCategoryDisplayName } from '@/utils/stringUtils';
+import {
+  getArticleMetadata,
+  getAuthorDisplayName,
+  getCategoryDisplayName,
+} from '@/utils/stringUtils';
 
 interface RelatedArticlesByFilterProps {
   /**
@@ -45,7 +49,6 @@ interface RelatedArticlesByFilterProps {
    * Maximum number of related articles to show (default: 5)
    */
   maxArticles?: number;
-
 }
 
 // Section header component matching FilteredArticleView style
@@ -68,14 +71,7 @@ SectionHeader.displayName = 'SectionHeader';
  * Uses existing article selection logic for consistency and efficiency.
  */
 export const RelatedArticlesByFilter = memo<RelatedArticlesByFilterProps>(
-  ({
-    currentArticleId,
-    articlesData,
-    filterType,
-    filterId,
-    filterName,
-    maxArticles = 5,
-  }) => {
+  ({ currentArticleId, articlesData, filterType, filterId, filterName, maxArticles = 5 }) => {
     const router = useRouter();
 
     // Filter articles by author or category, excluding current article

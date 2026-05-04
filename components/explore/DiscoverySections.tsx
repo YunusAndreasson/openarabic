@@ -103,11 +103,13 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
     const baseSeed = APP_SESSION_ID;
 
     // Beginner Friendly (difficulty 1-3)
-    const beginnerArticles = deduplicateByImageUrl(shuffleAndSlice(
-      unreadArticles.filter(a => a.difficulty_level <= BEGINNER_MAX_DIFFICULTY),
-      MAX_ARTICLES_PER_SECTION,
-      baseSeed ^ 3,
-    ));
+    const beginnerArticles = deduplicateByImageUrl(
+      shuffleAndSlice(
+        unreadArticles.filter(a => a.difficulty_level <= BEGINNER_MAX_DIFFICULTY),
+        MAX_ARTICLES_PER_SECTION,
+        baseSeed ^ 3,
+      ),
+    );
     if (beginnerArticles.length > 0) {
       result.push({
         key: 'beginner',
@@ -117,15 +119,17 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
     }
 
     // Short Reads (< 10 sentences, ~2 min)
-    const shortArticles = deduplicateByImageUrl(shuffleAndSlice(
-      unreadArticles.filter(
-        a =>
-          a.article_sentences.length > 0 &&
-          a.article_sentences.length < SHORT_ARTICLE_MAX_SENTENCES,
+    const shortArticles = deduplicateByImageUrl(
+      shuffleAndSlice(
+        unreadArticles.filter(
+          a =>
+            a.article_sentences.length > 0 &&
+            a.article_sentences.length < SHORT_ARTICLE_MAX_SENTENCES,
+        ),
+        MAX_ARTICLES_PER_SECTION,
+        baseSeed ^ 1,
       ),
-      MAX_ARTICLES_PER_SECTION,
-      baseSeed ^ 1,
-    ));
+    );
     if (shortArticles.length > 0) {
       result.push({
         key: 'short-reads',
@@ -135,11 +139,13 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
     }
 
     // Long Reads (>= 15 sentences, ~4+ min)
-    const longArticles = deduplicateByImageUrl(shuffleAndSlice(
-      unreadArticles.filter(a => a.article_sentences.length >= LONG_ARTICLE_MIN_SENTENCES),
-      MAX_ARTICLES_PER_SECTION,
-      baseSeed ^ 2,
-    ));
+    const longArticles = deduplicateByImageUrl(
+      shuffleAndSlice(
+        unreadArticles.filter(a => a.article_sentences.length >= LONG_ARTICLE_MIN_SENTENCES),
+        MAX_ARTICLES_PER_SECTION,
+        baseSeed ^ 2,
+      ),
+    );
     if (longArticles.length > 0) {
       result.push({
         key: 'long-reads',
@@ -149,11 +155,13 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
     }
 
     // Advanced (difficulty >= 4)
-    const advancedArticles = deduplicateByImageUrl(shuffleAndSlice(
-      unreadArticles.filter(a => a.difficulty_level >= ADVANCED_MIN_DIFFICULTY),
-      MAX_ARTICLES_PER_SECTION,
-      baseSeed ^ 4,
-    ));
+    const advancedArticles = deduplicateByImageUrl(
+      shuffleAndSlice(
+        unreadArticles.filter(a => a.difficulty_level >= ADVANCED_MIN_DIFFICULTY),
+        MAX_ARTICLES_PER_SECTION,
+        baseSeed ^ 4,
+      ),
+    );
     if (advancedArticles.length > 0) {
       result.push({
         key: 'advanced',

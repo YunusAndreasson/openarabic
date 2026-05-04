@@ -103,7 +103,6 @@ export function WordDetailsBottomSheet({
     });
   };
 
-
   return (
     <BottomSheet
       ref={bottomSheetRef}

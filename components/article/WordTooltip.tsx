@@ -184,12 +184,13 @@ export function WordTooltip({
   if (!visible || !layout) return null;
 
   return (
-    <View ref={containerRef} onLayout={handleLayout} style={CONTAINER_STYLE} pointerEvents="box-none">
-      <Animated.View
-        entering={ENTER_ANIMATION}
-        style={dynamicStyles.tooltip}
-        testID="word-tooltip"
-      >
+    <View
+      ref={containerRef}
+      onLayout={handleLayout}
+      style={CONTAINER_STYLE}
+      pointerEvents="box-none"
+    >
+      <Animated.View entering={ENTER_ANIMATION} style={dynamicStyles.tooltip} testID="word-tooltip">
         <Pressable
           onPress={onOpenWordDetails}
           disabled={!onOpenWordDetails}

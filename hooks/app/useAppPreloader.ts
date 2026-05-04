@@ -151,7 +151,9 @@ export const useAppPreloader = (): AppPreloaderResult => {
 
               // Fire-and-forget; do not block loader
               Promise.allSettled(imagePrefetches).catch(error => {
-                Sentry.captureException(error, { tags: { location: 'preloader:bookmark-prefetch' } });
+                Sentry.captureException(error, {
+                  tags: { location: 'preloader:bookmark-prefetch' },
+                });
               });
             }
           } catch {

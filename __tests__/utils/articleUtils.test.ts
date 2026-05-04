@@ -14,10 +14,7 @@ import { describe, expect, test } from '@jest/globals';
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import type { Article } from '@/types/articles.types';
 import type { StudyWord } from '@/types/vocabulary.types';
-import {
-  getArticlesByDueWords,
-  sortArticlesByProgress,
-} from '@/utils/articleUtils';
+import { getArticlesByDueWords, sortArticlesByProgress } from '@/utils/articleUtils';
 
 // Mock data for testing
 const mockArticles: Article[] = [

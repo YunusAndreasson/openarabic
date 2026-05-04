@@ -36,7 +36,6 @@ export const queryPersister = createAsyncStoragePersister({
   deserialize: JSON.parse,
 });
 
-
 /**
  * Clears all persisted React Query cache from AsyncStorage
  * This removes both current and legacy cache keys to ensure complete cleanup

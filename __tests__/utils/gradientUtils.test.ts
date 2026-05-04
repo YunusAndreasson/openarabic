@@ -96,5 +96,4 @@ describe('gradientUtils', () => {
       expect(result[9]).toBe(mockLightThemeColors.background);
     });
   });
-
 });

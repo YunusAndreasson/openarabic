@@ -89,14 +89,20 @@ describe('useFSRSQueries', () => {
     mockQueryClient.getQueryData.mockReturnValue(undefined);
 
     // Re-apply mock implementations after clearAllMocks
-    mockFsrsQueries.all.mockImplementation(() => ({
-      queryKey: ['fsrs-words', 'all'],
-      queryFn: mockQueryFn,
-    }) as never);
-    mockFsrsQueries.due.mockImplementation(() => ({
-      queryKey: ['fsrs-words', 'due'],
-      queryFn: mockQueryFn,
-    }) as never);
+    mockFsrsQueries.all.mockImplementation(
+      () =>
+        ({
+          queryKey: ['fsrs-words', 'all'],
+          queryFn: mockQueryFn,
+        }) as never,
+    );
+    mockFsrsQueries.due.mockImplementation(
+      () =>
+        ({
+          queryKey: ['fsrs-words', 'due'],
+          queryFn: mockQueryFn,
+        }) as never,
+    );
     (mockFsrsQueries as any).lastCompletedAtKey.mockImplementation(() => [
       'fsrs-words',
       'lastCompletedAt',

@@ -252,5 +252,4 @@ export const articlesService = {
 
     return mapToArticles(data ?? []);
   },
-
 };

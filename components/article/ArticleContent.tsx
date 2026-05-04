@@ -163,7 +163,6 @@ const ArticleContentInternal = function ArticleContent({
   // High-performance scroll handler - runs on UI thread (no cross-thread calls)
   const { scrollY, onScrollAnimated } = useArticleScrollHandler();
 
-
   // Tooltip closure handler - only triggers when scroll begins, not during continuous scrolling
   // This prevents blocking scroll performance while still closing tooltip on user interaction
   const handleScrollBegin = useCallback(
@@ -227,11 +226,7 @@ const ArticleContentInternal = function ArticleContent({
       {/* Summary section - positioned between author and content for natural reading flow */}
       {article.summary && (
         <View style={styles.summaryContainer}>
-          <ThemedText
-            type="caption"
-            colorName="subtitleText"
-            style={styles.summaryText}
-          >
+          <ThemedText type="caption" colorName="subtitleText" style={styles.summaryText}>
             {article.summary}
           </ThemedText>
         </View>
@@ -245,12 +240,7 @@ const ArticleContentInternal = function ArticleContent({
   const articlesData = queryClient.getQueryData<Article[]>(['articles']) || [];
 
   // React Compiler auto-memoizes
-  const footerComponent = (
-    <RelatedArticlesSection
-      article={article}
-      articlesData={articlesData}
-    />
-  );
+  const footerComponent = <RelatedArticlesSection article={article} articlesData={articlesData} />;
 
   // React Compiler auto-memoizes
   const contentContainerStyle = {

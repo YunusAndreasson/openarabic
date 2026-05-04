@@ -169,10 +169,7 @@ export default function PracticeScreen(): JSX.Element {
         scrollable={true}
         useSafeArea={false}
         includeBottomInset={false}
-        contentContainerStyle={[
-          styles.contentContainer,
-          { paddingBottom: contentPaddingBottom },
-        ]}
+        contentContainerStyle={[styles.contentContainer, { paddingBottom: contentPaddingBottom }]}
         scrollViewProps={{
           showsVerticalScrollIndicator: false,
         }}

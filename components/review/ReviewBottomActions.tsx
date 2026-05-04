@@ -104,11 +104,7 @@ export const ReviewBottomActions: FC<ReviewBottomActionsProps> = ({
           },
         ]}
       >
-        <Ionicons
-          name="close"
-          size={BOTTOM_ACTIONS_CONSTANTS.ICON_SIZE}
-          color={colors.error}
-        />
+        <Ionicons name="close" size={BOTTOM_ACTIONS_CONSTANTS.ICON_SIZE} color={colors.error} />
         <ThemedText
           skipDefaultColor
           weight="semibold"

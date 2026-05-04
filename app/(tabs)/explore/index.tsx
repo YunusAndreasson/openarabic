@@ -122,17 +122,14 @@ export default function ExploreScreen(): JSX.Element {
     }
   }, [isRefreshing, queryClient, user?.id]);
 
-  const handleSelectFilter = useCallback(
-    (id: number, _name?: string, filterType?: string) => {
-      if (filterType === 'category') {
-        const category = categoriesDataRef.current.find(c => c.id === id);
-        if (category) {
-          router.push(getCategoryFilterRoute(id as CategoryId, category.name));
-        }
+  const handleSelectFilter = useCallback((id: number, _name?: string, filterType?: string) => {
+    if (filterType === 'category') {
+      const category = categoriesDataRef.current.find(c => c.id === id);
+      if (category) {
+        router.push(getCategoryFilterRoute(id as CategoryId, category.name));
       }
-    },
-    [],
-  );
+    }
+  }, []);
 
   // Optimized header component - memoize individual sections
   const headerSections = useMemo(() => {
@@ -187,4 +184,3 @@ export default function ExploreScreen(): JSX.Element {
 export const options: NativeStackNavigationOptions = {
   headerShown: false,
 };
-

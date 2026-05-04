@@ -93,7 +93,11 @@ function getMilestoneMessage(masteredWords: number, currentStreak?: number): str
   // Check word milestones (highest first, with celebration window)
   for (let i = WORD_MILESTONES.length - 1; i >= 0; i--) {
     const target = WORD_MILESTONES[i];
-    if (target !== undefined && masteredWords >= target && masteredWords < target + WORD_MILESTONE_WINDOW) {
+    if (
+      target !== undefined &&
+      masteredWords >= target &&
+      masteredWords < target + WORD_MILESTONE_WINDOW
+    ) {
       return getWordMilestoneText(target);
     }
   }

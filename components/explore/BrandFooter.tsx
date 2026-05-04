@@ -14,7 +14,6 @@ interface BrandFooterProps {
 const CURRENT_YEAR = new Date().getFullYear();
 
 export const BrandFooter = memo(({ showDetails = false }: BrandFooterProps) => {
-
   // Use pkg.version directly to ensure build number is included (format: "1447.5.37+188")
   const versionString = pkg.version || '0.0.0';
   const [version, buildNumber] = versionString.split('+');

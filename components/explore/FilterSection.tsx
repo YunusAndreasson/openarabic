@@ -115,7 +115,11 @@ const compactCardStyles = StyleSheet.create({
   },
 });
 
-export function FilterSection({ items, onSelect, filterType }: FilterSectionProps): JSX.Element | null {
+export function FilterSection({
+  items,
+  onSelect,
+  filterType,
+}: FilterSectionProps): JSX.Element | null {
   const handleSelect = (id: number, name?: string) => () => onSelect(id, name, filterType);
 
   if (!items?.length) {

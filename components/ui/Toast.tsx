@@ -151,12 +151,7 @@ export function Toast({
           },
         ]}
       >
-        <Ionicons
-          name={config.icon}
-          size={ICON_SIZE}
-          color={textColor}
-          style={styles.icon}
-        />
+        <Ionicons name={config.icon} size={ICON_SIZE} color={textColor} style={styles.icon} />
         <ThemedText
           skipDefaultColor
           ellipsizeMode="tail"

@@ -102,9 +102,7 @@ describe('stringUtils', () => {
     });
 
     test('should fall back to raw name for unknown authors', () => {
-      expect(formatArticleMetadata('Unknown Author', 'unknown')).toBe(
-        'Unknown Author · Unknown',
-      );
+      expect(formatArticleMetadata('Unknown Author', 'unknown')).toBe('Unknown Author · Unknown');
     });
 
     test('should handle missing author or category', () => {

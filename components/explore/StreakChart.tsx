@@ -38,124 +38,115 @@ const createStreakMap = (streakPeriods: StreakPeriod[]): Map<string, StreakPerio
   return map;
 };
 
-export const StreakChart = memo<StreakChartProps>(
-  ({ dailyActivity, streakPeriods }) => {
-    const colors = useColors();
+export const StreakChart = memo<StreakChartProps>(({ dailyActivity, streakPeriods }) => {
+  const colors = useColors();
 
-    // Memoize expensive calculations
-    const chartData = useMemo(() => {
-      // Calculate available width (screen width minus padding)
-      const availableWidth = SCREEN_WIDTH - LAYOUT.SPACING.XLARGE * 2;
+  // Memoize expensive calculations
+  const chartData = useMemo(() => {
+    // Calculate available width (screen width minus padding)
+    const availableWidth = SCREEN_WIDTH - LAYOUT.SPACING.XLARGE * 2;
 
-      // Calculate bar width to fit all bars without scrolling
-      // Total width = (barCount * barWidth) + ((barCount - 1) * gap)
-      // Solving for barWidth: barWidth = (availableWidth - (barCount - 1) * gap) / barCount
-      const calculatedBarWidth =
-        (availableWidth - (dailyActivity.length - 1) * BAR_GAP) / dailyActivity.length;
+    // Calculate bar width to fit all bars without scrolling
+    // Total width = (barCount * barWidth) + ((barCount - 1) * gap)
+    // Solving for barWidth: barWidth = (availableWidth - (barCount - 1) * gap) / barCount
+    const calculatedBarWidth =
+      (availableWidth - (dailyActivity.length - 1) * BAR_GAP) / dailyActivity.length;
 
-      // Use calculated width, with a minimum of 6px for visibility
-      const barWidth = Math.max(6, calculatedBarWidth);
+    // Use calculated width, with a minimum of 6px for visibility
+    const barWidth = Math.max(6, calculatedBarWidth);
 
-      // Calculate actual chart width used
-      const chartWidth = dailyActivity.length * barWidth + (dailyActivity.length - 1) * BAR_GAP;
+    // Calculate actual chart width used
+    const chartWidth = dailyActivity.length * barWidth + (dailyActivity.length - 1) * BAR_GAP;
 
-      // Create streak map
-      const streakMap = createStreakMap(streakPeriods);
+    // Create streak map
+    const streakMap = createStreakMap(streakPeriods);
 
-      // Generate bars for each day with X positions
-      const bars = dailyActivity.map((activity, index) => {
-        const hasActivity = activity.hasActivity;
-        const streakPeriod = streakMap.get(activity.date);
-        const isInStreak = Boolean(streakPeriod);
-        const isActiveStreak = streakPeriod?.isActive || false;
+    // Generate bars for each day with X positions
+    const bars = dailyActivity.map((activity, index) => {
+      const hasActivity = activity.hasActivity;
+      const streakPeriod = streakMap.get(activity.date);
+      const isInStreak = Boolean(streakPeriod);
+      const isActiveStreak = streakPeriod?.isActive || false;
 
-        // Determine bar color and opacity
-        let barColor = colors.textTertiary;
-        let barOpacity = 0.2;
+      // Determine bar color and opacity
+      let barColor = colors.textTertiary;
+      let barOpacity = 0.2;
 
-        if (hasActivity) {
-          if (isActiveStreak) {
-            barColor = colors.warning; // Orange for active streak (matches Current badge)
-            barOpacity = 1;
-          } else if (isInStreak) {
-            barColor = colors.warning; // Dimmed orange for past streaks
-            barOpacity = 0.6;
-          } else {
-            barColor = colors.tint; // Sage green for isolated active days
-            barOpacity = 0.8;
-          }
+      if (hasActivity) {
+        if (isActiveStreak) {
+          barColor = colors.warning; // Orange for active streak (matches Current badge)
+          barOpacity = 1;
+        } else if (isInStreak) {
+          barColor = colors.warning; // Dimmed orange for past streaks
+          barOpacity = 0.6;
+        } else {
+          barColor = colors.tint; // Sage green for isolated active days
+          barOpacity = 0.8;
         }
+      }
 
-        // Calculate X position for this bar
-        const x = index * (barWidth + BAR_GAP);
+      // Calculate X position for this bar
+      const x = index * (barWidth + BAR_GAP);
 
-        // Convert to RGBA color for Skia
-        const color = withOpacity(barColor, barOpacity);
-
-        return {
-          key: activity.date,
-          x,
-          color,
-        };
-      });
-
-      // Border color for today's bar (subtle highlight)
-      const todayBorderColor = withOpacity(colors.text, 0.3);
+      // Convert to RGBA color for Skia
+      const color = withOpacity(barColor, barOpacity);
 
       return {
-        chartWidth,
-        barWidth,
-        bars,
-        todayBorderColor,
+        key: activity.date,
+        x,
+        color,
       };
-    }, [
-      dailyActivity,
-      streakPeriods,
-      colors.warning,
-      colors.tint,
-      colors.textTertiary,
-      colors.text,
-    ]);
+    });
 
-    return (
-      <View style={[styles.container, { height: CHART_HEIGHT }]}>
-        <View style={styles.chartArea}>
-          <Canvas
-            style={{
-              width: chartData.chartWidth,
-              height: BAR_HEIGHT,
-            }}
-          >
-            {chartData.bars.map(bar => (
-              <RoundedRect
-                key={bar.key}
-                x={bar.x}
-                y={0}
-                width={chartData.barWidth}
-                height={BAR_HEIGHT}
-                r={BAR_RADIUS}
-                color={bar.color}
-              />
-            ))}
-            {/* Subtle border for today's bar */}
-            {chartData.bars.length > 0 && (
-              <RoundedRect
-                x={chartData.bars[chartData.bars.length - 1]?.x ?? 0}
-                y={0}
-                width={chartData.barWidth}
-                height={BAR_HEIGHT}
-                r={BAR_RADIUS}
-                color={chartData.todayBorderColor}
-                style="stroke"
-                strokeWidth={1.5}
-              />
-            )}
-          </Canvas>
-        </View>
+    // Border color for today's bar (subtle highlight)
+    const todayBorderColor = withOpacity(colors.text, 0.3);
+
+    return {
+      chartWidth,
+      barWidth,
+      bars,
+      todayBorderColor,
+    };
+  }, [dailyActivity, streakPeriods, colors.warning, colors.tint, colors.textTertiary, colors.text]);
+
+  return (
+    <View style={[styles.container, { height: CHART_HEIGHT }]}>
+      <View style={styles.chartArea}>
+        <Canvas
+          style={{
+            width: chartData.chartWidth,
+            height: BAR_HEIGHT,
+          }}
+        >
+          {chartData.bars.map(bar => (
+            <RoundedRect
+              key={bar.key}
+              x={bar.x}
+              y={0}
+              width={chartData.barWidth}
+              height={BAR_HEIGHT}
+              r={BAR_RADIUS}
+              color={bar.color}
+            />
+          ))}
+          {/* Subtle border for today's bar */}
+          {chartData.bars.length > 0 && (
+            <RoundedRect
+              x={chartData.bars[chartData.bars.length - 1]?.x ?? 0}
+              y={0}
+              width={chartData.barWidth}
+              height={BAR_HEIGHT}
+              r={BAR_RADIUS}
+              color={chartData.todayBorderColor}
+              style="stroke"
+              strokeWidth={1.5}
+            />
+          )}
+        </Canvas>
       </View>
-    );
-  },
-);
+    </View>
+  );
+});
 
 StreakChart.displayName = 'StreakChart';
 

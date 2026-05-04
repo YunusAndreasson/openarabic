@@ -101,9 +101,7 @@ const ArticleSentenceInternal = function ArticleSentence({
 
   return (
     <View style={[styles.container, containerStyle]}>
-      {sentence.english && (
-        <ThemedText style={englishTextStyle}>{sentence.english}</ThemedText>
-      )}
+      {sentence.english && <ThemedText style={englishTextStyle}>{sentence.english}</ThemedText>}
 
       {/* Tutorial card below summary */}
       {showTutorialCard && (

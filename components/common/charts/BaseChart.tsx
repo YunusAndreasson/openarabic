@@ -5,12 +5,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { FONTS } from '@/constants/fonts';
-import {
-  LAYOUT,
-  LETTER_SPACING,
-  LINE_HEIGHT_MULTIPLIERS,
-  TEXT_STYLES,
-} from '@/constants/layout';
+import { LAYOUT, LETTER_SPACING, LINE_HEIGHT_MULTIPLIERS, TEXT_STYLES } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 

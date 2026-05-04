@@ -188,7 +188,6 @@ export function getArticleMetadataWithoutCategory(article: {
   return `${getAuthorDisplayName(article.author.name)} ${METADATA_SEPARATOR} ${readingTime}`;
 }
 
-
 /**
  * Extracts and formats the first name from an email address
  * @param email - The email address to extract the name from

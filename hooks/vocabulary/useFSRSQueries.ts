@@ -40,19 +40,19 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
     queryFn: !userId
       ? skipToken
       : () => {
-      const lastCompletedAt = queryClient.getQueryData<number>(
-        fsrsQueries.lastCompletedAtKey(userId),
-      );
-      const recentlyCompleted =
-        typeof lastCompletedAt === 'number' &&
-        Date.now() - lastCompletedAt < DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
+          const lastCompletedAt = queryClient.getQueryData<number>(
+            fsrsQueries.lastCompletedAtKey(userId),
+          );
+          const recentlyCompleted =
+            typeof lastCompletedAt === 'number' &&
+            Date.now() - lastCompletedAt < DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
 
-      return studyWordsFSRSService.getFSRSWords(userId, {
-        onlyDue: true,
-        limit,
-        ...(recentlyCompleted ? { sessionCooldownHours: DEFAULT_SESSION_COOLDOWN_HOURS } : {}),
-      });
-    },
+          return studyWordsFSRSService.getFSRSWords(userId, {
+            onlyDue: true,
+            limit,
+            ...(recentlyCompleted ? { sessionCooldownHours: DEFAULT_SESSION_COOLDOWN_HOURS } : {}),
+          });
+        },
     // Use allWords as placeholder while due words fetch — shows filtered data immediately
     // placeholderData (not initialData) so it doesn't create a stale cache entry
     placeholderData: () => {

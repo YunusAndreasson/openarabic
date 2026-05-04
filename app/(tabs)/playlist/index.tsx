@@ -229,7 +229,6 @@ export default function PlaylistScreen(): JSX.Element {
             showsVerticalScrollIndicator={true}
             contentContainerStyle={listContainerStyle}
             ItemSeparatorComponent={ItemSeparator}
-
             removeClippedSubviews
             initialNumToRender={6}
             windowSize={7}
@@ -248,7 +247,6 @@ export default function PlaylistScreen(): JSX.Element {
             showsVerticalScrollIndicator={true}
             contentContainerStyle={listContainerStyle}
             ItemSeparatorComponent={ItemSeparator}
-
             ListHeaderComponent={null}
             renderItem={renderItem}
             maintainVisibleContentPosition={{}} // Prevent scroll jumps when items change (enabled by default)

@@ -47,7 +47,6 @@ const getInitials = (name: string): string => {
     .slice(0, 2);
 };
 
-
 export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps) {
   const colors = useColors();
 
@@ -147,9 +146,7 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
   };
 
   return (
-    <Animated.View
-      style={[styles.profileCard, dynamicStyles.profileCard, containerAnimatedStyle]}
-    >
+    <Animated.View style={[styles.profileCard, dynamicStyles.profileCard, containerAnimatedStyle]}>
       <View style={styles.profileContent}>
         {/* Profile Photo */}
         <Pressable

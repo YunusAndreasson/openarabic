@@ -8,11 +8,7 @@ import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { TIMING_CONFIG, TIMING_CONSTANTS } from '@/constants/animation';
 import { FONTS } from '@/constants/fonts';
-import {
-  getThemeAwareElevation,
-  LAYOUT,
-  LINE_HEIGHT_MULTIPLIERS,
-} from '@/constants/layout';
+import { getThemeAwareElevation, LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useEncouragingMetrics, useReviewCompletion } from '@/hooks/review';

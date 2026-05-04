@@ -85,10 +85,8 @@ export const useStudyWordMutations = (
         );
         let capacityScore: number;
         if (valid.length >= Math.max(1, Math.floor(words.length * 0.5))) {
-          const avgStability =
-            valid.reduce((s, w) => s + w.fsrs_stability, 0) / valid.length;
-          const avgDifficulty =
-            valid.reduce((s, w) => s + w.fsrs_difficulty, 0) / valid.length;
+          const avgStability = valid.reduce((s, w) => s + w.fsrs_stability, 0) / valid.length;
+          const avgDifficulty = valid.reduce((s, w) => s + w.fsrs_difficulty, 0) / valid.length;
           const avgReps = valid.reduce((s, w) => s + (w.fsrs_reps ?? 0), 0) / valid.length;
           const stabilityFactor = Math.min(avgStability / 30, 1) * 45;
           const repsFactor = Math.min(avgReps / 10, 1) * 30;

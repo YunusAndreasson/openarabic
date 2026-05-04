@@ -8,11 +8,7 @@ import { Alert, StyleSheet } from 'react-native';
 import { THEME_OPTIONS } from '@/components/ui/ThemePicker';
 import { ThemedView } from '@/components/ThemedView';
 import { AccountBadge, SettingsCard, SettingsSection } from '@/components/account';
-import {
-  AboutSection,
-  AppearanceSection,
-  DangerZoneSection,
-} from '@/components/account/settings';
+import { AboutSection, AppearanceSection, DangerZoneSection } from '@/components/account/settings';
 import { BrandFooter } from '@/components/explore';
 import { useTutorialContext } from '@/components/providers';
 import { SettingsPicker } from '@/components/ui/SettingsPicker';

@@ -53,7 +53,6 @@ interface UseReviewReturn {
   isAudioPreloadingComplete: boolean;
 }
 
-
 // Timing constants for transitions (milliseconds)
 const TRANSITION_DELAYS = {
   initial: TIMING_CONFIG.FAST.duration, // Initial delay before animation
@@ -74,7 +73,11 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
   // Use optimized opacity animation from hooks/animations
   // animatedStyle uses Reanimated 4 inline shared values (no useAnimatedStyle wrapper)
-  const { animatedStyle: opacityStyle, fadeIn, fadeOut } = useOpacityAnimation({
+  const {
+    animatedStyle: opacityStyle,
+    fadeIn,
+    fadeOut,
+  } = useOpacityAnimation({
     initialOpacity: 1,
     duration: TRANSITION_DELAYS.fadeAnimation,
   });

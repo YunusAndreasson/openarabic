@@ -64,8 +64,7 @@ export const DailyWordLimitStatus = {
   REACHED: 'Daily limit reached. You can increase it in Account settings.',
 } as const;
 
-export type DailyWordLimitStatus =
-  (typeof DailyWordLimitStatus)[keyof typeof DailyWordLimitStatus];
+export type DailyWordLimitStatus = (typeof DailyWordLimitStatus)[keyof typeof DailyWordLimitStatus];
 
 // ===== ACCOUNT SECTIONS =====
 

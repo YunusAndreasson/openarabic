@@ -11,7 +11,12 @@ import { ToastType } from '@/types/enums';
 export function toError(error: unknown): Error {
   if (error instanceof Error) return error;
   // Handle plain objects with a message property (e.g. Supabase error objects)
-  if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') {
+  if (
+    error &&
+    typeof error === 'object' &&
+    'message' in error &&
+    typeof error.message === 'string'
+  ) {
     return new Error(error.message);
   }
   return new Error(String(error));

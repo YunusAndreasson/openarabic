@@ -544,7 +544,6 @@ describe('useArticleScreen Hook', () => {
     });
   });
 
-
   describe('Word Interactions', () => {
     test('exposes word interaction handlers', () => {
       const { result } = renderHook(() =>

@@ -11,12 +11,7 @@ import { DeleteButton } from './DeleteButton';
 import { DragHandle, type DragHandleProps } from './DragHandle';
 import { TIMING_CONSTANTS } from '@/constants/animation';
 import { FONTS } from '@/constants/fonts';
-import {
-  getEnhancedOpacity,
-  LAYOUT,
-  TEXT_OPACITY,
-  TEXT_STYLES,
-} from '@/constants/layout';
+import { getEnhancedOpacity, LAYOUT, TEXT_OPACITY, TEXT_STYLES } from '@/constants/layout';
 import { useEditModeCardAnimation } from '@/hooks/cards';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
@@ -44,114 +39,116 @@ interface PlaylistItemCardProps {
   compact?: boolean;
 }
 
-export const PlaylistItemCard: FC<PlaylistItemCardProps> = memo(({
-  title,
-  secondaryText,
-  onPress,
-  editMode = false,
-  onDelete,
-  dragHandleProps,
-  isBeingDragged = false,
-  imageUrl,
-  articleId,
-  progressPercentage,
-  compact = false,
-}) => {
-  const isDarkMode = useIsDarkMode();
-  const colors = useColors();
+export const PlaylistItemCard: FC<PlaylistItemCardProps> = memo(
+  ({
+    title,
+    secondaryText,
+    onPress,
+    editMode = false,
+    onDelete,
+    dragHandleProps,
+    isBeingDragged = false,
+    imageUrl,
+    articleId,
+    progressPercentage,
+    compact = false,
+  }) => {
+    const isDarkMode = useIsDarkMode();
+    const colors = useColors();
 
-  // Edit mode animation (scales down when in edit mode or being dragged)
-  const { animatedStyle } = useEditModeCardAnimation({
-    editMode,
-    isBeingDragged,
-  });
+    // Edit mode animation (scales down when in edit mode or being dragged)
+    const { animatedStyle } = useEditModeCardAnimation({
+      editMode,
+      isBeingDragged,
+    });
 
-  // Enhanced title and secondary text styles with semantic colors
-  const titleOpacity = getEnhancedOpacity(TEXT_OPACITY.PRIMARY, isDarkMode);
-  const secondaryOpacity = getEnhancedOpacity(TEXT_OPACITY.SECONDARY, isDarkMode);
+    // Enhanced title and secondary text styles with semantic colors
+    const titleOpacity = getEnhancedOpacity(TEXT_OPACITY.PRIMARY, isDarkMode);
+    const secondaryOpacity = getEnhancedOpacity(TEXT_OPACITY.SECONDARY, isDarkMode);
 
-  // Dynamic styles
-  const titleTextStyle = [styles.titleText, { opacity: titleOpacity }];
+    // Dynamic styles
+    const titleTextStyle = [styles.titleText, { opacity: titleOpacity }];
 
-  const secondaryTextStyle = [styles.secondaryText, { opacity: secondaryOpacity }];
+    const secondaryTextStyle = [styles.secondaryText, { opacity: secondaryOpacity }];
 
-  return (
-    <Animated.View style={[styles.cardContainer, animatedStyle]}>
-      {/* Drag Handle - shows on left in edit mode */}
-      {editMode && dragHandleProps && (
-        <View style={styles.dragHandleContainer}>
-          <DragHandle
-            onLongPress={dragHandleProps.onLongPress}
-            delayLongPress={dragHandleProps.delayLongPress}
-          />
-        </View>
-      )}
+    return (
+      <Animated.View style={[styles.cardContainer, animatedStyle]}>
+        {/* Drag Handle - shows on left in edit mode */}
+        {editMode && dragHandleProps && (
+          <View style={styles.dragHandleContainer}>
+            <DragHandle
+              onLongPress={dragHandleProps.onLongPress}
+              delayLongPress={dragHandleProps.delayLongPress}
+            />
+          </View>
+        )}
 
-      <View style={styles.cardWrapper}>
-        <BaseCard shadowSize="small" onPress={editMode ? undefined : onPress}>
-          <View style={styles.cardContent}>
-            {/* Article thumbnail - bookmarks style */}
-            {imageUrl && (
-              <View style={styles.imageContainer}>
-                <EnhancedImage
-                  source={imageUrl}
-                  style={styles.thumbnailImage}
-                  transition={TIMING_CONSTANTS.TRANSITION_DELAY}
-                  recyclingKey={articleId ? `article-${articleId}` : imageUrl}
-                />
-              </View>
-            )}
+        <View style={styles.cardWrapper}>
+          <BaseCard shadowSize="small" onPress={editMode ? undefined : onPress}>
+            <View style={styles.cardContent}>
+              {/* Article thumbnail - bookmarks style */}
+              {imageUrl && (
+                <View style={styles.imageContainer}>
+                  <EnhancedImage
+                    source={imageUrl}
+                    style={styles.thumbnailImage}
+                    transition={TIMING_CONSTANTS.TRANSITION_DELAY}
+                    recyclingKey={articleId ? `article-${articleId}` : imageUrl}
+                  />
+                </View>
+              )}
 
-            <View style={styles.contentWrapper}>
-              <View style={styles.textContent}>
-                <ThemedText
-                  colorName="headingText"
-                  style={titleTextStyle}
-                  type={compact ? 'body' : 'heading3'}
-                  weight={compact ? 'semibold' : undefined}
-                  numberOfLines={2}
-                  ellipsizeMode="tail"
-                >
-                  {title}
-                </ThemedText>
-                <View style={styles.secondaryRow}>
+              <View style={styles.contentWrapper}>
+                <View style={styles.textContent}>
                   <ThemedText
-                    skipDefaultColor
-                    colorName="authorText"
-                    numberOfLines={1}
+                    colorName="headingText"
+                    style={titleTextStyle}
+                    type={compact ? 'body' : 'heading3'}
+                    weight={compact ? 'semibold' : undefined}
+                    numberOfLines={2}
                     ellipsizeMode="tail"
-                    style={secondaryTextStyle}
-                    type="label"
                   >
-                    {secondaryText}
+                    {title}
                   </ThemedText>
+                  <View style={styles.secondaryRow}>
+                    <ThemedText
+                      skipDefaultColor
+                      colorName="authorText"
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                      style={secondaryTextStyle}
+                      type="label"
+                    >
+                      {secondaryText}
+                    </ThemedText>
+                  </View>
                 </View>
               </View>
             </View>
-          </View>
 
-          {/* Reading Progress Indicator - at bottom edge (media app style) */}
-          {progressPercentage !== undefined && progressPercentage > 0 && (
-            <ProgressBar
-              progress={progressPercentage}
-              height={LAYOUT.SPACING.TINY}
-              fillColor={colors.readingProgressIndicator}
-              backgroundColor={colors.readingProgressBackground}
-              style={styles.progressBar}
-            />
-          )}
-        </BaseCard>
-      </View>
-
-      {/* Delete Button - shows on right in edit mode */}
-      {editMode && onDelete && (
-        <View style={styles.deleteButtonContainer}>
-          <DeleteButton onPress={onDelete} />
+            {/* Reading Progress Indicator - at bottom edge (media app style) */}
+            {progressPercentage !== undefined && progressPercentage > 0 && (
+              <ProgressBar
+                progress={progressPercentage}
+                height={LAYOUT.SPACING.TINY}
+                fillColor={colors.readingProgressIndicator}
+                backgroundColor={colors.readingProgressBackground}
+                style={styles.progressBar}
+              />
+            )}
+          </BaseCard>
         </View>
-      )}
-    </Animated.View>
-  );
-});
+
+        {/* Delete Button - shows on right in edit mode */}
+        {editMode && onDelete && (
+          <View style={styles.deleteButtonContainer}>
+            <DeleteButton onPress={onDelete} />
+          </View>
+        )}
+      </Animated.View>
+    );
+  },
+);
 
 PlaylistItemCard.displayName = 'PlaylistItemCard';
 

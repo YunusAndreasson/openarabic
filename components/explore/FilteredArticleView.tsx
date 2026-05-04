@@ -144,10 +144,7 @@ interface FilteredArticleViewProps {
 /**
  * A specialized component for displaying filtered articles
  */
-export const FilteredArticleView: FC<FilteredArticleViewProps> = ({
-  articles,
-  onArticlePress,
-}) => {
+export const FilteredArticleView: FC<FilteredArticleViewProps> = ({ articles, onArticlePress }) => {
   const insets = useSafeAreaInsets();
 
   const {

@@ -99,8 +99,6 @@ export const generateColorCodedSegments = ({
     sectionIndex: number;
   }[] = [];
 
-
-
   // Add bracket color coding for [the] injection
   // Display as "the" without brackets in the colored segment
   if (analysis?.hasBracketInjection) {

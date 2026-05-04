@@ -73,7 +73,12 @@ const styles = StyleSheet.create({
     height: LAYOUT.BORDER.WIDTH.THIN,
     opacity: LAYOUT.OPACITY.MEDIUM,
     // Inset to align with text (skip icon column): card padding + icon padding + icon + icon padding + text margin
-    marginLeft: LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.SMALL + LAYOUT.BUTTON.ICON_SIZE.MEDIUM + LAYOUT.SPACING.SMALL + LAYOUT.SPACING.MEDIUM,
+    marginLeft:
+      LAYOUT.SPACING.MEDIUM +
+      LAYOUT.SPACING.SMALL +
+      LAYOUT.BUTTON.ICON_SIZE.MEDIUM +
+      LAYOUT.SPACING.SMALL +
+      LAYOUT.SPACING.MEDIUM,
   },
   sectionLabelOverride: {
     paddingTop: LAYOUT.SPACING.XLARGE,

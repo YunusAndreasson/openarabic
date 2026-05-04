@@ -148,9 +148,7 @@ describe('ReviewBottomActions', () => {
 
   describe('Disabled state', () => {
     test('does not call onPressLeft when disabled', () => {
-      const { getByText } = render(
-        <ReviewBottomActions onPressLeft={mockOnPressLeft} disabled />,
-      );
+      const { getByText } = render(<ReviewBottomActions onPressLeft={mockOnPressLeft} disabled />);
 
       fireEvent.press(getByText("Don't Know"));
 

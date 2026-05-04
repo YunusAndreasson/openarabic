@@ -179,9 +179,11 @@ export function runBenchmark(cases: GroundTruthCase[]): BenchmarkResult {
     // so the benchmark must score nothing too — otherwise the metric drifts from
     // user-visible truth. Components remain on the WordAnalysis for non-render
     // consumers (debugging, analytics) but are invisible to scoring.
-    const detectedPrefixes = analysis.hasComponents ? analysis.prefixes.map(p => p.arabicMatch) : [];
-    const detectedSuffix = analysis.hasComponents ? analysis.suffix?.arabicMatch ?? null : null;
-    const detectedInfix = analysis.hasComponents ? analysis.infix?.arabicMatch ?? null : null;
+    const detectedPrefixes = analysis.hasComponents
+      ? analysis.prefixes.map(p => p.arabicMatch)
+      : [];
+    const detectedSuffix = analysis.hasComponents ? (analysis.suffix?.arabicMatch ?? null) : null;
+    const detectedInfix = analysis.hasComponents ? (analysis.infix?.arabicMatch ?? null) : null;
 
     // Compare prefixes
     const prefixResult = comparePrefixes(detectedPrefixes, testCase.expectedPrefixes);

@@ -59,10 +59,7 @@ jest.mock('@/utils/errorHandling', () => ({
 
 // Import after mocks
 import * as BackgroundTask from 'expo-background-task';
-import {
-  registerBackgroundTasks,
-  unregisterBackgroundTasks,
-} from '@/services/backgroundTasks';
+import { registerBackgroundTasks, unregisterBackgroundTasks } from '@/services/backgroundTasks';
 import { handleError } from '@/utils/errorHandling';
 
 // Type-safe mocks
