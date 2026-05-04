@@ -56,7 +56,10 @@ interface SingleWordFailure {
   coloredSpans: { text: string; color: string; type: string }[];
 }
 
-function checkPairing(arabic: string, english: string): { ok: boolean; failure?: PairingFailure; componentCount: number } {
+function checkPairing(
+  arabic: string,
+  english: string,
+): { ok: boolean; failure?: PairingFailure; componentCount: number } {
   const normalized = normalizeArabic(arabic);
   const inject = shouldInjectBracket(normalized, english, arabic);
   const processedEnglish = inject ? `[the] ${english}` : english;
@@ -73,12 +76,17 @@ function checkPairing(arabic: string, english: string): { ok: boolean; failure?:
     defaultColor: colors.text,
   });
 
-  const arabicColors = new Set(arabicSegments.filter(s => isColoredSpan(s.color)).map(s => s.color));
-  const englishColors = new Set(englishSegments.filter(s => isColoredSpan(s.color)).map(s => s.color));
+  const arabicColors = new Set(
+    arabicSegments.filter(s => isColoredSpan(s.color)).map(s => s.color),
+  );
+  const englishColors = new Set(
+    englishSegments.filter(s => isColoredSpan(s.color)).map(s => s.color),
+  );
   const arabicOnly = [...arabicColors].filter(c => !englishColors.has(c));
   const englishOnly = [...englishColors].filter(c => !arabicColors.has(c));
 
-  const componentCount = analysis.prefixes.length + (analysis.infix ? 1 : 0) + (analysis.suffix ? 1 : 0);
+  const componentCount =
+    analysis.prefixes.length + (analysis.infix ? 1 : 0) + (analysis.suffix ? 1 : 0);
   if (arabicOnly.length === 0 && englishOnly.length === 0) {
     return { ok: true, componentCount };
   }
@@ -116,7 +124,18 @@ describe('Arabic grammar — UI-truth gate', () => {
     const rate = examined > 0 ? paired / examined : 1;
     fs.writeFileSync(
       '/tmp/ui-asymmetry.json',
-      JSON.stringify({ corpus: 'labeled', examined, paired, asymmetric: examined - paired, rate, failures: failures.slice(0, 50) }, null, 2),
+      JSON.stringify(
+        {
+          corpus: 'labeled',
+          examined,
+          paired,
+          asymmetric: examined - paired,
+          rate,
+          failures: failures.slice(0, 50),
+        },
+        null,
+        2,
+      ),
     );
     expect(rate).toBeGreaterThanOrEqual(1.0);
   });
@@ -138,7 +157,18 @@ describe('Arabic grammar — UI-truth gate', () => {
     const rate = examined > 0 ? paired / examined : 1;
     fs.writeFileSync(
       '/tmp/ui-asymmetry-prod.json',
-      JSON.stringify({ corpus: 'production', examined, paired, asymmetric: examined - paired, rate, failures: failures.slice(0, 50) }, null, 2),
+      JSON.stringify(
+        {
+          corpus: 'production',
+          examined,
+          paired,
+          asymmetric: examined - paired,
+          rate,
+          failures: failures.slice(0, 50),
+        },
+        null,
+        2,
+      ),
     );
     expect(rate).toBeGreaterThanOrEqual(1.0);
   });

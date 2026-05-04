@@ -26,7 +26,12 @@ interface Candidate {
   trigger: string;
   occurrences: number;
   reasonKept: string;
-  contexts: { sentenceId: number; position: number; sentenceArabic: string; sentenceEnglish: string }[];
+  contexts: {
+    sentenceId: number;
+    position: number;
+    sentenceArabic: string;
+    sentenceEnglish: string;
+  }[];
 }
 
 async function main() {
@@ -40,7 +45,12 @@ async function main() {
 
   const rollback: {
     appliedAt: string;
-    operations: { arabic: string; oldEnglish: string; newEnglish: string; rows: { id: number; sentence_id: number }[] }[];
+    operations: {
+      arabic: string;
+      oldEnglish: string;
+      newEnglish: string;
+      rows: { id: number; sentence_id: number }[];
+    }[];
   } = { appliedAt: new Date().toISOString(), operations: [] };
 
   let totalRowsUpdated = 0;
@@ -70,7 +80,7 @@ async function main() {
       arabic: c.arabic,
       oldEnglish: c.current,
       newEnglish: c.suggested,
-      rows: rows.map((r) => ({ id: r.id, sentence_id: r.sentence_id })),
+      rows: rows.map(r => ({ id: r.id, sentence_id: r.sentence_id })),
     });
 
     if (!dryRun) {
@@ -88,7 +98,9 @@ async function main() {
       const updatedCount = count ?? rows.length;
       totalRowsUpdated += updatedCount;
       opsApplied++;
-      process.stdout.write(`\r  applied ${opsApplied}/${candidates.length}  (rows: ${totalRowsUpdated})`);
+      process.stdout.write(
+        `\r  applied ${opsApplied}/${candidates.length}  (rows: ${totalRowsUpdated})`,
+      );
     } else {
       console.log(`  [dry] ${c.arabic} | '${c.current}' → '${c.suggested}'  (${rows.length} rows)`);
       totalRowsUpdated += rows.length;
@@ -108,4 +120,7 @@ async function main() {
   console.log(`  total rows updated: ${totalRowsUpdated}`);
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+main().catch(e => {
+  console.error(e);
+  process.exit(1);
+});

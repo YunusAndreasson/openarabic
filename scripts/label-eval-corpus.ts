@@ -27,7 +27,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const ARG = (name: string) =>
-  process.argv.find((a) => a.startsWith(`--${name}`))?.split('=')[1] ?? null;
+  process.argv.find(a => a.startsWith(`--${name}`))?.split('=')[1] ?? null;
 const FLAG = (name: string) => process.argv.includes(`--${name}`);
 const DRY_RUN = FLAG('dry-run');
 const LIMIT = ARG('limit') ? parseInt(ARG('limit')!, 10) : Infinity;
@@ -139,7 +139,7 @@ async function callLabeler(client: Anthropic, e: EnrichedEntry): Promise<Labeled
     messages: [{ role: 'user', content: userMessageFor(e) }],
   });
 
-  const textBlock = resp.content.find((b) => b.type === 'text');
+  const textBlock = resp.content.find(b => b.type === 'text');
   if (!textBlock || textBlock.type !== 'text') throw new Error('No text block in response');
   const text = textBlock.text.trim();
 
@@ -182,10 +182,7 @@ async function callLabeler(client: Anthropic, e: EnrichedEntry): Promise<Labeled
 
 function estimateCost(entries: EnrichedEntry[]) {
   const sysApprox = Math.ceil(SYSTEM_PROMPT.length / 4);
-  const userApprox = entries.reduce(
-    (s, e) => s + Math.ceil(userMessageFor(e).length / 4) + 10,
-    0,
-  );
+  const userApprox = entries.reduce((s, e) => s + Math.ceil(userMessageFor(e).length / 4) + 10, 0);
   const outApprox = entries.length * 100;
   // First call pays full system tokens (write to cache), rest pay cached rate
   const firstSysCost = (sysApprox * PRICE.input) / 1_000_000;
@@ -228,20 +225,24 @@ async function main() {
     console.error(`Missing ${enrichedPath}. Run step 1 + 2 first.`);
     process.exit(1);
   }
-  const enriched = JSON.parse(fs.readFileSync(enrichedPath, 'utf-8')) as { entries: EnrichedEntry[] };
+  const enriched = JSON.parse(fs.readFileSync(enrichedPath, 'utf-8')) as {
+    entries: EnrichedEntry[];
+  };
   let entries = enriched.entries;
   if (Number.isFinite(LIMIT)) entries = entries.slice(0, LIMIT);
 
   const outPath = path.join(__dirname, 'output/eval-corpus.labeled.jsonl');
   const done = loadAlreadyLabeled(outPath);
-  const todo = entries.filter((e) => !done.has(`${e.arabic}|${e.english}`));
+  const todo = entries.filter(e => !done.has(`${e.arabic}|${e.english}`));
 
   console.log(`Total entries: ${entries.length}`);
   console.log(`Already labeled: ${done.size}`);
   console.log(`To process: ${todo.length}`);
 
   const est = estimateCost(todo);
-  console.log(`Cost estimate: $${est.estimatedCostUSD.toFixed(2)} (system ~${est.estimatedSystemTokens} tok, user ~${est.estimatedUserTokensTotal} tok, output ~${est.estimatedOutputTokensTotal} tok)`);
+  console.log(
+    `Cost estimate: $${est.estimatedCostUSD.toFixed(2)} (system ~${est.estimatedSystemTokens} tok, user ~${est.estimatedUserTokensTotal} tok, output ~${est.estimatedOutputTokensTotal} tok)`,
+  );
 
   if (DRY_RUN) {
     console.log('Dry run — exiting before API calls.');
@@ -262,9 +263,9 @@ async function main() {
   const start = Date.now();
   await processWithConcurrency(
     todo,
-    (e) => callLabeler(client, e),
+    e => callLabeler(client, e),
     CONCURRENCY,
-    (labeled) => {
+    labeled => {
       out.write(JSON.stringify(labeled) + '\n');
       processed++;
       if (!labeled.agreesWithAnalyzer) disagreements++;
@@ -286,11 +287,13 @@ async function main() {
   out.end();
 
   console.log(`\nDone. ${processed} new labels written to ${outPath}.`);
-  console.log(`Disagreements: ${disagreements} / ${processed} (${((disagreements / Math.max(processed, 1)) * 100).toFixed(1)}%)`);
+  console.log(
+    `Disagreements: ${disagreements} / ${processed} (${((disagreements / Math.max(processed, 1)) * 100).toFixed(1)}%)`,
+  );
   console.log(`Actual cost: $${totalCost.toFixed(3)}`);
 }
 
-main().catch((e) => {
+main().catch(e => {
   console.error(e);
   process.exit(1);
 });

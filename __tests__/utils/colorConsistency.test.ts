@@ -195,11 +195,11 @@ const DB_WORDS: [string, string][] = [
   ['الذِّكْرِ', 'of mention'],
   ['الْوَقْتِ', 'of time'],
   // false positive regression guards
-  ['يَسَّرَ', 'He will make easy'],      // root س, NOT future
+  ['يَسَّرَ', 'He will make easy'], // root س, NOT future
   ['وَتَسْبِقُونَ', 'and you will surpass'], // root س, NOT future
-  ['فَفَعَلُوا', 'and they did so'],     // second ف is root, NOT conjunction
-  ['أَفْضَلُ', 'The best'],             // أ is Form IV pattern, NOT subject prefix
-  ['أَعْمَالَكَ', 'your deeds'],          // أ is noun pattern, NOT subject prefix
+  ['فَفَعَلُوا', 'and they did so'], // second ف is root, NOT conjunction
+  ['أَفْضَلُ', 'The best'], // أ is Form IV pattern, NOT subject prefix
+  ['أَعْمَالَكَ', 'your deeds'], // أ is noun pattern, NOT subject prefix
   // conjunction + verb (from real articles)
   ['وَيَسْمَعُ', 'and he would hear'],
   ['فَيُعْجَبُ', 'so he would be amazed'],
@@ -212,51 +212,51 @@ const DB_WORDS: [string, string][] = [
   ['عِنْدَهُ', 'with Him'],
   // --- Additional DB words for diverse pattern coverage ---
   // Root starts with letter that looks like prefix (false positive risk)
-  ['وَبَيْنَ', 'and between'],           // و=and, ب is root of بين (between)
-  ['وَلِبَاسُ', 'and the clothing'],     // و=and, ل is root of لباس (clothing)
-  ['لِكُلِّ', 'for every'],              // ل=for, ك is root of كل (every)
+  ['وَبَيْنَ', 'and between'], // و=and, ب is root of بين (between)
+  ['وَلِبَاسُ', 'and the clothing'], // و=and, ل is root of لباس (clothing)
+  ['لِكُلِّ', 'for every'], // ل=for, ك is root of كل (every)
   // Passive voice with damma on prefix
   ['يُؤَاخِذْهُ', 'He take him to account'], // ي=he passive + root + ه=him
-  ['يُوَاجَهَ', 'to be presented'],      // ي=to passive + root
+  ['يُوَاجَهَ', 'to be presented'], // ي=to passive + root
   // Demonstrative suffixes
-  ['وَذَٰلِكَ', 'and that'],             // و=and + ذلك=that demonstrative
-  ['لِذَلِكَ', 'for that'],              // ل=for + ذلك=that
-  ['وَهَذَا', 'and this'],               // و=and + هذا=this
-  ['لِهَذَا', 'for this'],               // ل=for + هذا=this
+  ['وَذَٰلِكَ', 'and that'], // و=and + ذلك=that demonstrative
+  ['لِذَلِكَ', 'for that'], // ل=for + ذلك=that
+  ['وَهَذَا', 'and this'], // و=and + هذا=this
+  ['لِهَذَا', 'for this'], // ل=for + هذا=this
   // Conjunction + preposition + suffix (3-layer)
-  ['وَمِنْهُ', 'and from it'],           // و + من + ه
-  ['وَمَعَهُمْ', 'and with them'],       // و + مع + هم
-  ['وَبِهَذَا', 'and with this'],        // و + ب + هذا
+  ['وَمِنْهُ', 'and from it'], // و + من + ه
+  ['وَمَعَهُمْ', 'and with them'], // و + مع + هم
+  ['وَبِهَذَا', 'and with this'], // و + ب + هذا
   // Article + root ending in ه (must NOT detect false suffix)
-  ['الإِلَهِ', 'the Divine'],            // ال + إله — ه is root, not suffix
-  ['الوَجْهِ', 'the face'],              // ال + وجه — ه is root
-  ['الِانْتِباهُ', 'the attention'],      // ال + انتباه — ه is root
+  ['الإِلَهِ', 'the Divine'], // ال + إله — ه is root, not suffix
+  ['الوَجْهِ', 'the face'], // ال + وجه — ه is root
+  ['الِانْتِباهُ', 'the attention'], // ال + انتباه — ه is root
   // Verb + وا (they) suffix
-  ['كَانُوا', 'they were'],              // root + وا=they
-  ['اجْتَمَعُوا', 'they gathered'],       // root + وا=they + Form VIII infix
+  ['كَانُوا', 'they were'], // root + وا=they
+  ['اجْتَمَعُوا', 'they gathered'], // root + وا=they + Form VIII infix
   // Preposition ending in ى + suffix
-  ['عِنْدَهَا', 'at it'],                // عند + ها
-  ['عِنْدَهُمْ', 'with them'],           // عند + هم
+  ['عِنْدَهَا', 'at it'], // عند + ها
+  ['عِنْدَهُمْ', 'with them'], // عند + هم
   // Object pronoun ني
-  ['هَدَانِي', 'guided me'],             // root + ني=me
-  ['أَمْهِلْنِي', 'grant me respite'],    // root + ني=me
+  ['هَدَانِي', 'guided me'], // root + ني=me
+  ['أَمْهِلْنِي', 'grant me respite'], // root + ني=me
   // Article + plural suffix (dual ين)
   ['الضِّفَّتَيْنِ', 'the two riverbanks'], // ال + root + ين dual
-  ['الْوَقْتَيْنِ', 'the two periods'],   // ال + root + ين dual
+  ['الْوَقْتَيْنِ', 'the two periods'], // ال + root + ين dual
   // 3+ prefixes
-  ['وَإِنَّمَا', 'and indeed only'],      // و + إن + ما
+  ['وَإِنَّمَا', 'and indeed only'], // و + إن + ما
   ['فَإِنَّمَا', 'so indeed it is only'], // ف + إن + ما
   // False positive guard: definite article then root starting with prefix-like letter
-  ['لِلْفُرْجَةِ', 'for leisure'],        // ل+ل+فرجة — ف is root, NOT conjunction
-  ['لِلشُّكْرِ', 'for gratitude'],        // ل+ل+شكر
+  ['لِلْفُرْجَةِ', 'for leisure'], // ل+ل+فرجة — ف is root, NOT conjunction
+  ['لِلشُّكْرِ', 'for gratitude'], // ل+ل+شكر
   // Genitive "of" coloring — "of" should be colored with possessive suffix
-  ['عَمَلِهِ', 'of his deeds'],           // ه suffix, "of his" colored together
-  ['كُلَّهُ', 'all of it'],               // ه suffix, "of it" colored
-  ['كُلُّهَا', 'all of it'],              // ها suffix, "of it" colored
-  ['بَيْتِهِ', 'of his house'],           // ه suffix
-  ['عِبَادِهِ', 'of His servants'],       // ه suffix
-  ['رَبِّكَ', 'of your Lord'],            // ك suffix, "of your" colored
-  ['بَقَائِهِ', 'of their survival'],      // ه suffix, "of their" colored
+  ['عَمَلِهِ', 'of his deeds'], // ه suffix, "of his" colored together
+  ['كُلَّهُ', 'all of it'], // ه suffix, "of it" colored
+  ['كُلُّهَا', 'all of it'], // ها suffix, "of it" colored
+  ['بَيْتِهِ', 'of his house'], // ه suffix
+  ['عِبَادِهِ', 'of His servants'], // ه suffix
+  ['رَبِّكَ', 'of your Lord'], // ك suffix, "of your" colored
+  ['بَقَائِهِ', 'of their survival'], // ه suffix, "of their" colored
 ];
 
 describe('Color Consistency: Arabic ↔ English', () => {
@@ -265,12 +265,12 @@ describe('Color Consistency: Arabic ↔ English', () => {
     ...DB_WORDS,
 
     // Synthetic edge cases not covered by DB data
-    ['بلبنه', 'with the milk of him'],    // double preposition regression
-    ['بلبناني', 'with the milk of'],      // bilubnaani regression
-    ['ويكتبه', 'and he writes it'],       // suffix competing with prefix for "it"
-    ['وسيكتبه', 'and he will write it'],  // 3 prefixes + suffix
-    ['لايكتبه', 'he does not write it'],  // negation + suffix
-    ['فبكتابهم', 'so with their book'],   // conj + prep + article + suffix
+    ['بلبنه', 'with the milk of him'], // double preposition regression
+    ['بلبناني', 'with the milk of'], // bilubnaani regression
+    ['ويكتبه', 'and he writes it'], // suffix competing with prefix for "it"
+    ['وسيكتبه', 'and he will write it'], // 3 prefixes + suffix
+    ['لايكتبه', 'he does not write it'], // negation + suffix
+    ['فبكتابهم', 'so with their book'], // conj + prep + article + suffix
   ];
 
   test.each(testCases)('%s → "%s" — Arabic and English colors match', (arabic, english) => {
@@ -329,9 +329,9 @@ describe('Color Uniqueness: no two SAME-TYPE components share a color', () => {
 
         if (unique.size < colors.length) {
           log(`\n  ⚠️  ${arabic} → "${english}" — duplicate ${type} colors:`);
-          componentColors.filter(c => c.type === type).forEach(c =>
-            log(`    ${c.type} "${c.text}" → ${c.colorName}`),
-          );
+          componentColors
+            .filter(c => c.type === type)
+            .forEach(c => log(`    ${c.type} "${c.text}" → ${c.colorName}`));
         }
 
         expect(unique.size).toBe(colors.length);
@@ -344,7 +344,8 @@ describe('Color Uniqueness: no two SAME-TYPE components share a color', () => {
 const allWords: [string, string][] = [
   ...DB_WORDS,
   // Bracket injection candidates (synthetic — DB words go through computeColoredSegments)
-  ['الكتاب', 'book'], ['البيت', 'house'],
+  ['الكتاب', 'book'],
+  ['البيت', 'house'],
 ];
 
 describe('Arabic Text Coverage: segments reconstruct to original text', () => {
@@ -365,43 +366,48 @@ describe('No Empty Segments: every segment has visible text', () => {
 });
 
 describe('English Text Coverage: segments reconstruct to displayed text', () => {
-  test.each(allWords)('%s → "%s" — English segments join back to displayed text', (arabic, english) => {
-    const analysis = analyzeArabicWord(arabic, english);
-    if (!analysis.hasComponents) return;
+  test.each(allWords)(
+    '%s → "%s" — English segments join back to displayed text',
+    (arabic, english) => {
+      const analysis = analyzeArabicWord(arabic, english);
+      if (!analysis.hasComponents) return;
 
-    const formatted = formatWordAnalysis(analysis);
-    if (!formatted) return;
+      const formatted = formatWordAnalysis(analysis);
+      if (!formatted) return;
 
-    const displayedText =
-      formatted.sections.find(s => s.type === 'original')?.content || english;
+      const displayedText = formatted.sections.find(s => s.type === 'original')?.content || english;
 
-    const segments = generateColorCodedSegments({
-      text: displayedText,
-      formattedAnalysis: formatted,
-      analysis,
-      colors,
-      defaultColor,
-    });
+      const segments = generateColorCodedSegments({
+        text: displayedText,
+        formattedAnalysis: formatted,
+        analysis,
+        colors,
+        defaultColor,
+      });
 
-    const reconstructed = segments.map(s => s.text).join('');
-    expect(reconstructed).toBe(displayedText);
-  });
+      const reconstructed = segments.map(s => s.text).join('');
+      expect(reconstructed).toBe(displayedText);
+    },
+  );
 });
 
 describe('Single-Word Gate: single English words never get component coloring', () => {
   const singleWordCases: [string, string][] = [
-    ['كتاب', 'book'], ['بيت', 'house'], ['يد', 'hand'],
-    ['وجه', 'face'], ['كره', 'hate'], ['فقيه', 'scholar'],
-    ['يكتب', 'writes'], ['كتابه', 'book'], ['فيه', 'in'],
+    ['كتاب', 'book'],
+    ['بيت', 'house'],
+    ['يد', 'hand'],
+    ['وجه', 'face'],
+    ['كره', 'hate'],
+    ['فقيه', 'scholar'],
+    ['يكتب', 'writes'],
+    ['كتابه', 'book'],
+    ['فيه', 'in'],
   ];
 
-  test.each(singleWordCases)(
-    '%s → "%s" — single English word never colored',
-    (arabic, english) => {
-      const analysis = analyzeArabicWord(arabic, english);
-      expect(analysis.hasComponents).toBe(false);
-    },
-  );
+  test.each(singleWordCases)('%s → "%s" — single English word never colored', (arabic, english) => {
+    const analysis = analyzeArabicWord(arabic, english);
+    expect(analysis.hasComponents).toBe(false);
+  });
 });
 
 describe('Bracket Injection: [the] renders as "the" with definite article color', () => {

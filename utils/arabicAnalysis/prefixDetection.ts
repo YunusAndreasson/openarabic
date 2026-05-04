@@ -135,8 +135,7 @@ export function detectPrefixes(
           SINGLE_LETTER_PREPOSITION_SET.has(prefixMatch.arabicMatch)
         ) {
           const isLamAfterLam =
-            prefixMatch.arabicMatch === 'ل' &&
-            detectedPrefixes.some(p => p.arabicMatch === 'ل');
+            prefixMatch.arabicMatch === 'ل' && detectedPrefixes.some(p => p.arabicMatch === 'ل');
           if (!isLamAfterLam) {
             const hasSingleLetterPreposition = detectedPrefixes.some(
               p =>
@@ -288,8 +287,7 @@ export function detectPrefixes(
           p =>
             (VALIDATION_CONFIG.FUTURE_TENSE_PREFIXES as readonly string[]).includes(
               p.arabicMatch,
-            ) ||
-            (VALIDATION_CONFIG.NEGATION_PREFIXES as readonly string[]).includes(p.arabicMatch),
+            ) || (VALIDATION_CONFIG.NEGATION_PREFIXES as readonly string[]).includes(p.arabicMatch),
         );
         if (hasFutureOrNegation) {
           continueDetection = false;

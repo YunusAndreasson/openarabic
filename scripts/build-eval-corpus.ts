@@ -102,12 +102,12 @@ async function main() {
   console.log(`  ${deduped.length} unique (arabic, english) pairs.`);
 
   const dist = {
-    singleWord: deduped.filter((d) => d.englishWordCount === 1).length,
-    twoWord: deduped.filter((d) => d.englishWordCount === 2).length,
-    threeWord: deduped.filter((d) => d.englishWordCount === 3).length,
-    fourPlus: deduped.filter((d) => d.englishWordCount >= 4).length,
-    freq1: deduped.filter((d) => d.frequency === 1).length,
-    freqHigh: deduped.filter((d) => d.frequency >= 5).length,
+    singleWord: deduped.filter(d => d.englishWordCount === 1).length,
+    twoWord: deduped.filter(d => d.englishWordCount === 2).length,
+    threeWord: deduped.filter(d => d.englishWordCount === 3).length,
+    fourPlus: deduped.filter(d => d.englishWordCount >= 4).length,
+    freq1: deduped.filter(d => d.frequency === 1).length,
+    freqHigh: deduped.filter(d => d.frequency >= 5).length,
   };
   console.log(`Distribution:`, dist);
 
@@ -132,7 +132,7 @@ async function main() {
   console.log(`Next: run \`yarn jest __tests__/utils/_autoresearch_enrich.test.ts\``);
 }
 
-main().catch((e) => {
+main().catch(e => {
   console.error(e);
   process.exit(1);
 });

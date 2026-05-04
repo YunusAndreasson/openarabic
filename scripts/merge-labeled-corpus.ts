@@ -22,7 +22,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const ARG = (name: string) =>
-  process.argv.find((a) => a.startsWith(`--${name}`))?.split('=')[1] ?? null;
+  process.argv.find(a => a.startsWith(`--${name}`))?.split('=')[1] ?? null;
 const MIN_CONFIDENCE = ARG('min-confidence') ? parseInt(ARG('min-confidence')!, 10) : 70;
 const TRAIN_PCT = ARG('split') ? parseInt(ARG('split')!, 10) : 70;
 
@@ -53,7 +53,7 @@ interface LabeledLine {
 function readAllBatches(dir: string): LabeledLine[] {
   const files = fs
     .readdirSync(dir)
-    .filter((f) => f.startsWith('eval-corpus.labeled.batch-') && f.endsWith('.jsonl'))
+    .filter(f => f.startsWith('eval-corpus.labeled.batch-') && f.endsWith('.jsonl'))
     .sort();
   const all: LabeledLine[] = [];
   for (const f of files) {
@@ -79,7 +79,9 @@ function dedupeByKey(rows: LabeledLine[]): LabeledLine[] {
   return Array.from(map.values());
 }
 
-function categoryFor(label: LabeledLine['label']): 'prefix' | 'suffix' | 'infix' | 'combined' | 'none' {
+function categoryFor(
+  label: LabeledLine['label'],
+): 'prefix' | 'suffix' | 'infix' | 'combined' | 'none' {
   const hasPre = label.expectedPrefixes.length > 0;
   const hasSuf = !!label.expectedSuffix;
   const hasInf = !!label.expectedInfix;
@@ -106,7 +108,7 @@ interface GroundTruthCase {
 }
 
 function toGroundTruth(rows: LabeledLine[]): GroundTruthCase[] {
-  return rows.map((r) => ({
+  return rows.map(r => ({
     arabic: r.arabic,
     english: r.english,
     expectedPrefixes: r.label.expectedPrefixes,
@@ -194,9 +196,11 @@ function main() {
   const deduped = dedupeByKey(all);
   console.log(`After dedup: ${deduped.length}`);
 
-  const filtered = deduped.filter((r) => r.label.confidence >= MIN_CONFIDENCE);
+  const filtered = deduped.filter(r => r.label.confidence >= MIN_CONFIDENCE);
   const dropped = deduped.length - filtered.length;
-  console.log(`Dropped ${dropped} low-confidence (<${MIN_CONFIDENCE}) entries → ${filtered.length} kept.`);
+  console.log(
+    `Dropped ${dropped} low-confidence (<${MIN_CONFIDENCE}) entries → ${filtered.length} kept.`,
+  );
 
   const groundTruth = toGroundTruth(filtered);
   const { train, test } = deterministicSplit(groundTruth, TRAIN_PCT);
@@ -208,7 +212,9 @@ function main() {
   console.log(`  disagreement types: ${JSON.stringify(stats.byDisagreement)}`);
   console.log(`  by bucket:`);
   for (const [b, v] of Object.entries(stats.byBucket)) {
-    console.log(`    ${b}: ${v.count} cases, ${v.disagreements} disagreements (${((v.disagreements / v.count) * 100).toFixed(1)}%)`);
+    console.log(
+      `    ${b}: ${v.count} cases, ${v.disagreements} disagreements (${((v.disagreements / v.count) * 100).toFixed(1)}%)`,
+    );
   }
 
   // Write outputs

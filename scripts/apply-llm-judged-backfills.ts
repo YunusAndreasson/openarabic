@@ -30,7 +30,13 @@ async function main() {
 
   const rollback: {
     appliedAt: string;
-    operations: { arabic: string; oldEnglish: string; newEnglish: string; reason: string; rows: { id: number; sentence_id: number }[] }[];
+    operations: {
+      arabic: string;
+      oldEnglish: string;
+      newEnglish: string;
+      reason: string;
+      rows: { id: number; sentence_id: number }[];
+    }[];
   } = { appliedAt: new Date().toISOString(), operations: [] };
 
   let totalRowsUpdated = 0;
@@ -61,7 +67,7 @@ async function main() {
       oldEnglish: d.current,
       newEnglish: d.new,
       reason: d.reason,
-      rows: rows.map((r) => ({ id: r.id, sentence_id: r.sentence_id })),
+      rows: rows.map(r => ({ id: r.id, sentence_id: r.sentence_id })),
     });
 
     if (!dryRun) {
@@ -78,9 +84,13 @@ async function main() {
       }
       totalRowsUpdated += rows.length;
       opsApplied++;
-      process.stdout.write(`\r  applied ${opsApplied}/${decisions.length}  (rows: ${totalRowsUpdated})`);
+      process.stdout.write(
+        `\r  applied ${opsApplied}/${decisions.length}  (rows: ${totalRowsUpdated})`,
+      );
     } else {
-      console.log(`  [dry] ${d.arabic} | '${d.current}' → '${d.new}'  (${rows.length} rows)  ${d.reason}`);
+      console.log(
+        `  [dry] ${d.arabic} | '${d.current}' → '${d.new}'  (${rows.length} rows)  ${d.reason}`,
+      );
       totalRowsUpdated += rows.length;
       opsApplied++;
     }
@@ -98,4 +108,7 @@ async function main() {
   console.log(`  total rows updated: ${totalRowsUpdated}`);
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+main().catch(e => {
+  console.error(e);
+  process.exit(1);
+});

@@ -153,11 +153,19 @@ function addInfixToSegments(
   const infixStart = infixIndex > 0 ? mapToOriginalPosition(remainingText, infixIndex) : 0;
 
   if (infixStart > 0) {
-    segments.push({ text: remainingText.substring(0, infixStart), colorName: 'arabicText', type: 'root' });
+    segments.push({
+      text: remainingText.substring(0, infixStart),
+      colorName: 'arabicText',
+      type: 'root',
+    });
   }
 
   const infixEnd = mapToOriginalPosition(remainingText, infixIndex + infixArabic.length);
-  segments.push({ text: remainingText.substring(infixStart, infixEnd), colorName: infixColorName, type: 'infix' });
+  segments.push({
+    text: remainingText.substring(infixStart, infixEnd),
+    colorName: infixColorName,
+    type: 'infix',
+  });
 
   return infixEnd;
 }
@@ -238,13 +246,26 @@ export function reconstructWithColors(analysis: WordAnalysis) {
   const infixColorName = COMPONENT_TYPE_CONFIG[ComponentType.INFIX].colorName;
   if (analysis.infix && analysis.suffix) {
     // Complex case: infix + suffix
-    const suffixOriginalStart = mapToOriginalPosition(arabic, analysis.suffix.arabicMatch.length, true);
+    const suffixOriginalStart = mapToOriginalPosition(
+      arabic,
+      analysis.suffix.arabicMatch.length,
+      true,
+    );
     const remainingText = arabic.substring(processed, suffixOriginalStart);
 
-    const infixEnd = addInfixToSegments(remainingText, analysis.infix.arabicMatch, infixColorName, segments);
+    const infixEnd = addInfixToSegments(
+      remainingText,
+      analysis.infix.arabicMatch,
+      infixColorName,
+      segments,
+    );
 
     if (infixEnd < remainingText.length) {
-      segments.push({ text: remainingText.substring(infixEnd), colorName: 'arabicText', type: 'root' });
+      segments.push({
+        text: remainingText.substring(infixEnd),
+        colorName: 'arabicText',
+        type: 'root',
+      });
     }
 
     // Add suffix segment (with diacritic split if needed)
@@ -260,10 +281,23 @@ export function reconstructWithColors(analysis: WordAnalysis) {
   } else if (analysis.infix) {
     // Simpler case: infix without suffix
     const remainingText = arabic.substring(processed);
-    const infixEnd = addInfixToSegments(remainingText, analysis.infix.arabicMatch, infixColorName, segments);
+    const infixEnd = addInfixToSegments(
+      remainingText,
+      analysis.infix.arabicMatch,
+      infixColorName,
+      segments,
+    );
 
     if (infixEnd < remainingText.length) {
-      segments.push(...splitWithDiacritic(remainingText.substring(infixEnd), 'arabicText', 'root', analysis, usedColors));
+      segments.push(
+        ...splitWithDiacritic(
+          remainingText.substring(infixEnd),
+          'arabicText',
+          'root',
+          analysis,
+          usedColors,
+        ),
+      );
     }
   } else if (analysis.suffix) {
     // Original suffix-only logic

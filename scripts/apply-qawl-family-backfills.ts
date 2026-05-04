@@ -19,15 +19,25 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const MAPPINGS: { arabic: string; current: string; new: string; reason: string }[] = [
-  { arabic: 'يَقُولُ', current: 'say',     new: 'he says',      reason: '3sg present indicative' },
-  { arabic: 'يَقُولُ', current: 'Say',     new: 'He says',      reason: '3sg present indicative (capitalized)' },
-  { arabic: 'يَقُولُ', current: 'saying',  new: 'he is saying', reason: '3sg present continuous' },
-  { arabic: 'يَقُولَ', current: 'say',     new: 'he says',      reason: '3sg subjunctive' },
-  { arabic: 'يَقُولُوا', current: 'say',   new: 'they say',     reason: '3pl present' },
-  { arabic: 'أَقُولُ',  current: 'say',     new: 'I say',        reason: '1sg present' },
-  { arabic: 'قَالَ',    current: 'saying', new: 'he said',      reason: 'past tense, gloss was wrong tense' },
-  { arabic: 'قَالَ',    current: 'said:',  new: 'he said:',     reason: '3sg past with colon' },
-  { arabic: 'قَالَ',    current: 'say',    new: 'he said',      reason: 'past tense, gloss was wrong tense' },
+  { arabic: 'يَقُولُ', current: 'say', new: 'he says', reason: '3sg present indicative' },
+  {
+    arabic: 'يَقُولُ',
+    current: 'Say',
+    new: 'He says',
+    reason: '3sg present indicative (capitalized)',
+  },
+  { arabic: 'يَقُولُ', current: 'saying', new: 'he is saying', reason: '3sg present continuous' },
+  { arabic: 'يَقُولَ', current: 'say', new: 'he says', reason: '3sg subjunctive' },
+  { arabic: 'يَقُولُوا', current: 'say', new: 'they say', reason: '3pl present' },
+  { arabic: 'أَقُولُ', current: 'say', new: 'I say', reason: '1sg present' },
+  {
+    arabic: 'قَالَ',
+    current: 'saying',
+    new: 'he said',
+    reason: 'past tense, gloss was wrong tense',
+  },
+  { arabic: 'قَالَ', current: 'said:', new: 'he said:', reason: '3sg past with colon' },
+  { arabic: 'قَالَ', current: 'say', new: 'he said', reason: 'past tense, gloss was wrong tense' },
 ];
 
 async function main() {
@@ -36,7 +46,13 @@ async function main() {
 
   const rollback: {
     appliedAt: string;
-    operations: { arabic: string; oldEnglish: string; newEnglish: string; reason: string; rows: { id: number; sentence_id: number }[] }[];
+    operations: {
+      arabic: string;
+      oldEnglish: string;
+      newEnglish: string;
+      reason: string;
+      rows: { id: number; sentence_id: number }[];
+    }[];
   } = { appliedAt: new Date().toISOString(), operations: [] };
 
   let totalRowsUpdated = 0;
@@ -84,7 +100,9 @@ async function main() {
     }
     totalRowsUpdated += rows.length;
     opsApplied++;
-    console.log(`  ${dryRun ? '[dry] ' : ''}${m.arabic} | '${m.current}' → '${m.new}'  (${rows.length} rows)`);
+    console.log(
+      `  ${dryRun ? '[dry] ' : ''}${m.arabic} | '${m.current}' → '${m.new}'  (${rows.length} rows)`,
+    );
   }
 
   const outDir = path.resolve(__dirname, 'output');
@@ -100,4 +118,7 @@ async function main() {
   console.log(`  total rows updated: ${totalRowsUpdated}`);
 }
 
-main().catch(e => { console.error(e); process.exit(1); });
+main().catch(e => {
+  console.error(e);
+  process.exit(1);
+});

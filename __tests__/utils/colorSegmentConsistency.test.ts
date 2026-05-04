@@ -27,35 +27,31 @@ const coloredWords = allWords.filter(({ arabic, english }) => {
 });
 
 describe('Every colored word must have matching Arabic and English color counts', () => {
-  test.each(coloredWords)(
-    '$arabic ($english)',
-    ({ arabic, english }) => {
-      // Arabic side: count distinct non-default colors the user sees
-      const segs = computeColoredSegments(arabic, english, colors);
-      const defaultColors = new Set([colors.arabicText, colors.text]);
-      const arabicColoredCount = new Set(
-        segs.map(s => s.color).filter(c => !defaultColors.has(c)),
-      ).size;
+  test.each(coloredWords)('$arabic ($english)', ({ arabic, english }) => {
+    // Arabic side: count distinct non-default colors the user sees
+    const segs = computeColoredSegments(arabic, english, colors);
+    const defaultColors = new Set([colors.arabicText, colors.text]);
+    const arabicColoredCount = new Set(segs.map(s => s.color).filter(c => !defaultColors.has(c)))
+      .size;
 
-      // English side: what the tooltip shows (must use same bracket injection as Arabic side)
-      const norm = normalizeArabic(arabic);
-      const processedEnglish = shouldInjectBracket(norm, english, arabic)
-        ? `[the] ${english}`
-        : english;
-      const analysis = analyzeArabicWord(arabic, processedEnglish);
+    // English side: what the tooltip shows (must use same bracket injection as Arabic side)
+    const norm = normalizeArabic(arabic);
+    const processedEnglish = shouldInjectBracket(norm, english, arabic)
+      ? `[the] ${english}`
+      : english;
+    const analysis = analyzeArabicWord(arabic, processedEnglish);
 
-      // If no components detected, Arabic should also have 0 colored segments
-      if (!analysis?.hasComponents) {
-        expect(arabicColoredCount).toBe(0);
-        return;
-      }
+    // If no components detected, Arabic should also have 0 colored segments
+    if (!analysis?.hasComponents) {
+      expect(arabicColoredCount).toBe(0);
+      return;
+    }
 
-      const formatted = formatWordAnalysis(analysis);
-      const englishColoredCount = formatted.sections.filter(s => s.type === 'components').length;
+    const formatted = formatWordAnalysis(analysis);
+    const englishColoredCount = formatted.sections.filter(s => s.type === 'components').length;
 
-      expect(arabicColoredCount).toBe(englishColoredCount);
-    },
-  );
+    expect(arabicColoredCount).toBe(englishColoredCount);
+  });
 
   test('segments always reconstruct to the original word', () => {
     for (const { arabic, english } of coloredWords) {

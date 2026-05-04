@@ -90,12 +90,15 @@ describe('Translation Expansion: Verified Patterns', () => {
       ['يصل', 'he arrives', 'ي', GrammaticalRole.SUBJECT_PREFIX],
       ['تقع', 'it falls', 'ت', GrammaticalRole.SUBJECT_PREFIX],
       ['يضع', 'he puts', 'ي', GrammaticalRole.SUBJECT_PREFIX],
-    ])('%s → "%s" colors %s (2-char root, 2 consonants)', (arabic, english, expectedPrefix, expectedRole) => {
-      const a = analyzeArabicWord(arabic, english);
-      expect(a.hasComponents).toBe(true);
-      expect(a.prefixes[0]?.arabicMatch).toBe(expectedPrefix);
-      expect(a.prefixes[0]?.role).toBe(expectedRole);
-    });
+    ])(
+      '%s → "%s" colors %s (2-char root, 2 consonants)',
+      (arabic, english, expectedPrefix, expectedRole) => {
+        const a = analyzeArabicWord(arabic, english);
+        expect(a.hasComponents).toBe(true);
+        expect(a.prefixes[0]?.arabicMatch).toBe(expectedPrefix);
+        expect(a.prefixes[0]?.role).toBe(expectedRole);
+      },
+    );
 
     test('يرى → "he sees" DOES color (رى has 2 consonants: ى is alef maqsura, not weak ي)', () => {
       const a = analyzeArabicWord('يرى', 'he sees');
@@ -148,12 +151,15 @@ describe('Translation Expansion: Verified Patterns', () => {
       ['لهم', 'for them', 'ل', 'هم'],
       ['فيها', 'in it', 'في', 'ها'],
       ['منها', 'from it', 'من', 'ها'],
-    ])('%s → "%s" colors prefix %s and suffix %s', (arabic, english, expectedPrefix, expectedSuffix) => {
-      const a = analyzeArabicWord(arabic, english);
-      expect(a.hasComponents).toBe(true);
-      expect(a.prefixes[0]?.arabicMatch).toBe(expectedPrefix);
-      expect(a.suffix?.arabicMatch).toBe(expectedSuffix);
-    });
+    ])(
+      '%s → "%s" colors prefix %s and suffix %s',
+      (arabic, english, expectedPrefix, expectedSuffix) => {
+        const a = analyzeArabicWord(arabic, english);
+        expect(a.hasComponents).toBe(true);
+        expect(a.prefixes[0]?.arabicMatch).toBe(expectedPrefix);
+        expect(a.suffix?.arabicMatch).toBe(expectedSuffix);
+      },
+    );
 
     test('اليه (hamza-less) → "to him" DOES color (hamza normalization)', () => {
       const a = analyzeArabicWord('اليه', 'to him');

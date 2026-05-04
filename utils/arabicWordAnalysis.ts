@@ -95,7 +95,19 @@ const SUBJECT_PRONOUN_SET = new Set(['he', 'she', 'it', 'i', 'we', 'you', 'they'
 
 /** Object/possessive pronouns that indicate valid suffix attachment */
 const OBJECT_POSSESSIVE_SET = new Set([
-  'his', 'her', 'its', 'it', 'my', 'our', 'your', 'you', 'their', 'him', 'me', 'us', 'them',
+  'his',
+  'her',
+  'its',
+  'it',
+  'my',
+  'our',
+  'your',
+  'you',
+  'their',
+  'him',
+  'me',
+  'us',
+  'them',
 ]);
 
 const REGEX_ESCAPE_RE = /[.*+?^${}()|[\]\\]/g;
@@ -280,15 +292,16 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
     // When remaining is 0 AND prefixes exist, it's a prefix+suffix compound (أنّه, فيه, بها).
     // Skip subject-pronoun validation — the suffix IS the pronoun, not a verb conjugation marker.
     const isPrefixSuffixCompound = remainingAfterSuffix.length === 0 && detectedPrefixes.length > 0;
-    if (!isPrefixSuffixCompound && remainingAfterSuffix.length < MIN_REMAINING_LENGTH.HIGH_RISK_SUFFIX) {
+    if (
+      !isPrefixSuffixCompound &&
+      remainingAfterSuffix.length < MIN_REMAINING_LENGTH.HIGH_RISK_SUFFIX
+    ) {
       // Check if English contains subject pronouns (these belong to verb conjugation, not suffixes)
       // Only check for pronouns that match the high-risk suffix (he/she/it/i)
       // Don't check "we" (נا suffix is almost always valid) or "you" (varied usage)
       const englishWords = normalizedEnglish.toLowerCase().split(/\s+/);
       const hasSubjectPronoun = englishWords.some(word => SUBJECT_PRONOUN_SET.has(word));
-      const hasObjectPossessivePronoun = englishWords.some(word =>
-        OBJECT_POSSESSIVE_SET.has(word),
-      );
+      const hasObjectPossessivePronoun = englishWords.some(word => OBJECT_POSSESSIVE_SET.has(word));
 
       if (hasSubjectPronoun && !hasObjectPossessivePronoun) {
         // ONLY subject pronoun present → must be verb conjugation, not suffix
@@ -488,7 +501,8 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
   // — it accounts for hamza-normalization quirks (إ → ا) that a naive startsWith comparison
   // on prefixMatch.arabicMatch can miss.
   const droppedCount =
-    finalPrefixes.length - visiblePrefixes.length +
+    finalPrefixes.length -
+    visiblePrefixes.length +
     (resolvedSuffix && !visibleSuffix ? 1 : 0) +
     (infix && !visibleInfix ? 1 : 0);
   let visibleRemaining: string;
@@ -500,7 +514,10 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
       visibleRemaining = visibleRemaining.substring(p.arabicMatch.length);
     }
     if (visibleSuffix) {
-      visibleRemaining = visibleRemaining.substring(0, visibleRemaining.length - visibleSuffix.arabicMatch.length);
+      visibleRemaining = visibleRemaining.substring(
+        0,
+        visibleRemaining.length - visibleSuffix.arabicMatch.length,
+      );
     }
   }
 
@@ -562,11 +579,30 @@ function reportColorMismatch(
       scope.setTag('issue', 'color-mismatch');
       scope.setExtra('arabicWord', arabicWord);
       scope.setExtra('english', english);
-      scope.setExtra('segments', segments.map(s => ({ text: s.text, type: s.type, color: s.color })));
-      scope.setExtra('sections', sections.filter(s => s.type === 'components'));
-      scope.setExtra('prefixes', analysis.prefixes?.map(p => ({ arabic: p.arabicMatch, role: p.role })));
-      scope.setExtra('suffix', analysis.suffix ? { arabic: analysis.suffix.arabicMatch, role: analysis.suffix.role } : null);
-      scope.setExtra('diacritic', analysis.diacritic ? { arabic: analysis.diacritic.arabicMatch, role: analysis.diacritic.role } : null);
+      scope.setExtra(
+        'segments',
+        segments.map(s => ({ text: s.text, type: s.type, color: s.color })),
+      );
+      scope.setExtra(
+        'sections',
+        sections.filter(s => s.type === 'components'),
+      );
+      scope.setExtra(
+        'prefixes',
+        analysis.prefixes?.map(p => ({ arabic: p.arabicMatch, role: p.role })),
+      );
+      scope.setExtra(
+        'suffix',
+        analysis.suffix
+          ? { arabic: analysis.suffix.arabicMatch, role: analysis.suffix.role }
+          : null,
+      );
+      scope.setExtra(
+        'diacritic',
+        analysis.diacritic
+          ? { arabic: analysis.diacritic.arabicMatch, role: analysis.diacritic.role }
+          : null,
+      );
       scope.setExtra('remainingArabic', analysis.remainingArabic);
       Sentry.captureMessage(`Color mismatch: "${arabicWord}" (${english})`);
     });

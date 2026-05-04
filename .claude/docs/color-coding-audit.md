@@ -6,6 +6,7 @@ Validated against: 100 real Arabic-English word pairs using `analyzeArabicWord()
 ## System Overview
 
 Dual-layer color coding for Arabic word analysis:
+
 - **Layer 1 (structural):** Component type (prefix/infix/suffix/diacritic) — 4 fallback colors
 - **Layer 2 (semantic):** Grammatical role — 12 OKLCH colors spanning 65-270 hue degrees
 - **Priority:** Role color overrides type color when a role is assigned
@@ -51,11 +52,12 @@ Total: 0 / 75 words with components
 
 ### Why It's Still Worth Considering (but not urgent)
 
-Users learn role colors *across* words, not just within one. If a user sees possessive green (#45845d) on one word and verbConjugation green (#2b8d71) on another, they may think they're the same grammatical concept. But this is a subtle learning effect, not a functional bug.
+Users learn role colors _across_ words, not just within one. If a user sees possessive green (#45845d) on one word and verbConjugation green (#2b8d71) on another, they may think they're the same grammatical concept. But this is a subtle learning effect, not a functional bug.
 
 ### Proposed Fix (if pursued)
 
 Alternate chroma and lightness for adjacent hues:
+
 ```
 olive        125   0.52  0.14  negation          (boost chroma)
 yellowGreen  140   0.62  0.08  plural            (raise L, lower C)
@@ -75,6 +77,7 @@ seafoam      185   0.52  0.14  interrogative     (boost chroma)
 ### Problem
 
 In `arabicWordComponents.ts:787-788`:
+
 ```typescript
 [GrammaticalRole.CASE_ENDING]: 'grammar.particle' as const,
 [GrammaticalRole.GENERIC]: 'grammar.verbConjugation' as const,
@@ -112,6 +115,7 @@ The aliasing is a pragmatic design choice, not a bug. Adding dedicated colors wo
 ```
 
 The engine matches based on which English words are present — not array order. The dual entries enable correct role assignment:
+
 - English contains "they/he/she" (subject) → GENERIC wins → verbConjugation color
 - English contains "their/his/her" (possessor) → POSSESSIVE wins → possessive color
 
@@ -197,6 +201,7 @@ English `[the]` injection uses `colors.tint` (sage green) while Arabic `ال` us
 ```
 
 The two paths are **mutually exclusive**:
+
 1. When bracket injection fires (English lacks "the"), `ال` is NOT detected as a component → Arabic side has NO coloring
 2. When `ال` IS colored (English already has "the"), bracket injection doesn't fire → English "the" gets colored via the component's `grammar.definiteArticle` color (correct)
 
@@ -206,17 +211,18 @@ The two paths are **mutually exclusive**:
 
 ## Revised Priority Summary
 
-| # | Issue | Verdict | Justification |
-|---|-------|---------|---------------|
-| 1 | Adjacent hues | Low priority polish | 0 co-occurrences — roles never appear together in same word |
-| 2 | CASE_ENDING/GENERIC aliasing | Low priority | Diacritics rarely use their own CASE_ENDING color (inheritColorFrom takes precedence) |
-| 3 | Duplicate suffix docs | Justified (2 min) | Not a fix — just add a comment explaining the intentional dual-entry pattern |
-| 4 | English over-coloring | Partially justified | Only 5/75 words (7%) genuinely over-colored. Root cause is trigger list breadth, not system design |
-| 5 | `[the]` color mismatch | Not justified | Mutually exclusive paths — colors never shown simultaneously |
+| #   | Issue                        | Verdict             | Justification                                                                                      |
+| --- | ---------------------------- | ------------------- | -------------------------------------------------------------------------------------------------- |
+| 1   | Adjacent hues                | Low priority polish | 0 co-occurrences — roles never appear together in same word                                        |
+| 2   | CASE_ENDING/GENERIC aliasing | Low priority        | Diacritics rarely use their own CASE_ENDING color (inheritColorFrom takes precedence)              |
+| 3   | Duplicate suffix docs        | Justified (2 min)   | Not a fix — just add a comment explaining the intentional dual-entry pattern                       |
+| 4   | English over-coloring        | Partially justified | Only 5/75 words (7%) genuinely over-colored. Root cause is trigger list breadth, not system design |
+| 5   | `[the]` color mismatch       | Not justified       | Mutually exclusive paths — colors never shown simultaneously                                       |
 
 ### Conclusion
 
 The color-coding system is **more robust than initially assessed**. Of the 5 proposed quick wins:
+
 - **1 is justified** (Issue 3: add documentation for intentional duplicate suffixes)
 - **1 is partially justified** (Issue 4: could limit single-component coloring to first match, affecting 7% of words)
 - **3 are not justified** by the data (Issues 1, 2, 5 — the problems exist in theory but don't manifest in real usage)

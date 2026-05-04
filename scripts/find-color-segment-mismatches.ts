@@ -27,9 +27,13 @@ interface Issue {
 
 function shouldInjectBracket(normalizedArabic: string, english: string): boolean {
   // Mirror the logic from computeColoredSegments
-  const alPrefix = normalizedArabic.startsWith('ال') || normalizedArabic.startsWith('وال') ||
-    normalizedArabic.startsWith('بال') || normalizedArabic.startsWith('فال') ||
-    normalizedArabic.startsWith('كال') || normalizedArabic.startsWith('لل');
+  const alPrefix =
+    normalizedArabic.startsWith('ال') ||
+    normalizedArabic.startsWith('وال') ||
+    normalizedArabic.startsWith('بال') ||
+    normalizedArabic.startsWith('فال') ||
+    normalizedArabic.startsWith('كال') ||
+    normalizedArabic.startsWith('لل');
   const alreadyHasThe = /^\[?the\]?\s/i.test(english) || /^the$/i.test(english);
   return alPrefix && !alreadyHasThe;
 }

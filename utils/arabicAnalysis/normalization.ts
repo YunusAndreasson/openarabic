@@ -70,12 +70,10 @@ export function normalizeEnglish(text: string): string {
 }
 
 // Pre-compiled contraction regexes (avoids creating 39 RegExp objects per call)
-const CONTRACTION_REGEXES = Object.entries(CONTRACTION_MAP).map(
-  ([contraction, expansion]) => ({
-    regex: new RegExp(`\\b${contraction}\\b`, 'g'),
-    expansion,
-  }),
-);
+const CONTRACTION_REGEXES = Object.entries(CONTRACTION_MAP).map(([contraction, expansion]) => ({
+  regex: new RegExp(`\\b${contraction}\\b`, 'g'),
+  expansion,
+}));
 
 /**
  * Expands contractions in English text BEFORE normalization

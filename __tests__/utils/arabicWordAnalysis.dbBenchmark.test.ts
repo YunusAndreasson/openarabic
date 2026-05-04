@@ -16,7 +16,11 @@
  */
 import { describe, expect, test } from '@jest/globals';
 
-import { ALL_DB_CASES, DB_TEST_CASES, DB_TRAIN_CASES } from '@/__tests__/fixtures/grammarGroundTruth.db';
+import {
+  ALL_DB_CASES,
+  DB_TEST_CASES,
+  DB_TRAIN_CASES,
+} from '@/__tests__/fixtures/grammarGroundTruth.db';
 import { runBenchmark } from '@/utils/benchmarkUtils';
 
 // Thresholds reflect the honest, UI-symmetric analyzer. The benchmark gates on
@@ -35,7 +39,7 @@ const THRESHOLDS = {
   },
   test: {
     precision: 0.97,
-    recall: 0.80,
+    recall: 0.8,
     f1Score: 0.875,
     hasComponentsAccuracy: 0.88,
   },
@@ -70,28 +74,36 @@ describe('Arabic classifier — DB-corpus benchmark (production gate)', () => {
   });
 
   test('multiWordHasComponents bucket — analyzer s primary turf — high precision + hasC', () => {
-    const cases = ALL_DB_CASES.filter((c) => c.bucket === 'multiWordHasComponents');
+    const cases = ALL_DB_CASES.filter(c => c.bucket === 'multiWordHasComponents');
     const r = runBenchmark(cases);
-    console.log(`\n  multiWordHasComponents (n=${cases.length}): P=${(r.precision * 100).toFixed(2)}% hasC=${(r.hasComponentsAccuracy * 100).toFixed(2)}%`);
-    expect(r.precision).toBeGreaterThanOrEqual(THRESHOLDS.byBucket.multiWordHasComponents.precision);
+    console.log(
+      `\n  multiWordHasComponents (n=${cases.length}): P=${(r.precision * 100).toFixed(2)}% hasC=${(r.hasComponentsAccuracy * 100).toFixed(2)}%`,
+    );
+    expect(r.precision).toBeGreaterThanOrEqual(
+      THRESHOLDS.byBucket.multiWordHasComponents.precision,
+    );
     expect(r.hasComponentsAccuracy).toBeGreaterThanOrEqual(
       THRESHOLDS.byBucket.multiWordHasComponents.hasComponentsAccuracy,
     );
   });
 
   test('singleWord bucket — single-word rule must remain bulletproof', () => {
-    const cases = ALL_DB_CASES.filter((c) => c.bucket === 'singleWord');
+    const cases = ALL_DB_CASES.filter(c => c.bucket === 'singleWord');
     const r = runBenchmark(cases);
-    console.log(`\n  singleWord (n=${cases.length}): hasC=${(r.hasComponentsAccuracy * 100).toFixed(2)}%`);
+    console.log(
+      `\n  singleWord (n=${cases.length}): hasC=${(r.hasComponentsAccuracy * 100).toFixed(2)}%`,
+    );
     expect(r.hasComponentsAccuracy).toBeGreaterThanOrEqual(
       THRESHOLDS.byBucket.singleWord.hasComponentsAccuracy,
     );
   });
 
   test('longPhrase bucket — compound-prefix territory', () => {
-    const cases = ALL_DB_CASES.filter((c) => c.bucket === 'longPhrase');
+    const cases = ALL_DB_CASES.filter(c => c.bucket === 'longPhrase');
     const r = runBenchmark(cases);
-    console.log(`\n  longPhrase (n=${cases.length}): hasC=${(r.hasComponentsAccuracy * 100).toFixed(2)}%`);
+    console.log(
+      `\n  longPhrase (n=${cases.length}): hasC=${(r.hasComponentsAccuracy * 100).toFixed(2)}%`,
+    );
     expect(r.hasComponentsAccuracy).toBeGreaterThanOrEqual(
       THRESHOLDS.byBucket.longPhrase.hasComponentsAccuracy,
     );

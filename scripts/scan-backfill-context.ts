@@ -35,7 +35,13 @@ async function main() {
 
   // Load the raw production dump so we can get sentence_words IDs cheaply.
   // We'll re-query Supabase for the joined sentence rows.
-  type SwRow = { id: number; word_form: string; english: string; sentence_id: number; position: number };
+  type SwRow = {
+    id: number;
+    word_form: string;
+    english: string;
+    sentence_id: number;
+    position: number;
+  };
   const swRows: SwRow[] = [];
   const PAGE = 1000;
   for (let page = 0; ; page++) {
@@ -90,12 +96,17 @@ async function main() {
 
   // Build the enriched review file
   type Enriched = Candidate & {
-    contexts: { sentenceId: number; position: number; sentenceArabic: string; sentenceEnglish: string }[];
+    contexts: {
+      sentenceId: number;
+      position: number;
+      sentenceArabic: string;
+      sentenceEnglish: string;
+    }[];
   };
-  const enriched: Enriched[] = cands.map((c) => {
+  const enriched: Enriched[] = cands.map(c => {
     const k = `${c.arabic}\t${c.current}`;
     const sw = candToSwSample.get(k) ?? [];
-    const contexts = sw.map((r) => {
+    const contexts = sw.map(r => {
       const s = sentMap.get(r.sentence_id);
       return {
         sentenceId: r.sentence_id,
@@ -116,11 +127,21 @@ async function main() {
   }
 
   const out = path.resolve(__dirname, 'output', 'backfill-curated-with-context.json');
-  fs.writeFileSync(out, JSON.stringify({
-    summary: { candidates: enriched.length, dbOccurrences: enriched.reduce((s, e) => s + e.occurrences, 0) },
-    byReason: Object.fromEntries([...byReason.entries()].map(([k, v]) => [k, v.length])),
-    candidates: enriched,
-  }, null, 2));
+  fs.writeFileSync(
+    out,
+    JSON.stringify(
+      {
+        summary: {
+          candidates: enriched.length,
+          dbOccurrences: enriched.reduce((s, e) => s + e.occurrences, 0),
+        },
+        byReason: Object.fromEntries([...byReason.entries()].map(([k, v]) => [k, v.length])),
+        candidates: enriched,
+      },
+      null,
+      2,
+    ),
+  );
   console.log(`→ ${out}`);
 
   // Also write a concise markdown for reading
@@ -149,4 +170,7 @@ async function main() {
   console.log(`→ ${mdOut}`);
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+main().catch(e => {
+  console.error(e);
+  process.exit(1);
+});

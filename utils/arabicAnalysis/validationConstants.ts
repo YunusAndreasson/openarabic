@@ -109,4 +109,3 @@ export const WORD_COUNT = {
    */
   SINGLE: 1,
 } as const;
-

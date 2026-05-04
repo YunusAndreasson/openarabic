@@ -25,7 +25,12 @@ interface Candidate {
   trigger: string;
   occurrences: number;
   reasonKept: string;
-  contexts: { sentenceId: number; position: number; sentenceArabic: string; sentenceEnglish: string }[];
+  contexts: {
+    sentenceId: number;
+    position: number;
+    sentenceArabic: string;
+    sentenceEnglish: string;
+  }[];
 }
 
 // Subject phrases that, when followed by the verb gloss, prove the sentence really
@@ -33,20 +38,69 @@ interface Candidate {
 // followed within ~3 tokens by the verb) — catches "Allah created", "he created",
 // "the Lord has created", but rejects "knowledge ... created" or "exhaustion reached me".
 const HE_SUBJECTS = [
-  'allah', 'god', 'the lord', 'lord',
-  'muhammad', 'the prophet', 'the messenger',
-  'he', 'he,', 'he.', 'he;',
-  'whoever', 'whomever',
-  'the one who', 'anyone who', 'one who', 'the man who', 'the servant who',
-  'the wise person', 'the rational person',
-  'a servant', 'a man', 'the man', 'a believer', 'the believer',
-  'umar', 'abu bakr', 'ali', 'ibn', 'iblis', 'satan', 'shaytan', "sa'd", 'umayya',
+  'allah',
+  'god',
+  'the lord',
+  'lord',
+  'muhammad',
+  'the prophet',
+  'the messenger',
+  'he',
+  'he,',
+  'he.',
+  'he;',
+  'whoever',
+  'whomever',
+  'the one who',
+  'anyone who',
+  'one who',
+  'the man who',
+  'the servant who',
+  'the wise person',
+  'the rational person',
+  'a servant',
+  'a man',
+  'the man',
+  'a believer',
+  'the believer',
+  'umar',
+  'abu bakr',
+  'ali',
+  'ibn',
+  'iblis',
+  'satan',
+  'shaytan',
+  "sa'd",
+  'umayya',
   // narration markers: "he said: ..." pattern
 ];
 const SHE_SUBJECTS = ['she', 'her', 'a woman', 'the woman'];
 const THEY_SUBJECTS = ['they', 'them', 'their', 'those who', 'people'];
 
-const AUX = ['', 'has', 'have', 'had', 'did', 'does', 'do', 'will', 'would', 'shall', 'should', 'is', 'was', 'were', 'are', 'also', 'then', 'truly', 'indeed', 'really', 'just', 'only'];
+const AUX = [
+  '',
+  'has',
+  'have',
+  'had',
+  'did',
+  'does',
+  'do',
+  'will',
+  'would',
+  'shall',
+  'should',
+  'is',
+  'was',
+  'were',
+  'are',
+  'also',
+  'then',
+  'truly',
+  'indeed',
+  'really',
+  'just',
+  'only',
+];
 
 function buildSubjectVerbPatterns(subjects: string[], verb: string): RegExp[] {
   // Pattern: subject (\s+aux?){0,2}\s+verb
@@ -61,13 +115,17 @@ function buildSubjectVerbPatterns(subjects: string[], verb: string): RegExp[] {
 }
 
 function sentenceMatchesHelper(sentenceEn: string, helper: string, verb: string): boolean {
-  const list = helper === 'he' ? HE_SUBJECTS
-    : helper === 'she' ? SHE_SUBJECTS
-    : helper === 'they' ? THEY_SUBJECTS
-    : null;
+  const list =
+    helper === 'he'
+      ? HE_SUBJECTS
+      : helper === 'she'
+        ? SHE_SUBJECTS
+        : helper === 'they'
+          ? THEY_SUBJECTS
+          : null;
   if (!list) return false;
   const patterns = buildSubjectVerbPatterns(list, verb);
-  return patterns.some((p) => p.test(sentenceEn));
+  return patterns.some(p => p.test(sentenceEn));
 }
 
 function rejectAsInanimate(_sentenceEn: string, _helper: string): boolean {
@@ -77,7 +135,9 @@ function rejectAsInanimate(_sentenceEn: string, _helper: string): boolean {
   return false;
 }
 
-function escSql(s: string): string { return s.replace(/'/g, "''"); }
+function escSql(s: string): string {
+  return s.replace(/'/g, "''");
+}
 
 async function main() {
   const reviewPath = path.resolve(__dirname, 'output', 'backfill-curated-with-context.json');
@@ -122,17 +182,26 @@ async function main() {
 
   // Output JSON plan
   const planPath = path.resolve(__dirname, 'output', 'backfill-obvious.json');
-  fs.writeFileSync(planPath, JSON.stringify({
-    summary: {
-      obvious: obvious.length,
-      obviousDbOccurrences: obvious.reduce((s, c) => s + c.occurrences, 0),
-      skipped: skipped.length,
-      skipReasonCounts: Object.fromEntries(skipCounts),
-    },
-    obvious,
-    skipped,
-  }, null, 2));
-  console.log(`obvious: ${obvious.length} (covering ${obvious.reduce((s, c) => s + c.occurrences, 0)} DB rows)`);
+  fs.writeFileSync(
+    planPath,
+    JSON.stringify(
+      {
+        summary: {
+          obvious: obvious.length,
+          obviousDbOccurrences: obvious.reduce((s, c) => s + c.occurrences, 0),
+          skipped: skipped.length,
+          skipReasonCounts: Object.fromEntries(skipCounts),
+        },
+        obvious,
+        skipped,
+      },
+      null,
+      2,
+    ),
+  );
+  console.log(
+    `obvious: ${obvious.length} (covering ${obvious.reduce((s, c) => s + c.occurrences, 0)} DB rows)`,
+  );
   console.log(`skipped: ${skipped.length}`);
   console.log(`reasons:`, Object.fromEntries(skipCounts));
   console.log(`→ ${planPath}`);
@@ -148,8 +217,8 @@ async function main() {
   for (const c of obvious) {
     sql.push(
       `UPDATE sentence_words SET english = '${escSql(c.suggested)}' ` +
-      `WHERE word_form = '${escSql(c.arabic)}' AND english = '${escSql(c.current)}'; ` +
-      `-- ${c.occurrences} row(s), ${c.reasonKept}`,
+        `WHERE word_form = '${escSql(c.arabic)}' AND english = '${escSql(c.current)}'; ` +
+        `-- ${c.occurrences} row(s), ${c.reasonKept}`,
     );
   }
   sql.push(`COMMIT;`);
@@ -158,4 +227,7 @@ async function main() {
   console.log(`→ ${sqlPath}`);
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+main().catch(e => {
+  console.error(e);
+  process.exit(1);
+});

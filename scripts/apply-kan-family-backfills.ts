@@ -15,7 +15,13 @@ import { supabaseClient } from './utils/supabase-standalone';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-interface Decision { id: number; arabic: string; current: string; new: string; reason: string; }
+interface Decision {
+  id: number;
+  arabic: string;
+  current: string;
+  new: string;
+  reason: string;
+}
 
 async function main() {
   const planPath = path.resolve(__dirname, 'output', 'kan-family-decisions.json');
@@ -26,12 +32,17 @@ async function main() {
   const dryRun = process.argv.includes('--dry-run');
   if (dryRun) console.log('DRY RUN — no writes will be made');
 
-  const rollback: { appliedAt: string; operations: (Decision & { sentence_id?: number; verifiedCurrent: string })[] } = {
+  const rollback: {
+    appliedAt: string;
+    operations: (Decision & { sentence_id?: number; verifiedCurrent: string })[];
+  } = {
     appliedAt: new Date().toISOString(),
     operations: [],
   };
 
-  let opsApplied = 0, opsNoop = 0, opsErrored = 0;
+  let opsApplied = 0,
+    opsNoop = 0,
+    opsErrored = 0;
 
   for (const d of decisions) {
     // Verify the row still matches current state (idempotent, safe re-run)
@@ -47,7 +58,9 @@ async function main() {
       continue;
     }
     if (row.word_form !== d.arabic || row.english !== d.current) {
-      console.log(`  [noop] id=${d.id} state changed: word_form="${row.word_form}" english="${row.english}" (expected ${d.arabic}|${d.current})`);
+      console.log(
+        `  [noop] id=${d.id} state changed: word_form="${row.word_form}" english="${row.english}" (expected ${d.arabic}|${d.current})`,
+      );
       opsNoop++;
       continue;
     }
@@ -65,7 +78,9 @@ async function main() {
         continue;
       }
     }
-    console.log(`  ${dryRun ? '[dry] ' : ''}id=${d.id} ${d.arabic} '${d.current}' → '${d.new}'  (${d.reason})`);
+    console.log(
+      `  ${dryRun ? '[dry] ' : ''}id=${d.id} ${d.arabic} '${d.current}' → '${d.new}'  (${d.reason})`,
+    );
     opsApplied++;
   }
 
@@ -75,4 +90,7 @@ async function main() {
   console.log(`\nSummary: applied=${opsApplied}  no-op=${opsNoop}  errored=${opsErrored}`);
 }
 
-main().catch(e => { console.error(e); process.exit(1); });
+main().catch(e => {
+  console.error(e);
+  process.exit(1);
+});

@@ -52,16 +52,42 @@ const PRODUCTIVE_PLURAL_DEFINITE_PREFIX = 'ال';
  * component iteration to avoid short-circuiting better English-trigger matches.
  */
 const PRONOUN_COMPOUND_SUFFIXES = new Set([
-  'ه', 'ها', 'هم', 'هما', 'هن', 'ك', 'كم', 'كما', 'كن', 'نا', 'ي',
+  'ه',
+  'ها',
+  'هم',
+  'هما',
+  'هن',
+  'ك',
+  'كم',
+  'كما',
+  'كن',
+  'نا',
+  'ي',
 ]);
 const PRONOUN_TOKENS_BLOCKING_BYPASS = new Set([
-  'i', 'me', 'my', 'mine',
-  'you', 'your', 'yours',
-  'he', 'him', 'his',
-  'she', 'her', 'hers',
-  'it', 'its',
-  'we', 'us', 'our', 'ours',
-  'they', 'them', 'their', 'theirs',
+  'i',
+  'me',
+  'my',
+  'mine',
+  'you',
+  'your',
+  'yours',
+  'he',
+  'him',
+  'his',
+  'she',
+  'her',
+  'hers',
+  'it',
+  'its',
+  'we',
+  'us',
+  'our',
+  'ours',
+  'they',
+  'them',
+  'their',
+  'theirs',
 ]);
 
 /**
@@ -444,9 +470,7 @@ export function analyzeDiacriticMatches(
         if (componentMatch === diacriticMatch) return true;
         // Check if diacriticMatch appears as a whole word in a multi-word component match
         // (e.g., "he" in "he is") — uses split instead of regex for performance
-        return componentMatch
-          .split(/\s+/)
-          .some(word => word === diacriticMatch);
+        return componentMatch.split(/\s+/).some(word => word === diacriticMatch);
       });
     });
 
