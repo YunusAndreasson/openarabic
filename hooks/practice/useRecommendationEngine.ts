@@ -119,7 +119,7 @@ function getWordMilestoneText(target: number): string {
     case 10:
       return "10 words mastered! You've built a foundation for long-term memory.";
     case 25:
-      return "25 words mastered! Building your first 25 takes real dedication—you've proven you can learn Arabic consistently.";
+      return "25 words mastered! Building your first 25 takes real dedication — you've proven you can learn Arabic consistently.";
     case 50:
       return '50 words mastered! A strong start. Reviewing at increasing intervals moves these words into long-term memory.';
     case 100:
@@ -138,9 +138,9 @@ function getWordMilestoneText(target: number): string {
 function getStreakMilestoneText(streak: number): string {
   switch (streak) {
     case 7:
-      return '7-day streak! One week of consistency—keep building this daily habit.';
+      return '7-day streak! One week of consistency — keep building this daily habit.';
     case 30:
-      return '30-day streak! A full month. Your brain has adapted to expect daily Arabic practice—this is now becoming automatic.';
+      return '30-day streak! A full month. Your brain has adapted to expect daily Arabic practice — this is now becoming automatic.';
     case 60:
       return "60-day streak! Two months of daily practice. At this point, skipping a day would feel wrong. That's habit formation at work.";
     case 100:
@@ -264,7 +264,7 @@ export function useRecommendationEngine({
           ? ` Just ${milestone.remaining} away from ${milestone.target}!`
           : '';
       const streakContext =
-        currentStreak && currentStreak > 0 ? ` ${currentStreak}-day streak going strong!` : '';
+        currentStreak && currentStreak > 1 ? ` ${currentStreak}-day streak going strong!` : '';
 
       return {
         message: `${baseMessage}${milestoneHint}${streakContext}`,
@@ -276,10 +276,10 @@ export function useRecommendationEngine({
     const baseMessage = selectFromPool(STRINGS.RECOMMENDATION_BALANCED_POOL, dayIndex);
     const milestoneHint =
       milestone && milestone.remaining <= 10
-        ? ` ${milestone.remaining} more to reach ${milestone.target}!`
+        ? ` ${milestone.remaining} more to reach ${milestone.target} mastered!`
         : '';
     const streakContext =
-      currentStreak && currentStreak > 0 ? ` ${currentStreak}-day streak going strong!` : '';
+      currentStreak && currentStreak > 1 ? ` ${currentStreak}-day streak going strong!` : '';
     const nextDueContext = nextDue ? ` Next review ${nextDueText}.` : '';
 
     return {

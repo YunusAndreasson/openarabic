@@ -184,7 +184,7 @@ export const STRINGS = {
     "Successful recall is more powerful than re-reading. You're training your brain to find these words when you need them.",
   ] as const,
   SESSION_ED_DEFAULT_POOL: [
-    'A mix of known and forgotten is actually ideal. Struggling to recall makes the memory stronger than getting it right easily.',
+    'A mix of known and forgotten is ideal. Struggling to recall makes the memory stronger than getting it right easily.',
     'Words you forgot will come back sooner. Words you knew get more time off. The system adapts to exactly where you are.',
     "Every word you couldn't recall is now scheduled for an earlier return. That's the algorithm protecting you from forgetting.",
     "Forgetting isn't failure — it's information. The system uses it to find the perfect moment for your next review.",
@@ -220,7 +220,7 @@ export const STRINGS = {
   ] as const,
   RECOMMENDATION_MODERATE_LOAD_POOL: [
     "Your vocabulary is growing steadily. A few more words won't overwhelm your schedule, but reviews always come first.",
-    'Half your words are approaching long-term memory. Each successful review roughly doubles the time until the next one.',
+    'More than half your words are approaching long-term memory. Each successful review roughly doubles the time until the next one.',
   ] as const,
   RECOMMENDATION_SMALL_CAUGHT_UP_POOL: [
     "Great time to explore articles and add words you're curious about. Words learned from context stick better than random lists.",
@@ -229,7 +229,7 @@ export const STRINGS = {
   ] as const,
   RECOMMENDATION_BALANCED_POOL: [
     'Longer gaps between reviews mean your brain is encoding these more deeply.',
-    'Your mastered words now have intervals of 5+ days. Each successful review pushes those intervals even longer.',
+    'Your mastered words have growing review intervals. Each successful review pushes them even longer.',
     'No reviews right now means your words are consolidating — your brain is strengthening the connections in the background.',
   ] as const,
   METRIC_FIRST_SESSION_TODAY: 'First session today!',

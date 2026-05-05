@@ -59,7 +59,10 @@ const BlurBackdropComponent = ({ animatedIndex, style }: BottomSheetBackdropProp
   );
 
   useAnimatedReaction(
-    () => animatedIndex.value <= DISAPPEARS_ON_INDEX,
+    () => {
+      'worklet';
+      return animatedIndex.value <= DISAPPEARS_ON_INDEX;
+    },
     (shouldDisable, previous) => {
       if (shouldDisable !== previous) {
         scheduleOnRN(handleContainerTouchability, shouldDisable);

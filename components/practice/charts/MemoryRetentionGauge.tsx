@@ -83,7 +83,7 @@ export function MemoryRetentionGauge({ studyWords = [], onInfoPress }: MemoryRet
 
   useEffect(() => {
     const next = Math.max(0, Math.min(100, currentRetention));
-    const delta = Math.abs(retentionShared.get() - next);
+    const delta = Math.abs(prevRetentionRef.current - next);
     if (delta < 0.5) return;
 
     // Check if we're entering the green area (75%+) for the first time
@@ -116,7 +116,10 @@ export function MemoryRetentionGauge({ studyWords = [], onInfoPress }: MemoryRet
 
   // Push only rounded values to JS to limit re-renders
   useAnimatedReaction(
-    () => Math.round(retentionShared.get()),
+    () => {
+      'worklet';
+      return Math.round(retentionShared.value);
+    },
     (rounded, prev) => {
       if (rounded !== prev) {
         scheduleOnRN(setAnimatedRetention, rounded);
