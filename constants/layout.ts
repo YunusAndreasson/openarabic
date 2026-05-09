@@ -51,12 +51,31 @@ const createShadow = (elevation: number, opacity: number, radius: number) => ({
 /** Creates symmetric hit slop for touch targets */
 const createHitSlop = (size: number) => ({ top: size, bottom: size, left: size, right: size });
 
-const ELEVATION_SYSTEM = {
+const ELEVATION_RAW = {
   NONE: createShadow(0, 0, 0),
   SUBTLE: createShadow(2, 0.12, 3),
   SMALL: createShadow(4, 0.16, 6),
   MEDIUM: createShadow(6, 0.2, 8),
   LARGE: createShadow(10, 0.25, 12),
+} as const;
+
+/**
+ * Elevation system — exposes both magnitude tiers (NONE/SUBTLE/SMALL/MEDIUM/LARGE)
+ * and semantic role aliases. Prefer the role aliases in new code so visual hierarchy
+ * is driven by intent, not by guessing a magnitude. Magnitude tiers stay for cases
+ * where the role doesn't fit cleanly.
+ *
+ *   HAIRLINE — flush surfaces (separators, inline chips)             → SUBTLE
+ *   CARD     — content cards in normal flow                          → SMALL
+ *   FLOATING — FABs, MiniPlayer, floating overlays                   → MEDIUM
+ *   MODAL    — sheets, popovers, tooltips that sit above the surface → LARGE
+ */
+const ELEVATION_SYSTEM = {
+  ...ELEVATION_RAW,
+  HAIRLINE: ELEVATION_RAW.SUBTLE,
+  CARD: ELEVATION_RAW.SMALL,
+  FLOATING: ELEVATION_RAW.MEDIUM,
+  MODAL: ELEVATION_RAW.LARGE,
 } as const;
 
 export const TYPOGRAPHY_HIERARCHY = {
@@ -236,6 +255,7 @@ export const LAYOUT = {
       SMALL: TOUCH_TARGETS.SMALL, // 32 - responsive to touch targets
       MEDIUM: TOUCH_TARGETS.MEDIUM, // 44 - responsive to touch targets
       LARGE: TOUCH_TARGETS.LARGE, // 48 - responsive to touch targets
+      FAB: BASE_UNIT * 14, // 56 - Material 3 FAB size
     },
     ICON_SIZE: {
       SMALL: SPACING_SCALE.LARGE, // 16 - responsive to spacing scale
@@ -451,15 +471,13 @@ export const getEnhancedOpacity = (
  */
 
 /**
- * Returns theme-aware elevation styles that remove shadows in dark mode
- * @param level - Elevation level ('SUBTLE' | 'SMALL' | 'MEDIUM' | 'LARGE')
- * @param isDarkMode - Whether dark mode is active
- * @returns Shadow styles with zero opacity in dark mode
+ * Returns theme-aware elevation styles that remove shadows in dark mode.
+ * Accepts both magnitude tiers (SUBTLE/SMALL/MEDIUM/LARGE) and semantic
+ * role aliases (HAIRLINE/CARD/FLOATING/MODAL).
  */
-export const getThemeAwareElevation = (
-  level: 'SUBTLE' | 'SMALL' | 'MEDIUM' | 'LARGE',
-  isDarkMode: boolean,
-) => ({
+export type ElevationLevel = Exclude<keyof typeof ELEVATION_SYSTEM, 'NONE'>;
+
+export const getThemeAwareElevation = (level: ElevationLevel, isDarkMode: boolean) => ({
   ...ELEVATION_SYSTEM[level],
   shadowOpacity: isDarkMode ? 0 : ELEVATION_SYSTEM[level].shadowOpacity,
 });

@@ -13,7 +13,8 @@ export {
   PRESS_ANIMATION_DEFAULT,
   usePressAnimation,
 } from './usePressAnimation';
+export { useReducedMotion } from './useReducedMotion';
 export { useToggleAnimation } from './useToggleAnimation';
 
 // Export animation configs
-export { SPRING_CONFIG, TIMING_CONFIG } from '@/constants/animation';
+export { MOTION, SPRING_CONFIG, TIMING_CONFIG } from '@/constants/animation';

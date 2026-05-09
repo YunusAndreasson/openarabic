@@ -9,7 +9,7 @@ import { PRESS_ANIMATION_BUTTON, usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { lightFeedback } from '@/utils/haptics';
 
-const FAB_SIZE = 56;
+const FAB_SIZE = LAYOUT.BUTTON.HEIGHT.FAB;
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface FloatingActionButtonProps {
@@ -76,6 +76,6 @@ const styles = StyleSheet.create({
     right: LAYOUT.SCREEN_HORIZONTAL_PADDING,
     width: FAB_SIZE,
     zIndex: LAYOUT.Z_INDEX.CARD,
-    ...LAYOUT.ELEVATION.MEDIUM,
+    ...LAYOUT.ELEVATION.FLOATING,
   },
 });

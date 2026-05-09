@@ -1,10 +1,10 @@
 import { BlurMask, Canvas, RoundedRect } from '@shopify/react-native-skia';
 import { memo, useEffect, useMemo } from 'react';
-import { Dimensions, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useDerivedValue, useSharedValue, withDelay, withSpring } from 'react-native-reanimated';
 
 import { SPRING_CONFIG } from '@/constants/animation';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { DailyReadingActivity, StreakPeriod } from '@/services/studyStreak';
 import { withOpacity } from '@/utils/colorUtils';
@@ -17,7 +17,6 @@ interface StreakChartProps {
 const CHART_HEIGHT = LAYOUT.CHART.HEIGHT; // 60 via constants
 const BAR_HEIGHT = LAYOUT.BUTTON.HEIGHT.LARGE / 2; // ~24 via constants
 const BAR_RADIUS = LAYOUT.BORDER_RADIUS.SMALL; // ~8 via constants
-const SCREEN_WIDTH = Dimensions.get('window').width;
 const BAR_GAP = LAYOUT.CHART.BAR_GAP; // 2 via constants
 const STAGGER_PER_BAR_MS = 30;
 

@@ -64,6 +64,39 @@ export const SPRING_CONFIG = {
   },
 } as const;
 
+/**
+ * MOTION — semantic motion tokens layered on top of TIMING_CONFIG / SPRING_CONFIG.
+ *
+ * Use these in new code so the *intent* of the animation is visible at the call
+ * site (entrance vs exit vs press, snappy vs gentle vs overshoot). The original
+ * named presets remain as the underlying source of truth so existing call sites
+ * keep working.
+ */
+export const MOTION = {
+  SPRING: {
+    /** Snappy, no-overshoot — buttons, cards, primary interactions. */
+    SNAPPY: SPRING_CONFIG.CARD,
+    /** Gentle, smooth — toggles, progress, low-attention motion. */
+    GENTLE: SPRING_CONFIG.TOGGLE,
+    /** Overshoots slightly — celebratory or attention-seeking motion. */
+    OVERSHOOT: {
+      damping: 12,
+      stiffness: 220,
+      mass: 0.7,
+      overshootClamping: false,
+      energyThreshold: 0.01,
+    },
+  },
+  TIMING: {
+    /** Component entrance — fades, mounts, route arrivals. */
+    ENTRANCE: TIMING_CONFIG.ENTRANCE,
+    /** Component exit — dismissals, unmounts, route departures. */
+    EXIT: TIMING_CONFIG.FAST,
+    /** Press feedback — opacity dips, hover-equivalent. */
+    PRESS: TIMING_CONFIG.FAST,
+  },
+} as const;
+
 /** Minimum duration for opacity animations */
 export const MIN_OPACITY_DURATION = 1;
 

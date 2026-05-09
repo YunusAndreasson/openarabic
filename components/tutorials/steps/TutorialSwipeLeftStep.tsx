@@ -12,6 +12,7 @@ import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { TUTORIAL_ANIMATION, TUTORIAL_VISUALS } from '@/constants/tutorials';
 import { useColors } from '@/hooks/theme/useColors';
+import { withOpacity } from '@/utils/colorUtils';
 
 // Total cycle: delay + swipe left + swipe back + pause
 const SWIPE_LEFT_CYCLE =
@@ -62,14 +63,16 @@ export function TutorialSwipeLeftStep() {
 
       {/* Left indicator */}
       <View style={styles.indicatorRow}>
-        <View style={[styles.indicator, { backgroundColor: colors.error + '20' }]}>
+        <View
+          style={[styles.indicator, { backgroundColor: withOpacity(colors.error, LAYOUT.OPACITY.FAINT) }]}
+        >
           <Ionicons
             name="chevron-back"
             size={TUTORIAL_VISUALS.INDICATOR_ICON_SIZE}
             color={colors.error}
           />
         </View>
-        <ThemedText type="body" weight="semibold" style={{ color: colors.error }}>
+        <ThemedText type="body" weight="semibold" colorName="error">
           {STRINGS.TUTORIAL_SWIPE_DONT_KNOW}
         </ThemedText>
       </View>

@@ -12,6 +12,7 @@ import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { TUTORIAL_ANIMATION, TUTORIAL_VISUALS } from '@/constants/tutorials';
 import { useColors } from '@/hooks/theme/useColors';
+import { withOpacity } from '@/utils/colorUtils';
 
 // Total cycle: delay + swipe right + swipe back + pause
 const SWIPE_RIGHT_CYCLE =
@@ -62,14 +63,16 @@ export function TutorialSwipeRightStep() {
 
       {/* Right indicator */}
       <View style={styles.indicatorRow}>
-        <View style={[styles.indicator, { backgroundColor: colors.success + '20' }]}>
+        <View
+          style={[styles.indicator, { backgroundColor: withOpacity(colors.success, LAYOUT.OPACITY.FAINT) }]}
+        >
           <Ionicons
             name="chevron-forward"
             size={TUTORIAL_VISUALS.INDICATOR_ICON_SIZE}
             color={colors.success}
           />
         </View>
-        <ThemedText type="body" weight="semibold" style={{ color: colors.success }}>
+        <ThemedText type="body" weight="semibold" colorName="success">
           {STRINGS.TUTORIAL_SWIPE_KNOW}
         </ThemedText>
       </View>
