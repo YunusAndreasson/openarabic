@@ -112,6 +112,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   const sessionStartTime = useRef<number | null>(null);
   const sessionStarted = useRef(false);
   const wordsReviewedCount = useRef(0);
+  const totalWordsInSessionRef = useRef(0);
 
   // Add controller ref for proper cleanup
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -426,30 +427,37 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     }
   }, [isComplete]);
 
-  // Effect: Initialize audio session when practice starts and track session start
+  // Effect: Initialize audio session when practice starts and track session start.
+  // Runs ONCE per session — wordQueue.length changes on every swipe, so without
+  // the sessionStarted guard, stopAudioSafely() would race with each new word's
+  // playback and intermittently silence the audio after a swipe.
   useEffect(() => {
-    if (wordQueue && wordQueue.length > 0 && !isComplete) {
-      // Stop any existing audio from other sessions (like listen tab)
-      stopAudioSafely();
+    if (sessionStarted.current) return;
+    if (!wordQueue || wordQueue.length === 0 || isComplete) return;
 
-      // Pre-configure audio session in background to reduce first audio delay
-      audioPlayerRef.current.preconfigureAudioSession?.().catch(() => {
-        // Ignore pre-configuration errors - session will be configured on first play
-      });
+    // Stop any existing audio from other sessions (like listen tab)
+    stopAudioSafely();
 
-      // Track review session started (only once per session)
-      if (!sessionStarted.current) {
-        sessionStarted.current = true;
-        sessionStartTime.current = Date.now();
-        analytics.track(ANALYTICS_EVENTS.REVIEW_SESSION_STARTED, {
-          word_count: wordQueue.length,
-          source: 'practice_tab',
-        });
-      }
-    }
+    // Pre-configure audio session in background to reduce first audio delay
+    audioPlayerRef.current.preconfigureAudioSession?.().catch(() => {
+      // Ignore pre-configuration errors - session will be configured on first play
+    });
+
+    sessionStarted.current = true;
+    sessionStartTime.current = Date.now();
+    totalWordsInSessionRef.current = wordQueue.length;
+    analytics.track(ANALYTICS_EVENTS.REVIEW_SESSION_STARTED, {
+      word_count: wordQueue.length,
+      source: 'practice_tab',
+    });
   }, [wordQueue?.length, isComplete, stopAudioSafely]);
 
-  // Effect: Handle current word changes and play audio (simplified - no more loading)
+  // Effect: Handle current word changes and play audio (simplified - no more loading).
+  // Guard against re-firing for the same word: this effect's deps include
+  // showTranslation, which flips false at the same ~3s moment processFeedback
+  // runs in the unknown-swipe flow. Since updateWord is async, currentWord
+  // doesn't update synchronously — without the lastProcessedWordId check, the
+  // OLD word's Arabic audio briefly replays before the new word's audio starts.
   useEffect(() => {
     if (stateRefs.current.completionTriggered || isComplete) {
       return;
@@ -463,24 +471,24 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       return;
     }
 
-    // CRITICAL FIX: Only play audio after preloading is complete
     if (isAudioPreloading || !isAudioPreloadingComplete) {
       return;
     }
 
-    const wordId = String(currentWord.root_id);
-    // generateStorageUrl is a pure utility function - no need in dependency array
-    const audioUrl = generateStorageUrl('audio', currentWord.root.audio_url);
+    // currentWordKey changes on each FSRS update (includes fsrs_last_review +
+    // fsrs_reps), so a word reappearing later in the session still re-plays.
+    if (timeRefs.current.lastProcessedWordId === currentWordKey) {
+      return;
+    }
+    timeRefs.current.lastProcessedWordId = currentWordKey;
 
-    // Play audio for Arabic words (preloaded, so should be instant)
+    const audioUrl = generateStorageUrl('audio', currentWord.root.audio_url);
     if (audioUrl) {
       playAudio(audioUrl).catch(handleError);
     }
-
-    // Update the lastProcessedWordId
-    timeRefs.current.lastProcessedWordId = wordId;
   }, [
     currentWord,
+    currentWordKey,
     isComplete,
     showTranslation,
     playAudio,
@@ -488,10 +496,13 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     isAudioPreloadingComplete,
   ]);
 
-  // Safety watchdog: if no current word and not transitioning, force completion
+  // Safety watchdog: if no current word and not transitioning, force completion.
+  // Must guard on !isLoading — without it, a slow initial FSRS query (>300ms)
+  // misfires this watchdog while the loading screen is still showing.
   useEffect(() => {
     if (
       !isComplete &&
+      !isLoading &&
       !stateRefs.current.completionTriggered &&
       !stateRefs.current.isUpdatingWord &&
       !currentWord
@@ -503,14 +514,13 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
           !stateRefs.current.isUpdatingWord &&
           !currentWord
         ) {
-          // UI watchdog completion warning
           triggerCompletionTransition();
         }
       }, 300);
       return () => clearTimeout(timer);
     }
     return undefined;
-  }, [currentWord, isComplete, triggerCompletionTransition]);
+  }, [currentWord, isComplete, isLoading, triggerCompletionTransition]);
 
   const handleSwipeLeft = useCallback(() => {
     if (isComplete || stateRefs.current.isUpdatingWord || !currentWordRef.current) return;
@@ -522,17 +532,12 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     handleKnowledgeResponse('known');
   }, [handleKnowledgeResponse, isComplete]);
 
-  // Replay audio for current word (passed to WordDisplay via ReviewCard)
-  // This callback is provided to ReviewContent via context and used in WordDisplay
+  // Replay audio for current word (passed to WordDisplay via ReviewCard).
+  // playAudio → service.play() already pauses + replace()s the existing player
+  // and restarts from 0, so an explicit stop() here would just destroy and
+  // recreate the native player on every tap.
   const handleReplayAudio = useCallback(async () => {
     if (!currentWord?.root?.audio_url) return;
-
-    // Stop any currently playing audio first to avoid race conditions
-    try {
-      await audioPlayerRef.current.stop();
-    } catch {
-      // Ignore stop errors - audio might not be playing
-    }
 
     const audioUrl = generateStorageUrl('audio', currentWord.root.audio_url);
     if (audioUrl) {
@@ -588,19 +593,20 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     );
   }, [invalidateQueries, user?.id, queryClient, onClose, fromRemember, setTimer, stopAudioSafely]);
 
-  // Cleanup effect
+  // Unmount-only cleanup: tracks abandonment, aborts in-flight work, resets refs.
+  // Deps must NOT include wordQueue.length — useFSRS.updateWord shrinks the queue
+  // on every swipe, so a length dep here would re-fire this cleanup mid-session,
+  // double-firing analytics, racing stopAudioSafely() against the new word's
+  // playAudio() in the audio-play effect, and clobbering session state.
   useEffect(() => {
-    // Capture current values for cleanup closure
-    const wasSessionStarted = sessionStarted.current;
-    const sessionStart = sessionStartTime.current;
-    const totalWordsInQueue = wordQueue?.length ?? 0;
-
     return () => {
-      // Track abandoned session if user leaves without completing
-      // Only track if session was started and not completed
-      if (wasSessionStarted && !stateRefs.current.completionTriggered && sessionStart) {
-        const sessionDurationMs = Date.now() - sessionStart;
-        const wordsRemaining = totalWordsInQueue - wordsReviewedCount.current;
+      if (
+        sessionStarted.current &&
+        !stateRefs.current.completionTriggered &&
+        sessionStartTime.current
+      ) {
+        const sessionDurationMs = Date.now() - sessionStartTime.current;
+        const wordsRemaining = totalWordsInSessionRef.current - wordsReviewedCount.current;
 
         analytics.track(ANALYTICS_EVENTS.REVIEW_SESSION_ABANDONED, {
           words_reviewed: wordsReviewedCount.current,
@@ -609,7 +615,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
         });
       }
 
-      // Abort any ongoing knowledge response operations
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
         abortControllerRef.current = null;
@@ -618,35 +623,28 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       stateRefs.current.completionTriggered = true;
       stateRefs.current.progressUpdatedForCompletion = false;
 
-      // Explicitly reset UI state on unmount
       setShowTranslation(false);
 
-      // Safely call fadeIn with error handling to prevent crashes
       try {
         fadeIn();
       } catch {
         // Animation cleanup failed - continue
       }
 
-      // Ensure audio is stopped and cleaned up
       stopAudioSafely();
-
-      // Clean up all timers
       clearAllTimers();
 
-      // Reset all state refs to prevent stale references
       stateRefs.current.isUpdatingWord = false;
       setIsUpdatingUI(false);
       stateRefs.current.maxProgress = 0;
       timeRefs.current.lastProcessedWordId = null;
       timeRefs.current.lastProgressUpdate = Date.now();
 
-      // Reset session tracking refs
       sessionStarted.current = false;
       sessionStartTime.current = null;
       wordsReviewedCount.current = 0;
     };
-  }, [fadeIn, stopAudioSafely, clearAllTimers, wordQueue?.length]);
+  }, [fadeIn, stopAudioSafely, clearAllTimers]);
 
   return {
     currentSentence,

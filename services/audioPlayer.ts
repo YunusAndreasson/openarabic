@@ -1,4 +1,5 @@
 import {
+  clearAllPreloadedSources,
   createAudioPlayer,
   preload,
   setAudioModeAsync,
@@ -402,12 +403,23 @@ class SimpleAudioService {
       // this, Android kills background playback after ~3 minutes).
       this.activateLockScreen(track);
 
-      // Try immediate playback first (works for cached/local audio)
-      // Only fall back to waitForPlayerReady if play() fails synchronously
+      // Wait for the source to be loaded before playing. expo-audio's play()
+      // returns void and silently no-ops when the source is still loading after
+      // replace(), so the synchronous try/catch below alone isn't enough — we
+      // must proactively check isLoaded. waitForPlayerReady has a fast path
+      // for already-loaded sources and a 5s timeout to prevent hanging.
+      if (!player.isLoaded) {
+        try {
+          await this.waitForPlayerReady();
+        } catch {
+          // Ready timeout — attempt play anyway; outer catch handles failures
+        }
+      }
+
+      // Defense-in-depth: catch synchronous failures (e.g., session conflicts)
       try {
         player.play();
       } catch {
-        // Player not ready yet — wait for native loading then retry
         await this.waitForPlayerReady();
         player.play();
       }
@@ -815,13 +827,25 @@ class SimpleAudioService {
       const player = this.currentPlayer;
       this.currentPlayer = null;
 
+      // Per-call try/catch so pause()+remove() always run even if
+      // clearLockScreenControls() throws (e.g. when the native side has
+      // already torn the player down). Otherwise the native AudioPlayer
+      // leaks and continues holding the iOS audio session.
       try {
         player.clearLockScreenControls();
-        this.lockScreenActive = false;
+      } catch {
+        // Lock screen teardown failed — proceed with player release
+      }
+      this.lockScreenActive = false;
+      try {
         player.pause();
+      } catch {
+        // Pause failed — still attempt remove
+      }
+      try {
         player.remove();
       } catch {
-        // Silent failure - callers don't always catch
+        // Player remove failed — native side may already be detached
       }
     }
     this.currentTrack = null;
@@ -861,6 +885,15 @@ class SimpleAudioService {
     if (this.appStateSubscription) {
       this.appStateSubscription.remove();
       this.appStateSubscription = null;
+    }
+
+    // Free native preloaded audio buffers — useAudioPreloader clears these at
+    // session complete, but if the app is killed mid-session those buffers
+    // outlive the practice screen. Belt-and-suspenders cleanup at app teardown.
+    try {
+      await clearAllPreloadedSources();
+    } catch {
+      // Non-critical — buffers will be reclaimed when the process exits
     }
 
     // Best-effort to release audio session
