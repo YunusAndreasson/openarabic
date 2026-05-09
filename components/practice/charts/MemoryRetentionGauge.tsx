@@ -1,11 +1,12 @@
 import { BaseChart } from '@/components/common/charts/BaseChart';
 import { useChartColors } from '@/constants/chartColors';
-import { Canvas, Group, Path, Skia } from '@shopify/react-native-skia';
+import { BlurMask, Canvas, Group, Path, Skia } from '@shopify/react-native-skia';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import {
   cancelAnimation,
   useAnimatedReaction,
+  useDerivedValue,
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
@@ -64,6 +65,14 @@ export function MemoryRetentionGauge({ studyWords = [], onInfoPress }: MemoryRet
   // Animated retention value using Reanimated
   const retentionShared = useSharedValue(0);
   const [animatedRetention, setAnimatedRetention] = useState(0);
+
+  // Derived UI-thread blur sigma — soft glow whenever retention is in the
+  // green zone (≥75%). Reads the SharedValue directly so the blur tracks the
+  // springed value pixel-perfectly without bouncing through React state.
+  const glowSigma = useDerivedValue(() => {
+    'worklet';
+    return retentionShared.value >= MEMORY_CAPACITY_THRESHOLDS.GOOD ? 6 : 0;
+  });
 
   // Cleanup animation on unmount
   useEffect(() => {
@@ -178,7 +187,10 @@ export function MemoryRetentionGauge({ studyWords = [], onInfoPress }: MemoryRet
                 strokeWidth={GAUGE_STROKE_WIDTH}
                 color={retentionColor}
                 style="stroke"
-              />
+              >
+                {/* Soft glow when retention crosses into the green zone (≥75%) */}
+                <BlurMask blur={glowSigma} style="solid" />
+              </Path>
             </Group>
           </Canvas>
 
@@ -207,7 +219,7 @@ const styles = StyleSheet.create({
     width: GAUGE_WIDTH,
   },
   retentionText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE + LAYOUT.SPACING.MEDIUM,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MASSIVE,
     fontFamily: FONTS.ENGLISH_BOLD,
     includeFontPadding: false,
     letterSpacing: LETTER_SPACING.TIGHT,

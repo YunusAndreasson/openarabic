@@ -7,6 +7,7 @@ import { LAYOUT } from '@/constants/layout';
 
 import { BottomSheetErrorBoundary } from './BottomSheetErrorBoundary';
 import { BottomSheetHeader } from './BottomSheetHeader';
+import { BrandedBottomSheetHandle } from '@/components/ui/BrandedBottomSheetHandle';
 import { useColors } from '@/hooks/theme/useColors';
 import { BottomSheetBackdrop, COMMON_BOTTOM_SHEET_MODAL_PROPS } from '@/utils/bottomSheetUtils';
 
@@ -69,9 +70,8 @@ export const GenericBottomSheet = forwardRef<GenericBottomSheetHandle, GenericBo
     const dynamicStyles = useMemo(
       () => ({
         bottomSheet: [styles.bottomSheet, { backgroundColor: colors.elevation1 }],
-        indicator: [styles.indicator, { backgroundColor: colors.modalIndicator }],
       }),
-      [colors.elevation1, colors.modalIndicator],
+      [colors.elevation1],
     );
 
     return (
@@ -80,7 +80,7 @@ export const GenericBottomSheet = forwardRef<GenericBottomSheetHandle, GenericBo
         onDismiss={onClose}
         containerStyle={styles.modalContainer}
         backgroundStyle={dynamicStyles.bottomSheet}
-        handleIndicatorStyle={dynamicStyles.indicator}
+        handleComponent={BrandedBottomSheetHandle}
         backdropComponent={BottomSheetBackdrop}
         {...BOTTOM_SHEET_PROPS}
       >
@@ -102,7 +102,6 @@ const styles = StyleSheet.create({
     zIndex: LAYOUT.Z_INDEX.MODAL, // Ensure modal appears above MiniPlayer
   },
   bottomSheet: LAYOUT.BOTTOM_SHEET.STYLES.bottomSheet,
-  indicator: LAYOUT.BOTTOM_SHEET.STYLES.indicator,
   container: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingTop: LAYOUT.SPACING.MEDIUM,

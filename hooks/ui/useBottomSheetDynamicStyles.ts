@@ -10,24 +10,12 @@ import { useColors } from '@/hooks/theme/useColors';
 interface BottomSheetDynamicStyles {
   /** Style for BottomSheet backgroundStyle prop */
   bottomSheet: StyleProp<ViewStyle>;
-  /** Style for BottomSheet handleIndicatorStyle prop */
-  indicator: StyleProp<ViewStyle>;
 }
 
 /**
  * Shared hook for bottom sheet dynamic style computation.
- * Centralizes the memoized theme-aware styles used by SettingsPicker, TimePicker, etc.
- *
- * @returns Memoized dynamic styles for bottom sheet background and indicator
- *
- * @example
- * const { bottomSheet, indicator } = useBottomSheetDynamicStyles();
- *
- * <BottomSheet
- *   backgroundStyle={bottomSheet}
- *   handleIndicatorStyle={indicator}
- *   ...
- * />
+ * Returns the theme-aware background style. Sheets use BrandedBottomSheetHandle
+ * via `handleComponent`, so a separate indicator style isn't needed here.
  */
 export function useBottomSheetDynamicStyles(): BottomSheetDynamicStyles {
   const colors = useColors();
@@ -35,8 +23,7 @@ export function useBottomSheetDynamicStyles(): BottomSheetDynamicStyles {
   return useMemo(
     () => ({
       bottomSheet: [LAYOUT.BOTTOM_SHEET.STYLES.bottomSheet, { backgroundColor: colors.elevation1 }],
-      indicator: [LAYOUT.BOTTOM_SHEET.STYLES.indicator, { backgroundColor: colors.modalIndicator }],
     }),
-    [colors.elevation1, colors.modalIndicator],
+    [colors.elevation1],
   );
 }

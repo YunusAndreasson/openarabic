@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
+import { BrandedBottomSheetHandle } from '@/components/ui/BrandedBottomSheetHandle';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
@@ -103,7 +104,7 @@ export const SleepTimer = forwardRef<SleepTimerHandle, SleepTimerProps>(function
         styles.background,
         { backgroundColor: colors.elevation1, shadowColor: colors.shadow },
       ]}
-      handleIndicatorStyle={[styles.indicator, { backgroundColor: colors.modalIndicator }]}
+      handleComponent={BrandedBottomSheetHandle}
     >
       <BottomSheetView
         style={[styles.container, { paddingBottom: insets.bottom + LAYOUT.SPACING.LARGE }]}
@@ -165,7 +166,6 @@ const styles = StyleSheet.create({
     ...LAYOUT.BOTTOM_SHEET.STYLES.bottomSheet,
     ...LAYOUT.ELEVATION.LARGE,
   },
-  indicator: LAYOUT.BOTTOM_SHEET.STYLES.indicator,
   container: {
     paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
     paddingTop: LAYOUT.SPACING.MEDIUM,

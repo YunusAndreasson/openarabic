@@ -13,6 +13,7 @@ import React from 'react';
 
 import { DictionaryWordCard } from '@/components/practice/DictionaryWordCard';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { getStabilityProgressColor } from '@/utils/urgencyScore';
 
 // Mock expo-router to avoid dependency chain issues
 jest.mock('expo-router', () => ({
@@ -57,13 +58,13 @@ jest.mock('@/utils/layoutUtils', () => ({
   createPadding: () => ({}),
 }));
 
-// Mock urgencyScore util
+// Mock urgencyScore util — jest.fn() so we can spy on call arguments
 jest.mock('@/utils/urgencyScore', () => ({
-  getStabilityProgressColor: (stability: number | null) => {
+  getStabilityProgressColor: jest.fn((stability: number | null) => {
     if (stability === null || stability < 1) return 'error';
     if (stability < 7) return 'warning';
     return 'success';
-  },
+  }),
 }));
 
 describe('DictionaryWordCard', () => {
@@ -199,22 +200,26 @@ describe('DictionaryWordCard', () => {
     });
 
     test('dot color reflects stability level', () => {
-      // Low stability = error color
+      // The dot is rendered through Skia (GlowingDot) so its tint isn't in
+      // the RN tree — instead, verify the component routes each word's
+      // stability into getStabilityProgressColor (the mock above returns
+      // 'error' for <1 and 'success' for ≥7).
+      const stabilitySpy = getStabilityProgressColor as jest.MockedFunction<
+        typeof getStabilityProgressColor
+      >;
+      stabilitySpy.mockClear();
+
       const lowStabilityWord = createMockWord({ fsrs_stability: 0.5 });
-      const { rerender, toJSON } = render(
+      const { rerender } = render(
         <DictionaryWordCard word={lowStabilityWord} editMode={false} onDelete={mockOnDelete} />,
       );
-      const lowSnapshot = JSON.stringify(toJSON());
+      expect(stabilitySpy).toHaveBeenCalledWith(0.5);
 
-      // High stability = success color
       const highStabilityWord = createMockWord({ fsrs_stability: 30 });
       rerender(
         <DictionaryWordCard word={highStabilityWord} editMode={false} onDelete={mockOnDelete} />,
       );
-      const highSnapshot = JSON.stringify(toJSON());
-
-      // Colors should be different
-      expect(lowSnapshot).not.toBe(highSnapshot);
+      expect(stabilitySpy).toHaveBeenCalledWith(30);
     });
   });
 

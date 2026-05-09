@@ -5,9 +5,10 @@ import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { DeleteButton } from '@/components/playlist';
-import { ColorDot } from '@/components/ui/ColorDot';
+import { GlowingDot } from '@/components/ui/GlowingDot';
+
 import { FONTS } from '@/constants/fonts';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
 import { useEditModeCardAnimation } from '@/hooks/cards';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -66,7 +67,7 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
             <View style={styles.content}>
               {/* Memory dot and English text */}
               <View style={styles.leftSection}>
-                <ColorDot color={colors[dotColorKey]} />
+                <GlowingDot color={colors[dotColorKey]} />
                 <ThemedText
                   type="body"
                   variant="secondary"
@@ -152,7 +153,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.ENGLISH_SEMIBOLD,
     textAlign: 'left',
     includeFontPadding: false,
-    lineHeight: Math.round(LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.1),
+    lineHeight: Math.round(LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.TIGHT),
   },
   rightSection: {
     flex: 1,

@@ -18,7 +18,7 @@ import { useBlurProps } from '@/hooks/ui/useBlurProps';
 // Calculate screen height for maxDynamicContentSize
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
-const BACKDROP_OPACITY = 0.5;
+const BACKDROP_OPACITY = 0.4;
 const APPEARS_ON_INDEX = 0;
 const DISAPPEARS_ON_INDEX = -1;
 

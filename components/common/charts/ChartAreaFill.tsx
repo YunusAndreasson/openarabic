@@ -1,6 +1,6 @@
 import { GRAPH_HEIGHT_LARGE } from '@/constants/chartConstants';
 import { createAreaFillPath } from '@/utils/chartDataUtils';
-import { LinearGradient, Path, vec } from '@shopify/react-native-skia';
+import { BlurMask, LinearGradient, Path, vec } from '@shopify/react-native-skia';
 import { memo, useMemo } from 'react';
 
 import type { ChartColors } from '@/types/ui/chart.types';
@@ -37,6 +37,8 @@ export const ChartAreaFill = memo<ChartAreaFillProps>(
           positions={GRADIENT_STOPS}
           start={vec(0, topPadding)}
         />
+        {/* Soft depth so the fill reads as a translucent layer beneath the line */}
+        <BlurMask blur={4} style="normal" />
       </Path>
     );
   },

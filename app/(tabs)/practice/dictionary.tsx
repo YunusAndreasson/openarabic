@@ -106,19 +106,24 @@ export default function DictionaryScreen(): JSX.Element {
   );
 
   const renderItem = useCallback(
-    (props: { item: StudyWord }) => (
-      <Animated.View
-        entering={FadeIn.duration(TIMING_CONFIG.MEDIUM.duration)}
-        exiting={FadeOut.duration(TIMING_CONFIG.FAST.duration)}
-      >
-        <DictionaryWordCard
-          word={props.item}
-          editMode={editMode}
-          onDelete={() => handleDeleteWord(props.item.root_id)}
-          onPress={handleWordPress}
-        />
-      </Animated.View>
-    ),
+    (props: { item: StudyWord; index: number }) => {
+      // Cap the stagger to the first ~20 items so deep scrolls don't pay a
+      // long entry delay for items the user isn't waiting on.
+      const enterDelay = props.index < 20 ? props.index * 20 : 0;
+      return (
+        <Animated.View
+          entering={FadeIn.duration(TIMING_CONFIG.MEDIUM.duration).delay(enterDelay)}
+          exiting={FadeOut.duration(TIMING_CONFIG.FAST.duration)}
+        >
+          <DictionaryWordCard
+            word={props.item}
+            editMode={editMode}
+            onDelete={() => handleDeleteWord(props.item.root_id)}
+            onPress={handleWordPress}
+          />
+        </Animated.View>
+      );
+    },
     [editMode, handleDeleteWord, handleWordPress],
   );
 

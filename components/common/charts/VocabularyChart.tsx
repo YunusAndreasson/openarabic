@@ -235,6 +235,7 @@ export const VocabularyChart = memo<VocabularyChartProps<unknown>>(
                 y={point.y}
                 uniqueKey={dataPointKeys[index]}
                 chartColors={chartColors}
+                index={index}
               />
             ))}
           </Group>,
@@ -252,6 +253,7 @@ export const VocabularyChart = memo<VocabularyChartProps<unknown>>(
                 y={milestone.y}
                 uniqueKey={milestoneKeys[index]}
                 chartColors={chartColors}
+                index={index}
               />
             ))}
           </Group>,

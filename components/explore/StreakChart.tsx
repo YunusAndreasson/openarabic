@@ -1,11 +1,13 @@
-import { Canvas, RoundedRect } from '@shopify/react-native-skia';
-import { memo, useMemo } from 'react';
+import { BlurMask, Canvas, RoundedRect } from '@shopify/react-native-skia';
+import { memo, useEffect, useMemo } from 'react';
 import { Dimensions, StyleSheet, View } from 'react-native';
+import { useDerivedValue, useSharedValue, withDelay, withSpring } from 'react-native-reanimated';
 
+import { SPRING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import { withOpacity } from '@/utils/colorUtils';
 import type { DailyReadingActivity, StreakPeriod } from '@/services/studyStreak';
+import { withOpacity } from '@/utils/colorUtils';
 
 interface StreakChartProps {
   dailyActivity: DailyReadingActivity[];
@@ -17,6 +19,7 @@ const BAR_HEIGHT = LAYOUT.BUTTON.HEIGHT.LARGE / 2; // ~24 via constants
 const BAR_RADIUS = LAYOUT.BORDER_RADIUS.SMALL; // ~8 via constants
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const BAR_GAP = LAYOUT.CHART.BAR_GAP; // 2 via constants
+const STAGGER_PER_BAR_MS = 30;
 
 // Extract expensive calculations outside component
 const createStreakMap = (streakPeriods: StreakPeriod[]): Map<string, StreakPeriod> => {
@@ -37,6 +40,39 @@ const createStreakMap = (streakPeriods: StreakPeriod[]): Map<string, StreakPerio
   });
   return map;
 };
+
+interface StreakBarProps {
+  x: number;
+  width: number;
+  color: string;
+  index: number;
+  isToday: boolean;
+}
+
+const StreakBar = memo<StreakBarProps>(({ x, width, color, index, isToday }) => {
+  const grow = useSharedValue(0);
+
+  useEffect(() => {
+    grow.value = withDelay(index * STAGGER_PER_BAR_MS, withSpring(1, SPRING_CONFIG.CARD));
+  }, [grow, index]);
+
+  const height = useDerivedValue(() => {
+    'worklet';
+    return grow.value * BAR_HEIGHT;
+  });
+  const y = useDerivedValue(() => {
+    'worklet';
+    return BAR_HEIGHT - grow.value * BAR_HEIGHT;
+  });
+
+  return (
+    <RoundedRect x={x} y={y} width={width} height={height} r={BAR_RADIUS} color={color}>
+      {isToday && <BlurMask blur={6} style="solid" />}
+    </RoundedRect>
+  );
+});
+
+StreakBar.displayName = 'StreakBar';
 
 export const StreakChart = memo<StreakChartProps>(({ dailyActivity, streakPeriods }) => {
   const colors = useColors();
@@ -98,16 +134,14 @@ export const StreakChart = memo<StreakChartProps>(({ dailyActivity, streakPeriod
       };
     });
 
-    // Border color for today's bar (subtle highlight)
-    const todayBorderColor = withOpacity(colors.text, 0.3);
-
     return {
       chartWidth,
       barWidth,
       bars,
-      todayBorderColor,
     };
-  }, [dailyActivity, streakPeriods, colors.warning, colors.tint, colors.textTertiary, colors.text]);
+  }, [dailyActivity, streakPeriods, colors.warning, colors.tint, colors.textTertiary]);
+
+  const lastIndex = chartData.bars.length - 1;
 
   return (
     <View style={[styles.container, { height: CHART_HEIGHT }]}>
@@ -118,30 +152,16 @@ export const StreakChart = memo<StreakChartProps>(({ dailyActivity, streakPeriod
             height: BAR_HEIGHT,
           }}
         >
-          {chartData.bars.map(bar => (
-            <RoundedRect
+          {chartData.bars.map((bar, index) => (
+            <StreakBar
               key={bar.key}
               x={bar.x}
-              y={0}
               width={chartData.barWidth}
-              height={BAR_HEIGHT}
-              r={BAR_RADIUS}
               color={bar.color}
+              index={index}
+              isToday={index === lastIndex}
             />
           ))}
-          {/* Subtle border for today's bar */}
-          {chartData.bars.length > 0 && (
-            <RoundedRect
-              x={chartData.bars[chartData.bars.length - 1]?.x ?? 0}
-              y={0}
-              width={chartData.barWidth}
-              height={BAR_HEIGHT}
-              r={BAR_RADIUS}
-              color={chartData.todayBorderColor}
-              style="stroke"
-              strokeWidth={1.5}
-            />
-          )}
         </Canvas>
       </View>
     </View>

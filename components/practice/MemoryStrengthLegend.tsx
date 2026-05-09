@@ -1,5 +1,6 @@
 import { memo, type FC } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -7,7 +8,10 @@ import { ColorDot } from '@/components/ui/ColorDot';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
+import { PRESS_ANIMATION_BUTTON, usePressAnimation } from '@/hooks/animations';
 import type { SortDirection } from '@/hooks/vocabulary/useDictionaryModal';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface MemoryStrengthLegendProps {
   sortDirection: SortDirection;
@@ -25,6 +29,8 @@ const MemoryStrengthLegendComponent: FC<MemoryStrengthLegendProps> = ({
   onToggleSort,
 }) => {
   const colors = useColors();
+  const { animatedStyle, handlePressIn, handlePressOut } =
+    usePressAnimation(PRESS_ANIMATION_BUTTON);
 
   return (
     <View style={styles.container}>
@@ -55,10 +61,12 @@ const MemoryStrengthLegendComponent: FC<MemoryStrengthLegendProps> = ({
         </View>
       </View>
 
-      {/* Label with sort toggle on right - tappable */}
-      <Pressable
-        style={({ pressed }) => [styles.headerRow, pressed && { opacity: LAYOUT.OPACITY.HIGH }]}
+      {/* Label with sort toggle on right — Reanimated press-scale matches FAB */}
+      <AnimatedPressable
+        style={[styles.headerRow, animatedStyle]}
         onPress={onToggleSort}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
       >
         <ThemedText type="caption" colorName="subtleLabelText" weight="semibold">
           {STRINGS.MEMORY_STRENGTH}
@@ -69,7 +77,7 @@ const MemoryStrengthLegendComponent: FC<MemoryStrengthLegendProps> = ({
           color={colors.secondary}
           style={styles.sortIcon}
         />
-      </Pressable>
+      </AnimatedPressable>
     </View>
   );
 };

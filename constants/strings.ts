@@ -369,6 +369,9 @@ export const STRINGS = {
   WORD_MASTERY_SUBTITLE: "Words you'll remember without review",
   DUE_WORDS_FORECAST_SUBTITLE: 'Reviews per day based on your pace',
   DUE_WORDS_FORECAST: 'Words due',
+  TREND_RISING: 'Trend: rising',
+  TREND_EASING: 'Trend: easing',
+  TREND_STEADY: 'Trend: steady',
   // Study Streak
   STREAK_LABEL: 'Day streak',
   // Study Streak Bottom Sheet

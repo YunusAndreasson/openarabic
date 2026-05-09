@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
+import { BrandedBottomSheetHandle } from '@/components/ui/BrandedBottomSheetHandle';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
@@ -86,7 +87,7 @@ export function TimePicker({
       onDismiss={onClose}
       containerStyle={styles.modalContainer}
       backgroundStyle={dynamicStyles.bottomSheet}
-      handleIndicatorStyle={dynamicStyles.indicator}
+      handleComponent={BrandedBottomSheetHandle}
       backdropComponent={BottomSheetBackdrop}
     >
       <BottomSheetView

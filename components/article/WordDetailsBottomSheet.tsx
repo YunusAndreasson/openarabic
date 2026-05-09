@@ -3,9 +3,11 @@ import { startTransition, useCallback, useEffect, useOptimistic } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { BottomSheetErrorBoundary } from '@/components/common/BottomSheetErrorBoundary';
 import { ColorCodedText } from '@/components/common/ColorCodedText';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
+import { BrandedBottomSheetHandle } from '@/components/ui/BrandedBottomSheetHandle';
 import { useToast } from '@/components/providers';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -112,69 +114,73 @@ export function WordDetailsBottomSheet({
       onClose={onClose}
       backdropComponent={BottomSheetBackdrop}
       backgroundStyle={[styles.background, { backgroundColor: colors.elevation1 }]}
-      handleIndicatorStyle={{ backgroundColor: colors.modalIndicator }}
+      handleComponent={BrandedBottomSheetHandle}
     >
       <BottomSheetView
         style={[styles.container, { paddingBottom: insets.bottom + LAYOUT.SPACING.LARGE }]}
       >
-        {!word ? null : (
-          <>
-            {/* Arabic Word Title */}
-            <View style={styles.titleSection}>
-              <ColorCodedText
-                text={cleanWordText(word.word_form || '')}
-                arabicWord={cleanWordText(word.word_form || '')}
-                englishTranslation={cleanWordText(word.english || '')}
-                type="heading1"
-                weight="bold"
-                style={styles.arabicTitle}
-                defaultColor={colors.arabicText}
-                isArabic={true}
-                precomputedSegments={word.coloredSegments}
-              />
-              {word.english && (
+        <BottomSheetErrorBoundary sheetName="WordDetails">
+          {!word ? null : (
+            <>
+              {/* Arabic Word Title */}
+              <View style={styles.titleSection}>
                 <ColorCodedText
-                  text={cleanWordText(word.english)}
+                  text={cleanWordText(word.word_form || '')}
                   arabicWord={cleanWordText(word.word_form || '')}
-                  type="heading3"
-                  style={styles.englishTranslation}
-                  defaultColor={colors.secondaryText}
-                  isArabic={false}
+                  englishTranslation={cleanWordText(word.english || '')}
+                  type="heading1"
+                  weight="bold"
+                  style={styles.arabicTitle}
+                  defaultColor={colors.arabicText}
+                  isArabic={true}
+                  precomputedSegments={word.coloredSegments}
                 />
+                {word.english && (
+                  <ColorCodedText
+                    text={cleanWordText(word.english)}
+                    arabicWord={cleanWordText(word.word_form || '')}
+                    type="heading3"
+                    style={styles.englishTranslation}
+                    defaultColor={colors.secondaryText}
+                    isArabic={false}
+                  />
+                )}
+              </View>
+
+              {/* Grammar Note */}
+              {word.grammar_note && (
+                <View style={styles.grammarSection}>
+                  <ThemedText type="body" style={styles.grammarText}>
+                    {word.grammar_note}
+                  </ThemedText>
+                </View>
               )}
-            </View>
 
-            {/* Grammar Note */}
-            {word.grammar_note && (
-              <View style={styles.grammarSection}>
-                <ThemedText type="body" style={styles.grammarText}>
-                  {word.grammar_note}
-                </ThemedText>
+              {/* Action Buttons */}
+              <View style={styles.buttonSection}>
+                <View style={styles.buttonContainer}>
+                  <ThemedButton
+                    title={STRINGS.PLAY_AUDIO}
+                    variant="outlined"
+                    onPress={handlePlayAudio}
+                    disabled={!word.audio_url}
+                    style={styles.actionButton}
+                  />
+                  <ThemedButton
+                    title={
+                      optimisticIsInStudyList
+                        ? STRINGS.REMOVE_FROM_PRACTICE
+                        : STRINGS.ADD_TO_PRACTICE
+                    }
+                    variant={optimisticIsInStudyList ? 'outlined' : 'filled'}
+                    onPress={handleAddToStudy}
+                    style={styles.actionButton}
+                  />
+                </View>
               </View>
-            )}
-
-            {/* Action Buttons */}
-            <View style={styles.buttonSection}>
-              <View style={styles.buttonContainer}>
-                <ThemedButton
-                  title={STRINGS.PLAY_AUDIO}
-                  variant="outlined"
-                  onPress={handlePlayAudio}
-                  disabled={!word.audio_url}
-                  style={styles.actionButton}
-                />
-                <ThemedButton
-                  title={
-                    optimisticIsInStudyList ? STRINGS.REMOVE_FROM_PRACTICE : STRINGS.ADD_TO_PRACTICE
-                  }
-                  variant={optimisticIsInStudyList ? 'outlined' : 'filled'}
-                  onPress={handleAddToStudy}
-                  style={styles.actionButton}
-                />
-              </View>
-            </View>
-          </>
-        )}
+            </>
+          )}
+        </BottomSheetErrorBoundary>
       </BottomSheetView>
     </BottomSheet>
   );

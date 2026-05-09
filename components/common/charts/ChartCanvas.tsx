@@ -1,7 +1,10 @@
-import { Canvas } from '@shopify/react-native-skia';
+import { Canvas, Group } from '@shopify/react-native-skia';
 import type { ReactNode } from 'react';
+import { useEffect } from 'react';
 import { StyleSheet, TouchableWithoutFeedback, View } from 'react-native';
+import { useSharedValue, withTiming } from 'react-native-reanimated';
 
+import { TIMING_CONFIG } from '@/constants/animation';
 import { FONTS } from '@/constants/fonts';
 import { LAYOUT, STATUS_INDICATOR } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
@@ -33,6 +36,14 @@ export function ChartCanvas({
   const resolvedWidth = width ?? graphWidth;
   const { tooltip, showTooltip, hideTooltip } = useChartTooltip();
   const colors = useColors();
+
+  // Subtle entry fade — single SharedValue cascades through the wrapping
+  // Skia Group so line, area fill, zones and grid all appear in lockstep.
+  // Data points then stagger in on top via their own per-index spring.
+  const entryProgress = useSharedValue(0);
+  useEffect(() => {
+    entryProgress.value = withTiming(1, { duration: TIMING_CONFIG.SLOW.duration });
+  }, [entryProgress]);
 
   // Validate dataPoints to prevent frozen object errors (React Compiler auto-memoizes)
   const validDataPoints = dataPoints.filter(
@@ -72,7 +83,9 @@ export function ChartCanvas({
     <TouchableWithoutFeedback onPress={hideTooltip}>
       <View style={[styles.container, { width: resolvedWidth, height }]}>
         {/* Main Chart Canvas */}
-        <Canvas style={canvasStyle}>{children}</Canvas>
+        <Canvas style={canvasStyle}>
+          <Group opacity={entryProgress}>{children}</Group>
+        </Canvas>
 
         {/* Interactive Data Point Overlays */}
         {validDataPoints.map(point => {

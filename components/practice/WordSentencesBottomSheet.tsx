@@ -7,7 +7,7 @@ import { ArticleSentence } from '@/components/article/ArticleSentence';
 import { BaseCard } from '@/components/common';
 import { ColorDot, HeaderIconButton } from '@/components/ui';
 import { FONTS } from '@/constants/fonts';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
 import { useColors } from '@/hooks/theme/useColors';
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontFamily: FONTS.ENGLISH_SEMIBOLD,
     includeFontPadding: false,
-    lineHeight: Math.round(LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.1),
+    lineHeight: Math.round(LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.TIGHT),
   },
   centeredContainer: {
     paddingVertical: LAYOUT.SPACING.XLARGE,

@@ -1,6 +1,6 @@
 import { GRAPH_HEIGHT_LARGE } from '@/constants/chartConstants';
 import { createAreaFillPath } from '@/utils/chartDataUtils';
-import { Mask, Path, Rect } from '@shopify/react-native-skia';
+import { BlurMask, Group, Mask, Path, Rect } from '@shopify/react-native-skia';
 import { memo, useMemo } from 'react';
 
 import type { PerformanceZone } from '@/types/ui/chart.types';
@@ -31,16 +31,20 @@ export const ChartPerformanceZones = memo<ChartPerformanceZonesProps>(
 
     return (
       <Mask mask={<Path color={colors.white} path={areaPath} />}>
-        {zones.map(zone => (
-          <Rect
-            key={`performance-zone-${zone.color}-${zone.y}-${zone.height}`}
-            color={withOpacity(zone.color, 0.5)}
-            height={zone.height}
-            width={graphWidth}
-            x={0}
-            y={zone.y}
-          />
-        ))}
+        <Group>
+          {zones.map(zone => (
+            <Rect
+              key={`performance-zone-${zone.color}-${zone.y}-${zone.height}`}
+              color={withOpacity(zone.color, 0.5)}
+              height={zone.height}
+              width={graphWidth}
+              x={0}
+              y={zone.y}
+            />
+          ))}
+          {/* Subtle layered depth so zone bands sit beneath the data line */}
+          <BlurMask blur={3} style="normal" />
+        </Group>
       </Mask>
     );
   },

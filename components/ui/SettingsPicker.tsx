@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BaseCard } from '@/components/common/BaseCard';
 
 import { ThemedText } from '@/components/ThemedText';
+import { BrandedBottomSheetHandle } from '@/components/ui/BrandedBottomSheetHandle';
 import { LAYOUT, LINE_HEIGHT_MULTIPLIERS, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useBottomSheetDynamicStyles } from '@/hooks/ui/useBottomSheetDynamicStyles';
@@ -58,7 +59,7 @@ function SettingsPickerComponent<T>({
       onDismiss={onClose}
       containerStyle={styles.modalContainer}
       backgroundStyle={dynamicStyles.bottomSheet}
-      handleIndicatorStyle={dynamicStyles.indicator}
+      handleComponent={BrandedBottomSheetHandle}
       backdropComponent={BottomSheetBackdrop}
     >
       <BottomSheetView>

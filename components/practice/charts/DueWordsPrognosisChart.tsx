@@ -3,6 +3,7 @@ import { memo, useMemo } from 'react';
 import { VocabularyChart, type DataPoint } from '@/components/common/charts';
 import { CHART_LABELS, EMPTY_STATE_MESSAGES } from '@/constants/chartMessages';
 import { useGraphWidth } from '@/constants/chartConstants';
+import { STRINGS } from '@/constants/strings';
 import { formatMonthDayUTC } from '@/utils/chartDataUtils';
 import { useChartAxisLabels } from '@/hooks/vocabulary/useChartAxisLabels';
 import { useDueWordsChart } from '@/hooks/vocabulary/useDueWordsChart';
@@ -38,10 +39,10 @@ export const DueWordsPrognosisChart = memo<DueWordsPrognosisChartProps>(
 
       const trendText =
         trend === 'increasing'
-          ? 'Trend: rising'
+          ? STRINGS.TREND_RISING
           : trend === 'decreasing'
-            ? 'Trend: easing'
-            : 'Trend: steady';
+            ? STRINGS.TREND_EASING
+            : STRINGS.TREND_STEADY;
 
       return `${currentDue} to review today, peak ${peakDue} • ${trendText}`;
     }, [chartData.insights, studyWords.length]);
