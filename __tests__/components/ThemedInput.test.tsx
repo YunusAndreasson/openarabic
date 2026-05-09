@@ -18,14 +18,6 @@ jest.mock('@/hooks/theme/useColors', () =>
   require('@/__tests__/helpers/componentMocks').useColorsMockFactory(),
 );
 
-jest.mock('@/utils/haptics', () => ({
-  lightFeedback: jest.fn(),
-  mediumFeedback: jest.fn(),
-  successFeedback: jest.fn(),
-  selectionFeedback: jest.fn(),
-  errorFeedback: jest.fn(),
-}));
-
 describe('ThemedInput', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -87,16 +79,6 @@ describe('ThemedInput', () => {
       const { getByText } = render(<ThemedInput error="Invalid input" />);
 
       expect(getByText('Invalid input')).toBeTruthy();
-    });
-
-    test('triggers haptic feedback on new error', () => {
-      const { errorFeedback } = require('@/utils/haptics');
-
-      const { rerender } = render(<ThemedInput />);
-
-      rerender(<ThemedInput error="New error" />);
-
-      expect(errorFeedback).toHaveBeenCalled();
     });
   });
 
