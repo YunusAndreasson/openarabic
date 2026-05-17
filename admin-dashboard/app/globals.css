@@ -1,13 +1,7 @@
 @import 'tailwindcss';
 
-/* Madina Font - Traditional Arabic calligraphic font */
-@font-face {
-  font-family: 'Madina';
-  src: url('/fonts/madina.woff2') format('woff2');
-  font-weight: normal;
-  font-style: normal;
-  font-display: optional; /* Non-blocking: use font if cached, fallback if not */
-}
+/* Tailwind v4: class-based dark mode (replaces darkMode: 'class' from v3 config) */
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* Tailwind v4 Theme Configuration - OpenArabic Branded Color System */
 @theme {
@@ -291,9 +285,9 @@ img:not([fetchpriority="high"]) {
   text-shadow: 0 1px 3px rgba(0,0,0,0.5), 0 0 8px rgba(0,0,0,0.3);
 }
 
-/* Arabic font utility */
+/* Arabic font utility — var(--font-madina) supplied by next/font/local */
 .font-arabic {
-  font-family: 'Madina', 'Amiri', 'Traditional Arabic', serif;
+  font-family: var(--font-madina), 'Amiri', 'Traditional Arabic', serif;
 }
 
 /* Arabic word hover — dotted underline slides in, text glows toward primary */

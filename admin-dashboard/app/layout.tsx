@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
+import localFont from 'next/font/local';
 import './globals.css';
 import { LayoutWrapper } from '@/components/layout-wrapper';
 import { SmartAppBanner } from '@/components/smart-app-banner';
@@ -9,6 +10,12 @@ const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
   display: 'swap',
+});
+
+const madina = localFont({
+  src: '../public/fonts/madina.woff2',
+  variable: '--font-madina',
+  display: 'optional',
 });
 
 export const viewport: Viewport = {
@@ -63,7 +70,7 @@ export default async function RootLayout({
   const platformInfo = await detectPlatform();
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${madina.variable}`} suppressHydrationWarning>
       <head>
         {/* Resource hints for faster external requests */}
         <link rel="preconnect" href="https://kkmnzbeugdoajtzfjkxg.supabase.co" />
@@ -75,27 +82,6 @@ export default async function RootLayout({
           href="/oaLogo.png"
           as="image"
           fetchPriority="high"
-        />
-
-        {/* Preload Arabic font for faster text rendering */}
-        <link
-          rel="preload"
-          href="/fonts/madina.woff2"
-          as="font"
-          type="font/woff2"
-          crossOrigin="anonymous"
-        />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              // Enable View Transitions API for smooth page transitions (Chrome 111+, Safari 18+)
-              if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches && document.startViewTransition) {
-                window.addEventListener('popstate', () => {
-                  document.documentElement.classList.add('view-transition');
-                });
-              }
-            `,
-          }}
         />
       </head>
       <body className={inter.className} suppressHydrationWarning>

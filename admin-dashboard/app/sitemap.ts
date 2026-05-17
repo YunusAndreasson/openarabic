@@ -4,11 +4,12 @@ import { supabase } from '@/lib/supabase';
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://openarabic.io';
 
-  // Fetch all articles for sitemap
+  // Fetch articles for sitemap (capped at 50k — XML sitemap protocol limit)
   const { data: articles } = await supabase
     .from('articles')
     .select('id, title, created_at')
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .range(0, 49999);
 
   const articleUrls = (articles || []).map((article) => ({
     url: `${baseUrl}/read/${article.id}`,

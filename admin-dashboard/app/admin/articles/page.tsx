@@ -180,7 +180,7 @@ function ArticlesPageContent() {
     try {
       const { error } = await supabase
         .from('articles')
-        .update({ [field]: value })
+        .update({ [field]: value } as Database['public']['Tables']['articles']['Update'])
         .eq('id', articleId);
 
       if (error) throw error;

@@ -239,7 +239,7 @@ export function SentenceAudioVerifier({ articleId }: SentenceAudioVerifierProps)
 
       const { error: updateError } = await supabase
         .from('article_sentences')
-        .update({ [field]: newValue })
+        .update({ [field]: newValue } as Database['public']['Tables']['article_sentences']['Update'])
         .eq('id', sentenceId);
 
       if (updateError) throw updateError;

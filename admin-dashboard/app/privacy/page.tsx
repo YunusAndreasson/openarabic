@@ -14,22 +14,20 @@ export default function PrivacyPolicyPage() {
   const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
-    fetchCategories();
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('categories')
+          .select('*')
+          .order('name');
+
+        if (error) throw error;
+        setCategories(data || []);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    })();
   }, []);
-
-  const fetchCategories = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .order('name');
-
-      if (error) throw error;
-      setCategories(data || []);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-    }
-  };
 
   return (
     <div className="min-h-screen flex flex-col">

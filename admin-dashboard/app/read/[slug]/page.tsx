@@ -1,5 +1,5 @@
+import { cache } from 'react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/lib/database.types';
@@ -28,8 +28,8 @@ type Category = Database['public']['Tables']['categories']['Row'];
 const SUPABASE_STORAGE_URL =
   'https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/images';
 
-// Fetch article by ID
-async function getArticle(articleId: number): Promise<Article | null> {
+// Fetch article by ID — cache() dedupes across generateMetadata + page in the same request
+const getArticle = cache(async (articleId: number): Promise<Article | null> => {
   const { data, error } = await supabase
     .from('articles')
     .select('*, authors(name), categories(name)')
@@ -38,7 +38,7 @@ async function getArticle(articleId: number): Promise<Article | null> {
 
   if (error) return null;
   return data as Article;
-}
+});
 
 // Generate dynamic metadata for SEO
 export async function generateMetadata({
@@ -59,6 +59,9 @@ export async function generateMetadata({
   return {
     title: `${article.title} - OpenArabic`,
     description: article.summary,
+    alternates: {
+      canonical: `https://openarabic.io/read/${slug}`,
+    },
     openGraph: {
       title: article.title,
       description: article.summary,
