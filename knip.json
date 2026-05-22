@@ -22,7 +22,7 @@
     "!**/supabase/migrations/**",
     "!**/admin-dashboard/**"
   ],
-  "ignore": ["plugins/**", "scripts/**", "metro.config.js"],
+  "ignore": ["plugins/**", "scripts/**", "admin-dashboard/**"],
   "ignoreDependencies": ["babel-preset-expo", "babel-jest"],
   "ignoreExportsUsedInFile": false,
   "includeEntryExports": false,

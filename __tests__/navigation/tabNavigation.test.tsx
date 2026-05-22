@@ -67,11 +67,21 @@ jest.mock('expo-router/unstable-native-tabs', () => {
   return { NativeTabs };
 });
 
-jest.mock('@react-navigation/native', () => {
+// SDK 56 consolidated @react-navigation/native + /elements re-exports under
+// expo-router/react-navigation. Merge the two old mocks targeting that path.
+jest.mock('expo-router/react-navigation', () => {
   const React = require('react');
+  const { Text } = require('react-native');
   return {
     NavigationContainer: ({ children }: { children: React.ReactNode }) => <>{children}</>,
     useFocusEffect: jest.fn(),
+    PlatformPressable: ({
+      onPress,
+      children,
+    }: {
+      onPress: () => void;
+      children: React.ReactNode;
+    }) => <Text onPress={onPress}>{children}</Text>,
   };
 });
 
@@ -94,20 +104,6 @@ jest.mock('@/components/providers/FSRSDataProvider', () => ({
 jest.mock('@expo/vector-icons', () => ({
   Ionicons: () => null,
 }));
-
-jest.mock('@react-navigation/elements', () => {
-  const React = require('react');
-  const { Text } = require('react-native');
-  return {
-    PlatformPressable: ({
-      onPress,
-      children,
-    }: {
-      onPress: () => void;
-      children: React.ReactNode;
-    }) => <Text onPress={onPress}>{children}</Text>,
-  };
-});
 
 jest.mock('expo-router', () => {
   const React = require('react');

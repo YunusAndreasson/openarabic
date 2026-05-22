@@ -145,8 +145,8 @@ jest.mock('@/constants/queries', () => ({
   },
 }));
 
-// Mock focus effects
-jest.mock('@react-navigation/native', () => ({
+// Mock focus effects — SDK 56 moved this to expo-router/react-navigation.
+jest.mock('expo-router/react-navigation', () => ({
   useFocusEffect: jest.fn((callback: () => void | (() => void)) => {
     // Execute the callback synchronously for testing
     const cleanup = callback();

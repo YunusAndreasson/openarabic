@@ -91,6 +91,24 @@ jest.useFakeTimers({
   doNotFake: ['nextTick', 'setImmediate'], // Keep these real for better async testing
 });
 
+// Mock expo-router/react-navigation: loading it pulls in MaskedViewNative which
+// reaches getViewManagerConfig on react-native's NativeModules. Tests don't
+// exercise this; stub the small surface the codebase actually imports.
+jest.mock('expo-router/react-navigation', () => {
+  const React = require('react');
+  return {
+    useFocusEffect: jest.fn(callback => {
+      const cleanup = callback?.();
+      return typeof cleanup === 'function' ? cleanup : undefined;
+    }),
+    useHeaderHeight: jest.fn(() => 44),
+    NavigationContainer: ({ children }) => children,
+    DarkTheme: { dark: true, colors: {} },
+    DefaultTheme: { dark: false, colors: {} },
+    ThemeProvider: ({ children }) => children,
+  };
+});
+
 // Mock expo-system-ui for system UI customization
 jest.mock('expo-system-ui', () => ({
   setBackgroundColorAsync: jest.fn().mockResolvedValue(undefined),
