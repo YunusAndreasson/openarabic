@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 /**
  * Custom hook for debouncing function calls to prevent rapid successive executions
@@ -14,31 +14,28 @@ export function useDebounce<T extends (...args: any[]) => any>(
   const [isDebouncing, setIsDebouncing] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const debouncedCallback = useCallback(
-    ((...args: Parameters<T>) => {
-      // Block if currently debouncing
-      if (isDebouncing) return;
+  const debouncedCallback = ((...args: Parameters<T>) => {
+    // Block if currently debouncing
+    if (isDebouncing) return;
 
-      // Execute the callback immediately
-      const result = callback(...args);
+    // Execute the callback immediately
+    const result = callback(...args);
 
-      // Set debouncing state to block subsequent calls
-      setIsDebouncing(true);
+    // Set debouncing state to block subsequent calls
+    setIsDebouncing(true);
 
-      // Clear any existing timeout
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
 
-      // Set new timeout to reset debouncing state
-      timeoutRef.current = setTimeout(() => {
-        setIsDebouncing(false);
-      }, delay);
+    // Set new timeout to reset debouncing state
+    timeoutRef.current = setTimeout(() => {
+      setIsDebouncing(false);
+    }, delay);
 
-      return result;
-    }) as T,
-    [callback, delay, isDebouncing],
-  );
+    return result;
+  }) as T;
 
   return [debouncedCallback, isDebouncing];
 }

@@ -123,7 +123,7 @@ export class AudioCacheManager {
             throw new Error('No network connection available');
           }
           // Exponential backoff: 1s, 2s
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+          await new Promise<void>(resolve => setTimeout(resolve, 1000 * attempt));
         }
 
         // Download to cache

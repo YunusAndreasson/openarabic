@@ -1,6 +1,6 @@
 import type { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { STRINGS } from '@/constants/strings';
 import type { SessionMetrics } from '@/types/review.types';
@@ -44,6 +44,10 @@ export const useEncouragingMetrics = (
   colors: ThemeColors | undefined,
   dailyStreak: number = 0,
 ): EncouragingMetricsResult | null => {
+  // Capture the "now" timestamp once when the completion view mounts so the
+  // session duration and day-rotation index stay stable across re-renders.
+  const [now] = useState(() => Date.now());
+
   return useMemo(() => {
     if (!sessionMetrics || !colors || sessionMetrics.wordsReviewed === 0) {
       return null;
@@ -65,7 +69,7 @@ export const useEncouragingMetrics = (
     });
 
     // 🔵 BLUE - Session duration
-    const sessionDuration = Date.now() - metrics.startTime;
+    const sessionDuration = now - metrics.startTime;
     if (sessionDuration > 0) {
       trafficLightMetrics.push({
         text: `${formatDuration(sessionDuration)} session`,
@@ -126,7 +130,7 @@ export const useEncouragingMetrics = (
 
     // Contextual educational text based on performance
     // Day-based rotation for variety (same message all day, different tomorrow)
-    const dayIndex = Math.floor(Date.now() / 86400000);
+    const dayIndex = Math.floor(now / 86400000);
 
     let educationalText: string;
 
@@ -151,5 +155,5 @@ export const useEncouragingMetrics = (
     }
 
     return { metrics: trafficLightMetrics, educationalText };
-  }, [sessionMetrics, colors, dailyStreak]);
+  }, [sessionMetrics, colors, dailyStreak, now]);
 };

@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import type { SessionMetrics } from '@/types/review.types';
 
@@ -15,6 +15,8 @@ const MASTERY_THRESHOLD = 5.0;
  * console.log(metrics.wordsKnown, metrics.currentStreak);
  */
 export const useSessionMetrics = () => {
+  // Capture session start once via lazy state init so the ref initializer is pure.
+  const [sessionStart] = useState(() => Date.now());
   const metricsRef = useRef<SessionMetrics>({
     wordsReviewed: 0,
     wordsKnown: 0,
@@ -23,7 +25,7 @@ export const useSessionMetrics = () => {
     longestStreak: 0,
     currentStreak: 0,
     masteredWords: 0,
-    startTime: Date.now(),
+    startTime: sessionStart,
   });
 
   // Track unique words reviewed in this session
@@ -107,7 +109,11 @@ export const useSessionMetrics = () => {
     reviewedWordsSet.current.clear();
   }, []);
 
+  // metricsRef is mutated imperatively in updateMetrics/resetMetrics so consumers
+  // read the latest values when their own state changes trigger re-render.
+  // eslint-disable-next-line react-hooks/refs
   return {
+    // eslint-disable-next-line react-hooks/refs
     metrics: metricsRef.current,
     updateMetrics,
     resetMetrics,

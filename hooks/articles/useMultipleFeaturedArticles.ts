@@ -121,12 +121,12 @@ export function useMultipleFeaturedArticles(
   // This ensures the Set reference only changes when the actual word IDs change
   const stableDueWordSet = useMemo(
     () => new Set(stableDueWordRootIds),
-    [stableDueWordRootIds.join(',')],
+    [stableDueWordRootIds],
   );
 
   const stableDifficultWordSet = useMemo(
     () => new Set(stableDifficultWordRootIds),
-    [stableDifficultWordRootIds.join(',')],
+    [stableDifficultWordRootIds],
   );
 
   // State to store the computed selection (only for refreshes)
@@ -324,13 +324,16 @@ export function useMultipleFeaturedArticles(
     }
   }, [refreshKey, selectedArticles]);
 
-  // Run selection once when all queries are ready (initial load or after refresh)
+  // Run selection once when all queries are ready (initial load or after refresh).
+  // Selection logic depends on async query readiness, so the result must be committed via setState
+  // once data is ready; cannot be derived from props alone.
   useEffect(() => {
     // For initial load (refreshKey === 0)
     if (refreshKey === 0 && !hasInitializedRef.current) {
       if (hasArticles && allQueriesReady) {
         hasInitializedRef.current = true;
         const result = selectionLogic();
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSelectedArticles(result);
       }
       return;
@@ -354,9 +357,13 @@ export function useMultipleFeaturedArticles(
     return cachedFeatured;
   }
 
-  // During refresh, return frozen selection to prevent flickering
-  // Only update once all queries have stabilized (isRefreshing becomes false)
+  // During refresh, return frozen selection to prevent flickering.
+  // Reading frozenSelectionRef during render is intentional: the ref is an imperatively-set snapshot
+  // that we want to use as the UI value while refresh is in flight; lifting to state would defeat the
+  // anti-flicker purpose (re-renders would happen on freeze/unfreeze).
+  // eslint-disable-next-line react-hooks/refs
   if (isRefreshing && frozenSelectionRef.current) {
+    // eslint-disable-next-line react-hooks/refs
     return frozenSelectionRef.current;
   }
 

@@ -65,7 +65,11 @@ const styles = StyleSheet.create({
     zIndex: LAYOUT.Z_INDEX.POPUP,
   },
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   contentContainer: {
     width: '100%',

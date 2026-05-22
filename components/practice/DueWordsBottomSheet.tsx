@@ -1,4 +1,4 @@
-import { forwardRef } from 'react';
+import type { Ref } from 'react';
 
 import { ChartBottomSheet } from './ChartBottomSheet';
 import { DueWordsPrognosisChart } from './charts/DueWordsPrognosisChart';
@@ -9,19 +9,15 @@ import type { StudyWord } from '@/types/vocabulary.types';
 const filterWordsWithRoot = (words: StudyWord[]) =>
   words.filter((word: StudyWord) => word?.root_id != null);
 
-export const DueWordsBottomSheet = forwardRef<GenericBottomSheetHandle>(
-  function DueWordsBottomSheet(_props, ref) {
-    return (
-      <ChartBottomSheet
-        ref={ref}
-        title={STRINGS.DUE_WORDS_FORECAST}
-        subtitle={STRINGS.DUE_WORDS_FORECAST_SUBTITLE}
-        ChartComponent={DueWordsPrognosisChart}
-        filterWords={filterWordsWithRoot}
-        queryLimit={1000}
-      />
-    );
-  },
-);
-
-DueWordsBottomSheet.displayName = 'DueWordsBottomSheet';
+export function DueWordsBottomSheet({ ref }: { ref?: Ref<GenericBottomSheetHandle> }) {
+  return (
+    <ChartBottomSheet
+      ref={ref}
+      title={STRINGS.DUE_WORDS_FORECAST}
+      subtitle={STRINGS.DUE_WORDS_FORECAST_SUBTITLE}
+      ChartComponent={DueWordsPrognosisChart}
+      filterWords={filterWordsWithRoot}
+      queryLimit={1000}
+    />
+  );
+}

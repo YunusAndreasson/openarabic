@@ -1,4 +1,4 @@
-import { forwardRef, useMemo, type ComponentType } from 'react';
+import { useMemo, type ComponentType, type Ref } from 'react';
 
 import { GenericBottomSheet, type GenericBottomSheetHandle } from '@/components/common';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -16,6 +16,8 @@ interface ChartBottomSheetProps {
   filterWords?: (words: StudyWord[]) => StudyWord[];
   /** Optional query limit for fetching words (default: 1000) */
   queryLimit?: number;
+  /** Imperative handle — use a ref to call .present()/.dismiss() */
+  ref?: Ref<GenericBottomSheetHandle>;
 }
 
 /**
@@ -40,31 +42,31 @@ interface ChartBottomSheetProps {
  * />
  * ```
  */
-export const ChartBottomSheet = forwardRef<GenericBottomSheetHandle, ChartBottomSheetProps>(
-  function ChartBottomSheet(
-    { title, subtitle, ChartComponent, filterWords, queryLimit = 1000 },
-    ref,
-  ) {
-    const { user } = useAuth();
+export function ChartBottomSheet({
+  title,
+  subtitle,
+  ChartComponent,
+  filterWords,
+  queryLimit = 1000,
+  ref,
+}: ChartBottomSheetProps) {
+  const { user } = useAuth();
 
-    // Fetch study words for the current user
-    const { allWords } = useFSRSQueries({
-      userId: user?.id,
-      limit: queryLimit,
-    });
+  // Fetch study words for the current user
+  const { allWords } = useFSRSQueries({
+    userId: user?.id,
+    limit: queryLimit,
+  });
 
-    // Apply optional filter transformation
-    const studyWords = useMemo(() => {
-      const words = allWords ?? [];
-      return filterWords ? filterWords(words) : words;
-    }, [allWords, filterWords]);
+  // Apply optional filter transformation
+  const studyWords = useMemo(() => {
+    const words = allWords ?? [];
+    return filterWords ? filterWords(words) : words;
+  }, [allWords, filterWords]);
 
-    return (
-      <GenericBottomSheet ref={ref} title={title} subtitle={subtitle}>
-        <ChartComponent studyWords={studyWords} />
-      </GenericBottomSheet>
-    );
-  },
-);
-
-ChartBottomSheet.displayName = 'ChartBottomSheet';
+  return (
+    <GenericBottomSheet ref={ref} title={title} subtitle={subtitle}>
+      <ChartComponent studyWords={studyWords} />
+    </GenericBottomSheet>
+  );
+}

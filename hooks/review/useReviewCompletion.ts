@@ -44,7 +44,7 @@ export const useReviewCompletion = (
 
     // Invalidate all FSRS word queries (prefix-based — covers all, due, stats, allWithCooldown)
     fsrsQueries.invalidateAll(queryClient, user.id);
-  }, [user?.id, queryClient]);
+  }, [user, queryClient]);
 
   /**
    * Track review completion analytics

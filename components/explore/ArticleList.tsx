@@ -1,5 +1,5 @@
-import { useHeaderHeight } from '@react-navigation/elements';
-import { useRef, useTransition, type ReactElement } from 'react';
+import { useHeaderHeight } from "expo-router/react-navigation";
+import { useState, useTransition, type ReactElement } from 'react';
 import { RefreshControl, ScrollView, type ViewStyle } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
@@ -32,11 +32,12 @@ export function ArticleList({
   const headerHeight = useHeaderHeight();
   const [, startTransition] = useTransition();
 
-  // Use ref to store stable header height and only update when significantly changed
-  const stableHeaderHeightRef = useRef(headerHeight);
-
-  if (Math.abs(stableHeaderHeightRef.current - headerHeight) > 5) {
-    stableHeaderHeightRef.current = headerHeight;
+  // Stable header height — only update when significantly changed to avoid layout jitter.
+  // Uses the "adjust state during render" pattern so the new value is applied in the
+  // same render that observes a >5px delta (React schedules a re-render with the new value).
+  const [stableHeaderHeight, setStableHeaderHeight] = useState(headerHeight);
+  if (Math.abs(stableHeaderHeight - headerHeight) > 5) {
+    setStableHeaderHeight(headerHeight);
   }
 
   const handleRefreshWithTransition = () => {
@@ -60,7 +61,7 @@ export function ArticleList({
           progressViewOffset={
             progressViewOffset !== undefined
               ? progressViewOffset
-              : stableHeaderHeightRef.current + LAYOUT.SPACING.XXLARGE
+              : stableHeaderHeight + LAYOUT.SPACING.XXLARGE
           }
           onRefresh={handleRefreshWithTransition}
         />

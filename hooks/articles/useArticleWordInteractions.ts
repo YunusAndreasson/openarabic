@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { LayoutRectangle } from 'react-native';
 
 import { fsrsQueries } from '@/constants/queries';
@@ -121,7 +121,7 @@ export function useArticleWordInteractions({
    * Compute whether current word details modal word is in study list
    * Checks local optimistic state first, then falls back to query cache
    */
-  const isInStudyList = useMemo(() => {
+  const isInStudyList = ((): boolean => {
     if (!wordDetailsModal.data?.root_id) return false;
 
     // Check local optimistic state first
@@ -132,7 +132,7 @@ export function useArticleWordInteractions({
     if (!user?.id) return false;
     const allWords = queryClient.getQueryData<StudyWord[]>(fsrsQueries.all(user.id).queryKey) ?? [];
     return allWords.some(word => word.root_id === wordDetailsModal.data?.root_id);
-  }, [wordDetailsModal.data?.root_id, localStudyStates, user?.id, queryClient]);
+  })();
 
   /**
    * Close active tooltip when scroll starts

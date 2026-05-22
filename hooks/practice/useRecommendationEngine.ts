@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { STRINGS } from '@/constants/strings';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -165,15 +165,16 @@ export function useRecommendationEngine({
   masteredWords = 0,
   currentStreak,
 }: RecommendationEngineParams): RecommendationData {
+  // Day-based rotation index — captured once per mount to keep recommendation
+  // memos pure across re-renders within the same day.
+  const [dayIndex] = useState(() => Math.floor(Date.now() / 86400000));
+
   return useMemo(() => {
     const totalWords = studyWords.length;
     const nextDue = calculateNextDueDate(studyWords);
     const nextDueText = formatNextDue(nextDue);
     const isLowRetention = currentRetention < LOW_RETENTION_THRESHOLD;
     const hasManyDue = dueWordsCount >= MANY_DUE_THRESHOLD;
-
-    // Day-based rotation for message variety
-    const dayIndex = Math.floor(Date.now() / 86400000);
 
     // Smart insights calculations
     const hardWordsCount = countHardWords(studyWords);

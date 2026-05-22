@@ -1,6 +1,5 @@
-import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { ListSeparator } from '@/components/common';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import type { JSX } from 'react';
 import { memo, useCallback, useEffect, useMemo } from 'react';
@@ -201,8 +200,8 @@ export default function PlaylistScreen(): JSX.Element {
     [editMode, handleDelete, handleArticlePress],
   );
 
-  // Memoize the key extractor to prevent inline function creation
-  const memoizedKeyExtractor = useCallback(keyExtractor, []);
+  // keyExtractor is a module-level constant, already stable.
+  const memoizedKeyExtractor = keyExtractor;
 
   if (shouldShowEmpty) {
     return (
@@ -260,6 +259,6 @@ export default function PlaylistScreen(): JSX.Element {
   );
 }
 
-export const options: NativeStackNavigationOptions = {
+export const options = {
   headerShown: false,
-};
+} as const;

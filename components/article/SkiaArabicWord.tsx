@@ -212,11 +212,19 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
 
 const styles = StyleSheet.create({
   highlightOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   targetWordOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     opacity: 0.2, // Subtle tint for target word indication
   },

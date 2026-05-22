@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import { use } from 'react';
 import { useColorScheme } from 'react-native';
 import { ReactReduxContext } from 'react-redux';
 
@@ -15,7 +15,7 @@ import type { ThemeColors } from '@/types/ui/theme.types';
  */
 export function useColors(): ThemeColors {
   // Check if Redux context is available (handles state migration timing issues)
-  const reduxContext = useContext(ReactReduxContext);
+  const reduxContext = use(ReactReduxContext);
   const systemColorScheme = useColorScheme();
 
   // Always call hooks unconditionally (React hooks rules)

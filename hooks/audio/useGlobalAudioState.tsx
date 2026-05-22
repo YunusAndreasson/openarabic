@@ -1,8 +1,8 @@
 import { useQueryClient } from '@tanstack/react-query';
 import {
   createContext,
+  use,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -159,7 +159,11 @@ function useGlobalAudioStateInternal(): GlobalAudioState {
   // FLICKER FIX: Store last valid article to prevent null flashing during rapid state changes
   const lastValidArticleRef = useRef<MiniPlayerArticle | null>(null);
 
-  // Format current article for mini-player with cache fallbacks (no waiting for fetch)
+  // Format current article for mini-player with cache fallbacks (no waiting for fetch).
+  // Anti-flicker design: ref is read AND latched during this memo so the MiniPlayer doesn't show
+  // a blank state during transitions. Lifting to state would cause extra renders that defeat
+  // the latch (we'd reset to null between renders before the next data arrived).
+  // eslint-disable-next-line react-hooks/refs
   const currentArticle = useMemo(() => {
     if (!currentArticleId) {
       // Only clear if we're truly stopping (not just transitioning states)
@@ -279,12 +283,12 @@ const GlobalAudioStateContext = createContext<GlobalAudioState | null>(null);
 export function GlobalAudioStateProvider({ children }: { children: ReactNode }) {
   const value = useGlobalAudioStateInternal();
   return (
-    <GlobalAudioStateContext.Provider value={value}>{children}</GlobalAudioStateContext.Provider>
+    <GlobalAudioStateContext value={value}>{children}</GlobalAudioStateContext>
   );
 }
 
 export function useGlobalAudioState(): GlobalAudioState {
-  const ctx = useContext(GlobalAudioStateContext);
+  const ctx = use(GlobalAudioStateContext);
   if (!ctx) {
     throw new Error('useGlobalAudioState must be used within GlobalAudioStateProvider');
   }

@@ -4,7 +4,7 @@ import {
   DarkTheme,
   DefaultTheme,
   ThemeProvider as NavigationThemeProvider,
-} from '@react-navigation/native';
+} from "expo-router/react-navigation";
 import * as Sentry from '@sentry/react-native';
 import { QueryClient, onlineManager } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
@@ -187,7 +187,7 @@ function AppContent() {
   const isDark = theme === Theme.Dark;
   const [appReady, setAppReady] = useState(false);
   const appState = useRef(AppState.currentState);
-  const sessionStartTime = useRef<number>(Date.now());
+  const [sessionStartTime] = useState<number>(() => Date.now());
   const backgroundedTime = useRef<number | null>(null);
   const { isLoading: isAuthLoading, session } = useAuth();
   const navigationRef = useNavigationContainerRef();
@@ -303,6 +303,10 @@ function AppContent() {
     // This prevents janky behavior from showing UI before resources are available
     // Once ready, never set back to false (prevents unmounting during refresh)
     if (fontsAreReady && authIsReady && contentIsReady && !appReady) {
+      // Latching transition tied to async resource readiness (fonts/auth/content)
+      // and bundled side effects (splash hide, analytics). Derived state can't
+      // express the one-shot side-effect chain without re-firing.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAppReady(true);
 
       // Hide splash screen when app is ready
@@ -415,7 +419,7 @@ function AppContent() {
       if (isBackgrounding && appReady) {
         // Track app backgrounded
         backgroundedTime.current = Date.now();
-        const sessionDurationMs = Date.now() - sessionStartTime.current;
+        const sessionDurationMs = Date.now() - sessionStartTime;
         analytics.track(ANALYTICS_EVENTS.APP_BACKGROUNDED, {
           session_duration_ms: sessionDurationMs,
         });
@@ -534,11 +538,7 @@ function AppContent() {
             {/* Audio overlays are isolated to prevent root re-renders on audio ticks */}
             <AudioOverlays />
 
-            <StatusBar
-              style={isDark ? 'light' : 'dark'}
-              backgroundColor={colors.background}
-              translucent={false}
-            />
+            <StatusBar style={isDark ? 'light' : 'dark'} />
           </GlobalAudioStateProvider>
         </FSRSDataProvider>
       </View>
@@ -590,6 +590,8 @@ const AudioOverlays = memo(function AudioOverlays() {
       <GlobalMiniPlayer />
 
       {/* SleepTimer rendered last to ensure it overlays everything */}
+      {/* SleepTimer props read from context; lint mis-flags as ref-during-render. */}
+      {/* eslint-disable react-hooks/refs */}
       <SleepTimer
         ref={globalAudioState.sleepTimerRef}
         isTimerActive={globalAudioState.isTimerActive}
@@ -597,6 +599,7 @@ const AudioOverlays = memo(function AudioOverlays() {
         onTimerSet={handleSleepTimerSet}
         onTimerCancel={globalAudioState.onSleepTimerCancel}
       />
+      {/* eslint-enable react-hooks/refs */}
     </AudioErrorBoundary>
   );
 });

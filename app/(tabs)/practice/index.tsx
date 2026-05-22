@@ -1,7 +1,5 @@
-import { useFocusEffect } from '@react-navigation/native';
-import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useMemo, useRef } from 'react';
 import { InteractionManager, StyleSheet } from 'react-native';
@@ -77,7 +75,7 @@ export default function PracticeScreen(): JSX.Element {
           prefetchVocabularyData();
         });
       }
-    }, [user?.id, prefetchVocabularyData, queryClient]),
+    }, [user, prefetchVocabularyData, queryClient]),
   );
 
   // Use the FSRS queries hook for data fetching
@@ -214,9 +212,9 @@ export default function PracticeScreen(): JSX.Element {
   );
 }
 
-export const options: NativeStackNavigationOptions = {
+export const options = {
   headerShown: false,
-};
+} as const;
 
 const styles = StyleSheet.create({
   container: LAYOUT.COMMON_STYLES.CONTAINER,

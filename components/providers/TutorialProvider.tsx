@@ -3,7 +3,7 @@
  * Provides tutorial state management to entire app via Context
  */
 
-import { createContext, useContext, type ReactNode } from 'react';
+import { createContext, use, type ReactNode } from 'react';
 
 import type { TutorialId } from '@/constants/tutorials';
 import { useTutorialManager } from '@/hooks/tutorials/useTutorialManager';
@@ -38,7 +38,7 @@ TutorialProvider.displayName = 'TutorialProvider';
  * Throws error if used outside TutorialProvider
  */
 export function useTutorialContext(): TutorialContextValue {
-  const context = useContext(TutorialContext);
+  const context = use(TutorialContext);
 
   if (!context) {
     throw new Error('useTutorialContext must be used within TutorialProvider');

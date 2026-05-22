@@ -23,7 +23,7 @@
     "!**/admin-dashboard/**"
   ],
   "ignore": ["plugins/**", "scripts/**", "metro.config.js"],
-  "ignoreDependencies": ["expo-constants", "babel-preset-expo", "babel-jest"],
+  "ignoreDependencies": ["babel-preset-expo", "babel-jest"],
   "ignoreExportsUsedInFile": false,
   "includeEntryExports": false,
   "ignoreBinaries": ["supabase", "gh", "list"],

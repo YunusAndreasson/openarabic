@@ -118,10 +118,10 @@ export const usePressAnimation = (options: PressAnimationOptions = {}): PressAni
   const handlers = useMemo(
     () => ({
       handlePressIn: () => {
-        pressed.value = withSpring(1, config.springConfig);
+        pressed.set(withSpring(1, config.springConfig));
       },
       handlePressOut: () => {
-        pressed.value = withSpring(0, config.springConfig);
+        pressed.set(withSpring(0, config.springConfig));
       },
     }),
     [pressed, config.springConfig],

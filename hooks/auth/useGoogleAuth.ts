@@ -134,7 +134,7 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
             }
 
             // Wait before retry (exponential backoff)
-            await new Promise(resolve => setTimeout(resolve, 1000 * signInAttempt));
+            await new Promise<void>(resolve => setTimeout(resolve, 1000 * signInAttempt));
 
             Sentry.addBreadcrumb({
               category: 'auth',

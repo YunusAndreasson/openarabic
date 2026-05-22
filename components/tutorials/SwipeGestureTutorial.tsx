@@ -5,7 +5,7 @@
  * Contextual help: Single step explaining specific action (reuses same step components)
  */
 
-import { useCallback, useEffect, useState, type ComponentType } from 'react';
+import { useCallback, useState, type ComponentType } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -79,11 +79,15 @@ export function SwipeGestureTutorial({
     }
   }, [isLastStep, onDismiss]);
 
-  useEffect(() => {
+  // Reset to first step when the tutorial transitions from hidden→visible (full mode only).
+  // Uses the "store previous prop in state" pattern instead of an effect.
+  const [prevVisible, setPrevVisible] = useState(visible);
+  if (visible !== prevVisible) {
+    setPrevVisible(visible);
     if (visible && !contextualHelp) {
       setCurrentStep(SwipeTutorialStep.INTRO);
     }
-  }, [visible, contextualHelp]);
+  }
 
   // Contextual help mode - single step (no title)
   if (contextualHelp) {

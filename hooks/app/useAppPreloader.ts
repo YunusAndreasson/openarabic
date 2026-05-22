@@ -42,6 +42,100 @@ export const useAppPreloader = (): AppPreloaderResult => {
   const [preloadProgress, setPreloadProgress] = useState(0);
   const preloadLockRef = useRef(false);
 
+  // Pre-select featured articles to prevent glitching when library loads
+  const prefetchFeaturedArticles = useCallback(async () => {
+    if (!user?.id) return false;
+
+    // CHECK: If featured articles already cached for this session, don't recalculate
+    // APP_SESSION_ID ensures fresh selection on each app launch
+    const existingFeatured = queryClient.getQueryData([
+      'featured-articles',
+      'global',
+      0,
+      APP_SESSION_ID,
+    ]);
+    if (existingFeatured) {
+      return true; // Already have featured articles for this session, use cached selection
+    }
+
+    try {
+      // Use ensureQueryData to prioritize cache for immutable articles
+      const allArticles = await queryClient.ensureQueryData(articleQueries.all());
+
+      if (!allArticles || allArticles.length === 0) return false;
+
+      // Get user's study words to determine selection strategy
+      // Use ensureQueryData to reuse cached data from useAppBadge/preloader
+      const allStudyWords = await queryClient.ensureQueryData(
+        fsrsQueries.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
+      );
+
+      const hasAnyStudyWords = allStudyWords.length > 0;
+
+      // Get due words for intelligent selection (already cached from preloader)
+      const dueWords = await queryClient.ensureQueryData(fsrsQueries.due(user.id));
+
+      const dueWordRootIds = new Set(dueWords.map(word => word.root_id));
+
+      // Perform intelligent featured article selection
+      const performIntelligentSelection = () => {
+        if (dueWordRootIds.size > 0) {
+          const dueWordArticles = allArticles.filter(article =>
+            article.article_sentences.some(sentence =>
+              sentence.sentence_words?.some(word => dueWordRootIds.has(word.root_id)),
+            ),
+          );
+
+          if (dueWordArticles.length > 0) {
+            const selected = getRandomItems(dueWordArticles, MAX_FEATURED_ARTICLES);
+            return {
+              articles: selected,
+              reason: STRINGS.SELECTED_TO_HELP_PRACTICE_DUE,
+              type: 'due-words' as const,
+              dueWordRootIds,
+            };
+          }
+        }
+
+        // Fallback to beginner articles for new users
+        if (!user?.id || !hasAnyStudyWords) {
+          const beginnerArticles = getBeginnerArticles(allArticles);
+          if (beginnerArticles.length > 0) {
+            const selected = getRandomItems(beginnerArticles, MAX_FEATURED_ARTICLES);
+            return {
+              articles: selected,
+              reason: STRINGS.RECOMMENDED,
+              type: 'beginner' as const,
+              dueWordRootIds: new Set(),
+            };
+          }
+        }
+
+        // Final fallback: random selection
+        return {
+          articles: getRandomItems(allArticles, MAX_FEATURED_ARTICLES),
+          reason: STRINGS.RECOMMENDED,
+          type: 'random' as const,
+          dueWordRootIds: new Set(),
+        };
+      };
+
+      const featuredSelection = performIntelligentSelection();
+
+      // Cache the featured articles for immediate use
+      // Include APP_SESSION_ID to ensure fresh articles on each app launch
+      queryClient.setQueryData(
+        ['featured-articles', 'global', 0, APP_SESSION_ID],
+        featuredSelection,
+      );
+
+      return true;
+    } catch {
+      // Featured articles prefetch failed - silently continue with cached or default content
+      return false;
+    }
+  }, [user, queryClient]);
+
   // Progressive loading: Load critical data first, then user-specific data
   const preloadCriticalData = useCallback(async () => {
     // Lock is handled by preloadAppData, no need to check here
@@ -261,101 +355,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
       handleError(toError(error), { showToast: false });
       return false;
     }
-  }, [queryClient, user?.id]);
-
-  // Pre-select featured articles to prevent glitching when library loads
-  const prefetchFeaturedArticles = useCallback(async () => {
-    if (!user?.id) return false;
-
-    // CHECK: If featured articles already cached for this session, don't recalculate
-    // APP_SESSION_ID ensures fresh selection on each app launch
-    const existingFeatured = queryClient.getQueryData([
-      'featured-articles',
-      'global',
-      0,
-      APP_SESSION_ID,
-    ]);
-    if (existingFeatured) {
-      return true; // Already have featured articles for this session, use cached selection
-    }
-
-    try {
-      // Use ensureQueryData to prioritize cache for immutable articles
-      const allArticles = await queryClient.ensureQueryData(articleQueries.all());
-
-      if (!allArticles || allArticles.length === 0) return false;
-
-      // Get user's study words to determine selection strategy
-      // Use ensureQueryData to reuse cached data from useAppBadge/preloader
-      const allStudyWords = await queryClient.ensureQueryData(
-        fsrsQueries.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
-      );
-
-      const hasAnyStudyWords = allStudyWords.length > 0;
-
-      // Get due words for intelligent selection (already cached from preloader)
-      const dueWords = await queryClient.ensureQueryData(fsrsQueries.due(user.id));
-
-      const dueWordRootIds = new Set(dueWords.map(word => word.root_id));
-
-      // Perform intelligent featured article selection
-      const performIntelligentSelection = () => {
-        if (dueWordRootIds.size > 0) {
-          const dueWordArticles = allArticles.filter(article =>
-            article.article_sentences.some(sentence =>
-              sentence.sentence_words?.some(word => dueWordRootIds.has(word.root_id)),
-            ),
-          );
-
-          if (dueWordArticles.length > 0) {
-            const selected = getRandomItems(dueWordArticles, MAX_FEATURED_ARTICLES);
-            return {
-              articles: selected,
-              reason: STRINGS.SELECTED_TO_HELP_PRACTICE_DUE,
-              type: 'due-words' as const,
-              dueWordRootIds,
-            };
-          }
-        }
-
-        // Fallback to beginner articles for new users
-        if (!user?.id || !hasAnyStudyWords) {
-          const beginnerArticles = getBeginnerArticles(allArticles);
-          if (beginnerArticles.length > 0) {
-            const selected = getRandomItems(beginnerArticles, MAX_FEATURED_ARTICLES);
-            return {
-              articles: selected,
-              reason: STRINGS.RECOMMENDED,
-              type: 'beginner' as const,
-              dueWordRootIds: new Set(),
-            };
-          }
-        }
-
-        // Final fallback: random selection
-        return {
-          articles: getRandomItems(allArticles, MAX_FEATURED_ARTICLES),
-          reason: STRINGS.RECOMMENDED,
-          type: 'random' as const,
-          dueWordRootIds: new Set(),
-        };
-      };
-
-      const featuredSelection = performIntelligentSelection();
-
-      // Cache the featured articles for immediate use
-      // Include APP_SESSION_ID to ensure fresh articles on each app launch
-      queryClient.setQueryData(
-        ['featured-articles', 'global', 0, APP_SESSION_ID],
-        featuredSelection,
-      );
-
-      return true;
-    } catch {
-      // Featured articles prefetch failed - silently continue with cached or default content
-      return false;
-    }
-  }, [user?.id, queryClient]);
+  }, [queryClient, user]);
 
   return {
     isPreloading,

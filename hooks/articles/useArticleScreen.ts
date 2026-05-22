@@ -78,7 +78,7 @@ export function useArticleScreen({
   }, [article]);
 
   // Current sentence index for reading progress
-  const [currentSentenceIndexForProgress, setCurrentSentenceIndexForProgress] = useState(0);
+  const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
 
   // Article mutations - using focused hooks directly
   const { handleToggleReadingList } = useReadingListMutations(refetchReadingListStatus);
@@ -143,13 +143,12 @@ export function useArticleScreen({
     useReadingProgress({
       articleId: articleId ?? (0 as ArticleId),
       totalSentences: sortedSentences?.length ?? 0,
-      currentSentenceIndex: currentSentenceIndexForProgress,
+      currentSentenceIndex,
       isActive,
     });
 
   // Track current sentence for reading progress
   const scrollViewRef = useRef<FlashListRef<Tables<'article_sentences'>> | null>(null);
-  const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
   // High water mark: the furthest sentence the user has reached (never decreases)
   const highWaterMarkRef = useRef(0);
 
@@ -159,10 +158,12 @@ export function useArticleScreen({
   // Track current position for UI, but debounce DB updates
   const pendingProgressUpdateRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Reset scroll state when article changes
+  // Reset scroll state when article changes. Resetting refs + tied UI state together when
+  // the articleId key changes is a legitimate "reset on prop change" use case.
   useEffect(() => {
     hasScrolledToPositionRef.current = false;
     highWaterMarkRef.current = 0;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsFlashListReady(false);
   }, [articleId]);
 
@@ -241,11 +242,6 @@ export function useArticleScreen({
   const handleScrollEnd = useCallback(() => {
     // No-op: viewable items callback handles all position tracking
   }, []);
-
-  // Sync sentence index (for any other features that might use it)
-  useEffect(() => {
-    setCurrentSentenceIndexForProgress(currentSentenceIndex);
-  }, [currentSentenceIndex]);
 
   // Scroll to position effect - triggers when all conditions are met
   useEffect(() => {

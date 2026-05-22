@@ -66,6 +66,10 @@ const ArticleSentenceInternal = function ArticleSentence({
   // Memoize rendered words to prevent unnecessary recreations
   // Use stable ref Map to avoid creating new refs on every render
   const renderedWords = useMemo(() => {
+    // The wordRefs Map is a stable container for child refs keyed by word identity:
+    // entries are created on first encounter and reused across renders, so reads here
+    // never affect render output.
+    /* eslint-disable react-hooks/refs */
     return words.map((word, index) => {
       const wordId = typeof word.id === 'string' ? Number(word.id) : word.id;
       const refKey = `word-${wordId}-${word.position}-${sentence.id}`;
@@ -97,6 +101,7 @@ const ArticleSentenceInternal = function ArticleSentence({
         />
       );
     });
+    /* eslint-enable react-hooks/refs */
   }, [words, onWordPress, sentence.id, showTutorialCard, activeWordIdSV, highlightRootId]);
 
   return (

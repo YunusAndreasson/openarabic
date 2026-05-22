@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { ViewStyle } from 'react-native';
 import type { SharedValue, WithTimingConfig } from 'react-native-reanimated';
 import {
@@ -131,22 +131,23 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
     timingConfig: customTimingConfig,
   } = options;
 
-  // Validate parameters - memoized to prevent recalculation
-  const duration = useRef(Math.max(MIN_OPACITY_DURATION, rawDuration)).current;
-  const delay = useRef(Math.max(0, rawDelay)).current;
-  const validInitialOpacity = useRef(Math.max(0, Math.min(1, initialOpacity))).current;
+  // Validate parameters - locked in on first render to prevent recalculation
+  const [duration] = useState(() => Math.max(MIN_OPACITY_DURATION, rawDuration));
+  const [delay] = useState(() => Math.max(0, rawDelay));
+  const [validInitialOpacity] = useState(() => Math.max(0, Math.min(1, initialOpacity)));
 
   // Create optimized timing config
-  const timingConfig = useRef<WithTimingConfig>(
-    customTimingConfig ?? {
-      duration,
-      easing: TIMING_CONFIG.MEDIUM.easing,
-    },
-  ).current;
+  const [timingConfig] = useState<WithTimingConfig>(
+    () =>
+      customTimingConfig ?? {
+        duration,
+        easing: TIMING_CONFIG.MEDIUM.easing,
+      },
+  );
 
   // Create optimized entering and exiting animations using Reanimated 3 built-ins
-  const entering = useRef(FadeIn.duration(duration).delay(delay)).current;
-  const exiting = useRef(FadeOut.duration(duration)).current;
+  const [entering] = useState(() => FadeIn.duration(duration).delay(delay));
+  const [exiting] = useState(() => FadeOut.duration(duration));
 
   // Track if component is mounted to prevent callbacks after unmount
   const isMounted = useSharedValue(true);

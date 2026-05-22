@@ -1,4 +1,3 @@
-import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
@@ -68,7 +67,9 @@ export default function ExploreScreen(): JSX.Element {
   const { data: categoriesData = [] } = useQuery(articleQueries.categories());
   // Ref for stable callback access to latest categoriesData
   const categoriesDataRef = useRef(categoriesData);
-  categoriesDataRef.current = categoriesData;
+  useEffect(() => {
+    categoriesDataRef.current = categoriesData;
+  });
 
   const { data: articlesData = [] } = useQuery({
     ...articleQueries.all(),
@@ -96,7 +97,7 @@ export default function ExploreScreen(): JSX.Element {
     [categoriesData, categoryCounts],
   );
 
-  const handleRefresh = useCallback(async () => {
+  const handleRefresh = async () => {
     if (isRefreshing) return;
 
     setIsRefreshing(true);
@@ -120,7 +121,7 @@ export default function ExploreScreen(): JSX.Element {
     } finally {
       setIsRefreshing(false);
     }
-  }, [isRefreshing, queryClient, user?.id]);
+  };
 
   const handleSelectFilter = useCallback((id: number, _name?: string, filterType?: string) => {
     if (filterType === 'category') {
@@ -181,6 +182,6 @@ export default function ExploreScreen(): JSX.Element {
 }
 
 // Let parent _layout.tsx stack handle header; no local options needed.
-export const options: NativeStackNavigationOptions = {
+export const options = {
   headerShown: false,
-};
+} as const;

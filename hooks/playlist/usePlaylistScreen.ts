@@ -1,4 +1,4 @@
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect } from "expo-router/react-navigation";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
@@ -99,11 +99,9 @@ export const usePlaylistScreen = () => {
     );
   }, [readingList, customOrder]);
 
-  const isDataCached = useMemo(() => {
-    return Boolean(
-      user?.id && queryClient.getQueryData(readingProgressQueries.readingList(user.id).queryKey),
-    );
-  }, [user?.id, queryClient]);
+  const isDataCached = Boolean(
+    user?.id && queryClient.getQueryData(readingProgressQueries.readingList(user.id).queryKey),
+  );
 
   const enhancedTracksQuery = useQuery(
     user?.id
@@ -242,30 +240,27 @@ export const usePlaylistScreen = () => {
 
   // Sleep timer handlers are handled by useGlobalAudioState
 
-  const handleDelete = useCallback(
-    async (articleId: ArticleId) => {
-      if (!user?.id) return;
-      try {
-        selectionFeedback();
-        await bookmarkService.removeFromReadingList(user.id, articleId);
-        dispatch(removeFromCustomOrder(articleId));
+  const handleDelete = async (articleId: ArticleId) => {
+    if (!user?.id) return;
+    try {
+      selectionFeedback();
+      await bookmarkService.removeFromReadingList(user.id, articleId);
+      dispatch(removeFromCustomOrder(articleId));
 
-        // Immediately update the specific article's reading list status
-        queryClient.setQueryData(['readingList', user.id, articleId], false);
+      // Immediately update the specific article's reading list status
+      queryClient.setQueryData(['readingList', user.id, articleId], false);
 
-        // Then invalidate related queries to ensure consistency
-        queryClient.invalidateQueries({
-          queryKey: readingProgressQueries.readingList(user.id).queryKey,
-        });
-        queryClient.invalidateQueries({
-          queryKey: audioQueries.tracks(user.id, audioPreference).queryKey,
-        });
-      } catch (error) {
-        handleError(error as Error);
-      }
-    },
-    [user?.id, dispatch, queryClient, audioPreference],
-  );
+      // Then invalidate related queries to ensure consistency
+      queryClient.invalidateQueries({
+        queryKey: readingProgressQueries.readingList(user.id).queryKey,
+      });
+      queryClient.invalidateQueries({
+        queryKey: audioQueries.tracks(user.id, audioPreference).queryKey,
+      });
+    } catch (error) {
+      handleError(error as Error);
+    }
+  };
 
   const handleArticlePlay = useCallback(
     async (articleId: ArticleId) => {

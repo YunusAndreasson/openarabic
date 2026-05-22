@@ -160,7 +160,10 @@ export function useFSRS({
       // Reset spacing queue
       spacingQueueRef.current = createSpacingState();
 
-      // Set all state in a predictable order
+      // Set all state in a predictable order. setState is intentional here —
+      // queue initialization is gated by signature change so it only fires when
+      // dueWords actually shifts, not on every render.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setProgress(0);
       setIsComplete(false);
       stateTrackingRef.current.completionTriggered = false;

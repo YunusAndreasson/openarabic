@@ -1,4 +1,4 @@
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect } from "expo-router/react-navigation";
 import { FlashList } from '@shopify/flash-list';
 import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -89,21 +89,18 @@ export default function DictionaryScreen(): JSX.Element {
     setTimeout(() => setSelectedWord(null), TIMING_CONSTANTS.MEDIUM_DELAY);
   }, []);
 
-  const handleDeleteWord = useCallback(
-    async (rootId: RootId) => {
-      if (!user?.id) return;
-      try {
-        await toggleRootMutation.mutateAsync({ userId: user.id, rootId });
-      } catch (error) {
-        await handleError(error instanceof Error ? error : String(error), {
-          showToast: true,
-          toastMessage: STRINGS.FAILED_TO_DELETE_WORD,
-          captureSentry: !__DEV__,
-        });
-      }
-    },
-    [user?.id, toggleRootMutation],
-  );
+  const handleDeleteWord = async (rootId: RootId) => {
+    if (!user?.id) return;
+    try {
+      await toggleRootMutation.mutateAsync({ userId: user.id, rootId });
+    } catch (error) {
+      await handleError(error instanceof Error ? error : String(error), {
+        showToast: true,
+        toastMessage: STRINGS.FAILED_TO_DELETE_WORD,
+        captureSentry: !__DEV__,
+      });
+    }
+  };
 
   const renderItem = useCallback(
     (props: { item: StudyWord; index: number }) => {

@@ -200,6 +200,8 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
 
   return (
     <View style={FLEX_ONE_STYLE}>
+      {/* scrollViewRef is forwarded to ArticleContent (which attaches it imperatively); lint sees it as ref-read-in-render. */}
+      {/* eslint-disable-next-line react-hooks/refs */}
       {articleContentProps ? <ArticleContent {...articleContentProps} /> : null}
 
       <WordTooltip {...tooltipProps} />

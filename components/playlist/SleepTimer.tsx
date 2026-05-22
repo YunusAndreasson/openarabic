@@ -1,5 +1,6 @@
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import type { Ref } from 'react';
+import { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -19,6 +20,7 @@ export interface SleepTimerProps {
   isTimerActive?: boolean;
   /** Unix timestamp (ms) when timer expires */
   endTime?: number;
+  ref?: Ref<SleepTimerHandle>;
 }
 
 export interface SleepTimerHandle {
@@ -38,10 +40,13 @@ function getRemainingSeconds(endTime: number): number {
   return Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
 }
 
-export const SleepTimer = forwardRef<SleepTimerHandle, SleepTimerProps>(function SleepTimer(
-  { onTimerSet, onTimerCancel, isTimerActive = false, endTime = 0 },
+export function SleepTimer({
+  onTimerSet,
+  onTimerCancel,
+  isTimerActive = false,
+  endTime = 0,
   ref,
-) {
+}: SleepTimerProps) {
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -62,12 +67,16 @@ export const SleepTimer = forwardRef<SleepTimerHandle, SleepTimerProps>(function
   const [displaySeconds, setDisplaySeconds] = useState(() => getRemainingSeconds(endTime));
 
   useEffect(() => {
+    // Resync immediately on endTime/active change so the displayed clock is not
+    // stale until the next interval tick. This is a bounded one-shot setState
+    // (no loop), not a cascade.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDisplaySeconds(getRemainingSeconds(endTime));
+
     if (!isTimerActive || !endTime || !isPresented) {
-      setDisplaySeconds(getRemainingSeconds(endTime));
       return;
     }
 
-    setDisplaySeconds(getRemainingSeconds(endTime));
     const interval = setInterval(() => {
       setDisplaySeconds(getRemainingSeconds(endTime));
     }, COUNTDOWN_INTERVAL);
@@ -154,9 +163,7 @@ export const SleepTimer = forwardRef<SleepTimerHandle, SleepTimerProps>(function
       </BottomSheetView>
     </BottomSheetModal>
   );
-});
-
-SleepTimer.displayName = 'SleepTimer';
+}
 
 const styles = StyleSheet.create({
   modalContainer: {

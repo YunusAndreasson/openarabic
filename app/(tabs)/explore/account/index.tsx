@@ -177,7 +177,7 @@ const AccountScreen: FC = () => {
         });
         return;
       }
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise<void>(resolve => setTimeout(resolve, 100));
       await StoreReview.requestReview();
       lightFeedback();
     } catch (error) {

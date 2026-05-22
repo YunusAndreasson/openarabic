@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, type ReactNode } from 'react';
+import { createContext, use, useMemo, type ReactNode } from 'react';
 
 import type { StudyWord } from '@/types/vocabulary.types';
 
@@ -39,7 +39,7 @@ export function FSRSDataProvider({ children, userId }: FSRSDataProviderProps) {
 }
 
 export function useFSRSData(): FSRSDataContextValue {
-  const context = useContext(FSRSDataContext);
+  const context = use(FSRSDataContext);
   if (!context) {
     throw new Error('useFSRSData must be used within an FSRSDataProvider');
   }

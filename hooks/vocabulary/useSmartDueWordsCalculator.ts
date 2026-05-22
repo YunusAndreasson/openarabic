@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useEffectEvent, useRef } from 'react';
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
 import type { AppStateStatus } from 'react-native';
 import { AppState } from 'react-native';
 
@@ -26,6 +26,7 @@ export function useSmartDueWordsCalculator(options: UseSmartDueWordsCalculatorOp
   const { user, isAuthenticated } = useAuth();
   const appStateRef = useRef(AppState.currentState);
   const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const lastRefreshRef = useRef<number>(0);
   const MIN_REFRESH_INTERVAL = CACHE_TIMES.CRITICAL.staleTime; // 30 seconds minimum between refreshes
 
@@ -47,6 +48,7 @@ export function useSmartDueWordsCalculator(options: UseSmartDueWordsCalculatorOp
       if (refreshTimeoutRef.current) {
         clearTimeout(refreshTimeoutRef.current);
         refreshTimeoutRef.current = null;
+        setIsRefreshing(false);
       }
 
       lastRefreshRef.current = now;
@@ -87,7 +89,7 @@ export function useSmartDueWordsCalculator(options: UseSmartDueWordsCalculatorOp
         analyticsEventName: 'Due_Words_Refresh_Error',
       });
     }
-  }, [user?.id, isAuthenticated, queryClient]);
+  }, [user, isAuthenticated, queryClient]);
 
   /**
    * Handle app state changes — useEffectEvent keeps the handler stable so the
@@ -103,7 +105,10 @@ export function useSmartDueWordsCalculator(options: UseSmartDueWordsCalculatorOp
     if (isActivating && user?.id && isAuthenticated) {
       if (refreshDelay > 0) {
         // Delay refresh to avoid excessive API calls during rapid state changes
+        setIsRefreshing(true);
         refreshTimeoutRef.current = setTimeout(() => {
+          refreshTimeoutRef.current = null;
+          setIsRefreshing(false);
           refreshDueWordsData();
         }, refreshDelay);
       } else {
@@ -115,6 +120,7 @@ export function useSmartDueWordsCalculator(options: UseSmartDueWordsCalculatorOp
     if (nextAppState !== 'active' && refreshTimeoutRef.current) {
       clearTimeout(refreshTimeoutRef.current);
       refreshTimeoutRef.current = null;
+      setIsRefreshing(false);
     }
   });
 
@@ -138,6 +144,6 @@ export function useSmartDueWordsCalculator(options: UseSmartDueWordsCalculatorOp
 
   return {
     forceRefresh,
-    isRefreshing: refreshTimeoutRef.current !== null,
+    isRefreshing,
   };
 }

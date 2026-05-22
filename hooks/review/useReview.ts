@@ -69,7 +69,9 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
   // Create stable refs for audio player methods to avoid dependency issues
   const audioPlayerRef = useRef(audioPlayer);
-  audioPlayerRef.current = audioPlayer;
+  useEffect(() => {
+    audioPlayerRef.current = audioPlayer;
+  });
 
   // Use optimized opacity animation from hooks/animations
   // animatedStyle uses Reanimated 4 inline shared values (no useAnimatedStyle wrapper)
@@ -93,10 +95,13 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   const [currentMeaning, setCurrentMeaning] = useState('');
   // Ensure UI re-renders when updating state changes so gestures re-enable
   const [isUpdatingUI, setIsUpdatingUI] = useState(false);
+  // Progress bar high-water mark, surfaced as state so consumers re-render.
+  const [maxProgress, setMaxProgress] = useState(0);
 
-  // Consolidated time tracking refs
+  // Consolidated time tracking refs — initial timestamp captured once via lazy state.
+  const [mountTime] = useState(() => Date.now());
   const timeRefs = useRef<ReviewTimeRefs>({
-    lastProgressUpdate: Date.now(),
+    lastProgressUpdate: mountTime,
     lastProcessedWordId: null,
   });
 
@@ -132,6 +137,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     stopAudioSafely();
 
     stateRefs.current.maxProgress = 100;
+    setMaxProgress(100);
   }, [stopAudioSafely]);
 
   const { currentWord, isComplete, progress, updateWord, invalidateQueries, wordQueue, isLoading } =
@@ -166,12 +172,15 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     currentWordKeyRef.current = currentWordKey;
   }, [currentWord, currentWordKey]);
 
-  // Ensure translation is hidden when advancing to a new word
+  // Ensure translation is hidden when advancing to a new word.
+  // Synchronises local UI flags with currentWordKey transitions; setState here is
+  // intentional — the alternative (derived state) loses the timer-clearing side effect.
   useEffect(() => {
     // Clear any pending translation timers
     clearTimer('meaningTimeout');
 
     // Immediately hide translation and reset state
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setShowTranslation(false);
     setCurrentMeaning('');
     // Reset stale completion flag if a new word/session appears
@@ -398,6 +407,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       const safeProgress = Math.min(100, Math.max(0, progress));
       if (safeProgress > stateRefs.current.maxProgress) {
         stateRefs.current.maxProgress = safeProgress;
+        setMaxProgress(safeProgress);
         timeRefs.current.lastProgressUpdate = now;
         // UI progress updated
       }
@@ -405,6 +415,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       // Only update if not already at 100% to prevent cycles
       if (isComplete && stateRefs.current.maxProgress < 100) {
         stateRefs.current.maxProgress = 100;
+        setMaxProgress(100);
         // Use a ref to track if we've already updated this cycle
         if (!stateRefs.current.progressUpdatedForCompletion) {
           stateRefs.current.progressUpdatedForCompletion = true;
@@ -418,6 +429,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     // Skip if we've already updated
     if (isComplete && !stateRefs.current.progressUpdatedForCompletion) {
       stateRefs.current.maxProgress = 100;
+      setMaxProgress(100);
       stateRefs.current.progressUpdatedForCompletion = true;
     }
 
@@ -545,7 +557,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     }
   }, [currentWord, playAudio]);
 
-  const handleClose = useCallback(() => {
+  const handleClose = () => {
     const mounted = { current: true };
 
     lightFeedback();
@@ -591,7 +603,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       },
       100,
     );
-  }, [invalidateQueries, user?.id, queryClient, onClose, fromRemember, setTimer, stopAudioSafely]);
+  };
 
   // Unmount-only cleanup: tracks abandonment, aborts in-flight work, resets refs.
   // Deps must NOT include wordQueue.length — useFSRS.updateWord shrinks the queue
@@ -656,7 +668,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     isLoading,
     wordQueue,
     progress,
-    maxProgress: stateRefs.current.maxProgress,
+    maxProgress,
     currentWordKey,
     handleSwipeLeft,
     handleSwipeRight,

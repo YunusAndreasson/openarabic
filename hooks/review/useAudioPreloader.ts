@@ -110,7 +110,7 @@ export const useAudioPreloader = (
 
         // Small delay between batches to prevent resource exhaustion
         if (i + BATCH_SIZE < audioUrls.length) {
-          await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
+          await new Promise<void>(resolve => setTimeout(resolve, BATCH_DELAY));
         }
       }
 
@@ -146,6 +146,8 @@ export const useAudioPreloader = (
     if (isSessionComplete) {
       hasPreloadedRef.current = false;
       lastPreloadedWordsRef.current = '';
+      // Resets local completion flag so the next session can re-arm preloading.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsComplete(false);
       // Free native memory used by preloaded audio
       try {

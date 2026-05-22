@@ -1,6 +1,6 @@
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
-import type { ReactNode } from 'react';
-import { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
+import type { ReactNode, Ref } from 'react';
+import { useImperativeHandle, useMemo, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
@@ -25,6 +25,8 @@ export interface GenericBottomSheetProps {
   subtitle?: string;
   /** Bottom sheet content */
   children: ReactNode;
+  /** Imperative handle — use a ref to call .present()/.dismiss() */
+  ref?: Ref<GenericBottomSheetHandle>;
 }
 
 /**
@@ -53,49 +55,51 @@ export interface GenericBottomSheetHandle {
  * </GenericBottomSheet>
  * ```
  */
-export const GenericBottomSheet = forwardRef<GenericBottomSheetHandle, GenericBottomSheetProps>(
-  function GenericBottomSheet({ onClose, title, subtitle, children }, ref) {
-    const colors = useColors();
-    const bottomSheetRef = useRef<BottomSheetModal>(null);
+export function GenericBottomSheet({
+  onClose,
+  title,
+  subtitle,
+  children,
+  ref,
+}: GenericBottomSheetProps) {
+  const colors = useColors();
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
 
-    useImperativeHandle(
-      ref,
-      () => ({
-        present: () => bottomSheetRef.current?.present(),
-        dismiss: () => bottomSheetRef.current?.dismiss(),
-      }),
-      [],
-    );
+  useImperativeHandle(
+    ref,
+    () => ({
+      present: () => bottomSheetRef.current?.present(),
+      dismiss: () => bottomSheetRef.current?.dismiss(),
+    }),
+    [],
+  );
 
-    const dynamicStyles = useMemo(
-      () => ({
-        bottomSheet: [styles.bottomSheet, { backgroundColor: colors.elevation1 }],
-      }),
-      [colors.elevation1],
-    );
+  const dynamicStyles = useMemo(
+    () => ({
+      bottomSheet: [styles.bottomSheet, { backgroundColor: colors.elevation1 }],
+    }),
+    [colors.elevation1],
+  );
 
-    return (
-      <BottomSheetModal
-        ref={bottomSheetRef}
-        onDismiss={onClose}
-        containerStyle={styles.modalContainer}
-        backgroundStyle={dynamicStyles.bottomSheet}
-        handleComponent={BrandedBottomSheetHandle}
-        backdropComponent={BottomSheetBackdrop}
-        {...BOTTOM_SHEET_PROPS}
-      >
-        <BottomSheetView style={styles.container}>
-          <BottomSheetErrorBoundary sheetName={title ?? 'Generic'}>
-            {title ? <BottomSheetHeader title={title} subtitle={subtitle || ''} /> : null}
-            {children}
-          </BottomSheetErrorBoundary>
-        </BottomSheetView>
-      </BottomSheetModal>
-    );
-  },
-);
-
-GenericBottomSheet.displayName = 'GenericBottomSheet';
+  return (
+    <BottomSheetModal
+      ref={bottomSheetRef}
+      onDismiss={onClose}
+      containerStyle={styles.modalContainer}
+      backgroundStyle={dynamicStyles.bottomSheet}
+      handleComponent={BrandedBottomSheetHandle}
+      backdropComponent={BottomSheetBackdrop}
+      {...BOTTOM_SHEET_PROPS}
+    >
+      <BottomSheetView style={styles.container}>
+        <BottomSheetErrorBoundary sheetName={title ?? 'Generic'}>
+          {title ? <BottomSheetHeader title={title} subtitle={subtitle || ''} /> : null}
+          {children}
+        </BottomSheetErrorBoundary>
+      </BottomSheetView>
+    </BottomSheetModal>
+  );
+}
 
 const styles = StyleSheet.create({
   modalContainer: {

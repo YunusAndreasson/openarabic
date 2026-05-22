@@ -24,78 +24,81 @@ export function useProvideAuth(): AuthResult {
   // Refresh session function with exponential backoff retry logic
   const refreshSession = useCallback(async (): Promise<UserSession | null> => {
     setIsLoading(true);
-    const currentAttempt = refreshAttemptsRef.current + 1;
-    refreshAttemptsRef.current = currentAttempt;
 
-    Sentry.addBreadcrumb({
-      category: 'auth',
-      message: `Refreshing session (attempt ${currentAttempt})`,
-      level: 'info',
-    });
+    while (true) {
+      const currentAttempt = refreshAttemptsRef.current + 1;
+      refreshAttemptsRef.current = currentAttempt;
 
-    try {
-      // Check network connectivity before attempting refresh
-      const netState = await NetInfo.fetch();
-      if (!netState.isConnected) {
-        Sentry.addBreadcrumb({
-          category: 'auth',
-          message: 'No network connection during refresh attempt',
-          level: 'warning',
-        });
-        setIsLoading(false);
-        return null;
-      }
+      Sentry.addBreadcrumb({
+        category: 'auth',
+        message: `Refreshing session (attempt ${currentAttempt})`,
+        level: 'info',
+      });
 
-      // Modern supabase-js v2 auto-initializes and auto-refreshes with autoRefreshToken: true
-      // Let Supabase handle the refresh
-      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-
-      if (refreshError) {
-        Sentry.captureException(refreshError, {
-          tags: { location: 'session_refresh' },
-          level: 'warning',
-        });
-
-        // If we've reached max retries, don't keep retrying
-        if (currentAttempt >= MAX_REFRESH_RETRIES) {
+      try {
+        // Check network connectivity before attempting refresh
+        const netState = await NetInfo.fetch();
+        if (!netState.isConnected) {
+          Sentry.addBreadcrumb({
+            category: 'auth',
+            message: 'No network connection during refresh attempt',
+            level: 'warning',
+          });
           setIsLoading(false);
           return null;
         }
 
-        // Implement exponential backoff for retries
-        const retryDelay = RETRY_DELAY_MS * Math.pow(2, currentAttempt - 1);
-        await new Promise(resolve => setTimeout(resolve, retryDelay));
+        // Modern supabase-js v2 auto-initializes and auto-refreshes with autoRefreshToken: true
+        // Let Supabase handle the refresh
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
 
-        // Try another refresh recursively with exponential backoff
-        return refreshSession();
-      }
+        if (refreshError) {
+          Sentry.captureException(refreshError, {
+            tags: { location: 'session_refresh' },
+            level: 'warning',
+          });
 
-      if (refreshData.session) {
-        // Reset refresh attempts on success
-        Sentry.addBreadcrumb({
-          category: 'auth',
-          message: 'Session refreshed successfully',
-          level: 'info',
+          // If we've reached max retries, don't keep retrying
+          if (currentAttempt >= MAX_REFRESH_RETRIES) {
+            setIsLoading(false);
+            return null;
+          }
+
+          // Implement exponential backoff for retries
+          const retryDelay = RETRY_DELAY_MS * Math.pow(2, currentAttempt - 1);
+          await new Promise<void>(resolve => setTimeout(resolve, retryDelay));
+
+          // Try another refresh with exponential backoff
+          continue;
+        }
+
+        if (refreshData.session) {
+          // Reset refresh attempts on success
+          Sentry.addBreadcrumb({
+            category: 'auth',
+            message: 'Session refreshed successfully',
+            level: 'info',
+          });
+
+          refreshAttemptsRef.current = 0;
+          setSession(refreshData.session);
+          setAuthError(null);
+          setIsLoading(false);
+          return refreshData.session;
+        } else {
+          setSession(null);
+          setIsLoading(false);
+          return null;
+        }
+      } catch (error) {
+        handleError(error instanceof Error ? error : new Error('Unknown auth error'), {
+          analyticsEventName: 'Session_Refresh_Error',
+          sentrySeverity: 'error',
+          showToast: false,
         });
-
-        refreshAttemptsRef.current = 0;
-        setSession(refreshData.session);
-        setAuthError(null);
-        setIsLoading(false);
-        return refreshData.session;
-      } else {
-        setSession(null);
         setIsLoading(false);
         return null;
       }
-    } catch (error) {
-      handleError(error instanceof Error ? error : new Error('Unknown auth error'), {
-        analyticsEventName: 'Session_Refresh_Error',
-        sentrySeverity: 'error',
-        showToast: false,
-      });
-      setIsLoading(false);
-      return null;
     }
   }, []);
 
@@ -156,7 +159,9 @@ export function useProvideAuth(): AuthResult {
     // Global ref to track current app state
     const appState = { current: AppState.currentState };
 
-    // Initialize auth
+    // Initialize auth — async session fetch that must run once on mount; setState
+    // happens after awaited supabase call resolves, not synchronously in effect body.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     initAuth();
 
     // Handle app state changes

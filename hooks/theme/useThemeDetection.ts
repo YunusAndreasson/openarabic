@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import { use } from 'react';
 import { useColorScheme } from 'react-native';
 import { ReactReduxContext } from 'react-redux';
 
@@ -12,7 +12,7 @@ import { useAppSelectorShallow } from '@/store/hooks';
  */
 function useCurrentTheme(): Theme {
   // Check if Redux context is available
-  const reduxContext = useContext(ReactReduxContext);
+  const reduxContext = use(ReactReduxContext);
   const systemColorScheme = useColorScheme();
 
   // Always call hooks unconditionally (React hooks rules)

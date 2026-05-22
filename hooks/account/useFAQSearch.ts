@@ -73,18 +73,22 @@ export const getFAQItemKey = (itemId: string, prefix?: string): string =>
 export function useFAQSearch({
   initialExpandedItem,
 }: UseFAQSearchOptions = {}): UseFAQSearchResult {
-  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(
+    () => new Set(initialExpandedItem ? [initialExpandedItem] : []),
+  );
   const [searchQuery, setSearchQuery] = useState('');
 
   // React 19: useDeferredValue replaces manual debounce - automatically schedules
   // low-priority updates based on device performance
   const deferredSearchQuery = useDeferredValue(searchQuery);
 
-  // Auto-expand item from URL params
+  // Auto-expand from URL params if the param changes during the screen's life (e.g. deep-link navigation).
+  // Sync external prop into internal expanded-set; required to react to URL param changes mid-screen.
   useEffect(() => {
     if (!initialExpandedItem) return;
-
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setExpandedItems(prev => {
+      if (prev.has(initialExpandedItem)) return prev;
       const newSet = new Set(prev);
       newSet.add(initialExpandedItem);
       return newSet;

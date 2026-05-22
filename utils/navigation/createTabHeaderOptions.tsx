@@ -1,7 +1,6 @@
-import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { Platform } from 'react-native';
 
-import { createNavigationOptions } from './navigationOptions';
+import { createNavigationOptions, type NativeStackNavigationOptions } from './navigationOptions';
 
 interface TabHeaderOptions {
   readonly title: string;

@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/react-native';
 import * as Application from 'expo-application';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
@@ -49,17 +49,13 @@ export interface UseAppleAuthReturn {
  * Note: Apple Sign In is only supported on iOS. Android users use Google Sign In.
  */
 export function useAppleAuth(): UseAppleAuthReturn {
-  const [isReady, setIsReady] = useState(false);
-
-  // Pre-load Apple Auth module on mount (matches Google pattern)
-  // This ensures the native module is fully initialized before first use
-  // Note: require() is synchronous, so no async wrapper needed
-  useEffect(() => {
-    if (!isAppleAuthAvailable) return;
-
+  // Pre-load Apple Auth module synchronously on first render via lazy init.
+  // require() is synchronous so the module is fully initialized before first use.
+  const [isReady] = useState(() => {
+    if (!isAppleAuthAvailable) return false;
     require('@invertase/react-native-apple-authentication');
-    setIsReady(true);
-  }, []);
+    return true;
+  });
 
   // Use OAuth provider factory with Apple-specific configuration
   const { signIn, loading } = useOAuthProvider({
@@ -117,7 +113,7 @@ export function useAppleAuth(): UseAppleAuthReturn {
             if (shouldRetry) {
               attempt++;
               // Brief delay before retry
-              await new Promise(resolve => setTimeout(resolve, 500));
+              await new Promise<void>(resolve => setTimeout(resolve, 500));
               continue;
             }
 

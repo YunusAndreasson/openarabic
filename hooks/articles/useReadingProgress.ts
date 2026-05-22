@@ -190,7 +190,9 @@ export function useReadingProgress({
 
   // Stable ref for queryClient so unmount cleanup can invalidate cache
   const queryClientRef = useRef(queryClient);
-  queryClientRef.current = queryClient;
+  useEffect(() => {
+    queryClientRef.current = queryClient;
+  });
 
   // Update refs whenever values change
   useEffect(() => {
@@ -267,8 +269,12 @@ export function useReadingProgress({
     isUpdating: updateProgressMutation.isPending,
     // New: expose the last sentence read for jumping functionality
     lastSentenceRead: progress?.last_sentence_read ?? 0,
-    // New: expose initial values to distinguish pre-existing progress from session updates
+    // New: expose initial values to distinguish pre-existing progress from session updates.
+    // Reading the ref here is intentional: the value is captured exactly once in an effect post-mount
+    // and is read-only thereafter; lifting to state would cause an extra render on initial load.
+    // eslint-disable-next-line react-hooks/refs
     initialLastSentenceRead: initialLastSentenceReadRef.current ?? 0,
+    // eslint-disable-next-line react-hooks/refs
     hadExistingProgressOnMount: (initialLastSentenceReadRef.current ?? 0) > 0,
   };
 }

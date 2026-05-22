@@ -147,7 +147,7 @@ export const useAccountScreen = () => {
     );
   }, []);
 
-  const handleResetReadingProgress = useCallback(() => {
+  const handleResetReadingProgress = () => {
     if (!user?.id) {
       Alert.alert(STRINGS.ERROR, 'No user ID available');
       return;
@@ -195,7 +195,7 @@ export const useAccountScreen = () => {
       ],
       { cancelable: true },
     );
-  }, [user?.id, queryClient]);
+  };
 
   const handleReminderToggle = useCallback(
     async (enabled: boolean) => {

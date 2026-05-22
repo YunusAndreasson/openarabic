@@ -59,12 +59,9 @@ export const useArticleData = (
   const isLoadingStudyWords = studyWordsQuery.isLoading;
 
   // Process sentences from article data - no additional fetch needed
-  const sortedSentences = useMemo(() => {
-    if (!article?.article_sentences) {
-      return [];
-    }
-    return [...article.article_sentences].sort((a, b) => a.position - b.position);
-  }, [article?.article_sentences]);
+  const sortedSentences = !article?.article_sentences
+    ? []
+    : [...article.article_sentences].sort((a, b) => a.position - b.position);
 
   // Extract selected root IDs since study is now root-based
   const selectedWordIds = useMemo(() => {
