@@ -2,7 +2,7 @@ import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import type { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useCallback, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedButton } from '@/components/ThemedButton';
@@ -30,31 +30,88 @@ export function TimePicker({
   initialHour = 12,
   initialMinute = 0,
 }: TimePickerProps) {
+  // @react-native-community/datetimepicker always presents as a modal AlertDialog
+  // on Android regardless of `display`. Wrapping it in a BottomSheet (as iOS does)
+  // produces a dialog AND a sheet stacked on top of each other, with a second
+  // "Set time" confirm button that's redundant with the dialog's OK. Use the
+  // native dialog directly on Android — its event.type ('set' | 'dismissed')
+  // drives onTimeSet / onClose. iOS keeps the inline-spinner-in-sheet design.
+  if (Platform.OS === 'android') {
+    return (
+      <AndroidTimePicker
+        isVisible={isVisible}
+        onClose={onClose}
+        onTimeSet={onTimeSet}
+        initialHour={initialHour}
+        initialMinute={initialMinute}
+      />
+    );
+  }
+
+  return (
+    <IosTimePicker
+      isVisible={isVisible}
+      onClose={onClose}
+      onTimeSet={onTimeSet}
+      initialHour={initialHour}
+      initialMinute={initialMinute}
+    />
+  );
+}
+
+TimePicker.displayName = 'TimePicker';
+
+function AndroidTimePicker({
+  isVisible,
+  onClose,
+  onTimeSet,
+  initialHour = 12,
+  initialMinute = 0,
+}: TimePickerProps) {
+  const initialDate = new Date();
+  initialDate.setHours(initialHour, initialMinute, 0, 0);
+
+  const handleChange = useCallback(
+    (event: DateTimePickerEvent, date?: Date) => {
+      // Android fires once per interaction. event.type is 'set' on OK,
+      // 'dismissed' on CANCEL / outside-tap. Either way we close the picker;
+      // only 'set' with a valid date persists the new time.
+      if (event.type === 'set' && date) {
+        onTimeSet(date.getHours(), date.getMinutes());
+      }
+      onClose();
+    },
+    [onClose, onTimeSet],
+  );
+
+  if (!isVisible) return null;
+
+  return (
+    <DateTimePicker
+      value={initialDate}
+      mode="time"
+      is24Hour
+      display="spinner"
+      onChange={handleChange}
+    />
+  );
+}
+
+function IosTimePicker({
+  isVisible,
+  onClose,
+  onTimeSet,
+  initialHour = 12,
+  initialMinute = 0,
+}: TimePickerProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const bottomSheetRef = useBottomSheetVisibility(isVisible);
 
-  // Create initial date from hour and minute
   const initialDate = new Date();
   initialDate.setHours(initialHour, initialMinute, 0, 0);
 
   const [selectedDate, setSelectedDate] = useState(initialDate);
-
-  // Track if bottom sheet is visible to prevent native picker from showing before sheet
-  const [isSheetVisible, setIsSheetVisible] = useState(false);
-
-  // Track bottom sheet visibility to delay native picker render on Android
-  // Parent state sync is handled by onClose prop after close animation completes
-  const handleChange = useCallback((index: number) => {
-    // 0 means sheet is expanded (visible)
-    setIsSheetVisible(index === 0);
-  }, []);
-
-  const extractTimeAndSet = (date: Date) => {
-    const hour = date.getHours();
-    const minute = date.getMinutes();
-    onTimeSet(hour, minute);
-  };
 
   const handleDateChange = (_event: DateTimePickerEvent, date?: Date) => {
     if (date) {
@@ -63,7 +120,7 @@ export function TimePicker({
   };
 
   const handleConfirm = () => {
-    extractTimeAndSet(selectedDate);
+    onTimeSet(selectedDate.getHours(), selectedDate.getMinutes());
     onClose();
   };
 
@@ -74,17 +131,14 @@ export function TimePicker({
       hour12: false,
     });
 
-  // Use shared dynamic styles hook for theme-aware styling
   const dynamicStyles = useBottomSheetDynamicStyles();
 
-  // Unified bottom sheet with native picker for both platforms
   return (
     <BottomSheet
       ref={bottomSheetRef}
       index={-1}
       {...COMMON_BOTTOM_SHEET_PROPS}
       enableDynamicSizing={true}
-      onChange={handleChange}
       onClose={onClose}
       backgroundStyle={dynamicStyles.bottomSheet}
       handleComponent={BrandedBottomSheetHandle}
@@ -93,35 +147,25 @@ export function TimePicker({
       <BottomSheetView
         style={[styles.container, { paddingBottom: insets.bottom + LAYOUT.SPACING.LARGE }]}
       >
-        {/* Time Display */}
         <View style={styles.timeDisplay}>
-          <ThemedText
-            colorName="subtitleText"
-            style={styles.timeText}
-            type="heading1"
-            weight="bold"
-          >
+          <ThemedText colorName="subtitleText" style={styles.timeText} type="heading1" weight="bold">
             {formatTime(selectedDate)}
           </ThemedText>
         </View>
 
-        {/* Native Time Picker - Only render when sheet is visible to prevent Android popup */}
-        {isSheetVisible && (
-          <View style={styles.pickerContainer}>
-            <DateTimePicker
-              value={selectedDate}
-              mode="time"
-              is24Hour={true}
-              display="spinner"
-              onChange={handleDateChange}
-              style={styles.picker}
-              textColor={colors.text}
-              accentColor={colors.tint}
-            />
-          </View>
-        )}
+        <View style={styles.pickerContainer}>
+          <DateTimePicker
+            value={selectedDate}
+            mode="time"
+            is24Hour
+            display="spinner"
+            onChange={handleDateChange}
+            style={styles.picker}
+            textColor={colors.text}
+            accentColor={colors.tint}
+          />
+        </View>
 
-        {/* Actions */}
         <View style={styles.actions}>
           <ThemedButton title={STRINGS.SET_TIME} onPress={handleConfirm} />
         </View>
@@ -129,8 +173,6 @@ export function TimePicker({
     </BottomSheet>
   );
 }
-
-TimePicker.displayName = 'TimePicker';
 
 const styles = StyleSheet.create({
   container: {
@@ -141,7 +183,7 @@ const styles = StyleSheet.create({
     marginTop: LAYOUT.SPACING.LARGE,
   },
   picker: {
-    height: MIN_TOUCH_TARGET.LARGE * 4 + LAYOUT.SPACING.LARGE, // Responsive height
+    height: MIN_TOUCH_TARGET.LARGE * 4 + LAYOUT.SPACING.LARGE,
     width: '100%',
   },
   pickerContainer: {
@@ -157,7 +199,7 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.MEDIUM,
   },
   timeText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE + LAYOUT.SPACING.LARGE, // 28 + 16 = 44px - consistent large display
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE + LAYOUT.SPACING.XXXLARGE, // 28 + 32 = 60px - proportional line height
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE + LAYOUT.SPACING.LARGE,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE + LAYOUT.SPACING.XXXLARGE,
   },
 });
