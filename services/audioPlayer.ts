@@ -276,13 +276,21 @@ class SimpleAudioService {
    * Listens for the first playbackStatusUpdate event indicating the source is
    * loaded. 5s timeout prevents hanging on corrupted or unreachable audio.
    *
-   * Note: we deliberately do NOT short-circuit on `player.isLoaded` — it's a
-   * getter on a fresh native object and we always want a real event tick so
-   * the subsequent play() doesn't race with source loading.
+   * Short-circuits on `player.isLoaded` — because we always create a fresh
+   * player (see createFreshPlayer), the getter reflects only the current
+   * source's state, never a stale value from a prior track. Without this
+   * fast path, cached / local audio (word-tap, prefetched playlist) hits
+   * the 5s timeout every time: createAudioPlayer can finish loading before
+   * the listener below attaches, and the initial "loaded" event is then
+   * lost. The double-check after subscribing closes the remaining race.
    */
   private async waitForPlayerReady(): Promise<void> {
     const player = this.currentPlayer;
     if (!player) {
+      return;
+    }
+
+    if (player.isLoaded) {
       return;
     }
 
@@ -305,6 +313,16 @@ class SimpleAudioService {
           }
         },
       );
+
+      // Close the race: the loaded event could have fired between the
+      // isLoaded check above and the listener being attached. Re-check
+      // synchronously now that the listener is in place — if already
+      // loaded, resolve immediately instead of waiting up to 5s.
+      if (player.isLoaded) {
+        clearTimeout(timeout);
+        readySubscription.remove();
+        resolve();
+      }
     });
   }
 
