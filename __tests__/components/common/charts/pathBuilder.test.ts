@@ -7,21 +7,36 @@
  * - Note: jest.mocked() used for type-safe mocking where needed
  */
 
-// Mock Skia before imports
+// Mock Skia before imports. chartPathBuilder builds via the immutable
+// PathBuilder API (Skia.PathBuilder.Make().moveTo(...).cubicTo(...).build())
+// so the mock returns a chainable builder whose build() yields an object with
+// toSVGString() reflecting the calls.
 jest.mock('@shopify/react-native-skia', () => ({
   Skia: {
-    Path: {
+    PathBuilder: {
       Make: () => {
         const commands: string[] = [];
-        return {
+        const builder = {
           moveTo: (x: number, y: number) => {
             commands.push(`M${x},${y}`);
+            return builder;
           },
-          cubicTo: (cx1: number, cy1: number, cx2: number, cy2: number, x: number, y: number) => {
+          cubicTo: (
+            cx1: number,
+            cy1: number,
+            cx2: number,
+            cy2: number,
+            x: number,
+            y: number,
+          ) => {
             commands.push(`C${cx1},${cy1} ${cx2},${cy2} ${x},${y}`);
+            return builder;
           },
-          toSVGString: () => commands.join(' '),
+          build: () => ({
+            toSVGString: () => commands.join(' '),
+          }),
         };
+        return builder;
       },
     },
   },

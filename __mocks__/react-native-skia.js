@@ -23,7 +23,7 @@ const createMockParagraphBuilder = () => ({
   build: jest.fn(() => createMockParagraph()),
 });
 
-// Mock Skia Path API
+// Mock Skia Path API (immutable result of PathBuilder.build())
 const createMockPath = () => ({
   moveTo: jest.fn(),
   lineTo: jest.fn(),
@@ -33,6 +33,43 @@ const createMockPath = () => ({
   toSVGString: jest.fn(() => 'M0,0'),
 });
 
+// Mock Skia PathBuilder API — chainable builder where every mutator returns
+// `this` and `build()` produces a Path. Mirrors the runtime API documented at
+// https://shopify.github.io/react-native-skia/docs/shapes/path-migration
+const createMockPathBuilder = () => {
+  const builder = {};
+  const chainableMethods = [
+    'moveTo',
+    'lineTo',
+    'quadTo',
+    'cubicTo',
+    'conicTo',
+    'rMoveTo',
+    'rLineTo',
+    'rQuadTo',
+    'rCubicTo',
+    'rConicTo',
+    'arcTo',
+    'arcToOval',
+    'arcToRotated',
+    'addRect',
+    'addOval',
+    'addCircle',
+    'addRRect',
+    'addArc',
+    'addPath',
+    'close',
+    'reset',
+    'setFillType',
+    'setIsVolatile',
+  ];
+  for (const name of chainableMethods) {
+    builder[name] = jest.fn(() => builder);
+  }
+  builder.build = jest.fn(() => createMockPath());
+  return builder;
+};
+
 // Mock Skia API
 export const Skia = {
   Color: jest.fn(color => color),
@@ -41,6 +78,10 @@ export const Skia = {
   },
   Path: {
     Make: jest.fn(() => createMockPath()),
+  },
+  PathBuilder: {
+    Make: jest.fn(() => createMockPathBuilder()),
+    MakeFromPath: jest.fn(() => createMockPathBuilder()),
   },
 };
 
