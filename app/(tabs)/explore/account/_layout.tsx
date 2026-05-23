@@ -8,22 +8,33 @@ import { useColors } from '@/hooks/theme/useColors';
 export default function AccountLayout() {
   const colors = useColors();
 
-  const screenOptions = (title: string) =>
+  // The `account` route is mounted as a modal from explore (_layout.tsx). The
+  // index screen inherits that modal presentation. Sub-screens must push as
+  // regular stack screens inside the modal — nesting `presentation: 'modal'`
+  // here renders unreliably on Android (new modal lands behind the existing
+  // one as a stacked DialogFragment).
+  const indexOptions = createNavigationOptions(colors, {
+    title: STRINGS.ACCOUNT,
+    headerRight: () => <CloseButton />,
+  });
+
+  const subScreenOptions = (title: string) =>
     createNavigationOptions(colors, {
       title,
       headerRight: () => <CloseButton />,
+      isRegularScreen: true,
     });
 
   return (
     <Stack>
-      <Stack.Screen name="index" options={screenOptions(STRINGS.ACCOUNT)} />
-      <Stack.Screen name="FontSelector" options={screenOptions(STRINGS.ARABIC_FONT)} />
-      <Stack.Screen name="DeleteAccount" options={screenOptions(STRINGS.DELETE_ACCOUNT)} />
-      <Stack.Screen name="help" options={screenOptions(STRINGS.HELP_CENTER)} />
-      <Stack.Screen name="feedback" options={screenOptions(STRINGS.CONTACT_SUPPORT)} />
-      <Stack.Screen name="terms" options={screenOptions(STRINGS.TERMS_OF_SERVICE)} />
-      <Stack.Screen name="privacy" options={screenOptions(STRINGS.PRIVACY_POLICY)} />
-      <Stack.Screen name="legal" options={screenOptions(STRINGS.LEGAL_ATTRIBUTIONS)} />
+      <Stack.Screen name="index" options={indexOptions} />
+      <Stack.Screen name="FontSelector" options={subScreenOptions(STRINGS.ARABIC_FONT)} />
+      <Stack.Screen name="DeleteAccount" options={subScreenOptions(STRINGS.DELETE_ACCOUNT)} />
+      <Stack.Screen name="help" options={subScreenOptions(STRINGS.HELP_CENTER)} />
+      <Stack.Screen name="feedback" options={subScreenOptions(STRINGS.CONTACT_SUPPORT)} />
+      <Stack.Screen name="terms" options={subScreenOptions(STRINGS.TERMS_OF_SERVICE)} />
+      <Stack.Screen name="privacy" options={subScreenOptions(STRINGS.PRIVACY_POLICY)} />
+      <Stack.Screen name="legal" options={subScreenOptions(STRINGS.LEGAL_ATTRIBUTIONS)} />
     </Stack>
   );
 }
