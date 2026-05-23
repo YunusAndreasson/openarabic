@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { Linking, StyleSheet, TouchableOpacity } from 'react-native';
+import { Linking, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -50,14 +50,17 @@ const LegalAttributionsScreen: FC = () => {
         <ThemedText type="body" style={styles.paragraph}>
           {STRINGS.LEGAL_AUDIO_ELEVENLABS_DESC}
         </ThemedText>
-        <TouchableOpacity
+        <Pressable
           onPress={() => handleLinkPress(STRINGS.LEGAL_AUDIO_ELEVENLABS_URL)}
-          style={styles.linkContainer}
+          style={({ pressed }) => [
+            styles.linkContainer,
+            pressed && { opacity: LAYOUT.OPACITY.HIGH },
+          ]}
         >
           <ThemedText type="body" colorName="tint" style={styles.link}>
             {STRINGS.LEGAL_AUDIO_ELEVENLABS_URL}
           </ThemedText>
-        </TouchableOpacity>
+        </Pressable>
 
         {/* Error Tracking */}
         <ThemedText type="heading3" weight="semibold" style={styles.sectionTitle}>
@@ -70,14 +73,17 @@ const LegalAttributionsScreen: FC = () => {
         <ThemedText type="body" style={styles.paragraph}>
           {STRINGS.LEGAL_ERROR_SENTRY_DESC}
         </ThemedText>
-        <TouchableOpacity
+        <Pressable
           onPress={() => handleLinkPress(STRINGS.LEGAL_ERROR_SENTRY_URL)}
-          style={styles.linkContainer}
+          style={({ pressed }) => [
+            styles.linkContainer,
+            pressed && { opacity: LAYOUT.OPACITY.HIGH },
+          ]}
         >
           <ThemedText type="body" colorName="tint" style={styles.link}>
             {STRINGS.LEGAL_ERROR_SENTRY_URL}
           </ThemedText>
-        </TouchableOpacity>
+        </Pressable>
 
         {/* Typefaces/Fonts */}
         <ThemedText type="heading3" weight="semibold" style={styles.sectionTitle}>

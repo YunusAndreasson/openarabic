@@ -13,9 +13,9 @@ import {
   WordTooltip,
   ArticleContent,
 } from '@/components/article';
+import { LoadingState } from '@/components/common';
 import { ComponentErrorBoundary } from '@/components/common/ComponentErrorBoundary';
 import { ToastProvider, useTutorialContext, useToast } from '@/components/providers';
-import { PulsatingLoader } from '@/components/ui';
 import { TutorialId } from '@/constants/tutorials';
 import { useArticleScreen } from '@/hooks/articles/useArticleScreen';
 import { useColors } from '@/hooks/theme/useColors';
@@ -24,13 +24,6 @@ import type { SentenceWord } from '@/types/vocabulary.types';
 
 // Static constants to prevent recreation
 const FLEX_ONE_STYLE = { flex: 1 } as const;
-
-// Static styles for loading container
-const LOADING_CONTAINER_STYLE = {
-  flex: 1,
-  justifyContent: 'center' as const,
-  alignItems: 'center' as const,
-} as const;
 
 // Custom comparison function for React.memo optimization
 const ArticleScreenContentComparison = (
@@ -191,11 +184,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
 
   // Show loader while article is loading
   if (isLoadingArticle) {
-    return (
-      <View style={LOADING_CONTAINER_STYLE}>
-        <PulsatingLoader size={64} />
-      </View>
-    );
+    return <LoadingState />;
   }
 
   return (

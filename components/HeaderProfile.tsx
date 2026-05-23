@@ -18,6 +18,11 @@ import { getFirstNameFromEmail } from '@/utils/stringUtils';
 // Profile fills the glass container completely
 const IOS_GLASS_SIZE = 36;
 
+// Initial-letter font scales proportionally with the avatar diameter.
+// 0.45 keeps the glyph centered and visually balanced inside the circle
+// for both the iOS (36) and Android (32) sizes.
+const INITIAL_FONT_SIZE_RATIO = 0.45;
+
 interface HeaderProfileProps {
   size?: number;
 }
@@ -117,7 +122,10 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
               <ThemedText
                 type="label"
                 weight="bold"
-                style={{ fontSize: effectiveSize * 0.45, color: colors.background }}
+                style={{
+                  fontSize: effectiveSize * INITIAL_FONT_SIZE_RATIO,
+                  color: colors.background,
+                }}
               >
                 {initials}
               </ThemedText>

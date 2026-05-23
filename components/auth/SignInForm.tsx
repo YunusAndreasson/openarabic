@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useRef } from 'react';
 import type { TextInput } from 'react-native';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AuthEmailInput, AuthPasswordInput } from './AuthFormInputs';
 import { ThemedButton } from '@/components/ThemedButton';
@@ -110,18 +110,18 @@ export function SignInForm(): JSX.Element {
 
       {/* Forgot Password Link */}
       <View style={styles.forgotPasswordContainer}>
-        <TouchableOpacity
-          activeOpacity={LAYOUT.OPACITY.HIGH}
+        <Pressable
           hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
           testID="forgot-password-button"
           accessibilityRole="button"
           accessibilityLabel="Forgot password"
           onPress={handleForgotPassword}
+          style={({ pressed }) => (pressed ? { opacity: LAYOUT.OPACITY.HIGH } : null)}
         >
           <ThemedText type="body" colorName="tint">
             {STRINGS.FORGOT_PASSWORD}
           </ThemedText>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {/* Link to Create Account */}
@@ -129,18 +129,18 @@ export function SignInForm(): JSX.Element {
         <ThemedText type="body" variant="secondary">
           {STRINGS.DONT_HAVE_ACCOUNT}{' '}
         </ThemedText>
-        <TouchableOpacity
-          activeOpacity={LAYOUT.OPACITY.HIGH}
+        <Pressable
           hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
           testID="navigate-to-sign-up-link"
           accessibilityRole="button"
           accessibilityLabel="Go to create account"
           onPress={handleCreateAccount}
+          style={({ pressed }) => (pressed ? { opacity: LAYOUT.OPACITY.HIGH } : null)}
         >
           <ThemedText type="body" colorName="tint" weight="semibold">
             {STRINGS.CREATE_ACCOUNT}
           </ThemedText>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     </View>
   );

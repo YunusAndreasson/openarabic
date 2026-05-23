@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   summaryLabel: {
-    marginBottom: 2,
+    marginBottom: LAYOUT.SPACING.HALF_TINY,
     fontFamily: FONTS.ENGLISH_SEMIBOLD,
   },
   summaryValue: {

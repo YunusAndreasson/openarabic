@@ -1,11 +1,9 @@
-import { ErrorState } from '@/components/common';
+import { ErrorState, LoadingState } from '@/components/common';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
 
-import { ThemedView } from '@/components/ThemedView';
 import { FilteredArticleView } from '@/components/explore';
-import { PulsatingLoader } from '@/components/ui';
 import { articleQueries } from '@/constants/queries';
 import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -37,18 +35,7 @@ export default function FilterScreen(): JSX.Element {
   }
 
   if (isFetching) {
-    return (
-      <ThemedView
-        style={{
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: 'transparent',
-        }}
-      >
-        <PulsatingLoader size={64} />
-      </ThemedView>
-    );
+    return <LoadingState />;
   }
 
   return (

@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps, Ref } from 'react';
 import { useCallback, useMemo, useState } from 'react';
 import type { GestureResponderEvent, TextInputProps } from 'react-native';
-import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
@@ -50,13 +50,17 @@ const RightInputIcon = ({
   colors: ReturnType<typeof useColors>;
   onPress?: (e: GestureResponderEvent) => void;
 }) => (
-  <TouchableOpacity hitSlop={LAYOUT.HIT_SLOP.MEDIUM} style={styles.rightIcon} onPress={onPress}>
+  <Pressable
+    hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
+    onPress={onPress}
+    style={({ pressed }) => [styles.rightIcon, pressed && { opacity: LAYOUT.OPACITY.HIGH }]}
+  >
     <Ionicons
       color={error ? colors.error : isFocused ? colors.tint : colors.icon}
       name={name}
       size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
     />
-  </TouchableOpacity>
+  </Pressable>
 );
 
 export function ThemedInput({

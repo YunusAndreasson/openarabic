@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useRef } from 'react';
 import type { TextInput } from 'react-native';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AuthEmailInput, AuthPasswordInput } from './AuthFormInputs';
 import { PasswordStrengthMeter } from './PasswordStrengthMeter';
@@ -112,18 +112,18 @@ export function SignUpForm(): JSX.Element {
         <ThemedText type="body" variant="secondary">
           {STRINGS.ALREADY_HAVE_ACCOUNT}{' '}
         </ThemedText>
-        <TouchableOpacity
-          activeOpacity={LAYOUT.OPACITY.HIGH}
+        <Pressable
           hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
           testID="navigate-to-sign-in-link"
           accessibilityRole="button"
           accessibilityLabel="Go to sign in"
           onPress={handleSignIn}
+          style={({ pressed }) => (pressed ? { opacity: LAYOUT.OPACITY.HIGH } : null)}
         >
           <ThemedText type="body" colorName="tint" weight="semibold">
             {STRINGS.SIGN_IN}
           </ThemedText>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     </View>
   );

@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
@@ -27,11 +27,11 @@ export function LegalLinks() {
         {STRINGS.BY_CONTINUING_YOU_AGREE}{' '}
       </ThemedText>
       <View style={styles.linksRow}>
-        <TouchableOpacity
-          activeOpacity={LAYOUT.OPACITY.HIGH}
+        <Pressable
           accessibilityRole="button"
           accessibilityLabel={STRINGS.TERMS_OF_SERVICE}
           onPress={handleTermsPress}
+          style={({ pressed }) => (pressed ? { opacity: LAYOUT.OPACITY.HIGH } : null)}
         >
           <ThemedText
             type="caption"
@@ -44,16 +44,16 @@ export function LegalLinks() {
           >
             {STRINGS.TERMS_OF_SERVICE}
           </ThemedText>
-        </TouchableOpacity>
+        </Pressable>
         <ThemedText type="caption" variant="secondary">
           {' '}
           {STRINGS.AND}{' '}
         </ThemedText>
-        <TouchableOpacity
-          activeOpacity={LAYOUT.OPACITY.HIGH}
+        <Pressable
           accessibilityRole="button"
           accessibilityLabel={STRINGS.PRIVACY_POLICY}
           onPress={handlePrivacyPress}
+          style={({ pressed }) => (pressed ? { opacity: LAYOUT.OPACITY.HIGH } : null)}
         >
           <ThemedText
             type="caption"
@@ -66,7 +66,7 @@ export function LegalLinks() {
           >
             {STRINGS.PRIVACY_POLICY}
           </ThemedText>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     </View>
   );

@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
     marginLeft: LAYOUT.SPACING.MEDIUM, // 12px gap from dots
   },
   sortIcon: {
-    marginTop: 1, // Optical alignment with text
+    marginTop: LAYOUT.SPACING.MICRO, // 1px optical alignment with text
   },
 });
 
