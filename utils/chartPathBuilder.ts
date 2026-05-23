@@ -52,7 +52,7 @@ export interface BuildPathResult<P> {
 export function buildSmoothChartPath<T, P>(options: BuildPathOptions<T, P>): BuildPathResult<P> {
   const { data, dataPointPositions, calculateY, buildPoint } = options;
 
-  const path = Skia.Path.Make();
+  const builder = Skia.PathBuilder.Make();
   const points: P[] = [];
 
   // First pass: build all points
@@ -69,7 +69,7 @@ export function buildSmoothChartPath<T, P>(options: BuildPathOptions<T, P>): Bui
 
     if (index === 0) {
       // Start the path at the first point
-      path.moveTo(x, y);
+      builder.moveTo(x, y);
     } else {
       const prevPoint = points[index - 1] as { x: number; y: number };
       const nextPoint = points[index + 1] as { x: number; y: number } | undefined;
@@ -107,12 +107,12 @@ export function buildSmoothChartPath<T, P>(options: BuildPathOptions<T, P>): Bui
       const controlX2 = x - (x - prevPoint.x) * tension;
       const controlY2 = y - currentSlope * (x - prevPoint.x) * tension;
 
-      path.cubicTo(controlX1, controlY1, controlX2, controlY2, x, y);
+      builder.cubicTo(controlX1, controlY1, controlX2, controlY2, x, y);
     }
   });
 
   return {
-    path: path.toSVGString(),
+    path: builder.build().toSVGString(),
     points,
   };
 }

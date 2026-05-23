@@ -140,12 +140,14 @@ export function MemoryRetentionGauge({ studyWords = [], onInfoPress }: MemoryRet
   const sweep = (animatedRetention / 100) * TOTAL_SWEEP;
 
   // React Compiler auto-memoizes
-  const animatedFilledPath = Skia.Path.Make();
-  animatedFilledPath.addArc(GAUGE_BOUNDS, START_ANGLE, sweep);
+  const animatedFilledPath = Skia.PathBuilder.Make()
+    .addArc(GAUGE_BOUNDS, START_ANGLE, sweep)
+    .build();
 
   // Create full background track path (React Compiler auto-memoizes)
-  const backgroundTrackPath = Skia.Path.Make();
-  backgroundTrackPath.addArc(GAUGE_BOUNDS, START_ANGLE, TOTAL_SWEEP);
+  const backgroundTrackPath = Skia.PathBuilder.Make()
+    .addArc(GAUGE_BOUNDS, START_ANGLE, TOTAL_SWEEP)
+    .build();
 
   // Determine color based on retention thresholds
   const getRetentionColor = () => {
