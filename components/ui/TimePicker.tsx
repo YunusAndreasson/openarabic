@@ -1,4 +1,4 @@
-import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import type { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useCallback, useState } from 'react';
@@ -12,8 +12,8 @@ import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { useBottomSheetDynamicStyles } from '@/hooks/ui/useBottomSheetDynamicStyles';
-import { useBottomSheetModalVisibility } from '@/hooks/ui/useBottomSheetVisibility';
-import { BottomSheetBackdrop, COMMON_BOTTOM_SHEET_MODAL_PROPS } from '@/utils/bottomSheetUtils';
+import { useBottomSheetVisibility } from '@/hooks/ui/useBottomSheetVisibility';
+import { BottomSheetBackdrop, COMMON_BOTTOM_SHEET_PROPS } from '@/utils/bottomSheetUtils';
 
 export interface TimePickerProps {
   isVisible: boolean;
@@ -32,7 +32,7 @@ export function TimePicker({
 }: TimePickerProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const bottomSheetRef = useBottomSheetModalVisibility(isVisible);
+  const bottomSheetRef = useBottomSheetVisibility(isVisible);
 
   // Create initial date from hour and minute
   const initialDate = new Date();
@@ -79,13 +79,13 @@ export function TimePicker({
 
   // Unified bottom sheet with native picker for both platforms
   return (
-    <BottomSheetModal
+    <BottomSheet
       ref={bottomSheetRef}
-      {...COMMON_BOTTOM_SHEET_MODAL_PROPS}
+      index={-1}
+      {...COMMON_BOTTOM_SHEET_PROPS}
       enableDynamicSizing={true}
       onChange={handleChange}
-      onDismiss={onClose}
-      containerStyle={styles.modalContainer}
+      onClose={onClose}
       backgroundStyle={dynamicStyles.bottomSheet}
       handleComponent={BrandedBottomSheetHandle}
       backdropComponent={BottomSheetBackdrop}
@@ -126,16 +126,13 @@ export function TimePicker({
           <ThemedButton title={STRINGS.SET_TIME} onPress={handleConfirm} />
         </View>
       </BottomSheetView>
-    </BottomSheetModal>
+    </BottomSheet>
   );
 }
 
 TimePicker.displayName = 'TimePicker';
 
 const styles = StyleSheet.create({
-  modalContainer: {
-    zIndex: LAYOUT.Z_INDEX.MODAL, // Render above the MiniPlayer
-  },
   container: {
     paddingTop: LAYOUT.SPACING.SMALL,
   },

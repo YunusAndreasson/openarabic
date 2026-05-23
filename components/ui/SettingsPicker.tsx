@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -10,8 +10,8 @@ import { BrandedBottomSheetHandle } from '@/components/ui/BrandedBottomSheetHand
 import { LAYOUT, LINE_HEIGHT_MULTIPLIERS, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useBottomSheetDynamicStyles } from '@/hooks/ui/useBottomSheetDynamicStyles';
-import { useBottomSheetModalVisibility } from '@/hooks/ui/useBottomSheetVisibility';
-import { BottomSheetBackdrop, COMMON_BOTTOM_SHEET_MODAL_PROPS } from '@/utils/bottomSheetUtils';
+import { useBottomSheetVisibility } from '@/hooks/ui/useBottomSheetVisibility';
+import { BottomSheetBackdrop, COMMON_BOTTOM_SHEET_PROPS } from '@/utils/bottomSheetUtils';
 
 export interface SettingsPickerOption<T> {
   id: T;
@@ -46,18 +46,18 @@ function SettingsPickerComponent<T>({
   const currentValue =
     selectedValue !== undefined && selectedValue !== null ? selectedValue : options[0]?.id;
 
-  const bottomSheetRef = useBottomSheetModalVisibility(isVisible);
+  const bottomSheetRef = useBottomSheetVisibility(isVisible);
 
   // Use shared dynamic styles hook for theme-aware styling
   const dynamicStyles = useBottomSheetDynamicStyles();
 
   return (
-    <BottomSheetModal
+    <BottomSheet
       ref={bottomSheetRef}
-      {...COMMON_BOTTOM_SHEET_MODAL_PROPS}
+      index={-1}
+      {...COMMON_BOTTOM_SHEET_PROPS}
       enableDynamicSizing={true}
-      onDismiss={onClose}
-      containerStyle={styles.modalContainer}
+      onClose={onClose}
       backgroundStyle={dynamicStyles.bottomSheet}
       handleComponent={BrandedBottomSheetHandle}
       backdropComponent={BottomSheetBackdrop}
@@ -128,7 +128,7 @@ function SettingsPickerComponent<T>({
           })}
         </View>
       </BottomSheetView>
-    </BottomSheetModal>
+    </BottomSheet>
   );
 }
 
@@ -136,9 +136,6 @@ function SettingsPickerComponent<T>({
 export const SettingsPicker = SettingsPickerComponent;
 
 const styles = StyleSheet.create({
-  modalContainer: {
-    zIndex: LAYOUT.Z_INDEX.MODAL, // Render above the MiniPlayer
-  },
   header: {
     ...LAYOUT.BOTTOM_SHEET.HEADER,
     marginBottom: LAYOUT.SPACING.MEDIUM,
