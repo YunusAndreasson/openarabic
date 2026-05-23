@@ -49,7 +49,18 @@ module.exports = {
     cubic: {},
     bezier: () => ({}),
   },
-  useSharedValue: initialValue => ({ value: initialValue }),
+  useSharedValue: initialValue => {
+    const sv = {
+      value: initialValue,
+      get() {
+        return this.value;
+      },
+      set(next) {
+        this.value = typeof next === 'function' ? next(this.value) : next;
+      },
+    };
+    return sv;
+  },
   useAnimatedStyle: () => ({}),
   withSpring: value => value,
   withTiming: value => value,

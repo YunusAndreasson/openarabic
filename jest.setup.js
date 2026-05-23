@@ -109,6 +109,55 @@ jest.mock('expo-router/react-navigation', () => {
   };
 });
 
+// Mock top-level expo-router: SDK 56 deprecates many expo-router/react-navigation
+// re-exports in favor of the typed top-level paths. Loading the real module
+// pulls in expo-constants (EXDevLauncher) which fails under jest. Stub the
+// surface the codebase imports — anything not listed here will be undefined.
+jest.mock('expo-router', () => {
+  const React = require('react');
+  const router = {
+    push: jest.fn(),
+    replace: jest.fn(),
+    back: jest.fn(),
+    canGoBack: jest.fn(() => true),
+    setParams: jest.fn(),
+    navigate: jest.fn(),
+    dismiss: jest.fn(),
+    dismissAll: jest.fn(),
+  };
+  const Stack = Object.assign(({ children }) => children, {
+    Screen: () => null,
+    Protected: ({ children }) => children,
+  });
+  return {
+    router,
+    useRouter: () => router,
+    useFocusEffect: jest.fn(callback => {
+      const cleanup = callback?.();
+      return typeof cleanup === 'function' ? cleanup : undefined;
+    }),
+    useIsFocused: () => true,
+    useNavigation: () => ({
+      navigate: jest.fn(),
+      goBack: jest.fn(),
+      setOptions: jest.fn(),
+      addListener: jest.fn(() => () => {}),
+    }),
+    useNavigationContainerRef: () => ({ current: null }),
+    useSegments: () => [],
+    useLocalSearchParams: () => ({}),
+    usePathname: () => '/',
+    Stack,
+    Tabs: Object.assign(({ children }) => children, { Screen: () => null }),
+    Link: ({ children }) => children,
+    Redirect: () => null,
+    DarkTheme: { dark: true, colors: {} },
+    DefaultTheme: { dark: false, colors: {} },
+    ThemeProvider: ({ children }) => children,
+    useTheme: () => ({ dark: false, colors: {} }),
+  };
+});
+
 // Mock expo-system-ui for system UI customization
 jest.mock('expo-system-ui', () => ({
   setBackgroundColorAsync: jest.fn().mockResolvedValue(undefined),
@@ -209,7 +258,20 @@ jest.mock('react-native-reanimated', () => {
     useSharedValue: (initialValue = 0) => {
       // Use React's useRef to maintain a stable reference across re-renders
       const React = require('react');
-      const ref = React.useRef({ value: initialValue, modify: jest.fn() });
+      const ref = React.useRef(null);
+      if (ref.current === null) {
+        const sv = {
+          value: initialValue,
+          modify: jest.fn(),
+          get() {
+            return this.value;
+          },
+          set(next) {
+            this.value = typeof next === 'function' ? next(this.value) : next;
+          },
+        };
+        ref.current = sv;
+      }
       return ref.current;
     },
     useAnimatedStyle: styleCallback => {

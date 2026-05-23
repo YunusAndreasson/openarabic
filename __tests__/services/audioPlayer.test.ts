@@ -244,21 +244,24 @@ describe('audioPlayer service', () => {
       expect(loadingStateSeen).toBeFalsy();
     });
 
-    test('should reuse player via replace() when switching tracks', async () => {
+    test('should dispose old player and create a fresh one when switching tracks', async () => {
       await audioService.play(testTrack);
 
-      // Player should be created once for the first track
       expect(mockCreateAudioPlayer).toHaveBeenCalledTimes(1);
 
       await audioService.play(testTrack2);
 
-      // Should reuse existing player via replace(), not create a new one
-      expect(mockCreateAudioPlayer).toHaveBeenCalledTimes(1);
-      expect(mockPlayer.replace).toHaveBeenCalledWith(testTrack2.audioUrl);
-      // Player should be paused before replacing source
+      // Fresh player per track — the previous one is paused + removed, and a
+      // new one is created. This eliminates the post-replace() isLoaded race
+      // where subsequent tracks silently no-op.
+      expect(mockCreateAudioPlayer).toHaveBeenCalledTimes(2);
+      expect(mockCreateAudioPlayer).toHaveBeenLastCalledWith(
+        testTrack2.audioUrl,
+        expect.objectContaining({ updateInterval: 500 }),
+      );
       expect(mockPlayer.pause).toHaveBeenCalled();
-      // Player should NOT be removed (kept alive for reuse)
-      expect(mockPlayer.remove).not.toHaveBeenCalled();
+      expect(mockPlayer.remove).toHaveBeenCalled();
+      expect(mockPlayer.replace).not.toHaveBeenCalled();
     });
 
     test('should handle play errors gracefully', async () => {

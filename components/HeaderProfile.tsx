@@ -1,6 +1,5 @@
-import { useFocusEffect } from "expo-router/react-navigation";
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';

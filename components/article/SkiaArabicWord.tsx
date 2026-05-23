@@ -64,7 +64,7 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
   const wordId = word.id;
   const activeStyle = useAnimatedStyle(() => {
     'worklet';
-    const isActive = activeWordIdSV?.value === wordId;
+    const isActive = activeWordIdSV?.get() === wordId;
     return { opacity: isActive ? LAYOUT.OPACITY.HIGH : LAYOUT.OPACITY.FULL };
   });
 

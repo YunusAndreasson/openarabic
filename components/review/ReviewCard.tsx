@@ -125,16 +125,17 @@ export function ReviewCard({
 
   const swipeBackgroundStyle = useAnimatedStyle(() => {
     'worklet';
+    const tx = translateX.get();
     const maxTranslation = SCREEN_WIDTH * GESTURE_CONSTANTS.MAX_TRANSLATION_RATIO;
-    const progress = Math.min(Math.abs(translateX.value) / maxTranslation, 1);
+    const progress = Math.min(Math.abs(tx) / maxTranslation, 1);
     const t = 1 - Math.pow(1 - progress, 2); // Quadratic ease-out
 
     // Left swipe (red)
-    if (translateX.value < 0) {
+    if (tx < 0) {
       return { backgroundColor: interpolateColor(t, [0, 1], flashColors.error) };
     }
     // Right swipe (green)
-    if (translateX.value > 0) {
+    if (tx > 0) {
       return { backgroundColor: interpolateColor(t, [0, 1], flashColors.success) };
     }
     return { backgroundColor: colors.transparent };

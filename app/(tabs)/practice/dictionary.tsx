@@ -1,5 +1,5 @@
-import { useFocusEffect } from "expo-router/react-navigation";
 import { FlashList } from '@shopify/flash-list';
+import { useFocusEffect } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';

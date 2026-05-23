@@ -1,5 +1,5 @@
-import { useFocusEffect } from "expo-router/react-navigation";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';

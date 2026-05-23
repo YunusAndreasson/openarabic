@@ -79,12 +79,16 @@ const BlurBackdropComponent = ({ animatedIndex, style }: BottomSheetBackdropProp
   return (
     <GestureDetector gesture={tapHandler}>
       <Animated.View style={containerStyle} pointerEvents={pointerEvents}>
-        <BlurView
-          intensity={intensity}
-          tint={tint}
-          blurMethod="dimezisBlurViewSdk31Plus"
-          style={styles.blur}
-        />
+        {/*
+         * No blurMethod on Android — the dimezis methods require a `blurTarget`
+         * ref pointing at a <BlurTargetView> wrapping the content to blur, and
+         * a bottom-sheet backdrop has no such anchor without piping a ref down
+         * from the root layout. Without a target the method silently falls
+         * back to "none" and emits a warning, so we omit the prop and let
+         * Android render the semi-transparent overlay directly. iOS ignores
+         * blurMethod entirely and still gets a native blur via `intensity`/`tint`.
+         */}
+        <BlurView intensity={intensity} tint={tint} style={styles.blur} />
       </Animated.View>
     </GestureDetector>
   );

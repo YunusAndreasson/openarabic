@@ -156,7 +156,7 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
   // Cleanup shared animation values on unmount - optimized with single cleanup function
   useEffect(() => {
     return () => {
-      isMounted.value = false;
+      isMounted.set(false);
       cancelAnimation(opacity);
     };
   }, [opacity, isMounted]);

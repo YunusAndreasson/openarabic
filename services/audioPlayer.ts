@@ -272,9 +272,13 @@ class SimpleAudioService {
   }
 
   /**
-   * Wait for player to be ready before playing
-   * Uses native playbackStatusUpdate events to detect when player is initialized
-   * Includes timeout to prevent hanging on corrupted or failed audio files
+   * Wait for player to be ready before playing.
+   * Listens for the first playbackStatusUpdate event indicating the source is
+   * loaded. 5s timeout prevents hanging on corrupted or unreachable audio.
+   *
+   * Note: we deliberately do NOT short-circuit on `player.isLoaded` — it's a
+   * getter on a fresh native object and we always want a real event tick so
+   * the subsequent play() doesn't race with source loading.
    */
   private async waitForPlayerReady(): Promise<void> {
     const player = this.currentPlayer;
@@ -282,12 +286,7 @@ class SimpleAudioService {
       return;
     }
 
-    // Fast path: player already loaded (common after replace() with cached audio)
-    if (player.isLoaded) {
-      return;
-    }
-
-    const READY_TIMEOUT_MS = 5000; // 5 second timeout
+    const READY_TIMEOUT_MS = 5000;
 
     return new Promise<void>((resolve, reject) => {
       const timeout = setTimeout(() => {
@@ -295,13 +294,10 @@ class SimpleAudioService {
         reject(new Error('Player ready timeout - audio may be corrupted or unavailable'));
       }, READY_TIMEOUT_MS);
 
-      // Listen for first status update indicating player is ready
       const readySubscription = player.addListener(
         PLAYBACK_STATUS_UPDATE,
         (status: { isLoaded?: boolean; playbackState?: string }) => {
-          // Player is ready when isLoaded is true or playbackState is 'ready'
           const isReady = status.isLoaded === true || status.playbackState === 'ready';
-
           if (isReady) {
             clearTimeout(timeout);
             readySubscription.remove();
@@ -309,33 +305,35 @@ class SimpleAudioService {
           }
         },
       );
-
-      // Check again after listener is set up (race condition: loaded between checks)
-      if (player.isLoaded) {
-        clearTimeout(timeout);
-        readySubscription.remove();
-        resolve();
-      }
     });
   }
 
   /**
-   * Ensure a player exists, creating one if needed or reusing the existing one.
-   * Uses replace() to swap audio source without recreating the native player.
+   * Dispose any existing player and create a fresh one for the given source.
+   *
+   * We do not reuse via replace() — the native `isLoaded` getter can report
+   * the previous source's value until the next status event fires, which
+   * causes play() to silently no-op on a still-loading new source. Creating
+   * a fresh player per track makes the load lifecycle unambiguous (the
+   * canonical expo-audio pattern, equivalent to what useAudioPlayer does
+   * when its source prop changes).
    */
-  private ensurePlayer(audioUrl: string): AudioPlayer {
+  private createFreshPlayer(audioUrl: string): AudioPlayer {
     if (this.currentPlayer) {
-      // Reuse existing player - pause and swap source
       try {
         this.currentPlayer.pause();
       } catch {
         // Ignore pause errors
       }
-      this.currentPlayer.replace(audioUrl);
-      return this.currentPlayer;
+      try {
+        this.currentPlayer.remove();
+      } catch {
+        // Ignore remove errors
+      }
+      this.currentPlayer = null;
+      this.lockScreenActive = false;
     }
 
-    // Create new player (first play or after destroy/error)
     const playerOptions: AudioPlayerOptions = {
       updateInterval: 500,
     };
@@ -370,11 +368,11 @@ class SimpleAudioService {
       // Configure audio session first (should be pre-configured for faster playback)
       await this.configureAudioSession();
 
-      // Stop event subscription from previous track before reusing player
+      // Stop event subscription from previous track before swapping the player
       this.stopEventSubscription();
 
-      // Reuse existing player or create new one
-      const player = this.ensurePlayer(track.audioUrl);
+      // Always create a fresh player — see createFreshPlayer for rationale
+      const player = this.createFreshPlayer(track.audioUrl);
       this.currentTrack = track;
 
       // IMMEDIATE FEEDBACK: Update status to loading right away
@@ -398,22 +396,13 @@ class SimpleAudioService {
       // Set up event subscription BEFORE playing to catch immediate failures
       this.startEventSubscription();
 
-      // Activate lock screen controls BEFORE play() so Android registers the
-      // foreground service before any chance of backgrounding (docs: without
-      // this, Android kills background playback after ~3 minutes).
-      this.activateLockScreen(track);
-
-      // Wait for the source to be loaded before playing. expo-audio's play()
-      // returns void and silently no-ops when the source is still loading after
-      // replace(), so the synchronous try/catch below alone isn't enough — we
-      // must proactively check isLoaded. waitForPlayerReady has a fast path
-      // for already-loaded sources and a 5s timeout to prevent hanging.
-      if (!player.isLoaded) {
-        try {
-          await this.waitForPlayerReady();
-        } catch {
-          // Ready timeout — attempt play anyway; outer catch handles failures
-        }
+      // Wait for the freshly-created player to load the source. expo-audio's
+      // play() silently no-ops on an unloaded source, so we must proactively
+      // wait for a ready event before calling it.
+      try {
+        await this.waitForPlayerReady();
+      } catch {
+        // Ready timeout — attempt play anyway; outer catch handles failures
       }
 
       // Defense-in-depth: catch synchronous failures (e.g., session conflicts)
@@ -422,6 +411,21 @@ class SimpleAudioService {
       } catch {
         await this.waitForPlayerReady();
         player.play();
+      }
+
+      // Activate lock screen controls AFTER play() — Android's mediaPlayback
+      // foreground service refuses to bind unless an active MediaSession exists
+      // to attach to. Binding pre-play yielded "service binding failed" warnings
+      // on Android 14+ even though the FGS declaration and permissions are
+      // correct. iOS is order-insensitive here; doing this last works for both.
+      //
+      // Gated to playlist mode only — single-shot plays (word audio in practice,
+      // word-tap audio in article reading) are ~2s long, never backgrounded
+      // mid-play, and would just push transient garbage into the OS lock screen.
+      // Binding the FGS for those also triggered spurious "service binding
+      // failed" warnings on Android with nothing to show for it.
+      if (this.isPlaylistMode) {
+        this.activateLockScreen(track);
       }
 
       // Update status to playing (actual state will come from event subscription)
@@ -818,7 +822,6 @@ class SimpleAudioService {
 
   /**
    * Internal stop method - disposes player fully.
-   * Player reuse via replace() only happens within ensurePlayer() during active playback.
    */
   private async stopInternal(): Promise<void> {
     this.stopEventSubscription();

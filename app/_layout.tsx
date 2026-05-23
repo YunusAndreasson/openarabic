@@ -1,15 +1,17 @@
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import NetInfo, { type NetInfoState } from '@react-native-community/netinfo';
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider as NavigationThemeProvider,
-} from "expo-router/react-navigation";
 import * as Sentry from '@sentry/react-native';
 import { QueryClient, onlineManager } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { useFonts } from 'expo-font';
-import { Stack, useNavigationContainerRef, useRouter, useSegments } from 'expo-router';
+import {
+  DarkTheme,
+  DefaultTheme,
+  Stack,
+  ThemeProvider as NavigationThemeProvider,
+  useNavigationContainerRef,
+  useRouter,
+} from 'expo-router';
 import * as NavigationBar from 'expo-navigation-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -191,9 +193,7 @@ function AppContent() {
   const backgroundedTime = useRef<number | null>(null);
   const { isLoading: isAuthLoading, session } = useAuth();
   const navigationRef = useNavigationContainerRef();
-  const initialNavigationDone = useRef(false);
   const router = useRouter();
-  const segments = useSegments();
 
   // Load fonts at runtime for Expo Go compatibility
   // PostScript names are used for cross-platform consistency (especially iOS)
@@ -443,51 +443,17 @@ function AppContent() {
     return () => subscription.remove();
   }, [appReady, preloadAppData]);
 
-  // Perform session-based navigation after app is ready and navigation is mounted
-  // This effect handles both initial load AND subsequent auth state changes (sign in/out)
-  // Pattern follows Expo Router docs: https://docs.expo.dev/router/advanced/authentication/
-  useEffect(() => {
-    // Wait for auth to resolve and router to be ready
-    if (!appReady || isAuthLoading) return;
-
-    // Determine current location from segments (always has at least 1 element when router is ready)
-    const inAuthGroup = segments[0] === 'auth';
-    const inTabsGroup = segments[0] === '(tabs)';
-
-    try {
-      if (!initialNavigationDone.current) {
-        // Initial navigation - only navigate if we're not already at the correct destination
-        initialNavigationDone.current = true;
-
-        if (session && !inTabsGroup) {
-          // User has session but not in tabs - navigate to main app
-          router.replace(ROUTE_PATHS.EXPLORE_TAB);
-        } else if (!session && !inAuthGroup) {
-          // User has no session and not in auth - navigate to auth
-          router.replace(ROUTE_PATHS.AUTH);
-        }
-        // Otherwise, already at correct destination - no navigation needed (no animation)
-      } else if (session && inAuthGroup) {
-        // Subsequent session change: user just signed in while on auth screen
-        // Navigate to main app when session becomes available
-        router.replace(ROUTE_PATHS.EXPLORE_TAB);
-      }
-      // Note: Sign out is handled by the auth screen's own navigation
-    } catch (err) {
-      Sentry.captureException(err, {
-        tags: {
-          location: 'app_layout',
-          action: 'session_redirect',
-        },
-      });
-      router.replace(ROUTE_PATHS.AUTH);
-    }
-  }, [appReady, isAuthLoading, session, router, segments]);
+  // Auth-gated navigation is handled declaratively below via <Stack.Protected>
+  // guards on the route groups. The runtime redirects users to the next
+  // available unprotected route when a guard flips, and enforces guards on
+  // deep links automatically — no imperative router.replace needed.
 
   // Don't render Stack until app is ready to prevent slide animation on initial load
   if (!appReady) {
     return null;
   }
+
+  const isAuthenticated = !!session;
 
   return (
     <NavigationThemeProvider value={navigationTheme}>
@@ -503,34 +469,47 @@ function AppContent() {
                 contentStyle: { backgroundColor: colors.background },
               }}
             >
-              <Stack.Screen
-                name="(tabs)"
-                options={{
-                  animation: 'none', // Disable animation to prevent black screen
-                  freezeOnBlur: false, // Keep tabs active
-                }}
-              />
-              <Stack.Screen
-                name="auth"
-                options={{
-                  animation: 'fade',
-                  freezeOnBlur: false, // Keep auth screen active
-                }}
-              />
-              <Stack.Screen
-                name="article/[id]"
-                options={createNavigationOptions(colors, {
-                  headerShown: false,
-                  freezeOnBlur: true, // Optimize article screen when backgrounded
-                })}
-              />
-              <Stack.Screen
-                name="review"
-                options={createNavigationOptions(colors, {
-                  headerShown: false,
-                  freezeOnBlur: true,
-                })}
-              />
+              {/* Authenticated routes — guard flips on sign-out, router unmounts these */}
+              <Stack.Protected guard={isAuthenticated}>
+                <Stack.Screen
+                  name="(tabs)"
+                  options={{
+                    // Animation re-enabled after Stack.Protected migration. The
+                    // previous `animation: 'none'` worked around a black-screen
+                    // bug caused by imperative router.replace racing with mount.
+                    // Declarative guards mount directly into the right route, so
+                    // the race is gone — fade matches the auth screen for a
+                    // symmetric sign-in / sign-out transition.
+                    animation: 'fade',
+                    freezeOnBlur: false, // Keep tabs active
+                  }}
+                />
+                <Stack.Screen
+                  name="article/[id]"
+                  options={createNavigationOptions(colors, {
+                    headerShown: false,
+                    freezeOnBlur: true, // Optimize article screen when backgrounded
+                  })}
+                />
+                <Stack.Screen
+                  name="review"
+                  options={createNavigationOptions(colors, {
+                    headerShown: false,
+                    freezeOnBlur: true,
+                  })}
+                />
+              </Stack.Protected>
+
+              {/* Unauthenticated routes — guard flips on sign-in, router unmounts auth */}
+              <Stack.Protected guard={!isAuthenticated}>
+                <Stack.Screen
+                  name="auth"
+                  options={{
+                    animation: 'fade',
+                    freezeOnBlur: false, // Keep auth screen active
+                  }}
+                />
+              </Stack.Protected>
 
               {/* Audio overlays - mini-player and sleep timer */}
             </Stack>
