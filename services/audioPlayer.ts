@@ -16,11 +16,17 @@ import { playTransitionSound } from '@/utils/transitionSound';
 // Event constant for playback status updates
 const PLAYBACK_STATUS_UPDATE = 'playbackStatusUpdate';
 
-// Audio mode configuration for consistent behavior across iOS and Android
+// Audio mode configuration for consistent behavior across iOS and Android.
+// allowsRecording MUST be true: this service preconfigures the iOS AVAudioSession
+// on app start and re-applies on every playback, and react-native-audio-api's
+// later `setAudioSessionOptions({ iosCategory: 'playAndRecord' })` from the
+// Parakeet voice recorder can't override it once the session is active in
+// playback-only mode. Setting it true here just *allows* the playAndRecord
+// category — it does not record on its own, and the playback path is unchanged.
 const AUDIO_MODE_CONFIG = {
   shouldPlayInBackground: true,
   playsInSilentMode: true,
-  allowsRecording: false,
+  allowsRecording: true,
   // Unified field replaces the deprecated interruptionModeIOS / interruptionModeAndroid pair
   interruptionMode: 'doNotMix' as const,
   shouldRouteThroughEarpiece: false,

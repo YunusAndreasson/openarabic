@@ -90,10 +90,14 @@ export function useVoiceReview({
   const armedForKeyRef = useRef<string | null>(null);
 
   // Reset on every new card. Latched state tied to currentWordKey transitions —
-  // a ref alone wouldn't re-render the indicator overlay.
+  // a ref alone wouldn't re-render the indicator overlay. Debug is also reset
+  // so the HUD never shows last card's transcript / stats during this card's
+  // listening window.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPhase('idle');
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDebug({ transcript: '', match: null, recorder: null, armError: null });
     armedForKeyRef.current = null;
   }, [currentWordKey]);
 

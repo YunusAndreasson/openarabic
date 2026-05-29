@@ -280,7 +280,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
           </ThemedText>
           {voiceDebug.recorder && (
             <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
-              {`rec: ${voiceDebug.recorder.stopReason} · ${voiceDebug.recorder.durationMs}ms · ${voiceDebug.recorder.bufferCount}buf · peak ${voiceDebug.recorder.peakRms.toFixed(3)} · ${voiceDebug.recorder.heardSpeech ? 'speech' : 'silent'}`}
+              {`rec: ${voiceDebug.recorder.stopReason} · ${voiceDebug.recorder.durationMs}ms · ${voiceDebug.recorder.bufferCount}buf · peak ${voiceDebug.recorder.peakRms.toFixed(5)} · ${voiceDebug.recorder.heardSpeech ? 'speech' : 'silent'}`}
             </ThemedText>
           )}
           {voiceDebug.transcript.length > 0 && (
