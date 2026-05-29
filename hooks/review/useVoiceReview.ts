@@ -27,7 +27,13 @@ export interface VoiceDebug {
   /** Trimmed Parakeet output for the most recent recording, '' if none. */
   transcript: string;
   /** Outcome of matchSingleWord on the most recent recording. */
-  match: { matched: boolean; method: string; spoken: string; expected: string } | null;
+  match: {
+    matched: boolean;
+    method: string;
+    similarity: number;
+    spoken: string;
+    expected: string;
+  } | null;
   /** Raw recorder stats from the most recent stop. */
   recorder: {
     durationMs: number;
@@ -214,6 +220,7 @@ export function useVoiceReview({
         match: {
           matched: match.matched,
           method: match.method,
+          similarity: match.similarity,
           spoken: match.normalizedSpoken,
           expected: match.normalizedExpected,
         },

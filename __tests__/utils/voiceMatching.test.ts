@@ -138,4 +138,43 @@ describe('voiceMatching', () => {
       expect(r.matched).toBe(true);
     });
   });
+
+  describe('matchSingleWord — fuzzy fallback', () => {
+    it('accepts a two-letter swap on a multi-word phrase', () => {
+      const r = matchSingleWord({ spoken: 'Humbel Himself', expected: 'humble himself' });
+      expect(r.matched).toBe(true);
+      expect(r.similarity).toBeGreaterThanOrEqual(0.7);
+    });
+
+    it('accepts a dropped syllable above the similarity threshold', () => {
+      const r = matchSingleWord({ spoken: 'isolat', expected: 'isolated' });
+      expect(r.matched).toBe(true);
+      expect(r.similarity).toBeGreaterThanOrEqual(0.7);
+    });
+
+    it('still rejects an unrelated word below the threshold', () => {
+      const r = matchSingleWord({ spoken: 'banana', expected: 'humble himself' });
+      expect(r.matched).toBe(false);
+      expect(r.similarity).toBeLessThan(0.7);
+    });
+
+    it('still rejects close-but-different short words (no fuzzy on digits, low sim)', () => {
+      const r = matchSingleWord({ spoken: 'cot', expected: 'cat' });
+      expect(r.matched).toBe(false);
+    });
+  });
+
+  describe('matchSingleWord — similarity score is always populated', () => {
+    it('exact match has similarity 1', () => {
+      const r = matchSingleWord({ spoken: 'mercy', expected: 'mercy' });
+      expect(r.similarity).toBe(1);
+    });
+
+    it('miss reports best similarity for debug HUD', () => {
+      const r = matchSingleWord({ spoken: 'apple', expected: 'knowledge' });
+      expect(r.matched).toBe(false);
+      expect(r.similarity).toBeGreaterThanOrEqual(0);
+      expect(r.similarity).toBeLessThan(0.7);
+    });
+  });
 });

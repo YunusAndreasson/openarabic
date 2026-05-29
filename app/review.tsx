@@ -295,7 +295,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
           )}
           {voiceDebug.match && (
             <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
-              {`match: ${voiceDebug.match.matched ? '✓' : '✗'} ${voiceDebug.match.method} · expected "${voiceDebug.match.expected}"`}
+              {`match: ${voiceDebug.match.matched ? '✓' : '✗'} ${voiceDebug.match.method} · sim ${voiceDebug.match.similarity.toFixed(2)} · expected "${voiceDebug.match.expected}"`}
             </ThemedText>
           )}
           {voiceDebug.armError && (

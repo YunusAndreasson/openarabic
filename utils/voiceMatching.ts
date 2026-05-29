@@ -97,15 +97,33 @@ const ASR_HALLUCINATIONS = new Set([
   'please subscribe',
 ]);
 
-export type MatchMethod = 'exact' | 'edit' | 'phonetic' | 'hallucination' | 'miss';
+export type MatchMethod = 'exact' | 'edit' | 'phonetic' | 'fuzzy' | 'hallucination' | 'miss';
+
+/**
+ * Self-graded recall app: lenient enough that "fuzzy" still counts. Threshold
+ * is on `1 - lev / max(len1, len2)`, so 0.70 means up to ~30 % of the longer
+ * string can differ. Picks up: e/l swap ("humbel" → "humble"), single-token
+ * drop on a phrase ("humble" caught instead of "humble himself"), and similar
+ * close-but-not-exact ASR mishears that the length-scaled edit budget misses.
+ */
+const FUZZY_MIN_SIMILARITY = 0.7;
 
 export interface SingleWordMatchResult {
   matched: boolean;
   method: MatchMethod;
+  /** Best similarity score across compared variants (1.0 = identical). Always
+   *  reported so the HUD can show "match 0.82" / "miss 0.41". */
+  similarity: number;
   /** Normalized spoken text — surfaced for debug / analytics. */
   normalizedSpoken: string;
   /** Normalized expected text — surfaced for debug / analytics. */
   normalizedExpected: string;
+}
+
+function similarityRatio(a: string, b: string): number {
+  const longest = Math.max(a.length, b.length);
+  if (longest === 0) return 1;
+  return 1 - levenshtein(a, b) / longest;
 }
 
 /**
@@ -126,37 +144,74 @@ export function matchSingleWord({
   const normalizedExpected = normalize(expected);
 
   if (normalizedSpoken.length === 0) {
-    return { matched: false, method: 'miss', normalizedSpoken, normalizedExpected };
+    return { matched: false, method: 'miss', similarity: 0, normalizedSpoken, normalizedExpected };
   }
   if (ASR_HALLUCINATIONS.has(normalizedSpoken)) {
-    return { matched: false, method: 'hallucination', normalizedSpoken, normalizedExpected };
+    return {
+      matched: false,
+      method: 'hallucination',
+      similarity: 0,
+      normalizedSpoken,
+      normalizedExpected,
+    };
   }
   if (normalizedExpected.length === 0) {
-    return { matched: false, method: 'miss', normalizedSpoken, normalizedExpected };
+    return { matched: false, method: 'miss', similarity: 0, normalizedSpoken, normalizedExpected };
   }
 
   if (normalizedSpoken === normalizedExpected) {
-    return { matched: true, method: 'exact', normalizedSpoken, normalizedExpected };
+    return {
+      matched: true,
+      method: 'exact',
+      similarity: 1,
+      normalizedSpoken,
+      normalizedExpected,
+    };
   }
 
   const spokenTokens = normalizedSpoken.split(' ').filter(Boolean);
   // Exact token hit anywhere in the utterance ("the answer is knowledge").
   if (spokenTokens.includes(normalizedExpected)) {
-    return { matched: true, method: 'exact', normalizedSpoken, normalizedExpected };
+    return {
+      matched: true,
+      method: 'exact',
+      similarity: 1,
+      normalizedSpoken,
+      normalizedExpected,
+    };
   }
+
+  // Track the best similarity score across all comparisons — surfaced in the
+  // result so the HUD can show a "miss 0.62" instead of just "miss". `bestSim`
+  // is also used by the fuzzy fallback at the bottom.
+  let bestSim = similarityRatio(normalizedSpoken, normalizedExpected);
 
   const budget = editBudget(normalizedExpected);
   if (budget > 0) {
     for (const tok of spokenTokens) {
+      const sim = similarityRatio(tok, normalizedExpected);
+      if (sim > bestSim) bestSim = sim;
       if (levenshtein(tok, normalizedExpected) <= budget) {
-        return { matched: true, method: 'edit', normalizedSpoken, normalizedExpected };
+        return {
+          matched: true,
+          method: 'edit',
+          similarity: sim,
+          normalizedSpoken,
+          normalizedExpected,
+        };
       }
     }
   }
 
   for (const tok of spokenTokens) {
     if (foldsEqual(tok, normalizedExpected)) {
-      return { matched: true, method: 'phonetic', normalizedSpoken, normalizedExpected };
+      return {
+        matched: true,
+        method: 'phonetic',
+        similarity: Math.max(bestSim, similarityRatio(tok, normalizedExpected)),
+        normalizedSpoken,
+        normalizedExpected,
+      };
     }
   }
 
@@ -164,8 +219,16 @@ export function matchSingleWord({
   // a space ("knowle dge"). Compare the despaced strings under the same budget.
   const despacedSpoken = normalizedSpoken.replace(/ /g, '');
   const despacedExpected = normalizedExpected.replace(/ /g, '');
+  const despacedSim = similarityRatio(despacedSpoken, despacedExpected);
+  if (despacedSim > bestSim) bestSim = despacedSim;
   if (despacedSpoken === despacedExpected) {
-    return { matched: true, method: 'exact', normalizedSpoken, normalizedExpected };
+    return {
+      matched: true,
+      method: 'exact',
+      similarity: 1,
+      normalizedSpoken,
+      normalizedExpected,
+    };
   }
   if (
     !/\d/.test(despacedExpected) &&
@@ -173,11 +236,45 @@ export function matchSingleWord({
     budget > 0 &&
     levenshtein(despacedSpoken, despacedExpected) <= budget
   ) {
-    return { matched: true, method: 'edit', normalizedSpoken, normalizedExpected };
+    return {
+      matched: true,
+      method: 'edit',
+      similarity: despacedSim,
+      normalizedSpoken,
+      normalizedExpected,
+    };
   }
   if (foldsEqual(despacedSpoken, despacedExpected)) {
-    return { matched: true, method: 'phonetic', normalizedSpoken, normalizedExpected };
+    return {
+      matched: true,
+      method: 'phonetic',
+      similarity: despacedSim,
+      normalizedSpoken,
+      normalizedExpected,
+    };
   }
 
-  return { matched: false, method: 'miss', normalizedSpoken, normalizedExpected };
+  // Generous fuzzy fallback: catch any close call the budget missed. Multi-
+  // word phrases especially: budget(14) is 4 but the despaced strings could
+  // legitimately differ by more when ASR drops/adds a syllable, and we'd
+  // rather over-credit on a self-graded recall app than reject "humble
+  // himself" because it was heard as "humbel himself". Digits are excluded
+  // because "iso9000" vs "iso8000" should always be a miss.
+  if (!/\d/.test(despacedExpected) && bestSim >= FUZZY_MIN_SIMILARITY) {
+    return {
+      matched: true,
+      method: 'fuzzy',
+      similarity: bestSim,
+      normalizedSpoken,
+      normalizedExpected,
+    };
+  }
+
+  return {
+    matched: false,
+    method: 'miss',
+    similarity: bestSim,
+    normalizedSpoken,
+    normalizedExpected,
+  };
 }
