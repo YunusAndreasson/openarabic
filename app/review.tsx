@@ -12,7 +12,7 @@ import {
   ReviewCard,
   ReviewHeader,
 } from '@/components/review';
-import { useTutorialContext } from '@/components/providers';
+import { useTutorialContext, useVoiceGrading } from '@/components/providers';
 import { SwipeGestureTutorial } from '@/components/tutorials/SwipeGestureTutorial';
 import { PulsatingLoader } from '@/components/ui';
 import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
@@ -146,13 +146,14 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   // Voice grading — when the toggle is on, auto-arms the mic after each card
   // settles. Match → silently advance as Known. Miss → reveal the meaning and
   // let the user pick Known / Unknown.
-  const { phase: voicePhase } = useVoiceReview({
+  const { phase: voicePhase, debug: voiceDebug } = useVoiceReview({
     expected: currentWord?.root?.meaning ?? null,
     currentWordKey,
     ready: !isUpdating && !isLoading && isAudioPreloadingComplete && !isComplete,
     onKnownAuto: handleSwipeRight,
     onRevealAnswer: revealMeaningPassive,
   });
+  const voice = useVoiceGrading();
 
   // Track if review session is still initializing (first word not yet loaded)
   const isInitializing = useMemo(() => {
@@ -264,6 +265,42 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
         </View>
       )}
 
+      {/* Voice debug HUD — visible while the toggle is on so user can see
+          exactly what the pipeline is doing without leaving the screen. */}
+      {voice.enabled && (
+        <View
+          pointerEvents="none"
+          style={[voiceDebugStyles.container, { top: insets.top + LAYOUT.SPACING.LARGE * 2 }]}
+        >
+          <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
+            {`model: ${voice.isReady ? 'ready' : voice.error ? `error: ${voice.error}` : `dl ${Math.round((voice.downloadProgress ?? 0) * 100)}%`}`}
+          </ThemedText>
+          <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
+            {`phase: ${voicePhase}`}
+          </ThemedText>
+          {voiceDebug.recorder && (
+            <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
+              {`rec: ${voiceDebug.recorder.stopReason} · ${voiceDebug.recorder.durationMs}ms · ${voiceDebug.recorder.bufferCount}buf · peak ${voiceDebug.recorder.peakRms.toFixed(3)} · ${voiceDebug.recorder.heardSpeech ? 'speech' : 'silent'}`}
+            </ThemedText>
+          )}
+          {voiceDebug.transcript.length > 0 && (
+            <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
+              {`heard: "${voiceDebug.transcript}"`}
+            </ThemedText>
+          )}
+          {voiceDebug.match && (
+            <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
+              {`match: ${voiceDebug.match.matched ? '✓' : '✗'} ${voiceDebug.match.method} · expected "${voiceDebug.match.expected}"`}
+            </ThemedText>
+          )}
+          {voiceDebug.armError && (
+            <ThemedText colorName="error" type="caption" style={voiceDebugStyles.line}>
+              {`arm error: ${voiceDebug.armError}`}
+            </ThemedText>
+          )}
+        </View>
+      )}
+
       {/* Contextual help overlay - shown when tapping bottom buttons */}
       <SwipeGestureTutorial
         visible={contextualHelpType !== null}
@@ -283,6 +320,23 @@ const voiceHintStyles = StyleSheet.create({
   } as ViewStyle,
   text: {
     textAlign: 'center',
+  } as TextStyle,
+});
+
+const voiceDebugStyles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    left: LAYOUT.SPACING.LARGE,
+    right: LAYOUT.SPACING.LARGE,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    gap: 2,
+  } as ViewStyle,
+  line: {
+    fontSize: 11,
+    lineHeight: 14,
   } as TextStyle,
 });
 

@@ -22,6 +22,24 @@ import { matchSingleWord } from '@/utils/voiceMatching';
 
 export type VoicePhase = 'idle' | 'listening' | 'checking' | 'revealed' | 'disabled';
 
+/** Last-recording diagnostics surfaced to the on-screen voice HUD. */
+export interface VoiceDebug {
+  /** Trimmed Parakeet output for the most recent recording, '' if none. */
+  transcript: string;
+  /** Outcome of matchSingleWord on the most recent recording. */
+  match: { matched: boolean; method: string; spoken: string; expected: string } | null;
+  /** Raw recorder stats from the most recent stop. */
+  recorder: {
+    durationMs: number;
+    bufferCount: number;
+    stopReason: string;
+    heardSpeech: boolean;
+    peakRms: number;
+  } | null;
+  /** Last terminal arm() outcome (permission / busy / error / etc.). */
+  armError: string | null;
+}
+
 interface UseVoiceReviewArgs {
   /** The English meaning expected from the user. Empty if no current card. */
   expected: string | null | undefined;
@@ -45,13 +63,19 @@ export function useVoiceReview({
   ready,
   onKnownAuto,
   onRevealAnswer,
-}: UseVoiceReviewArgs): { phase: VoicePhase } {
+}: UseVoiceReviewArgs): { phase: VoicePhase; debug: VoiceDebug } {
   const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
   const voice = useVoiceGrading();
   const dispatch = useAppDispatch();
   const { showToast } = useToast();
 
   const [phase, setPhase] = useState<VoicePhase>('idle');
+  const [debug, setDebug] = useState<VoiceDebug>({
+    transcript: '',
+    match: null,
+    recorder: null,
+    armError: null,
+  });
 
   // Stable refs for callback identity.
   const onKnownAutoRef = useRef(onKnownAuto);
@@ -116,6 +140,7 @@ export function useVoiceReview({
           });
           showToast(STRINGS.VOICE_MIC_PERMISSION_DENIED);
           dispatch(setVoiceEnabled(false));
+          setDebug(d => ({ ...d, armError: 'permission' }));
           setPhase('disabled');
           return;
         }
@@ -125,11 +150,26 @@ export function useVoiceReview({
           message: 'voice.arm.failed',
           data: { reason: outcome.reason },
         });
+        setDebug(d => ({
+          ...d,
+          armError: outcome.message ? `${outcome.reason}: ${outcome.message}` : outcome.reason,
+        }));
         setPhase('idle');
         return;
       }
 
       setPhase('checking');
+      setDebug(d => ({
+        ...d,
+        armError: null,
+        recorder: {
+          durationMs: outcome.result.durationMs,
+          bufferCount: outcome.result.bufferCount,
+          stopReason: outcome.result.stopReason,
+          heardSpeech: outcome.result.heardSpeech,
+          peakRms: outcome.result.peakRms,
+        },
+      }));
       const transcript = (await voice.transcribe(outcome.result.waveform)) ?? '';
       if (cancelled) return;
 
@@ -138,6 +178,8 @@ export function useVoiceReview({
         durationMs: outcome.result.durationMs,
         heardSpeech: outcome.result.heardSpeech,
         peakRms: outcome.result.peakRms,
+        bufferCount: outcome.result.bufferCount,
+        stopReason: outcome.result.stopReason,
       });
 
       const match = matchSingleWord({ spoken: transcript, expected });
@@ -158,6 +200,16 @@ export function useVoiceReview({
           expected: match.normalizedExpected,
         },
       });
+      setDebug(d => ({
+        ...d,
+        transcript,
+        match: {
+          matched: match.matched,
+          method: match.method,
+          spoken: match.normalizedSpoken,
+          expected: match.normalizedExpected,
+        },
+      }));
       if (match.matched) {
         onKnownAutoRef.current();
         // Phase resets when the next card mounts (currentWordKey change).
@@ -184,5 +236,5 @@ export function useVoiceReview({
     showToast,
   ]);
 
-  return { phase };
+  return { phase, debug };
 }

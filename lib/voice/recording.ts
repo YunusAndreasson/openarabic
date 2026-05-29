@@ -44,7 +44,10 @@ export const DEFAULT_RECORDING_CONFIG: RecordingConfig = {
   noiseRiseRate: 0.01,
   silenceHangMs: 900,
   minDurationMs: 600,
-  maxDurationMs: 10000,
+  // 15 s matches the edenmind-v2 reference that's known to grade well on
+  // device; 10 s left too little headroom for slow / hesitating speakers
+  // before the energy gate's silenceHangMs (900 ms) could fire.
+  maxDurationMs: 15000,
   gainNormalizeEnabled: true,
   captureTarget: 0.7,
   captureMaxGain: 60,
