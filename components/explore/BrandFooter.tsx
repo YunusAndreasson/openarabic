@@ -1,3 +1,4 @@
+import * as Updates from 'expo-updates';
 import { Image } from 'expo-image';
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -13,17 +14,33 @@ interface BrandFooterProps {
 
 const CURRENT_YEAR = new Date().getFullYear();
 
+// First 8 chars of the update group UUID is enough to disambiguate against
+// `eas update:list` output. "embedded" means no OTA has been applied yet — the
+// app is running the JS bundle baked into the binary.
+function getOtaLabel(): string {
+  const id = Updates.updateId;
+  const channel = Updates.channel ?? 'unknown';
+  if (!id) return `OTA embedded · ${channel}`;
+  return `OTA ${id.slice(0, 8)} · ${channel}`;
+}
+
 export const BrandFooter = memo(({ showDetails = false }: BrandFooterProps) => {
   // Use pkg.version directly to ensure build number is included (format: "1447.5.37+188")
   const versionString = pkg.version || '0.0.0';
   const [version, buildNumber] = versionString.split('+');
   const versionDisplay = buildNumber ? `Version ${version} (${buildNumber})` : `Version ${version}`;
+  const otaLabel = showDetails ? getOtaLabel() : null;
 
   return (
     <View style={styles.container}>
       {showDetails && (
         <ThemedText type="caption" colorName="textTertiary" style={styles.version}>
           {versionDisplay}
+        </ThemedText>
+      )}
+      {otaLabel && (
+        <ThemedText type="caption" colorName="textTertiary" style={styles.version}>
+          {otaLabel}
         </ThemedText>
       )}
       <ThemedText type="caption" colorName="textTertiary" style={styles.copyright}>

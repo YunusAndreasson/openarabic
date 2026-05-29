@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 
-import { createNavigationOptions, type NativeStackNavigationOptions } from './navigationOptions';
+import type { NativeStackNavigationOptions } from './navigationOptions';
 
 interface TabHeaderOptions {
   readonly title: string;
@@ -13,16 +13,29 @@ interface TabHeaderOptions {
 }
 
 /**
- * Tab-root header options: native iOS large title that collapses on scroll
- * (HIG-conforming), with a small inline title once the user scrolls past it.
+ * Tab-root header options: native iOS large title that collapses to a small
+ * centered title on scroll, with the nav bar background fading from transparent
+ * to opaque as content slides under it (the iOS HIG Mail/Photos pattern).
  *
- * iOS large-title collapse requires:
- *   1. `headerLargeTitle: true` on the Stack.Screen
- *   2. a native `title` string (not the custom `headerTitle` JSX that
- *      `createNavigationOptions` would otherwise install — UIKit can't drive a
- *      collapsing animation against a React Element)
- *   3. a top-level scrollable in the route with
- *      `contentInsetAdjustmentBehavior="automatic"`
+ * Recipe — all three are required:
+ *   1. `headerLargeTitle: true` on the Stack.Screen.
+ *   2. A native string `title` (NOT a custom `headerTitle` JSX — UIKit can't
+ *      drive a collapse animation against a React Element).
+ *   3. The screen's content scrollable sets
+ *      `contentInsetAdjustmentBehavior="automatic"` and fills the screen.
+ *
+ * Why this helper does NOT go through `createNavigationOptions`:
+ *   - createNavigationOptions sets `headerStyle: { backgroundColor }` for every
+ *     screen. On iOS native-stack, that color is applied to BOTH
+ *     standardAppearance and scrollEdgeAppearance, making the bar opaque in
+ *     both states — which kills the scroll-edge fade. Tab roots leave it unset
+ *     and rely on the React Navigation theme's `card` color (set in
+ *     `app/_layout.tsx`'s navigationTheme) to color the standard appearance.
+ *     scrollEdgeAppearance then stays at the iOS default (transparent) and the
+ *     bar fades correctly.
+ *   - createNavigationOptions also sets `scrollEdgeEffects: { top: 'soft' }`,
+ *     which is an iOS 26 content-blur prop unrelated to the fade. Edenmind's
+ *     reference implementation does not set it, so we don't either.
  *
  * Upstream Expo issue #40717 (NativeTabs > Stack > Screen swallowing the
  * collapse) was fixed in SDK 56; this used to be a known dead end pre-SDK 56.
@@ -40,23 +53,14 @@ interface TabHeaderOptions {
 export function createTabHeaderOptions({
   title,
   rightComponent,
-  colors,
+  colors: _colors,
 }: TabHeaderOptions): NativeStackNavigationOptions {
-  return createNavigationOptions(colors, {
-    isRegularScreen: true,
-    // Skip the custom left-aligned `headerTitle` JSX — the native large title
-    // is already left-aligned (iOS HIG) and needs the string `title` to drive
-    // the collapse-on-scroll animation. The inline title after collapse is
-    // centered on iOS, matching system tab roots (Mail, Photos, etc.).
-    useNativeTitle: true,
+  return {
     title,
     headerLargeTitle: Platform.OS === 'ios',
+    headerLargeTitleShadowVisible: false,
+    headerShadowVisible: false,
+    headerBackButtonDisplayMode: 'minimal',
     headerRight: rightComponent,
-    // Tab roots sit above the tab bar / iOS 26 bottom accessory; explicitly
-    // hide the bottom edge effect to avoid artifacts where scroll content
-    // meets that chrome. Only relevant on iOS 26+.
-    ...(Platform.OS === 'ios' && {
-      scrollEdgeEffects: { top: 'soft', bottom: 'hidden' },
-    }),
-  });
+  };
 }

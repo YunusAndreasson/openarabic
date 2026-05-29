@@ -2,7 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useFocusEffect, useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useMemo, useRef } from 'react';
-import { InteractionManager, StyleSheet } from 'react-native';
+import { InteractionManager, ScrollView, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import type { ReanimatedCSSAnimationStyle } from '@/types/ui/base.types';
@@ -19,6 +19,7 @@ const MOUNT_FADE_IN_STYLE = {
   animationFillMode: 'forwards' as const,
 } as ReanimatedCSSAnimationStyle;
 
+import { TabScreen } from '@/components/TabScreen';
 import { ThemedView } from '@/components/ThemedView';
 import { ErrorState } from '@/components/common';
 import {
@@ -34,12 +35,14 @@ import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useStudyStreak } from '@/hooks/practice/useStudyStreak';
+import { useColors } from '@/hooks/theme/useColors';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { FloatingActionButton } from '@/components/ui';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 import { calculateWordCategories } from '@/utils/wordClassification';
 
 export default function PracticeScreen(): JSX.Element {
+  const colors = useColors();
   const { user } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -172,16 +175,21 @@ export default function PracticeScreen(): JSX.Element {
   }
 
   // Main content
+  const showFab = dueWordsCount > 0 && hasAnyStudyWords;
+
   return (
-    <ThemedView useSafeArea={false} style={styles.container}>
-      <ThemedView
-        scrollable={true}
-        useSafeArea={false}
-        includeBottomInset={false}
+    <TabScreen
+      background={colors.background}
+      fab={
+        showFab ? (
+          <FloatingActionButton icon="flash" onPress={handleStartReview} />
+        ) : undefined
+      }
+    >
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.contentContainer, { paddingBottom: contentPaddingBottom }]}
-        scrollViewProps={{
-          showsVerticalScrollIndicator: false,
-        }}
       >
         <Animated.View style={[styles.vocabularySection, MOUNT_FADE_IN_STYLE]}>
           <PracticeStatCards
@@ -205,12 +213,8 @@ export default function PracticeScreen(): JSX.Element {
             currentStreak={currentStreak}
           />
         </Animated.View>
-      </ThemedView>
-
-      {dueWordsCount > 0 && hasAnyStudyWords && (
-        <FloatingActionButton icon="flash" onPress={handleStartReview} />
-      )}
-    </ThemedView>
+      </ScrollView>
+    </TabScreen>
   );
 }
 

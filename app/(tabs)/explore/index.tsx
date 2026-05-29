@@ -4,7 +4,7 @@ import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { ThemedView } from '@/components/ThemedView';
+import { TabScreen } from '@/components/TabScreen';
 import { SectionLabel } from '@/components/common';
 import {
   ArticleList,
@@ -19,6 +19,7 @@ import { articleQueries, readingProgressQueries } from '@/constants/queries';
 import { getCategoryFilterRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { useColors } from '@/hooks/theme/useColors';
 import { useToast } from '@/components/providers/ToastProvider';
 import type { CategoryId } from '@/types/branded.types';
 import { handleError } from '@/utils/errorHandling';
@@ -27,7 +28,6 @@ import { mediumFeedback } from '@/utils/haptics';
 const FOOTER_COMPONENT = <BrandFooter />;
 
 const styles = StyleSheet.create({
-  container: LAYOUT.COMMON_STYLES.CONTAINER,
   listContentContainer: LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
 });
 
@@ -46,6 +46,7 @@ function buildEntitiesWithCounts<T extends { id: number; name: string }>(
 }
 
 export default function ExploreScreen(): JSX.Element {
+  const colors = useColors();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { showToast } = useToast();
@@ -168,7 +169,7 @@ export default function ExploreScreen(): JSX.Element {
   }, [articlesData, refreshKey, categoriesWithArticles, handleSelectFilter]);
 
   return (
-    <ThemedView useSafeArea={false} style={styles.container}>
+    <TabScreen background={colors.background}>
       <ArticleList
         contentContainerStyle={styles.listContentContainer}
         isRefreshing={isRefreshing}
@@ -177,7 +178,7 @@ export default function ExploreScreen(): JSX.Element {
         progressViewOffset={LAYOUT.SPACING.XLARGE}
         onRefresh={handleRefresh}
       />
-    </ThemedView>
+    </TabScreen>
   );
 }
 

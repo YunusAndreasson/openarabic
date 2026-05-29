@@ -42,18 +42,15 @@ export default function TabLayout(): JSX.Element {
         // icon itself carries the tint.
         selected: Platform.OS === 'android' ? colors.onTint : colors.tint,
       }}
-      // iOS 26: tab bar shrinks like Safari when scrolling down. No-op on older iOS / Android.
-      minimizeBehavior={Platform.OS === 'ios' ? 'onScrollDown' : undefined}
-      // Pre-iOS-26 parity for the liquid-glass tab bar. iOS 26+ uses its own
-      // glass material and ignores this; older iOS gets a frosted chrome.
-      blurEffect={Platform.OS === 'ios' ? 'systemChromeMaterial' : undefined}
-      // Prevents the iOS 18 and earlier "blur disappears at scroll edge"
-      // artifact when FlashList content reaches the bottom — the docs cite
-      // this prop specifically as the fix for FlatList/FlashList integration.
-      // No-op on iOS 26+ (handled by liquid glass) and Android.
-      disableTransparentOnScrollEdge={Platform.OS === 'ios'}
-      // Android has no system blur, so the bar otherwise defaults to white in
-      // dark mode. Match the theme surface explicitly.
+      // iOS NativeTabs intentionally minimal — matching edenmind's reference
+      // impl. Three iOS-only props (minimizeBehavior, blurEffect,
+      // disableTransparentOnScrollEdge) were previously set; they hook into the
+      // same scroll observers UIKit uses for the top nav bar's large-title
+      // collapse + scroll-edge fade, and at least one of them was silently
+      // killing both. Leaving them at their iOS defaults is what makes Mail /
+      // Photos behave correctly, so we do the same.
+      // Android-only: explicit background because there's no system blur to
+      // fall back on (otherwise the bar reads as bright white in dark mode).
       backgroundColor={Platform.OS === 'android' ? colors.elevation1 : undefined}
       // Android Material 3 expressive theming (no-op on iOS)
       indicatorColor={colors.tint}

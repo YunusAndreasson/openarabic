@@ -257,7 +257,12 @@ function AppContent() {
 
   const colors = useColors();
 
-  // Optimized navigation theme - memoize with stable colors reference
+  // Optimized navigation theme - memoize with stable colors reference.
+  // `card` drives the iOS navigation bar's standardAppearance background.
+  // Setting it to the screen background means tab roots can leave
+  // `headerStyle.backgroundColor` unset and inherit the right color — which in
+  // turn keeps scrollEdgeAppearance at the iOS default (transparent) so the bar
+  // fades from transparent to opaque as content scrolls under the large title.
   const navigationTheme = useMemo(() => {
     const baseTheme = isDark ? DarkTheme : DefaultTheme;
     return {
@@ -265,9 +270,11 @@ function AppContent() {
       colors: {
         ...baseTheme.colors,
         primary: colors.tint,
+        card: colors.background,
+        background: colors.background,
       },
     };
-  }, [isDark, colors.tint]);
+  }, [isDark, colors.tint, colors.background]);
 
   // Set default theme based on system preference if none is set yet
   useEffect(() => {

@@ -9,6 +9,7 @@ import DraggableFlatList from 'react-native-draggable-flatlist';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { TabScreen } from '@/components/TabScreen';
 import { ThemedView } from '@/components/ThemedView';
 import { SavedEmptyState, PlaylistItemCard } from '@/components/playlist';
 import { useToast } from '@/components/providers';
@@ -19,6 +20,7 @@ import { STRINGS } from '@/constants/strings';
 import { usePlaylistScreen, usePlaylistUI } from '@/hooks/playlist';
 import { usePlaylistHeaderActions } from '@/hooks/playlist/usePlaylistHeaderActions';
 import { useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
+import { useColors } from '@/hooks/theme/useColors';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import type { BookmarkItem } from '@/types/bookmark.types';
 import type { ArticleId } from '@/types/branded.types';
@@ -28,9 +30,6 @@ import { getArticleMetadata } from '@/utils/stringUtils';
 
 const styles = StyleSheet.create({
   container: LAYOUT.COMMON_STYLES.CONTAINER,
-  flexOne: {
-    flex: 1,
-  },
 });
 
 // Use responsive height calculation instead of hardcoded value
@@ -114,6 +113,7 @@ const PlaylistListItem = memo(
 PlaylistListItem.displayName = 'PlaylistListItem';
 
 export default function PlaylistScreen(): JSX.Element {
+  const colors = useColors();
   const insets = useSafeAreaInsets();
   const { editMode, reset } = useEditMode('playlist');
   const { showToast } = useToast();
@@ -211,55 +211,59 @@ export default function PlaylistScreen(): JSX.Element {
     );
   }
 
+  const showFab = hasArticles && !shouldShowEmpty && !isMiniPlayerVisible;
+
   return (
-    <ThemedView useSafeArea={false} style={styles.container}>
-      <ThemedView includeBottomInset={false} style={styles.flexOne} useSafeArea={false}>
-        {editMode ? (
-          <DraggableFlatList<BookmarkItem>
-            data={sortedReadingList}
-            keyExtractor={memoizedKeyExtractor}
-            renderItem={renderItem}
-            onDragEnd={handleDragEnd}
-            // iOS best practice: Allow natural bounce behavior for tactile feedback
-            bounces={true}
-            alwaysBounceVertical={true}
-            overScrollMode="always"
-            // `automatic` is required for the iOS large-title collapse-on-scroll
-            // animation that the parent Stack.Screen opts into.
-            contentInsetAdjustmentBehavior="automatic"
-            showsVerticalScrollIndicator={true}
-            contentContainerStyle={listContainerStyle}
-            ItemSeparatorComponent={ItemSeparator}
-            removeClippedSubviews
-            initialNumToRender={6}
-            windowSize={7}
-          />
-        ) : (
-          <FlashList<BookmarkItem>
-            data={sortedReadingList}
-            drawDistance={ITEM_HEIGHT * 3}
-            keyExtractor={memoizedKeyExtractor}
-            scrollEventThrottle={64}
-            // iOS best practice: Allow natural bounce behavior for tactile feedback
-            bounces={true}
-            alwaysBounceVertical={true}
-            overScrollMode="always"
-            // `automatic` is required for the iOS large-title collapse-on-scroll
-            // animation that the parent Stack.Screen opts into.
-            contentInsetAdjustmentBehavior="automatic"
-            showsVerticalScrollIndicator={true}
-            contentContainerStyle={listContainerStyle}
-            ItemSeparatorComponent={ItemSeparator}
-            ListHeaderComponent={null}
-            renderItem={renderItem}
-            maintainVisibleContentPosition={{}} // Prevent scroll jumps when items change (enabled by default)
-          />
-        )}
-      </ThemedView>
-      {hasArticles && !shouldShowEmpty && !isMiniPlayerVisible && (
-        <FloatingActionButton icon="play" onPress={handlePlayAll} loading={isPlayAllLoading} />
+    <TabScreen
+      background={colors.background}
+      fab={
+        showFab ? (
+          <FloatingActionButton icon="play" onPress={handlePlayAll} loading={isPlayAllLoading} />
+        ) : undefined
+      }
+    >
+      {editMode ? (
+        <DraggableFlatList<BookmarkItem>
+          data={sortedReadingList}
+          keyExtractor={memoizedKeyExtractor}
+          renderItem={renderItem}
+          onDragEnd={handleDragEnd}
+          // iOS best practice: Allow natural bounce behavior for tactile feedback
+          bounces={true}
+          alwaysBounceVertical={true}
+          overScrollMode="always"
+          // `automatic` is required for the iOS large-title collapse-on-scroll
+          // animation that the parent Stack.Screen opts into.
+          contentInsetAdjustmentBehavior="automatic"
+          showsVerticalScrollIndicator={true}
+          contentContainerStyle={listContainerStyle}
+          ItemSeparatorComponent={ItemSeparator}
+          removeClippedSubviews
+          initialNumToRender={6}
+          windowSize={7}
+        />
+      ) : (
+        <FlashList<BookmarkItem>
+          data={sortedReadingList}
+          drawDistance={ITEM_HEIGHT * 3}
+          keyExtractor={memoizedKeyExtractor}
+          scrollEventThrottle={64}
+          // iOS best practice: Allow natural bounce behavior for tactile feedback
+          bounces={true}
+          alwaysBounceVertical={true}
+          overScrollMode="always"
+          // `automatic` is required for the iOS large-title collapse-on-scroll
+          // animation that the parent Stack.Screen opts into.
+          contentInsetAdjustmentBehavior="automatic"
+          showsVerticalScrollIndicator={true}
+          contentContainerStyle={listContainerStyle}
+          ItemSeparatorComponent={ItemSeparator}
+          ListHeaderComponent={null}
+          renderItem={renderItem}
+          maintainVisibleContentPosition={{}} // Prevent scroll jumps when items change (enabled by default)
+        />
       )}
-    </ThemedView>
+    </TabScreen>
   );
 }
 
