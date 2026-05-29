@@ -38,6 +38,7 @@ import {
   FSRSDataProvider,
   ToastProvider,
   TutorialProvider,
+  VoiceGradingProvider,
 } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TIMING_CONSTANTS } from '@/constants/animation';
@@ -457,6 +458,7 @@ function AppContent() {
     <NavigationThemeProvider value={navigationTheme}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <FSRSDataProvider userId={session?.user?.id}>
+          <VoiceGradingProvider>
           <GlobalAudioStateProvider>
             <Stack
               screenOptions={{
@@ -567,6 +569,7 @@ function AppContent() {
 
             <StatusBar style={isDark ? 'light' : 'dark'} />
           </GlobalAudioStateProvider>
+          </VoiceGradingProvider>
         </FSRSDataProvider>
       </View>
     </NavigationThemeProvider>

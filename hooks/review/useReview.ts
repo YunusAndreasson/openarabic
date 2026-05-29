@@ -51,6 +51,10 @@ interface UseReviewReturn {
   isAudioPreloading: boolean;
   audioPreloadProgress: number;
   isAudioPreloadingComplete: boolean;
+  /** Show the English meaning + play English audio without advancing the card.
+   *  Used by the voice-grading flow on a missed transcript: the user gets the
+   *  answer as a study aid but still chooses Known / Unknown manually. */
+  revealMeaningPassive: () => void;
 }
 
 // Timing constants for transitions (milliseconds)
@@ -295,6 +299,21 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       return false;
     }
   }, []);
+
+  // Voice-grading miss path: reveal the meaning + play the English audio, but
+  // do NOT schedule processFeedback. The card stays open for the user to pick.
+  const revealMeaningPassive = useCallback(() => {
+    if (stateRefs.current.isUpdatingWord || isComplete || stateRefs.current.completionTriggered) {
+      return;
+    }
+    displayMeaning();
+    if (currentWord?.root?.audio_url_en) {
+      const englishAudioUrl = generateStorageUrl('audio', currentWord.root.audio_url_en);
+      if (englishAudioUrl) {
+        playAudio(englishAudioUrl).catch(handleError);
+      }
+    }
+  }, [currentWord, displayMeaning, isComplete, playAudio]);
 
   const handleKnowledgeResponse = useCallback(
     (confidence: 'known' | 'unknown') => {
@@ -679,5 +698,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     isAudioPreloading,
     audioPreloadProgress,
     isAudioPreloadingComplete,
+    revealMeaningPassive,
   };
 }

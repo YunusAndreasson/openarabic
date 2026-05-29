@@ -21,6 +21,7 @@ export interface SettingsState {
   displayLanguagePreference: DisplayLanguage;
   dailyWordLimit: number; // Number of words that can be added per day (0 = unlimited)
   hapticsEnabled: boolean; // Vibration for button presses and interactions
+  voiceEnabled: boolean; // Speak the English answer in Practice
 }
 
 const initialState: SettingsState = {
@@ -36,6 +37,7 @@ const initialState: SettingsState = {
   displayLanguagePreference: DisplayLanguage.ARABIC_ENGLISH, // Default to Arabic + English
   dailyWordLimit: 10, // Default to 10 words per day for getting started
   hapticsEnabled: true, // Default to enabled for haptic feedback
+  voiceEnabled: false, // Opt-in; downloads a ~460 MB model on enable
 };
 
 const settingsSlice = createSlice({
@@ -66,6 +68,9 @@ const settingsSlice = createSlice({
     setHapticsEnabled: (state, action: PayloadAction<boolean>) => {
       state.hapticsEnabled = action.payload;
     },
+    setVoiceEnabled: (state, action: PayloadAction<boolean>) => {
+      state.voiceEnabled = action.payload;
+    },
   },
 });
 
@@ -78,5 +83,6 @@ export const {
   setDisplayLanguagePreference,
   setDailyWordLimit,
   setHapticsEnabled,
+  setVoiceEnabled,
 } = settingsSlice.actions;
 export default settingsSlice.reducer;

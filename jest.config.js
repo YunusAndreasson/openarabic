@@ -62,6 +62,13 @@ module.exports = {
     'expo-audio': '<rootDir>/__mocks__/expo-audio.js',
     'expo-asset': '<rootDir>/__mocks__/expo-asset.js',
 
+    // Voice grading native modules
+    'react-native-audio-api': '<rootDir>/__mocks__/react-native-audio-api.js',
+    '^react-native-sherpa-onnx$': '<rootDir>/__mocks__/react-native-sherpa-onnx.js',
+    '^react-native-sherpa-onnx/download$':
+      '<rootDir>/__mocks__/react-native-sherpa-onnx-download.js',
+    '^react-native-sherpa-onnx/stt$': '<rootDir>/__mocks__/react-native-sherpa-onnx-stt.js',
+
     // Path aliases for cleaner imports
     '^@/(.*)$': '<rootDir>/$1',
     '^@library/(.*)$': '<rootDir>/components/library/$1',

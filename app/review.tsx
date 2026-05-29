@@ -19,7 +19,7 @@ import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import type { ContextualHelpType } from '@/constants/tutorials';
 import { TutorialId } from '@/constants/tutorials';
-import { useReview } from '@/hooks/review';
+import { useReview, useVoiceReview } from '@/hooks/review';
 import { useColors } from '@/hooks/theme/useColors';
 import { useTutorial } from '@/hooks/tutorials/useTutorial';
 
@@ -140,7 +140,19 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     isLoading,
     wordQueue,
     currentWord,
+    revealMeaningPassive,
   } = useReview({ fromRemember });
+
+  // Voice grading — when the toggle is on, auto-arms the mic after each card
+  // settles. Match → silently advance as Known. Miss → reveal the meaning and
+  // let the user pick Known / Unknown.
+  const { phase: voicePhase } = useVoiceReview({
+    expected: currentWord?.root?.meaning ?? null,
+    currentWordKey,
+    ready: !isUpdating && !isLoading && isAudioPreloadingComplete && !isComplete,
+    onKnownAuto: handleSwipeRight,
+    onRevealAnswer: revealMeaningPassive,
+  });
 
   // Track if review session is still initializing (first word not yet loaded)
   const isInitializing = useMemo(() => {
@@ -221,6 +233,37 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
         </View>
       </View>
 
+      {/* Voice mode hint — small, non-blocking line above the bottom buttons. */}
+      {voicePhase !== 'idle' && (
+        <View
+          pointerEvents="none"
+          style={[
+            voiceHintStyles.container,
+            {
+              bottom:
+                insets.bottom +
+                LAYOUT.SPACING.LARGE +
+                LAYOUT.BUTTON.HEIGHT.LARGE +
+                LAYOUT.SPACING.MEDIUM,
+            },
+          ]}
+        >
+          <ThemedText
+            colorName="textTertiary"
+            style={voiceHintStyles.text}
+            type="caption"
+          >
+            {voicePhase === 'listening'
+              ? STRINGS.VOICE_LISTENING
+              : voicePhase === 'checking'
+                ? STRINGS.VOICE_CHECKING
+                : voicePhase === 'revealed'
+                  ? STRINGS.VOICE_TRY_AGAIN
+                  : STRINGS.VOICE_PREPARING}
+          </ThemedText>
+        </View>
+      )}
+
       {/* Contextual help overlay - shown when tapping bottom buttons */}
       <SwipeGestureTutorial
         visible={contextualHelpType !== null}
@@ -230,6 +273,18 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     </View>
   );
 }
+
+const voiceHintStyles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  } as ViewStyle,
+  text: {
+    textAlign: 'center',
+  } as TextStyle,
+});
 
 export default function ReviewScreen(): JSX.Element {
   const params = useLocalSearchParams();

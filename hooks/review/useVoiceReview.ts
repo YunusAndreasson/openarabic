@@ -1,0 +1,142 @@
+/**
+ * Wires the voice-grading pipeline into a Practice review session. Auto-arms
+ * the mic on each new card (after a short delay so the Arabic audio can play
+ * first), then on stop transcribes via Parakeet and runs `matchSingleWord`
+ * against the card's English meaning.
+ *
+ * Match → calls `onKnownAuto()` (the review screen routes through the existing
+ * Known path). Miss → calls `onRevealAnswer()` so the English appears and the
+ * card stays open for the user to manually choose Known / Unknown. There is no
+ * auto-Unknown — a missed transcript must not consume an FSRS attempt.
+ */
+import { useEffect, useRef, useState } from 'react';
+
+import { useToast, useVoiceGrading } from '@/components/providers';
+import { STRINGS } from '@/constants/strings';
+import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
+import { setVoiceEnabled } from '@/store/settingsSlice';
+import { matchSingleWord } from '@/utils/voiceMatching';
+
+export type VoicePhase = 'idle' | 'listening' | 'checking' | 'revealed' | 'disabled';
+
+interface UseVoiceReviewArgs {
+  /** The English meaning expected from the user. Empty if no current card. */
+  expected: string | null | undefined;
+  /** Key that changes when a new card is shown. */
+  currentWordKey: string;
+  /** Is the review session ready (not loading, no audio preload in flight). */
+  ready: boolean;
+  /** Called after a match — caller should advance the card as Known. */
+  onKnownAuto: () => void;
+  /** Called after a miss — caller should reveal the English meaning + play audio. */
+  onRevealAnswer: () => void;
+}
+
+/** How long to wait after a card settles before opening the mic. Lets the
+ *  pre-cached Arabic audio play out (typically ~1 s). */
+const ARM_DELAY_MS = 1400;
+
+export function useVoiceReview({
+  expected,
+  currentWordKey,
+  ready,
+  onKnownAuto,
+  onRevealAnswer,
+}: UseVoiceReviewArgs): { phase: VoicePhase } {
+  const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
+  const voice = useVoiceGrading();
+  const dispatch = useAppDispatch();
+  const { showToast } = useToast();
+
+  const [phase, setPhase] = useState<VoicePhase>('idle');
+
+  // Stable refs for callback identity.
+  const onKnownAutoRef = useRef(onKnownAuto);
+  const onRevealAnswerRef = useRef(onRevealAnswer);
+  useEffect(() => {
+    onKnownAutoRef.current = onKnownAuto;
+    onRevealAnswerRef.current = onRevealAnswer;
+  });
+
+  // The card key we've already armed for, to avoid re-arming on incidental
+  // re-renders while the mic is in flight.
+  const armedForKeyRef = useRef<string | null>(null);
+
+  // Reset on every new card. Latched state tied to currentWordKey transitions —
+  // a ref alone wouldn't re-render the indicator overlay.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPhase('idle');
+    armedForKeyRef.current = null;
+  }, [currentWordKey]);
+
+  // Surface a passive "disabled" indicator so the screen can give the user a
+  // hint when the toggle is on but the model isn't ready yet.
+  useEffect(() => {
+    if (!voiceEnabled) return;
+    if (voice.isReady) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPhase('disabled');
+  }, [voiceEnabled, voice.isReady]);
+
+  useEffect(() => {
+    if (!voiceEnabled || !voice.isReady) return;
+    if (!ready) return;
+    if (!expected || expected.length === 0) return;
+    if (currentWordKey === 'none') return;
+    if (armedForKeyRef.current === currentWordKey) return;
+
+    armedForKeyRef.current = currentWordKey;
+    let cancelled = false;
+
+    const timer = setTimeout(async () => {
+      if (cancelled) return;
+      setPhase('listening');
+
+      const outcome = await voice.arm();
+      if (cancelled) return;
+
+      if (!outcome.ok) {
+        if (outcome.reason === 'permission') {
+          showToast(STRINGS.VOICE_MIC_PERMISSION_DENIED);
+          dispatch(setVoiceEnabled(false));
+          setPhase('disabled');
+          return;
+        }
+        setPhase('idle');
+        return;
+      }
+
+      setPhase('checking');
+      const transcript = (await voice.transcribe(outcome.result.waveform)) ?? '';
+      if (cancelled) return;
+
+      const match = matchSingleWord({ spoken: transcript, expected });
+      if (match.matched) {
+        onKnownAutoRef.current();
+        // Phase resets when the next card mounts (currentWordKey change).
+        return;
+      }
+
+      setPhase('revealed');
+      onRevealAnswerRef.current();
+    }, ARM_DELAY_MS);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      // Cancel is a no-op when nothing is in flight.
+      void voice.cancel();
+    };
+  }, [
+    voiceEnabled,
+    voice,
+    ready,
+    expected,
+    currentWordKey,
+    dispatch,
+    showToast,
+  ]);
+
+  return { phase };
+}

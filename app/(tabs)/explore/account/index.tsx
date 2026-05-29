@@ -10,7 +10,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { AccountBadge, SettingsCard, SettingsSection } from '@/components/account';
 import { AboutSection, AppearanceSection, DangerZoneSection } from '@/components/account/settings';
 import { BrandFooter } from '@/components/explore';
-import { useTutorialContext } from '@/components/providers';
+import { useTutorialContext, useVoiceGrading } from '@/components/providers';
 import { SettingsPicker } from '@/components/ui/SettingsPicker';
 import type { Theme } from '@/constants/colors';
 import { LAYOUT } from '@/constants/layout';
@@ -24,6 +24,7 @@ import {
   setAudioShuffleEnabled,
   setDailyWordLimit,
   setDisplayLanguagePreference,
+  setVoiceEnabled,
 } from '@/store/settingsSlice';
 import { setTheme } from '@/store/themeSlice';
 import {
@@ -72,6 +73,8 @@ const AccountScreen: FC = () => {
   );
 
   const audioShuffleEnabled = useAppSelectorShallow(state => state.settings.audioShuffleEnabled);
+  const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
+  const voice = useVoiceGrading();
   const dispatch = useAppDispatch();
 
   const [activePicker, setActivePicker] = useState<ActivePicker>(null);
@@ -162,6 +165,24 @@ const AccountScreen: FC = () => {
     },
     [dispatch],
   );
+
+  // Voice grading toggle — flipping ON triggers the ~460 MB Parakeet download
+  // and the OS mic prompt the next time the user enters a Practice card.
+  const handleVoiceToggle = useCallback(
+    (enabled: boolean) => {
+      selectionFeedback();
+      dispatch(setVoiceEnabled(enabled));
+    },
+    [dispatch],
+  );
+
+  const voiceSubtitle = useMemo(() => {
+    if (!voiceEnabled) return STRINGS.SPEAK_ANSWER_IDLE_SUBTITLE;
+    if (voice.error) return STRINGS.SPEAK_ANSWER_ERROR_SUBTITLE;
+    if (voice.isReady) return STRINGS.SPEAK_ANSWER_READY_SUBTITLE;
+    const pct = Math.round((voice.downloadProgress ?? 0) * 100);
+    return STRINGS.SPEAK_ANSWER_DOWNLOADING_SUBTITLE.replace('{pct}', String(pct));
+  }, [voiceEnabled, voice.error, voice.isReady, voice.downloadProgress]);
 
   // Rate app handler
   const handleRequestReview = useCallback(async () => {
@@ -386,6 +407,14 @@ const AccountScreen: FC = () => {
             rightType="toggle"
             toggleValue={audioShuffleEnabled}
             onToggleChange={handleAudioShuffleToggle}
+          />
+          <SettingsCard
+            icon="mic"
+            label={STRINGS.SPEAK_ANSWER}
+            subtitle={voiceSubtitle}
+            rightType="toggle"
+            toggleValue={voiceEnabled}
+            onToggleChange={handleVoiceToggle}
           />
         </SettingsSection>
 
