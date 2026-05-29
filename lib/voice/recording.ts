@@ -57,6 +57,13 @@ export interface RecordingResult {
   heardSpeech: boolean;
   peakRms: number;
   noiseFloor: number;
+  /** Number of audio buffers handleBuffer received. 0 means the mic delivered
+   *  no audio at all (session conflict / permission edge case). */
+  bufferCount: number;
+  /** What stopped the recording: 'silence' (energy gate), 'maxDuration'
+   *  (hit cap inside handleBuffer), 'watchdog' (cap fired with zero buffers),
+   *  or 'manual' (cancel / external stop). */
+  stopReason: 'silence' | 'maxDuration' | 'watchdog' | 'manual';
 }
 
 export interface RecordingHandlers {
@@ -173,6 +180,9 @@ export class VoiceRecorder {
   private stopping = false;
   private handlers: RecordingHandlers = {};
   private config: RecordingConfig = { ...DEFAULT_RECORDING_CONFIG };
+  private bufferCount = 0;
+  private stopReason: RecordingResult['stopReason'] = 'manual';
+  private watchdog: ReturnType<typeof setTimeout> | null = null;
 
   get isRecording(): boolean {
     return this.recorder !== null;
@@ -212,6 +222,8 @@ export class VoiceRecorder {
     this.stopping = false;
     this.handlers = handlers;
     this.startedAt = Date.now();
+    this.bufferCount = 0;
+    this.stopReason = 'manual';
 
     const recorder = new AudioRecorder();
     // 1600 samples ≈ 100 ms at 16 kHz: fine enough for the energy gate.
@@ -223,6 +235,18 @@ export class VoiceRecorder {
     const started = recorder.start();
     if (started.status === 'error') throw new Error(`recorder.start failed: ${started.message}`);
     this.recorder = recorder;
+
+    // Safety net: if no buffers arrive (audio session conflict, permission
+    // edge case, etc.) the maxDuration check inside handleBuffer never runs
+    // and arm() hangs forever. Wall-clock timer enforces the cap with a small
+    // margin so a normal handleBuffer-driven stop still wins the race.
+    this.watchdog = setTimeout(() => {
+      if (!this.stopping) {
+        this.stopping = true;
+        this.stopReason = 'watchdog';
+        this.handlers.onAutoStop?.();
+      }
+    }, this.config.maxDurationMs + 500);
   }
 
   private handleBuffer(event: AudioReadyEvent): void {
@@ -230,6 +254,7 @@ export class VoiceRecorder {
     this.sourceSampleRate = event.buffer.sampleRate;
     this.chunks.push(channel.slice());
     this.totalSamples += channel.length;
+    this.bufferCount += 1;
 
     let sumSquares = 0;
     for (const sample of channel) {
@@ -264,6 +289,7 @@ export class VoiceRecorder {
       elapsed >= this.config.minDurationMs;
     if (!this.stopping && (quietEnough || elapsed >= this.config.maxDurationMs)) {
       this.stopping = true;
+      this.stopReason = quietEnough ? 'silence' : 'maxDuration';
       this.handlers.onAutoStop?.();
     }
   }
@@ -271,12 +297,18 @@ export class VoiceRecorder {
   async stop(): Promise<RecordingResult> {
     const recorder = this.recorder;
     this.recorder = null;
+    if (this.watchdog) {
+      clearTimeout(this.watchdog);
+      this.watchdog = null;
+    }
     const durationMs = Date.now() - this.startedAt;
     const heardSpeech = this.speechSeen;
     const sourceRate = this.sourceSampleRate;
     const peakRms = this.peakRms;
     const noiseFloor = this.noiseFloor;
     const config = { ...this.config };
+    const bufferCount = this.bufferCount;
+    const stopReason = this.stopReason;
 
     if (recorder) {
       recorder.clearOnAudioReady();
@@ -305,6 +337,8 @@ export class VoiceRecorder {
       heardSpeech,
       peakRms,
       noiseFloor,
+      bufferCount,
+      stopReason,
     };
   }
 

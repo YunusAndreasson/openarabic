@@ -8,6 +8,7 @@
  * Grading flow: arm() → energy gate stops → transcribe(waveform) → caller runs
  * the pure matchSingleWord() against the card's expected English.
  */
+import * as Sentry from '@sentry/react-native';
 import {
   createContext,
   use,
@@ -19,12 +20,14 @@ import {
   type ReactNode,
 } from 'react';
 
+import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { useParakeetStt } from '@/hooks/voice/useSherpaStt';
 import {
   MicPermissionDeniedError,
   VoiceRecorder,
   type RecordingResult,
 } from '@/lib/voice/recording';
+import { analytics } from '@/services/analytics';
 import { useAppSelectorShallow } from '@/store/hooks';
 
 export type VoiceArmOutcome =
@@ -66,44 +69,84 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
   const stt = useParakeetStt({ enabled });
   const { transcribe: rawTranscribe, isReady, isLoading, downloadProgress, error } = stt;
 
+  // Fresh recorder per arm() call. Reusing one across cards leaves the iOS
+  // audio session in a stale state and the next start() resolves but never
+  // delivers buffers (handleBuffer never fires, onAutoStop never triggers).
+  // Matches the edenmind reference pattern that's known to work on device.
   const recorderRef = useRef<VoiceRecorder | null>(null);
   const armResolveRef = useRef<((outcome: VoiceArmOutcome) => void) | null>(null);
-  const isRecordingRef = useRef(false);
-
-  const getRecorder = useCallback((): VoiceRecorder => {
-    if (!recorderRef.current) recorderRef.current = new VoiceRecorder();
-    return recorderRef.current;
-  }, []);
+  const sessionRef = useRef(0);
 
   // Stop the mic when the user turns the setting off mid-session.
   useEffect(() => {
     if (enabled) return;
+    sessionRef.current += 1;
     const recorder = recorderRef.current;
+    recorderRef.current = null;
     if (recorder?.isRecording) {
       void recorder.cancel();
     }
-    isRecordingRef.current = false;
     armResolveRef.current?.({ ok: false, reason: 'not-ready' });
     armResolveRef.current = null;
   }, [enabled]);
 
   const arm = useCallback(async (): Promise<VoiceArmOutcome> => {
     if (!isReady) return { ok: false, reason: 'not-ready' };
-    if (isRecordingRef.current) return { ok: false, reason: 'busy' };
-    const recorder = getRecorder();
-    isRecordingRef.current = true;
+    if (recorderRef.current) return { ok: false, reason: 'busy' };
+
+    sessionRef.current += 1;
+    const sessionId = sessionRef.current;
+    const recorder = new VoiceRecorder();
+    recorderRef.current = recorder;
+
+    Sentry.addBreadcrumb({
+      category: 'voice',
+      level: 'info',
+      message: 'voice.recorder.arm',
+      data: { sessionId },
+    });
 
     return new Promise<VoiceArmOutcome>(resolve => {
       armResolveRef.current = resolve;
       const finish = async (): Promise<void> => {
         if (armResolveRef.current !== resolve) return; // already resolved
+        if (sessionId !== sessionRef.current) return; // stale callback
         armResolveRef.current = null;
+        Sentry.addBreadcrumb({
+          category: 'voice',
+          level: 'info',
+          message: 'voice.recorder.finish',
+          data: { sessionId },
+        });
         try {
           const result = await recorder.stop();
-          isRecordingRef.current = false;
+          recorderRef.current = null;
+          Sentry.addBreadcrumb({
+            category: 'voice',
+            level: 'info',
+            message: 'voice.recorder.stopped',
+            data: {
+              sessionId,
+              durationMs: result.durationMs,
+              bufferCount: result.bufferCount,
+              stopReason: result.stopReason,
+              heardSpeech: result.heardSpeech,
+              peakRms: result.peakRms,
+            },
+          });
+          if (result.bufferCount === 0) {
+            void analytics.track(ANALYTICS_EVENTS.VOICE_MODEL_FAILED, {
+              stage: 'recorder-no-buffers',
+              durationMs: result.durationMs,
+              stopReason: result.stopReason,
+            });
+          }
           resolve({ ok: true, result });
         } catch (err) {
-          isRecordingRef.current = false;
+          recorderRef.current = null;
+          Sentry.captureException(err instanceof Error ? err : new Error(String(err)), {
+            tags: { feature: 'voice-grading', stage: 'recorder-stop' },
+          });
           resolve({
             ok: false,
             reason: 'error',
@@ -114,10 +157,24 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
 
       recorder
         .start({ onAutoStop: () => void finish() })
+        .then(() => {
+          Sentry.addBreadcrumb({
+            category: 'voice',
+            level: 'info',
+            message: 'voice.recorder.started',
+            data: { sessionId },
+          });
+        })
         .catch((err: unknown) => {
-          isRecordingRef.current = false;
+          recorderRef.current = null;
           if (armResolveRef.current !== resolve) return;
           armResolveRef.current = null;
+          Sentry.addBreadcrumb({
+            category: 'voice',
+            level: 'warning',
+            message: 'voice.recorder.start.failed',
+            data: { sessionId, error: err instanceof Error ? err.message : String(err) },
+          });
           if (err instanceof MicPermissionDeniedError) {
             resolve({ ok: false, reason: 'permission' });
           } else {
@@ -129,11 +186,12 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
           }
         });
     });
-  }, [isReady, getRecorder]);
+  }, [isReady]);
 
   const cancel = useCallback(async (): Promise<void> => {
+    sessionRef.current += 1;
     const recorder = recorderRef.current;
-    isRecordingRef.current = false;
+    recorderRef.current = null;
     if (armResolveRef.current) {
       armResolveRef.current({ ok: false, reason: 'busy' });
       armResolveRef.current = null;
