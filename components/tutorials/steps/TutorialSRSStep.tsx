@@ -2,7 +2,7 @@
  * Tutorial: Final step - brief encouragement before starting
  */
 
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@/components/ui/Icon';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';

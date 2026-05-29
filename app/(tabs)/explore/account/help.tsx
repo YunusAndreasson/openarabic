@@ -1,5 +1,5 @@
 // External Libraries
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@/components/ui/Icon';
 import { router, useLocalSearchParams } from 'expo-router';
 import { memo, useCallback, useMemo, type FC } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';

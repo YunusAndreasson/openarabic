@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, type IoniconName } from '@/components/ui/Icon';
 import { useEffect, useRef, useState, type JSX } from 'react';
 import type { GestureResponderEvent } from 'react-native';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, View } from 'react-native';
@@ -131,7 +131,7 @@ export function ThemedButton({
             ) : (
               <Ionicons
                 color={textColor}
-                name={icon as keyof typeof Ionicons.glyphMap}
+                name={icon as IoniconName}
                 size={iconSize}
               />
             )}

@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, type IoniconName } from '@/components/ui/Icon';
 import type { JSX } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -57,7 +57,7 @@ export function FloatingActionButton({
         <ActivityIndicator color={iconColor} size="small" />
       ) : (
         <Ionicons
-          name={icon as keyof typeof Ionicons.glyphMap}
+          name={icon as IoniconName}
           size={LAYOUT.BUTTON.ICON_SIZE.LARGE}
           color={iconColor}
         />

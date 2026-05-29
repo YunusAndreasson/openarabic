@@ -2,7 +2,7 @@ import type { JSX } from 'react';
 import { Fragment } from 'react';
 import { Platform } from 'react-native';
 
-import Ionicons from '@expo/vector-icons/Ionicons';
+import { Ionicons } from '@/components/ui/Icon';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 
 import { TAB_SCREENS } from '@/constants/tabs';

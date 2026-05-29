@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
 import type { AppStateStatus } from 'react-native';
 import { AppState } from 'react-native';
 
@@ -95,37 +95,41 @@ export function useAppBadge(): void {
     }
   }, [isAuthenticated, clearBadge]);
 
-  // Handle app state changes for optimal battery life
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', nextAppState => {
-      appStateRef.current = nextAppState;
+  // useEffectEvent isolates the listener bodies from their dependency closures
+  // so subscriptions don't tear down / re-attach on every dueWords change.
+  const handleAppStateChange = useEffectEvent((nextAppState: AppStateStatus) => {
+    appStateRef.current = nextAppState;
+    if (nextAppState === 'active' && isAuthenticated && !isLoading && dueWords) {
+      updateBadgeDebounced(dueWords.length);
+    }
+  });
 
-      // Update badge when app comes to foreground if we have due words
-      if (nextAppState === 'active' && isAuthenticated && !isLoading && dueWords) {
-        updateBadgeDebounced(dueWords.length);
+  const handleQueryCacheUpdate = useEffectEvent(
+    (newDueWords: StudyWord[] | undefined) => {
+      if (newDueWords && appStateRef.current === 'active') {
+        updateBadgeDebounced(newDueWords.length);
       }
-    });
+    },
+  );
 
+  // Subscribe once — handler reads latest closure via useEffectEvent.
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
     return () => subscription.remove();
-  }, [isAuthenticated, isLoading, dueWords, updateBadgeDebounced]);
+  }, []);
 
-  // Efficient query invalidation listener using React Query v5 patterns
+  // Subscribe to the due-words query cache; re-subscribe only when user changes.
   useEffect(() => {
     if (!user?.id || !isAuthenticated) return;
 
     const queryKey = fsrsQueries.due(user.id);
 
-    // Use query invalidation instead of cache subscription for better performance
     const unsubscribe = queryClient.getQueryCache().subscribe(event => {
-      // Only react to query updates for our specific key
       if (event.type === 'updated' && event.query.queryKey === queryKey) {
-        const newDueWords = event.query.state.data as StudyWord[] | undefined;
-        if (newDueWords && appStateRef.current === 'active') {
-          updateBadgeDebounced(newDueWords.length);
-        }
+        handleQueryCacheUpdate(event.query.state.data as StudyWord[] | undefined);
       }
     });
 
     return () => unsubscribe();
-  }, [user?.id, isAuthenticated, queryClient, updateBadgeDebounced]);
+  }, [user?.id, isAuthenticated, queryClient]);
 }

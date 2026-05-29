@@ -1,7 +1,7 @@
 import { memo, type FC } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import Ionicons from '@expo/vector-icons/Ionicons';
+import { Ionicons } from '@/components/ui/Icon';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ColorDot } from '@/components/ui/ColorDot';

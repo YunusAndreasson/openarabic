@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import {
   AppState,
   type NativeScrollEvent,
@@ -313,16 +313,19 @@ export function useArticleScreen({
     showToast,
   ]);
 
-  // Refetch on app state change
+  // Refetch on app state change — useEffectEvent keeps the listener stable so
+  // it doesn't tear down whenever refetchStudyWords identity churns.
+  const handleAppStateChange = useEffectEvent((nextAppState: string) => {
+    if (nextAppState === 'active') {
+      void refetchStudyWords?.();
+    }
+  });
+
   useEffect(() => {
     if (!user?.id) return;
-    const subscription = AppState.addEventListener('change', nextAppState => {
-      if (nextAppState === 'active') {
-        void refetchStudyWords?.();
-      }
-    });
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
     return () => subscription.remove();
-  }, [user?.id, refetchStudyWords]);
+  }, [user?.id]);
 
   // Cleanup audio on unmount
   useEffect(() => {

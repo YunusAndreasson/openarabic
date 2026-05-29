@@ -1,4 +1,4 @@
-import type { Ionicons } from '@expo/vector-icons';
+import { type IoniconName } from '@/components/ui/Icon';
 import { router } from 'expo-router';
 import type { FC } from 'react';
 import { useCallback, useEffect, useRef } from 'react';
@@ -10,7 +10,7 @@ import { TIMING_CONSTANTS } from '@/constants/animation';
 type NavigationAction = 'close' | 'done';
 
 /** Icon configuration for each navigation action */
-const NAVIGATION_ICONS: Record<NavigationAction, keyof typeof Ionicons.glyphMap> = {
+const NAVIGATION_ICONS: Record<NavigationAction, IoniconName> = {
   close: 'close',
   done: 'checkmark-circle',
 };

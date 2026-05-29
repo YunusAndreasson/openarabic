@@ -50,6 +50,8 @@ module.exports = {
     'react-redux': '<rootDir>/__mocks__/react-redux.js',
     'expo-image': '<rootDir>/__mocks__/expo-image.js',
     '@expo/vector-icons': '<rootDir>/__mocks__/@expo/vector-icons.js',
+    '@react-native-vector-icons/ionicons':
+      '<rootDir>/__mocks__/react-native-vector-icons-ionicons.js',
 
     // Expo Router native tabs mock
     'expo-router/unstable-native-tabs': '<rootDir>/__mocks__/expo-router-native-tabs.js',

@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { router } from 'expo-router';
 import {
   createContext,
   use,
@@ -7,10 +8,8 @@ import {
   useMemo,
   useRef,
   type ReactNode,
-  type RefObject,
 } from 'react';
 
-import type { SleepTimerHandle } from '@/components/playlist';
 import { AUDIO_STATES } from '@/constants/audio';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
@@ -49,8 +48,6 @@ export interface GlobalAudioState {
   // Sleep timer state
   isTimerActive: boolean;
   sleepTimerEndTime: number;
-  /** Ref to the SleepTimer modal — AudioOverlays attaches it to the rendered sheet. */
-  sleepTimerRef: RefObject<SleepTimerHandle | null>;
 
   // Actions
   onPlayPause: () => void;
@@ -73,11 +70,6 @@ function useGlobalAudioStateInternal(): GlobalAudioState {
   const audioPlayer = useSimpleAudioPlayer();
   const queryClient = useQueryClient();
 
-  // Imperative handle to the SleepTimer modal. Avoids the state-based
-  // useEffect → present() pattern which silently no-ops when the same
-  // value is set twice (gesture-dismiss → tap → tap again).
-  const sleepTimerRef = useRef<SleepTimerHandle | null>(null);
-
   // Get reading list for queue tracking
   const { sortedEnhancedTracks } = usePlaylistScreen();
 
@@ -86,7 +78,6 @@ function useGlobalAudioStateInternal(): GlobalAudioState {
   // Sleep timer integration
   const sleepTimer = useSleepTimer(() => {
     successFeedback(); // Haptic feedback when timer completes
-    sleepTimerRef.current?.dismiss();
 
     // CRITICAL FIX: Mark sleep timer as expired instead of stopping immediately
     // This allows the current track to finish naturally while preventing playlist progression
@@ -234,21 +225,19 @@ function useGlobalAudioStateInternal(): GlobalAudioState {
   }, [audioPlayer.stop]);
 
   const handleTimerPress = useCallback(() => {
-    sleepTimerRef.current?.present();
+    router.push('/sleep-timer');
   }, []);
 
   // Sleep timer handlers
   const handleSleepTimerSet = useCallback(
     (minutes: number) => {
       sleepTimer.actions.startTimer(minutes);
-      // Don't close modal immediately - let it stay open to show countdown
     },
     [sleepTimer.actions],
   );
 
   const handleSleepTimerCancel = useCallback(() => {
     sleepTimer.actions.cancelTimer();
-    sleepTimerRef.current?.dismiss();
   }, [sleepTimer.actions]);
 
   const handlePreconfigureAudioSession = useCallback(async () => {
@@ -269,7 +258,6 @@ function useGlobalAudioStateInternal(): GlobalAudioState {
     duration: audioPlayer.duration,
     isTimerActive: sleepTimer.state.isActive,
     sleepTimerEndTime: sleepTimer.state.endTime,
-    sleepTimerRef,
     onPlayPause: handlePlayPause,
     onTimerPress: handleTimerPress,
     onSleepTimerSet: handleSleepTimerSet,

@@ -2,7 +2,7 @@
  * Tutorial: Intro screen explaining the overall concept
  */
 
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@/components/ui/Icon';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';

@@ -1,4 +1,4 @@
-import type { Ionicons } from '@expo/vector-icons';
+import { type IoniconName } from '@/components/ui/Icon';
 import { memo } from 'react';
 
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
@@ -6,7 +6,7 @@ import { useColors } from '@/hooks/theme/useColors';
 
 export interface TransparentHeaderButtonProps {
   /** Icon name from Ionicons */
-  iconName: keyof typeof Ionicons.glyphMap;
+  iconName: IoniconName;
   /** Press handler */
   onPress: () => void;
   /** Long press handler */

@@ -7,4 +7,3 @@ export { DeleteButton } from './DeleteButton';
 export { DragHandle, type DragHandleProps } from './DragHandle';
 export { PlaylistItemCard } from './PlaylistItemCard';
 export { SavedEmptyState } from './SavedEmptyState';
-export { SleepTimer, type SleepTimerHandle } from './SleepTimer';

@@ -1,5 +1,5 @@
 import { ProgressBar } from '@/components/common';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@/components/ui/Icon';
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import type { FC } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';

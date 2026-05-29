@@ -99,7 +99,7 @@ jest.mock('../../components/practice/PracticeStatCards', () => {
   };
 });
 
-jest.mock('@expo/vector-icons', () => ({
+jest.mock('@/components/ui/Icon', () => ({
   Ionicons: () => null,
 }));
 

@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, type IoniconName } from '@/components/ui/Icon';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedButton } from '@/components/ThemedButton';
@@ -9,11 +9,11 @@ import { useColors } from '@/hooks/theme/useColors';
 interface EmptyStateAction {
   label: string;
   onPress: () => void;
-  icon?: keyof typeof Ionicons.glyphMap;
+  icon?: IoniconName;
 }
 
 interface EmptyStateProps {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: IoniconName;
   title: string;
   hint: string;
   iconSize?: number;

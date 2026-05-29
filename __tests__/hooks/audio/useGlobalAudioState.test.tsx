@@ -216,24 +216,26 @@ describe('useGlobalAudioState Hook', () => {
     });
   });
 
-  describe('Sleep Timer Modal', () => {
-    test('onTimerPress calls present on the sleep-timer ref', () => {
-      const { result } = renderHook(() => useGlobalAudioState(), {
-        wrapper: GlobalAudioStateProvider,
-      });
+  describe('Sleep Timer route', () => {
+    test('onTimerPress navigates to /sleep-timer', () => {
+      const { router } = require('expo-router');
+      const pushSpy = jest.spyOn(router, 'push');
+      try {
+        const { result } = renderHook(() => useGlobalAudioState(), {
+          wrapper: GlobalAudioStateProvider,
+        });
 
-      const present = jest.fn();
-      const dismiss = jest.fn();
-      result.current.sleepTimerRef.current = { present, dismiss };
+        act(() => {
+          result.current.onTimerPress();
+        });
 
-      act(() => {
-        result.current.onTimerPress();
-      });
-
-      expect(present).toHaveBeenCalledTimes(1);
+        expect(pushSpy).toHaveBeenCalledWith('/sleep-timer');
+      } finally {
+        pushSpy.mockRestore();
+      }
     });
 
-    test('onSleepTimerSet starts timer (modal kept open by component to show countdown)', () => {
+    test('onSleepTimerSet starts timer', () => {
       const { result } = renderHook(() => useGlobalAudioState(), {
         wrapper: GlobalAudioStateProvider,
       });
@@ -245,21 +247,16 @@ describe('useGlobalAudioState Hook', () => {
       expect(mockStartTimer).toHaveBeenCalledWith(30);
     });
 
-    test('onSleepTimerCancel cancels timer and dismisses modal via ref', () => {
+    test('onSleepTimerCancel cancels the timer', () => {
       const { result } = renderHook(() => useGlobalAudioState(), {
         wrapper: GlobalAudioStateProvider,
       });
-
-      const present = jest.fn();
-      const dismiss = jest.fn();
-      result.current.sleepTimerRef.current = { present, dismiss };
 
       act(() => {
         result.current.onSleepTimerCancel();
       });
 
       expect(mockCancelTimer).toHaveBeenCalledTimes(1);
-      expect(dismiss).toHaveBeenCalledTimes(1);
     });
   });
 

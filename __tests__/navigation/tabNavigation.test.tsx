@@ -101,7 +101,7 @@ jest.mock('@/components/providers/FSRSDataProvider', () => ({
   }),
 }));
 
-jest.mock('@expo/vector-icons', () => ({
+jest.mock('@/components/ui/Icon', () => ({
   Ionicons: () => null,
 }));
 

@@ -25,7 +25,7 @@ const GLOW_HEIGHT = PILL_HEIGHT + GLOW_PADDING;
 const GLOW_RADIUS = GLOW_HEIGHT / 2;
 
 /**
- * Branded drag handle for BottomSheet/BottomSheetModal — Skia rounded pill
+ * Branded drag handle for BottomSheet — Skia rounded pill
  * sitting on a soft tinted glow halo. Replaces the library default 36×4
  * indicator and keeps a single visual language across every sheet.
  */

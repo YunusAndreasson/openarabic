@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@/components/ui/Icon';
 import type { ComponentRef, RefObject } from 'react';
 import { createRef, memo, useMemo, useRef } from 'react';
 import type { LayoutRectangle, StyleProp, ViewStyle } from 'react-native';

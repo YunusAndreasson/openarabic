@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, type IoniconName } from '@/components/ui/Icon';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,7 +17,7 @@ export interface SettingsPickerOption<T> {
   id: T;
   title: string;
   subtitle?: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: IoniconName;
 }
 
 export interface SettingsPickerProps<T> {

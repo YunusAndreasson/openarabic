@@ -191,20 +191,22 @@ describe('useGlobalAudioState', () => {
       expect(typeof result.current.onPlayPause).toBe('function');
     });
 
-    test('should provide onTimerPress that calls present() on the sleep-timer ref', () => {
-      const { result } = renderHook(() => useGlobalAudioState(), {
-        wrapper: GlobalAudioStateProvider,
-      });
+    test('should provide onTimerPress that navigates to the sleep-timer route', () => {
+      const { router } = require('expo-router');
+      const pushSpy = jest.spyOn(router, 'push');
+      try {
+        const { result } = renderHook(() => useGlobalAudioState(), {
+          wrapper: GlobalAudioStateProvider,
+        });
 
-      const present = jest.fn();
-      const dismiss = jest.fn();
-      result.current.sleepTimerRef.current = { present, dismiss };
+        act(() => {
+          result.current.onTimerPress();
+        });
 
-      act(() => {
-        result.current.onTimerPress();
-      });
-
-      expect(present).toHaveBeenCalledTimes(1);
+        expect(pushSpy).toHaveBeenCalledWith('/sleep-timer');
+      } finally {
+        pushSpy.mockRestore();
+      }
     });
 
     test('should provide onSleepTimerSet action', () => {

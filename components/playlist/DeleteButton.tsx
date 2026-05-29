@@ -1,4 +1,4 @@
-import type { Ionicons } from '@expo/vector-icons';
+import type { Ionicons } from '@/components/ui/Icon';
 import type { ComponentProps, FC } from 'react';
 
 import { IconButton } from '@/components/ui';

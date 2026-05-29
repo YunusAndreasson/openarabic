@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, type IoniconName } from '@/components/ui/Icon';
 
 import { BaseCard } from '@/components/common/BaseCard';
 import { memo } from 'react';
@@ -9,7 +9,7 @@ import { ICON_CONTAINER, LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { withAlpha } from '@/utils/colorUtils';
 
 interface MetricCardProps {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: IoniconName;
   value: string | number;
   label: string;
   color: string;

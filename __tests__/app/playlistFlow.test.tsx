@@ -19,7 +19,7 @@ jest.mock('react-native-reanimated', () => {
 });
 
 // Mock vector icons to avoid loading native fonts
-jest.mock('@expo/vector-icons', () => ({
+jest.mock('@/components/ui/Icon', () => ({
   Ionicons: () => null,
 }));
 

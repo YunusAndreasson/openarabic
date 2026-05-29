@@ -47,7 +47,7 @@ jest.mock('@/utils/haptics', () => ({
 }));
 
 // Mock expo vector icons
-jest.mock('@expo/vector-icons', () => {
+jest.mock('@/components/ui/Icon', () => {
   const { View } = require('react-native');
   const React = require('react');
   return {

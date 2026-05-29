@@ -1,4 +1,4 @@
-import type { Ionicons } from '@expo/vector-icons';
+import type { Ionicons } from '@/components/ui/Icon';
 import type { ComponentProps } from 'react';
 import { useMemo, useState } from 'react';
 

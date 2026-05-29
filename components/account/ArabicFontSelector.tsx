@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@/components/ui/Icon';
 import Slider from '@react-native-community/slider';
 import { useState, type FC } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';

@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, type IoniconName } from '@/components/ui/Icon';
 import { memo, useMemo } from 'react';
 import { Platform, Pressable, StyleSheet } from 'react-native';
 
@@ -11,7 +11,7 @@ type ButtonSize = 'small' | 'medium' | 'large';
 
 export interface HeaderIconButtonProps {
   /** Icon name from Ionicons */
-  iconName: keyof typeof Ionicons.glyphMap;
+  iconName: IoniconName;
   /** Press handler */
   onPress: () => void;
   /** Long press handler */

@@ -1,4 +1,3 @@
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import NetInfo, { type NetInfoState } from '@react-native-community/netinfo';
 import * as Sentry from '@sentry/react-native';
 import { QueryClient, onlineManager } from '@tanstack/react-query';
@@ -34,7 +33,6 @@ import interSemiBold from '@/assets/fonts/Inter-SemiBold.ttf';
 import interBold from '@/assets/fonts/Inter-Bold.ttf';
 import { ThemedText } from '@/components/ThemedText';
 import { AudioErrorBoundary, GlobalMiniPlayer } from '@/components/audio';
-import { SleepTimer } from '@/components/playlist';
 import {
   AuthProvider,
   FSRSDataProvider,
@@ -50,7 +48,7 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppBadge } from '@/hooks/app/useAppBadge';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
-import { GlobalAudioStateProvider, useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
+import { GlobalAudioStateProvider } from '@/hooks/audio/useGlobalAudioState';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useSystemUITheme } from '@/hooks/theme/useSystemUITheme';
@@ -498,6 +496,16 @@ function AppContent() {
                     freezeOnBlur: true,
                   })}
                 />
+                <Stack.Screen
+                  name="sleep-timer"
+                  options={{
+                    presentation: 'formSheet',
+                    sheetAllowedDetents: [0.4],
+                    sheetGrabberVisible: true,
+                    sheetCornerRadius: 24,
+                    headerShown: false,
+                  }}
+                />
               </Stack.Protected>
 
               {/* Unauthenticated routes — guard flips on sign-in, router unmounts auth */}
@@ -551,34 +559,9 @@ const styles = StyleSheet.create({
 });
 
 const AudioOverlays = memo(function AudioOverlays() {
-  const globalAudioState = useGlobalAudioState();
-
-  // Wrap onSleepTimerSet to track analytics
-  const handleSleepTimerSet = useMemo(
-    () => (durationMinutes: number) => {
-      analytics.track(ANALYTICS_EVENTS.SLEEP_TIMER_SET, {
-        duration_minutes: durationMinutes,
-      });
-      globalAudioState.onSleepTimerSet(durationMinutes);
-    },
-    [globalAudioState.onSleepTimerSet],
-  );
-
   return (
     <AudioErrorBoundary>
       <GlobalMiniPlayer />
-
-      {/* SleepTimer rendered last to ensure it overlays everything */}
-      {/* SleepTimer props read from context; lint mis-flags as ref-during-render. */}
-      {/* eslint-disable react-hooks/refs */}
-      <SleepTimer
-        ref={globalAudioState.sleepTimerRef}
-        isTimerActive={globalAudioState.isTimerActive}
-        endTime={globalAudioState.sleepTimerEndTime}
-        onTimerSet={handleSleepTimerSet}
-        onTimerCancel={globalAudioState.onSleepTimerCancel}
-      />
-      {/* eslint-enable react-hooks/refs */}
     </AudioErrorBoundary>
   );
 });
@@ -609,15 +592,13 @@ export default Sentry.wrap(function RootLayout() {
             <AuthProvider>
               <SafeAreaProvider>
                 <TutorialProvider>
-                  <BottomSheetModalProvider>
-                    <ToastProvider>
-                      <Sentry.ErrorBoundary
-                        fallback={({ error }) => <ErrorFallback error={error} />}
-                      >
-                        <AppContent />
-                      </Sentry.ErrorBoundary>
-                    </ToastProvider>
-                  </BottomSheetModalProvider>
+                  <ToastProvider>
+                    <Sentry.ErrorBoundary
+                      fallback={({ error }) => <ErrorFallback error={error} />}
+                    >
+                      <AppContent />
+                    </Sentry.ErrorBoundary>
+                  </ToastProvider>
                 </TutorialProvider>
               </SafeAreaProvider>
             </AuthProvider>

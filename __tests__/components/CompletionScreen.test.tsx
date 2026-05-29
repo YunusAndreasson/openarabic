@@ -35,7 +35,7 @@ jest.mock('expo-router', () => ({
   ),
 }));
 
-jest.mock('@expo/vector-icons', () => {
+jest.mock('@/components/ui/Icon', () => {
   const React = require('react');
   const { Text } = require('react-native');
   return {

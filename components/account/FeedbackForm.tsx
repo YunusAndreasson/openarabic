@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@/components/ui/Icon';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import * as Sentry from '@sentry/react-native';

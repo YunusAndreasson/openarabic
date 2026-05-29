@@ -1,12 +1,26 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useFocusEffect, useRouter } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { InteractionManager, StyleSheet } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
+
+import type { ReanimatedCSSAnimationStyle } from '@/types/ui/base.types';
+
+// Mount fade-in — Reanimated 4 CSS @keyframes, module-level so no per-render alloc.
+// Replaces imperative `entering={FadeIn}` which the React Compiler can't track and
+// which forces a Reanimated mount-side-effect on every focus.
+const MOUNT_FADE_IN_STYLE = {
+  animationName: {
+    from: { opacity: 0 },
+    to: { opacity: 1 },
+  },
+  animationDuration: `${TIMING_CONFIG.SLOW.duration}ms`,
+  animationFillMode: 'forwards' as const,
+} as ReanimatedCSSAnimationStyle;
 
 import { ThemedView } from '@/components/ThemedView';
-import { ErrorState, type GenericBottomSheetHandle } from '@/components/common';
+import { ErrorState } from '@/components/common';
 import {
   DueWordsBottomSheet,
   MemoryRetentionBottomSheet,
@@ -35,15 +49,14 @@ export default function PracticeScreen(): JSX.Element {
   const queryClient = useQueryClient();
   const { prefetchVocabularyData } = useAppPreloader();
 
-  // Bottom sheet refs — imperative present()/dismiss() per @gorhom/bottom-sheet docs.
-  // The previous state-based useEffect approach was unreliable: setActiveSheet(sameValue)
-  // is a no-op so the effect didn't re-fire on repeat taps, and the modal could be
-  // unmounted at the moment present() ran. Refs sidestep both issues entirely; the
-  // library's `stackBehavior: 'replace'` already enforces the "only one open" rule.
-  const memorySheetRef = useRef<GenericBottomSheetHandle>(null);
-  const dueSheetRef = useRef<GenericBottomSheetHandle>(null);
-  const streakSheetRef = useRef<GenericBottomSheetHandle>(null);
-  const masteredSheetRef = useRef<GenericBottomSheetHandle>(null);
+  // Bottom sheets are now inline <BottomSheet> components driven by visibility state.
+  // Only one is visible at a time — opening one closes the others. The previous
+  // BottomSheetModal/.present() pattern was broken on Android; the inline pattern
+  // matches what SettingsPicker/TimePicker already use successfully.
+  const [activeSheet, setActiveSheet] = useState<
+    'memory' | 'due' | 'streak' | 'mastered' | null
+  >(null);
+  const closeSheet = useCallback(() => setActiveSheet(null), []);
 
   // Fetch study streak data
   const { streak } = useStudyStreak();
@@ -95,11 +108,10 @@ export default function PracticeScreen(): JSX.Element {
   // Don't show error if user is not authenticated yet - this is expected during auth flow
   const shouldShowError = error && user;
 
-  // Bottom sheet press handlers — imperatively present via ref
-  const handleMemoryStrengthInfo = useCallback(() => memorySheetRef.current?.present(), []);
-  const handleDuePress = useCallback(() => dueSheetRef.current?.present(), []);
-  const handleStreakPress = useCallback(() => streakSheetRef.current?.present(), []);
-  const handleMasteredPress = useCallback(() => masteredSheetRef.current?.present(), []);
+  const handleMemoryStrengthInfo = useCallback(() => setActiveSheet('memory'), []);
+  const handleDuePress = useCallback(() => setActiveSheet('due'), []);
+  const handleStreakPress = useCallback(() => setActiveSheet('streak'), []);
+  const handleMasteredPress = useCallback(() => setActiveSheet('mastered'), []);
 
   // Fix: Use the actual due words data count instead of database view
   // This ensures consistency between display and practice session
@@ -172,10 +184,7 @@ export default function PracticeScreen(): JSX.Element {
           showsVerticalScrollIndicator: false,
         }}
       >
-        <Animated.View
-          entering={FadeIn.duration(TIMING_CONFIG.SLOW.duration)}
-          style={styles.vocabularySection}
-        >
+        <Animated.View style={[styles.vocabularySection, MOUNT_FADE_IN_STYLE]}>
           <PracticeStatCards
             dueWords={dueWordsCount}
             currentStreak={currentStreak}
@@ -203,11 +212,11 @@ export default function PracticeScreen(): JSX.Element {
         <FloatingActionButton icon="flash" onPress={handleStartReview} />
       )}
 
-      {/* Coordinated Bottom Sheets — stackBehavior: 'replace' enforces one-at-a-time */}
-      <MemoryRetentionBottomSheet ref={memorySheetRef} />
-      <DueWordsBottomSheet ref={dueSheetRef} />
-      <StudyStreakBottomSheet ref={streakSheetRef} />
-      <WordsMasteredBottomSheet ref={masteredSheetRef} />
+      {/* Inline BottomSheets — `activeSheet` ensures only one is open at a time */}
+      <MemoryRetentionBottomSheet isVisible={activeSheet === 'memory'} onClose={closeSheet} />
+      <DueWordsBottomSheet isVisible={activeSheet === 'due'} onClose={closeSheet} />
+      <StudyStreakBottomSheet isVisible={activeSheet === 'streak'} onClose={closeSheet} />
+      <WordsMasteredBottomSheet isVisible={activeSheet === 'mastered'} onClose={closeSheet} />
     </ThemedView>
   );
 }

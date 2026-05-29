@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@/components/ui/Icon';
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { memo, startTransition, useOptimistic } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';

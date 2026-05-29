@@ -2,7 +2,7 @@
  * Contextual help: Swipe right for Known
  */
 
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@/components/ui/Icon';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
