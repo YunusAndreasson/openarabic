@@ -19,7 +19,6 @@ const MOUNT_FADE_IN_STYLE = {
   animationFillMode: 'forwards' as const,
 } as ReanimatedCSSAnimationStyle;
 
-import { TabScreen } from '@/components/TabScreen';
 import { ThemedView } from '@/components/ThemedView';
 import { ErrorState } from '@/components/common';
 import {
@@ -35,14 +34,12 @@ import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useStudyStreak } from '@/hooks/practice/useStudyStreak';
-import { useColors } from '@/hooks/theme/useColors';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { FloatingActionButton } from '@/components/ui';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 import { calculateWordCategories } from '@/utils/wordClassification';
 
 export default function PracticeScreen(): JSX.Element {
-  const colors = useColors();
   const { user } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -178,15 +175,13 @@ export default function PracticeScreen(): JSX.Element {
   const showFab = dueWordsCount > 0 && hasAnyStudyWords;
 
   return (
-    <TabScreen
-      background={colors.background}
-      fab={
-        showFab ? (
-          <FloatingActionButton icon="flash" onPress={handleStartReview} />
-        ) : undefined
-      }
-    >
+    <>
       <ScrollView
+        // `flex: 1` makes this ScrollView fill the route's content view so
+        // UIKit recognises it as the screen's primary scrollable. Without it
+        // the ScrollView only grows to its children's height — the large title
+        // never collapses on scroll even though the bar background fade fires.
+        style={styles.container}
         contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.contentContainer, { paddingBottom: contentPaddingBottom }]}
@@ -214,7 +209,8 @@ export default function PracticeScreen(): JSX.Element {
           />
         </Animated.View>
       </ScrollView>
-    </TabScreen>
+      {showFab && <FloatingActionButton icon="flash" onPress={handleStartReview} />}
+    </>
   );
 }
 

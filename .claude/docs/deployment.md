@@ -38,13 +38,22 @@ eas build --platform ios --profile preview --clear-cache
 eas build --platform android --profile production --clear-cache --non-interactive
 eas build --platform all --profile development --clear-cache
 
-# Update commands (OTA updates)
-eas update --branch root --auto --clear-cache
-eas update --branch development --message "Fix critical bug" --clear-cache
+# OTA updates — ALWAYS use the yarn scripts, never raw `--branch root`.
+# Production builds (TestFlight + App Store) subscribe to channel `production`,
+# which reads from branch `production`. Pushing to `root` or any other branch
+# silently does nothing for prod binaries.
+yarn ota "Fix critical bug"           # iOS prod channel
+yarn ota:android "Fix critical bug"   # Android prod channel
+yarn ota:all "Fix critical bug"       # both platforms, prod channel
 
 # List recent builds
 eas build:list --platform ios --limit 5 --non-interactive
 eas build:list --status in-progress
+
+# Inspect what's actually on each branch and which channel it feeds
+eas channel:list
+eas branch:list
+eas update:list --branch production --limit 5
 
 # Check authentication
 eas whoami
@@ -52,6 +61,25 @@ eas whoami
 # View project configuration
 eas config
 ```
+
+## OTA Pre-flight Checklist
+
+Before publishing an OTA, verify:
+
+1. **Local is in sync with origin** — `yarn release` auto-bumps app version
+   and commits to origin via the GitHub workflow. If you have local commits
+   that haven't been pushed yet, the binary that gets built from origin will
+   not include them. Run `git pull --rebase` and check `git status` is clean
+   before publishing OTAs.
+2. **OTA bundle's native modules match the running binary's** — adding a
+   native dependency (anything in `package.json` that ships a `.podspec` /
+   Android Gradle module) means existing TestFlight builds don't have it
+   linked. Pushing JS that imports the new module can either silently
+   no-op or crash on launch, in which case expo-updates rolls back to the
+   embedded bundle. New native deps require a fresh `yarn release`.
+3. **BrandFooter OTA hash confirms delivery** — Settings screen shows the
+   current bundle's update group ID (first 8 chars). Compare against
+   `eas update:list --branch production` to confirm the latest push landed.
 
 ## Build Profiles (from eas.json)
 

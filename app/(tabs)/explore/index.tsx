@@ -4,7 +4,6 @@ import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { TabScreen } from '@/components/TabScreen';
 import { SectionLabel } from '@/components/common';
 import {
   ArticleList,
@@ -19,7 +18,6 @@ import { articleQueries, readingProgressQueries } from '@/constants/queries';
 import { getCategoryFilterRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useColors } from '@/hooks/theme/useColors';
 import { useToast } from '@/components/providers/ToastProvider';
 import type { CategoryId } from '@/types/branded.types';
 import { handleError } from '@/utils/errorHandling';
@@ -46,7 +44,6 @@ function buildEntitiesWithCounts<T extends { id: number; name: string }>(
 }
 
 export default function ExploreScreen(): JSX.Element {
-  const colors = useColors();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { showToast } = useToast();
@@ -169,16 +166,14 @@ export default function ExploreScreen(): JSX.Element {
   }, [articlesData, refreshKey, categoriesWithArticles, handleSelectFilter]);
 
   return (
-    <TabScreen background={colors.background}>
-      <ArticleList
-        contentContainerStyle={styles.listContentContainer}
-        isRefreshing={isRefreshing}
-        ListHeaderComponent={<>{headerSections}</>}
-        ListFooterComponent={FOOTER_COMPONENT}
-        progressViewOffset={LAYOUT.SPACING.XLARGE}
-        onRefresh={handleRefresh}
-      />
-    </TabScreen>
+    <ArticleList
+      contentContainerStyle={styles.listContentContainer}
+      isRefreshing={isRefreshing}
+      ListHeaderComponent={<>{headerSections}</>}
+      ListFooterComponent={FOOTER_COMPONENT}
+      progressViewOffset={LAYOUT.SPACING.XLARGE}
+      onRefresh={handleRefresh}
+    />
   );
 }
 

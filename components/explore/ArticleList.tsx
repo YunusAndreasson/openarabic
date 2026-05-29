@@ -1,6 +1,6 @@
 import { useHeaderHeight } from "expo-router/react-navigation";
 import { useState, useTransition, type ReactElement } from 'react';
-import { RefreshControl, ScrollView, type ViewStyle } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, type ViewStyle } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
@@ -50,6 +50,11 @@ export function ArticleList({
 
   return (
     <ScrollView
+      // `flex: 1` makes the ScrollView fill the route's content view — required
+      // so UIKit treats it as the screen's primary scrollable and runs the
+      // large-title collapse on scroll. Background is set so we don't see the
+      // route's underlying chrome through any gaps.
+      style={[styles.flex, { backgroundColor: colors.background }]}
       contentContainerStyle={contentContainerStyle}
       showsVerticalScrollIndicator={false}
       refreshControl={
@@ -77,3 +82,7 @@ export function ArticleList({
 }
 
 ArticleList.displayName = 'ArticleList';
+
+const styles = StyleSheet.create({
+  flex: { flex: 1 },
+});
