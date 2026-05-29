@@ -35,6 +35,8 @@ export interface VoiceDebug {
     stopReason: string;
     heardSpeech: boolean;
     peakRms: number;
+    firstBufferMs: number | null;
+    stopDecidedAtMs: number;
   } | null;
   /** Last terminal arm() outcome (permission / busy / error / etc.). */
   armError: string | null;
@@ -172,6 +174,8 @@ export function useVoiceReview({
           stopReason: outcome.result.stopReason,
           heardSpeech: outcome.result.heardSpeech,
           peakRms: outcome.result.peakRms,
+          firstBufferMs: outcome.result.firstBufferMs,
+          stopDecidedAtMs: outcome.result.stopDecidedAtMs,
         },
       }));
       const transcript = (await voice.transcribe(outcome.result.waveform)) ?? '';

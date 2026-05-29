@@ -67,6 +67,12 @@ export interface RecordingResult {
    *  (hit cap inside handleBuffer), 'watchdog' (cap fired with zero buffers),
    *  or 'manual' (cancel / external stop). */
   stopReason: 'silence' | 'maxDuration' | 'watchdog' | 'manual';
+  /** Wall-clock ms from start() to first handleBuffer call. Reveals whether
+   *  the mic actually delivered audio and how slow startup was. */
+  firstBufferMs: number | null;
+  /** Wall-clock ms from start() to the moment the stop decision was taken
+   *  (energy gate, max cap, watchdog, or cancel/manual). */
+  stopDecidedAtMs: number;
 }
 
 export interface RecordingHandlers {
@@ -186,6 +192,8 @@ export class VoiceRecorder {
   private bufferCount = 0;
   private stopReason: RecordingResult['stopReason'] = 'manual';
   private watchdog: ReturnType<typeof setTimeout> | null = null;
+  private firstBufferAt: number | null = null;
+  private stopDecidedAt = 0;
 
   get isRecording(): boolean {
     return this.recorder !== null;
@@ -227,6 +235,8 @@ export class VoiceRecorder {
     this.startedAt = Date.now();
     this.bufferCount = 0;
     this.stopReason = 'manual';
+    this.firstBufferAt = null;
+    this.stopDecidedAt = 0;
 
     const recorder = new AudioRecorder();
     // 1600 samples ≈ 100 ms at 16 kHz: fine enough for the energy gate.
@@ -243,13 +253,24 @@ export class VoiceRecorder {
     // edge case, etc.) the maxDuration check inside handleBuffer never runs
     // and arm() hangs forever. Wall-clock timer enforces the cap with a small
     // margin so a normal handleBuffer-driven stop still wins the race.
+    const watchdogDelay = this.config.maxDurationMs + 500;
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.log(`[voice] start: watchdog scheduled in ${watchdogDelay}ms (maxDurationMs=${this.config.maxDurationMs})`);
+    }
     this.watchdog = setTimeout(() => {
       if (!this.stopping) {
+        const at = Date.now() - this.startedAt;
+        if (__DEV__) {
+          // eslint-disable-next-line no-console
+          console.log(`[voice] watchdog FIRED at ${at}ms (scheduled ${watchdogDelay}ms)`);
+        }
         this.stopping = true;
         this.stopReason = 'watchdog';
+        this.stopDecidedAt = at;
         this.handlers.onAutoStop?.();
       }
-    }, this.config.maxDurationMs + 500);
+    }, watchdogDelay);
   }
 
   private handleBuffer(event: AudioReadyEvent): void {
@@ -258,6 +279,13 @@ export class VoiceRecorder {
     this.chunks.push(channel.slice());
     this.totalSamples += channel.length;
     this.bufferCount += 1;
+    if (this.firstBufferAt === null) {
+      this.firstBufferAt = Date.now() - this.startedAt;
+      if (__DEV__) {
+        // eslint-disable-next-line no-console
+        console.log(`[voice] first buffer at ${this.firstBufferAt}ms`);
+      }
+    }
 
     let sumSquares = 0;
     for (const sample of channel) {
@@ -293,6 +321,11 @@ export class VoiceRecorder {
     if (!this.stopping && (quietEnough || elapsed >= this.config.maxDurationMs)) {
       this.stopping = true;
       this.stopReason = quietEnough ? 'silence' : 'maxDuration';
+      this.stopDecidedAt = elapsed;
+      if (__DEV__) {
+        // eslint-disable-next-line no-console
+        console.log(`[voice] handleBuffer stop ${this.stopReason} at ${elapsed}ms (speechSeen=${this.speechSeen} silenceMs=${this.silenceMs} peakRms=${this.peakRms.toFixed(5)})`);
+      }
       this.handlers.onAutoStop?.();
     }
   }
@@ -312,6 +345,12 @@ export class VoiceRecorder {
     const config = { ...this.config };
     const bufferCount = this.bufferCount;
     const stopReason = this.stopReason;
+    const firstBufferMs = this.firstBufferAt;
+    const stopDecidedAtMs = this.stopDecidedAt || durationMs;
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.log(`[voice] stop: durationMs=${durationMs} stopReason=${stopReason} bufferCount=${bufferCount} firstBufferMs=${firstBufferMs} peakRms=${peakRms.toFixed(5)} speechSeen=${heardSpeech}`);
+    }
 
     if (recorder) {
       recorder.clearOnAudioReady();
@@ -342,6 +381,8 @@ export class VoiceRecorder {
       noiseFloor,
       bufferCount,
       stopReason,
+      firstBufferMs,
+      stopDecidedAtMs,
     };
   }
 

@@ -279,9 +279,14 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
             {`phase: ${voicePhase}`}
           </ThemedText>
           {voiceDebug.recorder && (
-            <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
-              {`rec: ${voiceDebug.recorder.stopReason} · ${voiceDebug.recorder.durationMs}ms · ${voiceDebug.recorder.bufferCount}buf · peak ${voiceDebug.recorder.peakRms.toFixed(5)} · ${voiceDebug.recorder.heardSpeech ? 'speech' : 'silent'}`}
-            </ThemedText>
+            <>
+              <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
+                {`rec: ${voiceDebug.recorder.stopReason} @${voiceDebug.recorder.stopDecidedAtMs}ms · dur ${voiceDebug.recorder.durationMs}ms · ${voiceDebug.recorder.bufferCount}buf · 1st ${voiceDebug.recorder.firstBufferMs ?? 'never'}ms`}
+              </ThemedText>
+              <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
+                {`peak ${voiceDebug.recorder.peakRms.toFixed(5)} · ${voiceDebug.recorder.heardSpeech ? 'speech' : 'silent'}`}
+              </ThemedText>
+            </>
           )}
           {voiceDebug.transcript.length > 0 && (
             <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
