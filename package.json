@@ -34,7 +34,10 @@
     "release": "gh workflow run release.yml",
     "release:all": "gh workflow run release.yml -f platform=all",
     "release:ios": "gh workflow run release.yml -f platform=ios",
-    "release:android": "gh workflow run release.yml -f platform=android"
+    "release:android": "gh workflow run release.yml -f platform=android",
+    "ota": "eas update --branch production --environment production --platform ios --message",
+    "ota:android": "eas update --branch production --environment production --platform android --message",
+    "ota:all": "eas update --branch production --environment production --platform all --message"
   },
   "dependencies": {
     "@babel/runtime": "^7.29.7",

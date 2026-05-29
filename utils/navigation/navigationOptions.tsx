@@ -38,9 +38,16 @@ export function createNavigationOptions(
   },
   options: {
     isRegularScreen?: boolean;
+    /**
+     * When true, leave the title as a plain string so UIKit / Material can
+     * render it natively. Required for iOS `headerLargeTitle` collapse-on-scroll
+     * (UIKit can't animate a custom React element). Defaults to false, which
+     * keeps the left-aligned custom JSX title used everywhere else.
+     */
+    useNativeTitle?: boolean;
   } & Partial<NativeStackNavigationOptions> = {},
 ): NativeStackNavigationOptions {
-  const { isRegularScreen, title, ...restOverrides } = options;
+  const { isRegularScreen, useNativeTitle, title, ...restOverrides } = options;
 
   const baseOptions: NativeStackNavigationOptions = {
     headerStyle: { backgroundColor: colors.background },
@@ -55,23 +62,28 @@ export function createNavigationOptions(
     // Force left-aligned title on both platforms. UIKit centers nav bar titles
     // and ignores `headerTitleAlign`, so we render via custom `headerTitle` at
     // native sizes (17pt iOS / 22pt Android) wrapped in a flex:1 View.
+    // Tab roots opt out via `useNativeTitle` so iOS can drive the large-title
+    // collapse animation against a real UILabel.
     ...(title
-      ? {
-          headerTitle: () => (
-            <View style={{ flex: 1 }}>
-              <Text
-                numberOfLines={1}
-                style={{
-                  color: colors.headingText,
-                  fontFamily: FONTS.ENGLISH_SEMIBOLD,
-                  fontSize: NATIVE_TITLE_FONT_SIZE,
-                }}
-              >
-                {title}
-              </Text>
-            </View>
-          ),
-        }
+      ? useNativeTitle
+        ? { title }
+        : {
+            title,
+            headerTitle: () => (
+              <View style={{ flex: 1 }}>
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    color: colors.headingText,
+                    fontFamily: FONTS.ENGLISH_SEMIBOLD,
+                    fontSize: NATIVE_TITLE_FONT_SIZE,
+                  }}
+                >
+                  {title}
+                </Text>
+              </View>
+            ),
+          }
       : {}),
     headerTintColor: colors.headingText,
     headerBackVisible: false, // Prevent default back button on Android when using custom headerLeft

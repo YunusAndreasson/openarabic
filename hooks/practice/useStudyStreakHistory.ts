@@ -12,7 +12,7 @@ interface UseStudyStreakHistoryResult {
 
 /**
  * Hook to fetch complete study session streak history with visualization data
- * Used by StudyStreakBottomSheet to display 40-day chart and metrics
+ * Used by the study-streak route screen to display 40-day chart and metrics
  *
  * @returns Streak history with daily activity, streak periods, and metrics
  *

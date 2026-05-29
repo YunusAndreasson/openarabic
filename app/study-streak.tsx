@@ -1,29 +1,24 @@
+import type { JSX } from 'react';
 import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import {
   BottomSheetHeader,
   BottomSheetStateHandler,
-  GenericBottomSheet,
+  SheetScreen,
 } from '@/components/common';
 import { StreakChart, StreakMetrics } from '@/components/explore';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useStudyStreakHistory } from '@/hooks/practice/useStudyStreakHistory';
 
-interface Props {
-  isVisible: boolean;
-  onClose: () => void;
-}
-
-export function StudyStreakBottomSheet({ isVisible, onClose }: Props) {
+export default function StudyStreakScreen(): JSX.Element {
   const {
     streakHistory,
     isLoading: isStreakLoading,
     isError: isStreakError,
   } = useStudyStreakHistory();
 
-  // Only calculate subtitle when streakHistory exists to avoid null access
   const subtitle = useMemo(() => {
     if (!streakHistory?.metrics) {
       return STRINGS.STUDY_STREAK_INACTIVE_SUBTITLE;
@@ -35,7 +30,7 @@ export function StudyStreakBottomSheet({ isVisible, onClose }: Props) {
   }, [streakHistory]);
 
   return (
-    <GenericBottomSheet isVisible={isVisible} onClose={onClose}>
+    <SheetScreen>
       <BottomSheetStateHandler
         isLoading={isStreakLoading}
         isError={isStreakError}
@@ -46,14 +41,12 @@ export function StudyStreakBottomSheet({ isVisible, onClose }: Props) {
       >
         <BottomSheetHeader title={STRINGS.STREAK_LABEL} subtitle={subtitle} />
 
-        {/* Streak Metrics */}
         {streakHistory?.metrics && (
           <View style={styles.streakMetricsContainer}>
             <StreakMetrics metrics={streakHistory.metrics} />
           </View>
         )}
 
-        {/* Streak Chart */}
         {streakHistory?.dailyActivity && streakHistory?.streakPeriods && (
           <>
             <BottomSheetHeader
@@ -67,9 +60,13 @@ export function StudyStreakBottomSheet({ isVisible, onClose }: Props) {
           </>
         )}
       </BottomSheetStateHandler>
-    </GenericBottomSheet>
+    </SheetScreen>
   );
 }
+
+export const options = {
+  headerShown: false,
+} as const;
 
 const styles = StyleSheet.create({
   streakMetricsContainer: {

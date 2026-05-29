@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useFocusEffect, useRouter } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { InteractionManager, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -22,18 +22,14 @@ const MOUNT_FADE_IN_STYLE = {
 import { ThemedView } from '@/components/ThemedView';
 import { ErrorState } from '@/components/common';
 import {
-  DueWordsBottomSheet,
-  MemoryRetentionBottomSheet,
   PracticeEmptyState,
   RecommendationCard,
-  StudyStreakBottomSheet,
   PracticeStatCards,
-  WordsMasteredBottomSheet,
 } from '@/components/practice';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { fsrsQueries } from '@/constants/queries';
-import { getPracticeReviewRoute } from '@/constants/routes';
+import { ROUTE_PATHS, getPracticeReviewRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -48,15 +44,6 @@ export default function PracticeScreen(): JSX.Element {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { prefetchVocabularyData } = useAppPreloader();
-
-  // Bottom sheets are now inline <BottomSheet> components driven by visibility state.
-  // Only one is visible at a time — opening one closes the others. The previous
-  // BottomSheetModal/.present() pattern was broken on Android; the inline pattern
-  // matches what SettingsPicker/TimePicker already use successfully.
-  const [activeSheet, setActiveSheet] = useState<
-    'memory' | 'due' | 'streak' | 'mastered' | null
-  >(null);
-  const closeSheet = useCallback(() => setActiveSheet(null), []);
 
   // Fetch study streak data
   const { streak } = useStudyStreak();
@@ -108,10 +95,22 @@ export default function PracticeScreen(): JSX.Element {
   // Don't show error if user is not authenticated yet - this is expected during auth flow
   const shouldShowError = error && user;
 
-  const handleMemoryStrengthInfo = useCallback(() => setActiveSheet('memory'), []);
-  const handleDuePress = useCallback(() => setActiveSheet('due'), []);
-  const handleStreakPress = useCallback(() => setActiveSheet('streak'), []);
-  const handleMasteredPress = useCallback(() => setActiveSheet('mastered'), []);
+  const handleMemoryStrengthInfo = useCallback(
+    () => router.push(ROUTE_PATHS.PRACTICE_MEMORY_RETENTION),
+    [router],
+  );
+  const handleDuePress = useCallback(
+    () => router.push(ROUTE_PATHS.PRACTICE_DUE_WORDS),
+    [router],
+  );
+  const handleStreakPress = useCallback(
+    () => router.push(ROUTE_PATHS.PRACTICE_STUDY_STREAK),
+    [router],
+  );
+  const handleMasteredPress = useCallback(
+    () => router.push(ROUTE_PATHS.PRACTICE_WORDS_MASTERED),
+    [router],
+  );
 
   // Fix: Use the actual due words data count instead of database view
   // This ensures consistency between display and practice session
@@ -211,12 +210,6 @@ export default function PracticeScreen(): JSX.Element {
       {dueWordsCount > 0 && hasAnyStudyWords && (
         <FloatingActionButton icon="flash" onPress={handleStartReview} />
       )}
-
-      {/* Inline BottomSheets — `activeSheet` ensures only one is open at a time */}
-      <MemoryRetentionBottomSheet isVisible={activeSheet === 'memory'} onClose={closeSheet} />
-      <DueWordsBottomSheet isVisible={activeSheet === 'due'} onClose={closeSheet} />
-      <StudyStreakBottomSheet isVisible={activeSheet === 'streak'} onClose={closeSheet} />
-      <WordsMasteredBottomSheet isVisible={activeSheet === 'mastered'} onClose={closeSheet} />
     </ThemedView>
   );
 }

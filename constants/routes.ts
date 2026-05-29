@@ -19,6 +19,10 @@ export const ROUTE_PATHS = {
 
   PRACTICE_REVIEW: '/review',
   PRACTICE_DICTIONARY: '/(tabs)/practice/dictionary',
+  PRACTICE_DUE_WORDS: '/due-words',
+  PRACTICE_MEMORY_RETENTION: '/memory-retention',
+  PRACTICE_STUDY_STREAK: '/study-streak',
+  PRACTICE_WORDS_MASTERED: '/words-mastered',
 } as const;
 
 // Re-export route builders for backward compatibility

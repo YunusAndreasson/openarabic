@@ -224,7 +224,9 @@ export default function PlaylistScreen(): JSX.Element {
             bounces={true}
             alwaysBounceVertical={true}
             overScrollMode="always"
-            contentInsetAdjustmentBehavior="never"
+            // `automatic` is required for the iOS large-title collapse-on-scroll
+            // animation that the parent Stack.Screen opts into.
+            contentInsetAdjustmentBehavior="automatic"
             showsVerticalScrollIndicator={true}
             contentContainerStyle={listContainerStyle}
             ItemSeparatorComponent={ItemSeparator}
@@ -242,7 +244,9 @@ export default function PlaylistScreen(): JSX.Element {
             bounces={true}
             alwaysBounceVertical={true}
             overScrollMode="always"
-            contentInsetAdjustmentBehavior="never"
+            // `automatic` is required for the iOS large-title collapse-on-scroll
+            // animation that the parent Stack.Screen opts into.
+            contentInsetAdjustmentBehavior="automatic"
             showsVerticalScrollIndicator={true}
             contentContainerStyle={listContainerStyle}
             ItemSeparatorComponent={ItemSeparator}

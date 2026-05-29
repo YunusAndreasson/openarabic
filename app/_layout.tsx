@@ -506,6 +506,46 @@ function AppContent() {
                     headerShown: false,
                   }}
                 />
+                <Stack.Screen
+                  name="due-words"
+                  options={{
+                    presentation: 'formSheet',
+                    sheetAllowedDetents: 'fitToContents',
+                    sheetGrabberVisible: true,
+                    sheetCornerRadius: 24,
+                    headerShown: false,
+                  }}
+                />
+                <Stack.Screen
+                  name="memory-retention"
+                  options={{
+                    presentation: 'formSheet',
+                    sheetAllowedDetents: 'fitToContents',
+                    sheetGrabberVisible: true,
+                    sheetCornerRadius: 24,
+                    headerShown: false,
+                  }}
+                />
+                <Stack.Screen
+                  name="study-streak"
+                  options={{
+                    presentation: 'formSheet',
+                    sheetAllowedDetents: 'fitToContents',
+                    sheetGrabberVisible: true,
+                    sheetCornerRadius: 24,
+                    headerShown: false,
+                  }}
+                />
+                <Stack.Screen
+                  name="words-mastered"
+                  options={{
+                    presentation: 'formSheet',
+                    sheetAllowedDetents: 'fitToContents',
+                    sheetGrabberVisible: true,
+                    sheetCornerRadius: 24,
+                    headerShown: false,
+                  }}
+                />
               </Stack.Protected>
 
               {/* Unauthenticated routes — guard flips on sign-in, router unmounts auth */}
