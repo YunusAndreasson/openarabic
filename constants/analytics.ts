@@ -54,6 +54,15 @@ export const ANALYTICS_EVENTS = {
   // Notification events
   NOTIFICATION_SCHEDULING_FAILED: 'Notification Scheduling Failed',
   NOTIFICATIONS_DROPPED: 'Notifications Dropped',
+
+  // Voice grading (Parakeet ASR) events
+  VOICE_MODEL_LOAD_STARTED: 'Voice Model Load Started',
+  VOICE_MODEL_READY: 'Voice Model Ready',
+  VOICE_MODEL_FAILED: 'Voice Model Failed',
+  VOICE_ARM: 'Voice Arm',
+  VOICE_MIC_DENIED: 'Voice Mic Denied',
+  VOICE_TRANSCRIPT: 'Voice Transcript',
+  VOICE_MATCH: 'Voice Match',
 } as const;
 
 // User property keys for identify calls

@@ -5,6 +5,7 @@
  *
  * Ported from edemind's use-sherpa-stt.ts.
  */
+import * as Sentry from '@sentry/react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ModelCategory,
@@ -14,7 +15,9 @@ import {
 } from 'react-native-sherpa-onnx/download';
 import { createSTT, type STTModelType, type SttEngine } from 'react-native-sherpa-onnx/stt';
 
+import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TARGET_SAMPLE_RATE } from '@/lib/voice/recording';
+import { analytics } from '@/services/analytics';
 
 const PARAKEET_MODEL_ID = 'sherpa-onnx-nemo-parakeet-tdt-0.6b-v2-int8';
 
@@ -57,6 +60,14 @@ function useSherpaStt({
 
       setError(null);
       setDownloadProgress(progress => (progress > 0 ? progress : 0.01));
+      const loadStartedAt = Date.now();
+      void analytics.track(ANALYTICS_EVENTS.VOICE_MODEL_LOAD_STARTED, { modelId });
+      Sentry.addBreadcrumb({
+        category: 'voice',
+        level: 'info',
+        message: 'voice.model.load.start',
+        data: { modelId },
+      });
 
       try {
         const ensureOpts = {
@@ -95,10 +106,29 @@ function useSherpaStt({
         engineRef.current = engine;
         setDownloadProgress(1);
         setReady(true);
+        void analytics.track(ANALYTICS_EVENTS.VOICE_MODEL_READY, {
+          modelId,
+          durationMs: Date.now() - loadStartedAt,
+        });
+        Sentry.addBreadcrumb({
+          category: 'voice',
+          level: 'info',
+          message: 'voice.model.ready',
+          data: { modelId, durationMs: Date.now() - loadStartedAt },
+        });
       } catch (err) {
         if (!cancelled) {
           setReady(false);
-          setError(err instanceof Error ? err : new Error(String(err)));
+          const error = err instanceof Error ? err : new Error(String(err));
+          setError(error);
+          void analytics.track(ANALYTICS_EVENTS.VOICE_MODEL_FAILED, {
+            modelId,
+            message: error.message,
+          });
+          Sentry.captureException(error, {
+            tags: { feature: 'voice-grading', stage: 'model-load' },
+            extra: { modelId },
+          });
         }
       }
     }

@@ -9,10 +9,13 @@
  * card stays open for the user to manually choose Known / Unknown. There is no
  * auto-Unknown — a missed transcript must not consume an FSRS attempt.
  */
+import * as Sentry from '@sentry/react-native';
 import { useEffect, useRef, useState } from 'react';
 
 import { useToast, useVoiceGrading } from '@/components/providers';
+import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { STRINGS } from '@/constants/strings';
+import { analytics } from '@/services/analytics';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import { setVoiceEnabled } from '@/store/settingsSlice';
 import { matchSingleWord } from '@/utils/voiceMatching';
@@ -92,17 +95,36 @@ export function useVoiceReview({
     const timer = setTimeout(async () => {
       if (cancelled) return;
       setPhase('listening');
+      void analytics.track(ANALYTICS_EVENTS.VOICE_ARM, { wordKey: currentWordKey });
+      Sentry.addBreadcrumb({
+        category: 'voice',
+        level: 'info',
+        message: 'voice.arm',
+        data: { wordKey: currentWordKey },
+      });
 
       const outcome = await voice.arm();
       if (cancelled) return;
 
       if (!outcome.ok) {
         if (outcome.reason === 'permission') {
+          void analytics.track(ANALYTICS_EVENTS.VOICE_MIC_DENIED);
+          Sentry.addBreadcrumb({
+            category: 'voice',
+            level: 'warning',
+            message: 'voice.mic.denied',
+          });
           showToast(STRINGS.VOICE_MIC_PERMISSION_DENIED);
           dispatch(setVoiceEnabled(false));
           setPhase('disabled');
           return;
         }
+        Sentry.addBreadcrumb({
+          category: 'voice',
+          level: 'warning',
+          message: 'voice.arm.failed',
+          data: { reason: outcome.reason },
+        });
         setPhase('idle');
         return;
       }
@@ -111,7 +133,31 @@ export function useVoiceReview({
       const transcript = (await voice.transcribe(outcome.result.waveform)) ?? '';
       if (cancelled) return;
 
+      void analytics.track(ANALYTICS_EVENTS.VOICE_TRANSCRIPT, {
+        transcriptLength: transcript.length,
+        durationMs: outcome.result.durationMs,
+        heardSpeech: outcome.result.heardSpeech,
+        peakRms: outcome.result.peakRms,
+      });
+
       const match = matchSingleWord({ spoken: transcript, expected });
+      void analytics.track(ANALYTICS_EVENTS.VOICE_MATCH, {
+        matched: match.matched,
+        method: match.method,
+        normalizedSpoken: match.normalizedSpoken,
+        normalizedExpected: match.normalizedExpected,
+      });
+      Sentry.addBreadcrumb({
+        category: 'voice',
+        level: 'info',
+        message: 'voice.match',
+        data: {
+          matched: match.matched,
+          method: match.method,
+          spoken: match.normalizedSpoken,
+          expected: match.normalizedExpected,
+        },
+      });
       if (match.matched) {
         onKnownAutoRef.current();
         // Phase resets when the next card mounts (currentWordKey change).
