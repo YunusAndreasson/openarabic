@@ -9,6 +9,7 @@
  * the pure matchSingleWord() against the card's expected English.
  */
 import * as Sentry from '@sentry/react-native';
+import { setIsAudioActiveAsync } from 'expo-audio';
 import {
   createContext,
   use,
@@ -19,6 +20,7 @@ import {
   type FC,
   type ReactNode,
 } from 'react';
+import { Platform } from 'react-native';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { useParakeetStt } from '@/hooks/voice/useSherpaStt';
@@ -96,6 +98,26 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
 
     sessionRef.current += 1;
     const sessionId = sessionRef.current;
+
+    // simpleAudioService preconfigures the iOS AVAudioSession in 'playback'
+    // and never deactivates it. react-native-audio-api can change the category
+    // to 'playAndRecord' only on a fresh / inactive session, so without this
+    // deactivate→reactivate cycle the mic opens against a stale playback
+    // session and delivers near-silent buffers. Best-effort, swallowed errors:
+    // the call will surface its real failure via Sentry if it matters.
+    if (Platform.OS === 'ios') {
+      try {
+        await setIsAudioActiveAsync(false);
+      } catch (err) {
+        Sentry.addBreadcrumb({
+          category: 'voice',
+          level: 'warning',
+          message: 'voice.session.deactivate.failed',
+          data: { error: err instanceof Error ? err.message : String(err) },
+        });
+      }
+    }
+
     const recorder = new VoiceRecorder();
     recorderRef.current = recorder;
 
@@ -121,6 +143,20 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
         try {
           const result = await recorder.stop();
           recorderRef.current = null;
+          // Hand the session back to expo-audio so the next Arabic word
+          // can play. Mirror the deactivate we did before start().
+          if (Platform.OS === 'ios') {
+            try {
+              await setIsAudioActiveAsync(true);
+            } catch (err) {
+              Sentry.addBreadcrumb({
+                category: 'voice',
+                level: 'warning',
+                message: 'voice.session.reactivate.failed',
+                data: { error: err instanceof Error ? err.message : String(err) },
+              });
+            }
+          }
           Sentry.addBreadcrumb({
             category: 'voice',
             level: 'info',
@@ -132,6 +168,7 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
               stopReason: result.stopReason,
               heardSpeech: result.heardSpeech,
               peakRms: result.peakRms,
+              firstBufferMs: result.firstBufferMs,
             },
           });
           if (result.bufferCount === 0) {

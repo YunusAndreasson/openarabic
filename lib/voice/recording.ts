@@ -218,7 +218,11 @@ export class VoiceRecorder {
           iosOptions: ['defaultToSpeaker'],
         });
         await AudioManager.setAudioSessionActivity(true);
-      } catch {
+      } catch (sessionErr) {
+        if (__DEV__) {
+          // eslint-disable-next-line no-console
+          console.log(`[voice] ios session setup failed: ${sessionErr instanceof Error ? sessionErr.message : String(sessionErr)}`);
+        }
         // Surface the real error from start() below.
       }
     }
