@@ -44,6 +44,14 @@ interface ReviewBottomActionsProps {
   onPressRight?: () => void;
   onShowContextualHelp?: (helpType: ContextualHelpType) => void;
   disabled?: boolean;
+  /**
+   * Voice grading hint. When the speech recognizer transcribed a recording for
+   * this card, this prop tells the buttons which choice the recognizer leans
+   * toward so the visual weight nudges the user that way. The user can still
+   * tap either button — the hint never auto-submits. null = no hint
+   * (no voice attempt yet, or voice grading is off).
+   */
+  voiceHint?: 'known' | 'unknown' | null;
 }
 
 /**
@@ -55,15 +63,30 @@ export const ReviewBottomActions: FC<ReviewBottomActionsProps> = ({
   onPressRight,
   onShowContextualHelp,
   disabled = false,
+  voiceHint = null,
 }) => {
   const colors = useColors();
 
-  const leftBg = withAlpha(colors.error, BOTTOM_ACTIONS_CONSTANTS.TINT_BG_OPACITY);
-  const rightBg = withAlpha(colors.success, BOTTOM_ACTIONS_CONSTANTS.TINT_BG_OPACITY);
+  // When the voice grader leans one way, that button gets the "pressed-level"
+  // tint as a resting state so it visually stands out next to the other. The
+  // unhinted side stays at the normal subtle tint. With no hint both buttons
+  // render identically (current behaviour preserved).
+  const leftHinted = voiceHint === 'unknown';
+  const rightHinted = voiceHint === 'known';
+  const leftBgOpacity = leftHinted
+    ? BOTTOM_ACTIONS_CONSTANTS.PRESSED_BG_OPACITY
+    : BOTTOM_ACTIONS_CONSTANTS.TINT_BG_OPACITY;
+  const rightBgOpacity = rightHinted
+    ? BOTTOM_ACTIONS_CONSTANTS.PRESSED_BG_OPACITY
+    : BOTTOM_ACTIONS_CONSTANTS.TINT_BG_OPACITY;
+  const leftBorderOpacity = leftHinted ? LAYOUT.OPACITY.FULL : LAYOUT.OPACITY.LIGHT;
+  const rightBorderOpacity = rightHinted ? LAYOUT.OPACITY.FULL : LAYOUT.OPACITY.LIGHT;
+  const leftBg = withAlpha(colors.error, leftBgOpacity);
+  const rightBg = withAlpha(colors.success, rightBgOpacity);
   const leftBgPressed = withAlpha(colors.error, BOTTOM_ACTIONS_CONSTANTS.PRESSED_BG_OPACITY);
   const rightBgPressed = withAlpha(colors.success, BOTTOM_ACTIONS_CONSTANTS.PRESSED_BG_OPACITY);
-  const leftBorder = withAlpha(colors.error, LAYOUT.OPACITY.LIGHT);
-  const rightBorder = withAlpha(colors.success, LAYOUT.OPACITY.LIGHT);
+  const leftBorder = withAlpha(colors.error, leftBorderOpacity);
+  const rightBorder = withAlpha(colors.success, rightBorderOpacity);
 
   const handleLeftPress = () => {
     if (disabled) return;

@@ -151,6 +151,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     currentWordKey,
     ready: !isUpdating && !isLoading && isAudioPreloadingComplete && !isComplete,
     onKnownAuto: handleSwipeRight,
+    onUnknownAuto: handleSwipeLeft,
     onRevealAnswer: revealMeaningPassive,
   });
   const voice = useVoiceGrading();
@@ -230,6 +231,13 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
             onPressRight={handleSwipeRight}
             onShowContextualHelp={handleShowContextualHelp}
             disabled={isUpdating}
+            voiceHint={
+              voiceDebug.match
+                ? voiceDebug.match.matched
+                  ? 'known'
+                  : 'unknown'
+                : null
+            }
           />
         </View>
       </View>

@@ -4,10 +4,16 @@
  * first), then on stop transcribes via Parakeet and runs `matchSingleWord`
  * against the card's English meaning.
  *
- * Match → calls `onKnownAuto()` (the review screen routes through the existing
- * Known path). Miss → calls `onRevealAnswer()` so the English appears and the
- * card stays open for the user to manually choose Known / Unknown. There is no
- * auto-Unknown — a missed transcript must not consume an FSRS attempt.
+ * Three outcomes, mirroring the edenmind reference flow:
+ * - Match (similarity ≥ 0.70)             → `onKnownAuto()`   — auto-Known
+ * - Clean miss (real word, sim < ~0.50)   → `onUnknownAuto()` — auto-Unknown
+ * - Ambiguous / hallucination / silence   → `onRevealAnswer()` + wait
+ *
+ * Auto-Unknown is reserved for transcripts the recognizer is *confident* about
+ * but that aren't the expected word ("date" when the answer is "bee"). The
+ * ambiguous band (sim 0.50–0.70) and any hallucination / empty transcript fall
+ * back to the reveal-and-wait path so a transcription error can't burn an
+ * FSRS attempt on a card the learner actually knew.
  */
 import * as Sentry from '@sentry/react-native';
 import { useEffect, useRef, useState } from 'react';
@@ -57,7 +63,11 @@ interface UseVoiceReviewArgs {
   ready: boolean;
   /** Called after a match — caller should advance the card as Known. */
   onKnownAuto: () => void;
-  /** Called after a miss — caller should reveal the English meaning + play audio. */
+  /** Called after a clean miss (recognized real word that's clearly different
+   *  from the expected) — caller should advance the card as Unknown. */
+  onUnknownAuto: () => void;
+  /** Called after an ambiguous miss / hallucination / silence — caller should
+   *  reveal the English meaning and let the user pick Known or Unknown. */
   onRevealAnswer: () => void;
 }
 
@@ -65,11 +75,24 @@ interface UseVoiceReviewArgs {
  *  pre-cached Arabic audio play out (typically ~1 s). */
 const ARM_DELAY_MS = 1400;
 
+/** Similarity below this counts as a "clean miss" — a clearly recognized but
+ *  wrong word. Anything between this and FUZZY_MIN_SIMILARITY (0.70) is
+ *  ambiguous: surface the answer and let the user judge. Picked so that
+ *  "date" vs "bee" (sim ~0.25) auto-Unknowns while a 5-char word with two
+ *  edits ("growth" vs "groth", sim ~0.83) goes to the match path. */
+const CLEAN_MISS_MAX_SIMILARITY = 0.5;
+
+/** Minimum transcript length for an auto-Unknown. A single-character emit
+ *  ("a", "i") is almost always Parakeet hedging on near-silence — treat as
+ *  ambiguous instead of penalising the card. */
+const CLEAN_MISS_MIN_TRANSCRIPT_CHARS = 2;
+
 export function useVoiceReview({
   expected,
   currentWordKey,
   ready,
   onKnownAuto,
+  onUnknownAuto,
   onRevealAnswer,
 }: UseVoiceReviewArgs): { phase: VoicePhase; debug: VoiceDebug } {
   const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
@@ -87,9 +110,11 @@ export function useVoiceReview({
 
   // Stable refs for callback identity.
   const onKnownAutoRef = useRef(onKnownAuto);
+  const onUnknownAutoRef = useRef(onUnknownAuto);
   const onRevealAnswerRef = useRef(onRevealAnswer);
   useEffect(() => {
     onKnownAutoRef.current = onKnownAuto;
+    onUnknownAutoRef.current = onUnknownAuto;
     onRevealAnswerRef.current = onRevealAnswer;
   });
 
@@ -231,6 +256,30 @@ export function useVoiceReview({
         return;
       }
 
+      // Clean miss: Parakeet was confident about a real word and it's clearly
+      // not the answer (sim well below the fuzzy threshold, transcript is a
+      // recognizable word, and `method` wasn't flagged as a hallucination).
+      // Auto-advance as Unknown so the learner isn't stuck repeating the same
+      // wrong attempt — edemind treats this case the same way.
+      const isCleanMiss =
+        match.method !== 'hallucination' &&
+        match.normalizedSpoken.length >= CLEAN_MISS_MIN_TRANSCRIPT_CHARS &&
+        match.similarity < CLEAN_MISS_MAX_SIMILARITY;
+      if (isCleanMiss) {
+        Sentry.addBreadcrumb({
+          category: 'voice',
+          level: 'info',
+          message: 'voice.match.cleanMiss',
+          data: { similarity: match.similarity, spoken: match.normalizedSpoken },
+        });
+        onUnknownAutoRef.current();
+        // Phase resets when the next card mounts (currentWordKey change).
+        return;
+      }
+
+      // Ambiguous miss / hallucination / empty transcript: reveal the answer
+      // and let the user pick. A transcription error must not auto-burn an
+      // FSRS attempt on a card the learner actually knew.
       setPhase('revealed');
       onRevealAnswerRef.current();
     }, ARM_DELAY_MS);

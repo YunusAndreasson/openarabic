@@ -26,7 +26,7 @@ export const STRINGS = {
   SPEAK_ANSWER_READY_SUBTITLE: 'Ready · about 460 MB on device',
   SPEAK_ANSWER_ERROR_SUBTITLE: "Couldn't load voice model. Try again later.",
   VOICE_LISTENING: 'Listening…',
-  VOICE_CHECKING: 'Checking…',
+  VOICE_CHECKING: 'Grading…',
   VOICE_PREPARING: 'Preparing voice…',
   VOICE_TRY_AGAIN: 'Try again or tap to grade',
   VOICE_MIC_PERMISSION_DENIED: 'Microphone access is off. Voice grading disabled.',
