@@ -23,6 +23,7 @@ import { TutorialId } from '@/constants/tutorials';
 import { useReview, useVoiceReview } from '@/hooks/review';
 import { useColors } from '@/hooks/theme/useColors';
 import { useTutorial } from '@/hooks/tutorials/useTutorial';
+import { useAppSelectorShallow } from '@/store/hooks';
 
 const baseStyles = StyleSheet.create({
   container: {
@@ -156,6 +157,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     onRevealAnswer: revealMeaningPassive,
   });
   const voice = useVoiceGrading();
+  const voiceDebugEnabled = useAppSelectorShallow(state => state.settings.voiceDebugEnabled);
 
   // Track if review session is still initializing (first word not yet loaded)
   const isInitializing = useMemo(() => {
@@ -261,9 +263,10 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
         <VoiceStatusIndicator phase={voicePhase} />
       </View>
 
-      {/* Voice debug HUD — visible while the toggle is on so user can see
-          exactly what the pipeline is doing without leaving the screen. */}
-      {voice.enabled && (
+      {/* Voice debug HUD — gated on the Advanced "Voice debug HUD" toggle so
+          the user can see exactly what the pipeline is doing without leaving
+          the screen. */}
+      {voiceDebugEnabled && (
         <View
           pointerEvents="none"
           style={[voiceDebugStyles.container, { top: insets.top + LAYOUT.SPACING.LARGE * 2 }]}

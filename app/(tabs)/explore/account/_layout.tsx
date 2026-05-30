@@ -30,6 +30,7 @@ export default function AccountLayout() {
       <Stack.Screen name="DeleteAccount" options={screenOptions(STRINGS.DELETE_ACCOUNT)} />
       <Stack.Screen name="help" options={screenOptions(STRINGS.HELP_CENTER)} />
       <Stack.Screen name="feedback" options={screenOptions(STRINGS.CONTACT_SUPPORT)} />
+      <Stack.Screen name="advanced" options={screenOptions(STRINGS.ADVANCED_VOICE_GRADING)} />
       <Stack.Screen name="terms" options={screenOptions(STRINGS.TERMS_OF_SERVICE)} />
       <Stack.Screen name="privacy" options={screenOptions(STRINGS.PRIVACY_POLICY)} />
       <Stack.Screen name="legal" options={screenOptions(STRINGS.LEGAL_ATTRIBUTIONS)} />

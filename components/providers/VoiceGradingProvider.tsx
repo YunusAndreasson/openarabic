@@ -25,8 +25,10 @@ import { Platform } from 'react-native';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { useParakeetStt } from '@/hooks/voice/useSherpaStt';
 import {
+  DEFAULT_RECORDING_CONFIG,
   MicPermissionDeniedError,
   VoiceRecorder,
+  type RecordingConfig,
   type RecordingResult,
 } from '@/lib/voice/recording';
 import { analytics } from '@/services/analytics';
@@ -70,6 +72,24 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
   const enabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
   const stt = useParakeetStt({ enabled });
   const { transcribe: rawTranscribe, isReady, isLoading, downloadProgress, error } = stt;
+
+  // Advanced recording knobs (Account → Advanced). Held in a ref so arm()
+  // always reads the latest values without re-creating the callback (its
+  // identity flows into the context value consumed by the review screen).
+  const energyGateEnabled = useAppSelectorShallow(state => state.settings.voiceEnergyGateEnabled);
+  const gainNormalizeEnabled = useAppSelectorShallow(
+    state => state.settings.voiceGainNormalizeEnabled,
+  );
+  const iosRawMode = useAppSelectorShallow(state => state.settings.voiceIosRawMode);
+  const recordingConfigRef = useRef<RecordingConfig>(DEFAULT_RECORDING_CONFIG);
+  useEffect(() => {
+    recordingConfigRef.current = {
+      ...DEFAULT_RECORDING_CONFIG,
+      energyGateEnabled,
+      gainNormalizeEnabled,
+      iosRawMode,
+    };
+  }, [energyGateEnabled, gainNormalizeEnabled, iosRawMode]);
 
   // Fresh recorder per arm() call. Reusing one across cards leaves the iOS
   // audio session in a stale state and the next start() resolves but never
@@ -193,7 +213,7 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
       };
 
       recorder
-        .start({ onAutoStop: () => void finish() })
+        .start({ onAutoStop: () => void finish() }, recordingConfigRef.current)
         .then(() => {
           Sentry.addBreadcrumb({
             category: 'voice',

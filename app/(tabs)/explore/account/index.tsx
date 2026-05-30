@@ -454,6 +454,17 @@ const AccountScreen: FC = () => {
         {/* Legal + Community (split sections rendered by AboutSection) */}
         <AboutSection />
 
+        {/* Advanced - Voice grading model status + recording knobs */}
+        <SettingsSection title={STRINGS.ADVANCED}>
+          <SettingsCard
+            icon="construct"
+            label={STRINGS.ADVANCED_VOICE_GRADING}
+            subtitle={STRINGS.ADVANCED_VOICE_GRADING_SUBTITLE}
+            rightType="chevron"
+            onPress={() => router.push(ROUTE_PATHS.ACCOUNT_ADVANCED)}
+          />
+        </SettingsSection>
+
         {/* Account - Session management */}
         <SettingsSection title={STRINGS.ACCOUNT}>
           <SettingsCard

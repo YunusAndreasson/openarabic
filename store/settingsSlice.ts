@@ -22,6 +22,13 @@ export interface SettingsState {
   dailyWordLimit: number; // Number of words that can be added per day (0 = unlimited)
   hapticsEnabled: boolean; // Vibration for button presses and interactions
   voiceEnabled: boolean; // Speak the English answer in Practice
+  // Advanced voice-grading knobs (Account → Advanced). Defaults mirror
+  // DEFAULT_RECORDING_CONFIG; surfaced so quiet-capture issues can be tuned /
+  // A-B tested on-device without a rebuild.
+  voiceEnergyGateEnabled: boolean; // Auto-stop recording on trailing silence
+  voiceGainNormalizeEnabled: boolean; // Peak-normalize the waveform before ASR
+  voiceIosRawMode: boolean; // iOS 'measurement' session mode (raw, no AGC)
+  voiceDebugEnabled: boolean; // Show the in-review voice debug HUD
 }
 
 const initialState: SettingsState = {
@@ -38,6 +45,10 @@ const initialState: SettingsState = {
   dailyWordLimit: 10, // Default to 10 words per day for getting started
   hapticsEnabled: true, // Default to enabled for haptic feedback
   voiceEnabled: false, // Opt-in; downloads a ~460 MB model on enable
+  voiceEnergyGateEnabled: true,
+  voiceGainNormalizeEnabled: true,
+  voiceIosRawMode: false,
+  voiceDebugEnabled: false,
 };
 
 const settingsSlice = createSlice({
@@ -71,6 +82,18 @@ const settingsSlice = createSlice({
     setVoiceEnabled: (state, action: PayloadAction<boolean>) => {
       state.voiceEnabled = action.payload;
     },
+    setVoiceEnergyGateEnabled: (state, action: PayloadAction<boolean>) => {
+      state.voiceEnergyGateEnabled = action.payload;
+    },
+    setVoiceGainNormalizeEnabled: (state, action: PayloadAction<boolean>) => {
+      state.voiceGainNormalizeEnabled = action.payload;
+    },
+    setVoiceIosRawMode: (state, action: PayloadAction<boolean>) => {
+      state.voiceIosRawMode = action.payload;
+    },
+    setVoiceDebugEnabled: (state, action: PayloadAction<boolean>) => {
+      state.voiceDebugEnabled = action.payload;
+    },
   },
 });
 
@@ -84,5 +107,9 @@ export const {
   setDailyWordLimit,
   setHapticsEnabled,
   setVoiceEnabled,
+  setVoiceEnergyGateEnabled,
+  setVoiceGainNormalizeEnabled,
+  setVoiceIosRawMode,
+  setVoiceDebugEnabled,
 } = settingsSlice.actions;
 export default settingsSlice.reducer;

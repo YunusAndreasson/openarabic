@@ -13,6 +13,7 @@ export const ROUTE_PATHS = {
   ACCOUNT_FONT_SELECTOR: '/(tabs)/explore/account/FontSelector',
   ACCOUNT_DELETE_ACCOUNT: '/(tabs)/explore/account/DeleteAccount',
   ACCOUNT_FEEDBACK: '/(tabs)/explore/account/feedback',
+  ACCOUNT_ADVANCED: '/(tabs)/explore/account/advanced',
   TERMS: '/(tabs)/explore/account/terms',
   PRIVACY: '/(tabs)/explore/account/privacy',
   LEGAL: '/(tabs)/explore/account/legal',

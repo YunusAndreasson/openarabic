@@ -47,6 +47,10 @@ export interface RecordingConfig {
   gainNormalizeEnabled: boolean;
   captureTarget: number;
   captureMaxGain: number;
+  /** iOS only: use the 'measurement' session mode (raw — no input AGC / noise
+   *  processing) instead of 'spokenAudio'. Off by default; exposed as an
+   *  Advanced toggle so quiet-capture issues can be A/B tested on-device. */
+  iosRawMode: boolean;
 }
 
 export const DEFAULT_RECORDING_CONFIG: RecordingConfig = {
@@ -67,6 +71,7 @@ export const DEFAULT_RECORDING_CONFIG: RecordingConfig = {
   gainNormalizeEnabled: true,
   captureTarget: 0.7,
   captureMaxGain: 60,
+  iosRawMode: false,
 };
 
 export interface RecordingResult {
@@ -228,7 +233,10 @@ export class VoiceRecorder {
         AudioManager.setAudioSessionOptions({
           iosCategory: 'playAndRecord',
           // swmansion-recommended mode for on-device ASR — tuned for speech.
-          iosMode: 'spokenAudio',
+          // 'measurement' (raw mode) disables iOS input AGC / noise processing
+          // for a bone-dry signal — toggleable via the Advanced iOS raw mode
+          // setting for A/B testing quiet-capture issues.
+          iosMode: this.config.iosRawMode ? 'measurement' : 'spokenAudio',
           // No Bluetooth HFP: a connected headset would route the mic to an
           // ~8 kHz narrowband channel and strip the consonant cues Parakeet
           // needs. Force the full-band built-in mic.
