@@ -112,6 +112,96 @@ describe('voiceMatching', () => {
     });
   });
 
+  describe('matchSingleWord — equivalence groups', () => {
+    it('accepts a letter-name truncation (bee → b)', () => {
+      const r = matchSingleWord({ spoken: 'b', expected: 'bee' });
+      expect(r.matched).toBe(true);
+      expect(r.method).toBe('equivalent');
+      expect(r.similarity).toBe(1);
+    });
+
+    it('accepts a homophone both directions (sea ↔ see)', () => {
+      expect(matchSingleWord({ spoken: 'sea', expected: 'see' }).matched).toBe(true);
+      expect(matchSingleWord({ spoken: 'see', expected: 'sea' }).matched).toBe(true);
+    });
+
+    it('accepts number word ↔ digit (two ↔ 2, three ↔ 3)', () => {
+      expect(matchSingleWord({ spoken: 'to', expected: 'two' }).matched).toBe(true);
+      expect(matchSingleWord({ spoken: 'two', expected: '2' }).matched).toBe(true);
+      expect(matchSingleWord({ spoken: '3', expected: 'three' }).matched).toBe(true);
+      expect(matchSingleWord({ spoken: 'three', expected: '3' }).matched).toBe(true);
+    });
+
+    it('accepts a longer homophone the fold misses (flower ↔ flour)', () => {
+      const r = matchSingleWord({ spoken: 'flour', expected: 'flower' });
+      expect(r.matched).toBe(true);
+      expect(r.method).toBe('equivalent');
+    });
+
+    it('finds the equivalent token inside a longer utterance', () => {
+      const r = matchSingleWord({ spoken: 'i think it is b', expected: 'bee' });
+      expect(r.matched).toBe(true);
+      expect(r.method).toBe('equivalent');
+    });
+
+    it('does not collapse genuinely different short words', () => {
+      expect(matchSingleWord({ spoken: 'cot', expected: 'cat' }).matched).toBe(false);
+      expect(matchSingleWord({ spoken: 'pin', expected: 'pen' }).matched).toBe(false);
+    });
+  });
+
+  describe('matchSingleWord — inflection leniency', () => {
+    it('accepts a plural for a singular (books → book)', () => {
+      const r = matchSingleWord({ spoken: 'books', expected: 'book' });
+      expect(r.matched).toBe(true);
+      expect(r.method).toBe('inflection');
+    });
+
+    it('accepts -es / -ies plurals (buses → bus, flies → fly)', () => {
+      expect(matchSingleWord({ spoken: 'buses', expected: 'bus' }).matched).toBe(true);
+      expect(matchSingleWord({ spoken: 'flies', expected: 'fly' }).matched).toBe(true);
+    });
+
+    it('accepts verb -ing / -ed forms (running → run, helped → help)', () => {
+      expect(matchSingleWord({ spoken: 'running', expected: 'run' }).matched).toBe(true);
+      expect(matchSingleWord({ spoken: 'helped', expected: 'help' }).matched).toBe(true);
+      expect(matchSingleWord({ spoken: 'loving', expected: 'love' }).matched).toBe(true);
+    });
+
+    it('accepts adverb -ly forms (quickly → quick, happily → happy)', () => {
+      expect(matchSingleWord({ spoken: 'quickly', expected: 'quick' }).matched).toBe(true);
+      expect(matchSingleWord({ spoken: 'happily', expected: 'happy' }).matched).toBe(true);
+    });
+
+    it('matches either direction (book ↔ books)', () => {
+      expect(matchSingleWord({ spoken: 'book', expected: 'books' }).matched).toBe(true);
+    });
+
+    // The inflection layer must stay conservative: it must NOT be the thing that
+    // collapses a root word onto a shorter one. (These pairs may still be
+    // accepted by the separate, pre-existing fuzzy 0.70 fallback — that is
+    // intended leniency and out of scope here.)
+    it('does not stem a root word onto a shorter one (seed → see)', () => {
+      expect(matchSingleWord({ spoken: 'seed', expected: 'see' }).method).not.toBe('inflection');
+      expect(matchSingleWord({ spoken: 'feed', expected: 'fee' }).method).not.toBe('inflection');
+    });
+
+    it('does not strip agentive -er (teacher → teach)', () => {
+      expect(matchSingleWord({ spoken: 'teacher', expected: 'teach' }).method).not.toBe(
+        'inflection',
+      );
+    });
+  });
+
+  describe('matchSingleWord — British/American spelling', () => {
+    it('accepts the alternate spelling either direction', () => {
+      expect(matchSingleWord({ spoken: 'colour', expected: 'color' }).matched).toBe(true);
+      expect(matchSingleWord({ spoken: 'color', expected: 'colour' }).matched).toBe(true);
+      expect(matchSingleWord({ spoken: 'centre', expected: 'center' }).matched).toBe(true);
+      expect(matchSingleWord({ spoken: 'realise', expected: 'realize' }).matched).toBe(true);
+    });
+  });
+
   describe('matchSingleWord — miss', () => {
     it('rejects an unrelated word', () => {
       const r = matchSingleWord({ spoken: 'apple', expected: 'knowledge' });
