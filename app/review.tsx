@@ -11,6 +11,7 @@ import {
   ReviewBottomActions,
   ReviewCard,
   ReviewHeader,
+  VoiceStatusIndicator,
 } from '@/components/review';
 import { useTutorialContext, useVoiceGrading } from '@/components/providers';
 import { SwipeGestureTutorial } from '@/components/tutorials/SwipeGestureTutorial';
@@ -242,36 +243,23 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
         </View>
       </View>
 
-      {/* Voice mode hint — small, non-blocking line above the bottom buttons. */}
-      {voicePhase !== 'idle' && (
-        <View
-          pointerEvents="none"
-          style={[
-            voiceHintStyles.container,
-            {
-              bottom:
-                insets.bottom +
-                LAYOUT.SPACING.LARGE +
-                LAYOUT.BUTTON.HEIGHT.LARGE +
-                LAYOUT.SPACING.MEDIUM,
-            },
-          ]}
-        >
-          <ThemedText
-            colorName="textTertiary"
-            style={voiceHintStyles.text}
-            type="caption"
-          >
-            {voicePhase === 'listening'
-              ? STRINGS.VOICE_LISTENING
-              : voicePhase === 'checking'
-                ? STRINGS.VOICE_CHECKING
-                : voicePhase === 'revealed'
-                  ? STRINGS.VOICE_TRY_AGAIN
-                  : STRINGS.VOICE_PREPARING}
-          </ThemedText>
-        </View>
-      )}
+      {/* Voice status — prominent pill above the bottom buttons so the learner
+          can clearly tell when we're listening vs grading. */}
+      <View
+        pointerEvents="none"
+        style={[
+          voiceHintStyles.container,
+          {
+            bottom:
+              insets.bottom +
+              LAYOUT.SPACING.LARGE +
+              LAYOUT.BUTTON.HEIGHT.LARGE +
+              LAYOUT.SPACING.MEDIUM,
+          },
+        ]}
+      >
+        <VoiceStatusIndicator phase={voicePhase} />
+      </View>
 
       {/* Voice debug HUD — visible while the toggle is on so user can see
           exactly what the pipeline is doing without leaving the screen. */}
@@ -331,9 +319,6 @@ const voiceHintStyles = StyleSheet.create({
     right: 0,
     alignItems: 'center',
   } as ViewStyle,
-  text: {
-    textAlign: 'center',
-  } as TextStyle,
 });
 
 const voiceDebugStyles = StyleSheet.create({

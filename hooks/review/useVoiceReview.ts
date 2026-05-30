@@ -1,8 +1,8 @@
 /**
  * Wires the voice-grading pipeline into a Practice review session. Auto-arms
- * the mic on each new card (after a short delay so the Arabic audio can play
- * first), then on stop transcribes via Parakeet and runs `matchSingleWord`
- * against the card's English meaning.
+ * the mic on each new card once the Arabic word audio has finished playing (so
+ * the prompt is never cut off), then on stop transcribes via Parakeet and runs
+ * `matchSingleWord` against the card's English meaning.
  *
  * Three outcomes, mirroring the edenmind reference flow:
  * - Match (similarity ≥ 0.70)             → `onKnownAuto()`   — auto-Known
@@ -22,6 +22,7 @@ import { useToast, useVoiceGrading } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { STRINGS } from '@/constants/strings';
 import { analytics } from '@/services/analytics';
+import { simpleAudioService, type AudioStatus } from '@/services/audioPlayer';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import { setVoiceEnabled } from '@/store/settingsSlice';
 import { matchSingleWord } from '@/utils/voiceMatching';
@@ -71,9 +72,67 @@ interface UseVoiceReviewArgs {
   onRevealAnswer: () => void;
 }
 
-/** How long to wait after a card settles before opening the mic. Lets the
- *  pre-cached Arabic audio play out (typically ~1 s). */
-const ARM_DELAY_MS = 1400;
+/** If the Arabic word audio hasn't begun within this window after the card
+ *  settles, assume there's nothing to play (cache miss / no audio_url) and
+ *  open the mic anyway rather than waiting indefinitely. */
+const AUDIO_START_TIMEOUT_MS = 1500;
+
+/** Small pause after the Arabic audio finishes before opening the mic, so the
+ *  tail isn't clipped and the playback audio session fully releases first. */
+const POST_AUDIO_GRACE_MS = 200;
+
+/** Absolute cap on how long we'll wait for audio before arming regardless —
+ *  guards against a status stream that never reports completion. */
+const MAX_AUDIO_WAIT_MS = 8000;
+
+/**
+ * Resolves once the current card's Arabic word audio has finished playing, so
+ * the mic doesn't open mid-prompt. Replaces the old fixed pre-arm delay, which
+ * cut longer / late-starting words short.
+ *
+ * `simpleAudioService.subscribe` doesn't replay the current status and only
+ * fires on change (~every 500 ms while playing, then once on completion), so a
+ * light poll drives the start-timeout / max-wait deadlines. Resolution rules:
+ * - audio played then stopped         → finished, wait POST_AUDIO_GRACE_MS
+ * - audio never started in the window  → nothing to wait for, resolve now
+ * - MAX_AUDIO_WAIT_MS elapsed          → safety bail, resolve now
+ * - caller cancelled                   → resolve now
+ */
+function waitForCardAudioToFinish(isCancelled: () => boolean): Promise<void> {
+  return new Promise<void>(resolve => {
+    const startedAt = Date.now();
+    let sawPlayback = simpleAudioService.getStatus().playing;
+    let settled = false;
+
+    const finish = (graceMs: number) => {
+      if (settled) return;
+      settled = true;
+      clearInterval(poll);
+      unsubscribe();
+      if (graceMs > 0 && !isCancelled()) {
+        setTimeout(resolve, graceMs);
+      } else {
+        resolve();
+      }
+    };
+
+    const evaluate = (status: AudioStatus) => {
+      if (isCancelled()) return finish(0);
+      const elapsed = Date.now() - startedAt;
+      if (status.playing) sawPlayback = true;
+      // Played and has now stopped → the prompt finished.
+      if (sawPlayback && !status.playing) return finish(POST_AUDIO_GRACE_MS);
+      // Never started → nothing to wait for.
+      if (!sawPlayback && elapsed >= AUDIO_START_TIMEOUT_MS) return finish(0);
+      // Absolute safety cap.
+      if (elapsed >= MAX_AUDIO_WAIT_MS) return finish(0);
+    };
+
+    const unsubscribe = simpleAudioService.subscribe(evaluate);
+    const poll = setInterval(() => evaluate(simpleAudioService.getStatus()), 100);
+    evaluate(simpleAudioService.getStatus());
+  });
+}
 
 /** Similarity below this counts as a "clean miss" — a clearly recognized but
  *  wrong word. Anything between this and FUZZY_MIN_SIMILARITY (0.70) is
@@ -153,8 +212,12 @@ export function useVoiceReview({
     armedForKeyRef.current = currentWordKey;
     let cancelled = false;
 
-    const timer = setTimeout(async () => {
+    const run = async () => {
+      // Let the Arabic word audio play out before opening the mic so the prompt
+      // is never cut off. Resolves quickly when no audio plays for this card.
+      await waitForCardAudioToFinish(() => cancelled);
       if (cancelled) return;
+
       setPhase('listening');
       void analytics.track(ANALYTICS_EVENTS.VOICE_ARM, { wordKey: currentWordKey });
       Sentry.addBreadcrumb({
@@ -282,11 +345,12 @@ export function useVoiceReview({
       // FSRS attempt on a card the learner actually knew.
       setPhase('revealed');
       onRevealAnswerRef.current();
-    }, ARM_DELAY_MS);
+    };
+
+    void run();
 
     return () => {
       cancelled = true;
-      clearTimeout(timer);
       // Cancel is a no-op when nothing is in flight.
       void voice.cancel();
     };

@@ -20,8 +20,16 @@ interface AudioReadyEvent {
 /** Parakeet expects 16 kHz mono. */
 export const TARGET_SAMPLE_RATE = 16000;
 
-const ABS_SPEECH_FLOOR = 0.003;
-const ABS_SILENCE_FLOOR = 0.0018;
+// Absolute backstops for the otherwise-relative energy gate (the live threshold
+// is noiseFloor × speechFactor). These only dominate when the measured noise
+// floor is very low, i.e. a quiet room. They were 0.003 / 0.0018, but iPhone
+// capture under the `spokenAudio` session has no input AGC, so a soft or
+// slightly-distant speaker lands normal speech below 0.003 — `speechSeen` then
+// never flips and the recording runs to the maxDuration cap before grading can
+// start. Lowered so the adaptive gate handles quiet voices; the post-stop
+// normalizeGain still boosts the waveform Parakeet sees.
+const ABS_SPEECH_FLOOR = 0.001;
+const ABS_SILENCE_FLOOR = 0.0006;
 const INITIAL_NOISE_FLOOR = 0.005;
 
 export interface RecordingConfig {
@@ -32,6 +40,10 @@ export interface RecordingConfig {
   silenceHangMs: number;
   minDurationMs: number;
   maxDurationMs: number;
+  /** Dead-air bail: if the gate never registers speech, stop after this long
+   *  instead of waiting out maxDurationMs. Only applies while speechSeen is
+   *  false, so it never cuts off someone who actually started talking. */
+  noSpeechTimeoutMs: number;
   gainNormalizeEnabled: boolean;
   captureTarget: number;
   captureMaxGain: number;
@@ -48,6 +60,10 @@ export const DEFAULT_RECORDING_CONFIG: RecordingConfig = {
   // device; 10 s left too little headroom for slow / hesitating speakers
   // before the energy gate's silenceHangMs (900 ms) could fire.
   maxDurationMs: 15000,
+  // No speech at all in 8 s means the mic isn't hearing the user (too quiet /
+  // permission edge / silence). Bail to grading + the reveal fallback rather
+  // than stranding them on "Listening…" for the full 15 s cap.
+  noSpeechTimeoutMs: 8000,
   gainNormalizeEnabled: true,
   captureTarget: 0.7,
   captureMaxGain: 60,
@@ -63,10 +79,11 @@ export interface RecordingResult {
   /** Number of audio buffers handleBuffer received. 0 means the mic delivered
    *  no audio at all (session conflict / permission edge case). */
   bufferCount: number;
-  /** What stopped the recording: 'silence' (energy gate), 'maxDuration'
-   *  (hit cap inside handleBuffer), 'watchdog' (cap fired with zero buffers),
-   *  or 'manual' (cancel / external stop). */
-  stopReason: 'silence' | 'maxDuration' | 'watchdog' | 'manual';
+  /** What stopped the recording: 'silence' (energy gate), 'noSpeech' (gate
+   *  never heard speech within noSpeechTimeoutMs), 'maxDuration' (hit cap inside
+   *  handleBuffer), 'watchdog' (cap fired with zero buffers), or 'manual'
+   *  (cancel / external stop). */
+  stopReason: 'silence' | 'noSpeech' | 'maxDuration' | 'watchdog' | 'manual';
   /** Wall-clock ms from start() to first handleBuffer call. Reveals whether
    *  the mic actually delivered audio and how slow startup was. */
   firstBufferMs: number | null;
@@ -322,9 +339,14 @@ export class VoiceRecorder {
       this.speechSeen &&
       this.silenceMs >= this.config.silenceHangMs &&
       elapsed >= this.config.minDurationMs;
-    if (!this.stopping && (quietEnough || elapsed >= this.config.maxDurationMs)) {
+    const noSpeechTimedOut =
+      !this.speechSeen && elapsed >= this.config.noSpeechTimeoutMs;
+    if (
+      !this.stopping &&
+      (quietEnough || noSpeechTimedOut || elapsed >= this.config.maxDurationMs)
+    ) {
       this.stopping = true;
-      this.stopReason = quietEnough ? 'silence' : 'maxDuration';
+      this.stopReason = quietEnough ? 'silence' : noSpeechTimedOut ? 'noSpeech' : 'maxDuration';
       this.stopDecidedAt = elapsed;
       if (__DEV__) {
         // eslint-disable-next-line no-console
