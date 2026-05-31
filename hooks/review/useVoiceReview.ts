@@ -194,14 +194,16 @@ export function useVoiceReview({
     armedForKeyRef.current = null;
   }, [currentWordKey]);
 
-  // Surface a passive "disabled" indicator so the screen can give the user a
-  // hint when the toggle is on but the model isn't ready yet.
+  // Surface a passive "Preparing voice…" pill ONLY while the model is genuinely
+  // loading. On a load error (or any non-loading not-ready state) stay idle —
+  // otherwise the pill spins forever on a failure that will never resolve; the
+  // user just grades manually. Becomes ready → the arm effect takes over.
   useEffect(() => {
     if (!voiceEnabled) return;
     if (voice.isReady) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPhase('disabled');
-  }, [voiceEnabled, voice.isReady]);
+    setPhase(voice.isLoading ? 'disabled' : 'idle');
+  }, [voiceEnabled, voice.isLoading, voice.isReady]);
 
   useEffect(() => {
     if (!voiceEnabled || !voice.isReady) return;

@@ -32,15 +32,18 @@ export const STRINGS = {
   VOICE_MIC_PERMISSION_DENIED: 'Microphone access is off. Voice grading disabled.',
   VOICE_PAUSE_LABEL: 'Pause voice grading for this session',
   VOICE_RESUME_LABEL: 'Resume voice grading',
-  // Voice result panel — shown when a spoken answer was wrong
-  VOICE_RESULT_NOT_QUITE: 'Not quite',
+  // Voice result panel — shown when the recognizer couldn't confirm a match.
+  // Framed as a neutral self-grade ("did you get it right?") rather than a
+  // verdict, so the buttons answer the question the You-said/Answer comparison
+  // sets up instead of asking the user to ratify the ASR.
+  VOICE_RESULT_QUESTION: 'Did you get it right?',
   VOICE_RESULT_NOT_HEARD: "Didn't catch that",
   VOICE_RESULT_HEARD_LABEL: 'You said',
   VOICE_RESULT_ANSWER_LABEL: 'Answer',
   VOICE_RESULT_SILENCE: 'no clear speech',
-  VOICE_RESULT_ACCEPT: 'I knew it',
-  VOICE_RESULT_REJECT: "Didn't know",
-  VOICE_RESULT_RETRY: 'Retry',
+  VOICE_RESULT_ACCEPT: 'Yes, I got it',
+  VOICE_RESULT_REJECT: 'No, I missed it',
+  VOICE_RESULT_RETRY: 'Try again',
   // Advanced (Account → Advanced) — voice grading diagnostics
   ADVANCED: 'Advanced',
   ADVANCED_VOICE_GRADING: 'Voice grading',

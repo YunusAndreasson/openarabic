@@ -1,11 +1,13 @@
 /**
- * Post-grade voice result, shown only when a spoken answer was *wrong* — a
- * correct answer just proceeds. Lets the learner see what the recognizer heard
- * and recover from a mishear instead of silently losing the card.
+ * Post-grade voice result, shown when the recognizer couldn't confirm a match —
+ * a correct answer just proceeds. Framed as a neutral self-grade ("Did you get
+ * it right?") rather than a verdict, so the learner judges their own answer
+ * against the shown meaning instead of ratifying the ASR — this also recovers
+ * gracefully from a mishear.
  *
- * A full card shows the heard word + the answer, with three actions: "I knew
- * it" (accept → Known), "Didn't know" (→ Unknown) and "Retry" (re-record).
- * `result.suggestion` emphasises the likely choice.
+ * Shows the heard word + the answer, with three actions: "Yes, I got it"
+ * (accept → Known), "No, I missed it" (reject → Unknown) and "Try again"
+ * (re-record). `result.suggestion` emphasises the likely choice.
  *
  * Mirrors VoiceStatusIndicator's reanimated FadeIn + theme-token styling so the
  * two read as one cohesive voice surface.
@@ -51,12 +53,12 @@ export const VoiceResultPanel: FC<VoiceResultPanelProps> = memo(
       >
         <View style={styles.header}>
           <Ionicons
-            name={heardSomething ? 'alert-circle' : 'mic-off'}
+            name={heardSomething ? 'help-circle' : 'mic-off'}
             size={ICON_SIZE}
-            color={heardSomething ? colors.warning : colors.secondaryText}
+            color={colors.secondaryText}
           />
-          <ThemedText type="label" colorName={heardSomething ? 'warning' : 'secondaryText'}>
-            {heardSomething ? STRINGS.VOICE_RESULT_NOT_QUITE : STRINGS.VOICE_RESULT_NOT_HEARD}
+          <ThemedText type="label" colorName={heardSomething ? 'text' : 'secondaryText'}>
+            {heardSomething ? STRINGS.VOICE_RESULT_QUESTION : STRINGS.VOICE_RESULT_NOT_HEARD}
           </ThemedText>
         </View>
 
@@ -68,7 +70,7 @@ export const VoiceResultPanel: FC<VoiceResultPanelProps> = memo(
             type="body"
             weight="semibold"
             colorName={heardSomething ? 'text' : 'textTertiary'}
-            numberOfLines={1}
+            numberOfLines={2}
             style={styles.detailValue}
           >
             {heardSomething ? `“${result.heard}”` : STRINGS.VOICE_RESULT_SILENCE}
@@ -83,7 +85,7 @@ export const VoiceResultPanel: FC<VoiceResultPanelProps> = memo(
             type="body"
             weight="semibold"
             colorName="success"
-            numberOfLines={1}
+            numberOfLines={2}
             style={styles.detailValue}
           >
             {result.expected}

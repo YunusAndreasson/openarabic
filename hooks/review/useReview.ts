@@ -365,20 +365,22 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     }
   }, []);
 
-  // Voice-grading miss path: reveal the meaning + play the English audio, but
-  // do NOT schedule processFeedback. The card stays open for the user to pick.
+  // Voice-grading miss path: play the English audio as a study aid but do NOT
+  // schedule processFeedback — the card stays open for the user to pick. The
+  // answer text is shown (persistently) by the VoiceResultPanel itself, so we
+  // intentionally skip the transient center translation overlay here: it would
+  // flash for 3 s and then vanish while the panel kept showing the answer.
   const revealMeaningPassive = useCallback(() => {
     if (stateRefs.current.isUpdatingWord || isComplete || stateRefs.current.completionTriggered) {
       return;
     }
-    displayMeaning();
     if (currentWord?.root?.audio_url_en) {
       const englishAudioUrl = generateStorageUrl('audio', currentWord.root.audio_url_en);
       if (englishAudioUrl) {
         playAudio(englishAudioUrl).catch(handleError);
       }
     }
-  }, [currentWord, displayMeaning, isComplete, playAudio]);
+  }, [currentWord, isComplete, playAudio]);
 
   const handleKnowledgeResponse = useCallback(
     (confidence: 'known' | 'unknown', options: { skipReveal?: boolean } = {}) => {
