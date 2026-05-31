@@ -303,7 +303,21 @@ class SimpleAudioService {
     const READY_TIMEOUT_MS = 5000;
 
     return new Promise<void>((resolve, reject) => {
+      let settled = false;
+
+      const resolveReady = (): void => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
+        clearInterval(poll);
+        readySubscription.remove();
+        resolve();
+      };
+
       const timeout = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        clearInterval(poll);
         readySubscription.remove();
         reject(new Error('Player ready timeout - audio may be corrupted or unavailable'));
       }, READY_TIMEOUT_MS);
@@ -311,24 +325,22 @@ class SimpleAudioService {
       const readySubscription = player.addListener(
         PLAYBACK_STATUS_UPDATE,
         (status: { isLoaded?: boolean; playbackState?: string }) => {
-          const isReady = status.isLoaded === true || status.playbackState === 'ready';
-          if (isReady) {
-            clearTimeout(timeout);
-            readySubscription.remove();
-            resolve();
-          }
+          if (status.isLoaded === true || status.playbackState === 'ready') resolveReady();
         },
       );
 
-      // Close the race: the loaded event could have fired between the
-      // isLoaded check above and the listener being attached. Re-check
-      // synchronously now that the listener is in place — if already
-      // loaded, resolve immediately instead of waiting up to 5s.
-      if (player.isLoaded) {
-        clearTimeout(timeout);
-        readySubscription.remove();
-        resolve();
-      }
+      // Poll isLoaded so we resolve the moment the freshly-created player finishes
+      // loading, even when its initial "loaded" status event is never emitted
+      // (a known race for a new AudioPlayer on a cached/local source). Without
+      // this the event-only wait intermittently sits out the full 5s timeout,
+      // delaying first playback — and, in Practice, the mic arming / "Listening…".
+      const poll = setInterval(() => {
+        if (player.isLoaded) resolveReady();
+      }, 50);
+
+      // Close the race where loading completed between the check above and the
+      // listener/poll being attached.
+      if (player.isLoaded) resolveReady();
     });
   }
 
