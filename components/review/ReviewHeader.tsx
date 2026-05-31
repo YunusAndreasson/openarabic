@@ -9,6 +9,7 @@ const GlassContainer = GLASS_AVAILABLE ? GlassView : View;
 
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 
 // ===== STATIC STYLES USING STYLESHEET.CREATE =====
@@ -30,7 +31,7 @@ const STATIC_STYLES = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.TINY, // Bottom margin only for spacing
     marginRight: LAYOUT.SPACING.LARGE,
   },
-  closeButton: {
+  iconButton: {
     width: CLOSE_BUTTON_CONSTANTS.SIZE,
     height: CLOSE_BUTTON_CONSTANTS.SIZE,
     borderRadius: CLOSE_BUTTON_CONSTANTS.SIZE / 2, // Circular
@@ -38,15 +39,31 @@ const STATIC_STYLES = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
+  voiceButtonSpacing: {
+    marginRight: LAYOUT.SPACING.SMALL,
+  },
 });
 
 interface ReviewHeaderProps {
   progress: number;
   maxProgress: number;
   onClose?: () => void;
+  /** Show the voice mute toggle (only when voice grading is enabled). */
+  showVoiceControl?: boolean;
+  /** True when auto-listen is muted for this session — drives the mic icon. */
+  voicePaused?: boolean;
+  /** Toggle the session-local voice mute. */
+  onToggleVoice?: () => void;
 }
 
-export const ReviewHeader: FC<ReviewHeaderProps> = ({ progress, maxProgress, onClose }) => {
+export const ReviewHeader: FC<ReviewHeaderProps> = ({
+  progress,
+  maxProgress,
+  onClose,
+  showVoiceControl = false,
+  voicePaused = false,
+  onToggleVoice,
+}) => {
   const colors = useColors();
 
   const displayProgress = Math.max(progress, maxProgress);
@@ -73,10 +90,32 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({ progress, maxProgress, onC
           height={LAYOUT.SPACING.MEDIUM}
         />
       </View>
+      {showVoiceControl && onToggleVoice && (
+        <Pressable
+          onPress={onToggleVoice}
+          hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
+          accessibilityRole="button"
+          accessibilityLabel={
+            voicePaused ? STRINGS.VOICE_RESUME_LABEL : STRINGS.VOICE_PAUSE_LABEL
+          }
+          style={STATIC_STYLES.voiceButtonSpacing}
+        >
+          <GlassContainer
+            style={[STATIC_STYLES.iconButton, fallbackButtonStyle]}
+            {...(GLASS_AVAILABLE && { isInteractive: true, glassEffectStyle: 'clear' })}
+          >
+            <Ionicons
+              name={voicePaused ? 'mic-off' : 'mic'}
+              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+              color={voicePaused ? colors.secondaryText : colors.tint}
+            />
+          </GlassContainer>
+        </Pressable>
+      )}
       {onClose && (
         <Pressable onPress={handleClose} hitSlop={LAYOUT.HIT_SLOP.MEDIUM}>
           <GlassContainer
-            style={[STATIC_STYLES.closeButton, fallbackButtonStyle]}
+            style={[STATIC_STYLES.iconButton, fallbackButtonStyle]}
             {...(GLASS_AVAILABLE && { isInteractive: true, glassEffectStyle: 'clear' })}
           >
             <Ionicons

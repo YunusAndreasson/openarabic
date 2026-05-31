@@ -5,8 +5,8 @@
  * - listening → pulsing mic, brand tint  ("Listening…")
  * - checking  → spinning indicator, accent ("Grading…")
  * - disabled  → spinning indicator, muted  ("Preparing voice…")
- * - revealed  → static refresh, muted      ("Try again or tap to grade")
  * - idle      → renders nothing
+ * - result    → renders nothing (the verdict is owned by VoiceResultPanel)
  *
  * Looping motion uses the reanimated v4 CSS-keyframe pattern (same as
  * PulsatingLoader) so there's no useEffect/withRepeat and it's New-Arch safe.
@@ -72,15 +72,10 @@ function configFor(phase: VoicePhase): IndicatorConfig | null {
         motion: 'spin',
         color: 'secondaryText',
       };
-    case 'revealed':
-      return {
-        label: STRINGS.VOICE_TRY_AGAIN,
-        icon: 'refresh',
-        motion: 'none',
-        color: 'secondaryText',
-      };
     case 'idle':
+    case 'result':
     default:
+      // 'result' is rendered by VoiceResultPanel, not this indicator.
       return null;
   }
 }

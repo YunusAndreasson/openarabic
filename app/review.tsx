@@ -11,6 +11,7 @@ import {
   ReviewBottomActions,
   ReviewCard,
   ReviewHeader,
+  VoiceResultPanel,
   VoiceStatusIndicator,
 } from '@/components/review';
 import { useTutorialContext, useVoiceGrading } from '@/components/providers';
@@ -143,20 +144,41 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     wordQueue,
     currentWord,
     revealMeaningPassive,
+    promptAudioDoneKey,
+    handleVoiceUnknownResolved,
+    stopAudio,
   } = useReview({ fromRemember });
 
   // Voice grading — when the toggle is on, auto-arms the mic after each card
   // settles. Match → silently advance as Known. Miss → reveal the meaning and
   // let the user pick Known / Unknown.
-  const { phase: voicePhase, debug: voiceDebug } = useVoiceReview({
+  const {
+    phase: voicePhase,
+    debug: voiceDebug,
+    result: voiceResult,
+    paused: voicePaused,
+    accept: voiceAccept,
+    reject: voiceReject,
+    retry: voiceRetry,
+    togglePause: voiceTogglePause,
+  } = useVoiceReview({
     expected: currentWord?.root?.meaning ?? null,
     currentWordKey,
+    promptAudioDoneKey,
     ready: !isUpdating && !isLoading && isAudioPreloadingComplete && !isComplete,
+    stopAudio,
     onKnownAuto: handleSwipeRight,
-    onUnknownAuto: handleSwipeLeft,
+    // The panel already revealed the answer — advance as Unknown without
+    // re-revealing / replaying the English audio / waiting out the 3 s overlay.
+    onUnknownAuto: handleVoiceUnknownResolved,
     onRevealAnswer: revealMeaningPassive,
   });
+
+  // A wrong answer stops and shows the interactive result panel in place of the
+  // standard action buttons; a correct answer just proceeds (no result).
+  const voiceShowResult = voicePhase === 'result' && voiceResult !== null;
   const voice = useVoiceGrading();
+  const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
   const voiceDebugEnabled = useAppSelectorShallow(state => state.settings.voiceDebugEnabled);
 
   // Track if review session is still initializing (first word not yet loaded)
@@ -217,7 +239,14 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
             Platform.OS === 'android' && { paddingTop: insets.top },
           ]}
         >
-          <ReviewHeader maxProgress={maxProgress} progress={progress} onClose={handleClose} />
+          <ReviewHeader
+            maxProgress={maxProgress}
+            progress={progress}
+            onClose={handleClose}
+            showVoiceControl={voiceEnabled}
+            voicePaused={voicePaused}
+            onToggleVoice={voiceTogglePause}
+          />
         </View>
 
         {/* Bottom actions */}
@@ -229,39 +258,53 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
             right: LAYOUT.SPACING.LARGE,
           }}
         >
-          <ReviewBottomActions
-            onPressLeft={handleSwipeLeft}
-            onPressRight={handleSwipeRight}
-            onShowContextualHelp={handleShowContextualHelp}
-            disabled={isUpdating}
-            voiceHint={
-              voiceDebug.match
-                ? voiceDebug.match.matched
-                  ? 'known'
-                  : 'unknown'
-                : null
-            }
-          />
+          {voiceShowResult && voiceResult ? (
+            <VoiceResultPanel
+              result={voiceResult}
+              onAccept={voiceAccept}
+              onReject={voiceReject}
+              onRetry={voiceRetry}
+            />
+          ) : (
+            <ReviewBottomActions
+              onPressLeft={handleSwipeLeft}
+              onPressRight={handleSwipeRight}
+              onShowContextualHelp={handleShowContextualHelp}
+              disabled={isUpdating}
+              voiceHint={
+                voiceDebug.match
+                  ? voiceDebug.match.matched
+                    ? 'known'
+                    : 'unknown'
+                  : null
+              }
+            />
+          )}
         </View>
       </View>
 
-      {/* Voice status — prominent pill above the bottom buttons so the learner
-          can clearly tell when we're listening vs grading. */}
-      <View
-        pointerEvents="none"
-        style={[
-          voiceHintStyles.container,
-          {
-            bottom:
-              insets.bottom +
-              LAYOUT.SPACING.LARGE +
-              LAYOUT.BUTTON.HEIGHT.LARGE +
-              LAYOUT.SPACING.MEDIUM,
-          },
-        ]}
-      >
-        <VoiceStatusIndicator phase={voicePhase} />
-      </View>
+      {/* Voice status — pill above the bottom buttons so the learner can
+          clearly tell when we're listening vs grading. Hidden while the
+          wrong-answer panel owns the slot (voiceShowResult) and while a card
+          advance is in flight (isUpdating), so a transient phase can't flash
+          during the hand-off to the next card. */}
+      {!voiceShowResult && !isUpdating && (
+        <View
+          pointerEvents="none"
+          style={[
+            voiceHintStyles.container,
+            {
+              bottom:
+                insets.bottom +
+                LAYOUT.SPACING.LARGE +
+                LAYOUT.BUTTON.HEIGHT.LARGE +
+                LAYOUT.SPACING.MEDIUM,
+            },
+          ]}
+        >
+          <VoiceStatusIndicator phase={voicePhase} />
+        </View>
+      )}
 
       {/* Voice debug HUD — gated on the Advanced "Voice debug HUD" toggle so
           the user can see exactly what the pipeline is doing without leaving

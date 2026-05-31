@@ -21,6 +21,13 @@ import { analytics } from '@/services/analytics';
 
 const PARAKEET_MODEL_ID = 'sherpa-onnx-nemo-parakeet-tdt-0.6b-v2-int8';
 
+// Decoding config applied via engine.setConfig() once the model is ready. The
+// default greedy_search collapses an ambiguous single word onto its most
+// frequent neighbour (the "bare"→"there" mishear); a small beam keeps the
+// rarer-but-correct hypothesis alive at negligible cost for one-word audio.
+const VOICE_DECODING_METHOD = 'modified_beam_search';
+const VOICE_MAX_ACTIVE_PATHS = 8;
+
 export interface SherpaStt {
   /** Transcribe a 16 kHz mono waveform to trimmed text. null when not ready. */
   transcribe: (waveform: Float32Array) => Promise<string | null>;
@@ -104,6 +111,23 @@ function useSherpaStt({
         }
 
         engineRef.current = engine;
+
+        // Best-effort: widen decoding to a small beam. Greedy still works if the
+        // native layer rejects the runtime config, so never fail load over it.
+        try {
+          await engine.setConfig({
+            decodingMethod: VOICE_DECODING_METHOD,
+            maxActivePaths: VOICE_MAX_ACTIVE_PATHS,
+          });
+        } catch (cfgErr) {
+          Sentry.addBreadcrumb({
+            category: 'voice',
+            level: 'warning',
+            message: 'voice.decoding.config.failed',
+            data: { message: cfgErr instanceof Error ? cfgErr.message : String(cfgErr) },
+          });
+        }
+
         setDownloadProgress(1);
         setReady(true);
         void analytics.track(ANALYTICS_EVENTS.VOICE_MODEL_READY, {

@@ -1,33 +1,51 @@
 /**
  * Wires the voice-grading pipeline into a Practice review session. Auto-arms
  * the mic on each new card once the Arabic word audio has finished playing (so
- * the prompt is never cut off), then on stop transcribes via Parakeet and runs
- * `matchSingleWord` against the card's English meaning.
+ * the prompt is never cut off) — gated on `promptAudioDoneKey` from useReview,
+ * which owns the prompt playback and reports completion per card. Then on stop
+ * transcribes via Parakeet and runs `matchSingleWord` against the card's
+ * English meaning.
  *
- * Three outcomes, mirroring the edenmind reference flow:
- * - Match (similarity ≥ 0.70)             → `onKnownAuto()`   — auto-Known
- * - Clean miss (real word, sim < ~0.50)   → `onUnknownAuto()` — auto-Unknown
- * - Ambiguous / hallucination / silence   → `onRevealAnswer()` + wait
- *
- * Auto-Unknown is reserved for transcripts the recognizer is *confident* about
- * but that aren't the expected word ("date" when the answer is "bee"). The
- * ambiguous band (sim 0.50–0.70) and any hallucination / empty transcript fall
- * back to the reveal-and-wait path so a transcription error can't burn an
- * FSRS attempt on a card the learner actually knew.
+ * A correct answer just proceeds — `onKnownAuto()` fires and the card advances,
+ * keeping the hands-free flow fast. We only stop the learner when the answer
+ * was *wrong*: a `result` is surfaced and the panel waits, so a mishear can
+ * never silently burn an FSRS attempt. The learner taps `accept()` (the answer
+ * was actually right → Known), `reject()` (Unknown), or `retry()` (re-record);
+ * `suggestion` nudges the likely choice.
  */
 import * as Sentry from '@sentry/react-native';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useToast, useVoiceGrading } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { STRINGS } from '@/constants/strings';
 import { analytics } from '@/services/analytics';
-import { simpleAudioService, type AudioStatus } from '@/services/audioPlayer';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import { setVoiceEnabled } from '@/store/settingsSlice';
 import { matchSingleWord } from '@/utils/voiceMatching';
 
-export type VoicePhase = 'idle' | 'listening' | 'checking' | 'revealed' | 'disabled';
+export type VoicePhase = 'idle' | 'listening' | 'checking' | 'result' | 'disabled';
+
+/**
+ * A wrong / ambiguous answer the learner can act on. A *correct* answer never
+ * produces one — the card just proceeds — so the presence of a result always
+ * means "we stopped because the spoken answer didn't match; show what was
+ * heard and let the user override".
+ */
+export interface VoiceResult {
+  /** Normalized transcript shown as "you said …". '' when nothing usable was
+   *  heard (silence / hallucination) — the panel shows a fallback instead. */
+  heard: string;
+  /** Normalized expected meaning, shown as the answer. */
+  expected: string;
+  /** Which matchSingleWord branch fired (debug / suggestion logic). */
+  method: string;
+  similarity: number;
+  /** The action the recognizer leans toward, used to emphasise one button.
+   *  'retry' when the audio was unusable, 'unknown' for a confident wrong
+   *  word, null when genuinely ambiguous (let the learner judge). */
+  suggestion: 'unknown' | 'retry' | null;
+}
 
 /** Last-recording diagnostics surfaced to the on-screen voice HUD. */
 export interface VoiceDebug {
@@ -60,8 +78,15 @@ interface UseVoiceReviewArgs {
   expected: string | null | undefined;
   /** Key that changes when a new card is shown. */
   currentWordKey: string;
+  /** From useReview: the `currentWordKey` whose Arabic prompt has finished
+   *  playing (or had no audio). The mic only arms once this matches the current
+   *  card, so the prompt is never cut off and the mic never opens over it. */
+  promptAudioDoneKey: string | null;
   /** Is the review session ready (not loading, no audio preload in flight). */
   ready: boolean;
+  /** Stop any in-flight playback (reveal audio) before reopening the mic on a
+   *  retry, so its tail isn't captured by the recording. */
+  stopAudio: () => void;
   /** Called after a match — caller should advance the card as Known. */
   onKnownAuto: () => void;
   /** Called after a clean miss (recognized real word that's clearly different
@@ -72,68 +97,6 @@ interface UseVoiceReviewArgs {
   onRevealAnswer: () => void;
 }
 
-/** If the Arabic word audio hasn't begun within this window after the card
- *  settles, assume there's nothing to play (cache miss / no audio_url) and
- *  open the mic anyway rather than waiting indefinitely. */
-const AUDIO_START_TIMEOUT_MS = 1500;
-
-/** Small pause after the Arabic audio finishes before opening the mic, so the
- *  tail isn't clipped and the playback audio session fully releases first. */
-const POST_AUDIO_GRACE_MS = 200;
-
-/** Absolute cap on how long we'll wait for audio before arming regardless —
- *  guards against a status stream that never reports completion. */
-const MAX_AUDIO_WAIT_MS = 8000;
-
-/**
- * Resolves once the current card's Arabic word audio has finished playing, so
- * the mic doesn't open mid-prompt. Replaces the old fixed pre-arm delay, which
- * cut longer / late-starting words short.
- *
- * `simpleAudioService.subscribe` doesn't replay the current status and only
- * fires on change (~every 500 ms while playing, then once on completion), so a
- * light poll drives the start-timeout / max-wait deadlines. Resolution rules:
- * - audio played then stopped         → finished, wait POST_AUDIO_GRACE_MS
- * - audio never started in the window  → nothing to wait for, resolve now
- * - MAX_AUDIO_WAIT_MS elapsed          → safety bail, resolve now
- * - caller cancelled                   → resolve now
- */
-function waitForCardAudioToFinish(isCancelled: () => boolean): Promise<void> {
-  return new Promise<void>(resolve => {
-    const startedAt = Date.now();
-    let sawPlayback = simpleAudioService.getStatus().playing;
-    let settled = false;
-
-    const finish = (graceMs: number) => {
-      if (settled) return;
-      settled = true;
-      clearInterval(poll);
-      unsubscribe();
-      if (graceMs > 0 && !isCancelled()) {
-        setTimeout(resolve, graceMs);
-      } else {
-        resolve();
-      }
-    };
-
-    const evaluate = (status: AudioStatus) => {
-      if (isCancelled()) return finish(0);
-      const elapsed = Date.now() - startedAt;
-      if (status.playing) sawPlayback = true;
-      // Played and has now stopped → the prompt finished.
-      if (sawPlayback && !status.playing) return finish(POST_AUDIO_GRACE_MS);
-      // Never started → nothing to wait for.
-      if (!sawPlayback && elapsed >= AUDIO_START_TIMEOUT_MS) return finish(0);
-      // Absolute safety cap.
-      if (elapsed >= MAX_AUDIO_WAIT_MS) return finish(0);
-    };
-
-    const unsubscribe = simpleAudioService.subscribe(evaluate);
-    const poll = setInterval(() => evaluate(simpleAudioService.getStatus()), 100);
-    evaluate(simpleAudioService.getStatus());
-  });
-}
-
 /** Similarity below this counts as a "clean miss" — a clearly recognized but
  *  wrong word. Anything between this and FUZZY_MIN_SIMILARITY (0.70) is
  *  ambiguous: surface the answer and let the user judge. Picked so that
@@ -141,25 +104,42 @@ function waitForCardAudioToFinish(isCancelled: () => boolean): Promise<void> {
  *  edits ("growth" vs "groth", sim ~0.83) goes to the match path. */
 const CLEAN_MISS_MAX_SIMILARITY = 0.5;
 
-/** Minimum transcript length for an auto-Unknown. A single-character emit
- *  ("a", "i") is almost always Parakeet hedging on near-silence — treat as
- *  ambiguous instead of penalising the card. */
+/** Minimum transcript length to trust the heard word. A single-character emit
+ *  ("a", "i") is almost always Parakeet hedging on near-silence — show the
+ *  "didn't catch that" fallback and suggest a retry instead. */
 const CLEAN_MISS_MIN_TRANSCRIPT_CHARS = 2;
 
 export function useVoiceReview({
   expected,
   currentWordKey,
+  promptAudioDoneKey,
   ready,
+  stopAudio,
   onKnownAuto,
   onUnknownAuto,
   onRevealAnswer,
-}: UseVoiceReviewArgs): { phase: VoicePhase; debug: VoiceDebug } {
+}: UseVoiceReviewArgs): {
+  phase: VoicePhase;
+  debug: VoiceDebug;
+  result: VoiceResult | null;
+  /** True while auto-listen is muted for the rest of this session. */
+  paused: boolean;
+  /** Mark the current card Known (the spoken answer was right). */
+  accept: () => void;
+  /** Mark the current card Unknown. */
+  reject: () => void;
+  /** Re-open the mic for another attempt on the same card. */
+  retry: () => void;
+  /** Mute / unmute auto-listen for the rest of this session. */
+  togglePause: () => void;
+} {
   const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
   const voice = useVoiceGrading();
   const dispatch = useAppDispatch();
   const { showToast } = useToast();
 
   const [phase, setPhase] = useState<VoicePhase>('idle');
+  const [result, setResult] = useState<VoiceResult | null>(null);
   const [debug, setDebug] = useState<VoiceDebug>({
     transcript: '',
     match: null,
@@ -167,19 +147,40 @@ export function useVoiceReview({
     armError: null,
   });
 
+  // Bumped by retry() to re-arm the same card; part of the arm effect's deps.
+  const [attempt, setAttempt] = useState(0);
+  // True for the single arm() triggered by retry(), so it skips the wait-for-
+  // audio gate (there's no prompt replaying — open the mic immediately).
+  const retryRequestedRef = useRef(false);
+
+  // Session-local mute. When true the arm effect bails (no auto-listen) and any
+  // in-flight recording is cancelled. Does NOT touch the global `voiceEnabled`
+  // setting or persist — it only quiets the mic for the rest of this session.
+  const [paused, setPaused] = useState(false);
+  const pausedRef = useRef(false);
+
   // Stable refs for callback identity.
   const onKnownAutoRef = useRef(onKnownAuto);
   const onUnknownAutoRef = useRef(onUnknownAuto);
   const onRevealAnswerRef = useRef(onRevealAnswer);
+  const stopAudioRef = useRef(stopAudio);
   useEffect(() => {
     onKnownAutoRef.current = onKnownAuto;
     onUnknownAutoRef.current = onUnknownAuto;
     onRevealAnswerRef.current = onRevealAnswer;
+    stopAudioRef.current = stopAudio;
   });
 
   // The card key we've already armed for, to avoid re-arming on incidental
   // re-renders while the mic is in flight.
   const armedForKeyRef = useRef<string | null>(null);
+
+  // Mirror of `result` so togglePause (a stable callback) can tell whether a
+  // wrong-answer panel is currently awaiting the user without re-arming under it.
+  const resultRef = useRef<VoiceResult | null>(null);
+  useEffect(() => {
+    resultRef.current = result;
+  }, [result]);
 
   // Reset on every new card. Latched state tied to currentWordKey transitions —
   // a ref alone wouldn't re-render the indicator overlay. Debug is also reset
@@ -188,7 +189,7 @@ export function useVoiceReview({
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPhase('idle');
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setResult(null);
     setDebug({ transcript: '', match: null, recorder: null, armError: null });
     armedForKeyRef.current = null;
   }, [currentWordKey]);
@@ -204,20 +205,25 @@ export function useVoiceReview({
 
   useEffect(() => {
     if (!voiceEnabled || !voice.isReady) return;
+    if (paused) return;
     if (!ready) return;
     if (!expected || expected.length === 0) return;
     if (currentWordKey === 'none') return;
     if (armedForKeyRef.current === currentWordKey) return;
 
+    const isRetry = retryRequestedRef.current;
+    // Wait for this card's Arabic prompt to finish before opening the mic, so
+    // the prompt is never cut off and the mic never records over it. Gated on
+    // useReview's per-card `promptAudioDoneKey` (it owns the prompt playback),
+    // not the global audio status — which can't tell this card's prompt from
+    // lingering audio. A retry/resume skips the gate: no prompt is replaying.
+    if (!isRetry && promptAudioDoneKey !== currentWordKey) return;
+
     armedForKeyRef.current = currentWordKey;
+    retryRequestedRef.current = false;
     let cancelled = false;
 
     const run = async () => {
-      // Let the Arabic word audio play out before opening the mic so the prompt
-      // is never cut off. Resolves quickly when no audio plays for this card.
-      await waitForCardAudioToFinish(() => cancelled);
-      if (cancelled) return;
-
       setPhase('listening');
       void analytics.track(ANALYTICS_EVENTS.VOICE_ARM, { wordKey: currentWordKey });
       Sentry.addBreadcrumb({
@@ -314,36 +320,46 @@ export function useVoiceReview({
         },
       }));
       if (match.matched) {
+        // Correct → just proceed. Blank the indicator before handing off so the
+        // "Grading…" pill doesn't linger over the advance animation; the next
+        // card re-arms cleanly on mount.
+        setPhase('idle');
         onKnownAutoRef.current();
-        // Phase resets when the next card mounts (currentWordKey change).
         return;
       }
 
-      // Clean miss: Parakeet was confident about a real word and it's clearly
-      // not the answer (sim well below the fuzzy threshold, transcript is a
-      // recognizable word, and `method` wasn't flagged as a hallucination).
-      // Auto-advance as Unknown so the learner isn't stuck repeating the same
-      // wrong attempt — edemind treats this case the same way.
-      const isCleanMiss =
+      // Any miss now stops and shows the result panel rather than silently
+      // auto-advancing — a transcription error must never burn an FSRS attempt
+      // without showing the learner what was heard and offering an override.
+      // `suggestion` only nudges which button to emphasise; nothing auto-fires.
+      const heardReliable =
         match.method !== 'hallucination' &&
-        match.normalizedSpoken.length >= CLEAN_MISS_MIN_TRANSCRIPT_CHARS &&
-        match.similarity < CLEAN_MISS_MAX_SIMILARITY;
-      if (isCleanMiss) {
-        Sentry.addBreadcrumb({
-          category: 'voice',
-          level: 'info',
-          message: 'voice.match.cleanMiss',
-          data: { similarity: match.similarity, spoken: match.normalizedSpoken },
-        });
-        onUnknownAutoRef.current();
-        // Phase resets when the next card mounts (currentWordKey change).
-        return;
+        match.normalizedSpoken.length >= CLEAN_MISS_MIN_TRANSCRIPT_CHARS;
+      let suggestion: VoiceResult['suggestion'];
+      if (!heardReliable) {
+        // Silence / hallucination: the transcript can't be trusted — retry.
+        suggestion = 'retry';
+      } else if (match.similarity < CLEAN_MISS_MAX_SIMILARITY) {
+        // Confident, clearly different word — lean Unknown.
+        suggestion = 'unknown';
+      } else {
+        // Ambiguous band (sim 0.50–0.70): let the learner judge.
+        suggestion = null;
       }
-
-      // Ambiguous miss / hallucination / empty transcript: reveal the answer
-      // and let the user pick. A transcription error must not auto-burn an
-      // FSRS attempt on a card the learner actually knew.
-      setPhase('revealed');
+      Sentry.addBreadcrumb({
+        category: 'voice',
+        level: 'info',
+        message: 'voice.match.miss',
+        data: { similarity: match.similarity, spoken: match.normalizedSpoken, suggestion },
+      });
+      setResult({
+        heard: heardReliable ? match.normalizedSpoken : '',
+        expected: match.normalizedExpected,
+        method: match.method,
+        similarity: match.similarity,
+        suggestion,
+      });
+      setPhase('result');
       onRevealAnswerRef.current();
     };
 
@@ -357,12 +373,64 @@ export function useVoiceReview({
   }, [
     voiceEnabled,
     voice,
+    paused,
     ready,
     expected,
     currentWordKey,
+    promptAudioDoneKey,
+    attempt,
     dispatch,
     showToast,
   ]);
 
-  return { phase, debug };
+  const accept = useCallback((): void => {
+    setResult(null);
+    // Blank the indicator immediately so nothing transient (the cleared result
+    // panel, a stale phase) shows during the advance; the next card re-arms.
+    setPhase('idle');
+    onKnownAutoRef.current();
+  }, []);
+
+  const reject = useCallback((): void => {
+    setResult(null);
+    setPhase('idle');
+    onUnknownAutoRef.current();
+  }, []);
+
+  const retry = useCallback((): void => {
+    // Stop the reveal audio (played when the panel appeared) before reopening
+    // the mic, so its tail isn't captured by the new recording.
+    stopAudioRef.current();
+    setResult(null);
+    setPhase('listening');
+    // Force the arm effect to fire again for this same card and skip the
+    // wait-for-audio gate so the mic reopens immediately.
+    retryRequestedRef.current = true;
+    armedForKeyRef.current = null;
+    setAttempt(a => a + 1);
+  }, []);
+
+  const togglePause = useCallback((): void => {
+    const next = !pausedRef.current;
+    pausedRef.current = next;
+    setPaused(next);
+    if (next) {
+      // Pausing — the arm effect's cleanup cancels any in-flight recording once
+      // `paused` flips in its deps; clear the live indicator here so the pill
+      // doesn't linger while the recorder unwinds. A waiting result panel stays.
+      setPhase(p => (p === 'listening' || p === 'checking' ? 'idle' : p));
+    } else if (resultRef.current === null) {
+      // Resuming with no pending panel — re-open the mic for the current card
+      // even if we'd already armed for it before pausing (the cancelled
+      // recording left armedForKeyRef set). The prompt audio already played, so
+      // skip the wait-for-audio gate and open the mic right away, like a retry.
+      armedForKeyRef.current = null;
+      retryRequestedRef.current = true;
+      setPhase('listening');
+    }
+    // Resuming while a wrong-answer panel is up: keep armedForKeyRef so the arm
+    // effect bails under the panel; the next card arms once the user resolves it.
+  }, []);
+
+  return { phase, debug, result, paused, accept, reject, retry, togglePause };
 }

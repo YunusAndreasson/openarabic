@@ -10,6 +10,7 @@ import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import { fsrsQueries } from '@/constants/queries';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { analytics } from '@/services/analytics';
+import { simpleAudioService, type AudioStatus } from '@/services/audioPlayer';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useSimpleAudioPlayer } from '@/hooks/audio';
 import { useAuth } from '@/hooks/auth';
@@ -55,6 +56,18 @@ interface UseReviewReturn {
    *  Used by the voice-grading flow on a missed transcript: the user gets the
    *  answer as a study aid but still chooses Known / Unknown manually. */
   revealMeaningPassive: () => void;
+  /** The `currentWordKey` whose Arabic prompt audio has finished playing (or
+   *  had no audio to play). Lets the voice-grading hook arm the mic only once
+   *  the prompt is fully done, without sniffing the global audio status — which
+   *  can't tell this card's prompt from lingering/previous audio. */
+  promptAudioDoneKey: string | null;
+  /** Advance the current card as Unknown WITHOUT re-revealing the meaning —
+   *  used by the voice result panel, which already revealed the answer. Skips
+   *  the meaning overlay, the English audio replay and the 3 s display wait. */
+  handleVoiceUnknownResolved: () => void;
+  /** Stop any in-flight playback (e.g. the reveal audio) so the mic can reopen
+   *  cleanly on a voice retry without capturing the tail of a spoken answer. */
+  stopAudio: () => void;
 }
 
 // Timing constants for transitions (milliseconds)
@@ -63,6 +76,49 @@ const TRANSITION_DELAYS = {
   fadeAnimation: TIMING_CONFIG.MEDIUM.duration, // Delay for fade animation
   meaningDisplay: 3000, // Display time for meaning overlay
 };
+
+/** Grace after the prompt stops before declaring it done, so the tail isn't
+ *  clipped and the playback session fully releases before the mic opens. */
+const PROMPT_FINISH_GRACE_MS = 200;
+/** Safety cap: declare the prompt done regardless if the finish event never
+ *  arrives (e.g. a status stream that stalls), so the mic never hangs. */
+const PROMPT_MAX_WAIT_MS = 8000;
+
+/**
+ * Resolves (via `onFinish`) once the prompt audio just started by `play()` has
+ * finished. Anchored to a play() that already resolved, so the current player
+ * IS this card's prompt — no "whose audio is this" ambiguity. `subscribe` only
+ * fires on change and doesn't replay the current status, so a light poll backs
+ * the finish detection and the safety cap. Returns a canceller.
+ */
+function watchPromptFinish(onFinish: () => void, isCancelled: () => boolean): () => void {
+  let settled = false;
+  const startedAt = Date.now();
+  // play() flips status.playing true before resolving, so we usually see the
+  // rising edge on the immediate evaluate below.
+  let sawPlaying = false;
+
+  const finish = (graceMs: number): void => {
+    if (settled) return;
+    settled = true;
+    clearInterval(poll);
+    unsubscribe();
+    if (graceMs > 0 && !isCancelled()) setTimeout(onFinish, graceMs);
+    else onFinish();
+  };
+
+  const evaluate = (status: AudioStatus): void => {
+    if (isCancelled()) return finish(0);
+    if (status.playing) sawPlaying = true;
+    if (sawPlaying && !status.playing) return finish(PROMPT_FINISH_GRACE_MS);
+    if (Date.now() - startedAt >= PROMPT_MAX_WAIT_MS) return finish(0);
+  };
+
+  const unsubscribe = simpleAudioService.subscribe(evaluate);
+  const poll = setInterval(() => evaluate(simpleAudioService.getStatus()), 100);
+  evaluate(simpleAudioService.getStatus());
+  return () => finish(0);
+}
 
 export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseReviewReturn {
   const { user } = useAuth();
@@ -101,6 +157,10 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   const [isUpdatingUI, setIsUpdatingUI] = useState(false);
   // Progress bar high-water mark, surfaced as state so consumers re-render.
   const [maxProgress, setMaxProgress] = useState(0);
+  // The currentWordKey whose Arabic prompt has finished (or had no audio).
+  // Drives the voice-grading mic arm; never reset on its own — a stale value
+  // from a prior card can't match the new currentWordKey (which encodes reps).
+  const [promptAudioDoneKey, setPromptAudioDoneKey] = useState<string | null>(null);
 
   // Consolidated time tracking refs — initial timestamp captured once via lazy state.
   const [mountTime] = useState(() => Date.now());
@@ -125,6 +185,11 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
   // Add controller ref for proper cleanup
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Active prompt-finish watcher, keyed by the card it belongs to. Held in a
+  // ref (not tied to the audio effect's cleanup) so an incidental re-render
+  // mid-prompt can't tear it down and strand `promptAudioDoneKey`.
+  const promptWatchRef = useRef<{ key: string; cancel: () => void } | null>(null);
 
   // Utility to stop audio safely
   const stopAudioSafely = useCallback(() => {
@@ -316,7 +381,11 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   }, [currentWord, displayMeaning, isComplete, playAudio]);
 
   const handleKnowledgeResponse = useCallback(
-    (confidence: 'known' | 'unknown') => {
+    (confidence: 'known' | 'unknown', options: { skipReveal?: boolean } = {}) => {
+      // skipReveal: the answer was already revealed (voice result panel), so
+      // advance straight through like a Known swipe — no meaning overlay, no
+      // English audio replay, no 3 s wait — while still recording Unknown.
+      const skipReveal = options.skipReveal ?? false;
       // Guard conditions: exit early if we're already in a processing state
       if (stateRefs.current.isUpdatingWord || isComplete || stateRefs.current.completionTriggered) {
         return;
@@ -345,8 +414,9 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
           // Clean up any playing audio before proceeding
           stopAudioSafely();
 
-          // KNOWN WORDS: Fade out and proceed quickly
-          if (confidence === 'known') {
+          // KNOWN WORDS (or an already-revealed voice Unknown): fade out and
+          // proceed quickly without re-showing the meaning.
+          if (confidence === 'known' || skipReveal) {
             fadeOut();
             setTimer(
               'fadeAnimation',
@@ -513,10 +583,46 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     }
     timeRefs.current.lastProcessedWordId = currentWordKey;
 
-    const audioUrl = generateStorageUrl('audio', currentWord.root.audio_url);
-    if (audioUrl) {
-      playAudio(audioUrl).catch(handleError);
+    const keyForRun = currentWordKey;
+
+    // Cancel a still-running watcher from a previous card before this one's.
+    if (promptWatchRef.current && promptWatchRef.current.key !== keyForRun) {
+      promptWatchRef.current.cancel();
+      promptWatchRef.current = null;
     }
+
+    // The card advanced if lastProcessedWordId no longer points at this run.
+    const movedOn = (): boolean => timeRefs.current.lastProcessedWordId !== keyForRun;
+    const markDone = (): void => {
+      if (promptWatchRef.current?.key === keyForRun) promptWatchRef.current = null;
+      // A stale watcher (card already advanced) would set an old key, which the
+      // voice gate harmlessly ignores — but skip the needless re-render.
+      if (!movedOn()) setPromptAudioDoneKey(keyForRun);
+    };
+
+    const audioUrl = generateStorageUrl('audio', currentWord.root.audio_url);
+    if (!audioUrl) {
+      // No prompt to play — let the mic arm immediately for this card. Deferred
+      // off the effect body so it isn't a synchronous cascading setState.
+      void Promise.resolve().then(markDone);
+      return;
+    }
+
+    playAudio(audioUrl)
+      .then(started => {
+        if (movedOn()) return;
+        // Playback didn't start (cache miss / play failure) — don't strand the
+        // voice mic waiting; let it arm now.
+        if (!started) {
+          markDone();
+          return;
+        }
+        promptWatchRef.current = { key: keyForRun, cancel: watchPromptFinish(markDone, movedOn) };
+      })
+      .catch(err => {
+        handleError(err instanceof Error ? err : new Error(String(err)));
+        markDone();
+      });
   }, [
     currentWord,
     currentWordKey,
@@ -561,6 +667,13 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   const handleSwipeRight = useCallback(() => {
     if (isComplete || stateRefs.current.isUpdatingWord || !currentWordRef.current) return;
     handleKnowledgeResponse('known');
+  }, [handleKnowledgeResponse, isComplete]);
+
+  // Voice result panel "Didn't know": the meaning was already revealed when the
+  // panel appeared, so advance as Unknown without re-revealing / re-playing.
+  const handleVoiceUnknownResolved = useCallback(() => {
+    if (isComplete || stateRefs.current.isUpdatingWord || !currentWordRef.current) return;
+    handleKnowledgeResponse('unknown', { skipReveal: true });
   }, [handleKnowledgeResponse, isComplete]);
 
   // Replay audio for current word (passed to WordDisplay via ReviewCard).
@@ -651,6 +764,11 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
         abortControllerRef.current = null;
       }
 
+      // Cancel any in-flight prompt-finish watcher so its interval/subscription
+      // doesn't outlive the screen.
+      promptWatchRef.current?.cancel();
+      promptWatchRef.current = null;
+
       stateRefs.current.completionTriggered = true;
       stateRefs.current.progressUpdatedForCompletion = false;
 
@@ -699,5 +817,8 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     audioPreloadProgress,
     isAudioPreloadingComplete,
     revealMeaningPassive,
+    promptAudioDoneKey,
+    handleVoiceUnknownResolved,
+    stopAudio: stopAudioSafely,
   };
 }

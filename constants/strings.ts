@@ -30,6 +30,17 @@ export const STRINGS = {
   VOICE_PREPARING: 'Preparing voice…',
   VOICE_TRY_AGAIN: 'Try again or tap to grade',
   VOICE_MIC_PERMISSION_DENIED: 'Microphone access is off. Voice grading disabled.',
+  VOICE_PAUSE_LABEL: 'Pause voice grading for this session',
+  VOICE_RESUME_LABEL: 'Resume voice grading',
+  // Voice result panel — shown when a spoken answer was wrong
+  VOICE_RESULT_NOT_QUITE: 'Not quite',
+  VOICE_RESULT_NOT_HEARD: "Didn't catch that",
+  VOICE_RESULT_HEARD_LABEL: 'You said',
+  VOICE_RESULT_ANSWER_LABEL: 'Answer',
+  VOICE_RESULT_SILENCE: 'no clear speech',
+  VOICE_RESULT_ACCEPT: 'I knew it',
+  VOICE_RESULT_REJECT: "Didn't know",
+  VOICE_RESULT_RETRY: 'Retry',
   // Advanced (Account → Advanced) — voice grading diagnostics
   ADVANCED: 'Advanced',
   ADVANCED_VOICE_GRADING: 'Voice grading',

@@ -21,15 +21,15 @@ interface AudioReadyEvent {
 export const TARGET_SAMPLE_RATE = 16000;
 
 // Absolute backstops for the otherwise-relative energy gate (the live threshold
-// is noiseFloor × speechFactor). These only dominate when the measured noise
-// floor is very low, i.e. a quiet room. They were 0.003 / 0.0018, but iPhone
-// capture under the `spokenAudio` session has no input AGC, so a soft or
-// slightly-distant speaker lands normal speech below 0.003 — `speechSeen` then
-// never flips and the recording runs to the maxDuration cap before grading can
-// start. Lowered so the adaptive gate handles quiet voices; the post-stop
-// normalizeGain still boosts the waveform Parakeet sees.
-const ABS_SPEECH_FLOOR = 0.001;
-const ABS_SILENCE_FLOOR = 0.0006;
+// is noiseFloor × speechFactor). These match edenmind-v2, which grades reliably
+// on device. They were briefly lowered to 0.001 / 0.0006 to catch very soft or
+// distant speakers, but that dropped the silence floor so low that trailing
+// room-tone rarely counted as silence — recordings ran long and fed Parakeet a
+// noisy tail it tended to mis-decode. Reverted: the post-stop normalizeGain
+// still boosts a quiet waveform, so prefer raising captureMaxGain / speechFactor
+// over dropping these floors again if soft speakers stop registering.
+const ABS_SPEECH_FLOOR = 0.003;
+const ABS_SILENCE_FLOOR = 0.0018;
 const INITIAL_NOISE_FLOOR = 0.005;
 
 export interface RecordingConfig {
