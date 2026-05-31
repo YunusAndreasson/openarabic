@@ -29,6 +29,7 @@ import { analytics } from '@/services/analytics';
 import { logVoiceAttempt, type VoiceAttemptLog } from '@/services/voiceTelemetry';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import { setVoiceEnabled } from '@/store/settingsSlice';
+import { errorFeedback } from '@/utils/haptics';
 import { matchSingleWord } from '@/utils/voiceMatching';
 
 export type VoicePhase = 'idle' | 'listening' | 'checking' | 'result' | 'disabled';
@@ -412,6 +413,12 @@ export function useVoiceReview({
       } else {
         // Ambiguous band (sim 0.50–0.70): let the learner judge.
         suggestion = null;
+      }
+      if (heardReliable) {
+        // Heard a real word that didn't match → error haptic ("that was wrong").
+        // Silence / "didn't catch that" isn't a wrong answer, so no haptic — and
+        // a correct answer fires nothing either (it just advances).
+        errorFeedback();
       }
       Sentry.addBreadcrumb({
         category: 'voice',
