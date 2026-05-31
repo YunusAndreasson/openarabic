@@ -19,14 +19,15 @@ import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TARGET_SAMPLE_RATE } from '@/lib/voice/recording';
 import { analytics } from '@/services/analytics';
 
-const PARAKEET_MODEL_ID = 'sherpa-onnx-nemo-parakeet-tdt-0.6b-v2-int8';
+export const PARAKEET_MODEL_ID = 'sherpa-onnx-nemo-parakeet-tdt-0.6b-v2-int8';
 
 // Decoding config applied via engine.setConfig() once the model is ready. The
 // default greedy_search collapses an ambiguous single word onto its most
 // frequent neighbour (the "bare"→"there" mishear); a small beam keeps the
 // rarer-but-correct hypothesis alive at negligible cost for one-word audio.
-const VOICE_DECODING_METHOD = 'modified_beam_search';
-const VOICE_MAX_ACTIVE_PATHS = 8;
+// Exported so voice telemetry can record the exact decoding config per attempt.
+export const VOICE_DECODING_METHOD = 'modified_beam_search';
+export const VOICE_MAX_ACTIVE_PATHS = 8;
 
 export interface SherpaStt {
   /** Transcribe a 16 kHz mono waveform to trimmed text. null when not ready. */

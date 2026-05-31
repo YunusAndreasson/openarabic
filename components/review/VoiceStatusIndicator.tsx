@@ -1,78 +1,44 @@
 /**
  * Lightweight voice-grading status label shown above the Practice bottom
- * actions (borderless — no pill/box). Gives the learner a clear read on what
- * the mic pipeline is doing:
+ * actions. Plain text, no icon or looping motion — just the word, which carries
+ * the state on its own:
  *
- * - listening → pulsing mic, brand tint  ("Listening…")
- * - checking  → spinning indicator, accent ("Grading…")
- * - disabled  → spinning indicator, muted  ("Preparing voice…")
+ * - listening → "Listening…"      (brand tint)
+ * - checking  → "Grading…"        (accent)
+ * - disabled  → "Preparing voice…" (muted)
  * - idle      → renders nothing
  * - result    → renders nothing (the verdict is owned by VoiceResultPanel)
  *
- * Looping motion uses the reanimated v4 CSS-keyframe pattern (same as
- * PulsatingLoader) so there's no useEffect/withRepeat and it's New-Arch safe.
+ * A gentle FadeIn cross-fades the label when the state changes; there is
+ * deliberately no pulsing/spinning indicator (it read as distracting flicker).
  */
 import { memo, type FC } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import { Ionicons, type IoniconName } from '@/components/ui/Icon';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import type { VoicePhase } from '@/hooks/review/useVoiceReview';
-import { useColors } from '@/hooks/theme/useColors';
-import type { ReanimatedCSSAnimationStyle } from '@/types/ui/base.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 
-const ICON_SIZE = LAYOUT.BUTTON.ICON_SIZE.MEDIUM; // 20
-
-const pulseStyle = {
-  animationName: {
-    '0%': { transform: [{ scale: 0.82 }], opacity: 0.55 },
-    '100%': { transform: [{ scale: 1.08 }], opacity: 1 },
-  },
-  animationDuration: '650ms',
-  animationIterationCount: 'infinite' as const,
-  animationDirection: 'alternate' as const,
-  animationTimingFunction: 'ease-in-out',
-} as ReanimatedCSSAnimationStyle;
-
-const spinStyle = {
-  animationName: {
-    '0%': { transform: [{ rotate: '0deg' }] },
-    '100%': { transform: [{ rotate: '360deg' }] },
-  },
-  animationDuration: '850ms',
-  animationIterationCount: 'infinite' as const,
-  animationTimingFunction: 'linear',
-} as ReanimatedCSSAnimationStyle;
-
-type Motion = 'pulse' | 'spin' | 'none';
 /** Restricted to theme keys so ThemedText keeps the label at full opacity. */
 type IndicatorColor = Extract<keyof ThemeColors, 'tint' | 'accent' | 'secondaryText'>;
 
 interface IndicatorConfig {
   label: string;
-  icon: IoniconName;
-  motion: Motion;
   color: IndicatorColor;
 }
 
 function configFor(phase: VoicePhase): IndicatorConfig | null {
   switch (phase) {
     case 'listening':
-      return { label: STRINGS.VOICE_LISTENING, icon: 'mic', motion: 'pulse', color: 'tint' };
+      return { label: STRINGS.VOICE_LISTENING, color: 'tint' };
     case 'checking':
-      return { label: STRINGS.VOICE_CHECKING, icon: 'sync', motion: 'spin', color: 'accent' };
+      return { label: STRINGS.VOICE_CHECKING, color: 'accent' };
     case 'disabled':
-      return {
-        label: STRINGS.VOICE_PREPARING,
-        icon: 'sync',
-        motion: 'spin',
-        color: 'secondaryText',
-      };
+      return { label: STRINGS.VOICE_PREPARING, color: 'secondaryText' };
     case 'idle':
     case 'result':
     default:
@@ -82,26 +48,12 @@ function configFor(phase: VoicePhase): IndicatorConfig | null {
 }
 
 export const VoiceStatusIndicator: FC<{ phase: VoicePhase }> = memo(({ phase }) => {
-  const colors = useColors();
   const config = configFor(phase);
   if (!config) return null;
 
-  const tint = colors[config.color];
-  const motionStyle =
-    config.motion === 'pulse' ? pulseStyle : config.motion === 'spin' ? spinStyle : undefined;
-
   return (
-    // Keyed by phase so the icon/label cross-fade when the state changes.
-    // Borderless label (no pill/box) so it reads as light inline status rather
-    // than a heavy badge — the pulse/spin motion + tinted color carry the state.
-    <Animated.View
-      key={phase}
-      entering={FadeIn.duration(TIMING_CONFIG.MEDIUM.duration)}
-      style={styles.row}
-    >
-      <Animated.View style={[styles.iconWrap, motionStyle]}>
-        <Ionicons name={config.icon} size={ICON_SIZE} color={tint} />
-      </Animated.View>
+    // Keyed by phase so the label cross-fades when the state changes.
+    <Animated.View key={phase} entering={FadeIn.duration(TIMING_CONFIG.MEDIUM.duration)}>
       <ThemedText type="label" colorName={config.color} style={styles.label}>
         {config.label}
       </ThemedText>
@@ -112,17 +64,6 @@ export const VoiceStatusIndicator: FC<{ phase: VoicePhase }> = memo(({ phase }) 
 VoiceStatusIndicator.displayName = 'VoiceStatusIndicator';
 
 const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: LAYOUT.SPACING.SMALL,
-  },
-  iconWrap: {
-    width: ICON_SIZE,
-    height: ICON_SIZE,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   label: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
   },

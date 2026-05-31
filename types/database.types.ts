@@ -391,6 +391,95 @@ export interface Database {
           },
         ];
       };
+      voice_grading_attempts: {
+        Row: {
+          app_version: string | null;
+          attempt_index: number;
+          buffer_count: number | null;
+          created_at: string;
+          duration_ms: number | null;
+          expected: string | null;
+          first_buffer_ms: number | null;
+          heard_speech: boolean | null;
+          id: number;
+          match_method: string | null;
+          matched: boolean;
+          meta: Json;
+          model_id: string | null;
+          normalized_spoken: string | null;
+          peak_rms: number | null;
+          platform: string | null;
+          resolution: string;
+          root_id: number | null;
+          similarity: number | null;
+          stop_decided_at_ms: number | null;
+          stop_reason: string | null;
+          suggestion: string | null;
+          transcript: string | null;
+          user_id: string;
+        };
+        Insert: {
+          app_version?: string | null;
+          attempt_index?: number;
+          buffer_count?: number | null;
+          created_at?: string;
+          duration_ms?: number | null;
+          expected?: string | null;
+          first_buffer_ms?: number | null;
+          heard_speech?: boolean | null;
+          id?: number;
+          match_method?: string | null;
+          matched: boolean;
+          meta?: Json;
+          model_id?: string | null;
+          normalized_spoken?: string | null;
+          peak_rms?: number | null;
+          platform?: string | null;
+          resolution: string;
+          root_id?: number | null;
+          similarity?: number | null;
+          stop_decided_at_ms?: number | null;
+          stop_reason?: string | null;
+          suggestion?: string | null;
+          transcript?: string | null;
+          user_id: string;
+        };
+        Update: {
+          app_version?: string | null;
+          attempt_index?: number;
+          buffer_count?: number | null;
+          created_at?: string;
+          duration_ms?: number | null;
+          expected?: string | null;
+          first_buffer_ms?: number | null;
+          heard_speech?: boolean | null;
+          id?: number;
+          match_method?: string | null;
+          matched?: boolean;
+          meta?: Json;
+          model_id?: string | null;
+          normalized_spoken?: string | null;
+          peak_rms?: number | null;
+          platform?: string | null;
+          resolution?: string;
+          root_id?: number | null;
+          similarity?: number | null;
+          stop_decided_at_ms?: number | null;
+          stop_reason?: string | null;
+          suggestion?: string | null;
+          transcript?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'voice_grading_attempts_root_id_fkey';
+            columns: ['root_id'];
+            isOneToOne: false;
+            referencedRelation: 'roots';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       word_types: {
         Row: {
           id: number;

@@ -164,6 +164,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   } = useVoiceReview({
     expected: currentWord?.root?.meaning ?? null,
     currentWordKey,
+    rootId: currentWord?.root_id ?? null,
     promptAudioDoneKey,
     ready: !isUpdating && !isLoading && isAudioPreloadingComplete && !isComplete,
     stopAudio,

@@ -19,7 +19,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useToast, useVoiceGrading } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { STRINGS } from '@/constants/strings';
+import {
+  PARAKEET_MODEL_ID,
+  VOICE_DECODING_METHOD,
+  VOICE_MAX_ACTIVE_PATHS,
+} from '@/hooks/voice/useSherpaStt';
+import { DEFAULT_RECORDING_CONFIG } from '@/lib/voice/recording';
 import { analytics } from '@/services/analytics';
+import { logVoiceAttempt, type VoiceAttemptLog } from '@/services/voiceTelemetry';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import { setVoiceEnabled } from '@/store/settingsSlice';
 import { matchSingleWord } from '@/utils/voiceMatching';
@@ -78,6 +85,8 @@ interface UseVoiceReviewArgs {
   expected: string | null | undefined;
   /** Key that changes when a new card is shown. */
   currentWordKey: string;
+  /** Current card's root id, recorded with each telemetry attempt. */
+  rootId: number | null | undefined;
   /** From useReview: the `currentWordKey` whose Arabic prompt has finished
    *  playing (or had no audio). The mic only arms once this matches the current
    *  card, so the prompt is never cut off and the mic never opens over it. */
@@ -112,6 +121,7 @@ const CLEAN_MISS_MIN_TRANSCRIPT_CHARS = 2;
 export function useVoiceReview({
   expected,
   currentWordKey,
+  rootId,
   promptAudioDoneKey,
   ready,
   stopAudio,
@@ -134,6 +144,13 @@ export function useVoiceReview({
   togglePause: () => void;
 } {
   const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
+  // Advanced dev toggles — snapshotted into each telemetry attempt's `meta`.
+  const energyGateEnabled = useAppSelectorShallow(state => state.settings.voiceEnergyGateEnabled);
+  const gainNormalizeEnabled = useAppSelectorShallow(
+    state => state.settings.voiceGainNormalizeEnabled,
+  );
+  const iosRawMode = useAppSelectorShallow(state => state.settings.voiceIosRawMode);
+  const debugEnabled = useAppSelectorShallow(state => state.settings.voiceDebugEnabled);
   const voice = useVoiceGrading();
   const dispatch = useAppDispatch();
   const { showToast } = useToast();
@@ -164,12 +181,22 @@ export function useVoiceReview({
   const onUnknownAutoRef = useRef(onUnknownAuto);
   const onRevealAnswerRef = useRef(onRevealAnswer);
   const stopAudioRef = useRef(stopAudio);
+  // Latest dev-settings snapshot for telemetry `meta` (read from a ref so the
+  // arm effect / stable callbacks always log the current values without taking
+  // the settings as effect deps and re-arming when a toggle flips).
+  const settingsRef = useRef({ energyGateEnabled, gainNormalizeEnabled, iosRawMode, debugEnabled });
   useEffect(() => {
     onKnownAutoRef.current = onKnownAuto;
     onUnknownAutoRef.current = onUnknownAuto;
     onRevealAnswerRef.current = onRevealAnswer;
     stopAudioRef.current = stopAudio;
+    settingsRef.current = { energyGateEnabled, gainNormalizeEnabled, iosRawMode, debugEnabled };
   });
+
+  // The most recent resolved-or-pending attempt's loggable fields (everything
+  // except `resolution`). Populated after each match so the auto-known path and
+  // the panel callbacks (accept/reject/retry) can log with the right verdict.
+  const attemptCtxRef = useRef<Omit<VoiceAttemptLog, 'resolution'> | null>(null);
 
   // The card key we've already armed for, to avoid re-arming on incidental
   // re-renders while the mic is in flight.
@@ -192,6 +219,7 @@ export function useVoiceReview({
     setResult(null);
     setDebug({ transcript: '', match: null, recorder: null, armError: null });
     armedForKeyRef.current = null;
+    attemptCtxRef.current = null;
   }, [currentWordKey]);
 
   // Surface a passive "Preparing voice…" pill ONLY while the model is genuinely
@@ -321,10 +349,47 @@ export function useVoiceReview({
           expected: match.normalizedExpected,
         },
       }));
+      // Snapshot everything loggable except the resolution. The auto-known path
+      // logs immediately; a miss stores it so accept/reject/retry can log with
+      // the user's verdict.
+      const buildAttemptCtx = (
+        sug: VoiceResult['suggestion'],
+      ): Omit<VoiceAttemptLog, 'resolution'> => ({
+        rootId: rootId ?? null,
+        expected: match.normalizedExpected,
+        transcript,
+        normalizedSpoken: match.normalizedSpoken,
+        matched: match.matched,
+        matchMethod: match.method,
+        similarity: match.similarity,
+        suggestion: sug,
+        attemptIndex: attempt,
+        durationMs: outcome.result.durationMs,
+        stopReason: outcome.result.stopReason,
+        heardSpeech: outcome.result.heardSpeech,
+        peakRms: outcome.result.peakRms,
+        bufferCount: outcome.result.bufferCount,
+        firstBufferMs: outcome.result.firstBufferMs,
+        stopDecidedAtMs: outcome.result.stopDecidedAtMs,
+        modelId: PARAKEET_MODEL_ID,
+        meta: {
+          settings: settingsRef.current,
+          recordingConfig: {
+            ...DEFAULT_RECORDING_CONFIG,
+            energyGateEnabled: settingsRef.current.energyGateEnabled,
+            gainNormalizeEnabled: settingsRef.current.gainNormalizeEnabled,
+            iosRawMode: settingsRef.current.iosRawMode,
+          },
+          decoding: { method: VOICE_DECODING_METHOD, maxActivePaths: VOICE_MAX_ACTIVE_PATHS },
+        },
+      });
+
       if (match.matched) {
-        // Correct → just proceed. Blank the indicator before handing off so the
-        // "Grading…" pill doesn't linger over the advance animation; the next
-        // card re-arms cleanly on mount.
+        // Correct → log the auto-pass, then proceed. Blank the indicator before
+        // handing off so the "Grading…" pill doesn't linger over the advance
+        // animation; the next card re-arms cleanly on mount.
+        attemptCtxRef.current = buildAttemptCtx(null);
+        void logVoiceAttempt({ ...attemptCtxRef.current, resolution: 'auto_known' });
         setPhase('idle');
         onKnownAutoRef.current();
         return;
@@ -354,6 +419,8 @@ export function useVoiceReview({
         message: 'voice.match.miss',
         data: { similarity: match.similarity, spoken: match.normalizedSpoken, suggestion },
       });
+      // Hold the attempt; the panel's accept/reject/retry logs it with the verdict.
+      attemptCtxRef.current = buildAttemptCtx(suggestion);
       setResult({
         heard: heardReliable ? match.normalizedSpoken : '',
         expected: match.normalizedExpected,
@@ -379,6 +446,7 @@ export function useVoiceReview({
     ready,
     expected,
     currentWordKey,
+    rootId,
     promptAudioDoneKey,
     attempt,
     dispatch,
@@ -386,6 +454,9 @@ export function useVoiceReview({
   ]);
 
   const accept = useCallback((): void => {
+    const ctx = attemptCtxRef.current;
+    if (ctx) void logVoiceAttempt({ ...ctx, resolution: 'accept' });
+    attemptCtxRef.current = null;
     setResult(null);
     // Blank the indicator immediately so nothing transient (the cleared result
     // panel, a stale phase) shows during the advance; the next card re-arms.
@@ -394,12 +465,17 @@ export function useVoiceReview({
   }, []);
 
   const reject = useCallback((): void => {
+    const ctx = attemptCtxRef.current;
+    if (ctx) void logVoiceAttempt({ ...ctx, resolution: 'reject' });
+    attemptCtxRef.current = null;
     setResult(null);
     setPhase('idle');
     onUnknownAutoRef.current();
   }, []);
 
   const retry = useCallback((): void => {
+    const ctx = attemptCtxRef.current;
+    if (ctx) void logVoiceAttempt({ ...ctx, resolution: 'retry' });
     // Stop the reveal audio (played when the panel appeared) before reopening
     // the mic, so its tail isn't captured by the new recording.
     stopAudioRef.current();
