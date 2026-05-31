@@ -391,25 +391,22 @@ export class VoiceRecorder {
       recorder.stop();
       if (Platform.OS === 'ios') {
         try {
-          await AudioManager.setAudioSessionActivity(false);
-        } catch {
-          // Non-fatal.
-        }
-        try {
           // Restore a playback-friendly session before handing back to
-          // expo-audio. start() switches the session mode to
-          // 'spokenAudio'/'measurement' for ASR; iOS keeps applying that mode
-          // (a much quieter output level) and drops the speaker-route override
-          // across the deactivate/reactivate, so the *next* prompt plays at a
-          // much lower volume through the earpiece. expo-audio won't re-assert
-          // its own mode (its configureAudioSession short-circuits once set), so
-          // reset the mode to 'default' and re-assert the speaker route here —
-          // done while the session is inactive, which is safe to change.
+          // expo-audio. start() switches the session to 'spokenAudio' /
+          // 'measurement' mode for ASR — a much quieter output level — and iOS
+          // keeps applying it, so every prompt after the first recording played
+          // quiet. react-native-audio-api only *applies* session options on the
+          // next activation, so resetting the mode without re-activating (the
+          // previous attempt) was a no-op: expo-audio's setIsAudioActiveAsync
+          // just re-activated the stale recording mode. Reset to 'default' mode
+          // + speaker route and COMMIT it with an activation so the change
+          // actually takes effect before the next prompt plays.
           AudioManager.setAudioSessionOptions({
             iosCategory: 'playAndRecord',
             iosMode: 'default',
             iosOptions: ['defaultToSpeaker'],
           });
+          await AudioManager.setAudioSessionActivity(true);
         } catch {
           // Non-fatal — playback still works, just potentially at lower volume.
         }

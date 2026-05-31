@@ -1,6 +1,7 @@
 /**
- * Prominent voice-grading status pill shown above the Practice bottom actions.
- * Gives the learner an unmistakable read on what the mic pipeline is doing:
+ * Lightweight voice-grading status label shown above the Practice bottom
+ * actions (borderless — no pill/box). Gives the learner a clear read on what
+ * the mic pipeline is doing:
  *
  * - listening → pulsing mic, brand tint  ("Listening…")
  * - checking  → spinning indicator, accent ("Grading…")
@@ -91,17 +92,12 @@ export const VoiceStatusIndicator: FC<{ phase: VoicePhase }> = memo(({ phase }) 
 
   return (
     // Keyed by phase so the icon/label cross-fade when the state changes.
+    // Borderless label (no pill/box) so it reads as light inline status rather
+    // than a heavy badge — the pulse/spin motion + tinted color carry the state.
     <Animated.View
       key={phase}
       entering={FadeIn.duration(TIMING_CONFIG.MEDIUM.duration)}
-      style={[
-        styles.pill,
-        {
-          backgroundColor: colors.card,
-          borderColor: tint,
-          shadowColor: colors.shadow,
-        },
-      ]}
+      style={styles.row}
     >
       <Animated.View style={[styles.iconWrap, motionStyle]}>
         <Ionicons name={config.icon} size={ICON_SIZE} color={tint} />
@@ -116,15 +112,10 @@ export const VoiceStatusIndicator: FC<{ phase: VoicePhase }> = memo(({ phase }) 
 VoiceStatusIndicator.displayName = 'VoiceStatusIndicator';
 
 const styles = StyleSheet.create({
-  pill: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: LAYOUT.SPACING.SMALL,
-    paddingVertical: LAYOUT.SPACING.SMALL,
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-    borderRadius: LAYOUT.BORDER_RADIUS.PILL,
-    borderWidth: 1.5,
-    ...LAYOUT.ELEVATION.FLOATING,
   },
   iconWrap: {
     width: ICON_SIZE,
