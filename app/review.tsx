@@ -245,6 +245,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
             onClose={handleClose}
             showVoiceControl={voiceEnabled}
             voicePaused={voicePaused}
+            voiceListening={voicePhase === 'listening'}
             onToggleVoice={voiceTogglePause}
           />
         </View>

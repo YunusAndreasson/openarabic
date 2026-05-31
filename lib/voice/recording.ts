@@ -395,6 +395,24 @@ export class VoiceRecorder {
         } catch {
           // Non-fatal.
         }
+        try {
+          // Restore a playback-friendly session before handing back to
+          // expo-audio. start() switches the session mode to
+          // 'spokenAudio'/'measurement' for ASR; iOS keeps applying that mode
+          // (a much quieter output level) and drops the speaker-route override
+          // across the deactivate/reactivate, so the *next* prompt plays at a
+          // much lower volume through the earpiece. expo-audio won't re-assert
+          // its own mode (its configureAudioSession short-circuits once set), so
+          // reset the mode to 'default' and re-assert the speaker route here —
+          // done while the session is inactive, which is safe to change.
+          AudioManager.setAudioSessionOptions({
+            iosCategory: 'playAndRecord',
+            iosMode: 'default',
+            iosOptions: ['defaultToSpeaker'],
+          });
+        } catch {
+          // Non-fatal — playback still works, just potentially at lower volume.
+        }
       }
     }
 

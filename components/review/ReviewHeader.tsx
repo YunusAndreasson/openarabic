@@ -13,34 +13,36 @@ import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 
 // ===== STATIC STYLES USING STYLESHEET.CREATE =====
-const CLOSE_BUTTON_CONSTANTS = {
-  SIZE: MIN_TOUCH_TARGET.SMALL, // 32px - matches bottom action buttons
+// 44pt is the Apple HIG minimum tap target (Material prefers 48dp); the visible
+// button now matches the touch target so no hitSlop is needed and adjacent hit
+// areas can't overlap. Shared by the mic toggle and the close button.
+const ICON_BUTTON_CONSTANTS = {
+  SIZE: MIN_TOUCH_TARGET.MEDIUM, // 44px - Apple HIG minimum tap target
 } as const;
 
 const STATIC_STYLES = StyleSheet.create({
   header: {
     alignItems: 'center',
     flexDirection: 'row',
-    height: LAYOUT.SPACING.XXLARGE, // Compact height for progress bar only (32px)
+    height: MIN_TOUCH_TARGET.MEDIUM, // 44px - fits the tap-target-sized icon buttons
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     width: '100%',
     zIndex: LAYOUT.Z_INDEX.HEADER,
   },
   progressContainer: {
     flex: 1,
-    marginBottom: LAYOUT.SPACING.TINY, // Bottom margin only for spacing
     marginRight: LAYOUT.SPACING.LARGE,
   },
   iconButton: {
-    width: CLOSE_BUTTON_CONSTANTS.SIZE,
-    height: CLOSE_BUTTON_CONSTANTS.SIZE,
-    borderRadius: CLOSE_BUTTON_CONSTANTS.SIZE / 2, // Circular
+    width: ICON_BUTTON_CONSTANTS.SIZE,
+    height: ICON_BUTTON_CONSTANTS.SIZE,
+    borderRadius: ICON_BUTTON_CONSTANTS.SIZE / 2, // Circular
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
   voiceButtonSpacing: {
-    marginRight: LAYOUT.SPACING.SMALL,
+    marginRight: LAYOUT.SPACING.MEDIUM, // 12px gap ≥ Material's 8dp min between targets
   },
 });
 
@@ -50,8 +52,12 @@ interface ReviewHeaderProps {
   onClose?: () => void;
   /** Show the voice mute toggle (only when voice grading is enabled). */
   showVoiceControl?: boolean;
-  /** True when auto-listen is muted for this session — drives the mic icon. */
+  /** True when auto-listen is muted for this session — drives the mic glyph. */
   voicePaused?: boolean;
+  /** True only while the mic is actively listening — tints the mic icon so the
+   *  brand color reads as a live "listening now" cue. At rest the mic stays the
+   *  same neutral color as the close button. */
+  voiceListening?: boolean;
   /** Toggle the session-local voice mute. */
   onToggleVoice?: () => void;
 }
@@ -62,6 +68,7 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({
   onClose,
   showVoiceControl = false,
   voicePaused = false,
+  voiceListening = false,
   onToggleVoice,
 }) => {
   const colors = useColors();
@@ -93,7 +100,6 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({
       {showVoiceControl && onToggleVoice && (
         <Pressable
           onPress={onToggleVoice}
-          hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
           accessibilityRole="button"
           accessibilityLabel={
             voicePaused ? STRINGS.VOICE_RESUME_LABEL : STRINGS.VOICE_PAUSE_LABEL
@@ -106,21 +112,23 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({
           >
             <Ionicons
               name={voicePaused ? 'mic-off' : 'mic'}
-              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-              color={voicePaused ? colors.secondaryText : colors.tint}
+              size={LAYOUT.BUTTON.ICON_SIZE.LARGE}
+              // Tint only while actively listening; neutral at rest so it reads
+              // as the same chrome control as the close button.
+              color={voiceListening ? colors.tint : colors.secondaryText}
             />
           </GlassContainer>
         </Pressable>
       )}
       {onClose && (
-        <Pressable onPress={handleClose} hitSlop={LAYOUT.HIT_SLOP.MEDIUM}>
+        <Pressable onPress={handleClose}>
           <GlassContainer
             style={[STATIC_STYLES.iconButton, fallbackButtonStyle]}
             {...(GLASS_AVAILABLE && { isInteractive: true, glassEffectStyle: 'clear' })}
           >
             <Ionicons
               name="close"
-              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+              size={LAYOUT.BUTTON.ICON_SIZE.LARGE}
               color={colors.secondaryText}
             />
           </GlassContainer>
