@@ -114,6 +114,7 @@
         }
       ],
       "./plugins/withRemoveExpoAudioBootReceiver.js",
+      "./plugins/withDisableAudioapiFFmpeg.js",
       [
         "react-native-audio-api",
         {
