@@ -1,0 +1,73 @@
+name: Submit
+
+# Submit-only: pushes the LATEST finished EAS build for a platform to the store,
+# without rebuilding. Use when a build already exists on EAS and only the store
+# submission needs to (re)run (e.g. after fixing a Play Console declaration).
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Platform to submit (all, ios, or android)'
+        required: false
+        type: choice
+        options:
+          - all
+          - ios
+          - android
+        default: all
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Setup Expo and EAS CLI
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+          packager: yarn
+
+      - name: Prepare Google Service Account file
+        if: |
+          github.event.inputs.platform == 'all' ||
+          github.event.inputs.platform == 'android' ||
+          github.event.inputs.platform == ''
+        run: echo "$GOOGLE_SERVICE_ACCOUNT_KEY" > google-service-account.json
+        env:
+          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+
+      - name: Submit Android to Google Play (Internal)
+        if: |
+          github.event.inputs.platform == 'all' ||
+          github.event.inputs.platform == 'android' ||
+          github.event.inputs.platform == ''
+        run: eas submit --platform android --profile production --non-interactive --latest
+        env:
+          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+
+      - name: Submit iOS to TestFlight
+        if: |
+          github.event.inputs.platform == 'all' ||
+          github.event.inputs.platform == 'ios' ||
+          github.event.inputs.platform == ''
+        run: eas submit --platform ios --profile production --non-interactive --latest
+        env:
+          EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
+
+      - name: Notify on failure
+        if: failure()
+        run: echo "❌ Submit failed"
