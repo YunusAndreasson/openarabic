@@ -1,0 +1,33 @@
+diff --git a/node_modules/react-native-audio-api/scripts/validate-worklets-version.js b/node_modules/react-native-audio-api/scripts/validate-worklets-version.js
+index 9d2b0d9..184df64 100644
+--- a/node_modules/react-native-audio-api/scripts/validate-worklets-version.js
++++ b/node_modules/react-native-audio-api/scripts/validate-worklets-version.js
+@@ -1,8 +1,16 @@
+ 'use strict';
+ 
+ const semverGte = require('semver/functions/gte');
++const semverLt = require('semver/functions/lt');
+ 
+ const MIN_WORKLETS_VERSION = '0.6.0';
++// react-native-audio-api 0.12.x's worklets integration assumes source-built worklets
++// headers at $(PODS_ROOT)/Headers/Public/RNWorklets. react-native-worklets >= 0.8.0
++// ships a prebuilt RNWorklets.xcframework (headers live inside the framework), so the
++// `#import <rnworklets/rnworklets.h>` in AudioAPIModule.mm fails the iOS build. This app
++// only uses AudioRecorder/AudioManager (no audio worklet nodes), so cap the supported
++// range to disable the broken integration. See patches/react-native-audio-api+0.12.2.patch.
++const MAX_WORKLETS_VERSION_EXCLUSIVE = '0.8.0';
+ 
+ 
+ /**
+@@ -18,7 +26,10 @@ function validateVersion() {
+     return false;
+   }
+ 
+-  return semverGte(workletsVersion, MIN_WORKLETS_VERSION);
++  return (
++    semverGte(workletsVersion, MIN_WORKLETS_VERSION) &&
++    semverLt(workletsVersion, MAX_WORKLETS_VERSION_EXCLUSIVE)
++  );
+ }
+ 
+ if (!validateVersion()) {
