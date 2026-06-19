@@ -466,116 +466,126 @@ function AppContent() {
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <FSRSDataProvider userId={session?.user?.id}>
           <VoiceGradingProvider>
-          <GlobalAudioStateProvider>
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                headerTitle: '',
-                headerShadowVisible: false,
-                freezeOnBlur: true,
-                contentStyle: { backgroundColor: colors.background },
-              }}
-            >
-              {/* Authenticated routes — guard flips on sign-out, router unmounts these */}
-              <Stack.Protected guard={isAuthenticated}>
-                <Stack.Screen
-                  name="(tabs)"
-                  options={{
-                    // Animation re-enabled after Stack.Protected migration. The
-                    // previous `animation: 'none'` worked around a black-screen
-                    // bug caused by imperative router.replace racing with mount.
-                    // Declarative guards mount directly into the right route, so
-                    // the race is gone — fade matches the auth screen for a
-                    // symmetric sign-in / sign-out transition.
-                    animation: 'fade',
-                    freezeOnBlur: false, // Keep tabs active
-                  }}
-                />
-                <Stack.Screen
-                  name="article/[id]"
-                  options={createNavigationOptions(colors, {
-                    headerShown: false,
-                    freezeOnBlur: true, // Optimize article screen when backgrounded
-                  })}
-                />
-                <Stack.Screen
-                  name="review"
-                  options={createNavigationOptions(colors, {
-                    headerShown: false,
-                    freezeOnBlur: true,
-                  })}
-                />
-                <Stack.Screen
-                  name="sleep-timer"
-                  options={{
-                    presentation: 'formSheet',
-                    sheetAllowedDetents: [0.4],
-                    sheetGrabberVisible: true,
-                    sheetCornerRadius: 24,
-                    headerShown: false,
-                  }}
-                />
-                <Stack.Screen
-                  name="due-words"
-                  options={{
-                    presentation: 'formSheet',
-                    sheetAllowedDetents: 'fitToContents',
-                    sheetGrabberVisible: true,
-                    sheetCornerRadius: 24,
-                    headerShown: false,
-                  }}
-                />
-                <Stack.Screen
-                  name="memory-retention"
-                  options={{
-                    presentation: 'formSheet',
-                    sheetAllowedDetents: 'fitToContents',
-                    sheetGrabberVisible: true,
-                    sheetCornerRadius: 24,
-                    headerShown: false,
-                  }}
-                />
-                <Stack.Screen
-                  name="study-streak"
-                  options={{
-                    presentation: 'formSheet',
-                    sheetAllowedDetents: 'fitToContents',
-                    sheetGrabberVisible: true,
-                    sheetCornerRadius: 24,
-                    headerShown: false,
-                  }}
-                />
-                <Stack.Screen
-                  name="words-mastered"
-                  options={{
-                    presentation: 'formSheet',
-                    sheetAllowedDetents: 'fitToContents',
-                    sheetGrabberVisible: true,
-                    sheetCornerRadius: 24,
-                    headerShown: false,
-                  }}
-                />
-              </Stack.Protected>
+            <GlobalAudioStateProvider>
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  headerTitle: '',
+                  headerShadowVisible: false,
+                  freezeOnBlur: true,
+                  contentStyle: { backgroundColor: colors.background },
+                }}
+              >
+                {/* Authenticated routes — guard flips on sign-out, router unmounts these */}
+                <Stack.Protected guard={isAuthenticated}>
+                  <Stack.Screen
+                    name="(tabs)"
+                    options={{
+                      // Animation re-enabled after Stack.Protected migration. The
+                      // previous `animation: 'none'` worked around a black-screen
+                      // bug caused by imperative router.replace racing with mount.
+                      // Declarative guards mount directly into the right route, so
+                      // the race is gone — fade matches the auth screen for a
+                      // symmetric sign-in / sign-out transition.
+                      animation: 'fade',
+                      freezeOnBlur: false, // Keep tabs active
+                    }}
+                  />
+                  <Stack.Screen
+                    name="article/[id]"
+                    options={createNavigationOptions(colors, {
+                      headerShown: false,
+                      freezeOnBlur: true, // Optimize article screen when backgrounded
+                    })}
+                  />
+                  <Stack.Screen
+                    name="review"
+                    options={createNavigationOptions(colors, {
+                      headerShown: false,
+                      freezeOnBlur: true,
+                    })}
+                  />
+                  <Stack.Screen
+                    name="sleep-timer"
+                    options={{
+                      presentation: 'formSheet',
+                      sheetAllowedDetents: [0.4],
+                      sheetGrabberVisible: true,
+                      sheetCornerRadius: 24,
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="due-words"
+                    options={{
+                      presentation: 'formSheet',
+                      sheetAllowedDetents: 'fitToContents',
+                      sheetGrabberVisible: true,
+                      sheetCornerRadius: 24,
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="memory-retention"
+                    options={{
+                      presentation: 'formSheet',
+                      sheetAllowedDetents: 'fitToContents',
+                      sheetGrabberVisible: true,
+                      sheetCornerRadius: 24,
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="study-streak"
+                    options={{
+                      presentation: 'formSheet',
+                      sheetAllowedDetents: 'fitToContents',
+                      sheetGrabberVisible: true,
+                      sheetCornerRadius: 24,
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="words-mastered"
+                    options={{
+                      presentation: 'formSheet',
+                      sheetAllowedDetents: 'fitToContents',
+                      sheetGrabberVisible: true,
+                      sheetCornerRadius: 24,
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="words-to-revisit"
+                    options={{
+                      presentation: 'formSheet',
+                      sheetAllowedDetents: 'fitToContents',
+                      sheetGrabberVisible: true,
+                      sheetCornerRadius: 24,
+                      headerShown: false,
+                    }}
+                  />
+                </Stack.Protected>
 
-              {/* Unauthenticated routes — guard flips on sign-in, router unmounts auth */}
-              <Stack.Protected guard={!isAuthenticated}>
-                <Stack.Screen
-                  name="auth"
-                  options={{
-                    animation: 'fade',
-                    freezeOnBlur: false, // Keep auth screen active
-                  }}
-                />
-              </Stack.Protected>
+                {/* Unauthenticated routes — guard flips on sign-in, router unmounts auth */}
+                <Stack.Protected guard={!isAuthenticated}>
+                  <Stack.Screen
+                    name="auth"
+                    options={{
+                      animation: 'fade',
+                      freezeOnBlur: false, // Keep auth screen active
+                    }}
+                  />
+                </Stack.Protected>
 
-              {/* Audio overlays - mini-player and sleep timer */}
-            </Stack>
+                {/* Audio overlays - mini-player and sleep timer */}
+              </Stack>
 
-            {/* Audio overlays are isolated to prevent root re-renders on audio ticks */}
-            <AudioOverlays />
+              {/* Audio overlays are isolated to prevent root re-renders on audio ticks */}
+              <AudioOverlays />
 
-            <StatusBar style={isDark ? 'light' : 'dark'} />
-          </GlobalAudioStateProvider>
+              <StatusBar style={isDark ? 'light' : 'dark'} />
+            </GlobalAudioStateProvider>
           </VoiceGradingProvider>
         </FSRSDataProvider>
       </View>
@@ -643,9 +653,7 @@ export default Sentry.wrap(function RootLayout() {
               <SafeAreaProvider>
                 <TutorialProvider>
                   <ToastProvider>
-                    <Sentry.ErrorBoundary
-                      fallback={({ error }) => <ErrorFallback error={error} />}
-                    >
+                    <Sentry.ErrorBoundary fallback={({ error }) => <ErrorFallback error={error} />}>
                       <AppContent />
                     </Sentry.ErrorBoundary>
                   </ToastProvider>

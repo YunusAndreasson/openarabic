@@ -353,6 +353,33 @@ describe('useSessionMetrics', () => {
     });
   });
 
+  describe('First-attempt recall signal', () => {
+    test('records only the first attempt per word (re-asks excluded)', () => {
+      const { result } = renderHook(() => useSessionMetrics());
+
+      act(() => {
+        result.current.updateMetrics('unknown', { rootId: 100 }); // first attempt: missed
+        result.current.updateMetrics('known', { rootId: 200 }); // first attempt: recalled
+        result.current.updateMetrics('known', { rootId: 100 }); // re-ask of 100 → not a first attempt
+      });
+
+      expect(result.current.metrics.firstAttemptUnknown).toBe(1);
+      expect(result.current.metrics.firstAttemptKnown).toBe(1);
+    });
+
+    test('reset clears first-attempt counters', () => {
+      const { result } = renderHook(() => useSessionMetrics());
+
+      act(() => {
+        result.current.updateMetrics('known', { rootId: 100 });
+        result.current.resetMetrics();
+      });
+
+      expect(result.current.metrics.firstAttemptKnown).toBe(0);
+      expect(result.current.metrics.firstAttemptUnknown).toBe(0);
+    });
+  });
+
   describe('Reset functionality', () => {
     test('should reset all metrics including unique words set', () => {
       const { result } = renderHook(() => useSessionMetrics());

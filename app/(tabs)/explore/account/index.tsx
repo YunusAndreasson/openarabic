@@ -20,6 +20,7 @@ import { useAccountScreen } from '@/hooks/account';
 import { useDailyWordLimit } from '@/hooks/vocabulary';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import {
+  setAdaptiveNewWordPacingEnabled,
   setAudioLanguagePreference,
   setAudioShuffleEnabled,
   setDailyWordLimit,
@@ -73,6 +74,9 @@ const AccountScreen: FC = () => {
   );
 
   const audioShuffleEnabled = useAppSelectorShallow(state => state.settings.audioShuffleEnabled);
+  const adaptiveNewWordPacingEnabled = useAppSelectorShallow(
+    state => state.settings.adaptiveNewWordPacingEnabled,
+  );
   const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
   const voice = useVoiceGrading();
   const dispatch = useAppDispatch();
@@ -162,6 +166,15 @@ const AccountScreen: FC = () => {
     (enabled: boolean) => {
       selectionFeedback();
       dispatch(setAudioShuffleEnabled(enabled));
+    },
+    [dispatch],
+  );
+
+  // Adaptive new-word pacing toggle handler
+  const handleAdaptivePacingToggle = useCallback(
+    (enabled: boolean) => {
+      selectionFeedback();
+      dispatch(setAdaptiveNewWordPacingEnabled(enabled));
     },
     [dispatch],
   );
@@ -367,6 +380,14 @@ const AccountScreen: FC = () => {
             rightType="text-chevron"
             rightText={currentDailyWordLimitText}
             onPress={() => handlePickerOpen('dailyWordLimit')}
+          />
+          <SettingsCard
+            icon="speedometer"
+            label={STRINGS.ADAPTIVE_PACING}
+            subtitle={STRINGS.ADAPTIVE_PACING_SUBTITLE}
+            rightType="toggle"
+            toggleValue={adaptiveNewWordPacingEnabled}
+            onToggleChange={handleAdaptivePacingToggle}
           />
           <SettingsCard
             icon="school"

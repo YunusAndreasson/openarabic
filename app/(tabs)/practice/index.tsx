@@ -21,11 +21,7 @@ const MOUNT_FADE_IN_STYLE = {
 
 import { ThemedView } from '@/components/ThemedView';
 import { ErrorState } from '@/components/common';
-import {
-  PracticeEmptyState,
-  RecommendationCard,
-  PracticeStatCards,
-} from '@/components/practice';
+import { PracticeEmptyState, RecommendationCard, PracticeStatCards } from '@/components/practice';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { fsrsQueries } from '@/constants/queries';
@@ -37,6 +33,7 @@ import { useStudyStreak } from '@/hooks/practice/useStudyStreak';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { FloatingActionButton } from '@/components/ui';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
+import { rankStrugglingWords } from '@/utils/leechUtils';
 import { calculateWordCategories } from '@/utils/wordClassification';
 
 export default function PracticeScreen(): JSX.Element {
@@ -99,10 +96,7 @@ export default function PracticeScreen(): JSX.Element {
     () => router.push(ROUTE_PATHS.PRACTICE_MEMORY_RETENTION),
     [router],
   );
-  const handleDuePress = useCallback(
-    () => router.push(ROUTE_PATHS.PRACTICE_DUE_WORDS),
-    [router],
-  );
+  const handleDuePress = useCallback(() => router.push(ROUTE_PATHS.PRACTICE_DUE_WORDS), [router]);
   const handleStreakPress = useCallback(
     () => router.push(ROUTE_PATHS.PRACTICE_STUDY_STREAK),
     [router],
@@ -110,6 +104,18 @@ export default function PracticeScreen(): JSX.Element {
   const handleMasteredPress = useCallback(
     () => router.push(ROUTE_PATHS.PRACTICE_WORDS_MASTERED),
     [router],
+  );
+  const handleRevisitPress = useCallback(
+    () => router.push(ROUTE_PATHS.PRACTICE_WORDS_TO_REVISIT),
+    [router],
+  );
+
+  // Leech count for the (conditional) "Revisit" stat card — reuses the words
+  // already fetched, so no extra query. Ranking is the same pure util the
+  // dedicated screen uses.
+  const leechCount = useMemo(
+    () => rankStrugglingWords(filteredStudyWords).length,
+    [filteredStudyWords],
   );
 
   // Fix: Use the actual due words data count instead of database view
@@ -191,11 +197,13 @@ export default function PracticeScreen(): JSX.Element {
             dueWords={dueWordsCount}
             currentStreak={currentStreak}
             masteredWords={calculatedStats.masteredWords}
+            leechCount={leechCount}
             studyWords={filteredStudyWords}
             onInfoPress={handleMemoryStrengthInfo}
             onDuePress={handleDuePress}
             onStreakPress={handleStreakPress}
             onMasteredPress={handleMasteredPress}
+            onRevisitPress={handleRevisitPress}
           />
 
           {/* Recommendation Card - placed below stat cards */}

@@ -28,6 +28,7 @@ const mockCheckAuthentication = jest.fn();
 const mockToggleFSRSStudyRoot = jest.fn();
 const mockCanAddWord = jest.fn();
 const mockIncrementDailyWordCount = jest.fn();
+const mockGetEffectiveLimitInfo = jest.fn();
 const mockErrorFeedback = jest.fn();
 
 jest.mock('@/components/providers', () => ({
@@ -57,6 +58,7 @@ jest.mock('@/hooks/vocabulary', () => ({
     dailyWordLimit: 10,
     canAddWord: mockCanAddWord,
     incrementDailyWordCount: mockIncrementDailyWordCount,
+    getEffectiveLimitInfo: mockGetEffectiveLimitInfo,
   }),
 }));
 
@@ -84,6 +86,7 @@ describe('useStudyWordMutations', () => {
     // Default mock implementations
     mockCanAddWord.mockResolvedValue(true);
     mockIncrementDailyWordCount.mockResolvedValue(true);
+    mockGetEffectiveLimitInfo.mockResolvedValue({ effective: 10, ceiling: 10, status: 'full' });
     mockCheckAuthentication.mockResolvedValue({ user: { id: 'test-user-id' } });
     mockToggleFSRSStudyRoot.mockResolvedValue(true);
   });

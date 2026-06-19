@@ -19,10 +19,12 @@ interface PracticeStatCardsProps {
   masteredWords?: number;
   dueWords?: number;
   currentStreak?: number;
+  leechCount?: number;
   onInfoPress?: () => void;
   onDuePress?: () => void;
   onStreakPress?: () => void;
   onMasteredPress?: () => void;
+  onRevisitPress?: () => void;
   studyWords?: StudyWord[];
 }
 
@@ -30,10 +32,12 @@ export function PracticeStatCards({
   masteredWords = 0,
   dueWords = 0,
   currentStreak = 0,
+  leechCount = 0,
   onInfoPress,
   onDuePress,
   onStreakPress,
   onMasteredPress,
+  onRevisitPress,
   studyWords = [],
 }: PracticeStatCardsProps) {
   const colors = useColors();
@@ -63,6 +67,19 @@ export function PracticeStatCards({
       onPress: onMasteredPress,
       formatAsDecimal: false,
     },
+    // Only surfaced when the learner actually has leeches, so it never nags.
+    ...(leechCount > 0
+      ? [
+          {
+            label: STRINGS.REVISIT_LABEL,
+            value: leechCount,
+            color: colors.error,
+            icon: 'alert-circle' as const,
+            onPress: onRevisitPress,
+            formatAsDecimal: false,
+          },
+        ]
+      : []),
   ];
 
   return (

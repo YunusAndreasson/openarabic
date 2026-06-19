@@ -9,6 +9,7 @@
 
 import reducer, {
   type ArabicFontName,
+  setAdaptiveNewWordPacingEnabled,
   setArabicFont,
   setArabicFontSize,
   setAudioLanguagePreference,
@@ -38,6 +39,7 @@ describe('settingsSlice reducers', () => {
       audioShuffleEnabled: false,
       displayLanguagePreference: DisplayLanguage.ARABIC_ENGLISH,
       dailyWordLimit: 10,
+      adaptiveNewWordPacingEnabled: true,
       hapticsEnabled: true,
     };
   });
@@ -157,6 +159,19 @@ describe('settingsSlice reducers', () => {
     test('disables haptics', () => {
       const state = reducer(initialState, setHapticsEnabled(false));
       expect(state.hapticsEnabled).toBe(false);
+    });
+  });
+
+  describe('setAdaptiveNewWordPacingEnabled', () => {
+    test('disables adaptive pacing', () => {
+      const state = reducer(initialState, setAdaptiveNewWordPacingEnabled(false));
+      expect(state.adaptiveNewWordPacingEnabled).toBe(false);
+    });
+
+    test('re-enables adaptive pacing', () => {
+      const modifiedState = { ...initialState, adaptiveNewWordPacingEnabled: false };
+      const state = reducer(modifiedState, setAdaptiveNewWordPacingEnabled(true));
+      expect(state.adaptiveNewWordPacingEnabled).toBe(true);
     });
   });
 

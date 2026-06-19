@@ -92,6 +92,7 @@ describe('useDailyWordLimit', () => {
 
       expect(typeof result.current.dailyWordLimit).toBe('number');
       expect(typeof result.current.getDailyWordCount).toBe('function');
+      expect(typeof result.current.getEffectiveLimitInfo).toBe('function');
       expect(typeof result.current.incrementDailyWordCount).toBe('function');
       expect(typeof result.current.canAddWord).toBe('function');
       expect(typeof result.current.getRemainingWords).toBe('function');
@@ -200,6 +201,43 @@ describe('useDailyWordLimit', () => {
       const { result } = renderHook(() => useDailyWordLimit(), { wrapper });
 
       await expect(result.current.resetDailyWordCount()).resolves.not.toThrow();
+    });
+  });
+
+  describe('adaptive new-word pacing', () => {
+    const RECALL_KEY = 'recent_recall_sessions';
+
+    const seedRecall = (known: number, unknown: number) => {
+      mockStorage[RECALL_KEY] = JSON.stringify([{ known, unknown, at: 1 }]);
+    };
+
+    test('keeps the full ceiling while warming up (too little recall data)', async () => {
+      seedRecall(2, 1); // only 3 trials < MIN_TRIALS
+      const { result } = renderHook(() => useDailyWordLimit(), { wrapper });
+
+      const info = await result.current.getEffectiveLimitInfo();
+      expect(info.status).toBe('warming-up');
+      expect(await result.current.canAddWord()).toBe(true);
+    });
+
+    test('gives the full ceiling when recent recall is on target', async () => {
+      seedRecall(24, 1); // 25 trials, 96% recall ≥ target → full
+      const { result } = renderHook(() => useDailyWordLimit(), { wrapper });
+
+      const info = await result.current.getEffectiveLimitInfo();
+      expect(info.status).toBe('full');
+      expect(await result.current.canAddWord()).toBe(true);
+    });
+
+    test('pauses new words when recent recall is struggling', async () => {
+      seedRecall(5, 20); // 25 trials, 20% recall → well under target → paused
+      const { result } = renderHook(() => useDailyWordLimit(), { wrapper });
+
+      const info = await result.current.getEffectiveLimitInfo();
+      expect(info.status).toBe('paused');
+      expect(info.effective).toBe(0);
+      expect(await result.current.canAddWord()).toBe(false);
+      expect(await result.current.getRemainingWords()).toBe(0);
     });
   });
 });

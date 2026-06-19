@@ -62,7 +62,20 @@ export const useStudyWordMutations = (
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   const audioPreference = useAppSelector(state => state.settings.audioLanguagePreference);
-  const { dailyWordLimit, canAddWord, incrementDailyWordCount } = useDailyWordLimit();
+  const { dailyWordLimit, canAddWord, incrementDailyWordCount, getEffectiveLimitInfo } =
+    useDailyWordLimit();
+
+  // Pick the right "can't add" message: a recall-driven pause reads differently
+  // from simply hitting the configured daily ceiling.
+  const getLimitReachedMessage = useCallback(async (): Promise<string> => {
+    const { status } = await getEffectiveLimitInfo();
+    if (status === 'paused') {
+      return DailyWordLimitStatus.PAUSED_LOW_RECALL;
+    }
+    return dailyWordLimit === 0
+      ? DailyWordLimitStatus.REACHED
+      : `Daily limit of ${dailyWordLimit} words reached. You can increase it in Account settings.`;
+  }, [getEffectiveLimitInfo, dailyWordLimit]);
 
   // Lightweight capacity guard: prevent adding when capacity is low (red phase)
   // Only applies when user has more than 100 words to avoid being annoying for new users
@@ -226,7 +239,7 @@ export const useStudyWordMutations = (
         // Check daily word limit first
         const canAdd = await canAddWord();
         if (!canAdd) {
-          showToast(DailyWordLimitStatus.REACHED, 6000, ToastType.IMPORTANT);
+          showToast(await getLimitReachedMessage(), 6000, ToastType.IMPORTANT);
           return;
         }
 
@@ -250,7 +263,7 @@ export const useStudyWordMutations = (
         // Increment daily word count and proceed
         const incrementSuccess = await incrementDailyWordCount();
         if (!incrementSuccess) {
-          showToast(DailyWordLimitStatus.REACHED, 6000, ToastType.IMPORTANT);
+          showToast(await getLimitReachedMessage(), 6000, ToastType.IMPORTANT);
           return;
         }
 
@@ -260,7 +273,14 @@ export const useStudyWordMutations = (
         handleError(error as Error);
       }
     },
-    [toggleWordMutation, showToast, canAddWord, incrementDailyWordCount, isCapacityLow],
+    [
+      toggleWordMutation,
+      showToast,
+      canAddWord,
+      incrementDailyWordCount,
+      getLimitReachedMessage,
+      isCapacityLow,
+    ],
   );
 
   // Handle root press with validation
@@ -291,11 +311,7 @@ export const useStudyWordMutations = (
         if (!wordExists) {
           const canAdd = await canAddWord();
           if (!canAdd) {
-            const limitMessage =
-              dailyWordLimit === 0
-                ? DailyWordLimitStatus.REACHED
-                : `Daily limit of ${dailyWordLimit} words reached. You can increase it in Account settings.`;
-            showToast(limitMessage, 6000, ToastType.IMPORTANT);
+            showToast(await getLimitReachedMessage(), 6000, ToastType.IMPORTANT);
             errorFeedback(); // Use error haptic for daily limit reached
             return undefined;
           }
@@ -311,11 +327,7 @@ export const useStudyWordMutations = (
         if (!wordExists) {
           const incrementSuccess = await incrementDailyWordCount();
           if (!incrementSuccess) {
-            const limitMessage =
-              dailyWordLimit === 0
-                ? DailyWordLimitStatus.REACHED
-                : `Daily limit of ${dailyWordLimit} words reached. You can increase it in Account settings.`;
-            showToast(limitMessage, 6000, ToastType.IMPORTANT);
+            showToast(await getLimitReachedMessage(), 6000, ToastType.IMPORTANT);
             errorFeedback(); // Use error haptic for daily limit reached
             return undefined;
           }
@@ -337,7 +349,7 @@ export const useStudyWordMutations = (
       showToast,
       canAddWord,
       incrementDailyWordCount,
-      dailyWordLimit,
+      getLimitReachedMessage,
       queryClient,
       isCapacityLow,
     ],

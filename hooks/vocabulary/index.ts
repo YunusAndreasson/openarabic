@@ -4,7 +4,9 @@ export * from './useDailyWordLimit';
 export * from './useDictionaryModal';
 export * from './useFSRS';
 export * from './useFSRSQueries';
+export * from './useResetWordProgress';
 export * from './useSentencesByWord';
+export * from './useWordsToRevisit';
 
 export * from './useChartAxisLabels';
 export * from './useDueWordsChart';

@@ -62,6 +62,8 @@ export type DailyWordLimitDescription =
  */
 export const DailyWordLimitStatus = {
   REACHED: 'Daily limit reached. You can increase it in Account settings.',
+  PAUSED_LOW_RECALL:
+    'New words paused — your recent recall dipped. Review what you have, and they’ll resume.',
 } as const;
 
 export type DailyWordLimitStatus = (typeof DailyWordLimitStatus)[keyof typeof DailyWordLimitStatus];

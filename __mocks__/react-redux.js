@@ -10,6 +10,7 @@ const mockState = {
     audioShuffleEnabled: false,
     displayLanguagePreference: 'arabic_english',
     dailyWordLimit: 10,
+    adaptiveNewWordPacingEnabled: true,
   },
   filters: {
     difficultyRange: [1, 5],

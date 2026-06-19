@@ -3,11 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Card } from 'ts-fsrs';
 import { createEmptyCard, fsrs, generatorParameters, Rating, State } from 'ts-fsrs';
 
-import {
-  DEFAULT_SESSION_COOLDOWN_HOURS,
-  MIN_WORD_SPACING,
-  OPTIMIZED_FSRS_CONFIG,
-} from '@/constants/fsrs';
+import { DEFAULT_SESSION_COOLDOWN_HOURS, OPTIMIZED_FSRS_CONFIG } from '@/constants/fsrs';
 import { fsrsQueries } from '@/constants/queries';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { RootId } from '@/types/branded.types';
@@ -24,12 +20,18 @@ import {
   type SpacingState,
 } from '@/utils/fsrsSpacing';
 import { PriorityQueue } from '@/utils/priorityQueue';
+import { decideDrill, type DrillProgress } from '@/utils/review/drillPolicy';
 
 // Consolidated counters and tracking data
 interface FSRSCounters {
   totalWords: number;
   processedWords: number;
-  knownWords: number;
+  /**
+   * Words that have LEFT the session (graduated to criterion or hit the drill
+   * cap). Drives progress/completion — a first correct recall of a still-drilling
+   * word must NOT finish it, so this is distinct from a raw "known" count.
+   */
+  finishedWords: number;
   uniqueWords: Set<RootId>;
 }
 
@@ -58,15 +60,18 @@ export function useFSRS({
   const countersRef = useRef<FSRSCounters>({
     totalWords: 0,
     processedWords: 0,
-    knownWords: 0,
+    finishedWords: 0,
     uniqueWords: new Set<RootId>(),
   });
 
   // Priority queue for efficient reordering
   const queueRef = useRef<PriorityQueue<StudyWord>>(new PriorityQueue<StudyWord>());
 
-  // Spacing queue to enforce MIN_WORD_SPACING between repeats
+  // Spacing queue to enforce minimum spacing between repeats
   const spacingQueueRef = useRef<SpacingState>(createSpacingState());
+
+  // Per-word in-session drill progress (successive relearning to criterion).
+  const drillRef = useRef<Map<RootId, DrillProgress>>(new Map());
 
   // Enhanced state tracking
   const stateTrackingRef = useRef<EnhancedFSRSStateTracking>({
@@ -155,10 +160,11 @@ export function useFSRS({
       countersRef.current.totalWords = effectiveDueWords.length;
       countersRef.current.uniqueWords = new Set(effectiveDueWords.map(word => word.root_id));
       countersRef.current.processedWords = 0;
-      countersRef.current.knownWords = 0;
+      countersRef.current.finishedWords = 0;
 
-      // Reset spacing queue
+      // Reset spacing + drill state for the new session
       spacingQueueRef.current = createSpacingState();
+      drillRef.current = new Map();
 
       // Set all state in a predictable order. setState is intentional here —
       // queue initialization is gated by signature change so it only fires when
@@ -314,14 +320,22 @@ export function useFSRS({
       // Track session counters immediately
       countersRef.current.processedWords += 1;
       countersRef.current.uniqueWords.add(rootId);
-      if (confidence === 'known') {
-        countersRef.current.knownWords += 1;
-      } else {
-        // For vague/unknown responses, add the word back to the spacing queue
-        // Word will stay in session until marked as "known"
+
+      // In-session drilling decision (successive relearning to criterion).
+      // Replaces the old flat-spacing requeue: a missed word is re-asked at an
+      // expanding lag until recalled correctly twice, capped at DRILL_MAX_REASKS.
+      // Any non-"known" answer (Unknown, or a legacy "vague") counts as a miss,
+      // matching the previous requeue-everything-but-known behaviour.
+      const missed = confidence !== 'known';
+      const priorDrill = drillRef.current.get(rootId) ?? null;
+      const decision = decideDrill(priorDrill, missed);
+
+      if (decision.requeue) {
+        // Re-ask within this session. The FSRS-advanced copy continues from the
+        // new (Relearning/Review) state; `decision.lag` rides the existing
+        // spacing-counter decrement, so no change to fsrsSpacing is needed.
         const updatedWord: StudyWord = {
           ...currentWord,
-          // Use FSRS-calculated state for next review in this session
           fsrs_stability: newCard.stability,
           fsrs_difficulty: newCard.difficulty,
           fsrs_scheduled_days: newCard.scheduled_days,
@@ -334,8 +348,14 @@ export function useFSRS({
         };
         spacingQueueRef.current.spacedWords.push({
           word: updatedWord,
-          remainingSpacing: MIN_WORD_SPACING,
+          remainingSpacing: decision.lag,
         });
+        drillRef.current.set(rootId, decision.next ?? { correctStreak: 0, reasks: 0 });
+      } else {
+        // Word leaves the session: graduated to criterion OR hit the re-ask cap
+        // (the latter departs with its FSRS Relearning state for next session).
+        drillRef.current.delete(rootId);
+        countersRef.current.finishedWords += 1;
       }
 
       // Update spacing counters before selecting next word
@@ -364,11 +384,15 @@ export function useFSRS({
 
       const totalWordsInSession = countersRef.current.totalWords;
 
-      // Progress calculation: ONLY count words that are known (truly finished)
-      // Failed words that go to spacing queue should NOT increase progress
+      // Progress calculation: ONLY count words that have FINISHED (graduated to
+      // criterion or capped out). Words still being drilled in the spacing queue
+      // should NOT increase progress.
       const newProgress =
         totalWordsInSession > 0
-          ? Math.min(Math.round((countersRef.current.knownWords / totalWordsInSession) * 100), 100)
+          ? Math.min(
+              Math.round((countersRef.current.finishedWords / totalWordsInSession) * 100),
+              100,
+            )
           : 0;
       setProgress(newProgress);
 
@@ -396,10 +420,10 @@ export function useFSRS({
 
         // If still none, but the session isn't fully known yet, requeue the smallest spacing candidate
         if (!nextItem) {
-          const { knownWords, totalWords } = countersRef.current;
-          const allKnown = totalWords > 0 && knownWords >= totalWords;
+          const { finishedWords, totalWords } = countersRef.current;
+          const allFinished = totalWords > 0 && finishedWords >= totalWords;
 
-          if (!allKnown && spacingQueueRef.current.spacedWords.length > 0) {
+          if (!allFinished && spacingQueueRef.current.spacedWords.length > 0) {
             const candidate = spacingQueueRef.current.spacedWords.reduce(
               (min, curr) => (!min || curr.remainingSpacing < min.remainingSpacing ? curr : min),
               undefined as (typeof spacingQueueRef.current.spacedWords)[number] | undefined,
@@ -472,11 +496,12 @@ export function useFSRS({
     countersRef.current = {
       totalWords: 0,
       processedWords: 0,
-      knownWords: 0,
+      finishedWords: 0,
       uniqueWords: new Set<RootId>(),
     };
     queueRef.current = new PriorityQueue<StudyWord>();
     spacingQueueRef.current = createSpacingState();
+    drillRef.current = new Map();
   }, []);
 
   // Clean up on unmount

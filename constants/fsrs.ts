@@ -17,6 +17,34 @@ export const CRITICAL_RETRIEVABILITY_THRESHOLD = 0.7;
 export const UNSTABLE_STABILITY_THRESHOLD = 7;
 export const UNSTABLE_DIFFICULTY_THRESHOLD = 7.5;
 
+// "Words to revisit" / leech thresholds (ported from edenmind rankStrugglingCards).
+// fsrs_lapses is the honest signal — ts-fsrs only counts a lapse when an
+// already-graduated Review card is rated "Again" (i.e. answered Unknown here).
+export const LEECH_MIN_LAPSES = 2; // fsrs_lapses >= this to qualify as a leech
+export const LEECH_LIST_LIMIT = 20; // top-N struggling words to surface
+
+// Adaptive new-word pacing (ported from edenmind computeAdaptiveNewLimit).
+// The daily new-word limit becomes a ceiling that eases down when recent recall
+// dips below request_retention, recovering as it improves. Gaps are kept in
+// lockstep with the retention bands the rest of the SRS uses.
+export const NEW_WORD_PACING = {
+  /** Recent graded attempts needed before recall is a fair judgement. */
+  MIN_TRIALS: 20,
+  /** Recall this far under target → halve the daily ceiling. */
+  REDUCE_GAP: 0.05,
+  /** …and this far under → pause new words for the day. */
+  PAUSE_GAP: 0.15,
+} as const;
+
+// In-session drilling to criterion (successive relearning, ported from edenmind
+// decideDrill). FSRS owns the cross-session schedule; these only order the
+// in-session relearning queue. A missed word is re-asked at an expanding lag
+// until recalled correctly DRILL_CRITERION times, capped at DRILL_MAX_REASKS.
+export const DRILL_CRITERION = 2; // correct recalls (each after a lag) to graduate a miss
+export const DRILL_LAG_AFTER_MISS = MIN_WORD_SPACING; // intervening cards before the first re-ask (>= MIN_WORD_SPACING)
+export const DRILL_LAG_AFTER_CORRECT = 8; // wider lag after a non-graduating correct recall
+export const DRILL_MAX_REASKS = 6; // hard cap per word per session (prevents a stuck card trapping the session)
+
 export const DEFAULT_SESSION_COOLDOWN_HOURS = 2;
 
 // Spacing and scheduling constants

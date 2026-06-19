@@ -20,6 +20,7 @@ export interface SettingsState {
   audioShuffleEnabled: boolean;
   displayLanguagePreference: DisplayLanguage;
   dailyWordLimit: number; // Number of words that can be added per day (0 = unlimited)
+  adaptiveNewWordPacingEnabled: boolean; // Throttle new-word adds when recent recall dips
   hapticsEnabled: boolean; // Vibration for button presses and interactions
   voiceEnabled: boolean; // Speak the English answer in Practice
   // Advanced voice-grading knobs (Account → Advanced). Defaults mirror
@@ -43,6 +44,7 @@ const initialState: SettingsState = {
   audioShuffleEnabled: false, // Default to sequential playback
   displayLanguagePreference: DisplayLanguage.ARABIC_ENGLISH, // Default to Arabic + English
   dailyWordLimit: 10, // Default to 10 words per day for getting started
+  adaptiveNewWordPacingEnabled: true, // Default on; eases new words when recall dips
   hapticsEnabled: true, // Default to enabled for haptic feedback
   voiceEnabled: false, // Opt-in; downloads a ~460 MB model on enable
   voiceEnergyGateEnabled: true,
@@ -76,6 +78,9 @@ const settingsSlice = createSlice({
     setDailyWordLimit: (state, action: PayloadAction<number>) => {
       state.dailyWordLimit = action.payload;
     },
+    setAdaptiveNewWordPacingEnabled: (state, action: PayloadAction<boolean>) => {
+      state.adaptiveNewWordPacingEnabled = action.payload;
+    },
     setHapticsEnabled: (state, action: PayloadAction<boolean>) => {
       state.hapticsEnabled = action.payload;
     },
@@ -105,6 +110,7 @@ export const {
   setAudioShuffleEnabled,
   setDisplayLanguagePreference,
   setDailyWordLimit,
+  setAdaptiveNewWordPacingEnabled,
   setHapticsEnabled,
   setVoiceEnabled,
   setVoiceEnergyGateEnabled,

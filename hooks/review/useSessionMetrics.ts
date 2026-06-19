@@ -25,6 +25,8 @@ export const useSessionMetrics = () => {
     longestStreak: 0,
     currentStreak: 0,
     masteredWords: 0,
+    firstAttemptKnown: 0,
+    firstAttemptUnknown: 0,
     startTime: sessionStart,
   });
 
@@ -48,6 +50,14 @@ export const useSessionMetrics = () => {
         if (!reviewedWordsSet.current.has(wordData.rootId)) {
           reviewedWordsSet.current.add(wordData.rootId);
           metrics.wordsReviewed++;
+          // First-attempt-per-word recall signal for adaptive pacing. Recorded
+          // only on a word's first grade this session, so in-session re-asks
+          // (spacing / drilling) don't inflate the rate.
+          if (confidence === 'known') {
+            metrics.firstAttemptKnown++;
+          } else {
+            metrics.firstAttemptUnknown++;
+          }
         }
       } else {
         // Fallback for backwards compatibility if no rootId provided
@@ -103,6 +113,8 @@ export const useSessionMetrics = () => {
     metrics.longestStreak = 0;
     metrics.currentStreak = 0;
     metrics.masteredWords = 0;
+    metrics.firstAttemptKnown = 0;
+    metrics.firstAttemptUnknown = 0;
     metrics.startTime = Date.now();
 
     // Clear unique words tracking

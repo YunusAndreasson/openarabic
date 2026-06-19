@@ -456,12 +456,12 @@ describe('useFSRS Hook - Edge Cases', () => {
         expect(result.current.currentWord?.root_id).toBe(1);
       });
 
-      // Mark first as vague (goes to spacing)
+      // Mark first as vague (missed → enters the in-session drill)
       await act(async () => {
         await result.current.updateWord(1, 'vague');
       });
 
-      // Mark second as known
+      // Mark second as known (graduates immediately — it was never missed)
       await waitFor(() => {
         expect(result.current.currentWord?.root_id).toBe(2);
       });
@@ -470,12 +470,21 @@ describe('useFSRS Hook - Edge Cases', () => {
         await result.current.updateWord(2, 'known');
       });
 
-      // Word 1 should come back from spacing
+      // Word 1 comes back from the drill. The FIRST correct recall does NOT
+      // graduate it — the drill criterion is two correct recalls.
       await waitFor(() => {
         expect(result.current.currentWord?.root_id).toBe(1);
       });
 
-      // Now mark it as known to complete
+      await act(async () => {
+        await result.current.updateWord(1, 'known');
+      });
+
+      // It returns once more; the second correct recall meets criterion → done.
+      await waitFor(() => {
+        expect(result.current.currentWord?.root_id).toBe(1);
+      });
+
       await act(async () => {
         await result.current.updateWord(1, 'known');
       });

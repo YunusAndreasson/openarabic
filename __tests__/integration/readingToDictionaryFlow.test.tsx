@@ -35,6 +35,7 @@ const mockToggleFSRSStudyRoot = jest.fn();
 const mockCheckAuthentication = jest.fn();
 const mockCanAddWord = jest.fn();
 const mockIncrementDailyWordCount = jest.fn();
+const mockGetEffectiveLimitInfo = jest.fn();
 const mockShowToast = jest.fn();
 const mockSelectionFeedback = jest.fn();
 
@@ -67,6 +68,7 @@ jest.mock('@/hooks/vocabulary', () => ({
     dailyWordLimit: 10,
     canAddWord: mockCanAddWord,
     incrementDailyWordCount: mockIncrementDailyWordCount,
+    getEffectiveLimitInfo: mockGetEffectiveLimitInfo,
   }),
 }));
 
@@ -190,6 +192,7 @@ describe('Reading to Dictionary Flow', () => {
     mockCheckAuthentication.mockResolvedValue({ user: { id: mockUserId } });
     mockCanAddWord.mockResolvedValue(true);
     mockIncrementDailyWordCount.mockResolvedValue(true);
+    mockGetEffectiveLimitInfo.mockResolvedValue({ effective: 10, ceiling: 10, status: 'full' });
   });
 
   const wrapper = ({ children }: { children: React.ReactNode }) => (

@@ -41,6 +41,14 @@ export interface SessionMetrics {
   currentStreak: number;
   /** Number of words mastered during the session */
   masteredWords: number;
+  /**
+   * Words answered correctly on their FIRST attempt this session. Feeds the
+   * adaptive-pacing recall signal — first-attempt-only so in-session re-asks
+   * (spacing / drilling) don't inflate the rate.
+   */
+  firstAttemptKnown: number;
+  /** Words answered incorrectly on their FIRST attempt this session. */
+  firstAttemptUnknown: number;
   /** Unix timestamp when the session started */
   startTime: number;
 }

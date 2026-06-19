@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { analytics } from '@/services/analytics';
 import type { SessionMetrics } from '@/types/review.types';
 import { successFeedback } from '@/utils/haptics';
+import { appendSession } from '@/utils/recallSignalStorage';
 
 /**
  * Hook to handle review session completion side effects
@@ -78,6 +79,12 @@ export const useReviewCompletion = (
       invalidateReviewQueries();
       trackCompletion();
 
+      // Record this session's first-attempt recall for adaptive new-word pacing.
+      // Fire-and-forget (best-effort, local storage).
+      if (sessionMetrics) {
+        void appendSession(sessionMetrics.firstAttemptKnown, sessionMetrics.firstAttemptUnknown);
+      }
+
       // Trigger haptic feedback after animations
       timeoutId = setTimeout(
         () => {
@@ -93,7 +100,7 @@ export const useReviewCompletion = (
         clearTimeout(timeoutId);
       }
     };
-  }, [shouldExecute, invalidateReviewQueries, trackCompletion]);
+  }, [shouldExecute, invalidateReviewQueries, trackCompletion, sessionMetrics]);
 
   return {
     invalidateReviewQueries,

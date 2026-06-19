@@ -1,6 +1,9 @@
 import { useCallback } from 'react';
 
+import { OPTIMIZED_FSRS_CONFIG } from '@/constants/fsrs';
 import { useAppSelectorShallow } from '@/store/hooks';
+import { computeAdaptiveNewLimit, type AdaptiveNewLimit } from '@/utils/newWordPacing';
+import { readRecentRecall } from '@/utils/recallSignalStorage';
 import { getSafeStorage } from '@/utils/safeAsyncStorage';
 
 const DAILY_WORD_COUNT_KEY = 'daily_word_count';
@@ -9,6 +12,9 @@ const DAILY_WORD_RESET_KEY = 'daily_word_reset_date';
 export const useDailyWordLimit = () => {
   const storage = getSafeStorage();
   const dailyWordLimit = useAppSelectorShallow(state => state.settings.dailyWordLimit);
+  const adaptivePacingEnabled = useAppSelectorShallow(
+    state => state.settings.adaptiveNewWordPacingEnabled,
+  );
 
   const getCurrentDateString = useCallback(() => {
     const now = new Date();
@@ -36,17 +42,47 @@ export const useDailyWordLimit = () => {
     }
   }, [getCurrentDateString, storage]);
 
+  /**
+   * Resolve today's effective new-word ceiling. With adaptive pacing on, the
+   * configured limit is eased by recent recall (down to 0 = paused when recall
+   * is struggling); with it off, the raw setting is used unchanged.
+   *
+   * Representation: `Infinity` = unlimited, `0` = paused, finite = the cap.
+   * The app's `dailyWordLimit === 0` ("unlimited") maps to `Infinity` here.
+   */
+  const getEffectiveLimitInfo = useCallback(async (): Promise<AdaptiveNewLimit> => {
+    const ceiling = dailyWordLimit === 0 ? Infinity : dailyWordLimit;
+
+    if (!adaptivePacingEnabled) {
+      return {
+        effective: ceiling,
+        ceiling,
+        status: ceiling === Infinity ? 'unlimited' : 'full',
+      };
+    }
+
+    const recall = await readRecentRecall();
+    return computeAdaptiveNewLimit({
+      ceiling,
+      recall,
+      desiredRetention: OPTIMIZED_FSRS_CONFIG.request_retention,
+    });
+  }, [dailyWordLimit, adaptivePacingEnabled]);
+
   const incrementDailyWordCount = useCallback(async (): Promise<boolean> => {
     try {
-      // If unlimited, always allow
-      if (dailyWordLimit === 0) {
+      const { effective } = await getEffectiveLimitInfo();
+
+      // Unlimited → always allow.
+      if (effective === Infinity) {
         return true;
       }
 
       const currentCount = await getDailyWordCount();
 
-      // Check if limit would be exceeded
-      if (currentCount >= dailyWordLimit) {
+      // Check if the (possibly throttled) limit would be exceeded.
+      // `effective === 0` (paused) naturally blocks here.
+      if (currentCount >= effective) {
         return false;
       }
 
@@ -64,30 +100,33 @@ export const useDailyWordLimit = () => {
     } catch {
       return false;
     }
-  }, [dailyWordLimit, getDailyWordCount, storage]);
+  }, [getEffectiveLimitInfo, getDailyWordCount, storage]);
 
   const canAddWord = useCallback(async (): Promise<boolean> => {
-    if (dailyWordLimit === 0) return true;
+    const { effective } = await getEffectiveLimitInfo();
+    if (effective === Infinity) return true;
 
     const currentCount = await getDailyWordCount();
-    return currentCount < dailyWordLimit;
-  }, [dailyWordLimit, getDailyWordCount]);
+    return currentCount < effective;
+  }, [getEffectiveLimitInfo, getDailyWordCount]);
 
   const getRemainingWords = useCallback(async (): Promise<number> => {
-    if (dailyWordLimit === 0) return Infinity;
+    const { effective } = await getEffectiveLimitInfo();
+    if (effective === Infinity) return Infinity;
 
     const currentCount = await getDailyWordCount();
-    return Math.max(0, dailyWordLimit - currentCount);
-  }, [dailyWordLimit, getDailyWordCount]);
+    return Math.max(0, effective - currentCount);
+  }, [getEffectiveLimitInfo, getDailyWordCount]);
 
   // Check if user is approaching their daily limit (80% threshold)
   const isApproachingLimit = useCallback(async (): Promise<boolean> => {
-    if (dailyWordLimit === 0) return false;
+    const { effective } = await getEffectiveLimitInfo();
+    if (effective === Infinity) return false;
 
     const currentCount = await getDailyWordCount();
-    const threshold = Math.floor(dailyWordLimit * 0.8);
+    const threshold = Math.floor(effective * 0.8);
     return currentCount >= threshold;
-  }, [dailyWordLimit, getDailyWordCount]);
+  }, [getEffectiveLimitInfo, getDailyWordCount]);
 
   const resetDailyWordCount = useCallback(async () => {
     try {
@@ -101,6 +140,7 @@ export const useDailyWordLimit = () => {
   return {
     dailyWordLimit,
     getDailyWordCount,
+    getEffectiveLimitInfo,
     incrementDailyWordCount,
     canAddWord,
     getRemainingWords,
