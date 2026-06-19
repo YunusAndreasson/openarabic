@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import type { PlatformInfo } from '@/lib/platform-detection';
+import { APP_NAME } from '@/lib/app';
 
 interface SmartAppBannerProps {
   platformInfo: PlatformInfo;
@@ -18,6 +19,20 @@ const BANNER_ROUTES = ['/login', '/privacy', '/terms', '/contact'];
 const shouldShowOnRoute = (path: string) =>
   BANNER_ROUTES.includes(path) || path.startsWith('/read/');
 
+// On iOS Safari the native apple-itunes-app Smart App Banner already shows, so
+// the custom banner suppresses itself there to avoid a double banner. It still
+// covers Android and non-Safari iOS browsers, where the native banner never appears.
+const isIOSSafari = (): boolean => {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent;
+  const isIOS = /iPhone|iPad|iPod/i.test(ua);
+  return (
+    isIOS &&
+    /Safari/i.test(ua) &&
+    !/CriOS|FxiOS|EdgiOS|GSA|OPiOS|mercury/i.test(ua)
+  );
+};
+
 export function SmartAppBanner({ platformInfo }: SmartAppBannerProps) {
   const pathname = usePathname();
   const [isVisible, setIsVisible] = useState(false);
@@ -25,6 +40,9 @@ export function SmartAppBanner({ platformInfo }: SmartAppBannerProps) {
   useEffect(() => {
     // Early return if not mobile or wrong route
     if (!platformInfo.isMobile || !shouldShowOnRoute(pathname)) return;
+
+    // Defer to the native iOS Safari Smart App Banner
+    if (isIOSSafari()) return;
 
     // Check session storage
     const dismissed = sessionStorage.getItem(SESSION_STORAGE_KEY) === 'true';
@@ -75,7 +93,7 @@ export function SmartAppBanner({ platformInfo }: SmartAppBannerProps) {
 
             <div className="flex-1 min-w-0">
               <div className="font-semibold text-sm text-foreground">
-                OpenArabic
+                {APP_NAME}
               </div>
               <div className="text-xs text-muted-foreground">
                 Master Arabic through reading

@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Filter, MessageCircle, Info, Mail } from 'lucide-react';
+import { Filter, MessageCircle, Info, Mail, Download } from 'lucide-react';
 
 interface PublicHeaderProps {
   categories: Category[];
@@ -97,6 +97,14 @@ export function PublicHeader({
               <Filter className="h-4 w-4" />
               {selectedLabel}
             </button>
+            <Link
+              href="/download-app"
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground hover:bg-primary/85 active:bg-primary/70 transition-colors duration-150 flex-shrink-0"
+              title="Get the app"
+              aria-label="Get the OpenArabic app"
+            >
+              <Download className="h-4 w-4" />
+            </Link>
             <button
               onClick={() => setAboutDialogOpen(true)}
               className="flex items-center justify-center w-8 h-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors duration-150 cursor-pointer flex-shrink-0"
@@ -153,8 +161,16 @@ export function PublicHeader({
                 </button>
               ))}
 
-              {/* Info + Contact + Theme Toggle */}
+              {/* Get the app + Info + Contact + Theme Toggle */}
               <div className="ml-4 flex items-center gap-2 flex-shrink-0">
+                <Link
+                  href="/download-app"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/85 active:bg-primary/70 transition-colors duration-150"
+                  title="Get the OpenArabic app"
+                >
+                  <Download className="h-4 w-4" />
+                  Get the app
+                </Link>
                 <button
                   onClick={() => setAboutDialogOpen(true)}
                   className="flex items-center justify-center w-8 h-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors duration-150 cursor-pointer flex-shrink-0"

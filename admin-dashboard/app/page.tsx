@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { supabase } from '@/lib/supabase';
 import { ArticlesClient } from '@/components/articles-client';
+import { AppStructuredData } from '@/components/app-structured-data';
 import { ITEMS_PER_PAGE } from '@/lib/constants';
 import { detectPlatform } from '@/lib/platform-detection';
 import type { Article, Category, Author } from '@/lib/types';
@@ -72,12 +73,15 @@ export default async function PublicArticlesPage({ searchParams }: PageProps) {
   }
 
   return (
-    <ArticlesClient
-      initialArticles={(articles as Article[]) || []}
-      initialCategories={(categories as Category[]) || []}
-      initialAuthors={(authors as Author[]) || []}
-      platformInfo={platformInfo}
-      selectedCategoryId={categoryId}
-    />
+    <>
+      <AppStructuredData />
+      <ArticlesClient
+        initialArticles={(articles as Article[]) || []}
+        initialCategories={(categories as Category[]) || []}
+        initialAuthors={(authors as Author[]) || []}
+        platformInfo={platformInfo}
+        selectedCategoryId={categoryId}
+      />
+    </>
   );
 }

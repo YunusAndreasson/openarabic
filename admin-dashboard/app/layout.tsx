@@ -5,6 +5,7 @@ import './globals.css';
 import { LayoutWrapper } from '@/components/layout-wrapper';
 import { SmartAppBanner } from '@/components/smart-app-banner';
 import { detectPlatform } from '@/lib/platform-detection';
+import { APP_STORE_ID } from '@/lib/app';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -31,6 +32,13 @@ export const metadata: Metadata = {
   other: {
     // Enable View Transitions API for modern browsers
     'view-transition': 'same-origin',
+  },
+  // Native iOS Smart App Banner (Safari renders a dismissible install nudge
+  // from this tag). The custom SmartAppBanner suppresses itself on iOS Safari
+  // to avoid a double banner.
+  itunes: {
+    appId: APP_STORE_ID,
+    appArgument: 'https://openarabic.io/download-app',
   },
   openGraph: {
     type: 'website',

@@ -1,4 +1,5 @@
 import { headers } from 'next/headers';
+import { APP_STORE_URL, PLAY_STORE_URL } from '@/lib/app';
 
 export type Platform = 'ios' | 'android' | 'desktop';
 
@@ -10,9 +11,8 @@ export interface PlatformInfo {
 }
 
 const APP_STORE_URLS = {
-  ios: 'https://apps.apple.com/ae/app/openarabic/id1594031029',
-  android:
-    'https://play.google.com/store/apps/details?id=com.edenmind.OpenArabic',
+  ios: APP_STORE_URL,
+  android: PLAY_STORE_URL,
 } as const;
 
 /**
