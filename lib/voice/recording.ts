@@ -137,8 +137,7 @@ function lowPass(input: Float32Array, cutoff: number): Float32Array {
   let sum = 0;
   for (let n = 0; n < taps; n++) {
     const x = n - half;
-    const sinc =
-      x === 0 ? 2 * cutoff : Math.sin(2 * Math.PI * cutoff * x) / (Math.PI * x);
+    const sinc = x === 0 ? 2 * cutoff : Math.sin(2 * Math.PI * cutoff * x) / (Math.PI * x);
     const hann = 0.5 - 0.5 * Math.cos((2 * Math.PI * n) / (taps - 1));
     kernel[n] = sinc * hann;
     sum += kernel[n] ?? 0;
@@ -245,8 +244,10 @@ export class VoiceRecorder {
         await AudioManager.setAudioSessionActivity(true);
       } catch (sessionErr) {
         if (__DEV__) {
-          // eslint-disable-next-line no-console
-          console.log(`[voice] ios session setup failed: ${sessionErr instanceof Error ? sessionErr.message : String(sessionErr)}`);
+           
+          console.log(
+            `[voice] ios session setup failed: ${sessionErr instanceof Error ? sessionErr.message : String(sessionErr)}`,
+          );
         }
         // Surface the real error from start() below.
       }
@@ -284,14 +285,16 @@ export class VoiceRecorder {
     // margin so a normal handleBuffer-driven stop still wins the race.
     const watchdogDelay = this.config.maxDurationMs + 500;
     if (__DEV__) {
-      // eslint-disable-next-line no-console
-      console.log(`[voice] start: watchdog scheduled in ${watchdogDelay}ms (maxDurationMs=${this.config.maxDurationMs})`);
+       
+      console.log(
+        `[voice] start: watchdog scheduled in ${watchdogDelay}ms (maxDurationMs=${this.config.maxDurationMs})`,
+      );
     }
     this.watchdog = setTimeout(() => {
       if (!this.stopping) {
         const at = Date.now() - this.startedAt;
         if (__DEV__) {
-          // eslint-disable-next-line no-console
+           
           console.log(`[voice] watchdog FIRED at ${at}ms (scheduled ${watchdogDelay}ms)`);
         }
         this.stopping = true;
@@ -311,7 +314,7 @@ export class VoiceRecorder {
     if (this.firstBufferAt === null) {
       this.firstBufferAt = Date.now() - this.startedAt;
       if (__DEV__) {
-        // eslint-disable-next-line no-console
+         
         console.log(`[voice] first buffer at ${this.firstBufferAt}ms`);
       }
     }
@@ -347,8 +350,7 @@ export class VoiceRecorder {
       this.speechSeen &&
       this.silenceMs >= this.config.silenceHangMs &&
       elapsed >= this.config.minDurationMs;
-    const noSpeechTimedOut =
-      !this.speechSeen && elapsed >= this.config.noSpeechTimeoutMs;
+    const noSpeechTimedOut = !this.speechSeen && elapsed >= this.config.noSpeechTimeoutMs;
     if (
       !this.stopping &&
       (quietEnough || noSpeechTimedOut || elapsed >= this.config.maxDurationMs)
@@ -357,8 +359,10 @@ export class VoiceRecorder {
       this.stopReason = quietEnough ? 'silence' : noSpeechTimedOut ? 'noSpeech' : 'maxDuration';
       this.stopDecidedAt = elapsed;
       if (__DEV__) {
-        // eslint-disable-next-line no-console
-        console.log(`[voice] handleBuffer stop ${this.stopReason} at ${elapsed}ms (speechSeen=${this.speechSeen} silenceMs=${this.silenceMs} peakRms=${this.peakRms.toFixed(5)})`);
+         
+        console.log(
+          `[voice] handleBuffer stop ${this.stopReason} at ${elapsed}ms (speechSeen=${this.speechSeen} silenceMs=${this.silenceMs} peakRms=${this.peakRms.toFixed(5)})`,
+        );
       }
       this.handlers.onAutoStop?.();
     }
@@ -382,8 +386,10 @@ export class VoiceRecorder {
     const firstBufferMs = this.firstBufferAt;
     const stopDecidedAtMs = this.stopDecidedAt || durationMs;
     if (__DEV__) {
-      // eslint-disable-next-line no-console
-      console.log(`[voice] stop: durationMs=${durationMs} stopReason=${stopReason} bufferCount=${bufferCount} firstBufferMs=${firstBufferMs} peakRms=${peakRms.toFixed(5)} speechSeen=${heardSpeech}`);
+       
+      console.log(
+        `[voice] stop: durationMs=${durationMs} stopReason=${stopReason} bufferCount=${bufferCount} firstBufferMs=${firstBufferMs} peakRms=${peakRms.toFixed(5)} speechSeen=${heardSpeech}`,
+      );
     }
 
     if (recorder) {
