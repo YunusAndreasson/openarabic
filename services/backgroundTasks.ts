@@ -84,21 +84,35 @@ TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
       limit: 100,
     });
 
-    if (dueWords && dueWords.length > 0 && Notifications) {
-      // Schedule local notification for due words
+    const dueCount = dueWords?.length ?? 0;
+
+    // Keep the home-screen icon badge current even while the app is closed: set it
+    // to the due-words count, or clear it to 0 once the learner is caught up.
+    // Best-effort — no-ops without badge permission / on launchers that don't
+    // support numeric badges.
+    if (Notifications) {
+      try {
+        await Notifications.setBadgeCountAsync(Math.max(0, dueCount));
+      } catch {
+        // Unsupported launcher / revoked permission — leave the badge as-is.
+      }
+    }
+
+    if (dueCount > 0 && Notifications) {
+      // Schedule local notification for due words (badge baked in so the OS also
+      // sets the icon count when this is delivered).
       await Notifications.scheduleNotificationAsync({
         content: {
           title: '📚 Words Ready for Review',
-          body: `You have ${dueWords.length} words ready for practice`,
+          body: `You have ${dueCount} words ready for practice`,
+          badge: dueCount,
           data: {
-            dueWordsCount: dueWords.length,
+            dueWordsCount: dueCount,
             type: 'study-reminder',
           },
         },
         trigger: null, // Show immediately
       });
-
-      return BackgroundTask.BackgroundTaskResult.Success;
     }
 
     return BackgroundTask.BackgroundTaskResult.Success;

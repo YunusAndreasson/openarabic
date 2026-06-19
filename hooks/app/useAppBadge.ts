@@ -99,8 +99,14 @@ export function useAppBadge(): void {
   // so subscriptions don't tear down / re-attach on every dueWords change.
   const handleAppStateChange = useEffectEvent((nextAppState: AppStateStatus) => {
     appStateRef.current = nextAppState;
-    if (nextAppState === 'active' && isAuthenticated && !isLoading && dueWords) {
-      updateBadgeDebounced(dueWords.length);
+    if (nextAppState === 'active') {
+      // Re-check badge permission on every foreground so a grant made after mount
+      // (e.g. the post-practice prompt) takes effect without an app restart —
+      // otherwise the mount-time value would keep the badge off for the session.
+      void canUseBadge().then(setCanUseBadgeState);
+      if (isAuthenticated && !isLoading && dueWords) {
+        updateBadgeDebounced(dueWords.length);
+      }
     }
   });
 

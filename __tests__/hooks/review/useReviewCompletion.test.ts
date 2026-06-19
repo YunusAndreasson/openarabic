@@ -36,6 +36,10 @@ jest.mock('@/services/analytics', () => ({
   },
 }));
 
+jest.mock('@/services/notificationService', () => ({
+  ensurePermissions: jest.fn().mockResolvedValue(true),
+}));
+
 jest.mock('@/utils/haptics', () => ({
   lightFeedback: jest.fn(),
   mediumFeedback: jest.fn(),

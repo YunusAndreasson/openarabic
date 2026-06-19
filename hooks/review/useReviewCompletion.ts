@@ -7,6 +7,7 @@ import { TIMING_CONFIG } from '@/constants/animation';
 import { fsrsQueries, studyStreakQueries } from '@/constants/queries';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { analytics } from '@/services/analytics';
+import { ensurePermissions } from '@/services/notificationService';
 import type { SessionMetrics } from '@/types/review.types';
 import { successFeedback } from '@/utils/haptics';
 import { appendSession } from '@/utils/recallSignalStorage';
@@ -84,6 +85,13 @@ export const useReviewCompletion = (
       if (sessionMetrics) {
         void appendSession(sessionMetrics.firstAttemptKnown, sessionMetrics.firstAttemptUnknown);
       }
+
+      // Ask for notification/badge permission at this high-intent moment (the user
+      // just practiced; words they reviewed will come due later) so the home-screen
+      // icon badge — the due-words count — and study reminders can show. Idempotent:
+      // ensurePermissions() only surfaces the OS prompt when status is undetermined,
+      // and the OS shows it at most once.
+      void ensurePermissions();
 
       // Trigger haptic feedback after animations
       timeoutId = setTimeout(
