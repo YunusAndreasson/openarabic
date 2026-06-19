@@ -311,17 +311,17 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       expect(analysis.diacritic?.inheritColorFrom).toBe(ComponentType.SUFFIX);
     });
 
-    test('should make diacritic inherit suffix color in رَأَيْتُهَ (I saw him)', () => {
-      // Pronoun suffix ه with accusative case marker َ
-      // English contains "he" to match fatha َ and "him" to match suffix ه
+    test('should detect the pronoun suffix in رَأَيْتُهَ (I saw him), without a bare fatha diacritic', () => {
+      // Pronoun suffix ه is the meaningful component. The trailing accusative fatha is a
+      // bare case-ending vowel and is no longer painted (suffix-color inheritance for a
+      // real diacritic is still covered by the كِتَابَهُ damma case above).
       const analysis = analyzeArabicWord('رَأَيْتُهَ', 'I saw him as he');
 
-      // Should detect suffix
+      // Should still detect the suffix
       expect(analysis.suffix?.arabicMatch).toBe('ه');
 
-      // Diacritic should be detected and inherit suffix color
-      expect(analysis.diacritic?.arabicMatch).toBe('َ');
-      expect(analysis.diacritic?.inheritColorFrom).toBe(ComponentType.SUFFIX);
+      // Bare final fatha is no longer detected as a separate diacritic
+      expect(analysis.diacritic).toBeUndefined();
     });
   });
 

@@ -25,26 +25,33 @@ import { runBenchmark } from '@/utils/benchmarkUtils';
 
 // Thresholds reflect the honest, UI-symmetric analyzer. The benchmark gates on
 // `analysis.hasComponents` (utils/benchmarkUtils.ts), so it scores exactly what the
-// UI paints. Current measured: train 95.90 / 82.65 / 88.78 / 91.04; test 97.44 / 80.85 /
-// 88.37 / 88.44. Set ~0.5pp below so natural variance does not flake CI. The first-class
+// UI paints. Current measured: train 95.90 / 82.65 / 88.78 / 95.05; test 97.44 / 80.85 /
+// 88.37 / 92.49. Set ~1-2pp below so natural variance does not flake CI. The first-class
 // gate is arabicGrammar.uiInvariant.test.ts (every kept component renders on BOTH sides).
 // This dbBenchmark is a secondary signal — useful for tracking analyzer-side changes
 // during tuning, but never the deciding metric.
+//
+// 2026-06-19 re-baseline: removed false-positive case-ending diacritic detection (bare
+// final fatha "he <verb>"; bare nunation "a/an" on indefinite nouns) — the corpus has
+// zero diacritic-only components, so these only painted non-morphemes. hasComponents
+// accuracy rose (train 91.04→95.05, test 88.44→92.49, multiWord bucket 90.91→98.48);
+// precision/recall/F1 unchanged (diacritics aren't scored in P/R/F1). Thresholds
+// ratcheted up to lock the gains.
 const THRESHOLDS = {
   train: {
     precision: 0.95,
     recall: 0.82,
     f1Score: 0.88,
-    hasComponentsAccuracy: 0.905,
+    hasComponentsAccuracy: 0.93,
   },
   test: {
     precision: 0.97,
     recall: 0.8,
     f1Score: 0.875,
-    hasComponentsAccuracy: 0.88,
+    hasComponentsAccuracy: 0.9,
   },
   byBucket: {
-    multiWordHasComponents: { hasComponentsAccuracy: 0.94, precision: 0.96 },
+    multiWordHasComponents: { hasComponentsAccuracy: 0.96, precision: 0.96 },
     singleWord: { hasComponentsAccuracy: 1.0 },
     longPhrase: { hasComponentsAccuracy: 0.92 },
   },

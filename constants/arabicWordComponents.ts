@@ -720,13 +720,12 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
  * These are vowel markings and grammatical indicators
  */
 export const ARABIC_DIACRITICS: WordComponent[] = [
-  // Fatha (ــَ) - short "a" vowel, often indicates accusative case or adverbial usage
-  {
-    arabic: 'َ', // Fatha at end of word
-    english: ['he', 'a', 'an', 'as'],
-    type: ComponentType.DIACRITIC,
-    role: GrammaticalRole.CASE_ENDING,
-  },
+  // Fatha (ــَ) - short "a" vowel, marks accusative case / default past tense.
+  // INTENTIONALLY NOT DETECTED: a bare final fatha is a case-ending vowel, not a
+  // separable morpheme to color. Its old triggers ('he' for "he <verb>" past-tense,
+  // 'a'/'an'/'as' for accusative nouns) only produced false positives — the ground-truth
+  // corpus has zero diacritic-only components. A "he <verb>" word with a real affix still
+  // paints via that affix. (Same rationale as the Kasra trim below.)
 
   // Kasra (ــِ) - short "i" vowel, often indicates genitive case
   // NOTE: standalone prepositions ('of', 'in', 'with') removed — they are English grammar
@@ -749,17 +748,22 @@ export const ARABIC_DIACRITICS: WordComponent[] = [
   },
 
   // Tanween Fath (ــًا) - nunation with fatha, indicates indefinite accusative
+  // NOTE: indefinite-article triggers ('a','an','as') removed — bare nunation marks
+  // indefiniteness/case but is not a separable morpheme to color; it only produced
+  // false positives on plain indefinite nouns (سَبَبًا "a cause", قَلِيلًا "a bit").
   {
     arabic: 'ًا',
-    english: ['an', 'as', 'a', 'one'],
+    english: ['one'],
     type: ComponentType.DIACRITIC,
     role: GrammaticalRole.CASE_ENDING,
   },
 
   // Standalone Tanween Fath (ــً) - without alif, common on taa marboota
+  // NOTE: indefinite-article triggers removed (see ًا above) — nunation alone is not
+  // a paintable component per the ground-truth corpus.
   {
     arabic: 'ً',
-    english: ['a', 'an', 'one'],
+    english: ['one'],
     type: ComponentType.DIACRITIC,
     role: GrammaticalRole.CASE_ENDING,
   },
@@ -773,9 +777,12 @@ export const ARABIC_DIACRITICS: WordComponent[] = [
   },
 
   // Tanween Damm (ــٌ) - nunation with damma, indicates indefinite nominative
+  // NOTE: indefinite-article / copula triggers ('a','an','is') removed (see ًا above) —
+  // they only produced false positives on plain indefinite nouns (رَجُلٌ "A man",
+  // حَقٌّ "is true", كَافِرٌ "a disbeliever").
   {
     arabic: 'ٌ',
-    english: ['a', 'an', 'is', 'one'],
+    english: ['one'],
     type: ComponentType.DIACRITIC,
     role: GrammaticalRole.CASE_ENDING,
   },
@@ -820,16 +827,11 @@ export const ARABIC_DIACRITICS: WordComponent[] = [
     role: GrammaticalRole.CASE_ENDING,
   },
 
-  // 3rd person masculine singular past tense (ــَ) - final fatha
-  // The fatha on the last radical marks the default past tense form ("he did")
-  // Safe from false positives: English word-boundary matching ensures "he" only matches
-  // as a standalone token (e.g., "he said"), not as a substring (e.g., "the book")
-  {
-    arabic: 'َ',
-    english: ['he'],
-    type: ComponentType.DIACRITIC,
-    role: GrammaticalRole.VERB_CONJUGATION,
-  },
+  // NOTE: the bare final-fatha "he did" (past-tense) entry was removed. A lone final
+  // fatha marks default past tense but is NOT a separable morpheme to color — the
+  // ground-truth corpus has zero diacritic-only components, so it only produced false
+  // positives on plain verbs (قَالَ "he said", خَلَقَ "he created", كَانَ "he was").
+  // A "he <verb>" word with a real affix still paints via that affix.
 ];
 
 /**

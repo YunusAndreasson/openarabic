@@ -412,14 +412,13 @@ describe('arabicWordAnalysis', () => {
   });
 
   describe('Arabic diacritic detection', () => {
-    test('should detect fatha at end of word with "he" correspondence', () => {
+    test('should NOT detect a bare final fatha (case-ending vowel, not a component)', () => {
+      // A bare final fatha marks accusative case / default past tense but is not a
+      // separable morpheme to color. The ground-truth corpus has zero diacritic-only
+      // components, so detecting it only produced false positives.
       const analysis = analyzeArabicWord('كتابَ', 'he wrote a book'); // Fatha on final letter
 
-      expect(analysis.diacritic).toBeDefined();
-      expect(analysis.diacritic?.component.type).toBe('diacritic');
-      expect(analysis.diacritic?.arabicMatch).toBe('َ');
-      expect(analysis.diacritic?.englishMatches).toContain('he');
-      expect(analysis.hasComponents).toBeTruthy();
+      expect(analysis.diacritic).toBeUndefined();
     });
 
     test('should not detect standalone kasra with "in" (removed from kasra English matches)', () => {
@@ -441,14 +440,12 @@ describe('arabicWordAnalysis', () => {
       expect(analysis.hasComponents).toBeTruthy();
     });
 
-    test('should detect tanween fath with "an" correspondence', () => {
+    test('should NOT detect a bare tanween fath (nunation is not a paintable component)', () => {
+      // Nunation marks indefiniteness/case but is not a separable morpheme; the corpus
+      // labels such bare-nunation words as having no components.
       const analysis = analyzeArabicWord('كتابًا', 'he wrote an book'); // Tanween fath
 
-      expect(analysis.diacritic).toBeDefined();
-      expect(analysis.diacritic?.component.type).toBe('diacritic');
-      expect(analysis.diacritic?.arabicMatch).toBe('ًا');
-      expect(analysis.diacritic?.englishMatches).toContain('an');
-      expect(analysis.hasComponents).toBeTruthy();
+      expect(analysis.diacritic).toBeUndefined();
     });
 
     test('should not detect diacritic when English has no correspondence', () => {
@@ -474,26 +471,24 @@ describe('arabicWordAnalysis', () => {
       expect(analysis.hasComponents).toBeTruthy();
     });
 
-    test('should correctly reconstruct diacritic coloring', () => {
+    test('should not emit a diacritic segment for a bare case-ending fatha', () => {
       const analysis = analyzeArabicWord('كتابَ', 'he wrote a book');
       const formatted = formatWordAnalysis(analysis);
 
-      expect(formatted.reconstructedArabic).toBeDefined();
-      expect(formatted.reconstructedArabic?.segments).toHaveLength(2);
-      expect(formatted.reconstructedArabic?.segments[0].text).toBe('كتاب');
-      // Root segments use 'arabicText' color, not 'text'
-      expect(formatted.reconstructedArabic?.segments[0].colorName).toBe('arabicText');
-      expect(formatted.reconstructedArabic?.segments[1].text).toBe('َ');
-      expect(formatted.reconstructedArabic?.segments[1].colorName).toBe('accent');
-      expect(formatted.reconstructedArabic?.segments[1].type).toBe('diacritic');
+      // Bare fatha is no longer a component, so nothing reconstructs to a diacritic segment.
+      expect(analysis.hasComponents).toBeFalsy();
+      const diacriticSegments =
+        formatted.reconstructedArabic?.segments.filter(s => s.type === 'diacritic') ?? [];
+      expect(diacriticSegments).toHaveLength(0);
     });
 
     test('should include diacritic in tooltip sections', () => {
-      const analysis = analyzeArabicWord('كتابَ', 'he wrote a book');
+      // Uses a damma (still a valid diacritic) since the bare fatha is no longer detected.
+      const analysis = analyzeArabicWord('الكتابُ', 'he reads the book');
       const formatted = formatWordAnalysis(analysis);
 
       const diacriticSection = formatted.sections.find(
-        s => s.type === 'components' && s.arabicPart === 'َ',
+        s => s.type === 'components' && s.arabicPart === 'ُ',
       );
       expect(diacriticSection).toBeDefined();
       expect(diacriticSection?.englishPart).toContain('he');
@@ -501,16 +496,16 @@ describe('arabicWordAnalysis', () => {
       expect(diacriticSection?.icon).toBe('◌');
     });
     test('should handle diacritic with other components correctly', () => {
-      const analysis = analyzeArabicWord('والكتابَ', 'and he wrote the book');
+      // Damma example (bare fatha no longer detected): و (and) + ال (the) + damma (ُ).
+      const analysis = analyzeArabicWord('والكتابُ', 'and he reads the book');
       const formatted = formatWordAnalysis(analysis);
 
-      // Should have multiple prefixes: و (and) + ال (the), and diacritic (َ)
       expect(analysis.prefixes.length).toBeGreaterThan(0);
       expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
       if (analysis.prefixes.length > 1) {
         expect(analysis.prefixes[1]?.arabicMatch).toBe('ال');
       }
-      expect(analysis.diacritic?.arabicMatch).toBe('َ');
+      expect(analysis.diacritic?.arabicMatch).toBe('ُ');
       // At least 2 components (prefix + diacritic) or more if multiple prefixes detected
       expect(formatted.sections.filter(s => s.type === 'components').length).toBeGreaterThanOrEqual(
         2,
@@ -518,11 +513,12 @@ describe('arabicWordAnalysis', () => {
     });
   });
 
-  test('should detect final fatha on a verb as "he"', () => {
+  test('should NOT detect a bare final fatha on a past-tense verb', () => {
+    // كَتَبَ "he wrote" — the final fatha is the past-tense vowel, not a separable
+    // morpheme to color. Detecting it produced a false positive on every "he <verb>".
     const analysis = analyzeArabicWord('كَتَبَ', 'he wrote');
-    expect(analysis.diacritic).toBeDefined();
-    expect(analysis.diacritic?.arabicMatch).toBe('َ');
-    expect(analysis.diacritic?.englishMatches).toContain('he');
+    expect(analysis.diacritic).toBeUndefined();
+    expect(analysis.hasComponents).toBeFalsy();
   });
 });
 
@@ -561,16 +557,14 @@ describe('Diacritic Double-Matching Prevention', () => {
     expect(analysis.hasComponents).toBeTruthy();
   });
 
-  test('should keep diacritic when it has unique English match', () => {
-    // قَالَ → "he says"
-    // Fatha "َ" matches "he", which is unique (no other component claims it)
-    // Expected: Diacritic should be kept
+  test('should NOT paint a bare fatha on a plain past-tense verb', () => {
+    // قَالَ "he says" — the final fatha is the verb/past-tense vowel, not a separable
+    // morpheme. The corpus has zero diacritic-only components, so it must not be painted
+    // (this was a systematic false positive on every "he <verb>" word).
     const analysis = analyzeArabicWord('قَالَ', 'he says');
 
-    expect(analysis.diacritic).toBeDefined();
-    expect(analysis.diacritic?.arabicMatch).toBe('َ');
-    expect(analysis.diacritic?.englishMatches).toContain('he');
-    expect(analysis.hasComponents).toBeTruthy();
+    expect(analysis.diacritic).toBeUndefined();
+    expect(analysis.hasComponents).toBeFalsy();
   });
 
   test('should keep diacritic when multiple patterns exist and at least one is unique', () => {
