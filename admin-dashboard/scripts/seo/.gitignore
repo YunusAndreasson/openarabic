@@ -1,0 +1,9 @@
+# SEO data pipeline — never commit secrets, venv, or fetched snapshots
+.venv/
+data/
+*.json
+!package.json
+# belt-and-suspenders: never commit a service-account key
+*sa*.json
+*service-account*.json
+*credentials*.json
