@@ -1,6 +1,6 @@
 import { cache } from 'react';
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/lib/database.types';
 import { ArticleNav } from '@/components/article-nav';
@@ -13,7 +13,7 @@ import { ReadingHint } from '@/components/reading-hint';
 import { Footer } from '@/components/footer';
 import { ReadingProgress } from '@/components/reading-progress';
 import { ArticleStructuredData } from '@/components/article-structured-data';
-import { parseIdFromSlug } from '@/lib/slugify';
+import { generateSlug, parseIdFromSlug } from '@/lib/slugify';
 import { detectPlatform } from '@/lib/platform-detection';
 
 type Article = Database['public']['Tables']['articles']['Row'] & {
@@ -55,17 +55,22 @@ export async function generateMetadata({
   }
 
   const imageUrl = `${SUPABASE_STORAGE_URL}/${article.image_url}`;
+  // Always canonicalize to the descriptive slug so bare-id / stale-title URLs
+  // don't split ranking signals across duplicate URLs.
+  const canonicalSlug = generateSlug(article.title, article.id);
+  const canonicalUrl = `https://openarabic.io/read/${canonicalSlug}`;
 
   return {
     title: `${article.title} - OpenArabic`,
     description: article.summary,
     alternates: {
-      canonical: `https://openarabic.io/read/${slug}`,
+      canonical: canonicalUrl,
     },
     openGraph: {
       title: article.title,
       description: article.summary,
       type: 'article',
+      url: canonicalUrl,
       images: [{ url: imageUrl, width: 1200, height: 630, alt: article.title }],
       publishedTime: article.created_at,
       authors: [article.authors?.name || 'OpenArabic'],
@@ -104,6 +109,13 @@ export default async function ArticleReadPage({
   // Handle not found
   if (!article) {
     notFound();
+  }
+
+  // Consolidate to a single canonical URL: 308-redirect bare-id or stale-title
+  // slugs to the descriptive slug used by internal links and the sitemap.
+  const canonicalSlug = generateSlug(article.title, article.id);
+  if (slug !== canonicalSlug) {
+    permanentRedirect(`/read/${canonicalSlug}`);
   }
 
   const sentences = (sentencesResult.data as ArticleSentence[]) || [];

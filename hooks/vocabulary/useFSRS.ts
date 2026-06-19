@@ -1,9 +1,14 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Card } from 'ts-fsrs';
-import { createEmptyCard, fsrs, generatorParameters, Rating, State } from 'ts-fsrs';
+import { createEmptyCard, fsrs, generatorParameters, show_diff_message, State } from 'ts-fsrs';
 
-import { DEFAULT_SESSION_COOLDOWN_HOURS, OPTIMIZED_FSRS_CONFIG } from '@/constants/fsrs';
+import {
+  CONFIDENCE_TO_RATING,
+  DEFAULT_SESSION_COOLDOWN_HOURS,
+  MISS_CONFIDENCE,
+  OPTIMIZED_FSRS_CONFIG,
+} from '@/constants/fsrs';
 import { fsrsQueries } from '@/constants/queries';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { RootId } from '@/types/branded.types';
@@ -45,6 +50,9 @@ interface EnhancedFSRSStateTracking extends FSRSStateTracking {
 // Module-level constants — pure functions of stable config, no need to recompute per render
 const FSRS_PARAMS = generatorParameters(OPTIMIZED_FSRS_CONFIG);
 const FSRS_INSTANCE = fsrs(FSRS_PARAMS);
+
+// Compact units for ts-fsrs show_diff_message so interval labels stay terse ("10m"/"4d").
+const PREVIEW_UNITS = ['s', 'm', 'h', 'd', 'mo', 'y'];
 
 export function useFSRS({
   userId,
@@ -269,7 +277,7 @@ export function useFSRS({
         const card = convertToFSRSCard(currentWord);
         const now = new Date();
 
-        const rating = confidence === 'known' ? Rating.Good : Rating.Again;
+        const rating = CONFIDENCE_TO_RATING[confidence];
 
         const result = fsrsInstance.next(card, now, rating);
         newCard = result.card;
@@ -324,9 +332,9 @@ export function useFSRS({
       // In-session drilling decision (successive relearning to criterion).
       // Replaces the old flat-spacing requeue: a missed word is re-asked at an
       // expanding lag until recalled correctly twice, capped at DRILL_MAX_REASKS.
-      // Any non-"known" answer (Unknown, or a legacy "vague") counts as a miss,
-      // matching the previous requeue-everything-but-known behaviour.
-      const missed = confidence !== 'known';
+      // Only an outright "Forgot" (unknown) re-drills — "Guessed" (vague→Hard) is
+      // a PASS and graduates like "Knew it", penalized only at the FSRS interval scale.
+      const missed = MISS_CONFIDENCE.has(confidence);
       const priorDrill = drillRef.current.get(rootId) ?? null;
       const decision = decideDrill(priorDrill, missed);
 
@@ -485,6 +493,30 @@ export function useFSRS({
     ],
   );
 
+  /**
+   * Per-grade interval preview for a card. Reuses the SAME ts-fsrs scheduler as
+   * updateWord (so the label IS the schedule the grade would produce) and
+   * ts-fsrs's own `show_diff_message` humanizer for terse labels ("10m"/"4d").
+   * Keyed by WordConfidence so the grade bar can render a sub-label per button.
+   * NB: enable_fuzz is on, so the previewed due is "what grading now would give";
+   * the committed due is a separate fuzz draw and may differ slightly — fine for
+   * a terse label.
+   */
+  const previewIntervals = useCallback(
+    (word: StudyWord): Partial<Record<WordConfidence, string>> => {
+      const now = new Date();
+      const card = convertToFSRSCard(word);
+      const preview = fsrsInstance.repeat(card, now);
+      const out: Partial<Record<WordConfidence, string>> = {};
+      (Object.keys(CONFIDENCE_TO_RATING) as WordConfidence[]).forEach(confidence => {
+        const rating = CONFIDENCE_TO_RATING[confidence];
+        out[confidence] = show_diff_message(preview[rating].card.due, now, true, PREVIEW_UNITS);
+      });
+      return out;
+    },
+    [convertToFSRSCard, fsrsInstance],
+  );
+
   const resetQueue = useCallback(() => {
     stateTrackingRef.current.queueInitialized = false;
     setWordQueue([]);
@@ -536,6 +568,7 @@ export function useFSRS({
     isComplete,
     progress,
     updateWord,
+    previewIntervals,
     invalidateQueries,
     resetQueue,
   };

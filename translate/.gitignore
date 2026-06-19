@@ -169,6 +169,7 @@ cython_debug/
 
 # Generated directories
 archive/
+grammar_improve/
 
 # Pipeline directories - generated content
 0_inbox/

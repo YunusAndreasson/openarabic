@@ -1,4 +1,7 @@
-import type { StepUnit } from 'ts-fsrs';
+import { Rating } from 'ts-fsrs';
+import type { Grade, StepUnit } from 'ts-fsrs';
+
+import type { WordConfidence } from '@/types/review.types';
 
 export const DEFAULT_LEARNING_STEPS: StepUnit[] = ['1m', '10m'];
 export const DEFAULT_RELEARNING_STEPS: StepUnit[] = ['5m', '10m'];
@@ -44,6 +47,34 @@ export const DRILL_CRITERION = 2; // correct recalls (each after a lag) to gradu
 export const DRILL_LAG_AFTER_MISS = MIN_WORD_SPACING; // intervening cards before the first re-ask (>= MIN_WORD_SPACING)
 export const DRILL_LAG_AFTER_CORRECT = 8; // wider lag after a non-graduating correct recall
 export const DRILL_MAX_REASKS = 6; // hard cap per word per session (prevents a stuck card trapping the session)
+
+/**
+ * Self-grade (WordConfidence) → ts-fsrs Rating. The card is graded on a
+ * three-way confidence scale once its answer is revealed (UI: Forgot/Guessed/
+ * Knew it):
+ *   - known   ("Knew it") → Good   — clean recall
+ *   - vague   ("Guessed") → Hard   — recalled but effortful (a PASS, not a miss)
+ *   - unknown ("Forgot")  → Again  — failed recall
+ * Easy is intentionally unused — learners can't reliably self-assess Easy vs Good.
+ */
+export const CONFIDENCE_TO_RATING: Record<WordConfidence, Grade> = {
+  known: Rating.Good,
+  vague: Rating.Hard,
+  unknown: Rating.Again,
+};
+
+/**
+ * Confidences that count as a within-session "miss" (re-drilled to criterion).
+ * Only an outright Forgot re-drills — Guessed (Hard) is a pass and is penalized
+ * only at the cross-session interval scale, where penalties belong.
+ */
+export const MISS_CONFIDENCE: ReadonlySet<WordConfidence> = new Set<WordConfidence>(['unknown']);
+
+/** Confidences that count as a successful recall (streak / first-attempt pacing). */
+export const RECALLED_CONFIDENCE: ReadonlySet<WordConfidence> = new Set<WordConfidence>([
+  'known',
+  'vague',
+]);
 
 export const DEFAULT_SESSION_COOLDOWN_HOURS = 2;
 

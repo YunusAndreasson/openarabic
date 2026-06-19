@@ -119,10 +119,7 @@ export function useMultipleFeaturedArticles(
 
   // Create stable Set from stable array to prevent infinite loops
   // This ensures the Set reference only changes when the actual word IDs change
-  const stableDueWordSet = useMemo(
-    () => new Set(stableDueWordRootIds),
-    [stableDueWordRootIds],
-  );
+  const stableDueWordSet = useMemo(() => new Set(stableDueWordRootIds), [stableDueWordRootIds]);
 
   const stableDifficultWordSet = useMemo(
     () => new Set(stableDifficultWordRootIds),

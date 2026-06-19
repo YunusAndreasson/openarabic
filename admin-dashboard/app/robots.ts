@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/admin', '/api'],
+        disallow: ['/admin', '/api', '/articles', '/ai-test', '/images', '/login'],
       },
     ],
     sitemap: 'https://openarabic.io/sitemap.xml',

@@ -23,11 +23,7 @@ interface SheetScreenProps {
 export function SheetScreen({ children }: SheetScreenProps) {
   const colors = useColors();
 
-  return (
-    <View style={[styles.container, { backgroundColor: colors.elevation1 }]}>
-      {children}
-    </View>
-  );
+  return <View style={[styles.container, { backgroundColor: colors.elevation1 }]}>{children}</View>;
 }
 
 const styles = StyleSheet.create({

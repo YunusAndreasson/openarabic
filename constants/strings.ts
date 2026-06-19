@@ -44,6 +44,12 @@ export const STRINGS = {
   VOICE_RESULT_ACCEPT: 'Yes, I got it',
   VOICE_RESULT_REJECT: 'No, I missed it',
   VOICE_RESULT_RETRY: 'Try again',
+  // Reveal-first self-grade (shown after the card flips to its answer)
+  SHOW_ANSWER: 'Show answer',
+  GRADE_FORGOT: 'Forgot',
+  GRADE_GUESSED: 'Guessed',
+  GRADE_KNEW_IT: 'Knew it',
+  NO_TRANSLATION_AVAILABLE: 'No translation available',
   // Advanced (Account → Advanced) — voice grading diagnostics
   ADVANCED: 'Advanced',
   ADVANCED_VOICE_GRADING: 'Voice grading',
@@ -79,26 +85,26 @@ export const STRINGS = {
   RESET_TUTORIALS_MESSAGE: 'See helpful tips again as you explore the app.',
   // Tutorial copy
   TUTORIAL_WORD_TAP_CTA: 'Tap the highlighted word to see its meaning and save it for practice',
-  // Swipe tutorial - Intro
+  // Review tutorial - Intro
   TUTORIAL_INTRO_TITLE: 'How it works',
-  TUTORIAL_INTRO_DESCRIPTION: 'Rate each word by swiping left or right.',
-  // Swipe tutorial - action labels
-  TUTORIAL_SWIPE_DONT_KNOW: 'Unknown',
-  TUTORIAL_SWIPE_KNOW: 'Known',
-  // Swipe tutorial - Ready step
+  TUTORIAL_INTRO_DESCRIPTION: 'Tap a card to reveal the answer, then rate how well you knew it.',
+  // Review tutorial - grade labels
+  TUTORIAL_SWIPE_DONT_KNOW: 'Forgot',
+  TUTORIAL_SWIPE_KNOW: 'Knew it',
+  // Review tutorial - Ready step
   TUTORIAL_SRS_TITLE: "You're ready!",
   TUTORIAL_SRS_DESCRIPTION: 'Rate honestly. We adapt to you.',
   TUTORIAL_SRS_CTA: "Let's go!",
-  // Swipe tutorial navigation
+  // Review tutorial navigation
   TUTORIAL_NEXT: 'Got it',
-  // Contextual help - Swipe left (Unknown)
-  TUTORIAL_CONTEXT_LEFT_LINE1: "Don't know the word?",
+  // Contextual help - Forgot (swipe left)
+  TUTORIAL_CONTEXT_LEFT_LINE1: 'Forgot it?',
   TUTORIAL_CONTEXT_LEFT_LINE2: 'Swipe left.',
-  TUTORIAL_CONTEXT_LEFT_LINE3: 'It appears more often so you focus on hard words.',
-  // Contextual help - Swipe right (Known)
-  TUTORIAL_CONTEXT_RIGHT_LINE1: 'Know the word?',
+  TUTORIAL_CONTEXT_LEFT_LINE3: 'It comes back sooner so you focus on hard words.',
+  // Contextual help - Knew it (swipe right)
+  TUTORIAL_CONTEXT_RIGHT_LINE1: 'Knew it?',
   TUTORIAL_CONTEXT_RIGHT_LINE2: 'Swipe right.',
-  TUTORIAL_CONTEXT_RIGHT_LINE3: 'It appears less often so you skip easy words.',
+  TUTORIAL_CONTEXT_RIGHT_LINE3: 'It comes back later so you skip easy words.',
   // Contact email - single source of truth
   CONTACT_EMAIL: 'yunus+openarabic@edenmind.com',
   // Feedback form

@@ -1,15 +1,15 @@
 import { useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { TextStyle, ViewStyle } from 'react-native';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import {
   CompletionScreen,
-  ReviewBottomActions,
-  ReviewCard,
+  ReviewFlipCard,
+  ReviewGradeBar,
   ReviewHeader,
   VoiceResultPanel,
   VoiceStatusIndicator,
@@ -19,7 +19,6 @@ import { SwipeGestureTutorial } from '@/components/tutorials/SwipeGestureTutoria
 import { PulsatingLoader } from '@/components/ui';
 import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import type { ContextualHelpType } from '@/constants/tutorials';
 import { TutorialId } from '@/constants/tutorials';
 import { useReview, useVoiceReview } from '@/hooks/review';
 import { useColors } from '@/hooks/theme/useColors';
@@ -73,6 +72,19 @@ const baseStyles = StyleSheet.create({
   headerPadding: {
     paddingTop: LAYOUT.SPACING.LARGE,
   } as ViewStyle,
+  // Full-width reveal button — neutral card surface, tinted label. Matches the
+  // grade bar's height so the bottom slot doesn't jump between the two states.
+  showAnswerButton: {
+    width: '100%',
+    minHeight: LAYOUT.BUTTON.HEIGHT.LARGE + LAYOUT.SPACING.MEDIUM,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
+  } as ViewStyle,
+  showAnswerLabel: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+  } as TextStyle,
 });
 
 /** Reusable loading state component for review screen */
@@ -111,27 +123,17 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   const insets = useSafeAreaInsets();
   const colors = useColors();
 
-  // Contextual help state - shows specific help when tapping bottom buttons
-  const [contextualHelpType, setContextualHelpType] = useState<ContextualHelpType | null>(null);
-
-  const handleShowContextualHelp = useCallback((helpType: ContextualHelpType) => {
-    setContextualHelpType(helpType);
-  }, []);
-
-  const handleDismissContextualHelp = useCallback(() => {
-    setContextualHelpType(null);
-  }, []);
-
   const {
     currentSentence,
     currentMeaning,
-    showTranslation,
+    revealed,
     isComplete,
     progress,
     maxProgress,
     currentWordKey,
-    handleSwipeLeft,
-    handleSwipeRight,
+    revealAnswer,
+    grade,
+    intervalLabels,
     handleClose,
     isUpdating,
     transparentStyle,
@@ -145,13 +147,14 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     currentWord,
     revealMeaningPassive,
     promptAudioDoneKey,
-    handleVoiceUnknownResolved,
     stopAudio,
   } = useReview({ fromRemember });
 
   // Voice grading — when the toggle is on, auto-arms the mic after each card
-  // settles. Match → silently advance as Known. Miss → reveal the meaning and
-  // let the user pick Known / Unknown.
+  // settles. Correct match → silently advance as "Knew it". Miss → play the
+  // English audio + show the result panel (transcript + answer + Yes/No/Retry);
+  // the panel is the answer surface for voice, so the card is NOT flipped (a
+  // retry stays clean on the question face).
   const {
     phase: voicePhase,
     debug: voiceDebug,
@@ -166,12 +169,15 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     currentWordKey,
     rootId: currentWord?.root_id ?? null,
     promptAudioDoneKey,
-    ready: !isUpdating && !isLoading && isAudioPreloadingComplete && !isComplete,
+    // Stop listening once the answer is revealed — the recall test is over.
+    ready: !isUpdating && !isLoading && isAudioPreloadingComplete && !isComplete && !revealed,
     stopAudio,
-    onKnownAuto: handleSwipeRight,
-    // The panel already revealed the answer — advance as Unknown without
-    // re-revealing / replaying the English audio / waiting out the 3 s overlay.
-    onUnknownAuto: handleVoiceUnknownResolved,
+    // Correct match → silently advance as "Knew it" (speaking the answer is the
+    // proof; fromVoice bypasses the reveal guard).
+    onKnownAuto: () => grade('known', { fromVoice: true }),
+    // Voice result panel "No, I missed it" → Forgot.
+    onUnknownAuto: () => grade('unknown', { fromVoice: true }),
+    // Miss → play the English audio (the panel shows the answer text + override).
     onRevealAnswer: revealMeaningPassive,
   });
 
@@ -216,19 +222,19 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
 
   return (
     <View style={[baseStyles.container, { backgroundColor: colors.background }]}>
-      {/* Full-screen swipe background + word content */}
-      <ReviewCard
+      {/* Flip card: tap the front (Arabic) to reveal the answer, then swipe to grade */}
+      <ReviewFlipCard
         wordKey={currentWordKey}
         word={currentSentence.wordForm}
-        onSwipeLeft={handleSwipeLeft}
-        onSwipeRight={handleSwipeRight}
+        answer={currentMeaning}
+        revealed={revealed}
+        onReveal={revealAnswer}
+        onReplayAudio={handleReplayAudio}
         opacityStyle={transparentStyle}
         isUpdating={isUpdating}
+        onSwipeForgot={() => grade('unknown')}
+        onSwipeKnewIt={() => grade('known')}
         testID="review-card"
-        translation={currentMeaning}
-        showTranslation={showTranslation}
-        onReplayAudio={handleReplayAudio}
-        fullScreenBackground={true}
       />
 
       {/* UI chrome - header and bottom actions, positioned above background */}
@@ -267,20 +273,35 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
               onReject={voiceReject}
               onRetry={voiceRetry}
             />
+          ) : revealed ? (
+            <ReviewGradeBar intervals={intervalLabels} onGrade={grade} disabled={isUpdating} />
           ) : (
-            <ReviewBottomActions
-              onPressLeft={handleSwipeLeft}
-              onPressRight={handleSwipeRight}
-              onShowContextualHelp={handleShowContextualHelp}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={STRINGS.SHOW_ANSWER}
+              onPress={revealAnswer}
               disabled={isUpdating}
-              voiceHint={
-                voiceDebug.match
-                  ? voiceDebug.match.matched
-                    ? 'known'
-                    : 'unknown'
-                  : null
-              }
-            />
+              style={({ pressed }) => [
+                baseStyles.showAnswerButton,
+                {
+                  backgroundColor: colors.card,
+                  borderColor: colors.border,
+                  opacity: isUpdating
+                    ? LAYOUT.OPACITY.SUBTLE
+                    : pressed
+                      ? LAYOUT.OPACITY.PRESSED
+                      : LAYOUT.OPACITY.FULL,
+                },
+              ]}
+            >
+              <ThemedText
+                skipDefaultColor
+                weight="semibold"
+                style={[baseStyles.showAnswerLabel, { color: colors.tint }]}
+              >
+                {STRINGS.SHOW_ANSWER}
+              </ThemedText>
+            </Pressable>
           )}
         </View>
       </View>
@@ -290,16 +311,20 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
           wrong-answer panel owns the slot (voiceShowResult) and while a card
           advance is in flight (isUpdating), so a transient phase can't flash
           during the hand-off to the next card. */}
-      {!voiceShowResult && !isUpdating && (
+      {!voiceShowResult && !isUpdating && !revealed && (
         <View
           pointerEvents="none"
           style={[
             voiceHintStyles.container,
             {
+              // Sit just above the "Show answer" button. Its height is
+              // BUTTON.HEIGHT.LARGE + SPACING.MEDIUM (it matches the grade bar), so
+              // clear that plus a MEDIUM gap above the bottom inset.
               bottom:
                 insets.bottom +
                 LAYOUT.SPACING.LARGE +
                 LAYOUT.BUTTON.HEIGHT.LARGE +
+                LAYOUT.SPACING.MEDIUM +
                 LAYOUT.SPACING.MEDIUM,
             },
           ]}
@@ -349,13 +374,6 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
           )}
         </View>
       )}
-
-      {/* Contextual help overlay - shown when tapping bottom buttons */}
-      <SwipeGestureTutorial
-        visible={contextualHelpType !== null}
-        onDismiss={handleDismissContextualHelp}
-        contextualHelp={contextualHelpType ?? undefined}
-      />
     </View>
   );
 }

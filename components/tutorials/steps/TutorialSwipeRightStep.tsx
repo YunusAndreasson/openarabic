@@ -64,7 +64,10 @@ export function TutorialSwipeRightStep() {
       {/* Right indicator */}
       <View style={styles.indicatorRow}>
         <View
-          style={[styles.indicator, { backgroundColor: withOpacity(colors.success, LAYOUT.OPACITY.FAINT) }]}
+          style={[
+            styles.indicator,
+            { backgroundColor: withOpacity(colors.success, LAYOUT.OPACITY.FAINT) },
+          ]}
         >
           <Ionicons
             name="chevron-forward"

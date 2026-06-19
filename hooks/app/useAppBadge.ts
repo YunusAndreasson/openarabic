@@ -104,13 +104,11 @@ export function useAppBadge(): void {
     }
   });
 
-  const handleQueryCacheUpdate = useEffectEvent(
-    (newDueWords: StudyWord[] | undefined) => {
-      if (newDueWords && appStateRef.current === 'active') {
-        updateBadgeDebounced(newDueWords.length);
-      }
-    },
-  );
+  const handleQueryCacheUpdate = useEffectEvent((newDueWords: StudyWord[] | undefined) => {
+    if (newDueWords && appStateRef.current === 'active') {
+      updateBadgeDebounced(newDueWords.length);
+    }
+  });
 
   // Subscribe once — handler reads latest closure via useEffectEvent.
   useEffect(() => {

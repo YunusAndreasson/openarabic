@@ -185,11 +185,15 @@ describe('Visual Practice Flow - Real useReview Hook', () => {
       <View testID="review-screen">
         <Text testID="current-word">{review.currentSentence.wordForm}</Text>
         <Text testID="progress">{Math.round(review.progress)}%</Text>
-        <TouchableOpacity testID="swipe-left" onPress={review.handleSwipeLeft}>
-          <Text>Unknown</Text>
+        <Text testID="revealed">{review.revealed ? 'yes' : 'no'}</Text>
+        <TouchableOpacity testID="reveal" onPress={review.revealAnswer}>
+          <Text>Show answer</Text>
         </TouchableOpacity>
-        <TouchableOpacity testID="swipe-right" onPress={review.handleSwipeRight}>
-          <Text>Known</Text>
+        <TouchableOpacity testID="grade-forgot" onPress={() => review.grade('unknown')}>
+          <Text>Forgot</Text>
+        </TouchableOpacity>
+        <TouchableOpacity testID="grade-known" onPress={() => review.grade('known')}>
+          <Text>Knew it</Text>
         </TouchableOpacity>
       </View>
     );
@@ -207,7 +211,7 @@ describe('Visual Practice Flow - Real useReview Hook', () => {
     expect(getByTestId('review-screen')).toBeTruthy();
   });
 
-  test('should handle swipe left (unknown word) with real hook', async () => {
+  test('should reveal then grade a word with real hook', async () => {
     const { getByTestId, queryByTestId } = render(<ReviewTestComponent />, { wrapper });
 
     // Wait for loading to finish and review screen to appear
@@ -216,17 +220,20 @@ describe('Visual Practice Flow - Real useReview Hook', () => {
       expect(queryByTestId('review-screen')).toBeTruthy();
     });
 
-    const swipeLeft = getByTestId('swipe-left');
-
+    // Reveal the answer first (the card flips to its answer face).
     await act(async () => {
-      fireEvent.press(swipeLeft);
+      fireEvent.press(getByTestId('reveal'));
     });
 
-    // Note: swipe left = 'unknown' which does NOT call updateWordAndReview service
-    // The service is only called for 'known' words (by design - vague/unknown stay in memory)
-    // Verify the progress or word queue changed
+    expect(getByTestId('revealed').props.children).toBe('yes');
+
+    // Grade it "Knew it" → the card advances and the next card starts unrevealed.
+    await act(async () => {
+      fireEvent.press(getByTestId('grade-known'));
+    });
+
     await waitFor(() => {
-      expect(getByTestId('progress').props.children).not.toBe('0%');
+      expect(getByTestId('revealed').props.children).toBe('no');
     });
   });
 

@@ -22,8 +22,14 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
 
   if (!data) return {};
 
+  const categoryId = parseInt(category, 10);
+
   return {
     title: `${data.name} Articles - OpenArabic`,
+    description: `Read ${data.name} articles in Arabic with parallel English translations, native audio, and spaced-repetition vocabulary practice.`,
+    alternates: {
+      canonical: `https://openarabic.io/?category=${categoryId}`,
+    },
   };
 }
 

@@ -59,6 +59,11 @@ export interface UseFSRSResult {
   isComplete: boolean;
   progress: number;
   updateWord: (rootId: RootId, confidence: WordConfidence) => Promise<number | undefined>;
+  /**
+   * Per-grade interval preview ("10m"/"4d") for a card, keyed by WordConfidence.
+   * Drives the grade bar's sub-labels. Reuses the live ts-fsrs scheduler.
+   */
+  previewIntervals: (word: StudyWord) => Partial<Record<WordConfidence, string>>;
   invalidateQueries: () => void;
   resetQueue: () => void;
 }

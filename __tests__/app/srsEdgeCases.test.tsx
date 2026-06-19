@@ -193,25 +193,6 @@ jest.mock('../../hooks/review', () => {
 });
 
 // Mock components with proper types
-jest.mock('../../components/review/ReviewCard', () => {
-  const React = require('react');
-  const { TouchableOpacity, Text } = require('react-native');
-  interface MockReviewCardProps {
-    onSwipeLeft?: () => void;
-    onSwipeRight?: () => void;
-  }
-  return {
-    __esModule: true,
-    default: ({ onSwipeLeft, onSwipeRight }: MockReviewCardProps) => (
-      <>
-        <TouchableOpacity testID="swipe-left" onPress={onSwipeLeft} />
-        <TouchableOpacity testID="swipe-right" onPress={onSwipeRight} />
-        <Text testID="review-word" />
-      </>
-    ),
-  };
-});
-
 jest.mock('../../components/review/CompletionScreen', () => {
   const React = require('react');
   const { TouchableOpacity } = require('react-native');

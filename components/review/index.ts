@@ -1,6 +1,6 @@
 export { CompletionScreen } from './CompletionScreen';
-export { ReviewBottomActions } from './ReviewBottomActions';
-export { ReviewCard } from './ReviewCard';
+export { ReviewFlipCard } from './ReviewFlipCard';
+export { ReviewGradeBar } from './ReviewGradeBar';
 export { ReviewHeader } from './ReviewHeader';
 export { VoiceResultPanel } from './VoiceResultPanel';
 export { VoiceStatusIndicator } from './VoiceStatusIndicator';

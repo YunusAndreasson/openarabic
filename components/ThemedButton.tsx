@@ -129,11 +129,7 @@ export function ThemedButton({
             {isActuallyLoading ? (
               <ActivityIndicator color={textColor} size="small" />
             ) : (
-              <Ionicons
-                color={textColor}
-                name={icon as IoniconName}
-                size={iconSize}
-              />
+              <Ionicons color={textColor} name={icon as IoniconName} size={iconSize} />
             )}
           </View>
         )}

@@ -21,21 +21,21 @@ Rolling index of per-route audit findings. See the full program plan at
 
 ## Routes (8 priority, ordered by usage)
 
-| # | Route | File | Audit doc | Status |
-|---|-------|------|-----------|--------|
-| 1 | Explore feed | `app/(tabs)/explore/index.tsx` | [explore.md](explore.md) | ☐ pending |
-| 2 | Article detail | `app/article/[id].tsx` | [article-detail.md](article-detail.md) | ☐ pending |
-| 3 | Practice dashboard | `app/(tabs)/practice/index.tsx` | [practice.md](practice.md) | ☐ pending |
-| 4 | Review session | `app/review.tsx` | [review.md](review.md) | ☐ pending |
-| 5 | Playlist | `app/(tabs)/playlist/index.tsx` | [playlist.md](playlist.md) | ☐ pending |
-| 6 | Auth sign-in | `app/auth/sign-in.tsx` | [auth-sign-in.md](auth-sign-in.md) | ☐ pending |
-| 7 | Account settings | `app/(tabs)/explore/account/*` | [account.md](account.md) | ☐ pending |
-| 8 | MiniPlayer expand → full player | `app/player.tsx` (W4, not yet built) | [player.md](player.md) | ☐ pending |
+| #   | Route                           | File                                 | Audit doc                              | Status    |
+| --- | ------------------------------- | ------------------------------------ | -------------------------------------- | --------- |
+| 1   | Explore feed                    | `app/(tabs)/explore/index.tsx`       | [explore.md](explore.md)               | ☐ pending |
+| 2   | Article detail                  | `app/article/[id].tsx`               | [article-detail.md](article-detail.md) | ☐ pending |
+| 3   | Practice dashboard              | `app/(tabs)/practice/index.tsx`      | [practice.md](practice.md)             | ☐ pending |
+| 4   | Review session                  | `app/review.tsx`                     | [review.md](review.md)                 | ☐ pending |
+| 5   | Playlist                        | `app/(tabs)/playlist/index.tsx`      | [playlist.md](playlist.md)             | ☐ pending |
+| 6   | Auth sign-in                    | `app/auth/sign-in.tsx`               | [auth-sign-in.md](auth-sign-in.md)     | ☐ pending |
+| 7   | Account settings                | `app/(tabs)/explore/account/*`       | [account.md](account.md)               | ☐ pending |
+| 8   | MiniPlayer expand → full player | `app/player.tsx` (W4, not yet built) | [player.md](player.md)                 | ☐ pending |
 
 ## Cross-cutting findings
 
 Findings that span multiple routes go here, not in per-route files. Add as discovered.
 
-| Theme | Severity | Routes affected | Notes |
-|-------|----------|-----------------|-------|
-| _none yet_ | – | – | – |
+| Theme      | Severity | Routes affected | Notes |
+| ---------- | -------- | --------------- | ----- |
+| _none yet_ | –        | –               | –     |

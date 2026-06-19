@@ -206,8 +206,10 @@ describe('useReview Hook - Session Management', () => {
       const wrapper = createWrapper();
       const { result } = renderHook(() => useReview(), { wrapper });
 
+      // Grading is a no-op once the session is complete (no reveal needed —
+      // the completion guard short-circuits first).
       act(() => {
-        result.current.handleSwipeRight();
+        result.current.grade('known');
       });
 
       expect(mocks.mockUpdateWord).not.toHaveBeenCalled();
@@ -229,11 +231,16 @@ describe('useReview Hook - Session Management', () => {
       const { result } = renderHook(() => useReview(), { wrapper });
 
       act(() => {
-        result.current.handleSwipeRight();
+        result.current.revealAnswer();
+      });
+
+      // Two grades in a row — the second is ignored while the first is in flight.
+      act(() => {
+        result.current.grade('known');
       });
 
       act(() => {
-        result.current.handleSwipeRight();
+        result.current.grade('known');
       });
 
       await waitFor(() => {
@@ -283,7 +290,11 @@ describe('useReview Hook - Session Management', () => {
       const { result } = renderHook(() => useReview(), { wrapper });
 
       act(() => {
-        result.current.handleSwipeRight();
+        result.current.revealAnswer();
+      });
+
+      act(() => {
+        result.current.grade('known');
       });
 
       await waitFor(() => {
@@ -349,7 +360,11 @@ describe('useReview Hook - Session Management', () => {
       const { result, unmount } = renderHook(() => useReview(), { wrapper });
 
       act(() => {
-        result.current.handleSwipeLeft();
+        result.current.revealAnswer();
+      });
+
+      act(() => {
+        result.current.grade('unknown');
       });
 
       unmount();
@@ -407,7 +422,11 @@ describe('useReview Hook - Session Management', () => {
       const { result } = renderHook(() => useReview(), { wrapper });
 
       act(() => {
-        result.current.handleSwipeRight();
+        result.current.revealAnswer();
+      });
+
+      act(() => {
+        result.current.grade('known');
       });
 
       await waitFor(() => {

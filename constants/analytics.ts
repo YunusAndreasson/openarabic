@@ -23,6 +23,7 @@ export const ANALYTICS_EVENTS = {
   // Review/Practice session events
   REVIEW_SESSION_STARTED: 'Review Session Started',
   REVIEW_SESSION_ABANDONED: 'Review Session Abandoned',
+  REVIEW_WORD_GRADED: 'Review Word Graded',
   PRACTICE_SESSION_COMPLETE: 'Practice Session Complete',
 
   // Audio playback events

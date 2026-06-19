@@ -153,9 +153,9 @@ describe('useFSRS Hook - Edge Cases', () => {
         expect(result.current.currentWord?.root_id).toBe(1);
       });
 
-      // Mark both words as vague (should go to spacing queue)
+      // Mark both words as unknown (both go to the spacing queue / drill)
       await act(async () => {
-        await result.current.updateWord(1, 'vague');
+        await result.current.updateWord(1, 'unknown');
       });
 
       await waitFor(() => {
@@ -163,7 +163,7 @@ describe('useFSRS Hook - Edge Cases', () => {
       });
 
       await act(async () => {
-        await result.current.updateWord(2, 'vague');
+        await result.current.updateWord(2, 'unknown');
       });
 
       // Now both words are in spacing queue - hook should handle this
@@ -331,12 +331,12 @@ describe('useFSRS Hook - Edge Cases', () => {
         expect(result.current.currentWord?.root_id).toBe(1);
       });
 
-      // Mark as vague - goes to spacing, progress should not increase
+      // Mark as unknown - goes to spacing, progress should not increase
       await act(async () => {
-        await result.current.updateWord(1, 'vague');
+        await result.current.updateWord(1, 'unknown');
       });
 
-      expect(result.current.progress).toBe(0); // No progress for vague
+      expect(result.current.progress).toBe(0); // No progress for a re-drilled miss
 
       // Mark second word as known
       await waitFor(() => {
@@ -456,9 +456,9 @@ describe('useFSRS Hook - Edge Cases', () => {
         expect(result.current.currentWord?.root_id).toBe(1);
       });
 
-      // Mark first as vague (missed → enters the in-session drill)
+      // Mark first as unknown (missed → enters the in-session drill)
       await act(async () => {
-        await result.current.updateWord(1, 'vague');
+        await result.current.updateWord(1, 'unknown');
       });
 
       // Mark second as known (graduates immediately — it was never missed)
@@ -510,9 +510,9 @@ describe('useFSRS Hook - Edge Cases', () => {
         expect(result.current.currentWord?.root_id).toBe(1);
       });
 
-      // Mark both as vague
+      // Mark both as unknown (both re-drilled → spacing queue)
       await act(async () => {
-        await result.current.updateWord(1, 'vague');
+        await result.current.updateWord(1, 'unknown');
       });
 
       await waitFor(() => {
@@ -520,7 +520,7 @@ describe('useFSRS Hook - Edge Cases', () => {
       });
 
       await act(async () => {
-        await result.current.updateWord(2, 'vague');
+        await result.current.updateWord(2, 'unknown');
       });
 
       // Should NOT be complete - words are still in spacing queue

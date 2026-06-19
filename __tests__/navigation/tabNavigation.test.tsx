@@ -85,7 +85,7 @@ jest.mock('expo-router/react-navigation', () => {
   };
 });
 
-import { NavigationContainer } from "expo-router/react-navigation";
+import { NavigationContainer } from 'expo-router/react-navigation';
 import { QueryClientProvider } from '@tanstack/react-query';
 import TestStoreProvider from '../helpers/testStore';
 

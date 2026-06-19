@@ -1,8 +1,13 @@
 /**
- * Confidence level selected when answering a vocabulary prompt.
+ * Self-assessed recall confidence when grading a *revealed* vocabulary card.
+ * Three-way — the user sees the answer first, then rates honestly (UI labels):
+ *   - 'known'   → "Knew it"  — clean recall            (ts-fsrs Good)
+ *   - 'vague'   → "Guessed"  — recalled but effortful  (ts-fsrs Hard, a PASS)
+ *   - 'unknown' → "Forgot"   — failed recall           (ts-fsrs Again)
+ * Mapped to ts-fsrs Rating via CONFIDENCE_TO_RATING in constants/fsrs.ts.
  * Centralized here to avoid repeating the union across hooks and services.
  */
-export type WordConfidence = 'known' | 'unknown';
+export type WordConfidence = 'known' | 'vague' | 'unknown';
 
 /**
  * Consolidated refs for time tracking during review sessions
@@ -29,9 +34,9 @@ export interface ReviewStateRefs {
 export interface SessionMetrics {
   /** Total number of words reviewed */
   wordsReviewed: number;
-  /** Number of words marked as known */
+  /** Number of words recalled (graded "Knew it" or "Guessed") */
   wordsKnown: number;
-  /** Number of words marked as unknown */
+  /** Number of words forgotten (graded "Forgot") */
   wordsUnknown: number;
   /** Average increase in stability during the session */
   averageStabilityIncrease: number;
@@ -42,12 +47,13 @@ export interface SessionMetrics {
   /** Number of words mastered during the session */
   masteredWords: number;
   /**
-   * Words answered correctly on their FIRST attempt this session. Feeds the
-   * adaptive-pacing recall signal — first-attempt-only so in-session re-asks
-   * (spacing / drilling) don't inflate the rate.
+   * Words recalled (Knew it OR Guessed) on their FIRST attempt this session.
+   * Feeds the adaptive-pacing recall signal — first-attempt-only so in-session
+   * re-asks (spacing / drilling) don't inflate the rate. "Guessed" is a Hard
+   * PASS, so it counts as recalled here, matching what FSRS scores it as.
    */
   firstAttemptKnown: number;
-  /** Words answered incorrectly on their FIRST attempt this session. */
+  /** Words forgotten (Forgot) on their FIRST attempt this session. */
   firstAttemptUnknown: number;
   /** Unix timestamp when the session started */
   startTime: number;

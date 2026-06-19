@@ -148,7 +148,12 @@ function IosTimePicker({
         style={[styles.container, { paddingBottom: insets.bottom + LAYOUT.SPACING.LARGE }]}
       >
         <View style={styles.timeDisplay}>
-          <ThemedText colorName="subtitleText" style={styles.timeText} type="heading1" weight="bold">
+          <ThemedText
+            colorName="subtitleText"
+            style={styles.timeText}
+            type="heading1"
+            weight="bold"
+          >
             {formatTime(selectedDate)}
           </ThemedText>
         </View>

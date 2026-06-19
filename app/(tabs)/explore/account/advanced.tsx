@@ -42,7 +42,8 @@ const AdvancedScreen: FC = () => {
     if (!voice.enabled)
       return { label: STRINGS.ADVANCED_MODEL_VOICE_OFF, color: 'textTertiary', spinner: false };
     if (voice.error) return { label: voice.error, color: 'error', spinner: false };
-    if (voice.isReady) return { label: STRINGS.ADVANCED_MODEL_READY, color: 'success', spinner: false };
+    if (voice.isReady)
+      return { label: STRINGS.ADVANCED_MODEL_READY, color: 'success', spinner: false };
     if (voice.isLoading) {
       const pct = Math.round((voice.downloadProgress ?? 0) * 100);
       return {

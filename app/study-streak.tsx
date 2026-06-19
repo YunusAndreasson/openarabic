@@ -2,11 +2,7 @@ import type { JSX } from 'react';
 import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import {
-  BottomSheetHeader,
-  BottomSheetStateHandler,
-  SheetScreen,
-} from '@/components/common';
+import { BottomSheetHeader, BottomSheetStateHandler, SheetScreen } from '@/components/common';
 import { StreakChart, StreakMetrics } from '@/components/explore';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';

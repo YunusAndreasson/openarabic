@@ -8,6 +8,8 @@ import { normalizeImageUrl, formatDate, estimateReadTime } from '@/lib/article-u
 import { useTheme } from '@/components/providers/theme-provider';
 import { shareArticle, canShare } from '@/utils/share';
 import { ARTICLE_HEADER_BLUR } from '@/lib/blur-placeholder';
+import { generateSlug } from '@/lib/slugify';
+import { getAuthorUrl } from '@/lib/author-links';
 import type { Article } from '@/lib/types';
 
 interface ArticleHeaderProps {
@@ -20,7 +22,7 @@ export function ArticleHeader({ article, showSummary = true }: ArticleHeaderProp
   const [shareSuccess, setShareSuccess] = useState(false);
 
   const handleShare = async () => {
-    const articleUrl = `${window.location.origin}/read/${article.id}`;
+    const articleUrl = `${window.location.origin}/read/${generateSlug(article.title, article.id)}`;
     const success = await shareArticle({
       title: article.title,
       text: article.summary,
@@ -81,7 +83,22 @@ export function ArticleHeader({ article, showSummary = true }: ArticleHeaderProp
 
         {/* Metadata */}
         <div className="flex flex-wrap items-center gap-3 md:gap-4 text-white/90 text-sm md:text-base">
-          <span className="font-medium">{article.authors?.name || 'OpenArabic'}</span>
+          {(() => {
+            const authorName = article.authors?.name || 'OpenArabic';
+            const authorUrl = getAuthorUrl(authorName);
+            return authorUrl ? (
+              <a
+                href={authorUrl}
+                target="_blank"
+                rel="noopener noreferrer author"
+                className="font-medium hover:underline"
+              >
+                {authorName}
+              </a>
+            ) : (
+              <span className="font-medium">{authorName}</span>
+            );
+          })()}
           <time
             dateTime={article.created_at}
             className="opacity-90"

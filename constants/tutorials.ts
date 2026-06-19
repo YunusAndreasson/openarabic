@@ -59,7 +59,9 @@ export const TUTORIALS: Record<TutorialId, TutorialConfig> = {
     showDelay: 800,
   },
   [TutorialId.SWIPE_GESTURE]: {
-    storageKey: '@openarabic/tutorials/swipeGestureCompleted',
+    // Key bumped for the reveal-first flow so existing users see the updated
+    // onboarding (tap to reveal, then grade) once.
+    storageKey: '@openarabic/tutorials/reviewFlowCompleted',
     showDelay: 500,
   },
 };

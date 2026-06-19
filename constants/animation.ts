@@ -28,6 +28,10 @@ export const TIMING_CONFIG = {
     duration: 400, // Progress bar animations
     easing: Easing.out(Easing.cubic), // Smooth progress easing
   },
+  FLIP: {
+    duration: 320, // 3D card flip (reveal) — a touch slower than SLOW so the rotation reads
+    easing: Easing.inOut(Easing.cubic), // Symmetric ease for a physical front→back turn
+  },
 } as const;
 
 /**

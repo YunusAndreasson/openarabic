@@ -329,7 +329,16 @@ export function PublicHeader({
 
             <div className="border-t border-border/40 pt-4 mt-4">
               <p className="text-xs text-muted-foreground">
-                Developed by Yunus Andréasson<br />
+                Developed by{' '}
+                <a
+                  href="https://andreassonphoto.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  Yunus Andréasson
+                </a>
+                <br />
                 Contact: <a href="mailto:yunus+openarabic@edenmind.com" className="text-primary hover:underline">yunus+openarabic@edenmind.com</a>
               </p>
             </div>

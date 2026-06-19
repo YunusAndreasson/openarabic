@@ -290,9 +290,9 @@ describe('useFSRS Hook', () => {
       {
         confidence: 'vague' as const,
         rating: 'Hard',
-        expectedProgress: 0,
-        expectComplete: false,
-        description: 'adds to spacing queue (no progress increase)',
+        expectedProgress: 100,
+        expectComplete: true,
+        description: 'completes session (Hard is a pass — no in-session re-drill)',
       },
       {
         confidence: 'unknown' as const,
@@ -524,6 +524,29 @@ describe('useFSRS Hook', () => {
 
       // Next word should be the second word (root_id: 2)
       expect(result.current.currentWord?.root_id).toBe(2);
+    });
+  });
+
+  describe('previewIntervals', () => {
+    test('returns a non-empty interval label for each grade', async () => {
+      const word = createMockStudyWord({ root_id: 1 as RootId });
+      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue([word]);
+
+      const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.currentWord).not.toBeNull();
+      });
+
+      const labels = result.current.previewIntervals(word);
+
+      // Reuses the live ts-fsrs scheduler — every ternary grade gets a label.
+      expect(typeof labels.unknown).toBe('string');
+      expect(typeof labels.vague).toBe('string');
+      expect(typeof labels.known).toBe('string');
+      expect((labels.unknown ?? '').length).toBeGreaterThan(0);
+      expect((labels.vague ?? '').length).toBeGreaterThan(0);
+      expect((labels.known ?? '').length).toBeGreaterThan(0);
     });
   });
 

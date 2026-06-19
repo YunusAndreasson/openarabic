@@ -469,4 +469,71 @@ describe('useSessionMetrics', () => {
       });
     });
   });
+
+  describe('Guessed (vague) grade', () => {
+    test('counts as a recall for wordsKnown and the streak', () => {
+      const { result } = renderHook(() => useSessionMetrics());
+
+      act(() => {
+        result.current.updateMetrics('vague', { rootId: 100 });
+        result.current.updateMetrics('vague', { rootId: 200 });
+      });
+
+      expect(result.current.metrics.wordsKnown).toBe(2);
+      expect(result.current.metrics.wordsUnknown).toBe(0);
+      expect(result.current.metrics.currentStreak).toBe(2);
+      expect(result.current.metrics.longestStreak).toBe(2);
+    });
+
+    test('counts toward first-attempt recall (Hard is a pass)', () => {
+      const { result } = renderHook(() => useSessionMetrics());
+
+      act(() => {
+        result.current.updateMetrics('vague', { rootId: 100 });
+      });
+
+      expect(result.current.metrics.firstAttemptKnown).toBe(1);
+      expect(result.current.metrics.firstAttemptUnknown).toBe(0);
+    });
+
+    test('does not reset the streak', () => {
+      const { result } = renderHook(() => useSessionMetrics());
+
+      act(() => {
+        result.current.updateMetrics('known', { rootId: 100 });
+        result.current.updateMetrics('vague', { rootId: 200 });
+        result.current.updateMetrics('known', { rootId: 300 });
+      });
+
+      expect(result.current.metrics.currentStreak).toBe(3);
+    });
+
+    test('can register a mastery crossing (a Hard pass over 5.0 counts)', () => {
+      const { result } = renderHook(() => useSessionMetrics());
+
+      act(() => {
+        result.current.updateMetrics('vague', {
+          rootId: 100,
+          oldStability: 4.5,
+          newStability: 5.5,
+        });
+      });
+
+      expect(result.current.metrics.masteredWords).toBe(1);
+    });
+
+    test('Forgot does not register a mastery crossing', () => {
+      const { result } = renderHook(() => useSessionMetrics());
+
+      act(() => {
+        result.current.updateMetrics('unknown', {
+          rootId: 100,
+          oldStability: 4.5,
+          newStability: 5.5,
+        });
+      });
+
+      expect(result.current.metrics.masteredWords).toBe(0);
+    });
+  });
 });

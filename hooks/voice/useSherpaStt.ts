@@ -82,8 +82,7 @@ function useSherpaStt({
           deleteArchiveAfterExtract: true,
           signal: abortController.signal,
           onProgress: (progress: DownloadProgress) => {
-            if (!cancelled)
-              setDownloadProgress(Math.max(0, Math.min(1, progress.percent / 100)));
+            if (!cancelled) setDownloadProgress(Math.max(0, Math.min(1, progress.percent / 100)));
           },
         };
         // The model id is resolved against an on-device registry the lib caches

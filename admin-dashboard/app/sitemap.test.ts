@@ -54,7 +54,7 @@ describe('sitemap()', () => {
     expect(urls).toContain('https://openarabic.io/account-deletion');
   });
 
-  it('emits one entry per article using the article id', async () => {
+  it('emits one entry per article using the descriptive slug', async () => {
     setArticles([
       { id: 1, title: 'First', created_at: '2026-01-01T00:00:00Z' },
       { id: 2, title: 'Second', created_at: '2026-02-01T00:00:00Z' },
@@ -65,8 +65,8 @@ describe('sitemap()', () => {
       .map((e) => e.url)
       .filter((u) => u.includes('/read/'));
     expect(articleUrls).toEqual([
-      'https://openarabic.io/read/1',
-      'https://openarabic.io/read/2',
+      'https://openarabic.io/read/first-1',
+      'https://openarabic.io/read/second-2',
     ]);
   });
 

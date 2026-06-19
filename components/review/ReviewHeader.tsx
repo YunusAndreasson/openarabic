@@ -101,9 +101,7 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({
         <Pressable
           onPress={onToggleVoice}
           accessibilityRole="button"
-          accessibilityLabel={
-            voicePaused ? STRINGS.VOICE_RESUME_LABEL : STRINGS.VOICE_PAUSE_LABEL
-          }
+          accessibilityLabel={voicePaused ? STRINGS.VOICE_RESUME_LABEL : STRINGS.VOICE_PAUSE_LABEL}
           style={STATIC_STYLES.voiceButtonSpacing}
         >
           <GlassContainer

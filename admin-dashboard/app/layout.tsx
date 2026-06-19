@@ -4,6 +4,8 @@ import localFont from 'next/font/local';
 import './globals.css';
 import { LayoutWrapper } from '@/components/layout-wrapper';
 import { SmartAppBanner } from '@/components/smart-app-banner';
+import { SiteStructuredData } from '@/components/site-structured-data';
+import { GoogleAnalytics } from '@/components/google-analytics';
 import { detectPlatform } from '@/lib/platform-detection';
 import { APP_STORE_ID } from '@/lib/app';
 
@@ -27,8 +29,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://openarabic.io'),
   title: 'OpenArabic - Learn Arabic Through Reading',
   description: 'Read Arabic articles with parallel English translations. Improve your Arabic reading skills with authentic content.',
+  // Google Search Console ownership verification (HTML-tag method). The token
+  // renders as a public <meta> tag and is tied to the openarabic.io property,
+  // so it's safe to hardcode.
+  verification: { google: '7Ph-VBorESFEHDcvOZq7wp9DHLUe88ARuxlwaPseG00' },
   other: {
     // Enable View Transitions API for modern browsers
     'view-transition': 'same-origin',
@@ -80,6 +87,10 @@ export default async function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${madina.variable}`} suppressHydrationWarning>
       <head>
+        {/* Google Analytics (gtag.js) — must be in <head> for Search Console
+            "Google Analytics" ownership verification. */}
+        <GoogleAnalytics />
+
         {/* Resource hints for faster external requests */}
         <link rel="preconnect" href="https://kkmnzbeugdoajtzfjkxg.supabase.co" />
         <link rel="dns-prefetch" href="https://kkmnzbeugdoajtzfjkxg.supabase.co" />
@@ -93,6 +104,7 @@ export default async function RootLayout({
         />
       </head>
       <body className={inter.className} suppressHydrationWarning>
+        <SiteStructuredData />
         <SmartAppBanner platformInfo={platformInfo} />
         <LayoutWrapper>{children}</LayoutWrapper>
       </body>

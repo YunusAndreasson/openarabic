@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 
-import type { SessionMetrics } from '@/types/review.types';
+import { RECALLED_CONFIDENCE } from '@/constants/fsrs';
+import type { SessionMetrics, WordConfidence } from '@/types/review.types';
 
 // FSRS mastery threshold - words are considered "mastered" when stability >= 5 days
 const MASTERY_THRESHOLD = 5.0;
@@ -40,10 +41,14 @@ export const useSessionMetrics = () => {
    */
   const updateMetrics = useCallback(
     (
-      confidence: 'known' | 'unknown',
+      confidence: WordConfidence,
       wordData?: { rootId: number; oldStability?: number; newStability?: number },
     ) => {
       const metrics = metricsRef.current;
+      // "Knew it" and "Guessed" both count as a recall (Guessed is a Hard PASS);
+      // only "Forgot" is a miss. Keeps recall / streak / mastery consistent with
+      // what FSRS scores and with the drill (which re-asks only on Forgot).
+      const recalled = RECALLED_CONFIDENCE.has(confidence);
 
       // Track unique words reviewed (count each word only once per session)
       if (wordData?.rootId) {
@@ -53,7 +58,7 @@ export const useSessionMetrics = () => {
           // First-attempt-per-word recall signal for adaptive pacing. Recorded
           // only on a word's first grade this session, so in-session re-asks
           // (spacing / drilling) don't inflate the rate.
-          if (confidence === 'known') {
+          if (recalled) {
             metrics.firstAttemptKnown++;
           } else {
             metrics.firstAttemptUnknown++;
@@ -65,19 +70,20 @@ export const useSessionMetrics = () => {
       }
 
       // Track response types and streaks
-      if (confidence === 'known') {
+      if (recalled) {
         metrics.wordsKnown++;
         metrics.currentStreak++;
         metrics.longestStreak = Math.max(metrics.longestStreak, metrics.currentStreak);
       } else {
         metrics.wordsUnknown++;
-        metrics.currentStreak = 0; // Reset streak on unknown
+        metrics.currentStreak = 0; // Reset streak on Forgot
       }
 
-      // Check if word became mastered during THIS session
-      // Only count if: (1) marked as "known", (2) old < 5.0, (3) new >= 5.0
+      // Check if word became mastered during THIS session.
+      // Count if: (1) recalled (Knew it / Guessed — a Hard pass can cross 5.0),
+      // (2) old < 5.0, (3) new >= 5.0
       if (
-        confidence === 'known' &&
+        recalled &&
         wordData?.oldStability !== undefined &&
         wordData?.newStability !== undefined
       ) {

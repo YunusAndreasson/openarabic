@@ -1,14 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import {
-  createContext,
-  use,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  type ReactNode,
-} from 'react';
+import { createContext, use, useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react';
 
 import { AUDIO_STATES } from '@/constants/audio';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
@@ -270,9 +262,7 @@ const GlobalAudioStateContext = createContext<GlobalAudioState | null>(null);
 
 export function GlobalAudioStateProvider({ children }: { children: ReactNode }) {
   const value = useGlobalAudioStateInternal();
-  return (
-    <GlobalAudioStateContext value={value}>{children}</GlobalAudioStateContext>
-  );
+  return <GlobalAudioStateContext value={value}>{children}</GlobalAudioStateContext>;
 }
 
 export function useGlobalAudioState(): GlobalAudioState {

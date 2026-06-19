@@ -109,23 +109,45 @@ describe('useReview Hook - Swipe Gestures', () => {
   });
 
   describe('Swipe Gestures', () => {
-    // Parameterized test for basic swipe handling
+    // Parameterized test for basic grading: reveal the answer first, then grade.
     test.each([
-      {
-        gesture: 'swipe right',
-        action: (result: any) => result.current.handleSwipeRight(),
-        expectedConfidence: 'known',
-        expectedStability: 5,
-      },
-      {
-        gesture: 'swipe left',
-        action: (result: any) => result.current.handleSwipeLeft(),
-        expectedConfidence: 'unknown',
-        expectedStability: 5,
-      },
-    ])(
-      'should handle $gesture → $expectedConfidence',
-      async ({ action, expectedConfidence, expectedStability }) => {
+      { gesture: 'swipe right', confidence: 'known' as const, expectedStability: 5 },
+      { gesture: 'swipe left', confidence: 'unknown' as const, expectedStability: 5 },
+    ])('should handle $gesture → $confidence', async ({ confidence, expectedStability }) => {
+      const word = createMockWord();
+      useFSRS.mockReturnValue({
+        currentWord: word,
+        wordQueue: [word],
+        isLoading: false,
+        isComplete: false,
+        progress: 0,
+        updateWord: mocks.mockUpdateWord,
+        invalidateQueries: mocks.mockInvalidateQueries,
+      });
+
+      const wrapper = createWrapper();
+      const { result } = renderHook(() => useReview(), { wrapper });
+
+      act(() => {
+        result.current.revealAnswer();
+      });
+
+      act(() => {
+        result.current.grade(confidence);
+      });
+
+      await waitFor(() => {
+        expect(mocks.mockUpdateWord).toHaveBeenCalledWith(101, confidence);
+        expect(mocks.mockUpdateMetrics).toHaveBeenCalledWith(confidence, {
+          rootId: 101,
+          oldStability: expectedStability,
+          newStability: 7.5,
+        });
+      });
+    });
+
+    describe('Grade Behavior', () => {
+      test('should fade out on grade (card advance)', async () => {
         const word = createMockWord();
         useFSRS.mockReturnValue({
           currentWord: word,
@@ -141,38 +163,11 @@ describe('useReview Hook - Swipe Gestures', () => {
         const { result } = renderHook(() => useReview(), { wrapper });
 
         act(() => {
-          action(result);
+          result.current.revealAnswer();
         });
-
-        await waitFor(() => {
-          expect(mocks.mockUpdateWord).toHaveBeenCalledWith(101, expectedConfidence);
-          expect(mocks.mockUpdateMetrics).toHaveBeenCalledWith(expectedConfidence, {
-            rootId: 101,
-            oldStability: expectedStability,
-            newStability: 7.5,
-          });
-        });
-      },
-    );
-
-    describe('Known Word Specific Behavior', () => {
-      test('should fade out and fade in for known word transition', async () => {
-        const word = createMockWord();
-        useFSRS.mockReturnValue({
-          currentWord: word,
-          wordQueue: [word],
-          isLoading: false,
-          isComplete: false,
-          progress: 0,
-          updateWord: mocks.mockUpdateWord,
-          invalidateQueries: mocks.mockInvalidateQueries,
-        });
-
-        const wrapper = createWrapper();
-        const { result } = renderHook(() => useReview(), { wrapper });
 
         act(() => {
-          result.current.handleSwipeRight();
+          result.current.grade('known');
         });
 
         await waitFor(() => {
@@ -180,7 +175,7 @@ describe('useReview Hook - Swipe Gestures', () => {
         });
       });
 
-      test('should not show translation for known words', async () => {
+      test('reveals the answer (shows the translation) before grading', () => {
         const word = createMockWord();
         useFSRS.mockReturnValue({
           currentWord: word,
@@ -195,15 +190,17 @@ describe('useReview Hook - Swipe Gestures', () => {
         const wrapper = createWrapper();
         const { result } = renderHook(() => useReview(), { wrapper });
 
-        act(() => {
-          result.current.handleSwipeRight();
-        });
-
-        await waitFor(() => {
-          expect(mocks.mockUpdateWord).toHaveBeenCalled();
-        });
-
+        // Question face first — the answer is hidden until revealed.
         expect(result.current.showTranslation).toBeFalsy();
+        expect(result.current.revealed).toBeFalsy();
+
+        act(() => {
+          result.current.revealAnswer();
+        });
+
+        expect(result.current.revealed).toBeTruthy();
+        expect(result.current.showTranslation).toBeTruthy();
+        expect(result.current.currentMeaning).toBe('book');
       });
     });
 
@@ -235,7 +232,8 @@ describe('useReview Hook - Swipe Gestures', () => {
         const { result } = renderHook(() => useReview(), { wrapper });
 
         await act(async () => {
-          result.current.handleSwipeLeft();
+          result.current.revealAnswer();
+          result.current.grade('unknown');
           await Promise.resolve();
           await Promise.resolve();
         });

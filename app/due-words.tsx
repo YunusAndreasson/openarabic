@@ -6,8 +6,7 @@ import { DueWordsPrognosisChart } from '@/components/practice/charts/DueWordsPro
 import { STRINGS } from '@/constants/strings';
 import type { StudyWord } from '@/types/vocabulary.types';
 
-const filterWordsWithRoot = (words: StudyWord[]) =>
-  words.filter(word => word?.root_id != null);
+const filterWordsWithRoot = (words: StudyWord[]) => words.filter(word => word?.root_id != null);
 
 export default function DueWordsScreen(): JSX.Element {
   return (

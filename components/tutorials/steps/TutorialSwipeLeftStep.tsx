@@ -64,7 +64,10 @@ export function TutorialSwipeLeftStep() {
       {/* Left indicator */}
       <View style={styles.indicatorRow}>
         <View
-          style={[styles.indicator, { backgroundColor: withOpacity(colors.error, LAYOUT.OPACITY.FAINT) }]}
+          style={[
+            styles.indicator,
+            { backgroundColor: withOpacity(colors.error, LAYOUT.OPACITY.FAINT) },
+          ]}
         >
           <Ionicons
             name="chevron-back"

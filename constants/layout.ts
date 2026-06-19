@@ -296,6 +296,11 @@ export const LAYOUT = {
     TOP_OVERLAY: 9999, // Maximum z-index for critical overlays that must be above everything
   },
 
+  /** 3D transform focal length (px) for perspective transforms (e.g. card flip) */
+  PERSPECTIVE: {
+    CARD: 1000, // Review flip card front/back rotateY depth
+  },
+
   CHART: {
     Y_AXIS_WIDTH: BASE_UNIT * 8, // 32 - adjusted for "100%" label visibility
     CURSOR_WIDTH: 2, // Chart interaction cursor width

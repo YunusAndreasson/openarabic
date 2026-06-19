@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ViewStyle } from 'react-native';
 import { InteractionManager } from 'react-native';
 
@@ -9,6 +9,7 @@ import { TIMING_CONFIG } from '@/constants/animation';
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import { fsrsQueries } from '@/constants/queries';
 import { ROUTE_PATHS } from '@/constants/routes';
+import { STRINGS } from '@/constants/strings';
 import { analytics } from '@/services/analytics';
 import { simpleAudioService, type AudioStatus } from '@/services/audioPlayer';
 import { useOpacityAnimation } from '@/hooks/animations';
@@ -19,7 +20,12 @@ import { useSessionMetrics } from './useSessionMetrics';
 import { useTimerCleanup } from '@/hooks/utils';
 import { useFSRS } from '@/hooks/vocabulary';
 import { audioCache } from '@/services/audioCache';
-import type { ReviewStateRefs, ReviewTimeRefs, SessionMetrics } from '@/types/review.types';
+import type {
+  ReviewStateRefs,
+  ReviewTimeRefs,
+  SessionMetrics,
+  WordConfidence,
+} from '@/types/review.types';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
@@ -36,6 +42,8 @@ interface UseReviewReturn {
   currentMeaning: string;
   currentWord?: StudyWord | null;
   showTranslation: boolean;
+  /** Whether the current card's answer has been revealed (flipped). */
+  revealed: boolean;
   isComplete: boolean;
   isUpdating: boolean;
   isLoading: boolean;
@@ -43,8 +51,15 @@ interface UseReviewReturn {
   progress: number;
   maxProgress: number;
   currentWordKey: string;
-  handleSwipeLeft: () => void;
-  handleSwipeRight: () => void;
+  /** Flip the current card to its answer (English meaning + audio). Does not advance. */
+  revealAnswer: () => void;
+  /**
+   * Commit the self-grade for the (revealed) card and advance. `fromVoice` skips
+   * the reveal guard for the voice auto-advance path (speaking IS the proof).
+   */
+  grade: (confidence: WordConfidence, opts?: { fromVoice?: boolean }) => void;
+  /** Per-grade interval labels ("10m"/"4d") for the current card's grade bar. */
+  intervalLabels: Partial<Record<WordConfidence, string>>;
   handleClose: () => void;
   transparentStyle: AnimatedStyleProp<ViewStyle>;
   sessionMetrics: SessionMetrics;
@@ -52,19 +67,15 @@ interface UseReviewReturn {
   isAudioPreloading: boolean;
   audioPreloadProgress: number;
   isAudioPreloadingComplete: boolean;
-  /** Show the English meaning + play English audio without advancing the card.
-   *  Used by the voice-grading flow on a missed transcript: the user gets the
-   *  answer as a study aid but still chooses Known / Unknown manually. */
+  /** Play the English meaning audio without advancing or flipping the card.
+   *  Shared by the manual reveal and the voice-grading miss path (the answer is
+   *  shown by the flip / the voice result panel; this just plays the audio). */
   revealMeaningPassive: () => void;
   /** The `currentWordKey` whose Arabic prompt audio has finished playing (or
    *  had no audio to play). Lets the voice-grading hook arm the mic only once
    *  the prompt is fully done, without sniffing the global audio status — which
    *  can't tell this card's prompt from lingering/previous audio. */
   promptAudioDoneKey: string | null;
-  /** Advance the current card as Unknown WITHOUT re-revealing the meaning —
-   *  used by the voice result panel, which already revealed the answer. Skips
-   *  the meaning overlay, the English audio replay and the 3 s display wait. */
-  handleVoiceUnknownResolved: () => void;
   /** Stop any in-flight playback (e.g. the reveal audio) so the mic can reopen
    *  cleanly on a voice retry without capturing the tail of a spoken answer. */
   stopAudio: () => void;
@@ -74,7 +85,6 @@ interface UseReviewReturn {
 const TRANSITION_DELAYS = {
   initial: TIMING_CONFIG.FAST.duration, // Initial delay before animation
   fadeAnimation: TIMING_CONFIG.MEDIUM.duration, // Delay for fade animation
-  meaningDisplay: 3000, // Display time for meaning overlay
 };
 
 /** Grace after the prompt stops before declaring it done, so the tail isn't
@@ -152,6 +162,9 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
   // UI state
   const [showTranslation, setShowTranslation] = useState(false);
+  // Reveal-first: the card starts on its question face; the user flips it to the
+  // answer (revealAnswer) BEFORE self-grading. Reset to false on every new card.
+  const [revealed, setRevealed] = useState(false);
   const [currentMeaning, setCurrentMeaning] = useState('');
   // Ensure UI re-renders when updating state changes so gestures re-enable
   const [isUpdatingUI, setIsUpdatingUI] = useState(false);
@@ -209,12 +222,20 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     setMaxProgress(100);
   }, [stopAudioSafely]);
 
-  const { currentWord, isComplete, progress, updateWord, invalidateQueries, wordQueue, isLoading } =
-    useFSRS({
-      userId: user?.id,
-      onComplete: triggerCompletionTransition,
-      sessionCooldownHours: DEFAULT_SESSION_COOLDOWN_HOURS,
-    });
+  const {
+    currentWord,
+    isComplete,
+    progress,
+    updateWord,
+    previewIntervals,
+    invalidateQueries,
+    wordQueue,
+    isLoading,
+  } = useFSRS({
+    userId: user?.id,
+    onComplete: triggerCompletionTransition,
+    sessionCooldownHours: DEFAULT_SESSION_COOLDOWN_HOURS,
+  });
 
   // Audio preloading hook (must come after wordQueue/isComplete from useFSRS)
   const {
@@ -231,15 +252,14 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     ? `${currentWord.root_id}-${currentWord.fsrs_last_review ?? ''}-${currentWord.fsrs_reps ?? 0}`
     : 'none';
 
-  // Stable refs for callback optimization
-  const currentWordRef = useRef(currentWord);
-  const currentWordKeyRef = useRef(currentWordKey);
-
-  // Update refs when values change
-  useEffect(() => {
-    currentWordRef.current = currentWord;
-    currentWordKeyRef.current = currentWordKey;
-  }, [currentWord, currentWordKey]);
+  // Per-grade interval labels ("10m"/"4d") for the grade bar, recomputed per card
+  // (currentWord changes on every advance, including a re-queued word reappearing).
+  // `previewIntervals` is guarded for partial useFSRS mocks in tests; in production
+  // it is always present.
+  const intervalLabels = useMemo(
+    () => (currentWord && previewIntervals ? previewIntervals(currentWord) : {}),
+    [currentWord, previewIntervals],
+  );
 
   // Ensure translation is hidden when advancing to a new word.
   // Synchronises local UI flags with currentWordKey transitions; setState here is
@@ -248,9 +268,10 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     // Clear any pending translation timers
     clearTimer('meaningTimeout');
 
-    // Immediately hide translation and reset state
+    // Immediately hide translation and snap the card back to its question face
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setShowTranslation(false);
+    setRevealed(false);
     setCurrentMeaning('');
     // Reset stale completion flag if a new word/session appears
     if (currentWordKey !== 'none' && stateRefs.current.completionTriggered) {
@@ -258,38 +279,16 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     }
   }, [currentWordKey, clearTimer]);
 
-  // Batch state updates for translation display
-  const showTranslationWithTimeout = useCallback(
-    (meaning: string) => {
-      setCurrentMeaning(meaning);
-      setShowTranslation(true);
-
-      setTimer(
-        'meaningDisplay',
-        () => {
-          setShowTranslation(false);
-        },
-        TRANSITION_DELAYS.meaningDisplay,
-      );
-    },
-    [setTimer],
-  );
-
-  // Shows translation for unknown words
-  const displayMeaning = useCallback(() => {
-    const meaning = currentWord?.root?.meaning || 'No translation available';
-    showTranslationWithTimeout(meaning);
-  }, [currentWord?.root?.meaning, showTranslationWithTimeout]);
-
   // Process the word update in FSRS
   const processFeedback = useCallback(
-    async (confidence: 'known' | 'unknown', controller: AbortController) => {
+    async (confidence: WordConfidence, controller: AbortController) => {
       if (!currentWord?.root_id || controller.signal.aborted) {
         return;
       }
 
-      // Store old stability before update for metrics tracking
+      // Store old stability + reps before update for metrics / telemetry
       const oldStability = currentWord.fsrs_stability ?? undefined;
+      const reps = currentWord.fsrs_reps ?? 0;
       const rootId = currentWord.root_id;
 
       try {
@@ -298,6 +297,16 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
         // Increment words reviewed count for analytics
         wordsReviewedCount.current += 1;
+
+        // Per-grade telemetry — the Forgot/Guessed/Knew-it distribution the
+        // reveal-first flow is about (binary swipe analytics couldn't express it).
+        analytics.track(ANALYTICS_EVENTS.REVIEW_WORD_GRADED, {
+          confidence,
+          root_id: rootId,
+          old_stability: oldStability,
+          new_stability: newStability,
+          reps,
+        });
 
         // Update session metrics with old and new stability for accurate tracking
         updateMetrics(confidence, {
@@ -332,6 +341,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     [
       currentWord?.root_id,
       currentWord?.fsrs_stability,
+      currentWord?.fsrs_reps,
       updateWord,
       updateMetrics,
       fadeIn,
@@ -365,11 +375,10 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     }
   }, []);
 
-  // Voice-grading miss path: play the English audio as a study aid but do NOT
-  // schedule processFeedback — the card stays open for the user to pick. The
-  // answer text is shown (persistently) by the VoiceResultPanel itself, so we
-  // intentionally skip the transient center translation overlay here: it would
-  // flash for 3 s and then vanish while the panel kept showing the answer.
+  // Play the English meaning audio without advancing or flipping the card.
+  // Shared by the manual reveal (revealAnswer) and the voice-grading miss path
+  // (onRevealAnswer) — the answer text is shown by the flip / the VoiceResultPanel,
+  // so this only handles audio.
   const revealMeaningPassive = useCallback(() => {
     if (stateRefs.current.isUpdatingWord || isComplete || stateRefs.current.completionTriggered) {
       return;
@@ -382,18 +391,35 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     }
   }, [currentWord, isComplete, playAudio]);
 
-  const handleKnowledgeResponse = useCallback(
-    (confidence: 'known' | 'unknown', options: { skipReveal?: boolean } = {}) => {
-      // skipReveal: the answer was already revealed (voice result panel), so
-      // advance straight through like a Known swipe — no meaning overlay, no
-      // English audio replay, no 3 s wait — while still recording Unknown.
-      const skipReveal = options.skipReveal ?? false;
-      // Guard conditions: exit early if we're already in a processing state
+  // Reveal the answer: flip the card, show the English meaning persistently and
+  // play the English audio. Does NOT advance — the user self-grades next. Setting
+  // showTranslation also suppresses the Arabic-replay effect (guarded on it), so
+  // revealing never retriggers the prompt audio.
+  const revealAnswer = useCallback(() => {
+    if (stateRefs.current.isUpdatingWord || isComplete || stateRefs.current.completionTriggered) {
+      return;
+    }
+    if (revealed) return; // idempotent — tapping the card twice flips once
+    setRevealed(true);
+    setCurrentMeaning(currentWord?.root?.meaning || STRINGS.NO_TRANSLATION_AVAILABLE);
+    setShowTranslation(true);
+    revealMeaningPassive();
+    lightFeedback();
+  }, [revealed, isComplete, currentWord?.root?.meaning, revealMeaningPassive]);
+
+  // Commit the self-grade for the revealed card and advance. The answer is
+  // already on screen, so this is a clean fade-out → FSRS write → next card
+  // (no meaning overlay, no English replay). `fromVoice` skips the reveal guard
+  // for the voice auto-advance path (speaking the answer IS the proof).
+  const grade = useCallback(
+    (confidence: WordConfidence, opts: { fromVoice?: boolean } = {}) => {
       if (stateRefs.current.isUpdatingWord || isComplete || stateRefs.current.completionTriggered) {
         return;
       }
+      // Grading only happens after the answer is revealed — except a voice match,
+      // which confirms the answer without an on-screen reveal.
+      if (!revealed && !opts.fromVoice) return;
 
-      // Set updating flag immediately to prevent concurrent processing
       stateRefs.current.isUpdatingWord = true;
       setIsUpdatingUI(true);
 
@@ -404,58 +430,22 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       const controller = new AbortController();
       abortControllerRef.current = controller;
 
-      // Note: Session metrics are updated in processFeedback after FSRS calculation
-      // This ensures we have both old and new stability values for accurate tracking
-
-      // Start transition animation
+      // Note: session metrics are updated in processFeedback after FSRS calculation
+      // (it has both old and new stability for accurate tracking).
       setTimer(
         'initialTransition',
         () => {
           if (controller.signal.aborted) return;
 
-          // Clean up any playing audio before proceeding
+          // Stop the reveal (English) audio before advancing so it doesn't bleed
+          // into the next card.
           stopAudioSafely();
-
-          // KNOWN WORDS (or an already-revealed voice Unknown): fade out and
-          // proceed quickly without re-showing the meaning.
-          if (confidence === 'known' || skipReveal) {
-            fadeOut();
-            setTimer(
-              'fadeAnimation',
-              () => {
-                if (controller.signal.aborted) return;
-                processFeedback(confidence, controller);
-              },
-              TRANSITION_DELAYS.fadeAnimation,
-            );
-            return;
-          }
-
-          // UNKNOWN WORDS: Show translation + play audio + delay before next word
+          fadeOut();
           setTimer(
-            'fadeAnimationUnknown',
+            'fadeAnimation',
             () => {
               if (controller.signal.aborted) return;
-
-              // Show translation overlay with red text
-              displayMeaning();
-
-              // Play English feedback audio
-              if (currentWord?.root?.audio_url_en) {
-                const englishAudioUrl = generateStorageUrl('audio', currentWord.root.audio_url_en);
-                if (englishAudioUrl) {
-                  playAudio(englishAudioUrl);
-                }
-              }
-
-              // Wait for meaning display before processing
-              setTimer(
-                'meaningTimeout',
-                () => {
-                  processFeedback(confidence, controller);
-                },
-                TRANSITION_DELAYS.meaningDisplay,
-              );
+              processFeedback(confidence, controller);
             },
             TRANSITION_DELAYS.fadeAnimation,
           );
@@ -463,16 +453,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
         TRANSITION_DELAYS.initial,
       );
     },
-    [
-      isComplete,
-      fadeOut,
-      displayMeaning,
-      processFeedback,
-      playAudio,
-      currentWord,
-      setTimer,
-      stopAudioSafely,
-    ],
+    [revealed, isComplete, fadeOut, processFeedback, setTimer, stopAudioSafely],
   );
 
   // Effect: Handle completion transition
@@ -661,24 +642,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     return undefined;
   }, [currentWord, isComplete, isLoading, triggerCompletionTransition]);
 
-  const handleSwipeLeft = useCallback(() => {
-    if (isComplete || stateRefs.current.isUpdatingWord || !currentWordRef.current) return;
-    handleKnowledgeResponse('unknown');
-  }, [handleKnowledgeResponse, isComplete]);
-
-  const handleSwipeRight = useCallback(() => {
-    if (isComplete || stateRefs.current.isUpdatingWord || !currentWordRef.current) return;
-    handleKnowledgeResponse('known');
-  }, [handleKnowledgeResponse, isComplete]);
-
-  // Voice result panel "Didn't know": the meaning was already revealed when the
-  // panel appeared, so advance as Unknown without re-revealing / re-playing.
-  const handleVoiceUnknownResolved = useCallback(() => {
-    if (isComplete || stateRefs.current.isUpdatingWord || !currentWordRef.current) return;
-    handleKnowledgeResponse('unknown', { skipReveal: true });
-  }, [handleKnowledgeResponse, isComplete]);
-
-  // Replay audio for current word (passed to WordDisplay via ReviewCard).
+  // Replay audio for current word (passed to WordDisplay via ReviewFlipCard).
   // playAudio → service.play() already pauses + replace()s the existing player
   // and restarts from 0, so an explicit stop() here would just destroy and
   // recreate the native player on every tap.
@@ -775,6 +739,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       stateRefs.current.progressUpdatedForCompletion = false;
 
       setShowTranslation(false);
+      setRevealed(false);
 
       try {
         fadeIn();
@@ -802,6 +767,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     currentMeaning,
     currentWord,
     showTranslation,
+    revealed,
     isComplete,
     isUpdating: isUpdatingUI,
     isLoading,
@@ -809,8 +775,9 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     progress,
     maxProgress,
     currentWordKey,
-    handleSwipeLeft,
-    handleSwipeRight,
+    revealAnswer,
+    grade,
+    intervalLabels,
     handleClose,
     transparentStyle: opacityStyle,
     sessionMetrics,
@@ -820,7 +787,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     isAudioPreloadingComplete,
     revealMeaningPassive,
     promptAudioDoneKey,
-    handleVoiceUnknownResolved,
     stopAudio: stopAudioSafely,
   };
 }

@@ -244,7 +244,6 @@ export class VoiceRecorder {
         await AudioManager.setAudioSessionActivity(true);
       } catch (sessionErr) {
         if (__DEV__) {
-           
           console.log(
             `[voice] ios session setup failed: ${sessionErr instanceof Error ? sessionErr.message : String(sessionErr)}`,
           );
@@ -285,7 +284,6 @@ export class VoiceRecorder {
     // margin so a normal handleBuffer-driven stop still wins the race.
     const watchdogDelay = this.config.maxDurationMs + 500;
     if (__DEV__) {
-       
       console.log(
         `[voice] start: watchdog scheduled in ${watchdogDelay}ms (maxDurationMs=${this.config.maxDurationMs})`,
       );
@@ -294,7 +292,6 @@ export class VoiceRecorder {
       if (!this.stopping) {
         const at = Date.now() - this.startedAt;
         if (__DEV__) {
-           
           console.log(`[voice] watchdog FIRED at ${at}ms (scheduled ${watchdogDelay}ms)`);
         }
         this.stopping = true;
@@ -314,7 +311,6 @@ export class VoiceRecorder {
     if (this.firstBufferAt === null) {
       this.firstBufferAt = Date.now() - this.startedAt;
       if (__DEV__) {
-         
         console.log(`[voice] first buffer at ${this.firstBufferAt}ms`);
       }
     }
@@ -359,7 +355,6 @@ export class VoiceRecorder {
       this.stopReason = quietEnough ? 'silence' : noSpeechTimedOut ? 'noSpeech' : 'maxDuration';
       this.stopDecidedAt = elapsed;
       if (__DEV__) {
-         
         console.log(
           `[voice] handleBuffer stop ${this.stopReason} at ${elapsed}ms (speechSeen=${this.speechSeen} silenceMs=${this.silenceMs} peakRms=${this.peakRms.toFixed(5)})`,
         );
@@ -386,7 +381,6 @@ export class VoiceRecorder {
     const firstBufferMs = this.firstBufferAt;
     const stopDecidedAtMs = this.stopDecidedAt || durationMs;
     if (__DEV__) {
-       
       console.log(
         `[voice] stop: durationMs=${durationMs} stopReason=${stopReason} bufferCount=${bufferCount} firstBufferMs=${firstBufferMs} peakRms=${peakRms.toFixed(5)} speechSeen=${heardSpeech}`,
       );

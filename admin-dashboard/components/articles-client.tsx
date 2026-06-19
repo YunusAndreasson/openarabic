@@ -7,6 +7,7 @@ import { PublicHeader } from '@/components/public-header';
 import { ArticleGrid } from '@/components/article-grid';
 import { Footer } from '@/components/footer';
 import { AppDownloadCTA } from '@/components/app-download-cta';
+import { HomeHero } from '@/components/home-hero';
 import { ITEMS_PER_PAGE } from '@/lib/constants';
 import { BookDownloads } from '@/components/book-downloads';
 import type { PlatformInfo } from '@/lib/platform-detection';
@@ -133,6 +134,8 @@ export function ArticlesClient({
         {/* App download CTA - Mobile: single store, Desktop: both stores */}
         {selectedCategoryId === null && (
           <>
+            <HomeHero />
+
             <div className="mb-8">
               <AppDownloadCTA
                 platformInfo={platformInfo}

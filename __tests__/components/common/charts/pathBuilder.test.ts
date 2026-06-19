@@ -21,14 +21,7 @@ jest.mock('@shopify/react-native-skia', () => ({
             commands.push(`M${x},${y}`);
             return builder;
           },
-          cubicTo: (
-            cx1: number,
-            cy1: number,
-            cx2: number,
-            cy2: number,
-            x: number,
-            y: number,
-          ) => {
+          cubicTo: (cx1: number, cy1: number, cx2: number, cy2: number, x: number, y: number) => {
             commands.push(`C${cx1},${cy1} ${cx2},${cy2} ${x},${y}`);
             return builder;
           },
