@@ -3,7 +3,8 @@ import { supabase } from '@/lib/supabase';
 import { parseTrailingId } from '@/lib/slugify';
 import type { Article, Author } from '@/lib/types';
 
-export const SITE_URL = 'https://openarabic.io';
+// Re-exported so server code with an authors import keeps one import site.
+export { SITE_URL } from '@/lib/constants';
 
 // Pure slug/path builders live in author-slug.ts (client-safe). Re-exported
 // here so server code has a single author module to import from.

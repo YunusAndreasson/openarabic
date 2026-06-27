@@ -35,7 +35,7 @@ export function ArticleVocabulary({ roots }: ArticleVocabularyProps) {
               href={wordPagePath(root)}
               className="inline-flex items-baseline gap-2 rounded-lg border border-border/60 bg-card px-3 py-1.5 text-sm transition-colors hover:border-border hover:bg-muted/50"
             >
-              <span lang="ar" dir="rtl" className="text-base text-foreground">
+              <span lang="ar" dir="rtl" className="font-arabic text-base text-foreground">
                 {root.letters}
               </span>
               <span className="text-muted-foreground">{root.meaning}</span>

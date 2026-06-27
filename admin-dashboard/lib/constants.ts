@@ -4,6 +4,12 @@
  */
 
 /**
+ * Canonical production origin. Single source of truth for absolute URLs in
+ * metadata, canonicals, JSON-LD, and the sitemap — never hardcode the literal.
+ */
+export const SITE_URL = 'https://openarabic.io';
+
+/**
  * Number of articles to fetch per page
  * Used for pagination and infinite scroll
  */

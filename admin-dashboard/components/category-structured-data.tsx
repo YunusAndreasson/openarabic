@@ -1,7 +1,6 @@
 import { generateSlug } from '@/lib/slugify';
+import { SITE_URL } from '@/lib/constants';
 import type { Article } from '@/lib/types';
-
-const SITE_URL = 'https://openarabic.io';
 
 interface CategoryStructuredDataProps {
   categoryId: number;

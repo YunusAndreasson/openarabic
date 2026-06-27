@@ -1,8 +1,7 @@
 import type { Database } from '@/lib/database.types';
 import { generateSlug } from '@/lib/slugify';
 import { authorPath } from '@/lib/author-slug';
-
-const SITE_URL = 'https://openarabic.io';
+import { SITE_URL } from '@/lib/constants';
 
 type Article = Database['public']['Tables']['articles']['Row'] & {
   authors: { name: string } | null;

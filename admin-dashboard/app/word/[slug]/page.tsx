@@ -14,9 +14,8 @@ import { WordStructuredData } from '@/components/word-structured-data';
 import { AudioButton } from '@/components/audio-button';
 import { HighlightedArabic } from '@/components/highlighted-arabic';
 import { Footer } from '@/components/footer';
+import { SITE_URL } from '@/lib/constants';
 import type { Category } from '@/lib/types';
-
-const SITE_URL = 'https://openarabic.io';
 
 export async function generateMetadata({
   params,
@@ -89,7 +88,7 @@ export default async function WordPage({
             Arabic vocabulary
           </p>
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-foreground flex flex-wrap items-baseline gap-x-4 gap-y-2">
-            <span lang="ar" dir="rtl">
+            <span lang="ar" dir="rtl" className="font-arabic">
               {root.letters}
             </span>
             <span className="text-2xl md:text-3xl text-muted-foreground font-semibold">
@@ -123,7 +122,7 @@ export default async function WordPage({
                     <p
                       lang="ar"
                       dir="rtl"
-                      className="flex-1 text-2xl md:text-[26px] leading-[1.9] text-right text-foreground"
+                      className="flex-1 font-arabic text-2xl md:text-[26px] leading-[1.9] text-right text-foreground"
                     >
                       <HighlightedArabic
                         text={ex.sentenceArabic}
@@ -139,7 +138,7 @@ export default async function WordPage({
                   </p>
                   {ex.grammarNote && (
                     <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-                      <span lang="ar" dir="rtl" className="font-semibold text-foreground">
+                      <span lang="ar" dir="rtl" className="font-arabic font-semibold text-foreground">
                         {ex.wordForm}
                       </span>{' '}
                       — {ex.english}. {ex.grammarNote}
@@ -163,7 +162,7 @@ export default async function WordPage({
           </h2>
           <p className="text-sm text-muted-foreground leading-relaxed mb-4">
             OpenArabic teaches words like{' '}
-            <span lang="ar" dir="rtl" className="text-foreground">
+            <span lang="ar" dir="rtl" className="font-arabic text-foreground">
               {root.letters}
             </span>{' '}
             through real bilingual reading with native audio and spaced-repetition

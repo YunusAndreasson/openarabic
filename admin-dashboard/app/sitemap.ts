@@ -3,9 +3,9 @@ import { supabase } from '@/lib/supabase';
 import { generateSlug } from '@/lib/slugify';
 import { authorSlug } from '@/lib/author-slug';
 import { getWordPagesForSitemap } from '@/lib/word-pages';
+import { SITE_URL as baseUrl } from '@/lib/constants';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://openarabic.io';
 
   // Fetch articles (capped at 50k — XML sitemap protocol limit), plus authors,
   // categories, and dictionary entries. Each set is a separate landing-page

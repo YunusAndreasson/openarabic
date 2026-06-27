@@ -1,9 +1,8 @@
 import { wordPagePath } from '@/lib/word-pages';
+import { SITE_URL } from '@/lib/constants';
 import type { Database } from '@/lib/database.types';
 
 type Root = Database['public']['Tables']['roots']['Row'];
-
-const SITE_URL = 'https://openarabic.io';
 
 interface WordStructuredDataProps {
   root: Root;

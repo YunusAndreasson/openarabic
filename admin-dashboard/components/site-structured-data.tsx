@@ -1,6 +1,5 @@
 import { APP_NAME } from '@/lib/app';
-
-const SITE_URL = 'https://openarabic.io';
+import { SITE_URL } from '@/lib/constants';
 
 /**
  * Site-wide JSON-LD (Organization + WebSite) for the root layout.
