@@ -17,7 +17,10 @@ const BANNER_HEIGHT = 72;
 // Routes where the banner should appear (exclude homepage since it has hero CTA)
 const BANNER_ROUTES = ['/login', '/privacy', '/terms', '/contact'];
 const shouldShowOnRoute = (path: string) =>
-  BANNER_ROUTES.includes(path) || path.startsWith('/read/');
+  BANNER_ROUTES.includes(path) ||
+  path.startsWith('/read/') ||
+  path.startsWith('/word/') ||
+  path.startsWith('/author/');
 
 // On iOS Safari the native apple-itunes-app Smart App Banner already shows, so
 // the custom banner suppresses itself there to avoid a double banner. It still

@@ -1,16 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
-
-// Define public routes that don't require authentication
-const PUBLIC_ROUTES = ['/', '/login', '/account-deletion', '/privacy', '/terms', '/contact', '/download-app'];
-const isPublicRoute = (path: string) => {
-  return (
-    PUBLIC_ROUTES.includes(path) ||
-    path.startsWith('/read/') ||
-    path.startsWith('/word/') ||
-    path.startsWith('/author/')
-  );
-};
+import { isPublicRoute } from '@/lib/public-routes';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
