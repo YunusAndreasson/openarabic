@@ -42,12 +42,17 @@ export function ArticlesClient({
   // Ref for infinite scroll observer
   const observerTarget = useRef<HTMLDivElement>(null);
 
-  // Reset articles when server provides new initial data (category change)
-  useEffect(() => {
+  // Reset client list state when the server sends new initial data (category
+  // change). Adjusted during render — React's recommended alternative to an
+  // effect that only mirrors a prop — so there's no extra commit/cascading
+  // render. See https://react.dev/learn/you-might-not-need-an-effect
+  const [prevInitial, setPrevInitial] = useState(initialArticles);
+  if (prevInitial !== initialArticles) {
+    setPrevInitial(initialArticles);
     setArticles(initialArticles);
     setPage(1);
     setHasMore(initialArticles.length === ITEMS_PER_PAGE);
-  }, [initialArticles]);
+  }
 
   const fetchMoreArticles = useCallback(async (pageNum: number) => {
     try {
