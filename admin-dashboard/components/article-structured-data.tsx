@@ -1,6 +1,6 @@
 import type { Database } from '@/lib/database.types';
 import { generateSlug } from '@/lib/slugify';
-import { getAuthorUrl } from '@/lib/author-links';
+import { authorPath } from '@/lib/author-slug';
 
 const SITE_URL = 'https://openarabic.io';
 
@@ -21,7 +21,7 @@ export function ArticleStructuredData({ article }: ArticleStructuredDataProps) {
   const articleUrl = `${SITE_URL}/read/${generateSlug(article.title, article.id)}`;
   const categoryName = article.categories?.name || 'General';
   const authorName = article.authors?.name || 'OpenArabic';
-  const authorUrl = getAuthorUrl(authorName);
+  const authorUrl = `${SITE_URL}${authorPath({ id: article.author_id, name: authorName })}`;
 
   const structuredData = {
     '@context': 'https://schema.org',

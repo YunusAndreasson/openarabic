@@ -20,9 +20,9 @@ export function ArticleNav({ categories, selectedCategoryId }: ArticleNavProps) 
   const router = useRouter();
   const [, startTransition] = useTransition();
 
-  const handleSelectCategory = () => {
+  const handleSelectCategory = (categoryId: number | null) => {
     startTransition(() => {
-      router.push('/');
+      router.push(categoryId === null ? '/' : `/?category=${categoryId}`);
     });
   };
 

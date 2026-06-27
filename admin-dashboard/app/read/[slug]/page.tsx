@@ -8,6 +8,7 @@ import { ArticleHeader } from '@/components/article-header';
 import { ArticleContent } from '@/components/article-content';
 import { SentencePair } from '@/components/sentence-pair';
 import { RelatedArticles } from '@/components/related-articles';
+import { ArticleVocabulary } from '@/components/article-vocabulary';
 import { AppDownloadCTA } from '@/components/app-download-cta';
 import { ReadingHint } from '@/components/reading-hint';
 import { Footer } from '@/components/footer';
@@ -24,6 +25,13 @@ type Article = Database['public']['Tables']['articles']['Row'] & {
 type ArticleSentence = Database['public']['Tables']['article_sentences']['Row'];
 type SentenceWord = Database['public']['Tables']['sentence_words']['Row'];
 type Category = Database['public']['Tables']['categories']['Row'];
+type VocabRoot = Pick<
+  Database['public']['Tables']['roots']['Row'],
+  'id' | 'letters' | 'meaning'
+>;
+
+// Cap the "Key vocabulary" list so an unusually long text doesn't bloat the page.
+const MAX_VOCAB_ENTRIES = 150;
 
 const SUPABASE_STORAGE_URL =
   'https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/images';
@@ -149,7 +157,43 @@ export default async function ArticleReadPage({
     sentenceWords[word.sentence_id].push(word);
   });
 
-  const relatedArticles = (relatedResult.data as Article[]) || [];
+  let relatedArticles = (relatedResult.data as Article[]) || [];
+
+  // Backfill the related list with recent articles when the category is sparse,
+  // so every article ends with onward internal links.
+  if (relatedArticles.length < 3) {
+    const excludeIds = [articleId, ...relatedArticles.map((a) => a.id)];
+    const { data: more } = await supabase
+      .from('articles')
+      .select('*, authors(name), categories(name)')
+      .not('id', 'in', `(${excludeIds.join(',')})`)
+      .order('created_at', { ascending: false })
+      .limit(3 - relatedArticles.length);
+    relatedArticles = [...relatedArticles, ...((more as Article[]) || [])];
+  }
+
+  // Distinct dictionary entries used in this article, in order of appearance →
+  // crawlable "Key vocabulary" links to the per-word dictionary pages.
+  const orderedRootIds: number[] = [];
+  const seenRootIds = new Set<number>();
+  for (const word of (wordsResult.data as SentenceWord[]) || []) {
+    if (!seenRootIds.has(word.root_id)) {
+      seenRootIds.add(word.root_id);
+      orderedRootIds.push(word.root_id);
+    }
+  }
+  const vocabIds = orderedRootIds.slice(0, MAX_VOCAB_ENTRIES);
+  const { data: vocabRootsData } = vocabIds.length
+    ? await supabase.from('roots').select('id, letters, meaning').in('id', vocabIds)
+    : { data: [] as VocabRoot[] };
+  const vocabById = new Map(
+    ((vocabRootsData as VocabRoot[]) || []).map((r) => [r.id, r]),
+  );
+  const vocabRoots = vocabIds
+    .map((id) => vocabById.get(id))
+    .filter(
+      (r): r is VocabRoot => !!r && !!r.letters?.trim() && !!r.meaning?.trim(),
+    );
 
   return (
     <div className="min-h-screen">
@@ -186,6 +230,9 @@ export default async function ArticleReadPage({
           ))
         )}
       </ArticleContent>
+
+      {/* Key vocabulary — internal links to per-word dictionary pages */}
+      <ArticleVocabulary roots={vocabRoots} />
 
       {/* App Download CTA - Show on mobile */}
       {platformInfo.isMobile && (

@@ -122,6 +122,11 @@ export function ArticlesClient({
     }
   };
 
+  const selectedCategory =
+    selectedCategoryId !== null
+      ? initialCategories.find((c) => c.id === selectedCategoryId) ?? null
+      : null;
+
   return (
     <div className="min-h-screen flex flex-col">
       <PublicHeader
@@ -160,6 +165,20 @@ export function ArticlesClient({
               <BookDownloads />
             </div>
           </>
+        )}
+
+        {selectedCategory && (
+          <header className="mb-8 md:mb-10">
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground capitalize">
+              {selectedCategory.name} Articles in Arabic
+            </h1>
+            <p className="mt-3 text-muted-foreground max-w-3xl leading-relaxed">
+              Read {selectedCategory.name.toLowerCase()} articles in Arabic with
+              parallel English translations, native audio, and tap-to-translate
+              vocabulary. Every text is graded for learners reading at an
+              intermediate level.
+            </p>
+          </header>
         )}
 
         <ArticleGrid articles={articles} loading={false} showCategoryPill={selectedCategoryId === null} />

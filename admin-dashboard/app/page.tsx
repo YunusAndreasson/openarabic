@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { supabase } from '@/lib/supabase';
 import { ArticlesClient } from '@/components/articles-client';
 import { AppStructuredData } from '@/components/app-structured-data';
+import { CategoryStructuredData } from '@/components/category-structured-data';
 import { ITEMS_PER_PAGE } from '@/lib/constants';
 import { detectPlatform } from '@/lib/platform-detection';
 import type { Article, Category, Author } from '@/lib/types';
@@ -78,9 +79,20 @@ export default async function PublicArticlesPage({ searchParams }: PageProps) {
     console.error('Error fetching authors:', authorsError);
   }
 
+  const selectedCategory = categoryId
+    ? ((categories as Category[]) || []).find((c) => c.id === categoryId) ?? null
+    : null;
+
   return (
     <>
       <AppStructuredData />
+      {selectedCategory && (
+        <CategoryStructuredData
+          categoryId={selectedCategory.id}
+          categoryName={selectedCategory.name}
+          articles={(articles as Article[]) || []}
+        />
+      )}
       <ArticlesClient
         initialArticles={(articles as Article[]) || []}
         initialCategories={(categories as Category[]) || []}

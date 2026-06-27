@@ -9,7 +9,7 @@ import { useTheme } from '@/components/providers/theme-provider';
 import { shareArticle, canShare } from '@/utils/share';
 import { ARTICLE_HEADER_BLUR } from '@/lib/blur-placeholder';
 import { generateSlug } from '@/lib/slugify';
-import { getAuthorUrl } from '@/lib/author-links';
+import { authorPath } from '@/lib/author-slug';
 import type { Article } from '@/lib/types';
 
 interface ArticleHeaderProps {
@@ -61,7 +61,7 @@ export function ArticleHeader({ article, showSummary = true }: ArticleHeaderProp
         {/* Category Badge - Clickable to navigate to category */}
         <div className="mb-6 md:mb-8">
           <Link
-            href="/"
+            href={`/?category=${article.category_id}`}
             className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm md:text-base font-semibold bg-white/25 text-white backdrop-blur-md ring-1 ring-white/30 shadow-lg shadow-black/25 capitalize hover:bg-white/30 transition-colors duration-150 text-shadow-overlay"
             aria-label={`View all ${article.categories?.name || 'Uncategorized'} articles`}
           >
@@ -83,22 +83,13 @@ export function ArticleHeader({ article, showSummary = true }: ArticleHeaderProp
 
         {/* Metadata */}
         <div className="flex flex-wrap items-center gap-3 md:gap-4 text-white/90 text-sm md:text-base">
-          {(() => {
-            const authorName = article.authors?.name || 'OpenArabic';
-            const authorUrl = getAuthorUrl(authorName);
-            return authorUrl ? (
-              <a
-                href={authorUrl}
-                target="_blank"
-                rel="noopener noreferrer author"
-                className="font-medium hover:underline"
-              >
-                {authorName}
-              </a>
-            ) : (
-              <span className="font-medium">{authorName}</span>
-            );
-          })()}
+          <Link
+            href={authorPath({ id: article.author_id, name: article.authors?.name || 'OpenArabic' })}
+            rel="author"
+            className="font-medium hover:underline"
+          >
+            {article.authors?.name || 'OpenArabic'}
+          </Link>
           <time
             dateTime={article.created_at}
             className="opacity-90"

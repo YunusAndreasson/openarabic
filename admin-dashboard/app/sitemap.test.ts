@@ -11,6 +11,10 @@ vi.mock('@/lib/supabase', () => ({
   supabase: { from: fromMock },
 }));
 
+vi.mock('@/lib/word-pages', () => ({
+  getWordPagesForSitemap: vi.fn(() => Promise.resolve([{ slug: 'heart-5205' }])),
+}));
+
 const loadSitemap = async () => {
   const mod = await import('./sitemap');
   return mod.default;
@@ -68,6 +72,15 @@ describe('sitemap()', () => {
       'https://openarabic.io/read/first-1',
       'https://openarabic.io/read/second-2',
     ]);
+  });
+
+  it('emits dictionary entries from getWordPagesForSitemap', async () => {
+    setArticles([]);
+    const sitemap = await loadSitemap();
+    const entries = await sitemap();
+    expect(entries.map((e) => e.url)).toContain(
+      'https://openarabic.io/word/heart-5205',
+    );
   });
 
   it('still returns static pages when the articles query returns null', async () => {
