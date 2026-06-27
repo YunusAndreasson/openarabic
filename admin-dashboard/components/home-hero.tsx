@@ -14,7 +14,7 @@ export function HomeHero() {
       <p className="mt-3 text-base sm:text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto sm:mx-0">
         OpenArabic turns classical Islamic and literary texts into bilingual reading practice. Read
         Arabic with parallel English translations, tap any word for its meaning, hear native audio,
-        and build lasting vocabulary with spaced repetition — free, with no ads.
+        and build lasting vocabulary with spaced repetition.
       </p>
     </div>
   );

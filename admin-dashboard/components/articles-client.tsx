@@ -145,6 +145,7 @@ export function ArticlesClient({
               <AppDownloadCTA
                 platformInfo={platformInfo}
                 variant="hero"
+                description="Take your reading on the go — free on iPhone and Android."
                 authors={initialAuthors}
                 showBothStores={!platformInfo.isMobile}
               />
