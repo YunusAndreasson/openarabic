@@ -11,6 +11,8 @@ import {
 } from '@/lib/word-pages';
 import { ArticleNav } from '@/components/article-nav';
 import { WordStructuredData } from '@/components/word-structured-data';
+import { AudioButton } from '@/components/audio-button';
+import { HighlightedArabic } from '@/components/highlighted-arabic';
 import { Footer } from '@/components/footer';
 import type { Category } from '@/lib/types';
 
@@ -102,23 +104,9 @@ export default async function WordPage({
           </p>
 
           {(arabicAudio || englishAudio) && (
-            <div className="mt-6 flex flex-col sm:flex-row gap-4">
-              {arabicAudio && (
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-1.5">
-                    Arabic pronunciation
-                  </p>
-                  <audio controls preload="none" src={arabicAudio} className="h-9" />
-                </div>
-              )}
-              {englishAudio && (
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-1.5">
-                    English
-                  </p>
-                  <audio controls preload="none" src={englishAudio} className="h-9" />
-                </div>
-              )}
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              {arabicAudio && <AudioButton src={arabicAudio} label="Arabic" />}
+              {englishAudio && <AudioButton src={englishAudio} label="English" />}
             </div>
           )}
         </header>
@@ -131,13 +119,21 @@ export default async function WordPage({
             <ul className="space-y-8">
               {examples.map((ex, i) => (
                 <li key={i} className="border-b border-border/30 pb-8 last:border-b-0">
-                  <p
-                    lang="ar"
-                    dir="rtl"
-                    className="text-2xl md:text-[26px] leading-[1.9] text-right text-foreground"
-                  >
-                    {ex.sentenceArabic}
-                  </p>
+                  <div className="flex items-start gap-3">
+                    <p
+                      lang="ar"
+                      dir="rtl"
+                      className="flex-1 text-2xl md:text-[26px] leading-[1.9] text-right text-foreground"
+                    >
+                      <HighlightedArabic
+                        text={ex.sentenceArabic}
+                        highlight={ex.wordForm}
+                      />
+                    </p>
+                    {ex.sentenceAudio && (
+                      <AudioButton src={ex.sentenceAudio} className="mt-1" />
+                    )}
+                  </div>
                   <p className="mt-2 text-lg font-serif text-foreground/75">
                     {ex.sentenceEnglish}
                   </p>

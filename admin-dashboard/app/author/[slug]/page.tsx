@@ -66,6 +66,14 @@ export default async function AuthorPage({
 
   const categories = (categoriesResult.data as Category[]) || [];
   const externalUrl = getAuthorUrl(author.name);
+  const initials =
+    author.name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((w) => w[0])
+      .join('')
+      .toUpperCase() || '?';
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -73,28 +81,36 @@ export default async function AuthorPage({
       <ArticleNav categories={categories} selectedCategoryId={null} />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
-        <header className="mb-10 md:mb-12 border-b border-border/40 pb-8">
-          <p className="text-sm font-medium text-muted-foreground mb-2">Author</p>
-          <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground">
-            {author.name}
-          </h1>
-          <p className="mt-3 text-muted-foreground">
-            {articles.length} {articles.length === 1 ? 'article' : 'articles'} on
-            OpenArabic
-            {externalUrl && (
-              <>
-                {' · '}
-                <a
-                  href={externalUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline"
-                >
-                  Website
-                </a>
-              </>
-            )}
-          </p>
+        <header className="mb-10 md:mb-12 flex items-center gap-5 border-b border-border/40 pb-8">
+          <div
+            aria-hidden="true"
+            className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xl font-bold text-primary ring-1 ring-primary/20 md:h-20 md:w-20 md:text-2xl"
+          >
+            {initials}
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-muted-foreground mb-1">Author</p>
+            <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground">
+              {author.name}
+            </h1>
+            <p className="mt-2 text-muted-foreground">
+              {articles.length} {articles.length === 1 ? 'article' : 'articles'} on
+              OpenArabic
+              {externalUrl && (
+                <>
+                  {' · '}
+                  <a
+                    href={externalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    Website
+                  </a>
+                </>
+              )}
+            </p>
+          </div>
         </header>
 
         <ArticleGrid articles={articles} />

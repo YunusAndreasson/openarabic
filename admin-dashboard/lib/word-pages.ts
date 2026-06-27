@@ -28,6 +28,7 @@ export interface WordUsageExample {
   grammarNote: string | null;
   sentenceArabic: string;
   sentenceEnglish: string;
+  sentenceAudio: string | null;
   articleId: number;
   articleTitle: string;
   articleSlug: string;
@@ -96,7 +97,7 @@ export const getWordEntry = cache(
     const { data: sentences } = sentenceIds.length
       ? await supabase
           .from('article_sentences')
-          .select('id, arabic, english, article_id')
+          .select('id, arabic, english, article_id, audio_url')
           .in('id', sentenceIds)
       : { data: [] };
 
@@ -123,6 +124,7 @@ export const getWordEntry = cache(
         grammarNote: w.grammar_note,
         sentenceArabic: sentence.arabic,
         sentenceEnglish: sentence.english,
+        sentenceAudio: rootAudioUrl(sentence.audio_url),
         articleId: article.id,
         articleTitle: article.title,
         articleSlug: generateSlug(article.title, article.id),
