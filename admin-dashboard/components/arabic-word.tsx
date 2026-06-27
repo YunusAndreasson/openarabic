@@ -29,7 +29,7 @@ export function ArabicWord({ wordForm, english, grammarNote }: ArabicWordProps) 
             open ? 'arabic-word-active' : ''
           }`}
           style={{
-            fontFamily: 'Madina, "Noto Naskh Arabic", "Traditional Arabic", serif',
+            fontFamily: 'var(--font-madina), "Noto Naskh Arabic", "Traditional Arabic", serif',
             fontFeatureSettings: '"calt" 1, "liga" 1, "kern" 1',
             WebkitFontSmoothing: 'antialiased',
             MozOsxFontSmoothing: 'grayscale',

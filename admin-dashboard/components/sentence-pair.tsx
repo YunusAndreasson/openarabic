@@ -117,7 +117,7 @@ export function SentencePair({ sentence, words, isLast = false }: SentencePairPr
             // Fallback to full sentence if no words available
             <span
               style={{
-                fontFamily: 'Madina, "Noto Naskh Arabic", "Traditional Arabic", serif',
+                fontFamily: 'var(--font-madina), "Noto Naskh Arabic", "Traditional Arabic", serif',
                 fontFeatureSettings: '"calt" 1, "liga" 1, "kern" 1',
                 WebkitFontSmoothing: 'antialiased',
                 MozOsxFontSmoothing: 'grayscale',
