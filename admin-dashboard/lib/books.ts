@@ -8,6 +8,8 @@ export interface Book {
   pages: number;
   fileUrl: string;
   fileSizeMb: number;
+  /** Authoritative reference for the author (used for citation + JSON-LD sameAs). */
+  authorWikipedia?: string;
 }
 
 export const BOOKS: Book[] = [
@@ -22,5 +24,6 @@ export const BOOKS: Book[] = [
     pages: 308,
     fileUrl: '/books/al-fawaid.pdf',
     fileSizeMb: 18,
+    authorWikipedia: 'https://en.wikipedia.org/wiki/Ibn_Qayyim_al-Jawziyya',
   },
 ];

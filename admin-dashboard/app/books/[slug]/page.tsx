@@ -69,7 +69,12 @@ export default async function BookPage({
     '@type': 'Book',
     name: book.title,
     alternateName: book.titleArabic,
-    author: { '@type': 'Person', name: book.author },
+    author: {
+      '@type': 'Person',
+      name: book.author,
+      alternateName: book.authorArabic,
+      ...(book.authorWikipedia ? { sameAs: book.authorWikipedia } : {}),
+    },
     inLanguage: ['ar', 'en'],
     numberOfPages: book.pages,
     url: canonical,
@@ -144,20 +149,32 @@ export default async function BookPage({
             This edition sets the Arabic and English side by side and preserves the
             Arabic word order in the translation, so you can follow the original text
             phrase by phrase — a practical way to read classical Arabic while you are
-            still building vocabulary.
-          </p>
-          <p>
-            {book.author}{' '}
-            <span lang="ar" dir="rtl" className="font-arabic">
-              ({book.authorArabic})
-            </span>{' '}
-            was a classical scholar whose works on faith and the inner life are still
-            widely read today. The PDF is free to download and share.
+            still building vocabulary. The PDF is free to download and share.
           </p>
         </section>
 
         {book.slug === 'al-fawaid' && (
           <>
+            {/* Book history — real, sourced depth (E-E-A-T). */}
+            <section className="mt-12">
+              <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">
+                About the book
+              </h2>
+              <div className="space-y-4 leading-relaxed text-foreground/90">
+                <p>
+                  <span className="font-semibold text-foreground">Al-Fawaid</span> —
+                  literally “the benefits,” or points of benefit — is one of Ibn
+                  al-Qayyim’s best-loved shorter works. Rather than a systematic treatise,
+                  it gathers reflections that came to him over the years: a short
+                  meditation on a verse of the Qur’an, an insight drawn from a hadith, a
+                  note on the ailments and cures of the heart.
+                </p>
+                <p>
+                  {`He is said to have recorded each “benefit” as it occurred to him, which gives the book its character — a string of self-contained pearls rather than chapters building a single argument. This bilingual edition presents its ${AL_FAWAID_SECTION_COUNT} sections with the Arabic and a facing English translation.`}
+                </p>
+              </div>
+            </section>
+
             {/* A real bilingual sample from the book — unique, on-topic content. */}
             <section className="mt-12">
               <h2 className="text-xl md:text-2xl font-bold text-foreground mb-6">
@@ -204,6 +221,35 @@ export default async function BookPage({
                   </li>
                 ))}
               </ul>
+            </section>
+
+            {/* Author facts — verified, cited (E-E-A-T). */}
+            <section className="mt-12">
+              <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">
+                About the author
+              </h2>
+              <div className="space-y-4 leading-relaxed text-foreground/90">
+                <p>
+                  {`Ibn al-Qayyim al-Jawziyya — in full, Shams al-Din Muhammad ibn Abi Bakr ibn Ayyub al-Zurʿi al-Dimashqi al-Hanbali — was a scholar of the Hanbali school in Damascus, born in 1292 (691 AH) and died in 1350 (751 AH). His name, “son of the qayyim of al-Jawziyya,” comes from his father, who directed the al-Jawziyya madrasa in the city.`}
+                </p>
+                <p>
+                  {`He was the foremost student of Ibn Taymiyya, studying with him for some sixteen years and sharing his imprisonment in the Citadel of Damascus. Across law, theology, and the spiritual life he wrote close to a hundred works — among them Zad al-Maʿad, Madarij al-Salikin, and Iʿlam al-Muwaqqiʿin — and he remains one of the most widely read scholars of the classical period. He is buried at the Bab al-Saghir cemetery in Damascus.`}
+                </p>
+                {book.authorWikipedia && (
+                  <p className="text-sm text-muted-foreground">
+                    Biographical details from{' '}
+                    <a
+                      href={book.authorWikipedia}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      Wikipedia
+                    </a>
+                    .
+                  </p>
+                )}
+              </div>
             </section>
           </>
         )}
