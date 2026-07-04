@@ -4,6 +4,11 @@ import { notFound } from 'next/navigation';
 import { Download } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { BOOKS } from '@/lib/books';
+import {
+  AL_FAWAID_SAMPLE,
+  AL_FAWAID_TOPICS,
+  AL_FAWAID_SECTION_COUNT,
+} from '@/lib/al-fawaid-content';
 import { ArticleNav } from '@/components/article-nav';
 import { Footer } from '@/components/footer';
 import { SITE_URL } from '@/lib/constants';
@@ -150,6 +155,58 @@ export default async function BookPage({
             widely read today. The PDF is free to download and share.
           </p>
         </section>
+
+        {book.slug === 'al-fawaid' && (
+          <>
+            {/* A real bilingual sample from the book — unique, on-topic content. */}
+            <section className="mt-12">
+              <h2 className="text-xl md:text-2xl font-bold text-foreground mb-6">
+                A sample from the book
+              </h2>
+              <div className="rounded-xl border border-border/60 bg-card p-6 space-y-6">
+                {AL_FAWAID_SAMPLE.map((line, i) => (
+                  <div key={i}>
+                    <p
+                      lang="ar"
+                      dir="rtl"
+                      className="font-arabic text-2xl leading-[1.9] text-right text-foreground"
+                    >
+                      {line.arabic}
+                    </p>
+                    <p className="mt-1.5 font-serif text-foreground/75">{line.english}</p>
+                  </div>
+                ))}
+                <p className="pt-2 text-sm text-muted-foreground">
+                  Continue reading in the{' '}
+                  <a href={book.fileUrl} download className="text-primary hover:underline">
+                    free PDF
+                  </a>
+                  .
+                </p>
+              </div>
+            </section>
+
+            {/* Table of topics — genuine chapter content, keyword-rich for search. */}
+            <section className="mt-12">
+              <h2 className="text-xl md:text-2xl font-bold text-foreground mb-2">
+                What&rsquo;s inside
+              </h2>
+              <p className="mb-6 text-sm text-muted-foreground">
+                {`${book.title} gathers ${AL_FAWAID_SECTION_COUNT} short sections — “benefits” and principles on faith, the heart, and the Qur’an. A selection of what they cover:`}
+              </p>
+              <ul className="space-y-2.5">
+                {AL_FAWAID_TOPICS.map((topic, i) => (
+                  <li
+                    key={i}
+                    className="border-b border-border/20 pb-2.5 text-foreground/90 last:border-b-0"
+                  >
+                    {topic.english}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          </>
+        )}
 
         <section className="mt-12 rounded-xl border border-border/60 bg-card p-6">
           <h2 className="text-base font-semibold text-foreground mb-2">
