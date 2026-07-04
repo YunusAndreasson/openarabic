@@ -8,6 +8,7 @@ import { SiteStructuredData } from '@/components/site-structured-data';
 import { GoogleAnalytics } from '@/components/google-analytics';
 import { detectPlatform } from '@/lib/platform-detection';
 import { APP_STORE_ID } from '@/lib/app';
+import { SITE_URL } from '@/lib/constants';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -29,7 +30,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://openarabic.io'),
+  metadataBase: new URL(SITE_URL),
   title: 'OpenArabic - Learn Arabic Through Reading',
   description: 'Read Arabic articles with parallel English translations. Improve your Arabic reading skills with authentic content.',
   // Google Search Console ownership verification (HTML-tag method). The token
@@ -45,21 +46,21 @@ export const metadata: Metadata = {
   // to avoid a double banner.
   itunes: {
     appId: APP_STORE_ID,
-    appArgument: 'https://openarabic.io/download-app',
+    appArgument: `${SITE_URL}/download-app`,
   },
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://openarabic.io',
+    url: SITE_URL,
     siteName: 'OpenArabic',
     title: 'OpenArabic - Learn Arabic Through Reading',
     description: 'Read Arabic articles with parallel English translations. Improve your Arabic reading skills with authentic content.',
     images: [
       {
-        url: 'https://openarabic.io/oaLogo.png',
+        url: `${SITE_URL}/og.png`,
         width: 1200,
         height: 630,
-        alt: 'OpenArabic - Learn Arabic Through Reading',
+        alt: 'OpenArabic — read classical Arabic, even as a beginner',
       },
     ],
   },
@@ -69,10 +70,10 @@ export const metadata: Metadata = {
     creator: '@openarabicio',
     title: 'OpenArabic - Learn Arabic Through Reading',
     description: 'Read Arabic articles with parallel English translations. Improve your Arabic reading skills with authentic content.',
-    images: ['https://openarabic.io/oaLogo.png'],
+    images: [`${SITE_URL}/og.png`],
   },
   alternates: {
-    canonical: 'https://openarabic.io',
+    canonical: SITE_URL,
   },
 };
 

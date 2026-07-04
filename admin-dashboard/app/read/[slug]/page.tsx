@@ -16,6 +16,8 @@ import { ReadingProgress } from '@/components/reading-progress';
 import { ArticleStructuredData } from '@/components/article-structured-data';
 import { generateSlug, parseIdFromSlug } from '@/lib/slugify';
 import { detectPlatform } from '@/lib/platform-detection';
+import { normalizeImageUrl } from '@/lib/article-utils';
+import { SITE_URL } from '@/lib/constants';
 
 type Article = Database['public']['Tables']['articles']['Row'] & {
   authors: { name: string } | null;
@@ -32,9 +34,6 @@ type VocabRoot = Pick<
 
 // Cap the "Key vocabulary" list so an unusually long text doesn't bloat the page.
 const MAX_VOCAB_ENTRIES = 150;
-
-const SUPABASE_STORAGE_URL =
-  'https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/images';
 
 // Fetch article by ID — cache() dedupes across generateMetadata + page in the same request
 const getArticle = cache(async (articleId: number): Promise<Article | null> => {
@@ -62,11 +61,11 @@ export async function generateMetadata({
     return { title: 'Article Not Found - OpenArabic' };
   }
 
-  const imageUrl = `${SUPABASE_STORAGE_URL}/${article.image_url}`;
+  const imageUrl = normalizeImageUrl(article.image_url);
   // Always canonicalize to the descriptive slug so bare-id / stale-title URLs
   // don't split ranking signals across duplicate URLs.
   const canonicalSlug = generateSlug(article.title, article.id);
-  const canonicalUrl = `https://openarabic.io/read/${canonicalSlug}`;
+  const canonicalUrl = `${SITE_URL}/read/${canonicalSlug}`;
 
   return {
     title: `${article.title} - OpenArabic`,

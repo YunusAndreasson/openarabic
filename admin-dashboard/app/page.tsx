@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { ArticlesClient } from '@/components/articles-client';
 import { AppStructuredData } from '@/components/app-structured-data';
 import { CategoryStructuredData } from '@/components/category-structured-data';
-import { ITEMS_PER_PAGE } from '@/lib/constants';
+import { ITEMS_PER_PAGE, SITE_URL } from '@/lib/constants';
 import { detectPlatform } from '@/lib/platform-detection';
 import type { Article, Category, Author } from '@/lib/types';
 
@@ -25,11 +25,22 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
 
   const categoryId = parseInt(category, 10);
 
+  const title = `${data.name} Articles - OpenArabic`;
+  const description = `Read ${data.name} articles in Arabic with parallel English translations, native audio, and spaced-repetition vocabulary practice.`;
+  const url = `${SITE_URL}/?category=${categoryId}`;
+
   return {
-    title: `${data.name} Articles - OpenArabic`,
-    description: `Read ${data.name} articles in Arabic with parallel English translations, native audio, and spaced-repetition vocabulary practice.`,
+    title,
+    description,
     alternates: {
-      canonical: `https://openarabic.io/?category=${categoryId}`,
+      canonical: url,
+    },
+    // Per-category OG so shared category links don't inherit the homepage's
+    // generic card. Image falls back to the site-wide /og.png from the layout.
+    openGraph: {
+      title,
+      description,
+      url,
     },
   };
 }

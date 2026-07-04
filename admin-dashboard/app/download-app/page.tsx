@@ -1,43 +1,40 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
-import { Check } from 'lucide-react';
 import { detectPlatform } from '@/lib/platform-detection';
 import { StoreBadges } from '@/components/store-badges';
 import { AppStructuredData } from '@/components/app-structured-data';
-import { ArabicWordCloud } from '@/components/arabic-word-cloud';
-import {
-  APP_NAME,
-  APP_TAGLINE,
-  APP_DESCRIPTION,
-  APP_FEATURES,
-} from '@/lib/app';
+import { PhoneShowcase } from '@/components/phone-showcase';
+import { AppFeatureShowcase } from '@/components/app-feature-showcase';
+import { AppRating } from '@/components/app-rating';
+import { APP_NAME, APP_TAGLINE, APP_DESCRIPTION } from '@/lib/app';
+import { SITE_URL } from '@/lib/constants';
 
 export const metadata: Metadata = {
   title: 'Download OpenArabic - Read Classical Islamic Texts in Arabic & English',
   description: APP_DESCRIPTION,
   alternates: {
-    canonical: 'https://openarabic.io/download-app',
+    canonical: `${SITE_URL}/download-app`,
   },
   openGraph: {
     title: 'Download OpenArabic',
     description:
       'Classical Islamic texts in Arabic & English with audio. Free on iOS and Android.',
-    url: 'https://openarabic.io/download-app',
+    url: `${SITE_URL}/download-app`,
     images: [
       {
-        url: 'https://openarabic.io/oaLogo.png',
-        width: 512,
-        height: 512,
-        alt: 'OpenArabic App',
+        url: `${SITE_URL}/og.png`,
+        width: 1200,
+        height: 630,
+        alt: 'OpenArabic — read classical Arabic, even as a beginner',
       },
     ],
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: 'Download OpenArabic',
     description:
       'Classical Islamic texts in Arabic & English with audio. Free on iOS and Android.',
-    images: ['https://openarabic.io/oaLogo.png'],
+    images: [`${SITE_URL}/og.png`],
   },
 };
 
@@ -47,77 +44,74 @@ export default async function DownloadPage() {
   return (
     <>
       <AppStructuredData />
-      <div className="min-h-screen bg-background px-6 py-12 sm:py-16">
-        <div className="mx-auto max-w-5xl">
-          {/* Hero */}
-          <div className="lg:grid lg:grid-cols-2 lg:gap-12 lg:items-center">
-            {/* Left: pitch */}
-            <div className="text-center lg:text-left">
-              <div className="flex justify-center lg:justify-start">
-                <Image
-                  src="/oaLogo.png"
-                  alt={APP_NAME}
-                  width={96}
-                  height={96}
-                  className="rounded-[22px] shadow-lg"
-                  priority
-                />
-              </div>
-
-              <span className="mt-6 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
-                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-                Free &amp; No Ads
-              </span>
-
-              <h1 className="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                {APP_NAME}
-              </h1>
-
-              <p className="mt-3 text-lg font-medium text-foreground/90">
-                {APP_TAGLINE}
-              </p>
-
-              <p className="mx-auto mt-3 max-w-prose text-muted-foreground lg:mx-0">
-                {APP_DESCRIPTION}
-              </p>
-
-              <StoreBadges
-                platformInfo={platformInfo}
-                showBoth
-                className="mt-8 justify-center lg:justify-start"
+      <div className="bg-background">
+        {/* Hero */}
+        <section className="px-6 pt-16 sm:pt-24">
+          <div className="mx-auto max-w-2xl text-center">
+            <div className="flex items-center justify-center gap-2.5">
+              <Image
+                src="/oaLogo.png"
+                alt={APP_NAME}
+                width={40}
+                height={40}
+                className="logo rounded-[9px]"
+                priority
               />
+              <span className="font-medium text-foreground">{APP_NAME}</span>
+            </div>
 
-              <p className="mt-4 text-xs text-muted-foreground">
-                Free to download. Start your Arabic journey today.
+            <h1 className="mt-8 text-4xl font-semibold tracking-[-0.02em] text-foreground sm:text-6xl sm:leading-[1.03]">
+              {APP_TAGLINE}
+            </h1>
+
+            <p className="mx-auto mt-5 max-w-xl text-lg text-muted-foreground">
+              {APP_DESCRIPTION}
+            </p>
+
+            <StoreBadges platformInfo={platformInfo} showBoth className="mt-9 justify-center" />
+
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1 text-sm">
+              <AppRating />
+              <span className="text-muted-foreground" aria-hidden>
+                ·
+              </span>
+              <span className="text-muted-foreground">Free, no ads · iPhone &amp; Android</span>
+            </div>
+          </div>
+
+          {/* The app, shown */}
+          <div className="mt-16 sm:mt-20">
+            <PhoneShowcase className="max-w-sm" priority />
+          </div>
+        </section>
+
+        {/* Feature showcase */}
+        <section className="px-6 py-24 sm:py-32">
+          <div className="mx-auto max-w-5xl">
+            <div className="mb-16 max-w-2xl sm:mb-24">
+              <h2 className="text-3xl font-semibold tracking-[-0.02em] text-foreground sm:text-4xl">
+                Learn to read by reading
+              </h2>
+              <p className="mt-4 text-lg text-muted-foreground">
+                Real classical texts, not a phrasebook — with just enough help to keep you moving
+                through them.
               </p>
             </div>
-
-            {/* Right: visual.
-               Reuses the interactive Arabic word cloud (also the homepage-hero
-               visual). Swap in real app screenshots / a phone mockup here when
-               store assets are available. */}
-            <div className="mt-12 lg:mt-0">
-              <ArabicWordCloud />
-            </div>
+            <AppFeatureShowcase />
           </div>
+        </section>
 
-          {/* Feature grid */}
-          <div className="mt-16 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {APP_FEATURES.map((feature) => (
-              <div
-                key={feature}
-                className="flex items-center gap-3 rounded-xl border border-border bg-card p-4"
-              >
-                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <Check className="h-5 w-5" />
-                </span>
-                <span className="text-sm font-medium text-foreground">
-                  {feature}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Final CTA */}
+        <section className="border-t border-border/60 px-6 py-24 text-center sm:py-28">
+          <h2 className="text-3xl font-semibold tracking-[-0.02em] text-foreground sm:text-4xl">
+            Open the book tonight
+          </h2>
+          <p className="mx-auto mt-4 max-w-md text-lg text-muted-foreground">
+            Start with one short text. Tap what you don’t know, hear it, and let the app remember
+            it for you.
+          </p>
+          <StoreBadges platformInfo={platformInfo} showBoth className="mt-9 justify-center" />
+        </section>
       </div>
     </>
   );

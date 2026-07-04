@@ -14,8 +14,11 @@ interface SmartAppBannerProps {
 const SESSION_STORAGE_KEY = 'app-banner-dismissed';
 const BANNER_HEIGHT = 72;
 
-// Routes where the banner should appear (exclude homepage since it has hero CTA)
-const BANNER_ROUTES = ['/login', '/privacy', '/terms', '/contact'];
+// Routes where the banner should appear. Includes the homepage so every mobile
+// visitor gets an install prompt pinned to the top. On iOS Safari the native
+// apple-itunes-app banner takes over instead (see isIOSSafari), so there's no
+// double banner there.
+const BANNER_ROUTES = ['/', '/login', '/privacy', '/terms', '/contact'];
 const shouldShowOnRoute = (path: string) =>
   BANNER_ROUTES.includes(path) ||
   path.startsWith('/read/') ||

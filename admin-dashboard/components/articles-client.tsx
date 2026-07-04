@@ -6,8 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { PublicHeader } from '@/components/public-header';
 import { ArticleGrid } from '@/components/article-grid';
 import { Footer } from '@/components/footer';
-import { AppDownloadCTA } from '@/components/app-download-cta';
-import { HomeHero } from '@/components/home-hero';
+import { AppShowcaseHero } from '@/components/app-showcase-hero';
 import { ITEMS_PER_PAGE } from '@/lib/constants';
 import { BookDownloads } from '@/components/book-downloads';
 import type { PlatformInfo } from '@/lib/platform-detection';
@@ -144,17 +143,10 @@ export function ArticlesClient({
         {/* App download CTA - Mobile: single store, Desktop: both stores */}
         {selectedCategoryId === null && (
           <>
-            <HomeHero />
-
-            <div className="mb-8">
-              <AppDownloadCTA
-                platformInfo={platformInfo}
-                variant="hero"
-                description="Take your reading on the go — free on iPhone and Android."
-                authors={initialAuthors}
-                showBothStores={!platformInfo.isMobile}
-              />
-            </div>
+            <AppShowcaseHero
+              platformInfo={platformInfo}
+              authors={initialAuthors}
+            />
 
             {/* About + Free Books */}
             <div className="mb-10 grid grid-cols-1 md:grid-cols-2 gap-6">

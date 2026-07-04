@@ -1,6 +1,7 @@
 import type { Database } from '@/lib/database.types';
 import { generateSlug } from '@/lib/slugify';
 import { authorPath } from '@/lib/author-slug';
+import { normalizeImageUrl } from '@/lib/article-utils';
 import { SITE_URL } from '@/lib/constants';
 
 type Article = Database['public']['Tables']['articles']['Row'] & {
@@ -29,7 +30,7 @@ export function ArticleStructuredData({ article }: ArticleStructuredDataProps) {
         '@type': 'Article',
         headline: article.title,
         description: article.summary,
-        image: `https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/images/${article.image_url}`,
+        image: normalizeImageUrl(article.image_url),
         datePublished: article.created_at,
         dateModified: article.created_at,
         mainEntityOfPage: articleUrl,
@@ -38,14 +39,10 @@ export function ArticleStructuredData({ article }: ArticleStructuredDataProps) {
           name: authorName,
           ...(authorUrl ? { url: authorUrl } : {}),
         },
-        publisher: {
-          '@type': 'Organization',
-          name: 'OpenArabic',
-          logo: {
-            '@type': 'ImageObject',
-            url: `${SITE_URL}/oaLogo.png`,
-          },
-        },
+        // Reference the site-wide Organization (defined in SiteStructuredData)
+        // so Google consolidates the publisher entity instead of seeing a fresh
+        // node per article.
+        publisher: { '@id': `${SITE_URL}/#organization` },
         inLanguage: ['ar', 'en'],
         articleSection: categoryName,
       },

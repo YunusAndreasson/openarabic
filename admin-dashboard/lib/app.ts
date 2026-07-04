@@ -14,8 +14,10 @@ export const APP_STORE_ID = '1594031029';
 /** Android application id (used by manifest related_applications). */
 export const ANDROID_PACKAGE = 'com.edenmind.OpenArabic';
 
+// Storefront-neutral App Store link (no /ae/ country code) so Apple redirects
+// each visitor to their own regional store instead of geo-pinning to the UAE.
 export const APP_STORE_URL =
-  'https://apps.apple.com/ae/app/openarabic/id1594031029';
+  'https://apps.apple.com/app/openarabic/id1594031029';
 
 export const PLAY_STORE_URL =
   'https://play.google.com/store/apps/details?id=com.edenmind.OpenArabic';
@@ -34,3 +36,6 @@ export const APP_FEATURES = [
   'Spaced repetition',
   'Free & no ads',
 ] as const;
+
+/** Current average App Store rating (out of 5). Keep in step with the store. */
+export const APP_RATING = 5.0;
