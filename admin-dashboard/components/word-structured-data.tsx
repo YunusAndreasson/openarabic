@@ -39,6 +39,12 @@ export function WordStructuredData({ root }: WordStructuredDataProps) {
           {
             '@type': 'ListItem',
             position: 2,
+            name: 'Dictionary',
+            item: `${SITE_URL}/dictionary`,
+          },
+          {
+            '@type': 'ListItem',
+            position: 3,
             name: `${root.letters} (${root.meaning})`,
             item: url,
           },

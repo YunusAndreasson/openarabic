@@ -59,7 +59,7 @@ export default async function WordPage({
   ]);
 
   if (!entry) notFound();
-  const { root, usageCount, examples } = entry;
+  const { root, usageCount, examples, related } = entry;
 
   // Consolidate to a single canonical URL — 308-redirect stale-meaning slugs.
   const canonicalSlug = wordPageSlug(root);
@@ -80,7 +80,11 @@ export default async function WordPage({
             Home
           </Link>
           <span className="mx-1.5">/</span>
-          <span className="text-foreground">Dictionary</span>
+          <Link href="/dictionary" className="hover:text-foreground">
+            Dictionary
+          </Link>
+          <span className="mx-1.5">/</span>
+          <span className="text-foreground">{root.meaning}</span>
         </nav>
 
         <header className="border-b border-border/40 pb-8 mb-8">
@@ -149,6 +153,31 @@ export default async function WordPage({
                     className="mt-3 inline-block text-sm font-medium text-primary hover:underline"
                   >
                     From: {ex.articleTitle} →
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {related.length > 0 && (
+          <section className="mt-12">
+            <h2 className="text-xl md:text-2xl font-bold text-foreground mb-6">
+              Related words
+            </h2>
+            <ul className="flex flex-wrap gap-2.5">
+              {related.map((word) => (
+                <li key={word.path}>
+                  <Link
+                    href={word.path}
+                    className="inline-flex items-baseline gap-2 rounded-lg border border-border/60 bg-card px-3 py-2 hover:border-primary/50 hover:bg-muted/50 transition-colors"
+                  >
+                    <span lang="ar" dir="rtl" className="font-arabic text-lg text-foreground">
+                      {word.letters}
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      {word.meaning}
+                    </span>
                   </Link>
                 </li>
               ))}

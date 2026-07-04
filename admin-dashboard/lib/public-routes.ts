@@ -20,6 +20,7 @@ export const PUBLIC_ROUTES = [
   '/terms',
   '/contact',
   '/download-app',
+  '/dictionary',
 ];
 
 /** Public route families matched by prefix (each has many dynamic URLs). */

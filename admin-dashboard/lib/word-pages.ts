@@ -34,11 +34,30 @@ export interface WordUsageExample {
   articleSlug: string;
 }
 
+/** A neighbouring dictionary entry, linked for cross-navigation + internal SEO. */
+export interface RelatedWord {
+  letters: string;
+  meaning: string;
+  path: string;
+}
+
 export interface WordEntry {
   root: Root;
   usageCount: number;
   examples: WordUsageExample[];
+  related: RelatedWord[];
 }
+
+/** A dictionary entry as listed on the /dictionary hub, ranked by usage. */
+export interface DictionaryEntry {
+  id: number;
+  letters: string;
+  meaning: string;
+  usageCount: number;
+}
+
+/** How many related words to surface on a single dictionary page. */
+const MAX_RELATED = 12;
 
 /** Descriptive, ASCII slug for a dictionary entry: "heart-5205". */
 export function wordPageSlug(root: Pick<Root, 'id' | 'meaning'>): string {
@@ -131,24 +150,64 @@ export const getWordEntry = cache(
       });
     }
 
-    return { root, usageCount, examples };
+    // Related words: other dictionary entries that appear in the same sentences,
+    // ranked by how often they co-occur. This weaves the ~15k word pages into
+    // topical clusters — better crawlability and internal-link authority flow.
+    let related: RelatedWord[] = [];
+    if (sentenceIds.length) {
+      const { data: coRows } = await supabase
+        .from('sentence_words')
+        .select('root_id')
+        .in('sentence_id', sentenceIds)
+        .neq('root_id', rootId)
+        .limit(1000);
+
+      const counts = new Map<number, number>();
+      for (const row of coRows || []) {
+        counts.set(row.root_id, (counts.get(row.root_id) || 0) + 1);
+      }
+
+      const topIds = [...counts.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, MAX_RELATED)
+        .map(([id]) => id);
+
+      if (topIds.length) {
+        const { data: relRoots } = await supabase
+          .from('roots')
+          .select('id, letters, meaning')
+          .in('id', topIds);
+
+        const byId = new Map((relRoots || []).map((r) => [r.id, r]));
+        related = topIds
+          .map((id) => byId.get(id))
+          .filter(
+            (r): r is NonNullable<typeof r> =>
+              !!r && !!r.meaning?.trim() && !!r.letters?.trim(),
+          )
+          .map((r) => ({
+            letters: r.letters,
+            meaning: r.meaning,
+            path: wordPagePath(r),
+          }));
+      }
+    }
+
+    return { root, usageCount, examples, related };
   },
 );
 
 /**
- * Enumerate the dictionary entries that qualify for a public page, for the
- * sitemap. Scans sentence_words once to tally per-root usage (PostgREST has no
- * DISTINCT), then loads the matching roots. Subrequests run in parallel so the
- * sitemap stays fast; this route is fetched rarely (by crawlers).
+ * Tally per-root usage across every sentence_words row (PostgREST has no
+ * DISTINCT/GROUP BY, so we page through and count client-side). Subrequests run
+ * in parallel; callers are crawler/ISR routes fetched rarely, so this is fine.
  */
-export async function getWordPagesForSitemap(): Promise<
-  Array<{ slug: string }>
-> {
+async function scanRootUsage(): Promise<Map<number, number>> {
   const { count } = await supabase
     .from('sentence_words')
     .select('id', { count: 'exact', head: true });
 
-  if (!count) return [];
+  if (!count) return new Map();
 
   const pageCount = Math.ceil(count / SCAN_PAGE_SIZE);
   const pages = await Promise.all(
@@ -166,6 +225,72 @@ export async function getWordPagesForSitemap(): Promise<
       usage.set(row.root_id, (usage.get(row.root_id) || 0) + 1);
     }
   }
+  return usage;
+}
+
+/**
+ * The dictionary entries with the most in-article usage, for the /dictionary
+ * hub. Ranking by usage concentrates internal-link equity on the pages most
+ * likely to rank. cache() dedupes across generateMetadata + the page render;
+ * the route itself is ISR-cached so the full scan runs at most once per day.
+ */
+export const getDictionaryIndex = cache(
+  async (limit = 300): Promise<DictionaryEntry[]> => {
+    const usage = await scanRootUsage();
+    const ranked = [...usage.entries()]
+      .filter(([, n]) => n >= MIN_USAGES_FOR_WORD_PAGE)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, limit);
+
+    if (!ranked.length) return [];
+
+    const usageById = new Map(ranked);
+    const ids = ranked.map(([id]) => id);
+
+    // Chunk the id filter so each request URL stays small.
+    const chunks: number[][] = [];
+    for (let i = 0; i < ids.length; i += 150) chunks.push(ids.slice(i, i + 150));
+
+    const results = await Promise.all(
+      chunks.map((chunk) =>
+        supabase.from('roots').select('id, letters, meaning').in('id', chunk),
+      ),
+    );
+
+    const byId = new Map<
+      number,
+      { id: number; letters: string; meaning: string }
+    >();
+    for (const { data } of results) {
+      for (const r of data || []) byId.set(r.id, r);
+    }
+
+    // Preserve the usage ranking and drop entries missing letters/meaning.
+    return ids
+      .map((id) => byId.get(id))
+      .filter(
+        (r): r is { id: number; letters: string; meaning: string } =>
+          !!r && !!r.meaning?.trim() && !!r.letters?.trim(),
+      )
+      .map((r) => ({
+        id: r.id,
+        letters: r.letters,
+        meaning: r.meaning,
+        usageCount: usageById.get(r.id) || 0,
+      }));
+  },
+);
+
+/**
+ * Enumerate the dictionary entries that qualify for a public page, for the
+ * sitemap. Uses the shared usage scan, then loads the matching roots. This
+ * route is fetched rarely (by crawlers).
+ */
+export async function getWordPagesForSitemap(): Promise<
+  Array<{ slug: string }>
+> {
+  const usage = await scanRootUsage();
+  if (!usage.size) return [];
 
   const qualifying = new Set(
     [...usage.entries()]

@@ -75,6 +75,13 @@ export function Footer() {
           {/* Legal Links */}
           <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap justify-center">
             <Link
+              href="/dictionary"
+              prefetch={null}
+              className="hover:text-foreground transition-colors duration-150"
+            >
+              Dictionary
+            </Link>
+            <Link
               href="/privacy"
               prefetch={null}
               className="hover:text-foreground transition-colors duration-150"
