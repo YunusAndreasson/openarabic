@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Download } from 'lucide-react';
 import { BOOKS } from '@/lib/books';
 import type { Book } from '@/lib/books';
@@ -5,9 +6,12 @@ import type { Book } from '@/lib/books';
 function BookEntry({ book }: { book: Book }) {
   return (
     <div className="min-w-0">
-      <p className="text-sm font-medium text-foreground leading-tight">
+      <Link
+        href={`/books/${book.slug}`}
+        className="text-sm font-medium text-foreground leading-tight hover:text-primary transition-colors"
+      >
         {book.title}
-      </p>
+      </Link>
       <p className="text-xs text-muted-foreground mt-0.5">{book.author}</p>
       <p className="text-xs text-muted-foreground/80 mt-1.5 leading-relaxed line-clamp-2">
         {book.description}

@@ -96,14 +96,18 @@ export default async function WordPage({
               {root.letters}
             </span>
             <span className="text-2xl md:text-3xl text-muted-foreground font-semibold">
-              {root.meaning}
+              {root.meaning} in Arabic
             </span>
           </h1>
           <p className="mt-4 text-lg text-muted-foreground">
-            How to say <span className="text-foreground">&ldquo;{root.meaning}&rdquo;</span> in
-            Arabic, with pronunciation and{' '}
-            {usageCount === 1 ? 'an example' : 'real example sentences'} from
-            OpenArabic texts.
+            <span lang="ar" dir="rtl" className="font-arabic text-foreground">
+              {root.letters}
+            </span>{' '}
+            is how you say{' '}
+            <span className="text-foreground">&ldquo;{root.meaning}&rdquo;</span> in Arabic.
+            Hear it pronounced and see it used in{' '}
+            {usageCount === 1 ? 'a real example sentence' : 'real example sentences'} from
+            classical texts below.
           </p>
 
           {(arabicAudio || englishAudio) && (

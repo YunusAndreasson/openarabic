@@ -24,7 +24,7 @@ export const PUBLIC_ROUTES = [
 ];
 
 /** Public route families matched by prefix (each has many dynamic URLs). */
-export const PUBLIC_ROUTE_PREFIXES = ['/read/', '/word/', '/author/'];
+export const PUBLIC_ROUTE_PREFIXES = ['/read/', '/word/', '/author/', '/books/'];
 
 export function isPublicRoute(path: string | null | undefined): boolean {
   if (!path) return false;

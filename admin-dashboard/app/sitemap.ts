@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { generateSlug } from '@/lib/slugify';
 import { authorSlug } from '@/lib/author-slug';
 import { getWordPagesForSitemap } from '@/lib/word-pages';
+import { BOOKS } from '@/lib/books';
 import { SITE_URL as baseUrl } from '@/lib/constants';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -48,6 +49,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.4,
   }));
 
+  const bookUrls = BOOKS.map((book) => ({
+    url: `${baseUrl}/books/${book.slug}`,
+    changeFrequency: 'yearly' as const,
+    priority: 0.6,
+  }));
+
   return [
     {
       url: baseUrl,
@@ -91,6 +98,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'monthly',
       priority: 0.5,
     },
+    ...bookUrls,
     ...categoryUrls,
     ...authorUrls,
     ...articleUrls,

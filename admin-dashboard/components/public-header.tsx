@@ -127,11 +127,11 @@ export function PublicHeader({
           {/* Desktop: Category Navigation Pills */}
           <nav className="hidden md:flex flex-1 justify-end">
             <div className="flex gap-1.5 items-center">
-              {/* All Articles pill */}
-              <button
-                onClick={() => onSelectCategory(null)}
+              {/* All Articles pill — real link so crawlers reach the hub */}
+              <Link
+                href="/"
                 className={`
-                  flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer
+                  flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150
                   ${
                     selectedCategoryId === null
                       ? 'bg-muted text-foreground shadow-sm ring-1 ring-border/50'
@@ -141,15 +141,15 @@ export function PublicHeader({
                 title="All Articles"
               >
                 All
-              </button>
+              </Link>
 
-              {/* Category pills */}
+              {/* Category pills — real links to each category hub */}
               {categories.map(category => (
-                <button
+                <Link
                   key={category.id}
-                  onClick={() => onSelectCategory(category.id)}
+                  href={`/?category=${category.id}`}
                   className={`
-                    flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 capitalize cursor-pointer
+                    flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 capitalize
                     ${
                       selectedCategoryId === category.id
                         ? 'bg-muted text-foreground shadow-sm ring-1 ring-border/50'
@@ -158,7 +158,7 @@ export function PublicHeader({
                   `}
                 >
                   {category.name}
-                </button>
+                </Link>
               ))}
 
               {/* Get the app + Info + Contact + Theme Toggle */}
