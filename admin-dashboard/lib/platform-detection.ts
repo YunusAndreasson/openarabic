@@ -1,60 +1,22 @@
 import { headers } from 'next/headers';
-import { APP_STORE_URL, PLAY_STORE_URL } from '@/lib/app';
+import type { PlatformInfo } from '@/lib/user-agent';
+import { classifyUserAgent } from '@/lib/user-agent';
 
-export type Platform = 'ios' | 'android' | 'desktop';
-
-export interface PlatformInfo {
-  platform: Platform;
-  isMobile: boolean;
-  appStoreUrl: string | null;
-  storeName: string | null;
-}
-
-const APP_STORE_URLS = {
-  ios: APP_STORE_URL,
-  android: PLAY_STORE_URL,
-} as const;
+export type { Platform, PlatformInfo } from '@/lib/user-agent';
 
 /**
- * Detects the user's platform from the User-Agent header
- * Server-side only - uses Next.js headers()
+ * Detects the user's platform from the User-Agent header.
+ * Server-side only — uses Next.js headers(). For middleware / edge use, import
+ * the pure classifier from @/lib/user-agent instead.
  */
 export async function detectPlatform(): Promise<PlatformInfo> {
   const headersList = await headers();
-  const userAgent = headersList.get('user-agent') || '';
-
-  // Detect iOS devices
-  const isIOS = /iPhone|iPad|iPod/i.test(userAgent);
-
-  // Detect Android devices
-  const isAndroid = /Android/i.test(userAgent);
-
-  // Determine platform
-  let platform: Platform = 'desktop';
-  let appStoreUrl: string | null = null;
-  let storeName: string | null = null;
-
-  if (isIOS) {
-    platform = 'ios';
-    appStoreUrl = APP_STORE_URLS.ios;
-    storeName = 'App Store';
-  } else if (isAndroid) {
-    platform = 'android';
-    appStoreUrl = APP_STORE_URLS.android;
-    storeName = 'Google Play';
-  }
-
-  return {
-    platform,
-    isMobile: isIOS || isAndroid,
-    appStoreUrl,
-    storeName,
-  };
+  return classifyUserAgent(headersList.get('user-agent') || '');
 }
 
 /**
- * Get the appropriate app store URL for the user's platform
- * Returns null if not on mobile
+ * Get the appropriate app store URL for the user's platform.
+ * Returns null if not on mobile.
  */
 export async function getAppStoreUrl(): Promise<string | null> {
   const { appStoreUrl } = await detectPlatform();
@@ -62,7 +24,7 @@ export async function getAppStoreUrl(): Promise<string | null> {
 }
 
 /**
- * Check if the user is on a mobile device
+ * Check if the user is on a mobile device.
  */
 export async function isMobileDevice(): Promise<boolean> {
   const { isMobile } = await detectPlatform();

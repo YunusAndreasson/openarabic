@@ -64,4 +64,29 @@ describe('detectPlatform', () => {
     const { detectPlatform } = await import('./platform-detection');
     expect((await detectPlatform()).platform).toBe('desktop');
   });
+
+  it('flags a real iPhone browser as not a bot', async () => {
+    setUserAgent(
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15',
+    );
+    const { detectPlatform } = await import('./platform-detection');
+    expect((await detectPlatform()).isBot).toBe(false);
+  });
+
+  it('flags Googlebot Smartphone (Android UA) as a bot so /download-app is never store-redirected', async () => {
+    setUserAgent(
+      'Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+    );
+    const { detectPlatform } = await import('./platform-detection');
+    const info = await detectPlatform();
+    expect(info.platform).toBe('android');
+    expect(info.isMobile).toBe(true);
+    expect(info.isBot).toBe(true);
+  });
+
+  it('flags link-preview fetchers (facebookexternalhit) as bots', async () => {
+    setUserAgent('facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)');
+    const { detectPlatform } = await import('./platform-detection');
+    expect((await detectPlatform()).isBot).toBe(true);
+  });
 });

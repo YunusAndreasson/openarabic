@@ -1,9 +1,23 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { isPublicRoute } from '@/lib/public-routes';
+import { storeRedirectUrl } from '@/lib/user-agent';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Smart download link: send a real phone hitting /download-app straight to its
+  // store (iPhone → App Store, Android → Google Play). Desktop, unknown devices,
+  // and crawlers / link-preview bots fall through to the showcase page so it stays
+  // indexable and previewable. Done here (edge) rather than in the page component
+  // because in-component redirect() doesn't reliably surface as an HTTP redirect
+  // under this app's OpenNext deploy — middleware redirects do.
+  if (pathname === '/download-app' || pathname === '/download-app/') {
+    const storeUrl = storeRedirectUrl(request.headers.get('user-agent') || '');
+    if (storeUrl) {
+      return NextResponse.redirect(new URL(storeUrl));
+    }
+  }
 
   // Allow access to public routes without authentication
   if (isPublicRoute(pathname)) {

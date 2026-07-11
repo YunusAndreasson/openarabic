@@ -39,6 +39,9 @@ export const metadata: Metadata = {
 };
 
 export default async function DownloadPage() {
+  // Mobile visitors are redirected to their store in middleware (see
+  // middleware.ts); desktop / bots reach this showcase. platformInfo still tunes
+  // which store badge leads on the rare mobile hit that isn't redirected.
   const platformInfo = await detectPlatform();
 
   return (
