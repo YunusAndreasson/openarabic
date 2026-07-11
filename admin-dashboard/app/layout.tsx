@@ -33,6 +33,11 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: 'OpenArabic - Learn Arabic Through Reading',
   description: 'Read Arabic articles with parallel English translations. Improve your Arabic reading skills with authentic content.',
+  // The maker behind OpenArabic. Renders <meta name="author"> / <meta name="creator">.
+  // The brand keeps its own twitter:site/creator tags below; the Person identity
+  // is carried in the JSON-LD Person node (see site-structured-data.tsx).
+  authors: [{ name: 'Yunus Andreasson', url: 'https://andreassonphoto.com' }],
+  creator: 'Yunus Andreasson',
   // Google Search Console ownership verification (HTML-tag method). The token
   // renders as a public <meta> tag and is tied to the openarabic.io property,
   // so it's safe to hardcode.

@@ -39,6 +39,24 @@ const SOCIAL_LINKS = [
   },
 ];
 
+// Yunus Andreasson's personal profiles (the maker), kept distinct from the
+// brand SOCIAL_LINKS above. Order matches the shared maker spec. rel="me" on
+// the outbound links ties these back to the Person JSON-LD identity.
+const MAKER_SOCIALS = [
+  { name: 'GitHub', href: 'https://github.com/YunusAndreasson' },
+  { name: 'X', href: 'https://x.com/YunusAndreasson' },
+  { name: 'Instagram', href: 'https://www.instagram.com/andreasson.photo/' },
+  { name: 'LinkedIn', href: 'https://www.linkedin.com/in/yunusandreasson/' },
+];
+
+// Sibling apps in the Islamic cluster (OpenArabic lists the other four).
+const OTHER_APPS = [
+  { name: 'islam.se', href: 'https://islam.se' },
+  { name: 'al-ibadah', href: 'https://al-ibadah.com' },
+  { name: 'zuhd.news', href: 'https://zuhd.news' },
+  { name: 'qamar360', href: 'https://qamar360.com' },
+];
+
 export function Footer() {
   return (
     <footer className="border-t border-border/30 bg-muted/20">
@@ -103,6 +121,52 @@ export function Footer() {
               Delete Account
             </Link>
             <span className="text-muted-foreground/70">© {new Date().getFullYear()} OpenArabic</span>
+          </div>
+        </div>
+
+        {/* Maker signature — Yunus Andreasson's personal identity + sibling apps.
+            A quiet byline row, kept separate from the brand block above. */}
+        <div className="mt-6 pt-4 border-t border-border/20 flex flex-col gap-2 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span>
+              Made by{' '}
+              <a
+                href="https://andreassonphoto.com/about"
+                target="_blank"
+                rel="me noopener noreferrer"
+                className="text-foreground hover:underline"
+              >
+                Yunus Andreasson
+              </a>
+            </span>
+            <span className="text-muted-foreground/40" aria-hidden="true">
+              ·
+            </span>
+            {MAKER_SOCIALS.map(link => (
+              <a
+                key={link.name}
+                href={link.href}
+                target="_blank"
+                rel="me noopener noreferrer"
+                className="hover:text-foreground transition-colors duration-150"
+              >
+                {link.name}
+              </a>
+            ))}
+          </div>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span className="text-muted-foreground/70">Other apps</span>
+            {OTHER_APPS.map(app => (
+              <a
+                key={app.name}
+                href={app.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-foreground transition-colors duration-150"
+              >
+                {app.name}
+              </a>
+            ))}
           </div>
         </div>
       </div>
