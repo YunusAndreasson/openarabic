@@ -25,6 +25,10 @@
   --color-border: #e8f1ec;
   --color-input: #e8f1ec;
   --color-ring: #5b7f68;
+
+  /* Display serif (Newsreader) — drives the `font-display` utility used for
+     headings across the marketing pages. Body stays on Inter. */
+  --font-display: var(--font-newsreader), ui-serif, Georgia, 'Times New Roman', serif;
 }
 
 /* Dark Mode Colors - Override when .dark class is present */

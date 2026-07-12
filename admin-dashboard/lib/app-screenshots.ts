@@ -1,10 +1,11 @@
 /**
- * Real in-app screenshots (from the App Store listing) plus the marketing copy
+ * Real in-app screenshots (full-screen iPhone captures) plus the marketing copy
  * that frames each one. Single source of truth for the download page's feature
- * showcase and the homepage hero mockups — update the copy or swap an image
- * here and every surface stays in sync.
+ * showcase, the homepage hero mockups, and the MobileApplication JSON-LD — update
+ * the copy or swap an image here and every surface stays in sync.
  *
- * Assets live in public/screenshots (cropped to the app screen, 760×1060 WebP).
+ * Assets live in public/screenshots (full device screen, 900×1957 WebP). To swap
+ * one, rename the file too (the path is a cache key) and update its src below.
  */
 
 export interface AppScreenshot {
@@ -24,54 +25,63 @@ export interface AppScreenshot {
 
 export const SCREENSHOTS: AppScreenshot[] = [
   {
-    src: '/screenshots/read-bilingual.webp',
-    alt: 'A classical text by Imam Nawawī shown with Arabic and English side by side',
-    label: 'Read',
-    title: 'The real texts, side by side',
+    src: '/screenshots/explore-library.webp',
+    alt: 'The Explore screen with featured classical texts by Ibn al-Jawzī and topic categories',
+    label: 'Explore',
+    title: 'A library of the classics',
     description:
-      'Classical works from scholars like Imam Nawawī, with Arabic and English on one page. Switch to Arabic-only when you’re ready.',
+      'Ibn al-Qayyim, Ibn Taymiyyah, Ibn al-Jawzī, Imam Nawawī and more — real works on creed, fiqh, sīrah and tafsīr, sorted by topic. Open one and the app keeps your place for next time.',
+    meta: 'ʿAqīdah · Fiqh · Sīrah · Ḥadīth · Tafsīr',
+  },
+  {
+    src: '/screenshots/read-side-by-side.webp',
+    alt: 'A classical text shown with Arabic and English side by side, one word tapped for a hint',
+    label: 'Read',
+    title: 'Arabic and English, side by side',
+    description:
+      'Each line of Arabic sits above its English, so you read the actual text instead of a translation of it. When the help starts to feel slow, switch to Arabic-only.',
     meta: 'Bilingual & Arabic-only · graded by difficulty',
   },
   {
-    src: '/screenshots/tap-translate.webp',
-    alt: 'Reading in Arabic with a prompt to tap any word for its translation',
+    src: '/screenshots/tap-word.webp',
+    alt: 'A tapped word showing its meaning, a grammar note, native audio and an add-to-practice button',
     label: 'Understand',
     title: 'Tap any word you don’t know',
     description:
-      'The meaning, the root, and the pronunciation appear right there — so you keep reading instead of reaching for a dictionary.',
-    meta: 'Instant meanings · root & grammar',
+      'One tap opens its meaning, a short grammar note, and native audio — and drops it into your practice deck. No dictionary, no losing your place on the page.',
+    meta: 'Instant meaning · grammar note · native audio',
   },
   {
-    src: '/screenshots/dictionary-audio.webp',
-    alt: 'A vocabulary list with a play button and pronunciation for each word',
+    src: '/screenshots/listen-audio.webp',
+    alt: 'A playlist of classical texts you can listen to with narrated audio',
     label: 'Listen',
-    title: 'Hear every word spoken',
+    title: 'Hear it read, back to back',
     description:
-      'Native audio for each word and phrase teaches you how classical Arabic actually sounds. Works fully offline.',
-    meta: 'Native pronunciation · word by word',
+      'Queue a text and listen to it narrated — each Arabic line followed by its English — on a walk or a commute. Everything works offline once it’s downloaded.',
+    meta: 'Narrated texts · Arabic then English · offline',
   },
   {
-    src: '/screenshots/practice-quiz.webp',
-    alt: 'A short quiz drawn from a text the reader just finished',
-    label: 'Practice',
-    title: 'Turn reading into recall',
+    src: '/screenshots/speak-aloud.webp',
+    alt: 'A practice flashcard with a microphone to say the Arabic word out loud',
+    label: 'Speak',
+    title: 'Say the word out loud',
     description:
-      'Short quizzes built from the passage you just read turn words you barely recognised into words you can produce.',
-    meta: 'From your reading · quick sessions',
+      'Recall each word by speaking it — tap the mic and the app listens and grades you. It’s the difference between recognising a word and actually owning it.',
+    meta: 'Voice-graded · Forgot · Guessed · Knew it',
   },
   {
-    src: '/screenshots/vocabulary.webp',
-    alt: 'Vocabulary settings for the number of words and difficulty level',
+    src: '/screenshots/spaced-repetition.webp',
+    alt: 'A practice dashboard showing memory strength, words due, streak, and mastered count',
     label: 'Remember',
-    title: 'Keep the words you earn',
+    title: 'Spaced repetition makes it stick',
     description:
-      'Every word you tap enters a spaced-repetition deck that brings it back right before you’d forget it.',
-    meta: 'FSRS spaced repetition · set your own pace',
+      'Every word you tap joins a deck that brings it back right before you’d forget it. Your memory strength climbs a little more with each short session.',
+    meta: 'FSRS spaced repetition · a few minutes a day',
   },
 ];
 
 /** The two screens fanned in the hero mockup: front (primary), then behind. */
 export const HERO_SCREENSHOTS = {
-  front: SCREENSHOTS[0], // read-bilingual
-  back: SCREENSHOTS[2], // dictionary-audio
+  front: SCREENSHOTS[0], // explore-library (the app's start screen — inviting, content-rich)
+  back: SCREENSHOTS[5], // spaced-repetition (memory-strength gauge)
 } as const;

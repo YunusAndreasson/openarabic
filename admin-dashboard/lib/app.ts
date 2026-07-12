@@ -27,7 +27,7 @@ export const APP_TAGLINE = 'Read classical Arabic — even as a beginner';
 
 /** One-paragraph description (manifest, structured data, download page lead). */
 export const APP_DESCRIPTION =
-  'Read classical Islamic texts in Arabic with English translations. Tap unknown words, listen to native audio, and build vocabulary through spaced repetition.';
+  'Read classical Islamic texts — Ibn al-Qayyim, Ibn Taymiyyah, Imam Nawawī and more — in Arabic side by side with English. Tap any word for its meaning and native audio, say it out loud, and lock it in with spaced repetition.';
 
 /** Headline benefits shown as a feature grid / chips. */
 export const APP_FEATURES = [

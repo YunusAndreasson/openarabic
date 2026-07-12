@@ -14,13 +14,13 @@ interface PhoneShowcaseProps {
  */
 export function PhoneShowcase({ className, priority = false }: PhoneShowcaseProps) {
   return (
-    <div className={`relative mx-auto w-full max-w-[19rem] ${className ?? ''}`}>
+    <div className={`relative mx-auto w-full ${className ?? 'max-w-[22rem]'}`}>
       {/* Behind: dictionary / audio screen */}
       <div className="absolute right-0 top-[6%] w-[55%] rotate-[5deg]">
         <PhoneMockup
           src={HERO_SCREENSHOTS.back.src}
           alt={HERO_SCREENSHOTS.back.alt}
-          sizes="(max-width: 640px) 38vw, 160px"
+          sizes="(max-width: 640px) 45vw, 280px"
         />
       </div>
 
@@ -30,7 +30,7 @@ export function PhoneShowcase({ className, priority = false }: PhoneShowcaseProp
           src={HERO_SCREENSHOTS.front.src}
           alt={HERO_SCREENSHOTS.front.alt}
           priority={priority}
-          sizes="(max-width: 640px) 52vw, 210px"
+          sizes="(max-width: 640px) 60vw, 360px"
         />
       </div>
     </div>

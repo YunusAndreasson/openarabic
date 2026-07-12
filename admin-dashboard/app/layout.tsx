@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Newsreader } from 'next/font/google';
 import localFont from 'next/font/local';
 import './globals.css';
 import { LayoutWrapper } from '@/components/layout-wrapper';
@@ -14,6 +14,17 @@ const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
   display: 'swap',
+});
+
+// Editorial serif for display headings — an on-screen reading face that echoes
+// the app's own bilingual texts and gives the marketing pages a scholarly, book-
+// like voice distinct from the Inter body.
+const newsreader = Newsreader({
+  subsets: ['latin'],
+  variable: '--font-newsreader',
+  display: 'swap',
+  weight: ['400', '500', '600'],
+  style: ['normal', 'italic'],
 });
 
 const madina = localFont({
@@ -91,7 +102,11 @@ export default async function RootLayout({
   const platformInfo = await detectPlatform();
 
   return (
-    <html lang="en" className={`${inter.variable} ${madina.variable}`} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${inter.variable} ${madina.variable} ${newsreader.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         {/* Google Analytics (gtag.js) — must be in <head> for Search Console
             "Google Analytics" ownership verification. */}

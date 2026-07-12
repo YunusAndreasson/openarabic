@@ -44,8 +44,9 @@ export function AppShowcaseHero({ platformInfo, authors = [] }: AppShowcaseHeroP
           </h1>
 
           <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
-            Classical Islamic texts in Arabic, side by side with English. Tap any word for its
-            meaning and native audio — and remember it with spaced repetition.
+            Read Ibn al-Qayyim, Ibn Taymiyyah, and Imam Nawawī in Arabic, side by side with
+            English. Tap any word for its meaning and native audio, say it out loud, and remember
+            it with spaced repetition.
           </p>
 
           <StoreBadges
