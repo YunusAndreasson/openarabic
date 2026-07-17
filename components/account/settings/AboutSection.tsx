@@ -76,66 +76,14 @@ export const AboutSection = memo(() => {
         />
       </SettingsSection>
 
-      {/* More from the maker — Yunus Andreasson's personal identity + sibling
-          apps. Separate from the brand FOLLOW_US section above by design. */}
+      {/* A single quiet credit. The maker's other apps live on his projects
+          page, so this stays one row instead of a billboard of links. */}
       <SettingsSection title={STRINGS.MORE_FROM_MAKER}>
         <SettingsCard
           icon="person-circle"
           label={STRINGS.MAKER_BYLINE}
           rightType="external"
-          onPress={() => openSocialLink(STRINGS.MAKER_HUB_URL)}
-        />
-        <SettingsCard
-          icon="logo-github"
-          label={STRINGS.MAKER_GITHUB}
-          rightType="external"
-          onPress={() => openSocialLink(STRINGS.MAKER_GITHUB_URL)}
-        />
-        <SettingsCard
-          icon="logo-x"
-          label={STRINGS.MAKER_X}
-          rightType="external"
-          onPress={() => openSocialLink(STRINGS.MAKER_X_URL)}
-        />
-        <SettingsCard
-          icon="logo-instagram"
-          label={STRINGS.MAKER_INSTAGRAM}
-          rightType="external"
-          onPress={() => openSocialLink(STRINGS.MAKER_INSTAGRAM_URL)}
-        />
-        <SettingsCard
-          icon="logo-linkedin"
-          label={STRINGS.MAKER_LINKEDIN}
-          rightType="external"
-          onPress={() => openSocialLink(STRINGS.MAKER_LINKEDIN_URL)}
-        />
-        <SettingsCard
-          icon="globe-outline"
-          label={STRINGS.OTHER_APPS_ISLAM_SE}
-          subtitle={STRINGS.OTHER_APPS_ISLAM_SE_SUBTITLE}
-          rightType="external"
-          onPress={() => openSocialLink(STRINGS.OTHER_APPS_ISLAM_SE_URL)}
-        />
-        <SettingsCard
-          icon="globe-outline"
-          label={STRINGS.OTHER_APPS_AL_IBADAH}
-          subtitle={STRINGS.OTHER_APPS_AL_IBADAH_SUBTITLE}
-          rightType="external"
-          onPress={() => openSocialLink(STRINGS.OTHER_APPS_AL_IBADAH_URL)}
-        />
-        <SettingsCard
-          icon="globe-outline"
-          label={STRINGS.OTHER_APPS_ZUHD}
-          subtitle={STRINGS.OTHER_APPS_ZUHD_SUBTITLE}
-          rightType="external"
-          onPress={() => openSocialLink(STRINGS.OTHER_APPS_ZUHD_URL)}
-        />
-        <SettingsCard
-          icon="globe-outline"
-          label={STRINGS.OTHER_APPS_QAMAR}
-          subtitle={STRINGS.OTHER_APPS_QAMAR_SUBTITLE}
-          rightType="external"
-          onPress={() => openSocialLink(STRINGS.OTHER_APPS_QAMAR_URL)}
+          onPress={() => openSocialLink(STRINGS.MAKER_PROJECTS_URL)}
         />
       </SettingsSection>
     </>

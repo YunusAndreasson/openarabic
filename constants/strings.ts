@@ -136,33 +136,11 @@ export const STRINGS = {
   TWITTER_URL: 'https://x.com/openarabicio',
   INSTAGRAM_URL: 'https://www.instagram.com/openarabic.io/',
   FACEBOOK_URL: 'https://www.facebook.com/OpenArabic.io/',
-  // More from the maker — Yunus Andreasson's PERSONAL identity, distinct from
-  // the brand FOLLOW_US block above (which links @openarabicio). These MAKER_*
-  // keys point at Yunus's own profiles + hub, plus the sibling apps he builds.
+  // More from the maker — a single quiet credit. The byline links to Yunus's
+  // projects page, which lists his other apps, so this app doesn't have to.
   MORE_FROM_MAKER: 'More from the maker',
   MAKER_BYLINE: 'Made by Yunus Andreasson',
-  MAKER_HUB_URL: 'https://andreassonphoto.com/about',
-  MAKER_GITHUB: 'GitHub',
-  MAKER_GITHUB_URL: 'https://github.com/YunusAndreasson',
-  MAKER_X: 'X',
-  MAKER_X_URL: 'https://x.com/YunusAndreasson',
-  MAKER_INSTAGRAM: 'Instagram',
-  MAKER_INSTAGRAM_URL: 'https://www.instagram.com/andreasson.photo/',
-  MAKER_LINKEDIN: 'LinkedIn',
-  MAKER_LINKEDIN_URL: 'https://www.linkedin.com/in/yunusandreasson/',
-  // Other apps by the same maker (Islamic cluster — OpenArabic lists the other four).
-  OTHER_APPS_ISLAM_SE: 'islam.se',
-  OTHER_APPS_ISLAM_SE_SUBTITLE: 'Swedish Islamic knowledge & prayer times',
-  OTHER_APPS_ISLAM_SE_URL: 'https://islam.se',
-  OTHER_APPS_AL_IBADAH: 'al-ibadah',
-  OTHER_APPS_AL_IBADAH_SUBTITLE: 'Islamic knowledge collection',
-  OTHER_APPS_AL_IBADAH_URL: 'https://al-ibadah.com',
-  OTHER_APPS_ZUHD: 'zuhd.news',
-  OTHER_APPS_ZUHD_SUBTITLE: 'Calm Islamic news',
-  OTHER_APPS_ZUHD_URL: 'https://zuhd.news',
-  OTHER_APPS_QAMAR: 'qamar360',
-  OTHER_APPS_QAMAR_SUBTITLE: 'Prayer-habit companion',
-  OTHER_APPS_QAMAR_URL: 'https://qamar360.com',
+  MAKER_PROJECTS_URL: 'https://andreassonphoto.com/projects',
   // App Store Review
   RATE_APP: 'Rate OpenArabic',
   // Theme names
