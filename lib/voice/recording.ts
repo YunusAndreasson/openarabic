@@ -274,7 +274,7 @@ export class VoiceRecorder {
       event => this.handleBuffer(event),
     );
     if (ready.status === 'error') throw new Error(`onAudioReady failed: ${ready.message}`);
-    const started = recorder.start();
+    const started = await recorder.start();
     if (started.status === 'error') throw new Error(`recorder.start failed: ${started.message}`);
     this.recorder = recorder;
 

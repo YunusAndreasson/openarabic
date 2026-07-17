@@ -91,7 +91,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.0",
-    "react-native-audio-api": "0.12.2",
+    "react-native-audio-api": "0.13.2",
     "react-native-draggable-flatlist": "^4.0.3",
     "react-native-gesture-handler": "~2.32.0",
     "react-native-reanimated": "4.5.0",
@@ -134,6 +134,8 @@
   "private": true,
   "resolutions": {
     "@react-native-async-storage/async-storage": "^2.2.0",
+    "@typescript-eslint/eslint-plugin": "8.64.0",
+    "@typescript-eslint/parser": "8.64.0",
     "jest-environment-jsdom": "^30.0.0",
     "jest-environment-node": "^30.0.0",
     "jest-mock": "^30.0.0",
