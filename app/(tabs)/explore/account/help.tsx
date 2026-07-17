@@ -9,7 +9,7 @@ import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ArabicColoringExamples } from '@/components/account/ArabicColoringExamples';
-import { BaseCard, SectionLabel } from '@/components/common';
+import { BaseCard, EmptyState, SectionLabel } from '@/components/common';
 import { type FAQCategoryData, type FAQItem } from '@/constants/faq';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
@@ -165,6 +165,8 @@ const HelpScreen: FC = () => {
     router.push(ROUTE_PATHS.ACCOUNT_FEEDBACK);
   }, []);
 
+  const showEmptyState = !hasResults && Boolean(searchQuery.trim());
+
   return (
     <ThemedView
       includeBottomInset={false}
@@ -227,7 +229,9 @@ const HelpScreen: FC = () => {
         scrollable={true}
         style={styles.flexOne}
         useSafeArea={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={
+          showEmptyState ? [styles.scrollContent, styles.scrollContentEmpty] : styles.scrollContent
+        }
         scrollViewProps={{
           showsVerticalScrollIndicator: true,
           removeClippedSubviews: false,
@@ -235,21 +239,13 @@ const HelpScreen: FC = () => {
           keyboardDismissMode: 'on-drag',
         }}
       >
-        {!hasResults && searchQuery.trim() ? (
+        {showEmptyState ? (
           // Empty state when no search results
-          <View style={styles.emptyState}>
-            <Ionicons
-              name="search-outline"
-              size={LAYOUT.BUTTON.ICON_SIZE.XXLARGE}
-              color={colors.textTertiary}
-            />
-            <ThemedText type="heading3" weight="semibold" style={styles.emptyStateTitle}>
-              {STRINGS.HELP_NO_RESULTS_TITLE}
-            </ThemedText>
-            <ThemedText type="body" colorName="textTertiary" style={styles.emptyStateDescription}>
-              {STRINGS.HELP_NO_RESULTS_DESCRIPTION}
-            </ThemedText>
-          </View>
+          <EmptyState
+            icon="search-outline"
+            title={STRINGS.HELP_NO_RESULTS_TITLE}
+            hint={STRINGS.HELP_NO_RESULTS_DESCRIPTION}
+          />
         ) : (
           <>
             {/* Popular Questions Section */}
@@ -344,19 +340,9 @@ const styles = StyleSheet.create({
   resultCount: {
     paddingHorizontal: LAYOUT.SPACING.SMALL,
   },
-  // Empty state styles
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: LAYOUT.SPACING.XLARGE * 2,
-    gap: LAYOUT.SPACING.MEDIUM,
-  },
-  emptyStateTitle: {
-    textAlign: 'center',
-  },
-  emptyStateDescription: {
-    textAlign: 'center',
-    paddingHorizontal: LAYOUT.SPACING.XLARGE,
+  // Lets the shared EmptyState center itself within the scroll viewport
+  scrollContentEmpty: {
+    flexGrow: 1,
   },
   faqButton: {
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,

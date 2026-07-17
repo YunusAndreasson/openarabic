@@ -86,7 +86,7 @@ export const DueWordsPrognosisChart = memo<DueWordsPrognosisChartProps>(
         hideTitle={hideTitle}
         hasData={chartData.hasData}
         isFuturePrediction={true} // Today is leftmost for future predictions
-        emptyStateText=""
+        emptyStateText={EMPTY_STATE_MESSAGES.dueWords}
         yLabelFormatter={(value: number) => `${value}`}
       />
     );

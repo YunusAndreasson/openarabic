@@ -1,4 +1,4 @@
-import { ListSeparator } from '@/components/common';
+import { ListSeparator, LoadingState } from '@/components/common';
 import { useFocusEffect } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import type { JSX } from 'react';
@@ -131,6 +131,7 @@ export default function PlaylistScreen(): JSX.Element {
   const {
     sortedReadingList,
     isReadingListLoading,
+    shouldShowInitialLoading,
     handleArticlePlay,
     handleDelete,
     enhancedTracksError,
@@ -199,6 +200,14 @@ export default function PlaylistScreen(): JSX.Element {
 
   // keyExtractor is a module-level constant, already stable.
   const memoizedKeyExtractor = keyExtractor;
+
+  if (shouldShowInitialLoading) {
+    return (
+      <ThemedView useSafeArea={false} style={styles.container}>
+        <LoadingState />
+      </ThemedView>
+    );
+  }
 
   if (shouldShowEmpty) {
     return (

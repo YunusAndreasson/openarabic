@@ -22,7 +22,7 @@ export interface BottomSheetStateHandlerProps {
   isEmpty?: boolean;
 
   /**
-   * Custom loading message (defaults to STRINGS.LOADING)
+   * Custom loading message (defaults to STRINGS.LOADING_GENERIC)
    */
   loadingMessage?: string;
 
@@ -67,7 +67,7 @@ export function BottomSheetStateHandler({
   isLoading = false,
   isError = false,
   isEmpty = false,
-  loadingMessage = 'Loading...',
+  loadingMessage = STRINGS.LOADING_GENERIC,
   errorMessage = STRINGS.ERROR_LOADING_DATA,
   emptyMessage,
   children,

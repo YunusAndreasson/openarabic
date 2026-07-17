@@ -84,7 +84,7 @@ export const STRINGS = {
   RESET_TUTORIALS_TITLE: 'Reset tutorials?',
   RESET_TUTORIALS_MESSAGE: 'See helpful tips again as you explore the app.',
   // Tutorial copy
-  TUTORIAL_WORD_TAP_CTA: 'Tap the highlighted word to see its meaning and save it for practice',
+  TUTORIAL_WORD_TAP_CTA: 'Tap the highlighted word to see its meaning — then add it to practice',
   // Review tutorial - Intro
   TUTORIAL_INTRO_TITLE: 'How it works',
   TUTORIAL_INTRO_DESCRIPTION: 'Tap a card to reveal the answer, then rate how well you knew it.',
@@ -151,6 +151,7 @@ export const STRINGS = {
   PLEASE_TRY_AGAIN: tryAgain,
   LOADING_ARTICLES: 'Loading articles…',
   LOADING_AUDIO_ELLIPSIS: 'Loading session…',
+  LOADING_GENERIC: 'Loading…',
   AUDIO_READY: 'Audio ready',
   PREPARING_PRACTICE_SESSION: 'Preparing session…',
   // Timer controls
@@ -225,13 +226,16 @@ export const STRINGS = {
   ARTICLE_REMOVE_FROM_PLAYLIST_A11Y: 'Remove from playlist',
   // Playlist tab empty state - minimal one-tap start
   BOOKMARKS_EMPTY_TITLE: 'Nothing saved yet',
-  BOOKMARKS_EMPTY_HINT: 'Tap the headphones on any article\nto add it here',
+  BOOKMARKS_EMPTY_HINT: 'Tap the headphones on any article to add it here',
   // Practice tab empty state - minimal one-tap start
   START_REVIEW: 'Start review',
   PLAY_ALL: 'Play all',
   STUDY_LIST_EMPTY_TITLE: 'No words yet',
-  STUDY_LIST_EMPTY_HINT: 'Tap any word while reading\nto save it for practice',
+  STUDY_LIST_EMPTY_HINT: 'Tap a word while reading, then add it to practice',
   BROWSE_ARTICLES: 'Browse articles',
+  // Explore category/filter empty state
+  CATEGORY_EMPTY_TITLE: 'No articles here yet',
+  CATEGORY_EMPTY_HINT: 'New articles are added regularly — check back soon',
   // Welcome toasts when navigating from empty states
   EXPLORE_WELCOME_FROM_PLAYLIST: 'Tap the headphones on any article to add it to your playlist',
   // Success toasts for empty state actions
@@ -335,6 +339,7 @@ export const STRINGS = {
   RESET_PASSWORD_BUTTON: 'Reset password',
   RESET_PASSWORD_CONFIRM_ERROR: 'Confirm your password',
   RESET_PASSWORD_MISMATCH: 'Passwords do not match',
+  PASSWORD_STRENGTH_FAIR: 'Fair',
   PASSWORD_STRENGTH_GOOD: 'Good',
   PASSWORD_STRENGTH_STRONG: 'Strong',
   PASSWORD_REQUIREMENT_LENGTH: 'At least {minLength} characters',
@@ -463,10 +468,10 @@ export const STRINGS = {
   FAILED_TO_RESET_WORD_PROGRESS: "Couldn't reset progress. Try again",
   RESET_WORD_PROGRESS_A11Y: 'Reset progress for this word',
   // Chart Empty States (action + outcome, concise)
-  EMPTY_STATE_MASTERY: 'Practice 5 words to see your strength trend',
+  EMPTY_STATE_MASTERY: 'Add words to see your strength trend',
   EMPTY_STATE_LEARNED: 'Complete reviews to track your progress',
-  EMPTY_STATE_EFFICIENCY: 'Practice 10 words to track your learning speed',
-  EMPTY_STATE_RETRIEVABILITY: 'Practice 5 words to see your review timing',
+  EMPTY_STATE_EFFICIENCY: 'Add words to track your learning speed',
+  EMPTY_STATE_RETRIEVABILITY: 'Add words to see your review timing',
   EMPTY_STATE_DUE_WORDS: 'Add words to see your upcoming reviews',
   EMPTY_STATE_GENERAL: 'Add words to start tracking your progress',
   // Word Sentences Bottom Sheet (dictionary sentence examples)
@@ -594,7 +599,7 @@ export const STRINGS = {
   HELP_STILL_NEED_HELP_TITLE: 'Still need help?',
   HELP_STILL_NEED_HELP_DESCRIPTION: 'We typically respond within 24 hours',
   // Chart empty states
-  CHART_EMPTY_STATE: 'Add 10 or more words to see your progress chart',
+  CHART_EMPTY_STATE: 'Add words to see your progress chart',
   // Legal & Attributions
   LEGAL_ATTRIBUTIONS: 'Legal & attributions',
   LEGAL_INTRO:

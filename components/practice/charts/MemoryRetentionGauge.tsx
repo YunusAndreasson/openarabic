@@ -168,7 +168,12 @@ export function MemoryRetentionGauge({ studyWords = [], onInfoPress }: MemoryRet
   };
 
   return (
-    <BaseChart contentHeight={GAUGE_HEIGHT + 20} hasData={true} onCardPress={onInfoPress}>
+    <BaseChart
+      contentHeight={GAUGE_HEIGHT + 20}
+      hasData={studyWords.length > 0}
+      emptyStateText={STRINGS.STUDY_WORDS_TO_TRACK_MEMORY_RETENTION}
+      onCardPress={onInfoPress}
+    >
       <View style={styles.container} pointerEvents="none">
         <View style={styles.gaugeContainer}>
           <Canvas style={styles.canvas} pointerEvents="none">

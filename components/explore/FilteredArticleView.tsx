@@ -1,4 +1,4 @@
-import { ListSeparator, SectionLabel } from '@/components/common';
+import { EmptyState, ListSeparator, LoadingState, SectionLabel } from '@/components/common';
 import { FlashList } from '@shopify/flash-list';
 import { type FC, type JSX, useCallback, useDeferredValue, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -6,7 +6,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
 import { PlaylistItemCard } from '@/components/playlist';
-import { PulsatingLoader } from '@/components/ui';
 import { LIST_DRAW_DISTANCE_MULTIPLIER, SCROLL_EVENT_THROTTLE } from '@/constants/animation';
 import { COMPLETION_THRESHOLD, LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -39,12 +38,6 @@ const SeparatorComponent = () => <ListSeparator height={LAYOUT.SPACING.SMALL} />
 const STATIC_STYLES = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
   },
   footerSpacer: {
     height: LAYOUT.SPACING.LARGE,
@@ -217,9 +210,19 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({ articles, on
   if (shouldShowLoading) {
     return (
       <ThemedView {...THEMED_VIEW_PROPS}>
-        <View style={[STATIC_STYLES.emptyContainer, { paddingTop: LAYOUT.SPACING.XXLARGE }]}>
-          <PulsatingLoader size={64} />
-        </View>
+        <LoadingState />
+      </ThemedView>
+    );
+  }
+
+  if (listData.length === 0) {
+    return (
+      <ThemedView {...THEMED_VIEW_PROPS}>
+        <EmptyState
+          icon="library-outline"
+          title={STRINGS.CATEGORY_EMPTY_TITLE}
+          hint={STRINGS.CATEGORY_EMPTY_HINT}
+        />
       </ThemedView>
     );
   }

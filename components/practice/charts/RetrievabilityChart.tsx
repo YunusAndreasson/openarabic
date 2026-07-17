@@ -1,7 +1,7 @@
 import { memo, useMemo } from 'react';
 
 import { VocabularyChart, type DataPoint } from '@/components/common/charts';
-import { CHART_LABELS, generateChartSubtitle } from '@/constants/chartMessages';
+import { CHART_LABELS, EMPTY_STATE_MESSAGES, generateChartSubtitle } from '@/constants/chartMessages';
 import { useGraphWidth } from '@/constants/chartConstants';
 import { formatMonthDayUTC } from '@/utils/chartDataUtils';
 import { MEMORY_CAPACITY_THRESHOLDS } from '@/constants/fsrs';
@@ -79,7 +79,7 @@ export const RetrievabilityChart = memo<RetrievabilityChartProps>(
         hideTitle={hideTitle}
         hasData={chartData.hasData}
         isFuturePrediction={true} // Today is leftmost for future predictions
-        emptyStateText=""
+        emptyStateText={EMPTY_STATE_MESSAGES.retrievability}
       />
     );
   },

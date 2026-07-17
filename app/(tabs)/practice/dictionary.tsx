@@ -7,6 +7,7 @@ import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
+import { LoadingState } from '@/components/common';
 import {
   DictionaryEmptyState,
   DictionaryWordCard,
@@ -147,7 +148,9 @@ export default function DictionaryScreen(): JSX.Element {
 
   return (
     <ThemedView style={styles.container}>
-      {isLoading ? null : (
+      {isLoading ? (
+        <LoadingState />
+      ) : (
         <View style={styles.contentContainer}>
           <FlashList
             data={sortedWords}

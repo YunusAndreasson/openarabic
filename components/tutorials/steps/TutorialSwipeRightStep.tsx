@@ -82,7 +82,7 @@ export function TutorialSwipeRightStep() {
 
       {/* Animated hand swiping right */}
       <Animated.View style={[styles.handContainer, handStyle]}>
-        <Ionicons name="hand-left-outline" size={TUTORIAL_VISUALS.ICON_SIZE} color={colors.text} />
+        <Ionicons name="hand-right-outline" size={TUTORIAL_VISUALS.ICON_SIZE} color={colors.text} />
       </Animated.View>
     </View>
   );

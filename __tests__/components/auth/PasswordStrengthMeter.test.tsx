@@ -56,13 +56,14 @@ describe('PasswordStrengthMeter', () => {
     test('shows no label for passwords under 8 characters', () => {
       const { queryByText } = render(<PasswordStrengthMeter password="short" />);
       // Strength label should not appear for weak passwords
+      expect(queryByText('Fair')).toBeNull();
       expect(queryByText('Good')).toBeNull();
       expect(queryByText('Strong')).toBeNull();
     });
 
-    test('shows "Good" label for passwords 8-11 characters', () => {
+    test('shows "Fair" label for passwords 8-11 characters', () => {
       const { getByText } = render(<PasswordStrengthMeter password="password1" />);
-      expect(getByText('Good')).toBeTruthy();
+      expect(getByText('Fair')).toBeTruthy();
     });
 
     test('shows "Good" label for passwords 12-15 characters', () => {

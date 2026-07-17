@@ -36,7 +36,7 @@ function calculateStrength(password: string): number {
  */
 function getStrengthLabel(score: number): string {
   if (score === 0) return '';
-  if (score === 1) return STRINGS.PASSWORD_STRENGTH_GOOD;
+  if (score === 1) return STRINGS.PASSWORD_STRENGTH_FAIR;
   if (score === 2) return STRINGS.PASSWORD_STRENGTH_GOOD;
   return STRINGS.PASSWORD_STRENGTH_STRONG;
 }
@@ -65,8 +65,7 @@ export function PasswordStrengthMeter({ password }: PasswordStrengthMeterProps) 
   // Determine strength color
   const strengthColor = useMemo(() => {
     if (strength === 0) return colors.textTertiary;
-    if (strength === 1) return colors.success;
-    if (strength === 2) return colors.success;
+    if (strength === 1) return colors.warning;
     return colors.success;
   }, [strength, colors]);
 
