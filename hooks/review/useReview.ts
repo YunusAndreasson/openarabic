@@ -400,11 +400,13 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       return;
     }
     if (revealed) return; // idempotent — tapping the card twice flips once
+    // Haptic first: the tap's physical response should lead the flip, not queue
+    // behind the audio-cache lookup kicked off below.
+    lightFeedback();
     setRevealed(true);
     setCurrentMeaning(currentWord?.root?.meaning || STRINGS.NO_TRANSLATION_AVAILABLE);
     setShowTranslation(true);
     revealMeaningPassive();
-    lightFeedback();
   }, [revealed, isComplete, currentWord?.root?.meaning, revealMeaningPassive]);
 
   // Commit the self-grade for the revealed card and advance. The answer is

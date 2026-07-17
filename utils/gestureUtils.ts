@@ -7,9 +7,6 @@ export const GESTURE_CONSTANTS = {
   MIN_DISTANCE: 0.1,
   MAX_TRANSLATION_RATIO: LAYOUT.OPACITY.HOVER,
   VELOCITY_THRESHOLD: 600, // Velocity threshold for swipe detection
-  // v2 Performance optimizations
-  DEBOUNCE_DELAY: 16, // 60fps
-  HAPTIC_THRESHOLD: 0.02, // Minimum movement for haptic feedback
 } as const;
 
 // ===== GESTURE CONFIGURATION =====

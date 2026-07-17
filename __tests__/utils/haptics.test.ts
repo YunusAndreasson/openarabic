@@ -1,7 +1,7 @@
 /**
  * Haptics Tests
  *
- * Tests haptic feedback debouncing logic.
+ * Tests haptic feedback debouncing logic and platform routing.
  *
  * Modern Jest 29 Patterns:
  * - ✅ @jest/globals explicit imports
@@ -10,6 +10,7 @@
  */
 
 import { beforeEach, afterEach, describe, expect, test, jest } from '@jest/globals';
+import { Platform } from 'react-native';
 
 import { selectionFeedback } from '@/utils/haptics';
 
@@ -18,19 +19,30 @@ jest.mock('expo-haptics', () => ({
   selectionAsync: jest.fn(),
   impactAsync: jest.fn(),
   notificationAsync: jest.fn(),
+  performAndroidHapticsAsync: jest.fn(),
   ImpactFeedbackStyle: { Light: 'light' },
   NotificationFeedbackType: { Success: 'success', Error: 'error' },
+  AndroidHaptics: {
+    Segment_Tick: 'segment-tick',
+    Virtual_Key: 'virtual-key',
+    Context_Click: 'context-click',
+    Confirm: 'confirm',
+    Reject: 'reject',
+  },
 }));
 
-describe('haptics - debounce', () => {
+describe('haptics', () => {
   beforeEach(() => {
     jest.useFakeTimers();
-    jest.clearAllTimers();
     jest.clearAllMocks();
   });
 
   afterEach(() => {
+    // Flush the module-level debounce-release timeout so the block flag from
+    // this test's haptic calls doesn't leak into the next test.
+    jest.runOnlyPendingTimers();
     jest.useRealTimers();
+    jest.restoreAllMocks();
   });
 
   test('prevents double selectionFeedback within debounce window', () => {
@@ -46,5 +58,15 @@ describe('haptics - debounce', () => {
     jest.advanceTimersByTime(60);
     selectionFeedback();
     expect(selectionAsync).toHaveBeenCalledTimes(2);
+  });
+
+  test('routes through performAndroidHapticsAsync on Android (haptics engine, not Vibrator)', () => {
+    const { selectionAsync, performAndroidHapticsAsync, AndroidHaptics } = require('expo-haptics');
+    jest.replaceProperty(Platform, 'OS', 'android');
+
+    selectionFeedback();
+
+    expect(performAndroidHapticsAsync).toHaveBeenCalledWith(AndroidHaptics.Segment_Tick);
+    expect(selectionAsync).not.toHaveBeenCalled();
   });
 });

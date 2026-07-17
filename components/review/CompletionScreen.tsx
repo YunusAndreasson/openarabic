@@ -3,6 +3,7 @@ import { Link } from 'expo-router';
 import type { ComponentProps, FC } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 import Animated, { FadeIn, FadeInUp, ZoomIn } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
@@ -18,10 +19,20 @@ import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { UiAction } from '@/types/enums';
 import type { SessionMetrics } from '@/types/review.types';
 import { withAlpha } from '@/utils/colorUtils';
+import { successFeedback } from '@/utils/haptics';
 import { createMargin, createPadding, COMMON_STYLES } from '@/utils/layoutUtils';
 
 // Layout animation builders hoisted to module level per Reanimated best practices
-const ENTERING_ICON = ZoomIn.duration(TIMING_CONFIG.FAST.duration).springify();
+// Success haptic fires from the checkmark's completion callback so it lands on the
+// exact frame the zoom-in settles (no estimated setTimeout offset).
+const ENTERING_ICON = ZoomIn.duration(TIMING_CONFIG.FAST.duration)
+  .springify()
+  .withCallback(finished => {
+    'worklet';
+    if (finished) {
+      scheduleOnRN(successFeedback);
+    }
+  });
 const ENTERING_TITLE = FadeInUp.delay(TIMING_CONSTANTS.STAGGER.BASE).duration(
   TIMING_CONFIG.FAST.duration,
 );

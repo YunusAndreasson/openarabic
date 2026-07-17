@@ -251,6 +251,19 @@ jest.mock('react-native-worklets', () => ({
 jest.mock('react-native-reanimated', () => {
   const React = require('react');
 
+  // Chainable layout-animation builder: every builder method returns the chain
+  // so call orders like ZoomIn.duration(x).springify().withCallback(cb) work.
+  const createLayoutBuilderMock = () => {
+    const chain = {};
+    chain.duration = () => chain;
+    chain.delay = () => chain;
+    chain.springify = () => chain;
+    chain.damping = () => chain;
+    chain.stiffness = () => chain;
+    chain.withCallback = () => chain;
+    return chain;
+  };
+
   return {
     // Cancellation
     cancelAnimation: jest.fn(() => undefined),
@@ -333,63 +346,16 @@ jest.mock('react-native-reanimated', () => {
       stiffness: value => ({ stiffness: value }),
     },
 
-    // Entering animations with springify chain to mirror builder API
-    FadeIn: {
-      duration: ms => ({
-        duration: ms,
-        delay: _ms => ({ delay: _ms, springify: () => ({}) }),
-        springify: () => ({}),
-      }),
-    },
-    FadeOut: {
-      duration: ms => ({
-        duration: ms,
-        delay: _ms => ({ delay: _ms, springify: () => ({}) }),
-        springify: () => ({}),
-      }),
-    },
-    SlideInRight: {
-      duration: ms => ({
-        duration: ms,
-        delay: _ms => ({ delay: _ms, springify: () => ({}) }),
-        springify: () => ({}),
-      }),
-    },
-    SlideInLeft: {
-      duration: ms => ({
-        duration: ms,
-        delay: _ms => ({ delay: _ms, springify: () => ({}) }),
-        springify: () => ({}),
-      }),
-    },
-    ZoomIn: {
-      duration: ms => ({
-        duration: ms,
-        delay: _ms => ({ delay: _ms, springify: () => ({}) }),
-        springify: () => ({}),
-      }),
-    },
-    ZoomOut: {
-      duration: ms => ({
-        duration: ms,
-        delay: _ms => ({ delay: _ms, springify: () => ({}) }),
-        springify: () => ({}),
-      }),
-    },
-    SlideOutRight: {
-      duration: ms => ({
-        duration: ms,
-        delay: _ms => ({ delay: _ms, springify: () => ({}) }),
-        springify: () => ({}),
-      }),
-    },
-    SlideOutLeft: {
-      duration: ms => ({
-        duration: ms,
-        delay: _ms => ({ delay: _ms, springify: () => ({}) }),
-        springify: () => ({}),
-      }),
-    },
+    // Entering animations with a chainable builder to mirror the real API
+    // (duration/delay/springify/withCallback all return the builder)
+    FadeIn: createLayoutBuilderMock(),
+    FadeOut: createLayoutBuilderMock(),
+    SlideInRight: createLayoutBuilderMock(),
+    SlideInLeft: createLayoutBuilderMock(),
+    ZoomIn: createLayoutBuilderMock(),
+    ZoomOut: createLayoutBuilderMock(),
+    SlideOutRight: createLayoutBuilderMock(),
+    SlideOutLeft: createLayoutBuilderMock(),
 
     // Easing functions
     Easing: {

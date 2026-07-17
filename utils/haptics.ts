@@ -1,10 +1,17 @@
 import * as Haptics from 'expo-haptics';
+import { Platform } from 'react-native';
 
 import { store } from '@/store/store';
 
 /**
  * Standardized haptic feedback patterns for consistent user experience
  * Based on semantic meaning rather than technical implementation
+ *
+ * Platform routing: iOS maps to the UIKit feedback generators. Android uses
+ * performAndroidHapticsAsync — the expo-haptics docs deprecate the classic
+ * impactAsync/notificationAsync path there (it's simulated through the legacy
+ * Vibrator API), while performAndroidHapticsAsync drives the device's haptics
+ * engine with semantic HapticFeedbackConstants and needs no VIBRATE permission.
  */
 
 // Debounce mechanism to prevent double haptic feedback
@@ -44,7 +51,11 @@ const shouldTriggerHaptic = (): boolean => {
  */
 export const selectionFeedback = (): void => {
   if (shouldTriggerHaptic()) {
-    Haptics.selectionAsync();
+    if (Platform.OS === 'android') {
+      Haptics.performAndroidHapticsAsync(Haptics.AndroidHaptics.Segment_Tick);
+    } else {
+      Haptics.selectionAsync();
+    }
   }
 };
 
@@ -56,7 +67,11 @@ export const selectionFeedback = (): void => {
  */
 export const lightFeedback = (): void => {
   if (shouldTriggerHaptic()) {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS === 'android') {
+      Haptics.performAndroidHapticsAsync(Haptics.AndroidHaptics.Virtual_Key);
+    } else {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
   }
 };
 
@@ -68,7 +83,11 @@ export const lightFeedback = (): void => {
  */
 export const mediumFeedback = (): void => {
   if (shouldTriggerHaptic()) {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (Platform.OS === 'android') {
+      Haptics.performAndroidHapticsAsync(Haptics.AndroidHaptics.Context_Click);
+    } else {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
   }
 };
 
@@ -80,7 +99,11 @@ export const mediumFeedback = (): void => {
  */
 export const successFeedback = (): void => {
   if (shouldTriggerHaptic()) {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    if (Platform.OS === 'android') {
+      Haptics.performAndroidHapticsAsync(Haptics.AndroidHaptics.Confirm);
+    } else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
   }
 };
 
@@ -92,6 +115,10 @@ export const successFeedback = (): void => {
  */
 export const errorFeedback = (): void => {
   if (shouldTriggerHaptic()) {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    if (Platform.OS === 'android') {
+      Haptics.performAndroidHapticsAsync(Haptics.AndroidHaptics.Reject);
+    } else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
   }
 };

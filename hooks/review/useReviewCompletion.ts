@@ -3,18 +3,16 @@ import { useCallback, useEffect } from 'react';
 import { InteractionManager } from 'react-native';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
-import { TIMING_CONFIG } from '@/constants/animation';
 import { fsrsQueries, studyStreakQueries } from '@/constants/queries';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { analytics } from '@/services/analytics';
 import { ensurePermissions } from '@/services/notificationService';
 import type { SessionMetrics } from '@/types/review.types';
-import { successFeedback } from '@/utils/haptics';
 import { appendSession } from '@/utils/recallSignalStorage';
 
 /**
  * Hook to handle review session completion side effects
- * Manages query invalidation, analytics tracking, and haptic feedback
+ * Manages query invalidation and analytics tracking
  *
  * @param sessionMetrics - Optional metrics from the completed session
  * @param shouldExecute - Whether to execute completion logic (default: true)
@@ -70,11 +68,11 @@ export const useReviewCompletion = (
   /**
    * Execute completion logic when component mounts
    * Deferred to after animations complete for better UX
+   * (The success haptic lives in CompletionScreen's checkmark entering-animation
+   * callback so it lands exactly when the zoom-in settles.)
    */
   useEffect(() => {
     if (!shouldExecute) return;
-
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     InteractionManager.runAfterInteractions(() => {
       invalidateReviewQueries();
@@ -92,22 +90,7 @@ export const useReviewCompletion = (
       // ensurePermissions() only surfaces the OS prompt when status is undetermined,
       // and the OS shows it at most once.
       void ensurePermissions();
-
-      // Trigger haptic feedback after animations
-      timeoutId = setTimeout(
-        () => {
-          successFeedback();
-        },
-        TIMING_CONFIG.FAST.duration + TIMING_CONFIG.ENTRANCE.duration / 2,
-      );
     });
-
-    // FIXED: Cleanup timeout on unmount to prevent haptic feedback on wrong screen
-    return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-    };
   }, [shouldExecute, invalidateReviewQueries, trackCompletion, sessionMetrics]);
 
   return {

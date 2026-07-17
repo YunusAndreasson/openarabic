@@ -6,6 +6,7 @@ function createChainableMock() {
   chain.springify = () => chain;
   chain.delay = () => chain;
   chain.duration = () => chain;
+  chain.withCallback = () => chain;
   return chain;
 }
 

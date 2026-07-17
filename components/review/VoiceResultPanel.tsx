@@ -24,7 +24,7 @@ import { STRINGS } from '@/constants/strings';
 import type { VoiceResult } from '@/hooks/review/useVoiceReview';
 import { useColors } from '@/hooks/theme/useColors';
 import { withAlpha } from '@/utils/colorUtils';
-import { lightFeedback, selectionFeedback } from '@/utils/haptics';
+import { selectionFeedback } from '@/utils/haptics';
 
 const ICON_SIZE = LAYOUT.BUTTON.ICON_SIZE.MEDIUM;
 
@@ -99,7 +99,10 @@ export const VoiceResultPanel: FC<VoiceResultPanelProps> = memo(
             color={colors.error}
             emphasized={result.suggestion === 'unknown'}
             onPress={() => {
-              lightFeedback();
+              // Same subtle tick as every other self-grade action (grade bar,
+              // accept, retry) — the negative outcome already had its error
+              // haptic when the mishear was announced.
+              selectionFeedback();
               onReject();
             }}
           />

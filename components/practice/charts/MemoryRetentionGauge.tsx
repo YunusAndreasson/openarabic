@@ -1,7 +1,7 @@
 import { BaseChart } from '@/components/common/charts/BaseChart';
 import { useChartColors } from '@/constants/chartColors';
 import { BlurMask, Canvas, Group, Path, Skia } from '@shopify/react-native-skia';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import {
   cancelAnimation,
@@ -86,35 +86,8 @@ export function MemoryRetentionGauge({ studyWords = [], onInfoPress }: MemoryRet
     };
   }, [retentionShared]);
 
-  // Track previous retention to detect when entering green area
-  const prevRetentionRef = useRef(0);
-  const hasTriggeredGreenHapticRef = useRef(false);
-
   useEffect(() => {
     const next = Math.max(0, Math.min(100, currentRetention));
-    const delta = Math.abs(prevRetentionRef.current - next);
-    if (delta < 0.5) return;
-
-    // Check if we're entering the green area (75%+) for the first time
-    const wasBelowGreen = prevRetentionRef.current < MEMORY_CAPACITY_THRESHOLDS.GOOD;
-    const isNowGreen = next >= MEMORY_CAPACITY_THRESHOLDS.GOOD;
-
-    if (wasBelowGreen && isNowGreen && !hasTriggeredGreenHapticRef.current) {
-      // Single success notification on crossing the green threshold.
-      // Sequenced double-haptics read as gimmicky in 2026 — the system Success
-      // pattern is already a triple-tap and gives plenty of feedback on its own.
-      successFeedback();
-      hasTriggeredGreenHapticRef.current = true;
-    }
-
-    // Reset haptic trigger if user drops below green area
-    if (next < MEMORY_CAPACITY_THRESHOLDS.GOOD) {
-      hasTriggeredGreenHapticRef.current = false;
-    }
-
-    // Update previous retention
-    prevRetentionRef.current = next;
-
     retentionShared.set(
       withSpring(next, {
         ...SPRING_CONFIG.CARD,
@@ -122,6 +95,24 @@ export function MemoryRetentionGauge({ studyWords = [], onInfoPress }: MemoryRet
       }),
     );
   }, [currentRetention, retentionShared]);
+
+  // Success haptic on the frame the SPRINGED needle crosses into the green zone —
+  // the same condition that ignites the glow, so the haptic lands with the visual
+  // moment rather than at data-update time (the spring takes a beat to get there).
+  // Rising-edge only; dropping below green re-arms it, mirroring the glow.
+  // Single success notification — sequenced double-haptics read as gimmicky in
+  // 2026; the system Success pattern gives plenty of feedback on its own.
+  useAnimatedReaction(
+    () => {
+      'worklet';
+      return retentionShared.value >= MEMORY_CAPACITY_THRESHOLDS.GOOD;
+    },
+    (isGreen, wasGreen) => {
+      if (isGreen && wasGreen === false) {
+        scheduleOnRN(successFeedback);
+      }
+    },
+  );
 
   // Push only rounded values to JS to limit re-renders
   useAnimatedReaction(

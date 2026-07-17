@@ -137,6 +137,7 @@ export const createReanimatedMock = () => {
     springify: () => mockAnimation,
     damping: () => mockAnimation,
     stiffness: () => mockAnimation,
+    withCallback: () => mockAnimation,
   };
 
   const mockEasing = {
