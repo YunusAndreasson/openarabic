@@ -19,7 +19,10 @@ const CURRENT_YEAR = new Date().getFullYear();
 // app is running the JS bundle baked into the binary.
 function getOtaLabel(): string {
   const id = Updates.updateId;
-  const channel = Updates.channel ?? 'unknown';
+  // `||`, not `??`: on a build with no channel configured `Updates.channel` is an
+  // empty string rather than null, which `??` passes through and renders as a
+  // dangling separator ("OTA embedded · ").
+  const channel = Updates.channel || 'unknown';
   if (!id) return `OTA embedded · ${channel}`;
   return `OTA ${id.slice(0, 8)} · ${channel}`;
 }
