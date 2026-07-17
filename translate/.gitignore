@@ -181,3 +181,10 @@ grammar_improve/
 utils/set_keys.py
 *.json
 openarabic-*.json
+
+# word-enrichment pipeline: source lexicons + generated artifacts (curated
+# output is committed only as admin-dashboard/lib/word-enrichment.ts)
+word_enrichment/sources/
+word_enrichment/applied/
+word_enrichment/*.jsonl
+word_enrichment/*.json
