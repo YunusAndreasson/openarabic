@@ -120,12 +120,14 @@ export async function initializeNotifications(): Promise<boolean> {
 
     // Configure notification channel for Android with proper defaults
     if (Platform.OS === 'android') {
+      // `sound` is deliberately omitted: on a channel it names a bundled sound
+      // file, so a literal 'default' is looked up as a filename, fails, and
+      // leaves the channel silent. Omitting it selects the system default.
       await Notifications.setNotificationChannelAsync('reminders', {
         name: 'Study Reminders',
         importance: Notifications.AndroidImportance.HIGH,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: Colors.light.tint,
-        sound: 'default',
         enableVibrate: true,
         showBadge: true,
       });
@@ -136,7 +138,6 @@ export async function initializeNotifications(): Promise<boolean> {
         importance: Notifications.AndroidImportance.DEFAULT,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: Colors.light.tint,
-        sound: 'default',
         enableVibrate: true,
         showBadge: true,
       });
