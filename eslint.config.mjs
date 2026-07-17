@@ -106,6 +106,7 @@ export default defineConfig([
       '**/*.spec.*',
       'translate/',
       'admin-dashboard/',
+      'social/',
       'scripts/',
       'coverage/',
       'jest.setup.js',
