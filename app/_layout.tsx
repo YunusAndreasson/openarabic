@@ -196,7 +196,7 @@ function AppContent() {
 
   // Load fonts at runtime for Expo Go compatibility
   // PostScript names are used for cross-platform consistency (especially iOS)
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     'NotoSansArabic-Regular': notoSansFont,
     'Amiri-Regular': amiriFont,
     DigitalKhattNewMadinaRegular: madinaFont,
@@ -206,6 +206,19 @@ function AppContent() {
     'Inter-SemiBold': interSemiBold,
     'Inter-Bold': interBold,
   });
+
+  // A font failure must not strand the user on the splash screen forever, so
+  // it is reported and then treated as resolved — the app falls back to system
+  // fonts rather than never starting.
+  useEffect(() => {
+    if (fontError) {
+      handleError(fontError, {
+        showToast: false,
+        analyticsEventName: 'Font_Load_Failed',
+        sentryTags: { location: 'app', action: 'font_load' },
+      });
+    }
+  }, [fontError]);
 
   // Centralized system UI theme management
   useSystemUITheme();
@@ -296,8 +309,9 @@ function AppContent() {
 
   // Wait for all resources before setting appReady
   useEffect(() => {
-    // Fonts must be loaded (for Expo Go and runtime loading)
-    const fontsAreReady = fontsLoaded;
+    // Fonts must be loaded (for Expo Go and runtime loading). A load failure
+    // still counts as resolved — see the fontError effect above.
+    const fontsAreReady = fontsLoaded || !!fontError;
 
     // Auth must be fully resolved (not loading anymore)
     const authIsReady = !isAuthLoading;
@@ -323,7 +337,7 @@ function AppContent() {
         timestamp: new Date().toISOString(),
       });
     }
-  }, [fontsLoaded, isAuthLoading, isLoaded, appReady]);
+  }, [fontsLoaded, fontError, isAuthLoading, isLoaded, appReady]);
 
   // Initialize notifications when app is ready (Expo best practice)
   useEffect(() => {

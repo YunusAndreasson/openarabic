@@ -1,31 +1,18 @@
-import { router } from 'expo-router';
+import { Redirect } from 'expo-router';
 import type { JSX } from 'react';
-import { useEffect } from 'react';
-import { InteractionManager } from 'react-native';
 
 import { ROUTE_PATHS } from '@/constants/routes';
+import { useAuth } from '@/hooks/auth/useAuth';
 
 /**
- * Index screen - redirects to explore tab
+ * Index screen - redirects to the right root for the current auth state.
  *
- * Uses InteractionManager to defer redirect and prevent Android ViewGroup
- * NullPointerException race condition where Android tries to render a view
- * hierarchy that React Native has already unmounted during redirect.
+ * The target must agree with the <Stack.Protected> guards in _layout.tsx:
+ * redirecting into a guarded route the user cannot enter leaves the router
+ * parked on `/`, which renders nothing at all.
  */
-export default function Index(): JSX.Element | null {
-  useEffect(() => {
-    // Defer redirect until after initial render and interactions complete
-    // This prevents Android ViewGroup crash when view hierarchy is modified
-    // during Android's rendering pass
-    const interaction = InteractionManager.runAfterInteractions(() => {
-      router.replace(ROUTE_PATHS.EXPLORE_TAB);
-    });
+export default function Index(): JSX.Element {
+  const { session } = useAuth();
 
-    return () => {
-      interaction.cancel();
-    };
-  }, []);
-
-  // Return null to avoid rendering anything that could cause view hierarchy issues
-  return null;
+  return <Redirect href={session ? ROUTE_PATHS.EXPLORE_TAB : ROUTE_PATHS.AUTH} />;
 }
