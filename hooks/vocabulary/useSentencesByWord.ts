@@ -63,12 +63,10 @@ export function useSentencesByWord({
 
     return query.data.map(sentence => ({
       ...sentence,
-      sentence_words: sentence.sentence_words.map(
-        (word): SentenceWord => ({
-          ...word,
-          coloredSegments: computeColoredSegments(word.word_form, word.english || '', colors),
-        }),
-      ),
+      sentence_words: sentence.sentence_words.map((word): SentenceWord => ({
+        ...word,
+        coloredSegments: computeColoredSegments(word.word_form, word.english || '', colors),
+      })),
     }));
   }, [query.data, colors]);
 

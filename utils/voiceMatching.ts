@@ -342,14 +342,7 @@ const ASR_HALLUCINATIONS = new Set([
 ]);
 
 export type MatchMethod =
-  | 'exact'
-  | 'equivalent'
-  | 'inflection'
-  | 'edit'
-  | 'phonetic'
-  | 'fuzzy'
-  | 'hallucination'
-  | 'miss';
+  'exact' | 'equivalent' | 'inflection' | 'edit' | 'phonetic' | 'fuzzy' | 'hallucination' | 'miss';
 
 /**
  * Self-graded recall app: lenient enough that "fuzzy" still counts. Threshold

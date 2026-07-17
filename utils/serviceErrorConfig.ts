@@ -20,15 +20,7 @@ export interface ServiceErrorConfig {
  * Common CRUD operation types
  */
 export type CrudOperation =
-  | 'load'
-  | 'add'
-  | 'create'
-  | 'update'
-  | 'delete'
-  | 'remove'
-  | 'check'
-  | 'fetch'
-  | 'save';
+  'load' | 'add' | 'create' | 'update' | 'delete' | 'remove' | 'check' | 'fetch' | 'save';
 
 /**
  * Options for customizing error configs

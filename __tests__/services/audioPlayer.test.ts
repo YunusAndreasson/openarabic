@@ -286,8 +286,7 @@ describe('audioPlayer service', () => {
     test('should fall back to waitForPlayerReady when immediate play throws', async () => {
       // Mock player where play() throws on first call (not ready), succeeds on second
       let statusCallback:
-        | ((status: { isLoaded?: boolean; playbackState?: string }) => void)
-        | null = null;
+        ((status: { isLoaded?: boolean; playbackState?: string }) => void) | null = null;
       const mockRemoveListener = jest.fn();
       let playCallCount = 0;
       const mockPlayerWithListener = {
@@ -322,8 +321,7 @@ describe('audioPlayer service', () => {
 
     test('should resolve immediately if player is ready with playbackState', async () => {
       let statusCallback:
-        | ((status: { isLoaded?: boolean; playbackState?: string }) => void)
-        | null = null;
+        ((status: { isLoaded?: boolean; playbackState?: string }) => void) | null = null;
       const mockPlayerWithListener = {
         ...mockPlayer,
         addListener: jest.fn((event, callback) => {
@@ -349,8 +347,7 @@ describe('audioPlayer service', () => {
 
     test('should resolve immediately if player is ready with isLoaded', async () => {
       let statusCallback:
-        | ((status: { isLoaded?: boolean; playbackState?: string }) => void)
-        | null = null;
+        ((status: { isLoaded?: boolean; playbackState?: string }) => void) | null = null;
       const mockPlayerWithListener = {
         ...mockPlayer,
         addListener: jest.fn((event, callback) => {
