@@ -41,7 +41,7 @@ const STATIC_STYLES = StyleSheet.create({
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
     paddingHorizontal: TOOLTIP_CONSTANTS.MIN_PADDING,
     paddingVertical: LAYOUT.SPACING.SMALL,
-    minWidth: Math.max(LAYOUT.CARD.HEIGHT.LIST_ITEM, 120),
+    minWidth: TOOLTIP_CONSTANTS.MIN_WIDTH,
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',

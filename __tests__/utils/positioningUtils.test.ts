@@ -24,7 +24,7 @@ describe('Positioning Utilities', () => {
       expect(TOOLTIP_CONSTANTS.MIN_PADDING).toBe(8);
       expect(TOOLTIP_CONSTANTS.SCREEN_MARGIN).toBe(16);
       expect(TOOLTIP_CONSTANTS.Z_INDEX).toBe(999999);
-      expect(TOOLTIP_CONSTANTS.MIN_WIDTH).toBe(70);
+      expect(TOOLTIP_CONSTANTS.MIN_WIDTH).toBe(120);
       expect(TOOLTIP_CONSTANTS.HEIGHT).toBe(32);
       expect(TOOLTIP_CONSTANTS.CHAR_WIDTH).toBe(9);
       expect(TOOLTIP_CONSTANTS.BOOKMARK_WIDTH).toBe(32);

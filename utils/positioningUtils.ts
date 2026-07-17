@@ -6,7 +6,10 @@ export const TOOLTIP_CONSTANTS = {
   MIN_PADDING: 8, // Reduced for tighter appearance
   SCREEN_MARGIN: 16,
   Z_INDEX: 999999,
-  MIN_WIDTH: 70, // Reduced for tighter appearance
+  // Must equal the rendered tooltip's `minWidth` style. If the math assumes a
+  // narrower minimum than the view actually renders, the off-screen clamp below
+  // positions against a too-small width and short tooltips overflow the edge.
+  MIN_WIDTH: 120,
   HEIGHT: 32, // Reduced for tighter appearance
   CHAR_WIDTH: 9, // Approximate average char width at fontSize 15 for tighter estimate (tests expect 9)
   BOOKMARK_WIDTH: 32,
