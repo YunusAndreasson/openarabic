@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -58,15 +59,16 @@ const STATIC_STYLES = StyleSheet.create({
 export function WordDisplay({ word, style, translation, onWordPress }: WordDisplayProps) {
   const colors = useColors();
 
-  // Color batching
-  const batchedColors: BatchedTextColors = {
-    arabicText: colors.arabicText,
-    shadow: colors.shadow,
-    englishText: colors.englishText,
-  };
-
-  // Use larger font for Arabic, smaller for English
-  const arabicTextStyle = createTextStyle(WORD_DISPLAY_CONSTANTS.ARABIC_FONT_SIZE, batchedColors);
+  // Use larger font for Arabic, smaller for English. Memoized: this is the
+  // innermost per-card component and createTextStyle allocates a fresh style.
+  const arabicTextStyle = useMemo(() => {
+    const batchedColors: BatchedTextColors = {
+      arabicText: colors.arabicText,
+      shadow: colors.shadow,
+      englishText: colors.englishText,
+    };
+    return createTextStyle(WORD_DISPLAY_CONSTANTS.ARABIC_FONT_SIZE, batchedColors);
+  }, [colors.arabicText, colors.shadow, colors.englishText]);
 
   // CSS transition replaces useOpacityAnimation + useEffect
   const translationAnimatedStyle = {

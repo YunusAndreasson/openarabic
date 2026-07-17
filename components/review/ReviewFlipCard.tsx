@@ -7,7 +7,7 @@ import Animated, {
   interpolate,
   interpolateColor,
   useAnimatedStyle,
-  useSharedValue,
+  useDerivedValue,
   withTiming,
 } from 'react-native-reanimated';
 
@@ -118,7 +118,6 @@ export function ReviewFlipCard({
   testID,
 }: ReviewFlipCardProps) {
   const colors = useColors();
-  const flip = useSharedValue(0);
 
   const {
     gesture: panGesture,
@@ -131,12 +130,13 @@ export function ReviewFlipCard({
     springConfig: SPRING_CONFIG.CARD,
   });
 
-  // Drive the flip from `revealed`: animate the front→back turn on reveal, but
-  // snap straight back to the question face when advancing (revealed only goes
-  // false on a card change), so the next card never shows a flip-back animation.
-  useEffect(() => {
-    flip.value = revealed ? withTiming(1, { duration: TIMING_CONFIG.FLIP.duration }) : 0;
-  }, [revealed, flip]);
+  // Drive the flip from `revealed` during render (no post-commit effect hop):
+  // animate the front→back turn on reveal, but snap straight back to the
+  // question face when advancing (revealed only goes false on a card change),
+  // so the next card never shows a flip-back animation.
+  const flip = useDerivedValue(() =>
+    revealed ? withTiming(1, { duration: TIMING_CONFIG.FLIP.duration }) : 0,
+  );
 
   // Reset the swipe offset on a new card (the gesture's translateX persists across
   // cards otherwise).

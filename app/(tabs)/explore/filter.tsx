@@ -1,7 +1,9 @@
 import { ErrorState, LoadingState } from '@/components/common';
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import type { JSX } from 'react';
+import { useCallback, type JSX } from 'react';
+
+import type { Article } from '@/types/articles.types';
 
 import { FilteredArticleView } from '@/components/explore';
 import { articleQueries } from '@/constants/queries';
@@ -25,6 +27,11 @@ export default function FilterScreen(): JSX.Element {
     refetchOnReconnect: true,
   });
 
+  // Stable identity: FilteredArticleView's renderItem depends on this callback
+  const handleArticlePress = useCallback((article: Article) => {
+    router.push(getArticleRoute(article.id, article.title));
+  }, []);
+
   if (error) {
     return (
       <ErrorState
@@ -38,10 +45,5 @@ export default function FilterScreen(): JSX.Element {
     return <LoadingState />;
   }
 
-  return (
-    <FilteredArticleView
-      articles={articles}
-      onArticlePress={article => router.push(getArticleRoute(article.id, article.title))}
-    />
-  );
+  return <FilteredArticleView articles={articles} onArticlePress={handleArticlePress} />;
 }

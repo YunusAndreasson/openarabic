@@ -1,20 +1,16 @@
 import { ListSeparator, SectionLabel } from '@/components/common';
 import { FlashList } from '@shopify/flash-list';
-import { type FC, type JSX, useDeferredValue, useMemo } from 'react';
+import { type FC, type JSX, useCallback, useDeferredValue, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
 import { PlaylistItemCard } from '@/components/playlist';
 import { PulsatingLoader } from '@/components/ui';
-import {
-  LIST_DRAW_DISTANCE_MULTIPLIER,
-  SCROLL_EVENT_THROTTLE,
-  TIMING_CONFIG,
-} from '@/constants/animation';
+import { LIST_DRAW_DISTANCE_MULTIPLIER, SCROLL_EVENT_THROTTLE } from '@/constants/animation';
 import { COMPLETION_THRESHOLD, LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
+import { useArticlePrefetch } from '@/hooks/articles/useArticlePrefetch';
 import { useFilteredArticles } from '@/hooks/articles/useFilteredArticles';
 import type { Article } from '@/types/articles.types';
 import { generateStorageUrl } from '@/utils/storageUtils';
@@ -56,6 +52,17 @@ const STATIC_STYLES = StyleSheet.create({
 });
 
 const FooterComponent = () => <View style={STATIC_STYLES.footerSpacer} />;
+
+// Stable list callbacks — FlashList v2 treats changed identities as reasons to
+// re-render every visible cell, so keep these at module scope.
+const keyExtractor = (item: ListItem) => item.id;
+const getItemType = (item: ListItem) => item.type;
+
+const THEMED_VIEW_PROPS = {
+  includeBottomInset: false,
+  safeAreaEdges: ['left', 'right'] as ('left' | 'right' | 'bottom' | 'top')[],
+  style: STATIC_STYLES.container,
+};
 
 /**
  * Reorders articles so no two consecutive items share the same image_url.
@@ -170,18 +177,46 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({ articles, on
     [insets.bottom],
   );
 
-  const themedViewProps = {
-    includeBottomInset: false,
-    safeAreaEdges: ['left', 'right'] as ('left' | 'right' | 'bottom' | 'top')[],
-    style: STATIC_STYLES.container,
-  };
+  const prefetchArticle = useArticlePrefetch();
 
   const shouldShowLoading =
     isProgressLoading && visibleArticles.length > 0 && progressMap.size === 0;
 
+  // No entering/exiting layout animations here: FlashList v2 recycles cells,
+  // and mount animations re-fire on recycled rows during fast scrolls.
+  const renderItem = useCallback(
+    ({ item }: { item: ListItem }): JSX.Element => {
+      if (item.type === 'header') {
+        return <SectionLabel title={item.title} />;
+      }
+
+      const article = item.data;
+      const progress = progressMap.get(article.id);
+      const progressPercentage = progress
+        ? calculateProgressPercentage(progress.last_sentence_read, progress.total_sentences)
+        : 0;
+
+      const readingTime = calculateReadingTime(article.article_sentences.length);
+      const secondaryText = `${getAuthorDisplayName(article.author.name)} · ${readingTime}`;
+
+      return (
+        <PlaylistItemCard
+          title={article.title}
+          secondaryText={secondaryText}
+          imageUrl={generateStorageUrl('images', article.image_url)}
+          articleId={article.id}
+          onPress={onArticlePress ? () => onArticlePress(article) : undefined}
+          onPressIn={() => prefetchArticle(article.id)}
+          progressPercentage={progressPercentage}
+        />
+      );
+    },
+    [progressMap, onArticlePress, prefetchArticle],
+  );
+
   if (shouldShowLoading) {
     return (
-      <ThemedView {...themedViewProps}>
+      <ThemedView {...THEMED_VIEW_PROPS}>
         <View style={[STATIC_STYLES.emptyContainer, { paddingTop: LAYOUT.SPACING.XXLARGE }]}>
           <PulsatingLoader size={64} />
         </View>
@@ -189,50 +224,19 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({ articles, on
     );
   }
 
-  const renderItem = ({ item }: { item: ListItem }): JSX.Element => {
-    if (item.type === 'header') {
-      return <SectionLabel title={item.title} />;
-    }
-
-    const article = item.data;
-    const progress = progressMap.get(article.id);
-    const progressPercentage = progress
-      ? calculateProgressPercentage(progress.last_sentence_read, progress.total_sentences)
-      : 0;
-
-    const readingTime = calculateReadingTime(article.article_sentences.length);
-    const secondaryText = `${getAuthorDisplayName(article.author.name)} · ${readingTime}`;
-
-    return (
-      <Animated.View
-        entering={FadeIn.duration(TIMING_CONFIG.MEDIUM.duration)}
-        exiting={FadeOut.duration(TIMING_CONFIG.FAST.duration)}
-      >
-        <PlaylistItemCard
-          title={article.title}
-          secondaryText={secondaryText}
-          imageUrl={generateStorageUrl('images', article.image_url)}
-          articleId={article.id}
-          onPress={onArticlePress ? () => onArticlePress(article) : undefined}
-          progressPercentage={progressPercentage}
-        />
-      </Animated.View>
-    );
-  };
-
   return (
-    <ThemedView {...themedViewProps}>
+    <ThemedView {...THEMED_VIEW_PROPS}>
       <FlashList<ListItem>
         data={listData}
         drawDistance={ITEM_HEIGHT * LIST_DRAW_DISTANCE_MULTIPLIER}
-        keyExtractor={(item: ListItem) => item.id}
+        keyExtractor={keyExtractor}
         scrollEventThrottle={SCROLL_EVENT_THROTTLE}
         showsVerticalScrollIndicator={true}
         contentContainerStyle={listContentStyle}
         ItemSeparatorComponent={SeparatorComponent}
         ListFooterComponent={FooterComponent}
         renderItem={renderItem}
-        getItemType={(item: ListItem) => item.type}
+        getItemType={getItemType}
       />
     </ThemedView>
   );

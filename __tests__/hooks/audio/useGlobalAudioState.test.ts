@@ -51,7 +51,11 @@ jest.mock('@/utils/haptics', () => ({
 }));
 
 import { useQueryClient } from '@tanstack/react-query';
-import { GlobalAudioStateProvider, useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
+import {
+  GlobalAudioStateProvider,
+  useAudioProgress,
+  useGlobalAudioState,
+} from '@/hooks/audio/useGlobalAudioState';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -136,7 +140,7 @@ describe('useGlobalAudioState', () => {
 
   describe('Initial state', () => {
     test('should return initial audio state', () => {
-      const { result } = renderHook(() => useGlobalAudioState(), {
+      const { result } = renderHook(() => ({ ...useGlobalAudioState(), ...useAudioProgress() }), {
         wrapper: GlobalAudioStateProvider,
       });
 

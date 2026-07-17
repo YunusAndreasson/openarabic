@@ -7,6 +7,7 @@ import { PlaylistItemCard } from '@/components/playlist/PlaylistItemCard';
 import { COMPLETION_THRESHOLD, LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
+import { useArticlePrefetch } from '@/hooks/articles/useArticlePrefetch';
 import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useAuth } from '@/hooks/auth/useAuth';
 import type { Article } from '@/types/articles.types';
@@ -116,6 +117,8 @@ const ContinueReadingSectionComponent: FC<ContinueReadingSectionProps> = ({ arti
     [router, isContinueReading],
   );
 
+  const prefetchArticle = useArticlePrefetch();
+
   // Don't render if no user or no articles to show
   if (!user?.id || articles.length === 0) {
     return null;
@@ -144,6 +147,7 @@ const ContinueReadingSectionComponent: FC<ContinueReadingSectionProps> = ({ arti
               articleId={article.id}
               progressPercentage={progress}
               onPress={() => handleArticlePress(article)}
+              onPressIn={() => prefetchArticle(article.id as ArticleId)}
               compact
             />
           </View>

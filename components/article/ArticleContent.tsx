@@ -46,6 +46,13 @@ const MOUNT_FADE_IN_STYLE = {
 // Comfortable reading space constant
 const COMFORTABLE_READING_SPACE = MIN_TOUCH_TARGET.MEDIUM;
 
+// FlashList requires a referentially stable viewabilityConfig
+const VIEWABILITY_CONFIG = {
+  itemVisiblePercentThreshold: 15, // Only count items near top (15% visible)
+  minimumViewTime: 0, // Immediate updates for accurate scrubber tracking
+  waitForInteraction: false, // Update during scroll for real-time sync
+};
+
 /**
  * How much the title block overlaps the parallax hero gradient at the bottom.
  * Tuned so the title sits inside the gradient fade-out (not under the bright
@@ -255,13 +262,6 @@ const ArticleContentInternal = function ArticleContent({
     position: 'relative' as const,
   };
 
-  // React Compiler auto-memoizes
-  const viewabilityConfig = {
-    itemVisiblePercentThreshold: 15, // Only count items near top (15% visible)
-    minimumViewTime: 0, // Immediate updates for accurate scrubber tracking
-    waitForInteraction: false, // Update during scroll for real-time sync
-  };
-
   return (
     <View style={styles.content}>
       <Animated.View style={[styles.flexOne, MOUNT_FADE_IN_STYLE]}>
@@ -300,15 +300,13 @@ const ArticleContentInternal = function ArticleContent({
               onScrollBeginDrag={handleScrollBegin}
               onViewableItemsChanged={handleViewableItemsChanged}
               onMomentumScrollEnd={handleScrollEnd}
-              viewabilityConfig={viewabilityConfig}
+              viewabilityConfig={VIEWABILITY_CONFIG}
               scrollEventThrottle={SCROLL_THROTTLE}
               showsVerticalScrollIndicator={true}
               alwaysBounceVertical={true}
               bounces={true}
               overScrollMode="always"
-              extraData={{
-                themeMode: colors.text, // Track theme changes via stable color value
-              }}
+              extraData={colors.text}
               onLoad={onFlashListLoad}
             />
           </View>

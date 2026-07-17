@@ -28,7 +28,11 @@ import { renderHook, waitFor, act } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import type { QueryClient } from '@tanstack/react-query';
 
-import { GlobalAudioStateProvider, useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
+import {
+  GlobalAudioStateProvider,
+  useAudioProgress,
+  useGlobalAudioState,
+} from '@/hooks/audio/useGlobalAudioState';
 import { AUDIO_STATES } from '@/constants/audio';
 
 const { useAuth } = require('@/hooks/auth/useAuth');
@@ -112,7 +116,7 @@ describe('useGlobalAudioState Hook', () => {
 
   describe('Initialization & Basic State', () => {
     test('initializes with idle state when not playing', () => {
-      const { result } = renderHook(() => useGlobalAudioState(), {
+      const { result } = renderHook(() => ({ ...useGlobalAudioState(), ...useAudioProgress() }), {
         wrapper: GlobalAudioStateProvider,
       });
 
@@ -139,7 +143,7 @@ describe('useGlobalAudioState Hook', () => {
         preconfigureAudioSession: mockPreconfigureAudioSession,
       } as any);
 
-      const { result } = renderHook(() => useGlobalAudioState(), {
+      const { result } = renderHook(() => ({ ...useGlobalAudioState(), ...useAudioProgress() }), {
         wrapper: GlobalAudioStateProvider,
       });
 

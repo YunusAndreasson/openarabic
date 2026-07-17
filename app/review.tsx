@@ -24,6 +24,7 @@ import { useReview, useVoiceReview } from '@/hooks/review';
 import { useColors } from '@/hooks/theme/useColors';
 import { useTutorial } from '@/hooks/tutorials/useTutorial';
 import { useAppSelectorShallow } from '@/store/hooks';
+import { selectionFeedback } from '@/utils/haptics';
 
 const baseStyles = StyleSheet.create({
   container: {
@@ -232,8 +233,15 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
         onReplayAudio={handleReplayAudio}
         opacityStyle={transparentStyle}
         isUpdating={isUpdating}
-        onSwipeForgot={() => grade('unknown')}
-        onSwipeKnewIt={() => grade('known')}
+        onSwipeForgot={() => {
+          // Haptic parity with the tap-grade path (ReviewGradeBar)
+          selectionFeedback();
+          grade('unknown');
+        }}
+        onSwipeKnewIt={() => {
+          selectionFeedback();
+          grade('known');
+        }}
         testID="review-card"
       />
 

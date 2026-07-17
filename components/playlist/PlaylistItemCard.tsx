@@ -25,6 +25,7 @@ interface PlaylistItemCardProps {
   title: string;
   secondaryText: string;
   onPress?: () => void;
+  onPressIn?: () => void;
   editMode?: boolean;
   onDelete?: () => void;
   dragHandleProps?: DragHandleProps;
@@ -44,6 +45,7 @@ export const PlaylistItemCard: FC<PlaylistItemCardProps> = memo(
     title,
     secondaryText,
     onPress,
+    onPressIn,
     editMode = false,
     onDelete,
     dragHandleProps,
@@ -84,7 +86,11 @@ export const PlaylistItemCard: FC<PlaylistItemCardProps> = memo(
         )}
 
         <View style={styles.cardWrapper}>
-          <BaseCard shadowSize="small" onPress={editMode ? undefined : onPress}>
+          <BaseCard
+            shadowSize="small"
+            onPress={editMode ? undefined : onPress}
+            onPressIn={editMode ? undefined : onPressIn}
+          >
             <View style={styles.cardContent}>
               {/* Article thumbnail - bookmarks style */}
               {imageUrl && (

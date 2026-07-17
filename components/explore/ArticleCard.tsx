@@ -9,6 +9,7 @@ import { EnhancedImage } from '@/components/ui/EnhancedImage';
 import { TIMING_CONSTANTS } from '@/constants/animation';
 import { LAYOUT, SCREEN_WIDTH, TEXT_STYLES } from '@/constants/layout';
 import { getArticleRoute } from '@/constants/routes';
+import { useArticlePrefetch } from '@/hooks/articles/useArticlePrefetch';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
 import type { ArticleCardProps as BaseArticleCardProps } from '@/types/ui/card.types';
@@ -85,6 +86,7 @@ export function ArticleCard({
 }: ArticleCardProps) {
   const colors = useColors();
   const router = useRouter();
+  const prefetchArticle = useArticlePrefetch();
 
   // Full metadata: Author · Category · Reading time
   const metadataText = getArticleMetadata(article);
@@ -96,8 +98,13 @@ export function ArticleCard({
     router.push(articleHref);
   }, [router, articleHref]);
 
+  // Warm the detail cache while the press feedback plays
+  const handlePressIn = useCallback(() => {
+    prefetchArticle(article.id);
+  }, [prefetchArticle, article.id]);
+
   return (
-    <BaseCard style={style} testID={testID} onPress={handlePress}>
+    <BaseCard style={style} testID={testID} onPress={handlePress} onPressIn={handlePressIn}>
       <View style={styles.imageContainer}>
         <EnhancedImage
           style={styles.image}

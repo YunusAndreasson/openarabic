@@ -1,5 +1,6 @@
 // Article hooks
 export * from './useArticleData';
+export * from './useArticlePrefetch';
 export * from './useArticleScreen';
 export * from './useArticlesByDueWords';
 export * from './useArticleWordInteractions';

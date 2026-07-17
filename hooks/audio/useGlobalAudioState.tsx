@@ -28,8 +28,6 @@ export interface GlobalAudioState {
   audioState: string;
   isLoading: boolean;
   currentArticle: MiniPlayerArticle | null;
-  position: number;
-  duration: number;
 
   // Queue information
   queuePosition: {
@@ -50,6 +48,16 @@ export interface GlobalAudioState {
 }
 
 /**
+ * Playback clock, kept in its own context: position ticks ~2x/sec while audio
+ * plays, and only the MiniPlayer needs it. Everything else consumes
+ * `GlobalAudioState`, whose identity is stable across position ticks.
+ */
+export interface AudioProgress {
+  position: number;
+  duration: number;
+}
+
+/**
  * Internal hook — owns the actual audio/sleep-timer state. Must be invoked
  * exactly once per app via `GlobalAudioStateProvider`. Components consume
  * via `useGlobalAudioState`, which reads from context. This avoids the
@@ -57,7 +65,7 @@ export interface GlobalAudioState {
  * (and its own `useSleepTimer`) so taps on the MiniPlayer's timer button
  * never reached the SleepTimer modal renderer.
  */
-function useGlobalAudioStateInternal(): GlobalAudioState {
+function useGlobalAudioStateInternal(): { state: GlobalAudioState; progress: AudioProgress } {
   const { user } = useAuth();
   const audioPlayer = useSimpleAudioPlayer();
   const queryClient = useQueryClient();
@@ -234,41 +242,80 @@ function useGlobalAudioStateInternal(): GlobalAudioState {
 
   const handlePreconfigureAudioSession = useCallback(async () => {
     await audioPlayer.preconfigureAudioSession();
-  }, [audioPlayer]);
+  }, [audioPlayer.preconfigureAudioSession]);
 
-  return {
-    playing: audioPlayer.playing,
-    audioState: audioPlayer.playing
-      ? AUDIO_STATES.PLAYING
-      : audioPlayer.isLoading
-        ? AUDIO_STATES.LOADING
-        : AUDIO_STATES.IDLE,
-    isLoading: audioPlayer.isLoading,
-    currentArticle,
-    queuePosition: enhancedQueuePosition,
-    position: audioPlayer.currentTime,
-    duration: audioPlayer.duration,
-    isTimerActive: sleepTimer.state.isActive,
-    sleepTimerEndTime: sleepTimer.state.endTime,
-    onPlayPause: handlePlayPause,
-    onTimerPress: handleTimerPress,
-    onSleepTimerSet: handleSleepTimerSet,
-    onSleepTimerCancel: handleSleepTimerCancel,
-    preconfigureAudioSession: handlePreconfigureAudioSession,
-  };
+  // Explicit useMemo rather than relying on React Compiler: the ref latch in
+  // the currentArticle memo makes this hook a compiler bail-out candidate, and
+  // a context value must not change identity on every 500ms position tick.
+  const state = useMemo<GlobalAudioState>(
+    () => ({
+      playing: audioPlayer.playing,
+      audioState: audioPlayer.playing
+        ? AUDIO_STATES.PLAYING
+        : audioPlayer.isLoading
+          ? AUDIO_STATES.LOADING
+          : AUDIO_STATES.IDLE,
+      isLoading: audioPlayer.isLoading,
+      currentArticle,
+      queuePosition: enhancedQueuePosition,
+      isTimerActive: sleepTimer.state.isActive,
+      sleepTimerEndTime: sleepTimer.state.endTime,
+      onPlayPause: handlePlayPause,
+      onTimerPress: handleTimerPress,
+      onSleepTimerSet: handleSleepTimerSet,
+      onSleepTimerCancel: handleSleepTimerCancel,
+      preconfigureAudioSession: handlePreconfigureAudioSession,
+    }),
+    [
+      audioPlayer.playing,
+      audioPlayer.isLoading,
+      currentArticle,
+      enhancedQueuePosition,
+      sleepTimer.state.isActive,
+      sleepTimer.state.endTime,
+      handlePlayPause,
+      handleTimerPress,
+      handleSleepTimerSet,
+      handleSleepTimerCancel,
+      handlePreconfigureAudioSession,
+    ],
+  );
+
+  const progress = useMemo<AudioProgress>(
+    () => ({
+      position: audioPlayer.currentTime,
+      duration: audioPlayer.duration,
+    }),
+    [audioPlayer.currentTime, audioPlayer.duration],
+  );
+
+  return { state, progress };
 }
 
 const GlobalAudioStateContext = createContext<GlobalAudioState | null>(null);
+const AudioProgressContext = createContext<AudioProgress | null>(null);
 
 export function GlobalAudioStateProvider({ children }: { children: ReactNode }) {
-  const value = useGlobalAudioStateInternal();
-  return <GlobalAudioStateContext value={value}>{children}</GlobalAudioStateContext>;
+  const { state, progress } = useGlobalAudioStateInternal();
+  return (
+    <GlobalAudioStateContext value={state}>
+      <AudioProgressContext value={progress}>{children}</AudioProgressContext>
+    </GlobalAudioStateContext>
+  );
 }
 
 export function useGlobalAudioState(): GlobalAudioState {
   const ctx = use(GlobalAudioStateContext);
   if (!ctx) {
     throw new Error('useGlobalAudioState must be used within GlobalAudioStateProvider');
+  }
+  return ctx;
+}
+
+export function useAudioProgress(): AudioProgress {
+  const ctx = use(AudioProgressContext);
+  if (!ctx) {
+    throw new Error('useAudioProgress must be used within GlobalAudioStateProvider');
   }
   return ctx;
 }

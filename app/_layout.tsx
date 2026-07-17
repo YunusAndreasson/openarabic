@@ -2,6 +2,7 @@ import NetInfo, { type NetInfoState } from '@react-native-community/netinfo';
 import * as Sentry from '@sentry/react-native';
 import { QueryClient, onlineManager } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { useFonts } from 'expo-font';
 import {
   DarkTheme,
@@ -80,6 +81,29 @@ try {
 } catch {
   // expo-notifications unavailable in Expo Go on Android (SDK 53+)
 }
+
+// The expo-font config plugin (app.json) embeds all fonts natively. On iOS
+// they register under their PostScript names — exactly the names the app
+// references (verified against the font files) — so native iOS builds don't
+// need the runtime load and useFonts gets an empty map that resolves
+// immediately, keeping the splash-hide path off a redundant font resolve.
+// Android still needs it: the plugin copies string-entry fonts to assets under
+// their FILENAMES ('NotoSans.ttf' → family 'NotoSans'), which don't match the
+// PostScript names used throughout the app. Expo Go always needs it (no
+// config plugins there).
+const IS_EXPO_GO = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+const NEEDS_RUNTIME_FONTS = IS_EXPO_GO || Platform.OS === 'android';
+
+const RUNTIME_FONT_MAP = {
+  'NotoSansArabic-Regular': notoSansFont,
+  'Amiri-Regular': amiriFont,
+  DigitalKhattNewMadinaRegular: madinaFont,
+  'ScheherazadeNew-Regular': scheherazadeFont,
+  'NotoNastaliqUrdu-Regular': nastaliqFont,
+  'Inter-Regular': interRegular,
+  'Inter-SemiBold': interSemiBold,
+  'Inter-Bold': interBold,
+};
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -194,18 +218,8 @@ function AppContent() {
   const navigationRef = useNavigationContainerRef();
   const router = useRouter();
 
-  // Load fonts at runtime for Expo Go compatibility
-  // PostScript names are used for cross-platform consistency (especially iOS)
-  const [fontsLoaded, fontError] = useFonts({
-    'NotoSansArabic-Regular': notoSansFont,
-    'Amiri-Regular': amiriFont,
-    DigitalKhattNewMadinaRegular: madinaFont,
-    'ScheherazadeNew-Regular': scheherazadeFont,
-    'NotoNastaliqUrdu-Regular': nastaliqFont,
-    'Inter-Regular': interRegular,
-    'Inter-SemiBold': interSemiBold,
-    'Inter-Bold': interBold,
-  });
+  // Runtime font load for Expo Go + Android — see RUNTIME_FONT_MAP above
+  const [fontsLoaded, fontError] = useFonts(NEEDS_RUNTIME_FONTS ? RUNTIME_FONT_MAP : {});
 
   // A font failure must not strand the user on the splash screen forever, so
   // it is reported and then treated as resolved — the app falls back to system

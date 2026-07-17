@@ -8,6 +8,7 @@ import { COMPLETION_THRESHOLD, LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { APP_SESSION_ID } from '@/constants/queries';
 import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
+import { useArticlePrefetch } from '@/hooks/articles/useArticlePrefetch';
 import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import type { Article } from '@/types/articles.types';
 import type { ArticleId } from '@/types/branded.types';
@@ -180,6 +181,8 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
     [router],
   );
 
+  const prefetchArticle = useArticlePrefetch();
+
   if (sections.length === 0) return null;
 
   return (
@@ -209,6 +212,7 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
                   imageUrl={generateStorageUrl('images', article.image_url)}
                   articleId={article.id}
                   onPress={() => handleArticlePress(article)}
+                  onPressIn={() => prefetchArticle(article.id as ArticleId)}
                   compact
                 />
               </View>

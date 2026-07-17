@@ -3,7 +3,7 @@ import { useFocusEffect } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
@@ -26,8 +26,24 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import { useDictionaryModal, useFSRSQueries } from '@/hooks/vocabulary';
 import type { RootId } from '@/types/branded.types';
+import type { ReanimatedCSSAnimationStyle } from '@/types/ui/base.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
+
+// Row mount fade — Reanimated 4 CSS @keyframes. Unlike entering/exiting layout
+// animations, a CSS animation doesn't re-fire when FlashList recycles the row
+// onto a new item, so fast scrolls stay clean while first paint keeps the
+// staggered fade (per-row animationDelay below).
+const ROW_FADE_IN_STYLE = {
+  animationName: {
+    from: { opacity: 0 },
+    to: { opacity: 1 },
+  },
+  animationDuration: `${TIMING_CONFIG.MEDIUM.duration}ms`,
+  // 'backwards' holds opacity 0 through the stagger delay, then settles at the
+  // natural style (opacity 1) once finished
+  animationFillMode: 'backwards' as const,
+} as ReanimatedCSSAnimationStyle;
 
 export default function DictionaryScreen(): JSX.Element {
   const { user } = useAuth();
@@ -89,18 +105,21 @@ export default function DictionaryScreen(): JSX.Element {
     setTimeout(() => setSelectedWord(null), TIMING_CONSTANTS.MEDIUM_DELAY);
   }, []);
 
-  const handleDeleteWord = async (rootId: RootId) => {
-    if (!user?.id) return;
-    try {
-      await toggleRootMutation.mutateAsync({ userId: user.id, rootId });
-    } catch (error) {
-      await handleError(error instanceof Error ? error : String(error), {
-        showToast: true,
-        toastMessage: STRINGS.FAILED_TO_DELETE_WORD,
-        captureSentry: !__DEV__,
-      });
-    }
-  };
+  const handleDeleteWord = useCallback(
+    async (rootId: RootId) => {
+      if (!user?.id) return;
+      try {
+        await toggleRootMutation.mutateAsync({ userId: user.id, rootId });
+      } catch (error) {
+        await handleError(error instanceof Error ? error : String(error), {
+          showToast: true,
+          toastMessage: STRINGS.FAILED_TO_DELETE_WORD,
+          captureSentry: !__DEV__,
+        });
+      }
+    },
+    [user?.id, toggleRootMutation.mutateAsync],
+  );
 
   const renderItem = useCallback(
     (props: { item: StudyWord; index: number }) => {
@@ -108,10 +127,7 @@ export default function DictionaryScreen(): JSX.Element {
       // long entry delay for items the user isn't waiting on.
       const enterDelay = props.index < 20 ? props.index * 20 : 0;
       return (
-        <Animated.View
-          entering={FadeIn.duration(TIMING_CONFIG.MEDIUM.duration).delay(enterDelay)}
-          exiting={FadeOut.duration(TIMING_CONFIG.FAST.duration)}
-        >
+        <Animated.View style={[ROW_FADE_IN_STYLE, { animationDelay: `${enterDelay}ms` }]}>
           <DictionaryWordCard
             word={props.item}
             editMode={editMode}
