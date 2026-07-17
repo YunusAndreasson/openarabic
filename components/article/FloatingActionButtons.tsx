@@ -8,6 +8,7 @@ const GLASS_AVAILABLE = isLiquidGlassAvailable();
 const GlassContainer = GLASS_AVAILABLE ? GlassView : View;
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { selectionFeedback } from '@/utils/haptics';
 
@@ -82,7 +83,13 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
     return (
       <>
         {/* Close button - top left */}
-        <Pressable onPress={handleClose} hitSlop={LAYOUT.HIT_SLOP.MEDIUM} style={closeButtonStyle}>
+        <Pressable
+          onPress={handleClose}
+          hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
+          style={closeButtonStyle}
+          accessibilityRole="button"
+          accessibilityLabel={STRINGS.ARTICLE_CLOSE_A11Y}
+        >
           <GlassContainer
             style={[styles.glassButton, fallbackButtonStyle]}
             {...(GLASS_AVAILABLE && { isInteractive: true, glassEffectStyle: 'clear' })}
@@ -100,6 +107,13 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
           onPress={handleOptimisticToggle}
           hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
           style={actionButtonsStyle}
+          accessibilityRole="button"
+          accessibilityLabel={
+            optimisticIsInReadingList
+              ? STRINGS.ARTICLE_REMOVE_FROM_PLAYLIST_A11Y
+              : STRINGS.ARTICLE_ADD_TO_PLAYLIST_A11Y
+          }
+          accessibilityState={{ selected: optimisticIsInReadingList }}
         >
           <GlassContainer
             style={[

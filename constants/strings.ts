@@ -241,6 +241,10 @@ export const STRINGS = {
   UNREAD: 'Unread',
   COMPLETED: 'Completed',
   SET_TIME: 'Set time',
+  // Article reader floating controls — icon-only, so these are their only accessible name
+  ARTICLE_CLOSE_A11Y: 'Close article',
+  ARTICLE_ADD_TO_PLAYLIST_A11Y: 'Add to playlist',
+  ARTICLE_REMOVE_FROM_PLAYLIST_A11Y: 'Remove from playlist',
   // Playlist tab empty state - minimal one-tap start
   BOOKMARKS_EMPTY_TITLE: 'Nothing saved yet',
   BOOKMARKS_EMPTY_HINT: 'Tap the headphones on any article\nto add it here',
