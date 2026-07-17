@@ -18,6 +18,7 @@
     "lint:public": "eslint app/page.tsx app/layout.tsx app/loading.tsx app/error.tsx app/sitemap.ts app/robots.ts app/read app/login app/account-deletion app/privacy app/terms app/contact app/download-app middleware.ts",
     "test": "vitest run",
     "test:watch": "vitest",
+    "verify": "pnpm lint && pnpm test && pnpm build",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "cf:deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",

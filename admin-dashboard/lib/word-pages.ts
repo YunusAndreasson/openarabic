@@ -201,8 +201,10 @@ export const getWordEntry = cache(
  * Tally per-root usage across every sentence_words row (PostgREST has no
  * DISTINCT/GROUP BY, so we page through and count client-side). Subrequests run
  * in parallel; callers are crawler/ISR routes fetched rarely, so this is fine.
+ * cache() dedupes the scan across the index, the A–Z browse, and the sitemap
+ * within a single request.
  */
-async function scanRootUsage(): Promise<Map<number, number>> {
+const scanRootUsage = cache(async (): Promise<Map<number, number>> => {
   const { count } = await supabase
     .from('sentence_words')
     .select('id', { count: 'exact', head: true });
@@ -226,7 +228,7 @@ async function scanRootUsage(): Promise<Map<number, number>> {
     }
   }
   return usage;
-}
+});
 
 /**
  * The dictionary entries with the most in-article usage, for the /dictionary
@@ -281,45 +283,118 @@ export const getDictionaryIndex = cache(
   },
 );
 
+/** Leading English function words stripped when choosing a browse bucket, so an
+ *  entry files under its real initial ("to bring" → B, "a calamity" → C) instead
+ *  of piling up under T/A. Only the bucket is affected; slugs are untouched. */
+const BROWSE_STOP_PREFIXES = ['to ', 'the ', 'a ', 'an '];
+
+/** Ordered browse buckets for the A–Z dictionary index. Every qualifying entry
+ *  maps to exactly one, so the index links the full long tail — no orphans. */
+export const DICTIONARY_BUCKETS: string[] = [
+  'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+  'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+  '0-9', 'other',
+];
+
+/** The browse bucket a dictionary entry belongs to (see DICTIONARY_BUCKETS). */
+export function dictionaryBucket(meaning: string): string {
+  let m = meaning.trim().toLowerCase();
+  for (const prefix of BROWSE_STOP_PREFIXES) {
+    if (m.startsWith(prefix) && m.length > prefix.length) {
+      m = m.slice(prefix.length).trimStart();
+      break;
+    }
+  }
+  const c = m[0] ?? '';
+  if (c >= 'a' && c <= 'z') return c;
+  if (c >= '0' && c <= '9') return '0-9';
+  return 'other';
+}
+
+/** A qualifying dictionary entry with its browse bucket, for the A–Z index. */
+export interface BrowseEntry {
+  id: number;
+  letters: string;
+  meaning: string;
+  slug: string;
+  bucket: string;
+}
+
 /**
- * Enumerate the dictionary entries that qualify for a public page, for the
- * sitemap. Uses the shared usage scan, then loads the matching roots. This
- * route is fetched rarely (by crawlers).
+ * Every dictionary entry that qualifies for a public page, alphabetised by
+ * meaning and tagged with its browse bucket. Backs the A–Z index, whose whole
+ * job is to give the long-tail word pages a real inbound internal link — many
+ * are otherwise reachable only via the sitemap, which leaves them "discovered –
+ * currently not indexed". cache() + the cached usage scan mean the sitemap and
+ * the hub share a single scan per request.
+ */
+export const getAllDictionaryEntries = cache(
+  async (): Promise<BrowseEntry[]> => {
+    const usage = await scanRootUsage();
+    if (!usage.size) return [];
+
+    const qualifying = new Set(
+      [...usage.entries()]
+        .filter(([, n]) => n >= MIN_USAGES_FOR_WORD_PAGE)
+        .map(([id]) => id),
+    );
+
+    // Walk the roots table in pages and keep the qualifying entries. Paging by
+    // range (rather than a huge .in() of ids) keeps each request URL small.
+    const { count: rootCount } = await supabase
+      .from('roots')
+      .select('id', { count: 'exact', head: true });
+
+    const rootPages = await Promise.all(
+      Array.from(
+        { length: Math.ceil((rootCount || 0) / SCAN_PAGE_SIZE) },
+        (_, i) =>
+          supabase
+            .from('roots')
+            .select('id, meaning, letters')
+            .range(i * SCAN_PAGE_SIZE, i * SCAN_PAGE_SIZE + SCAN_PAGE_SIZE - 1),
+      ),
+    );
+
+    const entries: BrowseEntry[] = [];
+    for (const { data } of rootPages) {
+      for (const root of data || []) {
+        if (
+          qualifying.has(root.id) &&
+          root.meaning?.trim() &&
+          root.letters?.trim()
+        ) {
+          entries.push({
+            id: root.id,
+            letters: root.letters,
+            meaning: root.meaning,
+            slug: wordPageSlug(root),
+            bucket: dictionaryBucket(root.meaning),
+          });
+        }
+      }
+    }
+
+    entries.sort((a, b) => a.meaning.localeCompare(b.meaning));
+    return entries;
+  },
+);
+
+/** The browse buckets that actually contain entries, in A–Z order. Drives the
+ *  A–Z nav and the dictionary letter URLs in the sitemap. */
+export async function getDictionaryLetters(): Promise<string[]> {
+  const entries = await getAllDictionaryEntries();
+  const present = new Set(entries.map((e) => e.bucket));
+  return DICTIONARY_BUCKETS.filter((b) => present.has(b));
+}
+
+/**
+ * Slugs for every qualifying dictionary entry, for the sitemap. Derived from the
+ * shared entry scan so the sitemap render only scans once.
  */
 export async function getWordPagesForSitemap(): Promise<
   Array<{ slug: string }>
 > {
-  const usage = await scanRootUsage();
-  if (!usage.size) return [];
-
-  const qualifying = new Set(
-    [...usage.entries()]
-      .filter(([, n]) => n >= MIN_USAGES_FOR_WORD_PAGE)
-      .map(([id]) => id),
-  );
-
-  // Walk the roots table in pages and keep the qualifying entries. Paging by
-  // range (rather than a huge .in() of ids) keeps each request URL small.
-  const { count: rootCount } = await supabase
-    .from('roots')
-    .select('id', { count: 'exact', head: true });
-
-  const rootPages = await Promise.all(
-    Array.from({ length: Math.ceil((rootCount || 0) / SCAN_PAGE_SIZE) }, (_, i) =>
-      supabase
-        .from('roots')
-        .select('id, meaning, letters')
-        .range(i * SCAN_PAGE_SIZE, i * SCAN_PAGE_SIZE + SCAN_PAGE_SIZE - 1),
-    ),
-  );
-
-  const slugs: Array<{ slug: string }> = [];
-  for (const { data } of rootPages) {
-    for (const root of data || []) {
-      if (qualifying.has(root.id) && root.meaning?.trim() && root.letters?.trim()) {
-        slugs.push({ slug: wordPageSlug(root) });
-      }
-    }
-  }
-  return slugs;
+  const entries = await getAllDictionaryEntries();
+  return entries.map((e) => ({ slug: e.slug }));
 }

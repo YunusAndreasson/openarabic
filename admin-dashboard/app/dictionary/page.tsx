@@ -1,8 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import { getDictionaryIndex, wordPagePath } from '@/lib/word-pages';
+import {
+  getDictionaryIndex,
+  getDictionaryLetters,
+  wordPagePath,
+} from '@/lib/word-pages';
 import { ArticleNav } from '@/components/article-nav';
+import { DictionaryAzNav } from '@/components/dictionary-az-nav';
 import { Footer } from '@/components/footer';
 import { SITE_URL } from '@/lib/constants';
 import type { Category } from '@/lib/types';
@@ -31,9 +36,10 @@ export const metadata: Metadata = {
 };
 
 export default async function DictionaryPage() {
-  const [categoriesResult, entries] = await Promise.all([
+  const [categoriesResult, entries, letters] = await Promise.all([
     supabase.from('categories').select('*').order('name'),
     getDictionaryIndex(HUB_SIZE),
+    getDictionaryLetters(),
   ]);
 
   const categories = (categoriesResult.data as Category[]) || [];
@@ -94,6 +100,15 @@ export default async function DictionaryPage() {
             word the way it is actually used.
           </p>
         </header>
+
+        {letters.length > 0 && (
+          <section className="mb-10">
+            <h2 className="text-sm font-medium text-muted-foreground mb-3">
+              Browse every word A–Z
+            </h2>
+            <DictionaryAzNav letters={letters} />
+          </section>
+        )}
 
         {entries.length > 0 && (
           <section>

@@ -24,7 +24,13 @@ export const PUBLIC_ROUTES = [
 ];
 
 /** Public route families matched by prefix (each has many dynamic URLs). */
-export const PUBLIC_ROUTE_PREFIXES = ['/read/', '/word/', '/author/', '/books/'];
+export const PUBLIC_ROUTE_PREFIXES = [
+  '/read/',
+  '/word/',
+  '/author/',
+  '/books/',
+  '/dictionary/', // A–Z browse pages (/dictionary itself is in PUBLIC_ROUTES)
+];
 
 export function isPublicRoute(path: string | null | undefined): boolean {
   if (!path) return false;

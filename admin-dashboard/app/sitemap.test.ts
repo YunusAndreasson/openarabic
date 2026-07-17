@@ -13,6 +13,7 @@ vi.mock('@/lib/supabase', () => ({
 
 vi.mock('@/lib/word-pages', () => ({
   getWordPagesForSitemap: vi.fn(() => Promise.resolve([{ slug: 'heart-5205' }])),
+  getDictionaryLetters: vi.fn(() => Promise.resolve(['a', 'h'])),
 }));
 
 const loadSitemap = async () => {
@@ -81,6 +82,15 @@ describe('sitemap()', () => {
     expect(entries.map((e) => e.url)).toContain(
       'https://openarabic.io/word/heart-5205',
     );
+  });
+
+  it('emits an A–Z browse URL per dictionary letter', async () => {
+    setArticles([]);
+    const sitemap = await loadSitemap();
+    const entries = await sitemap();
+    const urls = entries.map((e) => e.url);
+    expect(urls).toContain('https://openarabic.io/dictionary/a');
+    expect(urls).toContain('https://openarabic.io/dictionary/h');
   });
 
   it('still returns static pages when the articles query returns null', async () => {

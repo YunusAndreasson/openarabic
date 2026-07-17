@@ -2,7 +2,10 @@ import type { MetadataRoute } from 'next';
 import { supabase } from '@/lib/supabase';
 import { generateSlug } from '@/lib/slugify';
 import { authorSlug } from '@/lib/author-slug';
-import { getWordPagesForSitemap } from '@/lib/word-pages';
+import {
+  getWordPagesForSitemap,
+  getDictionaryLetters,
+} from '@/lib/word-pages';
 import { BOOKS } from '@/lib/books';
 import { SITE_URL as baseUrl } from '@/lib/constants';
 
@@ -11,17 +14,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Fetch articles (capped at 50k — XML sitemap protocol limit), plus authors,
   // categories, and dictionary entries. Each set is a separate landing-page
   // type that builds topical authority.
-  const [articlesResult, authorsResult, categoriesResult, wordPages] =
-    await Promise.all([
-      supabase
-        .from('articles')
-        .select('id, title, created_at')
-        .order('created_at', { ascending: false })
-        .range(0, 49999),
-      supabase.from('authors').select('id, name').order('name'),
-      supabase.from('categories').select('id, name').order('name'),
-      getWordPagesForSitemap(),
-    ]);
+  const [
+    articlesResult,
+    authorsResult,
+    categoriesResult,
+    wordPages,
+    dictionaryLetters,
+  ] = await Promise.all([
+    supabase
+      .from('articles')
+      .select('id, title, created_at')
+      .order('created_at', { ascending: false })
+      .range(0, 49999),
+    supabase.from('authors').select('id, name').order('name'),
+    supabase.from('categories').select('id, name').order('name'),
+    getWordPagesForSitemap(),
+    getDictionaryLetters(),
+  ]);
 
   const articleUrls = (articlesResult.data || []).map((article) => ({
     // Descriptive slug — must match the canonical URL emitted by /read/[slug].
@@ -47,6 +56,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     url: `${baseUrl}/word/${word.slug}`,
     changeFrequency: 'monthly' as const,
     priority: 0.4,
+  }));
+
+  // A–Z browse pages — the crawlable index that links the full long tail of
+  // word pages, so Google discovers entries that a sitemap alone leaves behind.
+  const dictionaryLetterUrls = dictionaryLetters.map((letter) => ({
+    url: `${baseUrl}/dictionary/${letter}`,
+    changeFrequency: 'weekly' as const,
+    priority: 0.5,
   }));
 
   const bookUrls = BOOKS.map((book) => ({
@@ -101,6 +118,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...bookUrls,
     ...categoryUrls,
     ...authorUrls,
+    ...dictionaryLetterUrls,
     ...articleUrls,
     ...wordUrls,
   ];

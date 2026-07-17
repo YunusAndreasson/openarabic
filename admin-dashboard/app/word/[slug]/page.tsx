@@ -15,6 +15,7 @@ import { AudioButton } from '@/components/audio-button';
 import { HighlightedArabic } from '@/components/highlighted-arabic';
 import { Footer } from '@/components/footer';
 import { SITE_URL } from '@/lib/constants';
+import { getWordEnrichment } from '@/lib/word-enrichment';
 import type { Category } from '@/lib/types';
 
 export async function generateMetadata({
@@ -60,6 +61,7 @@ export default async function WordPage({
 
   if (!entry) notFound();
   const { root, usageCount, examples, related } = entry;
+  const enrichment = getWordEnrichment(root.id);
 
   // Consolidate to a single canonical URL — 308-redirect stale-meaning slugs.
   const canonicalSlug = wordPageSlug(root);
@@ -117,6 +119,129 @@ export default async function WordPage({
             </div>
           )}
         </header>
+
+        {enrichment && (
+          <section className="border-b border-border/40 pb-8 mb-8">
+            {enrichment.faq.length > 0 && (
+              <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{
+                  __html: JSON.stringify({
+                    '@context': 'https://schema.org',
+                    '@type': 'FAQPage',
+                    mainEntity: enrichment.faq.map((f) => ({
+                      '@type': 'Question',
+                      name: f.q,
+                      acceptedAnswer: { '@type': 'Answer', text: f.a },
+                    })),
+                  }),
+                }}
+              />
+            )}
+
+            <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1 text-sm text-muted-foreground mb-5">
+              <span>
+                Root{' '}
+                <span lang="ar" dir="rtl" className="font-arabic text-base text-foreground">
+                  {enrichment.triliteralRoot}
+                </span>{' '}
+                ({enrichment.rootTransliteration})
+              </span>
+              <span>{enrichment.partOfSpeech}</span>
+              <span>
+                Pronounced{' '}
+                <span className="text-foreground">{enrichment.headwordTransliteration}</span>
+              </span>
+            </div>
+
+            <h2 className="text-xl md:text-2xl font-bold text-foreground mb-4">
+              Meaning of {root.meaning} in Arabic
+            </h2>
+            <ol className="space-y-3 mb-6">
+              {enrichment.senses.map((s, i) => (
+                <li key={i} className="text-foreground leading-relaxed">
+                  <span className="font-semibold">{s.gloss}</span>
+                  {s.note && <span className="text-muted-foreground"> — {s.note}</span>}
+                </li>
+              ))}
+            </ol>
+
+            {enrichment.usageNote && (
+              <p className="text-muted-foreground leading-relaxed mb-6">
+                {enrichment.usageNote}
+              </p>
+            )}
+
+            {enrichment.wordFamily.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-foreground mb-3">
+                  Words from the same root
+                </h3>
+                <ul className="flex flex-wrap gap-2.5">
+                  {enrichment.wordFamily.map((m, i) => {
+                    const inner = (
+                      <>
+                        <span
+                          lang="ar"
+                          dir="rtl"
+                          className="font-arabic text-lg text-foreground"
+                        >
+                          {m.letters}
+                        </span>
+                        <span className="text-sm text-muted-foreground">{m.meaning}</span>
+                      </>
+                    );
+                    return (
+                      <li key={i}>
+                        {m.path ? (
+                          <Link
+                            href={m.path}
+                            className="inline-flex items-baseline gap-2 rounded-lg border border-border/60 bg-card px-3 py-2 hover:border-primary/50 hover:bg-muted/50 transition-colors"
+                          >
+                            {inner}
+                          </Link>
+                        ) : (
+                          <span className="inline-flex items-baseline gap-2 rounded-lg border border-border/40 px-3 py-2">
+                            {inner}
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+
+            {enrichment.faq.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-foreground mb-3">
+                  Common questions
+                </h3>
+                <dl className="space-y-3">
+                  {enrichment.faq.map((f, i) => (
+                    <div key={i}>
+                      <dt className="font-medium text-foreground">{f.q}</dt>
+                      <dd className="text-muted-foreground mt-0.5 leading-relaxed">{f.a}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            )}
+
+            <p className="mt-6 text-xs text-muted-foreground">
+              Definitions synthesised from{' '}
+              <a
+                href={enrichment.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-foreground"
+              >
+                {enrichment.source}
+              </a>
+              .
+            </p>
+          </section>
+        )}
 
         {examples.length > 0 && (
           <section>
