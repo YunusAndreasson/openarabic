@@ -25,6 +25,14 @@ const SINGLE_LETTER_PREPOSITION_SET = new Set(['ب', 'ل', 'ك', 'م']);
 const SINGLE_LETTER_CONJUNCTION_SET = new Set(['و', 'ف', 'ب', 'ل']);
 
 /**
+ * Non-fatha vowel marks (damma, kasra, sukun). The conjunctions وَ and فَ are always
+ * vocalized with fatha — a word-initial و/ف carrying one of these marks is a root
+ * letter (فُتِحَتْ "so they were opened": passive فُ of root ف-ت-ح, not the conjunction).
+ * Unvocalized text carries no mark and is left alone.
+ */
+const NON_FATHA_VOWELS = new Set(['ُ', 'ِ', 'ْ']); // ُ ِ ْ
+
+/**
  * Detects multiple prefixes in sequence from an Arabic word
  *
  * Arabic prefixes can stack (e.g., و + ال = وال "and the", ب + ال = بال "in the")
@@ -99,6 +107,18 @@ export function detectPrefixes(
             }
           }
         }
+      }
+
+      // VALIDATION 0b: Conjunction و/ف must carry fatha (or no mark) in the original.
+      // Only checkable for the first prefix, where the original text position is known.
+      if (
+        detectedPrefixes.length === 0 &&
+        (prefixMatch.arabicMatch === 'و' || prefixMatch.arabicMatch === 'ف') &&
+        originalArabic?.[0] === prefixMatch.arabicMatch &&
+        NON_FATHA_VOWELS.has(originalArabic[1] ?? '')
+      ) {
+        continueDetection = false;
+        continue;
       }
 
       // VALIDATION 1: Prevent duplicate definite article (ال)
@@ -399,43 +419,17 @@ export function calculateRemainingEnglish(
     diacritic?: AnalyzedComponent;
   },
 ): string {
-  // Collect all English matches from all components
+  // Collect all English matches from all components (multi-word matches contribute
+  // each of their words)
   const matchedWords = new Set<string>();
-
-  // Add prefix matches
-  components.prefixes.forEach(prefix => {
-    prefix.englishMatches.forEach(match => {
-      // Split multi-word matches and add each word
-      match
-        .toLowerCase()
-        .split(/\s+/)
-        .forEach(word => matchedWords.add(word.trim()));
-    });
-  });
-
-  // Add suffix matches
-  if (components.suffix) {
-    components.suffix.englishMatches.forEach(match => {
-      match
-        .toLowerCase()
-        .split(/\s+/)
-        .forEach(word => matchedWords.add(word.trim()));
-    });
-  }
-
-  // Add infix matches
-  if (components.infix) {
-    components.infix.englishMatches.forEach(match => {
-      match
-        .toLowerCase()
-        .split(/\s+/)
-        .forEach(word => matchedWords.add(word.trim()));
-    });
-  }
-
-  // Add diacritic matches
-  if (components.diacritic) {
-    components.diacritic.englishMatches.forEach(match => {
+  const allComponents = [
+    ...components.prefixes,
+    components.suffix,
+    components.infix,
+    components.diacritic,
+  ];
+  for (const component of allComponents) {
+    component?.englishMatches.forEach(match => {
       match
         .toLowerCase()
         .split(/\s+/)

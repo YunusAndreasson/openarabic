@@ -960,18 +960,20 @@ describe('2025 Pattern Enhancements', () => {
   describe('Form VI Verb Pattern (يَتَفَاعَلُ)', () => {
     test('should detect ي as subject prefix and stop before ت in Form VI verbs', () => {
       // Form VI present tense: يَتَدَارَسُونَهُ = "and studying it"
-      // Should detect: و (conjunction) + ي (subject prefix) + تدارسون (Form VI verb stem)
-      // Should NOT detect: و + ي + ت as three separate prefixes
-      // The ي IS a valid subject prefix; ت is part of the verb form
+      // Should NOT detect: و + ي + ت as three separate prefixes — ت is part of the
+      // verb form. And under SVO claim priority, the single non-initial 'it' is the
+      // OBJECT and belongs to the suffix هُ, not to subject prefix ي (whose subject
+      // "they" is elided in the English gerund) — so ي goes unpainted rather than
+      // stealing the object's token (same rule as يَدْفَعَهَا "repels it").
       const analysis = analyzeArabicWord('وَيَتَدَارَسُونَهُ', 'and studying it');
 
-      // Should have TWO prefixes (و + ي), not three (و + ي + ت)
-      expect(analysis.prefixes).toHaveLength(2);
+      expect(analysis.prefixes).toHaveLength(1);
       expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
-      expect(analysis.prefixes[1]?.arabicMatch).toBe('ي');
+      expect(analysis.suffix?.arabicMatch).toBe('ه');
+      expect(analysis.suffix?.englishMatches).toContain('it');
 
       // The ت should remain part of the verb stem (not detected as prefix)
-      expect(analysis.remainingArabic).toMatch(/^تدارسون/);
+      expect(analysis.remainingArabic).toMatch(/^يتدارسون/);
     });
 
     test('should detect ي as subject prefix for Form VI examples', () => {

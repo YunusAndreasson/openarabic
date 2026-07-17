@@ -21,8 +21,10 @@ import { MOCK_GRAMMAR_COLORS } from '@/__tests__/setup/mockGrammarColors';
 import { analyzeArabicWord, formatWordAnalysis } from '@/utils/arabicWordAnalysis';
 
 describe('English "the" coloring', () => {
-  test('should color "the" with coral for الذي (the one who)', () => {
-    const analysis = analyzeArabicWord('الذي', 'the one who');
+  test('should color "the" with the definite-article color for الْبَيْت (the house of God)', () => {
+    // Note: this test originally used الذي, but الذي is a fused relative pronoun
+    // (FUSED_AL_WORDS) whose ال is deliberately not detected anymore.
+    const analysis = analyzeArabicWord('البيت', 'the house of God');
     const formatted = formatWordAnalysis(analysis);
 
     const mockColors = {
@@ -33,14 +35,14 @@ describe('English "the" coloring', () => {
     } as any;
 
     const segments = generateColorCodedSegments({
-      text: 'the one who',
+      text: 'the house of God',
       formattedAnalysis: formatted,
       analysis,
       colors: mockColors,
       defaultColor: mockColors.text,
     });
 
-    // Should have at least 2 segments: "the" and "one who"
+    // Should have at least 2 segments: "the" and the rest
     expect(segments.length).toBeGreaterThanOrEqual(2);
 
     // Find the segment for "the"
@@ -50,6 +52,12 @@ describe('English "the" coloring', () => {
     // Should be colored with definite article grammar color (not default text color!)
     expect(theSegment?.color).toBe(MOCK_GRAMMAR_COLORS.definiteArticle);
     expect(theSegment?.color).not.toBe('#fcfffd'); // NOT default text color
+  });
+
+  test('fused الذي must NOT paint "the"', () => {
+    const analysis = analyzeArabicWord('الذي', 'the one who');
+    expect(analysis.prefixes).toHaveLength(0);
+    expect(analysis.hasComponents).toBe(false);
   });
 
   test('should color "the" for any word with ال prefix', () => {

@@ -37,23 +37,29 @@ import { runBenchmark } from '@/utils/benchmarkUtils';
 // accuracy rose (train 91.04→95.05, test 88.44→92.49, multiWord bucket 90.91→98.48);
 // precision/recall/F1 unchanged (diacritics aren't scored in P/R/F1). Thresholds
 // ratcheted up to lock the gains.
+// 2026-07-17 re-baseline: the benchmark now analyzes through the same [the]
+// bracket-injection preprocessing the UI applies (analyzeLikeUi in benchmarkUtils),
+// so these numbers describe what users actually see. Combined with the fused-ال,
+// shortened-preposition, root-letter و/ف, fatha-alef, and object-claim fixes plus
+// the displayed-text relabel of the injection cluster: train P .959→.984,
+// F1 .888→.917; test P .974→1.00, F1 .884→.920. Thresholds ratcheted to lock it.
 const THRESHOLDS = {
   train: {
-    precision: 0.95,
-    recall: 0.82,
-    f1Score: 0.88,
-    hasComponentsAccuracy: 0.93,
+    precision: 0.978,
+    recall: 0.85,
+    f1Score: 0.91,
+    hasComponentsAccuracy: 0.965,
   },
   test: {
-    precision: 0.97,
-    recall: 0.8,
-    f1Score: 0.875,
-    hasComponentsAccuracy: 0.9,
+    precision: 0.99,
+    recall: 0.845,
+    f1Score: 0.915,
+    hasComponentsAccuracy: 0.948,
   },
   byBucket: {
-    multiWordHasComponents: { hasComponentsAccuracy: 0.96, precision: 0.96 },
+    multiWordHasComponents: { hasComponentsAccuracy: 0.985, precision: 0.99 },
     singleWord: { hasComponentsAccuracy: 1.0 },
-    longPhrase: { hasComponentsAccuracy: 0.92 },
+    longPhrase: { hasComponentsAccuracy: 0.98 },
   },
 };
 

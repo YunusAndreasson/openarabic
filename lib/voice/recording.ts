@@ -108,7 +108,7 @@ export class MicPermissionDeniedError extends Error {
   }
 }
 
-export async function ensureMicPermission(): Promise<boolean> {
+async function ensureMicPermission(): Promise<boolean> {
   const current = await AudioManager.checkRecordingPermissions();
   if (current === 'Granted') return true;
   const requested = await AudioManager.requestRecordingPermissions();
@@ -155,7 +155,7 @@ function lowPass(input: Float32Array, cutoff: number): Float32Array {
   return out;
 }
 
-export function resample(input: Float32Array, from: number, to: number): Float32Array {
+function resample(input: Float32Array, from: number, to: number): Float32Array {
   if (from === to || input.length === 0) return input;
   const ratio = from / to;
   const source = ratio > 1 ? lowPass(input, 0.5 / ratio) : input;
@@ -175,7 +175,7 @@ export function resample(input: Float32Array, from: number, to: number): Float32
  * Gently peak-normalize. No-op when the peak is at/above `target` or below the
  * noise floor; gain is capped so a faint recording isn't amplified into noise.
  */
-export function normalizeGain(
+function normalizeGain(
   input: Float32Array,
   target = 0.7,
   maxGain = 12,

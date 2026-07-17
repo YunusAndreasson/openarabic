@@ -23,9 +23,9 @@
     "!**/admin-dashboard/**"
   ],
   "ignore": ["plugins/**", "scripts/**", "admin-dashboard/**"],
-  "ignoreDependencies": ["babel-preset-expo", "babel-jest"],
+  "ignoreDependencies": ["babel-preset-expo", "babel-jest", "@babel/plugin-transform-react-jsx"],
   "ignoreExportsUsedInFile": false,
   "includeEntryExports": false,
-  "ignoreBinaries": ["supabase", "gh", "list"],
+  "ignoreBinaries": ["supabase", "eas", "list"],
   "exclude": ["duplicates"]
 }

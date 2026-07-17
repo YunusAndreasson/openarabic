@@ -5,7 +5,25 @@
  * of the Arabic grammar component detection system.
  */
 
-import { analyzeArabicWord, type WordAnalysis } from './arabicWordAnalysis';
+import {
+  analyzeArabicWord,
+  normalizeArabic,
+  shouldInjectBracket,
+  type WordAnalysis,
+} from './arabicWordAnalysis';
+
+/**
+ * Analyze a case exactly the way the UI does. computeColoredSegments prepends
+ * "[the] " when bracket injection applies — a benchmark that skips this scores a
+ * different pipeline than users see (it both misses injection-enabled paints and
+ * is blind to injection-caused mis-paints).
+ */
+function analyzeLikeUi(arabic: string, english: string): WordAnalysis {
+  const processedEnglish = shouldInjectBracket(normalizeArabic(arabic), english, arabic)
+    ? `[the] ${english}`
+    : english;
+  return analyzeArabicWord(arabic, processedEnglish);
+}
 
 /**
  * Ground truth test case for benchmark validation
@@ -173,7 +191,7 @@ export function runBenchmark(cases: GroundTruthCase[]): BenchmarkResult {
   let hasComponentsCorrect = 0;
 
   for (const testCase of cases) {
-    const analysis = analyzeArabicWord(testCase.arabic, testCase.english);
+    const analysis = analyzeLikeUi(testCase.arabic, testCase.english);
 
     // Gate on hasComponents: when the analyzer says false, the UI paints nothing,
     // so the benchmark must score nothing too — otherwise the metric drifts from
@@ -260,9 +278,13 @@ export function runDetailedBenchmark(cases: GroundTruthCase[]): DetailedBenchmar
   const failures: FailureCase[] = [];
 
   for (const testCase of cases) {
-    const analysis = analyzeArabicWord(testCase.arabic, testCase.english);
-    const detectedPrefixes = analysis.prefixes.map(p => p.arabicMatch);
-    const detectedSuffix = analysis.suffix?.arabicMatch ?? null;
+    const analysis = analyzeLikeUi(testCase.arabic, testCase.english);
+    // Same hasComponents gate as runBenchmark — without it the failure list reports
+    // phantom FPs (standalone particles like لَمْ whose detections never render).
+    const detectedPrefixes = analysis.hasComponents
+      ? analysis.prefixes.map(p => p.arabicMatch)
+      : [];
+    const detectedSuffix = analysis.hasComponents ? (analysis.suffix?.arabicMatch ?? null) : null;
 
     // Track prefix patterns
     for (const expected of testCase.expectedPrefixes) {

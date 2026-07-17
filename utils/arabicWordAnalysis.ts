@@ -471,13 +471,40 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
     }
     return false;
   };
+  // English SVO claim priority: an object/possessive pronoun in non-initial position
+  // is the verb's object and belongs to the object suffix, not to a subject prefix
+  // that shares the trigger. يَدْفَعَهَا "repels it": 'it' translates ها — without this,
+  // prefix ي claimed the only 'it' and the UI taught that يَ means "it" while the
+  // actual object pronoun ها stayed unpainted. An English-initial pronoun ("you are
+  // patient") stays with the prefix — initial position marks the subject.
+  // The steal only fires when contention is total — the suffix has no claimable token
+  // of its own. With an uncontested token available (وَيَأْمُرُهُ "and it instructs him":
+  // suffix ه can take 'him'), normal order stands and ي keeps its subject 'it'.
+  const englishFirstToken = lowerEnglish.trim().split(/\s+/)[0] ?? '';
+  let suffixClaimedEarly = false;
+  if (visibleSuffix) {
+    const prefixTokens = new Set(
+      visiblePrefixes.flatMap(p => p.englishMatches.map(m => m.toLowerCase())),
+    );
+    const claimables = visibleSuffix.englishMatches
+      .map(m => m.toLowerCase())
+      .filter(t => {
+        ensureToken(t);
+        return (remainingOccurrences.get(t) ?? 0) > 0;
+      });
+    const allContested = claimables.length > 0 && claimables.every(t => prefixTokens.has(t));
+    const first = claimables[0];
+    if (allContested && first && OBJECT_POSSESSIVE_SET.has(first) && first !== englishFirstToken) {
+      suffixClaimedEarly = claimOne(visibleSuffix);
+    }
+  }
   const claimedPrefixes: AnalyzedComponent[] = [];
   for (const p of visiblePrefixes) {
     if (claimOne(p)) claimedPrefixes.push(p);
   }
   visiblePrefixes = claimedPrefixes;
   if (visibleInfix && !claimOne(visibleInfix)) visibleInfix = undefined;
-  if (visibleSuffix && !claimOne(visibleSuffix)) visibleSuffix = undefined;
+  if (visibleSuffix && !suffixClaimedEarly && !claimOne(visibleSuffix)) visibleSuffix = undefined;
   // Diacritics that inherit color from another component merge into that component's
   // section in formatWordAnalysis (lines 397-428 of colorSegments.ts). If the parent
   // component is still visible, the diacritic shares its claim and rides along. If the
