@@ -1,5 +1,17 @@
 # Release & Deployment
 
+## Web (admin-dashboard → Cloudflare Worker)
+
+The Next.js web app deploys as the `openarabic-web` Cloudflare Worker via
+OpenNext — it is NOT part of the EAS/GitHub Actions mobile release flow below:
+
+```bash
+cd admin-dashboard
+pnpm deploy   # opennextjs-cloudflare build && opennextjs-cloudflare deploy
+```
+
+See `admin-dashboard/CLAUDE.md` for details.
+
 ## GitHub Actions Workflow Commands
 
 Trigger release builds directly using the GitHub CLI:
