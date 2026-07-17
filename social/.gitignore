@@ -1,0 +1,6 @@
+node_modules/
+.env
+.usage-cache.json
+.x-auth-tmp.json
+preview/
+*.log

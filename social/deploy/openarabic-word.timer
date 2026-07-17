@@ -1,0 +1,12 @@
+[Unit]
+Description=Run the OpenArabic word-of-the-day post twice daily
+
+[Timer]
+# Two posts per day (UTC). Adjust to taste.
+OnCalendar=*-*-* 08:00:00 UTC
+OnCalendar=*-*-* 17:00:00 UTC
+Persistent=true
+AccuracySec=1min
+
+[Install]
+WantedBy=timers.target

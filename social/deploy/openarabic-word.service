@@ -1,0 +1,14 @@
+[Unit]
+Description=OpenArabic daily "word of the day" post (X + Instagram feed + story)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# System-level unit (runs as root on the Hetzner box, matching zuhd-news-cycle).
+WorkingDirectory=/root/open-arabic/social
+ExecStart=/usr/bin/env bash run-post.sh
+# node is mise-managed; run-post.sh also prepends the shims, this is a backstop.
+Environment=PATH=/root/.local/share/mise/shims:/root/.local/bin:/usr/local/bin:/usr/bin:/bin
+Environment=HOME=/root
+TimeoutStartSec=180

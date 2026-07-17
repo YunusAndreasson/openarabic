@@ -1,0 +1,22 @@
+[
+  {
+    "timestamp": "2026-07-11T22:03:59.933Z",
+    "root_id": 5266,
+    "arabic": "عِلْم",
+    "translit": "ʿilm",
+    "english": "knowledge",
+    "slug": "knowledge-5266",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/knowledge-5266-20260711-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/knowledge-5266-20260711-story.jpg",
+    "x": {
+      "ok": false,
+      "skipped": true
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "18046847129795193",
+      "commentId": "18449754577142727",
+      "storyMediaId": "18114756358724601"
+    }
+  }
+]

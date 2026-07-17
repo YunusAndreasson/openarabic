@@ -1,0 +1,18 @@
+{
+  "name": "openarabic-social",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "OpenArabic daily 'word of the day' image generator + poster (X, Instagram feed & story).",
+  "scripts": {
+    "card:sample": "node lib/card.mjs --sample",
+    "candidates": "node scripts/fetch-candidates.mjs",
+    "post": "bash run-post.sh",
+    "post:dry": "bash run-post.sh --dry-run"
+  },
+  "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "@supabase/supabase-js": "^2.45.0",
+    "jpeg-js": "^0.4.4"
+  }
+}
