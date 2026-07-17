@@ -43,6 +43,7 @@ This CLAUDE.md applies to the **React Native mobile app only**.
 
 - `yarn validate` - Fast validation (changed files only, ~5-6s)
 - `yarn validate:full` - Full validation (all files)
+- `yarn verify` - Full validation + all tests (alias for `yarn ci`)
 - `yarn prettier:fix` - Auto-format (always use this, never manually fix formatting)
 - `yarn test` - Run tests on changed files
 

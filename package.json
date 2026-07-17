@@ -30,6 +30,7 @@
     "validate": "node scripts/validate-changed.js",
     "validate:full": "yarn typecheck:source && yarn lint:source && yarn check-unused",
     "ci": "yarn validate:full && yarn test:all",
+    "verify": "yarn ci",
     "bump": "node utils/bumpVersion.js",
     "release": "gh workflow run release.yml",
     "release:all": "gh workflow run release.yml -f platform=all",
