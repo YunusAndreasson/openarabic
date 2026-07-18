@@ -20,6 +20,24 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 // Shared timing for tooltip fade animation (exported for WordTooltip)
 export const WORD_TOOLTIP_ANIMATION_DURATION = 150;
 
+// Extra vertical space for Arabic diacritics (shadda, tanwin) that extend above the line
+const DIACRITICS_PADDING = 8;
+
+/**
+ * Horizontal ink bleed per font family, in em (fraction of font size).
+ * Calligraphic fonts paint well beyond their glyph advances; without this
+ * reserve the canvas clips edge glyphs and the paragraph can force-break
+ * the word onto a hidden second line.
+ */
+const INK_BLEED_EM: Record<string, number> = {
+  'Noto Sans Arabic': 0.08,
+  'Digital Khatt New Madina': 0.3,
+  Amiri: 0.3,
+  'Scheherazade New': 0.3,
+  'Noto Nastaliq Urdu': 0.35,
+};
+const DEFAULT_INK_BLEED_EM = 0.15;
+
 // Module-level constant — no per-render allocation
 const HIGHLIGHT_ANIMATION_STYLE = {
   animationName: {
@@ -55,10 +73,14 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
   isTargetWord = false,
 }: SkiaArabicWordProps) {
   const colors = useColors();
-  const { getArabicFont, fontFamily, fontManager } = useSkiaFonts();
+  const { fontSize, fontFamily, fontManager } = useSkiaFonts();
 
   // Prevent memory leaks from async callbacks on unmounted components
   const isMountedRef = useRef(true);
+
+  // Fallback ref so the word can measure itself when the parent doesn't pass one
+  const internalWordRef = useRef<ComponentRef<typeof Pressable>>(null);
+  const pressableRef = wordRef ?? internalWordRef;
 
   // Active word opacity — derived from SharedValue on UI thread, no React re-renders
   const wordId = word.id;
@@ -88,66 +110,90 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
 
   // Build Skia paragraph based on whether word has colored components
   const paragraph = useMemo(() => {
-    // Get font with appropriate weight for selection state
-    const font = getArabicFont(undefined, isSelected ? 'semibold' : 'normal');
-    if (!font) {
+    // Native ParagraphBuilder.Make requires a font provider — skip until the
+    // shared manager finishes its one-time load (words fill in a frame later).
+    if (!fontManager) {
       return null;
     }
 
+    // Selected (study-list/due) words shift subtly to the brand tint instead of a
+    // weight change; grammar-colored segments keep their educational colors.
+    const baseColor = isSelected ? colors.tint : colors.arabicText;
+
     if (hasComponents && coloredSegments.length > 0) {
+      const segments = isSelected
+        ? coloredSegments.map(segment =>
+            segment.color === colors.text || segment.color === colors.arabicText
+              ? { ...segment, color: baseColor }
+              : segment,
+          )
+        : coloredSegments;
+
       // Build multi-colored paragraph from segments
       return buildColoredParagraph({
-        segments: coloredSegments,
-        font,
+        segments,
+        fontSize,
         fontFamily,
         fontManager,
         textDirection: TextDirection.RTL,
         maxWidth: 2000, // Large width to prevent wrapping of single words
         letterSpacing: 0,
       });
-    } else {
-      // Build simple single-color paragraph
-      return buildSimpleParagraph(
-        word.word_form,
-        font,
-        colors.arabicText,
-        fontFamily,
-        TextDirection.RTL,
-        2000,
-        fontManager,
-      );
     }
+
+    // Build simple single-color paragraph
+    return buildSimpleParagraph({
+      text: word.word_form,
+      fontSize,
+      color: baseColor,
+      fontFamily,
+      fontManager,
+      textDirection: TextDirection.RTL,
+      maxWidth: 2000,
+    });
   }, [
-    getArabicFont,
     isSelected,
     hasComponents,
     coloredSegments,
     word.word_form,
+    colors.tint,
     colors.arabicText,
+    colors.text,
+    fontSize,
     fontFamily,
     fontManager,
   ]);
 
-  // Extra vertical space for Arabic diacritics (shadda, tanwin) that extend above the line
-  const DIACRITICS_PADDING = 8;
-
   const canvasDimensions = useMemo(() => {
     if (!paragraph) {
-      return { width: 60, height: 40 };
+      return { width: 60, height: 40, layoutWidth: 60, bleedTrim: 0 };
     }
 
+    const inkBleed = Math.ceil(fontSize * (INK_BLEED_EM[fontFamily] ?? DEFAULT_INK_BLEED_EM));
+    // Visual breathing room between words stays at the pre-bleed rhythm (~5%
+    // of the word width was baked into the old canvas sizing).
+    const visualPad = Math.ceil(fontSize * 0.05);
+    // Right-aligned RTL text hugs the layout right edge, so one bleed on the
+    // layout width shifts the glyphs off the canvas edge and a second bleed
+    // on the canvas width leaves room on the left.
+    const layoutWidth = Math.ceil(paragraph.getMaxIntrinsicWidth()) + inkBleed;
+
     return {
-      width: Math.ceil(paragraph.getMaxIntrinsicWidth() * 1.05),
+      width: layoutWidth + inkBleed,
       height: Math.ceil(paragraph.getHeight()) + DIACRITICS_PADDING,
+      layoutWidth,
+      // Negative margin cancels the bleed in flex layout so word spacing
+      // doesn't grow — the bleed exists for paint only, not for layout.
+      bleedTrim: Math.max(0, inkBleed - visualPad),
     };
-  }, [paragraph]);
+  }, [paragraph, fontSize, fontFamily]);
 
   // Show tooltip on press - always measure fresh for 100% reliability
   const handlePress = () => {
-    if (!wordRef?.current || !onTooltipOpen) return;
+    if (!pressableRef.current || !onTooltipOpen) return;
 
     try {
-      wordRef.current.measureInWindow((x, y, width, height) => {
+      pressableRef.current.measureInWindow((x, y, width, height) => {
         // Only call tooltip if component is still mounted and coordinates are valid
         if (isMountedRef.current && x !== undefined && y !== undefined && width > 0 && height > 0) {
           onTooltipOpen(word, { x, y, width, height });
@@ -173,8 +219,16 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
     [canvasDimensions.width, canvasDimensions.height],
   );
 
+  const wrapperStyle = useMemo(
+    () =>
+      canvasDimensions.bleedTrim > 0
+        ? [styles.wordWrapper, { marginHorizontal: -canvasDimensions.bleedTrim }]
+        : styles.wordWrapper,
+    [canvasDimensions.bleedTrim],
+  );
+
   return (
-    <View style={styles.wordWrapper}>
+    <View style={wrapperStyle}>
       {/* Pulsing highlight for tutorial */}
       {isHighlighted && (
         <Animated.View
@@ -190,7 +244,7 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
         <View style={[styles.targetWordOverlay, { backgroundColor: colors.tint }]} />
       )}
       <AnimatedPressable
-        ref={wordRef}
+        ref={pressableRef}
         style={[containerStyle, activeStyle]}
         testID={testID}
         onPress={handlePress}
@@ -201,7 +255,7 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
               paragraph={paragraph}
               x={0}
               y={DIACRITICS_PADDING}
-              width={canvasDimensions.width}
+              width={canvasDimensions.layoutWidth}
             />
           )}
         </Canvas>

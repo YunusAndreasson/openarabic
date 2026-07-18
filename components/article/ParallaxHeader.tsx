@@ -1,6 +1,11 @@
 import { memo, useMemo } from 'react';
 import { StyleSheet } from 'react-native';
-import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
+import Animated, {
+  Extrapolation,
+  interpolate,
+  useAnimatedStyle,
+  type SharedValue,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Canvas, LinearGradient, Rect, vec } from '@shopify/react-native-skia';
 
@@ -32,14 +37,7 @@ const STATIC_STYLES = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  imageGradientOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: '60%', // Canvas container height (Rect inside controls actual gradient)
-  },
-  backgroundGradientOverlay: {
+  gradientOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
@@ -116,8 +114,12 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors, scr
     const translateY = y > 0 ? -y * 0.6 : 0; // slower upward movement for parallax
     const maxExtraScale = 0.08; // cap stretch at +8%
     const scale = y < 0 ? 1 + Math.min(-y / headerHeight, maxExtraScale) : 1;
+    // Fade the hero out as content scrolls over it — body text must never
+    // sit on the image itself (it becomes unreadable without a scrim).
+    const opacity = interpolate(y, [0, headerHeight * 0.6], [1, 0], Extrapolation.CLAMP);
     return {
       transform: [{ translateY }, { scale }],
+      opacity,
     };
   }, [headerHeight]);
 
@@ -137,19 +139,22 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors, scr
       <Animated.View style={[imageSectionStyle, animatedImageStyle]}>
         <EnhancedImage {...imageProps} />
 
-        {/* Enhanced image gradient for summary overlay - Skia for Android stability */}
-        <Canvas style={STATIC_STYLES.imageGradientOverlay} pointerEvents="none">
-          <Rect x={0} y={0} width={SCREEN_WIDTH} height={headerHeight * 0.6}>
+        {/* Both gradients in ONE canvas (one Skia surface) - Skia for Android stability.
+            Image gradient covers the bottom 60% for summary legibility; the background
+            transition gradient draws on top across the full header. */}
+        <Canvas style={STATIC_STYLES.gradientOverlay} pointerEvents="none">
+          <Rect
+            x={0}
+            y={headerHeight * 0.4}
+            width={SCREEN_WIDTH}
+            height={headerHeight * 0.6}
+          >
             <LinearGradient
-              start={vec(0, 0)}
-              end={vec(0, headerHeight * 0.6)}
+              start={vec(0, headerHeight * 0.4)}
+              end={vec(0, headerHeight)}
               colors={[...imageGradientColors]}
             />
           </Rect>
-        </Canvas>
-
-        {/* Background transition gradient - Skia for Android stability */}
-        <Canvas style={STATIC_STYLES.backgroundGradientOverlay} pointerEvents="none">
           <Rect x={0} y={0} width={SCREEN_WIDTH} height={headerHeight}>
             <LinearGradient
               start={vec(0, 0)}

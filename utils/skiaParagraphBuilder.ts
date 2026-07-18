@@ -1,6 +1,5 @@
 import {
   Skia,
-  type SkFont,
   type SkParagraph,
   type SkTypefaceFontProvider,
   TextAlign,
@@ -31,9 +30,8 @@ const makeParagraphStyle = (
   },
 });
 
-export interface ParagraphConfig {
-  segments: ColoredSegment[];
-  font: SkFont;
+interface ParagraphBaseConfig {
+  fontSize: number;
   fontFamily: string;
   fontManager?: SkTypefaceFontProvider | null;
   textDirection?: TextDirection;
@@ -41,24 +39,27 @@ export interface ParagraphConfig {
   letterSpacing?: number;
 }
 
-/** Builds a Skia paragraph from colored text segments with consistent diacritics spacing. */
-export const buildColoredParagraph = (config: ParagraphConfig): SkParagraph | null => {
-  const {
-    segments,
-    font,
+export interface ParagraphConfig extends ParagraphBaseConfig {
+  segments: ColoredSegment[];
+}
+
+export interface SimpleParagraphConfig extends ParagraphBaseConfig {
+  text: string;
+  color: string;
+}
+
+const buildParagraphFromSegments = (
+  segments: Pick<ColoredSegment, 'text' | 'color'>[],
+  {
+    fontSize,
     fontFamily,
     fontManager,
     textDirection = TextDirection.RTL,
     maxWidth = 2000,
     letterSpacing = ARABIC_LETTER_SPACING,
-  } = config;
-
-  if (segments.length === 0) {
-    return null;
-  }
-
+  }: ParagraphBaseConfig,
+): SkParagraph | null => {
   try {
-    const fontSize = font.getSize();
     const builder = Skia.ParagraphBuilder.Make(
       makeParagraphStyle(fontFamily, fontSize, textDirection),
       fontManager ?? undefined,
@@ -79,46 +80,27 @@ export const buildColoredParagraph = (config: ParagraphConfig): SkParagraph | nu
     paragraph.layout(maxWidth);
 
     return paragraph;
-  } catch {
+  } catch (error) {
+    // A null paragraph renders as an invisible word — surface the cause in dev
+    if (__DEV__) {
+      console.warn('[skiaParagraphBuilder] Failed to build paragraph', error);
+    }
     return null;
   }
 };
 
+/** Builds a Skia paragraph from colored text segments with consistent diacritics spacing. */
+export const buildColoredParagraph = (config: ParagraphConfig): SkParagraph | null => {
+  if (config.segments.length === 0) {
+    return null;
+  }
+  return buildParagraphFromSegments(config.segments, config);
+};
+
 /** Builds a single-color paragraph for words without colored segments. */
-export const buildSimpleParagraph = (
-  text: string,
-  font: SkFont,
-  color: string,
-  fontFamily: string,
-  textDirection: TextDirection = TextDirection.RTL,
-  maxWidth: number = 2000,
-  fontManager?: SkTypefaceFontProvider | null,
-): SkParagraph | null => {
-  if (!text) {
+export const buildSimpleParagraph = (config: SimpleParagraphConfig): SkParagraph | null => {
+  if (!config.text) {
     return null;
   }
-
-  try {
-    const fontSize = font.getSize();
-    const builder = Skia.ParagraphBuilder.Make(
-      makeParagraphStyle(fontFamily, fontSize, textDirection),
-      fontManager ?? undefined,
-    );
-
-    builder.pushStyle({
-      color: Skia.Color(color),
-      fontFamilies: [fontFamily],
-      fontSize,
-      letterSpacing: ARABIC_LETTER_SPACING,
-    });
-    builder.addText(text);
-    builder.pop();
-
-    const paragraph = builder.build();
-    paragraph.layout(maxWidth);
-
-    return paragraph;
-  } catch {
-    return null;
-  }
+  return buildParagraphFromSegments([{ text: config.text, color: config.color }], config);
 };

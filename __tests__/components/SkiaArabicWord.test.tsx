@@ -33,22 +33,10 @@ jest.mock('@/hooks/theme/useColors', () =>
 
 jest.mock('@/hooks/theme/useSkiaFonts', () => ({
   useSkiaFonts: jest.fn(() => ({
-    arabicFont: {
-      getSize: () => 17,
-      getTypeface: () => ({
-        getFamilyName: () => 'Noto Sans Arabic',
-      }),
-    },
-    getArabicFont: jest.fn(() => ({
-      getSize: () => 17,
-      getTypeface: () => ({
-        getFamilyName: () => 'Noto Sans Arabic',
-      }),
-    })),
     isReady: true,
     fontSize: 17,
     fontFamily: 'Noto Sans Arabic',
-    fontManager: null,
+    fontManager: { registerFont: jest.fn() },
   })),
 }));
 
@@ -56,8 +44,14 @@ jest.mock('@/hooks/vocabulary', () => ({
   useArabicWord: jest.fn(() => ({ isSelected: false })),
 }));
 
+jest.mock('@/utils/skiaParagraphBuilder', () => ({
+  buildColoredParagraph: jest.fn(() => null),
+  buildSimpleParagraph: jest.fn(() => null),
+}));
+
 const { useArabicWord } = require('@/hooks/vocabulary');
 const { useSkiaFonts } = require('@/hooks/theme/useSkiaFonts');
+const { buildSimpleParagraph } = require('@/utils/skiaParagraphBuilder');
 
 describe('SkiaArabicWord Component', () => {
   const createMockWord = (overrides: Partial<SentenceWord> = {}): SentenceWord => ({
@@ -78,22 +72,10 @@ describe('SkiaArabicWord Component', () => {
     jest.clearAllMocks();
     jest.mocked(useArabicWord).mockReturnValue({ isSelected: false });
     jest.mocked(useSkiaFonts).mockReturnValue({
-      arabicFont: {
-        getSize: () => 17,
-        getTypeface: () => ({
-          getFamilyName: () => 'Noto Sans Arabic',
-        }),
-      },
-      getArabicFont: jest.fn(() => ({
-        getSize: () => 17,
-        getTypeface: () => ({
-          getFamilyName: () => 'Noto Sans Arabic',
-        }),
-      })),
       isReady: true,
       fontSize: 17,
       fontFamily: 'Noto Sans Arabic',
-      fontManager: null,
+      fontManager: { registerFont: jest.fn() },
     });
   });
 
@@ -188,64 +170,29 @@ describe('SkiaArabicWord Component', () => {
   });
 
   describe('Selection State', () => {
-    test('uses semibold font when word is selected', () => {
-      const mockGetArabicFont = jest.fn(() => ({
-        getSize: () => 17,
-        getTypeface: () => ({
-          getFamilyName: () => 'Noto Sans Arabic',
-        }),
-      }));
-
+    // Selected words render in the brand tint (no weight change); unselected
+    // words use the default Arabic text color. Colors come from the shared
+    // useColors mock (tint #4a7c59, arabicText #1a1a1a).
+    test('renders selected words with the tint color', () => {
       jest.mocked(useArabicWord).mockReturnValue({ isSelected: true });
-      jest.mocked(useSkiaFonts).mockReturnValue({
-        arabicFont: {
-          getSize: () => 17,
-          getTypeface: () => ({
-            getFamilyName: () => 'Noto Sans Arabic',
-          }),
-        },
-        getArabicFont: mockGetArabicFont,
-        isReady: true,
-        fontSize: 17,
-        fontFamily: 'Noto Sans Arabic',
-        fontManager: null,
-      });
 
       const word = createMockWord();
       render(<SkiaArabicWord word={word} testID="word" />);
 
-      // Should request semibold font for selected state
-      expect(mockGetArabicFont).toHaveBeenCalledWith(undefined, 'semibold');
+      expect(buildSimpleParagraph).toHaveBeenCalledWith(
+        expect.objectContaining({ color: '#4a7c59', fontSize: 17 }),
+      );
     });
 
-    test('uses normal font weight by default', () => {
-      const mockGetArabicFont = jest.fn(() => ({
-        getSize: () => 17,
-        getTypeface: () => ({
-          getFamilyName: () => 'Noto Sans Arabic',
-        }),
-      }));
-
+    test('renders unselected words with the default text color', () => {
       jest.mocked(useArabicWord).mockReturnValue({ isSelected: false });
-      jest.mocked(useSkiaFonts).mockReturnValue({
-        arabicFont: {
-          getSize: () => 17,
-          getTypeface: () => ({
-            getFamilyName: () => 'Noto Sans Arabic',
-          }),
-        },
-        getArabicFont: mockGetArabicFont,
-        isReady: true,
-        fontSize: 17,
-        fontFamily: 'Noto Sans Arabic',
-        fontManager: null,
-      });
 
       const word = createMockWord();
       render(<SkiaArabicWord word={word} testID="word" />);
 
-      // Should request normal font weight
-      expect(mockGetArabicFont).toHaveBeenCalledWith(undefined, 'normal');
+      expect(buildSimpleParagraph).toHaveBeenCalledWith(
+        expect.objectContaining({ color: '#1a1a1a', fontSize: 17 }),
+      );
     });
   });
 

@@ -113,9 +113,10 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       const isFirstSentence = index === 0;
       const showTutorialCard = isFirstSentence && showWordTapTutorial && !isTutorialCardDismissed;
 
+      // No key prop: FlashList recycles item views, and an identity key would
+      // force a full remount per sentence instead of reuse (FlashList docs).
       return (
         <ArticleSentence
-          key={item.id}
           sentence={item}
           words={words}
           colors={colors}

@@ -1,6 +1,5 @@
 import { Ionicons } from '@/components/ui/Icon';
-import type { ComponentRef, RefObject } from 'react';
-import { createRef, memo, useMemo, useRef } from 'react';
+import { memo, useMemo } from 'react';
 import type { LayoutRectangle, StyleProp, ViewStyle } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { SharedValue } from 'react-native-reanimated';
@@ -48,10 +47,6 @@ const ArticleSentenceInternal = function ArticleSentence({
   const defaultColors = useColors();
   const colors = propColors || defaultColors;
 
-  // Use Map to persist refs across re-renders, avoiding memory leaks
-  // Only create new refs when new word IDs appear
-  const wordRefs = useRef<Map<string, RefObject<ComponentRef<typeof Pressable>>>>(new Map());
-
   // Memoize English text style to prevent recreation
   const englishTextStyle = useMemo(
     () => ({
@@ -63,26 +58,11 @@ const ArticleSentenceInternal = function ArticleSentence({
     [colors.englishText],
   );
 
-  // Memoize rendered words to prevent unnecessary recreations
-  // Use stable ref Map to avoid creating new refs on every render
+  // Memoize rendered words to prevent unnecessary recreations.
+  // Position-based keys keep word instances reusable when FlashList recycles
+  // this sentence for another one (words measure themselves via an internal ref).
   const renderedWords = useMemo(() => {
-    // The wordRefs Map is a stable container for child refs keyed by word identity:
-    // entries are created on first encounter and reused across renders, so reads here
-    // never affect render output.
-    /* eslint-disable react-hooks/refs */
     return words.map((word, index) => {
-      const wordId = typeof word.id === 'string' ? Number(word.id) : word.id;
-      const refKey = `word-${wordId}-${word.position}-${sentence.id}`;
-
-      // Get existing ref or create new one only if it doesn't exist
-      let wordRef = wordRefs.current.get(refKey);
-      if (!wordRef) {
-        wordRef = createRef<ComponentRef<typeof Pressable>>() as RefObject<
-          ComponentRef<typeof Pressable>
-        >;
-        wordRefs.current.set(refKey, wordRef);
-      }
-
       // Highlight the first word when tutorial is showing
       const isFirstWord = index === 0;
 
@@ -91,18 +71,16 @@ const ArticleSentenceInternal = function ArticleSentence({
 
       return (
         <ArabicWord
-          key={refKey}
+          key={`word-${word.position}`}
           word={word}
           onTooltipOpen={onWordPress}
-          wordRef={wordRef}
           isHighlighted={isFirstWord && showTutorialCard}
           activeWordIdSV={activeWordIdSV}
           isTargetWord={isTargetWord}
         />
       );
     });
-    /* eslint-enable react-hooks/refs */
-  }, [words, onWordPress, sentence.id, showTutorialCard, activeWordIdSV, highlightRootId]);
+  }, [words, onWordPress, showTutorialCard, activeWordIdSV, highlightRootId]);
 
   return (
     <View style={[styles.container, containerStyle]}>

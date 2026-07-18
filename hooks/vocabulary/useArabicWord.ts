@@ -1,7 +1,7 @@
 import { skipToken, useQuery } from '@tanstack/react-query';
+import { useCallback } from 'react';
 
 import { fsrsQueries } from '@/constants/queries';
-import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
 import { useAuth } from '@/hooks/auth/useAuth';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
 
@@ -16,33 +16,40 @@ export interface UseArabicWordReturn {
 /**
  * Hook to manage the state and behavior of an Arabic word in the UI
  * IMPORTANT: Uses same query as WordDetailsBottomSheet button state for consistency
+ *
+ * Every rendered word mounts this hook, so both queries subscribe with a
+ * narrow boolean `select`: the component only re-renders when THIS word's
+ * membership flips, not on every study-word cache update.
  */
 export function useArabicWord({ word }: UseArabicWordProps): UseArabicWordReturn {
   const { user } = useAuth();
+  const rootId = word.root_id;
 
-  // Get due words data - we use 0 as limit since we only need the due word IDs
-  const { dueWordRootIds = new Set<number>() } = useArticlesByDueWords(user?.id, 0);
-
-  // Check if this word is due for review
-  const isDueWord = word.root_id != null && dueWordRootIds.has(word.root_id);
+  const selectHasRoot = useCallback(
+    (studyWords: StudyWord[]) =>
+      rootId != null && studyWords.some(studyWord => studyWord.root_id === rootId),
+    [rootId],
+  );
 
   // CRITICAL: Use same query as useArticleWordInteractions for DRY consistency
   // Both underline state AND button state must use fsrsQueries.all() to stay in sync
   const allConfig = fsrsQueries.all(user?.id ?? '');
-  const { data: studyWords = [] } = useQuery({
+  const { data: isInStudyList = false } = useQuery({
     ...allConfig,
     queryFn: user?.id ? allConfig.queryFn : skipToken,
+    select: selectHasRoot,
   });
 
-  // React Compiler auto-memoizes these derivations
-  const directlySelected =
-    studyWords.length > 0 && word.root_id != null
-      ? studyWords.some((sw: StudyWord) => sw.root_id === word.root_id)
-      : false;
-
-  const isSelected = directlySelected || isDueWord;
+  // Due words are a subset of all study words; subscribing to the due query as
+  // well only makes the underline appear earlier while `all` is still loading.
+  const dueConfig = fsrsQueries.due(user?.id ?? '');
+  const { data: isDueWord = false } = useQuery({
+    ...dueConfig,
+    queryFn: user?.id ? dueConfig.queryFn : skipToken,
+    select: selectHasRoot,
+  });
 
   return {
-    isSelected,
+    isSelected: isInStudyList || isDueWord,
   };
 }
