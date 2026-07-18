@@ -7,31 +7,22 @@
  * - Note: jest.mocked() used for type-safe mocking where needed
  */
 
-import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { beforeEach, describe, expect, jest } from '@jest/globals';
 import { act, renderHook } from '@testing-library/react-native';
 
 import { useReminders } from '../../../hooks/notifications/useReminders';
 import type { ReminderTime } from '../../../types/notifications.types';
-
-jest.mock('../../../services/notificationService', () => ({
-  scheduleReminder: jest.fn(),
-  hasPermissions: jest.fn(),
-}));
 
 jest.mock('../../../store/hooks', () => ({
   useAppDispatch: jest.fn(),
   useAppSelector: jest.fn(),
 }));
 
-// Re-export actual toError since it's a pure function with no side effects
-const actualErrorHandling = jest.requireActual('../../../utils/errorHandling');
-
 jest.mock('../../../utils/errorHandling', () => ({
   handleError: jest.fn(),
   toError: (error: unknown) => (error instanceof Error ? error : new Error(String(error))),
 }));
 
-const { scheduleReminder, hasPermissions } = require('../../../services/notificationService');
 const { useAppDispatch, useAppSelector } = require('../../../store/hooks');
 const { handleError } = require('../../../utils/errorHandling');
 
@@ -47,9 +38,8 @@ beforeEach(() => {
 });
 
 describe('useReminders', () => {
-  test('schedules reminder and updates state', async () => {
+  test('dispatches the new reminder time (scheduling is owned by useSmartNotifications)', async () => {
     const newTime: ReminderTime = { hour: 8, minute: 30, enabled: true };
-    (scheduleReminder as jest.Mock).mockResolvedValue('id');
 
     const { result } = renderHook(() => useReminders());
 
@@ -57,14 +47,15 @@ describe('useReminders', () => {
       await result.current.updateReminderTime(newTime);
     });
 
-    expect(scheduleReminder).toHaveBeenCalledWith(newTime);
     expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({ payload: newTime }));
     expect(handleError).not.toHaveBeenCalled();
   });
 
-  test('handles errors when scheduling reminder', async () => {
+  test('handles dispatch errors without throwing', async () => {
     const err = new Error('fail');
-    (scheduleReminder as jest.Mock).mockRejectedValue(err);
+    mockDispatch.mockImplementationOnce(() => {
+      throw err;
+    });
 
     const { result } = renderHook(() => useReminders());
 

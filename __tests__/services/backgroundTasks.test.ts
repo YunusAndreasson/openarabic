@@ -33,6 +33,17 @@ jest.mock('expo-background-task', () => ({
 
 jest.mock('expo-notifications', () => ({
   scheduleNotificationAsync: jest.fn(),
+  setBadgeCountAsync: jest.fn(),
+}));
+
+// backgroundTasks imports the notification service (module init registers the
+// expo notification handler) and the prefs mirror (AsyncStorage) — stub both.
+jest.mock('@/services/notificationService', () => ({
+  syncSmartNotifications: jest.fn(async () => 0),
+}));
+
+jest.mock('@/utils/smartReminderPrefs', () => ({
+  readSmartReminderPrefs: jest.fn(async () => null),
 }));
 
 jest.mock('expo-task-manager', () => ({

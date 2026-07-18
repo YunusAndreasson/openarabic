@@ -1,4 +1,4 @@
-import { fsrs, generatorParameters } from 'ts-fsrs';
+import { computeDecayFactor, fsrs, generatorParameters } from 'ts-fsrs';
 
 import {
   CRITICAL_RETRIEVABILITY_THRESHOLD,
@@ -12,7 +12,8 @@ import { normalizeTimestamp } from '@/utils/dateTimeUtils';
 
 // Shared FSRS instance for retrievability calculations
 // Uses the same config as the review engine for consistency
-const FSRS_INSTANCE = fsrs(generatorParameters(OPTIMIZED_FSRS_CONFIG));
+const FSRS_PARAMS = generatorParameters(OPTIMIZED_FSRS_CONFIG);
+const FSRS_INSTANCE = fsrs(FSRS_PARAMS);
 
 export interface RetrievabilityForecast {
   date: Date;
@@ -50,6 +51,20 @@ export function calculateRetrievability(
   const daysSinceReview = (targetDate.getTime() - lastReview.getTime()) / (1000 * 60 * 60 * 24);
 
   return Math.max(0, Math.min(1, FSRS_INSTANCE.forgetting_curve(daysSinceReview, stability)));
+}
+
+/**
+ * Days after the last review until retrievability decays to `threshold`.
+ * Closed-form inversion of the ts-fsrs forgetting curve R(t,S) = (1 + factor·t/S)^decay,
+ * parameterized from the same weights as the review engine so a library upgrade
+ * (e.g. FSRS-6 per-deck decay w[20]) changes both sides together.
+ * Returns null when stability or threshold make the question meaningless.
+ */
+export function timeUntilRetrievability(stabilityDays: number, threshold: number): number | null {
+  if (stabilityDays <= 0 || threshold <= 0 || threshold >= 1) return null;
+
+  const { decay, factor } = computeDecayFactor(FSRS_PARAMS.w);
+  return (stabilityDays / factor) * (Math.pow(threshold, 1 / decay) - 1);
 }
 
 /**

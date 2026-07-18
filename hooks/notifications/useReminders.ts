@@ -1,6 +1,5 @@
 import { useCallback, useMemo } from 'react';
 
-import { scheduleReminder } from '@/services/notificationService';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setReminderTime } from '@/store/settingsSlice';
 import type { ReminderTime } from '@/types/notifications.types';
@@ -19,10 +18,8 @@ export function useReminders(): UseRemindersResult {
   const updateReminderTime = useCallback(
     async (newReminderTime: ReminderTime): Promise<void> => {
       try {
-        // Schedule the reminder
-        await scheduleReminder(newReminderTime);
-
-        // Update the store
+        // Dispatch only — useSmartNotifications watches this setting and
+        // reschedules the smart reminder plan on change.
         dispatch(setReminderTime(newReminderTime));
       } catch (error) {
         handleError(toError(error), { showToast: false });

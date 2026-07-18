@@ -6,8 +6,9 @@ export const STRINGS = {
   RETRY: 'Retry',
   RESET: 'Reset',
   // Settings & preferences
-  STUDY_REMINDERS: 'Daily reminders',
-  TIME: 'Reminder time',
+  STUDY_REMINDERS: 'Smart reminders',
+  SMART_REMINDERS_SUBTITLE: 'Timed to when your words start to fade',
+  TIME: 'Preferred time',
   THEME: 'Theme',
   ARABIC_FONT: 'Arabic font',
   FONT_SIZE: 'Font size',
@@ -535,11 +536,78 @@ export const STRINGS = {
   FAILED_TO_RESET_READING_PROGRESS: "Couldn't reset reading progress. " + tryAgain,
   // Notifications
   ENABLE_NOTIFICATIONS: 'Enable notifications',
-  TURN_ON_NOTIFICATIONS: 'Get daily practice reminders',
+  TURN_ON_NOTIFICATIONS:
+    'Notifications are off for OpenArabic. Turn them on in system settings to get review reminders.',
   OPEN_SETTINGS: 'Open settings',
   NOTIFICATIONS_DISABLED: 'Notifications disabled',
-  NOTIFICATION_REMINDER_TITLE: 'Time to practice Arabic',
-  NOTIFICATION_REMINDER_BODY: 'Your words are ready for practice',
+  // Notification permission priming (review completion screen)
+  NOTIFICATION_PRIMING_TITLE: 'Catch words before they fade',
+  NOTIFICATION_PRIMING_BODY:
+    "Each word you just practiced is now on its own forgetting curve. We'll nudge you only when a review actually matters — usually just before words start to fade.",
+  NOTIFICATION_PRIMING_ACCEPT: 'Turn on reminders',
+  NOTIFICATION_PRIMING_DECLINE: 'Not now',
+  // Smart reminder notifications (selection logic in utils/notificationCopy.ts)
+  NOTIFICATION_DUE_TITLE_POOL: [
+    'Your words are ready',
+    'Right on time for review',
+    'A few words are due',
+    'Your review window is open',
+    'Time for a short review',
+  ] as const,
+  NOTIFICATION_DUE_FEW_BODY_POOL: [
+    (count: number) =>
+      `Just ${count} ${count === 1 ? 'word' : 'words'} today. A minute of recall keeps ${count === 1 ? 'it' : 'them'} moving toward long-term memory.`,
+    (count: number) =>
+      `${count} ${count === 1 ? 'word is' : 'words are'} at the ideal recall point. Short sessions count the same as long ones.`,
+    (count: number) =>
+      `${count} ${count === 1 ? 'word is' : 'words are'} starting to fade. Reviewing now resets ${count === 1 ? 'its' : 'their'} clock for days.`,
+    (count: number) =>
+      `A light day — ${count} ${count === 1 ? 'word' : 'words'}, about a minute. Consistency is what builds the memory.`,
+  ] as const,
+  NOTIFICATION_DUE_MANY_BODY_POOL: [
+    (count: number) =>
+      `${count} words have reached their review point. Recalling them now is when memory strengthens most.`,
+    (count: number) =>
+      `${count} words are due — each successful recall pushes its next review further out.`,
+    (count: number) =>
+      `${count} words, all timed for today. A session now catches them at the right moment.`,
+    (count: number) =>
+      `Your ${count} due words are just starting to fade — the sweet spot for recall practice.`,
+  ] as const,
+  NOTIFICATION_SLIPPING_TITLE_POOL: [
+    'Some words are fading',
+    'Catch them before they go',
+    'A few words are slipping',
+    'Worth a short rescue',
+  ] as const,
+  NOTIFICATION_SLIPPING_BODY_POOL: [
+    (count: number) =>
+      `${count} ${count === 1 ? 'word is' : 'words are'} close to the forgetting point. One pass brings ${count === 1 ? 'it' : 'them'} back to full strength.`,
+    (count: number) =>
+      `Memory fades on a curve — ${count} of your words ${count === 1 ? 'is' : 'are'} near the drop. A short review flattens it.`,
+    (count: number) =>
+      `${count} ${count === 1 ? 'word' : 'words'} you worked for ${count === 1 ? 'is' : 'are'} slipping. Recalling ${count === 1 ? 'it' : 'them'} now builds the strongest trace.`,
+    (count: number) =>
+      `${count} ${count === 1 ? 'word is' : 'words are'} below ${count === 1 ? 'its' : 'their'} usual strength. ${count === 1 ? 'It comes' : 'They come'} back fastest if you review today.`,
+  ] as const,
+  NOTIFICATION_WORD_TITLE_POOL: [
+    (word: string) => `Remember ${word}?`,
+    (word: string) => `${word} is starting to fade`,
+    (word: string) => `Still know ${word}?`,
+    (word: string) => `A moment for ${word}`,
+  ] as const,
+  NOTIFICATION_WORD_BODY_POOL: [
+    (word: string, _others: number) =>
+      `${word} is nearing its forgetting point. Recalling it now roughly doubles how long it lasts.`,
+    (word: string, _others: number) =>
+      `If the meaning of ${word} just surfaced, that was retrieval — the exact practice that makes it stick.`,
+    (word: string, others: number) =>
+      others > 0
+        ? `${word} and ${others} more are due. Reviewing at this moment is when the memory strengthens most.`
+        : `${word} is due. Reviewing at this moment is when the memory strengthens most.`,
+    (word: string, _others: number) =>
+      `You've been building ${word} for a while — this is the review that locks it in for longer.`,
+  ] as const,
   START_REVIEWING_TO_BUILD_STRENGTH: 'Practice to see your memory strength',
   START_PRACTICING_TO_SEE_SPEED: 'Practice to track your learning speed',
   STUDY_TO_MONITOR_REVIEW_TIMING: 'Practice to see your review schedule',

@@ -1,4 +1,5 @@
 export { CompletionScreen } from './CompletionScreen';
+export { NotificationPrimingCard } from './NotificationPrimingCard';
 export { ReviewFlipCard } from './ReviewFlipCard';
 export { ReviewGradeBar } from './ReviewGradeBar';
 export { ReviewHeader } from './ReviewHeader';

@@ -47,9 +47,13 @@ try {
 }
 import * as TaskManager from 'expo-task-manager';
 
+import { ANALYTICS_EVENTS } from '@/constants/analytics';
+import { syncSmartNotifications } from '@/services/notificationService';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
+import { buildNotificationPlan } from '@/utils/notificationPlanner';
+import { readSmartReminderPrefs } from '@/utils/smartReminderPrefs';
 
 // Background task name
 const BACKGROUND_FETCH_TASK = 'background-due-words-calculation';
@@ -77,14 +81,19 @@ TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
       return BackgroundTask.BackgroundTaskResult.Failed;
     }
 
-    // Calculate current due words for the authenticated user
-    const dueWords = await studyWordsFSRSService.getFSRSWords(session.user.id, {
-      onlyDue: true,
-      sessionCooldownHours: 1,
-      limit: 100,
+    // Full word set (with the root relation) so the plan matches what the
+    // foreground hook computes — including word-personalized copy.
+    const words = await studyWordsFSRSService.getFSRSWords(session.user.id, {
+      forStats: false,
     });
 
-    const dueCount = dueWords?.length ?? 0;
+    const nowMs = Date.now();
+    const dueCount = words.filter(word => {
+      if (word.fsrs_state === 0) return true;
+      if (!word.fsrs_due) return false;
+      const dueMs = Date.parse(word.fsrs_due);
+      return !Number.isNaN(dueMs) && dueMs <= nowMs;
+    }).length;
 
     // Keep the home-screen icon badge current even while the app is closed: set it
     // to the due-words count, or clear it to 0 once the learner is caught up.
@@ -98,21 +107,17 @@ TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
       }
     }
 
-    if (dueCount > 0 && Notifications) {
-      // Schedule local notification for due words (badge baked in so the OS also
-      // sets the icon count when this is delivered).
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: '📚 Words Ready for Review',
-          body: `You have ${dueCount} words ready for practice`,
-          badge: dueCount,
-          data: {
-            dueWordsCount: dueCount,
-            type: 'study-reminder',
-          },
-        },
-        trigger: null, // Show immediately
+    // Refresh the forward smart-reminder plan headlessly. The foreground hook
+    // is the primary scheduler; this run corrects multi-device staleness.
+    const prefs = await readSmartReminderPrefs();
+    if (prefs?.enabled) {
+      const plan = buildNotificationPlan({
+        words,
+        now: new Date(),
+        preferredHour: prefs.hour,
+        preferredMinute: prefs.minute,
       });
+      await syncSmartNotifications(plan, 'background-task');
     }
 
     return BackgroundTask.BackgroundTaskResult.Success;
@@ -133,7 +138,7 @@ TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
     // Log other errors to Sentry (unexpected errors)
     handleError(error as Error, {
       showToast: false,
-      analyticsEventName: 'Background_Task_Error',
+      analyticsEventName: ANALYTICS_EVENTS.BACKGROUND_TASK_ERROR,
       sentrySeverity: 'warning',
     });
     return BackgroundTask.BackgroundTaskResult.Failed;

@@ -42,11 +42,16 @@ import type * as NotificationsModule from 'expo-notifications';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { Colors } from '@/constants/colors';
-import { ROUTE_PATHS } from '@/constants/routes';
-import { STRINGS } from '@/constants/strings';
+import {
+  NOTIFICATION_ROUTE_BY_TYPE,
+  NOTIFICATION_TYPES,
+  SMART_NOTIFICATIONS,
+} from '@/constants/notifications';
+import type { AnyNotificationType } from '@/constants/notifications';
 import { analytics } from '@/services/analytics';
-import type { ReminderTime } from '@/types/notifications.types';
 import { handleError } from '@/utils/errorHandling';
+import { buildReminderContent, dayOfYearSeed, reminderKindForPlan } from '@/utils/notificationCopy';
+import type { PlannedNotification } from '@/utils/notificationPlanner';
 
 // expo-notifications is unavailable in Expo Go on Android (SDK 53+).
 // Use a guarded require so the module-level throw doesn't crash the app.
@@ -183,10 +188,18 @@ function setupNotificationListeners(): void {
       return;
     }
 
-    // For default tap action, navigate to Study tab if it's a study reminder
-    if (actionIdentifier === 'DEFAULT' && type === 'study-reminder') {
+    if (actionIdentifier === 'DEFAULT' && typeof type === 'string') {
+      const route = NOTIFICATION_ROUTE_BY_TYPE[type as AnyNotificationType];
+      if (!route) return;
+
+      if (
+        type === NOTIFICATION_TYPES.SRS_DUE ||
+        type === NOTIFICATION_TYPES.SRS_SLIPPING
+      ) {
+        analytics.track(ANALYTICS_EVENTS.SMART_REMINDER_OPENED, { type });
+      }
       if (navigationCallback) {
-        navigationCallback(ROUTE_PATHS.PRACTICE_TAB);
+        navigationCallback(route);
       }
     }
   });
@@ -229,113 +242,130 @@ export function cleanupNotifications(): void {
   }
 }
 
-async function initialize(): Promise<boolean> {
-  if (!Notifications) return false;
-  if (isInitialized) return true;
+/**
+ * A scheduled notification is ours when its identifier carries the smart
+ * prefix, or when it is a legacy static daily reminder (identified by its
+ * data.type, since pre-upgrade identifiers were `reminder-<timestamp>`).
+ */
+function isManagedNotification(request: NotificationsModule.NotificationRequest): boolean {
+  if (request.identifier.startsWith(SMART_NOTIFICATIONS.IDENTIFIER_PREFIX)) return true;
+  return request.content.data?.['type'] === NOTIFICATION_TYPES.DAILY_REMINDER;
+}
 
-  try {
-    // Use the new optimized initialization function
-    const notificationsInitialized = await initializeNotifications();
-    if (!notificationsInitialized) {
-      return false;
+async function cancelManagedNotifications(
+  notifications: NonNullable<typeof Notifications>,
+): Promise<void> {
+  const scheduled = await notifications.getAllScheduledNotificationsAsync();
+  for (const request of scheduled) {
+    if (isManagedNotification(request)) {
+      await notifications.cancelScheduledNotificationAsync(request.identifier);
     }
-
-    // Request permissions (separate from initialization)
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
-
-    if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
-    }
-
-    if (finalStatus !== 'granted') {
-      handleError(new Error('Notification permissions not granted'), {
-        showToast: false,
-        captureSentry: false,
-      });
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    handleError(error as Error, { showToast: false });
-    return false;
   }
 }
 
-export async function scheduleReminder(reminderTime: ReminderTime): Promise<string | null> {
-  if (!Notifications) return null;
+/** Cancel all smart-scheduled (and legacy daily) reminders. Never throws. */
+export async function cancelSmartNotifications(): Promise<void> {
+  if (!Notifications) return;
   try {
-    // Initialize notifications if not already done
-    const initialized = await initialize();
-    if (!initialized) {
-      handleError(new Error('Notifications disabled'), {
-        toastMessage: STRINGS.NOTIFICATIONS_DISABLED,
-        captureSentry: false,
-      });
-      return null;
+    await cancelManagedNotifications(Notifications);
+  } catch (error) {
+    handleError(error as Error, { showToast: false });
+  }
+}
+
+/**
+ * Replace the scheduled smart reminders with a freshly computed plan.
+ * Idempotent: cancels every managed notification, then schedules the plan.
+ * Check-only on permissions — never triggers the OS permission dialog.
+ * Returns the number of notifications scheduled.
+ */
+export async function syncSmartNotifications(
+  plan: PlannedNotification[],
+  trigger?: string,
+): Promise<number> {
+  if (!Notifications) return 0;
+  try {
+    await initializeNotifications();
+    await cancelManagedNotifications(Notifications);
+
+    if (plan.length === 0) return 0;
+
+    const status = await getPermissionStatus();
+    if (status !== 'granted') return 0;
+
+    let scheduledCount = 0;
+    for (const planned of plan) {
+      try {
+        const kind = reminderKindForPlan(
+          planned.type,
+          planned.wordCount,
+          planned.sampleWord !== undefined,
+        );
+        const { title, body } = buildReminderContent(
+          kind,
+          { count: planned.wordCount, word: planned.sampleWord?.arabic },
+          dayOfYearSeed(planned.fireDate),
+        );
+
+        await Notifications.scheduleNotificationAsync({
+          identifier: planned.identifier,
+          content: {
+            title,
+            body,
+            sound: true,
+            badge: planned.badgeCount,
+            priority: Notifications.AndroidNotificationPriority.HIGH,
+            categoryIdentifier: 'reminder',
+            data: {
+              type: planned.type,
+              wordCount: planned.wordCount,
+              sampleRootId: planned.sampleWord?.rootId,
+            },
+          },
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.DATE,
+            date: planned.fireDate,
+            channelId: Platform.OS === 'android' ? 'reminders' : undefined,
+          },
+        });
+        scheduledCount++;
+      } catch (error) {
+        handleError(error as Error, {
+          showToast: false,
+          analyticsEventName: ANALYTICS_EVENTS.REMINDER_SCHEDULING_ERROR,
+        });
+      }
     }
 
-    // Cancel existing reminder first
-    await cancelReminder();
-
-    if (!reminderTime.enabled) {
-      return null;
-    }
-
-    // Validate reminder time
-    if (
-      reminderTime.hour < 0 ||
-      reminderTime.hour > 23 ||
-      reminderTime.minute < 0 ||
-      reminderTime.minute > 59
-    ) {
-      throw new Error('Invalid reminder time');
-    }
-
-    // Enhanced notification content with better structure
-    const title = STRINGS.NOTIFICATION_REMINDER_TITLE;
-    const body = STRINGS.NOTIFICATION_REMINDER_BODY;
-
-    // Use Expo's scheduling with enhanced trigger configuration
-    const identifier = await Notifications.scheduleNotificationAsync({
-      identifier: `reminder-${Date.now()}`, // Unique identifier
-      content: {
-        title,
-        body,
-        sound: true,
-        priority: Notifications.AndroidNotificationPriority.HIGH,
-        categoryIdentifier: 'reminder',
-        data: {
-          type: 'study-reminder',
-          scheduledTime: `${reminderTime.hour}:${reminderTime.minute}`,
-        },
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
-        hour: reminderTime.hour,
-        minute: reminderTime.minute,
-        repeats: true,
-        channelId: Platform.OS === 'android' ? 'reminders' : undefined,
-      },
+    analytics.track(ANALYTICS_EVENTS.SMART_REMINDERS_SYNCED, {
+      scheduledCount,
+      planned: plan.length,
+      horizonDays: SMART_NOTIFICATIONS.HORIZON_DAYS,
+      trigger,
     });
-
-    // Reminder scheduled successfully
-    return identifier;
+    return scheduledCount;
   } catch (error) {
     handleError(error as Error, {
       showToast: false,
-      analyticsEventName: 'Reminder_Scheduling_Error',
+      analyticsEventName: ANALYTICS_EVENTS.REMINDER_SCHEDULING_ERROR,
     });
-    return null;
+    return 0;
   }
 }
 
-async function cancelReminder(): Promise<void> {
+/**
+ * Dismiss already-delivered smart reminders from the notification tray —
+ * called when the app comes to the foreground so stale counts never linger.
+ */
+export async function dismissDeliveredSmartNotifications(): Promise<void> {
   if (!Notifications) return;
   try {
-    await Notifications.cancelAllScheduledNotificationsAsync();
+    const presented = await Notifications.getPresentedNotificationsAsync();
+    for (const notification of presented) {
+      if (isManagedNotification(notification.request)) {
+        await Notifications.dismissNotificationAsync(notification.request.identifier);
+      }
+    }
   } catch (error) {
     handleError(error as Error, { showToast: false });
   }
@@ -371,6 +401,42 @@ export async function clearAppBadge(): Promise<boolean> {
       analyticsEventName: 'Badge_Clear_Error',
     });
     return false;
+  }
+}
+
+export type NotificationPermissionStatus = 'granted' | 'denied' | 'undetermined' | 'unavailable';
+
+/**
+ * Check-only permission status — never triggers the OS dialog.
+ * 'unavailable' means the notifications module itself is absent (Expo Go Android).
+ * Android has no 'undetermined': a never-asked app reports denied with
+ * canAskAgain true, so that combination maps to 'undetermined' (askable);
+ * only denied + !canAskAgain is a real, final denial.
+ */
+export async function getPermissionStatus(): Promise<NotificationPermissionStatus> {
+  if (!Notifications) return 'unavailable';
+  try {
+    const { status, ios, canAskAgain } = await Notifications.getPermissionsAsync();
+
+    if (Platform.OS === 'ios' && ios) {
+      switch (ios.status) {
+        case Notifications.IosAuthorizationStatus.AUTHORIZED:
+        case Notifications.IosAuthorizationStatus.PROVISIONAL:
+          return 'granted';
+        case Notifications.IosAuthorizationStatus.DENIED:
+        case Notifications.IosAuthorizationStatus.EPHEMERAL:
+          return 'denied';
+        case Notifications.IosAuthorizationStatus.NOT_DETERMINED:
+          return 'undetermined';
+      }
+    }
+
+    if (status === 'granted') return 'granted';
+    if (status === 'denied') return canAskAgain ? 'undetermined' : 'denied';
+    return 'undetermined';
+  } catch (error) {
+    handleError(error as Error, { showToast: false });
+    return 'unavailable';
   }
 }
 

@@ -45,10 +45,15 @@ import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TIMING_CONSTANTS } from '@/constants/animation';
 import { Theme } from '@/constants/colors';
 import { LAYOUT } from '@/constants/layout';
+import {
+  NOTIFICATION_ROUTE_BY_TYPE,
+  NOTIFICATION_TYPES,
+} from '@/constants/notifications';
+import type { AnyNotificationType } from '@/constants/notifications';
 import { QUERY_DEFAULTS } from '@/constants/queries';
-import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppBadge } from '@/hooks/app/useAppBadge';
+import { useSmartNotifications } from '@/hooks/notifications/useSmartNotifications';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { GlobalAudioStateProvider } from '@/hooks/audio/useGlobalAudioState';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -240,6 +245,9 @@ function AppContent() {
   // App badge management - monitors due words and updates app icon badge
   useAppBadge();
 
+  // Smart SRS reminders - keeps the scheduled notification plan in sync with FSRS state
+  useSmartNotifications();
+
   // Smart due words calculator - refreshes data when app becomes active
   useSmartDueWordsCalculator({
     refreshDelay: 1000, // 1 second delay to avoid excessive API calls
@@ -396,9 +404,17 @@ function AppContent() {
         if (response) {
           const { type } = response.notification.request.content.data || {};
 
-          // Navigate to Practice tab if it's a study reminder
-          if (type === 'study-reminder') {
-            router.push(ROUTE_PATHS.PRACTICE_TAB);
+          if (typeof type === 'string') {
+            const route = NOTIFICATION_ROUTE_BY_TYPE[type as AnyNotificationType];
+            if (route) {
+              if (
+                type === NOTIFICATION_TYPES.SRS_DUE ||
+                type === NOTIFICATION_TYPES.SRS_SLIPPING
+              ) {
+                analytics.track(ANALYTICS_EVENTS.SMART_REMINDER_OPENED, { type, coldStart: true });
+              }
+              router.push(route);
+            }
           }
 
           // Clear the last notification response to prevent re-handling on next launch

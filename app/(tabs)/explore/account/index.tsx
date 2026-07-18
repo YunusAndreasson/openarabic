@@ -423,6 +423,7 @@ const AccountScreen: FC = () => {
           <SettingsCard
             icon="notifications"
             label={STRINGS.STUDY_REMINDERS}
+            subtitle={STRINGS.SMART_REMINDERS_SUBTITLE}
             rightType="toggle"
             toggleValue={reminderTime.enabled}
             onToggleChange={handleReminderToggle}

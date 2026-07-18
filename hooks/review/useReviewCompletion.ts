@@ -6,8 +6,8 @@ import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { fsrsQueries, studyStreakQueries } from '@/constants/queries';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { analytics } from '@/services/analytics';
-import { ensurePermissions } from '@/services/notificationService';
 import type { SessionMetrics } from '@/types/review.types';
+import { recordSessionCompleted } from '@/utils/notificationPromptStorage';
 import { appendSession } from '@/utils/recallSignalStorage';
 
 /**
@@ -84,12 +84,10 @@ export const useReviewCompletion = (
         void appendSession(sessionMetrics.firstAttemptKnown, sessionMetrics.firstAttemptUnknown);
       }
 
-      // Ask for notification/badge permission at this high-intent moment (the user
-      // just practiced; words they reviewed will come due later) so the home-screen
-      // icon badge — the due-words count — and study reminders can show. Idempotent:
-      // ensurePermissions() only surfaces the OS prompt when status is undetermined,
-      // and the OS shows it at most once.
-      void ensurePermissions();
+      // Count completed sessions for the notification priming card's re-ask
+      // policy. The OS permission dialog itself is only ever shown from the
+      // primed card on the completion screen — never bare from here.
+      void recordSessionCompleted();
     });
   }, [shouldExecute, invalidateReviewQueries, trackCompletion, sessionMetrics]);
 

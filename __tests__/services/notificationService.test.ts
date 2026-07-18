@@ -18,7 +18,7 @@
 import { describe, test, expect, jest, beforeEach, beforeAll } from '@jest/globals';
 import { Platform } from 'react-native';
 
-import type { ReminderTime } from '@/types/notifications.types';
+import type { PlannedNotification } from '@/utils/notificationPlanner';
 
 // expo-notifications is already mocked by __mocks__/expo-notifications.js
 // Import it to get access to the mock functions
@@ -31,14 +31,6 @@ jest.mock('@/services/analytics', () => ({
 
 jest.mock('@/utils/errorHandling', () => ({
   handleError: jest.fn(),
-}));
-
-jest.mock('@/constants/strings', () => ({
-  STRINGS: {
-    NOTIFICATIONS_DISABLED: 'Notifications are disabled',
-    NOTIFICATION_REMINDER_TITLE: 'Time to practice!',
-    NOTIFICATION_REMINDER_BODY: 'Keep your streak going',
-  },
 }));
 
 jest.mock('@/constants/routes', () => ({
@@ -73,6 +65,8 @@ const NotificationsMock = Notifications as typeof Notifications & {
     requestPermissionsAsync: jest.Mock;
     scheduleNotificationAsync: jest.Mock;
     cancelAllScheduledNotificationsAsync: jest.Mock;
+    cancelScheduledNotificationAsync: jest.Mock;
+    getAllScheduledNotificationsAsync: jest.Mock;
     setBadgeCountAsync: jest.Mock;
     getBadgeCountAsync: jest.Mock;
   };
@@ -92,6 +86,10 @@ const mockRequestPermissionsAsync = NotificationsMock.__mocks.requestPermissions
 const mockScheduleNotificationAsync = NotificationsMock.__mocks.scheduleNotificationAsync;
 const mockCancelAllScheduledNotificationsAsync =
   NotificationsMock.__mocks.cancelAllScheduledNotificationsAsync;
+const mockCancelScheduledNotificationAsync =
+  NotificationsMock.__mocks.cancelScheduledNotificationAsync;
+const mockGetAllScheduledNotificationsAsync =
+  NotificationsMock.__mocks.getAllScheduledNotificationsAsync;
 const mockSetBadgeCountAsync = NotificationsMock.__mocks.setBadgeCountAsync;
 const mockGetBadgeCountAsync = NotificationsMock.__mocks.getBadgeCountAsync;
 
@@ -110,6 +108,8 @@ describe('notificationService', () => {
     mockRequestPermissionsAsync.mockClear();
     mockScheduleNotificationAsync.mockClear();
     mockCancelAllScheduledNotificationsAsync.mockClear();
+    mockCancelScheduledNotificationAsync.mockClear();
+    mockGetAllScheduledNotificationsAsync.mockClear();
     mockSetBadgeCountAsync.mockClear();
     mockGetBadgeCountAsync.mockClear();
     mockSetNotificationCategoryAsync.mockClear();
@@ -129,6 +129,7 @@ describe('notificationService', () => {
     });
 
     mockScheduleNotificationAsync.mockResolvedValue('notification-id-123');
+    mockGetAllScheduledNotificationsAsync.mockResolvedValue([]);
   });
 
   describe('Initialization', () => {
@@ -263,81 +264,129 @@ describe('notificationService', () => {
     });
   });
 
-  describe('Reminder Scheduling', () => {
-    const validReminderTime: ReminderTime = {
-      enabled: true,
-      hour: 9,
-      minute: 30,
-    };
-
-    test('should schedule daily reminder successfully', async () => {
-      const id = await notificationService.scheduleReminder(validReminderTime);
-
-      expect(id).toBe('notification-id-123');
-      expect(mockScheduleNotificationAsync).toHaveBeenCalled();
+  describe('Smart Notification Sync', () => {
+    const makePlan = (overrides: Partial<PlannedNotification> = {}): PlannedNotification => ({
+      identifier: 'srs-due-2026-07-20',
+      type: 'srs-due',
+      fireDate: new Date('2026-07-20T19:00:00'),
+      wordCount: 4,
+      badgeCount: 4,
+      ...overrides,
     });
 
-    test('should return null if reminder is disabled', async () => {
-      const disabledReminder: ReminderTime = {
-        enabled: false,
-        hour: 9,
-        minute: 30,
-      };
+    test('should schedule every planned notification with its stable identifier', async () => {
+      const plan = [
+        makePlan(),
+        makePlan({
+          identifier: 'srs-slipping-2026-07-21',
+          type: 'srs-slipping',
+          fireDate: new Date('2026-07-21T19:00:00'),
+          wordCount: 2,
+          badgeCount: 6,
+          sampleWord: { rootId: 7, arabic: 'كِتاب', meaning: 'book' },
+        }),
+      ];
 
-      const id = await notificationService.scheduleReminder(disabledReminder);
+      const count = await notificationService.syncSmartNotifications(plan, 'test');
 
-      expect(id).toBeNull();
+      expect(count).toBe(2);
+      expect(mockScheduleNotificationAsync).toHaveBeenCalledTimes(2);
+      const identifiers = mockScheduleNotificationAsync.mock.calls.map(
+        call => (call[0] as { identifier: string }).identifier,
+      );
+      expect(identifiers).toEqual(['srs-due-2026-07-20', 'srs-slipping-2026-07-21']);
+    });
+
+    test('should cancel managed notifications before scheduling (smart prefix + legacy type)', async () => {
+      mockGetAllScheduledNotificationsAsync.mockResolvedValueOnce([
+        { identifier: 'srs-due-2026-07-19', content: { data: { type: 'srs-due' } } },
+        { identifier: 'reminder-1234', content: { data: { type: 'study-reminder' } } },
+        { identifier: 'unrelated', content: { data: { type: 'something-else' } } },
+      ]);
+
+      await notificationService.syncSmartNotifications([makePlan()], 'test');
+
+      const canceled = mockCancelScheduledNotificationAsync.mock.calls.map(call => call[0]);
+      expect(canceled).toEqual(['srs-due-2026-07-19', 'reminder-1234']);
+    });
+
+    test('should not schedule when permission is not granted (check-only, never requests)', async () => {
+      mockGetPermissionsAsync.mockResolvedValue({ status: 'denied' });
+
+      const count = await notificationService.syncSmartNotifications([makePlan()], 'test');
+
+      expect(count).toBe(0);
+      expect(mockScheduleNotificationAsync).not.toHaveBeenCalled();
+      expect(mockRequestPermissionsAsync).not.toHaveBeenCalled();
+    });
+
+    test('empty plan cancels stale notifications without scheduling', async () => {
+      mockGetAllScheduledNotificationsAsync.mockResolvedValueOnce([
+        { identifier: 'srs-due-2026-07-19', content: { data: { type: 'srs-due' } } },
+      ]);
+
+      const count = await notificationService.syncSmartNotifications([], 'test');
+
+      expect(count).toBe(0);
+      expect(mockCancelScheduledNotificationAsync).toHaveBeenCalledWith('srs-due-2026-07-19');
       expect(mockScheduleNotificationAsync).not.toHaveBeenCalled();
     });
 
-    test('should validate reminder time (hour)', async () => {
-      const invalidReminder: ReminderTime = {
-        enabled: true,
-        hour: 25, // Invalid hour
-        minute: 30,
-      };
+    test('continues scheduling after a per-item failure', async () => {
+      mockScheduleNotificationAsync
+        .mockRejectedValueOnce(new Error('Scheduling failed'))
+        .mockResolvedValueOnce('ok');
 
-      const id = await notificationService.scheduleReminder(invalidReminder);
-
-      expect(id).toBeNull();
-      expect(handleError).toHaveBeenCalledWith(
-        expect.objectContaining({ message: 'Invalid reminder time' }),
-        expect.any(Object),
+      const count = await notificationService.syncSmartNotifications(
+        [
+          makePlan(),
+          makePlan({ identifier: 'srs-due-2026-07-21', fireDate: new Date('2026-07-21T19:00:00') }),
+        ],
+        'test',
       );
-    });
 
-    test('should validate reminder time (minute)', async () => {
-      const invalidReminder: ReminderTime = {
-        enabled: true,
-        hour: 9,
-        minute: 70, // Invalid minute
-      };
-
-      const id = await notificationService.scheduleReminder(invalidReminder);
-
-      expect(id).toBeNull();
+      expect(count).toBe(1);
       expect(handleError).toHaveBeenCalled();
     });
 
-    test('should validate reminder time (negative values)', async () => {
-      const invalidReminder: ReminderTime = {
-        enabled: true,
-        hour: -1,
-        minute: 30,
-      };
+    test('cancelSmartNotifications does not throw on errors', async () => {
+      mockGetAllScheduledNotificationsAsync.mockRejectedValueOnce(new Error('boom'));
 
-      const id = await notificationService.scheduleReminder(invalidReminder);
+      await expect(notificationService.cancelSmartNotifications()).resolves.toBeUndefined();
+      expect(handleError).toHaveBeenCalled();
+    });
+  });
 
-      expect(id).toBeNull();
+  describe('Permission Status (check-only)', () => {
+    test('maps granted status', async () => {
+      mockGetPermissionsAsync.mockResolvedValueOnce({ status: 'granted' });
+      await expect(notificationService.getPermissionStatus()).resolves.toBe('granted');
     });
 
-    test('should handle scheduling errors gracefully', async () => {
-      mockScheduleNotificationAsync.mockRejectedValueOnce(new Error('Scheduling failed'));
+    test('maps final denial (cannot ask again) to denied', async () => {
+      mockGetPermissionsAsync.mockResolvedValueOnce({ status: 'denied', canAskAgain: false });
+      await expect(notificationService.getPermissionStatus()).resolves.toBe('denied');
+    });
 
-      const id = await notificationService.scheduleReminder(validReminderTime);
+    test('maps Android never-asked state (denied + canAskAgain) to undetermined', async () => {
+      Platform.OS = 'android';
+      mockGetPermissionsAsync.mockResolvedValueOnce({ status: 'denied', canAskAgain: true });
+      await expect(notificationService.getPermissionStatus()).resolves.toBe('undetermined');
+    });
 
-      expect(id).toBeNull();
-      expect(handleError).toHaveBeenCalled();
+    test('maps undetermined status without requesting', async () => {
+      mockGetPermissionsAsync.mockResolvedValueOnce({ status: 'undetermined' });
+      await expect(notificationService.getPermissionStatus()).resolves.toBe('undetermined');
+      expect(mockRequestPermissionsAsync).not.toHaveBeenCalled();
+    });
+
+    test('maps iOS provisional to granted', async () => {
+      Platform.OS = 'ios';
+      mockGetPermissionsAsync.mockResolvedValueOnce({
+        status: 'undetermined',
+        ios: { status: Notifications.IosAuthorizationStatus.PROVISIONAL },
+      });
+      await expect(notificationService.getPermissionStatus()).resolves.toBe('granted');
     });
   });
 

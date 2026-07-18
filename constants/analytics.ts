@@ -67,6 +67,15 @@ export const ANALYTICS_EVENTS = {
   // Notification events
   NOTIFICATION_SCHEDULING_FAILED: 'Notification Scheduling Failed',
   NOTIFICATIONS_DROPPED: 'Notifications Dropped',
+  SMART_REMINDERS_SYNCED: 'Smart Reminders Synced',
+  SMART_REMINDER_OPENED: 'Smart Reminder Opened',
+  SMART_REMINDERS_TOGGLED: 'Smart Reminders Toggled',
+  NOTIFICATION_PRIMING_SHOWN: 'Notification Priming Shown',
+  NOTIFICATION_PRIMING_ACCEPTED: 'Notification Priming Accepted',
+  NOTIFICATION_PRIMING_DECLINED: 'Notification Priming Declined',
+  NOTIFICATION_PERMISSION_RESULT: 'Notification Permission Result',
+  REMINDER_SCHEDULING_ERROR: 'Reminder_Scheduling_Error',
+  BACKGROUND_TASK_ERROR: 'Background_Task_Error',
 
   // Voice grading (Parakeet ASR) events
   VOICE_MODEL_LOAD_STARTED: 'Voice Model Load Started',

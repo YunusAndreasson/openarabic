@@ -2,9 +2,10 @@ import { Ionicons } from '@/components/ui/Icon';
 import { Link } from 'expo-router';
 import type { ComponentProps, FC } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
-import Animated, { FadeIn, FadeInUp, ZoomIn } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInUp, FadeOut, ZoomIn } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
+import { NotificationPrimingCard } from '@/components/review/NotificationPrimingCard';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { TIMING_CONFIG, TIMING_CONSTANTS } from '@/constants/animation';
@@ -12,7 +13,7 @@ import { FONTS } from '@/constants/fonts';
 import { getThemeAwareElevation, LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
-import { useEncouragingMetrics, useReviewCompletion } from '@/hooks/review';
+import { useEncouragingMetrics, useNotificationPriming, useReviewCompletion } from '@/hooks/review';
 import { useStudyStreak } from '@/hooks/practice';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
@@ -51,6 +52,14 @@ const ENTERING_METRICS = Array.from({ length: 5 }, (_, index) =>
     TIMING_CONSTANTS.STAGGER.SLOW + index * TIMING_CONSTANTS.STAGGER.INCREMENT,
   ).duration(TIMING_CONFIG.FAST.duration),
 );
+// Priming card lands after the metric stagger (metrics are capped at 2 when it shows)
+const ENTERING_PRIMING = FadeInUp.delay(
+  TIMING_CONSTANTS.STAGGER.SLOW + 3 * TIMING_CONSTANTS.STAGGER.INCREMENT,
+).duration(TIMING_CONFIG.FAST.duration);
+const EXITING_PRIMING = FadeOut.duration(TIMING_CONFIG.FAST.duration);
+// Small screens: cap metric rows while the priming card is visible so the
+// Continue button never gets crowded off.
+const MAX_METRICS_WITH_PRIMING = 2;
 
 interface CompletionScreenProps {
   title?: string;
@@ -85,6 +94,12 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
 
   const encouragingResult = useEncouragingMetrics(sessionMetrics, colors, currentDailyStreak);
 
+  // Primed notification ask — shows on the first session (and at most once more)
+  const { showPrimingCard, accept, decline } = useNotificationPriming();
+  const visibleMetrics = showPrimingCard
+    ? (encouragingResult?.metrics.slice(0, MAX_METRICS_WITH_PRIMING) ?? [])
+    : (encouragingResult?.metrics ?? []);
+
   const Content = (
     <View style={[styles.contentContainer, contentStyle]}>
       {/* Success Icon - Primary visual element */}
@@ -109,9 +124,9 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
       </View>
 
       {/* Metrics Section - Separated group for visual hierarchy */}
-      {encouragingResult && encouragingResult.metrics.length > 0 && (
+      {visibleMetrics.length > 0 && (
         <View style={styles.metricsContainer}>
-          {encouragingResult.metrics.map((metric, index) => (
+          {visibleMetrics.map((metric, index) => (
             <Animated.View
               key={metric.type + metric.text}
               entering={ENTERING_METRICS[index]}
@@ -146,6 +161,17 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
             </Animated.View>
           ))}
         </View>
+      )}
+
+      {/* Primed notification ask - between metrics and the bottom-anchored button */}
+      {showPrimingCard && (
+        <Animated.View
+          entering={ENTERING_PRIMING}
+          exiting={EXITING_PRIMING}
+          style={styles.primingContainer}
+        >
+          <NotificationPrimingCard onAccept={accept} onDecline={decline} />
+        </Animated.View>
       )}
 
       {/* Spacer to push button to bottom */}
@@ -261,6 +287,12 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.ENGLISH_SEMIBOLD,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.NORMAL,
     textAlign: 'left',
+  },
+
+  // Priming card sits below the metrics, above the flexible spacer
+  primingContainer: {
+    width: '100%',
+    marginTop: LAYOUT.SPACING.LARGE,
   },
 
   // Spacer to push button to bottom

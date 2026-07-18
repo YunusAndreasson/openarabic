@@ -78,6 +78,11 @@ jest.mock('@/hooks/practice', () => ({
 
 jest.mock('@/hooks/review', () => ({
   useReviewCompletion: jest.fn(),
+  useNotificationPriming: jest.fn(() => ({
+    showPrimingCard: false,
+    accept: jest.fn(),
+    decline: jest.fn(),
+  })),
   useEncouragingMetrics: jest.fn(() => ({
     metrics: [
       {
@@ -99,7 +104,11 @@ jest.mock('@/hooks/review', () => ({
   })),
 }));
 
-const { useReviewCompletion, useEncouragingMetrics } = require('@/hooks/review');
+const {
+  useReviewCompletion,
+  useEncouragingMetrics,
+  useNotificationPriming,
+} = require('@/hooks/review');
 
 describe('CompletionScreen Component', () => {
   const createMockMetrics = (overrides: Partial<SessionMetrics> = {}): SessionMetrics => ({
@@ -116,6 +125,13 @@ describe('CompletionScreen Component', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // resetMocks: true strips factory implementations — re-install the ones
+    // the component destructures unconditionally
+    useNotificationPriming.mockReturnValue({
+      showPrimingCard: false,
+      accept: jest.fn(),
+      decline: jest.fn(),
+    });
   });
 
   describe('Basic Rendering', () => {

@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Linking } from 'react-native';
 
+import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { readingProgressQueries } from '@/constants/queries';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -18,6 +19,7 @@ import { UiAction } from '@/types/enums';
 import { formatBytes } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback, errorFeedback } from '@/utils/haptics';
+import { recordAccepted } from '@/utils/notificationPromptStorage';
 import { clearPersistedQueryCache } from '@/utils/queryPersistence';
 
 const useUserWithCreationDate = () => {
@@ -220,8 +222,15 @@ export const useAccountScreen = () => {
         }
       }
 
+      if (enabled) {
+        // The user made the choice here — the completion-screen priming card
+        // should never ask again.
+        void recordAccepted();
+      }
+
       const newReminderTime = { ...reminderTime, enabled };
       await updateReminderTime(newReminderTime);
+      analytics.track(ANALYTICS_EVENTS.SMART_REMINDERS_TOGGLED, { enabled });
       lightFeedback();
     },
     [reminderTime, updateReminderTime],

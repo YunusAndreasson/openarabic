@@ -13,6 +13,10 @@ const mockGetPermissionsAsync = jest.fn().mockResolvedValue({ status: 'granted' 
 const mockRequestPermissionsAsync = jest.fn().mockResolvedValue({ status: 'granted' });
 const mockScheduleNotificationAsync = jest.fn().mockResolvedValue('notification-id');
 const mockCancelAllScheduledNotificationsAsync = jest.fn().mockResolvedValue(undefined);
+const mockCancelScheduledNotificationAsync = jest.fn().mockResolvedValue(undefined);
+const mockGetAllScheduledNotificationsAsync = jest.fn().mockResolvedValue([]);
+const mockGetPresentedNotificationsAsync = jest.fn().mockResolvedValue([]);
+const mockDismissNotificationAsync = jest.fn().mockResolvedValue(undefined);
 const mockSetBadgeCountAsync = jest.fn().mockResolvedValue(undefined);
 const mockGetBadgeCountAsync = jest.fn().mockResolvedValue(0);
 const mockClearLastNotificationResponseAsync = jest.fn().mockResolvedValue(undefined);
@@ -29,6 +33,10 @@ module.exports = {
   requestPermissionsAsync: mockRequestPermissionsAsync,
   scheduleNotificationAsync: mockScheduleNotificationAsync,
   cancelAllScheduledNotificationsAsync: mockCancelAllScheduledNotificationsAsync,
+  cancelScheduledNotificationAsync: mockCancelScheduledNotificationAsync,
+  getAllScheduledNotificationsAsync: mockGetAllScheduledNotificationsAsync,
+  getPresentedNotificationsAsync: mockGetPresentedNotificationsAsync,
+  dismissNotificationAsync: mockDismissNotificationAsync,
   setBadgeCountAsync: mockSetBadgeCountAsync,
   getBadgeCountAsync: mockGetBadgeCountAsync,
   clearLastNotificationResponseAsync: mockClearLastNotificationResponseAsync,
@@ -54,6 +62,7 @@ module.exports = {
     DAILY: 'daily',
     WEEKLY: 'weekly',
     YEARLY: 'yearly',
+    DATE: 'date',
   },
   IosAuthorizationStatus: {
     NOT_DETERMINED: 0,
@@ -75,6 +84,10 @@ module.exports = {
     requestPermissionsAsync: mockRequestPermissionsAsync,
     scheduleNotificationAsync: mockScheduleNotificationAsync,
     cancelAllScheduledNotificationsAsync: mockCancelAllScheduledNotificationsAsync,
+    cancelScheduledNotificationAsync: mockCancelScheduledNotificationAsync,
+    getAllScheduledNotificationsAsync: mockGetAllScheduledNotificationsAsync,
+    getPresentedNotificationsAsync: mockGetPresentedNotificationsAsync,
+    dismissNotificationAsync: mockDismissNotificationAsync,
     setBadgeCountAsync: mockSetBadgeCountAsync,
     getBadgeCountAsync: mockGetBadgeCountAsync,
     clearLastNotificationResponseAsync: mockClearLastNotificationResponseAsync,
