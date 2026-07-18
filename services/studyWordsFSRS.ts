@@ -3,7 +3,7 @@ import { supabase } from '@/services/supabase';
 import type { RootId } from '@/types/branded.types';
 import type { Tables } from '@/types/database.types';
 import type { FSRSWordUpdate, GetFSRSWordsOptions } from '@/types/fsrs.types';
-import type { StudyWord } from '@/types/vocabulary.types';
+import type { StudyWord, StudyWordIntent } from '@/types/vocabulary.types';
 import { createBulkFSRSEntries, createInitialFSRSEntry } from '@/utils/fsrsInitializers';
 import { createServiceErrorConfig } from '@/utils/serviceErrorConfig';
 import { executeAuthenticatedQuery, executeQuery } from '@/utils/supabaseHelpers';
@@ -199,7 +199,19 @@ export const studyWordsFSRSService = {
   },
 
   // Toggle FSRS study for roots
-  async toggleFSRSStudyRoot(userId: string, rootId: RootId): Promise<boolean> {
+  /**
+   * Toggle a root in the study list. When `intent` is given, the operation is
+   * idempotent in that direction: 'add' never deletes and 'remove' never
+   * inserts, even when the caller's view of the study list was stale — the
+   * user's tap can then never silently invert into the opposite action.
+   * Without `intent`, direction falls back to server-side existence (legacy
+   * toggle). Returns whether the root is in the study list afterwards.
+   */
+  async toggleFSRSStudyRoot(
+    userId: string,
+    rootId: RootId,
+    intent?: StudyWordIntent,
+  ): Promise<boolean> {
     // Check if a study entry already exists for this root
     // Using maybeSingle() returns null instead of throwing PGRST116 error
     const existing = await executeAuthenticatedQuery(
@@ -217,16 +229,21 @@ export const studyWordsFSRSService = {
       },
     );
 
-    if (existing) {
-      // Remove existing root study entry
-      await executeAuthenticatedQuery(
-        userId,
-        () => supabase.from('study_words').delete().eq('user_id', userId).eq('root_id', rootId),
-        {
-          ...errorConfig.toggleDelete,
-          analyticsProperties: { rootId },
-        },
-      );
+    if (intent === 'add' && existing) {
+      return true; // Already saved — the add is a no-op, not a delete
+    }
+
+    if (existing || intent === 'remove') {
+      if (existing) {
+        await executeAuthenticatedQuery(
+          userId,
+          () => supabase.from('study_words').delete().eq('user_id', userId).eq('root_id', rootId),
+          {
+            ...errorConfig.toggleDelete,
+            analyticsProperties: { rootId },
+          },
+        );
+      }
       return false;
     }
 

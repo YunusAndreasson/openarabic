@@ -110,7 +110,9 @@ export default function DictionaryScreen(): JSX.Element {
     async (rootId: RootId) => {
       if (!user?.id) return;
       try {
-        await toggleRootMutation.mutateAsync({ userId: user.id, rootId });
+        // Explicit intent: a delete must never flip into a re-add when the
+        // cached study list is stale
+        await toggleRootMutation.mutateAsync({ userId: user.id, rootId, intent: 'remove' });
       } catch (error) {
         await handleError(error instanceof Error ? error : String(error), {
           showToast: true,

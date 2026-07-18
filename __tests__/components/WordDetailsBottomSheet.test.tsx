@@ -153,7 +153,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
         expect(getByText('In practice')).toBeTruthy();
       });
 
-      expect(mockOnAddToStudy).toHaveBeenCalledWith(mockWord);
+      expect(mockOnAddToStudy).toHaveBeenCalledWith(mockWord, 'add');
       expect(selectionFeedback).toHaveBeenCalled();
     });
   });
@@ -238,7 +238,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
         expect(getByText('Add to practice')).toBeTruthy();
       });
 
-      expect(mockOnAddToStudy).toHaveBeenCalledWith(mockWord);
+      expect(mockOnAddToStudy).toHaveBeenCalledWith(mockWord, 'add');
     });
 
     test('should rollback optimistic update when daily limit is reached', async () => {
@@ -268,7 +268,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
         expect(getByText('Add to practice')).toBeTruthy();
       });
 
-      expect(mockOnAddToStudy).toHaveBeenCalledWith(mockWord);
+      expect(mockOnAddToStudy).toHaveBeenCalledWith(mockWord, 'add');
     });
   });
 

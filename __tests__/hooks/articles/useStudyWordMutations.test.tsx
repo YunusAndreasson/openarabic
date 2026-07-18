@@ -262,7 +262,7 @@ describe('useStudyWordMutations', () => {
       });
 
       await waitFor(() => {
-        expect(mockToggleFSRSStudyRoot).toHaveBeenCalledWith('test-user-id', 123);
+        expect(mockToggleFSRSStudyRoot).toHaveBeenCalledWith('test-user-id', 123, undefined);
       });
     });
 
@@ -277,7 +277,7 @@ describe('useStudyWordMutations', () => {
       });
 
       await waitFor(() => {
-        expect(mockToggleFSRSStudyRoot).toHaveBeenCalledWith('test-user-id', 456);
+        expect(mockToggleFSRSStudyRoot).toHaveBeenCalledWith('test-user-id', 456, undefined);
       });
     });
   });

@@ -402,7 +402,7 @@ describe('useArticleWordInteractions', () => {
       });
 
       expect(haptics.selectionFeedback).toHaveBeenCalled();
-      expect(mockHandleRootPress).toHaveBeenCalledWith(10);
+      expect(mockHandleRootPress).toHaveBeenCalledWith(10, undefined);
       expect(mockRefetchStudyWords).toHaveBeenCalled();
     });
 

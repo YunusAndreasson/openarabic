@@ -17,7 +17,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { preload } from 'expo-audio';
 
 import { audioCache } from '@/services/audioCache';
-import type { SentenceWord } from '@/types/vocabulary.types';
+import type { SentenceWord, StudyWordIntent } from '@/types/vocabulary.types';
 import { useBottomSheetVisibility } from '@/hooks/ui/useBottomSheetVisibility';
 import { BottomSheetBackdrop, COMMON_BOTTOM_SHEET_PROPS } from '@/utils/bottomSheetUtils';
 import { handleError } from '@/utils/errorHandling';
@@ -29,7 +29,7 @@ export interface WordDetailsBottomSheetProps {
   isVisible: boolean;
   onClose: () => void;
   word: SentenceWord | null;
-  onAddToStudy: (word: SentenceWord) => Promise<boolean>;
+  onAddToStudy: (word: SentenceWord, intent: StudyWordIntent) => Promise<boolean>;
   isInStudyList?: boolean;
 }
 
@@ -91,14 +91,15 @@ export function WordDetailsBottomSheet({
     const newValue = !optimisticIsInStudyList;
     selectionFeedback();
 
-    if (newValue) {
-      showToast(STRINGS.WORD_ADDED_TO_PRACTICE);
-    }
+    // Both directions get feedback — a silent removal reads as a failed save
+    showToast(newValue ? STRINGS.WORD_ADDED_TO_PRACTICE : STRINGS.WORD_QUICK_REMOVED);
 
     startTransition(async () => {
       setOptimisticIsInStudyList(newValue);
       try {
-        await onAddToStudy(word);
+        // Explicit intent: the user acted on the button label they saw, so a
+        // stale study-list cache can never invert this into the opposite action
+        await onAddToStudy(word, newValue ? 'add' : 'remove');
       } catch (error) {
         handleError(error as Error, { toastMessage: 'Failed to update study list' });
       }

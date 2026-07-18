@@ -1,22 +1,45 @@
 import type { JSX } from 'react';
-import { Fragment } from 'react';
-import { Platform } from 'react-native';
+import { Fragment, useEffect } from 'react';
+import { BackHandler, Platform } from 'react-native';
+
+import { router, usePathname } from 'expo-router';
 
 import { Ionicons } from '@/components/ui/Icon';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 
+import { ROUTE_PATHS } from '@/constants/routes';
 import { TAB_SCREENS } from '@/constants/tabs';
 import { useAuth } from '@/hooks/auth';
 import { useColors } from '@/hooks/theme';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 
+// Tab roots that are not the home tab — hardware back returns to Explore from
+// these instead of exiting the app (standard Android back pattern). Nested
+// screens are untouched: their pathnames don't match, so back pops normally.
+const NON_HOME_TAB_ROOT_PATHS = ['/practice', '/playlist'];
+
 export default function TabLayout(): JSX.Element {
   const { session } = useAuth();
   const colors = useColors();
+  const pathname = usePathname();
 
   // Get due words count using the same hook as the practice screen
   const { dueWords } = useFSRSQueries({ userId: session?.user?.id });
   const dueWordsCount = dueWords?.length ?? 0;
+
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (NON_HOME_TAB_ROOT_PATHS.includes(pathname)) {
+        router.navigate(ROUTE_PATHS.EXPLORE_TAB);
+        return true;
+      }
+      return false; // Home tab root or nested screen — let the system handle it
+    });
+    // Optional call: jest-expo's BackHandler shim returns undefined
+    return () => subscription?.remove();
+  }, [pathname]);
 
   // Auth gating is handled by <Stack.Protected guard={isAuthenticated}> in the
   // root layout — this subtree only mounts when authenticated, so no imperative

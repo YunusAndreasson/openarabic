@@ -11,19 +11,22 @@ Object.defineProperty(Platform, 'OS', { get: () => 'android' });
 jest.mock('expo-router/unstable-native-tabs', () => {
   const React = require('react');
   const { Text, TouchableOpacity } = require('react-native');
-  const screens = {
-    explore: require('../../app/(tabs)/explore/index.tsx').default,
-    playlist: require('../../app/(tabs)/playlist/index.tsx').default,
-    practice: require('../../app/(tabs)/practice/index.tsx').default,
-  };
+  // Lazy: the tabs layout imports expo-router modules whose mock factories
+  // would otherwise re-enter mid-initialization (circular module init).
+  const getScreens = () =>
+    ({
+      explore: require('../../app/(tabs)/explore/index.tsx').default,
+      playlist: require('../../app/(tabs)/playlist/index.tsx').default,
+      practice: require('../../app/(tabs)/practice/index.tsx').default,
+    }) as Record<string, React.ComponentType>;
 
   const NativeTabs = ({ children }: { children: React.ReactNode }) => {
     const triggers = React.Children.toArray(children).filter(
       (child: any) => child?.props?.name,
-    ) as Array<React.ReactElement<{ name: keyof typeof screens; children: React.ReactNode }>>;
+    ) as Array<React.ReactElement<{ name: string; children: React.ReactNode }>>;
 
     const [activeName, setActiveName] = React.useState(triggers[0]?.props.name ?? 'explore');
-    const Active = screens[activeName];
+    const Active = getScreens()[activeName];
 
     const tabBar = triggers.map(child => {
       const labelChild = React.Children.toArray(child.props.children).find(
@@ -108,11 +111,15 @@ jest.mock('@/components/ui/Icon', () => ({
 jest.mock('expo-router', () => {
   const React = require('react');
   const { Text, TouchableOpacity } = require('react-native');
-  const screens = {
-    explore: require('../../app/(tabs)/explore/index.tsx').default,
-    playlist: require('../../app/(tabs)/playlist/index.tsx').default,
-    practice: require('../../app/(tabs)/practice/index.tsx').default,
-  };
+  // Lazy: the tabs layout itself imports 'expo-router', so requiring the
+  // screens eagerly here would re-enter this factory mid-initialization
+  // (circular module init → jest-util warning-proxy stack overflow).
+  const getScreens = () =>
+    ({
+      explore: require('../../app/(tabs)/explore/index.tsx').default,
+      playlist: require('../../app/(tabs)/playlist/index.tsx').default,
+      practice: require('../../app/(tabs)/practice/index.tsx').default,
+    }) as Record<string, React.ComponentType>;
 
   const Tabs = ({
     children,
@@ -154,7 +161,7 @@ jest.mock('expo-router', () => {
       {} as Record<string, { options: { title: string } }>,
     );
     const state = { index, routes };
-    const Active = screens[routes[index].name as keyof typeof screens];
+    const Active = getScreens()[routes[index].name];
 
     // Simple tab bar implementation for testing
     const TabBar = () => (
@@ -181,7 +188,11 @@ jest.mock('expo-router', () => {
 
   Tabs.Screen = ({ name, options }: { name: string; options: { title?: string } }) => null;
 
-  return { Tabs, router: { replace: jest.fn() } };
+  return {
+    Tabs,
+    router: { replace: jest.fn(), navigate: jest.fn() },
+    usePathname: () => '/explore',
+  };
 });
 
 // expo-blur is not installed, so we skip the mock - tests using it should mock inline if needed

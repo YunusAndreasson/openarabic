@@ -85,6 +85,46 @@ describe('toggleFSRSStudyRoot', () => {
     expect(deleteFinal).toHaveBeenCalled();
     expect(result).toBeFalsy();
   });
+
+  test("intent 'add' on an existing entry is a no-op — never a delete", async () => {
+    const selectObj = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn().mockResolvedValue({ data: { root_id: 1 }, error: null }),
+    };
+    const deleteMock = jest.fn();
+    const insertMock = jest.fn();
+
+    (supabase.from as jest.Mock)
+      .mockImplementationOnce(() => selectObj)
+      .mockImplementation(() => ({ delete: deleteMock, insert: insertMock }));
+
+    const result = await studyWordsFSRSService.toggleFSRSStudyRoot('u1', 1, 'add');
+
+    expect(result).toBeTruthy();
+    expect(deleteMock).not.toHaveBeenCalled();
+    expect(insertMock).not.toHaveBeenCalled();
+  });
+
+  test("intent 'remove' on a missing entry is a no-op — never an insert", async () => {
+    const selectObj = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+    };
+    const deleteMock = jest.fn();
+    const insertMock = jest.fn();
+
+    (supabase.from as jest.Mock)
+      .mockImplementationOnce(() => selectObj)
+      .mockImplementation(() => ({ delete: deleteMock, insert: insertMock }));
+
+    const result = await studyWordsFSRSService.toggleFSRSStudyRoot('u1', 1, 'remove');
+
+    expect(result).toBeFalsy();
+    expect(deleteMock).not.toHaveBeenCalled();
+    expect(insertMock).not.toHaveBeenCalled();
+  });
 });
 
 describe('updateWordAndReview', () => {

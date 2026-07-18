@@ -360,7 +360,7 @@ describe('Reading to Dictionary Flow', () => {
       expect(addResult!).toBeTruthy();
       const { selectionFeedback } = require('@/utils/haptics');
       expect(selectionFeedback).toHaveBeenCalled();
-      expect(mockHandleRootPress).toHaveBeenCalledWith(mockWord.root_id);
+      expect(mockHandleRootPress).toHaveBeenCalledWith(mockWord.root_id, undefined);
     });
 
     test('returns false when no user is authenticated', async () => {
@@ -439,7 +439,7 @@ describe('Reading to Dictionary Flow', () => {
       });
 
       expect(toggleResult).toBeTruthy();
-      expect(mockToggleFSRSStudyRoot).toHaveBeenCalledWith(mockUserId, 501);
+      expect(mockToggleFSRSStudyRoot).toHaveBeenCalledWith(mockUserId, 501, undefined);
     });
 
     test('respects daily word limit when adding new words', async () => {
@@ -503,7 +503,7 @@ describe('Reading to Dictionary Flow', () => {
         await result.current.handleAddWordToStudy(mockWord);
       });
 
-      expect(mockHandleRootPress).toHaveBeenCalledWith(mockWord.root_id);
+      expect(mockHandleRootPress).toHaveBeenCalledWith(mockWord.root_id, undefined);
       expect(result.current.isInStudyList).toBeTruthy();
     });
 

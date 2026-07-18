@@ -143,6 +143,7 @@ describe('Study List Button State - Bug Reproduction', () => {
       expect(studyWordsFSRSService.toggleFSRSStudyRoot).toHaveBeenCalledWith(
         mockUserId,
         mockRootId,
+        undefined,
       );
 
       // Simulate cache update after mutation
@@ -167,6 +168,7 @@ describe('Study List Button State - Bug Reproduction', () => {
       expect(studyWordsFSRSService.toggleFSRSStudyRoot).toHaveBeenCalledWith(
         mockUserId,
         mockRootId,
+        undefined,
       );
 
       // Simulate cache update after mutation
@@ -190,6 +192,7 @@ describe('Study List Button State - Bug Reproduction', () => {
       expect(studyWordsFSRSService.toggleFSRSStudyRoot).toHaveBeenCalledWith(
         mockUserId,
         mockRootId,
+        undefined,
       );
 
       // Simulate cache update after mutation

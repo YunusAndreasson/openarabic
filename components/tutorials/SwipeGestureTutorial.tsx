@@ -75,7 +75,15 @@ export function SwipeGestureTutorial({
       setCurrentStep(SwipeTutorialStep.INTRO);
       onDismiss();
     } else {
-      setCurrentStep(prev => (prev + 1) as SwipeTutorialStep);
+      // Clamp at the last step: when the JS thread is busy (session preparing),
+      // several taps can batch into one render with a stale isLastStep, and an
+      // unbounded prev + 1 would walk past the array into a stuck fallback
+      // state that can never dismiss.
+      setCurrentStep(prev =>
+        prev >= SwipeTutorialStep.SRS_EXPLAIN
+          ? SwipeTutorialStep.SRS_EXPLAIN
+          : ((prev + 1) as SwipeTutorialStep),
+      );
     }
   }, [isLastStep, onDismiss]);
 

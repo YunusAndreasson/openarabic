@@ -23,6 +23,15 @@ module.exports = {
 
   // Use jest-expo default environment
 
+  // Jest 30's globals-cleanup soft-delete wraps globals in warning proxies;
+  // react-native's lazy module getters (e.g. BackHandler) can then recurse
+  // inside jest-util's emitAccessWarning (constructor access re-triggers the
+  // proxy) and crash the suite with a stack overflow. Disable the proxying —
+  // it only produced advisory warnings.
+  testEnvironmentOptions: {
+    globalsCleanup: 'off',
+  },
+
   // Enhanced path ignoring for AI focus
   testPathIgnorePatterns: [
     '/node_modules/',

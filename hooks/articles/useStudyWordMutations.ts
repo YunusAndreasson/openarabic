@@ -15,7 +15,7 @@ import { checkAuthentication } from '@/services/supabase';
 import { useAppSelector } from '@/store/hooks';
 import type { RootId } from '@/types/branded.types';
 import { DailyWordLimitStatus, ToastType } from '@/types/enums';
-import type { StudyWord } from '@/types/vocabulary.types';
+import type { StudyWord, StudyWordIntent } from '@/types/vocabulary.types';
 import { OnboardingStep } from '@/constants/onboarding';
 import { normalizeTimestamp } from '@/utils/dateTimeUtils';
 import { handleError } from '@/utils/errorHandling';
@@ -34,21 +34,19 @@ interface FSRSWordSnapshot {
   fsrs_reps?: number | null;
 }
 
+interface ToggleStudyVariables {
+  userId: string;
+  wordId?: RootId;
+  rootId?: RootId;
+  /** Explicit direction from the UI the user acted on; omitted = legacy toggle */
+  intent?: StudyWordIntent;
+}
+
 interface StudyWordMutationsResult {
   handleWordPress: (wordId: RootId) => void;
-  handleRootPress: (rootId: RootId) => Promise<boolean | undefined>;
-  toggleWordMutation: UseMutationResult<
-    boolean,
-    Error,
-    { userId: string; wordId?: RootId; rootId?: RootId },
-    StudyWordContext
-  >;
-  toggleRootMutation: UseMutationResult<
-    boolean,
-    Error,
-    { userId: string; wordId?: RootId; rootId?: RootId },
-    StudyWordContext
-  >;
+  handleRootPress: (rootId: RootId, intent?: StudyWordIntent) => Promise<boolean | undefined>;
+  toggleWordMutation: UseMutationResult<boolean, Error, ToggleStudyVariables, StudyWordContext>;
+  toggleRootMutation: UseMutationResult<boolean, Error, ToggleStudyVariables, StudyWordContext>;
 }
 
 /**
@@ -136,27 +134,11 @@ export const useStudyWordMutations = (
   // Shared mutation options for toggling study words/roots
   // DRY: Used by both toggleWord and toggleRoot mutations
   const toggleStudyOptions = {
-    mutationFn: async ({
-      userId,
-      wordId,
-      rootId,
-    }: {
-      userId: string;
-      wordId?: RootId;
-      rootId?: RootId;
-    }) => {
+    mutationFn: async ({ userId, wordId, rootId, intent }: ToggleStudyVariables) => {
       const id = (wordId ?? rootId) as RootId;
-      return studyWordsFSRSService.toggleFSRSStudyRoot(userId, id);
+      return studyWordsFSRSService.toggleFSRSStudyRoot(userId, id, intent);
     },
-    onMutate: async ({
-      userId,
-      wordId,
-      rootId,
-    }: {
-      userId: string;
-      wordId?: RootId;
-      rootId?: RootId;
-    }): Promise<StudyWordContext> => {
+    onMutate: async ({ userId, wordId, rootId, intent }: ToggleStudyVariables): Promise<StudyWordContext> => {
       // CRITICAL: Use fsrsQueries.all() to match what UI components read
       // This ensures optimistic updates are immediately visible in both underlines and buttons
       await queryClient.cancelQueries({
@@ -168,8 +150,14 @@ export const useStudyWordMutations = (
       const id = (wordId ?? rootId) as number;
       queryClient.setQueryData<StudyWord[]>(fsrsQueries.all(userId).queryKey, (old = []) => {
         const exists = old.some(sw => sw.root_id === id);
-        if (exists) {
+        // With explicit intent the optimistic direction matches the server's;
+        // legacy toggles fall back to inverting the cached state.
+        const shouldRemove = intent ? intent === 'remove' : exists;
+        if (shouldRemove) {
           return old.filter(sw => sw.root_id !== id);
+        }
+        if (exists) {
+          return old; // Add intent on an already-cached word — no duplicate
         }
         // For optimistic add, create a minimal StudyWord-like object
         // The actual full object will be fetched on success
@@ -178,7 +166,7 @@ export const useStudyWordMutations = (
 
       return { previousStudyWords };
     },
-    onError: (error: Error, { userId }: { userId: string }, context?: StudyWordContext) => {
+    onError: (error: Error, { userId }: ToggleStudyVariables, context?: StudyWordContext) => {
       // Revert optimistic update on error
       if (context?.previousStudyWords) {
         queryClient.setQueryData(fsrsQueries.all(userId).queryKey, context.previousStudyWords);
@@ -191,19 +179,19 @@ export const useStudyWordMutations = (
       });
     },
     onSuccess: (
-      _: boolean,
-      { userId, wordId, rootId }: { userId: string; wordId?: RootId; rootId?: RootId },
+      nowInStudyList: boolean,
+      { userId, wordId, rootId }: ToggleStudyVariables,
       context?: StudyWordContext,
     ) => {
       // Track word added/removed (fire and forget - don't block UI)
       const id = (wordId ?? rootId) as number;
       const wasInStudyList = context?.previousStudyWords?.some(sw => sw.root_id === id) ?? false;
 
-      if (wasInStudyList) {
+      if (!nowInStudyList && wasInStudyList) {
         analytics.track(ANALYTICS_EVENTS.WORD_REMOVED_FROM_STUDY, {
           root_id: id,
         });
-      } else {
+      } else if (nowInStudyList && !wasInStudyList) {
         analytics.track(ANALYTICS_EVENTS.WORD_ADDED_TO_STUDY, {
           root_id: id,
           source: 'article',
@@ -211,6 +199,7 @@ export const useStudyWordMutations = (
         // First-run checklist signal (idempotent, fire-and-forget)
         void markOnboardingStep(OnboardingStep.SAVE_WORD);
       }
+      // No event when an intent-carrying call was a no-op (state unchanged)
 
       // Invalidate queries in background (don't await - optimistic update already applied)
       fsrsQueries.invalidateAll(queryClient, userId);
@@ -223,18 +212,12 @@ export const useStudyWordMutations = (
     },
   };
 
-  const toggleWordMutation = useMutation<
-    boolean,
-    Error,
-    { userId: string; wordId?: RootId; rootId?: RootId },
-    StudyWordContext
-  >(toggleStudyOptions);
-  const toggleRootMutation = useMutation<
-    boolean,
-    Error,
-    { userId: string; wordId?: RootId; rootId?: RootId },
-    StudyWordContext
-  >(toggleStudyOptions);
+  const toggleWordMutation = useMutation<boolean, Error, ToggleStudyVariables, StudyWordContext>(
+    toggleStudyOptions,
+  );
+  const toggleRootMutation = useMutation<boolean, Error, ToggleStudyVariables, StudyWordContext>(
+    toggleStudyOptions,
+  );
 
   // Handle word press with validation
   const handleWordPress = useCallback(
@@ -289,7 +272,7 @@ export const useStudyWordMutations = (
 
   // Handle root press with validation
   const handleRootPress = useCallback(
-    async (rootId: RootId): Promise<boolean | undefined> => {
+    async (rootId: RootId, intent?: StudyWordIntent): Promise<boolean | undefined> => {
       try {
         // Use centralized auth check (handles getSession automatically)
         let currentUserId: string;
@@ -310,9 +293,11 @@ export const useStudyWordMutations = (
 
         const wordExists =
           existingWords?.some((word: StudyWord) => word.root_id === rootId) ?? false;
+        // Explicit intent (from the button the user saw) wins over the cache guess
+        const isAdd = intent ? intent === 'add' : !wordExists;
 
-        // Only check daily limit for add operations (when word doesn't exist)
-        if (!wordExists) {
+        // Only check daily limit for add operations
+        if (isAdd) {
           const canAdd = await canAddWord();
           if (!canAdd) {
             showToast(await getLimitReachedMessage(), 6000, ToastType.IMPORTANT);
@@ -321,14 +306,14 @@ export const useStudyWordMutations = (
           }
         }
 
-        // Capacity guard
-        if (isCapacityLow(currentUserId)) {
+        // Capacity guard applies to adds only — removing must always be possible
+        if (isAdd && isCapacityLow(currentUserId)) {
           showToast(STRINGS.COMPLETE_DUE_FIRST, 3000, ToastType.INFO);
           return undefined;
         }
 
         // Increment daily word count only for add operations
-        if (!wordExists) {
+        if (isAdd) {
           const incrementSuccess = await incrementDailyWordCount();
           if (!incrementSuccess) {
             showToast(await getLimitReachedMessage(), 6000, ToastType.IMPORTANT);
@@ -341,6 +326,7 @@ export const useStudyWordMutations = (
         const result = await toggleRootMutation.mutateAsync({
           userId: currentUserId,
           rootId,
+          intent,
         });
         return result;
       } catch (error) {

@@ -11,12 +11,12 @@ import { useModalState } from '@/hooks/ui/useModalState';
 import { analytics } from '@/services/analytics';
 import type { RootId } from '@/types/branded.types';
 import { ToastType } from '@/types/enums';
-import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
+import type { SentenceWord, StudyWord, StudyWordIntent } from '@/types/vocabulary.types';
 import { mediumFeedback, selectionFeedback } from '@/utils/haptics';
 
 export interface UseArticleWordInteractionsOptions {
   /** Handler for toggling word study status */
-  handleRootPress: (rootId: RootId) => Promise<boolean | undefined>;
+  handleRootPress: (rootId: RootId, intent?: StudyWordIntent) => Promise<boolean | undefined>;
   /** Callback to refetch study words after mutations */
   refetchStudyWords?: () => Promise<unknown>;
   /**
@@ -120,12 +120,12 @@ export function useArticleWordInteractions({
    * @returns true if operation succeeded, false if it failed (e.g., daily limit reached)
    */
   const handleAddWordToStudy = useCallback(
-    async (word: SentenceWord): Promise<boolean> => {
+    async (word: SentenceWord, intent?: StudyWordIntent): Promise<boolean> => {
       if (!user?.id || !word.root_id) return false;
 
       selectionFeedback();
 
-      const result = await handleRootPress(word.root_id);
+      const result = await handleRootPress(word.root_id, intent);
       if (result === undefined) return false;
 
       const isNowInStudy = result;
@@ -187,7 +187,8 @@ export function useArticleWordInteractions({
 
       mediumFeedback();
       const wasInStudy = isRootInStudyListRef.current(word.root_id);
-      const succeeded = await handleAddWordToStudy(word);
+      // Explicit intent: the toast below promises this exact direction
+      const succeeded = await handleAddWordToStudy(word, wasInStudy ? 'remove' : 'add');
       // Guard failures (daily limit, auth) already showed their own feedback
       if (!succeeded) return;
 

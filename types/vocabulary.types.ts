@@ -39,3 +39,10 @@ export interface StudyWord extends Omit<Tables<'study_words'>, 'root_id' | 'user
   /** Optional root relation loaded from database */
   root?: Tables<'roots'> | null;
 }
+
+/**
+ * Explicit direction for a study-list mutation. Carried from the button the
+ * user actually saw down to the service so a stale cache can never invert a
+ * save into a delete (or vice versa).
+ */
+export type StudyWordIntent = 'add' | 'remove';
