@@ -12,6 +12,9 @@ import { useWordsToRevisit } from '@/hooks/vocabulary/useWordsToRevisit';
 import type { RootId } from '@/types/branded.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 
+/** Content-area height as a fraction of the window — constant across states. */
+const REVISIT_CONTENT_HEIGHT_FRACTION = 0.45;
+
 function formatForgotCount(count: number): string {
   return STRINGS.FORGOT_N_TIMES.replace('{count}', String(count));
 }
@@ -67,22 +70,29 @@ export default function WordsToRevisitScreen(): JSX.Element {
         title={STRINGS.WORDS_TO_REVISIT}
         subtitle={STRINGS.WORDS_TO_REVISIT_SUBTITLE}
       />
-      <BottomSheetStateHandler
-        isLoading={isLoading}
-        isError={isError}
-        isEmpty={leeches.length === 0}
-        loadingMessage={STRINGS.LOADING_WORDS_TO_REVISIT}
-        errorMessage={STRINGS.FAILED_TO_LOAD_WORDS_TO_REVISIT}
-        emptyMessage={STRINGS.WORDS_TO_REVISIT_EMPTY_STATE}
-      >
-        {/* Cap the list height so a long leech list scrolls instead of
-            overflowing the fit-to-contents sheet. */}
-        <ScrollView style={{ maxHeight: height * 0.6 }} showsVerticalScrollIndicator={false}>
-          {leeches.map(word => (
-            <LeechRow key={word.root_id} word={word} onReset={confirmReset} />
-          ))}
-        </ScrollView>
-      </BottomSheetStateHandler>
+      {/* Fixed-height content area: a fitToContents form sheet measures its
+          detent ONCE at presentation. When the leech list loads after the
+          sheet presented (cold FSRS cache), iOS keeps the small loading-state
+          height and the taller list renders overlapping the header. Locking
+          the content area's height makes loading/empty/loaded measure
+          identically, so the sheet is right-sized no matter which state it
+          presents in. */}
+      <View style={{ height: height * REVISIT_CONTENT_HEIGHT_FRACTION }}>
+        <BottomSheetStateHandler
+          isLoading={isLoading}
+          isError={isError}
+          isEmpty={leeches.length === 0}
+          loadingMessage={STRINGS.LOADING_WORDS_TO_REVISIT}
+          errorMessage={STRINGS.FAILED_TO_LOAD_WORDS_TO_REVISIT}
+          emptyMessage={STRINGS.WORDS_TO_REVISIT_EMPTY_STATE}
+        >
+          <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
+            {leeches.map(word => (
+              <LeechRow key={word.root_id} word={word} onReset={confirmReset} />
+            ))}
+          </ScrollView>
+        </BottomSheetStateHandler>
+      </View>
     </SheetScreen>
   );
 }
@@ -92,6 +102,9 @@ export const options = {
 } as const;
 
 const styles = StyleSheet.create({
+  list: {
+    flex: 1,
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
