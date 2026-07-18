@@ -1,4 +1,4 @@
-import { NEW_WORD_PACING } from '@/constants/fsrs';
+import { DUE_BACKLOG_ADD_THRESHOLD, NEW_WORD_PACING } from '@/constants/fsrs';
 
 /**
  * Retention-gated pacing for *new* words. The daily new-word limit the learner
@@ -97,4 +97,22 @@ export function computeAdaptiveNewLimit(input: AdaptiveNewLimitInput): AdaptiveN
 
   // 5. Recall on target → full ceiling.
   return { effective: ceiling, ceiling, status: 'full', recall: recall.recall, gap };
+}
+
+export interface DueBacklogGate {
+  blocked: boolean;
+  dueCount: number;
+}
+
+/**
+ * Hard workload gate for new-word intake: while the due backlog is at/above
+ * the threshold, adding is blocked until reviews are cleared. Orthogonal to
+ * computeAdaptiveNewLimit, which paces intake by recall quality — this one
+ * caps it by outstanding workload.
+ */
+export function evaluateDueBacklogGate(
+  dueCount: number,
+  threshold: number = DUE_BACKLOG_ADD_THRESHOLD,
+): DueBacklogGate {
+  return { blocked: dueCount >= threshold, dueCount };
 }

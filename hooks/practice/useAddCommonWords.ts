@@ -18,6 +18,9 @@ import { markOnboardingStep } from '@/utils/onboardingStorage';
 /** Number of common words to add (matches the default daily word limit) */
 const COMMON_WORDS_COUNT = 10;
 
+// NB: this bulk path skips the due-backlog gate on purpose — its only consumer
+// is the practice empty state, shown when the user has no study words at all.
+
 interface UseAddCommonWordsOptions {
   onSuccess?: () => void;
 }

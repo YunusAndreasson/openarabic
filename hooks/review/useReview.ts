@@ -79,6 +79,10 @@ interface UseReviewReturn {
   /** Stop any in-flight playback (e.g. the reveal audio) so the mic can reopen
    *  cleanly on a voice retry without capturing the tail of a spoken answer. */
   stopAudio: () => void;
+  /** Due words beyond the current session chunk ("Review N more" affordance). */
+  remainingDueCount: number;
+  /** Start the next chunk of a large backlog after a completed session. */
+  startNextChunk: () => void;
 }
 
 // Timing constants for transitions (milliseconds)
@@ -158,7 +162,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   const { setTimer, clearTimer, clearAllTimers } = useTimerCleanup();
 
   // Session metrics tracking hook
-  const { metrics: sessionMetrics, updateMetrics } = useSessionMetrics();
+  const { metrics: sessionMetrics, updateMetrics, resetMetrics } = useSessionMetrics();
 
   // UI state
   const [showTranslation, setShowTranslation] = useState(false);
@@ -226,11 +230,13 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     currentWord,
     isComplete,
     progress,
+    remainingDueCount,
     updateWord,
     previewIntervals,
     invalidateQueries,
     wordQueue,
     isLoading,
+    resetQueue,
   } = useFSRS({
     userId: user?.id,
     onComplete: triggerCompletionTransition,
@@ -705,6 +711,26 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     );
   };
 
+  // Start the next chunk of a large backlog after a completed session. A fresh
+  // chunk is a fresh session: completion/progress/analytics/metrics state is
+  // reset so the header and recall signals track this chunk only (resetMetrics
+  // prevents double-appending the previous chunk's first-attempt signals into
+  // adaptive pacing — useReviewCompletion appends per completion-screen mount).
+  const startNextChunk = useCallback(() => {
+    stateRefs.current.completionTriggered = false;
+    stateRefs.current.progressUpdatedForCompletion = false;
+    stateRefs.current.maxProgress = 0;
+    setMaxProgress(0);
+    setShowTranslation(false);
+    setRevealed(false);
+    timeRefs.current.lastProcessedWordId = null;
+    sessionStarted.current = false;
+    sessionStartTime.current = null;
+    wordsReviewedCount.current = 0;
+    resetMetrics();
+    resetQueue();
+  }, [resetMetrics, resetQueue]);
+
   // Unmount-only cleanup: tracks abandonment, aborts in-flight work, resets refs.
   // Deps must NOT include wordQueue.length — useFSRS.updateWord shrinks the queue
   // on every swipe, so a length dep here would re-fire this cleanup mid-session,
@@ -790,5 +816,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     revealMeaningPassive,
     promptAudioDoneKey,
     stopAudio: stopAudioSafely,
+    remainingDueCount,
+    startNextChunk,
   };
 }

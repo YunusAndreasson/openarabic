@@ -58,6 +58,8 @@ export interface UseFSRSResult {
   isLoading: boolean;
   isComplete: boolean;
   progress: number;
+  /** Due words beyond the current session chunk ("Review N more" affordance). */
+  remainingDueCount: number;
   updateWord: (rootId: RootId, confidence: WordConfidence) => Promise<number | undefined>;
   /**
    * Per-grade interval preview ("10m"/"4d") for a card, keyed by WordConfidence.

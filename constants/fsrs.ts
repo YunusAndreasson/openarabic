@@ -78,6 +78,22 @@ export const RECALLED_CONFIDENCE: ReadonlySet<WordConfidence> = new Set<WordConf
 
 export const DEFAULT_SESSION_COOLDOWN_HOURS = 2;
 
+/**
+ * Review sessions are served in digestible chunks: each session takes the
+ * top-priority REVIEW_SESSION_CHUNK_SIZE due words (by calculateWordPriority).
+ * Presentation-level cap only — badges and due counts still show the full
+ * backlog; the completion screen offers the next chunk when more remain.
+ */
+export const REVIEW_SESSION_CHUNK_SIZE = 20;
+
+/**
+ * Hard intake gate: saving NEW words to practice is blocked while the due
+ * backlog is at/above this count (one understandable rule: clear reviews,
+ * then add). Complementary to the adaptive daily limit, which paces intake
+ * by recall quality; this caps it by outstanding workload.
+ */
+export const DUE_BACKLOG_ADD_THRESHOLD = 20;
+
 // Spacing and scheduling constants
 export const SPACING_ITERATION_LIMIT = 20;
 // Chart thresholds
@@ -99,12 +115,15 @@ export const MEMORY_CAPACITY_THRESHOLDS = {
   GOOD: 75,
 } as const;
 
-// Optimized FSRS configuration
+// Optimized FSRS configuration.
+// request_retention 0.90 is the FSRS default target — roughly 40% fewer reviews
+// than 0.95 for a small recall trade-off. Cards scheduled under an older target
+// self-correct: each picks up 0.90-based intervals at its next review (no rebase).
 export const OPTIMIZED_FSRS_CONFIG = {
   learning_steps: DEFAULT_LEARNING_STEPS,
   relearning_steps: DEFAULT_RELEARNING_STEPS,
-  request_retention: 0.95,
-  maximum_interval: 180,
+  request_retention: 0.9,
+  maximum_interval: 365,
   enable_fuzz: true,
   // enable_short_term=true keeps short-term memory steps (learning/relearning)
   // active in ts-fsrs v5. Disabling would skip directly to long-term scheduling.

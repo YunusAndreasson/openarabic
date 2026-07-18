@@ -18,7 +18,7 @@
 // Unmock React Query to test real hook behavior
 jest.unmock('@tanstack/react-query');
 
-import { renderHook, waitFor } from '@testing-library/react-native';
+import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import { State } from 'ts-fsrs';
 
@@ -126,6 +126,111 @@ describe('useFSRS Hook', () => {
       await waitFor(() => {
         expect(onComplete).toHaveBeenCalledTimes(1);
       });
+    });
+
+    test('slices a large backlog into a session chunk and reports the remainder', async () => {
+      const mockWords = Array.from({ length: 30 }, (_, i) =>
+        createMockStudyWord({
+          root_id: (i + 1) as RootId,
+          fsrs_due: new Date(Date.now() - (i + 1) * 3600 * 1000).toISOString(),
+        }),
+      );
+      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue(mockWords);
+
+      const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBeFalsy();
+      });
+
+      // Session queue holds only the top-priority chunk (REVIEW_SESSION_CHUNK_SIZE=20)
+      expect(result.current.wordQueue).toHaveLength(20);
+      expect(result.current.remainingDueCount).toBe(10);
+      expect(result.current.isComplete).toBeFalsy();
+    });
+
+    test('reports no remainder when the backlog fits one session', async () => {
+      const mockWords = Array.from({ length: 5 }, (_, i) =>
+        createMockStudyWord({ root_id: (i + 1) as RootId }),
+      );
+      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue(mockWords);
+
+      const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBeFalsy();
+      });
+
+      expect(result.current.wordQueue).toHaveLength(5);
+      expect(result.current.remainingDueCount).toBe(0);
+    });
+
+    test('a completed session is not restarted by a post-completion refetch', async () => {
+      // After the last grade, the completion-screen mount invalidates FSRS
+      // queries and the due query refetches with the remaining backlog. That
+      // new data must NOT re-initialize the queue underneath the completion
+      // screen — it only updates remainingDueCount for "Review N more".
+      const initialWord = createMockStudyWord({ root_id: 1 as RootId });
+      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue([initialWord]);
+      studyWordsFSRSService.updateWordAndReview = jest.fn().mockResolvedValue(undefined);
+
+      const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.currentWord).not.toBeNull();
+      });
+
+      // Grade the only word — session completes
+      await act(async () => {
+        await result.current.updateWord(1 as RootId, 'known');
+      });
+      expect(result.current.isComplete).toBeTruthy();
+
+      // Simulate the post-completion refetch delivering a remaining backlog
+      const backlog = Array.from({ length: 8 }, (_, i) =>
+        createMockStudyWord({ root_id: (i + 10) as RootId }),
+      );
+      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue(backlog);
+      await act(async () => {
+        await queryClient.refetchQueries({ queryKey: fsrsQueries.due('test-user').queryKey });
+      });
+
+      // Still complete; the fresh backlog only surfaces as remainingDueCount
+      expect(result.current.isComplete).toBeTruthy();
+      await waitFor(() => {
+        expect(result.current.remainingDueCount).toBe(8);
+      });
+    });
+
+    test('resetQueue re-arms initialization even when due data has not changed', async () => {
+      // The "Review N more" flow: after a completed chunk the due data has
+      // already refetched, so without the session-epoch dep the init effect
+      // would never re-run and the next chunk could never start.
+      const mockWords = Array.from({ length: 30 }, (_, i) =>
+        createMockStudyWord({
+          root_id: (i + 1) as RootId,
+          fsrs_due: new Date(Date.now() - (i + 1) * 3600 * 1000).toISOString(),
+        }),
+      );
+      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue(mockWords);
+
+      const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.wordQueue).toHaveLength(20);
+      });
+
+      await act(async () => {
+        result.current.resetQueue();
+      });
+
+      // Same dueWords identity, but the queue must be rebuilt (not stay empty)
+      await waitFor(() => {
+        expect(result.current.wordQueue).toHaveLength(20);
+      });
+      expect(result.current.currentWord).not.toBeNull();
+      expect(result.current.remainingDueCount).toBe(10);
+      expect(result.current.isComplete).toBeFalsy();
     });
 
     test('respects session cooldown hours', async () => {
@@ -611,7 +716,7 @@ describe('useFSRS Hook', () => {
   });
 
   describe('Utility Functions', () => {
-    test('resetQueue clears all state', async () => {
+    test('resetQueue clears session state and restarts from current due data', async () => {
       const words = [createMockStudyWord({ root_id: 1 as RootId })];
       studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue(words);
 
@@ -621,16 +726,19 @@ describe('useFSRS Hook', () => {
         expect(result.current.currentWord).not.toBeNull();
       });
 
-      result.current.resetQueue();
-
-      // Wait for state updates to complete
-      await waitFor(() => {
-        expect(result.current.currentWord).toBeNull();
+      await act(async () => {
+        result.current.resetQueue();
       });
 
-      expect(result.current.wordQueue).toEqual([]);
+      // resetQueue bumps the session epoch, so the init effect re-runs against
+      // the cached due data and a fresh session starts (the "Review N more"
+      // restart path) — progress and completion are back to their initial state.
+      await waitFor(() => {
+        expect(result.current.currentWord).not.toBeNull();
+      });
       expect(result.current.progress).toBe(0);
       expect(result.current.isComplete).toBeFalsy();
+      expect(result.current.wordQueue).toHaveLength(1);
     });
 
     test('invalidateQueries resets queue state', async () => {
@@ -785,7 +893,10 @@ describe('useFSRS Hook', () => {
         expect(result.current.currentWord).not.toBeNull();
       });
 
-      expect(result.current.wordQueue.length).toBe(100);
+      // Large backlogs are chunked: the session queue holds the top-priority
+      // slice, the rest is reported for the "Review N more" affordance.
+      expect(result.current.wordQueue.length).toBe(20);
+      expect(result.current.remainingDueCount).toBe(80);
       expect(result.current.progress).toBe(0);
     });
 

@@ -18,6 +18,7 @@ import {
   calculateWordPriority,
   createSpacingState,
   getNextWordWithSpacing,
+  selectSessionChunk,
   type SpacingState,
   updateSpacingCounters,
 } from '@/utils/fsrsSpacing';
@@ -519,6 +520,69 @@ describe('fsrsSpacing', () => {
       // Word should be added to spacedWords
       expect(state.spacedWords.length).toBe(1);
       expect(state.spacedWords[0].word.root_id).toBe(1);
+    });
+  });
+
+  describe('selectSessionChunk', () => {
+    const nowMs = Date.now();
+
+    // A barely-due, stable word — the filler the urgent ones must beat.
+    const fillerWord = (id: number): StudyWord =>
+      createTestWord({
+        root_id: id as StudyWord['root_id'],
+        fsrs_due: new Date(nowMs).toISOString(),
+        fsrs_stability: 10,
+        fsrs_difficulty: 6.5,
+        fsrs_lapses: 0,
+      });
+
+    test('returns the input unchanged when it fits the chunk', () => {
+      const words = [fillerWord(1), fillerWord(2)];
+      expect(selectSessionChunk(words, 5, nowMs)).toBe(words);
+      expect(selectSessionChunk(words, 2, nowMs)).toBe(words);
+      expect(selectSessionChunk([], 5, nowMs)).toEqual([]);
+    });
+
+    test('returns exactly chunkSize words when over', () => {
+      const words = Array.from({ length: 30 }, (_, i) => fillerWord(i + 1));
+      expect(selectSessionChunk(words, 20, nowMs)).toHaveLength(20);
+    });
+
+    test('keeps the most urgent words: overdue and hard beat barely-due stable', () => {
+      const overdue = createTestWord({
+        root_id: 100 as StudyWord['root_id'],
+        fsrs_due: new Date(nowMs - 48 * 3600 * 1000).toISOString(), // 48h overdue
+        fsrs_stability: 10,
+      });
+      const hard = createTestWord({
+        root_id: 200 as StudyWord['root_id'],
+        fsrs_due: new Date(nowMs).toISOString(),
+        fsrs_stability: 2,
+        fsrs_lapses: 3, // isHardWord territory
+        fsrs_reps: 5,
+        fsrs_state: 2,
+      });
+      const fillers = Array.from({ length: 10 }, (_, i) => fillerWord(i + 1));
+
+      const chunk = selectSessionChunk([...fillers, overdue, hard], 5, nowMs);
+      const ids = chunk.map(w => w.root_id);
+
+      expect(ids).toContain(100);
+      expect(ids).toContain(200);
+      expect(chunk).toHaveLength(5);
+    });
+
+    test('is deterministic for a fixed timestamp', () => {
+      const words = Array.from({ length: 25 }, (_, i) =>
+        createTestWord({
+          root_id: (i + 1) as StudyWord['root_id'],
+          fsrs_due: new Date(nowMs - i * 3600 * 1000).toISOString(),
+          fsrs_stability: (i % 10) + 1,
+        }),
+      );
+      const first = selectSessionChunk(words, 10, nowMs).map(w => w.root_id);
+      const second = selectSessionChunk(words, 10, nowMs).map(w => w.root_id);
+      expect(first).toEqual(second);
     });
   });
 });

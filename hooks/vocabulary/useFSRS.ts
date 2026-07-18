@@ -8,6 +8,7 @@ import {
   DEFAULT_SESSION_COOLDOWN_HOURS,
   MISS_CONFIDENCE,
   OPTIMIZED_FSRS_CONFIG,
+  REVIEW_SESSION_CHUNK_SIZE,
 } from '@/constants/fsrs';
 import { fsrsQueries } from '@/constants/queries';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
@@ -21,6 +22,7 @@ import {
   calculateWordPriority,
   createSpacingState,
   getNextWordWithSpacing as getNextFromSpacingQueue,
+  selectSessionChunk,
   updateSpacingCounters as updateSpacingState,
   type SpacingState,
 } from '@/utils/fsrsSpacing';
@@ -63,6 +65,12 @@ export function useFSRS({
   const [currentWord, setCurrentWord] = useState<StudyWord | null>(null);
   const [progress, setProgress] = useState<number>(0);
   const [isComplete, setIsComplete] = useState<boolean>(false);
+  // Due words beyond the current session chunk ("Review N more" on completion).
+  const [remainingDueCount, setRemainingDueCount] = useState<number>(0);
+  // Bumped by resetQueue so the init effect re-runs even when the due data's
+  // identity hasn't changed (React Query structural sharing) — required for
+  // starting the next chunk after a completed session.
+  const [sessionEpoch, setSessionEpoch] = useState<number>(0);
 
   // Consolidated counters in a single ref
   const countersRef = useRef<FSRSCounters>({
@@ -141,6 +149,16 @@ export function useFSRS({
 
     const effectiveDueWords: StudyWord[] = Array.isArray(dueWords) ? dueWords : [];
 
+    // A completed session must NOT be restarted by a background refetch: the
+    // post-completion refetch returns the remaining backlog (a new signature),
+    // which would otherwise re-init the queue underneath the completion screen.
+    // Record the fresh backlog for the "Review more" affordance instead; an
+    // explicit resetQueue() re-arms initialization.
+    if (stateTrackingRef.current.completionTriggered) {
+      setRemainingDueCount(effectiveDueWords.length);
+      return;
+    }
+
     // Build a stable signature of the current due words
     const signature = effectiveDueWords
       .map(w => w.root_id)
@@ -165,8 +183,14 @@ export function useFSRS({
 
     // Initialize queue synchronously (no setTimeout wrapper)
     if (effectiveDueWords.length > 0) {
-      countersRef.current.totalWords = effectiveDueWords.length;
-      countersRef.current.uniqueWords = new Set(effectiveDueWords.map(word => word.root_id));
+      const nowMs = Date.now(); // Single timestamp for entire batch
+
+      // Serve a large backlog in digestible chunks: the session holds the
+      // top-priority slice; the rest is offered as "Review N more" afterwards.
+      const sessionWords = selectSessionChunk(effectiveDueWords, REVIEW_SESSION_CHUNK_SIZE, nowMs);
+
+      countersRef.current.totalWords = sessionWords.length;
+      countersRef.current.uniqueWords = new Set(sessionWords.map(word => word.root_id));
       countersRef.current.processedWords = 0;
       countersRef.current.finishedWords = 0;
 
@@ -180,16 +204,15 @@ export function useFSRS({
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setProgress(0);
       setIsComplete(false);
+      setRemainingDueCount(effectiveDueWords.length - sessionWords.length);
       stateTrackingRef.current.completionTriggered = false;
       stateTrackingRef.current.isProcessingUpdate = false;
 
       queueRef.current = new PriorityQueue<StudyWord>();
 
       // Prioritize words by due date and FSRS metrics using heapify
-      const items = effectiveDueWords;
-      const nowMs = Date.now(); // Single timestamp for entire batch
-      const priorities = effectiveDueWords.map(w => calculateWordPriority(w, nowMs));
-      queueRef.current.heapify(items, priorities);
+      const priorities = sessionWords.map(w => calculateWordPriority(w, nowMs));
+      queueRef.current.heapify(sessionWords, priorities);
       const ordered = queueRef.current.toArray();
       setWordQueue(ordered);
 
@@ -208,6 +231,7 @@ export function useFSRS({
     } else {
       // No words available - complete immediately
       setIsComplete(true);
+      setRemainingDueCount(0);
       if (onComplete && !stateTrackingRef.current.completionTriggered) {
         stateTrackingRef.current.completionTriggered = true;
         onComplete();
@@ -221,7 +245,7 @@ export function useFSRS({
         completionTimeoutRef.current = null;
       }
     };
-  }, [dueWords, isLoading, onComplete, getNextWordWithSpacing]);
+  }, [dueWords, isLoading, onComplete, getNextWordWithSpacing, sessionEpoch]);
 
   const convertToFSRSCard = useCallback((word: StudyWord): Card => {
     // Phase 1.3: Use explicit null checks instead of truthy checks
@@ -523,6 +547,10 @@ export function useFSRS({
     setCurrentWord(null);
     setProgress(0);
     setIsComplete(false);
+    setRemainingDueCount(0);
+    // Force the init effect to re-run even when the due data hasn't changed
+    // identity since the completion-time refetch (next-chunk start).
+    setSessionEpoch(epoch => epoch + 1);
     stateTrackingRef.current.completionTriggered = false;
     stateTrackingRef.current.isProcessingUpdate = false;
     countersRef.current = {
@@ -567,6 +595,7 @@ export function useFSRS({
     isLoading,
     isComplete,
     progress,
+    remainingDueCount,
     updateWord,
     previewIntervals,
     invalidateQueries,

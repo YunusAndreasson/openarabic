@@ -39,7 +39,7 @@ export type AnyNotificationType = (typeof NOTIFICATION_TYPES)[keyof typeof NOTIF
 
 /**
  * Tap destination per notification type. Slipping words are by construction
- * long overdue (R ≤ 0.7 with a 0.95 retention target), so they are always in
+ * long overdue (R ≤ 0.7 with a 0.90 retention target), so they are always in
  * the due queue — the Practice tab is the correct single target for all types.
  */
 export const NOTIFICATION_ROUTE_BY_TYPE: Record<AnyNotificationType, string> = {

@@ -35,6 +35,24 @@ export function calculateWordPriority(word: StudyWord, nowMs: number = Date.now(
   );
 }
 
+/**
+ * Top-priority slice of the due backlog for one review session. Lower
+ * calculateWordPriority = more urgent (min-heap semantics), so sort ascending
+ * and take the first chunkSize. Returns the input unchanged when it fits.
+ */
+export function selectSessionChunk(
+  words: StudyWord[],
+  chunkSize: number,
+  nowMs: number = Date.now(),
+): StudyWord[] {
+  if (words.length <= chunkSize) return words;
+  return words
+    .map(word => ({ word, priority: calculateWordPriority(word, nowMs) }))
+    .sort((a, b) => a.priority - b.priority)
+    .slice(0, chunkSize)
+    .map(entry => entry.word);
+}
+
 export function getNextWordWithSpacing(
   queue: PriorityQueue<StudyWord>,
   spacingState: SpacingState,

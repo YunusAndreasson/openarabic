@@ -70,6 +70,10 @@ interface CompletionScreenProps {
   sessionMetrics?: SessionMetrics;
   testID?: string;
   fromRemember?: boolean; // For dismissTo navigation
+  /** Due words beyond the just-completed chunk; > 0 shows "Review N more". */
+  remainingDueCount?: number;
+  /** Start the next chunk of a large backlog (session slicing). */
+  onReviewMore?: () => void;
 }
 
 export const CompletionScreen: FC<CompletionScreenProps> = ({
@@ -81,6 +85,8 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
   sessionMetrics,
   testID,
   fromRemember = false,
+  remainingDueCount = 0,
+  onReviewMore,
 }) => {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
@@ -184,6 +190,13 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
         }
         style={styles.buttonContainer}
       >
+        {onReviewMore && remainingDueCount > 0 && (
+          <ThemedButton
+            title={STRINGS.REVIEW_MORE_TEMPLATE.replace('{count}', String(remainingDueCount))}
+            onPress={onReviewMore}
+            style={styles.button}
+          />
+        )}
         {fromRemember ? (
           <Link href={ROUTE_PATHS.PRACTICE_TAB} dismissTo={true} asChild>
             <ThemedButton title={buttonText} style={styles.button} />
@@ -304,6 +317,7 @@ const styles = StyleSheet.create({
   buttonContainer: {
     width: '100%',
     paddingBottom: LAYOUT.SPACING.LARGE, // Extra padding at bottom
+    gap: LAYOUT.SPACING.SMALL, // Between "Review N more" and Continue
   },
 
   button: {

@@ -170,7 +170,7 @@ export function useArticleWordInteractions({
   /**
    * Long-press on a word: instant save to practice (toggle — long-press again
    * to undo). Words without a root fall back to the regular tap behavior.
-   * All guards (auth redirect, daily limit, capacity) are inherited from
+   * All guards (auth redirect, daily limit, due backlog) are inherited from
    * handleAddWordToStudy / handleRootPress.
    */
   const handleWordLongPress = useCallback(

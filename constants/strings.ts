@@ -331,6 +331,10 @@ export const STRINGS = {
     'Your mastered words have growing review intervals. Each successful review pushes them even longer.',
     'No reviews right now means your words are consolidating — your brain is strengthening the connections in the background.',
   ] as const,
+  RECOMMENDATION_BACKLOG_POOL: [
+    'A big review queue means new words are paused for now. Sessions come in short chunks of your most urgent words — a few of them will clear it.',
+    'Reviews come first: strengthening what you already know beats adding more. New words unlock as soon as your queue shrinks.',
+  ] as const,
   METRIC_FIRST_SESSION_TODAY: 'First session today!',
   METRIC_WORDS_IMPROVING: (count: number) =>
     `${count} ${count === 1 ? 'word' : 'words'} strengthened`,
@@ -340,6 +344,10 @@ export const STRINGS = {
   ADD_TO_PRACTICE: 'Add to practice',
   REMOVE_FROM_PRACTICE: 'In practice',
   WORD_ADDED_TO_PRACTICE: 'Saved to practice',
+  // Due-backlog intake gate (adding words blocked while reviews pile up)
+  BACKLOG_CLEAR_REVIEWS_TOAST: 'Clear some reviews first — you have {count} words waiting',
+  // Completion screen: next-chunk affordance for a large backlog
+  REVIEW_MORE_TEMPLATE: 'Review {count} more',
   // Long-press quick save (toggle: long-press again to undo)
   WORD_QUICK_SAVED: 'Saved to practice — long-press to undo',
   WORD_QUICK_REMOVED: 'Removed from practice',
@@ -689,8 +697,6 @@ export const STRINGS = {
   PLEASE_SIGN_IN_TO_ADD_WORDS: 'Sign in to add words',
   PLEASE_SIGN_IN_TO_ADD_ROOTS: 'Sign in to add roots',
   ERROR_EMPTY_EMAIL: 'Enter your email address',
-  // Practice button disabled messages - concise guidance
-  COMPLETE_DUE_FIRST: 'Review your due words first',
   HELP_SEARCH_PLACEHOLDER: 'Search help articles',
   HELP_SEARCH_RESULTS_SINGULAR: 'result',
   HELP_SEARCH_RESULTS_PLURAL: 'results',

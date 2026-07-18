@@ -119,9 +119,11 @@ export const createFSRSMock = (
   isLoading: false,
   isComplete: false,
   progress: 0,
+  remainingDueCount: 0,
   updateWord: jest.fn().mockResolvedValue(7.5), // Returns new stability
   previewIntervals: jest.fn(() => ({ unknown: '1m', vague: '10m', known: '4d' })),
   invalidateQueries: jest.fn(),
+  resetQueue: jest.fn(),
   dueWords: [],
   totalDue: 0,
   ...overrides,

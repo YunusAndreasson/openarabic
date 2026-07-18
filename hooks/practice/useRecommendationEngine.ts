@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 
+import { DUE_BACKLOG_ADD_THRESHOLD } from '@/constants/fsrs';
 import { STRINGS } from '@/constants/strings';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { calculateNextDueDate } from '@/utils/fsrsUtils';
@@ -203,6 +204,15 @@ export function useRecommendationEngine({
         message:
           'Start by adding 10-15 words from articles. Small batches work best for long-term memory.',
         type: 'start',
+      };
+    }
+
+    // State 2a: Large backlog — adding is paused (mirrors the due-backlog
+    // intake gate); explain the state and the way out before other due messaging.
+    if (dueWordsCount >= DUE_BACKLOG_ADD_THRESHOLD) {
+      return {
+        message: selectFromPool(STRINGS.RECOMMENDATION_BACKLOG_POOL, dayIndex),
+        type: 'review',
       };
     }
 

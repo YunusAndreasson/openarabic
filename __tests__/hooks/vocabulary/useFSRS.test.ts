@@ -316,9 +316,14 @@ describe('useFSRS', () => {
         result.current.resetQueue();
       });
 
-      // After reset, queue should be empty and isComplete should be true (empty queue)
-      expect(result.current.wordQueue).toEqual([]);
+      // resetQueue bumps the session epoch, so the init effect re-runs against
+      // the current due data and a fresh session starts (the "Review N more"
+      // restart path) — progress returns to 0 and the queue is rebuilt.
+      await waitFor(() => {
+        expect(result.current.wordQueue).toHaveLength(1);
+      });
       expect(result.current.progress).toBe(0);
+      expect(result.current.isComplete).toBeFalsy();
     });
   });
 

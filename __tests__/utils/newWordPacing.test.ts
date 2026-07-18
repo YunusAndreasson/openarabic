@@ -6,9 +6,10 @@
 
 import { describe, expect, test } from '@jest/globals';
 
-import { NEW_WORD_PACING } from '@/constants/fsrs';
+import { DUE_BACKLOG_ADD_THRESHOLD, NEW_WORD_PACING } from '@/constants/fsrs';
 import {
   computeAdaptiveNewLimit,
+  evaluateDueBacklogGate,
   type AdaptiveNewLimitInput,
   type RecentRecall,
 } from '@/utils/newWordPacing';
@@ -94,5 +95,32 @@ describe('computeAdaptiveNewLimit', () => {
     expect(NEW_WORD_PACING.MIN_TRIALS).toBe(20);
     expect(NEW_WORD_PACING.REDUCE_GAP).toBe(0.05);
     expect(NEW_WORD_PACING.PAUSE_GAP).toBe(0.15);
+  });
+});
+
+describe('evaluateDueBacklogGate', () => {
+  test('does not block below the threshold', () => {
+    const r = evaluateDueBacklogGate(DUE_BACKLOG_ADD_THRESHOLD - 1);
+    expect(r.blocked).toBe(false);
+    expect(r.dueCount).toBe(DUE_BACKLOG_ADD_THRESHOLD - 1);
+  });
+
+  test('blocks exactly at the threshold (>=)', () => {
+    const r = evaluateDueBacklogGate(DUE_BACKLOG_ADD_THRESHOLD);
+    expect(r.blocked).toBe(true);
+    expect(r.dueCount).toBe(DUE_BACKLOG_ADD_THRESHOLD);
+  });
+
+  test('blocks above the threshold', () => {
+    expect(evaluateDueBacklogGate(DUE_BACKLOG_ADD_THRESHOLD + 30).blocked).toBe(true);
+  });
+
+  test('never blocks an empty backlog', () => {
+    expect(evaluateDueBacklogGate(0).blocked).toBe(false);
+  });
+
+  test('respects a custom threshold', () => {
+    expect(evaluateDueBacklogGate(5, 10).blocked).toBe(false);
+    expect(evaluateDueBacklogGate(10, 10).blocked).toBe(true);
   });
 });

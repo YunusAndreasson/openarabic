@@ -250,6 +250,86 @@ describe('useStudyWordMutations', () => {
     });
   });
 
+  describe('due-backlog gate', () => {
+    const dueKey = ['fsrs-words', 'test-user-id', 'due'];
+    const twentyDue = Array.from({ length: 20 }, (_, i) => ({ root_id: i + 1 }));
+
+    test('blocks adding via handleRootPress when the due backlog is at the threshold', async () => {
+      queryClient.setQueryData(['fsrs-words', 'test-user-id'], []);
+      queryClient.setQueryData(dueKey, twentyDue);
+
+      const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
+
+      let returned: boolean | undefined;
+      await act(async () => {
+        returned = await result.current.handleRootPress(999 as RootId, 'add');
+      });
+
+      expect(returned).toBeUndefined();
+      expect(mockShowToast).toHaveBeenCalledWith(
+        expect.stringContaining('20'),
+        3000,
+        expect.anything(),
+      );
+      expect(mockToggleFSRSStudyRoot).not.toHaveBeenCalled();
+    });
+
+    test('blocks adding via handleWordPress when the due backlog is high', async () => {
+      queryClient.setQueryData(dueKey, twentyDue);
+
+      const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
+
+      await act(async () => {
+        await result.current.handleWordPress(999 as RootId);
+      });
+
+      expect(mockShowToast).toHaveBeenCalledWith(
+        expect.stringContaining('20'),
+        3000,
+        expect.anything(),
+      );
+      expect(mockToggleFSRSStudyRoot).not.toHaveBeenCalled();
+    });
+
+    test('still allows removing despite a high backlog', async () => {
+      queryClient.setQueryData(['fsrs-words', 'test-user-id'], [{ root_id: 1 }]);
+      queryClient.setQueryData(dueKey, twentyDue);
+
+      const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
+
+      await act(async () => {
+        await result.current.handleRootPress(1 as RootId, 'remove');
+      });
+
+      expect(mockToggleFSRSStudyRoot).toHaveBeenCalled();
+    });
+
+    test('fails open when the due cache is missing', async () => {
+      queryClient.setQueryData(['fsrs-words', 'test-user-id'], []);
+
+      const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
+
+      await act(async () => {
+        await result.current.handleRootPress(2 as RootId, 'add');
+      });
+
+      expect(mockToggleFSRSStudyRoot).toHaveBeenCalled();
+    });
+
+    test('does not block just below the threshold', async () => {
+      queryClient.setQueryData(['fsrs-words', 'test-user-id'], []);
+      queryClient.setQueryData(dueKey, twentyDue.slice(0, 19));
+
+      const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
+
+      await act(async () => {
+        await result.current.handleRootPress(2 as RootId, 'add');
+      });
+
+      expect(mockToggleFSRSStudyRoot).toHaveBeenCalled();
+    });
+  });
+
   describe('Mutation behavior', () => {
     test('toggleWordMutation calls service with correct params', async () => {
       const { result } = renderHook(() => useStudyWordMutations(), { wrapper });

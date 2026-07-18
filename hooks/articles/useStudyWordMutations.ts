@@ -4,7 +4,6 @@ import { useCallback } from 'react';
 
 import { useToast } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
-import { DEFAULT_SESSION_COOLDOWN_HOURS, MEMORY_CAPACITY_THRESHOLDS } from '@/constants/fsrs';
 import { audioQueries, fsrsQueries } from '@/constants/queries';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -17,21 +16,13 @@ import type { RootId } from '@/types/branded.types';
 import { DailyWordLimitStatus, ToastType } from '@/types/enums';
 import type { StudyWord, StudyWordIntent } from '@/types/vocabulary.types';
 import { OnboardingStep } from '@/constants/onboarding';
-import { normalizeTimestamp } from '@/utils/dateTimeUtils';
 import { handleError } from '@/utils/errorHandling';
 import { errorFeedback } from '@/utils/haptics';
+import { evaluateDueBacklogGate } from '@/utils/newWordPacing';
 import { markOnboardingStep } from '@/utils/onboardingStorage';
 
 interface StudyWordContext {
   previousStudyWords: StudyWord[];
-}
-
-interface FSRSWordSnapshot {
-  fsrs_due: string | null;
-  fsrs_last_review: string;
-  fsrs_stability?: number | null;
-  fsrs_difficulty?: number | null;
-  fsrs_reps?: number | null;
 }
 
 interface ToggleStudyVariables {
@@ -77,56 +68,16 @@ export const useStudyWordMutations = (
       : `Daily limit of ${dailyWordLimit} words reached. You can increase it in Account settings.`;
   }, [getEffectiveLimitInfo, dailyWordLimit]);
 
-  // Lightweight capacity guard: prevent adding when capacity is low (red phase)
-  // Only applies when user has more than 100 words to avoid being annoying for new users
-  const isCapacityLow = useCallback(
-    (userId: string | undefined): boolean => {
-      if (!userId) return false;
-      const all = queryClient.getQueryData<unknown>(
-        fsrsQueries.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS).queryKey,
-      );
-      if (Array.isArray(all)) {
-        const words = all as FSRSWordSnapshot[];
-
-        // Don't apply capacity restrictions for users with 100 or fewer words
-        if (words.length <= 100) return false;
-
-        if (words.length === 0) return false;
-        const valid = words.filter(
-          (w): w is typeof w & { fsrs_stability: number; fsrs_difficulty: number } =>
-            w.fsrs_stability != null && w.fsrs_difficulty != null,
-        );
-        let capacityScore: number;
-        if (valid.length >= Math.max(1, Math.floor(words.length * 0.5))) {
-          const avgStability = valid.reduce((s, w) => s + w.fsrs_stability, 0) / valid.length;
-          const avgDifficulty = valid.reduce((s, w) => s + w.fsrs_difficulty, 0) / valid.length;
-          const avgReps = valid.reduce((s, w) => s + (w.fsrs_reps ?? 0), 0) / valid.length;
-          const stabilityFactor = Math.min(avgStability / 30, 1) * 45;
-          const repsFactor = Math.min(avgReps / 10, 1) * 30;
-          const difficultyFactor = Math.max(0, (10 - avgDifficulty) / 10) * 25;
-          capacityScore = Math.max(
-            15,
-            Math.min(100, Math.round(stabilityFactor + repsFactor + difficultyFactor)),
-          );
-        } else {
-          // Fallback heuristic based on due words ratio with cooldown
-          const nowMs = Date.now();
-          const cutoffMs = nowMs - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
-          const dueCount = words.reduce((count, w) => {
-            const dueStr = normalizeTimestamp(w.fsrs_due);
-            const dueMs = dueStr ? Date.parse(dueStr) : Number.POSITIVE_INFINITY;
-            const isDue = Number.isFinite(dueMs) && dueMs <= nowMs;
-            const lastStr = normalizeTimestamp(w.fsrs_last_review);
-            const lastMs = lastStr ? Date.parse(lastStr) : 0;
-            const recentlyReviewed = Number.isFinite(lastMs) && lastMs >= cutoffMs;
-            return count + (isDue && !recentlyReviewed ? 1 : 0);
-          }, 0);
-          const ratio = dueCount / Math.max(1, words.length);
-          capacityScore = ratio > 0.25 ? 30 : ratio > 0.1 ? 50 : 75;
-        }
-        return capacityScore < MEMORY_CAPACITY_THRESHOLDS.POOR;
-      }
-      return false;
+  // Due-backlog gate: block NEW saves while the review backlog is high. Reads
+  // the shared due-words cache (kept warm app-wide by the tab badge); fails
+  // open when the cache is missing. Returns the blocking count, or null when
+  // adding is fine.
+  const getDueBacklogBlock = useCallback(
+    (userId: string | undefined): number | null => {
+      if (!userId) return null;
+      const dueWords = queryClient.getQueryData<StudyWord[]>(fsrsQueries.due(userId).queryKey);
+      const gate = evaluateDueBacklogGate(Array.isArray(dueWords) ? dueWords.length : 0);
+      return gate.blocked ? gate.dueCount : null;
     },
     [queryClient],
   );
@@ -241,9 +192,14 @@ export const useStudyWordMutations = (
           return;
         }
 
-        // Capacity guard
-        if (isCapacityLow(userId)) {
-          showToast(STRINGS.COMPLETE_DUE_FIRST, 3000, ToastType.INFO);
+        // Due-backlog gate
+        const backlogCount = getDueBacklogBlock(userId);
+        if (backlogCount !== null) {
+          showToast(
+            STRINGS.BACKLOG_CLEAR_REVIEWS_TOAST.replace('{count}', String(backlogCount)),
+            3000,
+            ToastType.INFO,
+          );
           return;
         }
 
@@ -266,7 +222,7 @@ export const useStudyWordMutations = (
       canAddWord,
       incrementDailyWordCount,
       getLimitReachedMessage,
-      isCapacityLow,
+      getDueBacklogBlock,
     ],
   );
 
@@ -306,10 +262,17 @@ export const useStudyWordMutations = (
           }
         }
 
-        // Capacity guard applies to adds only — removing must always be possible
-        if (isAdd && isCapacityLow(currentUserId)) {
-          showToast(STRINGS.COMPLETE_DUE_FIRST, 3000, ToastType.INFO);
-          return undefined;
+        // Due-backlog gate applies to adds only — removing must always be possible
+        if (isAdd) {
+          const backlogCount = getDueBacklogBlock(currentUserId);
+          if (backlogCount !== null) {
+            showToast(
+              STRINGS.BACKLOG_CLEAR_REVIEWS_TOAST.replace('{count}', String(backlogCount)),
+              3000,
+              ToastType.INFO,
+            );
+            return undefined;
+          }
         }
 
         // Increment daily word count only for add operations
@@ -341,7 +304,7 @@ export const useStudyWordMutations = (
       incrementDailyWordCount,
       getLimitReachedMessage,
       queryClient,
-      isCapacityLow,
+      getDueBacklogBlock,
     ],
   );
 

@@ -149,6 +149,8 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     revealMeaningPassive,
     promptAudioDoneKey,
     stopAudio,
+    remainingDueCount,
+    startNextChunk,
   } = useReview({ fromRemember });
 
   // Voice grading — when the toggle is on, auto-arms the mic after each card
@@ -200,6 +202,8 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
         sessionMetrics={sessionMetrics}
         testID="completion-screen"
         fromRemember={fromRemember}
+        remainingDueCount={remainingDueCount}
+        onReviewMore={startNextChunk}
       />
     );
   }
