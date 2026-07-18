@@ -1,7 +1,8 @@
 /**
  * DictionaryWordCard Component Tests
  *
- * Tests vocabulary word card with edit mode and audio playback.
+ * Tests the vocabulary word row: word rendering, tap-to-open, swipe actions
+ * (reset progress / remove), and stability color routing.
  *
  * Modern Jest 29 Patterns:
  * - ✅ @jest/globals explicit imports
@@ -38,13 +39,6 @@ jest.mock('@/hooks/animations', () =>
   require('@/__tests__/helpers/componentMocks').createAnimationHooksMock(),
 );
 
-// Mock edit mode card animation
-jest.mock('@/hooks/cards', () => ({
-  useEditModeCardAnimation: () => ({
-    animatedStyle: {},
-  }),
-}));
-
 jest.mock('@/utils/haptics', () => ({
   lightFeedback: jest.fn(),
   mediumFeedback: jest.fn(),
@@ -58,6 +52,36 @@ jest.mock('@/utils/layoutUtils', () => ({
   createPadding: () => ({}),
 }));
 
+// Render the swipeable inline: children plus the right-actions panel, so the
+// swipe action buttons are reachable without gesture simulation
+jest.mock('react-native-gesture-handler/ReanimatedSwipeable', () => {
+  const MockReact = require('react');
+  const { View } = require('react-native');
+  const MockSwipeable = MockReact.forwardRef(
+    (
+      props: { children?: React.ReactNode; renderRightActions?: () => React.ReactNode },
+      _ref: unknown,
+    ) =>
+      MockReact.createElement(
+        View,
+        null,
+        props.children,
+        props.renderRightActions ? props.renderRightActions() : null,
+      ),
+  );
+  return { __esModule: true, default: MockSwipeable };
+});
+
+// Swipe action buttons as pressable text so tests can target them by icon name
+jest.mock('@/components/ui', () => {
+  const MockReact = require('react');
+  const { Text } = require('react-native');
+  return {
+    IconButton: ({ icon, onPress }: { icon: string; onPress: () => void }) =>
+      MockReact.createElement(Text, { onPress }, `icon-${icon}`),
+  };
+});
+
 // Mock urgencyScore util — jest.fn() so we can spy on call arguments
 jest.mock('@/utils/urgencyScore', () => ({
   getStabilityProgressColor: jest.fn((stability: number | null) => {
@@ -68,7 +92,9 @@ jest.mock('@/utils/urgencyScore', () => ({
 }));
 
 describe('DictionaryWordCard', () => {
-  const mockOnDelete = jest.fn();
+  const mockOnPress = jest.fn();
+  const mockOnRemove = jest.fn();
+  const mockOnResetProgress = jest.fn();
 
   const createMockWord = (overrides: Partial<StudyWord> = {}): StudyWord =>
     ({
@@ -95,129 +121,89 @@ describe('DictionaryWordCard', () => {
       ...overrides,
     }) as StudyWord;
 
+  const renderCard = (word: StudyWord) =>
+    render(
+      <DictionaryWordCard
+        word={word}
+        onPress={mockOnPress}
+        onRemove={mockOnRemove}
+        onResetProgress={mockOnResetProgress}
+      />,
+    );
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   describe('Rendering', () => {
     test('renders Arabic text from root', () => {
-      const word = createMockWord();
-      const { getByText } = render(
-        <DictionaryWordCard word={word} editMode={false} onDelete={mockOnDelete} />,
-      );
+      const { getByText } = renderCard(createMockWord());
       expect(getByText('كتب')).toBeTruthy();
     });
 
     test('renders English meaning from root with capitalized first letter', () => {
-      const word = createMockWord();
-      const { getByText } = render(
-        <DictionaryWordCard word={word} editMode={false} onDelete={mockOnDelete} />,
-      );
+      const { getByText } = renderCard(createMockWord());
       expect(getByText('To write')).toBeTruthy();
     });
 
-    test('renders fallback text when root is missing', () => {
-      const word = createMockWord({ root: undefined });
-      const { getByText } = render(
-        <DictionaryWordCard word={word} editMode={false} onDelete={mockOnDelete} />,
-      );
-      expect(getByText('Unknown Arabic')).toBeTruthy();
-      // Fallback text is already capitalized, so it remains "Unknown English"
-      expect(getByText('Unknown English')).toBeTruthy();
-    });
-  });
-
-  describe('Edit Mode', () => {
-    test('shows delete button in edit mode', () => {
-      const word = createMockWord();
-      const { toJSON } = render(
-        <DictionaryWordCard word={word} editMode={true} onDelete={mockOnDelete} />,
-      );
-      // Component should render with delete button
-      expect(toJSON()).toBeTruthy();
-    });
-
-    test('hides delete button when not in edit mode', () => {
-      const word = createMockWord();
-      const { toJSON } = render(
-        <DictionaryWordCard word={word} editMode={false} onDelete={mockOnDelete} />,
-      );
-      expect(toJSON()).toBeTruthy();
-    });
-
-    test('calls onDelete when delete button is pressed in edit mode', () => {
-      const word = createMockWord();
-      // DeleteButton component is mocked, so we verify the structure exists
-      const { toJSON } = render(
-        <DictionaryWordCard word={word} editMode={true} onDelete={mockOnDelete} />,
-      );
+    test('renders without crashing when root is missing', () => {
+      const { toJSON } = renderCard(createMockWord({ root: undefined }));
       expect(toJSON()).toBeTruthy();
     });
   });
 
   describe('Card Press', () => {
-    test('calls onPress with word when card is pressed (not in edit mode)', () => {
+    test('calls onPress with word when card is pressed', () => {
       const word = createMockWord();
-      const mockOnPress = jest.fn();
-      const { getByText } = render(
-        <DictionaryWordCard
-          word={word}
-          editMode={false}
-          onDelete={mockOnDelete}
-          onPress={mockOnPress}
-        />,
-      );
+      const { getByText } = renderCard(word);
 
       fireEvent.press(getByText('كتب'));
 
       expect(mockOnPress).toHaveBeenCalledWith(word);
     });
+  });
 
-    test('card is not pressable in edit mode', () => {
+  describe('Swipe Actions', () => {
+    test('calls onResetProgress with word when reset action is pressed', () => {
       const word = createMockWord();
-      const mockOnPress = jest.fn();
-      const { toJSON } = render(
-        <DictionaryWordCard
-          word={word}
-          editMode={true}
-          onDelete={mockOnDelete}
-          onPress={mockOnPress}
-        />,
-      );
-      // In edit mode, the card should render without press handler
-      // Verify the component renders correctly in edit mode
-      expect(toJSON()).toBeTruthy();
+      const { getByText } = renderCard(word);
+
+      fireEvent.press(getByText('icon-refresh'));
+
+      expect(mockOnResetProgress).toHaveBeenCalledWith(word);
+      expect(mockOnRemove).not.toHaveBeenCalled();
+    });
+
+    test('calls onRemove with word when remove action is pressed', () => {
+      const word = createMockWord();
+      const { getByText } = renderCard(word);
+
+      fireEvent.press(getByText('icon-trash'));
+
+      expect(mockOnRemove).toHaveBeenCalledWith(word);
+      expect(mockOnResetProgress).not.toHaveBeenCalled();
     });
   });
 
   describe('Memory Strength Indicator', () => {
-    test('renders memory strength dot', () => {
-      const word = createMockWord({ fsrs_stability: 10 });
-      const { toJSON } = render(
-        <DictionaryWordCard word={word} editMode={false} onDelete={mockOnDelete} />,
-      );
-      expect(toJSON()).toBeTruthy();
-    });
-
-    test('dot color reflects stability level', () => {
-      // The dot is rendered through Skia (GlowingDot) so its tint isn't in
-      // the RN tree — instead, verify the component routes each word's
-      // stability into getStabilityProgressColor (the mock above returns
-      // 'error' for <1 and 'success' for ≥7).
+    test('routes stability into getStabilityProgressColor', () => {
       const stabilitySpy = getStabilityProgressColor as jest.MockedFunction<
         typeof getStabilityProgressColor
       >;
       stabilitySpy.mockClear();
 
       const lowStabilityWord = createMockWord({ fsrs_stability: 0.5 });
-      const { rerender } = render(
-        <DictionaryWordCard word={lowStabilityWord} editMode={false} onDelete={mockOnDelete} />,
-      );
+      const { rerender } = renderCard(lowStabilityWord);
       expect(stabilitySpy).toHaveBeenCalledWith(0.5);
 
       const highStabilityWord = createMockWord({ fsrs_stability: 30 });
       rerender(
-        <DictionaryWordCard word={highStabilityWord} editMode={false} onDelete={mockOnDelete} />,
+        <DictionaryWordCard
+          word={highStabilityWord}
+          onPress={mockOnPress}
+          onRemove={mockOnRemove}
+          onResetProgress={mockOnResetProgress}
+        />,
       );
       expect(stabilitySpy).toHaveBeenCalledWith(30);
     });
@@ -226,12 +212,17 @@ describe('DictionaryWordCard', () => {
   describe('Memoization', () => {
     test('renders consistently with same props', () => {
       const word = createMockWord();
-      const { toJSON, rerender } = render(
-        <DictionaryWordCard word={word} editMode={false} onDelete={mockOnDelete} />,
-      );
+      const { toJSON, rerender } = renderCard(word);
       const firstRender = JSON.stringify(toJSON());
 
-      rerender(<DictionaryWordCard word={word} editMode={false} onDelete={mockOnDelete} />);
+      rerender(
+        <DictionaryWordCard
+          word={word}
+          onPress={mockOnPress}
+          onRemove={mockOnRemove}
+          onResetProgress={mockOnResetProgress}
+        />,
+      );
       const secondRender = JSON.stringify(toJSON());
 
       expect(firstRender).toBe(secondRender);
@@ -241,12 +232,17 @@ describe('DictionaryWordCard', () => {
       const word1 = createMockWord({ root: { ...createMockWord().root!, letters: 'كتب' } });
       const word2 = createMockWord({ root: { ...createMockWord().root!, letters: 'قرأ' } });
 
-      const { rerender, getByText, queryByText } = render(
-        <DictionaryWordCard word={word1} editMode={false} onDelete={mockOnDelete} />,
-      );
+      const { rerender, getByText, queryByText } = renderCard(word1);
       expect(getByText('كتب')).toBeTruthy();
 
-      rerender(<DictionaryWordCard word={word2} editMode={false} onDelete={mockOnDelete} />);
+      rerender(
+        <DictionaryWordCard
+          word={word2}
+          onPress={mockOnPress}
+          onRemove={mockOnRemove}
+          onResetProgress={mockOnResetProgress}
+        />,
+      );
       expect(getByText('قرأ')).toBeTruthy();
       expect(queryByText('كتب')).toBeNull();
     });

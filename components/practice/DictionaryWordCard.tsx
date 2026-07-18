@@ -1,112 +1,121 @@
-import { BaseCard } from '@/components/common';
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import ReanimatedSwipeable, {
+  type SwipeableMethods,
+} from 'react-native-gesture-handler/ReanimatedSwipeable';
 
 import { ThemedText } from '@/components/ThemedText';
-import { DeleteButton } from '@/components/playlist';
-import { GlowingDot } from '@/components/ui/GlowingDot';
+import { BaseCard } from '@/components/common';
+import { ColorDot } from '@/components/ui/ColorDot';
+import { Ionicons } from '@/components/ui/Icon';
+import { IconButton } from '@/components/ui';
 
-import { FONTS } from '@/constants/fonts';
-import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
-import { useEditModeCardAnimation } from '@/hooks/cards';
+import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 import { getStabilityProgressColor } from '@/utils/urgencyScore';
 
+const CHEVRON_SIZE = 14;
+
 interface DictionaryWordCardProps {
   word: StudyWord;
-  editMode: boolean;
-  onDelete: () => void;
-  /** Called when card is pressed (opens sentence examples bottom sheet) */
-  onPress?: (word: StudyWord) => void;
+  /** Opens the word detail sheet */
+  onPress: (word: StudyWord) => void;
+  /** Swipe action: remove the word from practice */
+  onRemove: (word: StudyWord) => void;
+  /** Swipe action: reset the word's FSRS progress */
+  onResetProgress: (word: StudyWord) => void;
 }
 
 export const DictionaryWordCard = memo<DictionaryWordCardProps>(
-  ({ word, editMode, onDelete, onPress }) => {
+  ({ word, onPress, onRemove, onResetProgress }) => {
     const colors = useColors();
+    const swipeableRef = useRef<SwipeableMethods>(null);
 
-    // Edit mode animation (scales down when in edit mode)
-    const { animatedStyle } = useEditModeCardAnimation({ editMode });
+    // FlashList recycles row instances onto new words — snap any open action
+    // panel shut instantly so it can't carry over to the recycled row.
+    useEffect(() => {
+      swipeableRef.current?.reset();
+    }, [word.root_id]);
 
-    // Handle card press - opens sentence examples bottom sheet
-    const handleCardPress = useCallback(() => {
-      if (editMode) return;
-      onPress?.(word);
-    }, [editMode, word, onPress]);
+    const handlePress = useCallback(() => {
+      onPress(word);
+    }, [onPress, word]);
 
-    // Handle delete button press
-    const handleDeletePress = useCallback(() => {
-      if (!editMode) return;
-      onDelete();
-    }, [editMode, onDelete]);
+    const handleRemove = useCallback(() => {
+      swipeableRef.current?.close();
+      onRemove(word);
+    }, [onRemove, word]);
 
-    // Get Arabic and English text from root
-    const arabicText = word.root?.letters || 'Unknown Arabic';
-    const rawEnglishText = word.root?.meaning || 'Unknown English';
+    const handleResetProgress = useCallback(() => {
+      swipeableRef.current?.close();
+      onResetProgress(word);
+    }, [onResetProgress, word]);
 
-    // Capitalize first letter of English text for display
-    const englishText = useMemo(() => capitalizeFirstLetter(rawEnglishText), [rawEnglishText]);
+    const renderRightActions = useCallback(
+      () => (
+        <View style={styles.actions}>
+          <IconButton
+            icon="refresh"
+            onPress={handleResetProgress}
+            backgroundColor={colors.warning}
+            iconSize={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+          />
+          <IconButton
+            icon="trash"
+            onPress={handleRemove}
+            variant="danger"
+            iconSize={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+          />
+        </View>
+      ),
+      [handleResetProgress, handleRemove, colors.warning],
+    );
 
-    // Get dot color based on stability level (error=red, warning=orange, success=green)
+    const arabicText = word.root?.letters ?? '';
+    const englishText = useMemo(
+      () => capitalizeFirstLetter(word.root?.meaning ?? ''),
+      [word.root?.meaning],
+    );
     const dotColorKey = useMemo(
       () => getStabilityProgressColor(word.fsrs_stability),
       [word.fsrs_stability],
     );
 
     return (
-      <Animated.View style={[styles.cardContainer, animatedStyle]}>
-        <View style={styles.cardWrapper}>
-          <BaseCard
-            style={styles.card}
-            onPress={editMode ? undefined : handleCardPress}
-            shadowSize="small"
-            contentStyle={styles.cardContent}
-          >
-            <View style={styles.content}>
-              {/* Memory dot and English text */}
-              <View style={styles.leftSection}>
-                <GlowingDot color={colors[dotColorKey]} />
-                <ThemedText
-                  type="body"
-                  variant="secondary"
-                  style={styles.englishText}
-                  numberOfLines={2}
-                  ellipsizeMode="tail"
-                >
-                  {englishText}
-                </ThemedText>
-              </View>
-
-              {/* Arabic text (vertically centered) */}
-              <View style={styles.rightSection}>
-                <ThemedText
-                  type="arabic"
-                  weight="semibold"
-                  numberOfLines={1}
-                  style={styles.arabicText}
-                >
-                  {arabicText}
-                </ThemedText>
-              </View>
+      <ReanimatedSwipeable
+        ref={swipeableRef}
+        friction={2}
+        rightThreshold={40}
+        overshootRight={false}
+        renderRightActions={renderRightActions}
+        containerStyle={styles.container}
+      >
+        <BaseCard onPress={handlePress} shadowSize="small">
+          <View style={styles.row}>
+            <View style={styles.wordColumn}>
+              <ThemedText type="arabic" weight="semibold" align="left" numberOfLines={1}>
+                {arabicText}
+              </ThemedText>
+              <ThemedText type="caption" colorName="secondaryText" numberOfLines={1}>
+                {englishText}
+              </ThemedText>
             </View>
-          </BaseCard>
-        </View>
 
-        {/* Delete Button - shows on right in edit mode (similar to bookmarks) */}
-        {editMode && (
-          <View style={styles.deleteButtonContainer}>
-            <DeleteButton onPress={handleDeletePress} />
+            <View style={styles.trailing}>
+              <ColorDot color={colors[dotColorKey]} />
+              <Ionicons name="chevron-forward" size={CHEVRON_SIZE} color={colors.textTertiary} />
+            </View>
           </View>
-        )}
-      </Animated.View>
+        </BaseCard>
+      </ReanimatedSwipeable>
     );
   },
   (prevProps, nextProps) => {
-    // Only compare values actually used in render output
+    // Only compare values actually used in render output — the screen passes
+    // stable callback references
     return (
-      prevProps.editMode === nextProps.editMode &&
       prevProps.word.root_id === nextProps.word.root_id &&
       prevProps.word.fsrs_stability === nextProps.word.fsrs_stability &&
       prevProps.word.root?.letters === nextProps.word.root?.letters &&
@@ -118,56 +127,32 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
 DictionaryWordCard.displayName = 'DictionaryWordCard';
 
 const styles = StyleSheet.create({
-  cardContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    position: 'relative',
+  container: {
     marginBottom: LAYOUT.SPACING.SMALL,
+    // Swipeable defaults to overflow hidden, which clips the card's iOS shadow
+    overflow: 'visible',
   },
-  cardWrapper: {
-    flex: 1,
-  },
-  card: {
-    flex: 1,
-  },
-  cardContent: {
-    minHeight: LAYOUT.CARD.HEIGHT.VOCABULARY_ITEM,
-  },
-  content: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    flex: 1,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: 0,
+    gap: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
   },
-  leftSection: {
+  wordColumn: {
     flex: 1,
+    gap: LAYOUT.SPACING.HALF_TINY,
+  },
+  trailing: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingRight: LAYOUT.SPACING.MEDIUM,
     gap: LAYOUT.SPACING.SMALL,
   },
-  englishText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontFamily: FONTS.ENGLISH_SEMIBOLD,
-    textAlign: 'left',
-    includeFontPadding: false,
-    lineHeight: Math.round(LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.TIGHT),
-  },
-  rightSection: {
-    flex: 1,
+  actions: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
-    marginLeft: LAYOUT.SPACING.SMALL,
-  },
-  arabicText: {
-    includeFontPadding: true,
-  },
-  deleteButtonContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingLeft: LAYOUT.SPACING.SMALL,
+    gap: LAYOUT.SPACING.SMALL,
+    paddingLeft: LAYOUT.SPACING.MEDIUM,
   },
 });

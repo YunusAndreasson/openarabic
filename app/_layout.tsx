@@ -609,6 +609,18 @@ function AppContent() {
                       headerShown: false,
                     }}
                   />
+                  <Stack.Screen
+                    name="practice-word"
+                    options={{
+                      presentation: 'formSheet',
+                      // Fixed detents (not fitToContents): the sentence examples
+                      // load async, and a fitToContents sheet measures only once
+                      sheetAllowedDetents: [0.75, 1],
+                      sheetGrabberVisible: true,
+                      sheetCornerRadius: 24,
+                      headerShown: false,
+                    }}
+                  />
                 </Stack.Protected>
 
                 {/* Unauthenticated routes — guard flips on sign-in, router unmounts auth */}
