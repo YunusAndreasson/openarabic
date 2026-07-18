@@ -390,6 +390,15 @@ class SimpleAudioService {
     } = {},
   ): Promise<boolean> {
     try {
+      // A foreign track (word preview, practice audio) played mid-playlist must
+      // exit playlist mode first — otherwise its didJustFinish would trigger
+      // advanceToNextTrack and hijack playback back into the stale playlist.
+      // Legitimate playlist advancement always plays tracks from this.playlist,
+      // so this never fires for it.
+      if (this.isPlaylistMode && !this.playlist.some(t => t.id === track.id)) {
+        this.resetPlaylistState();
+      }
+
       // Throttled session activation: Only activate if not recently activated (5s window)
       // Reduces redundant calls during practice sessions while maintaining iOS reliability
       const now = Date.now();

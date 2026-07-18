@@ -1,23 +1,19 @@
 import { useRouter } from 'expo-router';
 import { memo, useCallback, useMemo, type FC } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { SectionLabel } from '@/components/common';
-import { PlaylistItemCard } from '@/components/playlist/PlaylistItemCard';
-import { COMPLETION_THRESHOLD, LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
+import { COMPLETION_THRESHOLD } from '@/constants/layout';
 import { APP_SESSION_ID } from '@/constants/queries';
 import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
-import { useArticlePrefetch } from '@/hooks/articles/useArticlePrefetch';
 import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import type { Article } from '@/types/articles.types';
 import type { ArticleId } from '@/types/branded.types';
 import { calculateProgressPercentage } from '@/utils/progressUtils';
-import { generateStorageUrl } from '@/utils/storageUtils';
-import { getArticleMetadataWithoutCategory } from '@/utils/stringUtils';
 
-const CARD_WIDTH = SCREEN_WIDTH * 0.7;
-const CARD_SPACING = LAYOUT.SPACING.SMALL;
+import { ArticleRail, type ArticleRailItem } from './ArticleRail';
+
 const MAX_ARTICLES_PER_SECTION = 8;
 const SHORT_ARTICLE_MAX_SENTENCES = 10;
 const LONG_ARTICLE_MIN_SENTENCES = 15;
@@ -31,7 +27,7 @@ interface DiscoverySectionsProps {
 interface SectionConfig {
   key: string;
   title: string;
-  articles: Article[];
+  articles: ArticleRailItem[];
 }
 
 /**
@@ -73,7 +69,7 @@ function shuffleAndSlice<T>(items: T[], count: number, sectionSeed: number): T[]
 }
 
 /**
- * Renders multiple horizontal discovery sections using PlaylistItemCard.
+ * Renders multiple horizontal discovery sections as ArticleRail card rails.
  * Sections: Beginner Friendly, Short Reads, Long Reads, Advanced.
  * Each section self-hides when no matching articles are found.
  */
@@ -115,7 +111,7 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
       result.push({
         key: 'beginner',
         title: STRINGS.SECTION_BEGINNER_FRIENDLY,
-        articles: beginnerArticles,
+        articles: beginnerArticles.map(article => ({ article })),
       });
     }
 
@@ -135,7 +131,7 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
       result.push({
         key: 'short-reads',
         title: STRINGS.SECTION_SHORT_READS,
-        articles: shortArticles,
+        articles: shortArticles.map(article => ({ article })),
       });
     }
 
@@ -151,7 +147,7 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
       result.push({
         key: 'long-reads',
         title: STRINGS.SECTION_LONG_READS,
-        articles: longArticles,
+        articles: longArticles.map(article => ({ article })),
       });
     }
 
@@ -167,7 +163,7 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
       result.push({
         key: 'advanced',
         title: STRINGS.SECTION_ADVANCED,
-        articles: advancedArticles,
+        articles: advancedArticles.map(article => ({ article })),
       });
     }
 
@@ -181,8 +177,6 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
     [router],
   );
 
-  const prefetchArticle = useArticlePrefetch();
-
   if (sections.length === 0) return null;
 
   return (
@@ -193,49 +187,16 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
             title={section.title}
             density={sectionIndex === 0 ? 'comfortable' : 'compact'}
           />
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
-            decelerationRate="fast"
-            snapToInterval={CARD_WIDTH + CARD_SPACING}
-            snapToAlignment="start"
-          >
-            {section.articles.map((article, index) => (
-              <View
-                key={`${section.key}-${article.id}`}
-                style={index === 0 ? styles.cardContainerFirst : styles.cardContainer}
-              >
-                <PlaylistItemCard
-                  title={article.title}
-                  secondaryText={getArticleMetadataWithoutCategory(article)}
-                  imageUrl={generateStorageUrl('images', article.image_url)}
-                  articleId={article.id}
-                  onPress={() => handleArticlePress(article)}
-                  onPressIn={() => prefetchArticle(article.id as ArticleId)}
-                  compact
-                />
-              </View>
-            ))}
-          </ScrollView>
+          <ArticleRail
+            items={section.articles}
+            keyPrefix={section.key}
+            onArticlePress={handleArticlePress}
+          />
         </View>
       ))}
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  scrollContent: {
-    paddingRight: LAYOUT.SCREEN_HORIZONTAL_PADDING,
-  },
-  cardContainerFirst: {
-    width: CARD_WIDTH,
-  },
-  cardContainer: {
-    width: CARD_WIDTH,
-    marginLeft: CARD_SPACING,
-  },
-});
 
 export const DiscoverySections = memo(DiscoverySectionsComponent);
 DiscoverySections.displayName = 'DiscoverySections';

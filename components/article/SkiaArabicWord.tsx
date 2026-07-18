@@ -38,6 +38,10 @@ const INK_BLEED_EM: Record<string, number> = {
 };
 const DEFAULT_INK_BLEED_EM = 0.15;
 
+// Long-press threshold: long enough not to fire during scroll hesitation,
+// short enough to feel instant (RNGH default is 500ms)
+const LONG_PRESS_DELAY_MS = 400;
+
 // Module-level constant — no per-render allocation
 const HIGHLIGHT_ANIMATION_STYLE = {
   animationName: {
@@ -53,6 +57,8 @@ const HIGHLIGHT_ANIMATION_STYLE = {
 interface SkiaArabicWordProps {
   word: SentenceWord;
   onTooltipOpen?: (word: SentenceWord, layout: LayoutRectangle) => void;
+  /** Long-press: instant save to practice (toggle) */
+  onWordLongPress?: (word: SentenceWord, layout?: LayoutRectangle) => void;
   wordRef?: RefObject<ComponentRef<typeof Pressable>>;
   testID?: string;
   /** When true, shows a pulsing highlight to draw attention (used for tutorial) */
@@ -66,6 +72,7 @@ interface SkiaArabicWordProps {
 const SkiaArabicWordInternal = function SkiaArabicWord({
   word,
   onTooltipOpen,
+  onWordLongPress,
   wordRef,
   testID,
   isHighlighted = false,
@@ -204,6 +211,25 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
     }
   };
 
+  // Long-press: instant save. Measured layout is only needed for the
+  // no-root fallback (tooltip mode), so measurement failure still saves.
+  const handleLongPress = () => {
+    if (!onWordLongPress) return;
+
+    try {
+      pressableRef.current?.measureInWindow((x, y, width, height) => {
+        if (!isMountedRef.current) return;
+        const layout =
+          x !== undefined && y !== undefined && width > 0 && height > 0
+            ? { x, y, width, height }
+            : undefined;
+        onWordLongPress(word, layout);
+      });
+    } catch {
+      onWordLongPress(word, undefined);
+    }
+  };
+
   // Memoize styles that depend on state to prevent recreation
   const containerStyle = useMemo(
     () => [
@@ -248,6 +274,8 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
         style={[containerStyle, activeStyle]}
         testID={testID}
         onPress={handlePress}
+        onLongPress={onWordLongPress ? handleLongPress : undefined}
+        delayLongPress={LONG_PRESS_DELAY_MS}
       >
         <Canvas style={canvasStyle} pointerEvents="none">
           {paragraph && (

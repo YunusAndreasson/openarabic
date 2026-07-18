@@ -57,7 +57,7 @@ const { useReadingListMutations } = require('@/hooks/articles/useReadingListMuta
 const { useStudyWordMutations } = require('@/hooks/articles/useStudyWordMutations');
 const { useArticleWordInteractions } = require('@/hooks/articles/useArticleWordInteractions');
 const { useReadingProgress } = require('@/hooks/articles/useReadingProgress');
-const { stopAudioSafely } = require('@/utils/audioUtils');
+const { stopNonPlaylistAudioSafely } = require('@/utils/audioUtils');
 const { handleError } = require('@/utils/errorHandling');
 const { selectionFeedback } = require('@/utils/haptics');
 
@@ -152,7 +152,7 @@ describe('useArticleScreen Hook', () => {
     jest.mocked(router.canDismiss).mockReturnValue(true);
     jest.mocked(router.dismiss).mockImplementation(jest.fn());
     jest.mocked(router.push).mockImplementation(jest.fn());
-    jest.mocked(stopAudioSafely).mockResolvedValue(undefined);
+    jest.mocked(stopNonPlaylistAudioSafely).mockResolvedValue(undefined);
     jest.mocked(handleError).mockImplementation(jest.fn());
     jest.mocked(selectionFeedback).mockImplementation(jest.fn());
   });
@@ -376,7 +376,7 @@ describe('useArticleScreen Hook', () => {
         await result.current.handleClose();
       });
 
-      expect(stopAudioSafely).toHaveBeenCalledWith(true);
+      expect(stopNonPlaylistAudioSafely).toHaveBeenCalledWith(true);
       expect(router.dismiss).toHaveBeenCalled();
       expect(router.push).not.toHaveBeenCalled();
     });
@@ -395,14 +395,14 @@ describe('useArticleScreen Hook', () => {
         await result.current.handleClose();
       });
 
-      expect(stopAudioSafely).toHaveBeenCalledWith(true);
+      expect(stopNonPlaylistAudioSafely).toHaveBeenCalledWith(true);
       expect(router.dismiss).not.toHaveBeenCalled();
       expect(router.push).toHaveBeenCalledWith('/(tabs)/explore');
     });
 
     test('handles audio stop error gracefully', async () => {
       const error = new Error('Audio stop failed');
-      jest.mocked(stopAudioSafely).mockRejectedValueOnce(error);
+      jest.mocked(stopNonPlaylistAudioSafely).mockRejectedValueOnce(error);
 
       const { result } = renderHook(() =>
         useArticleScreen({
@@ -599,7 +599,8 @@ describe('useArticleScreen Hook', () => {
 
       unmount();
 
-      expect(stopAudioSafely).toHaveBeenCalled();
+      // Playlist-mode audio persists (MiniPlayer owns it) — only word-preview audio stops
+      expect(stopNonPlaylistAudioSafely).toHaveBeenCalled();
     });
 
     test('refetches study words on app state change to active', async () => {

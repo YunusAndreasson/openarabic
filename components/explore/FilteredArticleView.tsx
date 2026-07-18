@@ -42,6 +42,11 @@ const STATIC_STYLES = StyleSheet.create({
   footerSpacer: {
     height: LAYOUT.SPACING.LARGE,
   },
+  // The list contentContainer already applies the screen inset — zero out the
+  // label's own so it stays flush with the card edges below it.
+  flushLabel: {
+    paddingHorizontal: 0,
+  },
 });
 
 const FooterComponent = () => <View style={STATIC_STYLES.footerSpacer} />;
@@ -180,7 +185,7 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({ articles, on
   const renderItem = useCallback(
     ({ item }: { item: ListItem }): JSX.Element => {
       if (item.type === 'header') {
-        return <SectionLabel title={item.title} />;
+        return <SectionLabel title={item.title} style={STATIC_STYLES.flushLabel} />;
       }
 
       const article = item.data;

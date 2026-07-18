@@ -121,7 +121,12 @@ export function findComponent(
     // match ال — not even when the English contains "the" (regular match path).
     // Guarding only the bypass let إِلَيْهِ paint ال as "the" whenever bracket
     // injection or a genuine "the" appeared in the gloss.
-    if (matches && type === ComponentType.PREFIX && pattern === 'ال' && FUSED_AL_WORDS.has(arabic)) {
+    if (
+      matches &&
+      type === ComponentType.PREFIX &&
+      pattern === 'ال' &&
+      FUSED_AL_WORDS.has(arabic)
+    ) {
       matches = false;
     }
 

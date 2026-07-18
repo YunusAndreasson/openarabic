@@ -18,12 +18,14 @@ import { useAppDispatch, useAppSelector, useAppSelectorShallow } from '@/store/h
 import { removeFromCustomOrder } from '@/store/playlistSlice';
 import type { ArticleId } from '@/types/branded.types';
 import { AudioLanguage, ToastType } from '@/types/enums';
+import { OnboardingStep } from '@/constants/onboarding';
 import {
   getCurrentArticleId,
   isAudioBusy,
   prefetchArticleWithImage,
-  stopAudioSafely,
+  stopNonPlaylistAudioSafely,
 } from '@/utils/audioUtils';
+import { markOnboardingStep } from '@/utils/onboardingStorage';
 import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback, selectionFeedback } from '@/utils/haptics';
 import { useTimerCleanup } from '@/hooks/utils/useTimerCleanup';
@@ -201,7 +203,9 @@ export const usePlaylistScreen = () => {
             }
           });
 
-          if (!success) {
+          if (success) {
+            void markOnboardingStep(OnboardingStep.LISTEN_AUDIO);
+          } else {
             setTimer('playbackMode', () => setPlaybackMode('none'), TIMING_CONSTANTS.QUICK_DELAY);
           }
         } catch (error) {
@@ -292,6 +296,7 @@ export const usePlaylistScreen = () => {
           );
           if (track) {
             await simpleAudioService.play(track);
+            void markOnboardingStep(OnboardingStep.LISTEN_AUDIO);
           }
           return;
         }
@@ -318,7 +323,9 @@ export const usePlaylistScreen = () => {
           }
         });
 
-        if (!success) {
+        if (success) {
+          void markOnboardingStep(OnboardingStep.LISTEN_AUDIO);
+        } else {
           setTimer('playbackMode', () => setPlaybackMode('none'), TIMING_CONSTANTS.QUICK_DELAY);
         }
       } catch (error) {
@@ -329,13 +336,13 @@ export const usePlaylistScreen = () => {
     [isCurrentlyPlaying, sortedEnhancedTracks, audioPreference, queryClient, prefetchArticle],
   );
 
-  // Stop audio when screen loses focus
+  // Clean up leaked non-playlist audio when the screen loses focus.
+  // Playlist playback deliberately survives tab switches (podcast-style) —
+  // the global MiniPlayer is its control surface.
   useFocusEffect(
     useCallback(() => {
-      // Cleanup function when screen loses focus
       return () => {
-        // Stop any playing audio when navigating away from bookmarks screen
-        stopAudioSafely();
+        stopNonPlaylistAudioSafely();
       };
     }, []),
   );

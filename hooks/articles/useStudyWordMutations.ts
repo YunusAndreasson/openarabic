@@ -16,9 +16,11 @@ import { useAppSelector } from '@/store/hooks';
 import type { RootId } from '@/types/branded.types';
 import { DailyWordLimitStatus, ToastType } from '@/types/enums';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { OnboardingStep } from '@/constants/onboarding';
 import { normalizeTimestamp } from '@/utils/dateTimeUtils';
 import { handleError } from '@/utils/errorHandling';
 import { errorFeedback } from '@/utils/haptics';
+import { markOnboardingStep } from '@/utils/onboardingStorage';
 
 interface StudyWordContext {
   previousStudyWords: StudyWord[];
@@ -206,6 +208,8 @@ export const useStudyWordMutations = (
           root_id: id,
           source: 'article',
         });
+        // First-run checklist signal (idempotent, fire-and-forget)
+        void markOnboardingStep(OnboardingStep.SAVE_WORD);
       }
 
       // Invalidate queries in background (don't await - optimistic update already applied)

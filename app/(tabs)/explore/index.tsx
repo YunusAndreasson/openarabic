@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { SectionLabel } from '@/components/common';
 import {
@@ -11,23 +11,26 @@ import {
   ContinueReadingSection,
   DiscoverySections,
   FilterSection,
+  GetStartedChecklist,
   HorizontalFeaturedSection,
 } from '@/components/explore';
+import { WelcomeIntro } from '@/components/tutorials/WelcomeIntro';
 import { LAYOUT } from '@/constants/layout';
 import { articleQueries, readingProgressQueries } from '@/constants/queries';
-import { getCategoryFilterRoute } from '@/constants/routes';
+import { getArticleRoute, getCategoryFilterRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
+import { TutorialId } from '@/constants/tutorials';
+import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { useOnboardingChecklist } from '@/hooks/onboarding/useOnboardingChecklist';
+import { useTutorial } from '@/hooks/tutorials/useTutorial';
 import { useToast } from '@/components/providers/ToastProvider';
-import type { CategoryId } from '@/types/branded.types';
+import type { ArticleId, CategoryId } from '@/types/branded.types';
+import { pickStarterArticle } from '@/utils/articleUtils';
 import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback } from '@/utils/haptics';
 
 const FOOTER_COMPONENT = <BrandFooter />;
-
-const styles = StyleSheet.create({
-  listContentContainer: LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
-});
 
 /**
  * Generic helper to build entities (categories/authors) with article counts
@@ -76,6 +79,26 @@ export default function ExploreScreen(): JSX.Element {
 
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // First-run onboarding: "Get started" checklist + one-shot welcome intro
+  const checklist = useOnboardingChecklist(articlesData);
+  const intro = useTutorial(TutorialId.WELCOME_INTRO);
+  const { trigger: triggerIntro } = intro;
+  useEffect(() => {
+    if (checklist.isEligible) {
+      triggerIntro();
+    }
+  }, [checklist.isEligible, triggerIntro]);
+
+  const starterArticleIds = useMemo(() => articlesData.map(a => a.id as ArticleId), [articlesData]);
+  const { data: starterProgressMap } = useSafeBulkReadingProgress(starterArticleIds);
+
+  const handleOpenFirstText = useCallback(() => {
+    const starter = pickStarterArticle(articlesData, starterProgressMap);
+    if (starter) {
+      router.push(getArticleRoute(starter.id as ArticleId, starter.title, true));
+    }
+  }, [articlesData, starterProgressMap]);
 
   // Build category counts from articles
   const categoryCounts = useMemo(() => {
@@ -134,6 +157,11 @@ export default function ExploreScreen(): JSX.Element {
   const headerSections = useMemo(() => {
     const sections = [];
 
+    // First-run "Get started" checklist (renders null once completed/suppressed)
+    sections.push(
+      <GetStartedChecklist key="get-started" articlesData={articlesData} checklist={checklist} />,
+    );
+
     // Continue Reading / Getting Started section (adaptive based on user progress)
     sections.push(<ContinueReadingSection key="continue-reading" articlesData={articlesData} />);
 
@@ -163,17 +191,25 @@ export default function ExploreScreen(): JSX.Element {
     sections.push(<DiscoverySections key="discovery" articlesData={articlesData} />);
 
     return sections;
-  }, [articlesData, refreshKey, categoriesWithArticles, handleSelectFilter]);
+  }, [articlesData, refreshKey, categoriesWithArticles, handleSelectFilter, checklist]);
 
   return (
-    <ArticleList
-      contentContainerStyle={styles.listContentContainer}
-      isRefreshing={isRefreshing}
-      ListHeaderComponent={<>{headerSections}</>}
-      ListFooterComponent={FOOTER_COMPONENT}
-      progressViewOffset={LAYOUT.SPACING.XLARGE}
-      onRefresh={handleRefresh}
-    />
+    <>
+      {/* No horizontal padding on the scroll container — each section owns the
+          standard screen inset so horizontal rails can bleed edge-to-edge */}
+      <ArticleList
+        isRefreshing={isRefreshing}
+        ListHeaderComponent={<>{headerSections}</>}
+        ListFooterComponent={FOOTER_COMPONENT}
+        progressViewOffset={LAYOUT.SPACING.XLARGE}
+        onRefresh={handleRefresh}
+      />
+      <WelcomeIntro
+        visible={intro.isVisible}
+        onDismiss={intro.dismiss}
+        onOpenFirstText={handleOpenFirstText}
+      />
+    </>
   );
 }
 

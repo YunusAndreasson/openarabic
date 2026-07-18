@@ -10,6 +10,7 @@ import {
 import type { FlashListRef } from '@shopify/flash-list';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
+import { OnboardingStep } from '@/constants/onboarding';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { analytics } from '@/services/analytics';
@@ -23,9 +24,10 @@ import { useAppSelectorShallow } from '@/store/hooks';
 import type { ArticleId } from '@/types/branded.types';
 import type { Tables } from '@/types/database.types';
 import { ToastType } from '@/types/enums';
-import { stopAudioSafely } from '@/utils/audioUtils';
+import { stopNonPlaylistAudioSafely } from '@/utils/audioUtils';
 import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
+import { markOnboardingStep } from '@/utils/onboardingStorage';
 
 export interface UseArticleScreenOptions {
   id: string;
@@ -75,6 +77,7 @@ export function useArticleScreen({
         article_title: article.title,
         category: article.category.name,
       });
+      void markOnboardingStep(OnboardingStep.READ_TEXT);
     }
   }, [article]);
 
@@ -99,6 +102,7 @@ export function useArticleScreen({
     wordDetailsModal,
     isInStudyList,
     handleWordPress,
+    handleWordLongPress,
     handleCloseTooltip,
     handleOpenWordDetails,
     handleAddWordToStudy,
@@ -132,7 +136,7 @@ export function useArticleScreen({
 
   const handleClose = useCallback(async () => {
     try {
-      await stopAudioSafely(true);
+      await stopNonPlaylistAudioSafely(true);
     } catch (error) {
       handleError(error as Error, { toastMessage: STRINGS.FAILED_TO_STOP_AUDIO_ON_CLOSE });
     }
@@ -143,7 +147,7 @@ export function useArticleScreen({
     } else {
       router.push(ROUTE_PATHS.EXPLORE_TAB);
     }
-  }, [stopAudioSafely]);
+  }, [stopNonPlaylistAudioSafely]);
 
   // Reading progress
   const isActive = Boolean(article) && !isLoadingArticle;
@@ -335,10 +339,11 @@ export function useArticleScreen({
     return () => subscription.remove();
   }, [user?.id]);
 
-  // Cleanup audio on unmount
+  // Cleanup leaked word-preview audio on unmount. Playlist-mode audio
+  // (article Listen / Play All) keeps playing — the MiniPlayer controls it.
   useEffect(() => {
     return () => {
-      stopAudioSafely();
+      stopNonPlaylistAudioSafely();
     };
   }, []);
 
@@ -360,6 +365,7 @@ export function useArticleScreen({
     handleToggleReadingListWithFeedback,
     handleClose,
     handleWordPress,
+    handleWordLongPress,
     handleCloseTooltip,
     handleOpenWordDetails,
     handleAddWordToStudy,

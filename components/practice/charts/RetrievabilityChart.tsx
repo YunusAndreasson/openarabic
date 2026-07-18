@@ -1,7 +1,11 @@
 import { memo, useMemo } from 'react';
 
 import { VocabularyChart, type DataPoint } from '@/components/common/charts';
-import { CHART_LABELS, EMPTY_STATE_MESSAGES, generateChartSubtitle } from '@/constants/chartMessages';
+import {
+  CHART_LABELS,
+  EMPTY_STATE_MESSAGES,
+  generateChartSubtitle,
+} from '@/constants/chartMessages';
 import { useGraphWidth } from '@/constants/chartConstants';
 import { formatMonthDayUTC } from '@/utils/chartDataUtils';
 import { MEMORY_CAPACITY_THRESHOLDS } from '@/constants/fsrs';

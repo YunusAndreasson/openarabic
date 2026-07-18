@@ -110,6 +110,64 @@ export function getBeginnerArticles(articles: Article[], limit = 20): Article[] 
   return result;
 }
 
+export interface StarterArticlePick {
+  article: Article;
+  progress: number;
+}
+
+/**
+ * Pick "start here" articles for a fresh (or nearly fresh) user.
+ * Guaranteed non-empty whenever `articles` is non-empty via a fallback cascade:
+ * 1. unread beginner articles (difficulty ≤ 2)
+ * 2. unread easy articles (difficulty ≤ 3)
+ * 3. any unread article, shortest first
+ * 4. all articles, least progress first
+ *
+ * Used by the Getting Started rail, the welcome intro CTA, and the
+ * Get Started checklist so they always have somewhere to send the user.
+ */
+export function pickStarterArticles(
+  articles: Article[],
+  progressMap: ReadonlyMap<number, { last_sentence_read: number; total_sentences: number }>,
+  max = 5,
+): StarterArticlePick[] {
+  if (articles.length === 0) return [];
+
+  const progressCache = new Map<number, number>();
+  for (const article of articles) {
+    const data = progressMap.get(article.id);
+    progressCache.set(
+      article.id,
+      data ? calculateProgressPercentage(data.last_sentence_read, data.total_sentences) : 0,
+    );
+  }
+
+  const unread = articles.filter(article => (progressCache.get(article.id) ?? 0) === 0);
+
+  const tiers: Article[][] = [
+    unread.filter(article => article.difficulty_level <= 2),
+    unread.filter(article => article.difficulty_level <= 3),
+    [...unread].sort((a, b) => a.article_sentences.length - b.article_sentences.length),
+    [...articles].sort((a, b) => (progressCache.get(a.id) ?? 0) - (progressCache.get(b.id) ?? 0)),
+  ];
+
+  const picked = tiers.find(tier => tier.length > 0) ?? [];
+  return picked.slice(0, max).map(article => ({
+    article,
+    progress: progressCache.get(article.id) ?? 0,
+  }));
+}
+
+/**
+ * First starter article, or undefined when the catalog is empty.
+ */
+export function pickStarterArticle(
+  articles: Article[],
+  progressMap: ReadonlyMap<number, { last_sentence_read: number; total_sentences: number }>,
+): Article | undefined {
+  return pickStarterArticles(articles, progressMap, 1)[0]?.article;
+}
+
 /**
  * Build an index of article IDs to their root IDs for efficient lookups.
  * This avoids O(articles × sentences × words) nested loops during filtering.

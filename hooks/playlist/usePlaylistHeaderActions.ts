@@ -11,10 +11,12 @@ import { simpleAudioService } from '@/services/audioPlayer';
 import { useAppSelector } from '@/store/hooks';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import { ToastType } from '@/types/enums';
+import { OnboardingStep } from '@/constants/onboarding';
 import { isAudioBusy } from '@/utils/audioUtils';
 import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
 import { shuffleArray } from '@/utils/list';
+import { markOnboardingStep } from '@/utils/onboardingStorage';
 
 const NO_ARTICLES_MESSAGE = 'No articles to play';
 
@@ -62,7 +64,10 @@ export function usePlaylistHeaderActions() {
       });
 
       const tracksToPlay = audioShuffleEnabled ? shuffleArray(tracks) : tracks;
-      await simpleAudioService.playPlaylist(tracksToPlay);
+      const success = await simpleAudioService.playPlaylist(tracksToPlay);
+      if (success) {
+        void markOnboardingStep(OnboardingStep.LISTEN_AUDIO);
+      }
     } catch (error) {
       handleError(error as Error);
     } finally {

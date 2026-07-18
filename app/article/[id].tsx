@@ -17,8 +17,10 @@ import { LoadingState } from '@/components/common';
 import { ComponentErrorBoundary } from '@/components/common/ComponentErrorBoundary';
 import { ToastProvider, useTutorialContext, useToast } from '@/components/providers';
 import { TutorialId } from '@/constants/tutorials';
+import { useArticleListen } from '@/hooks/articles/useArticleListen';
 import { useArticleScreen } from '@/hooks/articles/useArticleScreen';
 import { useColors } from '@/hooks/theme/useColors';
+import type { ArticleId } from '@/types/branded.types';
 import type { Tables } from '@/types/database.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 
@@ -57,11 +59,18 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     handleToggleReadingListWithFeedback,
     handleClose,
     handleWordPress,
+    handleWordLongPress,
     handleCloseTooltip,
     handleOpenWordDetails,
     handleAddWordToStudy,
     handleFlashListLoad,
   } = useArticleScreen({ id, showToast, disableAutoScroll });
+
+  // In-article Listen control (podcast-style playback via the global MiniPlayer)
+  const { isListeningToThisArticle, isListenLoading, handleToggleListen } = useArticleListen(
+    article?.id as ArticleId | undefined,
+    article?.title,
+  );
 
   // Tutorial management
   const { shouldShowTutorial, completeTutorial } = useTutorialContext();
@@ -100,6 +109,18 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     [showWordTapTutorial, completeTutorial, handleWordPress],
   );
 
+  // Long-press quick save also counts as discovering the word interaction
+  const handleWordLongPressWithTutorial = useCallback(
+    (word: SentenceWord, layout?: LayoutRectangle) => {
+      void handleWordLongPress(word, layout);
+
+      if (showWordTapTutorial) {
+        completeTutorial(TutorialId.WORD_TAP);
+      }
+    },
+    [showWordTapTutorial, completeTutorial, handleWordLongPress],
+  );
+
   // Memoize renderSentenceItem to prevent unnecessary recreations
   const renderSentenceItem = useCallback(
     ({ item, index }: { item: Tables<'article_sentences'>; index: number }) => {
@@ -121,6 +142,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
           words={words}
           colors={colors}
           onWordPress={handleWordPressWithTutorial}
+          onWordLongPress={handleWordLongPressWithTutorial}
           showTutorialCard={showTutorialCard}
           onDismissTutorial={handleDismissTutorial}
           activeWordIdSV={activeWordIdSV}
@@ -131,6 +153,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       sentenceWordsMap,
       colors,
       handleWordPressWithTutorial,
+      handleWordLongPressWithTutorial,
       showWordTapTutorial,
       isTutorialCardDismissed,
       handleDismissTutorial,
@@ -165,6 +188,9 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       scrollViewRef: scrollViewRef as RefObject<FlashListRef<Tables<'article_sentences'>>>,
       isInReadingList,
       onToggleReadingList: handleToggleReadingListWithFeedback,
+      isListening: isListeningToThisArticle,
+      isListenLoading,
+      onToggleListen: handleToggleListen,
       onClose: handleClose,
       onFlashListLoad: handleFlashListLoad,
     };
@@ -179,6 +205,9 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     scrollViewRef,
     isInReadingList,
     handleToggleReadingListWithFeedback,
+    isListeningToThisArticle,
+    isListenLoading,
+    handleToggleListen,
     handleClose,
     handleFlashListLoad,
   ]);

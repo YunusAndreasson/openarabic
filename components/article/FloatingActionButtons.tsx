@@ -16,14 +16,25 @@ export interface FloatingActionButtonsProps {
   isInReadingList: boolean;
   onToggleReadingList: () => Promise<void>;
   onClose: () => void;
+  isListening: boolean;
+  isListenLoading: boolean;
+  onToggleListen: () => void;
 }
 
 /**
  * Floating action buttons component positioned over parallax header
- * Provides controls for adding to playlist and closing the article
+ * Provides controls for listening to the article, adding to playlist,
+ * and closing the article
  */
 export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
-  ({ isInReadingList, onToggleReadingList, onClose }) => {
+  ({
+    isInReadingList,
+    onToggleReadingList,
+    onClose,
+    isListening,
+    isListenLoading,
+    onToggleListen,
+  }) => {
     const colors = useColors();
     const insets = useSafeAreaInsets();
     // The buttons sit at the screen corners (left/right edges), so on iOS the
@@ -102,33 +113,59 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
           </GlassContainer>
         </Pressable>
 
-        {/* Action buttons - top right */}
-        <Pressable
-          onPress={handleOptimisticToggle}
-          hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-          style={actionButtonsStyle}
-          accessibilityRole="button"
-          accessibilityLabel={
-            optimisticIsInReadingList
-              ? STRINGS.ARTICLE_REMOVE_FROM_PLAYLIST_A11Y
-              : STRINGS.ARTICLE_ADD_TO_PLAYLIST_A11Y
-          }
-          accessibilityState={{ selected: optimisticIsInReadingList }}
-        >
-          <GlassContainer
-            style={[
-              styles.glassButton,
-              optimisticIsInReadingList ? activeFallbackStyle : fallbackButtonStyle,
-            ]}
-            {...(GLASS_AVAILABLE && { isInteractive: true })}
+        {/* Action buttons - top right: [Listen] [Add to playlist] */}
+        <View style={actionButtonsStyle}>
+          {/* No hitSlop on the paired buttons: 12px slop would overlap the 4px
+              gap and let the later sibling claim taps on its neighbour's edge.
+              Both buttons already meet the 44px minimum touch target. */}
+          <Pressable
+            onPress={onToggleListen}
+            accessibilityRole="button"
+            accessibilityLabel={
+              isListening ? STRINGS.ARTICLE_STOP_LISTENING_A11Y : STRINGS.ARTICLE_LISTEN_A11Y
+            }
+            accessibilityState={{ selected: isListening }}
           >
-            <Ionicons
-              name={optimisticIsInReadingList ? 'headset' : 'headset-outline'}
-              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-              color={optimisticIsInReadingList ? colors.tint : colors.secondaryText}
-            />
-          </GlassContainer>
-        </Pressable>
+            <GlassContainer
+              style={[
+                styles.glassButton,
+                isListening || isListenLoading ? activeFallbackStyle : fallbackButtonStyle,
+              ]}
+              {...(GLASS_AVAILABLE && { isInteractive: true })}
+            >
+              <Ionicons
+                name={isListening || isListenLoading ? 'stop' : 'play'}
+                size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                color={isListening || isListenLoading ? colors.tint : colors.secondaryText}
+              />
+            </GlassContainer>
+          </Pressable>
+
+          <Pressable
+            onPress={handleOptimisticToggle}
+            accessibilityRole="button"
+            accessibilityLabel={
+              optimisticIsInReadingList
+                ? STRINGS.ARTICLE_REMOVE_FROM_PLAYLIST_A11Y
+                : STRINGS.ARTICLE_ADD_TO_PLAYLIST_A11Y
+            }
+            accessibilityState={{ selected: optimisticIsInReadingList }}
+          >
+            <GlassContainer
+              style={[
+                styles.glassButton,
+                optimisticIsInReadingList ? activeFallbackStyle : fallbackButtonStyle,
+              ]}
+              {...(GLASS_AVAILABLE && { isInteractive: true })}
+            >
+              <Ionicons
+                name={optimisticIsInReadingList ? 'headset' : 'headset-outline'}
+                size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                color={optimisticIsInReadingList ? colors.tint : colors.secondaryText}
+              />
+            </GlassContainer>
+          </Pressable>
+        </View>
       </>
     );
   },

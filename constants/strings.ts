@@ -161,7 +161,28 @@ export const STRINGS = {
   SET_TIMER: 'Set timer',
   // Welcome & onboarding
   WELCOME_TITLE: 'OpenArabic',
-  WELCOME_SUBTITLE: 'Read, listen, and memorize',
+  // Auth value proposition — three terse lines, bold leading verb
+  AUTH_VALUE_READ_VERB: 'Read',
+  AUTH_VALUE_READ: 'classical texts in Arabic and English',
+  AUTH_VALUE_TAP_VERB: 'Tap',
+  AUTH_VALUE_TAP: 'any word to see it, save it, learn it',
+  AUTH_VALUE_LISTEN_VERB: 'Listen',
+  AUTH_VALUE_LISTEN: 'in English first, then Arabic',
+  // Onboarding — welcome intro (shown once after first sign-in)
+  ONBOARDING_STEP_READ_TITLE: 'Read bilingual texts',
+  ONBOARDING_STEP_READ_BODY: 'Classical Arabic, sentence by sentence, with English right below.',
+  ONBOARDING_STEP_TAP_TITLE: 'Tap any word',
+  ONBOARDING_STEP_TAP_BODY: 'See its meaning instantly, then save it to practice.',
+  ONBOARDING_STEP_LISTEN_TITLE: 'Listen to bilingual audio',
+  ONBOARDING_STEP_LISTEN_BODY: 'English first, then Arabic — your ear knows what to listen for.',
+  ONBOARDING_NEXT: 'Next',
+  ONBOARDING_CTA: 'Open your first text',
+  // Onboarding — Get started checklist on Explore
+  CHECKLIST_TITLE: 'Get started',
+  CHECKLIST_PROGRESS: '{done} of 3',
+  CHECKLIST_READ: 'Read your first text',
+  CHECKLIST_SAVE: 'Save a word to practice',
+  CHECKLIST_LISTEN: 'Listen to bilingual audio',
   // Sign In screen
   SIGN_IN_TITLE: 'Sign in',
   SIGN_IN_SUBTITLE: 'Welcome back',
@@ -224,16 +245,23 @@ export const STRINGS = {
   SET_TIME: 'Set time',
   // Article reader floating controls — icon-only, so these are their only accessible name
   ARTICLE_CLOSE_A11Y: 'Close article',
+  ARTICLE_LISTEN_A11Y: 'Listen to this article',
+  ARTICLE_STOP_LISTENING_A11Y: 'Stop listening',
   ARTICLE_ADD_TO_PLAYLIST_A11Y: 'Add to playlist',
   ARTICLE_REMOVE_FROM_PLAYLIST_A11Y: 'Remove from playlist',
-  // Playlist tab empty state - minimal one-tap start
-  BOOKMARKS_EMPTY_TITLE: 'Nothing saved yet',
-  BOOKMARKS_EMPTY_HINT: 'Tap the headphones on any article to add it here',
-  // Practice tab empty state - minimal one-tap start
+  // Playlist tab empty state - one-tap quick start
+  BOOKMARKS_EMPTY_TITLE: 'Nothing to play yet',
+  BOOKMARKS_EMPTY_HINT:
+    'Every article plays in English first, then Arabic. Tap the headphones on any article to add it here.',
+  PLAYLIST_EMPTY_SEED_CTA: 'Add beginner articles',
+  PLAYLIST_BILINGUAL_CAPTION: 'Plays English first, then Arabic',
+  // Practice tab empty state - one-tap quick start
   START_REVIEW: 'Start review',
   PLAY_ALL: 'Play all',
   STUDY_LIST_EMPTY_TITLE: 'No words yet',
-  STUDY_LIST_EMPTY_HINT: 'Tap a word while reading, then add it to practice',
+  STUDY_LIST_EMPTY_HINT:
+    'Tap any word while reading and save it — reviews are scheduled so it sticks',
+  PRACTICE_EMPTY_SEED_CTA: 'Add common words',
   BROWSE_ARTICLES: 'Browse articles',
   // Explore category/filter empty state
   CATEGORY_EMPTY_TITLE: 'No articles here yet',
@@ -311,6 +339,9 @@ export const STRINGS = {
   ADD_TO_PRACTICE: 'Add to practice',
   REMOVE_FROM_PRACTICE: 'In practice',
   WORD_ADDED_TO_PRACTICE: 'Saved to practice',
+  // Long-press quick save (toggle: long-press again to undo)
+  WORD_QUICK_SAVED: 'Saved to practice — long-press to undo',
+  WORD_QUICK_REMOVED: 'Removed from practice',
   CHECK_EMAIL_CONFIRMATION: 'Check your email to confirm',
   SUCCESS: 'Success',
   NEW_RECOMMENDATION_SELECTED: 'New recommendation',

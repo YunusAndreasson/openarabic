@@ -57,11 +57,8 @@ const HorizontalArticleSliderComponent: FC<HorizontalArticleSliderProps> = ({ ar
         snapToOffsets={snapOffsets}
         snapToAlignment="start"
       >
-        {displayArticles.map((article, index) => (
-          <View
-            key={`featured-${article.id}`}
-            style={index === 0 ? styles.cardContainerFirst : styles.cardContainer}
-          >
+        {displayArticles.map(article => (
+          <View key={`featured-${article.id}`} style={styles.cardContainer}>
             <ArticleCard
               article={article}
               {...buildArticleCardProps(article)}
@@ -79,16 +76,12 @@ const HorizontalArticleSliderComponent: FC<HorizontalArticleSliderProps> = ({ ar
 const styles = StyleSheet.create({
   scrollContainer: {
     // Label-to-cards gap is owned by SectionLabel.paddingBottom (8px) — match other sliders.
-    paddingRight: LAYOUT.SCREEN_HORIZONTAL_PADDING,
-  },
-  cardContainerFirst: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
+    paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
+    gap: CARD_SPACING,
   },
   cardContainer: {
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
-    marginLeft: CARD_SPACING,
   },
 });
 

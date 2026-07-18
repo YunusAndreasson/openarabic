@@ -39,6 +39,7 @@ import {
 import { formatBytes } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
 import { errorFeedback, lightFeedback, selectionFeedback, successFeedback } from '@/utils/haptics';
+import { resetOnboarding } from '@/utils/onboardingStorage';
 
 // Helper function for enum validation
 function validateEnumValue<T>(value: unknown, validValues: readonly T[], defaultValue: T): T {
@@ -152,6 +153,8 @@ const AccountScreen: FC = () => {
         onPress: async () => {
           try {
             await resetAllTutorials();
+            // Also re-enable the first-run intro + Get started checklist
+            await resetOnboarding();
             successFeedback();
           } catch (error) {
             errorFeedback();

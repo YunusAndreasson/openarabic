@@ -14,6 +14,9 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     rowGap: LAYOUT.SPACING.SMALL,
     columnGap: LAYOUT.SPACING.SMALL,
+    // Section owns its screen inset (Explore's scroll container is unpadded so
+    // rails can bleed full-width) — keeps the grid flush with section labels.
+    paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
   },
   // Two-column grid using flexBasis. The 1px deduction keeps rounding-safe so two
   // siblings + an 8px column gap never overflow the parent row.

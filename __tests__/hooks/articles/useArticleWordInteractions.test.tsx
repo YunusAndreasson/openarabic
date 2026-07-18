@@ -38,6 +38,14 @@ jest.mock('@/utils/haptics', () => ({
   errorFeedback: jest.fn(),
 }));
 
+// Mock toast — the hook shows a toast when the daily word limit is reached
+const mockShowToast = jest.fn();
+jest.mock('@/components/providers', () => ({
+  useToast: () => ({
+    showToast: mockShowToast,
+  }),
+}));
+
 describe('useArticleWordInteractions', () => {
   let queryClient: QueryClient;
   let mockHandleRootPress: jest.Mock;

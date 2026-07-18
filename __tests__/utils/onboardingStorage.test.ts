@@ -1,0 +1,130 @@
+/**
+ * Onboarding Storage Tests
+ *
+ * Tests the JSON-blob persistence, idempotent step marking, fail-safe
+ * error behavior, and listener notification of utils/onboardingStorage.ts.
+ * The module keeps an in-memory cache, so each test imports a fresh copy
+ * via jest.isolateModules.
+ */
+
+import { beforeEach, describe, expect, jest, test } from '@jest/globals';
+
+import { ONBOARDING_STORAGE_KEY, OnboardingStep } from '@/constants/onboarding';
+
+const mockMemoryStore = new Map<string, string>();
+const mockGetItem = jest.fn(async (key: string) => mockMemoryStore.get(key) ?? null);
+const mockSetItem = jest.fn(async (key: string, value: string) => {
+  mockMemoryStore.set(key, value);
+});
+
+jest.mock('@/utils/safeAsyncStorage', () => ({
+  storage: {
+    getItem: (key: string) => mockGetItem(key),
+    setItem: (key: string, value: string) => mockSetItem(key, value),
+    removeItem: async (key: string) => {
+      mockMemoryStore.delete(key);
+    },
+  },
+}));
+
+jest.mock('@/utils/errorHandling', () => ({
+  handleError: jest.fn(),
+}));
+
+type OnboardingStorageModule = typeof import('@/utils/onboardingStorage');
+
+function freshModule(): OnboardingStorageModule {
+  let module: OnboardingStorageModule | undefined;
+  jest.isolateModules(() => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    module = require('@/utils/onboardingStorage') as OnboardingStorageModule;
+  });
+  if (!module) throw new Error('module failed to load');
+  return module;
+}
+
+describe('onboardingStorage', () => {
+  beforeEach(() => {
+    mockMemoryStore.clear();
+    // jest.config has resetMocks: true, which strips implementations before
+    // each test — re-install both here
+    mockGetItem.mockImplementation(async (key: string) => mockMemoryStore.get(key) ?? null);
+    mockSetItem.mockImplementation(async (key: string, value: string) => {
+      mockMemoryStore.set(key, value);
+    });
+  });
+
+  test('loadOnboardingState returns fresh defaults when nothing is stored', async () => {
+    const { loadOnboardingState } = freshModule();
+    const state = await loadOnboardingState();
+    expect(state.dismissed).toBe(false);
+    expect(state.initializedAt).toBeUndefined();
+    expect(state.readFirstText).toBe(false);
+    expect(state.saveFirstWord).toBe(false);
+    expect(state.listenToAudio).toBe(false);
+  });
+
+  test('markOnboardingStep persists the step and is idempotent', async () => {
+    const { loadOnboardingState, markOnboardingStep } = freshModule();
+    await markOnboardingStep(OnboardingStep.READ_TEXT);
+    await markOnboardingStep(OnboardingStep.READ_TEXT);
+    expect(mockSetItem).toHaveBeenCalledTimes(1);
+
+    const stored = JSON.parse(mockMemoryStore.get(ONBOARDING_STORAGE_KEY) ?? '{}');
+    expect(stored.readFirstText).toBe(true);
+    expect(stored.saveFirstWord).toBe(false);
+    expect((await loadOnboardingState()).readFirstText).toBe(true);
+  });
+
+  test('state round-trips across module reloads', async () => {
+    const first = freshModule();
+    await first.markOnboardingStep(OnboardingStep.SAVE_WORD);
+    await first.initializeOnboarding({ dismissed: false });
+
+    const second = freshModule();
+    const state = await second.loadOnboardingState();
+    expect(state.saveFirstWord).toBe(true);
+    expect(state.dismissed).toBe(false);
+    expect(state.initializedAt).toEqual(expect.any(String));
+  });
+
+  test('fail-safe: read error yields a dismissed, initialized state without persisting', async () => {
+    mockGetItem.mockRejectedValueOnce(new Error('storage broken'));
+    const { loadOnboardingState } = freshModule();
+    const state = await loadOnboardingState();
+    expect(state.dismissed).toBe(true);
+    expect(state.initializedAt).toEqual(expect.any(String));
+    // Not persisted — a transient error is retried next launch
+    expect(mockMemoryStore.has(ONBOARDING_STORAGE_KEY)).toBe(false);
+  });
+
+  test('resetOnboarding writes a fresh enabled state', async () => {
+    const module = freshModule();
+    await module.markOnboardingStep(OnboardingStep.LISTEN_AUDIO);
+    await module.markChecklistCompleted();
+    await module.resetOnboarding();
+
+    const state = await module.loadOnboardingState();
+    expect(state.dismissed).toBe(false);
+    expect(state.listenToAudio).toBe(false);
+    expect(state.completedAt).toBeUndefined();
+    expect(state.initializedAt).toEqual(expect.any(String));
+  });
+
+  test('markChecklistCompleted is idempotent and keeps the first timestamp', async () => {
+    const module = freshModule();
+    await module.markChecklistCompleted();
+    const first = (await module.loadOnboardingState()).completedAt;
+    await module.markChecklistCompleted();
+    expect((await module.loadOnboardingState()).completedAt).toBe(first);
+  });
+
+  test('subscribers are notified on writes', async () => {
+    const module = freshModule();
+    const listener = jest.fn();
+    module.subscribeOnboarding(listener);
+    await module.markOnboardingStep(OnboardingStep.READ_TEXT);
+    expect(listener).toHaveBeenCalled();
+    expect(module.getCachedOnboardingState()?.readFirstText).toBe(true);
+  });
+});

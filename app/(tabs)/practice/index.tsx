@@ -6,19 +6,6 @@ import { InteractionManager, ScrollView, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import type { ReanimatedCSSAnimationStyle } from '@/types/ui/base.types';
-
-// Mount fade-in — Reanimated 4 CSS @keyframes, module-level so no per-render alloc.
-// Replaces imperative `entering={FadeIn}` which the React Compiler can't track and
-// which forces a Reanimated mount-side-effect on every focus.
-const MOUNT_FADE_IN_STYLE = {
-  animationName: {
-    from: { opacity: 0 },
-    to: { opacity: 1 },
-  },
-  animationDuration: `${TIMING_CONFIG.SLOW.duration}ms`,
-  animationFillMode: 'forwards' as const,
-} as ReanimatedCSSAnimationStyle;
-
 import { ThemedView } from '@/components/ThemedView';
 import { ErrorState } from '@/components/common';
 import { PracticeEmptyState, RecommendationCard, PracticeStatCards } from '@/components/practice';
@@ -35,6 +22,18 @@ import { FloatingActionButton } from '@/components/ui';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 import { rankStrugglingWords } from '@/utils/leechUtils';
 import { calculateWordCategories } from '@/utils/wordClassification';
+
+// Mount fade-in — Reanimated 4 CSS @keyframes, module-level so no per-render alloc.
+// Replaces imperative `entering={FadeIn}` which the React Compiler can't track and
+// which forces a Reanimated mount-side-effect on every focus.
+const MOUNT_FADE_IN_STYLE = {
+  animationName: {
+    from: { opacity: 0 },
+    to: { opacity: 1 },
+  },
+  animationDuration: `${TIMING_CONFIG.SLOW.duration}ms`,
+  animationFillMode: 'forwards' as const,
+} as ReanimatedCSSAnimationStyle;
 
 export default function PracticeScreen(): JSX.Element {
   const { user } = useAuth();
@@ -146,9 +145,6 @@ export default function PracticeScreen(): JSX.Element {
     return { masteredWords, learningPhaseWords };
   }, [filteredStudyWords, dueWordsCount]);
 
-  // Bottom padding for content
-  const contentPaddingBottom = LAYOUT.SPACING.MEDIUM;
-
   // Show error message if there was an error loading data
   if (shouldShowError) {
     const handleRetry = () => {
@@ -190,7 +186,7 @@ export default function PracticeScreen(): JSX.Element {
         style={styles.container}
         contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.contentContainer, { paddingBottom: contentPaddingBottom }]}
+        contentContainerStyle={styles.contentContainer}
       >
         <Animated.View style={[styles.vocabularySection, MOUNT_FADE_IN_STYLE]}>
           <PracticeStatCards
@@ -228,7 +224,12 @@ export const options = {
 
 const styles = StyleSheet.create({
   container: LAYOUT.COMMON_STYLES.CONTAINER,
-  contentContainer: LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
+  contentContainer: {
+    ...LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
+    // 12px first-content lead-in under the header — same rhythm as Explore/Playlist
+    paddingTop: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
+  },
   vocabularySection: {
     gap: LAYOUT.SPACING.SMALL, // 8px gap for perfect consistency with stat cards
   },

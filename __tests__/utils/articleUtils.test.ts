@@ -14,7 +14,12 @@ import { describe, expect, test } from '@jest/globals';
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import type { Article } from '@/types/articles.types';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { getArticlesByDueWords, sortArticlesByProgress } from '@/utils/articleUtils';
+import {
+  getArticlesByDueWords,
+  pickStarterArticle,
+  pickStarterArticles,
+  sortArticlesByProgress,
+} from '@/utils/articleUtils';
 
 // Mock data for testing
 const mockArticles: Article[] = [
@@ -244,6 +249,69 @@ describe('articleUtils', () => {
     test('should respect limit', () => {
       const result = getArticlesByDueWords(mockArticles, mockStudyWords, 1);
       expect(result).toHaveLength(1);
+    });
+  });
+
+  describe('pickStarterArticles', () => {
+    // mockArticles[0] has difficulty 2, mockArticles[1] has difficulty 4.
+    // A progress entry with last_sentence_read: 0 counts as 1% (started), so
+    // "unread" means no progress entry at all.
+    const makeArticle = (id: number, difficulty: number, sentenceCount = 1): Article => ({
+      ...mockArticles[0],
+      id,
+      difficulty_level: difficulty,
+      article_sentences: Array.from({ length: sentenceCount }, (_, i) => ({
+        ...mockArticles[0].article_sentences[0],
+        id: id * 100 + i,
+        position: i,
+      })),
+    });
+
+    test('tier 1: prefers unread beginner articles (difficulty ≤ 2)', () => {
+      const articles = [makeArticle(1, 4), makeArticle(2, 2), makeArticle(3, 1)];
+      const result = pickStarterArticles(articles, new Map());
+      expect(result.map(r => r.article.id)).toEqual([2, 3]);
+      expect(result.every(r => r.progress === 0)).toBe(true);
+    });
+
+    test('tier 2: falls back to unread difficulty ≤ 3 when no beginner articles', () => {
+      const articles = [makeArticle(1, 4), makeArticle(2, 3)];
+      const result = pickStarterArticles(articles, new Map());
+      expect(result.map(r => r.article.id)).toEqual([2]);
+    });
+
+    test('tier 3: falls back to any unread article, shortest first', () => {
+      const articles = [makeArticle(1, 5, 10), makeArticle(2, 4, 3)];
+      const result = pickStarterArticles(articles, new Map());
+      expect(result.map(r => r.article.id)).toEqual([2, 1]);
+    });
+
+    test('tier 4: falls back to all articles by least progress when everything is started', () => {
+      const articles = [makeArticle(1, 2), makeArticle(2, 2)];
+      const progressMap = new Map([
+        [1, { last_sentence_read: 49, total_sentences: 100 }], // 50%
+        [2, { last_sentence_read: 9, total_sentences: 100 }], // 10%
+      ]);
+      const result = pickStarterArticles(articles, progressMap);
+      expect(result.map(r => r.article.id)).toEqual([2, 1]);
+      expect(result[0].progress).toBe(10);
+    });
+
+    test('never returns empty for a non-empty catalog', () => {
+      const articles = [makeArticle(1, 5)];
+      const progressMap = new Map([[1, { last_sentence_read: 99, total_sentences: 100 }]]);
+      expect(pickStarterArticles(articles, progressMap)).toHaveLength(1);
+    });
+
+    test('returns empty for an empty catalog', () => {
+      expect(pickStarterArticles([], new Map())).toHaveLength(0);
+      expect(pickStarterArticle([], new Map())).toBeUndefined();
+    });
+
+    test('respects max and pickStarterArticle returns the first pick', () => {
+      const articles = [makeArticle(1, 1), makeArticle(2, 1), makeArticle(3, 1)];
+      expect(pickStarterArticles(articles, new Map(), 2)).toHaveLength(2);
+      expect(pickStarterArticle(articles, new Map())?.id).toBe(1);
     });
   });
 });

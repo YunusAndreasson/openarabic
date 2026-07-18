@@ -62,7 +62,6 @@ BrandFooter.displayName = 'BrandFooter';
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: -LAYOUT.SPACING.MEDIUM, // Extend beyond ScrollView content padding
     paddingTop: LAYOUT.SPACING.XXXLARGE, // 48px - clear separation from content
     paddingBottom: LAYOUT.SPACING.XLARGE, // 24px - breathing room below logo
   },

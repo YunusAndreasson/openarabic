@@ -1,23 +1,19 @@
 import { useRouter } from 'expo-router';
 import { memo, useCallback, useMemo, type FC } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { SectionLabel } from '@/components/common';
-import { PlaylistItemCard } from '@/components/playlist/PlaylistItemCard';
-import { COMPLETION_THRESHOLD, LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
+import { COMPLETION_THRESHOLD } from '@/constants/layout';
 import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
-import { useArticlePrefetch } from '@/hooks/articles/useArticlePrefetch';
 import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
-import { useAuth } from '@/hooks/auth/useAuth';
 import type { Article } from '@/types/articles.types';
 import type { ArticleId } from '@/types/branded.types';
+import { pickStarterArticles } from '@/utils/articleUtils';
 import { calculateProgressPercentage } from '@/utils/progressUtils';
-import { generateStorageUrl } from '@/utils/storageUtils';
-import { getArticleMetadataWithoutCategory } from '@/utils/stringUtils';
 
-const CARD_WIDTH = SCREEN_WIDTH * 0.7;
-const CARD_SPACING = LAYOUT.SPACING.SMALL;
+import { ArticleRail } from './ArticleRail';
+
 const MAX_ARTICLES = 5;
 
 interface ContinueReadingSectionProps {
@@ -27,12 +23,10 @@ interface ContinueReadingSectionProps {
 /**
  * Adaptive section that shows:
  * - "Continue Reading" with articles user has partially read (1-94% progress)
- * - OR "Getting Started" with beginner articles (difficulty 1-2) if no in-progress articles
- *
- * Returns null for unauthenticated users or if no articles match criteria.
+ * - OR "Getting Started" via the starter-article cascade (beginner-first with
+ *   fallbacks), so a start-here rail always renders when articles exist
  */
 const ContinueReadingSectionComponent: FC<ContinueReadingSectionProps> = ({ articlesData }) => {
-  const { user } = useAuth();
   const router = useRouter();
 
   // Get all article IDs for bulk progress fetch
@@ -43,7 +37,7 @@ const ContinueReadingSectionComponent: FC<ContinueReadingSectionProps> = ({ arti
 
   // Determine which articles to show and the section label
   const { articles, sectionLabel, isContinueReading } = useMemo(() => {
-    if (!user?.id || articlesData.length === 0) {
+    if (articlesData.length === 0) {
       return { articles: [], sectionLabel: '', isContinueReading: false };
     }
 
@@ -78,35 +72,14 @@ const ContinueReadingSectionComponent: FC<ContinueReadingSectionProps> = ({ arti
       };
     }
 
-    // Otherwise show "Getting Started" with beginner articles (difficulty 1-2, unread)
-    const beginnerArticles: { article: Article; progress: number }[] = [];
-
-    for (const article of articlesData) {
-      if (article.difficulty_level <= 2) {
-        const progressData = progressMap.get(article.id as ArticleId);
-        const percentage = progressData
-          ? calculateProgressPercentage(
-              progressData.last_sentence_read,
-              progressData.total_sentences,
-            )
-          : 0;
-        // Only show unread beginner articles
-        if (percentage === 0) {
-          beginnerArticles.push({ article, progress: 0 });
-        }
-      }
-    }
-
-    if (beginnerArticles.length === 0) {
-      return { articles: [], sectionLabel: '', isContinueReading: false };
-    }
-
+    // Otherwise show "Getting Started" via the starter cascade (unread beginner
+    // articles first, with fallbacks so the rail never silently disappears)
     return {
-      articles: beginnerArticles.slice(0, MAX_ARTICLES),
+      articles: pickStarterArticles(articlesData, progressMap, MAX_ARTICLES),
       sectionLabel: STRINGS.SECTION_GETTING_STARTED,
       isContinueReading: false,
     };
-  }, [user?.id, articlesData, progressMap]);
+  }, [articlesData, progressMap]);
 
   const handleArticlePress = useCallback(
     (article: Article) => {
@@ -117,58 +90,18 @@ const ContinueReadingSectionComponent: FC<ContinueReadingSectionProps> = ({ arti
     [router, isContinueReading],
   );
 
-  const prefetchArticle = useArticlePrefetch();
-
-  // Don't render if no user or no articles to show
-  if (!user?.id || articles.length === 0) {
+  // Don't render until the catalog has loaded (ArticleList owns loading/empty UI)
+  if (articles.length === 0) {
     return null;
   }
 
   return (
     <View>
       <SectionLabel title={sectionLabel} density="first" />
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-        decelerationRate="fast"
-        snapToInterval={CARD_WIDTH + CARD_SPACING}
-        snapToAlignment="start"
-      >
-        {articles.map(({ article, progress }, index) => (
-          <View
-            key={`continue-${article.id}`}
-            style={index === 0 ? styles.cardContainerFirst : styles.cardContainer}
-          >
-            <PlaylistItemCard
-              title={article.title}
-              secondaryText={getArticleMetadataWithoutCategory(article)}
-              imageUrl={generateStorageUrl('images', article.image_url)}
-              articleId={article.id}
-              progressPercentage={progress}
-              onPress={() => handleArticlePress(article)}
-              onPressIn={() => prefetchArticle(article.id as ArticleId)}
-              compact
-            />
-          </View>
-        ))}
-      </ScrollView>
+      <ArticleRail items={articles} keyPrefix="continue" onArticlePress={handleArticlePress} />
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  scrollContent: {
-    paddingRight: LAYOUT.SCREEN_HORIZONTAL_PADDING,
-  },
-  cardContainerFirst: {
-    width: CARD_WIDTH,
-  },
-  cardContainer: {
-    width: CARD_WIDTH,
-    marginLeft: CARD_SPACING,
-  },
-});
 
 export const ContinueReadingSection = memo(ContinueReadingSectionComponent);
 ContinueReadingSection.displayName = 'ContinueReadingSection';

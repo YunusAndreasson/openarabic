@@ -7,6 +7,7 @@
  * Tutorial identifiers (branded type pattern for type safety)
  */
 export const TutorialId = {
+  WELCOME_INTRO: 'welcomeIntro',
   WORD_TAP: 'wordTap',
   SWIPE_GESTURE: 'swipeGesture',
 } as const;
@@ -54,6 +55,10 @@ interface TutorialConfig {
  * Maps each TutorialId to its complete configuration
  */
 export const TUTORIALS: Record<TutorialId, TutorialConfig> = {
+  [TutorialId.WELCOME_INTRO]: {
+    storageKey: '@openarabic/tutorials/welcomeIntroSeen',
+    showDelay: 600,
+  },
   [TutorialId.WORD_TAP]: {
     storageKey: '@openarabic/tutorials/wordTapCompleted',
     showDelay: 800,

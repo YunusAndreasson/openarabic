@@ -23,6 +23,8 @@ interface ArticleSentenceProps {
   };
   words: SentenceWord[];
   onWordPress?: (word: SentenceWord, layout?: LayoutRectangle) => void;
+  /** Long-press: instant save to practice (toggle) */
+  onWordLongPress?: (word: SentenceWord, layout?: LayoutRectangle) => void;
   colors: ThemeColors;
   containerStyle?: StyleProp<ViewStyle>;
   showTutorialCard?: boolean;
@@ -37,6 +39,7 @@ const ArticleSentenceInternal = function ArticleSentence({
   sentence,
   words,
   onWordPress,
+  onWordLongPress,
   colors: propColors,
   containerStyle,
   showTutorialCard = false,
@@ -74,13 +77,14 @@ const ArticleSentenceInternal = function ArticleSentence({
           key={`word-${word.position}`}
           word={word}
           onTooltipOpen={onWordPress}
+          onWordLongPress={onWordLongPress}
           isHighlighted={isFirstWord && showTutorialCard}
           activeWordIdSV={activeWordIdSV}
           isTargetWord={isTargetWord}
         />
       );
     });
-  }, [words, onWordPress, showTutorialCard, activeWordIdSV, highlightRootId]);
+  }, [words, onWordPress, onWordLongPress, showTutorialCard, activeWordIdSV, highlightRootId]);
 
   return (
     <View style={[styles.container, containerStyle]}>

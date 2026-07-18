@@ -1,9 +1,11 @@
 export { ArticleCard } from './ArticleCard';
 export { ArticleList } from './ArticleList';
+export { ArticleRail } from './ArticleRail';
 export { BrandFooter } from './BrandFooter';
 export { ContinueReadingSection } from './ContinueReadingSection';
 export { FilteredArticleView } from './FilteredArticleView';
 export { FilterSection } from './FilterSection';
+export { GetStartedChecklist } from './GetStartedChecklist';
 export { DiscoverySections } from './DiscoverySections';
 export { HorizontalArticleSlider } from './HorizontalArticleSlider';
 export { HorizontalFeaturedSection } from './HorizontalFeaturedSection';

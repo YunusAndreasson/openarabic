@@ -40,8 +40,20 @@ export const ANALYTICS_EVENTS = {
   // Vocabulary/Study events
   WORD_ADDED_TO_STUDY: 'Word Added to Study',
   WORD_REMOVED_FROM_STUDY: 'Word Removed from Study',
+  WORD_LONG_PRESS_SAVE: 'Word Long Press Save',
   COMMON_WORDS_ADDED: 'Common Words Added',
   BEGINNER_ARTICLES_ADDED: 'Beginner Articles Added',
+
+  // Onboarding events
+  ONBOARDING_INTRO_VIEWED: 'Onboarding Intro Viewed',
+  ONBOARDING_INTRO_STEP_VIEWED: 'Onboarding Intro Step Viewed',
+  ONBOARDING_INTRO_COMPLETED: 'Onboarding Intro Completed',
+  ONBOARDING_INTRO_SKIPPED: 'Onboarding Intro Skipped',
+  ONBOARDING_CHECKLIST_SHOWN: 'Onboarding Checklist Shown',
+  ONBOARDING_CHECKLIST_ITEM_TAPPED: 'Onboarding Checklist Item Tapped',
+  ONBOARDING_CHECKLIST_ITEM_COMPLETED: 'Onboarding Checklist Item Completed',
+  ONBOARDING_CHECKLIST_COMPLETED: 'Onboarding Checklist Completed',
+  ONBOARDING_CHECKLIST_SUPPRESSED: 'Onboarding Checklist Suppressed',
 
   // Navigation events
   SCREEN_VIEWED: 'Screen Viewed',

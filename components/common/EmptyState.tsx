@@ -10,6 +10,8 @@ interface EmptyStateAction {
   label: string;
   onPress: () => void;
   icon?: IoniconName;
+  loading?: boolean;
+  disabled?: boolean;
 }
 
 interface EmptyStateProps {
@@ -19,11 +21,13 @@ interface EmptyStateProps {
   iconSize?: number;
   /** Optional primary CTA shown below the hint */
   action?: EmptyStateAction;
+  /** Optional secondary CTA rendered outlined below the primary */
+  secondaryAction?: EmptyStateAction;
 }
 
 /**
  * Generic empty state component used across the app.
- * Displays an icon, title, hint message, and optional primary action.
+ * Displays an icon, title, hint message, and optional primary/secondary actions.
  */
 export function EmptyState({
   icon,
@@ -31,6 +35,7 @@ export function EmptyState({
   hint,
   iconSize = LAYOUT.BUTTON.ICON_SIZE.HERO,
   action,
+  secondaryAction,
 }: EmptyStateProps) {
   const colors = useColors();
 
@@ -58,6 +63,22 @@ export function EmptyState({
             onPress={action.onPress}
             variant="filled"
             size="medium"
+            loading={action.loading}
+            disabled={action.disabled}
+          />
+        </View>
+      )}
+
+      {secondaryAction && (
+        <View style={styles.secondaryActionContainer}>
+          <ThemedButton
+            title={secondaryAction.label}
+            icon={secondaryAction.icon}
+            onPress={secondaryAction.onPress}
+            variant="outlined"
+            size="medium"
+            loading={secondaryAction.loading}
+            disabled={secondaryAction.disabled}
           />
         </View>
       )}
@@ -94,6 +115,10 @@ const styles = StyleSheet.create({
   },
   actionContainer: {
     marginTop: LAYOUT.SPACING.XLARGE,
+    minWidth: 200,
+  },
+  secondaryActionContainer: {
+    marginTop: LAYOUT.SPACING.MEDIUM,
     minWidth: 200,
   },
 });

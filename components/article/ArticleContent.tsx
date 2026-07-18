@@ -142,6 +142,10 @@ interface ArticleContentProps {
   // Reading list (bookmarks/listening) functionality
   isInReadingList: boolean;
   onToggleReadingList: () => Promise<void>;
+  // In-article Listen control
+  isListening: boolean;
+  isListenLoading: boolean;
+  onToggleListen: () => void;
   // Close functionality
   onClose: () => void;
   // FlashList ready callback for scroll-to-position
@@ -159,6 +163,9 @@ const ArticleContentInternal = function ArticleContent({
   scrollViewRef,
   isInReadingList,
   onToggleReadingList,
+  isListening,
+  isListenLoading,
+  onToggleListen,
   onClose,
   onFlashListLoad,
 }: ArticleContentProps) {
@@ -180,9 +187,11 @@ const ArticleContentInternal = function ArticleContent({
     [handleScroll],
   );
 
-  // Reserve right-side space so text never sits under floating action buttons
+  // Reserve right-side space so text never sits under the two floating action
+  // buttons (Listen + playlist, TINY gap between them)
   // React Compiler auto-memoizes
-  const rightOverlayPadding = MIN_TOUCH_TARGET.MEDIUM + LAYOUT.SPACING.LARGE;
+  const rightOverlayPadding =
+    2 * MIN_TOUCH_TARGET.MEDIUM + LAYOUT.SPACING.TINY + LAYOUT.SPACING.LARGE;
 
   // React Compiler auto-memoizes — title needs extra right padding so it never sits
   // under the floating action buttons in the top-right corner.
@@ -318,6 +327,9 @@ const ArticleContentInternal = function ArticleContent({
         <FloatingActionButtons
           isInReadingList={isInReadingList}
           onToggleReadingList={onToggleReadingList}
+          isListening={isListening}
+          isListenLoading={isListenLoading}
+          onToggleListen={onToggleListen}
           onClose={onClose}
         />
       )}

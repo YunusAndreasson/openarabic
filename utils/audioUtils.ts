@@ -54,6 +54,20 @@ export async function stopAudioSafely(throwOnError: boolean = false): Promise<vo
 }
 
 /**
+ * Stop only non-playlist audio (word previews, single-word playback).
+ * Playlist-mode audio deliberately survives screen unmounts and tab
+ * switches — the global MiniPlayer is its control surface. Use this in
+ * screen-lifecycle cleanups whose job is disposing leaked word players.
+ * @param throwOnError - If true, throws errors; if false, silently catches them
+ */
+export async function stopNonPlaylistAudioSafely(throwOnError: boolean = false): Promise<void> {
+  if (simpleAudioService.getPlaylistInfo().isPlaylistMode) {
+    return;
+  }
+  await stopAudioSafely(throwOnError);
+}
+
+/**
  * Prefetch article data and image for smooth audio transitions
  * @param articleId - Article to prefetch
  * @param queryClient - React Query client for cache access

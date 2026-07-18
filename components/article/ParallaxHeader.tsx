@@ -143,12 +143,7 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors, scr
             Image gradient covers the bottom 60% for summary legibility; the background
             transition gradient draws on top across the full header. */}
         <Canvas style={STATIC_STYLES.gradientOverlay} pointerEvents="none">
-          <Rect
-            x={0}
-            y={headerHeight * 0.4}
-            width={SCREEN_WIDTH}
-            height={headerHeight * 0.6}
-          >
+          <Rect x={0} y={headerHeight * 0.4} width={SCREEN_WIDTH} height={headerHeight * 0.6}>
             <LinearGradient
               start={vec(0, headerHeight * 0.4)}
               end={vec(0, headerHeight)}

@@ -9,6 +9,7 @@ import DraggableFlatList from 'react-native-draggable-flatlist';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { SavedEmptyState, PlaylistItemCard } from '@/components/playlist';
 import { useToast } from '@/components/providers';
@@ -20,15 +21,28 @@ import { usePlaylistScreen, usePlaylistUI } from '@/hooks/playlist';
 import { usePlaylistHeaderActions } from '@/hooks/playlist/usePlaylistHeaderActions';
 import { useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
 import { useEditMode } from '@/hooks/ui/useEditMode';
+import { useAppSelector } from '@/store/hooks';
 import type { BookmarkItem } from '@/types/bookmark.types';
 import type { ArticleId } from '@/types/branded.types';
-import { ToastType } from '@/types/enums';
+import { AudioLanguage, ToastType } from '@/types/enums';
 import { generateStorageUrl } from '@/utils/storageUtils';
 import { getArticleMetadata } from '@/utils/stringUtils';
 
 const styles = StyleSheet.create({
   container: LAYOUT.COMMON_STYLES.CONTAINER,
+  bilingualCaption: {
+    paddingBottom: LAYOUT.SPACING.SMALL,
+  },
 });
+
+// Surfaces the bilingual-audio payoff in the main flow (otherwise it's only
+// described in Account settings and the FAQ)
+const BilingualCaption = memo(() => (
+  <ThemedText type="caption" variant="secondary" style={styles.bilingualCaption}>
+    {STRINGS.PLAYLIST_BILINGUAL_CAPTION}
+  </ThemedText>
+));
+BilingualCaption.displayName = 'BilingualCaption';
 
 // Use responsive height calculation instead of hardcoded value
 const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.AUDIO_ITEM;
@@ -150,6 +164,10 @@ export default function PlaylistScreen(): JSX.Element {
   const { currentArticle } = useGlobalAudioState();
   const isMiniPlayerVisible = Boolean(currentArticle);
 
+  // "Plays English first, then Arabic" — only when bilingual audio is active
+  const audioPreference = useAppSelector(state => state.settings.audioLanguagePreference);
+  const showBilingualCaption = hasArticles && audioPreference === AudioLanguage.ENGLISH_ARABIC;
+
   useEffect(() => {
     if (enhancedTracksError) {
       showToast(STRINGS.FAILED_TO_LOAD_AUDIO_TRACKS, 4000, ToastType.ERROR);
@@ -161,6 +179,8 @@ export default function PlaylistScreen(): JSX.Element {
   const listContainerStyle = useMemo(
     () => ({
       ...LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
+      // 12px first-content lead-in under the header — same rhythm as Explore/Practice
+      paddingTop: LAYOUT.SPACING.MEDIUM,
       // Standard padding - no FAB clearance needed
       paddingBottom: LAYOUT.SPACING.LARGE + insets.bottom,
     }),
@@ -260,7 +280,7 @@ export default function PlaylistScreen(): JSX.Element {
           showsVerticalScrollIndicator={true}
           contentContainerStyle={listContainerStyle}
           ItemSeparatorComponent={ItemSeparator}
-          ListHeaderComponent={null}
+          ListHeaderComponent={showBilingualCaption ? <BilingualCaption /> : null}
           renderItem={renderItem}
           maintainVisibleContentPosition={{}} // Prevent scroll jumps when items change (enabled by default)
         />
