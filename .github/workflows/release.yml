@@ -24,13 +24,13 @@ jobs:
       (github.event_name == 'push' && contains(github.event.head_commit.message, 'chore: bump version'))
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: 'yarn'
@@ -43,7 +43,7 @@ jobs:
 
       # === EAS Build and Update Steps (run before version bumping) ===
       - name: Setup Expo and EAS CLI
-        uses: expo/expo-github-action@v8
+        uses: expo/expo-github-action@v9
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
