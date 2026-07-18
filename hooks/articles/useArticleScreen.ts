@@ -19,6 +19,7 @@ import { useStudyWordMutations } from '@/hooks/articles/useStudyWordMutations';
 import { useArticleWordInteractions } from '@/hooks/articles/useArticleWordInteractions';
 import { useReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { useAppSelectorShallow } from '@/store/hooks';
 import type { ArticleId } from '@/types/branded.types';
 import type { Tables } from '@/types/database.types';
 import { ToastType } from '@/types/enums';
@@ -86,6 +87,12 @@ export function useArticleScreen({
     await refetchStudyWords();
   });
 
+  // Reading preference: default is tap-to-open-card; opt-in tooltip-first.
+  // Guard for existing installs whose persisted settings predate this field.
+  const showTooltipFirst = useAppSelectorShallow(
+    state => state.settings.wordTapShowsTooltip ?? false,
+  );
+
   // Word interactions (tooltips, modal, study state)
   const {
     activeTooltip,
@@ -99,6 +106,7 @@ export function useArticleScreen({
   } = useArticleWordInteractions({
     handleRootPress,
     refetchStudyWords,
+    showTooltipFirst,
   });
 
   // Handle scroll to close tooltip

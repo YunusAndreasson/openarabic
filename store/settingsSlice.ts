@@ -21,6 +21,11 @@ export interface SettingsState {
   displayLanguagePreference: DisplayLanguage;
   dailyWordLimit: number; // Number of words that can be added per day (0 = unlimited)
   adaptiveNewWordPacingEnabled: boolean; // Throttle new-word adds when recent recall dips
+  // When true, tapping a word in an article shows the lightweight inline tooltip
+  // first (full word card on a second tap). Default false: tap opens the word
+  // card directly, so the feature is discoverable without the extra tap. Opt-in
+  // once the user knows the card is there.
+  wordTapShowsTooltip: boolean;
   hapticsEnabled: boolean; // Vibration for button presses and interactions
   voiceEnabled: boolean; // Speak the English answer in Practice
   // Advanced voice-grading knobs (Account → Advanced). Defaults mirror
@@ -45,6 +50,7 @@ const initialState: SettingsState = {
   displayLanguagePreference: DisplayLanguage.ARABIC_ENGLISH, // Default to Arabic + English
   dailyWordLimit: 10, // Default to 10 words per day for getting started
   adaptiveNewWordPacingEnabled: true, // Default on; eases new words when recall dips
+  wordTapShowsTooltip: false, // Default: tap a word to open its card directly (discoverable)
   hapticsEnabled: true, // Default to enabled for haptic feedback
   voiceEnabled: false, // Opt-in; downloads a ~460 MB model on enable
   voiceEnergyGateEnabled: true,
@@ -81,6 +87,9 @@ const settingsSlice = createSlice({
     setAdaptiveNewWordPacingEnabled: (state, action: PayloadAction<boolean>) => {
       state.adaptiveNewWordPacingEnabled = action.payload;
     },
+    setWordTapShowsTooltip: (state, action: PayloadAction<boolean>) => {
+      state.wordTapShowsTooltip = action.payload;
+    },
     setHapticsEnabled: (state, action: PayloadAction<boolean>) => {
       state.hapticsEnabled = action.payload;
     },
@@ -111,6 +120,7 @@ export const {
   setDisplayLanguagePreference,
   setDailyWordLimit,
   setAdaptiveNewWordPacingEnabled,
+  setWordTapShowsTooltip,
   setHapticsEnabled,
   setVoiceEnabled,
   setVoiceEnergyGateEnabled,

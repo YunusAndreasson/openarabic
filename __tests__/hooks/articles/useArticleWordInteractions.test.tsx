@@ -97,7 +97,7 @@ describe('useArticleWordInteractions', () => {
   });
 
   describe('handleWordPress', () => {
-    test('opens tooltip when word is pressed with valid layout', () => {
+    test('opens the word details card directly by default (no tooltip)', () => {
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
@@ -114,15 +114,61 @@ describe('useArticleWordInteractions', () => {
         result.current.handleWordPress(word, layout);
       });
 
-      expect(result.current.activeTooltip).toEqual({ word, layout });
+      expect(result.current.activeTooltip).toBeNull();
+      expect(result.current.wordDetailsModal.isVisible).toBeTruthy();
+      expect(result.current.wordDetailsModal.data).toEqual(word);
     });
 
-    test('closes tooltip when same word is pressed again', () => {
+    test('opens the word details card directly even without a layout', () => {
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
             handleRootPress: mockHandleRootPress,
             refetchStudyWords: mockRefetchStudyWords,
+          }),
+        { wrapper },
+      );
+
+      const word = createMockWord(1, 10);
+
+      act(() => {
+        result.current.handleWordPress(word);
+      });
+
+      expect(result.current.activeTooltip).toBeNull();
+      expect(result.current.wordDetailsModal.isVisible).toBeTruthy();
+      expect(result.current.wordDetailsModal.data).toEqual(word);
+    });
+
+    test('opens tooltip when word is pressed with valid layout (tooltip-first)', () => {
+      const { result } = renderHook(
+        () =>
+          useArticleWordInteractions({
+            handleRootPress: mockHandleRootPress,
+            refetchStudyWords: mockRefetchStudyWords,
+            showTooltipFirst: true,
+          }),
+        { wrapper },
+      );
+
+      const word = createMockWord(1, 10);
+      const layout = createMockLayout();
+
+      act(() => {
+        result.current.handleWordPress(word, layout);
+      });
+
+      expect(result.current.activeTooltip).toEqual({ word, layout });
+      expect(result.current.wordDetailsModal.isVisible).toBeFalsy();
+    });
+
+    test('closes tooltip when same word is pressed again (tooltip-first)', () => {
+      const { result } = renderHook(
+        () =>
+          useArticleWordInteractions({
+            handleRootPress: mockHandleRootPress,
+            refetchStudyWords: mockRefetchStudyWords,
+            showTooltipFirst: true,
           }),
         { wrapper },
       );
@@ -145,12 +191,13 @@ describe('useArticleWordInteractions', () => {
       expect(result.current.activeTooltip).toBeNull();
     });
 
-    test('switches tooltip when different word is pressed', () => {
+    test('switches tooltip when different word is pressed (tooltip-first)', () => {
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
             handleRootPress: mockHandleRootPress,
             refetchStudyWords: mockRefetchStudyWords,
+            showTooltipFirst: true,
           }),
         { wrapper },
       );
@@ -174,12 +221,13 @@ describe('useArticleWordInteractions', () => {
       expect(result.current.activeTooltip?.word.id).toBe(2);
     });
 
-    test('does not open tooltip with invalid layout (width 0)', () => {
+    test('does not open tooltip with invalid layout (width 0) (tooltip-first)', () => {
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
             handleRootPress: mockHandleRootPress,
             refetchStudyWords: mockRefetchStudyWords,
+            showTooltipFirst: true,
           }),
         { wrapper },
       );
@@ -194,12 +242,13 @@ describe('useArticleWordInteractions', () => {
       expect(result.current.activeTooltip).toBeNull();
     });
 
-    test('does not open tooltip without layout', () => {
+    test('does not open tooltip without layout (tooltip-first)', () => {
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
             handleRootPress: mockHandleRootPress,
             refetchStudyWords: mockRefetchStudyWords,
+            showTooltipFirst: true,
           }),
         { wrapper },
       );
@@ -221,6 +270,7 @@ describe('useArticleWordInteractions', () => {
           useArticleWordInteractions({
             handleRootPress: mockHandleRootPress,
             refetchStudyWords: mockRefetchStudyWords,
+            showTooltipFirst: true,
           }),
         { wrapper },
       );
@@ -251,6 +301,7 @@ describe('useArticleWordInteractions', () => {
           useArticleWordInteractions({
             handleRootPress: mockHandleRootPress,
             refetchStudyWords: mockRefetchStudyWords,
+            showTooltipFirst: true,
           }),
         { wrapper },
       );
@@ -281,6 +332,7 @@ describe('useArticleWordInteractions', () => {
           useArticleWordInteractions({
             handleRootPress: mockHandleRootPress,
             refetchStudyWords: mockRefetchStudyWords,
+            showTooltipFirst: true,
           }),
         { wrapper },
       );

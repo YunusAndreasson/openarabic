@@ -18,6 +18,7 @@ import reducer, {
   setDisplayLanguagePreference,
   setHapticsEnabled,
   setReminderTime,
+  setWordTapShowsTooltip,
   type SettingsState,
 } from '../../store/settingsSlice';
 import { AudioLanguage, DisplayLanguage } from '@/types/enums';
@@ -40,6 +41,7 @@ describe('settingsSlice reducers', () => {
       displayLanguagePreference: DisplayLanguage.ARABIC_ENGLISH,
       dailyWordLimit: 10,
       adaptiveNewWordPacingEnabled: true,
+      wordTapShowsTooltip: false,
       hapticsEnabled: true,
     };
   });
@@ -172,6 +174,19 @@ describe('settingsSlice reducers', () => {
       const modifiedState = { ...initialState, adaptiveNewWordPacingEnabled: false };
       const state = reducer(modifiedState, setAdaptiveNewWordPacingEnabled(true));
       expect(state.adaptiveNewWordPacingEnabled).toBe(true);
+    });
+  });
+
+  describe('setWordTapShowsTooltip', () => {
+    test('enables tooltip-first word taps', () => {
+      const state = reducer(initialState, setWordTapShowsTooltip(true));
+      expect(state.wordTapShowsTooltip).toBe(true);
+    });
+
+    test('returns to tap-opens-card behavior', () => {
+      const modifiedState = { ...initialState, wordTapShowsTooltip: true };
+      const state = reducer(modifiedState, setWordTapShowsTooltip(false));
+      expect(state.wordTapShowsTooltip).toBe(false);
     });
   });
 

@@ -26,6 +26,7 @@ import {
   setDailyWordLimit,
   setDisplayLanguagePreference,
   setVoiceEnabled,
+  setWordTapShowsTooltip,
 } from '@/store/settingsSlice';
 import { setTheme } from '@/store/themeSlice';
 import {
@@ -76,6 +77,9 @@ const AccountScreen: FC = () => {
   const audioShuffleEnabled = useAppSelectorShallow(state => state.settings.audioShuffleEnabled);
   const adaptiveNewWordPacingEnabled = useAppSelectorShallow(
     state => state.settings.adaptiveNewWordPacingEnabled,
+  );
+  const wordTapShowsTooltip = useAppSelectorShallow(
+    state => state.settings.wordTapShowsTooltip ?? false,
   );
   const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
   const voice = useVoiceGrading();
@@ -175,6 +179,16 @@ const AccountScreen: FC = () => {
     (enabled: boolean) => {
       selectionFeedback();
       dispatch(setAdaptiveNewWordPacingEnabled(enabled));
+    },
+    [dispatch],
+  );
+
+  // Word-tap preview toggle — ON restores the lightweight inline tooltip;
+  // OFF (default) opens the full word card directly on tap.
+  const handleWordTapPreviewToggle = useCallback(
+    (enabled: boolean) => {
+      selectionFeedback();
+      dispatch(setWordTapShowsTooltip(enabled));
     },
     [dispatch],
   );
@@ -388,6 +402,14 @@ const AccountScreen: FC = () => {
             rightType="toggle"
             toggleValue={adaptiveNewWordPacingEnabled}
             onToggleChange={handleAdaptivePacingToggle}
+          />
+          <SettingsCard
+            icon="chatbubble-ellipses"
+            label={STRINGS.WORD_TAP_PREVIEW}
+            subtitle={STRINGS.WORD_TAP_PREVIEW_SUBTITLE}
+            rightType="toggle"
+            toggleValue={wordTapShowsTooltip}
+            onToggleChange={handleWordTapPreviewToggle}
           />
           <SettingsCard
             icon="school"

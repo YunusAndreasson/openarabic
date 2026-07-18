@@ -80,6 +80,8 @@ export const STRINGS = {
   WORDS_REMAINING_TODAY: '{count} new words remaining today',
   ADAPTIVE_PACING: 'Smart pacing',
   ADAPTIVE_PACING_SUBTITLE: 'Pause new words when recent recall drops',
+  WORD_TAP_PREVIEW: 'Quick word preview',
+  WORD_TAP_PREVIEW_SUBTITLE: 'Tap a word for a small popup instead of the full card',
   RESET_TUTORIALS: 'Reset tutorials',
   RESET_TUTORIALS_TITLE: 'Reset tutorials?',
   RESET_TUTORIALS_MESSAGE: 'See helpful tips again as you explore the app.',

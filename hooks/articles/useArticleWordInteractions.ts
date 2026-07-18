@@ -14,6 +14,13 @@ export interface UseArticleWordInteractionsOptions {
   handleRootPress: (rootId: RootId) => Promise<boolean | undefined>;
   /** Callback to refetch study words after mutations */
   refetchStudyWords?: () => Promise<unknown>;
+  /**
+   * When true, a word tap shows the lightweight inline tooltip first and the
+   * full word card opens on a second tap (the tooltip's "see more"). When false
+   * (default), a word tap opens the word card directly — more discoverable, so
+   * users don't have to find the tooltip's follow-up tap.
+   */
+  showTooltipFirst?: boolean;
 }
 
 /**
@@ -25,6 +32,7 @@ export interface UseArticleWordInteractionsOptions {
 export function useArticleWordInteractions({
   handleRootPress,
   refetchStudyWords,
+  showTooltipFirst = false,
 }: UseArticleWordInteractionsOptions) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -49,12 +57,27 @@ export function useArticleWordInteractions({
     activeTooltipRef.current = activeTooltip;
   }, [activeTooltip]);
 
+  // Mirror the preference into a ref so handleWordPress stays a stable callback
+  // even when the setting is toggled mid-session.
+  const showTooltipFirstRef = useRef(showTooltipFirst);
+  useEffect(() => {
+    showTooltipFirstRef.current = showTooltipFirst;
+  }, [showTooltipFirst]);
+
   /**
-   * Handle word press to show/hide tooltip
-   * Uses ref for stable callback identity to prevent re-renders
+   * Handle word press.
+   * Default: open the word details card directly (discoverable, one tap).
+   * When `showTooltipFirst` is enabled: show/hide the inline tooltip instead,
+   * and the card opens from the tooltip's follow-up tap (handleOpenWordDetails).
+   * Uses refs for stable callback identity to prevent re-renders.
    */
   const handleWordPress = useCallback(
     (word: SentenceWord, layout?: LayoutRectangle) => {
+      if (!showTooltipFirstRef.current) {
+        wordDetailsModal.open(word);
+        return;
+      }
+
       if (layout && layout.width > 0) {
         if (activeTooltipRef.current?.word.id === word.id) {
           setActiveTooltip(null);
@@ -63,7 +86,7 @@ export function useArticleWordInteractions({
         }
       }
     },
-    [], // No dependencies - uses ref for stable callback identity
+    [wordDetailsModal.open], // open is a stable callback; refs cover the rest
   );
 
   /**

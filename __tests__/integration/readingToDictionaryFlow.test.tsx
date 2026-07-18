@@ -242,12 +242,13 @@ describe('Reading to Dictionary Flow', () => {
   });
 
   describe('Word Interactions', () => {
-    test('shows tooltip when word is pressed', async () => {
+    test('shows tooltip when word is pressed (tooltip-first)', async () => {
       const mockHandleRootPress = jest.fn().mockResolvedValue(true);
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
             handleRootPress: mockHandleRootPress,
+            showTooltipFirst: true,
           }),
         { wrapper },
       );
@@ -260,12 +261,13 @@ describe('Reading to Dictionary Flow', () => {
       expect(result.current.activeTooltip?.word.id).toBe(mockWord.id);
     });
 
-    test('closes tooltip when same word is pressed again', async () => {
+    test('closes tooltip when same word is pressed again (tooltip-first)', async () => {
       const mockHandleRootPress = jest.fn().mockResolvedValue(true);
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
             handleRootPress: mockHandleRootPress,
+            showTooltipFirst: true,
           }),
         { wrapper },
       );
@@ -285,12 +287,13 @@ describe('Reading to Dictionary Flow', () => {
       expect(result.current.activeTooltip).toBeNull();
     });
 
-    test('opens word details modal from tooltip', async () => {
+    test('opens word details modal from tooltip (tooltip-first)', async () => {
       const mockHandleRootPress = jest.fn().mockResolvedValue(true);
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
             handleRootPress: mockHandleRootPress,
+            showTooltipFirst: true,
           }),
         { wrapper },
       );
@@ -311,12 +314,13 @@ describe('Reading to Dictionary Flow', () => {
       expect(result.current.wordDetailsModal.data?.id).toBe(mockWord.id);
     });
 
-    test('closes tooltip on scroll', async () => {
+    test('closes tooltip on scroll (tooltip-first)', async () => {
       const mockHandleRootPress = jest.fn().mockResolvedValue(true);
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
             handleRootPress: mockHandleRootPress,
+            showTooltipFirst: true,
           }),
         { wrapper },
       );
@@ -475,6 +479,7 @@ describe('Reading to Dictionary Flow', () => {
         () =>
           useArticleWordInteractions({
             handleRootPress: mockHandleRootPress,
+            showTooltipFirst: true,
           }),
         { wrapper },
       );

@@ -35,6 +35,11 @@ jest.mock('@/hooks/articles/useReadingProgress');
 jest.mock('@/utils/audioUtils');
 jest.mock('@/utils/errorHandling');
 jest.mock('@/utils/haptics');
+// The hook reads the word-tap preference from Redux; stub the selector so the
+// test doesn't need a store Provider (default: tooltip-first off).
+jest.mock('@/store/hooks', () => ({
+  useAppSelectorShallow: jest.fn(() => false),
+}));
 
 import { renderHook, waitFor, act } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
