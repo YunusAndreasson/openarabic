@@ -18,7 +18,6 @@ import { generateStorageUrl } from '@/utils/storageUtils';
 import { formatAuthorCategory } from '@/utils/stringUtils';
 
 const GLASS_AVAILABLE = isLiquidGlassAvailable();
-const CardSurface = GLASS_AVAILABLE ? GlassView : View;
 
 /**
  * Where the player card is mounted.
@@ -32,7 +31,10 @@ const CardSurface = GLASS_AVAILABLE ? GlassView : View;
 export type MiniPlayerPlacement = 'root' | 'screen';
 
 export interface MiniPlayerProps {
-  /** Where the card is mounted — drives the bottom offset. Defaults to `root`. */
+  /**
+   * Where the card is mounted — drives the bottom offset and the surface.
+   * Defaults to `root`.
+   */
   placement?: MiniPlayerPlacement;
   /** Current article being played */
   article: {
@@ -112,20 +114,27 @@ const MiniPlayerComponent = ({
   const timerIconColor = isTimerActive ? colors.white : colors.tint;
   const stopButtonColor = withAlpha(colors.tint, 0.12);
 
+  // Liquid glass only over the tab screens, where the card floats above sparse
+  // card/list content. In the article reader it sits directly on top of dense
+  // Arabic body text, and iOS 26 glass is clear enough there that the player's
+  // own title and timings become unreadable — use the opaque surface instead.
+  const useGlassSurface = GLASS_AVAILABLE && placement === 'root';
+  const CardSurface = useGlassSurface ? GlassView : View;
+
   const cardStyle = [
     styles.card,
     {
-      // On iOS 26 the GlassView provides the surface; skip the opaque fill so
-      // the liquid-glass effect shows the tab bar/content behind it.
-      backgroundColor: GLASS_AVAILABLE ? 'transparent' : colors.elevation2,
-      borderWidth: GLASS_AVAILABLE ? 0 : StyleSheet.hairlineWidth,
+      // The GlassView provides its own surface; skip the opaque fill so the
+      // liquid-glass effect shows the tab bar/content behind it.
+      backgroundColor: useGlassSurface ? 'transparent' : colors.elevation2,
+      borderWidth: useGlassSurface ? 0 : StyleSheet.hairlineWidth,
       borderColor: withAlpha(colors.border, 0.5),
       ...LAYOUT.ELEVATION.MEDIUM,
       shadowColor: colors.shadow,
     },
   ];
 
-  const surfaceProps = GLASS_AVAILABLE ? { glassEffectStyle: 'regular' as const } : {};
+  const surfaceProps = useGlassSurface ? { glassEffectStyle: 'regular' as const } : {};
 
   const inner = (
     <CardSurface style={cardStyle} {...surfaceProps}>
