@@ -39,7 +39,7 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Run validation
-        run: yarn validate
+        run: yarn verify
 
       # === EAS Build and Update Steps (run before version bumping) ===
       - name: Setup Expo and EAS CLI
