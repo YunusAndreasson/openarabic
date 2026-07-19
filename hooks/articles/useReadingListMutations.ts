@@ -16,7 +16,7 @@ interface ReadingListMutationsResult {
   handleToggleReadingList: (
     articleId: ArticleId | undefined,
     isInReadingList: boolean,
-  ) => Promise<void>;
+  ) => Promise<boolean>;
 
   addToReadingListMutation: UseMutationResult<
     void,
@@ -119,21 +119,31 @@ export const useReadingListMutations = (
   // Handle toggling reading list with session refresh
   const handleToggleReadingList = useCallback(
     async (articleId: ArticleId | undefined, isInReadingList: boolean) => {
-      if (!articleId) return;
+      if (!articleId) return false;
+
+      let userId: string;
+      try {
+        const { user } = await checkAuthentication();
+        userId = user.id;
+      } catch {
+        router.replace(ROUTE_PATHS.AUTH);
+        return false;
+      }
 
       try {
-        // Use centralized auth check (handles getSession automatically)
-        const { user } = await checkAuthentication();
-
-        // Use the authenticated user ID
+        // Await the mutation so optimistic callers remain pending until the
+        // server confirms the new state. React Query still owns cache updates
+        // and error handling through the mutation callbacks above.
         if (isInReadingList) {
-          removeFromReadingListMutation.mutate({ userId: user.id, articleId });
+          await removeFromReadingListMutation.mutateAsync({ userId, articleId });
         } else {
-          addToReadingListMutation.mutate({ userId: user.id, articleId });
+          await addToReadingListMutation.mutateAsync({ userId, articleId });
         }
+        return true;
       } catch {
-        // Auth check failed - silently redirect to auth (no toast for bookmarks)
-        router.replace(ROUTE_PATHS.AUTH);
+        // The mutation callbacks already report operational failures. Returning
+        // false lets the optimistic UI roll back without claiming success.
+        return false;
       }
     },
     [addToReadingListMutation, removeFromReadingListMutation],

@@ -10,7 +10,6 @@ const GlassContainer = GLASS_AVAILABLE ? GlassView : View;
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
-import { selectionFeedback } from '@/utils/haptics';
 
 export interface FloatingActionButtonsProps {
   isInReadingList: boolean;
@@ -66,7 +65,6 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
     );
 
     const handleOptimisticToggle = () => {
-      selectionFeedback();
       const newValue = !optimisticIsInReadingList;
       // React 19: keep the async work inside the transition so the optimistic
       // value stays committed until the parent prop has caught up.

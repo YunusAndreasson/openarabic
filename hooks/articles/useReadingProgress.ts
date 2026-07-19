@@ -26,13 +26,8 @@ export function useReadingProgress({
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const lastSavedSentenceRef = useRef<number>(0);
-  // Capture the progress value as it existed on the initial load of this hook.
-  // This lets consumers differentiate between pre-existing progress and progress
-  // that was created/updated during the current session.
-  const initialLastSentenceReadRef = useRef<number | null>(null);
-
   // Use bulk query as single source of truth - extract specific article progress
-  const { data: progressMap, isLoading } = useBulkReadingProgress([articleId]);
+  const { data: progressMap, isLoading, isPlaceholderData } = useBulkReadingProgress([articleId]);
 
   // Extract progress for this specific article from the bulk cache
   const rawProgress = useMemo(() => {
@@ -91,22 +86,8 @@ export function useReadingProgress({
     }
   }, [progress?.last_sentence_read]);
 
-  // Reset capture when article changes
-  const prevArticleIdRef = useRef<number>(articleId);
-  useEffect(() => {
-    if (prevArticleIdRef.current !== articleId) {
-      initialLastSentenceReadRef.current = null;
-      prevArticleIdRef.current = articleId;
-    }
-  }, [articleId]);
-
-  // Capture the initial progress exactly once when the first query result resolves
-  // (post-sanitization). If there was no existing progress, this stores 0.
-  useEffect(() => {
-    if (initialLastSentenceReadRef.current === null && !isLoading) {
-      initialLastSentenceReadRef.current = progress?.last_sentence_read ?? 0;
-    }
-  }, [isLoading, progress?.last_sentence_read]);
+  const isInitialProgressReady = !isLoading && !isPlaceholderData;
+  const initialLastSentenceRead = isInitialProgressReady ? (progress?.last_sentence_read ?? 0) : 0;
 
   // Mutation to update reading progress
   const updateProgressMutation = useMutation({
@@ -226,8 +207,8 @@ export function useReadingProgress({
           Math.min(data.currentSentenceIndex, data.totalSentences - 1),
         );
 
-        // Save progress if we're at a different position than last recorded
-        if (validFinalSentenceIndex !== lastRecorded && data.userId) {
+        // Never overwrite newer stored progress with an earlier position.
+        if (validFinalSentenceIndex > lastRecorded) {
           // Save final progress and invalidate cache so Explore tab updates immediately
           readingProgressService
             .updateProgress({
@@ -267,15 +248,10 @@ export function useReadingProgress({
     isLoading,
     updateProgress,
     isUpdating: updateProgressMutation.isPending,
-    // New: expose the last sentence read for jumping functionality
     lastSentenceRead: progress?.last_sentence_read ?? 0,
-    // New: expose initial values to distinguish pre-existing progress from session updates.
-    // Reading the ref here is intentional: the value is captured exactly once in an effect post-mount
-    // and is read-only thereafter; lifting to state would cause an extra render on initial load.
-    // eslint-disable-next-line react-hooks/refs
-    initialLastSentenceRead: initialLastSentenceReadRef.current ?? 0,
-    // eslint-disable-next-line react-hooks/refs
-    hadExistingProgressOnMount: (initialLastSentenceReadRef.current ?? 0) > 0,
+    isInitialProgressReady,
+    initialLastSentenceRead,
+    hadExistingProgressOnMount: initialLastSentenceRead > 0,
   };
 }
 

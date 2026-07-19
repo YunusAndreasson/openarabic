@@ -155,6 +155,47 @@ describe('useReadingListMutations', () => {
         expect(mockRemoveFromReadingList).toHaveBeenCalledWith('test-user-id', 123);
       });
     });
+
+    test('resolves only after the bookmark mutation settles', async () => {
+      let resolveMutation: (() => void) | undefined;
+      mockAddToReadingList.mockImplementation(
+        () => new Promise<void>(resolve => (resolveMutation = resolve)),
+      );
+
+      const { result } = renderHook(() => useReadingListMutations(mockRefetchReadingListStatus), {
+        wrapper,
+      });
+
+      let settled = false;
+      const togglePromise = result.current
+        .handleToggleReadingList(123 as ArticleId, false)
+        .then(value => {
+          settled = true;
+          return value;
+        });
+
+      await waitFor(() => expect(mockAddToReadingList).toHaveBeenCalled());
+      expect(settled).toBe(false);
+
+      await act(async () => resolveMutation?.());
+      await expect(togglePromise).resolves.toBe(true);
+    });
+
+    test('returns false without redirecting when the mutation fails', async () => {
+      mockAddToReadingList.mockRejectedValue(new Error('Network error'));
+
+      const { result } = renderHook(() => useReadingListMutations(mockRefetchReadingListStatus), {
+        wrapper,
+      });
+
+      let succeeded: boolean | undefined;
+      await act(async () => {
+        succeeded = await result.current.handleToggleReadingList(123 as ArticleId, false);
+      });
+
+      expect(succeeded).toBe(false);
+      expect(mockRouterReplace).not.toHaveBeenCalled();
+    });
   });
 
   describe('addToReadingListMutation', () => {

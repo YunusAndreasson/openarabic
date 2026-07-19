@@ -446,5 +446,28 @@ describe('useReadingProgress', () => {
       // Should return null when no progress exists
       expect(result.current.progress).toBeNull();
     });
+
+    test('does not regress stored progress when unmounted before scrolling forward', async () => {
+      const { result, unmount } = renderHook(
+        () =>
+          useReadingProgress({
+            articleId: testArticleId,
+            totalSentences: 10,
+            currentSentenceIndex: 0,
+            isActive: true,
+          }),
+        { wrapper },
+      );
+
+      await waitFor(() => {
+        expect(result.current.lastSentenceRead).toBe(5);
+        expect(result.current.hadExistingProgressOnMount).toBe(true);
+      });
+      mockReadingProgressService.updateProgress.mockClear();
+
+      unmount();
+
+      expect(mockReadingProgressService.updateProgress).not.toHaveBeenCalled();
+    });
   });
 });

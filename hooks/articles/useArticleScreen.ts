@@ -52,8 +52,8 @@ export function useArticleScreen({
   // Parse article ID
   const articleId = useMemo(() => {
     if (!id) return undefined;
-    const parsed = parseInt(id ?? '', 10);
-    return isNaN(parsed) ? undefined : (parsed as ArticleId);
+    const parsed = Number(id);
+    return Number.isSafeInteger(parsed) && parsed > 0 ? (parsed as ArticleId) : undefined;
   }, [id]);
 
   // Article data
@@ -126,7 +126,8 @@ export function useArticleScreen({
   const handleToggleReadingListWithFeedback = useCallback(async () => {
     if (!articleId) return;
     selectionFeedback();
-    await handleToggleReadingList(articleId, isInReadingList);
+    const succeeded = await handleToggleReadingList(articleId, isInReadingList);
+    if (!succeeded) return;
     showToast(
       isInReadingList ? STRINGS.REMOVED_FROM_BOOKMARKS : STRINGS.ADDED_TO_BOOKMARKS,
       3000,
@@ -151,7 +152,7 @@ export function useArticleScreen({
 
   // Reading progress
   const isActive = Boolean(article) && !isLoadingArticle;
-  const { updateProgress, initialLastSentenceRead, hadExistingProgressOnMount } =
+  const { isInitialProgressReady, initialLastSentenceRead, hadExistingProgressOnMount } =
     useReadingProgress({
       articleId: articleId ?? (0 as ArticleId),
       totalSentences: sortedSentences?.length ?? 0,
@@ -167,8 +168,6 @@ export function useArticleScreen({
   // Track scroll state - one attempt per article
   const hasScrolledToPositionRef = useRef(false);
   const [isFlashListReady, setIsFlashListReady] = useState(false);
-  // Track current position for UI, but debounce DB updates
-  const pendingProgressUpdateRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Reset scroll state when article changes. Resetting refs + tied UI state together when
   // the articleId key changes is a legitimate "reset on prop change" use case.
@@ -222,32 +221,6 @@ export function useArticleScreen({
     [sortedSentences?.length],
   );
 
-  // Debounced progress update - only save to DB when user stops scrolling
-  useEffect(() => {
-    // Clear any pending update
-    if (pendingProgressUpdateRef.current) {
-      clearTimeout(pendingProgressUpdateRef.current);
-    }
-
-    // Don't update if article is still loading
-    if (!article || isLoadingArticle) {
-      return;
-    }
-
-    // Schedule DB update after 1 second of inactivity
-    pendingProgressUpdateRef.current = setTimeout(() => {
-      if (currentSentenceIndex >= 0) {
-        updateProgress(currentSentenceIndex);
-      }
-    }, 1000);
-
-    return () => {
-      if (pendingProgressUpdateRef.current) {
-        clearTimeout(pendingProgressUpdateRef.current);
-      }
-    };
-  }, [currentSentenceIndex, article, isLoadingArticle, updateProgress]);
-
   // Handle scroll end - placeholder for ArticleContent onMomentumScrollEnd prop
   const handleScrollEnd = useCallback(() => {
     // No-op: viewable items callback handles all position tracking
@@ -259,6 +232,7 @@ export function useArticleScreen({
 
     if (
       !hasScrolledToPositionRef.current &&
+      isInitialProgressReady &&
       isFlashListReady &&
       !isLoadingArticle &&
       article &&
@@ -310,11 +284,12 @@ export function useArticleScreen({
           showToast(message, 3000, ToastType.INFO);
         });
       });
-    } else if (!hasScrolledToPositionRef.current && isFlashListReady) {
+    } else if (!hasScrolledToPositionRef.current && isInitialProgressReady && isFlashListReady) {
       hasScrolledToPositionRef.current = true;
     }
   }, [
     isFlashListReady,
+    isInitialProgressReady,
     isLoadingArticle,
     article,
     sortedSentences,

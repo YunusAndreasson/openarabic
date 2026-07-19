@@ -127,6 +127,7 @@ describe('useArticleScreen Hook', () => {
     jest.mocked(useReadingListMutations).mockReturnValue({
       handleToggleReadingList: mockHandleToggleReadingList,
     } as any);
+    mockHandleToggleReadingList.mockResolvedValue(true);
 
     jest.mocked(useStudyWordMutations).mockReturnValue({
       handleRootPress: mockHandleRootPress,
@@ -145,6 +146,7 @@ describe('useArticleScreen Hook', () => {
 
     jest.mocked(useReadingProgress).mockReturnValue({
       updateProgress: mockUpdateProgress,
+      isInitialProgressReady: true,
       initialLastSentenceRead: 0,
       hadExistingProgressOnMount: false,
     } as any);
@@ -358,6 +360,23 @@ describe('useArticleScreen Hook', () => {
         3000,
         ToastType.INFO,
       );
+    });
+
+    test('does not show a success toast when the mutation fails', async () => {
+      mockHandleToggleReadingList.mockResolvedValue(false);
+
+      const { result } = renderHook(() =>
+        useArticleScreen({
+          id: '1',
+          showToast: mockShowToast,
+        }),
+      );
+
+      await act(async () => {
+        await result.current.handleToggleReadingListWithFeedback();
+      });
+
+      expect(mockShowToast).not.toHaveBeenCalled();
     });
   });
 
@@ -772,16 +791,8 @@ describe('useArticleScreen Hook', () => {
     });
   });
 
-  describe('Debounced Progress Updates', () => {
-    beforeEach(() => {
-      jest.useFakeTimers();
-    });
-
-    afterEach(() => {
-      jest.useRealTimers();
-    });
-
-    test('debounces progress updates by 1 second', () => {
+  describe('Progress Updates', () => {
+    test('forwards the latest visible sentence to the persistence hook', () => {
       const { result } = renderHook(() =>
         useArticleScreen({
           id: '1',
@@ -800,61 +811,9 @@ describe('useArticleScreen Hook', () => {
         } as any);
       });
 
-      // Should not update immediately
-      expect(mockUpdateProgress).not.toHaveBeenCalled();
-
-      // Fast-forward 500ms - still not called
-      act(() => {
-        jest.advanceTimersByTime(500);
-      });
-      expect(mockUpdateProgress).not.toHaveBeenCalled();
-
-      // Fast-forward another 500ms (total 1000ms) - now it should be called
-      act(() => {
-        jest.advanceTimersByTime(500);
-      });
-      expect(mockUpdateProgress).toHaveBeenCalledWith(3); // data index 3 = sentence 3
-    });
-
-    test('cancels pending progress update on rapid scroll', () => {
-      const { result } = renderHook(() =>
-        useArticleScreen({
-          id: '1',
-          showToast: mockShowToast,
-        }),
+      expect(useReadingProgress).toHaveBeenLastCalledWith(
+        expect.objectContaining({ currentSentenceIndex: 3 }),
       );
-
-      act(() => {
-        result.current.handleFlashListLoad();
-      });
-
-      // First scroll position
-      act(() => {
-        result.current.handleViewableItemsChanged({
-          viewableItems: [{ index: 3, isViewable: true, item: {} as any }],
-        } as any);
-      });
-
-      // Fast-forward 500ms
-      act(() => {
-        jest.advanceTimersByTime(500);
-      });
-
-      // Second scroll position before debounce completes
-      act(() => {
-        result.current.handleViewableItemsChanged({
-          viewableItems: [{ index: 5, isViewable: true, item: {} as any }],
-        } as any);
-      });
-
-      // Fast-forward another 1000ms
-      act(() => {
-        jest.advanceTimersByTime(1000);
-      });
-
-      // Should only be called once with the latest position
-      expect(mockUpdateProgress).toHaveBeenCalledTimes(1);
-      expect(mockUpdateProgress).toHaveBeenCalledWith(5); // data index 5 = sentence 5
     });
   });
 });
