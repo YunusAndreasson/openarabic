@@ -6,7 +6,7 @@ import { memo, useCallback, useEffect, useMemo } from 'react';
 import { StyleSheet } from 'react-native';
 import type { RenderItemParams } from 'react-native-draggable-flatlist';
 import DraggableFlatList from 'react-native-draggable-flatlist';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated, { FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -25,6 +25,7 @@ import { useAppSelector } from '@/store/hooks';
 import type { BookmarkItem } from '@/types/bookmark.types';
 import type { ArticleId } from '@/types/branded.types';
 import { AudioLanguage, ToastType } from '@/types/enums';
+import type { ReanimatedCSSAnimationStyle } from '@/types/ui/base.types';
 import { generateStorageUrl } from '@/utils/storageUtils';
 import { getArticleMetadata } from '@/utils/stringUtils';
 
@@ -46,6 +47,20 @@ BilingualCaption.displayName = 'BilingualCaption';
 
 // Use responsive height calculation instead of hardcoded value
 const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.AUDIO_ITEM;
+
+// FlashList recycles row views. Reanimated entering layout animations can be
+// interrupted while a recycled view is being rebound, leaving the native view
+// at an in-between opacity. A CSS keyframe returns to the explicit base opacity
+// after the animation, so every row deterministically settles fully visible.
+const ROW_FADE_IN_STYLE = {
+  opacity: 1,
+  animationName: {
+    from: { opacity: 0 },
+    to: { opacity: 1 },
+  },
+  animationDuration: `${TIMING_CONFIG.MEDIUM.duration}ms`,
+  animationFillMode: 'backwards' as const,
+} as ReanimatedCSSAnimationStyle;
 
 // Memoized separator component for both DraggableFlatList and FlashList
 const ItemSeparator = memo(() => <ListSeparator height={LAYOUT.SPACING.SMALL} />);
@@ -95,7 +110,7 @@ const PlaylistListItem = memo(
 
     return (
       <Animated.View
-        entering={FadeIn.duration(TIMING_CONFIG.MEDIUM.duration)}
+        style={ROW_FADE_IN_STYLE}
         exiting={FadeOut.duration(TIMING_CONFIG.FAST.duration)}
       >
         <PlaylistItemCard
