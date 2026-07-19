@@ -6,30 +6,25 @@ interface ChartGridProps {
   width: number;
   height: number;
   topPadding?: number;
-  xLabelPositions?: number[]; // X positions for vertical grid lines (daily positions)
   yMax?: number; // Maximum value for y-axis (default 100 for percentages)
   chartColors: ChartColors;
 }
 
 /**
- * Subtle grid component for charts to improve visual structure
- * without overwhelming the data visualization
+ * Recessive grid: solid 1px hairlines at 25/50/75/100% plus a baseline,
+ * all one step off the surface. No vertical lines (x labels carry the days)
+ * and no axis frame — the data is the only loud element.
  */
 export function ChartGrid({
   width,
   height,
   topPadding = 0,
-  xLabelPositions = [],
   yMax = 100,
   chartColors,
 }: ChartGridProps) {
-  // Beautiful, subtle grid lines - perfect opacity for readability without distraction
   const gridColor = chartColors.ui.grid;
 
-  // Slightly more prominent border lines for clean chart definition
-  const borderColor = chartColors.ui.border;
-
-  // Horizontal lines at exact percentages (25%, 50%, 75%, 100%) for perfect value reading
+  // Horizontal lines at exact percentages (25%, 50%, 75%, 100%) for value reading
   const chartHeight = height - topPadding;
   const percentages = [25, 50, 75, 100];
   const horizontalLines = percentages.map(percentage => {
@@ -37,12 +32,8 @@ export function ChartGrid({
     return { y: yPosition, percentage };
   });
 
-  // Vertical lines at daily positions for temporal reference
-  const verticalLines = xLabelPositions.map(x => ({ x })).filter(v => v.x !== undefined);
-
   return (
     <Group>
-      {/* Horizontal grid lines at exact percentages */}
       {horizontalLines.map(line => (
         <Line
           key={`grid-line-${line.percentage}%`}
@@ -54,36 +45,13 @@ export function ChartGrid({
         />
       ))}
 
-      {/* Vertical grid lines for daily reference */}
-      {verticalLines.map(({ x }) => (
-        <Line
-          key={`vertical-grid-line-${x}`}
-          color={gridColor}
-          p1={{ x, y: topPadding }}
-          p2={{ x, y: height }}
-          strokeWidth={0.75}
-          style="stroke"
-        />
-      ))}
-
-      {/* Perfect chart borders for professional definition */}
-      {/* Bottom border (x-axis) - clean baseline */}
+      {/* Baseline — same hairline weight as the grid, no heavier frame */}
       <Line
-        key="x-axis-border"
-        color={borderColor}
+        key="baseline"
+        color={gridColor}
         p1={{ x: 0, y: height }}
         p2={{ x: width, y: height }}
-        strokeWidth={1.25}
-        style="stroke"
-      />
-
-      {/* Left border (y-axis) - clean left edge */}
-      <Line
-        key="y-axis-border"
-        color={borderColor}
-        p1={{ x: 0, y: topPadding }}
-        p2={{ x: 0, y: height }}
-        strokeWidth={1.25}
+        strokeWidth={1}
         style="stroke"
       />
     </Group>

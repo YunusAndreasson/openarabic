@@ -89,7 +89,6 @@ export type AccountSection = (typeof AccountSection)[keyof typeof AccountSection
  * Using const object for zero runtime overhead
  */
 export const VocabularyStatCategory = {
-  DUE: 'Words Due',
   MASTERED: 'Mastered',
 } as const;
 

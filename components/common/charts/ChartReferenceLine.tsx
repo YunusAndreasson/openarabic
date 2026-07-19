@@ -32,7 +32,7 @@ export const ChartReferenceLine = memo<ChartReferenceLineProps>(
         color={lineColor}
         p1={{ x: 0, y: yPosition }}
         p2={{ x: graphWidth, y: yPosition }}
-        strokeWidth={1.5}
+        strokeWidth={1}
         style="stroke"
       />
     );

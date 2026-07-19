@@ -1,4 +1,4 @@
-import { getChartColors } from '@/constants/chartColors';
+import { CHART_OPACITY, getChartColors } from '@/constants/chartColors';
 import { CHART_VISUAL, GRAPH_HEIGHT_LARGE } from '@/constants/chartConstants';
 
 import { BaseChart } from './BaseChart';
@@ -15,6 +15,7 @@ import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { useColors } from '@/hooks/theme/useColors';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { PerformanceZone } from '@/types/ui/chart.types';
 import { generateDataPointKeys, generateMilestoneKeys, type ChartPoint } from '@/utils/chartUtils';
 
@@ -140,7 +141,12 @@ export const VocabularyChart = memo<VocabularyChartProps<unknown>>(
   }: VocabularyChartProps<unknown>) => {
     // Get colors outside Canvas (Context available here)
     const colors = useColors();
+    const isDarkMode = useIsDarkMode();
     const chartColors = useMemo(() => getChartColors(colors), [colors]);
+    const zoneOpacity = isDarkMode ? CHART_OPACITY.ZONE_DARK : CHART_OPACITY.ZONE;
+
+    // Emphasized point: today — index 0 on forecasts, last index on history
+    const emphasisIndex = isFuturePrediction ? 0 : dataPoints.length - 1;
 
     // Memoized chart data calculations for better performance
     const contentHeight = useMemo(
@@ -174,7 +180,6 @@ export const VocabularyChart = memo<VocabularyChartProps<unknown>>(
           height={GRAPH_HEIGHT_LARGE + CHART_VISUAL.CHART_BOTTOM_PADDING}
           topPadding={topPadding}
           width={graphWidth}
-          xLabelPositions={xLabelPositions}
           yMax={yMax}
           chartColors={chartColors}
         />,
@@ -199,12 +204,7 @@ export const VocabularyChart = memo<VocabularyChartProps<unknown>>(
       if (chartData.hasChartData && showAreaFill) {
         components.push(
           <Group key="area-fill">
-            <ChartAreaFill
-              path={path}
-              graphWidth={graphWidth}
-              topPadding={topPadding}
-              chartColors={chartColors}
-            />
+            <ChartAreaFill path={path} graphWidth={graphWidth} chartColors={chartColors} />
           </Group>,
         );
       }
@@ -218,6 +218,7 @@ export const VocabularyChart = memo<VocabularyChartProps<unknown>>(
               maskPath={path}
               graphWidth={graphWidth}
               colors={colors}
+              zoneOpacity={zoneOpacity}
             />
           </Group>,
         );
@@ -236,6 +237,7 @@ export const VocabularyChart = memo<VocabularyChartProps<unknown>>(
                 uniqueKey={dataPointKeys[index]}
                 chartColors={chartColors}
                 index={index}
+                emphasis={index === emphasisIndex}
               />
             ))}
           </Group>,
@@ -266,7 +268,6 @@ export const VocabularyChart = memo<VocabularyChartProps<unknown>>(
       path,
       graphWidth,
       topPadding,
-      xLabelPositions,
       yMax,
       referenceLine,
       performanceZones,
@@ -277,6 +278,8 @@ export const VocabularyChart = memo<VocabularyChartProps<unknown>>(
       chartColors,
       colors,
       showAreaFill,
+      zoneOpacity,
+      emphasisIndex,
     ]);
 
     // Memoized axes component

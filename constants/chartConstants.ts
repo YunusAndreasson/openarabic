@@ -18,9 +18,10 @@ export const GRAPH_HEIGHT_LARGE = Math.round(GRAPH_WIDTH / GOLDEN_RATIO);
 
 // Chart visual constants for perfect alignment
 export const CHART_VISUAL = {
-  DATA_POINT_SIZE: 3.5, // Primary data point radius
-  DATA_POINT_INNER_SIZE: 2, // Inner highlight radius
-  LINE_WIDTH: 2.5, // Chart line stroke width
+  DATA_POINT_SIZE: 2.5, // Intermediate data point radius
+  DATA_POINT_EMPHASIS_SIZE: 4, // Emphasized (today/endpoint) data point radius
+  DATA_POINT_RING_WIDTH: 2, // Surface ring around emphasized points
+  LINE_WIDTH: 2, // Chart line stroke width
   CHART_TOP_PADDING: 20, // Top padding for visual balance
   CHART_BOTTOM_PADDING: 8, // Bottom padding to prevent dots from clipping at bottom edge
   CHART_HORIZONTAL_PADDING: 4, // Horizontal padding to prevent edge dots from clipping
@@ -59,6 +60,7 @@ export const getEffectiveChartHeight = (): number => {
 
 // Time periods - optimized for mobile clarity and user comprehension
 export const DAYS_7 = 7; // Weekly view for better mobile experience and cognitive load
+export const DAYS_30 = 30; // Monthly view — long enough for cumulative charts to visibly grow
 
 /**
  * Standardized performance thresholds used across all charts

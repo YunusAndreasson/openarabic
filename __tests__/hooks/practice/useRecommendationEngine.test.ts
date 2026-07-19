@@ -17,6 +17,7 @@ import type { StudyWord } from '@/types/vocabulary.types';
 // Mock fsrsUtils
 jest.mock('@/utils/fsrsUtils', () => ({
   calculateNextDueDate: jest.fn(() => null),
+  formatNextDue: jest.fn(() => 'soon'),
 }));
 
 // Fix Date.now for deterministic pool selection (dayIndex = 0)

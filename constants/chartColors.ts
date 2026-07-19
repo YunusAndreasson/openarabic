@@ -6,11 +6,12 @@ import { withOpacity } from '@/utils/colorUtils';
 /**
  * Unified Chart Color System for Vocabulary Analytics
  *
- * This system provides visual cohesion across all charts:
- * - Single sage-green color family for all chart types
- * - Professional appearance like top analytics dashboards
- * - Reduced cognitive load - no color meaning to decode
- * - Perfect brand consistency with your sage-green theme
+ * - One vivid azure accent (`chartAccent`) carries all data ink: lines,
+ *   points, sparklines, cursors. Status colors (success/info/warning/error)
+ *   appear only where color means good/bad (gauge fill, retention zones).
+ * - Separation comes from crisp geometry and low-opacity washes,
+ *   never from glows or gradient stacks.
+ * - Fully theme-aware (light/dark/sepia) via semantic tokens.
  */
 
 // Refined opacity levels for data visualization
@@ -19,18 +20,21 @@ export const CHART_OPACITY = {
   HIGH: 0.85, // Strong presence for important data
   MEDIUM: 0.65, // Balanced visibility for secondary data
   LOW: 0.35, // Subtle presence for background elements
+  ZONE_DARK: 0.24, // Performance zone bands on dark surfaces
+  ZONE: 0.18, // Performance zone bands (crisp, no blur)
+  TRACK: 0.16, // Gauge/bar track washes — lighter step of the fill's own hue
   SUBTLE: 0.15, // Light overlay for zones
+  WASH: 0.1, // Flat area fill under the data line
   MINIMAL: 0.08, // Very subtle grid lines
 } as const;
 
 /**
  * Pure function to get theme-aware chart colors
  * Used by components rendering inside Skia Canvas (no Context access)
- * All charts use the tint color directly for maximum simplicity
  */
 export const getChartColors = (colors: ThemeColors): ChartColors => {
   return {
-    // Performance levels - using unified sage green system for visual cohesion
+    // Performance levels - status colors reserved for good/bad meaning
     performance: {
       excellent: colors.success, // Green - universally positive
       good: colors.info, // Blue (not sage) - calm, stable, distinct from green
@@ -43,32 +47,24 @@ export const getChartColors = (colors: ThemeColors): ChartColors => {
       background: colors.background,
       grid: colors.chartGrid, // Consistent subtle grid lines
       border: withOpacity(colors.border, CHART_OPACITY.HIGH),
-      accent: colors.tint, // Bright primary for interactive elements
-      dataLine: colors.tint, // All data lines use tint color
+      accent: colors.chartAccent, // Vivid azure for interactive elements
+      dataLine: colors.chartAccent, // All data lines use the chart accent
       shadow: withOpacity(colors.shadow, CHART_OPACITY.LOW),
       tooltip: withOpacity(colors.card, 0.98),
       threshold: colors.chartThreshold, // Reference lines for targets
     },
 
-    // Data point colors - using brighter sage for better visibility
+    // Data point colors - accent dot with a card-colored surface ring
     dataPoint: {
-      primary: colors.tint, // Brighter sage tint for better visibility
-      inner: withOpacity(colors.tint, 0.7), // Slightly darker for inner highlight
+      primary: colors.chartAccent,
+      inner: colors.card, // Surface ring so points stay legible on the line
     },
 
     // Helper functions
     withOpacity: (color: string, opacity: number) => withOpacity(color, opacity),
 
-    // Get unified gradient for all chart types
-    // Nearly transparent to let performance zone colors (red/orange/green) show through clearly
-    getAreaFillGradient: () => {
-      return [
-        withOpacity(colors.tint, 0.12), // Very subtle at top - lets zone colors dominate
-        withOpacity(colors.tint, 0.08), // Minimal in middle
-        withOpacity(colors.tint, 0.04), // Nearly invisible at middle-bottom
-        withOpacity(colors.tint, 0.01), // Essentially transparent at bottom
-      ];
-    },
+    // Flat low-opacity wash under the data line (no gradient, no blur)
+    areaWash: withOpacity(colors.chartAccent, CHART_OPACITY.WASH),
   };
 };
 

@@ -98,6 +98,20 @@ const azureOKLCH = {
 } as const;
 
 /**
+ * Chart Accent - Vivid azure data-ink for charts
+ * Deeper, higher-chroma sibling of the azure family so data lines and points
+ * pop against card surfaces where the low-chroma sage tint reads as dull.
+ * Validated ≥3:1 contrast + OKLCH chroma floor against each theme's card.
+ */
+const chartAccentOKLCH = {
+  light: { l: 0.5, c: 0.13, h: 230 }, // Vivid azure on white card
+  dark: { l: 0.66, c: 0.125, h: 228 }, // Bright azure on dark sage card
+  // Sepia gamut is tight here: C 0.13 authored clamps to ~0.103 in sRGB —
+  // lower authored C values clamp below the 0.1 chroma floor and fail validation.
+  sepia: { l: 0.55, c: 0.13, h: 215 }, // Teal-azure on warm paper
+} as const;
+
+/**
  * Violet - Purple tones for infixes (verb form transformations)
  * Hue range: 300-320° (purple-violet)
  * Represents transformation - the role of infixes in verb forms VII, VIII, X
@@ -300,6 +314,7 @@ const tint = convertFlatPalette(tintOKLCH);
 const disabled = convertFlatPalette(disabledOKLCH);
 const semantic = convertFlatPalette(semanticOKLCH);
 const azure = convertFlatPalette(azureOKLCH);
+const chartAccent = convertFlatPalette(chartAccentOKLCH);
 const violet = convertFlatPalette(violetOKLCH);
 const indigo = convertFlatPalette(indigoOKLCH);
 const coral = convertFlatPalette(coralOKLCH);
@@ -339,10 +354,13 @@ const basePalette = {
   autumn,
   sepiaPure,
   grammar,
+  chartAccent,
   charts: {
     ui: {
       grid: sage.light,
-      gridDark: sage.medium,
+      // One step above the L 0.185 card so the grid stays recessive (was
+      // sage.medium — two steps up, competing with the data line)
+      gridDark: sage.mediumDark,
       gridSepia: autumn.paper.light,
       threshold: forest.lighter,
       thresholdDark: forest.light,
@@ -508,6 +526,7 @@ const lightColors: ThemeColors = {
   // Chart UI colors
   chartGrid: basePalette.charts.ui.grid,
   chartThreshold: basePalette.charts.ui.threshold,
+  chartAccent: basePalette.chartAccent.light,
 
   // Card gradients - pre-computed for performance (dark gradient for text readability on images)
   cardGradient: [
@@ -608,6 +627,7 @@ const darkColors: ThemeColors = {
   // Chart UI colors
   chartGrid: basePalette.charts.ui.gridDark,
   chartThreshold: basePalette.charts.ui.thresholdDark,
+  chartAccent: basePalette.chartAccent.dark,
 
   // Card gradients - pre-computed for performance
   cardGradient: [
@@ -708,6 +728,7 @@ const sepiaColors: ThemeColors = {
   // Chart UI colors
   chartGrid: basePalette.charts.ui.gridSepia,
   chartThreshold: basePalette.charts.ui.thresholdSepia,
+  chartAccent: basePalette.chartAccent.sepia,
 
   // Card gradients - pre-computed for performance (dark gradient for text readability on images)
   cardGradient: [

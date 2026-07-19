@@ -5,8 +5,8 @@ import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { ICON_CONTAINER, LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
-import { withAlpha } from '@/utils/colorUtils';
+import { FONTS } from '@/constants/fonts';
+import { LAYOUT } from '@/constants/layout';
 
 interface MetricCardProps {
   icon: IoniconName;
@@ -18,7 +18,8 @@ interface MetricCardProps {
 
 /**
  * Generic metric card component used for displaying stats.
- * Used in vocabulary stats, streaks, and other metric displays.
+ * Stat-tile contract: icon+label row on top (icon carries the semantic
+ * color), value beneath in text ink — numbers never wear the status color.
  */
 export const MetricCard = memo<MetricCardProps>(({ icon, value, label, color, onPress }) => {
   const displayValue = typeof value === 'number' ? Math.round(value).toString() : value;
@@ -26,24 +27,19 @@ export const MetricCard = memo<MetricCardProps>(({ icon, value, label, color, on
   return (
     <BaseCard shadowSize="small" style={styles.card} onPress={onPress}>
       <View style={styles.cardWrapper}>
-        <View
-          style={[
-            styles.iconContainer,
-            { backgroundColor: withAlpha(color, LAYOUT.OPACITY.FAINT) },
-          ]}
-        >
-          <Ionicons name={icon} size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={color} />
+        <View style={styles.labelRow}>
+          <Ionicons name={icon} size={LAYOUT.TYPOGRAPHY.SCALE.MEDIUM} color={color} />
+          <ThemedText
+            type="caption"
+            colorName="subtleLabelText"
+            style={styles.label}
+            numberOfLines={1}
+          >
+            {label}
+          </ThemedText>
         </View>
-        <ThemedText type="heading2" style={[styles.value, { color }]}>
+        <ThemedText type="heading2" style={styles.value}>
           {displayValue}
-        </ThemedText>
-        <ThemedText
-          type="caption"
-          colorName="subtleLabelText"
-          style={styles.label}
-          numberOfLines={1}
-        >
-          {label}
         </ThemedText>
       </View>
     </BaseCard>
@@ -57,25 +53,22 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cardWrapper: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'center',
     paddingVertical: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    gap: LAYOUT.SPACING.SMALL,
   },
-  iconContainer: {
-    width: MIN_TOUCH_TARGET.SMALL,
-    height: MIN_TOUCH_TARGET.SMALL,
-    borderRadius: ICON_CONTAINER.SMALL_RADIUS,
+  labelRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: LAYOUT.SPACING.SMALL,
+    gap: LAYOUT.SPACING.TINY + LAYOUT.SPACING.HALF_TINY, // 6px
   },
   value: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    marginBottom: LAYOUT.SPACING.TINY,
-    textAlign: 'center',
+    fontFamily: FONTS.ENGLISH_SEMIBOLD,
   },
   label: {
-    textAlign: 'center',
+    flexShrink: 1,
   },
 });

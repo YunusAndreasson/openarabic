@@ -1,8 +1,9 @@
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 
 import { VocabularyChart } from '@/components/common/charts';
 import { CHART_LABELS, EMPTY_STATE_MESSAGES } from '@/constants/chartMessages';
 import { CHART_VISUAL, useGraphWidth } from '@/constants/chartConstants';
+import { STRINGS } from '@/constants/strings';
 import { useMasteryChart } from '@/hooks/vocabulary/useMasteryChart';
 import type { StudyWord } from '@/types/vocabulary.types';
 
@@ -29,9 +30,21 @@ export const MasteryChart = memo<MasteryChartProps>(
       xLabelPositions,
       xLabels,
       maxCount,
+      insights,
     } = useMasteryChart(studyWords);
 
     const tooltipDataPoints = dataPoints ?? [];
+
+    // Plain totals under the chart: "Mastered 87 · This month +5"
+    const bottomSummary = useMemo(() => {
+      const windowChange = insights.windowChange ?? 0;
+      return [
+        { label: STRINGS.SUMMARY_MASTERED, value: `${insights.totalMastered}` },
+        ...(windowChange > 0
+          ? [{ label: STRINGS.SUMMARY_THIS_MONTH, value: `+${windowChange}` }]
+          : []),
+      ];
+    }, [insights.totalMastered, insights.windowChange]);
 
     // 🚀 Unified chart with clean single-color design (no performance zones):
     return (
@@ -52,6 +65,7 @@ export const MasteryChart = memo<MasteryChartProps>(
         hideTitle={hideTitle}
         hasData={hasData}
         emptyStateText={EMPTY_STATE_MESSAGES.mastery}
+        bottomSummary={bottomSummary}
       />
     );
   },

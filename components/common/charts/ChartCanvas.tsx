@@ -5,6 +5,7 @@ import { StyleSheet, TouchableWithoutFeedback, View } from 'react-native';
 import { useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { TIMING_CONFIG } from '@/constants/animation';
+import { CHART_OPACITY } from '@/constants/chartColors';
 import { FONTS } from '@/constants/fonts';
 import { LAYOUT, STATUS_INDICATOR } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
@@ -71,8 +72,8 @@ export function ChartCanvas({
           {
             left: x,
             height,
-            backgroundColor: colors.tint,
-            opacity: LAYOUT.OPACITY.FAINT,
+            backgroundColor: colors.chartAccent,
+            opacity: CHART_OPACITY.LOW,
           },
         ]}
       />

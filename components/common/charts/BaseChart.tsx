@@ -43,7 +43,11 @@ export function BaseChart({
 }: BaseChartProps) {
   const colors = useColors();
 
-  const emptyContainerStyle = [styles.emptyContainer, { backgroundColor: colors.elevation2 }];
+  // minHeight matches the chart section so no layout shift when data arrives
+  const emptyContainerStyle = [
+    styles.emptyContainer,
+    { backgroundColor: colors.elevation2, minHeight: contentHeight },
+  ];
   const chartSectionStyle = [styles.chartSection, { minHeight: contentHeight }];
 
   // Empty state
@@ -96,12 +100,7 @@ export function BaseChart({
           <View style={styles.summaryRow}>
             {bottomSummary.map(item => (
               <View key={item.label} style={styles.summaryItem}>
-                <ThemedText
-                  type="caption"
-                  variant="secondary"
-                  weight="bold"
-                  style={styles.summaryLabel}
-                >
+                <ThemedText type="caption" colorName="subtleLabelText" style={styles.summaryLabel}>
                   {item.label}
                 </ThemedText>
                 <ThemedText type="caption" style={styles.summaryValue}>
@@ -144,12 +143,12 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     marginBottom: LAYOUT.SPACING.HALF_TINY,
-    fontFamily: FONTS.ENGLISH_SEMIBOLD,
+    fontFamily: FONTS.ENGLISH,
   },
   summaryValue: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LINE_HEIGHT_MULTIPLIERS.NORMAL,
-    fontFamily: FONTS.ENGLISH,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.NORMAL,
+    fontFamily: FONTS.ENGLISH_SEMIBOLD,
   },
   emptyContainer: {
     alignItems: 'center',
@@ -180,7 +179,6 @@ const styles = StyleSheet.create({
   },
   cardSubtitle: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LINE_HEIGHT_MULTIPLIERS.NORMAL,
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    marginTop: LAYOUT.SPACING.MEDIUM,
+    marginTop: LAYOUT.SPACING.TINY,
   },
 });

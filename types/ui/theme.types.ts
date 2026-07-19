@@ -67,9 +67,10 @@ export interface ThemeColors {
   readingProgressBackground: string;
   completionSuccess: string;
 
-  // Chart UI colors - simplified (main chart colors use tint directly)
+  // Chart UI colors
   chartGrid: string;
   chartThreshold: string;
+  chartAccent: string;
 
   // Card gradients - pre-computed for performance
   cardGradient: readonly string[];

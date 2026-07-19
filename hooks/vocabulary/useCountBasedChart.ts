@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
 
 import type { DataPoint } from '@/components/common/charts';
-import { generateChartSubtitle } from '@/constants/chartMessages';
 import {
   calculateDataPointPositions,
   CHART_VISUAL,
   DAYS_7,
   getEffectiveChartHeight,
 } from '@/constants/chartConstants';
+import { STRINGS } from '@/constants/strings';
 import { buildSmoothChartPath } from '@/utils/chartPathBuilder';
 import { generateDateRange } from '@/utils/chartDataUtils';
 import { MASTERY_TREND_THRESHOLD } from '@/constants/fsrs';
@@ -33,7 +33,8 @@ interface ChartInsights {
   currentCount: number;
   trend: 'declining' | 'improving' | 'stable';
   totalCount: number;
-  weeklyChange?: number;
+  /** Count change across the chart window (last day minus first day) */
+  windowChange?: number;
 }
 
 interface ParsedWord {
@@ -83,6 +84,13 @@ interface CountBasedChartConfig<T extends DailyData> {
    * Field name for insights total
    */
   insightsTotalFieldName: string;
+
+  /**
+   * Days of history to chart (default 7). Windows longer than a week get
+   * weekly axis labels and weekly marker/tooltip sampling — the line still
+   * renders every day.
+   */
+  windowDays?: number;
 }
 
 interface UseCountBasedChartReturn<T extends DailyData> {
@@ -108,6 +116,8 @@ export function useCountBasedChart<T extends DailyData>(
   studyWords: StudyWord[],
   config: CountBasedChartConfig<T>,
 ): UseCountBasedChartReturn<T> {
+  const windowDays = config.windowDays ?? DAYS_7;
+
   // Parse words with configuration-specific logic
   const parsedWords = useMemo(
     () => studyWords.map(config.parseWord),
@@ -116,7 +126,7 @@ export function useCountBasedChart<T extends DailyData>(
 
   // Generate daily data using configuration-specific counting logic
   const dailyData = useMemo(() => {
-    const dates = generateDateRange(DAYS_7);
+    const dates = generateDateRange(windowDays);
 
     return dates.map(date => {
       let count = 0;
@@ -134,7 +144,21 @@ export function useCountBasedChart<T extends DailyData>(
 
       return config.buildDailyData(date, count, totalCount);
     });
-  }, [parsedWords, config]);
+  }, [parsedWords, config, windowDays]);
+
+  // Indices carrying markers/labels: every day for a week view,
+  // weekly steps back from today for longer windows
+  const sampledIndices = useMemo(() => {
+    if (dailyData.length <= DAYS_7) {
+      return dailyData.map((_, index) => index);
+    }
+    const lastIndex = dailyData.length - 1;
+    const indices: number[] = [];
+    for (let index = lastIndex; index >= 0; index -= DAYS_7) {
+      indices.unshift(index);
+    }
+    return indices;
+  }, [dailyData]);
 
   // Build chart data (path, milestones, trend analysis)
   const chartData = useMemo(() => {
@@ -144,6 +168,7 @@ export function useCountBasedChart<T extends DailyData>(
         hasData: false,
         milestones: [] as Milestone[],
         points: [] as ChartPoint[],
+        allPoints: [] as ChartPoint[],
         insights: { currentCount: 0, trend: 'stable' as const, totalCount: 0 },
         maxCount: 0,
       };
@@ -182,69 +207,68 @@ export function useCountBasedChart<T extends DailyData>(
       })
       .filter(m => m.achieved);
 
-    // Trend analysis: compare recent 4 days vs older 3 days
-    const recent = dailyData.slice(-4);
-    const older = dailyData.slice(-7, -4);
-
-    const lastDayForCurrent = recent[recent.length - 1];
-    const currentCount = lastDayForCurrent ? config.getCount(lastDayForCurrent) : 0;
-    const recentAvg =
-      recent.length > 0
-        ? recent.reduce((sum, day) => sum + config.getCount(day), 0) / recent.length
-        : 0;
-    const olderAvg =
-      older.length > 0
-        ? older.reduce((sum, day) => sum + config.getCount(day), 0) / older.length
-        : 0;
-
-    const change = recentAvg - olderAvg;
+    // Trend: change across the whole window (cumulative counts only grow,
+    // so first-to-last is the honest delta — no rate grading)
+    const firstDay = dailyData[0];
+    const lastDay = dailyData[dailyData.length - 1];
+    const firstCount = firstDay ? config.getCount(firstDay) : 0;
+    const totalCount = lastDay ? config.getCount(lastDay) : 0;
+    const change = totalCount - firstCount;
     const trend: 'declining' | 'improving' | 'stable' =
       change > MASTERY_TREND_THRESHOLD
         ? 'improving'
         : change < -MASTERY_TREND_THRESHOLD
           ? 'declining'
           : 'stable';
-    const lastDay = recent[recent.length - 1];
-    const totalCount = lastDay ? config.getCount(lastDay) : 0;
+
+    // Markers/tooltips at sampled indices only; the line covers every day
+    const sampledPoints = sampledIndices
+      .map(index => points[index])
+      .filter((point): point is ChartPoint => Boolean(point));
 
     return {
       path,
       hasData: studyWords.length > 0,
       milestones,
-      points,
+      points: sampledPoints,
+      allPoints: points,
       insights: {
-        currentCount: Math.round(currentCount),
+        currentCount: totalCount,
         trend,
         totalCount,
-        weeklyChange: Math.round(change),
+        windowChange: Math.round(change),
       },
       maxCount,
     };
-  }, [dailyData, config, studyWords.length]);
+  }, [dailyData, config, studyWords.length, sampledIndices]);
 
-  // Generate subtitle based on current state
+  // Plain, honest subtitle: total + window delta (no performance grading)
   const subtitle = useMemo(() => {
-    const { currentCount, trend, weeklyChange } = chartData.insights;
+    const { totalCount, windowChange } = chartData.insights;
 
-    if (currentCount === 0) {
+    if (totalCount === 0) {
       return config.zeroStateMessage;
     }
 
-    return generateChartSubtitle.mastery(currentCount, trend, weeklyChange ?? 0);
-  }, [chartData.insights, config.zeroStateMessage]);
+    const period = windowDays >= 28 ? STRINGS.SUMMARY_THIS_MONTH : STRINGS.SUMMARY_TODAY;
+    const delta = windowChange ?? 0;
+    const deltaText = delta > 0 ? ` · +${delta} ${period.toLowerCase()}` : '';
+    return `${totalCount} ${STRINGS.MASTERED_LOWER}${deltaText}`;
+  }, [chartData.insights, config.zeroStateMessage, windowDays]);
 
-  // Build tooltip points for interactive display
+  // Build tooltip points for interactive display (sampled indices)
   const tooltipPoints: DataPoint<T>[] = useMemo(() => {
-    return chartData.points
-      .map((point, index) => {
+    return sampledIndices
+      .map(index => {
         const data = dailyData[index];
+        const point = chartData.allPoints[index];
         if (!data || !point || typeof point.x !== 'number' || typeof point.y !== 'number')
           return null;
 
         return {
           x: point.x,
           y: point.y,
-          value: `${config.getCount(data)} words`,
+          value: `${config.getCount(data)} ${STRINGS.SUMMARY_WORDS_SUFFIX}`,
           label: data.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
           data,
         } as DataPoint<T>;
@@ -253,15 +277,32 @@ export function useCountBasedChart<T extends DailyData>(
         (point): point is DataPoint<T> =>
           point !== null && Boolean(point.label) && Boolean(point.value),
       );
-  }, [chartData.points, dailyData, config]);
+  }, [chartData.allPoints, dailyData, config, sampledIndices]);
 
-  // Generate x-axis labels (day names)
-  const xLabels = useMemo(
+  // X-axis labels: weekday names for a week, "3w/2w/1w + today" for a month
+  const xLabels = useMemo(() => {
+    const lastIndex = dailyData.length - 1;
+    return sampledIndices.map(index => {
+      const data = dailyData[index];
+      if (!data) return '';
+      if (dailyData.length <= DAYS_7) {
+        return data.date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' });
+      }
+      const weeksAgo = Math.round((lastIndex - index) / DAYS_7);
+      // The last label is replaced by "Today" in ChartAxes
+      return weeksAgo === 0
+        ? data.date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' })
+        : `${weeksAgo}w`;
+    });
+  }, [dailyData, sampledIndices]);
+
+  const xLabelPositions = useMemo(
     () =>
-      dailyData.map(d => d.date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' })),
-    [dailyData],
+      sampledIndices
+        .map(index => chartData.allPoints[index]?.x)
+        .filter((x): x is number => typeof x === 'number'),
+    [chartData.allPoints, sampledIndices],
   );
-  const xLabelPositions = useMemo(() => chartData.points.map(p => p.x), [chartData.points]);
 
   return {
     path: chartData.path,

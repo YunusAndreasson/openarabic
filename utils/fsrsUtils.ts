@@ -283,3 +283,14 @@ export function calculateNextDueDate(studyWords: StudyWord[]): Date | null {
 
   return earliestMs === Infinity ? null : new Date(earliestMs);
 }
+
+/**
+ * Format next due date for display ("today", "tomorrow", "in N days")
+ */
+export function formatNextDue(nextDue: Date | null): string {
+  if (!nextDue) return 'soon';
+  const days = Math.ceil((nextDue.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+  if (days <= 0) return 'today';
+  if (days === 1) return 'tomorrow';
+  return `in ${days} days`;
+}

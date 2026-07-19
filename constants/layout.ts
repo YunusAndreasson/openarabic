@@ -303,7 +303,7 @@ export const LAYOUT = {
 
   CHART: {
     Y_AXIS_WIDTH: BASE_UNIT * 8, // 32 - adjusted for "100%" label visibility
-    CURSOR_WIDTH: 2, // Chart interaction cursor width
+    CURSOR_WIDTH: 1, // Chart interaction cursor width — hairline, visibility comes from opacity
     BADGE_PADDING: SPACING_SCALE.SMALL, // 8 - Chart badge padding
     BADGE_DOT_MARGIN: BASE_UNIT * 1.5, // 6 - Margin for badge dots
     HEIGHT: BASE_UNIT * 15, // 60 - Standard chart height for streak visualization

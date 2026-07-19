@@ -1,7 +1,9 @@
 import { CHART_VISUAL } from '@/constants/chartConstants';
-import { Path } from '@shopify/react-native-skia';
-import { memo } from 'react';
+import { Path, Skia } from '@shopify/react-native-skia';
+import { memo, useEffect, useMemo } from 'react';
+import { useSharedValue, withTiming } from 'react-native-reanimated';
 
+import { TIMING_CONFIG } from '@/constants/animation';
 import type { ChartColors } from '@/types/ui/chart.types';
 
 interface ChartMainLineProps {
@@ -10,16 +12,28 @@ interface ChartMainLineProps {
 }
 
 /**
- * Shared main line component for all vocabulary charts
- * Renders the consistent tint-colored main line with rounded caps
+ * Shared main line component for all vocabulary charts.
+ * 2px accent stroke with rounded caps, drawn in left-to-right on mount
+ * via Skia path trimming driven by a Reanimated shared value.
  */
 export const ChartMainLine = memo<ChartMainLineProps>(({ path, chartColors }) => {
-  if (!path) return null;
+  // Trim animation needs an SkPath — convert the SVG string once per path
+  const skPath = useMemo(() => (path ? Skia.Path.MakeFromSVGString(path) : null), [path]);
+
+  const progress = useSharedValue(0);
+  useEffect(() => {
+    progress.value = 0;
+    progress.value = withTiming(1, TIMING_CONFIG.PROGRESS);
+  }, [progress, path]);
+
+  if (!skPath) return null;
 
   return (
     <Path
       color={chartColors.ui.dataLine}
-      path={path}
+      path={skPath}
+      start={0}
+      end={progress}
       strokeCap="round"
       strokeJoin="round"
       strokeWidth={CHART_VISUAL.LINE_WIDTH}

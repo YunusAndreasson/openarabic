@@ -1,6 +1,6 @@
 import { BaseChart } from '@/components/common/charts/BaseChart';
-import { useChartColors } from '@/constants/chartColors';
-import { BlurMask, Canvas, Group, Path, Skia } from '@shopify/react-native-skia';
+import { CHART_OPACITY, useChartColors } from '@/constants/chartColors';
+import { Canvas, Group, Line, Path, Skia } from '@shopify/react-native-skia';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import {
@@ -22,20 +22,24 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { successFeedback } from '@/utils/haptics';
+import { withOpacity } from '@/utils/colorUtils';
 
 interface MemoryRetentionGaugeProps {
   studyWords: StudyWord[];
   onInfoPress?: () => void;
+  /** Render without the BaseChart card shell (for use inside sheets) */
+  embedded?: boolean;
 }
 
-// Enhanced gauge configuration for better visual appeal using golden ratio
+// Gauge geometry using golden ratio proportions
 const GOLDEN_RATIO = 1.618; // True golden ratio for optimal gauge proportions
 const GAUGE_WIDTH = 320;
 const GAUGE_HEIGHT = Math.round(GAUGE_WIDTH / GOLDEN_RATIO); // ~198, following golden ratio
 const GAUGE_RADIUS = Math.round(GAUGE_HEIGHT * 0.7); // Proportional radius based on height
-const GAUGE_STROKE_WIDTH = 20;
+const GAUGE_STROKE_WIDTH = 14;
 const START_ANGLE = 185;
 const TOTAL_SWEEP = 170;
+const TICK_OVERHANG = 2; // How far threshold ticks extend past the track edge
 
 // Static geometry values - calculated once
 const CENTER_X = GAUGE_WIDTH / 2;
@@ -47,14 +51,41 @@ const GAUGE_BOUNDS = {
   height: GAUGE_RADIUS * 2,
 };
 
-// Memory retention thresholds for color coding - now using centralized constants
+// Full arc built once — progress renders by trimming the path's `end`
+// on the UI thread, never by rebuilding geometry from React state.
+const FULL_ARC_PATH = Skia.PathBuilder.Make()
+  .addArc(GAUGE_BOUNDS, START_ANGLE, TOTAL_SWEEP)
+  .build();
+
+// Memory retention thresholds for color coding - centralized constants
 const RETENTION_THRESHOLDS = {
   POOR: MEMORY_CAPACITY_THRESHOLDS.POOR, // Red: <40% - urgent practice needed
   MODERATE: MEMORY_CAPACITY_THRESHOLDS.MODERATE, // Orange: 40-69% - needs attention
   GOOD: MEMORY_CAPACITY_THRESHOLDS.GOOD, // Green: 75%+ - good retention
 } as const;
 
-export function MemoryRetentionGauge({ studyWords = [], onInfoPress }: MemoryRetentionGaugeProps) {
+/** Endpoints of a tick line crossing the track arc at a given retention % */
+const tickLineAt = (percentage: number) => {
+  const angleDeg = START_ANGLE + (percentage / 100) * TOTAL_SWEEP;
+  const angleRad = (angleDeg * Math.PI) / 180;
+  const innerR = GAUGE_RADIUS - GAUGE_STROKE_WIDTH / 2 - TICK_OVERHANG;
+  const outerR = GAUGE_RADIUS + GAUGE_STROKE_WIDTH / 2 + TICK_OVERHANG;
+  const cos = Math.cos(angleRad);
+  const sin = Math.sin(angleRad);
+  return {
+    p1: { x: CENTER_X + innerR * cos, y: CENTER_Y + innerR * sin },
+    p2: { x: CENTER_X + outerR * cos, y: CENTER_Y + outerR * sin },
+  };
+};
+
+const POOR_TICK = tickLineAt(RETENTION_THRESHOLDS.POOR);
+const GOOD_TICK = tickLineAt(RETENTION_THRESHOLDS.GOOD);
+
+export function MemoryRetentionGauge({
+  studyWords = [],
+  onInfoPress,
+  embedded = false,
+}: MemoryRetentionGaugeProps) {
   const colors = useColors();
   const chartColors = useChartColors();
   const { chartData } = useRetrievabilityChart(studyWords);
@@ -65,14 +96,6 @@ export function MemoryRetentionGauge({ studyWords = [], onInfoPress }: MemoryRet
   // Animated retention value using Reanimated
   const retentionShared = useSharedValue(0);
   const [animatedRetention, setAnimatedRetention] = useState(0);
-
-  // Derived UI-thread blur sigma — soft glow whenever retention is in the
-  // green zone (≥75%). Reads the SharedValue directly so the blur tracks the
-  // springed value pixel-perfectly without bouncing through React state.
-  const glowSigma = useDerivedValue(() => {
-    'worklet';
-    return retentionShared.value >= MEMORY_CAPACITY_THRESHOLDS.GOOD ? 6 : 0;
-  });
 
   // Cleanup animation on unmount
   useEffect(() => {
@@ -96,12 +119,9 @@ export function MemoryRetentionGauge({ studyWords = [], onInfoPress }: MemoryRet
     );
   }, [currentRetention, retentionShared]);
 
-  // Success haptic on the frame the SPRINGED needle crosses into the green zone —
-  // the same condition that ignites the glow, so the haptic lands with the visual
-  // moment rather than at data-update time (the spring takes a beat to get there).
-  // Rising-edge only; dropping below green re-arms it, mirroring the glow.
-  // Single success notification — sequenced double-haptics read as gimmicky in
-  // 2026; the system Success pattern gives plenty of feedback on its own.
+  // Success haptic on the frame the SPRINGED needle crosses into the green
+  // zone, so it lands with the visual moment rather than at data-update time.
+  // Rising-edge only; dropping below green re-arms it.
   useAnimatedReaction(
     () => {
       'worklet';
@@ -114,7 +134,7 @@ export function MemoryRetentionGauge({ studyWords = [], onInfoPress }: MemoryRet
     },
   );
 
-  // Push only rounded values to JS to limit re-renders
+  // Push only rounded values to JS to limit re-renders (center text only)
   useAnimatedReaction(
     () => {
       'worklet';
@@ -127,28 +147,47 @@ export function MemoryRetentionGauge({ studyWords = [], onInfoPress }: MemoryRet
     },
   );
 
-  // Static geometry values
-  const sweep = (animatedRetention / 100) * TOTAL_SWEEP;
+  // UI-thread arc trim — the fill follows the spring pixel-perfectly
+  const trimEnd = useDerivedValue(() => {
+    'worklet';
+    return Math.max(0, Math.min(1, retentionShared.value / 100));
+  });
 
-  // React Compiler auto-memoizes
-  const animatedFilledPath = Skia.PathBuilder.Make()
-    .addArc(GAUGE_BOUNDS, START_ANGLE, sweep)
-    .build();
+  // Status colors resolved in JS, picked per-frame on the UI thread
+  const poorColor = chartColors.performance.poor;
+  const moderateColor = chartColors.performance.moderate;
+  const excellentColor = chartColors.performance.excellent;
 
-  // Create full background track path (React Compiler auto-memoizes)
-  const backgroundTrackPath = Skia.PathBuilder.Make()
-    .addArc(GAUGE_BOUNDS, START_ANGLE, TOTAL_SWEEP)
-    .build();
+  const fillColor = useDerivedValue(() => {
+    'worklet';
+    const value = retentionShared.value;
+    if (value < RETENTION_THRESHOLDS.POOR) return poorColor;
+    if (value < RETENTION_THRESHOLDS.GOOD) return moderateColor;
+    return excellentColor;
+  });
 
-  // Determine color based on retention thresholds
+  // Track is a lighter step of the SAME hue as the fill (meter rule),
+  // so state reads across the whole bar — never a gray border color.
+  const poorTrack = withOpacity(poorColor, CHART_OPACITY.TRACK);
+  const moderateTrack = withOpacity(moderateColor, CHART_OPACITY.TRACK);
+  const excellentTrack = withOpacity(excellentColor, CHART_OPACITY.TRACK);
+
+  const trackColor = useDerivedValue(() => {
+    'worklet';
+    const value = retentionShared.value;
+    if (value < RETENTION_THRESHOLDS.POOR) return poorTrack;
+    if (value < RETENTION_THRESHOLDS.GOOD) return moderateTrack;
+    return excellentTrack;
+  });
+
+  // Discrete status color for the center number (from the rounded JS state)
   const getRetentionColor = () => {
     if (animatedRetention < RETENTION_THRESHOLDS.POOR) {
-      return chartColors.performance.poor; // Red: <40%
+      return poorColor;
     } else if (animatedRetention < RETENTION_THRESHOLDS.GOOD) {
-      return chartColors.performance.moderate; // Orange: 40-74%
-    } else {
-      return chartColors.performance.excellent; // Green: 75%+
+      return moderateColor;
     }
+    return excellentColor;
   };
 
   const retentionColor = getRetentionColor();
@@ -158,6 +197,71 @@ export function MemoryRetentionGauge({ studyWords = [], onInfoPress }: MemoryRet
     retentionText: { color: retentionColor },
   };
 
+  const gauge = (
+    <View style={styles.container} pointerEvents="none">
+      <View style={styles.gaugeContainer}>
+        <Canvas style={styles.canvas} pointerEvents="none">
+          <Group>
+            {/* Full track - lighter step of the fill's own hue */}
+            <Path
+              color={trackColor}
+              path={FULL_ARC_PATH}
+              strokeCap="round"
+              strokeWidth={GAUGE_STROKE_WIDTH}
+              style="stroke"
+            />
+
+            {/* Filled portion - UI-thread path trim, no geometry rebuilds */}
+            <Path
+              path={FULL_ARC_PATH}
+              start={0}
+              end={trimEnd}
+              strokeCap="round"
+              strokeWidth={GAUGE_STROKE_WIDTH}
+              color={fillColor}
+              style="stroke"
+            />
+
+            {/* Threshold ticks at 40% and 75% - crisp card-colored geometry */}
+            <Line
+              p1={POOR_TICK.p1}
+              p2={POOR_TICK.p2}
+              color={colors.card}
+              strokeWidth={2}
+              style="stroke"
+            />
+            <Line
+              p1={GOOD_TICK.p1}
+              p2={GOOD_TICK.p2}
+              color={colors.card}
+              strokeWidth={2}
+              style="stroke"
+            />
+          </Group>
+        </Canvas>
+
+        {/* Center percentage */}
+        <View style={styles.centerSection}>
+          <ThemedText style={[styles.retentionText, dynamicStyles.retentionText]}>
+            {Math.round(animatedRetention)}%
+          </ThemedText>
+        </View>
+      </View>
+
+      {/* Label below gauge — redundant inside the memory sheet, whose header
+          already carries the title */}
+      {!embedded && (
+        <ThemedText type="caption" colorName="subtleLabelText" style={styles.memoryStrengthLabel}>
+          {STRINGS.MEMORY_STRENGTH}
+        </ThemedText>
+      )}
+    </View>
+  );
+
+  if (embedded) {
+    return gauge;
+  }
+
   return (
     <BaseChart
       contentHeight={GAUGE_HEIGHT + 20}
@@ -165,46 +269,7 @@ export function MemoryRetentionGauge({ studyWords = [], onInfoPress }: MemoryRet
       emptyStateText={STRINGS.STUDY_WORDS_TO_TRACK_MEMORY_RETENTION}
       onCardPress={onInfoPress}
     >
-      <View style={styles.container} pointerEvents="none">
-        <View style={styles.gaugeContainer}>
-          <Canvas style={styles.canvas} pointerEvents="none">
-            <Group>
-              {/* Full background track - always shows complete arc from 0% to 100% */}
-              <Path
-                color={colors.border}
-                path={backgroundTrackPath}
-                strokeCap="round"
-                strokeWidth={GAUGE_STROKE_WIDTH}
-                style="stroke"
-              />
-
-              {/* Filled portion - shows current progress */}
-              <Path
-                path={animatedFilledPath}
-                strokeCap="round"
-                strokeWidth={GAUGE_STROKE_WIDTH}
-                color={retentionColor}
-                style="stroke"
-              >
-                {/* Soft glow when retention crosses into the green zone (≥75%) */}
-                <BlurMask blur={glowSigma} style="solid" />
-              </Path>
-            </Group>
-          </Canvas>
-
-          {/* Center percentage */}
-          <View style={styles.centerSection}>
-            <ThemedText style={[styles.retentionText, dynamicStyles.retentionText]}>
-              {Math.round(animatedRetention)}%
-            </ThemedText>
-          </View>
-        </View>
-
-        {/* Memory Strength label below gauge */}
-        <ThemedText type="caption" colorName="subtleLabelText" style={styles.memoryStrengthLabel}>
-          {STRINGS.MEMORY_STRENGTH}
-        </ThemedText>
-      </View>
+      {gauge}
     </BaseChart>
   );
 }

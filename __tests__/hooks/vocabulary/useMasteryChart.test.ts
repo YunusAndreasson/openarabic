@@ -68,7 +68,7 @@ describe('useMasteryChart', () => {
       currentCount: 10,
       trend: 'improving' as const,
       totalCount: 10,
-      weeklyChange: 5,
+      windowChange: 5,
     },
     maxCount: 10,
   };
@@ -172,7 +172,7 @@ describe('useMasteryChart', () => {
     test('returns weekly change when available', () => {
       const { result } = renderHook(() => useMasteryChart([]));
 
-      expect(result.current.insights.weeklyChange).toBe(5);
+      expect(result.current.insights.windowChange).toBe(5);
     });
   });
 

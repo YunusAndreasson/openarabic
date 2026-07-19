@@ -475,14 +475,31 @@ export const STRINGS = {
   MEMORY_STRENGTH: 'Memory strength',
   WORD_MASTERY: 'Mastered words',
   // Practice bottom sheet subtitles (concise: what it shows + why it matters)
-  MEMORY_STRENGTH_SUBTITLE:
-    "Number of words you're likely to remember — stay above 75% before adding new words",
+  MEMORY_STRENGTH_SUBTITLE: "How much of your vocabulary you'd remember if quizzed right now",
+  MEMORY_FORECAST_HINT: 'The line shows the week ahead if you don’t review',
   WORD_MASTERY_SUBTITLE: "Words you'll remember without review",
-  DUE_WORDS_FORECAST_SUBTITLE: 'Reviews per day based on your pace',
-  DUE_WORDS_FORECAST: 'Words due',
-  TREND_RISING: 'Trend: rising',
-  TREND_EASING: 'Trend: easing',
-  TREND_STEADY: 'Trend: steady',
+  DUE_WORDS_FORECAST_SUBTITLE: 'How many words come up for review each day',
+  DUE_WORDS_FORECAST: 'This week',
+  // Today hero card
+  TODAY_ALL_CAUGHT_UP: 'All caught up',
+  TODAY_TO_REVIEW: 'to review',
+  TODAY_REVIEWED_TODAY: 'reviewed today',
+  TODAY_NEXT_REVIEW: 'Next review',
+  // Practice stat tiles
+  MEMORY_LABEL: 'Memory',
+  MASTERED_LOWER: 'mastered',
+  // Chart bottom summaries
+  SUMMARY_TODAY: 'Today',
+  SUMMARY_IN_A_WEEK: 'In a week',
+  SUMMARY_AT_RISK: 'At risk',
+  SUMMARY_BUSIEST_DAY: 'Busiest day',
+  SUMMARY_MASTERED: 'Mastered',
+  SUMMARY_THIS_MONTH: 'This month',
+  SUMMARY_WORDS_SUFFIX: 'words',
+  NEWLY_DUE_SUFFIX: 'new',
+  // Streak chart axis captions
+  STREAK_CHART_START_LABEL: '40 days ago',
+  STREAK_CHART_TODAY_LABEL: 'Today',
   // Study Streak
   STREAK_LABEL: 'Day streak',
   // Study Streak Bottom Sheet
@@ -645,21 +662,9 @@ export const STRINGS = {
       `You've been building ${word} for a while — this is the review that locks it in for longer.`,
   ] as const,
   START_REVIEWING_TO_BUILD_STRENGTH: 'Practice to see your memory strength',
-  START_PRACTICING_TO_SEE_SPEED: 'Practice to track your learning speed',
   STUDY_TO_MONITOR_REVIEW_TIMING: 'Practice to see your review schedule',
   STUDY_WORDS_TO_TRACK_MEMORY_RETENTION: 'Practice to track your retention',
-  // Performance indicators
-  PERFORMING_EXCELLENTLY: 'Performing excellently',
-  PERFORMING_WELL: 'Performing well',
-  OUTSTANDING_PERFORMANCE: 'Outstanding performance',
-  ROOM_FOR_IMPROVEMENT: 'Keep practicing',
-  TRENDING_UPWARD: 'Trending upward',
-  TRENDING_DOWNWARD: 'Trending downward',
-  STEADY_PERFORMANCE: 'Steady performance',
   ALL_WORDS_LOOK_STABLE: 'All words look stable',
-  ON_TRACK_WITH_USUAL_SPEED: 'On track',
-  FASTER_THAN_USUAL: 'Faster than usual',
-  SLOWER_THAN_USUAL: 'Slower than usual',
   RECOMMENDED: 'Recommended',
   // Error messages - actionable with next steps
   ERROR: 'Error',

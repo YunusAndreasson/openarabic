@@ -28,40 +28,57 @@ export const DueWordsPrognosisChart = memo<DueWordsPrognosisChartProps>(
     const { dueWordsData, chartData } = useDueWordsChart(studyWords);
     const { xLabels, xLabelPositions } = useChartAxisLabels(dueWordsData);
 
-    // Generate subtitle showing current and peak due words
+    // Subtitle: today's count + the heaviest upcoming day, in plain words
     const subtitle = useMemo(() => {
-      const { currentDue, peakDue, trend } = chartData.insights;
+      const { currentDue, peakDue } = chartData.insights;
       const totalWords = studyWords.length;
 
       if (totalWords === 0) {
         return EMPTY_STATE_MESSAGES.dueWords;
       }
 
-      const trendText =
-        trend === 'increasing'
-          ? STRINGS.TREND_RISING
-          : trend === 'decreasing'
-            ? STRINGS.TREND_EASING
-            : STRINGS.TREND_STEADY;
-
-      return `${currentDue} to review today, peak ${peakDue} • ${trendText}`;
+      return `${currentDue} ${STRINGS.TODAY_TO_REVIEW} ${STRINGS.SUMMARY_TODAY.toLowerCase()} · peak ${peakDue}`;
     }, [chartData.insights, studyWords.length]);
 
-    // Prepare data points for interactive tooltips
+    // The busiest upcoming day — the actionable fact in this forecast
+    const bottomSummary = useMemo(() => {
+      const { currentDue } = chartData.insights;
+      const busiest = dueWordsData.reduce(
+        (max, day) => (day.dueWords > max.dueWords ? day : max),
+        dueWordsData[0] ?? { date: new Date(), dueWords: 0, newlyDue: 0, totalWords: 0 },
+      );
+      const busiestLabel =
+        busiest.date.toDateString() === new Date().toDateString()
+          ? STRINGS.SUMMARY_TODAY
+          : busiest.date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' });
+
+      return [
+        { label: STRINGS.SUMMARY_TODAY, value: `${currentDue}` },
+        { label: STRINGS.SUMMARY_BUSIEST_DAY, value: `${busiestLabel} (${busiest.dueWords})` },
+      ];
+    }, [chartData.insights, dueWordsData]);
+
+    // Prepare data points for interactive tooltips — newlyDue comes from the
+    // forecast data (same index order as the chart points)
     const dataPoints: DataPoint<DueWordsRecord>[] = useMemo(() => {
-      return chartData.dataPoints.map(point => ({
-        x: point.x,
-        y: point.y,
-        value: `${point.dueWords}`,
-        label: formatMonthDayUTC(point.date),
-        data: {
-          date: point.date,
-          dueWords: point.dueWords,
-          newlyDue: 0, // Will be calculated from dueWordsData
-          totalWords: studyWords.length,
-        },
-      }));
-    }, [chartData.dataPoints, studyWords.length]);
+      return chartData.dataPoints.map((point, index) => {
+        const newlyDue = dueWordsData[index]?.newlyDue ?? 0;
+        // Days after today break out how many of the due words are new that day
+        const newSuffix = index > 0 && newlyDue > 0 ? ` · +${newlyDue} ${STRINGS.NEWLY_DUE_SUFFIX}` : '';
+        return {
+          x: point.x,
+          y: point.y,
+          value: `${point.dueWords}${newSuffix}`,
+          label: formatMonthDayUTC(point.date),
+          data: {
+            date: point.date,
+            dueWords: point.dueWords,
+            newlyDue,
+            totalWords: studyWords.length,
+          },
+        };
+      });
+    }, [chartData.dataPoints, dueWordsData, studyWords.length]);
 
     // Calculate the maximum Y value for better scaling
     const yMax = useMemo(() => {
@@ -88,6 +105,7 @@ export const DueWordsPrognosisChart = memo<DueWordsPrognosisChartProps>(
         isFuturePrediction={true} // Today is leftmost for future predictions
         emptyStateText={EMPTY_STATE_MESSAGES.dueWords}
         yLabelFormatter={(value: number) => `${value}`}
+        bottomSummary={bottomSummary}
       />
     );
   },

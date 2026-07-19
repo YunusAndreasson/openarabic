@@ -24,6 +24,8 @@ interface RetrievabilityChartData {
   dataPoints: { x: number; y: number; retrievability: number; date: Date }[];
   insights: {
     currentRetrievability: number;
+    /** Forecast average retrievability at the end of the window (no reviews) */
+    weekRetrievability: number;
     trend: 'improving' | 'declining' | 'stable';
     criticalWords: number;
   };
@@ -50,7 +52,12 @@ export function useRetrievabilityChart(studyWords: StudyWord[]): UseRetrievabili
       return {
         retrievabilityPath: '',
         hasData: false,
-        insights: { currentRetrievability: 0, trend: 'stable', criticalWords: 0 },
+        insights: {
+          currentRetrievability: 0,
+          weekRetrievability: 0,
+          trend: 'stable',
+          criticalWords: 0,
+        },
         dangerZones: [],
         dataPoints: [],
       };
@@ -88,6 +95,9 @@ export function useRetrievabilityChart(studyWords: StudyWord[]): UseRetrievabili
     const todayData = retrievabilityData[0]; // Today (leftmost, in UTC)
     const currentRetrievability = todayData?.averageRetrievability || 0;
     const criticalWords = todayData?.criticalWords || 0;
+    // End of the forecast window — where memory lands if nothing is reviewed
+    const weekData = retrievabilityData[retrievabilityData.length - 1];
+    const weekRetrievability = weekData?.averageRetrievability || 0;
 
     return {
       retrievabilityPath,
@@ -97,6 +107,7 @@ export function useRetrievabilityChart(studyWords: StudyWord[]): UseRetrievabili
       dataPoints: points,
       insights: {
         currentRetrievability: Math.round(currentRetrievability),
+        weekRetrievability: Math.round(weekRetrievability),
         trend,
         criticalWords,
       },

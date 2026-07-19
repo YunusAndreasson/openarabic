@@ -81,6 +81,7 @@ describe('useRetrievabilityChart', () => {
 
       expect(result.current.chartData.insights).toEqual({
         currentRetrievability: 0,
+        weekRetrievability: 0,
         trend: 'stable',
         criticalWords: 0,
       });

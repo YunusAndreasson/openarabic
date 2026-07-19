@@ -5,8 +5,6 @@ import { ThemedText } from '@/components/ThemedText';
 import { FONTS } from '@/constants/fonts';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
-import { withOpacity } from '@/utils/colorUtils';
 
 // Export the y-axis width for use in other components - optimized for perfect alignment
 export const Y_AXIS_WIDTH = LAYOUT.CHART.Y_AXIS_WIDTH; // Consistent chart spacing
@@ -46,7 +44,6 @@ export const ChartAxes = memo<AxisLabelsProps>(
     yLabelFormatter,
     isFuturePrediction = false,
   }: AxisLabelsProps) => {
-    const isDarkMode = useIsDarkMode();
     const colors = useColors();
 
     // Today index depends on chart type
@@ -55,10 +52,8 @@ export const ChartAxes = memo<AxisLabelsProps>(
     const todayIndex =
       xLabels.length > 0 ? (isFuturePrediction ? 0 : xLabels.length - 1) : undefined;
 
-    const textColor = useMemo(
-      () => (isDarkMode ? withOpacity(colors.white, 0.7) : withOpacity(colors.black, 0.7)),
-      [isDarkMode, colors.white, colors.black],
-    );
+    // Theme token instead of computed black/white alpha — fixes sepia labels
+    const textColor = colors.subtleLabelText;
 
     // Calculate y-axis label positions and values
     // Account for top padding used by the chart
@@ -162,8 +157,8 @@ export const ChartAxes = memo<AxisLabelsProps>(
                   style={[
                     styles.xLabelText,
                     {
-                      color: isToday ? colors.tint : textColor,
-                      fontFamily: isToday ? FONTS.ENGLISH_BOLD : FONTS.ENGLISH,
+                      color: isToday ? colors.chartAccent : textColor,
+                      fontFamily: isToday ? FONTS.ENGLISH_SEMIBOLD : FONTS.ENGLISH,
                       textAlign: 'center',
                       opacity: isToday ? 1 : 0.6, // Today stands out more
                     },

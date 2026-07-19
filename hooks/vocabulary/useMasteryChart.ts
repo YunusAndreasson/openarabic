@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import type { DataPoint } from '@/components/common/charts';
+import { DAYS_30 } from '@/constants/chartConstants';
 import { STRINGS } from '@/constants/strings';
 import type { StudyWord } from '@/types/vocabulary.types';
 
@@ -17,7 +18,7 @@ interface ChartInsights {
   currentCount: number;
   trend: 'declining' | 'improving' | 'stable';
   totalMastered: number;
-  weeklyChange?: number;
+  windowChange?: number;
 }
 
 interface Milestone {
@@ -66,6 +67,9 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
       zeroStateMessage: STRINGS.START_REVIEWING_TO_BUILD_STRENGTH,
       pathFieldName: 'masteryPath',
       insightsTotalFieldName: 'totalMastered',
+      // A month, not a week — cumulative mastery barely moves in 7 days,
+      // and the 10/25/50/100 milestone dots become genuinely reachable
+      windowDays: DAYS_30,
     }),
     [],
   );
@@ -87,7 +91,7 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
       currentCount: result.insights.currentCount,
       trend: result.insights.trend,
       totalMastered: result.insights.totalCount,
-      weeklyChange: result.insights.weeklyChange,
+      windowChange: result.insights.windowChange,
     },
     maxCount: result.maxCount,
   };

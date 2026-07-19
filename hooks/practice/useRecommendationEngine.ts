@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { DUE_BACKLOG_ADD_THRESHOLD } from '@/constants/fsrs';
 import { STRINGS } from '@/constants/strings';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { calculateNextDueDate } from '@/utils/fsrsUtils';
+import { calculateNextDueDate, formatNextDue } from '@/utils/fsrsUtils';
 import { isHardWord } from '@/utils/wordClassification';
 
 export interface RecommendationData {
@@ -63,17 +63,6 @@ function getNextMilestone(masteredWords: number): { target: number; remaining: n
   const nextTarget = WORD_MILESTONES.find(m => m > masteredWords);
   if (!nextTarget) return null;
   return { target: nextTarget, remaining: nextTarget - masteredWords };
-}
-
-/**
- * Format next due date for display
- */
-function formatNextDue(nextDue: Date | null): string {
-  if (!nextDue) return 'soon';
-  const days = Math.ceil((nextDue.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-  if (days <= 0) return 'today';
-  if (days === 1) return 'tomorrow';
-  return `in ${days} days`;
 }
 
 /**

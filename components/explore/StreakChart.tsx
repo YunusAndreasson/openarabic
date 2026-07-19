@@ -1,10 +1,12 @@
-import { BlurMask, Canvas, RoundedRect } from '@shopify/react-native-skia';
+import { Canvas, Group, Path, Skia, type SkPath } from '@shopify/react-native-skia';
 import { memo, useEffect, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useDerivedValue, useSharedValue, withDelay, withSpring } from 'react-native-reanimated';
 
+import { ThemedText } from '@/components/ThemedText';
 import { SPRING_CONFIG } from '@/constants/animation';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { DailyReadingActivity, StreakPeriod } from '@/services/studyStreak';
 import { withOpacity } from '@/utils/colorUtils';
@@ -16,9 +18,34 @@ interface StreakChartProps {
 
 const CHART_HEIGHT = LAYOUT.CHART.HEIGHT; // 60 via constants
 const BAR_HEIGHT = LAYOUT.BUTTON.HEIGHT.LARGE / 2; // ~24 via constants
-const BAR_RADIUS = LAYOUT.BORDER_RADIUS.SMALL; // ~8 via constants
 const BAR_GAP = LAYOUT.CHART.BAR_GAP; // 2 via constants
+const BAR_TOP_RADIUS = 3; // Rounded data-end; baseline stays square
+const INACTIVE_STUB_HEIGHT = Math.round(BAR_HEIGHT * 0.25); // Short baseline stubs
 const STAGGER_PER_BAR_MS = 30;
+
+// Sequential single-hue ramp (warning gold) — intensity carries recency,
+// geometry carries activity. No second hue, no glow.
+const ACTIVE_STREAK_OPACITY = 1;
+const PAST_STREAK_OPACITY = 0.55;
+const ISOLATED_DAY_OPACITY = 0.35;
+
+/**
+ * Bar with a rounded top and a square baseline. Quadratic corner
+ * approximation is indistinguishable from a circular arc at ~6px widths.
+ */
+const buildBarPath = (x: number, width: number, height: number): SkPath => {
+  const radius = Math.min(BAR_TOP_RADIUS, width / 2, height);
+  const top = BAR_HEIGHT - height;
+  return Skia.PathBuilder.Make()
+    .moveTo(x, BAR_HEIGHT)
+    .lineTo(x, top + radius)
+    .quadTo(x, top, x + radius, top)
+    .lineTo(x + width - radius, top)
+    .quadTo(x + width, top, x + width, top + radius)
+    .lineTo(x + width, BAR_HEIGHT)
+    .close()
+    .build();
+};
 
 // Extract expensive calculations outside component
 const createStreakMap = (streakPeriods: StreakPeriod[]): Map<string, StreakPeriod> => {
@@ -41,33 +68,31 @@ const createStreakMap = (streakPeriods: StreakPeriod[]): Map<string, StreakPerio
 };
 
 interface StreakBarProps {
-  x: number;
-  width: number;
+  path: SkPath;
   color: string;
   index: number;
-  isToday: boolean;
+  animated: boolean;
 }
 
-const StreakBar = memo<StreakBarProps>(({ x, width, color, index, isToday }) => {
-  const grow = useSharedValue(0);
+const StreakBar = memo<StreakBarProps>(({ path, color, index, animated }) => {
+  const grow = useSharedValue(animated ? 0 : 1);
 
   useEffect(() => {
-    grow.value = withDelay(index * STAGGER_PER_BAR_MS, withSpring(1, SPRING_CONFIG.CARD));
-  }, [grow, index]);
+    if (animated) {
+      grow.value = withDelay(index * STAGGER_PER_BAR_MS, withSpring(1, SPRING_CONFIG.CARD));
+    }
+  }, [grow, index, animated]);
 
-  const height = useDerivedValue(() => {
+  // Grow from the baseline: scaleY pivoted at the bottom of the canvas
+  const transform = useDerivedValue(() => {
     'worklet';
-    return grow.value * BAR_HEIGHT;
-  });
-  const y = useDerivedValue(() => {
-    'worklet';
-    return BAR_HEIGHT - grow.value * BAR_HEIGHT;
+    return [{ scaleY: grow.value }];
   });
 
   return (
-    <RoundedRect x={x} y={y} width={width} height={height} r={BAR_RADIUS} color={color}>
-      {isToday && <BlurMask blur={6} style="solid" />}
-    </RoundedRect>
+    <Group transform={transform} origin={{ x: 0, y: BAR_HEIGHT }}>
+      <Path path={path} color={color} />
+    </Group>
   );
 });
 
@@ -82,8 +107,6 @@ export const StreakChart = memo<StreakChartProps>(({ dailyActivity, streakPeriod
     const availableWidth = SCREEN_WIDTH - LAYOUT.SPACING.XLARGE * 2;
 
     // Calculate bar width to fit all bars without scrolling
-    // Total width = (barCount * barWidth) + ((barCount - 1) * gap)
-    // Solving for barWidth: barWidth = (availableWidth - (barCount - 1) * gap) / barCount
     const calculatedBarWidth =
       (availableWidth - (dailyActivity.length - 1) * BAR_GAP) / dailyActivity.length;
 
@@ -103,44 +126,36 @@ export const StreakChart = memo<StreakChartProps>(({ dailyActivity, streakPeriod
       const isInStreak = Boolean(streakPeriod);
       const isActiveStreak = streakPeriod?.isActive || false;
 
-      // Determine bar color and opacity
-      let barColor = colors.textTertiary;
-      let barOpacity = 0.2;
-
-      if (hasActivity) {
-        if (isActiveStreak) {
-          barColor = colors.warning; // Orange for active streak (matches Current badge)
-          barOpacity = 1;
-        } else if (isInStreak) {
-          barColor = colors.warning; // Dimmed orange for past streaks
-          barOpacity = 0.6;
-        } else {
-          barColor = colors.tint; // Sage green for isolated active days
-          barOpacity = 0.8;
-        }
+      // Single-hue ramp: active streak loudest, past streaks mid, isolated
+      // days faint. Inactive days are short grid-colored stubs — activity
+      // pops via bar height (CVD-safe), not color alone.
+      let color: string;
+      if (!hasActivity) {
+        color = colors.chartGrid;
+      } else if (isActiveStreak) {
+        color = withOpacity(colors.warning, ACTIVE_STREAK_OPACITY);
+      } else if (isInStreak) {
+        color = withOpacity(colors.warning, PAST_STREAK_OPACITY);
+      } else {
+        color = withOpacity(colors.warning, ISOLATED_DAY_OPACITY);
       }
 
-      // Calculate X position for this bar
       const x = index * (barWidth + BAR_GAP);
-
-      // Convert to RGBA color for Skia
-      const color = withOpacity(barColor, barOpacity);
+      const height = hasActivity ? BAR_HEIGHT : INACTIVE_STUB_HEIGHT;
 
       return {
         key: activity.date,
-        x,
+        path: buildBarPath(x, barWidth, height),
         color,
+        animated: hasActivity,
       };
     });
 
     return {
       chartWidth,
-      barWidth,
       bars,
     };
-  }, [dailyActivity, streakPeriods, colors.warning, colors.tint, colors.textTertiary]);
-
-  const lastIndex = chartData.bars.length - 1;
+  }, [dailyActivity, streakPeriods, colors.warning, colors.chartGrid]);
 
   return (
     <View style={[styles.container, { height: CHART_HEIGHT }]}>
@@ -154,14 +169,21 @@ export const StreakChart = memo<StreakChartProps>(({ dailyActivity, streakPeriod
           {chartData.bars.map((bar, index) => (
             <StreakBar
               key={bar.key}
-              x={bar.x}
-              width={chartData.barWidth}
+              path={bar.path}
               color={bar.color}
               index={index}
-              isToday={index === lastIndex}
+              animated={bar.animated}
             />
           ))}
         </Canvas>
+        <View style={[styles.axisRow, { width: chartData.chartWidth }]}>
+          <ThemedText type="caption" colorName="subtleLabelText" style={styles.axisLabel}>
+            {STRINGS.STREAK_CHART_START_LABEL}
+          </ThemedText>
+          <ThemedText type="caption" colorName="subtleLabelText" style={styles.axisLabel}>
+            {STRINGS.STREAK_CHART_TODAY_LABEL}
+          </ThemedText>
+        </View>
       </View>
     </View>
   );
@@ -177,5 +199,13 @@ const styles = StyleSheet.create({
   chartArea: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  axisRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: LAYOUT.SPACING.TINY,
+  },
+  axisLabel: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
   },
 });

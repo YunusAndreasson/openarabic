@@ -362,7 +362,7 @@ describe('useCountBasedChart', () => {
       // Trend should be improving (more cumulative words over time)
       // Or stable/declining depending on exact distribution - just verify it's calculated
       expect(['improving', 'declining', 'stable']).toContain(result.current.insights.trend);
-      expect(result.current.insights.weeklyChange).toBeDefined();
+      expect(result.current.insights.windowChange).toBeDefined();
     });
 
     test('should calculate stable trend when change is minimal', () => {

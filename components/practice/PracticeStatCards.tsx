@@ -1,63 +1,71 @@
 /**
  * PracticeStatCards Component
  *
- * Displays practice session options using a scientifically-grounded 3-phase color system
- * that coordinates with the Memory Capacity Gauge to guide optimal learning behavior.
+ * The practice home's stats surface: an actionable "Today" hero card
+ * (what to review now) above a row of progress tiles. The abstract
+ * memory-strength gauge lives in the memory-retention sheet.
  */
 import { MetricCard } from '@/components/common/MetricCard';
 import { StyleSheet, View } from 'react-native';
 
+import { MEMORY_CAPACITY_THRESHOLDS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 
-import { MemoryRetentionGauge } from './charts/MemoryRetentionGauge';
+import { TodayCard } from './TodayCard';
 import { VocabularyStatCategory } from '@/types/enums';
-import type { StudyWord } from '@/types/vocabulary.types';
 
 interface PracticeStatCardsProps {
   masteredWords?: number;
   dueWords?: number;
+  memoryRetention?: number;
+  reviewedToday?: number;
+  nextDueDate?: Date | null;
+  dueCountCapped?: boolean;
   currentStreak?: number;
   leechCount?: number;
-  onInfoPress?: () => void;
+  onStartReview?: () => void;
   onDuePress?: () => void;
   onStreakPress?: () => void;
   onMasteredPress?: () => void;
+  onMemoryPress?: () => void;
   onRevisitPress?: () => void;
-  studyWords?: StudyWord[];
 }
 
 export function PracticeStatCards({
   masteredWords = 0,
   dueWords = 0,
+  memoryRetention = 0,
+  reviewedToday = 0,
+  nextDueDate = null,
+  dueCountCapped = false,
   currentStreak = 0,
   leechCount = 0,
-  onInfoPress,
+  onStartReview,
   onDuePress,
   onStreakPress,
   onMasteredPress,
+  onMemoryPress,
   onRevisitPress,
-  studyWords = [],
 }: PracticeStatCardsProps) {
   const colors = useColors();
 
+  // Status color legitimately means good/bad on the memory tile
+  const memoryColor =
+    memoryRetention < MEMORY_CAPACITY_THRESHOLDS.POOR
+      ? colors.error
+      : memoryRetention < MEMORY_CAPACITY_THRESHOLDS.GOOD
+        ? colors.warning
+        : colors.success;
+
   const stats = [
-    {
-      label: VocabularyStatCategory.DUE,
-      value: dueWords,
-      color: colors.error,
-      icon: 'hourglass' as const,
-      onPress: onDuePress,
-      formatAsDecimal: false,
-    },
     {
       label: STRINGS.STREAK_LABEL,
       value: currentStreak,
       color: colors.warning,
       icon: 'flame' as const,
       onPress: onStreakPress,
-      formatAsDecimal: false,
     },
     {
       label: VocabularyStatCategory.MASTERED,
@@ -65,7 +73,13 @@ export function PracticeStatCards({
       color: colors.success,
       icon: 'trophy' as const,
       onPress: onMasteredPress,
-      formatAsDecimal: false,
+    },
+    {
+      label: STRINGS.MEMORY_LABEL,
+      value: `${Math.round(memoryRetention)}%`,
+      color: memoryColor,
+      icon: 'pulse' as const,
+      onPress: onMemoryPress,
     },
     // Only surfaced when the learner actually has leeches, so it never nags.
     ...(leechCount > 0
@@ -76,7 +90,6 @@ export function PracticeStatCards({
             color: colors.error,
             icon: 'alert-circle' as const,
             onPress: onRevisitPress,
-            formatAsDecimal: false,
           },
         ]
       : []),
@@ -84,9 +97,16 @@ export function PracticeStatCards({
 
   return (
     <View style={styles.container}>
-      <MemoryRetentionGauge studyWords={studyWords} onInfoPress={onInfoPress} />
+      <TodayCard
+        dueCount={dueWords}
+        reviewedToday={reviewedToday}
+        nextDueDate={nextDueDate}
+        dueCountCapped={dueCountCapped}
+        onStartReview={onStartReview ?? (() => undefined)}
+        onPress={onDuePress}
+      />
 
-      {/* Stats row below gauge */}
+      {/* Stats row below the Today card */}
       <View style={styles.statsRow}>
         {stats.map(stat => (
           <MetricCard

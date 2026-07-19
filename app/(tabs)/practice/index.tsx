@@ -20,8 +20,9 @@ import { useStudyStreak } from '@/hooks/practice/useStudyStreak';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { FloatingActionButton } from '@/components/ui';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
+import { calculateNextDueDate } from '@/utils/fsrsUtils';
 import { rankStrugglingWords } from '@/utils/leechUtils';
-import { calculateWordCategories } from '@/utils/wordClassification';
+import { calculateWordCategories, countReviewedToday } from '@/utils/wordClassification';
 
 // Mount fade-in — Reanimated 4 CSS @keyframes, module-level so no per-render alloc.
 // Replaces imperative `entering={FadeIn}` which the React Compiler can't track and
@@ -120,6 +121,16 @@ export default function PracticeScreen(): JSX.Element {
   // Fix: Use the actual due words data count instead of database view
   // This ensures consistency between display and practice session
   const dueWordsCount = dueWords?.length ?? 0;
+  // The due query clips at the fetch limit — never imply exactness past it
+  const dueCountCapped = dueWordsCount >= 100;
+
+  // Today-card data: words reviewed since local midnight + when the next
+  // review lands (both from the already-fetched full word set — no new query)
+  const reviewedToday = useMemo(
+    () => countReviewedToday(filteredStudyWords),
+    [filteredStudyWords],
+  );
+  const nextDueDate = useMemo(() => calculateNextDueDate(filteredStudyWords), [filteredStudyWords]);
 
   const handleStartReview = useCallback(() => {
     if (!user) return;
@@ -191,14 +202,18 @@ export default function PracticeScreen(): JSX.Element {
         <Animated.View style={[styles.vocabularySection, MOUNT_FADE_IN_STYLE]}>
           <PracticeStatCards
             dueWords={dueWordsCount}
+            dueCountCapped={dueCountCapped}
+            memoryRetention={chartData.insights.currentRetrievability}
+            reviewedToday={reviewedToday}
+            nextDueDate={nextDueDate}
             currentStreak={currentStreak}
             masteredWords={calculatedStats.masteredWords}
             leechCount={leechCount}
-            studyWords={filteredStudyWords}
-            onInfoPress={handleMemoryStrengthInfo}
+            onStartReview={handleStartReview}
             onDuePress={handleDuePress}
             onStreakPress={handleStreakPress}
             onMasteredPress={handleMasteredPress}
+            onMemoryPress={handleMemoryStrengthInfo}
             onRevisitPress={handleRevisitPress}
           />
 

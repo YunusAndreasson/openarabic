@@ -42,6 +42,6 @@ export interface ChartColors {
   };
   /** Helper to apply opacity to a color */
   withOpacity: (color: string, opacity: number) => string;
-  /** Get unified gradient colors for area fills */
-  getAreaFillGradient: () => string[];
+  /** Flat low-opacity wash for area fills under the data line */
+  areaWash: string;
 }

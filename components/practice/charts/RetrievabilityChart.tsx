@@ -46,6 +46,23 @@ export const RetrievabilityChart = memo<RetrievabilityChartProps>(
       return generateChartSubtitle.retrievability(currentRetrievability, criticalWords, totalWords);
     }, [chartData.insights, studyWords.length]);
 
+    // Concrete numbers under the chart: now → week-from-now → words at risk
+    const bottomSummary = useMemo(() => {
+      const { currentRetrievability, weekRetrievability, criticalWords } = chartData.insights;
+      return [
+        { label: STRINGS.SUMMARY_TODAY, value: `${currentRetrievability}%` },
+        { label: STRINGS.SUMMARY_IN_A_WEEK, value: `${weekRetrievability}%` },
+        ...(criticalWords > 0
+          ? [
+              {
+                label: STRINGS.SUMMARY_AT_RISK,
+                value: `${criticalWords} ${STRINGS.SUMMARY_WORDS_SUFFIX}`,
+              },
+            ]
+          : []),
+      ];
+    }, [chartData.insights]);
+
     // Prepare data points for interactive tooltips
     const dataPoints: DataPoint<RetrievabilityRecord>[] = useMemo(() => {
       return chartData.dataPoints.map(point => ({
@@ -84,6 +101,7 @@ export const RetrievabilityChart = memo<RetrievabilityChartProps>(
         hasData={chartData.hasData}
         isFuturePrediction={true} // Today is leftmost for future predictions
         emptyStateText={EMPTY_STATE_MESSAGES.retrievability}
+        bottomSummary={bottomSummary}
       />
     );
   },
