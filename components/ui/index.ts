@@ -9,10 +9,10 @@ export { ColorDot } from './ColorDot';
 export { DictionaryButton } from './DictionaryButton';
 export { EditModeButton } from './EditModeButton';
 export { EnhancedImage } from './EnhancedImage';
-export { FloatingActionButton } from './FloatingActionButton';
 export { GlowingDot } from './GlowingDot';
 export { HeaderIconButton } from './HeaderIconButton';
 export { IconButton } from './IconButton';
+export { PinnedActionButton } from './PinnedActionButton';
 export { PulsatingLoader } from './PulsatingLoader';
 export {
   SettingsPicker,

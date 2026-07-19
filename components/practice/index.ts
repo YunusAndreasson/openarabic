@@ -3,7 +3,6 @@ export { DictionaryEmptyState } from './DictionaryEmptyState';
 export { DictionarySortBar } from './DictionarySortBar';
 export { DictionaryWordCard } from './DictionaryWordCard';
 export { PracticeEmptyState } from './PracticeEmptyState';
-export { RecommendationCard } from './RecommendationCard';
 export { PracticeStatCards } from './PracticeStatCards';
 
 // Chart exports

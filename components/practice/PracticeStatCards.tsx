@@ -1,9 +1,10 @@
 /**
  * PracticeStatCards Component
  *
- * The practice home's stats surface: an actionable "Today" hero card
- * (what to review now) above a row of progress tiles. The abstract
- * memory-strength gauge lives in the memory-retention sheet.
+ * The practice home's stats surface: a vocabulary-growth hero chart,
+ * a slim "today" status strip, and a row of progress tiles. The abstract
+ * memory-strength gauge lives in the memory-retention sheet; the single
+ * start-review CTA is pinned near the bottom of the screen.
  */
 import { MetricCard } from '@/components/common/MetricCard';
 import { StyleSheet, View } from 'react-native';
@@ -12,8 +13,10 @@ import { MEMORY_CAPACITY_THRESHOLDS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
+import type { StudyWord } from '@/types/vocabulary.types';
 
 import { TodayCard } from './TodayCard';
+import { VocabularyProgressChart } from './charts/VocabularyProgressChart';
 import { VocabularyStatCategory } from '@/types/enums';
 
 interface PracticeStatCardsProps {
@@ -25,11 +28,12 @@ interface PracticeStatCardsProps {
   dueCountCapped?: boolean;
   currentStreak?: number;
   leechCount?: number;
-  onStartReview?: () => void;
+  studyWords?: StudyWord[];
   onDuePress?: () => void;
   onStreakPress?: () => void;
   onMasteredPress?: () => void;
   onMemoryPress?: () => void;
+  onVocabularyPress?: () => void;
   onRevisitPress?: () => void;
 }
 
@@ -42,11 +46,12 @@ export function PracticeStatCards({
   dueCountCapped = false,
   currentStreak = 0,
   leechCount = 0,
-  onStartReview,
+  studyWords = [],
   onDuePress,
   onStreakPress,
   onMasteredPress,
   onMemoryPress,
+  onVocabularyPress,
   onRevisitPress,
 }: PracticeStatCardsProps) {
   const colors = useColors();
@@ -97,16 +102,9 @@ export function PracticeStatCards({
 
   return (
     <View style={styles.container}>
-      <TodayCard
-        dueCount={dueWords}
-        reviewedToday={reviewedToday}
-        nextDueDate={nextDueDate}
-        dueCountCapped={dueCountCapped}
-        onStartReview={onStartReview ?? (() => undefined)}
-        onPress={onDuePress}
-      />
+      {/* Progress group: the growth story and its supporting numbers */}
+      <VocabularyProgressChart studyWords={studyWords} onPress={onVocabularyPress} />
 
-      {/* Stats row below the Today card */}
       <View style={styles.statsRow}>
         {stats.map(stat => (
           <MetricCard
@@ -119,6 +117,15 @@ export function PracticeStatCards({
           />
         ))}
       </View>
+
+      {/* Today strip last — nearest the pinned CTA it relates to */}
+      <TodayCard
+        dueCount={dueWords}
+        reviewedToday={reviewedToday}
+        nextDueDate={nextDueDate}
+        dueCountCapped={dueCountCapped}
+        onPress={onDuePress}
+      />
     </View>
   );
 }

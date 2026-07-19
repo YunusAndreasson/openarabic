@@ -8,7 +8,7 @@ import Animated from 'react-native-reanimated';
 import type { ReanimatedCSSAnimationStyle } from '@/types/ui/base.types';
 import { ThemedView } from '@/components/ThemedView';
 import { ErrorState } from '@/components/common';
-import { PracticeEmptyState, RecommendationCard, PracticeStatCards } from '@/components/practice';
+import { PracticeEmptyState, PracticeStatCards } from '@/components/practice';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { fsrsQueries } from '@/constants/queries';
@@ -18,7 +18,7 @@ import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useStudyStreak } from '@/hooks/practice/useStudyStreak';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
-import { FloatingActionButton } from '@/components/ui';
+import { PinnedActionButton } from '@/components/ui';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 import { calculateNextDueDate } from '@/utils/fsrsUtils';
 import { rankStrugglingWords } from '@/utils/leechUtils';
@@ -109,6 +109,10 @@ export default function PracticeScreen(): JSX.Element {
     () => router.push(ROUTE_PATHS.PRACTICE_WORDS_TO_REVISIT),
     [router],
   );
+  const handleVocabularyPress = useCallback(
+    () => router.push(ROUTE_PATHS.PRACTICE_DICTIONARY),
+    [router],
+  );
 
   // Leech count for the (conditional) "Revisit" stat card — reuses the words
   // already fetched, so no extra query. Ranking is the same pure util the
@@ -142,18 +146,10 @@ export default function PracticeScreen(): JSX.Element {
   // - dueWords reflects immediate availability for study
   const hasAnyStudyWords = (allWords?.length ?? 0) > 0 || dueWordsCount > 0;
 
-  // Calculate all word stats in single pass using optimized utility
-  const calculatedStats = useMemo(() => {
-    if (!filteredStudyWords.length) {
-      return { masteredWords: 0, learningPhaseWords: 0 };
-    }
-
-    const { masteredWords, learningPhaseWords } = calculateWordCategories(
-      filteredStudyWords,
-      dueWordsCount,
-    );
-
-    return { masteredWords, learningPhaseWords };
+  // Calculate word stats in single pass using optimized utility
+  const masteredWords = useMemo(() => {
+    if (!filteredStudyWords.length) return 0;
+    return calculateWordCategories(filteredStudyWords, dueWordsCount).masteredWords;
   }, [filteredStudyWords, dueWordsCount]);
 
   // Show error message if there was an error loading data
@@ -184,8 +180,12 @@ export default function PracticeScreen(): JSX.Element {
     );
   }
 
-  // Main content
-  const showFab = dueWordsCount > 0 && hasAnyStudyWords;
+  // Single start-review CTA, pinned within thumb reach above the tab bar.
+  // The title carries the workload so no separate status text is needed.
+  const showReviewCta = dueWordsCount > 0 && hasAnyStudyWords;
+  const reviewCtaTitle = `${STRINGS.REVIEW_CTA_PREFIX} ${
+    dueCountCapped ? `${dueWordsCount}+` : dueWordsCount
+  } ${dueWordsCount === 1 && !dueCountCapped ? STRINGS.WORD_SINGULAR : STRINGS.SUMMARY_WORDS_SUFFIX}`;
 
   return (
     <>
@@ -207,28 +207,19 @@ export default function PracticeScreen(): JSX.Element {
             reviewedToday={reviewedToday}
             nextDueDate={nextDueDate}
             currentStreak={currentStreak}
-            masteredWords={calculatedStats.masteredWords}
+            masteredWords={masteredWords}
             leechCount={leechCount}
-            onStartReview={handleStartReview}
+            studyWords={filteredStudyWords}
             onDuePress={handleDuePress}
             onStreakPress={handleStreakPress}
             onMasteredPress={handleMasteredPress}
             onMemoryPress={handleMemoryStrengthInfo}
+            onVocabularyPress={handleVocabularyPress}
             onRevisitPress={handleRevisitPress}
-          />
-
-          {/* Recommendation Card - placed below stat cards */}
-          <RecommendationCard
-            studyWords={filteredStudyWords}
-            dueWordsCount={dueWordsCount}
-            currentRetention={chartData.insights.currentRetrievability}
-            learningWords={calculatedStats.learningPhaseWords}
-            masteredWords={calculatedStats.masteredWords}
-            currentStreak={currentStreak}
           />
         </Animated.View>
       </ScrollView>
-      {showFab && <FloatingActionButton icon="flash" onPress={handleStartReview} />}
+      {showReviewCta && <PinnedActionButton title={reviewCtaTitle} onPress={handleStartReview} />}
     </>
   );
 }
@@ -243,7 +234,8 @@ const styles = StyleSheet.create({
     ...LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
     // 12px first-content lead-in under the header — same rhythm as Explore/Playlist
     paddingTop: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    // Room for the pinned start-review button so content never hides behind it
+    paddingBottom: LAYOUT.BUTTON.HEIGHT.LARGE + LAYOUT.SPACING.XLARGE,
   },
   vocabularySection: {
     gap: LAYOUT.SPACING.SMALL, // 8px gap for perfect consistency with stat cards

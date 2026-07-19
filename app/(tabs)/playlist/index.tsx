@@ -14,7 +14,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { SavedEmptyState, PlaylistItemCard } from '@/components/playlist';
 import { useToast } from '@/components/providers';
 import { TIMING_CONFIG } from '@/constants/animation';
-import { FloatingActionButton } from '@/components/ui';
+import { PinnedActionButton } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { usePlaylistScreen, usePlaylistUI } from '@/hooks/playlist';
@@ -181,8 +181,8 @@ export default function PlaylistScreen(): JSX.Element {
       ...LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
       // 12px first-content lead-in under the header — same rhythm as Explore/Practice
       paddingTop: LAYOUT.SPACING.MEDIUM,
-      // Standard padding - no FAB clearance needed
-      paddingBottom: LAYOUT.SPACING.LARGE + insets.bottom,
+      // Room for the pinned play-all button so the last row never hides behind it
+      paddingBottom: LAYOUT.BUTTON.HEIGHT.LARGE + LAYOUT.SPACING.XLARGE + insets.bottom,
     }),
     [insets.bottom],
   );
@@ -237,7 +237,7 @@ export default function PlaylistScreen(): JSX.Element {
     );
   }
 
-  const showFab = hasArticles && !shouldShowEmpty && !isMiniPlayerVisible;
+  const showPlayAll = hasArticles && !shouldShowEmpty && !isMiniPlayerVisible;
 
   return (
     <>
@@ -285,8 +285,12 @@ export default function PlaylistScreen(): JSX.Element {
           maintainVisibleContentPosition={{}} // Prevent scroll jumps when items change (enabled by default)
         />
       )}
-      {showFab && (
-        <FloatingActionButton icon="play" onPress={handlePlayAll} loading={isPlayAllLoading} />
+      {showPlayAll && (
+        <PinnedActionButton
+          title={STRINGS.PLAY_ALL}
+          onPress={handlePlayAll}
+          loading={isPlayAllLoading}
+        />
       )}
     </>
   );

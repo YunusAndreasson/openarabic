@@ -298,43 +298,6 @@ export const STRINGS = {
     "Perfect session. The algorithm will space your next reviews further apart — you've earned longer breaks.",
   SESSION_ED_BIG_STABILITY_JUMP:
     'Your words grew significantly stronger this session. Some jumped from days to weeks between reviews.',
-  // Recommendation engine message pools (forward-looking guidance for Practice tab)
-  RECOMMENDATION_LOW_RETENTION_POOL: [
-    'Forgetting is part of the process. Reviewing right at this difficulty point creates the strongest memories.',
-    'Your brain builds stronger connections when you retrieve words right before forgetting. Now is the ideal time.',
-    "Struggling to recall makes the next recall easier. Review now and you'll remember longer.",
-  ] as const,
-  RECOMMENDATION_DUE_MANY_POOL: [
-    'Your words are at the perfect point for review — just starting to fade, which makes recall practice most effective.',
-    'Each word is scheduled based on how well you know it. Harder words come back sooner, easier ones wait longer.',
-    "Reviewing now extends each word's memory by days. The more times you successfully recall, the longer the next interval.",
-  ] as const,
-  RECOMMENDATION_DUE_FEW_POOL: [
-    'A quick review now builds the habit. Consistency matters more than session size.',
-    'Short sessions are just as effective as long ones. Every successful recall strengthens the memory trace.',
-  ] as const,
-  RECOMMENDATION_HEAVY_LOAD_POOL: [
-    'Most of your words are still young memories. Let them mature through review before adding more — quality over quantity.',
-    'Your brain has a daily learning budget. Focus on strengthening current words — new ones stick better when existing ones are solid.',
-  ] as const,
-  RECOMMENDATION_MODERATE_LOAD_POOL: [
-    "Your vocabulary is growing steadily. A few more words won't overwhelm your schedule, but reviews always come first.",
-    'More than half your words are approaching long-term memory. Each successful review roughly doubles the time until the next one.',
-  ] as const,
-  RECOMMENDATION_SMALL_CAUGHT_UP_POOL: [
-    "Great time to explore articles and add words you're curious about. Words learned from context stick better than random lists.",
-    'You have room for more words. The system handles the scheduling — you just need to find words that interest you.',
-    "Each new word you add gets its own personalized schedule. Start with words you've seen in articles.",
-  ] as const,
-  RECOMMENDATION_BALANCED_POOL: [
-    'Longer gaps between reviews mean your brain is encoding these more deeply.',
-    'Your mastered words have growing review intervals. Each successful review pushes them even longer.',
-    'No reviews right now means your words are consolidating — your brain is strengthening the connections in the background.',
-  ] as const,
-  RECOMMENDATION_BACKLOG_POOL: [
-    'A big review queue means new words are paused for now. Sessions come in short chunks of your most urgent words — a few of them will clear it.',
-    'Reviews come first: strengthening what you already know beats adding more. New words unlock as soon as your queue shrinks.',
-  ] as const,
   METRIC_FIRST_SESSION_TODAY: 'First session today!',
   METRIC_WORDS_IMPROVING: (count: number) =>
     `${count} ${count === 1 ? 'word' : 'words'} strengthened`,
@@ -488,6 +451,7 @@ export const STRINGS = {
   // Practice stat tiles
   MEMORY_LABEL: 'Memory',
   MASTERED_LOWER: 'mastered',
+  VOCABULARY_GROWTH_LABEL: 'words in practice',
   // Chart bottom summaries
   SUMMARY_TODAY: 'Today',
   SUMMARY_IN_A_WEEK: 'In a week',
@@ -496,7 +460,9 @@ export const STRINGS = {
   SUMMARY_MASTERED: 'Mastered',
   SUMMARY_THIS_MONTH: 'This month',
   SUMMARY_WORDS_SUFFIX: 'words',
+  WORD_SINGULAR: 'word',
   NEWLY_DUE_SUFFIX: 'new',
+  REVIEW_CTA_PREFIX: 'Review',
   // Streak chart axis captions
   STREAK_CHART_START_LABEL: '40 days ago',
   STREAK_CHART_TODAY_LABEL: 'Today',

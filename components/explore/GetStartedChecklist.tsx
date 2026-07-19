@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     // MEDIUM interior padding — the card norm across tab screens (CompactNavCard,
-    // RecommendationCard, MetricCard)
+    // MetricCard)
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
   },

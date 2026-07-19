@@ -2,11 +2,9 @@ import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { BaseCard } from '@/components/common/BaseCard';
-import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { Ionicons } from '@/components/ui/Icon';
-import { FONTS } from '@/constants/fonts';
-import { LAYOUT, LETTER_SPACING } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { formatNextDue } from '@/utils/fsrsUtils';
@@ -17,72 +15,50 @@ interface TodayCardProps {
   nextDueDate: Date | null;
   /** Due count clips at the query limit — show "100+" instead of an exact number */
   dueCountCapped?: boolean;
-  onStartReview: () => void;
   /** Opens the "This week" due-words forecast sheet */
   onPress?: () => void;
 }
 
 /**
- * Hero card for the practice tab: what to do today, in plain numbers.
- * Due state leads with the review count and a start CTA; caught-up state
- * confirms today's work and says when the next review lands.
- * Tapping the card opens the weekly forecast sheet.
+ * Slim status strip: what today asks of you, in one line. The single
+ * start-review CTA lives at the bottom of the screen — this strip only
+ * informs and links to the weekly forecast sheet.
  */
 export const TodayCard = memo<TodayCardProps>(
-  ({ dueCount, reviewedToday, nextDueDate, dueCountCapped = false, onStartReview, onPress }) => {
+  ({ dueCount, reviewedToday, nextDueDate, dueCountCapped = false, onPress }) => {
     const colors = useColors();
     const hasDue = dueCount > 0;
 
     const displayCount = dueCountCapped ? `${dueCount}+` : `${dueCount}`;
+    const primary = hasDue
+      ? `${displayCount} ${STRINGS.TODAY_TO_REVIEW}`
+      : STRINGS.TODAY_ALL_CAUGHT_UP;
 
-    const subParts: string[] = [];
+    const secondaryParts: string[] = [];
     if (reviewedToday > 0) {
-      subParts.push(`${reviewedToday} ${STRINGS.TODAY_REVIEWED_TODAY}`);
+      secondaryParts.push(`${reviewedToday} ${STRINGS.TODAY_REVIEWED_TODAY}`);
     }
     if (!hasDue && nextDueDate) {
-      subParts.push(`${STRINGS.TODAY_NEXT_REVIEW} ${formatNextDue(nextDueDate)}`);
+      secondaryParts.push(`${STRINGS.TODAY_NEXT_REVIEW} ${formatNextDue(nextDueDate)}`);
     }
-    const subLine = subParts.join(' · ');
+    const secondary = secondaryParts.join(' · ');
 
     return (
       <BaseCard shadowSize="small" onPress={onPress}>
-        <View style={styles.content}>
-          <View style={styles.mainRow}>
-            {hasDue ? (
-              <View>
-                <ThemedText style={styles.dueValue}>{displayCount}</ThemedText>
-                <ThemedText type="caption" colorName="subtleLabelText">
-                  {STRINGS.TODAY_TO_REVIEW}
-                </ThemedText>
-              </View>
-            ) : (
-              <View style={styles.caughtUpRow}>
-                <Ionicons
-                  name="checkmark-circle"
-                  size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                  color={colors.success}
-                />
-                <ThemedText type="heading2" weight="bold">
-                  {STRINGS.TODAY_ALL_CAUGHT_UP}
-                </ThemedText>
-              </View>
-            )}
-
-            {hasDue && (
-              <ThemedButton
-                title={STRINGS.START_REVIEW}
-                onPress={onStartReview}
-                variant="filled"
-                size="small"
-              />
+        <View style={styles.row}>
+          <View style={styles.textColumn}>
+            <ThemedText type="bodyBold">{primary}</ThemedText>
+            {secondary.length > 0 && (
+              <ThemedText type="caption" variant="secondary">
+                {secondary}
+              </ThemedText>
             )}
           </View>
-
-          {subLine.length > 0 && (
-            <ThemedText type="caption" variant="secondary" style={styles.subLine}>
-              {subLine}
-            </ThemedText>
-          )}
+          <Ionicons
+            name="chevron-forward"
+            size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+            color={colors.textTertiary}
+          />
         </View>
       </BaseCard>
     );
@@ -92,28 +68,15 @@ export const TodayCard = memo<TodayCardProps>(
 TodayCard.displayName = 'TodayCard';
 
 const styles = StyleSheet.create({
-  content: {
-    paddingVertical: LAYOUT.SPACING.LARGE,
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-  },
-  mainRow: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
   },
-  caughtUpRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: LAYOUT.SPACING.SMALL,
-  },
-  dueValue: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * 1.15,
-    fontFamily: FONTS.ENGLISH_BOLD,
-    letterSpacing: LETTER_SPACING.TIGHT,
-    includeFontPadding: false,
-  },
-  subLine: {
-    marginTop: LAYOUT.SPACING.SMALL,
+  textColumn: {
+    flex: 1,
+    gap: LAYOUT.SPACING.HALF_TINY,
   },
 });
