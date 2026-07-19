@@ -9,11 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { LoadingState } from '@/components/common';
-import {
-  DictionaryEmptyState,
-  DictionarySortBar,
-  DictionaryWordCard,
-} from '@/components/practice';
+import { DictionaryEmptyState, DictionarySortBar, DictionaryWordCard } from '@/components/practice';
 import { LIST_DRAW_DISTANCE_MULTIPLIER, TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { getPracticeWordRoute } from '@/constants/routes';
@@ -110,6 +106,10 @@ export default function DictionaryScreen(): JSX.Element {
     [router],
   );
 
+  // Stable identity per word so recycling, deletions, and sort flips keep
+  // rows anchored (maintainVisibleContentPosition anchors by key).
+  const keyExtractor = useCallback((word: StudyWord) => String(word.root_id), []);
+
   const handleRemoveWord = useCallback(
     async (word: StudyWord) => {
       if (!user?.id) return;
@@ -183,6 +183,7 @@ export default function DictionaryScreen(): JSX.Element {
           <FlashList
             data={words}
             renderItem={renderItem}
+            keyExtractor={keyExtractor}
             ListHeaderComponent={
               totalCount > 0 ? (
                 <DictionarySortBar

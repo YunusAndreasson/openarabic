@@ -32,8 +32,7 @@ export const NOTIFICATION_TYPES = {
 } as const;
 
 export type SmartNotificationType =
-  | typeof NOTIFICATION_TYPES.SRS_DUE
-  | typeof NOTIFICATION_TYPES.SRS_SLIPPING;
+  typeof NOTIFICATION_TYPES.SRS_DUE | typeof NOTIFICATION_TYPES.SRS_SLIPPING;
 
 export type AnyNotificationType = (typeof NOTIFICATION_TYPES)[keyof typeof NOTIFICATION_TYPES];
 

@@ -6,7 +6,7 @@ import { SectionLabel } from '@/components/common';
 import { COMPLETION_THRESHOLD } from '@/constants/layout';
 import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
-import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
+import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import type { Article } from '@/types/articles.types';
 import type { ArticleId } from '@/types/branded.types';
 import { pickStarterArticles } from '@/utils/articleUtils';
@@ -33,7 +33,7 @@ const ContinueReadingSectionComponent: FC<ContinueReadingSectionProps> = ({ arti
   const articleIds = useMemo(() => articlesData.map(a => a.id as ArticleId), [articlesData]);
 
   // Fetch reading progress for all articles
-  const { data: progressMap } = useSafeBulkReadingProgress(articleIds);
+  const { data: progressMap } = useBulkReadingProgress(articleIds);
 
   // Determine which articles to show and the section label
   const { articles, sectionLabel, isContinueReading } = useMemo(() => {

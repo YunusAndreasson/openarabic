@@ -1,6 +1,7 @@
 import { STRINGS } from '@/constants/strings';
 import { articlesService } from '@/services/articles';
 import { audioCache } from '@/services/audioCache';
+import type { SourceTrackedAudioTrack } from '@/services/audioPlayer';
 import { bookmarkService } from '@/services/bookmark';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import type { ArticleId } from '@/types/branded.types';
@@ -34,19 +35,23 @@ const selectAudioUrl = (
     : article.audio_url;
 };
 
-// Helper function to create enhanced audio track
+// Helper function to create enhanced audio track.
+// The track keeps its pre-resolution sourceUrl so the playlist lane in
+// simpleAudioService can invalidate a corrupt cached copy and re-resolve
+// (the review lane's self-heal, applied to playlists).
 const createEnhancedTrack = async (
   articleId: ArticleId,
   article: { title: string; image_url: string; author?: { name: string } },
   audioUrl: string,
-): Promise<EnhancedAudioTrack> => {
-  const fullAudioUrl = generateStorageUrl('audio', audioUrl);
-  const cachedAudioUrl = await audioCache.getAudio(fullAudioUrl || audioUrl);
+): Promise<SourceTrackedAudioTrack> => {
+  const sourceUrl = generateStorageUrl('audio', audioUrl) || audioUrl;
+  const cachedAudioUrl = await audioCache.getAudio(sourceUrl);
 
   return {
     id: generateTrackId(articleId),
     articleId,
     audioUrl: cachedAudioUrl,
+    sourceUrl,
     title: article.title,
     artist: article.author?.name,
     imageUrl: generateStorageUrl('images', article.image_url),

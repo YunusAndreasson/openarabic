@@ -20,7 +20,7 @@ import { articleQueries, readingProgressQueries } from '@/constants/queries';
 import { getArticleRoute, getCategoryFilterRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { TutorialId } from '@/constants/tutorials';
-import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
+import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useOnboardingChecklist } from '@/hooks/onboarding/useOnboardingChecklist';
 import { useTutorial } from '@/hooks/tutorials/useTutorial';
@@ -91,7 +91,7 @@ export default function ExploreScreen(): JSX.Element {
   }, [checklist.isEligible, triggerIntro]);
 
   const starterArticleIds = useMemo(() => articlesData.map(a => a.id as ArticleId), [articlesData]);
-  const { data: starterProgressMap } = useSafeBulkReadingProgress(starterArticleIds);
+  const { data: starterProgressMap } = useBulkReadingProgress(starterArticleIds);
 
   const handleOpenFirstText = useCallback(() => {
     const starter = pickStarterArticle(articlesData, starterProgressMap);

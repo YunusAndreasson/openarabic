@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ViewStyle } from 'react-native';
@@ -7,7 +6,6 @@ import { InteractionManager } from 'react-native';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
-import { fsrsQueries } from '@/constants/queries';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { analytics } from '@/services/analytics';
@@ -136,7 +134,6 @@ function watchPromptFinish(onFinish: () => void, isCancelled: () => boolean): ()
 
 export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseReviewReturn {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
 
   // Use enhanced audio player instead of local expo-av implementation
   const audioPlayer = useSimpleAudioPlayer();
@@ -208,8 +205,16 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   // mid-prompt can't tear it down and strand `promptAudioDoneKey`.
   const promptWatchRef = useRef<{ key: string; cancel: () => void } | null>(null);
 
+  // Monotonic token for playAudio calls. play() returning false can mean the
+  // call was superseded by a newer play (or a stop); the cache self-heal retry
+  // must only run for the LATEST call, or a stale retry would invalidate a
+  // healthy file and hijack the newer playback it lost to.
+  const playAudioSeqRef = useRef(0);
+
   // Utility to stop audio safely
   const stopAudioSafely = useCallback(() => {
+    // A user-initiated stop also outdates any pending self-heal retry.
+    playAudioSeqRef.current++;
     audioPlayerRef.current.stop().catch(() => {
       // Silent failure
     });
@@ -357,24 +362,42 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     ],
   );
 
-  // Enhanced audio playback function for single audio files
+  // Enhanced audio playback function for single audio files.
+  // The session preloader has already cached every word's audio, so this is a
+  // local read in the normal case. Quick mode keeps the rare cache miss from
+  // hanging the card on the patient multi-retry download sequence.
   const playAudio = useCallback(async (url: string) => {
-    if (!url) return Promise.resolve();
+    if (!url) return false;
 
-    // CRITICAL FIX: Get cached local path instead of using remote URL
-    // Eliminates ~1000ms network latency by using preloaded local files
-    const localPath = await audioCache.getAudio(url);
+    const localPath = await audioCache.getAudio(url, { quick: true });
 
-    const track = {
+    const makeTrack = (audioUrl: string) => ({
       id: `review-${Date.now()}`,
-      audioUrl: localPath,
+      audioUrl,
       title: 'Review Audio',
-    };
+    });
+
+    const seq = ++playAudioSeqRef.current;
 
     try {
-      // Play audio immediately from local cache (preloaded)
-      const success = await audioPlayerRef.current.play(track);
-      return success;
+      const success = await audioPlayerRef.current.play(makeTrack(localPath));
+      if (success) return true;
+
+      // false can also mean this play was superseded by a newer play/stop —
+      // in that case the file is fine and retrying would hijack the newer
+      // playback. Only the latest call may self-heal.
+      if (playAudioSeqRef.current !== seq) return false;
+
+      // A cached copy that fails to load is almost always a corrupt/partial
+      // download poisoning the cache — without purging it, this word would
+      // stay silent in every future session. Re-fetch once and retry.
+      if (localPath !== url) {
+        await audioCache.invalidate(url);
+        const freshPath = await audioCache.getAudio(url, { quick: true });
+        if (playAudioSeqRef.current !== seq) return false;
+        return await audioPlayerRef.current.play(makeTrack(freshPath));
+      }
+      return false;
     } catch (error) {
       handleError(error instanceof Error ? error : new Error(String(error)));
       return false;
@@ -651,9 +674,9 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   }, [currentWord, isComplete, isLoading, triggerCompletionTransition]);
 
   // Replay audio for current word (passed to WordDisplay via ReviewFlipCard).
-  // playAudio → service.play() already pauses + replace()s the existing player
-  // and restarts from 0, so an explicit stop() here would just destroy and
-  // recreate the native player on every tap.
+  // playAudio → service.play() disposes any existing player and creates a
+  // fresh one per track (see createFreshPlayer in audioPlayer), so an explicit
+  // stop() here would be redundant — teardown is part of play().
   const handleReplayAudio = useCallback(async () => {
     if (!currentWord?.root?.audio_url) return;
 
@@ -673,23 +696,16 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
     if (!mounted.current) return;
 
-    // Defer query invalidation until after navigation animation completes
+    // Defer query invalidation until after navigation animation completes.
+    // invalidateQueries → fsrsQueries.invalidateAll prefix-invalidates every
+    // ['fsrs-words', userId] entry (all/due/cooldown variants) with the
+    // skipToken-guard predicate, and active observers refetch on their own —
+    // manual refetchQueries here would only ABORT those fetches and restart
+    // them (cancelRefetch defaults to true).
     InteractionManager.runAfterInteractions(() => {
       if (!mounted.current) return;
 
       invalidateQueries();
-
-      if (user?.id) {
-        // Invalidate and refetch commonly used FSRS queries
-        // Note: Don't invalidate/refetch allWithCooldown - it's session-specific
-        // and will be fetched fresh when needed by components that use it
-        queryClient.invalidateQueries({ queryKey: fsrsQueries.all(user.id).queryKey });
-        queryClient.invalidateQueries({ queryKey: fsrsQueries.due(user.id).queryKey });
-
-        // Eagerly refetch to update counts immediately
-        queryClient.refetchQueries({ queryKey: fsrsQueries.all(user.id).queryKey });
-        queryClient.refetchQueries({ queryKey: fsrsQueries.due(user.id).queryKey });
-      }
     });
 
     // Schedule navigation with timer cleanup

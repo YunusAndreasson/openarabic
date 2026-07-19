@@ -2,7 +2,6 @@ import { skipToken, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import { fsrsQueries } from '@/constants/queries';
-import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { normalizeTimestamp } from '@/utils/dateTimeUtils';
 
@@ -33,26 +32,14 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
     queryFn: userId ? allConfig.queryFn : skipToken,
   });
 
-  // Query for due words - uses shorter stale time since it's more time-sensitive
+  // Query for due words - uses shorter stale time since it's more time-sensitive.
+  // The factory owns the queryFn (conditional session cooldown included) and
+  // encodes cooldown + limit in the key, so callers with different limits get
+  // distinct cache entries instead of racing over one.
+  const dueConfig = fsrsQueries.due(userId ?? '', DEFAULT_SESSION_COOLDOWN_HOURS, limit);
   const dueWordsQuery = useQuery({
-    ...fsrsQueries.due(userId ?? '', DEFAULT_SESSION_COOLDOWN_HOURS),
-    // Override queryFn with skipToken when no userId, or custom logic when present
-    queryFn: !userId
-      ? skipToken
-      : () => {
-          const lastCompletedAt = queryClient.getQueryData<number>(
-            fsrsQueries.lastCompletedAtKey(userId),
-          );
-          const recentlyCompleted =
-            typeof lastCompletedAt === 'number' &&
-            Date.now() - lastCompletedAt < DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
-
-          return studyWordsFSRSService.getFSRSWords(userId, {
-            onlyDue: true,
-            limit,
-            ...(recentlyCompleted ? { sessionCooldownHours: DEFAULT_SESSION_COOLDOWN_HOURS } : {}),
-          });
-        },
+    ...dueConfig,
+    queryFn: userId ? dueConfig.queryFn : skipToken,
     // Use allWords as placeholder while due words fetch — shows filtered data immediately
     // placeholderData (not initialData) so it doesn't create a stale cache entry
     placeholderData: () => {

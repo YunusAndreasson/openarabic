@@ -35,8 +35,8 @@ export {
   calculateEfficiencyScore,
   createStandardizedPerformanceZones,
   createAreaFillPath,
-  formatWeekdayUTC,
-  formatMonthDayUTC,
+  formatWeekday,
+  formatMonthDay,
 } from '@/utils/chartDataUtils';
 
 export { buildSmoothChartPath } from '@/utils/chartPathBuilder';

@@ -30,8 +30,7 @@ export const getCategoryFilterRoute = (categoryId: CategoryId, name?: string): s
   return `${base}?${params.join('&')}`;
 };
 
-export const getPracticeWordRoute = (rootId: RootId): string =>
-  `/practice-word?rootId=${rootId}`;
+export const getPracticeWordRoute = (rootId: RootId): string => `/practice-word?rootId=${rootId}`;
 
 export const getPracticeReviewRoute = (
   params?: Partial<{

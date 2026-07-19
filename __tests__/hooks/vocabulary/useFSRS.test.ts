@@ -26,11 +26,26 @@ jest.mock('@tanstack/react-query', () => ({
   queryOptions: jest.fn(options => options),
 }));
 
+// Plain functions (not jest.fn): resetMocks wipes jest.fn implementations
+// before each test, which would make the factory return undefined mid-render.
 jest.mock('@/constants/queries', () => ({
   fsrsQueries: {
-    all: jest.fn(() => ({ queryKey: ['fsrs-words', 'all'], enabled: true })),
-    due: jest.fn(() => ({ queryKey: ['fsrs-words', 'due'], enabled: true })),
-    stats: jest.fn(() => ({ queryKey: ['fsrs-words', 'stats'], enabled: true })),
+    all: (userId: string) => ({
+      queryKey: ['fsrs-words', userId],
+      queryFn: () => Promise.resolve([]),
+      enabled: true,
+    }),
+    due: (userId: string, sessionCooldownHours?: number, limit?: number) => ({
+      queryKey: ['fsrs-words', userId, 'due', sessionCooldownHours ?? null, limit ?? null],
+      queryFn: () => Promise.resolve([]),
+      enabled: true,
+    }),
+    stats: (userId: string) => ({
+      queryKey: ['fsrs-words', userId, 'stats'],
+      queryFn: () => Promise.resolve([]),
+      enabled: true,
+    }),
+    invalidateAll: () => Promise.resolve(),
   },
 }));
 

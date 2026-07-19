@@ -66,7 +66,6 @@ try {
 if (Notifications) {
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
-      shouldShowAlert: true,
       shouldPlaySound: true,
       shouldSetBadge: true,
       shouldShowBanner: true,
@@ -192,10 +191,7 @@ function setupNotificationListeners(): void {
       const route = NOTIFICATION_ROUTE_BY_TYPE[type as AnyNotificationType];
       if (!route) return;
 
-      if (
-        type === NOTIFICATION_TYPES.SRS_DUE ||
-        type === NOTIFICATION_TYPES.SRS_SLIPPING
-      ) {
+      if (type === NOTIFICATION_TYPES.SRS_DUE || type === NOTIFICATION_TYPES.SRS_SLIPPING) {
         analytics.track(ANALYTICS_EVENTS.SMART_REMINDER_OPENED, { type });
       }
       if (navigationCallback) {
@@ -488,11 +484,8 @@ export async function ensurePermissions(): Promise<boolean> {
         allowCriticalAlerts: false,
         allowProvisional: false,
       },
-      android: {
-        allowAlert: true,
-        allowBadge: true,
-        allowSound: true,
-      },
+      // No android options: the native side ignores them (POST_NOTIFICATIONS
+      // is a single yes/no permission), so the key is omitted entirely.
     });
 
     // Handle different permission states properly

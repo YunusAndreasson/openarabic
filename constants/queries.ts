@@ -88,6 +88,20 @@ export const CACHE_TIMES = {
 } as const;
 
 /**
+ * Due-words fetch limit for the practice home screen. Shared by the screen's
+ * query, its cache probe, and the startup prefetch so all three address the
+ * exact same cache entry (the due key encodes the limit).
+ */
+export const PRACTICE_DUE_WORDS_LIMIT = 100;
+
+/**
+ * Query key for session completion timestamp (client-only, not fetched from
+ * server). Hoisted so the `due` queryFn can read it without self-referencing
+ * `fsrsQueries` inside its own initializer.
+ */
+const lastCompletedAtKey = (userId: string) => ['fsrs-words', userId, 'lastCompletedAt'] as const;
+
+/**
  * FSRS vocabulary queries
  * Used across 15+ files for consistent FSRS word queries
  */
@@ -125,17 +139,41 @@ export const fsrsQueries = {
 
   /**
    * Due words only (time-sensitive)
-   * Used for practice sessions and due word counts
+   * Used for practice sessions and due word counts.
+   *
+   * Every input the queryFn uses is encoded in the key (`null` = not provided;
+   * a `null` limit means unlimited), so differently-parameterized consumers get
+   * distinct cache entries instead of racing over one. This is the SINGLE
+   * queryFn for due words — call sites must not attach their own (beyond the
+   * skipToken guard for missing userId).
+   *
+   * The cooldown is conditional: it only filters recently-reviewed words while
+   * the last completed session (lastCompletedAtKey) is still inside the
+   * cooldown window. Outside that window no cooldown is applied, so words in
+   * short relearning steps reappear on time.
    */
-  due: (userId: string, sessionCooldownHours?: number) =>
+  due: (userId: string, sessionCooldownHours?: number, limit?: number) =>
     queryOptions({
-      queryKey: ['fsrs-words', userId, 'due'] as const,
-      queryFn: () =>
-        studyWordsFSRSService.getFSRSWords(userId, {
+      queryKey: [
+        'fsrs-words',
+        userId,
+        'due',
+        sessionCooldownHours ?? null,
+        limit ?? null,
+      ] as const,
+      queryFn: ({ client }) => {
+        const lastCompletedAt = client.getQueryData<number>(lastCompletedAtKey(userId));
+        const recentlyCompleted =
+          sessionCooldownHours !== undefined &&
+          typeof lastCompletedAt === 'number' &&
+          Date.now() - lastCompletedAt < sessionCooldownHours * 60 * 60 * 1000;
+
+        return studyWordsFSRSService.getFSRSWords(userId, {
           onlyDue: true,
-          ...(sessionCooldownHours !== undefined ? { sessionCooldownHours } : {}),
-          limit: 100,
-        }),
+          ...(recentlyCompleted ? { sessionCooldownHours } : {}),
+          ...(limit !== undefined ? { limit } : {}),
+        });
+      },
       enabled: !!userId,
       ...CACHE_TIMES.SHORT,
       retry: 2,
@@ -145,7 +183,14 @@ export const fsrsQueries = {
    * Query key for session completion timestamp (client-only, not fetched from server)
    * Used to temporarily apply cooldown after completing a review session
    */
-  lastCompletedAtKey: (userId: string) => ['fsrs-words', userId, 'lastCompletedAt'] as const,
+  lastCompletedAtKey,
+
+  /**
+   * Prefix matching every due-words cache entry regardless of its
+   * cooldown/limit variant (both are encoded in the key). For cache-only
+   * reads that need "any" due list, e.g. the add-gate backlog check.
+   */
+  duePrefix: (userId: string) => ['fsrs-words', userId, 'due'] as const,
 
   /**
    * Invalidate all FSRS queries for a user

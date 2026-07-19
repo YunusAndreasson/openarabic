@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Sentry from '@sentry/react-native';
 import type { Session, User } from '@supabase/supabase-js';
 import { createClient } from '@supabase/supabase-js';
@@ -6,7 +7,6 @@ import { AppState } from 'react-native';
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from '@/constants/supabase';
 import type { Database } from '@/types/database.types';
 import { handleError } from '@/utils/errorHandling';
-import { getSafeStorage, isAsyncStorageAvailable } from '@/utils/safeAsyncStorage';
 
 /**
  * Supabase client configuration and initialization
@@ -14,9 +14,9 @@ import { getSafeStorage, isAsyncStorageAvailable } from '@/utils/safeAsyncStorag
  */
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
-    storage: getSafeStorage(),
+    storage: AsyncStorage,
     autoRefreshToken: true,
-    persistSession: isAsyncStorageAvailable(),
+    persistSession: true,
     detectSessionInUrl: false, // Mobile apps don't need URL session detection
     flowType: 'implicit', // Mobile-only: implicit flow for native apps
     debug: false,
@@ -24,32 +24,20 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
 });
 
 /**
- * Registers an AppState listener to keep the auth session active.
- * Modern supabase-js v2 auto-initializes on first use and auto-refreshes tokens when autoRefreshToken: true.
+ * Registers the single AppState listener that drives supabase-js token
+ * auto-refresh (the documented React Native pattern): the refresh ticker runs
+ * only while the app is foregrounded. startAutoRefresh() fires an immediate
+ * refresh tick on activation, and any resulting session change is delivered
+ * through onAuthStateChange (TOKEN_REFRESHED) — no manual getSession() polling.
  *
  * @returns A cleanup function that removes the listener.
  */
 export function setupSupabaseAppStateListener(): () => void {
-  const subscription = AppState.addEventListener('change', async state => {
+  const subscription = AppState.addEventListener('change', state => {
     if (state === 'active') {
-      try {
-        // Just verify session is active - no manual initialization needed
-        const { error } = await supabase.auth.getSession();
-
-        if (error) {
-          await handleError(error, {
-            analyticsEventName: 'Auth_Session_Check_Error',
-            sentrySeverity: 'warning',
-            showToast: false,
-          });
-        }
-      } catch (err) {
-        await handleError(err instanceof Error ? err : new Error(String(err)), {
-          analyticsEventName: 'Auth_Session_Check_Error',
-          sentrySeverity: 'error',
-          showToast: false,
-        });
-      }
+      supabase.auth.startAutoRefresh();
+    } else {
+      supabase.auth.stopAutoRefresh();
     }
   });
 

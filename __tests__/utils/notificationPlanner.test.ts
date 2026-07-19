@@ -203,11 +203,7 @@ describe('buildNotificationPlan', () => {
   });
 
   test('never plans more than one notification per day', () => {
-    const words = [
-      ...[1, 2, 3, 4, 5].map(id => dueWord(-1, id)),
-      slippingWord(6),
-      slippingWord(7),
-    ];
+    const words = [...[1, 2, 3, 4, 5].map(id => dueWord(-1, id)), slippingWord(6), slippingWord(7)];
     const plan = buildNotificationPlan({ ...defaultInput, words });
 
     const days = plan.map(p => p.identifier.slice(-10));

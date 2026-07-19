@@ -192,15 +192,13 @@ export function useArticleScreen({
       if (totalSentences === 0) return;
 
       // Find the highest visible sentence index from viewable items.
-      // FlashList v2 includes the ListHeaderComponent at index 0,
-      // so data items start at index 1. We subtract 1 to get the sentence index.
+      // FlashList v2 ViewToken.index indexes props.data directly — the
+      // ListHeaderComponent renders outside the virtualized collection,
+      // so index 0 is the first sentence.
       let maxVisibleSentenceIndex = -1;
       for (const item of viewableItems) {
-        if (
-          typeof item.index === 'number' &&
-          item.index > 0 // Skip ListHeaderComponent (index 0 in FlashList v2)
-        ) {
-          const sentenceIndex = item.index - 1;
+        if (typeof item.index === 'number') {
+          const sentenceIndex = item.index;
           if (sentenceIndex >= 0 && sentenceIndex < totalSentences) {
             // For the last sentence, count it as viewed even if partially visible
             // (the viewability threshold can prevent it from registering at the bottom)
@@ -269,10 +267,13 @@ export function useArticleScreen({
       initialLastSentenceRead > 0 &&
       totalSentences > 0
     ) {
-      const targetIndex = initialLastSentenceRead + 1;
-      const maxIndex = totalSentences;
+      // FlashList v2 scrollToIndex takes props.data indices (the header
+      // offset is added internally), so the target is the sentence index
+      // itself: put the last-read sentence at the top of the viewport.
+      const targetIndex = Math.min(initialLastSentenceRead, totalSentences - 1);
 
-      if (targetIndex > maxIndex) {
+      // Index 0 means the reader barely started — no scroll or toast needed.
+      if (targetIndex < 1) {
         hasScrolledToPositionRef.current = true;
         return;
       }
@@ -285,25 +286,23 @@ export function useArticleScreen({
 
       // Initialize high water mark to the saved position so viewability
       // tracking only records progress BEYOND the resume point.
-      highWaterMarkRef.current = initialLastSentenceRead;
+      highWaterMarkRef.current = targetIndex;
 
       // Double RAF ensures FlashList layout is complete (v2 best practice)
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           try {
-            // scrollToIndex accounts for actual item heights and header
-            // +1 offset because FlashList index 0 = ListHeaderComponent
             scrollViewRef.current?.scrollToIndex({
               index: targetIndex,
               animated: true,
-              viewPosition: 0, // Place target at top of viewport
+              viewPosition: 0, // Place last-read sentence at top of viewport
             });
           } catch {
             // Silent error - scroll failed
           }
 
           // Show toast
-          const percentage = Math.round(((initialLastSentenceRead + 1) / totalSentences) * 100);
+          const percentage = Math.round(((targetIndex + 1) / totalSentences) * 100);
           const message = STRINGS.RESUMED_READING_TEMPLATE.replace(
             '{percent}',
             percentage.toString(),

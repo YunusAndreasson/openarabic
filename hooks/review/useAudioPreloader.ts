@@ -13,6 +13,16 @@ interface UseAudioPreloaderReturn {
 }
 
 /**
+ * Hard cap on how long the session-start preload may block the review UI
+ * (app/review.tsx holds the whole session behind the "Loading audio…" screen
+ * while isPreloading). When the deadline hits, the session starts with what's
+ * cached so far; in-flight downloads keep landing in the cache in the
+ * background (temp-file writes make late completions safe) and the play-time
+ * quick path picks up any stragglers.
+ */
+const PRELOAD_DEADLINE_MS = 45000;
+
+/**
  * Hook to handle audio preloading for practice sessions
  * Preloads all Arabic and English audio files at session start
  *
@@ -77,40 +87,67 @@ export const useAudioPreloader = (
       const BATCH_SIZE = 5; // Process 5 audio files at a time
       const BATCH_DELAY = 100; // 100ms delay between batches
 
+      // Deadline guard: a single stalled download must not freeze the blocking
+      // "Loading audio…" screen indefinitely. When it fires, the batch loop
+      // stops being awaited and the session starts with what's cached so far.
+      let deadlineHit = false;
+      let deadlineTimer: ReturnType<typeof setTimeout> | null = null;
+      const deadline = new Promise<void>(resolve => {
+        deadlineTimer = setTimeout(() => {
+          deadlineHit = true;
+          resolve();
+        }, PRELOAD_DEADLINE_MS);
+      });
+
       // Create progress tracking function
       const trackProgress = () => {
         completedUrls++;
-        setProgress((completedUrls / totalUrls) * 100);
+        // Skip state churn from stragglers finishing after the deadline
+        if (!deadlineHit) {
+          setProgress((completedUrls / totalUrls) * 100);
+        }
       };
 
       // Process audio files in batches
-      for (let i = 0; i < audioUrls.length; i += BATCH_SIZE) {
-        const batch = audioUrls.slice(i, i + BATCH_SIZE);
+      const runBatches = async () => {
+        for (let i = 0; i < audioUrls.length; i += BATCH_SIZE) {
+          if (deadlineHit) return;
 
-        // Process current batch in parallel
-        const batchPromises = batch.map(async url => {
-          try {
-            const localPath = await audioCache.getAudio(url);
-            // Buffer in native memory for near-instant playback
+          const batch = audioUrls.slice(i, i + BATCH_SIZE);
+
+          // Process current batch in parallel
+          const batchPromises = batch.map(async url => {
             try {
-              await preload(localPath);
+              const localPath = await audioCache.getAudio(url);
+              // Buffer in native memory for near-instant playback
+              try {
+                await preload(localPath);
+              } catch {
+                // preload is an enhancement - disk cache is sufficient
+              }
+              trackProgress();
+              return true;
             } catch {
-              // preload is an enhancement - disk cache is sufficient
+              trackProgress(); // Still count as completed to avoid hanging
+              return false;
             }
-            trackProgress();
-            return true;
-          } catch {
-            trackProgress(); // Still count as completed to avoid hanging
-            return false;
+          });
+
+          // Wait for current batch to complete
+          await Promise.all(batchPromises);
+
+          // Small delay between batches to prevent resource exhaustion
+          if (!deadlineHit && i + BATCH_SIZE < audioUrls.length) {
+            await new Promise<void>(resolve => setTimeout(resolve, BATCH_DELAY));
           }
-        });
+        }
+      };
 
-        // Wait for current batch to complete
-        await Promise.all(batchPromises);
-
-        // Small delay between batches to prevent resource exhaustion
-        if (i + BATCH_SIZE < audioUrls.length) {
-          await new Promise<void>(resolve => setTimeout(resolve, BATCH_DELAY));
+      try {
+        await Promise.race([runBatches(), deadline]);
+      } finally {
+        if (deadlineTimer) {
+          clearTimeout(deadlineTimer);
         }
       }
 

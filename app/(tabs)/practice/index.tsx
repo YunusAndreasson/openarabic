@@ -7,11 +7,12 @@ import Animated from 'react-native-reanimated';
 
 import type { ReanimatedCSSAnimationStyle } from '@/types/ui/base.types';
 import { ThemedView } from '@/components/ThemedView';
-import { ErrorState } from '@/components/common';
+import { ErrorState, LoadingState } from '@/components/common';
 import { PracticeEmptyState, PracticeStatCards } from '@/components/practice';
 import { TIMING_CONFIG } from '@/constants/animation';
+import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
-import { fsrsQueries } from '@/constants/queries';
+import { fsrsQueries, PRACTICE_DUE_WORDS_LIMIT } from '@/constants/queries';
 import { ROUTE_PATHS, getPracticeReviewRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
@@ -59,10 +60,12 @@ export default function PracticeScreen(): JSX.Element {
       // Prevent multiple prefetch calls
       if (hasPrefetchedRef.current) return;
 
-      const hasStudyWords = queryClient.getQueryData(
-        fsrsQueries.allWithCooldown(user.id, 1).queryKey,
+      // Probe EXACTLY the cache entries this screen reads via useFSRSQueries
+      // below — the same shapes prefetchVocabularyData warms.
+      const hasStudyWords = queryClient.getQueryData(fsrsQueries.all(user.id).queryKey);
+      const hasDueWords = queryClient.getQueryData(
+        fsrsQueries.due(user.id, DEFAULT_SESSION_COOLDOWN_HOURS, PRACTICE_DUE_WORDS_LIMIT).queryKey,
       );
-      const hasDueWords = queryClient.getQueryData(fsrsQueries.due(user.id).queryKey);
 
       hasPrefetchedRef.current = true;
 
@@ -76,9 +79,9 @@ export default function PracticeScreen(): JSX.Element {
   );
 
   // Use the FSRS queries hook for data fetching
-  const { allWords, dueWords, error } = useFSRSQueries({
+  const { allWords, dueWords, error, isLoading } = useFSRSQueries({
     userId: user?.id,
-    limit: 100,
+    limit: PRACTICE_DUE_WORDS_LIMIT,
   });
 
   // Filter study words for memory capacity gauge (needs all words, not just due)
@@ -126,14 +129,11 @@ export default function PracticeScreen(): JSX.Element {
   // This ensures consistency between display and practice session
   const dueWordsCount = dueWords?.length ?? 0;
   // The due query clips at the fetch limit — never imply exactness past it
-  const dueCountCapped = dueWordsCount >= 100;
+  const dueCountCapped = dueWordsCount >= PRACTICE_DUE_WORDS_LIMIT;
 
   // Today-card data: words reviewed since local midnight + when the next
   // review lands (both from the already-fetched full word set — no new query)
-  const reviewedToday = useMemo(
-    () => countReviewedToday(filteredStudyWords),
-    [filteredStudyWords],
-  );
+  const reviewedToday = useMemo(() => countReviewedToday(filteredStudyWords), [filteredStudyWords]);
   const nextDueDate = useMemo(() => calculateNextDueDate(filteredStudyWords), [filteredStudyWords]);
 
   const handleStartReview = useCallback(() => {
@@ -167,6 +167,18 @@ export default function PracticeScreen(): JSX.Element {
           message={error instanceof Error ? error.message : STRINGS.FAILED_TO_LOAD_PRACTICE_DATA}
           onRetry={handleRetry}
         />
+      </ThemedView>
+    );
+  }
+
+  // Initial-load gate: while the words queries are first loading, don't flash
+  // the empty state (with its live "Add common words" CTA). Gate on v5
+  // isLoading (= isPending && isFetching) — NOT bare isPending, which stays
+  // true forever for restore-gated/enabled-gated queries that never fetch.
+  if (isLoading && !hasAnyStudyWords) {
+    return (
+      <ThemedView style={styles.container}>
+        <LoadingState />
       </ThemedView>
     );
   }

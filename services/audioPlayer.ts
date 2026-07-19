@@ -1,5 +1,6 @@
 import {
   clearAllPreloadedSources,
+  clearPreloadedSource,
   createAudioPlayer,
   preload,
   setAudioModeAsync,
@@ -9,12 +10,20 @@ import {
 } from 'expo-audio';
 import { AppState } from 'react-native';
 
+import { STRINGS } from '@/constants/strings';
+import { audioCache } from '@/services/audioCache';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
+import { isRemoteAudioUrl } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
 import { playTransitionSound } from '@/utils/transitionSound';
 
 // Event constant for playback status updates
 const PLAYBACK_STATUS_UPDATE = 'playbackStatusUpdate';
+
+// Marker for "the source never became ready" failures, so play() can tell a
+// bad source (corrupt cached file / unreachable URL) apart from a corrupted
+// audio session — only the latter is worth a session-reset retry.
+const PLAYER_READY_TIMEOUT_MESSAGE = 'Player ready timeout - audio may be corrupted or unavailable';
 
 // Audio mode configuration for consistent behavior across iOS and Android.
 // allowsRecording MUST be true: this service preconfigures the iOS AVAudioSession
@@ -45,6 +54,26 @@ const RESET_AUDIO_STATUS = {
   didJustFinish: false,
 };
 
+// Internal result of a single play attempt. 'superseded' means a newer
+// play()/stop()/destroy() took over mid-flight — the stale call must return
+// quietly (callers see `false`) without touching the player, status, or
+// subscriptions the newer call now owns.
+type PlayOutcome = 'failure' | 'success' | 'superseded';
+
+/**
+ * Playlist track that remembers the pre-resolution source URL.
+ *
+ * Playlist tracks resolve their audio through audioCache at build time (see
+ * services/audioPlaylist.ts), so by the time play() fails the track only
+ * carries a local cache path. sourceUrl lets the playlist lane invalidate the
+ * corrupt cached copy and re-resolve — the same self-heal the review lane
+ * performs in hooks/review/useReview.ts.
+ */
+export interface SourceTrackedAudioTrack extends EnhancedAudioTrack {
+  /** Remote URL audioUrl was resolved from; absent for non-cached tracks. */
+  sourceUrl?: string;
+}
+
 /**
  * Simple audio service - single source of truth for native audio player
  */
@@ -60,12 +89,23 @@ class SimpleAudioService {
   private lastActivationTime = 0;
   private readonly ACTIVATION_THROTTLE = 5000; // 5 seconds
 
+  // GENERATION GUARD: Monotonic token for play() calls. Every play() attempt
+  // captures its own generation; stop()/destroy() and each newer play()
+  // advance the counter, so an older in-flight play() (e.g. one stuck in the
+  // 5s ready wait) can detect it has been superseded and abort silently
+  // instead of tearing down the newer call's live playback.
+  private playGeneration = 0;
+
   // PLAYLIST SUPPORT: Add playlist state management
-  private playlist: EnhancedAudioTrack[] = [];
+  private playlist: SourceTrackedAudioTrack[] = [];
   private currentPlaylistIndex = 0;
   private isPlaylistMode = false;
   private onPlaylistTrackComplete: ((nextTrack: EnhancedAudioTrack | null) => void) | null = null;
   private initialPlaylistLength = 0; // Track initial playlist size for transition sound logic
+  // Consecutive playlist track failures (reset on any successful track) — the
+  // skip-on-failure advance uses this to stop instead of looping forever when
+  // every remaining source is broken.
+  private consecutivePlaylistFailures = 0;
 
   // SLEEP TIMER SUPPORT: Track when sleep timer has expired
   private sleepTimerExpired = false;
@@ -110,6 +150,7 @@ class SimpleAudioService {
     this.currentPlaylistIndex = 0;
     this.onPlaylistTrackComplete = null;
     this.initialPlaylistLength = 0;
+    this.consecutivePlaylistFailures = 0;
     this.resetSleepTimerExpired();
   }
 
@@ -289,14 +330,30 @@ class SimpleAudioService {
    * the 5s timeout every time: createAudioPlayer can finish loading before
    * the listener below attaches, and the initial "loaded" event is then
    * lost. The double-check after subscribing closes the remaining race.
+   *
+   * Generation-guarded: if a newer play()/stop() supersedes the calling
+   * play() while we wait, the poll/timeout stop touching the (possibly
+   * removed) player and the promise resolves quietly — the caller re-checks
+   * its generation right after this await and aborts.
    */
-  private async waitForPlayerReady(): Promise<void> {
+  private async waitForPlayerReady(generation: number): Promise<void> {
     const player = this.currentPlayer;
     if (!player) {
       return;
     }
 
-    if (player.isLoaded) {
+    // Native reads on a removed expo SharedObject THROW — a newer play() may
+    // have disposed this player while we wait. Treat that as "not loaded";
+    // the generation checks below turn it into a quiet abort.
+    const isLoadedSafe = (): boolean => {
+      try {
+        return player.isLoaded;
+      } catch {
+        return false;
+      }
+    };
+
+    if (isLoadedSafe()) {
       return;
     }
 
@@ -305,21 +362,45 @@ class SimpleAudioService {
     return new Promise<void>((resolve, reject) => {
       let settled = false;
 
+      // Only this call's OWN resources are cleaned up here (timeout, poll,
+      // ready subscription). remove() is wrapped because the subscription may
+      // belong to a player a newer play() has already released.
+      const cleanup = (): void => {
+        clearTimeout(timeout);
+        clearInterval(poll);
+        try {
+          readySubscription.remove();
+        } catch {
+          // Player already released — nothing left to unsubscribe
+        }
+      };
+
       const resolveReady = (): void => {
         if (settled) return;
         settled = true;
-        clearTimeout(timeout);
-        clearInterval(poll);
-        readySubscription.remove();
+        cleanup();
+        resolve();
+      };
+
+      // Superseded by a newer play()/stop(): resolve quietly — the caller
+      // re-checks its generation after this await and aborts before touching
+      // the (newer) player.
+      const resolveSuperseded = (): void => {
+        if (settled) return;
+        settled = true;
+        cleanup();
         resolve();
       };
 
       const timeout = setTimeout(() => {
         if (settled) return;
+        if (generation !== this.playGeneration) {
+          resolveSuperseded();
+          return;
+        }
         settled = true;
-        clearInterval(poll);
-        readySubscription.remove();
-        reject(new Error('Player ready timeout - audio may be corrupted or unavailable'));
+        cleanup();
+        reject(new Error(PLAYER_READY_TIMEOUT_MESSAGE));
       }, READY_TIMEOUT_MS);
 
       const readySubscription = player.addListener(
@@ -334,13 +415,19 @@ class SimpleAudioService {
       // (a known race for a new AudioPlayer on a cached/local source). Without
       // this the event-only wait intermittently sits out the full 5s timeout,
       // delaying first playback — and, in Practice, the mic arming / "Listening…".
+      // Generation-guarded: once superseded the poll stops instead of reading
+      // a removed player every 50ms.
       const poll = setInterval(() => {
-        if (player.isLoaded) resolveReady();
+        if (generation !== this.playGeneration) {
+          resolveSuperseded();
+          return;
+        }
+        if (isLoadedSafe()) resolveReady();
       }, 50);
 
       // Close the race where loading completed between the check above and the
       // listener/poll being attached.
-      if (player.isLoaded) resolveReady();
+      if (isLoadedSafe()) resolveReady();
     });
   }
 
@@ -389,6 +476,30 @@ class SimpleAudioService {
       isRetry?: boolean;
     } = {},
   ): Promise<boolean> {
+    // Superseded plays report false too — the caller's attempt did not play,
+    // but the newer call that superseded it owns any error handling.
+    return (await this.playCore(track, options)) === 'success';
+  }
+
+  /**
+   * Core play implementation with the generation guard.
+   *
+   * Each call takes the next generation token; after every await (and before
+   * any cleanup or status mutation in the catch path) the token is compared
+   * against the current generation. A mismatch means a newer play()/stop()
+   * owns the player and status — the stale call aborts silently, cleaning up
+   * nothing but its own local resources (see waitForPlayerReady).
+   */
+  private async playCore(
+    track: EnhancedAudioTrack,
+    options: {
+      skipLoadingState?: boolean;
+      isRetry?: boolean;
+    } = {},
+  ): Promise<PlayOutcome> {
+    const generation = ++this.playGeneration;
+    const isSuperseded = (): boolean => generation !== this.playGeneration;
+
     try {
       // A foreign track (word preview, practice audio) played mid-playlist must
       // exit playlist mode first — otherwise its didJustFinish would trigger
@@ -408,10 +519,16 @@ class SimpleAudioService {
           playing: false, // Not playing yet, but about to
           isPlaylistMode: false,
         });
+        if (isSuperseded()) {
+          return 'superseded';
+        }
       }
 
       // Configure audio session first (should be pre-configured for faster playback)
       await this.configureAudioSession();
+      if (isSuperseded()) {
+        return 'superseded';
+      }
 
       // Stop event subscription from previous track before swapping the player
       this.stopEventSubscription();
@@ -443,20 +560,24 @@ class SimpleAudioService {
 
       // Wait for the freshly-created player to load the source. expo-audio's
       // play() silently no-ops on an unloaded source, so we must proactively
-      // wait for a ready event before calling it.
-      try {
-        await this.waitForPlayerReady();
-      } catch {
-        // Ready timeout — attempt play anyway; outer catch handles failures
+      // wait for a ready event before calling it. A ready timeout is a real
+      // failure: playing anyway would report success while producing silence
+      // (the "sound just doesn't play" bug), and would keep a corrupt cached
+      // file undetectable — callers invalidate the cache and retry on failure.
+      await this.waitForPlayerReady(generation);
+      if (isSuperseded()) {
+        // A newer play()/stop() already disposed our player via
+        // createFreshPlayer/stopInternal — nothing of ours is left to clean.
+        return 'superseded';
       }
 
-      // Defense-in-depth: catch synchronous failures (e.g., session conflicts)
-      try {
-        player.play();
-      } catch {
-        await this.waitForPlayerReady();
-        player.play();
-      }
+      // A synchronous throw here (e.g. a session conflict) is a real failure
+      // handled by the catch below (session reset + one retry with a FRESH
+      // player). Blindly re-invoking play() on this same player could never
+      // succeed — waitForPlayerReady would return immediately since isLoaded
+      // is already true — and in overlap interleavings it double-invoked a
+      // removed player.
+      player.play();
 
       // Activate lock screen controls AFTER play() — Android's mediaPlayback
       // foreground service refuses to bind unless an active MediaSession exists
@@ -485,8 +606,16 @@ class SimpleAudioService {
       // Preload next playlist track in native memory for faster transition
       this.preloadNextTrack();
 
-      return true;
+      return 'success';
     } catch (error) {
+      // GENERATION GUARD: never run failure cleanup against a newer call's
+      // player/status — this.currentPlayer may already be the newer player.
+      // Our own resources were cleaned up locally (waitForPlayerReady) and
+      // our player/subscription were disposed by the newer call itself.
+      if (isSuperseded()) {
+        return 'superseded';
+      }
+
       // RESET: Clear progress on play error
       this.updateStatus(RESET_AUDIO_STATUS);
 
@@ -503,23 +632,43 @@ class SimpleAudioService {
       }
       this.stopEventSubscription();
 
-      // CRITICAL FIX: Try to recover from audio session corruption (only on first attempt)
-      if (!options.isRetry) {
+      // CRITICAL FIX: Try to recover from audio session corruption (only on first
+      // attempt). Skipped for ready timeouts — those are a source problem
+      // (corrupt file / dead URL), and replaying the same source would just burn
+      // another 5s to fail again; the caller's cache-invalidate retry handles it.
+      const isReadyTimeout =
+        error instanceof Error && error.message === PLAYER_READY_TIMEOUT_MESSAGE;
+      if (!options.isRetry && !isReadyTimeout) {
         try {
           await this.resetAudioSession();
+          if (isSuperseded()) {
+            // A newer play()/stop() arrived during the reset — don't resurrect
+            // this track over it.
+            return 'superseded';
+          }
 
           // Retry playback once after reset with isRetry flag to prevent infinite recursion
-          const retrySuccess = await this.play(track, { ...options, isRetry: true });
-          if (retrySuccess) {
-            return true;
+          const retryOutcome = await this.playCore(track, { ...options, isRetry: true });
+          if (retryOutcome !== 'failure') {
+            return retryOutcome;
           }
+          // 'failure' falls through to the error handling below
         } catch {
           // Reset failed, continue with error handling
         }
       }
 
-      handleError(error as Error, { toastMessage: 'Failed to start audio playback' });
-      return false;
+      // No toast for ready timeouts: the self-healing lanes — review
+      // (useReview.playAudio) and playlist (playPlaylistTrack) — invalidate
+      // the cached file and retry on failure, and toasting before that
+      // resolves would flash an error over audio that is about to work.
+      // Single-shot callers without self-heal fail quietly too; the playlist
+      // lane surfaces exactly one toast itself if it ultimately stops.
+      handleError(error as Error, {
+        showToast: !isReadyTimeout,
+        toastMessage: 'Failed to start audio playback',
+      });
+      return 'failure';
     }
   }
 
@@ -527,7 +676,7 @@ class SimpleAudioService {
    * PLAYLIST SUPPORT: Start playing a playlist of tracks
    */
   async playPlaylist(
-    tracks: EnhancedAudioTrack[],
+    tracks: SourceTrackedAudioTrack[],
     onTrackComplete?: (nextTrack: EnhancedAudioTrack | null) => void,
   ): Promise<boolean> {
     if (!tracks.length) {
@@ -540,6 +689,7 @@ class SimpleAudioService {
       this.isPlaylistMode = true;
       this.onPlaylistTrackComplete = onTrackComplete || null;
       this.initialPlaylistLength = tracks.length; // Store initial playlist length
+      this.consecutivePlaylistFailures = 0;
 
       // Reset sleep timer expired flag when starting new playlist
       this.resetSleepTimerExpired();
@@ -551,16 +701,68 @@ class SimpleAudioService {
       }
 
       // FLICKER FIX: Skip loading state since audio is cached (prevents loading → playing flash)
-      return await this.play(firstTrack, { skipLoadingState: true });
+      return (await this.playPlaylistTrack(firstTrack, { skipLoadingState: true })) === 'success';
     } catch (error) {
       this.isPlaylistMode = false;
       this.playlist = [];
       this.currentPlaylistIndex = 0;
       this.onPlaylistTrackComplete = null;
       this.initialPlaylistLength = 0;
+      this.consecutivePlaylistFailures = 0;
       this.resetSleepTimerExpired();
       throw error;
     }
+  }
+
+  /**
+   * Playlist lane: play a track with the cache self-heal the review lane has
+   * (see hooks/review/useReview.ts playAudio). A cached copy that fails to
+   * load is almost always a corrupt/partial download poisoning the cache —
+   * without purging it the same broken file would be served on every future
+   * play of that track. Invalidate and retry ONCE against a fresh resolve
+   * (re-download, or the remote URL when the download fails).
+   */
+  private async playPlaylistTrack(
+    track: SourceTrackedAudioTrack,
+    options: { skipLoadingState?: boolean } = {},
+  ): Promise<PlayOutcome> {
+    const outcome = await this.playCore(track, options);
+    if (outcome === 'success') {
+      this.consecutivePlaylistFailures = 0;
+      return outcome;
+    }
+    if (outcome === 'superseded') {
+      return outcome;
+    }
+
+    const { sourceUrl } = track;
+    if (!sourceUrl || sourceUrl === track.audioUrl || isRemoteAudioUrl(track.audioUrl)) {
+      // The failure wasn't served from cache (remote stream / plain local
+      // file) — there is nothing to heal.
+      return 'failure';
+    }
+
+    const generationAtFailure = this.playGeneration;
+    await audioCache.invalidate(sourceUrl);
+    const freshAudioUrl = await audioCache.getAudio(sourceUrl, { quick: true });
+    if (this.playGeneration !== generationAtFailure) {
+      // A newer play()/stop() started while the source was re-resolving —
+      // don't hijack it with a stale retry.
+      return 'superseded';
+    }
+
+    const retryOutcome = await this.playCore({ ...track, audioUrl: freshAudioUrl }, options);
+    if (retryOutcome === 'success') {
+      this.consecutivePlaylistFailures = 0;
+      // Point the stored entry at the healed source so a replay of this track
+      // doesn't serve the (now deleted) stale cache path again.
+      const storedIndex = this.playlist.findIndex(t => t.id === track.id);
+      const storedTrack = this.playlist[storedIndex];
+      if (storedTrack) {
+        this.playlist[storedIndex] = { ...storedTrack, audioUrl: freshAudioUrl };
+      }
+    }
+    return retryOutcome;
   }
 
   /**
@@ -583,7 +785,13 @@ class SimpleAudioService {
   }
 
   /**
-   * PLAYLIST SUPPORT: Advance to the next track in the playlist
+   * PLAYLIST SUPPORT: Advance to the next track in the playlist.
+   *
+   * Failure policy: a track that still fails after its cache self-heal retry
+   * (playPlaylistTrack) is SKIPPED rather than halting the playlist. The
+   * consecutive-failure counter (reset on any successful track) bounds the
+   * skipping, and exactly one toast is surfaced when the playlist stops
+   * because of failures.
    */
   private async advanceToNextTrack(): Promise<boolean> {
     if (!this.isPlaylistMode || !this.playlist.length) {
@@ -592,12 +800,25 @@ class SimpleAudioService {
 
     this.currentPlaylistIndex++;
 
+    // The just-finished (or just-failed) track — its preloaded native buffer
+    // is released via releasePreloadedTrackBuffer AFTER the advance decision
+    // below: the release has zero ordering dependency on advancing, so it
+    // stays entirely out of the advance's critical path.
+    const previousTrack = this.playlist[this.currentPlaylistIndex - 1];
+
     if (this.currentPlaylistIndex >= this.playlist.length) {
-      // Playlist is complete
+      // Playlist is complete. If we only reached the end by skipping failed
+      // tracks, this is really a failure stop — tell the user why the audio
+      // went silent (the per-track ready-timeout failures are quiet).
+      const stoppedByFailures = this.consecutivePlaylistFailures > 0;
       this.resetPlaylistState();
 
       // Stop playback and notify completion
       await this.stop();
+      this.releasePreloadedTrackBuffer(previousTrack);
+      if (stoppedByFailures) {
+        this.notifyPlaylistStoppedByFailures();
+      }
       return false;
     }
 
@@ -614,25 +835,84 @@ class SimpleAudioService {
       }
 
       await playTransitionSound();
+
+      // A foreign play() during the transition sound exits playlist mode —
+      // don't advance a playlist the user just navigated away from.
+      if (!this.isPlaylistMode) {
+        return false;
+      }
     }
 
-    // Play the next track
+    // Play the next track (with cache self-heal and skip-on-failure)
     const nextTrack = this.playlist[this.currentPlaylistIndex];
-    if (nextTrack) {
-      const success = await this.play(nextTrack);
-      if (success && this.onPlaylistTrackComplete) {
+    if (!nextTrack) {
+      return false;
+    }
+
+    this.releasePreloadedTrackBuffer(previousTrack);
+
+    const outcome = await this.playPlaylistTrack(nextTrack);
+    if (outcome === 'success') {
+      if (this.onPlaylistTrackComplete) {
         this.onPlaylistTrackComplete(nextTrack);
       }
-      return success;
+      return true;
+    }
+    if (outcome === 'superseded') {
+      // A newer play()/stop() owns playback now — abort the advance silently.
+      return false;
     }
 
-    return false;
+    // The track failed even after the self-heal retry: skip it instead of
+    // halting the playlist. The counter guards against an endless skip loop
+    // when every remaining source is broken.
+    this.consecutivePlaylistFailures++;
+    if (this.consecutivePlaylistFailures >= this.playlist.length) {
+      this.resetPlaylistState();
+      await this.stop();
+      this.notifyPlaylistStoppedByFailures();
+      return false;
+    }
+    return this.advanceToNextTrack();
+  }
+
+  /**
+   * Release a track's preloaded native audio buffer, fire-and-forget.
+   *
+   * iOS consumes a preloaded source when a player uses it, but Android keeps
+   * preloaded sources alive until explicitly cleared — without this, a long
+   * playlist session accumulates native buffers. Clearing a consumed or
+   * unknown source is a safe no-op; anything left over is reclaimed by
+   * clearAllPreloadedSources at destroy/session end.
+   */
+  private releasePreloadedTrackBuffer(track: SourceTrackedAudioTrack | undefined): void {
+    if (!track) {
+      return;
+    }
+    clearPreloadedSource(track.audioUrl).catch(() => {
+      // Non-critical — buffer is reclaimed at destroy/session end
+    });
+  }
+
+  /**
+   * ONE user-visible toast when playlist playback stops because tracks kept
+   * failing — the individual track failures are deliberately quiet (see the
+   * ready-timeout handling in playCore's catch).
+   */
+  private notifyPlaylistStoppedByFailures(): void {
+    handleError(new Error('Playlist stopped after repeated track playback failures'), {
+      showToast: true,
+      toastMessage: STRINGS.FAILED_TO_LOAD_AUDIO_TRACKS,
+    });
   }
 
   /**
    * Stop playback
    */
   async stop(): Promise<void> {
+    // GENERATION GUARD: invalidate any in-flight play() so it aborts silently
+    // instead of resurrecting player/status state after this stop.
+    this.playGeneration++;
     try {
       // IMMEDIATE FEEDBACK: Update status immediately when stop is called
       this.updateStatus({ playing: false });
@@ -924,6 +1204,9 @@ class SimpleAudioService {
    * Cleanup resources
    */
   async destroy(): Promise<void> {
+    // GENERATION GUARD: invalidate any in-flight play() so it aborts silently
+    // instead of resurrecting state after teardown.
+    this.playGeneration++;
     await this.stopInternal();
 
     // Clear all listeners to prevent memory leaks
@@ -960,6 +1243,7 @@ class SimpleAudioService {
     this.currentPlaylistIndex = 0;
     this.onPlaylistTrackComplete = null;
     this.initialPlaylistLength = 0;
+    this.consecutivePlaylistFailures = 0;
   }
 }
 

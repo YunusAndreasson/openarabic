@@ -7,7 +7,7 @@ import {
   generateChartSubtitle,
 } from '@/constants/chartMessages';
 import { useGraphWidth } from '@/constants/chartConstants';
-import { formatMonthDayUTC } from '@/utils/chartDataUtils';
+import { formatMonthDay } from '@/utils/chartDataUtils';
 import { MEMORY_CAPACITY_THRESHOLDS } from '@/constants/fsrs';
 import { STRINGS } from '@/constants/strings';
 import { useChartAxisLabels } from '@/hooks/vocabulary/useChartAxisLabels';
@@ -69,7 +69,7 @@ export const RetrievabilityChart = memo<RetrievabilityChartProps>(
         x: point.x,
         y: point.y,
         value: `${Math.round(point.retrievability)}%`,
-        label: formatMonthDayUTC(point.date),
+        label: formatMonthDay(point.date),
         data: {
           date: point.date,
           averageRetrievability: point.retrievability,

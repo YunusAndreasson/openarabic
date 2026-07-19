@@ -1,9 +1,9 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useState } from 'react';
 import { Alert, Linking } from 'react-native';
 
 import { handleError, toError } from '@/utils/errorHandling';
-import { getSafeStorage } from '@/utils/safeAsyncStorage';
 
 interface UseScreenshotAttachmentOptions {
   /** User ID for permission caching (falls back to 'anonymous') */
@@ -54,10 +54,9 @@ export function useScreenshotAttachment({
   const handleAddScreenshot = useCallback(async () => {
     try {
       const permissionDeniedKey = `screenshot_permission_denied_${userId || 'anonymous'}`;
-      const storage = getSafeStorage();
 
       // Check if permission was previously denied (subsequent attempt)
-      const wasPreviouslyDenied = await storage.getItem(permissionDeniedKey);
+      const wasPreviouslyDenied = await AsyncStorage.getItem(permissionDeniedKey);
 
       if (wasPreviouslyDenied === 'true') {
         // User is trying to use feature after denying permission - show informational alert
@@ -101,7 +100,7 @@ export function useScreenshotAttachment({
 
       if (finalStatus !== 'granted') {
         // Save denied state for subsequent attempts
-        await storage.setItem(permissionDeniedKey, 'true');
+        await AsyncStorage.setItem(permissionDeniedKey, 'true');
         // Accept denial silently (Apple requirement - no retry, no auto-redirect)
         return;
       }

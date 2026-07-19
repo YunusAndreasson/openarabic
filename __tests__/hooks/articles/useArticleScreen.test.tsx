@@ -484,7 +484,7 @@ describe('useArticleScreen Hook', () => {
 
       const viewableItems = [
         {
-          index: 1, // FlashList index (0 is header)
+          index: 1, // FlashList v2 ViewToken.index indexes props.data directly
           isViewable: true,
           item: {} as any,
         },
@@ -494,8 +494,8 @@ describe('useArticleScreen Hook', () => {
         result.current.handleViewableItemsChanged({ viewableItems } as any);
       });
 
-      // Current sentence index should be updated (index - 1 for header offset)
-      expect(result.current.currentSentenceIndex).toBe(0);
+      // Current sentence index maps 1:1 to the data index (no header offset in v2)
+      expect(result.current.currentSentenceIndex).toBe(1);
     });
 
     test('ignores viewable items with no items', () => {
@@ -515,7 +515,7 @@ describe('useArticleScreen Hook', () => {
       expect(result.current.currentSentenceIndex).toBe(initialIndex);
     });
 
-    test('skips header item (index 0) in viewable items', () => {
+    test('accepts index 0 as the first sentence and tracks the highest visible', () => {
       const { result } = renderHook(() =>
         useArticleScreen({
           id: '1',
@@ -529,12 +529,12 @@ describe('useArticleScreen Hook', () => {
 
       const viewableItems = [
         {
-          index: 0, // Header
+          index: 0, // First sentence (the header renders outside the data collection in v2)
           isViewable: true,
           item: {} as any,
         },
         {
-          index: 2, // First real sentence after header
+          index: 2,
           isViewable: true,
           item: {} as any,
         },
@@ -544,8 +544,8 @@ describe('useArticleScreen Hook', () => {
         result.current.handleViewableItemsChanged({ viewableItems } as any);
       });
 
-      // Should track index 2 - 1 = sentence 1 (skipping header at index 0)
-      expect(result.current.currentSentenceIndex).toBe(1);
+      // Should track the highest visible sentence index directly
+      expect(result.current.currentSentenceIndex).toBe(2);
     });
   });
 
@@ -813,7 +813,7 @@ describe('useArticleScreen Hook', () => {
       act(() => {
         jest.advanceTimersByTime(500);
       });
-      expect(mockUpdateProgress).toHaveBeenCalledWith(2); // index 3 - 1 = sentence 2
+      expect(mockUpdateProgress).toHaveBeenCalledWith(3); // data index 3 = sentence 3
     });
 
     test('cancels pending progress update on rapid scroll', () => {
@@ -854,7 +854,7 @@ describe('useArticleScreen Hook', () => {
 
       // Should only be called once with the latest position
       expect(mockUpdateProgress).toHaveBeenCalledTimes(1);
-      expect(mockUpdateProgress).toHaveBeenCalledWith(4); // index 5 - 1 = sentence 4
+      expect(mockUpdateProgress).toHaveBeenCalledWith(5); // data index 5 = sentence 5
     });
   });
 });

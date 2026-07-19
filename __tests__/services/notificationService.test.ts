@@ -173,11 +173,6 @@ describe('notificationService', () => {
           allowCriticalAlerts: false,
           allowProvisional: false,
         },
-        android: {
-          allowAlert: true,
-          allowBadge: true,
-          allowSound: true,
-        },
       });
     });
 

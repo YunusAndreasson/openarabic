@@ -155,9 +155,12 @@ export const createAreaFillPath = (
   return `${smoothPath} L ${endX} ${graphHeight} L ${startX} ${graphHeight} Z`;
 };
 
-// UTC date format helpers (DRY across charts)
-export const formatWeekdayUTC = (date: Date): string =>
-  date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' });
+// Local-time date label helpers (DRY across the forecast charts).
+// The forecast buckets are built at LOCAL end-of-day (fsrsUtils
+// generateForecastDates), so labels must render in the device timezone —
+// formatting them as UTC shifted every label a day forward west of UTC.
+export const formatWeekday = (date: Date): string =>
+  date.toLocaleDateString('en-US', { weekday: 'short' });
 
-export const formatMonthDayUTC = (date: Date): string =>
-  date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+export const formatMonthDay = (date: Date): string =>
+  date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });

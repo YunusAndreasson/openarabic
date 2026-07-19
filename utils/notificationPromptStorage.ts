@@ -6,8 +6,9 @@
  * reads). Kept out of Redux — this is prompt bookkeeping, not a preference.
  */
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import { handleError } from '@/utils/errorHandling';
-import { storage } from '@/utils/safeAsyncStorage';
 
 const PROMPT_STORAGE_KEY = '@openarabic/notifications/promptState';
 const PROMPT_STATE_VERSION = 1;
@@ -61,7 +62,7 @@ function notifyListeners(): void {
 export async function loadNotificationPromptState(): Promise<NotificationPromptState> {
   if (cachedState) return cachedState;
   try {
-    const raw = await storage.getItem(PROMPT_STORAGE_KEY);
+    const raw = await AsyncStorage.getItem(PROMPT_STORAGE_KEY);
     cachedState = raw
       ? { ...createState(), ...(JSON.parse(raw) as Partial<NotificationPromptState>) }
       : createState();
@@ -77,7 +78,7 @@ async function writeState(next: NotificationPromptState): Promise<void> {
   cachedState = next;
   notifyListeners();
   try {
-    await storage.setItem(PROMPT_STORAGE_KEY, JSON.stringify(next));
+    await AsyncStorage.setItem(PROMPT_STORAGE_KEY, JSON.stringify(next));
   } catch (error) {
     handleError(error as Error, { showToast: false });
   }

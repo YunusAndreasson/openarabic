@@ -4,7 +4,7 @@ import { VocabularyChart, type DataPoint } from '@/components/common/charts';
 import { CHART_LABELS, EMPTY_STATE_MESSAGES } from '@/constants/chartMessages';
 import { useGraphWidth } from '@/constants/chartConstants';
 import { STRINGS } from '@/constants/strings';
-import { formatMonthDayUTC } from '@/utils/chartDataUtils';
+import { formatMonthDay, formatWeekday } from '@/utils/chartDataUtils';
 import { useChartAxisLabels } from '@/hooks/vocabulary/useChartAxisLabels';
 import { useDueWordsChart } from '@/hooks/vocabulary/useDueWordsChart';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -50,7 +50,7 @@ export const DueWordsPrognosisChart = memo<DueWordsPrognosisChartProps>(
       const busiestLabel =
         busiest.date.toDateString() === new Date().toDateString()
           ? STRINGS.SUMMARY_TODAY
-          : busiest.date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' });
+          : formatWeekday(busiest.date);
 
       return [
         { label: STRINGS.SUMMARY_TODAY, value: `${currentDue}` },
@@ -64,12 +64,13 @@ export const DueWordsPrognosisChart = memo<DueWordsPrognosisChartProps>(
       return chartData.dataPoints.map((point, index) => {
         const newlyDue = dueWordsData[index]?.newlyDue ?? 0;
         // Days after today break out how many of the due words are new that day
-        const newSuffix = index > 0 && newlyDue > 0 ? ` · +${newlyDue} ${STRINGS.NEWLY_DUE_SUFFIX}` : '';
+        const newSuffix =
+          index > 0 && newlyDue > 0 ? ` · +${newlyDue} ${STRINGS.NEWLY_DUE_SUFFIX}` : '';
         return {
           x: point.x,
           y: point.y,
           value: `${point.dueWords}${newSuffix}`,
-          label: formatMonthDayUTC(point.date),
+          label: formatMonthDay(point.date),
           data: {
             date: point.date,
             dueWords: point.dueWords,

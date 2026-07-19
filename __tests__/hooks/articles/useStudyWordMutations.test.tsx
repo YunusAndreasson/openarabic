@@ -101,69 +101,8 @@ describe('useStudyWordMutations', () => {
     test('returns expected interface', () => {
       const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
 
-      expect(typeof result.current.handleWordPress).toBe('function');
       expect(typeof result.current.handleRootPress).toBe('function');
-      expect(result.current.toggleWordMutation).toBeDefined();
       expect(result.current.toggleRootMutation).toBeDefined();
-    });
-  });
-
-  describe('handleWordPress', () => {
-    test('checks daily word limit first', async () => {
-      const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
-
-      await act(async () => {
-        await result.current.handleWordPress(1 as RootId);
-      });
-
-      expect(mockCanAddWord).toHaveBeenCalled();
-    });
-
-    test('shows toast when daily limit reached (before auth check)', async () => {
-      mockCanAddWord.mockResolvedValue(false);
-
-      const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
-
-      await act(async () => {
-        await result.current.handleWordPress(1 as RootId);
-      });
-
-      expect(mockShowToast).toHaveBeenCalled();
-      // Auth should not be checked if limit reached
-      expect(mockCheckAuthentication).not.toHaveBeenCalled();
-      expect(mockToggleFSRSStudyRoot).not.toHaveBeenCalled();
-    });
-
-    test('checks authentication after limit check passes', async () => {
-      const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
-
-      await act(async () => {
-        await result.current.handleWordPress(1 as RootId);
-      });
-
-      expect(mockCheckAuthentication).toHaveBeenCalled();
-    });
-
-    test('shows toast when not authenticated', async () => {
-      mockCheckAuthentication.mockRejectedValue(new Error('Not authenticated'));
-
-      const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
-
-      await act(async () => {
-        await result.current.handleWordPress(1 as RootId);
-      });
-
-      expect(mockShowToast).toHaveBeenCalled();
-    });
-
-    test('increments daily word count on successful add', async () => {
-      const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
-
-      await act(async () => {
-        await result.current.handleWordPress(1 as RootId);
-      });
-
-      expect(mockIncrementDailyWordCount).toHaveBeenCalled();
     });
   });
 
@@ -274,23 +213,6 @@ describe('useStudyWordMutations', () => {
       expect(mockToggleFSRSStudyRoot).not.toHaveBeenCalled();
     });
 
-    test('blocks adding via handleWordPress when the due backlog is high', async () => {
-      queryClient.setQueryData(dueKey, twentyDue);
-
-      const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
-
-      await act(async () => {
-        await result.current.handleWordPress(999 as RootId);
-      });
-
-      expect(mockShowToast).toHaveBeenCalledWith(
-        expect.stringContaining('20'),
-        3000,
-        expect.anything(),
-      );
-      expect(mockToggleFSRSStudyRoot).not.toHaveBeenCalled();
-    });
-
     test('still allows removing despite a high backlog', async () => {
       queryClient.setQueryData(['fsrs-words', 'test-user-id'], [{ root_id: 1 }]);
       queryClient.setQueryData(dueKey, twentyDue);
@@ -331,28 +253,13 @@ describe('useStudyWordMutations', () => {
   });
 
   describe('Mutation behavior', () => {
-    test('toggleWordMutation calls service with correct params', async () => {
-      const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
-
-      await act(async () => {
-        result.current.toggleWordMutation.mutate({
-          userId: 'test-user-id',
-          wordId: 123 as RootId,
-        });
-      });
-
-      await waitFor(() => {
-        expect(mockToggleFSRSStudyRoot).toHaveBeenCalledWith('test-user-id', 123, undefined);
-      });
-    });
-
     test('toggleRootMutation calls service with correct params', async () => {
       const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
 
       await act(async () => {
         result.current.toggleRootMutation.mutate({
           userId: 'test-user-id',
-          rootId: 456,
+          rootId: 456 as RootId,
         });
       });
 
@@ -369,9 +276,9 @@ describe('useStudyWordMutations', () => {
       const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
 
       await act(async () => {
-        result.current.toggleWordMutation.mutate({
+        result.current.toggleRootMutation.mutate({
           userId: 'test-user-id',
-          wordId: 1 as RootId,
+          rootId: 1 as RootId,
         });
       });
 
@@ -389,9 +296,9 @@ describe('useStudyWordMutations', () => {
 
       await act(async () => {
         try {
-          result.current.toggleWordMutation.mutate({
+          result.current.toggleRootMutation.mutate({
             userId: 'test-user-id',
-            wordId: 1 as RootId,
+            rootId: 1 as RootId,
           });
         } catch {
           // Expected to fail
@@ -412,9 +319,9 @@ describe('useStudyWordMutations', () => {
       });
 
       await act(async () => {
-        await result.current.toggleWordMutation.mutateAsync({
+        await result.current.toggleRootMutation.mutateAsync({
           userId: 'test-user-id',
-          wordId: 1 as RootId,
+          rootId: 1 as RootId,
         });
       });
 

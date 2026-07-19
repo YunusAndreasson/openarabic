@@ -1,9 +1,9 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Linking } from 'react-native';
 
 import { handleError, toError } from '@/utils/errorHandling';
-import { getSafeStorage } from '@/utils/safeAsyncStorage';
 
 interface UseProfilePhotoPickerOptions {
   /** User ID for storage key and permission caching */
@@ -67,8 +67,7 @@ export function useProfilePhotoPicker({
   useEffect(() => {
     const loadProfilePhoto = async () => {
       try {
-        const storage = getSafeStorage();
-        const savedUri = await storage.getItem(storageKey);
+        const savedUri = await AsyncStorage.getItem(storageKey);
         if (savedUri) {
           setProfilePhotoUri(savedUri);
         }
@@ -85,11 +84,10 @@ export function useProfilePhotoPicker({
 
   const selectPhoto = useCallback(async () => {
     try {
-      const storage = getSafeStorage();
       const permissionDeniedKey = `photo_permission_denied_${userId}`;
 
       // Check if permission was previously denied (subsequent attempt)
-      const wasPreviouslyDenied = await storage.getItem(permissionDeniedKey);
+      const wasPreviouslyDenied = await AsyncStorage.getItem(permissionDeniedKey);
 
       if (wasPreviouslyDenied === 'true') {
         // User is trying to use feature after denying permission - show informational alert
@@ -125,7 +123,7 @@ export function useProfilePhotoPicker({
 
       if (status !== 'granted') {
         // Save denied state for subsequent attempts
-        await storage.setItem(permissionDeniedKey, 'true');
+        await AsyncStorage.setItem(permissionDeniedKey, 'true');
         // Accept denial silently (Apple requirement - no retry, no auto-redirect)
         return;
       }
@@ -143,7 +141,7 @@ export function useProfilePhotoPicker({
         const selectedUri = result.assets[0].uri;
 
         // Save to local storage
-        await storage.setItem(storageKey, selectedUri);
+        await AsyncStorage.setItem(storageKey, selectedUri);
 
         // Update state
         setProfilePhotoUri(selectedUri);
@@ -158,8 +156,7 @@ export function useProfilePhotoPicker({
 
   const clearPhoto = useCallback(async () => {
     try {
-      const storage = getSafeStorage();
-      await storage.removeItem(storageKey);
+      await AsyncStorage.removeItem(storageKey);
       setProfilePhotoUri(null);
     } catch (error) {
       handleError(toError(error), { showToast: false });

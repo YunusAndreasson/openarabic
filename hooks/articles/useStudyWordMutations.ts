@@ -27,16 +27,13 @@ interface StudyWordContext {
 
 interface ToggleStudyVariables {
   userId: string;
-  wordId?: RootId;
-  rootId?: RootId;
+  rootId: RootId;
   /** Explicit direction from the UI the user acted on; omitted = legacy toggle */
   intent?: StudyWordIntent;
 }
 
 interface StudyWordMutationsResult {
-  handleWordPress: (wordId: RootId) => void;
   handleRootPress: (rootId: RootId, intent?: StudyWordIntent) => Promise<boolean | undefined>;
-  toggleWordMutation: UseMutationResult<boolean, Error, ToggleStudyVariables, StudyWordContext>;
   toggleRootMutation: UseMutationResult<boolean, Error, ToggleStudyVariables, StudyWordContext>;
 }
 
@@ -68,28 +65,31 @@ export const useStudyWordMutations = (
       : `Daily limit of ${dailyWordLimit} words reached. You can increase it in Account settings.`;
   }, [getEffectiveLimitInfo, dailyWordLimit]);
 
-  // Due-backlog gate: block NEW saves while the review backlog is high. Reads
-  // the shared due-words cache (kept warm app-wide by the tab badge); fails
-  // open when the cache is missing. Returns the blocking count, or null when
-  // adding is fine.
+  // Due-backlog gate: block NEW saves while the review backlog is high. The
+  // due key encodes cooldown/limit variants, so read every cached variant and
+  // take the largest count; fails open when none is cached. Returns the
+  // blocking count, or null when adding is fine.
   const getDueBacklogBlock = useCallback(
     (userId: string | undefined): number | null => {
       if (!userId) return null;
-      const dueWords = queryClient.getQueryData<StudyWord[]>(fsrsQueries.due(userId).queryKey);
-      const gate = evaluateDueBacklogGate(Array.isArray(dueWords) ? dueWords.length : 0);
+      const dueEntries = queryClient.getQueriesData<StudyWord[]>({
+        queryKey: fsrsQueries.duePrefix(userId),
+      });
+      const dueCount = dueEntries.reduce(
+        (max, [, words]) => (Array.isArray(words) ? Math.max(max, words.length) : max),
+        0,
+      );
+      const gate = evaluateDueBacklogGate(dueCount);
       return gate.blocked ? gate.dueCount : null;
     },
     [queryClient],
   );
 
-  // Shared mutation options for toggling study words/roots
-  // DRY: Used by both toggleWord and toggleRoot mutations
   const toggleStudyOptions = {
-    mutationFn: async ({ userId, wordId, rootId, intent }: ToggleStudyVariables) => {
-      const id = (wordId ?? rootId) as RootId;
-      return studyWordsFSRSService.toggleFSRSStudyRoot(userId, id, intent);
+    mutationFn: async ({ userId, rootId, intent }: ToggleStudyVariables) => {
+      return studyWordsFSRSService.toggleFSRSStudyRoot(userId, rootId, intent);
     },
-    onMutate: async ({ userId, wordId, rootId, intent }: ToggleStudyVariables): Promise<StudyWordContext> => {
+    onMutate: async ({ userId, rootId, intent }: ToggleStudyVariables): Promise<StudyWordContext> => {
       // CRITICAL: Use fsrsQueries.all() to match what UI components read
       // This ensures optimistic updates are immediately visible in both underlines and buttons
       await queryClient.cancelQueries({
@@ -98,21 +98,20 @@ export const useStudyWordMutations = (
       const previousStudyWords =
         (queryClient.getQueryData(fsrsQueries.all(userId).queryKey) as StudyWord[]) || [];
 
-      const id = (wordId ?? rootId) as number;
       queryClient.setQueryData<StudyWord[]>(fsrsQueries.all(userId).queryKey, (old = []) => {
-        const exists = old.some(sw => sw.root_id === id);
+        const exists = old.some(sw => sw.root_id === rootId);
         // With explicit intent the optimistic direction matches the server's;
         // legacy toggles fall back to inverting the cached state.
         const shouldRemove = intent ? intent === 'remove' : exists;
         if (shouldRemove) {
-          return old.filter(sw => sw.root_id !== id);
+          return old.filter(sw => sw.root_id !== rootId);
         }
         if (exists) {
           return old; // Add intent on an already-cached word — no duplicate
         }
         // For optimistic add, create a minimal StudyWord-like object
         // The actual full object will be fetched on success
-        return [...old, { root_id: id } as StudyWord];
+        return [...old, { root_id: rootId } as StudyWord];
       });
 
       return { previousStudyWords };
@@ -131,20 +130,20 @@ export const useStudyWordMutations = (
     },
     onSuccess: (
       nowInStudyList: boolean,
-      { userId, wordId, rootId }: ToggleStudyVariables,
+      { userId, rootId }: ToggleStudyVariables,
       context?: StudyWordContext,
     ) => {
       // Track word added/removed (fire and forget - don't block UI)
-      const id = (wordId ?? rootId) as number;
-      const wasInStudyList = context?.previousStudyWords?.some(sw => sw.root_id === id) ?? false;
+      const wasInStudyList =
+        context?.previousStudyWords?.some(sw => sw.root_id === rootId) ?? false;
 
       if (!nowInStudyList && wasInStudyList) {
         analytics.track(ANALYTICS_EVENTS.WORD_REMOVED_FROM_STUDY, {
-          root_id: id,
+          root_id: rootId,
         });
       } else if (nowInStudyList && !wasInStudyList) {
         analytics.track(ANALYTICS_EVENTS.WORD_ADDED_TO_STUDY, {
-          root_id: id,
+          root_id: rootId,
           source: 'article',
         });
         // First-run checklist signal (idempotent, fire-and-forget)
@@ -163,67 +162,8 @@ export const useStudyWordMutations = (
     },
   };
 
-  const toggleWordMutation = useMutation<boolean, Error, ToggleStudyVariables, StudyWordContext>(
-    toggleStudyOptions,
-  );
   const toggleRootMutation = useMutation<boolean, Error, ToggleStudyVariables, StudyWordContext>(
     toggleStudyOptions,
-  );
-
-  // Handle word press with validation
-  const handleWordPress = useCallback(
-    async (wordId: RootId) => {
-      try {
-        // Check daily word limit first
-        const canAdd = await canAddWord();
-        if (!canAdd) {
-          showToast(await getLimitReachedMessage(), 6000, ToastType.IMPORTANT);
-          return;
-        }
-
-        // Use centralized auth check (handles getSession automatically)
-        let userId: string;
-        try {
-          const { user } = await checkAuthentication();
-          userId = user.id;
-        } catch {
-          showToast(STRINGS.PLEASE_SIGN_IN_TO_ADD_WORDS, undefined, ToastType.INFO);
-          router.replace(ROUTE_PATHS.AUTH);
-          return;
-        }
-
-        // Due-backlog gate
-        const backlogCount = getDueBacklogBlock(userId);
-        if (backlogCount !== null) {
-          showToast(
-            STRINGS.BACKLOG_CLEAR_REVIEWS_TOAST.replace('{count}', String(backlogCount)),
-            3000,
-            ToastType.INFO,
-          );
-          return;
-        }
-
-        // Increment daily word count and proceed
-        const incrementSuccess = await incrementDailyWordCount();
-        if (!incrementSuccess) {
-          showToast(await getLimitReachedMessage(), 6000, ToastType.IMPORTANT);
-          return;
-        }
-
-        // Use the authenticated user ID
-        toggleWordMutation.mutate({ userId, wordId });
-      } catch (error) {
-        handleError(error as Error);
-      }
-    },
-    [
-      toggleWordMutation,
-      showToast,
-      canAddWord,
-      incrementDailyWordCount,
-      getLimitReachedMessage,
-      getDueBacklogBlock,
-    ],
   );
 
   // Handle root press with validation
@@ -309,9 +249,7 @@ export const useStudyWordMutations = (
   );
 
   return {
-    handleWordPress,
     handleRootPress,
-    toggleWordMutation,
     toggleRootMutation,
   };
 };

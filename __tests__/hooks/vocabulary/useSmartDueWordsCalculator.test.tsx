@@ -39,19 +39,30 @@ jest.mock('@/utils/errorHandling', () => ({
   handleError: jest.fn(),
 }));
 
-// Mock fsrs queries
-jest.mock('@/constants/queries', () => ({
-  fsrsQueries: {
-    due: (userId: string) => ({ queryKey: ['fsrs-words', userId, 'due'] }),
-    all: (userId: string) => ({ queryKey: ['fsrs-words', userId] }),
-    stats: (userId: string) => ({ queryKey: ['fsrs-words', userId, 'stats'] }),
-  },
-  CACHE_TIMES: {
-    CRITICAL: { staleTime: 30000, gcTime: 120000 },
-    SHORT: { staleTime: 60000, gcTime: 300000 },
-    MEDIUM: { staleTime: 180000, gcTime: 600000 },
-  },
-}));
+// Mock fsrs queries. The hook refreshes via the factories' own queryFn (it no
+// longer attaches its own), so the mock factories must route to the mocked
+// service for the call-count assertions below.
+jest.mock('@/constants/queries', () => {
+  const { studyWordsFSRSService } = require('@/services/studyWordsFSRS');
+  return {
+    fsrsQueries: {
+      due: (userId: string) => ({
+        queryKey: ['fsrs-words', userId, 'due', null, null],
+        queryFn: () => studyWordsFSRSService.getFSRSWords(userId, { onlyDue: true }),
+      }),
+      all: (userId: string) => ({
+        queryKey: ['fsrs-words', userId],
+        queryFn: () => studyWordsFSRSService.getFSRSWords(userId, { forStats: false }),
+      }),
+      stats: (userId: string) => ({ queryKey: ['fsrs-words', userId, 'stats'] }),
+    },
+    CACHE_TIMES: {
+      CRITICAL: { staleTime: 30000, gcTime: 120000 },
+      SHORT: { staleTime: 60000, gcTime: 300000 },
+      MEDIUM: { staleTime: 180000, gcTime: 600000 },
+    },
+  };
+});
 
 describe('useSmartDueWordsCalculator', () => {
   let queryClient: QueryClient;

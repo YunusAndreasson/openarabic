@@ -50,11 +50,17 @@ export function useSmartNotifications(): void {
       return;
     }
 
+    // Words query not yet resolved (offline launch, slow restore): skip the
+    // sync entirely rather than wiping the scheduled plan against an empty
+    // word set — the existing plan stays correct while the app is closed.
+    // The data-change effect re-fires scheduleSync when `words` resolves.
+    if (words === undefined) return;
+
     const lastCompletedAt = queryClient.getQueryData<number>(
       fsrsQueries.lastCompletedAtKey(userId),
     );
     const plan = buildNotificationPlan({
-      words: words ?? [],
+      words,
       now: new Date(),
       preferredHour: reminderTime.hour,
       preferredMinute: reminderTime.minute,

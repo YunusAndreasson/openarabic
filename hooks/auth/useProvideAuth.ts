@@ -1,7 +1,6 @@
 import NetInfo from '@react-native-community/netinfo';
 import * as Sentry from '@sentry/react-native';
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
-import { AppState } from 'react-native';
 
 import { simpleAudioService } from '@/services/audioPlayer';
 import { supabase, setupSupabaseAppStateListener } from '@/services/supabase';
@@ -152,34 +151,19 @@ export function useProvideAuth(): AuthResult {
   }, []);
 
   useEffect(() => {
+    // The supabase service's AppState listener starts/stops the auth-js
+    // auto-refresh ticker on foreground/background; startAutoRefresh fires an
+    // immediate refresh tick on activation, and the resulting TOKEN_REFRESHED
+    // events arrive through onAuthStateChange below — no foreground
+    // getSession() polling needed here.
     const removeSupabaseListener = setupSupabaseAppStateListener();
     let isMounted = true;
     let authSubscriptionUnsubscribe: () => void = () => undefined;
-
-    // Global ref to track current app state
-    const appState = { current: AppState.currentState };
 
     // Initialize auth — async session fetch that must run once on mount; setState
     // happens after awaited supabase call resolves, not synchronously in effect body.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     initAuth();
-
-    // Handle app state changes
-    const appStateSubscription = AppState.addEventListener('change', nextAppState => {
-      const isActivating = appState.current !== 'active' && nextAppState === 'active';
-
-      appState.current = nextAppState;
-
-      if (isActivating && isMounted) {
-        // Re-initialize auth when app becomes active
-        Sentry.addBreadcrumb({
-          category: 'auth',
-          message: 'App becoming active, refreshing auth state',
-          level: 'info',
-        });
-        initAuth();
-      }
-    });
 
     // Listen for auth state changes
     // CRITICAL: Callback must NOT be async and should defer all operations to prevent deadlocks
@@ -227,7 +211,6 @@ export function useProvideAuth(): AuthResult {
 
     return () => {
       isMounted = false;
-      appStateSubscription.remove();
       if (authSubscriptionUnsubscribe) {
         authSubscriptionUnsubscribe();
       }

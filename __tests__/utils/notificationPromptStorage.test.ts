@@ -15,13 +15,11 @@ const mockSetItem = jest.fn(async (key: string, value: string) => {
   mockMemoryStore.set(key, value);
 });
 
-jest.mock('@/utils/safeAsyncStorage', () => ({
-  storage: {
-    getItem: (key: string) => mockGetItem(key),
-    setItem: (key: string, value: string) => mockSetItem(key, value),
-    removeItem: async (key: string) => {
-      mockMemoryStore.delete(key);
-    },
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  getItem: (key: string) => mockGetItem(key),
+  setItem: (key: string, value: string) => mockSetItem(key, value),
+  removeItem: async (key: string) => {
+    mockMemoryStore.delete(key);
   },
 }));
 
@@ -67,8 +65,7 @@ describe('notificationPromptStorage', () => {
   });
 
   test('recordImpression stamps the session it happened at', async () => {
-    const { loadNotificationPromptState, recordImpression, recordSessionCompleted } =
-      freshModule();
+    const { loadNotificationPromptState, recordImpression, recordSessionCompleted } = freshModule();
     await recordSessionCompleted();
     await recordSessionCompleted();
     await recordSessionCompleted();

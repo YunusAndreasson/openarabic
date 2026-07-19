@@ -53,9 +53,7 @@ export const ChartDataPoint = memo<ChartDataPointProps>(
 
     return (
       <Group key={uniqueKey}>
-        {emphasis && (
-          <Circle color={chartColors.dataPoint.inner} cx={x} cy={y} r={animatedRingR} />
-        )}
+        {emphasis && <Circle color={chartColors.dataPoint.inner} cx={x} cy={y} r={animatedRingR} />}
         <Circle color={chartColors.dataPoint.primary} cx={x} cy={y} r={animatedDotR} />
       </Group>
     );

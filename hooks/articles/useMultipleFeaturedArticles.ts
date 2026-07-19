@@ -5,7 +5,7 @@ import { APP_SESSION_ID } from '@/constants/queries';
 import { STRINGS } from '@/constants/strings';
 import { useFSRSData } from '@/components/providers/FSRSDataProvider';
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
-import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
+import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useAuth } from '@/hooks/auth/useAuth';
 import type { Article } from '@/types/articles.types';
 import type { RootId } from '@/types/branded.types';
@@ -77,7 +77,7 @@ export function useMultipleFeaturedArticles(
   // Get reading progress for all articles to filter for unread/low-progress
   const articleIds = useMemo(() => articlesData.map(a => a.id), [articlesData]);
   const { data: progressMap, isLoading: isLoadingProgress } =
-    useSafeBulkReadingProgress(articleIds);
+    useBulkReadingProgress(articleIds);
 
   // Track combined loading state for all queries
   const allQueriesReady = !isDueWordsLoading && !isFSRSLoading && !isLoadingProgress;

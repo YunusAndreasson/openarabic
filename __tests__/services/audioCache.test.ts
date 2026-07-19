@@ -21,6 +21,27 @@ const mockDigestStringAsync = jest.fn();
 const mockDirectoryCreate = jest.fn();
 const mockDirectoryDelete = jest.fn();
 const mockDirectoryList = jest.fn();
+const mockFileMove = jest.fn();
+const mockFileDelete = jest.fn();
+
+/**
+ * Path-aware File mock for download-flow tests. Downloads now land in a
+ * `.tmp-*` file that is validated (exists + size) and moved into the final
+ * cache path — temp paths report as freshly downloaded (exists, non-empty),
+ * while the final cached path uses the provided flags.
+ */
+const makeFileMock =
+  ({
+    cachedExists = false,
+    cachedSize = null,
+  }: { cachedExists?: boolean; cachedSize?: number | null } = {}) =>
+  (path: string) => ({
+    uri: path,
+    exists: path.includes('.tmp-') ? true : cachedExists,
+    size: path.includes('.tmp-') ? 100 : cachedSize,
+    move: mockFileMove,
+    delete: mockFileDelete,
+  });
 
 jest.mock('expo-file-system', () => ({
   File: Object.assign(
@@ -28,6 +49,8 @@ jest.mock('expo-file-system', () => ({
       uri: path,
       exists: true,
       size: 100,
+      move: mockFileMove,
+      delete: mockFileDelete,
     })),
     {
       downloadFileAsync: mockDownloadFileAsync,
@@ -68,6 +91,10 @@ let audioCache: any;
 beforeEach(() => {
   jest.resetModules();
   jest.clearAllMocks();
+  // Directory#list() is synchronous in the SDK 57 API. Default to an empty
+  // dir so the one-time legacy sweep (run lazily on first getAudio) has
+  // nothing to delete; tests that exercise listing override this.
+  mockDirectoryList.mockReturnValue([]);
 });
 
 describe('audioCache', () => {
@@ -129,29 +156,25 @@ describe('audioCache', () => {
       list: mockDirectoryList,
     }));
 
-    // Mock File to not exist initially (triggers download)
-    // First call: getCachedFilePath - file doesn't exist
-    // Second call: cacheAudio - file doesn't exist initially
-    mockFileConstructor
-      .mockImplementationOnce(path => ({
-        uri: path,
-        exists: false, // getCachedFilePath - file not found
-        size: null,
-      }))
-      .mockImplementationOnce(path => ({
-        uri: path,
-        exists: false, // cacheAudio - file doesn't exist initially
-        size: null,
-      }));
+    mockDownloadFileAsync.mockResolvedValue(undefined);
 
-    // Mock the download to return a successful result
-    mockDownloadFileAsync.mockResolvedValue({ uri: cachedPath, exists: true });
-
+    // Require FIRST: it re-runs the expo-file-system mock factory (module
+    // registry was reset), which re-applies the default File implementation
+    // and would clobber a makeFileMock override set before it.
     audioCache = require('../../services/audioCache').audioCache;
+
+    // Cached path doesn't exist (triggers download); temp file reports as
+    // freshly downloaded so validation + move succeed
+    mockFileConstructor.mockImplementation(makeFileMock({ cachedExists: false }));
 
     const result = await audioCache.getAudio(url);
 
     expect(mockDownloadFileAsync).toHaveBeenCalled();
+    // Downloaded temp file is moved into the final cache path
+    expect(mockFileMove).toHaveBeenCalledWith(
+      expect.objectContaining({ uri: cachedPath }),
+      expect.objectContaining({ overwrite: true }),
+    );
     expect(result).toBe(cachedPath);
   });
 
@@ -175,25 +198,14 @@ describe('audioCache', () => {
       list: mockDirectoryList,
     }));
 
-    // Mock File to not exist initially (triggers download)
-    // First call: getCachedFilePath - file doesn't exist
-    // Second call: cacheAudio - file doesn't exist initially
-    mockFileConstructor
-      .mockImplementationOnce(path => ({
-        uri: path,
-        exists: false, // getCachedFilePath - file not found
-        size: null,
-      }))
-      .mockImplementationOnce(path => ({
-        uri: path,
-        exists: false, // cacheAudio - file doesn't exist initially
-        size: null,
-      }));
-
     // Mock the download to fail
     mockDownloadFileAsync.mockRejectedValue(new Error('Download failed'));
 
+    // Require first — re-running the mock factory would clobber makeFileMock
     audioCache = require('../../services/audioCache').audioCache;
+
+    // Cached path doesn't exist (triggers download)
+    mockFileConstructor.mockImplementation(makeFileMock({ cachedExists: false }));
 
     const result = await audioCache.getAudio(url);
 
@@ -273,8 +285,8 @@ describe('audioCache', () => {
     mockFileConstructor.mockClear();
     mockDirectoryList.mockClear();
 
-    // Mock directory.list() to return File instances
-    mockDirectoryList.mockResolvedValue([
+    // Mock directory.list() to return File instances (synchronous API)
+    mockDirectoryList.mockReturnValue([
       {
         uri: '/cache/audio/one.mp3',
         exists: true,
@@ -308,7 +320,7 @@ describe('audioCache', () => {
     mockDirectoryConstructor.mockClear();
     mockDirectoryList.mockClear();
 
-    mockDirectoryList.mockResolvedValue([]);
+    mockDirectoryList.mockReturnValue([]);
 
     mockDirectoryConstructor.mockImplementation(path => ({
       uri: path,
@@ -330,7 +342,7 @@ describe('audioCache', () => {
     mockDirectoryList.mockClear();
 
     // When directory doesn't exist, list returns empty or we get 0
-    mockDirectoryList.mockResolvedValue([]);
+    mockDirectoryList.mockReturnValue([]);
 
     mockDirectoryConstructor.mockImplementation(path => ({
       uri: path,
@@ -351,7 +363,7 @@ describe('audioCache', () => {
     mockDirectoryConstructor.mockClear();
     mockDirectoryList.mockClear();
 
-    mockDirectoryList.mockResolvedValue([
+    mockDirectoryList.mockReturnValue([
       {
         uri: '/cache/audio/one.mp3',
         exists: true,
@@ -427,17 +439,14 @@ describe('audioCache', () => {
       list: mockDirectoryList,
     }));
 
-    // File doesn't exist - triggers download
-    mockFileConstructor.mockImplementation(path => ({
-      uri: path,
-      exists: false,
-      size: null,
-    }));
-
     // Mock download to succeed
-    mockDownloadFileAsync.mockResolvedValue({ uri: uniqueCachedPath, exists: true });
+    mockDownloadFileAsync.mockResolvedValue(undefined);
 
+    // Require first — re-running the mock factory would clobber makeFileMock
     audioCache = require('../../services/audioCache').audioCache;
+
+    // Cached path doesn't exist - triggers download
+    mockFileConstructor.mockImplementation(makeFileMock({ cachedExists: false }));
 
     // Make two concurrent requests
     const [result1, result2] = await Promise.all([
@@ -585,13 +594,9 @@ describe('audioCache', () => {
     // Clear the cache
     await audioCache.clearCache();
 
-    // Reset file mock to not exist
-    mockFileConstructor.mockImplementation(path => ({
-      uri: path,
-      exists: false,
-      size: null,
-    }));
-    mockDownloadFileAsync.mockResolvedValue({ uri: cachedPath, exists: true });
+    // Reset file mock: cached path gone, downloads succeed
+    mockFileConstructor.mockImplementation(makeFileMock({ cachedExists: false }));
+    mockDownloadFileAsync.mockResolvedValue(undefined);
 
     // After clearCache, memory cache should be cleared
     // So this should trigger a new download
@@ -620,18 +625,115 @@ describe('audioCache', () => {
       list: mockDirectoryList,
     }));
 
-    mockFileConstructor.mockImplementation(path => ({
-      uri: path,
-      exists: false,
-      size: null,
-    }));
-
     // Download succeeds
-    mockDownloadFileAsync.mockResolvedValue({ uri: retryCachedPath, exists: true });
+    mockDownloadFileAsync.mockResolvedValue(undefined);
 
+    // Require first — re-running the mock factory would clobber makeFileMock
     audioCache = require('../../services/audioCache').audioCache;
+
+    mockFileConstructor.mockImplementation(makeFileMock({ cachedExists: false }));
 
     const result = await audioCache.getAudio(retryUrl);
     expect(result).toBe(retryCachedPath);
+  });
+
+  test('invalidate deletes the cached file so playback self-heal can re-download', async () => {
+    const invalidateUrl = 'http://example.com/invalidate-test.mp3';
+    const invalidateHash = 'invalidatehash';
+
+    mockDigestStringAsync.mockResolvedValue(invalidateHash);
+    mockFileConstructor.mockClear();
+    mockFileDelete.mockClear();
+
+    // Require first — re-running the mock factory would clobber makeFileMock
+    audioCache = require('../../services/audioCache').audioCache;
+
+    // Cached file exists with content
+    mockFileConstructor.mockImplementation(makeFileMock({ cachedExists: true, cachedSize: 100 }));
+
+    await audioCache.invalidate(invalidateUrl);
+
+    expect(mockFileDelete).toHaveBeenCalled();
+  });
+
+  test('zero-byte cached file is purged and re-downloaded instead of served', async () => {
+    const emptyUrl = 'http://example.com/empty-file-test.mp3';
+    const emptyHash = 'emptyhash';
+    const emptyCachedPath = `/cache/audio/${emptyHash}.mp3`;
+
+    mockDigestStringAsync.mockResolvedValue(emptyHash);
+    mockFileConstructor.mockClear();
+    mockFileDelete.mockClear();
+    mockDownloadFileAsync.mockClear();
+
+    mockDownloadFileAsync.mockResolvedValue(undefined);
+
+    // Require first — re-running the mock factory would clobber makeFileMock
+    audioCache = require('../../services/audioCache').audioCache;
+
+    // Cached file exists but is empty (interrupted write artifact)
+    mockFileConstructor.mockImplementation(makeFileMock({ cachedExists: true, cachedSize: 0 }));
+
+    const result = await audioCache.getAudio(emptyUrl);
+
+    // Empty artifact purged, fresh download served
+    expect(mockFileDelete).toHaveBeenCalled();
+    expect(mockDownloadFileAsync).toHaveBeenCalled();
+    expect(result).toBe(emptyCachedPath);
+  });
+
+  test('quick mode does not retry a failed download', async () => {
+    const quickUrl = 'http://example.com/quick-test.mp3';
+    const quickHash = 'quickhash';
+
+    mockDigestStringAsync.mockResolvedValue(quickHash);
+    mockFileConstructor.mockClear();
+    mockDownloadFileAsync.mockClear();
+
+    // Network-classified error that would trigger retries in patient mode
+    mockDownloadFileAsync.mockRejectedValue(new Error('Network connection lost'));
+
+    // Require first — re-running the mock factory would clobber makeFileMock
+    audioCache = require('../../services/audioCache').audioCache;
+
+    mockFileConstructor.mockImplementation(makeFileMock({ cachedExists: false }));
+
+    const result = await audioCache.getAudio(quickUrl, { quick: true });
+
+    // Falls back to the remote URL after a single attempt
+    expect(result).toBe(quickUrl);
+    expect(mockDownloadFileAsync).toHaveBeenCalledTimes(1);
+  });
+
+  test('one-time sweep deletes pre-overhaul cache files before first use and sets the flag', async () => {
+    const AsyncStorage = require('@react-native-async-storage/async-storage');
+    const sweepUrl = 'http://example.com/sweep-test.mp3';
+    const sweepHash = 'sweephash';
+
+    mockDigestStringAsync.mockResolvedValue(sweepHash);
+    mockFileConstructor.mockClear();
+    mockDownloadFileAsync.mockClear();
+    mockDownloadFileAsync.mockResolvedValue(undefined);
+
+    // A leftover file from the pre-overhaul (direct-to-final-path) downloader
+    const legacyEntryDelete = jest.fn();
+    mockDirectoryList.mockReturnValue([
+      { uri: '/cache/audio/old-poisoned.mp3', exists: true, size: 12, delete: legacyEntryDelete },
+    ]);
+
+    // Require first — re-running the mock factory would clobber makeFileMock
+    audioCache = require('../../services/audioCache').audioCache;
+
+    mockFileConstructor.mockImplementation(makeFileMock({ cachedExists: false }));
+
+    await audioCache.getAudio(sweepUrl);
+
+    // Sweep ran before the cache served anything, and the flag was persisted
+    // so it never runs again
+    expect(legacyEntryDelete).toHaveBeenCalledTimes(1);
+    expect(AsyncStorage.setItem).toHaveBeenCalledWith(
+      '@openarabic/audioCache/legacySweepV1',
+      'true',
+    );
   });
 });

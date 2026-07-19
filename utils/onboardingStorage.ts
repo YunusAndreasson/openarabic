@@ -6,6 +6,8 @@
  * from anywhere in the app (mutation callbacks, audio playback, etc.).
  */
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import {
   ONBOARDING_STATE_VERSION,
   ONBOARDING_STORAGE_KEY,
@@ -13,7 +15,6 @@ import {
   type OnboardingStep,
 } from '@/constants/onboarding';
 import { handleError } from '@/utils/errorHandling';
-import { storage } from '@/utils/safeAsyncStorage';
 
 function createState(overrides: Partial<OnboardingProgressState> = {}): OnboardingProgressState {
   return {
@@ -54,7 +55,7 @@ export function getCachedOnboardingState(): OnboardingProgressState | null {
 export async function loadOnboardingState(): Promise<OnboardingProgressState> {
   if (cachedState) return cachedState;
   try {
-    const raw = await storage.getItem(ONBOARDING_STORAGE_KEY);
+    const raw = await AsyncStorage.getItem(ONBOARDING_STORAGE_KEY);
     cachedState = raw
       ? { ...createState(), ...(JSON.parse(raw) as Partial<OnboardingProgressState>) }
       : createState();
@@ -77,7 +78,7 @@ async function writeState(next: OnboardingProgressState): Promise<void> {
   cachedState = next;
   notifyListeners();
   try {
-    await storage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify(next));
+    await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify(next));
   } catch (error) {
     handleError(error as Error, {
       showToast: false,

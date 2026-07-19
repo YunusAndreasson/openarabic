@@ -240,7 +240,7 @@ describe('audioUtils', () => {
       const result = await generateWordAudioTrack(word);
 
       expect(generateStorageUrlMock).toHaveBeenCalledWith('audio', 'arabic.mp3');
-      expect(audioCacheMock.getAudio).toHaveBeenCalledWith(remoteUrl);
+      expect(audioCacheMock.getAudio).toHaveBeenCalledWith(remoteUrl, { quick: true });
       expect(result).toEqual({
         id: 'word-1-ar',
         audioUrl: cachedUrl,

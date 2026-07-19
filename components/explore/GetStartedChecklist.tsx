@@ -18,7 +18,7 @@ import { ONBOARDING_CONFIG, type OnboardingStep } from '@/constants/onboarding';
 import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import type { OnboardingChecklistState } from '@/hooks/onboarding/useOnboardingChecklist';
-import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
+import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useColors } from '@/hooks/theme/useColors';
 import { analytics } from '@/services/analytics';
 import type { Article } from '@/types/articles.types';
@@ -50,7 +50,7 @@ const GetStartedChecklistComponent: FC<GetStartedChecklistProps> = ({
   const { isChecklistVisible, items, doneCount, allDone, finalizeCompletion } = checklist;
 
   const articleIds = useMemo(() => articlesData.map(a => a.id as ArticleId), [articlesData]);
-  const { data: progressMap } = useSafeBulkReadingProgress(articleIds);
+  const { data: progressMap } = useBulkReadingProgress(articleIds);
 
   // Collapse animation: measured height + opacity → 0, then persist completion.
   // Height-based (not reanimated `exiting`) because the card lives inside a

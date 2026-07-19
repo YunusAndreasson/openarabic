@@ -45,10 +45,7 @@ import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TIMING_CONSTANTS } from '@/constants/animation';
 import { Theme } from '@/constants/colors';
 import { LAYOUT } from '@/constants/layout';
-import {
-  NOTIFICATION_ROUTE_BY_TYPE,
-  NOTIFICATION_TYPES,
-} from '@/constants/notifications';
+import { NOTIFICATION_ROUTE_BY_TYPE, NOTIFICATION_TYPES } from '@/constants/notifications';
 import type { AnyNotificationType } from '@/constants/notifications';
 import { QUERY_DEFAULTS } from '@/constants/queries';
 import { STRINGS } from '@/constants/strings';
@@ -122,7 +119,12 @@ onlineManager.setEventListener((setOnline: (online: boolean) => void) => {
     setOnline(Boolean(state.isConnected));
   });
 });
-NetInfo.fetch().then((state: NetInfoState) => onlineManager.setOnline(Boolean(state.isConnected)));
+NetInfo.fetch()
+  .then((state: NetInfoState) => onlineManager.setOnline(Boolean(state.isConnected)))
+  .catch(() => {
+    // A rejection here would be an unhandled rejection at startup; the
+    // onlineManager listener above covers the steady state.
+  });
 
 // Optimized retry logic that stops when offline
 const createRetryFunction = (maxRetries: number) => (failureCount: number, error: unknown) => {
@@ -181,7 +183,7 @@ Sentry.init({
     }),
   ],
   enabled: !!sentryDsn, // Only enable if DSN is available
-  tracesSampleRate: 1.0, // Sample everything (100%)
+  tracesSampleRate: __DEV__ ? 1.0 : 0.1, // Sample everything in dev; 10% in production (Sentry guidance: don't ship 1.0)
   attachScreenshot: true, // Helps debug UI crashes
   debug: false, // Disable Sentry debug logging for performance
   enableNative: true, // CRITICAL: Enable native crash reporting
@@ -263,13 +265,20 @@ function AppContent() {
     }
   }, [navigationRef]);
 
+  // Configure Android navigation bar button style (background is transparent in
+  // edge-to-edge mode). Own effect with isDark in deps so bar contrast follows
+  // theme changes — kept separate from the session effect below, whose
+  // analytics.identify / audio-session work must not re-run on a theme switch.
   useEffect(() => {
     if (!appReady || isAuthLoading) return;
 
-    // Configure Android navigation bar button style (background is transparent in edge-to-edge mode)
     if (Platform.OS === 'android') {
       NavigationBar.setStyle(isDark ? 'light' : 'dark');
     }
+  }, [appReady, isAuthLoading, isDark]);
+
+  useEffect(() => {
+    if (!appReady || isAuthLoading) return;
 
     // Pre-configure audio session for background playback (call service directly to avoid subscribing to audio state)
     simpleAudioService.preconfigureAudioSession();
@@ -407,10 +416,7 @@ function AppContent() {
           if (typeof type === 'string') {
             const route = NOTIFICATION_ROUTE_BY_TYPE[type as AnyNotificationType];
             if (route) {
-              if (
-                type === NOTIFICATION_TYPES.SRS_DUE ||
-                type === NOTIFICATION_TYPES.SRS_SLIPPING
-              ) {
+              if (type === NOTIFICATION_TYPES.SRS_DUE || type === NOTIFICATION_TYPES.SRS_SLIPPING) {
                 analytics.track(ANALYTICS_EVENTS.SMART_REMINDER_OPENED, { type, coldStart: true });
               }
               router.push(route);

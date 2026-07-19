@@ -5,7 +5,6 @@ import { AppState } from 'react-native';
 
 import { CACHE_TIMES, fsrsQueries } from '@/constants/queries';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { handleError } from '@/utils/errorHandling';
 
 interface UseSmartDueWordsCalculatorOptions {
@@ -53,32 +52,16 @@ export function useSmartDueWordsCalculator(options: UseSmartDueWordsCalculatorOp
 
       lastRefreshRef.current = now;
 
-      // Use Promise.allSettled to avoid blocking on individual failures
+      // Use Promise.allSettled to avoid blocking on individual failures.
+      // Refresh through the shared factories — each key's ONLY queryFn lives in
+      // the factory, so this writes fresh data into the exact cache entries the
+      // observers read. staleTime: 0 forces the fetch past cache freshness.
       const refreshPromises = [
         // Refresh due words with fresh data
-        queryClient.fetchQuery({
-          queryKey: fsrsQueries.due(user.id).queryKey,
-          queryFn: () =>
-            studyWordsFSRSService.getFSRSWords(user.id, {
-              onlyDue: true,
-              sessionCooldownHours: 1,
-              limit: 100,
-            }),
-          staleTime: 0, // Always fetch fresh
-          gcTime: CACHE_TIMES.CRITICAL.gcTime, // 2 minutes cache
-        }),
+        queryClient.fetchQuery({ ...fsrsQueries.due(user.id), staleTime: 0 }),
 
         // Refresh all words for accurate memory strength calculation
-        queryClient.fetchQuery({
-          queryKey: fsrsQueries.all(user.id).queryKey,
-          queryFn: () =>
-            studyWordsFSRSService.getFSRSWords(user.id, {
-              forStats: false,
-              limit: 1000,
-            }),
-          staleTime: 0, // Always fetch fresh
-          gcTime: CACHE_TIMES.SHORT.gcTime, // 5 minutes cache
-        }),
+        queryClient.fetchQuery({ ...fsrsQueries.all(user.id), staleTime: 0 }),
       ];
 
       // Execute all refreshes in parallel for better performance

@@ -23,12 +23,21 @@ import { AppState } from 'react-native';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 
 // Mock dependencies BEFORE importing service
+// resetMocks: true (jest.config.js) wipes implementations set at module-factory
+// time, so a jest.fn().mockResolvedValue(...) member returns undefined during
+// tests. That is fine for awaited members (await undefined resolves) but any
+// member the service uses via promise chaining (`.catch()`) would throw a
+// synchronous TypeError mid-test. Fire-and-forget members with no assertion
+// handle are therefore plain functions; members asserted on in tests stay
+// jest.fn (call tracking survives resets, and their resolved values are only
+// ever awaited).
 jest.mock('expo-audio', () => ({
   createAudioPlayer: jest.fn(),
   setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
   setIsAudioActiveAsync: jest.fn().mockResolvedValue(undefined),
-  preload: jest.fn().mockResolvedValue(undefined),
-  clearAllPreloadedSources: jest.fn().mockResolvedValue(undefined),
+  preload: () => Promise.resolve(undefined),
+  clearPreloadedSource: () => Promise.resolve(undefined),
+  clearAllPreloadedSources: () => Promise.resolve(undefined),
 }));
 
 // Mock AppState addEventListener - must be defined before mock
@@ -283,40 +292,26 @@ describe('audioPlayer service', () => {
       expect(status.playing).toBeFalsy();
     });
 
-    test('should fall back to waitForPlayerReady when immediate play throws', async () => {
-      // Mock player where play() throws on first call (not ready), succeeds on second
-      let statusCallback:
-        ((status: { isLoaded?: boolean; playbackState?: string }) => void) | null = null;
-      const mockRemoveListener = jest.fn();
-      let playCallCount = 0;
-      const mockPlayerWithListener = {
+    test('should recover from a synchronous play() throw via session reset with a fresh player', async () => {
+      // Player whose play() always throws synchronously (e.g. session conflict)
+      const mockThrowingPlayer = {
         ...mockPlayer,
         play: jest.fn(() => {
-          playCallCount++;
-          if (playCallCount === 1) {
-            throw new Error('Player not ready');
-          }
-        }),
-        addListener: jest.fn((event, callback) => {
-          if (event === 'playbackStatusUpdate') {
-            statusCallback = callback;
-            // Simulate player becoming ready shortly after listener is added
-            process.nextTick(() => {
-              if (statusCallback) {
-                statusCallback({ isLoaded: true, playbackState: 'ready' });
-              }
-            });
-          }
-          return { remove: mockRemoveListener };
+          throw new Error('Player not ready');
         }),
       };
-      mockCreateAudioPlayer.mockReturnValueOnce(mockPlayerWithListener);
+      mockCreateAudioPlayer.mockReturnValueOnce(mockThrowingPlayer);
 
-      // Start play — first call throws, then waits for ready, then retries
-      await audioService.play(testTrack);
+      const success = await audioService.play(testTrack);
 
-      // play() should have been called twice: immediate attempt + retry after ready
-      expect(mockPlayerWithListener.play).toHaveBeenCalledTimes(2);
+      // The failed player is never blindly re-invoked (that retry could not
+      // succeed — the source was already loaded — and could double-invoke a
+      // removed player). Recovery is the outer catch: session reset plus one
+      // retry with a FRESH player.
+      expect(success).toBeTruthy();
+      expect(mockThrowingPlayer.play).toHaveBeenCalledTimes(1);
+      expect(mockCreateAudioPlayer).toHaveBeenCalledTimes(2);
+      expect(mockPlayer.play).toHaveBeenCalledTimes(1);
     });
 
     test('should resolve immediately if player is ready with playbackState', async () => {

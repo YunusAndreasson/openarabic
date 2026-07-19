@@ -5,15 +5,16 @@
  * AsyncStorage key whenever the setting changes, and the task reads them here.
  */
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import type { ReminderTime } from '@/types/notifications.types';
 import { handleError } from '@/utils/errorHandling';
-import { storage } from '@/utils/safeAsyncStorage';
 
 const SMART_REMINDER_PREFS_KEY = '@openarabic/notifications/smartReminderPrefs';
 
 export async function readSmartReminderPrefs(): Promise<ReminderTime | null> {
   try {
-    const raw = await storage.getItem(SMART_REMINDER_PREFS_KEY);
+    const raw = await AsyncStorage.getItem(SMART_REMINDER_PREFS_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<ReminderTime>;
     if (
@@ -32,7 +33,7 @@ export async function readSmartReminderPrefs(): Promise<ReminderTime | null> {
 
 export async function writeSmartReminderPrefs(prefs: ReminderTime): Promise<void> {
   try {
-    await storage.setItem(SMART_REMINDER_PREFS_KEY, JSON.stringify(prefs));
+    await AsyncStorage.setItem(SMART_REMINDER_PREFS_KEY, JSON.stringify(prefs));
   } catch (error) {
     handleError(error as Error, { showToast: false });
   }

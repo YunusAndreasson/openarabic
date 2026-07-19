@@ -1,5 +1,6 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import type { RecentRecall } from '@/utils/newWordPacing';
-import { getSafeStorage } from '@/utils/safeAsyncStorage';
 
 /**
  * Local, per-device record of recent realised recall, used to drive adaptive
@@ -26,9 +27,8 @@ interface RecallSessionEntry {
 }
 
 async function readSessions(): Promise<RecallSessionEntry[]> {
-  const storage = getSafeStorage();
   try {
-    const raw = await storage.getItem(RECENT_RECALL_KEY);
+    const raw = await AsyncStorage.getItem(RECENT_RECALL_KEY);
     if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
@@ -50,11 +50,10 @@ export async function appendSession(known: number, unknown: number): Promise<voi
   // Nothing graded → nothing to learn from; don't dilute the window.
   if (known + unknown <= 0) return;
 
-  const storage = getSafeStorage();
   try {
     const sessions = await readSessions();
     sessions.push({ known, unknown, at: Date.now() });
-    await storage.setItem(RECENT_RECALL_KEY, JSON.stringify(sessions.slice(-MAX_SESSIONS)));
+    await AsyncStorage.setItem(RECENT_RECALL_KEY, JSON.stringify(sessions.slice(-MAX_SESSIONS)));
   } catch {
     // Best-effort; pacing falls back to "warming-up" if this fails.
   }

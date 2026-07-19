@@ -11,6 +11,8 @@
 
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import { PERSISTENCE_OPTIONS, queryPersister } from '@/utils/queryPersistence';
 
 // Capture options passed into the persister factory
@@ -27,11 +29,6 @@ jest.mock('@tanstack/query-async-storage-persister', () => ({
       removeClient: jest.fn(),
     };
   },
-}));
-
-// Ensure we control the storage reference returned by our helper
-jest.mock('@/utils/safeAsyncStorage', () => ({
-  getSafeStorage: () => 'MOCK_STORAGE',
 }));
 
 // Helper to create mock Query objects for testing
@@ -57,7 +54,7 @@ describe('Query Persistence', () => {
       expect(captured.lastOptions).toBeDefined();
       expect(captured.lastOptions.key).toBe('REACT_QUERY_OFFLINE_CACHE_V2');
       expect(captured.lastOptions.throttleTime).toBe(1000);
-      expect(captured.lastOptions.storage).toBe('MOCK_STORAGE');
+      expect(captured.lastOptions.storage).toBe(AsyncStorage);
       expect(typeof captured.lastOptions.serialize).toBe('function');
       expect(typeof captured.lastOptions.deserialize).toBe('function');
     });
@@ -67,6 +64,7 @@ describe('Query Persistence', () => {
     test('should have correct configuration', () => {
       expect(PERSISTENCE_OPTIONS.persister).toBe(queryPersister);
       expect(PERSISTENCE_OPTIONS.maxAge).toBe(1000 * 60 * 60 * 24 * 7); // 7 days
+      expect(PERSISTENCE_OPTIONS.buster).toBe('v2');
       expect(PERSISTENCE_OPTIONS.dehydrateOptions).toBeDefined();
       expect(PERSISTENCE_OPTIONS.dehydrateOptions.shouldDehydrateQuery).toBeDefined();
     });

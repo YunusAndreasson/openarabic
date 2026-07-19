@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Image } from 'expo-image';
 import { router, useFocusEffect } from 'expo-router';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
@@ -11,7 +12,6 @@ import { PRESS_ANIMATION_BUTTON, usePressAnimation } from '@/hooks/animations';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { handleError } from '@/utils/errorHandling';
-import { getSafeStorage } from '@/utils/safeAsyncStorage';
 import { getFirstNameFromEmail } from '@/utils/stringUtils';
 
 // iOS 26 UIBarButton has fixed 36pt glass container
@@ -53,8 +53,7 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
     if (!user?.id) return;
 
     try {
-      const storage = getSafeStorage();
-      const savedUri = await storage.getItem(`profile_photo_${user.id}`);
+      const savedUri = await AsyncStorage.getItem(`profile_photo_${user.id}`);
       if (savedUri) {
         setProfilePhotoUri(savedUri);
       } else {

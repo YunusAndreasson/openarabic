@@ -328,25 +328,8 @@ export function useBulkReadingProgress(articleIds: ArticleId[]) {
 
   return {
     ...query,
+    // Always a Map: filteredData falls back to an empty Map, so consumers
+    // never need null checks before the query resolves.
     data: filteredData,
   };
-}
-
-// Safe wrapper hook for bulk reading progress that handles missing AuthProvider
-export function useSafeBulkReadingProgress(articleIds: ArticleId[]) {
-  try {
-    const result = useBulkReadingProgress(articleIds);
-    // Ensure data is always a Map, even if the query returns undefined
-    return {
-      ...result,
-      data: result.data || new Map(),
-    };
-  } catch {
-    // AuthProvider not available - return empty result
-    return {
-      data: new Map(),
-      isLoading: false,
-      error: null,
-    };
-  }
 }

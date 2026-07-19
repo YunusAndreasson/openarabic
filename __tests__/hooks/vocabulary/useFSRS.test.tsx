@@ -23,6 +23,7 @@ import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import { State } from 'ts-fsrs';
 
 import { createHookTestWrapper } from '@/__tests__/helpers/hookMocks';
+import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import { fsrsQueries } from '@/constants/queries';
 import { useFSRS } from '@/hooks/vocabulary/useFSRS';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -192,7 +193,11 @@ describe('useFSRS Hook', () => {
       );
       studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue(backlog);
       await act(async () => {
-        await queryClient.refetchQueries({ queryKey: fsrsQueries.due('test-user').queryKey });
+        // The hook subscribes under the cooldown-keyed due entry (the key now
+        // encodes the queryFn inputs), so target that exact key.
+        await queryClient.refetchQueries({
+          queryKey: fsrsQueries.due('test-user', DEFAULT_SESSION_COOLDOWN_HOURS).queryKey,
+        });
       });
 
       // Still complete; the fresh backlog only surfaces as remainingDueCount

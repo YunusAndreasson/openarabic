@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { skipToken, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Card } from 'ts-fsrs';
 import { createEmptyCard, fsrs, generatorParameters, show_diff_message, State } from 'ts-fsrs';
@@ -96,38 +96,17 @@ export function useFSRS({
     queueInitialized: false,
   });
 
-  // Track the last initialized set of due words (by root_id signature)
-  const lastQueueSignatureRef = useRef<string | null>(null);
-
-  // Timeout for completion callback (Phase 2.2: removed initTimeoutRef - now synchronous)
-  const completionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const queryClient = useQueryClient();
 
   const fsrsInstance = FSRS_INSTANCE;
 
+  // The factory owns the due queryFn (conditional cooldown included) — the key
+  // encodes the cooldown, so this never collides with differently-parameterized
+  // due consumers. Only the skipToken guard for a missing userId is added here.
+  const dueConfig = fsrsQueries.due(userId ?? '', _sessionCooldownHours);
   const { data: dueWords, isLoading } = useQuery({
-    ...fsrsQueries.due(userId || ''),
-    enabled: !!userId,
-    queryFn: async () => {
-      if (!userId) return [];
-
-      // If the last session was recently completed, temporarily apply cooldown
-      const lastCompletedAt = queryClient.getQueryData<number>(
-        fsrsQueries.lastCompletedAtKey(userId),
-      );
-      const recentlyCompleted =
-        typeof lastCompletedAt === 'number' &&
-        Date.now() - lastCompletedAt < _sessionCooldownHours * 60 * 60 * 1000;
-
-      const words = await studyWordsFSRSService.getFSRSWords(userId, {
-        onlyDue: true,
-        forStats: false,
-        ...(recentlyCompleted ? { sessionCooldownHours: _sessionCooldownHours } : {}),
-      });
-
-      return words;
-    },
+    ...dueConfig,
+    queryFn: userId ? dueConfig.queryFn : skipToken,
     refetchOnMount: true,
     refetchOnWindowFocus: false, // Mobile-only: no window focus concept
     refetchOnReconnect: true,
@@ -143,43 +122,33 @@ export function useFSRS({
     updateSpacingState(spacingQueueRef.current, processedWordId);
   }, []);
 
-  // Phase 2.2: Initialize queue synchronously (removed setTimeout wrapper)
+  // Initialize the session queue from due words exactly once per session.
   useEffect(() => {
     if (isLoading || !dueWords) return;
 
     const effectiveDueWords: StudyWord[] = Array.isArray(dueWords) ? dueWords : [];
 
     // A completed session must NOT be restarted by a background refetch: the
-    // post-completion refetch returns the remaining backlog (a new signature),
-    // which would otherwise re-init the queue underneath the completion screen.
-    // Record the fresh backlog for the "Review more" affordance instead; an
-    // explicit resetQueue() re-arms initialization.
+    // post-completion refetch returns the remaining backlog, which would
+    // otherwise re-init the queue underneath the completion screen. Record the
+    // fresh backlog for the "Review more" affordance instead; an explicit
+    // resetQueue() re-arms initialization.
     if (stateTrackingRef.current.completionTriggered) {
       setRemainingDueCount(effectiveDueWords.length);
       return;
     }
 
-    // Build a stable signature of the current due words
-    const signature = effectiveDueWords
-      .map(w => w.root_id)
-      .filter((id): id is RootId => id != null)
-      .sort((a, b) => a - b)
-      .join(',');
-
-    // If we've already initialized with the same set, skip re-initialization
-    if (stateTrackingRef.current.queueInitialized && lastQueueSignatureRef.current === signature) {
+    // Freeze the live session: once initialized, new dueWords from background
+    // refetches (reconnect, invalidation) NEVER re-init and wipe the session.
+    // Re-initialization happens only via the explicit re-arm paths
+    // (resetQueue/invalidateQueries), which clear queueInitialized — with
+    // resetQueue also bumping sessionEpoch so this effect re-runs even when the
+    // due data's identity is unchanged.
+    if (stateTrackingRef.current.queueInitialized) {
       return;
     }
 
-    // Mark as initialized for this signature
     stateTrackingRef.current.queueInitialized = true;
-    lastQueueSignatureRef.current = signature;
-
-    // Clear completion timeout if exists
-    if (completionTimeoutRef.current) {
-      clearTimeout(completionTimeoutRef.current);
-      completionTimeoutRef.current = null;
-    }
 
     // Initialize queue synchronously (no setTimeout wrapper)
     if (effectiveDueWords.length > 0) {
@@ -199,8 +168,8 @@ export function useFSRS({
       drillRef.current = new Map();
 
       // Set all state in a predictable order. setState is intentional here —
-      // queue initialization is gated by signature change so it only fires when
-      // dueWords actually shifts, not on every render.
+      // queue initialization is gated by the one-shot queueInitialized flag so
+      // it only fires on genuine (re-armed) session starts, not on every render.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setProgress(0);
       setIsComplete(false);
@@ -237,14 +206,6 @@ export function useFSRS({
         onComplete();
       }
     }
-
-    return () => {
-      // Cleanup completion timeout on unmount
-      if (completionTimeoutRef.current) {
-        clearTimeout(completionTimeoutRef.current);
-        completionTimeoutRef.current = null;
-      }
-    };
   }, [dueWords, isLoading, onComplete, getNextWordWithSpacing, sessionEpoch]);
 
   const convertToFSRSCard = useCallback((word: StudyWord): Card => {
@@ -567,13 +528,6 @@ export function useFSRS({
   // Clean up on unmount
   useEffect(() => {
     return () => {
-      // Clean up completion timer (Phase 2.2: initTimeoutRef removed)
-      if (completionTimeoutRef.current) {
-        clearTimeout(completionTimeoutRef.current);
-        completionTimeoutRef.current = null;
-      }
-
-      // Reset state
       resetQueue();
     };
   }, [resetQueue]);

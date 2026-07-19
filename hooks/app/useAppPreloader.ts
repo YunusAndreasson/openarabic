@@ -9,6 +9,7 @@ import {
   APP_SESSION_ID,
   articleQueries,
   fsrsQueries,
+  PRACTICE_DUE_WORDS_LIMIT,
   readingProgressQueries,
 } from '@/constants/queries';
 import { STRINGS } from '@/constants/strings';
@@ -20,6 +21,16 @@ import type { ArticleId } from '@/types/branded.types';
 import { getBeginnerArticles, getRandomItems } from '@/utils/articleUtils';
 import { handleError, toError } from '@/utils/errorHandling';
 import { MAX_FEATURED_ARTICLES } from '@/hooks/articles/useMultipleFeaturedArticles';
+
+/**
+ * Applied to every AWAITED query on the appReady-blocking path. The global
+ * networkMode is 'online', under which an offline cold start PAUSES fetches
+ * indefinitely (the promise never settles) and the splash never hides.
+ * 'offlineFirst' always runs the first attempt; the app's global retry
+ * function returns false while offline, so the fetch rejects fast and the
+ * existing catch paths proceed to setIsLoaded(true).
+ */
+const OFFLINE_FIRST = { networkMode: 'offlineFirst' } as const;
 
 interface AppPreloaderResult {
   isPreloading: boolean;
@@ -60,20 +71,27 @@ export const useAppPreloader = (): AppPreloaderResult => {
 
     try {
       // Use ensureQueryData to prioritize cache for immutable articles
-      const allArticles = await queryClient.ensureQueryData(articleQueries.all());
+      const allArticles = await queryClient.ensureQueryData({
+        ...articleQueries.all(),
+        ...OFFLINE_FIRST,
+      });
 
       if (!allArticles || allArticles.length === 0) return false;
 
       // Get user's study words to determine selection strategy
       // Use ensureQueryData to reuse cached data from useAppBadge/preloader
-      const allStudyWords = await queryClient.ensureQueryData(
-        fsrsQueries.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
-      );
+      const allStudyWords = await queryClient.ensureQueryData({
+        ...fsrsQueries.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
+        ...OFFLINE_FIRST,
+      });
 
       const hasAnyStudyWords = allStudyWords.length > 0;
 
       // Get due words for intelligent selection (already cached from preloader)
-      const dueWords = await queryClient.ensureQueryData(fsrsQueries.due(user.id));
+      const dueWords = await queryClient.ensureQueryData({
+        ...fsrsQueries.due(user.id),
+        ...OFFLINE_FIRST,
+      });
 
       const dueWordRootIds = new Set(dueWords.map(word => word.root_id));
 
@@ -146,12 +164,13 @@ export const useAppPreloader = (): AppPreloaderResult => {
       // Load static data first (categories, basic articles list)
       // Use ensureQueryData to prioritize cache over network (TanStack Query v5 best practice)
       const criticalPromises = [
-        queryClient.ensureQueryData(articleQueries.categories()),
-        queryClient.ensureQueryData(articleQueries.all()),
+        queryClient.ensureQueryData({ ...articleQueries.categories(), ...OFFLINE_FIRST }),
+        queryClient.ensureQueryData({ ...articleQueries.all(), ...OFFLINE_FIRST }),
       ];
 
       // CRITICAL FIX: Load reading progress synchronously with articles
       // This prevents race condition where filtered view renders before progress data is available
+      // (prefetchQuery never throws, but it must SETTLE — hence OFFLINE_FIRST)
       const readingProgressPromise = user?.id
         ? queryClient.prefetchQuery({
             queryKey: readingProgressQueries.bulk(user.id).queryKey,
@@ -159,6 +178,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
             staleTime: 0, // CRITICAL: Always fetch fresh data on app startup to prevent stale cache from blocking updates
             gcTime: 1000 * 60 * 60 * 24, // Keep in memory for 24 hours
             retry: 2,
+            ...OFFLINE_FIRST,
           })
         : Promise.resolve();
 
@@ -256,13 +276,13 @@ export const useAppPreloader = (): AppPreloaderResult => {
         });
       }
 
-      // Preload user's FSRS data if available
-      // Uses ensureQueryData to reuse in-flight/cached queries from useAppBadge's useFSRSQueries
-      // (which mounts in the same render cycle), preventing N+1 API calls to study_words
+      // Preload user's FSRS data if available. The bare due entry (no cooldown,
+      // no limit) is what useArabicWord/useArticlesByDueWords and the
+      // due-backlog gate read; fsrsQueries.all feeds the word lists.
       if (user?.id) {
         try {
-          await queryClient.ensureQueryData(fsrsQueries.due(user.id));
-          await queryClient.ensureQueryData(fsrsQueries.all(user.id));
+          await queryClient.ensureQueryData({ ...fsrsQueries.due(user.id), ...OFFLINE_FIRST });
+          await queryClient.ensureQueryData({ ...fsrsQueries.all(user.id), ...OFFLINE_FIRST });
 
           // Preload featured articles to prevent glitching when library loads
           try {
@@ -346,9 +366,14 @@ export const useAppPreloader = (): AppPreloaderResult => {
     if (!user?.id) return false;
 
     try {
+      // Warm EXACTLY the queryOptions the practice home screen consumes via
+      // useFSRSQueries (fsrsQueries.all + the cooldown/limit-keyed due entry) —
+      // any other shape would fill a cache entry nobody reads.
       await Promise.allSettled([
-        queryClient.prefetchQuery(fsrsQueries.allWithCooldown(user.id, 1)),
-        queryClient.prefetchQuery(fsrsQueries.due(user.id, 1)),
+        queryClient.prefetchQuery(fsrsQueries.all(user.id)),
+        queryClient.prefetchQuery(
+          fsrsQueries.due(user.id, DEFAULT_SESSION_COOLDOWN_HOURS, PRACTICE_DUE_WORDS_LIMIT),
+        ),
       ]);
       return true;
     } catch (error) {

@@ -8,7 +8,7 @@ import { LAYOUT } from '@/constants/layout';
 import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useMultipleFeaturedArticles } from '@/hooks/articles/useMultipleFeaturedArticles';
-import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
+import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import type { Article } from '@/types/articles.types';
 import type { ArticleId } from '@/types/branded.types';
 import { generateStorageUrl } from '@/utils/storageUtils';
@@ -99,7 +99,7 @@ export const RelatedArticlesByFilter = memo<RelatedArticlesByFilterProps>(
 
     // Fetch bulk reading progress for selected articles
     const selectedArticleIds = useMemo(() => selectedArticles.map(a => a.id), [selectedArticles]);
-    const { data: progressMap } = useSafeBulkReadingProgress(selectedArticleIds);
+    const { data: progressMap } = useBulkReadingProgress(selectedArticleIds);
 
     // Filter to only show unread or low-progress articles (< 20%)
     const unreadOrLowProgressArticles = useMemo(() => {

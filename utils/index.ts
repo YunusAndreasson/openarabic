@@ -29,7 +29,6 @@ export * from './priorityQueue';
 export * from './progressUtils';
 export * from './queryPersistence';
 export * from './routeBuilders';
-export * from './safeAsyncStorage';
 export * from './skiaParagraphBuilder';
 export * from './storageUtils';
 export * from './stringUtils';

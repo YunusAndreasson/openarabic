@@ -6,7 +6,7 @@ import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { ONBOARDING_CONFIG, OnboardingStep } from '@/constants/onboarding';
 import { STRINGS } from '@/constants/strings';
 import { TutorialId } from '@/constants/tutorials';
-import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
+import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { analytics } from '@/services/analytics';
 import type { Article } from '@/types/articles.types';
@@ -48,7 +48,7 @@ export function useOnboardingChecklist(articlesData: Article[]) {
 
   const articleIds = useMemo(() => articlesData.map(a => a.id as ArticleId), [articlesData]);
   const { data: progressMap, isLoading: isProgressLoading } =
-    useSafeBulkReadingProgress(articleIds);
+    useBulkReadingProgress(articleIds);
 
   const state = useSyncExternalStore(subscribeOnboarding, getCachedOnboardingState);
 

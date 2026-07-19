@@ -448,7 +448,7 @@ describe('Reading to Dictionary Flow', () => {
       const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
 
       await act(async () => {
-        await result.current.handleWordPress(501 as RootId);
+        await result.current.handleRootPress(501 as RootId, 'add');
       });
 
       expect(mockShowToast).toHaveBeenCalled();

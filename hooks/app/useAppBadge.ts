@@ -3,7 +3,7 @@ import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
 import type { AppStateStatus } from 'react-native';
 import { AppState } from 'react-native';
 
-import { fsrsQueries } from '@/constants/queries';
+import { FSRS_BASE_KEY } from '@/constants/fsrs';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { canUseBadge, clearAppBadge, setAppBadgeCount } from '@/services/notificationService';
@@ -126,10 +126,15 @@ export function useAppBadge(): void {
   useEffect(() => {
     if (!user?.id || !isAuthenticated) return;
 
-    const queryKey = fsrsQueries.due(user.id);
+    const userId = user.id;
 
     const unsubscribe = queryClient.getQueryCache().subscribe(event => {
-      if (event.type === 'updated' && event.query.queryKey === queryKey) {
+      if (event.type !== 'updated') return;
+      // Match due queries by PREFIX (['fsrs-words', userId, 'due', ...]) so any
+      // due-variant entry (extra cooldown/limit segments) triggers the badge
+      // update — reference-comparing a built key object never matches.
+      const key = event.query.queryKey;
+      if (key[0] === FSRS_BASE_KEY && key[1] === userId && key[2] === 'due') {
         handleQueryCacheUpdate(event.query.state.data as StudyWord[] | undefined);
       }
     });

@@ -212,6 +212,7 @@ jest.mock('@/services/audioCache', () => ({
       return Promise.resolve(`file:///mock/cache/${filename}`);
     }),
     cacheAudio: jest.fn().mockResolvedValue(undefined),
+    invalidate: jest.fn().mockResolvedValue(undefined),
     clearCache: jest.fn().mockResolvedValue(undefined),
     getCacheSize: jest.fn().mockResolvedValue(0),
   },
@@ -222,6 +223,7 @@ jest.mock('@/services/audioCache', () => ({
         return Promise.resolve(`file:///mock/cache/${filename}`);
       }),
       cacheAudio: jest.fn().mockResolvedValue(undefined),
+      invalidate: jest.fn().mockResolvedValue(undefined),
       clearCache: jest.fn().mockResolvedValue(undefined),
       getCacheSize: jest.fn().mockResolvedValue(0),
     })),

@@ -2,8 +2,27 @@ import NetInfo from '@react-native-community/netinfo';
 import * as Crypto from 'expo-crypto';
 import { Directory, File, Paths } from 'expo-file-system';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import { isRemoteAudioUrl } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
+
+// One-time sweep flag (key naming mirrors the onboarding/notification keys).
+// Files downloaded by the pre-overhaul implementation streamed straight into
+// their final cache path, so a dropped connection could leave a truncated but
+// non-empty file that the size>0 check treats as a valid hit forever. The
+// temp-file download flow only protects writes made AFTER that overhaul —
+// anything already on disk is untrusted and is deleted exactly once.
+const LEGACY_CACHE_SWEEP_STORAGE_KEY = '@openarabic/audioCache/legacySweepV1';
+
+export interface GetAudioOptions {
+  /**
+   * Play-time mode: a single download attempt with a short timeout instead of
+   * the patient multi-retry sequence. Use wherever a user is waiting on the
+   * sound right now; the session preloader uses the default patient mode.
+   */
+  quick?: boolean;
+}
 
 export class AudioCacheManager {
   private static instance: AudioCacheManager;
@@ -12,11 +31,58 @@ export class AudioCacheManager {
   private memoryCache = new Map<string, { path: string; timestamp: number }>();
   private readonly MEMORY_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
   private readonly MAX_MEMORY_CACHE_SIZE = 50; // Limit to prevent unbounded growth
+  // Per-attempt download bounds. Word audio files are ~20-50KB, so these are
+  // generous — their job is to stop a stalled connection from hanging callers
+  // (iOS URLSession would otherwise wait 60s+ before giving up).
+  private readonly DOWNLOAD_TIMEOUT_MS = 15000;
+  private readonly QUICK_DOWNLOAD_TIMEOUT_MS = 6000;
   // Track pending downloads to prevent duplicate requests for same file
   private pendingDownloads = new Map<string, Promise<string>>();
+  // Memoized one-time legacy sweep (see LEGACY_CACHE_SWEEP_STORAGE_KEY)
+  private legacySweepPromise: Promise<void> | null = null;
 
   private constructor() {
     this.ensureCacheDirectoryExists();
+  }
+
+  /**
+   * One-time purge of files written by the pre-overhaul cache implementation
+   * (potentially truncated/poisoned — see LEGACY_CACHE_SWEEP_STORAGE_KEY).
+   */
+  private async sweepLegacyCacheFiles(): Promise<void> {
+    const alreadySwept = await AsyncStorage.getItem(LEGACY_CACHE_SWEEP_STORAGE_KEY);
+    if (alreadySwept) {
+      return;
+    }
+
+    // Directory#list() is synchronous and throws when the directory is
+    // missing — a missing cache dir simply has nothing to sweep.
+    const cacheDir = new Directory(this.cacheDir);
+    if (cacheDir.exists) {
+      for (const entry of cacheDir.list()) {
+        entry.delete();
+      }
+      this.memoryCache.clear();
+    }
+
+    // Only mark swept after every deletion succeeded — a partial sweep
+    // retries on the next launch instead of trusting leftover files forever.
+    await AsyncStorage.setItem(LEGACY_CACHE_SWEEP_STORAGE_KEY, 'true');
+  }
+
+  /**
+   * Lazily run the legacy sweep exactly once per app session, before the
+   * cache serves its first file. A failed sweep must never break audio: the
+   * error is logged (not silently swallowed) and getAudio proceeds; the flag
+   * stays unset so the next launch retries the sweep.
+   */
+  private ensureLegacySweep(): Promise<void> {
+    if (!this.legacySweepPromise) {
+      this.legacySweepPromise = this.sweepLegacyCacheFiles().catch(async error => {
+        await handleError(error as Error, { showToast: false });
+      });
+    }
+    return this.legacySweepPromise;
   }
 
   /**
@@ -88,10 +154,18 @@ export class AudioCacheManager {
 
       const cachedFile = new File(cachedFilePath);
       if (cachedFile.exists) {
-        // Update memory cache
-        this.memoryCache.set(cacheKey, { path: cachedFilePath, timestamp: Date.now() });
-        this.evictIfNeeded();
-        return cachedFilePath;
+        if ((cachedFile.size ?? 0) > 0) {
+          // Update memory cache
+          this.memoryCache.set(cacheKey, { path: cachedFilePath, timestamp: Date.now() });
+          this.evictIfNeeded();
+          return cachedFilePath;
+        }
+        // Zero-byte artifact from an interrupted write — purge and re-download
+        try {
+          cachedFile.delete();
+        } catch {
+          // Best-effort cleanup; a re-download will overwrite it anyway
+        }
       }
       // Ensure any stale memory entry is removed
       this.memoryCache.delete(cacheKey);
@@ -103,18 +177,31 @@ export class AudioCacheManager {
   }
 
   /**
-   * Download and cache audio file with retry logic
+   * Download and cache audio file with retry logic.
+   *
+   * Downloads land in a temp file that is validated and then moved into the
+   * final cache path. Android streams straight into the destination file, so
+   * downloading to the final path directly would leave a truncated file behind
+   * on a dropped connection — which getCachedFilePath would then treat as a
+   * valid cache hit forever (the "this word never plays" bug).
    */
-  private async cacheAudio(url: string): Promise<string> {
+  private async cacheAudio(url: string, quick: boolean = false): Promise<string> {
     await this.ensureCacheDirectoryExists();
 
     const cacheKey = await this.generateCacheKey(url);
     const cachedFilePath = `${this.cacheDir}${cacheKey}`;
 
-    const maxRetries = 2; // 2 retries = 3 total attempts
+    const maxRetries = quick ? 0 : 2; // patient: 2 retries = 3 total attempts
+    const timeoutMs = quick ? this.QUICK_DOWNLOAD_TIMEOUT_MS : this.DOWNLOAD_TIMEOUT_MS;
     let lastError: Error | null = null;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      const tempFile = new File(
+        `${cachedFilePath}.tmp-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`,
+      );
+      const abortController = new AbortController();
+      const abortTimer = setTimeout(() => abortController.abort(), timeoutMs);
+
       try {
         // Check network before retry (skip check on first attempt for efficiency)
         if (attempt > 0) {
@@ -126,19 +213,28 @@ export class AudioCacheManager {
           await new Promise<void>(resolve => setTimeout(resolve, 1000 * attempt));
         }
 
-        // Download to cache
-        const file = new File(cachedFilePath);
-        const downloadResult = await File.downloadFileAsync(url, file);
+        await File.downloadFileAsync(url, tempFile, {
+          idempotent: true,
+          signal: abortController.signal,
+        });
 
-        if (downloadResult.exists) {
-          // Update memory cache
-          this.memoryCache.set(cacheKey, { path: cachedFilePath, timestamp: Date.now() });
-          this.evictIfNeeded();
-          return cachedFilePath;
-        } else {
-          throw new Error('Download failed - file does not exist after download');
+        if (!tempFile.exists || (tempFile.size ?? 0) <= 0) {
+          throw new Error('Download failed - file is missing or empty after download');
         }
+
+        await tempFile.move(new File(cachedFilePath), { overwrite: true });
+
+        // Update memory cache
+        this.memoryCache.set(cacheKey, { path: cachedFilePath, timestamp: Date.now() });
+        this.evictIfNeeded();
+        return cachedFilePath;
       } catch (error) {
+        try {
+          if (tempFile.exists) tempFile.delete();
+        } catch {
+          // Best-effort temp cleanup — an orphaned .tmp file is never served
+        }
+
         lastError = error as Error;
         const errorMsg = lastError.message.toLowerCase();
 
@@ -147,6 +243,7 @@ export class AudioCacheManager {
           errorMsg.includes('network') ||
           errorMsg.includes('failed') ||
           errorMsg.includes('timeout') ||
+          errorMsg.includes('abort') ||
           errorMsg.includes('connection');
 
         if (!isNetworkError || attempt >= maxRetries) {
@@ -154,6 +251,8 @@ export class AudioCacheManager {
           throw lastError;
         }
         // Continue to retry for network errors
+      } finally {
+        clearTimeout(abortTimer);
       }
     }
 
@@ -166,12 +265,16 @@ export class AudioCacheManager {
    * Get audio file - returns cached path if available, otherwise downloads and caches
    * For local files, returns the original URL without caching
    */
-  async getAudio(url: string): Promise<string> {
+  async getAudio(url: string, options: GetAudioOptions = {}): Promise<string> {
     try {
       // Don't cache local files - return them directly
       if (!isRemoteAudioUrl(url)) {
         return url;
       }
+
+      // Purge untrusted pre-overhaul cache files before serving anything
+      // (one-time; never rejects — see ensureLegacySweep)
+      await this.ensureLegacySweep();
 
       // First check if we have it cached
       const cachedPath = await this.getCachedFilePath(url);
@@ -187,7 +290,7 @@ export class AudioCacheManager {
       }
 
       // Cache miss - start download and track it
-      const downloadPromise = this.cacheAudio(url);
+      const downloadPromise = this.cacheAudio(url, options.quick ?? false);
       this.pendingDownloads.set(url, downloadPromise);
 
       try {
@@ -204,6 +307,29 @@ export class AudioCacheManager {
       });
       // Return original URL on failed download as fallback
       return url;
+    }
+  }
+
+  /**
+   * Drop a cached entry so the next getAudio() re-downloads it.
+   *
+   * Self-heal hook for playback: a cached file that fails to load is almost
+   * always a corrupt/partial download, and without purging it the same broken
+   * file would be served on every future play of that word.
+   */
+  async invalidate(url: string): Promise<void> {
+    try {
+      if (!isRemoteAudioUrl(url)) {
+        return;
+      }
+      const cacheKey = await this.generateCacheKey(url);
+      this.memoryCache.delete(cacheKey);
+      const cachedFile = new File(`${this.cacheDir}${cacheKey}`);
+      if (cachedFile.exists) {
+        cachedFile.delete();
+      }
+    } catch (error) {
+      await handleError(error as Error, { showToast: false });
     }
   }
 
@@ -236,7 +362,8 @@ export class AudioCacheManager {
         return 0;
       }
 
-      const items = await cacheDir.list();
+      // Directory#list() is synchronous in the SDK 57 API
+      const items = cacheDir.list();
 
       const totalSize = items.reduce((size: number, item) => {
         // Only count files, not directories

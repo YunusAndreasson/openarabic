@@ -24,16 +24,12 @@ let mockGetItem: jest.Mock;
 let mockSetItem: jest.Mock;
 let mockRemoveItem: jest.Mock;
 
-jest.mock('@/utils/safeAsyncStorage', () => {
-  // These will be reassigned in beforeEach
-  return {
-    getSafeStorage: () => ({
-      getItem: (...args: unknown[]) => mockGetItem(...args),
-      setItem: (...args: unknown[]) => mockSetItem(...args),
-      removeItem: (...args: unknown[]) => mockRemoveItem(...args),
-    }),
-  };
-});
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  // Delegates so the jest.fn implementations can be reassigned in beforeEach
+  getItem: (...args: unknown[]) => mockGetItem(...args),
+  setItem: (...args: unknown[]) => mockSetItem(...args),
+  removeItem: (...args: unknown[]) => mockRemoveItem(...args),
+}));
 
 const clearMockStorage = () => {
   Object.keys(mockStorage).forEach(key => delete mockStorage[key]);

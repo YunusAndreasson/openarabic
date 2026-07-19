@@ -26,6 +26,7 @@ const mockGetSession = jest.fn();
 const mockRefreshSession = jest.fn();
 const mockOnAuthStateChange = jest.fn();
 const mockNetInfoFetch = jest.fn();
+const mockRemoveSupabaseListener = jest.fn();
 let mockAuthStateCallback: ((event: string, session: unknown) => void) | null = null;
 
 jest.mock('@/services/supabase', () => ({
@@ -45,7 +46,7 @@ jest.mock('@/services/supabase', () => ({
       },
     },
   },
-  setupSupabaseAppStateListener: () => () => {},
+  setupSupabaseAppStateListener: () => mockRemoveSupabaseListener,
 }));
 
 jest.mock('@react-native-community/netinfo', () => ({
@@ -335,13 +336,16 @@ describe('Authentication Flow', () => {
   });
 
   describe('App State Handling', () => {
-    test('sets up AppState listener on mount', () => {
+    // Foreground token refresh is owned by the supabase service's AppState
+    // listener (startAutoRefresh/stopAutoRefresh); the hook itself must not
+    // register its own AppState listener or poll getSession() on foreground.
+    test('does not register its own AppState listener', () => {
       renderHook(() => useProvideAuth());
 
-      expect(AppState.addEventListener).toHaveBeenCalledWith('change', expect.any(Function));
+      expect(AppState.addEventListener).not.toHaveBeenCalled();
     });
 
-    test('re-initializes auth when app becomes active', async () => {
+    test('does not re-fetch the session on app state transitions', async () => {
       mockGetSession.mockResolvedValue({ data: { session: null }, error: null });
 
       const { result } = renderHook(() => useProvideAuth());
@@ -362,30 +366,11 @@ describe('Authentication Flow', () => {
 
       simulateAppStateChange('active');
 
-      await waitFor(() => {
-        expect(mockGetSession).toHaveBeenCalled();
-      });
-    });
-
-    test('does not re-initialize when app goes to background', async () => {
-      mockGetSession.mockResolvedValue({ data: { session: null }, error: null });
-
-      const { result } = renderHook(() => useProvideAuth());
-
-      await waitFor(() => {
-        expect(result.current.isLoading).toBeFalsy();
-      });
-
-      mockGetSession.mockClear();
-
-      // Just go to background
-      simulateAppStateChange('background');
-
       await act(async () => {
         jest.advanceTimersByTime(100);
       });
 
-      // Should not have called getSession again
+      // Session updates arrive via onAuthStateChange, not foreground polling
       expect(mockGetSession).not.toHaveBeenCalled();
     });
   });
@@ -422,15 +407,12 @@ describe('Authentication Flow', () => {
   });
 
   describe('Cleanup', () => {
-    test('removes AppState listener on unmount', () => {
-      const mockRemove = jest.fn();
-      jest.spyOn(AppState, 'addEventListener').mockReturnValue({ remove: mockRemove });
-
+    test('removes the supabase AppState listener on unmount', () => {
       const { unmount } = renderHook(() => useProvideAuth());
 
       unmount();
 
-      expect(mockRemove).toHaveBeenCalled();
+      expect(mockRemoveSupabaseListener).toHaveBeenCalled();
     });
 
     test('unsubscribes from auth state changes on unmount', () => {

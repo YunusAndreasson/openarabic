@@ -133,8 +133,10 @@ export async function generateWordAudioTrack(
     return null;
   }
 
-  // Get cached local path to eliminate network latency
-  const cachedAudioUrl = await audioCache.getAudio(audioUrl);
+  // Get cached local path to eliminate network latency. Quick mode: this runs
+  // on tap-to-play paths, so a cache miss gets one short bounded download
+  // attempt rather than the patient multi-retry sequence.
+  const cachedAudioUrl = await audioCache.getAudio(audioUrl, { quick: true });
 
   // Generate track with appropriate title
   const trackTitle =
