@@ -20,7 +20,20 @@ import { formatAuthorCategory } from '@/utils/stringUtils';
 const GLASS_AVAILABLE = isLiquidGlassAvailable();
 const CardSurface = GLASS_AVAILABLE ? GlassView : View;
 
+/**
+ * Where the player card is mounted.
+ *
+ * - `root`  — the app-wide floating overlay, sits above the native tab bar.
+ * - `screen` — mounted inside a screen presented as a native modal (the article
+ *   reader). Such a screen lives in its own view controller above the root React
+ *   view, so the root overlay can never draw on top of it, and it has no tab bar
+ *   to clear.
+ */
+export type MiniPlayerPlacement = 'root' | 'screen';
+
 export interface MiniPlayerProps {
+  /** Where the card is mounted — drives the bottom offset. Defaults to `root`. */
+  placement?: MiniPlayerPlacement;
   /** Current article being played */
   article: {
     id: number;
@@ -52,6 +65,7 @@ const PROGRESS_HEIGHT = LAYOUT.PROGRESS_BAR.HEIGHT;
 // skip re-renders for sub-second position changes (position updates 2x/sec but display shows seconds)
 const MiniPlayerComparison = (prev: MiniPlayerProps, next: MiniPlayerProps): boolean => {
   if (prev.article.id !== next.article.id) return false;
+  if (prev.placement !== next.placement) return false;
   if (prev.isTimerActive !== next.isTimerActive) return false;
   if (prev.duration !== next.duration) return false;
   if (Math.floor(prev.position) !== Math.floor(next.position)) return false;
@@ -65,6 +79,7 @@ const MiniPlayerComparison = (prev: MiniPlayerProps, next: MiniPlayerProps): boo
 };
 
 const MiniPlayerComponent = ({
+  placement = 'root',
   article,
   isTimerActive,
   position,
@@ -78,7 +93,11 @@ const MiniPlayerComponent = ({
 
   // Float above the native tab bar. `insets.bottom` covers the home-indicator
   // area on iOS; `BOTTOM_BAR.HEIGHT` is the tab bar's own intrinsic height.
-  const containerBottom = insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.TINY;
+  // Inside a modal screen there is no tab bar, so only the inset is cleared.
+  const containerBottom =
+    placement === 'screen'
+      ? insets.bottom + LAYOUT.SPACING.SMALL
+      : insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.TINY;
 
   // React Compiler auto-memoizes these derivations
   const imageUrl = generateStorageUrl('images', article.image_url);

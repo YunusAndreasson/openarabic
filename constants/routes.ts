@@ -30,6 +30,7 @@ export const ROUTE_PATHS = {
 
 // Re-export route builders for backward compatibility
 export {
+  ARTICLE_ROUTE_PREFIX,
   getArticleRoute,
   getCategoryFilterRoute,
   getPracticeReviewRoute,

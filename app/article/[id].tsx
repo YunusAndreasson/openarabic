@@ -13,6 +13,7 @@ import {
   WordTooltip,
   ArticleContent,
 } from '@/components/article';
+import { AudioErrorBoundary, GlobalMiniPlayer } from '@/components/audio';
 import { LoadingState } from '@/components/common';
 import { ComponentErrorBoundary } from '@/components/common/ComponentErrorBoundary';
 import { ToastProvider, useTutorialContext, useToast } from '@/components/providers';
@@ -222,6 +223,12 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       {/* scrollViewRef is forwarded to ArticleContent (which attaches it imperatively); lint sees it as ref-read-in-render. */}
       {/* eslint-disable-next-line react-hooks/refs */}
       {articleContentProps ? <ArticleContent {...articleContentProps} /> : null}
+
+      {/* The reader is a native modal presented above the root view, so the
+          app-wide overlay can't reach it — host the player here instead. */}
+      <AudioErrorBoundary>
+        <GlobalMiniPlayer placement="screen" />
+      </AudioErrorBoundary>
 
       <WordTooltip {...tooltipProps} />
 

@@ -3,12 +3,15 @@ import type { ArticleId, CategoryId, RootId } from '@/types/branded.types';
 // Inlined to avoid require cycle: routes.ts -> routeBuilders.ts -> routes.ts
 const PRACTICE_REVIEW_PATH = '/review';
 
+/** Path prefix of the article reader route (`/article/[id]`). */
+export const ARTICLE_ROUTE_PREFIX = '/article/';
+
 export const getArticleRoute = (
   id: ArticleId,
   headerTitle?: string,
   disableAutoScroll?: boolean,
 ): string => {
-  const base = `/article/${id}`;
+  const base = `${ARTICLE_ROUTE_PREFIX}${id}`;
   const params: string[] = [];
 
   if (headerTitle) {
