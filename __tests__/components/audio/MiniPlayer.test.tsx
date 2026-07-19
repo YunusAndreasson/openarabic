@@ -87,6 +87,22 @@ describe('MiniPlayer', () => {
   });
 
   describe('Rendering', () => {
+    test('uses a solid elevated surface at the app root', () => {
+      const { getByTestId } = render(<MiniPlayer {...defaultProps} />);
+      const surface = getByTestId('mini-player-surface');
+
+      expect(surface).toHaveStyle({ backgroundColor: '#EEEEEE' });
+      expect(surface.props.glassEffectStyle).toBeUndefined();
+    });
+
+    test('uses the same solid elevated surface inside a screen modal', () => {
+      const { getByTestId } = render(<MiniPlayer {...defaultProps} placement="screen" />);
+      const surface = getByTestId('mini-player-surface');
+
+      expect(surface.props.glassEffectStyle).toBeUndefined();
+      expect(surface).toHaveStyle({ backgroundColor: '#EEEEEE' });
+    });
+
     test('renders article title', () => {
       const { getByText } = render(<MiniPlayer {...defaultProps} />);
       expect(getByText('Test Article Title')).toBeTruthy();

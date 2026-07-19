@@ -1,5 +1,4 @@
 import { ProgressBar } from '@/components/common';
-import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
@@ -16,8 +15,6 @@ import { withAlpha } from '@/utils/colorUtils';
 import { formatSecondsToClock, safePercent } from '@/utils/dateTimeUtils';
 import { generateStorageUrl } from '@/utils/storageUtils';
 import { formatAuthorCategory } from '@/utils/stringUtils';
-
-const GLASS_AVAILABLE = isLiquidGlassAvailable();
 
 /**
  * Where the player card is mounted.
@@ -114,30 +111,23 @@ const MiniPlayerComponent = ({
   const timerIconColor = isTimerActive ? colors.white : colors.tint;
   const stopButtonColor = withAlpha(colors.tint, 0.12);
 
-  // Liquid glass only over the tab screens, where the card floats above sparse
-  // card/list content. In the article reader it sits directly on top of dense
-  // Arabic body text, and iOS 26 glass is clear enough there that the player's
-  // own title and timings become unreadable — use the opaque surface instead.
-  const useGlassSurface = GLASS_AVAILABLE && placement === 'root';
-  const CardSurface = useGlassSurface ? GlassView : View;
-
   const cardStyle = [
     styles.card,
     {
-      // The GlassView provides its own surface; skip the opaque fill so the
-      // liquid-glass effect shows the tab bar/content behind it.
-      backgroundColor: useGlassSurface ? 'transparent' : colors.elevation2,
-      borderWidth: useGlassSurface ? 0 : StyleSheet.hairlineWidth,
+      // The miniplayer must remain readable over arbitrary scrolling content.
+      // Native liquid glass and its tint are intentionally not used here:
+      // UIGlassEffect can still resolve nearly clear depending on what it
+      // samples, so only a real opaque surface provides a contrast guarantee.
+      backgroundColor: colors.elevation2,
+      borderWidth: StyleSheet.hairlineWidth,
       borderColor: withAlpha(colors.border, 0.5),
       ...LAYOUT.ELEVATION.MEDIUM,
       shadowColor: colors.shadow,
     },
   ];
 
-  const surfaceProps = useGlassSurface ? { glassEffectStyle: 'regular' as const } : {};
-
   const inner = (
-    <CardSurface style={cardStyle} {...surfaceProps}>
+    <View testID="mini-player-surface" style={cardStyle}>
       {/* Main Content Row */}
       <View style={styles.contentRow}>
         {/* Artwork Thumbnail */}
@@ -220,7 +210,7 @@ const MiniPlayerComponent = ({
           backgroundColor={colors.border}
         />
       </View>
-    </CardSurface>
+    </View>
   );
 
   return (
