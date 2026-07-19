@@ -40,6 +40,9 @@ module.exports = {
     '/.jest-cache/',
     '/build/',
     '/dist/',
+    '/admin-dashboard/',
+    '/translate/',
+    '/publish/',
   ],
 
   // Comprehensive module mapping for AI predictability
