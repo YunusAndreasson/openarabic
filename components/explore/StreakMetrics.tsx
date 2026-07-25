@@ -4,7 +4,6 @@ import { StyleSheet, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { useColors } from '@/hooks/theme/useColors';
 import type { StreakHistoryData } from '@/services/studyStreak';
 
 interface StreakMetricsProps {
@@ -12,53 +11,35 @@ interface StreakMetricsProps {
 }
 
 export const StreakMetrics = memo<StreakMetricsProps>(({ metrics }) => {
-  const colors = useColors();
-
-  // Memoize metric data to prevent recalculation
+  // Current / Longest / Total are three readings of the same quantity, so they
+  // stay in one ink — colouring them apart implied a distinction that isn't
+  // there. (Colour on a MetricCard is now reserved for values that mean
+  // good/bad, e.g. memory health on the practice screen.)
   const metricData = useMemo(
     () => [
       {
         id: 'current',
-        icon: 'flame' as const,
         value: metrics.currentStreak.toString(),
         label: STRINGS.STUDY_STREAK_CURRENT,
-        color: colors.warning,
       },
       {
         id: 'longest',
-        icon: 'trophy' as const,
         value: metrics.longestStreak.toString(),
         label: STRINGS.STUDY_STREAK_LONGEST,
-        color: colors.success, // Green for achievement (universal trophy semantics)
       },
       {
         id: 'total',
-        icon: 'calendar' as const,
         value: metrics.totalReadingDays.toString(),
         label: STRINGS.STUDY_STREAK_TOTAL,
-        color: colors.info, // Blue for informational/cumulative data
       },
     ],
-    [
-      metrics.currentStreak,
-      metrics.longestStreak,
-      metrics.totalReadingDays,
-      colors.warning,
-      colors.success,
-      colors.info,
-    ],
+    [metrics.currentStreak, metrics.longestStreak, metrics.totalReadingDays],
   );
 
   return (
     <View style={styles.metricsRow}>
       {metricData.map(metric => (
-        <MetricCard
-          key={metric.id}
-          icon={metric.icon}
-          value={metric.value}
-          label={metric.label}
-          color={metric.color}
-        />
+        <MetricCard key={metric.id} value={metric.value} label={metric.label} />
       ))}
     </View>
   );

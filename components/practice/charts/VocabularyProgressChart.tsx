@@ -59,14 +59,20 @@ export const VocabularyProgressChart = memo<VocabularyProgressChartProps>(
     return (
       <BaseCard shadowSize="small" onPress={onPress}>
         <View style={styles.header}>
+          {/* Title above the number, matching the stat tiles below (MetricCard).
+              The practice screen reads top-to-bottom as label → figure on every
+              card; this hero used to be the one that inverted it. */}
           <View>
-            <ThemedText style={styles.value}>{totalWords}</ThemedText>
             <ThemedText type="caption" colorName="subtleLabelText">
               {STRINGS.VOCABULARY_GROWTH_LABEL}
             </ThemedText>
+            <ThemedText style={styles.value}>{totalWords}</ThemedText>
           </View>
+          {/* A step dimmer than the card's own label: this is a supporting
+              aside, not a second title. At the same weight the two captions
+              read as a pair of equals competing across the header. */}
           {monthChange > 0 && (
-            <ThemedText type="caption" colorName="subtleLabelText">
+            <ThemedText type="caption" colorName="textTertiary">
               {`+${monthChange} ${STRINGS.SUMMARY_THIS_MONTH.toLowerCase()}`}
             </ThemedText>
           )}

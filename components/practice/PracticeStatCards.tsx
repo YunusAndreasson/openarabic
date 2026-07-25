@@ -64,26 +64,25 @@ export function PracticeStatCards({
         ? colors.warning
         : colors.success;
 
+  // Colour is spent only where it carries information. Memory health is
+  // genuinely good/bad, and a leech count only ever appears because something
+  // needs attention; a streak and a mastered count are just numbers, and
+  // painting those too turned the row into three unrelated accent colours.
   const stats = [
     {
       label: STRINGS.STREAK_LABEL,
       value: currentStreak,
-      color: colors.warning,
-      icon: 'flame' as const,
       onPress: onStreakPress,
     },
     {
       label: VocabularyStatCategory.MASTERED,
       value: masteredWords,
-      color: colors.success,
-      icon: 'trophy' as const,
       onPress: onMasteredPress,
     },
     {
       label: STRINGS.MEMORY_LABEL,
       value: `${Math.round(memoryRetention)}%`,
-      color: memoryColor,
-      icon: 'pulse' as const,
+      valueColor: memoryColor,
       onPress: onMemoryPress,
     },
     // Only surfaced when the learner actually has leeches, so it never nags.
@@ -92,8 +91,7 @@ export function PracticeStatCards({
           {
             label: STRINGS.REVISIT_LABEL,
             value: leechCount,
-            color: colors.error,
-            icon: 'alert-circle' as const,
+            valueColor: colors.error,
             onPress: onRevisitPress,
           },
         ]
@@ -109,10 +107,9 @@ export function PracticeStatCards({
         {stats.map(stat => (
           <MetricCard
             key={stat.label}
-            icon={stat.icon}
             value={stat.value}
             label={stat.label}
-            color={stat.color}
+            valueColor={stat.valueColor}
             onPress={stat.onPress}
           />
         ))}
