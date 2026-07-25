@@ -2,6 +2,7 @@ import type { ArticleId, CategoryId, RootId } from '@/types/branded.types';
 
 // Inlined to avoid require cycle: routes.ts -> routeBuilders.ts -> routes.ts
 const PRACTICE_REVIEW_PATH = '/review';
+const PRACTICE_WORD_PATH = '/(tabs)/practice/word';
 
 /** Path prefix of the article reader route (`/article/[id]`). */
 export const ARTICLE_ROUTE_PREFIX = '/article/';
@@ -33,7 +34,12 @@ export const getCategoryFilterRoute = (categoryId: CategoryId, name?: string): s
   return `${base}?${params.join('&')}`;
 };
 
-export const getPracticeWordRoute = (rootId: RootId): string => `/practice-word?rootId=${rootId}`;
+/**
+ * Word detail. Lives inside the practice stack (not at the root) so it pushes
+ * within the dictionary's modal instead of presenting behind it.
+ */
+export const getPracticeWordRoute = (rootId: RootId): string =>
+  `${PRACTICE_WORD_PATH}?rootId=${rootId}`;
 
 export const getPracticeReviewRoute = (
   params?: Partial<{

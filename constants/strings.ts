@@ -515,6 +515,10 @@ export const STRINGS = {
   WORD_DUE_IN_DAYS: 'In {count} days',
   WORD_STATE_NEW: 'New',
   WORD_EXAMPLES_TITLE: 'In articles',
+  WORD_DETAIL_TITLE: 'Word',
+  /** Shown when the word list has loaded but this word is no longer in it —
+   *  e.g. it was removed from another screen. Beats spinning forever. */
+  WORD_NOT_FOUND: 'This word is no longer in your practice list',
   RESET_PROGRESS_ACTION: 'Reset progress',
   REMOVE_FROM_PRACTICE_ACTION: 'Remove from practice',
   REMOVE_WORD_TITLE: 'Remove word?',

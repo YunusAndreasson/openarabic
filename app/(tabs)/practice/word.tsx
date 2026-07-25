@@ -62,7 +62,7 @@ export default function PracticeWordScreen(): JSX.Element {
   const { rootId: rootIdParam } = useLocalSearchParams<{ rootId?: string }>();
   const rootId = Number(rootIdParam) as RootId;
 
-  const { allWords } = useFSRSQueries({ userId: user?.id });
+  const { allWords, isLoading } = useFSRSQueries({ userId: user?.id });
   const { toggleRootMutation } = useStudyWordMutations();
   const { confirmReset } = useResetWordProgress();
 
@@ -134,11 +134,20 @@ export default function PracticeWordScreen(): JSX.Element {
     ]);
   }, [user?.id, word, toggleRootMutation.mutateAsync, router]);
 
+  // Distinguish "still fetching" from "not in the list". Both used to render an
+  // indefinite spinner, so a word that genuinely wasn't there (removed from
+  // another screen, stale deep link) looked like a screen that never loaded.
   if (!word) {
     return (
       <View style={[styles.container, { backgroundColor: colors.elevation1 }]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="small" color={colors.tint} />
+          {isLoading ? (
+            <ActivityIndicator size="small" color={colors.tint} />
+          ) : (
+            <ThemedText type="body" variant="secondary" align="center">
+              {STRINGS.WORD_NOT_FOUND}
+            </ThemedText>
+          )}
         </View>
       </View>
     );
@@ -273,9 +282,6 @@ export default function PracticeWordScreen(): JSX.Element {
   );
 }
 
-export const options = {
-  headerShown: false,
-} as const;
 
 const styles = StyleSheet.create({
   container: {
@@ -291,7 +297,9 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
-    paddingTop: LAYOUT.SPACING.XLARGE,
+    // Was XLARGE to clear a sheet grabber; the screen now pushes under a real
+    // header, which supplies its own separation.
+    paddingTop: LAYOUT.SPACING.LARGE,
     paddingBottom: LAYOUT.SPACING.LARGE,
   },
   hero: {

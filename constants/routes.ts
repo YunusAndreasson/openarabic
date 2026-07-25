@@ -25,7 +25,7 @@ export const ROUTE_PATHS = {
   PRACTICE_STUDY_STREAK: '/study-streak',
   PRACTICE_WORDS_MASTERED: '/words-mastered',
   PRACTICE_WORDS_TO_REVISIT: '/words-to-revisit',
-  PRACTICE_WORD: '/practice-word',
+  PRACTICE_WORD: '/(tabs)/practice/word',
 } as const;
 
 // Re-export route builders for backward compatibility
