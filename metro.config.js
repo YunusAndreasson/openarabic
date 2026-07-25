@@ -13,7 +13,8 @@ config.transformer.minifierConfig = {
   },
 };
 
-// Note: React Compiler is enabled by default in Expo SDK 54+ via babel-preset-expo
+// Note: React Compiler is opted into via `experiments.reactCompiler` in app.json,
+// which babel-preset-expo reads — nothing to configure here.
 
 // Native-specific optimizations are handled by Expo's default configuration
 
