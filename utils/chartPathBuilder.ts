@@ -27,14 +27,27 @@ export interface BuildPathResult<P> {
 /**
  * Build a smooth chart path using cubic bezier curves.
  *
- * This utility creates natural-looking smooth curves between data points
- * using monotone cubic interpolation. Control points are calculated based
- * on neighboring points to ensure smooth transitions without overshoot.
+ * This utility creates natural-looking smooth curves between data points by
+ * deriving control points from neighbouring slopes, then clamping each
+ * segment's control points into that segment's own y-range.
  *
- * Follows 2025 best practices for data visualization smoothing, ensuring:
+ * The clamp is load-bearing, not cosmetic. Averaging neighbour slopes places
+ * control points outside the segment at every local extremum, and a cubic
+ * bezier follows its control polygon — so a plateau next to a steep step used
+ * to bulge above the higher point and below the lower one. On the practice
+ * hero sparkline (8px top / 6px bottom padding) that overshoot ran past the
+ * canvas and Skia clipped it flat at BOTH edges. It also drew curves that
+ * contradict the data: the cumulative "words in practice" line would dip
+ * before a rise and spike after it, though the count only ever goes up.
+ *
+ * A bezier is contained in the convex hull of its control points, so clamping
+ * the control y-values into [min(y0,y1), max(y0,y1)] guarantees the curve
+ * never leaves the range spanned by the two points it connects.
+ *
+ * Ensures:
  * - Smooth curves that pass through all data points
  * - No artificial spikes or "edgy" transitions around points
- * - Monotone interpolation (no overshoot between data points)
+ * - No overshoot past a data point, in either direction
  *
  * @param options - Configuration for path building
  * @returns SVG path string and array of points with metadata
@@ -103,9 +116,17 @@ export function buildSmoothChartPath<T, P>(options: BuildPathOptions<T, P>): Bui
       // Calculate control points using slopes for smooth curves
       const tension = 0.3; // Tension factor for curve smoothness (lower = smoother)
       const controlX1 = prevPoint.x + (x - prevPoint.x) * tension;
-      const controlY1 = prevPoint.y + prevSlope * (x - prevPoint.x) * tension;
       const controlX2 = x - (x - prevPoint.x) * tension;
-      const controlY2 = y - currentSlope * (x - prevPoint.x) * tension;
+
+      // Clamp the control y-values into this segment's own range. See the
+      // header comment: without this the curve overshoots past the data at
+      // every local extremum and gets clipped by the canvas edges.
+      const minY = Math.min(prevPoint.y, y);
+      const maxY = Math.max(prevPoint.y, y);
+      const clampY = (value: number): number => Math.min(maxY, Math.max(minY, value));
+
+      const controlY1 = clampY(prevPoint.y + prevSlope * (x - prevPoint.x) * tension);
+      const controlY2 = clampY(y - currentSlope * (x - prevPoint.x) * tension);
 
       builder.cubicTo(controlX1, controlY1, controlX2, controlY2, x, y);
     }

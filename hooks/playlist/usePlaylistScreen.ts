@@ -11,8 +11,8 @@ import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 // Use direct service access to avoid frequent parent re-renders from time updates
 import { useAuth } from '@/hooks/auth/useAuth';
 import { analytics } from '@/services/analytics';
-import { enhancedAudioService } from '@/services/audioPlaylist';
-import { simpleAudioService } from '@/services/audioPlayer';
+import { enhancedAudioService, warmTrackCache } from '@/services/audioPlaylist';
+import { simpleAudioService, type SourceTrackedAudioTrack } from '@/services/audioPlayer';
 import { bookmarkService } from '@/services/bookmark';
 import { useAppDispatch, useAppSelector, useAppSelectorShallow } from '@/store/hooks';
 import { removeFromCustomOrder } from '@/store/playlistSlice';
@@ -197,6 +197,10 @@ export const usePlaylistScreen = () => {
             if (nextTrack?.articleId) {
               // Prefetch the next article's data and image for smooth transitions
               prefetchArticleWithImage(nextTrack.articleId, queryClient, prefetchArticle);
+              // Cache the now-playing track for offline replay (no-op if it was
+              // already local). Only ever the current track — warming the whole
+              // playlist is what used to saturate the connection.
+              warmTrackCache(nextTrack as SourceTrackedAudioTrack);
             } else {
               // Playlist is complete, reset playback mode
               setTimer('playbackMode', () => setPlaybackMode('none'), TIMING_CONSTANTS.QUICK_DELAY);
@@ -204,6 +208,9 @@ export const usePlaylistScreen = () => {
           });
 
           if (success) {
+            // Playback is live — warm only the track that's actually playing.
+            const firstTrack = tracksToPlay[0];
+            if (firstTrack) warmTrackCache(firstTrack);
             void markOnboardingStep(OnboardingStep.LISTEN_AUDIO);
           } else {
             setTimer('playbackMode', () => setPlaybackMode('none'), TIMING_CONSTANTS.QUICK_DELAY);
@@ -295,7 +302,8 @@ export const usePlaylistScreen = () => {
             audioPreference,
           );
           if (track) {
-            await simpleAudioService.play(track);
+            const played = await simpleAudioService.play(track);
+            if (played) warmTrackCache(track);
             void markOnboardingStep(OnboardingStep.LISTEN_AUDIO);
           }
           return;
@@ -317,6 +325,7 @@ export const usePlaylistScreen = () => {
         const success = await simpleAudioService.playPlaylist(tracksFromHere, nextTrack => {
           if (nextTrack?.articleId) {
             prefetchArticleWithImage(nextTrack.articleId, queryClient, prefetchArticle);
+            warmTrackCache(nextTrack as SourceTrackedAudioTrack);
           } else {
             // Playlist complete
             setTimer('playbackMode', () => setPlaybackMode('none'), TIMING_CONSTANTS.QUICK_DELAY);
@@ -324,6 +333,8 @@ export const usePlaylistScreen = () => {
         });
 
         if (success) {
+          const firstTrack = tracksFromHere[0];
+          if (firstTrack) warmTrackCache(firstTrack);
           void markOnboardingStep(OnboardingStep.LISTEN_AUDIO);
         } else {
           setTimer('playbackMode', () => setPlaybackMode('none'), TIMING_CONSTANTS.QUICK_DELAY);

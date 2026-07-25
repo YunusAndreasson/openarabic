@@ -47,8 +47,7 @@ export function useOnboardingChecklist(articlesData: Article[]) {
   const { studyWords, isLoading: isFSRSLoading, error: fsrsError } = useFSRSData();
 
   const articleIds = useMemo(() => articlesData.map(a => a.id as ArticleId), [articlesData]);
-  const { data: progressMap, isLoading: isProgressLoading } =
-    useBulkReadingProgress(articleIds);
+  const { data: progressMap, isLoading: isProgressLoading } = useBulkReadingProgress(articleIds);
 
   const state = useSyncExternalStore(subscribeOnboarding, getCachedOnboardingState);
 

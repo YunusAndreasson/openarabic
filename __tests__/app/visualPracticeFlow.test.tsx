@@ -25,7 +25,6 @@ import { Provider } from 'react-redux';
 
 import { createTestQueryClient } from '@/__tests__/helpers/testUtils';
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
-import { mockExpoHaptics } from '@/__tests__/setup/commonMocks';
 import { useReview } from '@/hooks/review';
 import { store } from '@/store/store';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -97,7 +96,9 @@ jest.mock('@/hooks/audio/useSimpleAudioPlayer', () => ({
   }),
 }));
 
-mockExpoHaptics();
+// expo-haptics is already mocked globally via moduleNameMapper (__mocks__/expo-haptics.js),
+// and jest.setup.js re-arms its promise-returning implementations per test. A local
+// jest.mock() factory here would shadow that with a second, un-armed mock object.
 
 const { studyWordsFSRSService } = require('@/services/studyWordsFSRS');
 

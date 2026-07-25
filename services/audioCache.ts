@@ -40,6 +40,11 @@ export class AudioCacheManager {
   private pendingDownloads = new Map<string, Promise<string>>();
   // Memoized one-time legacy sweep (see LEGACY_CACHE_SWEEP_STORAGE_KEY)
   private legacySweepPromise: Promise<void> | null = null;
+  // url → cache key. generateCacheKey is an async native crypto call and runs
+  // before the memory cache can even be consulted, so a warm practice session
+  // was paying one native round trip per file per lookup. The mapping is a pure
+  // function of the URL, so it can be memoized for the process lifetime.
+  private cacheKeys = new Map<string, string>();
 
   private constructor() {
     this.ensureCacheDirectoryExists();
@@ -125,12 +130,19 @@ export class AudioCacheManager {
    * Generate a cache key from URL
    */
   private async generateCacheKey(url: string): Promise<string> {
+    const memoized = this.cacheKeys.get(url);
+    if (memoized) {
+      return memoized;
+    }
+
     const hash = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.MD5, url);
     // Extract file extension from URL if available
     const urlParts = url.split('.');
     const lastPart = urlParts.length > 1 ? urlParts[urlParts.length - 1] : '';
     const extension = lastPart ? lastPart.split('?')[0] : 'mp3';
-    return `${hash}.${extension}`;
+    const cacheKey = `${hash}.${extension}`;
+    this.cacheKeys.set(url, cacheKey);
+    return cacheKey;
   }
 
   /**
@@ -307,6 +319,44 @@ export class AudioCacheManager {
       });
       // Return original URL on failed download as fallback
       return url;
+    }
+  }
+
+  /**
+   * Cache-hit-only lookup: returns the local path if the file is already on
+   * disk, otherwise null. NEVER downloads.
+   *
+   * For long-form audio (a several-minute article) the caller usually wants to
+   * start playing NOW and let expo-audio stream the remote URL, rather than
+   * block on a full download first. This lets them prefer the local copy when
+   * it exists without paying for it when it doesn't.
+   *
+   * Local (non-remote) sources are already playable as-is, so they come back
+   * unchanged rather than reporting a miss.
+   */
+  async getCachedPath(url: string): Promise<string | null> {
+    try {
+      if (!isRemoteAudioUrl(url)) {
+        return url;
+      }
+      await this.ensureLegacySweep();
+      return await this.getCachedFilePath(url);
+    } catch (error) {
+      await handleError(error as Error, { showToast: false });
+      return null;
+    }
+  }
+
+  /**
+   * Warm the cache for a URL in the background. Fire-and-forget: resolves when
+   * the file has landed (or failed), and never rejects. Use after handing a
+   * remote URL to the player so the NEXT play of that track is local.
+   */
+  async prefetch(url: string): Promise<void> {
+    try {
+      await this.getAudio(url);
+    } catch {
+      // Best-effort warming — a failure just means the next play streams again
     }
   }
 

@@ -85,12 +85,13 @@ export const createAudioPreloaderMock = (
   overrides: Partial<{
     isPreloading: boolean;
     progress: number;
-    isComplete: boolean;
+    isReady: boolean;
   }> = {},
 ) => ({
   isPreloading: false,
   progress: 100,
-  isComplete: true,
+  // The first card's audio is cached — later files may still be downloading.
+  isReady: true,
   ...overrides,
 });
 

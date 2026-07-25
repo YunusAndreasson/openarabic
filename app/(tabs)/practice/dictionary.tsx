@@ -122,7 +122,7 @@ export default function DictionaryScreen(): JSX.Element {
           intent: 'remove',
         });
       } catch (error) {
-        await handleError(error instanceof Error ? error : String(error), {
+        await handleError(error, {
           showToast: true,
           toastMessage: STRINGS.FAILED_TO_DELETE_WORD,
           captureSentry: !__DEV__,

@@ -138,7 +138,7 @@ export function useProvideAuth(): AuthResult {
         setSession(null);
       }
     } catch (error) {
-      handleError(error instanceof Error ? error : new Error(String(error)), {
+      handleError(error, {
         analyticsEventName: 'Auth_Initialization_Failed',
         sentrySeverity: 'error',
         showToast: false,

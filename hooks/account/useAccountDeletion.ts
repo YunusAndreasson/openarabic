@@ -104,7 +104,7 @@ export function useAccountDeletion(): UseAccountDeletionReturn {
     } catch (error) {
       // Error is already handled in the service layer
       // Just log for debugging if needed
-      await handleError(error instanceof Error ? error : new Error(String(error)), {
+      await handleError(error, {
         toastMessage: STRINGS.FAILED_TO_DELETE_ACCOUNT,
         analyticsEventName: 'Account_Deletion_Failed',
         sentrySeverity: 'error',

@@ -154,13 +154,7 @@ export const fsrsQueries = {
    */
   due: (userId: string, sessionCooldownHours?: number, limit?: number) =>
     queryOptions({
-      queryKey: [
-        'fsrs-words',
-        userId,
-        'due',
-        sessionCooldownHours ?? null,
-        limit ?? null,
-      ] as const,
+      queryKey: ['fsrs-words', userId, 'due', sessionCooldownHours ?? null, limit ?? null] as const,
       queryFn: ({ client }) => {
         const lastCompletedAt = client.getQueryData<number>(lastCompletedAtKey(userId));
         const recentlyCompleted =

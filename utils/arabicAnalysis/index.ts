@@ -9,7 +9,7 @@
 export type { AnalyzedComponent, WordAnalysis } from './types';
 
 // Cache
-export { ANALYSIS_CACHE, cacheWithLRUEviction, clearAnalysisCache } from './cache';
+export { ANALYSIS_CACHE, cacheWithFifoEviction, clearAnalysisCache } from './cache';
 
 // Normalization
 export { expandContractions, normalizeArabic, normalizeEnglish } from './normalization';

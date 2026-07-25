@@ -211,6 +211,13 @@ jest.mock('@/services/audioCache', () => ({
       const filename = url.split('/').pop() || 'audio.mp3';
       return Promise.resolve(`file:///mock/cache/${filename}`);
     }),
+    // Cache-hit-only lookup. Defaults to a HIT so existing suites keep seeing a
+    // local path; miss-path tests override with mockResolvedValue(null).
+    getCachedPath: jest.fn().mockImplementation(url => {
+      const filename = url.split('/').pop() || 'audio.mp3';
+      return Promise.resolve(`file:///mock/cache/${filename}`);
+    }),
+    prefetch: jest.fn().mockResolvedValue(undefined),
     cacheAudio: jest.fn().mockResolvedValue(undefined),
     invalidate: jest.fn().mockResolvedValue(undefined),
     clearCache: jest.fn().mockResolvedValue(undefined),
@@ -222,6 +229,11 @@ jest.mock('@/services/audioCache', () => ({
         const filename = url.split('/').pop() || 'audio.mp3';
         return Promise.resolve(`file:///mock/cache/${filename}`);
       }),
+      getCachedPath: jest.fn().mockImplementation(url => {
+        const filename = url.split('/').pop() || 'audio.mp3';
+        return Promise.resolve(`file:///mock/cache/${filename}`);
+      }),
+      prefetch: jest.fn().mockResolvedValue(undefined),
       cacheAudio: jest.fn().mockResolvedValue(undefined),
       invalidate: jest.fn().mockResolvedValue(undefined),
       clearCache: jest.fn().mockResolvedValue(undefined),
@@ -935,6 +947,28 @@ jest.mock('react-native/Libraries/Image/resolveAssetSource', () =>
     };
   }),
 );
+
+// `resetMocks: true` (jest.config.js) clears the implementation of EVERY jest.fn()
+// before each test — including the ones baked into module factories and the
+// __mocks__/* files. Any mocked async API therefore returns `undefined` instead of
+// a promise unless its implementation is re-applied here, per test.
+//
+// expo-haptics needs this: utils/haptics attaches a .catch() to swallow
+// "A haptics engine is not available on this device" (the top production error),
+// and .catch() on undefined throws. Re-arm the promise-returning implementations.
+beforeEach(() => {
+  const haptics = require('expo-haptics');
+  for (const name of [
+    'impactAsync',
+    'selectionAsync',
+    'notificationAsync',
+    'performAndroidHapticsAsync',
+  ]) {
+    if (typeof haptics[name]?.mockResolvedValue === 'function') {
+      haptics[name].mockResolvedValue(undefined);
+    }
+  }
+});
 
 // Global error handler for unhandled promise rejections
 process.on('unhandledRejection', reason => {

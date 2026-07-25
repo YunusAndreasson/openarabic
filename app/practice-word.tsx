@@ -122,7 +122,7 @@ export default function PracticeWordScreen(): JSX.Element {
           toggleRootMutation
             .mutateAsync({ userId, rootId: wordRootId, intent: 'remove' })
             .catch(error =>
-              handleError(error instanceof Error ? error : String(error), {
+              handleError(error, {
                 showToast: true,
                 toastMessage: STRINGS.FAILED_TO_DELETE_WORD,
                 captureSentry: !__DEV__,

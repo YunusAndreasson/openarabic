@@ -71,6 +71,8 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   const { isListeningToThisArticle, isListenLoading, handleToggleListen } = useArticleListen(
     article?.id as ArticleId | undefined,
     article?.title,
+    // Hand over the already-loaded article so tapping Listen doesn't refetch it
+    article,
   );
 
   // Tutorial management

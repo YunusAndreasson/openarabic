@@ -48,7 +48,7 @@ jest.mock('@/utils/errorHandling');
 jest.mock('@/utils/storageUtils');
 
 import { STRINGS } from '@/constants/strings';
-import { enhancedAudioService } from '@/services/audioPlaylist';
+import { enhancedAudioService, warmTrackCache } from '@/services/audioPlaylist';
 import { handleError } from '@/utils/errorHandling';
 import { generateStorageUrl } from '@/utils/storageUtils';
 
@@ -83,7 +83,7 @@ describe('enhancedAudioService', () => {
         if (bucket === 'images') return 'https://example.com/test-image.jpg';
         return '';
       });
-      mockAudioCache.getAudio.mockResolvedValue('cached-bilingual.mp3');
+      mockAudioCache.getCachedPath.mockResolvedValue('cached-bilingual.mp3');
 
       const result = await enhancedAudioService.generateEnhancedAudioTrack(1, 'bilingual');
 
@@ -106,7 +106,7 @@ describe('enhancedAudioService', () => {
         if (bucket === 'images') return 'https://example.com/test-image.jpg';
         return '';
       });
-      mockAudioCache.getAudio.mockResolvedValue('cached-arabic.mp3');
+      mockAudioCache.getCachedPath.mockResolvedValue('cached-arabic.mp3');
 
       const result = await enhancedAudioService.generateEnhancedAudioTrack(1, 'bilingual');
 
@@ -128,7 +128,7 @@ describe('enhancedAudioService', () => {
         if (bucket === 'images') return 'https://example.com/test-image.jpg';
         return '';
       });
-      mockAudioCache.getAudio.mockResolvedValue('cached-arabic.mp3');
+      mockAudioCache.getCachedPath.mockResolvedValue('cached-arabic.mp3');
 
       const result = await enhancedAudioService.generateEnhancedAudioTrack(1, 'arabic');
 
@@ -141,6 +141,43 @@ describe('enhancedAudioService', () => {
         imageUrl: 'https://example.com/test-image.jpg',
       });
       expect(mockGenerateStorageUrl).toHaveBeenCalledWith('audio', 'test-audio.mp3');
+    });
+
+    test('streams the remote URL when the file is not cached, without downloading first', async () => {
+      mockArticlesService.getArticleById.mockResolvedValue(mockArticle as any);
+      mockGenerateStorageUrl.mockImplementation(bucket => {
+        if (bucket === 'audio') return 'https://example.com/test-bilingual.mp3';
+        if (bucket === 'images') return 'https://example.com/test-image.jpg';
+        return '';
+      });
+      mockAudioCache.getCachedPath.mockResolvedValue(null);
+
+      const result = await enhancedAudioService.generateEnhancedAudioTrack(1, 'bilingual');
+
+      // Plays immediately instead of blocking on a full download...
+      expect(result?.audioUrl).toBe('https://example.com/test-bilingual.mp3');
+      expect(mockAudioCache.getAudio).not.toHaveBeenCalled();
+      // ...and nothing is fetched yet — warming waits until playback is live so
+      // the download can't steal bandwidth from the stream (see warmTrackCache).
+      expect(mockAudioCache.prefetch).not.toHaveBeenCalled();
+    });
+
+    test('uses a supplied article instead of refetching it', async () => {
+      mockGenerateStorageUrl.mockImplementation(bucket => {
+        if (bucket === 'audio') return 'https://example.com/test-bilingual.mp3';
+        if (bucket === 'images') return 'https://example.com/test-image.jpg';
+        return '';
+      });
+      mockAudioCache.getCachedPath.mockResolvedValue('cached-bilingual.mp3');
+
+      const result = await enhancedAudioService.generateEnhancedAudioTrack(
+        1,
+        'bilingual',
+        mockArticle as any,
+      );
+
+      expect(mockArticlesService.getArticleById).not.toHaveBeenCalled();
+      expect(result?.audioUrl).toBe('cached-bilingual.mp3');
     });
 
     test('handles errors gracefully and returns null', async () => {
@@ -201,7 +238,7 @@ describe('enhancedAudioService', () => {
         }
         return '';
       });
-      mockAudioCache.getAudio
+      mockAudioCache.getCachedPath
         .mockResolvedValueOnce('cached-bilingual1.mp3')
         .mockResolvedValueOnce('cached-audio2.mp3');
 
@@ -249,7 +286,7 @@ describe('enhancedAudioService', () => {
         }
         return '';
       });
-      mockAudioCache.getAudio
+      mockAudioCache.getCachedPath
         .mockResolvedValueOnce('cached-audio1.mp3')
         .mockResolvedValueOnce('cached-audio2.mp3');
 
@@ -297,6 +334,43 @@ describe('enhancedAudioService', () => {
       const result = await enhancedAudioService.getReadingListEnhancedTracks('user123');
 
       expect(result).toEqual([]);
+    });
+
+    test('warmTrackCache caches a streaming track but not an already-local one', () => {
+      warmTrackCache({
+        id: 'article-1',
+        audioUrl: 'https://example.com/audio.mp3',
+        sourceUrl: 'https://example.com/audio.mp3',
+        title: 'Streaming',
+      });
+      expect(mockAudioCache.prefetch).toHaveBeenCalledWith('https://example.com/audio.mp3');
+
+      mockAudioCache.prefetch.mockClear();
+
+      warmTrackCache({
+        id: 'article-2',
+        audioUrl: 'file:///cache/audio.mp3',
+        sourceUrl: 'https://example.com/audio.mp3',
+        title: 'Already cached',
+      });
+      expect(mockAudioCache.prefetch).not.toHaveBeenCalled();
+    });
+
+    test('does not download audio for uncached items', async () => {
+      // This runs from an app-wide query, so warming here would download every
+      // saved article's audio at app start.
+      mockBookmarkService.getReadingList.mockResolvedValue(mockReadingList as any);
+      mockGenerateStorageUrl.mockImplementation(bucket =>
+        bucket === 'audio' ? 'https://example.com/audio.mp3' : 'https://example.com/image.jpg',
+      );
+      mockAudioCache.getCachedPath.mockResolvedValue(null);
+
+      const result = await enhancedAudioService.getReadingListEnhancedTracks('user123');
+
+      expect(mockAudioCache.prefetch).not.toHaveBeenCalled();
+      expect(mockAudioCache.getAudio).not.toHaveBeenCalled();
+      // Still usable — they stream if the user plays one
+      expect(result[0]?.audioUrl).toBe('https://example.com/audio.mp3');
     });
   });
 });

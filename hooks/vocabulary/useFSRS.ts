@@ -89,6 +89,11 @@ export function useFSRS({
   // Per-word in-session drill progress (successive relearning to criterion).
   const drillRef = useRef<Map<RootId, DrillProgress>>(new Map());
 
+  // FSRS writes still in flight. updateWord persists OFF the critical path (see
+  // there), so the only thing that must wait for them is a read of the server's
+  // view — flushPendingWrites is how callers do that.
+  const pendingWritesRef = useRef<Set<Promise<unknown>>>(new Set());
+
   // Enhanced state tracking
   const stateTrackingRef = useRef<EnhancedFSRSStateTracking>({
     isProcessingUpdate: false,
@@ -268,7 +273,7 @@ export function useFSRS({
         newCard = result.card;
       } catch (error) {
         // Track analytics
-        handleError(error instanceof Error ? error : new Error(String(error)), {
+        handleError(error, {
           toastType: ToastType.ERROR,
           analyticsEventName: 'FSRS_Algorithm_Error',
           analyticsProperties: {
@@ -449,17 +454,29 @@ export function useFSRS({
       setCurrentWord(nextItem || null);
       setWordQueue(remaining);
 
-      // Phase 1.1: ALWAYS persist word updates to database for FSRS algorithm
-      // Note: Rating is now calculated in wordUpdateData by convertToFSRSCard
-      try {
-        await studyWordsFSRSService.updateWordAndReview(userId, rootId, wordUpdateData);
-      } catch (error) {
-        const errObj =
-          error instanceof Error
-            ? error
-            : new Error((error as { message?: string })?.message ?? JSON.stringify(error));
-        handleError(errObj, { toastType: ToastType.IMPORTANT });
-      }
+      // ALWAYS persist word updates to the database — but OFF the critical path.
+      // The next card is already committed to state above, so awaiting the write
+      // here bought nothing and cost everything: useReview.processFeedback awaits
+      // this function before calling fadeIn() and clearing isUpdating, so the
+      // card sat at opacity 0 with grading disabled for the whole round trip
+      // (measured ~0.8s on a fast connection, scaling 1:1 with RTT — seconds on
+      // mobile data). Firing it in the background makes the advance local-only.
+      //
+      // A failure still surfaces its toast; the session just isn't held hostage
+      // to the response. Registered in pendingWritesRef so flushPendingWrites
+      // can order a post-session refetch behind it.
+      const write = studyWordsFSRSService
+        .updateWordAndReview(userId, rootId, wordUpdateData)
+        .catch(error => {
+          // handleError normalises via toError — never JSON.stringify a thrown
+          // value into the message, that is how a whole payload ends up as a
+          // Sentry issue title.
+          handleError(error, { toastType: ToastType.IMPORTANT });
+        })
+        .finally(() => {
+          pendingWritesRef.current.delete(write);
+        });
+      pendingWritesRef.current.add(write);
 
       stateTrackingRef.current.isProcessingUpdate = false;
 
@@ -532,6 +549,18 @@ export function useFSRS({
     };
   }, [resetQueue]);
 
+  /**
+   * Settle every backgrounded FSRS write. Callers that are about to re-read the
+   * server's view (invalidate → refetch) must await this, or the refetch can
+   * overtake a write still in flight and repopulate the cache with pre-grade
+   * data. Individual writes never reject (each carries its own catch).
+   */
+  const flushPendingWrites = useCallback(async () => {
+    while (pendingWritesRef.current.size > 0) {
+      await Promise.allSettled([...pendingWritesRef.current]);
+    }
+  }, []);
+
   const invalidateQueries = useCallback(() => {
     if (!userId) return;
 
@@ -554,5 +583,6 @@ export function useFSRS({
     previewIntervals,
     invalidateQueries,
     resetQueue,
+    flushPendingWrites,
   };
 }

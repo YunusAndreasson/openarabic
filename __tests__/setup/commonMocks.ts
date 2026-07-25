@@ -3,19 +3,12 @@
  * Import these to avoid duplication
  */
 
-/**
- * Mock expo-haptics
- * Used in: visualPracticeFlow, integration tests, component tests
- */
-export const mockExpoHaptics = () => {
-  jest.mock('expo-haptics', () => ({
-    selectionAsync: jest.fn(),
-    impactAsync: jest.fn(),
-    notificationAsync: jest.fn(),
-    ImpactFeedbackStyle: { Light: 'light', Medium: 'medium', Heavy: 'heavy' },
-    NotificationFeedbackType: { Success: 'success', Error: 'error', Warning: 'warning' },
-  }));
-};
+// NOTE: there is deliberately no mockExpoHaptics() helper here. expo-haptics is
+// mocked globally for every suite through jest.config.js `moduleNameMapper` →
+// __mocks__/expo-haptics.js, and jest.setup.js re-arms its promise-returning
+// implementations per test (needed because `resetMocks: true` strips them).
+// A local jest.mock('expo-haptics', …) shadows that with a second mock object
+// that nothing re-arms, so production code chaining .catch() breaks.
 
 export const mockHaptics = () => {
   jest.mock('@/utils/haptics', () => ({

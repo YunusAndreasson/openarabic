@@ -53,7 +53,7 @@ export function useWordAudioPlayback(options: UseWordAudioPlaybackOptions = {}) 
       } catch (error) {
         if (!isMountedRef.current) return;
 
-        handleError(error instanceof Error ? error : new Error(String(error)), {
+        handleError(error, {
           showToast: showErrorToast,
           toastMessage: 'Word audio playback failed',
         });

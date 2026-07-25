@@ -107,8 +107,12 @@ const RUNTIME_FONT_MAP = {
   'Inter-Bold': interBold,
 };
 
-// Keep the splash screen visible while we fetch resources
-SplashScreen.preventAutoHideAsync();
+// Keep the splash screen visible while we fetch resources.
+// Returns a promise; a rejection here would be an unhandled rejection at startup
+// (and the splash is hidden explicitly once resources resolve regardless).
+SplashScreen.preventAutoHideAsync().catch(() => {
+  // Splash already hidden / unavailable — nothing to recover.
+});
 
 // Smooth fade-out transition when hiding the splash screen
 SplashScreen.setOptions({ fade: true, duration: 400 });
@@ -280,8 +284,15 @@ function AppContent() {
   useEffect(() => {
     if (!appReady || isAuthLoading) return;
 
-    // Pre-configure audio session for background playback (call service directly to avoid subscribing to audio state)
-    simpleAudioService.preconfigureAudioSession();
+    // Pre-configure audio session for background playback (call service directly to avoid subscribing to audio state).
+    // configureAudioSession() REJECTS when iOS refuses to activate the session —
+    // OSStatus 561017449 ('!pla', cannot-start-playing), which happens legitimately
+    // when the app is launched into the background or during a call. Unhandled, that
+    // rejection was the #2 production error. It is not fatal: play() reconfigures the
+    // session on the real playback path and reports there if it still fails.
+    simpleAudioService.preconfigureAudioSession().catch(() => {
+      // Pre-warm only — the playback path retries and owns real error reporting.
+    });
 
     const identifyUser = async () => {
       if (session?.user) {
@@ -464,6 +475,11 @@ function AppContent() {
 
   // Cleanup effect for AppState subscription
   useEffect(() => {
+    // Tracked so a pending resume-refresh is cancelled when this effect is torn
+    // down (or re-runs on an appReady/preloadAppData change) rather than firing
+    // against a stale closure.
+    let resumeRefreshTimer: ReturnType<typeof setTimeout> | undefined;
+
     const subscription = AppState.addEventListener('change', nextAppState => {
       const wasActive = appState.current === 'active';
       const wasInactive = appState.current !== 'active';
@@ -492,11 +508,15 @@ function AppContent() {
         backgroundedTime.current = null;
 
         // When resuming from background, refresh app data
-        setTimeout(preloadAppData, TIMING_CONSTANTS.MEDIUM_DELAY);
+        clearTimeout(resumeRefreshTimer);
+        resumeRefreshTimer = setTimeout(preloadAppData, TIMING_CONSTANTS.MEDIUM_DELAY);
       }
     });
 
-    return () => subscription.remove();
+    return () => {
+      subscription.remove();
+      clearTimeout(resumeRefreshTimer);
+    };
   }, [appReady, preloadAppData]);
 
   // Auth-gated navigation is handled declaratively below via <Stack.Protected>

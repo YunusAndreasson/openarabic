@@ -3,7 +3,6 @@ import { articlesService } from '@/services/articles';
 import { audioCache } from '@/services/audioCache';
 import type { SourceTrackedAudioTrack } from '@/services/audioPlayer';
 import { bookmarkService } from '@/services/bookmark';
-import type { EnhancedAudioTrack } from '@/types/audio.types';
 import type { ArticleId } from '@/types/branded.types';
 import { handleError } from '@/utils/errorHandling';
 import { createServiceErrorConfig } from '@/utils/serviceErrorConfig';
@@ -25,6 +24,18 @@ const generateTrackId = (articleId: ArticleId): string => {
   return `article-${articleId}`;
 };
 
+/**
+ * The slice of an article this service actually reads. Deliberately narrow so a
+ * caller holding a fuller Article can pass it straight through.
+ */
+export interface AudioTrackArticle {
+  title: string;
+  image_url: string;
+  audio_url: string;
+  audio_url_bilingual?: string | null;
+  author?: { name: string };
+}
+
 // Helper function to select audio URL based on preference
 const selectAudioUrl = (
   article: { audio_url: string; audio_url_bilingual?: string | null },
@@ -39,18 +50,25 @@ const selectAudioUrl = (
 // The track keeps its pre-resolution sourceUrl so the playlist lane in
 // simpleAudioService can invalidate a corrupt cached copy and re-resolve
 // (the review lane's self-heal, applied to playlists).
+//
+// Resolution is cache-hit-or-stream, never download-then-play. Article audio is
+// minutes long; waiting for the whole file before the first sample meant the
+// Listen button sat dead for seconds with no feedback (measured 4.7s on a
+// 5-minute article over a fast connection — far worse on mobile data).
+// expo-audio streams a remote URL fine, so a miss plays immediately and warms
+// the cache behind playback for next time.
 const createEnhancedTrack = async (
   articleId: ArticleId,
   article: { title: string; image_url: string; author?: { name: string } },
   audioUrl: string,
 ): Promise<SourceTrackedAudioTrack> => {
   const sourceUrl = generateStorageUrl('audio', audioUrl) || audioUrl;
-  const cachedAudioUrl = await audioCache.getAudio(sourceUrl);
+  const cachedAudioUrl = await audioCache.getCachedPath(sourceUrl);
 
   return {
     id: generateTrackId(articleId),
     articleId,
-    audioUrl: cachedAudioUrl,
+    audioUrl: cachedAudioUrl ?? sourceUrl,
     sourceUrl,
     title: article.title,
     artist: article.author?.name,
@@ -58,23 +76,48 @@ const createEnhancedTrack = async (
   };
 };
 
+/**
+ * Cache a track that is currently STREAMING, so the next play of it is local.
+ *
+ * Call this only once playback has actually started. Warming while the player
+ * is still opening its connection makes the download compete for bandwidth
+ * with the stream it is meant to help — which would slow down exactly the tap
+ * this path exists to make fast. A track that already resolved to a cached
+ * file (audioUrl !== sourceUrl) has nothing to warm.
+ */
+export function warmTrackCache(track: SourceTrackedAudioTrack): void {
+  if (!track.sourceUrl || track.audioUrl !== track.sourceUrl) {
+    return;
+  }
+  void audioCache.prefetch(track.sourceUrl);
+}
+
 export const enhancedAudioService = {
   /**
-   * Generates enhanced audio track for an article
+   * Generates enhanced audio track for an article.
+   *
+   * `knownArticle` lets a caller that already holds the article hand it over
+   * instead of paying for a refetch. That matters here: getArticleById pulls
+   * DETAIL_VIEW_COLUMNS — every sentence, every sentence_word, their roots and
+   * word types — and the only fields this needs are the title, audio URLs,
+   * image and author. The article reader already has all of it cached under
+   * ['article', id] with staleTime Infinity, so refetching it on the Listen tap
+   * was re-downloading the entire article to read five fields.
    */
   async generateEnhancedAudioTrack(
     articleId: ArticleId,
     audioPreference: 'arabic' | 'bilingual' = 'bilingual',
-  ): Promise<EnhancedAudioTrack | null> {
+    knownArticle?: AudioTrackArticle | null,
+  ): Promise<SourceTrackedAudioTrack | null> {
     try {
-      // Fetch article details - audio is guaranteed to be available
-      const article = await articlesService.getArticleById(articleId);
+      // Fetch article details only when the caller doesn't already have them.
+      const article = knownArticle ?? (await articlesService.getArticleById(articleId));
 
       // Select and create track using helpers
       const selectedAudioUrl = selectAudioUrl(article, audioPreference);
       return await createEnhancedTrack(articleId, article, selectedAudioUrl);
     } catch (error) {
-      await handleError(error instanceof Error ? error : new Error(String(error)), {
+      await handleError(error, {
         ...errorConfig.generate,
         analyticsProperties: { articleId },
       });
@@ -83,18 +126,26 @@ export const enhancedAudioService = {
   },
 
   /**
-   * Gets enhanced audio tracks for all reading list items
+   * Gets enhanced audio tracks for all reading list items.
+   *
+   * Metadata only — this never downloads. It runs from an app-wide query (see
+   * useGlobalAudioState → usePlaylistScreen), so caching here would mean
+   * downloading every saved article's audio at app start and on every reading
+   * list / preference invalidation, competing for bandwidth with whatever the
+   * user actually tapped. Tracks resolve to cached paths when present and
+   * stream otherwise; whichever one the user plays is warmed by the play path
+   * via warmTrackCache.
    */
   async getReadingListEnhancedTracks(
     userId: string,
     audioPreference: 'arabic' | 'bilingual' = 'bilingual',
-  ): Promise<EnhancedAudioTrack[]> {
+  ): Promise<SourceTrackedAudioTrack[]> {
     try {
       // Fetch user's reading list with the correct audio URL selected at database level
       const readingList = await bookmarkService.getReadingList(userId);
 
       // Build tracks using helpers
-      const allTracks: EnhancedAudioTrack[] = [];
+      const allTracks: SourceTrackedAudioTrack[] = [];
 
       for (const item of readingList) {
         const article = item.articles;
@@ -109,7 +160,7 @@ export const enhancedAudioService = {
 
       return allTracks;
     } catch (error) {
-      await handleError(error instanceof Error ? error : String(error), {
+      await handleError(error, {
         ...errorConfig.playlist,
         analyticsProperties: { userId },
       });

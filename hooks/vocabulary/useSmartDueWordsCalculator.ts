@@ -107,6 +107,12 @@ export function useSmartDueWordsCalculator(options: UseSmartDueWordsCalculatorOp
     }
   });
 
+  // Effect events are non-reactive and get a fresh identity on every render, so
+  // `handleAppStateChange` must stay OUT of the dependency array (enforced by
+  // react-hooks/exhaustive-deps). Listing it re-ran this effect on every render,
+  // and the cleanup then cleared the pending `refreshDelay` timer — which the
+  // handler's own `setIsRefreshing(true)` had just scheduled a render for. The
+  // delayed refresh was therefore cancelled before it could ever fire.
   useEffect(() => {
     const subscription = AppState.addEventListener('change', handleAppStateChange);
 
@@ -116,7 +122,7 @@ export function useSmartDueWordsCalculator(options: UseSmartDueWordsCalculatorOp
         clearTimeout(refreshTimeoutRef.current);
       }
     };
-  }, [handleAppStateChange]);
+  }, []);
 
   /**
    * Manual refresh function for immediate updates

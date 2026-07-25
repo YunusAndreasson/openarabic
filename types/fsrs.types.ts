@@ -68,6 +68,13 @@ export interface UseFSRSResult {
   previewIntervals: (word: StudyWord) => Partial<Record<WordConfidence, string>>;
   invalidateQueries: () => void;
   resetQueue: () => void;
+  /**
+   * Resolves once every backgrounded FSRS write has settled. `updateWord`
+   * persists off the critical path so the card advances immediately, so
+   * anything that reads the server's view (a refetch after invalidation) must
+   * await this first or it can race a write still in flight.
+   */
+  flushPendingWrites: () => Promise<void>;
 }
 
 export interface FSRSStateTracking {

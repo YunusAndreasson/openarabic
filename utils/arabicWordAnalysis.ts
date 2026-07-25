@@ -57,7 +57,7 @@ import { resolveColorName } from '@/utils/colorResolution';
 import {
   // Cache
   ANALYSIS_CACHE,
-  cacheWithLRUEviction,
+  cacheWithFifoEviction,
   clearAnalysisCache,
   // Component Detection
   analyzeDiacriticMatches,
@@ -190,7 +190,7 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
       hasBracketInjection,
     };
 
-    cacheWithLRUEviction(ANALYSIS_CACHE, cacheKey, singleWordResult);
+    cacheWithFifoEviction(ANALYSIS_CACHE, cacheKey, singleWordResult);
 
     return singleWordResult;
   }
@@ -576,7 +576,7 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
     hasBracketInjection,
   };
 
-  cacheWithLRUEviction(ANALYSIS_CACHE, cacheKey, result);
+  cacheWithFifoEviction(ANALYSIS_CACHE, cacheKey, result);
 
   return result;
 }

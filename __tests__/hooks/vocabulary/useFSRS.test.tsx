@@ -987,4 +987,77 @@ describe('useFSRS Hook', () => {
       expect(stability).toBeGreaterThan(0);
     });
   });
+
+  describe('Persistence is off the critical path', () => {
+    test('advances the card without waiting for the database write', async () => {
+      const words = [
+        createMockStudyWord({ root_id: 1 as RootId }),
+        createMockStudyWord({ root_id: 2 as RootId }),
+      ];
+      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue(words);
+
+      // A write that never settles — if updateWord awaited it, the grade would
+      // hang here exactly as it used to hang on a slow network.
+      studyWordsFSRSService.updateWordAndReview = jest
+        .fn()
+        .mockImplementation(() => new Promise(() => {}));
+
+      const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.currentWord).not.toBeNull();
+      });
+
+      const firstRootId = result.current.currentWord?.root_id;
+
+      await act(async () => {
+        // Resolves despite the pending write
+        await result.current.updateWord(firstRootId as RootId, 'known');
+      });
+
+      expect(studyWordsFSRSService.updateWordAndReview).toHaveBeenCalled();
+      // The next card is already live
+      expect(result.current.currentWord?.root_id).not.toBe(firstRootId);
+    });
+
+    test('flushPendingWrites settles once in-flight writes finish', async () => {
+      const word = createMockStudyWord({ root_id: 1 as RootId });
+      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue([word]);
+
+      let resolveWrite: (() => void) | undefined;
+      studyWordsFSRSService.updateWordAndReview = jest.fn().mockImplementation(
+        () =>
+          new Promise<void>(resolve => {
+            resolveWrite = resolve;
+          }),
+      );
+
+      const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.currentWord).not.toBeNull();
+      });
+
+      await act(async () => {
+        await result.current.updateWord(1 as RootId, 'known');
+      });
+
+      let flushed = false;
+      const flushing = result.current.flushPendingWrites().then(() => {
+        flushed = true;
+      });
+
+      // Still pending while the write is in flight — this ordering is what stops
+      // a post-session refetch overtaking the last grade.
+      await Promise.resolve();
+      expect(flushed).toBe(false);
+
+      await act(async () => {
+        resolveWrite?.();
+        await flushing;
+      });
+
+      expect(flushed).toBe(true);
+    });
+  });
 });

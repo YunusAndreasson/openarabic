@@ -444,7 +444,7 @@ describe('useReview Hook - Session Management', () => {
       useAudioPreloader.mockReturnValue({
         isPreloading: true,
         progress: 30,
-        isComplete: false,
+        isReady: false,
       });
 
       const word = createMockWord();
@@ -470,7 +470,7 @@ describe('useReview Hook - Session Management', () => {
       useAudioPreloader.mockReturnValue({
         isPreloading: false,
         progress: 100,
-        isComplete: true,
+        isReady: true,
       });
 
       const word = createMockWord();
@@ -496,7 +496,7 @@ describe('useReview Hook - Session Management', () => {
       useAudioPreloader.mockReturnValue({
         isPreloading: true,
         progress: 65,
-        isComplete: false,
+        isReady: false,
       });
 
       const word = createMockWord();
@@ -515,7 +515,7 @@ describe('useReview Hook - Session Management', () => {
 
       expect(result.current.isAudioPreloading).toBeTruthy();
       expect(result.current.audioPreloadProgress).toBe(65);
-      expect(result.current.isAudioPreloadingComplete).toBeFalsy();
+      expect(result.current.isAudioReady).toBeFalsy();
     });
   });
 });

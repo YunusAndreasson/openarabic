@@ -1,5 +1,4 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Sentry from '@sentry/react-native';
 import type { Session, User } from '@supabase/supabase-js';
 import { createClient } from '@supabase/supabase-js';
 import { AppState } from 'react-native';
@@ -45,6 +44,23 @@ export function setupSupabaseAppStateListener(): () => void {
 }
 
 /**
+ * Reports an authentication precondition failure exactly once (Sentry +
+ * analytics, no toast — see checkAuthentication).
+ */
+function reportAuthFailure(
+  error: Error,
+  analyticsEventName: string,
+  sentrySeverity: 'error' | 'info',
+): Promise<void> {
+  return handleError(error, {
+    showToast: false,
+    analyticsEventName,
+    sentrySeverity,
+    sentryTags: { location: 'check_authentication' },
+  });
+}
+
+/**
  * Checks if a user is authenticated and has the expected user ID
  * @param expectedUserId - The user ID to validate against (optional)
  * @returns The authenticated user's session and user object
@@ -54,48 +70,43 @@ export async function checkAuthentication(expectedUserId?: string): Promise<{
   session: Session;
   user: User;
 }> {
+  // Each failure path reports exactly once and then throws. The previous
+  // try/catch-around-everything wrapper re-reported anything thrown inside it,
+  // so a single failure produced three Sentry events and two analytics events —
+  // multiplied by every executeAuthenticatedQuery call while signed out.
+  //
+  // No toast here either: this is an internal precondition check, and every
+  // caller already surfaces its own STRINGS message (or redirects to auth) on
+  // rejection. Toasting `error.message` also leaked a raw developer string.
+
+  // Modern supabase-js v2 auto-initializes on first use. getSession can either
+  // reject outright or resolve with an `error` — both are the same failure here.
+  let sessionResult: Awaited<ReturnType<typeof supabase.auth.getSession>>;
   try {
-    // Modern supabase-js v2 auto-initializes on first use
-    const { data, error } = await supabase.auth.getSession();
-
-    if (error) {
-      Sentry.captureException(error, {
-        tags: { location: 'auth_check' },
-        level: 'error',
-      });
-      throw error;
-    }
-
-    const hasValidSession =
-      data.session &&
-      data.session.user &&
-      (!expectedUserId || data.session.user.id === expectedUserId);
-
-    if (hasValidSession) {
-      return {
-        session: data.session,
-        user: data.session.user,
-      };
-    }
-
-    const errorMessage = !data.session?.user ? 'User must be authenticated' : 'User ID mismatch';
-
-    const error_ = new Error(errorMessage);
-    await handleError(error_, {
-      analyticsEventName: !data.session?.user ? 'Auth_Required' : 'Auth_User_Mismatch',
-      sentrySeverity: 'info',
-    });
-    throw error_;
+    sessionResult = await supabase.auth.getSession();
   } catch (err) {
-    await handleError(err instanceof Error ? err : new Error(String(err)), {
-      sentrySeverity: 'error',
-      analyticsEventName: 'Auth_Check_Error',
-      showToast: false,
-    });
-    Sentry.captureException(err, {
-      tags: { location: 'check_authentication' },
-      level: 'error',
-    });
+    await reportAuthFailure(
+      err instanceof Error ? err : new Error(String(err)),
+      'Auth_Check_Error',
+      'error',
+    );
     throw err;
   }
+
+  const { data, error } = sessionResult;
+
+  if (error) {
+    await reportAuthFailure(error, 'Auth_Check_Error', 'error');
+    throw error;
+  }
+
+  const session = data.session;
+  if (session?.user && (!expectedUserId || session.user.id === expectedUserId)) {
+    return { session, user: session.user };
+  }
+
+  const isUserMismatch = !!session?.user;
+  const error_ = new Error(isUserMismatch ? 'User ID mismatch' : 'User must be authenticated');
+  await reportAuthFailure(error_, isUserMismatch ? 'Auth_User_Mismatch' : 'Auth_Required', 'info');
+  throw error_;
 }

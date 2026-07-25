@@ -4,9 +4,35 @@ import { DEFAULT_TOAST_DURATION } from '@/constants/animation';
 import { analytics } from '@/services/analytics';
 import { ToastType } from '@/types/enums';
 
+/** Upper bound on a synthesised error message, so one can never carry a payload. */
+const MAX_THROWN_VALUE_LENGTH = 200;
+
+/**
+ * Describe a thrown non-Error WITHOUT serialising its contents.
+ *
+ * Serialising it is actively harmful: a rejected Supabase query once threw the
+ * whole articles array, and `JSON.stringify`-ing it produced a ~100 KB "message".
+ * Sentry then grouped on that text, so every distinct payload opened a BRAND NEW
+ * issue whose title and stack frames were article JSON. Shape-only descriptions
+ * keep such errors groupable and the payload out of the message.
+ */
+function describeThrownValue(value: unknown): string {
+  if (typeof value === 'string') return value.slice(0, MAX_THROWN_VALUE_LENGTH);
+  if (value === null) return 'Non-Error thrown: null';
+  if (value === undefined) return 'Non-Error thrown: undefined';
+  if (Array.isArray(value)) return `Non-Error thrown: Array(${value.length})`;
+  if (typeof value === 'object') {
+    return `Non-Error thrown: ${value.constructor?.name ?? 'Object'}`;
+  }
+  return `Non-Error thrown: ${typeof value} ${String(value).slice(0, MAX_THROWN_VALUE_LENGTH)}`;
+}
+
 /**
  * Safely converts an unknown error to an Error object.
  * Useful for catch blocks where the error type is unknown.
+ *
+ * A plain string is treated as a deliberate message (many call sites pass one);
+ * anything else non-Error is described by shape — see describeThrownValue.
  */
 export function toError(error: unknown): Error {
   if (error instanceof Error) return error;
@@ -17,9 +43,9 @@ export function toError(error: unknown): Error {
     'message' in error &&
     typeof error.message === 'string'
   ) {
-    return new Error(error.message);
+    return new Error(error.message.slice(0, MAX_THROWN_VALUE_LENGTH));
   }
-  return new Error(String(error));
+  return new Error(describeThrownValue(error));
 }
 
 // Store toast handler globally - updated to support types
@@ -184,12 +210,13 @@ const trackErrorAnalytics = async (
  * @param error The error object
  * @param options Configuration options for error handling
  */
-export const handleError = async (
-  error: Error | string,
-  options: ErrorOptions = {},
-): Promise<void> => {
+export const handleError = async (error: unknown, options: ErrorOptions = {}): Promise<void> => {
   const opts = { ...DEFAULT_OPTIONS, ...options };
-  const errorObj = typeof error === 'string' ? new Error(error) : error;
+  // Accepts `unknown` so catch blocks can hand the raw value straight over.
+  // Normalising here (rather than at ~19 call sites doing
+  // `e instanceof Error ? e : String(e)`) is what stops a thrown object becoming
+  // the literal Sentry title "Error: [object Object]".
+  const errorObj = toError(error);
 
   // Skip Sentry logging for expected authentication errors (wrong password, invalid credentials, etc.)
   const shouldSkipSentry = isExpectedAuthError(errorObj);

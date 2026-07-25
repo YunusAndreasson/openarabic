@@ -14,12 +14,14 @@ import { Platform } from 'react-native';
 
 import { selectionFeedback } from '@/utils/haptics';
 
-// Keep inline mock for this test since it needs direct access to jest.fn() instances for assertions
+// Keep inline mock for this test since it needs direct access to jest.fn() instances for assertions.
+// Every expo-haptics function returns Promise<void> — the mocks must too, or
+// utils/haptics can't attach the .catch() that swallows "no haptics engine".
 jest.mock('expo-haptics', () => ({
-  selectionAsync: jest.fn(),
-  impactAsync: jest.fn(),
-  notificationAsync: jest.fn(),
-  performAndroidHapticsAsync: jest.fn(),
+  selectionAsync: jest.fn(() => Promise.resolve()),
+  impactAsync: jest.fn(() => Promise.resolve()),
+  notificationAsync: jest.fn(() => Promise.resolve()),
+  performAndroidHapticsAsync: jest.fn(() => Promise.resolve()),
   ImpactFeedbackStyle: { Light: 'light' },
   NotificationFeedbackType: { Success: 'success', Error: 'error' },
   AndroidHaptics: {
@@ -68,5 +70,47 @@ describe('haptics', () => {
 
     expect(performAndroidHapticsAsync).toHaveBeenCalledWith(AndroidHaptics.Segment_Tick);
     expect(selectionAsync).not.toHaveBeenCalled();
+  });
+
+  // Regression: devices without a haptics engine reject the native call. These
+  // helpers are fire-and-forget, so an unhandled rejection was reaching Sentry on
+  // every tap — it was the single largest source of production errors.
+  test('swallows a rejected haptic instead of leaking an unhandled rejection', async () => {
+    jest.useRealTimers();
+    const { selectionAsync } = require('expo-haptics');
+    selectionAsync.mockRejectedValue(new Error('A haptics engine is not available on this device'));
+
+    const unhandled = jest.fn();
+    process.on('unhandledRejection', unhandled);
+
+    expect(() => selectionFeedback()).not.toThrow();
+    // Let the microtask queue drain so an unattached rejection would surface.
+    await new Promise(resolve => setImmediate(resolve));
+
+    process.off('unhandledRejection', unhandled);
+    expect(selectionAsync).toHaveBeenCalledTimes(1);
+    expect(unhandled).not.toHaveBeenCalled();
+  });
+
+  test('swallows a rejected Android haptic too', async () => {
+    jest.useRealTimers();
+    // The debounce flag lives at module scope and is released by a real 50ms
+    // timeout that the previous real-timer test left pending — wait it out, or
+    // shouldTriggerHaptic() short-circuits and nothing is called.
+    await new Promise(resolve => setTimeout(resolve, 60));
+
+    const { performAndroidHapticsAsync } = require('expo-haptics');
+    jest.replaceProperty(Platform, 'OS', 'android');
+    performAndroidHapticsAsync.mockRejectedValue(new Error('A haptics engine is not available'));
+
+    const unhandled = jest.fn();
+    process.on('unhandledRejection', unhandled);
+
+    expect(() => selectionFeedback()).not.toThrow();
+    await new Promise(resolve => setImmediate(resolve));
+
+    process.off('unhandledRejection', unhandled);
+    expect(performAndroidHapticsAsync).toHaveBeenCalledTimes(1);
+    expect(unhandled).not.toHaveBeenCalled();
   });
 });

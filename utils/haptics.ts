@@ -44,6 +44,25 @@ const shouldTriggerHaptic = (): boolean => {
 };
 
 /**
+ * Fire a haptic without awaiting it, swallowing rejection.
+ *
+ * Every expo-haptics call returns a Promise<void>, and these helpers are
+ * deliberately fire-and-forget (`: void`). Dropping the promise meant a device
+ * with no haptics engine — common on budget/older Android hardware, which
+ * rejects with "A haptics engine is not available on this device" — produced an
+ * *unhandled rejection* on every single tap. Sentry's global handler reported
+ * each one, making this the single largest source of production errors.
+ *
+ * Haptics are cosmetic: there is nothing to recover from and nothing to tell
+ * the user, so the rejection is discarded rather than routed to handleError.
+ */
+const fireHaptic = (haptic: Promise<void>): void => {
+  haptic.catch(() => {
+    // No haptics engine / haptics unavailable — cosmetic only, nothing to do.
+  });
+};
+
+/**
  * Selection feedback for subtle interactions like:
  * - Toggle switches
  * - Filter selection
@@ -52,9 +71,9 @@ const shouldTriggerHaptic = (): boolean => {
 export const selectionFeedback = (): void => {
   if (shouldTriggerHaptic()) {
     if (Platform.OS === 'android') {
-      Haptics.performAndroidHapticsAsync(Haptics.AndroidHaptics.Segment_Tick);
+      fireHaptic(Haptics.performAndroidHapticsAsync(Haptics.AndroidHaptics.Segment_Tick));
     } else {
-      Haptics.selectionAsync();
+      fireHaptic(Haptics.selectionAsync());
     }
   }
 };
@@ -68,9 +87,9 @@ export const selectionFeedback = (): void => {
 export const lightFeedback = (): void => {
   if (shouldTriggerHaptic()) {
     if (Platform.OS === 'android') {
-      Haptics.performAndroidHapticsAsync(Haptics.AndroidHaptics.Virtual_Key);
+      fireHaptic(Haptics.performAndroidHapticsAsync(Haptics.AndroidHaptics.Virtual_Key));
     } else {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      fireHaptic(Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light));
     }
   }
 };
@@ -84,9 +103,9 @@ export const lightFeedback = (): void => {
 export const mediumFeedback = (): void => {
   if (shouldTriggerHaptic()) {
     if (Platform.OS === 'android') {
-      Haptics.performAndroidHapticsAsync(Haptics.AndroidHaptics.Context_Click);
+      fireHaptic(Haptics.performAndroidHapticsAsync(Haptics.AndroidHaptics.Context_Click));
     } else {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      fireHaptic(Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium));
     }
   }
 };
@@ -100,9 +119,9 @@ export const mediumFeedback = (): void => {
 export const successFeedback = (): void => {
   if (shouldTriggerHaptic()) {
     if (Platform.OS === 'android') {
-      Haptics.performAndroidHapticsAsync(Haptics.AndroidHaptics.Confirm);
+      fireHaptic(Haptics.performAndroidHapticsAsync(Haptics.AndroidHaptics.Confirm));
     } else {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      fireHaptic(Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success));
     }
   }
 };
@@ -116,9 +135,9 @@ export const successFeedback = (): void => {
 export const errorFeedback = (): void => {
   if (shouldTriggerHaptic()) {
     if (Platform.OS === 'android') {
-      Haptics.performAndroidHapticsAsync(Haptics.AndroidHaptics.Reject);
+      fireHaptic(Haptics.performAndroidHapticsAsync(Haptics.AndroidHaptics.Reject));
     } else {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      fireHaptic(Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error));
     }
   }
 };

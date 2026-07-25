@@ -142,7 +142,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     handleReplayAudio,
     isAudioPreloading,
     audioPreloadProgress,
-    isAudioPreloadingComplete,
+    isAudioReady,
     isLoading,
     wordQueue,
     currentWord,
@@ -173,7 +173,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     rootId: currentWord?.root_id ?? null,
     promptAudioDoneKey,
     // Stop listening once the answer is revealed — the recall test is over.
-    ready: !isUpdating && !isLoading && isAudioPreloadingComplete && !isComplete && !revealed,
+    ready: !isUpdating && !isLoading && isAudioReady && !isComplete && !revealed,
     stopAudio,
     // Correct match → silently advance as "Knew it" (speaking the answer is the
     // proof; fromVoice bypasses the reveal guard).
@@ -214,13 +214,15 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     return <ReviewLoadingState message={STRINGS.PREPARING_PRACTICE_SESSION} />;
   }
 
-  // Show audio preloading indicator (only when not in initial loading phase)
+  // Show audio preloading indicator (only when not in initial loading phase).
+  // This now covers just the first card's audio — the rest of the session's
+  // files keep downloading behind the live session.
   if (isAudioPreloading) {
     return (
       <ReviewLoadingState
         message={STRINGS.LOADING_AUDIO_ELLIPSIS}
         progress={audioPreloadProgress}
-        successMessage={isAudioPreloadingComplete ? STRINGS.AUDIO_READY : undefined}
+        successMessage={isAudioReady ? STRINGS.AUDIO_READY : undefined}
       />
     );
   }

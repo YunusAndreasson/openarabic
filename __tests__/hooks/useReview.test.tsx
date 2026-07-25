@@ -215,7 +215,7 @@ describe('useReview Hook', () => {
       useAudioPreloader.mockReturnValue({
         isPreloading: true,
         progress: 50,
-        isComplete: false,
+        isReady: false,
       });
 
       const word = createMockWord();

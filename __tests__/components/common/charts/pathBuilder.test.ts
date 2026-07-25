@@ -171,6 +171,77 @@ describe('buildSmoothChartPath', () => {
     expect(buildPoint).toHaveBeenCalledWith(100, 170, data[1], 1);
   });
 
+  describe('overshoot clamping', () => {
+    /** Pull each cubic segment's control y-values out of the built path. */
+    const parseControlYs = (path: string): { cy1: number; cy2: number; endY: number }[] =>
+      [...path.matchAll(/C([\d.-]+),([\d.-]+) ([\d.-]+),([\d.-]+) ([\d.-]+),([\d.-]+)/g)].map(
+        match => ({
+          cy1: Number(match[2]),
+          cy2: Number(match[4]),
+          endY: Number(match[6]),
+        }),
+      );
+
+    // A plateau, a one-step jump, then another plateau — the exact shape a
+    // cumulative "words in practice" series takes when words are added in a
+    // burst. Averaging neighbour slopes used to push control points past both
+    // plateaus, which the Skia canvas then clipped flat at top and bottom.
+    const stepData: TestDataItem[] = [
+      { value: 0, label: 'a' },
+      { value: 0, label: 'b' },
+      { value: 0, label: 'c' },
+      { value: 100, label: 'd' },
+      { value: 100, label: 'e' },
+      { value: 100, label: 'f' },
+    ];
+    const stepPositions = [0, 20, 40, 60, 80, 100];
+
+    test('keeps every control point inside its segment y-range', () => {
+      const result = buildSmoothChartPath<TestDataItem, TestPoint>({
+        data: stepData,
+        dataPointPositions: stepPositions,
+        calculateY: item => CHART_HEIGHT - item.value,
+        buildPoint: (x, y, item) => ({ x, y, value: item.value, label: item.label }),
+      });
+
+      const segments = parseControlYs(result.path);
+      expect(segments).toHaveLength(stepData.length - 1);
+
+      segments.forEach((segment, index) => {
+        const startY = result.points[index]?.y ?? 0;
+        const minY = Math.min(startY, segment.endY);
+        const maxY = Math.max(startY, segment.endY);
+
+        expect(segment.cy1).toBeGreaterThanOrEqual(minY);
+        expect(segment.cy1).toBeLessThanOrEqual(maxY);
+        expect(segment.cy2).toBeGreaterThanOrEqual(minY);
+        expect(segment.cy2).toBeLessThanOrEqual(maxY);
+      });
+    });
+
+    test('never draws above the highest or below the lowest data point', () => {
+      const result = buildSmoothChartPath<TestDataItem, TestPoint>({
+        data: stepData,
+        dataPointPositions: stepPositions,
+        calculateY: item => CHART_HEIGHT - item.value,
+        buildPoint: (x, y, item) => ({ x, y, value: item.value, label: item.label }),
+      });
+
+      const dataYs = result.points.map(point => point.y);
+      const dataMin = Math.min(...dataYs);
+      const dataMax = Math.max(...dataYs);
+
+      // Control points bound the curve (convex hull), so bounding them bounds
+      // the rendered line — no spike above the plateau, no dip below the floor.
+      parseControlYs(result.path).forEach(segment => {
+        expect(segment.cy1).toBeGreaterThanOrEqual(dataMin);
+        expect(segment.cy1).toBeLessThanOrEqual(dataMax);
+        expect(segment.cy2).toBeGreaterThanOrEqual(dataMin);
+        expect(segment.cy2).toBeLessThanOrEqual(dataMax);
+      });
+    });
+  });
+
   test('should handle missing position (fallback to 0)', () => {
     const data: TestDataItem[] = [{ value: 50, label: 'A' }];
     const positions: number[] = []; // Missing position

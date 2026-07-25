@@ -336,7 +336,7 @@ class SimpleAudioService {
    * removed) player and the promise resolves quietly — the caller re-checks
    * its generation right after this await and aborts.
    */
-  private async waitForPlayerReady(generation: number): Promise<void> {
+  private async waitForPlayerReady(generation: number, isRemoteSource = false): Promise<void> {
     const player = this.currentPlayer;
     if (!player) {
       return;
@@ -357,7 +357,12 @@ class SimpleAudioService {
       return;
     }
 
-    const READY_TIMEOUT_MS = 5000;
+    // A local file either loads almost instantly or is corrupt, so 5s is a
+    // generous verdict there. A streamed remote source has to open a connection
+    // and buffer first, and article audio now streams on a cache miss — judging
+    // that by the local-file deadline would report a healthy stream as a dead
+    // source on any slow network.
+    const READY_TIMEOUT_MS = isRemoteSource ? 20000 : 5000;
 
     return new Promise<void>((resolve, reject) => {
       let settled = false;
@@ -564,7 +569,7 @@ class SimpleAudioService {
       // failure: playing anyway would report success while producing silence
       // (the "sound just doesn't play" bug), and would keep a corrupt cached
       // file undetectable — callers invalidate the cache and retry on failure.
-      await this.waitForPlayerReady(generation);
+      await this.waitForPlayerReady(generation, isRemoteAudioUrl(track.audioUrl));
       if (isSuperseded()) {
         // A newer play()/stop() already disposed our player via
         // createFreshPlayer/stopInternal — nothing of ours is left to clean.
@@ -700,8 +705,20 @@ class SimpleAudioService {
         return false;
       }
 
-      // FLICKER FIX: Skip loading state since audio is cached (prevents loading → playing flash)
-      return (await this.playPlaylistTrack(firstTrack, { skipLoadingState: true })) === 'success';
+      // FLICKER FIX: skip the loading state for a CACHED track — a local file
+      // loads instantly and the intermediate state would just flash.
+      //
+      // A streamed track is the opposite case: it has to open a connection and
+      // buffer, and suppressing the loading state there meant nothing was
+      // published until playback actually began — no currentTrack, so the
+      // MiniPlayer stayed hidden and the Listen button stayed on "play" for the
+      // whole buffer. That silence *is* the reported "Listen takes several
+      // seconds to show up". Publishing the loading state puts the player on
+      // screen immediately, buffering, with the article's title and artwork.
+      const isStreaming = isRemoteAudioUrl(firstTrack.audioUrl);
+      return (
+        (await this.playPlaylistTrack(firstTrack, { skipLoadingState: !isStreaming })) === 'success'
+      );
     } catch (error) {
       this.isPlaylistMode = false;
       this.playlist = [];

@@ -9,21 +9,23 @@ export class PriorityQueue<T> {
   private swap(i: number, j: number) {
     if (i >= this.heap.length || j >= this.heap.length || i < 0 || j < 0) return;
 
-    // Swap items
-    const tempItem = this.heap[i];
+    const itemI = this.heap[i];
     const itemJ = this.heap[j];
-    if (tempItem === undefined || itemJ === undefined) return;
+    const priorityI = this.priorities[i];
+    const priorityJ = this.priorities[j];
+
+    // Read and validate BEFORE mutating, so the swap is all-or-nothing. The
+    // previous order swapped the items first and could then bail out before
+    // swapping the priorities, permanently desyncing the two parallel arrays.
+    // (These undefined checks exist to satisfy noUncheckedIndexedAccess — the
+    // heap is not expected to contain holes — but the ordering still mattered.)
+    if (itemI === undefined || itemJ === undefined) return;
+    if (priorityI === undefined || priorityJ === undefined) return;
 
     this.heap[i] = itemJ;
-    this.heap[j] = tempItem;
-
-    // Swap priorities
-    const tempPriority = this.priorities[i];
-    const priorityJ = this.priorities[j];
-    if (tempPriority === undefined || priorityJ === undefined) return;
-
+    this.heap[j] = itemI;
     this.priorities[i] = priorityJ;
-    this.priorities[j] = tempPriority;
+    this.priorities[j] = priorityI;
   }
 
   private bubbleUp(index: number) {

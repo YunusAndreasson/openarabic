@@ -5,7 +5,11 @@ import { OnboardingStep } from '@/constants/onboarding';
 import { useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
 import { analytics } from '@/services/analytics';
 import { simpleAudioService } from '@/services/audioPlayer';
-import { enhancedAudioService } from '@/services/audioPlaylist';
+import {
+  enhancedAudioService,
+  warmTrackCache,
+  type AudioTrackArticle,
+} from '@/services/audioPlaylist';
 import { useAppSelector } from '@/store/hooks';
 import type { ArticleId } from '@/types/branded.types';
 import { isAudioBusy } from '@/utils/audioUtils';
@@ -22,7 +26,13 @@ import { markOnboardingStep } from '@/utils/onboardingStorage';
  * Arabic-only fallback when no bilingual audio exists — so the control is
  * always available.
  */
-export function useArticleListen(articleId: ArticleId | undefined, articleTitle?: string) {
+export function useArticleListen(
+  articleId: ArticleId | undefined,
+  articleTitle?: string,
+  /** The article the reader already has loaded. Passed through so the track can
+   *  be built without refetching it (see generateEnhancedAudioTrack). */
+  article?: AudioTrackArticle | null,
+) {
   const { playing, isLoading, currentArticle } = useGlobalAudioState();
   const audioPreference = useAppSelector(state => state.settings.audioLanguagePreference);
 
@@ -44,12 +54,16 @@ export function useArticleListen(articleId: ArticleId | undefined, articleTitle?
       const track = await enhancedAudioService.generateEnhancedAudioTrack(
         articleId,
         audioPreference,
+        article,
       );
       // On failure the service already showed an error toast
       if (!track) return;
 
       const success = await simpleAudioService.playPlaylist([track]);
       if (success) {
+        // Playback is live — now it's safe to pull the file down for next time
+        // without stealing bandwidth from the stream that just started.
+        warmTrackCache(track);
         analytics.track(ANALYTICS_EVENTS.AUDIO_PLAYBACK_STARTED, {
           article_id: articleId,
           article_title: articleTitle ?? track.title,
@@ -61,7 +75,7 @@ export function useArticleListen(articleId: ArticleId | undefined, articleTitle?
     } catch (error) {
       handleError(error as Error);
     }
-  }, [articleId, articleTitle, audioPreference, isListeningToThisArticle]);
+  }, [articleId, articleTitle, audioPreference, article, isListeningToThisArticle]);
 
   return {
     isListeningToThisArticle,

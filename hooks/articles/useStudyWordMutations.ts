@@ -89,7 +89,11 @@ export const useStudyWordMutations = (
     mutationFn: async ({ userId, rootId, intent }: ToggleStudyVariables) => {
       return studyWordsFSRSService.toggleFSRSStudyRoot(userId, rootId, intent);
     },
-    onMutate: async ({ userId, rootId, intent }: ToggleStudyVariables): Promise<StudyWordContext> => {
+    onMutate: async ({
+      userId,
+      rootId,
+      intent,
+    }: ToggleStudyVariables): Promise<StudyWordContext> => {
       // CRITICAL: Use fsrsQueries.all() to match what UI components read
       // This ensures optimistic updates are immediately visible in both underlines and buttons
       await queryClient.cancelQueries({

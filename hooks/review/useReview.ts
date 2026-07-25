@@ -64,7 +64,9 @@ interface UseReviewReturn {
   handleReplayAudio: () => Promise<void>;
   isAudioPreloading: boolean;
   audioPreloadProgress: number;
-  isAudioPreloadingComplete: boolean;
+  /** The first card's audio is cached — the session may run. Later cards keep
+   *  preloading in the background (see useAudioPreloader). */
+  isAudioReady: boolean;
   /** Play the English meaning audio without advancing or flipping the card.
    *  Shared by the manual reveal and the voice-grading miss path (the answer is
    *  shown by the flip / the voice result panel; this just plays the audio). */
@@ -242,6 +244,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     wordQueue,
     isLoading,
     resetQueue,
+    flushPendingWrites,
   } = useFSRS({
     userId: user?.id,
     onComplete: triggerCompletionTransition,
@@ -252,7 +255,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   const {
     isPreloading: isAudioPreloading,
     progress: audioPreloadProgress,
-    isComplete: isAudioPreloadingComplete,
+    isReady: isAudioReady,
   } = useAudioPreloader(wordQueue, isComplete);
 
   // Derive currentSentence directly from currentWord (React 19 auto-memoizes)
@@ -340,7 +343,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
           fadeIn();
         }
       } catch (error) {
-        handleError(error instanceof Error ? error : new Error(String(error)));
+        handleError(error);
         if (!stateRefs.current.isUpdatingWord) return;
         fadeIn();
       } finally {
@@ -399,7 +402,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       }
       return false;
     } catch (error) {
-      handleError(error instanceof Error ? error : new Error(String(error)));
+      handleError(error);
       return false;
     }
   }, []);
@@ -586,7 +589,10 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       return;
     }
 
-    if (isAudioPreloading || !isAudioPreloadingComplete) {
+    // Gated on the FIRST card's audio only. Later cards' files are still
+    // downloading in the background; playAudio's quick mode (below) covers the
+    // rare case where the user reaches a card before its file has landed.
+    if (isAudioPreloading || !isAudioReady) {
       return;
     }
 
@@ -634,7 +640,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
         promptWatchRef.current = { key: keyForRun, cancel: watchPromptFinish(markDone, movedOn) };
       })
       .catch(err => {
-        handleError(err instanceof Error ? err : new Error(String(err)));
+        handleError(err);
         markDone();
       });
   }, [
@@ -644,7 +650,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     showTranslation,
     playAudio,
     isAudioPreloading,
-    isAudioPreloadingComplete,
+    isAudioReady,
   ]);
 
   // Safety watchdog: if no current word and not transitioning, force completion.
@@ -702,10 +708,14 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     // skipToken-guard predicate, and active observers refetch on their own —
     // manual refetchQueries here would only ABORT those fetches and restart
     // them (cancelRefetch defaults to true).
+    //
+    // Grades persist in the background (see useFSRS.updateWord), so the last
+    // card's write may still be in flight as the screen closes. Settle those
+    // first or the refetch can overtake them and repopulate the practice screen
+    // with pre-grade data. Not gated on `mounted` — the flush must complete even
+    // though this closure outlives the screen.
     InteractionManager.runAfterInteractions(() => {
-      if (!mounted.current) return;
-
-      invalidateQueries();
+      void flushPendingWrites().then(invalidateQueries);
     });
 
     // Schedule navigation with timer cleanup
@@ -828,7 +838,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     handleReplayAudio,
     isAudioPreloading,
     audioPreloadProgress,
-    isAudioPreloadingComplete,
+    isAudioReady,
     revealMeaningPassive,
     promptAudioDoneKey,
     stopAudio: stopAudioSafely,

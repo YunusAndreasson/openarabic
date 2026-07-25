@@ -67,7 +67,7 @@ describe('useAudioPreloader', () => {
 
       expect(result.current.isPreloading).toBeFalsy();
       expect(result.current.progress).toBe(0);
-      expect(result.current.isComplete).toBeFalsy();
+      expect(result.current.isReady).toBeFalsy();
     });
 
     test('should not crash with empty array', () => {
@@ -82,7 +82,7 @@ describe('useAudioPreloader', () => {
 
       expect(result.current).toHaveProperty('isPreloading');
       expect(result.current).toHaveProperty('progress');
-      expect(result.current).toHaveProperty('isComplete');
+      expect(result.current).toHaveProperty('isReady');
     });
 
     test('should return boolean for isPreloading', () => {

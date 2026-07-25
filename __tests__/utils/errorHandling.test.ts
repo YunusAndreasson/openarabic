@@ -5,7 +5,12 @@
 
 import { describe, expect, jest, test, beforeEach } from '@jest/globals';
 
-import { setGlobalToastHandler, showSuccessToast, handleError } from '@/utils/errorHandling';
+import {
+  setGlobalToastHandler,
+  showSuccessToast,
+  handleError,
+  toError,
+} from '@/utils/errorHandling';
 import { ToastType } from '@/types/enums';
 
 // Mock dependencies
@@ -443,6 +448,60 @@ describe('errorHandling utility', () => {
       await handleError(new Error('Test'));
 
       expect(analyticsResolved).toBeTruthy();
+    });
+  });
+
+  // Regression: a thrown non-Error used to be stringified into the message.
+  // `String(obj)` produced the Sentry title "Error: [object Object]", and
+  // JSON.stringify-ing a rejected query's payload produced a ~100KB title made of
+  // article JSON — which Sentry grouped per-payload, opening a new issue each time.
+  describe('toError - non-Error normalisation', () => {
+    test('returns an Error unchanged', () => {
+      const original = new Error('boom');
+      expect(toError(original)).toBe(original);
+    });
+
+    test('treats a string as a deliberate message', () => {
+      expect(toError('something failed').message).toBe('something failed');
+    });
+
+    test('uses a message property when present (Supabase-style errors)', () => {
+      expect(toError({ message: 'JWT expired', code: '401' }).message).toBe('JWT expired');
+    });
+
+    test('describes a thrown array by shape, never its contents', () => {
+      const articles = [
+        { id: 577, title: 'Public Preaching', summary: 'x'.repeat(500) },
+        { id: 576, title: 'Stories of Prophetic Judgments', summary: 'y'.repeat(500) },
+      ];
+
+      const { message } = toError(articles);
+
+      expect(message).toBe('Non-Error thrown: Array(2)');
+      expect(message).not.toContain('Public Preaching');
+    });
+
+    test('describes a thrown plain object instead of "[object Object]"', () => {
+      expect(toError({ status: 500 }).message).toBe('Non-Error thrown: Object');
+      expect(toError({}).message).not.toContain('[object Object]');
+    });
+
+    test('handles null and undefined distinctly', () => {
+      expect(toError(null).message).toBe('Non-Error thrown: null');
+      expect(toError(undefined).message).toBe('Non-Error thrown: undefined');
+    });
+
+    test('bounds an over-long message so a payload can never become the title', () => {
+      expect(toError('x'.repeat(5000)).message).toHaveLength(200);
+      expect(toError({ message: 'y'.repeat(5000) }).message).toHaveLength(200);
+    });
+
+    test('handleError normalises a thrown object before reporting it', async () => {
+      await handleError({ unexpected: 'shape' }, { showToast: false });
+
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Non-Error thrown: Object' }),
+      );
     });
   });
 });

@@ -463,7 +463,7 @@ describe('audioPlayer service', () => {
       expect(status.currentTrack).toEqual(testTrack);
     });
 
-    test('should skip loading state for playlist start', async () => {
+    test('should skip loading state for a cached playlist start', async () => {
       let loadingStateSeen = false;
       audioService.subscribe(status => {
         // The "loading state" the service emits explicitly sets isBuffering: true.
@@ -473,9 +473,31 @@ describe('audioPlayer service', () => {
         }
       });
 
-      await audioService.playPlaylist([testTrack, testTrack2]);
+      // A local file loads instantly — the intermediate state would only flash.
+      const cachedTrack = { ...testTrack, audioUrl: 'file:///cache/audio1.mp3' };
+      await audioService.playPlaylist([cachedTrack, testTrack2]);
 
       expect(loadingStateSeen).toBeFalsy();
+    });
+
+    test('should publish loading state for a streamed playlist start', async () => {
+      let loadingStateSeen = false;
+      let trackSeenWhileLoading: string | null = null;
+      audioService.subscribe(status => {
+        if (status.isBuffering) {
+          loadingStateSeen = true;
+          trackSeenWhileLoading = status.currentTrack?.id ?? null;
+        }
+      });
+
+      // A remote source has to buffer. Suppressing the loading state here left
+      // the MiniPlayer hidden and the Listen button inert for the whole buffer.
+      await audioService.playPlaylist([testTrack, testTrack2]);
+
+      expect(loadingStateSeen).toBeTruthy();
+      // The track is published too, so the MiniPlayer can render immediately
+      // with its title and artwork instead of waiting for playback.
+      expect(trackSeenWhileLoading).toBe(testTrack.id);
     });
 
     test('should return false for empty playlist', async () => {

@@ -52,7 +52,7 @@ export class AccountDeletionService {
       await supabase.auth.signOut();
     } catch (error) {
       // Handle and track the error
-      await handleError(error instanceof Error ? error : new Error(String(error)), {
+      await handleError(error, {
         toastMessage: STRINGS.FAILED_TO_DELETE_ACCOUNT,
         analyticsEventName: 'Account_Deletion_Error',
         sentrySeverity: 'error',
@@ -75,7 +75,7 @@ export class AccountDeletionService {
       } = await supabase.auth.getUser();
       return user?.email ?? null;
     } catch (error) {
-      await handleError(error instanceof Error ? error : new Error(String(error)), {
+      await handleError(error, {
         analyticsEventName: 'Get_User_Email_Error',
         sentrySeverity: 'warning',
         showToast: false,

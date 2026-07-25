@@ -20,10 +20,17 @@ export function clearAnalysisCache(): void {
 }
 
 /**
- * Cache helper with LRU (Least Recently Used) eviction strategy
- * Evicts the oldest entry when cache size reaches the limit
+ * Cache helper with FIFO eviction: evicts the oldest *inserted* entry once the
+ * cache reaches the limit (Map preserves insertion order).
+ *
+ * Deliberately NOT LRU, despite the name it used to carry — a read never
+ * promotes an entry, so a hot key inserted early is still evicted before a cold
+ * key inserted later. That is fine for word analysis (the working set is a
+ * single article's vocabulary and turnover is low); the name was the only thing
+ * that was wrong. Making it true LRU would mean re-inserting on every cache hit
+ * at the read sites, which is not worth it here.
  */
-export function cacheWithLRUEviction<K, V>(
+export function cacheWithFifoEviction<K, V>(
   cache: Map<K, V>,
   key: K,
   value: V,

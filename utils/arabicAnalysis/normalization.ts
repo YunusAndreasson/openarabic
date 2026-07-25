@@ -7,7 +7,7 @@ import { CONTRACTION_MAP } from '@/constants/contractions';
 import {
   ARABIC_NORMALIZATION_CACHE,
   ENGLISH_NORMALIZATION_CACHE,
-  cacheWithLRUEviction,
+  cacheWithFifoEviction,
 } from './cache';
 import { DIACRITIC_REGEX_GLOBAL, NON_WORD_REGEX, UNICODE_FORMAT_REGEX } from './constants';
 
@@ -48,7 +48,7 @@ export function normalizeArabic(text: string): string {
     .replace(DIACRITIC_REGEX_GLOBAL, '')
     .trim();
 
-  cacheWithLRUEviction(ARABIC_NORMALIZATION_CACHE, text, normalized);
+  cacheWithFifoEviction(ARABIC_NORMALIZATION_CACHE, text, normalized);
 
   return normalized;
 }
@@ -64,7 +64,7 @@ export function normalizeEnglish(text: string): string {
 
   const normalized = text.toLowerCase().replace(NON_WORD_REGEX, '').trim();
 
-  cacheWithLRUEviction(ENGLISH_NORMALIZATION_CACHE, text, normalized);
+  cacheWithFifoEviction(ENGLISH_NORMALIZATION_CACHE, text, normalized);
 
   return normalized;
 }

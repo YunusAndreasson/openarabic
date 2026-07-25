@@ -76,8 +76,7 @@ export function useMultipleFeaturedArticles(
 
   // Get reading progress for all articles to filter for unread/low-progress
   const articleIds = useMemo(() => articlesData.map(a => a.id), [articlesData]);
-  const { data: progressMap, isLoading: isLoadingProgress } =
-    useBulkReadingProgress(articleIds);
+  const { data: progressMap, isLoading: isLoadingProgress } = useBulkReadingProgress(articleIds);
 
   // Track combined loading state for all queries
   const allQueriesReady = !isDueWordsLoading && !isFSRSLoading && !isLoadingProgress;
