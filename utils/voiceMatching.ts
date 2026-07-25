@@ -17,10 +17,29 @@
 export function normalize(text: string): string {
   return text
     .toLowerCase()
-    .replace(/[-–—]/g, ' ')
+    .replace(/[-–—/,]/g, ' ')
     .replace(/[^\w\s]/g, '')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+/**
+ * Split a dictionary gloss into the separate answers it actually offers.
+ *
+ * `roots.meaning` uses `/` and `,` to list alternatives — "return/end",
+ * "kill/annihilate", "precious, noble, valuable" — and 472 of the 15,227 roots
+ * (3.1%) are written this way. Before this existed, normalize() deleted the
+ * separator and welded the alternatives into one token ("return/end" →
+ * "returnend"), so those cards could never be graded by voice: the learner says
+ * one valid alternative and the expected string is a word that does not exist.
+ * Saying ANY listed alternative is full credit.
+ */
+export function expectedAlternatives(expected: string): string[] {
+  const parts = expected
+    .split(/[/,]/)
+    .map(part => part.trim())
+    .filter(Boolean);
+  return parts.length > 0 ? parts : [expected];
 }
 
 /** Levenshtein edit distance — small, for fuzzy single-token matching. */
@@ -45,17 +64,23 @@ export function levenshtein(a: string, b: string): number {
 }
 
 /**
- * Edit tolerance scaled to word length (~length/3): a clearly-intended answer
+ * Edit tolerance scaled to word length (~length/5): a clearly-intended answer
  * with one mispronounced consonant should still pass on a self-graded recall
- * app. Words <4 chars stay strict (cat/cot is a different word), digits get
- * none.
+ * app. Words <6 chars get none (cat/cot, jest/just are different words), digits
+ * get none.
+ *
+ * Tightened 2026-07-25 from ~length/3 after reading real grading attempts: of
+ * the seven `edit` matches in the field, five had credited a genuinely WRONG
+ * answer — jest→"just", breast→"rest", ascended→"assented",
+ * "to become"→"to be calm" — which is the costlier error here. A false negative
+ * shows the learner a transcript and an override button; a false positive
+ * silently writes "known" into FSRS and the word never comes back.
  */
 export function editBudget(word: string): number {
   if (/\d/.test(word)) return 0;
-  if (word.length >= 12) return 4;
-  if (word.length >= 8) return 3;
-  if (word.length >= 6) return 2;
-  if (word.length >= 4) return 1;
+  if (word.length >= 12) return 3;
+  if (word.length >= 9) return 2;
+  if (word.length >= 6) return 1;
   return 0;
 }
 
@@ -75,8 +100,14 @@ export function phoneticFold(word: string): string {
     .replace(/(.)\1+/g, '$1');
 }
 
-/** Min length for phonetic-fold matching — shorter words collide once folded. */
-const PHONETIC_MIN_LEN = 6;
+/**
+ * Min length for phonetic-fold matching — shorter words collide once folded.
+ * Raised 6 → 8: the fold maps m/n, b/p, d/t, c/g/k/q, s/z, f/v/w onto each
+ * other and collapses doubles, so on a 6-char word it merges genuinely
+ * different vocabulary. Long words retain enough distinct material to survive
+ * it (canberra/camperra still folds equal).
+ */
+const PHONETIC_MIN_LEN = 8;
 
 function foldsEqual(a: string, b: string): boolean {
   if (b.length < PHONETIC_MIN_LEN || /\d/.test(a) || /\d/.test(b)) return false;
@@ -346,12 +377,31 @@ export type MatchMethod =
 
 /**
  * Self-graded recall app: lenient enough that "fuzzy" still counts. Threshold
- * is on `1 - lev / max(len1, len2)`, so 0.70 means up to ~30 % of the longer
- * string can differ. Picks up: e/l swap ("humbel" → "humble"), single-token
- * drop on a phrase ("humble" caught instead of "humble himself"), and similar
- * close-but-not-exact ASR mishears that the length-scaled edit budget misses.
+ * is on `1 - lev / max(len1, len2)`, so 0.80 means up to ~20 % of the longer
+ * string can differ.
+ *
+ * Two floors, because raw similarity cannot tell the two cases apart — both
+ * "isolat" vs "isolated" (an ASR that clipped the tail: keep) and "just" vs
+ * "jest" (a different word: reject) score exactly 0.75. What separates them is
+ * SHAPE: an ASR truncation leaves the shorter string as a prefix of the longer
+ * one, whereas a wrong answer substitutes letters mid-word. So prefix pairs
+ * keep the original lenient floor and everything else has to clear a higher
+ * one.
  */
-const FUZZY_MIN_SIMILARITY = 0.7;
+const FUZZY_MIN_SIMILARITY = 0.8;
+/** Prefix pairs (ASR dropped the tail) keep the original lenient floor. */
+const FUZZY_TRUNCATION_MIN_SIMILARITY = 0.7;
+
+/**
+ * True when one string is a prefix of the other — the signature of an ASR that
+ * clipped a word, as opposed to hearing a different one. Deliberately prefix
+ * only: a shared *suffix* ("rest" inside "breast") is not a truncation and must
+ * stay strict.
+ */
+function isTruncationPair(a: string, b: string): boolean {
+  const [shorter, longer] = a.length <= b.length ? [a, b] : [b, a];
+  return shorter.length > 0 && shorter !== longer && longer.startsWith(shorter);
+}
 
 export interface SingleWordMatchResult {
   matched: boolean;
@@ -378,7 +428,7 @@ function similarityRatio(a: string, b: string): number {
  * near-homophone fold (long words only). Falls back to a despaced compare so
  * "new york" vs "newyork" passes.
  */
-export function matchSingleWord({
+function matchAgainstOneExpected({
   spoken,
   expected,
 }: {
@@ -538,7 +588,10 @@ export function matchSingleWord({
   // rather over-credit on a self-graded recall app than reject "humble
   // himself" because it was heard as "humbel himself". Digits are excluded
   // because "iso9000" vs "iso8000" should always be a miss.
-  if (!/\d/.test(despacedExpected) && bestSim >= FUZZY_MIN_SIMILARITY) {
+  const fuzzyFloor = isTruncationPair(despacedSpoken, despacedExpected)
+    ? FUZZY_TRUNCATION_MIN_SIMILARITY
+    : FUZZY_MIN_SIMILARITY;
+  if (!/\d/.test(despacedExpected) && bestSim >= fuzzyFloor) {
     return {
       matched: true,
       method: 'fuzzy',
@@ -555,4 +608,32 @@ export function matchSingleWord({
     normalizedSpoken,
     normalizedExpected,
   };
+}
+
+/**
+ * Did the learner say the expected answer? Wraps the matcher so a gloss that
+ * lists alternatives ("return/end", "precious, noble, valuable") accepts ANY of
+ * them — see `expectedAlternatives`. On a miss, reports the alternative that
+ * came closest, so the debug HUD and telemetry show the comparison that
+ * actually mattered rather than the raw multi-answer string.
+ */
+export function matchSingleWord({
+  spoken,
+  expected,
+}: {
+  spoken: string;
+  expected: string;
+}): SingleWordMatchResult {
+  const alternatives = expectedAlternatives(expected);
+  if (alternatives.length === 1) {
+    return matchAgainstOneExpected({ spoken, expected: alternatives[0] ?? expected });
+  }
+
+  let best: SingleWordMatchResult | null = null;
+  for (const alternative of alternatives) {
+    const result = matchAgainstOneExpected({ spoken, expected: alternative });
+    if (result.matched) return result;
+    if (best === null || result.similarity > best.similarity) best = result;
+  }
+  return best ?? matchAgainstOneExpected({ spoken, expected });
 }

@@ -18,6 +18,8 @@ import reducer, {
   setDisplayLanguagePreference,
   setHapticsEnabled,
   setReminderTime,
+  setVoiceEnabled,
+  setVoiceOfferDismissed,
   setWordTapShowsTooltip,
   type SettingsState,
 } from '../../store/settingsSlice';
@@ -198,5 +200,43 @@ describe('settingsSlice reducers', () => {
     state = reducer(state, setDailyWordLimit(20));
     expect(state.arabicFontSize).toBe(22);
     expect(state.arabicFont).toBe(initialState.arabicFont);
+  });
+
+  // Speak-the-answer is promoted on the practice screen until the learner
+  // answers. These two booleans ARE the whole visibility policy — there is no
+  // session gate or impression cap to go stale.
+  describe('speak-the-answer offer', () => {
+    const defaults = () => reducer(undefined, { type: '@@INIT' });
+
+    it('ships off and un-refused, so the offer shows on first visit', () => {
+      const state = defaults();
+      expect(state.voiceEnabled).toBe(false);
+      expect(state.voiceOfferDismissed).toBe(false);
+    });
+
+    it('an explicit refusal is what retires the offer', () => {
+      const state = reducer(defaults(), setVoiceOfferDismissed(true));
+      expect(state.voiceOfferDismissed).toBe(true);
+      // Refusing must never quietly enable the feature.
+      expect(state.voiceEnabled).toBe(false);
+    });
+
+    it('turning it on does not need a refusal, and vice versa', () => {
+      const enabled = reducer(defaults(), setVoiceEnabled(true));
+      expect(enabled.voiceEnabled).toBe(true);
+      expect(enabled.voiceOfferDismissed).toBe(false);
+    });
+
+    it.each([
+      [false, false, true],
+      [true, false, false],
+      [false, true, false],
+      [true, true, false],
+    ])(
+      'voiceEnabled=%s dismissed=%s → offer shown=%s',
+      (voiceEnabled, dismissed, expectedShown) => {
+        expect(!voiceEnabled && !dismissed).toBe(expectedShown);
+      },
+    );
   });
 });

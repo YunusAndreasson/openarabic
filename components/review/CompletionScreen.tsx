@@ -6,6 +6,7 @@ import Animated, { FadeIn, FadeInUp, FadeOut, ZoomIn } from 'react-native-reanim
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { NotificationPrimingCard } from '@/components/review/NotificationPrimingCard';
+import { VoicePrimingCard } from '@/components/review/VoicePrimingCard';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { TIMING_CONFIG, TIMING_CONSTANTS } from '@/constants/animation';
@@ -13,7 +14,12 @@ import { FONTS } from '@/constants/fonts';
 import { getThemeAwareElevation, LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
-import { useEncouragingMetrics, useNotificationPriming, useReviewCompletion } from '@/hooks/review';
+import {
+  useEncouragingMetrics,
+  useNotificationPriming,
+  useReviewCompletion,
+  useVoicePriming,
+} from '@/hooks/review';
 import { useStudyStreak } from '@/hooks/practice';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
@@ -102,7 +108,20 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
 
   // Primed notification ask — shows on the first session (and at most once more)
   const { showPrimingCard, accept, decline } = useNotificationPriming();
-  const visibleMetrics = showPrimingCard
+  // Speak-the-answer offer — stands on every completion until answered.
+  const {
+    showPrimingCard: showVoicePriming,
+    accept: acceptVoice,
+    decline: declineVoice,
+  } = useVoicePriming();
+
+  // The two share one slot, so only one may ever render. Notifications win:
+  // that ask is capped at two impressions for the life of the install, while
+  // the voice offer is standing and loses nothing by waiting a session.
+  const showVoiceCard = showVoicePriming && !showPrimingCard;
+  const showAnyPriming = showPrimingCard || showVoiceCard;
+
+  const visibleMetrics = showAnyPriming
     ? (encouragingResult?.metrics.slice(0, MAX_METRICS_WITH_PRIMING) ?? [])
     : (encouragingResult?.metrics ?? []);
 
@@ -169,14 +188,19 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
         </View>
       )}
 
-      {/* Primed notification ask - between metrics and the bottom-anchored button */}
-      {showPrimingCard && (
+      {/* Priming slot - between metrics and the bottom-anchored button. One
+          card at most; see showVoiceCard above for which wins. */}
+      {showAnyPriming && (
         <Animated.View
           entering={ENTERING_PRIMING}
           exiting={EXITING_PRIMING}
           style={styles.primingContainer}
         >
-          <NotificationPrimingCard onAccept={accept} onDecline={decline} />
+          {showPrimingCard ? (
+            <NotificationPrimingCard onAccept={accept} onDecline={decline} />
+          ) : (
+            <VoicePrimingCard onAccept={acceptVoice} onDecline={declineVoice} />
+          )}
         </Animated.View>
       )}
 

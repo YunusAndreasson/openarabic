@@ -24,6 +24,7 @@ import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 
 import { CompletionScreen } from '@/components/review/CompletionScreen';
+import { STRINGS } from '@/constants/strings';
 import type { SessionMetrics } from '@/types/review.types';
 
 // Mock dependencies
@@ -83,6 +84,11 @@ jest.mock('@/hooks/review', () => ({
     accept: jest.fn(),
     decline: jest.fn(),
   })),
+  useVoicePriming: jest.fn(() => ({
+    showPrimingCard: false,
+    accept: jest.fn(),
+    decline: jest.fn(),
+  })),
   useEncouragingMetrics: jest.fn(() => ({
     metrics: [
       {
@@ -108,6 +114,7 @@ const {
   useReviewCompletion,
   useEncouragingMetrics,
   useNotificationPriming,
+  useVoicePriming,
 } = require('@/hooks/review');
 
 describe('CompletionScreen Component', () => {
@@ -128,6 +135,11 @@ describe('CompletionScreen Component', () => {
     // resetMocks: true strips factory implementations — re-install the ones
     // the component destructures unconditionally
     useNotificationPriming.mockReturnValue({
+      showPrimingCard: false,
+      accept: jest.fn(),
+      decline: jest.fn(),
+    });
+    useVoicePriming.mockReturnValue({
       showPrimingCard: false,
       accept: jest.fn(),
       decline: jest.fn(),
@@ -486,6 +498,43 @@ describe('CompletionScreen Component', () => {
 
       // Both metrics should be displayed
       expect(getAllByText(/streak|reviewed/)).toBeTruthy();
+    });
+  });
+
+  // Both priming cards share one slot above the anchored button. Rendering both
+  // would stack two asks on a celebration screen and get neither read.
+  describe('Priming slot', () => {
+    const primingOn = () => ({ showPrimingCard: true, accept: jest.fn(), decline: jest.fn() });
+
+    test('shows the notification ask when it wants the slot', () => {
+      useNotificationPriming.mockReturnValue(primingOn());
+
+      const { queryByText } = render(<CompletionScreen />);
+      expect(queryByText(STRINGS.NOTIFICATION_PRIMING_TITLE)).toBeTruthy();
+      expect(queryByText(STRINGS.VOICE_PRIMING_TITLE)).toBeNull();
+    });
+
+    test('shows the voice offer when the slot is free', () => {
+      useVoicePriming.mockReturnValue(primingOn());
+
+      const { queryByText } = render(<CompletionScreen />);
+      expect(queryByText(STRINGS.VOICE_PRIMING_TITLE)).toBeTruthy();
+      expect(queryByText(STRINGS.NOTIFICATION_PRIMING_TITLE)).toBeNull();
+    });
+
+    test('notifications win when both want the slot — never both', () => {
+      useNotificationPriming.mockReturnValue(primingOn());
+      useVoicePriming.mockReturnValue(primingOn());
+
+      const { queryByText } = render(<CompletionScreen />);
+      expect(queryByText(STRINGS.NOTIFICATION_PRIMING_TITLE)).toBeTruthy();
+      expect(queryByText(STRINGS.VOICE_PRIMING_TITLE)).toBeNull();
+    });
+
+    test('neither renders when both decline the slot', () => {
+      const { queryByText } = render(<CompletionScreen />);
+      expect(queryByText(STRINGS.NOTIFICATION_PRIMING_TITLE)).toBeNull();
+      expect(queryByText(STRINGS.VOICE_PRIMING_TITLE)).toBeNull();
     });
   });
 });

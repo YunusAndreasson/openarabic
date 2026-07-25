@@ -28,6 +28,14 @@ export interface SettingsState {
   wordTapShowsTooltip: boolean;
   hapticsEnabled: boolean; // Vibration for button presses and interactions
   voiceEnabled: boolean; // Speak the English answer in Practice
+  /**
+   * The learner explicitly refused the speak-the-answer offer on the practice
+   * screen. Until then the offer is shown every visit — it's a flagship
+   * feature, so it keeps asking rather than snoozing itself. Only an explicit
+   * "No thanks" retires it; Settings remains the way to turn the feature on
+   * later.
+   */
+  voiceOfferDismissed: boolean;
   // Advanced voice-grading knobs (Account → Advanced). Defaults mirror
   // DEFAULT_RECORDING_CONFIG; surfaced so quiet-capture issues can be tuned /
   // A-B tested on-device without a rebuild.
@@ -52,7 +60,8 @@ const initialState: SettingsState = {
   adaptiveNewWordPacingEnabled: true, // Default on; eases new words when recall dips
   wordTapShowsTooltip: false, // Default: tap a word to open its card directly (discoverable)
   hapticsEnabled: true, // Default to enabled for haptic feedback
-  voiceEnabled: false, // Opt-in; downloads a ~460 MB model on enable
+  voiceEnabled: false, // Opt-in; downloads a ~103 MB model on enable
+  voiceOfferDismissed: false,
   voiceEnergyGateEnabled: true,
   voiceGainNormalizeEnabled: true,
   voiceIosRawMode: false,
@@ -96,6 +105,9 @@ const settingsSlice = createSlice({
     setVoiceEnabled: (state, action: PayloadAction<boolean>) => {
       state.voiceEnabled = action.payload;
     },
+    setVoiceOfferDismissed: (state, action: PayloadAction<boolean>) => {
+      state.voiceOfferDismissed = action.payload;
+    },
     setVoiceEnergyGateEnabled: (state, action: PayloadAction<boolean>) => {
       state.voiceEnergyGateEnabled = action.payload;
     },
@@ -123,6 +135,7 @@ export const {
   setWordTapShowsTooltip,
   setHapticsEnabled,
   setVoiceEnabled,
+  setVoiceOfferDismissed,
   setVoiceEnergyGateEnabled,
   setVoiceGainNormalizeEnabled,
   setVoiceIosRawMode,

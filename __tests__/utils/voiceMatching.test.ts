@@ -39,12 +39,15 @@ describe('voiceMatching', () => {
     });
 
     it('scales with length', () => {
-      expect(editBudget('love')).toBe(1);
-      expect(editBudget('mercy')).toBe(1);
-      expect(editBudget('wisdom')).toBe(2);
-      expect(editBudget('patience')).toBe(3);
-      expect(editBudget('forgiveness')).toBe(3);
-      expect(editBudget('unforgettable')).toBe(4);
+      // Tightened 2026-07-25 (~length/5, was ~length/3) after field attempts
+      // showed the looser budget crediting wrong answers into FSRS.
+      expect(editBudget('love')).toBe(0);
+      expect(editBudget('mercy')).toBe(0);
+      expect(editBudget('wisdom')).toBe(1);
+      expect(editBudget('patience')).toBe(1);
+      expect(editBudget('knowledge')).toBe(2);
+      expect(editBudget('forgiveness')).toBe(2);
+      expect(editBudget('unforgettable')).toBe(3);
     });
 
     it('zero for words containing digits', () => {
@@ -101,6 +104,19 @@ describe('voiceMatching', () => {
       const r = matchSingleWord({ spoken: 'cot', expected: 'cat' });
       expect(r.matched).toBe(false);
       expect(r.method).toBe('miss');
+    });
+
+    // Regression: every one of these was accepted in the field and written to
+    // FSRS as a correct answer. A false positive is the costly error here —
+    // the learner never sees the word again — where a false negative just
+    // shows them the transcript and an override button.
+    it.each([
+      ['just', 'jest'],
+      ['rest', 'breast'],
+      ['assented', 'ascended'],
+      ['to be calm', 'to become'],
+    ])('rejects the wrong word %s heard for %s', (spoken, expected) => {
+      expect(matchSingleWord({ spoken, expected }).matched).toBe(false);
     });
   });
 
@@ -199,6 +215,45 @@ describe('voiceMatching', () => {
       expect(matchSingleWord({ spoken: 'color', expected: 'colour' }).matched).toBe(true);
       expect(matchSingleWord({ spoken: 'centre', expected: 'center' }).matched).toBe(true);
       expect(matchSingleWord({ spoken: 'realise', expected: 'realize' }).matched).toBe(true);
+    });
+  });
+
+  // 472 of 15,227 roots (3.1%) list alternatives with "/" or "," in `meaning`.
+  // normalize() used to delete the separator and weld them into one word, so
+  // those cards could never be graded: "return/end" became "returnend".
+  describe('matchSingleWord — alternative glosses', () => {
+    it('accepts either side of a slash gloss', () => {
+      expect(matchSingleWord({ spoken: 'return', expected: 'return/end' }).matched).toBe(true);
+      expect(matchSingleWord({ spoken: 'end', expected: 'return/end' }).matched).toBe(true);
+      expect(matchSingleWord({ spoken: 'kill', expected: 'kill/annihilate' }).matched).toBe(true);
+      expect(matchSingleWord({ spoken: 'annihilate', expected: 'kill/annihilate' }).matched).toBe(
+        true,
+      );
+    });
+
+    it('accepts any member of a comma gloss', () => {
+      const expected = 'precious, noble, valuable';
+      for (const spoken of ['precious', 'noble', 'valuable']) {
+        expect(matchSingleWord({ spoken, expected }).matched).toBe(true);
+      }
+    });
+
+    it('accepts a multi-word alternative', () => {
+      expect(
+        matchSingleWord({ spoken: 'be pleasant', expected: 'bless/be pleasant' }).matched,
+      ).toBe(true);
+    });
+
+    it('still rejects a word that matches no alternative', () => {
+      const r = matchSingleWord({ spoken: 'banana', expected: 'return/end' });
+      expect(r.matched).toBe(false);
+    });
+
+    it('never produces the welded token', () => {
+      expect(normalize('return/end')).toBe('return end');
+      expect(matchSingleWord({ spoken: 'return', expected: 'return/end' }).normalizedExpected).toBe(
+        'return',
+      );
     });
   });
 

@@ -1,7 +1,8 @@
 /**
- * NVIDIA Parakeet TDT 0.6B v2 int8 wrapper. Downloads the model on first
- * `enabled` flip (~460 MB), surfaces progress for the Settings screen, then
- * exposes a `transcribe(Float32Array) → string | null` for the review flow.
+ * NVIDIA Parakeet TDT transducer 110M (English, int8) wrapper. Downloads the
+ * model on first `enabled` flip (~103 MB), surfaces progress for the Settings
+ * screen, then exposes a `transcribe(Float32Array) → string | null` for the
+ * review flow.
  *
  * Ported from edemind's use-sherpa-stt.ts.
  */
@@ -19,7 +20,22 @@ import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TARGET_SAMPLE_RATE } from '@/lib/voice/recording';
 import { analytics } from '@/services/analytics';
 
-export const PARAKEET_MODEL_ID = 'sherpa-onnx-nemo-parakeet-tdt-0.6b-v2-int8';
+/**
+ * NVIDIA Parakeet TDT transducer 110M (English, int8) — ~103 MB.
+ *
+ * Was the 0.6B v2 int8 at ~460 MB. Field telemetry
+ * (`voice_grading_attempts`, 80 resolved attempts) showed transcription is not
+ * the constraint: exactly one attempt was a genuine mishear the learner had to
+ * override, and the misses that mattered were a wrong-answer matcher and glosses
+ * the normalizer had mangled — neither of which a bigger acoustic model fixes.
+ * So the 4.5× download was buying headroom the feature never used, on an
+ * opt-in feature where that download is the gate people actually bounce off.
+ *
+ * Same `nemo_transducer` architecture, so decoding config carries over
+ * unchanged. `model_id` is recorded on every attempt, so the accuracy of this
+ * swap is measurable against the 0.6B baseline already in the table.
+ */
+export const PARAKEET_MODEL_ID = 'sherpa-onnx-nemo-parakeet_tdt_transducer_110m-en-36000-int8';
 
 // Decoding config applied via engine.setConfig() once the model is ready. The
 // default greedy_search collapses an ambiguous single word onto its most
@@ -187,7 +203,7 @@ function useSherpaStt({
   );
 }
 
-/** Primary single-word recognizer: NVIDIA Parakeet TDT 0.6B v2 int8. */
+/** Primary single-word recognizer: NVIDIA Parakeet TDT transducer 110M int8. */
 export function useParakeetStt({ enabled }: { enabled: boolean }): SherpaStt {
   return useSherpaStt({
     enabled,

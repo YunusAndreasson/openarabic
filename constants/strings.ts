@@ -24,7 +24,7 @@ export const STRINGS = {
   SPEAK_ANSWER: 'Speak the English answer',
   SPEAK_ANSWER_IDLE_SUBTITLE: 'Say the English meaning. Close-enough counts.',
   SPEAK_ANSWER_DOWNLOADING_SUBTITLE: 'Downloading voice model… {pct}%',
-  SPEAK_ANSWER_READY_SUBTITLE: 'Ready · about 460 MB on device',
+  SPEAK_ANSWER_READY_SUBTITLE: 'Ready · about 100 MB on device',
   SPEAK_ANSWER_ERROR_SUBTITLE: "Couldn't load voice model. Try again later.",
   VOICE_LISTENING: 'Listening…',
   VOICE_CHECKING: 'Grading…',
@@ -451,7 +451,7 @@ export const STRINGS = {
   // Practice stat tiles
   MEMORY_LABEL: 'Memory',
   MASTERED_LOWER: 'mastered',
-  VOCABULARY_GROWTH_LABEL: 'words in practice',
+  VOCABULARY_GROWTH_LABEL: 'Words in practice',
   // Chart bottom summaries
   SUMMARY_TODAY: 'Today',
   SUMMARY_IN_A_WEEK: 'In a week',
@@ -565,6 +565,17 @@ export const STRINGS = {
     "Each word you just practiced is now on its own forgetting curve. We'll nudge you only when a review actually matters — usually just before words start to fade.",
   NOTIFICATION_PRIMING_ACCEPT: 'Turn on reminders',
   NOTIFICATION_PRIMING_DECLINE: 'Not now',
+  // Speak-the-answer priming (practice screen). The download size is stated in
+  // the ask on purpose — an undisclosed 100 MB download is how you lose trust.
+  VOICE_PRIMING_TITLE: 'Practice out loud',
+  // Says the useful thing and stops. Practice is self-graded, so the real pitch
+  // is that speaking is harder to fake than tapping "Knew it"; the size and the
+  // on-device fact are what a learner needs to decide. No em-dashes, no
+  // "entirely", no third sentence restating the second.
+  VOICE_PRIMING_BODY:
+    'Say answers out loud instead of tapping. Harder to fool yourself, and you practice pronunciation. Runs on your device, 100 MB.',
+  VOICE_PRIMING_ACCEPT: 'Turn it on',
+  VOICE_PRIMING_DECLINE: 'No thanks',
   // Smart reminder notifications (selection logic in utils/notificationCopy.ts)
   NOTIFICATION_DUE_TITLE_POOL: [
     'Your words are ready',
