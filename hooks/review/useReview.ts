@@ -87,8 +87,19 @@ interface UseReviewReturn {
 
 // Timing constants for transitions (milliseconds)
 const TRANSITION_DELAYS = {
-  initial: TIMING_CONFIG.FAST.duration, // Initial delay before animation
-  fadeAnimation: TIMING_CONFIG.MEDIUM.duration, // Delay for fade animation
+  /**
+   * Card dissolve on advance. Matched to the swipe's fling-out so a committed
+   * card leaves as one motion; the same fade plays the card back in.
+   */
+  fadeAnimation: TIMING_CONFIG.CARD_EXIT.duration,
+  /**
+   * Watchdog for the fade-out completion callback. Reanimated only invokes a
+   * withTiming callback with `finished: true` when the animation runs to
+   * completion — an interrupted fade would otherwise strand the session at
+   * opacity 0 with grading disabled. Generous enough never to pre-empt a
+   * healthy fade.
+   */
+  fadeWatchdog: TIMING_CONFIG.CARD_EXIT.duration + TIMING_CONFIG.MEDIUM.duration,
 };
 
 /** Grace after the prompt stops before declaring it done, so the tail isn't
@@ -464,30 +475,30 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       const controller = new AbortController();
       abortControllerRef.current = controller;
 
-      // Note: session metrics are updated in processFeedback after FSRS calculation
-      // (it has both old and new stability for accurate tracking).
-      setTimer(
-        'initialTransition',
-        () => {
-          if (controller.signal.aborted) return;
+      // Stop the reveal (English) audio before advancing so it doesn't bleed
+      // into the next card. Immediate: the grade is already committed, and the
+      // old 120ms lead-in was dead time on every single card (~2s per 20-card
+      // chunk) during which nothing moved.
+      stopAudioSafely();
 
-          // Stop the reveal (English) audio before advancing so it doesn't bleed
-          // into the next card.
-          stopAudioSafely();
-          fadeOut();
-          setTimer(
-            'fadeAnimation',
-            () => {
-              if (controller.signal.aborted) return;
-              processFeedback(confidence, controller);
-            },
-            TRANSITION_DELAYS.fadeAnimation,
-          );
-        },
-        TRANSITION_DELAYS.initial,
-      );
+      // The advance is sequenced off the fade-out's OWN completion callback
+      // rather than a setTimeout guessing its duration. The two used to be
+      // independent clocks — a UI-thread animation and a JS-thread timer — so
+      // under load the timer drifted and the card sat blank past the fade.
+      // Note: session metrics are updated in processFeedback after FSRS
+      // calculation (it has both old and new stability for accurate tracking).
+      let advanced = false;
+      const advance = () => {
+        if (advanced || controller.signal.aborted) return;
+        advanced = true;
+        clearTimer('fadeAnimation');
+        processFeedback(confidence, controller);
+      };
+
+      fadeOut(advance);
+      setTimer('fadeAnimation', advance, TRANSITION_DELAYS.fadeWatchdog);
     },
-    [revealed, isComplete, fadeOut, processFeedback, setTimer, stopAudioSafely],
+    [revealed, isComplete, fadeOut, processFeedback, setTimer, clearTimer, stopAudioSafely],
   );
 
   // Effect: Handle completion transition

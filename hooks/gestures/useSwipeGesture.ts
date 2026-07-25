@@ -2,12 +2,12 @@ import { useCallback, useMemo } from 'react';
 import type { PanGesture } from 'react-native-gesture-handler';
 import { Gesture } from 'react-native-gesture-handler';
 import type { SharedValue } from 'react-native-reanimated';
-import { useSharedValue, withDelay, withSpring } from 'react-native-reanimated';
+import { useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { SPRING_CONFIG } from '@/constants/animation';
+import { SPRING_CONFIG, TIMING_CONFIG } from '@/constants/animation';
 import { SCREEN_WIDTH } from '@/constants/layout';
-import { GESTURE_CONFIG, GESTURE_CONSTANTS } from '@/utils/gestureUtils';
+import { GESTURE_CONFIG, GESTURE_CONSTANTS, resolveSwipeCommit } from '@/utils/gestureUtils';
 
 export interface SwipeGestureOptions {
   enabled?: boolean;
@@ -17,8 +17,22 @@ export interface SwipeGestureOptions {
   onGestureBegin?: () => void;
   onGestureStart?: () => void;
   onGestureEnd?: () => void;
+  /**
+   * Fired the frame the drag crosses the commit threshold (`armed: true`) and
+   * again if it falls back below it (`armed: false`). This is the hook for
+   * threshold haptics: the feedback then lands while the finger is still down,
+   * at the exact moment the outcome is decided, instead of after release.
+   */
+  onCommitArmedChange?: (armed: boolean, isRight: boolean) => void;
+  /**
+   * Fly the card off screen in the swipe direction on commit instead of
+   * springing it back to centre. A card that returns home contradicts the
+   * gesture the user just made.
+   */
+  exitOnCommit?: boolean;
   minDistance?: number;
   activeOffsetX?: [number, number];
+  failOffsetY?: [number, number];
   swipeThresholdRatio?: number;
   maxTranslationRatio?: number;
   springConfig?: typeof SPRING_CONFIG.CARD;
@@ -28,12 +42,32 @@ export interface SwipeGestureResult {
   gesture: PanGesture;
   translateX: SharedValue<number>;
   isAnimatingRef: SharedValue<boolean>;
+  /**
+   * The commit distance in points. Exposed so the visual response (colour
+   * flash, tilt, scale) can be driven by the SAME number that decides the
+   * grade — previously the flash was scaled to a max-drag constant the card
+   * never reached, so it stayed faint and told the user nothing about whether
+   * releasing would commit.
+   */
+  swipeThreshold: number;
   resetPosition: () => void;
 }
 
 /**
- * Custom hook for swipe gestures with v2 optimizations
- * Provides consistent swipe behavior across components
+ * Pan-to-commit swipe, driven entirely on the UI thread.
+ *
+ * Design notes (validated against the Gesture Handler / Reanimated docs):
+ * - Reset lives in `onFinalize`, not only `onEnd`. Per the Gesture Handler
+ *   docs `onEnd` "will be called only if the handler was previously in the
+ *   active state", while `onFinalize` runs "when the handler finalizes
+ *   handling the gesture — the gesture was recognized and has finished or it
+ *   failed to recognize". A pan that activated and was then cancelled (system
+ *   back-gesture, another handler winning, app backgrounding) used to strand
+ *   the card off-centre with its colour flash stuck on.
+ * - A commit needs distance AND direction agreement. Velocity alone used to be
+ *   enough, and the direction was read off `translationX`, so a fast jab that
+ *   ended near the origin silently graded — always "Forgot" when it landed on
+ *   exactly 0.
  */
 export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResult => {
   const {
@@ -44,26 +78,45 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
     onGestureBegin,
     onGestureStart,
     onGestureEnd,
+    onCommitArmedChange,
+    exitOnCommit = false,
     minDistance = GESTURE_CONFIG.MIN_DISTANCE,
     activeOffsetX = GESTURE_CONFIG.ACTIVE_OFFSET_X,
+    failOffsetY = GESTURE_CONFIG.FAIL_OFFSET_Y,
     swipeThresholdRatio = GESTURE_CONSTANTS.SWIPE_THRESHOLD_RATIO,
     maxTranslationRatio = GESTURE_CONSTANTS.MAX_TRANSLATION_RATIO,
     springConfig = SPRING_CONFIG.CARD,
   } = options;
 
   const translateX = useSharedValue(0);
+  /**
+   * True only while a COMMITTED card is flying off screen. That exit is the one
+   * animation the user must not be able to grab back; the return-home spring is
+   * deliberately interruptible (see onStart).
+   */
   const isAnimatingRef = useSharedValue(false);
+  /** Card position when the current drag picked it up (the pan's origin). */
+  const startX = useSharedValue(0);
+  /** -1 / 0 / 1 — which side (if any) the drag is currently armed to commit. */
+  const armedSide = useSharedValue(0);
+  /** True once onEnd has decided this gesture, so onFinalize doesn't re-reset. */
+  const settledRef = useSharedValue(false);
+  /**
+   * This gesture began while a committed card was still flying off, so it is
+   * latched off for its whole lifetime. Checking `isAnimatingRef` per-frame is
+   * not enough: the exit clears that flag mid-drag, at which point the gesture
+   * would spring to life and yank the INCOMING card to an offset captured off
+   * the departing one.
+   */
+  const ignoreGestureRef = useSharedValue(false);
 
-  // Optimized reset function (worklet-ready)
+  const swipeThreshold = SCREEN_WIDTH * swipeThresholdRatio;
+
+  // Interruptible return-home, same as a below-threshold release.
   const resetPosition = useCallback(() => {
     'worklet';
-    isAnimatingRef.set(true);
-    translateX.set(
-      withSpring(0, springConfig, () => {
-        isAnimatingRef.set(false);
-      }),
-    );
-  }, [translateX, isAnimatingRef, springConfig]);
+    translateX.set(withSpring(0, springConfig));
+  }, [translateX, springConfig]);
 
   // JS-only callback for swipe actions (reset stays on UI thread)
   const handleSwipeAction = useCallback(
@@ -81,92 +134,187 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
     [onSwipeLeft, onSwipeRight, onSwipeComplete],
   );
 
-  // Optimized gesture handler with v2 best practices
   const gesture = useMemo(
     () =>
       Gesture.Pan()
         .enabled(enabled)
         .minDistance(minDistance)
         .activeOffsetX(activeOffsetX)
+        .failOffsetY(failOffsetY)
         .onBegin(() => {
           'worklet';
+          settledRef.set(false);
+          armedSide.set(0);
+          // A touch that lands mid-exit belongs to no card — the outgoing one
+          // is gone and the incoming one has not arrived yet.
+          ignoreGestureRef.set(isAnimatingRef.get());
           if (onGestureBegin) {
             scheduleOnRN(onGestureBegin);
           }
         })
-        .onStart(() => {
+        .onStart(event => {
           'worklet';
+          // Pick the card up exactly where it currently sits, so a drag started
+          // while the return-home spring is still running takes over seamlessly
+          // instead of being ignored (the card used to go dead for the ~200ms
+          // the spring took to settle) or snapping to the finger's zero-delta
+          // origin. Subtracting the activation travel makes the hand-off exact:
+          // on this frame startX + translationX === the card's present offset.
+          // This is the `offset` pattern from Reanimated's gesture docs.
+          if (!ignoreGestureRef.get()) {
+            startX.set(translateX.get() - (event.translationX ?? 0));
+          }
           if (onGestureStart) {
             scheduleOnRN(onGestureStart);
           }
         })
         .onUpdate(event => {
           'worklet';
-          if (!isAnimatingRef.get() && event.translationX !== undefined) {
-            // Inline clamping logic for better performance
-            const maxTranslation = SCREEN_WIDTH * maxTranslationRatio;
-            const clampedTranslation = Math.max(
-              -maxTranslation,
-              Math.min(maxTranslation, event.translationX),
-            );
-            translateX.set(clampedTranslation);
+          if (ignoreGestureRef.get() || isAnimatingRef.get() || event.translationX === undefined) {
+            return;
+          }
+
+          const maxTranslation = SCREEN_WIDTH * maxTranslationRatio;
+          const offset = startX.get() + event.translationX;
+          const clampedTranslation = Math.max(-maxTranslation, Math.min(maxTranslation, offset));
+          translateX.set(clampedTranslation);
+
+          // Threshold latch: only notify on a transition, so the haptic fires
+          // once per crossing rather than every frame past the line.
+          const nextArmed =
+            Math.abs(clampedTranslation) >= swipeThreshold ? Math.sign(clampedTranslation) : 0;
+          if (nextArmed !== armedSide.get()) {
+            armedSide.set(nextArmed);
+            if (onCommitArmedChange) {
+              scheduleOnRN(onCommitArmedChange, nextArmed !== 0, nextArmed > 0);
+            }
           }
         })
-        .onEnd(event => {
+        .onEnd((event, success) => {
           'worklet';
+          settledRef.set(true);
+          armedSide.set(0);
+
           if (
-            !isAnimatingRef.get() &&
-            event.translationX !== undefined &&
-            event.velocityX !== undefined
+            ignoreGestureRef.get() ||
+            isAnimatingRef.get() ||
+            event.translationX === undefined ||
+            event.velocityX === undefined
           ) {
-            const translationX = event.translationX;
-            const velocityX = event.velocityX;
+            return;
+          }
 
-            // Call end callback before processing swipe
-            if (onGestureEnd) {
-              scheduleOnRN(onGestureEnd);
+          // Judge the card's ACTUAL offset from centre, not this pan's delta.
+          // They differ whenever the drag picked the card up mid-spring, and
+          // the offset is what the user sees — it is what drives the colour
+          // flash, the tilt, and the armed latch, so the commit has to agree
+          // with it or the visuals promise one outcome and the release gives
+          // another.
+          const translationX = translateX.get();
+          const velocityX = event.velocityX;
+
+          if (onGestureEnd) {
+            scheduleOnRN(onGestureEnd);
+          }
+
+          // `success` is false when the gesture was CANCELLED or FAILED after
+          // activating (a system edge-swipe taking over, another handler
+          // winning, the app backgrounding). Gesture Handler still routes those
+          // through onEnd, so without this check an interrupted drag that
+          // happened to be past the threshold committed a permanent grade the
+          // user never released on.
+          const { commit, isRight } = success
+            ? resolveSwipeCommit({
+                translationX,
+                velocityX,
+                swipeThreshold,
+                screenWidth: SCREEN_WIDTH,
+              })
+            : { commit: false, isRight: false };
+
+          if (!commit) {
+            // Below threshold — spring straight home. No delay, and no
+            // "animating" flag: this spring is meant to be interruptible, so a
+            // user who immediately re-drags catches the card in flight (onStart
+            // captures its live position and the assignment below cancels the
+            // spring on its own).
+            translateX.set(withSpring(0, springConfig));
+            return;
+          }
+
+          // Fire the JS work first so grading starts on this frame, in parallel
+          // with the exit animation rather than after it.
+          scheduleOnRN(handleSwipeAction, isRight);
+
+          isAnimatingRef.set(true);
+          if (exitOnCommit) {
+            // Carry the card off screen in the direction it was thrown, then
+            // recentre the moment it lands. The consumer's dissolve runs on the
+            // same CARD_EXIT duration, so the snap happens under an opacity of
+            // ~0 and is never seen — whereas leaving it parked off screen until
+            // the next word's effect fires exposes a frame of the outgoing
+            // position (and its full-strength colour flash) as the new card
+            // starts fading in.
+            //
+            // The `finished` guard is load-bearing, not defensive: assigning to
+            // a shared value that still holds a RUNNING animation cancels it,
+            // which invokes this very callback again — so an unguarded
+            // `translateX.set(0)` here recurses until the stack blows the
+            // moment anything cancels the exit (the next card's recentre does,
+            // every time). On a genuine finish there is no animation left to
+            // cancel, so the assignment is inert.
+            const exitTarget = isRight ? SCREEN_WIDTH : -SCREEN_WIDTH;
+            translateX.set(
+              withTiming(exitTarget, TIMING_CONFIG.CARD_EXIT, finished => {
+                if (finished) {
+                  translateX.set(0);
+                }
+                isAnimatingRef.set(false);
+              }),
+            );
+          } else {
+            translateX.set(
+              withSpring(0, springConfig, () => {
+                isAnimatingRef.set(false);
+              }),
+            );
+          }
+        })
+        .onFinalize(() => {
+          'worklet';
+          // Cancelled or failed after activating: onEnd never ran, so nothing
+          // has brought the card home. Do it here.
+          if (settledRef.get()) {
+            return;
+          }
+          settledRef.set(true);
+          if (armedSide.get() !== 0) {
+            armedSide.set(0);
+            if (onCommitArmedChange) {
+              scheduleOnRN(onCommitArmedChange, false, false);
             }
-
-            // Inline swipe action logic
-            const swipeThreshold = SCREEN_WIDTH * swipeThresholdRatio;
-            const hasSignificantVelocity =
-              Math.abs(velocityX) > GESTURE_CONSTANTS.VELOCITY_THRESHOLD;
-
-            if (Math.abs(translationX) > swipeThreshold || hasSignificantVelocity) {
-              const isRight = translationX > 0;
-              // Fire JS callbacks for business logic
-              scheduleOnRN(handleSwipeAction, isRight);
-              // Reset position entirely on UI thread (no JS bridge round-trip)
-              isAnimatingRef.set(true);
-              translateX.set(
-                withDelay(
-                  GESTURE_CONSTANTS.RESET_DELAY,
-                  withSpring(0, springConfig, () => {
-                    isAnimatingRef.set(false);
-                  }),
-                ),
-              );
-            } else {
-              // Simple reset on UI thread with spring animation
-              isAnimatingRef.set(true);
-              translateX.set(
-                withSpring(0, springConfig, () => {
-                  isAnimatingRef.set(false);
-                }),
-              );
-            }
+          }
+          if (!isAnimatingRef.get() && translateX.get() !== 0) {
+            translateX.set(withSpring(0, springConfig));
           }
         }),
     [
       enabled,
       minDistance,
       activeOffsetX,
+      failOffsetY,
       isAnimatingRef,
       translateX,
+      startX,
+      armedSide,
+      settledRef,
+      ignoreGestureRef,
       handleSwipeAction,
       maxTranslationRatio,
-      swipeThresholdRatio,
+      swipeThreshold,
       springConfig,
+      exitOnCommit,
+      onCommitArmedChange,
       onGestureBegin,
       onGestureStart,
       onGestureEnd,
@@ -177,6 +325,7 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
     gesture,
     translateX,
     isAnimatingRef,
+    swipeThreshold,
     resetPosition,
   };
 };

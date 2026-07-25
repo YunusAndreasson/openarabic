@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ViewStyle } from 'react-native';
 import type { SharedValue, WithTimingConfig } from 'react-native-reanimated';
 import {
@@ -251,8 +251,12 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
     [opacity, validInitialOpacity, delay, timingConfig, safeRunCallback],
   );
 
-  // Reanimated 4: pass shared value directly to style prop (no useAnimatedStyle wrapper needed)
-  const animatedStyle = { opacity } as AnimatedStyleProp<ViewStyle>;
+  // Reanimated 4: pass shared value directly to style prop (no useAnimatedStyle
+  // wrapper needed). Memoized on the shared value, which never changes identity,
+  // so the object is stable for the hook's lifetime: a fresh object every render
+  // is a new `style` prop for every consumer, and the review screen now shares
+  // this one style across three views (card, swipe flash, bottom controls).
+  const animatedStyle = useMemo(() => ({ opacity }) as AnimatedStyleProp<ViewStyle>, [opacity]);
 
   // Auto-start animation if enabled - using UI thread
   useEffect(() => {

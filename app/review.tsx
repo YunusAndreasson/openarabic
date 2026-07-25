@@ -1,8 +1,9 @@
 import { useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { TextStyle, ViewStyle } from 'react-native';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -24,7 +25,6 @@ import { useReview, useVoiceReview } from '@/hooks/review';
 import { useColors } from '@/hooks/theme/useColors';
 import { useTutorial } from '@/hooks/tutorials/useTutorial';
 import { useAppSelectorShallow } from '@/store/hooks';
-import { selectionFeedback } from '@/utils/haptics';
 
 const baseStyles = StyleSheet.create({
   container: {
@@ -191,6 +191,18 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
   const voiceDebugEnabled = useAppSelectorShallow(state => state.settings.voiceDebugEnabled);
 
+  // Stable identities: these feed the pan gesture's config, and an inline arrow
+  // rebuilt the whole Gesture object on every render of the screen (voice phase
+  // ticks, audio status, progress) — re-attaching handlers mid-drag.
+  //
+  // No haptic here: the swipe already fired its detent tick the moment the drag
+  // crossed the commit threshold (see ReviewFlipCard). Firing again on release
+  // would double-buzz a single grade — and the tick at the threshold is the one
+  // that carries information, because it lands while the user can still change
+  // their mind.
+  const handleSwipeForgot = useCallback(() => grade('unknown'), [grade]);
+  const handleSwipeKnewIt = useCallback(() => grade('known'), [grade]);
+
   // Track if review session is still initializing (first word not yet loaded)
   const isInitializing = useMemo(() => {
     return isLoading || (wordQueue.length === 0 && !isComplete && currentWord === null);
@@ -239,15 +251,8 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
         onReplayAudio={handleReplayAudio}
         opacityStyle={transparentStyle}
         isUpdating={isUpdating}
-        onSwipeForgot={() => {
-          // Haptic parity with the tap-grade path (ReviewGradeBar)
-          selectionFeedback();
-          grade('unknown');
-        }}
-        onSwipeKnewIt={() => {
-          selectionFeedback();
-          grade('known');
-        }}
+        onSwipeForgot={handleSwipeForgot}
+        onSwipeKnewIt={handleSwipeKnewIt}
         testID="review-card"
       />
 
@@ -271,14 +276,20 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
           />
         </View>
 
-        {/* Bottom actions */}
-        <View
-          style={{
-            position: 'absolute',
-            bottom: insets.bottom + LAYOUT.SPACING.LARGE,
-            left: LAYOUT.SPACING.LARGE,
-            right: LAYOUT.SPACING.LARGE,
-          }}
+        {/* Bottom actions. Shares the card's fade (transparentStyle) so the
+            controls and the word they belong to leave and arrive as one
+            composition — the card used to dissolve while the buttons stayed
+            fully lit, which made every advance look half-finished. */}
+        <Animated.View
+          style={[
+            {
+              position: 'absolute',
+              bottom: insets.bottom + LAYOUT.SPACING.LARGE,
+              left: LAYOUT.SPACING.LARGE,
+              right: LAYOUT.SPACING.LARGE,
+            },
+            transparentStyle,
+          ]}
         >
           {voiceShowResult && voiceResult ? (
             <VoiceResultPanel
@@ -300,11 +311,9 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
                 {
                   backgroundColor: colors.card,
                   borderColor: colors.border,
-                  opacity: isUpdating
-                    ? LAYOUT.OPACITY.SUBTLE
-                    : pressed
-                      ? LAYOUT.OPACITY.PRESSED
-                      : LAYOUT.OPACITY.FULL,
+                  // Press feedback only — the transient isUpdating dim is now
+                  // carried by the container's shared fade (see above).
+                  opacity: pressed ? LAYOUT.OPACITY.PRESSED : LAYOUT.OPACITY.FULL,
                 },
               ]}
             >
@@ -317,7 +326,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
               </ThemedText>
             </Pressable>
           )}
-        </View>
+        </Animated.View>
       </View>
 
       {/* Voice status — pill above the bottom buttons so the learner can

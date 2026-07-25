@@ -56,8 +56,11 @@ describe('useSwipeGesture Hook', () => {
         onGestureBegin: jest.fn(),
         onGestureStart: jest.fn(),
         onGestureEnd: jest.fn(),
+        onCommitArmedChange: jest.fn(),
+        exitOnCommit: true,
         minDistance: 20,
         activeOffsetX: [-10, 10],
+        failOffsetY: [-24, 24],
         swipeThresholdRatio: 0.5,
         maxTranslationRatio: 0.8,
       };
@@ -66,6 +69,8 @@ describe('useSwipeGesture Hook', () => {
       expect(options).toHaveProperty('enabled');
       expect(options).toHaveProperty('minDistance');
       expect(options).toHaveProperty('activeOffsetX');
+      expect(options).toHaveProperty('onCommitArmedChange');
+      expect(options).toHaveProperty('exitOnCommit');
     });
   });
 
@@ -89,6 +94,7 @@ describe('useSwipeGesture Hook', () => {
         gesture: any;
         translateX: any;
         isAnimatingRef: any;
+        swipeThreshold: number;
         resetPosition: () => void;
       };
 
@@ -96,31 +102,44 @@ describe('useSwipeGesture Hook', () => {
         gesture: {},
         translateX: { value: 0 },
         isAnimatingRef: { value: false },
+        swipeThreshold: 88,
         resetPosition: jest.fn(),
       };
 
       expect(result).toHaveProperty('gesture');
       expect(result).toHaveProperty('translateX');
       expect(result).toHaveProperty('isAnimatingRef');
+      expect(result).toHaveProperty('swipeThreshold');
       expect(result).toHaveProperty('resetPosition');
       expect(typeof result.resetPosition).toBe('function');
     });
   });
 
   describe('Configuration Defaults', () => {
-    test('hook has documented default values', () => {
-      // These are the defaults from the hook implementation
-      const expectedDefaults = {
-        enabled: true,
-        minDistance: 0.1, // From GESTURE_CONFIG
-        activeOffsetX: [-1, 1], // From GESTURE_CONFIG
-        swipeThresholdRatio: 0.04, // From GESTURE_CONSTANTS
-        maxTranslationRatio: 0.9, // From GESTURE_CONSTANTS (LAYOUT.OPACITY.HOVER)
-      };
+    // Regression: the pan used to activate after 0.1pt of travel with a 1pt
+    // active offset, so it stole touches from the card's own Pressable on any
+    // tap with a hair of drift.
+    test('activation thresholds leave room for a tap', () => {
+      const { GESTURE_CONFIG, GESTURE_CONSTANTS } = require('@/utils/gestureUtils');
 
-      expect(expectedDefaults.enabled).toBeTruthy();
-      expect(expectedDefaults.minDistance).toBe(0.1);
-      expect(Array.isArray(expectedDefaults.activeOffsetX)).toBeTruthy();
+      expect(GESTURE_CONSTANTS.MIN_DISTANCE).toBeGreaterThanOrEqual(8);
+      expect(GESTURE_CONFIG.ACTIVE_OFFSET_X[0]).toBeLessThanOrEqual(-8);
+      expect(GESTURE_CONFIG.ACTIVE_OFFSET_X[1]).toBeGreaterThanOrEqual(8);
+    });
+
+    // Regression: a ~16pt commit distance meant a nudge permanently graded a
+    // card through FSRS.
+    test('commit distance requires a deliberate throw', () => {
+      const { GESTURE_CONSTANTS } = require('@/utils/gestureUtils');
+
+      expect(GESTURE_CONSTANTS.SWIPE_THRESHOLD_RATIO).toBeGreaterThanOrEqual(0.15);
+    });
+
+    test('a mostly-vertical drag cannot activate the horizontal pan', () => {
+      const { GESTURE_CONFIG } = require('@/utils/gestureUtils');
+
+      expect(GESTURE_CONFIG.FAIL_OFFSET_Y[0]).toBeLessThan(0);
+      expect(GESTURE_CONFIG.FAIL_OFFSET_Y[1]).toBeGreaterThan(0);
     });
 
     test('spring config is customizable', () => {
@@ -284,16 +303,56 @@ describe('useSwipeGesture Hook', () => {
       // Clamps translationX to [-maxTranslation, +maxTranslation]
       expect(true).toBeTruthy(); // Documented behavior
     });
+  });
 
-    test('hook detects swipe based on threshold and velocity', () => {
-      // Based on hook implementation lines 142-148
-      // Swipe detected if: abs(translation) > threshold OR hasSignificantVelocity
-      expect(true).toBeTruthy(); // Documented behavior
+  // The rules that decide whether a released pan grades a card. Extracted from
+  // the gesture worklet precisely so they can be exercised here — every case
+  // below is a way the previous inline check mis-graded.
+  describe('resolveSwipeCommit', () => {
+    const SCREEN = 400;
+    const THRESHOLD = SCREEN * 0.22; // 88pt
+
+    const resolve = (translationX: number, velocityX: number) => {
+      const { resolveSwipeCommit } = require('@/utils/gestureUtils');
+      return resolveSwipeCommit({
+        translationX,
+        velocityX,
+        swipeThreshold: THRESHOLD,
+        screenWidth: SCREEN,
+      });
+    };
+
+    test('commits a deliberate throw past the threshold', () => {
+      expect(resolve(THRESHOLD + 1, 0)).toEqual({ commit: true, isRight: true });
+      expect(resolve(-THRESHOLD - 1, 0)).toEqual({ commit: true, isRight: false });
     });
 
-    test('hook resets position after RESET_DELAY', () => {
-      // Reset handled on UI thread via withDelay + withSpring (no JS bridge)
-      expect(true).toBeTruthy(); // Documented behavior
+    test('does not commit a drag that stops short', () => {
+      expect(resolve(THRESHOLD - 1, 0).commit).toBe(false);
+      expect(resolve(-THRESHOLD + 1, 0).commit).toBe(false);
+    });
+
+    test('commits a fast flick that travelled a real distance', () => {
+      // 40pt is past the 6%-of-screen (24pt) flick floor but well short of the
+      // 88pt throw threshold — velocity is what carries it.
+      expect(resolve(40, 1200)).toEqual({ commit: true, isRight: true });
+      expect(resolve(-40, -1200)).toEqual({ commit: true, isRight: false });
+    });
+
+    // Regression: velocity alone used to commit, so a quick jab that ended
+    // where it started graded the card — and always as "Forgot", because the
+    // direction was read from translationX === 0.
+    test('does not commit a fast jab that barely moved', () => {
+      expect(resolve(0, 2000).commit).toBe(false);
+      expect(resolve(5, 2000).commit).toBe(false);
+      expect(resolve(-5, -2000).commit).toBe(false);
+    });
+
+    // Regression: a flick whose velocity opposed its travel used to commit in
+    // the direction of travel — grading the opposite of the user's intent.
+    test('does not commit when velocity opposes the travel', () => {
+      expect(resolve(40, -1200).commit).toBe(false);
+      expect(resolve(-40, 1200).commit).toBe(false);
     });
   });
 
@@ -302,10 +361,11 @@ describe('useSwipeGesture Hook', () => {
       const { GESTURE_CONSTANTS } = require('@/utils/gestureUtils');
 
       expect(GESTURE_CONSTANTS).toHaveProperty('SWIPE_THRESHOLD_RATIO');
-      expect(GESTURE_CONSTANTS).toHaveProperty('RESET_DELAY');
       expect(GESTURE_CONSTANTS).toHaveProperty('MIN_DISTANCE');
       expect(GESTURE_CONSTANTS).toHaveProperty('MAX_TRANSLATION_RATIO');
       expect(GESTURE_CONSTANTS).toHaveProperty('VELOCITY_THRESHOLD');
+      expect(GESTURE_CONSTANTS).toHaveProperty('FLICK_MIN_DISTANCE_RATIO');
+      expect(GESTURE_CONSTANTS).toHaveProperty('EXIT_DURATION');
     });
 
     test('GESTURE_CONFIG is defined', () => {

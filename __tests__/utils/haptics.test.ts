@@ -12,7 +12,7 @@
 import { beforeEach, afterEach, describe, expect, test, jest } from '@jest/globals';
 import { Platform } from 'react-native';
 
-import { selectionFeedback } from '@/utils/haptics';
+import { detentFeedback, lightFeedback, selectionFeedback } from '@/utils/haptics';
 
 // Keep inline mock for this test since it needs direct access to jest.fn() instances for assertions.
 // Every expo-haptics function returns Promise<void> — the mocks must too, or
@@ -22,12 +22,13 @@ jest.mock('expo-haptics', () => ({
   impactAsync: jest.fn(() => Promise.resolve()),
   notificationAsync: jest.fn(() => Promise.resolve()),
   performAndroidHapticsAsync: jest.fn(() => Promise.resolve()),
-  ImpactFeedbackStyle: { Light: 'light' },
+  ImpactFeedbackStyle: { Light: 'light', Medium: 'medium', Rigid: 'rigid' },
   NotificationFeedbackType: { Success: 'success', Error: 'error' },
   AndroidHaptics: {
     Segment_Tick: 'segment-tick',
     Virtual_Key: 'virtual-key',
     Context_Click: 'context-click',
+    Clock_Tick: 'clock-tick',
     Confirm: 'confirm',
     Reject: 'reject',
   },
@@ -60,6 +61,39 @@ describe('haptics', () => {
     jest.advanceTimersByTime(60);
     selectionFeedback();
     expect(selectionAsync).toHaveBeenCalledTimes(2);
+  });
+
+  // Regression: the debounce used to be a single global flag, so two
+  // semantically DIFFERENT haptics landing in the same 50ms silently dropped
+  // the second — e.g. a swipe crossing its commit threshold and the grade that
+  // follows, or a reveal followed straight away by a grade. The user then felt
+  // a random subset of the feedback the UI was trying to give.
+  test('does not let one pattern swallow a different pattern', () => {
+    const { selectionAsync, impactAsync } = require('expo-haptics');
+
+    selectionFeedback();
+    lightFeedback();
+    detentFeedback();
+
+    expect(selectionAsync).toHaveBeenCalledTimes(1);
+    expect(impactAsync).toHaveBeenCalledTimes(2); // light + rigid detent
+  });
+
+  test('detentFeedback uses the rigid impact on iOS', () => {
+    const { impactAsync, ImpactFeedbackStyle } = require('expo-haptics');
+
+    detentFeedback();
+
+    expect(impactAsync).toHaveBeenCalledWith(ImpactFeedbackStyle.Rigid);
+  });
+
+  test('detentFeedback uses the Android detent tick', () => {
+    const { performAndroidHapticsAsync, AndroidHaptics } = require('expo-haptics');
+    jest.replaceProperty(Platform, 'OS', 'android');
+
+    detentFeedback();
+
+    expect(performAndroidHapticsAsync).toHaveBeenCalledWith(AndroidHaptics.Clock_Tick);
   });
 
   test('routes through performAndroidHapticsAsync on Android (haptics engine, not Vibrator)', () => {

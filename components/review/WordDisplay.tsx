@@ -1,10 +1,8 @@
 import { useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { WordDisplayProps } from '@/types/ui/review.types';
@@ -17,11 +15,6 @@ const WORD_DISPLAY_CONSTANTS = {
   ARABIC_TOP_POSITION: LAYOUT.SPACING.MEDIUM, // Arabic higher up but not at very top (12px)
   ENGLISH_TOP_OFFSET: LAYOUT.SPACING.XXLARGE * 4, // Move slightly closer below Arabic (192px)
   CONTAINER_HEIGHT: LAYOUT.SPACING.XXXLARGE * 7, // Much taller container (336px)
-} as const;
-
-// Static animation configuration
-const ANIMATION_CONFIG = {
-  TRANSLATION_DURATION: TIMING_CONFIG.GENTLE.duration,
 } as const;
 
 const STATIC_STYLES = StyleSheet.create({
@@ -70,13 +63,6 @@ export function WordDisplay({ word, style, translation, onWordPress }: WordDispl
     return createTextStyle(WORD_DISPLAY_CONSTANTS.ARABIC_FONT_SIZE, batchedColors);
   }, [colors.arabicText, colors.shadow, colors.englishText]);
 
-  // CSS transition replaces useOpacityAnimation + useEffect
-  const translationAnimatedStyle = {
-    opacity: translation ? 1 : 0,
-    transitionProperty: 'opacity' as const,
-    transitionDuration: `${ANIMATION_CONFIG.TRANSLATION_DURATION}ms`,
-  };
-
   const containerStyle = [STATIC_STYLES.container, style];
 
   const arabicTextProps = {
@@ -108,10 +94,15 @@ export function WordDisplay({ word, style, translation, onWordPress }: WordDispl
       >
         <ThemedText {...arabicTextProps} />
       </Pressable>
+      {/* No opacity transition here: the meaning only exists on the card's
+          answer face, so the flip is already its entrance. The CSS transition
+          that used to sit here never ran — the view mounts with the meaning
+          already present, so opacity started at its target and had nothing to
+          animate from. */}
       {translation && (
-        <Animated.View style={[STATIC_STYLES.translationContainer, translationAnimatedStyle]}>
+        <View style={STATIC_STYLES.translationContainer}>
           <ThemedText {...translationTextProps} />
-        </Animated.View>
+        </View>
       )}
     </View>
   );

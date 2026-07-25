@@ -1,14 +1,13 @@
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
 import type { AnimatedStyle as ReanimatedAnimatedStyle } from 'react-native-reanimated';
 import Animated, {
+  cancelAnimation,
   interpolate,
   interpolateColor,
   useAnimatedStyle,
-  useDerivedValue,
-  withTiming,
 } from 'react-native-reanimated';
 
 import { SPRING_CONFIG, TIMING_CONFIG } from '@/constants/animation';
@@ -18,6 +17,7 @@ import { useSwipeGesture } from '@/hooks/gestures/useSwipeGesture';
 import { useColors } from '@/hooks/theme/useColors';
 import type { AnimatedStyleProp as AppAnimatedStyleProp } from '@/types/ui/base.types';
 import { withOpacity } from '@/utils/colorUtils';
+import { detentFeedback } from '@/utils/haptics';
 
 import { WordDisplay } from './WordDisplay';
 
@@ -25,7 +25,8 @@ const CARD_CONSTANTS = {
   WIDTH: SCREEN_WIDTH - LAYOUT.SPACING.LARGE * 2,
   HEIGHT: WORD_AREA_MIN_HEIGHT, // ~360
   FLASH_OPACITY: 0.35,
-  MAX_TRANSLATION_RATIO: LAYOUT.OPACITY.HOVER, // 0.8 — matches the old swipe card
+  /** Degrees of tilt at the commit threshold — enough to read as a thrown card. */
+  MAX_TILT_DEG: 7,
 } as const;
 
 const STATIC_STYLES = StyleSheet.create({
@@ -119,28 +120,70 @@ export function ReviewFlipCard({
 }: ReviewFlipCardProps) {
   const colors = useColors();
 
+  // The detent tick fires while the finger is still down, the frame the drag
+  // crosses the line that decides the grade — the same threshold the commit
+  // check and the colour flash use. Firing it after release (the old behaviour)
+  // meant the haptic confirmed something the user had already committed to,
+  // one JS-thread hop late, and felt identical for "Forgot" and "Knew it".
+  const handleCommitArmedChange = useCallback(() => {
+    detentFeedback();
+  }, []);
+
   const {
     gesture: panGesture,
     translateX,
     isAnimatingRef,
+    swipeThreshold,
   } = useSwipeGesture({
     enabled: revealed && !isUpdating, // can't grade what you haven't seen
     onSwipeLeft: onSwipeForgot,
     onSwipeRight: onSwipeKnewIt,
+    onCommitArmedChange: handleCommitArmedChange,
+    exitOnCommit: true,
     springConfig: SPRING_CONFIG.CARD,
   });
 
-  // Drive the flip from `revealed` during render (no post-commit effect hop):
-  // animate the front→back turn on reveal, but snap straight back to the
-  // question face when advancing (revealed only goes false on a card change),
-  // so the next card never shows a flip-back animation.
-  const flip = useDerivedValue(() =>
-    revealed ? withTiming(1, { duration: TIMING_CONFIG.FLIP.duration }) : 0,
-  );
+  // The flip is driven purely by React state, which is the case Reanimated 4's
+  // docs put squarely in the CSS-transitions column: "Reach for CSS transitions
+  // whenever an animation is driven by state ... it's the recommended place to
+  // start", reserving the shared-value API for "gesture-driven or scroll-driven
+  // interactions". The swipe below is gesture-driven and so stays on
+  // useAnimatedStyle — the two halves of this card sit on opposite sides of
+  // that line on purpose.
+  //
+  // Duration collapses to 0 on the way back so a new card snaps to its question
+  // face rather than playing the reveal in reverse (revealed only goes false on
+  // a card change). Face hiding is left to backfaceVisibility on STATIC_STYLES
+  // .face — the primitive built for it — instead of an opacity step at the
+  // rotation's midpoint.
+  const flipTransition = {
+    transitionProperty: 'transform',
+    transitionDuration: revealed ? TIMING_CONFIG.FLIP.duration : 0,
+    transitionTimingFunction: 'ease-in-out',
+  } as const;
 
-  // Reset the swipe offset on a new card (the gesture's translateX persists across
-  // cards otherwise).
+  const frontStyle = {
+    ...flipTransition,
+    transform: [
+      { perspective: LAYOUT.PERSPECTIVE.CARD },
+      { rotateY: revealed ? '180deg' : '0deg' },
+    ],
+  };
+
+  const backStyle = {
+    ...flipTransition,
+    transform: [
+      { perspective: LAYOUT.PERSPECTIVE.CARD },
+      { rotateY: revealed ? '360deg' : '180deg' },
+    ],
+  };
+
+  // Recentre for the new card. cancelAnimation first: the committed card is
+  // still flying off screen when the next word lands, and a running withTiming
+  // would overwrite a bare `set(0)` on its very next frame — leaving the fresh
+  // card parked off screen.
   useEffect(() => {
+    cancelAnimation(translateX);
     translateX.set(0);
     isAnimatingRef.set(false);
   }, [wordKey, translateX, isAnimatingRef]);
@@ -159,11 +202,14 @@ export function ReviewFlipCard({
     [colors.error, colors.success],
   );
 
+  // Full tint is reached exactly AT the commit threshold, so the colour is a
+  // readable "release now and it counts" signal rather than decoration. It used
+  // to be scaled to 0.8 × screen width — a distance the card never travelled —
+  // so the flash stayed faint no matter how far you dragged.
   const swipeBackgroundStyle = useAnimatedStyle(() => {
     'worklet';
     const tx = translateX.get();
-    const maxTranslation = SCREEN_WIDTH * CARD_CONSTANTS.MAX_TRANSLATION_RATIO;
-    const progress = Math.min(Math.abs(tx) / maxTranslation, 1);
+    const progress = Math.min(Math.abs(tx) / swipeThreshold, 1);
     const t = 1 - Math.pow(1 - progress, 2); // quadratic ease-out
     if (tx < 0) {
       return { backgroundColor: interpolateColor(t, [0, 1], flashColors.error) };
@@ -172,31 +218,33 @@ export function ReviewFlipCard({
       return { backgroundColor: interpolateColor(t, [0, 1], flashColors.success) };
     }
     return { backgroundColor: colors.transparent };
-  }, [flashColors.error, flashColors.success]);
+  });
 
-  const frontStyle = useAnimatedStyle(() => ({
-    opacity: flip.value < 0.5 ? 1 : 0,
-    transform: [
-      { perspective: LAYOUT.PERSPECTIVE.CARD },
-      { rotateY: `${interpolate(flip.value, [0, 1], [0, 180])}deg` },
-    ],
-  }));
-
-  const backStyle = useAnimatedStyle(() => ({
-    opacity: flip.value < 0.5 ? 0 : 1,
-    transform: [
-      { perspective: LAYOUT.PERSPECTIVE.CARD },
-      { rotateY: `${interpolate(flip.value, [0, 1], [180, 360])}deg` },
-    ],
-  }));
-
-  // Reanimated 4: inline shared value in transform (no useAnimatedStyle wrapper).
-  const cardSlideStyle = { transform: [{ translateX }] };
+  // Drag response: the card follows the finger and tilts into the throw, so the
+  // gesture reads as physically moving a card rather than sliding a panel.
+  // Needs useAnimatedStyle (not an inline shared value) because the tilt is
+  // derived from translateX rather than being it.
+  const cardSlideStyle = useAnimatedStyle(() => {
+    'worklet';
+    const tx = translateX.get();
+    const tilt = interpolate(
+      tx,
+      [-swipeThreshold, 0, swipeThreshold],
+      [-CARD_CONSTANTS.MAX_TILT_DEG, 0, CARD_CONSTANTS.MAX_TILT_DEG],
+      'clamp',
+    );
+    return { transform: [{ translateX: tx }, { rotateZ: `${tilt}deg` }] };
+  });
 
   return (
     <>
-      {/* Swipe-direction flash, behind the word. */}
-      <Animated.View style={[STATIC_STYLES.flashFill, swipeBackgroundStyle]} pointerEvents="none" />
+      {/* Swipe-direction flash, behind the word. Shares the card's fade so the
+          tint leaves with the card it belongs to instead of snapping off when
+          the swipe offset resets for the next word. */}
+      <Animated.View
+        style={[STATIC_STYLES.flashFill, swipeBackgroundStyle, opacityStyle]}
+        pointerEvents="none"
+      />
 
       <GestureDetector gesture={panGesture}>
         <Animated.View style={STATIC_STYLES.fill}>

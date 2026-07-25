@@ -107,13 +107,13 @@ export const ReviewGradeBar: FC<ReviewGradeBarProps> = ({
             hitSlop={LAYOUT.HIT_SLOP.SMALL}
             disabled={disabled}
             onPress={handlePress}
+            // No disabled dim: `disabled` is only ever true for the ~180ms of a
+            // card advance, during which the whole bottom slot is already
+            // fading out in step with the card. Dimming on top of that read as
+            // an unrelated flicker on every single grade.
             style={({ pressed }) => [
               STATIC_STYLES.button,
-              {
-                backgroundColor: pressed ? pressedBg : restBg,
-                borderColor,
-                opacity: disabled ? LAYOUT.OPACITY.SUBTLE : LAYOUT.OPACITY.FULL,
-              },
+              { backgroundColor: pressed ? pressedBg : restBg, borderColor },
             ]}
           >
             <ThemedText

@@ -32,6 +32,17 @@ export const TIMING_CONFIG = {
     duration: 320, // 3D card flip (reveal) — a touch slower than SLOW so the rotation reads
     easing: Easing.inOut(Easing.cubic), // Symmetric ease for a physical front→back turn
   },
+  /**
+   * A graded review card leaving the screen. Shared by the swipe's fling-out
+   * and the review advance's dissolve so the flight and the fade are ONE
+   * motion — previously the card sprang back to centre on a spring clock while
+   * a separate setTimeout chain faded it out ~120ms later, two uncoordinated
+   * timelines that visibly drifted apart whenever the JS thread was busy.
+   */
+  CARD_EXIT: {
+    duration: 180,
+    easing: Easing.out(Easing.cubic), // Decelerating throw — fast off the mark
+  },
 } as const;
 
 /**
