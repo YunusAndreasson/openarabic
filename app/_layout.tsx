@@ -629,7 +629,14 @@ function AppContent() {
                     name="words-to-revisit"
                     options={{
                       presentation: 'formSheet',
-                      sheetAllowedDetents: 'fitToContents',
+                      // Fixed detents, NOT fitToContents. The leech list loads
+                      // async, and iOS measures a fitToContents sheet exactly
+                      // once at presentation — on a cold FSRS cache it locked
+                      // to the loading-state height and the taller list then
+                      // rendered on top of the header. Pinning the content area
+                      // to a fixed fraction was tried first and still lost the
+                      // race; a fixed detent removes the measurement entirely.
+                      sheetAllowedDetents: [0.6, 1],
                       sheetGrabberVisible: true,
                       sheetCornerRadius: 24,
                       headerShown: false,

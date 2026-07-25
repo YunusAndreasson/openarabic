@@ -6,6 +6,13 @@ import { useColors } from '@/hooks/theme/useColors';
 
 interface SheetScreenProps {
   children: ReactNode;
+  /**
+   * Fill the sheet instead of hugging its children. Use ONLY with a fixed
+   * detent (`sheetAllowedDetents: [n]`), never with `fitToContents` — the
+   * whole point of hugging is to give iOS a measurable content height, and
+   * `flex: 1` has no intrinsic height to measure.
+   */
+  fill?: boolean;
 }
 
 /**
@@ -20,10 +27,14 @@ interface SheetScreenProps {
  * because at a fixed detent the space reads as breathing room around its
  * bottom button; with `fitToContents` the same padding becomes a gap.
  */
-export function SheetScreen({ children }: SheetScreenProps) {
+export function SheetScreen({ children, fill = false }: SheetScreenProps) {
   const colors = useColors();
 
-  return <View style={[styles.container, { backgroundColor: colors.elevation1 }]}>{children}</View>;
+  return (
+    <View style={[styles.container, fill && styles.fill, { backgroundColor: colors.elevation1 }]}>
+      {children}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -31,5 +42,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
     paddingTop: LAYOUT.SPACING.MEDIUM,
     paddingBottom: LAYOUT.SPACING.MEDIUM,
+  },
+  fill: {
+    flex: 1,
   },
 });

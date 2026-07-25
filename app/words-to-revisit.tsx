@@ -1,5 +1,5 @@
 import type { JSX } from 'react';
-import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { BottomSheetHeader, BottomSheetStateHandler, SheetScreen } from '@/components/common';
 import { ThemedText } from '@/components/ThemedText';
@@ -11,9 +11,6 @@ import { useResetWordProgress } from '@/hooks/vocabulary/useResetWordProgress';
 import { useWordsToRevisit } from '@/hooks/vocabulary/useWordsToRevisit';
 import type { RootId } from '@/types/branded.types';
 import type { StudyWord } from '@/types/vocabulary.types';
-
-/** Content-area height as a fraction of the window — constant across states. */
-const REVISIT_CONTENT_HEIGHT_FRACTION = 0.45;
 
 function formatForgotCount(count: number): string {
   return STRINGS.FORGOT_N_TIMES.replace('{count}', String(count));
@@ -62,22 +59,17 @@ function LeechRow({ word, onReset }: LeechRowProps): JSX.Element {
 export default function WordsToRevisitScreen(): JSX.Element {
   const { leeches, isLoading, isError } = useWordsToRevisit();
   const { confirmReset } = useResetWordProgress();
-  const { height } = useWindowDimensions();
 
   return (
-    <SheetScreen>
+    <SheetScreen fill>
       <BottomSheetHeader
         title={STRINGS.WORDS_TO_REVISIT}
         subtitle={STRINGS.WORDS_TO_REVISIT_SUBTITLE}
       />
-      {/* Fixed-height content area: a fitToContents form sheet measures its
-          detent ONCE at presentation. When the leech list loads after the
-          sheet presented (cold FSRS cache), iOS keeps the small loading-state
-          height and the taller list renders overlapping the header. Locking
-          the content area's height makes loading/empty/loaded measure
-          identically, so the sheet is right-sized no matter which state it
-          presents in. */}
-      <View style={{ height: height * REVISIT_CONTENT_HEIGHT_FRACTION }}>
+      {/* The sheet now opens at a fixed detent, so the content area simply
+          fills it. No measured height to get wrong, and every state —
+          loading, empty, loaded — occupies the same space. */}
+      <View style={styles.content}>
         <BottomSheetStateHandler
           isLoading={isLoading}
           isError={isError}
@@ -102,6 +94,9 @@ export const options = {
 } as const;
 
 const styles = StyleSheet.create({
+  content: {
+    flex: 1,
+  },
   list: {
     flex: 1,
   },
