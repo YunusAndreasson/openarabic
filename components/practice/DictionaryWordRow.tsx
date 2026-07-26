@@ -1,5 +1,12 @@
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+// Gesture-handler's Pressable, NOT react-native's. RN's runs on the JS responder
+// system, which does not negotiate with the swipeable's native pan: a horizontal
+// drag stays inside the row's press rect, so the press was never cancelled and
+// every swipe also fired onPress — the word detail opened on top of the actions
+// the swipe had just revealed. This one is a gesture handler, so the pan
+// activating cancels it the way it should.
+import { Pressable } from 'react-native-gesture-handler';
 import ReanimatedSwipeable, {
   type SwipeableMethods,
 } from 'react-native-gesture-handler/ReanimatedSwipeable';
@@ -16,6 +23,15 @@ import { capitalizeFirstLetter } from '@/utils/stringUtils';
 import { DIFFICULTY_COLORS, DIFFICULTY_LABELS, getDifficultyLevel } from '@/utils/urgencyScore';
 
 const CHEVRON_SIZE = 14;
+
+/**
+ * Horizontal travel before the swipe takes over, replacing the library's default
+ * of 10px. At 10 the actions started following a finger that was really just
+ * tapping or scrolling, so the row felt twitchy and half-opened constantly. 24
+ * is past the slop of an ordinary tap while still well short of a deliberate
+ * drag.
+ */
+const SWIPE_ACTIVATION_DISTANCE = 24;
 
 interface DictionaryWordRowProps {
   word: StudyWord;
@@ -44,14 +60,28 @@ export const DictionaryWordRow = memo<DictionaryWordRowProps>(
   ({ word, onPress, onRemove, onResetProgress }) => {
     const colors = useColors();
     const swipeableRef = useRef<SwipeableMethods>(null);
+    // Set the moment a drag starts revealing the actions. Belt and braces behind
+    // the gesture negotiation: whatever the handlers decide between them, a row
+    // the learner is swiping must not also navigate away.
+    const draggingRef = useRef(false);
 
     // FlashList recycles row instances onto new words — snap any open action
     // panel shut instantly so it can't carry over to the recycled row.
     useEffect(() => {
       swipeableRef.current?.reset();
+      draggingRef.current = false;
     }, [word.root_id]);
 
+    const handleOpenStartDrag = useCallback(() => {
+      draggingRef.current = true;
+    }, []);
+
+    const handleClose = useCallback(() => {
+      draggingRef.current = false;
+    }, []);
+
     const handlePress = useCallback(() => {
+      if (draggingRef.current) return;
       onPress(word);
     }, [onPress, word]);
 
@@ -117,6 +147,9 @@ export const DictionaryWordRow = memo<DictionaryWordRowProps>(
         friction={2}
         rightThreshold={40}
         overshootRight={false}
+        dragOffsetFromRightEdge={SWIPE_ACTIVATION_DISTANCE}
+        onSwipeableOpenStartDrag={handleOpenStartDrag}
+        onSwipeableClose={handleClose}
         renderRightActions={renderRightActions}
         containerStyle={styles.container}
       >
