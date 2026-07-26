@@ -4,6 +4,8 @@ import type { ColorName } from '@/constants/colors';
 
 export type TextTypeName =
   | 'arabic'
+  /** Arabic sized for a dense index row — capped size, single-line box */
+  | 'arabicCompact'
   | 'body'
   | 'bodyBold'
   | 'caption'

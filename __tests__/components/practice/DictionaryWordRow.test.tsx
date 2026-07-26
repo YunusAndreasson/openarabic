@@ -1,8 +1,8 @@
 /**
- * DictionaryWordCard Component Tests
+ * DictionaryWordRow Component Tests
  *
- * Tests the vocabulary word row: word rendering, tap-to-open, swipe actions
- * (reset progress / remove), and stability color routing.
+ * Tests the vocabulary word row: word rendering, tap-to-open, and swipe
+ * actions (reset progress / remove).
  *
  * Modern Jest 29 Patterns:
  * - ✅ @jest/globals explicit imports
@@ -12,9 +12,8 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import React from 'react';
 
-import { DictionaryWordCard } from '@/components/practice/DictionaryWordCard';
+import { DictionaryWordRow } from '@/components/practice/DictionaryWordRow';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { getStabilityProgressColor } from '@/utils/urgencyScore';
 
 // Mock expo-router to avoid dependency chain issues
 jest.mock('expo-router', () => ({
@@ -82,16 +81,7 @@ jest.mock('@/components/ui', () => {
   };
 });
 
-// Mock urgencyScore util — jest.fn() so we can spy on call arguments
-jest.mock('@/utils/urgencyScore', () => ({
-  getStabilityProgressColor: jest.fn((stability: number | null) => {
-    if (stability === null || stability < 1) return 'error';
-    if (stability < 7) return 'warning';
-    return 'success';
-  }),
-}));
-
-describe('DictionaryWordCard', () => {
+describe('DictionaryWordRow', () => {
   const mockOnPress = jest.fn();
   const mockOnRemove = jest.fn();
   const mockOnResetProgress = jest.fn();
@@ -121,9 +111,9 @@ describe('DictionaryWordCard', () => {
       ...overrides,
     }) as StudyWord;
 
-  const renderCard = (word: StudyWord) =>
+  const renderRow = (word: StudyWord) =>
     render(
-      <DictionaryWordCard
+      <DictionaryWordRow
         word={word}
         onPress={mockOnPress}
         onRemove={mockOnRemove}
@@ -137,25 +127,25 @@ describe('DictionaryWordCard', () => {
 
   describe('Rendering', () => {
     test('renders Arabic text from root', () => {
-      const { getByText } = renderCard(createMockWord());
+      const { getByText } = renderRow(createMockWord());
       expect(getByText('كتب')).toBeTruthy();
     });
 
     test('renders English meaning from root with capitalized first letter', () => {
-      const { getByText } = renderCard(createMockWord());
+      const { getByText } = renderRow(createMockWord());
       expect(getByText('To write')).toBeTruthy();
     });
 
     test('renders without crashing when root is missing', () => {
-      const { toJSON } = renderCard(createMockWord({ root: undefined }));
+      const { toJSON } = renderRow(createMockWord({ root: undefined }));
       expect(toJSON()).toBeTruthy();
     });
   });
 
-  describe('Card Press', () => {
-    test('calls onPress with word when card is pressed', () => {
+  describe('Row Press', () => {
+    test('calls onPress with word when the row is pressed', () => {
       const word = createMockWord();
-      const { getByText } = renderCard(word);
+      const { getByText } = renderRow(word);
 
       fireEvent.press(getByText('كتب'));
 
@@ -166,7 +156,7 @@ describe('DictionaryWordCard', () => {
   describe('Swipe Actions', () => {
     test('calls onResetProgress with word when reset action is pressed', () => {
       const word = createMockWord();
-      const { getByText } = renderCard(word);
+      const { getByText } = renderRow(word);
 
       fireEvent.press(getByText('icon-refresh'));
 
@@ -176,7 +166,7 @@ describe('DictionaryWordCard', () => {
 
     test('calls onRemove with word when remove action is pressed', () => {
       const word = createMockWord();
-      const { getByText } = renderCard(word);
+      const { getByText } = renderRow(word);
 
       fireEvent.press(getByText('icon-trash'));
 
@@ -185,38 +175,14 @@ describe('DictionaryWordCard', () => {
     });
   });
 
-  describe('Memory Strength Indicator', () => {
-    test('routes stability into getStabilityProgressColor', () => {
-      const stabilitySpy = getStabilityProgressColor as jest.MockedFunction<
-        typeof getStabilityProgressColor
-      >;
-      stabilitySpy.mockClear();
-
-      const lowStabilityWord = createMockWord({ fsrs_stability: 0.5 });
-      const { rerender } = renderCard(lowStabilityWord);
-      expect(stabilitySpy).toHaveBeenCalledWith(0.5);
-
-      const highStabilityWord = createMockWord({ fsrs_stability: 30 });
-      rerender(
-        <DictionaryWordCard
-          word={highStabilityWord}
-          onPress={mockOnPress}
-          onRemove={mockOnRemove}
-          onResetProgress={mockOnResetProgress}
-        />,
-      );
-      expect(stabilitySpy).toHaveBeenCalledWith(30);
-    });
-  });
-
   describe('Memoization', () => {
     test('renders consistently with same props', () => {
       const word = createMockWord();
-      const { toJSON, rerender } = renderCard(word);
+      const { toJSON, rerender } = renderRow(word);
       const firstRender = JSON.stringify(toJSON());
 
       rerender(
-        <DictionaryWordCard
+        <DictionaryWordRow
           word={word}
           onPress={mockOnPress}
           onRemove={mockOnRemove}
@@ -232,11 +198,11 @@ describe('DictionaryWordCard', () => {
       const word1 = createMockWord({ root: { ...createMockWord().root!, letters: 'كتب' } });
       const word2 = createMockWord({ root: { ...createMockWord().root!, letters: 'قرأ' } });
 
-      const { rerender, getByText, queryByText } = renderCard(word1);
+      const { rerender, getByText, queryByText } = renderRow(word1);
       expect(getByText('كتب')).toBeTruthy();
 
       rerender(
-        <DictionaryWordCard
+        <DictionaryWordRow
           word={word2}
           onPress={mockOnPress}
           onRemove={mockOnRemove}

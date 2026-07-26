@@ -46,7 +46,7 @@ const DictionarySortBarComponent: FC<DictionarySortBarProps> = ({
   const colors = useColors();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { borderBottomColor: colors.border }]}>
       <View style={styles.options}>
         {SORT_OPTIONS.map(({ field, label }) => {
           const isActive = field === sortField;
@@ -92,7 +92,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingTop: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.SMALL,
+    // Seats the control against the first row, matching the list's separators
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   options: {
     flexDirection: 'row',

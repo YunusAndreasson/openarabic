@@ -65,6 +65,12 @@ interface IconButtonProps {
    * Additional icon style offset (e.g., for play icon alignment)
    */
   iconStyle?: TextStyle;
+
+  /**
+   * What the button does, for screen readers. An icon-only control has no
+   * text to fall back on, so pass this wherever the icon isn't self-evident.
+   */
+  accessibilityLabel?: string;
 }
 
 // Internal constant for debounce duration
@@ -81,6 +87,7 @@ export const IconButton: FC<IconButtonProps> = ({
   debounce = false,
   hapticType = 'selection',
   iconStyle,
+  accessibilityLabel,
 }) => {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
@@ -110,6 +117,8 @@ export const IconButton: FC<IconButtonProps> = ({
       disabled={isDisabled}
       hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
       android_ripple={rippleConfig}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
     >
       <Animated.View
         style={[

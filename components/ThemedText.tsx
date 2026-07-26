@@ -10,6 +10,7 @@ import {
   TEXT_OPACITY,
   TEXT_STYLES,
   getArabicTextStyle,
+  getCompactArabicTextStyle,
   getEnhancedOpacity,
 } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
@@ -163,19 +164,25 @@ export function ThemedText({
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
   const selectedArabicFont = useAppSelector(selectArabicFont);
+  const isArabic = type === 'arabic' || type === 'arabicCompact';
   // Only use debounced font size for Arabic text to prevent flickering during slider changes
-  const debouncedArabicFontSize = useDebouncedArabicFontSize(type === 'arabic' ? 100 : 0);
+  const debouncedArabicFontSize = useDebouncedArabicFontSize(isArabic ? 100 : 0);
 
   // Memoize style computation to prevent unnecessary recalculations
   const finalStyle = useMemo((): StyleProp<TextStyle> => {
     const textColor = getTextColor(colors, variant, colorName, skipDefaultColor);
 
-    if (type === 'arabic') {
+    if (isArabic) {
       const fontSize = debouncedArabicFontSize || LAYOUT.TYPOGRAPHY.SCALE.LARGE;
+      // `weight` is deliberately ignored here: WEIGHT_FONT_MAP names Inter
+      // families, which carry no Arabic glyphs, so applying it silently
+      // discarded the user's chosen Arabic font for an OS fallback face.
+      // Emphasize Arabic with size or color instead.
       return [
-        getArabicTextStyle(fontSize, {}, selectedArabicFont),
+        type === 'arabicCompact'
+          ? getCompactArabicTextStyle(fontSize, selectedArabicFont)
+          : getArabicTextStyle(fontSize, {}, selectedArabicFont),
         textColor && { color: textColor },
-        weight && { fontFamily: WEIGHT_FONT_MAP[weight] },
         align && { textAlign: align },
         style,
       ].filter(Boolean) as StyleProp<TextStyle>;
@@ -202,6 +209,7 @@ export function ThemedText({
     colorName,
     skipDefaultColor,
     type,
+    isArabic,
     debouncedArabicFontSize,
     selectedArabicFont,
     weight,

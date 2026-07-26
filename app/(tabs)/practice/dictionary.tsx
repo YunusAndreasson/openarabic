@@ -1,15 +1,15 @@
-import { FlashList } from '@shopify/flash-list';
+import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import { useNavigation, useRouter } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { LoadingState } from '@/components/common';
-import { DictionaryEmptyState, DictionarySortBar, DictionaryWordCard } from '@/components/practice';
+import { ListSeparator, LoadingState } from '@/components/common';
+import { DictionaryEmptyState, DictionarySortBar, DictionaryWordRow } from '@/components/practice';
 import { LIST_DRAW_DISTANCE_MULTIPLIER, TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { getPracticeWordRoute } from '@/constants/routes';
@@ -26,16 +26,16 @@ import type { NativeStackNavigationOptions } from '@/utils/navigation';
 
 // Row mount fade — Reanimated 4 CSS @keyframes. Unlike entering/exiting layout
 // animations, a CSS animation doesn't re-fire when FlashList recycles the row
-// onto a new item, so fast scrolls stay clean while first paint keeps the
-// staggered fade (per-row animationDelay below).
+// onto a new item, so fast scrolls stay clean.
+//
+// Every row fades on the same clock: a per-row stagger across a dozen dense
+// hairline rows reads as a cascade of lines rather than a list appearing.
 const ROW_FADE_IN_STYLE = {
   animationName: {
     from: { opacity: 0 },
     to: { opacity: 1 },
   },
   animationDuration: `${TIMING_CONFIG.MEDIUM.duration}ms`,
-  // 'backwards' holds opacity 0 through the stagger delay, then settles at the
-  // natural style (opacity 1) once finished
   animationFillMode: 'backwards' as const,
 } as ReanimatedCSSAnimationStyle;
 
@@ -69,6 +69,19 @@ export default function DictionaryScreen(): JSX.Element {
     searchQuery,
     setSearchQuery,
   } = useDictionaryList({ studyWords: studyWords || [] });
+
+  const listRef = useRef<FlashListRef<StudyWord>>(null);
+
+  // Re-sorting mid-list would otherwise leave you stranded somewhere in the
+  // middle (maintainVisibleContentPosition anchors by key), with no sign that
+  // anything happened. Jump to the top so the new order is what you see.
+  const handleSelectField = useCallback(
+    (field: Parameters<typeof selectSortField>[0]) => {
+      selectSortField(field);
+      listRef.current?.scrollToOffset({ offset: 0, animated: true });
+    },
+    [selectSortField],
+  );
 
   // Native header search bar (UISearchController on iOS, SearchView on Android)
   useLayoutEffect(() => {
@@ -140,22 +153,24 @@ export default function DictionaryScreen(): JSX.Element {
   );
 
   const renderItem = useCallback(
-    (props: { item: StudyWord; index: number }) => {
-      // Cap the stagger to the first ~20 items so deep scrolls don't pay a
-      // long entry delay for items the user isn't waiting on.
-      const enterDelay = props.index < 20 ? props.index * 20 : 0;
-      return (
-        <Animated.View style={[ROW_FADE_IN_STYLE, { animationDelay: `${enterDelay}ms` }]}>
-          <DictionaryWordCard
-            word={props.item}
-            onPress={handleWordPress}
-            onRemove={handleRemoveWord}
-            onResetProgress={handleResetProgress}
-          />
-        </Animated.View>
-      );
-    },
+    (props: { item: StudyWord }) => (
+      <Animated.View style={ROW_FADE_IN_STYLE}>
+        <DictionaryWordRow
+          word={props.item}
+          onPress={handleWordPress}
+          onRemove={handleRemoveWord}
+          onResetProgress={handleResetProgress}
+        />
+      </Animated.View>
+    ),
     [handleWordPress, handleRemoveWord, handleResetProgress],
+  );
+
+  // A hairline rule, not a gap: the rows are flat, so the line is what
+  // separates them.
+  const renderSeparator = useCallback(
+    () => <ListSeparator height={StyleSheet.hairlineWidth} color={colors.border} />,
+    [colors.border],
   );
 
   const ListEmptyComponent = useMemo(() => {
@@ -180,21 +195,25 @@ export default function DictionaryScreen(): JSX.Element {
         <LoadingState />
       ) : (
         <View style={styles.contentContainer}>
+          {/* Pinned, not a ListHeaderComponent: how the list is sorted is system
+              status and has to stay visible. As a scrolling header it left the
+              screen on the first flick — more so now the rows are half as tall —
+              and took the only way to change the sort with it. */}
+          {totalCount > 0 && (
+            <DictionarySortBar
+              sortField={sortField}
+              sortDirection={sortDirection}
+              onSelectField={handleSelectField}
+              wordCount={words.length}
+            />
+          )}
           <FlashList
+            ref={listRef}
             data={words}
             renderItem={renderItem}
             keyExtractor={keyExtractor}
-            ListHeaderComponent={
-              totalCount > 0 ? (
-                <DictionarySortBar
-                  sortField={sortField}
-                  sortDirection={sortDirection}
-                  onSelectField={selectSortField}
-                  wordCount={words.length}
-                />
-              ) : null
-            }
             ListEmptyComponent={ListEmptyComponent}
+            ItemSeparatorComponent={renderSeparator}
             contentContainerStyle={contentContainerStyle}
             contentInsetAdjustmentBehavior="automatic"
             keyboardDismissMode="on-drag"

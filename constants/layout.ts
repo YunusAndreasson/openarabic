@@ -226,7 +226,7 @@ export const LAYOUT = {
       LIST_ITEM: TOUCH_TARGETS.LARGE + SPACING_SCALE.LARGE * 2, // 48 + 32 = 80
       AUDIO_ITEM: TOUCH_TARGETS.LARGE + SPACING_SCALE.XLARGE * 2, // 48 + 40 = 88
       MINI_PLAYER: TOUCH_TARGETS.LARGE + SPACING_SCALE.XXLARGE * 2, // 48 + 64 = 112 (taller for 2-line title)
-      VOCABULARY_ITEM: TOUCH_TARGETS.LARGE + SPACING_SCALE.LARGE * 2, // 48 + 32 = 80 (single-row compact layout)
+      VOCABULARY_ITEM: TOUCH_TARGETS.MEDIUM + SPACING_SCALE.MEDIUM, // 44 + 12 = 56 (compact hairline dictionary row)
     },
     IMAGE: {
       MINI_PLAYER: TOUCH_TARGETS.LARGE + SPACING_SCALE.SMALL, // 48 + 8 = 56 (increased from 40 for better balance)
@@ -235,9 +235,6 @@ export const LAYOUT = {
         WIDTH: BASE_UNIT * 20, // 80 - bookmark/list thumbnails (2025: larger for visual prominence)
         HEIGHT: BASE_UNIT * 15, // 60 - 4:3 aspect ratio
       },
-    },
-    WIDTH: {
-      DICTIONARY_LEFT_SECTION: BASE_UNIT * 32, // 128 - more space for English text with badges
     },
   },
 
@@ -443,6 +440,26 @@ export const getArabicTextStyle = (
     paddingHorizontal: 0,
     textAlignVertical: 'center',
     ...additionalStyles,
+  };
+};
+
+/**
+ * Arabic sized for a dense index row (the dictionary list).
+ *
+ * Reading surfaces keep `getArabicTextStyle`: its 2.2x line height and 6px of
+ * diacritic headroom are what make body Arabic legible, but they also make a
+ * single-line row ~82px tall before any padding. An index row is a navigation
+ * surface, so it caps the user's reading size and drops to the LOOSE multiplier.
+ */
+export const getCompactArabicTextStyle = (
+  fontSize: number,
+  fontFamily: string = FONTS.ARABIC,
+): TextStyle => {
+  const size = Math.min(fontSize, LAYOUT.TYPOGRAPHY.SCALE.XLARGE);
+  return {
+    ...getArabicTextStyle(size, {}, fontFamily),
+    lineHeight: Math.round(size * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.LOOSE),
+    paddingVertical: SPACING_SCALE.HALF_TINY,
   };
 };
 

@@ -5,11 +5,9 @@
 
 export { BrandedBottomSheetHandle } from './BrandedBottomSheetHandle';
 export { CloseButton } from './CloseButton';
-export { ColorDot } from './ColorDot';
 export { DictionaryButton } from './DictionaryButton';
 export { EditModeButton } from './EditModeButton';
 export { EnhancedImage } from './EnhancedImage';
-export { GlowingDot } from './GlowingDot';
 export { HeaderIconButton } from './HeaderIconButton';
 export { IconButton } from './IconButton';
 export { PinnedActionButton } from './PinnedActionButton';
