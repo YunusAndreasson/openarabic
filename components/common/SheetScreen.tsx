@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
-import { useColors } from '@/hooks/theme/useColors';
 
 /**
  * Clearance for the OS sheet grabber (`sheetGrabberVisible: true`). iOS draws a
@@ -31,17 +30,24 @@ interface SheetScreenProps {
  * `app/words-to-revisit.tsx` for the shape to use when scrolling is genuinely
  * needed.
  *
- * Bottom padding is a fixed `MEDIUM` — NOT `insets.bottom + LARGE`. A native
- * form sheet sits above the home indicator on its own (the system handles that
- * clearance), so adding the device safe-area inset here renders as a visible
- * empty band below the content. Sleep-timer can include `insets.bottom` because
- * at a fixed detent the space reads as breathing room around its bottom button;
- * with `fitToContents` the same padding becomes a gap.
+ * **The route owns the sheet background, via `contentStyle`, not this view.**
+ * With `fitToContents` and `headerShown: false` iOS leaves a bottom safe-area
+ * inset below the content wrapper (react-native-screens#3203) — the sheet is
+ * taller than what this container paints. No padding here can reach it: the
+ * band sits *outside* the wrapper. react-native-screens handles it by lifting
+ * `backgroundColor` out of the route's `contentStyle` onto the Screen itself
+ * ("we need to extract background color and apply it to Screen due to the safe
+ * area inset at the bottom of ScreenContentWrapper" — `ScreenStackItem`), which
+ * paints the whole sheet including the band. Expo Router already injects the
+ * theme `background` there, so a sheet that painted `elevation1` on this view
+ * instead left the band a visibly different colour — the "gap at the bottom".
+ *
+ * Bottom padding is a fixed `MEDIUM` — NOT `insets.bottom`. A native form sheet
+ * clears the home indicator on its own, and with `fitToContents` the inset above
+ * already supplies that room; adding it here only makes the sheet taller.
  */
 export function SheetScreen({ children }: SheetScreenProps) {
-  const colors = useColors();
-
-  return <View style={[styles.container, { backgroundColor: colors.elevation1 }]}>{children}</View>;
+  return <View style={styles.container}>{children}</View>;
 }
 
 const styles = StyleSheet.create({
