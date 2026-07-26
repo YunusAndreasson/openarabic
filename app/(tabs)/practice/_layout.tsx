@@ -33,11 +33,21 @@ export default function StudyLayout(): JSX.Element {
           the word screen opened to nothing. Same rule the account layout
           documents: sub-screens of a modal push as regular pages inside it
           rather than stacking modal-on-modal. */}
+      {/* Explicit CloseButton rather than relying on the platform back chevron.
+          On device this screen rendered with no visible way out at all — just
+          the title — so the learner had to know the system back gesture. An X
+          we render ourselves cannot be suppressed by header configuration, and
+          it matches `dictionary` directly above it: the same affordance in the
+          same corner throughout this flow. `headerBackVisible: false` keeps it
+          to one exit if the platform does supply a chevron here; both do
+          router.back() anyway, so they would only look like a choice. */}
       <Stack.Screen
         name="word"
         options={createNavigationOptions(colors, {
           title: STRINGS.WORD_DETAIL_TITLE,
           isRegularScreen: true,
+          headerBackVisible: false,
+          headerRight: () => <CloseButton />,
         })}
       />
     </Stack>

@@ -164,7 +164,7 @@ export default function PracticeWordScreen(): JSX.Element {
   // another screen, stale deep link) looked like a screen that never loaded.
   if (!word) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.elevation1 }]}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.loadingContainer}>
           {isLoading ? (
             <ActivityIndicator size="small" color={colors.tint} />
@@ -185,7 +185,7 @@ export default function PracticeWordScreen(): JSX.Element {
   const difficultyLevel = getDifficultyLevel(word.fsrs_difficulty);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.elevation1 }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[
