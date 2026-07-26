@@ -30,7 +30,6 @@ export const STRINGS = {
   /** Shown between arming the mic and the first audio buffer arriving (~0.5s
    *  on device). Saying "Listening…" during that window invites the learner to
    *  speak into a mic that is not capturing yet, and the answer is lost. */
-  VOICE_OPENING_MIC: 'Opening mic…',
   VOICE_CHECKING: 'Grading…',
   VOICE_PREPARING: 'Preparing voice…',
   VOICE_TRY_AGAIN: 'Try again or tap to grade',

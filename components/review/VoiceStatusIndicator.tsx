@@ -3,16 +3,18 @@
  * actions. Plain text, no icon or looping motion — just the word, which carries
  * the state on its own:
  *
- * - arming    → "Opening mic…"    (muted — do NOT speak yet)
  * - listening → "Listening…"      (brand tint)
  * - checking  → "Grading…"        (accent)
  * - disabled  → "Preparing voice…" (muted)
+ * - arming    → renders nothing
  * - idle      → renders nothing
  * - result    → renders nothing (the verdict is owned by VoiceResultPanel)
  *
- * The arming/listening split matters: the mic needs a few hundred ms after
- * arm() before it captures anything, and promising "Listening…" across that
- * window loses the learner's first syllables.
+ * The arming/listening split still matters — the mic needs a few hundred ms
+ * after arm() before it captures, and promising "Listening…" across that window
+ * loses the learner's first syllables — but narrating it ("Opening mic…") read
+ * as debug output. Showing nothing says the same thing: no cue yet, so don't
+ * speak yet, and "Listening…" still lands the moment capture actually starts.
  *
  * A gentle FadeIn cross-fades the label when the state changes; there is
  * deliberately no pulsing/spinning indicator (it read as distracting flicker).
@@ -38,14 +40,13 @@ interface IndicatorConfig {
 
 function configFor(phase: VoicePhase): IndicatorConfig | null {
   switch (phase) {
-    case 'arming':
-      return { label: STRINGS.VOICE_OPENING_MIC, color: 'secondaryText' };
     case 'listening':
       return { label: STRINGS.VOICE_LISTENING, color: 'tint' };
     case 'checking':
       return { label: STRINGS.VOICE_CHECKING, color: 'accent' };
     case 'disabled':
       return { label: STRINGS.VOICE_PREPARING, color: 'secondaryText' };
+    case 'arming':
     case 'idle':
     case 'result':
     default:
