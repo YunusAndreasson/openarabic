@@ -279,6 +279,11 @@ jest.mock('react-native-reanimated', () => {
   };
 
   return {
+    // Without this, Babel's interop ignores the `default` key below and hands a
+    // default import the whole exports object — so `Animated.View` is undefined
+    // and any component rendering one fails with "Element type is invalid".
+    // The __mocks__ copy of this mock already sets it; the two must agree.
+    __esModule: true,
     // Cancellation
     cancelAnimation: jest.fn(() => undefined),
     // Core animation values

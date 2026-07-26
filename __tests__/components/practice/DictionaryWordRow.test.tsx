@@ -52,33 +52,38 @@ jest.mock('@/utils/layoutUtils', () => ({
 }));
 
 // Render the swipeable inline: children plus the right-actions panel, so the
-// swipe action buttons are reachable without gesture simulation
+// swipe action buttons are reachable without gesture simulation.
+//
+// This factory has to stand in for the WHOLE gesture-handler module, not just
+// the swipeable. jest.config's moduleNameMapper key is a regex, so
+// 'react-native-gesture-handler' matches the '/ReanimatedSwipeable' subpath too
+// and both imports resolve to the same module — mocking one replaces the other.
+// Anything the component imports from the package root (Pressable) must be
+// re-exported here or it arrives undefined, which surfaces as the thoroughly
+// unhelpful "Element type is invalid".
 jest.mock('react-native-gesture-handler/ReanimatedSwipeable', () => {
   const MockReact = require('react');
-  const { View } = require('react-native');
+  const { View, Pressable } = require('react-native');
   const MockSwipeable = MockReact.forwardRef(
     (
-      props: { children?: React.ReactNode; renderRightActions?: () => React.ReactNode },
+      props: {
+        children?: React.ReactNode;
+        renderRightActions?: (
+          progress: { value: number },
+          drag: { value: number },
+        ) => React.ReactNode;
+      },
       _ref: unknown,
     ) =>
       MockReact.createElement(
         View,
         null,
         props.children,
-        props.renderRightActions ? props.renderRightActions() : null,
+        // The real signature passes shared values; the actions read `drag`.
+        props.renderRightActions ? props.renderRightActions({ value: 0 }, { value: 0 }) : null,
       ),
   );
-  return { __esModule: true, default: MockSwipeable };
-});
-
-// Swipe action buttons as pressable text so tests can target them by icon name
-jest.mock('@/components/ui', () => {
-  const MockReact = require('react');
-  const { Text } = require('react-native');
-  return {
-    IconButton: ({ icon, onPress }: { icon: string; onPress: () => void }) =>
-      MockReact.createElement(Text, { onPress }, `icon-${icon}`),
-  };
+  return { __esModule: true, default: MockSwipeable, Pressable };
 });
 
 describe('DictionaryWordRow', () => {
@@ -156,9 +161,12 @@ describe('DictionaryWordRow', () => {
   describe('Swipe Actions', () => {
     test('calls onResetProgress with word when reset action is pressed', () => {
       const word = createMockWord();
-      const { getByText } = renderRow(word);
+      const { getByLabelText } = renderRow(word);
 
-      fireEvent.press(getByText('icon-refresh'));
+      // Targeted by accessibility label, not the icon glyph: the actions are
+      // plain icons in flush panels now, and the label is what a learner using
+      // a screen reader actually gets.
+      fireEvent.press(getByLabelText('Reset progress'));
 
       expect(mockOnResetProgress).toHaveBeenCalledWith(word);
       expect(mockOnRemove).not.toHaveBeenCalled();
@@ -166,9 +174,9 @@ describe('DictionaryWordRow', () => {
 
     test('calls onRemove with word when remove action is pressed', () => {
       const word = createMockWord();
-      const { getByText } = renderRow(word);
+      const { getByLabelText } = renderRow(word);
 
-      fireEvent.press(getByText('icon-trash'));
+      fireEvent.press(getByLabelText('Remove from practice'));
 
       expect(mockOnRemove).toHaveBeenCalledWith(word);
       expect(mockOnResetProgress).not.toHaveBeenCalled();

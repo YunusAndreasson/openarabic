@@ -10,10 +10,10 @@ import { Pressable } from 'react-native-gesture-handler';
 import ReanimatedSwipeable, {
   type SwipeableMethods,
 } from 'react-native-gesture-handler/ReanimatedSwipeable';
+import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { Ionicons } from '@/components/ui/Icon';
-import { IconButton } from '@/components/ui';
 
 import { LAYOUT, MIN_TOUCH_TARGET, STATUS_INDICATOR } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -32,6 +32,60 @@ const CHEVRON_SIZE = 14;
  * drag.
  */
 const SWIPE_ACTIVATION_DISTANCE = 24;
+
+/** Width of one action panel. Two of them make up the revealed area. */
+const ACTION_WIDTH = 64;
+const ACTIONS_WIDTH = ACTION_WIDTH * 2;
+const ACTION_ICON_SIZE = 20;
+
+interface RowActionsProps {
+  /** Live drag offset from the swipeable — negative as the row moves left. */
+  drag: SharedValue<number>;
+  onReset: () => void;
+  onRemove: () => void;
+}
+
+/**
+ * The revealed swipe actions: two flush, full-height panels, no gaps and no
+ * corners, the way a native iOS row action looks.
+ *
+ * Previously these were two circular icon buttons floating on the list
+ * background, laid out statically — `renderRightActions` ignored the drag, so
+ * the panel did not track the finger and the buttons appeared to lag and stretch
+ * as the row moved. Reading `drag` and translating by it pins the actions to the
+ * row edge for the whole gesture, which is the difference between "revealed" and
+ * "sliding around".
+ */
+function RowActions({ drag, onReset, onRemove }: RowActionsProps) {
+  const colors = useColors();
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    // `drag` is 0 at rest and -ACTIONS_WIDTH when fully open, so this holds the
+    // panel exactly against the row's trailing edge at every point of the drag.
+    transform: [{ translateX: drag.value + ACTIONS_WIDTH }],
+  }));
+
+  return (
+    <Animated.View style={[styles.actions, animatedStyle]}>
+      <Pressable
+        onPress={onReset}
+        style={[styles.action, { backgroundColor: colors.warning }]}
+        accessibilityRole="button"
+        accessibilityLabel={STRINGS.RESET_PROGRESS_ACTION}
+      >
+        <Ionicons name="refresh" size={ACTION_ICON_SIZE} color={colors.onTint} />
+      </Pressable>
+      <Pressable
+        onPress={onRemove}
+        style={[styles.action, { backgroundColor: colors.error }]}
+        accessibilityRole="button"
+        accessibilityLabel={STRINGS.REMOVE_FROM_PRACTICE_ACTION}
+      >
+        <Ionicons name="trash" size={ACTION_ICON_SIZE} color={colors.onTint} />
+      </Pressable>
+    </Animated.View>
+  );
+}
 
 interface DictionaryWordRowProps {
   word: StudyWord;
@@ -96,25 +150,10 @@ export const DictionaryWordRow = memo<DictionaryWordRowProps>(
     }, [onResetProgress, word]);
 
     const renderRightActions = useCallback(
-      () => (
-        <View style={styles.actions}>
-          <IconButton
-            icon="refresh"
-            onPress={handleResetProgress}
-            backgroundColor={colors.warning}
-            iconSize={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-            accessibilityLabel={STRINGS.RESET_PROGRESS_ACTION}
-          />
-          <IconButton
-            icon="trash"
-            onPress={handleRemove}
-            variant="danger"
-            iconSize={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-            accessibilityLabel={STRINGS.REMOVE_FROM_PRACTICE_ACTION}
-          />
-        </View>
+      (_progress: SharedValue<number>, drag: SharedValue<number>) => (
+        <RowActions drag={drag} onReset={handleResetProgress} onRemove={handleRemove} />
       ),
-      [handleResetProgress, handleRemove, colors.warning],
+      [handleResetProgress, handleRemove],
     );
 
     // A flat row has no card press-scale, so feedback comes from the surface:
@@ -144,8 +183,12 @@ export const DictionaryWordRow = memo<DictionaryWordRowProps>(
     return (
       <ReanimatedSwipeable
         ref={swipeableRef}
-        friction={2}
-        rightThreshold={40}
+        // 1:1 with the finger. At friction 2 the row moved half as far as the
+        // drag, so opening the 128px panel took 256px of travel and the whole
+        // gesture felt heavy and detached from the touch.
+        friction={1}
+        // Past halfway to open, snap back below it.
+        rightThreshold={ACTION_WIDTH}
         overshootRight={false}
         dragOffsetFromRightEdge={SWIPE_ACTIVATION_DISTANCE}
         onSwipeableOpenStartDrag={handleOpenStartDrag}
@@ -227,8 +270,13 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
+    // No gap, no padding, no radius: the panels sit flush against each other and
+    // against the row, and stretch the row's full height.
+    width: ACTIONS_WIDTH,
+  },
+  action: {
+    width: ACTION_WIDTH,
     alignItems: 'center',
-    gap: LAYOUT.SPACING.SMALL,
-    paddingLeft: LAYOUT.SPACING.MEDIUM,
+    justifyContent: 'center',
   },
 });
