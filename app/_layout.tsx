@@ -585,11 +585,27 @@ function AppContent() {
                       headerShown: false,
                     }}
                   />
+                  {/* Fixed detents, never 'fitToContents' — iOS measures that
+                      as content height + bottom safe area and top-aligns the
+                      content, so the surplus renders as an empty band below it
+                      that no amount of padding can close (SheetScreen documents
+                      the full reasoning).
+                      A fixed detent is honoured literally — iOS adds the safe
+                      area only when it has to measure — so each first detent is
+                      the content height measured on device plus ~0.03 for the
+                      grabber clearance and bottom inset the content now owns.
+                      Keep them tight: overshooting reintroduces a band (charts
+                      have fixed heights and stack from the top) and undershooting
+                      hides the summary row under the sheet edge.
+                      A second `1` detent is only offered where expanding
+                      reveals more content (the tall charts, the leech list).
+                      Short sheets get a single detent — dragging those to full
+                      height would just open a band of empty space. */}
                   <Stack.Screen
                     name="due-words"
                     options={{
                       presentation: 'formSheet',
-                      sheetAllowedDetents: 'fitToContents',
+                      sheetAllowedDetents: [0.54],
                       sheetGrabberVisible: true,
                       sheetCornerRadius: 24,
                       headerShown: false,
@@ -599,7 +615,7 @@ function AppContent() {
                     name="memory-retention"
                     options={{
                       presentation: 'formSheet',
-                      sheetAllowedDetents: 'fitToContents',
+                      sheetAllowedDetents: [0.82, 1],
                       sheetGrabberVisible: true,
                       sheetCornerRadius: 24,
                       headerShown: false,
@@ -609,7 +625,7 @@ function AppContent() {
                     name="study-streak"
                     options={{
                       presentation: 'formSheet',
-                      sheetAllowedDetents: 'fitToContents',
+                      sheetAllowedDetents: [0.4, 1],
                       sheetGrabberVisible: true,
                       sheetCornerRadius: 24,
                       headerShown: false,
@@ -619,7 +635,7 @@ function AppContent() {
                     name="words-mastered"
                     options={{
                       presentation: 'formSheet',
-                      sheetAllowedDetents: 'fitToContents',
+                      sheetAllowedDetents: [0.56],
                       sheetGrabberVisible: true,
                       sheetCornerRadius: 24,
                       headerShown: false,
@@ -629,13 +645,11 @@ function AppContent() {
                     name="words-to-revisit"
                     options={{
                       presentation: 'formSheet',
-                      // Fixed detents, NOT fitToContents. The leech list loads
-                      // async, and iOS measures a fitToContents sheet exactly
-                      // once at presentation — on a cold FSRS cache it locked
-                      // to the loading-state height and the taller list then
-                      // rendered on top of the header. Pinning the content area
-                      // to a fixed fraction was tried first and still lost the
-                      // race; a fixed detent removes the measurement entirely.
+                      // Reached the same fixed-detent conclusion first, from the
+                      // other direction: the leech list loads async and iOS
+                      // measures fitToContents exactly once at presentation, so
+                      // on a cold FSRS cache it locked to the loading-state
+                      // height and the taller list rendered over the header.
                       sheetAllowedDetents: [0.6, 1],
                       sheetGrabberVisible: true,
                       sheetCornerRadius: 24,

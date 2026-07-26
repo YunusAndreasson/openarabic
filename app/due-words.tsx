@@ -10,7 +10,7 @@ const filterWordsWithRoot = (words: StudyWord[]) => words.filter(word => word?.r
 
 export default function DueWordsScreen(): JSX.Element {
   return (
-    <SheetScreen>
+    <SheetScreen fill>
       <ChartSheetContent
         title={STRINGS.DUE_WORDS_FORECAST}
         subtitle={STRINGS.DUE_WORDS_FORECAST_SUBTITLE}

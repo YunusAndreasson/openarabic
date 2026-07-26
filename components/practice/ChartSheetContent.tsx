@@ -1,4 +1,5 @@
 import { useMemo, type ComponentType } from 'react';
+import { ScrollView, StyleSheet } from 'react-native';
 
 import { BottomSheetHeader } from '@/components/common';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -16,6 +17,11 @@ interface ChartSheetContentProps {
 /**
  * Header + chart content for a chart sheet route screen presented via
  * Stack.Screen `presentation: 'formSheet'`.
+ *
+ * Scrolls inside a `<SheetScreen fill>`: the routes use fixed detents (see
+ * SheetScreen for why fitToContents is banned), so the content has to absorb
+ * the difference — `flexGrow` fills a detent taller than the chart, and
+ * scrolling covers one that's shorter.
  */
 export function ChartSheetContent({
   title,
@@ -37,9 +43,22 @@ export function ChartSheetContent({
   }, [allWords, filterWords]);
 
   return (
-    <>
+    <ScrollView
+      style={styles.scroll}
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+    >
       <BottomSheetHeader title={title} subtitle={subtitle} />
       <ChartComponent studyWords={studyWords} />
-    </>
+    </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  scroll: {
+    flex: 1,
+  },
+  content: {
+    flexGrow: 1,
+  },
+});
