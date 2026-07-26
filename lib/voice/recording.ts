@@ -46,6 +46,15 @@ export interface RecordingConfig {
    *  instead of waiting out maxDurationMs. Only applies while speechSeen is
    *  false, so it never cuts off someone who actually started talking. */
   noSpeechTimeoutMs: number;
+  /** Backstop for the gap between the two thresholds. Speech ends at
+   *  `silenceThreshold` but restarts at the higher `speechThreshold`; audio
+   *  parked between them is neither, so `silenceMs` stops accumulating and the
+   *  recording can only end at `maxDurationMs`. Room tone landing in that band
+   *  is what pinned real sessions to the 15 s cap. This is the same hang timer
+   *  measured against the *speech* threshold: quiet enough to not be speech,
+   *  for long enough, ends the recording whatever the noise floor is doing.
+   *  Necessarily ≥ `silenceHangMs`, so a genuinely quiet room still wins. */
+  idleHangMs: number;
   gainNormalizeEnabled: boolean;
   captureTarget: number;
   captureMaxGain: number;
@@ -70,6 +79,10 @@ export const DEFAULT_RECORDING_CONFIG: RecordingConfig = {
   // permission edge / silence). Bail to grading + the reveal fallback rather
   // than stranding them on "Listening…" for the full 15 s cap.
   noSpeechTimeoutMs: 8000,
+  // 1.5x silenceHangMs: long enough that the quiet-room path (900 ms) still
+  // decides normally, short enough that a learner who has stopped talking is
+  // never left waiting on the 15 s cap.
+  idleHangMs: 1350,
   gainNormalizeEnabled: true,
   captureTarget: 0.7,
   captureMaxGain: 60,
@@ -97,6 +110,76 @@ export interface RecordingResult {
   /** Wall-clock ms from start() to the moment the stop decision was taken
    *  (energy gate, max cap, watchdog, or cancel/manual). */
   stopDecidedAtMs: number;
+}
+
+/** Mutable state the energy gate carries between buffers. */
+export interface EnergyGateState {
+  noiseFloor: number;
+  speechSeen: boolean;
+  /** ms below `silenceThreshold` since speech was last heard. */
+  silenceMs: number;
+  /** ms below `speechThreshold` since speech was last heard. Always ≥
+   *  `silenceMs`, and the one that survives a raised noise floor. */
+  idleMs: number;
+}
+
+export function initialGateState(): EnergyGateState {
+  return { noiseFloor: INITIAL_NOISE_FLOOR, speechSeen: false, silenceMs: 0, idleMs: 0 };
+}
+
+/**
+ * One buffer's worth of energy-gate decision, as a pure function so it can be
+ * tested without a microphone. It has been wrong twice in production — once
+ * when the absolute floors were lowered and trailing room tone stopped counting
+ * as silence, and once when dropping the forced Bluetooth-HFP route made capture
+ * ~3x louder and pushed room tone above `ABS_SILENCE_FLOOR` — and both times the
+ * symptom was a recording that ran to `maxDurationMs` while the learner repeated
+ * themselves into a microphone that appeared dead.
+ *
+ * Returns the next state plus the stop reason, if any.
+ */
+export function stepEnergyGate(
+  state: EnergyGateState,
+  sample: { rms: number; bufferMs: number; elapsedMs: number },
+  config: RecordingConfig,
+): { state: EnergyGateState; stop: RecordingResult['stopReason'] | null } {
+  const { rms, bufferMs, elapsedMs } = sample;
+  const speechThreshold = config.energyGateEnabled
+    ? Math.max(ABS_SPEECH_FLOOR, state.noiseFloor * config.speechFactor)
+    : 0;
+  const silenceThreshold = config.energyGateEnabled
+    ? Math.max(ABS_SILENCE_FLOOR, state.noiseFloor * config.silenceFactor)
+    : Infinity;
+
+  let { noiseFloor, speechSeen, silenceMs, idleMs } = state;
+
+  if (rms < noiseFloor) noiseFloor = rms;
+  else if (config.energyGateEnabled && rms < speechThreshold)
+    noiseFloor += (rms - noiseFloor) * config.noiseRiseRate;
+
+  const isSpeech = !config.energyGateEnabled || rms >= speechThreshold;
+  if (isSpeech) {
+    speechSeen = true;
+    silenceMs = 0;
+    idleMs = 0;
+  } else if (speechSeen) {
+    // Below the speech threshold always counts as idle; only genuinely quiet
+    // audio counts as silence. Tracking both is what stops the band between
+    // them from being a state the gate can never leave.
+    idleMs += bufferMs;
+    if (rms < silenceThreshold) silenceMs += bufferMs;
+  }
+
+  const next = { noiseFloor, speechSeen, silenceMs, idleMs };
+  const pastMinimum = elapsedMs >= config.minDurationMs;
+  const quietEnough = speechSeen && silenceMs >= config.silenceHangMs && pastMinimum;
+  const idleEnough = speechSeen && idleMs >= config.idleHangMs && pastMinimum;
+  const noSpeechTimedOut = !speechSeen && elapsedMs >= config.noSpeechTimeoutMs;
+
+  if (quietEnough || idleEnough) return { state: next, stop: 'silence' };
+  if (noSpeechTimedOut) return { state: next, stop: 'noSpeech' };
+  if (elapsedMs >= config.maxDurationMs) return { state: next, stop: 'maxDuration' };
+  return { state: next, stop: null };
 }
 
 export interface RecordingHandlers {
@@ -209,10 +292,8 @@ export class VoiceRecorder {
   private totalSamples = 0;
   private sourceSampleRate = TARGET_SAMPLE_RATE;
   private startedAt = 0;
-  private speechSeen = false;
-  private silenceMs = 0;
+  private gate: EnergyGateState = initialGateState();
   private peakRms = 0;
-  private noiseFloor = INITIAL_NOISE_FLOOR;
   private stopping = false;
   private handlers: RecordingHandlers = {};
   private config: RecordingConfig = { ...DEFAULT_RECORDING_CONFIG };
@@ -259,10 +340,8 @@ export class VoiceRecorder {
     this.chunks = [];
     this.totalSamples = 0;
     this.sourceSampleRate = TARGET_SAMPLE_RATE;
-    this.speechSeen = false;
-    this.silenceMs = 0;
+    this.gate = initialGateState();
     this.peakRms = 0;
-    this.noiseFloor = INITIAL_NOISE_FLOOR;
     this.stopping = false;
     this.handlers = handlers;
     this.startedAt = Date.now();
@@ -329,41 +408,23 @@ export class VoiceRecorder {
     const bufferMs = (event.numFrames / (this.sourceSampleRate || TARGET_SAMPLE_RATE)) * 1000;
     if (rms > this.peakRms) this.peakRms = rms;
 
-    const speechThreshold = this.config.energyGateEnabled
-      ? Math.max(ABS_SPEECH_FLOOR, this.noiseFloor * this.config.speechFactor)
-      : 0;
-    const silenceThreshold = this.config.energyGateEnabled
-      ? Math.max(ABS_SILENCE_FLOOR, this.noiseFloor * this.config.silenceFactor)
-      : Infinity;
+    const { state, stop } = stepEnergyGate(
+      this.gate,
+      { rms, bufferMs, elapsedMs: elapsed },
+      this.config,
+    );
+    this.gate = state;
 
-    if (rms < this.noiseFloor) this.noiseFloor = rms;
-    else if (this.config.energyGateEnabled && rms < speechThreshold)
-      this.noiseFloor += (rms - this.noiseFloor) * this.config.noiseRiseRate;
-
-    if (!this.config.energyGateEnabled || rms >= speechThreshold) {
-      this.speechSeen = true;
-      this.silenceMs = 0;
-    } else if (this.speechSeen && rms < silenceThreshold) {
-      this.silenceMs += bufferMs;
-    }
-
-    const quietEnough =
-      this.speechSeen &&
-      this.silenceMs >= this.config.silenceHangMs &&
-      elapsed >= this.config.minDurationMs;
-    const noSpeechTimedOut = !this.speechSeen && elapsed >= this.config.noSpeechTimeoutMs;
-    if (
-      !this.stopping &&
-      (quietEnough || noSpeechTimedOut || elapsed >= this.config.maxDurationMs)
-    ) {
+    if (!this.stopping && stop !== null) {
       this.stopping = true;
-      this.stopReason = quietEnough ? 'silence' : noSpeechTimedOut ? 'noSpeech' : 'maxDuration';
+      this.stopReason = stop;
       this.stopDecidedAt = elapsed;
       diagMark('mic.stopDecided', {
         reason: this.stopReason,
         at: elapsed,
-        speechSeen: this.speechSeen,
-        silenceMs: this.silenceMs,
+        speechSeen: this.gate.speechSeen,
+        silenceMs: this.gate.silenceMs,
+        idleMs: this.gate.idleMs,
         peakRms: Number(this.peakRms.toFixed(5)),
       });
       this.handlers.onAutoStop?.();
@@ -378,10 +439,10 @@ export class VoiceRecorder {
       this.watchdog = null;
     }
     const durationMs = Date.now() - this.startedAt;
-    const heardSpeech = this.speechSeen;
+    const heardSpeech = this.gate.speechSeen;
     const sourceRate = this.sourceSampleRate;
     const peakRms = this.peakRms;
-    const noiseFloor = this.noiseFloor;
+    const noiseFloor = this.gate.noiseFloor;
     const config = { ...this.config };
     const bufferCount = this.bufferCount;
     const stopReason = this.stopReason;
