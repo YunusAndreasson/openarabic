@@ -30,9 +30,18 @@ import { logVoiceAttempt, type VoiceAttemptLog } from '@/services/voiceTelemetry
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import { setVoiceEnabled } from '@/store/settingsSlice';
 import { errorFeedback } from '@/utils/haptics';
+import { countDiag, mark as diagMark, span as diagSpan } from '@/utils/reviewDiagnostics';
 import { matchSingleWord } from '@/utils/voiceMatching';
 
-export type VoicePhase = 'idle' | 'listening' | 'checking' | 'result' | 'disabled';
+/**
+ * `arming` is the window between asking for the mic and the mic actually
+ * delivering audio (~0.5 s on device: permission check, then opening an
+ * exclusive input stream). It is a distinct phase because showing "Listening…"
+ * across it invites the learner to answer into a mic that is not recording yet
+ * — the answer is lost, the card times out, and it reads as "the mic is
+ * unreliable".
+ */
+export type VoicePhase = 'idle' | 'arming' | 'listening' | 'checking' | 'result' | 'disabled';
 
 /**
  * A wrong / ambiguous answer the learner can act on. A *correct* answer never
@@ -119,6 +128,14 @@ const CLEAN_MISS_MAX_SIMILARITY = 0.5;
  *  "didn't catch that" fallback and suggest a retry instead. */
 const CLEAN_MISS_MIN_TRANSCRIPT_CHARS = 2;
 
+/** Transient arm() failures tolerated per card before we stop retrying and let
+ *  the learner grade by hand. Small on purpose — a mic that needs four goes is
+ *  broken, not slow. */
+const MAX_ARM_RETRIES = 3;
+/** Backoff between arm retries, multiplied by the attempt number. Long enough
+ *  for a previous recorder's native teardown to complete. */
+const ARM_RETRY_BASE_MS = 250;
+
 export function useVoiceReview({
   expected,
   currentWordKey,
@@ -202,6 +219,11 @@ export function useVoiceReview({
   // The card key we've already armed for, to avoid re-arming on incidental
   // re-renders while the mic is in flight.
   const armedForKeyRef = useRef<string | null>(null);
+  // Transient arm() failures on the CURRENT card. A card whose arm fails must
+  // not be left mic-less for the rest of its life — that is the "I randomly
+  // have to wait for the mic" report — so it retries a bounded number of times.
+  const armFailuresRef = useRef(0);
+  const armRetryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Mirror of `result` so togglePause (a stable callback) can tell whether a
   // wrong-answer panel is currently awaiting the user without re-arming under it.
@@ -221,7 +243,20 @@ export function useVoiceReview({
     setDebug({ transcript: '', match: null, recorder: null, armError: null });
     armedForKeyRef.current = null;
     attemptCtxRef.current = null;
+    armFailuresRef.current = 0;
+    if (armRetryTimerRef.current) {
+      clearTimeout(armRetryTimerRef.current);
+      armRetryTimerRef.current = null;
+    }
   }, [currentWordKey]);
+
+  // Drop a pending arm retry if the screen goes away mid-backoff.
+  useEffect(
+    () => () => {
+      if (armRetryTimerRef.current) clearTimeout(armRetryTimerRef.current);
+    },
+    [],
+  );
 
   // Surface a passive "Preparing voice…" pill ONLY while the model is genuinely
   // loading. On a load error (or any non-loading not-ready state) stay idle —
@@ -235,12 +270,30 @@ export function useVoiceReview({
   }, [voiceEnabled, voice.isLoading, voice.isReady]);
 
   useEffect(() => {
-    if (!voiceEnabled || !voice.isReady) return;
-    if (paused) return;
-    if (!ready) return;
-    if (!expected || expected.length === 0) return;
+    // Every early return below is a card where the mic does NOT open. The user
+    // experiences that as "I had to wait for the mic", so each reason is
+    // recorded — a silent gate is exactly what made this hard to diagnose.
+    if (!voiceEnabled) return;
     if (currentWordKey === 'none') return;
-    if (armedForKeyRef.current === currentWordKey) return;
+    let blockedBy: string | null = null;
+    if (!voice.isReady) blockedBy = 'model-not-ready';
+    else if (paused) blockedBy = 'paused';
+    else if (!ready) blockedBy = 'session-not-ready';
+    else if (!expected || expected.length === 0) blockedBy = 'no-expected';
+    // A wrong-answer panel is waiting on the learner. Opening the mic here
+    // records them reading the answer, and its verdict replaces the panel they
+    // were still deciding on. This used to be implied by the armedForKeyRef
+    // latch, which a mid-panel re-render could clear — stating it directly is
+    // the only way it actually holds. accept/reject/retry all clear `result`
+    // before re-arming, so this never blocks the paths that should re-arm.
+    else if (result !== null) blockedBy = 'result-pending';
+    else if (armedForKeyRef.current === currentWordKey) blockedBy = 'already-armed';
+    // `!expected` is re-tested so TypeScript narrows it for the rest of the
+    // effect; the gate above already covers it.
+    if (blockedBy !== null || !expected) {
+      if (blockedBy !== null) diagMark('mic.gate', { blockedBy, key: currentWordKey });
+      return;
+    }
 
     const isRetry = retryRequestedRef.current;
     // Wait for this card's Arabic prompt to finish before opening the mic, so
@@ -255,7 +308,7 @@ export function useVoiceReview({
     let cancelled = false;
 
     const run = async () => {
-      setPhase('listening');
+      setPhase('arming');
       void analytics.track(ANALYTICS_EVENTS.VOICE_ARM, { wordKey: currentWordKey });
       Sentry.addBreadcrumb({
         category: 'voice',
@@ -264,10 +317,20 @@ export function useVoiceReview({
         data: { wordKey: currentWordKey },
       });
 
-      const outcome = await voice.arm();
-      if (cancelled) return;
+      const outcome = await voice.arm({
+        // The mic is live — only now is it honest to ask for an answer.
+        onCapturing: () => {
+          if (!cancelled) setPhase('listening');
+        },
+      });
+      if (cancelled) {
+        diagMark('mic.arm.cancelled', { key: currentWordKey, ok: outcome.ok });
+        return;
+      }
 
       if (!outcome.ok) {
+        countDiag({ micArmFailures: 1 });
+        diagMark('mic.arm.failed', { reason: outcome.reason, message: outcome.message });
         if (outcome.reason === 'permission') {
           void analytics.track(ANALYTICS_EVENTS.VOICE_MIC_DENIED);
           Sentry.addBreadcrumb({
@@ -291,10 +354,29 @@ export function useVoiceReview({
           ...d,
           armError: outcome.message ? `${outcome.reason}: ${outcome.message}` : outcome.reason,
         }));
+        // 'busy' / 'error' / 'not-ready' are transient: the recorder from the
+        // previous card may still be tearing down, or the native session
+        // hiccupped. Leaving the card here is what strands the learner on a mic
+        // that never opens, so re-arm after a short backoff instead.
+        if (armFailuresRef.current < MAX_ARM_RETRIES) {
+          armFailuresRef.current += 1;
+          const delay = ARM_RETRY_BASE_MS * armFailuresRef.current;
+          diagMark('mic.arm.retry-scheduled', { attempt: armFailuresRef.current, delay });
+          armedForKeyRef.current = null;
+          retryRequestedRef.current = true;
+          armRetryTimerRef.current = setTimeout(() => {
+            armRetryTimerRef.current = null;
+            setAttempt(a => a + 1);
+          }, delay);
+          return;
+        }
+        diagMark('mic.arm.gave-up', { attempts: armFailuresRef.current });
         setPhase('idle');
         return;
       }
+      armFailuresRef.current = 0;
 
+      countDiag({ micArms: 1 });
       setPhase('checking');
       setDebug(d => ({
         ...d,
@@ -309,7 +391,11 @@ export function useVoiceReview({
           stopDecidedAtMs: outcome.result.stopDecidedAtMs,
         },
       }));
+      const endTranscribe = diagSpan('stt.transcribe', {
+        samples: outcome.result.waveform.length,
+      });
       const transcript = (await voice.transcribe(outcome.result.waveform)) ?? '';
+      endTranscribe({ chars: transcript.length });
       if (cancelled) return;
 
       void analytics.track(ANALYTICS_EVENTS.VOICE_TRANSCRIPT, {
@@ -443,6 +529,22 @@ export function useVoiceReview({
 
     return () => {
       cancelled = true;
+      // Any dep change while the mic is open tears the recording down here. If
+      // we also left `armedForKeyRef` pointing at this card, the effect's very
+      // next run would bail on 'already-armed' and the card would sit with a
+      // mic that never reopens — the second half of the "I have to wait for the
+      // mic" report. Release the latch so the re-run can re-arm.
+      //
+      // Not released while a wrong-answer panel is waiting: there the mic is
+      // deliberately closed until the learner resolves the panel, and re-arming
+      // underneath it would record over their decision.
+      const armReleased = resultRef.current === null && armedForKeyRef.current === currentWordKey;
+      if (armReleased) armedForKeyRef.current = null;
+      diagMark('mic.effect.cleanup', { key: currentWordKey, armReleased });
+      // The recording this phase described is gone; leaving "Listening…" up
+      // would keep inviting an answer nothing is capturing. A later run sets
+      // its own phase, and 'result' belongs to the panel, so leave that alone.
+      setPhase(p => (p === 'arming' || p === 'listening' || p === 'checking' ? 'idle' : p));
       // Cancel is a no-op when nothing is in flight.
       void voice.cancel();
     };
@@ -451,6 +553,7 @@ export function useVoiceReview({
     voice,
     paused,
     ready,
+    result,
     expected,
     currentWordKey,
     rootId,
@@ -487,7 +590,7 @@ export function useVoiceReview({
     // the mic, so its tail isn't captured by the new recording.
     stopAudioRef.current();
     setResult(null);
-    setPhase('listening');
+    setPhase('arming');
     // Force the arm effect to fire again for this same card and skip the
     // wait-for-audio gate so the mic reopens immediately.
     retryRequestedRef.current = true;
@@ -503,7 +606,7 @@ export function useVoiceReview({
       // Pausing — the arm effect's cleanup cancels any in-flight recording once
       // `paused` flips in its deps; clear the live indicator here so the pill
       // doesn't linger while the recorder unwinds. A waiting result panel stays.
-      setPhase(p => (p === 'listening' || p === 'checking' ? 'idle' : p));
+      setPhase(p => (p === 'arming' || p === 'listening' || p === 'checking' ? 'idle' : p));
     } else if (resultRef.current === null) {
       // Resuming with no pending panel — re-open the mic for the current card
       // even if we'd already armed for it before pausing (the cancelled
@@ -511,7 +614,7 @@ export function useVoiceReview({
       // skip the wait-for-audio gate and open the mic right away, like a retry.
       armedForKeyRef.current = null;
       retryRequestedRef.current = true;
-      setPhase('listening');
+      setPhase('arming');
     }
     // Resuming while a wrong-answer panel is up: keep armedForKeyRef so the arm
     // effect bails under the panel; the next card arms once the user resolves it.

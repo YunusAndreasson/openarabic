@@ -4,6 +4,7 @@ import { clearAllPreloadedSources, preload } from 'expo-audio';
 
 import { audioCache } from '@/services/audioCache';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { mark as diagMark, span as diagSpan } from '@/utils/reviewDiagnostics';
 import { generateStorageUrl } from '@/utils/storageUtils';
 
 /**
@@ -142,6 +143,15 @@ export const useAudioPreloader = (
         : [];
       const backgroundUrls = audioUrls.filter(url => !priorityUrls.includes(url));
 
+      diagMark('preload.start', {
+        words: words.length,
+        files: totalUrls,
+        priority: priorityUrls.length,
+        background: backgroundUrls.length,
+      });
+      const endFirstCard = diagSpan('preload.first-card');
+      const endAll = diagSpan('preload.background');
+
       // Block on the first card only, under a tight deadline. In-flight work
       // keeps running after the deadline — it just stops being waited on.
       if (priorityUrls.length > 0) {
@@ -159,13 +169,17 @@ export const useAudioPreloader = (
         }
       }
 
+      endFirstCard({ files: priorityUrls.length });
       if (isStale()) return;
 
       // Session starts here. Everything below runs behind the live session.
       setIsPreloading(false);
       setIsReady(true);
 
-      if (backgroundUrls.length === 0) return;
+      if (backgroundUrls.length === 0) {
+        endAll({ files: 0 });
+        return;
+      }
 
       const BATCH_SIZE = 5; // Process 5 audio files at a time
       const BATCH_DELAY = 100; // 100ms delay between batches
@@ -175,9 +189,14 @@ export const useAudioPreloader = (
         deadlineHit = true;
       }, PRELOAD_DEADLINE_MS);
 
+      let batched = 0;
       try {
         for (let i = 0; i < backgroundUrls.length; i += BATCH_SIZE) {
-          if (deadlineHit || isStale()) return;
+          if (deadlineHit || isStale()) {
+            endAll({ files: batched, of: backgroundUrls.length, abandoned: true, deadlineHit });
+            return;
+          }
+          batched += Math.min(BATCH_SIZE, backgroundUrls.length - i);
 
           const batch = backgroundUrls.slice(i, i + BATCH_SIZE);
           await Promise.all(batch.map(url => cacheOne(url).then(trackProgress)));
@@ -188,6 +207,7 @@ export const useAudioPreloader = (
             await new Promise<void>(resolve => setTimeout(resolve, BATCH_DELAY));
           }
         }
+        endAll({ files: batched, of: backgroundUrls.length, abandoned: false });
       } finally {
         clearTimeout(overallDeadline);
       }

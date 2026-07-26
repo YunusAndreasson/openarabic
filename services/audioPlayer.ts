@@ -15,6 +15,7 @@ import { audioCache } from '@/services/audioCache';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import { isRemoteAudioUrl } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
+import { isSessionActive, mark } from '@/utils/reviewDiagnostics';
 import { playTransitionSound } from '@/utils/transitionSound';
 
 // Event constant for playback status updates
@@ -26,16 +27,22 @@ const PLAYBACK_STATUS_UPDATE = 'playbackStatusUpdate';
 const PLAYER_READY_TIMEOUT_MESSAGE = 'Player ready timeout - audio may be corrupted or unavailable';
 
 // Audio mode configuration for consistent behavior across iOS and Android.
-// allowsRecording MUST be true: this service preconfigures the iOS AVAudioSession
-// on app start and re-applies on every playback, and react-native-audio-api's
-// later `setAudioSessionOptions({ iosCategory: 'playAndRecord' })` from the
-// Parakeet voice recorder can't override it once the session is active in
-// playback-only mode. Setting it true here just *allows* the playAndRecord
-// category — it does not record on its own, and the playback path is unchanged.
+//
+// `allowsRecording` is deliberately NOT pinned on. On iOS, expo-audio maps it
+// to AVAudioSession category .playAndRecord *with* .allowBluetooth/.allowBluetoothHFP
+// (see expo-audio's AudioModule.setAudioMode) — so leaving it true put every
+// piece of playback in the app, articles and playlists included, on the
+// record-capable category, and routed output over the Bluetooth hands-free
+// profile whenever a headset was around. HFP is an ~8 kHz telephony channel:
+// that is audibly quieter and duller than the media route, and it flips as
+// devices connect, which is exactly the intermittent "audio is low for a couple
+// of answers" shape. The session now follows the actual need — plain .playback
+// for listening, .playAndRecord only while the voice recorder is armed (see
+// setRecordingSessionEnabled).
 const AUDIO_MODE_CONFIG = {
   shouldPlayInBackground: true,
   playsInSilentMode: true,
-  allowsRecording: true,
+  allowsRecording: false,
   // Unified field replaces the deprecated interruptionModeIOS / interruptionModeAndroid pair
   interruptionMode: 'doNotMix' as const,
   shouldRouteThroughEarpiece: false,
@@ -84,6 +91,16 @@ class SimpleAudioService {
   private listeners = new Set<(status: AudioStatus) => void>();
   private eventSubscription: { remove: () => void } | null = null;
   private audioSessionConfigured = false;
+
+  // Whether the session must currently allow recording. Held as state (rather
+  // than baked into AUDIO_MODE_CONFIG) so every later reconfiguration —
+  // including the one on AppState 'active' — re-applies the mode the app is
+  // actually in, instead of silently dropping the recorder's category.
+  private recordingSessionEnabled = false;
+
+  private currentAudioMode(): typeof AUDIO_MODE_CONFIG {
+    return { ...AUDIO_MODE_CONFIG, allowsRecording: this.recordingSessionEnabled };
+  }
 
   // Time-based activation throttling to avoid redundant iOS audio session calls
   private lastActivationTime = 0;
@@ -221,7 +238,7 @@ class SimpleAudioService {
         isPlaylistMode: false,
       });
 
-      await setAudioModeAsync(AUDIO_MODE_CONFIG);
+      await setAudioModeAsync(this.currentAudioMode());
 
       // Set up AppState listener for background audio handling
       this.setupAppStateListener();
@@ -238,6 +255,33 @@ class SimpleAudioService {
    */
   async preconfigureAudioSession(): Promise<void> {
     await this.configureAudioSession();
+  }
+
+  /**
+   * Put the shared audio session into (or out of) record-capable mode.
+   *
+   * The voice recorder needs AVAudioSession.playAndRecord, and on iOS
+   * react-native-audio-api cannot switch to it under an already-active
+   * playback-only session — so expo-audio has to grant it first. Everything
+   * else in the app is better off on plain .playback: it is louder, and it
+   * keeps output off the Bluetooth hands-free profile that .playAndRecord opts
+   * into. Call with `true` immediately before arming the mic and `false` as
+   * soon as the recording stops.
+   *
+   * Best-effort: playback still works if the switch fails, so this never
+   * throws into the voice pipeline.
+   */
+  async setRecordingSessionEnabled(enabled: boolean): Promise<void> {
+    if (this.recordingSessionEnabled === enabled) return;
+    this.recordingSessionEnabled = enabled;
+    try {
+      await setAudioModeAsync(this.currentAudioMode());
+    } catch (error) {
+      await handleError(error as Error, {
+        showToast: false,
+        sentryExtra: { operation: 'setRecordingSessionEnabled', enabled },
+      });
+    }
   }
 
   /**
@@ -262,7 +306,7 @@ class SimpleAudioService {
             });
             // Re-configure audio session to maintain background playback
             try {
-              await setAudioModeAsync(AUDIO_MODE_CONFIG);
+              await setAudioModeAsync(this.currentAudioMode());
             } catch {
               // Audio mode configuration may fail in background - not critical
             }
@@ -504,6 +548,7 @@ class SimpleAudioService {
   ): Promise<PlayOutcome> {
     const generation = ++this.playGeneration;
     const isSuperseded = (): boolean => generation !== this.playGeneration;
+    const playStartedAt = Date.now();
 
     try {
       // A foreign track (word preview, practice audio) played mid-playlist must
@@ -531,6 +576,9 @@ class SimpleAudioService {
 
       // Configure audio session first (should be pre-configured for faster playback)
       await this.configureAudioSession();
+      if (isSessionActive()) {
+        mark('player.session-ready', { ms: Date.now() - playStartedAt });
+      }
       if (isSuperseded()) {
         return 'superseded';
       }
@@ -569,7 +617,11 @@ class SimpleAudioService {
       // failure: playing anyway would report success while producing silence
       // (the "sound just doesn't play" bug), and would keep a corrupt cached
       // file undetectable — callers invalidate the cache and retry on failure.
+      const readyStartedAt = Date.now();
       await this.waitForPlayerReady(generation, isRemoteAudioUrl(track.audioUrl));
+      if (isSessionActive()) {
+        mark('player.ready', { ms: Date.now() - readyStartedAt, superseded: isSuperseded() });
+      }
       if (isSuperseded()) {
         // A newer play()/stop() already disposed our player via
         // createFreshPlayer/stopInternal — nothing of ours is left to clean.

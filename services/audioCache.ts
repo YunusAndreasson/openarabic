@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { isRemoteAudioUrl } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
+import { countDiag, isSessionActive, mark } from '@/utils/reviewDiagnostics';
 
 // One-time sweep flag (key naming mirrors the onboarding/notification keys).
 // Files downloaded by the pre-overhaul implementation streamed straight into
@@ -14,6 +15,12 @@ import { handleError } from '@/utils/errorHandling';
 // temp-file download flow only protects writes made AFTER that overhaul —
 // anything already on disk is untrusted and is deleted exactly once.
 const LEGACY_CACHE_SWEEP_STORAGE_KEY = '@openarabic/audioCache/legacySweepV1';
+
+/** Last path segment, for readable diagnostics without dumping signed URLs. */
+function basename(url: string): string {
+  const withoutQuery = url.split('?')[0] ?? url;
+  return withoutQuery.slice(withoutQuery.lastIndexOf('/') + 1);
+}
 
 export interface GetAudioOptions {
   /**
@@ -213,6 +220,7 @@ export class AudioCacheManager {
       );
       const abortController = new AbortController();
       const abortTimer = setTimeout(() => abortController.abort(), timeoutMs);
+      const attemptStartedAt = Date.now();
 
       try {
         // Check network before retry (skip check on first attempt for efficiency)
@@ -239,6 +247,11 @@ export class AudioCacheManager {
         // Update memory cache
         this.memoryCache.set(cacheKey, { path: cachedFilePath, timestamp: Date.now() });
         this.evictIfNeeded();
+        if (isSessionActive()) {
+          const ms = Date.now() - attemptStartedAt;
+          countDiag({ networkDownloads: 1, networkMs: ms });
+          mark('cache.download.ok', { url: basename(url), ms, attempt, quick });
+        }
         return cachedFilePath;
       } catch (error) {
         try {
@@ -248,6 +261,15 @@ export class AudioCacheManager {
         }
 
         lastError = error as Error;
+        if (isSessionActive()) {
+          countDiag({ networkFailures: 1 });
+          mark('cache.download.fail', {
+            url: basename(url),
+            ms: Date.now() - attemptStartedAt,
+            attempt,
+            message: lastError.message,
+          });
+        }
         const errorMsg = lastError.message.toLowerCase();
 
         // Don't retry on non-network errors (4xx, file system errors, etc.)
@@ -291,14 +313,23 @@ export class AudioCacheManager {
       // First check if we have it cached
       const cachedPath = await this.getCachedFilePath(url);
       if (cachedPath) {
+        countDiag({ cacheHits: 1 });
         return cachedPath;
       }
 
       // Check if download is already in progress for this URL
       const pendingDownload = this.pendingDownloads.get(url);
       if (pendingDownload) {
+        if (isSessionActive()) mark('cache.await-inflight', { url: basename(url) });
         // Reuse the existing download promise instead of starting a new download
         return await pendingDownload;
+      }
+
+      // A miss during a live review session means the preloader did not get
+      // here first — the session is about to make a network call the user can
+      // hear as a delay. Loud on purpose.
+      if (isSessionActive()) {
+        mark('cache.MISS.network', { url: basename(url), quick: options.quick ?? false });
       }
 
       // Cache miss - start download and track it

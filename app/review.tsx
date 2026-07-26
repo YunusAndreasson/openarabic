@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import type { TextStyle, ViewStyle } from 'react-native';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -25,6 +25,7 @@ import { useReview, useVoiceReview } from '@/hooks/review';
 import { useColors } from '@/hooks/theme/useColors';
 import { useTutorial } from '@/hooks/tutorials/useTutorial';
 import { useAppSelectorShallow } from '@/store/hooks';
+import { getDiagSnapshot, setDiagnosticsEnabled, subscribeDiag } from '@/utils/reviewDiagnostics';
 
 const baseStyles = StyleSheet.create({
   container: {
@@ -123,6 +124,12 @@ function ReviewLoadingState({
 function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element {
   const insets = useSafeAreaInsets();
   const colors = useColors();
+  const voiceDebugEnabled = useAppSelectorShallow(state => state.settings.voiceDebugEnabled);
+
+  // Arm the pipeline timeline BEFORE useReview opens its session below — an
+  // effect would run too late and the session would never start. Writing a
+  // module boolean is idempotent, so a double render is harmless.
+  setDiagnosticsEnabled(__DEV__ || voiceDebugEnabled);
 
   const {
     currentSentence,
@@ -189,7 +196,10 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   const voiceShowResult = voicePhase === 'result' && voiceResult !== null;
   const voice = useVoiceGrading();
   const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
-  const voiceDebugEnabled = useAppSelectorShallow(state => state.settings.voiceDebugEnabled);
+
+  // Live pipeline numbers for the debug HUD. Comes through the store hook
+  // rather than a getter call in render — see ReviewDiagSnapshot for why.
+  const diag = useSyncExternalStore(subscribeDiag, getDiagSnapshot, getDiagSnapshot);
 
   // Stable identities: these feed the pan gesture's config, and an inline arrow
   // rebuilt the whole Gesture object on every render of the screen (voice phase
@@ -395,6 +405,27 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
               {`arm error: ${voiceDebug.armError}`}
             </ThemedText>
           )}
+          {/* A healthy session downloads nothing: everything was preloaded. */}
+          <ThemedText
+            colorName={diag.counters.networkDownloads > 0 ? 'error' : 'textTertiary'}
+            type="caption"
+            style={voiceDebugStyles.line}
+          >
+            {`net: ${diag.counters.networkDownloads} dl (${diag.counters.networkMs}ms, ${diag.counters.networkFailures} fail) · cache ${diag.counters.cacheHits}`}
+          </ThemedText>
+          <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
+            {`mic: ${diag.counters.micArms}ok/${diag.counters.micArmFailures}fail · open ${diag.counters.lastPromptToMicMs}ms (worst ${diag.counters.worstPromptToMicMs}ms)`}
+          </ThemedText>
+          {diag.tail.map(entry => (
+            <ThemedText
+              key={`${entry.at}-${entry.event}`}
+              colorName="textTertiary"
+              type="caption"
+              style={voiceDebugStyles.line}
+            >
+              {`Δ${entry.delta} ${entry.event}`}
+            </ThemedText>
+          ))}
         </View>
       )}
     </View>

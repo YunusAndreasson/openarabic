@@ -27,6 +27,10 @@ export const STRINGS = {
   SPEAK_ANSWER_READY_SUBTITLE: 'Ready · about 100 MB on device',
   SPEAK_ANSWER_ERROR_SUBTITLE: "Couldn't load voice model. Try again later.",
   VOICE_LISTENING: 'Listening…',
+  /** Shown between arming the mic and the first audio buffer arriving (~0.5s
+   *  on device). Saying "Listening…" during that window invites the learner to
+   *  speak into a mic that is not capturing yet, and the answer is lost. */
+  VOICE_OPENING_MIC: 'Opening mic…',
   VOICE_CHECKING: 'Grading…',
   VOICE_PREPARING: 'Preparing voice…',
   VOICE_TRY_AGAIN: 'Try again or tap to grade',

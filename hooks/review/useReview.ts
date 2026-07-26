@@ -9,11 +9,12 @@ import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { analytics } from '@/services/analytics';
-import { simpleAudioService, type AudioStatus } from '@/services/audioPlayer';
+
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useSimpleAudioPlayer } from '@/hooks/audio';
 import { useAuth } from '@/hooks/auth';
 import { useAudioPreloader } from './useAudioPreloader';
+import { watchPromptFinish } from './promptFinishWatcher';
 import { useSessionMetrics } from './useSessionMetrics';
 import { useTimerCleanup } from '@/hooks/utils';
 import { useFSRS } from '@/hooks/vocabulary';
@@ -28,6 +29,13 @@ import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
+import {
+  endDiagSession,
+  mark as diagMark,
+  setDiagCard,
+  span as diagSpan,
+  startDiagSession,
+} from '@/utils/reviewDiagnostics';
 import { generateStorageUrl } from '@/utils/storageUtils';
 
 interface UseReviewProps {
@@ -102,51 +110,16 @@ const TRANSITION_DELAYS = {
   fadeWatchdog: TIMING_CONFIG.CARD_EXIT.duration + TIMING_CONFIG.MEDIUM.duration,
 };
 
-/** Grace after the prompt stops before declaring it done, so the tail isn't
- *  clipped and the playback session fully releases before the mic opens. */
-const PROMPT_FINISH_GRACE_MS = 200;
-/** Safety cap: declare the prompt done regardless if the finish event never
- *  arrives (e.g. a status stream that stalls), so the mic never hangs. */
-const PROMPT_MAX_WAIT_MS = 8000;
-
-/**
- * Resolves (via `onFinish`) once the prompt audio just started by `play()` has
- * finished. Anchored to a play() that already resolved, so the current player
- * IS this card's prompt — no "whose audio is this" ambiguity. `subscribe` only
- * fires on change and doesn't replay the current status, so a light poll backs
- * the finish detection and the safety cap. Returns a canceller.
- */
-function watchPromptFinish(onFinish: () => void, isCancelled: () => boolean): () => void {
-  let settled = false;
-  const startedAt = Date.now();
-  // play() flips status.playing true before resolving, so we usually see the
-  // rising edge on the immediate evaluate below.
-  let sawPlaying = false;
-
-  const finish = (graceMs: number): void => {
-    if (settled) return;
-    settled = true;
-    clearInterval(poll);
-    unsubscribe();
-    if (graceMs > 0 && !isCancelled()) setTimeout(onFinish, graceMs);
-    else onFinish();
-  };
-
-  const evaluate = (status: AudioStatus): void => {
-    if (isCancelled()) return finish(0);
-    if (status.playing) sawPlaying = true;
-    if (sawPlaying && !status.playing) return finish(PROMPT_FINISH_GRACE_MS);
-    if (Date.now() - startedAt >= PROMPT_MAX_WAIT_MS) return finish(0);
-  };
-
-  const unsubscribe = simpleAudioService.subscribe(evaluate);
-  const poll = setInterval(() => evaluate(simpleAudioService.getStatus()), 100);
-  evaluate(simpleAudioService.getStatus());
-  return () => finish(0);
-}
-
 export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseReviewReturn {
   const { user } = useAuth();
+
+  // Open the diagnostics timeline for the lifetime of the screen. Registered
+  // before every other effect in this hook so the first card's cache lookups
+  // and audio-session setup already fall inside the window; it is closed (and
+  // its report printed) by the unmount cleanup at the bottom, which runs last.
+  useEffect(() => {
+    startDiagSession({ fromRemember: fromRemember ?? false });
+  }, []);
 
   // Use enhanced audio player instead of local expo-av implementation
   const audioPlayer = useSimpleAudioPlayer();
@@ -429,7 +402,13 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     if (currentWord?.root?.audio_url_en) {
       const englishAudioUrl = generateStorageUrl('audio', currentWord.root.audio_url_en);
       if (englishAudioUrl) {
-        playAudio(englishAudioUrl).catch(handleError);
+        const endMeaningPlay = diagSpan('meaning.play');
+        playAudio(englishAudioUrl)
+          .then(started => endMeaningPlay({ started }))
+          .catch(err => {
+            endMeaningPlay({ started: false, error: true });
+            handleError(err);
+          });
       }
     }
   }, [currentWord, isComplete, playAudio]);
@@ -465,6 +444,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       // which confirms the answer without an on-screen reveal.
       if (!revealed && !opts.fromVoice) return;
 
+      diagMark('grade', { confidence, fromVoice: opts.fromVoice ?? false });
       stateRefs.current.isUpdatingWord = true;
       setIsUpdatingUI(true);
 
@@ -615,6 +595,16 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     timeRefs.current.lastProcessedWordId = currentWordKey;
 
     const keyForRun = currentWordKey;
+    setDiagCard(keyForRun);
+    diagMark('card.show', { rootId: currentWord.root_id });
+
+    // Clear the gate for the incoming card. currentWordKey encodes fsrs_reps
+    // and last_review, so a stale key from a previous card practically never
+    // collides — but "practically never" is the wrong guarantee for the flag
+    // that decides whether a live microphone opens over the prompt. Clearing it
+    // here makes the gate positively ordered: it can only be satisfied by a
+    // prompt that this run actually finished playing.
+    setPromptAudioDoneKey(null);
 
     // Cancel a still-running watcher from a previous card before this one's.
     if (promptWatchRef.current && promptWatchRef.current.key !== keyForRun) {
@@ -628,19 +618,24 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       if (promptWatchRef.current?.key === keyForRun) promptWatchRef.current = null;
       // A stale watcher (card already advanced) would set an old key, which the
       // voice gate harmlessly ignores — but skip the needless re-render.
-      if (!movedOn()) setPromptAudioDoneKey(keyForRun);
+      if (movedOn()) return;
+      diagMark('prompt.done');
+      setPromptAudioDoneKey(keyForRun);
     };
 
     const audioUrl = generateStorageUrl('audio', currentWord.root.audio_url);
     if (!audioUrl) {
       // No prompt to play — let the mic arm immediately for this card. Deferred
       // off the effect body so it isn't a synchronous cascading setState.
+      diagMark('prompt.none');
       void Promise.resolve().then(markDone);
       return;
     }
 
+    const endPromptPlay = diagSpan('prompt.play');
     playAudio(audioUrl)
       .then(started => {
+        endPromptPlay({ started, movedOn: movedOn() });
         if (movedOn()) return;
         // Playback didn't start (cache miss / play failure) — don't strand the
         // voice mic waiting; let it arm now.
@@ -651,6 +646,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
         promptWatchRef.current = { key: keyForRun, cancel: watchPromptFinish(markDone, movedOn) };
       })
       .catch(err => {
+        endPromptPlay({ started: false, error: true });
         handleError(err);
         markDone();
       });
@@ -824,6 +820,10 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       sessionStarted.current = false;
       sessionStartTime.current = null;
       wordsReviewedCount.current = 0;
+
+      // Last cleanup registered in this hook, so the printed report includes
+      // every teardown step above it.
+      endDiagSession();
     };
   }, [fadeIn, stopAudioSafely, clearAllTimers]);
 

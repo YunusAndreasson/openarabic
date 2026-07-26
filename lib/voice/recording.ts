@@ -11,6 +11,8 @@
 import { Platform } from 'react-native';
 import { AudioManager, AudioRecorder, type AudioBuffer } from 'react-native-audio-api';
 
+import { mark as diagMark, recordPromptToMic } from '@/utils/reviewDiagnostics';
+
 interface AudioReadyEvent {
   buffer: AudioBuffer;
   numFrames: number;
@@ -99,6 +101,10 @@ export interface RecordingResult {
 
 export interface RecordingHandlers {
   onAutoStop?: () => void;
+  /** Fired once, when the first audio buffer arrives — i.e. the microphone is
+   *  genuinely capturing. start() resolving is NOT that moment: the input
+   *  stream needs a few hundred ms more before samples flow. */
+  onCapturing?: () => void;
 }
 
 export class MicPermissionDeniedError extends Error {
@@ -243,11 +249,9 @@ export class VoiceRecorder {
         });
         await AudioManager.setAudioSessionActivity(true);
       } catch (sessionErr) {
-        if (__DEV__) {
-          console.log(
-            `[voice] ios session setup failed: ${sessionErr instanceof Error ? sessionErr.message : String(sessionErr)}`,
-          );
-        }
+        diagMark('mic.iosSession.failed', {
+          message: sessionErr instanceof Error ? sessionErr.message : String(sessionErr),
+        });
         // Surface the real error from start() below.
       }
     }
@@ -283,17 +287,10 @@ export class VoiceRecorder {
     // and arm() hangs forever. Wall-clock timer enforces the cap with a small
     // margin so a normal handleBuffer-driven stop still wins the race.
     const watchdogDelay = this.config.maxDurationMs + 500;
-    if (__DEV__) {
-      console.log(
-        `[voice] start: watchdog scheduled in ${watchdogDelay}ms (maxDurationMs=${this.config.maxDurationMs})`,
-      );
-    }
     this.watchdog = setTimeout(() => {
       if (!this.stopping) {
         const at = Date.now() - this.startedAt;
-        if (__DEV__) {
-          console.log(`[voice] watchdog FIRED at ${at}ms (scheduled ${watchdogDelay}ms)`);
-        }
+        diagMark('mic.watchdog', { at, scheduled: watchdogDelay });
         this.stopping = true;
         this.stopReason = 'watchdog';
         this.stopDecidedAt = at;
@@ -310,9 +307,17 @@ export class VoiceRecorder {
     this.bufferCount += 1;
     if (this.firstBufferAt === null) {
       this.firstBufferAt = Date.now() - this.startedAt;
-      if (__DEV__) {
-        console.log(`[voice] first buffer at ${this.firstBufferAt}ms`);
-      }
+      // The number behind "I have to wait for the mic": how long after arm()
+      // the microphone actually began delivering audio.
+      diagMark('mic.firstBuffer', {
+        ms: this.firstBufferAt,
+        // If this is not TARGET_SAMPLE_RATE, every buffer pays the JS-side
+        // low-pass + decimate in stop() — worth knowing before optimising it.
+        sourceSampleRate: this.sourceSampleRate,
+        frames: channel.length,
+      });
+      recordPromptToMic(this.firstBufferAt);
+      this.handlers.onCapturing?.();
     }
 
     let sumSquares = 0;
@@ -354,11 +359,13 @@ export class VoiceRecorder {
       this.stopping = true;
       this.stopReason = quietEnough ? 'silence' : noSpeechTimedOut ? 'noSpeech' : 'maxDuration';
       this.stopDecidedAt = elapsed;
-      if (__DEV__) {
-        console.log(
-          `[voice] handleBuffer stop ${this.stopReason} at ${elapsed}ms (speechSeen=${this.speechSeen} silenceMs=${this.silenceMs} peakRms=${this.peakRms.toFixed(5)})`,
-        );
-      }
+      diagMark('mic.stopDecided', {
+        reason: this.stopReason,
+        at: elapsed,
+        speechSeen: this.speechSeen,
+        silenceMs: this.silenceMs,
+        peakRms: Number(this.peakRms.toFixed(5)),
+      });
       this.handlers.onAutoStop?.();
     }
   }
@@ -380,11 +387,6 @@ export class VoiceRecorder {
     const stopReason = this.stopReason;
     const firstBufferMs = this.firstBufferAt;
     const stopDecidedAtMs = this.stopDecidedAt || durationMs;
-    if (__DEV__) {
-      console.log(
-        `[voice] stop: durationMs=${durationMs} stopReason=${stopReason} bufferCount=${bufferCount} firstBufferMs=${firstBufferMs} peakRms=${peakRms.toFixed(5)} speechSeen=${heardSpeech}`,
-      );
-    }
 
     if (recorder) {
       recorder.clearOnAudioReady();
