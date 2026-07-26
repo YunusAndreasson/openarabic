@@ -84,13 +84,11 @@ export default function PracticeScreen(): JSX.Element {
     limit: PRACTICE_DUE_WORDS_LIMIT,
   });
 
-  // Filter study words for memory capacity gauge (needs all words, not just due)
-  const filteredStudyWords = useMemo(() => {
-    return allWords?.filter(word => word?.root_id != null) ?? [];
-  }, [allWords]);
+  // Memory capacity gauge needs all words, not just due
+  const studyWords = useMemo(() => allWords ?? [], [allWords]);
 
   // Get chart data for recommendations
-  const { chartData } = useRetrievabilityChart(allWords || []);
+  const { chartData } = useRetrievabilityChart(studyWords);
 
   // Don't show error if user is not authenticated yet - this is expected during auth flow
   const shouldShowError = error && user;
@@ -120,10 +118,7 @@ export default function PracticeScreen(): JSX.Element {
   // Leech count for the (conditional) "Revisit" stat card — reuses the words
   // already fetched, so no extra query. Ranking is the same pure util the
   // dedicated screen uses.
-  const leechCount = useMemo(
-    () => rankStrugglingWords(filteredStudyWords).length,
-    [filteredStudyWords],
-  );
+  const leechCount = useMemo(() => rankStrugglingWords(studyWords).length, [studyWords]);
 
   // Fix: Use the actual due words data count instead of database view
   // This ensures consistency between display and practice session
@@ -133,8 +128,8 @@ export default function PracticeScreen(): JSX.Element {
 
   // Today-card data: words reviewed since local midnight + when the next
   // review lands (both from the already-fetched full word set — no new query)
-  const reviewedToday = useMemo(() => countReviewedToday(filteredStudyWords), [filteredStudyWords]);
-  const nextDueDate = useMemo(() => calculateNextDueDate(filteredStudyWords), [filteredStudyWords]);
+  const reviewedToday = useMemo(() => countReviewedToday(studyWords), [studyWords]);
+  const nextDueDate = useMemo(() => calculateNextDueDate(studyWords), [studyWords]);
 
   const handleStartReview = useCallback(() => {
     if (!user) return;
@@ -148,9 +143,9 @@ export default function PracticeScreen(): JSX.Element {
 
   // Calculate word stats in single pass using optimized utility
   const masteredWords = useMemo(() => {
-    if (!filteredStudyWords.length) return 0;
-    return calculateWordCategories(filteredStudyWords, dueWordsCount).masteredWords;
-  }, [filteredStudyWords, dueWordsCount]);
+    if (!studyWords.length) return 0;
+    return calculateWordCategories(studyWords, dueWordsCount).masteredWords;
+  }, [studyWords, dueWordsCount]);
 
   // Show error message if there was an error loading data
   if (shouldShowError) {
@@ -221,7 +216,7 @@ export default function PracticeScreen(): JSX.Element {
             currentStreak={currentStreak}
             masteredWords={masteredWords}
             leechCount={leechCount}
-            studyWords={filteredStudyWords}
+            studyWords={studyWords}
             onDuePress={handleDuePress}
             onStreakPress={handleStreakPress}
             onMasteredPress={handleMasteredPress}

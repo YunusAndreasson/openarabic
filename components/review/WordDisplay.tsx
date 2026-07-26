@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import type { ViewStyle } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -22,7 +21,7 @@ const STATIC_STYLES = StyleSheet.create({
     width: '100%',
     height: WORD_DISPLAY_CONSTANTS.CONTAINER_HEIGHT,
     position: 'relative',
-  } as ViewStyle,
+  },
   arabicContainer: {
     position: 'absolute',
     top: WORD_DISPLAY_CONSTANTS.ARABIC_TOP_POSITION,
@@ -31,7 +30,7 @@ const STATIC_STYLES = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: LAYOUT.Z_INDEX.CARD,
-  } as ViewStyle,
+  },
   translationContainer: {
     position: 'absolute',
     top: WORD_DISPLAY_CONSTANTS.ENGLISH_TOP_OFFSET,
@@ -43,7 +42,7 @@ const STATIC_STYLES = StyleSheet.create({
     paddingTop: LAYOUT.SPACING.LARGE, // Extra top padding to ensure no overlap
     zIndex: LAYOUT.Z_INDEX.TOP_OVERLAY, // Maximum z-index to ensure it's above everything
     minHeight: LAYOUT.SPACING.XXXLARGE * 2, // Ensure container has enough height for text
-  } as ViewStyle,
+  },
 });
 
 /**

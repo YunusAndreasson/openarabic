@@ -137,7 +137,7 @@ export class ReadingProgressService {
       },
     );
 
-    return data as ReadingProgress | null;
+    return data;
   }
 
   /**
@@ -176,7 +176,7 @@ export class ReadingProgressService {
     // Convert to Map for easy lookup
     const progressMap = new Map<ArticleId, ReadingProgress>();
     (data as Tables<'reading_progress'>[]).forEach(progress => {
-      progressMap.set(progress.article_id as ArticleId, progress as ReadingProgress);
+      progressMap.set(progress.article_id as ArticleId, progress);
     });
 
     return progressMap;
@@ -261,7 +261,7 @@ export class ReadingProgressService {
       },
     );
 
-    return data as ReadingProgress | null;
+    return data;
   }
 
   /**

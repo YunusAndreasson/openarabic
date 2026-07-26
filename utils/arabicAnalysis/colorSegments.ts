@@ -15,7 +15,7 @@ import type { AnalyzedComponent, WordAnalysis } from './types';
 /**
  * Maps a position from normalized text to original text (accounting for diacritics)
  */
-export function mapToOriginalPosition(
+function mapToOriginalPosition(
   original: string,
   normalizedLength: number,
   fromEnd = false,
@@ -61,7 +61,7 @@ export function mapToOriginalPosition(
  * Get the appropriate color name for a component based on role or type
  * Uses role-based color if available, otherwise falls back to type-based color
  */
-export function getComponentColorName(
+function getComponentColorName(
   component: AnalyzedComponent | undefined,
   defaultType: ComponentType,
 ): string {
@@ -105,7 +105,7 @@ function deduplicateColor(
  * @param usedColors - The dedup set from the parent rendering context, to ensure
  *   the diacritic gets the same color the inherited component was actually rendered with.
  */
-export function getDiacriticColorName(
+function getDiacriticColorName(
   diacritic: AnalyzedComponent | undefined,
   analysis?: WordAnalysis,
   _usedColors?: Set<string>,
@@ -201,13 +201,26 @@ function splitWithDiacritic(
 /**
  * Optimized reconstruction for coloring with infix and diacritic support
  */
-export function reconstructWithColors(analysis: WordAnalysis) {
+function reconstructWithColors(analysis: WordAnalysis) {
   const segments: { text: string; colorName: string; type: string }[] = [];
   const { arabic } = analysis.original;
   let processed = 0;
 
   // Track used colors to deduplicate (e.g., two prepositions both getting amber)
   const usedColors = new Set<string>();
+
+  // An elided connective was consumed to reach the prefixes behind it. Emit it in the
+  // plain root colour — unpainted, because the gloss has no word to pair it with — and
+  // advance past it so the prefix spans below map to the right characters.
+  if (analysis.elidedPrefixLength) {
+    const elidedEnd = mapToOriginalPosition(arabic, analysis.elidedPrefixLength);
+    segments.push({
+      text: arabic.substring(0, elidedEnd),
+      colorName: 'arabicText',
+      type: 'root',
+    });
+    processed = elidedEnd;
+  }
 
   // Add all prefix segments with role-based colors
   if (analysis.prefixes && analysis.prefixes.length > 0) {

@@ -201,9 +201,9 @@ export function useCountBasedChart<T extends DailyData>(
           const y =
             CHART_VISUAL.CHART_TOP_PADDING +
             (chartHeight - (milestoneCount / maxCount) * chartHeight);
-          return { x, y, count: target, achieved: true, date: milestone.date } as Milestone;
+          return { x, y, count: target, achieved: true, date: milestone.date };
         }
-        return { x: 0, y: 0, count: target, achieved: false, date: new Date() } as Milestone;
+        return { x: 0, y: 0, count: target, achieved: false, date: new Date() };
       })
       .filter(m => m.achieved);
 
@@ -259,7 +259,7 @@ export function useCountBasedChart<T extends DailyData>(
   // Build tooltip points for interactive display (sampled indices)
   const tooltipPoints: DataPoint<T>[] = useMemo(() => {
     return sampledIndices
-      .map(index => {
+      .map((index): DataPoint<T> | null => {
         const data = dailyData[index];
         const point = chartData.allPoints[index];
         if (!data || !point || typeof point.x !== 'number' || typeof point.y !== 'number')
@@ -271,7 +271,7 @@ export function useCountBasedChart<T extends DailyData>(
           value: `${config.getCount(data)} ${STRINGS.SUMMARY_WORDS_SUFFIX}`,
           label: data.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
           data,
-        } as DataPoint<T>;
+        };
       })
       .filter(
         (point): point is DataPoint<T> =>

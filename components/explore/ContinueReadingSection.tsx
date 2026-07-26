@@ -8,7 +8,6 @@ import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import type { Article } from '@/types/articles.types';
-import type { ArticleId } from '@/types/branded.types';
 import { pickStarterArticles } from '@/utils/articleUtils';
 import { calculateProgressPercentage } from '@/utils/progressUtils';
 
@@ -30,7 +29,7 @@ const ContinueReadingSectionComponent: FC<ContinueReadingSectionProps> = ({ arti
   const router = useRouter();
 
   // Get all article IDs for bulk progress fetch
-  const articleIds = useMemo(() => articlesData.map(a => a.id as ArticleId), [articlesData]);
+  const articleIds = useMemo(() => articlesData.map(a => a.id), [articlesData]);
 
   // Fetch reading progress for all articles
   const { data: progressMap } = useBulkReadingProgress(articleIds);
@@ -45,7 +44,7 @@ const ContinueReadingSectionComponent: FC<ContinueReadingSectionProps> = ({ arti
     const continueReadingArticles: { article: Article; progress: number; updatedAt: string }[] = [];
 
     for (const article of articlesData) {
-      const progressData = progressMap.get(article.id as ArticleId);
+      const progressData = progressMap.get(article.id);
       if (progressData) {
         const percentage = calculateProgressPercentage(
           progressData.last_sentence_read,
@@ -85,7 +84,7 @@ const ContinueReadingSectionComponent: FC<ContinueReadingSectionProps> = ({ arti
     (article: Article) => {
       // For continue reading: resume from progress (disableAutoScroll = false)
       // For getting started: start fresh (disableAutoScroll = true)
-      router.push(getArticleRoute(article.id as ArticleId, article.title, !isContinueReading));
+      router.push(getArticleRoute(article.id, article.title, !isContinueReading));
     },
     [router, isContinueReading],
   );

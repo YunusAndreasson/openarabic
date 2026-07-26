@@ -20,7 +20,7 @@ import { expandContractions, normalizeArabic, normalizeEnglish } from './normali
  * @param componentPattern - The Arabic component pattern (optional)
  * @returns true if the pattern should be rejected
  */
-export function shouldRejectWholeTranslationMatch(
+function shouldRejectWholeTranslationMatch(
   candidate: string,
   normalizedEnglish: string,
   tokenCount: number,

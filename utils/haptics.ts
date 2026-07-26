@@ -42,7 +42,7 @@ const shouldTriggerHaptic = (kind: HapticKind): boolean => {
   // Use explicit false check to handle undefined (missing from old persisted state)
   // When undefined, default to enabled (true) as per initialState
   const state = store.getState();
-  if (state.settings.hapticsEnabled === false) {
+  if (!state.settings.hapticsEnabled) {
     return false;
   }
 

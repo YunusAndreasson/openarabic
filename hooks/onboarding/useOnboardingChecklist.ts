@@ -10,7 +10,6 @@ import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { analytics } from '@/services/analytics';
 import type { Article } from '@/types/articles.types';
-import type { ArticleId } from '@/types/branded.types';
 import {
   getCachedOnboardingState,
   initializeOnboarding,
@@ -46,7 +45,7 @@ export function useOnboardingChecklist(articlesData: Article[]) {
   const { completeTutorial } = useTutorialContext();
   const { studyWords, isLoading: isFSRSLoading, error: fsrsError } = useFSRSData();
 
-  const articleIds = useMemo(() => articlesData.map(a => a.id as ArticleId), [articlesData]);
+  const articleIds = useMemo(() => articlesData.map(a => a.id), [articlesData]);
   const { data: progressMap, isLoading: isProgressLoading } = useBulkReadingProgress(articleIds);
 
   const state = useSyncExternalStore(subscribeOnboarding, getCachedOnboardingState);

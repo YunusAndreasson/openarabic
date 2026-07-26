@@ -37,23 +37,6 @@ function createState(overrides: Partial<NotificationPromptState> = {}): Notifica
 }
 
 let cachedState: NotificationPromptState | null = null;
-const listeners = new Set<() => void>();
-
-export function subscribeNotificationPrompt(listener: () => void): () => void {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
-}
-
-/** Synchronous snapshot for useSyncExternalStore; null until first load. */
-export function getCachedNotificationPromptState(): NotificationPromptState | null {
-  return cachedState;
-}
-
-function notifyListeners(): void {
-  listeners.forEach(listener => listener());
-}
 
 /**
  * FAIL-SAFE: a read/parse error yields an exhausted state (impressions maxed,
@@ -67,20 +50,18 @@ export async function loadNotificationPromptState(): Promise<NotificationPromptS
       ? { ...createState(), ...(JSON.parse(raw) as Partial<NotificationPromptState>) }
       : createState();
   } catch (error) {
-    handleError(error as Error, { showToast: false });
+    handleError(error, { showToast: false });
     cachedState = createState({ impressions: Number.MAX_SAFE_INTEGER });
   }
-  notifyListeners();
   return cachedState;
 }
 
 async function writeState(next: NotificationPromptState): Promise<void> {
   cachedState = next;
-  notifyListeners();
   try {
     await AsyncStorage.setItem(PROMPT_STORAGE_KEY, JSON.stringify(next));
   } catch (error) {
-    handleError(error as Error, { showToast: false });
+    handleError(error, { showToast: false });
   }
 }
 

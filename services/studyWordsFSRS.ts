@@ -275,7 +275,7 @@ export const studyWordsFSRSService = {
       errorConfig.allRoots,
     );
 
-    return (data ?? []) as Tables<'roots'>[];
+    return data ?? [];
   },
 
   /**

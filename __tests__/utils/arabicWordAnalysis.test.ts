@@ -448,6 +448,77 @@ describe('arabicWordAnalysis', () => {
       expect(analysis.diacritic).toBeUndefined();
     });
 
+    test.each([
+      ['سَيِّئًا', 'bad one', 'ًا'],
+      ['وَمُحَرِّكٌ', 'and the one who stirs up', 'ٌ'],
+      ['يَوْمًا', 'one day', 'ًا'],
+      ['سِكَّةٍ', 'a track', 'ٍ'],
+      ['زَلَلٍ', 'of slip', 'ٍ'],
+      ['مَحْبُوبٍ', 'something beloved', 'ٍ'],
+    ])('tanween never paints: %s "%s" must not match on %s', (arabic, english) => {
+      // All four tanween entries were removed. The 'one' trigger matched the English
+      // pronoun rather than any numeral ("bad one", "the one who"), and ٍ had kept the
+      // 'a'/'of'/'in'/'at' set its siblings had already shed as false positives —
+      // together 235 words of spurious paint in the production corpus.
+      expect(analyzeArabicWord(arabic, english).diacritic).toBeUndefined();
+    });
+
+    test.each([
+      ['قَالَتْ', 'she said', 'she'],
+      ['كَانَتْ', 'they are', 'they'],
+      ['فُتِحَتْ', 'so they were opened', 'they'],
+    ])('taa sakina %s "%s" pairs with "%s"', (arabic, english, expected) => {
+      // تْ is the 3rd-person-feminine perfect marker. Safe to trigger on 'she'/'they'
+      // precisely because of the sukun: a noun-final ت carries a case vowel, so تْ is
+      // reliably verbal. The bare ت suffix has no such guard and must NOT gain these.
+      const analysis = analyzeArabicWord(arabic, english);
+
+      expect(analysis.diacritic?.arabicMatch).toBe('تْ');
+      expect(analysis.diacritic?.englishMatches).toContain(expected);
+    });
+
+    test.each([
+      ['وَالسَّمَاءِ', 'the sky'],
+      ['وَالظُّلْمِ', 'the injustice'],
+      ['فَالْحَمْدُ', 'the praise'],
+    ])('elided connective: %s "%s" still pairs its article', (arabic, english) => {
+      // The gloss dropped the "and", so the و matched nothing and used to end prefix
+      // detection outright — taking the ال behind it down too, painting nothing at all.
+      const analysis = analyzeArabicWord(arabic, english);
+
+      expect(analysis.prefixes.map(p => p.arabicMatch)).toEqual(['ال']);
+      expect(analysis.elidedPrefixLength).toBe(1);
+    });
+
+    test.each([
+      ['وَقَعَ', 'he falls'],
+      ['وَضَعَ', 'he put down'],
+      ['وَاحِدٍ', 'one'],
+      ['فَعَلَ', 'did'],
+      ['وَأَمَّا', 'as for'],
+    ])('elided connective never strips a root letter: %s "%s"', (arabic, english) => {
+      // A fatha does NOT identify the conjunction — these are all root-initial and
+      // carry one. What protects them is the requirement that a definite article sit
+      // behind the candidate; "ضع"/"احد"/"عل" match nothing, so nothing is consumed.
+      expect(analyzeArabicWord(arabic, english).elidedPrefixLength).toBeFalsy();
+    });
+
+    test('elided connective does not steal a conjunction the gloss still has', () => {
+      const analysis = analyzeArabicWord('وَالسَّمَاءِ', 'and the sky');
+
+      expect(analysis.prefixes.map(p => p.arabicMatch)).toEqual(['و', 'ال']);
+      expect(analysis.elidedPrefixLength).toBeFalsy();
+    });
+
+    test('alternative glosses separated by a slash still match', () => {
+      // NON_WORD_REGEX deleted the slash, welding "she/it" into an unmatchable
+      // "sheit" so neither reading could satisfy a trigger.
+      const analysis = analyzeArabicWord('فَأَعْلَمَتْ', 'so she/it made known');
+
+      expect(analysis.diacritic?.arabicMatch).toBe('تْ');
+      expect(analysis.diacritic?.englishMatches.length).toBeGreaterThan(0);
+    });
+
     test('should not detect diacritic when English has no correspondence', () => {
       const analysis = analyzeArabicWord('كتابَ', 'book'); // Fatha but no "he" in English
 

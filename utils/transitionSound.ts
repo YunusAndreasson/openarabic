@@ -60,7 +60,7 @@ export async function playTransitionSound(): Promise<void> {
     });
   } catch (error) {
     // Transition sound is non-critical - silent failure
-    handleError(error as Error, {
+    handleError(error, {
       showToast: false,
       captureSentry: false,
     });

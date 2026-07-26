@@ -107,7 +107,7 @@ export function Toast({
 
   const config = TOAST_CONFIG[type];
   const backgroundColor = config.colorKey
-    ? (colors[config.colorKey] as string) || colors.tint
+    ? colors[config.colorKey] || colors.tint
     : colors.elevation2; // Use elevated surface so info toast doesn't blend with screen background
   const textColor = config.colorKey ? colors.white : colors.text;
 

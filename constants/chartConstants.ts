@@ -6,7 +6,7 @@ import { GOLDEN_RATIO, LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 // Slightly increase to introduce subtle horizontal breathing room for the whole graph
 const X_AXIS_LABEL_PADDING = 8; // Reduced from 12 for tighter spacing
 
-export const GRAPH_WIDTH =
+const GRAPH_WIDTH =
   SCREEN_WIDTH -
   LAYOUT.SCREEN_HORIZONTAL_PADDING * 2 -
   LAYOUT.SPACING.MEDIUM * 2 -

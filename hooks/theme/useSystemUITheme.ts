@@ -25,7 +25,7 @@ export function useSystemUITheme(): void {
         await SystemUI.setBackgroundColorAsync(colors.background);
       } catch (error) {
         // Silently handle system UI errors - not critical for app functionality
-        handleError(error as Error, { showToast: false, captureSentry: false });
+        handleError(error, { showToast: false, captureSentry: false });
       }
     };
 

@@ -101,7 +101,7 @@ export function WordDetailsBottomSheet({
         // stale study-list cache can never invert this into the opposite action
         await onAddToStudy(word, newValue ? 'add' : 'remove');
       } catch (error) {
-        handleError(error as Error, { toastMessage: 'Failed to update study list' });
+        handleError(error, { toastMessage: 'Failed to update study list' });
       }
     });
   };

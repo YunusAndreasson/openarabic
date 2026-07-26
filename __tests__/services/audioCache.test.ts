@@ -262,7 +262,12 @@ describe('audioCache', () => {
     mockDirectoryConstructor.mockClear();
     mockDirectoryDelete.mockClear();
 
-    mockDirectoryDelete.mockRejectedValueOnce(err);
+    // Directory.delete() is synchronous in the new expo-file-system API — it
+    // throws, it does not reject. Mocking a rejection here left an unhandled
+    // promise floating once the production code stopped awaiting it.
+    mockDirectoryDelete.mockImplementationOnce(() => {
+      throw err;
+    });
 
     // Mock Directory to exist
     mockDirectoryConstructor.mockImplementation(path => ({

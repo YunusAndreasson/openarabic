@@ -136,7 +136,7 @@ function getTokenBoundaryRegexGlobal(token: string): RegExp {
 import { normalizeTranslation } from './arabicAnalysis/translationNormalization';
 
 // Re-export types and functions for backwards compatibility
-export type { AnalyzedComponent, WordAnalysis };
+export type { WordAnalysis };
 export { clearAnalysisCache, formatWordAnalysis, normalizeArabic, shouldInjectBracket };
 
 /**
@@ -196,7 +196,11 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
   }
 
   // Detect multiple prefixes sequentially
-  const { prefixes: detectedPrefixes, remainingArabic: remainingAfterPrefixes } = detectPrefixes(
+  const {
+    prefixes: detectedPrefixes,
+    remainingArabic: remainingAfterPrefixes,
+    elidedPrefixLength,
+  } = detectPrefixes(
     normalized,
     normalizedEnglish,
     arabic, // Pass original Arabic for shadda detection
@@ -574,6 +578,9 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
     remainingArabic: visibleRemaining.trim(),
     remainingEnglish,
     hasBracketInjection,
+    // Only meaningful if a prefix behind the elided connective actually survived the
+    // visibility filter; otherwise there is nothing to offset and the word renders whole.
+    elidedPrefixLength: visiblePrefixes.length > 0 ? elidedPrefixLength : 0,
   };
 
   cacheWithFifoEviction(ANALYSIS_CACHE, cacheKey, result);

@@ -43,23 +43,40 @@ import { runBenchmark } from '@/utils/benchmarkUtils';
 // shortened-preposition, root-letter و/ف, fatha-alef, and object-claim fixes plus
 // the displayed-text relabel of the injection cluster: train P .959→.984,
 // F1 .888→.917; test P .974→1.00, F1 .884→.920. Thresholds ratcheted to lock it.
+//
+// 2026-07-26 re-baseline: P/R/F1 now cover the DIACRITIC class. It had never been
+// scored — runBenchmark compared prefixes, suffix and infix only — so diacritic
+// gains were uncreditable and diacritic false positives were unscoreable. All 597
+// cases carry `expectedDiacritic`, and three fixes landed with it: the four dead
+// tanween entries were removed (their leftover 'one'/'a' triggers painted 235
+// production words), تْ gained its 'she'/'they' triggers, and normalizeEnglish
+// stopped welding alternative glosses ("she/it" → "sheit"). Measured: train P
+// .984→.985, R .858→.871, F1 .917→.925; test R .851→.874, F1 .920→.933 (test
+// precision stays 1.000). The held-out split gained more than train.
+//
+// Same session, elided-connective consume: وَالسَّمَاءِ "the sky" painted nothing at all,
+// because an unmatched و ended prefix detection and took the ال behind it down with it.
+// The conjunction is now consumed without becoming a component (`elidedPrefixLength`)
+// so the article can pair. Restricted to a following ال — allowing any prefix cost
+// precision (وَأَمَّا "as for" read أما as a prefix meaning "as"). Train R .871→.874,
+// F1 .925→.926, hasC .974→.976 at unchanged precision; 22 more production words paint.
 const THRESHOLDS = {
   train: {
-    precision: 0.978,
-    recall: 0.85,
-    f1Score: 0.91,
-    hasComponentsAccuracy: 0.965,
+    precision: 0.98,
+    recall: 0.869,
+    f1Score: 0.921,
+    hasComponentsAccuracy: 0.971,
   },
   test: {
     precision: 0.99,
-    recall: 0.845,
-    f1Score: 0.915,
+    recall: 0.869,
+    f1Score: 0.928,
     hasComponentsAccuracy: 0.948,
   },
   byBucket: {
     multiWordHasComponents: { hasComponentsAccuracy: 0.985, precision: 0.99 },
     singleWord: { hasComponentsAccuracy: 1.0 },
-    longPhrase: { hasComponentsAccuracy: 0.98 },
+    longPhrase: { hasComponentsAccuracy: 0.982 },
   },
 };
 

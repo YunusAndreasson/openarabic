@@ -158,7 +158,7 @@ const AccountScreen: FC = () => {
             successFeedback();
           } catch (error) {
             errorFeedback();
-            handleError(error as Error, {
+            handleError(error, {
               toastMessage: 'Failed to reset tutorials',
               analyticsEventName: 'Reset_Tutorials_Failed',
             });
@@ -232,7 +232,7 @@ const AccountScreen: FC = () => {
       await StoreReview.requestReview();
       lightFeedback();
     } catch (error) {
-      handleError(error as Error, {
+      handleError(error, {
         analyticsEventName: 'Store_Review_Request_Failed',
         sentryTags: { location: 'account', action: 'store_review' },
         showToast: true,
@@ -543,15 +543,9 @@ const AccountScreen: FC = () => {
         isVisible={activePicker !== null}
         onClose={handlePickerClose}
         onSelect={handlePickerSelect}
-        title={activePicker ? pickerConfigs[activePicker as keyof typeof pickerConfigs].title : ''}
-        options={
-          activePicker ? pickerConfigs[activePicker as keyof typeof pickerConfigs].options : []
-        }
-        selectedValue={
-          activePicker
-            ? pickerConfigs[activePicker as keyof typeof pickerConfigs].selectedValue
-            : undefined
-        }
+        title={activePicker ? pickerConfigs[activePicker].title : ''}
+        options={activePicker ? pickerConfigs[activePicker].options : []}
+        selectedValue={activePicker ? pickerConfigs[activePicker].selectedValue : undefined}
       />
     </ThemedView>
   );

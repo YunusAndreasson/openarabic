@@ -260,7 +260,7 @@ export const withErrorHandling = <TArgs extends unknown[], TReturn>(
     try {
       return await fn(...args);
     } catch (error) {
-      await handleError(error as Error, errorOptions);
+      await handleError(error, errorOptions);
       throw error; // Re-throw to allow caller to handle if needed
     }
   };
@@ -282,7 +282,7 @@ export const withErrorHandlingDefault = <TArgs extends unknown[], TReturn>(
     try {
       return await fn(...args);
     } catch (error) {
-      await handleError(error as Error, errorOptions);
+      await handleError(error, errorOptions);
       return defaultValue;
     }
   };

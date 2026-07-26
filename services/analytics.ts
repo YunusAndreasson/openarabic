@@ -88,7 +88,7 @@ export const analytics = {
         if (properties) {
           const people = await mixpanelInstance.getPeople();
           if (people) {
-            await people.set(properties);
+            people.set(properties);
           }
         }
       }

@@ -185,15 +185,15 @@ export function ThemedText({
         textColor && { color: textColor },
         align && { textAlign: align },
         style,
-      ].filter(Boolean) as StyleProp<TextStyle>;
+      ].filter(Boolean);
     }
 
-    const baseStyle = BASE_STYLE_MAP[type as keyof typeof BASE_STYLE_MAP] || BASE_STYLE_MAP.body;
+    const baseStyle = BASE_STYLE_MAP[type] || BASE_STYLE_MAP.body;
 
     // When an explicit color is provided (colorName or variant), the semantic color
     // already encodes the hierarchy — skip the type's built-in opacity to avoid double-dimming.
     // Opacity-based hierarchy only applies to default-colored text.
-    const baseOpacity = colorName || variant ? TEXT_OPACITY.PRIMARY : (baseStyle.opacity as number);
+    const baseOpacity = colorName || variant ? TEXT_OPACITY.PRIMARY : baseStyle.opacity;
 
     return [
       baseStyle,
@@ -202,7 +202,7 @@ export function ThemedText({
       weight && { fontFamily: WEIGHT_FONT_MAP[weight] },
       align && { textAlign: align },
       style,
-    ].filter(Boolean) as StyleProp<TextStyle>;
+    ].filter(Boolean);
   }, [
     colors,
     variant,

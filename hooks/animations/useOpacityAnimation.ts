@@ -1,159 +1,59 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ViewStyle } from 'react-native';
-import type { SharedValue, WithTimingConfig } from 'react-native-reanimated';
-import {
-  cancelAnimation,
-  FadeIn,
-  FadeOut,
-  useSharedValue,
-  withDelay,
-  withTiming,
-} from 'react-native-reanimated';
+import type { WithTimingConfig } from 'react-native-reanimated';
+import { cancelAnimation, useSharedValue, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { MIN_MOUNT_DELAY, MIN_OPACITY_DURATION, TIMING_CONFIG } from '@/constants/animation';
+import { MIN_OPACITY_DURATION, TIMING_CONFIG } from '@/constants/animation';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
-
-export type FadeAnimationStyle = 'entrance-only' | 'standard';
 
 export interface FadeAnimationOptions {
   /**
-   * Initial opacity value
+   * Initial opacity value, clamped to 0–1.
    * @default 1
    */
   initialOpacity?: number;
 
   /**
-   * Duration of animation in ms
+   * Duration of the fade in ms, floored at MIN_OPACITY_DURATION.
    * @default TIMING_CONFIG.MEDIUM.duration
    */
   duration?: number;
-
-  /**
-   * Style of fade animation
-   * - 'standard': Full control over opacity with shared value
-   * - 'entrance-only': Only provides entering/exiting animations for direct use with Animated.View
-   * @default 'standard'
-   */
-  style?: FadeAnimationStyle;
-
-  /**
-   * Whether to automatically start the fade-in animation on mount
-   * @default false
-   */
-  autoStart?: boolean;
-
-  /**
-   * Delay before starting the animation (in ms)
-   * @default 0
-   */
-  delay?: number;
-
-  /**
-   * Custom timing configuration
-   */
-  timingConfig?: WithTimingConfig;
 }
 
 export interface FadeAnimationResult {
-  /**
-   * Shared value for opacity animation (only in standard style)
-   */
-  opacity: SharedValue<number>;
-
-  /**
-   * Animated style to apply to the component (only in standard style)
-   */
+  /** Animated style to spread onto the target view. */
   animatedStyle: AnimatedStyleProp<ViewStyle>;
 
-  /**
-   * Function to fade in the component (only in standard style)
-   * @param onComplete - Optional callback when animation completes
-   */
+  /** Fade to fully opaque. `onComplete` only fires if the fade finished and the hook is still mounted. */
   fadeIn: (onComplete?: () => void) => void;
 
-  /**
-   * Function to fade out the component (only in standard style)
-   * @param onComplete - Optional callback when animation completes
-   */
+  /** Fade to fully transparent. Same completion guarantees as `fadeIn`. */
   fadeOut: (onComplete?: () => void) => void;
-
-  /**
-   * Function to set a specific opacity value (only in standard style)
-   * @param value - Opacity value between 0 and 1
-   * @param onComplete - Optional callback when animation completes
-   */
-  setOpacity: (value: number, onComplete?: () => void) => void;
-
-  /**
-   * Function to reset opacity to initial value (only in standard style)
-   */
-  reset: () => void;
-
-  /**
-   * Function to start fade-in animation with optional delay (only in standard style)
-   * @param delay - Delay in ms before starting animation
-   * @param onComplete - Optional callback when animation completes
-   */
-  startAnimation: (delay?: number, onComplete?: () => void) => void;
-
-  /**
-   * Function to reverse animation back to initial opacity (only in standard style)
-   * @param delay - Delay in ms before starting animation
-   * @param onComplete - Optional callback when animation completes
-   */
-  reverseAnimation: (delay?: number, onComplete?: () => void) => void;
-
-  /**
-   * The entering animation to apply to an Animated.View
-   */
-  entering: ReturnType<typeof FadeIn.duration>;
-
-  /**
-   * The exiting animation to apply to an Animated.View
-   */
-  exiting: ReturnType<typeof FadeOut.duration>;
 }
 
 /**
- * Unified hook for opacity and fade animations
- * Combines functionality from useFadeInAnimation, useOpacityAnimation, and useFadeInEntrance
+ * Imperative opacity fade driven from event callbacks.
  *
- * @param options - Configuration options for the fade animation
- * @returns Animation controls and styles based on the selected style
+ * This is deliberately NOT a Reanimated CSS `animationName` keyframe: those are
+ * declarative and fire on mount, whereas the review flow has to start a fade at
+ * an arbitrary moment (card graded, prompt finished) and run work when it lands.
  */
 export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAnimationResult => {
-  const {
-    initialOpacity = 1,
-    duration: rawDuration = TIMING_CONFIG.MEDIUM.duration,
-    autoStart = false,
-    delay: rawDelay = 0,
-    timingConfig: customTimingConfig,
-  } = options;
+  const { initialOpacity = 1, duration: rawDuration = TIMING_CONFIG.MEDIUM.duration } = options;
 
-  // Validate parameters - locked in on first render to prevent recalculation
+  // Locked in on first render so a re-render can't retime an in-flight fade.
   const [duration] = useState(() => Math.max(MIN_OPACITY_DURATION, rawDuration));
-  const [delay] = useState(() => Math.max(0, rawDelay));
   const [validInitialOpacity] = useState(() => Math.max(0, Math.min(1, initialOpacity)));
+  const [timingConfig] = useState<WithTimingConfig>(() => ({
+    duration,
+    easing: TIMING_CONFIG.MEDIUM.easing,
+  }));
 
-  // Create optimized timing config
-  const [timingConfig] = useState<WithTimingConfig>(
-    () =>
-      customTimingConfig ?? {
-        duration,
-        easing: TIMING_CONFIG.MEDIUM.easing,
-      },
-  );
-
-  // Create optimized entering and exiting animations using Reanimated 3 built-ins
-  const [entering] = useState(() => FadeIn.duration(duration).delay(delay));
-  const [exiting] = useState(() => FadeOut.duration(duration));
-
-  // Track if component is mounted to prevent callbacks after unmount
+  // Guards against a completion callback firing into an unmounted tree.
   const isMounted = useSharedValue(true);
   const opacity = useSharedValue(validInitialOpacity);
 
-  // Cleanup shared animation values on unmount - optimized with single cleanup function
   useEffect(() => {
     return () => {
       isMounted.set(false);
@@ -161,121 +61,36 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
     };
   }, [opacity, isMounted]);
 
-  // Safe callback runner that checks if component is still mounted
-  const safeRunCallback = useCallback(
-    (callback?: () => void) => {
-      'worklet';
-      if (callback && isMounted.get()) {
-        scheduleOnRN(callback);
-      }
-    },
-    [isMounted],
-  );
-
-  // Common animation function to reduce code duplication - memoized with useCallback
   const animateOpacityTo = useCallback(
     (targetValue: number, onComplete?: () => void) => {
       'worklet';
       opacity.set(
         withTiming(targetValue, timingConfig, finished => {
-          if (finished) {
-            safeRunCallback(onComplete);
+          if (finished && onComplete && isMounted.get()) {
+            scheduleOnRN(onComplete);
           }
         }),
       );
     },
-    [opacity, timingConfig, safeRunCallback],
+    [opacity, timingConfig, isMounted],
   );
 
   const fadeIn = useCallback(
-    (onComplete?: () => void) => {
-      animateOpacityTo(1, onComplete);
-    },
+    (onComplete?: () => void) => animateOpacityTo(1, onComplete),
     [animateOpacityTo],
   );
 
   const fadeOut = useCallback(
-    (onComplete?: () => void) => {
-      animateOpacityTo(0, onComplete);
-    },
+    (onComplete?: () => void) => animateOpacityTo(0, onComplete),
     [animateOpacityTo],
   );
 
-  const setOpacity = useCallback(
-    (value: number, onComplete?: () => void) => {
-      const safeValue = Math.max(0, Math.min(1, value));
-      animateOpacityTo(safeValue, onComplete);
-    },
-    [animateOpacityTo],
-  );
-
-  const reset = useCallback(() => {
-    'worklet';
-    cancelAnimation(opacity);
-    opacity.set(validInitialOpacity);
-  }, [opacity, validInitialOpacity]);
-
-  const startAnimation = useCallback(
-    (startDelay = delay, onComplete?: () => void) => {
-      'worklet';
-      const safeDelay = Math.max(0, startDelay);
-      opacity.set(
-        withDelay(
-          safeDelay,
-          withTiming(1, timingConfig, finished => {
-            if (finished) {
-              safeRunCallback(onComplete);
-            }
-          }),
-        ),
-      );
-    },
-    [opacity, delay, timingConfig, safeRunCallback],
-  );
-
-  const reverseAnimation = useCallback(
-    (startDelay = delay, onComplete?: () => void) => {
-      'worklet';
-      const safeDelay = Math.max(0, startDelay);
-      opacity.set(
-        withDelay(
-          safeDelay,
-          withTiming(validInitialOpacity, timingConfig, finished => {
-            if (finished) {
-              safeRunCallback(onComplete);
-            }
-          }),
-        ),
-      );
-    },
-    [opacity, validInitialOpacity, delay, timingConfig, safeRunCallback],
-  );
-
-  // Reanimated 4: pass shared value directly to style prop (no useAnimatedStyle
-  // wrapper needed). Memoized on the shared value, which never changes identity,
+  // Reanimated 4: pass the shared value straight to `style` (no useAnimatedStyle
+  // wrapper needed). Memoized on the shared value, whose identity never changes,
   // so the object is stable for the hook's lifetime: a fresh object every render
-  // is a new `style` prop for every consumer, and the review screen now shares
+  // would be a new `style` prop for every consumer, and the review screen shares
   // this one style across three views (card, swipe flash, bottom controls).
   const animatedStyle = useMemo(() => ({ opacity }) as AnimatedStyleProp<ViewStyle>, [opacity]);
 
-  // Auto-start animation if enabled - using UI thread
-  useEffect(() => {
-    if (autoStart) {
-      // Set directly to target without initial flash to prevent visual glitch
-      opacity.set(withDelay(MIN_MOUNT_DELAY, withTiming(1, timingConfig)));
-    }
-  }, [autoStart, opacity, timingConfig]);
-
-  return {
-    opacity,
-    animatedStyle,
-    fadeIn,
-    fadeOut,
-    setOpacity,
-    reset,
-    startAnimation,
-    reverseAnimation,
-    entering,
-    exiting,
-  };
+  return { animatedStyle, fadeIn, fadeOut };
 };

@@ -139,7 +139,7 @@ export function useArticleScreen({
     try {
       await stopNonPlaylistAudioSafely(true);
     } catch (error) {
-      handleError(error as Error, { toastMessage: STRINGS.FAILED_TO_STOP_AUDIO_ON_CLOSE });
+      handleError(error, { toastMessage: STRINGS.FAILED_TO_STOP_AUDIO_ON_CLOSE });
     }
 
     // Dismiss the modal screen, or navigate to library home if not dismissible
@@ -201,7 +201,7 @@ export function useArticleScreen({
           if (sentenceIndex >= 0 && sentenceIndex < totalSentences) {
             // For the last sentence, count it as viewed even if partially visible
             // (the viewability threshold can prevent it from registering at the bottom)
-            const isVisible = item.isViewable === true || sentenceIndex === totalSentences - 1;
+            const isVisible = item.isViewable || sentenceIndex === totalSentences - 1;
             if (isVisible) {
               maxVisibleSentenceIndex = Math.max(maxVisibleSentenceIndex, sentenceIndex);
             }

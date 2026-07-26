@@ -25,7 +25,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useOnboardingChecklist } from '@/hooks/onboarding/useOnboardingChecklist';
 import { useTutorial } from '@/hooks/tutorials/useTutorial';
 import { useToast } from '@/components/providers/ToastProvider';
-import type { ArticleId, CategoryId } from '@/types/branded.types';
+import type { CategoryId } from '@/types/branded.types';
 import { pickStarterArticle } from '@/utils/articleUtils';
 import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback } from '@/utils/haptics';
@@ -90,13 +90,13 @@ export default function ExploreScreen(): JSX.Element {
     }
   }, [checklist.isEligible, triggerIntro]);
 
-  const starterArticleIds = useMemo(() => articlesData.map(a => a.id as ArticleId), [articlesData]);
+  const starterArticleIds = useMemo(() => articlesData.map(a => a.id), [articlesData]);
   const { data: starterProgressMap } = useBulkReadingProgress(starterArticleIds);
 
   const handleOpenFirstText = useCallback(() => {
     const starter = pickStarterArticle(articlesData, starterProgressMap);
     if (starter) {
-      router.push(getArticleRoute(starter.id as ArticleId, starter.title, true));
+      router.push(getArticleRoute(starter.id, starter.title, true));
     }
   }, [articlesData, starterProgressMap]);
 

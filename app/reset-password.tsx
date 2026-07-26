@@ -79,7 +79,7 @@ export default function ResetPasswordScreen(): JSX.Element {
           router.replace(ROUTE_PATHS.AUTH);
         }
       } catch (error) {
-        handleError(error as Error, {
+        handleError(error, {
           toastMessage: 'Failed to verify reset link. Please try again.',
           showToast: true,
         });

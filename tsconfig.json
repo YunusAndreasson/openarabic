@@ -25,6 +25,8 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
+    "noUncheckedSideEffectImports": true,
+    "erasableSyntaxOnly": true,
     "lib": ["ESNext"],
     "incremental": true,
     "tsBuildInfoFile": ".tsbuildinfo",

@@ -35,5 +35,5 @@ export function useStudyStreak(): UseStudyStreakResult {
     queryFn: user?.id ? streakConfig.queryFn : skipToken,
   });
 
-  return { streak, isLoading, error: error as Error | null, refetch };
+  return { streak, isLoading, error: error, refetch };
 }

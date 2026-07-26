@@ -3,8 +3,11 @@ import { STRINGS } from '@/constants/strings';
 export class PriorityQueue<T> {
   private heap: T[] = [];
   private priorities: number[] = [];
+  private compare: (a: number, b: number) => number;
 
-  constructor(private compare: (a: number, b: number) => number = (a, b) => a - b) {}
+  constructor(compare: (a: number, b: number) => number = (a, b) => a - b) {
+    this.compare = compare;
+  }
 
   private swap(i: number, j: number) {
     if (i >= this.heap.length || j >= this.heap.length || i < 0 || j < 0) return;

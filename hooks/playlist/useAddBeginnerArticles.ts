@@ -10,7 +10,6 @@ import { analytics } from '@/services/analytics';
 import { bookmarkService } from '@/services/bookmark';
 import { useAppDispatch } from '@/store/hooks';
 import { resetEditMode } from '@/store/editModeSlice';
-import type { ArticleId } from '@/types/branded.types';
 import { ToastType } from '@/types/enums';
 import { getBeginnerArticles } from '@/utils/articleUtils';
 import { handleError } from '@/utils/errorHandling';
@@ -67,7 +66,7 @@ export function useAddBeginnerArticles(
       // Add beginner articles to the reading list; allSettled so one flaky
       // network call doesn't fail the whole batch (upsert makes retries safe)
       const results = await Promise.allSettled(
-        beginnerArticleIds.map(id => bookmarkService.addToReadingList(user.id, id as ArticleId)),
+        beginnerArticleIds.map(id => bookmarkService.addToReadingList(user.id, id)),
       );
       const addedCount = results.filter(result => result.status === 'fulfilled').length;
 

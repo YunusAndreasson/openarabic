@@ -27,4 +27,4 @@ export function useAuth(): AuthResult {
   return context;
 }
 
-export type { AuthResult, UserSession } from '@/types/auth.types';
+export type { AuthResult } from '@/types/auth.types';

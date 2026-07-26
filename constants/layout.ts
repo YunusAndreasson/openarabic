@@ -78,7 +78,7 @@ const ELEVATION_SYSTEM = {
   MODAL: ELEVATION_RAW.LARGE,
 } as const;
 
-export const TYPOGRAPHY_HIERARCHY = {
+const TYPOGRAPHY_HIERARCHY = {
   WEIGHTS: {
     REGULAR: '400' as const,
     MEDIUM: '500' as const,
@@ -141,9 +141,6 @@ export const TYPOGRAPHY_HIERARCHY = {
 // ===== FLAT EXPORTS FOR SIMPLIFIED IMPORTS =====
 // These are top-level exports of TYPOGRAPHY_HIERARCHY for cleaner imports
 
-/** Font weight constants */
-export const FONT_WEIGHTS = TYPOGRAPHY_HIERARCHY.WEIGHTS;
-
 /** Line height multiplier constants */
 export const LINE_HEIGHT_MULTIPLIERS = TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS;
 
@@ -166,14 +163,6 @@ export const MIN_TOUCH_TARGET = TOUCH_TARGETS;
 export const STATUS_INDICATOR = {
   DOT_SIZE: 6, // Small status dots used in cards and headers
   DOT_RADIUS: 3, // Perfect circle radius for 6px dots
-} as const;
-
-// Icon container constants for consistent sizing
-export const ICON_CONTAINER = {
-  SMALL_SIZE: TOUCH_TARGETS.SMALL, // 32 - standard small icon container
-  SMALL_RADIUS: TOUCH_TARGETS.SMALL / 2, // 16 - half for perfect circle
-  MEDIUM_SIZE: TOUCH_TARGETS.MEDIUM, // 44 - standard medium icon container
-  MEDIUM_RADIUS: TOUCH_TARGETS.MEDIUM / 2, // 22 - half for perfect circle
 } as const;
 
 /**

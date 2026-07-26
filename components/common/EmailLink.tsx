@@ -43,7 +43,7 @@ export const EmailLink: FC<EmailLinkProps> = ({ email, type = 'body' }) => {
         });
       }
     } catch (error) {
-      handleError(error as Error, {
+      handleError(error, {
         analyticsEventName: 'Email_Link_Failed',
         sentryTags: { location: 'email_link', action: 'mailto' },
         sentryExtra: { email },

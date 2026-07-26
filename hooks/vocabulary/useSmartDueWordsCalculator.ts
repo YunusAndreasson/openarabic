@@ -67,7 +67,7 @@ export function useSmartDueWordsCalculator(options: UseSmartDueWordsCalculatorOp
       // Execute all refreshes in parallel for better performance
       await Promise.allSettled(refreshPromises);
     } catch (error) {
-      handleError(error as Error, {
+      handleError(error, {
         showToast: false,
         analyticsEventName: 'Due_Words_Refresh_Error',
       });

@@ -747,45 +747,24 @@ export const ARABIC_DIACRITICS: WordComponent[] = [
     role: GrammaticalRole.CASE_ENDING,
   },
 
-  // Tanween Fath (ــًا) - nunation with fatha, indicates indefinite accusative
-  // NOTE: indefinite-article triggers ('a','an','as') removed — bare nunation marks
-  // indefiniteness/case but is not a separable morpheme to color; it only produced
-  // false positives on plain indefinite nouns (سَبَبًا "a cause", قَلِيلًا "a bit").
-  {
-    arabic: 'ًا',
-    english: ['one'],
-    type: ComponentType.DIACRITIC,
-    role: GrammaticalRole.CASE_ENDING,
-  },
-
-  // Standalone Tanween Fath (ــً) - without alif, common on taa marboota
-  // NOTE: indefinite-article triggers removed (see ًا above) — nunation alone is not
-  // a paintable component per the ground-truth corpus.
-  {
-    arabic: 'ً',
-    english: ['one'],
-    type: ComponentType.DIACRITIC,
-    role: GrammaticalRole.CASE_ENDING,
-  },
-
-  // Tanween Kasr (ــٍ) - nunation with kasra, indicates indefinite genitive
-  {
-    arabic: 'ٍ',
-    english: ['of', 'in', 'at', 'a', 'something'],
-    type: ComponentType.DIACRITIC,
-    role: GrammaticalRole.CASE_ENDING,
-  },
-
-  // Tanween Damm (ــٌ) - nunation with damma, indicates indefinite nominative
-  // NOTE: indefinite-article / copula triggers ('a','an','is') removed (see ًا above) —
-  // they only produced false positives on plain indefinite nouns (رَجُلٌ "A man",
-  // حَقٌّ "is true", كَافِرٌ "a disbeliever").
-  {
-    arabic: 'ٌ',
-    english: ['one'],
-    type: ComponentType.DIACRITIC,
-    role: GrammaticalRole.CASE_ENDING,
-  },
+  // NOTE: all four tanween entries (ــًا, ــً, ــٍ, ــٌ) were removed. Nunation marks
+  // indefiniteness and case, but it is not a separable morpheme to color — and the
+  // ground-truth corpus is unanimous: of 52 tanween-final cases, 43 expect no
+  // components at all and the other 9 earn theirs solely from a prefix (وَعَدْلًا
+  // "and justice" via و). Zero expect a paint from the nunation itself.
+  //
+  // The earlier cleanup pulled the indefinite-article triggers ('a','an','as','is')
+  // from ًا/ً/ٌ for exactly this reason but left two leaks behind, worth 235 words
+  // (276 occurrences) of spurious paint in the production corpus:
+  //   - ٍ kept the whole set ('of','in','at','a','something'), so سِكَّةٍ "a track"
+  //     painted its kasratan as "a" — the same shape as رَجُلٌ "A man", which that
+  //     cleanup had already called a false positive.
+  //   - 'one' survived on ًا/ً/ٌ and matched the English pronoun rather than any
+  //     numeral: سَيِّئًا "bad one", وَمُحَرِّكٌ "and the one who stirs up",
+  //     يَوْمًا "one day" (a numeral, but not what the nunation means).
+  // Both painted symmetrically (Arabic mark ↔ English word), so the UI pairing
+  // invariant could never flag them; they were invisible until the benchmark
+  // learned to score diacritics.
 
   // Dual Nominative (ــانِ) - dual form in nominative case
   {
@@ -803,10 +782,29 @@ export const ARABIC_DIACRITICS: WordComponent[] = [
     role: GrammaticalRole.CASE_ENDING,
   },
 
-  // Taa Marboota (ــتْ) - feminine past tense / passive marker
+  // Taa sakina (ــتْ) - feminine past-tense subject marker (قَالَتْ "she said").
+  // NOT taa marboota (ة). Matched as a DIACRITIC so the sukun is still present:
+  // normalization would strip it and collide with the generic ت suffix, which is
+  // exactly the ambiguity the sukun resolves. A noun-final ت carries a case vowel,
+  // so تْ is reliably verbal — that is why 'she'/'they' are safe here even though
+  // they over-fire on the bare ت suffix (feminine nouns referred to as "she").
+  // 'they' covers the non-human plural, which Arabic treats as feminine singular
+  // (كَثُرَتْ "they are numerous").
   {
     arabic: 'تْ',
-    english: ['was', 'did', 'has', 'have been', 'take', 'takes', 'becomes', 'is', 'it'],
+    english: [
+      'was',
+      'did',
+      'has',
+      'have been',
+      'take',
+      'takes',
+      'becomes',
+      'is',
+      'it',
+      'she',
+      'they',
+    ],
     type: ComponentType.DIACRITIC,
     role: GrammaticalRole.CASE_ENDING,
   },

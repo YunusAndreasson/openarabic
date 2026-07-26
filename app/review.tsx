@@ -1,7 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
-import type { TextStyle, ViewStyle } from 'react-native';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -30,19 +29,19 @@ import { getDiagSnapshot, setDiagnosticsEnabled, subscribeDiag } from '@/utils/r
 const baseStyles = StyleSheet.create({
   container: {
     flex: 1,
-  } as ViewStyle,
+  },
   containerCentered: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
-  } as ViewStyle,
+  },
   contentContainer: {
     flex: 1,
     width: '100%',
     alignItems: 'center',
     paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
-  } as ViewStyle,
+  },
   wordArea: {
     flex: 1,
     width: '100%',
@@ -52,17 +51,17 @@ const baseStyles = StyleSheet.create({
     minHeight: WORD_AREA_MIN_HEIGHT,
     paddingTop: LAYOUT.SPACING.LARGE,
     paddingBottom: LAYOUT.SPACING.LARGE,
-  } as ViewStyle,
+  },
   loadingText: {
     marginTop: LAYOUT.SPACING.MEDIUM,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     textAlign: 'center',
-  } as TextStyle,
+  },
   loadingSubtext: {
     marginTop: LAYOUT.SPACING.SMALL,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     textAlign: 'center',
-  } as TextStyle,
+  },
   uiChromeOverlay: {
     position: 'absolute',
     top: 0,
@@ -70,10 +69,10 @@ const baseStyles = StyleSheet.create({
     right: 0,
     bottom: 0,
     pointerEvents: 'box-none',
-  } as ViewStyle,
+  },
   headerPadding: {
     paddingTop: LAYOUT.SPACING.LARGE,
-  } as ViewStyle,
+  },
   // Full-width reveal button — neutral card surface, tinted label. Matches the
   // grade bar's height so the bottom slot doesn't jump between the two states.
   showAnswerButton: {
@@ -83,10 +82,10 @@ const baseStyles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
-  } as ViewStyle,
+  },
   showAnswerLabel: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-  } as TextStyle,
+  },
 });
 
 /** Reusable loading state component for review screen */
@@ -439,7 +438,7 @@ const voiceHintStyles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
-  } as ViewStyle,
+  },
 });
 
 const voiceDebugStyles = StyleSheet.create({
@@ -452,11 +451,11 @@ const voiceDebugStyles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: 'rgba(0,0,0,0.45)',
     gap: 2,
-  } as ViewStyle,
+  },
   line: {
     fontSize: 11,
     lineHeight: 14,
-  } as TextStyle,
+  },
 });
 
 export default function ReviewScreen(): JSX.Element {

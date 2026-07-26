@@ -73,17 +73,17 @@ export interface TabScreenConfig {
 export const TAB_SCREENS: readonly TabScreenConfig[] = [
   {
     name: 'explore',
-    title: 'Explore' as AppTab,
+    title: 'Explore',
     icon: TAB_ICONS.EXPLORE,
   },
   {
     name: 'playlist',
-    title: 'Playlist' as AppTab,
+    title: 'Playlist',
     icon: TAB_ICONS.PLAYLIST,
   },
   {
     name: 'practice',
-    title: 'Practice' as AppTab,
+    title: 'Practice',
     icon: TAB_ICONS.PRACTICE,
   },
 ] as const;

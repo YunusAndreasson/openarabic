@@ -71,7 +71,7 @@ export function calculateReadingTime(sentenceCount: number): string {
  * Text separator used for displaying metadata (author, category, etc.)
  * Options: • (bullet), · (middle dot), / (slash), | (pipe)
  */
-export const METADATA_SEPARATOR = '·'; // Middle dot - clean and modern
+const METADATA_SEPARATOR = '·'; // Middle dot - clean and modern
 
 /**
  * Capitalizes the first letter of a string

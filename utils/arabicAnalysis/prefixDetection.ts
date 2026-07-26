@@ -32,6 +32,64 @@ const SINGLE_LETTER_CONJUNCTION_SET = new Set(['و', 'ف', 'ب', 'ل']);
  */
 const NON_FATHA_VOWELS = new Set(['ُ', 'ِ', 'ْ']); // ُ ِ ْ
 
+/** Conjunction triggers the و/ف prefixes claim; used to detect an elided "and". */
+const CONJUNCTION_IN_GLOSS_REGEX = /\b(and|then|so|but|or|nor|yet)\b/i;
+
+/**
+ * Decides whether a word-initial و/ف should be consumed without being painted.
+ *
+ * Translators routinely drop a connective "and": وَالسَّمَاءِ is glossed "the sky", not
+ * "and the sky". Because `findComponent` only returns a prefix that matched some
+ * English, the unmatched و ended prefix detection outright — taking the ال behind it
+ * down too, so the word painted nothing at all. The very same word glossed "and the
+ * sky" painted both prefixes.
+ *
+ * The conjunction is consumed but never becomes a component: there is no English
+ * "and" to pair it with, and painting an Arabic span with no counterpart is exactly
+ * the asymmetry the UI invariant forbids. `computeColoredSegments` renders the
+ * consumed span in the plain root colour via `elidedPrefixLength`.
+ *
+ * Kept narrow — every condition is load-bearing:
+ *  - only at the first iteration, since a conjunction is always outermost;
+ *  - only when the original carries fatha, which is what separates the conjunction
+ *    from a root radical (VALIDATION 0b applies the same test). NOTE: this test is
+ *    necessary but NOT sufficient — وَقَعَ, وَضَعَ, فَعَلَ are root-initial and carry fatha
+ *    too. What actually protects those is the final condition below;
+ *  - only when the definite article is what sits behind it. This is the whole
+ *    observed cluster (وال/فال: the gloss keeps "the" and drops the "and"), and
+ *    ال↔"the" is unambiguous. Allowing any prefix instead cost precision by
+ *    consuming speculatively: وَأَمَّا "as for" then read أما as a prefix meaning
+ *    "as", and فَكَأَنَّهُ "it is as if" read the ك of كأن the same way;
+ *  - only when a prefix *behind* it matches English, so a root letter is never
+ *    stripped speculatively (وَضَعَ leaves "ضع", which matches nothing);
+ *  - only when the gloss has no connective of its own — if it does, the ordinary
+ *    path already pairs the conjunction and this must not steal it.
+ */
+function consumeElidedConjunction(
+  remaining: string,
+  english: string,
+  originalArabic: string | undefined,
+  iterationCount: number,
+): boolean {
+  if (iterationCount !== 1) return false;
+
+  const first = remaining[0];
+  if (first !== 'و' && first !== 'ف') return false;
+
+  // Must be the vocalized conjunction, not a root radical.
+  if (originalArabic?.[0] !== first) return false;
+  if (NON_FATHA_VOWELS.has(originalArabic[1] ?? '')) return false;
+
+  // If the gloss still carries the connective, the normal path owns it.
+  if (CONJUNCTION_IN_GLOSS_REGEX.test(english)) return false;
+
+  const behind = remaining.substring(1);
+  if (behind.length < 2) return false;
+
+  const match = findComponent(behind, english, ARABIC_PREFIXES, ComponentType.PREFIX);
+  return match?.role === GrammaticalRole.DEFINITE_ARTICLE;
+}
+
 /**
  * Detects multiple prefixes in sequence from an Arabic word
  *
@@ -42,9 +100,10 @@ export function detectPrefixes(
   normalizedArabic: string,
   english: string,
   originalArabic?: string,
-): { prefixes: AnalyzedComponent[]; remainingArabic: string } {
+): { prefixes: AnalyzedComponent[]; remainingArabic: string; elidedPrefixLength: number } {
   const detectedPrefixes: AnalyzedComponent[] = [];
   let remaining = normalizedArabic;
+  let elidedPrefixLength = 0;
   const lowerEnglish = english.toLowerCase();
 
   // Track which roles we've seen to prevent duplicates
@@ -395,13 +454,24 @@ export function detectPrefixes(
 
       // Remove matched prefix from remaining text
       remaining = remainingAfterPrefix;
+    } else if (consumeElidedConjunction(remaining, english, originalArabic, iterationCount)) {
+      // Elided connective: consume it so detection can reach the prefix behind it.
+      // Deliberately not added to detectedPrefixes — see the helper's docblock.
+      remaining = remaining.substring(1);
+      elidedPrefixLength = 1;
     } else {
       // No more prefixes found
       continueDetection = false;
     }
   }
 
-  return { prefixes: detectedPrefixes, remainingArabic: remaining };
+  // Nothing behind it ended up painting, so the consume bought nothing — report zero
+  // and let the renderer treat the word as untouched.
+  if (detectedPrefixes.length === 0) {
+    elidedPrefixLength = 0;
+  }
+
+  return { prefixes: detectedPrefixes, remainingArabic: remaining, elidedPrefixLength };
 }
 
 /**

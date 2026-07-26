@@ -54,6 +54,18 @@ export function normalizeArabic(text: string): string {
 }
 
 /**
+ * Alternative-gloss separator. A slash joins two readings of the same word
+ * ("so she/it made known", "he/it", "on / upon"); stripping it as ordinary
+ * punctuation welds them into one unmatchable token ("sheit"), so neither
+ * reading can ever satisfy a component trigger. Replaced with a space instead.
+ *
+ * Deliberately NOT extended to hyphens: those overwhelmingly join proper nouns
+ * ("Al-Fatiha") and compound adjectives ("well-known", "self-sufficient") in this
+ * corpus, where splitting would manufacture spurious trigger tokens.
+ */
+const ALTERNATIVE_SEPARATOR_REGEX = /\//g;
+
+/**
  * Normalizes English text for comparison (with caching)
  */
 export function normalizeEnglish(text: string): string {
@@ -62,7 +74,11 @@ export function normalizeEnglish(text: string): string {
     return cached;
   }
 
-  const normalized = text.toLowerCase().replace(NON_WORD_REGEX, '').trim();
+  const normalized = text
+    .toLowerCase()
+    .replace(ALTERNATIVE_SEPARATOR_REGEX, ' ')
+    .replace(NON_WORD_REGEX, '')
+    .trim();
 
   cacheWithFifoEviction(ENGLISH_NORMALIZATION_CACHE, text, normalized);
 

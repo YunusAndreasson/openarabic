@@ -4,7 +4,7 @@
  */
 
 export { AccountBadge } from './AccountBadge';
-export { ArabicColoringExamples } from './ArabicColoringExamples';
+
 export { ArabicFontSelector } from './ArabicFontSelector';
 export { FeedbackForm } from './FeedbackForm';
 export { SettingsCard } from './SettingsCard';

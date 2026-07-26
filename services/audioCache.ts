@@ -31,7 +31,7 @@ export interface GetAudioOptions {
   quick?: boolean;
 }
 
-export class AudioCacheManager {
+class AudioCacheManager {
   private static instance: AudioCacheManager;
   private cacheDir = `${Paths.cache.uri}audio/`;
   // In-memory cache to reduce file system checks
@@ -126,10 +126,10 @@ export class AudioCacheManager {
     try {
       const cacheDir = new Directory(this.cacheDir);
       if (!cacheDir.exists) {
-        await cacheDir.create();
+        cacheDir.create();
       }
     } catch (error) {
-      await handleError(error as Error, { showToast: false });
+      await handleError(error, { showToast: false });
     }
   }
 
@@ -190,7 +190,7 @@ export class AudioCacheManager {
       this.memoryCache.delete(cacheKey);
       return null;
     } catch (error) {
-      await handleError(error as Error, { showToast: false });
+      await handleError(error, { showToast: false });
       return null;
     }
   }
@@ -344,7 +344,7 @@ export class AudioCacheManager {
         this.pendingDownloads.delete(url);
       }
     } catch (error) {
-      await handleError(error as Error, {
+      await handleError(error, {
         showToast: false,
         toastMessage: 'Audio caching failed. The app may experience slower audio loading.',
       });
@@ -373,7 +373,7 @@ export class AudioCacheManager {
       await this.ensureLegacySweep();
       return await this.getCachedFilePath(url);
     } catch (error) {
-      await handleError(error as Error, { showToast: false });
+      await handleError(error, { showToast: false });
       return null;
     }
   }
@@ -410,7 +410,7 @@ export class AudioCacheManager {
         cachedFile.delete();
       }
     } catch (error) {
-      await handleError(error as Error, { showToast: false });
+      await handleError(error, { showToast: false });
     }
   }
 
@@ -421,14 +421,14 @@ export class AudioCacheManager {
     try {
       const cacheDir = new Directory(this.cacheDir);
       if (cacheDir.exists) {
-        await cacheDir.delete();
+        cacheDir.delete();
         await this.ensureCacheDirectoryExists();
       }
       // Clear memory cache and pending downloads
       this.memoryCache.clear();
       this.pendingDownloads.clear();
     } catch (error) {
-      await handleError(error as Error);
+      await handleError(error);
       throw error;
     }
   }
@@ -456,7 +456,7 @@ export class AudioCacheManager {
 
       return totalSize;
     } catch (error) {
-      await handleError(error as Error);
+      await handleError(error);
       return 0;
     }
   }

@@ -205,7 +205,7 @@ class SimpleAudioService {
       const shouldLogToSentry = isAppActive && shouldBePlaying;
 
       if (shouldLogToSentry) {
-        await handleError(error as Error, {
+        await handleError(error, {
           showToast: false,
           sentryExtra: {
             operation: 'setIsAudioActiveAsync',
@@ -277,7 +277,7 @@ class SimpleAudioService {
     try {
       await setAudioModeAsync(this.currentAudioMode());
     } catch (error) {
-      await handleError(error as Error, {
+      await handleError(error, {
         showToast: false,
         sentryExtra: { operation: 'setRecordingSessionEnabled', enabled },
       });
@@ -324,7 +324,7 @@ class SimpleAudioService {
         const playing = this.status.playing || this.isPlaylistMode;
         if (playing && nextAppState === 'active') {
           // Only log if we're trying to play and app became active
-          await handleError(error as Error, {
+          await handleError(error, {
             showToast: false,
             sentryExtra: {
               operation: 'AppState.addEventListener',
@@ -721,7 +721,7 @@ class SimpleAudioService {
       // resolves would flash an error over audio that is about to work.
       // Single-shot callers without self-heal fail quietly too; the playlist
       // lane surfaces exactly one toast itself if it ultimately stops.
-      handleError(error as Error, {
+      handleError(error, {
         showToast: !isReadyTimeout,
         toastMessage: 'Failed to start audio playback',
       });

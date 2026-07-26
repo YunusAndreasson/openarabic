@@ -60,7 +60,7 @@ export async function loadOnboardingState(): Promise<OnboardingProgressState> {
       ? { ...createState(), ...(JSON.parse(raw) as Partial<OnboardingProgressState>) }
       : createState();
   } catch (error) {
-    handleError(error as Error, {
+    handleError(error, {
       showToast: false,
       analyticsEventName: 'Onboarding_Storage_Read_Error',
     });
@@ -80,7 +80,7 @@ async function writeState(next: OnboardingProgressState): Promise<void> {
   try {
     await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify(next));
   } catch (error) {
-    handleError(error as Error, {
+    handleError(error, {
       showToast: false,
       analyticsEventName: 'Onboarding_Storage_Write_Error',
     });

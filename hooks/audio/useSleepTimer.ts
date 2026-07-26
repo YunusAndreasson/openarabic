@@ -59,7 +59,7 @@ export function useSleepTimer(onTimerComplete?: () => void): UseSleepTimerResult
           onTimerComplete?.();
         }, durationMs);
       } catch (error) {
-        handleError(error as Error, {
+        handleError(error, {
           toastMessage: STRINGS.FAILED_TO_START_SLEEP_TIMER,
           analyticsEventName: 'Sleep_Timer_Start_Error',
         });

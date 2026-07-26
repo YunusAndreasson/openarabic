@@ -22,7 +22,6 @@ import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useColors } from '@/hooks/theme/useColors';
 import { analytics } from '@/services/analytics';
 import type { Article } from '@/types/articles.types';
-import type { ArticleId } from '@/types/branded.types';
 import { pickStarterArticle } from '@/utils/articleUtils';
 import { selectionFeedback } from '@/utils/haptics';
 
@@ -49,7 +48,7 @@ const GetStartedChecklistComponent: FC<GetStartedChecklistProps> = ({
   const router = useRouter();
   const { isChecklistVisible, items, doneCount, allDone, finalizeCompletion } = checklist;
 
-  const articleIds = useMemo(() => articlesData.map(a => a.id as ArticleId), [articlesData]);
+  const articleIds = useMemo(() => articlesData.map(a => a.id), [articlesData]);
   const { data: progressMap } = useBulkReadingProgress(articleIds);
 
   // Collapse animation: measured height + opacity → 0, then persist completion.
@@ -101,7 +100,7 @@ const GetStartedChecklistComponent: FC<GetStartedChecklistProps> = ({
       analytics.track(ANALYTICS_EVENTS.ONBOARDING_CHECKLIST_ITEM_TAPPED, { item: step });
       const starter = pickStarterArticle(articlesData, progressMap);
       if (starter) {
-        router.push(getArticleRoute(starter.id as ArticleId, starter.title, true));
+        router.push(getArticleRoute(starter.id, starter.title, true));
       }
     },
     [articlesData, progressMap, router],

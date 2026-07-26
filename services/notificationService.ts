@@ -153,7 +153,7 @@ export async function initializeNotifications(): Promise<boolean> {
     isInitialized = true;
     return true;
   } catch (error) {
-    handleError(error as Error, { showToast: false });
+    handleError(error, { showToast: false });
     return false;
   }
 }
@@ -265,7 +265,7 @@ export async function cancelSmartNotifications(): Promise<void> {
   try {
     await cancelManagedNotifications(Notifications);
   } catch (error) {
-    handleError(error as Error, { showToast: false });
+    handleError(error, { showToast: false });
   }
 }
 
@@ -326,7 +326,7 @@ export async function syncSmartNotifications(
         });
         scheduledCount++;
       } catch (error) {
-        handleError(error as Error, {
+        handleError(error, {
           showToast: false,
           analyticsEventName: ANALYTICS_EVENTS.REMINDER_SCHEDULING_ERROR,
         });
@@ -341,7 +341,7 @@ export async function syncSmartNotifications(
     });
     return scheduledCount;
   } catch (error) {
-    handleError(error as Error, {
+    handleError(error, {
       showToast: false,
       analyticsEventName: ANALYTICS_EVENTS.REMINDER_SCHEDULING_ERROR,
     });
@@ -363,7 +363,7 @@ export async function dismissDeliveredSmartNotifications(): Promise<void> {
       }
     }
   } catch (error) {
-    handleError(error as Error, { showToast: false });
+    handleError(error, { showToast: false });
   }
 }
 
@@ -378,7 +378,7 @@ export async function setAppBadgeCount(count: number): Promise<boolean> {
     await Notifications.setBadgeCountAsync(validCount);
     return true;
   } catch (error) {
-    handleError(error as Error, {
+    handleError(error, {
       showToast: false,
       analyticsEventName: 'Badge_Set_Error',
     });
@@ -392,7 +392,7 @@ export async function clearAppBadge(): Promise<boolean> {
     await Notifications.setBadgeCountAsync(0);
     return true;
   } catch (error) {
-    handleError(error as Error, {
+    handleError(error, {
       showToast: false,
       analyticsEventName: 'Badge_Clear_Error',
     });
@@ -431,7 +431,7 @@ export async function getPermissionStatus(): Promise<NotificationPermissionStatu
     if (status === 'denied') return canAskAgain ? 'undetermined' : 'denied';
     return 'undetermined';
   } catch (error) {
-    handleError(error as Error, { showToast: false });
+    handleError(error, { showToast: false });
     return 'unavailable';
   }
 }
@@ -509,7 +509,7 @@ export async function ensurePermissions(): Promise<boolean> {
         return false;
     }
   } catch (error) {
-    handleError(error as Error, {
+    handleError(error, {
       showToast: false,
       analyticsEventName: 'Notification_Permission_Error',
     });
@@ -533,7 +533,7 @@ export async function canUseBadge(): Promise<boolean> {
     // On Android, badge is controlled by notification permission
     return true;
   } catch (error) {
-    handleError(error as Error, {
+    handleError(error, {
       showToast: false,
       analyticsEventName: 'Badge_Permission_Check_Error',
     });

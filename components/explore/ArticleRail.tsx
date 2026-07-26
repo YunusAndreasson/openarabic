@@ -5,7 +5,6 @@ import { PlaylistItemCard } from '@/components/playlist/PlaylistItemCard';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { useArticlePrefetch } from '@/hooks/articles/useArticlePrefetch';
 import type { Article } from '@/types/articles.types';
-import type { ArticleId } from '@/types/branded.types';
 import { generateStorageUrl } from '@/utils/storageUtils';
 import { getArticleMetadataWithoutCategory } from '@/utils/stringUtils';
 
@@ -53,7 +52,7 @@ const ArticleRailComponent: FC<ArticleRailProps> = ({ items, keyPrefix, onArticl
             articleId={article.id}
             progressPercentage={progress}
             onPress={() => onArticlePress(article)}
-            onPressIn={() => prefetchArticle(article.id as ArticleId)}
+            onPressIn={() => prefetchArticle(article.id)}
             compact
           />
         </View>

@@ -8,7 +8,6 @@ import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
 import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useAuth } from '@/hooks/auth/useAuth';
 import type { Article } from '@/types/articles.types';
-import type { RootId } from '@/types/branded.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { getBeginnerArticles, getRandomItems } from '@/utils/articleUtils';
 import { calculateProgressPercentage } from '@/utils/progressUtils';
@@ -68,7 +67,7 @@ export function useMultipleFeaturedArticles(
   // Compute hard word root IDs inline using simplified isHardWord logic
   const difficultWordRootIds = useMemo(() => {
     const hardWords = studyWords.filter(isHardWord);
-    return new Set(hardWords.map(w => w.root_id as RootId));
+    return new Set(hardWords.map(w => w.root_id));
   }, [studyWords]);
 
   const hasDifficultWordArticles = difficultWordRootIds.size >= 3;

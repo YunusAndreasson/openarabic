@@ -21,7 +21,6 @@ import { TutorialId } from '@/constants/tutorials';
 import { useArticleListen } from '@/hooks/articles/useArticleListen';
 import { useArticleScreen } from '@/hooks/articles/useArticleScreen';
 import { useColors } from '@/hooks/theme/useColors';
-import type { ArticleId } from '@/types/branded.types';
 import type { Tables } from '@/types/database.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 
@@ -69,7 +68,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
 
   // In-article Listen control (podcast-style playback via the global MiniPlayer)
   const { isListeningToThisArticle, isListenLoading, handleToggleListen } = useArticleListen(
-    article?.id as ArticleId | undefined,
+    article?.id,
     article?.title,
     // Hand over the already-loaded article so tapping Listen doesn't refetch it
     article,

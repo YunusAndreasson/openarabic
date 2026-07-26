@@ -15,13 +15,13 @@ import { handleError } from '@/utils/errorHandling';
  * @param tutorialId - The tutorial to check
  * @returns true if completed, true on error (fail-safe)
  */
-export async function isTutorialCompleted(tutorialId: TutorialId): Promise<boolean> {
+async function isTutorialCompleted(tutorialId: TutorialId): Promise<boolean> {
   try {
     const config = TUTORIALS[tutorialId];
     const value = await AsyncStorage.getItem(config.storageKey);
     return value === 'true';
   } catch (error) {
-    handleError(error as Error, {
+    handleError(error, {
       showToast: false,
       analyticsEventName: 'Tutorial_Storage_Read_Error',
     });
@@ -40,7 +40,7 @@ export async function markTutorialCompleted(tutorialId: TutorialId): Promise<voi
     const config = TUTORIALS[tutorialId];
     await AsyncStorage.setItem(config.storageKey, 'true');
   } catch (error) {
-    handleError(error as Error, {
+    handleError(error, {
       showToast: false,
       analyticsEventName: 'Tutorial_Storage_Write_Error',
     });
@@ -61,7 +61,7 @@ export async function resetAllTutorials(): Promise<void> {
       }),
     );
   } catch (error) {
-    handleError(error as Error, {
+    handleError(error, {
       showToast: false,
       analyticsEventName: 'Tutorial_Storage_Reset_Error',
     });

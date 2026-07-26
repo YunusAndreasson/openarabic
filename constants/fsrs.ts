@@ -3,8 +3,8 @@ import type { Grade, StepUnit } from 'ts-fsrs';
 
 import type { WordConfidence } from '@/types/review.types';
 
-export const DEFAULT_LEARNING_STEPS: StepUnit[] = ['1m', '10m'];
-export const DEFAULT_RELEARNING_STEPS: StepUnit[] = ['5m', '10m'];
+const DEFAULT_LEARNING_STEPS: StepUnit[] = ['1m', '10m'];
+const DEFAULT_RELEARNING_STEPS: StepUnit[] = ['5m', '10m'];
 
 // Base keys for consistent cache management
 export const FSRS_BASE_KEY = 'fsrs-words';

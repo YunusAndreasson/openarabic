@@ -26,7 +26,7 @@ export async function readSmartReminderPrefs(): Promise<ReminderTime | null> {
     }
     return { hour: parsed.hour, minute: parsed.minute, enabled: parsed.enabled };
   } catch (error) {
-    handleError(error as Error, { showToast: false });
+    handleError(error, { showToast: false });
     return null;
   }
 }
@@ -35,6 +35,6 @@ export async function writeSmartReminderPrefs(prefs: ReminderTime): Promise<void
   try {
     await AsyncStorage.setItem(SMART_REMINDER_PREFS_KEY, JSON.stringify(prefs));
   } catch (error) {
-    handleError(error as Error, { showToast: false });
+    handleError(error, { showToast: false });
   }
 }

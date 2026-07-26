@@ -37,7 +37,7 @@ const useUserWithCreationDate = () => {
             setUserWithCreatedAt(data.user);
           }
         } catch (error) {
-          handleError(error as Error, { showToast: false });
+          handleError(error, { showToast: false });
         }
       }
     };
@@ -63,7 +63,7 @@ export const useAccountScreen = () => {
         const audioSize = await getCacheSize();
         setCacheSize(audioSize);
       } catch (error) {
-        handleError(error as Error, { showToast: false });
+        handleError(error, { showToast: false });
       }
     };
 
@@ -104,7 +104,7 @@ export const useAccountScreen = () => {
               Alert.alert(STRINGS.SUCCESS, STRINGS.CLEAR_CACHE_SUCCESS);
             } catch (error) {
               Alert.alert(STRINGS.ERROR, STRINGS.FAILED_TO_CLEAR_OFFLINE_CACHE);
-              handleError(error as Error, { showToast: false });
+              handleError(error, { showToast: false });
             }
           },
         },
@@ -174,10 +174,10 @@ export const useAccountScreen = () => {
 
               // Completely remove all reading progress queries from cache
               // Using removeQueries instead of invalidate to force complete cache clear
-              await queryClient.removeQueries({
+              queryClient.removeQueries({
                 queryKey: readingProgressQueries.bulk(user.id).queryKey,
               });
-              await queryClient.removeQueries({
+              queryClient.removeQueries({
                 queryKey: readingProgressQueries.readingList(user.id).queryKey,
               });
 
@@ -190,7 +190,7 @@ export const useAccountScreen = () => {
               Alert.alert(STRINGS.SUCCESS, STRINGS.READING_PROGRESS_RESET_SUCCESSFULLY);
             } catch (error) {
               Alert.alert(STRINGS.ERROR, STRINGS.FAILED_TO_RESET_READING_PROGRESS);
-              handleError(error as Error, { showToast: false });
+              handleError(error, { showToast: false });
             }
           },
         },
@@ -213,7 +213,7 @@ export const useAccountScreen = () => {
             return;
           }
         } catch (error) {
-          handleError(error as Error, { showToast: false });
+          handleError(error, { showToast: false });
           Alert.alert(STRINGS.ENABLE_NOTIFICATIONS, STRINGS.TURN_ON_NOTIFICATIONS, [
             { text: UiAction.CANCEL, style: 'cancel' },
             { text: STRINGS.OPEN_SETTINGS, onPress: () => Linking.openSettings() },

@@ -15,21 +15,12 @@ export { ANALYSIS_CACHE, cacheWithFifoEviction, clearAnalysisCache } from './cac
 export { expandContractions, normalizeArabic, normalizeEnglish } from './normalization';
 
 // Validation (only export what's used by other modules)
-export {
-  countConsonants,
-  getShortenedPrepositionForm,
-  hasSubstantialStructure,
-  isFormWithSuffixPattern,
-  isHighRiskPreposition,
-  isHighRiskSuffix,
-  isSubjectMarker,
-} from './validation';
+export { isHighRiskSuffix } from './validation';
 
 // Edge Cases
 export { isSingleStandaloneComponent } from './edgeCases';
 
 // English Matching
-export { hasEnglishMatch } from './englishMatching';
 
 // Component Detection
 export {

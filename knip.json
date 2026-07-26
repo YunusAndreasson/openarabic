@@ -2,19 +2,13 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "entry": [
     "app/**/*.{ts,tsx}",
-    "components/**/*.{ts,tsx}",
-    "hooks/**/*.{ts,tsx}",
-    "services/**/*.{ts,tsx}",
-    "store/**/*.{ts,tsx}",
-    "utils/**/*.{ts,tsx}",
-    "constants/**/*.{ts,tsx}",
-    "types/**/*.{ts,tsx}"
+    "*.config.{js,ts,mjs}",
+    "plugins/**/*.js",
+    "scripts/**/*.{ts,mjs}",
+    "__tests__/**/*.{ts,tsx}"
   ],
   "project": [
     "**/*.{js,jsx,ts,tsx}",
-    "!**/*.test.{js,jsx,ts,tsx}",
-    "!**/*.spec.{js,jsx,ts,tsx}",
-    "!**/__tests__/**",
     "!**/node_modules/**",
     "!**/patches/**",
     "!**/docs/**",
@@ -22,9 +16,9 @@
     "!**/supabase/migrations/**",
     "!**/admin-dashboard/**"
   ],
-  "ignore": ["plugins/**", "scripts/**", "admin-dashboard/**"],
+  "ignore": ["admin-dashboard/**", "types/database.types.ts"],
   "ignoreDependencies": ["babel-preset-expo", "babel-jest", "@babel/plugin-transform-react-jsx"],
-  "ignoreExportsUsedInFile": false,
+  "ignoreExportsUsedInFile": { "interface": true, "type": true },
   "includeEntryExports": false,
   "ignoreBinaries": ["supabase", "eas", "list"],
   "exclude": ["duplicates"]

@@ -36,25 +36,25 @@ const STATIC_STYLES = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-  } as ViewStyle,
+  },
   fill: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-  } as ViewStyle,
+  },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  } as ViewStyle,
+  },
   // Sizing container for the two overlaid faces — intentionally chrome-less so the
   // word floats on the screen background (OpenArabic's look), not inside a card box.
   contentBox: {
     width: CARD_CONSTANTS.WIDTH,
     height: CARD_CONSTANTS.HEIGHT,
-  } as ViewStyle,
+  },
   face: {
     position: 'absolute',
     top: 0,
@@ -64,13 +64,13 @@ const STATIC_STYLES = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backfaceVisibility: 'hidden',
-  } as ViewStyle,
+  },
   faceFill: {
     alignSelf: 'stretch',
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-  } as ViewStyle,
+  },
 });
 
 interface ReviewFlipCardProps {

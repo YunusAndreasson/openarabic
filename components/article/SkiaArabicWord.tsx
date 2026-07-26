@@ -17,9 +17,6 @@ import { getSelectedStyle } from '@/utils/textStyleUtils';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-// Shared timing for tooltip fade animation (exported for WordTooltip)
-export const WORD_TOOLTIP_ANIMATION_DURATION = 150;
-
 // Extra vertical space for Arabic diacritics (shadda, tanwin) that extend above the line
 const DIACRITICS_PADDING = 8;
 

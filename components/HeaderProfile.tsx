@@ -60,7 +60,7 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
         setProfilePhotoUri(null);
       }
     } catch (error) {
-      handleError(error as Error, { showToast: false });
+      handleError(error, { showToast: false });
     }
   }, [user?.id]);
 

@@ -237,7 +237,7 @@ export const useStudyWordMutations = (
         });
         return result;
       } catch (error) {
-        handleError(error as Error);
+        handleError(error);
         return undefined;
       }
     },

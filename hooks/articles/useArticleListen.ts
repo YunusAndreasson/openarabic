@@ -73,7 +73,7 @@ export function useArticleListen(
         void markOnboardingStep(OnboardingStep.LISTEN_AUDIO);
       }
     } catch (error) {
-      handleError(error as Error);
+      handleError(error);
     }
   }, [articleId, articleTitle, audioPreference, article, isListeningToThisArticle]);
 

@@ -302,7 +302,7 @@ function AppContent() {
           });
         } catch (err) {
           // Silently ignore analytics errors
-          handleError(err as Error, { showToast: false });
+          handleError(err, { showToast: false });
         }
       }
     };
@@ -439,7 +439,7 @@ function AppContent() {
         }
       } catch (error) {
         // Silently handle cold start notification errors
-        handleError(error as Error, {
+        handleError(error, {
           showToast: false,
           analyticsEventName: 'Cold_Start_Notification_Error',
         });

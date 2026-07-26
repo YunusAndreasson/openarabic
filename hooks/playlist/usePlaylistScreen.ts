@@ -12,7 +12,7 @@ import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { analytics } from '@/services/analytics';
 import { enhancedAudioService, warmTrackCache } from '@/services/audioPlaylist';
-import { simpleAudioService, type SourceTrackedAudioTrack } from '@/services/audioPlayer';
+import { simpleAudioService } from '@/services/audioPlayer';
 import { bookmarkService } from '@/services/bookmark';
 import { useAppDispatch, useAppSelector, useAppSelectorShallow } from '@/store/hooks';
 import { removeFromCustomOrder } from '@/store/playlistSlice';
@@ -200,7 +200,7 @@ export const usePlaylistScreen = () => {
               // Cache the now-playing track for offline replay (no-op if it was
               // already local). Only ever the current track — warming the whole
               // playlist is what used to saturate the connection.
-              warmTrackCache(nextTrack as SourceTrackedAudioTrack);
+              warmTrackCache(nextTrack);
             } else {
               // Playlist is complete, reset playback mode
               setTimer('playbackMode', () => setPlaybackMode('none'), TIMING_CONSTANTS.QUICK_DELAY);
@@ -217,7 +217,7 @@ export const usePlaylistScreen = () => {
           }
         } catch (error) {
           setTimer('playbackMode', () => setPlaybackMode('none'), TIMING_CONSTANTS.QUICK_DELAY);
-          handleError(error as Error);
+          handleError(error);
         }
       }
     },
@@ -269,7 +269,7 @@ export const usePlaylistScreen = () => {
         queryKey: audioQueries.tracks(user.id, audioPreference).queryKey,
       });
     } catch (error) {
-      handleError(error as Error);
+      handleError(error);
     }
   };
 
@@ -298,7 +298,7 @@ export const usePlaylistScreen = () => {
         if (startIndex === -1 || sortedEnhancedTracks.length === 0) {
           // Fallback: generate single track if not found in playlist
           const track = await enhancedAudioService.generateEnhancedAudioTrack(
-            articleId as ArticleId,
+            articleId,
             audioPreference,
           );
           if (track) {
@@ -325,7 +325,7 @@ export const usePlaylistScreen = () => {
         const success = await simpleAudioService.playPlaylist(tracksFromHere, nextTrack => {
           if (nextTrack?.articleId) {
             prefetchArticleWithImage(nextTrack.articleId, queryClient, prefetchArticle);
-            warmTrackCache(nextTrack as SourceTrackedAudioTrack);
+            warmTrackCache(nextTrack);
           } else {
             // Playlist complete
             setTimer('playbackMode', () => setPlaybackMode('none'), TIMING_CONSTANTS.QUICK_DELAY);
@@ -341,7 +341,7 @@ export const usePlaylistScreen = () => {
         }
       } catch (error) {
         setTimer('playbackMode', () => setPlaybackMode('none'), TIMING_CONSTANTS.QUICK_DELAY);
-        handleError(error as Error);
+        handleError(error);
       }
     },
     [isCurrentlyPlaying, sortedEnhancedTracks, audioPreference, queryClient, prefetchArticle],

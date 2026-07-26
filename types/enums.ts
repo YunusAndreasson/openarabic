@@ -166,37 +166,6 @@ export const UiAction = {
 
 export type UiAction = (typeof UiAction)[keyof typeof UiAction];
 
-// ===== AUDIO CONTROLS =====
-
-/**
- * Audio playback actions
- * Using const object for zero runtime overhead
- */
-export const AudioAction = {
-  REPEAT: 'Repeat',
-  PLAY_ALL: 'Play all',
-  PLAY_NOW: 'Play',
-  STOP: 'Stop',
-  REMOVE: 'Remove',
-  LISTEN_LATER: 'Listen later',
-} as const;
-
-export type AudioAction = (typeof AudioAction)[keyof typeof AudioAction];
-
-// ===== REVIEW ACTIONS =====
-
-/**
- * Practice confidence actions
- * Using const object for zero runtime overhead
- */
-export const ReviewAction = {
-  DONT_KNOW: 'Unknown',
-  KNOW: 'Known',
-  STUDY_DUE_WORDS: 'Practice Due',
-} as const;
-
-export type ReviewAction = (typeof ReviewAction)[keyof typeof ReviewAction];
-
 // ===== NOTIFICATION & TOAST TYPES =====
 
 /**

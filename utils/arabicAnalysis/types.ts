@@ -34,4 +34,12 @@ export interface WordAnalysis {
   remainingArabic: string;
   remainingEnglish: string;
   hasBracketInjection?: boolean;
+  /**
+   * Normalized-character count consumed off the front of the word before prefix
+   * detection began, without producing a component — an elided connective the gloss
+   * dropped (وَالسَّمَاءِ "the sky"). It has no English counterpart, so it must not be
+   * painted, but the renderer still has to skip it or every prefix span lands one
+   * character too far left. See `consumeElidedConjunction` in prefixDetection.ts.
+   */
+  elidedPrefixLength?: number;
 }

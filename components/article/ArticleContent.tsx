@@ -301,11 +301,7 @@ const ArticleContentInternal = function ArticleContent({
               contentContainerStyle={contentContainerStyle}
               ListHeaderComponent={headerComponent}
               ListFooterComponent={footerComponent}
-              onScroll={
-                onScrollAnimated as unknown as (
-                  event: NativeSyntheticEvent<NativeScrollEvent>,
-                ) => void
-              }
+              onScroll={onScrollAnimated}
               onScrollBeginDrag={handleScrollBegin}
               onViewableItemsChanged={handleViewableItemsChanged}
               onMomentumScrollEnd={handleScrollEnd}

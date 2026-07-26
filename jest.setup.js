@@ -175,18 +175,24 @@ jest.mock('expo-file-system', () => ({
       uri: 'file:///mock/document/',
     },
   },
+  // The Directory/File API is SYNCHRONOUS — these methods return values and
+  // throw; they never resolve or reject. Mocking them as async lets a test pass
+  // against behaviour the real module cannot produce, which is exactly how an
+  // unhandled rejection hid here before. `exists` is a getter, not a method.
   Directory: {
-    create: jest.fn().mockResolvedValue(undefined),
-    delete: jest.fn().mockResolvedValue(undefined),
-    exists: jest.fn().mockResolvedValue(true),
+    create: jest.fn(),
+    delete: jest.fn(),
+    list: jest.fn(() => []),
+    exists: true,
   },
   File: {
-    create: jest.fn().mockResolvedValue(undefined),
-    delete: jest.fn().mockResolvedValue(undefined),
-    exists: jest.fn().mockResolvedValue(true),
-    write: jest.fn().mockResolvedValue(undefined),
-    read: jest.fn().mockResolvedValue(''),
-    copy: jest.fn().mockResolvedValue(undefined),
+    create: jest.fn(),
+    delete: jest.fn(),
+    write: jest.fn(),
+    text: jest.fn(() => ''),
+    copy: jest.fn(),
+    exists: true,
+    size: 1024,
   },
   downloadAsync: jest.fn().mockResolvedValue({ uri: 'file:///mock/downloaded.mp3' }),
   getInfoAsync: jest.fn().mockResolvedValue({ exists: true, size: 1024, isDirectory: false }),

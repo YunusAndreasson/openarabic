@@ -12,7 +12,7 @@ export interface ArabicFontOption {
   previewText: string;
 }
 
-export const ARABIC_FONT_OPTIONS: ArabicFontOption[] = [
+const ARABIC_FONT_OPTIONS: ArabicFontOption[] = [
   {
     name: 'NotoSansArabic-Regular',
     displayName: ArabicFont.NOTO_SANS,

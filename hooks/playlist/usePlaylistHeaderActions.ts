@@ -69,7 +69,7 @@ export function usePlaylistHeaderActions() {
         void markOnboardingStep(OnboardingStep.LISTEN_AUDIO);
       }
     } catch (error) {
-      handleError(error as Error);
+      handleError(error);
     } finally {
       setIsLoading(false);
     }

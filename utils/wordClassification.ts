@@ -75,7 +75,7 @@ export function calculateMasteredWords(studyWords: StudyWord[]): number {
  * Calculate learning phase words for recommendation engine
  * Learning phase = State 1 (Learning), State 3 (Relearning), or State 2 with low stability
  */
-export function calculateLearningPhaseWords(studyWords: StudyWord[]): number {
+function calculateLearningPhaseWords(studyWords: StudyWord[]): number {
   return studyWords.filter(word => {
     const state = word.fsrs_state;
     const stability = word.fsrs_stability ?? 0;

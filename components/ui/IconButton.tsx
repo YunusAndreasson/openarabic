@@ -1,6 +1,6 @@
 import { Ionicons } from '@/components/ui/Icon';
 import type { ComponentProps, FC } from 'react';
-import type { TextStyle, ViewStyle } from 'react-native';
+import type { TextStyle } from 'react-native';
 import { Pressable, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -125,7 +125,7 @@ export const IconButton: FC<IconButtonProps> = ({
           styles.button,
           LAYOUT.ELEVATION.SUBTLE,
           { shadowColor: colors.shadow },
-          animatedStyle as ViewStyle,
+          animatedStyle,
           {
             backgroundColor: resolvedBackgroundColor,
             opacity: isDisabled ? LAYOUT.OPACITY.MEDIUM : 1,

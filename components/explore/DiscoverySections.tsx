@@ -9,7 +9,6 @@ import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import type { Article } from '@/types/articles.types';
-import type { ArticleId } from '@/types/branded.types';
 import { calculateProgressPercentage } from '@/utils/progressUtils';
 
 import { ArticleRail, type ArticleRailItem } from './ArticleRail';
@@ -75,13 +74,13 @@ function shuffleAndSlice<T>(items: T[], count: number, sectionSeed: number): T[]
  */
 const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }) => {
   const router = useRouter();
-  const articleIds = useMemo(() => articlesData.map(a => a.id as ArticleId), [articlesData]);
+  const articleIds = useMemo(() => articlesData.map(a => a.id), [articlesData]);
   const { data: progressMap } = useBulkReadingProgress(articleIds);
 
   // Filter out completed articles once for all sections
   const unreadArticles = useMemo(() => {
     return articlesData.filter(article => {
-      const progressData = progressMap.get(article.id as ArticleId);
+      const progressData = progressMap.get(article.id);
       if (!progressData) return true;
       const percentage = calculateProgressPercentage(
         progressData.last_sentence_read,
@@ -172,7 +171,7 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
 
   const handleArticlePress = useCallback(
     (article: Article) => {
-      router.push(getArticleRoute(article.id as ArticleId, article.title, true));
+      router.push(getArticleRoute(article.id, article.title, true));
     },
     [router],
   );

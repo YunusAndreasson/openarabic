@@ -34,7 +34,7 @@ export const PROMPT_FINISH_GRACE_MS = 200;
 export const PROMPT_MAX_WAIT_MS = 8000;
 /** Slack over the reported duration before giving up on the finish event.
  *  Covers the 500 ms status interval plus a little scheduling jitter. */
-export const PROMPT_OVERRUN_MS = 1500;
+const PROMPT_OVERRUN_MS = 1500;
 /** How often the status is re-read. `subscribe` only fires on change and never
  *  replays the current value, so the poll backs the event up and drives caps. */
 const POLL_INTERVAL_MS = 100;

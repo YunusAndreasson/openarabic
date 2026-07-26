@@ -42,7 +42,7 @@ export function calculateRetrievability(
 ): number {
   const stability = word.fsrs_stability ?? 0;
   if (!word.fsrs_last_review && !lastReviewDate) return 0;
-  const lastReview = lastReviewDate ?? new Date(word.fsrs_last_review as string);
+  const lastReview = lastReviewDate ?? new Date(word.fsrs_last_review);
 
   if (Number.isNaN(lastReview.getTime()) || stability <= 0) {
     return 0;

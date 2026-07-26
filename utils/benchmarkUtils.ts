@@ -39,6 +39,21 @@ export interface GroundTruthCase {
   expectedSuffix: string | null;
   /** Expected infix that SHOULD be detected (null if none) */
   expectedInfix?: string | null;
+  /**
+   * Expected diacritic component that SHOULD be detected (null if none).
+   *
+   * Diacritics (تْ feminine-past, نَا "we", َا dual, انِ/ينِ dual case endings,
+   * tanween) are a full component class the analyzer paints, so leaving them
+   * unscored made a quarter of the model invisible to the gate: diacritic-only
+   * improvements could never be credited, and diacritic false positives could
+   * never be caught. The لَا "They cannot" mis-paint (a bare َا painted as the
+   * dual-subject marker) had to be found by hand on-device precisely because
+   * this field did not exist.
+   *
+   * Opt-in like `expectedInfix`: cases that leave it `undefined` are not scored,
+   * so unlabeled cases never manufacture false positives.
+   */
+  expectedDiacritic?: string | null;
   /** Whether hasComponents should be true (shows composition) */
   expectedHasComponents: boolean;
   /** Category for reporting breakdown */
@@ -202,6 +217,9 @@ export function runBenchmark(cases: GroundTruthCase[]): BenchmarkResult {
       : [];
     const detectedSuffix = analysis.hasComponents ? (analysis.suffix?.arabicMatch ?? null) : null;
     const detectedInfix = analysis.hasComponents ? (analysis.infix?.arabicMatch ?? null) : null;
+    const detectedDiacritic = analysis.hasComponents
+      ? (analysis.diacritic?.arabicMatch ?? null)
+      : null;
 
     // Compare prefixes
     const prefixResult = comparePrefixes(detectedPrefixes, testCase.expectedPrefixes);
@@ -223,12 +241,22 @@ export function runBenchmark(cases: GroundTruthCase[]): BenchmarkResult {
       totalFn += infixResult.fn;
     }
 
-    // Track true negatives for 'none' category
+    // Compare diacritic (opt-in — see GroundTruthCase.expectedDiacritic)
+    if (testCase.expectedDiacritic !== undefined) {
+      const diacriticResult = compareComponent(detectedDiacritic, testCase.expectedDiacritic);
+      totalTp += diacriticResult.tp;
+      totalFp += diacriticResult.fp;
+      totalFn += diacriticResult.fn;
+    }
+
+    // Track true negatives for 'none' category. A detected diacritic disqualifies
+    // the case just like a prefix/suffix/infix would — it paints.
     if (
       testCase.category === 'none' &&
       detectedPrefixes.length === 0 &&
       !detectedSuffix &&
-      !detectedInfix
+      !detectedInfix &&
+      !detectedDiacritic
     ) {
       totalTn++;
     }
@@ -388,6 +416,28 @@ export function runDetailedBenchmark(cases: GroundTruthCase[]): DetailedBenchmar
         type: 'false_positive',
         details: `Detected suffix '${detectedSuffix}' but should not have`,
       });
+    }
+
+    // Track diacritic hits and misses (only for labeled cases)
+    if (testCase.expectedDiacritic !== undefined) {
+      const detectedDiacritic = analysis.hasComponents
+        ? (analysis.diacritic?.arabicMatch ?? null)
+        : null;
+      if (testCase.expectedDiacritic && detectedDiacritic !== testCase.expectedDiacritic) {
+        failures.push({
+          testCase,
+          analysis,
+          type: 'false_negative',
+          details: `Expected diacritic '${testCase.expectedDiacritic}' but got '${detectedDiacritic || 'none'}'`,
+        });
+      } else if (!testCase.expectedDiacritic && detectedDiacritic) {
+        failures.push({
+          testCase,
+          analysis,
+          type: 'false_positive',
+          details: `Detected diacritic '${detectedDiacritic}' but should not have`,
+        });
+      }
     }
 
     // Track hasComponents mismatch
