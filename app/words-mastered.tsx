@@ -7,7 +7,7 @@ import { STRINGS } from '@/constants/strings';
 
 export default function WordsMasteredScreen(): JSX.Element {
   return (
-    <SheetScreen fill>
+    <SheetScreen>
       <ChartSheetContent
         title={STRINGS.WORD_MASTERY}
         subtitle={STRINGS.WORD_MASTERY_SUBTITLE}

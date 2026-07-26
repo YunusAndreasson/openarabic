@@ -27,7 +27,7 @@ function MemoryStrengthContent({ studyWords }: { studyWords: StudyWord[] }): JSX
 
 export default function MemoryRetentionScreen(): JSX.Element {
   return (
-    <SheetScreen fill>
+    <SheetScreen>
       <ChartSheetContent
         title={STRINGS.MEMORY_STRENGTH}
         subtitle={STRINGS.MEMORY_STRENGTH_SUBTITLE}

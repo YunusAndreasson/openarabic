@@ -1,7 +1,8 @@
 import type { JSX } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BottomSheetHeader, BottomSheetStateHandler, SheetScreen } from '@/components/common';
+import { BottomSheetHeader, BottomSheetStateHandler } from '@/components/common';
 import { ThemedText } from '@/components/ThemedText';
 import { IconButton } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
@@ -56,36 +57,65 @@ function LeechRow({ word, onReset }: LeechRowProps): JSX.Element {
   );
 }
 
+/**
+ * The one sheet that genuinely scrolls — up to `LEECH_LIST_LIMIT` (20) rows
+ * never fit a `fitToContents` detent, so this route uses a fixed one.
+ *
+ * Its layout is dictated by react-native-screens, not by taste. On iOS a form
+ * sheet's scroll view is only sized correctly when it is a *direct* child of the
+ * screen, at index 0, or at index 1 behind a single non-collapsable header view
+ * (`RNSScreenContentWrapper.coerceChildScrollViewComponentSizeToSize`). Anything
+ * deeper — e.g. the shared `SheetScreen` padding container in between — misses
+ * that path, and the fallback force-sets the scroll view's frame to the *whole
+ * screen view*: the rows jump to the sheet's top-left corner at full sheet size,
+ * painting over the header and ignoring the container's padding. So:
+ *
+ * - no `SheetScreen` here; the header and the scroll view are the screen's own
+ *   two children, and the sheet background comes from the route's `contentStyle`
+ * - `collapsable={false}` on the header, or view flattening removes it from the
+ *   native hierarchy and the scroll view silently becomes child 0
+ * - padding lives on the header and on `contentContainerStyle`, never on a
+ *   wrapper around the scroll view
+ */
 export default function WordsToRevisitScreen(): JSX.Element {
   const { leeches, isLoading, isError } = useWordsToRevisit();
   const { confirmReset } = useResetWordProgress();
+  const insets = useSafeAreaInsets();
 
   return (
-    <SheetScreen fill>
-      <BottomSheetHeader
-        title={STRINGS.WORDS_TO_REVISIT}
-        subtitle={STRINGS.WORDS_TO_REVISIT_SUBTITLE}
-      />
-      {/* The sheet now opens at a fixed detent, so the content area simply
-          fills it. No measured height to get wrong, and every state —
-          loading, empty, loaded — occupies the same space. */}
-      <View style={styles.content}>
-        <BottomSheetStateHandler
-          isLoading={isLoading}
-          isError={isError}
-          isEmpty={leeches.length === 0}
-          loadingMessage={STRINGS.LOADING_WORDS_TO_REVISIT}
-          errorMessage={STRINGS.FAILED_TO_LOAD_WORDS_TO_REVISIT}
-          emptyMessage={STRINGS.WORDS_TO_REVISIT_EMPTY_STATE}
-        >
-          <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
-            {leeches.map(word => (
-              <LeechRow key={word.root_id} word={word} onReset={confirmReset} />
-            ))}
-          </ScrollView>
-        </BottomSheetStateHandler>
+    <>
+      <View collapsable={false} style={styles.header}>
+        <BottomSheetHeader
+          title={STRINGS.WORDS_TO_REVISIT}
+          subtitle={STRINGS.WORDS_TO_REVISIT_SUBTITLE}
+        />
       </View>
-    </SheetScreen>
+
+      <BottomSheetStateHandler
+        isLoading={isLoading}
+        isError={isError}
+        isEmpty={leeches.length === 0}
+        loadingMessage={STRINGS.LOADING_WORDS_TO_REVISIT}
+        errorMessage={STRINGS.FAILED_TO_LOAD_WORDS_TO_REVISIT}
+        emptyMessage={STRINGS.WORDS_TO_REVISIT_EMPTY_STATE}
+      >
+        <ScrollView
+          // `flex: 1` is what sizes this on Android and pre-empts the iOS
+          // correction; the fixed detent gives the wrapper a definite height,
+          // so there is nothing here for iOS to measure and lose.
+          style={styles.list}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: insets.bottom + LAYOUT.SPACING.MEDIUM },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
+          {leeches.map(word => (
+            <LeechRow key={word.root_id} word={word} onReset={confirmReset} />
+          ))}
+        </ScrollView>
+      </BottomSheetStateHandler>
+    </>
   );
 }
 
@@ -94,11 +124,16 @@ export const options = {
 } as const;
 
 const styles = StyleSheet.create({
-  content: {
-    flex: 1,
+  header: {
+    // Clears the OS grabber pill, which otherwise draws through the title.
+    paddingTop: LAYOUT.SPACING.XLARGE,
+    paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
   },
   list: {
     flex: 1,
+  },
+  listContent: {
+    paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
   },
   row: {
     flexDirection: 'row',

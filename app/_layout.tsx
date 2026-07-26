@@ -585,27 +585,19 @@ function AppContent() {
                       headerShown: false,
                     }}
                   />
-                  {/* Fixed detents, never 'fitToContents' — iOS measures that
-                      as content height + bottom safe area and top-aligns the
-                      content, so the surplus renders as an empty band below it
-                      that no amount of padding can close (SheetScreen documents
-                      the full reasoning).
-                      A fixed detent is honoured literally — iOS adds the safe
-                      area only when it has to measure — so each first detent is
-                      the content height measured on device plus ~0.03 for the
-                      grabber clearance and bottom inset the content now owns.
-                      Keep them tight: overshooting reintroduces a band (charts
-                      have fixed heights and stack from the top) and undershooting
-                      hides the summary row under the sheet edge.
-                      A second `1` detent is only offered where expanding
-                      reveals more content (the tall charts, the leech list).
-                      Short sheets get a single detent — dragging those to full
-                      height would just open a band of empty space. */}
+                  {/* These four fit their contents: fixed-height charts under a
+                      short header, no scrolling. 'fitToContents' measures the
+                      screen's content wrapper and re-measures it whenever the
+                      content height changes, so an async chart resizes the sheet
+                      instead of being clipped by a guessed fraction.
+                      Their content must therefore stay measurable — no `flex: 1`
+                      child (nothing to measure) and no ScrollView (which iOS
+                      resizes to the whole screen view, see SheetScreen). */}
                   <Stack.Screen
                     name="due-words"
                     options={{
                       presentation: 'formSheet',
-                      sheetAllowedDetents: [0.54],
+                      sheetAllowedDetents: 'fitToContents',
                       sheetGrabberVisible: true,
                       sheetCornerRadius: 24,
                       headerShown: false,
@@ -615,7 +607,7 @@ function AppContent() {
                     name="memory-retention"
                     options={{
                       presentation: 'formSheet',
-                      sheetAllowedDetents: [0.82, 1],
+                      sheetAllowedDetents: 'fitToContents',
                       sheetGrabberVisible: true,
                       sheetCornerRadius: 24,
                       headerShown: false,
@@ -625,7 +617,7 @@ function AppContent() {
                     name="study-streak"
                     options={{
                       presentation: 'formSheet',
-                      sheetAllowedDetents: [0.4, 1],
+                      sheetAllowedDetents: 'fitToContents',
                       sheetGrabberVisible: true,
                       sheetCornerRadius: 24,
                       headerShown: false,
@@ -635,7 +627,7 @@ function AppContent() {
                     name="words-mastered"
                     options={{
                       presentation: 'formSheet',
-                      sheetAllowedDetents: [0.56],
+                      sheetAllowedDetents: 'fitToContents',
                       sheetGrabberVisible: true,
                       sheetCornerRadius: 24,
                       headerShown: false,
@@ -645,12 +637,13 @@ function AppContent() {
                     name="words-to-revisit"
                     options={{
                       presentation: 'formSheet',
-                      // Reached the same fixed-detent conclusion first, from the
-                      // other direction: the leech list loads async and iOS
-                      // measures fitToContents exactly once at presentation, so
-                      // on a cold FSRS cache it locked to the loading-state
-                      // height and the taller list rendered over the header.
+                      // The odd one out: up to 20 leech rows never fit their
+                      // contents, so this sheet scrolls and needs a fixed
+                      // detent. Its screen owns the sheet background because the
+                      // scroll view has to be a direct child — the route file
+                      // documents the layout react-native-screens requires.
                       sheetAllowedDetents: [0.6, 1],
+                      contentStyle: { backgroundColor: colors.elevation1 },
                       sheetGrabberVisible: true,
                       sheetCornerRadius: 24,
                       headerShown: false,

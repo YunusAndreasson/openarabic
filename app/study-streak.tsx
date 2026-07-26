@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 import { useMemo } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { BottomSheetHeader, BottomSheetStateHandler, SheetScreen } from '@/components/common';
 import { StreakChart, StreakMetrics } from '@/components/explore';
@@ -26,44 +26,36 @@ export default function StudyStreakScreen(): JSX.Element {
   }, [streakHistory]);
 
   return (
-    <SheetScreen fill>
-      {/* Scrolls inside a fixed detent — see SheetScreen for why fitToContents
-          is banned, and why the content has to absorb the detent difference. */}
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
+    <SheetScreen>
+      <BottomSheetStateHandler
+        isLoading={isStreakLoading}
+        isError={isStreakError}
+        isEmpty={!streakHistory}
+        loadingMessage={STRINGS.LOADING_STREAK}
+        errorMessage={STRINGS.FAILED_TO_LOAD_STREAK}
+        emptyMessage={STRINGS.STUDY_STREAK_EMPTY_STATE}
       >
-        <BottomSheetStateHandler
-          isLoading={isStreakLoading}
-          isError={isStreakError}
-          isEmpty={!streakHistory}
-          loadingMessage={STRINGS.LOADING_STREAK}
-          errorMessage={STRINGS.FAILED_TO_LOAD_STREAK}
-          emptyMessage={STRINGS.STUDY_STREAK_EMPTY_STATE}
-        >
-          <BottomSheetHeader title={STRINGS.STREAK_LABEL} subtitle={subtitle} />
+        <BottomSheetHeader title={STRINGS.STREAK_LABEL} subtitle={subtitle} />
 
-          {streakHistory?.metrics && (
-            <View style={styles.streakMetricsContainer}>
-              <StreakMetrics metrics={streakHistory.metrics} />
-            </View>
-          )}
+        {streakHistory?.metrics && (
+          <View style={styles.streakMetricsContainer}>
+            <StreakMetrics metrics={streakHistory.metrics} />
+          </View>
+        )}
 
-          {streakHistory?.dailyActivity && streakHistory?.streakPeriods && (
-            <>
-              <BottomSheetHeader
-                title={STRINGS.STUDY_STREAK_CHART_TITLE}
-                subtitle={STRINGS.STUDY_STREAK_CHART_DESCRIPTION}
-              />
-              <StreakChart
-                dailyActivity={streakHistory.dailyActivity}
-                streakPeriods={streakHistory.streakPeriods}
-              />
-            </>
-          )}
-        </BottomSheetStateHandler>
-      </ScrollView>
+        {streakHistory?.dailyActivity && streakHistory?.streakPeriods && (
+          <>
+            <BottomSheetHeader
+              title={STRINGS.STUDY_STREAK_CHART_TITLE}
+              subtitle={STRINGS.STUDY_STREAK_CHART_DESCRIPTION}
+            />
+            <StreakChart
+              dailyActivity={streakHistory.dailyActivity}
+              streakPeriods={streakHistory.streakPeriods}
+            />
+          </>
+        )}
+      </BottomSheetStateHandler>
     </SheetScreen>
   );
 }
@@ -73,12 +65,6 @@ export const options = {
 } as const;
 
 const styles = StyleSheet.create({
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
   streakMetricsContainer: {
     marginBottom: LAYOUT.SPACING.SMALL,
   },
