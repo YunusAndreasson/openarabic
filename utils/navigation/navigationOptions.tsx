@@ -86,12 +86,17 @@ export function createNavigationOptions(
           }
       : {}),
     headerTintColor: colors.headingText,
-    headerBackVisible: false, // Prevent default back button on Android when using custom headerLeft
     headerBackButtonDisplayMode: 'minimal', // iOS: show only back chevron, no title text
     headerShadowVisible: false,
     ...restOverrides,
   };
 
+  // A pushed screen keeps whatever back affordance the platform provides.
+  // `headerBackVisible: false` used to be set for every screen to suppress
+  // Android's default button "when using custom headerLeft" — but no screen in
+  // the app supplies a headerLeft, so it only ever stripped the chevron off
+  // pushed screens. The practice word detail was left with no visible way out
+  // at all (no back, no close); you had to know the system back gesture.
   if (isRegularScreen) {
     return baseOptions;
   }
@@ -103,6 +108,10 @@ export function createNavigationOptions(
     gestureEnabled: true,
     fullScreenGestureEnabled: true, // iOS: Allow full-screen swipe to dismiss
     animationMatchesGesture: true, // iOS: Sync swipe gesture with slide animation
+    // A modal is dismissed by its CloseButton, not a chevron. Without this a
+    // modal opened over a tab root shows both, which reads as two different
+    // ways out that do different things.
+    headerBackVisible: false,
     contentStyle: {
       backgroundColor: colors.background,
     },
