@@ -226,6 +226,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
         fromRemember={fromRemember}
         remainingDueCount={remainingDueCount}
         onReviewMore={startNextChunk}
+        onContinue={handleClose}
       />
     );
   }

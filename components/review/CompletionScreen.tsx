@@ -80,6 +80,15 @@ interface CompletionScreenProps {
   remainingDueCount?: number;
   /** Start the next chunk of a large backlog (session slicing). */
   onReviewMore?: () => void;
+  /**
+   * Leave the session. REQUIRED for the counts on the practice tab to update:
+   * this button used to be a bare `<Link>`, so finishing a session navigated
+   * away without flushing the last grade's write or invalidating the FSRS
+   * queries — and with `refetchOnMount: false` the tab kept showing pre-session
+   * numbers indefinitely. Closing mid-session invalidated correctly, so
+   * completing one properly was the only path that went stale.
+   */
+  onContinue?: () => void;
 }
 
 export const CompletionScreen: FC<CompletionScreenProps> = ({
@@ -93,6 +102,7 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
   fromRemember = false,
   remainingDueCount = 0,
   onReviewMore,
+  onContinue,
 }) => {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
@@ -221,7 +231,13 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
             style={styles.button}
           />
         )}
-        {fromRemember ? (
+        {/* `onContinue` (useReview's handleClose) stops audio, settles pending
+            grade writes, invalidates the FSRS queries and then navigates — the
+            same path the close button takes. The Link fallbacks only apply when
+            no handler is supplied. */}
+        {onContinue ? (
+          <ThemedButton title={buttonText} onPress={onContinue} style={styles.button} />
+        ) : fromRemember ? (
           <Link href={ROUTE_PATHS.PRACTICE_TAB} dismissTo={true} asChild>
             <ThemedButton title={buttonText} style={styles.button} />
           </Link>
