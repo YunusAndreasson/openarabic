@@ -13,6 +13,9 @@ const createMockParagraph = () => ({
   getMinIntrinsicWidth: jest.fn(() => 80),
   getMaxIntrinsicWidth: jest.fn(() => 85), // Slightly wider for accurate measurement
   layout: jest.fn(),
+  // Null keeps callers on their estimate-based fallback, so canvas geometry in
+  // tests stays deterministic instead of depending on mocked glyph outlines.
+  getPath: jest.fn(() => null),
 });
 
 // Mock Skia ParagraphBuilder API

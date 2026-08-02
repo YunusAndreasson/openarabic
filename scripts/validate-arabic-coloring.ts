@@ -19,7 +19,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 
-import { analyzeArabicWord, formatWordAnalysis } from '../utils/arabicWordAnalysis';
+import { analyzeArabicWord } from '../utils/arabicWordAnalysis';
 import { supabaseClient } from './utils/supabase-standalone';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -694,20 +694,20 @@ function formatIssueForJson(issue: ValidationIssue) {
       prefixes: issue.analysis.prefixes.map(p => ({
         arabic: p.arabicMatch,
         english: p.englishMatches,
-        role: p.grammaticalRole,
+        role: p.role,
       })),
       suffix: issue.analysis.suffix
         ? {
             arabic: issue.analysis.suffix.arabicMatch,
             english: issue.analysis.suffix.englishMatches,
-            role: issue.analysis.suffix.grammaticalRole,
+            role: issue.analysis.suffix.role,
           }
         : null,
       infix: issue.analysis.infix
         ? {
             arabic: issue.analysis.infix.arabicMatch,
             english: issue.analysis.infix.englishMatches,
-            role: issue.analysis.infix.grammaticalRole,
+            role: issue.analysis.infix.role,
           }
         : null,
     },

@@ -4,7 +4,6 @@
  */
 
 import * as fs from 'fs';
-import * as path from 'path';
 
 const resultFile =
   process.argv[2] || './scripts/output/arabic-coloring-validation-v2-2025-11-08T20-00-24.json';

@@ -8,13 +8,13 @@ import {
   type AudioPlayer,
   type AudioPlayerOptions,
 } from 'expo-audio';
-import { AppState } from 'react-native';
+import { AppState, Platform } from 'react-native';
 
 import { STRINGS } from '@/constants/strings';
 import { audioCache } from '@/services/audioCache';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import { isRemoteAudioUrl } from '@/utils/cacheUtils';
-import { handleError } from '@/utils/errorHandling';
+import { handleError, toError } from '@/utils/errorHandling';
 import { isSessionActive, mark } from '@/utils/reviewDiagnostics';
 import { playTransitionSound } from '@/utils/transitionSound';
 
@@ -246,7 +246,7 @@ class SimpleAudioService {
       this.audioSessionConfigured = true;
     } catch (sessionError) {
       // This is critical - audio may not work properly
-      throw new Error(`Audio session configuration failed: ${sessionError}`);
+      throw new Error(`Audio session configuration failed: ${toError(sessionError).message}`);
     }
   }
 
@@ -276,6 +276,16 @@ class SimpleAudioService {
     this.recordingSessionEnabled = enabled;
     try {
       await setAudioModeAsync(this.currentAudioMode());
+      // Releasing the mic: on iOS the category change alone does not move
+      // output back off the route .playAndRecord opted into — notably the
+      // Bluetooth hands-free profile — so the session has to be cycled. Owned
+      // here rather than by the caller because there are two teardown paths
+      // (natural finish and cancel) and only one of them used to do it, which
+      // is why a manually revealed answer played quieter than one that timed
+      // out. Arming is the recorder's job; it does its own deactivate first.
+      if (!enabled && Platform.OS === 'ios') {
+        await setIsAudioActiveAsync(true);
+      }
     } catch (error) {
       await handleError(error, {
         showToast: false,
@@ -358,7 +368,7 @@ class SimpleAudioService {
     } catch (error) {
       // Even if reset fails, clear the configuration flag to force reconfiguration
       this.audioSessionConfigured = false;
-      throw new Error(`Audio session reset failed: ${error}`);
+      throw new Error(`Audio session reset failed: ${toError(error).message}`);
     }
   }
 
@@ -549,6 +559,17 @@ class SimpleAudioService {
     const generation = ++this.playGeneration;
     const isSuperseded = (): boolean => generation !== this.playGeneration;
     const playStartedAt = Date.now();
+
+    // Playback and recording never legitimately overlap here — anything the app
+    // plays while the mic is open would be recorded straight back. So if the
+    // record-capable category is still held, take it back before starting
+    // rather than trusting the caller to have released it first. The manual
+    // reveal in particular fires the English audio synchronously and only
+    // releases the mic on the next render, so it always lost that race.
+    if (this.recordingSessionEnabled) {
+      await this.setRecordingSessionEnabled(false);
+      if (isSuperseded()) return 'superseded';
+    }
 
     try {
       // A foreign track (word preview, practice audio) played mid-playlist must
@@ -996,7 +1017,7 @@ class SimpleAudioService {
       // RESET: Even on error, ensure all progress is cleared
       this.resetStatus();
       // Re-throw to make the error visible
-      throw new Error(`Failed to stop audio playback: ${stopError}`);
+      throw new Error(`Failed to stop audio playback: ${toError(stopError).message}`);
     }
   }
 
@@ -1011,7 +1032,7 @@ class SimpleAudioService {
       }
     } catch (seekError) {
       // Re-throw to make the error visible
-      throw new Error(`Failed to seek audio playback: ${seekError}`);
+      throw new Error(`Failed to seek audio playback: ${toError(seekError).message}`);
     }
   }
 

@@ -77,31 +77,6 @@ const HE_SUBJECTS = [
 const SHE_SUBJECTS = ['she', 'her', 'a woman', 'the woman'];
 const THEY_SUBJECTS = ['they', 'them', 'their', 'those who', 'people'];
 
-const AUX = [
-  '',
-  'has',
-  'have',
-  'had',
-  'did',
-  'does',
-  'do',
-  'will',
-  'would',
-  'shall',
-  'should',
-  'is',
-  'was',
-  'were',
-  'are',
-  'also',
-  'then',
-  'truly',
-  'indeed',
-  'really',
-  'just',
-  'only',
-];
-
 function buildSubjectVerbPatterns(subjects: string[], verb: string): RegExp[] {
   // Pattern: subject (\s+aux?){0,2}\s+verb
   const escVerb = verb.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -126,13 +101,6 @@ function sentenceMatchesHelper(sentenceEn: string, helper: string, verb: string)
   if (!list) return false;
   const patterns = buildSubjectVerbPatterns(list, verb);
   return patterns.some(p => p.test(sentenceEn));
-}
-
-function rejectAsInanimate(_sentenceEn: string, _helper: string): boolean {
-  // The adjacency-based filter above already rejects inanimate subjects implicitly —
-  // if the sentence is "knowledge harms the soul", the pattern "(he|allah|...) harms"
-  // won't match. So no separate negative list needed.
-  return false;
 }
 
 function escSql(s: string): string {
@@ -176,7 +144,7 @@ async function main() {
   // Group skip reasons for transparency
   const skipCounts = new Map<string, number>();
   for (const s of skipped) {
-    const key = s.skipReason.split('-in-s')[0];
+    const key = s.skipReason.split('-in-s')[0] ?? s.skipReason;
     skipCounts.set(key, (skipCounts.get(key) ?? 0) + 1);
   }
 

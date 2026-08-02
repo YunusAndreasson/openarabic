@@ -83,6 +83,30 @@ export default defineConfig([
       '@typescript-eslint/no-unnecessary-boolean-literal-compare': 'error',
       '@typescript-eslint/no-redundant-type-constituents': 'error',
       '@typescript-eslint/prefer-optional-chain': 'error',
+      '@typescript-eslint/no-unnecessary-type-arguments': 'error',
+      '@typescript-eslint/no-unnecessary-template-expression': 'error',
+      '@typescript-eslint/no-duplicate-type-constituents': 'error',
+      '@typescript-eslint/no-meaningless-void-operator': 'error',
+      '@typescript-eslint/prefer-reduce-type-parameter': 'error',
+      '@typescript-eslint/prefer-return-this-type': 'error',
+      '@typescript-eslint/related-getter-setter-pairs': 'error',
+
+      // --- correctness: measured at zero, kept there so regressions can't land ---
+      // `throw 'string'` and `Promise.reject('string')` both produce Sentry issues
+      // with no stack; `unbound-method` catches `onPress={obj.method}` losing `this`.
+      '@typescript-eslint/only-throw-error': 'error',
+      '@typescript-eslint/prefer-promise-reject-errors': 'error',
+      '@typescript-eslint/unbound-method': 'error',
+      '@typescript-eslint/no-array-delete': 'error',
+      '@typescript-eslint/no-misused-spread': 'error',
+
+      // A union switch that gains a member should fail loudly rather than fall
+      // through silently. `considerDefaultExhaustiveForUnions` keeps switches that
+      // already have a deliberate `default` from being flagged.
+      '@typescript-eslint/switch-exhaustiveness-check': [
+        'error',
+        { considerDefaultExhaustiveForUnions: true },
+      ],
 
       // --- judgment: each hit is either dead defensive code OR a lying type ---
       // `no-unnecessary-condition` is the rule that enforces "we control all the
@@ -95,6 +119,23 @@ export default defineConfig([
       // Fire-and-forget is fine, but it must be spelled `void promise` on purpose.
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-misused-promises': 'warn',
+
+      // Deprecated APIs are the landmines that detonate on the next SDK bump —
+      // this is the cheapest early warning we get for them (runAfterInteractions,
+      // runOnJS, appOwnership, MediaTypeOptions, blurOnSubmit all already fire).
+      '@typescript-eslint/no-deprecated': 'warn',
+
+      // `require-await` was evaluated 2026-08-02 and deliberately NOT enabled.
+      // All 12 hits were async-by-contract, not dropped awaits: `loadModule`
+      // satisfying the dynamic-import interface, expo's `handleNotification`
+      // (must return Promise<NotificationBehavior>), and functions with an
+      // explicit `: Promise<void>` return type. It flags interface conformance
+      // here, so it would cost 12 permanent suppressions and catch nothing.
+
+      // `${unknown}` silently renders "[object Object]" into user-facing strings
+      // and Sentry titles.
+      '@typescript-eslint/restrict-template-expressions': 'warn',
+      '@typescript-eslint/no-base-to-string': 'warn',
     },
   },
 

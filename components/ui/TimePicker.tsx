@@ -92,6 +92,9 @@ function AndroidTimePicker({
       mode="time"
       is24Hour
       display="spinner"
+      // this one callback into onValueChange/onDismiss/onNeutralButtonPress; migrating needs
+      // the picker's dismiss-vs-confirm behaviour re-verified on both platforms.
+      // eslint-disable-next-line @typescript-eslint/no-deprecated -- see note above
       onChange={handleChange}
     />
   );
@@ -164,6 +167,9 @@ function IosTimePicker({
             mode="time"
             is24Hour
             display="spinner"
+            // this one callback into onValueChange/onDismiss/onNeutralButtonPress; migrating needs
+            // the picker's dismiss-vs-confirm behaviour re-verified on both platforms.
+            // eslint-disable-next-line @typescript-eslint/no-deprecated -- see note above
             onChange={handleDateChange}
             style={styles.picker}
             textColor={colors.text}

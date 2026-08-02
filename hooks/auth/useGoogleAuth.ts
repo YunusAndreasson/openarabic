@@ -6,6 +6,10 @@ import { useOAuthProvider, type OAuthSignInResult } from '@/hooks/auth/useOAuthP
 import { isCancellationError } from '@/utils/authUtils';
 
 /** Native Google Sign In is unavailable in Expo Go */
+// ExecutionEnvironment.StoreClient means "Expo Go OR a dev build", while
+// appOwnership === 'expo' is Expo Go alone. Swapping it would disable native
+// auth in dev builds. Needs a real Expo-Go-only check before migrating.
+// eslint-disable-next-line @typescript-eslint/no-deprecated -- see note above
 const isExpoGo = Constants.appOwnership === 'expo';
 
 /** Type for dynamically imported Google Sign In module */

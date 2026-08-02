@@ -16,7 +16,7 @@ interface ArticleDataResult {
   selectedWordIds: Set<number>;
   sortedSentences: Required<Article>['article_sentences'];
   sentenceWordsMap: Map<number, SentenceWord[]>;
-  refetchStudyWords: () => Promise<QueryObserverResult<StudyWord[], Error>>;
+  refetchStudyWords: () => Promise<QueryObserverResult<StudyWord[]>>;
   isLoadingStudyWords: boolean;
 }
 

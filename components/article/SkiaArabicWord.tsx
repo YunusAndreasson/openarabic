@@ -12,19 +12,34 @@ import { useSkiaFonts } from '@/hooks/theme/useSkiaFonts';
 import { useArabicWord } from '@/hooks/vocabulary';
 import type { ReanimatedCSSAnimationStyle } from '@/types/ui/base.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
-import { buildColoredParagraph, buildSimpleParagraph } from '@/utils/skiaParagraphBuilder';
+import {
+  PARAGRAPH_LAYOUT_WIDTH,
+  buildColoredParagraph,
+  buildSimpleParagraph,
+  measureInkOverhang,
+} from '@/utils/skiaParagraphBuilder';
 import { getSelectedStyle } from '@/utils/textStyleUtils';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-// Extra vertical space for Arabic diacritics (shadda, tanwin) that extend above the line
+/**
+ * Extra vertical space for Arabic diacritics (shadda, tanwin) above the line.
+ *
+ * Deliberately a constant, not a per-word measurement like the horizontal ink
+ * bleed: `forceStrutHeight` makes `getHeight()` identical for every word at a
+ * given font size, so a fixed paint offset keeps every baseline in a sentence
+ * on the same line. Deriving this per word would shift baselines word by word.
+ */
 const DIACRITICS_PADDING = 8;
 
 /**
- * Horizontal ink bleed per font family, in em (fraction of font size).
+ * Fallback horizontal ink bleed per font family, in em (fraction of font size).
  * Calligraphic fonts paint well beyond their glyph advances; without this
  * reserve the canvas clips edge glyphs and the paragraph can force-break
  * the word onto a hidden second line.
+ *
+ * Only used when the native module can't measure the real bleed — see
+ * `measureInkOverhang`, which supersedes these estimates on Skia >= 2.8.0.
  */
 const INK_BLEED_EM: Record<string, number> = {
   'Noto Sans Arabic': 0.08,
@@ -140,7 +155,7 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
         fontFamily,
         fontManager,
         textDirection: TextDirection.RTL,
-        maxWidth: 2000, // Large width to prevent wrapping of single words
+        maxWidth: PARAGRAPH_LAYOUT_WIDTH,
         letterSpacing: 0,
       });
     }
@@ -153,7 +168,7 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
       fontFamily,
       fontManager,
       textDirection: TextDirection.RTL,
-      maxWidth: 2000,
+      maxWidth: PARAGRAPH_LAYOUT_WIDTH,
     });
   }, [
     isSelected,
@@ -170,25 +185,35 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
 
   const canvasDimensions = useMemo(() => {
     if (!paragraph) {
-      return { width: 60, height: 40, layoutWidth: 60, bleedTrim: 0 };
+      return { width: 60, height: 40, layoutWidth: 60, marginLeft: 0, marginRight: 0 };
     }
 
-    const inkBleed = Math.ceil(fontSize * (INK_BLEED_EM[fontFamily] ?? DEFAULT_INK_BLEED_EM));
+    // Real painted extent where the native module can report it, per-family
+    // estimate everywhere else. Measuring also sizes fonts absent from the map.
+    const overhang = measureInkOverhang(paragraph, PARAGRAPH_LAYOUT_WIDTH);
+    const estimate = Math.ceil(fontSize * (INK_BLEED_EM[fontFamily] ?? DEFAULT_INK_BLEED_EM));
+    const leftReserve = overhang ? Math.ceil(overhang.left) : estimate;
+    const rightReserve = overhang ? Math.ceil(overhang.right) : estimate;
+
     // Visual breathing room between words stays at the pre-bleed rhythm (~5%
     // of the word width was baked into the old canvas sizing).
     const visualPad = Math.ceil(fontSize * 0.05);
-    // Right-aligned RTL text hugs the layout right edge, so one bleed on the
-    // layout width shifts the glyphs off the canvas edge and a second bleed
-    // on the canvas width leaves room on the left.
-    const layoutWidth = Math.ceil(paragraph.getMaxIntrinsicWidth()) + inkBleed;
+    // Right-aligned RTL text hugs the layout right edge, so the left reserve
+    // has to widen the layout box itself while the right reserve only widens
+    // the canvas around it.
+    const layoutWidth = Math.ceil(paragraph.getMaxIntrinsicWidth()) + leftReserve;
 
     return {
-      width: layoutWidth + inkBleed,
+      width: layoutWidth + rightReserve,
       height: Math.ceil(paragraph.getHeight()) + DIACRITICS_PADDING,
       layoutWidth,
-      // Negative margin cancels the bleed in flex layout so word spacing
-      // doesn't grow — the bleed exists for paint only, not for layout.
-      bleedTrim: Math.max(0, inkBleed - visualPad),
+      // The reserve is paint-only, so cancel all of it in flex layout and hand
+      // back a constant `visualPad` gap instead. That keeps the word rhythm
+      // identical whatever the face bleeds — a heavily-bleeding Amiri glyph and
+      // a flush Noto one both lay out at advance + 2 * visualPad. These stay
+      // signed: a face that bleeds less than visualPad needs positive margin.
+      marginLeft: visualPad - leftReserve,
+      marginRight: visualPad - rightReserve,
     };
   }, [paragraph, fontSize, fontFamily]);
 
@@ -243,11 +268,11 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
   );
 
   const wrapperStyle = useMemo(
-    () =>
-      canvasDimensions.bleedTrim > 0
-        ? [styles.wordWrapper, { marginHorizontal: -canvasDimensions.bleedTrim }]
-        : styles.wordWrapper,
-    [canvasDimensions.bleedTrim],
+    () => [
+      styles.wordWrapper,
+      { marginLeft: canvasDimensions.marginLeft, marginRight: canvasDimensions.marginRight },
+    ],
+    [canvasDimensions.marginLeft, canvasDimensions.marginRight],
   );
 
   return (

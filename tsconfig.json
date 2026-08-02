@@ -48,7 +48,6 @@
     "assets",
     ".venv",
     "admin-dashboard",
-    "__tests__",
-    "scripts"
+    "__tests__"
   ]
 }

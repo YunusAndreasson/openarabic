@@ -1,6 +1,6 @@
 #!/usr/bin/env npx tsx
 
-import { analyzeArabicWord, formatWordAnalysis } from '../utils/arabicWordAnalysis';
+import { analyzeArabicWord } from '../utils/arabicWordAnalysis';
 
 console.log('🔍 Arabic Expert Analysis - Testing Specific Cases\n');
 
@@ -29,7 +29,6 @@ for (const test of testCases) {
   console.log(`Expected: ${test.expected}\n`);
 
   const analysis = analyzeArabicWord(test.arabic, test.english);
-  const formatted = formatWordAnalysis(analysis);
 
   console.log('Actual Analysis:');
   console.log(`  Components: ${analysis.hasComponents ? 'YES' : 'NO'}`);

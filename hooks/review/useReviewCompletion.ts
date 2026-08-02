@@ -6,6 +6,7 @@ import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { fsrsQueries, studyStreakQueries } from '@/constants/queries';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { analytics } from '@/services/analytics';
+import { metaEvents } from '@/services/metaEvents';
 import type { SessionMetrics } from '@/types/review.types';
 import { recordSessionCompleted } from '@/utils/notificationPromptStorage';
 import { appendSession } from '@/utils/recallSignalStorage';
@@ -63,6 +64,8 @@ export const useReviewCompletion = (
       longestStreak: sessionMetrics.longestStreak,
       masteredWords: sessionMetrics.masteredWords,
     });
+
+    metaEvents.logPracticeSessionComplete(sessionMetrics.wordsReviewed);
   }, [sessionMetrics]);
 
   /**
@@ -74,6 +77,9 @@ export const useReviewCompletion = (
   useEffect(() => {
     if (!shouldExecute) return;
 
+    // (split work + requestIdleCallback) changes *when* this runs, not just its name.
+    // These sit in preload/review hot paths; migrating needs per-site profiling.
+    // eslint-disable-next-line @typescript-eslint/no-deprecated -- see note above
     InteractionManager.runAfterInteractions(() => {
       invalidateReviewQueries();
       trackCompletion();

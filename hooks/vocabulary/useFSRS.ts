@@ -422,9 +422,11 @@ export function useFSRS({
           const allFinished = totalWords > 0 && finishedWords >= totalWords;
 
           if (!allFinished && spacingQueueRef.current.spacedWords.length > 0) {
-            const candidate = spacingQueueRef.current.spacedWords.reduce(
+            const candidate = spacingQueueRef.current.spacedWords.reduce<
+              (typeof spacingQueueRef.current.spacedWords)[number] | undefined
+            >(
               (min, curr) => (!min || curr.remainingSpacing < min.remainingSpacing ? curr : min),
-              undefined as (typeof spacingQueueRef.current.spacedWords)[number] | undefined,
+              undefined,
             );
 
             if (candidate) {

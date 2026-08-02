@@ -5,13 +5,18 @@
     "version": "1448.2.9",
     "description": "Learn Arabic through immersive reading, listening, and spaced repetition practice. Master vocabulary with authentic articles and audio content.",
     "orientation": "portrait",
-    "icon": "./assets/images/oaIcon.png",
+    "icon": "./assets/images/icon.png",
     "scheme": "open-arabic",
     "userInterfaceStyle": "automatic",
-    "backgroundColor": "#111614",
+    "backgroundColor": "#040D07",
     "primaryColor": "#568066",
     "platforms": ["ios", "android"],
     "ios": {
+      "icon": {
+        "light": "./assets/images/icon.png",
+        "dark": "./assets/images/icon-dark.png",
+        "tinted": "./assets/images/icon-tinted.png"
+      },
       "supportsTablet": false,
       "bundleIdentifier": "openarabic",
       "buildNumber": "246",
@@ -31,12 +36,97 @@
         "NSCameraUsageDescription": "This app needs access to your camera to let you take a profile photo for your account.",
         "NSMicrophoneUsageDescription": "Open Arabic uses the microphone to grade your spoken English answer. Audio is transcribed on your device and never leaves it.",
         "NSUserNotificationsUsageDescription": "This app sends study reminders to help you practice Arabic vocabulary at your scheduled times."
+      },
+      "privacyManifests": {
+        "NSPrivacyTracking": false,
+        "NSPrivacyAccessedAPITypes": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
+            "NSPrivacyAccessedAPITypeReasons": ["C617.1", "DDA9.1"]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategorySystemBootTime",
+            "NSPrivacyAccessedAPITypeReasons": ["35F9.1"]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryDiskSpace",
+            "NSPrivacyAccessedAPITypeReasons": ["E174.1"]
+          }
+        ],
+        "NSPrivacyCollectedDataTypes": [
+          {
+            "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypeEmailAddress",
+            "NSPrivacyCollectedDataTypeLinked": true,
+            "NSPrivacyCollectedDataTypeTracking": false,
+            "NSPrivacyCollectedDataTypePurposes": [
+              "NSPrivacyCollectedDataTypePurposeAppFunctionality",
+              "NSPrivacyCollectedDataTypePurposeAnalytics"
+            ]
+          },
+          {
+            "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypeUserID",
+            "NSPrivacyCollectedDataTypeLinked": true,
+            "NSPrivacyCollectedDataTypeTracking": false,
+            "NSPrivacyCollectedDataTypePurposes": [
+              "NSPrivacyCollectedDataTypePurposeAppFunctionality"
+            ]
+          },
+          {
+            "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypeDeviceID",
+            "NSPrivacyCollectedDataTypeLinked": false,
+            "NSPrivacyCollectedDataTypeTracking": false,
+            "NSPrivacyCollectedDataTypePurposes": [
+              "NSPrivacyCollectedDataTypePurposeThirdPartyAdvertising",
+              "NSPrivacyCollectedDataTypePurposeAnalytics"
+            ]
+          },
+          {
+            "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypeProductInteraction",
+            "NSPrivacyCollectedDataTypeLinked": true,
+            "NSPrivacyCollectedDataTypeTracking": false,
+            "NSPrivacyCollectedDataTypePurposes": [
+              "NSPrivacyCollectedDataTypePurposeAppFunctionality",
+              "NSPrivacyCollectedDataTypePurposeAnalytics"
+            ]
+          },
+          {
+            "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypeOtherUsageData",
+            "NSPrivacyCollectedDataTypeLinked": true,
+            "NSPrivacyCollectedDataTypeTracking": false,
+            "NSPrivacyCollectedDataTypePurposes": [
+              "NSPrivacyCollectedDataTypePurposeAnalytics",
+              "NSPrivacyCollectedDataTypePurposeProductPersonalization",
+              "NSPrivacyCollectedDataTypePurposeThirdPartyAdvertising"
+            ]
+          },
+          {
+            "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypeCrashData",
+            "NSPrivacyCollectedDataTypeLinked": false,
+            "NSPrivacyCollectedDataTypeTracking": false,
+            "NSPrivacyCollectedDataTypePurposes": [
+              "NSPrivacyCollectedDataTypePurposeAppFunctionality"
+            ]
+          },
+          {
+            "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypePerformanceData",
+            "NSPrivacyCollectedDataTypeLinked": false,
+            "NSPrivacyCollectedDataTypeTracking": false,
+            "NSPrivacyCollectedDataTypePurposes": [
+              "NSPrivacyCollectedDataTypePurposeAppFunctionality"
+            ]
+          }
+        ]
       }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#111614",
-        "foregroundImage": "./assets/images/oaIcon.png"
+        "backgroundColor": "#040D07",
+        "foregroundImage": "./assets/images/adaptive-foreground.png",
+        "monochromeImage": "./assets/images/adaptive-monochrome.png"
       },
       "package": "com.edenmind.OpenArabic",
       "versionCode": 246,
@@ -55,9 +145,9 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#111614",
+          "backgroundColor": "#040D07",
           "resizeMode": "contain",
-          "image": "./assets/images/oaIcon.png"
+          "image": "./assets/images/splash.png"
         }
       ],
       [
@@ -86,7 +176,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/oaIcon.png",
+          "icon": "./assets/images/notification-icon.png",
           "color": "#568066",
           "defaultChannel": "reminders",
           "sounds": [],
@@ -133,7 +223,20 @@
       "expo-asset",
       "expo-background-task",
       "expo-image",
-      "expo-status-bar"
+      "expo-status-bar",
+      [
+        "react-native-fbsdk-next",
+        {
+          "_comment": "Meta app events for ad attribution. AEM-only: no ATT prompt is ever shown, so on iOS the IDFA stays zeroed and Meta attributes via Aggregated Event Measurement + SKAdNetwork. advertiserIDCollectionEnabled is a no-op on iOS without ATT, but IS what lets Android report the Google Advertising ID — that is where user-level attribution actually comes from.",
+          "appID": "1579869453486353",
+          "clientToken": "c39b97bf7d2917ab6725e95be8506aab",
+          "displayName": "Open Arabic",
+          "scheme": "fb1579869453486353",
+          "isAutoInitEnabled": true,
+          "autoLogAppEventsEnabled": true,
+          "advertiserIDCollectionEnabled": true
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
@@ -145,7 +248,7 @@
       }
     },
     "owner": "edenmind",
-    "runtimeVersion": "1448.2.3",
+    "runtimeVersion": "1448.2.10",
     "updates": {
       "url": "https://u.expo.dev/644480e0-3ac0-4ce6-b6ca-b950f62ca438",
       "enableBsdiffPatchSupport": true

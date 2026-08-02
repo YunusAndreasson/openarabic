@@ -8,7 +8,6 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-import { Colors } from '../constants/colors';
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from '../constants/supabase';
 import type { Database } from '../types/database.types';
 import { analyzeArabicWord } from '../utils/arabicWordAnalysis';
@@ -16,7 +15,6 @@ import { formatWordAnalysis } from '../utils/arabicAnalysis/colorSegments';
 import { normalizeArabic } from '../utils/arabicAnalysis/normalization';
 
 const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY);
-const colors = Colors.dark;
 
 interface Issue {
   wordForm: string;

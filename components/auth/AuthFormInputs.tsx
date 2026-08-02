@@ -61,7 +61,7 @@ export function AuthEmailInput({
         testID={testID}
         accessibilityLabel="Email address"
         accessibilityHint="Enter your email address"
-        blurOnSubmit={false}
+        submitBehavior="submit"
         onBlur={onBlur}
         onChangeText={onChangeText}
         onSubmitEditing={onSubmitEditing}

@@ -721,6 +721,9 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     // first or the refetch can overtake them and repopulate the practice screen
     // with pre-grade data. Not gated on `mounted` — the flush must complete even
     // though this closure outlives the screen.
+    // (split work + requestIdleCallback) changes *when* this runs, not just its name.
+    // These sit in preload/review hot paths; migrating needs per-site profiling.
+    // eslint-disable-next-line @typescript-eslint/no-deprecated -- see note above
     InteractionManager.runAfterInteractions(() => {
       void flushPendingWrites().then(invalidateQueries);
     });

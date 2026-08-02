@@ -27,8 +27,8 @@ async function checkWords() {
   for (const word of wordsToCheck) {
     const { data, error } = await supabase
       .from('sentence_words')
-      .select('arabic_word, english_word')
-      .eq('english_word', word)
+      .select('word_form, english')
+      .eq('english', word)
       .limit(10);
 
     if (error) {
@@ -46,8 +46,8 @@ async function checkWords() {
     // Group by Arabic word
     const arabicMap = new Map<string, number>();
     data.forEach(d => {
-      const count = arabicMap.get(d.arabic_word) || 0;
-      arabicMap.set(d.arabic_word, count + 1);
+      const count = arabicMap.get(d.word_form) ?? 0;
+      arabicMap.set(d.word_form, count + 1);
     });
 
     arabicMap.forEach((count, arabic) => {

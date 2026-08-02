@@ -59,6 +59,9 @@ jest.mock(
 
 jest.mock('@/utils/errorHandling', () => ({
   handleError: jest.fn(),
+  // Mirrors the real toError: audioPlayer routes caught unknowns through it so
+  // thrown non-Errors can't render as "[object Object]" in the message.
+  toError: (error: unknown) => (error instanceof Error ? error : new Error(String(error))),
 }));
 
 jest.mock('@/utils/transitionSound', () => ({
@@ -798,6 +801,37 @@ describe('audioPlayer service', () => {
 
     test('should handle stop when no player exists', async () => {
       await expect(audioService.stop()).resolves.not.toThrow();
+    });
+
+    // Regression: the review card's manual reveal fires the English audio
+    // synchronously and only releases the mic on the next render, so playback
+    // used to start while the session still held .playAndRecord — audibly
+    // quieter, and on Bluetooth routed over the ~8 kHz hands-free profile. The
+    // same card played at full volume if the mic timed out instead.
+    test('releases the recording session before starting playback', async () => {
+      await audioService.setRecordingSessionEnabled(true);
+      mockSetAudioModeAsync.mockClear();
+      mockCreateAudioPlayer.mockClear();
+
+      await audioService.play(testTrack);
+
+      const releasedWith = mockSetAudioModeAsync.mock.calls.at(-1)?.[0];
+      expect(releasedWith).toEqual(expect.objectContaining({ allowsRecording: false }));
+      // ...and it happened before the player was ever created.
+      expect(mockSetAudioModeAsync).toHaveBeenCalled();
+      expect(mockCreateAudioPlayer).toHaveBeenCalled();
+      expect(mockSetAudioModeAsync.mock.invocationCallOrder[0]).toBeLessThan(
+        mockCreateAudioPlayer.mock.invocationCallOrder[0],
+      );
+    });
+
+    test('leaves the audio mode alone when no recording session is held', async () => {
+      await audioService.preconfigureAudioSession();
+      mockSetAudioModeAsync.mockClear();
+
+      await audioService.play(testTrack);
+
+      expect(mockSetAudioModeAsync).not.toHaveBeenCalled();
     });
 
     test('should handle playlist error and return false', async () => {

@@ -112,17 +112,19 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
 
   /** Cancel a recorder and remember the teardown so the next arm() can wait. */
   const beginTeardown = useCallback((recorder: VoiceRecorder | null): void => {
-    if (!recorder?.isRecording) {
-      void simpleAudioService.setRecordingSessionEnabled(false);
-      return;
-    }
-    const teardown = recorder
-      .cancel()
-      .catch(() => {
-        // A failed teardown must not block the next arm — the recorder is gone
-        // either way and start() surfaces any real problem.
-      })
-      .then(() => simpleAudioService.setRecordingSessionEnabled(false));
+    // Both branches restore the session through the same awaited call, and both
+    // publish the promise on teardownRef, so a cancelled card lands back on
+    // plain .playback exactly like one that timed out. They used to differ:
+    // the cancel path released the category without waiting and never cycled
+    // the iOS session, which left a manually revealed answer playing over the
+    // record-capable route.
+    const stopped = recorder?.isRecording
+      ? recorder.cancel().catch(() => {
+          // A failed teardown must not block the next arm — the recorder is gone
+          // either way and start() surfaces any real problem.
+        })
+      : Promise.resolve();
+    const teardown = stopped.then(() => simpleAudioService.setRecordingSessionEnabled(false));
     teardownRef.current = teardown;
     void teardown.then(() => {
       if (teardownRef.current === teardown) teardownRef.current = null;
@@ -218,22 +220,10 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
             const result = await recorder.stop();
             recorderRef.current = null;
             // Back to plain playback: the reveal audio and the next card's prompt
-            // should not play through the record-capable category.
+            // should not play through the record-capable category. This also
+            // hands the session back to expo-audio (mirroring the deactivate we
+            // did before start()) — see setRecordingSessionEnabled.
             await simpleAudioService.setRecordingSessionEnabled(false);
-            // Hand the session back to expo-audio so the next Arabic word
-            // can play. Mirror the deactivate we did before start().
-            if (Platform.OS === 'ios') {
-              try {
-                await setIsAudioActiveAsync(true);
-              } catch (err) {
-                Sentry.addBreadcrumb({
-                  category: 'voice',
-                  level: 'warning',
-                  message: 'voice.session.reactivate.failed',
-                  data: { error: err instanceof Error ? err.message : String(err) },
-                });
-              }
-            }
             Sentry.addBreadcrumb({
               category: 'voice',
               level: 'info',

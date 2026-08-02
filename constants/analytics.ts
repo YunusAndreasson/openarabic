@@ -90,4 +90,27 @@ export const ANALYTICS_EVENTS = {
   VOICE_MATCH: 'Voice Match',
 } as const;
 
+/**
+ * Meta (Facebook) app event names, used only for ad attribution in Ads Manager.
+ *
+ * These are the raw wire names rather than `AppEventsLogger.AppEvents.*` so this
+ * file stays free of native imports — constants are pulled into tests and Expo Go,
+ * where the Facebook SDK is not linked.
+ *
+ * `fb_mobile_activate_app` (install / launch) is NOT listed: the native SDK logs it
+ * automatically via `autoLogAppEventsEnabled` in app.json. Only events we raise
+ * ourselves belong here.
+ *
+ * Keep this list short. Every event here is data shared with Meta, so add one only
+ * when it is genuinely needed to judge whether an ad is paying for itself.
+ */
+export const META_EVENTS = {
+  /** Account created — the top of the funnel an install ad is actually buying. */
+  COMPLETED_REGISTRATION: 'fb_mobile_complete_registration',
+  /** Finished the welcome intro — separates real users from bounced installs. */
+  COMPLETED_TUTORIAL: 'fb_mobile_tutorial_completion',
+  /** Custom: finished a practice session — the best available proxy for retention. */
+  PRACTICE_SESSION_COMPLETE: 'PracticeSessionComplete',
+} as const;
+
 // User property keys for identify calls

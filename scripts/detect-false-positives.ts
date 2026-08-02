@@ -456,7 +456,7 @@ function analyzeWord(word: ColoredWord, allWords: ColoredWord[]): FalsePositiveC
 /**
  * Determine pattern type based on signals
  */
-function determinePatternType(word: ColoredWord, signals: DetectionSignal[]): string {
+function determinePatternType(_word: ColoredWord, signals: DetectionSignal[]): string {
   if (signals.some(s => s.detector === 'Root Pattern Validator')) {
     return 'Root Letter Confusion';
   }

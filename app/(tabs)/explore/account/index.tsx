@@ -256,6 +256,9 @@ const AccountScreen: FC = () => {
         case 'dailyWordLimit':
           dispatch(setDailyWordLimit(value as number));
           break;
+        case null:
+          // No picker open, so there is nothing to apply the selection to.
+          break;
       }
       // Don't close picker on selection - let user close manually
     },

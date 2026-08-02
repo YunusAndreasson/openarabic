@@ -24,7 +24,20 @@ function describeThrownValue(value: unknown): string {
   if (typeof value === 'object') {
     return `Non-Error thrown: ${value.constructor?.name ?? 'Object'}`;
   }
-  return `Non-Error thrown: ${typeof value} ${String(value).slice(0, MAX_THROWN_VALUE_LENGTH)}`;
+  // A function stringifies to its whole source text — exactly the unbounded
+  // payload this helper exists to keep out of Sentry titles.
+  if (typeof value === 'function') {
+    return `Non-Error thrown: function ${value.name || 'anonymous'}`;
+  }
+  // Remaining primitives, narrowed explicitly so nothing can reach String()
+  // that would render as "[object Object]".
+  if (typeof value === 'number' || typeof value === 'bigint' || typeof value === 'boolean') {
+    return `Non-Error thrown: ${typeof value} ${String(value).slice(0, MAX_THROWN_VALUE_LENGTH)}`;
+  }
+  if (typeof value === 'symbol') {
+    return `Non-Error thrown: symbol ${value.toString().slice(0, MAX_THROWN_VALUE_LENGTH)}`;
+  }
+  return `Non-Error thrown: ${typeof value}`;
 }
 
 /**
@@ -239,7 +252,7 @@ export const handleError = async (error: unknown, options: ErrorOptions = {}): P
     // In development, throw the error to make it visible
     if (__DEV__) {
       throw new Error(
-        `Error handling failed: ${errorHandlingError}. Original error: ${errorObj.message}`,
+        `Error handling failed: ${toError(errorHandlingError).message}. Original error: ${errorObj.message}`,
       );
     }
     // In production, silently continue

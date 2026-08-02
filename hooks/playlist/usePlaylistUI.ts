@@ -34,6 +34,9 @@ export const usePlaylistUI = ({ sortedReadingList, editMode }: ListenUIParams) =
 
       const article = sortedReadingList.find(item => item.article_id === articleId)?.articles;
       if (article) {
+        // (split work + requestIdleCallback) changes *when* this runs, not just its name.
+        // These sit in preload/review hot paths; migrating needs per-site profiling.
+        // eslint-disable-next-line @typescript-eslint/no-deprecated -- see note above
         InteractionManager.runAfterInteractions(() => prefetchArticle(articleId));
         router.push(getArticleRoute(articleId, article.title));
       }

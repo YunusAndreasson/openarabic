@@ -6,6 +6,7 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useMountSafety } from '@/hooks/common/useMountSafety';
 import { analytics } from '@/services/analytics';
+import { metaEvents } from '@/services/metaEvents';
 import { supabase } from '@/services/supabase';
 import { handleError, showSuccessToast } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
@@ -202,6 +203,7 @@ export function useAuthForm(): UseAuthFormReturn {
         analytics.trackSignUp('email').catch(() => {
           // Silent failure for analytics
         });
+        metaEvents.logSignUp('email');
       }
     } catch (err) {
       if (!isMountedRef.current) return;

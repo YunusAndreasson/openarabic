@@ -407,8 +407,7 @@ function printResults(candidates: TransliterationCandidate[], rules: Normalizati
   console.log('Top 20 Candidates:\n');
 
   const top20 = candidates.slice(0, 20);
-  for (let i = 0; i < top20.length; i++) {
-    const c = top20[i];
+  for (const [i, c] of top20.entries()) {
     console.log(`${i + 1}. ${c.arabic} → "${c.english}" (${c.frequency}x)`);
     console.log(`   Suggested: "${c.suggestedTranslation}"`);
     console.log(`   Confidence: ${c.confidence.toUpperCase()}`);

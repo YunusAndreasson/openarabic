@@ -111,7 +111,7 @@ export const sentencesService = {
           )
           .in('id', sentenceIds)
           .order('position', { ascending: true })
-          .returns<SentenceWithWordsRow[]>(),
+          .overrideTypes<SentenceWithWordsRow[], { merge: false }>(),
       {
         ...errorConfig.loadByRootId,
         analyticsProperties: { rootId, sentenceCount: sentenceIds.length },

@@ -103,6 +103,14 @@ const PrivacyPolicyScreen: FC = () => {
           {STRINGS.PRIVACY_THIRD_PARTY_SENTRY_DESC}
         </ThemedText>
 
+        {/* Meta */}
+        <ThemedText type="body" weight="semibold" style={styles.subsectionTitle}>
+          {STRINGS.PRIVACY_THIRD_PARTY_META}
+        </ThemedText>
+        <ThemedText type="body" style={styles.paragraph}>
+          {STRINGS.PRIVACY_THIRD_PARTY_META_DESC}
+        </ThemedText>
+
         {/* Apple and Google */}
         <ThemedText type="body" weight="semibold" style={styles.subsectionTitle}>
           {STRINGS.PRIVACY_THIRD_PARTY_AUTH}

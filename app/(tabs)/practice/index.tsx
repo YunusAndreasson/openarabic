@@ -71,6 +71,9 @@ export default function PracticeScreen(): JSX.Element {
 
       // Only fetch if we're missing either data set
       if (!hasStudyWords || !hasDueWords) {
+        // (split work + requestIdleCallback) changes *when* this runs, not just its name.
+        // These sit in preload/review hot paths; migrating needs per-site profiling.
+        // eslint-disable-next-line @typescript-eslint/no-deprecated -- see note above
         InteractionManager.runAfterInteractions(() => {
           prefetchVocabularyData();
         });

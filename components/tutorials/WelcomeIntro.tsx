@@ -15,6 +15,7 @@ import { STRINGS } from '@/constants/strings';
 import { TUTORIAL_STEP_HEIGHT, TUTORIAL_VISUALS } from '@/constants/tutorials';
 import { useColors } from '@/hooks/theme/useColors';
 import { analytics } from '@/services/analytics';
+import { metaEvents } from '@/services/metaEvents';
 import { lightFeedback } from '@/utils/haptics';
 
 import { TutorialCard } from './TutorialCard';
@@ -97,6 +98,7 @@ export function WelcomeIntro({ visible, onDismiss, onOpenFirstText }: WelcomeInt
     if (isLastStep) {
       lightFeedback();
       analytics.track(ANALYTICS_EVENTS.ONBOARDING_INTRO_COMPLETED, { cta: 'open_first_text' });
+      metaEvents.logTutorialComplete();
       onDismiss();
       onOpenFirstText();
     } else {

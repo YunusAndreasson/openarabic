@@ -3,12 +3,12 @@ import { useRouter } from 'expo-router';
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type FC } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
-  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
   ZoomIn,
 } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import { ThemedText } from '@/components/ThemedText';
 import { BaseCard } from '@/components/common';
@@ -75,7 +75,7 @@ const GetStartedChecklistComponent: FC<GetStartedChecklistProps> = ({
         { duration: ONBOARDING_CONFIG.CHECKLIST_COLLAPSE_DURATION_MS },
         finished => {
           if (finished) {
-            runOnJS(finalizeCompletion)();
+            scheduleOnRN(finalizeCompletion);
           }
         },
       );

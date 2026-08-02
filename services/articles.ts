@@ -176,7 +176,7 @@ export const articlesService = {
       query = query.range(offset, offset + limit - 1);
     }
 
-    const data = await executeQuery(() => query.returns<ArticleRow[]>(), {
+    const data = await executeQuery(() => query.overrideTypes<ArticleRow[], { merge: false }>(), {
       ...errorConfig.load,
       analyticsProperties: {
         ...(categoryId !== undefined && { categoryId }),
@@ -200,7 +200,7 @@ export const articlesService = {
           .order('created_at', {
             ascending: false,
           })
-          .returns<ArticleRow[]>(),
+          .overrideTypes<ArticleRow[], { merge: false }>(),
       errorConfig.loadWithStats,
     );
 
@@ -216,7 +216,7 @@ export const articlesService = {
           .eq('id', id)
           .eq('published', true)
           .maybeSingle()
-          .returns<ArticleRow>(),
+          .overrideTypes<ArticleRow, { merge: false }>(),
       {
         ...errorConfig.loadById,
         analyticsProperties: { id },
@@ -243,7 +243,7 @@ export const articlesService = {
           .select(DETAIL_VIEW_COLUMNS)
           .in('id', ids as number[]) // Cast branded type to number[] for Supabase query
           .eq('published', true)
-          .returns<ArticleRow[]>(),
+          .overrideTypes<ArticleRow[], { merge: false }>(),
       {
         ...errorConfig.bulkLoad,
         analyticsProperties: { count: ids.length },

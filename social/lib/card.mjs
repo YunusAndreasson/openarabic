@@ -38,7 +38,7 @@ const LATIN_FAMILY = 'Inter'
 
 // --- brand palette (current OpenArabic dark theme) ---
 const COLORS = {
-  bg: '#111614', // near-black forest — app dark background / icon bg
+  bg: '#040D07', // sage.darkest — the app's dark background / icon bg
   sage: '#7dae8d', // brightened brand sage, legible on the dark bg (Arabic word)
   translit: '#8a9990', // muted sage-gray — transliteration
   meaning: '#e8f1ec', // soft white — English meaning

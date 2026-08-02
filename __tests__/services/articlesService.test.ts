@@ -37,6 +37,9 @@ const createThenBuilder = (response: any) => {
     order: jest.fn().mockReturnThis(),
     range: jest.fn().mockReturnThis(),
     returns: jest.fn().mockReturnThis(),
+    // supabase-js deprecated `.returns()` in favour of `.overrideTypes()`; both
+    // are type-level no-ops at runtime, so both must resolve to the builder.
+    overrideTypes: jest.fn().mockReturnThis(),
     then: jest.fn((resolve: any) => resolve(response)),
   };
   return builder;
@@ -49,6 +52,7 @@ const createFinalBuilder = (response: any) => {
     single: jest.fn().mockReturnThis(),
     maybeSingle: jest.fn().mockReturnThis(),
     returns: jest.fn().mockResolvedValue(response),
+    overrideTypes: jest.fn().mockResolvedValue(response),
   };
   return builder;
 };

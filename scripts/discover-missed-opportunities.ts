@@ -45,25 +45,11 @@ interface PatternCluster {
   consistencyScore: number; // 0-1, how consistent is this pattern?
 }
 
-interface OpportunityDiscovery {
-  pattern: string;
-  type: 'prefix' | 'suffix' | 'preposition' | 'compound';
-  arabicComponent: string;
-  englishPatterns: string[];
-  examples: Array<{ arabic: string; english: string; freq: number }>;
-  totalFrequency: number;
-  impactScore: number;
-  confidence: number; // 0-100, LLM confidence this is a real component
-  reasoning: string; // LLM linguistic analysis
-  suggestedFix: string; // Code to add to arabicWordComponents.ts
-}
-
 // ============================================================================
 // Configuration
 // ============================================================================
 
 const args = process.argv.slice(2);
-const limitArg = args.find(arg => arg.startsWith('--limit'))?.split('=')[1];
 const outputJson = args.includes('--output-json');
 const verbose = args.includes('--verbose');
 const minFreq = 2; // Focus on patterns appearing 2+ times

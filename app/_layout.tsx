@@ -12,7 +12,7 @@ import {
   useNavigationContainerRef,
   useRouter,
 } from 'expo-router';
-import * as NavigationBar from 'expo-navigation-bar';
+import { NavigationBar } from 'expo-navigation-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import * as Updates from 'expo-updates';
@@ -419,7 +419,7 @@ function AppContent() {
       try {
         if (!Notifications) return;
 
-        const response = await Notifications.getLastNotificationResponseAsync();
+        const response = Notifications.getLastNotificationResponse();
 
         if (response) {
           const { type } = response.notification.request.content.data || {};
@@ -435,7 +435,7 @@ function AppContent() {
           }
 
           // Clear the last notification response to prevent re-handling on next launch
-          await Notifications.clearLastNotificationResponseAsync();
+          Notifications.clearLastNotificationResponse();
         }
       } catch (error) {
         // Silently handle cold start notification errors

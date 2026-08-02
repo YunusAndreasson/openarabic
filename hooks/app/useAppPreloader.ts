@@ -193,6 +193,9 @@ export const useAppPreloader = (): AppPreloaderResult => {
       // CRITICAL: Only generate new featured articles if none exist for this session
       // This prevents articles from changing on app resume (backgrounding/foregrounding)
       if (Array.isArray(_articles) && _articles.length > 0) {
+        // (split work + requestIdleCallback) changes *when* this runs, not just its name.
+        // These sit in preload/review hot paths; migrating needs per-site profiling.
+        // eslint-disable-next-line @typescript-eslint/no-deprecated -- see note above
         InteractionManager.runAfterInteractions(() => {
           try {
             // Check if featured articles already exist for this session
@@ -252,6 +255,9 @@ export const useAppPreloader = (): AppPreloaderResult => {
       // Prefetch bookmark images for instant loading when user opens bookmarks
       // Uses ensureQueryData to reuse the TanStack Query cache and prevent N+1 API calls
       if (user?.id) {
+        // (split work + requestIdleCallback) changes *when* this runs, not just its name.
+        // These sit in preload/review hot paths; migrating needs per-site profiling.
+        // eslint-disable-next-line @typescript-eslint/no-deprecated -- see note above
         InteractionManager.runAfterInteractions(async () => {
           try {
             const readingList = await queryClient.ensureQueryData(
