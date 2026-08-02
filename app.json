@@ -256,6 +256,18 @@
           "autoLogAppEventsEnabled": true,
           "advertiserIDCollectionEnabled": true
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "_comment": "MMKV/MMKVCore arrive transitively via @kesha-antonov/react-native-background-downloader, whose podspec floats 'MMKV >= 1.2.0'. With no Podfile.lock in the repo (CNG), every EAS build re-resolves pods, so on 2026-08-02 it picked up MMKVCore 2.4.1 (published 2026-07-30), which calls memset_s — C11 Annex K, which Apple's libc does not implement — and the iOS build failed to compile AESCrypt.cpp. Pinning BOTH is required: MMKV 2.4.0 declares 'MMKVCore ~> 2.4.0', which would still admit 2.4.1. Drop this once upstream ships a fix.",
+          "ios": {
+            "extraPods": [
+              { "name": "MMKVCore", "version": "2.4.0" },
+              { "name": "MMKV", "version": "2.4.0" }
+            ]
+          }
+        }
       ]
     ],
     "experiments": {
