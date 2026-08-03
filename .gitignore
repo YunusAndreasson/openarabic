@@ -103,3 +103,6 @@ translate/uv.lock
 # Additional translate directories
 translate_2/
 translate_3/
+
+# Play Store service-account key (CI writes this from a secret; never commit it)
+google-service-account.json

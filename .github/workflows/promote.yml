@@ -1,0 +1,67 @@
+name: Promote
+
+# Promote-only: moves a build that is ALREADY uploaded to Google Play from one
+# track to another (normally internal -> production). Release/Submit stop at the
+# internal track, so this is the step that puts a build in front of real users.
+# Nothing is rebuilt and nothing is re-uploaded.
+#
+# Run with dry_run enabled first: it prints what every track currently holds
+# and exits without touching Play.
+on:
+  workflow_dispatch:
+    inputs:
+      version_code:
+        description: 'Version code to promote (blank = highest in the source track)'
+        required: false
+        type: string
+        default: ''
+      from_track:
+        description: 'Track to promote from'
+        required: false
+        type: choice
+        options:
+          - internal
+          - alpha
+          - beta
+        default: internal
+      rollout:
+        description: 'Fraction of users, 0-1 (1.0 = full rollout)'
+        required: false
+        type: string
+        default: '1.0'
+      dry_run:
+        description: 'Report track state and exit without changing anything'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Prepare Google Service Account file
+        run: echo "$GOOGLE_SERVICE_ACCOUNT_KEY" > google-service-account.json
+        env:
+          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+
+      - name: Promote release
+        run: |
+          node scripts/promote-play-release.mjs \
+            --key ./google-service-account.json \
+            --from "${{ inputs.from_track }}" \
+            --to production \
+            --rollout "${{ inputs.rollout }}" \
+            ${{ inputs.version_code != '' && format('--version-code {0}', inputs.version_code) || '' }} \
+            ${{ inputs.dry_run && '--dry-run' || '' }}
+
+      - name: Notify on failure
+        if: failure()
+        run: echo "❌ Promote failed"
