@@ -132,7 +132,15 @@ const describeRelease = release => {
   const fraction =
     release.userFraction === undefined ? '' : ` @ ${(release.userFraction * 100).toFixed(1)}%`;
 
-  return `      ${release.status}${fraction} — versionCodes [${codes}] — "${release.name ?? 'unnamed'}"`;
+  const head = `      ${release.status}${fraction} — versionCodes [${codes}] — "${release.name ?? 'unnamed'}"`;
+
+  // Release notes are what users actually read, so surface them rather than
+  // silently carrying them across tracks.
+  const notes = (release.releaseNotes ?? []).map(
+    note => `          [${note.language}] ${note.text?.replace(/\n/g, ' ⏎ ') ?? ''}`,
+  );
+
+  return [head, ...notes].join('\n');
 };
 
 const main = async () => {
@@ -186,19 +194,37 @@ const main = async () => {
       );
     }
 
+    // The target track may already hold an unpublished draft of this build — a
+    // console rollout someone started and never finished. Its name and notes
+    // are the ones a human actually wrote, so publish those rather than
+    // overwrite them with whatever the source track happens to carry.
+    const destination = tracks.find(track => track.track === args.to);
+    const existingDraft = (destination?.releases ?? []).find(release =>
+      (release.versionCodes ?? []).some(code => Number(code) === target.code),
+    );
+
+    const blueprint = existingDraft ?? target.release;
+
     const promoted = {
-      name: target.release.name,
+      name: blueprint.name,
       versionCodes: [String(target.code)],
       status: rollout >= 1 ? 'completed' : 'inProgress',
       ...(rollout < 1 ? { userFraction: rollout } : {}),
-      ...(target.release.releaseNotes ? { releaseNotes: target.release.releaseNotes } : {}),
+      ...(blueprint.releaseNotes ? { releaseNotes: blueprint.releaseNotes } : {}),
     };
 
     console.log(
-      `Promote versionCode ${target.code} ("${target.release.name ?? 'unnamed'}") ` +
+      `Promote versionCode ${target.code} ("${blueprint.name ?? 'unnamed'}") ` +
         `from "${args.from}" to "${args.to}" as ${promoted.status}` +
         `${rollout < 1 ? ` at ${(rollout * 100).toFixed(1)}% rollout` : ' (full rollout)'}.`,
     );
+
+    if (existingDraft) {
+      console.log(
+        `Reusing the existing "${existingDraft.status}" release already on "${args.to}" ` +
+          'for its name and release notes.',
+      );
+    }
 
     if (args.dryRun) {
       await callApi(token, `/edits/${edit.id}`, { method: 'DELETE' });
