@@ -19,6 +19,7 @@ import { createSTT, type STTModelType, type SttEngine } from 'react-native-sherp
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TARGET_SAMPLE_RATE } from '@/lib/voice/recording';
 import { analytics } from '@/services/analytics';
+import { span as diagSpan } from '@/utils/reviewDiagnostics';
 
 /**
  * NVIDIA Parakeet TDT transducer 110M (English, int8) — ~103 MB.
@@ -44,6 +45,11 @@ export const PARAKEET_MODEL_ID = 'sherpa-onnx-nemo-parakeet_tdt_transducer_110m-
 // Exported so voice telemetry can record the exact decoding config per attempt.
 export const VOICE_DECODING_METHOD = 'modified_beam_search';
 export const VOICE_MAX_ACTIVE_PATHS = 8;
+
+/** Silence fed through the engine once at load to force the ONNX graph to
+ *  build. Half a second at 16 kHz — enough to execute the full pipeline,
+ *  short enough that the warm-up itself is cheap. */
+const WARMUP_SAMPLE_COUNT = TARGET_SAMPLE_RATE / 2;
 
 export interface SherpaStt {
   /** Transcribe a 16 kHz mono waveform to trimmed text. null when not ready. */
@@ -143,6 +149,34 @@ function useSherpaStt({
             data: { message: cfgErr instanceof Error ? cfgErr.message : String(cfgErr) },
           });
         }
+
+        // Run one throwaway inference before announcing readiness. Creating the
+        // engine does not build the ONNX execution graph — the FIRST
+        // transcribeSamples() does, and that cost lands inside the learner's
+        // "Grading…" wait on the first card of every session. Measured on the
+        // Android emulator: 2949 ms for the first transcription vs ~1150 ms for
+        // every subsequent one on comparable audio. Paying it here costs nothing
+        // (the model has only just finished loading and no card is waiting).
+        //
+        // Deliberately before setReady(true): while this runs the UI still says
+        // "Preparing voice…", which is true. Failures are swallowed — a model
+        // that cannot warm up is still worth trying on real speech.
+        try {
+          const endWarmup = diagSpan('stt.warmup');
+          await engine.transcribeSamples(
+            Array.from(new Float32Array(WARMUP_SAMPLE_COUNT)),
+            TARGET_SAMPLE_RATE,
+          );
+          endWarmup();
+        } catch (warmErr) {
+          Sentry.addBreadcrumb({
+            category: 'voice',
+            level: 'warning',
+            message: 'voice.warmup.failed',
+            data: { message: warmErr instanceof Error ? warmErr.message : String(warmErr) },
+          });
+        }
+        if (cancelled) return;
 
         setDownloadProgress(1);
         setReady(true);

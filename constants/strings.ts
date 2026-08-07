@@ -33,6 +33,21 @@ export const STRINGS = {
   VOICE_CHECKING: 'Grading…',
   VOICE_PREPARING: 'Preparing voice…',
   VOICE_TRY_AGAIN: 'Try again or tap to grade',
+  // Voice channel — the live mic strip inside the question face. The labels
+  // are instructions, not status: at every point the learner should be able to
+  // read one line and know whether to listen, wait, or speak.
+  /** While the card's Arabic prompt is still playing. */
+  VOICE_PROMPT_PLAYING: 'Listen…',
+  /** Mic requested, not yet capturing. Naming the wait beats an empty strip:
+   *  the old indicator showed nothing here, which read as "voice is broken". */
+  VOICE_ARMING: 'Get ready…',
+  /** The one moment it is honest to ask for an answer. */
+  VOICE_SAY_MEANING: 'Say the meaning',
+  VOICE_PAUSED: 'Voice paused',
+  VOICE_MIC_OFF: 'Microphone is off',
+  VOICE_SKIP_PROMPT: 'Tap to skip',
+  VOICE_HOLD_TO_SPEAK: 'Hold to speak',
+  VOICE_CHANNEL_LABEL: 'Voice answer',
   VOICE_MIC_PERMISSION_DENIED: 'Microphone access is off. Voice grading disabled.',
   VOICE_PAUSE_LABEL: 'Pause voice grading for this session',
   VOICE_RESUME_LABEL: 'Resume voice grading',
@@ -50,6 +65,11 @@ export const STRINGS = {
   VOICE_RESULT_RETRY: 'Try again',
   // Reveal-first self-grade (shown after the card flips to its answer)
   SHOW_ANSWER: 'Show answer',
+  PLAY_SENTENCE_AUDIO: 'Play sentence',
+  REPLAY_WORD_AUDIO: 'Replay word',
+  RESTUDY_CONTINUE: 'Tap to continue',
+  RESTUDY_HINT: 'Take a moment with this one',
+  RECALL_RUN: (count: number) => `${count} in a row`,
   GRADE_FORGOT: 'Forgot',
   GRADE_GUESSED: 'Guessed',
   GRADE_KNEW_IT: 'Knew it',

@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import { useMountSafety } from '@/hooks/common/useMountSafety';
-import { simpleAudioService } from '@/services/audioPlayer';
+import { simpleAudioService, type AudioPlayOptions } from '@/services/audioPlayer';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 
 import { useAudioSubscription } from './useAudioSubscription';
@@ -13,11 +13,14 @@ export const useSimpleAudioPlayer = () => {
   const { status } = useAudioSubscription();
   const isMountedRef = useMountSafety();
 
-  // Play function
+  // Play function. `options` is forwarded verbatim so callers that need to tune
+  // load/status behaviour for their lane (the review prompt caps its ready wait
+  // and ticks status faster, because the microphone is gated on end-of-clip)
+  // don't have to reach past this hook to the service.
   const play = useCallback(
-    async (track: EnhancedAudioTrack): Promise<boolean> => {
+    async (track: EnhancedAudioTrack, options?: AudioPlayOptions): Promise<boolean> => {
       if (!isMountedRef.current) return false;
-      return await simpleAudioService.play(track);
+      return await simpleAudioService.play(track, options);
     },
     [isMountedRef],
   );

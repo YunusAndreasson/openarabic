@@ -21,10 +21,44 @@ import { playTransitionSound } from '@/utils/transitionSound';
 // Event constant for playback status updates
 const PLAYBACK_STATUS_UPDATE = 'playbackStatusUpdate';
 
+/**
+ * Per-play tuning. Named (rather than inlined at the call site) so consumers —
+ * and the React Compiler — see a plain object type instead of a
+ * `Parameters<typeof play>[1]` indirection.
+ */
+export interface AudioPlayOptions {
+  skipLoadingState?: boolean;
+  isRetry?: boolean;
+  /**
+   * Cap on waiting for the source to load, overriding the local/remote
+   * defaults. The review prompt sets this: a cache download that fails returns
+   * the REMOTE url (audioCache.getAudio), which silently promotes the wait to
+   * the 20 s streaming budget — on a one-word clip that is a 20 s hole with the
+   * microphone gated behind it.
+   */
+  readyTimeoutMs?: number;
+  /**
+   * Native status emission interval for this track's player. Lower means
+   * `didJustFinish` lands sooner, which matters only where something is gated
+   * on end-of-clip (the review prompt gates the microphone). Left at the 500 ms
+   * default everywhere else — article and playlist playback gain nothing from a
+   * faster tick and would just pay for the extra events.
+   */
+  statusIntervalMs?: number;
+}
+
 // Marker for "the source never became ready" failures, so play() can tell a
 // bad source (corrupt cached file / unreachable URL) apart from a corrupted
 // audio session — only the latter is worth a session-reset retry.
 const PLAYER_READY_TIMEOUT_MESSAGE = 'Player ready timeout - audio may be corrupted or unavailable';
+
+// How often the native player emits a status update. 500 ms is right for the
+// listening surfaces (a progress bar cannot use more), but it also bounds how
+// quickly `didJustFinish` can be observed — and the review screen gates the
+// microphone on exactly that event, so a prompt can read as "still playing" for
+// up to half a second after the word has finished. Callers that care pass
+// `statusIntervalMs`; see play().
+const DEFAULT_UPDATE_INTERVAL_MS = 500;
 
 // Audio mode configuration for consistent behavior across iOS and Android.
 //
@@ -390,7 +424,11 @@ class SimpleAudioService {
    * removed) player and the promise resolves quietly — the caller re-checks
    * its generation right after this await and aborts.
    */
-  private async waitForPlayerReady(generation: number, isRemoteSource = false): Promise<void> {
+  private async waitForPlayerReady(
+    generation: number,
+    isRemoteSource = false,
+    overrideTimeoutMs?: number,
+  ): Promise<void> {
     const player = this.currentPlayer;
     if (!player) {
       return;
@@ -416,7 +454,7 @@ class SimpleAudioService {
     // and buffer first, and article audio now streams on a cache miss — judging
     // that by the local-file deadline would report a healthy stream as a dead
     // source on any slow network.
-    const READY_TIMEOUT_MS = isRemoteSource ? 20000 : 5000;
+    const READY_TIMEOUT_MS = overrideTimeoutMs ?? (isRemoteSource ? 20000 : 5000);
 
     return new Promise<void>((resolve, reject) => {
       let settled = false;
@@ -500,7 +538,10 @@ class SimpleAudioService {
    * canonical expo-audio pattern, equivalent to what useAudioPlayer does
    * when its source prop changes).
    */
-  private createFreshPlayer(audioUrl: string): AudioPlayer {
+  private createFreshPlayer(
+    audioUrl: string,
+    updateIntervalMs = DEFAULT_UPDATE_INTERVAL_MS,
+  ): AudioPlayer {
     if (this.currentPlayer) {
       try {
         this.currentPlayer.pause();
@@ -517,7 +558,7 @@ class SimpleAudioService {
     }
 
     const playerOptions: AudioPlayerOptions = {
-      updateInterval: 500,
+      updateInterval: updateIntervalMs,
     };
     this.currentPlayer = createAudioPlayer(audioUrl, playerOptions);
     return this.currentPlayer;
@@ -528,13 +569,7 @@ class SimpleAudioService {
    * @param track - The audio track to play
    * @param options - Playback options for optimization
    */
-  async play(
-    track: EnhancedAudioTrack,
-    options: {
-      skipLoadingState?: boolean;
-      isRetry?: boolean;
-    } = {},
-  ): Promise<boolean> {
+  async play(track: EnhancedAudioTrack, options: AudioPlayOptions = {}): Promise<boolean> {
     // Superseded plays report false too — the caller's attempt did not play,
     // but the newer call that superseded it owns any error handling.
     return (await this.playCore(track, options)) === 'success';
@@ -551,10 +586,7 @@ class SimpleAudioService {
    */
   private async playCore(
     track: EnhancedAudioTrack,
-    options: {
-      skipLoadingState?: boolean;
-      isRetry?: boolean;
-    } = {},
+    options: AudioPlayOptions = {},
   ): Promise<PlayOutcome> {
     const generation = ++this.playGeneration;
     const isSuperseded = (): boolean => generation !== this.playGeneration;
@@ -608,7 +640,7 @@ class SimpleAudioService {
       this.stopEventSubscription();
 
       // Always create a fresh player — see createFreshPlayer for rationale
-      const player = this.createFreshPlayer(track.audioUrl);
+      const player = this.createFreshPlayer(track.audioUrl, options.statusIntervalMs);
       this.currentTrack = track;
 
       // IMMEDIATE FEEDBACK: Update status to loading right away
@@ -639,7 +671,11 @@ class SimpleAudioService {
       // (the "sound just doesn't play" bug), and would keep a corrupt cached
       // file undetectable — callers invalidate the cache and retry on failure.
       const readyStartedAt = Date.now();
-      await this.waitForPlayerReady(generation, isRemoteAudioUrl(track.audioUrl));
+      await this.waitForPlayerReady(
+        generation,
+        isRemoteAudioUrl(track.audioUrl),
+        options.readyTimeoutMs,
+      );
       if (isSessionActive()) {
         mark('player.ready', { ms: Date.now() - readyStartedAt, superseded: isSuperseded() });
       }

@@ -154,7 +154,6 @@ export const TEXT_OPACITY = TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY;
 export const TEXT_STYLES = TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES;
 
 // Dynamic word area height based on screen proportions and touch targets
-export const WORD_AREA_MIN_HEIGHT = TOUCH_TARGETS.LARGE * 7.5; // ~360px, responsive to touch targets
 
 // Export touch targets for external use
 export const MIN_TOUCH_TARGET = TOUCH_TARGETS;

@@ -136,6 +136,21 @@ describe('useReview Hook - Swipe Gestures', () => {
         result.current.grade(confidence);
       });
 
+      // "Forgot" no longer advances straight away: it holds the card on its
+      // answer face for a restudy beat and waits for a tap. The FSRS write is
+      // deferred to that tap, not skipped — the grade is identical, only its
+      // timing moved. "Knew it" still commits immediately.
+      if (confidence === 'unknown') {
+        expect(result.current.restudying).toBe(true);
+        expect(mocks.mockUpdateWord).not.toHaveBeenCalled();
+
+        act(() => {
+          result.current.continueFromRestudy();
+        });
+
+        expect(result.current.restudying).toBe(false);
+      }
+
       await waitFor(() => {
         expect(mocks.mockUpdateWord).toHaveBeenCalledWith(101, confidence);
         expect(mocks.mockUpdateMetrics).toHaveBeenCalledWith(confidence, {
@@ -143,6 +158,45 @@ describe('useReview Hook - Swipe Gestures', () => {
           oldStability: expectedStability,
           newStability: 7.5,
         });
+      });
+    });
+
+    test('a forgotten card commits only once, on the tap that leaves the hold', async () => {
+      const word = createMockWord();
+      useFSRS.mockReturnValue({
+        currentWord: word,
+        wordQueue: [word],
+        isLoading: false,
+        isComplete: false,
+        progress: 0,
+        updateWord: mocks.mockUpdateWord,
+        invalidateQueries: mocks.mockInvalidateQueries,
+      });
+
+      const wrapper = createWrapper();
+      const { result } = renderHook(() => useReview(), { wrapper });
+
+      act(() => {
+        result.current.revealAnswer();
+      });
+      act(() => {
+        result.current.grade('unknown');
+      });
+      // A second "Forgot" while already holding must not stack another hold or
+      // double-write — grade() re-entering is exactly what the ref guards.
+      act(() => {
+        result.current.grade('unknown');
+      });
+      act(() => {
+        result.current.continueFromRestudy();
+      });
+      // And a stray continue after the hold is over is a no-op.
+      act(() => {
+        result.current.continueFromRestudy();
+      });
+
+      await waitFor(() => {
+        expect(mocks.mockUpdateWord).toHaveBeenCalledTimes(1);
       });
     });
 

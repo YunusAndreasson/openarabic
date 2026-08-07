@@ -143,7 +143,7 @@ describe('useSimpleAudioPlayer Hook', () => {
         playResult = await result.current.play(track);
       });
 
-      expect(simpleAudioService.play).toHaveBeenCalledWith(track);
+      expect(simpleAudioService.play).toHaveBeenCalledWith(track, undefined);
       expect(playResult).toBeTruthy();
     });
 
@@ -182,8 +182,8 @@ describe('useSimpleAudioPlayer Hook', () => {
       });
 
       expect(simpleAudioService.play).toHaveBeenCalledTimes(2);
-      expect(simpleAudioService.play).toHaveBeenCalledWith(track1);
-      expect(simpleAudioService.play).toHaveBeenCalledWith(track2);
+      expect(simpleAudioService.play).toHaveBeenCalledWith(track1, undefined);
+      expect(simpleAudioService.play).toHaveBeenCalledWith(track2, undefined);
     });
   });
 
@@ -416,7 +416,7 @@ describe('useSimpleAudioPlayer Hook', () => {
       await act(async () => {
         await result.current.play(track);
       });
-      expect(simpleAudioService.play).toHaveBeenCalledWith(track);
+      expect(simpleAudioService.play).toHaveBeenCalledWith(track, undefined);
 
       // Stop
       await act(async () => {
@@ -435,7 +435,7 @@ describe('useSimpleAudioPlayer Hook', () => {
         await result.current.stop();
       });
 
-      expect(simpleAudioService.play).toHaveBeenCalledWith(track);
+      expect(simpleAudioService.play).toHaveBeenCalledWith(track, undefined);
       expect(simpleAudioService.seekTo).toHaveBeenCalledWith(60);
       expect(simpleAudioService.stop).toHaveBeenCalled();
     });
@@ -491,7 +491,7 @@ describe('useSimpleAudioPlayer Hook', () => {
         await result.current.play(track);
       });
 
-      expect(simpleAudioService.play).toHaveBeenCalledWith(track);
+      expect(simpleAudioService.play).toHaveBeenCalledWith(track, undefined);
     });
 
     test('should handle invalid seek position (negative)', async () => {

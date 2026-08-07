@@ -9,7 +9,7 @@
  * (accept → Known), "No, I missed it" (reject → Unknown) and "Try again"
  * (re-record). `result.suggestion` emphasises the likely choice.
  *
- * Mirrors VoiceStatusIndicator's reanimated FadeIn + theme-token styling so the
+ * Mirrors the voice channel's reanimated FadeIn + theme-token styling so the
  * two read as one cohesive voice surface.
  */
 import { memo, type FC } from 'react';

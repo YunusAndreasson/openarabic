@@ -11,7 +11,7 @@
 import { Platform } from 'react-native';
 import { AudioManager, AudioRecorder, type AudioBuffer } from 'react-native-audio-api';
 
-import { mark as diagMark, recordPromptToMic } from '@/utils/reviewDiagnostics';
+import { mark as diagMark, recordPromptToMic, span as diagSpan } from '@/utils/reviewDiagnostics';
 
 interface AudioReadyEvent {
   buffer: AudioBuffer;
@@ -188,6 +188,11 @@ export interface RecordingHandlers {
    *  genuinely capturing. start() resolving is NOT that moment: the input
    *  stream needs a few hundred ms more before samples flow. */
   onCapturing?: () => void;
+  /** Per-buffer RMS (~10 Hz), for a live input meter. Deliberately a bare
+   *  number and not a state setter: the consumer writes it straight into a
+   *  Reanimated shared value, so the meter costs no React render. The energy
+   *  gate reads the same figure — this is a tap on it, not a second measure. */
+  onLevel?: (rms: number) => void;
 }
 
 export class MicPermissionDeniedError extends Error {
@@ -197,7 +202,10 @@ export class MicPermissionDeniedError extends Error {
   }
 }
 
-async function ensureMicPermission(): Promise<boolean> {
+/** Exported so the review session can ask for the mic BEFORE a card is waiting
+ *  on it — see VoiceGradingProvider.prewarmPermission. Idempotent: once granted
+ *  it is a cheap native check. */
+export async function ensureMicPermission(): Promise<boolean> {
   const current = await AudioManager.checkRecordingPermissions();
   if (current === 'Granted') return true;
   const requested = await AudioManager.requestRecordingPermissions();
@@ -309,12 +317,28 @@ export class VoiceRecorder {
 
   async start(handlers: RecordingHandlers = {}, config?: RecordingConfig): Promise<void> {
     if (this.recorder) return;
+    // Spanned: this is normally a no-op re-check, but on a first run it opens
+    // the OS permission dialog and blocks here for as long as the learner takes
+    // to answer — mid-card, with the UI showing nothing. It sits before
+    // `startedAt` below, so firstBufferMs never counted it and the HUD's
+    // "mic open Xms" silently under-reported the real wait.
+    // See VoiceGradingProvider.prewarmPermission, which moves the ask to the
+    // start of the session so it stops interrupting a card.
+    const endPermission = diagSpan('mic.permission');
     const allowed = await ensureMicPermission();
+    endPermission({ allowed });
     if (!allowed) throw new MicPermissionDeniedError();
 
     this.config = config ?? { ...DEFAULT_RECORDING_CONFIG };
 
     if (Platform.OS === 'ios') {
+      // Spanned for the same reason: an AVAudioSession category change plus
+      // activation can block for seconds when another process holds the session
+      // or a Bluetooth route is renegotiating, and it too lands before
+      // `startedAt`. This is the one window on the arm path that Android cannot
+      // reproduce, so it is the prime suspect for the intermittent multi-second
+      // mic stall reported on device.
+      const endIosSession = diagSpan('mic.iosSession');
       try {
         AudioManager.setAudioSessionOptions({
           iosCategory: 'playAndRecord',
@@ -329,7 +353,9 @@ export class VoiceRecorder {
           iosOptions: ['defaultToSpeaker'],
         });
         await AudioManager.setAudioSessionActivity(true);
+        endIosSession();
       } catch (sessionErr) {
+        endIosSession({ failed: true });
         diagMark('mic.iosSession.failed', {
           message: sessionErr instanceof Error ? sessionErr.message : String(sessionErr),
         });
@@ -407,6 +433,7 @@ export class VoiceRecorder {
     const elapsed = Date.now() - this.startedAt;
     const bufferMs = (event.numFrames / (this.sourceSampleRate || TARGET_SAMPLE_RATE)) * 1000;
     if (rms > this.peakRms) this.peakRms = rms;
+    this.handlers.onLevel?.(rms);
 
     const { state, stop } = stepEnergyGate(
       this.gate,

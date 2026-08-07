@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import type { ReactNode, Ref } from 'react';
+import { useCallback, useEffect, useImperativeHandle, useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
@@ -10,33 +11,48 @@ import Animated, {
   useAnimatedStyle,
 } from 'react-native-reanimated';
 
+import { ThemedText } from '@/components/ThemedText';
+import { Ionicons } from '@/components/ui/Icon';
 import { SPRING_CONFIG, TIMING_CONFIG } from '@/constants/animation';
-import { LAYOUT, SCREEN_WIDTH, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
+import { getThemeAwareElevation, LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useSwipeGesture } from '@/hooks/gestures/useSwipeGesture';
 import { useColors } from '@/hooks/theme/useColors';
-import type { AnimatedStyleProp as AppAnimatedStyleProp } from '@/types/ui/base.types';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import type {
+  AnimatedStyleProp as AppAnimatedStyleProp,
+  ReanimatedCSSAnimationStyle,
+} from '@/types/ui/base.types';
 import { withOpacity } from '@/utils/colorUtils';
+import { capitalizeFirstLetter } from '@/utils/stringUtils';
 import { detentFeedback } from '@/utils/haptics';
 
 import { WordDisplay } from './WordDisplay';
 
 const CARD_CONSTANTS = {
-  WIDTH: SCREEN_WIDTH - LAYOUT.SPACING.LARGE * 2,
-  HEIGHT: WORD_AREA_MIN_HEIGHT, // ~360
-  FLASH_OPACITY: 0.35,
+  /** Peak tint of the swipe wash, reached exactly AT the commit threshold. */
+  FLASH_OPACITY: 0.22,
   /** Degrees of tilt at the commit threshold — enough to read as a thrown card. */
   MAX_TILT_DEG: 7,
 } as const;
 
-const STATIC_STYLES = StyleSheet.create({
-  flashFill: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+/**
+ * A new card rises into place rather than materialising. State-driven (it
+ * replays whenever the keyed wrapper remounts on a word change), so per the
+ * split documented below it belongs on Reanimated's CSS API, and the builder is
+ * hoisted to module scope so the React Compiler sees a stable value.
+ */
+const CARD_ENTRANCE: ReanimatedCSSAnimationStyle = {
+  animationName: {
+    from: { opacity: 0, transform: [{ translateY: 18 }, { scale: 0.97 }] },
+    to: { opacity: 1, transform: [{ translateY: 0 }, { scale: 1 }] },
   },
+  animationDuration: TIMING_CONFIG.ENTRANCE.duration,
+  animationTimingFunction: 'ease-out',
+  animationFillMode: 'both',
+};
+
+const STATIC_STYLES = StyleSheet.create({
   fill: {
     position: 'absolute',
     top: 0,
@@ -49,11 +65,20 @@ const STATIC_STYLES = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  // Sizing container for the two overlaid faces — intentionally chrome-less so the
-  // word floats on the screen background (OpenArabic's look), not inside a card box.
-  contentBox: {
-    width: CARD_CONSTANTS.WIDTH,
-    height: CARD_CONSTANTS.HEIGHT,
+  // The card box. Sized by its parent (app/review.tsx lays out header / card /
+  // actions as a column) rather than the old fixed 360px, so the card grows
+  // with the screen instead of floating in it.
+  cardBox: {
+    flex: 1,
+    width: '100%',
+  },
+  entranceLayer: {
+    flex: 1,
+    width: '100%',
+  },
+  faceStack: {
+    flex: 1,
+    width: '100%',
   },
   face: {
     position: 'absolute',
@@ -61,28 +86,89 @@ const STATIC_STYLES = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
     backfaceVisibility: 'hidden',
+    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
+    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    paddingTop: LAYOUT.SPACING.LARGE,
+    paddingBottom: LAYOUT.SPACING.LARGE,
   },
-  faceFill: {
-    alignSelf: 'stretch',
+  facePressable: {
     flex: 1,
+    width: '100%',
+  },
+  // Swipe wash. Lives INSIDE the card now (matched radius, no clipping needed)
+  // instead of washing the whole screen — with a real surface the tint reads as
+  // the card being marked, not the app changing colour.
+  flashOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
+  },
+  verdictRow: {
+    position: 'absolute',
+    top: LAYOUT.SPACING.LARGE,
+    left: LAYOUT.SPACING.LARGE,
+    right: LAYOUT.SPACING.LARGE,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  divider: {
+    height: LAYOUT.BORDER.WIDTH.THIN,
+    alignSelf: 'stretch',
+    marginVertical: LAYOUT.SPACING.LARGE,
+  },
+  answerBody: {
+    flex: 1,
+    width: '100%',
+    alignItems: 'center',
+  },
+  questionBody: {
+    flex: 1,
+    width: '100%',
+    alignItems: 'center',
+    paddingTop: LAYOUT.SPACING.LARGE,
+    gap: LAYOUT.SPACING.LARGE,
+  },
+  // Replay is an explicit control now. It used to be "tap the Arabic", which
+  // was undiscoverable and only worked on the answer face.
+  replayButton: {
+    width: LAYOUT.BUTTON.HEIGHT.MEDIUM,
+    height: LAYOUT.BUTTON.HEIGHT.MEDIUM,
+    borderRadius: LAYOUT.BUTTON.HEIGHT.MEDIUM / 2,
+    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  meaning: {
+    textAlign: 'center',
   },
 });
 
+/** Imperative surface for grades that did not come from a drag. */
+export interface ReviewCardHandle {
+  /** Play the same commit exit a swipe would. */
+  commitTo: (direction: 'left' | 'right') => void;
+}
+
 interface ReviewFlipCardProps {
+  /** Lets the grade bar drive the card's exit, so a tapped grade and a swiped
+   *  one are the same motion. */
+  ref?: Ref<ReviewCardHandle>;
   /** Arabic prompt (shown on both faces via WordDisplay). */
   word: string;
   /** English meaning, revealed below the Arabic on the answer face. */
   answer: string;
+  /** Grammatical class, when known. Renders above the Arabic on both faces. */
+  wordType?: string | null;
   /** Whether the card is flipped to its answer face. */
   revealed: boolean;
   /** Flip to the answer (tap the front face). */
   onReveal: () => void;
-  /** Replay the Arabic prompt audio (tap the word on the answer face). */
+  /** Replay the Arabic prompt audio (tap the word). */
   onReplayAudio?: () => void;
   /** Fade style applied during a grade advance (useReview.transparentStyle). */
   opacityStyle: ReanimatedAnimatedStyle<ViewStyle> | AppAnimatedStyleProp<ViewStyle>;
@@ -94,20 +180,37 @@ interface ReviewFlipCardProps {
   onSwipeForgot: () => void;
   /** Swipe right → Knew it. Only active once revealed. */
   onSwipeKnewIt: () => void;
+  /** Holding a forgotten card for a restudy beat: swiping is off and the whole
+   *  answer face becomes "tap to continue". */
+  restudying?: boolean;
+  /** Leave the restudy hold (tap anywhere on the card). */
+  onRestudyContinue?: () => void;
+  /** Voice channel, hosted in the question face's lower half. */
+  questionSlot?: ReactNode;
+  /** Example sentence / context, below the meaning on the answer face. */
+  answerSlot?: ReactNode;
   testID?: string;
 }
 
 /**
- * The review card: the Arabic prompt floats on the screen (OpenArabic's clean,
- * surface-less word display). Tap the front to flip — a light 3D turn — to the
- * answer face, where the English meaning is revealed below the same Arabic
- * (reusing WordDisplay, so it reads exactly like the rest of the app). Once
- * revealed, swipe left = Forgot / right = Knew it (the centre "Guessed" lives on
- * the grade bar). The flip is the borrowed interaction; the look stays OpenArabic.
+ * The review card.
+ *
+ * This used to be deliberately chrome-less — the Arabic floated directly on the
+ * screen background, with the two faces sized by a fixed 360px box and their
+ * contents placed at hardcoded offsets. That was changed on purpose: with only
+ * a word and a gloss to show, the "card" was mostly empty space, and there was
+ * nowhere to put the things that actually help recall (an example sentence, the
+ * voice channel, a visible replay control). It is now a real surface, and the
+ * things it carries are what justify it.
+ *
+ * Tap the front to flip to the answer face; once revealed, swipe left = Forgot
+ * and right = Knew it (the centre "Guessed" lives on the grade bar).
  */
 export function ReviewFlipCard({
+  ref,
   word,
   answer,
+  wordType,
   revealed,
   onReveal,
   onReplayAudio,
@@ -116,9 +219,14 @@ export function ReviewFlipCard({
   isUpdating,
   onSwipeForgot,
   onSwipeKnewIt,
+  restudying = false,
+  onRestudyContinue,
+  questionSlot,
+  answerSlot,
   testID,
 }: ReviewFlipCardProps) {
   const colors = useColors();
+  const isDarkMode = useIsDarkMode();
 
   // The detent tick fires while the finger is still down, the frame the drag
   // crosses the line that decides the grade — the same threshold the commit
@@ -134,14 +242,22 @@ export function ReviewFlipCard({
     translateX,
     isAnimatingRef,
     swipeThreshold,
+    commitTo,
   } = useSwipeGesture({
-    enabled: revealed && !isUpdating, // can't grade what you haven't seen
+    // Can't grade what you haven't seen — and during a restudy hold the grade
+    // is already decided, so a swipe would fling a card that isn't leaving.
+    enabled: revealed && !isUpdating && !restudying,
     onSwipeLeft: onSwipeForgot,
     onSwipeRight: onSwipeKnewIt,
     onCommitArmedChange: handleCommitArmedChange,
     exitOnCommit: true,
     springConfig: SPRING_CONFIG.CARD,
   });
+
+  // Tapping "Forgot" and swiping left are the same decision, so they now leave
+  // the same way. Exposed rather than handled internally because the grade bar
+  // lives outside this component, next to the intervals it labels.
+  useImperativeHandle(ref, () => ({ commitTo }), [commitTo]);
 
   // The flip is driven purely by React state, which is the case Reanimated 4's
   // docs put squarely in the CSS-transitions column: "Reach for CSS transitions
@@ -177,6 +293,21 @@ export function ReviewFlipCard({
       { rotateY: revealed ? '360deg' : '180deg' },
     ],
   };
+
+  // In dark mode getThemeAwareElevation zeroes shadowOpacity by design, so the
+  // card cannot rely on a shadow to separate from the background there — it
+  // steps up to elevation2 instead, which is what the rest of the app does.
+  const surfaceStyle = useMemo(
+    () => [
+      {
+        backgroundColor: isDarkMode ? colors.elevation2 : colors.card,
+        borderColor: colors.cardBorder,
+        shadowColor: colors.shadow,
+      },
+      getThemeAwareElevation('CARD', isDarkMode),
+    ],
+    [colors.card, colors.cardBorder, colors.shadow, colors.elevation2, isDarkMode],
+  );
 
   // Recentre for the new card. cancelAnimation first: the committed card is
   // still flying off screen when the next word lands, and a running withTiming
@@ -220,6 +351,21 @@ export function ReviewFlipCard({
     return { backgroundColor: colors.transparent };
   });
 
+  // The wash says "something is happening"; these say WHICH grade. On the same
+  // ramp as the tint, so the word is fully legible at the moment releasing would
+  // commit it — which is the moment the learner can still change their mind.
+  const forgotLabelStyle = useAnimatedStyle(() => {
+    'worklet';
+    const tx = translateX.get();
+    return { opacity: tx < 0 ? Math.min(Math.abs(tx) / swipeThreshold, 1) : 0 };
+  });
+
+  const knewLabelStyle = useAnimatedStyle(() => {
+    'worklet';
+    const tx = translateX.get();
+    return { opacity: tx > 0 ? Math.min(tx / swipeThreshold, 1) : 0 };
+  });
+
   // Drag response: the card follows the finger and tilts into the throw, so the
   // gesture reads as physically moving a card rather than sliding a panel.
   // Needs useAnimatedStyle (not an inline shared value) because the tilt is
@@ -237,49 +383,122 @@ export function ReviewFlipCard({
   });
 
   return (
-    <>
-      {/* Swipe-direction flash, behind the word. Shares the card's fade so the
-          tint leaves with the card it belongs to instead of snapping off when
-          the swipe offset resets for the next word. */}
-      <Animated.View
-        style={[STATIC_STYLES.flashFill, swipeBackgroundStyle, opacityStyle]}
-        pointerEvents="none"
-      />
-
-      <GestureDetector gesture={panGesture}>
-        <Animated.View style={STATIC_STYLES.fill}>
-          <View style={STATIC_STYLES.centered}>
-            <Animated.View
-              style={[STATIC_STYLES.contentBox, cardSlideStyle, opacityStyle]}
-              testID={testID}
-            >
-              {/* Answer face: the same Arabic with its English meaning revealed below. */}
+    <GestureDetector gesture={panGesture}>
+      <Animated.View style={STATIC_STYLES.centered}>
+        <Animated.View style={[STATIC_STYLES.cardBox, cardSlideStyle, opacityStyle]}>
+          {/* Keyed so a new word replays the entrance. Only this wrapper
+              remounts — the gesture, its shared values and the surfaces below
+              are outside it and keep their identity across cards. */}
+          <Animated.View
+            key={wordKey}
+            style={[STATIC_STYLES.entranceLayer, CARD_ENTRANCE]}
+            testID={testID}
+          >
+            <View style={STATIC_STYLES.faceStack}>
+              {/* Answer face: the same Arabic, its meaning, and the evidence. */}
               <Animated.View
                 pointerEvents={revealed ? 'auto' : 'none'}
-                style={[STATIC_STYLES.face, backStyle]}
+                style={[STATIC_STYLES.face, surfaceStyle, backStyle]}
               >
-                <WordDisplay word={word} translation={answer} onWordPress={onReplayAudio} />
+                {/* During a restudy hold the whole face is the continue target,
+                    so the learner can carry on with one tap anywhere rather than
+                    aiming at the button. Outside that hold there is no face-level
+                    press — the grade bar owns the decision. */}
+                <Pressable
+                  style={STATIC_STYLES.facePressable}
+                  onPress={restudying ? onRestudyContinue : undefined}
+                  disabled={!restudying}
+                  accessibilityRole={restudying ? 'button' : undefined}
+                  accessibilityLabel={restudying ? STRINGS.RESTUDY_CONTINUE : undefined}
+                >
+                  <WordDisplay word={word} wordType={wordType} onWordPress={onReplayAudio}>
+                    <View
+                      style={[STATIC_STYLES.divider, { backgroundColor: colors.border }]}
+                      pointerEvents="none"
+                    />
+                    <View style={STATIC_STYLES.answerBody}>
+                      <ThemedText
+                        type="heading2"
+                        colorName="englishText"
+                        style={STATIC_STYLES.meaning}
+                      >
+                        {answer ? capitalizeFirstLetter(answer) : answer}
+                      </ThemedText>
+                      {answerSlot}
+                    </View>
+                  </WordDisplay>
+                </Pressable>
               </Animated.View>
 
-              {/* Question face: the Arabic prompt alone. Tap anywhere to reveal. */}
+              {/* Question face: the Arabic alone, with the voice channel below
+                  it. Tap anywhere that isn't an interactive child to reveal. */}
               <Animated.View
                 pointerEvents={revealed ? 'none' : 'auto'}
-                style={[STATIC_STYLES.face, frontStyle]}
+                style={[STATIC_STYLES.face, surfaceStyle, frontStyle]}
               >
                 <Pressable
-                  style={STATIC_STYLES.faceFill}
+                  style={STATIC_STYLES.facePressable}
                   onPress={onReveal}
                   accessibilityRole="button"
                   accessibilityLabel={STRINGS.SHOW_ANSWER}
                 >
-                  <WordDisplay word={word} />
+                  {/* No onWordPress here on purpose. Tapping the word is the
+                      most natural way to ask for the answer, and making the
+                      hero a replay button on this face swallowed that tap —
+                      the card played the audio again instead of flipping.
+                      Replay gets its own control below; the whole question
+                      face reveals. */}
+                  <WordDisplay word={word} wordType={wordType}>
+                    <View style={STATIC_STYLES.questionBody}>
+                      {onReplayAudio ? (
+                        <Pressable
+                          onPress={onReplayAudio}
+                          accessibilityRole="button"
+                          accessibilityLabel={STRINGS.REPLAY_WORD_AUDIO}
+                          hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
+                          style={({ pressed }) => [
+                            STATIC_STYLES.replayButton,
+                            {
+                              borderColor: colors.border,
+                              opacity: pressed ? LAYOUT.OPACITY.PRESSED : LAYOUT.OPACITY.FULL,
+                            },
+                          ]}
+                        >
+                          <Ionicons
+                            name="volume-medium-outline"
+                            size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                            color={colors.secondaryText}
+                          />
+                        </Pressable>
+                      ) : null}
+                      {questionSlot}
+                    </View>
+                  </WordDisplay>
                 </Pressable>
               </Animated.View>
-            </Animated.View>
-          </View>
+
+              {/* Swipe feedback, above both faces so it tints whichever is up. */}
+              <Animated.View
+                style={[STATIC_STYLES.flashOverlay, swipeBackgroundStyle]}
+                pointerEvents="none"
+              />
+              <View style={STATIC_STYLES.verdictRow} pointerEvents="none">
+                <Animated.View style={forgotLabelStyle}>
+                  <ThemedText skipDefaultColor type="label" style={{ color: colors.error }}>
+                    {STRINGS.GRADE_FORGOT}
+                  </ThemedText>
+                </Animated.View>
+                <Animated.View style={knewLabelStyle}>
+                  <ThemedText skipDefaultColor type="label" style={{ color: colors.success }}>
+                    {STRINGS.GRADE_KNEW_IT}
+                  </ThemedText>
+                </Animated.View>
+              </View>
+            </View>
+          </Animated.View>
         </Animated.View>
-      </GestureDetector>
-    </>
+      </Animated.View>
+    </GestureDetector>
   );
 }
 

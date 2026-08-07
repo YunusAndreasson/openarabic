@@ -203,8 +203,13 @@ export const createReanimatedMock = () => {
         return {} as T;
       }
     },
+    // `get()` alongside `value`: components written against Reanimated 4's
+    // accessor API read derived values with .get(), and without it every
+    // useAnimatedStyle that consumes one throws into the catch below and
+    // silently yields an empty style.
     useDerivedValue: <T,>(derivation: () => T) => ({
       value: derivation(),
+      get: () => derivation(),
     }),
     useAnimatedProps: <T extends Record<string, unknown>>(propsCallback: () => T): T => {
       try {

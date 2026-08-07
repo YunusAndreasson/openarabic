@@ -41,7 +41,22 @@ import { matchSingleWord } from '@/utils/voiceMatching';
  * — the answer is lost, the card times out, and it reads as "the mic is
  * unreliable".
  */
-export type VoicePhase = 'idle' | 'arming' | 'listening' | 'checking' | 'result' | 'disabled';
+export type VoicePhase =
+  | 'idle'
+  | 'arming'
+  | 'listening'
+  | 'checking'
+  | 'result'
+  /** The recognizer is still downloading or loading — voice will work shortly.
+   *  Split out from the old catch-all `disabled`, which used the same value for
+   *  this and for a refused microphone. They mean opposite things to a learner
+   *  ("wait" vs "this will never work until you change a setting") and the
+   *  channel could not tell them apart. */
+  | 'loading'
+  /** The OS refused the microphone. Momentary in practice — the arm path also
+   *  turns the voice setting off, which unmounts the channel — but it must not
+   *  read as "preparing" for even that long. */
+  | 'denied';
 
 /**
  * A wrong / ambiguous answer the learner can act on. A *correct* answer never
@@ -135,6 +150,33 @@ const MAX_ARM_RETRIES = 3;
 /** Backoff between arm retries, multiplied by the attempt number. Long enough
  *  for a previous recorder's native teardown to complete. */
 const ARM_RETRY_BASE_MS = 250;
+/** Ceiling on a single transcription. The native call has no timeout of its
+ *  own, so a hung ONNX session left the card stuck on "Grading…" with no way
+ *  out but advancing. Measured on the Android emulator: 2949 ms cold (ONNX warm
+ *  start) then ~1150 ms steady for 8 s of audio, so this is ~5x the worst
+ *  observed case — it only ever fires on a genuine hang. */
+const TRANSCRIBE_TIMEOUT_MS = 15000;
+
+/** Resolves to `null` if the transcription outlives its budget, so the caller
+ *  falls through to the "didn't catch that" panel instead of hanging. The
+ *  native promise is abandoned, not cancelled — sherpa exposes no cancel — but
+ *  a late resolution is harmless: `cancelled` already guards the continuation. */
+async function transcribeWithTimeout(
+  run: Promise<string | null>,
+  timeoutMs: number = TRANSCRIBE_TIMEOUT_MS,
+): Promise<{ transcript: string; timedOut: boolean }> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<null>(resolve => {
+    timer = setTimeout(() => resolve(null), timeoutMs);
+  });
+  try {
+    const winner = await Promise.race([run.then(value => ({ value })), timeout]);
+    if (winner === null) return { transcript: '', timedOut: true };
+    return { transcript: winner.value ?? '', timedOut: false };
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 export function useVoiceReview({
   expected,
@@ -160,6 +202,11 @@ export function useVoiceReview({
   retry: () => void;
   /** Mute / unmute auto-listen for the rest of this session. */
   togglePause: () => void;
+  /** Open the mic for this card right now, whatever the gates say — the
+   *  learner asked for it (hold-to-talk / skip the prompt). */
+  speakNow: () => void;
+  /** End a hold-to-talk recording and grade what was captured. */
+  stopSpeaking: () => void;
 } {
   const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
   // Advanced dev toggles — snapshotted into each telemetry attempt's `meta`.
@@ -203,12 +250,17 @@ export function useVoiceReview({
   // arm effect / stable callbacks always log the current values without taking
   // the settings as effect deps and re-arming when a toggle flips).
   const settingsRef = useRef({ energyGateEnabled, gainNormalizeEnabled, iosRawMode, debugEnabled });
+  // Read by speakNow/stopSpeaking, which are stable callbacks handed to the
+  // voice channel: they need the CURRENT phase to decide whether there is
+  // anything to take over or to stop.
+  const phaseRef = useRef<VoicePhase>('idle');
   useEffect(() => {
     onKnownAutoRef.current = onKnownAuto;
     onUnknownAutoRef.current = onUnknownAuto;
     onRevealAnswerRef.current = onRevealAnswer;
     stopAudioRef.current = stopAudio;
     settingsRef.current = { energyGateEnabled, gainNormalizeEnabled, iosRawMode, debugEnabled };
+    phaseRef.current = phase;
   });
 
   // The most recent resolved-or-pending attempt's loggable fields (everything
@@ -244,6 +296,14 @@ export function useVoiceReview({
     armedForKeyRef.current = null;
     attemptCtxRef.current = null;
     armFailuresRef.current = 0;
+    // A retry request belongs to the card that asked for it. It used to be
+    // cleared only inside the arm effect, *after* every gate passed — so a
+    // retry scheduled by an arm failure (or by resuming from pause) that was
+    // still pending when the card advanced carried `isRetry === true` into the
+    // NEXT card, where it skips the prompt-audio gate below and opens the mic
+    // over that card's Arabic prompt. That is the exact failure the per-card
+    // promptAudioDoneKey gate exists to prevent.
+    retryRequestedRef.current = false;
     if (armRetryTimerRef.current) {
       clearTimeout(armRetryTimerRef.current);
       armRetryTimerRef.current = null;
@@ -258,6 +318,19 @@ export function useVoiceReview({
     [],
   );
 
+  // Get the microphone permission out of the way at session start. The ask used
+  // to happen inside the first arm(), which put the OS dialog in the middle of a
+  // card — the prompt had already played and the screen showed nothing while the
+  // learner read a system alert. Doing it here keeps the ask contextual (they
+  // just opened a practice session) and off the per-card path.
+  //
+  // Not gated on `ready`: waiting for the audio preloader would put us back in
+  // the same window we are trying to leave.
+  useEffect(() => {
+    if (!voiceEnabled || paused) return;
+    void voice.prewarmPermission();
+  }, [voiceEnabled, paused, voice]);
+
   // Surface a passive "Preparing voice…" pill ONLY while the model is genuinely
   // loading. On a load error (or any non-loading not-ready state) stay idle —
   // otherwise the pill spins forever on a failure that will never resolve; the
@@ -266,7 +339,7 @@ export function useVoiceReview({
     if (!voiceEnabled) return;
     if (voice.isReady) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPhase(voice.isLoading ? 'disabled' : 'idle');
+    setPhase(voice.isLoading ? 'loading' : 'idle');
   }, [voiceEnabled, voice.isLoading, voice.isReady]);
 
   useEffect(() => {
@@ -341,7 +414,7 @@ export function useVoiceReview({
           showToast(STRINGS.VOICE_MIC_PERMISSION_DENIED);
           dispatch(setVoiceEnabled(false));
           setDebug(d => ({ ...d, armError: 'permission' }));
-          setPhase('disabled');
+          setPhase('denied');
           return;
         }
         Sentry.addBreadcrumb({
@@ -394,9 +467,22 @@ export function useVoiceReview({
       const endTranscribe = diagSpan('stt.transcribe', {
         samples: outcome.result.waveform.length,
       });
-      const transcript = (await voice.transcribe(outcome.result.waveform)) ?? '';
-      endTranscribe({ chars: transcript.length });
+      const { transcript, timedOut } = await transcribeWithTimeout(
+        voice.transcribe(outcome.result.waveform),
+      );
+      endTranscribe({ chars: transcript.length, timedOut });
       if (cancelled) return;
+      if (timedOut) {
+        // Treat a hung recognizer exactly like hearing nothing: surface the
+        // panel so the learner can self-grade or retry. Never auto-Unknown.
+        diagMark('stt.timeout', { samples: outcome.result.waveform.length });
+        Sentry.addBreadcrumb({
+          category: 'voice',
+          level: 'warning',
+          message: 'voice.transcribe.timeout',
+        });
+        setDebug(d => ({ ...d, armError: 'transcribe-timeout' }));
+      }
 
       void analytics.track(ANALYTICS_EVENTS.VOICE_TRANSCRIPT, {
         transcriptLength: transcript.length,
@@ -598,6 +684,42 @@ export function useVoiceReview({
     setAttempt(a => a + 1);
   }, []);
 
+  /**
+   * "Open the mic, now." The escape hatch for every card whose automatic arm
+   * did not happen — the prompt is still playing and the learner is ready, or
+   * the arm ladder gave up and the card is sitting there with a dead mic.
+   *
+   * Mechanically this is `retry()` without an attempt to log: the gate that
+   * waits for the prompt is skipped, the already-armed latch is released, and
+   * the effect re-runs. It also stops the prompt, which is what makes it a
+   * skip as well as a takeover — the watcher sees the track disappear and
+   * settles at zero grace instead of waiting out the clip.
+   */
+  const speakNow = useCallback((): void => {
+    // A mic that is already open (or grading) is not something to take over —
+    // re-arming here would throw away audio the learner has already spoken.
+    if (phaseRef.current === 'listening' || phaseRef.current === 'checking') return;
+    if (pausedRef.current) return;
+    if (!voice.isReady) return;
+    diagMark('mic.speakNow', { phase: phaseRef.current });
+    stopAudioRef.current();
+    setResult(null);
+    setPhase('arming');
+    retryRequestedRef.current = true;
+    armedForKeyRef.current = null;
+    setAttempt(a => a + 1);
+  }, [voice.isReady]);
+
+  /**
+   * Hold released. Only meaningful once the mic is genuinely capturing —
+   * before that there is no waveform to grade, so the release is ignored and
+   * the recording the hold started runs on under the energy gate.
+   */
+  const stopSpeaking = useCallback((): void => {
+    if (phaseRef.current !== 'listening') return;
+    voice.stopListening();
+  }, [voice]);
+
   const togglePause = useCallback((): void => {
     const next = !pausedRef.current;
     pausedRef.current = next;
@@ -620,5 +742,16 @@ export function useVoiceReview({
     // effect bails under the panel; the next card arms once the user resolves it.
   }, []);
 
-  return { phase, debug, result, paused, accept, reject, retry, togglePause };
+  return {
+    phase,
+    debug,
+    result,
+    paused,
+    accept,
+    reject,
+    retry,
+    togglePause,
+    speakNow,
+    stopSpeaking,
+  };
 }

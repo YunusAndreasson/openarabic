@@ -70,6 +70,13 @@ interface UseReviewReturn {
   transparentStyle: AnimatedStyleProp<ViewStyle>;
   sessionMetrics: SessionMetrics;
   handleReplayAudio: () => Promise<void>;
+  /** Play an example sentence's audio (explicit user tap only). */
+  playSentenceAudio: (storagePath: string) => Promise<void>;
+  /** True while a forgotten card is held on its answer face for a restudy beat
+   *  instead of advancing. The bottom slot becomes a "Tap to continue" prompt. */
+  restudying: boolean;
+  /** Leave the restudy hold and commit the pending "Forgot". */
+  continueFromRestudy: () => void;
   isAudioPreloading: boolean;
   audioPreloadProgress: number;
   /** The first card's audio is cached — the session may run. Later cards keep
@@ -94,6 +101,29 @@ interface UseReviewReturn {
 }
 
 // Timing constants for transitions (milliseconds)
+/**
+ * Playback options specific to the review lane. Both settings aim at the same
+ * thing: the microphone is gated on the Arabic prompt finishing, so every
+ * millisecond between "the word ended" and "we know the word ended" is dead air
+ * the learner sits through with nothing on screen.
+ *
+ * - `statusIntervalMs`: the player's default 500 ms tick bounds how quickly
+ *   `didJustFinish` can be observed. Review clips run ~0.8-1.8 s (measured), so
+ *   half a second of detection lag is a large fraction of a wait we are
+ *   actively blocking on. Scoped to this lane — article and playlist playback
+ *   gain nothing from a faster tick and would only pay for the extra events.
+ * - `readyTimeoutMs`: when a cache download fails, `audioCache.getAudio`
+ *   returns the REMOTE url as a fallback, which flips `waitForPlayerReady` onto
+ *   its 20 s streaming budget *and* skips the self-heal below (that path is
+ *   gated on `localPath !== url`). Twenty seconds of silence is never the right
+ *   answer for a one-word prompt: fail fast, let the card continue without
+ *   audio, and let the mic open.
+ */
+const REVIEW_PLAY_OPTIONS = {
+  statusIntervalMs: 100,
+  readyTimeoutMs: 4000,
+} as const;
+
 const TRANSITION_DELAYS = {
   /**
    * Card dissolve on advance. Matched to the swipe's fling-out so a committed
@@ -161,6 +191,11 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   // Drives the voice-grading mic arm; never reset on its own — a stale value
   // from a prior card can't match the new currentWordKey (which encodes reps).
   const [promptAudioDoneKey, setPromptAudioDoneKey] = useState<string | null>(null);
+  // Holding a forgotten card on its answer face for a restudy beat before it
+  // advances. Mirrored in a ref because `grade` is a stable callback that must
+  // read the live value to know whether it is the interception or the commit.
+  const [restudying, setRestudying] = useState(false);
+  const restudyRef = useRef(false);
 
   // Consolidated time tracking refs — initial timestamp captured once via lazy state.
   const [mountTime] = useState(() => Date.now());
@@ -271,6 +306,11 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     setShowTranslation(false);
     setRevealed(false);
     setCurrentMeaning('');
+    // A restudy hold belongs to the card that earned it. Clearing both here
+    // means an interrupted hold (session close, chunk restart) can never leak
+    // into the next card and swallow its first "Forgot".
+    restudyRef.current = false;
+    setRestudying(false);
     // Reset stale completion flag if a new word/session appears
     if (currentWordKey !== 'none' && stateRefs.current.completionTriggered) {
       stateRefs.current.completionTriggered = false;
@@ -367,7 +407,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     const seq = ++playAudioSeqRef.current;
 
     try {
-      const success = await audioPlayerRef.current.play(makeTrack(localPath));
+      const success = await audioPlayerRef.current.play(makeTrack(localPath), REVIEW_PLAY_OPTIONS);
       if (success) return true;
 
       // false can also mean this play was superseded by a newer play/stop —
@@ -382,7 +422,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
         await audioCache.invalidate(url);
         const freshPath = await audioCache.getAudio(url, { quick: true });
         if (playAudioSeqRef.current !== seq) return false;
-        return await audioPlayerRef.current.play(makeTrack(freshPath));
+        return await audioPlayerRef.current.play(makeTrack(freshPath), REVIEW_PLAY_OPTIONS);
       }
       return false;
     } catch (error) {
@@ -435,15 +475,8 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   // already on screen, so this is a clean fade-out → FSRS write → next card
   // (no meaning overlay, no English replay). `fromVoice` skips the reveal guard
   // for the voice auto-advance path (speaking the answer IS the proof).
-  const grade = useCallback(
+  const commitGrade = useCallback(
     (confidence: WordConfidence, opts: { fromVoice?: boolean } = {}) => {
-      if (stateRefs.current.isUpdatingWord || isComplete || stateRefs.current.completionTriggered) {
-        return;
-      }
-      // Grading only happens after the answer is revealed — except a voice match,
-      // which confirms the answer without an on-screen reveal.
-      if (!revealed && !opts.fromVoice) return;
-
       diagMark('grade', { confidence, fromVoice: opts.fromVoice ?? false });
       stateRefs.current.isUpdatingWord = true;
       setIsUpdatingUI(true);
@@ -478,8 +511,85 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       fadeOut(advance);
       setTimer('fadeAnimation', advance, TRANSITION_DELAYS.fadeWatchdog);
     },
-    [revealed, isComplete, fadeOut, processFeedback, setTimer, clearTimer, stopAudioSafely],
+    [fadeOut, processFeedback, setTimer, clearTimer, stopAudioSafely],
   );
+
+  /**
+   * Grade the current card — with one interception.
+   *
+   * A forgotten word used to dissolve straight into the next card and come back
+   * three cards later with nothing learned in between. The moment immediately
+   * after a failed retrieval is when re-encoding is most effective, and spending
+   * it on a 180 ms fade throws it away. So "Forgot" first holds the card on its
+   * answer face with the meaning and an example, replays the Arabic, and waits
+   * for a tap.
+   *
+   * The interception sits BEFORE any of the advance machinery on purpose: the
+   * re-entrancy lock, the fade-callback sequencing, the threefold completion
+   * guard and the drill requeue all run exactly as they did, just later. Holding
+   * the card *after* `updateWord()` would not work — `currentWord` has already
+   * moved on by then.
+   *
+   * At the 0.90 retention target this fires on roughly one card in ten.
+   */
+  /** Put the card into the restudy hold: show the answer and replay the Arabic. */
+  const enterRestudy = useCallback(
+    (fromVoice: boolean) => {
+      restudyRef.current = true;
+      setRestudying(true);
+      diagMark('restudy.enter', { fromVoice });
+      // The voice path never flips the card (its result panel is the answer
+      // surface), so a miss can arrive here still on the question face. Show
+      // the answer before asking the learner to study it.
+      setRevealed(true);
+      setCurrentMeaning(currentWord?.root?.meaning || STRINGS.NO_TRANSLATION_AVAILABLE);
+      setShowTranslation(true);
+      // Replay the Arabic rather than the English: pairing the form the learner
+      // failed on with the meaning now in front of them is the association
+      // worth strengthening. Setting showTranslation above suppresses the
+      // automatic prompt-replay effect, so this is the only playback that fires.
+      const audioPath = currentWord?.root?.audio_url;
+      if (!audioPath) return;
+      const replayUrl = generateStorageUrl('audio', audioPath);
+      if (replayUrl) playAudio(replayUrl).catch(handleError);
+    },
+    [currentWord?.root?.meaning, currentWord?.root?.audio_url, playAudio],
+  );
+
+  const grade = useCallback(
+    (confidence: WordConfidence, opts: { fromVoice?: boolean } = {}) => {
+      if (stateRefs.current.isUpdatingWord || isComplete || stateRefs.current.completionTriggered) {
+        return;
+      }
+      // Grading only happens after the answer is revealed — except a voice match,
+      // which confirms the answer without an on-screen reveal.
+      if (!revealed && !opts.fromVoice) return;
+
+      // While a restudy hold is up the grade is already decided; only the tap
+      // that leaves the hold may commit it. Without this a second "Forgot"
+      // arriving during the hold fell straight through to the commit and wrote
+      // the card twice (caught by useReview.swipe.test).
+      if (restudyRef.current) return;
+
+      if (confidence === 'unknown') {
+        enterRestudy(opts.fromVoice ?? false);
+        return;
+      }
+
+      commitGrade(confidence, opts);
+    },
+    [revealed, isComplete, commitGrade, enterRestudy],
+  );
+
+  /** Leave the restudy hold and actually commit the "Forgot". */
+  const continueFromRestudy = useCallback(() => {
+    if (!restudyRef.current) return;
+    restudyRef.current = false;
+    setRestudying(false);
+    diagMark('restudy.continue');
+    lightFeedback();
+    commitGrade('unknown');
+  }, [commitGrade]);
 
   // Effect: Handle completion transition
   useEffect(() => {
@@ -699,6 +809,22 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     }
   }, [currentWord, playAudio]);
 
+  /**
+   * Play an example sentence's audio. Explicitly user-initiated only — it is
+   * never preloaded and never auto-plays, so the session keeps its property of
+   * making no background network calls (a warm session is `net: 0`; the debug
+   * HUD turns red otherwise). A tap that has to fetch is the learner's choice.
+   */
+  const playSentenceAudio = useCallback(
+    async (storagePath: string) => {
+      const audioUrl = generateStorageUrl('audio', storagePath);
+      if (audioUrl) {
+        playAudio(audioUrl).catch(handleError);
+      }
+    },
+    [playAudio],
+  );
+
   const handleClose = () => {
     const mounted = { current: true };
 
@@ -850,6 +976,9 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     transparentStyle: opacityStyle,
     sessionMetrics,
     handleReplayAudio,
+    playSentenceAudio,
+    restudying,
+    continueFromRestudy,
     isAudioPreloading,
     audioPreloadProgress,
     isAudioReady,

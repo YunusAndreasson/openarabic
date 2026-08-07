@@ -10,6 +10,7 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import React from 'react';
+import { Text } from 'react-native';
 
 import { WordDisplay } from '@/components/review/WordDisplay';
 
@@ -79,18 +80,35 @@ describe('WordDisplay', () => {
       expect(getByText('كتب')).toBeTruthy();
     });
 
-    test('renders with translation when provided', () => {
-      const { getByText } = render(<WordDisplay word="كتب" translation="to write" />);
+    // WordDisplay no longer owns the meaning. It renders the shared top of both
+    // card faces (word class + the Arabic hero) and hosts whatever that face
+    // puts below it; the meaning is the answer face's content, so ReviewFlipCard
+    // owns it. That split is what keeps the Arabic at an identical y on both
+    // faces through the flip.
+    test('renders face-specific children below the word', () => {
+      const { getByText } = render(
+        <WordDisplay word="كتب">
+          <Text>To write</Text>
+        </WordDisplay>,
+      );
 
       expect(getByText('كتب')).toBeTruthy();
-      expect(getByText('To write')).toBeTruthy(); // Capitalized
+      expect(getByText('To write')).toBeTruthy();
     });
 
-    test('renders without translation when not provided', () => {
+    test('renders only the word when no children are given', () => {
       const { queryByText, getByText } = render(<WordDisplay word="كتب" />);
 
       expect(getByText('كتب')).toBeTruthy();
-      expect(queryByText('to write')).toBeNull();
+      expect(queryByText('To write')).toBeNull();
+    });
+
+    test('renders the word class when the corpus knows one', () => {
+      const { getByText, queryByText } = render(<WordDisplay word="كتب" wordType="Verb" />);
+
+      expect(getByText('Verb')).toBeTruthy();
+      // Optional by design: not every root has an example sentence to join.
+      expect(queryByText('Noun')).toBeNull();
     });
   });
 
@@ -146,12 +164,14 @@ describe('WordDisplay', () => {
       expect(getByText(longWord)).toBeTruthy();
     });
 
-    test('handles long translation', () => {
+    test('handles long child content', () => {
       const { getByText } = render(
-        <WordDisplay word="كتب" translation="to write, to compose, to author a book" />,
+        <WordDisplay word="كتب">
+          <Text>To write, to compose, to author a book</Text>
+        </WordDisplay>,
       );
 
-      expect(getByText('To write, to compose, to author a book')).toBeTruthy(); // Capitalized
+      expect(getByText('To write, to compose, to author a book')).toBeTruthy();
     });
   });
 });

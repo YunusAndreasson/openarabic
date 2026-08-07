@@ -41,7 +41,105 @@ function mapToSentenceWithWords(row: SentenceWithWordsRow): SentenceWithWords {
   };
 }
 
+/**
+ * One example of a practised word in real use, for the review card's answer
+ * face. Deliberately flat and small: the review lane needs the sentence text,
+ * its translation and the inflected form to emphasise — not the full
+ * grammar-coloured word graph `getSentencesByRootId` returns for the reader.
+ */
+export interface WordExample {
+  rootId: number;
+  sentenceId: number;
+  /** The sentence as it appears in the article. */
+  arabic: string;
+  english: string;
+  /** Sentence audio, played only on an explicit tap. */
+  audioUrl: string | null;
+  /** The practised root's inflected form in this sentence, so the card can
+   *  highlight it — a learner should see the word they know inside the line. */
+  wordForm: string;
+}
+
+/** Rows pulled per root before deduplication. Sentences are ordered easiest
+ *  first, so a handful per root is plenty to land a usable example while
+ *  keeping one bounded query for the whole session chunk. */
+const EXAMPLE_ROWS_PER_ROOT = 8;
+
 export const sentencesService = {
+  /**
+   * One example sentence for each of many roots, in a single round trip.
+   *
+   * The review session preloads this for a whole chunk at once. Calling
+   * `getSentencesByRootId` per card would put a network request on every card,
+   * which the review lane explicitly does not do — a warm session makes zero
+   * network calls, and the debug HUD turns red when it doesn't.
+   *
+   * Ordered by `difficulty_level` so the easiest usage wins: the example is
+   * there to reinforce the word, not to introduce three harder ones. The row
+   * cap means a root can occasionally come back without an example; that is
+   * intentional and the card simply omits the block rather than blocking.
+   */
+  async getExamplesForRoots(rootIds: RootId[]): Promise<Map<number, WordExample>> {
+    if (rootIds.length === 0) return new Map();
+
+    const wordRows = await executeQuery(
+      () =>
+        supabase
+          .from('sentence_words')
+          .select('root_id, sentence_id, word_form, difficulty_level')
+          .in(
+            'root_id',
+            rootIds.map(id => id as number),
+          )
+          .order('difficulty_level', { ascending: true })
+          .limit(rootIds.length * EXAMPLE_ROWS_PER_ROOT),
+      {
+        ...errorConfig.loadByRootId,
+        analyticsProperties: { rootCount: rootIds.length },
+      },
+    );
+
+    if (!wordRows || wordRows.length === 0) return new Map();
+
+    // First row per root wins — the query already ordered by difficulty.
+    const chosen = new Map<number, { sentenceId: number; wordForm: string }>();
+    for (const row of wordRows) {
+      if (!chosen.has(row.root_id)) {
+        chosen.set(row.root_id, { sentenceId: row.sentence_id, wordForm: row.word_form });
+      }
+    }
+
+    const sentenceRows = await executeQuery(
+      () =>
+        supabase
+          .from('article_sentences')
+          .select('id, arabic, english, audio_url')
+          .in('id', [...new Set([...chosen.values()].map(c => c.sentenceId))]),
+      {
+        ...errorConfig.loadByRootId,
+        analyticsProperties: { sentenceCount: chosen.size },
+      },
+    );
+
+    if (!sentenceRows) return new Map();
+
+    const byId = new Map(sentenceRows.map(s => [s.id, s]));
+    const examples = new Map<number, WordExample>();
+    for (const [rootId, pick] of chosen) {
+      const sentence = byId.get(pick.sentenceId);
+      if (!sentence?.arabic) continue;
+      examples.set(rootId, {
+        rootId,
+        sentenceId: pick.sentenceId,
+        arabic: sentence.arabic,
+        english: sentence.english ?? '',
+        audioUrl: sentence.audio_url ?? null,
+        wordForm: pick.wordForm,
+      });
+    }
+    return examples;
+  },
+
   /**
    * Get sentences containing a specific word (by root_id)
    *

@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import type { PanGesture } from 'react-native-gesture-handler';
 import { Gesture } from 'react-native-gesture-handler';
 import type { SharedValue } from 'react-native-reanimated';
-import { useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import { cancelAnimation, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { SPRING_CONFIG, TIMING_CONFIG } from '@/constants/animation';
@@ -51,6 +51,12 @@ export interface SwipeGestureResult {
    */
   swipeThreshold: number;
   resetPosition: () => void;
+  /**
+   * Play the commit exit for a grade that came from a tap rather than a drag,
+   * so both input paths produce the same motion. Ignored while a committed card
+   * is already flying off.
+   */
+  commitTo: (direction: 'left' | 'right') => void;
 }
 
 /**
@@ -321,11 +327,48 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
     ],
   );
 
+  /**
+   * Play the commit exit for a grade that did NOT come from a drag.
+   *
+   * Tapping "Forgot" and swiping left are the same decision, but they used to
+   * look nothing alike: the swipe threw the card off screen with a tilt and a
+   * colour wash while the tap just dissolved it. This drives the exact same
+   * animation from the same shared value, so the two paths are one motion.
+   *
+   * The card is placed AT the commit threshold first so the consumer's
+   * threshold-derived styles (tint, verdict label, tilt) are at full strength
+   * for the frame the exit starts from — otherwise a tapped card would fly off
+   * untinted. No haptic here: the caller owns that, exactly as the drag path
+   * leaves the detent tick to the threshold crossing.
+   */
+  const commitTo = useCallback(
+    (direction: 'left' | 'right') => {
+      if (isAnimatingRef.get()) return;
+      isAnimatingRef.set(true);
+      const sign = direction === 'right' ? 1 : -1;
+      cancelAnimation(translateX);
+      translateX.set(sign * swipeThreshold);
+      translateX.set(
+        withTiming(sign * SCREEN_WIDTH, TIMING_CONFIG.CARD_EXIT, finished => {
+          'worklet';
+          // Same recursion guard as the drag path: assigning over a running
+          // animation cancels it, which re-enters this callback.
+          if (finished) {
+            translateX.set(0);
+          }
+          isAnimatingRef.set(false);
+        }),
+      );
+    },
+    [isAnimatingRef, translateX, swipeThreshold],
+  );
+
   return {
     gesture,
     translateX,
     isAnimatingRef,
     swipeThreshold,
     resetPosition,
+    commitTo,
   };
 };

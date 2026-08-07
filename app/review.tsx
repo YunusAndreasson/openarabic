@@ -1,26 +1,29 @@
 import { useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
+import type { ReviewCardHandle } from '@/components/review/ReviewFlipCard';
 import {
   CompletionScreen,
+  ReviewContextSentence,
   ReviewFlipCard,
   ReviewGradeBar,
   ReviewHeader,
+  VoiceChannel,
   VoiceResultPanel,
-  VoiceStatusIndicator,
 } from '@/components/review';
 import { useTutorialContext, useVoiceGrading } from '@/components/providers';
+import type { WordConfidence } from '@/types/review.types';
 import { SwipeGestureTutorial } from '@/components/tutorials/SwipeGestureTutorial';
 import { PulsatingLoader } from '@/components/ui';
-import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { TutorialId } from '@/constants/tutorials';
-import { useReview, useVoiceReview } from '@/hooks/review';
+import { useReview, useReviewExamples, useVoiceReview } from '@/hooks/review';
 import { useColors } from '@/hooks/theme/useColors';
 import { useTutorial } from '@/hooks/tutorials/useTutorial';
 import { useAppSelectorShallow } from '@/store/hooks';
@@ -36,21 +39,25 @@ const baseStyles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
   },
-  contentContainer: {
+  // The card's lane in the column: it takes whatever is left between the header
+  // and the action row, so the card sizes itself to the device instead of the
+  // old fixed 360px box that left a void on tall screens.
+  cardArea: {
     flex: 1,
     width: '100%',
-    alignItems: 'center',
-    paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
-  },
-  wordArea: {
-    flex: 1,
-    width: '100%',
-    position: 'relative',
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: WORD_AREA_MIN_HEIGHT,
-    paddingTop: LAYOUT.SPACING.LARGE,
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
     paddingBottom: LAYOUT.SPACING.LARGE,
+  },
+  bottomSlot: {
+    width: '100%',
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
+  },
+  voiceSlot: {
+    flex: 1,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   loadingText: {
     marginTop: LAYOUT.SPACING.MEDIUM,
@@ -61,14 +68,6 @@ const baseStyles = StyleSheet.create({
     marginTop: LAYOUT.SPACING.SMALL,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     textAlign: 'center',
-  },
-  uiChromeOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    pointerEvents: 'box-none',
   },
   headerPadding: {
     paddingTop: LAYOUT.SPACING.LARGE,
@@ -157,7 +156,16 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     stopAudio,
     remainingDueCount,
     startNextChunk,
+    playSentenceAudio,
+    restudying,
+    continueFromRestudy,
   } = useReview({ fromRemember });
+
+  // One example sentence per word in the chunk, fetched once and never on the
+  // per-card path. Non-blocking: a card renders without it and picks it up when
+  // it lands, so a slow or failed lookup can never hold up a session.
+  const examples = useReviewExamples(wordQueue);
+  const currentExample = currentWord ? (examples.get(currentWord.root_id) ?? null) : null;
 
   // Voice grading — when the toggle is on, auto-arms the mic after each card
   // settles. Correct match → silently advance as "Knew it". Miss → play the
@@ -173,6 +181,8 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     reject: voiceReject,
     retry: voiceRetry,
     togglePause: voiceTogglePause,
+    speakNow: voiceSpeakNow,
+    stopSpeaking: voiceStopSpeaking,
   } = useVoiceReview({
     expected: currentWord?.root?.meaning ?? null,
     currentWordKey,
@@ -211,6 +221,31 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   // their mind.
   const handleSwipeForgot = useCallback(() => grade('unknown'), [grade]);
   const handleSwipeKnewIt = useCallback(() => grade('known'), [grade]);
+
+  // A tapped grade drives the card's exit before committing, so the two input
+  // paths produce the same motion: Forgot leaves left, Knew it leaves right,
+  // both on the swipe's own CARD_EXIT timing and colour ramp. "Guessed" has no
+  // direction (and deliberately no swipe), so it keeps the plain dissolve —
+  // that difference is the affordance, not an oversight.
+  //
+  // "Forgot" from the bar never exits here: it opens a restudy hold, so the
+  // card is staying put and throwing it off screen would be a lie. Its left
+  // exit is deferred to the tap that leaves the hold, below.
+  const cardRef = useRef<ReviewCardHandle>(null);
+  const handleGradeFromBar = useCallback(
+    (confidence: WordConfidence) => {
+      if (confidence === 'known') cardRef.current?.commitTo('right');
+      grade(confidence);
+    },
+    [grade],
+  );
+
+  // Leaving the restudy hold is the moment the "Forgot" actually commits, so
+  // that is where its exit belongs.
+  const handleRestudyContinue = useCallback(() => {
+    cardRef.current?.commitTo('left');
+    continueFromRestudy();
+  }, [continueFromRestudy]);
 
   // Track if review session is still initializing (first word not yet loaded)
   const isInitializing = useMemo(() => {
@@ -251,120 +286,159 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
 
   return (
     <View style={[baseStyles.container, { backgroundColor: colors.background }]}>
-      {/* Flip card: tap the front (Arabic) to reveal the answer, then swipe to grade */}
-      <ReviewFlipCard
-        wordKey={currentWordKey}
-        word={currentSentence.wordForm}
-        answer={currentMeaning}
-        revealed={revealed}
-        onReveal={revealAnswer}
-        onReplayAudio={handleReplayAudio}
-        opacityStyle={transparentStyle}
-        isUpdating={isUpdating}
-        onSwipeForgot={handleSwipeForgot}
-        onSwipeKnewIt={handleSwipeKnewIt}
-        testID="review-card"
-      />
-
-      {/* UI chrome - header and bottom actions, positioned above background */}
-      <View style={baseStyles.uiChromeOverlay}>
-        {/* Progress header at top of screen */}
-        <View
-          style={[
-            baseStyles.headerPadding,
-            Platform.OS === 'android' && { paddingTop: insets.top },
-          ]}
-        >
-          <ReviewHeader
-            maxProgress={maxProgress}
-            progress={progress}
-            onClose={handleClose}
-            showVoiceControl={voiceEnabled}
-            voicePaused={voicePaused}
-            voiceListening={voicePhase === 'listening'}
-            onToggleVoice={voiceTogglePause}
-          />
-        </View>
-
-        {/* Bottom actions. Shares the card's fade (transparentStyle) so the
-            controls and the word they belong to leave and arrive as one
-            composition — the card used to dissolve while the buttons stayed
-            fully lit, which made every advance look half-finished. */}
-        <Animated.View
-          style={[
-            {
-              position: 'absolute',
-              bottom: insets.bottom + LAYOUT.SPACING.LARGE,
-              left: LAYOUT.SPACING.LARGE,
-              right: LAYOUT.SPACING.LARGE,
-            },
-            transparentStyle,
-          ]}
-        >
-          {voiceShowResult && voiceResult ? (
-            <VoiceResultPanel
-              result={voiceResult}
-              onAccept={voiceAccept}
-              onReject={voiceReject}
-              onRetry={voiceRetry}
-            />
-          ) : revealed ? (
-            <ReviewGradeBar intervals={intervalLabels} onGrade={grade} disabled={isUpdating} />
-          ) : (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={STRINGS.SHOW_ANSWER}
-              onPress={revealAnswer}
-              disabled={isUpdating}
-              style={({ pressed }) => [
-                baseStyles.showAnswerButton,
-                {
-                  backgroundColor: colors.card,
-                  borderColor: colors.border,
-                  // Press feedback only — the transient isUpdating dim is now
-                  // carried by the container's shared fade (see above).
-                  opacity: pressed ? LAYOUT.OPACITY.PRESSED : LAYOUT.OPACITY.FULL,
-                },
-              ]}
-            >
-              <ThemedText
-                skipDefaultColor
-                weight="semibold"
-                style={[baseStyles.showAnswerLabel, { color: colors.tint }]}
-              >
-                {STRINGS.SHOW_ANSWER}
-              </ThemedText>
-            </Pressable>
-          )}
-        </Animated.View>
+      {/* Header / card / actions as a real column. This screen used to render
+          the card as an absolute fill with the chrome floating over it, which
+          is why the card had a hardcoded height and the voice pill needed a
+          hand-computed `bottom` offset built from four spacing tokens. The card
+          now simply takes the space between the two. */}
+      <View
+        style={[baseStyles.headerPadding, Platform.OS === 'android' && { paddingTop: insets.top }]}
+      >
+        <ReviewHeader
+          maxProgress={maxProgress}
+          progress={progress}
+          onClose={handleClose}
+          showVoiceControl={voiceEnabled}
+          voicePaused={voicePaused}
+          voiceListening={voicePhase === 'listening'}
+          onToggleVoice={voiceTogglePause}
+          recallRun={sessionMetrics.currentStreak}
+        />
       </View>
 
-      {/* Voice status — pill above the bottom buttons so the learner can
-          clearly tell when we're listening vs grading. Hidden while the
-          wrong-answer panel owns the slot (voiceShowResult) and while a card
-          advance is in flight (isUpdating), so a transient phase can't flash
-          during the hand-off to the next card. */}
-      {!voiceShowResult && !isUpdating && !revealed && (
-        <View
-          pointerEvents="none"
-          style={[
-            voiceHintStyles.container,
-            {
-              // Sit just above the "Show answer" button. Its height is
-              // BUTTON.HEIGHT.LARGE + SPACING.MEDIUM (it matches the grade bar), so
-              // clear that plus a MEDIUM gap above the bottom inset.
-              bottom:
-                insets.bottom +
-                LAYOUT.SPACING.LARGE +
-                LAYOUT.BUTTON.HEIGHT.LARGE +
-                LAYOUT.SPACING.MEDIUM +
-                LAYOUT.SPACING.MEDIUM,
-            },
-          ]}
-        >
-          <VoiceStatusIndicator phase={voicePhase} />
-        </View>
-      )}
+      <View style={baseStyles.cardArea}>
+        <ReviewFlipCard
+          ref={cardRef}
+          wordKey={currentWordKey}
+          word={currentSentence.wordForm}
+          answer={currentMeaning}
+          revealed={revealed}
+          onReveal={revealAnswer}
+          onReplayAudio={handleReplayAudio}
+          opacityStyle={transparentStyle}
+          isUpdating={isUpdating}
+          onSwipeForgot={handleSwipeForgot}
+          onSwipeKnewIt={handleSwipeKnewIt}
+          testID="review-card"
+          restudying={restudying}
+          onRestudyContinue={handleRestudyContinue}
+          answerSlot={
+            currentExample ? (
+              <ReviewContextSentence
+                example={currentExample}
+                onPlay={
+                  currentExample.audioUrl
+                    ? () => {
+                        const path = currentExample.audioUrl;
+                        if (path) void playSentenceAudio(path);
+                      }
+                    : undefined
+                }
+              />
+            ) : null
+          }
+          // Voice now lives inside the card it belongs to, instead of floating
+          // between the card and the buttons. Suppressed while the wrong-answer
+          // panel owns the decision and during an advance, so a transient phase
+          // can't flash during the hand-off to the next card.
+          //
+          // Interactive, unlike the status label it replaced: this is where the
+          // learner skips the prompt or holds to take the mic, so it must
+          // receive touches. Its own Pressable wins over the question face's
+          // tap-to-reveal, which is the intent — the strip is the mic control.
+          questionSlot={
+            voiceEnabled && !voiceShowResult && !isUpdating ? (
+              <View style={baseStyles.voiceSlot}>
+                <VoiceChannel
+                  phase={voicePhase}
+                  level={voice.micLevel}
+                  promptPlaying={promptAudioDoneKey !== currentWordKey}
+                  paused={voicePaused}
+                  onSpeakNow={voiceSpeakNow}
+                  onStopSpeaking={voiceStopSpeaking}
+                />
+              </View>
+            ) : null
+          }
+        />
+      </View>
+
+      {/* Bottom actions. Shares the card's fade (transparentStyle) so the
+          controls and the word they belong to leave and arrive as one
+          composition — the card used to dissolve while the buttons stayed
+          fully lit, which made every advance look half-finished. */}
+      <Animated.View
+        style={[
+          baseStyles.bottomSlot,
+          { paddingBottom: insets.bottom + LAYOUT.SPACING.LARGE },
+          transparentStyle,
+        ]}
+      >
+        {restudying ? (
+          // A forgotten card holds here instead of advancing. The whole card is
+          // the tap target (see onRestudyContinue on ReviewFlipCard), so this is
+          // a prompt rather than a button — one easy tap anywhere, no aiming.
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={STRINGS.RESTUDY_CONTINUE}
+            onPress={handleRestudyContinue}
+            style={({ pressed }) => [
+              baseStyles.showAnswerButton,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                opacity: pressed ? LAYOUT.OPACITY.PRESSED : LAYOUT.OPACITY.FULL,
+              },
+            ]}
+          >
+            <ThemedText
+              skipDefaultColor
+              weight="semibold"
+              style={[baseStyles.showAnswerLabel, { color: colors.tint }]}
+            >
+              {STRINGS.RESTUDY_CONTINUE}
+            </ThemedText>
+          </Pressable>
+        ) : voiceShowResult && voiceResult ? (
+          <VoiceResultPanel
+            result={voiceResult}
+            onAccept={voiceAccept}
+            onReject={voiceReject}
+            onRetry={voiceRetry}
+          />
+        ) : revealed ? (
+          <ReviewGradeBar
+            intervals={intervalLabels}
+            onGrade={handleGradeFromBar}
+            disabled={isUpdating}
+          />
+        ) : (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={STRINGS.SHOW_ANSWER}
+            onPress={revealAnswer}
+            disabled={isUpdating}
+            style={({ pressed }) => [
+              baseStyles.showAnswerButton,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                // Press feedback only — the transient isUpdating dim is now
+                // carried by the container's shared fade (see above).
+                opacity: pressed ? LAYOUT.OPACITY.PRESSED : LAYOUT.OPACITY.FULL,
+              },
+            ]}
+          >
+            <ThemedText
+              skipDefaultColor
+              weight="semibold"
+              style={[baseStyles.showAnswerLabel, { color: colors.tint }]}
+            >
+              {STRINGS.SHOW_ANSWER}
+            </ThemedText>
+          </Pressable>
+        )}
+      </Animated.View>
 
       {/* Voice debug HUD — gated on the Advanced "Voice debug HUD" toggle so
           the user can see exactly what the pipeline is doing without leaving
@@ -431,15 +505,6 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     </View>
   );
 }
-
-const voiceHintStyles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-});
 
 const voiceDebugStyles = StyleSheet.create({
   container: {

@@ -7,6 +7,9 @@ import { Pressable, StyleSheet, View } from 'react-native';
 const GLASS_AVAILABLE = isLiquidGlassAvailable();
 const GlassContainer = GLASS_AVAILABLE ? GlassView : View;
 
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+
+import { ThemedText } from '@/components/ThemedText';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -19,6 +22,9 @@ import { useColors } from '@/hooks/theme/useColors';
 const ICON_BUTTON_CONSTANTS = {
   SIZE: MIN_TOUCH_TARGET.MEDIUM, // 44px - Apple HIG minimum tap target
 } as const;
+
+/** Below this a "run" is noise — two right answers is just Tuesday. */
+const MIN_RECALL_RUN = 3;
 
 const STATIC_STYLES = StyleSheet.create({
   header: {
@@ -41,6 +47,9 @@ const STATIC_STYLES = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
+  runContainer: {
+    marginRight: LAYOUT.SPACING.MEDIUM,
+  },
   voiceButtonSpacing: {
     marginRight: LAYOUT.SPACING.MEDIUM, // 12px gap ≥ Material's 8dp min between targets
   },
@@ -60,6 +69,8 @@ interface ReviewHeaderProps {
   voiceListening?: boolean;
   /** Toggle the session-local voice mute. */
   onToggleVoice?: () => void;
+  /** Consecutive recalls this session (useSessionMetrics.currentStreak). */
+  recallRun?: number;
 }
 
 export const ReviewHeader: FC<ReviewHeaderProps> = ({
@@ -70,6 +81,7 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({
   voicePaused = false,
   voiceListening = false,
   onToggleVoice,
+  recallRun = 0,
 }) => {
   const colors = useColors();
 
@@ -97,6 +109,23 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({
           height={LAYOUT.SPACING.MEDIUM}
         />
       </View>
+      {/* A quiet run counter, from metrics the session already tracks. All the
+          reward in this loop used to be deferred to the completion screen, so a
+          good run felt like nothing until it was over. Appears only once the
+          run is worth noticing and re-enters on each new milestone (keyed), so
+          it reads as a nod rather than a scoreboard. No confetti, no glow. */}
+      {recallRun >= MIN_RECALL_RUN && (
+        <Animated.View
+          key={recallRun}
+          entering={FadeIn.duration(TIMING_CONFIG.MEDIUM.duration)}
+          exiting={FadeOut.duration(TIMING_CONFIG.FAST.duration)}
+          style={STATIC_STYLES.runContainer}
+        >
+          <ThemedText type="caption" colorName="success" numberOfLines={1}>
+            {STRINGS.RECALL_RUN(recallRun)}
+          </ThemedText>
+        </Animated.View>
+      )}
       {showVoiceControl && onToggleVoice && (
         <Pressable
           onPress={onToggleVoice}
