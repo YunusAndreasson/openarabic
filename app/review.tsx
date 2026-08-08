@@ -25,7 +25,7 @@ import { useTutorialContext, useVoiceGrading } from '@/components/providers';
 import type { WordConfidence } from '@/types/review.types';
 import { SwipeGestureTutorial } from '@/components/tutorials/SwipeGestureTutorial';
 import { PulsatingLoader } from '@/components/ui';
-import { TIMING_CONFIG } from '@/constants/animation';
+import { TIMING_CONFIG, VERDICT } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { TutorialId } from '@/constants/tutorials';
@@ -184,6 +184,38 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     continueFromRestudy,
   } = useReview({ fromRemember, setPlaybackPriority: voice.setPlaybackPriority });
 
+  /**
+   * Every grade in the session goes through here, whichever input decided it.
+   *
+   * Grading used to confirm nothing. You learned you were right because the
+   * next word appeared — and on two of the three paths there was not even a
+   * departure to watch: a voice-correct answer and a "Guessed" dissolved from
+   * rest without moving. So the card now shows an outcome, and the outcome is
+   * played from ONE place rather than each input inventing its own.
+   *
+   * The verdict is gated on `grade`'s return value. Several guards inside it
+   * drop a grade silently (an advance already in flight, a restudy hold, an
+   * unrevealed card), and confirming one of those would be a lie — this is also
+   * what fixes the old ordering here, which flew the card off screen before
+   * asking whether the grade would be accepted.
+   *
+   * `known` additionally leaves to the right, the same throw a swipe gives it,
+   * with the beat in front of it on every path but the swipe's own.
+   * "Guessed" keeps its plain dissolve: it has no direction and deliberately no
+   * swipe, and that difference is the affordance.
+   */
+  const cardRef = useRef<ReviewCardHandle>(null);
+  const gradeWithVerdict = useCallback(
+    (confidence: WordConfidence, opts: { fromVoice?: boolean; skipBeat?: boolean } = {}) => {
+      if (!grade(confidence, opts)) return;
+      cardRef.current?.playVerdict(confidence);
+      if (confidence === 'known') {
+        cardRef.current?.commitTo('right', opts.skipBeat ? 0 : VERDICT.BEAT);
+      }
+    },
+    [grade],
+  );
+
   // One example sentence per word in the chunk, fetched once and never on the
   // per-card path. Non-blocking: a card renders without it and picks it up when
   // it lands, so a slow or failed lookup can never hold up a session.
@@ -215,15 +247,18 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     // Stop listening once the answer is revealed — the recall test is over.
     ready: !isUpdating && !isLoading && isAudioReady && !isComplete && !revealed,
     stopAudio,
-    // Correct match → silently advance as "Knew it" (speaking the answer is the
-    // proof; fromVoice bypasses the reveal guard).
-    onKnownAuto: () => grade('known', { fromVoice: true }),
+    // Correct match → advance as "Knew it" (speaking the answer is the proof;
+    // fromVoice bypasses the reveal guard). This used to be the worst path in
+    // the session for knowing what had happened: no reveal, no motion, no
+    // colour — the card simply stopped existing. It now pops green and throws
+    // right like every other correct grade.
+    onKnownAuto: () => gradeWithVerdict('known', { fromVoice: true }),
     // Sounded like the answer but transcribed as something else → Guessed. The
     // learner is credited (Hard is a pass) and the word returns sooner, which is
     // the right hedge when the transcript is what we're unsure about.
-    onVagueAuto: () => grade('vague', { fromVoice: true }),
+    onVagueAuto: () => gradeWithVerdict('vague', { fromVoice: true }),
     // Voice result panel "No, I missed it" → Forgot.
-    onUnknownAuto: () => grade('unknown', { fromVoice: true }),
+    onUnknownAuto: () => gradeWithVerdict('unknown', { fromVoice: true }),
     // Miss → play the English audio (the panel shows the answer text + override).
     onRevealAnswer: revealMeaningPassive,
   });
@@ -253,34 +288,35 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   // rebuilt the whole Gesture object on every render of the screen (voice phase
   // ticks, audio status, progress) — re-attaching handlers mid-drag.
   //
-  // No haptic here: the swipe already fired its detent tick the moment the drag
-  // crossed the commit threshold (see ReviewFlipCard). Firing again on release
-  // would double-buzz a single grade — and the tick at the threshold is the one
-  // that carries information, because it lands while the user can still change
-  // their mind.
-  const handleSwipeForgot = useCallback(() => grade('unknown'), [grade]);
-  const handleSwipeKnewIt = useCallback(() => grade('known'), [grade]);
+  // `skipBeat` drops the verdict beat. The throw is the beat: the card has been
+  // tinting and tilting under the finger the whole way and is now leaving in the
+  // direction of the decision, so parking it at the threshold first would stall
+  // a gesture that is already saying everything the beat exists to say.
+  const handleSwipeForgot = useCallback(
+    () => gradeWithVerdict('unknown', { skipBeat: true }),
+    [gradeWithVerdict],
+  );
+  const handleSwipeKnewIt = useCallback(
+    () => gradeWithVerdict('known', { skipBeat: true }),
+    [gradeWithVerdict],
+  );
 
-  // A tapped grade drives the card's exit before committing, so the two input
-  // paths produce the same motion: Forgot leaves left, Knew it leaves right,
-  // both on the swipe's own CARD_EXIT timing and colour ramp. "Guessed" has no
-  // direction (and deliberately no swipe), so it keeps the plain dissolve —
-  // that difference is the affordance, not an oversight.
+  // A tapped grade produces the same motion as the swipe — Knew it leaves right
+  // on the same CARD_EXIT timing and colour ramp — with the beat in front of it
+  // because a tap gave the card no movement of its own.
   //
   // "Forgot" from the bar never exits here: it opens a restudy hold, so the
   // card is staying put and throwing it off screen would be a lie. Its left
   // exit is deferred to the tap that leaves the hold, below.
-  const cardRef = useRef<ReviewCardHandle>(null);
   const handleGradeFromBar = useCallback(
-    (confidence: WordConfidence) => {
-      if (confidence === 'known') cardRef.current?.commitTo('right');
-      grade(confidence);
-    },
-    [grade],
+    (confidence: WordConfidence) => gradeWithVerdict(confidence),
+    [gradeWithVerdict],
   );
 
   // Leaving the restudy hold is the moment the "Forgot" actually commits, so
-  // that is where its exit belongs.
+  // that is where its exit belongs. No beat and no second verdict: the red ring
+  // has been sitting on this card for the whole hold, which is as long a moment
+  // as the session gives anything.
   const handleRestudyContinue = useCallback(() => {
     cardRef.current?.commitTo('left');
     continueFromRestudy();

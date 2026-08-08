@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ViewStyle } from 'react-native';
 import type { WithTimingConfig } from 'react-native-reanimated';
-import { cancelAnimation, useSharedValue, withTiming } from 'react-native-reanimated';
+import { cancelAnimation, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { MIN_OPACITY_DURATION, TIMING_CONFIG } from '@/constants/animation';
@@ -28,8 +28,18 @@ export interface FadeAnimationResult {
   /** Fade to fully opaque. `onComplete` only fires if the fade finished and the hook is still mounted. */
   fadeIn: (onComplete?: () => void) => void;
 
-  /** Fade to fully transparent. Same completion guarantees as `fadeIn`. */
-  fadeOut: (onComplete?: () => void) => void;
+  /**
+   * Fade to fully transparent. Same completion guarantees as `fadeIn`.
+   *
+   * `delayMs` holds the view at its current opacity before the fade starts —
+   * used by the review card's verdict beat, which needs the confirmation
+   * legible at full strength before the dissolve begins. The delay is part of
+   * the animation rather than a timer in front of this call on purpose: two
+   * independent clocks (a UI-thread animation and a JS-thread timeout) drift
+   * apart under load, which is the exact bug the review advance was rewritten
+   * to remove.
+   */
+  fadeOut: (onComplete?: () => void, delayMs?: number) => void;
 }
 
 /**
@@ -62,15 +72,17 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
   }, [opacity, isMounted]);
 
   const animateOpacityTo = useCallback(
-    (targetValue: number, onComplete?: () => void) => {
+    (targetValue: number, onComplete?: () => void, delayMs = 0) => {
       'worklet';
-      opacity.set(
-        withTiming(targetValue, timingConfig, finished => {
-          if (finished && onComplete && isMounted.get()) {
-            scheduleOnRN(onComplete);
-          }
-        }),
-      );
+      const fade = withTiming(targetValue, timingConfig, finished => {
+        if (finished && onComplete && isMounted.get()) {
+          scheduleOnRN(onComplete);
+        }
+      });
+      // withDelay wraps the timing rather than preceding it, so the completion
+      // callback still belongs to the same animation and still fires at
+      // delay + duration on the one clock.
+      opacity.set(delayMs > 0 ? withDelay(delayMs, fade) : fade);
     },
     [opacity, timingConfig, isMounted],
   );
@@ -81,7 +93,7 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
   );
 
   const fadeOut = useCallback(
-    (onComplete?: () => void) => animateOpacityTo(0, onComplete),
+    (onComplete?: () => void, delayMs?: number) => animateOpacityTo(0, onComplete, delayMs),
     [animateOpacityTo],
   );
 

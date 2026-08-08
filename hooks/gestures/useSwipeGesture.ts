@@ -2,7 +2,13 @@ import { useCallback, useMemo } from 'react';
 import type { PanGesture } from 'react-native-gesture-handler';
 import { Gesture } from 'react-native-gesture-handler';
 import type { SharedValue } from 'react-native-reanimated';
-import { cancelAnimation, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import {
+  cancelAnimation,
+  useSharedValue,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { SPRING_CONFIG, TIMING_CONFIG } from '@/constants/animation';
@@ -31,8 +37,11 @@ export interface SwipeGestureOptions {
    *
    * Two cases where it does NOT simply track the latch:
    * - A commit that never armed (a fast flick, which `resolveSwipeCommit`
-   *   accepts well short of the threshold) fires one `armed: true` at release,
-   *   because that is the only moment left to acknowledge it.
+   *   accepts well short of the threshold) fires NOTHING here. It used to fire
+   *   a late `armed: true` at release, because a thrown card otherwise graded
+   *   in silence — but the consumer now fires its own haptic when the grade
+   *   commits, which covers a flick properly instead of approximating it. Both
+   *   would land within a frame or two of each other and double-buzz one throw.
    * - A gesture cancelled while armed fires nothing. The outcome is being
    *   undone; a tick there is feedback for something that did not happen.
    */
@@ -78,8 +87,13 @@ export interface SwipeGestureResult {
    * Play the commit exit for a grade that came from a tap rather than a drag,
    * so both input paths produce the same motion. Ignored while a committed card
    * is already flying off.
+   *
+   * `holdMs` parks the card at the commit threshold — displaced and at full
+   * tint — before it throws, so a grade that had no gesture to carry it still
+   * gets a legible moment. A drag passes 0: the throw IS the moment, and
+   * hanging a thrown card in mid-air would contradict the hand that threw it.
    */
-  commitTo: (direction: 'left' | 'right') => void;
+  commitTo: (direction: 'left' | 'right', holdMs?: number) => void;
 }
 
 /**
@@ -222,9 +236,6 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
         .onEnd((event, success) => {
           'worklet';
           settledRef.set(true);
-          // Read the latch BEFORE clearing it: a commit that never armed still
-          // owes the user a tick (see the flick branch below).
-          const wasArmed = armedSide.get() !== 0;
           armedSide.set(0);
 
           if (
@@ -274,18 +285,13 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
             return;
           }
 
-          // A flick commits BELOW the arm threshold — `resolveSwipeCommit`'s
-          // velocity path needs only FLICK_MIN_DISTANCE_RATIO of travel, about
-          // a quarter of the distance the latch wants — so the drag never
-          // armed and the detent never fired. Release is silent by design, so
-          // without this a thrown card graded with no tactile confirmation at
-          // all. This is that tick, at the only moment it can still land.
-          // Guarded on `wasArmed` so a normal drag-past-the-line, which
-          // already ticked, is not buzzed a second time.
-          if (!wasArmed && onCommitArmedChange) {
-            scheduleOnRN(onCommitArmedChange, true, isRight);
-          }
-
+          // Release fires no haptic on any path. A drag that crossed the line
+          // already ticked at the crossing, while the finger was still down and
+          // the user could still change their mind — the moment that carries
+          // information. A flick that commits below the threshold never armed
+          // and so never ticked, but the consumer's commit haptic covers it,
+          // and ticking here too would buzz one throw twice.
+          //
           // Fire the JS work first so grading starts on this frame, in parallel
           // with the exit animation rather than after it.
           scheduleOnRN(handleSwipeAction, isRight);
@@ -376,29 +382,52 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
    * colour wash while the tap just dissolved it. This drives the exact same
    * animation from the same shared value, so the two paths are one motion.
    *
-   * The card is placed AT the commit threshold first so the consumer's
+   * The card is carried to the commit threshold first, so the consumer's
    * threshold-derived styles (tint, verdict label, tilt) are at full strength
-   * for the frame the exit starts from — otherwise a tapped card would fly off
-   * untinted. No haptic here: the caller owns that, exactly as the drag path
-   * leaves the detent tick to the threshold crossing.
+   * for the frame the throw starts from — otherwise a tapped card would fly off
+   * untinted.
+   *
+   * `holdMs` decides how it gets there. At 0 it is placed there instantly,
+   * which is invisible because the throw starts on the same frame. Above 0 it
+   * DRAWS BACK over that time on a decelerating curve instead: the beat exists
+   * so a grade with no gesture behind it has something to watch, and a card
+   * that teleports a fifth of the way across the screen and then sits still
+   * reads as a glitch, not as a decision. Gliding out and then throwing is the
+   * same gesture the finger would have made.
+   *
+   * No haptic here: the caller owns that, exactly as the drag path leaves the
+   * detent tick to the threshold crossing.
    */
   const commitTo = useCallback(
-    (direction: 'left' | 'right') => {
+    (direction: 'left' | 'right', holdMs = 0) => {
       if (isAnimatingRef.get()) return;
       isAnimatingRef.set(true);
       const sign = direction === 'right' ? 1 : -1;
       cancelAnimation(translateX);
-      translateX.set(sign * swipeThreshold);
+      const throwOut = withTiming(sign * SCREEN_WIDTH, TIMING_CONFIG.CARD_EXIT, finished => {
+        'worklet';
+        // Same recursion guard as the drag path: assigning over a running
+        // animation cancels it, which re-enters this callback.
+        if (finished) {
+          translateX.set(0);
+        }
+        isAnimatingRef.set(false);
+      });
+
+      if (holdMs <= 0) {
+        translateX.set(sign * swipeThreshold);
+        translateX.set(throwOut);
+        return;
+      }
+
       translateX.set(
-        withTiming(sign * SCREEN_WIDTH, TIMING_CONFIG.CARD_EXIT, finished => {
-          'worklet';
-          // Same recursion guard as the drag path: assigning over a running
-          // animation cancels it, which re-enters this callback.
-          if (finished) {
-            translateX.set(0);
-          }
-          isAnimatingRef.set(false);
-        }),
+        withSequence(
+          withTiming(sign * swipeThreshold, {
+            duration: holdMs,
+            easing: TIMING_CONFIG.MEDIUM.easing,
+          }),
+          throwOut,
+        ),
       );
     },
     [isAnimatingRef, translateX, swipeThreshold],

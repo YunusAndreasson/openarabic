@@ -76,18 +76,18 @@ export const VoiceResultPanel: FC<VoiceResultPanelProps> = memo(
             label={STRINGS.VOICE_RESULT_REJECT_SHORT}
             accessibilityLabel={STRINGS.VOICE_RESULT_REJECT}
             color={colors.error}
-            onPress={() => {
-              // Same subtle tick as every other self-grade action — the negative
-              // outcome already had its error haptic when the mishear was
-              // announced.
-              selectionFeedback();
-              onReject();
-            }}
+            // No tick on the two buttons that grade. Both hand off to a grade,
+            // and the card's verdict fires the outcome haptic on the frame its
+            // colour lands — a press tick as well would buzz one decision twice
+            // and the first buzz would be the one that says less.
+            onPress={onReject}
           />
           <ReviewActionButton
             label={STRINGS.VOICE_RESULT_RETRY}
             color={colors.secondaryText}
             onPress={() => {
+              // Retry is the exception: it grades nothing, so there is no
+              // verdict coming and this tap would otherwise land in silence.
               selectionFeedback();
               onRetry();
             }}
@@ -96,10 +96,7 @@ export const VoiceResultPanel: FC<VoiceResultPanelProps> = memo(
             label={STRINGS.VOICE_RESULT_ACCEPT_SHORT}
             accessibilityLabel={STRINGS.VOICE_RESULT_ACCEPT}
             color={colors.success}
-            onPress={() => {
-              selectionFeedback();
-              onAccept();
-            }}
+            onPress={onAccept}
           />
         </View>
       </Animated.View>

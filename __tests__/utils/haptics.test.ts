@@ -12,7 +12,13 @@
 import { beforeEach, afterEach, describe, expect, test, jest } from '@jest/globals';
 import { Platform } from 'react-native';
 
-import { detentFeedback, lightFeedback, selectionFeedback, warningFeedback } from '@/utils/haptics';
+import {
+  commitFeedback,
+  detentFeedback,
+  lightFeedback,
+  selectionFeedback,
+  warningFeedback,
+} from '@/utils/haptics';
 
 // Keep inline mock for this test since it needs direct access to jest.fn() instances for assertions.
 // Every expo-haptics function returns Promise<void> — the mocks must too, or
@@ -93,6 +99,37 @@ describe('haptics', () => {
 
     expect(selectionAsync).toHaveBeenCalledTimes(1);
     expect(impactAsync).toHaveBeenCalledTimes(2); // light + rigid detent
+  });
+
+  test('commitFeedback uses the rigid impact on iOS', () => {
+    const { impactAsync, ImpactFeedbackStyle } = require('expo-haptics');
+
+    commitFeedback();
+
+    expect(impactAsync).toHaveBeenCalledWith(ImpactFeedbackStyle.Rigid);
+  });
+
+  test('commitFeedback uses the Android detent tick', () => {
+    const { performAndroidHapticsAsync, AndroidHaptics } = require('expo-haptics');
+    jest.replaceProperty(Platform, 'OS', 'android');
+
+    commitFeedback();
+
+    expect(performAndroidHapticsAsync).toHaveBeenCalledWith(AndroidHaptics.Clock_Tick);
+  });
+
+  // commitFeedback and detentFeedback('crisp') share a TEXTURE but not a
+  // moment: the detent fires while the finger is still down and the outcome can
+  // still be changed, the commit fires once it cannot. A fast flick produces
+  // both within a frame or two, so they must not share a debounce key — with
+  // one, the commit (the more informative of the two) was the one swallowed.
+  test('a commit is not swallowed by a detent in the same window', () => {
+    const { impactAsync } = require('expo-haptics');
+
+    detentFeedback('crisp');
+    commitFeedback();
+
+    expect(impactAsync).toHaveBeenCalledTimes(2);
   });
 
   test('detentFeedback uses the rigid impact on iOS', () => {

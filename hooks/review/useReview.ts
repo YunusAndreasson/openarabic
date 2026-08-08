@@ -4,7 +4,7 @@ import type { ViewStyle } from 'react-native';
 import { InteractionManager } from 'react-native';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
-import { TIMING_CONFIG } from '@/constants/animation';
+import { TIMING_CONFIG, VERDICT } from '@/constants/animation';
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -87,8 +87,18 @@ interface UseReviewReturn {
   /**
    * Commit the self-grade for the (revealed) card and advance. `fromVoice` skips
    * the reveal guard for the voice auto-advance path (speaking IS the proof).
+   * `skipBeat` skips the verdict beat, because a thrown card is already its own
+   * confirmation and parking it in mid-air would contradict the throw.
+   *
+   * Returns whether the grade was ACTED ON. Several guards drop a grade on the
+   * floor (an advance already in flight, a restudy hold, an unrevealed card),
+   * and the caller has outcome feedback to play only for one that landed —
+   * without this it would have to re-implement those guards to know.
    */
-  grade: (confidence: WordConfidence, opts?: { fromVoice?: boolean }) => void;
+  grade: (
+    confidence: WordConfidence,
+    opts?: { fromVoice?: boolean; skipBeat?: boolean },
+  ) => boolean;
   /** Per-grade interval labels ("10m"/"4d") for the current card's grade bar. */
   intervalLabels: Partial<Record<WordConfidence, string>>;
   handleClose: () => void;
@@ -176,8 +186,13 @@ const TRANSITION_DELAYS = {
    * completion — an interrupted fade would otherwise strand the session at
    * opacity 0 with grading disabled. Generous enough never to pre-empt a
    * healthy fade.
+   *
+   * Includes the verdict beat: the fade now starts VERDICT.BEAT after the
+   * grade on every path but a swipe, and a watchdog that ignored the hold
+   * would fire mid-beat and advance the card out from under its own
+   * confirmation.
    */
-  fadeWatchdog: TIMING_CONFIG.CARD_EXIT.duration + TIMING_CONFIG.MEDIUM.duration,
+  fadeWatchdog: VERDICT.BEAT + TIMING_CONFIG.CARD_EXIT.duration + TIMING_CONFIG.MEDIUM.duration,
 };
 
 export function useReview({
@@ -570,7 +585,7 @@ export function useReview({
   // (no meaning overlay, no English replay). `fromVoice` skips the reveal guard
   // for the voice auto-advance path (speaking the answer IS the proof).
   const commitGrade = useCallback(
-    (confidence: WordConfidence, opts: { fromVoice?: boolean } = {}) => {
+    (confidence: WordConfidence, opts: { fromVoice?: boolean; skipBeat?: boolean } = {}) => {
       diagMark('grade', { confidence, fromVoice: opts.fromVoice ?? false });
       stateRefs.current.isUpdatingWord = true;
       setIsUpdatingUI(true);
@@ -602,7 +617,20 @@ export function useReview({
         processFeedback(confidence, controller);
       };
 
-      fadeOut(advance);
+      // Hold the card at full strength for the verdict beat before dissolving
+      // it, so the confirmation is legible on its own. The dissolve is
+      // Easing.out — fastest off the mark — so a verdict painted at grade time
+      // was under 30% opacity within three frames and never read at all.
+      //
+      // A swipe is exempt. It has already confirmed continuously under the
+      // finger and is throwing the card in the direction of the decision; the
+      // beat would hang a thrown card in mid-air.
+      //
+      // The delay goes INSIDE the animation (withDelay), not in a timer before
+      // it. Two clocks drift, and the sequencing below depends on the fade's
+      // own completion callback landing when the fade actually lands.
+      const beatMs = opts.skipBeat ? 0 : VERDICT.BEAT;
+      fadeOut(advance, beatMs);
       setTimer('fadeAnimation', advance, TRANSITION_DELAYS.fadeWatchdog);
     },
     [fadeOut, processFeedback, setTimer, clearTimer, stopAudioSafely],
@@ -658,19 +686,19 @@ export function useReview({
   );
 
   const grade = useCallback(
-    (confidence: WordConfidence, opts: { fromVoice?: boolean } = {}) => {
+    (confidence: WordConfidence, opts: { fromVoice?: boolean; skipBeat?: boolean } = {}) => {
       if (stateRefs.current.isUpdatingWord || isComplete || stateRefs.current.completionTriggered) {
-        return;
+        return false;
       }
       // Grading only happens after the answer is revealed — except a voice match,
       // which confirms the answer without an on-screen reveal.
-      if (!revealed && !opts.fromVoice) return;
+      if (!revealed && !opts.fromVoice) return false;
 
       // While a restudy hold is up the grade is already decided; only the tap
       // that leaves the hold may commit it. Without this a second "Forgot"
       // arriving during the hold fell straight through to the commit and wrote
       // the card twice (caught by useReview.swipe.test).
-      if (restudyRef.current) return;
+      if (restudyRef.current) return false;
 
       // Graded while the prompt was still playing — the learner answered
       // without hearing the whole word. A no-op once it has finished.
@@ -678,10 +706,11 @@ export function useReview({
 
       if (confidence === 'unknown') {
         enterRestudy(opts.fromVoice ?? false);
-        return;
+        return true;
       }
 
       commitGrade(confidence, opts);
+      return true;
     },
     [revealed, isComplete, commitGrade, enterRestudy],
   );
@@ -693,7 +722,11 @@ export function useReview({
     setRestudying(false);
     diagMark('restudy.continue');
     lightFeedback();
-    commitGrade('unknown');
+    // No beat. The verdict fired when the miss was graded and its ring has been
+    // sitting on this card for the whole hold — a longer moment than the beat
+    // could ever buy. Holding again here would also desync the fade from the
+    // card's own left exit, which the screen starts on this same tap.
+    commitGrade('unknown', { skipBeat: true });
   }, [commitGrade]);
 
   // Effect: Handle completion transition

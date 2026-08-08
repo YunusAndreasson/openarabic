@@ -17,6 +17,7 @@
 
 import { renderHook, act, waitFor } from '@testing-library/react-native';
 
+import { VERDICT } from '@/constants/animation';
 import { useReview } from '@/hooks/review/useReview';
 import {
   setupUseReviewMocks,
@@ -233,6 +234,103 @@ describe('useReview Hook - Swipe Gestures', () => {
         await waitFor(() => {
           expect(mocks.mockFadeOut).toHaveBeenCalled();
         });
+      });
+
+      // The card holds its verdict at full strength before dissolving, because
+      // the dissolve is Easing.out — a confirmation painted at grade time was
+      // under a third of its opacity within three frames and never read.
+      test('the dissolve waits for the verdict beat', () => {
+        const word = createMockWord();
+        useFSRS.mockReturnValue({
+          currentWord: word,
+          wordQueue: [word],
+          isLoading: false,
+          isComplete: false,
+          progress: 0,
+          updateWord: mocks.mockUpdateWord,
+          invalidateQueries: mocks.mockInvalidateQueries,
+        });
+
+        const wrapper = createWrapper();
+        const { result } = renderHook(() => useReview(), { wrapper });
+
+        act(() => {
+          result.current.revealAnswer();
+        });
+        act(() => {
+          result.current.grade('known');
+        });
+
+        expect(mocks.mockFadeOut).toHaveBeenCalledWith(expect.any(Function), VERDICT.BEAT);
+      });
+
+      // A swipe is exempt: it has been confirming continuously under the finger
+      // and is throwing the card in the direction of the decision, so parking it
+      // at the threshold first would stall a gesture that already said it all.
+      test('a swipe skips the beat', () => {
+        const word = createMockWord();
+        useFSRS.mockReturnValue({
+          currentWord: word,
+          wordQueue: [word],
+          isLoading: false,
+          isComplete: false,
+          progress: 0,
+          updateWord: mocks.mockUpdateWord,
+          invalidateQueries: mocks.mockInvalidateQueries,
+        });
+
+        const wrapper = createWrapper();
+        const { result } = renderHook(() => useReview(), { wrapper });
+
+        act(() => {
+          result.current.revealAnswer();
+        });
+        act(() => {
+          result.current.grade('known', { skipBeat: true });
+        });
+
+        expect(mocks.mockFadeOut).toHaveBeenCalledWith(expect.any(Function), 0);
+      });
+
+      // The screen plays the card's verdict only for a grade that landed. Every
+      // guard that silently drops one has to be reportable, or the card
+      // confirms an outcome that was never written.
+      test('grade reports whether it acted', () => {
+        const word = createMockWord();
+        useFSRS.mockReturnValue({
+          currentWord: word,
+          wordQueue: [word],
+          isLoading: false,
+          isComplete: false,
+          progress: 0,
+          updateWord: mocks.mockUpdateWord,
+          invalidateQueries: mocks.mockInvalidateQueries,
+        });
+
+        const wrapper = createWrapper();
+        const { result } = renderHook(() => useReview(), { wrapper });
+
+        // Unrevealed and not from voice — the recall was never tested.
+        let acted: boolean | undefined;
+        act(() => {
+          acted = result.current.grade('known');
+        });
+        expect(acted).toBe(false);
+
+        act(() => {
+          result.current.revealAnswer();
+        });
+        act(() => {
+          acted = result.current.grade('unknown');
+        });
+        expect(acted).toBe(true);
+
+        // A second grade arriving during the restudy hold is dropped: the
+        // outcome is already decided and only the continue tap may commit it.
+        act(() => {
+          acted = result.current.grade('known');
+        });
+        expect(acted).toBe(false);
       });
 
       test('reveals the answer (shows the translation) before grading', () => {

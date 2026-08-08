@@ -54,6 +54,34 @@ in `ThemeColors`; local alpha transformations use `withOpacity`/`withAlpha`.
 Transparent gradient stops and platform-native configuration are valid
 exceptions when they do not encode a theme color.
 
+## Motion and feedback
+
+Timings, springs, and press scales live in `constants/animation.ts`. Reach for
+Reanimated's CSS API (`animationName`, `transitionProperty`) when an animation
+is driven by React state, and for shared values with `useAnimatedStyle` when it
+is driven by a gesture, a scroll, or an event with no state change behind it.
+Both appear in `components/review/ReviewFlipCard.tsx`, on opposite sides of that
+line, with the reasoning inline.
+
+An outcome — a graded review card — shows its result through the `VERDICT`
+tokens: a ring in the semantic status colour, a hold at full strength before the
+surface leaves, and a residual level for an outcome the user stays with. Motion
+that confirms something must not be painted onto a surface that is already
+dissolving; hold first, then leave.
+
+A haptic that accompanies an animation is fired from the animation's own frame —
+a `useAnimatedReaction` on the driving value crossing a threshold, handed to JS
+with `scheduleOnRN` — never from JS alongside the animation start. Those are two
+clocks and they drift apart under load. `components/practice/charts/MemoryRetentionGauge.tsx`
+and `hooks/review/useCardVerdict.ts` are the reference implementations.
+
+One decision gets one haptic. When a press, a gesture threshold, and a commit
+all describe the same choice, only the moment that carries information is felt:
+a threshold tick fires while the outcome can still be changed, and a commit
+fires once it cannot. Semantic wrappers in `utils/haptics.ts` own the iOS and
+Android routing, the per-pattern debounce, and the rejection swallowing; do not
+call `expo-haptics` directly. New patterns need their own debounce key.
+
 ## Component conventions
 
 - Screens use `ThemedView` for the theme surface and safe-area behavior.

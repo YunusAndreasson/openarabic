@@ -31,7 +31,16 @@ const HAPTIC_DEBOUNCE_MS = 50;
  * pattern keeps the original protection without eating real signal.
  */
 type HapticKind =
-  'selection' | 'light' | 'medium' | 'rigid' | 'heavy' | 'soft' | 'success' | 'warning' | 'error';
+  | 'selection'
+  | 'light'
+  | 'medium'
+  | 'rigid'
+  | 'heavy'
+  | 'soft'
+  | 'commit'
+  | 'success'
+  | 'warning'
+  | 'error';
 
 const blockedKinds = new Set<HapticKind>();
 
@@ -194,10 +203,42 @@ export const detentFeedback = (tone: DetentTone = 'crisp'): void => {
 };
 
 /**
+ * The moment a decision is COMMITTED and the outcome is now fact — a review
+ * card graded correct, an action that has taken effect.
+ *
+ * Same texture as `detentFeedback('crisp')` and deliberately so: a commit
+ * should feel like the mechanism closing. It is a separate function because it
+ * is a separate MOMENT. A detent is predictive — it fires while the finger is
+ * still down and means "release now and it counts", so the user can still
+ * change their mind. This fires after there is nothing left to change.
+ *
+ * It also needs its own debounce key. Sharing `'rigid'` with the detent would
+ * let one swallow the other inside the 50ms window, and that is not a
+ * hypothetical: a fast flick commits within a frame or two of arming, so the
+ * two land almost together.
+ *
+ * Chosen over `successFeedback` for a graded card on weight. This fires on
+ * roughly nine cards in ten, and iOS's Success texture is a two-tap
+ * notification — distinctive once, noise twenty times a session.
+ */
+export const commitFeedback = (): void => {
+  if (shouldTriggerHaptic('commit')) {
+    if (Platform.OS === 'android') {
+      fireHaptic(Haptics.performAndroidHapticsAsync(Haptics.AndroidHaptics.Clock_Tick));
+    } else {
+      fireHaptic(Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid));
+    }
+  }
+};
+
+/**
  * Success feedback for positive outcomes like:
  * - Successful operations
  * - Achievements
  * - Completion states
+ *
+ * Reserved for session-scale moments (a completed review session). A single
+ * graded card uses `commitFeedback` — see there for why.
  */
 export const successFeedback = (): void => {
   if (shouldTriggerHaptic('success')) {

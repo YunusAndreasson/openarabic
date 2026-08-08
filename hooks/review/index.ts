@@ -1,4 +1,5 @@
 export * from './useReview';
+export * from './useCardVerdict';
 export * from './useEncouragingMetrics';
 export * from './useNotificationPriming';
 export * from './useVoicePriming';

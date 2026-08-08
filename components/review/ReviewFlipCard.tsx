@@ -13,12 +13,14 @@ import Animated, {
 
 import { ThemedText } from '@/components/ThemedText';
 import { Ionicons } from '@/components/ui/Icon';
-import { SPRING_CONFIG, TIMING_CONFIG } from '@/constants/animation';
+import { SPRING_CONFIG, TIMING_CONFIG, VERDICT } from '@/constants/animation';
 import { getThemeAwareElevation, LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useSwipeGesture } from '@/hooks/gestures/useSwipeGesture';
+import { useCardVerdict, VERDICT_TONE } from '@/hooks/review/useCardVerdict';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import type { WordConfidence } from '@/types/review.types';
 import type {
   AnimatedStyleProp as AppAnimatedStyleProp,
   ReanimatedCSSAnimationStyle,
@@ -35,6 +37,13 @@ const CARD_CONSTANTS = {
   FLASH_OPACITY: 0.22,
   /** Degrees of tilt at the commit threshold — enough to read as a thrown card. */
   MAX_TILT_DEG: 7,
+  /**
+   * Verdict ring thickness. Twice the card's own border so it reads as the edge
+   * lighting up rather than the border merely changing colour — at
+   * BORDER.WIDTH.NORMAL the recolour was invisible against cardBorder in dark
+   * mode.
+   */
+  VERDICT_RING_WIDTH: 2,
 } as const;
 
 /**
@@ -88,6 +97,16 @@ const STATIC_STYLES = StyleSheet.create({
     flex: 1,
     width: '100%',
   },
+  // The verdict's own transform layer, between the drag (cardBox) and the
+  // entrance (entranceLayer). Three separate nodes because three separate
+  // things animate the card's transform and none of them may share a value:
+  // the drag owns translateX + tilt, the entrance owns CSS keyframes, and the
+  // verdict owns the pop and the shake. Putting the shake on the drag's
+  // translateX would have it fight the spring home on a swipe-left.
+  verdictLayer: {
+    flex: 1,
+    width: '100%',
+  },
   entranceLayer: {
     flex: 1,
     width: '100%',
@@ -123,6 +142,18 @@ const STATIC_STYLES = StyleSheet.create({
     right: 0,
     bottom: 0,
     borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
+  },
+  // The verdict ring. An overlay rather than the faces' own borderColor: there
+  // are two faces, only one is ever facing the viewer, and recolouring both
+  // means the answer to "what did I score" is hidden on the back of the card.
+  verdictRing: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
+    borderWidth: CARD_CONSTANTS.VERDICT_RING_WIDTH,
   },
   verdictRow: {
     position: 'absolute',
@@ -164,10 +195,18 @@ const STATIC_STYLES = StyleSheet.create({
   },
 });
 
-/** Imperative surface for grades that did not come from a drag. */
+/** Imperative surface for a grade the card did not decide itself. */
 export interface ReviewCardHandle {
-  /** Play the same commit exit a swipe would. */
-  commitTo: (direction: 'left' | 'right') => void;
+  /**
+   * Play the same commit exit a swipe would. `holdMs` parks the card at the
+   * threshold first, for grades that had no gesture to carry the moment.
+   */
+  commitTo: (direction: 'left' | 'right', holdMs?: number) => void;
+  /**
+   * Show the outcome — ring, wash, and the haptic that goes with them. Called
+   * once per grade that actually commits, from whichever input decided it.
+   */
+  playVerdict: (confidence: WordConfidence) => void;
 }
 
 interface ReviewFlipCardProps {
@@ -279,10 +318,14 @@ export function ReviewFlipCard({
     springConfig: SPRING_CONFIG.CARD,
   });
 
+  const { verdictTone, verdictLevel, verdictShake, playVerdict, resetVerdict } = useCardVerdict();
+
   // Tapping "Forgot" and swiping left are the same decision, so they now leave
   // the same way. Exposed rather than handled internally because the grade bar
-  // lives outside this component, next to the intervals it labels.
-  useImperativeHandle(ref, () => ({ commitTo }), [commitTo]);
+  // lives outside this component, next to the intervals it labels — and the
+  // verdict is exposed for the same reason: the screen owns which grades
+  // actually commit, and only a committed grade has an outcome to show.
+  useImperativeHandle(ref, () => ({ commitTo, playVerdict }), [commitTo, playVerdict]);
 
   // The flip is driven purely by React state, which is the case Reanimated 4's
   // docs put squarely in the CSS-transitions column: "Reach for CSS transitions
@@ -342,7 +385,11 @@ export function ReviewFlipCard({
     cancelAnimation(translateX);
     translateX.set(0);
     isAnimatingRef.set(false);
-  }, [wordKey, translateX, isAnimatingRef]);
+    // A miss holds its ring for the restudy hold, so unlike the drag offset the
+    // verdict has no self-clearing animation — the new card has to clear it, or
+    // the word after a forgotten one arrives already marked red.
+    resetVerdict();
+  }, [wordKey, translateX, isAnimatingRef, resetVerdict]);
 
   const flashColors = useMemo(
     () => ({
@@ -350,30 +397,108 @@ export function ReviewFlipCard({
         withOpacity(colors.error, 0),
         withOpacity(colors.error, CARD_CONSTANTS.FLASH_OPACITY),
       ] as [string, string],
+      warning: [
+        withOpacity(colors.warning, 0),
+        withOpacity(colors.warning, CARD_CONSTANTS.FLASH_OPACITY),
+      ] as [string, string],
       success: [
         withOpacity(colors.success, 0),
         withOpacity(colors.success, CARD_CONSTANTS.FLASH_OPACITY),
       ] as [string, string],
     }),
-    [colors.error, colors.success],
+    [colors.error, colors.warning, colors.success],
   );
 
-  // Full tint is reached exactly AT the commit threshold, so the colour is a
-  // readable "release now and it counts" signal rather than decoration. It used
-  // to be scaled to 0.8 × screen width — a distance the card never travelled —
-  // so the flash stayed faint no matter how far you dragged.
-  const swipeBackgroundStyle = useAnimatedStyle(() => {
+  // The ring's three hues, resolved in JS and picked per-frame on the UI thread
+  // (the chart components do the same). Opacity carries the animation, so these
+  // are the solid colours.
+  const ringColors = useMemo(
+    () => ({
+      correct: colors.success,
+      almost: colors.warning,
+      wrong: colors.error,
+    }),
+    [colors.error, colors.warning, colors.success],
+  );
+
+  // The wash, now serving two masters.
+  //
+  // While a finger is down it is PREDICTIVE: full tint is reached exactly AT
+  // the commit threshold, so the colour says "release now and it counts". (It
+  // used to be scaled to 0.8 × screen width — a distance the card never
+  // travelled — so it stayed faint no matter how far you dragged.)
+  //
+  // After a grade commits it is CONFIRMATORY, driven by the verdict instead.
+  // The drag still wins while it is the stronger of the two, so a swipe hands
+  // over to its own verdict without the colour dipping between them.
+  const washStyle = useAnimatedStyle(() => {
     'worklet';
     const tx = translateX.get();
-    const progress = Math.min(Math.abs(tx) / swipeThreshold, 1);
-    const t = 1 - Math.pow(1 - progress, 2); // quadratic ease-out
-    if (tx < 0) {
-      return { backgroundColor: interpolateColor(t, [0, 1], flashColors.error) };
+    const dragProgress = Math.min(Math.abs(tx) / swipeThreshold, 1);
+    const drag = 1 - Math.pow(1 - dragProgress, 2); // quadratic ease-out
+    const verdict = verdictLevel.get();
+    const tone = verdictTone.get();
+
+    // A drag is only allowed to name the colour while it is actually leading;
+    // otherwise the verdict does, so a card thrown right that graded "Guessed"
+    // (voice near-match) washes amber rather than green.
+    const useDrag = drag >= verdict && tx !== 0;
+    const t = Math.max(drag, verdict);
+    if (t === 0) {
+      return { backgroundColor: colors.transparent };
     }
-    if (tx > 0) {
+
+    if (useDrag) {
+      return {
+        backgroundColor: interpolateColor(
+          t,
+          [0, 1],
+          tx < 0 ? flashColors.error : flashColors.success,
+        ),
+      };
+    }
+
+    if (tone === VERDICT_TONE.CORRECT) {
       return { backgroundColor: interpolateColor(t, [0, 1], flashColors.success) };
     }
+    if (tone === VERDICT_TONE.ALMOST) {
+      return { backgroundColor: interpolateColor(t, [0, 1], flashColors.warning) };
+    }
+    if (tone === VERDICT_TONE.WRONG) {
+      return { backgroundColor: interpolateColor(t, [0, 1], flashColors.error) };
+    }
     return { backgroundColor: colors.transparent };
+  });
+
+  // The ring is the verdict alone — it never responds to a drag, because a drag
+  // is a question and this is the answer.
+  const verdictRingStyle = useAnimatedStyle(() => {
+    'worklet';
+    const tone = verdictTone.get();
+    if (tone === VERDICT_TONE.NONE) {
+      return { opacity: 0, borderColor: colors.transparent };
+    }
+    return {
+      opacity: verdictLevel.get(),
+      borderColor:
+        tone === VERDICT_TONE.CORRECT
+          ? ringColors.correct
+          : tone === VERDICT_TONE.ALMOST
+            ? ringColors.almost
+            : ringColors.wrong,
+    };
+  });
+
+  // The verdict's own transform: a small lift on a pass, a decaying shake on a
+  // miss. Separate from cardSlideStyle so it composes with the drag and with
+  // the spring home rather than overwriting either.
+  const verdictTransformStyle = useAnimatedStyle(() => {
+    'worklet';
+    const lift =
+      verdictTone.get() === VERDICT_TONE.CORRECT
+        ? 1 + (VERDICT.POP_SCALE - 1) * verdictLevel.get()
+        : 1;
+    return { transform: [{ translateX: verdictShake.get() }, { scale: lift }] };
   });
 
   // The wash says "something is happening"; these say WHICH grade. On the same
@@ -411,63 +536,67 @@ export function ReviewFlipCard({
     <GestureDetector gesture={panGesture}>
       <Animated.View style={STATIC_STYLES.centered}>
         <Animated.View style={[STATIC_STYLES.cardBox, cardSlideStyle, opacityStyle]}>
-          {/* Keyed so a new word replays the entrance. Only this wrapper
+          {/* Verdict motion. Its own node so the pop and the shake compose with
+              the drag above and the entrance below instead of overwriting
+              either — three animations, three transforms, one card. */}
+          <Animated.View style={[STATIC_STYLES.verdictLayer, verdictTransformStyle]}>
+            {/* Keyed so a new word replays the entrance. Only this wrapper
               remounts — the gesture, its shared values and the surfaces below
               are outside it and keep their identity across cards. */}
-          <Animated.View
-            key={wordKey}
-            style={[STATIC_STYLES.entranceLayer, CARD_ENTRANCE]}
-            testID={testID}
-          >
-            <View style={STATIC_STYLES.faceStack}>
-              {/* Answer face: the same Arabic, its meaning, and the evidence. */}
-              <Animated.View
-                pointerEvents={revealed ? 'auto' : 'none'}
-                style={[STATIC_STYLES.face, surfaceStyle, backStyle]}
-              >
-                {/* During a restudy hold the whole face is the continue target,
+            <Animated.View
+              key={wordKey}
+              style={[STATIC_STYLES.entranceLayer, CARD_ENTRANCE]}
+              testID={testID}
+            >
+              <View style={STATIC_STYLES.faceStack}>
+                {/* Answer face: the same Arabic, its meaning, and the evidence. */}
+                <Animated.View
+                  pointerEvents={revealed ? 'auto' : 'none'}
+                  style={[STATIC_STYLES.face, surfaceStyle, backStyle]}
+                >
+                  {/* During a restudy hold the whole face is the continue target,
                     so the learner can carry on with one tap anywhere rather than
                     aiming at the button. Outside that hold there is no face-level
                     press — the grade bar owns the decision. */}
-                <Pressable
-                  style={STATIC_STYLES.facePressable}
-                  onPress={restudying ? onRestudyContinue : undefined}
-                  disabled={!restudying}
-                  accessibilityRole={restudying ? 'button' : undefined}
-                  accessibilityLabel={restudying ? STRINGS.RESTUDY_CONTINUE : undefined}
-                >
-                  <WordDisplay word={word} wordType={wordType} onWordPress={onReplayAudio}>
-                    <View
-                      style={[STATIC_STYLES.divider, { backgroundColor: colors.border }]}
-                      pointerEvents="none"
-                    />
-                    <View style={STATIC_STYLES.answerBody}>
-                      <ThemedText
-                        type="heading2"
-                        colorName="englishText"
-                        style={STATIC_STYLES.meaning}
-                      >
-                        {answer ? capitalizeFirstLetter(answer) : answer}
-                      </ThemedText>
-                      {answerSlot}
-                    </View>
-                  </WordDisplay>
-                </Pressable>
-              </Animated.View>
+                  <Pressable
+                    style={STATIC_STYLES.facePressable}
+                    onPress={restudying ? onRestudyContinue : undefined}
+                    disabled={!restudying}
+                    accessibilityRole={restudying ? 'button' : undefined}
+                    accessibilityLabel={restudying ? STRINGS.RESTUDY_CONTINUE : undefined}
+                  >
+                    <WordDisplay word={word} wordType={wordType} onWordPress={onReplayAudio}>
+                      <View
+                        style={[STATIC_STYLES.divider, { backgroundColor: colors.border }]}
+                        pointerEvents="none"
+                      />
+                      <View style={STATIC_STYLES.answerBody}>
+                        <ThemedText
+                          type="heading2"
+                          colorName="englishText"
+                          style={STATIC_STYLES.meaning}
+                        >
+                          {answer ? capitalizeFirstLetter(answer) : answer}
+                        </ThemedText>
+                        {answerSlot}
+                      </View>
+                    </WordDisplay>
+                  </Pressable>
+                </Animated.View>
 
-              {/* Question face: the Arabic alone, with the voice channel below
+                {/* Question face: the Arabic alone, with the voice channel below
                   it. Tap anywhere that isn't an interactive child to reveal. */}
-              <Animated.View
-                pointerEvents={revealed ? 'none' : 'auto'}
-                style={[STATIC_STYLES.face, surfaceStyle, frontStyle]}
-              >
-                <Pressable
-                  style={STATIC_STYLES.facePressable}
-                  onPress={onReveal}
-                  accessibilityRole="button"
-                  accessibilityLabel={STRINGS.SHOW_ANSWER}
+                <Animated.View
+                  pointerEvents={revealed ? 'none' : 'auto'}
+                  style={[STATIC_STYLES.face, surfaceStyle, frontStyle]}
                 >
-                  {/* No onWordPress here on purpose. Tapping the word is the
+                  <Pressable
+                    style={STATIC_STYLES.facePressable}
+                    onPress={onReveal}
+                    accessibilityRole="button"
+                    accessibilityLabel={STRINGS.SHOW_ANSWER}
+                  >
+                    {/* No onWordPress here on purpose. Tapping the word is the
                       most natural way to ask for the answer, and making the
                       hero a replay button on this face swallowed that tap —
                       the card played the audio again instead of flipping.
@@ -478,57 +607,63 @@ export function ReviewFlipCard({
                       the face the recall is tested on. WordDisplay reserves the
                       band regardless of content, which is what holds the Arabic
                       at an identical y through the flip. */}
-                  <WordDisplay word={word}>
-                    <View style={STATIC_STYLES.questionBody}>
-                      {/* One slot, two occupants, the same height either way.
+                    <WordDisplay word={word}>
+                      <View style={STATIC_STYLES.questionBody}>
+                        {/* One slot, two occupants, the same height either way.
                           While the mic is working it shows what it is doing —
                           on the card, next to the word being answered, rather
                           than in the button the learner has to aim at. */}
-                      {listeningSlot ??
-                        (onReplayAudio ? (
-                          <Pressable
-                            onPress={onReplayAudio}
-                            accessibilityRole="button"
-                            accessibilityLabel={STRINGS.REPLAY_WORD_AUDIO}
-                            hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-                            style={({ pressed }) => [
-                              STATIC_STYLES.replayButton,
-                              {
-                                borderColor: colors.border,
-                                opacity: pressed ? LAYOUT.OPACITY.PRESSED : LAYOUT.OPACITY.FULL,
-                              },
-                            ]}
-                          >
-                            <Ionicons
-                              name="volume-medium-outline"
-                              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                              color={colors.secondaryText}
-                            />
-                          </Pressable>
-                        ) : null)}
-                    </View>
-                  </WordDisplay>
-                </Pressable>
-              </Animated.View>
+                        {listeningSlot ??
+                          (onReplayAudio ? (
+                            <Pressable
+                              onPress={onReplayAudio}
+                              accessibilityRole="button"
+                              accessibilityLabel={STRINGS.REPLAY_WORD_AUDIO}
+                              hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
+                              style={({ pressed }) => [
+                                STATIC_STYLES.replayButton,
+                                {
+                                  borderColor: colors.border,
+                                  opacity: pressed ? LAYOUT.OPACITY.PRESSED : LAYOUT.OPACITY.FULL,
+                                },
+                              ]}
+                            >
+                              <Ionicons
+                                name="volume-medium-outline"
+                                size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                                color={colors.secondaryText}
+                              />
+                            </Pressable>
+                          ) : null)}
+                      </View>
+                    </WordDisplay>
+                  </Pressable>
+                </Animated.View>
 
-              {/* Swipe feedback, above both faces so it tints whichever is up. */}
-              <Animated.View
-                style={[STATIC_STYLES.flashOverlay, swipeBackgroundStyle]}
-                pointerEvents="none"
-              />
-              <View style={STATIC_STYLES.verdictRow} pointerEvents="none">
-                <Animated.View style={forgotLabelStyle}>
-                  <ThemedText skipDefaultColor type="label" style={{ color: colors.error }}>
-                    {STRINGS.GRADE_FORGOT}
-                  </ThemedText>
-                </Animated.View>
-                <Animated.View style={knewLabelStyle}>
-                  <ThemedText skipDefaultColor type="label" style={{ color: colors.success }}>
-                    {STRINGS.GRADE_KNEW_IT}
-                  </ThemedText>
-                </Animated.View>
+                {/* Swipe and verdict feedback, above both faces so it marks
+                  whichever is up. */}
+                <Animated.View
+                  style={[STATIC_STYLES.flashOverlay, washStyle]}
+                  pointerEvents="none"
+                />
+                <Animated.View
+                  style={[STATIC_STYLES.verdictRing, verdictRingStyle]}
+                  pointerEvents="none"
+                />
+                <View style={STATIC_STYLES.verdictRow} pointerEvents="none">
+                  <Animated.View style={forgotLabelStyle}>
+                    <ThemedText skipDefaultColor type="label" style={{ color: colors.error }}>
+                      {STRINGS.GRADE_FORGOT}
+                    </ThemedText>
+                  </Animated.View>
+                  <Animated.View style={knewLabelStyle}>
+                    <ThemedText skipDefaultColor type="label" style={{ color: colors.success }}>
+                      {STRINGS.GRADE_KNEW_IT}
+                    </ThemedText>
+                  </Animated.View>
+                </View>
               </View>
-            </View>
+            </Animated.View>
           </Animated.View>
         </Animated.View>
       </Animated.View>

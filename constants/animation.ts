@@ -46,6 +46,75 @@ export const TIMING_CONFIG = {
 } as const;
 
 /**
+ * The verdict beat: the moment a graded review card confirms the outcome before
+ * it leaves.
+ *
+ * Grading used to have no confirmation at all — you learned you were right
+ * because the next word appeared. The green/red wash that existed was driven
+ * entirely by drag distance, so it only spoke while a finger was down, and it
+ * said "release now and it counts", which is a different statement from "that
+ * was right". Two of the three grades (a voice-correct answer and "Guessed")
+ * had no motion whatsoever: the card did not move, it stopped existing.
+ *
+ * Painting the confirmation at grade time did not work either. CARD_EXIT fades
+ * on `Easing.out(Easing.cubic)`, which is fastest off the mark — the card is at
+ * roughly 30% opacity 60ms in, so anything drawn there was gone before it
+ * finished drawing. Hence BEAT: the card holds at full verdict strength first,
+ * and only then does the existing exit run.
+ */
+export const VERDICT = {
+  /**
+   * How long the card holds at full verdict strength before it leaves, so the
+   * confirmation is legible on its own rather than under a dissolve.
+   *
+   * Applied to the tap, voice and restudy-continue paths only. A swipe is
+   * exempt: it has already given continuous, finger-driven confirmation and is
+   * throwing the card in the direction of the decision, and hanging a thrown
+   * card in mid-air for 140ms would contradict the gesture.
+   */
+  BEAT: 140,
+  /** Verdict rising to full strength. Fast, so the colour arrives as one event. */
+  IGNITE: {
+    duration: 90,
+    easing: Easing.out(Easing.cubic),
+  },
+  /** Verdict releasing as the card leaves. Matched to CARD_EXIT so they land together. */
+  DECAY: {
+    duration: 180,
+    easing: Easing.out(Easing.cubic),
+  },
+  /** Verdict falling back to its held level after a miss. */
+  SETTLE: {
+    duration: 220,
+    easing: Easing.out(Easing.cubic),
+  },
+  /**
+   * What a wrong answer keeps for the whole restudy hold, instead of decaying
+   * to nothing. The card stays on screen to be re-studied, and a low steady red
+   * is what makes it read as "this is the one you missed" while you study it.
+   */
+  RESIDUAL: 0.35,
+  /** Micro-shake on a miss. Small and decaying — a wince, not a tantrum. */
+  SHAKE: {
+    AMPLITUDE: 5,
+    STEP: 50,
+  },
+  /**
+   * Rising-edge level at which the outcome haptic fires — about 55ms into the
+   * ignite, as the colour reaches most of its strength, so the buzz and the
+   * visual are one event.
+   *
+   * The haptic is fired from a `useAnimatedReaction` watching this crossing,
+   * NOT from JS alongside the animation start. Those are two clocks and they
+   * drift under load, which is the bug the review session's motion work already
+   * removed once.
+   */
+  HAPTIC_AT: 0.6,
+  /** Scale pop on a correct answer. Barely there on purpose. */
+  POP_SCALE: 1.025,
+} as const;
+
+/**
  * Spring configuration presets for common animations
  */
 export const SPRING_CONFIG = {

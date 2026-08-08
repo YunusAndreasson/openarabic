@@ -45,7 +45,7 @@ import {
 } from '@/services/voiceTelemetry';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import { setVoiceEnabled } from '@/store/settingsSlice';
-import { errorFeedback, lightFeedback, successFeedback, warningFeedback } from '@/utils/haptics';
+import { errorFeedback, lightFeedback, warningFeedback } from '@/utils/haptics';
 import { getArmStages, markArmTap } from '@/utils/armTelemetry';
 import { getPromptSnapshot, recordPromptCut } from '@/utils/promptTelemetry';
 import { countDiag, mark as diagMark, span as diagSpan } from '@/utils/reviewDiagnostics';
@@ -716,17 +716,15 @@ export function useVoiceReview({
           resolution: vague ? 'auto_vague' : 'auto_known',
         });
         setPhase('idle');
+        // Neither branch fires its own haptic. The grade these hand off to
+        // plays the card's verdict, which weighs the outcome (a near match is
+        // lighter than a clean pass, exactly as this code used to do by hand)
+        // and fires on the frame the colour lands rather than a JS hop ahead of
+        // it. Keeping a tick here would buzz one answer twice.
         if (vague) {
-          // Credited, but not cleanly — a lighter beat than a full pass, to
-          // match the toast that says what was actually heard.
-          lightFeedback();
           showToast(STRINGS.VOICE_NEAR_MATCH_TEMPLATE(match.normalizedSpoken));
           onVagueAutoRef.current();
         } else {
-          // You said it right. This is the payoff moment of the whole voice
-          // exercise and it used to be entirely silent — the card just advanced,
-          // so a clean answer and a dead microphone felt exactly the same.
-          successFeedback();
           onKnownAutoRef.current();
         }
         return;
