@@ -24,6 +24,14 @@
  * never silently burn an FSRS attempt. The learner taps `accept()` (the answer
  * was actually right → Known), `reject()` (Unknown), or `retry()` (re-record);
  * `suggestion` nudges the likely choice.
+ *
+ * A heard-but-wrong word marks the card immediately via `onMissHeard()`, before
+ * any of those buttons is pressed. Waiting for the press meant the one thing
+ * the learner already knew — that they had said something else — was the one
+ * thing the app would not say until asked. The mark is provisional: `accept()`
+ * repaints the same card green and throws it, which is what overruling the
+ * recognizer should look like. Silence and hallucinated transcripts are exempt;
+ * those are us failing to hear, not them being wrong.
  */
 import * as Sentry from '@sentry/react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -45,7 +53,7 @@ import {
 } from '@/services/voiceTelemetry';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import { setVoiceEnabled } from '@/store/settingsSlice';
-import { errorFeedback, lightFeedback, warningFeedback } from '@/utils/haptics';
+import { lightFeedback, warningFeedback } from '@/utils/haptics';
 import { getArmStages, markArmTap } from '@/utils/armTelemetry';
 import { getPromptSnapshot, recordPromptCut } from '@/utils/promptTelemetry';
 import { countDiag, mark as diagMark, span as diagSpan } from '@/utils/reviewDiagnostics';
@@ -147,6 +155,22 @@ interface UseVoiceReviewArgs {
   /** Called after an ambiguous miss / hallucination / silence — caller should
    *  reveal the English meaning and let the user pick Known or Unknown. */
   onRevealAnswer: () => void;
+  /**
+   * Called the moment a REAL word was heard and it was not the answer — before
+   * the learner has decided anything. The caller should mark the card wrong.
+   *
+   * This is not a grade and may still be overturned: the result panel's "I knew
+   * it" turns the same card green. It fires anyway because the alternative is
+   * what shipped first — the learner said the wrong word and nothing happened
+   * until they pressed a button to be told so, which is feedback arriving after
+   * the person already had to work out the answer for themselves.
+   *
+   * Deliberately NOT fired for silence or a hallucinated transcript. Those are
+   * the app failing to hear, not the learner being wrong, and marking the card
+   * red would score our failure against them (`onRevealAnswer` still runs, and
+   * the warning haptic still says "we're back, nothing landed").
+   */
+  onMissHeard: () => void;
 }
 
 /** Similarity below this counts as a "clean miss" — a clearly recognized but
@@ -206,6 +230,7 @@ export function useVoiceReview({
   onVagueAuto,
   onUnknownAuto,
   onRevealAnswer,
+  onMissHeard,
 }: UseVoiceReviewArgs): {
   phase: VoicePhase;
   debug: VoiceDebug;
@@ -286,6 +311,7 @@ export function useVoiceReview({
   const onVagueAutoRef = useRef(onVagueAuto);
   const onUnknownAutoRef = useRef(onUnknownAuto);
   const onRevealAnswerRef = useRef(onRevealAnswer);
+  const onMissHeardRef = useRef(onMissHeard);
   const stopAudioRef = useRef(stopAudio);
   // Latest dev-settings snapshot for telemetry `meta` (read from a ref so the
   // arm effect / stable callbacks always log the current values without taking
@@ -300,6 +326,7 @@ export function useVoiceReview({
     onVagueAutoRef.current = onVagueAuto;
     onUnknownAutoRef.current = onUnknownAuto;
     onRevealAnswerRef.current = onRevealAnswer;
+    onMissHeardRef.current = onMissHeard;
     stopAudioRef.current = stopAudio;
     settingsRef.current = { energyGateEnabled, gainNormalizeEnabled, iosRawMode, debugEnabled };
     phaseRef.current = phase;
@@ -749,8 +776,15 @@ export function useVoiceReview({
         suggestion = null;
       }
       if (heardReliable) {
-        // Heard a real word that didn't match → error haptic ("that was wrong").
-        errorFeedback();
+        // Heard a real word and it was not the answer. Mark the card wrong NOW,
+        // not when the learner presses a button to be told so: it used to sit
+        // there unchanged until "No, I missed it", which is feedback arriving
+        // after they had already worked the answer out themselves.
+        //
+        // The verdict carries the error haptic on its own animation frame, so
+        // there is no direct call here. It is provisional — "I knew it" on the
+        // panel below repaints the same card green and throws it.
+        onMissHeardRef.current();
       } else {
         // Silence or a hallucinated transcript is the app failing, not a wrong
         // answer, so it must not feel like one — but it can't be silent either.

@@ -132,6 +132,16 @@ export const useCardVerdict = (): CardVerdictResult => {
   const animateVerdict = useCallback(
     (tone: number) => {
       'worklet';
+      // A verdict already on the card is not replayed. The voice path marks a
+      // mishear wrong the moment it is heard, and the learner's "No, I missed
+      // it" then grades the same outcome — replaying would shake a card that is
+      // already red and buzz the same conclusion twice. Only tones that HOLD
+      // can hit this (a pass decays to zero), which is exactly the case that
+      // needs it.
+      if (verdictTone.get() === tone && verdictLevel.get() > 0) {
+        return;
+      }
+
       cancelAnimation(verdictLevel);
       cancelAnimation(verdictShake);
       // Ignite from zero, always. The haptic hangs off a RISING crossing of

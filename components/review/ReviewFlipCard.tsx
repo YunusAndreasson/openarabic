@@ -203,10 +203,19 @@ export interface ReviewCardHandle {
    */
   commitTo: (direction: 'left' | 'right', holdMs?: number) => void;
   /**
-   * Show the outcome — ring, wash, and the haptic that goes with them. Called
-   * once per grade that actually commits, from whichever input decided it.
+   * Show an outcome — ring, wash, and the haptic that goes with them.
+   *
+   * Called for a grade that commits, and also for a voice mishear, which is an
+   * outcome the learner can still overturn. Showing the same outcome twice is a
+   * no-op, so a mishear followed by the grade that agrees with it marks the card
+   * once.
    */
   playVerdict: (confidence: WordConfidence) => void;
+  /**
+   * Take an outcome back off the card without replacing it. For a voice retry:
+   * the attempt that produced the mark is being discarded.
+   */
+  clearVerdict: () => void;
 }
 
 interface ReviewFlipCardProps {
@@ -325,7 +334,11 @@ export function ReviewFlipCard({
   // lives outside this component, next to the intervals it labels — and the
   // verdict is exposed for the same reason: the screen owns which grades
   // actually commit, and only a committed grade has an outcome to show.
-  useImperativeHandle(ref, () => ({ commitTo, playVerdict }), [commitTo, playVerdict]);
+  useImperativeHandle(ref, () => ({ commitTo, playVerdict, clearVerdict: resetVerdict }), [
+    commitTo,
+    playVerdict,
+    resetVerdict,
+  ]);
 
   // The flip is driven purely by React state, which is the case Reanimated 4's
   // docs put squarely in the CSS-transitions column: "Reach for CSS transitions

@@ -76,18 +76,23 @@ export const VoiceResultPanel: FC<VoiceResultPanelProps> = memo(
             label={STRINGS.VOICE_RESULT_REJECT_SHORT}
             accessibilityLabel={STRINGS.VOICE_RESULT_REJECT}
             color={colors.error}
-            // No tick on the two buttons that grade. Both hand off to a grade,
-            // and the card's verdict fires the outcome haptic on the frame its
-            // colour lands — a press tick as well would buzz one decision twice
-            // and the first buzz would be the one that says less.
-            onPress={onReject}
+            onPress={() => {
+              // Agreeing with the verdict already on the card. The card went red
+              // the moment the mishear landed and fired its error haptic then,
+              // and the grade this commits is the same outcome — so the verdict
+              // layer suppresses a replay and this tap would otherwise land in
+              // silence. A quiet tick acknowledges the press without restating
+              // a conclusion the learner has already felt.
+              selectionFeedback();
+              onReject();
+            }}
           />
           <ReviewActionButton
             label={STRINGS.VOICE_RESULT_RETRY}
             color={colors.secondaryText}
             onPress={() => {
-              // Retry is the exception: it grades nothing, so there is no
-              // verdict coming and this tap would otherwise land in silence.
+              // Grades nothing, so no verdict is coming and this tap would
+              // otherwise land in silence.
               selectionFeedback();
               onRetry();
             }}
@@ -96,6 +101,11 @@ export const VoiceResultPanel: FC<VoiceResultPanelProps> = memo(
             label={STRINGS.VOICE_RESULT_ACCEPT_SHORT}
             accessibilityLabel={STRINGS.VOICE_RESULT_ACCEPT}
             color={colors.success}
+            // No tick here. This overturns the red already on the card, and the
+            // green verdict that replaces it fires its own haptic on the frame
+            // the colour lands — a press tick as well would buzz the reversal
+            // twice, the earlier of the two saying nothing about which way it
+            // went.
             onPress={onAccept}
           />
         </View>

@@ -224,11 +224,11 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
 
   // Voice grading — when the toggle is on, the action band carries a
   // tap-to-speak button next to "Show answer", and the mic opens only when the
-  // learner presses it. Correct match →
-  // silently advance as "Knew it". Miss → play the English audio + show the
-  // result row (transcript + answer + Missed it/Try again/Got it); that row is
-  // the answer surface for voice, so the card is NOT flipped (a retry stays
-  // clean on the question face).
+  // learner presses it. Correct match → advance as "Knew it". Miss → mark the
+  // card wrong on the spot, play the English audio, and show the result row
+  // (transcript + answer + Missed it/Try again/Got it); that row is the answer
+  // surface for voice, so the card is NOT flipped (a retry stays clean on the
+  // question face).
   const {
     phase: voicePhase,
     debug: voiceDebug,
@@ -257,14 +257,24 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     // learner is credited (Hard is a pass) and the word returns sooner, which is
     // the right hedge when the transcript is what we're unsure about.
     onVagueAuto: () => gradeWithVerdict('vague', { fromVoice: true }),
-    // Voice result panel "No, I missed it" → Forgot.
+    // Voice result panel "No, I missed it" → Forgot. The card is already red by
+    // then (see onMissHeard), and the verdict layer will not replay a verdict it
+    // is already showing, so this commits the grade without shaking the card a
+    // second time.
     onUnknownAuto: () => gradeWithVerdict('unknown', { fromVoice: true }),
     // Miss → play the English audio (the panel shows the answer text + override).
     onRevealAnswer: revealMeaningPassive,
+    // Said a real word and it wasn't the answer → mark the card wrong straight
+    // away, while the panel is still asking. Provisional, not a grade: nothing
+    // is written, and "I knew it" repaints the same card green and throws it
+    // right. Red-then-green is not a contradiction here — it is the learner
+    // overruling the recognizer, which is exactly what that button means.
+    onMissHeard: () => cardRef.current?.playVerdict('unknown'),
   });
 
-  // A wrong answer stops and shows the interactive result panel in place of the
-  // standard action buttons; a correct answer just proceeds (no result).
+  // A wrong answer reddens the card and shows the interactive result panel in
+  // place of the standard action buttons; a correct answer just proceeds (no
+  // result).
   const voiceShowResult = voicePhase === 'result' && voiceResult !== null;
   const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
 
@@ -312,6 +322,14 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     (confidence: WordConfidence) => gradeWithVerdict(confidence),
     [gradeWithVerdict],
   );
+
+  // Re-recording discards the attempt that produced the mishear, so the red it
+  // put on the card has to go with it. Left alone, the learner would speak into
+  // a card still marked wrong for an answer they are in the middle of replacing.
+  const handleVoiceRetry = useCallback(() => {
+    cardRef.current?.clearVerdict();
+    voiceRetry();
+  }, [voiceRetry]);
 
   // Leaving the restudy hold is the moment the "Forgot" actually commits, so
   // that is where its exit belongs. No beat and no second verdict: the red ring
@@ -462,7 +480,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
                 result={voiceResult}
                 onAccept={voiceAccept}
                 onReject={voiceReject}
-                onRetry={voiceRetry}
+                onRetry={handleVoiceRetry}
               />
             </Animated.View>
           ) : revealed ? (

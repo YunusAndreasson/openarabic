@@ -142,6 +142,38 @@ describe('useCardVerdict', () => {
   // mock that collapses a sequence to its last frame both a miss and a pass
   // read 0 and the assertion would pass without proving anything.
 
+  // The voice path marks a mishear wrong the moment it is heard, and "No, I
+  // missed it" then grades the same outcome. Replaying would shake a card that
+  // is already red and buzz one conclusion twice.
+  test('an outcome already showing is not replayed', () => {
+    const { result } = renderHook(() => useCardVerdict());
+
+    act(() => result.current.playVerdict('unknown'));
+    // Prove the second call is a no-op by moving the value first: a replay
+    // would drive it back to RESIDUAL, a suppressed one leaves it alone.
+    act(() => result.current.verdictLevel.set(0.5));
+    act(() => result.current.playVerdict('unknown'));
+
+    expect(result.current.verdictLevel.get()).toBe(0.5);
+    expect(result.current.verdictTone.get()).toBe(VERDICT_TONE.WRONG);
+  });
+
+  // "I knew it" on the voice panel overturns the recognizer, and the card has
+  // to follow: red goes green and the card leaves. This is the one place a
+  // verdict legitimately replaces another mid-card.
+  test('a different outcome replaces the one showing', () => {
+    const { result } = renderHook(() => useCardVerdict());
+
+    act(() => result.current.playVerdict('unknown'));
+    expect(result.current.verdictTone.get()).toBe(VERDICT_TONE.WRONG);
+
+    act(() => result.current.playVerdict('known'));
+
+    expect(result.current.verdictTone.get()).toBe(VERDICT_TONE.CORRECT);
+    // The pass decays away as the card leaves, unlike the miss it replaced.
+    expect(result.current.verdictLevel.get()).toBe(0);
+  });
+
   // The miss ring does not decay on its own, so nothing but the next card
   // clears it. Without this the word AFTER a forgotten one arrived already
   // marked red.
