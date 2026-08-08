@@ -415,7 +415,12 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
           testID="review-card"
           restudying={restudying}
           onRestudyContinue={handleRestudyContinue}
-          listeningSlot={
+          // A voice miss discloses the answer without flipping the card, so the
+          // English goes under the Arabic on the question face. The card renders
+          // its own `answer` there rather than the screen passing a second copy
+          // of the same string.
+          discloseAnswer={voiceShowResult}
+          questionSlot={
             indicatorState ? (
               <VoiceListeningIndicator state={indicatorState} level={voice.micLevel} />
             ) : null

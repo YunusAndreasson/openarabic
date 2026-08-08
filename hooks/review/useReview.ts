@@ -524,14 +524,21 @@ export function useReview({
     [resolveCached, forgetCached],
   );
 
-  // Play the English meaning audio without advancing or flipping the card.
-  // Shared by the manual reveal (revealAnswer) and the voice-grading miss path
-  // (onRevealAnswer) — the answer text is shown by the flip / the VoiceResultPanel,
-  // so this only handles audio.
+  // Disclose the English meaning without advancing or flipping the card: set
+  // the text and play its audio. Shared by the manual reveal (revealAnswer,
+  // which flips as well) and the voice-grading miss path (onRevealAnswer, which
+  // shows it under the Arabic on the question face).
+  //
+  // It used to be audio only, on the grounds that the flip or the result panel
+  // showed the text. The panel no longer does — the answer moved onto the card,
+  // where it reads at the size the answer face gives it — so the one function
+  // that means "the answer is now disclosed" has to own the text too. Without
+  // it the card had an empty `answer` on every voice miss.
   const revealMeaningPassive = useCallback(() => {
     if (stateRefs.current.isUpdatingWord || isComplete || stateRefs.current.completionTriggered) {
       return;
     }
+    setCurrentMeaning(currentWord?.root?.meaning || STRINGS.NO_TRANSLATION_AVAILABLE);
     if (currentWord?.root?.audio_url_en) {
       const englishAudioUrl = generateStorageUrl('audio', currentWord.root.audio_url_en);
       if (englishAudioUrl) {

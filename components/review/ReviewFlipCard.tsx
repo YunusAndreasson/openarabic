@@ -251,11 +251,25 @@ interface ReviewFlipCardProps {
   onRestudyContinue?: () => void;
   /** Example sentence / context, below the meaning on the answer face. */
   answerSlot?: ReactNode;
-  /** What the microphone is doing, on the question face. Takes the replay
-   *  control's place while it is present — replaying the Arabic into an open
-   *  mic is not something to offer, and it is the same slot either way so the
-   *  face does not resize when the mic opens. */
-  listeningSlot?: ReactNode;
+  /**
+   * Whatever the question face has to say right now, directly under the Arabic:
+   * the microphone's state while it is working, or the English answer after a
+   * voice miss. Takes the replay control's place while it is present —
+   * replaying the Arabic into an open mic is not something to offer — and it is
+   * the same slot either way, so the face does not resize as the state changes.
+   */
+  questionSlot?: ReactNode;
+  /**
+   * Show the English under the Arabic on the QUESTION face, at the size the
+   * answer face gives it. For a voice miss, which discloses the answer without
+   * flipping the card — a retry has to stay on the question face, and it is the
+   * word the learner just failed to recall, so it belongs next to the Arabic
+   * rather than in a caption below the card.
+   *
+   * Outranks `questionSlot`: when a result is up the microphone is idle and has
+   * nothing to say.
+   */
+  discloseAnswer?: boolean;
   testID?: string;
 }
 
@@ -289,7 +303,8 @@ export function ReviewFlipCard({
   restudying = false,
   onRestudyContinue,
   answerSlot,
-  listeningSlot,
+  questionSlot,
+  discloseAnswer = false,
   testID,
 }: ReviewFlipCardProps) {
   const colors = useColors();
@@ -622,11 +637,24 @@ export function ReviewFlipCard({
                       at an identical y through the flip. */}
                     <WordDisplay word={word}>
                       <View style={STATIC_STYLES.questionBody}>
-                        {/* One slot, two occupants, the same height either way.
-                          While the mic is working it shows what it is doing —
-                          on the card, next to the word being answered, rather
-                          than in the button the learner has to aim at. */}
-                        {listeningSlot ??
+                        {/* One slot, three occupants. While the mic is working
+                          it shows what it is doing; after a voice miss it shows
+                          the English. Both belong here rather than under the
+                          card, next to the word they are about — the answer in
+                          particular was a caption in the action band, set at
+                          the smallest type in the app, which is a strange place
+                          to put the one thing the learner failed to recall.
+                          Falls back to the replay control. */}
+                        {discloseAnswer && answer ? (
+                          <ThemedText
+                            type="heading2"
+                            colorName="englishText"
+                            style={STATIC_STYLES.meaning}
+                          >
+                            {capitalizeFirstLetter(answer)}
+                          </ThemedText>
+                        ) : (
+                          (questionSlot ??
                           (onReplayAudio ? (
                             <Pressable
                               onPress={onReplayAudio}
@@ -647,7 +675,8 @@ export function ReviewFlipCard({
                                 color={colors.secondaryText}
                               />
                             </Pressable>
-                          ) : null)}
+                          ) : null))
+                        )}
                       </View>
                     </WordDisplay>
                   </Pressable>

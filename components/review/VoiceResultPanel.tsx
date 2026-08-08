@@ -42,9 +42,17 @@ export const VoiceResultPanel: FC<VoiceResultPanelProps> = memo(
 
     return (
       <Animated.View entering={FadeIn.duration(TIMING_CONFIG.MEDIUM.duration)} style={styles.panel}>
+        {/* What was HEARD, and only that. The answer used to sit beside it as a
+            second caption, which put the one word the learner had just failed
+            to recall in the smallest type in the app, in the action band, away
+            from the Arabic it belongs to. It is on the card now, under the word,
+            at the same size the answer face gives it.
+
+            The transcript stays here because it is evidence about the
+            recognizer rather than about the language: it is what makes the
+            override an informed choice instead of a guess, and a miss must
+            never be graded without showing it. */}
         <View style={styles.detailRow}>
-          {/* The transcript takes the slack and ellipsizes; the answer never
-              does, because it is the half the decision is made against. */}
           <ThemedText
             type="caption"
             colorName={heardSomething ? 'text' : 'textTertiary'}
@@ -54,9 +62,6 @@ export const VoiceResultPanel: FC<VoiceResultPanelProps> = memo(
             {heardSomething
               ? STRINGS.VOICE_RESULT_HEARD_TEMPLATE(result.heard)
               : STRINGS.VOICE_RESULT_NOT_HEARD}
-          </ThemedText>
-          <ThemedText type="caption" colorName="success" numberOfLines={1} style={styles.answer}>
-            {STRINGS.VOICE_RESULT_ANSWER_TEMPLATE(result.expected)}
           </ThemedText>
         </View>
 
@@ -130,9 +135,6 @@ const styles = StyleSheet.create({
   },
   heard: {
     flexShrink: 1,
-  },
-  answer: {
-    flexShrink: 0,
   },
   actionsRow: {
     flexDirection: 'row',

@@ -57,11 +57,13 @@ export const STRINGS = {
   VOICE_RESUME_LABEL: 'Resume voice grading',
   // Voice result panel — shown when the recognizer couldn't confirm a match.
   // Framed as a neutral self-grade ("did you get it right?") rather than a
-  // verdict, so the buttons answer the question the You-said/Answer comparison
-  // sets up instead of asking the user to ratify the ASR.
+  // verdict, so the buttons answer the question the transcript sets up instead
+  // of asking the user to ratify the ASR. The answer half of that comparison is
+  // no longer here: it is on the card, under the Arabic, at the size the answer
+  // face gives it — a caption in the action band was the wrong home for the one
+  // word the learner had just failed to recall.
   VOICE_RESULT_NOT_HEARD: "Didn't catch that",
   VOICE_RESULT_HEARD_TEMPLATE: (heard: string) => `You said “${heard}”`,
-  VOICE_RESULT_ANSWER_TEMPLATE: (answer: string) => `→ ${answer}`,
   // Long forms stay as the accessibility labels: the visible buttons are
   // abbreviated to sit three-up in the same band as the self-grade row, but a
   // screen reader has no such constraint and "Got it" alone is ambiguous.
