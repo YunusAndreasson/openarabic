@@ -48,10 +48,16 @@ const STATIC_STYLES = StyleSheet.create({
   // Flex spacers rather than fixed offsets: they resolve identically on both
   // faces (same structure, same flex values), which is what keeps the Arabic at
   // an identical y through the flip, while still adapting to the card's height
-  // on any device. Ratio puts the word around a third of the way down instead
-  // of flush against the top edge.
+  // on any device.
+  //
+  // The ratio was 1 : 2.6, putting the word ~28% down — which reads as balanced
+  // on the question face, where nothing follows it, and badly top-heavy on the
+  // answer face, where the meaning AND the example sentence have to share what
+  // is left. Raising the word buys that stack roughly a tenth of the card back
+  // from air nothing was using. Changed on BOTH faces, never per-face: the
+  // identical resolution is what stops the Arabic jumping through the flip.
   heroLead: {
-    flexGrow: 1,
+    flexGrow: 0.55,
   },
   heroRow: {
     width: '100%',

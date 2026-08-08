@@ -45,6 +45,23 @@ export interface AudioPlayOptions {
    * faster tick and would just pay for the extra events.
    */
   statusIntervalMs?: number;
+  /**
+   * iOS: keep the audio session active when this player pauses or finishes.
+   *
+   * expo-audio defaults this to `false`, which means a finishing player
+   * DEACTIVATES the shared audio session. In a review session that session is
+   * not ours alone — the voice provider holds it record-capable for the whole
+   * screen (`setRecordingSessionEnabled` + `openCapture`) — so every prompt
+   * that ended was tearing the session out from under the live microphone.
+   * That is what `refreshCapture()` has been compensating for ("playing the
+   * Arabic can leave the held-open stream alive but deaf"), and it matches the
+   * measured decay: prompts start in ~30 ms and, once the mic has been used,
+   * settle at ~4.2 s — one full `readyTimeoutMs` plus the internal retry.
+   *
+   * Set only where a microphone shares the session. Leaving it false elsewhere
+   * keeps the default courtesy of releasing the session for other apps.
+   */
+  keepAudioSessionActive?: boolean;
 }
 
 // Marker for "the source never became ready" failures, so play() can tell a
@@ -594,6 +611,7 @@ class SimpleAudioService {
   private createFreshPlayer(
     audioUrl: string,
     updateIntervalMs = DEFAULT_UPDATE_INTERVAL_MS,
+    keepAudioSessionActive = false,
   ): AudioPlayer {
     if (this.currentPlayer) {
       try {
@@ -612,6 +630,7 @@ class SimpleAudioService {
 
     const playerOptions: AudioPlayerOptions = {
       updateInterval: updateIntervalMs,
+      keepAudioSessionActive,
     };
     this.currentPlayer = createAudioPlayer(audioUrl, playerOptions);
     return this.currentPlayer;
@@ -689,7 +708,11 @@ class SimpleAudioService {
       this.stopEventSubscription();
 
       // Always create a fresh player — see createFreshPlayer for rationale
-      const player = this.createFreshPlayer(track.audioUrl, options.statusIntervalMs);
+      const player = this.createFreshPlayer(
+        track.audioUrl,
+        options.statusIntervalMs,
+        options.keepAudioSessionActive,
+      );
       this.currentTrack = track;
 
       // IMMEDIATE FEEDBACK: Update status to loading right away

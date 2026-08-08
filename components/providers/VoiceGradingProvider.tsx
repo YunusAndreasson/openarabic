@@ -41,6 +41,12 @@ import {
   type RecordingResult,
 } from '@/lib/voice/recording';
 import { analytics } from '@/services/analytics';
+import {
+  markArmEntered,
+  markAwaitOpen,
+  markBeginWindow,
+  markStreamState,
+} from '@/utils/armTelemetry';
 import { simpleAudioService } from '@/services/audioPlayer';
 import { useAppSelectorShallow } from '@/store/hooks';
 import { mark as diagMark, span as diagSpan } from '@/utils/reviewDiagnostics';
@@ -248,6 +254,21 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
   const acquireSession = useCallback((): (() => void) => {
     holdersRef.current += 1;
     if (holdersRef.current === 1) {
+      // Opens the input stream up front, and it has to stay that way.
+      //
+      // Deferring it to the tap was tried and reverted: opening on demand cost
+      // 1008 ms on the first card (the ~19 ms that justified the attempt was a
+      // WARM reopen mid-session, not a cold open — the wrong number to
+      // generalise from), and worse, it failed outright, producing 15
+      // consecutive `arm_failed` rows where the microphone never came back for
+      // the rest of the session. Opening while nothing contends for the device
+      // is what makes the tap reliable.
+      //
+      // The cost is real and unresolved: an open input stream lights the iOS
+      // microphone indicator for the whole session, before the learner has
+      // asked for anything, and it forces the output route onto .playAndRecord
+      // (quieter playback — see AUDIO_MODE_CONFIG). Fixing that means releasing
+      // the recording session between cards, not opening the stream late.
       void simpleAudioService.setRecordingSessionEnabled(true).then(() => openCapture());
     }
     let released = false;
@@ -321,6 +342,7 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
 
   const arm = useCallback(
     async function arm(handlers?: { onCapturing?: () => void }): Promise<VoiceArmOutcome> {
+      markArmEntered();
       if (!isReady) {
         diagMark('mic.arm.reject', { reason: 'not-ready' });
         return { ok: false, reason: 'not-ready' };
@@ -333,9 +355,12 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
       // Normally already open — acquireSession did it when the screen mounted.
       // This covers a first card that beat the open, and any reopen still in
       // flight after an interruption.
+      markStreamState(capture.isOpen);
       if (!capture.isOpen) {
         const endOpen = diagSpan('mic.awaitOpen');
+        const openStartedAt = Date.now();
         await openCapture();
+        markAwaitOpen(Date.now() - openStartedAt);
         endOpen({ opened: capture.isOpen });
         if (!capture.isOpen) {
           diagMark('mic.arm.reject', { reason: 'stream-closed' });
@@ -404,6 +429,7 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
         finishRef.current = finish;
 
         try {
+          markBeginWindow();
           capture.beginWindow(
             {
               onAutoStop: finish,

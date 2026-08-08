@@ -9,6 +9,8 @@ import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { analytics } from '@/services/analytics';
+import { logPromptSilent } from '@/services/voiceTelemetry';
+import { useAppSelectorShallow } from '@/store/hooks';
 
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useAuth } from '@/hooks/auth';
@@ -27,8 +29,20 @@ import type {
 } from '@/types/review.types';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { resetArmTelemetry } from '@/utils/armTelemetry';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
+import {
+  beginPrompt,
+  markCardCurrent,
+  recordPromptAbsent,
+  recordPromptCut,
+  recordPromptFinish,
+  recordPromptFinishAudit,
+  recordPromptGate,
+  recordPromptPlay,
+  resetPromptTelemetry,
+} from '@/utils/promptTelemetry';
 import {
   endDiagSession,
   mark as diagMark,
@@ -122,7 +136,24 @@ interface UseReviewReturn {
 const REVIEW_PLAY_OPTIONS = {
   statusIntervalMs: 100,
   readyTimeoutMs: 4000,
+  // The voice provider holds this same audio session record-capable for the
+  // whole screen. Without this flag every finishing prompt deactivated it under
+  // the live microphone — see AudioPlayOptions.keepAudioSessionActive.
+  keepAudioSessionActive: true,
 } as const;
+
+/**
+ * What a `playAudio` call had to do to get there, reported alongside its
+ * boolean result. Both fields cost the learner seconds and neither is visible
+ * from the outside: a failed play looks the same whether the file was missing,
+ * corrupt, or simply refused to load.
+ */
+export interface PlayAudioDetail {
+  /** The file was not in the preload map and had to be resolved on the spot. */
+  cacheMissed: boolean;
+  /** The invalidate → re-download → retry path ran for this call. */
+  healed: boolean;
+}
 
 const TRANSITION_DELAYS = {
   /**
@@ -223,6 +254,15 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   // ref (not tied to the audio effect's cleanup) so an incidental re-render
   // mid-prompt can't tear it down and strand `promptAudioDoneKey`.
   const promptWatchRef = useRef<{ key: string; cancel: () => void } | null>(null);
+
+  // Read for the silent-prompt row only, so it can say whether the mic was
+  // about to open on a word that was never read. Kept in a ref: the prompt
+  // effect must not re-run because a setting changed mid-card.
+  const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
+  const voiceEnabledRef = useRef(voiceEnabled);
+  useEffect(() => {
+    voiceEnabledRef.current = voiceEnabled;
+  }, [voiceEnabled]);
 
   // Monotonic token for playAudio calls. play() returning false can mean the
   // call was superseded by a newer play (or a stop); the cache self-heal retry
@@ -400,10 +440,18 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   // outlives. Quick mode still covers the genuine miss: a card reached before
   // the background preload got to it.
   const playAudio = useCallback(
-    async (url: string) => {
+    async (url: string, onResolved?: (detail: PlayAudioDetail) => void) => {
       if (!url) return false;
 
       const preloaded = resolveCached(url);
+      // Reported rather than inferred: a play-time cache miss and a cache
+      // self-heal both cost seconds, and from the outside they look identical
+      // to a player that simply refused to load.
+      const detail: PlayAudioDetail = { cacheMissed: preloaded === null, healed: false };
+      const report = (started: boolean): boolean => {
+        onResolved?.(detail);
+        return started;
+      };
       const localPath = preloaded ?? (await audioCache.getAudio(url, { quick: true }));
 
       const makeTrack = (audioUrl: string) => ({
@@ -416,12 +464,12 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
       try {
         const success = await simpleAudioService.play(makeTrack(localPath), REVIEW_PLAY_OPTIONS);
-        if (success) return true;
+        if (success) return report(true);
 
         // false can also mean this play was superseded by a newer play/stop —
         // in that case the file is fine and retrying would hijack the newer
         // playback. Only the latest call may self-heal.
-        if (playAudioSeqRef.current !== seq) return false;
+        if (playAudioSeqRef.current !== seq) return report(false);
 
         // A cached copy that fails to load is almost always a corrupt/partial
         // download poisoning the cache — without purging it, this word would
@@ -429,16 +477,17 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
         // remembered path goes too, or the retry would resolve straight back to
         // the file we just deleted.
         if (localPath !== url) {
+          detail.healed = true;
           forgetCached(url);
           await audioCache.invalidate(url);
           const freshPath = await audioCache.getAudio(url, { quick: true });
-          if (playAudioSeqRef.current !== seq) return false;
-          return await simpleAudioService.play(makeTrack(freshPath), REVIEW_PLAY_OPTIONS);
+          if (playAudioSeqRef.current !== seq) return report(false);
+          return report(await simpleAudioService.play(makeTrack(freshPath), REVIEW_PLAY_OPTIONS));
         }
-        return false;
+        return report(false);
       } catch (error) {
         handleError(error);
-        return false;
+        return report(false);
       }
     },
     [resolveCached, forgetCached],
@@ -455,6 +504,10 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     if (currentWord?.root?.audio_url_en) {
       const englishAudioUrl = generateStorageUrl('audio', currentWord.root.audio_url_en);
       if (englishAudioUrl) {
+        // The English play supersedes the Arabic prompt. Recorded before it
+        // starts, because from the watcher's side the teardown that follows is
+        // indistinguishable from a player that died on its own.
+        recordPromptCut('reveal');
         const endMeaningPlay = diagSpan('meaning.play');
         playAudio(englishAudioUrl)
           .then(started => endMeaningPlay({ started }))
@@ -564,7 +617,10 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       const audioPath = currentWord?.root?.audio_url;
       if (!audioPath) return;
       const replayUrl = generateStorageUrl('audio', audioPath);
-      if (replayUrl) playAudio(replayUrl).catch(handleError);
+      if (replayUrl) {
+        recordPromptCut('reveal');
+        playAudio(replayUrl).catch(handleError);
+      }
     },
     [currentWord?.root?.meaning, currentWord?.root?.audio_url, playAudio],
   );
@@ -583,6 +639,10 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       // arriving during the hold fell straight through to the commit and wrote
       // the card twice (caught by useReview.swipe.test).
       if (restudyRef.current) return;
+
+      // Graded while the prompt was still playing — the learner answered
+      // without hearing the whole word. A no-op once it has finished.
+      recordPromptCut('advance');
 
       if (confidence === 'unknown') {
         enterRestudy(opts.fromVoice ?? false);
@@ -684,6 +744,20 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     });
   }, [wordQueue?.length, isComplete, stopAudioSafely]);
 
+  /**
+   * Stamp the moment this card became the current one — deliberately ahead of
+   * the prompt effect below and behind none of its gates.
+   *
+   * The prompt effect cannot do this itself: it returns early while the audio
+   * preloader is still working, so anything it measures starts after the wait.
+   * A learner who says "I waited two seconds for the Arabic" is describing this
+   * window, and measuring from the play call reported it as 50 ms.
+   */
+  useEffect(() => {
+    if (!currentWord?.root || currentWordKey === 'none') return;
+    markCardCurrent(currentWordKey);
+  }, [currentWordKey, currentWord?.root]);
+
   // Effect: Handle current word changes and play audio (simplified - no more loading).
   // Guard against re-firing for the same word: this effect's deps include
   // showTranslation, which flips false at the same ~3s moment processFeedback
@@ -700,6 +774,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     }
 
     if (showTranslation) {
+      recordPromptGate(currentWordKey, 'revealed');
       return;
     }
 
@@ -707,6 +782,9 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     // downloading in the background; playAudio's quick mode (below) covers the
     // rare case where the user reaches a card before its file has landed.
     if (isAudioPreloading || !isAudioReady) {
+      // The silent-wait gate. Recorded because the card is on screen and mute
+      // while this holds, and nothing downstream can see that it happened.
+      recordPromptGate(currentWordKey, 'preload');
       return;
     }
 
@@ -746,30 +824,71 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       setPromptAudioDoneKey(keyForRun);
     };
 
+    // Opens this card's prompt record. Everything below reports into it, and
+    // whatever telemetry row this card eventually writes carries the result.
+    beginPrompt(keyForRun);
+
     const audioUrl = generateStorageUrl('audio', currentWord.root.audio_url);
     if (!audioUrl) {
       // No prompt to play — let the mic arm immediately for this card. Deferred
       // off the effect body so it isn't a synchronous cascading setState.
       diagMark('prompt.none');
+      recordPromptAbsent(keyForRun);
       void Promise.resolve().then(markDone);
       return;
     }
 
+    const rootIdForRun = currentWord.root_id;
+    const expectedForRun = currentWord.root.meaning ?? null;
+    const playStartedAt = Date.now();
     const endPromptPlay = diagSpan('prompt.play');
-    playAudio(audioUrl)
+    let playDetail: PlayAudioDetail = { cacheMissed: false, healed: false };
+    playAudio(audioUrl, detail => {
+      playDetail = detail;
+    })
       .then(started => {
+        const playMs = Date.now() - playStartedAt;
         endPromptPlay({ started, movedOn: movedOn() });
+        recordPromptPlay(keyForRun, { started, playMs, ...playDetail });
         if (movedOn()) return;
         // Playback didn't start (cache miss / play failure) — don't strand the
         // voice mic waiting; let it arm now.
         if (!started) {
+          // The silent card. It throws nothing and consumes no attempt, so this
+          // row is the only trace it ever leaves — see logPromptSilent.
+          void logPromptSilent({
+            rootId: rootIdForRun,
+            expected: expectedForRun,
+            playMs,
+            voiceEnabled: voiceEnabledRef.current,
+            meta: { cacheMissed: playDetail.cacheMissed, healed: playDetail.healed },
+          });
           markDone();
           return;
         }
-        promptWatchRef.current = { key: keyForRun, cancel: watchPromptFinish(markDone, movedOn) };
+        promptWatchRef.current = {
+          key: keyForRun,
+          cancel: watchPromptFinish(
+            outcome => {
+              recordPromptFinish(keyForRun, outcome);
+              markDone();
+            },
+            movedOn,
+            undefined,
+            // Runs after the prompt is already done as far as the session is
+            // concerned; it only settles whether the player's own finish event
+            // exists on this platform or merely arrives too late to win.
+            audit => recordPromptFinishAudit(keyForRun, audit),
+          ),
+        };
       })
       .catch(err => {
         endPromptPlay({ started: false, error: true });
+        recordPromptPlay(keyForRun, {
+          started: false,
+          playMs: Date.now() - playStartedAt,
+          ...playDetail,
+        });
         handleError(err);
         markDone();
       });
@@ -818,6 +937,9 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
     const audioUrl = generateStorageUrl('audio', currentWord.root.audio_url);
     if (audioUrl) {
+      // Replaying the same word supersedes an in-flight prompt with itself:
+      // the learner heard part of it, then asked for it again.
+      recordPromptCut('replay');
       playAudio(audioUrl).catch(handleError);
     }
   }, [currentWord, playAudio]);
@@ -962,6 +1084,12 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       sessionStarted.current = false;
       sessionStartTime.current = null;
       wordsReviewedCount.current = 0;
+
+      // The card in flight is gone with the screen; without this its prompt
+      // would still answer to `getPromptSnapshot` and ride into the next
+      // session's first telemetry row.
+      resetPromptTelemetry();
+      resetArmTelemetry();
 
       // Last cleanup registered in this hook, so the printed report includes
       // every teardown step above it.

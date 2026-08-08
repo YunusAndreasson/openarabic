@@ -110,7 +110,12 @@ interface Props {
  */
 export const ReviewContextSentence: FC<Props> = memo(({ example, onPlay }) => {
   const colors = useColors();
-  const readerFontSize = useDebouncedArabicFontSize(100);
+  // A clear step below the reader's own size. At 100% the example competed with
+  // the hero Arabic above it — same script, same weight, near enough the same
+  // size — so the answer face read as two headlines stacked rather than an
+  // answer and its evidence. Hierarchy by scale, since colour is spoken for
+  // (see the chip note below) and weight does nothing on Arabic glyphs.
+  const readerFontSize = useDebouncedArabicFontSize(82);
 
   const targetChipColor = withAlpha(colors.tint, LAYOUT.OPACITY.FAINT);
   const words = example.words;

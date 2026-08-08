@@ -46,6 +46,8 @@ import {
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import { setVoiceEnabled } from '@/store/settingsSlice';
 import { errorFeedback } from '@/utils/haptics';
+import { getArmStages, markArmTap } from '@/utils/armTelemetry';
+import { getPromptSnapshot, recordPromptCut } from '@/utils/promptTelemetry';
 import { countDiag, mark as diagMark, span as diagSpan } from '@/utils/reviewDiagnostics';
 import { matchSingleWord } from '@/utils/voiceMatching';
 
@@ -265,6 +267,14 @@ export function useVoiceReview({
   // its retry backoff. That gap is the whole complaint.
   const tapAtRef = useRef<number | null>(null);
   const tapToCapturingRef = useRef<number | null>(null);
+  /**
+   * What set `armRequestedRef` for this card. Recorded because a field report
+   * of "the mic was live and I never tapped" cannot be checked without it —
+   * `tapToCapturingMs` looked like the answer but was structurally always null
+   * (`tapAtRef` was cleared and read, never assigned), so it proved nothing.
+   * A row with an arm and a null trigger is an arm nobody asked for.
+   */
+  const armTriggerRef = useRef<'tap' | 'retry' | 'ladder' | null>(null);
   /** The input stream was force-reopened after this card's prompt. */
   const streamRefreshedRef = useRef(false);
 
@@ -337,6 +347,7 @@ export function useVoiceReview({
     armRequestedRef.current = false;
     tapAtRef.current = null;
     tapToCapturingRef.current = null;
+    armTriggerRef.current = null;
     streamRefreshedRef.current = false;
     if (armRetryTimerRef.current) {
       clearTimeout(armRetryTimerRef.current);
@@ -501,7 +512,11 @@ export function useVoiceReview({
             bufferCount: null,
             tapToCapturingMs: null,
             streamRefreshed: streamRefreshedRef.current,
-            meta: { settings: settingsRef.current, phase: 'denied' },
+            meta: {
+              settings: settingsRef.current,
+              phase: 'denied',
+              prompt: getPromptSnapshot(currentWordKey),
+            },
           });
           setPhase('denied');
           return;
@@ -533,7 +548,9 @@ export function useVoiceReview({
           diagMark('mic.arm.retry-scheduled', { attempt: armFailuresRef.current, delay });
           armedForKeyRef.current = null;
           // Still the learner's original request — finish it rather than making
-          // them tap again for a native hiccup they never saw.
+          // them tap again for a native hiccup they never saw. The trigger stays
+          // whatever asked first; only note that a rung ran.
+          armTriggerRef.current = armTriggerRef.current ?? 'ladder';
           armRequestedRef.current = true;
           armRetryTimerRef.current = setTimeout(() => {
             armRetryTimerRef.current = null;
@@ -553,7 +570,11 @@ export function useVoiceReview({
           bufferCount: null,
           tapToCapturingMs: null,
           streamRefreshed: streamRefreshedRef.current,
-          meta: { settings: settingsRef.current, phase: 'gave-up' },
+          meta: {
+            settings: settingsRef.current,
+            phase: 'gave-up',
+            prompt: getPromptSnapshot(currentWordKey),
+          },
         });
         setPhase('idle');
         return;
@@ -663,7 +684,16 @@ export function useVoiceReview({
           // where `first_buffer_ms` starts counting only once the window opens.
           tapToCapturingMs: tapToCapturingRef.current,
           armAttempts: armFailuresRef.current,
+          armTrigger: armTriggerRef.current,
+          // Where the ~1.1 s between the tap and the microphone went. Only
+          // ~150 ms of it is the recorder; the rest was unattributed until this.
+          armStages: getArmStages(),
           streamRefreshed: streamRefreshedRef.current,
+          // What the learner actually heard before answering. A miss on a card
+          // whose prompt was cut (or never played) is not a mishearing — it is
+          // a question that was never asked, and until this landed the two were
+          // indistinguishable in the table.
+          prompt: getPromptSnapshot(currentWordKey),
           settings: settingsRef.current,
           recordingConfig: {
             ...DEFAULT_RECORDING_CONFIG,
@@ -799,6 +829,9 @@ export function useVoiceReview({
     stopAudioRef.current();
     setResult(null);
     setPhase('arming');
+    tapAtRef.current = Date.now();
+    armTriggerRef.current = 'retry';
+    markArmTap();
     // Force the arm effect to fire again for this same card and skip the
     // wait-for-audio gate so the mic reopens immediately.
     armRequestedRef.current = true;
@@ -824,6 +857,17 @@ export function useVoiceReview({
     if (pausedRef.current) return;
     if (!voice.isReady) return;
     diagMark('mic.speakNow', { phase: phaseRef.current });
+    // The tap is now the only way to arm, so this stop runs on every card —
+    // and on any card where the learner is quick, it is what truncates the
+    // Arabic. Recorded before the stop, while there is still a prompt to
+    // describe; the attempt row that follows carries how much was heard.
+    recordPromptCut('speak-now');
+    // The assignment `tapToCapturingMs` always needed: the ref was cleared per
+    // card and read in onCapturing, but never set, so the column has been null
+    // on every row ever written.
+    tapAtRef.current = Date.now();
+    armTriggerRef.current = 'tap';
+    markArmTap();
     stopAudioRef.current();
     setResult(null);
     setPhase('arming');

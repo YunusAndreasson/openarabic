@@ -20,8 +20,16 @@ import type { Json } from '@/types/database.types';
  * we most needed to see were the only ones NOT being written: a window that
  * comes back with zero buffers returns before any match is computed, so the
  * table only ever held the attempts that worked.
+ *
+ * `prompt_silent` rows are the step before that: a card whose Arabic prompt
+ * never played at all. It is not an error — `play()` returns `false` and the
+ * pipeline deliberately carries on so the mic is not stranded — so it reaches
+ * neither Sentry nor `arm_failed`, and the learner is asked to say a word they
+ * were never read. One row per silent card, written whether or not voice
+ * grading is on, since the prompt plays either way.
  */
-export type VoiceResolution = 'auto_known' | 'accept' | 'reject' | 'retry' | 'arm_failed';
+export type VoiceResolution =
+  'auto_known' | 'accept' | 'reject' | 'retry' | 'arm_failed' | 'prompt_silent';
 
 /** One resolved voice attempt, in app-domain shape (mapped to columns below). */
 export interface VoiceAttemptLog {
@@ -69,6 +77,47 @@ export interface VoiceArmFailureLog {
   /** True if the stream had been force-reopened since the prompt ended. */
   streamRefreshed: boolean;
   meta: Record<string, unknown>;
+}
+
+/** A card whose Arabic prompt produced no audio. Same trick as the arm failure
+ *  above: everything specific rides in `meta`, so no schema change. */
+export interface PromptSilentLog {
+  rootId: number | null;
+  expected: string | null;
+  /** ms `playAudio` took to give up. The review lane caps the player's ready
+   *  wait at `REVIEW_PLAY_OPTIONS.readyTimeoutMs`, so that deadline shows up
+   *  here as roughly one (or, with the cache self-heal, two) of those. */
+  playMs: number | null;
+  /** Voice grading was on for this card. A silent prompt is worse when it is,
+   *  because the mic then opens on a word that was never read. */
+  voiceEnabled: boolean;
+  meta: Record<string, unknown>;
+}
+
+export async function logPromptSilent(log: PromptSilentLog): Promise<void> {
+  await logVoiceAttempt({
+    rootId: log.rootId,
+    expected: log.expected,
+    transcript: null,
+    normalizedSpoken: null,
+    matched: false,
+    matchMethod: null,
+    similarity: null,
+    suggestion: null,
+    resolution: 'prompt_silent',
+    // No arm happened, and no attempt was consumed — this row describes the
+    // card, not a try at answering it.
+    attemptIndex: 0,
+    durationMs: log.playMs,
+    stopReason: null,
+    heardSpeech: null,
+    peakRms: null,
+    bufferCount: null,
+    firstBufferMs: null,
+    stopDecidedAtMs: null,
+    modelId: null,
+    meta: { ...log.meta, voiceEnabled: log.voiceEnabled },
+  });
 }
 
 export async function logVoiceArmFailure(log: VoiceArmFailureLog): Promise<void> {

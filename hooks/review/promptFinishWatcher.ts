@@ -65,17 +65,69 @@ export interface PromptStatusSource {
 export type PromptFinishReason =
   'didJustFinish' | 'stopped' | 'reachedEnd' | 'maxWait' | 'cancelled' | 'superseded';
 
+/** How the prompt ended, handed to `onFinish` so the caller can record it
+ *  without re-deriving it from a status it no longer has. */
+export interface PromptFinishOutcome {
+  reason: PromptFinishReason;
+  /** ms the watcher was open — how long the clip was actually audible. */
+  audibleMs: number;
+  /** Clip length the player reported, or 0 if it never reported one. */
+  durationMs: number;
+  /** Distinct play-head readings this watcher saw. The `reachedEnd` deadline is
+   *  only as good as its last sample, so a low count on a ~1.5 s clip means the
+   *  estimate was extrapolating from stale data rather than tracking playback. */
+  positionSamples: number;
+}
+
+/**
+ * Did the player's own end-of-source event ever show up, and if so, how late?
+ *
+ * Measured because a field session came back `reachedEnd` on 11 cards out of
+ * 11 and `didJustFinish` on none, while the same code on Android saw it 32
+ * times in 46. Two very different explanations fit that: either expo-audio
+ * never emits it on iOS, or it does and simply loses the race — the wall-clock
+ * backstop fires at the *estimated* end, which on an accurate estimate is a few
+ * ms before the real one. The fix is opposite in each case, so this settles it
+ * instead of guessing: keep listening briefly after settling and report whether
+ * the authoritative event turns up.
+ */
+export interface PromptFinishAudit {
+  /** True if `didJustFinish` / `ended` arrived after we had already settled. */
+  lateEventSeen: boolean;
+  /** ms between settling on an estimate and that event landing. */
+  lateEventMs: number | null;
+}
+
+/** How long to keep listening for the authoritative event after settling on an
+ *  estimate. Generous next to the few ms a lost race would cost, and short
+ *  enough that the audit lands before the card's telemetry row is written. */
+const FINISH_EVENT_AUDIT_MS = 750;
+
+/** Estimate-based settles — the only ones where a later authoritative event is
+ *  meaningful. A torn-down track (`stopped`/`cancelled`/`superseded`) has no
+ *  source left to finish, so watching for one would only ever time out. */
+const AUDITED_REASONS: ReadonlySet<PromptFinishReason> = new Set<PromptFinishReason>([
+  'reachedEnd',
+  'maxWait',
+]);
+
 /**
  * Calls `onFinish` once the prompt that `play()` just started has finished.
  * Returns a canceller; calling it settles the watcher immediately.
  */
 export function watchPromptFinish(
-  onFinish: () => void,
+  onFinish: (outcome: PromptFinishOutcome) => void,
   isCancelled: () => boolean,
   source: PromptStatusSource = simpleAudioService,
+  onAudit?: (audit: PromptFinishAudit) => void,
 ): () => void {
   let settled = false;
   const startedAt = Date.now();
+  /** Distinct play-head readings seen — reported so a starved estimate is
+   *  visible rather than inferred from the overshoot alone. */
+  let positionSamples = 0;
+  /** Teardown for the post-settle audit, so the canceller can reach it too. */
+  let cancelAudit: (() => void) | null = null;
   // Wall-clock instant the clip is expected to end, derived from the player's
   // reported duration/position. Recomputed on every status so it tracks the
   // real play head rather than assuming playback began when play() resolved.
@@ -87,14 +139,53 @@ export function watchPromptFinish(
   // (but still reports `playing`) would hold the microphone shut indefinitely.
   let lastPositionS = -1;
 
+  /**
+   * Keep one cheap listener alive after an estimate-based settle, purely to see
+   * whether the player's own finish event turns up afterwards. Reports exactly
+   * once and tears itself down either way. Nothing downstream waits on it — the
+   * prompt is already done as far as the session is concerned.
+   */
+  const auditLateFinish = (settledAt: number): void => {
+    if (!onAudit) return;
+    let reported = false;
+    const report = (audit: PromptFinishAudit): void => {
+      if (reported) return;
+      reported = true;
+      clearTimeout(deadline);
+      stopAudit();
+      cancelAudit = null;
+      onAudit(audit);
+    };
+    const stopAudit = source.subscribe(status => {
+      if (status.didJustFinish || status.playbackState === 'ended') {
+        report({ lateEventSeen: true, lateEventMs: Date.now() - settledAt });
+      }
+    });
+    const deadline = setTimeout(
+      () => report({ lateEventSeen: false, lateEventMs: null }),
+      FINISH_EVENT_AUDIT_MS,
+    );
+    cancelAudit = () => report({ lateEventSeen: false, lateEventMs: null });
+  };
+
   const finish = (graceMs: number, reason: PromptFinishReason): void => {
-    if (settled) return;
+    if (settled) {
+      // The canceller runs on teardown as well as supersession, and by then the
+      // audit may still be open on a screen that is going away.
+      cancelAudit?.();
+      return;
+    }
     settled = true;
     clearInterval(poll);
     unsubscribe();
-    diagMark('prompt.finish', { reason, ms: Date.now() - startedAt, graceMs, durationMs });
-    if (graceMs > 0 && !isCancelled()) setTimeout(onFinish, graceMs);
-    else onFinish();
+    const audibleMs = Date.now() - startedAt;
+    diagMark('prompt.finish', { reason, ms: audibleMs, graceMs, durationMs, positionSamples });
+    // Measured at the settle, not after the grace — the grace is silence the
+    // learner sits through, not part of the word.
+    const outcome: PromptFinishOutcome = { reason, audibleMs, durationMs, positionSamples };
+    if (AUDITED_REASONS.has(reason)) auditLateFinish(Date.now());
+    if (graceMs > 0 && !isCancelled()) setTimeout(() => onFinish(outcome), graceMs);
+    else onFinish(outcome);
   };
 
   const evaluate = (status: AudioStatus): void => {
@@ -113,6 +204,7 @@ export function watchPromptFinish(
     // Re-derive the deadline only from a genuinely new play-head reading.
     if (status.duration > 0 && status.currentTime !== lastPositionS) {
       lastPositionS = status.currentTime;
+      positionSamples += 1;
       durationMs = status.duration * 1000;
       expectedEndAt = Date.now() + (status.duration - status.currentTime) * 1000;
     }
