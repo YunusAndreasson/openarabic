@@ -127,6 +127,27 @@ interface VoiceGradingContextValue {
    * away what is being said.
    */
   refreshCapture: () => void;
+  /**
+   * Hand the audio session to playback, or give it back to the microphone.
+   *
+   * iOS gives `.playAndRecord` less output gain than `.playback`, so holding
+   * the input stream open for a whole review session makes every Arabic prompt
+   * quieter than it should be. Measured against a natural experiment: on a
+   * build where the stream only opened at the first tap, the FIRST prompt was
+   * at full volume and every prompt after it was not.
+   *
+   * Dropping the stream for the prompt and restoring it afterwards is the only
+   * lever available — `.allowBluetoothHFP` and `.defaultToSpeaker` are decided
+   * natively (AudioModule.swift) and no JS option suppresses the category
+   * itself.
+   *
+   * Fails SAFE and permanently: if the stream cannot be restored even once,
+   * the whole mechanism latches off for the rest of the session and the
+   * microphone keeps a record-capable session, because a quiet prompt is a
+   * far smaller problem than a dead microphone (which is exactly what an
+   * earlier open-on-demand attempt produced).
+   */
+  setPlaybackPriority: (playbackOnly: boolean) => Promise<void>;
 }
 
 /**
@@ -250,6 +271,53 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
     diagMark('mic.session.refresh');
     void openCapture(true);
   }, [capture, openCapture]);
+
+  /** True while the session has been handed to playback for a prompt. */
+  const playbackPriorityRef = useRef(false);
+  /** Latched on the first failure to restore — see setPlaybackPriority. */
+  const playbackPriorityBrokenRef = useRef(false);
+
+  const setPlaybackPriority = useCallback(
+    async (playbackOnly: boolean): Promise<void> => {
+      if (holdersRef.current === 0) return;
+      // Once this has failed to give the microphone back, it never runs again.
+      if (playbackPriorityBrokenRef.current) return;
+      // Never under a live window: closing the stream would discard the audio
+      // the learner is producing right now.
+      if (capture.isCapturing) return;
+      if (playbackOnly === playbackPriorityRef.current) return;
+
+      if (playbackOnly) {
+        playbackPriorityRef.current = true;
+        diagMark('mic.session.toPlayback');
+        await capture.close();
+        await simpleAudioService.setRecordingSessionEnabled(false);
+        return;
+      }
+
+      playbackPriorityRef.current = false;
+      await simpleAudioService.setRecordingSessionEnabled(true);
+      await openCapture();
+      if (!capture.isOpen) {
+        // One forced retry, then give up on the mechanism entirely rather than
+        // leave the learner tapping a microphone that will never open.
+        await openCapture(true);
+      }
+      diagMark('mic.session.toRecord', { restored: capture.isOpen });
+      if (!capture.isOpen) {
+        playbackPriorityBrokenRef.current = true;
+        Sentry.addBreadcrumb({
+          category: 'voice',
+          level: 'warning',
+          message: 'voice.playbackPriority.disabled',
+        });
+        // Leave the session record-capable so the arm ladder has something to
+        // work with; the prompt goes back to being quiet, which is survivable.
+        await simpleAudioService.setRecordingSessionEnabled(true);
+      }
+    },
+    [capture, openCapture],
+  );
 
   const acquireSession = useCallback((): (() => void) => {
     holdersRef.current += 1;
@@ -555,6 +623,7 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
       prewarmPermission,
       acquireSession,
       refreshCapture,
+      setPlaybackPriority,
     }),
     [
       enabled,
@@ -570,6 +639,7 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
       prewarmPermission,
       acquireSession,
       refreshCapture,
+      setPlaybackPriority,
     ],
   );
 

@@ -150,6 +150,9 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   // module boolean is idempotent, so a double render is harmless.
   setDiagnosticsEnabled(__DEV__ || voiceDebugEnabled);
 
+  // Read before useReview: the review hook takes `setPlaybackPriority` from
+  // here so the Arabic prompt can claim a full-volume playback session.
+  const voice = useVoiceGrading();
   const {
     currentSentence,
     currentMeaning,
@@ -180,7 +183,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     playSentenceAudio,
     restudying,
     continueFromRestudy,
-  } = useReview({ fromRemember });
+  } = useReview({ fromRemember, setPlaybackPriority: voice.setPlaybackPriority });
 
   // One example sentence per word in the chunk, fetched once and never on the
   // per-card path. Non-blocking: a card renders without it and picks it up when
@@ -228,7 +231,6 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   // A wrong answer stops and shows the interactive result panel in place of the
   // standard action buttons; a correct answer just proceeds (no result).
   const voiceShowResult = voicePhase === 'result' && voiceResult !== null;
-  const voice = useVoiceGrading();
   const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
 
   // The two halves of the voice UI, and the split between them: the BUTTON is

@@ -55,6 +55,17 @@ import { generateStorageUrl } from '@/utils/storageUtils';
 interface UseReviewProps {
   fromRemember?: boolean;
   onClose?: () => void;
+  /**
+   * Hands the audio session to playback for the prompt and gives it back
+   * afterwards, so the Arabic is not played through the quieter
+   * `.playAndRecord` route (see VoiceGradingProvider.setPlaybackPriority).
+   *
+   * Injected rather than pulled from the context here: this hook is otherwise
+   * independent of the voice provider, and reaching into it would make every
+   * consumer — and every test — need one mounted for a concern that is
+   * optional. Absent, the prompt simply plays on whatever session is current.
+   */
+  setPlaybackPriority?: (playbackOnly: boolean) => Promise<void>;
 }
 
 interface UseReviewReturn {
@@ -155,6 +166,9 @@ export interface PlayAudioDetail {
   healed: boolean;
 }
 
+/** Used when no caller supplied one — the prompt plays on the current session. */
+const NO_PLAYBACK_PRIORITY = (): Promise<void> => Promise.resolve();
+
 const TRANSITION_DELAYS = {
   /**
    * Card dissolve on advance. Matched to the swipe's fling-out so a committed
@@ -171,7 +185,11 @@ const TRANSITION_DELAYS = {
   fadeWatchdog: TIMING_CONFIG.CARD_EXIT.duration + TIMING_CONFIG.MEDIUM.duration,
 };
 
-export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseReviewReturn {
+export function useReview({
+  fromRemember,
+  onClose,
+  setPlaybackPriority,
+}: UseReviewProps = {}): UseReviewReturn {
   const { user } = useAuth();
 
   // Open the diagnostics timeline for the lifetime of the screen. Registered
@@ -259,6 +277,13 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   // about to open on a word that was never read. Kept in a ref: the prompt
   // effect must not re-run because a setting changed mid-card.
   const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
+  // Held in a ref for the same reason as voiceEnabled: the prompt effect must
+  // not re-run because the provider re-rendered mid-card. Defaults to a no-op
+  // so a caller that does not care (and every test) needs no provider.
+  const setPlaybackPriorityRef = useRef(setPlaybackPriority ?? NO_PLAYBACK_PRIORITY);
+  useEffect(() => {
+    setPlaybackPriorityRef.current = setPlaybackPriority ?? NO_PLAYBACK_PRIORITY;
+  }, [setPlaybackPriority]);
   const voiceEnabledRef = useRef(voiceEnabled);
   useEffect(() => {
     voiceEnabledRef.current = voiceEnabled;
@@ -816,6 +841,9 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     // The card advanced if lastProcessedWordId no longer points at this run.
     const movedOn = (): boolean => timeRefs.current.lastProcessedWordId !== keyForRun;
     const markDone = (): void => {
+      // Give the microphone its session back the moment the word is over —
+      // before the learner can tap, so the tap still lands on a live stream.
+      void setPlaybackPriorityRef.current(false).catch(handleError);
       if (promptWatchRef.current?.key === keyForRun) promptWatchRef.current = null;
       // A stale watcher (card already advanced) would set an old key, which the
       // voice gate harmlessly ignores — but skip the needless re-render.
@@ -838,14 +866,23 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       return;
     }
 
+    // The prompt is about to play: take the session off .playAndRecord so the
+    // word is at full volume. Awaited inside the play chain below rather than
+    // here, so a slow session change shows up in `toAudibleMs` instead of
+    // hiding in an unmeasured gap.
     const rootIdForRun = currentWord.root_id;
     const expectedForRun = currentWord.root.meaning ?? null;
     const playStartedAt = Date.now();
     const endPromptPlay = diagSpan('prompt.play');
     let playDetail: PlayAudioDetail = { cacheMissed: false, healed: false };
-    playAudio(audioUrl, detail => {
-      playDetail = detail;
-    })
+    setPlaybackPriorityRef
+      .current(true)
+      .catch(handleError)
+      .then(() =>
+        playAudio(audioUrl, detail => {
+          playDetail = detail;
+        }),
+      )
       .then(started => {
         const playMs = Date.now() - playStartedAt;
         endPromptPlay({ started, movedOn: movedOn() });
