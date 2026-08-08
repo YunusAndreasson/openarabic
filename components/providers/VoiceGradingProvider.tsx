@@ -216,12 +216,24 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
    * an interruption or a route change, both of which can leave the stream alive
    * but deaf.
    */
+  /**
+   * Why `capture.open()` last refused, kept so the arm outcome can say it.
+   *
+   * The failure below is swallowed on purpose — a microphone that will not open
+   * is not a crash — but the message was going only to a Sentry breadcrumb, and
+   * a breadcrumb without an event never leaves the device. Every arm failure
+   * therefore reported the symptom ("input stream unavailable") and never the
+   * cause.
+   */
+  const lastOpenErrorRef = useRef<string | null>(null);
+
   const openCapture = useCallback(
     async (reopen = false): Promise<void> => {
       if (holdersRef.current === 0) return;
       try {
         if (reopen) await capture.close();
         await capture.open(recordingConfigRef.current);
+        lastOpenErrorRef.current = null;
         // The screen can close while the stream is still opening. Without this
         // the release has already run its own close() and we would be left
         // holding a live microphone with nobody using it.
@@ -232,6 +244,7 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
         diagMark('mic.session.open', { reopen });
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
+        lastOpenErrorRef.current = message;
         diagMark('mic.session.open.failed', { message, reopen });
         Sentry.addBreadcrumb({
           category: 'voice',
@@ -342,13 +355,44 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
       // asked for anything, and it forces the output route onto .playAndRecord
       // (quieter playback — see AUDIO_MODE_CONFIG). Fixing that means releasing
       // the recording session between cards, not opening the stream late.
-      // A first prompt may already own playback: useReview registers that effect
-      // before useVoiceReview registers this acquisition. In that case markDone
-      // will restore/open the microphone after the prompt; opening here would
-      // switch the prompt back to the quiet record-capable route mid-word.
-      if (!playbackPriorityRef.current) {
-        void simpleAudioService.setRecordingSessionEnabled(true).then(() => openCapture());
-      }
+      // Join the pending handoff before touching the session. This was the one
+      // transition that did not, and it is why the SECOND session of an app
+      // launch came up with a dead microphone while a restart always fixed it:
+      //
+      //   screen 1 unmounts → release() → holders 0 → an async cleanup starts
+      //     (close the stream, setRecordingSessionEnabled(false))
+      //   screen 2 mounts   → acquire() → holders 1 → setRecordingSessionEnabled(true)
+      //     → openCapture()
+      //
+      // Nothing ordered those two. The new session's open would land first and
+      // the old session's teardown would then close the stream underneath it and
+      // switch the category back off recording — after which `capture.open()`
+      // throws for the rest of the app's life, every arm returns "input stream
+      // unavailable", and the prompt still plays perfectly because only the
+      // record half is gone. It is a race, so it missed as often as it hit,
+      // which is why it read as flakiness rather than a lifecycle bug.
+      const previous = handoffRef.current;
+      const startup = (async () => {
+        await previous?.catch(() => undefined);
+        // Read AFTER the teardown, not before: the release path clears this on
+        // its way out, so a value sampled synchronously above would be the
+        // outgoing session's.
+        //
+        // A first prompt may already own playback: useReview registers that
+        // effect before useVoiceReview registers this acquisition. In that case
+        // markDone will restore/open the microphone after the prompt; opening
+        // here would switch the prompt back to the quiet record-capable route
+        // mid-word.
+        if (playbackPriorityRef.current) return;
+        // Another holder arrived and left again while we waited.
+        if (holdersRef.current === 0) return;
+        await simpleAudioService.setRecordingSessionEnabled(true);
+        await openCapture();
+      })();
+      handoffRef.current = startup;
+      void startup.finally(() => {
+        if (handoffRef.current === startup) handoffRef.current = null;
+      });
     }
     let released = false;
     return () => {
@@ -450,16 +494,40 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
       // Normally already open — acquireSession did it when the screen mounted.
       // This covers a first card that beat the open, and any reopen still in
       // flight after an interruption.
-      markStreamState(capture.isOpen);
-      if (!capture.isOpen) {
+      // `capture.isOpen` is a live getter that an await can flip, but the
+      // compiler narrows it on the first test and then reads every later one as
+      // dead code. Going through a call keeps each check honest.
+      const streamIsOpen = (): boolean => capture.isOpen;
+
+      markStreamState(streamIsOpen());
+      if (!streamIsOpen()) {
         const endOpen = diagSpan('mic.awaitOpen');
         const openStartedAt = Date.now();
         await openCapture();
+        if (!streamIsOpen()) {
+          // The stream cannot open, and the most likely reason is that the
+          // audio session is no longer record-capable — a teardown turned it
+          // off. Turning it back on and forcing a fresh open is the difference
+          // between one bad card and a microphone that stays dead until the app
+          // is restarted, which is exactly how this failure was reported.
+          diagMark('mic.arm.recover');
+          await simpleAudioService.setRecordingSessionEnabled(true);
+          await openCapture(true);
+        }
         markAwaitOpen(Date.now() - openStartedAt);
-        endOpen({ opened: capture.isOpen });
-        if (!capture.isOpen) {
+        endOpen({ opened: streamIsOpen() });
+        if (!streamIsOpen()) {
           diagMark('mic.arm.reject', { reason: 'stream-closed' });
-          return { ok: false, reason: 'error', message: 'input stream unavailable' };
+          return {
+            ok: false,
+            reason: 'error',
+            // Carry the reason `capture.open()` actually gave. Without it every
+            // one of these looks identical in telemetry and says only that the
+            // stream is not open, which is the symptom we already knew.
+            message: lastOpenErrorRef.current
+              ? `input stream unavailable: ${lastOpenErrorRef.current}`
+              : 'input stream unavailable',
+          };
         }
       }
 
