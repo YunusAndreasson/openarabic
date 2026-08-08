@@ -257,11 +257,25 @@ export class MicPermissionDeniedError extends Error {
  *  on it — see VoiceGradingProvider.prewarmPermission. Idempotent: once granted
  *  it is a cheap native check. */
 export async function ensureMicPermission(): Promise<boolean> {
+  // A grant is cached for the process lifetime because this now runs on the
+  // critical path of EVERY card, not once per session: the input stream is
+  // closed for each prompt (so the word plays at full volume) and reopened
+  // afterwards, and `openInternal` re-checks permission on every reopen. Both
+  // platforms terminate the app when the user revokes a permission from
+  // Settings, so a cached grant cannot outlive the truth.
+  if (permissionGranted) return true;
   const current = await AudioManager.checkRecordingPermissions();
-  if (current === 'Granted') return true;
+  if (current === 'Granted') {
+    permissionGranted = true;
+    return true;
+  }
   const requested = await AudioManager.requestRecordingPermissions();
-  return requested === 'Granted';
+  permissionGranted = requested === 'Granted';
+  return permissionGranted;
 }
+
+/** Set once the OS has said yes; see ensureMicPermission for why it sticks. */
+let permissionGranted = false;
 
 /**
  * Claim the audio session the review screen needs for its whole life: playback

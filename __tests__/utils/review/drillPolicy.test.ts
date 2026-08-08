@@ -62,10 +62,38 @@ describe('within-session drill policy', () => {
     });
   });
 
-  test('stops drilling once the re-ask cap is reached, so a stuck word cannot trap', () => {
-    const atCap: DrillProgress = { correctStreak: 0, reasks: P.maxReasks };
-    expect(decideDrill(atCap, true)).toEqual({ requeue: false, lag: 0, next: null });
+  test('stops drilling at the re-ask cap once the word has been recalled', () => {
+    const atCap: DrillProgress = { correctStreak: 1, reasks: P.maxReasks };
     expect(decideDrill(atCap, false)).toEqual({ requeue: false, lag: 0, next: null });
+  });
+
+  test('the cap cannot release a word the learner has never once recalled', () => {
+    // The whole point of the drill is to produce one successful retrieval. A
+    // session that ends with a word still only ever missed produced none, and
+    // the learner is left with a card they watched go past and never answered.
+    const missedEveryTime: DrillProgress = { correctStreak: 0, reasks: P.maxReasks };
+    expect(decideDrill(missedEveryTime, true)).toEqual({
+      requeue: true,
+      lag: P.lagAfterMiss,
+      next: { correctStreak: 0, reasks: P.maxReasks + 1 },
+    });
+  });
+
+  test('one correct recall is the whole way out of the over-cap drill', () => {
+    // Answering it right is always the exit, which is what keeps "never leaves
+    // on a miss" from being a trap. It costs one more pass (the criterion is
+    // two), and after that the cap releases the word whichever way it goes.
+    const missedEveryTime: DrillProgress = { correctStreak: 0, reasks: P.maxReasks };
+    const afterFirstCorrect = decideDrill(missedEveryTime, false);
+    expect(afterFirstCorrect).toEqual({
+      requeue: true,
+      lag: P.lagAfterCorrect,
+      next: { correctStreak: 1, reasks: P.maxReasks + 1 },
+    });
+
+    const progress = afterFirstCorrect.next as DrillProgress;
+    expect(decideDrill(progress, false)).toEqual({ requeue: false, lag: 0, next: null });
+    expect(decideDrill(progress, true)).toEqual({ requeue: false, lag: 0, next: null });
   });
 
   test('honours a custom policy (criterion 1 graduates on the first correct)', () => {

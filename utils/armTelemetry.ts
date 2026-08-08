@@ -35,6 +35,21 @@ export interface ArmStages {
   awaitOpenMs: number | null;
   /** `arm()` entered → `beginWindow()` called. Includes `awaitOpenMs`. */
   armToWindowMs: number | null;
+  /**
+   * End-to-end duration of the restore that hands the microphone back after a
+   * prompt (`setPlaybackPriority(false)`), or null if none has completed.
+   *
+   * The restore is kicked off the moment the Arabic finishes, so on most cards
+   * it is over before the learner taps and costs nothing. This is the number
+   * that decides whether that is true: it is the budget an eager tap has to
+   * beat, and until now it was never measured — `awaitOpenMs` only ever saw
+   * whatever tail happened to be left.
+   */
+  restoreMs: number | null;
+  /** Was that restore still running when the learner tapped? */
+  restorePendingAtTap: boolean | null;
+  /** ms the tap spent waiting on an already-in-flight restore to finish. */
+  restoreWaitMs: number | null;
 }
 
 const EMPTY: ArmStages = {
@@ -42,17 +57,48 @@ const EMPTY: ArmStages = {
   streamWasOpen: null,
   awaitOpenMs: null,
   armToWindowMs: null,
+  restoreMs: null,
+  restorePendingAtTap: null,
+  restoreWaitMs: null,
 };
 
 let tapAt: number | null = null;
 let armAt: number | null = null;
 let stages: ArmStages = { ...EMPTY };
+/** Set while a restore is in flight; null between them. */
+let restoreStartedAt: number | null = null;
+/** Duration of the last restore that completed, kept across the tap reset. */
+let lastRestoreMs: number | null = null;
 
-/** The learner asked for the microphone. Resets the breakdown. */
+/** The microphone is being handed back after a prompt. */
+export function markRestoreStart(): void {
+  restoreStartedAt = Date.now();
+}
+
+/** The hand-back finished — this is the budget an eager tap has to beat. */
+export function markRestoreEnd(): void {
+  if (restoreStartedAt === null) return;
+  lastRestoreMs = Date.now() - restoreStartedAt;
+  restoreStartedAt = null;
+  stages = { ...stages, restoreMs: lastRestoreMs };
+}
+
+/** How long the tap waited on a restore that was still running when it landed. */
+export function markRestoreWait(ms: number): void {
+  stages = { ...stages, restoreWaitMs: ms };
+}
+
+/** The learner asked for the microphone. Resets the breakdown, except what the
+ *  restore already established — that happened before the tap and is the whole
+ *  point of the comparison. */
 export function markArmTap(): void {
   tapAt = Date.now();
   armAt = null;
-  stages = { ...EMPTY };
+  stages = {
+    ...EMPTY,
+    restoreMs: lastRestoreMs,
+    restorePendingAtTap: restoreStartedAt !== null,
+  };
 }
 
 /** `arm()` has been entered — closes the React round trip. */
@@ -85,5 +131,7 @@ export function getArmStages(): ArmStages {
 export function resetArmTelemetry(): void {
   tapAt = null;
   armAt = null;
+  restoreStartedAt = null;
+  lastRestoreMs = null;
   stages = { ...EMPTY };
 }

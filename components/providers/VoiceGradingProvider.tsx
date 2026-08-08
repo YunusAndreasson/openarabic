@@ -45,6 +45,9 @@ import {
   markArmEntered,
   markAwaitOpen,
   markBeginWindow,
+  markRestoreEnd,
+  markRestoreStart,
+  markRestoreWait,
   markStreamState,
 } from '@/utils/armTelemetry';
 import { simpleAudioService } from '@/services/audioPlayer';
@@ -276,6 +279,20 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
   const playbackPriorityRef = useRef(false);
   /** Latched on the first failure to restore — see setPlaybackPriority. */
   const playbackPriorityBrokenRef = useRef(false);
+  /**
+   * The in-flight hand-back to the microphone, so a caller that arrives while
+   * it is running joins it instead of skipping it.
+   *
+   * Load-bearing. `playbackPriorityRef` flips to false SYNCHRONOUSLY at the
+   * start of the restore, so without this a tap landing mid-restore matched the
+   * `playbackOnly === playbackPriorityRef.current` early-out, returned
+   * immediately, and went straight on to open the recorder itself — overtaking
+   * the `setRecordingSessionEnabled(true)` it was supposed to follow, and
+   * opening an input stream against a session expo-audio still had in
+   * `.playback`. Measured on device as `awaitOpenMs` of 428–704 ms on the cards
+   * where the learner tapped as the prompt ended.
+   */
+  const restoreRef = useRef<Promise<void> | null>(null);
 
   const setPlaybackPriority = useCallback(
     async (playbackOnly: boolean): Promise<void> => {
@@ -285,7 +302,17 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
       // Never under a live window: closing the stream would discard the audio
       // the learner is producing right now.
       if (capture.isCapturing) return;
-      if (playbackOnly === playbackPriorityRef.current) return;
+      if (playbackOnly === playbackPriorityRef.current) {
+        // Already where we want to be — unless the restore that put us here is
+        // still running, in which case this caller has to wait for it.
+        const inFlight = restoreRef.current;
+        if (!playbackOnly && inFlight) {
+          const waitedFrom = Date.now();
+          await inFlight;
+          markRestoreWait(Date.now() - waitedFrom);
+        }
+        return;
+      }
 
       if (playbackOnly) {
         playbackPriorityRef.current = true;
@@ -296,25 +323,33 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
       }
 
       playbackPriorityRef.current = false;
-      await simpleAudioService.setRecordingSessionEnabled(true);
-      await openCapture();
-      if (!capture.isOpen) {
-        // One forced retry, then give up on the mechanism entirely rather than
-        // leave the learner tapping a microphone that will never open.
-        await openCapture(true);
-      }
-      diagMark('mic.session.toRecord', { restored: capture.isOpen });
-      if (!capture.isOpen) {
-        playbackPriorityBrokenRef.current = true;
-        Sentry.addBreadcrumb({
-          category: 'voice',
-          level: 'warning',
-          message: 'voice.playbackPriority.disabled',
-        });
-        // Leave the session record-capable so the arm ladder has something to
-        // work with; the prompt goes back to being quiet, which is survivable.
+      markRestoreStart();
+      const restore = (async () => {
         await simpleAudioService.setRecordingSessionEnabled(true);
-      }
+        await openCapture();
+        if (!capture.isOpen) {
+          // One forced retry, then give up on the mechanism entirely rather
+          // than leave the learner tapping a mic that will never open.
+          await openCapture(true);
+        }
+        diagMark('mic.session.toRecord', { restored: capture.isOpen });
+        if (!capture.isOpen) {
+          playbackPriorityBrokenRef.current = true;
+          Sentry.addBreadcrumb({
+            category: 'voice',
+            level: 'warning',
+            message: 'voice.playbackPriority.disabled',
+          });
+          // Leave the session record-capable so the arm ladder has something to
+          // work with; the prompt goes back to being quiet, which is survivable.
+          await simpleAudioService.setRecordingSessionEnabled(true);
+        }
+      })().finally(() => {
+        markRestoreEnd();
+        restoreRef.current = null;
+      });
+      restoreRef.current = restore;
+      return restore;
     },
     [capture, openCapture],
   );
@@ -581,7 +616,7 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
         return null;
       }
     },
-    [isReady, rawTranscribe, setPlaybackPriority],
+    [isReady, rawTranscribe],
   );
 
   // Ask for the microphone before a card needs it. Without this the OS dialog

@@ -859,6 +859,11 @@ export function useReview({
     const markDone = (): void => {
       // Give the microphone its session back the moment the word is over —
       // before the learner can tap, so the tap still lands on a live stream.
+      //
+      // Not awaited here, but not dropped either: the provider holds this
+      // promise and `arm()` joins it, so a tap that beats the hand-back waits
+      // for THIS restore rather than starting a competing one. Awaiting it here
+      // instead would only delay the gate that lets the learner tap at all.
       void setPlaybackPriorityRef.current(false).catch(handleError);
       if (promptWatchRef.current?.key === keyForRun) promptWatchRef.current = null;
       // A stale watcher (card already advanced) would set an old key, which the

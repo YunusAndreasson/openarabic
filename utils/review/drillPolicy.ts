@@ -78,9 +78,23 @@ export function decideDrill(
   if (!missed && !prior) return { requeue: false, lag: 0, next: null };
 
   const reasks = prior?.reasks ?? 0;
+  const recalledSinceMiss = (prior?.correctStreak ?? 0) > 0;
   // Cap reached → stop drilling; it leaves with its FSRS Relearning state and
   // returns next session, so a stubborn word can't trap the learner.
-  if (reasks >= policy.maxReasks) return { requeue: false, lag: 0, next: null };
+  //
+  // Except: the cap may not release a word the learner has NEVER once recalled.
+  // A session that ends while a word has only ever been missed is a session
+  // that taught nothing about it — the learner watched it go past `maxReasks`
+  // times and still leaves without a single successful retrieval, which is the
+  // one event the drill exists to produce. Passing (`Guessed`) counts; only an
+  // unbroken run of misses keeps a word in.
+  //
+  // This is bounded in practice rather than by a number: every miss puts the
+  // card into the restudy hold, which shows the meaning and replays the Arabic
+  // before re-asking, and the learner can leave the session at any time.
+  if (reasks >= policy.maxReasks && recalledSinceMiss) {
+    return { requeue: false, lag: 0, next: null };
+  }
 
   if (missed) {
     // Reset the streak and re-ask soon — effortful, but not a massed reread.
