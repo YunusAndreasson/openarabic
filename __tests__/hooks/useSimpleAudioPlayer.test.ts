@@ -14,7 +14,12 @@
  * - Audio playback (play, stop)
  * - Seeking to position
  * - Audio session configuration
- * - Status subscription (playing, isLoading, currentTime, duration, currentTrack)
+ * - Status subscription (playing, isLoading, currentTrack)
+ *
+ * Deliberately no currentTime / duration: this hook reads the service's
+ * transport channel, which does not deliver play-head ticks, so exposing a
+ * position here would hand callers a number that silently stops advancing.
+ * The clock lives in useAudioProgressSubscription.
  * - Mount safety (prevent calls after unmount)
  *
  * This hook is CRITICAL for:
@@ -65,6 +70,7 @@ const createMockStatus = (overrides: Partial<AudioStatus> = {}): AudioStatus => 
   playing: false,
   currentTime: 0,
   duration: 0,
+  error: null,
   currentTrack: null,
   // isLoaded defaults to true so the hook's derived isLoading reads as false
   // for "idle" baseline statuses; tests opt in to a buffering state explicitly.
@@ -106,8 +112,6 @@ describe('useSimpleAudioPlayer Hook', () => {
 
       expect(result.current.playing).toBeFalsy();
       expect(result.current.isLoading).toBeFalsy();
-      expect(result.current.currentTime).toBe(0);
-      expect(result.current.duration).toBe(0);
       expect(result.current.currentTrack).toBeNull();
     });
 
@@ -332,26 +336,19 @@ describe('useSimpleAudioPlayer Hook', () => {
       expect(result.current.isLoading).toBeTruthy();
     });
 
-    test('should update current time', () => {
+    test('does not expose a play head', () => {
+      // The transport channel never ticks currentTime, so a position read here
+      // would be stale by construction. Callers that need one use
+      // useAudioProgressSubscription.
       useAudioSubscription.mockReturnValue({
-        status: createMockStatus({ currentTime: 45.5 }),
+        status: createMockStatus({ currentTime: 45.5, duration: 180 }),
         isMounted: true,
       });
 
       const { result } = renderHook(() => useSimpleAudioPlayer());
 
-      expect(result.current.currentTime).toBe(45.5);
-    });
-
-    test('should update duration', () => {
-      useAudioSubscription.mockReturnValue({
-        status: createMockStatus({ duration: 180 }),
-        isMounted: true,
-      });
-
-      const { result } = renderHook(() => useSimpleAudioPlayer());
-
-      expect(result.current.duration).toBe(180);
+      expect(result.current).not.toHaveProperty('currentTime');
+      expect(result.current).not.toHaveProperty('duration');
     });
 
     test('should update current track', () => {
@@ -376,8 +373,6 @@ describe('useSimpleAudioPlayer Hook', () => {
 
       expect(result.current.playing).toBeFalsy();
       expect(result.current.isLoading).toBeFalsy();
-      expect(result.current.currentTime).toBe(0);
-      expect(result.current.duration).toBe(0);
       expect(result.current.currentTrack).toBeNull();
     });
 
@@ -391,7 +386,6 @@ describe('useSimpleAudioPlayer Hook', () => {
       const { result, rerender } = renderHook(() => useSimpleAudioPlayer());
 
       expect(result.current.playing).toBeFalsy();
-      expect(result.current.currentTime).toBe(0);
 
       // Update status
       const updatedStatus = createMockStatus({ playing: true, currentTime: 30 });
@@ -403,7 +397,6 @@ describe('useSimpleAudioPlayer Hook', () => {
       rerender();
 
       expect(result.current.playing).toBeTruthy();
-      expect(result.current.currentTime).toBe(30);
     });
   });
 
@@ -565,8 +558,6 @@ describe('useSimpleAudioPlayer Hook', () => {
 
       expect(result.current.playing).toBeTruthy();
       expect(result.current.isLoading).toBeFalsy();
-      expect(result.current.currentTime).toBe(45);
-      expect(result.current.duration).toBe(180);
       expect(result.current.currentTrack).toEqual(fullStatus.currentTrack);
       expect(result.current.status).toEqual(fullStatus);
     });
@@ -586,7 +577,6 @@ describe('useSimpleAudioPlayer Hook', () => {
 
       expect(result.current.playing).toBeTruthy();
       expect(result.current.isLoading).toBeFalsy();
-      expect(result.current.currentTime).toBe(0);
     });
   });
 

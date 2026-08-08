@@ -34,6 +34,21 @@ interface UseAudioPreloaderReturn {
    * "everything is done" — it's "nothing is waiting on us any more".
    */
   isReady: boolean;
+  /**
+   * The local file this session already downloaded for `url`, or undefined.
+   *
+   * Synchronous on purpose. Every play used to re-ask audioCache for a path
+   * this hook had resolved minutes earlier: three async hops for a Map lookup,
+   * and — once past the cache's five-minute memory TTL, which a real session
+   * outlives — two synchronous filesystem stats per file as well. Nothing
+   * deletes these files while the session that downloaded them is running, so
+   * the answer cannot change; the only path that can invalidate one is the
+   * caller's own self-heal, which calls `forget`.
+   */
+  resolveCached: (url: string) => string | undefined;
+  /** Drop a resolved path after its file failed to play, so the next attempt
+   *  goes back through the cache (and its re-download). */
+  forgetCached: (url: string) => void;
 }
 
 /** Both audio files for one word, in play order (prompt first, meaning second). */
@@ -83,6 +98,10 @@ export const useAudioPreloader = (
   // Bumped whenever a session ends or the hook unmounts, so a background batch
   // loop from the previous session stops instead of writing state into the next.
   const runIdRef = useRef(0);
+  // Remote url → the local file this session downloaded for it. See
+  // `resolveCached`: this is the answer the play path used to go and ask
+  // audioCache for all over again, on every single card.
+  const resolvedPathsRef = useRef(new Map<string, string>());
 
   /**
    * Fetch one URL into the disk cache and buffer it natively. Never throws —
@@ -91,6 +110,10 @@ export const useAudioPreloader = (
   const cacheOne = useCallback(async (url: string): Promise<void> => {
     try {
       const localPath = await audioCache.getAudio(url);
+      // A failed download resolves to the remote url itself, which is not a
+      // cached file and must not be recorded as one — the play path's self-heal
+      // is gated on the two differing.
+      if (localPath !== url) resolvedPathsRef.current.set(url, localPath);
       try {
         // Buffer in native memory for near-instant playback
         await preload(localPath);
@@ -100,6 +123,15 @@ export const useAudioPreloader = (
     } catch {
       // Download failed — the play-time quick path retries on demand
     }
+  }, []);
+
+  const resolveCached = useCallback(
+    (url: string): string | undefined => resolvedPathsRef.current.get(url),
+    [],
+  );
+
+  const forgetCached = useCallback((url: string): void => {
+    resolvedPathsRef.current.delete(url);
   }, []);
 
   const preloadSessionAudio = useCallback(
@@ -114,13 +146,10 @@ export const useAudioPreloader = (
       setProgress(0);
 
       // Collect all unique audio URLs, first word first — the priority slice
-      // below relies on that ordering.
-      const audioUrls: string[] = [];
-      words.forEach(word => {
-        audioUrlsForWord(word).forEach(url => {
-          if (!audioUrls.includes(url)) audioUrls.push(url);
-        });
-      });
+      // below relies on that ordering. A Set does the de-duplication: the
+      // previous `includes` scan re-walked the whole list for every file, and
+      // the two partitioning filters below did it twice more.
+      const audioUrls = [...new Set(words.flatMap(audioUrlsForWord))];
 
       if (audioUrls.length === 0) {
         setIsPreloading(false);
@@ -138,10 +167,9 @@ export const useAudioPreloader = (
       // The first card's own files — the only ones the user is actually waiting
       // on. Everything else is prefetch for cards they haven't reached yet.
       const firstWord = words[0];
-      const priorityUrls = firstWord
-        ? audioUrlsForWord(firstWord).filter(url => audioUrls.includes(url))
-        : [];
-      const backgroundUrls = audioUrls.filter(url => !priorityUrls.includes(url));
+      const priorityUrls = firstWord ? audioUrlsForWord(firstWord) : [];
+      const priority = new Set(priorityUrls);
+      const backgroundUrls = audioUrls.filter(url => !priority.has(url));
 
       diagMark('preload.start', {
         words: words.length,
@@ -243,6 +271,10 @@ export const useAudioPreloader = (
       lastPreloadedWordsRef.current = '';
       // Stop any background batch loop still running for the finished session.
       runIdRef.current++;
+      // Resolved paths belong to the session that downloaded them. The files
+      // survive on disk, but the next chunk re-preloads its own set and this
+      // map should not accumulate across them.
+      resolvedPathsRef.current.clear();
       // Resets local readiness so the next session can re-arm preloading.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsReady(false);
@@ -268,5 +300,7 @@ export const useAudioPreloader = (
     isPreloading,
     progress,
     isReady,
+    resolveCached,
+    forgetCached,
   };
 };

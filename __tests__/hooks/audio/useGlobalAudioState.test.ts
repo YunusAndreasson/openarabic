@@ -39,6 +39,11 @@ jest.mock('@/services/audioPlayer', () => ({
     markSleepTimerExpired: jest.fn(),
     getPlaylistInfo: jest.fn(),
     preconfigureAudioSession: jest.fn(),
+    // The playback clock subscribes to the service's position channel directly
+    // (AudioProgressProvider), rather than reading a position off the transport
+    // status the rest of the provider uses.
+    getStatus: jest.fn(() => ({ currentTime: 0, duration: 0 })),
+    subscribe: jest.fn(() => jest.fn()),
   },
 }));
 

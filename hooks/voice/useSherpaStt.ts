@@ -51,6 +51,20 @@ export const VOICE_MAX_ACTIVE_PATHS = 8;
  *  short enough that the warm-up itself is cheap. */
 const WARMUP_SAMPLE_COUNT = TARGET_SAMPLE_RATE / 2;
 
+/**
+ * Copy a waveform into the plain `number[]` the native bridge takes.
+ *
+ * `transcribeSamples` has no Float32Array overload, so this conversion is
+ * unavoidable — but it sits directly in the learner's "Checking…" wait, on tens
+ * of thousands of samples. `Array.from` went through the iterator protocol and
+ * grew the array as it went; pre-sizing and indexing does neither.
+ */
+function toSampleArray(waveform: Float32Array): number[] {
+  const samples = new Array<number>(waveform.length);
+  for (let i = 0; i < waveform.length; i += 1) samples[i] = waveform[i] ?? 0;
+  return samples;
+}
+
 export interface SherpaStt {
   /** Transcribe a 16 kHz mono waveform to trimmed text. null when not ready. */
   transcribe: (waveform: Float32Array) => Promise<string | null>;
@@ -164,7 +178,7 @@ function useSherpaStt({
         try {
           const endWarmup = diagSpan('stt.warmup');
           await engine.transcribeSamples(
-            Array.from(new Float32Array(WARMUP_SAMPLE_COUNT)),
+            toSampleArray(new Float32Array(WARMUP_SAMPLE_COUNT)),
             TARGET_SAMPLE_RATE,
           );
           endWarmup();
@@ -221,7 +235,7 @@ function useSherpaStt({
   const transcribe = useCallback(async (waveform: Float32Array): Promise<string | null> => {
     const engine = engineRef.current;
     if (!engine || waveform.length === 0) return null;
-    const result = await engine.transcribeSamples(Array.from(waveform), TARGET_SAMPLE_RATE);
+    const result = await engine.transcribeSamples(toSampleArray(waveform), TARGET_SAMPLE_RATE);
     return (result.text ?? '').trim();
   }, []);
 

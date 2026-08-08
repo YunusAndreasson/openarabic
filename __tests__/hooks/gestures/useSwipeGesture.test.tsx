@@ -18,6 +18,7 @@
 import { describe, expect, jest, test } from '@jest/globals';
 
 import type { SwipeGestureOptions } from '@/hooks/gestures/useSwipeGesture';
+import type { SwipeExitPolicy } from '@/utils/gestureUtils';
 
 describe('useSwipeGesture Hook', () => {
   const mockOnSwipeLeft = jest.fn();
@@ -353,6 +354,38 @@ describe('useSwipeGesture Hook', () => {
     test('does not commit when velocity opposes the travel', () => {
       expect(resolve(40, -1200).commit).toBe(false);
       expect(resolve(-40, 1200).commit).toBe(false);
+    });
+  });
+
+  // Whether a committed card leaves the screen. Extracted from the gesture
+  // worklet for the same reason as resolveSwipeCommit above.
+  describe('resolveCommitExit', () => {
+    const exit = (policy: SwipeExitPolicy, isRight: boolean) => {
+      const { resolveCommitExit } = require('@/utils/gestureUtils');
+      return resolveCommitExit(policy, isRight);
+    };
+
+    test('a boolean policy applies to both directions', () => {
+      expect(exit(true, true)).toBe(true);
+      expect(exit(true, false)).toBe(true);
+      expect(exit(false, true)).toBe(false);
+      expect(exit(false, false)).toBe(false);
+    });
+
+    // Regression: the review card's "Forgot" swipe opens a restudy hold, so the
+    // card must stay on screen. Under the old single boolean it flew off at full
+    // opacity — nothing faded it, because the grade had not been committed yet —
+    // and then teleported back to centre when the exit recentred on completion.
+    test('a per-direction policy exits only the direction it names', () => {
+      const reviewCard: SwipeExitPolicy = { left: false, right: true };
+
+      expect(exit(reviewCard, true)).toBe(true);
+      expect(exit(reviewCard, false)).toBe(false);
+    });
+
+    test('a per-direction policy can suppress both', () => {
+      expect(exit({ left: false, right: false }, true)).toBe(false);
+      expect(exit({ left: false, right: false }, false)).toBe(false);
     });
   });
 

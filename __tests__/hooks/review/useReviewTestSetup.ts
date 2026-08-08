@@ -90,7 +90,7 @@ export function setupUseReviewMocks(): UseReviewMockRefs {
   // Get mocked hooks via require (they're already mocked via jest.mock in test file)
   const { useAuth } = require('@/hooks/auth');
   const { useFSRS } = require('@/hooks/vocabulary');
-  const { useSimpleAudioPlayer } = require('@/hooks/audio/useSimpleAudioPlayer');
+  const { simpleAudioService } = require('@/services/audioPlayer');
   const { useSessionMetrics } = require('@/hooks/review/useSessionMetrics');
   const { useAudioPreloader } = require('@/hooks/review/useAudioPreloader');
   const { useTimerCleanup } = require('@/hooks/utils/useTimerCleanup');
@@ -102,9 +102,14 @@ export function setupUseReviewMocks(): UseReviewMockRefs {
   // Mock auth
   useAuth.mockReturnValue(createAuthMock());
 
-  // Mock audio player
+  // Mock the audio service. useReview commands playback directly rather than
+  // through useSimpleAudioPlayer: it reads no status field, and the review
+  // lane's 100 ms status interval made that subscription re-render the whole
+  // screen ten times a second for the length of every prompt.
   const mockAudioPlayer = createAudioPlayerMock();
-  useSimpleAudioPlayer.mockReturnValue(mockAudioPlayer);
+  simpleAudioService.play = mockAudioPlayer.play;
+  simpleAudioService.stop = mockAudioPlayer.stop;
+  simpleAudioService.preconfigureAudioSession = mockAudioPlayer.preconfigureAudioSession;
 
   // Mock FSRS hook
   const mockUpdateWord = jest.fn().mockResolvedValue(7.5);

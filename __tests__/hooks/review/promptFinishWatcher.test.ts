@@ -133,8 +133,10 @@ describe('watchPromptFinish', () => {
     emit({ playing: true, currentTime: 0.9, duration: 1.0, playbackState: 'playing' });
     expect(onFinish).not.toHaveBeenCalled();
 
-    // Past the estimated end: the poll settles the watcher…
-    advance(200);
+    // Past the estimated end: the first poll settles the watcher…
+    // (advanced by exactly one poll interval, so this stays true whatever
+    // PROMPT_FINISH_GRACE_MS is tuned to)
+    advance(100);
     expect(onFinish).not.toHaveBeenCalled();
     // …and the grace elapses before the mic is handed the card.
     advance(PROMPT_FINISH_GRACE_MS);

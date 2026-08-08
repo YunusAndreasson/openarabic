@@ -14,7 +14,14 @@ import { Platform } from 'react-native';
 import { supabase } from '@/services/supabase';
 import type { Json } from '@/types/database.types';
 
-export type VoiceResolution = 'auto_known' | 'accept' | 'reject' | 'retry';
+/**
+ * `arm_failed` rows describe an attempt that never produced audio, so most of
+ * the transcription columns are null on them. They exist because the failures
+ * we most needed to see were the only ones NOT being written: a window that
+ * comes back with zero buffers returns before any match is computed, so the
+ * table only ever held the attempts that worked.
+ */
+export type VoiceResolution = 'auto_known' | 'accept' | 'reject' | 'retry' | 'arm_failed';
 
 /** One resolved voice attempt, in app-domain shape (mapped to columns below). */
 export interface VoiceAttemptLog {
@@ -38,6 +45,60 @@ export interface VoiceAttemptLog {
   modelId: string | null;
   /** Dev-settings + effective recording/decoding config snapshot. */
   meta: Record<string, unknown>;
+}
+
+/** An arm that never delivered audio. Everything specific goes in `meta`, so
+ *  this needs no schema change — the table has no CHECK on `resolution` and
+ *  `meta` is free-form jsonb. */
+export interface VoiceArmFailureLog {
+  rootId: number | null;
+  expected: string | null;
+  /** Which arm attempt on this card (0 = the learner's tap, 1+ = the ladder). */
+  attemptIndex: number;
+  /** 'permission' | 'busy' | 'not-ready' | 'error'. */
+  reason: string;
+  message: string | null;
+  /** From the dead window, when there was one: 'watchdog' means the
+   *  first-buffer deadline fired with nothing at all. */
+  stopReason: string | null;
+  durationMs: number | null;
+  bufferCount: number | null;
+  /** Tap → mic actually capturing, in ms. The number the learner feels, as
+   *  opposed to `first_buffer_ms`, which starts at the window instead. */
+  tapToCapturingMs: number | null;
+  /** True if the stream had been force-reopened since the prompt ended. */
+  streamRefreshed: boolean;
+  meta: Record<string, unknown>;
+}
+
+export async function logVoiceArmFailure(log: VoiceArmFailureLog): Promise<void> {
+  await logVoiceAttempt({
+    rootId: log.rootId,
+    expected: log.expected,
+    transcript: null,
+    normalizedSpoken: null,
+    matched: false,
+    matchMethod: null,
+    similarity: null,
+    suggestion: null,
+    resolution: 'arm_failed',
+    attemptIndex: log.attemptIndex,
+    durationMs: log.durationMs,
+    stopReason: log.stopReason,
+    heardSpeech: null,
+    peakRms: null,
+    bufferCount: log.bufferCount,
+    firstBufferMs: null,
+    stopDecidedAtMs: null,
+    modelId: null,
+    meta: {
+      ...log.meta,
+      armReason: log.reason,
+      armMessage: log.message,
+      tapToCapturingMs: log.tapToCapturingMs,
+      streamRefreshed: log.streamRefreshed,
+    },
+  });
 }
 
 export async function logVoiceAttempt(log: VoiceAttemptLog): Promise<void> {

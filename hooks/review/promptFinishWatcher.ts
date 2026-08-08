@@ -23,12 +23,25 @@
  *      as a backstop if the finish event never lands.
  *   4. A hard cap, so the mic can never hang.
  */
-import { simpleAudioService, type AudioStatus } from '@/services/audioPlayer';
+import {
+  simpleAudioService,
+  type AudioStatus,
+  type AudioSubscribeOptions,
+} from '@/services/audioPlayer';
 import { mark as diagMark } from '@/utils/reviewDiagnostics';
 
-/** Grace after the prompt stops before declaring it done, so the tail isn't
- *  clipped and the playback session fully releases before the mic opens. */
-export const PROMPT_FINISH_GRACE_MS = 200;
+/**
+ * Grace after the prompt stops before declaring it done, so the tail isn't
+ * clipped.
+ *
+ * This was 200 ms, and most of that was spent letting the playback session
+ * release before the microphone claimed a record-capable one. There is no such
+ * hand-off any more: the review session holds one audio session for its whole
+ * life and the recorder is only resumed, never opened (see
+ * lib/voice/recording.ts). What remains is a guard on the clip's own tail, and
+ * every millisecond of it is silence the learner sits through.
+ */
+export const PROMPT_FINISH_GRACE_MS = 60;
 /** Safety cap while the clip's duration is still unknown. Once the player
  *  reports a duration the cap tightens to that plus PROMPT_OVERRUN_MS. */
 export const PROMPT_MAX_WAIT_MS = 8000;
@@ -42,7 +55,10 @@ const POLL_INTERVAL_MS = 100;
 /** The slice of the audio service this watcher needs; injectable for tests. */
 export interface PromptStatusSource {
   getStatus: () => AudioStatus;
-  subscribe: (listener: (status: AudioStatus) => void) => () => void;
+  subscribe: (
+    listener: (status: AudioStatus) => void,
+    options?: AudioSubscribeOptions,
+  ) => () => void;
 }
 
 /** Why the watcher settled — surfaced in diagnostics, asserted in tests. */
@@ -111,7 +127,10 @@ export function watchPromptFinish(
     if (Date.now() - startedAt >= cap) return finish(0, 'maxWait');
   };
 
-  const unsubscribe = source.subscribe(evaluate);
+  // Position channel: the `reachedEnd` backstop is derived from the play head,
+  // so this watcher is one of the two things in the app that genuinely needs
+  // the ticks. Everything else on the transport channel is spared them.
+  const unsubscribe = source.subscribe(evaluate, { position: true });
   const poll = setInterval(() => evaluate(source.getStatus()), POLL_INTERVAL_MS);
   evaluate(source.getStatus());
   return () => finish(0, 'superseded');

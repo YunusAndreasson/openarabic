@@ -1,5 +1,6 @@
 import { memo, useMemo, type FC } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import type { TextStyle } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -7,18 +8,64 @@ import { Ionicons } from '@/components/ui/Icon';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
+import { useDebouncedArabicFontSize } from '@/hooks/theme/useDebouncedArabicFontSize';
 import { useColors } from '@/hooks/theme/useColors';
-import type { WordExample } from '@/services/sentences';
+import type { ExampleWord, WordExample } from '@/services/sentences';
+import type { ColoredSegment } from '@/types/vocabulary.types';
+import { withAlpha } from '@/utils/colorUtils';
+
+/**
+ * Line height for the example, as a multiple of its font size.
+ *
+ * `arabicCompact` renders at LOOSE (1.6x), which is tuned for the dictionary's
+ * dense index rows. React Native honours a lineHeight smaller than the font's
+ * own line box strictly and centres the glyphs inside it, so on a fully
+ * vocalized sentence — which every corpus sentence is — tanween and
+ * shadda+vowel stacks were cut off along the top edge. Reading Arabic (2.2x)
+ * has the headroom but costs 48px a line, which this block cannot spend under
+ * the answer.
+ *
+ * 1.9x clears Noto Sans Arabic's mark stack (~1.5em above the baseline) with
+ * room to spare, at 42px a line. Local rather than a shared token because
+ * widening LOOSE would make every dictionary row taller.
+ */
+const EXAMPLE_LINE_HEIGHT = 1.9;
+
+/**
+ * Lines of translation shown before the ellipsis. Measured against the corpus
+ * rather than guessed: of the 5,523 sentences that can be picked as an example
+ * (those with a word at difficulty ≤ 2), at the ~42 characters this block fits
+ * per line, 2 lines covered only 73.1% of them and cut the rest mid-sentence.
+ * 3 lines covers 92.3% — the smallest budget that clears 90%, and 21px cheaper
+ * than the 4 lines it would take to reach 97.7%.
+ */
+const ENGLISH_LINES = 3;
 
 const STATIC_STYLES = StyleSheet.create({
   container: {
     width: '100%',
-    marginTop: LAYOUT.SPACING.LARGE,
+    // A clear step up from the gaps *inside* this block, so proximity alone
+    // separates "the answer" from "the evidence" — no rule, no second surface.
+    marginTop: LAYOUT.SPACING.XLARGE,
     alignItems: 'center',
     gap: LAYOUT.SPACING.SMALL,
   },
-  arabic: {
-    textAlign: 'center',
+  // Word-level composition, same as the reader (components/article/
+  // ArticleSentence): row-reverse + wrap puts Arabic words in reading order and
+  // breaks between words rather than mid-word. Centred here because the card is
+  // a centred composition, whereas the reader's column is left-aligned.
+  sentenceRow: {
+    flexDirection: 'row-reverse',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: LAYOUT.SPACING.HALF_TINY,
+  },
+  // Applied to EVERY word, not just the marked one, so the chip's padding
+  // cannot shift the line when the target happens to fall at a wrap point.
+  word: {
+    paddingHorizontal: LAYOUT.SPACING.HALF_TINY,
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL_CIRCLE,
   },
   english: {
     textAlign: 'center',
@@ -50,66 +97,92 @@ interface Props {
  * which is what this app is for. Seeing the inflected form inside a line they
  * may well have read is both the elaborative hook and the payoff.
  *
- * Kept typographically quiet on purpose — the answer is the headline, this is
- * the evidence under it. Only the target word is tinted; full grammar colouring
- * (computeColoredSegments) is available but reads as busy at this size.
+ * The sentence carries the SAME grammar colouring as the reader — segments are
+ * precomputed per word in useReviewExamples via `computeColoredSegments`, so
+ * review reinforces exactly the mapping reading teaches, including the rule
+ * that a single-English-word gloss is never colour-coded.
+ *
+ * The practised word is marked by a faint tinted chip rather than by a colour,
+ * because hue is spoken for: in this palette `tint` is the same hue as the
+ * grammar palette's `possessive` AND as `success` ("Knew it"), so a tinted word
+ * would read as a grammatical role or as a verdict. Shape says "this is yours";
+ * colour says "this is what it does".
  */
 export const ReviewContextSentence: FC<Props> = memo(({ example, onPlay }) => {
   const colors = useColors();
+  const readerFontSize = useDebouncedArabicFontSize(100);
 
-  // Split on the inflected form so it can be tinted in place. The corpus stores
-  // the exact surface form, so a plain segment split is enough — no matching
-  // heuristics, and if it isn't found the sentence just renders untinted.
-  const segments = useMemo(() => {
-    // Keyed by character offset rather than array position: the offset is a
-    // real identity for a slice of an immutable string, and it stays stable if
-    // the split ever changes shape.
-    const whole = [{ key: 'all-0', text: example.arabic, match: false }];
-    const form = example.wordForm?.trim();
-    if (!form) return whole;
-    const parts = example.arabic.split(form);
-    if (parts.length === 1) return whole;
+  const targetChipColor = withAlpha(colors.tint, LAYOUT.OPACITY.FAINT);
+  const words = example.words;
 
-    const out: { key: string; text: string; match: boolean }[] = [];
-    let offset = 0;
-    parts.forEach((part, i) => {
-      if (part) {
-        out.push({ key: `t-${offset}`, text: part, match: false });
-        offset += part.length;
-      }
-      if (i < parts.length - 1) {
-        out.push({ key: `m-${offset}`, text: form, match: true });
-        offset += form.length;
-      }
-    });
-    return out;
-  }, [example.arabic, example.wordForm]);
+  // Mirrors what ThemedText's `arabicCompact` resolves to (the reader's size,
+  // capped) so the line height below is derived from the size actually rendered.
+  // Applied to the parent AND every segment span: each span carries its own
+  // arabicCompact style, so overriding only the parent would leave the spans on
+  // the clipping line height.
+  const arabicLineStyle = useMemo<TextStyle>(() => {
+    const size = Math.min(
+      readerFontSize || LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+      LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
+    );
+    return {
+      lineHeight: Math.round(size * EXAMPLE_LINE_HEIGHT),
+      // Android: keep the font's own vertical padding, which is where the mark
+      // stack lives. arabicCompact turns it off for row density.
+      includeFontPadding: true,
+    };
+  }, [readerFontSize]);
 
   return (
     <Animated.View
       entering={FadeIn.duration(TIMING_CONFIG.MEDIUM.duration)}
       style={STATIC_STYLES.container}
     >
-      <ThemedText type="arabicCompact" align="center" style={STATIC_STYLES.arabic}>
-        {segments.map(seg => (
+      {/* One a11y node: a screen reader should read the sentence, not eleven
+          disconnected words. */}
+      <View accessible accessibilityLabel={example.arabic} style={STATIC_STYLES.sentenceRow}>
+        {words.length > 0 ? (
+          words.map(word => (
+            <View
+              key={word.position}
+              testID={`example-word-${word.position}`}
+              style={[STATIC_STYLES.word, word.isTarget && { backgroundColor: targetChipColor }]}
+            >
+              <ExampleWordText
+                word={word}
+                defaultColor={colors.arabicText}
+                lineStyle={arabicLineStyle}
+              />
+            </View>
+          ))
+        ) : (
+          // The corpus has the sentence but not its word breakdown. Rare, and a
+          // plain line still teaches more than no example at all.
           <ThemedText
-            key={seg.key}
             type="arabicCompact"
-            skipDefaultColor
-            style={{ color: seg.match ? colors.tint : colors.arabicText }}
+            colorName="arabicText"
+            align="center"
+            style={arabicLineStyle}
           >
-            {seg.text}
+            {example.arabic}
           </ThemedText>
-        ))}
-      </ThemedText>
+        )}
+      </View>
 
       {example.english ? (
-        <ThemedText type="caption" colorName="textTertiary" style={STATIC_STYLES.english}>
+        <ThemedText
+          type="caption"
+          colorName="textTertiary"
+          numberOfLines={ENGLISH_LINES}
+          style={STATIC_STYLES.english}
+        >
           {example.english}
         </ThemedText>
       ) : null}
 
       {onPlay && example.audioUrl ? (
+        // Neutral, not tinted: inside this block `tint` means "the word you are
+        // practising", and a tinted control would compete with the chip for it.
         <Pressable
           onPress={onPlay}
           accessibilityRole="button"
@@ -120,8 +193,8 @@ export const ReviewContextSentence: FC<Props> = memo(({ example, onPlay }) => {
             { opacity: pressed ? LAYOUT.OPACITY.PRESSED : LAYOUT.OPACITY.FULL },
           ]}
         >
-          <Ionicons name="play" size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={colors.tint} />
-          <ThemedText skipDefaultColor type="caption" style={{ color: colors.tint }}>
+          <Ionicons name="play" size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={colors.secondaryText} />
+          <ThemedText type="caption" colorName="secondaryText">
             {STRINGS.PLAY_SENTENCE_AUDIO}
           </ThemedText>
         </Pressable>
@@ -131,3 +204,59 @@ export const ReviewContextSentence: FC<Props> = memo(({ example, onPlay }) => {
 });
 
 ReviewContextSentence.displayName = 'ReviewContextSentence';
+
+/**
+ * Character offset within the word, which is a real identity for a contiguous
+ * slice of an immutable string: the same text can legitimately appear twice in
+ * one word (a repeated letter carrying two roles), so text alone is not unique,
+ * and an array index would silently re-key if the analyzer ever changed how it
+ * splits a form.
+ */
+function keyedSegments(segments: ColoredSegment[]): (ColoredSegment & { key: string })[] {
+  let offset = 0;
+  return segments.map(segment => {
+    const keyed = { ...segment, key: `${offset}-${segment.type}` };
+    offset += segment.text.length;
+    return keyed;
+  });
+}
+
+/**
+ * One word, rendered as coloured spans inside a single Text so the glyphs shape
+ * and join as one word. Nested `<Text>` colour is the mechanism the reader's
+ * ColorCodedText uses; the chip lives on the wrapping View instead, because
+ * padding on a nested Text is unreliable on Android.
+ */
+const ExampleWordText: FC<{
+  word: ExampleWord;
+  defaultColor: string;
+  /** Diacritic headroom — see EXAMPLE_LINE_HEIGHT. */
+  lineStyle: TextStyle;
+}> = ({ word, defaultColor, lineStyle }) => {
+  const segments = word.coloredSegments;
+
+  if (!segments || segments.length === 0) {
+    return (
+      <ThemedText type="arabicCompact" colorName="arabicText" style={lineStyle}>
+        {word.wordForm}
+      </ThemedText>
+    );
+  }
+
+  return (
+    <ThemedText type="arabicCompact" skipDefaultColor style={[lineStyle, { color: defaultColor }]}>
+      {keyedSegments(segments).map(segment => (
+        <ThemedText
+          key={segment.key}
+          type="arabicCompact"
+          skipDefaultColor
+          style={[lineStyle, { color: segment.color }]}
+        >
+          {segment.text}
+        </ThemedText>
+      ))}
+    </ThemedText>
+  );
+};
+
+ExampleWordText.displayName = 'ExampleWordText';

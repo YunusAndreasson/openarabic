@@ -7,7 +7,13 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 import { SPRING_CONFIG, TIMING_CONFIG } from '@/constants/animation';
 import { SCREEN_WIDTH } from '@/constants/layout';
-import { GESTURE_CONFIG, GESTURE_CONSTANTS, resolveSwipeCommit } from '@/utils/gestureUtils';
+import type { SwipeExitPolicy } from '@/utils/gestureUtils';
+import {
+  GESTURE_CONFIG,
+  GESTURE_CONSTANTS,
+  resolveCommitExit,
+  resolveSwipeCommit,
+} from '@/utils/gestureUtils';
 
 export interface SwipeGestureOptions {
   enabled?: boolean;
@@ -28,8 +34,18 @@ export interface SwipeGestureOptions {
    * Fly the card off screen in the swipe direction on commit instead of
    * springing it back to centre. A card that returns home contradicts the
    * gesture the user just made.
+   *
+   * Per-direction because a commit does not always mean the card leaves: the
+   * review card's left swipe ("Forgot") opens a restudy hold, so the card has
+   * to stay on screen and its exit is deferred to the tap that ends the hold.
+   * With a single boolean that card flew off at full opacity and then snapped
+   * back to centre, because nothing else was moving it.
+   *
+   * Pass a plain object (hoisted to module scope, not an inline literal): it is
+   * captured by the gesture worklet and it is a dependency of the memo that
+   * builds the Gesture.
    */
-  exitOnCommit?: boolean;
+  exitOnCommit?: SwipeExitPolicy;
   minDistance?: number;
   activeOffsetX?: [number, number];
   failOffsetY?: [number, number];
@@ -253,7 +269,7 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
           scheduleOnRN(handleSwipeAction, isRight);
 
           isAnimatingRef.set(true);
-          if (exitOnCommit) {
+          if (resolveCommitExit(exitOnCommit, isRight)) {
             // Carry the card off screen in the direction it was thrown, then
             // recentre the moment it lands. The consumer's dissolve runs on the
             // same CARD_EXIT duration, so the snap happens under an opacity of

@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { createContext, use, useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react';
 
 import { AUDIO_STATES } from '@/constants/audio';
+import { useAudioProgressSubscription } from '@/hooks/audio/useAudioSubscription';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -65,7 +66,7 @@ export interface AudioProgress {
  * (and its own `useSleepTimer`) so taps on the MiniPlayer's timer button
  * never reached the SleepTimer modal renderer.
  */
-function useGlobalAudioStateInternal(): { state: GlobalAudioState; progress: AudioProgress } {
+function useGlobalAudioStateInternal(): GlobalAudioState {
   const { user } = useAuth();
   const audioPlayer = useSimpleAudioPlayer();
   const queryClient = useQueryClient();
@@ -281,25 +282,36 @@ function useGlobalAudioStateInternal(): { state: GlobalAudioState; progress: Aud
     ],
   );
 
-  const progress = useMemo<AudioProgress>(
-    () => ({
-      position: audioPlayer.currentTime,
-      duration: audioPlayer.duration,
-    }),
-    [audioPlayer.currentTime, audioPlayer.duration],
-  );
-
-  return { state, progress };
+  return state;
 }
 
 const GlobalAudioStateContext = createContext<GlobalAudioState | null>(null);
 const AudioProgressContext = createContext<AudioProgress | null>(null);
 
+/**
+ * The playback clock, isolated in its own tiny component.
+ *
+ * This is the ONLY subscriber to the service's position channel, and it is
+ * deliberately a leaf: position ticks re-render this component and nothing
+ * else, because `children` arrives as a prop and React bails out of
+ * re-rendering an unchanged element. Merging it back into
+ * `GlobalAudioStateProvider` would put the whole app-root hook body — reading
+ * list queries, queue position, article lookups — back on the tick, which
+ * during a review prompt means ten times a second.
+ */
+function AudioProgressProvider({ children }: { children: ReactNode }) {
+  const { status } = useAudioProgressSubscription();
+  const position = status?.currentTime ?? 0;
+  const duration = status?.duration ?? 0;
+  const progress = useMemo<AudioProgress>(() => ({ position, duration }), [position, duration]);
+  return <AudioProgressContext value={progress}>{children}</AudioProgressContext>;
+}
+
 export function GlobalAudioStateProvider({ children }: { children: ReactNode }) {
-  const { state, progress } = useGlobalAudioStateInternal();
+  const state = useGlobalAudioStateInternal();
   return (
     <GlobalAudioStateContext value={state}>
-      <AudioProgressContext value={progress}>{children}</AudioProgressContext>
+      <AudioProgressProvider>{children}</AudioProgressProvider>
     </GlobalAudioStateContext>
   );
 }

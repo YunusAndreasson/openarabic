@@ -103,10 +103,13 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({
   return (
     <View style={STATIC_STYLES.header}>
       <View style={STATIC_STYLES.progressContainer}>
+        {/* Deliberately thinner than the ProgressBar default (12): next to two
+            44pt circular buttons a 12px pill reads as a third control rather
+            than as chrome. */}
         <ProgressBar
           animationDuration={TIMING_CONFIG.PROGRESS.duration}
           progress={displayProgress}
-          height={LAYOUT.SPACING.MEDIUM}
+          height={LAYOUT.SPACING.SMALL}
         />
       </View>
       {/* A quiet run counter, from metrics the session already tracks. All the

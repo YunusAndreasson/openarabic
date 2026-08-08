@@ -41,8 +41,14 @@ jest.mock('@/hooks/auth', () => ({
 
 // Mock is in @/hooks/vocabulary below
 
-jest.mock('@/hooks/audio/useSimpleAudioPlayer', () => ({
-  useSimpleAudioPlayer: jest.fn(),
+jest.mock('@/services/audioPlayer', () => ({
+  simpleAudioService: {
+    play: jest.fn(),
+    stop: jest.fn(),
+    preconfigureAudioSession: jest.fn(),
+    subscribe: jest.fn(() => jest.fn()),
+    getStatus: jest.fn(() => ({})),
+  },
 }));
 
 jest.mock('@/hooks/review/useSessionMetrics', () => ({
@@ -126,6 +132,20 @@ describe('useReview Hook', () => {
   });
 
   describe('Initialization', () => {
+    // Regression: the review lane runs its player at a 100 ms status interval so
+    // the microphone gate observes didJustFinish quickly. useReview held a
+    // status subscription it never read a single field from, so that interval
+    // re-rendered the hook — and the entire review screen under it — ten times a
+    // second for the whole of every prompt and every revealed answer.
+    test('does not subscribe to audio status', () => {
+      const wrapper = createWrapper();
+      renderHook(() => useReview(), { wrapper });
+
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { simpleAudioService } = require('@/services/audioPlayer');
+      expect(simpleAudioService.subscribe).not.toHaveBeenCalled();
+    });
+
     test('should initialize with default state', () => {
       const wrapper = createWrapper();
       const { result } = renderHook(() => useReview(), { wrapper });
@@ -180,6 +200,66 @@ describe('useReview Hook', () => {
   });
 
   describe('Audio Playback', () => {
+    // The preloader downloaded every word's audio for this session and knows
+    // where each file went. Re-asking audioCache for that answer on every
+    // prompt, reveal and replay cost three async hops each — plus two
+    // filesystem stats per file once the cache's five-minute memory TTL
+    // expired, which any real session outlives.
+    test('plays a preloaded file without going back to the cache', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { audioCache } = require('@/services/audioCache');
+      // jest.config sets resetMocks, which strips the implementations declared
+      // in the jest.mock factories above before every test.
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { generateStorageUrl } = require('@/utils/storageUtils');
+      generateStorageUrl.mockImplementation(
+        (bucket: string, path: string) => `https://example.com/storage/${bucket}/${path}`,
+      );
+      const word = createMockWord({
+        root: {
+          id: 101,
+          letters: 'كتاب',
+          meaning: 'book',
+          audio_url: 'audio/kitab.mp3',
+          audio_url_en: 'audio/book.mp3',
+        },
+      });
+      const url = 'https://example.com/storage/audio/audio/kitab.mp3';
+
+      useAudioPreloader.mockReturnValue({
+        isPreloading: false,
+        progress: 100,
+        isReady: true,
+        resolveCached: jest.fn((candidate: string) =>
+          candidate === url ? '/cache/kitab.mp3' : undefined,
+        ),
+        forgetCached: jest.fn(),
+      });
+      useFSRS.mockReturnValue({
+        currentWord: word,
+        wordQueue: [word],
+        isLoading: false,
+        isComplete: false,
+        progress: 0,
+        updateWord: mocks.mockUpdateWord,
+        invalidateQueries: mocks.mockInvalidateQueries,
+      });
+      mocks.mockAudioPlayer.play.mockResolvedValue(true);
+      audioCache.getAudio.mockClear();
+
+      const wrapper = createWrapper();
+      const { result } = renderHook(() => useReview(), { wrapper });
+
+      await act(async () => {
+        await result.current.handleReplayAudio();
+      });
+      expect(mocks.mockAudioPlayer.play).toHaveBeenCalledWith(
+        expect.objectContaining({ audioUrl: '/cache/kitab.mp3' }),
+        expect.anything(),
+      );
+      expect(audioCache.getAudio).not.toHaveBeenCalled();
+    });
+
     // SKIP: Complex async timing with playAudio in useEffect makes this hard to test reliably.
     // The feature works in production - this is a test infrastructure limitation.
     it.skip('should play Arabic audio when word loads', async () => {

@@ -1,10 +1,22 @@
 /**
- * Wires the voice-grading pipeline into a Practice review session. Auto-arms
- * the mic on each new card once the Arabic word audio has finished playing (so
- * the prompt is never cut off) — gated on `promptAudioDoneKey` from useReview,
- * which owns the prompt playback and reports completion per card. Then on stop
- * transcribes via Parakeet and runs `matchSingleWord` against the card's
- * English meaning.
+ * Wires the voice-grading pipeline into a Practice review session. The mic
+ * opens when the learner asks for it — never on a timer.
+ *
+ * It used to arm itself on every card as soon as the Arabic prompt finished.
+ * That meant guessing when someone was ready to speak, and a guess can only be
+ * wrong: arm too eagerly and the mic is open while they are still thinking (the
+ * energy gate then closes on room tone and grades silence); arm behind any of
+ * the seven gates below and the card sits with a mic that never opens, which
+ * reads as "the mic is unreliable". Neither failure is visible from the outside,
+ * which is why it stayed hard to pin down.
+ *
+ * Making the tap the trigger removes the guess entirely, and it is also the
+ * better exercise: the pause before answering IS the retrieval, so the learner
+ * should own when it ends. Every gate below is still here — they still decide
+ * whether an arm CAN happen — but nothing arms until `speakNow()` says so.
+ *
+ * On stop it transcribes via Parakeet and runs `matchSingleWord` against the
+ * card's English meaning.
  *
  * A correct answer just proceeds — `onKnownAuto()` fires and the card advances,
  * keeping the hands-free flow fast. We only stop the learner when the answer
@@ -26,7 +38,11 @@ import {
 } from '@/hooks/voice/useSherpaStt';
 import { DEFAULT_RECORDING_CONFIG } from '@/lib/voice/recording';
 import { analytics } from '@/services/analytics';
-import { logVoiceAttempt, type VoiceAttemptLog } from '@/services/voiceTelemetry';
+import {
+  logVoiceArmFailure,
+  logVoiceAttempt,
+  type VoiceAttemptLog,
+} from '@/services/voiceTelemetry';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import { setVoiceEnabled } from '@/store/settingsSlice';
 import { errorFeedback } from '@/utils/haptics';
@@ -113,8 +129,9 @@ interface UseVoiceReviewArgs {
   /** Current card's root id, recorded with each telemetry attempt. */
   rootId: number | null | undefined;
   /** From useReview: the `currentWordKey` whose Arabic prompt has finished
-   *  playing (or had no audio). The mic only arms once this matches the current
-   *  card, so the prompt is never cut off and the mic never opens over it. */
+   *  playing (or had no audio). No longer gates the mic — the tap does — but it
+   *  is when the input stream gets re-established, because playing the prompt
+   *  is what can leave it open and deaf. See `refreshCapture`. */
   promptAudioDoneKey: string | null;
   /** Is the review session ready (not loading, no audio preload in flight). */
   ready: boolean;
@@ -229,11 +246,27 @@ export function useVoiceReview({
     armError: null,
   });
 
-  // Bumped by retry() to re-arm the same card; part of the arm effect's deps.
+  // Bumped by every path that asks for the mic, so the arm effect re-runs.
   const [attempt, setAttempt] = useState(0);
-  // True for the single arm() triggered by retry(), so it skips the wait-for-
-  // audio gate (there's no prompt replaying — open the mic immediately).
-  const retryRequestedRef = useRef(false);
+  /**
+   * The learner has asked for the mic and the effect may arm exactly once.
+   *
+   * This is the trigger now — there is no automatic arm. Set by `speakNow()`
+   * (the tap), by `retry()`, by resuming from pause, and by the transient-
+   * failure backoff, which is the one case where the request outlives its
+   * first attempt: the learner already asked, so the ladder is finishing their
+   * request rather than starting one of its own.
+   */
+  const armRequestedRef = useRef(false);
+
+  // Timing the learner actually feels: the tap, and the moment the microphone
+  // began delivering audio. `first_buffer_ms` measures from the window opening,
+  // which misses everything before it — the React round trip, a dead window and
+  // its retry backoff. That gap is the whole complaint.
+  const tapAtRef = useRef<number | null>(null);
+  const tapToCapturingRef = useRef<number | null>(null);
+  /** The input stream was force-reopened after this card's prompt. */
+  const streamRefreshedRef = useRef(false);
 
   // Session-local mute. When true the arm effect bails (no auto-listen) and any
   // in-flight recording is cancelled. Does NOT touch the global `voiceEnabled`
@@ -296,14 +329,15 @@ export function useVoiceReview({
     armedForKeyRef.current = null;
     attemptCtxRef.current = null;
     armFailuresRef.current = 0;
-    // A retry request belongs to the card that asked for it. It used to be
-    // cleared only inside the arm effect, *after* every gate passed — so a
-    // retry scheduled by an arm failure (or by resuming from pause) that was
-    // still pending when the card advanced carried `isRetry === true` into the
-    // NEXT card, where it skips the prompt-audio gate below and opens the mic
-    // over that card's Arabic prompt. That is the exact failure the per-card
-    // promptAudioDoneKey gate exists to prevent.
-    retryRequestedRef.current = false;
+    // A request to open the mic belongs to the card that asked for it. Without
+    // this, a request still pending when the card advanced (an arm-failure
+    // backoff, a resume from pause) would open a live mic on the next card
+    // while its Arabic prompt is playing — nobody asked for that, and the
+    // recording captures the prompt.
+    armRequestedRef.current = false;
+    tapAtRef.current = null;
+    tapToCapturingRef.current = null;
+    streamRefreshedRef.current = false;
     if (armRetryTimerRef.current) {
       clearTimeout(armRetryTimerRef.current);
       armRetryTimerRef.current = null;
@@ -326,10 +360,49 @@ export function useVoiceReview({
   //
   // Not gated on `ready`: waiting for the audio preloader would put us back in
   // the same window we are trying to leave.
+  // Both effects below depend on the individual callbacks rather than the whole
+  // `voice` context value: that object's identity changes on every
+  // `downloadProgress` tick, so depending on it would tear the session down and
+  // rebuild it dozens of times while the model is still downloading.
+  const { prewarmPermission, acquireSession, refreshCapture } = voice;
+
   useEffect(() => {
     if (!voiceEnabled || paused) return;
-    void voice.prewarmPermission();
-  }, [voiceEnabled, paused, voice]);
+    void prewarmPermission();
+  }, [voiceEnabled, paused, prewarmPermission]);
+
+  // Claim the microphone for the whole session, not per card. This opens the
+  // input stream and the record-capable audio session once, up front, while the
+  // first card's audio is still preloading — so by the time the first prompt
+  // ends there is nothing left to set up and arming is a `resume()`.
+  //
+  // Deliberately NOT gated on `paused`: a learner who un-pauses mid-session
+  // should get the mic on the very next card, not wait for a stream to open.
+  // The session costs nothing while no window is open.
+  useEffect(() => {
+    if (!voiceEnabled) return;
+    return acquireSession();
+  }, [voiceEnabled, acquireSession]);
+
+  /**
+   * Re-establish the input stream the moment this card's prompt finishes.
+   *
+   * Playing the Arabic reconfigures the shared audio session, and that can
+   * leave the held-open stream alive but deaf — `isOpen` true, not one buffer
+   * ever. The old path only discovered this from inside the window: it ran to
+   * the first-buffer watchdog, came back "no audio from microphone", reopened,
+   * and the caller's backoff armed again. All of that is billed to the tap.
+   *
+   * Doing it here spends the reopen while the learner is still reading the
+   * word, so the tap lands on a live microphone. The failure ladder stays as
+   * the backstop for the interruptions this cannot predict.
+   */
+  useEffect(() => {
+    if (!voiceEnabled || paused) return;
+    if (currentWordKey === 'none' || promptAudioDoneKey !== currentWordKey) return;
+    streamRefreshedRef.current = true;
+    refreshCapture();
+  }, [voiceEnabled, paused, currentWordKey, promptAudioDoneKey, refreshCapture]);
 
   // Surface a passive "Preparing voice…" pill ONLY while the model is genuinely
   // loading. On a load error (or any non-loading not-ready state) stay idle —
@@ -361,6 +434,9 @@ export function useVoiceReview({
     // before re-arming, so this never blocks the paths that should re-arm.
     else if (result !== null) blockedBy = 'result-pending';
     else if (armedForKeyRef.current === currentWordKey) blockedBy = 'already-armed';
+    // The trigger. Every other gate above is a reason an arm CAN'T happen; this
+    // one is the reason it doesn't happen yet — the learner has not tapped.
+    else if (!armRequestedRef.current) blockedBy = 'awaiting-tap';
     // `!expected` is re-tested so TypeScript narrows it for the rest of the
     // effect; the gate above already covers it.
     if (blockedBy !== null || !expected) {
@@ -368,16 +444,12 @@ export function useVoiceReview({
       return;
     }
 
-    const isRetry = retryRequestedRef.current;
-    // Wait for this card's Arabic prompt to finish before opening the mic, so
-    // the prompt is never cut off and the mic never records over it. Gated on
-    // useReview's per-card `promptAudioDoneKey` (it owns the prompt playback),
-    // not the global audio status — which can't tell this card's prompt from
-    // lingering audio. A retry/resume skips the gate: no prompt is replaying.
-    if (!isRetry && promptAudioDoneKey !== currentWordKey) return;
-
+    // No wait-for-the-prompt gate any more: `speakNow()` stops the prompt on its
+    // way in, so by the time we get here the clip is already down. That gate
+    // existed to stop an automatic arm from opening over the Arabic — with the
+    // tap as the trigger there is nothing to race.
     armedForKeyRef.current = currentWordKey;
-    retryRequestedRef.current = false;
+    armRequestedRef.current = false;
     let cancelled = false;
 
     const run = async () => {
@@ -393,6 +465,9 @@ export function useVoiceReview({
       const outcome = await voice.arm({
         // The mic is live — only now is it honest to ask for an answer.
         onCapturing: () => {
+          tapToCapturingRef.current =
+            tapAtRef.current === null ? null : Date.now() - tapAtRef.current;
+          diagMark('mic.capturing', { tapToCapturingMs: tapToCapturingRef.current });
           if (!cancelled) setPhase('listening');
         },
       });
@@ -414,6 +489,20 @@ export function useVoiceReview({
           showToast(STRINGS.VOICE_MIC_PERMISSION_DENIED);
           dispatch(setVoiceEnabled(false));
           setDebug(d => ({ ...d, armError: 'permission' }));
+          // Terminal, and it turns the whole feature off — always worth a row.
+          void logVoiceArmFailure({
+            rootId: rootId ?? null,
+            expected,
+            attemptIndex: armFailuresRef.current,
+            reason: 'permission',
+            message: outcome.message ?? null,
+            stopReason: null,
+            durationMs: null,
+            bufferCount: null,
+            tapToCapturingMs: null,
+            streamRefreshed: streamRefreshedRef.current,
+            meta: { settings: settingsRef.current, phase: 'denied' },
+          });
           setPhase('denied');
           return;
         }
@@ -431,12 +520,21 @@ export function useVoiceReview({
         // previous card may still be tearing down, or the native session
         // hiccupped. Leaving the card here is what strands the learner on a mic
         // that never opens, so re-arm after a short backoff instead.
+        //
+        // Deliberately NOT logged per rung. A card that has to climb the whole
+        // ladder would write three rows, and a session where the microphone is
+        // simply broken would write sixty — the volume would scale with exactly
+        // the failure we are trying to measure. Only the terminal outcome below
+        // is written: one row per card that never got a microphone, carrying
+        // how many attempts it took to give up.
         if (armFailuresRef.current < MAX_ARM_RETRIES) {
           armFailuresRef.current += 1;
           const delay = ARM_RETRY_BASE_MS * armFailuresRef.current;
           diagMark('mic.arm.retry-scheduled', { attempt: armFailuresRef.current, delay });
           armedForKeyRef.current = null;
-          retryRequestedRef.current = true;
+          // Still the learner's original request — finish it rather than making
+          // them tap again for a native hiccup they never saw.
+          armRequestedRef.current = true;
           armRetryTimerRef.current = setTimeout(() => {
             armRetryTimerRef.current = null;
             setAttempt(a => a + 1);
@@ -444,6 +542,19 @@ export function useVoiceReview({
           return;
         }
         diagMark('mic.arm.gave-up', { attempts: armFailuresRef.current });
+        void logVoiceArmFailure({
+          rootId: rootId ?? null,
+          expected,
+          attemptIndex: armFailuresRef.current,
+          reason: outcome.reason,
+          message: outcome.message ?? null,
+          stopReason: null,
+          durationMs: null,
+          bufferCount: null,
+          tapToCapturingMs: null,
+          streamRefreshed: streamRefreshedRef.current,
+          meta: { settings: settingsRef.current, phase: 'gave-up' },
+        });
         setPhase('idle');
         return;
       }
@@ -546,6 +657,13 @@ export function useVoiceReview({
         stopDecidedAtMs: outcome.result.stopDecidedAtMs,
         modelId: PARAKEET_MODEL_ID,
         meta: {
+          // Free: this row is written anyway, one per resolved attempt. Adds no
+          // volume and gives the latency distribution the HUD can only show one
+          // card at a time — `tapToCapturingMs` is what the learner waits,
+          // where `first_buffer_ms` starts counting only once the window opens.
+          tapToCapturingMs: tapToCapturingRef.current,
+          armAttempts: armFailuresRef.current,
+          streamRefreshed: streamRefreshedRef.current,
           settings: settingsRef.current,
           recordingConfig: {
             ...DEFAULT_RECORDING_CONFIG,
@@ -634,6 +752,11 @@ export function useVoiceReview({
       // Cancel is a no-op when nothing is in flight.
       void voice.cancel();
     };
+    // The hook no longer takes `promptAudioDoneKey` at all. It used to gate the
+    // arm AND sit in these deps, which with a tap trigger would be actively
+    // harmful: tapping during the prompt makes speakNow stop the clip, the
+    // watcher then reports the prompt finished, this effect re-runs — and its
+    // cleanup cancels the recording the tap had just started.
   }, [
     voiceEnabled,
     voice,
@@ -643,7 +766,6 @@ export function useVoiceReview({
     expected,
     currentWordKey,
     rootId,
-    promptAudioDoneKey,
     attempt,
     dispatch,
     showToast,
@@ -679,7 +801,7 @@ export function useVoiceReview({
     setPhase('arming');
     // Force the arm effect to fire again for this same card and skip the
     // wait-for-audio gate so the mic reopens immediately.
-    retryRequestedRef.current = true;
+    armRequestedRef.current = true;
     armedForKeyRef.current = null;
     setAttempt(a => a + 1);
   }, []);
@@ -705,7 +827,7 @@ export function useVoiceReview({
     stopAudioRef.current();
     setResult(null);
     setPhase('arming');
-    retryRequestedRef.current = true;
+    armRequestedRef.current = true;
     armedForKeyRef.current = null;
     setAttempt(a => a + 1);
   }, [voice.isReady]);
@@ -730,13 +852,14 @@ export function useVoiceReview({
       // doesn't linger while the recorder unwinds. A waiting result panel stays.
       setPhase(p => (p === 'arming' || p === 'listening' || p === 'checking' ? 'idle' : p));
     } else if (resultRef.current === null) {
-      // Resuming with no pending panel — re-open the mic for the current card
-      // even if we'd already armed for it before pausing (the cancelled
-      // recording left armedForKeyRef set). The prompt audio already played, so
-      // skip the wait-for-audio gate and open the mic right away, like a retry.
+      // Resuming just returns the button to rest. It used to re-open the mic on
+      // the spot, which made sense when arming was automatic — un-muting was
+      // the only way to ask for it. Now the button is right there, and opening
+      // a live mic on a toggle nobody aimed at the microphone is a surprise.
+      // The latch has to be released either way: the cancelled recording left
+      // it pointing at this card, and without this the next tap would bail on
+      // 'already-armed'.
       armedForKeyRef.current = null;
-      retryRequestedRef.current = true;
-      setPhase('arming');
     }
     // Resuming while a wrong-answer panel is up: keep armedForKeyRef so the arm
     // effect bails under the panel; the next card arms once the user resolves it.

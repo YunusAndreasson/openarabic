@@ -34,8 +34,14 @@ jest.mock('@/hooks/auth', () => ({
   useAuth: jest.fn(() => ({ user: { id: 'test-user-123' } })),
 }));
 
-jest.mock('@/hooks/audio/useSimpleAudioPlayer', () => ({
-  useSimpleAudioPlayer: jest.fn(),
+jest.mock('@/services/audioPlayer', () => ({
+  simpleAudioService: {
+    play: jest.fn(),
+    stop: jest.fn(),
+    preconfigureAudioSession: jest.fn(),
+    subscribe: jest.fn(() => jest.fn()),
+    getStatus: jest.fn(() => ({})),
+  },
 }));
 
 jest.mock('@/hooks/review/useSessionMetrics', () => ({

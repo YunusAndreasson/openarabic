@@ -22,7 +22,10 @@ jest.mock('@/services/audioPlayer', () => ({
   },
 }));
 
-import { useAudioSubscription } from '@/hooks/audio/useAudioSubscription';
+import {
+  useAudioProgressSubscription,
+  useAudioSubscription,
+} from '@/hooks/audio/useAudioSubscription';
 import { useMountSafety } from '@/hooks/common/useMountSafety';
 import { simpleAudioService } from '@/services/audioPlayer';
 import type { AudioStatus } from '@/services/audioPlayer';
@@ -42,22 +45,27 @@ describe('useAudioSubscription', () => {
     timeControlStatus: 'paused',
     reasonForWaitingToPlay: '',
     didJustFinish: false,
+    error: null,
   };
 
   let subscribeCallback: ((status: AudioStatus) => void) | null = null;
+  /** The `{ position }` flag the hook asked the service for. */
+  let subscribeOptions: { position?: boolean } | undefined;
   const mockUnsubscribe = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
     subscribeCallback = null;
+    subscribeOptions = undefined;
 
     // Default mount safety - component is mounted
     mockUseMountSafety.mockReturnValue({ current: true });
 
     // Default audio service mocks
     mockSimpleAudioService.getStatus.mockReturnValue(mockInitialStatus);
-    mockSimpleAudioService.subscribe.mockImplementation(callback => {
+    mockSimpleAudioService.subscribe.mockImplementation((callback, options) => {
       subscribeCallback = callback;
+      subscribeOptions = options;
       return mockUnsubscribe;
     });
   });
@@ -77,7 +85,25 @@ describe('useAudioSubscription', () => {
       renderHook(() => useAudioSubscription());
 
       expect(mockSimpleAudioService.subscribe).toHaveBeenCalledTimes(1);
-      expect(mockSimpleAudioService.subscribe).toHaveBeenCalledWith(expect.any(Function));
+      expect(mockSimpleAudioService.subscribe).toHaveBeenCalledWith(expect.any(Function), {
+        position: false,
+      });
+    });
+
+    test('does NOT ask the service for play-head ticks', () => {
+      // The review lane runs its player at a 100 ms status interval so the mic
+      // gate sees didJustFinish quickly. Every consumer of this hook used to
+      // re-render on each of those ticks; the transport channel is what stops
+      // that, and it only works if the hook actually opts out.
+      renderHook(() => useAudioSubscription());
+
+      expect(subscribeOptions).toEqual({ position: false });
+    });
+
+    test('the progress variant opts in to play-head ticks', () => {
+      renderHook(() => useAudioProgressSubscription());
+
+      expect(subscribeOptions).toEqual({ position: true });
     });
   });
 
@@ -115,7 +141,7 @@ describe('useAudioSubscription', () => {
     });
 
     test('should update status when currentTime changes by >= 0.1', () => {
-      const { result } = renderHook(() => useAudioSubscription());
+      const { result } = renderHook(() => useAudioProgressSubscription());
 
       const newStatus: AudioStatus = {
         ...mockInitialStatus,
@@ -135,7 +161,7 @@ describe('useAudioSubscription', () => {
         currentTime: 1.0,
       });
 
-      const { result } = renderHook(() => useAudioSubscription());
+      const { result } = renderHook(() => useAudioProgressSubscription());
 
       const initialTime = result.current.status.currentTime;
 

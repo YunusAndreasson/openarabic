@@ -1,32 +1,29 @@
 /**
  * Post-grade voice result, shown when the recognizer couldn't confirm a match —
- * a correct answer just proceeds. Framed as a neutral self-grade ("Did you get
- * it right?") rather than a verdict, so the learner judges their own answer
- * against the shown meaning instead of ratifying the ASR — this also recovers
- * gracefully from a mishear.
+ * a correct answer just proceeds. Framed as a neutral self-grade rather than a
+ * verdict, so the learner judges their own answer against the shown meaning
+ * instead of ratifying the ASR — this also recovers gracefully from a mishear.
  *
- * Shows the heard word + the answer, with three actions: "Yes, I got it"
- * (accept → Known), "No, I missed it" (reject → Unknown) and "Try again"
- * (re-record). `result.suggestion` emphasises the likely choice.
- *
- * Mirrors the voice channel's reanimated FadeIn + theme-token styling so the
- * two read as one cohesive voice surface.
+ * One line of evidence (what was heard → what the answer was) over the same
+ * three-up row the self-grade bar uses. It used to be a floating card carrying
+ * a title, two labelled rows and a full-width retry: ~244px against the grade
+ * bar's 60, in a bottom slot that sizes itself. Every voice miss therefore took
+ * ~184px away from the card above and jerked the Arabic upward at the exact
+ * moment the learner started reading the result. Now both states of the band
+ * are the same shape, and the card never moves.
  */
 import { memo, type FC } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
+import { ReviewActionButton } from '@/components/review/ReviewActionButton';
 import { ThemedText } from '@/components/ThemedText';
-import { Ionicons, type IoniconName } from '@/components/ui/Icon';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import type { VoiceResult } from '@/hooks/review/useVoiceReview';
 import { useColors } from '@/hooks/theme/useColors';
-import { withAlpha } from '@/utils/colorUtils';
 import { selectionFeedback } from '@/utils/haptics';
-
-const ICON_SIZE = LAYOUT.BUTTON.ICON_SIZE.MEDIUM;
 
 interface VoiceResultPanelProps {
   result: VoiceResult;
@@ -44,91 +41,67 @@ export const VoiceResultPanel: FC<VoiceResultPanelProps> = memo(
     const heardSomething = result.heard.length > 0;
 
     return (
-      <Animated.View
-        entering={FadeIn.duration(TIMING_CONFIG.MEDIUM.duration)}
-        style={[
-          styles.card,
-          { backgroundColor: colors.card, borderColor: colors.border, shadowColor: colors.shadow },
-        ]}
-      >
-        <View style={styles.header}>
-          <Ionicons
-            name={heardSomething ? 'help-circle' : 'mic-off'}
-            size={ICON_SIZE}
-            color={colors.secondaryText}
-          />
-          <ThemedText type="label" colorName={heardSomething ? 'text' : 'secondaryText'}>
-            {heardSomething ? STRINGS.VOICE_RESULT_QUESTION : STRINGS.VOICE_RESULT_NOT_HEARD}
-          </ThemedText>
-        </View>
-
-        <View style={styles.detail}>
-          <ThemedText type="caption" colorName="textTertiary" style={styles.detailLabel}>
-            {STRINGS.VOICE_RESULT_HEARD_LABEL}
-          </ThemedText>
+      <Animated.View entering={FadeIn.duration(TIMING_CONFIG.MEDIUM.duration)} style={styles.panel}>
+        <View style={styles.detailRow}>
+          {/* The transcript takes the slack and ellipsizes; the answer never
+              does, because it is the half the decision is made against. */}
           <ThemedText
-            type="body"
-            weight="semibold"
+            type="caption"
             colorName={heardSomething ? 'text' : 'textTertiary'}
-            numberOfLines={2}
-            style={styles.detailValue}
+            numberOfLines={1}
+            style={styles.heard}
           >
-            {heardSomething ? `“${result.heard}”` : STRINGS.VOICE_RESULT_SILENCE}
+            {heardSomething
+              ? STRINGS.VOICE_RESULT_HEARD_TEMPLATE(result.heard)
+              : STRINGS.VOICE_RESULT_NOT_HEARD}
+          </ThemedText>
+          <ThemedText type="caption" colorName="success" numberOfLines={1} style={styles.answer}>
+            {STRINGS.VOICE_RESULT_ANSWER_TEMPLATE(result.expected)}
           </ThemedText>
         </View>
 
-        <View style={styles.detail}>
-          <ThemedText type="caption" colorName="textTertiary" style={styles.detailLabel}>
-            {STRINGS.VOICE_RESULT_ANSWER_LABEL}
-          </ThemedText>
-          <ThemedText
-            type="body"
-            weight="semibold"
-            colorName="success"
-            numberOfLines={2}
-            style={styles.detailValue}
-          >
-            {result.expected}
-          </ThemedText>
-        </View>
+        {/* Same left→right reading as the grade bar: miss on the left, success
+            on the right. Retry sits between them in a neutral colour so the row
+            keeps two outcomes and one action rather than three competing hues.
 
+            Three peers, and deliberately no emphasis on any of them. The
+            recognizer's `suggestion` used to fill the likeliest button solid —
+            which, since silence and mishears both suggest 'retry', meant the
+            neutral middle button was usually a block of flat grey shouting over
+            the two coloured outcomes either side of it. It is still recorded
+            with every attempt (see voiceTelemetry); it just no longer decides
+            what the learner is looking at. This is their judgement to make. */}
         <View style={styles.actionsRow}>
-          <ActionButton
-            label={STRINGS.VOICE_RESULT_REJECT}
-            icon="close"
+          <ReviewActionButton
+            label={STRINGS.VOICE_RESULT_REJECT_SHORT}
+            accessibilityLabel={STRINGS.VOICE_RESULT_REJECT}
             color={colors.error}
-            emphasized={result.suggestion === 'unknown'}
             onPress={() => {
-              // Same subtle tick as every other self-grade action (grade bar,
-              // accept, retry) — the negative outcome already had its error
-              // haptic when the mishear was announced.
+              // Same subtle tick as every other self-grade action — the negative
+              // outcome already had its error haptic when the mishear was
+              // announced.
               selectionFeedback();
               onReject();
             }}
           />
-          <ActionButton
-            label={STRINGS.VOICE_RESULT_ACCEPT}
-            icon="checkmark"
+          <ReviewActionButton
+            label={STRINGS.VOICE_RESULT_RETRY}
+            color={colors.secondaryText}
+            onPress={() => {
+              selectionFeedback();
+              onRetry();
+            }}
+          />
+          <ReviewActionButton
+            label={STRINGS.VOICE_RESULT_ACCEPT_SHORT}
+            accessibilityLabel={STRINGS.VOICE_RESULT_ACCEPT}
             color={colors.success}
-            emphasized={result.suggestion === null}
             onPress={() => {
               selectionFeedback();
               onAccept();
             }}
           />
         </View>
-
-        <ActionButton
-          label={STRINGS.VOICE_RESULT_RETRY}
-          icon="refresh"
-          color={colors.tint}
-          emphasized={result.suggestion === 'retry'}
-          fullWidth
-          onPress={() => {
-            selectionFeedback();
-            onRetry();
-          }}
-        />
       </Animated.View>
     );
   },
@@ -136,86 +109,27 @@ export const VoiceResultPanel: FC<VoiceResultPanelProps> = memo(
 
 VoiceResultPanel.displayName = 'VoiceResultPanel';
 
-const ActionButton: FC<{
-  label: string;
-  icon: IoniconName;
-  color: string;
-  emphasized: boolean;
-  fullWidth?: boolean;
-  onPress: () => void;
-}> = ({ label, icon, color, emphasized, fullWidth = false, onPress }) => {
-  const bgOpacity = emphasized ? LAYOUT.OPACITY.SUBTLE : LAYOUT.OPACITY.FAINT;
-  const borderOpacity = emphasized ? LAYOUT.OPACITY.FULL : LAYOUT.OPACITY.LIGHT;
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      hitSlop={LAYOUT.HIT_SLOP.SMALL}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.actionButton,
-        fullWidth ? styles.actionFull : styles.actionFlex,
-        {
-          backgroundColor: withAlpha(color, pressed ? LAYOUT.OPACITY.SUBTLE : bgOpacity),
-          borderColor: withAlpha(color, borderOpacity),
-        },
-      ]}
-    >
-      <Ionicons name={icon} size={ICON_SIZE} color={color} />
-      <ThemedText skipDefaultColor weight="semibold" style={[styles.actionLabel, { color }]}>
-        {label}
-      </ThemedText>
-    </Pressable>
-  );
-};
-
 const styles = StyleSheet.create({
-  card: {
+  panel: {
     width: '100%',
-    padding: LAYOUT.SPACING.LARGE,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
-    gap: LAYOUT.SPACING.MEDIUM,
-    ...LAYOUT.ELEVATION.FLOATING,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: LAYOUT.SPACING.SMALL,
   },
-  detail: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: LAYOUT.SPACING.SMALL,
-  },
-  detailLabel: {
-    width: 64,
-  },
-  detailValue: {
-    flex: 1,
-  },
-  actionsRow: {
-    flexDirection: 'row',
-    gap: LAYOUT.SPACING.MEDIUM,
-    marginTop: LAYOUT.SPACING.TINY,
-  },
-  actionButton: {
+  detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: LAYOUT.BUTTON.HEIGHT.LARGE,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    gap: LAYOUT.SPACING.SMALL,
-    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
+    gap: LAYOUT.SPACING.TINY,
+    height: LAYOUT.SPACING.XLARGE,
   },
-  actionFlex: {
-    flex: 1,
+  heard: {
+    flexShrink: 1,
   },
-  actionFull: {
+  answer: {
+    flexShrink: 0,
+  },
+  actionsRow: {
+    flexDirection: 'row',
     width: '100%',
-  },
-  actionLabel: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    gap: LAYOUT.SPACING.MEDIUM,
   },
 });

@@ -60,6 +60,10 @@ const PLAYER_READY_TIMEOUT_MESSAGE = 'Player ready timeout - audio may be corrup
 // `statusIntervalMs`; see play().
 const DEFAULT_UPDATE_INTERVAL_MS = 500;
 
+// How often waitForPlayerReady re-checks `isLoaded`. See the poll in that
+// method for why this is one frame rather than the 50 ms it used to be.
+const READY_POLL_INTERVAL_MS = 16;
+
 // Audio mode configuration for consistent behavior across iOS and Android.
 //
 // `allowsRecording` is deliberately NOT pinned on. On iOS, expo-audio maps it
@@ -93,7 +97,40 @@ const RESET_AUDIO_STATUS = {
   timeControlStatus: 'paused' as const,
   reasonForWaitingToPlay: '',
   didJustFinish: false,
+  error: null,
 };
+
+/**
+ * The fields that describe what the player is DOING, as opposed to where the
+ * play head is. A change to any of these is broadcast to every subscriber; a
+ * change to `currentTime` / `duration` alone reaches only those that asked for
+ * the clock.
+ *
+ * This split exists because the review lane runs its player at a 100 ms status
+ * interval (the microphone is gated on `didJustFinish`, see AudioPlayOptions).
+ * Without it, every one of those ticks re-rendered every React consumer of this
+ * service — including the app-root GlobalAudioStateProvider — ten times a
+ * second for the whole of every prompt, on every card.
+ */
+const TRANSPORT_KEYS = [
+  'playing',
+  'isLoaded',
+  'isBuffering',
+  'playbackState',
+  'timeControlStatus',
+  'reasonForWaitingToPlay',
+  'didJustFinish',
+  'error',
+] as const satisfies readonly (keyof AudioStatus)[];
+
+/** Per-subscription options for {@link SimpleAudioService.subscribe}. */
+export interface AudioSubscribeOptions {
+  /**
+   * Also deliver `currentTime` / `duration` ticks. Only a consumer that draws a
+   * play head needs these — everything else re-renders for nothing.
+   */
+  position?: boolean;
+}
 
 // Internal result of a single play attempt. 'superseded' means a newer
 // play()/stop()/destroy() took over mid-flight — the stale call must return
@@ -122,7 +159,10 @@ export interface SourceTrackedAudioTrack extends EnhancedAudioTrack {
 class SimpleAudioService {
   private currentPlayer: AudioPlayer | null = null;
   private currentTrack: EnhancedAudioTrack | null = null;
-  private listeners = new Set<(status: AudioStatus) => void>();
+  /** Notified only when a transport field changes (see TRANSPORT_KEYS). */
+  private transportListeners = new Set<(status: AudioStatus) => void>();
+  /** Notified on every status update, ticks included. */
+  private positionListeners = new Set<(status: AudioStatus) => void>();
   private eventSubscription: { remove: () => void } | null = null;
   private audioSessionConfigured = false;
 
@@ -180,6 +220,7 @@ class SimpleAudioService {
     timeControlStatus: 'paused',
     reasonForWaitingToPlay: '',
     didJustFinish: false,
+    error: null,
   };
 
   /**
@@ -299,8 +340,13 @@ class SimpleAudioService {
    * playback-only session — so expo-audio has to grant it first. Everything
    * else in the app is better off on plain .playback: it is louder, and it
    * keeps output off the Bluetooth hands-free profile that .playAndRecord opts
-   * into. Call with `true` immediately before arming the mic and `false` as
-   * soon as the recording stops.
+   * into. Call with `true` when a review session claims the microphone and
+   * `false` when it releases it — once each, not per card.
+   *
+   * react-native-audio-api applies its own session options straight after this
+   * (`configureVoiceSessionOptions`, with `defaultToSpeaker` and no
+   * `allowBluetoothHFP`) and those are what actually take effect, so the
+   * hands-free route stays off for the session's lifetime.
    *
    * Best-effort: playback still works if the switch fails, so this never
    * throws into the voice pipeline.
@@ -513,14 +559,21 @@ class SimpleAudioService {
       // this the event-only wait intermittently sits out the full 5s timeout,
       // delaying first playback — and, in Practice, the mic arming / "Listening…".
       // Generation-guarded: once superseded the poll stops instead of reading
-      // a removed player every 50ms.
+      // a removed player.
+      //
+      // One frame rather than 50 ms: review audio is preloaded into native
+      // memory before the session starts, so the load it is waiting on resolves
+      // almost immediately and the interval was rounding that up to as much as
+      // 50 ms on every prompt and every revealed answer. The poll only lives
+      // for the duration of the load, so a tighter tick costs a handful of
+      // extra `isLoaded` reads and nothing else.
       const poll = setInterval(() => {
         if (generation !== this.playGeneration) {
           resolveSuperseded();
           return;
         }
         if (isLoadedSafe()) resolveReady();
-      }, 50);
+      }, READY_POLL_INTERVAL_MS);
 
       // Close the race where loading completed between the check above and the
       // listener/poll being attached.
@@ -592,17 +645,13 @@ class SimpleAudioService {
     const isSuperseded = (): boolean => generation !== this.playGeneration;
     const playStartedAt = Date.now();
 
-    // Playback and recording never legitimately overlap here — anything the app
-    // plays while the mic is open would be recorded straight back. So if the
-    // record-capable category is still held, take it back before starting
-    // rather than trusting the caller to have released it first. The manual
-    // reveal in particular fires the English audio synchronously and only
-    // releases the mic on the next render, so it always lost that race.
-    if (this.recordingSessionEnabled) {
-      await this.setRecordingSessionEnabled(false);
-      if (isSuperseded()) return 'superseded';
-    }
-
+    // Note: the record-capable category is deliberately NOT taken back here.
+    // A review session holds it for its whole life (VoiceGradingProvider
+    // .acquireSession) precisely so that no card pays for a category change,
+    // and this used to release it on every prompt and every revealed answer.
+    // What it was actually protecting against — the app recording its own
+    // playback — is handled a level up: the capture window is closed while the
+    // prompt plays, and buffers arriving outside a window are discarded.
     try {
       // A foreign track (word preview, practice audio) played mid-playlist must
       // exit playlist mode first — otherwise its didJustFinish would trigger
@@ -1073,10 +1122,17 @@ class SimpleAudioService {
   }
 
   /**
-   * Get current status
+   * Get current status.
+   *
+   * Returns the live snapshot, not a copy. `updateStatus` never mutates in
+   * place — it always assigns a freshly spread object — so the value handed out
+   * here is effectively frozen, and it is the same object listeners receive.
+   * The copy this used to make was allocated on every call, and the review
+   * lane's prompt watcher calls it ten times a second for the length of every
+   * prompt. Treat the result as read-only.
    */
   getStatus(): AudioStatus {
-    return { ...this.status };
+    return this.status;
   }
 
   /**
@@ -1112,12 +1168,17 @@ class SimpleAudioService {
   }
 
   /**
-   * Subscribe to status updates
+   * Subscribe to status updates.
+   *
+   * By default a listener hears about transport changes only — started,
+   * stopped, loaded, buffering, finished, failed. Pass `{ position: true }` to
+   * also receive the play-head ticks; see TRANSPORT_KEYS for why that is opt-in.
    */
-  subscribe(listener: (status: AudioStatus) => void): () => void {
-    this.listeners.add(listener);
+  subscribe(listener: (status: AudioStatus) => void, options?: AudioSubscribeOptions): () => void {
+    const set = options?.position ? this.positionListeners : this.transportListeners;
+    set.add(listener);
     return () => {
-      this.listeners.delete(listener);
+      set.delete(listener);
     };
   }
 
@@ -1145,11 +1206,26 @@ class SimpleAudioService {
         timeControlStatus?: string;
         reasonForWaitingToPlay?: string;
         didJustFinish?: boolean;
+        error?: string | null;
+        mediaServicesDidReset?: boolean;
       }) => {
         try {
           const currentTime = nativeStatus.currentTime ?? 0;
           const duration = nativeStatus.duration ?? 0;
           const didJustFinish = nativeStatus.didJustFinish ?? false;
+
+          // iOS only: the system media daemon crashed and took the audio
+          // session with it. expo-audio reloads the source itself, but our
+          // cached "session is configured" flag is now a lie — every category
+          // and activation we applied is gone. Clearing it makes the next play()
+          // reconfigure from scratch instead of trusting a session that no
+          // longer exists.
+          if (nativeStatus.mediaServicesDidReset === true) {
+            this.audioSessionConfigured = false;
+            if (isSessionActive()) {
+              mark('player.mediaServicesDidReset');
+            }
+          }
 
           // Guard against NaN/Infinity from native — observed during seek/replace.
           const safeCurrentTime =
@@ -1201,6 +1277,7 @@ class SimpleAudioService {
               timeControlStatus: nativeStatus.timeControlStatus ?? 'paused',
               reasonForWaitingToPlay: nativeStatus.reasonForWaitingToPlay ?? '',
               didJustFinish: true,
+              error: nativeStatus.error ?? null,
             });
             return;
           }
@@ -1217,6 +1294,9 @@ class SimpleAudioService {
             timeControlStatus: nativeStatus.timeControlStatus ?? 'paused',
             reasonForWaitingToPlay: nativeStatus.reasonForWaitingToPlay ?? '',
             didJustFinish,
+            // Published by expo-audio and previously discarded: a real reason
+            // the source failed, instead of inferring one from a ready timeout.
+            error: nativeStatus.error ?? null,
           });
         } catch {
           // Stop subscription on error
@@ -1306,22 +1386,34 @@ class SimpleAudioService {
   }
 
   /**
-   * Update audio status and notify listeners
-   * Native updateInterval (500ms) handles throttling automatically
+   * Update audio status and notify listeners.
+   *
+   * Position subscribers hear every update. Transport subscribers hear only the
+   * ones where something they care about actually changed, so a 100 ms review
+   * prompt does not wake the whole app ten times a second.
    */
   private updateStatus(updates: Partial<AudioStatus>): void {
-    this.status = { ...this.status, ...updates };
+    const previous = this.status;
+    this.status = { ...previous, ...updates };
 
-    // Create a copy of listeners to avoid modification during iteration
-    const listenersCopy = new Set(this.listeners);
+    this.notify(this.positionListeners);
 
-    // Notify all listeners
-    listenersCopy.forEach(listener => {
+    const transportChanged =
+      TRANSPORT_KEYS.some(key => previous[key] !== this.status[key]) ||
+      (previous.currentTrack?.id ?? null) !== (this.status.currentTrack?.id ?? null);
+    if (transportChanged) {
+      this.notify(this.transportListeners);
+    }
+  }
+
+  /** Fan out the current status, dropping any listener that throws. */
+  private notify(listeners: Set<(status: AudioStatus) => void>): void {
+    // Copy so a listener unsubscribing during the fan-out can't skip a sibling.
+    new Set(listeners).forEach(listener => {
       try {
         listener(this.status);
       } catch {
-        // Remove problematic listeners
-        this.listeners.delete(listener);
+        listeners.delete(listener);
       }
     });
   }
@@ -1336,7 +1428,8 @@ class SimpleAudioService {
     await this.stopInternal();
 
     // Clear all listeners to prevent memory leaks
-    this.listeners.clear();
+    this.transportListeners.clear();
+    this.positionListeners.clear();
 
     // Clean up AppState listener
     if (this.appStateSubscription) {
@@ -1386,6 +1479,9 @@ export interface AudioStatus {
   timeControlStatus: string;
   reasonForWaitingToPlay: string;
   didJustFinish: boolean;
+  /** Playback error message from the native player, or null. Cleared when a
+   *  new source loads or playback resumes. */
+  error: string | null;
 }
 
 // Export singleton instance

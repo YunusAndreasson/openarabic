@@ -5,8 +5,16 @@
  * energy gate watches each buffer and auto-stops once the user has spoken and
  * then gone quiet, backed up by a hard duration cap.
  *
- * Ported from edemind's recording.ts. Trimmed of the iosRawMode dev knob since
- * we are not tuning thresholds in production.
+ * The input stream is opened ONCE per review session and only paused between
+ * cards. It used to be built and destroyed per card, and that is where the
+ * feature's whole reliability history came from: opening an exclusive input
+ * stream costs ~500 ms before the first buffer arrives, the previous card's
+ * teardown had to be awaited before the next could start (racing the audio HAL
+ * when it didn't settle), and a stream that failed to open left the card with a
+ * microphone that never worked. `AudioRecorder.pause()` / `.resume()` restart an
+ * already-open stream instead, which skips device negotiation entirely.
+ *
+ * Ported from edemind's recording.ts.
  */
 import { Platform } from 'react-native';
 import { AudioManager, AudioRecorder, type AudioBuffer } from 'react-native-audio-api';
@@ -34,6 +42,46 @@ const ABS_SPEECH_FLOOR = 0.003;
 const ABS_SILENCE_FLOOR = 0.0018;
 const INITIAL_NOISE_FLOOR = 0.005;
 
+/**
+ * How long a capture window waits for its first buffer before declaring the
+ * stream dead.
+ *
+ * With a session-scoped recorder the stream is already open and warm, so a
+ * resumed window should deliver audio in tens of milliseconds. If it hasn't
+ * after this long, something outside our control took the input away (an
+ * interruption we missed, the audio engine stopping, a route change mid-word) —
+ * and the honest response is to fail fast so the caller's retry ladder can
+ * reopen the session. Previously this state was indistinguishable from silence
+ * and the learner sat on "Listening…" for the full `noSpeechTimeoutMs`.
+ *
+ * 700 rather than the 1500 it started at. A healthy warm window was measured on
+ * device at ~120 ms to first buffer, so this is still ~6x headroom — while the
+ * old value meant a deaf stream cost a second and a half before the recovery
+ * reopen even began, and every millisecond of it is billed to the learner's tap.
+ */
+const WINDOW_FIRST_BUFFER_TIMEOUT_MS = 700;
+
+/** Audio kept either side of the detected speech before transcription. Enough
+ *  that a soft onset or a trailing consonant is never clipped, short enough
+ *  that the recogniser isn't handed seconds of room tone to decode. */
+const TRIM_PREROLL_MS = 200;
+const TRIM_POSTROLL_MS = 250;
+
+/**
+ * The iOS session mode held for the whole review session.
+ *
+ * Capture used to run in `'spokenAudio'` and playback had to be restored to
+ * `'default'` afterwards, because iOS keeps applying the recording mode and
+ * every prompt after the first recording played noticeably quiet. With one
+ * session spanning both, that flap is gone and a single mode has to serve both
+ * — so it is the one that was already proven right for playback. Field
+ * telemetry (`voice_grading_attempts`) showed transcription accuracy was never
+ * the constraint, which is what makes this the cheap side of the trade.
+ * `'measurement'` (no input AGC / noise processing) is still reachable through
+ * the Advanced iOS raw-mode toggle for A/B testing quiet capture.
+ */
+const IOS_SESSION_MODE = 'default';
+
 export interface RecordingConfig {
   energyGateEnabled: boolean;
   speechFactor: number;
@@ -59,8 +107,8 @@ export interface RecordingConfig {
   captureTarget: number;
   captureMaxGain: number;
   /** iOS only: use the 'measurement' session mode (raw — no input AGC / noise
-   *  processing) instead of 'spokenAudio'. Off by default; exposed as an
-   *  Advanced toggle so quiet-capture issues can be A/B tested on-device. */
+   *  processing) instead of the shared session mode. Off by default; exposed as
+   *  an Advanced toggle so quiet-capture issues can be A/B tested on-device. */
   iosRawMode: boolean;
 }
 
@@ -96,19 +144,21 @@ export interface RecordingResult {
   heardSpeech: boolean;
   peakRms: number;
   noiseFloor: number;
-  /** Number of audio buffers handleBuffer received. 0 means the mic delivered
+  /** Number of audio buffers the window received. 0 means the mic delivered
    *  no audio at all (session conflict / permission edge case). */
   bufferCount: number;
   /** What stopped the recording: 'silence' (energy gate), 'noSpeech' (gate
    *  never heard speech within noSpeechTimeoutMs), 'maxDuration' (hit cap inside
-   *  handleBuffer), 'watchdog' (cap fired with zero buffers), or 'manual'
-   *  (cancel / external stop). */
+   *  handleBuffer), 'watchdog' (a cap fired with zero buffers — either the hard
+   *  duration cap or the first-buffer deadline), or 'manual' (cancel / external
+   *  stop). */
   stopReason: 'silence' | 'noSpeech' | 'maxDuration' | 'watchdog' | 'manual';
-  /** Wall-clock ms from start() to first handleBuffer call. Reveals whether
-   *  the mic actually delivered audio and how slow startup was. */
+  /** Wall-clock ms from the window opening to its first buffer. Reveals whether
+   *  the mic actually delivered audio and how slow startup was. This is the
+   *  number the session-scoped recorder exists to reduce. */
   firstBufferMs: number | null;
-  /** Wall-clock ms from start() to the moment the stop decision was taken
-   *  (energy gate, max cap, watchdog, or cancel/manual). */
+  /** Wall-clock ms from the window opening to the moment the stop decision was
+   *  taken (energy gate, max cap, watchdog, or cancel/manual). */
   stopDecidedAtMs: number;
 }
 
@@ -136,13 +186,15 @@ export function initialGateState(): EnergyGateState {
  * symptom was a recording that ran to `maxDurationMs` while the learner repeated
  * themselves into a microphone that appeared dead.
  *
- * Returns the next state plus the stop reason, if any.
+ * Returns the next state, whether this buffer counted as speech, and the stop
+ * reason if any. `isSpeech` is reported rather than re-derived by the caller
+ * because it is what bounds the region actually sent to the recogniser.
  */
 export function stepEnergyGate(
   state: EnergyGateState,
   sample: { rms: number; bufferMs: number; elapsedMs: number },
   config: RecordingConfig,
-): { state: EnergyGateState; stop: RecordingResult['stopReason'] | null } {
+): { state: EnergyGateState; isSpeech: boolean; stop: RecordingResult['stopReason'] | null } {
   const { rms, bufferMs, elapsedMs } = sample;
   const speechThreshold = config.energyGateEnabled
     ? Math.max(ABS_SPEECH_FLOOR, state.noiseFloor * config.speechFactor)
@@ -176,17 +228,16 @@ export function stepEnergyGate(
   const idleEnough = speechSeen && idleMs >= config.idleHangMs && pastMinimum;
   const noSpeechTimedOut = !speechSeen && elapsedMs >= config.noSpeechTimeoutMs;
 
-  if (quietEnough || idleEnough) return { state: next, stop: 'silence' };
-  if (noSpeechTimedOut) return { state: next, stop: 'noSpeech' };
-  if (elapsedMs >= config.maxDurationMs) return { state: next, stop: 'maxDuration' };
-  return { state: next, stop: null };
+  if (quietEnough || idleEnough) return { state: next, isSpeech, stop: 'silence' };
+  if (noSpeechTimedOut) return { state: next, isSpeech, stop: 'noSpeech' };
+  if (elapsedMs >= config.maxDurationMs) return { state: next, isSpeech, stop: 'maxDuration' };
+  return { state: next, isSpeech, stop: null };
 }
 
 export interface RecordingHandlers {
   onAutoStop?: () => void;
-  /** Fired once, when the first audio buffer arrives — i.e. the microphone is
-   *  genuinely capturing. start() resolving is NOT that moment: the input
-   *  stream needs a few hundred ms more before samples flow. */
+  /** Fired once, when the window's first audio buffer arrives — i.e. the
+   *  microphone is genuinely capturing for THIS card. */
   onCapturing?: () => void;
   /** Per-buffer RMS (~10 Hz), for a live input meter. Deliberately a bare
    *  number and not a state setter: the consumer writes it straight into a
@@ -210,6 +261,29 @@ export async function ensureMicPermission(): Promise<boolean> {
   if (current === 'Granted') return true;
   const requested = await AudioManager.requestRecordingPermissions();
   return requested === 'Granted';
+}
+
+/**
+ * Claim the audio session the review screen needs for its whole life: playback
+ * for prompts, capture for answers, from one category so neither has to take it
+ * from the other mid-card.
+ *
+ * `iosAllowHaptics` is load-bearing rather than cosmetic. iOS silences haptics
+ * while a session is record-capable, and that window is now the entire review
+ * instead of one card's recording — so without it the swipe detent tick, the
+ * grade feedback and the reveal tap all go dead on iOS for the whole session.
+ */
+function configureVoiceSessionOptions(config: RecordingConfig): void {
+  if (Platform.OS !== 'ios') return;
+  AudioManager.setAudioSessionOptions({
+    iosCategory: 'playAndRecord',
+    iosMode: config.iosRawMode ? 'measurement' : IOS_SESSION_MODE,
+    // No Bluetooth HFP: a connected headset would route the mic to an
+    // ~8 kHz narrowband channel and strip the consonant cues Parakeet
+    // needs. Force the full-band built-in mic.
+    iosOptions: ['defaultToSpeaker'],
+    iosAllowHaptics: true,
+  });
 }
 
 function concat(chunks: Float32Array[], total: number): Float32Array {
@@ -277,9 +351,12 @@ function normalizeGain(
   target = 0.7,
   maxGain = 12,
 ): { output: Float32Array; gainApplied: number | null } {
+  // Indexed for the same reason as the per-buffer RMS: this walks the whole
+  // recording, synchronously, immediately before the recogniser is handed it.
   let peak = 0;
-  for (const sample of input) {
-    const a = Math.abs(sample);
+  const length = input.length;
+  for (let i = 0; i < length; i += 1) {
+    const a = Math.abs(input[i] ?? 0);
     if (a > peak) peak = a;
   }
   if (peak < 1e-3 || peak >= target) return { output: input, gainApplied: null };
@@ -291,11 +368,53 @@ function normalizeGain(
 }
 
 /**
- * A single-shot microphone session. Construct once and keep across renders in
- * a ref; call start()/stop() per recording.
+ * Narrow a recording to the part the learner actually spoke.
+ *
+ * The captured buffer runs from the moment the window opened to the moment the
+ * gate called time — so it carries the learner's thinking pause at the front and
+ * the full `silenceHangMs` / `idleHangMs` hang at the back. Both ends are pure
+ * cost twice over: `transcribeSamples` takes a `number[]`, so every sample is
+ * converted through `Array.from` on the JS thread before an offline transducer
+ * decodes it, and decode time scales with length.
+ *
+ * Returns the input untouched when no speech was located, so a silent or
+ * hallucinated recording still reaches the recogniser exactly as it was heard.
+ * Covered end-to-end by __tests__/lib/voice/captureSession.test.ts.
  */
-export class VoiceRecorder {
+function trimToSpeech(
+  input: Float32Array,
+  range: { firstSpeechSample: number | null; lastSpeechSample: number | null },
+  sampleRate: number,
+): Float32Array {
+  const { firstSpeechSample, lastSpeechSample } = range;
+  if (firstSpeechSample === null || lastSpeechSample === null) return input;
+  if (lastSpeechSample <= firstSpeechSample) return input;
+
+  const start = Math.max(0, firstSpeechSample - Math.round((TRIM_PREROLL_MS * sampleRate) / 1000));
+  const end = Math.min(
+    input.length,
+    lastSpeechSample + Math.round((TRIM_POSTROLL_MS * sampleRate) / 1000),
+  );
+  if (start >= end || (start === 0 && end === input.length)) return input;
+  return input.subarray(start, end);
+}
+
+/**
+ * The microphone for a whole review session.
+ *
+ * `open()` once when the session starts, then `beginWindow()` / `endWindow()`
+ * per card. Buffers that arrive while no window is open are discarded, which is
+ * what makes it safe for the stream to keep running between cards — and what
+ * makes correctness independent of whether the native `pause()` actually took
+ * effect on a given device.
+ */
+export class VoiceCaptureSession {
   private recorder: AudioRecorder | null = null;
+  private opening: Promise<void> | null = null;
+  private streamErrorHandler: ((message: string) => void) | null = null;
+
+  // Per-window state. All of it is reset by beginWindow().
+  private windowOpen = false;
   private chunks: Float32Array[] = [];
   private totalSamples = 0;
   private sourceSampleRate = TARGET_SAMPLE_RATE;
@@ -308,61 +427,111 @@ export class VoiceRecorder {
   private bufferCount = 0;
   private stopReason: RecordingResult['stopReason'] = 'manual';
   private watchdog: ReturnType<typeof setTimeout> | null = null;
+  private firstBufferTimer: ReturnType<typeof setTimeout> | null = null;
   private firstBufferAt: number | null = null;
   private stopDecidedAt = 0;
+  /** Sample offsets (at source rate) bounding the speech the gate detected. */
+  private firstSpeechSample: number | null = null;
+  private lastSpeechSample: number | null = null;
 
-  get isRecording(): boolean {
+  /** The native input stream is open (whether or not a card is capturing). */
+  get isOpen(): boolean {
     return this.recorder !== null;
   }
 
-  async start(handlers: RecordingHandlers = {}, config?: RecordingConfig): Promise<void> {
+  /** A card's capture window is currently accepting audio. */
+  get isCapturing(): boolean {
+    return this.windowOpen;
+  }
+
+  /** Called when the native recorder reports an error. Registering this is the
+   *  only way a stream that dies mid-session announces itself; without it the
+   *  symptom is a card that silently records nothing. */
+  onStreamError(handler: ((message: string) => void) | null): void {
+    this.streamErrorHandler = handler;
+  }
+
+  /**
+   * Open the input stream for the session. Idempotent and safe to call
+   * concurrently — the second caller awaits the first's attempt.
+   */
+  async open(config: RecordingConfig = DEFAULT_RECORDING_CONFIG): Promise<void> {
     if (this.recorder) return;
-    // Spanned: this is normally a no-op re-check, but on a first run it opens
-    // the OS permission dialog and blocks here for as long as the learner takes
-    // to answer — mid-card, with the UI showing nothing. It sits before
-    // `startedAt` below, so firstBufferMs never counted it and the HUD's
-    // "mic open Xms" silently under-reported the real wait.
-    // See VoiceGradingProvider.prewarmPermission, which moves the ask to the
-    // start of the session so it stops interrupting a card.
+    if (this.opening) return this.opening;
+    this.opening = this.openInternal(config).finally(() => {
+      this.opening = null;
+    });
+    return this.opening;
+  }
+
+  private async openInternal(config: RecordingConfig): Promise<void> {
+    // Normally a no-op re-check; on a first run it opens the OS permission
+    // dialog. VoiceGradingProvider.prewarmPermission moves that ask to the start
+    // of the session so it can't land mid-card.
     const endPermission = diagSpan('mic.permission');
     const allowed = await ensureMicPermission();
     endPermission({ allowed });
     if (!allowed) throw new MicPermissionDeniedError();
 
-    this.config = config ?? { ...DEFAULT_RECORDING_CONFIG };
+    this.config = config;
 
-    if (Platform.OS === 'ios') {
-      // Spanned for the same reason: an AVAudioSession category change plus
-      // activation can block for seconds when another process holds the session
-      // or a Bluetooth route is renegotiating, and it too lands before
-      // `startedAt`. This is the one window on the arm path that Android cannot
-      // reproduce, so it is the prime suspect for the intermittent multi-second
-      // mic stall reported on device.
-      const endIosSession = diagSpan('mic.iosSession');
-      try {
-        AudioManager.setAudioSessionOptions({
-          iosCategory: 'playAndRecord',
-          // swmansion-recommended mode for on-device ASR — tuned for speech.
-          // 'measurement' (raw mode) disables iOS input AGC / noise processing
-          // for a bone-dry signal — toggleable via the Advanced iOS raw mode
-          // setting for A/B testing quiet-capture issues.
-          iosMode: this.config.iosRawMode ? 'measurement' : 'spokenAudio',
-          // No Bluetooth HFP: a connected headset would route the mic to an
-          // ~8 kHz narrowband channel and strip the consonant cues Parakeet
-          // needs. Force the full-band built-in mic.
-          iosOptions: ['defaultToSpeaker'],
-        });
+    // Applied once for the whole session rather than per card. The category
+    // change plus activation is the one call on this path that can block for
+    // seconds on iOS (another process holding the session, a Bluetooth route
+    // renegotiating), and it used to run on every single card.
+    const endSession = diagSpan('mic.session.configure');
+    try {
+      configureVoiceSessionOptions(config);
+      if (Platform.OS === 'ios') {
         await AudioManager.setAudioSessionActivity(true);
-        endIosSession();
-      } catch (sessionErr) {
-        endIosSession({ failed: true });
-        diagMark('mic.iosSession.failed', {
-          message: sessionErr instanceof Error ? sessionErr.message : String(sessionErr),
-        });
-        // Surface the real error from start() below.
       }
+      endSession();
+    } catch (sessionErr) {
+      endSession({ failed: true });
+      diagMark('mic.session.configure.failed', {
+        message: sessionErr instanceof Error ? sessionErr.message : String(sessionErr),
+      });
+      // Surface the real error from start() below.
     }
 
+    const recorder = new AudioRecorder();
+    // 1600 samples ≈ 100 ms at 16 kHz: fine enough for the energy gate.
+    const ready = recorder.onAudioReady(
+      { sampleRate: TARGET_SAMPLE_RATE, bufferLength: 1600, channelCount: 1 },
+      event => this.handleBuffer(event),
+    );
+    if (ready.status === 'error') throw new Error(`onAudioReady failed: ${ready.message}`);
+
+    recorder.onError(({ message }) => {
+      diagMark('mic.stream.error', { message });
+      this.streamErrorHandler?.(message);
+    });
+
+    const endStart = diagSpan('mic.stream.open');
+    const started = await recorder.start();
+    if (started.status === 'error') {
+      endStart({ failed: true });
+      recorder.clearOnAudioReady();
+      recorder.clearOnError();
+      throw new Error(`recorder.start failed: ${started.message}`);
+    }
+    endStart();
+    this.recorder = recorder;
+
+    // Idle until a card asks for it. Buffers are discarded either way (see
+    // handleBuffer), so this is a power optimisation rather than the guarantee.
+    recorder.pause();
+  }
+
+  /**
+   * Begin capturing for one card. Resumes the already-open stream, which is the
+   * whole point of the session-scoped design: there is no device negotiation,
+   * no permission round-trip and no audio-session change on this path.
+   */
+  beginWindow(handlers: RecordingHandlers = {}, config?: RecordingConfig): void {
+    if (this.windowOpen) return;
+
+    this.config = config ?? { ...DEFAULT_RECORDING_CONFIG };
     this.chunks = [];
     this.totalSamples = 0;
     this.sourceSampleRate = TARGET_SAMPLE_RATE;
@@ -375,49 +544,66 @@ export class VoiceRecorder {
     this.stopReason = 'manual';
     this.firstBufferAt = null;
     this.stopDecidedAt = 0;
+    this.firstSpeechSample = null;
+    this.lastSpeechSample = null;
+    this.windowOpen = true;
 
-    const recorder = new AudioRecorder();
-    // 1600 samples ≈ 100 ms at 16 kHz: fine enough for the energy gate.
-    const ready = recorder.onAudioReady(
-      { sampleRate: TARGET_SAMPLE_RATE, bufferLength: 1600, channelCount: 1 },
-      event => this.handleBuffer(event),
-    );
-    if (ready.status === 'error') throw new Error(`onAudioReady failed: ${ready.message}`);
-    const started = await recorder.start();
-    if (started.status === 'error') throw new Error(`recorder.start failed: ${started.message}`);
-    this.recorder = recorder;
+    const endResume = diagSpan('mic.window.resume');
+    this.recorder?.resume();
+    endResume();
 
-    // Safety net: if no buffers arrive (audio session conflict, permission
-    // edge case, etc.) the maxDuration check inside handleBuffer never runs
-    // and arm() hangs forever. Wall-clock timer enforces the cap with a small
-    // margin so a normal handleBuffer-driven stop still wins the race.
+    // Safety net: if no buffers arrive (the audio engine stopped, an
+    // interruption we didn't see, a route change) the maxDuration check inside
+    // handleBuffer never runs and the caller would hang. Wall-clock timer
+    // enforces the cap with a small margin so a normal handleBuffer-driven stop
+    // still wins the race.
     const watchdogDelay = this.config.maxDurationMs + 500;
-    this.watchdog = setTimeout(() => {
-      if (!this.stopping) {
-        const at = Date.now() - this.startedAt;
-        diagMark('mic.watchdog', { at, scheduled: watchdogDelay });
-        this.stopping = true;
-        this.stopReason = 'watchdog';
-        this.stopDecidedAt = at;
-        this.handlers.onAutoStop?.();
-      }
-    }, watchdogDelay);
+    this.watchdog = setTimeout(() => this.forceStop('watchdog', watchdogDelay), watchdogDelay);
+
+    // A resumed stream should deliver audio almost immediately. If it doesn't,
+    // fail now rather than making the learner wait out noSpeechTimeoutMs on a
+    // microphone that is never going to speak.
+    this.firstBufferTimer = setTimeout(
+      () => this.forceStop('watchdog', WINDOW_FIRST_BUFFER_TIMEOUT_MS),
+      WINDOW_FIRST_BUFFER_TIMEOUT_MS,
+    );
+  }
+
+  /** Stop from a timer rather than from the gate. */
+  private forceStop(reason: RecordingResult['stopReason'], scheduled: number): void {
+    if (this.stopping || !this.windowOpen) return;
+    const at = Date.now() - this.startedAt;
+    diagMark('mic.watchdog', { at, scheduled, reason, buffers: this.bufferCount });
+    this.stopping = true;
+    this.stopReason = reason;
+    this.stopDecidedAt = at;
+    this.handlers.onAutoStop?.();
   }
 
   private handleBuffer(event: AudioReadyEvent): void {
+    // Between cards the stream may still be live (pause() is best-effort and
+    // platform-dependent). Anything arriving now belongs to no card.
+    if (!this.windowOpen) return;
+
     const channel = event.buffer.getChannelData(0);
     this.sourceSampleRate = event.buffer.sampleRate;
+    const bufferStartSample = this.totalSamples;
     this.chunks.push(channel.slice());
     this.totalSamples += channel.length;
     this.bufferCount += 1;
     if (this.firstBufferAt === null) {
       this.firstBufferAt = Date.now() - this.startedAt;
-      // The number behind "I have to wait for the mic": how long after arm()
-      // the microphone actually began delivering audio.
+      if (this.firstBufferTimer) {
+        clearTimeout(this.firstBufferTimer);
+        this.firstBufferTimer = null;
+      }
+      // The number behind "I have to wait for the mic": how long after the
+      // window opened the microphone actually began delivering audio. With the
+      // stream held open across cards this should be tens of ms, not hundreds.
       diagMark('mic.firstBuffer', {
         ms: this.firstBufferAt,
         // If this is not TARGET_SAMPLE_RATE, every buffer pays the JS-side
-        // low-pass + decimate in stop() — worth knowing before optimising it.
+        // low-pass + decimate in endWindow() — worth knowing before optimising it.
         sourceSampleRate: this.sourceSampleRate,
         frames: channel.length,
       });
@@ -425,22 +611,32 @@ export class VoiceRecorder {
       this.handlers.onCapturing?.();
     }
 
+    // Indexed rather than for..of: this runs over every sample of every buffer,
+    // ten times a second for as long as the learner is speaking, and the
+    // iterator protocol allocates per step where an index does not.
     let sumSquares = 0;
-    for (const sample of channel) {
+    const frames = channel.length;
+    for (let i = 0; i < frames; i += 1) {
+      const sample = channel[i] ?? 0;
       sumSquares += sample * sample;
     }
-    const rms = channel.length ? Math.sqrt(sumSquares / channel.length) : 0;
+    const rms = frames ? Math.sqrt(sumSquares / frames) : 0;
     const elapsed = Date.now() - this.startedAt;
     const bufferMs = (event.numFrames / (this.sourceSampleRate || TARGET_SAMPLE_RATE)) * 1000;
     if (rms > this.peakRms) this.peakRms = rms;
     this.handlers.onLevel?.(rms);
 
-    const { state, stop } = stepEnergyGate(
+    const { state, isSpeech, stop } = stepEnergyGate(
       this.gate,
       { rms, bufferMs, elapsedMs: elapsed },
       this.config,
     );
     this.gate = state;
+
+    if (isSpeech) {
+      if (this.firstSpeechSample === null) this.firstSpeechSample = bufferStartSample;
+      this.lastSpeechSample = bufferStartSample + channel.length;
+    }
 
     if (!this.stopping && stop !== null) {
       this.stopping = true;
@@ -458,77 +654,103 @@ export class VoiceRecorder {
     }
   }
 
-  async stop(): Promise<RecordingResult> {
-    const recorder = this.recorder;
-    this.recorder = null;
+  /**
+   * End the current card's window and return what was captured.
+   *
+   * Synchronous by design. This used to be an async `stop()` that tore the
+   * stream down and then awaited an audio-session restore, and transcription
+   * was serialised behind both — so the learner waited for a session hand-off
+   * before the recogniser had even seen their answer. Now the pause is
+   * immediate and the caller can start decoding on this same frame.
+   */
+  endWindow(): RecordingResult {
+    const durationMs = Date.now() - this.startedAt;
     if (this.watchdog) {
       clearTimeout(this.watchdog);
       this.watchdog = null;
     }
-    const durationMs = Date.now() - this.startedAt;
-    const heardSpeech = this.gate.speechSeen;
-    const sourceRate = this.sourceSampleRate;
-    const peakRms = this.peakRms;
-    const noiseFloor = this.gate.noiseFloor;
-    const config = { ...this.config };
-    const bufferCount = this.bufferCount;
-    const stopReason = this.stopReason;
-    const firstBufferMs = this.firstBufferAt;
-    const stopDecidedAtMs = this.stopDecidedAt || durationMs;
+    if (this.firstBufferTimer) {
+      clearTimeout(this.firstBufferTimer);
+      this.firstBufferTimer = null;
+    }
 
-    if (recorder) {
-      recorder.clearOnAudioReady();
-      recorder.stop();
-      if (Platform.OS === 'ios') {
-        try {
-          // Restore a playback-friendly session before handing back to
-          // expo-audio. start() switches the session to 'spokenAudio' /
-          // 'measurement' mode for ASR — a much quieter output level — and iOS
-          // keeps applying it, so every prompt after the first recording played
-          // quiet. react-native-audio-api only *applies* session options on the
-          // next activation, so resetting the mode without re-activating (the
-          // previous attempt) was a no-op: expo-audio's setIsAudioActiveAsync
-          // just re-activated the stale recording mode. Reset to 'default' mode
-          // + speaker route and COMMIT it with an activation so the change
-          // actually takes effect before the next prompt plays.
-          AudioManager.setAudioSessionOptions({
-            iosCategory: 'playAndRecord',
-            iosMode: 'default',
-            iosOptions: ['defaultToSpeaker'],
-          });
-          await AudioManager.setAudioSessionActivity(true);
-        } catch {
-          // Non-fatal — playback still works, just potentially at lower volume.
-        }
-      }
+    const wasOpen = this.windowOpen;
+    this.windowOpen = false;
+    this.handlers = {};
+
+    if (wasOpen) {
+      // Deferred by a microtask because the common caller is `onAutoStop`,
+      // which fires from inside the native buffer callback — and `pause()` is
+      // documented as JS-thread-only. The window is already closed, so any
+      // buffer that slips through before the pause lands is discarded.
+      const recorder = this.recorder;
+      void Promise.resolve().then(() => {
+        const endPause = diagSpan('mic.window.pause');
+        recorder?.pause();
+        endPause();
+      });
     }
 
     const merged = concat(this.chunks, this.totalSamples);
     this.chunks = [];
-    this.totalSamples = 0;
-    const resampled = resample(merged, sourceRate, TARGET_SAMPLE_RATE);
-    const { output: waveform } = config.gainNormalizeEnabled
-      ? normalizeGain(resampled, config.captureTarget, config.captureMaxGain)
+    const spoken = trimToSpeech(
+      merged,
+      { firstSpeechSample: this.firstSpeechSample, lastSpeechSample: this.lastSpeechSample },
+      this.sourceSampleRate,
+    );
+    if (spoken.length !== merged.length) {
+      diagMark('mic.trim', {
+        fromSamples: merged.length,
+        toSamples: spoken.length,
+        rate: this.sourceSampleRate,
+      });
+    }
+    const resampled = resample(spoken, this.sourceSampleRate, TARGET_SAMPLE_RATE);
+    const { output: waveform } = this.config.gainNormalizeEnabled
+      ? normalizeGain(resampled, this.config.captureTarget, this.config.captureMaxGain)
       : { output: resampled };
 
-    return {
+    const result: RecordingResult = {
       waveform,
       sampleRate: TARGET_SAMPLE_RATE,
       durationMs,
-      heardSpeech,
-      peakRms,
-      noiseFloor,
-      bufferCount,
-      stopReason,
-      firstBufferMs,
-      stopDecidedAtMs,
+      heardSpeech: this.gate.speechSeen,
+      peakRms: this.peakRms,
+      noiseFloor: this.gate.noiseFloor,
+      bufferCount: this.bufferCount,
+      stopReason: this.stopReason,
+      firstBufferMs: this.firstBufferAt,
+      stopDecidedAtMs: this.stopDecidedAt || durationMs,
     };
+    this.totalSamples = 0;
+    return result;
   }
 
-  async cancel(): Promise<void> {
-    if (!this.recorder) return;
-    this.handlers = {};
+  /** Abandon the current window without producing a result. */
+  cancelWindow(): void {
+    if (!this.windowOpen) return;
     this.stopping = true;
-    await this.stop();
+    this.stopReason = 'manual';
+    this.endWindow();
+  }
+
+  /**
+   * Tear the session's input stream down. Called when the review screen
+   * unmounts, when voice is switched off mid-session, and before a reopen
+   * forced by an interruption or route change.
+   */
+  async close(): Promise<void> {
+    this.cancelWindow();
+    const recorder = this.recorder;
+    this.recorder = null;
+    if (!recorder) return;
+    try {
+      recorder.clearOnAudioReady();
+      recorder.clearOnError();
+      await recorder.stop();
+    } catch {
+      // The stream is gone either way; a failed teardown must not block the
+      // caller, which is usually an unmount.
+    }
   }
 }

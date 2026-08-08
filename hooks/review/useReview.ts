@@ -11,7 +11,6 @@ import { STRINGS } from '@/constants/strings';
 import { analytics } from '@/services/analytics';
 
 import { useOpacityAnimation } from '@/hooks/animations';
-import { useSimpleAudioPlayer } from '@/hooks/audio';
 import { useAuth } from '@/hooks/auth';
 import { useAudioPreloader } from './useAudioPreloader';
 import { watchPromptFinish } from './promptFinishWatcher';
@@ -19,6 +18,7 @@ import { useSessionMetrics } from './useSessionMetrics';
 import { useTimerCleanup } from '@/hooks/utils';
 import { useFSRS } from '@/hooks/vocabulary';
 import { audioCache } from '@/services/audioCache';
+import { simpleAudioService } from '@/services/audioPlayer';
 import type {
   ReviewStateRefs,
   ReviewTimeRefs,
@@ -151,15 +151,13 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     startDiagSession({ fromRemember: fromRemember ?? false });
   }, []);
 
-  // Use enhanced audio player instead of local expo-av implementation
-  const audioPlayer = useSimpleAudioPlayer();
-
-  // Create stable refs for audio player methods to avoid dependency issues
-  const audioPlayerRef = useRef(audioPlayer);
-  useEffect(() => {
-    audioPlayerRef.current = audioPlayer;
-  });
-
+  // Talks to the audio service directly rather than through
+  // useSimpleAudioPlayer. This hook only ever *commands* playback — play, stop,
+  // preconfigure — and reads no status field, so the subscription it used to
+  // hold was pure cost: the review lane runs its player at a 100 ms status
+  // interval, so it re-rendered this hook and the entire review screen ten
+  // times a second for the whole of every prompt and every reveal.
+  //
   // Use optimized opacity animation from hooks/animations
   // animatedStyle uses Reanimated 4 inline shared values (no useAnimatedStyle wrapper)
   const {
@@ -236,7 +234,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   const stopAudioSafely = useCallback(() => {
     // A user-initiated stop also outdates any pending self-heal retry.
     playAudioSeqRef.current++;
-    audioPlayerRef.current.stop().catch(() => {
+    simpleAudioService.stop().catch(() => {
       // Silent failure
     });
   }, []);
@@ -275,6 +273,8 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     isPreloading: isAudioPreloading,
     progress: audioPreloadProgress,
     isReady: isAudioReady,
+    resolveCached,
+    forgetCached,
   } = useAudioPreloader(wordQueue, isComplete);
 
   // Derive currentSentence directly from currentWord (React 19 auto-memoizes)
@@ -390,46 +390,59 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   );
 
   // Enhanced audio playback function for single audio files.
-  // The session preloader has already cached every word's audio, so this is a
-  // local read in the normal case. Quick mode keeps the rare cache miss from
-  // hanging the card on the patient multi-retry download sequence.
-  const playAudio = useCallback(async (url: string) => {
-    if (!url) return false;
+  //
+  // The session preloader downloaded every word's audio and remembers where it
+  // put each file, so the normal case resolves with a Map lookup and reaches
+  // play() without a single await. Asking audioCache again — which is what this
+  // did on every prompt, every reveal and every replay — cost three async hops
+  // for an answer we already had, plus two synchronous filesystem stats per file
+  // once the cache's five-minute memory TTL expired, which any real session
+  // outlives. Quick mode still covers the genuine miss: a card reached before
+  // the background preload got to it.
+  const playAudio = useCallback(
+    async (url: string) => {
+      if (!url) return false;
 
-    const localPath = await audioCache.getAudio(url, { quick: true });
+      const preloaded = resolveCached(url);
+      const localPath = preloaded ?? (await audioCache.getAudio(url, { quick: true }));
 
-    const makeTrack = (audioUrl: string) => ({
-      id: `review-${Date.now()}`,
-      audioUrl,
-      title: 'Review Audio',
-    });
+      const makeTrack = (audioUrl: string) => ({
+        id: `review-${Date.now()}`,
+        audioUrl,
+        title: 'Review Audio',
+      });
 
-    const seq = ++playAudioSeqRef.current;
+      const seq = ++playAudioSeqRef.current;
 
-    try {
-      const success = await audioPlayerRef.current.play(makeTrack(localPath), REVIEW_PLAY_OPTIONS);
-      if (success) return true;
+      try {
+        const success = await simpleAudioService.play(makeTrack(localPath), REVIEW_PLAY_OPTIONS);
+        if (success) return true;
 
-      // false can also mean this play was superseded by a newer play/stop —
-      // in that case the file is fine and retrying would hijack the newer
-      // playback. Only the latest call may self-heal.
-      if (playAudioSeqRef.current !== seq) return false;
-
-      // A cached copy that fails to load is almost always a corrupt/partial
-      // download poisoning the cache — without purging it, this word would
-      // stay silent in every future session. Re-fetch once and retry.
-      if (localPath !== url) {
-        await audioCache.invalidate(url);
-        const freshPath = await audioCache.getAudio(url, { quick: true });
+        // false can also mean this play was superseded by a newer play/stop —
+        // in that case the file is fine and retrying would hijack the newer
+        // playback. Only the latest call may self-heal.
         if (playAudioSeqRef.current !== seq) return false;
-        return await audioPlayerRef.current.play(makeTrack(freshPath), REVIEW_PLAY_OPTIONS);
+
+        // A cached copy that fails to load is almost always a corrupt/partial
+        // download poisoning the cache — without purging it, this word would
+        // stay silent in every future session. Re-fetch once and retry. The
+        // remembered path goes too, or the retry would resolve straight back to
+        // the file we just deleted.
+        if (localPath !== url) {
+          forgetCached(url);
+          await audioCache.invalidate(url);
+          const freshPath = await audioCache.getAudio(url, { quick: true });
+          if (playAudioSeqRef.current !== seq) return false;
+          return await simpleAudioService.play(makeTrack(freshPath), REVIEW_PLAY_OPTIONS);
+        }
+        return false;
+      } catch (error) {
+        handleError(error);
+        return false;
       }
-      return false;
-    } catch (error) {
-      handleError(error);
-      return false;
-    }
-  }, []);
+    },
+    [resolveCached, forgetCached],
+  );
 
   // Play the English meaning audio without advancing or flipping the card.
   // Shared by the manual reveal (revealAnswer) and the voice-grading miss path
@@ -658,7 +671,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     stopAudioSafely();
 
     // Pre-configure audio session in background to reduce first audio delay
-    audioPlayerRef.current.preconfigureAudioSession?.().catch(() => {
+    simpleAudioService.preconfigureAudioSession().catch(() => {
       // Ignore pre-configuration errors - session will be configured on first play
     });
 

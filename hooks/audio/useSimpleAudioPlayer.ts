@@ -7,7 +7,13 @@ import type { EnhancedAudioTrack } from '@/types/audio.types';
 import { useAudioSubscription } from './useAudioSubscription';
 
 /**
- * Hook for simple audio player functionality
+ * Hook for simple audio player functionality.
+ *
+ * Transport state only — deliberately no `currentTime` / `duration`. This hook
+ * subscribes to the service's transport channel, which does not deliver
+ * play-head ticks (see TRANSPORT_KEYS in services/audioPlayer.ts), so exposing
+ * a position here would hand every caller a number that silently stops
+ * advancing. The one consumer that needs a clock reads `useAudioProgress`.
  */
 export const useSimpleAudioPlayer = () => {
   const { status } = useAudioSubscription();
@@ -58,8 +64,6 @@ export const useSimpleAudioPlayer = () => {
   return {
     playing: status?.playing ?? false,
     isLoading,
-    currentTime: status?.currentTime ?? 0,
-    duration: status?.duration ?? 0,
     currentTrack,
 
     play,

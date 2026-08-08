@@ -41,16 +41,31 @@ const CARD_CONSTANTS = {
  * replays whenever the keyed wrapper remounts on a word change), so per the
  * split documented below it belongs on Reanimated's CSS API, and the builder is
  * hoisted to module scope so the React Compiler sees a stable value.
+ *
+ * Transform only. Opacity belongs to the session's shared fade (useReview's
+ * `transparentStyle`, which the whole screen rides), and animating it here too
+ * meant a new card's opacity was the PRODUCT of two curves on two clocks — 250ms
+ * of keyframes on the inner layer against 180ms of timing on the outer one,
+ * started by different events. The card visibly lagged the buttons below it.
+ * Duration matches CARD_EXIT so the rise and the fade land on the same frame.
  */
 const CARD_ENTRANCE: ReanimatedCSSAnimationStyle = {
   animationName: {
-    from: { opacity: 0, transform: [{ translateY: 18 }, { scale: 0.97 }] },
-    to: { opacity: 1, transform: [{ translateY: 0 }, { scale: 1 }] },
+    from: { transform: [{ translateY: 18 }, { scale: 0.97 }] },
+    to: { transform: [{ translateY: 0 }, { scale: 1 }] },
   },
-  animationDuration: TIMING_CONFIG.ENTRANCE.duration,
+  animationDuration: TIMING_CONFIG.CARD_EXIT.duration,
   animationTimingFunction: 'ease-out',
   animationFillMode: 'both',
 };
+
+/**
+ * Left is "Forgot", which opens a restudy hold — the card stays on screen and
+ * its exit is deferred to the tap that ends the hold (see onRestudyContinue in
+ * app/review.tsx). Only the right-hand commit throws the card. Module scope
+ * because the gesture worklet captures it and it feeds the Gesture memo.
+ */
+const CARD_EXIT_DIRECTIONS = { left: false, right: true } as const;
 
 const STATIC_STYLES = StyleSheet.create({
   fill: {
@@ -185,10 +200,13 @@ interface ReviewFlipCardProps {
   restudying?: boolean;
   /** Leave the restudy hold (tap anywhere on the card). */
   onRestudyContinue?: () => void;
-  /** Voice channel, hosted in the question face's lower half. */
-  questionSlot?: ReactNode;
   /** Example sentence / context, below the meaning on the answer face. */
   answerSlot?: ReactNode;
+  /** What the microphone is doing, on the question face. Takes the replay
+   *  control's place while it is present — replaying the Arabic into an open
+   *  mic is not something to offer, and it is the same slot either way so the
+   *  face does not resize when the mic opens. */
+  listeningSlot?: ReactNode;
   testID?: string;
 }
 
@@ -221,8 +239,8 @@ export function ReviewFlipCard({
   onSwipeKnewIt,
   restudying = false,
   onRestudyContinue,
-  questionSlot,
   answerSlot,
+  listeningSlot,
   testID,
 }: ReviewFlipCardProps) {
   const colors = useColors();
@@ -250,7 +268,7 @@ export function ReviewFlipCard({
     onSwipeLeft: onSwipeForgot,
     onSwipeRight: onSwipeKnewIt,
     onCommitArmedChange: handleCommitArmedChange,
-    exitOnCommit: true,
+    exitOnCommit: CARD_EXIT_DIRECTIONS,
     springConfig: SPRING_CONFIG.CARD,
   });
 
@@ -447,31 +465,40 @@ export function ReviewFlipCard({
                       hero a replay button on this face swallowed that tap —
                       the card played the audio again instead of flipping.
                       Replay gets its own control below; the whole question
-                      face reveals. */}
-                  <WordDisplay word={word} wordType={wordType}>
+                      face reveals.
+
+                      No wordType either: "Verb" narrows the guess, and this is
+                      the face the recall is tested on. WordDisplay reserves the
+                      band regardless of content, which is what holds the Arabic
+                      at an identical y through the flip. */}
+                  <WordDisplay word={word}>
                     <View style={STATIC_STYLES.questionBody}>
-                      {onReplayAudio ? (
-                        <Pressable
-                          onPress={onReplayAudio}
-                          accessibilityRole="button"
-                          accessibilityLabel={STRINGS.REPLAY_WORD_AUDIO}
-                          hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-                          style={({ pressed }) => [
-                            STATIC_STYLES.replayButton,
-                            {
-                              borderColor: colors.border,
-                              opacity: pressed ? LAYOUT.OPACITY.PRESSED : LAYOUT.OPACITY.FULL,
-                            },
-                          ]}
-                        >
-                          <Ionicons
-                            name="volume-medium-outline"
-                            size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                            color={colors.secondaryText}
-                          />
-                        </Pressable>
-                      ) : null}
-                      {questionSlot}
+                      {/* One slot, two occupants, the same height either way.
+                          While the mic is working it shows what it is doing —
+                          on the card, next to the word being answered, rather
+                          than in the button the learner has to aim at. */}
+                      {listeningSlot ??
+                        (onReplayAudio ? (
+                          <Pressable
+                            onPress={onReplayAudio}
+                            accessibilityRole="button"
+                            accessibilityLabel={STRINGS.REPLAY_WORD_AUDIO}
+                            hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
+                            style={({ pressed }) => [
+                              STATIC_STYLES.replayButton,
+                              {
+                                borderColor: colors.border,
+                                opacity: pressed ? LAYOUT.OPACITY.PRESSED : LAYOUT.OPACITY.FULL,
+                              },
+                            ]}
+                          >
+                            <Ionicons
+                              name="volume-medium-outline"
+                              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                              color={colors.secondaryText}
+                            />
+                          </Pressable>
+                        ) : null)}
                     </View>
                   </WordDisplay>
                 </Pressable>

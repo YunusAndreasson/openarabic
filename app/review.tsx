@@ -1,25 +1,31 @@
 import { useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import type { ReviewCardHandle } from '@/components/review/ReviewFlipCard';
 import {
   CompletionScreen,
+  ReviewActionButton,
   ReviewContextSentence,
   ReviewFlipCard,
   ReviewGradeBar,
   ReviewHeader,
-  VoiceChannel,
+  VoiceAnswerButton,
+  voiceButtonMode,
+  VoiceListeningIndicator,
+  voiceIndicatorState,
   VoiceResultPanel,
 } from '@/components/review';
 import { useTutorialContext, useVoiceGrading } from '@/components/providers';
 import type { WordConfidence } from '@/types/review.types';
 import { SwipeGestureTutorial } from '@/components/tutorials/SwipeGestureTutorial';
 import { PulsatingLoader } from '@/components/ui';
+import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { TutorialId } from '@/constants/tutorials';
@@ -53,11 +59,19 @@ const baseStyles = StyleSheet.create({
     width: '100%',
     paddingHorizontal: LAYOUT.SPACING.LARGE,
   },
-  voiceSlot: {
-    flex: 1,
+  // Fixed band. Every state the bottom can hold lives inside it, absolutely
+  // anchored to the bottom edge, so the card above (which is flex: 1) keeps its
+  // height whatever is showing — and so two states cross-fading during a swap
+  // can overlap without either of them changing the layout.
+  actionSlot: {
     width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
+    height: LAYOUT.REVIEW.ACTION_SLOT_HEIGHT,
+  },
+  actionState: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   loadingText: {
     marginTop: LAYOUT.SPACING.MEDIUM,
@@ -72,20 +86,27 @@ const baseStyles = StyleSheet.create({
   headerPadding: {
     paddingTop: LAYOUT.SPACING.LARGE,
   },
-  // Full-width reveal button — neutral card surface, tinted label. Matches the
-  // grade bar's height so the bottom slot doesn't jump between the two states.
-  showAnswerButton: {
+  // Every state of the band is a row of ReviewActionButtons, so the reveal
+  // pair, the three grades and the voice row are one shape in three costumes.
+  actionRow: {
+    flexDirection: 'row',
     width: '100%',
-    minHeight: LAYOUT.BUTTON.HEIGHT.LARGE + LAYOUT.SPACING.MEDIUM,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
-  },
-  showAnswerLabel: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    gap: LAYOUT.SPACING.MEDIUM,
   },
 });
+
+/**
+ * Bottom-band swap. The delay is the flip: `revealed` turns the card over
+ * TIMING_CONFIG.FLIP.duration and the front face is still facing the learner
+ * until the rotation passes 90°, so a control that swapped on the same frame as
+ * the state sat under a card still showing the question for ~160ms — the grade
+ * options arrived before the answer did. Entering at the halfway mark lands the
+ * new control exactly as its face comes round.
+ */
+const ACTION_ENTERING = FadeIn.delay(TIMING_CONFIG.FLIP.duration / 2).duration(
+  TIMING_CONFIG.FAST.duration,
+);
+const ACTION_EXITING = FadeOut.duration(TIMING_CONFIG.FAST.duration);
 
 /** Reusable loading state component for review screen */
 function ReviewLoadingState({
@@ -167,11 +188,13 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   const examples = useReviewExamples(wordQueue);
   const currentExample = currentWord ? (examples.get(currentWord.root_id) ?? null) : null;
 
-  // Voice grading — when the toggle is on, auto-arms the mic after each card
-  // settles. Correct match → silently advance as "Knew it". Miss → play the
-  // English audio + show the result panel (transcript + answer + Yes/No/Retry);
-  // the panel is the answer surface for voice, so the card is NOT flipped (a
-  // retry stays clean on the question face).
+  // Voice grading — when the toggle is on, the action band carries a
+  // tap-to-speak button next to "Show answer", and the mic opens only when the
+  // learner presses it. Correct match →
+  // silently advance as "Knew it". Miss → play the English audio + show the
+  // result row (transcript + answer + Missed it/Try again/Got it); that row is
+  // the answer surface for voice, so the card is NOT flipped (a retry stays
+  // clean on the question face).
   const {
     phase: voicePhase,
     debug: voiceDebug,
@@ -187,6 +210,8 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     expected: currentWord?.root?.meaning ?? null,
     currentWordKey,
     rootId: currentWord?.root_id ?? null,
+    // Not a gate any more — it is when the input stream gets re-established,
+    // because playing the prompt is what can leave it open and deaf.
     promptAudioDoneKey,
     // Stop listening once the answer is revealed — the recall test is over.
     ready: !isUpdating && !isLoading && isAudioReady && !isComplete && !revealed,
@@ -205,6 +230,18 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   const voiceShowResult = voicePhase === 'result' && voiceResult !== null;
   const voice = useVoiceGrading();
   const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
+
+  // The two halves of the voice UI, and the split between them: the BUTTON is
+  // the action ("Tap to answer" / "Done"), the CARD is the state (a meter that
+  // breathes while the mic opens and moves once it is live). Both are null far
+  // more often than not — a paused, refused or still-loading recognizer offers
+  // nothing and says nothing, and "Show answer" simply takes the whole row.
+  //
+  // Suppressed during an advance so a transient phase can't flash while the
+  // next card is handed over.
+  const voiceMode = voiceEnabled && !isUpdating ? voiceButtonMode(voicePhase, voicePaused) : null;
+  const indicatorState =
+    voiceEnabled && !isUpdating ? voiceIndicatorState(voicePhase, voicePaused) : null;
 
   // Live pipeline numbers for the debug HUD. Comes through the store hook
   // rather than a getter call in render — see ReviewDiagSnapshot for why.
@@ -312,6 +349,11 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
           wordKey={currentWordKey}
           word={currentSentence.wordForm}
           answer={currentMeaning}
+          // Answer face only — see ReviewFlipCard. Comes from the example
+          // lookup's word_types join, so it is absent until the examples land
+          // and for roots the corpus has no class for; WordDisplay reserves the
+          // band either way.
+          wordType={currentExample?.wordType}
           revealed={revealed}
           onReveal={revealAnswer}
           onReplayAudio={handleReplayAudio}
@@ -322,6 +364,11 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
           testID="review-card"
           restudying={restudying}
           onRestudyContinue={handleRestudyContinue}
+          listeningSlot={
+            indicatorState ? (
+              <VoiceListeningIndicator state={indicatorState} level={voice.micLevel} />
+            ) : null
+          }
           answerSlot={
             currentExample ? (
               <ReviewContextSentence
@@ -335,29 +382,6 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
                     : undefined
                 }
               />
-            ) : null
-          }
-          // Voice now lives inside the card it belongs to, instead of floating
-          // between the card and the buttons. Suppressed while the wrong-answer
-          // panel owns the decision and during an advance, so a transient phase
-          // can't flash during the hand-off to the next card.
-          //
-          // Interactive, unlike the status label it replaced: this is where the
-          // learner skips the prompt or holds to take the mic, so it must
-          // receive touches. Its own Pressable wins over the question face's
-          // tap-to-reveal, which is the intent — the strip is the mic control.
-          questionSlot={
-            voiceEnabled && !voiceShowResult && !isUpdating ? (
-              <View style={baseStyles.voiceSlot}>
-                <VoiceChannel
-                  phase={voicePhase}
-                  level={voice.micLevel}
-                  promptPlaying={promptAudioDoneKey !== currentWordKey}
-                  paused={voicePaused}
-                  onSpeakNow={voiceSpeakNow}
-                  onStopSpeaking={voiceStopSpeaking}
-                />
-              </View>
             ) : null
           }
         />
@@ -374,70 +398,90 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
           transparentStyle,
         ]}
       >
-        {restudying ? (
-          // A forgotten card holds here instead of advancing. The whole card is
-          // the tap target (see onRestudyContinue on ReviewFlipCard), so this is
-          // a prompt rather than a button — one easy tap anywhere, no aiming.
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={STRINGS.RESTUDY_CONTINUE}
-            onPress={handleRestudyContinue}
-            style={({ pressed }) => [
-              baseStyles.showAnswerButton,
-              {
-                backgroundColor: colors.card,
-                borderColor: colors.border,
-                opacity: pressed ? LAYOUT.OPACITY.PRESSED : LAYOUT.OPACITY.FULL,
-              },
-            ]}
-          >
-            <ThemedText
-              skipDefaultColor
-              weight="semibold"
-              style={[baseStyles.showAnswerLabel, { color: colors.tint }]}
+        <View style={baseStyles.actionSlot}>
+          {restudying ? (
+            // A forgotten card holds here instead of advancing. The whole card
+            // is the tap target (see onRestudyContinue on ReviewFlipCard), so
+            // this is a prompt rather than a button — one easy tap anywhere, no
+            // aiming.
+            <Animated.View
+              key="restudy"
+              entering={ACTION_ENTERING}
+              exiting={ACTION_EXITING}
+              style={baseStyles.actionState}
             >
-              {STRINGS.RESTUDY_CONTINUE}
-            </ThemedText>
-          </Pressable>
-        ) : voiceShowResult && voiceResult ? (
-          <VoiceResultPanel
-            result={voiceResult}
-            onAccept={voiceAccept}
-            onReject={voiceReject}
-            onRetry={voiceRetry}
-          />
-        ) : revealed ? (
-          <ReviewGradeBar
-            intervals={intervalLabels}
-            onGrade={handleGradeFromBar}
-            disabled={isUpdating}
-          />
-        ) : (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={STRINGS.SHOW_ANSWER}
-            onPress={revealAnswer}
-            disabled={isUpdating}
-            style={({ pressed }) => [
-              baseStyles.showAnswerButton,
-              {
-                backgroundColor: colors.card,
-                borderColor: colors.border,
-                // Press feedback only — the transient isUpdating dim is now
-                // carried by the container's shared fade (see above).
-                opacity: pressed ? LAYOUT.OPACITY.PRESSED : LAYOUT.OPACITY.FULL,
-              },
-            ]}
-          >
-            <ThemedText
-              skipDefaultColor
-              weight="semibold"
-              style={[baseStyles.showAnswerLabel, { color: colors.tint }]}
+              <View style={baseStyles.actionRow}>
+                <ReviewActionButton
+                  label={STRINGS.RESTUDY_CONTINUE}
+                  color={colors.tint}
+                  onPress={handleRestudyContinue}
+                />
+              </View>
+            </Animated.View>
+          ) : voiceShowResult && voiceResult ? (
+            <Animated.View
+              key="voice-result"
+              entering={ACTION_ENTERING}
+              exiting={ACTION_EXITING}
+              style={baseStyles.actionState}
             >
-              {STRINGS.SHOW_ANSWER}
-            </ThemedText>
-          </Pressable>
-        )}
+              <VoiceResultPanel
+                result={voiceResult}
+                onAccept={voiceAccept}
+                onReject={voiceReject}
+                onRetry={voiceRetry}
+              />
+            </Animated.View>
+          ) : revealed ? (
+            <Animated.View
+              key="grade"
+              entering={ACTION_ENTERING}
+              exiting={ACTION_EXITING}
+              style={baseStyles.actionState}
+            >
+              <ReviewGradeBar
+                intervals={intervalLabels}
+                onGrade={handleGradeFromBar}
+                disabled={isUpdating}
+              />
+            </Animated.View>
+          ) : (
+            // The two ways to answer a card, side by side, in the one place
+            // this screen puts things you can do. The mic used to sit on the
+            // card and "Show answer" below it — two invitations, two shapes,
+            // two places, and no way to see them as alternatives.
+            //
+            // Two peers now: same height, same shape, one line of text each,
+            // no glyphs. There is no line of copy above them either — the pair
+            // is the whole instruction, and everything that used to be written
+            // here ("Tap when you're done") was explaining a control that can
+            // show it instead.
+            <Animated.View
+              key="reveal"
+              entering={ACTION_ENTERING}
+              exiting={ACTION_EXITING}
+              style={baseStyles.actionState}
+            >
+              <View style={baseStyles.actionRow}>
+                <ReviewActionButton
+                  label={STRINGS.SHOW_ANSWER}
+                  // Neutral against the mic's tint: when voice is on, speaking
+                  // is the exercise and revealing is the way out of it.
+                  color={colors.secondaryText}
+                  disabled={isUpdating}
+                  onPress={revealAnswer}
+                />
+                {voiceMode ? (
+                  <VoiceAnswerButton
+                    mode={voiceMode}
+                    onSpeakNow={voiceSpeakNow}
+                    onStopSpeaking={voiceStopSpeaking}
+                  />
+                ) : null}
+              </View>
+            </Animated.View>
+          )}
+        </View>
       </Animated.View>
 
       {/* Voice debug HUD — gated on the Advanced "Voice debug HUD" toggle so

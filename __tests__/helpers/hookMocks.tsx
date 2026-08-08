@@ -86,12 +86,18 @@ export const createAudioPreloaderMock = (
     isPreloading: boolean;
     progress: number;
     isReady: boolean;
+    resolveCached: jest.Mock;
+    forgetCached: jest.Mock;
   }> = {},
 ) => ({
   isPreloading: false,
   progress: 100,
   // The first card's audio is cached — later files may still be downloading.
   isReady: true,
+  // Defaults to a miss so the play path exercises its audioCache fallback;
+  // override with a path to test the preloaded fast path.
+  resolveCached: jest.fn(() => undefined),
+  forgetCached: jest.fn(),
   ...overrides,
 });
 

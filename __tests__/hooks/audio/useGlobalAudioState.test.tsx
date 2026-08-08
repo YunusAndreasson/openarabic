@@ -56,6 +56,14 @@ describe('useGlobalAudioState Hook', () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
 
+    // The playback clock reads the service's position channel directly, not the
+    // transport status the rest of the provider uses — the whole point of the
+    // split is that play-head ticks never reach those consumers.
+    jest
+      .mocked(simpleAudioService.getStatus)
+      .mockReturnValue({ currentTime: 0, duration: 0 } as any);
+    jest.mocked(simpleAudioService.subscribe).mockReturnValue(jest.fn());
+
     // Mock useAuth
     jest.mocked(useAuth).mockReturnValue({
       user: { id: 'test-user' },
@@ -129,11 +137,12 @@ describe('useGlobalAudioState Hook', () => {
     });
 
     test('reflects playing state from audio player', () => {
+      jest
+        .mocked(simpleAudioService.getStatus)
+        .mockReturnValue({ currentTime: 30, duration: 120 } as any);
       jest.mocked(useSimpleAudioPlayer).mockReturnValue({
         playing: true,
         isLoading: false,
-        currentTime: 30,
-        duration: 120,
         currentTrack: {
           id: 'track-1',
           articleId: 1,

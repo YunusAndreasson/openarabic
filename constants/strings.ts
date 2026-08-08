@@ -26,27 +26,31 @@ export const STRINGS = {
   SPEAK_ANSWER_DOWNLOADING_SUBTITLE: 'Downloading voice model… {pct}%',
   SPEAK_ANSWER_READY_SUBTITLE: 'Ready · about 100 MB on device',
   SPEAK_ANSWER_ERROR_SUBTITLE: "Couldn't load voice model. Try again later.",
+  // Voice control. Two rules decide every string here, and there are only four
+  // of them left:
+  //
+  //   the BUTTON names the action available — it has exactly two labels
+  //   the CARD carries the state — and mostly shows it rather than saying it
+  //
+  // The button used to report the pipeline: "Preparing voice…", "Listen…",
+  // "Opening mic…", "Listening…", "Grading…", "Voice paused", "Microphone is
+  // off" — seven labels on one control, changing up to five times per answer,
+  // each one explaining something the learner never asked about. States that
+  // mean the mic cannot be used (paused, refused, still downloading) now hide
+  // the button outright instead of naming themselves: an offer that isn't there
+  // needs no excuse.
+  /** Resting label. The mic opens when the learner says so, never on a timer —
+   *  the pause before answering IS the retrieval, so they own when it ends. */
+  VOICE_TAP_TO_ANSWER: 'Tap to answer',
+  /** While the mic is live. An action, not a state: "Listening…" belongs on the
+   *  card, where a meter that moves with the voice already says it. */
+  VOICE_DONE_SPEAKING: 'Done',
+  /** Under the card's live meter. The meter carries "we can hear you"; this
+   *  names it once for anyone who needs the word (and for a screen reader). */
   VOICE_LISTENING: 'Listening…',
-  /** Shown between arming the mic and the first audio buffer arriving (~0.5s
-   *  on device). Saying "Listening…" during that window invites the learner to
-   *  speak into a mic that is not capturing yet, and the answer is lost. */
+  /** The one beat the meter cannot narrate: bars frozen with no caption reads
+   *  as a hang. */
   VOICE_CHECKING: 'Grading…',
-  VOICE_PREPARING: 'Preparing voice…',
-  VOICE_TRY_AGAIN: 'Try again or tap to grade',
-  // Voice channel — the live mic strip inside the question face. The labels
-  // are instructions, not status: at every point the learner should be able to
-  // read one line and know whether to listen, wait, or speak.
-  /** While the card's Arabic prompt is still playing. */
-  VOICE_PROMPT_PLAYING: 'Listen…',
-  /** Mic requested, not yet capturing. Naming the wait beats an empty strip:
-   *  the old indicator showed nothing here, which read as "voice is broken". */
-  VOICE_ARMING: 'Get ready…',
-  /** The one moment it is honest to ask for an answer. */
-  VOICE_SAY_MEANING: 'Say the meaning',
-  VOICE_PAUSED: 'Voice paused',
-  VOICE_MIC_OFF: 'Microphone is off',
-  VOICE_SKIP_PROMPT: 'Tap to skip',
-  VOICE_HOLD_TO_SPEAK: 'Hold to speak',
   VOICE_CHANNEL_LABEL: 'Voice answer',
   VOICE_MIC_PERMISSION_DENIED: 'Microphone access is off. Voice grading disabled.',
   VOICE_PAUSE_LABEL: 'Pause voice grading for this session',
@@ -55,14 +59,17 @@ export const STRINGS = {
   // Framed as a neutral self-grade ("did you get it right?") rather than a
   // verdict, so the buttons answer the question the You-said/Answer comparison
   // sets up instead of asking the user to ratify the ASR.
-  VOICE_RESULT_QUESTION: 'Did you get it right?',
   VOICE_RESULT_NOT_HEARD: "Didn't catch that",
-  VOICE_RESULT_HEARD_LABEL: 'You said',
-  VOICE_RESULT_ANSWER_LABEL: 'Answer',
-  VOICE_RESULT_SILENCE: 'no clear speech',
+  VOICE_RESULT_HEARD_TEMPLATE: (heard: string) => `You said “${heard}”`,
+  VOICE_RESULT_ANSWER_TEMPLATE: (answer: string) => `→ ${answer}`,
+  // Long forms stay as the accessibility labels: the visible buttons are
+  // abbreviated to sit three-up in the same band as the self-grade row, but a
+  // screen reader has no such constraint and "Got it" alone is ambiguous.
   VOICE_RESULT_ACCEPT: 'Yes, I got it',
   VOICE_RESULT_REJECT: 'No, I missed it',
   VOICE_RESULT_RETRY: 'Try again',
+  VOICE_RESULT_ACCEPT_SHORT: 'Got it',
+  VOICE_RESULT_REJECT_SHORT: 'Missed it',
   // Reveal-first self-grade (shown after the card flips to its answer)
   SHOW_ANSWER: 'Show answer',
   PLAY_SENTENCE_AUDIO: 'Play sentence',

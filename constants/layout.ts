@@ -335,8 +335,23 @@ export const LAYOUT = {
   },
 
   REVIEW: {
-    BOTTOM_ACTIONS_HEIGHT: TOUCH_TARGETS.LARGE + SPACING_SCALE.LARGE * 2, // Same as CARD.HEIGHT.LIST_ITEM
-    INDICATOR_MAX_WIDTH: BASE_UNIT * 22.5, // 90 - responsive to base unit
+    /**
+     * The review screen's bottom action band, fixed for every state it can
+     * hold: "Show answer", the self-grade row, the restudy prompt and the
+     * voice-miss row. Fixed because the card above it is `flex: 1` — with an
+     * intrinsically-sized band, the ~184px difference between the voice result
+     * and the grade bar resized the card and jerked the Arabic hero upward on
+     * every voice miss.
+     *
+     * Button row (48 + 12) + gap (8) + a one-line detail slot (24) = 92.
+     *
+     * Only the voice-miss row fills the detail slot (with what was heard); the
+     * other three states are the button row alone, bottom-anchored, and leave
+     * it empty. That is the slot doing its job — it exists so the band is the
+     * same height whichever state is in it.
+     */
+    ACTION_SLOT_HEIGHT:
+      TOUCH_TARGETS.LARGE + SPACING_SCALE.MEDIUM + SPACING_SCALE.SMALL + SPACING_SCALE.XLARGE, // 92
     COMPLETION: {
       ICON_DEFAULT_SIZE: BASE_UNIT * 25, // 100 - responsive to base unit
       ICON_CONTAINER_HEIGHT: BASE_UNIT * 30, // 120 - responsive to base unit

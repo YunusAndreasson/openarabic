@@ -3,7 +3,7 @@ import { supabase } from '@/services/supabase';
 import type { SentenceWordRow } from '@/types/articles.types';
 import type { RootId } from '@/types/branded.types';
 import type { Tables } from '@/types/database.types';
-import type { SentenceWord } from '@/types/vocabulary.types';
+import type { ColoredSegment, SentenceWord } from '@/types/vocabulary.types';
 import { createServiceErrorConfig } from '@/utils/serviceErrorConfig';
 import { executeQuery } from '@/utils/supabaseHelpers';
 import { mapToSentenceWord } from '@/utils/typeMappers';
@@ -42,22 +42,50 @@ function mapToSentenceWithWords(row: SentenceWithWordsRow): SentenceWithWords {
 }
 
 /**
+ * One word of an example sentence, in reading order.
+ *
+ * Carries the per-word gloss because that is what `computeColoredSegments`
+ * needs to split a form into its grammatical components — the review card
+ * colours its example exactly the way the reader colours an article.
+ */
+export interface ExampleWord {
+  position: number;
+  wordForm: string;
+  /** The word's own gloss — the analyzer needs both halves to split a form. */
+  english: string;
+  rootId: number;
+  /** True for the practised root. Comes from the corpus rather than a text
+   *  match, so a form that appears twice (or inside a longer word) can't
+   *  mis-mark the sentence. */
+  isTarget: boolean;
+  /** Attached by useReviewExamples once the theme's colours are known — the
+   *  same load-time precompute `useSentencesByWord` does for the reader. */
+  coloredSegments?: ColoredSegment[];
+}
+
+/**
  * One example of a practised word in real use, for the review card's answer
- * face. Deliberately flat and small: the review lane needs the sentence text,
- * its translation and the inflected form to emphasise — not the full
- * grammar-coloured word graph `getSentencesByRootId` returns for the reader.
+ * face. Flatter and smaller than the word graph `getSentencesByRootId` returns
+ * for the reader: no roots, no audio per word, no article context — just enough
+ * to render one grammar-coloured line and play it.
  */
 export interface WordExample {
   rootId: number;
   sentenceId: number;
-  /** The sentence as it appears in the article. */
+  /** The sentence as it appears in the article. Kept for accessibility labels
+   *  and as the fallback when the word breakdown is missing. */
   arabic: string;
   english: string;
   /** Sentence audio, played only on an explicit tap. */
   audioUrl: string | null;
-  /** The practised root's inflected form in this sentence, so the card can
-   *  highlight it — a learner should see the word they know inside the line. */
+  /** The practised root's inflected form in this sentence. */
   wordForm: string;
+  /** The practised word's grammatical class ("Verb", "Noun"). Shown above the
+   *  Arabic on the answer face — never on the question face, where it would
+   *  narrow the guess. */
+  wordType: string;
+  /** Every word of the sentence, ordered by position. */
+  words: ExampleWord[];
 }
 
 /** Rows pulled per root before deduplication. Sentences are ordered easiest
@@ -78,6 +106,11 @@ export const sentencesService = {
    * there to reinforce the word, not to introduce three harder ones. The row
    * cap means a root can occasionally come back without an example; that is
    * intentional and the card simply omits the block rather than blocking.
+   *
+   * The second query pulls every word of the chosen sentences, not just the
+   * practised one, because the card grammar-colours the whole line — the
+   * analyzer works per word (form + its own gloss), so a sentence-level string
+   * is not enough. Still two round trips for the whole chunk.
    */
   async getExamplesForRoots(rootIds: RootId[]): Promise<Map<number, WordExample>> {
     if (rootIds.length === 0) return new Map();
@@ -86,7 +119,7 @@ export const sentencesService = {
       () =>
         supabase
           .from('sentence_words')
-          .select('root_id, sentence_id, word_form, difficulty_level')
+          .select('root_id, sentence_id, word_form, difficulty_level, word_type:word_types(name)')
           .in(
             'root_id',
             rootIds.map(id => id as number),
@@ -102,10 +135,14 @@ export const sentencesService = {
     if (!wordRows || wordRows.length === 0) return new Map();
 
     // First row per root wins — the query already ordered by difficulty.
-    const chosen = new Map<number, { sentenceId: number; wordForm: string }>();
+    const chosen = new Map<number, { sentenceId: number; wordForm: string; wordType: string }>();
     for (const row of wordRows) {
       if (!chosen.has(row.root_id)) {
-        chosen.set(row.root_id, { sentenceId: row.sentence_id, wordForm: row.word_form });
+        chosen.set(row.root_id, {
+          sentenceId: row.sentence_id,
+          wordForm: row.word_form,
+          wordType: row.word_type.name,
+        });
       }
     }
 
@@ -113,7 +150,9 @@ export const sentencesService = {
       () =>
         supabase
           .from('article_sentences')
-          .select('id, arabic, english, audio_url')
+          .select(
+            'id, arabic, english, audio_url, sentence_words(position, word_form, english, root_id)',
+          )
           .in('id', [...new Set([...chosen.values()].map(c => c.sentenceId))]),
       {
         ...errorConfig.loadByRootId,
@@ -128,6 +167,17 @@ export const sentencesService = {
     for (const [rootId, pick] of chosen) {
       const sentence = byId.get(pick.sentenceId);
       if (!sentence?.arabic) continue;
+      // Sorted here rather than in the query: the nested rows come back in an
+      // order Postgres does not promise, and reading order is the whole point.
+      const words: ExampleWord[] = sentence.sentence_words
+        .map(word => ({
+          position: word.position,
+          wordForm: word.word_form,
+          english: word.english,
+          rootId: word.root_id,
+          isTarget: word.root_id === rootId,
+        }))
+        .sort((a, b) => a.position - b.position);
       examples.set(rootId, {
         rootId,
         sentenceId: pick.sentenceId,
@@ -135,6 +185,8 @@ export const sentencesService = {
         english: sentence.english ?? '',
         audioUrl: sentence.audio_url ?? null,
         wordForm: pick.wordForm,
+        wordType: pick.wordType,
+        words,
       });
     }
     return examples;

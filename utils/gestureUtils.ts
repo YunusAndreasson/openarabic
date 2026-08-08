@@ -77,6 +77,29 @@ export function resolveSwipeCommit({
   return { commit: isThrow || isFlick, isRight: translationX > 0 };
 }
 
+/** Whether a committed card flies off screen, per direction. See
+ *  `SwipeGestureOptions.exitOnCommit`. */
+export type SwipeExitPolicy = boolean | { left: boolean; right: boolean };
+
+/**
+ * Whether the card leaves the screen for a commit in this direction.
+ *
+ * A commit is not always an exit: the review card's left swipe ("Forgot")
+ * opens a restudy hold, so the card has to stay put and its exit is deferred to
+ * the tap that ends the hold. With a single boolean the card flew off at full
+ * opacity and then teleported back to centre, because nothing else was moving
+ * it and the exit recentres on completion.
+ *
+ * A worklet (the gesture calls it on the UI thread) and pure, so the policy is
+ * testable without a gesture harness — same reason `resolveSwipeCommit` above
+ * lives here.
+ */
+export function resolveCommitExit(policy: SwipeExitPolicy, isRight: boolean): boolean {
+  'worklet';
+  if (typeof policy === 'boolean') return policy;
+  return isRight ? policy.right : policy.left;
+}
+
 // ===== GESTURE CONFIGURATION =====
 export const GESTURE_CONFIG = {
   MIN_DISTANCE: GESTURE_CONSTANTS.MIN_DISTANCE,

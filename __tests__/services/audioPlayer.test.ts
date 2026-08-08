@@ -803,26 +803,27 @@ describe('audioPlayer service', () => {
       await expect(audioService.stop()).resolves.not.toThrow();
     });
 
-    // Regression: the review card's manual reveal fires the English audio
-    // synchronously and only releases the mic on the next render, so playback
-    // used to start while the session still held .playAndRecord — audibly
-    // quieter, and on Bluetooth routed over the ~8 kHz hands-free profile. The
-    // same card played at full volume if the mic timed out instead.
-    test('releases the recording session before starting playback', async () => {
+    // A review session claims the record-capable category once and holds it for
+    // its whole life (VoiceGradingProvider.acquireSession), so that no card pays
+    // for a category change between its prompt ending and its microphone
+    // opening. play() used to take that category back on every call, which
+    // meant every prompt and every revealed answer silently undid the session.
+    //
+    // What the release was protecting against — the app recording its own
+    // playback — is handled a level up: the capture window is closed while the
+    // prompt plays and buffers outside a window are discarded.
+    test('does not release the recording session when playback starts', async () => {
       await audioService.setRecordingSessionEnabled(true);
       mockSetAudioModeAsync.mockClear();
       mockCreateAudioPlayer.mockClear();
 
       await audioService.play(testTrack);
 
-      const releasedWith = mockSetAudioModeAsync.mock.calls.at(-1)?.[0];
-      expect(releasedWith).toEqual(expect.objectContaining({ allowsRecording: false }));
-      // ...and it happened before the player was ever created.
-      expect(mockSetAudioModeAsync).toHaveBeenCalled();
-      expect(mockCreateAudioPlayer).toHaveBeenCalled();
-      expect(mockSetAudioModeAsync.mock.invocationCallOrder[0]).toBeLessThan(
-        mockCreateAudioPlayer.mock.invocationCallOrder[0],
+      const releasedRecording = mockSetAudioModeAsync.mock.calls.some(
+        call => (call[0] as { allowsRecording?: boolean } | undefined)?.allowsRecording === false,
       );
+      expect(releasedRecording).toBe(false);
+      expect(mockCreateAudioPlayer).toHaveBeenCalled();
     });
 
     test('leaves the audio mode alone when no recording session is held', async () => {
