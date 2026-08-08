@@ -272,6 +272,28 @@ describe('getFSRSWords', () => {
       );
     });
 
+    test('exempts unlearned words from the cooldown, so a miss stays practiceable', async () => {
+      // Regression: the cooldown filtered purely on fsrs_last_review, so words
+      // the learner had just FAILED — which FSRS schedules minutes out via
+      // learning_steps 1m/10m and relearning_steps 5m/10m — were hidden for the
+      // whole cooldown window. Measured on a real account: 5 words due 21
+      // seconds after the session ended, all 5 suppressed, learner told there
+      // was nothing to practice. Only Review-state (2) words may be cooled.
+      const builder = createBuilder({ data: [], error: null });
+      (supabase.from as jest.Mock).mockReturnValue(builder);
+
+      await studyWordsFSRSService.getFSRSWords('test-user-unlearned', {
+        onlyDue: true,
+        sessionCooldownHours: 2,
+      });
+
+      const cooldownFilter = (builder.or as jest.Mock).mock.calls
+        .map(([filter]: [string]) => filter)
+        .find((filter: string) => filter.includes('fsrs_last_review.lt.'));
+
+      expect(cooldownFilter).toContain('fsrs_state.in.(0,1,3)');
+    });
+
     test('should not apply cooldown when sessionCooldownHours is 0', async () => {
       const userId = 'test-user-no-cooldown';
 

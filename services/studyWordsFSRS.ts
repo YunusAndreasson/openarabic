@@ -114,12 +114,26 @@ export const studyWordsFSRSService = {
       filteredQuery = filteredQuery.or(`fsrs_due.lte.${now},fsrs_state.eq.0`);
     }
 
-    // Session cooldown: Exclude words reviewed within the specified hours
-    // Apply cooldown alongside due filter so recently reviewed words are excluded consistently
+    // Session cooldown: after finishing a session, don't immediately re-serve
+    // the words that session covered.
+    //
+    // It applies ONLY to Review-state words (2). Learning (1) and Relearning (3)
+    // are exempt, and that exemption is the whole point: those are the words the
+    // learner has NOT got right yet, and FSRS deliberately schedules them minutes
+    // out (learning_steps 1m/10m, relearning_steps 5m/10m). Cooling them by
+    // `fsrs_last_review` hid exactly the words that most needed practising —
+    // measured on a real account 2026-08-08: 5 words due 21 seconds after the
+    // session ended, all 5 suppressed, and the learner shown "nothing to
+    // practice" while nothing had actually been learned.
+    //
+    // Nothing is lost by exempting them, because a word that WAS answered
+    // correctly leaves the short steps for a multi-day interval and is already
+    // excluded by the `onlyDue` filter above. The cooldown keeps its job (a
+    // finished session stays finished) and stops doing the other one.
     if (options.sessionCooldownHours && options.sessionCooldownHours > 0) {
       const cooldownTime = new Date(Date.now() - options.sessionCooldownHours * 60 * 60 * 1000);
       filteredQuery = filteredQuery.or(
-        `fsrs_state.eq.0,fsrs_last_review.is.null,fsrs_last_review.lt.${cooldownTime.toISOString()}`,
+        `fsrs_state.in.(0,1,3),fsrs_last_review.is.null,fsrs_last_review.lt.${cooldownTime.toISOString()}`,
       );
     }
 
