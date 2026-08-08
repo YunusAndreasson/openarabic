@@ -36,13 +36,17 @@ jest.mock('@/components/common', () => {
   };
 });
 
-// Mock haptics
-const mockSelectionFeedback = jest.fn();
+// Mock haptics. Reach for the mocks through require('@/utils/haptics') — a
+// module-scope `const mockX = jest.fn()` referenced from assertions is NOT what
+// the factory below installs, so any expectation on it passes vacuously
+// whatever the component does.
 jest.mock('@/utils/haptics', () => ({
   lightFeedback: jest.fn(),
   mediumFeedback: jest.fn(),
   successFeedback: jest.fn(),
   selectionFeedback: jest.fn(),
+  detentFeedback: jest.fn(),
+  warningFeedback: jest.fn(),
   errorFeedback: jest.fn(),
 }));
 
@@ -118,19 +122,66 @@ describe('ReviewHeader', () => {
       }
     });
 
-    test('does not trigger haptic feedback when closing', () => {
+    // The close haptic lives on this button rather than in useReview's
+    // handleClose, because that exit is also reached from the completion
+    // screen's ThemedButtons — which fire their own. Keeping it in the hook
+    // buzzed Continue twice in one tick, hidden only by the 50ms debounce.
+    // This bare Pressable has no press feedback of its own, so it needs this.
+    test('the close button carries its own press feedback', () => {
+      const { lightFeedback } = require('@/utils/haptics');
       const { getByTestId } = render(
         <ReviewHeader progress={5} maxProgress={10} onClose={mockOnClose} />,
       );
 
-      const closeIcon = getByTestId('icon-close');
-      const pressable = closeIcon.parent;
+      const pressable = getByTestId('icon-close').parent;
+      expect(pressable).toBeTruthy();
+      fireEvent.press(pressable!);
 
-      if (pressable) {
-        fireEvent.press(pressable);
-        // Haptics removed for modal close (2025 UX best practice)
-        expect(mockSelectionFeedback).not.toHaveBeenCalled();
-      }
+      expect(lightFeedback).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  // The run counter is the only thing in the session that rewards the learner
+  // while they are still in it, and it was visual-only — a caption fading in
+  // beside a progress bar nobody looks at mid-answer.
+  describe('Recall run milestones', () => {
+    test('the run being worth showing is also worth feeling', () => {
+      const { lightFeedback } = require('@/utils/haptics');
+      const { rerender } = render(<ReviewHeader progress={1} maxProgress={10} recallRun={2} />);
+      // Two right answers is just Tuesday — nothing is shown, nothing fires.
+      expect(lightFeedback).not.toHaveBeenCalled();
+
+      rerender(<ReviewHeader progress={2} maxProgress={10} recallRun={3} />);
+      expect(lightFeedback).toHaveBeenCalledTimes(1);
+    });
+
+    // Buzzing every correct card turns the reward into wallpaper, and it would
+    // land right behind the grade haptic that caused it.
+    test('every card in a run does not buzz', () => {
+      const { lightFeedback } = require('@/utils/haptics');
+      const { rerender } = render(<ReviewHeader progress={1} maxProgress={10} recallRun={3} />);
+      jest.mocked(lightFeedback).mockClear();
+
+      rerender(<ReviewHeader progress={2} maxProgress={10} recallRun={4} />);
+      rerender(<ReviewHeader progress={3} maxProgress={10} recallRun={5} />);
+      expect(lightFeedback).not.toHaveBeenCalled();
+
+      // ...but the fifth beyond the first milestone is an event again.
+      rerender(<ReviewHeader progress={4} maxProgress={10} recallRun={8} />);
+      expect(lightFeedback).toHaveBeenCalledTimes(1);
+    });
+
+    // A run that breaks and a remount mid-session must not re-congratulate a
+    // milestone the learner already felt.
+    test('only a rising run fires', () => {
+      const { lightFeedback } = require('@/utils/haptics');
+      const { rerender } = render(<ReviewHeader progress={1} maxProgress={10} recallRun={3} />);
+      jest.mocked(lightFeedback).mockClear();
+
+      rerender(<ReviewHeader progress={2} maxProgress={10} recallRun={0} />);
+      rerender(<ReviewHeader progress={3} maxProgress={10} recallRun={0} />);
+
+      expect(lightFeedback).not.toHaveBeenCalled();
     });
   });
 

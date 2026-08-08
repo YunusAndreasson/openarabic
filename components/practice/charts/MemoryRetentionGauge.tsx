@@ -16,7 +16,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { SPRING_CONFIG } from '@/constants/animation';
 import { MEMORY_CAPACITY_THRESHOLDS } from '@/constants/fsrs';
 import { FONTS } from '@/constants/fonts';
-import { LAYOUT, LETTER_SPACING, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { GOLDEN_RATIO, LAYOUT, LETTER_SPACING, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
@@ -32,7 +32,6 @@ interface MemoryRetentionGaugeProps {
 }
 
 // Gauge geometry using golden ratio proportions
-const GOLDEN_RATIO = 1.618; // True golden ratio for optimal gauge proportions
 const GAUGE_WIDTH = 320;
 const GAUGE_HEIGHT = Math.round(GAUGE_WIDTH / GOLDEN_RATIO); // ~198, following golden ratio
 const GAUGE_RADIUS = Math.round(GAUGE_HEIGHT * 0.7); // Proportional radius based on height

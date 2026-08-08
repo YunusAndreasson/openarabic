@@ -112,7 +112,7 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
   const currentDailyStreak = streak?.currentStreak ?? 0;
 
   // Handle review completion logic (query invalidation, analytics, haptics)
-  useReviewCompletion(sessionMetrics, true);
+  useReviewCompletion(sessionMetrics);
 
   const encouragingResult = useEncouragingMetrics(sessionMetrics, colors, currentDailyStreak);
 
@@ -131,9 +131,8 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
   const showVoiceCard = showVoicePriming && !showPrimingCard;
   const showAnyPriming = showPrimingCard || showVoiceCard;
 
-  const visibleMetrics = showAnyPriming
-    ? (encouragingResult?.metrics.slice(0, MAX_METRICS_WITH_PRIMING) ?? [])
-    : (encouragingResult?.metrics ?? []);
+  const metrics = encouragingResult?.metrics ?? [];
+  const visibleMetrics = showAnyPriming ? metrics.slice(0, MAX_METRICS_WITH_PRIMING) : metrics;
 
   const Content = (
     <View style={[styles.contentContainer, contentStyle]}>
@@ -207,7 +206,7 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
           style={styles.primingContainer}
         >
           {showPrimingCard ? (
-            <NotificationPrimingCard onAccept={accept} onDecline={decline} />
+            <NotificationPrimingCard onAccept={() => void accept()} onDecline={decline} />
           ) : (
             <VoicePrimingCard onAccept={acceptVoice} onDecline={declineVoice} />
           )}

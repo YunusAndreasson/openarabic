@@ -29,7 +29,16 @@ import type { Json } from '@/types/database.types';
  * grading is on, since the prompt plays either way.
  */
 export type VoiceResolution =
-  'auto_known' | 'accept' | 'reject' | 'retry' | 'arm_failed' | 'prompt_silent';
+  | 'auto_known'
+  /** Credited by the phonetic near-miss path as Guessed — the utterance sounded
+   *  like the answer but didn't transcribe as it. Separate from `auto_known` so
+   *  the precision of that path stays measurable against the same table. */
+  | 'auto_vague'
+  | 'accept'
+  | 'reject'
+  | 'retry'
+  | 'arm_failed'
+  | 'prompt_silent';
 
 /** One resolved voice attempt, in app-domain shape (mapped to columns below). */
 export interface VoiceAttemptLog {

@@ -24,6 +24,7 @@ import type {
   ReanimatedCSSAnimationStyle,
 } from '@/types/ui/base.types';
 import { withOpacity } from '@/utils/colorUtils';
+import { resolveDetentTone } from '@/utils/gestureUtils';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 import { detentFeedback } from '@/utils/haptics';
 
@@ -250,9 +251,15 @@ export function ReviewFlipCard({
   // crosses the line that decides the grade — the same threshold the commit
   // check and the colour flash use. Firing it after release (the old behaviour)
   // meant the haptic confirmed something the user had already committed to,
-  // one JS-thread hop late, and felt identical for "Forgot" and "Knew it".
-  const handleCommitArmedChange = useCallback(() => {
-    detentFeedback();
+  // one JS-thread hop late.
+  //
+  // The tone carries the outcome, so the one tick says both "you've crossed"
+  // and "into Forgot" / "into Knew it" — they used to feel identical. Weighting
+  // the miss heavier matches how the grade bar already weights its taps. A
+  // second haptic on release would name the grade too, but that double-buzzes
+  // one decision, which is why the release path stays silent.
+  const handleCommitArmedChange = useCallback((armed: boolean, isRight: boolean) => {
+    detentFeedback(resolveDetentTone(armed, isRight));
   }, []);
 
   const {

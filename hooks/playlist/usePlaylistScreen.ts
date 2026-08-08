@@ -226,9 +226,11 @@ export const usePlaylistScreen = () => {
       sortedEnhancedTracks,
       audioPreference,
       audioShuffleEnabled,
-      user?.id,
+      user,
       queryClient,
       prefetchArticle,
+      clearTimer,
+      setTimer,
     ],
   );
 
@@ -344,7 +346,14 @@ export const usePlaylistScreen = () => {
         handleError(error);
       }
     },
-    [isCurrentlyPlaying, sortedEnhancedTracks, audioPreference, queryClient, prefetchArticle],
+    [
+      isCurrentlyPlaying,
+      sortedEnhancedTracks,
+      audioPreference,
+      queryClient,
+      prefetchArticle,
+      setTimer,
+    ],
   );
 
   // Clean up leaked non-playlist audio when the screen loses focus.

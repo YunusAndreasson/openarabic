@@ -373,7 +373,164 @@ const ASR_HALLUCINATIONS = new Set([
 ]);
 
 export type MatchMethod =
-  'exact' | 'equivalent' | 'inflection' | 'edit' | 'phonetic' | 'fuzzy' | 'hallucination' | 'miss';
+  | 'exact'
+  | 'equivalent'
+  | 'inflection'
+  | 'edit'
+  | 'phonetic'
+  | 'fuzzy'
+  | 'near'
+  | 'hallucination'
+  | 'miss';
+
+/**
+ * How much credit a match is worth. Every exact/equivalent/inflection/edit/
+ * fuzzy path is `known` — the learner demonstrably produced the answer. The
+ * `near` path is `vague`: the utterance is acoustically the answer but the
+ * transcript isn't, so we credit it rather than fail the learner, at the lower
+ * confidence tier. See NEAR_MIN_PHONETIC for why that tier is the whole trick.
+ */
+export type MatchCredit = 'known' | 'vague' | 'unknown';
+
+/**
+ * Grammatical scaffolding Parakeet adds to a one-word answer. The model is
+ * trained on running speech, so a bare gloss comes back as "to count", "the
+ * travels", "a garden" — 56 of 142 field misses started with one of these and
+ * the dictionary gloss almost never does (3 of 142).
+ */
+const LEADING_FUNCTION_WORDS = /^(?:to|the|a|an)\s+/;
+
+function stripLeadingFunctionWords(text: string): string {
+  let out = text;
+  let previous: string;
+  do {
+    previous = out;
+    out = out.replace(LEADING_FUNCTION_WORDS, '').trim();
+  } while (out !== previous);
+  return out;
+}
+
+/**
+ * Approximate English pronunciation as a consonant skeleton — a compact
+ * Metaphone. This exists because `phoneticFold` folds ORTHOGRAPHY: "place" and
+ * "please" differ by `c`→k vs `s`→s under the fold and never match, even though
+ * they are one vowel apart in speech. Mapping spelling to sound first is what
+ * makes place/please, praise/price and girded/girl comparable at all.
+ *
+ * Vowels survive only in initial position: Parakeet's vowel errors are its most
+ * common ("Easton" for "eastern"), its consonant skeleton far more stable.
+ * p/b, m/n and f/v/w are merged for the same reason `phoneticFold` merges them.
+ */
+export function phoneticKey(word: string): string {
+  const letters = word
+    .toLowerCase()
+    .replace(/[^a-z]/g, '')
+    .replace(/^(ae|gn|kn|pn|wr)/, match => match.slice(1))
+    .replace(/^x/, 's')
+    .replace(/^wh/, 'w');
+  let key = '';
+  for (let i = 0; i < letters.length; i += 1) {
+    const char = letters[i] ?? '';
+    const prev = letters[i - 1] ?? '';
+    const next = letters[i + 1] ?? '';
+    const after = letters[i + 2] ?? '';
+    if (char === prev && char !== 'c') continue; // doubled letters are one sound
+    switch (char) {
+      case 'a':
+      case 'e':
+      case 'i':
+      case 'o':
+      case 'u':
+        if (i === 0) key += 'A';
+        break;
+      case 'b':
+        if (!(i === letters.length - 1 && prev === 'm')) key += 'B'; // silent b in "lamb"
+        break;
+      case 'c':
+        if (next === 'h') {
+          key += 'X';
+          i += 1;
+        } else if (/[iey]/.test(next))
+          key += 'S'; // "place" → S, the whole point
+        else key += 'K';
+        break;
+      case 'd':
+        if (next === 'g' && /[iey]/.test(after)) {
+          key += 'J';
+          i += 2;
+        } else key += 'T';
+        break;
+      case 'g':
+        if (next === 'h') {
+          if (/[aeiou]/.test(after)) key += 'K';
+          i += 1;
+        } else if (next === 'n')
+          break; // silent g in "gnome"
+        else if (/[iey]/.test(next)) key += 'J';
+        else key += 'K';
+        break;
+      case 'h':
+        if (!(/[aeiou]/.test(prev) && !/[aeiou]/.test(next))) key += 'H';
+        break;
+      case 'k':
+        if (prev !== 'c') key += 'K';
+        break;
+      case 'p':
+        if (next === 'h') {
+          key += 'F';
+          i += 1;
+        } else key += 'B';
+        break;
+      case 'q':
+        key += 'K';
+        break;
+      case 's':
+        if (next === 'h') {
+          key += 'X';
+          i += 1;
+        } else key += 'S';
+        break;
+      case 't':
+        if (next === 'h') {
+          key += '0';
+          i += 1;
+        } else if (next === 'i' && /[ao]/.test(after))
+          key += 'X'; // "-tion"
+        else key += 'T';
+        break;
+      case 'f':
+      case 'v':
+      case 'w':
+        key += 'F';
+        break;
+      case 'x':
+        key += 'KS';
+        break;
+      case 'z':
+        key += 'S';
+        break;
+      case 'j':
+        key += 'J';
+        break;
+      case 'm':
+      case 'n':
+        key += 'N';
+        break;
+      case 'l':
+        key += 'L';
+        break;
+      case 'r':
+        key += 'R';
+        break;
+      case 'y':
+        if (/[aeiou]/.test(next)) key += 'Y';
+        break;
+      default:
+        break;
+    }
+  }
+  return key.replace(/(.)\1+/g, '$1');
+}
 
 /**
  * Self-graded recall app: lenient enough that "fuzzy" still counts. Threshold
@@ -403,9 +560,70 @@ function isTruncationPair(a: string, b: string): boolean {
   return shorter.length > 0 && shorter !== longer && longer.startsWith(shorter);
 }
 
+/**
+ * Near-miss floors: an utterance that SOUNDS like the answer but transcribed as
+ * something else. Measured on 350 field attempts — at these two floors, 12 of
+ * 142 misses flip and every one is the learner saying the right word into a
+ * model that mangled it: place→"Please", praise→"Price", girded with→"Girl
+ * with"/"Guard with", beware→"to be aware", eastern→"Easton", his
+ * sessions→"The recessions", andalusian→"And Luisi", traveler→"The travels".
+ * Nothing from the "learner said a different word's meaning" class survives
+ * them (girded with→"leading figure", grabbed→"to arrive" all stay misses).
+ *
+ * BOTH floors are load-bearing. Phonetic alone credits ascended→"Send." (a
+ * 4-letter key inside an 8-letter one); the lexical floor rejects it. Lexical
+ * alone is the 2026-07-25 mistake all over again.
+ *
+ * This path knowingly re-credits the homophone class that fix removed —
+ * jest←"just", ascended←"assented", breast←"rest" — and that is the deliberate
+ * trade: it credits them as `vague`, not `known`. `vague` is Rating.Hard, a
+ * pass that shortens rather than extends the interval, so a wrongly-credited
+ * word comes back soon. The old failure mode (silently writing `known` and
+ * burying the word) is not reachable from here, while the cost it was guarding
+ * against — failing a learner who answered correctly — is what actually showed
+ * up in the field: 17 of these 20 attempts were graded Forgot.
+ */
+const NEAR_MIN_PHONETIC = 0.75;
+const NEAR_MIN_LEXICAL = 0.55;
+
+/**
+ * Length floors, for the same reason `PHONETIC_MIN_LEN` exists: a consonant
+ * skeleton is not evidence on a short word. "cat"/"cot"/"cut" all key to KT and
+ * "jest"/"just" to JST — three-letter vocabulary would collapse wholesale. The
+ * shortest answer this path legitimately rescues is "place" (5 chars, key BLS),
+ * so both floors sit just under it and every genuinely short word is left to the
+ * strict layers above.
+ */
+const NEAR_MIN_EXPECTED_LEN = 5;
+const NEAR_MIN_KEY_LEN = 3;
+
+/**
+ * Does the utterance sound like the expected answer? Compares phonetic keys of
+ * the whole (function-word-stripped) utterance and of each token, so a one-word
+ * answer buried in ASR scaffolding still lines up.
+ */
+function phoneticNearness(spoken: string, expected: string): number {
+  const spokenText = stripLeadingFunctionWords(spoken);
+  const expectedText = stripLeadingFunctionWords(expected);
+  const expectedKey = phoneticKey(expectedText);
+  if (expectedText.length < NEAR_MIN_EXPECTED_LEN || expectedKey.length < NEAR_MIN_KEY_LEN) {
+    return 0;
+  }
+  let best = similarityRatio(phoneticKey(spokenText), expectedKey);
+  for (const token of spokenText.split(' ')) {
+    if (!token) continue;
+    const sim = similarityRatio(phoneticKey(token), expectedKey);
+    if (sim > best) best = sim;
+  }
+  return best;
+}
+
 export interface SingleWordMatchResult {
   matched: boolean;
   method: MatchMethod;
+  /** What this match is worth, in WordConfidence terms: 'known' for a real
+   *  match, 'vague' for the phonetic near path, 'unknown' for a miss. */
+  credit: MatchCredit;
   /** Best similarity score across compared variants (1.0 = identical). Always
    *  reported so the HUD can show "match 0.82" / "miss 0.41". */
   similarity: number;
@@ -439,11 +657,19 @@ function matchAgainstOneExpected({
   const normalizedExpected = normalize(expected);
 
   if (normalizedSpoken.length === 0) {
-    return { matched: false, method: 'miss', similarity: 0, normalizedSpoken, normalizedExpected };
+    return {
+      matched: false,
+      credit: 'unknown',
+      method: 'miss',
+      similarity: 0,
+      normalizedSpoken,
+      normalizedExpected,
+    };
   }
   if (ASR_HALLUCINATIONS.has(normalizedSpoken)) {
     return {
       matched: false,
+      credit: 'unknown',
       method: 'hallucination',
       similarity: 0,
       normalizedSpoken,
@@ -451,12 +677,20 @@ function matchAgainstOneExpected({
     };
   }
   if (normalizedExpected.length === 0) {
-    return { matched: false, method: 'miss', similarity: 0, normalizedSpoken, normalizedExpected };
+    return {
+      matched: false,
+      credit: 'unknown',
+      method: 'miss',
+      similarity: 0,
+      normalizedSpoken,
+      normalizedExpected,
+    };
   }
 
   if (normalizedSpoken === normalizedExpected) {
     return {
       matched: true,
+      credit: 'known',
       method: 'exact',
       similarity: 1,
       normalizedSpoken,
@@ -469,6 +703,7 @@ function matchAgainstOneExpected({
   if (spokenTokens.includes(normalizedExpected)) {
     return {
       matched: true,
+      credit: 'known',
       method: 'exact',
       similarity: 1,
       normalizedSpoken,
@@ -483,6 +718,7 @@ function matchAgainstOneExpected({
     if (equivalentTokens(tok, normalizedExpected)) {
       return {
         matched: true,
+        credit: 'known',
         method: 'equivalent',
         similarity: 1,
         normalizedSpoken,
@@ -500,6 +736,7 @@ function matchAgainstOneExpected({
       if (inflectionMatch(expectedVariants, tok)) {
         return {
           matched: true,
+          credit: 'known',
           method: 'inflection',
           similarity: 1,
           normalizedSpoken,
@@ -522,6 +759,7 @@ function matchAgainstOneExpected({
       if (levenshtein(tok, normalizedExpected) <= budget) {
         return {
           matched: true,
+          credit: 'known',
           method: 'edit',
           similarity: sim,
           normalizedSpoken,
@@ -535,6 +773,7 @@ function matchAgainstOneExpected({
     if (foldsEqual(tok, normalizedExpected)) {
       return {
         matched: true,
+        credit: 'known',
         method: 'phonetic',
         similarity: Math.max(bestSim, similarityRatio(tok, normalizedExpected)),
         normalizedSpoken,
@@ -552,6 +791,7 @@ function matchAgainstOneExpected({
   if (despacedSpoken === despacedExpected) {
     return {
       matched: true,
+      credit: 'known',
       method: 'exact',
       similarity: 1,
       normalizedSpoken,
@@ -566,6 +806,7 @@ function matchAgainstOneExpected({
   ) {
     return {
       matched: true,
+      credit: 'known',
       method: 'edit',
       similarity: despacedSim,
       normalizedSpoken,
@@ -575,6 +816,7 @@ function matchAgainstOneExpected({
   if (foldsEqual(despacedSpoken, despacedExpected)) {
     return {
       matched: true,
+      credit: 'known',
       method: 'phonetic',
       similarity: despacedSim,
       normalizedSpoken,
@@ -594,7 +836,27 @@ function matchAgainstOneExpected({
   if (!/\d/.test(despacedExpected) && bestSim >= fuzzyFloor) {
     return {
       matched: true,
+      credit: 'known',
       method: 'fuzzy',
+      similarity: bestSim,
+      normalizedSpoken,
+      normalizedExpected,
+    };
+  }
+
+  // Last chance before failing the learner: did they SOUND like the answer? A
+  // transcript can be the wrong string and still be the right utterance, and on
+  // a recall app the kinder reading is the right one — so this credits at the
+  // `vague` tier rather than rejecting. See NEAR_MIN_PHONETIC.
+  if (
+    !/\d/.test(despacedExpected) &&
+    bestSim >= NEAR_MIN_LEXICAL &&
+    phoneticNearness(normalizedSpoken, normalizedExpected) >= NEAR_MIN_PHONETIC
+  ) {
+    return {
+      matched: true,
+      credit: 'vague',
+      method: 'near',
       similarity: bestSim,
       normalizedSpoken,
       normalizedExpected,
@@ -603,6 +865,7 @@ function matchAgainstOneExpected({
 
   return {
     matched: false,
+    credit: 'unknown',
     method: 'miss',
     similarity: bestSim,
     normalizedSpoken,

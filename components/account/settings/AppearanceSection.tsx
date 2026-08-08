@@ -6,7 +6,7 @@ import { THEME_OPTIONS } from '@/components/ui/ThemePicker';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
-import { setHapticsEnabled } from '@/store/settingsSlice';
+import { selectHapticsEnabled, setHapticsEnabled } from '@/store/settingsSlice';
 
 const FONT_DISPLAY_NAMES: Record<string, string> = {
   'NotoSansArabic-Regular': 'Noto Sans',
@@ -36,7 +36,10 @@ export const AppearanceSection = memo<AppearanceSectionProps>(
       state => state.settings.displayLanguagePreference,
     );
     const currentArabicFont = useAppSelectorShallow(state => state.settings.arabicFont);
-    const hapticsEnabled = useAppSelectorShallow(state => state.settings.hapticsEnabled);
+    // Through the selector, not the raw field: the flag is absent from state
+    // persisted before it existed, and reading it directly rendered this toggle
+    // as off for every such install (while haptics were, correctly, on).
+    const hapticsEnabled = useAppSelectorShallow(selectHapticsEnabled);
     const currentThemeText = useMemo(() => {
       const themeOption = THEME_OPTIONS.find(option => option.id === currentTheme);
       return themeOption?.title || STRINGS.THEME_BIRCHES;

@@ -53,8 +53,7 @@ export interface AudioPlayOptions {
    * not ours alone — the voice provider holds it record-capable for the whole
    * screen (`setRecordingSessionEnabled` + `openCapture`) — so every prompt
    * that ended was tearing the session out from under the live microphone.
-   * That is what `refreshCapture()` has been compensating for ("playing the
-   * Arabic can leave the held-open stream alive but deaf"), and it matches the
+   * That previously left the held-open stream alive but deaf, and it matches the
    * measured decay: prompts start in ~30 ms and, once the mic has been used,
    * settle at ~4.2 s — one full `readyTimeoutMs` plus the internal retry.
    *

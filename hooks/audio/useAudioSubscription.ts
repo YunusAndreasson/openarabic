@@ -1,7 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useRef, useSyncExternalStore } from 'react';
 
-import { useMountSafety } from '@/hooks/common/useMountSafety';
-import type { AudioStatus } from '@/services/audioPlayer';
 import { simpleAudioService } from '@/services/audioPlayer';
 
 /**
@@ -30,42 +28,36 @@ export function useAudioProgressSubscription() {
 }
 
 function useAudioStatusSubscription(withPosition: boolean) {
-  const [status, setStatus] = useState<AudioStatus>(() => simpleAudioService.getStatus());
-  const isMountedRef = useMountSafety();
+  const snapshotRef = useRef(simpleAudioService.getStatus());
 
-  // Single subscription to audio service
-  useEffect(() => {
-    const unsubscribe = simpleAudioService.subscribe(
-      newStatus => {
-        if (!isMountedRef.current) return;
-
-        // Dedup at the React boundary so identical-status events don't re-render.
-        // The service already filters position ticks out of the transport
-        // channel, so the position comparison below only ever runs for the
-        // clock subscriber that asked for them.
-        setStatus(prev => {
-          if (!prev) return newStatus;
-
+  const subscribe = useCallback(
+    (onStoreChange: () => void) =>
+      simpleAudioService.subscribe(
+        newStatus => {
+          const previousStatus = snapshotRef.current;
           const didChange =
-            prev.playing !== newStatus.playing ||
-            prev.isLoaded !== newStatus.isLoaded ||
-            prev.isBuffering !== newStatus.isBuffering ||
-            prev.playbackState !== newStatus.playbackState ||
-            prev.didJustFinish !== newStatus.didJustFinish ||
-            prev.error !== newStatus.error ||
+            previousStatus.playing !== newStatus.playing ||
+            previousStatus.isLoaded !== newStatus.isLoaded ||
+            previousStatus.isBuffering !== newStatus.isBuffering ||
+            previousStatus.playbackState !== newStatus.playbackState ||
+            previousStatus.didJustFinish !== newStatus.didJustFinish ||
+            previousStatus.error !== newStatus.error ||
             (withPosition &&
-              (Math.abs(prev.currentTime - newStatus.currentTime) >= 0.1 ||
-                Math.floor(prev.duration) !== Math.floor(newStatus.duration))) ||
-            (prev.currentTrack?.id ?? null) !== (newStatus.currentTrack?.id ?? null);
+              (Math.abs(previousStatus.currentTime - newStatus.currentTime) >= 0.1 ||
+                Math.floor(previousStatus.duration) !== Math.floor(newStatus.duration))) ||
+            (previousStatus.currentTrack?.id ?? null) !== (newStatus.currentTrack?.id ?? null);
 
-          return didChange ? newStatus : prev;
-        });
-      },
-      { position: withPosition },
-    );
+          if (!didChange) return;
+          snapshotRef.current = newStatus;
+          onStoreChange();
+        },
+        { position: withPosition },
+      ),
+    [withPosition],
+  );
 
-    return unsubscribe;
-  }, [isMountedRef, withPosition]);
+  const getSnapshot = useCallback(() => snapshotRef.current, []);
+  const status = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
   return { status };
 }

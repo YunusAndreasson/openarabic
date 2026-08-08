@@ -70,6 +70,10 @@ export const STRINGS = {
   VOICE_RESULT_RETRY: 'Try again',
   VOICE_RESULT_ACCEPT_SHORT: 'Got it',
   VOICE_RESULT_REJECT_SHORT: 'Missed it',
+  // Shown when the phonetic near-miss path credits an answer the transcript got
+  // wrong ("Please" for "place"). Names what was heard so the pass never looks
+  // like the app mishearing in the learner's favour without saying so.
+  VOICE_NEAR_MATCH_TEMPLATE: (heard: string) => `Heard “${heard}” — counted it`,
   // Reveal-first self-grade (shown after the card flips to its answer)
   SHOW_ANSWER: 'Show answer',
   PLAY_SENTENCE_AUDIO: 'Play sentence',

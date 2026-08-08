@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -176,7 +176,6 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     wordQueue,
     currentWord,
     revealMeaningPassive,
-    promptAudioDoneKey,
     stopAudio,
     remainingDueCount,
     startNextChunk,
@@ -213,15 +212,16 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     expected: currentWord?.root?.meaning ?? null,
     currentWordKey,
     rootId: currentWord?.root_id ?? null,
-    // Not a gate any more — it is when the input stream gets re-established,
-    // because playing the prompt is what can leave it open and deaf.
-    promptAudioDoneKey,
     // Stop listening once the answer is revealed — the recall test is over.
     ready: !isUpdating && !isLoading && isAudioReady && !isComplete && !revealed,
     stopAudio,
     // Correct match → silently advance as "Knew it" (speaking the answer is the
     // proof; fromVoice bypasses the reveal guard).
     onKnownAuto: () => grade('known', { fromVoice: true }),
+    // Sounded like the answer but transcribed as something else → Guessed. The
+    // learner is credited (Hard is a pass) and the word returns sooner, which is
+    // the right hedge when the transcript is what we're unsure about.
+    onVagueAuto: () => grade('vague', { fromVoice: true }),
     // Voice result panel "No, I missed it" → Forgot.
     onUnknownAuto: () => grade('unknown', { fromVoice: true }),
     // Miss → play the English audio (the panel shows the answer text + override).
@@ -286,11 +286,6 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     continueFromRestudy();
   }, [continueFromRestudy]);
 
-  // Track if review session is still initializing (first word not yet loaded)
-  const isInitializing = useMemo(() => {
-    return isLoading || (wordQueue.length === 0 && !isComplete && currentWord === null);
-  }, [isLoading, wordQueue.length, isComplete, currentWord]);
-
   if (isComplete && !isUpdating) {
     return (
       <CompletionScreen
@@ -306,7 +301,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
 
   // Show beautiful loader while practice session is loading words or initializing
   // This takes precedence over audio preloading during initial load
-  if (isLoading || isInitializing) {
+  if (isLoading || (wordQueue.length === 0 && !isComplete && currentWord === null)) {
     return <ReviewLoadingState message={STRINGS.PREPARING_PRACTICE_SESSION} />;
   }
 
@@ -358,7 +353,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
           wordType={currentExample?.wordType}
           revealed={revealed}
           onReveal={revealAnswer}
-          onReplayAudio={handleReplayAudio}
+          onReplayAudio={() => void handleReplayAudio()}
           opacityStyle={transparentStyle}
           isUpdating={isUpdating}
           onSwipeForgot={handleSwipeForgot}
@@ -420,7 +415,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
                 />
               </View>
             </Animated.View>
-          ) : voiceShowResult && voiceResult ? (
+          ) : voiceShowResult ? (
             <Animated.View
               key="voice-result"
               entering={ACTION_ENTERING}
@@ -495,7 +490,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
           style={[voiceDebugStyles.container, { top: insets.top + LAYOUT.SPACING.LARGE * 2 }]}
         >
           <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
-            {`model: ${voice.isReady ? 'ready' : voice.error ? `error: ${voice.error}` : `dl ${Math.round((voice.downloadProgress ?? 0) * 100)}%`}`}
+            {`model: ${voice.isReady ? 'ready' : voice.error ? `error: ${voice.error}` : `dl ${Math.round(voice.downloadProgress * 100)}%`}`}
           </ThemedText>
           <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
             {`phase: ${voicePhase}`}
@@ -581,26 +576,31 @@ export default function ReviewScreen(): JSX.Element {
 
   // Tutorial management
   const swipeTutorial = useTutorial(TutorialId.SWIPE_GESTURE);
+  const {
+    dismiss: dismissSwipeTutorial,
+    isVisible: isSwipeTutorialVisible,
+    trigger,
+  } = swipeTutorial;
 
   // Handle tutorial dismissal
   const handleTutorialDismiss = () => {
     setTutorialDismissed(true);
-    swipeTutorial.dismiss();
+    dismissSwipeTutorial();
   };
 
   // Show tutorial immediately if needed
   useEffect(() => {
     if (shouldShowTutorial(TutorialId.SWIPE_GESTURE)) {
-      swipeTutorial.trigger();
+      trigger();
     }
-  }, []); // Only trigger once on mount
+  }, [shouldShowTutorial, trigger]);
 
   // Show tutorial with simple background if needed (before session starts)
   if (!tutorialDismissed) {
     return (
       <>
         <ReviewLoadingState message={STRINGS.PREPARING_PRACTICE_SESSION} />
-        <SwipeGestureTutorial visible={swipeTutorial.isVisible} onDismiss={handleTutorialDismiss} />
+        <SwipeGestureTutorial visible={isSwipeTutorialVisible} onDismiss={handleTutorialDismiss} />
       </>
     );
   }

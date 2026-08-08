@@ -58,7 +58,7 @@ const sageOKLCH = {
 /**
  * Tint Colors - Primary interactive sage
  * Hue range: 151-156° (sage green)
- * Chroma increased ~15% for more vibrant 2025 aesthetic
+ * Chroma is raised slightly so interactive elements remain distinct from surfaces.
  */
 const tintOKLCH = {
   primary: { l: 0.5624, c: 0.0622, h: 156.2 }, // Vibrant sage for light mode

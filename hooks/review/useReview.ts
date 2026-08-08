@@ -31,7 +31,7 @@ import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { resetArmTelemetry } from '@/utils/armTelemetry';
 import { handleError } from '@/utils/errorHandling';
-import { lightFeedback } from '@/utils/haptics';
+import { lightFeedback, warningFeedback } from '@/utils/haptics';
 import {
   beginPrompt,
   markCardCurrent,
@@ -111,11 +111,6 @@ interface UseReviewReturn {
    *  Shared by the manual reveal and the voice-grading miss path (the answer is
    *  shown by the flip / the voice result panel; this just plays the audio). */
   revealMeaningPassive: () => void;
-  /** The `currentWordKey` whose Arabic prompt audio has finished playing (or
-   *  had no audio to play). Lets the voice-grading hook arm the mic only once
-   *  the prompt is fully done, without sniffing the global audio status — which
-   *  can't tell this card's prompt from lingering/previous audio. */
-  promptAudioDoneKey: string | null;
   /** Stop any in-flight playback (e.g. the reveal audio) so the mic can reopen
    *  cleanly on a voice retry without capturing the tail of a spoken answer. */
   stopAudio: () => void;
@@ -234,10 +229,6 @@ export function useReview({
   const [isUpdatingUI, setIsUpdatingUI] = useState(false);
   // Progress bar high-water mark, surfaced as state so consumers re-render.
   const [maxProgress, setMaxProgress] = useState(0);
-  // The currentWordKey whose Arabic prompt has finished (or had no audio).
-  // Drives the voice-grading mic arm; never reset on its own — a stale value
-  // from a prior card can't match the new currentWordKey (which encodes reps).
-  const [promptAudioDoneKey, setPromptAudioDoneKey] = useState<string | null>(null);
   // Holding a forgotten card on its answer face for a restudy beat before it
   // advances. Mirrored in a ref because `grade` is a stable callback that must
   // read the live value to know whether it is the interception or the commit.
@@ -270,7 +261,7 @@ export function useReview({
 
   // Active prompt-finish watcher, keyed by the card it belongs to. Held in a
   // ref (not tied to the audio effect's cleanup) so an incidental re-render
-  // mid-prompt can't tear it down and strand `promptAudioDoneKey`.
+  // mid-prompt can't tear it down.
   const promptWatchRef = useRef<{ key: string; cancel: () => void } | null>(null);
 
   // Read for the silent-prompt row only, so it can say whether the mic was
@@ -730,17 +721,6 @@ export function useReview({
         stateRefs.current.maxProgress = safeProgress;
         setMaxProgress(safeProgress);
         timeRefs.current.lastProgressUpdate = now;
-        // UI progress updated
-      }
-
-      // Only update if not already at 100% to prevent cycles
-      if (isComplete && stateRefs.current.maxProgress < 100) {
-        stateRefs.current.maxProgress = 100;
-        setMaxProgress(100);
-        // Use a ref to track if we've already updated this cycle
-        if (!stateRefs.current.progressUpdatedForCompletion) {
-          stateRefs.current.progressUpdatedForCompletion = true;
-        }
       }
     }
   }, [isComplete, progress]);
@@ -766,7 +746,7 @@ export function useReview({
   // playback and intermittently silence the audio after a swipe.
   useEffect(() => {
     if (sessionStarted.current) return;
-    if (!wordQueue || wordQueue.length === 0 || isComplete) return;
+    if (wordQueue.length === 0 || isComplete) return;
 
     // Stop any existing audio from other sessions (like listen tab)
     stopAudioSafely();
@@ -783,7 +763,7 @@ export function useReview({
       word_count: wordQueue.length,
       source: 'practice_tab',
     });
-  }, [wordQueue?.length, isComplete, stopAudioSafely]);
+  }, [wordQueue.length, isComplete, stopAudioSafely]);
 
   /**
    * Stamp the moment this card became the current one — deliberately ahead of
@@ -840,14 +820,6 @@ export function useReview({
     setDiagCard(keyForRun);
     diagMark('card.show', { rootId: currentWord.root_id });
 
-    // Clear the gate for the incoming card. currentWordKey encodes fsrs_reps
-    // and last_review, so a stale key from a previous card practically never
-    // collides — but "practically never" is the wrong guarantee for the flag
-    // that decides whether a live microphone opens over the prompt. Clearing it
-    // here makes the gate positively ordered: it can only be satisfied by a
-    // prompt that this run actually finished playing.
-    setPromptAudioDoneKey(null);
-
     // Cancel a still-running watcher from a previous card before this one's.
     if (promptWatchRef.current && promptWatchRef.current.key !== keyForRun) {
       promptWatchRef.current.cancel();
@@ -866,11 +838,8 @@ export function useReview({
       // instead would only delay the gate that lets the learner tap at all.
       void setPlaybackPriorityRef.current(false).catch(handleError);
       if (promptWatchRef.current?.key === keyForRun) promptWatchRef.current = null;
-      // A stale watcher (card already advanced) would set an old key, which the
-      // voice gate harmlessly ignores — but skip the needless re-render.
       if (movedOn()) return;
       diagMark('prompt.done');
-      setPromptAudioDoneKey(keyForRun);
     };
 
     // Opens this card's prompt record. Everything below reports into it, and
@@ -913,7 +882,12 @@ export function useReview({
         // voice mic waiting; let it arm now.
         if (!started) {
           // The silent card. It throws nothing and consumes no attempt, so this
-          // row is the only trace it ever leaves — see logPromptSilent.
+          // row was the only trace it ever left — see logPromptSilent. From the
+          // learner's side it is a card that simply never speaks, with no way to
+          // tell that from a word whose audio is genuinely missing. A warning
+          // buzz at least marks it as something going wrong rather than as the
+          // app waiting on them.
+          warningFeedback();
           void logPromptSilent({
             rootId: rootIdForRun,
             expected: expectedForRun,
@@ -1022,15 +996,14 @@ export function useReview({
     [playAudio],
   );
 
+  // No haptic here. Every route into this — the header's close button, the
+  // completion screen's Continue, "Review N more" — is a control that owns its
+  // own press feedback, and ThemedButton already fires one. Firing again here
+  // meant Continue buzzed twice in the same tick, hidden only by the 50ms
+  // per-pattern debounce. The haptic belongs to the control, not to the exit.
   const handleClose = () => {
-    const mounted = { current: true };
-
-    lightFeedback();
-
     // Stop any playing audio when closing
     stopAudioSafely();
-
-    if (!mounted.current) return;
 
     // Defer query invalidation until after navigation animation completes.
     // invalidateQueries → fsrsQueries.invalidateAll prefix-invalidates every
@@ -1042,8 +1015,8 @@ export function useReview({
     // Grades persist in the background (see useFSRS.updateWord), so the last
     // card's write may still be in flight as the screen closes. Settle those
     // first or the refetch can overtake them and repopulate the practice screen
-    // with pre-grade data. Not gated on `mounted` — the flush must complete even
-    // though this closure outlives the screen.
+    // with pre-grade data. The flush must complete even though this closure
+    // outlives the screen.
     // (split work + requestIdleCallback) changes *when* this runs, not just its name.
     // These sit in preload/review hot paths; migrating needs per-site profiling.
     // eslint-disable-next-line @typescript-eslint/no-deprecated -- see note above
@@ -1055,16 +1028,13 @@ export function useReview({
     setTimer(
       'navigation',
       () => {
-        if (mounted.current) {
-          if (onClose) {
-            onClose();
-          } else if (fromRemember) {
-            router.replace(ROUTE_PATHS.PRACTICE_TAB);
-          } else {
-            router.dismiss();
-          }
+        if (onClose) {
+          onClose();
+        } else if (fromRemember) {
+          router.replace(ROUTE_PATHS.PRACTICE_TAB);
+        } else {
+          router.dismiss();
         }
-        mounted.current = false;
       },
       100,
     );
@@ -1186,7 +1156,6 @@ export function useReview({
     audioPreloadProgress,
     isAudioReady,
     revealMeaningPassive,
-    promptAudioDoneKey,
     stopAudio: stopAudioSafely,
     remainingDueCount,
     startNextChunk,

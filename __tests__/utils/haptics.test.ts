@@ -12,7 +12,7 @@
 import { beforeEach, afterEach, describe, expect, test, jest } from '@jest/globals';
 import { Platform } from 'react-native';
 
-import { detentFeedback, lightFeedback, selectionFeedback } from '@/utils/haptics';
+import { detentFeedback, lightFeedback, selectionFeedback, warningFeedback } from '@/utils/haptics';
 
 // Keep inline mock for this test since it needs direct access to jest.fn() instances for assertions.
 // Every expo-haptics function returns Promise<void> — the mocks must too, or
@@ -22,22 +22,38 @@ jest.mock('expo-haptics', () => ({
   impactAsync: jest.fn(() => Promise.resolve()),
   notificationAsync: jest.fn(() => Promise.resolve()),
   performAndroidHapticsAsync: jest.fn(() => Promise.resolve()),
-  ImpactFeedbackStyle: { Light: 'light', Medium: 'medium', Rigid: 'rigid' },
-  NotificationFeedbackType: { Success: 'success', Error: 'error' },
+  ImpactFeedbackStyle: {
+    Light: 'light',
+    Medium: 'medium',
+    Heavy: 'heavy',
+    Rigid: 'rigid',
+    Soft: 'soft',
+  },
+  NotificationFeedbackType: { Success: 'success', Warning: 'warning', Error: 'error' },
   AndroidHaptics: {
     Segment_Tick: 'segment-tick',
+    Segment_Frequent_Tick: 'segment-frequent-tick',
     Virtual_Key: 'virtual-key',
     Context_Click: 'context-click',
     Clock_Tick: 'clock-tick',
+    Long_Press: 'long-press',
     Confirm: 'confirm',
     Reject: 'reject',
   },
+}));
+
+// The settings gate reads the store directly (module singleton, no subscription),
+// so drive it from here rather than standing up a real store per case.
+const mockSettings: { hapticsEnabled?: boolean } = {};
+jest.mock('@/store/store', () => ({
+  store: { getState: () => ({ settings: mockSettings }) },
 }));
 
 describe('haptics', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     jest.clearAllMocks();
+    mockSettings.hapticsEnabled = true;
   });
 
   afterEach(() => {
@@ -94,6 +110,91 @@ describe('haptics', () => {
     detentFeedback();
 
     expect(performAndroidHapticsAsync).toHaveBeenCalledWith(AndroidHaptics.Clock_Tick);
+  });
+
+  // The tone is what tells "armed into Forgot" apart from "armed into Knew it"
+  // and from "dropped back below the line" — one tick, three meanings. Before
+  // this they were the same Rigid impact, so the swipe's only haptic carried no
+  // information about which way it was going.
+  test('detentFeedback weights each tone differently on iOS', () => {
+    const { impactAsync, ImpactFeedbackStyle } = require('expo-haptics');
+
+    detentFeedback('crisp');
+    detentFeedback('heavy');
+    detentFeedback('soft');
+
+    expect(impactAsync).toHaveBeenNthCalledWith(1, ImpactFeedbackStyle.Rigid);
+    expect(impactAsync).toHaveBeenNthCalledWith(2, ImpactFeedbackStyle.Heavy);
+    expect(impactAsync).toHaveBeenNthCalledWith(3, ImpactFeedbackStyle.Soft);
+  });
+
+  test('detentFeedback maps each tone to an Android constant', () => {
+    const { performAndroidHapticsAsync, AndroidHaptics } = require('expo-haptics');
+    jest.replaceProperty(Platform, 'OS', 'android');
+
+    detentFeedback('crisp');
+    detentFeedback('heavy');
+    detentFeedback('soft');
+
+    expect(performAndroidHapticsAsync).toHaveBeenNthCalledWith(1, AndroidHaptics.Clock_Tick);
+    expect(performAndroidHapticsAsync).toHaveBeenNthCalledWith(2, AndroidHaptics.Long_Press);
+    expect(performAndroidHapticsAsync).toHaveBeenNthCalledWith(
+      3,
+      AndroidHaptics.Segment_Frequent_Tick,
+    );
+  });
+
+  // Each tone debounces on its own key. An arm immediately followed by a disarm
+  // (a fast drag past the line and back) is real signal, and a shared key would
+  // silently eat the second tick.
+  test('one detent tone does not swallow another', () => {
+    const { impactAsync } = require('expo-haptics');
+
+    detentFeedback('crisp');
+    detentFeedback('soft');
+
+    expect(impactAsync).toHaveBeenCalledTimes(2);
+  });
+
+  test('warningFeedback uses the iOS warning notification', () => {
+    const { notificationAsync, NotificationFeedbackType } = require('expo-haptics');
+
+    warningFeedback();
+
+    expect(notificationAsync).toHaveBeenCalledWith(NotificationFeedbackType.Warning);
+  });
+
+  test('warningFeedback falls back to Reject on Android', () => {
+    const { performAndroidHapticsAsync, AndroidHaptics } = require('expo-haptics');
+    jest.replaceProperty(Platform, 'OS', 'android');
+
+    warningFeedback();
+
+    expect(performAndroidHapticsAsync).toHaveBeenCalledWith(AndroidHaptics.Reject);
+  });
+
+  // Regression, and the reason this whole feature was dead for most of the
+  // install base: `hapticsEnabled` is ABSENT from state persisted before the
+  // flag shipped (the settings slice has been persisted since Feb 2025, the flag
+  // was added Nov 2025, and persistConfig has no migrate). A truthiness check
+  // read that as "off" and silently muted every haptic in the app — invisible on
+  // a fresh install, which is why it survived.
+  test('fires when hapticsEnabled is absent from persisted state', () => {
+    const { selectionAsync } = require('expo-haptics');
+    delete mockSettings.hapticsEnabled;
+
+    selectionFeedback();
+
+    expect(selectionAsync).toHaveBeenCalledTimes(1);
+  });
+
+  test('stays silent when hapticsEnabled is explicitly false', () => {
+    const { selectionAsync } = require('expo-haptics');
+    mockSettings.hapticsEnabled = false;
+
+    selectionFeedback();
+
+    expect(selectionAsync).not.toHaveBeenCalled();
   });
 
   test('routes through performAndroidHapticsAsync on Android (haptics engine, not Vibrator)', () => {

@@ -340,6 +340,16 @@ describe('useSwipeGesture Hook', () => {
       expect(resolve(-40, -1200)).toEqual({ commit: true, isRight: false });
     });
 
+    // The premise the gesture's commit-time haptic rests on: this path grades a
+    // card WITHOUT the drag ever reaching the arm threshold, so the detent that
+    // normally fires at the line never fires at all. onEnd has to notice that
+    // and tick once itself, or a thrown card grades in silence.
+    test('the flick path commits below the arm threshold', () => {
+      const flickTravel = 40;
+      expect(flickTravel).toBeLessThan(THRESHOLD);
+      expect(resolve(flickTravel, 1200).commit).toBe(true);
+    });
+
     // Regression: velocity alone used to commit, so a quick jab that ended
     // where it started graded the card — and always as "Forgot", because the
     // direction was read from translationX === 0.
@@ -354,6 +364,32 @@ describe('useSwipeGesture Hook', () => {
     test('does not commit when velocity opposes the travel', () => {
       expect(resolve(40, -1200).commit).toBe(false);
       expect(resolve(-40, 1200).commit).toBe(false);
+    });
+  });
+
+  // The swipe's only haptic. Release fires nothing on purpose, so this single
+  // tick has to say both "you crossed the line" and "into which grade".
+  describe('resolveDetentTone', () => {
+    const tone = (armed: boolean, isRight: boolean) => {
+      const { resolveDetentTone } = require('@/utils/gestureUtils');
+      return resolveDetentTone(armed, isRight);
+    };
+
+    test('arming toward Knew it is the crisp detent', () => {
+      expect(tone(true, true)).toBe('crisp');
+    });
+
+    // Regression: both directions used to fire the identical Rigid tick, so the
+    // one haptic the swipe had told the user nothing about which way it went.
+    // A miss reads heavier, matching how the grade bar weights its taps.
+    test('arming toward Forgot is heavier than arming toward Knew it', () => {
+      expect(tone(true, false)).toBe('heavy');
+      expect(tone(true, false)).not.toBe(tone(true, true));
+    });
+
+    test('falling back below the line is the soft tick, whichever way it went', () => {
+      expect(tone(false, true)).toBe('soft');
+      expect(tone(false, false)).toBe('soft');
     });
   });
 

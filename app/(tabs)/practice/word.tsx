@@ -89,6 +89,7 @@ export default function PracticeWordScreen(): JSX.Element {
 
   const { allWords, isLoading } = useFSRSQueries({ userId: user?.id });
   const { toggleRootMutation } = useStudyWordMutations();
+  const toggleRoot = toggleRootMutation.mutateAsync;
   const { confirmReset } = useResetWordProgress();
 
   // Hold the last seen word so the sheet stays rendered while it dismisses
@@ -144,20 +145,18 @@ export default function PracticeWordScreen(): JSX.Element {
         onPress: () => {
           // Optimistic cache update removes the word immediately; failures
           // revert the cache and surface a toast.
-          toggleRootMutation
-            .mutateAsync({ userId, rootId: wordRootId, intent: 'remove' })
-            .catch(error =>
-              handleError(error, {
-                showToast: true,
-                toastMessage: STRINGS.FAILED_TO_DELETE_WORD,
-                captureSentry: !__DEV__,
-              }),
-            );
+          toggleRoot({ userId, rootId: wordRootId, intent: 'remove' }).catch(error =>
+            handleError(error, {
+              showToast: true,
+              toastMessage: STRINGS.FAILED_TO_DELETE_WORD,
+              captureSentry: !__DEV__,
+            }),
+          );
           router.back();
         },
       },
     ]);
-  }, [user?.id, word, toggleRootMutation.mutateAsync, router]);
+  }, [user, word, toggleRoot, router]);
 
   // Distinguish "still fetching" from "not in the list". Both used to render an
   // indefinite spinner, so a word that genuinely wasn't there (removed from

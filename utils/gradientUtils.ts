@@ -1,10 +1,9 @@
-import { SCREEN_WIDTH } from '@/constants/layout';
+import { GOLDEN_RATIO, SCREEN_WIDTH } from '@/constants/layout';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import { withOpacity } from '@/utils/colorUtils';
 
 // Extract constants outside component to prevent recreation
-const GOLDEN_RATIO = 1.618; // True golden ratio for optimal header proportions
-const BASE_HEADER_HEIGHT = Math.round(SCREEN_WIDTH / GOLDEN_RATIO); // Original golden ratio for proper article image display
+const BASE_HEADER_HEIGHT = Math.round(SCREEN_WIDTH / GOLDEN_RATIO);
 
 /**
  * Calculate header height including safe area for proper image display

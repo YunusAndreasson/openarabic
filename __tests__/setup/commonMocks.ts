@@ -10,12 +10,18 @@
 // A local jest.mock('expo-haptics', …) shadows that with a second mock object
 // that nothing re-arms, so production code chaining .catch() breaks.
 
+// Must list EVERY export of @/utils/haptics: this replaces the module wholesale,
+// so anything omitted is `undefined` at the call site rather than a no-op, and
+// the component under test dies with "is not a function". detentFeedback was
+// missing, which is exactly what any review-card suite reaches first.
 export const mockHaptics = () => {
   jest.mock('@/utils/haptics', () => ({
     lightFeedback: jest.fn(),
     mediumFeedback: jest.fn(),
     successFeedback: jest.fn(),
     selectionFeedback: jest.fn(),
+    detentFeedback: jest.fn(),
+    warningFeedback: jest.fn(),
     errorFeedback: jest.fn(),
   }));
 };

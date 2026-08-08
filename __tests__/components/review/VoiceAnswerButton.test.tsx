@@ -31,6 +31,8 @@ jest.mock('@/hooks/theme/useColors', () =>
   require('@/__tests__/helpers/componentMocks').useColorsMockFactory(),
 );
 
+jest.mock('@/utils/haptics', () => ({ selectionFeedback: jest.fn() }));
+
 const onSpeakNow = jest.fn();
 const onStopSpeaking = jest.fn();
 
@@ -121,6 +123,22 @@ describe('VoiceAnswerButton', () => {
     expect(onStopSpeaking).toHaveBeenCalledTimes(1);
     // Re-arming here would throw away what the learner just said.
     expect(onSpeakNow).not.toHaveBeenCalled();
+  });
+
+  // The primary control of the whole voice exercise used to fire nothing at
+  // all. This tick acknowledges the TAP only — the "go" that says the mic is
+  // actually capturing belongs to onCapturing, roughly a second later, and the
+  // two are deliberately separate beats.
+  test('both meanings of the button acknowledge the tap', () => {
+    const { selectionFeedback } = require('@/utils/haptics');
+
+    const { getByLabelText } = renderButton('idle');
+    fireEvent.press(getByLabelText(STRINGS.VOICE_CHANNEL_LABEL));
+    expect(selectionFeedback).toHaveBeenCalledTimes(1);
+
+    const { getByLabelText: getLive } = renderButton('listening');
+    fireEvent.press(getLive(STRINGS.VOICE_DONE_SPEAKING));
+    expect(selectionFeedback).toHaveBeenCalledTimes(2);
   });
 
   // Regression: hold-to-talk shared this target with the tap, so a deliberate

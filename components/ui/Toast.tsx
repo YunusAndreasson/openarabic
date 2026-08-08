@@ -1,5 +1,5 @@
 import { Ionicons } from '@/components/ui/Icon';
-import { useEffect, useRef } from 'react';
+import { useEffect, useEffectEvent, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp, FadeOutDown, FadeOutUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -75,12 +75,7 @@ export function Toast({
   const insets = useSafeAreaInsets();
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const onCloseRef = useRef(onClose);
-
-  // Update the ref when onClose changes
-  useEffect(() => {
-    onCloseRef.current = onClose;
-  }, [onClose]);
+  const closeToast = useEffectEvent(onClose);
 
   useEffect(() => {
     if (timerRef.current) {
@@ -93,7 +88,7 @@ export function Toast({
       // already fired its own haptic. Callers that need a haptic for unsolicited
       // toasts (e.g. background errors) should trigger it explicitly.
       timerRef.current = setTimeout(() => {
-        onCloseRef.current();
+        closeToast();
       }, duration);
     }
 

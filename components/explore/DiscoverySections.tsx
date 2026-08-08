@@ -1,6 +1,5 @@
 import { useRouter } from 'expo-router';
-import { memo, useCallback, useMemo, type FC } from 'react';
-import { View } from 'react-native';
+import { Fragment, memo, useCallback, useMemo, type FC } from 'react';
 
 import { SectionLabel } from '@/components/common';
 import { COMPLETION_THRESHOLD } from '@/constants/layout';
@@ -179,9 +178,9 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
   if (sections.length === 0) return null;
 
   return (
-    <View>
+    <>
       {sections.map((section, sectionIndex) => (
-        <View key={section.key}>
+        <Fragment key={section.key}>
           <SectionLabel
             title={section.title}
             density={sectionIndex === 0 ? 'comfortable' : 'compact'}
@@ -191,9 +190,9 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
             keyPrefix={section.key}
             onArticlePress={handleArticlePress}
           />
-        </View>
+        </Fragment>
       ))}
-    </View>
+    </>
   );
 };
 

@@ -123,6 +123,29 @@ const settingsSlice = createSlice({
   },
 });
 
+/**
+ * Whether haptic feedback is on.
+ *
+ * Read through this rather than off `state.settings.hapticsEnabled` directly:
+ * the key is ABSENT from state persisted before it existed. The `settings`
+ * slice has been in the redux-persist whitelist since 2025-02-19, but
+ * `hapticsEnabled` was only added on 2025-11-05, and `persistConfig` carries no
+ * `version`/`migrate` — so redux-persist's default `autoMergeLevel1` hands back
+ * the stored slice verbatim and the key reads `undefined`. A truthiness check
+ * therefore turned haptics OFF, permanently and silently, for every install
+ * that predates the flag, with the settings toggle rendering as off to match.
+ * A fresh install can never reproduce it, which is why it went unnoticed.
+ *
+ * The parameter is typed to the REHYDRATED reality rather than to
+ * `SettingsState`: the declared type says `boolean`, which is a lie for any
+ * store that has been rehydrated from a pre-flag payload, and typing it that
+ * way makes the `!== false` read as a redundant boolean comparison when it is
+ * the entire point. Narrow rather than RootState so this file stays out of the
+ * store's import graph; RootState satisfies it structurally.
+ */
+export const selectHapticsEnabled = (state: { settings: { hapticsEnabled?: boolean } }): boolean =>
+  state.settings.hapticsEnabled !== false;
+
 export const {
   setReminderTime,
   setArabicFont,

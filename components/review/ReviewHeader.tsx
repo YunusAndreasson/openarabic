@@ -2,6 +2,7 @@ import { ProgressBar } from '@/components/common';
 import { Ionicons } from '@/components/ui/Icon';
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import type { FC } from 'react';
+import { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 const GLASS_AVAILABLE = isLiquidGlassAvailable();
@@ -14,6 +15,7 @@ import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
+import { lightFeedback } from '@/utils/haptics';
 
 // ===== STATIC STYLES USING STYLESHEET.CREATE =====
 // 44pt is the Apple HIG minimum tap target (Material prefers 48dp); the visible
@@ -25,6 +27,19 @@ const ICON_BUTTON_CONSTANTS = {
 
 /** Below this a "run" is noise — two right answers is just Tuesday. */
 const MIN_RECALL_RUN = 3;
+
+/**
+ * How often a run gets a haptic after the first one. The counter itself updates
+ * on every correct card, but buzzing each time turns a reward into wallpaper —
+ * and it would land right behind the grade haptic that caused it. Marking the
+ * run's arrival and then every fifth keeps it an event.
+ */
+const RECALL_RUN_HAPTIC_INTERVAL = 5;
+
+/** Whether this run length is one worth feeling, not just seeing. */
+const isRecallRunMilestone = (run: number): boolean =>
+  run === MIN_RECALL_RUN ||
+  (run > MIN_RECALL_RUN && (run - MIN_RECALL_RUN) % RECALL_RUN_HAPTIC_INTERVAL === 0);
 
 const STATIC_STYLES = StyleSheet.create({
   header: {
@@ -87,8 +102,30 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({
 
   const displayProgress = Math.max(progress, maxProgress);
 
-  // Handle close
+  // A run is the one moment in the session that rewards the learner while they
+  // are still in it, and it was visual-only — a caption fading in beside a
+  // progress bar nobody is looking at mid-answer. The tick lands 100–300ms
+  // after the grade haptic (the metrics update runs behind the FSRS write), so
+  // it reads as a distinct second beat — "right… and that's three in a row" —
+  // rather than smearing into the grade.
+  //
+  // Keyed off a rising edge rather than the render, so a remount mid-session
+  // doesn't re-congratulate a run the learner already felt.
+  const lastRunRef = useRef(recallRun);
+  useEffect(() => {
+    const previous = lastRunRef.current;
+    lastRunRef.current = recallRun;
+    if (recallRun > previous && isRecallRunMilestone(recallRun)) {
+      lightFeedback();
+    }
+  }, [recallRun]);
+
+  // Handle close. The haptic lives here rather than in useReview's handleClose:
+  // that exit is also reached from the completion screen's ThemedButtons, which
+  // fire their own, so keeping it in the hook buzzed Continue twice in one tick.
+  // This bare Pressable has no press feedback of its own, so it needs this.
   const handleClose = () => {
+    lightFeedback();
     if (onClose) {
       onClose();
     }

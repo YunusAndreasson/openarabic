@@ -1,4 +1,4 @@
-import { memo, useMemo, type FC } from 'react';
+import { memo, type FC } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
@@ -39,11 +39,7 @@ const SLIDER_CARD_STYLE = {
 const HorizontalArticleSliderComponent: FC<HorizontalArticleSliderProps> = ({ articles }) => {
   const displayArticles = articles.slice(0, MAX_FEATURED_ARTICLES);
 
-  // Compute snap offsets for each card position
-  const snapOffsets = useMemo(
-    () => displayArticles.map((_, index) => index * (CARD_WIDTH + CARD_SPACING)),
-    [displayArticles.length],
-  );
+  const snapOffsets = displayArticles.map((_, index) => index * (CARD_WIDTH + CARD_SPACING));
 
   if (!articles.length) return null;
 

@@ -1,6 +1,7 @@
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
 
+import { selectHapticsEnabled } from '@/store/settingsSlice';
 import { store } from '@/store/store';
 
 /**
@@ -29,7 +30,8 @@ const HAPTIC_DEBOUNCE_MS = 50;
  * still what we want to swallow (double-fired press handlers), so keying by
  * pattern keeps the original protection without eating real signal.
  */
-type HapticKind = 'selection' | 'light' | 'medium' | 'rigid' | 'success' | 'error';
+type HapticKind =
+  'selection' | 'light' | 'medium' | 'rigid' | 'heavy' | 'soft' | 'success' | 'warning' | 'error';
 
 const blockedKinds = new Set<HapticKind>();
 
@@ -38,11 +40,10 @@ const blockedKinds = new Set<HapticKind>();
  * based on debounce timing and user preferences
  */
 const shouldTriggerHaptic = (kind: HapticKind): boolean => {
-  // Check if haptics are enabled in settings
-  // Use explicit false check to handle undefined (missing from old persisted state)
-  // When undefined, default to enabled (true) as per initialState
-  const state = store.getState();
-  if (!state.settings.hapticsEnabled) {
+  // Explicitly `!== false` (via the selector), because the flag is absent from
+  // state persisted before it existed and absent must mean ON — see
+  // selectHapticsEnabled for why a truthiness check silently muted the app.
+  if (!selectHapticsEnabled(store.getState())) {
     return false;
   }
 
@@ -126,25 +127,70 @@ export const mediumFeedback = (): void => {
 };
 
 /**
- * Crisp detent "click" for the moment a continuous gesture crosses a threshold
- * and the outcome flips — swipe-to-grade passing its commit point, a slider
+ * Which side of a detent this tick is, and how much it should weigh.
+ *
+ * `crisp` — armed toward the lighter outcome (swipe right, "Knew it").
+ * `heavy` — armed toward the heavier one (swipe left, "Forgot"). A miss should
+ *           feel weightier than a clean recall, the same way the grade bar
+ *           already weights its three taps.
+ * `soft`  — the drag fell back below the line. A detent that only clicks on the
+ *           way in is half a detent; the quieter tick on the way out is what
+ *           makes "drag back to cancel" read as a mechanism rather than a
+ *           dead zone.
+ */
+export type DetentTone = 'crisp' | 'heavy' | 'soft';
+
+const DETENT_KIND: Record<DetentTone, HapticKind> = {
+  crisp: 'rigid',
+  heavy: 'heavy',
+  soft: 'soft',
+};
+
+/**
+ * Detent "click" for the moment a continuous gesture crosses a threshold and
+ * the outcome flips — swipe-to-grade passing its commit point, a slider
  * snapping to a stop. This is the tick that tells the finger "release now and
- * it counts", so it has to read as mechanical rather than soft: `Rigid` is
- * UIKit's low-compression impact, and `Clock_Tick` is Android's detent tick
- * (the one a time picker uses).
+ * it counts", so it has to read as mechanical: `Rigid` is UIKit's
+ * low-compression impact and `Clock_Tick` is Android's detent tick (the one a
+ * time picker uses).
+ *
+ * The tone carries WHICH way the outcome flipped, so a single tick can say both
+ * "you've crossed" and "into this". The alternative — a second haptic on
+ * release to name the grade — double-buzzes one decision, which is why the
+ * release path deliberately fires nothing.
+ *
+ * Each tone debounces on its own key: an arm immediately followed by a disarm
+ * is real signal, and a shared key would swallow the second one.
  *
  * Fire it from a gesture worklet via `scheduleOnRN` — expo-haptics is
  * async/JS-thread-only (there is no worklet-callable variant in SDK 57), so
  * hopping the runtime boundary is the supported path.
  */
-export const detentFeedback = (): void => {
-  if (shouldTriggerHaptic('rigid')) {
-    if (Platform.OS === 'android') {
-      fireHaptic(Haptics.performAndroidHapticsAsync(Haptics.AndroidHaptics.Clock_Tick));
-    } else {
-      fireHaptic(Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid));
-    }
+export const detentFeedback = (tone: DetentTone = 'crisp'): void => {
+  if (!shouldTriggerHaptic(DETENT_KIND[tone])) {
+    return;
   }
+
+  if (Platform.OS === 'android') {
+    // Android's palette is coarser than UIKit's — these are the closest
+    // semantic constants, not exact analogues of the iOS textures.
+    const androidTone =
+      tone === 'heavy'
+        ? Haptics.AndroidHaptics.Long_Press
+        : tone === 'soft'
+          ? Haptics.AndroidHaptics.Segment_Frequent_Tick
+          : Haptics.AndroidHaptics.Clock_Tick;
+    fireHaptic(Haptics.performAndroidHapticsAsync(androidTone));
+    return;
+  }
+
+  const iosTone =
+    tone === 'heavy'
+      ? Haptics.ImpactFeedbackStyle.Heavy
+      : tone === 'soft'
+        ? Haptics.ImpactFeedbackStyle.Soft
+        : Haptics.ImpactFeedbackStyle.Rigid;
+  fireHaptic(Haptics.impactAsync(iosTone));
 };
 
 /**
@@ -159,6 +205,32 @@ export const successFeedback = (): void => {
       fireHaptic(Haptics.performAndroidHapticsAsync(Haptics.AndroidHaptics.Confirm));
     } else {
       fireHaptic(Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success));
+    }
+  }
+};
+
+/**
+ * Warning feedback for "something went wrong, and it wasn't your fault":
+ * - The microphone never opened, or opened deaf
+ * - The Arabic prompt failed to play
+ * - We captured audio but nothing usable came out of it
+ *
+ * Distinct from `errorFeedback`, which scores an outcome against the user. The
+ * cases above are the app failing, and total silence is worse than a soft
+ * warning: after speaking into a mic you cannot tell "heard nothing" from
+ * "still thinking".
+ *
+ * iOS has a dedicated Warning notification texture. Android does not — its
+ * closest semantic constant is `Reject`, the same one `errorFeedback` uses, so
+ * the two collapse into one texture there. That is a limitation of the
+ * platform's palette, not an oversight.
+ */
+export const warningFeedback = (): void => {
+  if (shouldTriggerHaptic('warning')) {
+    if (Platform.OS === 'android') {
+      fireHaptic(Haptics.performAndroidHapticsAsync(Haptics.AndroidHaptics.Reject));
+    } else {
+      fireHaptic(Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning));
     }
   }
 };

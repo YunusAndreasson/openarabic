@@ -106,7 +106,7 @@ export function BottomSheetStateHandler({
   }
 
   // Success state - render children
-  return <>{children}</>;
+  return children;
 }
 
 const styles = StyleSheet.create({

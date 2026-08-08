@@ -28,6 +28,13 @@ export interface SwipeGestureOptions {
    * again if it falls back below it (`armed: false`). This is the hook for
    * threshold haptics: the feedback then lands while the finger is still down,
    * at the exact moment the outcome is decided, instead of after release.
+   *
+   * Two cases where it does NOT simply track the latch:
+   * - A commit that never armed (a fast flick, which `resolveSwipeCommit`
+   *   accepts well short of the threshold) fires one `armed: true` at release,
+   *   because that is the only moment left to acknowledge it.
+   * - A gesture cancelled while armed fires nothing. The outcome is being
+   *   undone; a tick there is feedback for something that did not happen.
    */
   onCommitArmedChange?: (armed: boolean, isRight: boolean) => void;
   /**
@@ -215,6 +222,9 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
         .onEnd((event, success) => {
           'worklet';
           settledRef.set(true);
+          // Read the latch BEFORE clearing it: a commit that never armed still
+          // owes the user a tick (see the flick branch below).
+          const wasArmed = armedSide.get() !== 0;
           armedSide.set(0);
 
           if (
@@ -264,6 +274,18 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
             return;
           }
 
+          // A flick commits BELOW the arm threshold — `resolveSwipeCommit`'s
+          // velocity path needs only FLICK_MIN_DISTANCE_RATIO of travel, about
+          // a quarter of the distance the latch wants — so the drag never
+          // armed and the detent never fired. Release is silent by design, so
+          // without this a thrown card graded with no tactile confirmation at
+          // all. This is that tick, at the only moment it can still land.
+          // Guarded on `wasArmed` so a normal drag-past-the-line, which
+          // already ticked, is not buzzed a second time.
+          if (!wasArmed && onCommitArmedChange) {
+            scheduleOnRN(onCommitArmedChange, true, isRight);
+          }
+
           // Fire the JS work first so grading starts on this frame, in parallel
           // with the exit animation rather than after it.
           scheduleOnRN(handleSwipeAction, isRight);
@@ -310,12 +332,15 @@ export const useSwipeGesture = (options: SwipeGestureOptions): SwipeGestureResul
             return;
           }
           settledRef.set(true);
-          if (armedSide.get() !== 0) {
-            armedSide.set(0);
-            if (onCommitArmedChange) {
-              scheduleOnRN(onCommitArmedChange, false, false);
-            }
-          }
+          // Clear the latch, but do NOT notify: this path only runs when the
+          // gesture was cancelled or failed after activating (a system
+          // edge-swipe taking over, the app backgrounding). Notifying fired a
+          // detent for an outcome that is being undone as the card springs
+          // home — a click for something that did not happen. Safe to drop
+          // because this callback is a haptic hook and nothing else: the
+          // colour flash, verdict labels and tilt are all animated styles
+          // reading `translateX`, which the spring below resets.
+          armedSide.set(0);
           if (!isAnimatingRef.get() && translateX.get() !== 0) {
             translateX.set(withSpring(0, springConfig));
           }

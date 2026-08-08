@@ -6,6 +6,21 @@ import type { SessionMetrics, WordConfidence } from '@/types/review.types';
 // FSRS mastery threshold - words are considered "mastered" when stability >= 5 days
 const MASTERY_THRESHOLD = 5.0;
 
+function createSessionMetrics(startTime: number): SessionMetrics {
+  return {
+    wordsReviewed: 0,
+    wordsKnown: 0,
+    wordsUnknown: 0,
+    averageStabilityIncrease: 0,
+    longestStreak: 0,
+    currentStreak: 0,
+    masteredWords: 0,
+    firstAttemptKnown: 0,
+    firstAttemptUnknown: 0,
+    startTime,
+  };
+}
+
 /**
  * Hook to manage practice session metrics tracking
  * Handles all session statistics including streaks, accuracy, and stability improvements
@@ -18,18 +33,7 @@ const MASTERY_THRESHOLD = 5.0;
 export const useSessionMetrics = () => {
   // Capture session start once via lazy state init so the ref initializer is pure.
   const [sessionStart] = useState(() => Date.now());
-  const metricsRef = useRef<SessionMetrics>({
-    wordsReviewed: 0,
-    wordsKnown: 0,
-    wordsUnknown: 0,
-    averageStabilityIncrease: 0,
-    longestStreak: 0,
-    currentStreak: 0,
-    masteredWords: 0,
-    firstAttemptKnown: 0,
-    firstAttemptUnknown: 0,
-    startTime: sessionStart,
-  });
+  const metricsRef = useRef<SessionMetrics>(createSessionMetrics(sessionStart));
 
   // Track unique words reviewed in this session
   const reviewedWordsSet = useRef<Set<number>>(new Set());
@@ -79,16 +83,15 @@ export const useSessionMetrics = () => {
         metrics.currentStreak = 0; // Reset streak on Forgot
       }
 
+      const oldStability = wordData?.oldStability;
+      const newStability = wordData?.newStability;
+
       // Check if word became mastered during THIS session.
       // Count if: (1) recalled (Knew it / Guessed — a Hard pass can cross 5.0),
       // (2) old < 5.0, (3) new >= 5.0
-      if (
-        recalled &&
-        wordData?.oldStability !== undefined &&
-        wordData?.newStability !== undefined
-      ) {
-        const wasNotMastered = wordData.oldStability < MASTERY_THRESHOLD;
-        const isNowMastered = wordData.newStability >= MASTERY_THRESHOLD;
+      if (recalled && oldStability !== undefined && newStability !== undefined) {
+        const wasNotMastered = oldStability < MASTERY_THRESHOLD;
+        const isNowMastered = newStability >= MASTERY_THRESHOLD;
 
         if (wasNotMastered && isNowMastered) {
           metrics.masteredWords++;
@@ -96,8 +99,8 @@ export const useSessionMetrics = () => {
       }
 
       // Calculate actual stability increase (for all confidence levels)
-      if (wordData?.oldStability !== undefined && wordData?.newStability !== undefined) {
-        const stabilityIncrease = wordData.newStability - wordData.oldStability;
+      if (oldStability !== undefined && newStability !== undefined) {
+        const stabilityIncrease = newStability - oldStability;
         const totalIncrease =
           metrics.averageStabilityIncrease * (metrics.wordsReviewed - 1) + stabilityIncrease;
         metrics.averageStabilityIncrease = totalIncrease / metrics.wordsReviewed;
@@ -111,19 +114,7 @@ export const useSessionMetrics = () => {
    * Useful when starting a new session
    */
   const resetMetrics = useCallback(() => {
-    const metrics = metricsRef.current;
-    metrics.wordsReviewed = 0;
-    metrics.wordsKnown = 0;
-    metrics.wordsUnknown = 0;
-    metrics.averageStabilityIncrease = 0;
-    metrics.longestStreak = 0;
-    metrics.currentStreak = 0;
-    metrics.masteredWords = 0;
-    metrics.firstAttemptKnown = 0;
-    metrics.firstAttemptUnknown = 0;
-    metrics.startTime = Date.now();
-
-    // Clear unique words tracking
+    Object.assign(metricsRef.current, createSessionMetrics(Date.now()));
     reviewedWordsSet.current.clear();
   }, []);
 

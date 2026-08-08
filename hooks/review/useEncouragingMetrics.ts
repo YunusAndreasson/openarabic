@@ -28,6 +28,10 @@ const formatDuration = (ms: number): string => {
   return `${minutes}m ${seconds}s`;
 };
 
+function selectDailyMessage(pool: readonly [string, ...string[]], dayIndex: number): string {
+  return pool[dayIndex % pool.length] ?? pool[0];
+}
+
 /**
  * Build an array of encouraging metric objects for the review completion screen.
  * Shows up to 4 metrics:
@@ -54,7 +58,7 @@ export const useEncouragingMetrics = (
     }
 
     const metrics = sessionMetrics;
-    const knownRatio = metrics.wordsReviewed > 0 ? metrics.wordsKnown / metrics.wordsReviewed : 0;
+    const knownRatio = metrics.wordsKnown / metrics.wordsReviewed;
 
     // Traffic light metrics (always show these 3 in order)
     const trafficLightMetrics: EncouragingMetric[] = [];
@@ -144,14 +148,11 @@ export const useEncouragingMetrics = (
     } else if (knownRatio >= 0.7 && metrics.averageStabilityIncrease >= 3.0) {
       educationalText = STRINGS.SESSION_ED_BIG_STABILITY_JUMP;
     } else if (knownRatio >= 0.7) {
-      const pool = STRINGS.SESSION_ED_STRONG_POOL;
-      educationalText = pool[dayIndex % pool.length] ?? pool[0];
+      educationalText = selectDailyMessage(STRINGS.SESSION_ED_STRONG_POOL, dayIndex);
     } else if (knownRatio < 0.4) {
-      const pool = STRINGS.SESSION_ED_STRUGGLE_POOL;
-      educationalText = pool[dayIndex % pool.length] ?? pool[0];
+      educationalText = selectDailyMessage(STRINGS.SESSION_ED_STRUGGLE_POOL, dayIndex);
     } else {
-      const pool = STRINGS.SESSION_ED_DEFAULT_POOL;
-      educationalText = pool[dayIndex % pool.length] ?? pool[0];
+      educationalText = selectDailyMessage(STRINGS.SESSION_ED_DEFAULT_POOL, dayIndex);
     }
 
     return { metrics: trafficLightMetrics, educationalText };

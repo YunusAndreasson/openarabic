@@ -26,7 +26,6 @@ const SPACING_SCALE = {
   LARGE: BASE_UNIT * 4, // 16
   XLARGE: BASE_UNIT * 6, // 24
   XXLARGE: BASE_UNIT * 8, // 32
-  HUGE: BASE_UNIT * 10, // 40 - fills gap between XXLARGE and XXXLARGE
   XXXLARGE: BASE_UNIT * 12, // 48
 } as const;
 
@@ -79,32 +78,18 @@ const ELEVATION_SYSTEM = {
 } as const;
 
 const TYPOGRAPHY_HIERARCHY = {
-  WEIGHTS: {
-    REGULAR: '400' as const,
-    MEDIUM: '500' as const,
-    SEMIBOLD: '600' as const,
-    BOLD: '700' as const,
-    HEAVY: '800' as const,
-  },
-
   COLOR_HIERARCHY: {
     PRIMARY: 1.0,
     SECONDARY: 0.85,
-    TERTIARY: 0.65,
-    SUBTLE: 0.5,
-    ACCENT: 0.75,
   },
 
   LETTER_SPACING: {
     EXTRA_TIGHT: -0.5,
     TIGHT: -0.3,
-    NARROW: -0.2,
-    SLIGHT_NEGATIVE: -0.1,
     NORMAL: 0,
     SLIGHT_POSITIVE: 0.1,
     WIDE: 0.2,
     RELAXED: 0.3,
-    EXTRA_WIDE: 0.4,
     ULTRA_WIDE: 0.5,
   },
 
@@ -184,7 +169,6 @@ export const LAYOUT = {
     FAINT: 0.15, // Very subtle elements (chart cursors, hints)
     LIGHT: 0.25, // Dividers, subtle separators
     SUBTLE: 0.3, // Secondary elements, disabled states
-    OVERLAY: 0.4, // Modal overlays, backgrounds
     MEDIUM: 0.5, // Mid-level visibility
     PRESSED: 0.6, // Button pressed state
     HIGH: 0.7, // Primary visibility
@@ -202,9 +186,9 @@ export const LAYOUT = {
     MICRO: 2, // For chart dots and small elements
     TINY: 3, // Perfect circles for 6px elements (STATUS_INDICATOR dots)
     SMALL_CIRCLE: 6, // Small rounded elements
-    SMALL: BASE_UNIT * 2.5, // 10 - softer corners (2025 trend)
-    MEDIUM: SPACING_SCALE.LARGE, // 16 - softer corners (2025 trend)
-    LARGE: BASE_UNIT * 5, // 20 - for larger cards/containers (2025 trend)
+    SMALL: BASE_UNIT * 2.5, // 10 - compact controls
+    MEDIUM: SPACING_SCALE.LARGE, // 16 - standard controls and cards
+    LARGE: BASE_UNIT * 5, // 20 - large surfaces
     PILL: 9999, // Keep as is for perfect circles
   },
 
@@ -247,7 +231,6 @@ export const LAYOUT = {
       MEDIUM: BASE_UNIT * 5, // 20 - responsive to base unit
       LARGE: SPACING_SCALE.XLARGE, // 24 - responsive to spacing scale
       XLARGE: BASE_UNIT * 7, // 28 - responsive to base unit
-      XXLARGE: BASE_UNIT * 16, // 64 - responsive to base unit (for empty states)
       HERO: BASE_UNIT * 24, // 96 - large icons for empty states and illustrations
     },
   },
@@ -271,14 +254,10 @@ export const LAYOUT = {
   ELEVATION: ELEVATION_SYSTEM,
 
   Z_INDEX: {
-    BASE: 0,
     CARD: 1,
     HEADER: 2,
-    MODAL: 3,
     OVERLAY: 4,
-    TOOLTIP: 5,
     POPUP: 6,
-    TOP_OVERLAY: 9999, // Maximum z-index for critical overlays that must be above everything
   },
 
   /** 3D transform focal length (px) for perspective transforms (e.g. card flip) */
@@ -354,7 +333,6 @@ export const LAYOUT = {
       TOUCH_TARGETS.LARGE + SPACING_SCALE.MEDIUM + SPACING_SCALE.SMALL + SPACING_SCALE.XLARGE, // 92
     COMPLETION: {
       ICON_DEFAULT_SIZE: BASE_UNIT * 25, // 100 - responsive to base unit
-      ICON_CONTAINER_HEIGHT: BASE_UNIT * 30, // 120 - responsive to base unit
       CONTENT_MAX_WIDTH: BASE_UNIT * 87.5, // 350 - responsive to base unit
     },
   },
@@ -367,7 +345,6 @@ export const LAYOUT = {
 
   BORDER: {
     WIDTH: {
-      NONE: 0,
       THIN: Math.round(BASE_UNIT * 0.125), // 0.5 rounded to 1 - prevents sub-pixel rendering
       NORMAL: BASE_UNIT * 0.25, // 1 - responsive to base unit
       FOCUSED: BASE_UNIT * 0.5, // 2 - responsive to base unit
@@ -420,8 +397,6 @@ export const LAYOUT = {
   /** Android Material Design 3 touch targets */
   ANDROID: {
     TOUCH_TARGET: {
-      MIN_SIZE: 48, // MD3 minimum touch target
-      PREFERRED_SIZE: 56, // MD3 preferred touch target
       RIPPLE_RADIUS: 20, // For ripple effects
     },
   },
@@ -487,7 +462,7 @@ export const getEnhancedOpacity = (
 };
 
 /**
- * 2025 Dark Mode Elevation Pattern
+ * Dark mode elevation pattern
  *
  * Modern dark mode design relies on elevation background colors for hierarchy.
  * Shadows are nearly invisible on dark backgrounds, so we remove them entirely.

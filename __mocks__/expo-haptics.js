@@ -17,10 +17,16 @@ module.exports = {
   selectionAsync: mockSelectionAsync,
   notificationAsync: mockNotificationAsync,
   performAndroidHapticsAsync: mockPerformAndroidHapticsAsync,
+  // Keep these enums complete. They were missing Rigid/Soft and Clock_Tick,
+  // which meant detentFeedback() resolved its style to `undefined` in every
+  // suite but the dedicated haptics one — it never threw, so any assertion on
+  // the argument passed vacuously.
   ImpactFeedbackStyle: {
     Light: 'Light',
     Medium: 'Medium',
     Heavy: 'Heavy',
+    Rigid: 'Rigid',
+    Soft: 'Soft',
   },
   NotificationFeedbackType: {
     Success: 'Success',
@@ -29,8 +35,11 @@ module.exports = {
   },
   AndroidHaptics: {
     Segment_Tick: 'Segment_Tick',
+    Segment_Frequent_Tick: 'Segment_Frequent_Tick',
+    Clock_Tick: 'Clock_Tick',
     Virtual_Key: 'Virtual_Key',
     Context_Click: 'Context_Click',
+    Long_Press: 'Long_Press',
     Confirm: 'Confirm',
     Reject: 'Reject',
   },

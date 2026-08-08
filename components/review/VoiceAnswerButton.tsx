@@ -31,6 +31,7 @@ import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import type { VoicePhase } from '@/hooks/review/useVoiceReview';
 import { useColors } from '@/hooks/theme/useColors';
+import { selectionFeedback } from '@/utils/haptics';
 
 /**
  * What the button offers right now.
@@ -91,7 +92,15 @@ export const VoiceAnswerButton: FC<VoiceAnswerButtonProps> = ({
   // used to share this target with the tap, so a deliberate press that ran a
   // shade long became a hold, and its release graded a recording the learner
   // thought they were still starting.
+  //
+  // Both meanings acknowledge the tap itself, nothing more. Opening the mic is
+  // a request, not a result — the tick that says "go" belongs to the moment the
+  // microphone is actually capturing, half a second to a second later
+  // (useVoiceReview's onCapturing). The two are a deliberate two-beat, "heard
+  // you" then "go", far enough apart to read as separate events rather than as
+  // one double-buzz.
   const handlePress = useCallback(() => {
+    selectionFeedback();
     if (isLive) {
       onStopSpeaking();
       return;

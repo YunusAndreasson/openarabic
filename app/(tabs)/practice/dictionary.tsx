@@ -58,6 +58,7 @@ export default function DictionaryScreen(): JSX.Element {
 
   // No refetch callback needed - mutation's onSuccess handles invalidation
   const { toggleRootMutation } = useStudyWordMutations();
+  const toggleRoot = toggleRootMutation.mutateAsync;
   const { confirmReset } = useResetWordProgress();
 
   const {
@@ -129,7 +130,7 @@ export default function DictionaryScreen(): JSX.Element {
       try {
         // Explicit intent: a delete must never flip into a re-add when the
         // cached study list is stale
-        await toggleRootMutation.mutateAsync({
+        await toggleRoot({
           userId: user.id,
           rootId: word.root_id,
           intent: 'remove',
@@ -142,7 +143,7 @@ export default function DictionaryScreen(): JSX.Element {
         });
       }
     },
-    [user?.id, toggleRootMutation.mutateAsync],
+    [user, toggleRoot],
   );
 
   const handleResetProgress = useCallback(

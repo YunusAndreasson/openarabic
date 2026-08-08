@@ -81,7 +81,7 @@ const GetStartedChecklistComponent: FC<GetStartedChecklistProps> = ({
       );
     }, ONBOARDING_CONFIG.CHECKLIST_COLLAPSE_DELAY_MS);
     return () => clearTimeout(timeout);
-  }, [allDone, isChecklistVisible]);
+  }, [allDone, isChecklistVisible, collapseProgress, finalizeCompletion]);
 
   const animatedStyle = useAnimatedStyle(() => {
     if (collapseProgress.value === 0 || measuredHeight === 0) {

@@ -1,7 +1,7 @@
 // External Libraries
 import { Ionicons } from '@/components/ui/Icon';
 import { router, useLocalSearchParams } from 'expo-router';
-import { memo, useCallback, useMemo, type FC } from 'react';
+import { Fragment, memo, useCallback, useMemo, type FC } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
@@ -116,7 +116,7 @@ interface FAQCategorySectionProps {
 const FAQCategorySection: FC<FAQCategorySectionProps> = memo(
   ({ title, items, expandedItems, onToggle, keyPrefix }) => {
     return (
-      <View>
+      <Fragment>
         <SectionLabel title={title} />
         <View style={styles.categoryContainer}>
           {items.map(item => {
@@ -132,7 +132,7 @@ const FAQCategorySection: FC<FAQCategorySectionProps> = memo(
             );
           })}
         </View>
-      </View>
+      </Fragment>
     );
   },
 );

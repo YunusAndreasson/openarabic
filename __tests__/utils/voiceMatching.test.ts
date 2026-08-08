@@ -106,16 +106,26 @@ describe('voiceMatching', () => {
       expect(r.method).toBe('miss');
     });
 
-    // Regression: every one of these was accepted in the field and written to
-    // FSRS as a correct answer. A false positive is the costly error here —
-    // the learner never sees the word again — where a false negative just
-    // shows them the transcript and an override button.
+    // These four were accepted in the field and written to FSRS as fully
+    // correct, which is what the 2026-07-25 tightening removed. The bar they
+    // must clear is now "never `known`" rather than "never matched": each is
+    // acoustically the answer, so the near path credits the long ones as
+    // Guessed — a pass that SHORTENS the interval, so a wrongly-credited word
+    // comes back rather than disappearing. That was the whole risk being
+    // guarded against; the guard moved rather than went away.
     it.each([
-      ['just', 'jest'],
+      ['just', 'jest'], // 4 chars — under the near path's length floor
+      ['to be calm', 'to become'],
       ['rest', 'breast'],
       ['assented', 'ascended'],
-      ['to be calm', 'to become'],
-    ])('rejects the wrong word %s heard for %s', (spoken, expected) => {
+    ])('never awards full credit for %s heard as %s', (spoken, expected) => {
+      expect(matchSingleWord({ spoken, expected }).credit).not.toBe('known');
+    });
+
+    it.each([
+      ['just', 'jest'],
+      ['cot', 'cat'],
+    ])('leaves short words (%s / %s) an outright miss', (spoken, expected) => {
       expect(matchSingleWord({ spoken, expected }).matched).toBe(false);
     });
   });
@@ -321,5 +331,51 @@ describe('voiceMatching', () => {
       expect(r.similarity).toBeGreaterThanOrEqual(0);
       expect(r.similarity).toBeLessThan(0.7);
     });
+  });
+});
+
+/**
+ * Phonetic near-miss path. Every pair below is a real 2026-08-08 field attempt
+ * from `voice_grading_attempts` where the learner said the answer and Parakeet
+ * wrote down something else; all twelve were graded Forgot before this existed.
+ */
+describe('matchSingleWord — near path credits an utterance that SOUNDS right', () => {
+  it.each([
+    ['please', 'place'],
+    ['price', 'praise'],
+    ['girl with', 'girded with'],
+    ['guard with', 'girded with'],
+    ['girl it with', 'girded with'],
+    ['to be aware', 'beware'],
+    ['easton', 'eastern'],
+    ['the recessions', 'his sessions'],
+    ['and luisi', 'andalusian'],
+    ['the travels', 'traveler'],
+  ])('credits "%s" for "%s" as vague, not a miss', (spoken, expected) => {
+    const r = matchSingleWord({ spoken, expected });
+    expect(r.matched).toBe(true);
+    expect(r.credit).toBe('vague');
+  });
+
+  it('never awards full credit on the near path — a wrong transcript is never mastery', () => {
+    expect(matchSingleWord({ spoken: 'please', expected: 'place' }).credit).toBe('vague');
+    expect(matchSingleWord({ spoken: 'place', expected: 'place' }).credit).toBe('known');
+  });
+
+  it.each([
+    // The learner said a DIFFERENT word's meaning — these must stay misses.
+    ['leading figure', 'girded with'],
+    ['to arrive', 'grabbed'],
+    ['to approach', 'beware'],
+    ['establishment', 'expansive'],
+    ['session', 'assembly'],
+    ['to count', 'estimate'],
+  ])('leaves "%s" for "%s" a miss', (spoken, expected) => {
+    expect(matchSingleWord({ spoken, expected }).matched).toBe(false);
+  });
+
+  it('requires BOTH floors: phonetic alone would credit "send" for "ascended"', () => {
+    // Key SNT sits inside ASNT (phonetic 0.75) but lexical similarity is 0.50.
+    expect(matchSingleWord({ spoken: 'send', expected: 'ascended' }).matched).toBe(false);
   });
 });

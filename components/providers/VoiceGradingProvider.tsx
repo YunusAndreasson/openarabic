@@ -114,23 +114,6 @@ interface VoiceGradingContextValue {
    */
   acquireSession: () => () => void;
   /**
-   * Re-establish the held-open input stream, off the critical path.
-   *
-   * Playing audio reconfigures the shared audio session (see
-   * `simpleAudioService.setRecordingSessionEnabled` / every `play()` reapplying
-   * the mode), and that can leave an already-open input stream alive but DEAF:
-   * `isOpen` is true and not a single buffer ever arrives. The window then runs
-   * to its first-buffer watchdog and comes back "no audio from microphone",
-   * after which the recovery reopen + the caller's retry backoff are what the
-   * learner experiences as "the mic took ages".
-   *
-   * Calling this right after the card's prompt finishes spends that cost while
-   * the learner is still reading, so the tap lands on a live microphone. A
-   * no-op while a window is open — reopening under a live recording would throw
-   * away what is being said.
-   */
-  refreshCapture: () => void;
-  /**
    * Hand the audio session to playback, or give it back to the microphone.
    *
    * iOS gives `.playAndRecord` less output gain than `.playback`, so holding
@@ -266,90 +249,77 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
    * record-capable here and stays that way until the last holder releases it,
    * so no card pays for a category change.
    */
-  const refreshCapture = useCallback((): void => {
-    if (holdersRef.current === 0) return;
-    // Never under a live window: the reopen would discard the audio the learner
-    // is producing right now.
-    if (capture.isCapturing) return;
-    diagMark('mic.session.refresh');
-    void openCapture(true);
-  }, [capture, openCapture]);
-
   /** True while the session has been handed to playback for a prompt. */
   const playbackPriorityRef = useRef(false);
   /** Latched on the first failure to restore — see setPlaybackPriority. */
   const playbackPriorityBrokenRef = useRef(false);
-  /**
-   * The in-flight hand-back to the microphone, so a caller that arrives while
-   * it is running joins it instead of skipping it.
-   *
-   * Load-bearing. `playbackPriorityRef` flips to false SYNCHRONOUSLY at the
-   * start of the restore, so without this a tap landing mid-restore matched the
-   * `playbackOnly === playbackPriorityRef.current` early-out, returned
-   * immediately, and went straight on to open the recorder itself — overtaking
-   * the `setRecordingSessionEnabled(true)` it was supposed to follow, and
-   * opening an input stream against a session expo-audio still had in
-   * `.playback`. Measured on device as `awaitOpenMs` of 428–704 ms on the cards
-   * where the learner tapped as the prompt ended.
-   */
-  const restoreRef = useRef<Promise<void> | null>(null);
+  /** Serializes every playback/record handoff. A same-direction caller must also
+   * join the active transition: `playbackPriorityRef` describes the completed
+   * native state, not merely the most recently requested state. */
+  const handoffRef = useRef<Promise<void> | null>(null);
 
   const setPlaybackPriority = useCallback(
     async (playbackOnly: boolean): Promise<void> => {
-      if (holdersRef.current === 0) return;
-      // Once this has failed to give the microphone back, it never runs again.
-      if (playbackPriorityBrokenRef.current) return;
-      // Never under a live window: closing the stream would discard the audio
-      // the learner is producing right now.
-      if (capture.isCapturing) return;
-      if (playbackOnly === playbackPriorityRef.current) {
-        // Already where we want to be — unless the restore that put us here is
-        // still running, in which case this caller has to wait for it.
-        const inFlight = restoreRef.current;
-        if (!playbackOnly && inFlight) {
-          const waitedFrom = Date.now();
-          await inFlight;
-          markRestoreWait(Date.now() - waitedFrom);
+      const previous = handoffRef.current;
+      const queuedAt = Date.now();
+      const handoff = (async () => {
+        if (previous) {
+          await previous.catch(() => undefined);
+          if (!playbackOnly) markRestoreWait(Date.now() - queuedAt);
         }
-        return;
-      }
-
-      if (playbackOnly) {
-        playbackPriorityRef.current = true;
-        diagMark('mic.session.toPlayback');
-        await capture.close();
-        await simpleAudioService.setRecordingSessionEnabled(false);
-        return;
-      }
-
-      playbackPriorityRef.current = false;
-      markRestoreStart();
-      const restore = (async () => {
-        await simpleAudioService.setRecordingSessionEnabled(true);
-        await openCapture();
-        if (!capture.isOpen) {
-          // One forced retry, then give up on the mechanism entirely rather
-          // than leave the learner tapping a mic that will never open.
-          await openCapture(true);
+        if (playbackPriorityBrokenRef.current) return;
+        // The first prompt effect is registered before useVoiceReview's session
+        // acquisition effect. Remember that playback already owns the session,
+        // so the later acquisition does not turn recording on underneath it.
+        if (holdersRef.current === 0) {
+          if (playbackOnly) playbackPriorityRef.current = true;
+          return;
         }
-        diagMark('mic.session.toRecord', { restored: capture.isOpen });
-        if (!capture.isOpen) {
-          playbackPriorityBrokenRef.current = true;
-          Sentry.addBreadcrumb({
-            category: 'voice',
-            level: 'warning',
-            message: 'voice.playbackPriority.disabled',
-          });
-          // Leave the session record-capable so the arm ladder has something to
-          // work with; the prompt goes back to being quiet, which is survivable.
+        // Never under a live window: closing the stream would discard the audio
+        // the learner is producing right now.
+        if (capture.isCapturing) return;
+        if (playbackOnly === playbackPriorityRef.current) return;
+
+        if (playbackOnly) {
+          diagMark('mic.session.toPlayback');
+          await capture.close();
+          await simpleAudioService.setRecordingSessionEnabled(false);
+          playbackPriorityRef.current = true;
+          return;
+        }
+
+        markRestoreStart();
+        try {
           await simpleAudioService.setRecordingSessionEnabled(true);
+          await openCapture();
+          if (!capture.isOpen) {
+            // One forced retry, then give up on the mechanism entirely rather
+            // than leave the learner tapping a mic that will never open.
+            await openCapture(true);
+          }
+          diagMark('mic.session.toRecord', { restored: capture.isOpen });
+          if (!capture.isOpen) {
+            playbackPriorityBrokenRef.current = true;
+            Sentry.addBreadcrumb({
+              category: 'voice',
+              level: 'warning',
+              message: 'voice.playbackPriority.disabled',
+            });
+            // Leave the session record-capable so the arm ladder has something to
+            // work with; the prompt goes back to being quiet, which is survivable.
+            await simpleAudioService.setRecordingSessionEnabled(true);
+          }
+          playbackPriorityRef.current = false;
+        } finally {
+          markRestoreEnd();
         }
-      })().finally(() => {
-        markRestoreEnd();
-        restoreRef.current = null;
-      });
-      restoreRef.current = restore;
-      return restore;
+      })();
+      handoffRef.current = handoff;
+      try {
+        await handoff;
+      } finally {
+        if (handoffRef.current === handoff) handoffRef.current = null;
+      }
     },
     [capture, openCapture],
   );
@@ -372,7 +342,13 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
       // asked for anything, and it forces the output route onto .playAndRecord
       // (quieter playback — see AUDIO_MODE_CONFIG). Fixing that means releasing
       // the recording session between cards, not opening the stream late.
-      void simpleAudioService.setRecordingSessionEnabled(true).then(() => openCapture());
+      // A first prompt may already own playback: useReview registers that effect
+      // before useVoiceReview registers this acquisition. In that case markDone
+      // will restore/open the microphone after the prompt; opening here would
+      // switch the prompt back to the quiet record-capable route mid-word.
+      if (!playbackPriorityRef.current) {
+        void simpleAudioService.setRecordingSessionEnabled(true).then(() => openCapture());
+      }
     }
     let released = false;
     return () => {
@@ -381,7 +357,18 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
       holdersRef.current -= 1;
       if (holdersRef.current > 0) return;
       abortWindow('not-ready');
-      void capture.close().then(() => simpleAudioService.setRecordingSessionEnabled(false));
+      const previous = handoffRef.current;
+      const cleanup = (async () => {
+        await previous?.catch(() => undefined);
+        await capture.close();
+        await simpleAudioService.setRecordingSessionEnabled(false);
+        playbackPriorityRef.current = false;
+        playbackPriorityBrokenRef.current = false;
+      })();
+      handoffRef.current = cleanup;
+      void cleanup.finally(() => {
+        if (handoffRef.current === cleanup) handoffRef.current = null;
+      });
     };
   }, [abortWindow, capture, openCapture]);
 
@@ -587,7 +574,7 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
         }
       });
     },
-    [capture, isReady, micLevel, openCapture],
+    [capture, isReady, micLevel, openCapture, setPlaybackPriority],
   );
 
   /**
@@ -662,7 +649,6 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
       transcribe,
       prewarmPermission,
       acquireSession,
-      refreshCapture,
       setPlaybackPriority,
     }),
     [
@@ -678,7 +664,6 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
       transcribe,
       prewarmPermission,
       acquireSession,
-      refreshCapture,
       setPlaybackPriority,
     ],
   );

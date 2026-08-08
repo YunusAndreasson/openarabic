@@ -10,11 +10,6 @@
 import { describe, expect, it, jest, beforeEach, afterEach } from '@jest/globals';
 import { renderHook, act } from '@testing-library/react-native';
 
-// Mock dependencies BEFORE imports
-jest.mock('@/hooks/common/useMountSafety', () => ({
-  useMountSafety: jest.fn(),
-}));
-
 jest.mock('@/services/audioPlayer', () => ({
   simpleAudioService: {
     getStatus: jest.fn(),
@@ -26,11 +21,9 @@ import {
   useAudioProgressSubscription,
   useAudioSubscription,
 } from '@/hooks/audio/useAudioSubscription';
-import { useMountSafety } from '@/hooks/common/useMountSafety';
 import { simpleAudioService } from '@/services/audioPlayer';
 import type { AudioStatus } from '@/services/audioPlayer';
 
-const mockUseMountSafety = jest.mocked(useMountSafety);
 const mockSimpleAudioService = jest.mocked(simpleAudioService);
 
 describe('useAudioSubscription', () => {
@@ -57,9 +50,6 @@ describe('useAudioSubscription', () => {
     jest.clearAllMocks();
     subscribeCallback = null;
     subscribeOptions = undefined;
-
-    // Default mount safety - component is mounted
-    mockUseMountSafety.mockReturnValue({ current: true });
 
     // Default audio service mocks
     mockSimpleAudioService.getStatus.mockReturnValue(mockInitialStatus);
@@ -196,30 +186,6 @@ describe('useAudioSubscription', () => {
       });
 
       expect(result.current.status.currentTrack?.id).toBe(123);
-    });
-  });
-
-  describe('Mount safety', () => {
-    test('should not update status when component is unmounted', () => {
-      const mountedRef = { current: true };
-      mockUseMountSafety.mockReturnValue(mountedRef);
-
-      const { result } = renderHook(() => useAudioSubscription());
-
-      // Simulate unmount
-      mountedRef.current = false;
-
-      const newStatus: AudioStatus = {
-        ...mockInitialStatus,
-        playing: true,
-      };
-
-      act(() => {
-        subscribeCallback?.(newStatus);
-      });
-
-      // Status should not have changed
-      expect(result.current.status.playing).toBeFalsy();
     });
   });
 

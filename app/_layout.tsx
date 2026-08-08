@@ -16,8 +16,8 @@ import { NavigationBar } from 'expo-navigation-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import * as Updates from 'expo-updates';
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { AppState, Platform, StyleSheet, View } from 'react-native';
+import { memo, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
+import { AppState, Platform, StyleSheet, View, type AppStateStatus } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -225,6 +225,7 @@ function AppContent() {
   const appState = useRef(AppState.currentState);
   const [sessionStartTime] = useState<number>(() => Date.now());
   const backgroundedTime = useRef<number | null>(null);
+  const resumeRefreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { isLoading: isAuthLoading, session } = useAuth();
   const navigationRef = useNavigationContainerRef();
   const router = useRouter();
@@ -473,51 +474,46 @@ function AppContent() {
     };
   }, []);
 
+  const handleAppStateChange = useEffectEvent((nextAppState: AppStateStatus) => {
+    const wasActive = appState.current === 'active';
+    const wasInactive = appState.current !== 'active';
+    const isActivating = wasInactive && nextAppState === 'active';
+    const isBackgrounding = wasActive && nextAppState !== 'active';
+
+    appState.current = nextAppState;
+
+    if (isBackgrounding && appReady) {
+      backgroundedTime.current = Date.now();
+      const sessionDurationMs = Date.now() - sessionStartTime;
+      analytics.track(ANALYTICS_EVENTS.APP_BACKGROUNDED, {
+        session_duration_ms: sessionDurationMs,
+      });
+    }
+
+    if (!isActivating || !appReady) return;
+
+    const timeBackgroundedMs = backgroundedTime.current ? Date.now() - backgroundedTime.current : 0;
+    analytics.track(ANALYTICS_EVENTS.APP_RESUMED, {
+      time_backgrounded_ms: timeBackgroundedMs,
+    });
+    backgroundedTime.current = null;
+
+    if (resumeRefreshTimer.current) clearTimeout(resumeRefreshTimer.current);
+    resumeRefreshTimer.current = setTimeout(() => {
+      resumeRefreshTimer.current = null;
+      void preloadAppData();
+    }, TIMING_CONSTANTS.MEDIUM_DELAY);
+  });
+
   // Cleanup effect for AppState subscription
   useEffect(() => {
-    // Tracked so a pending resume-refresh is cancelled when this effect is torn
-    // down (or re-runs on an appReady/preloadAppData change) rather than firing
-    // against a stale closure.
-    let resumeRefreshTimer: ReturnType<typeof setTimeout> | undefined;
-
-    const subscription = AppState.addEventListener('change', nextAppState => {
-      const wasActive = appState.current === 'active';
-      const wasInactive = appState.current !== 'active';
-      const isActivating = wasInactive && nextAppState === 'active';
-      const isBackgrounding = wasActive && nextAppState !== 'active';
-
-      appState.current = nextAppState;
-
-      if (isBackgrounding && appReady) {
-        // Track app backgrounded
-        backgroundedTime.current = Date.now();
-        const sessionDurationMs = Date.now() - sessionStartTime;
-        analytics.track(ANALYTICS_EVENTS.APP_BACKGROUNDED, {
-          session_duration_ms: sessionDurationMs,
-        });
-      }
-
-      if (isActivating && appReady) {
-        // Track app resumed
-        const timeBackgroundedMs = backgroundedTime.current
-          ? Date.now() - backgroundedTime.current
-          : 0;
-        analytics.track(ANALYTICS_EVENTS.APP_RESUMED, {
-          time_backgrounded_ms: timeBackgroundedMs,
-        });
-        backgroundedTime.current = null;
-
-        // When resuming from background, refresh app data
-        clearTimeout(resumeRefreshTimer);
-        resumeRefreshTimer = setTimeout(preloadAppData, TIMING_CONSTANTS.MEDIUM_DELAY);
-      }
-    });
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
 
     return () => {
       subscription.remove();
-      clearTimeout(resumeRefreshTimer);
+      if (resumeRefreshTimer.current) clearTimeout(resumeRefreshTimer.current);
     };
-  }, [appReady, preloadAppData]);
+  }, []);
 
   // Auth-gated navigation is handled declaratively below via <Stack.Protected>
   // guards on the route groups. The runtime redirects users to the next

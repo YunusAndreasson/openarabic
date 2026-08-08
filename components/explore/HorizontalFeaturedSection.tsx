@@ -1,5 +1,4 @@
 import type { JSX } from 'react';
-import { View } from 'react-native';
 
 import { SectionLabel } from '@/components/common';
 import { STRINGS } from '@/constants/strings';
@@ -35,10 +34,10 @@ export function HorizontalFeaturedSection({
   if (articles.length === 0) return null;
 
   return (
-    <View>
+    <>
       <SectionLabel title={STRINGS.SECTION_FEATURED} />
       <HorizontalArticleSlider articles={articles} />
-    </View>
+    </>
   );
 }
 

@@ -45,7 +45,7 @@ import {
 } from '@/services/voiceTelemetry';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import { setVoiceEnabled } from '@/store/settingsSlice';
-import { errorFeedback } from '@/utils/haptics';
+import { errorFeedback, lightFeedback, successFeedback, warningFeedback } from '@/utils/haptics';
 import { getArmStages, markArmTap } from '@/utils/armTelemetry';
 import { getPromptSnapshot, recordPromptCut } from '@/utils/promptTelemetry';
 import { countDiag, mark as diagMark, span as diagSpan } from '@/utils/reviewDiagnostics';
@@ -130,11 +130,6 @@ interface UseVoiceReviewArgs {
   currentWordKey: string;
   /** Current card's root id, recorded with each telemetry attempt. */
   rootId: number | null | undefined;
-  /** From useReview: the `currentWordKey` whose Arabic prompt has finished
-   *  playing (or had no audio). No longer gates the mic — the tap does — but it
-   *  is when the input stream gets re-established, because playing the prompt
-   *  is what can leave it open and deaf. See `refreshCapture`. */
-  promptAudioDoneKey: string | null;
   /** Is the review session ready (not loading, no audio preload in flight). */
   ready: boolean;
   /** Stop any in-flight playback (reveal audio) before reopening the mic on a
@@ -142,6 +137,10 @@ interface UseVoiceReviewArgs {
   stopAudio: () => void;
   /** Called after a match — caller should advance the card as Known. */
   onKnownAuto: () => void;
+  /** Called when the utterance SOUNDED like the answer but transcribed as
+   *  something else — caller should advance the card as Guessed. Credit, not a
+   *  failure: see the `near` path in voiceMatching. */
+  onVagueAuto: () => void;
   /** Called after a clean miss (recognized real word that's clearly different
    *  from the expected) — caller should advance the card as Unknown. */
   onUnknownAuto: () => void;
@@ -201,10 +200,10 @@ export function useVoiceReview({
   expected,
   currentWordKey,
   rootId,
-  promptAudioDoneKey,
   ready,
   stopAudio,
   onKnownAuto,
+  onVagueAuto,
   onUnknownAuto,
   onRevealAnswer,
 }: UseVoiceReviewArgs): {
@@ -275,8 +274,6 @@ export function useVoiceReview({
    * A row with an arm and a null trigger is an arm nobody asked for.
    */
   const armTriggerRef = useRef<'tap' | 'retry' | 'ladder' | null>(null);
-  /** The input stream was force-reopened after this card's prompt. */
-  const streamRefreshedRef = useRef(false);
 
   // Session-local mute. When true the arm effect bails (no auto-listen) and any
   // in-flight recording is cancelled. Does NOT touch the global `voiceEnabled`
@@ -286,6 +283,7 @@ export function useVoiceReview({
 
   // Stable refs for callback identity.
   const onKnownAutoRef = useRef(onKnownAuto);
+  const onVagueAutoRef = useRef(onVagueAuto);
   const onUnknownAutoRef = useRef(onUnknownAuto);
   const onRevealAnswerRef = useRef(onRevealAnswer);
   const stopAudioRef = useRef(stopAudio);
@@ -299,6 +297,7 @@ export function useVoiceReview({
   const phaseRef = useRef<VoicePhase>('idle');
   useEffect(() => {
     onKnownAutoRef.current = onKnownAuto;
+    onVagueAutoRef.current = onVagueAuto;
     onUnknownAutoRef.current = onUnknownAuto;
     onRevealAnswerRef.current = onRevealAnswer;
     stopAudioRef.current = stopAudio;
@@ -348,7 +347,6 @@ export function useVoiceReview({
     tapAtRef.current = null;
     tapToCapturingRef.current = null;
     armTriggerRef.current = null;
-    streamRefreshedRef.current = false;
     if (armRetryTimerRef.current) {
       clearTimeout(armRetryTimerRef.current);
       armRetryTimerRef.current = null;
@@ -375,7 +373,7 @@ export function useVoiceReview({
   // `voice` context value: that object's identity changes on every
   // `downloadProgress` tick, so depending on it would tear the session down and
   // rebuild it dozens of times while the model is still downloading.
-  const { prewarmPermission, acquireSession, refreshCapture } = voice;
+  const { prewarmPermission, acquireSession } = voice;
 
   useEffect(() => {
     if (!voiceEnabled || paused) return;
@@ -394,26 +392,6 @@ export function useVoiceReview({
     if (!voiceEnabled) return;
     return acquireSession();
   }, [voiceEnabled, acquireSession]);
-
-  /**
-   * Re-establish the input stream the moment this card's prompt finishes.
-   *
-   * Playing the Arabic reconfigures the shared audio session, and that can
-   * leave the held-open stream alive but deaf — `isOpen` true, not one buffer
-   * ever. The old path only discovered this from inside the window: it ran to
-   * the first-buffer watchdog, came back "no audio from microphone", reopened,
-   * and the caller's backoff armed again. All of that is billed to the tap.
-   *
-   * Doing it here spends the reopen while the learner is still reading the
-   * word, so the tap lands on a live microphone. The failure ladder stays as
-   * the backstop for the interruptions this cannot predict.
-   */
-  useEffect(() => {
-    if (!voiceEnabled || paused) return;
-    if (currentWordKey === 'none' || promptAudioDoneKey !== currentWordKey) return;
-    streamRefreshedRef.current = true;
-    refreshCapture();
-  }, [voiceEnabled, paused, currentWordKey, promptAudioDoneKey, refreshCapture]);
 
   // Surface a passive "Preparing voice…" pill ONLY while the model is genuinely
   // loading. On a load error (or any non-loading not-ready state) stay idle —
@@ -479,7 +457,15 @@ export function useVoiceReview({
           tapToCapturingRef.current =
             tapAtRef.current === null ? null : Date.now() - tapAtRef.current;
           diagMark('mic.capturing', { tapToCapturingMs: tapToCapturingRef.current });
-          if (!cancelled) setPhase('listening');
+          if (!cancelled) {
+            setPhase('listening');
+            // "Go." The mic opens half a second to a second after the tap, and
+            // the learner is looking at the word they are about to say, not at
+            // the button that changes caption. Without this the only way to
+            // know when to start speaking is to watch the UI — which is the one
+            // thing a spoken-answer exercise should not require.
+            lightFeedback();
+          }
         },
       });
       if (cancelled) {
@@ -511,7 +497,7 @@ export function useVoiceReview({
             durationMs: null,
             bufferCount: null,
             tapToCapturingMs: null,
-            streamRefreshed: streamRefreshedRef.current,
+            streamRefreshed: false,
             meta: {
               settings: settingsRef.current,
               phase: 'denied',
@@ -569,13 +555,21 @@ export function useVoiceReview({
           durationMs: null,
           bufferCount: null,
           tapToCapturingMs: null,
-          streamRefreshed: streamRefreshedRef.current,
+          streamRefreshed: false,
           meta: {
             settings: settingsRef.current,
             phase: 'gave-up',
             prompt: getPromptSnapshot(currentWordKey),
           },
         });
+        // The ladder is out of rungs: this card never got a microphone. The
+        // button just goes quietly back to "Tap to answer", which is
+        // indistinguishable from it never having been pressed — so the one
+        // signal the learner gets that anything went wrong is this. A warning
+        // rather than an error: the mic failing is not a wrong answer.
+        // (The missing VISUAL for this state is a real gap, but out of scope
+        // for a haptics pass.)
+        warningFeedback();
         setPhase('idle');
         return;
       }
@@ -688,7 +682,7 @@ export function useVoiceReview({
           // Where the ~1.1 s between the tap and the microphone went. Only
           // ~150 ms of it is the recorder; the rest was unattributed until this.
           armStages: getArmStages(),
-          streamRefreshed: streamRefreshedRef.current,
+          streamRefreshed: false,
           // What the learner actually heard before answering. A miss on a card
           // whose prompt was cut (or never played) is not a mishearing — it is
           // a question that was never asked, and until this landed the two were
@@ -709,10 +703,32 @@ export function useVoiceReview({
         // Correct → log the auto-pass, then proceed. Blank the indicator before
         // handing off so the "Grading…" pill doesn't linger over the advance
         // animation; the next card re-arms cleanly on mount.
+        //
+        // A `near` match is credited too, but as Guessed: the learner sounded
+        // like the answer and the model wrote down something else, so failing
+        // them would be the model's mistake charged to them. A toast names what
+        // was heard, because silently passing an answer the learner knows they
+        // fumbled is its own kind of wrong.
+        const vague = match.credit === 'vague';
         attemptCtxRef.current = buildAttemptCtx(null);
-        void logVoiceAttempt({ ...attemptCtxRef.current, resolution: 'auto_known' });
+        void logVoiceAttempt({
+          ...attemptCtxRef.current,
+          resolution: vague ? 'auto_vague' : 'auto_known',
+        });
         setPhase('idle');
-        onKnownAutoRef.current();
+        if (vague) {
+          // Credited, but not cleanly — a lighter beat than a full pass, to
+          // match the toast that says what was actually heard.
+          lightFeedback();
+          showToast(STRINGS.VOICE_NEAR_MATCH_TEMPLATE(match.normalizedSpoken));
+          onVagueAutoRef.current();
+        } else {
+          // You said it right. This is the payoff moment of the whole voice
+          // exercise and it used to be entirely silent — the card just advanced,
+          // so a clean answer and a dead microphone felt exactly the same.
+          successFeedback();
+          onKnownAutoRef.current();
+        }
         return;
       }
 
@@ -736,9 +752,15 @@ export function useVoiceReview({
       }
       if (heardReliable) {
         // Heard a real word that didn't match → error haptic ("that was wrong").
-        // Silence / "didn't catch that" isn't a wrong answer, so no haptic — and
-        // a correct answer fires nothing either (it just advances).
         errorFeedback();
+      } else {
+        // Silence or a hallucinated transcript is the app failing, not a wrong
+        // answer, so it must not feel like one — but it can't be silent either.
+        // After speaking into a microphone, no feedback at all is ambiguous:
+        // "it heard nothing" and "it's still thinking" feel identical, and the
+        // learner is left waiting on a panel that has already arrived. Warning
+        // says "we're back, nothing landed" without scoring it against them.
+        warningFeedback();
       }
       Sentry.addBreadcrumb({
         category: 'voice',

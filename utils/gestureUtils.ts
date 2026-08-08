@@ -1,5 +1,6 @@
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
+import type { DetentTone } from '@/utils/haptics';
 
 // ===== GESTURE CONSTANTS =====
 export const GESTURE_CONSTANTS = {
@@ -75,6 +76,25 @@ export function resolveSwipeCommit({
     Math.sign(velocityX) === Math.sign(translationX);
 
   return { commit: isThrow || isFlick, isRight: translationX > 0 };
+}
+
+/**
+ * Which detent texture a swipe-to-grade threshold event should fire.
+ *
+ * Lives here with `resolveSwipeCommit` and `resolveCommitExit` for the same
+ * reason they do: it is one of the gesture's decisions, and keeping it a pure
+ * function means the rule can be exercised without a gesture harness.
+ *
+ * The tick is the swipe's ONLY haptic — release deliberately fires nothing,
+ * because a second buzz for one decision is worse than an ambiguous first one.
+ * So the tone has to carry the outcome as well as the crossing: crisp toward
+ * the lighter grade, heavy toward the miss (matching how the grade bar already
+ * weights its taps), soft on the way back out, because a detent that only
+ * clicks going in is half a detent.
+ */
+export function resolveDetentTone(armed: boolean, isRight: boolean): DetentTone {
+  if (!armed) return 'soft';
+  return isRight ? 'crisp' : 'heavy';
 }
 
 /** Whether a committed card flies off screen, per direction. See

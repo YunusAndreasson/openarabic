@@ -7,7 +7,7 @@
  * - renderHook from @testing-library/react-native
  */
 
-import { describe, expect, it, jest, beforeEach, afterEach } from '@jest/globals';
+import { describe, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { renderHook } from '@testing-library/react-native';
 
 // Mock dependencies BEFORE imports
@@ -25,6 +25,10 @@ jest.mock('@/hooks/auth/useAuth', () => ({
 }));
 
 jest.mock('@/constants/queries', () => ({
+  fsrsQueries: {
+    lastCompletedAtKey: jest.fn((userId: string) => ['last-completed', userId]),
+    invalidateAll: jest.fn(),
+  },
   studyStreakQueries: {
     invalidateAll: jest.fn(),
   },
@@ -34,6 +38,20 @@ jest.mock('@/services/analytics', () => ({
   analytics: {
     track: jest.fn(),
   },
+}));
+
+jest.mock('@/services/metaEvents', () => ({
+  metaEvents: {
+    logPracticeSessionComplete: jest.fn(),
+  },
+}));
+
+jest.mock('@/utils/notificationPromptStorage', () => ({
+  recordSessionCompleted: jest.fn(),
+}));
+
+jest.mock('@/utils/recallSignalStorage', () => ({
+  appendSession: jest.fn(),
 }));
 
 jest.mock('@/services/notificationService', () => ({
@@ -110,31 +128,13 @@ describe('useReviewCompletion', () => {
     cardsCrossedThreshold: 1,
   };
 
-  describe('Initial state', () => {
-    test('should return completion functions', () => {
-      const { result } = renderHook(() => useReviewCompletion(mockSessionMetrics, false));
-
-      expect(result.current).toHaveProperty('invalidateReviewQueries');
-      expect(result.current).toHaveProperty('trackCompletion');
-    });
-
+  describe('Lifecycle', () => {
     test('should not crash with undefined metrics', () => {
-      const { result } = renderHook(() => useReviewCompletion(undefined, false));
-      expect(result.current).toBeDefined();
+      expect(() => renderHook(() => useReviewCompletion())).not.toThrow();
     });
-  });
 
-  describe('Return value structure', () => {
-    test('should return functions', () => {
-      const { result } = renderHook(() => useReviewCompletion(mockSessionMetrics, false));
-      expect(typeof result.current.invalidateReviewQueries).toBe('function');
-      expect(typeof result.current.trackCompletion).toBe('function');
-    });
-  });
-
-  describe('Cleanup', () => {
     test('should cleanup on unmount', () => {
-      const { unmount } = renderHook(() => useReviewCompletion(mockSessionMetrics, false));
+      const { unmount } = renderHook(() => useReviewCompletion(mockSessionMetrics));
 
       // Should unmount without errors
       unmount();

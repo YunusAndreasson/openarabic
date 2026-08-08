@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect } from 'react';
+import { useEffect } from 'react';
 import { InteractionManager } from 'react-native';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
@@ -16,57 +16,10 @@ import { appendSession } from '@/utils/recallSignalStorage';
  * Manages query invalidation and analytics tracking
  *
  * @param sessionMetrics - Optional metrics from the completed session
- * @param shouldExecute - Whether to execute completion logic (default: true)
  */
-export const useReviewCompletion = (
-  sessionMetrics?: SessionMetrics,
-  shouldExecute: boolean = true,
-) => {
+export const useReviewCompletion = (sessionMetrics?: SessionMetrics): void => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-
-  /**
-   * Invalidate all FSRS queries after review completion
-   * This ensures the study tab and coach messages update immediately
-   * Also records study session for streak tracking
-   */
-  const invalidateReviewQueries = useCallback(async () => {
-    if (!user?.id) return;
-
-    // Mark session completion time to enable temporary cooldown
-    queryClient.setQueryData(fsrsQueries.lastCompletedAtKey(user.id), Date.now());
-
-    // Invalidate study streak queries to update UI immediately (silent - don't block on failure)
-    try {
-      await studyStreakQueries.invalidateAll(queryClient, user.id);
-    } catch {
-      // Silently fail - don't block review completion on streak recording failure
-    }
-
-    // Invalidate all FSRS word queries (prefix-based — covers all, due, stats, allWithCooldown)
-    fsrsQueries.invalidateAll(queryClient, user.id);
-  }, [user, queryClient]);
-
-  /**
-   * Track review completion analytics
-   */
-  const trackCompletion = useCallback(() => {
-    if (!sessionMetrics) return;
-
-    const sessionDuration = Date.now() - sessionMetrics.startTime;
-
-    analytics.track(ANALYTICS_EVENTS.PRACTICE_SESSION_COMPLETE, {
-      wordsReviewed: sessionMetrics.wordsReviewed,
-      wordsKnown: sessionMetrics.wordsKnown,
-      wordsUnknown: sessionMetrics.wordsUnknown,
-      sessionDuration,
-      averageStabilityIncrease: sessionMetrics.averageStabilityIncrease,
-      longestStreak: sessionMetrics.longestStreak,
-      masteredWords: sessionMetrics.masteredWords,
-    });
-
-    metaEvents.logPracticeSessionComplete(sessionMetrics.wordsReviewed);
-  }, [sessionMetrics]);
 
   /**
    * Execute completion logic when component mounts
@@ -75,14 +28,38 @@ export const useReviewCompletion = (
    * callback so it lands exactly when the zoom-in settles.)
    */
   useEffect(() => {
-    if (!shouldExecute) return;
+    const invalidateReviewQueries = async (): Promise<void> => {
+      if (!user?.id) return;
+
+      queryClient.setQueryData(fsrsQueries.lastCompletedAtKey(user.id), Date.now());
+
+      try {
+        await studyStreakQueries.invalidateAll(queryClient, user.id);
+      } catch {
+        // Streak refresh is best-effort and must not block completion.
+      }
+
+      void fsrsQueries.invalidateAll(queryClient, user.id);
+    };
 
     // (split work + requestIdleCallback) changes *when* this runs, not just its name.
     // These sit in preload/review hot paths; migrating needs per-site profiling.
     // eslint-disable-next-line @typescript-eslint/no-deprecated -- see note above
     InteractionManager.runAfterInteractions(() => {
-      invalidateReviewQueries();
-      trackCompletion();
+      void invalidateReviewQueries();
+
+      if (sessionMetrics) {
+        void analytics.track(ANALYTICS_EVENTS.PRACTICE_SESSION_COMPLETE, {
+          wordsReviewed: sessionMetrics.wordsReviewed,
+          wordsKnown: sessionMetrics.wordsKnown,
+          wordsUnknown: sessionMetrics.wordsUnknown,
+          sessionDuration: Date.now() - sessionMetrics.startTime,
+          averageStabilityIncrease: sessionMetrics.averageStabilityIncrease,
+          longestStreak: sessionMetrics.longestStreak,
+          masteredWords: sessionMetrics.masteredWords,
+        });
+        metaEvents.logPracticeSessionComplete(sessionMetrics.wordsReviewed);
+      }
 
       // Record this session's first-attempt recall for adaptive new-word pacing.
       // Fire-and-forget (best-effort, local storage).
@@ -95,10 +72,5 @@ export const useReviewCompletion = (
       // primed card on the completion screen — never bare from here.
       void recordSessionCompleted();
     });
-  }, [shouldExecute, invalidateReviewQueries, trackCompletion, sessionMetrics]);
-
-  return {
-    invalidateReviewQueries,
-    trackCompletion,
-  };
+  }, [queryClient, sessionMetrics, user?.id]);
 };

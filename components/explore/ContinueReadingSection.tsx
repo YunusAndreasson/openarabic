@@ -1,6 +1,5 @@
 import { useRouter } from 'expo-router';
-import { memo, useCallback, useMemo, type FC } from 'react';
-import { View } from 'react-native';
+import { Fragment, memo, useCallback, useMemo, type FC } from 'react';
 
 import { SectionLabel } from '@/components/common';
 import { COMPLETION_THRESHOLD } from '@/constants/layout';
@@ -95,10 +94,10 @@ const ContinueReadingSectionComponent: FC<ContinueReadingSectionProps> = ({ arti
   }
 
   return (
-    <View>
+    <Fragment>
       <SectionLabel title={sectionLabel} density="first" />
       <ArticleRail items={articles} keyPrefix="continue" onArticlePress={handleArticlePress} />
-    </View>
+    </Fragment>
   );
 };
 
