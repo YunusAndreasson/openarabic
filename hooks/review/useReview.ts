@@ -529,13 +529,25 @@ export function useReview({
     if (currentWord?.root?.audio_url_en) {
       const englishAudioUrl = generateStorageUrl('audio', currentWord.root.audio_url_en);
       if (englishAudioUrl) {
+        // The answer is spoken AFTER the microphone has taken its session back
+        // (markDone restores it at the end of the prompt), so without this it
+        // plays on the quiet .playAndRecord route. There is no finish event to
+        // hand the session back on, so the microphone reclaims it itself when
+        // the learner next taps — see arm() in VoiceGradingProvider.
         // The English play supersedes the Arabic prompt. Recorded before it
         // starts, because from the watcher's side the teardown that follows is
         // indistinguishable from a player that died on its own.
         recordPromptCut('reveal');
         const endMeaningPlay = diagSpan('meaning.play');
-        playAudio(englishAudioUrl)
-          .then(started => endMeaningPlay({ started }))
+        // AWAITED, not fired alongside the play: until the input stream is
+        // actually closed the answer plays on the quiet .playAndRecord route.
+        // Racing the two lost — the answer began while the microphone was still
+        // open, which is exactly what it sounded like.
+        setPlaybackPriorityRef
+          .current(true)
+          .catch(handleError)
+          .then(() => playAudio(englishAudioUrl))
+          .then(started => endMeaningPlay({ started: started ?? false }))
           .catch(err => {
             endMeaningPlay({ started: false, error: true });
             handleError(err);
@@ -644,7 +656,11 @@ export function useReview({
       const replayUrl = generateStorageUrl('audio', audioPath);
       if (replayUrl) {
         recordPromptCut('reveal');
-        playAudio(replayUrl).catch(handleError);
+        setPlaybackPriorityRef
+          .current(true)
+          .catch(handleError)
+          .then(() => playAudio(replayUrl))
+          .catch(handleError);
       }
     },
     [currentWord?.root?.meaning, currentWord?.root?.audio_url, playAudio],
@@ -977,7 +993,11 @@ export function useReview({
       // Replaying the same word supersedes an in-flight prompt with itself:
       // the learner heard part of it, then asked for it again.
       recordPromptCut('replay');
-      playAudio(audioUrl).catch(handleError);
+      setPlaybackPriorityRef
+        .current(true)
+        .catch(handleError)
+        .then(() => playAudio(audioUrl))
+        .catch(handleError);
     }
   }, [currentWord, playAudio]);
 

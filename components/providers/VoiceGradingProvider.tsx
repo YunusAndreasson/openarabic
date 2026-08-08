@@ -411,6 +411,11 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
   const arm = useCallback(
     async function arm(handlers?: { onCapturing?: () => void }): Promise<VoiceArmOutcome> {
       markArmEntered();
+      // Whoever borrowed the session for playback may not have given it back —
+      // the English answer claims it and has no finish event to hand it over
+      // on. The microphone reclaims it here rather than trusting that, so a tap
+      // can never land on a session that is still in .playback.
+      await setPlaybackPriority(false);
       if (!isReady) {
         diagMark('mic.arm.reject', { reason: 'not-ready' });
         return { ok: false, reason: 'not-ready' };
@@ -576,7 +581,7 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
         return null;
       }
     },
-    [isReady, rawTranscribe],
+    [isReady, rawTranscribe, setPlaybackPriority],
   );
 
   // Ask for the microphone before a card needs it. Without this the OS dialog
