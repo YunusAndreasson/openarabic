@@ -45,10 +45,15 @@ jest.mock('@/utils/chartDataUtils', () => ({
 jest.mock('@/utils/fsrsUtils', () => ({
   calculateRetrievabilityForecast: (words: StudyWord[], days: number) => {
     if (words.length === 0) return [];
+    // `wordCount` is part of RetrievabilityForecast and the hook reads it as
+    // the population the score speaks for — omitting it made every mocked
+    // forecast look like it had measured nothing.
+    const measured = words.filter(w => (w.fsrs_reps ?? 0) > 0).length;
     return Array.from({ length: days }, (_, i) => ({
       date: new Date(Date.now() + i * 24 * 60 * 60 * 1000),
       averageRetrievability: 80 - i * 5, // Declining
       criticalWords: i,
+      wordCount: measured,
     }));
   },
   calculateRetrievabilityTrend: (data: any[]) => {
@@ -84,21 +89,26 @@ describe('useRetrievabilityChart', () => {
         weekRetrievability: 0,
         trend: 'stable',
         criticalWords: 0,
+        measuredWords: 0,
       });
     });
   });
 
   describe('With Study Words', () => {
     test('calculates retrievability forecast for words', () => {
+      // fsrs_reps > 0 is what makes these reviewed words rather than saved
+      // ones: a State 2 card has necessarily been through a review, and only
+      // reviewed words carry the memory state the forgetting curve reads.
       const words = [
-        createTestWord({ fsrs_state: 2, fsrs_stability: 5 }),
-        createTestWord({ fsrs_state: 2, fsrs_stability: 3 }),
+        createTestWord({ fsrs_state: 2, fsrs_stability: 5, fsrs_reps: 3 }),
+        createTestWord({ fsrs_state: 2, fsrs_stability: 3, fsrs_reps: 2 }),
       ];
 
       const { result } = renderHook(() => useRetrievabilityChart(words));
 
       expect(result.current.retrievabilityData.length).toBeGreaterThan(0);
       expect(result.current.chartData.hasData).toBeTruthy();
+      expect(result.current.chartData.insights.measuredWords).toBe(2);
     });
 
     test('generates chart path for valid data', () => {

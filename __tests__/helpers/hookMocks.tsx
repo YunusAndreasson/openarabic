@@ -117,6 +117,7 @@ export const createFSRSMock = (
     progress: number;
     updateWord: jest.Mock;
     invalidateQueries: jest.Mock;
+    flushPendingWrites: jest.Mock;
     dueWords: StudyWord[];
     totalDue: number;
   }> = {},
@@ -130,6 +131,9 @@ export const createFSRSMock = (
   updateWord: jest.fn().mockResolvedValue(7.5), // Returns new stability
   previewIntervals: jest.fn(() => ({ unknown: '1m', vague: '10m', known: '4d' })),
   invalidateQueries: jest.fn(),
+  // Every review exit awaits this before invalidating, so it must resolve —
+  // a mock missing it turns session teardown into a TypeError.
+  flushPendingWrites: jest.fn().mockResolvedValue(undefined),
   resetQueue: jest.fn(),
   dueWords: [],
   totalDue: 0,

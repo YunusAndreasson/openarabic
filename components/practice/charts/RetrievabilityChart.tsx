@@ -36,15 +36,20 @@ export const RetrievabilityChart = memo<RetrievabilityChartProps>(
 
     // Generate subtitle using standardized messaging system
     const subtitle = useMemo(() => {
-      const { currentRetrievability, criticalWords } = chartData.insights;
-      const totalWords = studyWords.length;
+      const { currentRetrievability, criticalWords, measuredWords } = chartData.insights;
 
-      if (totalWords === 0) {
+      // Counted over the words the curve actually speaks for, not everything
+      // saved — the subtitle quotes this total back to the learner.
+      if (measuredWords === 0) {
         return STRINGS.STUDY_WORDS_TO_TRACK_MEMORY_RETENTION;
       }
 
-      return generateChartSubtitle.retrievability(currentRetrievability, criticalWords, totalWords);
-    }, [chartData.insights, studyWords.length]);
+      return generateChartSubtitle.retrievability(
+        currentRetrievability,
+        criticalWords,
+        measuredWords,
+      );
+    }, [chartData.insights]);
 
     // Concrete numbers under the chart: now → week-from-now → words at risk
     const bottomSummary = useMemo(() => {

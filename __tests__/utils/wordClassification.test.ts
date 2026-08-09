@@ -263,7 +263,13 @@ describe('wordClassification', () => {
       expect(isDueWord(notDueWord)).toBeFalsy();
     });
 
-    test('should return false for recently reviewed words', () => {
+    test('an overdue word stays due even if it was reviewed recently', () => {
+      // "Due" is a property of the schedule: fsrs_due has passed. The 2h
+      // session cooldown is a separate gate on re-serving a finished session's
+      // words, applied server-side only when a session just completed (and
+      // exempting states 0/1/3 even then). Applying it here unilaterally made
+      // this classifier disagree with both the server's `onlyDue` filter and
+      // the due-words forecast rendered beside it.
       const now = new Date();
       const pastDate = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
       const recentReview = new Date(now.getTime() - 30 * 60 * 1000).toISOString(); // 30 min ago
@@ -274,7 +280,7 @@ describe('wordClassification', () => {
         fsrs_last_review: recentReview,
       });
 
-      expect(isDueWord(recentlyReviewedWord)).toBeFalsy();
+      expect(isDueWord(recentlyReviewedWord)).toBe(true);
     });
   });
 

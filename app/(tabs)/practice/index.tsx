@@ -214,6 +214,7 @@ export default function PracticeScreen(): JSX.Element {
             dueWords={dueWordsCount}
             dueCountCapped={dueCountCapped}
             memoryRetention={chartData.insights.currentRetrievability}
+            hasMeasuredMemory={chartData.insights.measuredWords > 0}
             reviewedToday={reviewedToday}
             nextDueDate={nextDueDate}
             currentStreak={currentStreak}

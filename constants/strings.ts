@@ -477,7 +477,10 @@ export const STRINGS = {
   MEMORY_STRENGTH: 'Memory strength',
   WORD_MASTERY: 'Mastered words',
   // Practice bottom sheet subtitles (concise: what it shows + why it matters)
-  MEMORY_STRENGTH_SUBTITLE: "How much of your vocabulary you'd remember if quizzed right now",
+  // Says "practised", not "your vocabulary": the score is the forgetting curve
+  // averaged over words that have actually been reviewed. Words still waiting
+  // for a first review have no memory state and are not in it.
+  MEMORY_STRENGTH_SUBTITLE: "How much of what you've practised you'd remember if quizzed right now",
   MEMORY_FORECAST_HINT: 'The line shows the week ahead if you don’t review',
   WORD_MASTERY_SUBTITLE: "Words you'll remember without review",
   DUE_WORDS_FORECAST_SUBTITLE: 'How many words come up for review each day',
@@ -489,6 +492,8 @@ export const STRINGS = {
   TODAY_NEXT_REVIEW: 'Next review',
   // Practice stat tiles
   MEMORY_LABEL: 'Memory',
+  /** Stat-tile placeholder for a metric with nothing to measure yet. */
+  EMPTY_METRIC: '—',
   MASTERED_LOWER: 'mastered',
   VOCABULARY_GROWTH_LABEL: 'Words in practice',
   // Chart bottom summaries

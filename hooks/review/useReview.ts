@@ -274,6 +274,25 @@ export function useReview({
   // Add controller ref for proper cleanup
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  // A grade the learner has already given whose FSRS write has not started yet.
+  //
+  // `commitGrade` sequences the write off the card's fade-out completion, so
+  // for VERDICT.BEAT + CARD_EXIT (320ms; 180ms on a swipe, which skips the
+  // beat) the grade exists only as this pending closure. Every teardown path
+  // used to cancel it — the AbortController aborts, useOpacityAnimation drops
+  // its callback once isMounted goes false, and clearAllTimers kills the
+  // watchdog — so `updateWord` was never reached, pendingWritesRef stayed empty
+  // and flushPendingWrites had nothing to flush. Closing 154ms and 187ms after
+  // a grade both reached the database with nothing, silently: the card had
+  // already faded out and the counts stayed self-consistent.
+  //
+  // Draining this before any teardown is what makes a grade durable.
+  const pendingGradeRef = useRef<(() => void) | null>(null);
+
+  // Set once a session teardown has already been finalized, so the close
+  // handler and the unmount cleanup don't both schedule the same work.
+  const finalizedRef = useRef(false);
+
   // Active prompt-finish watcher, keyed by the card it belongs to. Held in a
   // ref (not tied to the audio effect's cleanup) so an incidental re-render
   // mid-prompt can't tear it down.
@@ -620,9 +639,14 @@ export function useReview({
       const advance = () => {
         if (advanced || controller.signal.aborted) return;
         advanced = true;
+        pendingGradeRef.current = null;
         clearTimer('fadeAnimation');
         processFeedback(confidence, controller);
       };
+
+      // Registered before the fade starts, so a close landing inside the fade
+      // window can still commit this grade (see pendingGradeRef).
+      pendingGradeRef.current = advance;
 
       // Hold the card at full strength for the verdict beat before dissolving
       // it, so the confirmation is legible on its own. The dissolve is
@@ -1041,9 +1065,57 @@ export function useReview({
   // own press feedback, and ThemedButton already fires one. Firing again here
   // meant Continue buzzed twice in the same tick, hidden only by the 50ms
   // per-pattern debounce. The haptic belongs to the control, not to the exit.
+  /**
+   * Everything a session owes the rest of the app on its way out, on EVERY exit
+   * path: commit a grade still waiting on the fade, settle the writes, then let
+   * the practice screen refetch behind them.
+   *
+   * Idempotent. `handleClose` calls it for the ✕ button; the unmount cleanup
+   * calls it for exits that never reach `handleClose` — Android's back button
+   * and back gesture, or a parent navigation — which previously persisted the
+   * grade but left every ['fsrs-words'] entry untouched, so the practice
+   * screen kept showing pre-session counts for up to the 60s staleTime.
+   */
+  const commitPendingGrade = useCallback(() => {
+    const pendingGrade = pendingGradeRef.current;
+    pendingGradeRef.current = null;
+    pendingGrade?.();
+  }, []);
+
+  const finalizeSession = useCallback(() => {
+    if (finalizedRef.current) return;
+    finalizedRef.current = true;
+
+    commitPendingGrade();
+
+    // The flush must complete even though this closure outlives the screen.
+    //
+    // Guarded because this is the FIRST step of the unmount cleanup: abort,
+    // timer cleanup, telemetry reset and the abandonment event all run after
+    // it, and a throw here would take every one of them down with it. A real
+    // failure still surfaces rather than being swallowed.
+    try {
+      void flushPendingWrites().then(invalidateQueries).catch(handleError);
+    } catch (error) {
+      handleError(error);
+    }
+  }, [commitPendingGrade, flushPendingWrites, invalidateQueries]);
+
+  // Held in a ref so the unmount cleanup can call it without taking it as a
+  // dependency — that effect must stay mount/unmount-only (see its own note).
+  const finalizeSessionRef = useRef(finalizeSession);
+  useEffect(() => {
+    finalizeSessionRef.current = finalizeSession;
+  }, [finalizeSession]);
+
   const handleClose = () => {
     // Stop any playing audio when closing
     stopAudioSafely();
+
+    // Before anything can tear the screen down: commit a grade still waiting on
+    // the card's fade-out. Synchronous on purpose — it only kicks off a
+    // background write, and deferring it is exactly how it used to get lost.
+    commitPendingGrade();
 
     // Defer query invalidation until after navigation animation completes.
     // invalidateQueries → fsrsQueries.invalidateAll prefix-invalidates every
@@ -1061,7 +1133,7 @@ export function useReview({
     // These sit in preload/review hot paths; migrating needs per-site profiling.
     // eslint-disable-next-line @typescript-eslint/no-deprecated -- see note above
     InteractionManager.runAfterInteractions(() => {
-      void flushPendingWrites().then(invalidateQueries);
+      finalizeSession();
     });
 
     // Schedule navigation with timer cleanup
@@ -1107,6 +1179,13 @@ export function useReview({
   // playAudio() in the audio-play effect, and clobbering session state.
   useEffect(() => {
     return () => {
+      // FIRST, before the abort below can cancel it: persist a grade still
+      // waiting on the fade and leave the caches consistent. This is the only
+      // hook exits that never reach `handleClose` have — Android's back button
+      // and back gesture, or a parent navigation. Idempotent, so the ✕ path
+      // (which already finalized) falls straight through.
+      finalizeSessionRef.current();
+
       if (
         sessionStarted.current &&
         !stateRefs.current.completionTriggered &&

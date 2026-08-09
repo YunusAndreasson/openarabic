@@ -58,7 +58,6 @@ export const useReviewCompletion = (sessionMetrics?: SessionMetrics): void => {
           longestStreak: sessionMetrics.longestStreak,
           masteredWords: sessionMetrics.masteredWords,
         });
-        metaEvents.logPracticeSessionComplete(sessionMetrics.wordsReviewed);
       }
 
       // Record this session's first-attempt recall for adaptive new-word pacing.
@@ -71,6 +70,19 @@ export const useReviewCompletion = (sessionMetrics?: SessionMetrics): void => {
       // policy. The OS permission dialog itself is only ever shown from the
       // primed card on the completion screen — never bare from here.
       void recordSessionCompleted();
+
+      // Ad attribution goes LAST and behind its own guard. The Meta SDK threw
+      // out of here on the first completion of every launch ("The SDK has not
+      // been initialized"), and from the middle of this callback that skipped
+      // the two calls above it. Nothing the learner depends on may sit behind
+      // an ad SDK.
+      if (sessionMetrics) {
+        try {
+          metaEvents.logPracticeSessionComplete(sessionMetrics.wordsReviewed);
+        } catch {
+          // Attribution is non-critical — never let it affect the session.
+        }
+      }
     });
   }, [queryClient, sessionMetrics, user?.id]);
 };

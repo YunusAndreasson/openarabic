@@ -2,13 +2,12 @@ import { computeDecayFactor, fsrs, generatorParameters } from 'ts-fsrs';
 
 import {
   CRITICAL_RETRIEVABILITY_THRESHOLD,
-  DEFAULT_SESSION_COOLDOWN_HOURS,
   OPTIMIZED_FSRS_CONFIG,
   TREND_CHANGE_THRESHOLD,
   URGENT_RETRIEVABILITY_THRESHOLD,
 } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { normalizeTimestamp } from '@/utils/dateTimeUtils';
+import { parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
 
 // Shared FSRS instance for retrievability calculations
 // Uses the same config as the review engine for consistency
@@ -42,7 +41,12 @@ export function calculateRetrievability(
 ): number {
   const stability = word.fsrs_stability ?? 0;
   if (!word.fsrs_last_review && !lastReviewDate) return 0;
-  const lastReview = lastReviewDate ?? new Date(word.fsrs_last_review);
+  // parseSupabaseTimestamp, not `new Date(...)`: the raw constructor reads a
+  // zone-less stamp as device-local (Hermes included) while the rest of the
+  // app reads it as UTC, and rejects Postgres' "+00" offset outright.
+  const lastReview = lastReviewDate ?? parseSupabaseTimestamp(word.fsrs_last_review);
+
+  if (!lastReview) return 0;
 
   if (Number.isNaN(lastReview.getTime()) || stability <= 0) {
     return 0;
@@ -72,13 +76,19 @@ export function timeUntilRetrievability(stabilityDays: number, threshold: number
  * Internal helper function for calculateRetrievabilityForecast and calculateDueWordsForecast
  */
 function generateForecastDates(days: number = 7): Date[] {
-  const today = new Date();
-  today.setHours(23, 59, 59, 999);
+  const now = new Date();
 
-  const dates: Date[] = [];
-  for (let i = 0; i < days; i++) {
-    const date = new Date(today);
-    date.setDate(today.getDate() + i); // Future dates starting from today
+  // The first bucket is NOW, not the end of today. Both charts label it
+  // "Today" and read as a statement about this moment — the due chart's
+  // "<N> to review today" sits beside a CTA that counts what is due right now,
+  // and the retention gauge says "if quizzed right now". Anchoring the bucket
+  // at 23:59 made the first one count words that only fall due tonight and the
+  // second one charge a full day of extra decay against today's score.
+  const dates: Date[] = [now];
+
+  for (let i = 1; i < days; i++) {
+    const date = new Date(now);
+    date.setDate(now.getDate() + i);
     date.setHours(23, 59, 59, 999);
     dates.push(date);
   }
@@ -96,7 +106,8 @@ export function calculateRetrievabilityForecast(
   // Filter to only include words that have been reviewed
   const validWords = studyWords.reduce<(StudyWord & { lastReviewDate: Date })[]>((acc, w) => {
     if (w.fsrs_last_review && (w.fsrs_reps ?? 0) > 0) {
-      acc.push({ ...w, lastReviewDate: new Date(w.fsrs_last_review) });
+      const lastReviewDate = parseSupabaseTimestamp(w.fsrs_last_review);
+      if (lastReviewDate) acc.push({ ...w, lastReviewDate });
     }
     return acc;
   }, []);
@@ -159,7 +170,8 @@ export function calculateRetrievabilityTrend(
  */
 interface WordDueData {
   dueMs: number;
-  lastReviewMs: number;
+  /** State 0 — never studied, so always due for its first review. */
+  isNew: boolean;
 }
 
 /**
@@ -167,28 +179,28 @@ interface WordDueData {
  */
 function precomputeWordDueData(words: StudyWord[]): WordDueData[] {
   return words.map(word => {
-    const dueStr = normalizeTimestamp(word.fsrs_due);
-    const dueMs = dueStr ? Date.parse(dueStr) : Number.POSITIVE_INFINITY;
+    const due = parseSupabaseTimestamp(word.fsrs_due);
 
-    const lastStr = normalizeTimestamp(word.fsrs_last_review);
-    const lastMs = lastStr ? Date.parse(lastStr) : 0;
-
-    return { dueMs, lastReviewMs: lastMs };
+    return {
+      dueMs: due ? due.getTime() : Number.POSITIVE_INFINITY,
+      isNew: (word.fsrs_state ?? 0) === 0,
+    };
   });
 }
 
 /**
- * Check if a word is due on a specific date using pre-computed data
+ * Check if a word is due on a specific date using pre-computed data.
+ *
+ * Deliberately the same rule the server's `onlyDue` filter and
+ * `calculateDueWords` use — `fsrs_due <= target OR state 0` — so the forecast's
+ * "Today" and the queue the Practice screen actually serves are the same
+ * number. It does NOT apply the session cooldown: that is a gate on re-serving
+ * a finished session's words, not a property of the schedule, and anchoring it
+ * to each forecast day made the chart disagree with the CTA beside it.
  */
-function isWordDueOnDateFast(
-  wordData: WordDueData,
-  targetDateMs: number,
-  cooldownMs: number,
-): boolean {
-  const isDue = Number.isFinite(wordData.dueMs) && wordData.dueMs <= targetDateMs;
-  const isRecentlyReviewed =
-    Number.isFinite(wordData.lastReviewMs) && wordData.lastReviewMs >= cooldownMs;
-  return isDue && !isRecentlyReviewed;
+function isWordDueOnDateFast(wordData: WordDueData, targetDateMs: number): boolean {
+  if (wordData.isNew) return true;
+  return Number.isFinite(wordData.dueMs) && wordData.dueMs <= targetDateMs;
 }
 
 /**
@@ -199,8 +211,9 @@ export function calculateDueWordsForecast(
   studyWords: StudyWord[],
   days: number = 7,
 ): DueWordsForecast[] {
-  // Filter to only include words that have FSRS data
-  const validWords = studyWords.filter(w => w.fsrs_due != null);
+  // A new word is due for its first review whether or not it carries a due
+  // date, so it cannot be filtered out on `fsrs_due` alone.
+  const validWords = studyWords.filter(w => w.fsrs_due != null || (w.fsrs_state ?? 0) === 0);
 
   // Pre-compute due data for all words (single pass)
   const wordDueData = precomputeWordDueData(validWords);
@@ -208,18 +221,13 @@ export function calculateDueWordsForecast(
   // Generate future dates for forecasting
   const dates = generateForecastDates(days);
 
-  // Pre-compute date timestamps and cooldowns
-  const dateData = dates.map(date => ({
-    date,
-    targetMs: date.getTime(),
-    cooldownMs: date.getTime() - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000,
-  }));
+  const dateData = dates.map(date => ({ date, targetMs: date.getTime() }));
 
   // Calculate due counts for each date
-  const dueCounts: number[] = dateData.map(({ targetMs, cooldownMs }) => {
+  const dueCounts: number[] = dateData.map(({ targetMs }) => {
     let count = 0;
     for (const data of wordDueData) {
-      if (isWordDueOnDateFast(data, targetMs, cooldownMs)) {
+      if (isWordDueOnDateFast(data, targetMs)) {
         count++;
       }
     }
@@ -273,9 +281,9 @@ export function calculateNextDueDate(studyWords: StudyWord[]): Date | null {
   let earliestMs = Infinity;
   for (const word of studyWords) {
     if (word.fsrs_due == null) continue;
-    const dueStr = normalizeTimestamp(word.fsrs_due);
-    if (!dueStr) continue;
-    const dueMs = new Date(dueStr).getTime();
+    const due = parseSupabaseTimestamp(word.fsrs_due);
+    if (!due) continue;
+    const dueMs = due.getTime();
     if (dueMs > now.getTime() && dueMs < earliestMs) {
       earliestMs = dueMs;
     }
@@ -289,7 +297,20 @@ export function calculateNextDueDate(studyWords: StudyWord[]): Date | null {
  */
 export function formatNextDue(nextDue: Date | null): string {
   if (!nextDue) return 'soon';
-  const days = Math.ceil((nextDue.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+
+  // Calendar days apart, not elapsed 24h blocks. Dividing the raw difference
+  // rounded every sub-day gap up to a full day, so a word due ten minutes from
+  // now — the normal state at the end of a session, since the learning steps
+  // are 1m/6m/10m — was announced as "tomorrow", and a word due tomorrow
+  // evening as "in 2 days". `calculateNextDueDate` only ever returns a future
+  // date, so the 'today' branch was unreachable entirely.
+  const startOfLocalDay = (date: Date): number =>
+    new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+
+  const days = Math.round(
+    (startOfLocalDay(nextDue) - startOfLocalDay(new Date())) / (1000 * 60 * 60 * 24),
+  );
+
   if (days <= 0) return 'today';
   if (days === 1) return 'tomorrow';
   return `in ${days} days`;

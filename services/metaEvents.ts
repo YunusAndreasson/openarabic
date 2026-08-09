@@ -35,7 +35,7 @@
  * observe. The same trap applies to Mixpanel. `NSPrivacyTracking` is false for the
  * matching reason: with no ATT there is no IDFA, so nothing tracks across apps.
  */
-import { Platform } from 'react-native';
+import { NativeModules, Platform } from 'react-native';
 
 import { META_EVENTS } from '@/constants/analytics';
 
@@ -48,11 +48,26 @@ interface MetaAppEventsLogger {
 }
 
 interface MetaSettings {
+  initializeSDK(): void;
   setAdvertiserTrackingEnabled(enabled: boolean): Promise<boolean>;
 }
 
 let appEventsLogger: MetaAppEventsLogger | null = null;
-let isConfigured = false;
+let isSdkInitialized = false;
+let loggerResolveAttempts = 0;
+
+/**
+ * Reaching AppEventsLogger before native initialization has landed throws out
+ * of the JSI proxy ("Exception in HostObject::get for prop 'FBAppEventsLogger'").
+ * The throw is caught below, but on Android it is also reported to LogBox, so
+ * each attempt costs a red box in development.
+ *
+ * Two attempts: one immediate, one on a later event, which covers a native init
+ * that had not settled in the first tick. Bounded tightly on purpose — a build
+ * whose native project carries no Facebook app id never initializes at all, and
+ * retrying that forever would just multiply the noise.
+ */
+const MAX_LOGGER_RESOLVE_ATTEMPTS = 2;
 
 /**
  * Resolve the SDK on first use.
@@ -62,20 +77,26 @@ let isConfigured = false;
  * miss here leaves appEventsLogger null and every call below becomes a no-op.
  */
 const configureMeta = (): void => {
-  if (isConfigured) {
+  if (isSdkInitialized) {
     return;
   }
 
   // Latch before the work: a throw must not leave this retrying on every event.
-  isConfigured = true;
+  isSdkInitialized = true;
 
   try {
-    const { AppEventsLogger, Settings } = require('react-native-fbsdk-next') as {
-      AppEventsLogger: MetaAppEventsLogger;
-      Settings: MetaSettings;
-    };
+    // `react-native-fbsdk-next` eagerly evaluates every barrel export, including
+    // AccessTokenTracker. Loading only the two modules used here prevents an
+    // unrelated login tracker from crashing first-run analytics on Android.
+    NativeModules['FBSettings']?.initializeSDK?.();
 
-    appEventsLogger = AppEventsLogger;
+    const Settings = require('react-native-fbsdk-next/lib/commonjs/FBSettings')
+      .default as MetaSettings;
+
+    // A checked-in native project can lag behind app.json plugin settings. Make
+    // initialization explicit before the first event so Android never reaches
+    // AppEventsLogger with an uninitialized FacebookSdk.
+    Settings.initializeSDK();
 
     // Explicit on iOS even though the SDK already derives `false` from an
     // undetermined ATT status. Stating it makes AEM-only mode deliberate rather
@@ -91,6 +112,30 @@ const configureMeta = (): void => {
   }
 };
 
+/**
+ * Resolve the event logger, separately from initialization and only once the
+ * SDK has been asked to initialize. Kept apart from `configureMeta` so a native
+ * init that has not settled yet costs one skipped event rather than latching
+ * attribution off for the whole process.
+ */
+const resolveAppEventsLogger = (): MetaAppEventsLogger | null => {
+  if (appEventsLogger || loggerResolveAttempts >= MAX_LOGGER_RESOLVE_ATTEMPTS) {
+    return appEventsLogger;
+  }
+
+  loggerResolveAttempts += 1;
+
+  try {
+    appEventsLogger = require('react-native-fbsdk-next/lib/commonjs/FBAppEventsLogger')
+      .default as MetaAppEventsLogger;
+  } catch {
+    // Not ready (or not linked) — a later event tries again, up to the cap.
+    appEventsLogger = null;
+  }
+
+  return appEventsLogger;
+};
+
 export const metaEvents = {
   /**
    * Log a Meta app event. Prefer the named helpers below over calling this with
@@ -100,7 +145,7 @@ export const metaEvents = {
   log: (eventName: string, params?: MetaEventParams): void => {
     try {
       configureMeta();
-      appEventsLogger?.logEvent(eventName, params);
+      resolveAppEventsLogger()?.logEvent(eventName, params);
     } catch {
       // Ad attribution is non-critical — never surface this.
     }

@@ -264,7 +264,9 @@ export function MemoryRetentionGauge({
   return (
     <BaseChart
       contentHeight={GAUGE_HEIGHT + 20}
-      hasData={studyWords.length > 0}
+      // Having words saved is not the same as having something to measure:
+      // the curve only speaks for words that have actually been reviewed.
+      hasData={chartData.insights.measuredWords > 0}
       emptyStateText={STRINGS.STUDY_WORDS_TO_TRACK_MEMORY_RETENTION}
       onCardPress={onInfoPress}
     >

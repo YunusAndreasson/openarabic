@@ -28,6 +28,14 @@ interface RetrievabilityChartData {
     weekRetrievability: number;
     trend: 'improving' | 'declining' | 'stable';
     criticalWords: number;
+    /**
+     * How many words the percentage is actually averaged over — only those with
+     * a review behind them. A word that has never been shown has no memory
+     * state to decay, so it cannot be in this average, and the surfaces above
+     * must not imply it is. Zero here means there is nothing to measure yet,
+     * which is NOT the same as 0% recall.
+     */
+    measuredWords: number;
   };
 }
 
@@ -57,6 +65,7 @@ export function useRetrievabilityChart(studyWords: StudyWord[]): UseRetrievabili
           weekRetrievability: 0,
           trend: 'stable',
           criticalWords: 0,
+          measuredWords: 0,
         },
         dangerZones: [],
         dataPoints: [],
@@ -99,10 +108,17 @@ export function useRetrievabilityChart(studyWords: StudyWord[]): UseRetrievabili
     const weekData = retrievabilityData[retrievabilityData.length - 1];
     const weekRetrievability = weekData?.averageRetrievability || 0;
 
+    // Only words with a review behind them carry a memory state, so they are
+    // the only ones the forgetting curve can speak for.
+    const measuredWords = todayData?.wordCount ?? 0;
+
     return {
       retrievabilityPath,
-      // Show the chart whenever the user has any study words, regardless of due words
-      hasData: (studyWords?.length ?? 0) > 0,
+      // Needs something measured, not merely something saved. With words added
+      // but none practised the average is taken over an empty set and rendered
+      // as a flat 0% — telling a learner who just built a list that they would
+      // remember none of it. That is an empty state, not a score.
+      hasData: measuredWords > 0,
       dangerZones: performanceZones,
       dataPoints: points,
       insights: {
@@ -110,9 +126,10 @@ export function useRetrievabilityChart(studyWords: StudyWord[]): UseRetrievabili
         weekRetrievability: Math.round(weekRetrievability),
         trend,
         criticalWords,
+        measuredWords,
       },
     };
-  }, [retrievabilityData, chartColors, studyWords?.length]);
+  }, [retrievabilityData, chartColors]);
 
   return { retrievabilityData, chartData };
 }

@@ -24,25 +24,7 @@ export function isHardWord(word: StudyWord): boolean {
  * Uses FSRS due date logic to determine which words are currently due for review
  */
 export function calculateDueWords(studyWords: StudyWord[]): number {
-  const nowMs = Date.now();
-  const cutoffMs = nowMs - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
-
-  return studyWords.filter(word => {
-    // New words (state 0) are always due for their first review
-    if (word.fsrs_state === 0) {
-      return true;
-    }
-
-    const dueStr = normalizeTimestamp(word.fsrs_due);
-    const dueMs = dueStr ? Date.parse(dueStr) : Number.POSITIVE_INFINITY;
-    const isDue = Number.isFinite(dueMs) && dueMs <= nowMs;
-
-    const lastStr = normalizeTimestamp(word.fsrs_last_review);
-    const lastMs = lastStr ? Date.parse(lastStr) : 0;
-    const isRecentlyReviewed = Number.isFinite(lastMs) && lastMs >= cutoffMs;
-
-    return isDue && !isRecentlyReviewed;
-  }).length;
+  return studyWords.filter(isDueWord).length;
 }
 
 /**
@@ -144,6 +126,13 @@ export function countReviewedToday(studyWords: StudyWord[]): number {
   const startMs = startOfToday.getTime();
 
   return studyWords.filter(word => {
+    // `fsrs_reps > 0` is the only honest test for "has been reviewed".
+    // createResetFSRSUpdate stamps fsrs_last_review at creation on a card with
+    // reps 0, so keying off the timestamp alone reported every word ADDED
+    // today as REVIEWED today — measured on a live account as "10 reviewed
+    // today" against a total of one actual review.
+    if ((word.fsrs_reps ?? 0) <= 0) return false;
+
     const lastStr = normalizeTimestamp(word.fsrs_last_review);
     const lastMs = lastStr ? Date.parse(lastStr) : 0;
     return Number.isFinite(lastMs) && lastMs >= startMs;
@@ -164,13 +153,20 @@ export function isUnstableWord(word: StudyWord): boolean {
 // ===== WORD STATUS UTILITY FUNCTIONS FOR DICTIONARY UI =====
 
 /**
- * Determines if a word is due for review (for Dictionary UI status badges)
- * Uses the same logic as calculateDueWords but for a single word
+ * Is this word due for review right now?
+ *
+ * The single source of truth for "due" on the client, and deliberately the same
+ * rule the server's `onlyDue` filter uses: `fsrs_due <= now`, plus new words,
+ * which are always due for their first review.
+ *
+ * No session cooldown here. That is a gate on re-serving the words a
+ * just-finished session covered — the server applies it only when a session
+ * completed inside the window, and even then exempts states 0/1/3 (see
+ * studyWordsFSRSService.getFSRSWords). Baking it unconditionally into the
+ * client's "is this word due" test made these counts disagree with both the
+ * server and the due-words forecast beside them.
  */
 export function isDueWord(word: StudyWord): boolean {
-  const nowMs = Date.now();
-  const cutoffMs = nowMs - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
-
   // New words (state 0) are always due for their first review
   if (word.fsrs_state === 0) {
     return true;
@@ -178,13 +174,8 @@ export function isDueWord(word: StudyWord): boolean {
 
   const dueStr = normalizeTimestamp(word.fsrs_due);
   const dueMs = dueStr ? Date.parse(dueStr) : Number.POSITIVE_INFINITY;
-  const isDue = Number.isFinite(dueMs) && dueMs <= nowMs;
 
-  const lastStr = normalizeTimestamp(word.fsrs_last_review);
-  const lastMs = lastStr ? Date.parse(lastStr) : 0;
-  const isRecentlyReviewed = Number.isFinite(lastMs) && lastMs >= cutoffMs;
-
-  return isDue && !isRecentlyReviewed;
+  return Number.isFinite(dueMs) && dueMs <= Date.now();
 }
 
 /**

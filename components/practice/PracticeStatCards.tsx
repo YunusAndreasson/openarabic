@@ -23,6 +23,8 @@ interface PracticeStatCardsProps {
   masteredWords?: number;
   dueWords?: number;
   memoryRetention?: number;
+  /** False when no word has been reviewed yet, so there is no score to show. */
+  hasMeasuredMemory?: boolean;
   reviewedToday?: number;
   nextDueDate?: Date | null;
   dueCountCapped?: boolean;
@@ -41,6 +43,7 @@ export function PracticeStatCards({
   masteredWords = 0,
   dueWords = 0,
   memoryRetention = 0,
+  hasMeasuredMemory = true,
   reviewedToday = 0,
   nextDueDate = null,
   dueCountCapped = false,
@@ -81,8 +84,11 @@ export function PracticeStatCards({
     },
     {
       label: STRINGS.MEMORY_LABEL,
-      value: `${Math.round(memoryRetention)}%`,
-      valueColor: memoryColor,
+      // Nothing practised yet means nothing to measure. Rendering that as "0%"
+      // (in error red) reads as "you have forgotten everything" to someone who
+      // has simply not started.
+      value: hasMeasuredMemory ? `${Math.round(memoryRetention)}%` : STRINGS.EMPTY_METRIC,
+      valueColor: hasMeasuredMemory ? memoryColor : undefined,
       onPress: onMemoryPress,
     },
     // Only surfaced when the learner actually has leeches, so it never nags.
