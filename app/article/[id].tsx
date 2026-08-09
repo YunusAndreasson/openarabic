@@ -53,6 +53,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     activeTooltip,
     wordDetailsModal,
     isInStudyList,
+    isLoadingStudyWords,
     handleScroll,
     handleViewableItemsChanged,
     handleScrollEnd,
@@ -239,6 +240,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
         word={wordDetailsModal.data}
         onAddToStudy={handleAddWordToStudy}
         isInStudyList={isInStudyList}
+        isStudyStateLoading={isLoadingStudyWords}
       />
     </View>
   );

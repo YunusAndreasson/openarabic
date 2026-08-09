@@ -60,10 +60,18 @@ export const ChartAxes = memo<AxisLabelsProps>(
     const yLabels = useMemo(() => {
       const chartHeight = height - topPadding;
       const labels = [] as { value: number; y: number }[];
+      const seenValues = new Set<number>();
       for (let i = 0; i < Y_AXIS_LINES; i++) {
         const value = (yMax * i) / (Y_AXIS_LINES - 1);
         const y = topPadding + chartHeight - (i * chartHeight) / (Y_AXIS_LINES - 1);
-        labels.push({ value: Math.round(value), y });
+        const roundedValue = Math.round(value);
+        // Count charts often have a max of only 1–3. Five rounded ticks then
+        // render misleading duplicates such as 1,1,1,0,0. Keep one label per
+        // actual integer while retaining its grid-aligned position.
+        if (!seenValues.has(roundedValue)) {
+          seenValues.add(roundedValue);
+          labels.push({ value: roundedValue, y });
+        }
       }
       return labels;
     }, [height, topPadding, yMax]);

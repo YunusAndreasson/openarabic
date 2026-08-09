@@ -64,7 +64,10 @@ export function useAuthForm(): UseAuthFormReturn {
 
   const validateEmail = useCallback(
     (value: string) => {
-      if (!value) return false;
+      if (!value) {
+        if (isMountedRef.current) setEmailError(STRINGS.ERROR_EMPTY_EMAIL);
+        return false;
+      }
       if (!EMAIL_REGEX.test(value)) {
         if (isMountedRef.current) setEmailError(STRINGS.ENTER_VALID_EMAIL);
         return false;

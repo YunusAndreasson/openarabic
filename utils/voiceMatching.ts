@@ -421,7 +421,7 @@ function stripLeadingFunctionWords(text: string): string {
  * common ("Easton" for "eastern"), its consonant skeleton far more stable.
  * p/b, m/n and f/v/w are merged for the same reason `phoneticFold` merges them.
  */
-export function phoneticKey(word: string): string {
+function phoneticKey(word: string): string {
   const letters = word
     .toLowerCase()
     .replace(/[^a-z]/g, '')

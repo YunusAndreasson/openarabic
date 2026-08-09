@@ -1,4 +1,3 @@
-import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
 
@@ -22,45 +21,39 @@ export class AccountDeletionService {
    * @throws Error if deletion fails or user is not authenticated
    */
   static async deleteAccount(): Promise<void> {
-    try {
-      // Verify user is authenticated
-      const {
-        data: { user },
-        error: sessionError,
-      } = await supabase.auth.getUser();
+    // Verify user is authenticated
+    const {
+      data: { user },
+      error: sessionError,
+    } = await supabase.auth.getUser();
 
-      if (sessionError || !user) {
-        throw new Error('User must be authenticated to delete account');
-      }
+    if (sessionError || !user) {
+      throw new Error('User must be authenticated to delete account');
+    }
 
-      // Delete user account via RPC function
-      // WHY RPC?: Multi-table deletion requiring SECURITY DEFINER to access auth.users schema
-      // - Deletes from: study_words, reading_progress, reading_list, auth.users
-      // - Cannot be done with client-side queries (auth schema requires elevated privileges)
-      // - RPC runs with database privileges to delete from all schemas
-      // - Implements App Store requirement (5.1.1v) for account deletion
-      // See: SUPABASE_BACKEND_REQUIREMENTS.md and types/database.types.ts for details
-      const { error: deleteError } = await supabase.rpc('delete_user_account', {
-        user_id: user.id,
-      });
+    // Delete user account via RPC function
+    // WHY RPC?: Multi-table deletion requiring SECURITY DEFINER to access auth.users schema
+    // - Deletes from: study_words, reading_progress, reading_list, auth.users
+    // - Cannot be done with client-side queries (auth schema requires elevated privileges)
+    // - RPC runs with database privileges to delete from all schemas
+    // - Implements App Store requirement (5.1.1v) for account deletion
+    // See: SUPABASE_BACKEND_REQUIREMENTS.md and types/database.types.ts for details
+    const { error: deleteError } = await supabase.rpc('delete_user_account', {
+      user_id: user.id,
+    });
 
-      if (deleteError) {
-        throw new Error(`Failed to delete account: ${deleteError.message}`);
-      }
+    if (deleteError) {
+      throw new Error(`Failed to delete account: ${deleteError.message}`);
+    }
 
-      // Sign out after successful deletion
-      await supabase.auth.signOut();
-    } catch (error) {
-      // Handle and track the error
-      await handleError(error, {
-        toastMessage: STRINGS.FAILED_TO_DELETE_ACCOUNT,
-        analyticsEventName: 'Account_Deletion_Error',
-        sentrySeverity: 'error',
-        showToast: true,
-      });
-
-      // Re-throw to allow caller to handle
-      throw error;
+    // The server-side auth record no longer exists, so a global sign-out can no
+    // longer revoke it. Clear the local session directly and let the hook own
+    // user-visible error reporting.
+    const { error: signOutError } = await supabase.auth.signOut({ scope: 'local' });
+    if (signOutError) {
+      throw new Error(
+        `Account was deleted but the local session could not be cleared: ${signOutError.message}`,
+      );
     }
   }
 

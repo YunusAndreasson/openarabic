@@ -41,6 +41,9 @@ function FontPreviewCard({ option, isSelected, fontSize, onSelect }: FontPreview
         },
       ]}
       onPress={handlePress}
+      accessibilityLabel={`${option.displayName}. ${option.description}`}
+      accessibilityRole="radio"
+      accessibilityState={{ selected: isSelected }}
     >
       <View style={styles.fontHeader}>
         <View style={styles.fontTitleRow}>
@@ -115,6 +118,14 @@ export const ArabicFontSelector: FC = () => {
             A
           </ThemedText>
           <Slider
+            accessibilityLabel={STRINGS.FONT_SIZE}
+            accessibilityRole="adjustable"
+            accessibilityValue={{
+              min: fontSizeRange.MIN,
+              max: fontSizeRange.MAX,
+              now: Math.round(displayFontSize),
+              text: `${Math.round(displayFontSize)} pixels`,
+            }}
             style={styles.slider}
             minimumValue={fontSizeRange.MIN}
             maximumValue={fontSizeRange.MAX}

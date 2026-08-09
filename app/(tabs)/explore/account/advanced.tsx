@@ -5,7 +5,7 @@
  * be A/B tested on-device without a rebuild. No sliders — toggles only.
  */
 import { useCallback, useMemo, type FC } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -22,7 +22,6 @@ import {
   setVoiceGainNormalizeEnabled,
   setVoiceIosRawMode,
 } from '@/store/settingsSlice';
-import { selectionFeedback } from '@/utils/haptics';
 
 type StatusColor = 'success' | 'error' | 'tint' | 'textTertiary';
 
@@ -57,7 +56,6 @@ const AdvancedScreen: FC = () => {
 
   const makeToggleHandler = useCallback(
     (action: (value: boolean) => { type: string; payload: boolean }) => (value: boolean) => {
-      selectionFeedback();
       dispatch(action(value));
     },
     [dispatch],
@@ -123,14 +121,16 @@ const AdvancedScreen: FC = () => {
             toggleValue={gainNormalizeEnabled}
             onToggleChange={handleGainNorm}
           />
-          <SettingsCard
-            icon="hardware-chip"
-            label={STRINGS.ADVANCED_IOS_RAW}
-            subtitle={STRINGS.ADVANCED_IOS_RAW_SUBTITLE}
-            rightType="toggle"
-            toggleValue={iosRawMode}
-            onToggleChange={handleIosRaw}
-          />
+          {Platform.OS === 'ios' && (
+            <SettingsCard
+              icon="hardware-chip"
+              label={STRINGS.ADVANCED_IOS_RAW}
+              subtitle={STRINGS.ADVANCED_IOS_RAW_SUBTITLE}
+              rightType="toggle"
+              toggleValue={iosRawMode}
+              onToggleChange={handleIosRaw}
+            />
+          )}
         </SettingsSection>
 
         <SettingsSection title={STRINGS.ADVANCED_DEBUG_SECTION}>

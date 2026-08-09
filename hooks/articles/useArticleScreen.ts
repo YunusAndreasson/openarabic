@@ -63,6 +63,7 @@ export function useArticleScreen({
     sortedSentences,
     sentenceWordsMap,
     refetchStudyWords,
+    isLoadingStudyWords,
     isInReadingList,
     refetchReadingListStatus,
   } = useArticleData(articleId, user?.id);
@@ -332,6 +333,7 @@ export function useArticleScreen({
     activeTooltip,
     wordDetailsModal,
     isInStudyList,
+    isLoadingStudyWords,
     handleScrollEnd,
     // Handlers
     handleScroll,

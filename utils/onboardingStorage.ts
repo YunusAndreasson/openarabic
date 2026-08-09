@@ -28,7 +28,19 @@ function createState(overrides: Partial<OnboardingProgressState> = {}): Onboardi
 }
 
 let cachedState: OnboardingProgressState | null = null;
+let activeUserId: string | null = null;
 const listeners = new Set<() => void>();
+
+const getStorageKey = (): string =>
+  activeUserId ? `${ONBOARDING_STORAGE_KEY}:${activeUserId}` : ONBOARDING_STORAGE_KEY;
+
+/** Switch the in-memory/persistent checklist scope when the auth user changes. */
+export function setOnboardingStorageUser(userId: string | null): void {
+  if (activeUserId === userId) return;
+  activeUserId = userId;
+  cachedState = null;
+  notifyListeners();
+}
 
 /**
  * Subscribe to onboarding state changes (fires after every write).
@@ -54,11 +66,14 @@ export function getCachedOnboardingState(): OnboardingProgressState | null {
  */
 export async function loadOnboardingState(): Promise<OnboardingProgressState> {
   if (cachedState) return cachedState;
+  const storageKey = getStorageKey();
   try {
-    const raw = await AsyncStorage.getItem(ONBOARDING_STORAGE_KEY);
-    cachedState = raw
+    const raw = await AsyncStorage.getItem(storageKey);
+    const loadedState = raw
       ? { ...createState(), ...(JSON.parse(raw) as Partial<OnboardingProgressState>) }
       : createState();
+    // Ignore a late read from the account that was active when loading began.
+    if (storageKey === getStorageKey()) cachedState = loadedState;
   } catch (error) {
     handleError(error, {
       showToast: false,
@@ -66,8 +81,8 @@ export async function loadOnboardingState(): Promise<OnboardingProgressState> {
     });
     cachedState = createState({ dismissed: true, initializedAt: new Date().toISOString() });
   }
-  notifyListeners();
-  return cachedState;
+  if (storageKey === getStorageKey()) notifyListeners();
+  return cachedState ?? createState();
 }
 
 function notifyListeners(): void {
@@ -78,7 +93,7 @@ async function writeState(next: OnboardingProgressState): Promise<void> {
   cachedState = next;
   notifyListeners();
   try {
-    await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify(next));
+    await AsyncStorage.setItem(getStorageKey(), JSON.stringify(next));
   } catch (error) {
     handleError(error, {
       showToast: false,

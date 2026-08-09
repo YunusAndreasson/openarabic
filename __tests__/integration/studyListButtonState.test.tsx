@@ -135,12 +135,15 @@ describe('Study List Button State - Bug Reproduction', () => {
       );
 
       // STEP 1: Add word to study list (first time)
-      (studyWordsFSRSService.toggleFSRSStudyRoot as jest.Mock).mockResolvedValueOnce(true);
+      (studyWordsFSRSService.setFSRSStudyRoot as jest.Mock).mockResolvedValueOnce({
+        inStudyList: true,
+        changed: true,
+      });
 
       const firstAddResult = await result.current.handleRootPress(mockRootId);
 
       expect(firstAddResult).toBeTruthy(); // Word was added
-      expect(studyWordsFSRSService.toggleFSRSStudyRoot).toHaveBeenCalledWith(
+      expect(studyWordsFSRSService.setFSRSStudyRoot).toHaveBeenCalledWith(
         mockUserId,
         mockRootId,
         undefined,
@@ -160,12 +163,15 @@ describe('Study List Button State - Bug Reproduction', () => {
       expect(afterFirstAdd?.some(w => w.root_id === mockRootId)).toBeTruthy();
 
       // STEP 2: Remove word from study list
-      (studyWordsFSRSService.toggleFSRSStudyRoot as jest.Mock).mockResolvedValueOnce(false);
+      (studyWordsFSRSService.setFSRSStudyRoot as jest.Mock).mockResolvedValueOnce({
+        inStudyList: false,
+        changed: true,
+      });
 
       const removeResult = await result.current.handleRootPress(mockRootId);
 
       expect(removeResult).toBeFalsy(); // Word was removed
-      expect(studyWordsFSRSService.toggleFSRSStudyRoot).toHaveBeenCalledWith(
+      expect(studyWordsFSRSService.setFSRSStudyRoot).toHaveBeenCalledWith(
         mockUserId,
         mockRootId,
         undefined,
@@ -183,13 +189,16 @@ describe('Study List Button State - Bug Reproduction', () => {
       expect(afterRemove?.some(w => w.root_id === mockRootId)).toBeFalsy();
 
       // STEP 3: Add word AGAIN (this should work but may fail due to bug)
-      (studyWordsFSRSService.toggleFSRSStudyRoot as jest.Mock).mockResolvedValueOnce(true);
+      (studyWordsFSRSService.setFSRSStudyRoot as jest.Mock).mockResolvedValueOnce({
+        inStudyList: true,
+        changed: true,
+      });
 
       const secondAddResult = await result.current.handleRootPress(mockRootId);
 
       // 🐛 BUG: This assertion may fail if the stale closure bug occurs
       expect(secondAddResult).toBeTruthy(); // Word should be added again
-      expect(studyWordsFSRSService.toggleFSRSStudyRoot).toHaveBeenCalledWith(
+      expect(studyWordsFSRSService.setFSRSStudyRoot).toHaveBeenCalledWith(
         mockUserId,
         mockRootId,
         undefined,
@@ -223,22 +232,34 @@ describe('Study List Button State - Bug Reproduction', () => {
       );
 
       // First add
-      (studyWordsFSRSService.toggleFSRSStudyRoot as jest.Mock).mockResolvedValueOnce(true);
+      (studyWordsFSRSService.setFSRSStudyRoot as jest.Mock).mockResolvedValueOnce({
+        inStudyList: true,
+        changed: true,
+      });
       await result.current.handleRootPress(mockRootId);
       expectedLocalState.set(mockRootId, true);
 
       // Remove
-      (studyWordsFSRSService.toggleFSRSStudyRoot as jest.Mock).mockResolvedValueOnce(false);
+      (studyWordsFSRSService.setFSRSStudyRoot as jest.Mock).mockResolvedValueOnce({
+        inStudyList: false,
+        changed: true,
+      });
       await result.current.handleRootPress(mockRootId);
       expectedLocalState.set(mockRootId, false);
 
       // Second add
-      (studyWordsFSRSService.toggleFSRSStudyRoot as jest.Mock).mockResolvedValueOnce(true);
+      (studyWordsFSRSService.setFSRSStudyRoot as jest.Mock).mockResolvedValueOnce({
+        inStudyList: true,
+        changed: true,
+      });
       await result.current.handleRootPress(mockRootId);
       expectedLocalState.set(mockRootId, true);
 
       // Third add (should toggle to false)
-      (studyWordsFSRSService.toggleFSRSStudyRoot as jest.Mock).mockResolvedValueOnce(false);
+      (studyWordsFSRSService.setFSRSStudyRoot as jest.Mock).mockResolvedValueOnce({
+        inStudyList: false,
+        changed: true,
+      });
       const finalResult = await result.current.handleRootPress(mockRootId);
       expectedLocalState.set(mockRootId, false);
 
@@ -259,7 +280,10 @@ describe('Study List Button State - Bug Reproduction', () => {
       );
 
       // Remove word (local state becomes false, but cache still has it)
-      (studyWordsFSRSService.toggleFSRSStudyRoot as jest.Mock).mockResolvedValueOnce(false);
+      (studyWordsFSRSService.setFSRSStudyRoot as jest.Mock).mockResolvedValueOnce({
+        inStudyList: false,
+        changed: true,
+      });
       const removeResult = await result.current.handleRootPress(mockRootId);
 
       expect(removeResult).toBeFalsy();
@@ -280,9 +304,10 @@ describe('Study List Button State - Bug Reproduction', () => {
       const operations = [true, false, true, false];
 
       for (const expectedResult of operations) {
-        (studyWordsFSRSService.toggleFSRSStudyRoot as jest.Mock).mockResolvedValueOnce(
-          expectedResult,
-        );
+        (studyWordsFSRSService.setFSRSStudyRoot as jest.Mock).mockResolvedValueOnce({
+          inStudyList: expectedResult,
+          changed: true,
+        });
         const actualResult = await result.current.handleRootPress(mockRootId);
 
         // 🐛 BUG: May fail on later toggles due to stale closure
@@ -302,7 +327,10 @@ describe('Study List Button State - Bug Reproduction', () => {
         { wrapper },
       );
 
-      (studyWordsFSRSService.toggleFSRSStudyRoot as jest.Mock).mockResolvedValueOnce(true);
+      (studyWordsFSRSService.setFSRSStudyRoot as jest.Mock).mockResolvedValueOnce({
+        inStudyList: true,
+        changed: true,
+      });
       await result.current.handleRootPress(mockRootId);
 
       // Wait for mutation to complete and invalidation to fire
@@ -335,7 +363,7 @@ describe('Study List Button State - Bug Reproduction', () => {
 
       // Simulate mutation failure
       const mockError = new Error('Database connection failed');
-      (studyWordsFSRSService.toggleFSRSStudyRoot as jest.Mock).mockRejectedValueOnce(mockError);
+      (studyWordsFSRSService.setFSRSStudyRoot as jest.Mock).mockRejectedValueOnce(mockError);
 
       // Attempt to remove word (will fail)
       const removeResult = await result.current.handleRootPress(mockRootId);

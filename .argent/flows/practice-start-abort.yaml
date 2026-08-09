@@ -1,0 +1,12 @@
+steps:
+  - echo: Start a due-word review, then abort it without grading a card.
+  - tap: { text: { matches: '^Review [0-9]+ words?$' } }
+  - await: { visible: Show answer, timeout: 12000 }
+  - tool: button
+    args:
+      button: back
+  - await: { visible: Words in practice }
+  - assert: { visible: { text: { matches: '^[0-9]+ to review$' } } }
+executionPrerequisite: Reusable QA account is signed in and the Practice
+  dashboard shows at least one due word. The first-run review tutorial has been
+  dismissed for this account.

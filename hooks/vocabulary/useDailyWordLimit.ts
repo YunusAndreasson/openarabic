@@ -101,6 +101,20 @@ export const useDailyWordLimit = () => {
     }
   }, [getEffectiveLimitInfo, getDailyWordCount]);
 
+  /** Release a slot reserved by incrementDailyWordCount when the add fails. */
+  const decrementDailyWordCount = useCallback(async (): Promise<void> => {
+    try {
+      const { effective } = await getEffectiveLimitInfo();
+      // Unlimited mode never persists a reservation.
+      if (effective === Infinity) return;
+
+      const currentCount = await getDailyWordCount();
+      await AsyncStorage.setItem(DAILY_WORD_COUNT_KEY, String(Math.max(0, currentCount - 1)));
+    } catch {
+      // A failed cleanup must not hide the original mutation error.
+    }
+  }, [getEffectiveLimitInfo, getDailyWordCount]);
+
   const canAddWord = useCallback(async (): Promise<boolean> => {
     const { effective } = await getEffectiveLimitInfo();
     if (effective === Infinity) return true;
@@ -141,6 +155,7 @@ export const useDailyWordLimit = () => {
     getDailyWordCount,
     getEffectiveLimitInfo,
     incrementDailyWordCount,
+    decrementDailyWordCount,
     canAddWord,
     getRemainingWords,
     isApproachingLimit,

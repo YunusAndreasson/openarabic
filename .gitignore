@@ -52,6 +52,7 @@ translate/__pycache__/
 # translate/audio_cache/ removed - using Supabase Storage as single source of truth
 .env.local
 .env
+.argent/secrets.env
 translate/__pycache__/
 translate/reports/
 translate/article/

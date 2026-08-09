@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { LAYOUT } from '@/constants/layout';
+import { useShouldShowMiniPlayer } from '@/hooks/audio/useShouldShowMiniPlayer';
 
 interface PinnedActionButtonProps {
   title: string;
@@ -24,9 +25,18 @@ export function PinnedActionButton({
   loading,
 }: PinnedActionButtonProps): JSX.Element {
   const insets = useSafeAreaInsets();
+  const shouldShowMiniPlayer = useShouldShowMiniPlayer();
+  const miniPlayerClearance = shouldShowMiniPlayer
+    ? LAYOUT.CARD.HEIGHT.MINI_PLAYER + LAYOUT.SPACING.SMALL
+    : 0;
 
   return (
-    <View style={[styles.container, { bottom: insets.bottom + LAYOUT.SPACING.SMALL }]}>
+    <View
+      style={[
+        styles.container,
+        { bottom: insets.bottom + LAYOUT.SPACING.SMALL + miniPlayerClearance },
+      ]}
+    >
       <ThemedButton
         title={title}
         onPress={onPress}

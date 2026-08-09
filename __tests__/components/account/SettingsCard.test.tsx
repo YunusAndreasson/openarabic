@@ -99,8 +99,8 @@ describe('SettingsCard', () => {
       expect(getByText('English')).toBeTruthy();
     });
 
-    test('renders toggle switch', () => {
-      const { toJSON } = render(
+    test('renders a labeled toggle switch with its checked state', () => {
+      const { getByLabelText } = render(
         <SettingsCard
           icon="notifications"
           label="Notifications"
@@ -109,7 +109,7 @@ describe('SettingsCard', () => {
           onToggleChange={mockOnToggleChange}
         />,
       );
-      expect(toJSON()).toBeTruthy();
+      expect(getByLabelText('Notifications').props.accessibilityState).toEqual({ checked: true });
     });
 
     test('renders custom component', () => {

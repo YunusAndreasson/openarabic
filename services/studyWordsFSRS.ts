@@ -54,6 +54,11 @@ const errorConfig = {
   }),
 };
 
+export interface StudyWordMutationResult {
+  inStudyList: boolean;
+  changed: boolean;
+}
+
 export const studyWordsFSRSService = {
   // Fetch study words with FSRS parameters
   async getFSRSWords(userId: string, options: GetFSRSWordsOptions = {}): Promise<StudyWord[]> {
@@ -221,11 +226,11 @@ export const studyWordsFSRSService = {
    * Without `intent`, direction falls back to server-side existence (legacy
    * toggle). Returns whether the root is in the study list afterwards.
    */
-  async toggleFSRSStudyRoot(
+  async setFSRSStudyRoot(
     userId: string,
     rootId: RootId,
     intent?: StudyWordIntent,
-  ): Promise<boolean> {
+  ): Promise<StudyWordMutationResult> {
     // Check if a study entry already exists for this root
     // Using maybeSingle() returns null instead of throwing PGRST116 error
     const existing = await executeAuthenticatedQuery(
@@ -244,7 +249,7 @@ export const studyWordsFSRSService = {
     );
 
     if (intent === 'add' && existing) {
-      return true; // Already saved — the add is a no-op, not a delete
+      return { inStudyList: true, changed: false };
     }
 
     if (existing || intent === 'remove') {
@@ -258,7 +263,7 @@ export const studyWordsFSRSService = {
           },
         );
       }
-      return false;
+      return { inStudyList: false, changed: !!existing };
     }
 
     // Create a new FSRS card for the root with proper initial values
@@ -269,7 +274,17 @@ export const studyWordsFSRSService = {
       analyticsProperties: { rootId },
     });
 
-    return true;
+    return { inStudyList: true, changed: true };
+  },
+
+  /** Compatibility wrapper for callers that only need the resulting state. */
+  async toggleFSRSStudyRoot(
+    userId: string,
+    rootId: RootId,
+    intent?: StudyWordIntent,
+  ): Promise<boolean> {
+    const result = await this.setFSRSStudyRoot(userId, rootId, intent);
+    return result.inStudyList;
   },
 
   /**

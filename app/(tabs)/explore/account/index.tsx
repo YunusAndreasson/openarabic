@@ -38,7 +38,7 @@ import {
 } from '@/types/enums';
 import { formatBytes } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
-import { errorFeedback, lightFeedback, selectionFeedback, successFeedback } from '@/utils/haptics';
+import { errorFeedback, lightFeedback, successFeedback } from '@/utils/haptics';
 import { resetOnboarding } from '@/utils/onboardingStorage';
 
 // Helper function for enum validation
@@ -171,7 +171,6 @@ const AccountScreen: FC = () => {
   // Audio Shuffle toggle handler
   const handleAudioShuffleToggle = useCallback(
     (enabled: boolean) => {
-      selectionFeedback();
       dispatch(setAudioShuffleEnabled(enabled));
     },
     [dispatch],
@@ -180,7 +179,6 @@ const AccountScreen: FC = () => {
   // Adaptive new-word pacing toggle handler
   const handleAdaptivePacingToggle = useCallback(
     (enabled: boolean) => {
-      selectionFeedback();
       dispatch(setAdaptiveNewWordPacingEnabled(enabled));
     },
     [dispatch],
@@ -190,7 +188,6 @@ const AccountScreen: FC = () => {
   // OFF (default) opens the full word card directly on tap.
   const handleWordTapPreviewToggle = useCallback(
     (enabled: boolean) => {
-      selectionFeedback();
       dispatch(setWordTapShowsTooltip(enabled));
     },
     [dispatch],
@@ -200,7 +197,6 @@ const AccountScreen: FC = () => {
   // and the OS mic prompt the next time the user enters a Practice card.
   const handleVoiceToggle = useCallback(
     (enabled: boolean) => {
-      selectionFeedback();
       dispatch(setVoiceEnabled(enabled));
     },
     [dispatch],

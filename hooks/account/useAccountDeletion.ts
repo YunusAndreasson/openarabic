@@ -85,9 +85,15 @@ export function useAccountDeletion(): UseAccountDeletionReturn {
       await AccountDeletionService.deleteAccount();
 
       // Track successful deletion
-      await analytics.track(ANALYTICS_EVENTS.ACCOUNT_DELETED, {
-        timestamp: new Date().toISOString(),
-      });
+      // Deletion is already irreversible. Analytics must never turn a completed
+      // deletion into a user-visible failure state.
+      try {
+        await analytics.track(ANALYTICS_EVENTS.ACCOUNT_DELETED, {
+          timestamp: new Date().toISOString(),
+        });
+      } catch {
+        // Best effort only.
+      }
 
       // Show success feedback
       if (isMountedRef.current) {
@@ -95,15 +101,10 @@ export function useAccountDeletion(): UseAccountDeletionReturn {
         showSuccessToast(STRINGS.DELETE_ACCOUNT_SUCCESS);
       }
 
-      // Navigate to auth screen after a brief delay
-      setTimeout(() => {
-        if (isMountedRef.current) {
-          router.replace(ROUTE_PATHS.AUTH);
-        }
-      }, 500);
+      // Navigate before the auth-state update unmounts this screen. Deferring
+      // behind an isMounted check can strand the user on a stale protected tab.
+      router.replace(ROUTE_PATHS.AUTH);
     } catch (error) {
-      // Error is already handled in the service layer
-      // Just log for debugging if needed
       await handleError(error, {
         toastMessage: STRINGS.FAILED_TO_DELETE_ACCOUNT,
         analyticsEventName: 'Account_Deletion_Failed',

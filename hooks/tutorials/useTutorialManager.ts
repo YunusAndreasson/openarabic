@@ -3,8 +3,9 @@
  * Provides single source of truth for all tutorial completion states
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { use, useCallback, useEffect, useMemo, useState } from 'react';
 
+import { AuthContext } from '@/components/providers/AuthProvider';
 import type { TutorialId } from '@/constants/tutorials';
 import {
   loadAllTutorialStates,
@@ -26,6 +27,8 @@ interface TutorialManagerState {
  * @returns Tutorial manager methods and state
  */
 export function useTutorialManager() {
+  const auth = use(AuthContext);
+  const userId = auth?.user?.id ?? null;
   const [state, setState] = useState<TutorialManagerState>({
     completedTutorials: {} as Record<TutorialId, boolean>,
     isLoaded: false,
@@ -36,7 +39,7 @@ export function useTutorialManager() {
     let mounted = true;
 
     async function loadStates() {
-      const states = await loadAllTutorialStates();
+      const states = await loadAllTutorialStates(userId);
       if (mounted) {
         setState({
           completedTutorials: states,
@@ -45,12 +48,12 @@ export function useTutorialManager() {
       }
     }
 
-    loadStates();
+    void loadStates();
 
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [userId]);
 
   /**
    * Check if a tutorial should be shown
@@ -67,26 +70,29 @@ export function useTutorialManager() {
    * Mark a tutorial as completed
    * Optimistic update with background persistence
    */
-  const completeTutorial = useCallback((tutorialId: TutorialId) => {
-    // Optimistic update
-    setState(prev => ({
-      ...prev,
-      completedTutorials: {
-        ...prev.completedTutorials,
-        [tutorialId]: true,
-      },
-    }));
+  const completeTutorial = useCallback(
+    (tutorialId: TutorialId) => {
+      // Optimistic update
+      setState(prev => ({
+        ...prev,
+        completedTutorials: {
+          ...prev.completedTutorials,
+          [tutorialId]: true,
+        },
+      }));
 
-    // Persist to AsyncStorage in background
-    markTutorialCompleted(tutorialId);
-  }, []);
+      // Persist to AsyncStorage in background
+      void markTutorialCompleted(tutorialId, userId);
+    },
+    [userId],
+  );
 
   /**
    * Reset all tutorials (clear all completion states)
    * Used by "Show tutorials again" feature in Account settings
    */
   const resetAllTutorials = useCallback(async () => {
-    await resetAllTutorialsStorage();
+    await resetAllTutorialsStorage(userId);
 
     // Reset in-memory state
     setState(prev => {
@@ -100,7 +106,7 @@ export function useTutorialManager() {
         completedTutorials: resetStates,
       };
     });
-  }, []);
+  }, [userId]);
 
   return useMemo(
     () => ({

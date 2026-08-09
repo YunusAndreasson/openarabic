@@ -15,20 +15,16 @@ interface ChartGridProps {
  * all one step off the surface. No vertical lines (x labels carry the days)
  * and no axis frame — the data is the only loud element.
  */
-export function ChartGrid({
-  width,
-  height,
-  topPadding = 0,
-  yMax = 100,
-  chartColors,
-}: ChartGridProps) {
+export function ChartGrid({ width, height, topPadding = 0, chartColors }: ChartGridProps) {
   const gridColor = chartColors.ui.grid;
 
   // Horizontal lines at exact percentages (25%, 50%, 75%, 100%) for value reading
   const chartHeight = height - topPadding;
   const percentages = [25, 50, 75, 100];
   const horizontalLines = percentages.map(percentage => {
-    const yPosition = topPadding + chartHeight - (percentage / yMax) * chartHeight;
+    // These are normalized grid positions, not data values. Dividing by yMax
+    // pushed every line off-canvas on count charts whose maximum was below 25.
+    const yPosition = topPadding + chartHeight - (percentage / 100) * chartHeight;
     return { y: yPosition, percentage };
   });
 

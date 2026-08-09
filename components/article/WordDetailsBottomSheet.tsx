@@ -31,6 +31,7 @@ export interface WordDetailsBottomSheetProps {
   word: SentenceWord | null;
   onAddToStudy: (word: SentenceWord, intent: StudyWordIntent) => Promise<boolean>;
   isInStudyList?: boolean;
+  isStudyStateLoading?: boolean;
 }
 
 export function WordDetailsBottomSheet({
@@ -39,6 +40,7 @@ export function WordDetailsBottomSheet({
   word,
   onAddToStudy,
   isInStudyList = false,
+  isStudyStateLoading = false,
 }: WordDetailsBottomSheetProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -86,7 +88,7 @@ export function WordDetailsBottomSheet({
 
   // Handle add to study with optimistic update for instant feedback
   const handleAddToStudy = () => {
-    if (!word) return;
+    if (!word || isStudyStateLoading) return;
 
     const newValue = !optimisticIsInStudyList;
     selectionFeedback();
@@ -169,12 +171,15 @@ export function WordDetailsBottomSheet({
                   />
                   <ThemedButton
                     title={
-                      optimisticIsInStudyList
-                        ? STRINGS.REMOVE_FROM_PRACTICE
-                        : STRINGS.ADD_TO_PRACTICE
+                      isStudyStateLoading
+                        ? STRINGS.LOADING_GENERIC
+                        : optimisticIsInStudyList
+                          ? STRINGS.REMOVE_FROM_PRACTICE
+                          : STRINGS.ADD_TO_PRACTICE
                     }
                     variant={optimisticIsInStudyList ? 'outlined' : 'filled'}
                     onPress={handleAddToStudy}
+                    disabled={isStudyStateLoading}
                     style={styles.actionButton}
                   />
                 </View>

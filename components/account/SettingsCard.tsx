@@ -78,7 +78,13 @@ export const SettingsCard = memo((props: SettingsCardProps) => {
   const renderRight = () => {
     switch (props.rightType) {
       case 'toggle':
-        return <Toggle value={props.toggleValue} onValueChange={props.onToggleChange} />;
+        return (
+          <Toggle
+            accessibilityLabel={label}
+            value={props.toggleValue}
+            onValueChange={props.onToggleChange}
+          />
+        );
 
       case 'text-chevron':
         return (

@@ -90,6 +90,11 @@ function SettingsPickerComponent<T>({
                   },
                 ]}
                 onPress={() => onSelect(option.id)}
+                accessibilityLabel={
+                  option.subtitle ? `${option.title}. ${option.subtitle}` : option.title
+                }
+                accessibilityRole="radio"
+                accessibilityState={{ selected: isSelected }}
               >
                 <View style={styles.cardContent}>
                   <View style={styles.cardLeft}>

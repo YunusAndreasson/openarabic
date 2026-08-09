@@ -23,7 +23,7 @@ const HANDLE_SIZE = TOGGLE_HEIGHT - TOGGLE_PADDING * 2;
 const TOGGLE_WIDTH = TOGGLE_HEIGHT * 2; // 2:1 ratio for modern horizontal look
 const TRAVEL_DISTANCE = TOGGLE_WIDTH - HANDLE_SIZE - TOGGLE_PADDING * 2;
 
-export function Toggle({ value, onValueChange, testID }: ToggleProps) {
+export function Toggle({ value, onValueChange, testID, accessibilityLabel }: ToggleProps) {
   const colors = useColors();
   const isMounted = useRef(false);
 
@@ -76,6 +76,9 @@ export function Toggle({ value, onValueChange, testID }: ToggleProps) {
       onPress={handlePress}
       hitSlop={LAYOUT.HIT_SLOP.SMALL}
       testID={testID}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: value }}
     >
       <Animated.View style={[containerStyle, combinedContainerStyle]}>
         <View style={styles.toggleTrack}>

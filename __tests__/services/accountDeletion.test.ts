@@ -71,7 +71,7 @@ describe('AccountDeletionService', () => {
       });
 
       // Verify user was signed out after deletion
-      expect(supabase.auth.signOut).toHaveBeenCalled();
+      expect(supabase.auth.signOut).toHaveBeenCalledWith({ scope: 'local' });
     });
 
     test('throws error when user is not authenticated', async () => {
@@ -126,6 +126,21 @@ describe('AccountDeletionService', () => {
 
       // Verify sign out was not called on failure
       expect(supabase.auth.signOut).not.toHaveBeenCalled();
+    });
+
+    test('reports when the deleted account local session cannot be cleared', async () => {
+      (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+        data: { user: { id: mockUserId, email: mockUserEmail } },
+        error: null,
+      });
+      (supabase.rpc as jest.Mock).mockResolvedValue({ data: null, error: null });
+      (supabase.auth.signOut as jest.Mock).mockResolvedValue({
+        error: new Error('Storage unavailable'),
+      });
+
+      await expect(AccountDeletionService.deleteAccount()).rejects.toThrow(
+        'Account was deleted but the local session could not be cleared: Storage unavailable',
+      );
     });
 
     test('verifies delete_user_account RPC is the only one used (per audit)', async () => {

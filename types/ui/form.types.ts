@@ -8,4 +8,6 @@ export interface ToggleProps {
   onValueChange: (value: boolean) => void;
   /** Test ID for testing */
   testID?: string;
+  /** Spoken label for screen readers. */
+  accessibilityLabel?: string;
 }

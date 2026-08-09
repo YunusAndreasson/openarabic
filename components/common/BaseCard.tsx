@@ -30,6 +30,9 @@ export const BaseCard: FC<BaseCardProps> = ({
   contentStyle,
   disabled = false,
   testID,
+  accessibilityLabel,
+  accessibilityRole,
+  accessibilityState,
 }) => {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
@@ -86,6 +89,9 @@ export const BaseCard: FC<BaseCardProps> = ({
     <Animated.View style={[cardStyle, animatedStyle]}>
       <Pressable
         testID={testID}
+        accessibilityLabel={accessibilityLabel}
+        accessibilityRole={accessibilityRole}
+        accessibilityState={accessibilityState}
         disabled={disabled}
         android_ripple={rippleConfig}
         style={PRESSABLE_STYLE}

@@ -1,4 +1,4 @@
-import type { StyleProp, ViewStyle } from 'react-native';
+import type { AccessibilityRole, AccessibilityState, StyleProp, ViewStyle } from 'react-native';
 import type { AnimatedStyle } from 'react-native-reanimated';
 
 /**
@@ -22,6 +22,9 @@ export interface BaseAnimatedStyleProps {
  * This consolidates the most common UI component patterns to reduce interface extension
  */
 export interface BaseComponentProps extends BaseStyleProps {
+  accessibilityLabel?: string;
+  accessibilityRole?: AccessibilityRole;
+  accessibilityState?: AccessibilityState;
   /** Optional callback when the component is pressed */
   onPress?: () => void;
   /** Optional test identifier used for testing */

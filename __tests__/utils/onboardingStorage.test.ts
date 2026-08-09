@@ -86,6 +86,21 @@ describe('onboardingStorage', () => {
     expect(state.initializedAt).toEqual(expect.any(String));
   });
 
+  test('keeps onboarding progress isolated between accounts', async () => {
+    const module = freshModule();
+    module.setOnboardingStorageUser('user-a');
+    await module.markOnboardingStep(OnboardingStep.READ_TEXT);
+
+    module.setOnboardingStorageUser('user-b');
+    expect((await module.loadOnboardingState()).readFirstText).toBe(false);
+    await module.markOnboardingStep(OnboardingStep.SAVE_WORD);
+
+    module.setOnboardingStorageUser('user-a');
+    const firstUser = await module.loadOnboardingState();
+    expect(firstUser.readFirstText).toBe(true);
+    expect(firstUser.saveFirstWord).toBe(false);
+  });
+
   test('fail-safe: read error yields a dismissed, initialized state without persisting', async () => {
     mockGetItem.mockRejectedValueOnce(new Error('storage broken'));
     const { loadOnboardingState } = freshModule();

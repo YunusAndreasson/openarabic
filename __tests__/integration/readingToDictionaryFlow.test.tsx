@@ -31,10 +31,11 @@ import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
 const mockGetArticleById = jest.fn();
 const mockIsInReadingList = jest.fn();
 const mockGetStudyWords = jest.fn();
-const mockToggleFSRSStudyRoot = jest.fn();
+const mockSetFSRSStudyRoot = jest.fn();
 const mockCheckAuthentication = jest.fn();
 const mockCanAddWord = jest.fn();
 const mockIncrementDailyWordCount = jest.fn();
+const mockDecrementDailyWordCount = jest.fn();
 const mockGetEffectiveLimitInfo = jest.fn();
 const mockShowToast = jest.fn();
 const mockSelectionFeedback = jest.fn();
@@ -55,7 +56,7 @@ jest.mock('@/services/bookmark', () => ({
 jest.mock('@/services/studyWordsFSRS', () => ({
   studyWordsFSRSService: {
     getStudyWords: () => mockGetStudyWords(),
-    toggleFSRSStudyRoot: (...args: unknown[]) => mockToggleFSRSStudyRoot(...args),
+    setFSRSStudyRoot: (...args: unknown[]) => mockSetFSRSStudyRoot(...args),
   },
 }));
 
@@ -68,6 +69,7 @@ jest.mock('@/hooks/vocabulary', () => ({
     dailyWordLimit: 10,
     canAddWord: mockCanAddWord,
     incrementDailyWordCount: mockIncrementDailyWordCount,
+    decrementDailyWordCount: mockDecrementDailyWordCount,
     getEffectiveLimitInfo: mockGetEffectiveLimitInfo,
   }),
 }));
@@ -188,7 +190,7 @@ describe('Reading to Dictionary Flow', () => {
     mockGetArticleById.mockResolvedValue(mockArticle);
     mockIsInReadingList.mockResolvedValue(false);
     mockGetStudyWords.mockResolvedValue([]);
-    mockToggleFSRSStudyRoot.mockResolvedValue(true);
+    mockSetFSRSStudyRoot.mockResolvedValue({ inStudyList: true, changed: true });
     mockCheckAuthentication.mockResolvedValue({ user: { id: mockUserId } });
     mockCanAddWord.mockResolvedValue(true);
     mockIncrementDailyWordCount.mockResolvedValue(true);
@@ -439,7 +441,7 @@ describe('Reading to Dictionary Flow', () => {
       });
 
       expect(toggleResult).toBeTruthy();
-      expect(mockToggleFSRSStudyRoot).toHaveBeenCalledWith(mockUserId, 501, undefined);
+      expect(mockSetFSRSStudyRoot).toHaveBeenCalledWith(mockUserId, 501, undefined);
     });
 
     test('respects daily word limit when adding new words', async () => {
@@ -452,7 +454,7 @@ describe('Reading to Dictionary Flow', () => {
       });
 
       expect(mockShowToast).toHaveBeenCalled();
-      expect(mockToggleFSRSStudyRoot).not.toHaveBeenCalled();
+      expect(mockSetFSRSStudyRoot).not.toHaveBeenCalled();
     });
 
     test('allows removing words even when at daily limit', async () => {
@@ -467,7 +469,7 @@ describe('Reading to Dictionary Flow', () => {
       });
 
       // Should allow removal even at limit
-      expect(mockToggleFSRSStudyRoot).toHaveBeenCalled();
+      expect(mockSetFSRSStudyRoot).toHaveBeenCalled();
     });
   });
 

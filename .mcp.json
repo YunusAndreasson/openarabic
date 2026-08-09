@@ -16,6 +16,11 @@
     "tarteel": {
       "type": "http",
       "url": "https://mcp.tarteel.ai/mcp"
+    },
+    "argent": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["node_modules/@swmansion/argent/dist/cli.js", "mcp"]
     }
   }
 }

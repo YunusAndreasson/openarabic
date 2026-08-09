@@ -50,19 +50,8 @@ jest.mock('@/services/analytics', () => ({
 const mockWords: StudyWord[] = [];
 const mockUpdatedWords: Map<number, Partial<StudyWord>> = new Map();
 
-const mockStudyWordsFSRSService = {
-  getFSRSWords: jest.fn().mockImplementation(() => Promise.resolve([...mockWords])),
-  updateWordAndReview: jest
-    .fn()
-    .mockImplementation((userId: string, rootId: number, updates: Partial<StudyWord>) => {
-      mockUpdatedWords.set(rootId, updates);
-      return Promise.resolve(undefined);
-    }),
-};
-
-jest.mock('@/services/studyWordsFSRS', () => ({
-  studyWordsFSRSService: mockStudyWordsFSRSService,
-}));
+jest.mock('@/services/studyWordsFSRS');
+const { studyWordsFSRSService: mockStudyWordsFSRSService } = require('@/services/studyWordsFSRS');
 
 // Mock error handling
 jest.mock('@/utils/errorHandling', () => ({
@@ -90,6 +79,15 @@ describe('Review Session Flow Integration', () => {
     mockWords.length = 0;
     mockUpdatedWords.clear();
     trackedEvents.length = 0;
+    mockStudyWordsFSRSService.getFSRSWords.mockImplementation(() =>
+      Promise.resolve([...mockWords]),
+    );
+    mockStudyWordsFSRSService.updateWordAndReview.mockImplementation(
+      (_userId: string, rootId: number, updates: Partial<StudyWord>) => {
+        mockUpdatedWords.set(rootId, updates);
+        return Promise.resolve(undefined);
+      },
+    );
   });
 
   // Helper to create a typical review session with due words

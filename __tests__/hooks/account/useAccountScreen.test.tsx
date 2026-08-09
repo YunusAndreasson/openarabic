@@ -1,22 +1,197 @@
-/**
- * useAccountScreen Hook Tests
- *
- * TODO: Fix module resolution issue
- * The test file has a conflict with Jest mock hoisting that causes
- * AudioLanguage enum to be undefined when settingsSlice is loaded.
- * This needs investigation into the mock ordering and module resolution.
- *
- * Tests to implement:
- * - Cache clearing (audio, query, persisted)
- * - Sign out flow
- * - Reading progress reset
- * - Reminder time management
- * - Notification permissions
- */
+import { act, cleanup, renderHook, waitFor } from '@testing-library/react-native';
+import { Alert } from 'react-native';
 
-// Skip this entire test file until mock resolution is fixed
-describe.skip('useAccountScreen - SKIPPED', () => {
-  test('placeholder', () => {
-    expect(true).toBeTruthy();
+import { useAccountScreen } from '@/hooks/account/useAccountScreen';
+
+const mockClearCache = jest.fn();
+const mockGetCacheSize = jest.fn();
+const mockUpdateReminderTime = jest.fn();
+const mockEnsurePermissions = jest.fn();
+const mockRecordAccepted = jest.fn();
+const mockClearPersistedQueryCache = jest.fn();
+const mockStopAudio = jest.fn();
+const mockTrackSignOut = jest.fn();
+const mockAnalyticsReset = jest.fn();
+const mockSignOut = jest.fn();
+const mockGetUser = jest.fn();
+const mockDeleteAllProgress = jest.fn();
+const mockQueryClear = jest.fn();
+const mockRemoveQueries = jest.fn();
+const mockRefetchQueries = jest.fn();
+const mockRouterReplace = jest.fn();
+const mockHandleError = jest.fn();
+
+let mockReminderTime = { enabled: false, hour: 19, minute: 0 };
+
+jest.mock('@tanstack/react-query', () => ({
+  queryOptions: (options: unknown) => options,
+  skipToken: Symbol('skipToken'),
+  useQueryClient: () => ({
+    clear: (...args: unknown[]) => mockQueryClear(...args),
+    removeQueries: (...args: unknown[]) => mockRemoveQueries(...args),
+    refetchQueries: (...args: unknown[]) => mockRefetchQueries(...args),
+  }),
+}));
+
+jest.mock('expo-router', () => ({
+  router: { push: jest.fn(), replace: (...args: unknown[]) => mockRouterReplace(...args) },
+}));
+
+jest.mock('@/hooks/auth/useAuth', () => ({
+  useAuth: () => ({ user: { id: 'user-1', email: 'qa@example.com' } }),
+}));
+
+jest.mock('@/hooks/audio/useAudioCache', () => ({
+  useAudioCache: () => ({ clearCache: mockClearCache, getCacheSize: mockGetCacheSize }),
+}));
+
+jest.mock('@/hooks/notifications/useReminders', () => ({
+  useReminders: () => ({
+    reminderTime: mockReminderTime,
+    updateReminderTime: mockUpdateReminderTime,
+    formatReminderTime: (hour: number, minute: number) =>
+      `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`,
+  }),
+}));
+
+jest.mock('@/services/notificationService', () => ({
+  ensurePermissions: (...args: unknown[]) => mockEnsurePermissions(...args),
+}));
+jest.mock('@/utils/notificationPromptStorage', () => ({
+  recordAccepted: (...args: unknown[]) => mockRecordAccepted(...args),
+}));
+jest.mock('@/utils/queryPersistence', () => ({
+  clearPersistedQueryCache: (...args: unknown[]) => mockClearPersistedQueryCache(...args),
+}));
+jest.mock('@/services/audioPlayer', () => ({
+  simpleAudioService: { stop: (...args: unknown[]) => mockStopAudio(...args) },
+}));
+jest.mock('@/services/analytics', () => ({
+  analytics: {
+    track: jest.fn(),
+    trackSignOut: (...args: unknown[]) => mockTrackSignOut(...args),
+    reset: (...args: unknown[]) => mockAnalyticsReset(...args),
+  },
+}));
+jest.mock('@/services/supabase', () => ({
+  supabase: {
+    auth: {
+      getUser: (...args: unknown[]) => mockGetUser(...args),
+      signOut: (...args: unknown[]) => mockSignOut(...args),
+    },
+  },
+}));
+jest.mock('@/services/readingProgress', () => ({
+  ReadingProgressService: {
+    deleteAllProgress: (...args: unknown[]) => mockDeleteAllProgress(...args),
+  },
+}));
+jest.mock('@/utils/errorHandling', () => ({
+  handleError: (...args: unknown[]) => mockHandleError(...args),
+}));
+jest.mock('@/utils/haptics', () => ({ lightFeedback: jest.fn(), errorFeedback: jest.fn() }));
+
+describe('useAccountScreen', () => {
+  let alertSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    jest.useRealTimers();
+    jest.clearAllMocks();
+    mockReminderTime = { enabled: false, hour: 19, minute: 0 };
+    mockGetCacheSize.mockResolvedValue(1024);
+    mockClearCache.mockResolvedValue(undefined);
+    mockClearPersistedQueryCache.mockResolvedValue(undefined);
+    mockEnsurePermissions.mockResolvedValue(true);
+    mockUpdateReminderTime.mockResolvedValue(undefined);
+    mockStopAudio.mockResolvedValue(undefined);
+    mockTrackSignOut.mockResolvedValue(undefined);
+    mockSignOut.mockResolvedValue({ error: null });
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: 'user-1', email: 'qa@example.com' } },
+      error: null,
+    });
+    mockAnalyticsReset.mockResolvedValue(undefined);
+    mockDeleteAllProgress.mockResolvedValue(undefined);
+    mockRefetchQueries.mockResolvedValue(undefined);
+    alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(jest.fn());
+  });
+
+  afterEach(() => {
+    cleanup();
+    alertSpy.mockRestore();
+  });
+
+  test('loads and exposes the audio cache size', async () => {
+    const { result } = renderHook(() => useAccountScreen());
+
+    await waitFor(() => expect(result.current.cacheSize).toBe(1024));
+  });
+
+  test('does not enable reminders when notification permission is denied', async () => {
+    mockEnsurePermissions.mockResolvedValue(false);
+    const { result } = renderHook(() => useAccountScreen());
+
+    await result.current.handleReminderToggle(true);
+
+    expect(mockUpdateReminderTime).not.toHaveBeenCalled();
+    expect(alertSpy).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(String),
+      expect.any(Array),
+    );
+  });
+
+  test('enables reminders and records acceptance when permission is granted', async () => {
+    const { result } = renderHook(() => useAccountScreen());
+
+    await result.current.handleReminderToggle(true);
+
+    expect(mockRecordAccepted).toHaveBeenCalledTimes(1);
+    expect(mockUpdateReminderTime).toHaveBeenCalledWith({ enabled: true, hour: 19, minute: 0 });
+  });
+
+  test('stops audio and signs out only after destructive confirmation', async () => {
+    const { result } = renderHook(() => useAccountScreen());
+
+    act(() => result.current.handleSignOut());
+    expect(mockSignOut).not.toHaveBeenCalled();
+
+    const confirmationButtons = alertSpy.mock.calls[0]?.[2];
+    const signOutButton = confirmationButtons?.find(button => button.style === 'destructive');
+    await signOutButton?.onPress?.();
+
+    expect(mockStopAudio).toHaveBeenCalledTimes(1);
+    expect(mockSignOut).toHaveBeenCalledTimes(1);
+    expect(mockAnalyticsReset).toHaveBeenCalledTimes(1);
+    expect(mockRouterReplace).toHaveBeenCalledWith('/auth');
+  });
+
+  test('resets reading progress and refreshes its query after confirmation', async () => {
+    const { result } = renderHook(() => useAccountScreen());
+
+    act(() => result.current.handleResetReadingProgress());
+    const confirmationButtons = alertSpy.mock.calls[0]?.[2];
+    const resetButton = confirmationButtons?.find(button => button.style === 'destructive');
+    await resetButton?.onPress?.();
+
+    expect(mockDeleteAllProgress).toHaveBeenCalledWith('user-1');
+    expect(mockRemoveQueries).toHaveBeenCalledTimes(2);
+    expect(mockRefetchQueries).toHaveBeenCalledTimes(1);
+  });
+
+  test('clears audio, in-memory query, and persisted query caches after confirmation', async () => {
+    const { result, unmount } = renderHook(() => useAccountScreen());
+    await waitFor(() => expect(result.current.cacheSize).toBe(1024));
+
+    act(() => result.current.handleClearCache());
+    const confirmationButtons = alertSpy.mock.calls[0]?.[2];
+    const clearButton = confirmationButtons?.find(button => button.style === 'destructive');
+    unmount();
+    await clearButton?.onPress?.();
+
+    expect(mockClearCache).toHaveBeenCalledTimes(1);
+    expect(mockQueryClear).toHaveBeenCalledTimes(1);
+    expect(mockClearPersistedQueryCache).toHaveBeenCalledTimes(1);
+    expect(mockHandleError).not.toHaveBeenCalled();
   });
 });

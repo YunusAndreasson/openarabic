@@ -15,6 +15,7 @@ import {
   initializeOnboarding,
   loadOnboardingState,
   markChecklistCompleted,
+  setOnboardingStorageUser,
   subscribeOnboarding,
 } from '@/utils/onboardingStorage';
 
@@ -50,13 +51,19 @@ export function useOnboardingChecklist(articlesData: Article[]) {
 
   const state = useSyncExternalStore(subscribeOnboarding, getCachedOnboardingState);
 
-  // Kick the initial storage load (no-op once cached)
   useEffect(() => {
+    setOnboardingStorageUser(user?.id ?? null);
     void loadOnboardingState();
-  }, []);
+  }, [user?.id]);
+
+  // Kick the initial storage load (no-op once cached)
 
   // One-time eligibility evaluation
   const hasEvaluatedRef = useRef(false);
+  useEffect(() => {
+    hasEvaluatedRef.current = false;
+  }, [user?.id]);
+
   useEffect(() => {
     if (hasEvaluatedRef.current) return;
     if (!state || state.initializedAt) return;

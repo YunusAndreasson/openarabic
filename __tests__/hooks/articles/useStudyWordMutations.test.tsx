@@ -28,6 +28,7 @@ const mockCheckAuthentication = jest.fn();
 const mockToggleFSRSStudyRoot = jest.fn();
 const mockCanAddWord = jest.fn();
 const mockIncrementDailyWordCount = jest.fn();
+const mockDecrementDailyWordCount = jest.fn();
 const mockGetEffectiveLimitInfo = jest.fn();
 const mockErrorFeedback = jest.fn();
 
@@ -49,7 +50,10 @@ jest.mock('@/services/supabase', () => ({
 
 jest.mock('@/services/studyWordsFSRS', () => ({
   studyWordsFSRSService: {
-    toggleFSRSStudyRoot: (...args: unknown[]) => mockToggleFSRSStudyRoot(...args),
+    setFSRSStudyRoot: async (...args: unknown[]) => ({
+      inStudyList: await mockToggleFSRSStudyRoot(...args),
+      changed: true,
+    }),
   },
 }));
 
@@ -58,6 +62,7 @@ jest.mock('@/hooks/vocabulary', () => ({
     dailyWordLimit: 10,
     canAddWord: mockCanAddWord,
     incrementDailyWordCount: mockIncrementDailyWordCount,
+    decrementDailyWordCount: mockDecrementDailyWordCount,
     getEffectiveLimitInfo: mockGetEffectiveLimitInfo,
   }),
 }));
@@ -86,6 +91,7 @@ describe('useStudyWordMutations', () => {
     // Default mock implementations
     mockCanAddWord.mockResolvedValue(true);
     mockIncrementDailyWordCount.mockResolvedValue(true);
+    mockDecrementDailyWordCount.mockResolvedValue(undefined);
     mockGetEffectiveLimitInfo.mockResolvedValue({ effective: 10, ceiling: 10, status: 'full' });
     mockCheckAuthentication.mockResolvedValue({ user: { id: 'test-user-id' } });
     mockToggleFSRSStudyRoot.mockResolvedValue(true);
@@ -186,6 +192,49 @@ describe('useStudyWordMutations', () => {
 
       // For removal, incrementDailyWordCount should not be called
       expect(mockIncrementDailyWordCount).not.toHaveBeenCalled();
+    });
+
+    test('releases the reserved daily slot when an add fails', async () => {
+      queryClient.setQueryData(['fsrs-words', 'test-user-id'], []);
+      mockToggleFSRSStudyRoot.mockRejectedValue(new Error('network failure'));
+
+      const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
+
+      await act(async () => {
+        await result.current.handleRootPress(1 as RootId, 'add');
+      });
+
+      expect(mockIncrementDailyWordCount).toHaveBeenCalledTimes(1);
+      expect(mockDecrementDailyWordCount).toHaveBeenCalledTimes(1);
+    });
+
+    test('does not release daily quota when a remove fails', async () => {
+      queryClient.setQueryData(['fsrs-words', 'test-user-id'], [{ root_id: 1 }]);
+      mockToggleFSRSStudyRoot.mockRejectedValue(new Error('network failure'));
+
+      const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
+
+      await act(async () => {
+        await result.current.handleRootPress(1 as RootId, 'remove');
+      });
+
+      expect(mockDecrementDailyWordCount).not.toHaveBeenCalled();
+    });
+
+    test('releases daily quota when an explicit add is already present on the server', async () => {
+      queryClient.setQueryData(['fsrs-words', 'test-user-id'], []);
+      const setSpy = jest
+        .spyOn(require('@/services/studyWordsFSRS').studyWordsFSRSService, 'setFSRSStudyRoot')
+        .mockResolvedValueOnce({ inStudyList: true, changed: false });
+
+      const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
+
+      await act(async () => {
+        await result.current.handleRootPress(1 as RootId, 'add');
+      });
+
+      expect(setSpy).toHaveBeenCalled();
+      expect(mockDecrementDailyWordCount).toHaveBeenCalledTimes(1);
     });
   });
 

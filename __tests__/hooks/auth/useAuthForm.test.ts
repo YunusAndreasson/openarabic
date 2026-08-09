@@ -118,6 +118,11 @@ describe('useAuthForm', () => {
     const { result } = renderHook(() => useAuthForm());
 
     act(() => {
+      result.current.validateEmail('');
+    });
+    expect(result.current.emailError).toBe('Enter your email address');
+
+    act(() => {
       result.current.validateEmail('bad');
     });
     expect(result.current.emailError).toBe('Enter a valid email');

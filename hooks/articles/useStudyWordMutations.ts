@@ -9,7 +9,7 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useDailyWordLimit } from '@/hooks/vocabulary';
 import { analytics } from '@/services/analytics';
-import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
+import { studyWordsFSRSService, type StudyWordMutationResult } from '@/services/studyWordsFSRS';
 import { checkAuthentication } from '@/services/supabase';
 import { useAppSelector } from '@/store/hooks';
 import type { RootId } from '@/types/branded.types';
@@ -34,7 +34,12 @@ interface ToggleStudyVariables {
 
 interface StudyWordMutationsResult {
   handleRootPress: (rootId: RootId, intent?: StudyWordIntent) => Promise<boolean | undefined>;
-  toggleRootMutation: UseMutationResult<boolean, Error, ToggleStudyVariables, StudyWordContext>;
+  toggleRootMutation: UseMutationResult<
+    StudyWordMutationResult,
+    Error,
+    ToggleStudyVariables,
+    StudyWordContext
+  >;
 }
 
 /**
@@ -50,8 +55,13 @@ export const useStudyWordMutations = (
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   const audioPreference = useAppSelector(state => state.settings.audioLanguagePreference);
-  const { dailyWordLimit, canAddWord, incrementDailyWordCount, getEffectiveLimitInfo } =
-    useDailyWordLimit();
+  const {
+    dailyWordLimit,
+    canAddWord,
+    incrementDailyWordCount,
+    decrementDailyWordCount,
+    getEffectiveLimitInfo,
+  } = useDailyWordLimit();
 
   // Pick the right "can't add" message: a recall-driven pause reads differently
   // from simply hitting the configured daily ceiling.
@@ -87,7 +97,7 @@ export const useStudyWordMutations = (
 
   const toggleStudyOptions = {
     mutationFn: async ({ userId, rootId, intent }: ToggleStudyVariables) => {
-      return studyWordsFSRSService.toggleFSRSStudyRoot(userId, rootId, intent);
+      return studyWordsFSRSService.setFSRSStudyRoot(userId, rootId, intent);
     },
     onMutate: async ({
       userId,
@@ -133,7 +143,7 @@ export const useStudyWordMutations = (
       });
     },
     onSuccess: (
-      nowInStudyList: boolean,
+      result: StudyWordMutationResult,
       { userId, rootId }: ToggleStudyVariables,
       context?: StudyWordContext,
     ) => {
@@ -141,11 +151,11 @@ export const useStudyWordMutations = (
       const wasInStudyList =
         context?.previousStudyWords?.some(sw => sw.root_id === rootId) ?? false;
 
-      if (!nowInStudyList && wasInStudyList) {
+      if (result.changed && !result.inStudyList && wasInStudyList) {
         analytics.track(ANALYTICS_EVENTS.WORD_REMOVED_FROM_STUDY, {
           root_id: rootId,
         });
-      } else if (nowInStudyList && !wasInStudyList) {
+      } else if (result.changed && result.inStudyList && !wasInStudyList) {
         analytics.track(ANALYTICS_EVENTS.WORD_ADDED_TO_STUDY, {
           root_id: rootId,
           source: 'article',
@@ -166,9 +176,12 @@ export const useStudyWordMutations = (
     },
   };
 
-  const toggleRootMutation = useMutation<boolean, Error, ToggleStudyVariables, StudyWordContext>(
-    toggleStudyOptions,
-  );
+  const toggleRootMutation = useMutation<
+    StudyWordMutationResult,
+    Error,
+    ToggleStudyVariables,
+    StudyWordContext
+  >(toggleStudyOptions);
 
   // Handle root press with validation
   const handleRootPress = useCallback(
@@ -230,12 +243,22 @@ export const useStudyWordMutations = (
         }
 
         // Always use the user ID from the session directly
-        const result = await toggleRootMutation.mutateAsync({
-          userId: currentUserId,
-          rootId,
-          intent,
-        });
-        return result;
+        try {
+          const result = await toggleRootMutation.mutateAsync({
+            userId: currentUserId,
+            rootId,
+            intent,
+          });
+          if (isAdd && !result.changed) await decrementDailyWordCount();
+          return result.inStudyList;
+        } catch (error) {
+          // Adding reserves the daily quota before the network write so two
+          // rapid presses cannot both pass the ceiling. Release that slot when
+          // the write fails; otherwise transient errors permanently consume
+          // today's allowance.
+          if (isAdd) await decrementDailyWordCount();
+          throw error;
+        }
       } catch (error) {
         handleError(error);
         return undefined;
@@ -246,6 +269,7 @@ export const useStudyWordMutations = (
       showToast,
       canAddWord,
       incrementDailyWordCount,
+      decrementDailyWordCount,
       getLimitReachedMessage,
       queryClient,
       getDueBacklogBlock,

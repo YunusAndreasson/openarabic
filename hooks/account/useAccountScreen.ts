@@ -228,10 +228,15 @@ export const useAccountScreen = () => {
         void recordAccepted();
       }
 
-      const newReminderTime = { ...reminderTime, enabled };
-      await updateReminderTime(newReminderTime);
-      analytics.track(ANALYTICS_EVENTS.SMART_REMINDERS_TOGGLED, { enabled });
-      lightFeedback();
+      try {
+        const newReminderTime = { ...reminderTime, enabled };
+        await updateReminderTime(newReminderTime);
+        analytics.track(ANALYTICS_EVENTS.SMART_REMINDERS_TOGGLED, { enabled });
+        lightFeedback();
+      } catch (error) {
+        handleError(error, { showToast: false });
+        Alert.alert(STRINGS.ERROR, 'Could not update reminders. Please try again.');
+      }
     },
     [reminderTime, updateReminderTime],
   );
@@ -246,9 +251,14 @@ export const useAccountScreen = () => {
 
   const handleTimeSet = useCallback(
     async (hour: number, minute: number) => {
-      const newReminderTime = { ...reminderTime, hour, minute };
-      await updateReminderTime(newReminderTime);
-      lightFeedback();
+      try {
+        const newReminderTime = { ...reminderTime, hour, minute };
+        await updateReminderTime(newReminderTime);
+        lightFeedback();
+      } catch (error) {
+        handleError(error, { showToast: false });
+        Alert.alert(STRINGS.ERROR, 'Could not update the reminder time. Please try again.');
+      }
     },
     [reminderTime, updateReminderTime],
   );

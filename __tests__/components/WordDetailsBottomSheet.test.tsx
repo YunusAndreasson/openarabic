@@ -102,6 +102,24 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       expect(getByText('Add to practice')).toBeTruthy();
     });
 
+    test('does not offer an add/remove action before persisted study state loads', () => {
+      const { getByText } = render(
+        <WordDetailsBottomSheet
+          isVisible={true}
+          onClose={mockOnClose}
+          word={mockWord}
+          onAddToStudy={mockOnAddToStudy}
+          isInStudyList={false}
+          isStudyStateLoading={true}
+        />,
+      );
+
+      const loadingButton = getByText('Loading…');
+      fireEvent.press(loadingButton);
+
+      expect(mockOnAddToStudy).not.toHaveBeenCalled();
+    });
+
     test('should sync optimistic state when isInStudyList prop changes', async () => {
       const { rerender, getByText } = render(
         <WordDetailsBottomSheet

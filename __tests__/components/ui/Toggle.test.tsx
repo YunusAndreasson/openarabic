@@ -61,6 +61,29 @@ describe('Toggle', () => {
 
       expect(getByTestId('my-toggle')).toBeTruthy();
     });
+
+    test('exposes its label and checked state to accessibility services', () => {
+      const { getByLabelText, rerender } = render(
+        <Toggle
+          accessibilityLabel="Smart reminders"
+          value={false}
+          onValueChange={mockOnValueChange}
+        />,
+      );
+
+      expect(getByLabelText('Smart reminders').props.accessibilityState).toEqual({
+        checked: false,
+      });
+
+      rerender(
+        <Toggle
+          accessibilityLabel="Smart reminders"
+          value={true}
+          onValueChange={mockOnValueChange}
+        />,
+      );
+      expect(getByLabelText('Smart reminders').props.accessibilityState).toEqual({ checked: true });
+    });
   });
 
   describe('Interactions', () => {
