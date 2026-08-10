@@ -1,5 +1,5 @@
 import type { JSX } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedButton } from '@/components/ThemedButton';
@@ -30,11 +30,22 @@ export function PinnedActionButton({
     ? LAYOUT.CARD.HEIGHT.MINI_PLAYER + LAYOUT.SPACING.SMALL
     : 0;
 
+  // This button lives INSIDE a NativeTabs screen, whose content area already
+  // ends flush above the native tab bar — the tab bar is separate native
+  // chrome, not part of this view's own layout. On Android, `insets.bottom`
+  // still reports the raw gesture-nav inset even here (confirmed on-device:
+  // 24dp), even though that strip sits below chrome this view never reaches,
+  // so adding it double-counts clearance the tab bar already owns and leaves
+  // a large dead gap above it (measured ~32dp / ~84px on a 2.625x-density
+  // device). iOS's UITabBarController-hosted content reads correctly with
+  // the unmodified formula, so only Android needs the exclusion.
+  const bottomInsetClearance = Platform.OS === 'android' ? 0 : insets.bottom;
+
   return (
     <View
       style={[
         styles.container,
-        { bottom: insets.bottom + LAYOUT.SPACING.SMALL + miniPlayerClearance },
+        { bottom: bottomInsetClearance + LAYOUT.SPACING.SMALL + miniPlayerClearance },
       ]}
     >
       <ThemedButton
