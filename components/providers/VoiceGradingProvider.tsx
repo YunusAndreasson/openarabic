@@ -226,6 +226,11 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
    * cause.
    */
   const lastOpenErrorRef = useRef<string | null>(null);
+  // Whether that failure was specifically a denied OS permission, as opposed
+  // to a transient stream/session hiccup. `capture.open()` throws the same
+  // Error shape for both, and the message alone isn't a safe discriminator
+  // for callers — this flag is, since it's set from the actual error class.
+  const lastOpenWasPermissionDeniedRef = useRef(false);
 
   const openCapture = useCallback(
     async (reopen = false): Promise<void> => {
@@ -234,6 +239,7 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
         if (reopen) await capture.close();
         await capture.open(recordingConfigRef.current);
         lastOpenErrorRef.current = null;
+        lastOpenWasPermissionDeniedRef.current = false;
         // The screen can close while the stream is still opening. Without this
         // the release has already run its own close() and we would be left
         // holding a live microphone with nobody using it.
@@ -245,6 +251,7 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         lastOpenErrorRef.current = message;
+        lastOpenWasPermissionDeniedRef.current = err instanceof MicPermissionDeniedError;
         diagMark('mic.session.open.failed', { message, reopen });
         Sentry.addBreadcrumb({
           category: 'voice',
@@ -517,6 +524,17 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
         markAwaitOpen(Date.now() - openStartedAt);
         endOpen({ opened: streamIsOpen() });
         if (!streamIsOpen()) {
+          // A denied permission is not the transient hiccup the other reasons
+          // are — retrying it can never succeed. Reporting it as 'permission'
+          // (not the generic 'error') routes it to useVoiceReview's dedicated
+          // handling: it stops the retry ladder immediately, tells the learner
+          // why, and turns voice off, instead of quietly burning through
+          // MAX_ARM_RETRIES on a mic that will never open and then giving up
+          // in silence — indistinguishable from the tap never having landed.
+          if (lastOpenWasPermissionDeniedRef.current) {
+            diagMark('mic.arm.reject', { reason: 'permission' });
+            return { ok: false, reason: 'permission', message: lastOpenErrorRef.current ?? undefined };
+          }
           diagMark('mic.arm.reject', { reason: 'stream-closed' });
           return {
             ok: false,
