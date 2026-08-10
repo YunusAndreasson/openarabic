@@ -35,9 +35,19 @@
  * observe. The same trap applies to Mixpanel. `NSPrivacyTracking` is false for the
  * matching reason: with no ATT there is no IDFA, so nothing tracks across apps.
  */
-import { NativeModules, Platform } from 'react-native';
+import { LogBox, NativeModules, Platform } from 'react-native';
 
 import { META_EVENTS } from '@/constants/analytics';
+
+// The exception below is already caught (see resolveAppEventsLogger) and never
+// affects app behavior — react-native-fbsdk-next reads native constants at
+// require() time (FBAppEventsLogger.ts top-level `getConstants()`), which
+// constructs the native AppEventsLoggerImpl and throws if FacebookSdk hasn't
+// finished initializing yet. Android's bridge reports that native throw to
+// LogBox as a fatal-looking "Uncaught Error" regardless of the JS catch, so
+// without this it shows a full red error screen for a condition the retry
+// logic below already treats as a safe, expected no-op.
+LogBox.ignoreLogs(["Exception in HostObject::get for prop 'FBAppEventsLogger'"]);
 
 // Meta app event parameters are limited to primitives on the wire.
 type MetaEventParams = Record<string, string | number>;

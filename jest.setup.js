@@ -472,6 +472,14 @@ jest.mock('react-native', () => {
       isTesting: true,
     },
 
+    // Dev-tooling: metaEvents.ts calls LogBox.ignoreLogs() at module load time
+    // to suppress a known-safe native exception, so any test that transitively
+    // imports it needs this to exist even without touching metaEvents directly.
+    LogBox: {
+      ignoreLogs: jest.fn(),
+      ignoreAllLogs: jest.fn(),
+    },
+
     // Styling
     StyleSheet: {
       create: jest.fn(styles => styles),

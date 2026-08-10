@@ -5,6 +5,7 @@ const mockLogEvent = jest.fn();
 jest.mock('react-native', () => ({
   NativeModules: { FBSettings: { initializeSDK: mockInitializeSDK } },
   Platform: { OS: 'android' },
+  LogBox: { ignoreLogs: jest.fn() },
 }));
 
 jest.mock('react-native-fbsdk-next/lib/commonjs/FBSettings', () => {
