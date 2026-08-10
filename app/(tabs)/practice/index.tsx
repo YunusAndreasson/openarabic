@@ -222,11 +222,12 @@ export default function PracticeScreen(): JSX.Element {
     dueCountCapped ? `${dueWordsCount}+` : dueWordsCount
   } ${dueWordsCount === 1 && !dueCountCapped ? STRINGS.WORD_SINGULAR : STRINGS.SUMMARY_WORDS_SUFFIX}`;
 
-  // Caught up is not the same as nothing to do. Without this the screen renders
-  // stat cards and no action at all, plus 72px of padding reserved for a button
-  // that never arrives — so the tab reads as a dead end at exactly the moment
-  // the user came looking for something to practise.
-  const showBrowseCta = !showReviewCta;
+  // Caught up is not the same as nothing to do: when there is nothing due, the
+  // one CTA below becomes "Browse articles" rather than disappearing. Without
+  // that the screen renders stat cards and no action at all, plus 72px of
+  // padding reserved for a button that never arrives — so the tab reads as a
+  // dead end at exactly the moment the user came looking for something to
+  // practise.
 
   return (
     <>
@@ -261,10 +262,19 @@ export default function PracticeScreen(): JSX.Element {
           />
         </Animated.View>
       </ScrollView>
-      {showReviewCta && <PinnedActionButton title={reviewCtaTitle} onPress={handleStartReview} />}
-      {showBrowseCta && (
-        <PinnedActionButton title={STRINGS.BROWSE_ARTICLES} onPress={handleBrowseArticles} />
-      )}
+      {/* ONE button whose label and action change, not two that swap places.
+          `allWords` and `dueWords` are separate queries: the loading gate above
+          opens as soon as `allWords` lands, and until `dueWords` follows,
+          `dueWordsCount` is still 0 — so on a cold start this rendered "Browse
+          articles" first, then unmounted it and mounted the review button in
+          its place. Two different components meant the CTA visibly vanished and
+          came back (replaying its mount animation) on every first open. As one
+          instance the worst case is a label settling, which is a far quieter
+          correction than a button disappearing. */}
+      <PinnedActionButton
+        title={showReviewCta ? reviewCtaTitle : STRINGS.BROWSE_ARTICLES}
+        onPress={showReviewCta ? handleStartReview : handleBrowseArticles}
+      />
     </>
   );
 }

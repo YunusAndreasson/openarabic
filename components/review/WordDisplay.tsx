@@ -45,19 +45,29 @@ const STATIC_STYLES = StyleSheet.create({
     height: LAYOUT.SPACING.XLARGE,
     justifyContent: 'center',
   },
-  // Flex spacers rather than fixed offsets: they resolve identically on both
-  // faces (same structure, same flex values), which is what keeps the Arabic at
-  // an identical y through the flip, while still adapting to the card's height
-  // on any device.
+  // The lead above the Arabic, as a fraction of the card rather than a share of
+  // whatever is left over.
   //
-  // The ratio was 1 : 2.6, putting the word ~28% down — which reads as balanced
-  // on the question face, where nothing follows it, and badly top-heavy on the
-  // answer face, where the meaning AND the example sentence have to share what
-  // is left. Raising the word buys that stack roughly a tenth of the card back
-  // from air nothing was using. Changed on BOTH faces, never per-face: the
-  // identical resolution is what stops the Arabic jumping through the flip.
+  // This used to be `flexGrow: 0.55` against a `flexGrow: 2.6` body, which was
+  // meant to resolve identically on both faces — but a grow ratio splits the
+  // FREE space, and free space is the card minus the body's own content. The
+  // two faces hold different content (a meaning and an example sentence on one,
+  // the voice channel or a replay button on the other), so the split differed
+  // and the hero already sat at a slightly different y on each. A fixed
+  // fraction is content-independent, so the Arabic is pinned to the same band
+  // on both faces by construction — which is what the flip needs, since the two
+  // are absolutely stacked and a mismatch shows as a jump at the halfway point
+  // of the rotation.
+  //
+  // The value places the hero + meaning block just above true centre: the old
+  // ratio left the word ~31% down with the whole lower half of the card empty
+  // whenever a word had no example sentence.
   heroLead: {
-    flexGrow: 0.55,
+    // Measured on device against both faces: this lands the block a little
+    // above true centre on each, which is where the eye expects it.
+    height: '28%',
+    // Yields to the body when a long example sentence needs the room.
+    flexShrink: 1,
   },
   heroRow: {
     width: '100%',
@@ -69,10 +79,23 @@ const STATIC_STYLES = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // Sized by its content now, not by a share of the card. It grew to fill
+  // everything below the hero, so a word with no example sentence ended with
+  // half a card of dead air inside a bordered box.
+  // flexShrink 0 so the lead above gives up its space first: a long example
+  // sentence should push the word toward the top of the card, never be clipped
+  // to preserve a centred hero.
   body: {
-    flexGrow: 2.6,
     width: '100%',
     alignItems: 'center',
+    flexShrink: 0,
+  },
+  // Absorbs whatever is left under the content, so the slack sits below the
+  // block instead of inside it and the hero keeps its fixed lead.
+  trailer: {
+    flexGrow: 1,
+    flexShrink: 1,
+    minHeight: 0,
   },
 });
 
@@ -118,7 +141,10 @@ export function WordDisplay({ word, style, onWordPress, wordType, children }: Pr
     <View style={[STATIC_STYLES.container, style]}>
       <View style={STATIC_STYLES.metaRow}>
         {wordType ? (
-          <ThemedText type="overline" colorName="textTertiary">
+          // Tinted rather than tertiary grey: it is the only tier between the
+          // Arabic hero and the meaning, and at 11px uppercase it needs colour
+          // to register as a level at all rather than as faint noise.
+          <ThemedText type="overline" colorName="tint">
             {wordType}
           </ThemedText>
         ) : null}
@@ -140,6 +166,8 @@ export function WordDisplay({ word, style, onWordPress, wordType, children }: Pr
       </View>
 
       <View style={STATIC_STYLES.body}>{children}</View>
+
+      <View style={STATIC_STYLES.trailer} pointerEvents="none" />
     </View>
   );
 }

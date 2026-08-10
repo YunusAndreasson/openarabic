@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { ViewStyle } from 'react-native';
 import { InteractionManager } from 'react-native';
 
@@ -195,6 +195,14 @@ const TRANSITION_DELAYS = {
    * confirmation.
    */
   fadeWatchdog: VERDICT.BEAT + TIMING_CONFIG.CARD_EXIT.duration + TIMING_CONFIG.MEDIUM.duration,
+  /**
+   * Watchdog for the fade-IN, which is armed by a committed grade and released
+   * by the next card's arrival (see `pendingFadeInRef`). The release is a
+   * layout effect on `currentWordKey`, so it cannot fire if the queue hands
+   * back the same key or hands back nothing at all; this is the floor that
+   * guarantees the card is never left invisible.
+   */
+  fadeInWatchdog: TIMING_CONFIG.CARD_EXIT.duration + TIMING_CONFIG.MEDIUM.duration,
 };
 
 export function useReview({
@@ -233,6 +241,16 @@ export function useReview({
   // Timer cleanup hook for managing all setTimeout calls
   const { setTimer, clearTimer, clearAllTimers } = useTimerCleanup();
 
+  // Set by a committed grade, cleared by whichever of the next card's arrival
+  // or the watchdog gets there first. Idempotent on both paths.
+  const pendingFadeInRef = useRef(false);
+  const releasePendingFadeIn = useCallback(() => {
+    if (!pendingFadeInRef.current) return;
+    pendingFadeInRef.current = false;
+    clearTimer('fadeInWatchdog');
+    fadeIn();
+  }, [fadeIn, clearTimer]);
+
   // Session metrics tracking hook
   const { metrics: sessionMetrics, updateMetrics, resetMetrics } = useSessionMetrics();
 
@@ -247,9 +265,20 @@ export function useReview({
   // Progress bar high-water mark, surfaced as state so consumers re-render.
   const [maxProgress, setMaxProgress] = useState(0);
   // Holding a forgotten card on its answer face for a restudy beat before it
-  // advances. Mirrored in a ref because `grade` is a stable callback that must
-  // read the live value to know whether it is the interception or the commit.
-  const [restudying, setRestudying] = useState(false);
+  // advances.
+  //
+  // Stored as WHICH CARD is being held rather than a boolean, so the rendered
+  // flag below is derived from the current word instead of being reset after
+  // the fact. `continueFromRestudy` deliberately leaves the hold flag up
+  // through the exit fade (see the comment there), and clearing it used to be
+  // the job of the currentWordKey effect — which runs after the paint, so the
+  // first frame of the NEXT card rendered "Tap to continue" all over again
+  // before it vanished. Keyed, the hold simply stops matching the moment a new
+  // word arrives, in the same render that carries it.
+  //
+  // Still mirrored in a ref because `grade` is a stable callback that must read
+  // the live value to know whether it is the interception or the commit.
+  const [restudyKey, setRestudyKey] = useState<string | null>(null);
   const restudyRef = useRef(false);
 
   // Consolidated time tracking refs — initial timestamp captured once via lazy state.
@@ -386,23 +415,53 @@ export function useReview({
     [currentWord, previewIntervals],
   );
 
-  // Ensure translation is hidden when advancing to a new word.
-  // Synchronises local UI flags with currentWordKey transitions; setState here is
-  // intentional — the alternative (derived state) loses the timer-clearing side effect.
+  // Snap the card back to its question face the instant a new word arrives.
+  //
+  // This is React's "adjusting state when a prop changes" pattern — a state
+  // update DURING render, guarded by the previous key — and it is load-bearing
+  // here rather than a style choice. These three flags used to be reset in the
+  // effect below, and an effect cannot run before the paint it is reacting to:
+  // the render that first carried the new `currentWord` still had `revealed`
+  // true and `currentMeaning` holding the PREVIOUS card's text, so every single
+  // advance painted the new Arabic word above the old English meaning before
+  // the effect corrected it. Filmed at 30fps on a Pixel emulator, that
+  // mismatched pair was on screen for ~230ms — long enough to read.
+  //
+  // Setting them here re-renders before anything reaches the screen, so the
+  // wrong pairing is never painted. The timer/ref cleanup stays in the effect
+  // below: side effects can't run during render, and those are not visible.
+  // The hold belongs to one card. Derived, so it can never outlive it.
+  const restudying = restudyKey !== null && restudyKey === currentWordKey;
+
+  const [syncedWordKey, setSyncedWordKey] = useState(currentWordKey);
+  if (syncedWordKey !== currentWordKey) {
+    setSyncedWordKey(currentWordKey);
+    setShowTranslation(false);
+    setRevealed(false);
+    setCurrentMeaning('');
+  }
+
+  // Bring the card back only once the new word is committed. A layout effect,
+  // not a passive one: this runs after the commit that carries the new content
+  // but BEFORE the frame is painted, so the card's return and the word it
+  // returns with are the same event. A passive effect would paint first, which
+  // is the whole class of bug this replaced.
+  useLayoutEffect(() => {
+    releasePendingFadeIn();
+  }, [currentWordKey, releasePendingFadeIn]);
+
   useEffect(() => {
     // Clear any pending translation timers
     clearTimer('meaningTimeout');
 
-    // Immediately hide translation and snap the card back to its question face
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setShowTranslation(false);
-    setRevealed(false);
-    setCurrentMeaning('');
     // A restudy hold belongs to the card that earned it. Clearing both here
     // means an interrupted hold (session close, chunk restart) can never leak
     // into the next card and swallow its first "Forgot".
+    //
+    // Only the ref drops here. The rendered flag is derived from `restudyKey`
+    // above and needs no reset at all — a ref, unlike state, cannot be safely
+    // written during render.
     restudyRef.current = false;
-    setRestudying(false);
     // Reset stale completion flag if a new word/session appears
     if (currentWordKey !== 'none' && stateRefs.current.completionTriggered) {
       stateRefs.current.completionTriggered = false;
@@ -413,6 +472,15 @@ export function useReview({
   const processFeedback = useCallback(
     async (confidence: WordConfidence, controller: AbortController) => {
       if (!currentWord?.root_id || controller.signal.aborted) {
+        // Release the locks before bailing. This return sits OUTSIDE the
+        // try/finally that normally clears them, so taking it used to leave
+        // `isUpdatingWord` true forever — and that flag both rejects every
+        // later grade in `grade()` and disables the whole grade bar. Since the
+        // bar deliberately has no disabled dim, the result was a review screen
+        // that looked completely normal and silently ignored every tap.
+        stateRefs.current.isUpdatingWord = false;
+        setIsUpdatingUI(false);
+        releasePendingFadeIn();
         return;
       }
 
@@ -427,6 +495,19 @@ export function useReview({
       void markOnboardingStep(OnboardingStep.PRACTICE_WORD);
 
       try {
+        // Arm BEFORE the await, not after.
+        //
+        // `updateWord` swaps the next word in synchronously (useFSRS calls
+        // setCurrentWord partway through, and only the DB write is deferred),
+        // so React can commit the new card while this function is still
+        // suspended on the await. Arming afterwards therefore raced the very
+        // commit it was waiting for: the layout effect found nothing armed, and
+        // the 380ms watchdog became the real path — measured as ~633ms of black
+        // between cards on a 30fps capture. Armed here, the release lands on
+        // the commit itself.
+        pendingFadeInRef.current = true;
+        setTimer('fadeInWatchdog', releasePendingFadeIn, TRANSITION_DELAYS.fadeInWatchdog);
+
         // Call updateWord and capture the new stability value
         const newStability = await updateWord(rootId, confidence);
 
@@ -455,18 +536,28 @@ export function useReview({
         // FIXED: Check if completion is needed after word processing
         // This ensures completion happens at the right time
         if (isComplete) {
-          // Session is already complete, trigger completion transition
+          // Session is already complete, trigger completion transition. Release
+          // the armed fade-in rather than leaving it to the watchdog: there is
+          // no next card to wait for, and the card's opacity must not be left
+          // at 0 for whatever mounts next.
+          releasePendingFadeIn();
           triggerCompletionTransition();
           // Word process complete immediately
-        } else {
-          // Continue with normal flow - fade in immediately (no delay)
-          // This ensures audio and visual appearance are synchronized
-          fadeIn();
         }
+        // Nothing to do on the normal path: the fade-in was armed before the
+        // await and the layout effect on currentWordKey releases it when the
+        // next card actually commits.
+        //
+        // It used to call fadeIn() straight after the await. The opacity is a
+        // shared value that lands on the very next UI frame, while React had
+        // not yet committed the new word — so the card faded back in still
+        // showing the card that was just graded and swapped a few frames later.
+        // Filmed at 30fps: ~265ms of the outgoing card at full opacity.
       } catch (error) {
         handleError(error);
         if (!stateRefs.current.isUpdatingWord) return;
-        fadeIn();
+        // The armed fade-in has no commit coming; un-hide the card now.
+        releasePendingFadeIn();
       } finally {
         stateRefs.current.isUpdatingWord = false;
         setIsUpdatingUI(false);
@@ -480,6 +571,8 @@ export function useReview({
       updateWord,
       updateMetrics,
       fadeIn,
+      releasePendingFadeIn,
+      setTimer,
       isComplete,
       triggerCompletionTransition,
       clearTimer,
@@ -696,7 +789,7 @@ export function useReview({
   const enterRestudy = useCallback(
     (fromVoice: boolean) => {
       restudyRef.current = true;
-      setRestudying(true);
+      setRestudyKey(currentWordKey);
       diagMark('restudy.enter', { fromVoice });
       // The voice path never flips the card (its result panel is the answer
       // surface), so a miss can arrive here still on the question face. Show
@@ -1103,7 +1196,7 @@ export function useReview({
   const commitPendingGrade = useCallback(() => {
     if (restudyRef.current) {
       restudyRef.current = false;
-      setRestudying(false);
+      setRestudyKey(null);
       diagMark('restudy.interrupted');
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();

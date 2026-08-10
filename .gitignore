@@ -53,6 +53,7 @@ translate/__pycache__/
 .env.local
 .env
 .argent/secrets.env
+.argent/recordings/
 translate/__pycache__/
 translate/reports/
 translate/article/

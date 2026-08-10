@@ -10,7 +10,7 @@
  * - H (Hue): 0-360 (degrees on color wheel)
  */
 
-import { clampRgb, converter, formatHex, type Oklch } from 'culori';
+import { clampRgb, converter, formatHex, type Oklch, type Rgb } from 'culori';
 
 /**
  * Convert OKLCH color to hex string for React Native
@@ -82,6 +82,50 @@ export function withOpacity(hex: string, opacity: number): string {
   const b = Math.round((rgb.b ?? 0) * 255);
 
   return `rgba(${r},${g},${b},${validOpacity})`;
+}
+
+/**
+ * Blend two colors into a single opaque hex.
+ *
+ * `withAlpha` and `withOpacity` both return a translucent color, which the
+ * renderer composites over whatever happens to sit behind the element. This
+ * resolves the blend up front against a base you choose instead.
+ *
+ * That distinction matters on a dark theme. A hue laid over the near-black page
+ * background at a low alpha collapses toward black whatever the hue was — 15%
+ * of amber over `#040D07` is an olive-brown, not amber. Blended into an
+ * elevation surface at the same weight, the hue still reads as itself.
+ *
+ * @param base - Hex color underneath (typically an elevation surface)
+ * @param overlay - Hex color laid on top
+ * @param amount - Proportion of `overlay` in the result (0 = base, 1 = overlay)
+ * @returns Opaque hex color, or `base` if either input cannot be parsed
+ *
+ * @example
+ * mixColors('#121F17', '#4EAD6D', 0.22) // → "#1E3B28"
+ */
+export function mixColors(base: string, overlay: string, amount: number): string {
+  const ratio =
+    typeof amount === 'number' && !Number.isNaN(amount) ? Math.max(0, Math.min(1, amount)) : 0;
+
+  const baseRgb = toRgb(base);
+  const overlayRgb = toRgb(overlay);
+
+  if (!baseRgb || !overlayRgb) {
+    return base;
+  }
+
+  // Gamma-space interpolation, matching how the renderer composites an alpha
+  // fill — so a call here lands where the equivalent `withAlpha` would have,
+  // just resolved against `base` rather than against the page.
+  const blended: Rgb = {
+    mode: 'rgb',
+    r: (baseRgb.r ?? 0) * (1 - ratio) + (overlayRgb.r ?? 0) * ratio,
+    g: (baseRgb.g ?? 0) * (1 - ratio) + (overlayRgb.g ?? 0) * ratio,
+    b: (baseRgb.b ?? 0) * (1 - ratio) + (overlayRgb.b ?? 0) * ratio,
+  };
+
+  return formatHex(blended);
 }
 
 // =============================================================================

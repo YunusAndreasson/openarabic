@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from '
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, LayoutAnimationConfig } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import type { ReviewCardHandle } from '@/components/review/ReviewFlipCard';
@@ -454,89 +454,137 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
           transparentStyle,
         ]}
       >
+        {/* Keyed on the card, so a card change UNMOUNTS this wrapper — which is
+            the only moment `skipExiting` applies (it fires from the wrapper's
+            own componentWillUnmount, tagging its SINGLE child so the native side
+            skips that view's exit). It therefore has to sit directly around the
+            branch: wrapping the slot View instead tags a view that has no exit
+            animation of its own, and the branch inside still animated out —
+            verified on device, chips still lingered ~10 frames.
+
+            `skipEntering` is the same idea in reverse. The 160ms entering delay
+            below exists to wait out the FLIP — but a new card arrives already
+            on its question face, with no flip to wait for, so on that path the
+            delay was dead time: the card was back and the band stayed empty for
+            another ~280ms. The band already rides the card's own fade-in, which
+            is the appearance it needs. Within a card the wrapper stays mounted,
+            so the flip-timed entering still applies where it was designed to.
+
+            That placement gives the band the distinction it needs:
+
+            - Swapping branches WITHIN a card (reveal → grade bar on the flip,
+              grade bar → voice result) leaves the wrapper mounted, so those
+              keep their cross-fade, which is what the 160ms entering delay was
+              tuned for.
+            - Advancing to a new card unmounts it, and the outgoing branch is
+              removed instantly instead of animating.
+
+            Without this, a branch's 120ms FadeOut ran while the band sat at
+            opacity 0 riding the card's fade, was still in flight when the band
+            faded back in, and got multiplied back into view — grade chips
+            hanging over the incoming card for ~4-5 frames. Same cause as the
+            "Tap to continue" reappearance, which the restudy branch solves by
+            having no exit at all (it only ever leaves via an advance). */}
         <View style={baseStyles.actionSlot}>
-          {restudying ? (
-            // A forgotten card holds here instead of advancing. The whole card
-            // is the tap target (see onRestudyContinue on ReviewFlipCard), so
-            // this is a prompt rather than a button — one easy tap anywhere, no
-            // aiming.
-            <Animated.View
-              key="restudy"
-              entering={ACTION_ENTERING}
-              exiting={ACTION_EXITING}
-              style={baseStyles.actionState}
-            >
-              <View style={baseStyles.actionRow}>
-                <ReviewActionButton
-                  label={STRINGS.RESTUDY_CONTINUE}
-                  color={colors.tint}
-                  onPress={handleRestudyContinue}
-                />
-              </View>
-            </Animated.View>
-          ) : voiceShowResult ? (
-            <Animated.View
-              key="voice-result"
-              entering={ACTION_ENTERING}
-              exiting={ACTION_EXITING}
-              style={baseStyles.actionState}
-            >
-              <VoiceResultPanel
-                result={voiceResult}
-                onAccept={voiceAccept}
-                onReject={voiceReject}
-                onRetry={handleVoiceRetry}
-              />
-            </Animated.View>
-          ) : revealed ? (
-            <Animated.View
-              key="grade"
-              entering={ACTION_ENTERING}
-              exiting={ACTION_EXITING}
-              style={baseStyles.actionState}
-            >
-              <ReviewGradeBar
-                intervals={intervalLabels}
-                onGrade={handleGradeFromBar}
-                disabled={isUpdating}
-              />
-            </Animated.View>
-          ) : (
-            // The two ways to answer a card, side by side, in the one place
-            // this screen puts things you can do. The mic used to sit on the
-            // card and "Show answer" below it — two invitations, two shapes,
-            // two places, and no way to see them as alternatives.
-            //
-            // Two peers now: same height, same shape, one line of text each,
-            // no glyphs. There is no line of copy above them either — the pair
-            // is the whole instruction, and everything that used to be written
-            // here ("Tap when you're done") was explaining a control that can
-            // show it instead.
-            <Animated.View
-              key="reveal"
-              entering={ACTION_ENTERING}
-              exiting={ACTION_EXITING}
-              style={baseStyles.actionState}
-            >
-              <View style={baseStyles.actionRow}>
-                <ReviewActionButton
-                  label={STRINGS.SHOW_ANSWER}
-                  // Neutral against the mic's tint: when voice is on, speaking
-                  // is the exercise and revealing is the way out of it.
-                  color={colors.secondaryText}
-                  disabled={isUpdating}
-                  onPress={revealAnswer}
-                />
-                {voiceMode ? (
-                  <VoiceAnswerButton
-                    mode={voiceMode}
-                    onSpeakNow={voiceSpeakNow}
-                    onStopSpeaking={voiceStopSpeaking}
+          <LayoutAnimationConfig key={currentWordKey} skipEntering skipExiting>
+            {restudying ? (
+              // A forgotten card holds here instead of advancing. The whole card
+              // is the tap target (see onRestudyContinue on ReviewFlipCard), so
+              // this is a prompt rather than a button — one easy tap anywhere, no
+              // aiming.
+              // No `exiting`. Unlike the other branches, which swap WITHIN a card
+              // while the band is at full opacity, a restudy hold only ever ends
+              // by advancing — and by then the band is already at opacity 0,
+              // riding the card's own fade. Its 120ms FadeOut therefore ran
+              // invisibly, was still in flight when the band faded back in for the
+              // next card, and got multiplied back into view: "Tap to continue"
+              // reappeared faintly over the incoming card for ~165ms before
+              // vanishing again. Unmounting outright is invisible, because
+              // nothing is on screen at that moment anyway.
+              <Animated.View
+                key="restudy"
+                entering={ACTION_ENTERING}
+                style={baseStyles.actionState}
+              >
+                <View style={baseStyles.actionRow}>
+                  <ReviewActionButton
+                    label={STRINGS.RESTUDY_CONTINUE}
+                    color={colors.tint}
+                    onPress={handleRestudyContinue}
                   />
-                ) : null}
-              </View>
-            </Animated.View>
-          )}
+                </View>
+              </Animated.View>
+            ) : voiceShowResult ? (
+              <Animated.View
+                key="voice-result"
+                entering={ACTION_ENTERING}
+                exiting={ACTION_EXITING}
+                style={baseStyles.actionState}
+              >
+                <VoiceResultPanel
+                  result={voiceResult}
+                  onAccept={voiceAccept}
+                  onReject={voiceReject}
+                  onRetry={handleVoiceRetry}
+                />
+              </Animated.View>
+            ) : revealed ? (
+              <Animated.View
+                key="grade"
+                entering={ACTION_ENTERING}
+                exiting={ACTION_EXITING}
+                style={baseStyles.actionState}
+              >
+                <ReviewGradeBar
+                  intervals={intervalLabels}
+                  onGrade={handleGradeFromBar}
+                  disabled={isUpdating}
+                />
+              </Animated.View>
+            ) : (
+              // The two ways to answer a card, side by side, in the one place
+              // this screen puts things you can do. The mic used to sit on the
+              // card and "Show answer" below it — two invitations, two shapes,
+              // two places, and no way to see them as alternatives.
+              //
+              // Two peers now: same height, same shape, one line of text each,
+              // no glyphs. There is no line of copy above them either — the pair
+              // is the whole instruction, and everything that used to be written
+              // here ("Tap when you're done") was explaining a control that can
+              // show it instead.
+              <Animated.View
+                key="reveal"
+                entering={ACTION_ENTERING}
+                exiting={ACTION_EXITING}
+                style={baseStyles.actionState}
+              >
+                <View style={baseStyles.actionRow}>
+                  <ReviewActionButton
+                    label={STRINGS.SHOW_ANSWER}
+                    // Neutral against the mic's tint: when voice is on, speaking
+                    // is the exercise and revealing is the way out of it.
+                    //
+                    // With voice off there is no mic to be neutral against, and
+                    // the band holds this button alone — so it takes the app's
+                    // standalone-CTA shape instead of sitting there as a grey
+                    // ghost. See ReviewActionButton on why a filled variant is
+                    // only ever valid for a button without peers.
+                    color={colors.secondaryText}
+                    variant={voiceMode ? 'tinted' : 'primary'}
+                    disabled={isUpdating}
+                    onPress={revealAnswer}
+                  />
+                  {voiceMode ? (
+                    <VoiceAnswerButton
+                      mode={voiceMode}
+                      onSpeakNow={voiceSpeakNow}
+                      onStopSpeaking={voiceStopSpeaking}
+                    />
+                  ) : null}
+                </View>
+              </Animated.View>
+            )}
+          </LayoutAnimationConfig>
         </View>
       </Animated.View>
 

@@ -3,7 +3,32 @@ import { Pressable, StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
-import { withAlpha } from '@/utils/colorUtils';
+import { useColors } from '@/hooks/theme/useColors';
+import { mixColors, withAlpha } from '@/utils/colorUtils';
+
+/**
+ * How an outcome hue is turned into a chip.
+ *
+ * The fill is *mixed into* the elevation surface rather than laid over the page
+ * as a translucent wash. An alpha fill composites against whatever is behind
+ * the button, which on this screen is `colors.background` — near-black in dark
+ * mode — so a hue at 15% resolved to near-black whatever the hue was: "Guessed"
+ * came out an olive-brown, "Knew it" a barely-green charcoal. Three outcomes,
+ * three sludges. Mixing into `elevation2` keeps each hue recognisably itself in
+ * dark mode and lifts the chip off the page as a surface.
+ *
+ * The border stays alpha on purpose: it composites over the chip's own opaque
+ * fill, so it reads as a stronger edge of the same hue rather than washing out.
+ * It is what actually carries the colour at rest.
+ */
+const GRADE_SURFACE = {
+  /** Hue mixed into the elevation surface for the resting fill. */
+  FILL: 0.22,
+  /** Same mix, deeper, so a press reads without changing the chip's shape. */
+  FILL_PRESSED: 0.35,
+  /** Hue over the resting fill. Above LAYOUT.OPACITY.LIGHT — see above. */
+  BORDER: 0.35,
+} as const;
 
 const STATIC_STYLES = StyleSheet.create({
   button: {
@@ -17,23 +42,38 @@ const STATIC_STYLES = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.SMALL,
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
   },
+  // The app's standalone-CTA shape (see PinnedActionButton), applied only to
+  // the `primary` variant.
+  capsule: {
+    borderRadius: LAYOUT.BORDER_RADIUS.PILL,
+  },
   label: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
   },
   // Tabular figures keep a centered "10m"/"4d" from jittering between cards.
+  // No opacity: the interval is already a tier below the label by size and
+  // weight, and dimming it on top of that was most of why the chips read as
+  // washed out.
   sublabel: {
     marginTop: LAYOUT.SPACING.TINY,
     fontVariant: ['tabular-nums'],
-    opacity: LAYOUT.OPACITY.HIGH,
   },
 });
 
 interface ReviewActionButtonProps {
   label: string;
-  /** Outcome colour: drives the fill, the border and the label. */
+  /** Outcome colour: drives the fill, the border and the label. Ignored by the
+   *  `primary` variant, which paints itself from the theme's tint. */
   color: string;
   /** Quiet second line — the interval a grade buys. */
   sublabel?: string;
+  /**
+   * `tinted` (default) is a peer in a row of outcomes.
+   *
+   * `primary` is the app's filled-tint capsule, and is only valid for a button
+   * that is ALONE in the band — see the note on solid fills below.
+   */
+  variant?: 'tinted' | 'primary';
   disabled?: boolean;
   /** Defaults to `label`; pass the long form when the label is abbreviated. */
   accessibilityLabel?: string;
@@ -50,26 +90,54 @@ interface ReviewActionButtonProps {
  * because "Forgot" and "Try again" do not feel the same.
  *
  * Every button in the band is one line of label (plus, on a grade, the quiet
- * interval it buys). There is deliberately no glyph slot and no solid-fill
- * "emphasized" variant: the mic glyph made the voice button two rows tall
- * beside a one-row "Show answer" so the pair never read as alternatives, and
- * the solid fill — used to nudge the likeliest choice after a voice miss —
- * turned whichever button it landed on into a block of flat colour that
- * out-shouted the two real outcomes either side of it. A row of peers is the
- * point; if one of them needs to be louder, that is a decision for the copy,
- * not for the paint.
+ * interval it buys). There is deliberately no glyph slot: the mic glyph made
+ * the voice button two rows tall beside a one-row "Show answer" so the pair
+ * never read as alternatives.
+ *
+ * On solid fills, and why `primary` is not a reversal of that:
+ *
+ * A solid fill was once used to nudge the likeliest choice after a voice miss,
+ * and it turned whichever button it landed on into a block of flat colour that
+ * out-shouted the two real outcomes either side of it. That still holds, and it
+ * is a rule about a button WITH PEERS: a row of outcomes must stay a row of
+ * peers, because a louder option biases self-grading and self-grading is the
+ * input to FSRS. `primary` is therefore invalid on any member of a multi-button
+ * row — the grade bar and the voice-miss row must never pass it.
+ *
+ * It exists for the one state where the band holds a single button: "Show
+ * answer" with voice off. There, neutrality was against nothing. The screen's
+ * only action was a grey ghost while every other screen-level CTA in the app is
+ * a filled tint capsule, so the review screen read as flat and unfinished. With
+ * voice on the button has a peer again and reverts to `tinted`.
  */
 export const ReviewActionButton: FC<ReviewActionButtonProps> = ({
   label,
   color,
   sublabel,
+  variant = 'tinted',
   disabled = false,
   accessibilityLabel,
   onPress,
 }) => {
-  const restBg = withAlpha(color, LAYOUT.OPACITY.FAINT);
-  const pressedBg = withAlpha(color, LAYOUT.OPACITY.SUBTLE);
-  const borderColor = withAlpha(color, LAYOUT.OPACITY.LIGHT);
+  const colors = useColors();
+  const isPrimary = variant === 'primary';
+
+  // Filled variant mirrors ThemedButton's `filled` tokens so the review screen's
+  // CTA is the same button the rest of the app uses, not a lookalike.
+  const restBg = isPrimary
+    ? disabled
+      ? colors.disabledButtonBg
+      : colors.tint
+    : mixColors(colors.elevation2, color, GRADE_SURFACE.FILL);
+  const pressedBg = isPrimary
+    ? colors.tint
+    : mixColors(colors.elevation2, color, GRADE_SURFACE.FILL_PRESSED);
+  const borderColor = isPrimary
+    ? disabled
+      ? colors.cardBorder
+      : colors.tint
+    : withAlpha(color, GRADE_SURFACE.BORDER);
+  const labelColor = isPrimary ? (disabled ? colors.disabled : colors.onTint) : color;
 
   return (
     <Pressable
@@ -87,14 +155,20 @@ export const ReviewActionButton: FC<ReviewActionButtonProps> = ({
       // an eyeblink is responsible for showing it (see VoiceAnswerButton).
       style={({ pressed }) => [
         STATIC_STYLES.button,
+        isPrimary && STATIC_STYLES.capsule,
         { backgroundColor: pressed ? pressedBg : restBg, borderColor },
+        // A filled surface has no headroom for a deeper fill on press, so the
+        // capsule dims instead — the same press idiom as the card's own
+        // controls. The tinted chips keep the fill swap, which reads better on
+        // a surface that is mostly its own background.
+        isPrimary && pressed && { opacity: LAYOUT.OPACITY.PRESSED },
       ]}
     >
       <ThemedText
         skipDefaultColor
         weight="semibold"
         numberOfLines={1}
-        style={[STATIC_STYLES.label, { color }]}
+        style={[STATIC_STYLES.label, { color: labelColor }]}
       >
         {label}
       </ThemedText>
@@ -103,6 +177,12 @@ export const ReviewActionButton: FC<ReviewActionButtonProps> = ({
           skipDefaultColor
           type="caption"
           numberOfLines={1}
+          // The outcome hue at full strength. It used to be the same hue at 70%
+          // opacity, which on the old near-black fill left the interval as a
+          // smudge; a neutral grey fixes the contrast but reads as dead matter
+          // sitting in a coloured chip. With the fill now carrying real colour,
+          // size and weight are enough of a tier on their own — 13pt regular
+          // under 16pt semibold — so the hue can stay lit.
           style={[STATIC_STYLES.sublabel, { color }]}
         >
           {sublabel}

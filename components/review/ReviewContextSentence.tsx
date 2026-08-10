@@ -198,7 +198,10 @@ export const ReviewContextSentence: FC<Props> = memo(({ example, onPlay }) => {
             { opacity: pressed ? LAYOUT.OPACITY.PRESSED : LAYOUT.OPACITY.FULL },
           ]}
         >
-          <Ionicons name="play" size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={colors.secondaryText} />
+          {/* Same reasoning as the card's replay glyph: an audio control on this
+              screen is secondary to the word, so it takes the icon token rather
+              than a near-white text one. */}
+          <Ionicons name="play" size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={colors.icon} />
           <ThemedText type="caption" colorName="secondaryText">
             {STRINGS.PLAY_SENTENCE_AUDIO}
           </ThemedText>

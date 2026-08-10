@@ -15,6 +15,7 @@ import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
+import { mixColors } from '@/utils/colorUtils';
 import { lightFeedback } from '@/utils/haptics';
 
 // ===== STATIC STYLES USING STYLESHEET.CREATE =====
@@ -24,6 +25,9 @@ import { lightFeedback } from '@/utils/haptics';
 const ICON_BUTTON_CONSTANTS = {
   SIZE: MIN_TOUCH_TARGET.MEDIUM, // 44px - Apple HIG minimum tap target
 } as const;
+
+/** Tint mixed into the elevation surface to make the progress track visible. */
+const TRACK_TINT = 0.15;
 
 /** Below this a "run" is noise — two right answers is just Tuesday. */
 const MIN_RECALL_RUN = 3;
@@ -147,6 +151,12 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({
           animationDuration={TIMING_CONFIG.PROGRESS.duration}
           progress={displayProgress}
           height={LAYOUT.SPACING.SMALL}
+          // The default track is tint at 15%, which over this screen's near-black
+          // background is within a shade of the page — so on the first card, when
+          // the fill is still zero-width, the bar was invisible and the session
+          // opened with a header that looked empty. A mixed track is a real
+          // channel the fill visibly travels along, in both themes.
+          backgroundColor={mixColors(colors.elevation2, colors.tint, TRACK_TINT)}
         />
       </View>
       {/* A quiet run counter, from metrics the session already tracks. All the

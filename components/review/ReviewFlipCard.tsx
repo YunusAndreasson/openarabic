@@ -163,21 +163,21 @@ const STATIC_STYLES = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  divider: {
-    height: LAYOUT.BORDER.WIDTH.THIN,
-    alignSelf: 'stretch',
-    marginVertical: LAYOUT.SPACING.LARGE,
-  },
+  // No rule between the Arabic and its meaning. A hairline across a card that
+  // already has a border is a separator drawn twice, and it split the one thing
+  // on this face that should read as a single thought — the word and what it
+  // means. The break is spatial now; the type carries the hierarchy.
   answerBody: {
-    flex: 1,
     width: '100%',
     alignItems: 'center',
+    paddingTop: LAYOUT.SPACING.XLARGE,
   },
+  // Content-sized, like answerBody: WordDisplay's trailer owns the slack below
+  // the block now, so neither face's body may grow into it.
   questionBody: {
-    flex: 1,
     width: '100%',
     alignItems: 'center',
-    paddingTop: LAYOUT.SPACING.LARGE,
+    paddingTop: LAYOUT.SPACING.XLARGE,
     gap: LAYOUT.SPACING.LARGE,
   },
   // Replay is an explicit control now. It used to be "tap the Arabic", which
@@ -594,10 +594,6 @@ export function ReviewFlipCard({
                     accessibilityLabel={restudying ? STRINGS.RESTUDY_CONTINUE : undefined}
                   >
                     <WordDisplay word={word} wordType={wordType} onWordPress={onReplayAudio}>
-                      <View
-                        style={[STATIC_STYLES.divider, { backgroundColor: colors.border }]}
-                        pointerEvents="none"
-                      />
                       <View style={STATIC_STYLES.answerBody}>
                         <ThemedText
                           type="heading2"
@@ -669,10 +665,14 @@ export function ReviewFlipCard({
                                 },
                               ]}
                             >
+                              {/* `icon`, not `secondaryText`: replay is a
+                                  secondary control on a face whose whole job is
+                                  to show one word, and a near-white glyph gave
+                                  it the weight of a second subject. */}
                               <Ionicons
                                 name="volume-medium-outline"
                                 size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                                color={colors.secondaryText}
+                                color={colors.icon}
                               />
                             </Pressable>
                           ) : null))
