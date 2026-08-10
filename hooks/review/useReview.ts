@@ -1075,12 +1075,37 @@ export function useReview({
    * and back gesture, or a parent navigation — which previously persisted the
    * grade but left every ['fsrs-words'] entry untouched, so the practice
    * screen kept showing pre-session counts for up to the 60s staleTime.
+   *
+   * A restudy hold is a second flavour of "decided but unwritten": tapping
+   * "Forgot" already committed the learner to the grade — the hold only buys
+   * a beat to look at the answer before it advances — so an exit before "Tap
+   * to continue" must write it too. Without this, closing (or backing out of)
+   * a session on a held card discarded the Forgot entirely and left the word
+   * showing as untouched in the next session, silently contradicting what the
+   * learner was just shown on screen. There is no pendingGradeRef for this
+   * case — enterRestudy never reaches commitGrade — so it is handled directly
+   * rather than through the fade-driven commitGrade/advance path, which has
+   * no card left to animate once the screen is on its way out.
    */
   const commitPendingGrade = useCallback(() => {
+    if (restudyRef.current) {
+      restudyRef.current = false;
+      setRestudying(false);
+      diagMark('restudy.interrupted');
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+      stateRefs.current.isUpdatingWord = true;
+      processFeedback('unknown', controller);
+      return;
+    }
+
     const pendingGrade = pendingGradeRef.current;
     pendingGradeRef.current = null;
     pendingGrade?.();
-  }, []);
+  }, [processFeedback]);
 
   const finalizeSession = useCallback(() => {
     if (finalizedRef.current) return;
