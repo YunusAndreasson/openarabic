@@ -756,8 +756,14 @@ export function useReview({
   /** Leave the restudy hold and actually commit the "Forgot". */
   const continueFromRestudy = useCallback(() => {
     if (!restudyRef.current) return;
+    // Only the ref drops here — it is the re-entry guard, and a second tap
+    // during the exit must be a no-op. The UI flag deliberately stays up until
+    // the next card arrives (the currentWordKey effect clears it): the bottom
+    // band picks restudy → voice → revealed → reveal, and `revealed` is still
+    // true for this card, so clearing `restudying` now swapped "Tap to
+    // continue" for the grade bar for the whole exit fade — offering three
+    // buttons the learner never had, on a card already on its way out.
     restudyRef.current = false;
-    setRestudying(false);
     diagMark('restudy.continue');
     lightFeedback();
     // No beat. The verdict fired when the miss was graded and its ring has been
