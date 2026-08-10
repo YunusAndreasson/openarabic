@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
 
@@ -7,9 +7,12 @@ import { LAYOUT } from '@/constants/layout';
  * Clearance for the OS sheet grabber (`sheetGrabberVisible: true`). iOS draws a
  * pill a few points below the sheet's top edge; at the previous `MEDIUM` (12)
  * the grabber landed on the first line of the header, which read as garbled
- * text. Android draws its own and needs the same room.
+ * text. Android never draws one for this classic `Stack.Screen
+ * presentation:'formSheet'` path — react-native-screens only reads
+ * `sheetGrabberVisible` on its newer standalone `<FormSheet>` component — so
+ * reserving the same space here was just dead space above the header.
  */
-const GRABBER_CLEARANCE = LAYOUT.SPACING.XLARGE;
+const GRABBER_CLEARANCE = Platform.OS === 'android' ? LAYOUT.SPACING.MEDIUM : LAYOUT.SPACING.XLARGE;
 
 interface SheetScreenProps {
   children: ReactNode;
