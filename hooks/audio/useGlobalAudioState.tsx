@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { createContext, use, useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react';
 
 import { AUDIO_STATES } from '@/constants/audio';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { useAudioProgressSubscription } from '@/hooks/audio/useAudioSubscription';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
@@ -232,7 +233,7 @@ function useGlobalAudioStateInternal(): GlobalAudioState {
   }, [audioPlayer.stop]);
 
   const handleTimerPress = useCallback(() => {
-    router.push('/sleep-timer');
+    router.push(ROUTE_PATHS.SLEEP_TIMER);
   }, []);
 
   // Sleep timer handlers

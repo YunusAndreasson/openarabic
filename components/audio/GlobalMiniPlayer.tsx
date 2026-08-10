@@ -1,12 +1,29 @@
 import { usePathname } from 'expo-router';
 import { memo } from 'react';
 
-import { ARTICLE_ROUTE_PREFIX } from '@/constants/routes';
+import { ARTICLE_ROUTE_PREFIX, ROUTE_PATHS } from '@/constants/routes';
 import { useAudioProgress, useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
 import { useShouldShowMiniPlayer } from '@/hooks/audio/useShouldShowMiniPlayer';
 
 import { MiniPlayer } from './MiniPlayer';
 import type { MiniPlayerPlacement } from './MiniPlayer';
+
+// Root-level `formSheet` routes (app/_layout.tsx). Unlike the article reader's
+// full `modal`, a formSheet does NOT get its own isolated view controller/
+// window on Android, so the root overlay's zIndex still wins and draws on top
+// of the sheet instead of behind it — e.g. the sleep timer's "Set timer"
+// button sits right where the root card renders and becomes unreadable and
+// hard to tap. All of these are reachable from a screen the root instance
+// already covers (the mini player itself, or a Practice stat card), so there
+// is nothing lost by standing the root instance down while one is open.
+const FORM_SHEET_ROUTES: ReadonlySet<string> = new Set([
+  ROUTE_PATHS.SLEEP_TIMER,
+  ROUTE_PATHS.PRACTICE_DUE_WORDS,
+  ROUTE_PATHS.PRACTICE_MEMORY_RETENTION,
+  ROUTE_PATHS.PRACTICE_STUDY_STREAK,
+  ROUTE_PATHS.PRACTICE_WORDS_MASTERED,
+  ROUTE_PATHS.PRACTICE_WORDS_TO_REVISIT,
+]);
 
 export interface GlobalMiniPlayerProps {
   /**
@@ -32,7 +49,14 @@ export const GlobalMiniPlayer = memo(function GlobalMiniPlayer({
   // one stands down so the two never overlap mid-dismiss.
   const hostedByArticleScreen = placement === 'root' && pathname.startsWith(ARTICLE_ROUTE_PREFIX);
 
-  if (hostedByArticleScreen || !shouldShow || !globalAudioState.currentArticle) {
+  const hostedByFormSheet = placement === 'root' && FORM_SHEET_ROUTES.has(pathname);
+
+  if (
+    hostedByArticleScreen ||
+    hostedByFormSheet ||
+    !shouldShow ||
+    !globalAudioState.currentArticle
+  ) {
     return null;
   }
 

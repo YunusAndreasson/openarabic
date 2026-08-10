@@ -26,6 +26,8 @@ export const ROUTE_PATHS = {
   PRACTICE_WORDS_MASTERED: '/words-mastered',
   PRACTICE_WORDS_TO_REVISIT: '/words-to-revisit',
   PRACTICE_WORD: '/(tabs)/practice/word',
+
+  SLEEP_TIMER: '/sleep-timer',
 } as const;
 
 // Re-export route builders for backward compatibility
