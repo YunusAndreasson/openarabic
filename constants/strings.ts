@@ -555,6 +555,7 @@ export const STRINGS = {
   WORD_DIFFICULTY_MODERATE: 'Moderate',
   WORD_DIFFICULTY_HARD: 'Hard',
   WORD_DUE_NOW: 'Due now',
+  WORD_DUE_LATER_TODAY: 'Later today',
   WORD_DUE_TOMORROW: 'Tomorrow',
   WORD_DUE_IN_DAYS: 'In {count} days',
   WORD_STATE_NEW: 'New',

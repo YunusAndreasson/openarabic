@@ -65,7 +65,7 @@ function StatRow({ label, value, colorName, borderColor }: StatRowProps): JSX.El
   );
 }
 
-function getNextReviewLabel(due: string | null): string {
+export function getNextReviewLabel(due: string | null): string {
   const dueDate = parseSupabaseTimestamp(due);
   if (!dueDate) return STRINGS.WORD_STATE_NEW;
   const now = new Date();
@@ -74,7 +74,12 @@ function getNextReviewLabel(due: string | null): string {
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const startOfDueDay = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
   const days = Math.round((startOfDueDay.getTime() - startOfToday.getTime()) / DAY_MS);
-  if (days <= 0) return STRINGS.WORD_DUE_NOW;
+  // Same calendar day but still in the future (e.g. due at 6pm, now 10am) is
+  // NOT "due now" — the due query (fsrs_due <= now) won't serve it yet, so
+  // labelling it "Due now" contradicted a Practice screen already showing
+  // "All caught up". Collapsing this into the days<=0 branch below reused the
+  // "now" copy for anything from seconds to hours away.
+  if (days <= 0) return STRINGS.WORD_DUE_LATER_TODAY;
   if (days === 1) return STRINGS.WORD_DUE_TOMORROW;
   return STRINGS.WORD_DUE_IN_DAYS.replace('{count}', String(days));
 }
