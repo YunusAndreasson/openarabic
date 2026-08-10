@@ -111,10 +111,16 @@ export function useOnboardingChecklist(articlesData: Article[]) {
     const readDone = Boolean(state?.readFirstText) || (progressMap?.size ?? 0) > 0;
     const saveDone = Boolean(state?.saveFirstWord) || (studyWords?.length ?? 0) > 0;
     const listenDone = Boolean(state?.listenToAudio);
+    // `fsrs_reps > 0` is the only honest server test for "has been reviewed" —
+    // createResetFSRSUpdate stamps fsrs_last_review at creation with reps 0, so
+    // the timestamp reports every freshly saved word as already practised.
+    const practiceDone =
+      Boolean(state?.practiceFirstWord) || (studyWords?.some(w => (w.fsrs_reps ?? 0) > 0) ?? false);
     return [
       { step: OnboardingStep.READ_TEXT, label: STRINGS.CHECKLIST_READ, done: readDone },
       { step: OnboardingStep.SAVE_WORD, label: STRINGS.CHECKLIST_SAVE, done: saveDone },
       { step: OnboardingStep.LISTEN_AUDIO, label: STRINGS.CHECKLIST_LISTEN, done: listenDone },
+      { step: OnboardingStep.PRACTICE_WORD, label: STRINGS.CHECKLIST_PRACTICE, done: practiceDone },
     ];
   }, [state, progressMap, studyWords]);
 

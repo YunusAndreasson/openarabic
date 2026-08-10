@@ -6,6 +6,7 @@ import { InteractionManager } from 'react-native';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TIMING_CONFIG, VERDICT } from '@/constants/animation';
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
+import { OnboardingStep } from '@/constants/onboarding';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { analytics } from '@/services/analytics';
@@ -32,6 +33,7 @@ import type { StudyWord } from '@/types/vocabulary.types';
 import { resetArmTelemetry } from '@/utils/armTelemetry';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback, warningFeedback } from '@/utils/haptics';
+import { markOnboardingStep } from '@/utils/onboardingStorage';
 import {
   beginPrompt,
   markCardCurrent,
@@ -418,6 +420,11 @@ export function useReview({
       const oldStability = currentWord.fsrs_stability ?? undefined;
       const reps = currentWord.fsrs_reps ?? 0;
       const rootId = currentWord.root_id;
+
+      // Onboarding: this is the single funnel every committed grade passes
+      // through (fade completion, watchdog, teardown drain, restudy exit), so
+      // the checkmark can't be lost the way the fade callback alone could be.
+      void markOnboardingStep(OnboardingStep.PRACTICE_WORD);
 
       try {
         // Call updateWord and capture the new stability value

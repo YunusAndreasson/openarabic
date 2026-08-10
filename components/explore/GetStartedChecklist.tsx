@@ -13,24 +13,40 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { ThemedText } from '@/components/ThemedText';
 import { BaseCard } from '@/components/common';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
-import { LAYOUT } from '@/constants/layout';
-import { ONBOARDING_CONFIG, type OnboardingStep } from '@/constants/onboarding';
-import { getArticleRoute } from '@/constants/routes';
+import { TIMING_CONFIG } from '@/constants/animation';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { ONBOARDING_CONFIG, OnboardingStep } from '@/constants/onboarding';
+import { getArticleRoute, ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import type { OnboardingChecklistState } from '@/hooks/onboarding/useOnboardingChecklist';
 import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useColors } from '@/hooks/theme/useColors';
 import { analytics } from '@/services/analytics';
 import type { Article } from '@/types/articles.types';
+import type { ReanimatedCSSAnimationStyle } from '@/types/ui/base.types';
 import { pickStarterArticle } from '@/utils/articleUtils';
 import { selectionFeedback } from '@/utils/haptics';
 
 const CHECK_ICON_SIZE = 22;
 
+// Mount fade-in — Reanimated 4 CSS @keyframes, module-level so no per-render
+// alloc. Gives the card a deliberate entrance when the welcome intro dismisses,
+// instead of popping in behind the closing modal.
+const MOUNT_FADE_IN_STYLE = {
+  animationName: {
+    from: { opacity: 0 },
+    to: { opacity: 1 },
+  },
+  animationDuration: `${TIMING_CONFIG.SLOW.duration}ms`,
+  animationFillMode: 'forwards' as const,
+} as ReanimatedCSSAnimationStyle;
+
 interface GetStartedChecklistProps {
   articlesData: Article[];
   /** Owned by the Explore screen so eligibility is evaluated exactly once */
   checklist: OnboardingChecklistState;
+  /** Welcome intro is on screen — stay hidden until it's dismissed */
+  isSuppressedByIntro?: boolean;
 }
 
 /**
@@ -43,6 +59,7 @@ interface GetStartedChecklistProps {
 const GetStartedChecklistComponent: FC<GetStartedChecklistProps> = ({
   articlesData,
   checklist,
+  isSuppressedByIntro = false,
 }) => {
   const colors = useColors();
   const router = useRouter();
@@ -98,6 +115,16 @@ const GetStartedChecklistComponent: FC<GetStartedChecklistProps> = ({
     (step: OnboardingStep) => {
       selectionFeedback();
       analytics.track(ANALYTICS_EVENTS.ONBOARDING_CHECKLIST_ITEM_TAPPED, { item: step });
+
+      // Practice is the one step that doesn't happen inside an article. Send the
+      // user to the tab rather than straight into a session — a first-run user
+      // has probably never opened it, and the point is to show them their saved
+      // words are waiting there.
+      if (step === OnboardingStep.PRACTICE_WORD) {
+        router.push(ROUTE_PATHS.PRACTICE_TAB);
+        return;
+      }
+
       const starter = pickStarterArticle(articlesData, progressMap);
       if (starter) {
         router.push(getArticleRoute(starter.id, starter.title, true));
@@ -106,14 +133,17 @@ const GetStartedChecklistComponent: FC<GetStartedChecklistProps> = ({
     [articlesData, progressMap, router],
   );
 
-  if (!isChecklistVisible) {
+  if (!isChecklistVisible || isSuppressedByIntro) {
     return null;
   }
 
-  const progressLabel = STRINGS.CHECKLIST_PROGRESS.replace('{done}', String(doneCount));
+  const progressLabel = STRINGS.CHECKLIST_PROGRESS.replace('{done}', String(doneCount)).replace(
+    '{total}',
+    String(items.length),
+  );
 
   return (
-    <Animated.View style={animatedStyle}>
+    <Animated.View style={[MOUNT_FADE_IN_STYLE, animatedStyle]}>
       <View
         style={styles.cardWrapper}
         onLayout={event => setMeasuredHeight(event.nativeEvent.layout.height)}
@@ -193,7 +223,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
-    minHeight: LAYOUT.SPACING.XXXLARGE,
+    minHeight: MIN_TOUCH_TARGET.LARGE,
   },
   rowLabel: {
     flex: 1,

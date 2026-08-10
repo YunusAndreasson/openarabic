@@ -126,24 +126,24 @@ export const STRINGS = {
   TUTORIAL_WORD_TAP_CTA: 'Tap the highlighted word to see its meaning — then add it to practice',
   // Review tutorial - Intro
   TUTORIAL_INTRO_TITLE: 'How it works',
-  TUTORIAL_INTRO_DESCRIPTION: 'Tap a card to reveal the answer, then rate how well you knew it.',
-  // Review tutorial - grade labels
-  TUTORIAL_SWIPE_DONT_KNOW: 'Forgot',
-  TUTORIAL_SWIPE_KNOW: 'Knew it',
+  TUTORIAL_INTRO_DESCRIPTION: 'Tap a card to reveal the answer, then say how well you knew it.',
+  // Review tutorial - the three grades. The LABELS are not duplicated here on
+  // purpose: the step reuses GRADE_FORGOT / GRADE_GUESSED / GRADE_KNEW_IT, the
+  // same strings ReviewGradeBar renders, so the tutorial cannot drift from the
+  // screen it is explaining (it previously taught a binary swipe for a ternary
+  // grade bar, and never mentioned "Guessed" at all).
+  TUTORIAL_GRADES_TITLE: 'Three answers',
+  TUTORIAL_GRADES_BODY:
+    'Once the answer is showing, tap one — or swipe left for Forgot, right for Knew it.',
+  TUTORIAL_GRADE_FORGOT_HINT: 'Stays for another look, then comes back soon',
+  TUTORIAL_GRADE_GUESSED_HINT: 'Comes back sooner than the ones you knew',
+  TUTORIAL_GRADE_KNEW_HINT: 'Comes back later, so you skip easy words',
   // Review tutorial - Ready step
-  TUTORIAL_SRS_TITLE: "You're ready!",
+  TUTORIAL_SRS_TITLE: "You're ready",
   TUTORIAL_SRS_DESCRIPTION: 'Rate honestly. We adapt to you.',
-  TUTORIAL_SRS_CTA: "Let's go!",
+  TUTORIAL_SRS_CTA: 'Start',
   // Review tutorial navigation
-  TUTORIAL_NEXT: 'Got it',
-  // Contextual help - Forgot (swipe left)
-  TUTORIAL_CONTEXT_LEFT_LINE1: 'Forgot it?',
-  TUTORIAL_CONTEXT_LEFT_LINE2: 'Swipe left.',
-  TUTORIAL_CONTEXT_LEFT_LINE3: 'It comes back sooner so you focus on hard words.',
-  // Contextual help - Knew it (swipe right)
-  TUTORIAL_CONTEXT_RIGHT_LINE1: 'Knew it?',
-  TUTORIAL_CONTEXT_RIGHT_LINE2: 'Swipe right.',
-  TUTORIAL_CONTEXT_RIGHT_LINE3: 'It comes back later so you skip easy words.',
+  TUTORIAL_NEXT: 'Next',
   // Contact email - single source of truth
   CONTACT_EMAIL: 'yunus+openarabic@edenmind.com',
   // Feedback form
@@ -205,21 +205,29 @@ export const STRINGS = {
   AUTH_VALUE_TAP: 'any word to see it, save it, learn it',
   AUTH_VALUE_LISTEN_VERB: 'Listen',
   AUTH_VALUE_LISTEN: 'in English first, then Arabic',
-  // Onboarding — welcome intro (shown once after first sign-in)
-  ONBOARDING_STEP_READ_TITLE: 'Read bilingual texts',
-  ONBOARDING_STEP_READ_BODY: 'Classical Arabic, sentence by sentence, with English right below.',
-  ONBOARDING_STEP_TAP_TITLE: 'Tap any word',
-  ONBOARDING_STEP_TAP_BODY: 'See its meaning instantly, then save it to practice.',
-  ONBOARDING_STEP_LISTEN_TITLE: 'Listen to bilingual audio',
-  ONBOARDING_STEP_LISTEN_BODY: 'English first, then Arabic — your ear knows what to listen for.',
+  // Onboarding — welcome intro (shown once after first sign-in).
+  // Deliberately NOT the auth screen's Read/Tap/Listen triad again — these three
+  // teach the loop the app is built on (read → save → review), which nothing else
+  // in the first run explains.
+  ONBOARDING_STEP_READ_TITLE: 'Read without decoding',
+  ONBOARDING_STEP_READ_BODY:
+    "Every text is classical Arabic with the English above each line — you're never stuck on a sentence.",
+  ONBOARDING_STEP_SAVE_TITLE: 'Keep the words you meet',
+  ONBOARDING_STEP_SAVE_BODY:
+    'Tap a word for its meaning, or long-press to save it straight to practice.',
+  ONBOARDING_STEP_REVIEW_TITLE: 'They come back on time',
+  ONBOARDING_STEP_REVIEW_BODY:
+    "Saved words return for review just before you'd forget them. A few minutes a day is enough.",
   ONBOARDING_NEXT: 'Next',
+  ONBOARDING_SKIP: 'Skip',
   ONBOARDING_CTA: 'Open your first text',
   // Onboarding — Get started checklist on Explore
   CHECKLIST_TITLE: 'Get started',
-  CHECKLIST_PROGRESS: '{done} of 3',
+  CHECKLIST_PROGRESS: '{done} of {total}',
   CHECKLIST_READ: 'Read your first text',
   CHECKLIST_SAVE: 'Save a word to practice',
   CHECKLIST_LISTEN: 'Listen to bilingual audio',
+  CHECKLIST_PRACTICE: 'Practice your first word',
   // Sign In screen
   SIGN_IN_TITLE: 'Sign in',
   SIGN_IN_SUBTITLE: 'Welcome back',

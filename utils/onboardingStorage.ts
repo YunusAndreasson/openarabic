@@ -23,6 +23,7 @@ function createState(overrides: Partial<OnboardingProgressState> = {}): Onboardi
     readFirstText: false,
     saveFirstWord: false,
     listenToAudio: false,
+    practiceFirstWord: false,
     ...overrides,
   };
 }

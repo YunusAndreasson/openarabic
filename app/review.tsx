@@ -627,11 +627,15 @@ export default function ReviewScreen(): JSX.Element {
   const params = useLocalSearchParams();
   const fromRemember = params['fromRemember'] === 'true';
 
-  // Check if tutorial needs to be shown before starting session
-  const { shouldShowTutorial } = useTutorialContext();
-  const [tutorialDismissed, setTutorialDismissed] = useState(
-    !shouldShowTutorial(TutorialId.SWIPE_GESTURE),
-  );
+  // Check if tutorial needs to be shown before starting session.
+  // `shouldShowTutorial` returns false for BOTH "already seen" and "store hasn't
+  // hydrated yet", so this must not be snapshotted into state before isLoaded:
+  // opening review during hydration used to latch dismissed=true, and since the
+  // tutorial then never rendered it was never marked complete either — it just
+  // silently failed to appear, every session, forever.
+  const { shouldShowTutorial, isLoaded: areTutorialsLoaded } = useTutorialContext();
+  const [tutorialDismissed, setTutorialDismissed] = useState(false);
+  const needsTutorial = areTutorialsLoaded && shouldShowTutorial(TutorialId.SWIPE_GESTURE);
 
   // Tutorial management
   const swipeTutorial = useTutorial(TutorialId.SWIPE_GESTURE);
@@ -654,8 +658,15 @@ export default function ReviewScreen(): JSX.Element {
     }
   }, [shouldShowTutorial, trigger]);
 
+  // Hold until the tutorial store has hydrated, so we never start the session
+  // and then pop the tutorial over it a moment later. In practice this is
+  // already resolved at app root — at most a frame.
+  if (!areTutorialsLoaded) {
+    return <ReviewLoadingState message={STRINGS.PREPARING_PRACTICE_SESSION} />;
+  }
+
   // Show tutorial with simple background if needed (before session starts)
-  if (!tutorialDismissed) {
+  if (needsTutorial && !tutorialDismissed) {
     return (
       <>
         <ReviewLoadingState message={STRINGS.PREPARING_PRACTICE_SESSION} />

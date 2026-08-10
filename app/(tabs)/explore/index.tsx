@@ -157,9 +157,17 @@ export default function ExploreScreen(): JSX.Element {
   const headerSections = useMemo(() => {
     const sections = [];
 
-    // First-run "Get started" checklist (renders null once completed/suppressed)
+    // First-run "Get started" checklist (renders null once completed/suppressed).
+    // Held back while the welcome intro is up: both resolve from the same
+    // eligibility decision, so without this the user watches the card appear and
+    // then get covered by the modal 600ms later.
     sections.push(
-      <GetStartedChecklist key="get-started" articlesData={articlesData} checklist={checklist} />,
+      <GetStartedChecklist
+        key="get-started"
+        articlesData={articlesData}
+        checklist={checklist}
+        isSuppressedByIntro={intro.isVisible}
+      />,
     );
 
     // Continue Reading / Getting Started section (adaptive based on user progress)
@@ -191,7 +199,14 @@ export default function ExploreScreen(): JSX.Element {
     sections.push(<DiscoverySections key="discovery" articlesData={articlesData} />);
 
     return sections;
-  }, [articlesData, refreshKey, categoriesWithArticles, handleSelectFilter, checklist]);
+  }, [
+    articlesData,
+    refreshKey,
+    categoriesWithArticles,
+    handleSelectFilter,
+    checklist,
+    intro.isVisible,
+  ]);
 
   return (
     <>

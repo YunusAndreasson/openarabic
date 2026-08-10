@@ -39,7 +39,16 @@ export function TutorialOverlay({ visible, onDismiss, children }: TutorialOverla
   if (!visible) return null;
 
   return (
-    <Modal visible={visible} transparent={true} animationType="none" statusBarTranslucent={true}>
+    <Modal
+      visible={visible}
+      transparent={true}
+      animationType="none"
+      statusBarTranslucent={true}
+      // Android hardware back / predictive-back gesture. Without this the back
+      // press is swallowed and the tutorial becomes inescapable except by the
+      // backdrop tap, which is not a discoverable affordance.
+      onRequestClose={onDismiss}
+    >
       <Pressable style={styles.container} onPress={onDismiss}>
         <Animated.View
           entering={FadeIn.duration(TUTORIAL_ANIMATION.FADE_IN_DURATION)}

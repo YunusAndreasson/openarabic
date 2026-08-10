@@ -15,28 +15,15 @@ export const TutorialId = {
 export type TutorialId = (typeof TutorialId)[keyof typeof TutorialId];
 
 /**
- * Swipe tutorial step indices (full tutorial flow)
- * Note: HINT step was removed - hesitation detection replaced tap-to-reveal
+ * Review tutorial step indices: how it works → the three grades → ready.
  */
-export const SwipeTutorialStep = {
+export const ReviewTutorialStep = {
   INTRO: 0,
-  SWIPE_LEFT: 1,
-  SWIPE_RIGHT: 2,
-  SRS_EXPLAIN: 3,
+  GRADES: 1,
+  READY: 2,
 } as const;
 
-export type SwipeTutorialStep = (typeof SwipeTutorialStep)[keyof typeof SwipeTutorialStep];
-
-/**
- * Contextual help types (single-step help triggered by tapping icons)
- * Note: HINT was removed - hesitation detection replaced tap-to-reveal
- */
-export const ContextualHelpType = {
-  SWIPE_LEFT: 'swipe_left',
-  SWIPE_RIGHT: 'swipe_right',
-} as const;
-
-export type ContextualHelpType = (typeof ContextualHelpType)[keyof typeof ContextualHelpType];
+export type ReviewTutorialStep = (typeof ReviewTutorialStep)[keyof typeof ReviewTutorialStep];
 
 /**
  * Configuration for a single tutorial
@@ -64,9 +51,10 @@ export const TUTORIALS: Record<TutorialId, TutorialConfig> = {
     showDelay: 800,
   },
   [TutorialId.SWIPE_GESTURE]: {
-    // Key bumped for the reveal-first flow so existing users see the updated
-    // onboarding (tap to reveal, then grade) once.
-    storageKey: '@openarabic/tutorials/reviewFlowCompleted',
+    // Key bumped again for the three-grade rewrite: the previous version taught
+    // a binary swipe and never mentioned "Guessed", so existing users should see
+    // the corrected tutorial once.
+    storageKey: '@openarabic/tutorials/reviewGradesCompleted',
     showDelay: 500,
   },
 };
@@ -77,24 +65,21 @@ export const TUTORIALS: Record<TutorialId, TutorialConfig> = {
 export const TUTORIAL_ANIMATION = {
   FADE_IN_DURATION: 300,
   FADE_OUT_DURATION: 200,
-  BOUNCE_DURATION: 800,
 } as const;
 
 /**
- * Fixed height for tutorial step content area
- * Prevents modal from resizing between steps
+ * Floor for the tutorial step content area.
+ * Keeps the modal from visibly resizing between steps of similar length — but a
+ * minimum, not a fixed height, so a two-line title or a large system font scale
+ * grows the card instead of clipping.
  */
-export const TUTORIAL_STEP_HEIGHT = 280;
+export const TUTORIAL_STEP_MIN_HEIGHT = 240;
 
 /**
  * Shared tutorial visual constants
  * Ensures consistency across all tutorial steps
  */
 export const TUTORIAL_VISUALS = {
-  /** Main gesture icon size (hand, sparkles) */
+  /** Hero icon inside the step's tinted halo (halo is 2x this) */
   ICON_SIZE: 40,
-  /** Circular indicator dimensions */
-  INDICATOR_SIZE: 36,
-  /** Icons inside indicators */
-  INDICATOR_ICON_SIZE: 20,
 } as const;

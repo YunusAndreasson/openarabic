@@ -12,6 +12,7 @@ export const OnboardingStep = {
   READ_TEXT: 'readFirstText',
   SAVE_WORD: 'saveFirstWord',
   LISTEN_AUDIO: 'listenToAudio',
+  PRACTICE_WORD: 'practiceFirstWord',
 } as const;
 
 export type OnboardingStep = (typeof OnboardingStep)[keyof typeof OnboardingStep];
@@ -32,6 +33,7 @@ export interface OnboardingProgressState {
   readFirstText: boolean;
   saveFirstWord: boolean;
   listenToAudio: boolean;
+  practiceFirstWord: boolean;
   completedAt?: string;
 }
 

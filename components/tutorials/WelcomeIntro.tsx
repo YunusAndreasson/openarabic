@@ -1,25 +1,26 @@
 /**
- * Welcome intro — three-step first-run walkthrough of the hallmark features
- * (read bilingual texts → tap any word → listen to bilingual audio).
+ * Welcome intro — three-step first-run walkthrough of the loop the app is built
+ * on (read a text → save the words you meet → they come back for review).
+ *
+ * Deliberately NOT a repeat of the auth screen's Read/Tap/Listen value props:
+ * the user has just read those. Spaced repetition is the thing nothing else in
+ * the first run explains, so it gets the last slide.
+ *
  * Shown once after first sign-in, gated by TutorialId.WELCOME_INTRO.
  */
 
-import { Ionicons, type IoniconName } from '@/components/ui/Icon';
+import { type IoniconName } from '@/components/ui/Icon';
 import { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
 
-import { ThemedText } from '@/components/ThemedText';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
-import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { TUTORIAL_STEP_HEIGHT, TUTORIAL_VISUALS } from '@/constants/tutorials';
-import { useColors } from '@/hooks/theme/useColors';
 import { analytics } from '@/services/analytics';
 import { metaEvents } from '@/services/metaEvents';
 import { lightFeedback } from '@/utils/haptics';
 
 import { TutorialCard } from './TutorialCard';
 import { TutorialOverlay } from './TutorialOverlay';
+import { TutorialStepLayout } from './TutorialStepLayout';
 
 interface WelcomeIntroProps {
   visible: boolean;
@@ -44,21 +45,20 @@ const INTRO_STEPS: IntroStep[] = [
     body: STRINGS.ONBOARDING_STEP_READ_BODY,
   },
   {
-    key: 'tap',
-    icon: 'hand-left-outline',
-    title: STRINGS.ONBOARDING_STEP_TAP_TITLE,
-    body: STRINGS.ONBOARDING_STEP_TAP_BODY,
+    key: 'save',
+    icon: 'bookmark-outline',
+    title: STRINGS.ONBOARDING_STEP_SAVE_TITLE,
+    body: STRINGS.ONBOARDING_STEP_SAVE_BODY,
   },
   {
-    key: 'listen',
-    icon: 'headset-outline',
-    title: STRINGS.ONBOARDING_STEP_LISTEN_TITLE,
-    body: STRINGS.ONBOARDING_STEP_LISTEN_BODY,
+    key: 'review',
+    icon: 'sparkles-outline',
+    title: STRINGS.ONBOARDING_STEP_REVIEW_TITLE,
+    body: STRINGS.ONBOARDING_STEP_REVIEW_BODY,
   },
 ];
 
 export function WelcomeIntro({ visible, onDismiss, onOpenFirstText }: WelcomeIntroProps) {
-  const colors = useColors();
   const [currentStep, setCurrentStep] = useState(0);
 
   const isLastStep = currentStep === INTRO_STEPS.length - 1;
@@ -88,7 +88,7 @@ export function WelcomeIntro({ visible, onDismiss, onOpenFirstText }: WelcomeInt
     }
   }, [visible, currentStep, step]);
 
-  // Backdrop tap = skip: still completes the tutorial (one-shot)
+  // Skip (visible affordance or backdrop tap) still completes the tutorial (one-shot)
   const handleSkip = useCallback(() => {
     analytics.track(ANALYTICS_EVENTS.ONBOARDING_INTRO_SKIPPED, { step_index: currentStep });
     onDismiss();
@@ -113,88 +113,19 @@ export function WelcomeIntro({ visible, onDismiss, onOpenFirstText }: WelcomeInt
       <TutorialCard
         dismissText={isLastStep ? STRINGS.ONBOARDING_CTA : STRINGS.ONBOARDING_NEXT}
         onDismiss={handleNext}
+        // On the last step the CTA is the way out, so a Skip beside it is noise.
+        onSkip={isLastStep ? undefined : handleSkip}
       >
-        <View style={styles.stepContainer}>
-          <ThemedText type="heading3" style={[styles.title, { color: colors.text }]}>
-            {step.title}
-          </ThemedText>
-
-          <View style={styles.stepContent}>
-            <View style={[styles.iconIndicator, { backgroundColor: colors.tint + '20' }]}>
-              <Ionicons name={step.icon} size={TUTORIAL_VISUALS.ICON_SIZE} color={colors.tint} />
-            </View>
-
-            <View style={[styles.descriptionCard, { backgroundColor: colors.elevation1 }]}>
-              <ThemedText type="body" variant="secondary" style={styles.description}>
-                {step.body}
-              </ThemedText>
-            </View>
-          </View>
-
-          <View style={styles.dotsRow}>
-            {INTRO_STEPS.map((dotStep, index) => (
-              <View
-                key={dotStep.key}
-                style={[
-                  styles.dot,
-                  {
-                    backgroundColor: index === currentStep ? colors.primary : colors.elevation2,
-                  },
-                ]}
-              />
-            ))}
-          </View>
-        </View>
+        <TutorialStepLayout
+          icon={step.icon}
+          title={step.title}
+          body={step.body}
+          stepCount={INTRO_STEPS.length}
+          currentStep={currentStep}
+        />
       </TutorialCard>
     </TutorialOverlay>
   );
 }
 
 WelcomeIntro.displayName = 'WelcomeIntro';
-
-const DOT_SIZE = 6;
-
-const styles = StyleSheet.create({
-  stepContainer: {
-    height: TUTORIAL_STEP_HEIGHT,
-    width: '100%',
-  },
-  title: {
-    textAlign: 'center',
-    marginBottom: LAYOUT.SPACING.LARGE,
-    paddingBottom: LAYOUT.SPACING.TINY,
-  },
-  stepContent: {
-    flex: 1,
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  iconIndicator: {
-    width: TUTORIAL_VISUALS.ICON_SIZE * 2,
-    height: TUTORIAL_VISUALS.ICON_SIZE * 2,
-    borderRadius: TUTORIAL_VISUALS.ICON_SIZE,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: LAYOUT.SPACING.XLARGE,
-  },
-  descriptionCard: {
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-  },
-  description: {
-    textAlign: 'center',
-  },
-  dotsRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: LAYOUT.SPACING.SMALL,
-    paddingTop: LAYOUT.SPACING.LARGE,
-  },
-  dot: {
-    width: DOT_SIZE,
-    height: DOT_SIZE,
-    borderRadius: DOT_SIZE / 2,
-  },
-});

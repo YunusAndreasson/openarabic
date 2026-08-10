@@ -3,12 +3,14 @@
  */
 
 import { type ReactNode } from 'react';
-import { StyleSheet } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 
 import { ThemedButton } from '@/components/ThemedButton';
+import { ThemedText } from '@/components/ThemedText';
 import { BaseCard } from '@/components/common';
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { TUTORIAL_ANIMATION } from '@/constants/tutorials';
 
 interface TutorialCardProps {
@@ -18,19 +20,38 @@ interface TutorialCardProps {
   dismissText?: string;
   /** Callback when dismiss button is pressed */
   onDismiss?: () => void;
+  /**
+   * Skip affordance in the top-right. Backdrop tap alone is not discoverable —
+   * without this the only visible way out of a tutorial is to finish it.
+   */
+  onSkip?: () => void;
 }
 
 /**
  * Minimal card wrapper for tutorial visuals
  */
-export function TutorialCard({ children, dismissText, onDismiss }: TutorialCardProps) {
+export function TutorialCard({ children, dismissText, onDismiss, onSkip }: TutorialCardProps) {
   return (
     <Animated.View
       entering={FadeInUp.duration(TUTORIAL_ANIMATION.FADE_IN_DURATION)}
       exiting={FadeOutDown.duration(TUTORIAL_ANIMATION.FADE_OUT_DURATION)}
-      style={styles.animatedWrapper}
     >
       <BaseCard shadowSize="large" style={styles.card} contentStyle={styles.cardContent}>
+        {onSkip && (
+          <View style={styles.skipRow}>
+            <Pressable
+              onPress={onSkip}
+              hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
+              accessibilityRole="button"
+              accessibilityLabel={STRINGS.ONBOARDING_SKIP}
+            >
+              <ThemedText type="caption" colorName="secondaryText">
+                {STRINGS.ONBOARDING_SKIP}
+              </ThemedText>
+            </Pressable>
+          </View>
+        )}
+
         {children}
 
         {dismissText && onDismiss && (
@@ -49,16 +70,18 @@ export function TutorialCard({ children, dismissText, onDismiss }: TutorialCardP
 TutorialCard.displayName = 'TutorialCard';
 
 const styles = StyleSheet.create({
-  animatedWrapper: {
-    marginHorizontal: LAYOUT.SPACING.LARGE,
-  },
+  // No horizontal margin here — TutorialOverlay's contentContainer already owns
+  // the gutter. Having both gave every tutorial a 32pt inset nobody chose.
   card: {
     borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
   },
   cardContent: {
     padding: LAYOUT.SPACING.XLARGE,
   },
+  skipRow: {
+    alignItems: 'flex-end',
+  },
   button: {
-    marginTop: LAYOUT.SPACING.XXXLARGE,
+    marginTop: LAYOUT.SPACING.XLARGE,
   },
 });

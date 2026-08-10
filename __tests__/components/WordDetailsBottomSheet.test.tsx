@@ -461,4 +461,50 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       );
     });
   });
+
+  // Onboarding promises "tap a word … then save it to practice". It used to take
+  // three interactions because the sheet stayed open after a save and the user
+  // had to dismiss it themselves.
+  describe('Dismissal after saving', () => {
+    test('closes itself once the word is added', async () => {
+      mockOnAddToStudy.mockResolvedValue(true);
+
+      const { getByText } = render(
+        <WordDetailsBottomSheet
+          isVisible={true}
+          onClose={mockOnClose}
+          word={mockWord}
+          onAddToStudy={mockOnAddToStudy}
+          isInStudyList={false}
+        />,
+      );
+
+      fireEvent.press(getByText('Add to practice'));
+
+      await waitFor(() => {
+        expect(mockOnClose).toHaveBeenCalled();
+      });
+    });
+
+    test('stays open on removal, so a mistaken tap can be undone in place', async () => {
+      mockOnAddToStudy.mockResolvedValue(true);
+
+      const { getByText } = render(
+        <WordDetailsBottomSheet
+          isVisible={true}
+          onClose={mockOnClose}
+          word={mockWord}
+          onAddToStudy={mockOnAddToStudy}
+          isInStudyList={true}
+        />,
+      );
+
+      fireEvent.press(getByText('In practice'));
+
+      await waitFor(() => {
+        expect(mockOnAddToStudy).toHaveBeenCalledWith(mockWord, 'remove');
+      });
+      expect(mockOnClose).not.toHaveBeenCalled();
+    });
+  });
 });

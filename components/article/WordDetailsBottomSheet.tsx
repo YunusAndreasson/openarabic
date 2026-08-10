@@ -96,6 +96,14 @@ export function WordDetailsBottomSheet({
     // Both directions get feedback — a silent removal reads as a failed save
     showToast(newValue ? STRINGS.WORD_ADDED_TO_PRACTICE : STRINGS.WORD_QUICK_REMOVED);
 
+    // Saving is the terminal action for this sheet: the toast already carries the
+    // confirmation, so staying open only forces a third interaction to get back to
+    // the text. Removal is a correction rather than an exit — keep the sheet open
+    // there so the user can immediately re-add if they tapped by mistake.
+    if (newValue) {
+      onClose();
+    }
+
     startTransition(async () => {
       setOptimisticIsInStudyList(newValue);
       try {

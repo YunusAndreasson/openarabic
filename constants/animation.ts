@@ -242,8 +242,6 @@ export const TIMING_CONSTANTS = {
 
   /** Animation transition delays */
   TRANSITION_DELAY: 150,
-  TUTORIAL_DELAY_SHORT: 500,
-  TUTORIAL_DELAY_LONG: 800,
 
   /** Touch interaction delays */
   LONG_PRESS_DELAY: 500,

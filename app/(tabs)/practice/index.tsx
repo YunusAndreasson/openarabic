@@ -156,6 +156,14 @@ export default function PracticeScreen(): JSX.Element {
     router.push(getPracticeReviewRoute());
   }, [user, router]);
 
+  // Shown when nothing is due: more words come from reading, so send them there
+  // rather than leaving the screen without an action. Matches the empty state's
+  // secondary CTA, including the `from` param Explore uses for its hint toast.
+  const handleBrowseArticles = useCallback(
+    () => router.push({ pathname: ROUTE_PATHS.EXPLORE_TAB, params: { from: 'practice' } }),
+    [router],
+  );
+
   // Show main UI if there are any words available in either query source
   // - allWords may lag if mutations only invalidate 'due' keys
   // - dueWords reflects immediate availability for study
@@ -214,6 +222,12 @@ export default function PracticeScreen(): JSX.Element {
     dueCountCapped ? `${dueWordsCount}+` : dueWordsCount
   } ${dueWordsCount === 1 && !dueCountCapped ? STRINGS.WORD_SINGULAR : STRINGS.SUMMARY_WORDS_SUFFIX}`;
 
+  // Caught up is not the same as nothing to do. Without this the screen renders
+  // stat cards and no action at all, plus 72px of padding reserved for a button
+  // that never arrives — so the tab reads as a dead end at exactly the moment
+  // the user came looking for something to practise.
+  const showBrowseCta = !showReviewCta;
+
   return (
     <>
       <ScrollView
@@ -248,6 +262,9 @@ export default function PracticeScreen(): JSX.Element {
         </Animated.View>
       </ScrollView>
       {showReviewCta && <PinnedActionButton title={reviewCtaTitle} onPress={handleStartReview} />}
+      {showBrowseCta && (
+        <PinnedActionButton title={STRINGS.BROWSE_ARTICLES} onPress={handleBrowseArticles} />
+      )}
     </>
   );
 }
