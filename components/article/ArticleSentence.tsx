@@ -1,15 +1,21 @@
 import { Ionicons } from '@/components/ui/Icon';
 import { memo, useMemo } from 'react';
 import type { LayoutRectangle, StyleProp, ViewStyle } from 'react-native';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+// Gesture-handler Pressable — see FloatingActionButtons for why. The article
+// screen's RNGH background-tap wrapper swallows JS-responder touchables, which
+// is why this card's close button did nothing at all.
+import { Pressable } from 'react-native-gesture-handler';
 import type { SharedValue } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { SkiaArabicWord as ArabicWord } from '@/components/article/SkiaArabicWord';
 import { FONTS } from '@/constants/fonts';
-import { LAYOUT } from '@/constants/layout';
+import { getThemeAwareElevation, LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import { withAlpha } from '@/utils/colorUtils';
 import type { RootId } from '@/types/branded.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
@@ -49,6 +55,7 @@ const ArticleSentenceInternal = function ArticleSentence({
 }: ArticleSentenceProps) {
   const defaultColors = useColors();
   const colors = propColors || defaultColors;
+  const isDarkMode = useIsDarkMode();
 
   // Memoize English text style to prevent recreation
   const englishTextStyle = useMemo(
@@ -98,30 +105,46 @@ const ArticleSentenceInternal = function ArticleSentence({
               styles.tutorialCard,
               {
                 backgroundColor: colors.tint,
-                ...LAYOUT.ELEVATION.SMALL,
                 shadowColor: colors.shadow,
               },
+              // Theme-aware, like every other raised surface in the app: dark
+              // mode carries no shadow (it would sit invisibly on near-black)
+              // and separates by colour alone.
+              getThemeAwareElevation('CARD', isDarkMode),
             ]}
           >
             <ThemedText
               type="body"
               weight="bold"
-              style={[styles.tutorialText, { color: colors.background }]}
+              // `onTint` is the token for content ON the tint colour. This used
+              // to use `background`, which only looked right by coincidence —
+              // in dark the two are within a shade of each other, but in light
+              // `background` is a tinted off-white rather than the white this
+              // needs.
+              style={[styles.tutorialText, { color: colors.onTint }]}
             >
               {STRINGS.TUTORIAL_WORD_TAP_CTA}
             </ThemedText>
 
-            {/* Close button */}
             {onDismissTutorial && (
               <Pressable
                 onPress={onDismissTutorial}
-                style={[styles.closeButton, { backgroundColor: `${colors.background}20` }]}
-                hitSlop={LAYOUT.SPACING.SMALL}
+                // A circular scrim of the foreground colour, so the affordance
+                // reads the same in both themes. It was a hand-built
+                // `${colors.background}20` string, which composed a near-black
+                // disc on the tint in dark mode and a near-white one in light.
+                style={[styles.closeButton, { backgroundColor: withAlpha(colors.onTint, 0.18) }]}
+                // 28px button + 8px slop was a 44px target only on the diagonal.
+                // This is the control the learner reaches for to get the banner
+                // out of the way, so it gets a real one.
+                hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
+                accessibilityRole="button"
+                accessibilityLabel={STRINGS.ONBOARDING_SKIP}
               >
                 <Ionicons
                   name="close"
                   size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                  color={colors.background}
+                  color={colors.onTint}
                 />
               </Pressable>
             )}
@@ -169,7 +192,9 @@ const styles = StyleSheet.create({
     right: LAYOUT.SPACING.SMALL,
     width: LAYOUT.BUTTON.ICON_SIZE.XLARGE,
     height: LAYOUT.BUTTON.ICON_SIZE.XLARGE,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    // A real circle. At radius 16 on a 28px box the corners were flattened
+    // just enough to read as a rounded square that could not decide.
+    borderRadius: LAYOUT.BUTTON.ICON_SIZE.XLARGE / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },

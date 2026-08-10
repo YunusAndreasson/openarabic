@@ -1,7 +1,15 @@
 import { Ionicons } from '@/components/ui/Icon';
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { memo, startTransition, useOptimistic } from 'react';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
+// Gesture-handler Pressable, NOT react-native's. The article screen wraps its
+// whole content in an RNGH Pressable (see app/article/[id].tsx) to dismiss the
+// word tooltip on a background tap. An RNGH ancestor wins the gesture arena
+// against descendants that use the JS responder system, so these buttons —
+// close, listen, add-to-playlist — silently stopped responding to every tap.
+// RNGH children compose with it instead, which is why tapping a word kept
+// working: SkiaArabicWord already imports Pressable from here.
+import { Pressable } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const GLASS_AVAILABLE = isLiquidGlassAvailable();

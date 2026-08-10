@@ -106,8 +106,13 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       // Call original handler
       handleWordPress(word, layout);
 
-      // Complete tutorial (marks as done for next time, but keeps showing this time)
+      // Tapping a word IS the instruction being followed, so the card retires
+      // itself. It used to only mark the tutorial done for next time and stay
+      // on screen, which left "Tap the highlighted word…" sitting above the
+      // tooltip it had just produced — still telling the learner to do the
+      // thing they had visibly just done.
       if (showWordTapTutorial) {
+        setIsTutorialCardDismissed(true);
         completeTutorial(TutorialId.WORD_TAP);
       }
     },
@@ -120,6 +125,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       void handleWordLongPress(word, layout);
 
       if (showWordTapTutorial) {
+        setIsTutorialCardDismissed(true);
         completeTutorial(TutorialId.WORD_TAP);
       }
     },
