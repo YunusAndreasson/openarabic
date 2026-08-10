@@ -54,9 +54,7 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
         const applyCooldown =
           typeof lastCompletedAt === 'number' &&
           Date.now() - lastCompletedAt < DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
-        const cutoffMs = applyCooldown
-          ? nowMs - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000
-          : -Infinity;
+        const cutoffMs = nowMs - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
 
         const filtered = allWords.filter(word => {
           // New words (state 0) are always due for their first review
@@ -67,11 +65,21 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
           const dueStr = normalizeTimestamp(word.fsrs_due);
           const dueMs = dueStr ? Date.parse(dueStr) : Number.POSITIVE_INFINITY;
           const isDue = Number.isFinite(dueMs) && dueMs <= nowMs;
+          if (!isDue) return false;
+
+          // Mirrors the server's cooldown exemption (studyWordsFSRSService.getFSRSWords):
+          // Learning (1) and Relearning (3) are exempt — those are the words the
+          // learner has NOT got right yet, scheduled minutes out on purpose, and
+          // cooling them by fsrs_last_review would hide exactly what most needs
+          // practising. Without `applyCooldown` there is nothing to cool either.
+          if (!applyCooldown || word.fsrs_state === 1 || word.fsrs_state === 3) {
+            return true;
+          }
 
           const lastStr = normalizeTimestamp(word.fsrs_last_review);
           const lastMs = lastStr ? Date.parse(lastStr) : 0;
           const isRecentlyReviewed = Number.isFinite(lastMs) && lastMs >= cutoffMs;
-          return isDue && !isRecentlyReviewed;
+          return !isRecentlyReviewed;
         });
 
         return filtered.slice(0, limit);
