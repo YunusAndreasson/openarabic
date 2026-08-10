@@ -95,6 +95,7 @@ describe('useArticleScreen Hook', () => {
   const mockHandleRootPress = jest.fn();
   const mockHandleWordPress = jest.fn();
   const mockHandleCloseTooltip = jest.fn();
+  const mockHandleBackgroundPress = jest.fn();
   const mockHandleOpenWordDetails = jest.fn();
   const mockHandleAddWordToStudy = jest.fn();
   const mockCloseTooltipOnScroll = jest.fn();
@@ -139,6 +140,7 @@ describe('useArticleScreen Hook', () => {
       isInStudyList: jest.fn(),
       handleWordPress: mockHandleWordPress,
       handleCloseTooltip: mockHandleCloseTooltip,
+      handleBackgroundPress: mockHandleBackgroundPress,
       handleOpenWordDetails: mockHandleOpenWordDetails,
       handleAddWordToStudy: mockHandleAddWordToStudy,
       closeTooltipOnScroll: mockCloseTooltipOnScroll,
@@ -579,6 +581,7 @@ describe('useArticleScreen Hook', () => {
 
       expect(result.current.handleWordPress).toBe(mockHandleWordPress);
       expect(result.current.handleCloseTooltip).toBe(mockHandleCloseTooltip);
+      expect(result.current.handleBackgroundPress).toBe(mockHandleBackgroundPress);
       expect(result.current.handleOpenWordDetails).toBe(mockHandleOpenWordDetails);
       expect(result.current.handleAddWordToStudy).toBe(mockHandleAddWordToStudy);
     });
@@ -590,6 +593,7 @@ describe('useArticleScreen Hook', () => {
         isInStudyList: jest.fn(),
         handleWordPress: mockHandleWordPress,
         handleCloseTooltip: mockHandleCloseTooltip,
+        handleBackgroundPress: mockHandleBackgroundPress,
         handleOpenWordDetails: mockHandleOpenWordDetails,
         handleAddWordToStudy: mockHandleAddWordToStudy,
         closeTooltipOnScroll: mockCloseTooltipOnScroll,

@@ -4,6 +4,7 @@ import type { JSX, RefObject } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { LayoutRectangle } from 'react-native';
 import { View } from 'react-native';
+import { Pressable } from 'react-native-gesture-handler';
 import { useSharedValue } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -62,6 +63,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     handleWordPress,
     handleWordLongPress,
     handleCloseTooltip,
+    handleBackgroundPress,
     handleOpenWordDetails,
     handleAddWordToStudy,
     handleFlashListLoad,
@@ -223,8 +225,29 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   return (
     <View style={FLEX_ONE_STYLE}>
       {/* scrollViewRef is forwarded to ArticleContent (which attaches it imperatively); lint sees it as ref-read-in-render. */}
+      {/* Dismiss the tooltip on any tap that doesn't land on a word or the
+          tooltip bubble itself — without this, WordTooltip's box-none overlay
+          lets a tap on English text/margins/sentence gaps pass straight
+          through to nothing, leaving the tooltip stuck open until the same
+          word is tapped again or the list scrolls. A tap on a word fires
+          BOTH that word's own onPress AND this wrapper's onPress (in that
+          order, same gesture dispatch) — handleBackgroundPress (not
+          handleCloseTooltip) checks a same-tick ref handleWordPress sets, so
+          a word tap still switches the tooltip instead of this wrapper
+          closing what the word just opened. */}
       {/* eslint-disable-next-line react-hooks/refs */}
-      {articleContentProps ? <ArticleContent {...articleContentProps} /> : null}
+      {articleContentProps ? (
+        // accessible={false}: a Pressable otherwise groups its whole subtree into
+        // one TalkBack node with every descendant's text concatenated into a
+        // single label, hiding the individually-accessible words and buttons below.
+        <Pressable
+          style={FLEX_ONE_STYLE}
+          onPress={handleBackgroundPress}
+          accessible={false}
+        >
+          <ArticleContent {...articleContentProps} />
+        </Pressable>
+      ) : null}
 
       {/* The reader is a native modal presented above the root view, so the
           app-wide overlay can't reach it — host the player here instead. */}

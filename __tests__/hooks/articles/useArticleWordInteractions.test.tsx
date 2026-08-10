@@ -302,6 +302,134 @@ describe('useArticleWordInteractions', () => {
     });
   });
 
+  describe('handleBackgroundPress', () => {
+    // Safety net: if a word press ever fires without its paired background
+    // press right behind it (the normal same-gesture pairing that consumes
+    // the ref immediately), the flag must not stay stuck forever and
+    // silently no-op some later, unrelated background tap.
+    test('a word press with no paired background press self-clears via the timeout', () => {
+      jest.useFakeTimers();
+      const { result } = renderHook(
+        () =>
+          useArticleWordInteractions({
+            handleRootPress: mockHandleRootPress,
+            refetchStudyWords: mockRefetchStudyWords,
+            showTooltipFirst: true,
+          }),
+        { wrapper },
+      );
+
+      const word = createMockWord(1, 10);
+      const layout = createMockLayout();
+
+      act(() => {
+        result.current.handleWordPress(word, layout);
+      });
+      expect(result.current.activeTooltip).not.toBeNull();
+
+      act(() => {
+        jest.advanceTimersByTime(0);
+      });
+
+      act(() => {
+        result.current.handleBackgroundPress();
+      });
+      expect(result.current.activeTooltip).toBeNull();
+
+      jest.useRealTimers();
+    });
+
+    // Regression: the article screen wraps the reading area in a
+    // background-dismiss Pressable so tapping away from an open tooltip
+    // closes it. A tap that lands ON a word fires that word's own onPress
+    // AND the background wrapper's onPress in the same gesture dispatch —
+    // handleBackgroundPress running after handleWordPress must not stomp the
+    // tooltip the word press just opened/switched to. See
+    // app/article/[id].tsx's background-dismiss Pressable.
+    test('does not close the tooltip a word press just opened in the same tick', () => {
+      const { result } = renderHook(
+        () =>
+          useArticleWordInteractions({
+            handleRootPress: mockHandleRootPress,
+            refetchStudyWords: mockRefetchStudyWords,
+            showTooltipFirst: true,
+          }),
+        { wrapper },
+      );
+
+      const word = createMockWord(1, 10);
+      const layout = createMockLayout();
+
+      // Simulates the real dispatch order: the word's onPress fires, then the
+      // wrapping background Pressable's onPress fires for the same gesture —
+      // both within one synchronous handler, no re-render in between.
+      act(() => {
+        result.current.handleWordPress(word, layout);
+        result.current.handleBackgroundPress();
+      });
+
+      expect(result.current.activeTooltip).toEqual({ word, layout });
+    });
+
+    // Regression: switching from one word's tooltip to a different word's
+    // must not get closed by the same-tick background dismiss either.
+    test('does not close the tooltip a word press just switched to in the same tick', () => {
+      const { result } = renderHook(
+        () =>
+          useArticleWordInteractions({
+            handleRootPress: mockHandleRootPress,
+            refetchStudyWords: mockRefetchStudyWords,
+            showTooltipFirst: true,
+          }),
+        { wrapper },
+      );
+
+      const word1 = createMockWord(1, 10);
+      const word2 = createMockWord(2, 20);
+      const layout = createMockLayout();
+
+      act(() => {
+        result.current.handleWordPress(word1, layout);
+        result.current.handleBackgroundPress();
+      });
+      expect(result.current.activeTooltip?.word.id).toBe(1);
+
+      act(() => {
+        result.current.handleWordPress(word2, layout);
+        result.current.handleBackgroundPress();
+      });
+      expect(result.current.activeTooltip?.word.id).toBe(2);
+    });
+
+    test('closes the tooltip when a background tap is not preceded by a word press', () => {
+      const { result } = renderHook(
+        () =>
+          useArticleWordInteractions({
+            handleRootPress: mockHandleRootPress,
+            refetchStudyWords: mockRefetchStudyWords,
+            showTooltipFirst: true,
+          }),
+        { wrapper },
+      );
+
+      const word = createMockWord(1, 10);
+      const layout = createMockLayout();
+
+      act(() => {
+        result.current.handleWordPress(word, layout);
+        result.current.handleBackgroundPress();
+      });
+      expect(result.current.activeTooltip).not.toBeNull();
+
+      // A later, separate background tap (its own gesture dispatch, no word
+      // press alongside it) must still close the tooltip normally.
+      act(() => {
+        result.current.handleBackgroundPress();
+      });
+      expect(result.current.activeTooltip).toBeNull();
+    });
+  });
+
   describe('closeTooltipOnScroll', () => {
     test('closes tooltip when scroll starts', () => {
       const { result } = renderHook(
