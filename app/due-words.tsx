@@ -16,7 +16,3 @@ export default function DueWordsScreen(): JSX.Element {
     </SheetScreen>
   );
 }
-
-export const options = {
-  headerShown: false,
-} as const;

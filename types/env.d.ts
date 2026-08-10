@@ -22,11 +22,6 @@ declare global {
       // Google Sign In configuration
       EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID?: string;
       EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?: string;
-
-      // Expo Updates configuration
-      EXPO_PUBLIC_UPDATES_ENABLED?: string;
-      EXPO_PUBLIC_UPDATES_CHECK_AUTOMATICALLY?: string;
-      EXPO_PUBLIC_UPDATES_FALLBACK_TO_CACHE_TIMEOUT?: string;
     }
   }
 }

@@ -1,4 +1,10 @@
 import { Ionicons } from '@/components/ui/Icon';
+// Deliberately NOT @expo/ui/community/slider: its SliderProps has no
+// onSlidingStart/onSlidingComplete and no accessibility pass-through. This
+// slider commits to persisted state once per drag (handleSlidingComplete →
+// setFontSize); driving that from onValueChange would write to redux-persist on
+// every frame and re-render every Arabic sample with it. The community package
+// is not deprecated — revisit only if @expo/ui grows a release event.
 import Slider from '@react-native-community/slider';
 import { useState, type FC } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';

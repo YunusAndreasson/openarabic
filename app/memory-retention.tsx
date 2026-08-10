@@ -37,10 +37,6 @@ export default function MemoryRetentionScreen(): JSX.Element {
   );
 }
 
-export const options = {
-  headerShown: false,
-} as const;
-
 const styles = StyleSheet.create({
   forecastHint: {
     marginBottom: LAYOUT.SPACING.SMALL,

@@ -17,7 +17,15 @@
     "!**/admin-dashboard/**"
   ],
   "ignore": ["admin-dashboard/**", "types/database.types.ts"],
-  "ignoreDependencies": ["babel-preset-expo", "babel-jest", "@babel/plugin-transform-react-jsx"],
+  "ignoreDependencies": [
+    "babel-preset-expo",
+    "babel-jest",
+    "@babel/plugin-transform-react-jsx",
+    "@eslint/js",
+    "@swmansion/argent",
+    "eslint-plugin-react",
+    "eslint-plugin-react-hooks"
+  ],
   "ignoreExportsUsedInFile": { "interface": true, "type": true },
   "includeEntryExports": false,
   "ignoreBinaries": ["supabase", "eas", "list"],

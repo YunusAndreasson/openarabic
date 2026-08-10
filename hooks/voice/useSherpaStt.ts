@@ -8,6 +8,13 @@
  */
 import * as Sentry from '@sentry/react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+// NOTE: `react-native-sherpa-onnx/download` imports `@dr.pogodin/react-native-fs`
+// internally (lib/module/download/validation.js) but does not depend on it, so we
+// must declare it in package.json even though nothing here imports it directly.
+// Removing it as "unused" breaks the Metro bundle with "Unable to resolve module
+// @dr.pogodin/react-native-fs" the moment this module is reached. `yarn check-unused`
+// (knip) does resolve through node_modules and sees the import, so it will catch the
+// mistake — a plain grep over app source will not.
 import {
   ModelCategory,
   ensureModelByCategory,

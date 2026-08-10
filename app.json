@@ -174,16 +174,95 @@
       [
         "expo-font",
         {
-          "fonts": [
-            "./assets/fonts/NotoSans.ttf",
-            "./assets/fonts/Amiri.ttf",
-            "./assets/fonts/Madina.otf",
-            "./assets/fonts/Scheherazade.ttf",
-            "./assets/fonts/Nastaliq.ttf",
-            "./assets/fonts/Inter-Regular.ttf",
-            "./assets/fonts/Inter-SemiBold.ttf",
-            "./assets/fonts/Inter-Bold.ttf"
-          ]
+          "_comment": "iOS registers fonts under their PostScript names, so plain paths are enough. Android registers string-entry fonts under their FILENAME ('NotoSans.ttf' -> 'NotoSans'), which does not match the names the app uses - hence the object form below, which calls ReactFontManager.addCustomFont(<fontFamily>) in MainApplication.onCreate(). Keep every fontFamily here in sync with constants/fonts.ts and RUNTIME_FONT_MAP in app/_layout.tsx.",
+          "ios": {
+            "fonts": [
+              "./assets/fonts/NotoSans.ttf",
+              "./assets/fonts/Amiri.ttf",
+              "./assets/fonts/Madina.otf",
+              "./assets/fonts/Scheherazade.ttf",
+              "./assets/fonts/Nastaliq.ttf",
+              "./assets/fonts/Inter-Regular.ttf",
+              "./assets/fonts/Inter-SemiBold.ttf",
+              "./assets/fonts/Inter-Bold.ttf"
+            ]
+          },
+          "android": {
+            "fonts": [
+              {
+                "fontFamily": "NotoSansArabic-Regular",
+                "fontDefinitions": [
+                  {
+                    "path": "./assets/fonts/NotoSans.ttf",
+                    "weight": 400
+                  }
+                ]
+              },
+              {
+                "fontFamily": "Amiri-Regular",
+                "fontDefinitions": [
+                  {
+                    "path": "./assets/fonts/Amiri.ttf",
+                    "weight": 400
+                  }
+                ]
+              },
+              {
+                "fontFamily": "DigitalKhattNewMadinaRegular",
+                "fontDefinitions": [
+                  {
+                    "path": "./assets/fonts/Madina.otf",
+                    "weight": 400
+                  }
+                ]
+              },
+              {
+                "fontFamily": "ScheherazadeNew-Regular",
+                "fontDefinitions": [
+                  {
+                    "path": "./assets/fonts/Scheherazade.ttf",
+                    "weight": 400
+                  }
+                ]
+              },
+              {
+                "fontFamily": "NotoNastaliqUrdu-Regular",
+                "fontDefinitions": [
+                  {
+                    "path": "./assets/fonts/Nastaliq.ttf",
+                    "weight": 400
+                  }
+                ]
+              },
+              {
+                "fontFamily": "Inter-Regular",
+                "fontDefinitions": [
+                  {
+                    "path": "./assets/fonts/Inter-Regular.ttf",
+                    "weight": 400
+                  }
+                ]
+              },
+              {
+                "fontFamily": "Inter-SemiBold",
+                "fontDefinitions": [
+                  {
+                    "path": "./assets/fonts/Inter-SemiBold.ttf",
+                    "weight": 400
+                  }
+                ]
+              },
+              {
+                "fontFamily": "Inter-Bold",
+                "fontDefinitions": [
+                  {
+                    "path": "./assets/fonts/Inter-Bold.ttf",
+                    "weight": 400
+                  }
+                ]
+              }
+            ]
+          }
         }
       ],
       [

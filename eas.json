@@ -16,9 +16,6 @@
         "simulator": true
       },
       "env": {
-        "EXPO_PUBLIC_UPDATES_ENABLED": "true",
-        "EXPO_PUBLIC_UPDATES_CHECK_AUTOMATICALLY": "ON_LOAD",
-        "EXPO_PUBLIC_UPDATES_FALLBACK_TO_CACHE_TIMEOUT": "0",
         "NODE_PATH": "/Users/expo/workingdir/build",
         "SENTRY_ORG": "openarabic",
         "SENTRY_PROJECT": "react-native",
@@ -34,9 +31,6 @@
         "resourceClass": "medium"
       },
       "env": {
-        "EXPO_PUBLIC_UPDATES_ENABLED": "true",
-        "EXPO_PUBLIC_UPDATES_CHECK_AUTOMATICALLY": "ON_LOAD",
-        "EXPO_PUBLIC_UPDATES_FALLBACK_TO_CACHE_TIMEOUT": "0",
         "NODE_PATH": "/Users/expo/workingdir/build",
         "SENTRY_ORG": "openarabic",
         "SENTRY_PROJECT": "react-native",
@@ -56,9 +50,6 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "EXPO_PUBLIC_UPDATES_ENABLED": "true",
-        "EXPO_PUBLIC_UPDATES_CHECK_AUTOMATICALLY": "ON_LOAD",
-        "EXPO_PUBLIC_UPDATES_FALLBACK_TO_CACHE_TIMEOUT": "0",
         "NODE_PATH": "/Users/expo/workingdir/build",
         "SENTRY_ORG": "openarabic",
         "SENTRY_PROJECT": "react-native",

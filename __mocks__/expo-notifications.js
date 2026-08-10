@@ -19,7 +19,12 @@ const mockGetPresentedNotificationsAsync = jest.fn().mockResolvedValue([]);
 const mockDismissNotificationAsync = jest.fn().mockResolvedValue(undefined);
 const mockSetBadgeCountAsync = jest.fn().mockResolvedValue(undefined);
 const mockGetBadgeCountAsync = jest.fn().mockResolvedValue(0);
-const mockClearLastNotificationResponseAsync = jest.fn().mockResolvedValue(undefined);
+// Cold-start handling in app/_layout.tsx uses the SYNCHRONOUS pair. The `…Async`
+// variants are deprecated in SDK 57 and are deliberately not mocked here — mocking
+// them as promises would let the cold-start path pass against a shape the real
+// module no longer returns.
+const mockGetLastNotificationResponse = jest.fn(() => null);
+const mockClearLastNotificationResponse = jest.fn();
 
 module.exports = {
   __esModule: true,
@@ -39,7 +44,8 @@ module.exports = {
   dismissNotificationAsync: mockDismissNotificationAsync,
   setBadgeCountAsync: mockSetBadgeCountAsync,
   getBadgeCountAsync: mockGetBadgeCountAsync,
-  clearLastNotificationResponseAsync: mockClearLastNotificationResponseAsync,
+  getLastNotificationResponse: mockGetLastNotificationResponse,
+  clearLastNotificationResponse: mockClearLastNotificationResponse,
 
   // Constants
   AndroidImportance: {
@@ -90,6 +96,7 @@ module.exports = {
     dismissNotificationAsync: mockDismissNotificationAsync,
     setBadgeCountAsync: mockSetBadgeCountAsync,
     getBadgeCountAsync: mockGetBadgeCountAsync,
-    clearLastNotificationResponseAsync: mockClearLastNotificationResponseAsync,
+    getLastNotificationResponse: mockGetLastNotificationResponse,
+    clearLastNotificationResponse: mockClearLastNotificationResponse,
   },
 };

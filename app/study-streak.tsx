@@ -60,10 +60,6 @@ export default function StudyStreakScreen(): JSX.Element {
   );
 }
 
-export const options = {
-  headerShown: false,
-} as const;
-
 const styles = StyleSheet.create({
   streakMetricsContainer: {
     marginBottom: LAYOUT.SPACING.SMALL,

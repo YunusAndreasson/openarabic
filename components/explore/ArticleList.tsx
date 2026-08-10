@@ -1,5 +1,4 @@
-import { useHeaderHeight } from 'expo-router/react-navigation';
-import { useState, useTransition, type ReactElement } from 'react';
+import { useTransition, type ReactElement } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, type ViewStyle } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
@@ -25,20 +24,11 @@ export function ArticleList({
   ListHeaderComponent,
   ListFooterComponent,
   contentContainerStyle,
-  progressViewOffset,
+  progressViewOffset = LAYOUT.SPACING.XLARGE,
   isRefreshing = false,
 }: ArticleListProps) {
   const colors = useColors();
-  const headerHeight = useHeaderHeight();
   const [, startTransition] = useTransition();
-
-  // Stable header height — only update when significantly changed to avoid layout jitter.
-  // Uses the "adjust state during render" pattern so the new value is applied in the
-  // same render that observes a >5px delta (React schedules a re-render with the new value).
-  const [stableHeaderHeight, setStableHeaderHeight] = useState(headerHeight);
-  if (Math.abs(stableHeaderHeight - headerHeight) > 5) {
-    setStableHeaderHeight(headerHeight);
-  }
 
   const handleRefreshWithTransition = () => {
     if (onRefresh) {
@@ -63,11 +53,7 @@ export function ArticleList({
           progressBackgroundColor={colors.background}
           refreshing={isRefreshing}
           tintColor={colors.tint}
-          progressViewOffset={
-            progressViewOffset !== undefined
-              ? progressViewOffset
-              : stableHeaderHeight + LAYOUT.SPACING.XXLARGE
-          }
+          progressViewOffset={progressViewOffset}
           onRefresh={handleRefreshWithTransition}
         />
       }

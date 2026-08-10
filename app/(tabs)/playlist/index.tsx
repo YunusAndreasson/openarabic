@@ -310,7 +310,3 @@ export default function PlaylistScreen(): JSX.Element {
     </>
   );
 }
-
-export const options = {
-  headerShown: false,
-} as const;

@@ -119,10 +119,6 @@ export default function WordsToRevisitScreen(): JSX.Element {
   );
 }
 
-export const options = {
-  headerShown: false,
-} as const;
-
 const styles = StyleSheet.create({
   header: {
     // Clears the OS grabber pill, which otherwise draws through the title.

@@ -1,19 +1,11 @@
 import * as Sentry from '@sentry/react-native';
 import * as Application from 'expo-application';
 import { useState } from 'react';
-import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
 import { useOAuthProvider, type OAuthSignInResult } from '@/hooks/auth/useOAuthProvider';
-import { isCancellationError } from '@/utils/authUtils';
-
-/** Native Apple Auth is unavailable in Expo Go or non-iOS */
-// ExecutionEnvironment.StoreClient means "Expo Go OR a dev build", while
-// appOwnership === 'expo' is Expo Go alone. Swapping it would disable native
-// auth in dev builds. Needs a real Expo-Go-only check before migrating.
-// eslint-disable-next-line @typescript-eslint/no-deprecated -- see note above
-const isAppleAuthAvailable = Platform.OS === 'ios' && Constants.appOwnership !== 'expo';
 import { supabase } from '@/services/supabase';
+import { isCancellationError } from '@/utils/authUtils';
 
 /** Type for dynamically imported Apple Auth module (iOS only) */
 interface AppleAuthModule {
@@ -30,6 +22,32 @@ interface AppleAuthModule {
     Operation: { LOGIN: unknown };
     Scope: { EMAIL: unknown; FULL_NAME: unknown };
   };
+}
+
+/**
+ * Native Apple Auth ships as a native module (iOS only), so it is simply absent in
+ * Expo Go. Observing the module is more accurate than inferring it from the
+ * environment: `Constants.appOwnership` is deprecated, and its only replacement
+ * (`ExecutionEnvironment.StoreClient`) also matches dev builds, where native auth
+ * does work. Mirrors the guarded-require pattern used for expo-notifications in
+ * app/_layout.tsx. Probed lazily, then memoized, so importing this hook stays cheap.
+ */
+let cachedAppleAuth: AppleAuthModule | null | undefined;
+
+function getAppleAuth(): AppleAuthModule | null {
+  if (cachedAppleAuth === undefined) {
+    if (Platform.OS !== 'ios') {
+      cachedAppleAuth = null;
+    } else {
+      try {
+        cachedAppleAuth =
+          require('@invertase/react-native-apple-authentication') as AppleAuthModule;
+      } catch {
+        cachedAppleAuth = null;
+      }
+    }
+  }
+  return cachedAppleAuth;
 }
 
 /**
@@ -55,21 +73,17 @@ export interface UseAppleAuthReturn {
 export function useAppleAuth(): UseAppleAuthReturn {
   // Pre-load Apple Auth module synchronously on first render via lazy init.
   // require() is synchronous so the module is fully initialized before first use.
-  const [isReady] = useState(() => {
-    if (!isAppleAuthAvailable) return false;
-    require('@invertase/react-native-apple-authentication');
-    return true;
-  });
+  const [isReady] = useState(() => getAppleAuth() !== null);
 
   // Use OAuth provider factory with Apple-specific configuration
   const { signIn, loading } = useOAuthProvider({
     provider: 'apple',
 
     loadModule: async () => {
-      if (!isAppleAuthAvailable || !isReady) {
+      const appleAuth = getAppleAuth();
+      if (!appleAuth || !isReady) {
         throw new Error('Apple Sign In not available');
       }
-      const appleAuth = require('@invertase/react-native-apple-authentication');
       return appleAuth;
     },
 

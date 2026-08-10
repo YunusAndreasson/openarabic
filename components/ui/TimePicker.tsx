@@ -1,6 +1,5 @@
+import { DateTimePicker } from '@expo/ui/community/datetime-picker';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
-import type { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { useCallback, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,6 +10,7 @@ import { BrandedBottomSheetHandle } from '@/components/ui/BrandedBottomSheetHand
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { useBottomSheetDynamicStyles } from '@/hooks/ui/useBottomSheetDynamicStyles';
 import { useBottomSheetVisibility } from '@/hooks/ui/useBottomSheetVisibility';
 import { BottomSheetBackdrop, COMMON_BOTTOM_SHEET_PROPS } from '@/utils/bottomSheetUtils';
@@ -30,12 +30,10 @@ export function TimePicker({
   initialHour = 12,
   initialMinute = 0,
 }: TimePickerProps) {
-  // @react-native-community/datetimepicker always presents as a modal AlertDialog
-  // on Android regardless of `display`. Wrapping it in a BottomSheet (as iOS does)
-  // produces a dialog AND a sheet stacked on top of each other, with a second
-  // "Set time" confirm button that's redundant with the dialog's OK. Use the
-  // native dialog directly on Android — its event.type ('set' | 'dismissed')
-  // drives onTimeSet / onClose. iOS keeps the inline-spinner-in-sheet design.
+  // Android presents as a modal dialog (`presentation: 'dialog'`, its default).
+  // Wrapping that in a BottomSheet (as iOS does) would stack a dialog on a sheet,
+  // with a second "Set time" confirm redundant with the dialog's OK — so Android
+  // uses the dialog directly. iOS keeps the inline-spinner-in-sheet design.
   if (Platform.OS === 'android') {
     return (
       <AndroidTimePicker
@@ -71,14 +69,12 @@ function AndroidTimePicker({
   const initialDate = new Date();
   initialDate.setHours(initialHour, initialMinute, 0, 0);
 
-  const handleChange = useCallback(
-    (event: DateTimePickerEvent, date?: Date) => {
-      // Android fires once per interaction. event.type is 'set' on OK,
-      // 'dismissed' on CANCEL / outside-tap. Either way we close the picker;
-      // only 'set' with a valid date persists the new time.
-      if (event.type === 'set' && date) {
-        onTimeSet(date.getHours(), date.getMinutes());
-      }
+  // Confirm and cancel are now separate callbacks, so there is no event.type to
+  // branch on: onValueChange fires only on OK, onDismiss only on CANCEL /
+  // outside-tap. Both close the picker; only the former persists the new time.
+  const handleValueChange = useCallback(
+    (_event: unknown, date: Date) => {
+      onTimeSet(date.getHours(), date.getMinutes());
       onClose();
     },
     [onClose, onTimeSet],
@@ -91,11 +87,9 @@ function AndroidTimePicker({
       value={initialDate}
       mode="time"
       is24Hour
-      display="spinner"
-      // this one callback into onValueChange/onDismiss/onNeutralButtonPress; migrating needs
-      // the picker's dismiss-vs-confirm behaviour re-verified on both platforms.
-      // eslint-disable-next-line @typescript-eslint/no-deprecated -- see note above
-      onChange={handleChange}
+      presentation="dialog"
+      onValueChange={handleValueChange}
+      onDismiss={onClose}
     />
   );
 }
@@ -108,6 +102,7 @@ function IosTimePicker({
   initialMinute = 0,
 }: TimePickerProps) {
   const colors = useColors();
+  const isDark = useIsDarkMode();
   const insets = useSafeAreaInsets();
   const bottomSheetRef = useBottomSheetVisibility(isVisible);
 
@@ -116,10 +111,8 @@ function IosTimePicker({
 
   const [selectedDate, setSelectedDate] = useState(initialDate);
 
-  const handleDateChange = (_event: DateTimePickerEvent, date?: Date) => {
-    if (date) {
-      setSelectedDate(date);
-    }
+  const handleDateChange = (_event: unknown, date: Date) => {
+    setSelectedDate(date);
   };
 
   const handleConfirm = () => {
@@ -162,18 +155,17 @@ function IosTimePicker({
         </View>
 
         <View style={styles.pickerContainer}>
+          {/* No textColor equivalent in @expo/ui — themeVariant carries the same
+              intent, pinning the wheel to the app's theme rather than the
+              system's (the two diverge whenever the user forces a theme). */}
           <DateTimePicker
             value={selectedDate}
             mode="time"
-            is24Hour
             display="spinner"
-            // this one callback into onValueChange/onDismiss/onNeutralButtonPress; migrating needs
-            // the picker's dismiss-vs-confirm behaviour re-verified on both platforms.
-            // eslint-disable-next-line @typescript-eslint/no-deprecated -- see note above
-            onChange={handleDateChange}
+            onValueChange={handleDateChange}
             style={styles.picker}
-            textColor={colors.text}
             accentColor={colors.tint}
+            themeVariant={isDark ? 'dark' : 'light'}
           />
         </View>
 

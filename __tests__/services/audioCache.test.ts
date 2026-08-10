@@ -70,13 +70,6 @@ jest.mock('expo-file-system', () => ({
   },
 }));
 
-jest.mock('expo-file-system/legacy', () => ({
-  readDirectoryAsync: jest.fn(),
-  deleteAsync: jest.fn(),
-  makeDirectoryAsync: jest.fn(),
-  getInfoAsync: jest.fn(),
-}));
-
 jest.mock('expo-crypto', () => ({
   CryptoDigestAlgorithm: { MD5: 'MD5' },
   digestStringAsync: mockDigestStringAsync,
@@ -136,11 +129,6 @@ describe('audioCache', () => {
   test('getAudio downloads file when not cached', async () => {
     // Mock crypto to return the expected hash
     mockDigestStringAsync.mockResolvedValue(hash);
-
-    const FileSystemLegacy = require('expo-file-system/legacy');
-    (FileSystemLegacy.getInfoAsync as jest.Mock)
-      .mockResolvedValueOnce({ exists: true }) // constructor check
-      .mockResolvedValueOnce({ exists: true }); // cache dir exists during download
 
     // Clear mocks before test
     mockDirectoryConstructor.mockClear();

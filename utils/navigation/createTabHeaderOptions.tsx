@@ -1,6 +1,5 @@
+import type { NativeStackNavigationOptions } from 'expo-router';
 import { Platform } from 'react-native';
-
-import type { NativeStackNavigationOptions } from './navigationOptions';
 
 interface TabHeaderOptions {
   readonly title: string;

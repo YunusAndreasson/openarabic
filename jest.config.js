@@ -57,7 +57,9 @@ module.exports = {
     // Core React Native mocks
     '@shopify/react-native-skia': '<rootDir>/__mocks__/react-native-skia.js',
     'react-native-gesture-handler': '<rootDir>/__mocks__/react-native-gesture-handler.js',
-    'react-native-reanimated': '<rootDir>/__mocks__/react-native-reanimated.js',
+    // NOTE: react-native-reanimated is intentionally NOT mapped here. It is mocked
+    // in jest.setup.js, which is the richer of the two mocks that used to coexist
+    // (this mapper's target lacked useDerivedValue/useAnimatedReaction/interpolateColor).
     '@sentry/react-native': '<rootDir>/__mocks__/sentry-react-native.js',
     'react-redux': '<rootDir>/__mocks__/react-redux.js',
     'expo-image': '<rootDir>/__mocks__/expo-image.js',
@@ -67,6 +69,10 @@ module.exports = {
 
     // Expo Router native tabs mock
     'expo-router/unstable-native-tabs': '<rootDir>/__mocks__/expo-router-native-tabs.js',
+
+    // @expo/ui ships untranspiled TS source, so a real import pulls
+    // expo/src/Expo.fx.tsx (and an undefined EXDevLauncher) into the module graph.
+    '@expo/ui/community/datetime-picker': '<rootDir>/__mocks__/expo-ui-datetime-picker.js',
 
     // Enhanced mocks for critical dependencies
     'expo-haptics': '<rootDir>/__mocks__/expo-haptics.js',

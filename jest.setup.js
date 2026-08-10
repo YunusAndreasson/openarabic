@@ -194,12 +194,11 @@ jest.mock('expo-file-system', () => ({
     exists: true,
     size: 1024,
   },
-  downloadAsync: jest.fn().mockResolvedValue({ uri: 'file:///mock/downloaded.mp3' }),
-  getInfoAsync: jest.fn().mockResolvedValue({ exists: true, size: 1024, isDirectory: false }),
-  makeDirectoryAsync: jest.fn().mockResolvedValue(undefined),
-  deleteAsync: jest.fn().mockResolvedValue(undefined),
-  readAsStringAsync: jest.fn().mockResolvedValue(''),
-  writeAsStringAsync: jest.fn().mockResolvedValue(undefined),
+  // NOTE: the legacy function API (downloadAsync/getInfoAsync/makeDirectoryAsync/
+  // deleteAsync/readAsStringAsync/writeAsStringAsync) is deliberately absent.
+  // It was removed in SDK 54 and now throws at runtime, so mocking it would let a
+  // test pass against behaviour the real module cannot produce. Only the
+  // Directory/File/Paths API above exists — see services/audioCache.ts.
 }));
 
 // Mini-player visibility hook is a thin wrapper over useGlobalAudioState which
@@ -263,8 +262,6 @@ jest.mock('react-native-worklets', () => ({
       callback(...args);
     }
   }),
-  createWorklet: jest.fn(callback => callback),
-  isWorklet: jest.fn(() => false),
 }));
 
 // Comprehensive react-native-reanimated mock for AI predictability

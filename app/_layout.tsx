@@ -20,7 +20,7 @@ import { memo, useEffect, useEffectEvent, useMemo, useRef, useState } from 'reac
 import { AppState, Platform, StyleSheet, View, type AppStateStatus } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 
@@ -84,17 +84,22 @@ try {
   // expo-notifications unavailable in Expo Go on Android (SDK 53+)
 }
 
-// The expo-font config plugin (app.json) embeds all fonts natively. On iOS
-// they register under their PostScript names — exactly the names the app
-// references (verified against the font files) — so native iOS builds don't
-// need the runtime load and useFonts gets an empty map that resolves
-// immediately, keeping the splash-hide path off a redundant font resolve.
-// Android still needs it: the plugin copies string-entry fonts to assets under
-// their FILENAMES ('NotoSans.ttf' → family 'NotoSans'), which don't match the
-// PostScript names used throughout the app. Expo Go always needs it (no
-// config plugins there).
-const IS_EXPO_GO = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
-const NEEDS_RUNTIME_FONTS = IS_EXPO_GO || Platform.OS === 'android';
+// The expo-font config plugin (app.json) embeds all fonts natively on both
+// platforms, so useFonts gets an empty map that resolves immediately and the
+// splash-hide path skips a redundant font resolve.
+//   iOS     — string entries register under their PostScript names, which are
+//             exactly the names the app references.
+//   Android — the `android.fonts` object entries register under the declared
+//             `fontFamily` verbatim, via ReactFontManager.addCustomFont() in
+//             MainApplication.onCreate(), i.e. before JS starts. (String entries
+//             would instead register under the FILENAME — 'NotoSans.ttf' →
+//             'NotoSans' — which is why the object form is required there.)
+// Expo Go runs no config plugins, so it is the only case still needing the
+// runtime load.
+//
+// NOTE: this is an app.json plugin change, so it only takes effect after a
+// native rebuild — an OTA alone will ship the narrowed flag without the fonts.
+const NEEDS_RUNTIME_FONTS = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 
 const RUNTIME_FONT_MAP = {
   'NotoSansArabic-Regular': notoSansFont,
@@ -745,7 +750,10 @@ export default Sentry.wrap(function RootLayout() {
         <PersistGate loading={<View />} persistor={persistor}>
           <PersistQueryClientProvider client={queryClient} persistOptions={PERSISTENCE_OPTIONS}>
             <AuthProvider>
-              <SafeAreaProvider>
+              {/* initialMetrics seeds the insets synchronously from the native side,
+                  so the first frame is laid out with real safe areas instead of
+                  zeros that get corrected a frame later. */}
+              <SafeAreaProvider initialMetrics={initialWindowMetrics}>
                 <TutorialProvider>
                   <ToastProvider>
                     <Sentry.ErrorBoundary fallback={({ error }) => <ErrorFallback error={error} />}>

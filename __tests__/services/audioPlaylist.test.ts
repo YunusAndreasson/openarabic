@@ -20,12 +20,6 @@ jest.mock('expo-file-system', () => ({
   Directory: jest.fn(),
   File: jest.fn(),
 }));
-jest.mock('expo-file-system/legacy', () => ({
-  makeDirectoryAsync: jest.fn().mockResolvedValue(undefined),
-  deleteAsync: jest.fn().mockResolvedValue(undefined),
-  getInfoAsync: jest.fn().mockResolvedValue({ exists: false }),
-  readDirectoryAsync: jest.fn().mockResolvedValue([]),
-}));
 jest.mock('expo-crypto', () => ({
   digestStringAsync: jest.fn().mockResolvedValue('mock-hash'),
 }));

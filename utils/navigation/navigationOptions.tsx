@@ -1,16 +1,7 @@
-import type { Stack } from 'expo-router';
-import type { ComponentProps } from 'react';
+import type { NativeStackNavigationOptions } from 'expo-router';
 import { Platform, Text, View } from 'react-native';
 
 import { FONTS } from '@/constants/fonts';
-
-// SDK 56 removed the public `NativeStackNavigationOptions` re-export.
-// Derive it from <Stack.Screen options> instead. The runtime shape is identical.
-export type NativeStackNavigationOptions = Exclude<
-  NonNullable<ComponentProps<typeof Stack.Screen>['options']>,
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-  Function
->;
 
 // UIKit nav bar title is 17pt semibold; M3 small top app bar is 22pt.
 const NATIVE_TITLE_FONT_SIZE = Platform.OS === 'ios' ? 17 : 22;

@@ -279,10 +279,6 @@ export default function PracticeScreen(): JSX.Element {
   );
 }
 
-export const options = {
-  headerShown: false,
-} as const;
-
 const styles = StyleSheet.create({
   container: LAYOUT.COMMON_STYLES.CONTAINER,
   contentContainer: {

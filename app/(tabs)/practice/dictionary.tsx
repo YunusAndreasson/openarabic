@@ -1,7 +1,7 @@
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
-import { useNavigation, useRouter } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,7 +22,6 @@ import { useDictionaryList, useFSRSQueries, useResetWordProgress } from '@/hooks
 import type { ReanimatedCSSAnimationStyle } from '@/types/ui/base.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
-import type { NativeStackNavigationOptions } from '@/utils/navigation';
 
 // Row mount fade — Reanimated 4 CSS @keyframes. Unlike entering/exiting layout
 // animations, a CSS animation doesn't re-fire when FlashList recycles the row
@@ -42,7 +41,6 @@ const ROW_FADE_IN_STYLE = {
 export default function DictionaryScreen(): JSX.Element {
   const { user } = useAuth();
   const router = useRouter();
-  const navigation = useNavigation();
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { preconfigureAudioSession } = useSimpleAudioPlayer();
@@ -83,25 +81,6 @@ export default function DictionaryScreen(): JSX.Element {
     },
     [selectSortField],
   );
-
-  // Native header search bar (UISearchController on iOS, SearchView on Android)
-  useLayoutEffect(() => {
-    const options: NativeStackNavigationOptions = {
-      headerSearchBarOptions: {
-        placeholder: STRINGS.SEARCH_WORDS,
-        hideWhenScrolling: false,
-        autoCapitalize: 'none',
-        onChangeText: event => setSearchQuery(event.nativeEvent.text),
-        onCancelButtonPress: () => setSearchQuery(''),
-        onClose: () => setSearchQuery(''),
-        // Android SearchView colors (iOS adapts to the theme on its own)
-        headerIconColor: colors.text,
-        textColor: colors.text,
-        hintTextColor: colors.textTertiary,
-      },
-    };
-    navigation.setOptions(options);
-  }, [navigation, colors.text, colors.textTertiary, setSearchQuery]);
 
   const hasWords = words.length > 0;
 
@@ -192,6 +171,22 @@ export default function DictionaryScreen(): JSX.Element {
 
   return (
     <ThemedView style={styles.container}>
+      {/* Native header search bar (UISearchController on iOS, SearchView on
+          Android). Declarative in SDK 57 — it renders null and folds its props
+          into the parent Stack's header options, so it replaces the old
+          useLayoutEffect + navigation.setOptions round-trip. */}
+      <Stack.SearchBar
+        placeholder={STRINGS.SEARCH_WORDS}
+        hideWhenScrolling={false}
+        autoCapitalize="none"
+        onChangeText={event => setSearchQuery(event.nativeEvent.text)}
+        onCancelButtonPress={() => setSearchQuery('')}
+        onClose={() => setSearchQuery('')}
+        // Android SearchView colors (iOS adapts to the theme on its own)
+        headerIconColor={colors.text}
+        textColor={colors.text}
+        hintTextColor={colors.textTertiary}
+      />
       {isLoading ? (
         <LoadingState />
       ) : (

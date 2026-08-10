@@ -1,19 +1,16 @@
-import Constants from 'expo-constants';
 import NetInfo from '@react-native-community/netinfo';
 import * as Sentry from '@sentry/react-native';
 import { useEffect, useState } from 'react';
 import { useOAuthProvider, type OAuthSignInResult } from '@/hooks/auth/useOAuthProvider';
 import { isCancellationError } from '@/utils/authUtils';
 
-/** Native Google Sign In is unavailable in Expo Go */
-// ExecutionEnvironment.StoreClient means "Expo Go OR a dev build", while
-// appOwnership === 'expo' is Expo Go alone. Swapping it would disable native
-// auth in dev builds. Needs a real Expo-Go-only check before migrating.
-// eslint-disable-next-line @typescript-eslint/no-deprecated -- see note above
-const isExpoGo = Constants.appOwnership === 'expo';
-
 /** Type for dynamically imported Google Sign In module */
 interface GoogleSignInModule {
+  configure: (options: {
+    webClientId: string;
+    iosClientId?: string | undefined;
+    offlineAccess?: boolean;
+  }) => void | Promise<void>;
   hasPlayServices: (options: { showPlayServicesUpdateDialog: boolean }) => Promise<void>;
   signIn: () => Promise<{
     data?: {
@@ -23,6 +20,30 @@ interface GoogleSignInModule {
       accessToken?: string;
     };
   }>;
+}
+
+/**
+ * Google Sign In ships as a native module, so it is simply absent in Expo Go.
+ * Observing the module is more accurate than inferring it from the environment:
+ * `Constants.appOwnership` is deprecated, and its only replacement
+ * (`ExecutionEnvironment.StoreClient`) also matches dev builds, where native auth
+ * does work. Mirrors the guarded-require pattern used for expo-notifications in
+ * app/_layout.tsx. Probed lazily, then memoized, so importing this hook stays cheap.
+ */
+let cachedGoogleSignin: GoogleSignInModule | null | undefined;
+
+function getGoogleSignin(): GoogleSignInModule | null {
+  if (cachedGoogleSignin === undefined) {
+    try {
+      const mod = require('@react-native-google-signin/google-signin') as {
+        GoogleSignin?: GoogleSignInModule;
+      };
+      cachedGoogleSignin = mod.GoogleSignin ?? null;
+    } catch {
+      cachedGoogleSignin = null;
+    }
+  }
+  return cachedGoogleSignin;
 }
 
 /**
@@ -56,9 +77,8 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
     const configure = async (): Promise<void> => {
       try {
         // Guard: skip if native module is unavailable (Expo Go)
-        if (isExpoGo) return;
-
-        const GoogleSignin = require('@react-native-google-signin/google-signin').GoogleSignin;
+        const GoogleSignin = getGoogleSignin();
+        if (!GoogleSignin) return;
 
         // Get Web Client ID from environment
         const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
@@ -110,11 +130,11 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
     provider: 'google',
 
     loadModule: async () => {
-      if (isExpoGo || !isConfigured) {
+      const GoogleSignin = getGoogleSignin();
+      if (!GoogleSignin || !isConfigured) {
         throw new Error('Google Sign In not available');
       }
 
-      const { GoogleSignin } = require('@react-native-google-signin/google-signin');
       return GoogleSignin;
     },
 
@@ -218,7 +238,7 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
     },
 
     handleProviderError: (error: unknown) => {
-      if (isExpoGo) return undefined;
+      if (!getGoogleSignin()) return undefined;
 
       // Handle Play Services not available (Android)
       const { statusCodes } = require('@react-native-google-signin/google-signin');

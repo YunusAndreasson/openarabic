@@ -229,6 +229,3 @@ export default function ExploreScreen(): JSX.Element {
 }
 
 // Let parent _layout.tsx stack handle header; no local options needed.
-export const options = {
-  headerShown: false,
-} as const;

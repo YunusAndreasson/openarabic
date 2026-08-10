@@ -11,12 +11,10 @@ jest.mock('@shopify/flash-list', () => {
   return { FlashList: (props: any) => <View {...props} /> };
 });
 
-// Basic mock for reanimated
-jest.mock('react-native-reanimated', () => {
-  const Reanimated = require('react-native-reanimated/mock');
-  Reanimated.default.call = () => {};
-  return Reanimated;
-});
+// Reanimated is mocked globally in jest.setup.js. The old
+// `require('react-native-reanimated/mock')` + `Reanimated.default.call` idiom is a
+// v2-era pattern — `call` no longer exists in Reanimated 4 — so this file just
+// inherits the shared mock.
 
 // Mock vector icons to avoid loading native fonts
 jest.mock('@/components/ui/Icon', () => ({
