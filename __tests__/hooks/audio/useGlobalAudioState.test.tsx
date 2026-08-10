@@ -321,7 +321,7 @@ describe('useGlobalAudioState Hook', () => {
       expect(mockMarkSleepTimerExpired).toHaveBeenCalledTimes(1);
     });
 
-    test('timer completion sets force-stop timeout for 30 seconds', () => {
+    test('timer completion sets force-stop timeout for 30 seconds (playlist mode)', () => {
       let timerCallback: (() => void) | undefined;
 
       jest.mocked(useSleepTimer).mockImplementation((onComplete: () => void) => {
@@ -340,6 +340,9 @@ describe('useGlobalAudioState Hook', () => {
         currentIndex: 0,
         totalTracks: 5,
       });
+      jest
+        .mocked(simpleAudioService.getStatus)
+        .mockReturnValue({ currentTime: 0, duration: 0, playing: true } as any);
 
       renderHook(() => useGlobalAudioState(), { wrapper: GlobalAudioStateProvider });
 
@@ -355,11 +358,15 @@ describe('useGlobalAudioState Hook', () => {
         jest.advanceTimersByTime(30000);
       });
 
-      // Should now force stop if still in playlist mode
+      // Should now force stop since the track is still playing
       expect(mockStop).toHaveBeenCalledTimes(1);
     });
 
-    test('force-stop timeout does not trigger if not in playlist mode', () => {
+    // Regression test: the force-stop used to gate on isPlaylistMode alone, so
+    // a single (non-"Play All") track never got stopped by the sleep timer at
+    // all — nothing else checks sleepTimerExpired for that lane. See
+    // hooks/audio/useGlobalAudioState.tsx's forceStop comment.
+    test('force-stop timeout also fires for a single track (not playlist mode) if still playing', () => {
       let timerCallback: (() => void) | undefined;
 
       jest.mocked(useSleepTimer).mockImplementation((onComplete: () => void) => {
@@ -378,6 +385,9 @@ describe('useGlobalAudioState Hook', () => {
         currentIndex: 0,
         totalTracks: 0,
       });
+      jest
+        .mocked(simpleAudioService.getStatus)
+        .mockReturnValue({ currentTime: 0, duration: 0, playing: true } as any);
 
       renderHook(() => useGlobalAudioState(), { wrapper: GlobalAudioStateProvider });
 
@@ -386,7 +396,35 @@ describe('useGlobalAudioState Hook', () => {
         jest.advanceTimersByTime(30000);
       });
 
-      // Should not force stop when not in playlist mode
+      expect(mockStop).toHaveBeenCalledTimes(1);
+    });
+
+    test('force-stop timeout does not fire if playback already stopped naturally', () => {
+      let timerCallback: (() => void) | undefined;
+
+      jest.mocked(useSleepTimer).mockImplementation((onComplete: () => void) => {
+        timerCallback = onComplete;
+        return {
+          state: { isActive: true, endTime: Date.now() + 60000 },
+          actions: {
+            startTimer: mockStartTimer,
+            cancelTimer: mockCancelTimer,
+          },
+        } as any;
+      });
+
+      jest
+        .mocked(simpleAudioService.getStatus)
+        .mockReturnValue({ currentTime: 0, duration: 0, playing: false } as any);
+
+      renderHook(() => useGlobalAudioState(), { wrapper: GlobalAudioStateProvider });
+
+      act(() => {
+        timerCallback?.();
+        jest.advanceTimersByTime(30000);
+      });
+
+      // Track already finished naturally within the grace window — no redundant stop.
       expect(mockStop).not.toHaveBeenCalled();
     });
 

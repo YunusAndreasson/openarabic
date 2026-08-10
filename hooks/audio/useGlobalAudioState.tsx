@@ -89,9 +89,15 @@ function useGlobalAudioStateInternal(): GlobalAudioState {
     setTimer(
       'forceStop',
       () => {
-        // Only stop if we're still in playlist mode (track didn't finish yet)
-        const playlistInfo = simpleAudioService.getPlaylistInfo();
-        if (playlistInfo.isPlaylistMode) {
+        // Gating this on isPlaylistMode alone meant the sleep timer did
+        // nothing for a single (non-"Play All") track: playCore's single-
+        // track didJustFinish branch never checks sleepTimerExpired, so
+        // nothing else was going to stop it either — the countdown would
+        // reach zero and the article would just keep playing. Checking live
+        // playing status instead covers both lanes; a track that already
+        // finished naturally within the 30s grace window is a no-op here
+        // either way.
+        if (simpleAudioService.getStatus().playing) {
           audioPlayer.stop();
         }
       },

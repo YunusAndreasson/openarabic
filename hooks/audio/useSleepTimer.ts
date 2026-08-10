@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 
 import { STRINGS } from '@/constants/strings';
 import { handleError } from '@/utils/errorHandling';
@@ -37,6 +38,13 @@ export function useSleepTimer(onTimerComplete?: () => void): UseSleepTimerResult
     }
   }, []);
 
+  const fireCompletion = useCallback(() => {
+    clearTimerTimeout();
+    setIsActive(false);
+    setEndTime(0);
+    onTimerComplete?.();
+  }, [clearTimerTimeout, onTimerComplete]);
+
   const startTimer = useCallback(
     (minutes: number) => {
       try {
@@ -52,12 +60,7 @@ export function useSleepTimer(onTimerComplete?: () => void): UseSleepTimerResult
         setEndTime(end);
         setIsActive(true);
 
-        timeoutRef.current = setTimeout(() => {
-          setIsActive(false);
-          setEndTime(0);
-          timeoutRef.current = null;
-          onTimerComplete?.();
-        }, durationMs);
+        timeoutRef.current = setTimeout(fireCompletion, durationMs);
       } catch (error) {
         handleError(error, {
           toastMessage: STRINGS.FAILED_TO_START_SLEEP_TIMER,
@@ -65,7 +68,7 @@ export function useSleepTimer(onTimerComplete?: () => void): UseSleepTimerResult
         });
       }
     },
-    [clearTimerTimeout, onTimerComplete],
+    [clearTimerTimeout, fireCompletion],
   );
 
   const cancelTimer = useCallback(() => {
@@ -80,6 +83,26 @@ export function useSleepTimer(onTimerComplete?: () => void): UseSleepTimerResult
       clearTimerTimeout();
     };
   }, [clearTimerTimeout]);
+
+  // A backgrounded app throttles JS timers — measured on the Android emulator,
+  // a 5-minute setTimeout did not fire until the app was foregrounded again
+  // several minutes past its deadline, during which a playing queue kept
+  // auto-advancing completely uninterrupted. That's the one case a "sleep"
+  // timer must not fail in: the app is backgrounded because the listener put
+  // the phone down. Re-checking the stored wall-clock `endTime` against
+  // `Date.now()` on every foreground transition makes expiry correct
+  // regardless of whether the underlying setTimeout fired on schedule, was
+  // merely late, or is still pending.
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextState => {
+      if (nextState !== 'active') return;
+      if (!isActive || endTime === 0) return;
+      if (Date.now() >= endTime) {
+        fireCompletion();
+      }
+    });
+    return () => subscription?.remove();
+  }, [isActive, endTime, fireCompletion]);
 
   return {
     state: { isActive, endTime },
