@@ -10,6 +10,7 @@ import { IconButton } from '@/components/ui';
 import { TIMING_CONFIG, TIMING_CONSTANTS } from '@/constants/animation';
 import { FONTS } from '@/constants/fonts';
 import { LAYOUT, TEXT_STYLES } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { withAlpha } from '@/utils/colorUtils';
 import { formatSecondsToClock, safePercent } from '@/utils/dateTimeUtils';
@@ -191,12 +192,17 @@ const MiniPlayerComponent = ({
             hapticType="light"
           />
           <IconButton
-            icon="pause"
+            // There is no pause/resume in this player — onPlayPause always stops
+            // and clears the queue (see useGlobalAudioState's handlePlayPause).
+            // A "pause" glyph promised a resumable pause that didn't exist, so a
+            // tap here silently threw away a listener's place in the playlist.
+            icon="stop"
             onPress={onPlayPause}
             backgroundColor={stopButtonColor}
             iconColor={colors.tint}
             iconSize={LAYOUT.BUTTON.ICON_SIZE.LARGE}
             hapticType="light"
+            accessibilityLabel={STRINGS.ARTICLE_STOP_LISTENING_A11Y}
           />
         </View>
       </View>
