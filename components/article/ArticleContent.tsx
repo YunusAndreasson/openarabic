@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import { FloatingActionButtons } from '@/components/article/FloatingActionButtons';
+import { HeaderScrim } from '@/components/article/HeaderScrim';
 import { ParallaxHeader } from '@/components/article/ParallaxHeader';
 import { RelatedArticlesSection } from '@/components/article/RelatedArticlesSection';
 import { SCROLL_EVENT_THROTTLE, TIMING_CONFIG } from '@/constants/animation';
@@ -317,6 +318,12 @@ const ArticleContentInternal = function ArticleContent({
           </View>
         ) : null}
       </Animated.View>
+
+      {/* Persistent backdrop for the status bar + button row — ParallaxHeader's
+          own gradient fades to opacity 0 once content scrolls past the hero
+          (by design), so without this, body text scrolls directly under the
+          status bar and buttons with no scrim for the rest of the article. */}
+      {sortedSentences.length > 0 && <HeaderScrim colors={colors} />}
 
       {/* Floating action buttons - completely outside Animated.View to avoid gesture conflicts */}
       {sortedSentences.length > 0 && (
