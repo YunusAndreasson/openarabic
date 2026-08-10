@@ -1,5 +1,6 @@
 import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
+import type { Tables } from '@/types/database.types';
 import { toUTCDateString } from '@/utils/dateTimeUtils';
 import { createServiceErrorConfig } from '@/utils/serviceErrorConfig';
 import { executeQuery } from '@/utils/supabaseHelpers';
@@ -205,14 +206,28 @@ export class StudySessionStreakService {
     // Go back (days - 1) to include today as the last day
     startDate.setDate(startDate.getDate() - (days - 1));
 
-    // Get all study_words reviews for the user (fsrs_last_review tracks when they studied)
-    const data = await executeQuery(
-      () => supabase.from('study_words').select('fsrs_last_review').eq('user_id', userId),
-      {
-        ...errorConfig.activity,
-        analyticsProperties: { userId, days },
-      },
-    );
+    // Get all study_words reviews for the user (fsrs_last_review tracks when they studied).
+    // Paged rather than a single `.select()`: PostgREST silently truncates an
+    // unbounded request at its implicit 1000-row default, which would drop a
+    // heavy learner's older reviews out of the streak calculation.
+    const PAGE_SIZE = 1000;
+    const data: Pick<Tables<'study_words'>, 'fsrs_last_review'>[] = [];
+    for (let offset = 0; ; offset += PAGE_SIZE) {
+      const page = await executeQuery(
+        () =>
+          supabase
+            .from('study_words')
+            .select('fsrs_last_review')
+            .eq('user_id', userId)
+            .range(offset, offset + PAGE_SIZE - 1),
+        {
+          ...errorConfig.activity,
+          analyticsProperties: { userId, days },
+        },
+      );
+      data.push(...(page ?? []));
+      if (!page || page.length < PAGE_SIZE) break;
+    }
 
     // Initialize exactly `days` dates including today
     const activityMap = new Map<string, boolean>();

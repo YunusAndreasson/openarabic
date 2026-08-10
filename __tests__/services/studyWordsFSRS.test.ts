@@ -30,6 +30,7 @@ const createBuilder = (response: any = { data: [], error: null }) => {
     or: jest.fn().mockReturnThis(),
     order: jest.fn().mockReturnThis(),
     limit: jest.fn().mockReturnThis(),
+    range: jest.fn().mockReturnThis(),
   };
   builder.then = jest.fn((resolve, reject) => Promise.resolve(response).then(resolve, reject));
   return builder;

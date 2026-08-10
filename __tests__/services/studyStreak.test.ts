@@ -23,9 +23,14 @@ jest.mock('@/services/supabase', () => ({
 
 const { supabase } = require('@/services/supabase');
 
+// The service pages through results with `.range()` after `.eq()`, so the
+// mocked terminal value must be chainable (`.range()` returns the same
+// awaitable) as well as directly awaitable, matching Supabase's real builder.
+const chainableResult = (promise: Promise<any>) => Object.assign(promise, { range: jest.fn(() => promise) });
+
 // Helper to create query builder chain for SELECT queries
 const createSelectBuilder = (response: any = { data: [], error: null }) => {
-  const promise = Promise.resolve(response);
+  const promise = chainableResult(Promise.resolve(response));
   const selectFn = jest.fn();
   const eqFn = jest.fn(() => promise);
 
@@ -402,7 +407,7 @@ describe('StudySessionStreakService', () => {
     test('should return activity for specified number of days', async () => {
       const mockData = [{ fsrs_last_review: new Date().toISOString() }];
       const { builder, eqFn } = createSelectBuilder({ data: mockData, error: null });
-      eqFn.mockReturnValue(Promise.resolve({ data: mockData, error: null }));
+      eqFn.mockReturnValue(chainableResult(Promise.resolve({ data: mockData, error: null })));
       (supabase.from as jest.Mock).mockReturnValue(builder);
 
       const result = await StudySessionStreakService.getDailyStudySessionActivity('user-123', 7);
@@ -421,7 +426,7 @@ describe('StudySessionStreakService', () => {
         { fsrs_last_review: yesterday.toISOString() },
       ];
       const { builder, eqFn } = createSelectBuilder({ data: mockData, error: null });
-      eqFn.mockReturnValue(Promise.resolve({ data: mockData, error: null }));
+      eqFn.mockReturnValue(chainableResult(Promise.resolve({ data: mockData, error: null })));
       (supabase.from as jest.Mock).mockReturnValue(builder);
 
       const result = await StudySessionStreakService.getDailyStudySessionActivity('user-123', 7);
@@ -433,7 +438,7 @@ describe('StudySessionStreakService', () => {
     test('should handle null fsrs_last_review values', async () => {
       const mockData = [{ fsrs_last_review: null }, { fsrs_last_review: new Date().toISOString() }];
       const { builder, eqFn } = createSelectBuilder({ data: mockData, error: null });
-      eqFn.mockReturnValue(Promise.resolve({ data: mockData, error: null }));
+      eqFn.mockReturnValue(chainableResult(Promise.resolve({ data: mockData, error: null })));
       (supabase.from as jest.Mock).mockReturnValue(builder);
 
       const result = await StudySessionStreakService.getDailyStudySessionActivity('user-123', 7);
@@ -444,7 +449,7 @@ describe('StudySessionStreakService', () => {
 
     test('should handle empty data', async () => {
       const { builder, eqFn } = createSelectBuilder({ data: [], error: null });
-      eqFn.mockReturnValue(Promise.resolve({ data: [], error: null }));
+      eqFn.mockReturnValue(chainableResult(Promise.resolve({ data: [], error: null })));
       (supabase.from as jest.Mock).mockReturnValue(builder);
 
       const result = await StudySessionStreakService.getDailyStudySessionActivity('user-123', 7);
@@ -465,7 +470,7 @@ describe('StudySessionStreakService', () => {
         { fsrs_last_review: yesterday.toISOString() },
       ];
       const { builder, eqFn } = createSelectBuilder({ data: mockData, error: null });
-      eqFn.mockReturnValue(Promise.resolve({ data: mockData, error: null }));
+      eqFn.mockReturnValue(chainableResult(Promise.resolve({ data: mockData, error: null })));
       (supabase.from as jest.Mock).mockReturnValue(builder);
 
       const result = await StudySessionStreakService.getStudySessionStreak('user-123');
@@ -476,7 +481,7 @@ describe('StudySessionStreakService', () => {
 
     test('should return zero streak when no study sessions', async () => {
       const { builder, eqFn } = createSelectBuilder({ data: [], error: null });
-      eqFn.mockReturnValue(Promise.resolve({ data: [], error: null }));
+      eqFn.mockReturnValue(chainableResult(Promise.resolve({ data: [], error: null })));
       (supabase.from as jest.Mock).mockReturnValue(builder);
 
       const result = await StudySessionStreakService.getStudySessionStreak('user-123');
@@ -488,7 +493,7 @@ describe('StudySessionStreakService', () => {
 
     test('should handle query errors gracefully', async () => {
       const { builder, eqFn } = createSelectBuilder({ data: null, error: { message: 'DB error' } });
-      eqFn.mockReturnValue(Promise.reject(new Error('DB error')));
+      eqFn.mockReturnValue(chainableResult(Promise.reject(new Error('DB error'))));
       (supabase.from as jest.Mock).mockReturnValue(builder);
 
       const result = await StudySessionStreakService.getStudySessionStreak('user-123');
@@ -504,7 +509,7 @@ describe('StudySessionStreakService', () => {
       const today = new Date();
       const mockData = [{ fsrs_last_review: today.toISOString() }];
       const { builder, eqFn } = createSelectBuilder({ data: mockData, error: null });
-      eqFn.mockReturnValue(Promise.resolve({ data: mockData, error: null }));
+      eqFn.mockReturnValue(chainableResult(Promise.resolve({ data: mockData, error: null })));
       (supabase.from as jest.Mock).mockReturnValue(builder);
 
       const result = await StudySessionStreakService.getStudySessionHistory('user-123', 7);
@@ -517,7 +522,7 @@ describe('StudySessionStreakService', () => {
 
     test('should return empty history on error', async () => {
       const { builder, eqFn } = createSelectBuilder({ data: null, error: { message: 'Error' } });
-      eqFn.mockReturnValue(Promise.reject(new Error('Error')));
+      eqFn.mockReturnValue(chainableResult(Promise.reject(new Error('Error'))));
       (supabase.from as jest.Mock).mockReturnValue(builder);
 
       const result = await StudySessionStreakService.getStudySessionHistory('user-123', 7);
@@ -537,7 +542,7 @@ describe('StudySessionStreakService', () => {
         { fsrs_last_review: yesterday.toISOString() },
       ];
       const { builder, eqFn } = createSelectBuilder({ data: mockData, error: null });
-      eqFn.mockReturnValue(Promise.resolve({ data: mockData, error: null }));
+      eqFn.mockReturnValue(chainableResult(Promise.resolve({ data: mockData, error: null })));
       (supabase.from as jest.Mock).mockReturnValue(builder);
 
       const result = await StudySessionStreakService.getStudySessionHistory('user-123', 30);

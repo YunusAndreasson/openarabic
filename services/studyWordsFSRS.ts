@@ -62,15 +62,18 @@ export interface StudyWordMutationResult {
 export const studyWordsFSRSService = {
   // Fetch study words with FSRS parameters
   async getFSRSWords(userId: string, options: GetFSRSWordsOptions = {}): Promise<StudyWord[]> {
-    // Build the query step by step with proper typing
-    const query = supabase.from('study_words');
+    // Builds the query fresh each call so an unbounded fetch (see below) can
+    // re-run it per page — a Postgrest query builder can't be re-ranged after
+    // it has already been awaited once.
+    const buildFilteredQuery = () => {
+      const query = supabase.from('study_words');
 
-    // Define the selection based on options
-    let selectQuery;
-    if (options.forStats) {
-      // For stats, we only need core fields, not all the relationships
-      selectQuery = query.select(
-        `
+      // Define the selection based on options
+      let selectQuery;
+      if (options.forStats) {
+        // For stats, we only need core fields, not all the relationships
+        selectQuery = query.select(
+          `
           fsrs_due,
           fsrs_stability,
           fsrs_difficulty,
@@ -82,10 +85,10 @@ export const studyWordsFSRSService = {
           fsrs_last_review,
           root_id,
           created_at`,
-      );
-    } else {
-      // Get full data with relationships - root is the only relation we need
-      const columns = `
+        );
+      } else {
+        // Get full data with relationships - root is the only relation we need
+        const columns = `
           root_id,
           user_id,
           fsrs_due,
@@ -100,82 +103,111 @@ export const studyWordsFSRSService = {
           created_at,
           root:roots (id, letters, meaning, audio_url, audio_url_en)
         `;
-      selectQuery = query.select(columns);
-    }
+        selectQuery = query.select(columns);
+      }
 
-    // Add filters after the select
-    let filteredQuery = selectQuery.eq('user_id', userId);
+      // Add filters after the select
+      let filteredQuery = selectQuery.eq('user_id', userId);
 
-    if (options.reviewedOnly) {
-      filteredQuery = filteredQuery.not('fsrs_last_review', 'is', null).gt('fsrs_reps', 0);
-    }
+      if (options.reviewedOnly) {
+        filteredQuery = filteredQuery.not('fsrs_last_review', 'is', null).gt('fsrs_reps', 0);
+      }
 
-    // Add due date filter if requested
-    if (options.onlyDue) {
-      const now = new Date().toISOString();
-      // Include both:
-      // 1. Words with due date <= now
-      // 2. New words (state 0) which are always due for their first review
-      filteredQuery = filteredQuery.or(`fsrs_due.lte.${now},fsrs_state.eq.0`);
-    }
+      // Add due date filter if requested
+      if (options.onlyDue) {
+        const now = new Date().toISOString();
+        // Include both:
+        // 1. Words with due date <= now
+        // 2. New words (state 0) which are always due for their first review
+        filteredQuery = filteredQuery.or(`fsrs_due.lte.${now},fsrs_state.eq.0`);
+      }
 
-    // Session cooldown: after finishing a session, don't immediately re-serve
-    // the words that session covered.
-    //
-    // It applies ONLY to Review-state words (2). Learning (1) and Relearning (3)
-    // are exempt, and that exemption is the whole point: those are the words the
-    // learner has NOT got right yet, and FSRS deliberately schedules them minutes
-    // out (learning_steps 1m/10m, relearning_steps 5m/10m). Cooling them by
-    // `fsrs_last_review` hid exactly the words that most needed practising —
-    // measured on a real account 2026-08-08: 5 words due 21 seconds after the
-    // session ended, all 5 suppressed, and the learner shown "nothing to
-    // practice" while nothing had actually been learned.
-    //
-    // Nothing is lost by exempting them, because a word that WAS answered
-    // correctly leaves the short steps for a multi-day interval and is already
-    // excluded by the `onlyDue` filter above. The cooldown keeps its job (a
-    // finished session stays finished) and stops doing the other one.
-    if (options.sessionCooldownHours && options.sessionCooldownHours > 0) {
-      const cooldownTime = new Date(Date.now() - options.sessionCooldownHours * 60 * 60 * 1000);
-      filteredQuery = filteredQuery.or(
-        `fsrs_state.in.(0,1,3),fsrs_last_review.is.null,fsrs_last_review.lt.${cooldownTime.toISOString()}`,
-      );
-    }
+      // Session cooldown: after finishing a session, don't immediately re-serve
+      // the words that session covered.
+      //
+      // It applies ONLY to Review-state words (2). Learning (1) and Relearning (3)
+      // are exempt, and that exemption is the whole point: those are the words the
+      // learner has NOT got right yet, and FSRS deliberately schedules them minutes
+      // out (learning_steps 1m/10m, relearning_steps 5m/10m). Cooling them by
+      // `fsrs_last_review` hid exactly the words that most needed practising —
+      // measured on a real account 2026-08-08: 5 words due 21 seconds after the
+      // session ended, all 5 suppressed, and the learner shown "nothing to
+      // practice" while nothing had actually been learned.
+      //
+      // Nothing is lost by exempting them, because a word that WAS answered
+      // correctly leaves the short steps for a multi-day interval and is already
+      // excluded by the `onlyDue` filter above. The cooldown keeps its job (a
+      // finished session stays finished) and stops doing the other one.
+      if (options.sessionCooldownHours && options.sessionCooldownHours > 0) {
+        const cooldownTime = new Date(Date.now() - options.sessionCooldownHours * 60 * 60 * 1000);
+        filteredQuery = filteredQuery.or(
+          `fsrs_state.in.(0,1,3),fsrs_last_review.is.null,fsrs_last_review.lt.${cooldownTime.toISOString()}`,
+        );
+      }
 
-    // Apply category filters server-side to reduce payload
-    if (options.category === 'mastered') {
-      filteredQuery = filteredQuery.eq('fsrs_state', 2).gte('fsrs_stability', 5);
-    } else if (options.category === 'learning') {
-      // State 0 (New) words are due for first review, not learning
-      // Only states 1, 3, or state 2 with low stability are learning
-      filteredQuery = filteredQuery.or(
-        'fsrs_state.in.(1,3),and(fsrs_state.eq.2,fsrs_stability.lt.5)',
-      );
-    }
+      // Apply category filters server-side to reduce payload
+      if (options.category === 'mastered') {
+        filteredQuery = filteredQuery.eq('fsrs_state', 2).gte('fsrs_stability', 5);
+      } else if (options.category === 'learning') {
+        // State 0 (New) words are due for first review, not learning
+        // Only states 1, 3, or state 2 with low stability are learning
+        filteredQuery = filteredQuery.or(
+          'fsrs_state.in.(1,3),and(fsrs_state.eq.2,fsrs_stability.lt.5)',
+        );
+      }
 
-    if (options.sortByDifficultyAndStability) {
-      filteredQuery = filteredQuery
-        .order('fsrs_difficulty', { ascending: false })
-        .order('fsrs_stability', { ascending: true })
-        .order('fsrs_last_review', { ascending: false });
-    } else {
-      // Order by due date
-      filteredQuery = filteredQuery.order('fsrs_due', { ascending: true });
-    }
+      if (options.sortByDifficultyAndStability) {
+        filteredQuery = filteredQuery
+          .order('fsrs_difficulty', { ascending: false })
+          .order('fsrs_stability', { ascending: true })
+          .order('fsrs_last_review', { ascending: false });
+      } else {
+        // Order by due date
+        filteredQuery = filteredQuery.order('fsrs_due', { ascending: true });
+      }
 
-    // Apply limit if specified
-    if (options.limit) {
-      filteredQuery = filteredQuery.limit(options.limit);
-    }
+      return filteredQuery;
+    };
 
-    const data = await executeAuthenticatedQuery(userId, () => filteredQuery, {
+    const queryErrorConfig = {
       ...errorConfig.load,
       analyticsProperties: {
         ...(options.onlyDue !== undefined && { onlyDue: options.onlyDue }),
         ...(options.forStats !== undefined && { forStats: options.forStats }),
         ...(options.category !== undefined && { category: options.category }),
       },
-    });
+    };
+
+    let data;
+    if (options.limit) {
+      // Caller wants a specific page/cap (e.g. the due-review chunk) — a
+      // single request is correct here.
+      data = await executeAuthenticatedQuery(
+        userId,
+        () => buildFilteredQuery().limit(options.limit as number),
+        queryErrorConfig,
+      );
+    } else {
+      // No cap requested: the caller wants this user's FULL word list (used
+      // for the vocabulary total, dictionary, and every stat derived from
+      // it). A plain `.select()` with no `.range()`/`.limit()` silently
+      // truncates at PostgREST's implicit 1000-row default — invisible on a
+      // normal account, but a heavy learner's real total, dictionary
+      // listing, and search all went quietly wrong past 1000 saved words.
+      // Page through everything instead.
+      const PAGE_SIZE = 1000;
+      const pages = [];
+      for (let offset = 0; ; offset += PAGE_SIZE) {
+        const page = await executeAuthenticatedQuery(
+          userId,
+          () => buildFilteredQuery().range(offset, offset + PAGE_SIZE - 1),
+          queryErrorConfig,
+        );
+        pages.push(...(page ?? []));
+        if (!page || page.length < PAGE_SIZE) break;
+      }
+      data = pages;
+    }
 
     // Type-safe mapping from database rows to StudyWord interface
     return (data || []).map(row => mapToStudyWord(row, userId));
