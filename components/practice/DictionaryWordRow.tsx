@@ -21,7 +21,7 @@ import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { DictionarySortField } from '@/hooks/vocabulary/useDictionaryList';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { getSortMeterFraction } from '@/utils/dictionaryMeter';
+import { getSortMeterColorName, getSortMeterFraction } from '@/utils/dictionaryMeter';
 import { getHorizonAccessibilityLabel, getMemoryHorizonDays } from '@/utils/memoryHorizon';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 import { DIFFICULTY_LABELS, getWordDifficultyLevel } from '@/utils/urgencyScore';
@@ -240,7 +240,10 @@ export const DictionaryWordRow = memo<DictionaryWordRowProps>(
               trailing accessory, and a full gap between them would cost the
               meaning another 12dp of width. */}
           <View style={styles.trailing}>
-            <SortMeter fraction={getSortMeterFraction(word, sortField, nowMs)} />
+            <SortMeter
+              fraction={getSortMeterFraction(word, sortField, nowMs)}
+              colorName={getSortMeterColorName(word, sortField)}
+            />
             <Ionicons name="chevron-forward" size={CHEVRON_SIZE} color={colors.textTertiary} />
           </View>
         </Pressable>

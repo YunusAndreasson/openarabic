@@ -55,6 +55,24 @@ export const MEMORY_STAGE_LABELS: Record<MemoryStage, string> = {
 };
 
 /**
+ * Theme colour per stage, for surfaces that paint a memory rather than name it.
+ *
+ * A deliberately calm ramp with **no red in it**: untouched grey, then the chart
+ * accent for the two stages where a memory is genuinely developing, then success
+ * green once the word clears the app's own mastery rule. Every word passes
+ * through `learning`, so tinting that stage like a warning would paint an active
+ * learner's entire list as failure — which is the opposite of what the horizon
+ * is for. The one red signal in this domain is the leech rule, and it already
+ * has its own surface in "Words to revisit".
+ */
+export const MEMORY_STAGE_COLORS = {
+  new: 'textTertiary',
+  learning: 'chartAccent',
+  familiar: 'chartAccent',
+  mastered: 'success',
+} as const satisfies Record<MemoryStage, string>;
+
+/**
  * Days this word currently holds, or `null` when there is no memory to measure
  * yet. `null` is not zero: a never-practised word has no horizon, which is a
  * different statement from "you would forget it immediately".
