@@ -160,7 +160,11 @@ const STATIC_STYLES = StyleSheet.create({
     right: 0,
     bottom: 0,
     backfaceVisibility: 'hidden',
-    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
+    // MEDIUM, not LARGE: matches BaseCard (the app's card radius everywhere
+    // else) and the action buttons this card sits directly above — LARGE was
+    // a one-off that made this the only card/button pair in the app whose
+    // corners didn't match.
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     paddingTop: LAYOUT.SPACING.LARGE,
@@ -179,7 +183,8 @@ const STATIC_STYLES = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
+    // Kept in lockstep with `face`'s radius — see the comment there.
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   // The verdict ring. An overlay rather than the faces' own borderColor: there
   // are two faces, only one is ever facing the viewer, and recolouring both
@@ -190,7 +195,8 @@ const STATIC_STYLES = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
+    // Kept in lockstep with `face`'s radius — see the comment there.
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: CARD_CONSTANTS.VERDICT_RING_WIDTH,
   },
   verdictRow: {
