@@ -560,13 +560,51 @@ export const STRINGS = {
   WORD_COUNT_ONE: '1 word',
   WORD_COUNT_OTHER: '{count} words',
   NO_WORDS_MATCH_SEARCH: 'No words match your search',
+  // Dictionary scope filter — names what the list is currently showing
+  FILTER_WORDS_A11Y: 'Filter words',
+  SCOPE_PICKER_TITLE: 'Show',
+  SCOPE_ALL: 'All words',
+  SCOPE_DUE: 'Due now',
+  SCOPE_STRUGGLING: 'Struggling',
+  SCOPE_MASTERED: 'Mastered',
+  /** Prefixes the word count while a scope is active, e.g. "Due now · 24 words". */
+  SCOPE_COUNT_TEMPLATE: '{scope} · {count}',
+  SCOPE_EMPTY_DUE: 'Nothing due right now',
+  SCOPE_EMPTY_STRUGGLING: 'Nothing tripping you up right now',
+  SCOPE_EMPTY_MASTERED: 'No mastered words yet — keep reviewing',
+  SHOW_ALL_WORDS: 'Show all words',
+  // Practice word detail — memory panel
+  WORD_MEMORY_TITLE: 'Memory',
+  /** Stage · horizon, e.g. "Familiar · holds for 3 weeks". */
+  WORD_MEMORY_SUMMARY: '{stage} · holds for {horizon}',
+  WORD_STAGE_LEARNING: 'Learning',
+  WORD_STAGE_FAMILIAR: 'Familiar',
+  WORD_STAGE_MASTERED: 'Mastered',
+  WORD_NOT_PRACTISED: "You haven't practised this word yet",
+  WORD_HORIZON_DAY_ONE: '1 day',
+  WORD_HORIZON_DAYS: '{count} days',
+  WORD_HORIZON_WEEK_ONE: '1 week',
+  WORD_HORIZON_WEEKS: '{count} weeks',
+  WORD_HORIZON_MONTH_ONE: '1 month',
+  WORD_HORIZON_MONTHS: '{count} months',
+  WORD_HORIZON_YEAR: 'over a year',
+  /** Reads on the row as "Memory · holds for 3 weeks" for screen readers. */
+  WORD_HORIZON_A11Y: 'memory holds for {horizon}',
+  WORD_HORIZON_A11Y_NONE: 'not practised yet',
+  /** Sits opposite the stage/horizon under the forgetting curve. */
+  WORD_RECALL_NOW: '{percent}% now',
+  /** Names the curve for screen readers, which cannot see a drawing. */
+  WORD_MEMORY_CURVE_A11Y:
+    'Forgetting curve. Recall is {percent} percent now and the next review is {due}.',
   // Practice word detail sheet
-  WORD_STAT_STRENGTH: 'Strength',
   WORD_STAT_DIFFICULTY: 'Difficulty',
   WORD_STAT_NEXT_REVIEW: 'Next review',
-  WORD_STRENGTH_WEAK: 'Weak',
-  WORD_STRENGTH_MEDIUM: 'Medium',
-  WORD_STRENGTH_STRONG: 'Strong',
+  /** Feedforward: what a successful recall would buy, before you spend it. */
+  WORD_STAT_NEXT_GAIN: 'Recall it again',
+  WORD_STAT_NEXT_GAIN_VALUE: '→ {horizon}',
+  WORD_STAT_REVIEWS: 'Reviews',
+  WORD_REVIEWS_VALUE: '{count}',
+  WORD_REVIEWS_WITH_LAPSES: '{count} · {lapses} forgotten',
   WORD_DIFFICULTY_EASY: 'Easy',
   WORD_DIFFICULTY_MODERATE: 'Moderate',
   WORD_DIFFICULTY_HARD: 'Hard',

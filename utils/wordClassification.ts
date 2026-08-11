@@ -179,6 +179,24 @@ export function isDueWord(word: StudyWord): boolean {
 }
 
 /**
+ * Has this word ever actually been reviewed?
+ *
+ * Not a formality, and NOT a null check. A brand-new study word is written with
+ * *placeholder* FSRS values rather than empty ones — `createInitialFSRSEntry`
+ * stamps stability 0.4, difficulty 6.5, and `fsrs_last_review` set to the moment
+ * it was saved (that column is NOT NULL). Read naively, those columns claim
+ * "moderately hard, holds for a day, last reviewed just now" about a word the
+ * learner has never once been asked, and every surface that ranks or draws FSRS
+ * state repeats the claim. Gate on this first.
+ *
+ * `createResetFSRSUpdate` writes the same values, so a word whose progress was
+ * reset correctly reads as never-practised again.
+ */
+export function hasBeenPractised(word: StudyWord): boolean {
+  return (word.fsrs_state ?? 0) !== 0 && (word.fsrs_reps ?? 0) > 0;
+}
+
+/**
  * Determines if a word is learned (for Dictionary UI status badges)
  * Learned = State 2 (graduated to review phase)
  */

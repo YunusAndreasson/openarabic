@@ -1,7 +1,7 @@
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import { Stack, useRouter } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,7 +9,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ListSeparator, LoadingState } from '@/components/common';
-import { DictionaryEmptyState, DictionarySortBar, DictionaryWordRow } from '@/components/practice';
+import {
+  DictionaryEmptyState,
+  DictionarySortBar,
+  DictionaryWordRow,
+  SCOPE_LABELS,
+  formatWordCount,
+} from '@/components/practice';
+import { SettingsPicker, TextLink } from '@/components/ui';
+import type { SettingsPickerOption } from '@/components/ui/SettingsPicker';
 import { LIST_DRAW_DISTANCE_MULTIPLIER, TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { getPracticeWordRoute } from '@/constants/routes';
@@ -19,9 +27,17 @@ import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useDictionaryList, useFSRSQueries, useResetWordProgress } from '@/hooks/vocabulary';
+import type { DictionaryScope } from '@/hooks/vocabulary/useDictionaryList';
 import type { ReanimatedCSSAnimationStyle } from '@/types/ui/base.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
+
+/** What an empty scope says. `all` is unreachable here — it has its own CTA state. */
+const SCOPE_EMPTY_MESSAGES: Record<Exclude<DictionaryScope, 'all'>, string> = {
+  due: STRINGS.SCOPE_EMPTY_DUE,
+  struggling: STRINGS.SCOPE_EMPTY_STRUGGLING,
+  mastered: STRINGS.SCOPE_EMPTY_MASTERED,
+};
 
 // Row mount fade — Reanimated 4 CSS @keyframes. Unlike entering/exiting layout
 // animations, a CSS animation doesn't re-fire when FlashList recycles the row
@@ -67,7 +83,12 @@ export default function DictionaryScreen(): JSX.Element {
     selectSortField,
     searchQuery,
     setSearchQuery,
+    scope,
+    setScope,
+    scopeCounts,
   } = useDictionaryList({ studyWords: studyWords || [] });
+
+  const [isScopePickerVisible, setScopePickerVisible] = useState(false);
 
   const listRef = useRef<FlashListRef<StudyWord>>(null);
 
@@ -83,6 +104,55 @@ export default function DictionaryScreen(): JSX.Element {
   );
 
   const hasWords = words.length > 0;
+
+  const scopeOptions = useMemo<SettingsPickerOption<DictionaryScope>[]>(
+    () => [
+      {
+        id: 'all',
+        title: SCOPE_LABELS.all,
+        subtitle: formatWordCount(scopeCounts.all),
+        icon: 'book-outline',
+      },
+      {
+        id: 'due',
+        title: SCOPE_LABELS.due,
+        subtitle: formatWordCount(scopeCounts.due),
+        icon: 'time-outline',
+      },
+      {
+        id: 'struggling',
+        title: SCOPE_LABELS.struggling,
+        subtitle: formatWordCount(scopeCounts.struggling),
+        icon: 'alert-circle-outline',
+      },
+      {
+        id: 'mastered',
+        title: SCOPE_LABELS.mastered,
+        subtitle: formatWordCount(scopeCounts.mastered),
+        icon: 'checkmark-circle-outline',
+      },
+    ],
+    // Counts sit in the subtitles so an empty scope is visible BEFORE you pick
+    // it — otherwise choosing "Struggling" on a good week costs two taps to
+    // land on an empty list and back out again.
+    [scopeCounts],
+  );
+
+  const handleOpenScopePicker = useCallback(() => setScopePickerVisible(true), []);
+  const handleCloseScopePicker = useCallback(() => setScopePickerVisible(false), []);
+
+  const handleSelectScope = useCallback(
+    (nextScope: DictionaryScope) => {
+      setScope(nextScope);
+      setScopePickerVisible(false);
+      // Same reason changing the sort scrolls to the top: the list you are
+      // looking at is no longer the list you were looking at.
+      listRef.current?.scrollToOffset({ offset: 0, animated: false });
+    },
+    [setScope],
+  );
+
+  const handleShowAllWords = useCallback(() => handleSelectScope('all'), [handleSelectScope]);
 
   const contentContainerStyle = useMemo(
     () => ({
@@ -166,8 +236,25 @@ export default function DictionaryScreen(): JSX.Element {
         </View>
       );
     }
+    // An empty scope is usually good news, so it says what it found rather than
+    // "no results" — and it carries the way back, because the learner narrowed
+    // the list from a control that is now off screen above the fold.
+    if (scope !== 'all') {
+      return (
+        <View style={styles.searchEmptyContainer}>
+          <ThemedText type="body" colorName="secondaryText" align="center">
+            {SCOPE_EMPTY_MESSAGES[scope]}
+          </ThemedText>
+          <TextLink
+            label={STRINGS.SHOW_ALL_WORDS}
+            style={styles.scopeEscape}
+            onPress={handleShowAllWords}
+          />
+        </View>
+      );
+    }
     return <DictionaryEmptyState />;
-  }, [hasWords, searchQuery]);
+  }, [hasWords, searchQuery, scope, handleShowAllWords]);
 
   return (
     <ThemedView style={styles.container}>
@@ -197,8 +284,10 @@ export default function DictionaryScreen(): JSX.Element {
               and took the only way to change the sort with it. */}
           {totalCount > 0 && (
             <DictionarySortBar
+              scope={scope}
               sortField={sortField}
               sortDirection={sortDirection}
+              onPressScope={handleOpenScopePicker}
               onSelectField={handleSelectField}
               wordCount={words.length}
             />
@@ -223,6 +312,18 @@ export default function DictionaryScreen(): JSX.Element {
           />
         </View>
       )}
+
+      {/* Inline <BottomSheet> (what SettingsPicker uses), and rendered inside
+          this screen rather than at the root: this route is itself a modal, and
+          a root-level overlay draws behind a modal screen. */}
+      <SettingsPicker
+        isVisible={isScopePickerVisible}
+        options={scopeOptions}
+        selectedValue={scope}
+        title={STRINGS.SCOPE_PICKER_TITLE}
+        onClose={handleCloseScopePicker}
+        onSelect={handleSelectScope}
+      />
     </ThemedView>
   );
 }
@@ -235,5 +336,9 @@ const styles = StyleSheet.create({
   },
   searchEmptyContainer: {
     paddingTop: LAYOUT.SPACING.XXLARGE,
+    alignItems: 'center',
+  },
+  scopeEscape: {
+    marginTop: LAYOUT.SPACING.MEDIUM,
   },
 });

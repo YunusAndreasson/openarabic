@@ -1,0 +1,123 @@
+/**
+ * How far a single word's memory currently reaches, and how far along it is.
+ *
+ * FSRS `stability` is not an abstract score: it is the number of days until
+ * predicted recall of that word falls to `request_retention` (0.90). So "holds
+ * for 23 days" is the definition, not a metaphor — and unlike a Weak/Medium/
+ * Strong bucket it keeps growing with every successful review, all the way to
+ * `maximum_interval`. That is what makes it a development metric rather than a
+ * label.
+ *
+ * Single source of truth for the dictionary row's meter and the word detail
+ * screen's Memory panel, so the length of a bar and the words beside it can
+ * never disagree.
+ */
+
+import { OPTIMIZED_FSRS_CONFIG } from '@/constants/fsrs';
+import { STRINGS } from '@/constants/strings';
+import type { StudyWord } from '@/types/vocabulary.types';
+import { hasBeenPractised, isMasteredWord } from '@/utils/wordClassification';
+
+/**
+ * Where a word sits in its life, in the app's own existing vocabulary.
+ *
+ * Four rungs, not five, and `mastered` is deliberately NOT a new threshold:
+ * it delegates to `isMasteredWord` (state 2 + stability >= 5), the same
+ * predicate behind `calculateMasteredWords` and the Practice screen's Mastered
+ * count. Inventing a second bar for "mastered" is exactly how the old
+ * `Strength: Strong` (stability >= 7) drifted away from it.
+ */
+export type MemoryStage = 'new' | 'learning' | 'familiar' | 'mastered';
+
+/** ts-fsrs State: 0 New, 1 Learning, 2 Review, 3 Relearning. */
+const STATE_NEW = 0;
+const STATE_REVIEW = 2;
+
+const DAYS_PER_WEEK = 7;
+const DAYS_PER_MONTH = 30;
+const DAYS_PER_YEAR = 365;
+
+export function getMemoryStage(word: StudyWord): MemoryStage {
+  const state = word.fsrs_state ?? STATE_NEW;
+  if (state === STATE_NEW) return 'new';
+  // Learning (1) and Relearning (3) are the same thing to a learner: the word is
+  // in short steps and hasn't graduated. Splitting them would surface an
+  // implementation detail of the scheduler.
+  if (state !== STATE_REVIEW) return 'learning';
+  return isMasteredWord(word) ? 'mastered' : 'familiar';
+}
+
+export const MEMORY_STAGE_LABELS: Record<MemoryStage, string> = {
+  new: STRINGS.WORD_STATE_NEW,
+  learning: STRINGS.WORD_STAGE_LEARNING,
+  familiar: STRINGS.WORD_STAGE_FAMILIAR,
+  mastered: STRINGS.WORD_STAGE_MASTERED,
+};
+
+/**
+ * Days this word currently holds, or `null` when there is no memory to measure
+ * yet. `null` is not zero: a never-practised word has no horizon, which is a
+ * different statement from "you would forget it immediately".
+ */
+export function getMemoryHorizonDays(word: StudyWord): number | null {
+  if (!hasBeenPractised(word)) return null;
+  const stability = word.fsrs_stability;
+  if (stability == null || !Number.isFinite(stability) || stability <= 0) return null;
+  return stability;
+}
+
+/**
+ * 0..1 for a meter, log-scaled against `maximum_interval`.
+ *
+ * Linear would be useless: stability spans 0–365 days, so on a linear scale
+ * every word a learner is actually working on sits in the leftmost few percent
+ * and the whole column reads as empty. Log spreads the early days — where
+ * progress is fastest and most motivating — and still keeps climbing at the top
+ * end, so a 200-day word visibly beats a 30-day one.
+ */
+export function getHorizonFraction(days: number | null): number {
+  if (days == null || !Number.isFinite(days) || days <= 0) return 0;
+  const fraction = Math.log1p(days) / Math.log1p(OPTIMIZED_FSRS_CONFIG.maximum_interval);
+  return Math.min(1, Math.max(0, fraction));
+}
+
+/**
+ * A horizon a learner can picture: "5 days", "3 weeks", "4 months".
+ *
+ * Rounds to the unit that keeps the number small — nobody reads "127 days".
+ */
+export function formatHorizon(days: number | null): string {
+  if (days == null || !Number.isFinite(days) || days <= 0) return '';
+
+  if (days >= DAYS_PER_YEAR) return STRINGS.WORD_HORIZON_YEAR;
+
+  if (days >= DAYS_PER_MONTH) {
+    const months = Math.round(days / DAYS_PER_MONTH);
+    return months === 1
+      ? STRINGS.WORD_HORIZON_MONTH_ONE
+      : STRINGS.WORD_HORIZON_MONTHS.replace('{count}', String(months));
+  }
+
+  if (days >= DAYS_PER_WEEK) {
+    const weeks = Math.round(days / DAYS_PER_WEEK);
+    return weeks === 1
+      ? STRINGS.WORD_HORIZON_WEEK_ONE
+      : STRINGS.WORD_HORIZON_WEEKS.replace('{count}', String(weeks));
+  }
+
+  // Below a day still reads as "1 day" rather than "0 days" — the word holds for
+  // *some* of today, and a zero here would look like a bug rather than a fact.
+  const wholeDays = Math.max(1, Math.round(days));
+  return wholeDays === 1
+    ? STRINGS.WORD_HORIZON_DAY_ONE
+    : STRINGS.WORD_HORIZON_DAYS.replace('{count}', String(wholeDays));
+}
+
+/**
+ * The meter is length-only, so every surface that draws one must also say it out
+ * loud. Kept here so the phrasing can't drift between the row and the panel.
+ */
+export function getHorizonAccessibilityLabel(days: number | null): string {
+  if (days == null) return STRINGS.WORD_HORIZON_A11Y_NONE;
+  return STRINGS.WORD_HORIZON_A11Y.replace('{horizon}', formatHorizon(days));
+}

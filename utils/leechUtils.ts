@@ -11,14 +11,34 @@ interface RankStrugglingWordsOptions {
 }
 
 /**
- * Rank a learner's "leeches" — studied words they keep forgetting — from the
- * current FSRS state on each study word. Ported from edenmind's
- * `rankStrugglingCards`.
+ * Does this word keep tripping the learner up?
  *
  * `fsrs_lapses` is the honest signal: ts-fsrs only counts a lapse when an
- * already-graduated Review card is answered Unknown, so this is a real "these
- * keep tripping you up" list, not a guess. FSRS `difficulty` is the tiebreak.
- * Never-studied words (New / `fsrs_reps === 0`) can't be leeches and are excluded.
+ * already-graduated Review card is answered Unknown, so this is a real "keeps
+ * being forgotten" test, not a guess. Never-studied words (New / `fsrs_reps === 0`)
+ * can't be leeches and are excluded.
+ *
+ * The single source of truth for "struggling" on the client — the "Words to
+ * revisit" screen and the dictionary's Struggling filter both go through here, so
+ * a word can never be a leech on one surface and not on the other.
+ *
+ * NB: `calculateStrugglingWords` in wordClassification.ts is a DIFFERENT rule —
+ * it additionally excludes anything reviewed inside the session cooldown. That
+ * one answers "what should I be shown next"; this one answers "what do I keep
+ * forgetting", which is a property of the word rather than of the schedule.
+ */
+export function isLeechWord(word: StudyWord, minLapses: number = LEECH_MIN_LAPSES): boolean {
+  return (
+    word.fsrs_state !== State.New &&
+    (word.fsrs_reps ?? 0) > 0 &&
+    (word.fsrs_lapses ?? 0) >= minLapses
+  );
+}
+
+/**
+ * Rank a learner's "leeches" — studied words they keep forgetting — from the
+ * current FSRS state on each study word. Ported from edenmind's
+ * `rankStrugglingCards`. FSRS `difficulty` is the tiebreak.
  *
  * Pure and side-effect free so it can be unit-tested and reused on both the
  * dedicated screen and the practice-home count.
@@ -31,12 +51,7 @@ export function rankStrugglingWords(
   const limit = opts.limit ?? LEECH_LIST_LIMIT;
 
   return words
-    .filter(
-      word =>
-        word.fsrs_state !== State.New &&
-        (word.fsrs_reps ?? 0) > 0 &&
-        (word.fsrs_lapses ?? 0) >= minLapses,
-    )
+    .filter(word => isLeechWord(word, minLapses))
     .sort(
       (a, b) =>
         (b.fsrs_lapses ?? 0) - (a.fsrs_lapses ?? 0) ||

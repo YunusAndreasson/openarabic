@@ -5,35 +5,21 @@
 
 import { UNSTABLE_DIFFICULTY_THRESHOLD } from '@/constants/fsrs';
 import { STRINGS } from '@/constants/strings';
+import type { StudyWord } from '@/types/vocabulary.types';
+import { hasBeenPractised } from '@/utils/wordClassification';
 
 /** Above this, FSRS difficulty reads as "moderate" rather than "easy" */
 const MODERATE_DIFFICULTY_THRESHOLD = 5;
 
-export type WordSignalColor = 'error' | 'warning' | 'success';
-
-/**
- * Get progress bar color based on stability level
- * Uses semantic colors to show learning progression
- *
- * @param stability - FSRS stability value (0-10+)
- * @returns Color name from theme ('error', 'warning', or 'success')
+/*
+ * `getStabilityProgressColor` used to live here: stability < 3 → Weak, < 7 →
+ * Medium, else Strong. It was deleted with the word screen's "Strength" row.
+ * Three buckets over a value that runs to 365 days meant the label stopped
+ * moving about a week into a word's life — exactly when its memory starts
+ * developing — and its ">= 7 is Strong" bar had silently drifted away from the
+ * app's actual mastery rule (state 2 + stability >= 5). Both jobs now belong to
+ * utils/memoryHorizon.ts, which reports the horizon as a real quantity.
  */
-export function getStabilityProgressColor(stability: number | null | undefined): WordSignalColor {
-  const safeStability = stability ?? 0;
-
-  // Red zone: 0-3 (early learning, weak memory)
-  if (safeStability < 3) {
-    return 'error';
-  }
-
-  // Yellow zone: 3-7 (consolidating, approaching mastery)
-  if (safeStability < 7) {
-    return 'warning';
-  }
-
-  // Green zone: 7-10+ (mastered, strong memory)
-  return 'success';
-}
 
 /**
  * How hard FSRS thinks a word intrinsically is. `null` means the word has never
@@ -51,6 +37,20 @@ export function getDifficultyLevel(
   if (difficulty >= UNSTABLE_DIFFICULTY_THRESHOLD) return 'hard';
   if (difficulty >= MODERATE_DIFFICULTY_THRESHOLD) return 'moderate';
   return 'easy';
+}
+
+/**
+ * The difficulty level to *show* for a study word.
+ *
+ * `getDifficultyLevel(null)` returns 'new', but that branch never fired in
+ * production: a never-practised word carries a placeholder difficulty of 6.5,
+ * not null, so the dictionary painted it amber and called it "Moderate" — a
+ * judgement about a word the learner has never been asked. Gate on real reviews
+ * first, exactly as the memory meter beside it does, so the two signals agree
+ * about which words haven't started.
+ */
+export function getWordDifficultyLevel(word: StudyWord): ReturnType<typeof getDifficultyLevel> {
+  return hasBeenPractised(word) ? getDifficultyLevel(word.fsrs_difficulty) : 'new';
 }
 
 export const DIFFICULTY_LABELS = {

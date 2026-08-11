@@ -9,10 +9,11 @@ import {
 import type { StudyWord } from '@/types/vocabulary.types';
 import { parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
 
-// Shared FSRS instance for retrievability calculations
-// Uses the same config as the review engine for consistency
+// The app's one FSRS instance. The review engine (useFSRS) grades through it and
+// every read-only derivation here reads through it, so a config or library change
+// can never move one side without the other.
 const FSRS_PARAMS = generatorParameters(OPTIMIZED_FSRS_CONFIG);
-const FSRS_INSTANCE = fsrs(FSRS_PARAMS);
+export const FSRS_INSTANCE = fsrs(FSRS_PARAMS);
 
 export interface RetrievabilityForecast {
   date: Date;

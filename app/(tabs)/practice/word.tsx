@@ -8,6 +8,7 @@ import { ListRow, LoadingState } from '@/components/common';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ArticleSentence } from '@/components/article/ArticleSentence';
+import { WordMemoryPanel } from '@/components/practice';
 import { IconButton, PulsatingLoader } from '@/components/ui';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -15,28 +16,22 @@ import { useStudyWordMutations } from '@/hooks/articles/useStudyWordMutations';
 import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
-import { useFSRSQueries, useResetWordProgress, useSentencesByWord } from '@/hooks/vocabulary';
+import {
+  useFSRSQueries,
+  useResetWordProgress,
+  useSentencesByWord,
+  useWordMemory,
+} from '@/hooks/vocabulary';
 import type { SolidColorName } from '@/constants/colors';
 import type { RootId } from '@/types/branded.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
 import { handleError } from '@/utils/errorHandling';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
-import {
-  DIFFICULTY_COLORS,
-  DIFFICULTY_LABELS,
-  getDifficultyLevel,
-  getStabilityProgressColor,
-} from '@/utils/urgencyScore';
+import { DIFFICULTY_COLORS, DIFFICULTY_LABELS, getWordDifficultyLevel } from '@/utils/urgencyScore';
 
 const SENTENCE_EXAMPLES_LIMIT = 5;
 const DAY_MS = 24 * 60 * 60 * 1000;
-
-const STRENGTH_LABELS = {
-  error: STRINGS.WORD_STRENGTH_WEAK,
-  warning: STRINGS.WORD_STRENGTH_MEDIUM,
-  success: STRINGS.WORD_STRENGTH_STRONG,
-} as const;
 
 interface StatRowProps {
   label: string;
@@ -110,6 +105,8 @@ export default function PracticeWordScreen(): JSX.Element {
   if (found && found !== word) {
     setWord(found);
   }
+
+  const memory = useWordMemory(word);
 
   const {
     sentences,
@@ -185,9 +182,9 @@ export default function PracticeWordScreen(): JSX.Element {
 
   const arabicText = word.root?.letters ?? '';
   const englishText = capitalizeFirstLetter(word.root?.meaning ?? '');
-  const strengthColorKey = getStabilityProgressColor(word.fsrs_stability);
   // Same level → same color as the dot on this word's dictionary row
-  const difficultyLevel = getDifficultyLevel(word.fsrs_difficulty);
+  const difficultyLevel = getWordDifficultyLevel(word);
+  const nextReviewLabel = getNextReviewLabel(word.fsrs_due);
 
   return (
     <ThemedView style={styles.container}>
@@ -223,22 +220,45 @@ export default function PracticeWordScreen(): JSX.Element {
           )}
         </View>
 
+        {/* The one thing on this screen that shows the model rather than a
+            reading of it: the decay this word is on, and where the schedule sits
+            on that decay. */}
+        {memory && <WordMemoryPanel dueLabel={nextReviewLabel} memory={memory} />}
+
         {/* FSRS stats — one hairline row each */}
         <View style={[styles.stats, { borderTopColor: colors.border }]}>
-          <StatRow
-            colorName={strengthColorKey}
-            label={STRINGS.WORD_STAT_STRENGTH}
-            value={STRENGTH_LABELS[strengthColorKey]}
-          />
           <StatRow
             colorName={DIFFICULTY_COLORS[difficultyLevel]}
             label={STRINGS.WORD_STAT_DIFFICULTY}
             value={DIFFICULTY_LABELS[difficultyLevel]}
           />
-          <StatRow
-            label={STRINGS.WORD_STAT_NEXT_REVIEW}
-            value={getNextReviewLabel(word.fsrs_due)}
-          />
+          <StatRow label={STRINGS.WORD_STAT_NEXT_REVIEW} value={nextReviewLabel} />
+          {/* Feedforward: what recalling it would buy, stated before the learner
+              spends the effort. The figure comes from the same ts-fsrs call the
+              review screen's grade bar previews with, so it cannot promise an
+              interval that grading would not give. */}
+          {memory?.nextHorizonLabel && (
+            <StatRow
+              label={STRINGS.WORD_STAT_NEXT_GAIN}
+              value={STRINGS.WORD_STAT_NEXT_GAIN_VALUE.replace(
+                '{horizon}',
+                memory.nextHorizonLabel,
+              )}
+            />
+          )}
+          {memory && memory.reps > 0 && (
+            <StatRow
+              label={STRINGS.WORD_STAT_REVIEWS}
+              value={
+                memory.lapses > 0
+                  ? STRINGS.WORD_REVIEWS_WITH_LAPSES.replace(
+                      '{count}',
+                      String(memory.reps),
+                    ).replace('{lapses}', String(memory.lapses))
+                  : STRINGS.WORD_REVIEWS_VALUE.replace('{count}', String(memory.reps))
+              }
+            />
+          )}
         </View>
 
         {/* Example sentences from articles */}

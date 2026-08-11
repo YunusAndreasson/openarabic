@@ -1,6 +1,6 @@
 import { Ionicons } from '@/components/ui';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 // Gesture-handler's Pressable, NOT react-native's. RN's runs on the JS responder
 // system, which does not negotiate with the swipeable's native pan: a horizontal
 // drag stays inside the row's press rect, so the press was never cancelled and
@@ -16,12 +16,18 @@ import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reani
 import { ThemedText } from '@/components/ThemedText';
 
 import { Dot } from '@/components/common';
+import { MemoryMeter } from '@/components/practice/MemoryMeter';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
+import {
+  getHorizonAccessibilityLabel,
+  getHorizonFraction,
+  getMemoryHorizonDays,
+} from '@/utils/memoryHorizon';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
-import { DIFFICULTY_COLORS, DIFFICULTY_LABELS, getDifficultyLevel } from '@/utils/urgencyScore';
+import { DIFFICULTY_COLORS, DIFFICULTY_LABELS, getWordDifficultyLevel } from '@/utils/urgencyScore';
 
 const CHEVRON_SIZE = 14;
 
@@ -108,8 +114,13 @@ interface DictionaryWordRowProps {
  * The dot sits in a fixed-width leading column so it forms one vertical axis to
  * scan. Sorted by Difficulty (the default) the column reads as a gradient, so
  * the indicator and the sort order corroborate each other. Its level, label and
- * color come from `getDifficultyLevel` — the same source the word detail
+ * color come from `getWordDifficultyLevel` — the same source the word detail
  * screen's Difficulty stat uses, so the two surfaces can't drift apart.
+ *
+ * The trailing meter is the same idea for the other magnitude the list sorts by:
+ * colour carries difficulty, length carries how far the memory reaches. Both are
+ * fixed in meaning — neither changes with the active sort — so nothing here is a
+ * mode, and each ordering has exactly one signal that corroborates it.
  */
 export const DictionaryWordRow = memo<DictionaryWordRowProps>(
   ({ word, onPress, onRemove, onResetProgress }) => {
@@ -178,8 +189,9 @@ export const DictionaryWordRow = memo<DictionaryWordRowProps>(
       [word.root?.meaning],
     );
 
-    const difficultyLevel = getDifficultyLevel(word.fsrs_difficulty);
+    const difficultyLevel = getWordDifficultyLevel(word);
     const difficultyLabel = DIFFICULTY_LABELS[difficultyLevel];
+    const horizonDays = getMemoryHorizonDays(word);
 
     return (
       <ReanimatedSwipeable
@@ -201,9 +213,10 @@ export const DictionaryWordRow = memo<DictionaryWordRowProps>(
           onPress={handlePress}
           android_ripple={rippleConfig}
           style={pressableStyle}
-          // The dot is color-only, so the level is spelled out here — screen
-          // reader users and anyone who can't separate the hues get it too
-          accessibilityLabel={`${arabicText}, ${englishText}, ${difficultyLabel}`}
+          // The dot is color-only and the meter is length-only, so both are
+          // spelled out here — screen reader users, and anyone who can't
+          // separate the hues, get the same two readings everyone else does.
+          accessibilityLabel={`${arabicText}, ${englishText}, ${difficultyLabel}, ${getHorizonAccessibilityLabel(horizonDays)}`}
         >
           <Dot color={colors[DIFFICULTY_COLORS[difficultyLevel]]} />
           <ThemedText type="arabicCompact" align="left" numberOfLines={1} style={styles.arabicText}>
@@ -218,17 +231,25 @@ export const DictionaryWordRow = memo<DictionaryWordRowProps>(
           >
             {englishText}
           </ThemedText>
-          <Ionicons name="chevron-forward" size={CHEVRON_SIZE} color={colors.textTertiary} />
+          {/* Meter and chevron travel together on a tighter gap: they are one
+              trailing accessory, and a full gap between them would cost the
+              meaning another 12dp of width. */}
+          <View style={styles.trailing}>
+            <MemoryMeter fraction={getHorizonFraction(horizonDays)} />
+            <Ionicons name="chevron-forward" size={CHEVRON_SIZE} color={colors.textTertiary} />
+          </View>
         </Pressable>
       </ReanimatedSwipeable>
     );
   },
   (prevProps, nextProps) => {
     // Only compare values actually used in render output — the screen passes
-    // stable callback references. Anything new rendered here must be added.
+    // stable callback references. Anything new rendered here must be added, or
+    // it silently keeps the previous word's value after a recycle.
     return (
       prevProps.word.root_id === nextProps.word.root_id &&
       prevProps.word.fsrs_difficulty === nextProps.word.fsrs_difficulty &&
+      prevProps.word.fsrs_stability === nextProps.word.fsrs_stability &&
       prevProps.word.root?.letters === nextProps.word.root?.letters &&
       prevProps.word.root?.meaning === nextProps.word.root?.meaning
     );
@@ -256,6 +277,12 @@ const styles = StyleSheet.create({
   },
   englishText: {
     flex: 1,
+  },
+  trailing: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: LAYOUT.SPACING.SMALL,
+    flexShrink: 0,
   },
   actions: {
     flexDirection: 'row',

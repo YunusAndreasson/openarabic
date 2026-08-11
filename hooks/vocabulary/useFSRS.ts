@@ -1,13 +1,12 @@
 import { skipToken, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Card } from 'ts-fsrs';
-import { createEmptyCard, fsrs, generatorParameters, show_diff_message, State } from 'ts-fsrs';
+import { show_diff_message, State } from 'ts-fsrs';
 
 import {
   CONFIDENCE_TO_RATING,
   DEFAULT_SESSION_COOLDOWN_HOURS,
   MISS_CONFIDENCE,
-  OPTIMIZED_FSRS_CONFIG,
   REVIEW_REFILL_LOW_WATER,
   REVIEW_SESSION_CHUNK_SIZE,
 } from '@/constants/fsrs';
@@ -19,6 +18,7 @@ import type { FSRSStateTracking, UseFSRSOptions, UseFSRSResult } from '@/types/f
 import type { WordConfidence } from '@/types/review.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
+import { convertToFSRSCard } from '@/utils/fsrsCard';
 import {
   calculateWordPriority,
   createSpacingState,
@@ -27,6 +27,7 @@ import {
   updateSpacingCounters as updateSpacingState,
   type SpacingState,
 } from '@/utils/fsrsSpacing';
+import { FSRS_INSTANCE } from '@/utils/fsrsUtils';
 import { PriorityQueue } from '@/utils/priorityQueue';
 import { decideDrill, type DrillProgress } from '@/utils/review/drillPolicy';
 
@@ -49,10 +50,6 @@ interface EnhancedFSRSStateTracking extends FSRSStateTracking {
   isProcessingUpdate: boolean;
   queueInitialized: boolean;
 }
-
-// Module-level constants — pure functions of stable config, no need to recompute per render
-const FSRS_PARAMS = generatorParameters(OPTIMIZED_FSRS_CONFIG);
-const FSRS_INSTANCE = fsrs(FSRS_PARAMS);
 
 // Compact units for ts-fsrs show_diff_message so interval labels stay terse ("10m"/"4d").
 const PREVIEW_UNITS = ['s', 'm', 'h', 'd', 'mo', 'y'];
@@ -112,8 +109,6 @@ export function useFSRS({
   });
 
   const queryClient = useQueryClient();
-
-  const fsrsInstance = FSRS_INSTANCE;
 
   // The factory owns the due queryFn (conditional cooldown included) — the key
   // encodes the cooldown, so this never collides with differently-parameterized
@@ -262,38 +257,6 @@ export function useFSRS({
     }
   }, [dueWords, isLoading, onComplete, getNextWordWithSpacing, sessionEpoch]);
 
-  const convertToFSRSCard = useCallback((word: StudyWord): Card => {
-    // Phase 1.3: Use explicit null checks instead of truthy checks
-    // fsrs_reps: 0 and fsrs_stability: 0 are valid but falsy
-    if (
-      word.fsrs_state === State.New ||
-      (word.fsrs_reps == null && word.fsrs_stability == null && !word.fsrs_last_review)
-    ) {
-      const emptyCard = createEmptyCard(new Date());
-      return {
-        ...emptyCard,
-        due: word.fsrs_due ? new Date(word.fsrs_due) : new Date(),
-      };
-    }
-
-    const lastReview = word.fsrs_last_review ? new Date(word.fsrs_last_review) : undefined;
-
-    return {
-      due: word.fsrs_due ? new Date(word.fsrs_due) : new Date(),
-      stability: word.fsrs_stability ?? 0,
-      difficulty: word.fsrs_difficulty ?? 6.5,
-      // elapsed_days is recomputed by fsrs.next() from last_review + now (and is
-      // deprecated for removal in ts-fsrs v6); the value we pass is overwritten.
-      elapsed_days: 0,
-      scheduled_days: word.fsrs_scheduled_days ?? 0,
-      learning_steps: word.fsrs_learning_steps ?? 0,
-      reps: word.fsrs_reps ?? 0,
-      lapses: word.fsrs_lapses ?? 0,
-      state: word.fsrs_state ?? State.New,
-      last_review: lastReview,
-    };
-  }, []);
-
   const updateWord = useCallback(
     async (rootId: RootId, confidence: WordConfidence) => {
       if (!userId || !currentWord) {
@@ -318,7 +281,7 @@ export function useFSRS({
 
         const rating = CONFIDENCE_TO_RATING[confidence];
 
-        const result = fsrsInstance.next(card, now, rating);
+        const result = FSRS_INSTANCE.next(card, now, rating);
         newCard = result.card;
       } catch (error) {
         // Track analytics
@@ -567,8 +530,6 @@ export function useFSRS({
       userId,
       currentWord,
       isComplete,
-      convertToFSRSCard,
-      fsrsInstance,
       onComplete,
       getNextWordWithSpacing,
       updateSpacingCounters,
@@ -589,7 +550,7 @@ export function useFSRS({
     (word: StudyWord): Partial<Record<WordConfidence, string>> => {
       const now = new Date();
       const card = convertToFSRSCard(word);
-      const preview = fsrsInstance.repeat(card, now);
+      const preview = FSRS_INSTANCE.repeat(card, now);
       const out: Partial<Record<WordConfidence, string>> = {};
       (Object.keys(CONFIDENCE_TO_RATING) as WordConfidence[]).forEach(confidence => {
         const rating = CONFIDENCE_TO_RATING[confidence];
@@ -597,7 +558,7 @@ export function useFSRS({
       });
       return out;
     },
-    [convertToFSRSCard, fsrsInstance],
+    [],
   );
 
   const resetQueue = useCallback(() => {

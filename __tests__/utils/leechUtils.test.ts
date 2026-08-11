@@ -12,7 +12,7 @@ import { State } from 'ts-fsrs';
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import { LEECH_LIST_LIMIT, LEECH_MIN_LAPSES } from '@/constants/fsrs';
 import type { RootId } from '@/types/branded.types';
-import { rankStrugglingWords } from '@/utils/leechUtils';
+import { isLeechWord, rankStrugglingWords } from '@/utils/leechUtils';
 
 const leech = (root_id: number, lapses: number, difficulty: number) =>
   createTestWord({
@@ -79,5 +79,35 @@ describe('rankStrugglingWords', () => {
     const words = Array.from({ length: LEECH_LIST_LIMIT + 5 }, (_, i) => leech(i + 1, 2 + i, 7));
 
     expect(rankStrugglingWords(words)).toHaveLength(LEECH_LIST_LIMIT);
+  });
+});
+
+describe('isLeechWord', () => {
+  test('needs a review behind it, not just lapses', () => {
+    expect(
+      isLeechWord(createTestWord({ fsrs_state: State.New, fsrs_reps: 0, fsrs_lapses: 9 })),
+    ).toBe(false);
+    expect(
+      isLeechWord(createTestWord({ fsrs_state: State.Review, fsrs_reps: 0, fsrs_lapses: 9 })),
+    ).toBe(false);
+  });
+
+  test('qualifies exactly at LEECH_MIN_LAPSES', () => {
+    expect(isLeechWord(leech(1, LEECH_MIN_LAPSES - 1, 7))).toBe(false);
+    expect(isLeechWord(leech(1, LEECH_MIN_LAPSES, 7))).toBe(true);
+  });
+
+  test('a caller-supplied minLapses overrides the default', () => {
+    expect(isLeechWord(leech(1, 2, 7), 3)).toBe(false);
+    expect(isLeechWord(leech(1, 4, 7), 3)).toBe(true);
+  });
+
+  test('is safe to hand straight to Array.filter', () => {
+    // `filter` passes the index as a second argument, which lands on the
+    // `minLapses` parameter — at index 0 that would make every word a leech.
+    // Call sites must wrap it; this pins the failure mode so the reason is on
+    // record.
+    const clean = createTestWord({ fsrs_state: State.Review, fsrs_reps: 5, fsrs_lapses: 0 });
+    expect([clean].filter(word => isLeechWord(word))).toEqual([]);
   });
 });

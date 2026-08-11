@@ -1,68 +1,86 @@
 /**
- * Urgency Score Tests
+ * Difficulty banding — the shared source of the dictionary row's dot and the
+ * word detail screen's Difficulty stat, so the two surfaces cannot drift.
  *
- * Tests stability progress and color utilities for vocabulary memory strength.
- *
- * Modern Jest 29 Patterns:
- * - ✅ @jest/globals explicit imports
- * - Note: No test.concurrent() - these are synchronous tests
- * - Note: No jest.mocked() needed - no mocks used
+ * This file used to test `getStabilityProgressColor` (the Weak/Medium/Strong
+ * bands behind the word screen's deleted "Strength" row). That helper is gone;
+ * memory strength is now a real horizon in days — see
+ * `__tests__/utils/memoryHorizon.test.ts`. `getDifficultyLevel` had no coverage
+ * at all until now.
  */
 
 import { describe, expect, test } from '@jest/globals';
 
-import { getStabilityProgressColor } from '@/utils/urgencyScore';
+import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
+import { UNSTABLE_DIFFICULTY_THRESHOLD } from '@/constants/fsrs';
+import {
+  DIFFICULTY_COLORS,
+  DIFFICULTY_LABELS,
+  getDifficultyLevel,
+  getWordDifficultyLevel,
+} from '@/utils/urgencyScore';
+import { State } from 'ts-fsrs';
 
-describe('urgencyScore', () => {
-  describe('getStabilityProgressColor', () => {
-    test('should return error for null stability', () => {
-      expect(getStabilityProgressColor(null)).toBe('error');
+describe('getDifficultyLevel', () => {
+  test('an unreviewed word is "new", which is not the same as "easy"', () => {
+    expect(getDifficultyLevel(null)).toBe('new');
+    expect(getDifficultyLevel(undefined)).toBe('new');
+  });
+
+  test('bands run easy → moderate → hard', () => {
+    expect(getDifficultyLevel(1)).toBe('easy');
+    expect(getDifficultyLevel(4.99)).toBe('easy');
+    expect(getDifficultyLevel(5)).toBe('moderate');
+    expect(getDifficultyLevel(7.49)).toBe('moderate');
+    expect(getDifficultyLevel(UNSTABLE_DIFFICULTY_THRESHOLD)).toBe('hard');
+    expect(getDifficultyLevel(10)).toBe('hard');
+  });
+
+  test('zero is a value, not a missing one', () => {
+    // `?? 'new'` on a falsy check would mislabel this; only null/undefined mean
+    // "never reviewed".
+    expect(getDifficultyLevel(0)).toBe('easy');
+  });
+
+  test('every level has a label and a colour', () => {
+    (['new', 'easy', 'moderate', 'hard'] as const).forEach(level => {
+      expect(DIFFICULTY_LABELS[level]).toBeTruthy();
+      expect(DIFFICULTY_COLORS[level]).toBeTruthy();
+    });
+  });
+
+  test('red means "needs attention", so only hard gets the error colour', () => {
+    expect(DIFFICULTY_COLORS.hard).toBe('error');
+    expect(DIFFICULTY_COLORS.new).toBe('textTertiary');
+  });
+});
+
+describe('getWordDifficultyLevel', () => {
+  test('a never-practised word is "new", not the placeholder it was saved with', () => {
+    // The regression this pins: `getDifficultyLevel(null) === 'new'` was
+    // unreachable in production. A freshly saved word carries difficulty 6.5 —
+    // never null — so the dictionary painted it amber and called it "Moderate",
+    // a judgement about a word the learner has never been asked.
+    const fresh = createTestWord({ fsrs_state: State.New, fsrs_reps: 0, fsrs_difficulty: 6.5 });
+
+    expect(getDifficultyLevel(fresh.fsrs_difficulty)).toBe('moderate');
+    expect(getWordDifficultyLevel(fresh)).toBe('new');
+  });
+
+  test('a practised word reports its measured difficulty', () => {
+    const word = createTestWord({
+      fsrs_state: State.Review,
+      fsrs_reps: 6,
+      fsrs_difficulty: 8.2,
     });
 
-    test('should return error for undefined stability', () => {
-      expect(getStabilityProgressColor(undefined)).toBe('error');
-    });
+    expect(getWordDifficultyLevel(word)).toBe('hard');
+  });
 
-    test('should return error for stability 0-2.99 (red zone)', () => {
-      expect(getStabilityProgressColor(0)).toBe('error');
-      expect(getStabilityProgressColor(1)).toBe('error');
-      expect(getStabilityProgressColor(2)).toBe('error');
-      expect(getStabilityProgressColor(2.99)).toBe('error');
-    });
+  test('resetting a word takes it back to "new"', () => {
+    // createResetFSRSUpdate restores exactly the new-word placeholders.
+    const reset = createTestWord({ fsrs_state: State.New, fsrs_reps: 0, fsrs_difficulty: 6.5 });
 
-    test('should return warning for stability 3-6.99 (yellow zone)', () => {
-      expect(getStabilityProgressColor(3)).toBe('warning');
-      expect(getStabilityProgressColor(4)).toBe('warning');
-      expect(getStabilityProgressColor(5)).toBe('warning');
-      expect(getStabilityProgressColor(6)).toBe('warning');
-      expect(getStabilityProgressColor(6.99)).toBe('warning');
-    });
-
-    test('should return success for stability 7+ (green zone)', () => {
-      expect(getStabilityProgressColor(7)).toBe('success');
-      expect(getStabilityProgressColor(8)).toBe('success');
-      expect(getStabilityProgressColor(9)).toBe('success');
-      expect(getStabilityProgressColor(10)).toBe('success');
-    });
-
-    test('should return success for stability above 10', () => {
-      expect(getStabilityProgressColor(15)).toBe('success');
-      expect(getStabilityProgressColor(100)).toBe('success');
-    });
-
-    test('should return error for negative stability', () => {
-      expect(getStabilityProgressColor(-1)).toBe('error');
-      expect(getStabilityProgressColor(-10)).toBe('error');
-    });
-
-    test('should handle boundary values correctly', () => {
-      // Just below threshold
-      expect(getStabilityProgressColor(2.999)).toBe('error');
-      expect(getStabilityProgressColor(6.999)).toBe('warning');
-
-      // At threshold
-      expect(getStabilityProgressColor(3)).toBe('warning');
-      expect(getStabilityProgressColor(7)).toBe('success');
-    });
+    expect(getWordDifficultyLevel(reset)).toBe('new');
   });
 });
