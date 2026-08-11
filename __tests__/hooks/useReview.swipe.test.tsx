@@ -158,8 +158,8 @@ describe('useReview Hook - Swipe Gestures', () => {
         // The hold's UI flag deliberately outlives the tap — it clears when the
         // next card arrives, not here. `revealed` is still true for this card,
         // and the bottom band picks restudy → voice → revealed → reveal, so
-        // dropping `restudying` now swapped "Tap to continue" for the grade bar
-        // for the whole exit fade. Re-entry is guarded by a ref instead; the
+        // dropping `restudying` now swapped "Continue" for the grade bar for
+        // the whole exit fade. Re-entry is guarded by a ref instead; the
         // "commits only once" test below covers that.
         expect(result.current.restudying).toBe(true);
         expect(result.current.revealed).toBe(true);

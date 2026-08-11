@@ -93,7 +93,7 @@ describe('VoiceAnswerButton', () => {
 
   test('the label never reports the pipeline — only what you can do next', () => {
     const { getByText, queryByText } = renderButton('idle');
-    expect(getByText(STRINGS.VOICE_TAP_TO_ANSWER)).toBeTruthy();
+    expect(getByText(STRINGS.VOICE_SPEAK_TO_ANSWER)).toBeTruthy();
 
     const { getByText: getLive } = renderButton('listening');
     expect(getLive(STRINGS.VOICE_DONE_SPEAKING)).toBeTruthy();
@@ -111,7 +111,7 @@ describe('VoiceAnswerButton', () => {
     // would fire onPress either way. This is the contract the real Pressable
     // and a screen reader both read.
     const { getByText, getByLabelText } = renderButton('checking');
-    expect(getByText(STRINGS.VOICE_TAP_TO_ANSWER)).toBeTruthy();
+    expect(getByText(STRINGS.VOICE_SPEAK_TO_ANSWER)).toBeTruthy();
     const button = getByLabelText(STRINGS.VOICE_CHANNEL_LABEL);
     expect(button.props.disabled).toBe(true);
     expect(button.props.accessibilityState).toEqual({ disabled: true });

@@ -35,7 +35,7 @@ export type PromptGateReason =
 
 /** What took the prompt down early, when something did. */
 export type PromptCutSource =
-  /** The learner tapped "Tap to answer" — `speakNow()` stops the clip. */
+  /** The learner tapped "Speak to answer" — `speakNow()` stops the clip. */
   | 'speak-now'
   /** "Show answer" / a voice miss revealed the meaning. */
   | 'reveal'

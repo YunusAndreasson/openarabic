@@ -590,7 +590,7 @@ export function useVoiceReview({
           },
         });
         // The ladder is out of rungs: this card never got a microphone. The
-        // button just goes quietly back to "Tap to answer", which is
+        // button just goes quietly back to "Speak to answer", which is
         // indistinguishable from it never having been pressed — so the one
         // signal the learner gets that anything went wrong is this. A warning
         // rather than an error: the mic failing is not a wrong answer.

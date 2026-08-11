@@ -277,7 +277,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
 
   // The two halves of the voice UI, and the split between them: the BUTTON is
-  // the action ("Tap to answer" / "Done"), the CARD is the state (a meter that
+  // the action ("Speak to answer" / "Done"), the CARD is the state (a meter that
   // breathes while the mic opens and moves once it is live). Both are null far
   // more often than not — a paused, refused or still-loading recognizer offers
   // nothing and says nothing, and "Show answer" simply takes the whole row.
@@ -508,7 +508,11 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
                 <View style={baseStyles.actionRow}>
                   <ReviewActionButton
                     label={STRINGS.RESTUDY_CONTINUE}
+                    // Alone in the band, same as "Show answer" with voice off —
+                    // takes the app's standalone-CTA pill shape instead of
+                    // sitting there as a quiet, easy-to-miss chip.
                     color={colors.tint}
+                    variant="primary"
                     onPress={handleRestudyContinue}
                   />
                 </View>

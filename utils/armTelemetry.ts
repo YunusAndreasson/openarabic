@@ -1,5 +1,5 @@
 /**
- * Always-on breakdown of the gap between the learner tapping "Tap to answer"
+ * Always-on breakdown of the gap between the learner tapping "Speak to answer"
  * and the microphone actually delivering audio.
  *
  * Measured on device: that gap is 1160-1358 ms on every card, and only 125-184

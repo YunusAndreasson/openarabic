@@ -1,5 +1,5 @@
 /**
- * The voice half of the card's action row: "Tap to answer" on the right,
+ * The voice half of the card's action row: "Speak to answer" on the right,
  * "Show answer" on the left, one line of text each, same rounded-rect shape.
  * The two used to differ only by tint (a muted chip either way); now this one
  * goes solid — the row's one loud action — while "Show answer" stays a
@@ -134,7 +134,7 @@ export const VoiceAnswerButton: FC<VoiceAnswerButtonProps> = ({
       ]}
     >
       <ReviewActionButton
-        label={isLive ? STRINGS.VOICE_DONE_SPEAKING : STRINGS.VOICE_TAP_TO_ANSWER}
+        label={isLive ? STRINGS.VOICE_DONE_SPEAKING : STRINGS.VOICE_SPEAK_TO_ANSWER}
         accessibilityLabel={isLive ? STRINGS.VOICE_DONE_SPEAKING : STRINGS.VOICE_CHANNEL_LABEL}
         color={colors.tint}
         variant="primary"

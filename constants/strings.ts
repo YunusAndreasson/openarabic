@@ -40,8 +40,11 @@ export const STRINGS = {
   // the button outright instead of naming themselves: an offer that isn't there
   // needs no excuse.
   /** Resting label. The mic opens when the learner says so, never on a timer —
-   *  the pause before answering IS the retrieval, so they own when it ends. */
-  VOICE_TAP_TO_ANSWER: 'Tap to answer',
+   *  the pause before answering IS the retrieval, so they own when it ends.
+   *  Names the action ("Speak"), not the gesture ("Tap") — every button on
+   *  this screen is tapped, so saying so here is the one thing this label
+   *  does NOT need to say; what it needs to say is what happens next. */
+  VOICE_SPEAK_TO_ANSWER: 'Speak to answer',
   /** While the mic is live. An action, not a state: "Listening…" belongs on the
    *  card, where a meter that moves with the voice already says it. */
   VOICE_DONE_SPEAKING: 'Done',
@@ -82,7 +85,9 @@ export const STRINGS = {
   SHOW_ANSWER: 'Show answer',
   PLAY_SENTENCE_AUDIO: 'Play sentence',
   REPLAY_WORD_AUDIO: 'Replay word',
-  RESTUDY_CONTINUE: 'Tap to continue',
+  // Solo button in its row, filled/primary like "Show answer" alone — "Tap to"
+  // was naming the gesture every button already asks for.
+  RESTUDY_CONTINUE: 'Continue',
   RESTUDY_HINT: 'Take a moment with this one',
   RECALL_RUN: (count: number) => `${count} in a row`,
   GRADE_FORGOT: 'Forgot',

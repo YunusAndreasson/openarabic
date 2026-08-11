@@ -110,7 +110,7 @@ interface UseReviewReturn {
   /** Play an example sentence's audio (explicit user tap only). */
   playSentenceAudio: (storagePath: string) => Promise<void>;
   /** True while a forgotten card is held on its answer face for a restudy beat
-   *  instead of advancing. The bottom slot becomes a "Tap to continue" prompt. */
+   *  instead of advancing. The bottom slot becomes a "Continue" prompt. */
   restudying: boolean;
   /** Leave the restudy hold and commit the pending "Forgot". */
   continueFromRestudy: () => void;
@@ -851,14 +851,14 @@ export function useReview({
     // during the exit must be a no-op. The UI flag deliberately stays up until
     // the next card arrives (the currentWordKey effect clears it): the bottom
     // band picks restudy → voice → revealed → reveal, and `revealed` is still
-    // true for this card, so clearing `restudying` now swapped "Tap to
-    // continue" for the grade bar for the whole exit fade — offering three
-    // buttons the learner never had, on a card already on its way out.
+    // true for this card, so clearing `restudying` now swapped "Continue" for
+    // the grade bar for the whole exit fade — offering three buttons the
+    // learner never had, on a card already on its way out.
     restudyRef.current = false;
     diagMark('restudy.continue');
-    // Tier 0. "Tap to continue" ends a pause; the grade it commits was decided
-    // — and buzzed at tier 3 — before the hold began. Anything louder here
-    // would report the miss a second time.
+    // Tier 0. "Continue" ends a pause; the grade it commits was decided — and
+    // buzzed at tier 3 — before the hold began. Anything louder here would
+    // report the miss a second time.
     selectionFeedback();
     // No beat. The verdict fired when the miss was graded and its ring has been
     // sitting on this card for the whole hold — a longer moment than the beat
