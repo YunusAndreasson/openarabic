@@ -354,6 +354,55 @@ function inflectionMatch(expectedVariants: ReadonlySet<string>, token: string): 
 }
 
 /**
+ * Grammatical scaffolding that carries no lexical content. Stripping it is what
+ * lets "were eager" and "Eager." meet: `roots.meaning` is written as a gloss in
+ * running English, so the card string carries a tense marker or a preposition
+ * the learner never says out loud.
+ *
+ * Deliberately wider than `LEADING_FUNCTION_WORDS` (which only strips a leading
+ * to/the/a/an) because the scaffolding here is not always leading — it is the
+ * `were` in "were eager", the `with` in "girded with", the `for`/`ones` in "for
+ * close ones". Every member is a closed-class word that cannot be the answer on
+ * its own, EXCEPT via the guard in `contentWords`: a gloss made entirely of
+ * these ("one", "be") keeps its tokens rather than reducing to nothing.
+ */
+const FUNCTION_WORDS = new Set([
+  'a',
+  'an',
+  'and',
+  'be',
+  'been',
+  'for',
+  'her',
+  'his',
+  'in',
+  'is',
+  'it',
+  'its',
+  'of',
+  'on',
+  'one',
+  'ones',
+  'the',
+  'their',
+  'to',
+  'was',
+  'were',
+  'with',
+]);
+
+/**
+ * The lexically meaningful tokens of a normalized string. Falls back to the raw
+ * tokens when everything would be stripped, so a card whose whole gloss is a
+ * function word ("one", "be") still has something to compare.
+ */
+function contentWords(normalized: string): string[] {
+  const tokens = normalized.split(' ').filter(Boolean);
+  const content = tokens.filter(token => !FUNCTION_WORDS.has(token));
+  return content.length > 0 ? content : tokens;
+}
+
+/**
  * Parakeet very rarely emits these on near-silence (more of a Whisper habit),
  * but the guard is cheap and protects against the edge case where the energy
  * gate's heardSpeech flag is true for a brief ambient noise.
@@ -379,6 +428,8 @@ export type MatchMethod =
   | 'edit'
   | 'phonetic'
   | 'fuzzy'
+  /** Matched the gloss's head content word once scaffolding was stripped. */
+  | 'head'
   | 'near'
   | 'hallucination'
   | 'miss';
@@ -587,6 +638,44 @@ const NEAR_MIN_PHONETIC = 0.75;
 const NEAR_MIN_LEXICAL = 0.55;
 
 /**
+ * Shared-prefix escape from the lexical floor.
+ *
+ * The lexical floor above is measured against the WHOLE gloss, so a long card
+ * answer drags it below 0.55 even when the learner clearly produced the word:
+ * girded with←"Girdle." scores 0.40, strap←"to straddle." scores 0.40. Both are
+ * the learner saying the right thing into a model that clipped or extended it,
+ * and both die on a floor that is really measuring gloss length.
+ *
+ * A shared opening on the HEAD content word is the signal that separates them
+ * from a genuinely different answer, because English words that start alike
+ * usually sound alike from the onset — which is exactly the part of an utterance
+ * an ASR gets right before it starts guessing.
+ *
+ * Four letters, and only four. Measured against the 162 learner-labelled misses:
+ * at 4 the rule flips 5 rows, every one a real utterance, and breaches none of
+ * the 18 guard pairs the earlier tightenings exist to protect. At 2 it credits
+ * ascended←"Assented." (both open "as"), assembly←"Astorium.",
+ * estimate←"to Eston." and leading figure←"Learned." — the precise class the
+ * 2026-07-25 pass removed. At 3 three of those come back. This replaces only the
+ * LEXICAL floor; the phonetic floor still has to clear on its own, so a word that
+ * merely starts alike but sounds different is still a miss.
+ */
+const NEAR_PREFIX_LEN = 4;
+
+/**
+ * Do the expected gloss's head content word and some spoken content token open
+ * with the same `NEAR_PREFIX_LEN` letters?
+ */
+function sharesHeadPrefix(spoken: string, expected: string): boolean {
+  const head = contentWords(expected)[0];
+  if (head === undefined || head.length < NEAR_PREFIX_LEN || /\d/.test(head)) return false;
+  const opening = head.slice(0, NEAR_PREFIX_LEN);
+  return contentWords(spoken).some(
+    token => token.length >= NEAR_PREFIX_LEN && token.slice(0, NEAR_PREFIX_LEN) === opening,
+  );
+}
+
+/**
  * Length floors, for the same reason `PHONETIC_MIN_LEN` exists: a consonant
  * skeleton is not evidence on a short word. "cat"/"cot"/"cut" all key to KT and
  * "jest"/"just" to JST — three-letter vocabulary would collapse wholesale. The
@@ -609,11 +698,28 @@ function phoneticNearness(spoken: string, expected: string): number {
   if (expectedText.length < NEAR_MIN_EXPECTED_LEN || expectedKey.length < NEAR_MIN_KEY_LEN) {
     return 0;
   }
-  let best = similarityRatio(phoneticKey(spokenText), expectedKey);
-  for (const token of spokenText.split(' ')) {
-    if (!token) continue;
-    const sim = similarityRatio(phoneticKey(token), expectedKey);
-    if (sim > best) best = sim;
+
+  // Compare against the head content word as well as the whole gloss, mirroring
+  // the way spoken tokens are already tried individually. Without this a gloss
+  // that carries a second word is unreachable from a one-word utterance:
+  // "girded with" keys the trailing "with" too, so "Girdle." can never line up
+  // no matter how well `girdle`/`girded` actually match.
+  const expectedKeys = [expectedKey];
+  const head = contentWords(expectedText)[0];
+  if (head !== undefined && head !== expectedText && head.length >= NEAR_MIN_EXPECTED_LEN) {
+    const headKey = phoneticKey(head);
+    if (headKey.length >= NEAR_MIN_KEY_LEN) expectedKeys.push(headKey);
+  }
+
+  let best = 0;
+  for (const key of expectedKeys) {
+    const whole = similarityRatio(phoneticKey(spokenText), key);
+    if (whole > best) best = whole;
+    for (const token of spokenText.split(' ')) {
+      if (!token) continue;
+      const sim = similarityRatio(phoneticKey(token), key);
+      if (sim > best) best = sim;
+    }
   }
   return best;
 }
@@ -844,13 +950,53 @@ function matchAgainstOneExpected({
     };
   }
 
+  // Head-word pass: strip the gloss's grammatical scaffolding and try the same
+  // same-word tests again against what is left. This is not new leniency — it
+  // reruns the exact/equivalent/inflection ladder from above, only on the part of
+  // the gloss the learner actually says out loud. It is what lets "were
+  // eager"←"Eager." and "for close ones"←"the closed ones" through.
+  //
+  // Runs HERE, below every full-string layer, so it can only ever convert what
+  // would otherwise be a miss. Placed above the ladder it would intercept
+  // answers `edit` already credits in full and quietly demote them — "become
+  // strong"←"to become strong." went known → vague when this sat higher up.
+  //
+  // Credit turns on how much of the gloss the head represents. When the gloss
+  // reduces to ONE content word the learner produced all of it and this is a
+  // pure scaffolding strip, worth full credit. When several content words
+  // survive ("become strong") the head alone is a partial answer AND collides
+  // across cards — قَوِيَ "become strong" and تَكُونُ "to become" share the head
+  // "become" — so it credits `vague`, whose shortened interval brings the word
+  // back rather than burying it.
+  const expectedContent = contentWords(normalizedExpected);
+  const expectedHead = expectedContent[0];
+  if (expectedHead !== undefined && expectedHead !== normalizedExpected) {
+    const headVariants = new Set(inflectionVariants(expectedHead));
+    for (const tok of contentWords(normalizedSpoken)) {
+      if (
+        tok === expectedHead ||
+        equivalentTokens(tok, expectedHead) ||
+        inflectionMatch(headVariants, tok)
+      ) {
+        return {
+          matched: true,
+          credit: expectedContent.length === 1 ? 'known' : 'vague',
+          method: 'head',
+          similarity: Math.max(bestSim, similarityRatio(tok, expectedHead)),
+          normalizedSpoken,
+          normalizedExpected,
+        };
+      }
+    }
+  }
+
   // Last chance before failing the learner: did they SOUND like the answer? A
   // transcript can be the wrong string and still be the right utterance, and on
   // a recall app the kinder reading is the right one — so this credits at the
   // `vague` tier rather than rejecting. See NEAR_MIN_PHONETIC.
   if (
     !/\d/.test(despacedExpected) &&
-    bestSim >= NEAR_MIN_LEXICAL &&
+    (bestSim >= NEAR_MIN_LEXICAL || sharesHeadPrefix(normalizedSpoken, normalizedExpected)) &&
     phoneticNearness(normalizedSpoken, normalizedExpected) >= NEAR_MIN_PHONETIC
   ) {
     return {

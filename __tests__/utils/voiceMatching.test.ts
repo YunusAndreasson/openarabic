@@ -379,3 +379,89 @@ describe('matchSingleWord — near path credits an utterance that SOUNDS right',
     expect(matchSingleWord({ spoken: 'send', expected: 'ascended' }).matched).toBe(false);
   });
 });
+
+/**
+ * `roots.meaning` is written as running English, so a gloss carries tense
+ * markers and prepositions the learner never says: "were eager", "for close
+ * ones", "girded with". Comparing the whole string against a bare one-word
+ * utterance fails on scaffolding rather than on vocabulary.
+ */
+describe('matchSingleWord — head-word pass strips gloss scaffolding', () => {
+  it.each([
+    ['eager', 'were eager'],
+    ['be eager', 'were eager'],
+    ['the closed ones', 'for close ones'],
+    ['to the close ones', 'for close ones'],
+  ])('credits "%s" for "%s"', (spoken, expected) => {
+    const r = matchSingleWord({ spoken, expected });
+    expect(r.matched).toBe(true);
+    expect(r.method).toBe('head');
+  });
+
+  it('gives full credit when the gloss reduces to one content word', () => {
+    // "were eager" → "eager": the learner produced all of it.
+    expect(matchSingleWord({ spoken: 'eager', expected: 'were eager' }).credit).toBe('known');
+  });
+
+  it('gives only vague credit when other content words survive', () => {
+    // "become strong" keeps two content words, and the head "become" collides
+    // with the separate card تَكُونُ "to become" — a partial answer, not mastery.
+    const r = matchSingleWord({ spoken: 'become', expected: 'become strong' });
+    expect(r.matched).toBe(true);
+    expect(r.credit).toBe('vague');
+  });
+
+  it('never demotes an answer the full-string ladder already credits', () => {
+    // Regression guard: with this pass above the ladder, "to become strong."
+    // was intercepted and downgraded from edit/known to head/vague.
+    expect(matchSingleWord({ spoken: 'to become strong', expected: 'become strong' }).credit).toBe(
+      'known',
+    );
+    expect(matchSingleWord({ spoken: 'other than', expected: 'other than it' }).credit).toBe(
+      'known',
+    );
+  });
+
+  it('still misses when the head word is genuinely different', () => {
+    expect(matchSingleWord({ spoken: 'to the first ones', expected: 'for close ones' }).matched).toBe(
+      false,
+    );
+  });
+});
+
+/**
+ * The near path's lexical floor is measured against the WHOLE gloss, so a long
+ * card answer drags it under 0.55 even when the learner clearly said the word.
+ * A shared four-letter opening on the head content word substitutes for that
+ * floor — the phonetic floor still has to clear on its own.
+ */
+describe('matchSingleWord — shared head prefix rescues a long gloss', () => {
+  it('credits "girdle" for "girded with" as vague', () => {
+    const r = matchSingleWord({ spoken: 'girdle', expected: 'girded with' });
+    expect(r.matched).toBe(true);
+    expect(r.credit).toBe('vague');
+  });
+
+  it.each([
+    // Four letters, and only four. Every one of these opens with the same two
+    // or three letters as its gloss and is a genuinely different answer — the
+    // class the 2026-07-25 tightening exists to reject.
+    ['assented', 'ascended'],
+    ['astorium', 'assembly'],
+    ['to eston', 'estimate'],
+    ['learned', 'leading figure'],
+    ['gradle with', 'grabbed'],
+    ['establishment', 'expansive'],
+  ])('does not let "%s" through for "%s" on prefix alone', (spoken, expected) => {
+    const r = matchSingleWord({ spoken, expected });
+    // Either a miss, or credited by the pre-existing near path — never `known`.
+    expect(r.credit).not.toBe('known');
+  });
+
+  it('does not fire on a short head word, where a prefix is the whole word', () => {
+    // "cat"/"cot" and "jest"/"just" must stay apart; a 4-letter prefix on a
+    // 4-letter word would be an exact match by another name.
+    expect(matchSingleWord({ spoken: 'just', expected: 'jest' }).matched).toBe(false);
+    expect(matchSingleWord({ spoken: 'cot', expected: 'cat' }).matched).toBe(false);
+  });
+});
