@@ -170,17 +170,18 @@ describe('SkiaArabicWord Component', () => {
   });
 
   describe('Selection State', () => {
-    // Selected words render in the brand tint (no weight change); unselected
-    // words use the default Arabic text color. Colors come from the shared
-    // useColors mock (tint #4a7c59, arabicText #1a1a1a).
-    test('renders selected words with the tint color', () => {
+    // Selection is carried by the marker rule under the word, never by the glyph
+    // color: repainting a saved word in the brand tint shouted, and overwrote the
+    // grammar colors it covered. Colors come from the shared useColors mock
+    // (tint #4a7c59, arabicText #1a1a1a).
+    test('leaves the glyph color alone when a word is selected', () => {
       jest.mocked(useArabicWord).mockReturnValue({ isSelected: true });
 
       const word = createMockWord();
       render(<SkiaArabicWord word={word} testID="word" />);
 
       expect(buildSimpleParagraph).toHaveBeenCalledWith(
-        expect.objectContaining({ color: '#4a7c59', fontSize: 17 }),
+        expect.objectContaining({ color: '#1a1a1a', fontSize: 17 }),
       );
     });
 

@@ -18,8 +18,6 @@ import {
   buildSimpleParagraph,
   measureInkOverhang,
 } from '@/utils/skiaParagraphBuilder';
-import { getSelectedStyle } from '@/utils/textStyleUtils';
-
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /**
@@ -31,6 +29,18 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
  * on the same line. Deriving this per word would shift baselines word by word.
  */
 const DIACRITICS_PADDING = 8;
+
+/**
+ * Clear space below the glyphs for the marker rule — the bottom counterpart to
+ * `DIACRITICS_PADDING`, and constant for the same reason.
+ *
+ * Arabic descends a long way below the baseline (ن, ج, ي), and a rule drawn
+ * flush against that tail crowds the harf and hurts legibility. Reserving the
+ * space inside the canvas keeps the rule clear of the descenders while staying
+ * within the word's own bounds, which a negative offset would not — Android
+ * clips absolutely positioned children that overflow their parent.
+ */
+const MARKER_UNDERLINE_GAP = 6;
 
 /**
  * Fallback horizontal ink bleed per font family, in em (fraction of font size).
@@ -73,11 +83,11 @@ interface SkiaArabicWordProps {
   onWordLongPress?: (word: SentenceWord, layout?: LayoutRectangle) => void;
   wordRef?: RefObject<ComponentRef<typeof Pressable>>;
   testID?: string;
-  /** When true, shows a pulsing highlight to draw attention (used for tutorial) */
+  /** When true, pulses the marker underline to draw attention (used for tutorial) */
   isHighlighted?: boolean;
   /** SharedValue tracking the active word ID — drives opacity on UI thread without re-renders */
   activeWordIdSV?: SharedValue<string | number | null>;
-  /** When true, shows a subtle tint background to mark this as the target word (used for dictionary sentence examples) */
+  /** When true, marks this as the looked-up word (used for dictionary sentence examples) */
   isTargetWord?: boolean;
 }
 
@@ -135,22 +145,15 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
       return null;
     }
 
-    // Selected (study-list/due) words shift subtly to the brand tint instead of a
-    // weight change; grammar-colored segments keep their educational colors.
-    const baseColor = isSelected ? colors.tint : colors.arabicText;
+    // Selection is never carried by the glyph color: repainting a saved word in
+    // the brand tint both shouted and overwrote the grammar colors it covered.
+    // The marker underline below is the only channel that says "saved".
+    const baseColor = colors.arabicText;
 
     if (hasComponents && coloredSegments.length > 0) {
-      const segments = isSelected
-        ? coloredSegments.map(segment =>
-            segment.color === colors.text || segment.color === colors.arabicText
-              ? { ...segment, color: baseColor }
-              : segment,
-          )
-        : coloredSegments;
-
       // Build multi-colored paragraph from segments
       return buildColoredParagraph({
-        segments,
+        segments: coloredSegments,
         fontSize,
         fontFamily,
         fontManager,
@@ -171,13 +174,10 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
       maxWidth: PARAGRAPH_LAYOUT_WIDTH,
     });
   }, [
-    isSelected,
     hasComponents,
     coloredSegments,
     word.word_form,
-    colors.tint,
     colors.arabicText,
-    colors.text,
     fontSize,
     fontFamily,
     fontManager,
@@ -185,7 +185,15 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
 
   const canvasDimensions = useMemo(() => {
     if (!paragraph) {
-      return { width: 60, height: 40, layoutWidth: 60, marginLeft: 0, marginRight: 0 };
+      return {
+        width: 60,
+        height: 40,
+        layoutWidth: 60,
+        marginLeft: 0,
+        marginRight: 0,
+        inkLeft: 0,
+        inkRight: 0,
+      };
     }
 
     // Real painted extent where the native module can report it, per-family
@@ -205,7 +213,7 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
 
     return {
       width: layoutWidth + rightReserve,
-      height: Math.ceil(paragraph.getHeight()) + DIACRITICS_PADDING,
+      height: Math.ceil(paragraph.getHeight()) + DIACRITICS_PADDING + MARKER_UNDERLINE_GAP,
       layoutWidth,
       // The reserve is paint-only, so cancel all of it in flex layout and hand
       // back a constant `visualPad` gap instead. That keeps the word rhythm
@@ -214,6 +222,11 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
       // signed: a face that bleeds less than visualPad needs positive margin.
       marginLeft: visualPad - leftReserve,
       marginRight: visualPad - rightReserve,
+      // Paint-only reserve on each side. The marker underline insets by these
+      // so it tracks the glyph advance rather than the bleed-padded canvas —
+      // a rule wider than the word it marks reads as a mistake.
+      inkLeft: leftReserve,
+      inkRight: rightReserve,
     };
   }, [paragraph, fontSize, fontFamily]);
 
@@ -252,14 +265,36 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
     }
   };
 
-  // Memoize styles that depend on state to prevent recreation
-  const containerStyle = useMemo(
+  // All three "this word is notable" states share one visual channel — a thin
+  // rule under the word — and differ only in weight and motion. Ranking them
+  // into a single height also makes them mutually exclusive, so a saved word
+  // that is also the dictionary target draws one line, never a doubled one.
+  //
+  // The rule is painted, not a `borderBottomWidth`: `wordContainer` is rounded,
+  // and Android draws a bottom-only border on a rounded box as a degenerate arc
+  // across the corner radius — which is why the old selected-word underline
+  // never actually appeared there.
+  const markerHeight = useMemo(() => {
+    if (isHighlighted || isTargetWord) {
+      return LAYOUT.BORDER.WIDTH.FOCUSED;
+    }
+    return isSelected ? LAYOUT.BORDER.WIDTH.NORMAL : 0;
+  }, [isHighlighted, isTargetWord, isSelected]);
+
+  // Absolutely positioned so weight can change without taking part in layout —
+  // the emphasis can never nudge the line's rhythm. It sits at the foot of the
+  // canvas, inside the space `MARKER_UNDERLINE_GAP` reserves.
+  const markerBarStyle = useMemo(
     () => [
-      styles.wordContainer,
-      styles.underlineReserve,
-      getSelectedStyle(isSelected, colors.disabled),
+      styles.markerUnderline,
+      {
+        height: markerHeight,
+        backgroundColor: colors.tint,
+        left: LAYOUT.SPACING.MICRO + canvasDimensions.inkLeft,
+        right: LAYOUT.SPACING.MICRO + canvasDimensions.inkRight,
+      },
     ],
-    [isSelected, colors.disabled],
+    [markerHeight, colors.tint, canvasDimensions.inkLeft, canvasDimensions.inkRight],
   );
 
   const canvasStyle = useMemo(
@@ -277,23 +312,9 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
 
   return (
     <View style={wrapperStyle}>
-      {/* Pulsing highlight for tutorial */}
-      {isHighlighted && (
-        <Animated.View
-          style={[
-            styles.highlightOverlay,
-            { backgroundColor: colors.tint },
-            HIGHLIGHT_ANIMATION_STYLE,
-          ]}
-        />
-      )}
-      {/* Static subtle highlight for target word in sentence examples */}
-      {isTargetWord && !isHighlighted && (
-        <View style={[styles.targetWordOverlay, { backgroundColor: colors.tint }]} />
-      )}
       <AnimatedPressable
         ref={pressableRef}
-        style={[containerStyle, activeStyle]}
+        style={[CONTAINER_STYLE, activeStyle]}
         testID={testID}
         onPress={handlePress}
         onLongPress={onWordLongPress ? handleLongPress : undefined}
@@ -310,31 +331,25 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
           )}
         </Canvas>
       </AnimatedPressable>
+      {/* Drawn last so the rule stays visible over the canvas edge; never
+          interactive, or it would eat taps along the bottom of the word. */}
+      {markerHeight > 0 &&
+        (isHighlighted ? (
+          <Animated.View
+            style={[markerBarStyle, HIGHLIGHT_ANIMATION_STYLE]}
+            pointerEvents="none"
+          />
+        ) : (
+          <View style={markerBarStyle} pointerEvents="none" />
+        ))}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  highlightOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
+  markerUnderline: {
     bottom: 0,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-  },
-  targetWordOverlay: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    opacity: 0.2, // Subtle tint for target word indication
-  },
-  underlineReserve: {
-    borderBottomColor: 'transparent',
-    borderBottomWidth: 1,
   },
   wordContainer: {
     alignItems: 'center',
@@ -346,6 +361,10 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
 });
+
+// Identical for every word in every state, so it is hoisted to a stable identity
+// rather than rebuilt per render.
+const CONTAINER_STYLE = [styles.wordContainer];
 
 SkiaArabicWordInternal.displayName = 'SkiaArabicWord';
 

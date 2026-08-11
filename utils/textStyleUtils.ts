@@ -1,4 +1,4 @@
-import type { TextStyle, ViewStyle } from 'react-native';
+import type { TextStyle } from 'react-native';
 
 import { getArabicTextStyle, LAYOUT } from '@/constants/layout';
 
@@ -66,22 +66,11 @@ export const createTextStyle = (fontSize: number, colors: BatchedTextColors): Te
   };
 };
 
-/**
- * Creates underline style for Arabic words based on selection state
- * @param isSelected - Whether the word is currently selected (in study list)
- * @param color - The underline color to use
- * @returns ViewStyle object for the underline, or empty object if not selected
- */
-export const getSelectedStyle = (isSelected: boolean, color: string): ViewStyle => {
-  if (!isSelected) {
-    return {};
-  }
-
-  return {
-    borderBottomWidth: 1,
-    borderBottomColor: color,
-  };
-};
+// `getSelectedStyle` used to live here, returning a `borderBottomWidth` for a
+// word in the study list. It was removed with the marker rewrite: SkiaArabicWord
+// rounds its word container, and Android draws a bottom-only border on a rounded
+// box as an arc across the corner radius, so that underline never rendered
+// there. All word markers are now painted as an absolutely positioned bar.
 
 // Button text styling used to live here as `createButtonTextStyle(size)`, which
 // overrode the `fontSize` that ThemedButton had already chosen via a ThemedText

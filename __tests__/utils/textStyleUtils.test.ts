@@ -16,7 +16,6 @@ import {
   calculateDynamicPadding,
   createTextStyle,
   createTextStyleBase,
-  getSelectedStyle,
   type BatchedTextColors,
 } from '@/utils/textStyleUtils';
 
@@ -27,7 +26,6 @@ describe('textStyleUtils', () => {
     shadow: '#666666',
     englishText: '#333333',
   };
-  const mockUnderlineColor = '#9AB5A4'; // Soft disabled color for all underlines
 
   describe('TEXT_STYLE_CONSTANTS', () => {
     test('should have correct constant values', () => {
@@ -74,22 +72,4 @@ describe('textStyleUtils', () => {
     });
   });
 
-  describe('getSelectedStyle', () => {
-    test('should return soft underline for selected words', () => {
-      const result = getSelectedStyle(true, mockUnderlineColor);
-      expect(result).toHaveProperty('borderBottomWidth', 1);
-      expect(result).toHaveProperty('borderBottomColor', mockUnderlineColor);
-    });
-
-    test('should return empty object for unselected words', () => {
-      const result = getSelectedStyle(false, mockUnderlineColor);
-      expect(result).toEqual({});
-    });
-
-    test('should use the provided color exactly', () => {
-      const customColor = '#FF0000';
-      const result = getSelectedStyle(true, customColor);
-      expect(result).toHaveProperty('borderBottomColor', customColor);
-    });
-  });
 });
