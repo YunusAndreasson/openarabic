@@ -566,17 +566,25 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
                 <View style={baseStyles.actionRow}>
                   <ReviewActionButton
                     label={STRINGS.SHOW_ANSWER}
-                    // Neutral against the mic's tint: when voice is on, speaking
-                    // is the exercise and revealing is the way out of it, so the
+                    // Same hue as the voice CTA, not a neutral grey: `secondaryText`
+                    // is a near-white, almost-no-chroma token, and mixed into a
+                    // tinted chip it read as a flat, lifeless grey rather than a
+                    // quieter sibling. `colors.tint` at the tinted chip's fill
+                    // (a light mix, not a solid fill) still reads clearly as the
+                    // quieter of the two — Material 3 pairs a filled and a tonal
+                    // button in the same colour for exactly this reason — while
+                    // giving "Show answer" a real colour instead of none. Weight
+                    // does the demoting, not hue: when voice is on, speaking is
+                    // the exercise and revealing is the way out of it, so the
                     // voice CTA carries `primary` instead (see VoiceAnswerButton)
-                    // and this one stays a quiet `tinted` chip beside it.
+                    // and this one stays the quieter `tinted` chip beside it.
                     //
                     // With voice off there is no mic to defer to, and the band
                     // holds this button alone — so it takes the app's
                     // standalone-CTA shape itself rather than sitting there as a
                     // grey ghost. See ReviewActionButton on where `primary` may
                     // and may not appear.
-                    color={colors.secondaryText}
+                    color={colors.tint}
                     variant={voiceMode ? 'tinted' : 'primary'}
                     disabled={isUpdating}
                     onPress={revealAnswer}
