@@ -223,6 +223,50 @@ export default function DictionaryScreen(): JSX.Element {
     [colors.border],
   );
 
+  /**
+   * The sort bar rides INSIDE the list, not pinned above it.
+   *
+   * It was pinned deliberately — how the list is sorted is system status, and as
+   * a scrolling header it leaves the screen on the first flick, taking the only
+   * way to change the sort with it. But this is the one screen in the app with a
+   * `Stack.SearchBar`, and on iOS that becomes a UISearchController living in the
+   * navigation bar. In that configuration UIKit lays the screen's content out
+   * from the top of the window, UNDER the bars, and expects the scroll view to
+   * compensate — which is what `contentInsetAdjustmentBehavior="automatic"` below
+   * does. That inset reaches the scroll view and nothing else, so a pinned
+   * sibling renders behind the search bar and is invisible on iOS while the rows
+   * beneath it land correctly. Android lays its toolbar out above the content, so
+   * it never showed the bug.
+   *
+   * FlashList v2's `stickyHeaderIndices` maps over `data` and renders through
+   * `renderItem`, so it cannot stick a ListHeaderComponent — keeping the bar
+   * pinned would mean injecting a sentinel row into `data`, which also disables
+   * `ListEmptyComponent` (the list would never be empty). Not worth it for a
+   * layout bug; re-pinning wants a proper header-height offset instead.
+   */
+  const ListHeaderComponent = useMemo(
+    () =>
+      totalCount > 0 ? (
+        <DictionarySortBar
+          scope={scope}
+          sortField={sortField}
+          sortDirection={sortDirection}
+          onPressScope={handleOpenScopePicker}
+          onSelectField={handleSelectField}
+          wordCount={words.length}
+        />
+      ) : null,
+    [
+      totalCount,
+      scope,
+      sortField,
+      sortDirection,
+      handleOpenScopePicker,
+      handleSelectField,
+      words.length,
+    ],
+  );
+
   const ListEmptyComponent = useMemo(() => {
     if (hasWords) return null;
     // A fruitless search gets a quiet notice; a truly empty dictionary gets
@@ -278,25 +322,12 @@ export default function DictionaryScreen(): JSX.Element {
         <LoadingState />
       ) : (
         <View style={styles.contentContainer}>
-          {/* Pinned, not a ListHeaderComponent: how the list is sorted is system
-              status and has to stay visible. As a scrolling header it left the
-              screen on the first flick — more so now the rows are half as tall —
-              and took the only way to change the sort with it. */}
-          {totalCount > 0 && (
-            <DictionarySortBar
-              scope={scope}
-              sortField={sortField}
-              sortDirection={sortDirection}
-              onPressScope={handleOpenScopePicker}
-              onSelectField={handleSelectField}
-              wordCount={words.length}
-            />
-          )}
           <FlashList
             ref={listRef}
             data={words}
             renderItem={renderItem}
             keyExtractor={keyExtractor}
+            ListHeaderComponent={ListHeaderComponent}
             ListEmptyComponent={ListEmptyComponent}
             ItemSeparatorComponent={renderSeparator}
             contentContainerStyle={contentContainerStyle}
