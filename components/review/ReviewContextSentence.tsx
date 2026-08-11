@@ -12,7 +12,6 @@ import { useDebouncedArabicFontSize } from '@/hooks/theme/useDebouncedArabicFont
 import { useColors } from '@/hooks/theme/useColors';
 import type { ExampleWord, WordExample } from '@/services/sentences';
 import type { ColoredSegment } from '@/types/vocabulary.types';
-import { withAlpha } from '@/utils/colorUtils';
 
 /**
  * Line height for the example, as a multiple of its font size.
@@ -61,11 +60,27 @@ const STATIC_STYLES = StyleSheet.create({
     justifyContent: 'center',
     gap: LAYOUT.SPACING.HALF_TINY,
   },
-  // Applied to EVERY word, not just the marked one, so the chip's padding
-  // cannot shift the line when the target happens to fall at a wrap point.
+  // Applied to EVERY word, not just the marked one, so the underline's
+  // reserved space cannot shift the line when the target happens to fall at
+  // a wrap point.
   word: {
     paddingHorizontal: LAYOUT.SPACING.HALF_TINY,
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL_CIRCLE,
+    // Clears Arabic descenders (ي ج ن) from the marker rule below — same
+    // reasoning as SkiaArabicWord's MARKER_UNDERLINE_GAP.
+    paddingBottom: LAYOUT.SPACING.TINY,
+  },
+  // Same visual channel as SkiaArabicWord's marker rule — a saved word in the
+  // reader, a highlighted word in onboarding, and the practised word here are
+  // all "this word is yours" in one language. Painted as an absolutely
+  // positioned bar, not a `borderBottomWidth`: Android draws a bottom-only
+  // border on a rounded box as a degenerate arc across the corner radius, so
+  // a real border here would silently fail to render.
+  targetUnderline: {
+    position: 'absolute',
+    left: LAYOUT.SPACING.MICRO,
+    right: LAYOUT.SPACING.MICRO,
+    bottom: 0,
+    height: LAYOUT.BORDER.WIDTH.FOCUSED,
   },
   english: {
     textAlign: 'center',
@@ -102,11 +117,15 @@ interface Props {
  * review reinforces exactly the mapping reading teaches, including the rule
  * that a single-English-word gloss is never colour-coded.
  *
- * The practised word is marked by a faint tinted chip rather than by a colour,
- * because hue is spoken for: in this palette `tint` is the same hue as the
- * grammar palette's `possessive` AND as `success` ("Knew it"), so a tinted word
- * would read as a grammatical role or as a verdict. Shape says "this is yours";
- * colour says "this is what it does".
+ * The practised word is marked by the same tint-coloured underline the reader
+ * uses for a saved word and onboarding uses to point at one (SkiaArabicWord's
+ * marker rule) — not a background fill, and not the glyph colour itself:
+ * hue is spoken for, since in this palette `tint` is the same hue as the
+ * grammar palette's `possessive` AND as `success` ("Knew it"), so painting the
+ * word itself would read as a grammatical role or as a verdict. The underline
+ * is a shape, not a colour-coding — "this is yours", not "this is what it
+ * does" — and reusing the app's one existing "this word is yours" mark keeps
+ * it legible as the same claim rather than inventing a second one.
  */
 export const ReviewContextSentence: FC<Props> = memo(({ example, onPlay }) => {
   const colors = useColors();
@@ -114,10 +133,9 @@ export const ReviewContextSentence: FC<Props> = memo(({ example, onPlay }) => {
   // the hero Arabic above it — same script, same weight, near enough the same
   // size — so the answer face read as two headlines stacked rather than an
   // answer and its evidence. Hierarchy by scale, since colour is spoken for
-  // (see the chip note below) and weight does nothing on Arabic glyphs.
+  // (see the underline note above) and weight does nothing on Arabic glyphs.
   const readerFontSize = useDebouncedArabicFontSize(82);
 
-  const targetChipColor = withAlpha(colors.tint, LAYOUT.OPACITY.FAINT);
   const words = example.words;
 
   // Mirrors what ThemedText's `arabicCompact` resolves to (the reader's size,
@@ -151,13 +169,20 @@ export const ReviewContextSentence: FC<Props> = memo(({ example, onPlay }) => {
             <View
               key={word.position}
               testID={`example-word-${word.position}`}
-              style={[STATIC_STYLES.word, word.isTarget && { backgroundColor: targetChipColor }]}
+              style={STATIC_STYLES.word}
             >
               <ExampleWordText
                 word={word}
                 defaultColor={colors.arabicText}
                 lineStyle={arabicLineStyle}
               />
+              {word.isTarget ? (
+                <View
+                  testID={`example-word-${word.position}-underline`}
+                  style={[STATIC_STYLES.targetUnderline, { backgroundColor: colors.tint }]}
+                  pointerEvents="none"
+                />
+              ) : null}
             </View>
           ))
         ) : (

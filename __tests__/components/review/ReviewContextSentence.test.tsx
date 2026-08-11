@@ -8,9 +8,10 @@
  *   form against the sentence text. The old split-on-the-form approach marked
  *   EVERY occurrence, so a sentence using the word twice lit up twice and a form
  *   that was a substring of a longer word lit up inside it.
- * - the mark is a background chip, never a text colour: in this palette `tint`
- *   is the same hue as the grammar palette's "possessive" and as `success`
- *   ("Knew it"), so a tinted word would read as a role or as a verdict.
+ * - the mark is the same tint-coloured underline SkiaArabicWord uses for a
+ *   saved word, never a text colour: in this palette `tint` is the same hue as
+ *   the grammar palette's "possessive" and as `success` ("Knew it"), so a
+ *   tinted word would read as a role or as a verdict.
  */
 
 import { describe, expect, jest, test } from '@jest/globals';
@@ -86,8 +87,15 @@ function someNodeIsColored(nodes: { props: { style?: unknown } }[], color: strin
   return nodes.some(node => flattenStyle(node.props.style)['color'] === color);
 }
 
-function chipColor(node: { props: { style?: unknown } }): unknown {
-  return flattenStyle(node.props.style)['backgroundColor'];
+/** The marker underline is a sibling node, present only on the target word —
+ *  rendered under `example-word-{position}-underline`, not on the word's own
+ *  wrapper, so a query that finds nothing means "not marked". */
+function underlineColor(
+  queryByTestId: (testId: string) => { props: { style?: unknown } } | null,
+  position: number,
+): unknown {
+  const node = queryByTestId(`example-word-${position}-underline`);
+  return node ? flattenStyle(node.props.style)['backgroundColor'] : undefined;
 }
 
 describe('ReviewContextSentence', () => {
@@ -128,11 +136,11 @@ describe('ReviewContextSentence', () => {
   });
 
   describe('Marking the practised word', () => {
-    test('chips the target word and only the target word', () => {
-      const { getByTestId } = render(<ReviewContextSentence example={makeExample()} />);
+    test('underlines the target word and only the target word', () => {
+      const { queryByTestId } = render(<ReviewContextSentence example={makeExample()} />);
 
-      expect(chipColor(getByTestId('example-word-2'))).toBeDefined();
-      expect(chipColor(getByTestId('example-word-1'))).toBeUndefined();
+      expect(underlineColor(queryByTestId, 2)).toBeDefined();
+      expect(underlineColor(queryByTestId, 1)).toBeUndefined();
     });
 
     // Regression: the old implementation split the sentence string on the
@@ -146,19 +154,19 @@ describe('ReviewContextSentence', () => {
           word({ position: 2, wordForm: 'الكتاب', rootId: 77, isTarget: false }),
         ],
       });
-      const { getByTestId } = render(<ReviewContextSentence example={example} />);
+      const { queryByTestId } = render(<ReviewContextSentence example={example} />);
 
-      expect(chipColor(getByTestId('example-word-1'))).toBeDefined();
-      expect(chipColor(getByTestId('example-word-2'))).toBeUndefined();
+      expect(underlineColor(queryByTestId, 1)).toBeDefined();
+      expect(underlineColor(queryByTestId, 2)).toBeUndefined();
     });
 
-    test('marks the word with a background, never with a text colour', () => {
-      const { getByTestId, getAllByText } = render(
+    test('marks the word with an underline, never with a text colour', () => {
+      const { queryByTestId, getAllByText } = render(
         <ReviewContextSentence example={makeExample()} />,
       );
 
-      // The chip is on the wrapper…
-      expect(chipColor(getByTestId('example-word-2'))).toBeDefined();
+      // The underline is a sibling of the word's text…
+      expect(underlineColor(queryByTestId, 2)).toBeDefined();
       // …and the word's own segments keep their grammar colours, which is what
       // makes the two channels readable at once.
       expect(someNodeIsColored(getAllByText('ال'), DEFINITE_ARTICLE)).toBe(true);
