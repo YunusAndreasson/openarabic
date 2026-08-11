@@ -40,10 +40,10 @@ const CARD_CONSTANTS = {
   /** Degrees of tilt at the commit threshold — enough to read as a thrown card. */
   MAX_TILT_DEG: 7,
   /**
-   * Verdict ring thickness. Twice the card's own border so it reads as the edge
-   * lighting up rather than the border merely changing colour — at
-   * BORDER.WIDTH.NORMAL the recolour was invisible against cardBorder in dark
-   * mode.
+   * Verdict ring thickness. The card has no resting border to recolour, so the
+   * ring has to read as its own edge-lighting-up event on a plain face —
+   * BORDER.WIDTH.FOCUSED (2), the app's standard emphasis width, rather than
+   * NORMAL (1), which read as too faint an edge to register as a flash.
    */
   VERDICT_RING_WIDTH: 2,
   /**
@@ -51,9 +51,9 @@ const CARD_CONSTANTS = {
    * edge-on and paints as a bright vertical line down its own centre.
    *
    * At 90° the projected width of a rotateY'd view is zero, but a view is still
-   * rasterized at a minimum of about a pixel, so the card's opaque fill and its
-   * two 1pt borders collapse into one hairline at full brightness against the
-   * page. That line is the artifact; there is no element drawing it, and
+   * rasterized at a minimum of about a pixel, so the card's opaque fill
+   * collapses into one hairline at full brightness against the page. That
+   * line is the artifact; there is no element drawing it, and
    * `backfaceVisibility` cannot help because the near face is legitimately
    * still the near face right up to 90°.
    *
@@ -165,7 +165,10 @@ const STATIC_STYLES = StyleSheet.create({
     // a one-off that made this the only card/button pair in the app whose
     // corners didn't match.
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
+    // No resting border. BaseCard, TodayCard, ArticleCard and PlaylistItemCard
+    // all separate from the page with a flat elevation step (+4% L) and a
+    // shadow, no stroke — see surfaceStyle below. A border was the other half
+    // of this card's one-off chrome, alongside the LARGE radius above.
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     paddingTop: LAYOUT.SPACING.LARGE,
     paddingBottom: LAYOUT.SPACING.LARGE,
@@ -473,19 +476,23 @@ export function ReviewFlipCard({
     return { opacity: seamMask(flipProgress.get()) };
   });
 
-  // In dark mode getThemeAwareElevation zeroes shadowOpacity by design, so the
-  // card cannot rely on a shadow to separate from the background there — it
-  // steps up to elevation2 instead, which is what the rest of the app does.
+  // In dark mode getThemeAwareElevation zeroes shadowOpacity by design, same
+  // as it does for BaseCard. BaseCard doesn't compensate with a border or a
+  // step up to elevation2 either — `colors.card` is already +4% L above the
+  // page background (sage.dark vs. sage.darkest), which is the app's actual
+  // separation mechanism everywhere else (BaseCard, ArticleCard,
+  // PlaylistItemCard). Stepping up to elevation2 and adding a border on top
+  // was doing that job twice, and made this the only card in the app with
+  // either a stroke or a background a full level lighter than plain `card`.
   const surfaceStyle = useMemo(
     () => [
       {
-        backgroundColor: isDarkMode ? colors.elevation2 : colors.card,
-        borderColor: colors.cardBorder,
+        backgroundColor: colors.card,
         shadowColor: colors.shadow,
       },
       getThemeAwareElevation('CARD', isDarkMode),
     ],
-    [colors.card, colors.cardBorder, colors.shadow, colors.elevation2, isDarkMode],
+    [colors.card, colors.shadow, isDarkMode],
   );
 
   // Recentre for the new card. cancelAnimation first: the committed card is
