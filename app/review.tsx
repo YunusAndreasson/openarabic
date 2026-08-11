@@ -546,15 +546,17 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
               // card and "Show answer" below it — two invitations, two shapes,
               // two places, and no way to see them as alternatives.
               //
-              // Two peers now: same height, one line of text each, no glyphs.
-              // Shape now carries the hierarchy the tint used to carry alone —
-              // the voice CTA is the filled capsule, "Show answer" the quieter
-              // fallback beside it — so the pair reads as "the exercise, and the
-              // way out of it" rather than two equal buttons in different
-              // colours. There is no line of copy above them either — the pair
-              // is the whole instruction, and everything that used to be written
-              // here ("Tap when you're done") was explaining a control that can
-              // show it instead.
+              // Two peers now: same height, same shape, one line of text each,
+              // no glyphs. Fill now carries the hierarchy the tint used to
+              // carry alone — the voice CTA goes solid, "Show answer" stays
+              // the quieter tinted fallback beside it — so the pair reads as
+              // "the exercise, and the way out of it" rather than two equally
+              // muted buttons in different colours. The shape stays shared
+              // between the two; only "Show answer" alone (voice off) takes
+              // the app's standalone pill shape. There is no line of copy
+              // above them either — the pair is the whole instruction, and
+              // everything that used to be written here ("Tap when you're
+              // done") was explaining a control that can show it instead.
               <Animated.View
                 key="reveal"
                 entering={ACTION_ENTERING}

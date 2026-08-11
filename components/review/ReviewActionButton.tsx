@@ -42,8 +42,12 @@ const STATIC_STYLES = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.SMALL,
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
   },
-  // The app's standalone-CTA shape (see PinnedActionButton), applied only to
-  // the `primary` variant.
+  // The app's standalone-CTA shape (see PinnedActionButton) — a `primary`
+  // button takes this only when it has no peer. Two buttons sharing a row
+  // must share a corner radius too: a pill next to a rounded rect reads as
+  // two unrelated controls, not as one control's louder and quieter states.
+  // The fill (solid tint vs. tinted chip) is what carries the hierarchy;
+  // shape stays constant across the row.
   capsule: {
     borderRadius: LAYOUT.BORDER_RADIUS.PILL,
   },
@@ -70,11 +74,18 @@ interface ReviewActionButtonProps {
   /**
    * `tinted` (default) is a peer in a row of outcomes.
    *
-   * `primary` is the app's filled-tint capsule — the one loud action in the
-   * band, whether it is alone or leading a single quieter fallback. See the
-   * note on solid fills below for where it may and may not appear.
+   * `primary` is the loud, solid-fill treatment — the one action in the band
+   * that's asking to be tapped. See the note on solid fills below for where
+   * it may and may not appear.
    */
   variant?: 'tinted' | 'primary';
+  /**
+   * Only meaningful on a `primary` button. `true` (default) takes the app's
+   * standalone-CTA pill shape — valid when this button is the row's only
+   * occupant. Pass `false` when a `primary` button has a `tinted` peer, so
+   * both keep the row's shared rounded-rect shape and differ by fill alone.
+   */
+  standalone?: boolean;
   disabled?: boolean;
   /** Defaults to `label`; pass the long form when the label is abbreviated. */
   accessibilityLabel?: string;
@@ -112,18 +123,26 @@ interface ReviewActionButtonProps {
  * exercise; revealing is the way out of it), or "Show answer" alone once voice
  * is off and there is no CTA to defer to. The one not carrying `primary` stays
  * `tinted`, neutral against it rather than competing with it.
+ *
+ * The voice CTA passes `standalone={false}`: it has a `tinted` peer, so the
+ * capsule shape is reserved for "Show answer" alone. Loudness there comes
+ * entirely from the fill going solid, not from also changing the corner
+ * radius underneath it — two shapes in one row would read as two different
+ * controls rather than one control's louder and quieter states.
  */
 export const ReviewActionButton: FC<ReviewActionButtonProps> = ({
   label,
   color,
   sublabel,
   variant = 'tinted',
+  standalone = true,
   disabled = false,
   accessibilityLabel,
   onPress,
 }) => {
   const colors = useColors();
   const isPrimary = variant === 'primary';
+  const isCapsule = isPrimary && standalone;
 
   // Filled variant mirrors ThemedButton's `filled` tokens so the review screen's
   // CTA is the same button the rest of the app uses, not a lookalike.
@@ -158,7 +177,7 @@ export const ReviewActionButton: FC<ReviewActionButtonProps> = ({
       // an eyeblink is responsible for showing it (see VoiceAnswerButton).
       style={({ pressed }) => [
         STATIC_STYLES.button,
-        isPrimary && STATIC_STYLES.capsule,
+        isCapsule && STATIC_STYLES.capsule,
         { backgroundColor: pressed ? pressedBg : restBg, borderColor },
         // A filled surface has no headroom for a deeper fill on press, so the
         // capsule dims instead — the same press idiom as the card's own
