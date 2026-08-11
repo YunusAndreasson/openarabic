@@ -15,7 +15,6 @@ import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reani
 
 import { ThemedText } from '@/components/ThemedText';
 
-import { Dot } from '@/components/common';
 import { SortMeter } from '@/components/practice/SortMeter';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -25,7 +24,7 @@ import type { StudyWord } from '@/types/vocabulary.types';
 import { getSortMeterFraction } from '@/utils/dictionaryMeter';
 import { getHorizonAccessibilityLabel, getMemoryHorizonDays } from '@/utils/memoryHorizon';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
-import { DIFFICULTY_COLORS, DIFFICULTY_LABELS, getWordDifficultyLevel } from '@/utils/urgencyScore';
+import { DIFFICULTY_LABELS, getWordDifficultyLevel } from '@/utils/urgencyScore';
 
 const CHEVRON_SIZE = 14;
 
@@ -107,22 +106,24 @@ interface DictionaryWordRowProps {
 }
 
 /**
- * One word in the dictionary index — a difficulty dot, the Arabic, then the
- * meaning trailing, split from its neighbours by the list's hairline separator.
+ * One word in the dictionary index — the Arabic, then the meaning trailing, then
+ * a meter, split from its neighbours by the list's hairline separator.
  *
  * Deliberately flat: an index of hundreds of words should read as a list, not
  * as a stack of elevated cards.
  *
- * The dot sits in a fixed-width leading column so it forms one vertical axis to
- * scan. Its level, label and color come from `getWordDifficultyLevel` — the same
- * source the word detail screen's Difficulty stat uses, so the two surfaces
- * can't drift apart. It stays fixed to difficulty under every sort, which keeps
- * a second dimension on screen while the meter tracks the first.
+ * **Exactly one magnitude per row, and the sort control names it.** The meter
+ * draws whatever the list is sorted by (see `getSortMeterFraction`), so the
+ * control directly above the list is its label.
  *
- * The trailing meter draws whatever the list is sorted by — see
- * `getSortMeterFraction`. It was previously pinned to the memory horizon, but
- * nothing on the screen ever named it, so under two of the three sorts it read
- * as an unexplained magnitude next to an order it had nothing to do with.
+ * A difficulty dot used to lead the row as a second, fixed signal. It was
+ * removed once the meter became sort-bound, because it was then redundant
+ * exactly where it was explained and unexplained everywhere else: under the
+ * Difficulty sort colour and length encoded the same variable, and under
+ * Strength and Recent it showed a quantity unrelated to the order with nothing
+ * on screen naming it. Its original job — "sorting by Difficulty produces a
+ * legible red-to-green column" — is now the meter's under that sort. Two
+ * competing magnitudes where only one is labelled is worse than one that is.
  */
 export const DictionaryWordRow = memo<DictionaryWordRowProps>(
   ({ word, sortField, nowMs, onPress, onRemove, onResetProgress }) => {
@@ -215,12 +216,14 @@ export const DictionaryWordRow = memo<DictionaryWordRowProps>(
           onPress={handlePress}
           android_ripple={rippleConfig}
           style={pressableStyle}
-          // The dot is color-only and the meter is length-only, so both are
-          // spelled out here — screen reader users, and anyone who can't
-          // separate the hues, get the same two readings everyone else does.
+          // Deliberately still both readings, though only one is now drawn: the
+          // meter is length-only, and difficulty and horizon are true of the
+          // word whichever the sort happens to show. Trimming this to match the
+          // visual would take information away from screen reader users to make
+          // them equal with everyone else. (Age, under the Recent sort, is the
+          // one drawn value not spoken — it says nothing about the word itself.)
           accessibilityLabel={`${arabicText}, ${englishText}, ${difficultyLabel}, ${getHorizonAccessibilityLabel(horizonDays)}`}
         >
-          <Dot color={colors[DIFFICULTY_COLORS[difficultyLevel]]} />
           <ThemedText type="arabicCompact" align="left" numberOfLines={1} style={styles.arabicText}>
             {arabicText}
           </ThemedText>
