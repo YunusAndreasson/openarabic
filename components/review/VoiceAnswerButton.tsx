@@ -1,6 +1,10 @@
 /**
  * The voice half of the card's action row: "Tap to answer" on the right,
- * "Show answer" on the left, one line of text each, the same size and shape.
+ * "Show answer" on the left, one line of text each. The two used to be the
+ * same shape, differing only by tint; now this one takes the filled capsule —
+ * the row's one loud action — while "Show answer" stays a quiet, neutral chip
+ * beside it. See ReviewActionButton on why that split is safe here (it is not
+ * an outcome row) where it would not be on the grade bar or voice-result row.
  *
  * This button used to be the whole voice channel — a mic glyph that grew into a
  * live meter above a label that cycled through seven strings ("Preparing
@@ -130,6 +134,7 @@ export const VoiceAnswerButton: FC<VoiceAnswerButtonProps> = ({
         label={isLive ? STRINGS.VOICE_DONE_SPEAKING : STRINGS.VOICE_TAP_TO_ANSWER}
         accessibilityLabel={isLive ? STRINGS.VOICE_DONE_SPEAKING : STRINGS.VOICE_CHANNEL_LABEL}
         color={colors.tint}
+        variant="primary"
         disabled={standDown}
         onPress={handlePress}
       />

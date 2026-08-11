@@ -70,8 +70,9 @@ interface ReviewActionButtonProps {
   /**
    * `tinted` (default) is a peer in a row of outcomes.
    *
-   * `primary` is the app's filled-tint capsule, and is only valid for a button
-   * that is ALONE in the band — see the note on solid fills below.
+   * `primary` is the app's filled-tint capsule — the one loud action in the
+   * band, whether it is alone or leading a single quieter fallback. See the
+   * note on solid fills below for where it may and may not appear.
    */
   variant?: 'tinted' | 'primary';
   disabled?: boolean;
@@ -94,21 +95,23 @@ interface ReviewActionButtonProps {
  * the voice button two rows tall beside a one-row "Show answer" so the pair
  * never read as alternatives.
  *
- * On solid fills, and why `primary` is not a reversal of that:
+ * On solid fills, and where `primary` may and may not appear:
  *
  * A solid fill was once used to nudge the likeliest choice after a voice miss,
  * and it turned whichever button it landed on into a block of flat colour that
- * out-shouted the two real outcomes either side of it. That still holds, and it
- * is a rule about a button WITH PEERS: a row of outcomes must stay a row of
+ * out-shouted the two real outcomes either side of it. That still holds for any
+ * row of OUTCOMES: the grade bar and the voice-result row must stay rows of
  * peers, because a louder option biases self-grading and self-grading is the
- * input to FSRS. `primary` is therefore invalid on any member of a multi-button
- * row — the grade bar and the voice-miss row must never pass it.
+ * input to FSRS. `primary` is invalid on every member of those two rows,
+ * without exception.
  *
- * It exists for the one state where the band holds a single button: "Show
- * answer" with voice off. There, neutrality was against nothing. The screen's
- * only action was a grey ghost while every other screen-level CTA in the app is
- * a filled tint capsule, so the review screen read as flat and unfinished. With
- * voice on the button has a peer again and reverts to `tinted`.
+ * The reveal row is not an outcome row — "Show answer" and the voice CTA are
+ * two ways to do the same thing, not two judgements of what already happened —
+ * so nudging there costs FSRS nothing. `primary` marks whichever of the two is
+ * this screen's invitation: the voice CTA when a mic is offered (this is the
+ * exercise; revealing is the way out of it), or "Show answer" alone once voice
+ * is off and there is no CTA to defer to. The one not carrying `primary` stays
+ * `tinted`, neutral against it rather than competing with it.
  */
 export const ReviewActionButton: FC<ReviewActionButtonProps> = ({
   label,

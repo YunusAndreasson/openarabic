@@ -546,8 +546,12 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
               // card and "Show answer" below it — two invitations, two shapes,
               // two places, and no way to see them as alternatives.
               //
-              // Two peers now: same height, same shape, one line of text each,
-              // no glyphs. There is no line of copy above them either — the pair
+              // Two peers now: same height, one line of text each, no glyphs.
+              // Shape now carries the hierarchy the tint used to carry alone —
+              // the voice CTA is the filled capsule, "Show answer" the quieter
+              // fallback beside it — so the pair reads as "the exercise, and the
+              // way out of it" rather than two equal buttons in different
+              // colours. There is no line of copy above them either — the pair
               // is the whole instruction, and everything that used to be written
               // here ("Tap when you're done") was explaining a control that can
               // show it instead.
@@ -561,13 +565,15 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
                   <ReviewActionButton
                     label={STRINGS.SHOW_ANSWER}
                     // Neutral against the mic's tint: when voice is on, speaking
-                    // is the exercise and revealing is the way out of it.
+                    // is the exercise and revealing is the way out of it, so the
+                    // voice CTA carries `primary` instead (see VoiceAnswerButton)
+                    // and this one stays a quiet `tinted` chip beside it.
                     //
-                    // With voice off there is no mic to be neutral against, and
-                    // the band holds this button alone — so it takes the app's
-                    // standalone-CTA shape instead of sitting there as a grey
-                    // ghost. See ReviewActionButton on why a filled variant is
-                    // only ever valid for a button without peers.
+                    // With voice off there is no mic to defer to, and the band
+                    // holds this button alone — so it takes the app's
+                    // standalone-CTA shape itself rather than sitting there as a
+                    // grey ghost. See ReviewActionButton on where `primary` may
+                    // and may not appear.
                     color={colors.secondaryText}
                     variant={voiceMode ? 'tinted' : 'primary'}
                     disabled={isUpdating}
