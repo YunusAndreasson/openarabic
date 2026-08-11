@@ -1,7 +1,7 @@
-import { FlashList, type FlashListRef } from '@shopify/flash-list';
+import { FlashList } from '@shopify/flash-list';
 import { Stack, useRouter } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -90,18 +90,23 @@ export default function DictionaryScreen(): JSX.Element {
 
   const [isScopePickerVisible, setScopePickerVisible] = useState(false);
 
-  const listRef = useRef<FlashListRef<StudyWord>>(null);
-
-  // Re-sorting mid-list would otherwise leave you stranded somewhere in the
-  // middle (maintainVisibleContentPosition anchors by key), with no sign that
-  // anything happened. Jump to the top so the new order is what you see.
-  const handleSelectField = useCallback(
-    (field: Parameters<typeof selectSortField>[0]) => {
-      selectSortField(field);
-      listRef.current?.scrollToOffset({ offset: 0, animated: true });
-    },
-    [selectSortField],
-  );
+  // No jump to the top on re-sort any more.
+  //
+  // That call was written when the sort bar was pinned above the list and could
+  // be tapped from anywhere in it, where re-sorting really did strand you
+  // mid-list. The bar now rides inside the list, so it is only reachable from
+  // the top and there is nothing to jump back from.
+  //
+  // Keeping it was actively wrong on iOS. This screen's search bar makes UIKit
+  // lay the content out under the bars and compensate through the scroll view's
+  // inset, so the list's RESTING offset is negative — `-adjustedContentInset.top`
+  // — and `offset: 0` is that far BELOW the top. Tapping a heading slid the whole
+  // table up and hid the header and first row behind the navigation bar. Android
+  // has no such inset, so offset 0 was already the top and it never showed there.
+  //
+  // `scrollToTop()` is not a fix: FlashList implements it as
+  // `scrollToOffset({ offset: 0 })`, the identical call.
+  const handleSelectField = selectSortField;
 
   const hasWords = words.length > 0;
 
@@ -145,9 +150,11 @@ export default function DictionaryScreen(): JSX.Element {
     (nextScope: DictionaryScope) => {
       setScope(nextScope);
       setScopePickerVisible(false);
-      // Same reason changing the sort scrolls to the top: the list you are
-      // looking at is no longer the list you were looking at.
-      listRef.current?.scrollToOffset({ offset: 0, animated: false });
+      // Dropped the jump to the top here for the same two reasons as the sort
+      // handler above: the control that opens this picker rides in the list
+      // header, so you are already at the top, and `offset: 0` is not the top on
+      // iOS. This one passed `animated: false`, so the table snapped upward
+      // instantly rather than gliding.
     },
     [setScope],
   );
@@ -332,7 +339,6 @@ export default function DictionaryScreen(): JSX.Element {
       ) : (
         <View style={styles.contentContainer}>
           <FlashList
-            ref={listRef}
             data={words}
             renderItem={renderItem}
             keyExtractor={keyExtractor}
