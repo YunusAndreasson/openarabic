@@ -36,21 +36,33 @@ export function calculateWordPriority(word: StudyWord, nowMs: number = Date.now(
 }
 
 /**
- * Top-priority slice of the due backlog for one review session. Lower
- * calculateWordPriority = more urgent (min-heap semantics), so sort ascending
- * and take the first chunkSize. Returns the input unchanged when it fits.
+ * Split a due backlog into the next working set and everything still waiting.
+ *
+ * Lower calculateWordPriority = more urgent (min-heap semantics), so sort
+ * ascending and take the first chunkSize. `rest` is the tail in the same
+ * priority order, so a later call can partition it again without re-deciding
+ * anything: the session refills straight from the front of what is left.
+ *
+ * Returning both halves matters. The session used to take a chunk and drop the
+ * remainder on the floor (it was a hard cap, and the leftovers only ever became
+ * a number on the completion screen). Now that the session drains the whole
+ * backlog, the remainder has to survive — and recovering it by filtering the
+ * original array against the served slice would be quadratic over a session and
+ * would key on object identity, which nothing else here relies on.
  */
-export function selectSessionChunk(
+export function partitionSessionChunk(
   words: StudyWord[],
   chunkSize: number,
   nowMs: number = Date.now(),
-): StudyWord[] {
-  if (words.length <= chunkSize) return words;
-  return words
+): { chunk: StudyWord[]; rest: StudyWord[] } {
+  if (words.length <= chunkSize) return { chunk: words, rest: [] };
+
+  const ordered = words
     .map(word => ({ word, priority: calculateWordPriority(word, nowMs) }))
     .sort((a, b) => a.priority - b.priority)
-    .slice(0, chunkSize)
     .map(entry => entry.word);
+
+  return { chunk: ordered.slice(0, chunkSize), rest: ordered.slice(chunkSize) };
 }
 
 export function getNextWordWithSpacing(

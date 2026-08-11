@@ -57,9 +57,11 @@ export interface UseFSRSResult {
   wordQueue: StudyWord[];
   isLoading: boolean;
   isComplete: boolean;
+  /**
+   * 0–100 across the WHOLE backlog the session started with, not the current
+   * working chunk — the session refills itself until everything is done.
+   */
   progress: number;
-  /** Due words beyond the current session chunk ("Review N more" affordance). */
-  remainingDueCount: number;
   updateWord: (rootId: RootId, confidence: WordConfidence) => Promise<number | undefined>;
   /**
    * Per-grade interval preview ("10m"/"4d") for a card, keyed by WordConfidence.

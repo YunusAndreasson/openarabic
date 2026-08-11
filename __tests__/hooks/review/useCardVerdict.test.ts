@@ -48,12 +48,16 @@ jest.mock('react-native-worklets', () => ({
 
 jest.mock('@/utils/haptics', () => ({
   commitFeedback: jest.fn(),
+  lightFeedback: jest.fn(),
+  // Not used by any verdict any more, and mocked precisely so the test below
+  // can prove that.
   selectionFeedback: jest.fn(),
   errorFeedback: jest.fn(),
 }));
 
 const haptics = jest.requireMock('@/utils/haptics') as {
   commitFeedback: jest.Mock;
+  lightFeedback: jest.Mock;
   selectionFeedback: jest.Mock;
   errorFeedback: jest.Mock;
 };
@@ -77,14 +81,25 @@ describe('fireVerdictFeedback', () => {
   test('weights each outcome differently', () => {
     fireVerdictFeedback(VERDICT_TONE.CORRECT);
     expect(haptics.commitFeedback).toHaveBeenCalledTimes(1);
-    expect(haptics.selectionFeedback).not.toHaveBeenCalled();
+    expect(haptics.lightFeedback).not.toHaveBeenCalled();
     expect(haptics.errorFeedback).not.toHaveBeenCalled();
 
     fireVerdictFeedback(VERDICT_TONE.ALMOST);
-    expect(haptics.selectionFeedback).toHaveBeenCalledTimes(1);
+    expect(haptics.lightFeedback).toHaveBeenCalledTimes(1);
 
     fireVerdictFeedback(VERDICT_TONE.WRONG);
     expect(haptics.errorFeedback).toHaveBeenCalledTimes(1);
+  });
+
+  // Selection is tier 0 in utils/haptics — what every press in the session now
+  // fires. An outcome that used it would feel exactly like tapping Continue,
+  // which is the inversion this ladder exists to prevent.
+  test('no outcome uses the tier-0 press texture', () => {
+    fireVerdictFeedback(VERDICT_TONE.CORRECT);
+    fireVerdictFeedback(VERDICT_TONE.ALMOST);
+    fireVerdictFeedback(VERDICT_TONE.WRONG);
+
+    expect(haptics.selectionFeedback).not.toHaveBeenCalled();
   });
 
   // The reaction reads the tone off a shared value, so it can be called with
@@ -93,6 +108,7 @@ describe('fireVerdictFeedback', () => {
     fireVerdictFeedback(VERDICT_TONE.NONE);
 
     expect(haptics.commitFeedback).not.toHaveBeenCalled();
+    expect(haptics.lightFeedback).not.toHaveBeenCalled();
     expect(haptics.selectionFeedback).not.toHaveBeenCalled();
     expect(haptics.errorFeedback).not.toHaveBeenCalled();
   });
@@ -104,7 +120,7 @@ describe('useCardVerdict', () => {
 
     expect(result.current.verdictTone.get()).toBe(VERDICT_TONE.NONE);
     expect(result.current.verdictLevel.get()).toBe(0);
-    expect(result.current.verdictShake.get()).toBe(0);
+    expect(result.current.verdictShakePhase.get()).toBe(0);
   });
 
   test('a grade sets its tone', () => {
@@ -138,9 +154,23 @@ describe('useCardVerdict', () => {
     expect(result.current.verdictLevel.get()).toBe(VERDICT.RESIDUAL);
   });
 
-  // No test for the shake's amplitude: it ends where it started, so under a
-  // mock that collapses a sequence to its last frame both a miss and a pass
-  // read 0 and the assertion would pass without proving anything.
+  // The wince used to be a withSequence between fixed offsets that ended where
+  // it started, so under a mock that collapses a sequence to its last frame a
+  // miss and a pass both read 0 and there was nothing to assert. As a 0 → 1
+  // phase there is: the mock collapses the timing to its target, so a miss rests
+  // at 1 (a fully spent wobble) and everything else at 0 (never started).
+  test('only a miss runs the wince', () => {
+    const { result } = renderHook(() => useCardVerdict());
+
+    act(() => result.current.playVerdict('unknown'));
+    expect(result.current.verdictShakePhase.get()).toBe(1);
+
+    act(() => result.current.playVerdict('known'));
+    expect(result.current.verdictShakePhase.get()).toBe(0);
+
+    act(() => result.current.playVerdict('vague'));
+    expect(result.current.verdictShakePhase.get()).toBe(0);
+  });
 
   // The voice path marks a mishear wrong the moment it is heard, and "No, I
   // missed it" then grades the same outcome. Replaying would shake a card that
@@ -187,6 +217,6 @@ describe('useCardVerdict', () => {
 
     expect(result.current.verdictTone.get()).toBe(VERDICT_TONE.NONE);
     expect(result.current.verdictLevel.get()).toBe(0);
-    expect(result.current.verdictShake.get()).toBe(0);
+    expect(result.current.verdictShakePhase.get()).toBe(0);
   });
 });

@@ -18,7 +18,7 @@ import {
   calculateWordPriority,
   createSpacingState,
   getNextWordWithSpacing,
-  selectSessionChunk,
+  partitionSessionChunk,
   type SpacingState,
   updateSpacingCounters,
 } from '@/utils/fsrsSpacing';
@@ -523,7 +523,7 @@ describe('fsrsSpacing', () => {
     });
   });
 
-  describe('selectSessionChunk', () => {
+  describe('partitionSessionChunk', () => {
     const nowMs = Date.now();
 
     // A barely-due, stable word — the filler the urgent ones must beat.
@@ -536,16 +536,44 @@ describe('fsrsSpacing', () => {
         fsrs_lapses: 0,
       });
 
-    test('returns the input unchanged when it fits the chunk', () => {
+    test('returns the input unchanged, and an empty rest, when it fits the chunk', () => {
       const words = [fillerWord(1), fillerWord(2)];
-      expect(selectSessionChunk(words, 5, nowMs)).toBe(words);
-      expect(selectSessionChunk(words, 2, nowMs)).toBe(words);
-      expect(selectSessionChunk([], 5, nowMs)).toEqual([]);
+      expect(partitionSessionChunk(words, 5, nowMs)).toEqual({ chunk: words, rest: [] });
+      expect(partitionSessionChunk(words, 2, nowMs)).toEqual({ chunk: words, rest: [] });
+      expect(partitionSessionChunk([], 5, nowMs)).toEqual({ chunk: [], rest: [] });
     });
 
-    test('returns exactly chunkSize words when over', () => {
+    test('returns exactly chunkSize words when over, and the remainder as rest', () => {
       const words = Array.from({ length: 30 }, (_, i) => fillerWord(i + 1));
-      expect(selectSessionChunk(words, 20, nowMs)).toHaveLength(20);
+      const { chunk, rest } = partitionSessionChunk(words, 20, nowMs);
+      expect(chunk).toHaveLength(20);
+      expect(rest).toHaveLength(10);
+    });
+
+    // The session refills from `rest`, so nothing may be lost or duplicated
+    // between the two halves — a word that fell out of both would never be
+    // reviewed, and the session would never reach completion.
+    test('chunk and rest together are exactly the input, with no overlap', () => {
+      const words = Array.from({ length: 47 }, (_, i) => fillerWord(i + 1));
+      const { chunk, rest } = partitionSessionChunk(words, 20, nowMs);
+      const ids = [...chunk, ...rest].map(w => w.root_id).sort((a, b) => a - b);
+      expect(ids).toEqual(words.map(w => w.root_id).sort((a, b) => a - b));
+      expect(new Set(ids).size).toBe(words.length);
+    });
+
+    // Refilling partitions `rest` again, so it has to already be in priority
+    // order or the second chunk would be an arbitrary slice.
+    test('rest stays in priority order, so a refill can partition it again', () => {
+      const words = Array.from({ length: 30 }, (_, i) =>
+        createTestWord({
+          root_id: (i + 1) as StudyWord['root_id'],
+          fsrs_due: new Date(nowMs - i * 3600 * 1000).toISOString(),
+          fsrs_stability: 10,
+        }),
+      );
+      const { rest } = partitionSessionChunk(words, 10, nowMs);
+      const second = partitionSessionChunk(rest, 10, nowMs);
+      expect(second.chunk).toEqual(rest.slice(0, 10));
     });
 
     test('keeps the most urgent words: overdue and hard beat barely-due stable', () => {
@@ -564,7 +592,7 @@ describe('fsrsSpacing', () => {
       });
       const fillers = Array.from({ length: 10 }, (_, i) => fillerWord(i + 1));
 
-      const chunk = selectSessionChunk([...fillers, overdue, hard], 5, nowMs);
+      const { chunk } = partitionSessionChunk([...fillers, overdue, hard], 5, nowMs);
       const ids = chunk.map(w => w.root_id);
 
       expect(ids).toContain(100);
@@ -580,8 +608,8 @@ describe('fsrsSpacing', () => {
           fsrs_stability: (i % 10) + 1,
         }),
       );
-      const first = selectSessionChunk(words, 10, nowMs).map(w => w.root_id);
-      const second = selectSessionChunk(words, 10, nowMs).map(w => w.root_id);
+      const first = partitionSessionChunk(words, 10, nowMs).chunk.map(w => w.root_id);
+      const second = partitionSessionChunk(words, 10, nowMs).chunk.map(w => w.root_id);
       expect(first).toEqual(second);
     });
   });

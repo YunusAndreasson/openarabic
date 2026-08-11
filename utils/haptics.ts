@@ -13,6 +13,45 @@ import { store } from '@/store/store';
  * impactAsync/notificationAsync path there (it's simulated through the legacy
  * Vibrator API), while performAndroidHapticsAsync drives the device's haptics
  * engine with semantic HapticFeedbackConstants and needs no VIBRATE permission.
+ *
+ * ---
+ *
+ * THE LADDER
+ *
+ * These functions have been reassigned three times now, each pass fixing one
+ * call site and leaving the ordering to chance, so the ordering is written down
+ * here. One rule holds it together:
+ *
+ *   **No press may ever outweigh an outcome.**
+ *
+ * A press is the user asking; an outcome is the app answering. When a button
+ * buzzes harder than the grade it leads to — which is what the review session
+ * did, revealing on Light and grading "Guessed" on Selection — every tap feels
+ * consequential and no result feels like a result.
+ *
+ *   tier 0  acknowledge      selectionFeedback   the faintest thing available.
+ *                                                Any press that only moves the
+ *                                                UI: reveal, continue, close,
+ *                                                toggles, retry.
+ *   tier 1  outcome, soft    lightFeedback       a real result, lightly held —
+ *                                                "Guessed". Also the mic going
+ *                                                live, which is the app saying
+ *                                                "go" rather than "heard you".
+ *   tier 2  outcome, firm    commitFeedback      a decision now fact — a card
+ *                                                recalled cleanly.
+ *   tier 3  outcome, adverse errorFeedback       scored against the user — a
+ *                                                miss.
+ *   —       app's fault      warningFeedback     not the user's outcome at all:
+ *                                                dead mic, silent prompt.
+ *   —       session scale    successFeedback     rare by construction. One per
+ *                                                completed session.
+ *
+ * `detentFeedback` sits outside the ladder: it is continuous-gesture feedback
+ * fired while a finger is still down, and its three tones say WHICH WAY rather
+ * than HOW MUCH.
+ *
+ * Adding a haptic to a control? Start at tier 0 and only climb if you can say
+ * what outcome it reports.
  */
 
 /** Minimum time between two firings of the SAME haptic pattern. */

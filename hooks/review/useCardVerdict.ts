@@ -12,7 +12,7 @@ import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 
 import { VERDICT } from '@/constants/animation';
 import type { WordConfidence } from '@/types/review.types';
-import { commitFeedback, errorFeedback, selectionFeedback } from '@/utils/haptics';
+import { commitFeedback, errorFeedback, lightFeedback } from '@/utils/haptics';
 
 /**
  * Which verdict the card is showing, as a number the UI thread can read.
@@ -46,17 +46,24 @@ export const resolveVerdictTone = (confidence: WordConfidence): VerdictTone =>
   TONE_FOR_CONFIDENCE[confidence];
 
 /**
- * The outcome haptic, one per tone.
+ * The outcome haptic, one per tone. Tiers 1–3 of the ladder in utils/haptics.
  *
  * Weighted the same way the rest of the session already weights its feedback: a
  * miss is heavier than a clean recall. `commitFeedback` rather than
  * `successFeedback` for a correct card — see utils/haptics for why a two-tap
  * notification texture is the wrong weight for something that fires nine times
  * in ten.
+ *
+ * ALMOST is `lightFeedback`, NOT `selectionFeedback`. Selection is tier 0 — the
+ * texture every press in the session now uses to say "heard you, nothing has
+ * been decided". A grade is a decision, and the faintest tick in the app cannot
+ * be both the acknowledgement of a button and one of the three outcomes that
+ * feed FSRS. Light is the smallest step that keeps "Guessed" above a press
+ * without pretending it is as firm as a clean recall.
  */
 const TONE_FEEDBACK: Partial<Record<VerdictTone, () => void>> = {
   [VERDICT_TONE.CORRECT]: commitFeedback,
-  [VERDICT_TONE.ALMOST]: selectionFeedback,
+  [VERDICT_TONE.ALMOST]: lightFeedback,
   [VERDICT_TONE.WRONG]: errorFeedback,
 };
 
@@ -76,10 +83,18 @@ export const fireVerdictFeedback = (tone: number): void => {
 export interface CardVerdictResult {
   /** Which verdict is showing — read on the UI thread to pick a colour. */
   verdictTone: SharedValue<number>;
-  /** 0..1 strength. Drives the ring's opacity, the wash, and the pop. */
+  /** 0..1 strength. Drives the ring's opacity, the wash, the pop and the wince. */
   verdictLevel: SharedValue<number>;
-  /** Horizontal offset in points for the miss shake. Zero for every other tone. */
-  verdictShake: SharedValue<number>;
+  /**
+   * 0..1 phase of the miss wobble — NOT an offset in points.
+   *
+   * The consumer shapes it (`AMPLITUDE · e^(−DAMPING·p) · sin(2π·CYCLES·p)`),
+   * which is what lets one linear driver produce both the translation and the
+   * counter-rotation from the same envelope. Stays at 0 for every other tone,
+   * and 0 is the resting value in the shaped form too — `sin(0) = 0` — so a
+   * reset needs no special case.
+   */
+  verdictShakePhase: SharedValue<number>;
   /** Play the verdict for a grade that has just been committed. */
   playVerdict: (confidence: WordConfidence) => void;
   /** Clear the verdict — call when the card changes. */
@@ -104,7 +119,7 @@ export interface CardVerdictResult {
 export const useCardVerdict = (): CardVerdictResult => {
   const verdictTone = useSharedValue<number>(VERDICT_TONE.NONE);
   const verdictLevel = useSharedValue(0);
-  const verdictShake = useSharedValue(0);
+  const verdictShakePhase = useSharedValue(0);
 
   /**
    * The outcome haptic, fired on the frame the verdict crosses most of its
@@ -143,7 +158,7 @@ export const useCardVerdict = (): CardVerdictResult => {
       }
 
       cancelAnimation(verdictLevel);
-      cancelAnimation(verdictShake);
+      cancelAnimation(verdictShakePhase);
       // Ignite from zero, always. The haptic hangs off a RISING crossing of
       // HAPTIC_AT, so a verdict starting from a level already above it would
       // animate and stay silent. Cancelling leaves the value wherever it was,
@@ -159,27 +174,23 @@ export const useCardVerdict = (): CardVerdictResult => {
         verdictLevel.set(
           withSequence(withTiming(1, VERDICT.IGNITE), withTiming(VERDICT.RESIDUAL, VERDICT.SETTLE)),
         );
-        // A wince, not a tantrum: three decaying beats and done. This rides its
-        // own shared value on its own layer rather than joining the drag's
-        // translateX, so a swipe-left shake composes with the spring home
-        // instead of fighting it for the same value.
-        const { AMPLITUDE, STEP } = VERDICT.SHAKE;
-        const step = { duration: STEP };
-        verdictShake.set(
-          withSequence(
-            withTiming(AMPLITUDE, step),
-            withTiming(-AMPLITUDE * 0.8, step),
-            withTiming(AMPLITUDE * 0.4, step),
-            withTiming(0, step),
-          ),
-        );
+        // A wince, not a tantrum. One linear sweep of the phase; the shape is
+        // the consumer's damped sine, so there are no reversal corners for the
+        // eye to catch on. This rides its own shared value on its own layer
+        // rather than joining the drag's translateX, so a swipe-left wince
+        // composes with the spring home instead of fighting it for the value.
+        //
+        // The sweep is linear (see VERDICT.SHAKE.SWEEP) — the envelope owns the
+        // deceleration, so easing the phase too would slow the first swing.
+        verdictShakePhase.set(0);
+        verdictShakePhase.set(withTiming(1, VERDICT.SHAKE.SWEEP));
         return;
       }
 
       // Correct and Almost both leave. Hold at full strength for the rest of
       // the beat, then release on CARD_EXIT's own duration so the verdict and
       // the card's departure land on the same frame.
-      verdictShake.set(0);
+      verdictShakePhase.set(0);
       verdictLevel.set(
         withSequence(
           withTiming(1, VERDICT.IGNITE),
@@ -190,7 +201,7 @@ export const useCardVerdict = (): CardVerdictResult => {
         ),
       );
     },
-    [verdictTone, verdictLevel, verdictShake],
+    [verdictTone, verdictLevel, verdictShakePhase],
   );
 
   const clearVerdict = useCallback(() => {
@@ -199,11 +210,11 @@ export const useCardVerdict = (): CardVerdictResult => {
     // invokes its completion callback, which is how this file's neighbours have
     // recursed before; cancelling first leaves nothing to re-enter.
     cancelAnimation(verdictLevel);
-    cancelAnimation(verdictShake);
+    cancelAnimation(verdictShakePhase);
     verdictLevel.set(0);
-    verdictShake.set(0);
+    verdictShakePhase.set(0);
     verdictTone.set(VERDICT_TONE.NONE);
-  }, [verdictTone, verdictLevel, verdictShake]);
+  }, [verdictTone, verdictLevel, verdictShakePhase]);
 
   const playVerdict = useCallback(
     (confidence: WordConfidence) => {
@@ -216,5 +227,5 @@ export const useCardVerdict = (): CardVerdictResult => {
     scheduleOnUI(clearVerdict);
   }, [clearVerdict]);
 
-  return { verdictTone, verdictLevel, verdictShake, playVerdict, resetVerdict };
+  return { verdictTone, verdictLevel, verdictShakePhase, playVerdict, resetVerdict };
 };

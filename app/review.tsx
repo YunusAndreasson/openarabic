@@ -177,8 +177,6 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     currentWord,
     revealMeaningPassive,
     stopAudio,
-    remainingDueCount,
-    startNextChunk,
     playSentenceAudio,
     restudying,
     continueFromRestudy,
@@ -340,14 +338,15 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     continueFromRestudy();
   }, [continueFromRestudy]);
 
+  // `isComplete` now means every word the session started with is done — the
+  // queue refills itself from the backlog rather than stopping at the first
+  // chunk, so reaching here is the real end and there is nothing left to offer.
   if (isComplete && !isUpdating) {
     return (
       <CompletionScreen
         sessionMetrics={sessionMetrics}
         testID="completion-screen"
         fromRemember={fromRemember}
-        remainingDueCount={remainingDueCount}
-        onReviewMore={startNextChunk}
         onContinue={handleClose}
       />
     );

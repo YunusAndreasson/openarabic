@@ -72,6 +72,20 @@ jest.mock('expo-router', () => ({
   },
 }));
 
+// Replaces the module wholesale, so EVERY export any transitively-loaded module
+// reaches for has to be here — a missing one dies as "not a function" far from
+// the cause. See utils/haptics for what each tier means.
+jest.mock('@/utils/haptics', () => ({
+  selectionFeedback: jest.fn(),
+  lightFeedback: jest.fn(),
+  mediumFeedback: jest.fn(),
+  commitFeedback: jest.fn(),
+  detentFeedback: jest.fn(),
+  successFeedback: jest.fn(),
+  warningFeedback: jest.fn(),
+  errorFeedback: jest.fn(),
+}));
+
 // Note: getAudio returns synchronously to avoid async timing issues in tests
 jest.mock('@/services/audioCache', () => ({
   audioCache: {
@@ -219,6 +233,36 @@ describe('useReview Hook - Session Management', () => {
       });
 
       expect(mocks.mockUpdateWord).not.toHaveBeenCalled();
+    });
+
+    // Tier 0 in utils/haptics. Revealing is the single most-fired haptic in the
+    // session — once per card — and it decides nothing. It used to be Light,
+    // which is a full tap, and it landed HARDER than the "Guessed" grade that
+    // could follow it seconds later. If this ever climbs back up, every press in
+    // the session feels consequential and no outcome feels like an outcome.
+    test('revealing the answer fires only the faintest haptic', () => {
+      const haptics = jest.requireMock('@/utils/haptics') as Record<string, jest.Mock>;
+      const word = createMockWord();
+      useFSRS.mockReturnValue({
+        currentWord: word,
+        wordQueue: [word],
+        isLoading: false,
+        isComplete: false,
+        progress: 0,
+        updateWord: mocks.mockUpdateWord,
+        invalidateQueries: mocks.mockInvalidateQueries,
+      });
+
+      const wrapper = createWrapper();
+      const { result } = renderHook(() => useReview(), { wrapper });
+
+      act(() => {
+        result.current.revealAnswer();
+      });
+
+      expect(haptics.selectionFeedback).toHaveBeenCalledTimes(1);
+      expect(haptics.lightFeedback).not.toHaveBeenCalled();
+      expect(haptics.mediumFeedback).not.toHaveBeenCalled();
     });
 
     test('should not process swipes when already updating', async () => {

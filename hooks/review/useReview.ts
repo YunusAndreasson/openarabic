@@ -32,7 +32,7 @@ import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { resetArmTelemetry } from '@/utils/armTelemetry';
 import { handleError } from '@/utils/errorHandling';
-import { lightFeedback, warningFeedback } from '@/utils/haptics';
+import { selectionFeedback, warningFeedback } from '@/utils/haptics';
 import { markOnboardingStep } from '@/utils/onboardingStorage';
 import {
   beginPrompt,
@@ -126,10 +126,6 @@ interface UseReviewReturn {
   /** Stop any in-flight playback (e.g. the reveal audio) so the mic can reopen
    *  cleanly on a voice retry without capturing the tail of a spoken answer. */
   stopAudio: () => void;
-  /** Due words beyond the current session chunk ("Review N more" affordance). */
-  remainingDueCount: number;
-  /** Start the next chunk of a large backlog after a completed session. */
-  startNextChunk: () => void;
 }
 
 // Timing constants for transitions (milliseconds)
@@ -252,7 +248,7 @@ export function useReview({
   }, [fadeIn, clearTimer]);
 
   // Session metrics tracking hook
-  const { metrics: sessionMetrics, updateMetrics, resetMetrics } = useSessionMetrics();
+  const { metrics: sessionMetrics, updateMetrics } = useSessionMetrics();
 
   // UI state
   const [showTranslation, setShowTranslation] = useState(false);
@@ -375,13 +371,11 @@ export function useReview({
     currentWord,
     isComplete,
     progress,
-    remainingDueCount,
     updateWord,
     previewIntervals,
     invalidateQueries,
     wordQueue,
     isLoading,
-    resetQueue,
     flushPendingWrites,
   } = useFSRS({
     userId: user?.id,
@@ -699,7 +693,11 @@ export function useReview({
     if (revealed) return; // idempotent — tapping the card twice flips once
     // Haptic first: the tap's physical response should lead the flip, not queue
     // behind the audio-cache lookup kicked off below.
-    lightFeedback();
+    //
+    // Tier 0 (see utils/haptics). Revealing asks a question — it decides
+    // nothing, grades nothing and can be done on every card without cost. It
+    // must not land harder than the grade that follows it seconds later.
+    selectionFeedback();
     setRevealed(true);
     setCurrentMeaning(currentWord?.root?.meaning || STRINGS.NO_TRANSLATION_AVAILABLE);
     setShowTranslation(true);
@@ -858,7 +856,10 @@ export function useReview({
     // buttons the learner never had, on a card already on its way out.
     restudyRef.current = false;
     diagMark('restudy.continue');
-    lightFeedback();
+    // Tier 0. "Tap to continue" ends a pause; the grade it commits was decided
+    // — and buzzed at tier 3 — before the hold began. Anything louder here
+    // would report the miss a second time.
+    selectionFeedback();
     // No beat. The verdict fired when the miss was graded and its ring has been
     // sitting on this card for the whole hold — a longer moment than the beat
     // could ever buy. Holding again here would also desync the fade from the
@@ -1283,26 +1284,6 @@ export function useReview({
     );
   };
 
-  // Start the next chunk of a large backlog after a completed session. A fresh
-  // chunk is a fresh session: completion/progress/analytics/metrics state is
-  // reset so the header and recall signals track this chunk only (resetMetrics
-  // prevents double-appending the previous chunk's first-attempt signals into
-  // adaptive pacing — useReviewCompletion appends per completion-screen mount).
-  const startNextChunk = useCallback(() => {
-    stateRefs.current.completionTriggered = false;
-    stateRefs.current.progressUpdatedForCompletion = false;
-    stateRefs.current.maxProgress = 0;
-    setMaxProgress(0);
-    setShowTranslation(false);
-    setRevealed(false);
-    timeRefs.current.lastProcessedWordId = null;
-    sessionStarted.current = false;
-    sessionStartTime.current = null;
-    wordsReviewedCount.current = 0;
-    resetMetrics();
-    resetQueue();
-  }, [resetMetrics, resetQueue]);
-
   // Unmount-only cleanup: tracks abandonment, aborts in-flight work, resets refs.
   // Deps must NOT include wordQueue.length — useFSRS.updateWord shrinks the queue
   // on every swipe, so a length dep here would re-fire this cleanup mid-session,
@@ -1407,7 +1388,5 @@ export function useReview({
     isAudioReady,
     revealMeaningPassive,
     stopAudio: stopAudioSafely,
-    remainingDueCount,
-    startNextChunk,
   };
 }

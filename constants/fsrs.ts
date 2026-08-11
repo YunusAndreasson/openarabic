@@ -79,12 +79,37 @@ export const RECALLED_CONFIDENCE: ReadonlySet<WordConfidence> = new Set<WordConf
 export const DEFAULT_SESSION_COOLDOWN_HOURS = 2;
 
 /**
- * Review sessions are served in digestible chunks: each session takes the
- * top-priority REVIEW_SESSION_CHUNK_SIZE due words (by calculateWordPriority).
- * Presentation-level cap only — badges and due counts still show the full
- * backlog; the completion screen offers the next chunk when more remain.
+ * How many due words the review session holds in its priority heap at once.
+ *
+ * A WORKING-SET size, not a session cap. The session drains the entire backlog
+ * it started with, refilling this many words at a time as the heap empties
+ * (see useFSRS) — "Session complete" is only ever shown when nothing is left.
+ *
+ * It exists because the in-session machinery reasons over what is in the heap.
+ * Spacing keeps repeats at least MIN_WORD_SPACING cards apart and the drill
+ * re-asks a missed word after DRILL_LAG_AFTER_MISS; with a 300-word heap those
+ * lags are trivially satisfiable and a missed word can drift arbitrarily far
+ * from the miss. A small working set keeps re-asks close enough to be
+ * relearning rather than a second cold recall.
+ *
+ * This was previously a presentation cap, and the session ended at the end of
+ * the first chunk — congratulating a learner with 27 words still due and then
+ * offering them "Review 27 more", which is not what "complete" means.
  */
 export const REVIEW_SESSION_CHUNK_SIZE = 20;
+
+/**
+ * Heap size at which the session pulls the next chunk out of the backlog.
+ *
+ * Refilling only once the heap is empty works, but it means the first card of
+ * every new chunk is chosen and shown in the same tick it was added — and
+ * useAudioPreloader watches the published queue to decide what to download, so
+ * that card would be the one card in twenty asked to play audio it has never
+ * seen. Refilling with a few cards still in hand gives the downloader that many
+ * cards of lead time, which is the difference between a warm read and a silent
+ * prompt waiting on the network.
+ */
+export const REVIEW_REFILL_LOW_WATER = 5;
 
 /**
  * Hard intake gate: saving NEW words to practice is blocked while the due

@@ -23,6 +23,11 @@ const FIRST_CARD_DEADLINE_MS = 10000;
  */
 const PRELOAD_DEADLINE_MS = 45000;
 
+/** Files fetched at once by the background loop. */
+const BATCH_SIZE = 5;
+/** Breather between batches, so downloads leave headroom for live playback. */
+const BATCH_DELAY = 100;
+
 interface UseAudioPreloaderReturn {
   /** True only while the first card's audio is being fetched. Blocks the UI. */
   isPreloading: boolean;
@@ -95,6 +100,10 @@ export const useAudioPreloader = (
   const hasPreloadedRef = useRef(false);
   // Track the actual word content to prevent unnecessary preloading
   const lastPreloadedWordsRef = useRef<string>('');
+  // Every word this session has already handed to a preload pass. The queue
+  // grows as the session refills its working set from the backlog, so "have we
+  // fetched this word yet" can no longer be answered by comparing whole queues.
+  const preloadedIdsRef = useRef(new Set<number>());
   // Bumped whenever a session ends or the hook unmounts, so a background batch
   // loop from the previous session stops instead of writing state into the next.
   const runIdRef = useRef(0);
@@ -133,6 +142,50 @@ export const useAudioPreloader = (
   const forgetCached = useCallback((url: string): void => {
     resolvedPathsRef.current.delete(url);
   }, []);
+
+  /**
+   * Fetch a list of URLs a few at a time, behind whatever is on screen.
+   *
+   * Shared by the session's own background pass and by the top-up that follows
+   * a queue refill, because they want identical behaviour: bounded concurrency,
+   * a breather between batches, a deadline on the whole loop, and an abort as
+   * soon as the run they belong to is superseded.
+   */
+  const cacheInBatches = useCallback(
+    async (
+      urls: string[],
+      isStale: () => boolean,
+      deadlineMs: number,
+      /** Progress tick. Omitted by the top-up, which nothing is waiting on. */
+      onOne?: () => void,
+    ): Promise<{ batched: number; abandoned: boolean; deadlineHit: boolean }> => {
+      let deadlineHit = false;
+      const deadline = setTimeout(() => {
+        deadlineHit = true;
+      }, deadlineMs);
+
+      let batched = 0;
+      try {
+        for (let i = 0; i < urls.length; i += BATCH_SIZE) {
+          if (deadlineHit || isStale()) {
+            return { batched, abandoned: true, deadlineHit };
+          }
+          batched += Math.min(BATCH_SIZE, urls.length - i);
+
+          const batch = urls.slice(i, i + BATCH_SIZE);
+          await Promise.all(batch.map(url => cacheOne(url).then(() => onOne?.())));
+
+          if (!deadlineHit && i + BATCH_SIZE < urls.length) {
+            await new Promise<void>(resolve => setTimeout(resolve, BATCH_DELAY));
+          }
+        }
+        return { batched, abandoned: false, deadlineHit };
+      } finally {
+        clearTimeout(deadline);
+      }
+    },
+    [cacheOne],
+  );
 
   const preloadSessionAudio = useCallback(
     async (words: StudyWord[]) => {
@@ -209,38 +262,54 @@ export const useAudioPreloader = (
         return;
       }
 
-      const BATCH_SIZE = 5; // Process 5 audio files at a time
-      const BATCH_DELAY = 100; // 100ms delay between batches
-
-      let deadlineHit = false;
-      const overallDeadline = setTimeout(() => {
-        deadlineHit = true;
-      }, PRELOAD_DEADLINE_MS);
-
-      let batched = 0;
-      try {
-        for (let i = 0; i < backgroundUrls.length; i += BATCH_SIZE) {
-          if (deadlineHit || isStale()) {
-            endAll({ files: batched, of: backgroundUrls.length, abandoned: true, deadlineHit });
-            return;
-          }
-          batched += Math.min(BATCH_SIZE, backgroundUrls.length - i);
-
-          const batch = backgroundUrls.slice(i, i + BATCH_SIZE);
-          await Promise.all(batch.map(url => cacheOne(url).then(trackProgress)));
-
-          // Small delay between batches to prevent resource exhaustion — and to
-          // leave headroom for whatever the live session is playing right now.
-          if (!deadlineHit && i + BATCH_SIZE < backgroundUrls.length) {
-            await new Promise<void>(resolve => setTimeout(resolve, BATCH_DELAY));
-          }
-        }
-        endAll({ files: batched, of: backgroundUrls.length, abandoned: false });
-      } finally {
-        clearTimeout(overallDeadline);
-      }
+      const { batched, abandoned, deadlineHit } = await cacheInBatches(
+        backgroundUrls,
+        isStale,
+        PRELOAD_DEADLINE_MS,
+        trackProgress,
+      );
+      endAll({ files: batched, of: backgroundUrls.length, abandoned, deadlineHit });
     },
-    [cacheOne],
+    [cacheInBatches],
+  );
+
+  /**
+   * Cache the audio for words that joined the queue after the session started.
+   *
+   * The session drains the whole due backlog now, refilling its working set a
+   * chunk at a time (see useFSRS), so `wordQueue` grows mid-session. The initial
+   * pass is gated on `!isReady` and re-arms only on completion, which used to be
+   * correct — the queue only ever shrank. It no longer is: without this, every
+   * word past the first chunk would reach the screen with nothing cached and
+   * fall back to the play-time network path.
+   *
+   * Deliberately does NOT bump `runIdRef` or touch `isPreloading` / `isReady` /
+   * `progress`. It shares the session's run id so it dies with the session, and
+   * nothing is waiting on it — the loading gate belongs to the first card alone
+   * and must not reappear because the queue topped itself up.
+   */
+  const topUpSessionAudio = useCallback(
+    async (words: StudyWord[]) => {
+      if (!words.length) return;
+
+      const runId = runIdRef.current;
+      const isStale = (): boolean => runId !== runIdRef.current;
+
+      const urls = [...new Set(words.flatMap(audioUrlsForWord))].filter(
+        url => !resolvedPathsRef.current.has(url),
+      );
+      if (urls.length === 0) return;
+
+      diagMark('preload.topup', { words: words.length, files: urls.length });
+      const endTopUp = diagSpan('preload.topup');
+      const { batched, abandoned, deadlineHit } = await cacheInBatches(
+        urls,
+        isStale,
+        PRELOAD_DEADLINE_MS,
+      );
+      endTopUp({ files: batched, of: urls.length, abandoned, deadlineHit });
+    },
+    [cacheInBatches],
   );
 
   // Effect: Preload audio when session starts
@@ -260,16 +329,36 @@ export const useAudioPreloader = (
 
     hasPreloadedRef.current = true;
     lastPreloadedWordsRef.current = currentWords;
+    wordQueue.forEach(word => preloadedIdsRef.current.add(word.root_id));
 
     preloadSessionAudio(wordQueue);
   }, [wordQueue, isPreloading, isSessionComplete, isReady, preloadSessionAudio]);
+
+  // Effect: cache words that joined the queue after the session started.
+  //
+  // Runs on every advance (the queue is republished each grade), so it filters
+  // by id rather than re-fetching a set it has already seen. Gated on isReady so
+  // it can never race the opening pass — before that, the pass above owns the
+  // whole queue.
+  useEffect(() => {
+    if (!isReady || isSessionComplete || wordQueue.length === 0) return;
+
+    const fresh = wordQueue.filter(word => !preloadedIdsRef.current.has(word.root_id));
+    if (fresh.length === 0) return;
+
+    fresh.forEach(word => preloadedIdsRef.current.add(word.root_id));
+    void topUpSessionAudio(fresh);
+  }, [wordQueue, isReady, isSessionComplete, topUpSessionAudio]);
 
   // Reset preload flag and clear native preloaded sources when session completes
   useEffect(() => {
     if (isSessionComplete) {
       hasPreloadedRef.current = false;
       lastPreloadedWordsRef.current = '';
-      // Stop any background batch loop still running for the finished session.
+      preloadedIdsRef.current.clear();
+      // Stop any background batch loop still running for the finished session,
+      // including a top-up — they share this id precisely so one bump kills all
+      // of them.
       runIdRef.current++;
       // Resolved paths belong to the session that downloaded them. The files
       // survive on disk, but the next chunk re-preloads its own set and this

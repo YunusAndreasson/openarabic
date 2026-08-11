@@ -80,10 +80,6 @@ interface CompletionScreenProps {
   sessionMetrics?: SessionMetrics;
   testID?: string;
   fromRemember?: boolean; // For dismissTo navigation
-  /** Due words beyond the just-completed chunk; > 0 shows "Review N more". */
-  remainingDueCount?: number;
-  /** Start the next chunk of a large backlog (session slicing). */
-  onReviewMore?: () => void;
   /**
    * Leave the session. REQUIRED for the counts on the practice tab to update:
    * this button used to be a bare `<Link>`, so finishing a session navigated
@@ -104,8 +100,6 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
   sessionMetrics,
   testID,
   fromRemember = false,
-  remainingDueCount = 0,
-  onReviewMore,
   onContinue,
 }) => {
   const colors = useColors();
@@ -222,26 +216,30 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
         }
         style={styles.buttonContainer}
       >
-        {onReviewMore && remainingDueCount > 0 && (
-          <ThemedButton
-            title={STRINGS.REVIEW_MORE_TEMPLATE.replace('{count}', String(remainingDueCount))}
-            onPress={onReviewMore}
-            style={styles.button}
-          />
-        )}
         {/* `onContinue` (useReview's handleClose) stops audio, settles pending
             grade writes, invalidates the FSRS queries and then navigates — the
             same path the close button takes. The Link fallbacks only apply when
-            no handler is supplied. */}
+            no handler is supplied.
+
+            hapticType="selection" overrides ThemedButton's 'light' default —
+            tier 0 in utils/haptics. The success notification has already fired
+            from the checkmark's landing callback, which is the moment worth
+            marking; a Light tap on top of it two seconds later is a second,
+            weaker claim about the same thing. */}
         {onContinue ? (
-          <ThemedButton title={buttonText} onPress={onContinue} style={styles.button} />
+          <ThemedButton
+            title={buttonText}
+            hapticType="selection"
+            onPress={onContinue}
+            style={styles.button}
+          />
         ) : fromRemember ? (
           <Link href={ROUTE_PATHS.PRACTICE_TAB} dismissTo={true} asChild>
-            <ThemedButton title={buttonText} style={styles.button} />
+            <ThemedButton title={buttonText} hapticType="selection" style={styles.button} />
           </Link>
         ) : (
           <Link href=".." replace asChild>
-            <ThemedButton title={buttonText} style={styles.button} />
+            <ThemedButton title={buttonText} hapticType="selection" style={styles.button} />
           </Link>
         )}
       </Animated.View>

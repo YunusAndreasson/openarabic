@@ -108,10 +108,14 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({
     }
   }, [recallRun]);
 
-  // The close haptic lives on the button (GlassIconButton fires 'light' by
-  // default) rather than in useReview's handleClose: that exit is also reached
-  // from the completion screen's ThemedButtons, which fire their own, so keeping
-  // it in the hook buzzed Continue twice in one tick.
+  // The close haptic lives on the button rather than in useReview's handleClose:
+  // that exit is also reached from the completion screen's ThemedButtons, which
+  // fire their own, so keeping it in the hook buzzed Continue twice in one tick.
+  //
+  // Both chrome buttons pass hapticType="selection" explicitly, overriding
+  // GlassIconButton's 'light' default — tier 0 in utils/haptics. Leaving the
+  // session and muting the mic are navigation, and a session where the chrome
+  // buzzes as hard as a grade has no room left to mark the grade.
   const handleClose = () => {
     onClose?.();
   };
@@ -161,6 +165,7 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({
           // lift the surface, which the mic shouldn't do — only the glyph
           // changes colour.
           iconColor={voiceListening ? colors.tint : colors.secondaryText}
+          hapticType="selection"
           style={STATIC_STYLES.voiceButtonSpacing}
           onPress={onToggleVoice}
         />
@@ -170,6 +175,7 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({
           clear
           accessibilityLabel={STRINGS.REVIEW_CLOSE_A11Y}
           icon="close"
+          hapticType="selection"
           onPress={handleClose}
         />
       )}

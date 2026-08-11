@@ -8,6 +8,7 @@ import {
   DEFAULT_SESSION_COOLDOWN_HOURS,
   MISS_CONFIDENCE,
   OPTIMIZED_FSRS_CONFIG,
+  REVIEW_REFILL_LOW_WATER,
   REVIEW_SESSION_CHUNK_SIZE,
 } from '@/constants/fsrs';
 import { fsrsQueries } from '@/constants/queries';
@@ -22,7 +23,7 @@ import {
   calculateWordPriority,
   createSpacingState,
   getNextWordWithSpacing as getNextFromSpacingQueue,
-  selectSessionChunk,
+  partitionSessionChunk,
   updateSpacingCounters as updateSpacingState,
   type SpacingState,
 } from '@/utils/fsrsSpacing';
@@ -65,11 +66,8 @@ export function useFSRS({
   const [currentWord, setCurrentWord] = useState<StudyWord | null>(null);
   const [progress, setProgress] = useState<number>(0);
   const [isComplete, setIsComplete] = useState<boolean>(false);
-  // Due words beyond the current session chunk ("Review N more" on completion).
-  const [remainingDueCount, setRemainingDueCount] = useState<number>(0);
   // Bumped by resetQueue so the init effect re-runs even when the due data's
-  // identity hasn't changed (React Query structural sharing) — required for
-  // starting the next chunk after a completed session.
+  // identity hasn't changed (React Query structural sharing).
   const [sessionEpoch, setSessionEpoch] = useState<number>(0);
 
   // Consolidated counters in a single ref
@@ -80,8 +78,20 @@ export function useFSRS({
     uniqueWords: new Set<RootId>(),
   });
 
-  // Priority queue for efficient reordering
+  // Priority queue for efficient reordering — the session's WORKING SET, not
+  // the session. It holds REVIEW_SESSION_CHUNK_SIZE words at a time and is
+  // refilled from backlogRef as it drains.
   const queueRef = useRef<PriorityQueue<StudyWord>>(new PriorityQueue<StudyWord>());
+
+  // Due words captured at session start that have not yet entered the heap, in
+  // priority order. The session is finished when this, the heap and the spacing
+  // buffer are all empty — never before.
+  //
+  // Captured ONCE, at init. Words that fall due while the session is running are
+  // deliberately not added: a session that grew as you worked through it would
+  // have no defined end, and the learner agreed to review what was due when they
+  // started. They are picked up by the next session.
+  const backlogRef = useRef<StudyWord[]>([]);
 
   // Spacing queue to enforce minimum spacing between repeats
   const spacingQueueRef = useRef<SpacingState>(createSpacingState());
@@ -127,6 +137,36 @@ export function useFSRS({
     updateSpacingState(spacingQueueRef.current, processedWordId);
   }, []);
 
+  /**
+   * Move the next chunk of the backlog into the working heap.
+   *
+   * Called twice per advance: speculatively once the heap runs low (so audio for
+   * the incoming words is downloading well before they are shown), and as a last
+   * resort when no next card could be produced at all. Both callers want the
+   * same thing and the second is the one that guarantees correctness, so the
+   * low-water call is an optimisation that can safely do nothing.
+   *
+   * Returns whether anything was added.
+   */
+  const refillWorkingSet = useCallback((): boolean => {
+    if (backlogRef.current.length === 0) return false;
+
+    const nowMs = Date.now();
+    const { chunk, rest } = partitionSessionChunk(
+      backlogRef.current,
+      REVIEW_SESSION_CHUNK_SIZE,
+      nowMs,
+    );
+    backlogRef.current = rest;
+
+    chunk.forEach(word => {
+      countersRef.current.uniqueWords.add(word.root_id);
+      queueRef.current.push(word, calculateWordPriority(word, nowMs));
+    });
+
+    return chunk.length > 0;
+  }, []);
+
   // Initialize the session queue from due words exactly once per session.
   useEffect(() => {
     if (isLoading || !dueWords) return;
@@ -134,12 +174,9 @@ export function useFSRS({
     const effectiveDueWords: StudyWord[] = Array.isArray(dueWords) ? dueWords : [];
 
     // A completed session must NOT be restarted by a background refetch: the
-    // post-completion refetch returns the remaining backlog, which would
-    // otherwise re-init the queue underneath the completion screen. Record the
-    // fresh backlog for the "Review more" affordance instead; an explicit
-    // resetQueue() re-arms initialization.
+    // post-completion refetch would otherwise re-init the queue underneath the
+    // completion screen. An explicit resetQueue() re-arms initialization.
     if (stateTrackingRef.current.completionTriggered) {
-      setRemainingDueCount(effectiveDueWords.length);
       return;
     }
 
@@ -159,11 +196,24 @@ export function useFSRS({
     if (effectiveDueWords.length > 0) {
       const nowMs = Date.now(); // Single timestamp for entire batch
 
-      // Serve a large backlog in digestible chunks: the session holds the
-      // top-priority slice; the rest is offered as "Review N more" afterwards.
-      const sessionWords = selectSessionChunk(effectiveDueWords, REVIEW_SESSION_CHUNK_SIZE, nowMs);
+      // The chunk is a working set, not a session cap. The heap holds the
+      // top-priority slice and `rest` waits its turn; the session runs until
+      // every one of them is done. Keeping the heap small is what the chunk is
+      // for — the spacing and drill machinery reasons over what is IN the heap,
+      // and handing it a 300-word backlog at once makes "space repeats at least
+      // MIN_WORD_SPACING apart" a much weaker constraint than it should be.
+      const { chunk: sessionWords, rest } = partitionSessionChunk(
+        effectiveDueWords,
+        REVIEW_SESSION_CHUNK_SIZE,
+        nowMs,
+      );
+      backlogRef.current = rest;
 
-      countersRef.current.totalWords = sessionWords.length;
+      // The whole backlog, not the chunk: this is the denominator of the
+      // progress bar and the definition of "everything is done" in the rescue
+      // path below. When it counted only the chunk, the bar reached 100% and the
+      // session declared itself complete with words still waiting.
+      countersRef.current.totalWords = effectiveDueWords.length;
       countersRef.current.uniqueWords = new Set(sessionWords.map(word => word.root_id));
       countersRef.current.processedWords = 0;
       countersRef.current.finishedWords = 0;
@@ -178,7 +228,6 @@ export function useFSRS({
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setProgress(0);
       setIsComplete(false);
-      setRemainingDueCount(effectiveDueWords.length - sessionWords.length);
       stateTrackingRef.current.completionTriggered = false;
       stateTrackingRef.current.isProcessingUpdate = false;
 
@@ -205,7 +254,7 @@ export function useFSRS({
     } else {
       // No words available - complete immediately
       setIsComplete(true);
-      setRemainingDueCount(0);
+      backlogRef.current = [];
       if (onComplete && !stateTrackingRef.current.completionTriggered) {
         stateTrackingRef.current.completionTriggered = true;
         onComplete();
@@ -359,6 +408,13 @@ export function useFSRS({
       // Update spacing counters before selecting next word
       updateSpacingCounters(rootId);
 
+      // Top the working set up BEFORE choosing the next card, so the incoming
+      // words can compete for this pick and — more importantly — so their audio
+      // starts downloading while there are still cards in hand to cover it.
+      if (queueRef.current.size() <= REVIEW_REFILL_LOW_WATER) {
+        refillWorkingSet();
+      }
+
       // Select the next word optimistically
       let nextItem = getNextWordWithSpacing();
       // Safety: never immediately return the same word again
@@ -369,7 +425,6 @@ export function useFSRS({
         nextItem = getNextWordWithSpacing();
         guardIterations += 1;
       }
-      const remaining = queueRef.current.toArray();
 
       // FIXED: Use totalWords instead of uniqueWords for progress calculation
       // Progress should always be available, so no need to check if totalWords exists
@@ -416,6 +471,22 @@ export function useFSRS({
           nextItem = getNextWordWithSpacing();
         }
 
+        // Then refill from the backlog. Together with the low-water top-up
+        // above, this is what makes the session drain everything the learner
+        // started with instead of stopping at the first chunk and calling it
+        // "Session complete".
+        //
+        // Its position matters twice. It runs AFTER the ready-spaced flush,
+        // because a word whose spacing has elapsed has waited its turn and
+        // should come back before an unseen one. It runs BEFORE the forced
+        // release below, which breaks the spacing rule to escape a deadlock —
+        // and there is no deadlock to escape while unseen words are still
+        // waiting. That ordering also fixes a live bug: with a backlog present,
+        // a drilled word could be force-repeated a card or two after its miss.
+        if (!nextItem && refillWorkingSet()) {
+          nextItem = getNextWordWithSpacing();
+        }
+
         // If still none, but the session isn't fully known yet, requeue the smallest spacing candidate
         if (!nextItem) {
           const { finishedWords, totalWords } = countersRef.current;
@@ -444,7 +515,9 @@ export function useFSRS({
             }
           }
 
-          // If we still have no next item, complete immediately
+          // If we still have no next item, complete immediately. Reachable only
+          // once the heap, the spacing buffer AND the backlog are all empty —
+          // which is now the only thing "Session complete" is allowed to mean.
           if (!nextItem && !stateTrackingRef.current.completionTriggered) {
             stateTrackingRef.current.completionTriggered = true;
             setIsComplete(true);
@@ -454,7 +527,12 @@ export function useFSRS({
       }
 
       setCurrentWord(nextItem || null);
-      setWordQueue(remaining);
+      // Read the heap AFTER the rescue and refill above, both of which push into
+      // it. Snapshotting before them published a queue that was missing the
+      // words just added — and useAudioPreloader watches this array to decide
+      // what to cache, so a stale snapshot silently left a refilled chunk with
+      // no audio.
+      setWordQueue(queueRef.current.toArray());
 
       // ALWAYS persist word updates to the database — but OFF the critical path.
       // The next card is already committed to state above, so awaiting the write
@@ -494,6 +572,7 @@ export function useFSRS({
       onComplete,
       getNextWordWithSpacing,
       updateSpacingCounters,
+      refillWorkingSet,
     ],
   );
 
@@ -527,9 +606,8 @@ export function useFSRS({
     setCurrentWord(null);
     setProgress(0);
     setIsComplete(false);
-    setRemainingDueCount(0);
     // Force the init effect to re-run even when the due data hasn't changed
-    // identity since the completion-time refetch (next-chunk start).
+    // identity since the last refetch.
     setSessionEpoch(epoch => epoch + 1);
     stateTrackingRef.current.completionTriggered = false;
     stateTrackingRef.current.isProcessingUpdate = false;
@@ -542,6 +620,7 @@ export function useFSRS({
     queueRef.current = new PriorityQueue<StudyWord>();
     spacingQueueRef.current = createSpacingState();
     drillRef.current = new Map();
+    backlogRef.current = [];
   }, []);
 
   // Clean up on unmount
@@ -572,6 +651,7 @@ export function useFSRS({
     stateTrackingRef.current.queueInitialized = false;
     queueRef.current = new PriorityQueue<StudyWord>();
     spacingQueueRef.current = createSpacingState();
+    backlogRef.current = [];
   }, [queryClient, userId]);
 
   return {
@@ -580,7 +660,6 @@ export function useFSRS({
     isLoading,
     isComplete,
     progress,
-    remainingDueCount,
     updateWord,
     previewIntervals,
     invalidateQueries,

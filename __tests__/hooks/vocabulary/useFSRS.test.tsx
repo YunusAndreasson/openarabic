@@ -129,7 +129,7 @@ describe('useFSRS Hook', () => {
       });
     });
 
-    test('slices a large backlog into a session chunk and reports the remainder', async () => {
+    test('holds a large backlog as a working set without completing', async () => {
       const mockWords = Array.from({ length: 30 }, (_, i) =>
         createMockStudyWord({
           root_id: (i + 1) as RootId,
@@ -144,13 +144,12 @@ describe('useFSRS Hook', () => {
         expect(result.current.isLoading).toBeFalsy();
       });
 
-      // Session queue holds only the top-priority chunk (REVIEW_SESSION_CHUNK_SIZE=20)
+      // The heap holds only the top-priority chunk (REVIEW_SESSION_CHUNK_SIZE=20)
       expect(result.current.wordQueue).toHaveLength(20);
-      expect(result.current.remainingDueCount).toBe(10);
       expect(result.current.isComplete).toBeFalsy();
     });
 
-    test('reports no remainder when the backlog fits one session', async () => {
+    test('a backlog that fits one chunk is served whole', async () => {
       const mockWords = Array.from({ length: 5 }, (_, i) =>
         createMockStudyWord({ root_id: (i + 1) as RootId }),
       );
@@ -163,14 +162,59 @@ describe('useFSRS Hook', () => {
       });
 
       expect(result.current.wordQueue).toHaveLength(5);
-      expect(result.current.remainingDueCount).toBe(0);
+      expect(result.current.isComplete).toBeFalsy();
+    });
+
+    // The behaviour the chunking rework exists for: a backlog bigger than one
+    // chunk must be served in full, in one session, with no completion in the
+    // middle of it. Before, this session ended after 20 words and offered
+    // "Review 10 more".
+    test('refills from the backlog and only completes once every word is done', async () => {
+      const total = 30;
+      const mockWords = Array.from({ length: total }, (_, i) =>
+        createMockStudyWord({
+          root_id: (i + 1) as RootId,
+          fsrs_due: new Date(Date.now() - (i + 1) * 3600 * 1000).toISOString(),
+        }),
+      );
+      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue(mockWords);
+      studyWordsFSRSService.updateWordAndReview = jest.fn().mockResolvedValue(undefined);
+
+      const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.currentWord).not.toBeNull();
+      });
+
+      const graded = new Set<number>();
+      // Bounded well above `total` so a stuck session fails as a timeout rather
+      // than hanging: 'known' graduates a word on the first pass, so the drill
+      // never re-asks and the loop is expected to take exactly `total` steps.
+      for (let i = 0; i < total * 3; i += 1) {
+        const word = result.current.currentWord;
+        if (!word) break;
+
+        // The session must never declare itself complete while it still has a
+        // card up — that is exactly the false "Session complete" being fixed.
+        expect(result.current.isComplete).toBeFalsy();
+
+        graded.add(word.root_id);
+        await act(async () => {
+          await result.current.updateWord(word.root_id, 'known');
+        });
+      }
+
+      expect(graded.size).toBe(total);
+      expect(result.current.isComplete).toBeTruthy();
+      expect(result.current.progress).toBe(100);
     });
 
     test('a completed session is not restarted by a post-completion refetch', async () => {
       // After the last grade, the completion-screen mount invalidates FSRS
-      // queries and the due query refetches with the remaining backlog. That
-      // new data must NOT re-initialize the queue underneath the completion
-      // screen — it only updates remainingDueCount for "Review N more".
+      // queries and the due query refetches. Words that fell due DURING the
+      // session come back in that refetch, and they must NOT re-initialize the
+      // queue underneath the completion screen — the session covers what was
+      // due when it started; the next one picks these up.
       const initialWord = createMockStudyWord({ root_id: 1 as RootId });
       studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue([initialWord]);
       studyWordsFSRSService.updateWordAndReview = jest.fn().mockResolvedValue(undefined);
@@ -200,17 +244,15 @@ describe('useFSRS Hook', () => {
         });
       });
 
-      // Still complete; the fresh backlog only surfaces as remainingDueCount
+      // Still complete, and still showing no card — the refetch is inert here.
       expect(result.current.isComplete).toBeTruthy();
-      await waitFor(() => {
-        expect(result.current.remainingDueCount).toBe(8);
-      });
+      expect(result.current.currentWord).toBeNull();
     });
 
     test('resetQueue re-arms initialization even when due data has not changed', async () => {
-      // The "Review N more" flow: after a completed chunk the due data has
-      // already refetched, so without the session-epoch dep the init effect
-      // would never re-run and the next chunk could never start.
+      // React Query's structural sharing can hand back a dueWords array with an
+      // unchanged identity, so without the session-epoch dep the init effect
+      // would never re-run and a reset queue would stay empty.
       const mockWords = Array.from({ length: 30 }, (_, i) =>
         createMockStudyWord({
           root_id: (i + 1) as RootId,
@@ -234,7 +276,6 @@ describe('useFSRS Hook', () => {
         expect(result.current.wordQueue).toHaveLength(20);
       });
       expect(result.current.currentWord).not.toBeNull();
-      expect(result.current.remainingDueCount).toBe(10);
       expect(result.current.isComplete).toBeFalsy();
     });
 
@@ -898,11 +939,11 @@ describe('useFSRS Hook', () => {
         expect(result.current.currentWord).not.toBeNull();
       });
 
-      // Large backlogs are chunked: the session queue holds the top-priority
-      // slice, the rest is reported for the "Review N more" affordance.
+      // The heap is a working set, not the session: it holds the top-priority
+      // slice and refills from the backlog as it drains.
       expect(result.current.wordQueue.length).toBe(20);
-      expect(result.current.remainingDueCount).toBe(80);
       expect(result.current.progress).toBe(0);
+      expect(result.current.isComplete).toBeFalsy();
     });
 
     test('handles words with identical due dates (ordering stability)', async () => {

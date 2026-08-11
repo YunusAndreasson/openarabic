@@ -10,6 +10,8 @@ import Animated, {
   interpolate,
   interpolateColor,
   useAnimatedStyle,
+  useSharedValue,
+  withTiming,
 } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -44,7 +46,43 @@ const CARD_CONSTANTS = {
    * mode.
    */
   VERDICT_RING_WIDTH: 2,
+  /**
+   * The flip's seam — the band of the turn either side of 90° where the card is
+   * edge-on and paints as a bright vertical line down its own centre.
+   *
+   * At 90° the projected width of a rotateY'd view is zero, but a view is still
+   * rasterized at a minimum of about a pixel, so the card's opaque fill and its
+   * two 1pt borders collapse into one hairline at full brightness against the
+   * page. That line is the artifact; there is no element drawing it, and
+   * `backfaceVisibility` cannot help because the near face is legitimately
+   * still the near face right up to 90°.
+   *
+   * The mask is on |progress − 0.5| rather than on time because progress is
+   * what determines the geometry. FLIP eases in-out, so the card is moving at
+   * roughly 3× its average rate through here — the whole masked band is about
+   * 20ms of the 320ms turn, one to two frames, and it is the one to two frames
+   * in which there is nothing to see anyway.
+   */
+  /** Beyond this, the card is wide enough to read as a card. Full opacity. */
+  SEAM_HALF_WIDTH: 0.1,
+  /** Within this, the card is a line. Not painted at all. */
+  SEAM_FULL_HIDE: 0.055,
 } as const;
+
+/**
+ * How much of the card to paint at this point in the turn: 1 everywhere except
+ * across the seam, 0 at the degenerate middle. Module scope so both faces and
+ * the overlays share one definition, and so the worklets capture a stable one.
+ */
+const seamMask = (progress: number): number => {
+  'worklet';
+  return interpolate(
+    Math.abs(progress - 0.5),
+    [CARD_CONSTANTS.SEAM_FULL_HIDE, CARD_CONSTANTS.SEAM_HALF_WIDTH],
+    [0, 1],
+    'clamp',
+  );
+};
 
 /**
  * A new card rises into place rather than materialising. State-driven (it
@@ -342,7 +380,8 @@ export function ReviewFlipCard({
     springConfig: SPRING_CONFIG.CARD,
   });
 
-  const { verdictTone, verdictLevel, verdictShake, playVerdict, resetVerdict } = useCardVerdict();
+  const { verdictTone, verdictLevel, verdictShakePhase, playVerdict, resetVerdict } =
+    useCardVerdict();
 
   // Tapping "Forgot" and swiping left are the same decision, so they now leave
   // the same way. Exposed rather than handled internally because the grade bar
@@ -355,40 +394,78 @@ export function ReviewFlipCard({
     resetVerdict,
   ]);
 
-  // The flip is driven purely by React state, which is the case Reanimated 4's
-  // docs put squarely in the CSS-transitions column: "Reach for CSS transitions
-  // whenever an animation is driven by state ... it's the recommended place to
-  // start", reserving the shared-value API for "gesture-driven or scroll-driven
-  // interactions". The swipe below is gesture-driven and so stays on
-  // useAnimatedStyle — the two halves of this card sit on opposite sides of
-  // that line on purpose.
+  // The flip: 0 = question face, 1 = answer face.
   //
-  // Duration collapses to 0 on the way back so a new card snaps to its question
-  // face rather than playing the reveal in reverse (revealed only goes false on
-  // a card change). Face hiding is left to backfaceVisibility on STATIC_STYLES
-  // .face — the primitive built for it — instead of an opacity step at the
-  // rotation's midpoint.
-  const flipTransition = {
-    transitionProperty: 'transform',
-    transitionDuration: revealed ? TIMING_CONFIG.FLIP.duration : 0,
-    transitionTimingFunction: 'ease-in-out',
-  } as const;
+  // This is state-driven, which is the case Reanimated 4's docs put in the
+  // CSS-transitions column, and it WAS a CSS transition per face. It moved to a
+  // shared value for one reason: masking the seam (see CARD_CONSTANTS) needs the
+  // rotation's value mid-flight, and a CSS transition deliberately exposes no
+  // progress to read. The card's *entrance* is still state-driven with nothing
+  // to read mid-flight, so it stays on the CSS API — the split in this file is
+  // now "does anything need to sample the animation", not "what starts it".
+  const flipProgress = useSharedValue(revealed ? 1 : 0);
 
-  const frontStyle = {
-    ...flipTransition,
-    transform: [
-      { perspective: LAYOUT.PERSPECTIVE.CARD },
-      { rotateY: revealed ? '180deg' : '0deg' },
-    ],
-  };
+  // Forward is the reveal. Backward snaps, because `revealed` only goes false on
+  // a card change and a new card must arrive on its question face rather than
+  // play the reveal in reverse — the same instant return the old
+  // `transitionDuration: 0` gave.
+  useEffect(() => {
+    if (revealed) {
+      flipProgress.set(withTiming(1, TIMING_CONFIG.FLIP));
+      return;
+    }
+    cancelAnimation(flipProgress);
+    flipProgress.set(0);
+  }, [revealed, flipProgress]);
 
-  const backStyle = {
-    ...flipTransition,
-    transform: [
-      { perspective: LAYOUT.PERSPECTIVE.CARD },
-      { rotateY: revealed ? '360deg' : '180deg' },
-    ],
-  };
+  // Both faces turn together, half a turn apart, and both drop out across the
+  // seam. backfaceVisibility still does the actual face hiding either side of
+  // it — the mask only covers the band where neither face has a front OR a back
+  // facing the viewer, just an edge.
+  // The shadow is the other half of the artifact. An edge-on view still casts
+  // its full 6pt blur, so in light and sepia the collapsed card wears a soft
+  // vertical smear even once the fill itself is masked. Zero in dark mode by
+  // design, which is why the line reads as a clean hairline there and as a
+  // bruise in light. Fades on the same mask.
+  const restShadowOpacity = useMemo(
+    () => getThemeAwareElevation('CARD', isDarkMode).shadowOpacity,
+    [isDarkMode],
+  );
+
+  const frontStyle = useAnimatedStyle(() => {
+    'worklet';
+    const progress = flipProgress.get();
+    const mask = seamMask(progress);
+    return {
+      opacity: mask,
+      shadowOpacity: restShadowOpacity * mask,
+      transform: [{ perspective: LAYOUT.PERSPECTIVE.CARD }, { rotateY: `${progress * 180}deg` }],
+    };
+  });
+
+  const backStyle = useAnimatedStyle(() => {
+    'worklet';
+    const progress = flipProgress.get();
+    const mask = seamMask(progress);
+    return {
+      opacity: mask,
+      shadowOpacity: restShadowOpacity * mask,
+      transform: [
+        { perspective: LAYOUT.PERSPECTIVE.CARD },
+        { rotateY: `${180 + progress * 180}deg` },
+      ],
+    };
+  });
+
+  // The overlays are siblings of the faces, not children, so they do not rotate:
+  // without this they stay full-size rounded rectangles around a card that has
+  // folded to nothing. A swipe can begin while the flip is still running (the
+  // gesture arms the moment `revealed` flips, not when the turn ends), so the
+  // wash and the grade labels really can be lit mid-fold.
+  const seamStyle = useAnimatedStyle(() => {
+    'worklet';
+    return { opacity: seamMask(flipProgress.get()) };
+  });
 
   // In dark mode getThemeAwareElevation zeroes shadowOpacity by design, so the
   // card cannot rely on a shadow to separate from the background there — it
@@ -413,11 +490,17 @@ export function ReviewFlipCard({
     cancelAnimation(translateX);
     translateX.set(0);
     isAnimatingRef.set(false);
+    // Belt and braces with the `revealed` effect above: a new card must never
+    // arrive mid-turn or already turned. Both paths snap to 0 and the card is
+    // riding the advance fade at opacity 0 while this runs, so a redundant set
+    // costs nothing and a missed one would show the answer face for a frame.
+    cancelAnimation(flipProgress);
+    flipProgress.set(0);
     // A miss holds its ring for the restudy hold, so unlike the drag offset the
     // verdict has no self-clearing animation — the new card has to clear it, or
     // the word after a forgotten one arrives already marked red.
     resetVerdict();
-  }, [wordKey, translateX, isAnimatingRef, resetVerdict]);
+  }, [wordKey, translateX, isAnimatingRef, resetVerdict, flipProgress]);
 
   const flashColors = useMemo(
     () => ({
@@ -517,16 +600,39 @@ export function ReviewFlipCard({
     };
   });
 
-  // The verdict's own transform: a small lift on a pass, a decaying shake on a
+  // The verdict's own transform: a small lift on a pass, a decaying wince on a
   // miss. Separate from cardSlideStyle so it composes with the drag and with
   // the spring home rather than overwriting either.
+  //
+  // The wince is a damped sine sampled from one linear phase, not a sequence of
+  // fixed offsets — see VERDICT.SHAKE. Translation and tilt share the phase AND
+  // the envelope, so the card pivots as it swings instead of sliding flat, and
+  // both die together. At rest (phase 0) sin(0) is 0, so nothing has to be
+  // special-cased when the verdict is cleared.
   const verdictTransformStyle = useAnimatedStyle(() => {
     'worklet';
-    const lift =
-      verdictTone.get() === VERDICT_TONE.CORRECT
-        ? 1 + (VERDICT.POP_SCALE - 1) * verdictLevel.get()
-        : 1;
-    return { transform: [{ translateX: verdictShake.get() }, { scale: lift }] };
+    const tone = verdictTone.get();
+    const level = verdictLevel.get();
+    const phase = verdictShakePhase.get();
+    const envelope = Math.exp(-VERDICT.SHAKE.DAMPING * phase);
+    const swing = envelope * Math.sin(phase * VERDICT.SHAKE.CYCLES * 2 * Math.PI);
+
+    // Both outcomes now move: a pass swells, a miss draws in. Only one of the
+    // two can be showing, and NONE leaves the card at rest.
+    const scale =
+      tone === VERDICT_TONE.CORRECT
+        ? 1 + (VERDICT.POP_SCALE - 1) * level
+        : tone === VERDICT_TONE.WRONG
+          ? 1 + (VERDICT.WINCE_SCALE - 1) * level
+          : 1;
+
+    return {
+      transform: [
+        { translateX: VERDICT.SHAKE.AMPLITUDE * swing },
+        { rotateZ: `${VERDICT.SHAKE.TILT_DEG * swing}deg` },
+        { scale },
+      ],
+    };
   });
 
   // The wash says "something is happening"; these say WHICH grade. On the same
@@ -683,16 +789,20 @@ export function ReviewFlipCard({
                 </Animated.View>
 
                 {/* Swipe and verdict feedback, above both faces so it marks
-                  whichever is up. */}
+                  whichever is up. These do not rotate with the faces, so each
+                  rides the seam mask as well — otherwise a wash or a ring lit
+                  by a swipe that began mid-flip keeps its full rectangle while
+                  the card it belongs to has folded away. Nested opacities
+                  multiply, which is exactly the wanted behaviour. */}
                 <Animated.View
-                  style={[STATIC_STYLES.flashOverlay, washStyle]}
+                  style={[STATIC_STYLES.flashOverlay, washStyle, seamStyle]}
                   pointerEvents="none"
                 />
                 <Animated.View
-                  style={[STATIC_STYLES.verdictRing, verdictRingStyle]}
+                  style={[STATIC_STYLES.verdictRing, verdictRingStyle, seamStyle]}
                   pointerEvents="none"
                 />
-                <View style={STATIC_STYLES.verdictRow} pointerEvents="none">
+                <Animated.View style={[STATIC_STYLES.verdictRow, seamStyle]} pointerEvents="none">
                   <Animated.View style={forgotLabelStyle}>
                     <ThemedText skipDefaultColor type="label" style={{ color: colors.error }}>
                       {STRINGS.GRADE_FORGOT}
@@ -703,7 +813,7 @@ export function ReviewFlipCard({
                       {STRINGS.GRADE_KNEW_IT}
                     </ThemedText>
                   </Animated.View>
-                </View>
+                </Animated.View>
               </View>
             </Animated.View>
           </Animated.View>

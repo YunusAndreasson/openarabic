@@ -127,8 +127,13 @@ describe('ReviewHeader', () => {
     // screen's ThemedButtons — which fire their own. Keeping it in the hook
     // buzzed Continue twice in one tick, hidden only by the 50ms debounce.
     // This bare Pressable has no press feedback of its own, so it needs this.
-    test('the close button carries its own press feedback', () => {
-      const { lightFeedback } = require('@/utils/haptics');
+    //
+    // Selection, not GlassIconButton's default Light: leaving the session is
+    // navigation, and tier 0 in utils/haptics is everything that only moves the
+    // UI. A chrome button that lands as hard as a grade leaves the grade
+    // nothing to be louder than.
+    test('the close button carries its own press feedback, at the faintest tier', () => {
+      const { selectionFeedback, lightFeedback } = require('@/utils/haptics');
       const { getByTestId } = render(
         <ReviewHeader progress={5} maxProgress={10} onClose={mockOnClose} />,
       );
@@ -137,7 +142,8 @@ describe('ReviewHeader', () => {
       expect(pressable).toBeTruthy();
       fireEvent.press(pressable!);
 
-      expect(lightFeedback).toHaveBeenCalledTimes(1);
+      expect(selectionFeedback).toHaveBeenCalledTimes(1);
+      expect(lightFeedback).not.toHaveBeenCalled();
     });
   });
 

@@ -361,8 +361,6 @@ export const STRINGS = {
   WORD_ADDED_TO_PRACTICE: 'Saved to practice',
   // Due-backlog intake gate (adding words blocked while reviews pile up)
   BACKLOG_CLEAR_REVIEWS_TOAST: 'Clear some reviews first — you have {count} words waiting',
-  // Completion screen: next-chunk affordance for a large backlog
-  REVIEW_MORE_TEMPLATE: 'Review {count} more',
   // Long-press quick save (toggle: long-press again to undo)
   WORD_QUICK_SAVED: 'Saved to practice — long-press to undo',
   WORD_QUICK_REMOVED: 'Removed from practice',

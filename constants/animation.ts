@@ -94,10 +94,44 @@ export const VERDICT = {
    * is what makes it read as "this is the one you missed" while you study it.
    */
   RESIDUAL: 0.35,
-  /** Micro-shake on a miss. Small and decaying — a wince, not a tantrum. */
+  /**
+   * Micro-shake on a miss. Small and decaying — a wince, not a tantrum.
+   *
+   * A damped sine rather than a sequence of timings between fixed offsets. The
+   * four-step version (+5, −4, +2, 0 at 50ms each) put a corner on the velocity
+   * curve at every reversal, and a card that changes direction instantly four
+   * times reads as a rattle regardless of how small the offsets are. One phase
+   * driven 0 → 1 linearly, shaped by `AMPLITUDE · e^(−DAMPING·p) · sin(2π·CYCLES·p)`,
+   * spends the same energy with a continuous first derivative — the card
+   * flinches and settles.
+   *
+   * The envelope is what makes DURATION safe to lengthen: by p = 0.5 the swing
+   * is already under a fifth of AMPLITUDE, so the tail is motion the eye reads
+   * as settling rather than as more shaking.
+   */
   SHAKE: {
-    AMPLITUDE: 5,
-    STEP: 50,
+    /** Peak horizontal offset in points, at the first swing. */
+    AMPLITUDE: 4,
+    /**
+     * The phase sweep itself, 0 → 1. Linear on purpose: the envelope already
+     * decelerates the motion, and easing the phase on top of it would stretch
+     * the first swing — the one that lands with the haptic — into a slow lean.
+     */
+    SWEEP: {
+      duration: 420,
+      easing: Easing.linear,
+    },
+    /** Full oscillations across the sweep. */
+    CYCLES: 2.25,
+    /** Exponential decay rate of the envelope over the 0 → 1 phase. */
+    DAMPING: 4.2,
+    /**
+     * Counter-rotation in degrees, on the same phase and the same envelope.
+     * A card that only translates slides; one that rotates a little as it goes
+     * pivots, which is what makes the wince read as the card reacting rather
+     * than the screen jogging.
+     */
+    TILT_DEG: 0.5,
   },
   /**
    * Rising-edge level at which the outcome haptic fires — about 55ms into the
@@ -112,6 +146,15 @@ export const VERDICT = {
   HAPTIC_AT: 0.6,
   /** Scale pop on a correct answer. Barely there on purpose. */
   POP_SCALE: 1.025,
+  /**
+   * The miss's counterpart to POP_SCALE: the card draws in very slightly.
+   *
+   * A pass had a transform and a miss did not, so the two outcomes were not
+   * symmetrical — one lifted, the other only changed colour and rattled. Rides
+   * `verdictLevel` exactly as the pop does, so it settles with the ring to the
+   * held RESIDUAL level instead of snapping back the moment the shake ends.
+   */
+  WINCE_SCALE: 0.99,
 } as const;
 
 /**
