@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { BaseCard, SectionLabel } from '@/components/common';
+import { BaseCard, ListSeparator, SectionLabel } from '@/components/common';
 import { OPACITY_HEX } from '@/constants/colors';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
@@ -55,12 +55,28 @@ export const SettingsSection = memo(({ title, children, dangerZone }: SettingsSe
 
 SettingsSection.displayName = 'SettingsSection';
 
-// Divider component
+// The rule between rows, inset past the icon column so it lines up with the
+// row labels. Wraps the shared ListSeparator rather than re-declaring a View.
 const Divider = memo(() => {
   const colors = useColors();
-  return <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />;
+  return (
+    <ListSeparator
+      color={colors.cardBorder}
+      height={ListSeparator.RULE_HEIGHT}
+      inset={DIVIDER_INSET}
+      style={styles.divider}
+    />
+  );
 });
 Divider.displayName = 'Divider';
+
+/** Card padding + icon padding + icon + icon padding + text margin. */
+const DIVIDER_INSET =
+  LAYOUT.SPACING.MEDIUM +
+  LAYOUT.SPACING.SMALL +
+  LAYOUT.BUTTON.ICON_SIZE.MEDIUM +
+  LAYOUT.SPACING.SMALL +
+  LAYOUT.SPACING.MEDIUM;
 
 const styles = StyleSheet.create({
   sectionContainer: {
@@ -70,15 +86,7 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.SMALL,
   },
   divider: {
-    height: LAYOUT.BORDER.WIDTH.THIN,
     opacity: LAYOUT.OPACITY.MEDIUM,
-    // Inset to align with text (skip icon column): card padding + icon padding + icon + icon padding + text margin
-    marginLeft:
-      LAYOUT.SPACING.MEDIUM +
-      LAYOUT.SPACING.SMALL +
-      LAYOUT.BUTTON.ICON_SIZE.MEDIUM +
-      LAYOUT.SPACING.SMALL +
-      LAYOUT.SPACING.MEDIUM,
   },
   sectionLabelOverride: {
     paddingTop: LAYOUT.SPACING.XLARGE,

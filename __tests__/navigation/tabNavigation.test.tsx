@@ -253,7 +253,7 @@ jest.mock('../../hooks/theme/useThemeDetection', () => ({
 }));
 
 jest.mock('../../components/HeaderProfile', () => () => null);
-jest.mock('../../components/ui/EditModeButton', () => () => null);
+jest.mock('../../components/playlist/EditModeButton', () => () => null);
 
 // Mock notification service to prevent expo-notifications import error
 jest.mock('../../services/notificationService', () => ({

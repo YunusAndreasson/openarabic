@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/ThemedText';
 import { DEFAULT_TOAST_DURATION, TIMING_CONFIG } from '@/constants/animation';
 import { FONTS } from '@/constants/fonts';
-import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
+import { LAYOUT, LINE_HEIGHT_MULTIPLIERS, SCREEN_WIDTH } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { ToastType } from '@/types/enums';
 
@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL, // 13px — lightweight toast text
     fontFamily: FONTS.ENGLISH,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LINE_HEIGHT_MULTIPLIERS.NORMAL,
   },
 });
 

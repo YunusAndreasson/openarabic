@@ -55,6 +55,8 @@ export const STRINGS = {
   VOICE_MIC_PERMISSION_DENIED: 'Microphone access is off. Voice grading disabled.',
   VOICE_PAUSE_LABEL: 'Pause voice grading for this session',
   VOICE_RESUME_LABEL: 'Resume voice grading',
+  /** The review header's close button — icon-only, so it needs a spoken name. */
+  REVIEW_CLOSE_A11Y: 'End review session',
   // Voice result panel — shown when the recognizer couldn't confirm a match.
   // Framed as a neutral self-grade ("did you get it right?") rather than a
   // verdict, so the buttons answer the question the transcript sets up instead
@@ -157,6 +159,7 @@ export const STRINGS = {
   FEEDBACK_ERROR_TITLE: "Couldn't send",
   FEEDBACK_ERROR_MESSAGE: "We couldn't send your feedback. Try again or email us directly.",
   FEEDBACK_SCREENSHOT_LABEL: 'Add screenshot (optional)',
+  FEEDBACK_SCREENSHOT_REMOVE_A11Y: 'Remove screenshot',
   FEEDBACK_SENDING: 'Sending…',
   FEEDBACK_SUBMIT: 'Send feedback',
   // Account section titles - now imported directly from enums in components
@@ -288,6 +291,11 @@ export const STRINGS = {
   UNREAD: 'Unread',
   COMPLETED: 'Completed',
   SET_TIME: 'Set time',
+  // Header buttons are icon-only, so these are their only accessible name
+  CLOSE_A11Y: 'Close',
+  DICTIONARY_A11Y: 'All words',
+  EDIT_MODE_START_A11Y: 'Edit list',
+  EDIT_MODE_DONE_A11Y: 'Done editing',
   // Article reader floating controls — icon-only, so these are their only accessible name
   ARTICLE_CLOSE_A11Y: 'Close article',
   ARTICLE_LISTEN_A11Y: 'Listen to this article',
@@ -549,6 +557,8 @@ export const STRINGS = {
   SORT_DIFFICULTY: 'Difficulty',
   SORT_STRENGTH: 'Strength',
   SORT_RECENT: 'Recent',
+  /** Names the dictionary sort group for screen readers. */
+  SORT_BY_A11Y: 'Sort by',
   WORD_COUNT_ONE: '1 word',
   WORD_COUNT_OTHER: '{count} words',
   NO_WORDS_MATCH_SEARCH: 'No words match your search',

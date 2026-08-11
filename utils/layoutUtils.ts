@@ -1,4 +1,4 @@
-import type { ViewStyle } from 'react-native';
+import type { PressableAndroidRippleConfig, ViewStyle } from 'react-native';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import type { ThemeColors } from '@/types/ui/theme.types';
@@ -111,14 +111,19 @@ const RIPPLE_SIZE_MAP = {
  * Creates consistent Android ripple configuration
  * @param colors - Theme colors object
  * @param size - Size of the ripple radius
+ * @param foreground - Draw the ripple ABOVE the content rather than behind it.
+ *   Needed by surfaces that paint their own opaque background (cards), which
+ *   would otherwise hide a background ripple entirely.
  * @returns Android ripple configuration
  */
 export const createAndroidRipple = (
   colors: ThemeColors,
   size: 'small' | 'medium' | 'large' = 'medium',
-) => ({
+  foreground = false,
+): PressableAndroidRippleConfig => ({
   color: colors.navigationRipple,
   radius: RIPPLE_SIZE_MAP[size] / 2,
+  foreground,
 });
 
 /**

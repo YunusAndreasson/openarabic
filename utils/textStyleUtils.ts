@@ -1,7 +1,6 @@
 import type { TextStyle, ViewStyle } from 'react-native';
 
-import { FONTS } from '@/constants/fonts';
-import { getArabicTextStyle, LAYOUT, LETTER_SPACING } from '@/constants/layout';
+import { getArabicTextStyle, LAYOUT } from '@/constants/layout';
 
 // ===== TEXT STYLE CONSTANTS =====
 export const TEXT_STYLE_CONSTANTS = {
@@ -84,38 +83,7 @@ export const getSelectedStyle = (isSelected: boolean, color: string): ViewStyle 
   };
 };
 
-// ===== BUTTON TEXT STYLING UTILITIES =====
-
-/**
- * Creates consistent button text styling
- * @param size - Button size variant ('small' | 'medium' | 'large')
- * @returns TextStyle object for button text
- */
-export const createButtonTextStyle = (size: 'small' | 'medium' | 'large' = 'medium'): TextStyle => {
-  const baseStyle: TextStyle = {
-    fontFamily: FONTS.ENGLISH_SEMIBOLD,
-    textAlign: 'center',
-  };
-
-  switch (size) {
-    case 'small':
-      return {
-        ...baseStyle,
-        fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-        letterSpacing: LETTER_SPACING.NORMAL,
-      };
-    case 'large':
-      return {
-        ...baseStyle,
-        fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-        letterSpacing: LETTER_SPACING.SLIGHT_POSITIVE,
-      };
-    case 'medium':
-    default:
-      return {
-        ...baseStyle,
-        fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-        letterSpacing: LETTER_SPACING.SLIGHT_POSITIVE,
-      };
-  }
-};
+// Button text styling used to live here as `createButtonTextStyle(size)`, which
+// overrode the `fontSize` that ThemedButton had already chosen via a ThemedText
+// type — so every button rendered a step larger than it declared. Button
+// typography is now decided once, by `TEXT_TYPE_MAP` in ThemedButton.

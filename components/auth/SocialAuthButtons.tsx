@@ -1,6 +1,7 @@
 import type { JSX } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
+import { ListSeparator } from '@/components/common';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
@@ -71,16 +72,24 @@ export function SocialAuthButtons({ appleAuth, googleAuth }: SocialAuthButtonsPr
 
       {/* Divider with "or" text - appears after social buttons */}
       <View style={styles.dividerContainer}>
-        <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+        <ListSeparator
+          color={colors.border}
+          height={ListSeparator.RULE_HEIGHT}
+          style={styles.dividerLine}
+        />
         <ThemedText
           type="caption"
-          variant="secondary"
+          colorName="secondaryText"
           style={styles.dividerText}
           accessibilityLabel="Or continue with email"
         >
           {STRINGS.CONTINUE_WITH}
         </ThemedText>
-        <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+        <ListSeparator
+          color={colors.border}
+          height={ListSeparator.RULE_HEIGHT}
+          style={styles.dividerLine}
+        />
       </View>
     </View>
   );
@@ -103,7 +112,6 @@ const styles = StyleSheet.create({
   },
   dividerLine: {
     flex: 1,
-    height: LAYOUT.BORDER.WIDTH.THIN,
   },
   dividerText: {
     marginHorizontal: LAYOUT.SPACING.LARGE, // More breathing room around "or"

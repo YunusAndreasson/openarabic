@@ -1,12 +1,8 @@
+import { GlassIconButton } from '@/components/ui';
 import { ProgressBar } from '@/components/common';
-import { Ionicons } from '@/components/ui/Icon';
-import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import type { FC } from 'react';
 import { useEffect, useRef } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-
-const GLASS_AVAILABLE = isLiquidGlassAvailable();
-const GlassContainer = GLASS_AVAILABLE ? GlassView : View;
+import { StyleSheet, View } from 'react-native';
 
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
@@ -18,13 +14,9 @@ import { useColors } from '@/hooks/theme/useColors';
 import { mixColors } from '@/utils/colorUtils';
 import { lightFeedback } from '@/utils/haptics';
 
-// ===== STATIC STYLES USING STYLESHEET.CREATE =====
-// 44pt is the Apple HIG minimum tap target (Material prefers 48dp); the visible
-// button now matches the touch target so no hitSlop is needed and adjacent hit
-// areas can't overlap. Shared by the mic toggle and the close button.
-const ICON_BUTTON_CONSTANTS = {
-  SIZE: MIN_TOUCH_TARGET.MEDIUM, // 44px - Apple HIG minimum tap target
-} as const;
+// The mic and close controls are `GlassIconButton`s, which are 44pt — the Apple
+// HIG minimum tap target (Material prefers 48dp). The visible button matches the
+// touch target, so no hitSlop is needed and adjacent hit areas can't overlap.
 
 /** Tint mixed into the elevation surface to make the progress track visible. */
 const TRACK_TINT = 0.15;
@@ -57,14 +49,6 @@ const STATIC_STYLES = StyleSheet.create({
   progressContainer: {
     flex: 1,
     marginRight: LAYOUT.SPACING.LARGE,
-  },
-  iconButton: {
-    width: ICON_BUTTON_CONSTANTS.SIZE,
-    height: ICON_BUTTON_CONSTANTS.SIZE,
-    borderRadius: ICON_BUTTON_CONSTANTS.SIZE / 2, // Circular
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
   },
   runContainer: {
     marginRight: LAYOUT.SPACING.MEDIUM,
@@ -124,21 +108,12 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({
     }
   }, [recallRun]);
 
-  // Handle close. The haptic lives here rather than in useReview's handleClose:
-  // that exit is also reached from the completion screen's ThemedButtons, which
-  // fire their own, so keeping it in the hook buzzed Continue twice in one tick.
-  // This bare Pressable has no press feedback of its own, so it needs this.
+  // The close haptic lives on the button (GlassIconButton fires 'light' by
+  // default) rather than in useReview's handleClose: that exit is also reached
+  // from the completion screen's ThemedButtons, which fire their own, so keeping
+  // it in the hook buzzed Continue twice in one tick.
   const handleClose = () => {
-    lightFeedback();
-    if (onClose) {
-      onClose();
-    }
-  };
-
-  // Fallback background for non-iOS-26 platforms
-  const fallbackButtonStyle = {
-    backgroundColor: colors.elevation1,
-    opacity: LAYOUT.OPACITY.PRESSED,
+    onClose?.();
   };
 
   return (
@@ -177,39 +152,26 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({
         </Animated.View>
       )}
       {showVoiceControl && onToggleVoice && (
-        <Pressable
-          onPress={onToggleVoice}
-          accessibilityRole="button"
+        <GlassIconButton
+          clear
           accessibilityLabel={voicePaused ? STRINGS.VOICE_RESUME_LABEL : STRINGS.VOICE_PAUSE_LABEL}
+          icon={voicePaused ? 'mic-off' : 'mic'}
+          // Tint only while actively listening; neutral at rest so it reads as
+          // the same chrome control as the close button. `active` would also
+          // lift the surface, which the mic shouldn't do — only the glyph
+          // changes colour.
+          iconColor={voiceListening ? colors.tint : colors.secondaryText}
           style={STATIC_STYLES.voiceButtonSpacing}
-        >
-          <GlassContainer
-            style={[STATIC_STYLES.iconButton, fallbackButtonStyle]}
-            {...(GLASS_AVAILABLE && { isInteractive: true, glassEffectStyle: 'clear' })}
-          >
-            <Ionicons
-              name={voicePaused ? 'mic-off' : 'mic'}
-              size={LAYOUT.BUTTON.ICON_SIZE.LARGE}
-              // Tint only while actively listening; neutral at rest so it reads
-              // as the same chrome control as the close button.
-              color={voiceListening ? colors.tint : colors.secondaryText}
-            />
-          </GlassContainer>
-        </Pressable>
+          onPress={onToggleVoice}
+        />
       )}
       {onClose && (
-        <Pressable onPress={handleClose}>
-          <GlassContainer
-            style={[STATIC_STYLES.iconButton, fallbackButtonStyle]}
-            {...(GLASS_AVAILABLE && { isInteractive: true, glassEffectStyle: 'clear' })}
-          >
-            <Ionicons
-              name="close"
-              size={LAYOUT.BUTTON.ICON_SIZE.LARGE}
-              color={colors.secondaryText}
-            />
-          </GlassContainer>
-        </Pressable>
+        <GlassIconButton
+          clear
+          accessibilityLabel={STRINGS.REVIEW_CLOSE_A11Y}
+          icon="close"
+          onPress={handleClose}
+        />
       )}
     </View>
   );

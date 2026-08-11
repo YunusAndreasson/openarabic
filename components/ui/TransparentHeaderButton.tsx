@@ -1,18 +1,21 @@
+import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
 import { type IoniconName } from '@/components/ui/Icon';
 import { memo } from 'react';
 
-import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
+import type { IconButtonSize } from '@/constants/iconButton';
 import { useColors } from '@/hooks/theme/useColors';
 
 export interface TransparentHeaderButtonProps {
   /** Icon name from Ionicons */
-  iconName: IoniconName;
+  icon: IoniconName;
+  /** What the button does, for screen readers — it is icon-only. */
+  accessibilityLabel: string;
   /** Press handler */
   onPress: () => void;
   /** Long press handler */
   onLongPress?: () => void;
   /** Button size - determines width, height, and icon size */
-  size?: 'small' | 'medium' | 'large';
+  size?: IconButtonSize;
   /** Whether the button is disabled */
   disabled?: boolean;
   /** Test ID for testing */
@@ -34,25 +37,34 @@ export interface TransparentHeaderButtonProps {
  *
  * @example
  * <TransparentHeaderButton
- *   iconName="close"
+ *   icon="close"
+ *   accessibilityLabel="Close"
  *   onPress={handleClose}
- *   size="medium"
  * />
  */
 export const TransparentHeaderButton = memo<TransparentHeaderButtonProps>(
-  ({ iconName, onPress, onLongPress, size = 'medium', disabled = false, testID }) => {
+  ({
+    icon,
+    accessibilityLabel,
+    onPress,
+    onLongPress,
+    size = 'medium',
+    disabled = false,
+    testID,
+  }) => {
     const colors = useColors();
 
     return (
       <HeaderIconButton
-        iconName={iconName}
-        onPress={onPress}
-        onLongPress={onLongPress}
-        size={size}
-        iconColor={colors.tint}
+        accessibilityLabel={accessibilityLabel}
         backgroundColor={colors.transparent}
         disabled={disabled}
+        icon={icon}
+        iconColor={colors.tint}
+        size={size}
         testID={testID}
+        onLongPress={onLongPress}
+        onPress={onPress}
       />
     );
   },

@@ -1,20 +1,22 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ListRow, LoadingState } from '@/components/common';
 import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
 import { ArticleSentence } from '@/components/article/ArticleSentence';
-import { IconButton } from '@/components/ui';
-import { LAYOUT } from '@/constants/layout';
+import { IconButton, PulsatingLoader } from '@/components/ui';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useStudyWordMutations } from '@/hooks/articles/useStudyWordMutations';
 import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useFSRSQueries, useResetWordProgress, useSentencesByWord } from '@/hooks/vocabulary';
-import type { ColorName } from '@/constants/colors';
+import type { SolidColorName } from '@/constants/colors';
 import type { RootId } from '@/types/branded.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
@@ -40,8 +42,7 @@ interface StatRowProps {
   label: string;
   value: string;
   /** Omit for values that carry no judgement (a due date isn't good or bad) */
-  colorName?: ColorName;
-  borderColor: string;
+  colorName?: SolidColorName;
 }
 
 /**
@@ -52,16 +53,16 @@ interface StatRowProps {
  * colored red a perfectly normal word read as an error state. Rows also put
  * this screen on the same left-aligned scan axis as the dictionary list.
  */
-function StatRow({ label, value, colorName, borderColor }: StatRowProps): JSX.Element {
+function StatRow({ label, value, colorName }: StatRowProps): JSX.Element {
   return (
-    <View style={[styles.statRow, { borderBottomColor: borderColor }]}>
-      <ThemedText type="body" colorName="secondaryText">
+    <ListRow divider style={styles.statRow}>
+      <ThemedText colorName="secondaryText" type="body">
         {label}
       </ThemedText>
-      <ThemedText type="body" weight="semibold" colorName={colorName}>
+      <ThemedText colorName={colorName} type="bodyBold">
         {value}
       </ThemedText>
-    </View>
+    </ListRow>
   );
 }
 
@@ -168,17 +169,17 @@ export default function PracticeWordScreen(): JSX.Element {
   // another screen, stale deep link) looked like a screen that never loaded.
   if (!word) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <ThemedView style={styles.container}>
         <View style={styles.loadingContainer}>
           {isLoading ? (
-            <ActivityIndicator size="small" color={colors.tint} />
+            <LoadingState />
           ) : (
-            <ThemedText type="body" variant="secondary" align="center">
+            <ThemedText align="center" colorName="secondaryText" type="body">
               {STRINGS.WORD_NOT_FOUND}
             </ThemedText>
           )}
         </View>
-      </View>
+      </ThemedView>
     );
   }
 
@@ -189,7 +190,7 @@ export default function PracticeWordScreen(): JSX.Element {
   const difficultyLevel = getDifficultyLevel(word.fsrs_difficulty);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <ThemedView style={styles.container}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[
@@ -225,21 +226,18 @@ export default function PracticeWordScreen(): JSX.Element {
         {/* FSRS stats — one hairline row each */}
         <View style={[styles.stats, { borderTopColor: colors.border }]}>
           <StatRow
+            colorName={strengthColorKey}
             label={STRINGS.WORD_STAT_STRENGTH}
             value={STRENGTH_LABELS[strengthColorKey]}
-            colorName={strengthColorKey}
-            borderColor={colors.border}
           />
           <StatRow
+            colorName={DIFFICULTY_COLORS[difficultyLevel]}
             label={STRINGS.WORD_STAT_DIFFICULTY}
             value={DIFFICULTY_LABELS[difficultyLevel]}
-            colorName={DIFFICULTY_COLORS[difficultyLevel]}
-            borderColor={colors.border}
           />
           <StatRow
             label={STRINGS.WORD_STAT_NEXT_REVIEW}
             value={getNextReviewLabel(word.fsrs_due)}
-            borderColor={colors.border}
           />
         </View>
 
@@ -251,7 +249,8 @@ export default function PracticeWordScreen(): JSX.Element {
 
           {sentencesLoading && (
             <View style={styles.examplesFallback}>
-              <ActivityIndicator size="small" color={colors.tint} />
+              {/* Inline, inside a section — not the screen-filling LoadingState. */}
+              <PulsatingLoader size={MIN_TOUCH_TARGET.LARGE} />
             </View>
           )}
 
@@ -302,19 +301,22 @@ export default function PracticeWordScreen(): JSX.Element {
         {/* Management actions — last in the scroll, low emphasis. Rare and
             destructive, so they get the end of the page rather than pinned
             space, and both are still one swipe away on the dictionary row. */}
+        {/* Rows, not buttons: they sit in the same left-aligned scan column as
+            the stat rows above and read as a continuation of them. A ghost
+            ThemedButton needed `alignItems: 'flex-start'` and zeroed padding to
+            fake this, which is the component telling you it is the wrong one. */}
         <View style={[styles.actions, { borderTopColor: colors.border }]}>
-          <Pressable style={styles.actionRow} onPress={handleResetProgress}>
+          <ListRow divider hapticType="selection" onPress={handleResetProgress}>
             <ThemedText type="body">{STRINGS.RESET_PROGRESS_ACTION}</ThemedText>
-          </Pressable>
-          <View style={[styles.actionDivider, { backgroundColor: colors.border }]} />
-          <Pressable style={styles.actionRow} onPress={handleRemove}>
-            <ThemedText type="body" variant="error">
+          </ListRow>
+          <ListRow hapticType="selection" onPress={handleRemove}>
+            <ThemedText colorName="error" type="body">
               {STRINGS.REMOVE_FROM_PRACTICE_ACTION}
             </ThemedText>
-          </Pressable>
+          </ListRow>
         </View>
       </ScrollView>
-    </View>
+    </ThemedView>
   );
 }
 
@@ -353,13 +355,10 @@ const styles = StyleSheet.create({
     marginTop: LAYOUT.SPACING.XLARGE,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
+  // ListRow supplies the row layout and the rule; this only spreads the
+  // label and value to opposite edges.
   statRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    gap: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
-    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   examplesSection: {
     marginTop: LAYOUT.SPACING.XLARGE,
@@ -368,6 +367,7 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.SMALL,
   },
   examplesFallback: {
+    alignItems: 'center',
     paddingVertical: LAYOUT.SPACING.XLARGE,
   },
   sentenceBlock: {
@@ -383,12 +383,6 @@ const styles = StyleSheet.create({
   },
   actions: {
     marginTop: LAYOUT.SPACING.XLARGE,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  actionDivider: {
-    height: StyleSheet.hairlineWidth,
-  },
-  actionRow: {
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    borderTopWidth: LAYOUT.BORDER.WIDTH.HAIRLINE,
   },
 });

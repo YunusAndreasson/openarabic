@@ -15,8 +15,7 @@ import {
   ArticleContent,
 } from '@/components/article';
 import { AudioErrorBoundary, GlobalMiniPlayer } from '@/components/audio';
-import { LoadingState } from '@/components/common';
-import { ComponentErrorBoundary } from '@/components/common/ComponentErrorBoundary';
+import { ComponentErrorBoundary, LoadingState } from '@/components/common';
 import { ToastProvider, useTutorialContext, useToast } from '@/components/providers';
 import { TutorialId } from '@/constants/tutorials';
 import { useArticleListen } from '@/hooks/articles/useArticleListen';
@@ -246,11 +245,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
         // accessible={false}: a Pressable otherwise groups its whole subtree into
         // one TalkBack node with every descendant's text concatenated into a
         // single label, hiding the individually-accessible words and buttons below.
-        <Pressable
-          style={FLEX_ONE_STYLE}
-          onPress={handleBackgroundPress}
-          accessible={false}
-        >
+        <Pressable style={FLEX_ONE_STYLE} onPress={handleBackgroundPress} accessible={false}>
           <ArticleContent {...articleContentProps} />
         </Pressable>
       ) : null}

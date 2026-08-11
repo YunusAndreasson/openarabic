@@ -1,4 +1,4 @@
-import { MetricCard } from '@/components/common/MetricCard';
+import { MetricCard } from '@/components/common';
 import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 

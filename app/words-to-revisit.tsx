@@ -2,7 +2,7 @@ import type { JSX } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BottomSheetHeader, BottomSheetStateHandler } from '@/components/common';
+import { Badge, BottomSheetHeader, BottomSheetStateHandler } from '@/components/common';
 import { ThemedText } from '@/components/ThemedText';
 import { IconButton } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
@@ -41,15 +41,11 @@ function LeechRow({ word, onReset }: LeechRowProps): JSX.Element {
         ) : null}
       </View>
 
-      <View style={[styles.badge, { backgroundColor: colors.elevation2 }]}>
-        <ThemedText type="caption" colorName="error">
-          {formatForgotCount(lapses)}
-        </ThemedText>
-      </View>
+      <Badge colorName="error">{formatForgotCount(lapses)}</Badge>
 
       <IconButton
         icon="refresh"
-        variant="danger"
+        tone="destructive"
         iconSize={LAYOUT.BUTTON.ICON_SIZE.SMALL}
         onPress={() => onReset(word.root_id)}
       />
@@ -141,10 +137,5 @@ const styles = StyleSheet.create({
   wordColumn: {
     flex: 1,
     gap: LAYOUT.SPACING.TINY,
-  },
-  badge: {
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
-    paddingVertical: LAYOUT.SPACING.TINY,
-    borderRadius: LAYOUT.BORDER_RADIUS.PILL,
   },
 });

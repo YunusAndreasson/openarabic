@@ -1,10 +1,10 @@
+import { Ionicons } from '@/components/ui';
 import type { JSX } from 'react';
 import { Fragment, useEffect } from 'react';
 import { BackHandler, Platform } from 'react-native';
 
 import { router, usePathname } from 'expo-router';
 
-import { Ionicons } from '@/components/ui/Icon';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 
 import { ROUTE_PATHS } from '@/constants/routes';

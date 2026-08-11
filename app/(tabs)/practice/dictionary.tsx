@@ -160,7 +160,7 @@ export default function DictionaryScreen(): JSX.Element {
     if (searchQuery.trim()) {
       return (
         <View style={styles.searchEmptyContainer}>
-          <ThemedText type="body" variant="secondary" align="center">
+          <ThemedText type="body" colorName="secondaryText" align="center">
             {STRINGS.NO_WORDS_MATCH_SEARCH}
           </ThemedText>
         </View>

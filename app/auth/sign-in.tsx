@@ -31,7 +31,7 @@ const SignInScreen = memo(function SignInScreen(): JSX.Element {
       }}
     >
       <View style={styles.content}>
-        <ThemedText align="center" type="body" variant="secondary" style={styles.subtitle}>
+        <ThemedText align="center" type="body" colorName="secondaryText" style={styles.subtitle}>
           {STRINGS.SIGN_IN_SUBTITLE}
         </ThemedText>
 

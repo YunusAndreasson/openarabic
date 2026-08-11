@@ -1,12 +1,12 @@
 import { type FC, useMemo } from 'react';
-import type { PressableAndroidRippleConfig } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { getThemeAwareElevation, LAYOUT } from '@/constants/layout';
-import { PRESS_ANIMATION_CARD, usePressAnimation } from '@/hooks/animations/usePressAnimation';
+import { PRESS_ANIMATION_CARD } from '@/hooks/animations/usePressAnimation';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import { useButtonPress } from '@/hooks/ui/useButtonPress';
 import type { BaseCardProps } from '@/types/ui/card.types';
 
 // Static constants extracted outside component - zero per-render allocations
@@ -37,8 +37,18 @@ export const BaseCard: FC<BaseCardProps> = ({
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
 
-  // Press animation - using shared preset for zero allocations
-  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation(PRESS_ANIMATION_CARD);
+  // Shared press engine, same as every button. `hapticType` stays 'none' (the
+  // hook's default): a card is a navigation surface, and firing a haptic on
+  // every list-row tap would be a different app.
+  const { handlePress, animatedStyle, handlePressIn, handlePressOut, rippleConfig } =
+    useButtonPress({
+      onPress,
+      disabled,
+      animationOptions: PRESS_ANIMATION_CARD,
+      // A card paints its own opaque background, which would hide a ripple
+      // drawn behind it.
+      rippleForeground: true,
+    });
 
   const handlePressInWithCallback = useMemo(() => {
     if (!onPressIn) return handlePressIn;
@@ -62,12 +72,6 @@ export const BaseCard: FC<BaseCardProps> = ({
       disabled && { opacity: LAYOUT.OPACITY.MEDIUM },
     ];
   }, [colors.card, colors.shadow, isDarkMode, shadowSize, style, disabled]);
-
-  // Memoize ripple config to avoid per-render object allocation
-  const rippleConfig = useMemo<PressableAndroidRippleConfig>(
-    () => ({ color: colors.navigationRipple, borderless: false, foreground: true }),
-    [colors.navigationRipple],
-  );
 
   // Content wrapper — View acts as layout boundary between flex:1 Pressable and card content
   const content = <View style={contentStyle}>{children}</View>;
@@ -95,7 +99,7 @@ export const BaseCard: FC<BaseCardProps> = ({
         disabled={disabled}
         android_ripple={rippleConfig}
         style={PRESSABLE_STYLE}
-        onPress={onPress}
+        onPress={handlePress}
         onPressIn={handlePressInWithCallback}
         onPressOut={handlePressOut}
         onLongPress={onLongPress}

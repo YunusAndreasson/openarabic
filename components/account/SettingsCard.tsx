@@ -1,10 +1,9 @@
-import { Ionicons } from '@/components/ui/Icon';
 import { memo, type ComponentProps, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { BaseCard } from '@/components/common';
 import { ThemedText } from '@/components/ThemedText';
-import { Toggle } from '@/components/ui';
+import { Ionicons, Toggle } from '@/components/ui';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
@@ -137,11 +136,7 @@ export const SettingsCard = memo((props: SettingsCardProps) => {
             <Ionicons color={iconColor} name={icon} size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM} />
           </View>
           <View style={subtitle ? styles.textContainerWithSubtitle : styles.textContainer}>
-            <ThemedText
-              type="body"
-              weight="medium"
-              colorName={textColor === 'error' ? 'error' : 'text'}
-            >
+            <ThemedText type="body" colorName={textColor === 'error' ? 'error' : 'text'}>
               {label}
             </ThemedText>
             {subtitle && (

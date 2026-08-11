@@ -1,12 +1,12 @@
+import { BrandedBottomSheetHandle } from '@/components/ui/BrandedBottomSheetHandle';
 import { Ionicons, type IoniconName } from '@/components/ui/Icon';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BaseCard } from '@/components/common/BaseCard';
-
+import { BottomSheetHeader } from '@/components/common/BottomSheetHeader';
+import { OptionCard } from '@/components/common/OptionCard';
 import { ThemedText } from '@/components/ThemedText';
-import { BrandedBottomSheetHandle } from '@/components/ui/BrandedBottomSheetHandle';
 import { LAYOUT, LINE_HEIGHT_MULTIPLIERS, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useBottomSheetDynamicStyles } from '@/hooks/ui/useBottomSheetDynamicStyles';
@@ -63,12 +63,7 @@ function SettingsPickerComponent<T>({
       backdropComponent={BottomSheetBackdrop}
     >
       <BottomSheetView>
-        {/* Header */}
-        <View style={styles.header}>
-          <ThemedText type="heading3" weight="bold" style={LAYOUT.BOTTOM_SHEET.STYLES.title}>
-            {title}
-          </ThemedText>
-        </View>
+        <BottomSheetHeader title={title} />
 
         {/* Options */}
         <View
@@ -78,23 +73,14 @@ function SettingsPickerComponent<T>({
             const isSelected = currentValue === option.id;
 
             return (
-              <BaseCard
+              <OptionCard
                 key={String(option.id)}
-                shadowSize="small"
-                style={[
-                  styles.optionCard,
-                  {
-                    backgroundColor: isSelected ? colors.tintBackground : colors.elevation2,
-                    borderColor: isSelected ? colors.tint : colors.borderOverlay,
-                    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-                  },
-                ]}
-                onPress={() => onSelect(option.id)}
                 accessibilityLabel={
                   option.subtitle ? `${option.title}. ${option.subtitle}` : option.title
                 }
-                accessibilityRole="radio"
-                accessibilityState={{ selected: isSelected }}
+                selected={isSelected}
+                style={styles.optionCard}
+                onPress={() => onSelect(option.id)}
               >
                 <View style={styles.cardContent}>
                   <View style={styles.cardLeft}>
@@ -108,7 +94,6 @@ function SettingsPickerComponent<T>({
                     <View style={styles.optionContent}>
                       <ThemedText
                         type="body"
-                        weight="medium"
                         style={[
                           styles.optionTitle,
                           { color: isSelected ? colors.tint : colors.text },
@@ -119,7 +104,7 @@ function SettingsPickerComponent<T>({
                       {option.subtitle && (
                         <ThemedText
                           type="caption"
-                          variant="secondary"
+                          colorName="secondaryText"
                           style={styles.optionSubtitle}
                         >
                           {option.subtitle}
@@ -128,7 +113,7 @@ function SettingsPickerComponent<T>({
                     </View>
                   </View>
                 </View>
-              </BaseCard>
+              </OptionCard>
             );
           })}
         </View>
@@ -141,10 +126,6 @@ function SettingsPickerComponent<T>({
 export const SettingsPicker = SettingsPickerComponent;
 
 const styles = StyleSheet.create({
-  header: {
-    ...LAYOUT.BOTTOM_SHEET.HEADER,
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
   optionsContainer: {
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     gap: LAYOUT.SPACING.MEDIUM,

@@ -1,7 +1,7 @@
 import { Stack } from 'expo-router';
 import type { JSX } from 'react';
 
-import { EditModeButton } from '@/components/ui';
+import { EditModeButton } from '@/components/playlist/EditModeButton';
 import { useColors } from '@/hooks/theme/useColors';
 import { AppTab } from '@/types/enums';
 import { createTabHeaderOptions } from '@/utils/navigation';

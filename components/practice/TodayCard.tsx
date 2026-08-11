@@ -1,9 +1,9 @@
+import { BaseCard } from '@/components/common';
+import { Ionicons } from '@/components/ui';
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { BaseCard } from '@/components/common/BaseCard';
 import { ThemedText } from '@/components/ThemedText';
-import { Ionicons } from '@/components/ui/Icon';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
@@ -49,7 +49,7 @@ export const TodayCard = memo<TodayCardProps>(
           <View style={styles.textColumn}>
             <ThemedText type="bodyBold">{primary}</ThemedText>
             {secondary.length > 0 && (
-              <ThemedText type="caption" variant="secondary">
+              <ThemedText type="caption" colorName="secondaryText">
                 {secondary}
               </ThemedText>
             )}

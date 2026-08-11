@@ -1,15 +1,14 @@
-import { BaseCard } from '@/components/common/BaseCard';
-import { ProgressBar } from '@/components/common/ProgressBar';
+import { BaseCard, ProgressBar } from '@/components/common';
 import { memo, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import { EnhancedImage } from '@/components/ui/EnhancedImage';
+import { EnhancedImage, IconButton } from '@/components/ui';
 import { ThemedText } from '@/components/ThemedText';
 
-import { DeleteButton } from './DeleteButton';
 import { DragHandle, type DragHandleProps } from './DragHandle';
 import { TIMING_CONSTANTS } from '@/constants/animation';
+import { STRINGS } from '@/constants/strings';
 import { FONTS } from '@/constants/fonts';
 import { getEnhancedOpacity, LAYOUT, TEXT_OPACITY, TEXT_STYLES } from '@/constants/layout';
 import { useEditModeCardAnimation } from '@/hooks/cards';
@@ -148,7 +147,14 @@ export const PlaylistItemCard: FC<PlaylistItemCardProps> = memo(
         {/* Delete Button - shows on right in edit mode */}
         {editMode && onDelete && (
           <View style={styles.deleteButtonContainer}>
-            <DeleteButton onPress={onDelete} />
+            <IconButton
+              accessibilityLabel={STRINGS.ARTICLE_REMOVE_FROM_PLAYLIST_A11Y}
+              hapticType="selection"
+              icon="trash"
+              size="small"
+              tone="destructive"
+              onPress={onDelete}
+            />
           </View>
         )}
       </Animated.View>

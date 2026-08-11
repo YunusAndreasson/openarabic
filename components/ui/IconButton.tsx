@@ -1,20 +1,21 @@
-import { Ionicons } from '@/components/ui/Icon';
-import type { ComponentProps, FC } from 'react';
+import { Ionicons, type IoniconName } from '@/components/ui/Icon';
+import type { FC } from 'react';
 import type { TextStyle } from 'react-native';
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { PRESS_SCALE } from '@/constants/animation';
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
+import { ICON_BUTTON_SIZES, type IconButtonSize } from '@/constants/iconButton';
 import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
-import { useButtonPress } from '@/hooks/ui/useButtonPress';
+import { useButtonPress, type HapticType } from '@/hooks/ui/useButtonPress';
+import type { ButtonTone } from '@/types/ui/button.types';
 
 interface IconButtonProps {
   /**
    * The icon name from Ionicons
    */
-  icon: ComponentProps<typeof Ionicons>['name'];
+  icon: IoniconName;
 
   /**
    * Callback when button is pressed
@@ -27,26 +28,33 @@ interface IconButtonProps {
   disabled?: boolean;
 
   /**
-   * Background color (defaults to tint)
+   * Overall button size. Drives the dimension, corner radius, icon size and
+   * hit slop from one token — the same scale `HeaderIconButton` uses.
+   */
+  size?: IconButtonSize;
+
+  /**
+   * Background color (defaults to the tone's hue)
    */
   backgroundColor?: string;
 
   /**
-   * Icon color (auto-computed from theme if not provided)
+   * Icon color (defaults to the tone's contrast color)
    */
   iconColor?: string;
 
   /**
-   * Icon size (defaults to MEDIUM)
+   * Icon size override, when the glyph needs to be smaller or larger than the
+   * button's `size` implies. Prefer `size`.
    */
   iconSize?: number;
 
   /**
-   * Button variant
-   * - 'default': Uses tint background
-   * - 'danger': Uses error background
+   * Which hue the button paints itself with — same axis as `ThemedButton`.
+   * - 'default': the theme tint
+   * - 'destructive': the error color, for delete/reset actions
    */
-  variant?: 'default' | 'danger';
+  tone?: ButtonTone;
 
   /**
    * Whether to use debouncing (useful for rapid clicks)
@@ -59,7 +67,7 @@ interface IconButtonProps {
    * - 'selection': Selection haptic feedback (delete/action buttons)
    * - 'none': No haptic feedback
    */
-  hapticType?: 'light' | 'selection' | 'none';
+  hapticType?: HapticType;
 
   /**
    * Additional icon style offset (e.g., for play icon alignment)
@@ -76,21 +84,27 @@ interface IconButtonProps {
 // Internal constant for debounce duration
 const DEBOUNCE_DURATION_MS = 300;
 
+/**
+ * A filled, circular icon button — the app's compact action control (play,
+ * delete, reset). For the transparent variant used in navigation headers see
+ * `HeaderIconButton`; for chrome floating over content see `GlassIconButton`.
+ */
 export const IconButton: FC<IconButtonProps> = ({
   icon,
   onPress,
   disabled = false,
+  size = 'medium',
   backgroundColor,
   iconColor,
-  iconSize = LAYOUT.BUTTON.ICON_SIZE.MEDIUM,
-  variant = 'default',
+  iconSize,
+  tone = 'default',
   debounce = false,
   hapticType = 'selection',
   iconStyle,
   accessibilityLabel,
 }) => {
   const colors = useColors();
-  const isDarkMode = useIsDarkMode();
+  const config = ICON_BUTTON_SIZES[size];
 
   // Use shared button press hook
   const { handlePress, animatedStyle, handlePressIn, handlePressOut, rippleConfig, isDisabled } =
@@ -103,26 +117,33 @@ export const IconButton: FC<IconButtonProps> = ({
       animationOptions: { scaleAmount: PRESS_SCALE.STRONG },
     });
 
-  // Determine colors with theme-aware defaults
-  const resolvedBackgroundColor =
-    backgroundColor ?? (variant === 'danger' ? colors.error : colors.tint);
-  const resolvedIconColor = iconColor ?? (isDarkMode ? colors.text : colors.black);
+  // Determine colors from the tone. The icon color used to default to
+  // `isDarkMode ? text : black`, which ignored the surface it sits on — on a
+  // destructive button that painted near-black glyphs onto red in light mode.
+  // The `onTint`/`onError` pair is the contrast color each hue was designed
+  // with, and it is what ThemedButton uses for the same job.
+  const hue = tone === 'destructive' ? colors.error : colors.tint;
+  const onHue = tone === 'destructive' ? colors.onError : colors.onTint;
+
+  const resolvedBackgroundColor = backgroundColor ?? hue;
+  const resolvedIconColor = iconColor ?? onHue;
 
   return (
     <Pressable
-      style={styles.button}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: isDisabled }}
+      android_ripple={rippleConfig}
+      disabled={isDisabled}
+      hitSlop={config.hitSlop}
+      style={config.container}
       onPress={handlePress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      disabled={isDisabled}
-      hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-      android_ripple={rippleConfig}
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
     >
       <Animated.View
         style={[
-          styles.button,
+          config.container,
           LAYOUT.ELEVATION.SUBTLE,
           { shadowColor: colors.shadow },
           animatedStyle,
@@ -132,18 +153,15 @@ export const IconButton: FC<IconButtonProps> = ({
           },
         ]}
       >
-        <Ionicons name={icon} size={iconSize} color={resolvedIconColor} style={iconStyle} />
+        <Ionicons
+          color={resolvedIconColor}
+          name={icon}
+          size={iconSize ?? config.iconSize}
+          style={iconStyle}
+        />
       </Animated.View>
     </Pressable>
   );
 };
 
-const styles = StyleSheet.create({
-  button: {
-    alignItems: 'center',
-    borderRadius: MIN_TOUCH_TARGET.MEDIUM / 2,
-    height: MIN_TOUCH_TARGET.MEDIUM,
-    justifyContent: 'center',
-    width: MIN_TOUCH_TARGET.MEDIUM,
-  },
-});
+IconButton.displayName = 'IconButton';

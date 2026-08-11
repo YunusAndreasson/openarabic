@@ -1,207 +1,73 @@
-import type { FC } from 'react';
-import { Linking, Pressable, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { DocCredit, DocHeading, DocLink, DocParagraph, LegalDocument } from '@/components/common';
+import { Fragment, type FC } from 'react';
 
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
+
+/** A credited third-party service: name, what it does, and where to read more. */
+const SERVICES: { section: string; name: string; description: string; url: string }[] = [
+  {
+    section: STRINGS.LEGAL_AUDIO_TITLE,
+    name: STRINGS.LEGAL_AUDIO_ELEVENLABS,
+    description: STRINGS.LEGAL_AUDIO_ELEVENLABS_DESC,
+    url: STRINGS.LEGAL_AUDIO_ELEVENLABS_URL,
+  },
+  {
+    section: STRINGS.LEGAL_ERROR_TRACKING_TITLE,
+    name: STRINGS.LEGAL_ERROR_SENTRY,
+    description: STRINGS.LEGAL_ERROR_SENTRY_DESC,
+    url: STRINGS.LEGAL_ERROR_SENTRY_URL,
+  },
+];
+
+const ARABIC_FONTS: { name: string; description: string }[] = [
+  { name: STRINGS.LEGAL_FONT_SCHEHERAZADE, description: STRINGS.LEGAL_FONT_SCHEHERAZADE_DESC },
+  { name: STRINGS.LEGAL_FONT_AMIRI, description: STRINGS.LEGAL_FONT_AMIRI_DESC },
+  { name: STRINGS.LEGAL_FONT_MADINA, description: STRINGS.LEGAL_FONT_MADINA_DESC },
+  { name: STRINGS.LEGAL_FONT_NASTALIQ, description: STRINGS.LEGAL_FONT_NASTALIQ_DESC },
+];
+
+const ENGLISH_FONTS: { name: string; description: string }[] = [
+  { name: STRINGS.LEGAL_FONT_NOTO_SANS, description: STRINGS.LEGAL_FONT_NOTO_SANS_DESC },
+];
 
 /**
  * Legal & Attributions Screen
  * Displays third-party service acknowledgments and open source license information
  */
-const LegalAttributionsScreen: FC = () => {
-  const insets = useSafeAreaInsets();
+const LegalAttributionsScreen: FC = () => (
+  <LegalDocument>
+    <DocParagraph>{STRINGS.LEGAL_INTRO}</DocParagraph>
 
-  const handleLinkPress = (url: string) => {
-    Linking.openURL(url);
-  };
+    {SERVICES.map(({ section, name, description, url }) => (
+      <Fragment key={section}>
+        <DocHeading>{section}</DocHeading>
+        <DocHeading level="subsection">{name}</DocHeading>
+        <DocParagraph>{description}</DocParagraph>
+        <DocLink url={url} />
+      </Fragment>
+    ))}
 
-  return (
-    <ThemedView
-      includeBottomInset={false}
-      safeAreaEdges={['left', 'right']}
-      style={styles.container}
-    >
-      <ThemedView
-        includeBottomInset={false}
-        scrollable={true}
-        style={styles.content}
-        useSafeArea={false}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: LAYOUT.SPACING.XLARGE + insets.bottom },
-        ]}
-      >
-        {/* Introduction */}
-        <ThemedText type="body" style={styles.paragraph}>
-          {STRINGS.LEGAL_INTRO}
-        </ThemedText>
+    <DocHeading>{STRINGS.LEGAL_FONTS_TITLE}</DocHeading>
 
-        {/* Audio Generation Services */}
-        <ThemedText type="heading3" weight="semibold" style={styles.sectionTitle}>
-          {STRINGS.LEGAL_AUDIO_TITLE}
-        </ThemedText>
+    <DocHeading level="subsection">{STRINGS.LEGAL_FONTS_ARABIC_TITLE}</DocHeading>
+    {ARABIC_FONTS.map(font => (
+      <DocCredit key={font.name} description={font.description} name={font.name} />
+    ))}
 
-        <ThemedText type="body" weight="semibold" style={styles.subsectionTitle}>
-          {STRINGS.LEGAL_AUDIO_ELEVENLABS}
-        </ThemedText>
-        <ThemedText type="body" style={styles.paragraph}>
-          {STRINGS.LEGAL_AUDIO_ELEVENLABS_DESC}
-        </ThemedText>
-        <Pressable
-          onPress={() => handleLinkPress(STRINGS.LEGAL_AUDIO_ELEVENLABS_URL)}
-          style={({ pressed }) => [
-            styles.linkContainer,
-            pressed && { opacity: LAYOUT.OPACITY.HIGH },
-          ]}
-        >
-          <ThemedText type="body" colorName="tint" style={styles.link}>
-            {STRINGS.LEGAL_AUDIO_ELEVENLABS_URL}
-          </ThemedText>
-        </Pressable>
+    <DocHeading level="subsection">{STRINGS.LEGAL_FONTS_ENGLISH_TITLE}</DocHeading>
+    {ENGLISH_FONTS.map(font => (
+      <DocCredit key={font.name} description={font.description} name={font.name} />
+    ))}
 
-        {/* Error Tracking */}
-        <ThemedText type="heading3" weight="semibold" style={styles.sectionTitle}>
-          {STRINGS.LEGAL_ERROR_TRACKING_TITLE}
-        </ThemedText>
+    <DocParagraph>{STRINGS.LEGAL_FONTS_SYSTEM_NOTE}</DocParagraph>
 
-        <ThemedText type="body" weight="semibold" style={styles.subsectionTitle}>
-          {STRINGS.LEGAL_ERROR_SENTRY}
-        </ThemedText>
-        <ThemedText type="body" style={styles.paragraph}>
-          {STRINGS.LEGAL_ERROR_SENTRY_DESC}
-        </ThemedText>
-        <Pressable
-          onPress={() => handleLinkPress(STRINGS.LEGAL_ERROR_SENTRY_URL)}
-          style={({ pressed }) => [
-            styles.linkContainer,
-            pressed && { opacity: LAYOUT.OPACITY.HIGH },
-          ]}
-        >
-          <ThemedText type="body" colorName="tint" style={styles.link}>
-            {STRINGS.LEGAL_ERROR_SENTRY_URL}
-          </ThemedText>
-        </Pressable>
+    <DocHeading>{STRINGS.LEGAL_LICENSE_INFO}</DocHeading>
+    <DocHeading level="subsection">{STRINGS.LEGAL_SIL_OFL_TITLE}</DocHeading>
+    <DocParagraph>{STRINGS.LEGAL_SIL_OFL_DESC}</DocParagraph>
 
-        {/* Typefaces/Fonts */}
-        <ThemedText type="heading3" weight="semibold" style={styles.sectionTitle}>
-          {STRINGS.LEGAL_FONTS_TITLE}
-        </ThemedText>
-
-        {/* Arabic Fonts */}
-        <ThemedText type="body" weight="semibold" style={styles.subsectionTitle}>
-          {STRINGS.LEGAL_FONTS_ARABIC_TITLE}
-        </ThemedText>
-
-        <ThemedText type="body" weight="medium" style={styles.fontName}>
-          {STRINGS.LEGAL_FONT_SCHEHERAZADE}
-        </ThemedText>
-        <ThemedText type="body" colorName="textTertiary" style={styles.fontDesc}>
-          {STRINGS.LEGAL_FONT_SCHEHERAZADE_DESC}
-        </ThemedText>
-
-        <ThemedText type="body" weight="medium" style={styles.fontName}>
-          {STRINGS.LEGAL_FONT_AMIRI}
-        </ThemedText>
-        <ThemedText type="body" colorName="textTertiary" style={styles.fontDesc}>
-          {STRINGS.LEGAL_FONT_AMIRI_DESC}
-        </ThemedText>
-
-        <ThemedText type="body" weight="medium" style={styles.fontName}>
-          {STRINGS.LEGAL_FONT_MADINA}
-        </ThemedText>
-        <ThemedText type="body" colorName="textTertiary" style={styles.fontDesc}>
-          {STRINGS.LEGAL_FONT_MADINA_DESC}
-        </ThemedText>
-
-        <ThemedText type="body" weight="medium" style={styles.fontName}>
-          {STRINGS.LEGAL_FONT_NASTALIQ}
-        </ThemedText>
-        <ThemedText type="body" colorName="textTertiary" style={styles.fontDesc}>
-          {STRINGS.LEGAL_FONT_NASTALIQ_DESC}
-        </ThemedText>
-
-        {/* English Fonts */}
-        <ThemedText type="body" weight="semibold" style={styles.subsectionTitle}>
-          {STRINGS.LEGAL_FONTS_ENGLISH_TITLE}
-        </ThemedText>
-
-        <ThemedText type="body" weight="medium" style={styles.fontName}>
-          {STRINGS.LEGAL_FONT_NOTO_SANS}
-        </ThemedText>
-        <ThemedText type="body" colorName="textTertiary" style={styles.fontDesc}>
-          {STRINGS.LEGAL_FONT_NOTO_SANS_DESC}
-        </ThemedText>
-
-        <ThemedText type="body" style={styles.paragraph}>
-          {STRINGS.LEGAL_FONTS_SYSTEM_NOTE}
-        </ThemedText>
-
-        {/* License Information */}
-        <ThemedText type="heading3" weight="semibold" style={styles.sectionTitle}>
-          {STRINGS.LEGAL_LICENSE_INFO}
-        </ThemedText>
-
-        <ThemedText type="body" weight="semibold" style={styles.subsectionTitle}>
-          {STRINGS.LEGAL_SIL_OFL_TITLE}
-        </ThemedText>
-        <ThemedText type="body" style={styles.paragraph}>
-          {STRINGS.LEGAL_SIL_OFL_DESC}
-        </ThemedText>
-
-        {/* Open Source Libraries */}
-        <ThemedText type="heading3" weight="semibold" style={styles.sectionTitle}>
-          {STRINGS.LEGAL_OPEN_SOURCE_TITLE}
-        </ThemedText>
-        <ThemedText type="body" style={styles.lastParagraph}>
-          {STRINGS.LEGAL_OPEN_SOURCE_DESC}
-        </ThemedText>
-      </ThemedView>
-    </ThemedView>
-  );
-};
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
-  },
-  sectionTitle: {
-    marginTop: LAYOUT.SPACING.LARGE,
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  subsectionTitle: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
-    marginBottom: LAYOUT.SPACING.TINY,
-  },
-  paragraph: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.NORMAL,
-  },
-  lastParagraph: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.NORMAL,
-  },
-  linkContainer: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  link: {
-    textDecorationLine: 'underline',
-  },
-  fontName: {
-    marginTop: LAYOUT.SPACING.SMALL,
-  },
-  fontDesc: {
-    marginBottom: LAYOUT.SPACING.TINY,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL, // 13px
-  },
-});
+    <DocHeading>{STRINGS.LEGAL_OPEN_SOURCE_TITLE}</DocHeading>
+    <DocParagraph last>{STRINGS.LEGAL_OPEN_SOURCE_DESC}</DocParagraph>
+  </LegalDocument>
+);
 
 export default LegalAttributionsScreen;

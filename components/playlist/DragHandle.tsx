@@ -1,4 +1,4 @@
-import { Ionicons } from '@/components/ui/Icon';
+import { Ionicons } from '@/components/ui';
 import type { FC } from 'react';
 import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 

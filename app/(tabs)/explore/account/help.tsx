@@ -1,5 +1,5 @@
 // External Libraries
-import { Ionicons } from '@/components/ui/Icon';
+import { Ionicons } from '@/components/ui';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Fragment, memo, useCallback, useMemo, type FC } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
@@ -63,7 +63,6 @@ const FAQItemComponent: FC<FAQItemComponentProps> = memo(
           <View style={styles.faqButtonContent}>
             <ThemedText
               type="body"
-              weight="medium"
               colorName={isExpanded ? 'tint' : 'text'}
               style={styles.faqQuestionText}
             >
@@ -320,7 +319,7 @@ const styles = StyleSheet.create({
   searchInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     height: LAYOUT.BUTTON.HEIGHT.MEDIUM,
@@ -345,7 +344,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   faqButton: {
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
@@ -361,7 +360,7 @@ const styles = StyleSheet.create({
     marginRight: LAYOUT.SPACING.MEDIUM,
   },
   faqAnswerContainer: {
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     paddingVertical: LAYOUT.SPACING.MEDIUM,

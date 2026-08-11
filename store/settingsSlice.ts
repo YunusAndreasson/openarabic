@@ -52,7 +52,7 @@ const initialState: SettingsState = {
     enabled: false,
   },
   arabicFont: 'NotoSansArabic-Regular', // Default font
-  arabicFontSize: LAYOUT.TYPOGRAPHY.SCALE.DEFAULT_ARABIC, // Default to 24px (slightly above average of 13-40px range)
+  arabicFontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE, // Default to 24px (slightly above average of 13-40px range)
   audioLanguagePreference: AudioLanguage.ENGLISH_ARABIC, // Default to English + Arabic
   audioShuffleEnabled: false, // Default to sequential playback
   displayLanguagePreference: DisplayLanguage.ARABIC_ENGLISH, // Default to Arabic + English

@@ -1,10 +1,6 @@
+import { PrimingCard } from '@/components/common';
 import type { FC } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
 
-import { BaseCard } from '@/components/common';
-import { ThemedButton } from '@/components/ThemedButton';
-import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 
 interface NotificationPrimingCardProps {
@@ -15,48 +11,20 @@ interface NotificationPrimingCardProps {
 /**
  * Primed "turn on smart reminders" ask on the review completion screen —
  * explains the forgetting-curve value before any OS permission dialog appears.
- * Text-only card: the calm sibling of the metric rows above it.
+ * The calm sibling of the metric rows above it, so it takes the quiet title.
  */
 export const NotificationPrimingCard: FC<NotificationPrimingCardProps> = ({
   onAccept,
   onDecline,
 }) => (
-  <BaseCard contentStyle={styles.content} shadowSize="small">
-    <ThemedText type="bodyBold">{STRINGS.NOTIFICATION_PRIMING_TITLE}</ThemedText>
-    <ThemedText style={styles.body} type="body" variant="secondary">
-      {STRINGS.NOTIFICATION_PRIMING_BODY}
-    </ThemedText>
-    <ThemedButton
-      style={styles.acceptButton}
-      title={STRINGS.NOTIFICATION_PRIMING_ACCEPT}
-      onPress={onAccept}
-    />
-    <Pressable
-      accessibilityRole="button"
-      hitSlop={LAYOUT.SPACING.SMALL}
-      style={styles.declineButton}
-      onPress={onDecline}
-    >
-      <ThemedText type="caption" variant="secondary">
-        {STRINGS.NOTIFICATION_PRIMING_DECLINE}
-      </ThemedText>
-    </Pressable>
-  </BaseCard>
+  <PrimingCard
+    acceptLabel={STRINGS.NOTIFICATION_PRIMING_ACCEPT}
+    body={STRINGS.NOTIFICATION_PRIMING_BODY}
+    declineLabel={STRINGS.NOTIFICATION_PRIMING_DECLINE}
+    title={STRINGS.NOTIFICATION_PRIMING_TITLE}
+    onAccept={onAccept}
+    onDecline={onDecline}
+  />
 );
 
-const styles = StyleSheet.create({
-  content: {
-    padding: LAYOUT.SPACING.LARGE,
-  },
-  body: {
-    marginTop: LAYOUT.SPACING.TINY,
-    marginBottom: LAYOUT.SPACING.LARGE,
-  },
-  acceptButton: {
-    alignSelf: 'stretch',
-  },
-  declineButton: {
-    alignItems: 'center',
-    marginTop: LAYOUT.SPACING.MEDIUM,
-  },
-});
+NotificationPrimingCard.displayName = 'NotificationPrimingCard';

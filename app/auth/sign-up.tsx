@@ -31,7 +31,7 @@ const SignUpScreen = memo(function SignUpScreen(): JSX.Element {
       }}
     >
       <View style={styles.content}>
-        <ThemedText align="center" type="body" variant="secondary" style={styles.subtitle}>
+        <ThemedText align="center" type="body" colorName="secondaryText" style={styles.subtitle}>
           {STRINGS.CREATE_ACCOUNT_SUBTITLE}
         </ThemedText>
 

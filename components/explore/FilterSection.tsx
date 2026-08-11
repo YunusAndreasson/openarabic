@@ -1,4 +1,4 @@
-import { BaseCard } from '@/components/common';
+import { Badge, BaseCard } from '@/components/common';
 import type { JSX } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -52,8 +52,6 @@ function CompactNavCard({
 }) {
   const colors = useColors();
 
-  const countBadgeStyle = [compactCardStyles.countBadge, { backgroundColor: colors.elevation3 }];
-  const countTextStyle = [compactCardStyles.countText, { color: colors.text }];
   const subtitleStyle = [compactCardStyles.subtitle, { color: colors.secondaryText }];
 
   return (
@@ -70,11 +68,13 @@ function CompactNavCard({
           )}
         </View>
         {count !== undefined && (
-          <View style={countBadgeStyle}>
-            <ThemedText skipDefaultColor style={countTextStyle} type="caption">
-              {count}
-            </ThemedText>
-          </View>
+          <Badge
+            backgroundColorName="elevation3"
+            colorName="text"
+            style={compactCardStyles.countBadge}
+          >
+            {count}
+          </Badge>
         )}
       </View>
     </BaseCard>
@@ -103,18 +103,11 @@ const compactCardStyles = StyleSheet.create({
   subtitle: {
     opacity: LAYOUT.OPACITY.HIGH,
   },
+  // Radius, padding and alignment come from `Badge`; this only reserves the
+  // width a two-digit count needs and separates it from the label.
   countBadge: {
-    alignItems: 'center',
-    borderRadius: MIN_TOUCH_TARGET.SMALL / 2,
-    minHeight: MIN_TOUCH_TARGET.SMALL,
-    minWidth: MIN_TOUCH_TARGET.SMALL,
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
-    justifyContent: 'center',
     marginLeft: LAYOUT.SPACING.SMALL,
-  },
-  countText: {
-    fontFamily: FONTS.ENGLISH_SEMIBOLD,
-    textAlign: 'center',
+    minWidth: MIN_TOUCH_TARGET.SMALL,
   },
 });
 

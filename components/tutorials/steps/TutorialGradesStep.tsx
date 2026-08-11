@@ -47,7 +47,7 @@ export function TutorialGradesStep() {
             <ThemedText type="body" weight="semibold" colorName={grade.colorName}>
               {grade.label}
             </ThemedText>
-            <ThemedText type="caption" variant="secondary">
+            <ThemedText type="caption" colorName="secondaryText">
               {grade.hint}
             </ThemedText>
           </View>

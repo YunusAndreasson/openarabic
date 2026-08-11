@@ -135,43 +135,96 @@ withTiming(PRESS_SCALE.STRONG); // 0.9
 withTiming(PRESS_SCALE.DRAG_UP); // 1.05
 ```
 
-## Header Button Components
+## The primitive layer
 
-Use shared header button abstractions from `components/ui/`:
+Two buckets, one rule each:
+
+- **`components/ui`** — interactive controls: buttons, links, pickers, toggles, icons.
+- **`components/common`** — layout, state and composition: cards, rows, screen
+  scaffolds, empty/error/loading states, badges, separators.
+
+Import from the barrel (`@/components/ui`, `@/components/common`), not from the
+file. The one exception is files _inside_ those two directories (and
+`components/providers`), which must import each other by direct path — a barrel
+import from inside a barrel closes a cycle that resolves to `undefined` at
+runtime.
+
+A component that calls a domain hook or the router is **not** a primitive. It
+belongs in its feature directory (`components/practice/DictionaryButton.tsx`,
+`components/playlist/EditModeButton.tsx`).
+
+## Buttons
+
+`ThemedButton` is the only text button. Two orthogonal axes:
 
 ```typescript
-// Transparent header buttons (iOS glass effect)
-import { TransparentHeaderButton } from '@/components/ui/TransparentHeaderButton';
-<TransparentHeaderButton iconName="close" onPress={handleClose} />
-
-// Navigation buttons (close/done with router.back())
-import { CloseButton, DoneButton } from '@/components/ui';
-<CloseButton onPress={optionalHandler} />
-<DoneButton />
-
-// Button groups in headers
-import { HeaderButtonGroup } from '@/components/ui/HeaderButtonGroup';
-<HeaderButtonGroup>
-  <DictionaryButton />
-  <StartReviewButton />
-</HeaderButtonGroup>
+variant: 'filled' | 'tonal' | 'outlined' | 'ghost'; // how loud
+tone: 'default' | 'destructive'; // which hue
 ```
+
+- `filled` — the one primary action on a screen
+- `tonal` — a secondary action that still reads as an action
+- `outlined` — a peer alongside a filled one
+- `ghost` — tertiary: "Not now", "Skip"
+
+Sizes are `small | medium | large`, and the size alone decides the font (13 / 16
+/ 18) via a `ThemedText` type. Never override a button's `fontSize`.
+
+Icon-only controls, by where they live:
+
+```typescript
+import { IconButton, HeaderIconButton, GlassIconButton, TextLink } from '@/components/ui';
+
+<IconButton icon="trash" tone="destructive" accessibilityLabel="Delete" onPress={...} />
+<CloseButton />                                    // headerRight of every modal
+<GlassIconButton icon="close" accessibilityLabel="Close article" onPress={...} />
+<TextLink label="Forgot password?" onPress={...} /> // inline in a sentence
+```
+
+**Every icon-only control requires `accessibilityLabel`** — it is a required
+prop on the header and glass buttons because there is no text to fall back on.
+
+## Screen scaffolding
+
+Three scaffolds, and the choice is decided by how the screen is presented:
+
+| Screen                                                    | Use                                                                                  |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Pushed / modal under a nav header                         | `ScreenScaffold` (`components/common`)                                               |
+| `presentation: 'formSheet'` route                         | `SheetScreen` — read its docblock first, it encodes react-native-screens constraints |
+| Owns its own scroll container (FlashList, article reader) | `ThemedView` directly                                                                |
+
+`ScreenScaffold` handles horizontal safe area, the 12px lead-in below the
+header, and bottom padding that clears the home indicator. Do not re-derive
+`insets.bottom` per screen.
 
 ## Bottom Sheet Dynamic Styles
 
-Use `useBottomSheetDynamicStyles` hook for consistent theming:
+Use `useBottomSheetDynamicStyles` for the sheet background, and
+`BrandedBottomSheetHandle` for the grabber:
 
 ```typescript
 import { useBottomSheetDynamicStyles } from '@/hooks/ui/useBottomSheetDynamicStyles';
+import { BrandedBottomSheetHandle } from '@/components/ui';
 
 const dynamicStyles = useBottomSheetDynamicStyles();
 
 <BottomSheet
   backgroundStyle={dynamicStyles.bottomSheet}
-  handleIndicatorStyle={dynamicStyles.indicator}
+  handleComponent={BrandedBottomSheetHandle}
   ...
 />
 ```
+
+Sheet titles go through `BottomSheetHeader` (`components/common`), not a
+hand-rolled `View` + `ThemedText`.
+
+## Typography
+
+`ThemedText` has one colour axis (`colorName`) and one weight axis (`weight`).
+A parallel `variant` prop and a `weight="medium"` that rendered Regular were
+both removed — prefer a `type` that already carries the weight (`bodyBold`,
+`heading3`) over overriding it.
 
 ## StyleSheet Best Practices
 

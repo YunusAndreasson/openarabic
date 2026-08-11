@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { PulsatingLoader } from '@/components/ui';
+import { PulsatingLoader } from '@/components/ui/PulsatingLoader';
 import { LAYOUT } from '@/constants/layout';
 
 interface LoadingStateProps {
@@ -11,6 +11,11 @@ interface LoadingStateProps {
   size?: number;
 }
 
+/**
+ * Larger than `PulsatingLoader`'s own 48pt default on purpose: this is the
+ * screen-filling state, where 48 reads as lost in the middle of an empty page.
+ * Inline loaders inside a section should use `PulsatingLoader` directly.
+ */
 const DEFAULT_LOADER_SIZE = 64;
 
 /**
@@ -22,7 +27,7 @@ export function LoadingState({ message, size = DEFAULT_LOADER_SIZE }: LoadingSta
     <View style={styles.container}>
       <PulsatingLoader size={size} />
       {message ? (
-        <ThemedText align="center" type="body" variant="secondary" style={styles.message}>
+        <ThemedText align="center" type="body" colorName="secondaryText" style={styles.message}>
           {message}
         </ThemedText>
       ) : null}

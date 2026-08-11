@@ -62,35 +62,72 @@ describe('ThemedButton', () => {
     });
   });
 
-  describe('Variants', () => {
-    test('renders filled variant by default with background color', () => {
-      const { getByText } = render(<ThemedButton title="Filled" onPress={mockOnPress} />);
-
-      const textElement = getByText('Filled');
-      expect(textElement).toBeTruthy();
-
-      // Filled variant should render text with appropriate color
-      // The button renders successfully with filled styling
-    });
-
-    test('renders outlined variant with transparent background', () => {
+  describe('Variants and tones', () => {
+    // Style assertions are worthless here: jest.setup.js stubs
+    // StyleSheet.flatten as the identity function, so any expectation about a
+    // resolved backgroundColor passes vacuously. These assert on the rendered
+    // tree and on props instead, which the stub does not touch.
+    test.each(['filled', 'tonal', 'outlined', 'ghost'] as const)('renders %s variant', variant => {
       const { getByText } = render(
-        <ThemedButton title="Outlined" variant="outlined" onPress={mockOnPress} />,
+        <ThemedButton title={variant} variant={variant} onPress={mockOnPress} />,
       );
 
-      const textElement = getByText('Outlined');
-      expect(textElement).toBeTruthy();
-
-      // Outlined variant should have border but transparent background
+      expect(getByText(variant)).toBeTruthy();
     });
 
-    test('filled variant shows different text color in disabled state', () => {
+    test.each(['default', 'destructive'] as const)('renders %s tone', tone => {
       const { getByText } = render(
-        <ThemedButton title="Disabled" variant="filled" disabled onPress={mockOnPress} />,
+        <ThemedButton title="Delete" tone={tone} onPress={mockOnPress} />,
       );
 
-      expect(getByText('Disabled')).toBeTruthy();
-      // Disabled state uses colors.disabled for text
+      expect(getByText('Delete')).toBeTruthy();
+    });
+
+    test('a destructive ghost is still announced as a button', () => {
+      const { UNSAFE_getByProps } = render(
+        <ThemedButton title="Ghost" tone="destructive" variant="ghost" onPress={mockOnPress} />,
+      );
+
+      expect(UNSAFE_getByProps({ accessibilityRole: 'button' })).toBeTruthy();
+    });
+  });
+
+  describe('Accessibility', () => {
+    // `getByRole` can't be used here: the Pressable comes from the reanimated
+    // mock, so it is not a host element and RNTL's role query never matches it.
+    // The props themselves are what ship, so assert on those.
+    test('defaults to the button role without the caller passing one', () => {
+      const { UNSAFE_getByProps } = render(<ThemedButton title="Save" onPress={mockOnPress} />);
+
+      expect(UNSAFE_getByProps({ accessibilityRole: 'button' })).toBeTruthy();
+    });
+
+    test('reports the disabled state', () => {
+      const { UNSAFE_getByProps } = render(
+        <ThemedButton disabled title="Save" onPress={mockOnPress} />,
+      );
+
+      expect(
+        UNSAFE_getByProps({ accessibilityRole: 'button' }).props.accessibilityState,
+      ).toMatchObject({ disabled: true });
+    });
+
+    test('reports busy while loading, and stays disabled', () => {
+      const { UNSAFE_getByProps } = render(
+        <ThemedButton loading title="Save" onPress={mockOnPress} />,
+      );
+
+      expect(
+        UNSAFE_getByProps({ accessibilityRole: 'button' }).props.accessibilityState,
+      ).toMatchObject({ busy: true, disabled: true });
+    });
+
+    test('keeps the label visible while loading', () => {
+      const { getByText } = render(<ThemedButton loading title="Saving" onPress={mockOnPress} />);
+
+      // The spinner takes the icon slot; replacing the label instead made the
+      // button resize on every press.
+      expect(getByText('Saving')).toBeTruthy();
     });
   });
 

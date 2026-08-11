@@ -63,17 +63,35 @@ describe('IconButton', () => {
     });
   });
 
-  describe('Variants', () => {
-    test('renders default variant', () => {
-      const { toJSON } = render(<IconButton icon="play" variant="default" onPress={mockOnPress} />);
+  describe('Tones', () => {
+    test.each(['default', 'destructive'] as const)('renders %s tone', tone => {
+      const { UNSAFE_getByProps } = render(
+        <IconButton accessibilityLabel="Action" icon="trash" tone={tone} onPress={mockOnPress} />,
+      );
 
-      expect(toJSON()).toBeTruthy();
+      expect(UNSAFE_getByProps({ accessibilityRole: 'button' })).toBeTruthy();
+    });
+  });
+
+  describe('Accessibility', () => {
+    test('exposes the label an icon-only control has no text for', () => {
+      const { UNSAFE_getByProps } = render(
+        <IconButton accessibilityLabel="Delete word" icon="trash" onPress={mockOnPress} />,
+      );
+
+      expect(UNSAFE_getByProps({ accessibilityRole: 'button' }).props.accessibilityLabel).toBe(
+        'Delete word',
+      );
     });
 
-    test('renders danger variant', () => {
-      const { toJSON } = render(<IconButton icon="trash" variant="danger" onPress={mockOnPress} />);
+    test('reports the disabled state', () => {
+      const { UNSAFE_getByProps } = render(
+        <IconButton disabled accessibilityLabel="Play" icon="play" onPress={mockOnPress} />,
+      );
 
-      expect(toJSON()).toBeTruthy();
+      expect(
+        UNSAFE_getByProps({ accessibilityRole: 'button' }).props.accessibilityState,
+      ).toMatchObject({ disabled: true });
     });
   });
 

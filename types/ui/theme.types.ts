@@ -1,5 +1,4 @@
 export interface ThemeColors {
-  primary: string;
   secondary: string;
   background: string;
   text: string;
@@ -27,6 +26,7 @@ export interface ThemeColors {
   tint: string;
   tintBackground: string;
   onTint: string;
+  onError: string;
   tabIconDefault: string;
   tabIconSelected: string;
   icon: string;
@@ -40,9 +40,6 @@ export interface ThemeColors {
   elevation2: string;
   elevation3: string;
   white: string;
-  black: string;
-  textShadowDark: string;
-  textShadowLight: string;
   info: string;
   accent: string;
   violet: string;
@@ -52,14 +49,9 @@ export interface ThemeColors {
   backdropOverlay: string;
   toastBorder: string;
   gradientOverlay: string;
-  wordTooltipBg: string;
-  wordTooltipText: string;
   wordTooltipBorder: string;
-  wordTooltipShadow: string;
 
   navigationRipple: string;
-  headerOverlay: string;
-  tabBarOverlay: string;
 
   progressIndicator: string;
   progressBackground: string;

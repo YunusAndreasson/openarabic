@@ -1,17 +1,19 @@
-import { Ionicons } from '@/components/ui/Icon';
+import { Ionicons } from '@/components/ui';
 import { Link } from 'expo-router';
 import type { ComponentProps, FC } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 import Animated, { FadeIn, FadeInUp, FadeOut, ZoomIn } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
+import { BaseCard } from '@/components/common';
 import { NotificationPrimingCard } from '@/components/review/NotificationPrimingCard';
 import { VoicePrimingCard } from '@/components/review/VoicePrimingCard';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { TIMING_CONFIG, TIMING_CONSTANTS } from '@/constants/animation';
+
 import { FONTS } from '@/constants/fonts';
-import { getThemeAwareElevation, LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
+import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import {
@@ -22,12 +24,14 @@ import {
 } from '@/hooks/review';
 import { useStudyStreak } from '@/hooks/practice';
 import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { UiAction } from '@/types/enums';
 import type { SessionMetrics } from '@/types/review.types';
-import { withAlpha } from '@/utils/colorUtils';
+import { mixColors } from '@/utils/colorUtils';
 import { successFeedback } from '@/utils/haptics';
 import { createMargin, createPadding, COMMON_STYLES } from '@/utils/layoutUtils';
+
+/** How much of a metric's hue is mixed into the card behind its icon. */
+const METRIC_ICON_TINT = 0.12;
 
 // Layout animation builders hoisted to module level per Reanimated best practices
 // Success haptic fires from the checkmark's completion callback so it lands on the
@@ -105,7 +109,6 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
   onContinue,
 }) => {
   const colors = useColors();
-  const isDarkMode = useIsDarkMode();
 
   // Fetch current daily study streak
   const { streak } = useStudyStreak();
@@ -161,23 +164,19 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
       {visibleMetrics.length > 0 && (
         <View style={styles.metricsContainer}>
           {visibleMetrics.map((metric, index) => (
-            <Animated.View
-              key={metric.type + metric.text}
-              entering={ENTERING_METRICS[index]}
-              style={[
-                styles.metricItem,
-                {
-                  backgroundColor: colors.card,
-                  shadowColor: colors.shadow,
-                },
-                getThemeAwareElevation('SUBTLE', isDarkMode),
-              ]}
-            >
-              <View style={styles.metricContent}>
+            <Animated.View key={metric.type + metric.text} entering={ENTERING_METRICS[index]}>
+              <BaseCard
+                contentStyle={styles.metricContent}
+                shadowSize="subtle"
+                style={styles.metricItem}
+              >
                 <View
                   style={[
                     styles.metricIconContainer,
-                    { backgroundColor: withAlpha(metric.color, 0.12) },
+                    // Mixed into the card rather than laid over it: a hue at 12%
+                    // alpha composites against the near-black review background
+                    // in dark mode and collapses to a grey smudge.
+                    { backgroundColor: mixColors(colors.card, metric.color, METRIC_ICON_TINT) },
                   ]}
                 >
                   <Ionicons
@@ -191,7 +190,7 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
                     {metric.text}
                   </ThemedText>
                 </View>
-              </View>
+              </BaseCard>
             </Animated.View>
           ))}
         </View>
@@ -311,8 +310,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
 
+  // BaseCard supplies the radius and the surface; this is only its padding.
   metricItem: {
-    ...COMMON_STYLES.roundedMedium,
     ...createPadding({ horizontal: 'LARGE', vertical: 'TINY' }),
   },
 

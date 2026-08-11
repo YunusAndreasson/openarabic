@@ -1,5 +1,5 @@
 import { Y_AXIS_WIDTH } from './ChartAxes';
-import { BaseCard } from '@/components/common';
+import { BaseCard } from '@/components/common/BaseCard';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -57,10 +57,10 @@ export function BaseChart({
         <View style={styles.content}>
           {!hideTitle && (
             <View style={styles.titleGroup}>
-              <ThemedText style={styles.cardTitle} type="heading2" weight="bold">
+              <ThemedText style={styles.cardTitle} type="heading2">
                 {title}
               </ThemedText>
-              <ThemedText style={styles.cardSubtitle} type="caption" variant="secondary">
+              <ThemedText style={styles.cardSubtitle} type="caption" colorName="secondaryText">
                 {subtitle}
               </ThemedText>
             </View>
@@ -83,10 +83,10 @@ export function BaseChart({
         {!hideTitle && (
           <View style={styles.headerSection}>
             <View style={styles.titleGroup}>
-              <ThemedText style={styles.cardTitle} type="heading2" weight="bold">
+              <ThemedText style={styles.cardTitle} type="heading2">
                 {title}
               </ThemedText>
-              <ThemedText style={styles.cardSubtitle} type="caption" variant="secondary">
+              <ThemedText style={styles.cardSubtitle} type="caption" colorName="secondaryText">
                 {subtitle}
               </ThemedText>
             </View>

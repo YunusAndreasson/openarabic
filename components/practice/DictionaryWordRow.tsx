@@ -1,5 +1,6 @@
+import { Ionicons } from '@/components/ui';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 // Gesture-handler's Pressable, NOT react-native's. RN's runs on the JS responder
 // system, which does not negotiate with the swipeable's native pan: a horizontal
 // drag stays inside the row's press rect, so the press was never cancelled and
@@ -13,9 +14,9 @@ import ReanimatedSwipeable, {
 import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import { Ionicons } from '@/components/ui/Icon';
 
-import { LAYOUT, MIN_TOUCH_TARGET, STATUS_INDICATOR } from '@/constants/layout';
+import { Dot } from '@/components/common';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -204,12 +205,7 @@ export const DictionaryWordRow = memo<DictionaryWordRowProps>(
           // reader users and anyone who can't separate the hues get it too
           accessibilityLabel={`${arabicText}, ${englishText}, ${difficultyLabel}`}
         >
-          <View
-            style={[
-              styles.difficultyDot,
-              { backgroundColor: colors[DIFFICULTY_COLORS[difficultyLevel]] },
-            ]}
-          />
+          <Dot color={colors[DIFFICULTY_COLORS[difficultyLevel]]} />
           <ThemedText type="arabicCompact" align="left" numberOfLines={1} style={styles.arabicText}>
             {arabicText}
           </ThemedText>
@@ -254,13 +250,6 @@ const styles = StyleSheet.create({
     // Floor for very small Arabic font settings — also stops the 44px swipe
     // action buttons from dictating the row height
     minHeight: MIN_TOUCH_TARGET.LARGE,
-  },
-  difficultyDot: {
-    width: STATUS_INDICATOR.DOT_SIZE,
-    height: STATUS_INDICATOR.DOT_SIZE,
-    borderRadius: STATUS_INDICATOR.DOT_RADIUS,
-    // Never shrink — the dots must stay on one vertical axis to be scannable
-    flexShrink: 0,
   },
   arabicText: {
     flexShrink: 1,

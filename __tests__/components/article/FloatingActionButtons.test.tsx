@@ -45,6 +45,9 @@ jest.mock('@/components/ui/Icon', () => {
 
 // Mock layout utils
 jest.mock('@/utils/layoutUtils', () => ({
+  // Spread the real module: these buttons now reach ThemedButton through the
+  // components/ui barrel, and it needs createPadding at module-init time.
+  ...jest.requireActual('@/utils/layoutUtils'),
   createAndroidRipple: () => ({ color: 'rgba(0,0,0,0.1)' }),
 }));
 

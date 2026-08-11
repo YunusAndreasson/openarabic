@@ -2,7 +2,7 @@ import { memo, useCallback, useMemo } from 'react';
 import { router } from 'expo-router';
 
 import { SettingsCard, SettingsSection } from '@/components/account';
-import { THEME_OPTIONS } from '@/components/ui/ThemePicker';
+import { THEME_OPTIONS } from '@/constants/themeOptions';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';

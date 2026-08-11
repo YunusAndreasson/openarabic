@@ -1,3 +1,4 @@
+import { EnhancedImage } from '@/components/ui';
 import { memo, useMemo } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated, {
@@ -9,7 +10,6 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Canvas, LinearGradient, Rect, vec } from '@shopify/react-native-skia';
 
-import { EnhancedImage } from '@/components/ui/EnhancedImage';
 import { SCREEN_WIDTH } from '@/constants/layout';
 import type { Article } from '@/types/articles.types';
 import type { ThemeColors } from '@/types/ui/theme.types';

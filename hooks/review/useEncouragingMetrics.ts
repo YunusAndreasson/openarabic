@@ -1,4 +1,4 @@
-import type { Ionicons } from '@/components/ui/Icon';
+import type { Ionicons } from '@/components/ui';
 import type { ComponentProps } from 'react';
 import { useMemo, useState } from 'react';
 

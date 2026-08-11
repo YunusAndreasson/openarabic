@@ -1,0 +1,146 @@
+import { Ionicons, type IoniconName } from '@/components/ui/Icon';
+import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
+import type { ComponentType, FC, ReactNode } from 'react';
+import type { AccessibilityState, Insets, StyleProp, ViewStyle } from 'react-native';
+import { Pressable as RNPressable, StyleSheet, View } from 'react-native';
+
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { useColors } from '@/hooks/theme/useColors';
+import { useButtonPress, type HapticType } from '@/hooks/ui/useButtonPress';
+
+// Resolved once: `isLiquidGlassAvailable()` is a native capability check, not
+// state, so it cannot change for the life of the process.
+const GLASS_AVAILABLE = isLiquidGlassAvailable();
+const GlassContainer = GLASS_AVAILABLE ? GlassView : View;
+
+/**
+ * The subset of pressable props this component actually passes down.
+ *
+ * Deliberately not `PressableProps`: react-native's and
+ * react-native-gesture-handler's differ (their `onHoverIn` event types are
+ * unrelated), so a prop typed as either one rejects the other component
+ * outright. Naming only what is used keeps both assignable.
+ */
+export interface PressableLikeProps {
+  children?: ReactNode;
+  onPress?: () => void;
+  style?: StyleProp<ViewStyle>;
+  hitSlop?: number | Insets;
+  accessibilityLabel?: string;
+  accessibilityRole?: 'button';
+  accessibilityState?: AccessibilityState;
+  testID?: string;
+}
+
+export interface GlassIconButtonProps {
+  /** Icon name from Ionicons */
+  icon: IoniconName;
+  /**
+   * What the button does. Required, not optional: this control is icon-only, so
+   * there is no text for a screen reader to fall back on.
+   */
+  accessibilityLabel: string;
+  onPress: () => void;
+  /**
+   * Emphasised state — a toggle that is currently on. Lifts the surface a level
+   * and raises its opacity so an active control reads as pressed-in.
+   */
+  active?: boolean;
+  /** Defaults to `secondaryText` (or `tint` when `active`). */
+  iconColor?: string;
+  iconSize?: number;
+  /** Haptic weight fired on press (default: 'light'). */
+  hapticType?: HapticType;
+  hitSlop?: number | Insets;
+  accessibilityState?: AccessibilityState;
+  /** Positioning for the outer pressable — where the button sits on screen. */
+  style?: StyleProp<ViewStyle>;
+  /**
+   * Use the `clear` liquid-glass style rather than the default. Chrome that
+   * floats over content (headers) wants `clear`; controls that sit on a busy
+   * image read better with the default.
+   */
+  clear?: boolean;
+  /**
+   * Pressable implementation. Defaults to react-native's.
+   *
+   * Pass react-native-gesture-handler's when an RNGH ancestor owns the gesture
+   * arena — an RNGH ancestor beats descendants using the JS responder system, so
+   * a react-native Pressable nested under one silently stops receiving taps.
+   * The article reader wraps its whole content in an RNGH Pressable to dismiss
+   * the word tooltip, which is exactly that situation.
+   */
+  PressableComponent?: ComponentType<PressableLikeProps>;
+  testID?: string;
+}
+
+/**
+ * A circular icon button on a liquid-glass surface, for chrome that floats over
+ * content — the article reader's close/listen/playlist controls and the review
+ * header's mic/close.
+ *
+ * Both of those built this independently, down to a byte-identical
+ * `GLASS_AVAILABLE`/`GlassContainer` pair, the same six-property circle style
+ * and the same non-glass fallback. Neither labelled its close button.
+ */
+export const GlassIconButton: FC<GlassIconButtonProps> = ({
+  icon,
+  accessibilityLabel,
+  onPress,
+  active = false,
+  iconColor,
+  iconSize = LAYOUT.BUTTON.ICON_SIZE.LARGE,
+  hapticType = 'light',
+  hitSlop,
+  accessibilityState,
+  style,
+  clear = false,
+  PressableComponent = RNPressable,
+  testID,
+}) => {
+  const colors = useColors();
+  const { handlePress } = useButtonPress({ onPress, hapticType });
+
+  // Fallback background for platforms without liquid glass. On iOS 26 the glass
+  // effect paints over this; everywhere else it IS the button.
+  const surfaceStyle = active
+    ? { backgroundColor: colors.elevation2, opacity: LAYOUT.OPACITY.ACTIVE }
+    : { backgroundColor: colors.elevation1, opacity: LAYOUT.OPACITY.PRESSED };
+
+  const resolvedIconColor = iconColor ?? (active ? colors.tint : colors.secondaryText);
+
+  return (
+    <PressableComponent
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="button"
+      accessibilityState={accessibilityState}
+      hitSlop={hitSlop}
+      style={style}
+      testID={testID}
+      onPress={handlePress}
+    >
+      <GlassContainer
+        style={[styles.button, surfaceStyle]}
+        {...(GLASS_AVAILABLE && {
+          isInteractive: true,
+          ...(clear && { glassEffectStyle: 'clear' }),
+        })}
+      >
+        <Ionicons color={resolvedIconColor} name={icon} size={iconSize} />
+      </GlassContainer>
+    </PressableComponent>
+  );
+};
+
+const styles = StyleSheet.create({
+  button: {
+    alignItems: 'center',
+    borderRadius: MIN_TOUCH_TARGET.MEDIUM / 2,
+    height: MIN_TOUCH_TARGET.MEDIUM,
+    justifyContent: 'center',
+    overflow: 'hidden',
+    width: MIN_TOUCH_TARGET.MEDIUM,
+  },
+});
+
+GlassIconButton.displayName = 'GlassIconButton';

@@ -1,3 +1,4 @@
+import { EnhancedImage } from '@/components/ui';
 import { BaseCard } from '@/components/common';
 import { Canvas, LinearGradient, Rect, vec } from '@shopify/react-native-skia';
 import { useRouter } from 'expo-router';
@@ -5,9 +6,8 @@ import { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { EnhancedImage } from '@/components/ui/EnhancedImage';
 import { TIMING_CONSTANTS } from '@/constants/animation';
-import { LAYOUT, SCREEN_WIDTH, TEXT_STYLES } from '@/constants/layout';
+import { LAYOUT, LINE_HEIGHT_MULTIPLIERS, SCREEN_WIDTH, TEXT_STYLES } from '@/constants/layout';
 import { getArticleRoute } from '@/constants/routes';
 import { useArticlePrefetch } from '@/hooks/articles/useArticlePrefetch';
 import { useColors } from '@/hooks/theme/useColors';
@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
 const TITLE_STYLE = {
   fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE, // 24px - larger for hero card prominence
   letterSpacing: TEXT_STYLES.CARD_TITLE.letterSpacing,
-  lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
+  lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LINE_HEIGHT_MULTIPLIERS.TIGHT,
 };
 
 /** Article card component optimized for list rendering */

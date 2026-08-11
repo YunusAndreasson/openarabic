@@ -1,4 +1,13 @@
-# Bottom Sheet Patterns (@gorhom/bottom-sheet v5.2.6)
+# Bottom Sheet Patterns (@gorhom/bottom-sheet v5)
+
+> The app uses `<BottomSheet>` everywhere, never `<BottomSheetModal>` — a
+> `BottomSheetModal` opened from a routed screen doesn't render on Android.
+> There are exactly three instances: `WordDetailsBottomSheet`, `SettingsPicker`
+> and `TimePicker`. Everything else that looks like a sheet is a
+> `presentation: 'formSheet'` route — see `components/common/SheetScreen.tsx`.
+>
+> All three take `handleComponent={BrandedBottomSheetHandle}` and title
+> themselves with `BottomSheetHeader`.
 
 ## Core Principles
 
@@ -15,13 +24,13 @@
 - Content is simple (no scrollable lists exceeding 50 items)
 
 ```typescript
-import { COMMON_BOTTOM_SHEET_MODAL_PROPS } from '@/utils/bottomSheetUtils';
+import { COMMON_BOTTOM_SHEET_PROPS } from '@/utils/bottomSheetUtils';
 
-<BottomSheetModal {...COMMON_BOTTOM_SHEET_MODAL_PROPS}>
+<BottomSheet {...COMMON_BOTTOM_SHEET_PROPS}>
   <BottomSheetView>
     <Chart data={dynamicData} />
   </BottomSheetView>
-</BottomSheetModal>
+</BottomSheet>
 ```
 
 ### Use `enableDynamicSizing: false` + `snapPoints` when:
@@ -48,23 +57,23 @@ const SNAP_POINTS = [320]; // Fixed height for 4 options
 
 ```typescript
 // ✅ GOOD - Proper wrapper
-<BottomSheetModal {...COMMON_BOTTOM_SHEET_MODAL_PROPS}>
+<BottomSheet {...COMMON_BOTTOM_SHEET_PROPS}>
   <BottomSheetView style={styles.container}>
     {content}
   </BottomSheetView>
-</BottomSheetModal>
+</BottomSheet>
 
 // ❌ BAD - Missing wrapper
-<BottomSheetModal {...COMMON_BOTTOM_SHEET_MODAL_PROPS}>
+<BottomSheet {...COMMON_BOTTOM_SHEET_PROPS}>
   {content}
-</BottomSheetModal>
+</BottomSheet>
 ```
 
 ### Use maxDynamicContentSize:
 
 ```typescript
-// Automatically included in COMMON_BOTTOM_SHEET_MODAL_PROPS
-export const COMMON_BOTTOM_SHEET_MODAL_PROPS = {
+// Automatically included in COMMON_BOTTOM_SHEET_PROPS
+export const COMMON_BOTTOM_SHEET_PROPS = {
   enableDynamicSizing: true,
   maxDynamicContentSize: SCREEN_HEIGHT * 0.85,
   // ...other props
@@ -82,7 +91,7 @@ export const COMMON_BOTTOM_SHEET_MODAL_PROPS = {
 ```typescript
 import { BottomSheetFlashList } from '@gorhom/bottom-sheet';
 
-<BottomSheetModal
+<BottomSheet
   snapPoints={[SCREEN_HEIGHT * 0.9]}
   enableDynamicSizing={false} // REQUIRED with lists
 >
@@ -90,16 +99,21 @@ import { BottomSheetFlashList } from '@gorhom/bottom-sheet';
     data={items}
     renderItem={renderItem}
   />
-</BottomSheetModal>
+</BottomSheet>
 ```
 
 ## Common Utilities
 
 Use shared utilities from `utils/bottomSheetUtils.tsx`:
 
-- `COMMON_BOTTOM_SHEET_PROPS` - For regular BottomSheet with snapPoints
-- `COMMON_BOTTOM_SHEET_MODAL_PROPS` - For BottomSheetModal with dynamic sizing
+- `COMMON_BOTTOM_SHEET_PROPS` — pan-to-close, no over-drag, and a
+  `maxDynamicContentSize` of 85% of the screen. The only props export; a
+  separate `COMMON_BOTTOM_SHEET_MODAL_PROPS` was documented here for a long time
+  but never existed.
 - `BottomSheetBackdrop` - Blur backdrop component (pass directly as `backdropComponent`)
+- `useBottomSheetDynamicStyles()` — returns `{ bottomSheet }` for
+  `backgroundStyle`. It has no `indicator` key; the grabber comes from
+  `handleComponent={BrandedBottomSheetHandle}`.
 
 ## Snap Points Reference
 

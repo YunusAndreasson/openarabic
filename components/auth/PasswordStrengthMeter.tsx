@@ -1,4 +1,4 @@
-import { Ionicons } from '@/components/ui/Icon';
+import { Ionicons } from '@/components/ui';
 import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 

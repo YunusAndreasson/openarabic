@@ -18,7 +18,7 @@ export function ErrorState({ message, onRetry }: ErrorStateProps) {
   return (
     <View style={styles.container}>
       <View style={styles.textContainer}>
-        <ThemedText align="center" type="body" variant="error">
+        <ThemedText align="center" type="body" colorName="error">
           {message}
         </ThemedText>
       </View>

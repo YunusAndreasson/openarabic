@@ -533,7 +533,11 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
           // in silence — indistinguishable from the tap never having landed.
           if (lastOpenWasPermissionDeniedRef.current) {
             diagMark('mic.arm.reject', { reason: 'permission' });
-            return { ok: false, reason: 'permission', message: lastOpenErrorRef.current ?? undefined };
+            return {
+              ok: false,
+              reason: 'permission',
+              message: lastOpenErrorRef.current ?? undefined,
+            };
           }
           diagMark('mic.arm.reject', { reason: 'stream-closed' });
           return {

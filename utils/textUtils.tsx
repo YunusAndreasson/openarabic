@@ -3,9 +3,8 @@
  * Pure text utilities are in stringUtils.ts
  */
 
+import { EmailLink } from '@/components/common';
 import type { ReactElement } from 'react';
-
-import { EmailLink } from '@/components/common/EmailLink';
 
 // Email regex pattern for detecting email addresses in text
 const EMAIL_REGEX = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;

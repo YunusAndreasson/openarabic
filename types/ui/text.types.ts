@@ -1,6 +1,6 @@
 import type { TextProps, TextStyle, StyleProp } from 'react-native';
 
-import type { ColorName } from '@/constants/colors';
+import type { SolidColorName } from '@/constants/colors';
 
 export type TextTypeName =
   | 'arabic'
@@ -14,8 +14,18 @@ export type TextTypeName =
   | 'heading3'
   | 'label'
   | 'overline';
-export type TextVariant = 'error' | 'primary' | 'secondary';
-export type TextWeight = 'bold' | 'medium' | 'normal' | 'semibold';
+/**
+ * Font weight override.
+ *
+ * There is no `medium`: only Inter Regular, SemiBold and Bold ship (see
+ * `assets/fonts/`), so `medium` mapped to Regular — the same face as `normal`.
+ * Two names for one weight meant `weight="medium"` silently did nothing at the
+ * ten call sites that asked for it.
+ *
+ * Prefer picking a `type` that already carries the weight (`bodyBold`,
+ * `heading3`) over overriding it here.
+ */
+export type TextWeight = 'bold' | 'normal' | 'semibold';
 export type TextAlign = 'center' | 'justify' | 'left' | 'right';
 
 /**
@@ -24,14 +34,18 @@ export type TextAlign = 'center' | 'justify' | 'left' | 'right';
 export interface ThemedTextProps extends TextProps {
   /** Type of text (heading, body, etc.) */
   type?: TextTypeName;
-  /** Variant of text (error, subtle, etc.) */
-  variant?: TextVariant;
   /** Weight of the text */
   weight?: TextWeight;
   /** Alignment of the text */
   align?: TextAlign;
-  /** Custom color to apply to text - use theme colors when possible */
-  colorName?: ColorName;
+  /**
+   * Semantic colour for the text.
+   *
+   * This replaced a parallel `variant` prop (`'error' | 'primary' |
+   * 'secondary'`) that mapped onto `error` / `text` / `secondaryText` — two
+   * props for one job, with `colorName` already used three times as often.
+   */
+  colorName?: SolidColorName;
   /** Skip applying the default text color */
   skipDefaultColor?: boolean;
   /** Maximum number of lines to show */

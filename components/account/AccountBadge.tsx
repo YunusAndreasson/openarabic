@@ -1,4 +1,4 @@
-import { Ionicons } from '@/components/ui/Icon';
+import { Ionicons } from '@/components/ui';
 import { Image } from 'expo-image';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -171,7 +171,6 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
                 <View style={dynamicStyles.initialsContainer}>
                   <ThemedText
                     type="heading2"
-                    weight="bold"
                     style={[styles.initialsText, dynamicStyles.initialsText]}
                   >
                     {initials}
@@ -189,13 +188,13 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
 
         {/* User Info */}
         <View style={styles.userInfo}>
-          <ThemedText type="heading2" weight="bold" style={styles.userName} numberOfLines={1}>
+          <ThemedText type="heading2" style={styles.userName} numberOfLines={1}>
             {firstName}
           </ThemedText>
           {memberSince && (
             <ThemedText
               type="body"
-              variant="secondary"
+              colorName="secondaryText"
               style={styles.memberSince}
               numberOfLines={1}
             >

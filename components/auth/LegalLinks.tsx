@@ -1,18 +1,16 @@
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
+import { TextLink } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
-import { useColors } from '@/hooks/theme/useColors';
 
 /**
  * Legal links component showing Terms of Service and Privacy Policy
  */
 export function LegalLinks() {
-  const colors = useColors();
-
   const handleTermsPress = () => {
     router.push(ROUTE_PATHS.AUTH_TERMS);
   };
@@ -23,50 +21,26 @@ export function LegalLinks() {
 
   return (
     <View style={styles.container}>
-      <ThemedText align="center" type="caption" variant="secondary">
+      <ThemedText align="center" type="caption" colorName="secondaryText">
         {STRINGS.BY_CONTINUING_YOU_AGREE}{' '}
       </ThemedText>
       <View style={styles.linksRow}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={STRINGS.TERMS_OF_SERVICE}
+        <TextLink
+          underline
+          label={STRINGS.TERMS_OF_SERVICE}
+          type="caption"
           onPress={handleTermsPress}
-          style={({ pressed }) => (pressed ? { opacity: LAYOUT.OPACITY.HIGH } : null)}
-        >
-          <ThemedText
-            type="caption"
-            style={[
-              styles.link,
-              {
-                color: colors.tint,
-              },
-            ]}
-          >
-            {STRINGS.TERMS_OF_SERVICE}
-          </ThemedText>
-        </Pressable>
-        <ThemedText type="caption" variant="secondary">
+        />
+        <ThemedText type="caption" colorName="secondaryText">
           {' '}
           {STRINGS.AND}{' '}
         </ThemedText>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={STRINGS.PRIVACY_POLICY}
+        <TextLink
+          underline
+          label={STRINGS.PRIVACY_POLICY}
+          type="caption"
           onPress={handlePrivacyPress}
-          style={({ pressed }) => (pressed ? { opacity: LAYOUT.OPACITY.HIGH } : null)}
-        >
-          <ThemedText
-            type="caption"
-            style={[
-              styles.link,
-              {
-                color: colors.tint,
-              },
-            ]}
-          >
-            {STRINGS.PRIVACY_POLICY}
-          </ThemedText>
-        </Pressable>
+        />
       </View>
     </View>
   );
@@ -79,9 +53,6 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     width: '100%',
-  },
-  link: {
-    textDecorationLine: 'underline',
   },
   linksRow: {
     alignItems: 'center',

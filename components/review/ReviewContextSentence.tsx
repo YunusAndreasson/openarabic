@@ -1,10 +1,10 @@
+import { Ionicons } from '@/components/ui';
 import { memo, useMemo, type FC } from 'react';
 import type { TextStyle } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import { Ionicons } from '@/components/ui/Icon';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';

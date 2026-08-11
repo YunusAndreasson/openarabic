@@ -1,18 +1,18 @@
-import { Ionicons } from '@/components/ui/Icon';
 // Deliberately NOT @expo/ui/community/slider: its SliderProps has no
 // onSlidingStart/onSlidingComplete and no accessibility pass-through. This
 // slider commits to persisted state once per drag (handleSlidingComplete →
 // setFontSize); driving that from onValueChange would write to redux-persist on
 // every frame and re-render every Arabic sample with it. The community package
 // is not deprecated — revisit only if @expo/ui grows a release event.
+import { Ionicons } from '@/components/ui';
 import Slider from '@react-native-community/slider';
 import { useState, type FC } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BaseCard } from '@/components/common';
+import { BaseCard, OptionCard } from '@/components/common';
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import {
   useArabicFontSelector,
@@ -36,20 +36,11 @@ function FontPreviewCard({ option, isSelected, fontSize, onSelect }: FontPreview
   };
 
   return (
-    <BaseCard
-      shadowSize="small"
-      style={[
-        styles.fontCard,
-        {
-          backgroundColor: isSelected ? colors.tintBackground : colors.card,
-          borderColor: isSelected ? colors.tint : colors.borderOverlay,
-          borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-        },
-      ]}
-      onPress={handlePress}
+    <OptionCard
       accessibilityLabel={`${option.displayName}. ${option.description}`}
-      accessibilityRole="radio"
-      accessibilityState={{ selected: isSelected }}
+      selected={isSelected}
+      style={styles.fontCard}
+      onPress={handlePress}
     >
       <View style={styles.fontHeader}>
         <View style={styles.fontTitleRow}>
@@ -76,7 +67,7 @@ function FontPreviewCard({ option, isSelected, fontSize, onSelect }: FontPreview
       >
         {option.previewText}
       </ThemedText>
-    </BaseCard>
+    </OptionCard>
   );
 }
 
@@ -112,9 +103,7 @@ export const ArabicFontSelector: FC = () => {
     <View style={styles.container}>
       <BaseCard shadowSize="small" style={styles.sliderCard}>
         <View style={styles.sliderHeader}>
-          <ThemedText type="body" weight="medium">
-            {STRINGS.FONT_SIZE}
-          </ThemedText>
+          <ThemedText type="body">{STRINGS.FONT_SIZE}</ThemedText>
           <ThemedText colorName="textTertiary" type="caption">
             {Math.round(displayFontSize)}px
           </ThemedText>
@@ -220,7 +209,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   fontDescription: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LINE_HEIGHT_MULTIPLIERS.NORMAL,
     textAlign: 'center',
     opacity: LAYOUT.OPACITY.HOVER,
   },

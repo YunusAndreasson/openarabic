@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
 // Surfaces the bilingual-audio payoff in the main flow (otherwise it's only
 // described in Account settings and the FAQ)
 const BilingualCaption = memo(() => (
-  <ThemedText type="caption" variant="secondary" style={styles.bilingualCaption}>
+  <ThemedText type="caption" colorName="secondaryText" style={styles.bilingualCaption}>
     {STRINGS.PLAYLIST_BILINGUAL_CAPTION}
   </ThemedText>
 ));

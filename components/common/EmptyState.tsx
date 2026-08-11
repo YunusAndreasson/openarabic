@@ -50,7 +50,7 @@ export function EmptyState({
       </ThemedText>
 
       <View style={styles.hintContainer}>
-        <ThemedText style={styles.hint} type="caption" variant="secondary">
+        <ThemedText style={styles.hint} type="caption" colorName="secondaryText">
           {hint}
         </ThemedText>
       </View>

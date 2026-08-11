@@ -3,21 +3,28 @@ import { memo, useMemo } from 'react';
 import { Platform, Pressable, StyleSheet } from 'react-native';
 
 import { TIMING_CONSTANTS } from '@/constants/animation';
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { ICON_BUTTON_SIZES, type IconButtonSize } from '@/constants/iconButton';
+import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useButtonPress } from '@/hooks/ui/useButtonPress';
 
-type ButtonSize = 'small' | 'medium' | 'large';
-
 export interface HeaderIconButtonProps {
   /** Icon name from Ionicons */
-  iconName: IoniconName;
+  icon: IoniconName;
+  /**
+   * What the button does, for screen readers.
+   *
+   * This whole family is icon-only, so without a label a screen reader
+   * announces nothing usable. It had no such prop at all until now, which is
+   * why every header button in the app was silent.
+   */
+  accessibilityLabel: string;
   /** Press handler */
   onPress: () => void;
   /** Long press handler */
   onLongPress?: () => void;
   /** Button size - determines width, height, and icon size */
-  size?: ButtonSize;
+  size?: IconButtonSize;
   /** Icon color - defaults to theme text color */
   iconColor?: string;
   /** Background color - defaults to theme elevation1 */
@@ -31,27 +38,6 @@ export interface HeaderIconButtonProps {
 // iOS 26 UIBarButton has fixed 36pt width - use this for header buttons to ensure circular glass
 const IOS_BAR_BUTTON_SIZE = 36;
 
-const SIZE_CONFIG = {
-  small: {
-    dimension: MIN_TOUCH_TARGET.SMALL,
-    iconSize: LAYOUT.BUTTON.ICON_SIZE.SMALL,
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
-    hitSlop: LAYOUT.HIT_SLOP.SMALL,
-  },
-  medium: {
-    dimension: MIN_TOUCH_TARGET.MEDIUM,
-    iconSize: LAYOUT.BUTTON.ICON_SIZE.MEDIUM,
-    borderRadius: MIN_TOUCH_TARGET.MEDIUM / 2,
-    hitSlop: LAYOUT.HIT_SLOP.MEDIUM,
-  },
-  large: {
-    dimension: MIN_TOUCH_TARGET.LARGE,
-    iconSize: LAYOUT.BUTTON.ICON_SIZE.LARGE,
-    borderRadius: MIN_TOUCH_TARGET.LARGE / 2,
-    hitSlop: LAYOUT.HIT_SLOP.LARGE,
-  },
-} as const;
-
 /**
  * Reusable circular icon button for headers
  *
@@ -62,14 +48,16 @@ const SIZE_CONFIG = {
  *
  * @example
  * <HeaderIconButton
- *   iconName="close"
+ *   icon="close"
+ *   accessibilityLabel="Close"
  *   onPress={handleClose}
  *   size="medium"
  * />
  */
 export const HeaderIconButton = memo<HeaderIconButtonProps>(
   ({
-    iconName,
+    icon,
+    accessibilityLabel,
     onPress,
     onLongPress,
     size = 'medium',
@@ -80,7 +68,7 @@ export const HeaderIconButton = memo<HeaderIconButtonProps>(
   }) => {
     const colors = useColors();
 
-    const config = SIZE_CONFIG[size];
+    const config = ICON_BUTTON_SIZES[size];
 
     // Use shared button press hook (no animation for header buttons)
     const { handlePress, rippleConfig } = useButtonPress({
@@ -94,7 +82,7 @@ export const HeaderIconButton = memo<HeaderIconButtonProps>(
     // iOS 26 header buttons: use 36pt to match native UIBarButton for circular glass
     const isIOSHeaderButton = Platform.OS === 'ios' && isTransparent;
     const buttonDimension = isIOSHeaderButton ? IOS_BAR_BUTTON_SIZE : config.dimension;
-    const buttonRadius = isIOSHeaderButton ? IOS_BAR_BUTTON_SIZE / 2 : config.borderRadius;
+    const buttonRadius = isIOSHeaderButton ? IOS_BAR_BUTTON_SIZE / 2 : config.dimension / 2;
 
     const buttonStyle = useMemo(
       () => [
@@ -117,16 +105,19 @@ export const HeaderIconButton = memo<HeaderIconButtonProps>(
 
     return (
       <Pressable
-        style={[buttonStyle, disabled && { opacity: LAYOUT.OPACITY.MEDIUM }]}
-        onPress={handlePress}
-        onLongPress={onLongPress}
-        delayLongPress={TIMING_CONSTANTS.LONG_PRESS_DELAY}
-        hitSlop={config.hitSlop}
+        accessibilityLabel={accessibilityLabel}
+        accessibilityRole="button"
+        accessibilityState={{ disabled }}
         android_ripple={rippleConfig}
+        delayLongPress={TIMING_CONSTANTS.LONG_PRESS_DELAY}
         disabled={disabled}
+        hitSlop={config.hitSlop}
+        style={[buttonStyle, disabled && { opacity: LAYOUT.OPACITY.MEDIUM }]}
         testID={testID}
+        onLongPress={onLongPress}
+        onPress={handlePress}
       >
-        <Ionicons name={iconName} size={iconSize} color={finalIconColor} />
+        <Ionicons color={finalIconColor} name={icon} size={iconSize} />
       </Pressable>
     );
   },

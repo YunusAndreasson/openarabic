@@ -1,7 +1,7 @@
+import { EmptyState } from '@/components/common';
 import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
 
-import { EmptyState } from '@/components/common/EmptyState';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAddBeginnerArticles } from '@/hooks/playlist/useAddBeginnerArticles';

@@ -2,11 +2,12 @@ import { router } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useRef } from 'react';
 import type { TextInput } from 'react-native';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { AuthEmailInput, AuthPasswordInput } from './AuthFormInputs';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
+import { TextLink } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -110,37 +111,26 @@ export function SignInForm(): JSX.Element {
 
       {/* Forgot Password Link */}
       <View style={styles.forgotPasswordContainer}>
-        <Pressable
-          hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-          testID="forgot-password-button"
-          accessibilityRole="button"
+        <TextLink
           accessibilityLabel="Forgot password"
+          label={STRINGS.FORGOT_PASSWORD}
+          testID="forgot-password-button"
           onPress={handleForgotPassword}
-          style={({ pressed }) => (pressed ? { opacity: LAYOUT.OPACITY.HIGH } : null)}
-        >
-          <ThemedText type="body" colorName="tint">
-            {STRINGS.FORGOT_PASSWORD}
-          </ThemedText>
-        </Pressable>
+        />
       </View>
 
       {/* Link to Create Account */}
       <View style={styles.createAccountContainer}>
-        <ThemedText type="body" variant="secondary">
+        <ThemedText type="body" colorName="secondaryText">
           {STRINGS.DONT_HAVE_ACCOUNT}{' '}
         </ThemedText>
-        <Pressable
-          hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-          testID="navigate-to-sign-up-link"
-          accessibilityRole="button"
+        <TextLink
           accessibilityLabel="Go to create account"
+          label={STRINGS.CREATE_ACCOUNT}
+          testID="navigate-to-sign-up-link"
+          type="bodyBold"
           onPress={handleCreateAccount}
-          style={({ pressed }) => (pressed ? { opacity: LAYOUT.OPACITY.HIGH } : null)}
-        >
-          <ThemedText type="body" colorName="tint" weight="semibold">
-            {STRINGS.CREATE_ACCOUNT}
-          </ThemedText>
-        </Pressable>
+        />
       </View>
     </View>
   );

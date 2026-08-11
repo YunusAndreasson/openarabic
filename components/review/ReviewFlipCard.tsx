@@ -1,3 +1,4 @@
+import { Ionicons } from '@/components/ui';
 import type { ReactNode, Ref } from 'react';
 import { useCallback, useEffect, useImperativeHandle, useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
@@ -12,7 +13,6 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import { Ionicons } from '@/components/ui/Icon';
 import { SPRING_CONFIG, TIMING_CONFIG, VERDICT } from '@/constants/animation';
 import { getThemeAwareElevation, LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';

@@ -1,4 +1,4 @@
-import { Ionicons } from '@/components/ui/Icon';
+import { Ionicons } from '@/components/ui';
 import { useRouter } from 'expo-router';
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type FC } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -151,7 +151,7 @@ const GetStartedChecklistComponent: FC<GetStartedChecklistProps> = ({
         <BaseCard shadowSize="small" contentStyle={styles.cardContent}>
           <View style={styles.headerRow}>
             <ThemedText type="bodyBold">{STRINGS.CHECKLIST_TITLE}</ThemedText>
-            <ThemedText type="caption" variant="secondary">
+            <ThemedText type="caption" colorName="secondaryText">
               {progressLabel}
             </ThemedText>
           </View>
@@ -178,9 +178,9 @@ const GetStartedChecklistComponent: FC<GetStartedChecklistProps> = ({
                 />
               )}
               <ThemedText
-                type="body"
-                variant={item.done ? 'secondary' : 'primary'}
+                colorName={item.done ? 'secondaryText' : 'text'}
                 style={styles.rowLabel}
+                type="body"
               >
                 {item.label}
               </ThemedText>

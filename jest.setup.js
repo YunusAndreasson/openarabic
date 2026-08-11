@@ -515,6 +515,9 @@ jest.mock('react-native', () => {
     Image: 'Image',
     TextInput: 'TextInput',
     Pressable: 'Pressable',
+    // Was missing, so rendering any component in a loading state threw
+    // "Element type is invalid ... got: undefined" instead of failing usefully.
+    ActivityIndicator: 'ActivityIndicator',
     TouchableOpacity: 'TouchableOpacity',
     TouchableHighlight: 'TouchableHighlight',
     TouchableWithoutFeedback: 'TouchableWithoutFeedback',

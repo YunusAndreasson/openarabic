@@ -452,7 +452,6 @@ const createGrammarColors = (variant: 'light' | 'dark' | 'sepia') => ({
 
 const lightColors: ThemeColors = {
   // Core brand colors
-  primary: basePalette.forest.dark,
   secondary: basePalette.forest.medium, // Distinct from primary for visual hierarchy
   background: basePalette.sage.lighter,
   text: basePalette.forest.darkest,
@@ -485,6 +484,7 @@ const lightColors: ThemeColors = {
   tint: basePalette.tint.primary,
   tintBackground: withAlpha(basePalette.tint.primary, opacity.medium),
   onTint: basePalette.pure.white, // Text/icon color on tint backgrounds
+  onError: basePalette.pure.white, // Text/icon on an `error` fill (destructive buttons)
   tabIconDefault: basePalette.forest.lighter,
   tabIconSelected: basePalette.tint.primary,
   icon: basePalette.forest.light,
@@ -506,15 +506,10 @@ const lightColors: ThemeColors = {
   // Reading experience
   toastBorder: basePalette.pure.transparent, // No border needed in light mode
   gradientOverlay: basePalette.sage.lighter, // Base color for image/background gradients
-  wordTooltipBg: basePalette.pure.white,
-  wordTooltipText: basePalette.forest.darkest,
   wordTooltipBorder: basePalette.sage.light,
-  wordTooltipShadow: withAlpha(basePalette.forest.dark, opacity.active),
 
   // Navigation
   navigationRipple: withAlpha(basePalette.tint.primary, opacity.strong),
-  headerOverlay: withAlpha(basePalette.sage.lighter, opacity.header),
-  tabBarOverlay: withAlpha(basePalette.sage.lighter, opacity.modal),
 
   // UI semantics
   progressIndicator: basePalette.tint.primary,
@@ -541,11 +536,8 @@ const lightColors: ThemeColors = {
   cardOverlayAuthor: withAlpha(basePalette.pure.white, opacity.shadow),
 
   // Utility colors
-  textShadowDark: withAlpha(basePalette.forest.dark, opacity.shadow),
-  textShadowLight: withAlpha(basePalette.pure.white, opacity.shadow),
   modalIndicator: basePalette.forest.lighter,
   white: basePalette.pure.white,
-  black: basePalette.pure.black,
 
   // Grammar color palette - see createGrammarColors() for role/color documentation
   grammar: createGrammarColors('light'),
@@ -553,7 +545,6 @@ const lightColors: ThemeColors = {
 
 const darkColors: ThemeColors = {
   // Core brand colors
-  primary: basePalette.tint.primaryDark,
   secondary: basePalette.forest.light, // Lower L = less contrast on dark bg = correctly less prominent
   background: basePalette.sage.darkest,
   text: basePalette.pure.white,
@@ -586,6 +577,7 @@ const darkColors: ThemeColors = {
   tint: basePalette.tint.primaryDark,
   tintBackground: withAlpha(basePalette.tint.primaryDark, opacity.medium),
   onTint: basePalette.pure.black, // Dark text/icon on lighter tint in dark mode
+  onError: basePalette.pure.black, // Dark error is light enough that black outreads white on it
   tabIconDefault: basePalette.forest.light, // Increased from forest.medium for better dark mode visibility
   tabIconSelected: basePalette.tint.primaryDark,
   icon: basePalette.forest.lighter, // Palette-based for consistency (matches light/sepia pattern)
@@ -607,15 +599,10 @@ const darkColors: ThemeColors = {
   // Reading experience
   toastBorder: basePalette.sage.outline, // Subtle border for toast visibility on dark surfaces
   gradientOverlay: basePalette.pure.black, // True-black overlay base for image/background gradients
-  wordTooltipBg: basePalette.sage.medium,
-  wordTooltipText: basePalette.pure.white,
   wordTooltipBorder: basePalette.forest.light, // Brighter border (L: 0.576 vs tooltip bg L: 0.265)
-  wordTooltipShadow: withAlpha(basePalette.pure.black, opacity.active),
 
   // Navigation
   navigationRipple: withAlpha(basePalette.tint.primaryDark, opacity.active),
-  headerOverlay: withAlpha(basePalette.sage.darkest, opacity.header),
-  tabBarOverlay: withAlpha(basePalette.sage.darkest, opacity.modal),
 
   // UI semantics
   progressIndicator: basePalette.tint.primaryDark,
@@ -642,11 +629,8 @@ const darkColors: ThemeColors = {
   cardOverlayAuthor: withAlpha(basePalette.pure.white, opacity.shadow),
 
   // Utility colors
-  textShadowDark: withAlpha(basePalette.pure.black, opacity.shadow),
-  textShadowLight: withAlpha(basePalette.pure.white, opacity.shadow),
   modalIndicator: basePalette.forest.light,
   white: basePalette.pure.white,
-  black: basePalette.pure.black,
 
   // Grammar color palette - see createGrammarColors() for role/color documentation
   grammar: createGrammarColors('dark'),
@@ -654,7 +638,6 @@ const darkColors: ThemeColors = {
 
 const sepiaColors: ThemeColors = {
   // Core brand colors
-  primary: basePalette.autumn.dark,
   secondary: basePalette.autumn.medium,
   background: basePalette.autumn.paper.lighter,
   text: basePalette.autumn.darkest,
@@ -687,6 +670,7 @@ const sepiaColors: ThemeColors = {
   tint: basePalette.autumn.accent.primary,
   tintBackground: withAlpha(basePalette.autumn.accent.primary, opacity.medium),
   onTint: basePalette.sepiaPure.white, // Light text/icon on warm tint backgrounds
+  onError: basePalette.sepiaPure.white, // Text/icon on an `error` fill (destructive buttons)
   tabIconDefault: basePalette.autumn.lighter,
   tabIconSelected: basePalette.autumn.accent.primary,
   icon: basePalette.autumn.light,
@@ -708,15 +692,10 @@ const sepiaColors: ThemeColors = {
   // Reading experience
   toastBorder: basePalette.pure.transparent, // No border needed in sepia mode
   gradientOverlay: basePalette.autumn.paper.lighter, // Warm base for image/background gradients
-  wordTooltipBg: basePalette.sepiaPure.white,
-  wordTooltipText: basePalette.autumn.darkest,
   wordTooltipBorder: basePalette.autumn.paper.light,
-  wordTooltipShadow: withAlpha(basePalette.autumn.dark, opacity.active),
 
   // Navigation
   navigationRipple: withAlpha(basePalette.autumn.accent.primary, opacity.strong),
-  headerOverlay: withAlpha(basePalette.autumn.paper.lighter, opacity.header),
-  tabBarOverlay: withAlpha(basePalette.autumn.paper.lighter, opacity.modal),
 
   // UI semantics
   progressIndicator: basePalette.autumn.accent.primary,
@@ -743,11 +722,8 @@ const sepiaColors: ThemeColors = {
   cardOverlayAuthor: withAlpha(basePalette.sepiaPure.white, opacity.shadow),
 
   // Utility colors
-  textShadowDark: withAlpha(basePalette.autumn.dark, opacity.shadow),
-  textShadowLight: withAlpha(basePalette.sepiaPure.white, opacity.shadow),
   modalIndicator: basePalette.autumn.lighter,
   white: basePalette.sepiaPure.white,
-  black: basePalette.sepiaPure.black,
 
   // Grammar color palette - see createGrammarColors() for role/color documentation
   grammar: createGrammarColors('sepia'),
@@ -779,3 +755,17 @@ export const Theme = {
 export type Theme = (typeof Theme)[keyof typeof Theme];
 
 export type ColorName = keyof ThemeColors;
+
+/**
+ * The theme keys that hold a single colour.
+ *
+ * `ColorName` covers every key, including `cardGradient` (an array) and
+ * `grammar` (a nested map). Anything that assigns a theme value straight to a
+ * `color` / `backgroundColor` style wants this narrower type instead — with
+ * `ColorName` those two keys typecheck and then fail at runtime, which is why
+ * ThemedText carries a `typeof color === 'string'` guard that silently renders
+ * uncoloured text.
+ */
+export type SolidColorName = {
+  [K in keyof ThemeColors]: ThemeColors[K] extends string ? K : never;
+}[keyof ThemeColors];

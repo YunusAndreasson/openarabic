@@ -1,6 +1,8 @@
 /**
- * Theme Options
- * Shared theme configuration options used by SettingsPicker
+ * Theme options offered by the appearance picker.
+ *
+ * This is data, not a component — it lived at `components/ui/ThemePicker.tsx`,
+ * a `.tsx` file containing no JSX.
  */
 
 import type { SettingsPickerOption } from '@/components/ui/SettingsPicker';

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { BottomSheetHeader } from '@/components/common';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -82,11 +83,7 @@ export default function SleepTimerScreen(): JSX.Element {
         },
       ]}
     >
-      <View style={styles.header}>
-        <ThemedText type="heading3" weight="bold">
-          {STRINGS.SLEEP_TIMER}
-        </ThemedText>
-      </View>
+      <BottomSheetHeader title={STRINGS.SLEEP_TIMER} />
 
       {!isTimerActive ? (
         <>
@@ -133,7 +130,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
     paddingTop: LAYOUT.SPACING.MEDIUM,
   },
-  header: LAYOUT.BOTTOM_SHEET.HEADER,
   optionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',

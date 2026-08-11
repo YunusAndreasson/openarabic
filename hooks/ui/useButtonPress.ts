@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import type { GestureResponderEvent } from 'react-native';
 
 import { PRESS_ANIMATION_DEFAULT, useDebounce, usePressAnimation } from '@/hooks/animations';
 import type { PressAnimationOptions } from '@/hooks/animations/usePressAnimation';
@@ -10,9 +11,11 @@ export type HapticType = 'light' | 'selection' | 'none';
 
 export interface UseButtonPressOptions {
   /**
-   * Press handler callback
+   * Press handler callback. The gesture event is forwarded, so callers that
+   * need it (ThemedButton passes it straight through to consumers) get it and
+   * callers that don't can keep a zero-arg handler.
    */
-  onPress: () => void;
+  onPress?: (event?: GestureResponderEvent) => void;
 
   /**
    * Whether the button is disabled
@@ -46,13 +49,19 @@ export interface UseButtonPressOptions {
    * Android ripple size variant
    */
   rippleSize?: 'small' | 'medium';
+
+  /**
+   * Draw the Android ripple above the content instead of behind it. Needed by
+   * surfaces that paint their own opaque background (cards).
+   */
+  rippleForeground?: boolean;
 }
 
 export interface UseButtonPressResult {
   /**
    * Combined press handler with haptic feedback and debouncing
    */
-  handlePress: () => void;
+  handlePress: (event?: GestureResponderEvent) => void;
 
   /**
    * Animation styles for the button
@@ -118,6 +127,7 @@ export function useButtonPress({
   debounceDuration = 300,
   animationOptions,
   rippleSize,
+  rippleForeground = false,
 }: UseButtonPressOptions): UseButtonPressResult {
   const colors = useColors();
 
@@ -127,19 +137,22 @@ export function useButtonPress({
   );
 
   // Create the press handler with haptic feedback
-  const pressHandler = useCallback(() => {
-    if (disabled) return;
+  const pressHandler = useCallback(
+    (event?: GestureResponderEvent) => {
+      if (disabled) return;
 
-    // Trigger appropriate haptic feedback
-    if (hapticType === 'light') {
-      lightFeedback();
-    } else if (hapticType === 'selection') {
-      selectionFeedback();
-    }
-    // 'none' - no haptic feedback
+      // Trigger appropriate haptic feedback
+      if (hapticType === 'light') {
+        lightFeedback();
+      } else if (hapticType === 'selection') {
+        selectionFeedback();
+      }
+      // 'none' - no haptic feedback
 
-    onPress();
-  }, [disabled, onPress, hapticType]);
+      onPress?.(event);
+    },
+    [disabled, onPress, hapticType],
+  );
 
   // Always call useDebounce hook (hooks must be called unconditionally)
   const [debouncedHandlePress, isDebouncing] = useDebounce(pressHandler, debounceDuration);
@@ -149,7 +162,7 @@ export function useButtonPress({
   const isDisabled = disabled || (debounce && isDebouncing);
 
   // Android ripple configuration
-  const rippleConfig = createAndroidRipple(colors, rippleSize);
+  const rippleConfig = createAndroidRipple(colors, rippleSize, rippleForeground);
 
   return {
     handlePress: finalHandler,

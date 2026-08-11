@@ -2,8 +2,8 @@ import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { ColorCodedText } from '@/components/common/ColorCodedText';
-import { LAYOUT, STATUS_INDICATOR } from '@/constants/layout';
+import { ColorCodedText, Dot } from '@/components/common';
+import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
 /**
@@ -22,25 +22,25 @@ export const ArabicColoringExamples = memo(() => {
         </ThemedText>
         <View style={styles.legendRow}>
           <View style={styles.legendItem}>
-            <View style={[styles.colorDot, { backgroundColor: colors.tint }]} />
+            <Dot color={colors.tint} />
             <ThemedText type="caption" colorName="textTertiary">
               Prefix
             </ThemedText>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.colorDot, { backgroundColor: colors.warning }]} />
+            <Dot color={colors.warning} />
             <ThemedText type="caption" colorName="textTertiary">
               Suffix
             </ThemedText>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.colorDot, { backgroundColor: colors.accent }]} />
+            <Dot color={colors.accent} />
             <ThemedText type="caption" colorName="textTertiary">
               Diacritic
             </ThemedText>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.colorDot, { backgroundColor: colors.violet }]} />
+            <Dot color={colors.violet} />
             <ThemedText type="caption" colorName="textTertiary">
               Infix
             </ThemedText>
@@ -189,11 +189,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: LAYOUT.SPACING.TINY,
-  },
-  colorDot: {
-    width: STATUS_INDICATOR.DOT_SIZE,
-    height: STATUS_INDICATOR.DOT_SIZE,
-    borderRadius: STATUS_INDICATOR.DOT_RADIUS,
   },
   exampleContainer: {
     gap: LAYOUT.SPACING.TINY,

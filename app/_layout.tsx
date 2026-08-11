@@ -730,7 +730,7 @@ const ErrorFallback = memo(function ErrorFallback({ error }: FallbackProps) {
   const errorMessage = error instanceof Error ? error.toString() : STRINGS.UNKNOWN_ERROR_OCCURRED;
   return (
     <View style={styles.errorContainer}>
-      <ThemedText type="heading3" variant="error" style={styles.errorTitle}>
+      <ThemedText type="heading3" colorName="error" style={styles.errorTitle}>
         {STRINGS.SOMETHING_WENT_WRONG}
       </ThemedText>
       <ThemedText style={styles.errorMessage} type="body">

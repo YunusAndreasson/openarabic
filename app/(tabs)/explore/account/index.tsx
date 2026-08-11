@@ -1,17 +1,16 @@
 // External Libraries
-import { TimePicker } from '@/components/ui';
+import { SettingsPicker, TimePicker } from '@/components/ui';
 import * as StoreReview from 'expo-store-review';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState, type FC } from 'react';
 import { Alert, StyleSheet } from 'react-native';
 
-import { THEME_OPTIONS } from '@/components/ui/ThemePicker';
+import { THEME_OPTIONS } from '@/constants/themeOptions';
 import { ThemedView } from '@/components/ThemedView';
 import { AccountBadge, SettingsCard, SettingsSection } from '@/components/account';
 import { AboutSection, AppearanceSection, DangerZoneSection } from '@/components/account/settings';
 import { BrandFooter } from '@/components/explore';
 import { useTutorialContext, useVoiceGrading } from '@/components/providers';
-import { SettingsPicker } from '@/components/ui/SettingsPicker';
 import type { Theme } from '@/constants/colors';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';

@@ -17,7 +17,7 @@ const BottomSheetErrorFallback = memo(function BottomSheetErrorFallback({
 }: BottomSheetErrorFallbackProps) {
   return (
     <View style={styles.errorContainer}>
-      <ThemedText type="body" variant="error" style={styles.errorText}>
+      <ThemedText type="body" colorName="error" style={styles.errorText}>
         {STRINGS.SOMETHING_WENT_WRONG}
       </ThemedText>
       {__DEV__ && (

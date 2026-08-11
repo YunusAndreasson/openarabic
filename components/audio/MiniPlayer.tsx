@@ -4,9 +4,8 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { EnhancedImage } from '@/components/ui/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
-import { IconButton } from '@/components/ui';
+import { EnhancedImage, IconButton } from '@/components/ui';
 import { TIMING_CONFIG, TIMING_CONSTANTS } from '@/constants/animation';
 import { FONTS } from '@/constants/fonts';
 import { LAYOUT, TEXT_STYLES } from '@/constants/layout';

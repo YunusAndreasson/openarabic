@@ -1,7 +1,6 @@
-import { Ionicons } from '@/components/ui/Icon';
-import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
+import { GlassIconButton } from '@/components/ui';
 import { memo, startTransition, useOptimistic } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, View } from 'react-native';
 // Gesture-handler Pressable, NOT react-native's. The article screen wraps its
 // whole content in an RNGH Pressable (see app/article/[id].tsx) to dismiss the
 // word tooltip on a background tap. An RNGH ancestor wins the gesture arena
@@ -12,12 +11,8 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { Pressable } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const GLASS_AVAILABLE = isLiquidGlassAvailable();
-const GlassContainer = GLASS_AVAILABLE ? GlassView : View;
-
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { useColors } from '@/hooks/theme/useColors';
 
 export interface FloatingActionButtonsProps {
   isInReadingList: boolean;
@@ -42,7 +37,6 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
     isListenLoading,
     onToggleListen,
   }) => {
-    const colors = useColors();
     const insets = useSafeAreaInsets();
     // The buttons sit at the screen corners (left/right edges), so on iOS the
     // dynamic island / notch — which is centered — doesn't overlap them, and a
@@ -86,91 +80,52 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
       onClose();
     };
 
-    // Fallback background for non-iOS-26 platforms
-    const fallbackButtonStyle = {
-      backgroundColor: colors.elevation1,
-      opacity: LAYOUT.OPACITY.PRESSED,
-    };
-
-    const activeFallbackStyle = {
-      backgroundColor: colors.elevation2,
-      opacity: LAYOUT.OPACITY.ACTIVE,
-    };
+    const isListenActive = isListening || isListenLoading;
 
     return (
       <>
         {/* Close button - top left */}
-        <Pressable
-          onPress={handleClose}
-          hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-          style={closeButtonStyle}
-          accessibilityRole="button"
+        <GlassIconButton
+          clear
           accessibilityLabel={STRINGS.ARTICLE_CLOSE_A11Y}
-        >
-          <GlassContainer
-            style={[styles.glassButton, fallbackButtonStyle]}
-            {...(GLASS_AVAILABLE && { isInteractive: true, glassEffectStyle: 'clear' })}
-          >
-            <Ionicons
-              name="close"
-              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-              color={colors.secondaryText}
-            />
-          </GlassContainer>
-        </Pressable>
+          hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
+          icon="close"
+          iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+          PressableComponent={Pressable}
+          style={closeButtonStyle}
+          onPress={handleClose}
+        />
 
         {/* Action buttons - top right: [Listen] [Add to playlist] */}
         <View style={actionButtonsStyle}>
           {/* No hitSlop on the paired buttons: 12px slop would overlap the 4px
               gap and let the later sibling claim taps on its neighbour's edge.
               Both buttons already meet the 44px minimum touch target. */}
-          <Pressable
-            onPress={onToggleListen}
-            accessibilityRole="button"
+          <GlassIconButton
             accessibilityLabel={
               isListening ? STRINGS.ARTICLE_STOP_LISTENING_A11Y : STRINGS.ARTICLE_LISTEN_A11Y
             }
             accessibilityState={{ selected: isListening }}
-          >
-            <GlassContainer
-              style={[
-                styles.glassButton,
-                isListening || isListenLoading ? activeFallbackStyle : fallbackButtonStyle,
-              ]}
-              {...(GLASS_AVAILABLE && { isInteractive: true })}
-            >
-              <Ionicons
-                name={isListening || isListenLoading ? 'stop' : 'play'}
-                size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                color={isListening || isListenLoading ? colors.tint : colors.secondaryText}
-              />
-            </GlassContainer>
-          </Pressable>
+            active={isListenActive}
+            icon={isListenActive ? 'stop' : 'play'}
+            iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+            PressableComponent={Pressable}
+            onPress={onToggleListen}
+          />
 
-          <Pressable
-            onPress={handleOptimisticToggle}
-            accessibilityRole="button"
+          <GlassIconButton
             accessibilityLabel={
               optimisticIsInReadingList
                 ? STRINGS.ARTICLE_REMOVE_FROM_PLAYLIST_A11Y
                 : STRINGS.ARTICLE_ADD_TO_PLAYLIST_A11Y
             }
             accessibilityState={{ selected: optimisticIsInReadingList }}
-          >
-            <GlassContainer
-              style={[
-                styles.glassButton,
-                optimisticIsInReadingList ? activeFallbackStyle : fallbackButtonStyle,
-              ]}
-              {...(GLASS_AVAILABLE && { isInteractive: true })}
-            >
-              <Ionicons
-                name={optimisticIsInReadingList ? 'headset' : 'headset-outline'}
-                size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                color={optimisticIsInReadingList ? colors.tint : colors.secondaryText}
-              />
-            </GlassContainer>
-          </Pressable>
+            active={optimisticIsInReadingList}
+            icon={optimisticIsInReadingList ? 'headset' : 'headset-outline'}
+            iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+            PressableComponent={Pressable}
+            onPress={handleOptimisticToggle}
+          />
         </View>
       </>
     );
@@ -178,14 +133,3 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
 );
 
 FloatingActionButtons.displayName = 'FloatingActionButtons';
-
-const styles = StyleSheet.create({
-  glassButton: {
-    width: MIN_TOUCH_TARGET.MEDIUM,
-    height: MIN_TOUCH_TARGET.MEDIUM,
-    borderRadius: MIN_TOUCH_TARGET.MEDIUM / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-});

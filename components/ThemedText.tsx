@@ -30,23 +30,13 @@ const selectArabicFont = (state: RootState) => state.settings.arabicFont;
  */
 const getTextColor = (
   colors: ThemeColors,
-  variant?: ThemedTextProps['variant'],
   colorName?: ThemedTextProps['colorName'],
   skipDefaultColor?: boolean,
 ): string | undefined => {
-  if (colorName) {
-    const color = colors[colorName];
-    // ThemedText only uses string colors, not gradient arrays
-    return typeof color === 'string' ? color : undefined;
-  }
-  if (variant) {
-    const variantColorMap = {
-      error: colors.error,
-      primary: colors.text,
-      secondary: colors.secondaryText,
-    } as const;
-    return variantColorMap[variant];
-  }
+  // `SolidColorName` excludes the array/object theme keys, so this is a string
+  // by construction — the old runtime `typeof color === 'string'` guard silently
+  // rendered uncoloured text when someone passed `cardGradient` or `grammar`.
+  if (colorName) return colors[colorName];
   return !skipDefaultColor ? colors.text : undefined;
 };
 
@@ -123,10 +113,9 @@ const BASE_STYLE_MAP = {
   overline: styles.overline,
 } as const;
 
-/** Maps semantic weight names to Source Sans 3 font families */
+/** Maps semantic weight names to the Inter families bundled in assets/fonts. */
 const WEIGHT_FONT_MAP = {
   bold: FONTS.ENGLISH_BOLD,
-  medium: FONTS.ENGLISH,
   normal: FONTS.ENGLISH,
   semibold: FONTS.ENGLISH_SEMIBOLD,
 } as const satisfies Record<NonNullable<ThemedTextProps['weight']>, string>;
@@ -144,7 +133,7 @@ const WEIGHT_FONT_MAP = {
  * <ThemedText type="heading1">Title</ThemedText>
  *
  * // Semantic variants with optimized colors
- * <ThemedText variant="error">Error message</ThemedText>
+ * <ThemedText colorName="error">Error message</ThemedText>
  *
  * // Custom semantic color from enhanced system
  * <ThemedText colorName="authorText">Author byline</ThemedText>
@@ -152,7 +141,6 @@ const WEIGHT_FONT_MAP = {
 export function ThemedText({
   style,
   type = 'body',
-  variant,
   weight,
   align,
   colorName,
@@ -170,7 +158,7 @@ export function ThemedText({
 
   // Memoize style computation to prevent unnecessary recalculations
   const finalStyle = useMemo((): StyleProp<TextStyle> => {
-    const textColor = getTextColor(colors, variant, colorName, skipDefaultColor);
+    const textColor = getTextColor(colors, colorName, skipDefaultColor);
 
     if (isArabic) {
       const fontSize = debouncedArabicFontSize || LAYOUT.TYPOGRAPHY.SCALE.LARGE;
@@ -190,10 +178,10 @@ export function ThemedText({
 
     const baseStyle = BASE_STYLE_MAP[type] || BASE_STYLE_MAP.body;
 
-    // When an explicit color is provided (colorName or variant), the semantic color
-    // already encodes the hierarchy — skip the type's built-in opacity to avoid double-dimming.
+    // When an explicit color is provided, the semantic color already encodes the
+    // hierarchy — skip the type's built-in opacity to avoid double-dimming.
     // Opacity-based hierarchy only applies to default-colored text.
-    const baseOpacity = colorName || variant ? TEXT_OPACITY.PRIMARY : baseStyle.opacity;
+    const baseOpacity = colorName ? TEXT_OPACITY.PRIMARY : baseStyle.opacity;
 
     return [
       baseStyle,
@@ -205,7 +193,6 @@ export function ThemedText({
     ].filter(Boolean);
   }, [
     colors,
-    variant,
     colorName,
     skipDefaultColor,
     type,

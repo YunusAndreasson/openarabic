@@ -6,7 +6,7 @@
  * memory-strength gauge lives in the memory-retention sheet; the single
  * start-review CTA is pinned near the bottom of the screen.
  */
-import { MetricCard } from '@/components/common/MetricCard';
+import { MetricCard } from '@/components/common';
 import { StyleSheet, View } from 'react-native';
 
 import { MEMORY_CAPACITY_THRESHOLDS } from '@/constants/fsrs';

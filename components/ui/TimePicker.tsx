@@ -1,3 +1,4 @@
+import { BrandedBottomSheetHandle } from '@/components/ui/BrandedBottomSheetHandle';
 import { DateTimePicker } from '@expo/ui/community/datetime-picker';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useCallback, useState } from 'react';
@@ -6,7 +7,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
-import { BrandedBottomSheetHandle } from '@/components/ui/BrandedBottomSheetHandle';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
@@ -144,12 +144,7 @@ function IosTimePicker({
         style={[styles.container, { paddingBottom: insets.bottom + LAYOUT.SPACING.LARGE }]}
       >
         <View style={styles.timeDisplay}>
-          <ThemedText
-            colorName="subtitleText"
-            style={styles.timeText}
-            type="heading1"
-            weight="bold"
-          >
+          <ThemedText colorName="subtitleText" style={styles.timeText} type="heading1">
             {formatTime(selectedDate)}
           </ThemedText>
         </View>

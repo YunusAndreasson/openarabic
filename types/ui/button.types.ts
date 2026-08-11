@@ -1,21 +1,47 @@
-import type { PressableProps, ViewStyle } from 'react-native';
+import type { GestureResponderEvent, PressableProps } from 'react-native';
+
+import type { IoniconName } from '@/components/ui/Icon';
+import type { HapticType } from '@/hooks/ui/useButtonPress';
 
 import type { BaseAnimatedStyleProps } from './base.types';
 
 /**
- * Button variant types
+ * How much visual weight a button carries, loudest first.
+ *
+ * - `filled`   — the one primary action on a screen. Solid hue.
+ * - `tonal`    — a secondary action that still needs to read as an action.
+ *                Hue mixed into an elevation surface, so it stays recognisable
+ *                on the dark theme where a translucent fill would go muddy.
+ * - `outlined` — a peer action alongside a `filled` one.
+ * - `ghost`    — tertiary: "Not now", "Skip", inline links. No fill, no border.
  */
-export type ButtonVariant = 'filled' | 'outlined';
+export type ButtonVariant = 'filled' | 'tonal' | 'outlined' | 'ghost';
+
+/**
+ * Which hue a button paints itself with. Orthogonal to `variant`, so a
+ * destructive action can be quiet (`ghost`) or loud (`filled`) without needing
+ * its own variant.
+ */
+export type ButtonTone = 'default' | 'destructive';
 
 /**
  * Button size options
  */
 export type ButtonSize = 'large' | 'medium' | 'small';
 
+/** Where the icon sits relative to the label. */
+export type ButtonIconPosition = 'leading' | 'trailing';
+
 /**
  * Base button props shared across all button variants
  */
-export interface BaseButtonProps extends Omit<PressableProps, 'style'>, BaseAnimatedStyleProps {
+export interface BaseButtonProps
+  extends Omit<PressableProps, 'style' | 'onPress'>, BaseAnimatedStyleProps {
+  /**
+   * Press handler. The gesture event is optional because the shared press
+   * engine also drives buttons that are activated without one.
+   */
+  onPress?: (event?: GestureResponderEvent) => void;
   /** Text displayed on the button */
   title: string;
   /** Whether the button is in a loading state */
@@ -26,14 +52,20 @@ export interface BaseButtonProps extends Omit<PressableProps, 'style'>, BaseAnim
   enableOptimisticLoading?: boolean;
   /** Whether to transform text to uppercase (default: false) */
   uppercase?: boolean;
+  /** Stretch to fill the available width instead of hugging the label */
+  fullWidth?: boolean;
+  /** Haptic weight fired on press (default: 'light') */
+  hapticType?: HapticType;
 }
 
 /**
  * Props for icon buttons (shared across variants)
  */
 export interface IconButtonProps {
-  /** Optional Ionicons icon name to display before the title */
-  icon?: string;
+  /** Optional Ionicons icon name to display alongside the title */
+  icon?: IoniconName;
+  /** Which side of the label the icon sits on (default: 'leading') */
+  iconPosition?: ButtonIconPosition;
 }
 
 /**
@@ -42,24 +74,6 @@ export interface IconButtonProps {
 export interface ThemedButtonProps extends BaseButtonProps, IconButtonProps {
   /** Visual style variant of the button */
   variant?: ButtonVariant;
-}
-
-/**
- * Simplified base props for icon-based buttons
- */
-export interface BaseIconButtonProps<TIcon = string> {
-  /** Icon name (string or union of icon names) */
-  icon: TIcon;
-  /** Icon size in pixels */
-  size?: number;
-  /** Icon color */
-  color?: string;
-  /** Whether the button is disabled */
-  disabled?: boolean;
-  /** Additional styles for the container */
-  style?: ViewStyle;
-  /** Press handler */
-  onPress: () => void;
-  /** Test ID for testing */
-  testID?: string;
+  /** Which hue the button paints itself with (default: 'default') */
+  tone?: ButtonTone;
 }

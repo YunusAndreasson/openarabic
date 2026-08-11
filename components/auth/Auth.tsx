@@ -1,7 +1,7 @@
+import { EnhancedImage } from '@/components/ui';
 import type { JSX } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { EnhancedImage } from '@/components/ui/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -50,7 +50,7 @@ export function Auth(): JSX.Element {
         {/* Value proposition — three terse lines, bold leading verb */}
         <View style={styles.valueProps}>
           {VALUE_PROP_ROWS.map(({ verb, rest }) => (
-            <ThemedText key={verb} align="center" type="body" variant="secondary">
+            <ThemedText key={verb} align="center" type="body" colorName="secondaryText">
               <ThemedText type="bodyBold">{verb}</ThemedText> {rest}
             </ThemedText>
           ))}

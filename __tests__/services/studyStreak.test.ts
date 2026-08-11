@@ -26,7 +26,8 @@ const { supabase } = require('@/services/supabase');
 // The service pages through results with `.range()` after `.eq()`, so the
 // mocked terminal value must be chainable (`.range()` returns the same
 // awaitable) as well as directly awaitable, matching Supabase's real builder.
-const chainableResult = (promise: Promise<any>) => Object.assign(promise, { range: jest.fn(() => promise) });
+const chainableResult = (promise: Promise<any>) =>
+  Object.assign(promise, { range: jest.fn(() => promise) });
 
 // Helper to create query builder chain for SELECT queries
 const createSelectBuilder = (response: any = { data: [], error: null }) => {

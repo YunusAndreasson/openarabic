@@ -14,12 +14,13 @@
  *   card instead of clipping it
  */
 
-import { Ionicons, type IoniconName } from '@/components/ui/Icon';
+import { Ionicons, type IoniconName } from '@/components/ui';
 import { type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT, STATUS_INDICATOR } from '@/constants/layout';
+import { Dot } from '@/components/common';
+import { LAYOUT } from '@/constants/layout';
 import { TUTORIAL_STEP_MIN_HEIGHT, TUTORIAL_VISUALS } from '@/constants/tutorials';
 import { useColors } from '@/hooks/theme/useColors';
 import { withOpacity } from '@/utils/colorUtils';
@@ -76,7 +77,7 @@ export function TutorialStepLayout({
         )}
 
         {typeof body === 'string' ? (
-          <ThemedText type="body" variant="secondary" style={styles.body}>
+          <ThemedText type="body" colorName="secondaryText" style={styles.body}>
             {body}
           </ThemedText>
         ) : (
@@ -89,13 +90,7 @@ export function TutorialStepLayout({
       {showDots && (
         <View style={styles.dotsRow}>
           {Array.from({ length: stepCount }, (_, index) => (
-            <View
-              key={index}
-              style={[
-                styles.dot,
-                { backgroundColor: index === currentStep ? colors.tint : colors.border },
-              ]}
-            />
+            <Dot key={index} color={index === currentStep ? colors.tint : colors.border} />
           ))}
         </View>
       )}
@@ -148,10 +143,5 @@ const styles = StyleSheet.create({
     // padding on both sides reads as the dots crowding the copy. This lands them
     // optically midway between the paragraph and the CTA.
     paddingTop: LAYOUT.SPACING.XXLARGE,
-  },
-  dot: {
-    width: STATUS_INDICATOR.DOT_SIZE,
-    height: STATUS_INDICATOR.DOT_SIZE,
-    borderRadius: STATUS_INDICATOR.DOT_RADIUS,
   },
 });

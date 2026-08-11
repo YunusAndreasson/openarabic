@@ -1,5 +1,5 @@
 import type { TextStyle } from 'react-native';
-import { Dimensions } from 'react-native';
+import { Dimensions, StyleSheet } from 'react-native';
 
 import { FONTS } from '@/constants/fonts';
 
@@ -35,6 +35,27 @@ const TOUCH_TARGETS = {
   MEDIUM: BASE_UNIT * 11, // 44 - responsive to base unit
   LARGE: BASE_UNIT * 12, // 48 - iOS/Android minimum recommended, responsive
   ICON_PADDING: BASE_UNIT * 3, // 12
+} as const;
+
+/**
+ * Border widths.
+ *
+ * Deliberately literal, not derived from BASE_UNIT. The previous scale computed
+ * `Math.round(BASE_UNIT * 0.125)` and `BASE_UNIT * 0.25`, which both land on 1 —
+ * two names for one value, so code that read as picking a weight wasn't. The same
+ * collision made the text-input focus state invisible: its "default" and "focused"
+ * widths both resolved to 2.
+ *
+ * A width is a device-space line, not a multiple of the layout rhythm, so tie it
+ * to neither.
+ */
+const BORDER_WIDTHS = {
+  /** Thinnest line the display can draw (~0.33–0.5pt). Separators and inset rules. */
+  HAIRLINE: StyleSheet.hairlineWidth,
+  /** 1pt — the resting border for cards, chips, buttons and inputs. */
+  NORMAL: 1,
+  /** 2pt — focus and selection emphasis. Must differ visibly from NORMAL. */
+  FOCUSED: 2,
 } as const;
 
 /**
@@ -196,7 +217,7 @@ export const LAYOUT = {
     HEIGHT: {
       // Dynamic heights based on content
       LIST_ITEM: TOUCH_TARGETS.LARGE + SPACING_SCALE.LARGE * 2, // 48 + 32 = 80
-      AUDIO_ITEM: TOUCH_TARGETS.LARGE + SPACING_SCALE.XLARGE * 2, // 48 + 40 = 88
+      AUDIO_ITEM: TOUCH_TARGETS.LARGE + SPACING_SCALE.XLARGE * 2, // 48 + 48 = 96
       MINI_PLAYER: TOUCH_TARGETS.LARGE + SPACING_SCALE.XXLARGE * 2, // 48 + 64 = 112 (taller for 2-line title)
       VOCABULARY_ITEM: TOUCH_TARGETS.MEDIUM + SPACING_SCALE.MEDIUM, // 44 + 12 = 56 (compact hairline dictionary row)
     },
@@ -214,8 +235,8 @@ export const LAYOUT = {
     HEIGHT: TOUCH_TARGETS.LARGE + BASE_UNIT, // 52 - responsive to touch targets + padding
     MULTILINE_HEIGHT: BASE_UNIT * 50, // 200 - standard height for multiline text areas
     BORDER_WIDTH: {
-      DEFAULT: Math.round(BASE_UNIT * 0.375), // 1.5 rounded to 2 - prevents sub-pixel rendering
-      FOCUSED: BASE_UNIT * 0.5, // 2 - responsive to base unit
+      DEFAULT: BORDER_WIDTHS.NORMAL, // 1 - at rest
+      FOCUSED: BORDER_WIDTHS.FOCUSED, // 2 - thickens on focus (was also 1.5→2, so nothing moved)
     },
   },
 
@@ -243,12 +264,13 @@ export const LAYOUT = {
       LARGE: BASE_UNIT * 4.5, // 18 - clear heading3/body distinction (1.125x ratio)
       XLARGE: BASE_UNIT * 5.5, // 22 - bolder heading (2025 trend)
       XXLARGE: BASE_UNIT * 6, // 24 - bolder heading (2025 trend)
-      HUGE: BASE_UNIT * 8, // 32 - bolder heading (2025 trend)
-      DEFAULT_ARABIC: BASE_UNIT * 8, // 32 - alias for HUGE, used for Arabic text settings
+      HUGE: BASE_UNIT * 8, // 32 - bolder heading (2025 trend); also the default Arabic size
       XXHUGE: BASE_UNIT * 9.5, // 38 - bolder heading (2025 trend)
       MASSIVE: BASE_UNIT * 11, // 44 - bolder heading (2025 trend)
     },
-    LINE_HEIGHT: TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS,
+    // Line-height multipliers live in the flat `LINE_HEIGHT_MULTIPLIERS` export.
+    // A `LAYOUT.TYPOGRAPHY.LINE_HEIGHT` alias for the same object used to exist
+    // and left the codebase split across two paths to one value.
   },
 
   ELEVATION: ELEVATION_SYSTEM,
@@ -298,10 +320,8 @@ export const LAYOUT = {
         borderTopLeftRadius: BASE_UNIT * 5, // 20 - softer corners (2025 trend)
         borderTopRightRadius: BASE_UNIT * 5, // 20 - softer corners (2025 trend)
       },
-      indicator: {
-        width: BASE_UNIT * 9, // 36 - consistent indicator width
-        height: BASE_UNIT, // 4 - consistent indicator height
-      },
+      // No `indicator` here: every sheet renders `BrandedBottomSheetHandle`
+      // (a Skia pill) via `handleComponent`, so a 36x4 token had no consumer.
       // Shared text styles for bottom sheet headers (DRY)
       title: {
         marginBottom: SPACING_SCALE.TINY, // 4px - tight coupling with subtitle
@@ -344,11 +364,7 @@ export const LAYOUT = {
   },
 
   BORDER: {
-    WIDTH: {
-      THIN: Math.round(BASE_UNIT * 0.125), // 0.5 rounded to 1 - prevents sub-pixel rendering
-      NORMAL: BASE_UNIT * 0.25, // 1 - responsive to base unit
-      FOCUSED: BASE_UNIT * 0.5, // 2 - responsive to base unit
-    },
+    WIDTH: BORDER_WIDTHS,
   },
 
   /**

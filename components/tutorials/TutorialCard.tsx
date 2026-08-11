@@ -3,11 +3,10 @@
  */
 
 import { type ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 
 import { ThemedButton } from '@/components/ThemedButton';
-import { ThemedText } from '@/components/ThemedText';
 import { BaseCard } from '@/components/common';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -39,16 +38,13 @@ export function TutorialCard({ children, dismissText, onDismiss, onSkip }: Tutor
       <BaseCard shadowSize="large" style={styles.card} contentStyle={styles.cardContent}>
         {onSkip && (
           <View style={styles.skipRow}>
-            <Pressable
+            <ThemedButton
+              hapticType="none"
+              size="small"
+              title={STRINGS.ONBOARDING_SKIP}
+              variant="ghost"
               onPress={onSkip}
-              hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-              accessibilityRole="button"
-              accessibilityLabel={STRINGS.ONBOARDING_SKIP}
-            >
-              <ThemedText type="caption" colorName="secondaryText">
-                {STRINGS.ONBOARDING_SKIP}
-              </ThemedText>
-            </Pressable>
+            />
           </View>
         )}
 

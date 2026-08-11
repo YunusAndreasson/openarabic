@@ -237,7 +237,7 @@ export default function ResetPasswordScreen(): JSX.Element {
           <ThemedText align="center" type="heading1" colorName="headingText">
             {STRINGS.RESET_PASSWORD_TITLE}
           </ThemedText>
-          <ThemedText align="center" type="body" variant="secondary" style={styles.subtitle}>
+          <ThemedText align="center" type="body" colorName="secondaryText" style={styles.subtitle}>
             {STRINGS.RESET_PASSWORD_SUBTITLE}
           </ThemedText>
         </View>

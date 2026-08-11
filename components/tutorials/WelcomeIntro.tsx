@@ -9,7 +9,7 @@
  * Shown once after first sign-in, gated by TutorialId.WELCOME_INTRO.
  */
 
-import { type IoniconName } from '@/components/ui/Icon';
+import { type IoniconName } from '@/components/ui';
 import { useCallback, useEffect, useState } from 'react';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';

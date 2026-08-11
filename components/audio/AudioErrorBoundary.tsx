@@ -1,9 +1,9 @@
+import { ComponentErrorBoundary } from '@/components/common';
 import { memo } from 'react';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { ComponentErrorBoundary } from '@/components/common/ComponentErrorBoundary';
 import { LAYOUT } from '@/constants/layout';
 
 const AudioErrorFallback = memo(function AudioErrorFallback() {

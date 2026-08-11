@@ -1,4 +1,3 @@
-import { Ionicons } from '@/components/ui/Icon';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import * as Sentry from '@sentry/react-native';
@@ -7,7 +6,6 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   TextInput,
@@ -15,10 +13,11 @@ import {
 } from 'react-native';
 
 import { ThemedButton } from '@/components/ThemedButton';
+import { IconButton } from '@/components/ui';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { FONTS } from '@/constants/fonts';
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useScreenshotAttachment } from '@/hooks/account';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -194,30 +193,25 @@ export const FeedbackForm = memo(() => {
                   contentFit="cover"
                   cachePolicy="none"
                 />
-                <Pressable
-                  onPress={handleRemoveScreenshot}
-                  style={[
-                    styles.removeButton,
-                    { backgroundColor: colors.error, shadowColor: colors.shadow },
-                  ]}
-                >
-                  <Ionicons
-                    name="close"
-                    size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    color={colors.white}
+                <View style={styles.removeButton}>
+                  <IconButton
+                    accessibilityLabel={STRINGS.FEEDBACK_SCREENSHOT_REMOVE_A11Y}
+                    icon="close"
+                    size="small"
+                    tone="destructive"
+                    onPress={handleRemoveScreenshot}
                   />
-                </Pressable>
+                </View>
               </View>
             ) : (
-              <Pressable
+              <ThemedButton
+                fullWidth
+                icon="image"
+                style={styles.addScreenshotButton}
+                title={STRINGS.FEEDBACK_SCREENSHOT_LABEL}
+                variant="outlined"
                 onPress={handleAddScreenshot}
-                style={[styles.addScreenshotButton, { borderColor: colors.border }]}
-              >
-                <Ionicons name="image" size={LAYOUT.BUTTON.ICON_SIZE.LARGE} color={colors.tint} />
-                <ThemedText type="body" colorName="tint" style={styles.addScreenshotText}>
-                  {STRINGS.FEEDBACK_SCREENSHOT_LABEL}
-                </ThemedText>
-              </Pressable>
+              />
             )}
 
             <ThemedView style={styles.metaRow}>
@@ -287,19 +281,13 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.ENGLISH_SEMIBOLD,
     marginLeft: LAYOUT.SPACING.SMALL,
   },
+  // Dashed edge marks this as a drop/pick target rather than a committing
+  // action. Everything else — height, radius, press feel — is the outlined
+  // ThemedButton underneath.
   addScreenshotButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
     borderStyle: 'dashed',
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    padding: LAYOUT.SPACING.LARGE,
     marginBottom: LAYOUT.SPACING.MEDIUM,
-    gap: LAYOUT.SPACING.SMALL,
-  },
-  addScreenshotText: {
-    marginLeft: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.LARGE,
   },
   screenshotPreview: {
     position: 'relative',
@@ -314,14 +302,8 @@ const styles = StyleSheet.create({
   },
   removeButton: {
     position: 'absolute',
-    top: LAYOUT.SPACING.SMALL,
     right: LAYOUT.SPACING.SMALL,
-    width: MIN_TOUCH_TARGET.SMALL,
-    height: MIN_TOUCH_TARGET.SMALL,
-    borderRadius: MIN_TOUCH_TARGET.SMALL / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...LAYOUT.ELEVATION.SMALL,
+    top: LAYOUT.SPACING.SMALL,
   },
   submitButton: {
     marginTop: LAYOUT.SPACING.SMALL,

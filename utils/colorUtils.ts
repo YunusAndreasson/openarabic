@@ -128,6 +128,51 @@ export function mixColors(base: string, overlay: string, amount: number): string
   return formatHex(blended);
 }
 
+/**
+ * How a hue is turned into a "tonal" control surface — a fill quiet enough to
+ * sit beside other controls, but still recognisably its own colour.
+ *
+ * These weights were derived on the review screen's grade chips, where the
+ * problem shows most clearly: an alpha fill composites against whatever is
+ * behind the control, which there is a near-black page, so every hue at 15%
+ * resolved to a different shade of sludge. Mixing into an elevation surface
+ * instead keeps each hue itself and lifts the control off the page.
+ *
+ * The border stays alpha deliberately — it composites over the control's own
+ * opaque fill, so it reads as a stronger edge of the same hue rather than
+ * washing out. It is what carries the colour at rest.
+ */
+const TONAL_SURFACE = {
+  /** Hue mixed into the elevation surface for the resting fill. */
+  FILL: 0.22,
+  /** Same mix, deeper, so a press reads without changing the control's shape. */
+  FILL_PRESSED: 0.35,
+  /** Hue over the resting fill. */
+  BORDER: 0.35,
+} as const;
+
+/**
+ * Resolve a tonal control surface for a hue against an elevation surface.
+ *
+ * @param surface - The elevation colour the control sits on (usually `elevation2`)
+ * @param hue - The control's colour (tint, error, a grade colour…)
+ * @param pressed - Deepen the fill for the pressed state
+ */
+export function tonalSurface(
+  surface: string,
+  hue: string,
+  pressed = false,
+): { backgroundColor: string; borderColor: string } {
+  return {
+    backgroundColor: mixColors(
+      surface,
+      hue,
+      pressed ? TONAL_SURFACE.FILL_PRESSED : TONAL_SURFACE.FILL,
+    ),
+    borderColor: withAlpha(hue, TONAL_SURFACE.BORDER),
+  };
+}
+
 // =============================================================================
 // OKLCH PALETTE CONVERSION UTILITIES
 // =============================================================================

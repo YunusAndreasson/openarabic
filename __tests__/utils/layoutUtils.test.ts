@@ -173,6 +173,7 @@ describe('layoutUtils', () => {
       expect(result).toEqual({
         color: 'rgba(0, 0, 0, 0.1)',
         radius: MIN_TOUCH_TARGET.SMALL / 2,
+        foreground: false,
       });
     });
 
@@ -181,6 +182,7 @@ describe('layoutUtils', () => {
       expect(result).toEqual({
         color: 'rgba(0, 0, 0, 0.1)',
         radius: MIN_TOUCH_TARGET.MEDIUM / 2,
+        foreground: false,
       });
     });
 
@@ -189,6 +191,7 @@ describe('layoutUtils', () => {
       expect(result).toEqual({
         color: 'rgba(0, 0, 0, 0.1)',
         radius: MIN_TOUCH_TARGET.LARGE / 2,
+        foreground: false,
       });
     });
 
@@ -197,6 +200,7 @@ describe('layoutUtils', () => {
       expect(result).toEqual({
         color: 'rgba(0, 0, 0, 0.1)',
         radius: MIN_TOUCH_TARGET.MEDIUM / 2,
+        foreground: false,
       });
     });
 

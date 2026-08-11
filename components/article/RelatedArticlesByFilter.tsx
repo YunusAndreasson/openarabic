@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { ThemedText } from '@/components/ThemedText';
+import { SectionLabel } from '@/components/common';
 import { PlaylistItemCard } from '@/components/playlist';
 import { LAYOUT } from '@/constants/layout';
 import { getArticleRoute } from '@/constants/routes';
@@ -50,18 +50,6 @@ interface RelatedArticlesByFilterProps {
    */
   maxArticles?: number;
 }
-
-// Section header component matching FilteredArticleView style
-// Memoized to prevent unnecessary re-renders
-const SectionHeader = memo(({ title }: { title: string }) => (
-  <View style={styles.sectionHeader}>
-    <ThemedText type="heading3" weight="bold">
-      {title}
-    </ThemedText>
-  </View>
-));
-
-SectionHeader.displayName = 'SectionHeader';
 
 /**
  * Related Articles By Filter Component
@@ -188,7 +176,7 @@ export const RelatedArticlesByFilter = memo<RelatedArticlesByFilterProps>(
 
     return (
       <View style={styles.container}>
-        <SectionHeader title={sectionTitle} />
+        <SectionLabel density="compact" title={sectionTitle} />
         {articleCards}
       </View>
     );
@@ -202,11 +190,6 @@ const styles = StyleSheet.create({
     paddingTop: LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SPACING.SMALL,
     // paddingBottom removed - FlashList contentContainerStyle handles bottom spacing
-  },
-  sectionHeader: {
-    paddingTop: LAYOUT.SPACING.LARGE,
-    paddingBottom: LAYOUT.SPACING.SMALL,
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
   },
   articleSpacing: {
     marginTop: LAYOUT.SPACING.SMALL,

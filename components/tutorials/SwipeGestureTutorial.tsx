@@ -8,6 +8,7 @@
  * binary model for a ternary grade bar.
  */
 
+import type { IoniconName } from '@/components/ui';
 import { useCallback, useState, type ComponentType } from 'react';
 
 import { STRINGS } from '@/constants/strings';
@@ -18,7 +19,6 @@ import { TutorialGradesStep } from './steps';
 import { TutorialCard } from './TutorialCard';
 import { TutorialOverlay } from './TutorialOverlay';
 import { TutorialStepLayout } from './TutorialStepLayout';
-import type { IoniconName } from '@/components/ui/Icon';
 
 interface SwipeGestureTutorialProps {
   visible: boolean;

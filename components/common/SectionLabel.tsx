@@ -43,7 +43,7 @@ export const SectionLabel: FC<SectionLabelProps> = ({
   <View style={[styles.container, { paddingTop: DENSITY_TOP_PADDING[density] }, style]}>
     <ThemedText type="overline">{title}</ThemedText>
     {subtitle ? (
-      <ThemedText type="caption" variant="secondary" style={styles.subtitle}>
+      <ThemedText type="caption" colorName="secondaryText" style={styles.subtitle}>
         {subtitle}
       </ThemedText>
     ) : null}
