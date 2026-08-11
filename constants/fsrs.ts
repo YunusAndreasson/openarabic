@@ -20,6 +20,14 @@ export const CRITICAL_RETRIEVABILITY_THRESHOLD = 0.7;
 export const UNSTABLE_STABILITY_THRESHOLD = 7;
 export const UNSTABLE_DIFFICULTY_THRESHOLD = 7.5;
 
+/**
+ * FSRS difficulty is defined on a closed 1–10 scale, unlike stability, which is
+ * an open-ended day count. Named here because the dictionary meter has to
+ * normalise it to 0–1 and a magic `10` in that maths reads as arbitrary.
+ */
+export const FSRS_DIFFICULTY_MIN = 1;
+export const FSRS_DIFFICULTY_MAX = 10;
+
 // "Words to revisit" / leech thresholds (ported from edenmind rankStrugglingCards).
 // fsrs_lapses is the honest signal — ts-fsrs only counts a lapse when an
 // already-graduated Review card is rated "Again" (i.e. answered Unknown here).

@@ -10,8 +10,8 @@ import { mixColors } from '@/utils/colorUtils';
 /** Fixed width so every meter in a list shares one right edge and one scale. */
 const METER_WIDTH = 32;
 
-interface MemoryMeterProps {
-  /** 0–1, from getHorizonFraction — log-scaled days of memory horizon. */
+interface SortMeterProps {
+  /** 0–1, from `getSortMeterFraction` — whichever magnitude the list is sorted by. */
   fraction: number;
   /**
    * Animate width changes. Off inside a recycled list row: FlashList hands the
@@ -22,20 +22,20 @@ interface MemoryMeterProps {
 }
 
 /**
- * How far a word's memory currently reaches, as a length.
+ * The magnitude the list is currently sorted by, as a length.
  *
- * The dictionary already carries one signal — a difficulty dot — which is why
- * sorting by Difficulty produces a legible red-to-green column while sorting by
- * Strength reordered hundreds of identical rows with nothing on screen to show
- * for it. This is the missing half: under the Strength sort the meters grade
- * from short to long, so the list corroborates its own order.
+ * Whatever the active sort measures, this draws — see `getSortMeterFraction`.
+ * That binding is the point: the bar was previously fixed to the memory horizon
+ * while the list offered three orderings, and since nothing on screen named it,
+ * two of the three sorts left it looking arbitrary. Tying it to the sort makes
+ * the control directly above the list act as the bar's label.
  *
  * Length, not colour. The dot beside it is already red/amber/green, and a second
  * traffic light in the same row makes an ordinary word look like an error — the
  * exact failure that got a three-column stat block deleted from the word detail
  * screen. Different variable, different visual attribute.
  */
-export const MemoryMeter = memo<MemoryMeterProps>(({ fraction, animated = false }) => {
+export const SortMeter = memo<SortMeterProps>(({ fraction, animated = false }) => {
   const colors = useColors();
 
   // The chart system's meter rule: the track is a lighter step of the fill's own
@@ -57,7 +57,7 @@ export const MemoryMeter = memo<MemoryMeterProps>(({ fraction, animated = false 
   );
 });
 
-MemoryMeter.displayName = 'MemoryMeter';
+SortMeter.displayName = 'SortMeter';
 
 const styles = StyleSheet.create({
   container: {

@@ -16,16 +16,14 @@ import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reani
 import { ThemedText } from '@/components/ThemedText';
 
 import { Dot } from '@/components/common';
-import { MemoryMeter } from '@/components/practice/MemoryMeter';
+import { SortMeter } from '@/components/practice/SortMeter';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
+import type { DictionarySortField } from '@/hooks/vocabulary/useDictionaryList';
 import type { StudyWord } from '@/types/vocabulary.types';
-import {
-  getHorizonAccessibilityLabel,
-  getHorizonFraction,
-  getMemoryHorizonDays,
-} from '@/utils/memoryHorizon';
+import { getSortMeterFraction } from '@/utils/dictionaryMeter';
+import { getHorizonAccessibilityLabel, getMemoryHorizonDays } from '@/utils/memoryHorizon';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 import { DIFFICULTY_COLORS, DIFFICULTY_LABELS, getWordDifficultyLevel } from '@/utils/urgencyScore';
 
@@ -96,6 +94,10 @@ function RowActions({ drag, onReset, onRemove }: RowActionsProps) {
 
 interface DictionaryWordRowProps {
   word: StudyWord;
+  /** Which magnitude the trailing meter draws — always the list's active sort. */
+  sortField: DictionarySortField;
+  /** One instant for the whole list, so every row's age meter shares a clock. */
+  nowMs: number;
   /** Opens the word detail screen */
   onPress: (word: StudyWord) => void;
   /** Swipe action: remove the word from practice */
@@ -112,18 +114,18 @@ interface DictionaryWordRowProps {
  * as a stack of elevated cards.
  *
  * The dot sits in a fixed-width leading column so it forms one vertical axis to
- * scan. Sorted by Difficulty (the default) the column reads as a gradient, so
- * the indicator and the sort order corroborate each other. Its level, label and
- * color come from `getWordDifficultyLevel` — the same source the word detail
- * screen's Difficulty stat uses, so the two surfaces can't drift apart.
+ * scan. Its level, label and color come from `getWordDifficultyLevel` — the same
+ * source the word detail screen's Difficulty stat uses, so the two surfaces
+ * can't drift apart. It stays fixed to difficulty under every sort, which keeps
+ * a second dimension on screen while the meter tracks the first.
  *
- * The trailing meter is the same idea for the other magnitude the list sorts by:
- * colour carries difficulty, length carries how far the memory reaches. Both are
- * fixed in meaning — neither changes with the active sort — so nothing here is a
- * mode, and each ordering has exactly one signal that corroborates it.
+ * The trailing meter draws whatever the list is sorted by — see
+ * `getSortMeterFraction`. It was previously pinned to the memory horizon, but
+ * nothing on the screen ever named it, so under two of the three sorts it read
+ * as an unexplained magnitude next to an order it had nothing to do with.
  */
 export const DictionaryWordRow = memo<DictionaryWordRowProps>(
-  ({ word, onPress, onRemove, onResetProgress }) => {
+  ({ word, sortField, nowMs, onPress, onRemove, onResetProgress }) => {
     const colors = useColors();
     const swipeableRef = useRef<SwipeableMethods>(null);
     // Set the moment a drag starts revealing the actions. Belt and braces behind
@@ -235,7 +237,7 @@ export const DictionaryWordRow = memo<DictionaryWordRowProps>(
               trailing accessory, and a full gap between them would cost the
               meaning another 12dp of width. */}
           <View style={styles.trailing}>
-            <MemoryMeter fraction={getHorizonFraction(horizonDays)} />
+            <SortMeter fraction={getSortMeterFraction(word, sortField, nowMs)} />
             <Ionicons name="chevron-forward" size={CHEVRON_SIZE} color={colors.textTertiary} />
           </View>
         </Pressable>
@@ -246,10 +248,24 @@ export const DictionaryWordRow = memo<DictionaryWordRowProps>(
     // Only compare values actually used in render output — the screen passes
     // stable callback references. Anything new rendered here must be added, or
     // it silently keeps the previous word's value after a recycle.
+    //
+    // `fsrs_state` and `fsrs_reps` are here because `hasBeenPractised` reads
+    // them, and both the dot and the meter gate on it. They were missing while
+    // the dot already depended on them, so a recycled row could carry the
+    // previous word's practised/new verdict — an amber "Moderate" dot on a word
+    // never reviewed. `created_at` and `nowMs` feed the age meter under the
+    // Recent sort, and `sortField` decides which magnitude the meter draws at
+    // all: without it, changing the sort reorders the rows and leaves every
+    // meter at its previous length.
     return (
+      prevProps.sortField === nextProps.sortField &&
+      prevProps.nowMs === nextProps.nowMs &&
       prevProps.word.root_id === nextProps.word.root_id &&
       prevProps.word.fsrs_difficulty === nextProps.word.fsrs_difficulty &&
       prevProps.word.fsrs_stability === nextProps.word.fsrs_stability &&
+      prevProps.word.fsrs_state === nextProps.word.fsrs_state &&
+      prevProps.word.fsrs_reps === nextProps.word.fsrs_reps &&
+      prevProps.word.created_at === nextProps.word.created_at &&
       prevProps.word.root?.letters === nextProps.word.root?.letters &&
       prevProps.word.root?.meaning === nextProps.word.root?.meaning
     );

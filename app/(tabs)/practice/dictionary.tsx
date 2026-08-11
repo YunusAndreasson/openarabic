@@ -202,18 +202,27 @@ export default function DictionaryScreen(): JSX.Element {
     [confirmReset],
   );
 
+  // One instant for every row's age meter, read once per screen. A clock read
+  // inside each row would give two words measured a millisecond apart different
+  // fractions and defeat the row's memo comparison on every pass; a bare
+  // `Date.now()` in render is an impure call the React Compiler rejects. Same
+  // lazy-initialiser pattern as useSessionMetrics and useReview.
+  const [nowMs] = useState(() => Date.now());
+
   const renderItem = useCallback(
     (props: { item: StudyWord }) => (
       <Animated.View style={ROW_FADE_IN_STYLE}>
         <DictionaryWordRow
           word={props.item}
+          sortField={sortField}
+          nowMs={nowMs}
           onPress={handleWordPress}
           onRemove={handleRemoveWord}
           onResetProgress={handleResetProgress}
         />
       </Animated.View>
     ),
-    [handleWordPress, handleRemoveWord, handleResetProgress],
+    [sortField, nowMs, handleWordPress, handleRemoveWord, handleResetProgress],
   );
 
   // A hairline rule, not a gap: the rows are flat, so the line is what
