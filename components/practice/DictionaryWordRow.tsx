@@ -106,8 +106,11 @@ interface DictionaryWordRowProps {
 }
 
 /**
- * One word in the dictionary index — the Arabic, then the meaning trailing, then
- * a meter, split from its neighbours by the list's hairline separator.
+ * One word in the dictionary index — the meaning, then the Arabic trailing, then
+ * a meter, split from its neighbours by the list's hairline separator. Arabic
+ * sits on the right so each language keeps its natural text alignment: English
+ * ragged-right on the left, Arabic ragged-left on the right, instead of both
+ * fighting their default direction.
  *
  * Deliberately flat: an index of hundreds of words should read as a list, not
  * as a stack of elevated cards.
@@ -224,17 +227,17 @@ export const DictionaryWordRow = memo<DictionaryWordRowProps>(
           // one drawn value not spoken — it says nothing about the word itself.)
           accessibilityLabel={`${arabicText}, ${englishText}, ${difficultyLabel}, ${getHorizonAccessibilityLabel(horizonDays)}`}
         >
-          <ThemedText type="arabicCompact" align="left" numberOfLines={1} style={styles.arabicText}>
-            {arabicText}
-          </ThemedText>
           <ThemedText
             type="caption"
             colorName="secondaryText"
-            align="right"
+            align="left"
             numberOfLines={1}
             style={styles.englishText}
           >
             {englishText}
+          </ThemedText>
+          <ThemedText type="arabicCompact" align="right" numberOfLines={1} style={styles.arabicText}>
+            {arabicText}
           </ThemedText>
           {/* Meter and chevron travel together on a tighter gap: they are one
               trailing accessory, and a full gap between them would cost the
