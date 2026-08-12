@@ -128,6 +128,16 @@ export function watchPromptFinish(
   let positionSamples = 0;
   /** Teardown for the post-settle audit, so the canceller can reach it too. */
   let cancelAudit: (() => void) | null = null;
+  /** The pending grace-period delay before a settled `onFinish` actually
+   *  fires. Tracked so the canceller can still stop it — without this, a
+   *  cancel landing inside the grace window (a fast card advance, or a
+   *  replay tap right on the natural end of the clip) was a no-op: `finish`
+   *  had already flipped `settled` true, so the short-circuit above ran and
+   *  the scheduled `onFinish` fired anyway, tens of ms after the caller
+   *  believed this watcher was dead. Downstream that stale call still hands
+   *  the audio session back (see markDone in useReview), landing after the
+   *  NEW card's own session request and reopening the microphone under it. */
+  let graceTimer: ReturnType<typeof setTimeout> | null = null;
   // Wall-clock instant the clip is expected to end, derived from the player's
   // reported duration/position. Recomputed on every status so it tracks the
   // real play head rather than assuming playback began when play() resolved.
@@ -184,8 +194,14 @@ export function watchPromptFinish(
     // learner sits through, not part of the word.
     const outcome: PromptFinishOutcome = { reason, audibleMs, durationMs, positionSamples };
     if (AUDITED_REASONS.has(reason)) auditLateFinish(Date.now());
-    if (graceMs > 0 && !isCancelled()) setTimeout(() => onFinish(outcome), graceMs);
-    else onFinish(outcome);
+    if (graceMs > 0 && !isCancelled()) {
+      graceTimer = setTimeout(() => {
+        graceTimer = null;
+        onFinish(outcome);
+      }, graceMs);
+    } else {
+      onFinish(outcome);
+    }
   };
 
   const evaluate = (status: AudioStatus): void => {
@@ -225,5 +241,17 @@ export function watchPromptFinish(
   const unsubscribe = source.subscribe(evaluate, { position: true });
   const poll = setInterval(() => evaluate(source.getStatus()), POLL_INTERVAL_MS);
   evaluate(source.getStatus());
-  return () => finish(0, 'superseded');
+  return () => {
+    // Already settled and waiting out its grace pad — `finish` would take the
+    // `if (settled)` short-circuit and leave the scheduled `onFinish` armed.
+    // Clear it directly so a cancel landing in this window actually prevents
+    // the callback, matching what "settles the watcher immediately" promises.
+    if (graceTimer) {
+      clearTimeout(graceTimer);
+      graceTimer = null;
+      cancelAudit?.();
+      return;
+    }
+    finish(0, 'superseded');
+  };
 }

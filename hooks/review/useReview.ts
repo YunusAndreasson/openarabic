@@ -1,5 +1,13 @@
 import { router } from 'expo-router';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import type { ViewStyle } from 'react-native';
 import { InteractionManager } from 'react-native';
 
@@ -326,20 +334,23 @@ export function useReview({
   const promptWatchRef = useRef<{ key: string; cancel: () => void } | null>(null);
 
   // Read for the silent-prompt row only, so it can say whether the mic was
-  // about to open on a word that was never read. Kept in a ref: the prompt
-  // effect must not re-run because a setting changed mid-card.
+  // about to open on a word that was never read. Read through an Effect Event
+  // (below) so the prompt effect doesn't re-run just because a setting
+  // changed mid-card.
   const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
-  // Held in a ref for the same reason as voiceEnabled: the prompt effect must
-  // not re-run because the provider re-rendered mid-card. Defaults to a no-op
-  // so a caller that does not care (and every test) needs no provider.
-  const setPlaybackPriorityRef = useRef(setPlaybackPriority ?? NO_PLAYBACK_PRIORITY);
-  useEffect(() => {
-    setPlaybackPriorityRef.current = setPlaybackPriority ?? NO_PLAYBACK_PRIORITY;
-  }, [setPlaybackPriority]);
-  const voiceEnabledRef = useRef(voiceEnabled);
-  useEffect(() => {
-    voiceEnabledRef.current = voiceEnabled;
-  }, [voiceEnabled]);
+  // Defaults to a no-op so a caller that does not care (and every test) needs
+  // no provider. Plain closure — safe for the non-effect callers below
+  // (revealMeaningPassive, enterRestudy, handleReplayAudio), which already
+  // pick up the latest `setPlaybackPriority` on every render the normal way.
+  const playbackPriority = setPlaybackPriority ?? NO_PLAYBACK_PRIORITY;
+  // Effect Event wrapper for the prompt-play effect only: that effect must
+  // not re-run just because the provider re-rendered mid-card, which a plain
+  // closure (or listing `playbackPriority` as a dep) would force. Only
+  // callable from inside an Effect — see the two call sites below.
+  const setPlaybackPriorityEvent = useEffectEvent((playbackOnly: boolean) =>
+    playbackPriority(playbackOnly),
+  );
+  const getVoiceEnabled = useEffectEvent(() => voiceEnabled);
 
   // Monotonic token for playAudio calls. play() returning false can mean the
   // call was superseded by a newer play (or a stop); the cache self-heal retry
@@ -665,14 +676,26 @@ export function useReview({
         // indistinguishable from a player that died on its own.
         recordPromptCut('reveal');
         const endMeaningPlay = diagSpan('meaning.play');
+        // Read through the ref, not the closure: `timeRefs.current` is live at
+        // whatever moment the handoff below actually resolves, while a plain
+        // `currentWordKey` captured here would just be this render's value —
+        // useless for detecting a card change that happens later.
+        const keyAtRequest = timeRefs.current.lastProcessedWordId;
         // AWAITED, not fired alongside the play: until the input stream is
         // actually closed the answer plays on the quiet .playAndRecord route.
         // Racing the two lost — the answer began while the microphone was still
         // open, which is exactly what it sounded like.
-        setPlaybackPriorityRef
-          .current(true)
+        playbackPriority(true)
           .catch(handleError)
-          .then(() => playAudio(englishAudioUrl))
+          .then(() => {
+            // The card moved on while the session handoff was in flight (a
+            // fast restudy "Continue", a swipe). Playing now would hijack
+            // simpleAudioService's play() from whichever card is current —
+            // it resolves purely by call order, with no notion of which card
+            // a call belongs to.
+            if (timeRefs.current.lastProcessedWordId !== keyAtRequest) return false;
+            return playAudio(englishAudioUrl);
+          })
           .then(started => endMeaningPlay({ started: started ?? false }))
           .catch(err => {
             endMeaningPlay({ started: false, error: true });
@@ -680,7 +703,7 @@ export function useReview({
           });
       }
     }
-  }, [currentWord, isComplete, playAudio]);
+  }, [currentWord, isComplete, playAudio, playbackPriority]);
 
   // Reveal the answer: flip the card, show the English meaning persistently and
   // play the English audio. Does NOT advance — the user self-grades next. Setting
@@ -804,14 +827,20 @@ export function useReview({
       const replayUrl = generateStorageUrl('audio', audioPath);
       if (replayUrl) {
         recordPromptCut('reveal');
-        setPlaybackPriorityRef
-          .current(true)
+        // See revealMeaningPassive: a tap on "Continue" landing while this
+        // handoff is still resolving must not let the replay hijack whatever
+        // the next card's own prompt is already playing.
+        const keyAtRequest = timeRefs.current.lastProcessedWordId;
+        playbackPriority(true)
           .catch(handleError)
-          .then(() => playAudio(replayUrl))
+          .then(() => {
+            if (timeRefs.current.lastProcessedWordId !== keyAtRequest) return false;
+            return playAudio(replayUrl);
+          })
           .catch(handleError);
       }
     },
-    [currentWord?.root?.meaning, currentWord?.root?.audio_url, playAudio],
+    [currentWord?.root?.meaning, currentWord?.root?.audio_url, playAudio, playbackPriority],
   );
 
   const grade = useCallback(
@@ -1007,7 +1036,7 @@ export function useReview({
       // promise and `arm()` joins it, so a tap that beats the hand-back waits
       // for THIS restore rather than starting a competing one. Awaiting it here
       // instead would only delay the gate that lets the learner tap at all.
-      void setPlaybackPriorityRef.current(false).catch(handleError);
+      void setPlaybackPriorityEvent(false).catch(handleError);
       if (promptWatchRef.current?.key === keyForRun) promptWatchRef.current = null;
       if (movedOn()) return;
       diagMark('prompt.done');
@@ -1036,8 +1065,7 @@ export function useReview({
     const playStartedAt = Date.now();
     const endPromptPlay = diagSpan('prompt.play');
     let playDetail: PlayAudioDetail = { cacheMissed: false, healed: false };
-    setPlaybackPriorityRef
-      .current(true)
+    setPlaybackPriorityEvent(true)
       .catch(handleError)
       .then(() =>
         playAudio(audioUrl, detail => {
@@ -1063,7 +1091,7 @@ export function useReview({
             rootId: rootIdForRun,
             expected: expectedForRun,
             playMs,
-            voiceEnabled: voiceEnabledRef.current,
+            voiceEnabled: getVoiceEnabled(),
             meta: { cacheMissed: playDetail.cacheMissed, healed: playDetail.healed },
           });
           markDone();
@@ -1143,13 +1171,18 @@ export function useReview({
       // Replaying the same word supersedes an in-flight prompt with itself:
       // the learner heard part of it, then asked for it again.
       recordPromptCut('replay');
-      setPlaybackPriorityRef
-        .current(true)
+      // See revealMeaningPassive: don't let a handoff that resolves late
+      // hijack whatever the (by-then-current) card is already playing.
+      const keyAtRequest = timeRefs.current.lastProcessedWordId;
+      playbackPriority(true)
         .catch(handleError)
-        .then(() => playAudio(audioUrl))
+        .then(() => {
+          if (timeRefs.current.lastProcessedWordId !== keyAtRequest) return false;
+          return playAudio(audioUrl);
+        })
         .catch(handleError);
     }
-  }, [currentWord, playAudio]);
+  }, [currentWord, playAudio, playbackPriority]);
 
   /**
    * Play an example sentence's audio. Explicitly user-initiated only — it is

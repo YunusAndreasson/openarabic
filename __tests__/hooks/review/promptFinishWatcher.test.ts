@@ -199,6 +199,31 @@ describe('watchPromptFinish', () => {
     expect(onFinish).toHaveBeenCalledTimes(1);
   });
 
+  test('cancelling during the grace window suppresses the stale onFinish', () => {
+    const onFinish = jest.fn();
+    const { source, emit } = createSource(OPTIMISTIC_PLAYING);
+
+    const cancel = watchPromptFinish(onFinish, () => false, source);
+    emit({
+      playing: false,
+      currentTime: 1.4,
+      duration: 1.4,
+      playbackState: 'ended',
+      didJustFinish: true,
+    });
+    // Settled on didJustFinish, but still inside the PROMPT_FINISH_GRACE_MS
+    // pad — onFinish has not fired yet.
+    expect(onFinish).not.toHaveBeenCalled();
+
+    // A new card supersedes this watcher while the grace timer is still
+    // ticking (e.g. a fast advance, or a replay tap landing right on the
+    // natural end of the clip).
+    cancel();
+
+    advance(PROMPT_FINISH_GRACE_MS + 100);
+    expect(onFinish).not.toHaveBeenCalled();
+  });
+
   test('a card that advanced mid-prompt finishes without the grace delay', () => {
     const onFinish = jest.fn();
     const { source, emit } = createSource(OPTIMISTIC_PLAYING);

@@ -187,6 +187,30 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
   const [capture] = useState(() => new VoiceCaptureSession());
 
   const armResolveRef = useRef<((outcome: VoiceArmOutcome) => void) | null>(null);
+  /**
+   * Claimed synchronously at the top of `arm()`, before its first `await`.
+   *
+   * The busy check further down (`armResolveRef.current !== null`) only
+   * becomes true once `arm()` reaches its `armResolveRef.current = resolve`
+   * assignment — which sits behind at least one `await` (`setPlaybackPriority`,
+   * sometimes `openCapture` too). Two `arm()` calls issued close together (a
+   * fast double-tap before the caller's own `disabled` state commits — see
+   * useVoiceReview's `phaseRef`, which lags the tap by one render) both read
+   * `armResolveRef.current === null` before either has set it, both pass the
+   * busy check, and both proceed. The second call's `capture.beginWindow()`
+   * then silently no-ops (the session is already open), but its `finish`
+   * closure overwrites `armResolveRef.current` — so when the FIRST window
+   * later ends, its own `finish` reads a stale `resolve` reference, bails via
+   * the `armResolveRef.current !== resolve` guard, and never calls
+   * `capture.endWindow()`. The stream is left open with nothing to close it,
+   * `armResolveRef.current` points at a `resolve` nothing will ever call, and
+   * every arm() for the rest of the session fails the busy check — a mic
+   * that's dead until the app restarts. Claiming here, before any await, is
+   * atomic (JS is single-threaded — a second `arm()` invocation can't run
+   * until this synchronous prefix, including the claim, has completed) and
+   * closes the gap the later check can't.
+   */
+  const armClaimRef = useRef(false);
   const windowSeqRef = useRef(0);
   const micLevel = useSharedValue(0);
   const levelPeakRef = useRef(MIN_LEVEL_REFERENCE);
@@ -483,186 +507,203 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
 
   const arm = useCallback(
     async function arm(handlers?: { onCapturing?: () => void }): Promise<VoiceArmOutcome> {
-      markArmEntered();
-      // Whoever borrowed the session for playback may not have given it back —
-      // the English answer claims it and has no finish event to hand it over
-      // on. The microphone reclaims it here rather than trusting that, so a tap
-      // can never land on a session that is still in .playback.
-      await setPlaybackPriority(false);
-      if (!isReady) {
-        diagMark('mic.arm.reject', { reason: 'not-ready' });
-        return { ok: false, reason: 'not-ready' };
-      }
-      if (capture.isCapturing || armResolveRef.current !== null) {
+      // Synchronous — before any await — so a second call arriving before
+      // this one reaches `armResolveRef.current = resolve` still sees the
+      // claim and bails, instead of racing it. See armClaimRef's own comment.
+      if (armClaimRef.current) {
         diagMark('mic.arm.reject', { reason: 'busy' });
         return { ok: false, reason: 'busy' };
       }
-
-      // Normally already open — acquireSession did it when the screen mounted.
-      // This covers a first card that beat the open, and any reopen still in
-      // flight after an interruption.
-      // `capture.isOpen` is a live getter that an await can flip, but the
-      // compiler narrows it on the first test and then reads every later one as
-      // dead code. Going through a call keeps each check honest.
-      const streamIsOpen = (): boolean => capture.isOpen;
-
-      markStreamState(streamIsOpen());
-      if (!streamIsOpen()) {
-        const endOpen = diagSpan('mic.awaitOpen');
-        const openStartedAt = Date.now();
-        await openCapture();
-        if (!streamIsOpen()) {
-          // The stream cannot open, and the most likely reason is that the
-          // audio session is no longer record-capable — a teardown turned it
-          // off. Turning it back on and forcing a fresh open is the difference
-          // between one bad card and a microphone that stays dead until the app
-          // is restarted, which is exactly how this failure was reported.
-          diagMark('mic.arm.recover');
-          await simpleAudioService.setRecordingSessionEnabled(true);
-          await openCapture(true);
+      armClaimRef.current = true;
+      try {
+        markArmEntered();
+        // Whoever borrowed the session for playback may not have given it back —
+        // the English answer claims it and has no finish event to hand it over
+        // on. The microphone reclaims it here rather than trusting that, so a tap
+        // can never land on a session that is still in .playback.
+        await setPlaybackPriority(false);
+        if (!isReady) {
+          diagMark('mic.arm.reject', { reason: 'not-ready' });
+          return { ok: false, reason: 'not-ready' };
         }
-        markAwaitOpen(Date.now() - openStartedAt);
-        endOpen({ opened: streamIsOpen() });
+        if (capture.isCapturing || armResolveRef.current !== null) {
+          diagMark('mic.arm.reject', { reason: 'busy' });
+          return { ok: false, reason: 'busy' };
+        }
+
+        // Normally already open — acquireSession did it when the screen mounted.
+        // This covers a first card that beat the open, and any reopen still in
+        // flight after an interruption.
+        // `capture.isOpen` is a live getter that an await can flip, but the
+        // compiler narrows it on the first test and then reads every later one as
+        // dead code. Going through a call keeps each check honest.
+        const streamIsOpen = (): boolean => capture.isOpen;
+
+        markStreamState(streamIsOpen());
         if (!streamIsOpen()) {
-          // A denied permission is not the transient hiccup the other reasons
-          // are — retrying it can never succeed. Reporting it as 'permission'
-          // (not the generic 'error') routes it to useVoiceReview's dedicated
-          // handling: it stops the retry ladder immediately, tells the learner
-          // why, and turns voice off, instead of quietly burning through
-          // MAX_ARM_RETRIES on a mic that will never open and then giving up
-          // in silence — indistinguishable from the tap never having landed.
-          if (lastOpenWasPermissionDeniedRef.current) {
-            diagMark('mic.arm.reject', { reason: 'permission' });
+          const endOpen = diagSpan('mic.awaitOpen');
+          const openStartedAt = Date.now();
+          await openCapture();
+          if (!streamIsOpen()) {
+            // The stream cannot open, and the most likely reason is that the
+            // audio session is no longer record-capable — a teardown turned it
+            // off. Turning it back on and forcing a fresh open is the difference
+            // between one bad card and a microphone that stays dead until the app
+            // is restarted, which is exactly how this failure was reported.
+            diagMark('mic.arm.recover');
+            await simpleAudioService.setRecordingSessionEnabled(true);
+            await openCapture(true);
+          }
+          markAwaitOpen(Date.now() - openStartedAt);
+          endOpen({ opened: streamIsOpen() });
+          if (!streamIsOpen()) {
+            // A denied permission is not the transient hiccup the other reasons
+            // are — retrying it can never succeed. Reporting it as 'permission'
+            // (not the generic 'error') routes it to useVoiceReview's dedicated
+            // handling: it stops the retry ladder immediately, tells the learner
+            // why, and turns voice off, instead of quietly burning through
+            // MAX_ARM_RETRIES on a mic that will never open and then giving up
+            // in silence — indistinguishable from the tap never having landed.
+            if (lastOpenWasPermissionDeniedRef.current) {
+              diagMark('mic.arm.reject', { reason: 'permission' });
+              return {
+                ok: false,
+                reason: 'permission',
+                message: lastOpenErrorRef.current ?? undefined,
+              };
+            }
+            diagMark('mic.arm.reject', { reason: 'stream-closed' });
             return {
               ok: false,
-              reason: 'permission',
-              message: lastOpenErrorRef.current ?? undefined,
+              reason: 'error',
+              // Carry the reason `capture.open()` actually gave. Without it every
+              // one of these looks identical in telemetry and says only that the
+              // stream is not open, which is the symptom we already knew.
+              message: lastOpenErrorRef.current
+                ? `input stream unavailable: ${lastOpenErrorRef.current}`
+                : 'input stream unavailable',
             };
           }
-          diagMark('mic.arm.reject', { reason: 'stream-closed' });
-          return {
-            ok: false,
-            reason: 'error',
-            // Carry the reason `capture.open()` actually gave. Without it every
-            // one of these looks identical in telemetry and says only that the
-            // stream is not open, which is the symptom we already knew.
-            message: lastOpenErrorRef.current
-              ? `input stream unavailable: ${lastOpenErrorRef.current}`
-              : 'input stream unavailable',
-          };
         }
-      }
 
-      windowSeqRef.current += 1;
-      const windowId = windowSeqRef.current;
-      levelPeakRef.current = MIN_LEVEL_REFERENCE;
-      diagMark('mic.arm.request', { windowId });
+        windowSeqRef.current += 1;
+        const windowId = windowSeqRef.current;
+        levelPeakRef.current = MIN_LEVEL_REFERENCE;
+        diagMark('mic.arm.request', { windowId });
 
-      return new Promise<VoiceArmOutcome>(resolve => {
-        armResolveRef.current = resolve;
+        return new Promise<VoiceArmOutcome>(resolve => {
+          armResolveRef.current = resolve;
 
-        const finish = (): void => {
-          if (armResolveRef.current !== resolve) return; // already resolved
-          if (windowId !== windowSeqRef.current) return; // stale callback
-          armResolveRef.current = null;
-          finishRef.current = null;
-          micLevel.set(0);
+          const finish = (): void => {
+            if (armResolveRef.current !== resolve) return; // already resolved
+            if (windowId !== windowSeqRef.current) return; // stale callback
+            armResolveRef.current = null;
+            finishRef.current = null;
+            micLevel.set(0);
 
-          // Synchronous: no stream teardown, no audio-session restore. The
-          // caller starts transcribing on this frame — that hand-off used to
-          // wait on both.
-          const result = capture.endWindow();
-          diagMark('mic.stopped', {
-            windowId,
-            durationMs: result.durationMs,
-            stopReason: result.stopReason,
-            bufferCount: result.bufferCount,
-            firstBufferMs: result.firstBufferMs,
-            heardSpeech: result.heardSpeech,
-            peakRms: Number(result.peakRms.toFixed(5)),
-            samples: result.waveform.length,
-          });
-          Sentry.addBreadcrumb({
-            category: 'voice',
-            level: 'info',
-            message: 'voice.recorder.stopped',
-            data: {
+            // Synchronous: no stream teardown, no audio-session restore. The
+            // caller starts transcribing on this frame — that hand-off used to
+            // wait on both.
+            const result = capture.endWindow();
+            diagMark('mic.stopped', {
               windowId,
               durationMs: result.durationMs,
+              stopReason: result.stopReason,
               bufferCount: result.bufferCount,
-              stopReason: result.stopReason,
-              heardSpeech: result.heardSpeech,
-              peakRms: result.peakRms,
               firstBufferMs: result.firstBufferMs,
-            },
-          });
-          if (result.bufferCount === 0) {
-            void analytics.track(ANALYTICS_EVENTS.VOICE_MODEL_FAILED, {
-              stage: 'recorder-no-buffers',
-              durationMs: result.durationMs,
-              stopReason: result.stopReason,
+              heardSpeech: result.heardSpeech,
+              peakRms: Number(result.peakRms.toFixed(5)),
+              samples: result.waveform.length,
             });
-            // The stream is present but deaf. Reopening now means the retry
-            // lands on a live microphone rather than the same dead one.
-            void openCapture(true);
-            resolve({ ok: false, reason: 'error', message: 'no audio from microphone' });
-            return;
-          }
-          resolve({ ok: true, result });
-        };
-
-        finishRef.current = finish;
-
-        try {
-          markBeginWindow();
-          capture.beginWindow(
-            {
-              onAutoStop: finish,
-              onCapturing: () => {
-                // Stale guard: a window from a superseded arm() must not flip
-                // the current card's UI to "listening".
-                if (windowId === windowSeqRef.current) handlers?.onCapturing?.();
+            Sentry.addBreadcrumb({
+              category: 'voice',
+              level: 'info',
+              message: 'voice.recorder.stopped',
+              data: {
+                windowId,
+                durationMs: result.durationMs,
+                bufferCount: result.bufferCount,
+                stopReason: result.stopReason,
+                heardSpeech: result.heardSpeech,
+                peakRms: result.peakRms,
+                firstBufferMs: result.firstBufferMs,
               },
-              onLevel: rms => {
-                if (windowId !== windowSeqRef.current) return;
-                const reference = Math.max(
-                  rms,
-                  levelPeakRef.current * LEVEL_PEAK_DECAY,
-                  MIN_LEVEL_REFERENCE,
-                );
-                levelPeakRef.current = reference;
-                // sqrt: RMS is a power measure, so a linear bar leaves ordinary
-                // speech hugging the bottom of the meter.
-                micLevel.set(Math.min(1, Math.sqrt(rms / reference)));
+            });
+            if (result.bufferCount === 0) {
+              void analytics.track(ANALYTICS_EVENTS.VOICE_MODEL_FAILED, {
+                stage: 'recorder-no-buffers',
+                durationMs: result.durationMs,
+                stopReason: result.stopReason,
+              });
+              // The stream is present but deaf. Reopening now means the retry
+              // lands on a live microphone rather than the same dead one.
+              void openCapture(true);
+              resolve({ ok: false, reason: 'error', message: 'no audio from microphone' });
+              return;
+            }
+            resolve({ ok: true, result });
+          };
+
+          finishRef.current = finish;
+
+          try {
+            markBeginWindow();
+            capture.beginWindow(
+              {
+                onAutoStop: finish,
+                onCapturing: () => {
+                  // Stale guard: a window from a superseded arm() must not flip
+                  // the current card's UI to "listening".
+                  if (windowId === windowSeqRef.current) handlers?.onCapturing?.();
+                },
+                onLevel: rms => {
+                  if (windowId !== windowSeqRef.current) return;
+                  const reference = Math.max(
+                    rms,
+                    levelPeakRef.current * LEVEL_PEAK_DECAY,
+                    MIN_LEVEL_REFERENCE,
+                  );
+                  levelPeakRef.current = reference;
+                  // sqrt: RMS is a power measure, so a linear bar leaves ordinary
+                  // speech hugging the bottom of the meter.
+                  micLevel.set(Math.min(1, Math.sqrt(rms / reference)));
+                },
               },
-            },
-            recordingConfigRef.current,
-          );
-          Sentry.addBreadcrumb({
-            category: 'voice',
-            level: 'info',
-            message: 'voice.recorder.arm',
-            data: { windowId },
-          });
-        } catch (err) {
-          armResolveRef.current = null;
-          finishRef.current = null;
-          micLevel.set(0);
-          const message = err instanceof Error ? err.message : String(err);
-          diagMark('mic.window.failed', { message });
-          Sentry.addBreadcrumb({
-            category: 'voice',
-            level: 'warning',
-            message: 'voice.recorder.start.failed',
-            data: { windowId, error: message },
-          });
-          if (err instanceof MicPermissionDeniedError) {
-            resolve({ ok: false, reason: 'permission' });
-          } else {
-            resolve({ ok: false, reason: 'error', message });
+              recordingConfigRef.current,
+            );
+            Sentry.addBreadcrumb({
+              category: 'voice',
+              level: 'info',
+              message: 'voice.recorder.arm',
+              data: { windowId },
+            });
+          } catch (err) {
+            armResolveRef.current = null;
+            finishRef.current = null;
+            micLevel.set(0);
+            const message = err instanceof Error ? err.message : String(err);
+            diagMark('mic.window.failed', { message });
+            Sentry.addBreadcrumb({
+              category: 'voice',
+              level: 'warning',
+              message: 'voice.recorder.start.failed',
+              data: { windowId, error: message },
+            });
+            if (err instanceof MicPermissionDeniedError) {
+              resolve({ ok: false, reason: 'permission' });
+            } else {
+              resolve({ ok: false, reason: 'error', message });
+            }
           }
-        }
-      });
+        });
+      } finally {
+        // Released the instant a window is actually claimed too — from then
+        // on `armResolveRef.current !== null` is the authoritative busy
+        // signal for the window's own lifetime, so this is a no-op by the
+        // time the Promise above is returned. Matters for the early-return
+        // paths and for an unexpected throw from either await.
+        armClaimRef.current = false;
+      }
     },
     [capture, isReady, micLevel, openCapture, setPlaybackPriority],
   );
