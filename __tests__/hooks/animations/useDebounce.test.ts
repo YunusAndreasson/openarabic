@@ -220,6 +220,26 @@ describe('useDebounce', () => {
     expect(callback).toHaveBeenCalledTimes(1);
   });
 
+  test('clears the pending reset timer on unmount', () => {
+    const callback = jest.fn();
+    const { result, unmount } = renderHook(() => useDebounce(callback, 300));
+
+    act(() => {
+      const [debouncedCallback] = result.current;
+      debouncedCallback();
+    });
+    expect(callback).toHaveBeenCalledTimes(1);
+    // The reset timer is scheduled but hasn't fired yet.
+    expect(jest.getTimerCount()).toBe(1);
+
+    unmount();
+
+    // Checked BEFORE the delay elapses: a fired timer removes itself from
+    // the count regardless of whether clearTimeout ran, so this only proves
+    // the fix if it's read while the timer would otherwise still be pending.
+    expect(jest.getTimerCount()).toBe(0);
+  });
+
   test('should work with default delay (300ms) when not specified', () => {
     const callback = jest.fn();
     const { result } = renderHook(() => useDebounce(callback));

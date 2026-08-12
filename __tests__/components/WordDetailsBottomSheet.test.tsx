@@ -218,15 +218,28 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       const removeButton = getByText('In practice');
       fireEvent.press(removeButton);
 
-      // 🐛 BUG: Optimistic state may desync here
-      // Expected: Button shows "Add to practice"
-      // Actual (with bug): Button may still show "In practice"
+      await waitFor(() => {
+        expect(callCount).toBe(2);
+      });
+
+      // The real parent updates `isInStudyList` once its query settles after
+      // the mutation — `useOptimistic` reverts to whatever base prop it was
+      // last given, so without this the assertion below depends on catching
+      // a transient optimistic value before the revert, which is exactly the
+      // desync this describe block is named for.
+      rerender(
+        <WordDetailsBottomSheet
+          isVisible={true}
+          onClose={mockOnClose}
+          word={mockWord}
+          onAddToStudy={mockOnAddToStudy}
+          isInStudyList={false}
+        />,
+      );
 
       await waitFor(() => {
         expect(getByText('Add to practice')).toBeTruthy();
       });
-
-      expect(callCount).toBe(2);
     });
 
     test('should rollback optimistic update on error', async () => {
@@ -287,6 +300,50 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       });
 
       expect(mockOnAddToStudy).toHaveBeenCalledWith(mockWord, 'add');
+    });
+  });
+
+  describe('Rapid double-tap on remove', () => {
+    test('a second tap while the mutation is still pending is a no-op, not a re-add', async () => {
+      let resolveMutation: ((value: boolean) => void) | undefined;
+      mockOnAddToStudy.mockImplementation(
+        () =>
+          new Promise<boolean>(resolve => {
+            resolveMutation = resolve;
+          }),
+      );
+
+      const { getByText } = render(
+        <WordDetailsBottomSheet
+          isVisible={true}
+          onClose={mockOnClose}
+          word={mockWord}
+          onAddToStudy={mockOnAddToStudy}
+          isInStudyList={true}
+        />,
+      );
+
+      // First tap starts the remove — sheet stays open (see "stays open on
+      // removal" above), so a fast second tap physically CAN land here.
+      fireEvent.press(getByText('In practice'));
+
+      await waitFor(() => {
+        expect(mockOnAddToStudy).toHaveBeenCalledTimes(1);
+      });
+
+      // Second tap lands on the still-open, still-pending button. Without a
+      // guard, `optimisticIsInStudyList` has already flipped to `false`, so
+      // this would compute newValue=true and re-add the word the user just
+      // asked to remove — a duplicate mutation that also inverts intent.
+      fireEvent.press(getByText('Loading…'));
+
+      resolveMutation?.(true);
+      await waitFor(() => {
+        expect(mockOnAddToStudy).toHaveBeenCalledTimes(1);
+      });
+
+      expect(mockOnAddToStudy).toHaveBeenCalledWith(mockWord, 'remove');
+      expect(mockOnAddToStudy).not.toHaveBeenCalledWith(mockWord, 'add');
     });
   });
 

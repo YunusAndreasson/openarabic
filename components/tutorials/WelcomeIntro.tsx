@@ -64,12 +64,21 @@ export function WelcomeIntro({ visible, onDismiss, onOpenFirstText }: WelcomeInt
   const isLastStep = currentStep === INTRO_STEPS.length - 1;
   const step = INTRO_STEPS[currentStep] ?? INTRO_STEPS[0];
 
+  // Guards the last-step completion below: `onDismiss()` flips the `visible`
+  // prop through the parent, which only lands on a LATER render — a double
+  // tap on the final CTA before that commit fires the completion block twice,
+  // pushing the starter article route onto the stack a second time. State,
+  // not a ref: a ref write here would run during render (same block as the
+  // `currentStep` reset below), which React Compiler rejects.
+  const [completed, setCompleted] = useState(false);
+
   // Reset to first step on hidden→visible (store-previous-prop pattern)
   const [prevVisible, setPrevVisible] = useState(visible);
   if (visible !== prevVisible) {
     setPrevVisible(visible);
     if (visible) {
       setCurrentStep(0);
+      setCompleted(false);
     }
   }
 
@@ -96,6 +105,8 @@ export function WelcomeIntro({ visible, onDismiss, onOpenFirstText }: WelcomeInt
 
   const handleNext = useCallback(() => {
     if (isLastStep) {
+      if (completed) return;
+      setCompleted(true);
       lightFeedback();
       analytics.track(ANALYTICS_EVENTS.ONBOARDING_INTRO_COMPLETED, { cta: 'open_first_text' });
       metaEvents.logTutorialComplete();
@@ -104,7 +115,7 @@ export function WelcomeIntro({ visible, onDismiss, onOpenFirstText }: WelcomeInt
     } else {
       setCurrentStep(prev => prev + 1);
     }
-  }, [isLastStep, onDismiss, onOpenFirstText]);
+  }, [isLastStep, completed, onDismiss, onOpenFirstText]);
 
   if (!step) return null;
 

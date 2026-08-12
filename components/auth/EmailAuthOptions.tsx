@@ -29,6 +29,7 @@ export function EmailAuthOptions(): JSX.Element {
         testID="navigate-to-sign-in-button"
         accessibilityLabel="Go to sign in screen"
         onPress={handleSignIn}
+        enableOptimisticLoading
       />
 
       <ThemedButton
@@ -39,6 +40,7 @@ export function EmailAuthOptions(): JSX.Element {
         testID="navigate-to-sign-up-button"
         accessibilityLabel="Go to create account screen"
         onPress={handleSignUp}
+        enableOptimisticLoading
       />
     </View>
   );

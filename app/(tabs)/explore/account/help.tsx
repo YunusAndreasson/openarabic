@@ -284,6 +284,7 @@ const HelpScreen: FC = () => {
                 <ThemedButton
                   title={STRINGS.CONTACT_SUPPORT}
                   onPress={handleContactSupport}
+                  enableOptimisticLoading
                   style={styles.helpFooterButton}
                 />
               </View>

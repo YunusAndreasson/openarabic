@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 /**
  * Custom hook for debouncing function calls to prevent rapid successive executions
@@ -13,6 +13,16 @@ export function useDebounce<T extends (...args: any[]) => any>(
 ): [T, boolean] {
   const [isDebouncing, setIsDebouncing] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Every other timeout ref in this codebase clears itself on unmount
+  // (CloseButton, useSleepTimer, useShouldShowMiniPlayer); this one didn't —
+  // a component that unmounts mid-debounce left its reset timer running,
+  // firing setIsDebouncing(false) into an unmounted hook instance.
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   const debouncedCallback = ((...args: Parameters<T>) => {
     // Block if currently debouncing

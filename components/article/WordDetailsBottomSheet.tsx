@@ -1,7 +1,7 @@
 import { BottomSheetErrorBoundary, ColorCodedText } from '@/components/common';
 import { BrandedBottomSheetHandle } from '@/components/ui';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
-import { startTransition, useCallback, useEffect, useOptimistic } from 'react';
+import { startTransition, useCallback, useEffect, useOptimistic, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -85,9 +85,19 @@ export function WordDetailsBottomSheet({
     await playWordAudio(word);
   }, [word, playWordAudio]);
 
+  // Own in-flight flag for THIS mutation — `isStudyStateLoading` is the study-
+  // words query's loading state, not this button's own toggle, so it doesn't
+  // cover the gap while `onAddToStudy` is in flight. That gap matters most on
+  // the remove path: unlike add (which closes the sheet immediately), remove
+  // leaves the button up and tappable, and by the time a fast second tap
+  // lands, `optimisticIsInStudyList` has usually already flipped — so the
+  // second tap doesn't just re-fire the same mutation, it computes the
+  // OPPOSITE `newValue` and re-adds the word the user just removed.
+  const [isToggling, setIsToggling] = useState(false);
+
   // Handle add to study with optimistic update for instant feedback
   const handleAddToStudy = () => {
-    if (!word || isStudyStateLoading) return;
+    if (!word || isStudyStateLoading || isToggling) return;
 
     const newValue = !optimisticIsInStudyList;
     selectionFeedback();
@@ -101,6 +111,8 @@ export function WordDetailsBottomSheet({
     // there so the user can immediately re-add if they tapped by mistake.
     if (newValue) {
       onClose();
+    } else {
+      setIsToggling(true);
     }
 
     startTransition(async () => {
@@ -111,6 +123,8 @@ export function WordDetailsBottomSheet({
         await onAddToStudy(word, newValue ? 'add' : 'remove');
       } catch (error) {
         handleError(error, { toastMessage: 'Failed to update study list' });
+      } finally {
+        if (!newValue) setIsToggling(false);
       }
     });
   };
@@ -178,7 +192,7 @@ export function WordDetailsBottomSheet({
                   />
                   <ThemedButton
                     title={
-                      isStudyStateLoading
+                      isStudyStateLoading || isToggling
                         ? STRINGS.LOADING_GENERIC
                         : optimisticIsInStudyList
                           ? STRINGS.REMOVE_FROM_PRACTICE
@@ -186,7 +200,7 @@ export function WordDetailsBottomSheet({
                     }
                     variant={optimisticIsInStudyList ? 'outlined' : 'filled'}
                     onPress={handleAddToStudy}
-                    disabled={isStudyStateLoading}
+                    disabled={isStudyStateLoading || isToggling}
                     style={styles.actionButton}
                   />
                 </View>
