@@ -198,16 +198,18 @@ const HelpScreen: FC = () => {
           />
           {searchQuery.length > 0 && (
             <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={STRINGS.HELP_SEARCH_CLEAR}
               onPress={handleClearSearch}
               style={styles.clearButton}
-              hitSlop={LAYOUT.SPACING.SMALL}
+              hitSlop={LAYOUT.HIT_SLOP.SMALL}
             >
               {({ pressed }) => (
                 <Ionicons
                   name="close-circle"
                   size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                   color={colors.textTertiary}
-                  style={{ opacity: pressed ? 0.6 : 1 }}
+                  style={{ opacity: pressed ? LAYOUT.OPACITY.PRESSED : LAYOUT.OPACITY.FULL }}
                 />
               )}
             </Pressable>
@@ -284,8 +286,7 @@ const HelpScreen: FC = () => {
                 <ThemedButton
                   title={STRINGS.CONTACT_SUPPORT}
                   onPress={handleContactSupport}
-                  enableOptimisticLoading
-                  style={styles.helpFooterButton}
+                  fullWidth
                 />
               </View>
             </BaseCard>
@@ -385,10 +386,6 @@ const styles = StyleSheet.create({
   },
   helpFooterDescription: {
     textAlign: 'center',
-  },
-  helpFooterButton: {
-    marginTop: LAYOUT.SPACING.SMALL,
-    width: '100%',
   },
 });
 

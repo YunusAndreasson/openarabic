@@ -29,18 +29,15 @@ export function EmailAuthOptions(): JSX.Element {
         testID="navigate-to-sign-in-button"
         accessibilityLabel="Go to sign in screen"
         onPress={handleSignIn}
-        enableOptimisticLoading
       />
 
       <ThemedButton
         variant="outlined"
         title={STRINGS.CREATE_ACCOUNT_WITH_EMAIL}
         icon="mail-outline"
-        style={styles.createAccountButton}
         testID="navigate-to-sign-up-button"
         accessibilityLabel="Go to create account screen"
         onPress={handleSignUp}
-        enableOptimisticLoading
       />
     </View>
   );
@@ -48,9 +45,7 @@ export function EmailAuthOptions(): JSX.Element {
 
 const styles = StyleSheet.create({
   container: {
+    gap: LAYOUT.SPACING.MEDIUM,
     width: '100%',
-  },
-  createAccountButton: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
   },
 });

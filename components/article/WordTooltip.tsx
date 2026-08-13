@@ -10,7 +10,9 @@ import {
   MIN_TOUCH_TARGET,
   SCREEN_WIDTH,
 } from '@/constants/layout';
+import { PRESS_ANIMATION_BUTTON } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
+import { useButtonPress } from '@/hooks/ui/useButtonPress';
 import { useArabicWordAnalysis } from '@/hooks/vocabulary';
 import type { WordTooltipProps } from '@/types/ui/modal.types';
 import { generateColorCodedSegments } from '@/utils/colorCodedTextUtils';
@@ -20,6 +22,8 @@ import {
   type TooltipLayout,
 } from '@/utils/positioningUtils';
 import { cleanWordText } from '@/utils/stringUtils';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 // Module-level constants - zero per-render allocations
 // Quick fade-in — short enough that the transparency flash is imperceptible
@@ -112,6 +116,15 @@ export function WordTooltip({
     });
   }, []);
 
+  // Press feedback used to be a hardcoded `scale: pressed ? 0.96 : 1` in the
+  // style callback — the same number as PRESS_SCALE.BUTTON, but snapping
+  // instead of springing. The shared engine gives it the app's real press.
+  const { handlePress, animatedStyle, handlePressIn, handlePressOut } = useButtonPress({
+    onPress: onOpenWordDetails,
+    disabled: !onOpenWordDetails,
+    animationOptions: PRESS_ANIMATION_BUTTON,
+  });
+
   // Clean text by removing punctuation for display
   const cleanedText = cleanWordText(text);
   const cleanedArabicWord = cleanWordText(arabicWord || '');
@@ -191,14 +204,13 @@ export function WordTooltip({
       pointerEvents="box-none"
     >
       <Animated.View entering={ENTER_ANIMATION} style={dynamicStyles.tooltip} testID="word-tooltip">
-        <Pressable
-          onPress={onOpenWordDetails}
+        <AnimatedPressable
+          onPress={handlePress}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
           disabled={!onOpenWordDetails}
           hitSlop={LAYOUT.HIT_SLOP.SMALL}
-          style={({ pressed }) => [
-            STATIC_STYLES.contentContainer,
-            { transform: [{ scale: pressed ? 0.96 : 1 }] },
-          ]}
+          style={[STATIC_STYLES.contentContainer, animatedStyle]}
         >
           <View style={STATIC_STYLES.textContainer}>
             <ThemedText skipDefaultColor style={STATIC_STYLES.singleLineText}>
@@ -213,7 +225,7 @@ export function WordTooltip({
               ))}
             </ThemedText>
           </View>
-        </Pressable>
+        </AnimatedPressable>
         <View style={dynamicStyles.arrow} />
       </Animated.View>
     </View>

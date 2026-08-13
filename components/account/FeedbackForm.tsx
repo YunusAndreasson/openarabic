@@ -211,7 +211,6 @@ export const FeedbackForm = memo(() => {
                 title={STRINGS.FEEDBACK_SCREENSHOT_LABEL}
                 variant="outlined"
                 onPress={handleAddScreenshot}
-                enableOptimisticLoading
               />
             )}
 

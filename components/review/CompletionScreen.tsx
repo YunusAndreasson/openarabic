@@ -227,19 +227,14 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
             marking; a Light tap on top of it two seconds later is a second,
             weaker claim about the same thing. */}
         {onContinue ? (
-          <ThemedButton
-            title={buttonText}
-            hapticType="selection"
-            onPress={onContinue}
-            style={styles.button}
-          />
+          <ThemedButton title={buttonText} hapticType="selection" onPress={onContinue} fullWidth />
         ) : fromRemember ? (
           <Link href={ROUTE_PATHS.PRACTICE_TAB} dismissTo={true} asChild>
-            <ThemedButton title={buttonText} hapticType="selection" style={styles.button} />
+            <ThemedButton fullWidth title={buttonText} hapticType="selection" />
           </Link>
         ) : (
           <Link href=".." replace asChild>
-            <ThemedButton title={buttonText} hapticType="selection" style={styles.button} />
+            <ThemedButton fullWidth title={buttonText} hapticType="selection" />
           </Link>
         )}
       </Animated.View>
@@ -354,9 +349,5 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingBottom: LAYOUT.SPACING.LARGE, // Extra padding at bottom
     gap: LAYOUT.SPACING.SMALL, // Between "Review N more" and Continue
-  },
-
-  button: {
-    alignSelf: 'stretch',
   },
 });

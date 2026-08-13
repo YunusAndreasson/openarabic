@@ -61,7 +61,12 @@ const sageOKLCH = {
  * Chroma is raised slightly so interactive elements remain distinct from surfaces.
  */
 const tintOKLCH = {
-  primary: { l: 0.5624, c: 0.0622, h: 156.2 }, // Vibrant sage for light mode
+  // Lightness is pinned by contrast, not by taste. At the previous 0.5624 this
+  // resolved to #568066, which put a filled button's white label at 4.46:1 and
+  // an outlined/ghost label on the page at 4.15:1 — both under the 4.5:1 WCAG
+  // AA floor for normal text. 0.54 lands them at 4.86 and 4.51. Anything
+  // lighter fails again, so raise this only with the numbers rechecked.
+  primary: { l: 0.54, c: 0.0622, h: 156.2 }, // Vibrant sage for light mode
   primaryDark: { l: 0.7323, c: 0.085, h: 151.5 }, // Higher chroma so CTAs pop on deep dark surfaces
 } as const;
 

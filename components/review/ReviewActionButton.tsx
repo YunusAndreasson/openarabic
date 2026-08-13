@@ -4,31 +4,7 @@ import { Pressable, StyleSheet } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import { mixColors, withAlpha } from '@/utils/colorUtils';
-
-/**
- * How an outcome hue is turned into a chip.
- *
- * The fill is *mixed into* the elevation surface rather than laid over the page
- * as a translucent wash. An alpha fill composites against whatever is behind
- * the button, which on this screen is `colors.background` — near-black in dark
- * mode — so a hue at 15% resolved to near-black whatever the hue was: "Guessed"
- * came out an olive-brown, "Knew it" a barely-green charcoal. Three outcomes,
- * three sludges. Mixing into `elevation2` keeps each hue recognisably itself in
- * dark mode and lifts the chip off the page as a surface.
- *
- * The border stays alpha on purpose: it composites over the chip's own opaque
- * fill, so it reads as a stronger edge of the same hue rather than washing out.
- * It is what actually carries the colour at rest.
- */
-const GRADE_SURFACE = {
-  /** Hue mixed into the elevation surface for the resting fill. */
-  FILL: 0.22,
-  /** Same mix, deeper, so a press reads without changing the chip's shape. */
-  FILL_PRESSED: 0.35,
-  /** Hue over the resting fill. Above LAYOUT.OPACITY.LIGHT — see above. */
-  BORDER: 0.35,
-} as const;
+import { tonalSurface } from '@/utils/colorUtils';
 
 const STATIC_STYLES = StyleSheet.create({
   button: {
@@ -42,17 +18,15 @@ const STATIC_STYLES = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.SMALL,
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
   },
-  // The app's standalone-CTA shape (see PinnedActionButton) — a `primary`
-  // button takes this only when it has no peer. Two buttons sharing a row
-  // must share a corner radius too: a pill next to a rounded rect reads as
-  // two unrelated controls, not as one control's louder and quieter states.
-  // The fill (solid tint vs. tinted chip) is what carries the hierarchy;
-  // shape stays constant across the row.
+  // The app's standalone-CTA shape — the same one `ThemedButton`'s
+  // `shape="pill"` paints, spelled locally because this button's base style is
+  // its own. A `primary` button takes it only when it has no peer: two buttons
+  // sharing a row must share a corner radius too, or a pill next to a rounded
+  // rect reads as two unrelated controls rather than one control's louder and
+  // quieter states. The fill is what carries the hierarchy; shape stays
+  // constant across the row.
   capsule: {
     borderRadius: LAYOUT.BORDER_RADIUS.PILL,
-  },
-  label: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
   },
   // Tabular figures keep a centered "10m"/"4d" from jittering between cards.
   // No opacity: the interval is already a tier below the label by size and
@@ -144,21 +118,22 @@ export const ReviewActionButton: FC<ReviewActionButtonProps> = ({
   const isPrimary = variant === 'primary';
   const isCapsule = isPrimary && standalone;
 
+  // A tinted chip is the shared tonal surface — the same fill/border weights
+  // `ThemedButton variant="tonal"` paints, just with a caller-supplied hue
+  // instead of the theme tint. This file used to carry its own byte-identical
+  // copy of those weights.
+  const tinted = tonalSurface(colors.elevation2, color);
+  const tintedPressed = tonalSurface(colors.elevation2, color, true);
+
   // Filled variant mirrors ThemedButton's `filled` tokens so the review screen's
   // CTA is the same button the rest of the app uses, not a lookalike.
   const restBg = isPrimary
     ? disabled
       ? colors.disabledButtonBg
       : colors.tint
-    : mixColors(colors.elevation2, color, GRADE_SURFACE.FILL);
-  const pressedBg = isPrimary
-    ? colors.tint
-    : mixColors(colors.elevation2, color, GRADE_SURFACE.FILL_PRESSED);
-  const borderColor = isPrimary
-    ? disabled
-      ? colors.cardBorder
-      : colors.tint
-    : withAlpha(color, GRADE_SURFACE.BORDER);
+    : tinted.backgroundColor;
+  const pressedBg = isPrimary ? colors.tint : tintedPressed.backgroundColor;
+  const borderColor = isPrimary ? (disabled ? colors.cardBorder : colors.tint) : tinted.borderColor;
   const labelColor = isPrimary ? (disabled ? colors.disabled : colors.onTint) : color;
 
   return (
@@ -186,12 +161,7 @@ export const ReviewActionButton: FC<ReviewActionButtonProps> = ({
         isPrimary && pressed && { opacity: LAYOUT.OPACITY.PRESSED },
       ]}
     >
-      <ThemedText
-        skipDefaultColor
-        weight="semibold"
-        numberOfLines={1}
-        style={[STATIC_STYLES.label, { color: labelColor }]}
-      >
+      <ThemedText skipDefaultColor type="bodyBold" numberOfLines={1} style={{ color: labelColor }}>
         {label}
       </ThemedText>
       {sublabel ? (

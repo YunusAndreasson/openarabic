@@ -142,7 +142,7 @@ export function WordDisplay({ word, style, onWordPress, wordType, children }: Pr
       <View style={STATIC_STYLES.metaRow}>
         {wordType ? (
           // Tinted rather than tertiary grey: it is the only tier between the
-          // Arabic hero and the meaning, and at 11px uppercase it needs colour
+          // Arabic hero and the meaning, and at 13px it needs colour
           // to register as a level at all rather than as faint noise.
           <ThemedText type="overline" colorName="tint">
             {wordType}

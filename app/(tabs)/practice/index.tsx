@@ -49,13 +49,6 @@ export default function PracticeScreen(): JSX.Element {
 
   // Add ref to prevent infinite re-renders
   const hasPrefetchedRef = useRef(false);
-  // Guards handleStartReview against a double-tap pushing the review route
-  // twice — PinnedActionButton has no built-in debounce, and the session's
-  // own loading screen (preload + first-card audio, ~2-5s) is exactly the
-  // window an impatient second tap lands in. Reset on focus regain: that
-  // covers every way the learner can be back on this screen, not just one
-  // exit path.
-  const startingReviewRef = useRef(false);
 
   // Prefetch vocabulary data on first focus (deduped via ref)
   // Note: useReview.handleClose already invalidates queries when returning from review,
@@ -86,15 +79,6 @@ export default function PracticeScreen(): JSX.Element {
         });
       }
     }, [user, prefetchVocabularyData, queryClient]),
-  );
-
-  // Release the double-tap guard whenever this screen is back in focus —
-  // returning from a finished, closed, or backed-out-of review session all
-  // land here, and any of them means a fresh tap should be allowed through.
-  useFocusEffect(
-    useCallback(() => {
-      startingReviewRef.current = false;
-    }, []),
   );
 
   // Use the FSRS queries hook for data fetching
@@ -150,9 +134,11 @@ export default function PracticeScreen(): JSX.Element {
   const reviewedToday = useMemo(() => countReviewedToday(studyWords), [studyWords]);
   const nextDueDate = useMemo(() => calculateNextDueDate(studyWords), [studyWords]);
 
+  // No double-tap guard here any more: every ThemedButton is behind the shared
+  // press lock in useButtonPress, so a second tap inside 300ms never reaches
+  // this handler.
   const handleStartReview = useCallback(() => {
-    if (!user || startingReviewRef.current) return;
-    startingReviewRef.current = true;
+    if (!user) return;
     router.push(getPracticeReviewRoute());
   }, [user, router]);
 

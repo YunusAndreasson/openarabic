@@ -8,9 +8,11 @@ import Animated from 'react-native-reanimated';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
-import { PRESS_ANIMATION_BUTTON, usePressAnimation } from '@/hooks/animations';
+import { STRINGS } from '@/constants/strings';
+import { PRESS_ANIMATION_BUTTON } from '@/hooks/animations';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
+import { useButtonPress } from '@/hooks/ui/useButtonPress';
 import { handleError } from '@/utils/errorHandling';
 import { getFirstNameFromEmail } from '@/utils/stringUtils';
 
@@ -36,12 +38,17 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
   // On iOS, profile fills the glass container; on Android use the provided size
   const effectiveSize = isIOS ? IOS_GLASS_SIZE : size;
 
-  // Press animation for profile button
-  const profilePressAnimation = usePressAnimation(PRESS_ANIMATION_BUTTON);
-
-  const handlePress = useCallback(() => {
-    router.push(ROUTE_PATHS.ACCOUNT);
-  }, []);
+  // The shared engine, not a bare usePressAnimation: wiring the animation by
+  // hand meant this button silently shipped without the haptic and the Android
+  // ripple every other control in the app gets.
+  const { handlePress, animatedStyle, handlePressIn, handlePressOut, rippleConfig } =
+    useButtonPress({
+      onPress: useCallback(() => {
+        router.push(ROUTE_PATHS.ACCOUNT);
+      }, []),
+      hapticType: 'selection',
+      animationOptions: PRESS_ANIMATION_BUTTON,
+    });
 
   const profilePhotoStyle = useMemo(
     () => ({ width: effectiveSize, height: effectiveSize, borderRadius: effectiveSize / 2 }),
@@ -90,13 +97,16 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
     <View style={containerStyle}>
       {/* Profile Button */}
       <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={STRINGS.ACCOUNT_A11Y_OPEN}
+        android_ripple={rippleConfig}
         onPress={handlePress}
-        onPressIn={profilePressAnimation.handlePressIn}
-        onPressOut={profilePressAnimation.handlePressOut}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
         style={styles.profileButton}
         hitSlop={isIOS ? undefined : LAYOUT.HIT_SLOP.MEDIUM}
       >
-        <Animated.View style={profilePressAnimation.animatedStyle}>
+        <Animated.View style={animatedStyle}>
           {profilePhotoUri ? (
             <Image
               source={{ uri: profilePhotoUri }}

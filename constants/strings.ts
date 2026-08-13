@@ -169,6 +169,10 @@ export const STRINGS = {
   FEEDBACK_SUBMIT: 'Send feedback',
   // Account section titles - now imported directly from enums in components
   ACCOUNT: 'Account',
+  ACCOUNT_A11Y_OPEN: 'Open account',
+  ACCOUNT_A11Y_CHANGE_PHOTO: 'Change profile photo',
+  PLAYLIST_A11Y_REORDER: 'Reorder track',
+  PLAYLIST_A11Y_REORDER_HINT: 'Press and hold, then drag to move this track',
   APPEARANCE_SECTION: 'Appearance',
   STORAGE_SECTION: 'Storage',
   DANGER_ZONE_SECTION: 'Danger Zone',
@@ -816,6 +820,7 @@ export const STRINGS = {
   PLEASE_SIGN_IN_TO_ADD_ROOTS: 'Sign in to add roots',
   ERROR_EMPTY_EMAIL: 'Enter your email address',
   HELP_SEARCH_PLACEHOLDER: 'Search help articles',
+  HELP_SEARCH_CLEAR: 'Clear search',
   HELP_SEARCH_RESULTS_SINGULAR: 'result',
   HELP_SEARCH_RESULTS_PLURAL: 'results',
   HELP_NO_RESULTS_TITLE: 'No results found',

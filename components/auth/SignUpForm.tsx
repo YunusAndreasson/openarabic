@@ -101,6 +101,7 @@ export function SignUpForm(): JSX.Element {
       <ThemedButton
         disabled={loading}
         loading={loading}
+        fullWidth
         style={styles.button}
         title={STRINGS.CREATE_ACCOUNT}
         testID="create-account-button"
@@ -128,7 +129,6 @@ export function SignUpForm(): JSX.Element {
 const styles = StyleSheet.create({
   button: {
     marginTop: LAYOUT.SPACING.LARGE,
-    width: '100%',
   },
   container: {
     width: '100%',

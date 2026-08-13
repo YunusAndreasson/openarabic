@@ -12,6 +12,22 @@ import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import React from 'react';
 
 import { ThemedButton } from '@/components/ThemedButton';
+import { PRESS_LOCK_WINDOW_MS } from '@/constants/animation';
+
+/**
+ * jest.setup stubs `StyleSheet.flatten` as the identity function, so calling it
+ * on a style array hands back the array and every `toMatchObject` against it
+ * passes vacuously. Flatten it here instead, so the assertion means something.
+ */
+const flattenStyle = (style: unknown): Record<string, unknown> => {
+  if (Array.isArray(style)) {
+    return style.reduce<Record<string, unknown>>(
+      (acc, entry) => ({ ...acc, ...flattenStyle(entry) }),
+      {},
+    );
+  }
+  return style && typeof style === 'object' ? (style as Record<string, unknown>) : {};
+};
 
 // Use shared mock factories from componentMocks.tsx
 jest.mock('react-native-reanimated', () =>
@@ -41,15 +57,7 @@ describe('ThemedButton', () => {
     test('renders with title text', () => {
       const { getByText } = render(<ThemedButton title="Submit" onPress={mockOnPress} />);
 
-      expect(getByText('Submit')).toBeTruthy(); // sentence case by default (uppercase=false)
-    });
-
-    test('renders with uppercase text when uppercase is true', () => {
-      const { getByText } = render(
-        <ThemedButton title="Submit" onPress={mockOnPress} uppercase={true} />,
-      );
-
-      expect(getByText('SUBMIT')).toBeTruthy(); // uppercase=true transforms text
+      expect(getByText('Submit')).toBeTruthy();
     });
 
     test('renders with icon', () => {
@@ -181,13 +189,44 @@ describe('ThemedButton', () => {
     });
   });
 
-  describe('Optimistic Loading', () => {
-    test('renders button with enableOptimisticLoading prop', () => {
-      const { getByText } = render(
-        <ThemedButton title="Submit" enableOptimisticLoading onPress={mockOnPress} />,
+  describe('Press lock', () => {
+    // The regression test for the bug that motivated usePressLock: the previous
+    // guard lived in state, so both halves of a double-tap read the pre-commit
+    // value and both fired.
+    test('ignores a second press inside the lock window', () => {
+      const { getByText } = render(<ThemedButton title="Start" onPress={mockOnPress} />);
+
+      fireEvent.press(getByText('Start'));
+      fireEvent.press(getByText('Start'));
+
+      expect(mockOnPress).toHaveBeenCalledTimes(1);
+    });
+
+    test('accepts a press again once the window has passed', () => {
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2026-01-01T00:00:00Z'));
+
+      const { getByText } = render(<ThemedButton title="Start" onPress={mockOnPress} />);
+
+      fireEvent.press(getByText('Start'));
+      jest.advanceTimersByTime(PRESS_LOCK_WINDOW_MS + 1);
+      fireEvent.press(getByText('Start'));
+
+      expect(mockOnPress).toHaveBeenCalledTimes(2);
+
+      jest.useRealTimers();
+    });
+  });
+
+  describe('Layout', () => {
+    test('fullWidth stretches the button', () => {
+      const { getByTestId } = render(
+        <ThemedButton fullWidth testID="cta" title="Continue" onPress={mockOnPress} />,
       );
 
-      expect(getByText('Submit')).toBeTruthy();
+      expect(flattenStyle(getByTestId('cta').props.style)).toMatchObject({
+        alignSelf: 'stretch',
+      });
     });
   });
 
@@ -199,9 +238,7 @@ describe('ThemedButton', () => {
 
     test('handles long title text', () => {
       const longTitle = 'This is a very long button title that might wrap';
-      const { getByText } = render(
-        <ThemedButton title={longTitle} onPress={mockOnPress} uppercase={false} />,
-      );
+      const { getByText } = render(<ThemedButton title={longTitle} onPress={mockOnPress} />);
 
       expect(getByText(longTitle)).toBeTruthy();
     });

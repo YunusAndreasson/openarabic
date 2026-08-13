@@ -283,8 +283,13 @@ export const createAnimationHooksMock = () => ({
     toggleScale: { value: 1 },
     forceAnimateToInitialState: jest.fn(),
   }),
-  useDebounce: (fn: () => void) => [fn, false],
   // Re-export animation configs as empty objects (tests rarely need actual values)
   SPRING_CONFIG: {},
   TIMING_CONFIG: {},
+  // Press presets. The mocked usePressAnimation ignores them, but a component
+  // that imports one gets a defined value rather than undefined.
+  PRESS_ANIMATION_BUTTON: {},
+  PRESS_ANIMATION_CARD: {},
+  PRESS_ANIMATION_DEFAULT: {},
+  PRESS_ANIMATION_WIDE: {},
 });

@@ -94,18 +94,14 @@ export default function SleepTimerScreen(): JSX.Element {
                   title={`${minutes} min`}
                   variant={selectedMinutes === minutes ? 'filled' : 'outlined'}
                   onPress={handleOptionSelect(minutes)}
-                  style={styles.optionButton}
+                  fullWidth
                 />
               </View>
             ))}
           </View>
 
           <View style={styles.buttonContainer}>
-            <ThemedButton
-              style={styles.fullWidthButton}
-              title={STRINGS.SET_TIMER}
-              onPress={handleSetTimer}
-            />
+            <ThemedButton fullWidth title={STRINGS.SET_TIMER} onPress={handleSetTimer} />
           </View>
         </>
       ) : (
@@ -139,14 +135,6 @@ const styles = StyleSheet.create({
     width: '50%',
     paddingHorizontal: LAYOUT.SPACING.TINY,
     paddingVertical: LAYOUT.SPACING.TINY,
-  },
-  optionButton: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM + 2,
-    paddingVertical: LAYOUT.SPACING.MEDIUM + 2,
-    width: '100%',
-  },
-  fullWidthButton: {
-    width: '100%',
   },
   activeTimerContainer: {
     alignItems: 'center',

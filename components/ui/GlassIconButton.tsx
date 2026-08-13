@@ -3,15 +3,17 @@ import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import type { ComponentType, FC, ReactNode } from 'react';
 import type { AccessibilityState, Insets, StyleProp, ViewStyle } from 'react-native';
 import { Pressable as RNPressable, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { PRESS_ANIMATION_BUTTON } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useButtonPress, type HapticType } from '@/hooks/ui/useButtonPress';
 
 // Resolved once: `isLiquidGlassAvailable()` is a native capability check, not
 // state, so it cannot change for the life of the process.
 const GLASS_AVAILABLE = isLiquidGlassAvailable();
-const GlassContainer = GLASS_AVAILABLE ? GlassView : View;
+const AnimatedView = Animated.createAnimatedComponent(View);
 
 /**
  * The subset of pressable props this component actually passes down.
@@ -26,6 +28,8 @@ export interface PressableLikeProps {
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
   hitSlop?: number | Insets;
+  onPressIn?: () => void;
+  onPressOut?: () => void;
   accessibilityLabel?: string;
   accessibilityRole?: 'button';
   accessibilityState?: AccessibilityState;
@@ -99,7 +103,16 @@ export const GlassIconButton: FC<GlassIconButtonProps> = ({
   testID,
 }) => {
   const colors = useColors();
-  const { handlePress } = useButtonPress({ onPress, hapticType });
+  // On iOS 26 the glass container answers the press itself (`isInteractive`).
+  // Everywhere else the fallback is a plain View, which for a long time meant
+  // this button — the article reader's floating controls and the review
+  // header's mic and close — gave no visual response to a tap at all. The
+  // scale only runs on the fallback path so the two never double up.
+  const { handlePress, animatedStyle, handlePressIn, handlePressOut } = useButtonPress({
+    onPress,
+    hapticType,
+    animationOptions: PRESS_ANIMATION_BUTTON,
+  });
 
   // Fallback background for platforms without liquid glass. On iOS 26 the glass
   // effect paints over this; everywhere else it IS the button.
@@ -118,16 +131,22 @@ export const GlassIconButton: FC<GlassIconButtonProps> = ({
       style={style}
       testID={testID}
       onPress={handlePress}
+      onPressIn={GLASS_AVAILABLE ? undefined : handlePressIn}
+      onPressOut={GLASS_AVAILABLE ? undefined : handlePressOut}
     >
-      <GlassContainer
-        style={[styles.button, surfaceStyle]}
-        {...(GLASS_AVAILABLE && {
-          isInteractive: true,
-          ...(clear && { glassEffectStyle: 'clear' }),
-        })}
-      >
-        <Ionicons color={resolvedIconColor} name={icon} size={iconSize} />
-      </GlassContainer>
+      {GLASS_AVAILABLE ? (
+        <GlassView
+          style={[styles.button, surfaceStyle]}
+          isInteractive
+          {...(clear && { glassEffectStyle: 'clear' as const })}
+        >
+          <Ionicons color={resolvedIconColor} name={icon} size={iconSize} />
+        </GlassView>
+      ) : (
+        <AnimatedView style={[styles.button, surfaceStyle, animatedStyle]}>
+          <Ionicons color={resolvedIconColor} name={icon} size={iconSize} />
+        </AnimatedView>
+      )}
     </PressableComponent>
   );
 };

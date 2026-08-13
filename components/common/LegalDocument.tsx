@@ -1,8 +1,9 @@
 import { ScreenScaffold } from '@/components/common/ScreenScaffold';
 import type { FC, ReactNode } from 'react';
-import { Linking, Pressable, StyleSheet } from 'react-native';
+import { Linking, StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
+import { TextLink } from '@/components/ui/TextLink';
 import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
 
 /**
@@ -55,19 +56,23 @@ export const DocParagraph: FC<{ children: ReactNode; last?: boolean }> = ({
   </ThemedText>
 );
 
-/** An external URL credited in a document. Opens in the system browser. */
+/**
+ * An external URL credited in a document. Opens in the system browser.
+ *
+ * This used to hand-roll a tint-coloured `ThemedText` inside a `Pressable` with
+ * a pressed-opacity style callback — a verbatim copy of the very pattern
+ * `TextLink` exists to have deleted. It also picked up a hit slop it never had.
+ */
 export const DocLink: FC<{ url: string }> = ({ url }) => (
-  <Pressable
-    accessibilityRole="link"
-    style={({ pressed }) => [styles.linkContainer, pressed && { opacity: LAYOUT.OPACITY.HIGH }]}
+  <TextLink
+    underline
+    label={url}
+    style={styles.linkContainer}
+    type="body"
     onPress={() => {
       Linking.openURL(url);
     }}
-  >
-    <ThemedText colorName="tint" style={styles.link} type="body">
-      {url}
-    </ThemedText>
-  </Pressable>
+  />
 );
 
 /** A credited item — a font, a library — with its one-line description. */
@@ -111,9 +116,6 @@ const styles = StyleSheet.create({
   },
   linkContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  link: {
-    textDecorationLine: 'underline',
   },
   creditName: {
     marginTop: LAYOUT.SPACING.SMALL,

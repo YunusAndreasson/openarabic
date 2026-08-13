@@ -70,7 +70,11 @@ export const HeaderIconButton = memo<HeaderIconButtonProps>(
 
     const config = ICON_BUTTON_SIZES[size];
 
-    // Use shared button press hook (no animation for header buttons)
+    // No scale animation here on purpose — a header button sits in native
+    // chrome, and a chip that shrinks inside a navigation bar reads as loose.
+    // It did, however, ship with no press response of ANY kind on iOS, where
+    // there is no ripple to fall back on. A pressed-opacity is the inline
+    // idiom for a bare glyph, and it costs the Android ripple nothing.
     const { handlePress, rippleConfig } = useButtonPress({
       onPress,
       rippleSize: size === 'small' ? 'small' : undefined,
@@ -112,7 +116,11 @@ export const HeaderIconButton = memo<HeaderIconButtonProps>(
         delayLongPress={TIMING_CONSTANTS.LONG_PRESS_DELAY}
         disabled={disabled}
         hitSlop={config.hitSlop}
-        style={[buttonStyle, disabled && { opacity: LAYOUT.OPACITY.MEDIUM }]}
+        style={({ pressed }) => [
+          buttonStyle,
+          pressed && styles.pressed,
+          disabled && styles.disabled,
+        ]}
         testID={testID}
         onLongPress={onLongPress}
         onPress={handlePress}
@@ -127,6 +135,12 @@ const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  disabled: {
+    opacity: LAYOUT.OPACITY.MEDIUM,
+  },
+  pressed: {
+    opacity: LAYOUT.OPACITY.PRESSED,
   },
 });
 

@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-nat
 
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { createAndroidRipple } from '@/utils/layoutUtils';
 
@@ -24,6 +25,9 @@ export const DragHandle: FC<DragHandleProps> = ({
 
   return (
     <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={STRINGS.PLAYLIST_A11Y_REORDER}
+      accessibilityHint={STRINGS.PLAYLIST_A11Y_REORDER_HINT}
       style={[styles.container, style]}
       onLongPress={onLongPress}
       delayLongPress={delayLongPress}

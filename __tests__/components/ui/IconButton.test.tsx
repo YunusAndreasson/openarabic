@@ -125,14 +125,6 @@ describe('IconButton', () => {
     });
   });
 
-  describe('Flat Mode', () => {
-    test('renders in flat mode without elevation', () => {
-      const { toJSON } = render(<IconButton icon="play" flat onPress={mockOnPress} />);
-
-      expect(toJSON()).toBeTruthy();
-    });
-  });
-
   describe('Custom Colors', () => {
     test('accepts custom background color', () => {
       const { toJSON } = render(

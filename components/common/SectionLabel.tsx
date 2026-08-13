@@ -7,7 +7,7 @@ import { StyleSheet, View } from 'react-native';
 type SectionLabelDensity = 'comfortable' | 'compact' | 'first';
 
 interface SectionLabelProps {
-  /** The label text (will be uppercased automatically) */
+  /** The label text, in sentence case */
   title: string;
   /** Optional subtitle displayed below the title in secondary color */
   subtitle?: string;
@@ -29,10 +29,9 @@ const DENSITY_TOP_PADDING: Record<SectionLabelDensity, number> = {
 };
 
 /**
- * Subtle uppercase section label for filter lists and grouped content.
- * Uses overline typography to match category pill styling.
+ * Quiet section label for filter lists and grouped content.
  *
- * Example: CATEGORIES, AUTHORS, DIFFICULTY, CONTINUE READING, UNREAD
+ * Example: Topics, Continue reading, Featured, Appearance.
  */
 export const SectionLabel: FC<SectionLabelProps> = ({
   title,

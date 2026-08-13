@@ -87,8 +87,13 @@ call `expo-haptics` directly. New patterns need their own debounce key.
 - Screens use `ThemedView` for the theme surface and safe-area behavior.
 - Text uses `ThemedText`; local styles should normally control layout, not
   recreate font families, sizes, or semantic colors.
-- Primary actions use `ThemedButton`. Icon-only actions use the shared icon and
-  header-button primitives so hit targets and pressed states stay aligned.
+- Primary actions use `ThemedButton`, sized and shaped through its own props
+  (`size`, `variant`, `tone`, `shape`, `fullWidth`) rather than a `style`
+  override. Icon-only actions use the shared icon and header-button primitives
+  so hit targets and pressed states stay aligned.
+- Press feedback, haptics, the Android ripple and the repeat-press lock all come
+  from `hooks/ui/useButtonPress`. A control that hand-rolls any of them is a bug,
+  not a variant.
 - Form controls use `ThemedInput`, `Toggle`, `SettingsPicker`, `ThemePicker`, or
   `TimePicker` as appropriate.
 - Card surfaces should use the semantic elevations and shared `BaseCard` where

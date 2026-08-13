@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
   heading1: {
     fontFamily: FONTS.ENGLISH_BOLD,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
-    letterSpacing: LETTER_SPACING.TIGHT,
+    letterSpacing: LETTER_SPACING.DISPLAY,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * LINE_HEIGHT_MULTIPLIERS.TIGHT,
     opacity: TEXT_OPACITY.PRIMARY,
   },
@@ -91,13 +91,19 @@ const styles = StyleSheet.create({
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LINE_HEIGHT_MULTIPLIERS.NORMAL,
     opacity: TEXT_OPACITY.SECONDARY,
   },
+  // A quiet section label. It used to be 11pt ALL CAPS at +1.0 tracking — about
+  // +0.09em, four times the magnitude of the tightest heading and in the
+  // opposite direction, so the one place the scale spread its letters was also
+  // its smallest and least readable text, sitting directly above the content it
+  // was labelling. Sentence case at 13pt reads as a label without shouting.
+  // Every caller already passes a sentence-case string; the type was
+  // upper-casing them at render, so nothing in constants/strings.ts changes.
   overline: {
     fontFamily: FONTS.ENGLISH_SEMIBOLD,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    letterSpacing: LETTER_SPACING.ULTRA_WIDE * 2, // ~9% of font size - within 5-12% best practice for all-caps
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY * LINE_HEIGHT_MULTIPLIERS.NORMAL,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    letterSpacing: LETTER_SPACING.SLIGHT_POSITIVE,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LINE_HEIGHT_MULTIPLIERS.NORMAL,
     opacity: LAYOUT.OPACITY.HOVER, // Auxiliary labels - visible but not competing with primary content
-    textTransform: 'uppercase',
   },
 });
 

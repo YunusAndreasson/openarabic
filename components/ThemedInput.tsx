@@ -59,7 +59,7 @@ const RightInputIcon = ({
     accessibilityRole="button"
     hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
     onPress={onPress}
-    style={({ pressed }) => [styles.rightIcon, pressed && { opacity: LAYOUT.OPACITY.HIGH }]}
+    style={({ pressed }) => [styles.rightIcon, pressed && styles.rightIconPressed]}
   >
     <Ionicons
       color={error ? colors.error : isFocused ? colors.tint : colors.icon}
@@ -200,6 +200,9 @@ const styles = StyleSheet.create({
   },
   rightIcon: {
     marginLeft: LAYOUT.SPACING.SMALL,
+  },
+  rightIconPressed: {
+    opacity: LAYOUT.OPACITY.PRESSED,
   },
   wrapper: {
     marginVertical: LAYOUT.SPACING.TINY,

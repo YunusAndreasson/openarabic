@@ -104,7 +104,22 @@ const TYPOGRAPHY_HIERARCHY = {
     SECONDARY: 0.85,
   },
 
+  /**
+   * Tracking, in points, per role.
+   *
+   * Type wants LESS tracking as it gets bigger — that is what optical sizing
+   * means. This scale used to do the opposite: heading1 at 32pt carried the
+   * same −0.3 as bodyBold at 16pt, so in relative terms (−0.009em vs −0.019em)
+   * the display type was set twice as loose as the body text underneath it,
+   * and headings read as spaced out rather than as headings.
+   *
+   * The display values are literals, deliberately. Deriving them from the size
+   * scale is how two tokens previously rounded onto the same number and broke
+   * a component — see the ThemedInput focus-ring incident.
+   */
   LETTER_SPACING: {
+    /** heading1, 32pt → −0.020em */
+    DISPLAY: -0.64,
     EXTRA_TIGHT: -0.5,
     TIGHT: -0.3,
     NORMAL: 0,
@@ -123,12 +138,14 @@ const TYPOGRAPHY_HIERARCHY = {
 
   MICRO_ADJUSTMENTS: {
     CONTENT_TYPES: {
+      /** heading3, 18pt → −0.015em */
       CARD_TITLE: {
-        letterSpacing: -0.15,
+        letterSpacing: -0.27,
         lineHeightMultiplier: 1.2,
       },
+      /** heading2, 24pt → −0.020em */
       SECTION_HEADER: {
-        letterSpacing: -0.35,
+        letterSpacing: -0.48,
         lineHeightMultiplier: 1.1,
       },
       AUTHOR_BYLINE: {

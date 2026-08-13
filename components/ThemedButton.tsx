@@ -1,13 +1,12 @@
 import { Ionicons } from '@/components/ui/Icon';
-import { useEffect, useRef, useState, type JSX } from 'react';
-import type { GestureResponderEvent } from 'react-native';
+import type { JSX } from 'react';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import type { ColorName } from '@/constants/colors';
 import { LAYOUT } from '@/constants/layout';
-import { PRESS_ANIMATION_BUTTON } from '@/hooks/animations';
+import { PRESS_ANIMATION_BUTTON, PRESS_ANIMATION_WIDE } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useButtonPress } from '@/hooks/ui/useButtonPress';
 import type { ThemedButtonProps } from '@/types/ui/button.types';
@@ -37,8 +36,6 @@ const ICON_SIZE_MAP = {
   large: LAYOUT.BUTTON.ICON_SIZE.LARGE,
 } as const;
 
-const OPTIMISTIC_LOADING_TIMEOUT_MS = 500;
-
 export function ThemedButton({
   variant = 'filled', // Most common value - hardcoded
   tone = 'default',
@@ -50,46 +47,30 @@ export function ThemedButton({
   disabled = false, // Always false when not specified
   onPress,
   size = 'medium', // Most common value - hardcoded
-  enableOptimisticLoading = false, // Only enable when explicitly requested
-  uppercase = false, // Sentence case is the design-system default
   fullWidth = false,
+  shape = 'rounded',
   hapticType = 'light',
   accessibilityRole = 'button',
   ...props
 }: ThemedButtonProps): JSX.Element {
   const colors = useColors();
 
-  // Optimistic loading state - only when explicitly enabled
-  const [optimisticLoading, setOptimisticLoading] = useState(false);
-  const optimisticTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isActuallyLoading = loading || (enableOptimisticLoading && optimisticLoading);
-  const isInert = disabled || isActuallyLoading;
+  const isInert = disabled || loading;
 
-  useEffect(() => {
-    return () => {
-      if (optimisticTimeoutRef.current) clearTimeout(optimisticTimeoutRef.current);
-    };
-  }, []);
-
-  // Haptics, ripple and press-scale all come from the shared engine — this
-  // component used to hand-roll all three, which is how the app ended up with
-  // three different press feels depending on which button you touched.
+  // Haptics, ripple, press-scale and the repeat-press lock all come from the
+  // shared engine — this component used to hand-roll all of them, which is how
+  // the app ended up with three different press feels and four different
+  // double-tap guards depending on which button you touched.
+  //
+  // A wide control gets a subtler scale: the same ratio moves a full-width
+  // capsule several times further than a hugging button.
+  const isWide = fullWidth || shape === 'pill';
   const { handlePress, animatedStyle, handlePressIn, handlePressOut, rippleConfig } =
     useButtonPress({
-      onPress: (event?: GestureResponderEvent) => {
-        if (enableOptimisticLoading) {
-          setOptimisticLoading(true);
-          onPress?.(event);
-          optimisticTimeoutRef.current = setTimeout(() => {
-            setOptimisticLoading(false);
-          }, OPTIMISTIC_LOADING_TIMEOUT_MS);
-        } else {
-          onPress?.(event);
-        }
-      },
+      onPress,
       disabled: isInert,
       hapticType,
-      animationOptions: PRESS_ANIMATION_BUTTON,
+      animationOptions: isWide ? PRESS_ANIMATION_WIDE : PRESS_ANIMATION_BUTTON,
     });
 
   // The hue the button paints itself with. `tone` is orthogonal to `variant`, so
@@ -148,6 +129,7 @@ export function ThemedButton({
     size === 'large' && styles.buttonLarge,
     size === 'small' && styles.buttonSmall,
     variant === 'ghost' && styles.buttonGhost,
+    shape === 'pill' && styles.buttonPill,
     fullWidth && styles.buttonFullWidth,
     surfaceStyle,
   ];
@@ -160,10 +142,10 @@ export function ThemedButton({
   // A spinner takes the icon slot and the label stays put. Replacing the label
   // instead — what the icon-less path used to do — made the button jump between
   // a sized label and a bare spinner on every press.
-  const showGlyph = Boolean(icon) || isActuallyLoading;
+  const showGlyph = Boolean(icon) || loading;
   const glyph = showGlyph ? (
     <View style={iconContainerStyle}>
-      {isActuallyLoading ? (
+      {loading ? (
         <ActivityIndicator color={textColor} size="small" />
       ) : icon ? (
         <Ionicons color={textColor} name={icon} size={iconSize} />
@@ -174,7 +156,7 @@ export function ThemedButton({
   return (
     <AnimatedPressable
       accessibilityRole={accessibilityRole}
-      accessibilityState={{ busy: isActuallyLoading, disabled: isInert }}
+      accessibilityState={{ busy: loading, disabled: isInert }}
       android_ripple={androidRipple}
       disabled={isInert}
       // A 32pt-tall button is under the 44pt minimum; hit slop makes up the rest.
@@ -195,7 +177,7 @@ export function ThemedButton({
           style={styles.buttonText}
           type={TEXT_TYPE_MAP[size]}
         >
-          {uppercase ? title?.toUpperCase() : title}
+          {title}
         </ThemedText>
 
         {iconPosition === 'trailing' ? glyph : null}
@@ -225,6 +207,13 @@ const styles = StyleSheet.create({
   // the only thing making it hittable.
   buttonGhost: {
     ...createPadding({ horizontal: 'SMALL', vertical: 'SMALL' }),
+  },
+  // The iOS 26 / M3 Expressive shape for a standalone prominent CTA. Scoped to
+  // an opt-in so ordinary buttons keep the app radius — and so a row of peers
+  // can't end up mixing a pill with a rounded rect, which reads as two
+  // unrelated controls rather than one control's louder and quieter states.
+  buttonPill: {
+    borderRadius: LAYOUT.BORDER_RADIUS.PILL,
   },
   buttonFullWidth: {
     alignSelf: 'stretch',

@@ -1,20 +1,17 @@
 import { Ionicons } from '@/components/ui';
 import { Image } from 'expo-image';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Animated, {
-  cancelAnimation,
-  useSharedValue,
-  withSequence,
-  withSpring,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { cancelAnimation, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import { PRESS_SCALE, SPRING_CONFIG, TIMING_CONFIG } from '@/constants/animation';
+import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
+import { PRESS_ANIMATION_BUTTON } from '@/hooks/animations';
 import { useProfilePhotoPicker } from '@/hooks/account';
 import { useColors } from '@/hooks/theme/useColors';
+import { useButtonPress } from '@/hooks/ui/useButtonPress';
 import { getFirstNameFromEmail } from '@/utils/stringUtils';
 
 // Static constants for performance
@@ -50,8 +47,7 @@ const getInitials = (name: string): string => {
 export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps) {
   const colors = useColors();
 
-  // Animation values
-  const scaleValue = useSharedValue(1);
+  // Animation values — the photo's press scale belongs to useButtonPress now.
   const containerOpacity = useSharedValue(0);
   const [photoLoaded, setPhotoLoaded] = useState(false);
 
@@ -65,14 +61,12 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
   useEffect(() => {
     return () => {
       try {
-        cancelAnimation(scaleValue);
         cancelAnimation(containerOpacity);
-        scaleValue.value = 1;
       } catch {
         // Animation cleanup failed - continue
       }
     };
-  }, [scaleValue, containerOpacity]);
+  }, [containerOpacity]);
 
   // Container opacity — fade in when photo loaded
   useEffect(() => {
@@ -91,20 +85,20 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
   const memberSince = formatMemberSince(createdAt);
   const initials = getInitials(firstName);
 
-  // Handle photo press animation
-  const handlePhotoPress = useCallback(() => {
-    cancelAnimation(scaleValue);
-    scaleValue.set(
-      withSequence(
-        withSpring(PRESS_SCALE.BUTTON, SPRING_CONFIG.BUTTON),
-        withSpring(1, SPRING_CONFIG.BUTTON),
-      ),
-    );
-    selectPhoto();
-  }, [scaleValue, selectPhoto]);
-
-  // Reanimated 4: pass shared value directly (no useAnimatedStyle wrapper needed)
-  const photoAnimatedStyle = { transform: [{ scale: scaleValue }] };
+  // The photo used to pulse with a withSequence fired on press COMPLETION, so
+  // holding a finger down showed nothing and the animation played after the
+  // release. The shared engine ties the scale to finger-down/up like every
+  // other control, and brings the haptic with it.
+  const {
+    handlePress: handlePhotoPress,
+    animatedStyle: photoAnimatedStyle,
+    handlePressIn,
+    handlePressOut,
+  } = useButtonPress({
+    onPress: selectPhoto,
+    hapticType: 'selection',
+    animationOptions: PRESS_ANIMATION_BUTTON,
+  });
 
   // Dynamic styles (React Compiler auto-memoizes)
   const dynamicStyles = {
@@ -152,7 +146,11 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
       <View style={styles.profileContent}>
         {/* Profile Photo */}
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={STRINGS.ACCOUNT_A11Y_CHANGE_PHOTO}
           onPress={handlePhotoPress}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
           style={styles.photoContainer}
           hitSlop={LAYOUT.HIT_SLOP.SMALL}
         >

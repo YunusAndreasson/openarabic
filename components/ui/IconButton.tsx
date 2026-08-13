@@ -57,11 +57,6 @@ interface IconButtonProps {
   tone?: ButtonTone;
 
   /**
-   * Whether to use debouncing (useful for rapid clicks)
-   */
-  debounce?: boolean;
-
-  /**
    * Type of haptic feedback
    * - 'light': Light haptic feedback (play buttons)
    * - 'selection': Selection haptic feedback (delete/action buttons)
@@ -81,9 +76,6 @@ interface IconButtonProps {
   accessibilityLabel?: string;
 }
 
-// Internal constant for debounce duration
-const DEBOUNCE_DURATION_MS = 300;
-
 /**
  * A filled, circular icon button — the app's compact action control (play,
  * delete, reset). For the transparent variant used in navigation headers see
@@ -98,7 +90,6 @@ export const IconButton: FC<IconButtonProps> = ({
   iconColor,
   iconSize,
   tone = 'default',
-  debounce = false,
   hapticType = 'selection',
   iconStyle,
   accessibilityLabel,
@@ -107,13 +98,11 @@ export const IconButton: FC<IconButtonProps> = ({
   const config = ICON_BUTTON_SIZES[size];
 
   // Use shared button press hook
-  const { handlePress, animatedStyle, handlePressIn, handlePressOut, rippleConfig, isDisabled } =
+  const { handlePress, animatedStyle, handlePressIn, handlePressOut, rippleConfig } =
     useButtonPress({
       onPress,
       disabled,
       hapticType,
-      debounce,
-      debounceDuration: DEBOUNCE_DURATION_MS,
       animationOptions: { scaleAmount: PRESS_SCALE.STRONG },
     });
 
@@ -132,9 +121,9 @@ export const IconButton: FC<IconButtonProps> = ({
     <Pressable
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="button"
-      accessibilityState={{ disabled: isDisabled }}
+      accessibilityState={{ disabled }}
       android_ripple={rippleConfig}
-      disabled={isDisabled}
+      disabled={disabled}
       hitSlop={config.hitSlop}
       style={config.container}
       onPress={handlePress}
@@ -149,7 +138,7 @@ export const IconButton: FC<IconButtonProps> = ({
           animatedStyle,
           {
             backgroundColor: resolvedBackgroundColor,
-            opacity: isDisabled ? LAYOUT.OPACITY.MEDIUM : 1,
+            opacity: disabled ? LAYOUT.OPACITY.MEDIUM : 1,
           },
         ]}
       >

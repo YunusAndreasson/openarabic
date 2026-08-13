@@ -155,11 +155,12 @@ belongs in its feature directory (`components/practice/DictionaryButton.tsx`,
 
 ## Buttons
 
-`ThemedButton` is the only text button. Two orthogonal axes:
+`ThemedButton` is the only text button. Three orthogonal axes:
 
 ```typescript
 variant: 'filled' | 'tonal' | 'outlined' | 'ghost'; // how loud
 tone: 'default' | 'destructive'; // which hue
+shape: 'rounded' | 'pill'; // which silhouette
 ```
 
 - `filled` — the one primary action on a screen
@@ -167,8 +168,40 @@ tone: 'default' | 'destructive'; // which hue
 - `outlined` — a peer alongside a filled one
 - `ghost` — tertiary: "Not now", "Skip"
 
+`shape="pill"` is reserved for a standalone prominent CTA with no peer beside it
+(`PinnedActionButton`). Two shapes in one row read as two unrelated controls, so
+loudness inside a row is carried by the fill, never by the radius.
+
 Sizes are `small | medium | large`, and the size alone decides the font (13 / 16
 / 18) via a `ThemedText` type. Never override a button's `fontSize`.
+
+Use `fullWidth` to stretch a button — never `style={{ width: '100%' }}`. External
+spacing belongs to the parent's `gap`, not to the button. **`style=` on a
+`ThemedButton` is legal only for a genuinely one-off surface treatment** (the
+dashed drop target in `FeedbackForm` is the one sanctioned case) — never for
+width, spacing, radius, or typography. Each of those has an axis; if the axis
+doesn't fit, the fix is at the call site or in the component, not an override.
+
+### Press behaviour
+
+All of it comes from `hooks/ui/useButtonPress` — haptic, Android ripple,
+press-scale, and a repeat-press lock that is **always on**. Nothing needs to opt
+in, and no caller should hand-roll a double-tap guard; a `loading` prop wired to
+real mutation state is still worth having for anything that takes seconds, but
+it covers a different window than the lock does.
+
+Two press idioms, and one rule for choosing between them:
+
+| The element…                           | Idiom                                              |
+| -------------------------------------- | -------------------------------------------------- |
+| has its own surface **and** layout box | `useButtonPress` — spring scale + haptic + ripple  |
+| is a run of text or a bare glyph       | `({ pressed }) => opacity: LAYOUT.OPACITY.PRESSED` |
+
+Gesture-driven animation is a Reanimated worklet (`usePressAnimation`);
+state-driven animation is a Reanimated CSS transition. Press-in runs on a 120ms
+timing curve rather than a spring, because it has to finish while the finger is
+still down — a tap holds contact for 60–120ms, and `SPRING_CONFIG.BUTTON` needs
+314ms to arrive.
 
 Icon-only controls, by where they live:
 

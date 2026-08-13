@@ -50,7 +50,7 @@ export function SocialAuthButtons({ appleAuth, googleAuth }: SocialAuthButtonsPr
           icon="logo-apple"
           loading={appleLoading}
           disabled={appleLoading || googleLoading}
-          style={styles.button}
+          fullWidth
           testID="apple-sign-in-button"
           accessibilityLabel="Sign in with Apple"
           onPress={signInWithApple}
@@ -64,7 +64,7 @@ export function SocialAuthButtons({ appleAuth, googleAuth }: SocialAuthButtonsPr
         icon="logo-google"
         loading={googleLoading}
         disabled={isIOS ? appleLoading || googleLoading : googleLoading}
-        style={styles.button}
+        fullWidth
         testID="google-sign-in-button"
         accessibilityLabel="Sign in with Google"
         onPress={signInWithGoogle}
@@ -96,11 +96,8 @@ export function SocialAuthButtons({ appleAuth, googleAuth }: SocialAuthButtonsPr
 }
 
 const styles = StyleSheet.create({
-  button: {
-    marginBottom: LAYOUT.SPACING.SMALL, // Tighter grouping between social buttons (proximity)
-    width: '100%',
-  },
   container: {
+    gap: LAYOUT.SPACING.SMALL, // Tighter grouping between social buttons (proximity)
     maxWidth: SCREEN_WIDTH * 0.9,
     width: '100%',
   },

@@ -91,7 +91,7 @@ const DeleteAccountScreen: FC = () => {
       <ThemedButton
         disabled={!confirmationText || loading}
         loading={loading}
-        style={styles.deleteButton}
+        fullWidth
         title={loading ? STRINGS.ACCOUNT_DELETION_IN_PROGRESS : STRINGS.DELETE_ACCOUNT}
         tone="destructive"
         onPress={handleDeletePress}
@@ -135,9 +135,6 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.NORMAL,
-  },
-  deleteButton: {
-    marginTop: LAYOUT.SPACING.SMALL,
   },
 });
 

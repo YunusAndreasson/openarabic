@@ -29,6 +29,18 @@ export type ButtonTone = 'default' | 'destructive';
  */
 export type ButtonSize = 'large' | 'medium' | 'small';
 
+/**
+ * The button's corner treatment. Orthogonal to `size` and `variant`.
+ *
+ * - `rounded` — the app radius. Every button in a row, every button inside a
+ *   card or sheet.
+ * - `pill` — fully rounded, reserved for a standalone prominent CTA with no
+ *   peers beside it (the pinned tab-screen action, the review screen's reveal
+ *   button when it is alone). Two shapes in one row read as two different
+ *   controls, so loudness in a row is carried by the fill, not the radius.
+ */
+export type ButtonShape = 'rounded' | 'pill';
+
 /** Where the icon sits relative to the label. */
 export type ButtonIconPosition = 'leading' | 'trailing';
 
@@ -48,10 +60,8 @@ export interface BaseButtonProps
   loading?: boolean;
   /** Size variant of the button */
   size?: ButtonSize;
-  /** Enable optimistic loading - immediately show loading when pressed */
-  enableOptimisticLoading?: boolean;
-  /** Whether to transform text to uppercase (default: false) */
-  uppercase?: boolean;
+  /** Corner treatment (default: 'rounded') */
+  shape?: ButtonShape;
   /** Stretch to fill the available width instead of hugging the label */
   fullWidth?: boolean;
   /** Haptic weight fired on press (default: 'light') */

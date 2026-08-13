@@ -58,6 +58,8 @@ export const EmailLink: FC<EmailLinkProps> = ({ email, type = 'body' }) => {
       type={type}
       colorName="tint"
       style={styles.link}
+      accessibilityRole="link"
+      accessibilityLabel={email}
       onPress={handleEmailPress}
       suppressHighlighting={true}
     >

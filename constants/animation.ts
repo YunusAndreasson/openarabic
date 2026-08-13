@@ -209,12 +209,33 @@ export const PRESS_SCALE = {
   MODERATE: 0.95,
   /** Strong press for icon buttons */
   STRONG: 0.9,
+  /**
+   * Wide controls — a full-width or capsule CTA.
+   *
+   * The invariant these numbers actually encode is constant EDGE TRAVEL, about
+   * 2pt, not a constant ratio: STRONG on a 44pt icon button pulls each edge in
+   * 2.2pt, BUTTON on a ~100pt hugging button 2.0pt. The same BUTTON value on a
+   * 340pt pinned CTA moves each edge 6.8pt, which reads as the whole screen
+   * flexing rather than as a button depressing. 0.99 puts a full-width control
+   * back at 1.7pt, in line with the rest.
+   */
+  WIDE: 0.99,
   /** Scale up for drag feedback */
   DRAG_UP: 1.05,
 } as const;
 
 /** Default opacity reduction for card press animations */
 export const CARD_PRESS_OPACITY = 0.97;
+
+/**
+ * How long a control ignores a repeat press after firing.
+ *
+ * Covers the gap a `loading` prop structurally cannot: `loading` only becomes
+ * true one render after the press, and a determined double-tap lands inside
+ * that window. 300ms is comfortably longer than a double-tap and shorter than
+ * any deliberate second press.
+ */
+export const PRESS_LOCK_WINDOW_MS = 300;
 
 /**
  * Multiplier for FlashList draw distance (overscroll rendering).

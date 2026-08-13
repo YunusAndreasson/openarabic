@@ -188,7 +188,7 @@ export function WordDetailsBottomSheet({
                     variant="outlined"
                     onPress={handlePlayAudio}
                     disabled={!word.audio_url}
-                    style={styles.actionButton}
+                    fullWidth
                   />
                   <ThemedButton
                     title={
@@ -201,7 +201,7 @@ export function WordDetailsBottomSheet({
                     variant={optimisticIsInStudyList ? 'outlined' : 'filled'}
                     onPress={handleAddToStudy}
                     disabled={isStudyStateLoading || isToggling}
-                    style={styles.actionButton}
+                    fullWidth
                   />
                 </View>
               </View>
@@ -250,8 +250,5 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     gap: LAYOUT.SPACING.MEDIUM,
-  },
-  actionButton: {
-    width: '100%',
   },
 });

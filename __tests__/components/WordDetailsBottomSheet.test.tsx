@@ -176,8 +176,20 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
     });
   });
 
-  describe('BUG: Rapid Toggle State Desync', () => {
-    test('should handle rapid button presses without state desync', async () => {
+  describe('Rapid Toggle State Desync', () => {
+    /**
+     * This used to assert that a rapid second press fired a SECOND mutation,
+     * and the desync it is named for was the consequence: by the time the
+     * second tap lands, the optimistic value has already flipped, so the tap
+     * doesn't repeat the mutation — it computes the opposite `newValue` and
+     * silently re-adds the word the learner just removed.
+     *
+     * The shared press lock in `useButtonPress` closes that window at the
+     * source: a second press inside 300ms never reaches the handler, so there
+     * is no second mutation and nothing to desync. The assertion is inverted
+     * on purpose.
+     */
+    test('swallows a rapid second press instead of toggling back', async () => {
       let callCount = 0;
       mockOnAddToStudy.mockImplementation(async () => {
         callCount++;
@@ -214,31 +226,30 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
         expect(getByText('In practice')).toBeTruthy();
       });
 
-      // Second press: Remove (while first operation still pending)
+      // Second press, immediately, while the first mutation is still pending.
       const removeButton = getByText('In practice');
       fireEvent.press(removeButton);
 
+      // Blocked by the press lock — the word stays added.
       await waitFor(() => {
-        expect(callCount).toBe(2);
+        expect(callCount).toBe(1);
       });
+      expect(getByText('In practice')).toBeTruthy();
 
-      // The real parent updates `isInStudyList` once its query settles after
-      // the mutation — `useOptimistic` reverts to whatever base prop it was
-      // last given, so without this the assertion below depends on catching
-      // a transient optimistic value before the revert, which is exactly the
-      // desync this describe block is named for.
+      // And the parent's settled prop agrees with what the learner sees, which
+      // is the desync this block is named for.
       rerender(
         <WordDetailsBottomSheet
           isVisible={true}
           onClose={mockOnClose}
           word={mockWord}
           onAddToStudy={mockOnAddToStudy}
-          isInStudyList={false}
+          isInStudyList={true}
         />,
       );
 
       await waitFor(() => {
-        expect(getByText('Add to practice')).toBeTruthy();
+        expect(getByText('In practice')).toBeTruthy();
       });
     });
 

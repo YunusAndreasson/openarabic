@@ -57,7 +57,7 @@ export const TextLink: FC<TextLinkProps> = ({
 
 const styles = StyleSheet.create({
   pressed: {
-    opacity: LAYOUT.OPACITY.HIGH,
+    opacity: LAYOUT.OPACITY.PRESSED,
   },
   underline: {
     textDecorationLine: 'underline',

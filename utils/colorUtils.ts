@@ -135,8 +135,10 @@ export function mixColors(base: string, overlay: string, amount: number): string
  * These weights were derived on the review screen's grade chips, where the
  * problem shows most clearly: an alpha fill composites against whatever is
  * behind the control, which there is a near-black page, so every hue at 15%
- * resolved to a different shade of sludge. Mixing into an elevation surface
- * instead keeps each hue itself and lifts the control off the page.
+ * resolved to a different shade of sludge — "Guessed" came out an olive-brown,
+ * "Knew it" a barely-green charcoal. Three outcomes, three sludges. Mixing into
+ * an elevation surface instead keeps each hue itself and lifts the control off
+ * the page as a surface.
  *
  * The border stays alpha deliberately — it composites over the control's own
  * opaque fill, so it reads as a stronger edge of the same hue rather than

@@ -1,9 +1,10 @@
 import { useCallback } from 'react';
 import type { GestureResponderEvent } from 'react-native';
 
-import { PRESS_ANIMATION_DEFAULT, useDebounce, usePressAnimation } from '@/hooks/animations';
+import { PRESS_ANIMATION_DEFAULT, usePressAnimation } from '@/hooks/animations';
 import type { PressAnimationOptions } from '@/hooks/animations/usePressAnimation';
 import { useColors } from '@/hooks/theme/useColors';
+import { usePressLock } from '@/hooks/ui/usePressLock';
 import { lightFeedback, selectionFeedback } from '@/utils/haptics';
 import { createAndroidRipple } from '@/utils/layoutUtils';
 
@@ -31,16 +32,6 @@ export interface UseButtonPressOptions {
   hapticType?: HapticType;
 
   /**
-   * Whether to use debouncing (useful for rapid clicks)
-   */
-  debounce?: boolean;
-
-  /**
-   * Debounce duration in ms
-   */
-  debounceDuration?: number;
-
-  /**
    * Press animation options (passed to usePressAnimation)
    */
   animationOptions?: PressAnimationOptions;
@@ -59,7 +50,7 @@ export interface UseButtonPressOptions {
 
 export interface UseButtonPressResult {
   /**
-   * Combined press handler with haptic feedback and debouncing
+   * Combined press handler: disabled check, repeat-press lock, haptic, `onPress`.
    */
   handlePress: (event?: GestureResponderEvent) => void;
 
@@ -82,11 +73,6 @@ export interface UseButtonPressResult {
    * Android ripple configuration
    */
   rippleConfig: ReturnType<typeof createAndroidRipple>;
-
-  /**
-   * Whether button is effectively disabled (original disabled + debounce state)
-   */
-  isDisabled: boolean;
 }
 
 /**
@@ -95,8 +81,13 @@ export interface UseButtonPressResult {
  * Consolidates common button patterns:
  * - Press animations with scale/opacity effects
  * - Haptic feedback (light, selection, or none)
- * - Debouncing to prevent rapid clicks
+ * - A repeat-press lock, always on — see `usePressLock`
  * - Android ripple configuration
+ *
+ * The lock is not optional. It used to be, and exactly one component opted in,
+ * so every other button was left to whatever guard its caller happened to wire
+ * up — which produced four incompatible strategies and several buttons with
+ * none at all. Nothing in this app wants two presses within 300ms to both land.
  *
  * @example
  * ```tsx
@@ -104,7 +95,6 @@ export interface UseButtonPressResult {
  *   useButtonPress({
  *     onPress: handleDelete,
  *     hapticType: 'selection',
- *     debounce: true,
  *   });
  *
  * <Pressable
@@ -123,8 +113,6 @@ export function useButtonPress({
   onPress,
   disabled = false,
   hapticType = 'none',
-  debounce = false,
-  debounceDuration = 300,
   animationOptions,
   rippleSize,
   rippleForeground = false,
@@ -136,40 +124,37 @@ export function useButtonPress({
     animationOptions ?? PRESS_ANIMATION_DEFAULT,
   );
 
-  // Create the press handler with haptic feedback
-  const pressHandler = useCallback(
+  // Haptic then callback, behind the repeat-press lock.
+  const lockedPress = usePressLock((event?: GestureResponderEvent) => {
+    if (hapticType === 'light') {
+      lightFeedback();
+    } else if (hapticType === 'selection') {
+      selectionFeedback();
+    }
+    // 'none' - no haptic feedback
+
+    onPress?.(event);
+  });
+
+  // The disabled check sits OUTSIDE the lock: a press on a disabled control
+  // should fire nothing and also arm nothing, so the control is live the
+  // instant it re-enables rather than sitting in a lock it never earned.
+  const handlePress = useCallback(
     (event?: GestureResponderEvent) => {
       if (disabled) return;
-
-      // Trigger appropriate haptic feedback
-      if (hapticType === 'light') {
-        lightFeedback();
-      } else if (hapticType === 'selection') {
-        selectionFeedback();
-      }
-      // 'none' - no haptic feedback
-
-      onPress?.(event);
+      lockedPress(event);
     },
-    [disabled, onPress, hapticType],
+    [disabled, lockedPress],
   );
-
-  // Always call useDebounce hook (hooks must be called unconditionally)
-  const [debouncedHandlePress, isDebouncing] = useDebounce(pressHandler, debounceDuration);
-
-  // Use the appropriate handler based on debounce setting
-  const finalHandler = debounce ? debouncedHandlePress : pressHandler;
-  const isDisabled = disabled || (debounce && isDebouncing);
 
   // Android ripple configuration
   const rippleConfig = createAndroidRipple(colors, rippleSize, rippleForeground);
 
   return {
-    handlePress: finalHandler,
+    handlePress,
     animatedStyle,
     handlePressIn,
     handlePressOut,
     rippleConfig,
-    isDisabled,
   };
 }

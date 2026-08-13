@@ -293,6 +293,7 @@ export default function ResetPasswordScreen(): JSX.Element {
           <ThemedButton
             disabled={loading}
             loading={loading}
+            fullWidth
             style={styles.button}
             title={STRINGS.RESET_PASSWORD_BUTTON}
             testID="reset-password-button"
@@ -308,7 +309,6 @@ export default function ResetPasswordScreen(): JSX.Element {
 const styles = StyleSheet.create({
   button: {
     marginTop: LAYOUT.SPACING.LARGE,
-    width: '100%',
   },
   container: {
     flex: 1,

@@ -96,11 +96,13 @@ describe('ThemedText', () => {
       expect(element).toHaveStyle({ fontSize: 13, fontFamily: 'Inter-SemiBold' });
     });
 
-    test('renders overline type with uppercase transform', () => {
-      const { getByText } = render(<ThemedText type="overline">Overline</ThemedText>);
+    test('renders overline type in sentence case', () => {
+      const { getByText } = render(<ThemedText type="overline">Continue reading</ThemedText>);
 
-      const element = getByText('Overline');
-      expect(element).toHaveStyle({ textTransform: 'uppercase' });
+      const element = getByText('Continue reading');
+      expect(element).toHaveStyle({ fontSize: 13, fontFamily: 'Inter-SemiBold' });
+      // The style prop is an array, so flatten before asking what it contains.
+      expect([element.props.style].flat(Infinity).some(s => s && 'textTransform' in s)).toBe(false);
     });
   });
 

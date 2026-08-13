@@ -5,8 +5,10 @@ import Animated from 'react-native-reanimated';
 import { ThemedText } from '@/components/ThemedText';
 import { FONTS } from '@/constants/fonts';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
-import { usePressAnimation } from '@/hooks/animations';
+import { PRESS_ANIMATION_CARD } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
+import { useButtonPress } from '@/hooks/ui/useButtonPress';
+import { withAlpha } from '@/utils/colorUtils';
 
 interface ChartTooltip {
   x: number;
@@ -65,30 +67,46 @@ export const DataPointOverlay = memo<DataPointOverlayProps>(({ x, y, value, labe
   const [isPressed, setIsPressed] = useState(false);
   const colors = useColors();
 
-  // Press animation for consistent touch feedback
-  const { animatedStyle } = usePressAnimation({
-    type: 'card',
+  // The animation used to be dead: this component pulled `animatedStyle` off
+  // usePressAnimation but wired its own same-named press handlers, which set
+  // `isPressed` and never touched the hook's shared value — so the worklet
+  // returned a constant scale of 1 on every press. Composing the hook's
+  // handlers with the state setter drives both.
+  const {
+    handlePress,
+    animatedStyle,
+    handlePressIn: animatePressIn,
+    handlePressOut: animatePressOut,
+  } = useButtonPress({
+    onPress: useCallback(() => {
+      // Defensive guards to avoid updating frozen state with invalid values
+      const isValidNumber = (n: unknown) => typeof n === 'number' && Number.isFinite(n);
+      const isValidString = (s: unknown) => typeof s === 'string' && s.length > 0;
+
+      if (
+        !isValidNumber(x) ||
+        !isValidNumber(y) ||
+        !isValidString(value) ||
+        !isValidString(label)
+      ) {
+        return;
+      }
+
+      onPress(x, y, value, label);
+    }, [x, y, value, label, onPress]),
+    animationOptions: PRESS_ANIMATION_CARD,
   });
 
-  const handlePress = useCallback(() => {
-    // Defensive guards to avoid updating frozen state with invalid values
-    const isValidNumber = (n: unknown) => typeof n === 'number' && Number.isFinite(n);
-    const isValidString = (s: unknown) => typeof s === 'string' && s.length > 0;
-
-    if (!isValidNumber(x) || !isValidNumber(y) || !isValidString(value) || !isValidString(label)) {
-      return;
-    }
-
-    onPress(x, y, value, label);
-  }, [x, y, value, label, onPress]);
-
+  // `isPressed` earns its renders — it paints the tint ring below.
   const handlePressIn = useCallback(() => {
     setIsPressed(true);
-  }, []);
+    animatePressIn();
+  }, [animatePressIn]);
 
   const handlePressOut = useCallback(() => {
     setIsPressed(false);
-  }, []);
+    animatePressOut();
+  }, [animatePressOut]);
 
   const touchTargetSize = MIN_TOUCH_TARGET.LARGE;
   const offset = touchTargetSize / 2;
@@ -102,8 +120,10 @@ export const DataPointOverlay = memo<DataPointOverlayProps>(({ x, y, value, labe
         width: touchTargetSize,
         height: touchTargetSize,
         borderRadius: touchTargetSize / 2,
-        backgroundColor: isPressed ? colors.tint + '20' : colors.transparent,
-        borderWidth: isPressed ? 2 : 0,
+        backgroundColor: isPressed
+          ? withAlpha(colors.tint, LAYOUT.OPACITY.FAINT)
+          : colors.transparent,
+        borderWidth: isPressed ? LAYOUT.BORDER.WIDTH.FOCUSED : 0,
         borderColor: isPressed ? colors.tint : colors.transparent,
       },
     ],
