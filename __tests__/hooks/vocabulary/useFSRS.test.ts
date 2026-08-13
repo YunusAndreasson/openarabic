@@ -20,6 +20,7 @@ const mockQueryClient = {
 
 jest.mock('@tanstack/react-query', () => ({
   useQuery: jest.fn(),
+  useMutation: jest.fn(),
   useQueryClient: jest.fn(() => mockQueryClient),
   QueryClient: jest.fn(),
   QueryClientProvider: ({ children }: { children: ReactNode }) => children,
@@ -103,13 +104,14 @@ jest.mock('ts-fsrs', () => ({
   },
 }));
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useFSRS } from '@/hooks/vocabulary/useFSRS';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { StudyWord } from '@/types/vocabulary.types';
 import type { RootId, UserId } from '@/types/branded.types';
 
 const mockUseQuery = jest.mocked(useQuery);
+const mockUseMutation = jest.mocked(useMutation);
 const mockStudyWordsFSRSService = jest.mocked(studyWordsFSRSService);
 
 describe('useFSRS', () => {
@@ -159,6 +161,10 @@ describe('useFSRS', () => {
       isLoading: false,
       isFetching: false,
       error: null,
+    } as never);
+
+    mockUseMutation.mockReturnValue({
+      mutateAsync: jest.fn(() => Promise.resolve(true)),
     } as never);
 
     mockStudyWordsFSRSService.updateStudyWord.mockResolvedValue(undefined);

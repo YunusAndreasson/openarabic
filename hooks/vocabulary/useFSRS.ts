@@ -1,4 +1,4 @@
-import { skipToken, useQuery, useQueryClient } from '@tanstack/react-query';
+import { skipToken, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Card } from 'ts-fsrs';
 import { show_diff_message, State } from 'ts-fsrs';
@@ -14,7 +14,12 @@ import { fsrsQueries } from '@/constants/queries';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { RootId } from '@/types/branded.types';
 import { ToastType } from '@/types/enums';
-import type { FSRSStateTracking, UseFSRSOptions, UseFSRSResult } from '@/types/fsrs.types';
+import type {
+  FSRSStateTracking,
+  FSRSWordUpdate,
+  UseFSRSOptions,
+  UseFSRSResult,
+} from '@/types/fsrs.types';
 import type { WordConfidence } from '@/types/review.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
@@ -42,6 +47,12 @@ interface FSRSCounters {
    */
   finishedWords: number;
   uniqueWords: Set<RootId>;
+}
+
+interface GradeWriteVariables {
+  userId: string;
+  rootId: RootId;
+  update: FSRSWordUpdate;
 }
 
 // Enhanced state tracking with more fields
@@ -109,6 +120,20 @@ export function useFSRS({
   });
 
   const queryClient = useQueryClient();
+
+  // Persists a single grade. Routed through useMutation (rather than calling
+  // the service directly) so this write — the whole point of a review session
+  // — inherits the app's mutation defaults (app/_layout.tsx): retry on
+  // transient failures, and networkMode 'online' pausing the write instead of
+  // dropping it when the device is offline, then auto-firing it the moment
+  // onlineManager sees the connection return. Still fire-and-forget: the
+  // caller below chains .catch()/.finally() on mutateAsync exactly as it did
+  // on the raw service call, so the card advance is never held up by it.
+  const gradeMutation = useMutation({
+    mutationKey: ['fsrs-words', 'grade'],
+    mutationFn: ({ userId: mutationUserId, rootId, update }: GradeWriteVariables) =>
+      studyWordsFSRSService.updateWordAndReview(mutationUserId, rootId, update),
+  });
 
   // The factory owns the due queryFn (conditional cooldown included) — the key
   // encodes the cooldown, so this never collides with differently-parameterized
@@ -508,8 +533,8 @@ export function useFSRS({
       // A failure still surfaces its toast; the session just isn't held hostage
       // to the response. Registered in pendingWritesRef so flushPendingWrites
       // can order a post-session refetch behind it.
-      const write = studyWordsFSRSService
-        .updateWordAndReview(userId, rootId, wordUpdateData)
+      const write = gradeMutation
+        .mutateAsync({ userId, rootId, update: wordUpdateData })
         .catch(error => {
           // handleError normalises via toError — never JSON.stringify a thrown
           // value into the message, that is how a whole payload ends up as a
@@ -534,6 +559,7 @@ export function useFSRS({
       getNextWordWithSpacing,
       updateSpacingCounters,
       refillWorkingSet,
+      gradeMutation,
     ],
   );
 

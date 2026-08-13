@@ -168,6 +168,15 @@ const queryClient = new QueryClient({
   },
 });
 
+// A mutation paused offline (networkMode 'online') is dehydrated with the rest
+// of the persisted cache on app close. Without resuming it here, it stays
+// dormant forever after a restart — the write it represents (e.g. a review
+// grade) is silently lost instead of firing the moment the app comes back up
+// with a connection.
+const resumePausedMutationsOnRestore = (): void => {
+  void queryClient.resumePausedMutations();
+};
+
 // Memoize navigation integration for Sentry
 const navigationIntegration = Sentry.reactNavigationIntegration();
 const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
@@ -748,7 +757,11 @@ export default Sentry.wrap(function RootLayout() {
     <GestureHandlerRootView style={styles.gestureRoot}>
       <Provider store={store}>
         <PersistGate loading={<View />} persistor={persistor}>
-          <PersistQueryClientProvider client={queryClient} persistOptions={PERSISTENCE_OPTIONS}>
+          <PersistQueryClientProvider
+            client={queryClient}
+            persistOptions={PERSISTENCE_OPTIONS}
+            onSuccess={resumePausedMutationsOnRestore}
+          >
             <AuthProvider>
               {/* initialMetrics seeds the insets synchronously from the native side,
                   so the first frame is laid out with real safe areas instead of
