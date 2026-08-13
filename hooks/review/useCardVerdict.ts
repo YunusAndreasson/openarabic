@@ -8,7 +8,7 @@ import {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import { VERDICT } from '@/constants/animation';
 import type { WordConfidence } from '@/types/review.types';
@@ -95,10 +95,16 @@ export interface CardVerdictResult {
    * reset needs no special case.
    */
   verdictShakePhase: SharedValue<number>;
-  /** Play the verdict for a grade that has just been committed. */
-  playVerdict: (confidence: WordConfidence) => void;
-  /** Clear the verdict — call when the card changes. */
-  resetVerdict: () => void;
+  /**
+   * Play the verdict for a grade that has just been committed.
+   *
+   * `cardKey` identifies the card this verdict belongs to — see the note on
+   * `activeKey` below for why a call with no key to check would be unsafe.
+   */
+  playVerdict: (confidence: WordConfidence, cardKey: string) => void;
+  /** Clear the verdict and mark `cardKey` as the card now on screen — call
+   *  when the card changes. */
+  resetVerdict: (cardKey: string) => void;
 }
 
 /**
@@ -120,6 +126,28 @@ export const useCardVerdict = (): CardVerdictResult => {
   const verdictTone = useSharedValue<number>(VERDICT_TONE.NONE);
   const verdictLevel = useSharedValue(0);
   const verdictShakePhase = useSharedValue(0);
+  /**
+   * The card the ring currently belongs to, as told by the last `resetVerdict`
+   * (the card component re-syncs this on every card change). `playVerdict`
+   * checks its own `cardKey` against this before painting, so a call for a
+   * card that isn't current any more is a no-op rather than a wrong paint.
+   *
+   * `playVerdict`/`resetVerdict` call straight through to their worklets (no
+   * `scheduleOnUI`). This check is what every other cross-thread/async
+   * handoff in this file's neighbours already carries (useReview's
+   * `lastProcessedWordId`, VoiceGradingProvider's `windowSeqRef`) and is
+   * cheap insurance against any reordering — but it is NOT what closes the
+   * card-comes-up-ringed-for-a-grade-it-never-got bug a background/foreground
+   * gap can cause. That bug traces to Reanimated not repainting a native view
+   * to match a shared value it mutated while the OS had suspended the UI
+   * thread's frame loop — the value reads back correct (confirmed with
+   * logging, from both a worklet and the JS thread) even while the screen
+   * still shows the stale paint. No amount of re-cancelling or re-setting
+   * from here fixes a paint a correct value isn't triggering; see
+   * `remountEpoch` in app/review.tsx, which forces a fresh component instance
+   * on every foreground return instead.
+   */
+  const activeKey = useSharedValue<string | null>(null);
 
   /**
    * The outcome haptic, fired on the frame the verdict crosses most of its
@@ -145,8 +173,15 @@ export const useCardVerdict = (): CardVerdictResult => {
   );
 
   const animateVerdict = useCallback(
-    (tone: number) => {
+    (tone: number, cardKey: string) => {
       'worklet';
+      // Stale: the card this verdict was meant for is no longer the one on
+      // screen (see activeKey above). A no-op, not a defensive clamp — there is
+      // nothing left on screen this outcome is about.
+      if (cardKey !== activeKey.get()) {
+        return;
+      }
+
       // A verdict already on the card is not replayed. The voice path marks a
       // mishear wrong the moment it is heard, and the learner's "No, I missed
       // it" then grades the same outcome — replaying would shake a card that is
@@ -201,31 +236,41 @@ export const useCardVerdict = (): CardVerdictResult => {
         ),
       );
     },
-    [verdictTone, verdictLevel, verdictShakePhase],
+    [verdictTone, verdictLevel, verdictShakePhase, activeKey],
   );
 
-  const clearVerdict = useCallback(() => {
-    'worklet';
-    // Cancel before assigning. Writing over a RUNNING animation cancels it and
-    // invokes its completion callback, which is how this file's neighbours have
-    // recursed before; cancelling first leaves nothing to re-enter.
-    cancelAnimation(verdictLevel);
-    cancelAnimation(verdictShakePhase);
-    verdictLevel.set(0);
-    verdictShakePhase.set(0);
-    verdictTone.set(VERDICT_TONE.NONE);
-  }, [verdictTone, verdictLevel, verdictShakePhase]);
+  const clearVerdict = useCallback(
+    (cardKey: string) => {
+      'worklet';
+      // Claim the card FIRST — a same-tick `animateVerdict` for this same key
+      // (a fresh grade on the card that just mounted) must still see itself as
+      // current, not raced out by its own reset.
+      activeKey.set(cardKey);
+      // Cancel before assigning. Writing over a RUNNING animation cancels it and
+      // invokes its completion callback, which is how this file's neighbours have
+      // recursed before; cancelling first leaves nothing to re-enter.
+      cancelAnimation(verdictLevel);
+      cancelAnimation(verdictShakePhase);
+      verdictLevel.set(0);
+      verdictShakePhase.set(0);
+      verdictTone.set(VERDICT_TONE.NONE);
+    },
+    [verdictTone, verdictLevel, verdictShakePhase, activeKey],
+  );
 
   const playVerdict = useCallback(
-    (confidence: WordConfidence) => {
-      scheduleOnUI(animateVerdict, TONE_FOR_CONFIDENCE[confidence]);
+    (confidence: WordConfidence, cardKey: string) => {
+      animateVerdict(TONE_FOR_CONFIDENCE[confidence], cardKey);
     },
     [animateVerdict],
   );
 
-  const resetVerdict = useCallback(() => {
-    scheduleOnUI(clearVerdict);
-  }, [clearVerdict]);
+  const resetVerdict = useCallback(
+    (cardKey: string) => {
+      clearVerdict(cardKey);
+    },
+    [clearVerdict],
+  );
 
   return { verdictTone, verdictLevel, verdictShakePhase, playVerdict, resetVerdict };
 };

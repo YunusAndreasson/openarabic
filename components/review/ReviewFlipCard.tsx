@@ -397,11 +397,20 @@ export function ReviewFlipCard({
   // lives outside this component, next to the intervals it labels — and the
   // verdict is exposed for the same reason: the screen owns which grades
   // actually commit, and only a committed grade has an outcome to show.
-  useImperativeHandle(ref, () => ({ commitTo, playVerdict, clearVerdict: resetVerdict }), [
-    commitTo,
-    playVerdict,
-    resetVerdict,
-  ]);
+  //
+  // playVerdict/resetVerdict are wrapped with the CURRENT `wordKey` here,
+  // rather than exposing useCardVerdict's raw functions, so the imperative
+  // caller (app/review.tsx) never has to know a card identity exists — see
+  // activeKey in useCardVerdict for why the animation needs it.
+  useImperativeHandle(
+    ref,
+    () => ({
+      commitTo,
+      playVerdict: (confidence: WordConfidence) => playVerdict(confidence, wordKey ?? ''),
+      clearVerdict: () => resetVerdict(wordKey ?? ''),
+    }),
+    [commitTo, playVerdict, resetVerdict, wordKey],
+  );
 
   // The flip: 0 = question face, 1 = answer face.
   //
@@ -511,8 +520,16 @@ export function ReviewFlipCard({
     flipProgress.set(0);
     // A miss holds its ring for the restudy hold, so unlike the drag offset the
     // verdict has no self-clearing animation — the new card has to clear it, or
-    // the word after a forgotten one arrives already marked red.
-    resetVerdict();
+    // the word after a forgotten one arrives already marked red. Passing
+    // `wordKey` also claims this card as the active one, so a `playVerdict`
+    // call for the card just left is recognised as stale and dropped instead
+    // of painting over this card (see activeKey in useCardVerdict). Note this
+    // is NOT what protects against the app being backgrounded mid-verdict —
+    // see the remount in app/review.tsx's `remountEpoch` for that; a
+    // shared-value reset here can be correct and still not repaint after a
+    // background/foreground gap, which is a Reanimated-level gap this effect
+    // cannot close by itself.
+    resetVerdict(wordKey ?? '');
   }, [wordKey, translateX, isAnimatingRef, resetVerdict, flipProgress]);
 
   const flashColors = useMemo(

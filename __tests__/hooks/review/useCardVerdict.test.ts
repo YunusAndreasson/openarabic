@@ -125,14 +125,15 @@ describe('useCardVerdict', () => {
 
   test('a grade sets its tone', () => {
     const { result } = renderHook(() => useCardVerdict());
+    act(() => result.current.resetVerdict('card-1'));
 
-    act(() => result.current.playVerdict('known'));
+    act(() => result.current.playVerdict('known', 'card-1'));
     expect(result.current.verdictTone.get()).toBe(VERDICT_TONE.CORRECT);
 
-    act(() => result.current.playVerdict('vague'));
+    act(() => result.current.playVerdict('vague', 'card-1'));
     expect(result.current.verdictTone.get()).toBe(VERDICT_TONE.ALMOST);
 
-    act(() => result.current.playVerdict('unknown'));
+    act(() => result.current.playVerdict('unknown', 'card-1'));
     expect(result.current.verdictTone.get()).toBe(VERDICT_TONE.WRONG);
   });
 
@@ -141,16 +142,17 @@ describe('useCardVerdict', () => {
   // thing that actually differs between a card that leaves and one that stays.
   test('a pass releases its verdict; a miss keeps one', () => {
     const { result } = renderHook(() => useCardVerdict());
+    act(() => result.current.resetVerdict('card-1'));
 
-    act(() => result.current.playVerdict('known'));
+    act(() => result.current.playVerdict('known', 'card-1'));
     expect(result.current.verdictLevel.get()).toBe(0);
 
-    act(() => result.current.playVerdict('vague'));
+    act(() => result.current.playVerdict('vague', 'card-1'));
     expect(result.current.verdictLevel.get()).toBe(0);
 
     // A forgotten card stays on screen for the restudy hold, so its ring has to
     // still be there while the learner studies it.
-    act(() => result.current.playVerdict('unknown'));
+    act(() => result.current.playVerdict('unknown', 'card-1'));
     expect(result.current.verdictLevel.get()).toBe(VERDICT.RESIDUAL);
   });
 
@@ -161,14 +163,15 @@ describe('useCardVerdict', () => {
   // at 1 (a fully spent wobble) and everything else at 0 (never started).
   test('only a miss runs the wince', () => {
     const { result } = renderHook(() => useCardVerdict());
+    act(() => result.current.resetVerdict('card-1'));
 
-    act(() => result.current.playVerdict('unknown'));
+    act(() => result.current.playVerdict('unknown', 'card-1'));
     expect(result.current.verdictShakePhase.get()).toBe(1);
 
-    act(() => result.current.playVerdict('known'));
+    act(() => result.current.playVerdict('known', 'card-1'));
     expect(result.current.verdictShakePhase.get()).toBe(0);
 
-    act(() => result.current.playVerdict('vague'));
+    act(() => result.current.playVerdict('vague', 'card-1'));
     expect(result.current.verdictShakePhase.get()).toBe(0);
   });
 
@@ -177,12 +180,13 @@ describe('useCardVerdict', () => {
   // is already red and buzz one conclusion twice.
   test('an outcome already showing is not replayed', () => {
     const { result } = renderHook(() => useCardVerdict());
+    act(() => result.current.resetVerdict('card-1'));
 
-    act(() => result.current.playVerdict('unknown'));
+    act(() => result.current.playVerdict('unknown', 'card-1'));
     // Prove the second call is a no-op by moving the value first: a replay
     // would drive it back to RESIDUAL, a suppressed one leaves it alone.
     act(() => result.current.verdictLevel.set(0.5));
-    act(() => result.current.playVerdict('unknown'));
+    act(() => result.current.playVerdict('unknown', 'card-1'));
 
     expect(result.current.verdictLevel.get()).toBe(0.5);
     expect(result.current.verdictTone.get()).toBe(VERDICT_TONE.WRONG);
@@ -193,11 +197,12 @@ describe('useCardVerdict', () => {
   // verdict legitimately replaces another mid-card.
   test('a different outcome replaces the one showing', () => {
     const { result } = renderHook(() => useCardVerdict());
+    act(() => result.current.resetVerdict('card-1'));
 
-    act(() => result.current.playVerdict('unknown'));
+    act(() => result.current.playVerdict('unknown', 'card-1'));
     expect(result.current.verdictTone.get()).toBe(VERDICT_TONE.WRONG);
 
-    act(() => result.current.playVerdict('known'));
+    act(() => result.current.playVerdict('known', 'card-1'));
 
     expect(result.current.verdictTone.get()).toBe(VERDICT_TONE.CORRECT);
     // The pass decays away as the card leaves, unlike the miss it replaced.
@@ -209,14 +214,49 @@ describe('useCardVerdict', () => {
   // marked red.
   test('resetVerdict clears a held miss', () => {
     const { result } = renderHook(() => useCardVerdict());
+    act(() => result.current.resetVerdict('card-1'));
 
-    act(() => result.current.playVerdict('unknown'));
+    act(() => result.current.playVerdict('unknown', 'card-1'));
     expect(result.current.verdictLevel.get()).toBe(VERDICT.RESIDUAL);
 
-    act(() => result.current.resetVerdict());
+    act(() => result.current.resetVerdict('card-2'));
 
     expect(result.current.verdictTone.get()).toBe(VERDICT_TONE.NONE);
     expect(result.current.verdictLevel.get()).toBe(0);
     expect(result.current.verdictShakePhase.get()).toBe(0);
+  });
+
+  // The staleness guard this proves: a playVerdict call is only ever safe to
+  // apply if it still names the card that is actually current. On device this
+  // matters when a background/foreground gap reorders a queued verdict behind
+  // the next card's own reset — observed as a later, ungraded card coming up
+  // ringed and labelled for a grade it was never given. That specific timing
+  // isn't reproducible under the reanimated mock's synchronous scheduleOnUI
+  // (see the jest.mock above), so this test exercises the guard's LOGIC
+  // directly: call the reset for a later card, then attempt to paint the
+  // earlier one.
+  test('a verdict queued for a card that has since been left behind does not paint', () => {
+    const { result } = renderHook(() => useCardVerdict());
+    act(() => result.current.resetVerdict('card-1'));
+
+    // The card advances (a new word mounts) BEFORE the queued playVerdict for
+    // card-1 is drained — the exact ordering a background/foreground gap
+    // produces, simulated here by simply calling resetVerdict first.
+    act(() => result.current.resetVerdict('card-2'));
+    act(() => result.current.playVerdict('known', 'card-1'));
+
+    expect(result.current.verdictTone.get()).toBe(VERDICT_TONE.NONE);
+    expect(result.current.verdictLevel.get()).toBe(0);
+  });
+
+  // The normal, same-tick case must still work: a grade for the card that is
+  // ACTUALLY current is never treated as stale.
+  test('a verdict for the current card still paints', () => {
+    const { result } = renderHook(() => useCardVerdict());
+    act(() => result.current.resetVerdict('card-1'));
+
+    act(() => result.current.playVerdict('known', 'card-1'));
+
+    expect(result.current.verdictTone.get()).toBe(VERDICT_TONE.CORRECT);
   });
 });

@@ -1,7 +1,7 @@
 import { useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { AppState, Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import Animated, { FadeIn, FadeOut, LayoutAnimationConfig } from 'react-native-reanimated';
@@ -203,6 +203,75 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
    * swipe, and that difference is the affordance.
    */
   const cardRef = useRef<ReviewCardHandle>(null);
+
+  /**
+   * Bumped when the app returns to the foreground AFTER backgrounding while a
+   * grade was actively committing, and folded into both the card's `key`
+   * below and the action band's `LayoutAnimationConfig` key further down
+   * (the actual grade buttons' parent — a SEPARATE wrapper `ReviewFlipCard`'s
+   * own remount does not reach) to force a full remount of each.
+   *
+   * Root cause, confirmed against Reanimated's own issue tracker, not just
+   * this app's behaviour: a Reanimated animation (a shared-value `withTiming`/
+   * `withSequence`, OR a layout animation's `entering`/`exiting`) that starts
+   * or is mid-flight while the OS has suspended the UI thread's frame loop —
+   * which backgrounding does — can leave Reanimated's view state desynced
+   * from Fabric's actual mounting layer once the thread resumes. This is a
+   * documented, currently-open class of hazard in react-native-reanimated
+   * (github.com/software-mansion/react-native-reanimated/issues/7493 — fixed
+   * there for the crash a layout-animation race caused, by skipping
+   * not-yet-mounted views; the underlying "queued animation start racing a
+   * blocked UI thread's mounting work" mechanism is not specific to that one
+   * crash and is exactly what this app hits, non-crashing, as stale paint).
+   *
+   * Observed on device from the shared-value half of it: grade a card "Knew
+   * it", background the app within the verdict ring's beat (`useCardVerdict`,
+   * its ignite/decay `withSequence` is still running), wait, resume — the
+   * NEXT card comes up ringed green and labelled "Knew it" for a grade it was
+   * never given, and no amount of re-grading, re-revealing, or waiting clears
+   * it. Traced with logging: the underlying shared value DOES correctly read
+   * back as reset (0 / NONE, confirmed from both a worklet and the JS
+   * thread) — cancelling more aggressively or re-issuing the reset (both
+   * tried) cannot fix a paint that a correct value isn't triggering. The
+   * action band's OWN `entering`/`exiting` (below) is the layout-animation
+   * half of the same hazard class, on the actual button-holding view.
+   *
+   * A fresh component instance has no native view to have stale mount state
+   * on — it mounts already reflecting current props and shared-value INITIAL
+   * values.
+   *
+   * Gated on `isUpdating` at the moment backgrounding STARTED (not read at
+   * resume — by then a grade begun before backgrounding has near-certainly
+   * already finished, per the JS-thread watchdog in useReview.commitGrade,
+   * which fires even while backgrounded) rather than remounting on every
+   * foreground return: an unconditional remount replaces this bug with a
+   * different one — the card's OWN flip re-paints wrong on a fresh mount
+   * created during the same resume window (confirmed on device: reveal a
+   * card, background with nothing grading, resume — the question face shows
+   * despite `revealed` being true and the grade bar rendering correctly).
+   * Remounting is a real fix for "mount state got lost" only when something
+   * was actually mid-transition; gating on it costs nothing on the vastly
+   * more common "just switched apps" case, which never had anything to lose.
+   */
+  const [remountEpoch, setRemountEpoch] = useState(0);
+  const wasGradingRef = useRef(false);
+  const isUpdatingRef = useRef(isUpdating);
+  useEffect(() => {
+    isUpdatingRef.current = isUpdating;
+  });
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextState => {
+      if (nextState === 'background') {
+        wasGradingRef.current = isUpdatingRef.current;
+        return;
+      }
+      if (nextState !== 'active' || !wasGradingRef.current) return;
+      wasGradingRef.current = false;
+      setRemountEpoch(epoch => epoch + 1);
+    });
+    return () => subscription.remove();
+  }, []);
+
   const gradeWithVerdict = useCallback(
     (confidence: WordConfidence, opts: { fromVoice?: boolean; skipBeat?: boolean } = {}) => {
       if (!grade(confidence, opts)) return;
@@ -395,6 +464,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
 
       <View style={baseStyles.cardArea}>
         <ReviewFlipCard
+          key={remountEpoch}
           ref={cardRef}
           wordKey={currentWordKey}
           word={currentSentence.wordForm}
@@ -485,7 +555,24 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
             "Tap to continue" reappearance, which the restudy branch solves by
             having no exit at all (it only ever leaves via an advance). */}
         <View style={baseStyles.actionSlot}>
-          <LayoutAnimationConfig key={currentWordKey} skipEntering skipExiting>
+          {/* `remountEpoch` folded in alongside `currentWordKey` (see its own
+              comment above `cardRef`): this wrapper's branch swaps run on
+              Reanimated layout animations (`entering`/`exiting` below) exactly
+              like the confirmed-real Reanimated/Fabric hazard that motivated
+              `remountEpoch` — a layout-animation start queued while the UI
+              thread is blocked (backgrounding does this) can desync from the
+              Fabric mounting layer once the thread resumes (see
+              github.com/software-mansion/react-native-reanimated/issues/7493,
+              fixed for the crash it caused there but the underlying
+              stale-mount-state class is not specific to that one crash). This
+              wrapper is the actual grade buttons' parent — `ReviewFlipCard`'s
+              own remount does not reach it — so it needs the same fresh start
+              on a backgrounding-interrupted resume. */}
+          <LayoutAnimationConfig
+            key={`${currentWordKey}-${remountEpoch}`}
+            skipEntering
+            skipExiting
+          >
             {restudying ? (
               // A forgotten card holds here instead of advancing. The whole card
               // is the tap target (see onRestudyContinue on ReviewFlipCard), so
