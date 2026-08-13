@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { cancelAnimation, useSharedValue, withTiming } from 'react-native-reanimated';
 
+import { BaseCard } from '@/components/common';
 import { ThemedText } from '@/components/ThemedText';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
@@ -102,11 +103,6 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
 
   // Dynamic styles (React Compiler auto-memoizes)
   const dynamicStyles = {
-    profileCard: {
-      backgroundColor: colors.elevation1,
-      ...LAYOUT.ELEVATION.SMALL,
-      shadowColor: colors.shadow, // Override elevation shadowColor with theme color
-    },
     photoRing: {
       width: PROFILE_PHOTO_SIZE + 4,
       height: PROFILE_PHOTO_SIZE + 4,
@@ -142,8 +138,17 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
   };
 
   return (
-    <Animated.View style={[styles.profileCard, dynamicStyles.profileCard, containerAnimatedStyle]}>
-      <View style={styles.profileContent}>
+    // The card is BaseCard's; the Animated.View outside it exists only to carry
+    // the photo-load fade. This used to hand-roll the whole surface — radius,
+    // overflow, elevation1 fill and a raw LAYOUT.ELEVATION.SMALL spread, which
+    // skipped the theme-aware wrapper and made it one of only two cards in the
+    // app still casting a shadow in dark mode.
+    <Animated.View style={containerAnimatedStyle}>
+      <BaseCard
+        surface="elevation1"
+        style={styles.profileCard}
+        contentStyle={styles.profileContent}
+      >
         {/* Profile Photo */}
         <Pressable
           accessibilityRole="button"
@@ -200,7 +205,7 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
             </ThemedText>
           )}
         </View>
-      </View>
+      </BaseCard>
     </Animated.View>
   );
 }
@@ -208,16 +213,16 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
 AccountBadge.displayName = 'AccountBadge';
 
 const styles = StyleSheet.create({
+  // BaseCard supplies the radius, the surface and the clipping; these are only
+  // the card's outer margin and its inner padding.
   profileCard: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
     marginBottom: LAYOUT.SPACING.MEDIUM,
-    overflow: 'hidden',
   },
   profileContent: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
   },
   photoContainer: {
     marginRight: LAYOUT.SPACING.MEDIUM,

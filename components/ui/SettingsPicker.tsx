@@ -130,8 +130,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     gap: LAYOUT.SPACING.MEDIUM,
   },
+  // OptionCard's BaseCard supplies the radius; this is only its box.
   optionCard: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     marginBottom: 0,
     minHeight: MIN_TOUCH_TARGET.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,

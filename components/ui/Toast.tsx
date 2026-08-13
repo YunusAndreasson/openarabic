@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/ThemedText';
 import { DEFAULT_TOAST_DURATION, TIMING_CONFIG } from '@/constants/animation';
 import { FONTS } from '@/constants/fonts';
+import { getElevation } from '@/constants/elevation';
 import { LAYOUT, LINE_HEIGHT_MULTIPLIERS, SCREEN_WIDTH } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { ToastType } from '@/types/enums';
@@ -46,7 +47,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     paddingVertical: LAYOUT.SPACING.SMALL + LAYOUT.SPACING.TINY, // 12px — compact pill
-    ...LAYOUT.ELEVATION.LARGE,
   },
   toastContainer: {
     alignItems: 'center',
@@ -137,11 +137,11 @@ export function Toast({
       <View
         style={[
           styles.toast,
+          getElevation(colors, 'MODAL'),
           {
             maxWidth: maxToastWidth,
             backgroundColor,
-            shadowColor: colors.shadow,
-            borderWidth: 1,
+            borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
             borderColor: colors.toastBorder,
           },
         ]}

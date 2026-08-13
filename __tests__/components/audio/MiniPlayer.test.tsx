@@ -53,8 +53,10 @@ jest.mock('@/components/ui/EnhancedImage', () => ({
   },
 }));
 
-// Mock ProgressBar
+// Mock ProgressBar. BaseCard stays real — it owns the miniplayer's surface, and
+// the "solid elevated surface" assertions below are about exactly that.
 jest.mock('@/components/common', () => ({
+  BaseCard: require('@/components/common/BaseCard').BaseCard,
   ProgressBar: ({ progress }: { progress: number }) => {
     const { View } = require('react-native');
     return <View testID="progress-bar" accessibilityValue={{ now: progress }} />;

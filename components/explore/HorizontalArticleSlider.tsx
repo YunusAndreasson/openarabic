@@ -23,13 +23,13 @@ const CONTENT_HEIGHT_UNITS = 5.5; // multiples of LAYOUT.SPACING.XXXLARGE
 const BASE_CONTENT_HEIGHT = LAYOUT.SPACING.XXXLARGE * CONTENT_HEIGHT_UNITS;
 const CARD_HEIGHT = LAYOUT.CARD.HEIGHT.LIST_ITEM + BASE_CONTENT_HEIGHT;
 
-// Card style override: BaseCard already applies background, shadowColor, and the
-// MEDIUM elevation. Slider cards want SUBTLE elevation instead and need to fill
-// their fixed-dimension parent container — declared once at module scope.
+// Slider cards fill their fixed-dimension parent container — declared once at
+// module scope. The elevation step-down is an `elevation` prop now; it used to
+// be a raw token spread into this override, which skipped the theme-aware
+// wrapper entirely.
 const SLIDER_CARD_STYLE = {
   width: '100%',
   height: '100%',
-  ...LAYOUT.ELEVATION.SUBTLE,
 } as const;
 
 /**
@@ -58,6 +58,7 @@ const HorizontalArticleSliderComponent: FC<HorizontalArticleSliderProps> = ({ ar
             <ArticleCard
               article={article}
               {...buildArticleCardProps(article)}
+              elevation="hairline"
               style={SLIDER_CARD_STYLE}
               testID={`slider-article-${article.id}`}
               isFeaturedArticle={true}

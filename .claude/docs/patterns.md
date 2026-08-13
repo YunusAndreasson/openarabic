@@ -97,13 +97,17 @@ article.article_sentences?.forEach(sentence => {
 
 ## Performance Optimization Patterns
 
-### 1. React.memo for Component Memoization
+### 1. Don't hand-write memoization
 
-```tsx
-const ExpensiveComponent = React.memo(({ data }: { data: string[] }) => {
-  return <ComplexChart data={data} />;
-});
-```
+The React Compiler is enabled (`app.json` → `experiments.reactCompiler`, wired
+by `babel-preset-expo`). It memoizes values, handlers and JSX automatically, so
+`React.memo`, `useMemo` and `useCallback` are redundant in new code — and
+manual memoization the compiler cannot validate makes it **bail out of
+optimizing that component entirely**, which costs more than it saves. That is
+why `BaseCard`, a primitive that runs once per list row, has none.
+
+Existing `memo()` wrappers are being left alone rather than swept; don't add
+new ones without a measurement that says the compiler missed.
 
 ### 2. Extract Static Constants
 
@@ -119,22 +123,21 @@ const STATIC_STYLES = StyleSheet.create({
 const MyComponent = () => <View style={STATIC_STYLES.container} />;
 ```
 
-### 3. useMemo for Expensive Calculations
+### 3. Cache per-theme values at module scope, not per component
 
-```tsx
-const processedData = useMemo(
-  () => items.map(item => expensiveProcessing(item)).filter(Boolean),
-  [items],
-);
-```
+A value derived from the theme is the same for every component using that
+theme, so it belongs in a module-level cache keyed by the theme's colour object
+— not in a hook that recomputes it once per instance. `getElevation`
+(`constants/elevation.ts`) and `BaseCard`'s surface cache are the reference
+implementations; both hand back an identity-stable object, so a list of fifty
+rows shares one.
 
-### 4. useCallback for Event Handlers
+### 4. Only subscribe to the theme once
 
-```tsx
-const handlePress = useCallback(() => {
-  onPress();
-}, [onPress]);
-```
+`useColors()` and `useIsDarkMode()` are each a `use(ReactReduxContext)` plus a
+`useColorScheme()` plus a store subscription. Calling both — or calling
+`useColors()` in a component whose hook also calls it — multiplies that per
+instance. Derive what you need from a single `useColors()` result.
 
 ## ESLint Rules
 

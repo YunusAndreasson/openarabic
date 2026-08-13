@@ -2,7 +2,8 @@ import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { TIMING_CONSTANTS } from '@/constants/animation';
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { getElevation } from '@/constants/elevation';
+import { MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { ReanimatedCSSAnimationStyle } from '@/types/ui/base.types';
 
@@ -43,7 +44,7 @@ export function PulsatingLoader({ size = DEFAULT_LOADER_SIZE }: PulsatingLoaderP
     <View style={[styles.container, { width: size, height: size }]}>
       <Animated.View
         style={[
-          styles.loader,
+          getElevation(colors, 'HAIRLINE'),
           pulsateStyle,
           {
             width: size,
@@ -51,7 +52,6 @@ export function PulsatingLoader({ size = DEFAULT_LOADER_SIZE }: PulsatingLoaderP
             borderRadius: size / 2,
             borderWidth: Math.max(MIN_BORDER_WIDTH, size * BORDER_WIDTH_SCALE), // Scales with size, 3px minimum
             borderColor: colors.tint,
-            shadowColor: colors.shadow, // Theme-aware shadow color
           },
         ]}
       />
@@ -65,9 +65,5 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  loader: {
-    // Shadow for depth (Material Design elevation)
-    ...LAYOUT.ELEVATION.SUBTLE,
   },
 });

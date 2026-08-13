@@ -41,30 +41,12 @@ export const createTextStyleBase = (fontSize: number, additionalStyles: TextStyl
     ...additionalStyles,
   });
 
-/**
- * Interface for batched color values used in text styling
- */
-export interface BatchedTextColors {
-  arabicText: string;
-  shadow: string;
-  englishText: string;
-}
-
-/**
- * Creates complete text style with colors and elevation
- * @param fontSize - The font size for the text
- * @param colors - Object containing color values
- * @returns Complete text style object
- */
-export const createTextStyle = (fontSize: number, colors: BatchedTextColors): TextStyle => {
-  const baseStyle = createTextStyleBase(fontSize);
-  return {
-    ...baseStyle,
-    color: colors.arabicText,
-    ...LAYOUT.ELEVATION.SMALL,
-    shadowColor: colors.shadow,
-  };
-};
+// `createTextStyle` used to live here: `createTextStyleBase` plus a colour and a
+// spread of the SMALL elevation token. It had no callers, and the spread could
+// not have worked if it had — `shadowOffset`/`shadowOpacity`/`shadowRadius` are
+// View style props, and Text takes `textShadow*`. WordDisplay's comment about
+// there being no drop shadow on the hero glyphs describes a shadow that was
+// never drawn.
 
 // `getSelectedStyle` used to live here, returning a `borderBottomWidth` for a
 // word in the study list. It was removed with the marker rewrite: SkiaArabicWord

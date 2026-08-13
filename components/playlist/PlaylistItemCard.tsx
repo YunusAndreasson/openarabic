@@ -86,7 +86,6 @@ export const PlaylistItemCard: FC<PlaylistItemCardProps> = memo(
 
         <View style={styles.cardWrapper}>
           <BaseCard
-            shadowSize="small"
             onPress={editMode ? undefined : onPress}
             onPressIn={editMode ? undefined : onPressIn}
           >

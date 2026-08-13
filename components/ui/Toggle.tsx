@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
+import { getElevation } from '@/constants/elevation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useToggleAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
@@ -60,14 +61,13 @@ export function Toggle({ value, onValueChange, testID, accessibilityLabel }: Tog
   ];
 
   const handleStyle = [
-    styles.handle,
     {
       width: HANDLE_SIZE,
       height: HANDLE_SIZE,
       borderRadius: HANDLE_SIZE / 2,
       backgroundColor: value ? colors.elevation3 : colors.elevation2,
-      shadowColor: colors.shadow,
     },
+    getElevation(colors, 'HAIRLINE'),
   ];
 
   return (
@@ -95,9 +95,6 @@ const styles = StyleSheet.create({
   container: {
     justifyContent: 'center',
     paddingHorizontal: LAYOUT.SPACING.TINY,
-  },
-  handle: {
-    ...LAYOUT.ELEVATION.SUBTLE,
   },
   toggleTrack: {
     alignItems: 'flex-start',

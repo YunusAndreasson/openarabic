@@ -4,6 +4,7 @@ import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { FONTS } from '@/constants/fonts';
+import { getElevation } from '@/constants/elevation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { PRESS_ANIMATION_CARD } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
@@ -32,12 +33,12 @@ export const ChartTooltipData = memo<ChartTooltipProps>(({ tooltip, maxWidth }) 
     <View
       style={[
         styles.tooltip,
+        getElevation(colors, 'HAIRLINE'),
         {
           left: Math.max(8, Math.min(tooltip.x - 40, maxWidth - 88)),
           top: Math.max(8, tooltip.y),
           backgroundColor: colors.elevation3,
           borderColor: colors.wordTooltipBorder, // Distinct from elevation3 bg (border === elevation3 in dark mode)
-          shadowColor: colors.shadow,
         },
       ]}
     >
@@ -179,7 +180,6 @@ export const useChartTooltip = () => {
 
 const styles = StyleSheet.create({
   tooltip: {
-    ...LAYOUT.ELEVATION.SUBTLE,
     borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
     padding: LAYOUT.SPACING.SMALL,

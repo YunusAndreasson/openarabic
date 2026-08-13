@@ -101,7 +101,7 @@ export const ArabicFontSelector: FC = () => {
 
   return (
     <View style={styles.container}>
-      <BaseCard shadowSize="small" style={styles.sliderCard}>
+      <BaseCard style={styles.sliderCard}>
         <View style={styles.sliderHeader}>
           <ThemedText type="body">{STRINGS.FONT_SIZE}</ThemedText>
           <ThemedText colorName="textTertiary" type="caption">

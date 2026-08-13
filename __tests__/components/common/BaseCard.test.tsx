@@ -3,6 +3,13 @@
  *
  * Tests foundation card component used throughout the app.
  *
+ * No style assertions here. `StyleSheet.flatten` is the identity function under
+ * this jest setup, so anything asserted about a resolved style passes whatever
+ * the component actually rendered. Surface, elevation and border are verified on
+ * device instead; what is worth locking down in jest is the STRUCTURE each prop
+ * combination produces — which branch renders, and what the accessibility tree
+ * looks like.
+ *
  * Modern Jest 29 Patterns:
  * - ✅ @jest/globals explicit imports
  */
@@ -23,17 +30,12 @@ jest.mock('@/hooks/theme/useColors', () =>
   require('@/__tests__/helpers/componentMocks').useColorsMockFactory(),
 );
 
-jest.mock('@/hooks/theme/useThemeDetection', () => ({
-  useIsDarkMode: () => false,
-}));
-
 jest.mock('@/hooks/animations', () =>
   require('@/__tests__/helpers/componentMocks').createAnimationHooksMock(),
 );
 
 describe('BaseCard', () => {
   const mockOnPress = jest.fn();
-  const mockOnLongPress = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -57,63 +59,41 @@ describe('BaseCard', () => {
       );
       expect(getByTestId('my-card')).toBeTruthy();
     });
-
-    test('renders loading state without children', () => {
-      const { queryByText, getByTestId } = render(
-        <BaseCard testID="loading-card" loading>
-          <Text>Hidden Content</Text>
-        </BaseCard>,
-      );
-      expect(getByTestId('loading-card')).toBeTruthy();
-      // Content should not be visible during loading
-      expect(queryByText('Hidden Content')).toBeNull();
-    });
   });
 
-  describe('Shadow Sizes', () => {
-    test('renders with default medium shadow', () => {
-      const { toJSON } = render(
-        <BaseCard>
+  describe('Axes', () => {
+    // These render-without-throwing checks are the honest limit of what jest can
+    // see: the axes resolve to style values, and style assertions are vacuous
+    // here. They do catch a bad role -> token mapping, which would throw on the
+    // lookup.
+    test.each(['none', 'hairline', 'card', 'floating', 'modal'] as const)(
+      'renders with %s elevation',
+      elevation => {
+        const { getByTestId } = render(
+          <BaseCard testID="card" elevation={elevation}>
+            <Text>Content</Text>
+          </BaseCard>,
+        );
+        expect(getByTestId('card')).toBeTruthy();
+      },
+    );
+
+    test.each(['card', 'elevation1', 'elevation2'] as const)('renders with %s surface', surface => {
+      const { getByTestId } = render(
+        <BaseCard testID="card" surface={surface}>
           <Text>Content</Text>
         </BaseCard>,
       );
-      expect(toJSON()).toBeTruthy();
+      expect(getByTestId('card')).toBeTruthy();
     });
 
-    test('renders with subtle shadow', () => {
-      const { toJSON } = render(
-        <BaseCard shadowSize="subtle">
+    test('renders bordered', () => {
+      const { getByTestId } = render(
+        <BaseCard testID="card" bordered>
           <Text>Content</Text>
         </BaseCard>,
       );
-      expect(toJSON()).toBeTruthy();
-    });
-
-    test('renders with small shadow', () => {
-      const { toJSON } = render(
-        <BaseCard shadowSize="small">
-          <Text>Content</Text>
-        </BaseCard>,
-      );
-      expect(toJSON()).toBeTruthy();
-    });
-
-    test('renders with large shadow', () => {
-      const { toJSON } = render(
-        <BaseCard shadowSize="large">
-          <Text>Content</Text>
-        </BaseCard>,
-      );
-      expect(toJSON()).toBeTruthy();
-    });
-
-    test('renders with no shadow', () => {
-      const { toJSON } = render(
-        <BaseCard shadowSize="none">
-          <Text>Content</Text>
-        </BaseCard>,
-      );
-      expect(toJSON()).toBeTruthy();
+      expect(getByTestId('card')).toBeTruthy();
     });
   });
 
@@ -129,81 +109,119 @@ describe('BaseCard', () => {
       expect(mockOnPress).toHaveBeenCalledTimes(1);
     });
 
-    test('calls onLongPress when long pressed', () => {
+    test('a repeat press inside the lock window fires once', () => {
       const { getByTestId } = render(
-        <BaseCard testID="long-press-card" onLongPress={mockOnLongPress}>
-          <Text>Long Press Me</Text>
+        <BaseCard testID="pressable-card" onPress={mockOnPress}>
+          <Text>Press Me</Text>
         </BaseCard>,
       );
 
-      fireEvent(getByTestId('long-press-card'), 'longPress');
-      expect(mockOnLongPress).toHaveBeenCalledTimes(1);
+      const card = getByTestId('pressable-card');
+      fireEvent.press(card);
+      fireEvent.press(card);
+
+      expect(mockOnPress).toHaveBeenCalledTimes(1);
     });
 
-    test('does not render Pressable when no press handlers', () => {
+    test('a static card renders no pressable', () => {
       const { getByTestId } = render(
         <BaseCard testID="static-card">
           <Text>Static Content</Text>
         </BaseCard>,
       );
-      // Card should render but not be pressable
-      expect(getByTestId('static-card')).toBeTruthy();
-    });
-  });
 
-  describe('Disabled State', () => {
-    test('renders with disabled opacity', () => {
-      const { toJSON } = render(
-        <BaseCard disabled onPress={mockOnPress}>
-          <Text>Disabled Card</Text>
-        </BaseCard>,
-      );
-      expect(toJSON()).toBeTruthy();
+      // The whole point of the static branch: no Pressable, and therefore none
+      // of the press engine's hooks. `onPress` being absent from the host node
+      // is what proves it took that branch.
+      expect(getByTestId('static-card').props.onStartShouldSetResponder).toBeUndefined();
     });
 
-    test('passes disabled prop to Pressable', () => {
-      // Note: fireEvent.press bypasses native disabled behavior
-      // This test verifies the structure renders correctly when disabled
+    test('does not fire onPress when disabled', () => {
       const { getByTestId } = render(
         <BaseCard testID="disabled-card" disabled onPress={mockOnPress}>
           <Text>Disabled</Text>
         </BaseCard>,
       );
 
-      // Component renders with disabled state (opacity applied)
-      expect(getByTestId('disabled-card')).toBeTruthy();
+      fireEvent.press(getByTestId('disabled-card'));
+      expect(mockOnPress).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Accessibility', () => {
+    test('a pressable card defaults to the button role', () => {
+      const { getByTestId } = render(
+        <BaseCard testID="pressable-card" onPress={mockOnPress}>
+          <Text>Press Me</Text>
+        </BaseCard>,
+      );
+
+      expect(getByTestId('pressable-card').props.accessibilityRole).toBe('button');
+    });
+
+    test('an explicit role wins over the button default', () => {
+      const { getByTestId } = render(
+        <BaseCard
+          testID="option-card"
+          accessibilityRole="radio"
+          accessibilityState={{ selected: true }}
+          onPress={mockOnPress}
+        >
+          <Text>Option</Text>
+        </BaseCard>,
+      );
+
+      const card = getByTestId('option-card');
+      expect(card.props.accessibilityRole).toBe('radio');
+      expect(card.props.accessibilityState).toMatchObject({ selected: true });
+    });
+
+    test('a static card keeps its accessibility props', () => {
+      // These used to be dropped: they were only ever spread onto the
+      // `Pressable`, so a labelled card with no `onPress` announced nothing.
+      const { getByTestId } = render(
+        <BaseCard
+          testID="static-card"
+          accessibilityLabel="Reading progress"
+          accessibilityRole="summary"
+        >
+          <Text>Content</Text>
+        </BaseCard>,
+      );
+
+      const card = getByTestId('static-card');
+      expect(card.props.accessibilityLabel).toBe('Reading progress');
+      expect(card.props.accessibilityRole).toBe('summary');
+    });
+
+    test('a static card has no implicit button role', () => {
+      const { getByTestId } = render(
+        <BaseCard testID="static-card">
+          <Text>Content</Text>
+        </BaseCard>,
+      );
+
+      expect(getByTestId('static-card').props.accessibilityRole).toBeUndefined();
     });
   });
 
   describe('Custom Styling', () => {
     test('accepts custom style prop', () => {
-      const { toJSON } = render(
-        <BaseCard style={{ marginTop: 20 }}>
+      const { getByTestId } = render(
+        <BaseCard testID="card" style={{ marginTop: 20 }}>
           <Text>Styled Card</Text>
         </BaseCard>,
       );
-      expect(toJSON()).toBeTruthy();
+      expect(getByTestId('card')).toBeTruthy();
     });
 
     test('accepts custom contentStyle prop', () => {
-      const { toJSON } = render(
+      const { getByText } = render(
         <BaseCard contentStyle={{ paddingHorizontal: 24 }}>
           <Text>Custom Content Style</Text>
         </BaseCard>,
       );
-      expect(toJSON()).toBeTruthy();
-    });
-  });
-
-  describe('Press Animation', () => {
-    test('has press animation styles applied', () => {
-      const { toJSON } = render(
-        <BaseCard onPress={mockOnPress}>
-          <Text>Animated Card</Text>
-        </BaseCard>,
-      );
-      // Animation styles are applied via reanimated
-      expect(toJSON()).toBeTruthy();
+      expect(getByText('Custom Content Style')).toBeTruthy();
     });
   });
 });

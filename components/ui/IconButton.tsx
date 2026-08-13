@@ -5,6 +5,7 @@ import { Pressable } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { PRESS_SCALE } from '@/constants/animation';
+import { getElevation } from '@/constants/elevation';
 import { LAYOUT } from '@/constants/layout';
 import { ICON_BUTTON_SIZES, type IconButtonSize } from '@/constants/iconButton';
 import { useColors } from '@/hooks/theme/useColors';
@@ -133,8 +134,7 @@ export const IconButton: FC<IconButtonProps> = ({
       <Animated.View
         style={[
           config.container,
-          LAYOUT.ELEVATION.SUBTLE,
-          { shadowColor: colors.shadow },
+          getElevation(colors, 'HAIRLINE'),
           animatedStyle,
           {
             backgroundColor: resolvedBackgroundColor,

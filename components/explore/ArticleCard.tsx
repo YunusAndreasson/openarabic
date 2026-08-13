@@ -12,7 +12,7 @@ import { getArticleRoute } from '@/constants/routes';
 import { useArticlePrefetch } from '@/hooks/articles/useArticlePrefetch';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
-import type { ArticleCardProps as BaseArticleCardProps } from '@/types/ui/card.types';
+import type { BaseCardProps } from '@/types/ui/card.types';
 import { getArticleMetadata } from '@/utils/stringUtils';
 
 // Static constants - computed once at module load
@@ -24,9 +24,12 @@ const GRADIENT_HEIGHT = Math.round(IMAGE_HEIGHT * 0.6);
 const GRADIENT_OVERSHOOT = 2;
 
 type ArticleCardProps = Omit<
-  BaseArticleCardProps,
-  'variant' | 'onPress' | 'onLongPress' | 'loading' | 'disabled' | 'shadowSize' | 'contentStyle'
+  BaseCardProps,
+  'bordered' | 'contentStyle' | 'disabled' | 'onPress' | 'surface'
 > & {
+  title: string;
+  imageUrl: string;
+  summary: string;
   article: Article;
   isFeaturedArticle?: boolean;
 };
@@ -83,6 +86,12 @@ export function ArticleCard({
   testID,
   article,
   isFeaturedArticle = false,
+  // The hero article card is the one surface on Explore meant to sit above the
+  // feed rather than in it. It used to get this by riding BaseCard's old
+  // default, which every other call site overrode back down — so it was never a
+  // decision. The horizontal slider steps it back down to `hairline`, which it
+  // used to do by spreading a raw elevation token into `style`.
+  elevation = 'floating',
 }: ArticleCardProps) {
   const colors = useColors();
   const router = useRouter();
@@ -104,7 +113,13 @@ export function ArticleCard({
   }, [prefetchArticle, article.id]);
 
   return (
-    <BaseCard style={style} testID={testID} onPress={handlePress} onPressIn={handlePressIn}>
+    <BaseCard
+      elevation={elevation}
+      style={style}
+      testID={testID}
+      onPress={handlePress}
+      onPressIn={handlePressIn}
+    >
       <View style={styles.imageContainer}>
         <EnhancedImage
           style={styles.image}

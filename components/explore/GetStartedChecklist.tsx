@@ -148,7 +148,7 @@ const GetStartedChecklistComponent: FC<GetStartedChecklistProps> = ({
         style={styles.cardWrapper}
         onLayout={event => setMeasuredHeight(event.nativeEvent.layout.height)}
       >
-        <BaseCard shadowSize="small" contentStyle={styles.cardContent}>
+        <BaseCard contentStyle={styles.cardContent}>
           <View style={styles.headerRow}>
             <ThemedText type="bodyBold">{STRINGS.CHECKLIST_TITLE}</ThemedText>
             <ThemedText type="caption" colorName="secondaryText">

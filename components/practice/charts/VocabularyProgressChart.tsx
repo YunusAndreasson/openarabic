@@ -57,7 +57,7 @@ export const VocabularyProgressChart = memo<VocabularyProgressChartProps>(
     }, [progress, settleOpacity, linePath]);
 
     return (
-      <BaseCard shadowSize="small" onPress={onPress}>
+      <BaseCard onPress={onPress}>
         <View style={styles.header}>
           {/* Title above the number, matching the stat tiles below (MetricCard).
               The practice screen reads top-to-bottom as label → figure on every

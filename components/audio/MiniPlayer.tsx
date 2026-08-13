@@ -1,4 +1,4 @@
-import { ProgressBar } from '@/components/common';
+import { BaseCard, ProgressBar } from '@/components/common';
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
@@ -111,23 +111,21 @@ const MiniPlayerComponent = ({
   const timerIconColor = isTimerActive ? colors.white : colors.tint;
   const stopButtonColor = withAlpha(colors.tint, 0.12);
 
-  const cardStyle = [
-    styles.card,
-    {
-      // The miniplayer must remain readable over arbitrary scrolling content.
-      // Native liquid glass and its tint are intentionally not used here:
-      // UIGlassEffect can still resolve nearly clear depending on what it
-      // samples, so only a real opaque surface provides a contrast guarantee.
-      backgroundColor: colors.elevation2,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: withAlpha(colors.border, 0.5),
-      ...LAYOUT.ELEVATION.MEDIUM,
-      shadowColor: colors.shadow,
-    },
-  ];
-
   const inner = (
-    <View testID="mini-player-surface" style={cardStyle}>
+    // The miniplayer must remain readable over arbitrary scrolling content.
+    // Native liquid glass and its tint are intentionally not used here:
+    // UIGlassEffect can still resolve nearly clear depending on what it
+    // samples, so only a real opaque surface provides a contrast guarantee —
+    // hence `elevation2` rather than the plain card fill, and a hairline border
+    // to keep that guarantee in dark mode, where shadows are suppressed.
+    <BaseCard
+      testID="mini-player-surface"
+      surface="elevation2"
+      elevation="floating"
+      bordered
+      style={styles.card}
+      contentStyle={styles.cardContent}
+    >
       {/* Main Content Row */}
       <View style={styles.contentRow}>
         {/* Artwork Thumbnail */}
@@ -215,7 +213,7 @@ const MiniPlayerComponent = ({
           backgroundColor={colors.border}
         />
       </View>
-    </View>
+    </BaseCard>
   );
 
   return (
@@ -243,10 +241,16 @@ const styles = StyleSheet.create({
     zIndex: LAYOUT.Z_INDEX.HEADER,
   },
 
+  // BaseCard supplies the radius, the surface, the border and the clipping.
   card: {
     height: MINI_PLAYER_HEIGHT,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    overflow: 'hidden',
+  },
+
+  // BaseCard wraps children in a content box; it has to fill the fixed card
+  // height or `contentRow`'s flex and the absolutely-placed progress bar would
+  // both measure against a content-sized box instead.
+  cardContent: {
+    flex: 1,
   },
 
   contentRow: {

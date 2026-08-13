@@ -6,14 +6,15 @@ assets.
 
 ## Sources of truth
 
-| Concern                                          | Source                                                      | Rule                                                                                                                    |
-| ------------------------------------------------ | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Theme colors                                     | `constants/colors.ts` and `types/ui/theme.types.ts`         | Components consume semantic `ThemeColors` through `useColors()`; palette values are implementation details.             |
-| Spacing, size, radius, elevation, and type scale | `constants/layout.ts`                                       | Use `LAYOUT` and the exported typography/touch helpers instead of restating shared values.                              |
-| Font families                                    | `constants/fonts.ts`                                        | English uses Inter; the default Arabic face is Noto Sans Arabic and may be replaced by the user's selected Arabic font. |
-| Text                                             | `components/ThemedText.tsx`                                 | Use a named text type and semantic color/variant before adding local typography.                                        |
-| Buttons and inputs                               | `components/ThemedButton.tsx`, `components/ThemedInput.tsx` | These own the standard control heights, states, typography, borders, and feedback.                                      |
-| Reusable UI                                      | `components/ui/index.ts`                                    | Prefer the existing control or header primitive when its semantics match.                                               |
+| Concern                               | Source                                                      | Rule                                                                                                                    |
+| ------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Theme colors                          | `constants/colors.ts` and `types/ui/theme.types.ts`         | Components consume semantic `ThemeColors` through `useColors()`; palette values are implementation details.             |
+| Spacing, size, radius, and type scale | `constants/layout.ts`                                       | Use `LAYOUT` and the exported typography/touch helpers instead of restating shared values.                              |
+| Elevation                             | `constants/elevation.ts`                                    | Resolve through `getElevation(colors, role)`; there is no spreadable raw token, deliberately.                           |
+| Font families                         | `constants/fonts.ts`                                        | English uses Inter; the default Arabic face is Noto Sans Arabic and may be replaced by the user's selected Arabic font. |
+| Text                                  | `components/ThemedText.tsx`                                 | Use a named text type and semantic color/variant before adding local typography.                                        |
+| Buttons and inputs                    | `components/ThemedButton.tsx`, `components/ThemedInput.tsx` | These own the standard control heights, states, typography, borders, and feedback.                                      |
+| Reusable UI                           | `components/ui/index.ts`                                    | Prefer the existing control or header primitive when its semantics match.                                               |
 
 ## Foundations
 
@@ -40,8 +41,25 @@ Light, dark, and sepia themes expose the same semantic contract. UI code should
 name intent (`text`, `secondaryText`, `tint`, `error`, `elevation1`,
 `cardBorder`) rather than a palette hue. `elevation0` is the screen surface;
 `elevation1` through `elevation3` are progressively raised surfaces. In dark
-mode, surface color provides hierarchy and shadows are suppressed by
-`getThemeAwareElevation`.
+mode, surface color provides hierarchy and `getElevation` suppresses shadows
+entirely.
+
+Shadows are CSS `boxShadow`, resolved through `getElevation(colors, role)` in
+`constants/elevation.ts`. The roles are `HAIRLINE`, `CARD`, `FLOATING`, and
+`MODAL`; there are no magnitude tiers, because a token that answers both "how
+big" and "what for" drifts between the two. Every (theme, role) pair is built
+once at module load and handed back by identity, so a shadow costs no allocation
+and needs no second theme subscription to ask whether the theme is dark.
+
+The predecessor spread `shadowOffset`/`shadowOpacity`/`shadowRadius` onto a view
+directly. Those have no Android path — nothing here ever set `elevation` — and
+on iOS they are drawn outside the layer's bounds, so any view that also carries
+`overflow: 'hidden'` masks its own shadow away. `boxShadow` is
+New-Architecture-only, renders on Android 9 and later, and follows CSS in
+scoping `overflow` to an element's children rather than to its own shadow.
+`components/review/ReviewFlipCard.tsx` is the single exception and says why
+inline: it fades each face's shadow across the flip seam from a worklet, and
+`boxShadow` has no scalar opacity channel to animate.
 
 Status colors are reserved for meaning: success, warning, error, and info.
 Charts use `getChartColors()` so data ink, reference lines, and performance
@@ -96,8 +114,15 @@ call `expo-haptics` directly. New patterns need their own debounce key.
   not a variant.
 - Form controls use `ThemedInput`, `Toggle`, `SettingsPicker`, `ThemePicker`, or
   `TimePicker` as appropriate.
-- Card surfaces should use the semantic elevations and shared `BaseCard` where
-  its interaction model fits.
+- Card surfaces use `BaseCard`, shaped through its own axes — `elevation`
+  (`hairline`/`card`/`floating`/`modal`), `surface` (`card`/`elevation1`/
+  `elevation2`), and `bordered` — rather than a hand-rolled radius, fill and
+  shadow. A card that needs a different background is a `surface` value, not a
+  new component.
+- `BaseCard` renders a plain `View` until it is given an `onPress`, at which
+  point it mounts the pressable half. Do not move the press engine back up into
+  the shared path: a static row would pay for a shared value, a worklet and a
+  ripple config it never uses, once per row.
 - Re-export reusable primitives from their nearest `index.ts`; do not keep
   parallel wrappers with equivalent behavior.
 

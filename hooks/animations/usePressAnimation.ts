@@ -25,8 +25,13 @@ export type PressAnimationType = 'button' | 'card' | 'custom';
 /** Button press animation preset - scale only, responsive spring */
 export const PRESS_ANIMATION_BUTTON = { type: 'button' } as const;
 
-/** Card press animation preset - scale + opacity, gentler spring */
-export const PRESS_ANIMATION_CARD = { type: 'card' } as const;
+/**
+ * Card press animation preset — scale + opacity, gentler spring.
+ *
+ * Takes the wide scale: a card is full-bleed, so it is subject to the same
+ * edge-travel invariant as a pinned CTA (see `PRESS_SCALE.WIDE`).
+ */
+export const PRESS_ANIMATION_CARD = { type: 'card', scaleAmount: PRESS_SCALE.WIDE } as const;
 
 /**
  * Wide-control preset — a full-width or capsule CTA. Same spring, smaller
@@ -103,7 +108,7 @@ export const usePressAnimation = (options: PressAnimationOptions = {}): PressAni
 
   // Memoize config to prevent recalculation - stable across renders
   const config = useMemo(() => {
-    const defaultScaleAmount = type === 'card' ? PRESS_SCALE.CARD : PRESS_SCALE.BUTTON;
+    const defaultScaleAmount = type === 'card' ? PRESS_SCALE.WIDE : PRESS_SCALE.BUTTON;
     return {
       scaleAmount: scaleAmount ?? defaultScaleAmount,
       opacityAmount: opacityAmount ?? CARD_PRESS_OPACITY,

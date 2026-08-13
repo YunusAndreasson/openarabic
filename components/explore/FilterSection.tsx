@@ -55,7 +55,7 @@ function CompactNavCard({
   const subtitleStyle = [compactCardStyles.subtitle, { color: colors.secondaryText }];
 
   return (
-    <BaseCard shadowSize="small" style={compactCardStyles.card} onPress={onPress}>
+    <BaseCard style={compactCardStyles.card} onPress={onPress}>
       <View style={compactCardStyles.row}>
         <View style={compactCardStyles.labelGroup}>
           <ThemedText numberOfLines={1} style={compactCardStyles.label} type="body" weight="bold">
@@ -84,8 +84,8 @@ function CompactNavCard({
 CompactNavCard.displayName = 'CompactNavCard';
 
 const compactCardStyles = StyleSheet.create({
+  // BaseCard supplies the radius and the surface; this is only its padding.
   card: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },

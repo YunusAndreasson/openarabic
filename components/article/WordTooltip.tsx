@@ -4,6 +4,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { FONTS } from '@/constants/fonts';
+import { getElevation } from '@/constants/elevation';
 import {
   LAYOUT,
   LINE_HEIGHT_MULTIPLIERS,
@@ -178,8 +179,7 @@ export function WordTooltip({
       backgroundColor: colors.elevation1,
       borderColor: colors.border,
       zIndex: TOOLTIP_CONSTANTS.Z_INDEX + 1,
-      ...LAYOUT.ELEVATION.LARGE,
-      shadowColor: colors.shadow,
+      ...getElevation(colors, 'MODAL'),
     },
     arrow: {
       ...STATIC_STYLES.arrow,

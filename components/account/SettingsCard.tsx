@@ -129,7 +129,7 @@ export const SettingsCard = memo((props: SettingsCardProps) => {
   };
 
   return (
-    <BaseCard shadowSize="subtle" style={cardStyle} onPress={onPress}>
+    <BaseCard elevation="hairline" style={cardStyle} onPress={onPress}>
       <View style={styles.content}>
         <View style={styles.left}>
           <View style={styles.iconContainer}>

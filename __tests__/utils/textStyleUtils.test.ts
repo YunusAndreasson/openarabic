@@ -14,18 +14,11 @@ import { describe, expect, test } from '@jest/globals';
 import {
   TEXT_STYLE_CONSTANTS,
   calculateDynamicPadding,
-  createTextStyle,
   createTextStyleBase,
-  type BatchedTextColors,
 } from '@/utils/textStyleUtils';
 
 describe('textStyleUtils', () => {
   const mockFontSize = 20;
-  const mockColors: BatchedTextColors = {
-    arabicText: '#000000',
-    shadow: '#666666',
-    englishText: '#333333',
-  };
 
   describe('TEXT_STYLE_CONSTANTS', () => {
     test('should have correct constant values', () => {
@@ -61,15 +54,8 @@ describe('textStyleUtils', () => {
     });
   });
 
-  describe('createTextStyle', () => {
-    test('should create complete text style with colors and elevation', () => {
-      const result = createTextStyle(mockFontSize, mockColors);
-
-      expect(result).toHaveProperty('color', mockColors.arabicText);
-      expect(result).toHaveProperty('fontWeight', '700');
-      expect(result).toHaveProperty('textAlign', 'center');
-      expect(result).toHaveProperty('shadowColor', mockColors.shadow);
-    });
-  });
-
+  // `createTextStyle` used to be tested here. It was deleted with the elevation
+  // migration: it had no callers, and its one distinguishing feature over
+  // `createTextStyleBase` was spreading View shadow props onto a TextStyle,
+  // which never drew anything.
 });

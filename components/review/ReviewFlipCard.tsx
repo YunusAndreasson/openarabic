@@ -16,7 +16,7 @@ import Animated, {
 
 import { ThemedText } from '@/components/ThemedText';
 import { SPRING_CONFIG, TIMING_CONFIG, VERDICT } from '@/constants/animation';
-import { getThemeAwareElevation, LAYOUT } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useSwipeGesture } from '@/hooks/gestures/useSwipeGesture';
 import { useCardVerdict, VERDICT_TONE } from '@/hooks/review/useCardVerdict';
@@ -114,6 +114,27 @@ const CARD_ENTRANCE: ReanimatedCSSAnimationStyle = {
  * because the gesture worklet captures it and it feeds the Gesture memo.
  */
 const CARD_EXIT_DIRECTIONS = { left: false, right: true } as const;
+
+/**
+ * This card's shadow, and the app's one remaining set of legacy shadow props.
+ *
+ * Everything else goes through `getElevation`, which emits a CSS `boxShadow` —
+ * one shadow that draws on both platforms and is not clipped by the card's own
+ * `overflow: 'hidden'`. This card cannot: the two faces fade their shadow out
+ * across the flip seam from a worklet (`frontStyle`/`backStyle` below), and
+ * `boxShadow` has no scalar opacity channel to animate. Moving the shadow to a
+ * non-rotating backing layer instead would need that layer to track the fold's
+ * own `scaleX`, or it peeks out past a face turned edge-on.
+ *
+ * Matched to the CARD role's pre-migration values so the resting card still
+ * reads the same as every BaseCard around it. If those are retuned, retune
+ * these — there is no shared token to keep them honest any more.
+ */
+const FLIP_SHADOW = {
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.16,
+  shadowRadius: 6,
+} as const;
 
 const STATIC_STYLES = StyleSheet.create({
   fill: {
@@ -441,14 +462,11 @@ export function ReviewFlipCard({
   // it — the mask only covers the band where neither face has a front OR a back
   // facing the viewer, just an edge.
   // The shadow is the other half of the artifact. An edge-on view still casts
-  // its full 6pt blur, so in light and sepia the collapsed card wears a soft
+  // its full blur, so in light and sepia the collapsed card wears a soft
   // vertical smear even once the fill itself is masked. Zero in dark mode by
   // design, which is why the line reads as a clean hairline there and as a
   // bruise in light. Fades on the same mask.
-  const restShadowOpacity = useMemo(
-    () => getThemeAwareElevation('CARD', isDarkMode).shadowOpacity,
-    [isDarkMode],
-  );
+  const restShadowOpacity = isDarkMode ? 0 : FLIP_SHADOW.shadowOpacity;
 
   const frontStyle = useAnimatedStyle(() => {
     'worklet';
@@ -485,21 +503,21 @@ export function ReviewFlipCard({
     return { opacity: seamMask(flipProgress.get()) };
   });
 
-  // In dark mode getThemeAwareElevation zeroes shadowOpacity by design, same
-  // as it does for BaseCard. BaseCard doesn't compensate with a border or a
-  // step up to elevation2 either — `colors.card` is already +4% L above the
-  // page background (sage.dark vs. sage.darkest), which is the app's actual
-  // separation mechanism everywhere else (BaseCard, ArticleCard,
-  // PlaylistItemCard). Stepping up to elevation2 and adding a border on top
-  // was doing that job twice, and made this the only card in the app with
-  // either a stroke or a background a full level lighter than plain `card`.
+  // Dark mode carries no shadow, same as BaseCard. This card doesn't compensate
+  // with a border or a step up to elevation2 either — `colors.card` is already
+  // +4% L above the page background (sage.dark vs. sage.darkest), which is the
+  // app's actual separation mechanism everywhere else (BaseCard, ArticleCard,
+  // PlaylistItemCard). Stepping up to elevation2 and adding a border on top was
+  // doing that job twice, and made this the only card in the app with either a
+  // stroke or a background a full level lighter than plain `card`.
   const surfaceStyle = useMemo(
     () => [
       {
         backgroundColor: colors.card,
         shadowColor: colors.shadow,
+        ...FLIP_SHADOW,
+        shadowOpacity: isDarkMode ? 0 : FLIP_SHADOW.shadowOpacity,
       },
-      getThemeAwareElevation('CARD', isDarkMode),
     ],
     [colors.card, colors.shadow, isDarkMode],
   );

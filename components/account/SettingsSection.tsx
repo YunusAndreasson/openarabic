@@ -46,7 +46,7 @@ export const SettingsSection = memo(({ title, children, dangerZone }: SettingsSe
   return (
     <>
       <SectionLabel title={title} style={styles.sectionLabelOverride} />
-      <BaseCard shadowSize="small" style={sectionStyle}>
+      <BaseCard style={sectionStyle}>
         <View style={styles.linksContainer}>{childrenWithDividers}</View>
       </BaseCard>
     </>

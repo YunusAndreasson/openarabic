@@ -199,18 +199,16 @@ export const MIN_OPACITY_DURATION = 1;
  * Values closer to 1.0 = subtler feedback, values further from 1.0 = stronger feedback.
  */
 export const PRESS_SCALE = {
-  /** Default press feedback for buttons and cards (subtle) */
+  /** Default press feedback for buttons (subtle) */
   DEFAULT: 0.96,
   /** Alias for DEFAULT - buttons use subtle feedback */
   BUTTON: 0.96,
-  /** Alias for DEFAULT - cards use subtle feedback */
-  CARD: 0.96,
   /** Moderate press for toggles and interactive words */
   MODERATE: 0.95,
   /** Strong press for icon buttons */
   STRONG: 0.9,
   /**
-   * Wide controls — a full-width or capsule CTA.
+   * Wide controls — a full-width or capsule CTA, and every card.
    *
    * The invariant these numbers actually encode is constant EDGE TRAVEL, about
    * 2pt, not a constant ratio: STRONG on a 44pt icon button pulls each edge in
@@ -218,6 +216,12 @@ export const PRESS_SCALE = {
    * 340pt pinned CTA moves each edge 6.8pt, which reads as the whole screen
    * flexing rather than as a button depressing. 0.99 puts a full-width control
    * back at 1.7pt, in line with the rest.
+   *
+   * Cards belong here for the same reason. A card is full-bleed by
+   * construction — 351pt inside the 12pt screen padding on a 375pt screen — so
+   * the 0.96 it used to carry moved each edge 7pt. `PRESS_SCALE.CARD` was also
+   * byte-identical to DEFAULT and BUTTON, three names for one number, so it is
+   * gone rather than retuned.
    */
   WIDE: 0.99,
   /** Scale up for drag feedback */

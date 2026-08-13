@@ -30,7 +30,7 @@ export const MetricCard = memo<MetricCardProps>(({ value, label, valueColor, onP
   const displayValue = typeof value === 'number' ? Math.round(value).toString() : value;
 
   return (
-    <BaseCard shadowSize="small" style={styles.card} onPress={onPress}>
+    <BaseCard style={styles.card} onPress={onPress}>
       <View style={styles.cardWrapper}>
         <ThemedText
           type="caption"

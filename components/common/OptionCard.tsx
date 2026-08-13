@@ -39,7 +39,6 @@ export const OptionCard: FC<OptionCardProps> = ({
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="radio"
       accessibilityState={{ selected }}
-      shadowSize="small"
       style={[
         styles.card,
         {

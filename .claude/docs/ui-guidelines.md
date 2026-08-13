@@ -27,8 +27,11 @@
 
 ## Elevation System
 
-- **MANDATORY**: Use `LAYOUT.SHADOW` constants from layout.ts
-- **Levels**: SUBTLE → SMALL → MEDIUM → LARGE for progressive elevation
+- **MANDATORY**: Resolve shadows through `getElevation(colors, role)` from
+  `constants/elevation.ts`. There is no spreadable raw token, deliberately —
+  eleven call sites used to spread one and skip the theme-aware path, which made
+  them the only surfaces still casting a shadow in dark mode.
+- **Roles, not sizes**: `HAIRLINE` → `CARD` → `FLOATING` → `MODAL`
 - **Consistency**: Reference BaseCard.tsx for proper elevation usage
 
 ## UX Laws (Apply to All UI Work)
@@ -57,7 +60,7 @@
 
 - **Typography**: Use `TYPOGRAPHY_HIERARCHY` and `LAYOUT.TYPOGRAPHY.SCALE`
 - **Spacing**: Use `LAYOUT.SPACING` scale
-- **Elevation**: Use `LAYOUT.ELEVATION.SUBTLE/SMALL/MEDIUM/LARGE`
+- **Elevation**: Use `getElevation(colors, 'HAIRLINE' | 'CARD' | 'FLOATING' | 'MODAL')`
 - **Colors**: Use semantic color names from Colors.ts
 - **Strings**: Use `STRINGS.*` constants for all user-facing text
 - **Animations**: Use `TIMING_CONFIG` and `SPRING_CONFIG` presets
@@ -92,28 +95,33 @@ import { TEXT_STYLES } from '@/constants/layout';
 // Section headers
 <ThemedText style={{ ...TEXT_STYLES.SECTION_HEADER }}>
 
-// Metadata text
-<ThemedText style={{ ...TEXT_STYLES.METADATA }}>
-
 // Author bylines
 <ThemedText style={{ ...TEXT_STYLES.AUTHOR_BYLINE }}>
 ```
 
 ## Theme-Aware Shadows
 
-Use `getThemeAwareElevation()` for shadows that adapt to dark mode:
+`getElevation()` takes the resolved theme colours and returns a CSS `boxShadow`
+style. It needs no `isDarkMode` argument — the theme's colour object identifies
+the theme, so a component reads `useColors()` once and derives the shadow from
+it rather than paying a second Redux + Appearance subscription to ask.
 
 ```typescript
-import { getThemeAwareElevation } from '@/constants/layout';
-import { useColorScheme } from '@/hooks/theme/useColorScheme';
+import { getElevation } from '@/constants/elevation';
+import { useColors } from '@/hooks/theme/useColors';
 
-const { isDarkMode } = useColorScheme();
-const elevation = getThemeAwareElevation('MEDIUM', isDarkMode);
+const colors = useColors();
 
-<View style={[styles.card, elevation, { shadowColor: colors.shadow }]}>
+<View style={[styles.card, getElevation(colors, 'FLOATING')]}>
 ```
 
-Dark mode relies on elevation background colors for hierarchy (shadows are nearly invisible).
+The returned object is identity-stable per (theme, role), so it can sit in a
+style array without allocating on every render.
+
+Dark mode relies on elevation background colors for hierarchy; `getElevation`
+returns no shadow there. Shadows are `boxShadow`, not the legacy
+`shadowOffset`/`shadowOpacity`/`shadowRadius` props — those never drew on
+Android, and on iOS a view with `overflow: 'hidden'` clipped its own shadow away.
 
 ## Press Scale Constants
 
@@ -262,7 +270,10 @@ both removed — prefer a `type` that already carries the weight (`bodyBold`,
 ## StyleSheet Best Practices
 
 - Use `StyleSheet.create()` for static styles
-- Use `useMemo` when styles depend on dynamic values (colors, state)
+- Write dynamic styles inline. **The React Compiler is enabled**
+  (`app.json` → `experiments.reactCompiler`), so it memoizes them for you — and
+  manual memoization it cannot validate makes it bail out of optimizing that
+  component entirely, which is worse than not having written it.
 - Prefer shared style objects over inline styles for better performance
 
 ```typescript
@@ -271,11 +282,11 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
 });
 
-// Dynamic styles with useMemo
-const dynamicStyles = useMemo(
-  () => ({
-    card: [styles.card, { backgroundColor: colors.elevation1 }],
-  }),
-  [colors.elevation1],
-);
+// Dynamic styles — no useMemo; the compiler caches this
+const cardStyle = [styles.card, { backgroundColor: colors.elevation1 }];
 ```
+
+For a value used once per list row, prefer a module-level cache keyed by the
+theme object over any memo hook — see `getElevation` and `BaseCard`'s surface
+cache. That gives one shared object across every row rather than one per
+component instance.

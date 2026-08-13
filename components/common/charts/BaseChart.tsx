@@ -53,7 +53,7 @@ export function BaseChart({
   // Empty state
   if (!hasData) {
     return (
-      <BaseCard shadowSize="small" onPress={onCardPress}>
+      <BaseCard onPress={onCardPress}>
         <View style={styles.content}>
           {!hideTitle && (
             <View style={styles.titleGroup}>
@@ -77,7 +77,7 @@ export function BaseChart({
 
   // Main chart with data
   return (
-    <BaseCard shadowSize="small" onPress={onCardPress}>
+    <BaseCard onPress={onCardPress}>
       <View style={styles.content}>
         {/* Header Section */}
         {!hideTitle && (

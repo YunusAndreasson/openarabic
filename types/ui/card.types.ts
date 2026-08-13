@@ -2,31 +2,44 @@ import type { StyleProp, ViewStyle } from 'react-native';
 
 import type { BaseComponentProps } from './base.types';
 
-/**
- * Props for card components with basic styling and functionality
- * Note: Use 'loading' prop from BaseComponentProps for loading state
- */
-export interface BaseCardProps extends BaseComponentProps {
-  /** Optional callback when card is long pressed */
-  onLongPress?: () => void;
-  /** Fired the moment a press starts — useful for prefetch hints */
-  onPressIn?: () => void;
-  /** Shadow size for the card */
-  shadowSize?: 'large' | 'medium' | 'none' | 'small' | 'subtle';
-  /** Additional styling for the content container */
-  contentStyle?: StyleProp<ViewStyle>;
-}
+/** Which theme surface the card paints itself with. */
+export type CardSurface = 'card' | 'elevation1' | 'elevation2';
+
+/** Semantic elevation role, mirroring `ElevationRole` in lowercase. */
+export type CardElevation = 'card' | 'floating' | 'hairline' | 'modal' | 'none';
 
 /**
- * Props for article variant of ThemedCard
+ * Props for the shared card surface.
+ *
+ * `loading` and `onLongPress` used to live here. Neither had a production call
+ * site: `loading` rendered an empty card that no caller ever asked for, and
+ * `onLongPress` went straight to the `Pressable`, bypassing the repeat-press
+ * lock, the disabled check and the press animation that every other interaction
+ * on this surface goes through. A press path with none of the press engine is a
+ * bug waiting for its first caller, not an axis.
  */
-export interface ArticleCardProps extends BaseCardProps {
-  /** Variant of the card */
-  variant: 'article';
-  /** URL of the image to display in the card */
-  imageUrl: string;
-  /** Title text to display in the card */
-  title: string;
-  /** Summary text to display in the card */
-  summary: string;
+export interface BaseCardProps extends Omit<BaseComponentProps, 'loading'> {
+  /** Fired the moment a press starts — useful for prefetch hints */
+  onPressIn?: () => void;
+  /**
+   * How high the card sits. Roles, not magnitudes — see `constants/elevation.ts`.
+   * @default 'card'
+   */
+  elevation?: CardElevation;
+  /**
+   * Which theme surface to paint. `elevation1`/`elevation2` are for cards that
+   * float over arbitrary content and need a contrast guarantee the page
+   * background cannot give them.
+   * @default 'card'
+   */
+  surface?: CardSurface;
+  /**
+   * Draw a hairline border. Dark mode suppresses shadows, so a surface that
+   * genuinely has to separate itself from unknown content behind it needs a
+   * stroke to do the job the shadow does in light and sepia.
+   * @default false
+   */
+  bordered?: boolean;
+  /** Additional styling for the content container */
+  contentStyle?: StyleProp<ViewStyle>;
 }

@@ -42,7 +42,7 @@ export const PrimingCard: FC<PrimingCardProps> = ({
   onDecline,
   emphasis = 'quiet',
 }) => (
-  <BaseCard contentStyle={styles.content} shadowSize="small">
+  <BaseCard contentStyle={styles.content}>
     <ThemedText type={emphasis === 'flagship' ? 'heading3' : 'bodyBold'}>{title}</ThemedText>
     <ThemedText colorName="secondaryText" style={styles.body} type="body">
       {body}

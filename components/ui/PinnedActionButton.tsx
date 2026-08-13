@@ -46,8 +46,8 @@ export function PinnedActionButton({
   const bottomInsetClearance = Platform.OS === 'android' ? 0 : insets.bottom;
   const bottom = bottomInsetClearance + LAYOUT.SPACING.SMALL + miniPlayerClearance;
 
-  // The button floats over a scrolling list, and `getThemeAwareElevation`
-  // zeroes shadow opacity in dark mode — so on the dark theme there was
+  // The button floats over a scrolling list, and the elevation system carries
+  // no shadow in dark mode — so on the dark theme there was
   // literally nothing separating the pill from the content it covered, and a
   // card edge showed through beneath it. Same fix as the article reader's
   // HeaderScrim, pointed the other way: the page colour fading up from the

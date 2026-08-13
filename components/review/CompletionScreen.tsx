@@ -161,7 +161,7 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
             <Animated.View key={metric.type + metric.text} entering={ENTERING_METRICS[index]}>
               <BaseCard
                 contentStyle={styles.metricContent}
-                shadowSize="subtle"
+                elevation="hairline"
                 style={styles.metricItem}
               >
                 <View

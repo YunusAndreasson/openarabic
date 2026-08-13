@@ -8,13 +8,13 @@ import { StyleSheet, View } from 'react-native';
 import { Pressable } from 'react-native-gesture-handler';
 import type { SharedValue } from 'react-native-reanimated';
 
+import { BaseCard } from '@/components/common';
 import { ThemedText } from '@/components/ThemedText';
 import { SkiaArabicWord as ArabicWord } from '@/components/article/SkiaArabicWord';
 import { FONTS } from '@/constants/fonts';
-import { getThemeAwareElevation, LAYOUT } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { withAlpha } from '@/utils/colorUtils';
 import type { RootId } from '@/types/branded.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
@@ -55,7 +55,6 @@ const ArticleSentenceInternal = function ArticleSentence({
 }: ArticleSentenceProps) {
   const defaultColors = useColors();
   const colors = propColors || defaultColors;
-  const isDarkMode = useIsDarkMode();
 
   // Memoize English text style to prevent recreation
   const englishTextStyle = useMemo(
@@ -100,18 +99,14 @@ const ArticleSentenceInternal = function ArticleSentence({
       {/* Tutorial card below summary */}
       {showTutorialCard && (
         <View style={styles.tutorialContainer}>
-          <View
-            style={[
-              styles.tutorialCard,
-              {
-                backgroundColor: colors.tint,
-                shadowColor: colors.shadow,
-              },
-              // Theme-aware, like every other raised surface in the app: dark
-              // mode carries no shadow (it would sit invisibly on near-black)
-              // and separates by colour alone.
-              getThemeAwareElevation('CARD', isDarkMode),
-            ]}
+          {/*
+            A BaseCard with a tint fill. `style` lands after BaseCard's own
+            surface in the style array, so the tint wins without needing a
+            `surface` value for a colour only this one card uses.
+          */}
+          <BaseCard
+            style={[styles.tutorialCard, { backgroundColor: colors.tint }]}
+            contentStyle={styles.tutorialCardContent}
           >
             <ThemedText
               type="body"
@@ -144,7 +139,7 @@ const ArticleSentenceInternal = function ArticleSentence({
                 <Ionicons name="close" size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={colors.onTint} />
               </Pressable>
             )}
-          </View>
+          </BaseCard>
         </View>
       )}
 
@@ -171,11 +166,15 @@ const styles = StyleSheet.create({
   tutorialContainer: {
     // No alignment - let card fill width naturally
   },
+  // BaseCard supplies the radius and the elevation; this is the card's margin.
   tutorialCard: {
     marginHorizontal: LAYOUT.SPACING.MEDIUM,
     marginTop: LAYOUT.SPACING.MEDIUM,
+  },
+  // The padded box the close button anchors against. It fills the card exactly,
+  // so `closeButton`'s absolute inset still measures from the card's own edge.
+  tutorialCardContent: {
     padding: LAYOUT.SPACING.MEDIUM,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     position: 'relative',
   },
   tutorialText: {

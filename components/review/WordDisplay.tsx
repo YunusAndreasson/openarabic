@@ -128,10 +128,9 @@ export function WordDisplay({ word, style, onWordPress, wordType, children }: Pr
     return Math.round(base);
   }, [readerFontSize, word]);
 
-  // No drop shadow: `createTextStyle` spread LAYOUT.ELEVATION.SMALL onto the
-  // glyphs, which reads as dated on its own and actively muddies vocalized
-  // Arabic — a shadow under a kasra is visual noise at exactly the size the
-  // learner is trying to read the mark.
+  // No drop shadow on the glyphs, deliberately: it reads as dated on its own
+  // and actively muddies vocalized Arabic — a shadow under a kasra is visual
+  // noise at exactly the size the learner is trying to read the mark.
   const heroTextStyle = useMemo(
     () => ({ fontSize: heroFontSize, lineHeight: heroFontSize * LINE_HEIGHT_MULTIPLIERS.ARABIC }),
     [heroFontSize],

@@ -58,45 +58,14 @@ const BORDER_WIDTHS = {
   FOCUSED: 2,
 } as const;
 
-/**
- * Unified shadow/elevation system - uses iOS-style shadows on both platforms.
- * Creates shadow configuration object (shadowColor applied at usage site).
- */
-const createShadow = (elevation: number, opacity: number, radius: number) => ({
-  shadowOffset: { width: 0, height: Math.ceil(elevation / 2) },
-  shadowOpacity: opacity,
-  shadowRadius: radius,
-});
-
 /** Creates symmetric hit slop for touch targets */
 const createHitSlop = (size: number) => ({ top: size, bottom: size, left: size, right: size });
 
-const ELEVATION_RAW = {
-  NONE: createShadow(0, 0, 0),
-  SUBTLE: createShadow(2, 0.12, 3),
-  SMALL: createShadow(4, 0.16, 6),
-  MEDIUM: createShadow(6, 0.2, 8),
-  LARGE: createShadow(10, 0.25, 12),
-} as const;
-
-/**
- * Elevation system — exposes both magnitude tiers (NONE/SUBTLE/SMALL/MEDIUM/LARGE)
- * and semantic role aliases. Prefer the role aliases in new code so visual hierarchy
- * is driven by intent, not by guessing a magnitude. Magnitude tiers stay for cases
- * where the role doesn't fit cleanly.
- *
- *   HAIRLINE — flush surfaces (separators, inline chips)             → SUBTLE
- *   CARD     — content cards in normal flow                          → SMALL
- *   FLOATING — FABs, MiniPlayer, floating overlays                   → MEDIUM
- *   MODAL    — sheets, popovers, tooltips that sit above the surface → LARGE
- */
-const ELEVATION_SYSTEM = {
-  ...ELEVATION_RAW,
-  HAIRLINE: ELEVATION_RAW.SUBTLE,
-  CARD: ELEVATION_RAW.SMALL,
-  FLOATING: ELEVATION_RAW.MEDIUM,
-  MODAL: ELEVATION_RAW.LARGE,
-} as const;
+// Shadows live in `constants/elevation.ts`, not here. They used to be a spreadable
+// `LAYOUT.ELEVATION.*` token, which meant every consumer could — and eleven of them
+// did — spread the raw values and skip the theme-aware wrapper, so those were the
+// only surfaces in the app still casting a shadow in dark mode. `getElevation` takes
+// the resolved theme colours, so there is nothing left to bypass.
 
 const TYPOGRAPHY_HIERARCHY = {
   COLOR_HIERARCHY: {
@@ -289,8 +258,6 @@ export const LAYOUT = {
     // A `LAYOUT.TYPOGRAPHY.LINE_HEIGHT` alias for the same object used to exist
     // and left the codebase split across two paths to one value.
   },
-
-  ELEVATION: ELEVATION_SYSTEM,
 
   Z_INDEX: {
     CARD: 1,
@@ -493,24 +460,3 @@ export const getEnhancedOpacity = (
 
   return Math.min(1.0, Math.max(0.0, adjustedOpacity));
 };
-
-/**
- * Dark mode elevation pattern
- *
- * Modern dark mode design relies on elevation background colors for hierarchy.
- * Shadows are nearly invisible on dark backgrounds, so we remove them entirely.
- * The perceptually uniform 4.5% lightness steps between elevation levels
- * provide sufficient visual separation without borders or shadows.
- */
-
-/**
- * Returns theme-aware elevation styles that remove shadows in dark mode.
- * Accepts both magnitude tiers (SUBTLE/SMALL/MEDIUM/LARGE) and semantic
- * role aliases (HAIRLINE/CARD/FLOATING/MODAL).
- */
-export type ElevationLevel = Exclude<keyof typeof ELEVATION_SYSTEM, 'NONE'>;
-
-export const getThemeAwareElevation = (level: ElevationLevel, isDarkMode: boolean) => ({
-  ...ELEVATION_SYSTEM[level],
-  shadowOpacity: isDarkMode ? 0 : ELEVATION_SYSTEM[level].shadowOpacity,
-});

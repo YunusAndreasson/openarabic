@@ -45,21 +45,20 @@ const FAQItemComponent: FC<FAQItemComponentProps> = memo(
       [colors.tint, colors.cardBorder, isExpanded],
     );
 
-    const answerContainerStyle = useMemo(
-      () => [
-        styles.faqAnswerContainer,
-        {
-          backgroundColor: colors.background,
-          borderColor: colors.cardBorder,
-          ...LAYOUT.ELEVATION.SUBTLE, // Consistent elevation for expanded content
-        },
-      ],
-      [colors.background, colors.cardBorder],
+    // Border only. The surface, the radius and the elevation now come from
+    // BaseCard — this panel used to hand-roll all three, and spread the raw
+    // elevation token, so it was one of only two surfaces in the app still
+    // casting a shadow in dark mode. It also painted itself `background` while
+    // the question above it painted `card`, which split one accordion across
+    // two surfaces.
+    const answerBorderStyle = useMemo(
+      () => [styles.faqAnswerContainer, { borderColor: colors.cardBorder }],
+      [colors.cardBorder],
     );
 
     return (
       <View>
-        <BaseCard shadowSize="small" style={buttonStyle} onPress={handlePress}>
+        <BaseCard style={buttonStyle} onPress={handlePress}>
           <View style={styles.faqButtonContent}>
             <ThemedText
               type="body"
@@ -76,24 +75,26 @@ const FAQItemComponent: FC<FAQItemComponentProps> = memo(
           </View>
         </BaseCard>
         {isExpanded && (
-          <Animated.View
-            entering={FadeIn.duration(200)}
-            exiting={FadeOut.duration(150)}
-            style={answerContainerStyle}
-          >
-            {item.answer.split('\n\n').map((paragraph, index) => (
-              <ThemedText
-                // eslint-disable-next-line react/no-array-index-key
-                key={`${item.id}-paragraph-${index}`}
-                type="body"
-                colorName="metadataText"
-                style={index > 0 ? styles.paragraphSpacing : undefined}
-              >
-                {parseTextWithEmails(paragraph, 'body')}
-              </ThemedText>
-            ))}
-            {/* Render colored examples for Arabic text coloring FAQ */}
-            {item.id === 'arabic-text-coloring' && <ArabicColoringExamples />}
+          <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)}>
+            <BaseCard
+              elevation="hairline"
+              style={answerBorderStyle}
+              contentStyle={styles.faqAnswerContent}
+            >
+              {item.answer.split('\n\n').map((paragraph, index) => (
+                <ThemedText
+                  // eslint-disable-next-line react/no-array-index-key
+                  key={`${item.id}-paragraph-${index}`}
+                  type="body"
+                  colorName="metadataText"
+                  style={index > 0 ? styles.paragraphSpacing : undefined}
+                >
+                  {parseTextWithEmails(paragraph, 'body')}
+                </ThemedText>
+              ))}
+              {/* Render colored examples for Arabic text coloring FAQ */}
+              {item.id === 'arabic-text-coloring' && <ArabicColoringExamples />}
+            </BaseCard>
           </Animated.View>
         )}
       </View>
@@ -271,7 +272,7 @@ const HelpScreen: FC = () => {
             ))}
 
             {/* Still Need Help? Footer */}
-            <BaseCard shadowSize="small" style={styles.helpFooter}>
+            <BaseCard style={styles.helpFooter}>
               <View style={styles.helpFooterContent}>
                 <ThemedText type="body" weight="semibold" style={styles.helpFooterTitle}>
                   {STRINGS.HELP_STILL_NEED_HELP_TITLE}
@@ -345,9 +346,9 @@ const styles = StyleSheet.create({
   scrollContentEmpty: {
     flexGrow: 1,
   },
+  // BaseCard supplies the radius and the surface; this is only its padding.
   faqButton: {
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     minHeight: LAYOUT.BUTTON.HEIGHT.LARGE, // 48dp minimum per Fitts' Law
@@ -361,12 +362,15 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: LAYOUT.SPACING.MEDIUM,
   },
+  // BaseCard supplies the radius and the surface; these are the panel's border
+  // and its offset from the question above it.
   faqAnswerContainer: {
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    marginTop: LAYOUT.SPACING.SMALL,
+  },
+  faqAnswerContent: {
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
-    marginTop: LAYOUT.SPACING.SMALL,
   },
   paragraphSpacing: {
     marginTop: LAYOUT.SPACING.MEDIUM,

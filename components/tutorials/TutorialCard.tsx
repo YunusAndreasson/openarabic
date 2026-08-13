@@ -35,7 +35,7 @@ export function TutorialCard({ children, dismissText, onDismiss, onSkip }: Tutor
       entering={FadeInUp.duration(TUTORIAL_ANIMATION.FADE_IN_DURATION)}
       exiting={FadeOutDown.duration(TUTORIAL_ANIMATION.FADE_OUT_DURATION)}
     >
-      <BaseCard shadowSize="large" style={styles.card} contentStyle={styles.cardContent}>
+      <BaseCard elevation="modal" style={styles.card} contentStyle={styles.cardContent}>
         {onSkip && (
           <View style={styles.skipRow}>
             <ThemedButton

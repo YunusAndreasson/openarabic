@@ -44,7 +44,7 @@ export const TodayCard = memo<TodayCardProps>(
     const secondary = secondaryParts.join(' · ');
 
     return (
-      <BaseCard shadowSize="small" onPress={onPress}>
+      <BaseCard onPress={onPress}>
         <View style={styles.row}>
           <View style={styles.textColumn}>
             <ThemedText type="bodyBold">{primary}</ThemedText>
