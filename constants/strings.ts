@@ -391,6 +391,7 @@ export const STRINGS = {
   SIGN_OUT_CONFIRMATION: 'Sign out of your account?',
   ENTER_VALID_EMAIL: 'Enter a valid email',
   ENTER_PASSWORD: 'Enter your password',
+  NO_INTERNET_CONNECTION: 'No internet connection. Check your connection and try again.',
   PASSWORD_USE_AT_LEAST_TEMPLATE: 'Use at least {minLength} characters',
   FORGOT_PASSWORD: 'Forgot password?',
   RESET_PASSWORD_EMAIL_SENT: 'Check your email for a reset link',

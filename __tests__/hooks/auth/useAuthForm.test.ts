@@ -37,6 +37,15 @@ jest.mock('@/utils/errorHandling', () => ({
   handleError: jest.fn(),
 }));
 
+// Mock NetInfo — every auth submit runs a reachability pre-flight first. Without
+// this the auto-mocked native module resolves `fetch()` to undefined, which is
+// not a realistic offline signal, it just crashes the pre-flight.
+const mockNetInfoFetch = jest.fn<() => Promise<{ isConnected: boolean | null }>>();
+jest.mock('@react-native-community/netinfo', () => ({
+  __esModule: true,
+  default: { fetch: () => mockNetInfoFetch() },
+}));
+
 // Mock haptics
 jest.mock('@/utils/haptics', () => ({
   lightFeedback: jest.fn(),
@@ -107,6 +116,7 @@ describe('useAuthForm', () => {
       data: { user: { id: '1', email: 'test@example.com' }, session: null },
       error: null,
     });
+    mockNetInfoFetch.mockResolvedValue({ isConnected: true });
   });
 
   afterEach(() => {
@@ -432,6 +442,53 @@ describe('useAuthForm', () => {
           }),
         );
       });
+    });
+  });
+
+  describe('network pre-flight', () => {
+    const submitSignIn = async () => {
+      const { result } = renderHook(() => useAuthForm());
+      act(() => {
+        result.current.setEmail('user@example.com');
+        result.current.setPassword('Password1');
+      });
+      await act(async () => {
+        await result.current.signInWithEmail();
+      });
+      return result;
+    };
+
+    test('blocks the request when definitively offline', async () => {
+      mockNetInfoFetch.mockResolvedValue({ isConnected: false });
+
+      const result = await submitSignIn();
+
+      expect(mockSignInWithPassword).not.toHaveBeenCalled();
+      expect(result.current.passwordError).toBe(STRINGS.NO_INTERNET_CONNECTION);
+    });
+
+    // The pre-flight exists only to turn a guaranteed hang into a fast error.
+    // It must never be the reason a sign-in that would have worked doesn't.
+    test('proceeds when connectivity is UNKNOWN (isConnected null)', async () => {
+      mockNetInfoFetch.mockResolvedValue({ isConnected: null });
+
+      const result = await submitSignIn();
+
+      expect(mockSignInWithPassword).toHaveBeenCalled();
+      expect(result.current.passwordError).toBe('');
+    });
+
+    test('proceeds when the connectivity probe itself fails', async () => {
+      // Regression: the probe was awaited OUTSIDE signInWithEmail's try block,
+      // so a rejection here escaped the whole function — the button did nothing
+      // at all and sign-in was impossible. Strictly worse than the hang the
+      // pre-flight prevents.
+      mockNetInfoFetch.mockRejectedValue(new Error('NetInfo unavailable'));
+
+      const result = await submitSignIn();
+
+      expect(mockSignInWithPassword).toHaveBeenCalled();
+      expect(result.current.passwordError).toBe('');
     });
   });
 

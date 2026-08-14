@@ -1,3 +1,4 @@
+import NetInfo from '@react-native-community/netinfo';
 import * as Sentry from '@sentry/react-native';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -100,10 +101,55 @@ export function useAuthForm(): UseAuthFormReturn {
     [isMountedRef],
   );
 
+  // supabase-js has no built-in timeout: a signIn/signUp/resetPassword call made
+  // while offline hangs indefinitely on the fetch rather than rejecting, leaving
+  // the button stuck in a loading state with no way to recover short of leaving
+  // the screen. Checking reachability first (same pattern as refreshSession in
+  // useProvideAuth) fails fast with a visible error instead.
+  //
+  // Fails OPEN, deliberately. This is a courtesy pre-flight, not an
+  // authorization gate — its only job is to turn a guaranteed hang into a fast,
+  // visible error, so it must never be able to block an attempt that would have
+  // worked. Two ways the naive version did exactly that:
+  //
+  // - `isConnected` is `boolean | null`, and null means UNKNOWN, not offline.
+  //   Truthiness-testing it told a connected user on a platform reporting null
+  //   that they had no internet.
+  // - If `NetInfo.fetch()` rejects or the native module is missing, the throw
+  //   escaped from here straight out of signInWithEmail — the call sits OUTSIDE
+  //   that function's try block — so the button silently did nothing at all and
+  //   sign-in was impossible. Strictly worse than the hang this prevents.
+  //
+  // So: only a definitive `false` counts as offline. Anything else proceeds and
+  // lets the real request decide.
+  const checkNetworkConnected = useCallback(async (): Promise<boolean> => {
+    let isDefinitelyOffline = false;
+    try {
+      const netState = await NetInfo.fetch();
+      isDefinitelyOffline = netState?.isConnected === false;
+    } catch {
+      isDefinitelyOffline = false;
+    }
+
+    if (!isDefinitelyOffline) return true;
+
+    if (isMountedRef.current) setPasswordError(STRINGS.NO_INTERNET_CONNECTION);
+    handleError(new Error('No network connection available'), {
+      toastMessage: STRINGS.NO_INTERNET_CONNECTION,
+      analyticsEventName: 'Auth_No_Network',
+      captureSentry: false,
+      trackAnalytics: false,
+      showToast: true,
+    });
+    return false;
+  }, [isMountedRef]);
+
   const signInWithEmail = useCallback(async () => {
     const isEmailValid = validateEmail(email);
     const isPasswordValid = validatePassword(password);
     if (!isEmailValid || !isPasswordValid) return;
+
+    if (!(await checkNetworkConnected())) return;
 
     if (!isMountedRef.current) return;
     setLoading(true);
@@ -144,7 +190,7 @@ export function useAuthForm(): UseAuthFormReturn {
         setLoading(false);
       }
     }
-  }, [email, password, validateEmail, validatePassword, isMountedRef]);
+  }, [email, password, validateEmail, validatePassword, isMountedRef, checkNetworkConnected]);
 
   const signUpWithEmail = useCallback(async () => {
     const isEmailValid = validateEmail(email);
@@ -152,6 +198,8 @@ export function useAuthForm(): UseAuthFormReturn {
     if (!isEmailValid || !isPasswordValid) {
       return;
     }
+
+    if (!(await checkNetworkConnected())) return;
 
     if (!isMountedRef.current) return;
     setLoading(true);
@@ -221,7 +269,7 @@ export function useAuthForm(): UseAuthFormReturn {
         setLoading(false);
       }
     }
-  }, [email, password, validateEmail, validatePassword, isMountedRef]);
+  }, [email, password, validateEmail, validatePassword, isMountedRef, checkNetworkConnected]);
 
   const toggleMode = useCallback(() => {
     setIsRegistering(!isRegistering);
@@ -243,6 +291,8 @@ export function useAuthForm(): UseAuthFormReturn {
       });
       return;
     }
+
+    if (!(await checkNetworkConnected())) return;
 
     if (!isMountedRef.current) return;
     setLoading(true);
@@ -285,7 +335,7 @@ export function useAuthForm(): UseAuthFormReturn {
         setLoading(false);
       }
     }
-  }, [email, validateEmail, isMountedRef]);
+  }, [email, validateEmail, isMountedRef, checkNetworkConnected]);
 
   return {
     email,

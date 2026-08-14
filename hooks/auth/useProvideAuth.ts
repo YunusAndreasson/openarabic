@@ -35,9 +35,13 @@ export function useProvideAuth(): AuthResult {
       });
 
       try {
-        // Check network connectivity before attempting refresh
+        // Check network connectivity before attempting refresh. Only a
+        // definitive `false` counts: `isConnected` is `boolean | null`, and null
+        // means UNKNOWN — skipping the refresh on that would abandon a session
+        // that could have been renewed fine. Same fail-open rule as the auth
+        // form's pre-flight.
         const netState = await NetInfo.fetch();
-        if (!netState.isConnected) {
+        if (netState?.isConnected === false) {
           Sentry.addBreadcrumb({
             category: 'auth',
             message: 'No network connection during refresh attempt',
