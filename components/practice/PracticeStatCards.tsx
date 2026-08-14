@@ -29,6 +29,9 @@ interface PracticeStatCardsProps {
   nextDueDate?: Date | null;
   dueCountCapped?: boolean;
   currentStreak?: number;
+  /** False until the streak has actually been read, so a pending or failed
+   *  fetch never renders as "0". */
+  hasStreak?: boolean;
   leechCount?: number;
   studyWords?: StudyWord[];
   onDuePress?: () => void;
@@ -48,6 +51,7 @@ export function PracticeStatCards({
   nextDueDate = null,
   dueCountCapped = false,
   currentStreak = 0,
+  hasStreak = true,
   leechCount = 0,
   studyWords = [],
   onDuePress,
@@ -74,7 +78,12 @@ export function PracticeStatCards({
   const stats = [
     {
       label: STRINGS.STREAK_LABEL,
-      value: currentStreak,
+      // An unread streak is not a streak of zero. Rendering the pending (or
+      // failed) state as "0" tells someone on a 43-day run that they have lost
+      // it — measured on device: every cold start flashed "0" before the query
+      // landed, and a failed fetch left it there. Same reasoning as the memory
+      // tile below, which has always shown "—" rather than a false score.
+      value: hasStreak ? currentStreak : STRINGS.EMPTY_METRIC,
       onPress: onStreakPress,
     },
     {

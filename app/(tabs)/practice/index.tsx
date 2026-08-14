@@ -43,9 +43,12 @@ export default function PracticeScreen(): JSX.Element {
   const queryClient = useQueryClient();
   const { prefetchVocabularyData } = useAppPreloader();
 
-  // Fetch study streak data
+  // Fetch study streak data. `streak` is null until the query resolves and
+  // stays null if it fails, which is NOT the same as a zero streak — the tile
+  // shows "—" in that case rather than claiming the run is over.
   const { streak } = useStudyStreak();
   const currentStreak = streak?.currentStreak ?? 0;
+  const hasStreak = streak !== null;
 
   // Add ref to prevent infinite re-renders
   const hasPrefetchedRef = useRef(false);
@@ -236,6 +239,7 @@ export default function PracticeScreen(): JSX.Element {
             reviewedToday={reviewedToday}
             nextDueDate={nextDueDate}
             currentStreak={currentStreak}
+            hasStreak={hasStreak}
             masteredWords={masteredWords}
             leechCount={leechCount}
             studyWords={studyWords}

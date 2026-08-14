@@ -113,22 +113,29 @@ export function safePercent(position: number, duration: number): number {
 }
 
 /**
- * Converts a date to UTC date string (YYYY-MM-DD format).
- * Used for streak tracking and calendar data where we need consistent UTC date strings.
+ * Converts a date to a LOCAL calendar date string (YYYY-MM-DD format).
+ *
+ * "Which day did I study?" is a question about the learner's own calendar, not
+ * about UTC. Keying streaks by UTC day means an evening session west of UTC
+ * lands on tomorrow and a late-night session east of UTC lands on yesterday —
+ * so two sessions on consecutive local days can collapse into one UTC day (or
+ * straddle a UTC day with nothing in it) and silently break a streak.
+ *
+ * This is also the day boundary `countReviewedToday` uses, so the streak and
+ * the "N reviewed today" line on the same card agree about what "today" means.
  *
  * @param date - Date to convert
- * @returns UTC date string in YYYY-MM-DD format
+ * @returns Local date string in YYYY-MM-DD format
  *
  * @example
  * ```ts
- * const dateStr = toUTCDateString(new Date());
- * // Returns: "2024-01-15" (UTC date, regardless of local timezone)
+ * const dateStr = toLocalDateString(new Date());
+ * // Returns: "2024-01-15" (the date on the device's own calendar)
  * ```
  */
-export function toUTCDateString(date: Date): string {
-  return (
-    new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
-      .toISOString()
-      .split('T')[0] || ''
-  );
+export function toLocalDateString(date: Date): string {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }

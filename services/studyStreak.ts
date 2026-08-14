@@ -1,7 +1,6 @@
 import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
-import type { Tables } from '@/types/database.types';
-import { toUTCDateString } from '@/utils/dateTimeUtils';
+import { parseSupabaseTimestamp, toLocalDateString } from '@/utils/dateTimeUtils';
 import { createServiceErrorConfig } from '@/utils/serviceErrorConfig';
 import { executeQuery } from '@/utils/supabaseHelpers';
 
@@ -41,86 +40,118 @@ export interface StreakHistoryData {
   };
 }
 
+const EMPTY_STREAK: ReadingStreak = {
+  currentStreak: 0,
+  longestStreak: 0,
+  lastReadingDate: null,
+  totalReadingDays: 0,
+};
+
+/**
+ * Parse a `YYYY-MM-DD` day key back to LOCAL midnight.
+ *
+ * Not `new Date(key)` — that parses as UTC midnight, which is a different
+ * calendar day everywhere west of Greenwich, so the key would not round-trip
+ * through `toLocalDateString`.
+ */
+function parseDayKey(key: string): Date {
+  const [year = 0, month = 1, day = 1] = key.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
+/** Is `day` the calendar day immediately after `previous`? */
+function isNextDay(previous: Date, day: Date): boolean {
+  const next = new Date(previous);
+  next.setDate(next.getDate() + 1);
+  return toLocalDateString(next) === toLocalDateString(day);
+}
+
+/**
+ * Current / longest / total study days over a COMPLETE set of day keys.
+ *
+ * Takes the whole history, never a window. The previous implementation derived
+ * these numbers from the same fixed-length array the chart draws (30 days for
+ * the practice card, 40 for the streak sheet), so a streak longer than the
+ * window was silently truncated to the window size — a live 184-day streak
+ * rendered as "29" on the card and "39" one tap away in the sheet, because the
+ * two surfaces happened to ask for different window lengths. The window is a
+ * property of the chart, not of the streak.
+ *
+ * Day arithmetic goes through `setDate` + `toLocalDateString` rather than
+ * millisecond differences: a local day is 23 or 25 hours across a DST
+ * transition, so `diff === ONE_DAY_MS` drops a day twice a year.
+ */
+function calculateStreakFromDayKeys(dayKeys: Set<string>): ReadingStreak {
+  if (dayKeys.size === 0) return { ...EMPTY_STREAK };
+
+  const sortedKeys = Array.from(dayKeys).sort();
+  const mostRecentKey = sortedKeys[sortedKeys.length - 1] ?? '';
+
+  const todayKey = toLocalDateString(new Date());
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayKey = toLocalDateString(yesterday);
+
+  // Yesterday still counts: the streak must not evaporate at midnight, before
+  // the learner has had today to keep it alive.
+  let currentStreak = 0;
+  if (mostRecentKey === todayKey || mostRecentKey === yesterdayKey) {
+    const cursor = parseDayKey(mostRecentKey);
+    while (dayKeys.has(toLocalDateString(cursor))) {
+      currentStreak++;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+  }
+
+  let longestStreak = 0;
+  let run = 0;
+  let previous: Date | null = null;
+  for (const key of sortedKeys) {
+    const day = parseDayKey(key);
+    run = previous && isNextDay(previous, day) ? run + 1 : 1;
+    longestStreak = Math.max(longestStreak, run);
+    previous = day;
+  }
+
+  return {
+    currentStreak,
+    longestStreak,
+    lastReadingDate: parseDayKey(mostRecentKey),
+    totalReadingDays: dayKeys.size,
+  };
+}
+
+/**
+ * Build the fixed-length day-by-day array the streak chart draws.
+ *
+ * Exactly `days` buckets ending on today, walked as calendar days from local
+ * midnight. The old version stepped from `now - (days - 1)` keeping the current
+ * time of day and then filtered `reviewedAt >= startDate`, so any review on the
+ * oldest day that happened earlier in the day than "now" was dropped — which is
+ * why a fully saturated window reported 29 of 30 days and 39 of 40.
+ */
+function buildActivityWindow(dayKeys: Set<string>, days: number): DailyReadingActivity[] {
+  const cursor = new Date();
+  cursor.setHours(0, 0, 0, 0);
+  cursor.setDate(cursor.getDate() - (days - 1));
+
+  const activity: DailyReadingActivity[] = [];
+  for (let index = 0; index < days; index++) {
+    const date = toLocalDateString(cursor);
+    activity.push({ date, hasActivity: dayKeys.has(date) });
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return activity;
+}
+
 export class ReadingStreakService {
   /**
    * Calculate reading streak from daily activity data
    */
   static calculateStreak(activities: DailyReadingActivity[]): ReadingStreak {
-    const today = new Date();
-    const todayStr = toUTCDateString(today);
-
-    const activeDays = activities.filter(day => day.hasActivity);
-
-    if (activeDays.length === 0) {
-      return {
-        currentStreak: 0,
-        longestStreak: 0,
-        lastReadingDate: null,
-        totalReadingDays: 0,
-      };
-    }
-
-    const sortedActiveDays = activeDays.sort((a, b) => a.date.localeCompare(b.date));
-    const mostRecentDate = sortedActiveDays[sortedActiveDays.length - 1]?.date;
-    const lastReadingDate = new Date(mostRecentDate || '');
-
-    // Calculate current streak
-    let currentStreak = 0;
-    const yesterday = new Date();
-    yesterday.setUTCDate(yesterday.getUTCDate() - 1);
-    const yesterdayStr = toUTCDateString(yesterday);
-
-    const hasRecentActivity =
-      mostRecentDate && (mostRecentDate === todayStr || mostRecentDate === yesterdayStr);
-
-    if (hasRecentActivity) {
-      const activeDatesSet = new Set(sortedActiveDays.map(a => a.date));
-      const currentDate = new Date(mostRecentDate);
-
-      while (true) {
-        const dateStr = toUTCDateString(currentDate);
-        if (dateStr && activeDatesSet.has(dateStr)) {
-          currentStreak++;
-          currentDate.setUTCDate(currentDate.getUTCDate() - 1);
-        } else {
-          break;
-        }
-      }
-    }
-
-    // Calculate longest streak
-    let longestStreak = 0;
-    let tempStreak = 0;
-    const allActivities = activities.sort((a, b) => a.date.localeCompare(b.date));
-
-    for (let i = 0; i < allActivities.length; i++) {
-      const activity = allActivities[i];
-      if (activity?.hasActivity) {
-        const prevActivity = allActivities[i - 1];
-        if (i === 0 || !prevActivity?.hasActivity) {
-          tempStreak = 1;
-        } else {
-          const prevDate = new Date(prevActivity.date);
-          const currentDate = new Date(activity.date);
-          const dayDiff = (currentDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24);
-
-          if (dayDiff === 1) {
-            tempStreak++;
-          } else {
-            longestStreak = Math.max(longestStreak, tempStreak);
-            tempStreak = 1;
-          }
-        }
-        longestStreak = Math.max(longestStreak, tempStreak);
-      }
-    }
-
-    return {
-      currentStreak,
-      longestStreak,
-      lastReadingDate,
-      totalReadingDays: activeDays.length,
-    };
+    return calculateStreakFromDayKeys(
+      new Set(activities.filter(day => day.hasActivity).map(day => day.date)),
+    );
   }
 
   /**
@@ -139,11 +170,7 @@ export class ReadingStreakService {
       if (!currentPeriod) {
         currentPeriod = { start: day.date, end: day.date, dates: [day.date] };
       } else {
-        const lastDate = new Date(currentPeriod.end);
-        const currentDate = new Date(day.date);
-        const dayDiff = (currentDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24);
-
-        if (dayDiff === 1) {
+        if (isNextDay(parseDayKey(currentPeriod.end), parseDayKey(day.date))) {
           currentPeriod.end = day.date;
           currentPeriod.dates.push(day.date);
         } else {
@@ -172,12 +199,11 @@ export class ReadingStreakService {
     // Mark the most recent period as active if it's current
     if (periods.length > 0) {
       const lastPeriod = periods[periods.length - 1];
-      const today = new Date();
-      const todayStr = toUTCDateString(today);
+      const todayStr = toLocalDateString(new Date());
 
       const yesterday = new Date();
-      yesterday.setUTCDate(yesterday.getUTCDate() - 1);
-      const yesterdayStr = toUTCDateString(yesterday);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = toLocalDateString(yesterday);
 
       if (lastPeriod && (lastPeriod.endDate === todayStr || lastPeriod.endDate === yesterdayStr)) {
         lastPeriod.isActive = true;
@@ -194,24 +220,25 @@ export class ReadingStreakService {
  */
 export class StudySessionStreakService {
   /**
-   * Get daily study session activity for a user over a specified period
-   * Uses study_words table fsrs_last_review timestamps to track study sessions
+   * Every LOCAL calendar day the user actually reviewed a word, over their whole
+   * history — the single source of truth behind both the streak numbers and the
+   * chart.
+   *
+   * Gated on `fsrs_reps > 0`, which is the only honest "has been reviewed" test:
+   * `createInitialFSRSEntry` / `createResetFSRSUpdate` stamp `fsrs_last_review`
+   * at the moment a word is ADDED, on a card with `fsrs_reps: 0`. Without the
+   * gate, a day spent only adding vocabulary counted as a day spent studying —
+   * measured across the live database as 544 phantom study days over 498
+   * accounts, inflating those users' streaks. `countReviewedToday` was fixed for
+   * exactly this; the streak was not.
    */
-  static async getDailyStudySessionActivity(
-    userId: string,
-    days: number = 30,
-  ): Promise<DailyReadingActivity[]> {
-    const endDate = new Date();
-    const startDate = new Date();
-    // Go back (days - 1) to include today as the last day
-    startDate.setDate(startDate.getDate() - (days - 1));
-
-    // Get all study_words reviews for the user (fsrs_last_review tracks when they studied).
+  private static async fetchStudyDayKeys(userId: string): Promise<Set<string>> {
     // Paged rather than a single `.select()`: PostgREST silently truncates an
     // unbounded request at its implicit 1000-row default, which would drop a
     // heavy learner's older reviews out of the streak calculation.
     const PAGE_SIZE = 1000;
-    const data: Pick<Tables<'study_words'>, 'fsrs_last_review'>[] = [];
+    const dayKeys = new Set<string>();
+
     for (let offset = 0; ; offset += PAGE_SIZE) {
       const page = await executeQuery(
         () =>
@@ -219,111 +246,85 @@ export class StudySessionStreakService {
             .from('study_words')
             .select('fsrs_last_review')
             .eq('user_id', userId)
+            .gt('fsrs_reps', 0)
             .range(offset, offset + PAGE_SIZE - 1),
         {
           ...errorConfig.activity,
-          analyticsProperties: { userId, days },
+          analyticsProperties: { userId },
         },
       );
-      data.push(...(page ?? []));
+
+      for (const record of page ?? []) {
+        const reviewedAt = parseSupabaseTimestamp(record?.fsrs_last_review);
+        if (reviewedAt) dayKeys.add(toLocalDateString(reviewedAt));
+      }
+
       if (!page || page.length < PAGE_SIZE) break;
     }
 
-    // Initialize exactly `days` dates including today
-    const activityMap = new Map<string, boolean>();
-
-    for (let i = 0; i < days; i++) {
-      const date = new Date(startDate);
-      date.setDate(date.getDate() + i);
-      const dateStr = toUTCDateString(date);
-      if (dateStr) {
-        activityMap.set(dateStr, false);
-      }
-    }
-
-    // Mark dates with study session activity (any word review = session that day)
-    (data || []).forEach(record => {
-      const lastReview = record?.fsrs_last_review;
-      if (lastReview) {
-        const date = new Date(lastReview);
-        const dateKey = toUTCDateString(date);
-
-        // Only count activity within our specified date range
-        if (date >= startDate && date <= endDate) {
-          if (dateKey && activityMap.has(dateKey)) {
-            activityMap.set(dateKey, true);
-          }
-        }
-      }
-    });
-
-    return Array.from(activityMap.entries())
-      .map(([date, hasActivity]) => ({ date, hasActivity }))
-      .sort((a, b) => a.date.localeCompare(b.date));
+    return dayKeys;
   }
 
   /**
-   * Get study session streak info
-   * Reuses existing calculateStreak logic from ReadingStreakService
+   * Day-by-day activity for the streak chart: exactly `days` buckets ending
+   * today. Display only — the streak metrics are NOT derived from this window.
+   */
+  static async getDailyStudySessionActivity(
+    userId: string,
+    days: number = 30,
+  ): Promise<DailyReadingActivity[]> {
+    return buildActivityWindow(await this.fetchStudyDayKeys(userId), days);
+  }
+
+  /**
+   * Get study session streak info, computed over the user's full history.
+   *
+   * Failures propagate deliberately. This used to catch everything and return a
+   * zeroed streak, which React Query then cached as a SUCCESS — so one flaky
+   * request overwrote a live 43-day streak with "0", and because no error ever
+   * reached the query layer its `retry` never fired and the 0 simply stayed.
+   * Telling a learner their streak is gone is the single most destructive thing
+   * this screen can get wrong, and a network blip is not evidence of it.
+   *
+   * The case the old comment worried about — "no study_words yet" — does not
+   * throw: it returns no rows, and an empty day set already yields a zero
+   * streak through the normal path. So the catch could only ever fire on a real
+   * failure, which is exactly when zero is a lie. Letting it throw keeps the
+   * last good value on screen and lets the query retry.
    */
   static async getStudySessionStreak(userId: string): Promise<ReadingStreak> {
-    try {
-      const activities = await this.getDailyStudySessionActivity(userId, 30);
-      return ReadingStreakService.calculateStreak(activities);
-    } catch {
-      // If query fails (e.g., no study_words yet), return empty streak
-      return {
-        currentStreak: 0,
-        longestStreak: 0,
-        lastReadingDate: null,
-        totalReadingDays: 0,
-      };
-    }
+    return calculateStreakFromDayKeys(await this.fetchStudyDayKeys(userId));
   }
 
   /**
-   * Get complete study session streak history data for visualization
-   * Reuses existing calculation logic from ReadingStreakService
+   * Get complete study session streak history data for visualization.
+   *
+   * The metrics come from the full day set and the chart from a `days`-long
+   * window of it, so this screen and the practice card report the same streak
+   * however long each chooses to draw.
    */
   static async getStudySessionHistory(
     userId: string,
     days: number = 30,
   ): Promise<StreakHistoryData> {
-    try {
-      const dailyActivity = await this.getDailyStudySessionActivity(userId, days);
-      const streakPeriods = ReadingStreakService.calculateStreakPeriods(dailyActivity);
-      const streak = ReadingStreakService.calculateStreak(dailyActivity);
+    // Throws on failure for the same reason getStudySessionStreak does: an
+    // all-blank chart with zeroed metrics is a claim about the learner's
+    // history, and a failed request has nothing to say about it. The screen has
+    // an error state; this should reach it.
+    const dayKeys = await this.fetchStudyDayKeys(userId);
+    const dailyActivity = buildActivityWindow(dayKeys, days);
+    const streakPeriods = ReadingStreakService.calculateStreakPeriods(dailyActivity);
+    const streak = calculateStreakFromDayKeys(dayKeys);
 
-      return {
-        dailyActivity,
-        streakPeriods,
-        metrics: {
-          currentStreak: streak.currentStreak,
-          longestStreak: streak.longestStreak,
-          totalReadingDays: streak.totalReadingDays,
-        },
-      };
-    } catch {
-      // If query fails, return empty history
-      const emptyActivity: DailyReadingActivity[] = [];
-      for (let i = 0; i < days; i++) {
-        const date = new Date();
-        date.setDate(date.getDate() - (days - 1 - i));
-        emptyActivity.push({
-          date: toUTCDateString(date),
-          hasActivity: false,
-        });
-      }
-      return {
-        dailyActivity: emptyActivity,
-        streakPeriods: [],
-        metrics: {
-          currentStreak: 0,
-          longestStreak: 0,
-          totalReadingDays: 0,
-        },
-      };
-    }
+    return {
+      dailyActivity,
+      streakPeriods,
+      metrics: {
+        currentStreak: streak.currentStreak,
+        longestStreak: streak.longestStreak,
+        totalReadingDays: streak.totalReadingDays,
+      },
+    };
   }
 }
 
