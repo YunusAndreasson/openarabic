@@ -3,6 +3,7 @@
   "main": "expo-router/entry",
   "version": "1448.3.1+257",
   "scripts": {
+    "eas-build-pre-install": "corepack enable",
     "lint:fix": "eslint . --fix --cache",
     "lint": "eslint . --cache --max-warnings 488",
     "prettier:check": "prettier --check . --cache",
