@@ -47,11 +47,6 @@ const errorConfig = {
     analyticsEventName: 'Add_Multiple_Roots_Insert_Error',
     showToast: false,
   }),
-  deleteAll: createServiceErrorConfig('study_words', 'delete', {
-    toastMessage: STRINGS.FAILED_TO_DELETE_STUDY_WORDS,
-    analyticsEventName: 'Delete_All_Study_Words_Error',
-    showToast: false,
-  }),
 };
 
 export interface StudyWordMutationResult {

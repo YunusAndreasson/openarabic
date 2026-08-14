@@ -90,6 +90,7 @@ describe('useDailyWordLimit', () => {
       expect(typeof result.current.getDailyWordCount).toBe('function');
       expect(typeof result.current.getEffectiveLimitInfo).toBe('function');
       expect(typeof result.current.incrementDailyWordCount).toBe('function');
+      expect(typeof result.current.decrementIfAddedToday).toBe('function');
       expect(typeof result.current.canAddWord).toBe('function');
       expect(typeof result.current.getRemainingWords).toBe('function');
       expect(typeof result.current.isApproachingLimit).toBe('function');
@@ -197,6 +198,48 @@ describe('useDailyWordLimit', () => {
       const { result } = renderHook(() => useDailyWordLimit(), { wrapper });
 
       await expect(result.current.resetDailyWordCount()).resolves.not.toThrow();
+    });
+  });
+
+  describe('decrementIfAddedToday', () => {
+    // Regression: removing a word added earlier in the SAME session used to
+    // leave the daily counter permanently incremented — a same-day
+    // add-then-remove should net to zero words spent against today's cap.
+    test('releases a slot for a word added earlier today', async () => {
+      const { result } = renderHook(() => useDailyWordLimit(), { wrapper });
+
+      await result.current.incrementDailyWordCount();
+      expect(await result.current.getDailyWordCount()).toBe(1);
+
+      await result.current.decrementIfAddedToday(new Date().toISOString());
+
+      expect(await result.current.getDailyWordCount()).toBe(0);
+    });
+
+    // Removing an OLDER word must never refund a slot it never used against
+    // today's count — only a same-day add-then-remove nets to zero.
+    test('does not release a slot for a word added on a previous day', async () => {
+      const { result } = renderHook(() => useDailyWordLimit(), { wrapper });
+
+      await result.current.incrementDailyWordCount();
+      expect(await result.current.getDailyWordCount()).toBe(1);
+
+      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      await result.current.decrementIfAddedToday(yesterday);
+
+      expect(await result.current.getDailyWordCount()).toBe(1);
+    });
+
+    test('does nothing for a null or invalid created_at', async () => {
+      const { result } = renderHook(() => useDailyWordLimit(), { wrapper });
+
+      await result.current.incrementDailyWordCount();
+      expect(await result.current.getDailyWordCount()).toBe(1);
+
+      await result.current.decrementIfAddedToday(null);
+      await result.current.decrementIfAddedToday('not-a-real-timestamp');
+
+      expect(await result.current.getDailyWordCount()).toBe(1);
     });
   });
 

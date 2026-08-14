@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -36,6 +37,7 @@ export function useAccountDeletion(): UseAccountDeletionReturn {
   const [confirmationError, setConfirmationError] = useState('');
 
   const isMountedRef = useMountSafety();
+  const queryClient = useQueryClient();
 
   // Fetch user email on mount
   useEffect(() => {
@@ -84,6 +86,11 @@ export function useAccountDeletion(): UseAccountDeletionReturn {
       // Delete account via service (no email needed - uses session)
       await AccountDeletionService.deleteAccount();
 
+      // The deleted account's word/audio/reading/streak data otherwise stays
+      // resident in the query cache for the rest of the process lifetime —
+      // a stale leftover of an account the app just confirmed was deleted.
+      queryClient.clear();
+
       // Track successful deletion
       // Deletion is already irreversible. Analytics must never turn a completed
       // deletion into a user-visible failure state.
@@ -116,7 +123,7 @@ export function useAccountDeletion(): UseAccountDeletionReturn {
         setLoading(false);
       }
     }
-  }, [confirmationText, validateConfirmation, isMountedRef]);
+  }, [confirmationText, validateConfirmation, isMountedRef, queryClient]);
 
   return {
     // State

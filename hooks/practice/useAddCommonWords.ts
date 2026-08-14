@@ -7,6 +7,7 @@ import { OnboardingStep } from '@/constants/onboarding';
 import { fsrsQueries } from '@/constants/queries';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { useDailyWordLimit } from '@/hooks/vocabulary';
 import { analytics } from '@/services/analytics';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { RootId } from '@/types/branded.types';
@@ -43,6 +44,7 @@ export function useAddCommonWords(options?: UseAddCommonWordsOptions): UseAddCom
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const { incrementDailyWordCount } = useDailyWordLimit();
 
   // Fetch common words
   const { data: commonWords = [] } = useQuery({
@@ -69,7 +71,7 @@ export function useAddCommonWords(options?: UseAddCommonWordsOptions): UseAddCom
 
       return { addedCount };
     },
-    onSuccess: ({ addedCount }) => {
+    onSuccess: async ({ addedCount }) => {
       if (!user?.id) return;
 
       // Show toast with haptic immediately (don't wait for cache invalidation)
@@ -87,6 +89,17 @@ export function useAddCommonWords(options?: UseAddCommonWordsOptions): UseAddCom
 
       // Invalidate queries in background (UI updates when ready)
       fsrsQueries.invalidateAll(queryClient, user.id);
+
+      // This bulk path skips the daily-limit CHECK on purpose (see note above),
+      // but must still reserve today's quota for what it actually added —
+      // otherwise the per-word add path (article/dictionary) lets the user add
+      // a full second daily allowance right on top of this quick-start.
+      // incrementDailyWordCount stops (returns false, no-ops) once the
+      // configured ceiling is reached, so this can only cap the count, never
+      // over-reserve past it.
+      for (let i = 0; i < addedCount; i += 1) {
+        await incrementDailyWordCount();
+      }
 
       // Call onSuccess callback
       options?.onSuccess?.();

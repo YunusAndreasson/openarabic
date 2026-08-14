@@ -60,6 +60,7 @@ export const useStudyWordMutations = (
     canAddWord,
     incrementDailyWordCount,
     decrementDailyWordCount,
+    decrementIfAddedToday,
     getEffectiveLimitInfo,
   } = useDailyWordLimit();
 
@@ -90,13 +91,26 @@ export const useStudyWordMutations = (
   const getDueBacklogBlock = useCallback(
     (userId: string | undefined): number | null => {
       if (!userId) return null;
-      const dueEntries = queryClient.getQueriesData<StudyWord[]>({
-        queryKey: fsrsQueries.duePrefix(userId),
-      });
-      const cachedDueCount = dueEntries.reduce(
-        (max, [, words]) => (Array.isArray(words) ? Math.max(max, words.length) : max),
-        0,
-      );
+      // Only trust FRESH due-variant cache entries. fsrsQueries.invalidateAll
+      // (called after every add/remove and every completed review session)
+      // marks every fsrs-words query stale, but only actively refetches
+      // variants with a live observer — a variant nothing is currently
+      // watching (e.g. a different cooldown/limit combo some other screen
+      // fetched earlier this session) stays stale with its old, now-wrong
+      // count until something re-observes it. Counting that entry here could
+      // block new adds for minutes after the backlog was actually cleared —
+      // a false block, the mirror image of the fail-open bug this gate was
+      // built to close. Skipping stale entries falls straight through to
+      // derivedDueCount below, which is always computed fresh from the
+      // (near-universally observed) full word list.
+      const dueEntries = queryClient
+        .getQueryCache()
+        .findAll({ queryKey: fsrsQueries.duePrefix(userId) });
+      const cachedDueCount = dueEntries.reduce((max, query) => {
+        if (query.isStale()) return max;
+        const words = query.state.data as StudyWord[] | undefined;
+        return Array.isArray(words) ? Math.max(max, words.length) : max;
+      }, 0);
 
       const allWords = queryClient.getQueryData<StudyWord[]>(fsrsQueries.all(userId).queryKey);
       const derivedDueCount = allWords
@@ -174,6 +188,10 @@ export const useStudyWordMutations = (
         analytics.track(ANALYTICS_EVENTS.WORD_REMOVED_FROM_STUDY, {
           root_id: rootId,
         });
+        // A same-day add-then-remove nets to zero words spent against today's
+        // cap; removing a word added on an earlier day must not refund it.
+        const removedWord = context?.previousStudyWords?.find(sw => sw.root_id === rootId);
+        void decrementIfAddedToday(removedWord?.created_at);
       } else if (result.changed && result.inStudyList && !wasInStudyList) {
         analytics.track(ANALYTICS_EVENTS.WORD_ADDED_TO_STUDY, {
           root_id: rootId,
@@ -270,15 +288,24 @@ export const useStudyWordMutations = (
           });
           if (isAdd && !result.changed) await decrementDailyWordCount();
           return result.inStudyList;
-        } catch (error) {
+        } catch {
           // Adding reserves the daily quota before the network write so two
           // rapid presses cannot both pass the ceiling. Release that slot when
           // the write fails; otherwise transient errors permanently consume
           // today's allowance.
           if (isAdd) await decrementDailyWordCount();
-          throw error;
+          // The mutation's own onError already reported this failure (toast +
+          // Sentry + analytics + optimistic-cache revert) — stop here instead
+          // of re-throwing into the outer catch below, which would report the
+          // same single failure a second time (a duplicate toast on top of
+          // the friendly one onError already showed, plus a duplicate Sentry
+          // capture and analytics event).
+          return undefined;
         }
       } catch (error) {
+        // Reached only by an error that did NOT come from the mutation above
+        // — everything from the mutation itself already returned before this
+        // catch runs.
         handleError(error);
         return undefined;
       }

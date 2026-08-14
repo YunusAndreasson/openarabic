@@ -36,6 +36,7 @@ const mockCheckAuthentication = jest.fn();
 const mockCanAddWord = jest.fn();
 const mockIncrementDailyWordCount = jest.fn();
 const mockDecrementDailyWordCount = jest.fn();
+const mockDecrementIfAddedToday = jest.fn();
 const mockGetEffectiveLimitInfo = jest.fn();
 const mockShowToast = jest.fn();
 const mockSelectionFeedback = jest.fn();
@@ -70,6 +71,7 @@ jest.mock('@/hooks/vocabulary', () => ({
     canAddWord: mockCanAddWord,
     incrementDailyWordCount: mockIncrementDailyWordCount,
     decrementDailyWordCount: mockDecrementDailyWordCount,
+    decrementIfAddedToday: mockDecrementIfAddedToday,
     getEffectiveLimitInfo: mockGetEffectiveLimitInfo,
   }),
 }));
@@ -388,7 +390,17 @@ describe('Reading to Dictionary Flow', () => {
     });
 
     test('updates local study state optimistically', async () => {
-      const mockHandleRootPress = jest.fn().mockResolvedValue(true);
+      // handleRootPress is the boundary to the real useStudyWordMutations
+      // mutation, whose onMutate writes the optimistic value straight into
+      // the fsrs-words cache — the mock here does the same to stand in for
+      // it, since isRootInStudyList now reads that cache reactively.
+      const mockHandleRootPress = jest.fn().mockImplementation(async (rootId: number) => {
+        queryClient.setQueryData(['fsrs-words', mockUserId], (old: StudyWord[] = []) => [
+          ...old,
+          { root_id: rootId } as StudyWord,
+        ]);
+        return true;
+      });
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
@@ -401,13 +413,15 @@ describe('Reading to Dictionary Flow', () => {
         await result.current.handleAddWordToStudy(mockWord);
       });
 
-      // After adding, the word should show as in study list via optimistic update
+      // After adding, the word should show as in study list via the cache
       // Open the word details to check isInStudyList
       await act(async () => {
         result.current.wordDetailsModal.open(mockWord);
       });
 
-      expect(result.current.isInStudyList).toBeTruthy();
+      await waitFor(() => {
+        expect(result.current.isInStudyList).toBeTruthy();
+      });
     });
 
     test('calls refetchStudyWords callback after adding', async () => {
@@ -475,7 +489,13 @@ describe('Reading to Dictionary Flow', () => {
 
   describe('Full User Journey', () => {
     test('complete flow: tap word → view details → add to study', async () => {
-      const mockHandleRootPress = jest.fn().mockResolvedValue(true);
+      const mockHandleRootPress = jest.fn().mockImplementation(async (rootId: number) => {
+        queryClient.setQueryData(['fsrs-words', mockUserId], (old: StudyWord[] = []) => [
+          ...old,
+          { root_id: rootId } as StudyWord,
+        ]);
+        return true;
+      });
 
       const { result } = renderHook(
         () =>
@@ -506,14 +526,21 @@ describe('Reading to Dictionary Flow', () => {
       });
 
       expect(mockHandleRootPress).toHaveBeenCalledWith(mockWord.root_id, undefined);
-      expect(result.current.isInStudyList).toBeTruthy();
+      await waitFor(() => {
+        expect(result.current.isInStudyList).toBeTruthy();
+      });
     });
 
     test('flow handles word already in study list', async () => {
       // Set up word as already in study list
       queryClient.setQueryData(['fsrs-words', mockUserId], [{ root_id: 501 }]);
 
-      const mockHandleRootPress = jest.fn().mockResolvedValue(false); // Returns false when removing
+      const mockHandleRootPress = jest.fn().mockImplementation(async (rootId: number) => {
+        queryClient.setQueryData(['fsrs-words', mockUserId], (old: StudyWord[] = []) =>
+          old.filter(w => w.root_id !== rootId),
+        );
+        return false; // Returns false when removing
+      });
 
       const { result } = renderHook(
         () =>
@@ -536,8 +563,10 @@ describe('Reading to Dictionary Flow', () => {
         await result.current.handleAddWordToStudy(mockWord);
       });
 
-      // After removal, local optimistic state should show as not in study list
-      expect(result.current.isInStudyList).toBeFalsy();
+      // After removal, the shared cache should show it as not in study list
+      await waitFor(() => {
+        expect(result.current.isInStudyList).toBeFalsy();
+      });
     });
   });
 });

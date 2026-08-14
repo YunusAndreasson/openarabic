@@ -72,6 +72,8 @@ jest.mock('@/hooks/vocabulary', () => ({
     dailyWordLimit: 50,
     canAddWord: jest.fn().mockResolvedValue(true),
     incrementDailyWordCount: jest.fn().mockResolvedValue(true),
+    decrementDailyWordCount: jest.fn().mockResolvedValue(undefined),
+    decrementIfAddedToday: jest.fn().mockResolvedValue(undefined),
   }),
 }));
 

@@ -1,8 +1,8 @@
 // External Libraries
 import { SettingsPicker, TimePicker } from '@/components/ui';
 import * as StoreReview from 'expo-store-review';
-import { router } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState, type FC } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useMemo, useState, type FC } from 'react';
 import { Alert, StyleSheet } from 'react-native';
 
 import { THEME_OPTIONS } from '@/constants/themeOptions';
@@ -119,14 +119,19 @@ const AccountScreen: FC = () => {
   const { getRemainingWords } = useDailyWordLimit();
   const [wordsRemainingToday, setWordsRemainingToday] = useState<number | null>(null);
 
-  // Fetch remaining words on mount
-  useEffect(() => {
-    const fetchRemainingWords = async () => {
-      const remaining = await getRemainingWords();
-      setWordsRemainingToday(remaining === Infinity ? null : remaining);
-    };
-    fetchRemainingWords();
-  }, [getRemainingWords]);
+  // Refetch every time this screen gains focus, not just on mount — the
+  // count changes from other screens (article reader, dictionary list,
+  // practice empty-state quick-start) while Account may stay mounted in the
+  // background tab stack, so a mount-only fetch could show a stale figure.
+  useFocusEffect(
+    useCallback(() => {
+      const fetchRemainingWords = async () => {
+        const remaining = await getRemainingWords();
+        setWordsRemainingToday(remaining === Infinity ? null : remaining);
+      };
+      fetchRemainingWords();
+    }, [getRemainingWords]),
+  );
 
   const currentDailyWordLimitText = useMemo(() => {
     if (currentDailyWordLimit === 0) return 'Unlimited';

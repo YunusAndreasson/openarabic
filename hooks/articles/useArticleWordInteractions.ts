@@ -1,4 +1,4 @@
-import { useQueryClient } from '@tanstack/react-query';
+import { skipToken, useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { LayoutRectangle } from 'react-native';
 
@@ -11,7 +11,7 @@ import { useModalState } from '@/hooks/ui/useModalState';
 import { analytics } from '@/services/analytics';
 import type { RootId } from '@/types/branded.types';
 import { ToastType } from '@/types/enums';
-import type { SentenceWord, StudyWord, StudyWordIntent } from '@/types/vocabulary.types';
+import type { SentenceWord, StudyWordIntent } from '@/types/vocabulary.types';
 import { mediumFeedback, selectionFeedback } from '@/utils/haptics';
 
 export interface UseArticleWordInteractionsOptions {
@@ -40,8 +40,18 @@ export function useArticleWordInteractions({
   showTooltipFirst = false,
 }: UseArticleWordInteractionsOptions) {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const { showToast } = useToast();
+
+  // Live subscription to the shared study-word cache. The toggle mutation's
+  // onMutate already writes its optimistic value straight into this cache
+  // entry, so reading it reactively gives every consumer (this hook, the
+  // dictionary list, the word-detail page) the same answer at the same time —
+  // no per-screen local copy that can drift once a word is toggled elsewhere.
+  const allWordsConfig = fsrsQueries.all(user?.id ?? '');
+  const studyWordsQuery = useQuery({
+    ...allWordsConfig,
+    queryFn: user?.id ? allWordsConfig.queryFn : skipToken,
+  });
 
   // Tooltip state for word tap preview
   const [activeTooltip, setActiveTooltip] = useState<{
@@ -51,9 +61,6 @@ export function useArticleWordInteractions({
 
   // Word details modal state
   const wordDetailsModal = useModalState<SentenceWord>();
-
-  // Local study states for immediate UI updates (optimistic updates)
-  const [localStudyStates, setLocalStudyStates] = useState<Map<RootId, boolean>>(new Map());
 
   // Ref to avoid handleWordPress identity changes when tooltip toggles
   const activeTooltipRef = useRef<typeof activeTooltip>(null);
@@ -160,17 +167,9 @@ export function useArticleWordInteractions({
       const result = await handleRootPress(word.root_id, intent);
       if (result === undefined) return false;
 
-      const isNowInStudy = result;
-
-      // Optimistic update for immediate UI feedback
-      setLocalStudyStates(prev => {
-        const next = new Map(prev);
-        next.set(word.root_id, isNowInStudy);
-        return next;
-      });
-
-      // Note: handleRootPress mutation already invalidates all FSRS queries via invalidateAll
-      // We only need to refetch to update local component state
+      // No local state to update: the mutation's onMutate already wrote the
+      // optimistic value into the fsrsQueries.all cache, and isRootInStudyList
+      // below reads that cache reactively.
       await refetchStudyWords?.();
 
       return true;
@@ -179,16 +178,13 @@ export function useArticleWordInteractions({
   );
 
   /**
-   * Whether a root is currently in the study list.
-   * Checks local optimistic state first, then falls back to query cache.
+   * Whether a root is currently in the study list. Reads the shared
+   * fsrsQueries.all cache reactively — the same source every screen mutates
+   * through, so a toggle from the dictionary list or the word-detail page is
+   * reflected here without waiting for this screen to remount.
    */
   const isRootInStudyList = (rootId: RootId): boolean => {
-    const localState = localStudyStates.get(rootId);
-    if (localState !== undefined) return localState;
-
-    if (!user?.id) return false;
-    const allWords = queryClient.getQueryData<StudyWord[]>(fsrsQueries.all(user.id).queryKey) ?? [];
-    return allWords.some(word => word.root_id === rootId);
+    return studyWordsQuery.data?.some(word => word.root_id === rootId) ?? false;
   };
 
   // Ref mirror (synced every commit) so handleWordLongPress keeps a stable

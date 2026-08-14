@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 import { OPTIMIZED_FSRS_CONFIG } from '@/constants/fsrs';
 import { useAppSelectorShallow } from '@/store/hooks';
 import { selectAdaptiveNewWordPacingEnabled } from '@/store/settingsSlice';
+import { parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
 import { computeAdaptiveNewLimit, type AdaptiveNewLimit } from '@/utils/newWordPacing';
 import { readRecentRecall } from '@/utils/recallSignalStorage';
 
@@ -114,6 +115,28 @@ export const useDailyWordLimit = () => {
     }
   }, [getEffectiveLimitInfo, getDailyWordCount]);
 
+  /**
+   * Release today's reserved quota slot ONLY if `createdAt` falls on today's
+   * local calendar day. A same-day add-then-remove nets out to zero words
+   * spent against the cap; removing a word added on an earlier day must never
+   * refund a slot it never used.
+   */
+  const decrementIfAddedToday = useCallback(
+    async (createdAt: string | null | undefined): Promise<void> => {
+      const created = parseSupabaseTimestamp(createdAt);
+      if (!created) return;
+
+      const createdDateString = `${created.getFullYear()}-${String(created.getMonth() + 1).padStart(
+        2,
+        '0',
+      )}-${String(created.getDate()).padStart(2, '0')}`;
+      if (createdDateString !== getCurrentDateString()) return;
+
+      await decrementDailyWordCount();
+    },
+    [getCurrentDateString, decrementDailyWordCount],
+  );
+
   const canAddWord = useCallback(async (): Promise<boolean> => {
     const { effective } = await getEffectiveLimitInfo();
     if (effective === Infinity) return true;
@@ -155,6 +178,7 @@ export const useDailyWordLimit = () => {
     getEffectiveLimitInfo,
     incrementDailyWordCount,
     decrementDailyWordCount,
+    decrementIfAddedToday,
     canAddWord,
     getRemainingWords,
     isApproachingLimit,

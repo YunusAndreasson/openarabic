@@ -46,6 +46,16 @@ jest.mock('@/components/providers', () => ({
   }),
 }));
 
+// The hook subscribes to fsrsQueries.all via useQuery — mock the service so a
+// test that doesn't pre-seed the cache resolves to an empty list immediately
+// instead of falling through to the generic supabase-js mock's chainable
+// builder (unrelated data shape, and an avoidable async round-trip per test).
+jest.mock('@/services/studyWordsFSRS', () => ({
+  studyWordsFSRSService: {
+    getFSRSWords: jest.fn().mockResolvedValue([]),
+  },
+}));
+
 describe('useArticleWordInteractions', () => {
   let queryClient: QueryClient;
   let mockHandleRootPress: jest.Mock;
@@ -534,8 +544,18 @@ describe('useArticleWordInteractions', () => {
       expect(mockRefetchStudyWords).toHaveBeenCalled();
     });
 
-    test('updates local optimistic state immediately', async () => {
-      mockHandleRootPress.mockResolvedValue(true);
+    // handleRootPress is the boundary to the real useStudyWordMutations
+    // mutation, whose onMutate writes the optimistic value straight into the
+    // fsrsQueries.all cache before the network call even resolves — so the
+    // mock here writes to that same cache entry to stand in for it.
+    test('reflects the study-word cache once the toggle mutation lands', async () => {
+      mockHandleRootPress.mockImplementation(async (rootId: number) => {
+        queryClient.setQueryData(
+          fsrsQueries.all('test-user-id').queryKey,
+          (old: StudyWord[] = []) => [...old, { root_id: rootId } as StudyWord],
+        );
+        return true;
+      });
 
       const { result } = renderHook(
         () =>
@@ -548,33 +568,31 @@ describe('useArticleWordInteractions', () => {
 
       const word = createMockWord(1, 10);
 
-      // Open word details modal
       act(() => {
         result.current.wordDetailsModal.open(word);
       });
-
       expect(result.current.isInStudyList).toBeFalsy();
-
-      // Close modal before adding
-      act(() => {
-        result.current.wordDetailsModal.close();
-      });
 
       await act(async () => {
         await result.current.handleAddWordToStudy(word);
       });
 
-      // Re-open modal to check updated state
-      act(() => {
-        result.current.wordDetailsModal.open(word);
+      await waitFor(() => {
+        expect(result.current.isInStudyList).toBeTruthy();
       });
-
-      // Should be true after adding
-      expect(result.current.isInStudyList).toBeTruthy();
     });
 
     test('removes word from study when toggled off', async () => {
-      mockHandleRootPress.mockResolvedValue(false);
+      queryClient.setQueryData(fsrsQueries.all('test-user-id').queryKey, [
+        { root_id: 10 } as StudyWord,
+      ]);
+      mockHandleRootPress.mockImplementation(async (rootId: number) => {
+        queryClient.setQueryData(
+          fsrsQueries.all('test-user-id').queryKey,
+          (old: StudyWord[] = []) => old.filter(w => w.root_id !== rootId),
+        );
+        return false;
+      });
 
       const { result } = renderHook(
         () =>
@@ -587,26 +605,18 @@ describe('useArticleWordInteractions', () => {
 
       const word = createMockWord(1, 10);
 
-      // First add it
-      mockHandleRootPress.mockResolvedValue(true);
-      await act(async () => {
-        await result.current.handleAddWordToStudy(word);
-      });
-
-      // Open modal to check state
       act(() => {
         result.current.wordDetailsModal.open(word);
       });
-
       expect(result.current.isInStudyList).toBeTruthy();
 
-      // Now remove it
-      mockHandleRootPress.mockResolvedValue(false);
       await act(async () => {
         await result.current.handleAddWordToStudy(word);
       });
 
-      expect(result.current.isInStudyList).toBeFalsy();
+      await waitFor(() => {
+        expect(result.current.isInStudyList).toBeFalsy();
+      });
     });
 
     test('refetches study words after mutation', async () => {
@@ -709,7 +719,19 @@ describe('useArticleWordInteractions', () => {
   });
 
   describe('isInStudyList', () => {
-    test('checks local optimistic state first', async () => {
+    // Regression test: this hook used to keep its own local `Map<RootId,
+    // boolean>` of "already saved" state, checked BEFORE the query cache and
+    // never reconciled with it. A word toggled through a completely
+    // different useStudyWordMutations instance — e.g. removed from the
+    // Practice dictionary list while this article screen stayed mounted in
+    // the background — left that local Map stale, so the article's
+    // word-detail sheet kept showing "Remove from Practice" for a word that
+    // was no longer saved. Reading fsrsQueries.all reactively (no local
+    // Map of its own) means an external mutation is reflected immediately,
+    // with nothing here that CAN go stale.
+    test('reflects a word toggled by a different mutation instance without a remount', async () => {
+      queryClient.setQueryData(fsrsQueries.all('test-user-id').queryKey, []);
+
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
@@ -721,20 +743,29 @@ describe('useArticleWordInteractions', () => {
 
       const word = createMockWord(1, 10);
 
-      // Set local state directly via handleAddWordToStudy
-      mockHandleRootPress.mockResolvedValue(true);
-
-      await act(async () => {
-        await result.current.handleAddWordToStudy(word);
-      });
-
-      // Open modal to check study state
       act(() => {
         result.current.wordDetailsModal.open(word);
       });
+      expect(result.current.isInStudyList).toBeFalsy();
 
-      // Should use local state
-      expect(result.current.isInStudyList).toBeTruthy();
+      // Simulate another screen's mutation adding the word — this hook never
+      // called handleAddWordToStudy for it.
+      await act(async () => {
+        queryClient.setQueryData(fsrsQueries.all('test-user-id').queryKey, [
+          { root_id: 10 } as StudyWord,
+        ]);
+      });
+      await waitFor(() => {
+        expect(result.current.isInStudyList).toBeTruthy();
+      });
+
+      // ...and removed again, same external path.
+      await act(async () => {
+        queryClient.setQueryData(fsrsQueries.all('test-user-id').queryKey, []);
+      });
+      await waitFor(() => {
+        expect(result.current.isInStudyList).toBeFalsy();
+      });
     });
 
     test('falls back to query cache when no local state', () => {

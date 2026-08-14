@@ -20,6 +20,7 @@ import { setupTestStore } from '@/__tests__/helpers/testStore';
 import { createTestQueryClient } from '@/__tests__/helpers/testUtils';
 import { useStudyWordMutations } from '@/hooks/articles/useStudyWordMutations';
 import type { RootId } from '@/types/branded.types';
+import { handleError } from '@/utils/errorHandling';
 
 // Mock modules at top level
 const mockShowToast = jest.fn();
@@ -29,6 +30,7 @@ const mockToggleFSRSStudyRoot = jest.fn();
 const mockCanAddWord = jest.fn();
 const mockIncrementDailyWordCount = jest.fn();
 const mockDecrementDailyWordCount = jest.fn();
+const mockDecrementIfAddedToday = jest.fn();
 const mockGetEffectiveLimitInfo = jest.fn();
 const mockErrorFeedback = jest.fn();
 
@@ -63,6 +65,7 @@ jest.mock('@/hooks/vocabulary', () => ({
     canAddWord: mockCanAddWord,
     incrementDailyWordCount: mockIncrementDailyWordCount,
     decrementDailyWordCount: mockDecrementDailyWordCount,
+    decrementIfAddedToday: mockDecrementIfAddedToday,
     getEffectiveLimitInfo: mockGetEffectiveLimitInfo,
   }),
 }));
@@ -92,6 +95,7 @@ describe('useStudyWordMutations', () => {
     mockCanAddWord.mockResolvedValue(true);
     mockIncrementDailyWordCount.mockResolvedValue(true);
     mockDecrementDailyWordCount.mockResolvedValue(undefined);
+    mockDecrementIfAddedToday.mockResolvedValue(undefined);
     mockGetEffectiveLimitInfo.mockResolvedValue({ effective: 10, ceiling: 10, status: 'full' });
     mockCheckAuthentication.mockResolvedValue({ user: { id: 'test-user-id' } });
     mockToggleFSRSStudyRoot.mockResolvedValue(true);
@@ -221,6 +225,65 @@ describe('useStudyWordMutations', () => {
       expect(mockDecrementDailyWordCount).not.toHaveBeenCalled();
     });
 
+    // Regression: a failed toggle used to be reported twice — once by the
+    // mutation's own onError (toast + Sentry + analytics), and a second time
+    // by handleRootPress re-throwing into its own outer catch, which called
+    // handleError again for the SAME single failure (a duplicate raw-message
+    // toast stacked on top of the friendly one, plus a duplicate Sentry
+    // capture). handleError must now fire exactly once per failure.
+    test('reports a failed toggle exactly once, not twice', async () => {
+      queryClient.setQueryData(['fsrs-words', 'test-user-id'], []);
+      mockToggleFSRSStudyRoot.mockRejectedValue(new Error('network failure'));
+
+      const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
+
+      await act(async () => {
+        await result.current.handleRootPress(1 as RootId, 'add');
+      });
+
+      expect(jest.mocked(handleError)).toHaveBeenCalledTimes(1);
+    });
+
+    // Regression: a same-day add-then-remove should net to zero words spent
+    // against today's cap. onSuccess must look up the removed word's
+    // created_at from the pre-mutation snapshot and hand it to
+    // decrementIfAddedToday (which itself owns the "was this today" check).
+    test("passes the removed word's created_at to decrementIfAddedToday on a successful remove", async () => {
+      const createdAt = '2026-08-01T10:00:00.000Z';
+      queryClient.setQueryData(
+        ['fsrs-words', 'test-user-id'],
+        [{ root_id: 1, created_at: createdAt }],
+      );
+      // The server confirms the word is no longer in the study list.
+      mockToggleFSRSStudyRoot.mockResolvedValue(false);
+
+      const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
+
+      await act(async () => {
+        await result.current.handleRootPress(1 as RootId, 'remove');
+      });
+
+      await waitFor(() => {
+        expect(mockDecrementIfAddedToday).toHaveBeenCalledWith(createdAt);
+      });
+    });
+
+    test('does not call decrementIfAddedToday on a successful add', async () => {
+      queryClient.setQueryData(['fsrs-words', 'test-user-id'], []);
+      mockToggleFSRSStudyRoot.mockResolvedValue(true);
+
+      const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
+
+      await act(async () => {
+        await result.current.handleRootPress(2 as RootId, 'add');
+      });
+
+      await waitFor(() => {
+        expect(mockIncrementDailyWordCount).toHaveBeenCalled();
+      });
+      expect(mockDecrementIfAddedToday).not.toHaveBeenCalled();
+    });
+
     test('releases daily quota when an explicit add is already present on the server', async () => {
       queryClient.setQueryData(['fsrs-words', 'test-user-id'], []);
       const setSpy = jest
@@ -298,6 +361,46 @@ describe('useStudyWordMutations', () => {
         Array.from({ length: 20 }, (_, i) => ({ root_id: i + 1, fsrs_state: 0 })),
       );
       // No dueKey entry set — the due-specific query has not resolved yet.
+
+      const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
+
+      let returned: boolean | undefined;
+      await act(async () => {
+        returned = await result.current.handleRootPress(999 as RootId, 'add');
+      });
+
+      expect(returned).toBeUndefined();
+      expect(mockToggleFSRSStudyRoot).not.toHaveBeenCalled();
+    });
+
+    // Regression: fsrsQueries.invalidateAll marks every fsrs-words query
+    // stale but only actively refetches variants with a live observer. A
+    // due-prefix entry nothing is currently watching kept its old (too-high)
+    // count indefinitely and, via Math.max, could outvote a correct,
+    // freshly-derived 0 — falsely re-blocking adds for minutes after the
+    // backlog was actually cleared. A stale entry must be ignored so the gate
+    // falls through to the fresh, derived count instead.
+    test('ignores a stale due-cache entry and derives the count fresh instead', async () => {
+      // Nothing due per the freshly-known full word list...
+      queryClient.setQueryData(['fsrs-words', 'test-user-id'], []);
+      // ...but an old, now-stale due-prefix snapshot still says otherwise,
+      // with no observer around to have refetched it.
+      queryClient.setQueryData(dueKey, twentyDue);
+      queryClient.invalidateQueries({ queryKey: dueKey });
+
+      const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
+
+      await act(async () => {
+        await result.current.handleRootPress(999 as RootId, 'add');
+      });
+
+      expect(mockToggleFSRSStudyRoot).toHaveBeenCalled();
+    });
+
+    test('still blocks on a FRESH due-cache entry that agrees with the backlog', async () => {
+      queryClient.setQueryData(['fsrs-words', 'test-user-id'], []);
+      queryClient.setQueryData(dueKey, twentyDue);
+      // No invalidation this time — the entry stays fresh.
 
       const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
 
