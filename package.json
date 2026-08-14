@@ -4,7 +4,7 @@
   "version": "1448.2.19+256",
   "scripts": {
     "lint:fix": "eslint . --fix --cache",
-    "lint": "eslint . --cache",
+    "lint": "eslint . --cache --max-warnings 488",
     "prettier:check": "prettier --check . --cache",
     "prettier:fix": "prettier --write . --cache",
     "start": "expo start -c",
@@ -27,7 +27,7 @@
     "check-unused": "knip",
     "typecheck": "tsc --noEmit",
     "typecheck:source": "tsc --noEmit --skipLibCheck",
-    "lint:source": "eslint . --cache",
+    "lint:source": "eslint . --cache --max-warnings 488",
     "prettier:check:source": "prettier --check . --cache",
     "validate": "node scripts/validate-changed.js",
     "validate:full": "yarn typecheck:source && yarn lint:source && yarn check-unused",

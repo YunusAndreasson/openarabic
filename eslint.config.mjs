@@ -1,6 +1,7 @@
 import { fixupPluginRules } from '@eslint/compat';
 import { defineConfig } from 'eslint/config';
 import expoConfig from 'eslint-config-expo/flat.js';
+import reactHooks from 'eslint-plugin-react-hooks';
 import { configs as tseslintConfigs, parser as tsParser } from 'typescript-eslint';
 import unusedImportsPlugin from 'eslint-plugin-unused-imports';
 import prettierConfig from 'eslint-config-prettier';
@@ -150,6 +151,46 @@ export default defineConfig([
       '@typescript-eslint/no-require-imports': 'off', // Config files use require()
       '@typescript-eslint/no-unused-vars': 'off',
       '@typescript-eslint/no-empty-function': 'off',
+    },
+  },
+
+  // React Compiler lints (eslint-plugin-react-hooks v7).
+  //
+  // v7 ships the React Compiler *as a linter*: beyond rules-of-hooks/exhaustive-deps
+  // it statically proves the Rules of React — `purity`, `refs` (no ref reads/writes
+  // during render), `immutability` (no mutating props/state), `set-state-in-effect`,
+  // `set-state-in-render`, `static-components`, `error-boundaries`.
+  //
+  // IMPORTANT: `eslint-config-expo/flat.js` ALREADY enables 16 of this preset's 17
+  // rules at the severities above (verified 2026-08-14 by reading its resolved rule
+  // map — do not re-derive this by reading only this file, which is what made an
+  // earlier audit wrongly conclude they were off). So this line is deliberately
+  // near-redundant. It exists to:
+  //   1. add the one rule expo omits — `void-use-memo`; and
+  //   2. PIN the guarantee. These rules arrive transitively through an Expo preset,
+  //      so an SDK bump could silently drop enforcement and nothing would fail. This
+  //      line makes that a merge conflict instead of a silent regression.
+  // All 17 measured at 0 violations repo-wide, so it changes no current output.
+  //
+  // Placed BEFORE the React block below so that block's deliberate
+  // `exhaustive-deps: 'warn'` keeps winning over the preset's own setting.
+  reactHooks.configs.flat['recommended-latest'],
+
+  // The rules that actually add signal: NOT in the preset and NOT in expo's config,
+  // and unlike everything above these have real hits (+21). Same error/warn split as
+  // the type-aware block: each needs a human call per site, so they surface without
+  // blocking CI. Do not let them grow.
+  {
+    files: ['**/*.{js,jsx,ts,tsx}'],
+    rules: {
+      // 16 hits. Incomplete/extra dep arrays stop the compiler from tracking data
+      // flow, and the "missing" half is a stale-closure bug waiting to happen —
+      // concentrated in useGlobalAudioState (4), useReview (2), useAppPreloader (2).
+      'react-hooks/memo-dependencies': 'warn',
+      // 5 hits. A capitalized call that isn't a component is either a mis-named
+      // helper or a component being invoked as a function (which silently drops its
+      // state). Both need reading the call site to tell apart.
+      'react-hooks/capitalized-calls': 'warn',
     },
   },
 
