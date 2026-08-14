@@ -65,10 +65,12 @@ NODE
 echo
 if [ "$LATEST" -eq 1 ]; then
   echo "▸ [3/5] Updating unpatched dependencies to their latest releases…"
-  yarn upgrade --latest "${UPDATE_PACKAGES[@]}"
+  # Yarn 4's `up` goes to latest and rewrites package.json — Yarn 1's `upgrade --latest`.
+  yarn up "${UPDATE_PACKAGES[@]}"
 else
   echo "▸ [3/5] Updating unpatched dependencies within declared semver ranges…"
-  yarn upgrade "${UPDATE_PACKAGES[@]}"
+  # `-R` re-resolves the existing ranges and touches only the lockfile — Yarn 1's bare `upgrade`.
+  yarn up -R "${UPDATE_PACKAGES[@]}"
 fi
 
 echo

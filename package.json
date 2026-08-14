@@ -3,7 +3,6 @@
   "main": "expo-router/entry",
   "version": "1448.2.19+256",
   "scripts": {
-    "postinstall": "patch-package",
     "lint:fix": "eslint . --fix --cache",
     "lint": "eslint . --cache",
     "prettier:check": "prettier --check . --cache",
@@ -132,7 +131,6 @@
     "jest": "~30.4.2",
     "jest-expo": "~57.0.4",
     "knip": "^6.29.0",
-    "patch-package": "^8.0.1",
     "prettier": "^3.9.6",
     "react-test-renderer": "19.2.3",
     "typescript": "~6.0.3",
@@ -150,7 +148,7 @@
   },
   "engines": {
     "node": ">=20.19.5",
-    "yarn": ">=1.22.22"
+    "yarn": ">=4.0.0"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
@@ -161,7 +159,7 @@
       "prettier --write"
     ]
   },
-  "packageManager": "yarn@1.22.22",
+  "packageManager": "yarn@4.18.0",
   "reanimated": {
     "staticFeatureFlags": {
       "ANDROID_SYNCHRONOUSLY_UPDATE_UI_PROPS": true

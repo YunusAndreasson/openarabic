@@ -33,10 +33,23 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 22
-          cache: 'yarn'
+
+      # Yarn 4 comes from the `packageManager` field via Corepack. Without this
+      # the runner's bundled Yarn 1 would try to read a Berry lockfile.
+      # setup-node has no Corepack input, so its `cache: 'yarn'` would probe the
+      # wrong Yarn and cache the wrong folder — hence the explicit cache below.
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Cache Yarn global cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.local/share/yarn/berry/cache
+          key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
+          restore-keys: ${{ runner.os }}-yarn-
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install --immutable
 
       - name: Run validation
         run: yarn verify
@@ -58,7 +71,7 @@ jobs:
       - name: Verify build dependencies
         run: |
           # Check that all required build dependencies are available
-          yarn list --depth=0 | grep -E "(expo|@babel|metro)" || true
+          yarn info --name-only | grep -E "(expo|@babel|metro)" || true
           echo "✅ Build dependencies verified"
 
           # Note: mixpanel-react-native expects async-storage ^1.21.0 but we use ^2.2.0

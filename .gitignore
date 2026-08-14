@@ -3,6 +3,18 @@
 # dependencies
 node_modules/
 
+# Yarn 4. install-state.gz is a build artifact; the package cache lives outside
+# the repo (enableGlobalCache) so .yarn/cache never appears either. The
+# exceptions are Yarn's standard allowlist — none are in use today, but they are
+# the directories that MUST be committed if we ever add a patch or a plugin.
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
+
 # Expo
 .expo/
 dist/
