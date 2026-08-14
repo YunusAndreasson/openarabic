@@ -64,7 +64,16 @@ export const ToastProvider: FC<{ children: ReactNode }> = ({ children }) => {
         duration,
         type,
         position,
-        key: prev.key + 1,
+        // Only bump the key (replaying Toast's entering/exiting animation)
+        // when starting fresh from hidden. A back-to-back call while a toast
+        // is already visible — e.g. two "Failed to start audio playback"
+        // errors seconds apart — used to always bump it, which remounts the
+        // Animated.View: Reanimated keeps the outgoing instance rendered for
+        // its full exiting fade while the new instance's entering fade plays
+        // on top, so two toast banners stacked visibly until the first one's
+        // animation finished. Keeping the key lets this call update the same
+        // instance's text in place instead.
+        key: prev.visible ? prev.key : prev.key + 1,
       }));
     },
     [],
@@ -78,7 +87,7 @@ export const ToastProvider: FC<{ children: ReactNode }> = ({ children }) => {
         duration,
         type: ToastType.IMPORTANT,
         position: 'top',
-        key: prev.key + 1,
+        key: prev.visible ? prev.key : prev.key + 1,
       }));
     },
     [],

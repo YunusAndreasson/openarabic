@@ -45,6 +45,18 @@ class AudioCacheManager {
   private readonly QUICK_DOWNLOAD_TIMEOUT_MS = 6000;
   // Track pending downloads to prevent duplicate requests for same file
   private pendingDownloads = new Map<string, Promise<string>>();
+  // Background (session-preload) downloads self-throttle through this gate so
+  // a burst of prefetch requests can never hold every native connection slot
+  // and starve a `quick` request for the card on screen right now. `quick`
+  // downloads never touch this gate — they always call downloadFileAsync
+  // immediately, which is the whole point: the card the learner is looking at
+  // must never queue behind words they haven't reached yet. Found via a stress
+  // session where a ~38-file background preload burst left the current card's
+  // "quick" fetch waiting 3-4s just to START downloading, blowing the player's
+  // ~5s ready deadline on nearly every card for the rest of the session.
+  private readonly MAX_CONCURRENT_BACKGROUND_DOWNLOADS = 3;
+  private backgroundDownloadSlotsInUse = 0;
+  private backgroundDownloadWaiters: (() => void)[] = [];
   // Memoized one-time legacy sweep (see LEGACY_CACHE_SWEEP_STORAGE_KEY)
   private legacySweepPromise: Promise<void> | null = null;
   // url → cache key. generateCacheKey is an async native crypto call and runs
@@ -195,6 +207,22 @@ class AudioCacheManager {
     }
   }
 
+  /** Blocks until a background-download slot is free; `quick` callers never call this. */
+  private async acquireBackgroundDownloadSlot(): Promise<void> {
+    if (this.backgroundDownloadSlotsInUse < this.MAX_CONCURRENT_BACKGROUND_DOWNLOADS) {
+      this.backgroundDownloadSlotsInUse++;
+      return;
+    }
+    await new Promise<void>(resolve => this.backgroundDownloadWaiters.push(resolve));
+    this.backgroundDownloadSlotsInUse++;
+  }
+
+  /** Hands the freed slot to the longest-waiting queued background download, if any. */
+  private releaseBackgroundDownloadSlot(): void {
+    this.backgroundDownloadSlotsInUse--;
+    this.backgroundDownloadWaiters.shift()?.();
+  }
+
   /**
    * Download and cache audio file with retry logic.
    *
@@ -233,10 +261,15 @@ class AudioCacheManager {
           await new Promise<void>(resolve => setTimeout(resolve, 1000 * attempt));
         }
 
-        await File.downloadFileAsync(url, tempFile, {
-          idempotent: true,
-          signal: abortController.signal,
-        });
+        if (!quick) await this.acquireBackgroundDownloadSlot();
+        try {
+          await File.downloadFileAsync(url, tempFile, {
+            idempotent: true,
+            signal: abortController.signal,
+          });
+        } finally {
+          if (!quick) this.releaseBackgroundDownloadSlot();
+        }
 
         if (!tempFile.exists || (tempFile.size ?? 0) <= 0) {
           throw new Error('Download failed - file is missing or empty after download');

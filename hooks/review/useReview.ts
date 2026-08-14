@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import {
   useCallback,
@@ -15,6 +16,7 @@ import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TIMING_CONFIG, VERDICT } from '@/constants/animation';
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import { OnboardingStep } from '@/constants/onboarding';
+import { fsrsQueries, studyStreakQueries } from '@/constants/queries';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { analytics } from '@/services/analytics';
@@ -215,6 +217,7 @@ export function useReview({
   setPlaybackPriority,
 }: UseReviewProps = {}): UseReviewReturn {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   // Open the diagnostics timeline for the lifetime of the screen. Registered
   // before every other effect in this hook so the first card's cache lookups
@@ -1260,11 +1263,26 @@ export function useReview({
     // it, and a throw here would take every one of them down with it. A real
     // failure still surfaces rather than being swallowed.
     try {
-      void flushPendingWrites().then(invalidateQueries).catch(handleError);
+      void flushPendingWrites()
+        .then(() => {
+          invalidateQueries();
+
+          // CompletionScreen's useReviewCompletion is the only thing that sets
+          // lastCompletedAtKey and refreshes the streak, and it only mounts on
+          // the natural "ran out of due cards" path — an early exit (✕ button,
+          // Android back) never reaches it, so the streak and the due-cooldown
+          // window silently stayed on yesterday's values. Every exit owes the
+          // rest of the app the same freshness natural completion does.
+          if (user?.id) {
+            queryClient.setQueryData(fsrsQueries.lastCompletedAtKey(user.id), Date.now());
+            void studyStreakQueries.invalidateAll(queryClient, user.id);
+          }
+        })
+        .catch(handleError);
     } catch (error) {
       handleError(error);
     }
-  }, [commitPendingGrade, flushPendingWrites, invalidateQueries]);
+  }, [commitPendingGrade, flushPendingWrites, invalidateQueries, queryClient, user]);
 
   // Held in a ref so the unmount cleanup can call it without taking it as a
   // dependency — that effect must stay mount/unmount-only (see its own note).
