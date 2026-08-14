@@ -3,9 +3,41 @@ import type { Session, User } from '@supabase/supabase-js';
 import { createClient } from '@supabase/supabase-js';
 import { AppState } from 'react-native';
 
-import { SUPABASE_ANON_KEY, SUPABASE_URL } from '@/constants/supabase';
+import { SUPABASE_ANON_KEY, SUPABASE_REQUEST_TIMEOUT_MS, SUPABASE_URL } from '@/constants/supabase';
 import type { Database } from '@/types/database.types';
 import { handleError } from '@/utils/errorHandling';
+
+/**
+ * `fetch` with a deadline, for every Supabase request.
+ *
+ * Neither supabase-js nor React Native's fetch imposes a timeout, so a request
+ * that lands on a dead pooled connection hangs instead of failing — see
+ * SUPABASE_REQUEST_TIMEOUT_MS for the measurement and why a hang is worse than
+ * an error here.
+ *
+ * A caller-supplied signal (supabase-js `.abortSignal()`, and the auth client's
+ * own cancellation) is chained rather than replaced, so aborting from outside
+ * still works and the deadline applies on top of it.
+ */
+const fetchWithTimeout: typeof fetch = async (input, init) => {
+  const controller = new AbortController();
+  const callerSignal = init?.signal;
+
+  if (callerSignal?.aborted) {
+    controller.abort();
+  }
+
+  const abortFromCaller = (): void => controller.abort();
+  callerSignal?.addEventListener('abort', abortFromCaller);
+  const timeoutId = setTimeout(() => controller.abort(), SUPABASE_REQUEST_TIMEOUT_MS);
+
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+    callerSignal?.removeEventListener('abort', abortFromCaller);
+  }
+};
 
 /**
  * Supabase client configuration and initialization
@@ -19,6 +51,9 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
     detectSessionInUrl: false, // Mobile apps don't need URL session detection
     flowType: 'implicit', // Mobile-only: implicit flow for native apps
     debug: false,
+  },
+  global: {
+    fetch: fetchWithTimeout,
   },
 });
 
