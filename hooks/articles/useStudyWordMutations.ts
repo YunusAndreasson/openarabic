@@ -18,7 +18,7 @@ import type { StudyWord, StudyWordIntent } from '@/types/vocabulary.types';
 import { OnboardingStep } from '@/constants/onboarding';
 import { handleError } from '@/utils/errorHandling';
 import { errorFeedback } from '@/utils/haptics';
-import { evaluateDueBacklogGate } from '@/utils/newWordPacing';
+import { evaluateDueBacklogGate, filterDueWords } from '@/utils/newWordPacing';
 import { markOnboardingStep } from '@/utils/onboardingStorage';
 
 interface StudyWordContext {
@@ -77,19 +77,38 @@ export const useStudyWordMutations = (
 
   // Due-backlog gate: block NEW saves while the review backlog is high. The
   // due key encodes cooldown/limit variants, so read every cached variant and
-  // take the largest count; fails open when none is cached. Returns the
-  // blocking count, or null when adding is fine.
+  // take the largest count.
+  //
+  // Early in a session the due-specific query can still be mid-flight — its
+  // UI-facing count already shows via placeholderData (the tab badge, the
+  // Practice screen), but that placeholder never lands in the query cache
+  // itself, so reading the cache alone sees nothing and the gate used to fail
+  // open — letting adds through while the badge was visibly showing a huge
+  // backlog. Fall back to deriving the same estimate from the (earlier-
+  // resolving) full word list with the identical filter the placeholder uses,
+  // so the gate can't disagree with what the user is already looking at.
   const getDueBacklogBlock = useCallback(
     (userId: string | undefined): number | null => {
       if (!userId) return null;
       const dueEntries = queryClient.getQueriesData<StudyWord[]>({
         queryKey: fsrsQueries.duePrefix(userId),
       });
-      const dueCount = dueEntries.reduce(
+      const cachedDueCount = dueEntries.reduce(
         (max, [, words]) => (Array.isArray(words) ? Math.max(max, words.length) : max),
         0,
       );
-      const gate = evaluateDueBacklogGate(dueCount);
+
+      const allWords = queryClient.getQueryData<StudyWord[]>(fsrsQueries.all(userId).queryKey);
+      const derivedDueCount = allWords
+        ? filterDueWords(allWords, {
+            lastCompletedAt: queryClient.getQueryData<number>(
+              fsrsQueries.lastCompletedAtKey(userId),
+            ),
+            nowMs: Date.now(),
+          }).length
+        : 0;
+
+      const gate = evaluateDueBacklogGate(Math.max(cachedDueCount, derivedDueCount));
       return gate.blocked ? gate.dueCount : null;
     },
     [queryClient],

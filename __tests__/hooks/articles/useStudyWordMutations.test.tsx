@@ -287,6 +287,29 @@ describe('useStudyWordMutations', () => {
       expect(mockToggleFSRSStudyRoot).toHaveBeenCalled();
     });
 
+    test('blocks adding when the due-specific cache is still empty but the full word list already shows the backlog', async () => {
+      // Regression: the due-words query can still be mid-flight (its count
+      // only shown via placeholderData, e.g. on the tab badge / Practice
+      // screen) while the broader `fsrs-words` cache has already resolved.
+      // The gate must derive the same due count from that cache instead of
+      // reading an empty due-specific entry and waving the add through.
+      queryClient.setQueryData(
+        ['fsrs-words', 'test-user-id'],
+        Array.from({ length: 20 }, (_, i) => ({ root_id: i + 1, fsrs_state: 0 })),
+      );
+      // No dueKey entry set — the due-specific query has not resolved yet.
+
+      const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
+
+      let returned: boolean | undefined;
+      await act(async () => {
+        returned = await result.current.handleRootPress(999 as RootId, 'add');
+      });
+
+      expect(returned).toBeUndefined();
+      expect(mockToggleFSRSStudyRoot).not.toHaveBeenCalled();
+    });
+
     test('does not block just below the threshold', async () => {
       queryClient.setQueryData(['fsrs-words', 'test-user-id'], []);
       queryClient.setQueryData(dueKey, twentyDue.slice(0, 19));

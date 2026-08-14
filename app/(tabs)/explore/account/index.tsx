@@ -19,6 +19,7 @@ import { useAccountScreen } from '@/hooks/account';
 import { useDailyWordLimit } from '@/hooks/vocabulary';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import {
+  selectAdaptiveNewWordPacingEnabled,
   setAdaptiveNewWordPacingEnabled,
   setAudioLanguagePreference,
   setAudioShuffleEnabled,
@@ -75,9 +76,7 @@ const AccountScreen: FC = () => {
   );
 
   const audioShuffleEnabled = useAppSelectorShallow(state => state.settings.audioShuffleEnabled);
-  const adaptiveNewWordPacingEnabled = useAppSelectorShallow(
-    state => state.settings.adaptiveNewWordPacingEnabled,
-  );
+  const adaptiveNewWordPacingEnabled = useAppSelectorShallow(selectAdaptiveNewWordPacingEnabled);
   const wordTapShowsTooltip = useAppSelectorShallow(
     state => state.settings.wordTapShowsTooltip ?? false,
   );

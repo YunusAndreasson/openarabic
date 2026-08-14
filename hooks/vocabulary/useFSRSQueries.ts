@@ -3,7 +3,7 @@ import { skipToken, useQuery, useQueryClient } from '@tanstack/react-query';
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import { fsrsQueries } from '@/constants/queries';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { normalizeTimestamp } from '@/utils/dateTimeUtils';
+import { filterDueWords } from '@/utils/newWordPacing';
 
 interface UseFSRSQueriesOptions {
   userId: string | undefined;
@@ -45,46 +45,18 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
     placeholderData: () => {
       if (!userId) return undefined;
       const allWords = queryClient.getQueryData<StudyWord[]>(fsrsQueries.all(userId).queryKey);
-      if (allWords) {
-        const nowMs = Date.now();
-        // Apply cooldown only if session was recently completed
-        const lastCompletedAt = queryClient.getQueryData<number>(
-          fsrsQueries.lastCompletedAtKey(userId),
-        );
-        const applyCooldown =
-          typeof lastCompletedAt === 'number' &&
-          Date.now() - lastCompletedAt < DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
-        const cutoffMs = nowMs - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
+      if (!allWords) return undefined;
 
-        const filtered = allWords.filter(word => {
-          // New words (state 0) are always due for their first review
-          if (word.fsrs_state === 0) {
-            return true;
-          }
+      const lastCompletedAt = queryClient.getQueryData<number>(
+        fsrsQueries.lastCompletedAtKey(userId),
+      );
+      const filtered = filterDueWords(allWords, {
+        lastCompletedAt,
+        cooldownHours: DEFAULT_SESSION_COOLDOWN_HOURS,
+        nowMs: Date.now(),
+      });
 
-          const dueStr = normalizeTimestamp(word.fsrs_due);
-          const dueMs = dueStr ? Date.parse(dueStr) : Number.POSITIVE_INFINITY;
-          const isDue = Number.isFinite(dueMs) && dueMs <= nowMs;
-          if (!isDue) return false;
-
-          // Mirrors the server's cooldown exemption (studyWordsFSRSService.getFSRSWords):
-          // Learning (1) and Relearning (3) are exempt — those are the words the
-          // learner has NOT got right yet, scheduled minutes out on purpose, and
-          // cooling them by fsrs_last_review would hide exactly what most needs
-          // practising. Without `applyCooldown` there is nothing to cool either.
-          if (!applyCooldown || word.fsrs_state === 1 || word.fsrs_state === 3) {
-            return true;
-          }
-
-          const lastStr = normalizeTimestamp(word.fsrs_last_review);
-          const lastMs = lastStr ? Date.parse(lastStr) : 0;
-          const isRecentlyReviewed = Number.isFinite(lastMs) && lastMs >= cutoffMs;
-          return !isRecentlyReviewed;
-        });
-
-        return filtered.slice(0, limit);
-      }
-      return undefined;
+      return filtered.slice(0, limit);
     },
   });
 

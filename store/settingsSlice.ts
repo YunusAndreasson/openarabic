@@ -146,6 +146,20 @@ const settingsSlice = createSlice({
 export const selectHapticsEnabled = (state: { settings: { hapticsEnabled?: boolean } }): boolean =>
   state.settings.hapticsEnabled !== false;
 
+/**
+ * Same rehydration hazard as {@link selectHapticsEnabled}: `adaptiveNewWordPacingEnabled`
+ * was added in `12f21454` (FSRS learning port), well after `settings` joined the
+ * redux-persist whitelist, and `persistConfig` still carries no `version`/`migrate`.
+ * Every install that predates that commit rehydrates this key as `undefined`, and
+ * `useDailyWordLimit`'s `if (!adaptivePacingEnabled)` reads that as "off" — silently
+ * disabling retention-gated pacing (and showing the toggle off) for every existing
+ * user despite the field's documented default of `true`. Read through this selector
+ * instead of the raw slice field so undefined maps back to the intended default.
+ */
+export const selectAdaptiveNewWordPacingEnabled = (state: {
+  settings: { adaptiveNewWordPacingEnabled?: boolean };
+}): boolean => state.settings.adaptiveNewWordPacingEnabled !== false;
+
 export const {
   setReminderTime,
   setArabicFont,

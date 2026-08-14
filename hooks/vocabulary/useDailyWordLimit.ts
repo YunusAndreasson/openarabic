@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 
 import { OPTIMIZED_FSRS_CONFIG } from '@/constants/fsrs';
 import { useAppSelectorShallow } from '@/store/hooks';
+import { selectAdaptiveNewWordPacingEnabled } from '@/store/settingsSlice';
 import { computeAdaptiveNewLimit, type AdaptiveNewLimit } from '@/utils/newWordPacing';
 import { readRecentRecall } from '@/utils/recallSignalStorage';
 
@@ -11,9 +12,7 @@ const DAILY_WORD_RESET_KEY = 'daily_word_reset_date';
 
 export const useDailyWordLimit = () => {
   const dailyWordLimit = useAppSelectorShallow(state => state.settings.dailyWordLimit);
-  const adaptivePacingEnabled = useAppSelectorShallow(
-    state => state.settings.adaptiveNewWordPacingEnabled,
-  );
+  const adaptivePacingEnabled = useAppSelectorShallow(selectAdaptiveNewWordPacingEnabled);
 
   const getCurrentDateString = useCallback(() => {
     const now = new Date();

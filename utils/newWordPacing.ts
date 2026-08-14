@@ -1,4 +1,10 @@
-import { DUE_BACKLOG_ADD_THRESHOLD, NEW_WORD_PACING } from '@/constants/fsrs';
+import {
+  DEFAULT_SESSION_COOLDOWN_HOURS,
+  DUE_BACKLOG_ADD_THRESHOLD,
+  NEW_WORD_PACING,
+} from '@/constants/fsrs';
+import type { StudyWord } from '@/types/vocabulary.types';
+import { normalizeTimestamp } from '@/utils/dateTimeUtils';
 
 /**
  * Retention-gated pacing for *new* words. The daily new-word limit the learner
@@ -115,4 +121,50 @@ export function evaluateDueBacklogGate(
   threshold: number = DUE_BACKLOG_ADD_THRESHOLD,
 ): DueBacklogGate {
   return { blocked: dueCount >= threshold, dueCount };
+}
+
+export interface FilterDueWordsOptions {
+  /** Timestamp (ms) the last practice session finished, if any. */
+  lastCompletedAt: number | undefined;
+  cooldownHours?: number;
+  /** Injected rather than read internally so callers stay pure/testable. */
+  nowMs: number;
+}
+
+/**
+ * Client-side mirror of the server's onlyDue + sessionCooldown filter
+ * (`studyWordsFSRSService.getFSRSWords`'s `onlyDue`/`sessionCooldownHours`
+ * options) for deriving a due list from an already-cached full word list —
+ * the same word list `useFSRSQueries`'s due-query `placeholderData` filters
+ * while the dedicated due-words request is still in flight, and what the
+ * due-backlog gate falls back to so it can't read the query cache before that
+ * request resolves and silently wave new-word adds through. Keep in lockstep
+ * with the server-side filter.
+ */
+export function filterDueWords(
+  allWords: StudyWord[],
+  { lastCompletedAt, cooldownHours = DEFAULT_SESSION_COOLDOWN_HOURS, nowMs }: FilterDueWordsOptions,
+): StudyWord[] {
+  const applyCooldown =
+    typeof lastCompletedAt === 'number' && nowMs - lastCompletedAt < cooldownHours * 60 * 60 * 1000;
+  const cutoffMs = nowMs - cooldownHours * 60 * 60 * 1000;
+
+  return allWords.filter(word => {
+    // New words (state 0) are always due for their first review.
+    if (word.fsrs_state === 0) return true;
+
+    const dueStr = normalizeTimestamp(word.fsrs_due);
+    const dueMs = dueStr ? Date.parse(dueStr) : Number.POSITIVE_INFINITY;
+    const isDue = Number.isFinite(dueMs) && dueMs <= nowMs;
+    if (!isDue) return false;
+
+    // Learning (1) and Relearning (3) are exempt from the cooldown — see the
+    // matching exemption and rationale in studyWordsFSRSService.getFSRSWords.
+    if (!applyCooldown || word.fsrs_state === 1 || word.fsrs_state === 3) return true;
+
+    const lastStr = normalizeTimestamp(word.fsrs_last_review);
+    const lastMs = lastStr ? Date.parse(lastStr) : 0;
+    const isRecentlyReviewed = Number.isFinite(lastMs) && lastMs >= cutoffMs;
+    return !isRecentlyReviewed;
+  });
 }

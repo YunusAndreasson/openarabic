@@ -9,6 +9,7 @@
 
 import reducer, {
   type ArabicFontName,
+  selectAdaptiveNewWordPacingEnabled,
   setAdaptiveNewWordPacingEnabled,
   setArabicFont,
   setArabicFontSize,
@@ -176,6 +177,28 @@ describe('settingsSlice reducers', () => {
       const modifiedState = { ...initialState, adaptiveNewWordPacingEnabled: false };
       const state = reducer(modifiedState, setAdaptiveNewWordPacingEnabled(true));
       expect(state.adaptiveNewWordPacingEnabled).toBe(true);
+    });
+  });
+
+  describe('selectAdaptiveNewWordPacingEnabled', () => {
+    test('reads true when explicitly enabled', () => {
+      expect(
+        selectAdaptiveNewWordPacingEnabled({ settings: { adaptiveNewWordPacingEnabled: true } }),
+      ).toBe(true);
+    });
+
+    test('reads false when explicitly disabled', () => {
+      expect(
+        selectAdaptiveNewWordPacingEnabled({ settings: { adaptiveNewWordPacingEnabled: false } }),
+      ).toBe(false);
+    });
+
+    test('defaults to true when rehydrated from a pre-flag install (key absent)', () => {
+      // Regression: persistConfig has no version/migrate, so redux-persist's
+      // autoMergeLevel1 leaves this key `undefined` for every install that
+      // predates the field. A bare truthiness read silently disables pacing;
+      // the selector must fall back to the documented `true` default instead.
+      expect(selectAdaptiveNewWordPacingEnabled({ settings: {} })).toBe(true);
     });
   });
 
