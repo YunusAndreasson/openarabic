@@ -170,24 +170,34 @@ const sepiaPureOKLCH = {
  * Hue range: 50-270° (golden → green → cyan → blue → purple-violet) - Extended sage-centric harmony
  * 12 perceptually distinct colors with 15-25° spacing for visual clarity
  * Common co-occurring pairs get 40°+ separation (definiteArticle↔preposition = 40°)
- * Lightness adjusts per theme: light (0.52-0.62), dark (+0.08), sepia (-0.02-0.04)
+ * Lightness adjusts per theme: light (0.515-0.555), dark (0.6-0.7), sepia (0.495-0.53)
  * Chroma alternates high/low in the green band (125-200°) for perceptual distinction
+ *
+ * The light and sepia lightnesses are set by contrast, not taste: every colour
+ * here paints body-size English in the word sheet as well as the Arabic, so each
+ * must clear WCAG AA 4.5:1 on its own page background. They previously sat at
+ * 0.52-0.62 / 0.5-0.6, where ten of the twelve landed between 3.2:1 and 4.5:1 —
+ * legible as large Arabic, under the bar as a gloss. Hue and chroma are
+ * untouched, so the palette's relationships are unchanged; the closest pair is
+ * still periwinkle/violet in sepia at the same 19.1 RGB as before. Dark already
+ * cleared AA and is deliberately left alone. Re-check with a contrast solver
+ * before moving any of these.
  */
 const grammarOKLCH = {
   golden: {
-    light: { l: 0.6, c: 0.11, h: 50 },
+    light: { l: 0.555, c: 0.11, h: 50 },
     dark: { l: 0.68, c: 0.11, h: 50 },
-    sepia: { l: 0.58, c: 0.09, h: 53 },
+    sepia: { l: 0.53, c: 0.09, h: 53 },
   },
   amber: {
-    light: { l: 0.58, c: 0.12, h: 90 },
+    light: { l: 0.545, c: 0.12, h: 90 },
     dark: { l: 0.66, c: 0.12, h: 90 },
-    sepia: { l: 0.56, c: 0.1, h: 93 },
+    sepia: { l: 0.525, c: 0.1, h: 93 },
   },
   lime: {
-    light: { l: 0.62, c: 0.13, h: 110 },
+    light: { l: 0.54, c: 0.13, h: 110 },
     dark: { l: 0.7, c: 0.13, h: 110 },
-    sepia: { l: 0.6, c: 0.11, h: 113 },
+    sepia: { l: 0.52, c: 0.11, h: 113 },
   },
   olive: {
     light: { l: 0.52, c: 0.14, h: 125 },
@@ -195,9 +205,9 @@ const grammarOKLCH = {
     sepia: { l: 0.5, c: 0.12, h: 128 },
   },
   yellowGreen: {
-    light: { l: 0.62, c: 0.08, h: 140 },
+    light: { l: 0.54, c: 0.08, h: 140 },
     dark: { l: 0.7, c: 0.08, h: 140 },
-    sepia: { l: 0.6, c: 0.06, h: 142 },
+    sepia: { l: 0.515, c: 0.06, h: 142 },
   },
   sage: {
     light: { l: 0.52, c: 0.14, h: 155 },
@@ -205,34 +215,34 @@ const grammarOKLCH = {
     sepia: { l: 0.5, c: 0.12, h: 157 },
   },
   mintGreen: {
-    light: { l: 0.62, c: 0.08, h: 170 },
+    light: { l: 0.535, c: 0.08, h: 170 },
     dark: { l: 0.7, c: 0.08, h: 170 },
-    sepia: { l: 0.6, c: 0.06, h: 172 },
+    sepia: { l: 0.515, c: 0.06, h: 172 },
   },
   seafoam: {
-    light: { l: 0.52, c: 0.14, h: 185 },
+    light: { l: 0.515, c: 0.14, h: 185 },
     dark: { l: 0.6, c: 0.14, h: 185 },
-    sepia: { l: 0.5, c: 0.12, h: 187 },
+    sepia: { l: 0.495, c: 0.12, h: 187 },
   },
   teal: {
-    light: { l: 0.62, c: 0.08, h: 200 },
+    light: { l: 0.535, c: 0.08, h: 200 },
     dark: { l: 0.7, c: 0.08, h: 200 },
-    sepia: { l: 0.6, c: 0.06, h: 202 },
+    sepia: { l: 0.52, c: 0.06, h: 202 },
   },
   skyBlue: {
-    light: { l: 0.58, c: 0.1, h: 225 },
+    light: { l: 0.54, c: 0.1, h: 225 },
     dark: { l: 0.66, c: 0.1, h: 225 },
-    sepia: { l: 0.56, c: 0.08, h: 227 },
+    sepia: { l: 0.52, c: 0.08, h: 227 },
   },
   periwinkle: {
-    light: { l: 0.6, c: 0.09, h: 250 },
+    light: { l: 0.545, c: 0.09, h: 250 },
     dark: { l: 0.68, c: 0.09, h: 250 },
-    sepia: { l: 0.58, c: 0.07, h: 252 },
+    sepia: { l: 0.525, c: 0.07, h: 252 },
   },
   violet: {
-    light: { l: 0.58, c: 0.08, h: 270 },
+    light: { l: 0.55, c: 0.08, h: 270 },
     dark: { l: 0.66, c: 0.08, h: 270 },
-    sepia: { l: 0.56, c: 0.06, h: 272 },
+    sepia: { l: 0.525, c: 0.06, h: 272 },
   },
 } as const;
 

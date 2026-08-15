@@ -66,6 +66,32 @@ const FUSED_AL_WORDS = new Set([
   'الهي', // ← إلهي, "my god"
 ]);
 
+/**
+ * Whether the word's own spelling rules out its opening alef being the definite
+ * article's.
+ *
+ * `normalizeArabic` folds أ/إ/آ/ٱ into a bare ا, after which إِلَهِيَّتِهِ "His
+ * Divinity" and اِلْتِفَاتُهُ "his turning" are indistinguishable from a genuine
+ * ال-word — so both painted their root letters in the article's colour. The
+ * original spelling still carries the distinction:
+ *
+ * - The article's alef is a hamzat waṣl. It is written bare (ا) or with waṣla
+ *   (ٱ), never with hamza — أَلَمْ, إِلَى and آلَاف are not articles.
+ * - It never carries a kasra. A kasra'd alef is the prosthetic alef of form VII
+ *   and VIII (اِلْتِفَات, اِعْتِرَاض), where the lām is a root letter.
+ *
+ * Checked across the corpus: of the words opening with أ or إ + lām, none gloss
+ * with "the"; of 138 kasra-alef forms, 3 do (and those are form VIII verbal
+ * nouns whose "the" belongs to a later word). Waṣla-alef words are left alone —
+ * 55 of 106 are genuine articles.
+ */
+export function hasNonArticleAlef(originalArabic: string | undefined): boolean {
+  if (!originalArabic) return false;
+  const first = originalArabic[0];
+  if (first === 'أ' || first === 'إ' || first === 'آ') return true;
+  return first === 'ا' && originalArabic[1] === 'ِ';
+}
+
 const ENGLISH_TOKEN_REGEX = /\s+/;
 /**
  * Shortened preposition/particle forms (على→عل, إلى→إل, لدى→لد, حتى→حت) exist ONLY
@@ -355,6 +381,12 @@ export function shouldInjectBracket(
       ? normalizedArabic.slice(1)
       : normalizedArabic;
   if (FUSED_AL_WORDS.has(alBearingTail)) {
+    return false;
+  }
+
+  // A hamza'd or kasra'd alef is not the article's, so there is no article to
+  // supply an English "the" for (إِلَهِيَّتِهِ read as "[the] His Divinity").
+  if (hasNonArticleAlef(originalArabic)) {
     return false;
   }
 

@@ -410,7 +410,7 @@ describe('Single-Word Gate: single English words never get component coloring', 
   });
 });
 
-describe('Bracket Injection: [the] renders as "the" with definite article color', () => {
+describe('Bracket Injection: [the] keeps its brackets, and "the" carries the article color', () => {
   const bracketCases: [string, string][] = [
     ['الكتاب', 'book'],
     ['البيت', 'house'],
@@ -444,10 +444,14 @@ describe('Bracket Injection: [the] renders as "the" with definite article color'
       expect(theSegment).toBeDefined();
       expect(theSegment?.color).not.toBe(defaultColor);
 
-      // No bracket characters should appear in output
+      // The brackets stay on screen: they mark "the" as supplied for teaching
+      // rather than written by the translator. Only the word inside is painted,
+      // because the brackets correspond to nothing in the Arabic.
       const fullText = segments.map(s => s.text).join('');
-      expect(fullText).not.toContain('[');
-      expect(fullText).not.toContain(']');
+      expect(fullText).toContain('[the]');
+      const bracketSegments = segments.filter(s => s.text.includes('[') || s.text.includes(']'));
+      expect(bracketSegments.length).toBeGreaterThan(0);
+      bracketSegments.forEach(s => expect(s.color).toBe(defaultColor));
     },
   );
 });

@@ -82,7 +82,7 @@ const mockColors: ThemeColors = {
 
 describe('Positional Scoring Edge Cases', () => {
   describe('Bracket Injection Priority', () => {
-    test('bracket injection should win overlap with prefix at start', () => {
+    test('the article section paints the word inside the brackets, brackets kept', () => {
       const formattedAnalysis: FormattedAnalysis = {
         sections: [
           {
@@ -108,19 +108,21 @@ describe('Positional Scoring Edge Cases', () => {
         defaultColor: mockColors.text,
       });
 
-      // Bracket injection should be displayed (brackets removed)
+      // The ال section matches "the" inside the brackets like any other
+      // component — brackets are word boundaries to the matcher.
       const theSegment = result.find(s => s.text === 'the');
       expect(theSegment).toBeDefined();
       expect(theSegment?.color).toBe(mockColors.tint);
 
-      // Should NOT have "[the]" with brackets
+      // The brackets survive, unpainted: they mark a word supplied for teaching.
       const bracketsSegment = result.find(s => s.text.includes('['));
-      expect(bracketsSegment).toBeUndefined();
+      expect(bracketsSegment).toBeDefined();
+      expect(bracketsSegment?.color).toBe(mockColors.text);
     });
 
-    test('bracket injection priority (score 2.0) beats all other components', () => {
-      // This test documents that POSITIONAL_SCORE.BRACKET_INJECTION = 2.0
-      // is higher than any other component score (max 1.0 for optimal position)
+    test('when two sections claim "the", the earlier one (the prefix) wins', () => {
+      // Section order encodes the left-to-right Arabic↔English correspondence:
+      // prefixes are emitted before suffixes, so the prefix claims first.
       const formattedAnalysis: FormattedAnalysis = {
         sections: [
           {

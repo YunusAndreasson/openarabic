@@ -7,6 +7,27 @@ import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
 /**
+ * The legend names the colours a reader actually meets, in the order they meet
+ * them. Words are coloured by grammatical role, not by whether a part sits at
+ * the front or the back — an earlier legend of Prefix/Suffix/Diacritic/Infix
+ * described the `ComponentType` fallbacks, which the renderer almost never uses,
+ * and had the two commonest cases backwards: ال is a prefix painted in the
+ * article's colour, ـه is a suffix painted in the possessive's.
+ *
+ * Keys index `colors.grammar`, so the swatches cannot drift from the paint.
+ */
+const LEGEND = [
+  { role: 'definiteArticle', label: 'The (ال)' },
+  { role: 'preposition', label: 'Preposition' },
+  { role: 'conjunction', label: 'Joining word' },
+  { role: 'possessive', label: 'Possessive' },
+  { role: 'subjectPrefix', label: 'Subject marker' },
+  { role: 'verbConjugation', label: 'Verb ending' },
+  { role: 'plural', label: 'Plural' },
+  { role: 'negation', label: 'Negation' },
+] as const;
+
+/**
  * Displays interactive colored examples of Arabic text analysis
  * Shows how prefixes, suffixes, and other components are identified and colored
  */
@@ -21,30 +42,14 @@ export const ArabicColoringExamples = memo(() => {
           Color Guide:
         </ThemedText>
         <View style={styles.legendRow}>
-          <View style={styles.legendItem}>
-            <Dot color={colors.tint} />
-            <ThemedText type="caption" colorName="textTertiary">
-              Prefix
-            </ThemedText>
-          </View>
-          <View style={styles.legendItem}>
-            <Dot color={colors.warning} />
-            <ThemedText type="caption" colorName="textTertiary">
-              Suffix
-            </ThemedText>
-          </View>
-          <View style={styles.legendItem}>
-            <Dot color={colors.accent} />
-            <ThemedText type="caption" colorName="textTertiary">
-              Diacritic
-            </ThemedText>
-          </View>
-          <View style={styles.legendItem}>
-            <Dot color={colors.violet} />
-            <ThemedText type="caption" colorName="textTertiary">
-              Infix
-            </ThemedText>
-          </View>
+          {LEGEND.map(entry => (
+            <View key={entry.label} style={styles.legendItem}>
+              <Dot color={colors.grammar[entry.role]} />
+              <ThemedText type="caption" colorName="textTertiary">
+                {entry.label}
+              </ThemedText>
+            </View>
+          ))}
         </View>
       </View>
 
@@ -56,9 +61,7 @@ export const ArabicColoringExamples = memo(() => {
             arabicWord="وَالْبَيْتِ"
             englishTranslation="and the house"
             isArabic={true}
-            type="heading1"
-            weight="bold"
-            style={styles.arabicExample}
+            arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.HUGE}
           />
         </View>
         <View style={styles.translationRow}>
@@ -83,9 +86,7 @@ export const ArabicColoringExamples = memo(() => {
             arabicWord="بِكِتَابِي"
             englishTranslation="with my book"
             isArabic={true}
-            type="heading1"
-            weight="bold"
-            style={styles.arabicExample}
+            arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.HUGE}
           />
         </View>
         <View style={styles.translationRow}>
@@ -110,9 +111,7 @@ export const ArabicColoringExamples = memo(() => {
             arabicWord="فَقَالُوا"
             englishTranslation="so they said"
             isArabic={true}
-            type="heading1"
-            weight="bold"
-            style={styles.arabicExample}
+            arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.HUGE}
           />
         </View>
         <View style={styles.translationRow}>
@@ -137,9 +136,7 @@ export const ArabicColoringExamples = memo(() => {
             arabicWord="لِلْمُسْلِمِينَ"
             englishTranslation="to the Muslims"
             isArabic={true}
-            type="heading1"
-            weight="bold"
-            style={styles.arabicExample}
+            arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.HUGE}
           />
         </View>
         <View style={styles.translationRow}>
@@ -196,9 +193,6 @@ const styles = StyleSheet.create({
   },
   arabicRow: {
     alignItems: 'flex-end', // Right-align Arabic text
-  },
-  arabicExample: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE, // 28px - large and readable
   },
   translationRow: {
     alignItems: 'flex-start', // Left-align English text

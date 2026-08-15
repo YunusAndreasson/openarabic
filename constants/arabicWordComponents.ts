@@ -790,21 +790,14 @@ export const ARABIC_DIACRITICS: WordComponent[] = [
   // they over-fire on the bare ت suffix (feminine nouns referred to as "she").
   // 'they' covers the non-human plural, which Arabic treats as feminine singular
   // (كَثُرَتْ "they are numerous").
+  // 'take'/'takes'/'becomes' were removed: تْ marks who did the verb, never which
+  // verb, so pairing it with a lexical verb taught the wrong thing — عَلِقَتْ
+  // "take hold" painted تْ and "take" the same colour while the word's own note
+  // said the ending marks the feminine subject. The auxiliaries stay: English
+  // carries agreement on them, so "was"/"is" is a fair counterpart to the marker.
   {
     arabic: 'تْ',
-    english: [
-      'was',
-      'did',
-      'has',
-      'have been',
-      'take',
-      'takes',
-      'becomes',
-      'is',
-      'it',
-      'she',
-      'they',
-    ],
+    english: ['was', 'did', 'has', 'have been', 'is', 'it', 'she', 'they'],
     type: ComponentType.DIACRITIC,
     role: GrammaticalRole.CASE_ENDING,
   },

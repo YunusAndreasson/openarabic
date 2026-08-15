@@ -360,8 +360,17 @@ function reconstructWithColors(analysis: WordAnalysis) {
  * Formats analysis for tooltip display with infix support
  */
 export function formatWordAnalysis(analysis: WordAnalysis) {
-  // Remove brackets from English for display (show "the" instead of "[the]")
-  const englishForDisplay = analysis.original.english.replace(/^\[the\]\s*/, 'the ');
+  // The injected article keeps its brackets on screen. Arabic writes a definite
+  // article the English gloss often leaves implicit, so the "[the]" is supplied
+  // for teaching rather than written by the translator — and the brackets are
+  // what say so. Stripping them stated the addition as fact and turned glosses
+  // that already start with a preposition into nonsense: "of knowledge" read as
+  // "the of knowledge".
+  //
+  // Only the word inside is painted, by the ال prefix section like any other
+  // component. The brackets stay in the body colour because they correspond to
+  // nothing in the Arabic.
+  const englishForDisplay = analysis.original.english;
 
   const title = `${analysis.original.arabic} → ${englishForDisplay}`;
   const reconstructedArabic = analysis.hasComponents ? reconstructWithColors(analysis) : undefined;

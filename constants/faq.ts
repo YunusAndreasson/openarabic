@@ -102,7 +102,7 @@ export const FAQ_DATA: FAQCategoryData[] = [
         id: 'arabic-text-coloring',
         question: 'Why is Arabic text colored in the app?',
         answer:
-          'Arabic text is color-coded so you can see how words are built from smaller parts at a glance.\n\nPrefixes like و (and), ب (with), ل (to) appear in green. Suffixes like ي (my), ك (your), ه (his) appear in orange. Diacritics (case endings) appear in blue. Infixes (verb form markers) appear in purple.\n\nWhy only multi-word phrases? A single word like "house" doesn\'t benefit from color-coding. But "and the house" shows how و (and) + ال (the) attach to the root word—helping you understand Arabic grammar naturally as you read.\n\nSee the colored examples below.',
+          'Arabic text is color-coded so you can see how words are built from smaller parts at a glance.\n\nThe color tells you what a part does, not where it sits in the word. ال (the) keeps its own color whether it starts the word or follows a preposition; possessive endings like ي (my), ك (your) and ه (his) share a different one. The English translation is colored to match, so each Arabic part lines up with the English word it becomes. The color guide below names them.\n\nWhy only multi-word phrases? A single word like "house" doesn\'t benefit from color-coding. But "and the house" shows how و (and) + ال (the) attach to the root word—helping you understand Arabic grammar naturally as you read.\n\nA word in [brackets] was added to the English. Arabic writes "the" in places where English leaves it out, so the brackets mark a word supplied to show you the match.\n\nSee the colored examples below.',
         category: FAQCategoryEnum.FEATURES,
       },
       {

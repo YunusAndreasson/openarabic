@@ -1,6 +1,5 @@
 import { ICON_TO_COMPONENT_TYPE } from '@/constants/arabicWordComponents';
 import { CONTRACTION_EXPANSIONS, EXPANSION_TO_CONTRACTION } from '@/constants/contractions';
-import { BRACKET_TYPE } from '@/constants/positionalScoring';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import type { formatWordAnalysis, WordAnalysis } from '@/utils/arabicWordAnalysis';
 import { resolveColorName, shouldApplyColorCoding } from '@/utils/colorResolution';
@@ -94,26 +93,14 @@ export const generateColorCodedSegments = ({
     end: number;
     color: string;
     componentType?: string;
-    isBracketInjection?: boolean;
     /** Section processing order — earlier sections (prefixes) win ties over later ones (suffixes) */
     sectionIndex: number;
   }[] = [];
 
-  // Add bracket color coding for [the] injection
-  // Display as "the" without brackets in the colored segment
-  if (analysis?.hasBracketInjection) {
-    const bracketMatch = displayedText.match(/^\[the\]/);
-    if (bracketMatch) {
-      matchPositions.push({
-        start: 0,
-        end: 5, // "[the]" length (5 characters including brackets)
-        color: colors.tint, // Use tint color for definite article
-        componentType: BRACKET_TYPE, // Special type for bracket injection
-        isBracketInjection: true, // Flag to remove brackets when displaying
-        sectionIndex: -1, // Bracket injection has highest priority
-      });
-    }
-  }
+  // An injected "[the]" needs no special case: the ال prefix section carries
+  // "the" as its English part and matches it inside the brackets like any other
+  // component, so it is painted in the article's own colour. The brackets are
+  // word boundaries to the matcher, and stay unpainted — see `formatWordAnalysis`.
 
   // Process each component section (order matters: prefixes first, then suffix/infix/diacritic)
   for (let sectionIdx = 0; sectionIdx < componentSections.length; sectionIdx++) {
@@ -289,16 +276,8 @@ export const generateColorCodedSegments = ({
       });
     }
 
-    // Get the matched text
-    let matchedText = displayedText.substring(match.start, match.end);
-
-    // Remove brackets from bracket injection matches (display "the" instead of "[the]")
-    if (match.isBracketInjection && matchedText.startsWith('[') && matchedText.endsWith(']')) {
-      matchedText = matchedText.slice(1, -1); // Remove [ and ]
-    }
-
     parts.push({
-      text: matchedText,
+      text: displayedText.substring(match.start, match.end),
       color: match.color,
       key: `match-${match.start}`,
     });

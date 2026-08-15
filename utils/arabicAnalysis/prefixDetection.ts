@@ -4,7 +4,7 @@
 
 import { ARABIC_PREFIXES, ComponentType, GrammaticalRole } from '@/constants/arabicWordComponents';
 
-import { findComponent } from './componentDetection';
+import { findComponent, hasNonArticleAlef } from './componentDetection';
 import { VALIDATION_CONFIG } from './constants';
 import { hasEnglishMatch } from './englishMatching';
 import { normalizeEnglish } from './normalization';
@@ -175,6 +175,18 @@ export function detectPrefixes(
         (prefixMatch.arabicMatch === 'و' || prefixMatch.arabicMatch === 'ف') &&
         originalArabic?.[0] === prefixMatch.arabicMatch &&
         NON_FATHA_VOWELS.has(originalArabic[1] ?? '')
+      ) {
+        continueDetection = false;
+        continue;
+      }
+
+      // VALIDATION 0c: the article's alef must be spelled like one. Only the
+      // first prefix can be checked, since only there is the original text
+      // position known — see `hasNonArticleAlef`.
+      if (
+        detectedPrefixes.length === 0 &&
+        role === GrammaticalRole.DEFINITE_ARTICLE &&
+        hasNonArticleAlef(originalArabic)
       ) {
         continueDetection = false;
         continue;
