@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
-import { LAYOUT } from '@/constants/layout';
+import { resolveArabicFont } from '@/constants/fonts';
+import { ARABIC_FONT_SIZE, clampArabicFontSize } from '@/constants/layout';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setArabicFont, setArabicFontSize, type ArabicFontName } from '@/store/settingsSlice';
 import { ArabicFont, FontDescription } from '@/types/enums';
@@ -45,13 +46,12 @@ const ARABIC_FONT_OPTIONS: ArabicFontOption[] = [
   },
 ];
 
-// Font size range - following Miller's Law (5-9 options)
-export const FONT_SIZE_RANGE = {
-  MIN: LAYOUT.TYPOGRAPHY.SCALE.SMALL, // 13px
-  MAX: LAYOUT.TYPOGRAPHY.SCALE.MASSIVE, // 40px
-  DEFAULT: LAYOUT.TYPOGRAPHY.SCALE.XLARGE, // 20px
-  STEP: 1, // 1px increments for fine control
-} as const;
+/**
+ * Re-exported so the picker keeps its own name for the range while the numbers
+ * live next to the clamp every renderer applies — the two used to be separate
+ * literals and had drifted apart.
+ */
+export const FONT_SIZE_RANGE = ARABIC_FONT_SIZE;
 
 export interface UseArabicFontSelectorResult {
   selectedFont: ArabicFontName;
@@ -64,8 +64,17 @@ export interface UseArabicFontSelectorResult {
 
 export const useArabicFontSelector = (): UseArabicFontSelectorResult => {
   const dispatch = useAppDispatch();
-  const selectedFont = useAppSelector(state => state.settings.arabicFont);
-  const selectedFontSize = useAppSelector(state => state.settings.arabicFontSize);
+  // Resolved so the picker marks the face that is actually rendering. An
+  // unfamiliar persisted name left all five cards unselected while the account
+  // row above claimed "Noto Sans".
+  const selectedFont = useAppSelector(state => resolveArabicFont(state.settings.arabicFont));
+  // Clamped, not raw: the slider cannot represent a value outside its own range,
+  // so a persisted out-of-range size would leave the thumb pinned at one end
+  // while the readout claimed something else — and dragging from there would
+  // read as the control lying about what it is set to.
+  const selectedFontSize = useAppSelector(state =>
+    clampArabicFontSize(state.settings.arabicFontSize),
+  );
 
   const selectFont = useCallback(
     (fontName: ArabicFontName) => {
@@ -76,11 +85,7 @@ export const useArabicFontSelector = (): UseArabicFontSelectorResult => {
 
   const setFontSize = useCallback(
     (size: number) => {
-      const clampedSize = Math.max(
-        FONT_SIZE_RANGE.MIN,
-        Math.min(FONT_SIZE_RANGE.MAX, Math.round(size)),
-      );
-      dispatch(setArabicFontSize(clampedSize));
+      dispatch(setArabicFontSize(size));
     },
     [dispatch],
   );

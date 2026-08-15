@@ -131,8 +131,6 @@ export const DUE_BACKLOG_ADD_THRESHOLD = 20;
 export const SPACING_ITERATION_LIMIT = 20;
 // Chart thresholds
 export const URGENT_RETRIEVABILITY_THRESHOLD = 0.5;
-export const TREND_CHANGE_THRESHOLD = 0.1;
-export const MASTERY_TREND_THRESHOLD = 3;
 
 /**
  * Memory capacity thresholds for vocabulary retention

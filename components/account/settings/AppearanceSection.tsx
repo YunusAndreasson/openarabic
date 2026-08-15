@@ -2,13 +2,14 @@ import { memo, useCallback, useMemo } from 'react';
 import { router } from 'expo-router';
 
 import { SettingsCard, SettingsSection } from '@/components/account';
+import { resolveArabicFont, type ArabicFontName } from '@/constants/fonts';
 import { THEME_OPTIONS } from '@/constants/themeOptions';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import { selectHapticsEnabled, setHapticsEnabled } from '@/store/settingsSlice';
 
-const FONT_DISPLAY_NAMES: Record<string, string> = {
+const FONT_DISPLAY_NAMES: Record<ArabicFontName, string> = {
   'NotoSansArabic-Regular': 'Noto Sans',
   DigitalKhattNewMadinaRegular: 'Madina',
   'Amiri-Regular': 'Amiri',
@@ -35,7 +36,9 @@ export const AppearanceSection = memo<AppearanceSectionProps>(
     const currentLanguage = useAppSelectorShallow(
       state => state.settings.displayLanguagePreference,
     );
-    const currentArabicFont = useAppSelectorShallow(state => state.settings.arabicFont);
+    const currentArabicFont = useAppSelectorShallow(state =>
+      resolveArabicFont(state.settings.arabicFont),
+    );
     // Through the selector, not the raw field: the flag is absent from state
     // persisted before it existed, and reading it directly rendered this toggle
     // as off for every such install (while haptics were, correctly, on).
@@ -48,7 +51,10 @@ export const AppearanceSection = memo<AppearanceSectionProps>(
     const currentLanguageText =
       currentLanguage === 'arabic' ? STRINGS.DISPLAY_LANGUAGE_ARABIC : STRINGS.BILINGUAL_LABEL;
 
-    const currentArabicFontText = FONT_DISPLAY_NAMES[currentArabicFont] ?? 'Noto Sans';
+    // No `?? 'Noto Sans'` fallback: `resolveArabicFont` already guarantees a
+    // name the map has a label for, and the fallback was what let this row read
+    // "Noto Sans" while the picker showed nothing selected.
+    const currentArabicFontText = FONT_DISPLAY_NAMES[currentArabicFont];
 
     const handleHapticsToggle = useCallback(
       (enabled: boolean) => {

@@ -1,5 +1,5 @@
 import { FlashList } from '@shopify/flash-list';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -16,6 +16,7 @@ import {
   SCOPE_LABELS,
   formatWordCount,
 } from '@/components/practice';
+import { VocabularyProgressChart } from '@/components/practice/charts/VocabularyProgressChart';
 import { SettingsPicker, TextLink } from '@/components/ui';
 import type { SettingsPickerOption } from '@/components/ui/SettingsPicker';
 import { LIST_DRAW_DISTANCE_MULTIPLIER, TIMING_CONFIG } from '@/constants/animation';
@@ -27,7 +28,8 @@ import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useDictionaryList, useFSRSQueries, useResetWordProgress } from '@/hooks/vocabulary';
-import type { DictionaryScope } from '@/hooks/vocabulary/useDictionaryList';
+import { isHorizonScope } from '@/hooks/vocabulary/useDictionaryList';
+import type { DictionaryScope, PickerScope } from '@/hooks/vocabulary/useDictionaryList';
 import type { ReanimatedCSSAnimationStyle } from '@/types/ui/base.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
@@ -37,6 +39,13 @@ const SCOPE_EMPTY_MESSAGES: Record<Exclude<DictionaryScope, 'all'>, string> = {
   due: STRINGS.SCOPE_EMPTY_DUE,
   struggling: STRINGS.SCOPE_EMPTY_STRUGGLING,
   mastered: STRINGS.SCOPE_EMPTY_MASTERED,
+  // Only reachable by searching inside a band: the memory sheet does not make an
+  // empty band pressable, so there is no way to arrive at one of these cold.
+  'horizon-days': STRINGS.SCOPE_EMPTY_HORIZON,
+  'horizon-weeks': STRINGS.SCOPE_EMPTY_HORIZON,
+  'horizon-months': STRINGS.SCOPE_EMPTY_HORIZON,
+  'horizon-year': STRINGS.SCOPE_EMPTY_HORIZON,
+  'horizon-none': STRINGS.SCOPE_EMPTY_HORIZON_NONE,
 };
 
 // Row mount fade — Reanimated 4 CSS @keyframes. Unlike entering/exiting layout
@@ -75,6 +84,12 @@ export default function DictionaryScreen(): JSX.Element {
   const toggleRoot = toggleRootMutation.mutateAsync;
   const { confirmReset } = useResetWordProgress();
 
+  // The memory-horizon sheet opens this screen *at* a band. Validated rather
+  // than cast: the value arrives from a URL, and an unrecognised one must fall
+  // back to the whole dictionary instead of filtering it down to nothing.
+  const { scope: scopeParam } = useLocalSearchParams<{ scope?: string }>();
+  const initialScope = scopeParam && isHorizonScope(scopeParam) ? scopeParam : undefined;
+
   const {
     words,
     totalCount,
@@ -86,7 +101,7 @@ export default function DictionaryScreen(): JSX.Element {
     scope,
     setScope,
     scopeCounts,
-  } = useDictionaryList({ studyWords: studyWords || [] });
+  } = useDictionaryList({ studyWords: studyWords || [], initialScope });
 
   const [isScopePickerVisible, setScopePickerVisible] = useState(false);
 
@@ -110,7 +125,9 @@ export default function DictionaryScreen(): JSX.Element {
 
   const hasWords = words.length > 0;
 
-  const scopeOptions = useMemo<SettingsPickerOption<DictionaryScope>[]>(
+  // Typed to the picker's own four, not to every scope: a horizon band cannot be
+  // chosen here, and the type is what keeps that true as scopes are added.
+  const scopeOptions = useMemo<SettingsPickerOption<PickerScope>[]>(
     () => [
       {
         id: 'all',
@@ -147,7 +164,7 @@ export default function DictionaryScreen(): JSX.Element {
   const handleCloseScopePicker = useCallback(() => setScopePickerVisible(false), []);
 
   const handleSelectScope = useCallback(
-    (nextScope: DictionaryScope) => {
+    (nextScope: PickerScope) => {
       setScope(nextScope);
       setScopePickerVisible(false);
       // Dropped the jump to the top here for the same two reasons as the sort
@@ -260,24 +277,39 @@ export default function DictionaryScreen(): JSX.Element {
    * `ListEmptyComponent` (the list would never be empty). Not worth it for a
    * layout bug; re-pinning wants a proper header-height offset instead.
    */
+  /**
+   * The vocabulary-growth chart moved here from the practice home.
+   *
+   * It is the one genuinely historical series the app has — `created_at` is the
+   * only timestamp never overwritten — but it carries no FSRS data, it can only
+   * rise, and leading the practice tab with it rewarded *adding* words, which
+   * argues with the app's own intake pacing. It describes the dictionary, so it
+   * lives above the dictionary, and scrolls away like the header it is.
+   */
   const ListHeaderComponent = useMemo(
     () =>
       totalCount > 0 ? (
-        <DictionarySortBar
-          scope={scope}
-          sortField={sortField}
-          sortDirection={sortDirection}
-          onPressScope={handleOpenScopePicker}
-          onSelectField={handleSelectField}
-          wordCount={words.length}
-        />
+        <>
+          <VocabularyProgressChart studyWords={studyWords ?? []} />
+          <DictionarySortBar
+            scope={scope}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onPressScope={handleOpenScopePicker}
+            onClearScope={handleShowAllWords}
+            onSelectField={handleSelectField}
+            wordCount={words.length}
+          />
+        </>
       ) : null,
     [
       totalCount,
+      studyWords,
       scope,
       sortField,
       sortDirection,
       handleOpenScopePicker,
+      handleShowAllWords,
       handleSelectField,
       words.length,
     ],
@@ -365,7 +397,10 @@ export default function DictionaryScreen(): JSX.Element {
       <SettingsPicker
         isVisible={isScopePickerVisible}
         options={scopeOptions}
-        selectedValue={scope}
+        // A horizon band is not one of these four, so under one there is no
+        // selection to show. Unreachable in practice — the control that opens
+        // this picker clears the band instead while one is active.
+        selectedValue={isHorizonScope(scope) ? undefined : scope}
         title={STRINGS.SCOPE_PICKER_TITLE}
         onClose={handleCloseScopePicker}
         onSelect={handleSelectScope}

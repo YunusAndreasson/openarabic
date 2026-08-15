@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import type { StyleProp, TextStyle } from 'react-native';
 import { StyleSheet, Text } from 'react-native';
 
-import { FONTS } from '@/constants/fonts';
+import { FONTS, resolveArabicFont } from '@/constants/fonts';
 import {
   LAYOUT,
   LETTER_SPACING,
@@ -22,7 +22,10 @@ import type { ThemedTextProps } from '@/types/ui/text.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 
 // Extract selector outside component to avoid recreation on every render
-const selectArabicFont = (state: RootState) => state.settings.arabicFont;
+// Resolved, not raw: an unknown persisted family reaches Android as an unknown
+// family and quietly renders in the system face, which shapes Arabic worse and
+// no longer matches what Skia paints two lines above it.
+const selectArabicFont = (state: RootState) => resolveArabicFont(state.settings.arabicFont);
 
 /**
  * Enhanced text color function with semantic color support

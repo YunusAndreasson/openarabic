@@ -82,19 +82,6 @@ export const AccountSection = {
 
 export type AccountSection = (typeof AccountSection)[keyof typeof AccountSection];
 
-// ===== PRACTICE SYSTEM =====
-
-/**
- * Vocabulary statistics categories
- * Using const object for zero runtime overhead
- */
-export const VocabularyStatCategory = {
-  MASTERED: 'Mastered',
-} as const;
-
-export type VocabularyStatCategory =
-  (typeof VocabularyStatCategory)[keyof typeof VocabularyStatCategory];
-
 // ===== FONT OPTIONS =====
 
 /**

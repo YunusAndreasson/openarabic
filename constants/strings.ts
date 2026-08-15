@@ -498,24 +498,108 @@ export const STRINGS = {
   SIGN_IN_WITH_EMAIL: 'Sign in with email',
   CREATE_ACCOUNT_WITH_EMAIL: 'Create account with email',
   CONTINUE_WITH: 'or',
-  MEMORY_STRENGTH: 'Memory strength',
-  WORD_MASTERY: 'Mastered words',
-  // Practice bottom sheet subtitles (concise: what it shows + why it matters)
-  // Says "practised", not "your vocabulary": the score is the forgetting curve
-  // averaged over words that have actually been reviewed. Words still waiting
-  // for a first review have no memory state and are not in it.
-  MEMORY_STRENGTH_SUBTITLE: "How much of what you've practised you'd remember if quizzed right now",
-  MEMORY_FORECAST_HINT: 'The line shows the week ahead if you don’t review',
-  WORD_MASTERY_SUBTITLE: "Words you'll remember without review",
+  // Memory horizon sheet — the breakdown one tap under the practice hero.
+  //
+  // It answers the card's own drawing: the constellation bins practised words by
+  // how long they hold, and this sheet lists those same bands with their counts
+  // and a way into the words. It deliberately does NOT restate the hero's number
+  // as a percentage — that was the old gauge, and Σ R over N is the hero count
+  // divided by its own denominator, not a detail of it.
+  MEMORY_HORIZON_TITLE: 'Memory horizon',
+  /**
+   * Says "practised" for the same reason the hero does: a word waiting for its
+   * first review has no memory state, so it has no horizon either. It is counted
+   * separately, under MEMORY_HORIZON_NOT_STARTED.
+   */
+  MEMORY_HORIZON_SUBTITLE: 'How long each practised word holds before it needs you again',
+  /**
+   * The definition, stated once, in the one place with room for it. `stability`
+   * IS the days until predicted recall falls to `request_retention` (0.90) — so
+   * this sentence is the maths, not a metaphor for it.
+   */
+  MEMORY_HORIZON_EXPLAINER:
+    'A horizon is how long a word holds before recall drops to 90%. Every review you get right pushes it further out.',
+  /** Tags the band the median word falls in — the hero's "typical", made locatable. */
+  MEMORY_HORIZON_TYPICAL_TAG: 'typical',
+  MEMORY_HORIZON_NOT_STARTED: 'Not started',
+  MEMORY_HORIZON_NOT_STARTED_HINT: 'saved, never reviewed',
+  MEMORY_HORIZON_EMPTY: 'Nothing practised yet — your first review puts a word on this axis',
+  /** Plain-language span per band, so a label never has to be decoded. */
+  HORIZON_BAND_HINT_DAYS: 'under a week',
+  HORIZON_BAND_HINT_WEEKS: 'a week to a month',
+  HORIZON_BAND_HINT_MONTHS: 'a month to a year',
+  HORIZON_BAND_HINT_YEAR: 'over a year',
+  /**
+   * `{spoken}` is a whole clause, not the visible caption: the caption reads as
+   * a fragment under a label ("under a week"), and only the band rows can have
+   * "holds" put in front of it. "Not started" describes why a word has no
+   * horizon at all, so it supplies its own — otherwise VoiceOver said "holds
+   * saved, never reviewed".
+   */
+  HORIZON_ROW_A11Y: '{band}, {count} words, {spoken}. Opens them in your dictionary.',
+  HORIZON_ROW_A11Y_EMPTY: '{band}, no words, {spoken}.',
+  HORIZON_ROW_HOLDS_A11Y: 'holds {hint}',
   DUE_WORDS_FORECAST_SUBTITLE: 'How many words come up for review each day',
   DUE_WORDS_FORECAST: 'This week',
-  // Today hero card
+  // Week-ahead card
   TODAY_ALL_CAUGHT_UP: 'All caught up',
-  TODAY_TO_REVIEW: 'to review',
-  TODAY_REVIEWED_TODAY: 'reviewed today',
+  TODAY_TO_REVIEW: 'to review today',
+  /**
+   * Says "words", not just "reviewed today", because the number counts unique
+   * WORDS whose last review was today — re-asking the same word inside a session
+   * does not add to it. Without the noun this sat beside a "Reviews done" tile
+   * and the screen used "review" for two different units.
+   */
+  TODAY_REVIEWED_TODAY: 'words reviewed today',
   TODAY_NEXT_REVIEW: 'Next review',
+  // Memory horizon hero
+  /**
+   * Conditional mood on purpose: this is an expectation summed over forgetting
+   * curves, not a tally of things the learner has done. Same voice as
+   * MEMORY_STRENGTH_SUBTITLE, which the sheet one tap deeper uses.
+   */
+  PRACTICE_RECALL_NOW_LABEL: "Words you'd recall right now",
+  /** Names the population the estimate is over, so it is never read as a grade. */
+  PRACTICE_RECALL_OF_TOTAL: 'of {total} practised',
+  /**
+   * Nothing reviewed yet. NOT "0" — that claims total loss where there is simply
+   * no measurement.
+   */
+  PRACTICE_RECALL_EMPTY: 'Nothing measured yet — your first review starts it',
+  /**
+   * The median, and the copy says so. "Typical" rather than "average" because the
+   * maths is a median: stability is heavily right-skewed, and a mean sits where
+   * no real word does. If this ever reads "average", the maths must change too.
+   */
+  PRACTICE_TYPICAL_HORIZON: 'Typical word holds for {horizon}',
+  PRACTICE_SLIPPING_NOW: '{count} slipping',
+  PRACTICE_NOTHING_SLIPPING: 'Nothing slipping',
+  PRACTICE_SLIPPING_WEEK: '{count} more slip this week',
+  PRACTICE_NOTHING_SLIPPING_WEEK: 'Nothing else slips this week',
+  /** Shown only when a dot stops being one word, so the scale is never silent. */
+  PRACTICE_DOT_SCALE: 'each dot is {count} words',
+  // Memory horizon bands — deliberately the units formatHorizon rounds to, so a
+  // band label can never contradict a word's own detail screen.
+  HORIZON_BAND_DAYS: 'Days',
+  HORIZON_BAND_WEEKS: 'Weeks',
+  HORIZON_BAND_MONTHS: 'Months',
+  HORIZON_BAND_YEAR: 'A year+',
+  HORIZON_BAND_COUNT_A11Y: '{count} for {band}',
+  HORIZON_BAND_A11Y:
+    'Memory horizon. You can recall about {recall} of {total} practised words right now. {breakdown}. Opens the breakdown by band.',
+  HORIZON_BAND_A11Y_EMPTY: 'Memory horizon. Nothing practised yet. Opens the breakdown by band.',
+  WEEK_AHEAD_A11Y:
+    'Reviews this week. {today} due today, {peak} at the busiest. Opens the weekly forecast.',
+  /**
+   * Two variants because this card has two homes. On the dictionary it IS the
+   * dictionary, so promising to open one is wrong; only the (currently unused)
+   * pressable placement navigates anywhere.
+   */
+  VOCABULARY_GROWTH_A11Y: '{count} words in practice.',
+  VOCABULARY_GROWTH_A11Y_LINK: '{count} words in practice. Opens your dictionary.',
   // Practice stat tiles
-  MEMORY_LABEL: 'Memory',
+  /** Grades given, not words seen — distinct from "words reviewed today" above. */
+  REVIEWS_LABEL: 'Reviews done',
   /** Stat-tile placeholder for a metric with nothing to measure yet. */
   EMPTY_METRIC: '—',
   MASTERED_LOWER: 'mastered',
@@ -582,6 +666,26 @@ export const STRINGS = {
   SCOPE_EMPTY_DUE: 'Nothing due right now',
   SCOPE_EMPTY_STRUGGLING: 'Nothing tripping you up right now',
   SCOPE_EMPTY_MASTERED: 'No mastered words yet — keep reviewing',
+  /**
+   * Horizon scopes. Reachable only from the memory sheet, never from the scope
+   * picker — that picker is four full-height option cards inside a
+   * dynamically-sized bottom sheet, and five more would overflow a small phone
+   * with no scroll. They still live in the same `scope` union so the list can
+   * only ever be under one filter, and so the sort bar's existing count line
+   * names it without a second filter mechanism on screen.
+   *
+   * "Holds for", not the bare band label: on the practice card "Weeks" sits on a
+   * time axis that says what it means, and in a list of words it would not.
+   */
+  SCOPE_HORIZON_DAYS: 'Holds for days',
+  SCOPE_HORIZON_WEEKS: 'Holds for weeks',
+  SCOPE_HORIZON_MONTHS: 'Holds for months',
+  SCOPE_HORIZON_YEAR: 'Holds for a year+',
+  SCOPE_HORIZON_NONE: 'Not started',
+  SCOPE_EMPTY_HORIZON: 'No words hold for that long yet',
+  SCOPE_EMPTY_HORIZON_NONE: 'Every word has a review behind it',
+  /** The filter arrived from another screen, so it says how to leave. */
+  CLEAR_FILTER_A11Y: 'Clear filter, show all words',
   SHOW_ALL_WORDS: 'Show all words',
   // Practice word detail — memory panel
   WORD_MEMORY_TITLE: 'Memory',
@@ -634,18 +738,11 @@ export const STRINGS = {
   REMOVE_WORD_CONFIRM: 'The word and its review progress are removed from practice.',
   REMOVE: 'Remove',
   // Chart Empty States (action + outcome, concise)
-  EMPTY_STATE_MASTERY: 'Add words to see your strength trend',
-  EMPTY_STATE_LEARNED: 'Complete reviews to track your progress',
-  EMPTY_STATE_EFFICIENCY: 'Add words to track your learning speed',
-  EMPTY_STATE_RETRIEVABILITY: 'Add words to see your review timing',
   EMPTY_STATE_DUE_WORDS: 'Add words to see your upcoming reviews',
   EMPTY_STATE_GENERAL: 'Add words to start tracking your progress',
   // Word Sentences Bottom Sheet (dictionary sentence examples)
   NO_SENTENCE_EXAMPLES: 'No sentence examples yet',
   PLAY_AUDIO: 'Play audio',
-  // Chart Dynamic Message Suffixes (concatenated with numbers)
-  WORDS_NEED_URGENT_REVIEW: '% due for review',
-  WORDS_LIKELY_FORGOTTEN: ' words due for review',
   // Account - Support section
   HELP_CENTER: 'Help center',
   CONTACT_SUPPORT: 'Contact support',
@@ -751,10 +848,6 @@ export const STRINGS = {
     (word: string, _others: number) =>
       `You've been building ${word} for a while — this is the review that locks it in for longer.`,
   ] as const,
-  START_REVIEWING_TO_BUILD_STRENGTH: 'Practice to see your memory strength',
-  STUDY_TO_MONITOR_REVIEW_TIMING: 'Practice to see your review schedule',
-  STUDY_WORDS_TO_TRACK_MEMORY_RETENTION: 'Practice to track your retention',
-  ALL_WORDS_LOOK_STABLE: 'All words look stable',
   RECOMMENDED: 'Recommended',
   // Error messages - actionable with next steps
   ERROR: 'Error',

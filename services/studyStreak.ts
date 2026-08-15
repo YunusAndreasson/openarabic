@@ -2,6 +2,7 @@ import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
 import { parseSupabaseTimestamp, toLocalDateString } from '@/utils/dateTimeUtils';
 import { createServiceErrorConfig } from '@/utils/serviceErrorConfig';
+import { mergeStudyDays } from '@/utils/studyDayLedger';
 import { executeQuery } from '@/utils/supabaseHelpers';
 
 const errorConfig = {
@@ -231,6 +232,12 @@ export class StudySessionStreakService {
    * measured across the live database as 544 phantom study days over 498
    * accounts, inflating those users' streaks. `countReviewedToday` was fixed for
    * exactly this; the streak was not.
+   *
+   * The result is merged into the local append-only ledger before it is used
+   * (see `utils/studyDayLedger`). On its own this set is NOT a history: every
+   * review overwrites `fsrs_last_review`, so re-reviewing a word erases the day
+   * it previously contributed and the derived numbers can go DOWN. The merge is
+   * what makes current / longest / total monotone.
    */
   private static async fetchStudyDayKeys(userId: string): Promise<Set<string>> {
     // Paged rather than a single `.select()`: PostgREST silently truncates an
@@ -262,7 +269,7 @@ export class StudySessionStreakService {
       if (!page || page.length < PAGE_SIZE) break;
     }
 
-    return dayKeys;
+    return mergeStudyDays(dayKeys);
   }
 
   /**

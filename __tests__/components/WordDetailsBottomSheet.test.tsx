@@ -22,6 +22,7 @@ import React from 'react';
 import { selectionFeedback } from '@/utils/haptics';
 
 import { WordDetailsBottomSheet } from '@/components/article/WordDetailsBottomSheet';
+import { STRINGS } from '@/constants/strings';
 import type { SentenceWord } from '@/types/vocabulary.types';
 
 // Mock haptics at the utility level (not expo-haptics) since selectionFeedback
@@ -38,9 +39,12 @@ jest.mock('@/utils/haptics', () => ({
 jest.mock('@/hooks/theme/useColors', () =>
   require('@/__tests__/helpers/componentMocks').useColorsMockFactory(),
 );
+// A STABLE spy, not a fresh jest.fn() per call — the toast assertions below
+// need to see what the component actually announced.
+const mockShowToast = jest.fn();
 jest.mock('@/components/providers', () => ({
   useToast: () => ({
-    showToast: jest.fn(),
+    showToast: mockShowToast,
   }),
 }));
 
@@ -84,6 +88,88 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  /**
+   * The sheet used to announce "Saved to practice" BEFORE calling the mutation,
+   * so a save the app then refused — by the due-backlog gate, or the daily
+   * limit — still told the learner it had been saved.
+   *
+   * Reproduced on a real account with 1,491 words due: two taps, two "Saved to
+   * practice" toasts, zero rows written. The claim must wait for the answer.
+   */
+  describe('never claims a save that did not happen', () => {
+    test('confirms the save only after the write succeeds', async () => {
+      let resolveAdd: (value: boolean) => void = () => undefined;
+      mockOnAddToStudy.mockReturnValueOnce(
+        new Promise<boolean>(resolve => {
+          resolveAdd = resolve;
+        }),
+      );
+
+      const { getByText } = render(
+        <WordDetailsBottomSheet
+          isVisible={true}
+          onClose={mockOnClose}
+          word={mockWord}
+          onAddToStudy={mockOnAddToStudy}
+          isInStudyList={false}
+        />,
+      );
+
+      fireEvent.press(getByText('Add to practice'));
+
+      // Nothing is claimed while the write is still in flight.
+      expect(mockShowToast).not.toHaveBeenCalledWith(STRINGS.WORD_ADDED_TO_PRACTICE);
+
+      resolveAdd(true);
+
+      await waitFor(() => {
+        expect(mockShowToast).toHaveBeenCalledWith(STRINGS.WORD_ADDED_TO_PRACTICE);
+      });
+    });
+
+    test('a refused add is never announced as saved', async () => {
+      // What the due-backlog gate and the daily limit both return.
+      mockOnAddToStudy.mockResolvedValueOnce(false);
+
+      const { getByText } = render(
+        <WordDetailsBottomSheet
+          isVisible={true}
+          onClose={mockOnClose}
+          word={mockWord}
+          onAddToStudy={mockOnAddToStudy}
+          isInStudyList={false}
+        />,
+      );
+
+      fireEvent.press(getByText('Add to practice'));
+
+      // …and the word goes back to being offerable, rather than reading as saved.
+      await waitFor(() => {
+        expect(getByText('Add to practice')).toBeTruthy();
+      });
+
+      expect(mockShowToast).not.toHaveBeenCalledWith(STRINGS.WORD_ADDED_TO_PRACTICE);
+    });
+
+    test('a removal is still confirmed immediately — it cannot be refused', async () => {
+      mockOnAddToStudy.mockResolvedValueOnce(true);
+
+      const { getByText } = render(
+        <WordDetailsBottomSheet
+          isVisible={true}
+          onClose={mockOnClose}
+          word={mockWord}
+          onAddToStudy={mockOnAddToStudy}
+          isInStudyList={true}
+        />,
+      );
+
+      fireEvent.press(getByText('In practice'));
+
+      expect(mockShowToast).toHaveBeenCalledWith(STRINGS.WORD_QUICK_REMOVED);
+    });
   });
 
   describe('Optimistic State Synchronization', () => {

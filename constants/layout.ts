@@ -1,4 +1,4 @@
-import type { TextStyle } from 'react-native';
+import type { ScaledSize, TextStyle } from 'react-native';
 import { Dimensions, Platform, StyleSheet } from 'react-native';
 
 import { FONTS } from '@/constants/fonts';
@@ -7,8 +7,19 @@ import { FONTS } from '@/constants/fonts';
 
 // For mobile-only apps, screen width doesn't change during runtime
 // Use static width instead of dynamic useWindowDimensions
-const SCREEN_DIMENSIONS = Dimensions.get('window');
-export const SCREEN_WIDTH = SCREEN_DIMENSIONS?.width ?? 375; // Default fallback for test environments
+// `Dimensions.get` is TYPED as always returning a ScaledSize, but returns
+// undefined under Jest — so the fallbacks below are real, and the cast is what
+// makes the type say so. Without it the optional chain and `??` read as dead
+// code to type-aware lint, which is why this used to carry four warnings for
+// two lines that are both load-bearing.
+const SCREEN_DIMENSIONS = Dimensions.get('window') as ScaledSize | undefined;
+export const SCREEN_WIDTH = SCREEN_DIMENSIONS?.width ?? 375;
+/**
+ * Static height, same reasoning as the width above. Used for the one coarse
+ * breakpoint the practice charts have — a taller phone gets a taller canvas.
+ * Not for laying out anything that must respond to rotation or a split view.
+ */
+export const SCREEN_HEIGHT = SCREEN_DIMENSIONS?.height ?? 812;
 
 // Base scale for systematic sizing
 const BASE_UNIT = 4;
@@ -450,6 +461,62 @@ export const getCompactArabicTextStyle = (
     paddingVertical: SPACING_SCALE.HALF_TINY,
   };
 };
+
+/**
+ * The reading size the learner picks for Arabic, in points.
+ *
+ * The floor is the English body size, deliberately: below it the Arabic — the
+ * thing the learner opened the app to read — sets smaller than the translation
+ * printed underneath it, and the harakat this app colour-codes to teach grammar
+ * stop resolving into distinct marks at all. It used to be 13, which did both.
+ *
+ * Lives here rather than beside the picker so the store, the picker and every
+ * renderer read one range. The picker's copy had drifted to a MAX of "40px" and
+ * a DEFAULT of 22 while the store shipped 32 — three numbers, none agreeing.
+ */
+export const ARABIC_FONT_SIZE = {
+  MIN: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM, // 16
+  MAX: LAYOUT.TYPOGRAPHY.SCALE.MASSIVE, // 44
+  DEFAULT: LAYOUT.TYPOGRAPHY.SCALE.HUGE, // 32
+  STEP: 1, // 1pt increments for fine control
+} as const;
+
+/**
+ * Forces a reading size into the supported range.
+ *
+ * Every renderer of Arabic goes through this, because the persisted value does
+ * not: `settings` is rehydrated by redux-persist with no migration step, so a
+ * size written by an older build — or corrupted in storage — is handed to the
+ * layout verbatim. A stored 400 rendered one glyph per screen with no way back
+ * except reinstalling, since the slider cannot represent the value it is meant
+ * to correct.
+ */
+export const clampArabicFontSize = (size: number | undefined | null): number => {
+  if (typeof size !== 'number' || !Number.isFinite(size)) return ARABIC_FONT_SIZE.DEFAULT;
+  return Math.min(ARABIC_FONT_SIZE.MAX, Math.max(ARABIC_FONT_SIZE.MIN, Math.round(size)));
+};
+
+/**
+ * Size for a single Arabic word shown as the hero of a screen or sheet.
+ *
+ * Both of these were pinned to XXHUGE, which meant the one setting a learner
+ * has for "make the Arabic bigger" did nothing to the largest Arabic in the
+ * app: turn the reading size up to the ceiling and the word screen's headword
+ * came back *smaller* than the sentences under it.
+ *
+ * The multiplier is chosen so the default reading size still lands on XXHUGE,
+ * and the clamp keeps a hero recognisably a hero at the floor without letting
+ * it outgrow a single line at the ceiling. Same intent as the review card's
+ * `HERO`, which already scales this way.
+ */
+export const getArabicHeroFontSize = (readingFontSize: number): number =>
+  Math.min(
+    LAYOUT.TYPOGRAPHY.SCALE.MASSIVE,
+    Math.max(
+      LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
+      Math.round(clampArabicFontSize(readingFontSize) * 1.2),
+    ),
+  );
 
 export const getEnhancedOpacity = (
   baseOpacity: number,

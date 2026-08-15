@@ -10,12 +10,13 @@ import { ThemedView } from '@/components/ThemedView';
 import { ArticleSentence } from '@/components/article/ArticleSentence';
 import { WordMemoryPanel } from '@/components/practice';
 import { IconButton, PulsatingLoader } from '@/components/ui';
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET, getArabicHeroFontSize } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useStudyWordMutations } from '@/hooks/articles/useStudyWordMutations';
 import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
+import { useDebouncedArabicFontSize } from '@/hooks/theme/useDebouncedArabicFontSize';
 import {
   useFSRSQueries,
   useResetWordProgress,
@@ -87,6 +88,17 @@ export default function PracticeWordScreen(): JSX.Element {
   const { user } = useAuth();
   const { rootId: rootIdParam } = useLocalSearchParams<{ rootId?: string }>();
   const rootId = Number(rootIdParam) as RootId;
+
+  // Debounced like every other Arabic surface, so dragging the size slider does
+  // not re-render the headword on every tick.
+  const heroFontSize = getArabicHeroFontSize(useDebouncedArabicFontSize(100));
+  const heroArabicStyle = useMemo(
+    () => ({
+      fontSize: heroFontSize,
+      lineHeight: Math.round(heroFontSize * 1.58), // headroom for diacritics
+    }),
+    [heroFontSize],
+  );
 
   const { allWords, isLoading } = useFSRSQueries({ userId: user?.id });
   const { toggleRootMutation } = useStudyWordMutations();
@@ -201,7 +213,7 @@ export default function PracticeWordScreen(): JSX.Element {
             every other surface in the app. No `weight` on Arabic: see ThemedText. */}
         <View style={styles.hero}>
           <View style={styles.heroText}>
-            <ThemedText type="arabic" align="left" numberOfLines={1} style={styles.heroArabic}>
+            <ThemedText type="arabic" align="left" numberOfLines={1} style={heroArabicStyle}>
               {arabicText}
             </ThemedText>
             <ThemedText type="body" colorName="secondaryText">
@@ -366,10 +378,6 @@ const styles = StyleSheet.create({
   },
   heroText: {
     flexShrink: 1,
-  },
-  heroArabic: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXHUGE, // 38 — hero word above body copy
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXHUGE * 1.58, // headroom for diacritics
   },
   stats: {
     marginTop: LAYOUT.SPACING.XLARGE,

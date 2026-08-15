@@ -11,11 +11,7 @@ import { createStandardizedPerformanceZones } from '@/utils/chartDataUtils';
 import { useMemo } from 'react';
 
 import type { StudyWord } from '@/types/vocabulary.types';
-import {
-  calculateRetrievabilityForecast,
-  calculateRetrievabilityTrend,
-  type RetrievabilityForecast,
-} from '@/utils/fsrsUtils';
+import { calculateRetrievabilityForecast, type RetrievabilityForecast } from '@/utils/fsrsUtils';
 
 interface RetrievabilityChartData {
   retrievabilityPath: string;
@@ -26,8 +22,22 @@ interface RetrievabilityChartData {
     currentRetrievability: number;
     /** Forecast average retrievability at the end of the window (no reviews) */
     weekRetrievability: number;
-    trend: 'improving' | 'declining' | 'stable';
     criticalWords: number;
+    /**
+     * How many more words drop below the critical recall threshold by the end of
+     * the window if nothing is reviewed. The forgetting curve only decreases, so
+     * this is never negative.
+     */
+    criticalWordsInWeek: number;
+    /**
+     * Expected number of words recallable right now — the sum of every measured
+     * word's recall probability, which is `currentRetrievability` un-averaged.
+     *
+     * Deliberately derived from the same figures as `currentRetrievability` so
+     * the practice hero's count and the memory sheet's percentage are the same
+     * fact in two units and can never drift apart.
+     */
+    recallableWords: number;
     /**
      * How many words the percentage is actually averaged over — only those with
      * a review behind them. A word that has never been shown has no memory
@@ -63,8 +73,9 @@ export function useRetrievabilityChart(studyWords: StudyWord[]): UseRetrievabili
         insights: {
           currentRetrievability: 0,
           weekRetrievability: 0,
-          trend: 'stable',
           criticalWords: 0,
+          criticalWordsInWeek: 0,
+          recallableWords: 0,
           measuredWords: 0,
         },
         dangerZones: [],
@@ -97,9 +108,6 @@ export function useRetrievabilityChart(studyWords: StudyWord[]): UseRetrievabili
 
     const performanceZones = createStandardizedPerformanceZones(GRAPH_HEIGHT_LARGE, 0, chartColors);
 
-    // Calculate trend using utility function
-    const trend = calculateRetrievabilityTrend(retrievabilityData);
-
     // Get today's data for insights
     const todayData = retrievabilityData[0]; // Today (leftmost, in UTC)
     const currentRetrievability = todayData?.averageRetrievability || 0;
@@ -111,6 +119,19 @@ export function useRetrievabilityChart(studyWords: StudyWord[]): UseRetrievabili
     // Only words with a review behind them carry a memory state, so they are
     // the only ones the forgetting curve can speak for.
     const measuredWords = todayData?.wordCount ?? 0;
+
+    // Σ R over measured words. Computed from the UNROUNDED average so it stays
+    // the same quantity the gauge shows, and clamped so it can never claim more
+    // recallable words than there are words to recall.
+    const recallableWords = Math.min(
+      measuredWords,
+      Math.round((currentRetrievability / 100) * measuredWords),
+    );
+
+    // How many more words slip below the critical line across the window.
+    // Max(0, …) is defensive only: retrievability decays monotonically, so the
+    // week's critical count can never be lower than today's.
+    const criticalWordsInWeek = Math.max(0, (weekData?.criticalWords ?? 0) - criticalWords);
 
     return {
       retrievabilityPath,
@@ -124,8 +145,9 @@ export function useRetrievabilityChart(studyWords: StudyWord[]): UseRetrievabili
       insights: {
         currentRetrievability: Math.round(currentRetrievability),
         weekRetrievability: Math.round(weekRetrievability),
-        trend,
         criticalWords,
+        criticalWordsInWeek,
+        recallableWords,
         measuredWords,
       },
     };

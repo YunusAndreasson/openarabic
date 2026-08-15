@@ -37,7 +37,7 @@ export const DueWordsPrognosisChart = memo<DueWordsPrognosisChartProps>(
         return EMPTY_STATE_MESSAGES.dueWords;
       }
 
-      return `${currentDue} ${STRINGS.TODAY_TO_REVIEW} ${STRINGS.SUMMARY_TODAY.toLowerCase()} · peak ${peakDue}`;
+      return `${currentDue} ${STRINGS.TODAY_TO_REVIEW} · peak ${peakDue}`;
     }, [chartData.insights, studyWords.length]);
 
     // The busiest upcoming day — the actionable fact in this forecast

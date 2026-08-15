@@ -139,3 +139,93 @@ export function getHorizonAccessibilityLabel(days: number | null): string {
   if (days == null) return STRINGS.WORD_HORIZON_A11Y_NONE;
   return STRINGS.WORD_HORIZON_A11Y.replace('{horizon}', formatHorizon(days));
 }
+
+// ---------------------------------------------------------------------------
+// Horizon bands — the axis the practice screen's constellation is binned along.
+// ---------------------------------------------------------------------------
+
+/**
+ * Four bands, ordered shortest to longest so reading direction is growth
+ * direction.
+ *
+ * The boundaries are `formatHorizon`'s OWN unit boundaries, taken from the same
+ * three constants it branches on. That coupling is the point: any other cut
+ * produces a screen where a word's detail page says "holds for 6 days" while the
+ * chart files it under "Weeks".
+ *
+ * Deliberately NOT aligned to the mastery rule (state 2 + stability >= 5). Five
+ * days is not a natural unit, so the labels would be meaningless, and the
+ * alignment would still only be approximate — a Relearning word with stability 8
+ * clears five days but fails `isMasteredWord`, which also requires state 2.
+ * Bands describe how long a word holds; stages describe where it is in its life.
+ * Different questions, and they are never shown as peers.
+ */
+export const HORIZON_BAND_KEYS = ['days', 'weeks', 'months', 'year'] as const;
+
+export type HorizonBandKey = (typeof HORIZON_BAND_KEYS)[number];
+
+export const HORIZON_BAND_LABELS: Record<HorizonBandKey, string> = {
+  days: STRINGS.HORIZON_BAND_DAYS,
+  weeks: STRINGS.HORIZON_BAND_WEEKS,
+  months: STRINGS.HORIZON_BAND_MONTHS,
+  year: STRINGS.HORIZON_BAND_YEAR,
+};
+
+/**
+ * The same four boundaries in plain language.
+ *
+ * On the practice card the labels sit on a drawn time axis, which says what
+ * "Weeks" means. In a list of rows there is no axis, so each band has to carry
+ * its own span — and it must be read off the SAME constants `getHorizonBand`
+ * branches on, or a row will name a range it does not filter by.
+ */
+export const HORIZON_BAND_HINTS: Record<HorizonBandKey, string> = {
+  days: STRINGS.HORIZON_BAND_HINT_DAYS,
+  weeks: STRINGS.HORIZON_BAND_HINT_WEEKS,
+  months: STRINGS.HORIZON_BAND_HINT_MONTHS,
+  year: STRINGS.HORIZON_BAND_HINT_YEAR,
+};
+
+export interface HorizonBand {
+  key: HorizonBandKey;
+  label: string;
+  count: number;
+}
+
+/**
+ * Which band a WORD falls in, or `null` when it has no horizon yet.
+ *
+ * The two-step — horizon first, band second — is the practised gate, and going
+ * through it is what keeps a never-reviewed word (which carries PLACEHOLDER
+ * stability, not null) out of the `days` band. Every surface that groups words
+ * by band must come through here rather than re-deriving it.
+ */
+export function getWordHorizonBand(word: StudyWord): HorizonBandKey | null {
+  return getHorizonBand(getMemoryHorizonDays(word));
+}
+
+/** Which band a horizon falls in. `null` for a word with no horizon at all. */
+export function getHorizonBand(days: number | null): HorizonBandKey | null {
+  if (days == null || !Number.isFinite(days) || days <= 0) return null;
+  if (days >= DAYS_PER_YEAR) return 'year';
+  if (days >= DAYS_PER_MONTH) return 'months';
+  if (days >= DAYS_PER_WEEK) return 'weeks';
+  return 'days';
+}
+
+/**
+ * The constellation is shape-and-position only, so it says itself out loud the
+ * same way the row meter does. Phrasing lives here so the drawing and any future
+ * sheet cannot drift.
+ */
+export function getHorizonBandsAccessibilityLabel(bands: readonly HorizonBand[]): string {
+  return bands
+    .filter(band => band.count > 0)
+    .map(band =>
+      STRINGS.HORIZON_BAND_COUNT_A11Y.replace('{count}', String(band.count)).replace(
+        '{band}',
+        band.label.toLowerCase(),
+      ),
+    )
+    .join(', ');
+}

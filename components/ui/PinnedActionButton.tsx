@@ -16,19 +16,14 @@ interface PinnedActionButtonProps {
 }
 
 /**
- * Full-width primary CTA pinned above the tab bar — the single, reachable
- * action-button pattern shared by tab screens (practice review, playlist
- * play-all). Screens showing it add bottom content padding of
- * LAYOUT.BUTTON.HEIGHT.LARGE + LAYOUT.SPACING.XLARGE so list content
- * never hides behind it.
+ * Where the pinned button's bottom edge sits, in points.
+ *
+ * Shared by the button itself and by `usePinnedActionClearance` so the space a
+ * screen reserves and the space the button occupies are derived from one
+ * formula and cannot drift apart.
  */
-export function PinnedActionButton({
-  title,
-  onPress,
-  loading,
-}: PinnedActionButtonProps): JSX.Element {
+function usePinnedActionBottom(): number {
   const insets = useSafeAreaInsets();
-  const colors = useColors();
   const shouldShowMiniPlayer = useShouldShowMiniPlayer();
   const miniPlayerClearance = shouldShowMiniPlayer
     ? LAYOUT.CARD.HEIGHT.MINI_PLAYER + LAYOUT.SPACING.SMALL
@@ -44,7 +39,37 @@ export function PinnedActionButton({
   // device). iOS's UITabBarController-hosted content reads correctly with
   // the unmodified formula, so only Android needs the exclusion.
   const bottomInsetClearance = Platform.OS === 'android' ? 0 : insets.bottom;
-  const bottom = bottomInsetClearance + LAYOUT.SPACING.SMALL + miniPlayerClearance;
+  return bottomInsetClearance + LAYOUT.SPACING.SMALL + miniPlayerClearance;
+}
+
+/**
+ * Bottom content padding a screen must reserve so nothing hides behind the
+ * pinned CTA. Use this for `contentContainerStyle.paddingBottom`.
+ *
+ * Screens used to hardcode `BUTTON.HEIGHT.LARGE + SPACING.XLARGE`, which
+ * ignored both the safe-area inset and the mini player. With the mini player
+ * up the button rises by MINI_PLAYER + SMALL (120pt) while the reserved space
+ * stayed at 72 — so the last 120pt of content sat behind the player with no
+ * way to scroll it clear. Deriving both from `usePinnedActionBottom` is what
+ * keeps them in step.
+ */
+export function usePinnedActionClearance(): number {
+  return usePinnedActionBottom() + LAYOUT.BUTTON.HEIGHT.LARGE + LAYOUT.SPACING.XLARGE;
+}
+
+/**
+ * Full-width primary CTA pinned above the tab bar — the single, reachable
+ * action-button pattern shared by tab screens (practice review, playlist
+ * play-all). Screens showing it set their bottom content padding from
+ * `usePinnedActionClearance()` so list content never hides behind it.
+ */
+export function PinnedActionButton({
+  title,
+  onPress,
+  loading,
+}: PinnedActionButtonProps): JSX.Element {
+  const colors = useColors();
+  const bottom = usePinnedActionBottom();
 
   // The button floats over a scrolling list, and the elevation system carries
   // no shadow in dark mode — so on the dark theme there was

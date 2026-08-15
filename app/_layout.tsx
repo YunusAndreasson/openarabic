@@ -648,17 +648,6 @@ function AppContent() {
                     }}
                   />
                   <Stack.Screen
-                    name="words-mastered"
-                    options={{
-                      presentation: 'formSheet',
-                      sheetAllowedDetents: 'fitToContents',
-                      contentStyle: { backgroundColor: colors.elevation1 },
-                      sheetGrabberVisible: true,
-                      sheetCornerRadius: 24,
-                      headerShown: false,
-                    }}
-                  />
-                  <Stack.Screen
                     name="words-to-revisit"
                     options={{
                       presentation: 'formSheet',

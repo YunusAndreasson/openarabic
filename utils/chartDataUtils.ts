@@ -1,5 +1,4 @@
 import type { ChartColors } from '@/types/ui/chart.types';
-import type { StudyWord } from '@/types/vocabulary.types';
 
 import { PERFORMANCE_THRESHOLDS } from '@/constants/chartConstants';
 
@@ -22,64 +21,6 @@ export const generateDateRange = (days: number) => {
 };
 
 // Note: calculateRetrievability is available from @/utils/fsrsUtils
-
-const safeNum = (val: number | null | undefined, fallback: number) =>
-  isNaN(val ?? fallback) ? fallback : (val ?? fallback);
-
-// Calculate learning efficiency score
-export const calculateEfficiencyScore = (word: StudyWord): number => {
-  const difficulty = safeNum(word.fsrs_difficulty, 6.5);
-  const lapses = safeNum(word.fsrs_lapses, 0);
-  const stability = safeNum(word.fsrs_stability, 0);
-  const state = safeNum(word.fsrs_state, 0);
-  const reps = safeNum(word.fsrs_reps, 0);
-
-  let score = 0;
-
-  // State progression (40% weight) - aligned with FSRS states
-  if (state === 2 && stability >= 5) {
-    // Mastered: review state with good stability
-    score += 40;
-  } else if (state === 2 && stability < 5) {
-    // Review but unstable
-    score += 30;
-  } else if (state === 1 && reps > 1) {
-    // Learning with progress
-    score += 25;
-  } else if (state === 0 && reps === 1) {
-    // Just started learning
-    score += 15;
-  } else if (state === 3) {
-    // Relearning (failed)
-    score += 10;
-  }
-
-  // Stability quality (30% weight) - better thresholds
-  if (stability >= 30) score += 30;
-  else if (stability >= 14) score += 25;
-  else if (stability >= 7) score += 20;
-  else if (stability >= 3) score += 15;
-  else if (stability >= 1) score += 10;
-  else if (stability > 0) score += 5;
-
-  // Lapse rate (20% weight) - penalize failures more appropriately
-  if (lapses === 0) score += 20;
-  else if (lapses === 1) score += 15;
-  else if (lapses === 2) score += 10;
-  else if (lapses <= 4) score += 5;
-  // No points for 5+ lapses
-
-  // Difficulty balance (10% weight) - FSRS difficulty ranges 5-10, optimal around 6.5-8.0
-  if (difficulty >= 6.0 && difficulty <= 8.5)
-    score += 10; // Optimal learning zone
-  else if (difficulty >= 5.5 && difficulty <= 9.0)
-    score += 7; // Good range
-  else if (difficulty >= 5.0 && difficulty <= 9.5)
-    score += 5; // Acceptable range
-  else if (difficulty >= 4.5 && difficulty <= 10.0) score += 2; // Edge cases
-
-  return Math.min(100, score); // Cap at 100
-};
 
 /**
  * Creates standardized performance zones for charts

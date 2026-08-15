@@ -15,7 +15,8 @@ import { State } from 'ts-fsrs';
 
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import { LEECH_MIN_LAPSES } from '@/constants/fsrs';
-import { useDictionaryList } from '@/hooks/vocabulary/useDictionaryList';
+import { HORIZON_BAND_SCOPES, useDictionaryList } from '@/hooks/vocabulary/useDictionaryList';
+import { useMemoryHorizonDistribution } from '@/hooks/vocabulary/useMemoryHorizonDistribution';
 import type { RootId } from '@/types/branded.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 
@@ -145,6 +146,96 @@ describe('useDictionaryList scopes', () => {
 
     act(() => result.current.setScope('struggling'));
     expect(ids(result.current.words)).toEqual([2]);
+  });
+});
+
+/**
+ * The memory-horizon sheet counts words per band and opens the dictionary at
+ * one. Those two surfaces must select the same words — a row that says "128"
+ * and opens a list of 119 is worse than no row at all — so these tests assert
+ * the scope against `useMemoryHorizonDistribution` itself rather than against a
+ * hand-written expectation of it.
+ */
+describe('useDictionaryList horizon scopes', () => {
+  const studyWords = [
+    measured(1, { fsrs_stability: 1 }), // days
+    measured(2, { fsrs_stability: 3 }), // days
+    measured(3, { fsrs_stability: 10 }), // weeks
+    measured(4, { fsrs_stability: 60 }), // months
+    measured(5, { fsrs_stability: 400 }), // a year+
+    unmeasured(6),
+    unmeasured(7),
+  ];
+
+  test('each band shows exactly the words the memory sheet counts in it', () => {
+    const { result: list } = renderHook(() =>
+      useDictionaryList({ studyWords, initialScope: 'horizon-days' }),
+    );
+    const { result: distribution } = renderHook(() => useMemoryHorizonDistribution(studyWords));
+
+    const counted = Object.fromEntries(
+      distribution.current.bands.map(band => [band.key, band.count]),
+    );
+
+    expect(list.current.words).toHaveLength(counted.days as number);
+    expect(ids(list.current.words).sort()).toEqual([1, 2]);
+
+    for (const [band, scope] of Object.entries(HORIZON_BAND_SCOPES)) {
+      const { result } = renderHook(() => useDictionaryList({ studyWords, initialScope: scope }));
+      expect(result.current.words).toHaveLength(counted[band] as number);
+    }
+  });
+
+  test('not-started is the words with no horizon, placeholders included', () => {
+    const { result } = renderHook(() =>
+      useDictionaryList({ studyWords, initialScope: 'horizon-none' }),
+    );
+    const { result: distribution } = renderHook(() => useMemoryHorizonDistribution(studyWords));
+
+    // The trap: a never-practised word carries stability 0.4, not null, so a
+    // numeric test would file both of these under "days".
+    expect(ids(result.current.words).sort()).toEqual([6, 7]);
+    expect(result.current.words).toHaveLength(distribution.current.notStartedCount);
+  });
+
+  test('the five horizon scopes partition the collection, with no word in two', () => {
+    const scopes = [...Object.values(HORIZON_BAND_SCOPES), 'horizon-none' as const];
+    const seen = scopes.flatMap(scope => {
+      const { result } = renderHook(() => useDictionaryList({ studyWords, initialScope: scope }));
+      return ids(result.current.words);
+    });
+
+    expect(seen).toHaveLength(studyWords.length);
+    expect(new Set(seen).size).toBe(studyWords.length);
+  });
+
+  test('a band opens weakest-first, so the words about to leave it lead', () => {
+    const { result } = renderHook(() =>
+      useDictionaryList({ studyWords, initialScope: 'horizon-days' }),
+    );
+
+    expect(result.current.sortField).toBe('strength');
+    expect(result.current.sortDirection).toBe('asc');
+    expect(ids(result.current.words)).toEqual([1, 2]);
+  });
+
+  test('not-started opens by when the words were saved — it has no strength to sort on', () => {
+    const { result } = renderHook(() =>
+      useDictionaryList({ studyWords, initialScope: 'horizon-none' }),
+    );
+
+    expect(result.current.sortField).toBe('recent');
+    expect(result.current.sortDirection).toBe('desc');
+  });
+
+  test('clearing returns to the whole dictionary', () => {
+    const { result } = renderHook(() =>
+      useDictionaryList({ studyWords, initialScope: 'horizon-days' }),
+    );
+
+    act(() => result.current.setScope('all'));
+
+    expect(result.current.words).toHaveLength(studyWords.length);
   });
 });
 

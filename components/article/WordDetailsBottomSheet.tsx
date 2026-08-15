@@ -8,10 +8,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { useToast } from '@/components/providers';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, getArabicHeroFontSize } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
 import { useColors } from '@/hooks/theme/useColors';
+import { useDebouncedArabicFontSize } from '@/hooks/theme/useDebouncedArabicFontSize';
 
 import { preload } from 'expo-audio';
 
@@ -47,6 +48,10 @@ export function WordDetailsBottomSheet({
   const bottomSheetRef = useBottomSheetVisibility(isVisible && !!word);
   // Use consolidated word audio playback hook
   const playWordAudio = useWordAudioPlayback({ showErrorToast: true });
+  // Scales with the learner's reading size, like the review card's hero. It was
+  // pinned to XXHUGE, so the setting that exists to make Arabic bigger left the
+  // word they tapped to inspect at a fixed size.
+  const heroFontSize = getArabicHeroFontSize(useDebouncedArabicFontSize(100));
 
   // React 19: useOptimistic auto-reverts when the underlying prop unchanged after the
   // transition settles, so no manual revert/sync code is needed.
@@ -102,13 +107,26 @@ export function WordDetailsBottomSheet({
     const newValue = !optimisticIsInStudyList;
     selectionFeedback();
 
-    // Both directions get feedback — a silent removal reads as a failed save
-    showToast(newValue ? STRINGS.WORD_ADDED_TO_PRACTICE : STRINGS.WORD_QUICK_REMOVED);
+    // A removal always succeeds, so it can be confirmed up front — and a silent
+    // removal reads as a failed save.
+    //
+    // An ADD can be refused: the due-backlog gate declines it while the review
+    // queue is at or above DUE_BACKLOG_ADD_THRESHOLD, and the daily limit can
+    // decline it too. Both already explain themselves with their own toast. This
+    // used to announce "Saved to practice" BEFORE calling the mutation, so a
+    // refused add told the learner it had been saved and then swallowed the
+    // explanation — measured on a real account with 1,491 words due: two taps,
+    // two "Saved to practice" toasts, zero rows written, no correction shown.
+    // The claim now waits for the answer.
+    if (!newValue) {
+      showToast(STRINGS.WORD_QUICK_REMOVED);
+    }
 
-    // Saving is the terminal action for this sheet: the toast already carries the
-    // confirmation, so staying open only forces a third interaction to get back to
-    // the text. Removal is a correction rather than an exit — keep the sheet open
-    // there so the user can immediately re-add if they tapped by mistake.
+    // Closing still happens immediately, so saving keeps its one-tap feel:
+    // saving is the terminal action for this sheet, and staying open only forces
+    // a third interaction to get back to the text. Removal is a correction
+    // rather than an exit — keep the sheet open there so the user can
+    // immediately re-add if they tapped by mistake.
     if (newValue) {
       onClose();
     } else {
@@ -120,8 +138,19 @@ export function WordDetailsBottomSheet({
       try {
         // Explicit intent: the user acted on the button label they saw, so a
         // stale study-list cache can never invert this into the opposite action
-        await onAddToStudy(word, newValue ? 'add' : 'remove');
+        const succeeded = await onAddToStudy(word, newValue ? 'add' : 'remove');
+
+        if (newValue) {
+          if (succeeded) {
+            showToast(STRINGS.WORD_ADDED_TO_PRACTICE);
+          } else {
+            // Refused by a gate that has already said why. Put the optimistic
+            // state back so the word does not read as saved.
+            setOptimisticIsInStudyList(false);
+          }
+        }
       } catch (error) {
+        if (newValue) setOptimisticIsInStudyList(false);
         handleError(error, { toastMessage: 'Failed to update study list' });
       } finally {
         if (!newValue) setIsToggling(false);
@@ -152,7 +181,7 @@ export function WordDetailsBottomSheet({
                   text={cleanWordText(word.word_form || '')}
                   arabicWord={cleanWordText(word.word_form || '')}
                   englishTranslation={cleanWordText(word.english || '')}
-                  arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.XXHUGE}
+                  arabicFontSize={heroFontSize}
                   defaultColor={colors.arabicText}
                   isArabic={true}
                   precomputedSegments={word.coloredSegments}

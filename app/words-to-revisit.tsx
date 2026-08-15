@@ -31,7 +31,14 @@ function LeechRow({ word, onReset }: LeechRowProps): JSX.Element {
   return (
     <View style={[styles.row, { borderBottomColor: colors.border }]}>
       <View style={styles.wordColumn}>
-        <ThemedText type="arabic" numberOfLines={1}>
+        {/* `arabicCompact`, like the dictionary index: this is a navigation row,
+            so it caps the reading size and drops the line box to LOOSE. Reading
+            Arabic at the 44px ceiling gave the row a 97px line, stranding the
+            gloss at the foot of a row two and a half times its normal height.
+            Left-aligned so the word sits directly above its meaning — the
+            reading style's right alignment put the two at opposite ends of the
+            same column. */}
+        <ThemedText type="arabicCompact" align="left" numberOfLines={1}>
           {letters}
         </ThemedText>
         {meaning ? (

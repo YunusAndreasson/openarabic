@@ -7,14 +7,13 @@ import { StyleSheet } from 'react-native';
 import type { RenderItemParams } from 'react-native-draggable-flatlist';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 import Animated, { FadeOut } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { SavedEmptyState, PlaylistItemCard } from '@/components/playlist';
 import { useToast } from '@/components/providers';
 import { TIMING_CONFIG } from '@/constants/animation';
-import { PinnedActionButton } from '@/components/ui';
+import { PinnedActionButton, usePinnedActionClearance } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { usePlaylistScreen, usePlaylistUI } from '@/hooks/playlist';
@@ -140,7 +139,7 @@ const PlaylistListItem = memo(
 PlaylistListItem.displayName = 'PlaylistListItem';
 
 export default function PlaylistScreen(): JSX.Element {
-  const insets = useSafeAreaInsets();
+  const pinnedClearance = usePinnedActionClearance();
   const { editMode, reset } = useEditMode('playlist');
   const { showToast } = useToast();
 
@@ -196,10 +195,13 @@ export default function PlaylistScreen(): JSX.Element {
       ...LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
       // 12px first-content lead-in under the header — same rhythm as Explore/Practice
       paddingTop: LAYOUT.SPACING.MEDIUM,
-      // Room for the pinned play-all button so the last row never hides behind it
-      paddingBottom: LAYOUT.BUTTON.HEIGHT.LARGE + LAYOUT.SPACING.XLARGE + insets.bottom,
+      // Room for the pinned play-all button so the last row never hides behind it.
+      // Derived from the button's own geometry, so it also accounts for the mini
+      // player raising the button — a hardcoded 48+24 left the last rows stranded
+      // behind the player with no way to scroll them clear.
+      paddingBottom: pinnedClearance,
     }),
-    [insets.bottom],
+    [pinnedClearance],
   );
 
   // Create the article press handler - plays audio in miniplayer

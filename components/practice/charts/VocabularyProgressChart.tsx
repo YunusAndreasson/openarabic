@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import { TIMING_CONFIG } from '@/constants/animation';
+import { TIMING_CONFIG, TIMING_CONSTANTS } from '@/constants/animation';
 import { useChartColors } from '@/constants/chartColors';
 import { CHART_VISUAL } from '@/constants/chartConstants';
 import { FONTS } from '@/constants/fonts';
@@ -14,9 +14,16 @@ import { STRINGS } from '@/constants/strings';
 import { useVocabularyGrowthChart } from '@/hooks/vocabulary/useVocabularyGrowthChart';
 import type { StudyWord } from '@/types/vocabulary.types';
 
-// Full-bleed inside the card: screen minus the tab content's 12px insets
-const CHART_WIDTH = SCREEN_WIDTH - LAYOUT.SCREEN_HORIZONTAL_PADDING * 2;
-const CHART_HEIGHT = 104;
+/**
+ * Half the card width, minus its padding and the label column beside it. The
+ * chart is now an aside rather than a hero, so it is sized to the space left
+ * over by the number it accompanies.
+ */
+const CARD_WIDTH = SCREEN_WIDTH - LAYOUT.SCREEN_HORIZONTAL_PADDING * 2;
+const LABEL_COLUMN_WIDTH = 120;
+const CHART_WIDTH =
+  CARD_WIDTH - LABEL_COLUMN_WIDTH - LAYOUT.SPACING.LARGE * 2 - LAYOUT.SPACING.MEDIUM;
+const CHART_HEIGHT = 44;
 
 interface VocabularyProgressChartProps {
   studyWords: StudyWord[];
@@ -24,9 +31,15 @@ interface VocabularyProgressChartProps {
 }
 
 /**
- * Hero progress card for the practice tab: vocabulary size as a big
- * figure with its 30-day growth drawn as a full-bleed area sparkline.
- * Growth-framed on purpose — the number only ever goes up.
+ * Vocabulary size and its 30-day growth, as a trend tile.
+ *
+ * It used to lead the practice screen at 183pt tall. It was demoted, not
+ * deleted, and the reasoning is worth keeping: this is the ONE honest historical
+ * series the app has — `created_at` is the only timestamp that is never
+ * overwritten — so it deserves a place. But it contains no FSRS data at all, it
+ * can only ever rise, and a screen that opens on it rewards *adding* words,
+ * which argues with the app's own intake pacing. The memory constellation leads
+ * now; this closes.
  */
 export const VocabularyProgressChart = memo<VocabularyProgressChartProps>(
   ({ studyWords = [], onPress }) => {
@@ -48,69 +61,79 @@ export const VocabularyProgressChart = memo<VocabularyProgressChartProps>(
     useEffect(() => {
       progress.value = 0;
       settleOpacity.value = 0;
-      progress.value = withTiming(1, TIMING_CONFIG.PROGRESS);
+      // Last of the three charts to arrive, so the screen resolves top-to-bottom.
+      progress.value = withDelay(
+        TIMING_CONSTANTS.STAGGER.FAST,
+        withTiming(1, TIMING_CONFIG.PROGRESS),
+      );
       // Wash + endpoint dot appear once the line has finished drawing
       settleOpacity.value = withDelay(
-        TIMING_CONFIG.PROGRESS.duration,
+        TIMING_CONSTANTS.STAGGER.FAST + TIMING_CONFIG.PROGRESS.duration,
         withTiming(1, TIMING_CONFIG.ENTRANCE),
       );
     }, [progress, settleOpacity, linePath]);
 
     return (
-      <BaseCard onPress={onPress}>
-        <View style={styles.header}>
-          {/* Title above the number, matching the stat tiles below (MetricCard).
-              The practice screen reads top-to-bottom as label → figure on every
-              card; this hero used to be the one that inverted it. */}
-          <View>
+      <BaseCard
+        onPress={onPress}
+        accessibilityLabel={(onPress
+          ? STRINGS.VOCABULARY_GROWTH_A11Y_LINK
+          : STRINGS.VOCABULARY_GROWTH_A11Y
+        ).replace('{count}', String(totalWords))}
+      >
+        <View style={styles.row}>
+          <View style={styles.labelColumn}>
             <ThemedText type="caption" colorName="subtleLabelText">
               {STRINGS.VOCABULARY_GROWTH_LABEL}
             </ThemedText>
             <ThemedText style={styles.value}>{totalWords}</ThemedText>
           </View>
-          {/* A step dimmer than the card's own label: this is a supporting
-              aside, not a second title. At the same weight the two captions
-              read as a pair of equals competing across the header. */}
-          {monthChange > 0 && (
-            <ThemedText type="caption" colorName="textTertiary">
-              {`+${monthChange} ${STRINGS.SUMMARY_THIS_MONTH.toLowerCase()}`}
-            </ThemedText>
-          )}
-        </View>
 
-        {skLinePath && (
-          <Canvas style={styles.canvas} pointerEvents="none">
-            <Group opacity={settleOpacity}>
-              <Path path={areaPath} color={chartColors.areaWash} />
-            </Group>
-            <Path
-              path={skLinePath}
-              start={0}
-              end={progress}
-              color={chartColors.ui.dataLine}
-              style="stroke"
-              strokeWidth={CHART_VISUAL.LINE_WIDTH}
-              strokeCap="round"
-              strokeJoin="round"
-            />
-            {endPoint && (
-              <Group opacity={settleOpacity}>
-                <Circle
-                  cx={endPoint.x}
-                  cy={endPoint.y}
-                  r={CHART_VISUAL.DATA_POINT_EMPHASIS_SIZE + CHART_VISUAL.DATA_POINT_RING_WIDTH}
-                  color={chartColors.dataPoint.inner}
+          <View
+            style={styles.chartColumn}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+          >
+            {skLinePath && (
+              <Canvas style={styles.canvas} pointerEvents="none">
+                <Group opacity={settleOpacity}>
+                  <Path path={areaPath} color={chartColors.areaWash} />
+                </Group>
+                <Path
+                  path={skLinePath}
+                  start={0}
+                  end={progress}
+                  color={chartColors.ui.dataLine}
+                  style="stroke"
+                  strokeWidth={CHART_VISUAL.LINE_WIDTH}
+                  strokeCap="round"
+                  strokeJoin="round"
                 />
-                <Circle
-                  cx={endPoint.x}
-                  cy={endPoint.y}
-                  r={CHART_VISUAL.DATA_POINT_EMPHASIS_SIZE}
-                  color={chartColors.dataPoint.primary}
-                />
-              </Group>
+                {endPoint && (
+                  <Group opacity={settleOpacity}>
+                    <Circle
+                      cx={endPoint.x}
+                      cy={endPoint.y}
+                      r={CHART_VISUAL.DATA_POINT_EMPHASIS_SIZE + CHART_VISUAL.DATA_POINT_RING_WIDTH}
+                      color={chartColors.dataPoint.inner}
+                    />
+                    <Circle
+                      cx={endPoint.x}
+                      cy={endPoint.y}
+                      r={CHART_VISUAL.DATA_POINT_EMPHASIS_SIZE}
+                      color={chartColors.dataPoint.primary}
+                    />
+                  </Group>
+                )}
+              </Canvas>
             )}
-          </Canvas>
-        )}
+            {monthChange > 0 && (
+              <ThemedText type="caption" colorName="textTertiary" style={styles.delta}>
+                {`+${monthChange} ${STRINGS.SUMMARY_THIS_MONTH.toLowerCase()}`}
+              </ThemedText>
+            )}
+          </View>
+        </View>
       </BaseCard>
     );
   },
@@ -119,23 +142,32 @@ export const VocabularyProgressChart = memo<VocabularyProgressChartProps>(
 VocabularyProgressChart.displayName = 'VocabularyProgressChart';
 
 const styles = StyleSheet.create({
-  header: {
+  row: {
+    alignItems: 'center',
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    paddingTop: LAYOUT.SPACING.LARGE,
+    gap: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+  },
+  labelColumn: {
+    width: LABEL_COLUMN_WIDTH,
+  },
+  chartColumn: {
+    alignItems: 'flex-end',
+    flex: 1,
   },
   value: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * 1.15,
-    fontFamily: FONTS.ENGLISH_BOLD,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.2,
+    fontFamily: FONTS.ENGLISH_SEMIBOLD,
     letterSpacing: LETTER_SPACING.TIGHT,
     includeFontPadding: false,
   },
   canvas: {
-    width: CHART_WIDTH,
     height: CHART_HEIGHT,
-    marginTop: LAYOUT.SPACING.SMALL,
+    width: CHART_WIDTH,
+  },
+  delta: {
+    marginTop: LAYOUT.SPACING.TINY,
   },
 });

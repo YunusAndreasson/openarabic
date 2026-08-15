@@ -56,14 +56,6 @@ jest.mock('@/utils/fsrsUtils', () => ({
       wordCount: measured,
     }));
   },
-  calculateRetrievabilityTrend: (data: any[]) => {
-    if (data.length < 2) return 'stable';
-    const first = data[0]?.averageRetrievability || 0;
-    const last = data[data.length - 1]?.averageRetrievability || 0;
-    if (first > last + 10) return 'improving';
-    if (first < last - 10) return 'declining';
-    return 'stable';
-  },
 }));
 
 describe('useRetrievabilityChart', () => {
@@ -87,8 +79,9 @@ describe('useRetrievabilityChart', () => {
       expect(result.current.chartData.insights).toEqual({
         currentRetrievability: 0,
         weekRetrievability: 0,
-        trend: 'stable',
         criticalWords: 0,
+        criticalWordsInWeek: 0,
+        recallableWords: 0,
         measuredWords: 0,
       });
     });
@@ -150,13 +143,19 @@ describe('useRetrievabilityChart', () => {
       expect(result.current.chartData.insights.currentRetrievability).toBeLessThanOrEqual(100);
     });
 
-    test('provides trend insight', () => {
-      const words = [createTestWord({ fsrs_state: 2, fsrs_stability: 5 })];
+    test('recallableWords is the percentage un-averaged, never more than the population', () => {
+      const words = [
+        createTestWord({ id: 1, fsrs_state: 2, fsrs_stability: 5 }),
+        createTestWord({ id: 2, fsrs_state: 2, fsrs_stability: 40 }),
+      ];
 
       const { result } = renderHook(() => useRetrievabilityChart(words));
+      const { recallableWords, currentRetrievability, measuredWords } =
+        result.current.chartData.insights;
 
-      expect(['improving', 'declining', 'stable']).toContain(
-        result.current.chartData.insights.trend,
+      expect(recallableWords).toBeLessThanOrEqual(measuredWords);
+      expect(recallableWords).toBe(
+        Math.min(measuredWords, Math.round((currentRetrievability / 100) * measuredWords)),
       );
     });
 

@@ -10,6 +10,7 @@ import { metaEvents } from '@/services/metaEvents';
 import type { SessionMetrics } from '@/types/review.types';
 import { recordSessionCompleted } from '@/utils/notificationPromptStorage';
 import { appendSession } from '@/utils/recallSignalStorage';
+import { recordStudyDay } from '@/utils/studyDayLedger';
 
 /**
  * Hook to handle review session completion side effects
@@ -64,6 +65,16 @@ export const useReviewCompletion = (sessionMetrics?: SessionMetrics): void => {
       // Fire-and-forget (best-effort, local storage).
       if (sessionMetrics) {
         void appendSession(sessionMetrics.firstAttemptKnown, sessionMetrics.firstAttemptUnknown);
+      }
+
+      // Stamp today into the append-only study-day ledger. The server cannot
+      // remember this: `fsrs_last_review` is overwritten by the next review, so
+      // the day-key set derived from it loses days as the learner keeps going.
+      // Gated on a word actually being reviewed, matching the `fsrs_reps > 0`
+      // rule the derived set uses — opening and closing a session must not
+      // count as a study day.
+      if (sessionMetrics && sessionMetrics.wordsReviewed > 0) {
+        void recordStudyDay();
       }
 
       // Count completed sessions for the notification priming card's re-ask

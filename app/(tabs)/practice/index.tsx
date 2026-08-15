@@ -12,6 +12,7 @@ import { PracticeEmptyState, PracticeStatCards } from '@/components/practice';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
+import { DAYS_7 } from '@/constants/chartConstants';
 import { fsrsQueries, PRACTICE_DUE_WORDS_LIMIT } from '@/constants/queries';
 import { ROUTE_PATHS, getPracticeReviewRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -19,11 +20,12 @@ import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useStudyStreak } from '@/hooks/practice/useStudyStreak';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
-import { PinnedActionButton } from '@/components/ui';
+import { PinnedActionButton, usePinnedActionClearance } from '@/components/ui';
+import { useMemoryHorizonDistribution } from '@/hooks/vocabulary/useMemoryHorizonDistribution';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
-import { calculateNextDueDate } from '@/utils/fsrsUtils';
-import { rankStrugglingWords } from '@/utils/leechUtils';
-import { calculateWordCategories, countReviewedToday } from '@/utils/wordClassification';
+import { calculateDueWordsForecast } from '@/utils/fsrsUtils';
+import { isLeechWord } from '@/utils/leechUtils';
+import { countReviewedToday } from '@/utils/wordClassification';
 
 // Mount fade-in — Reanimated 4 CSS @keyframes, module-level so no per-render alloc.
 // Replaces imperative `entering={FadeIn}` which the React Compiler can't track and
@@ -42,6 +44,7 @@ export default function PracticeScreen(): JSX.Element {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { prefetchVocabularyData } = useAppPreloader();
+  const pinnedClearance = usePinnedActionClearance();
 
   // Fetch study streak data. `streak` is null until the query resolves and
   // stays null if it fails, which is NOT the same as a zero streak — the tile
@@ -108,23 +111,24 @@ export default function PracticeScreen(): JSX.Element {
     () => router.push(ROUTE_PATHS.PRACTICE_STUDY_STREAK),
     [router],
   );
-  const handleMasteredPress = useCallback(
-    () => router.push(ROUTE_PATHS.PRACTICE_WORDS_MASTERED),
-    [router],
-  );
   const handleRevisitPress = useCallback(
     () => router.push(ROUTE_PATHS.PRACTICE_WORDS_TO_REVISIT),
     [router],
   );
-  const handleVocabularyPress = useCallback(
-    () => router.push(ROUTE_PATHS.PRACTICE_DICTIONARY),
-    [router],
-  );
 
   // Leech count for the (conditional) "Revisit" stat card — reuses the words
-  // already fetched, so no extra query. Ranking is the same pure util the
-  // dedicated screen uses.
-  const leechCount = useMemo(() => rankStrugglingWords(studyWords).length, [studyWords]);
+  // already fetched, so no extra query.
+  //
+  // Counted with the predicate, NOT with `rankStrugglingWords`: that function
+  // slices to LEECH_LIST_LIMIT (20), which is the right cap for the *list*
+  // screen and a lie on a tile — a learner with 47 leeches was told 20.
+  // The arrow wrapper is load-bearing: `Array.filter` passes the index as its
+  // second argument, which lands on `isLeechWord`'s `minLapses` parameter and
+  // makes every word at index 0/1 a leech (same trap as useDictionaryList).
+  const leechCount = useMemo(
+    () => studyWords.filter(word => isLeechWord(word)).length,
+    [studyWords],
+  );
 
   // Fix: Use the actual due words data count instead of database view
   // This ensures consistency between display and practice session
@@ -132,10 +136,26 @@ export default function PracticeScreen(): JSX.Element {
   // The due query clips at the fetch limit — never imply exactness past it
   const dueCountCapped = dueWordsCount >= PRACTICE_DUE_WORDS_LIMIT;
 
-  // Today-card data: words reviewed since local midnight + when the next
-  // review lands (both from the already-fetched full word set — no new query)
+  // Unique words whose last review was today. One `fsrs_last_review` per word is
+  // the only per-day granularity the schema allows, so re-asking the same word
+  // inside a session does not add to this — which is why the label says "words
+  // reviewed today" rather than "reviews".
   const reviewedToday = useMemo(() => countReviewedToday(studyWords), [studyWords]);
-  const nextDueDate = useMemo(() => calculateNextDueDate(studyWords), [studyWords]);
+
+  // Grades given across the whole collection. Exact, and monotone in a way the
+  // streak is not: `fsrs_reps` only ever falls through an explicit, confirmed
+  // reset or removal, never on its own.
+  const totalReviews = useMemo(
+    () => studyWords.reduce((sum, word) => sum + Math.max(0, word.fsrs_reps ?? 0), 0),
+    [studyWords],
+  );
+
+  // Seven days of due counts for the week-ahead card. The same series the
+  // /due-words sheet plots — one fact at two resolutions, never two facts.
+  const forecast = useMemo(() => calculateDueWordsForecast(studyWords, DAYS_7), [studyWords]);
+
+  // The distribution behind the memory constellation.
+  const distribution = useMemoryHorizonDistribution(studyWords);
 
   // No double-tap guard here any more: every ThemedButton is behind the shared
   // press lock in useButtonPress, so a second tap inside 300ms never reaches
@@ -157,12 +177,6 @@ export default function PracticeScreen(): JSX.Element {
   // - allWords may lag if mutations only invalidate 'due' keys
   // - dueWords reflects immediate availability for study
   const hasAnyStudyWords = (allWords?.length ?? 0) > 0 || dueWordsCount > 0;
-
-  // Calculate word stats in single pass using optimized utility
-  const masteredWords = useMemo(() => {
-    if (!studyWords.length) return 0;
-    return calculateWordCategories(studyWords, dueWordsCount).masteredWords;
-  }, [studyWords, dueWordsCount]);
 
   // Show error message if there was an error loading data
   if (shouldShowError) {
@@ -228,26 +242,24 @@ export default function PracticeScreen(): JSX.Element {
         style={styles.container}
         contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.contentContainer}
+        contentContainerStyle={[styles.contentContainer, { paddingBottom: pinnedClearance }]}
       >
         <Animated.View style={[styles.vocabularySection, MOUNT_FADE_IN_STYLE]}>
           <PracticeStatCards
             dueWords={dueWordsCount}
             dueCountCapped={dueCountCapped}
-            memoryRetention={chartData.insights.currentRetrievability}
-            hasMeasuredMemory={chartData.insights.measuredWords > 0}
             reviewedToday={reviewedToday}
-            nextDueDate={nextDueDate}
+            recallableWords={chartData.insights.recallableWords}
+            hasMeasuredMemory={chartData.insights.measuredWords > 0}
+            distribution={distribution}
+            forecast={forecast}
             currentStreak={currentStreak}
             hasStreak={hasStreak}
-            masteredWords={masteredWords}
+            totalReviews={totalReviews}
             leechCount={leechCount}
-            studyWords={studyWords}
             onDuePress={handleDuePress}
             onStreakPress={handleStreakPress}
-            onMasteredPress={handleMasteredPress}
             onMemoryPress={handleMemoryStrengthInfo}
-            onVocabularyPress={handleVocabularyPress}
             onRevisitPress={handleRevisitPress}
           />
         </Animated.View>
@@ -275,8 +287,8 @@ const styles = StyleSheet.create({
     ...LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
     // 12px first-content lead-in under the header — same rhythm as Explore/Playlist
     paddingTop: LAYOUT.SPACING.MEDIUM,
-    // Room for the pinned start-review button so content never hides behind it
-    paddingBottom: LAYOUT.BUTTON.HEIGHT.LARGE + LAYOUT.SPACING.XLARGE,
+    // paddingBottom comes from usePinnedActionClearance() at the call site — it
+    // depends on the safe-area inset and on whether the mini player is up.
   },
   vocabularySection: {
     gap: LAYOUT.SPACING.SMALL, // 8px gap for perfect consistency with stat cards

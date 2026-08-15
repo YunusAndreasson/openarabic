@@ -73,13 +73,6 @@ jest.mock('@/utils/fsrsUtils', () => ({
       };
     });
   },
-  calculateDueWordsTrend: (data: DueWordsForecast[]) => {
-    if (!data || data.length < 2) return 'stable';
-    const first = data[0]?.dueWords ?? 0;
-    const last = data[data.length - 1]?.dueWords ?? 0;
-    const change = last - first;
-    return change > 2 ? 'increasing' : change < -2 ? 'decreasing' : 'stable';
-  },
 }));
 
 describe('useDueWordsChart', () => {
@@ -99,7 +92,6 @@ describe('useDueWordsChart', () => {
       expect(result.current.chartData.insights).toEqual({
         currentDue: 0,
         peakDue: 0,
-        trend: 'stable',
       });
     });
 
@@ -216,42 +208,6 @@ describe('useDueWordsChart', () => {
 
       // Peak due should be >= current due
       expect(insights.peakDue).toBeGreaterThanOrEqual(insights.currentDue);
-
-      // Trend should be one of the valid values
-      expect(['increasing', 'decreasing', 'stable']).toContain(insights.trend);
-    });
-  });
-
-  describe('Trend Calculation', () => {
-    test('should calculate increasing trend', () => {
-      const today = new Date();
-      const words: StudyWord[] = [];
-
-      // Create words with increasing due dates
-      for (let i = 0; i < 10; i++) {
-        const dueDate = new Date(today);
-        dueDate.setDate(dueDate.getDate() + i);
-        words.push(createTestWord({ id: i + 1, fsrs_due: dueDate.toISOString() }));
-      }
-
-      const { result } = renderHook(() => useDueWordsChart(words));
-
-      // Should show increasing trend (more words due later)
-      expect(result.current.chartData.insights.trend).toBe('increasing');
-    });
-
-    test('should calculate stable trend for flat data', () => {
-      const today = new Date();
-      const words: StudyWord[] = [
-        createTestWord({ id: 1, fsrs_due: today.toISOString() }),
-        createTestWord({ id: 2, fsrs_due: today.toISOString() }),
-        createTestWord({ id: 3, fsrs_due: today.toISOString() }),
-      ];
-
-      const { result } = renderHook(() => useDueWordsChart(words));
-
-      // All words due today, no change over time
-      expect(result.current.chartData.insights.trend).toBe('stable');
     });
   });
 

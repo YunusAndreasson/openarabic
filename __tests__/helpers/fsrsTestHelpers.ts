@@ -10,6 +10,18 @@ import type { StudyWord } from '../../types/vocabulary.types';
 // Base word factory with sensible defaults
 export const createTestWord = (overrides: Partial<StudyWord> = {}): StudyWord => {
   const now = Date.now();
+
+  // A word given reps but no explicit state defaults to Review, not New.
+  //
+  // This is not a convenience — it is the invariant. ts-fsrs moves a card off
+  // `New` on its very first grade, so `{ state: 0, reps: 3 }` describes a word
+  // that cannot exist, and `hasBeenPractised` (state !== New && reps > 0) is
+  // the gate every FSRS-derived number in the app passes through. Fixtures in
+  // that impossible shape used to slip past a looser filter and quietly
+  // "prove" behaviour production never sees. Pass `fsrs_state` explicitly when
+  // an unpractised word is genuinely what the test means.
+  const defaultState = (overrides.fsrs_reps ?? 0) > 0 ? 2 : 0;
+
   return {
     root_id: 1 as RootId,
     user_id: 'test-user' as UserId,
@@ -21,10 +33,11 @@ export const createTestWord = (overrides: Partial<StudyWord> = {}): StudyWord =>
     fsrs_learning_steps: 0,
     fsrs_reps: 0,
     fsrs_lapses: 0,
-    fsrs_state: 0,
+    fsrs_state: defaultState,
     fsrs_last_review: new Date().toISOString(),
     difficulty: 0.65,
     root: undefined,
+    // Overrides last, so an explicit state — including `null` — always wins.
     ...overrides,
   } as StudyWord;
 };

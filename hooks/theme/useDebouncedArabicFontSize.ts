@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
+import { clampArabicFontSize } from '@/constants/layout';
 import { useAppSelector } from '@/store/hooks';
 
 /**
@@ -7,7 +8,11 @@ import { useAppSelector } from '@/store/hooks';
  * during slider interactions. Only updates the global state after a delay.
  */
 export const useDebouncedArabicFontSize = (debounceMs: number = 150) => {
-  const selectedArabicFontSize = useAppSelector(state => state.settings.arabicFontSize);
+  // Clamped at the point of use: `settings` is rehydrated straight from storage
+  // with no migration, so a size from an older build reaches the renderer as-is.
+  const selectedArabicFontSize = useAppSelector(state =>
+    clampArabicFontSize(state.settings.arabicFontSize),
+  );
   const [debouncedFontSize, setDebouncedFontSize] = useState(selectedArabicFontSize);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 

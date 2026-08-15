@@ -147,14 +147,38 @@ const measureInkOverhang = (paragraph: SkParagraph, layoutWidth: number): InkOve
 };
 
 /**
- * Extra vertical space for Arabic diacritics (shadda, tanwin) above the line.
+ * Vertical paint reserve around the line box, in em (fraction of font size).
  *
- * Deliberately a constant, not a per-word measurement like the horizontal ink
- * bleed: `forceStrutHeight` makes `getHeight()` identical for every word at a
- * given font size, so a fixed paint offset keeps every baseline in a sentence
- * on the same line. Deriving this per word would shift baselines word by word.
+ * `forceStrutHeight` pins the line box to `STRUT_HEIGHT_MULTIPLIER` em whatever
+ * face is selected, but a face's glyphs do not agree to live inside it. Measured
+ * against real corpus articles (`paragraph.getPath(0).computeTightBounds()` vs
+ * `getHeight()`), the ink runs past the *bottom* of that box in four of the five
+ * bundled faces — up to 0.30em for Scheherazade — while none of them reach its
+ * top. Reserving space above and below lets the glyphs paint in full.
+ *
+ * Per family and in em, for two reasons. In em because the old reserve was a
+ * flat 8px above and 6px below: ample at the 13px floor and not nearly enough at
+ * the 44px ceiling, so turning the reading size up quietly sliced the tails off
+ * ن ج ي. Per family because a single reserve big enough for Scheherazade would
+ * spend ~13px of dead leading a line on Noto Sans, which is the default face and
+ * needs almost none.
+ *
+ * Deliberately NOT a per-word measurement, unlike the horizontal ink bleed: the
+ * words of a sentence are laid out in a centred row, so a per-word height would
+ * shift each word's baseline by half its own overhang. These are constant for a
+ * given (family, size), which keeps every baseline in a line identical.
+ *
+ * Values are the measured maxima plus roughly 0.09em of headroom for glyph
+ * combinations the corpus sample did not contain.
  */
-export const DIACRITICS_PADDING = 8;
+const VERTICAL_INK_EM: Record<string, { top: number; bottom: number }> = {
+  'Noto Sans Arabic': { top: 0.2, bottom: 0.12 },
+  'Digital Khatt New Madina': { top: 0.2, bottom: 0.3 },
+  Amiri: { top: 0.2, bottom: 0.36 },
+  'Scheherazade New': { top: 0.2, bottom: 0.4 },
+  'Noto Nastaliq Urdu': { top: 0.2, bottom: 0.32 },
+};
+const DEFAULT_VERTICAL_INK = { top: 0.2, bottom: 0.4 };
 
 /**
  * Fallback horizontal ink bleed per font family, in em (fraction of font size).
@@ -178,7 +202,7 @@ const DEFAULT_INK_BLEED_EM = 0.15;
 export interface ParagraphCanvasMetrics {
   /** Canvas width: the layout box plus the right-hand paint-only reserve. */
   width: number;
-  /** Canvas height: paragraph height plus diacritic headroom and `bottomGap`. */
+  /** Canvas height: paragraph height plus the vertical reserves and `bottomGap`. */
   height: number;
   /** Width to lay the paragraph out at inside the canvas. */
   layoutWidth: number;
@@ -186,6 +210,10 @@ export interface ParagraphCanvasMetrics {
   inkLeft: number;
   /** Paint-only reserve right of the glyph advance. */
   inkRight: number;
+  /** y to paint the paragraph at: the diacritic headroom above the line box. */
+  paintY: number;
+  /** Paint-only reserve below the line box, where the descenders run. */
+  inkBottom: number;
 }
 
 /**
@@ -204,8 +232,19 @@ export const measureParagraphCanvas = (
     bottomGap = 0,
   }: { fontSize: number; fontFamily: string; bottomGap?: number },
 ): ParagraphCanvasMetrics => {
+  const vertical = VERTICAL_INK_EM[fontFamily] ?? DEFAULT_VERTICAL_INK;
+  const paintY = Math.ceil(fontSize * vertical.top);
+  const inkBottom = Math.ceil(fontSize * vertical.bottom);
+
+  // Nothing shaped yet (the font manager loads once per session). Reserve the
+  // line the word is about to occupy rather than a flat 60x40, which held the
+  // right height for roughly an 18px reading size and nothing else: at the 44px
+  // ceiling every word was a third of its eventual height for a frame, so the
+  // sentence wrapped differently and then jumped.
   if (!paragraph) {
-    return { width: 60, height: 40, layoutWidth: 60, inkLeft: 0, inkRight: 0 };
+    const height = Math.ceil(fontSize * STRUT_HEIGHT_MULTIPLIER) + paintY + inkBottom + bottomGap;
+    const width = Math.ceil(fontSize * 3);
+    return { width, height, layoutWidth: width, inkLeft: 0, inkRight: 0, paintY, inkBottom };
   }
 
   // Real painted extent where the native module can report it, per-family
@@ -222,10 +261,12 @@ export const measureParagraphCanvas = (
 
   return {
     width: layoutWidth + inkRight,
-    height: Math.ceil(paragraph.getHeight()) + DIACRITICS_PADDING + bottomGap,
+    height: Math.ceil(paragraph.getHeight()) + paintY + inkBottom + bottomGap,
     layoutWidth,
     inkLeft,
     inkRight,
+    paintY,
+    inkBottom,
   };
 };
 

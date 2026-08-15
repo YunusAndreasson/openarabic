@@ -13,13 +13,14 @@ import { describe, expect, test } from '@jest/globals';
 
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import type { StudyWord } from '@/types/vocabulary.types';
-import {
-  calculateRetrievability,
-  calculateRetrievabilityForecast,
-  calculateRetrievabilityTrend,
-} from '@/utils/fsrsUtils';
+import { calculateRetrievability, calculateRetrievabilityForecast } from '@/utils/fsrsUtils';
 
-// Helper to create study words for this test
+// Helper to create study words for this test.
+//
+// Fixtures that set `fsrs_reps` must also set `fsrs_state`: the forecast gates
+// on `hasBeenPractised` (state !== New && reps > 0), which is the app-wide rule,
+// and ts-fsrs never leaves a graded card in state New. A fixture with reps 3 and
+// state 0 is not a word that can exist.
 const createStudyWord = (overrides: Partial<StudyWord> = {}): StudyWord =>
   createTestWord(overrides);
 
@@ -67,11 +68,13 @@ describe('fsrsUtils', () => {
       const now = new Date().toISOString();
       const words = [
         createStudyWord({
+          fsrs_state: 2,
           fsrs_stability: 10,
           fsrs_last_review: now,
           fsrs_reps: 3,
         }),
         createStudyWord({
+          fsrs_state: 2,
           fsrs_stability: 5,
           fsrs_last_review: now,
           fsrs_reps: 2,
@@ -92,6 +95,7 @@ describe('fsrsUtils', () => {
           fsrs_reps: 0,
         }),
         createStudyWord({
+          fsrs_state: 2,
           fsrs_last_review: new Date().toISOString(),
           fsrs_reps: 3,
         }),
@@ -108,11 +112,13 @@ describe('fsrsUtils', () => {
       const reviewDate = '2024-01-01T00:00:00Z';
       const words = [
         createStudyWord({
+          fsrs_state: 2,
           fsrs_stability: 1, // Very low stability = critical
           fsrs_last_review: reviewDate,
           fsrs_reps: 3,
         }),
         createStudyWord({
+          fsrs_state: 2,
           fsrs_stability: 10, // High stability = not critical
           fsrs_last_review: reviewDate,
           fsrs_reps: 3,
@@ -124,43 +130,6 @@ describe('fsrsUtils', () => {
       // Word with stability 1 will have low retrievability (< 0.7 threshold)
       expect(result[0].criticalWords).toBeGreaterThan(0);
       expect(result[0].wordCount).toBe(2);
-    });
-  });
-
-  describe('calculateRetrievabilityTrend', () => {
-    test('should return stable for insufficient data', () => {
-      const data = [
-        {
-          date: new Date(),
-          averageRetrievability: 80,
-          wordCount: 1,
-          criticalWords: 0,
-          urgentWords: 0,
-        },
-      ];
-
-      const result = calculateRetrievabilityTrend(data);
-      expect(result).toBe('stable');
-    });
-
-    test('should calculate trend correctly', () => {
-      const today = new Date();
-      const tomorrow = new Date(today);
-      tomorrow.setDate(today.getDate() + 1);
-
-      const data = [
-        { date: today, averageRetrievability: 80, wordCount: 1, criticalWords: 0, urgentWords: 0 },
-        {
-          date: tomorrow,
-          averageRetrievability: 70,
-          wordCount: 1,
-          criticalWords: 0,
-          urgentWords: 0,
-        },
-      ];
-
-      const result = calculateRetrievabilityTrend(data);
-      expect(result).toBe('declining');
     });
   });
 });

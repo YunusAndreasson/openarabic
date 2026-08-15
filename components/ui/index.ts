@@ -23,7 +23,7 @@ export { GlassIconButton } from './GlassIconButton';
 export { Ionicons } from './Icon';
 export type { IoniconName } from './Icon';
 export { IconButton } from './IconButton';
-export { PinnedActionButton } from './PinnedActionButton';
+export { PinnedActionButton, usePinnedActionClearance } from './PinnedActionButton';
 export { PulsatingLoader } from './PulsatingLoader';
 export { SegmentedControl } from './SegmentedControl';
 export type { SegmentedControlOption } from './SegmentedControl';

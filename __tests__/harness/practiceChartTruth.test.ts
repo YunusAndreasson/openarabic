@@ -2,13 +2,13 @@
  * Practice SRS chart truth harness
  * ================================
  *
- * The Practice tab renders five numbers-bearing surfaces off one array of
- * `StudyWord`s: the vocabulary sparkline, the mastery chart, the due-words
- * prognosis, the retrievability forecast, and the stat cards above them.
+ * The Practice tab renders several numbers-bearing surfaces off one array of
+ * `StudyWord`s: the memory horizon constellation, the vocabulary sparkline,
+ * the due-words prognosis, the retrievability forecast, and the stat cards.
  *
  * Existing unit tests for those hooks mock out the layer that does the
- * counting (`useMasteryChart.test.ts` mocks `useCountBasedChart` wholesale),
- * so nothing currently checks that the numbers on screen describe the data.
+ * counting, so nothing else checks that the numbers on screen describe the
+ * data.
  *
  * This harness does. It:
  *   1. builds a vocabulary whose ground truth is known by construction,
@@ -44,6 +44,14 @@ jest.mock('@shopify/react-native-skia', () => {
         segments.push(`C${c1x} ${c1y} ${c2x} ${c2y} ${x} ${y}`);
         return builder;
       },
+      quadTo: (cx: number, cy: number, x: number, y: number) => {
+        segments.push(`Q${cx} ${cy} ${x} ${y}`);
+        return builder;
+      },
+      addRect: (r: { x: number; y: number; width: number; height: number }) => {
+        segments.push(`R${r.x} ${r.y} ${r.width} ${r.height}`);
+        return builder;
+      },
       close: () => {
         segments.push('Z');
         return builder;
@@ -58,7 +66,8 @@ jest.mock('@shopify/react-native-skia', () => {
   };
 });
 
-import { useCountBasedChart, parseWordWithStability } from '@/hooks/vocabulary/useCountBasedChart';
+import { useMemoryHorizonDistribution } from '@/hooks/vocabulary/useMemoryHorizonDistribution';
+import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 import { useVocabularyGrowthChart } from '@/hooks/vocabulary/useVocabularyGrowthChart';
 import type { StudyWord } from '@/types/vocabulary.types';
 import {
@@ -66,6 +75,7 @@ import {
   calculateRetrievability,
   calculateRetrievabilityForecast,
 } from '@/utils/fsrsUtils';
+import { getMemoryHorizonDays } from '@/utils/memoryHorizon';
 import {
   calculateDueWords,
   calculateMasteredWords,
@@ -73,7 +83,6 @@ import {
 } from '@/utils/wordClassification';
 import { normalizeTimestamp, parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
 import { DAYS_30, DAYS_7 } from '@/constants/chartConstants';
-import { STRINGS } from '@/constants/strings';
 
 // ---------------------------------------------------------------------------
 // Pinned clock. 2026-08-09T12:00:00Z — midday UTC, so a UTC/local day flip in
@@ -201,29 +210,6 @@ const TRUTH = {
   addedInLast30Days: 8,
 } as const;
 
-// The mastery chart's configuration, taken from useMasteryChart. Rendering the
-// factory directly keeps the harness on the real counting code while avoiding
-// the theme context the wrapper hooks pull in.
-const MASTERY_CONFIG = {
-  parseWord: parseWordWithStability,
-  shouldCountWord: (word: ReturnType<typeof parseWordWithStability>, date: Date) =>
-    word.state === 2 &&
-    (word.stability ?? 0) >= 5 &&
-    word.lastReview !== null &&
-    word.lastReview <= date,
-  buildDailyData: (date: Date, count: number, totalCount: number) => ({
-    date,
-    masteredCount: count,
-    totalCount,
-    masteryRate: totalCount > 0 ? (count / totalCount) * 100 : 0,
-  }),
-  getCount: (d: { masteredCount: number }) => d.masteredCount,
-  zeroStateMessage: STRINGS.START_REVIEWING_TO_BUILD_STRENGTH,
-  pathFieldName: 'masteryPath',
-  insightsTotalFieldName: 'totalMastered',
-  windowDays: DAYS_30,
-};
-
 // ===========================================================================
 describe('sanity: the fixture says what it claims', () => {
   test('ground truth matches the production classifiers', () => {
@@ -257,49 +243,6 @@ describe('vocabulary sparkline (hero card)', () => {
     const { result } = renderHook(() => useVocabularyGrowthChart(WORDS, 300, 60));
     expect(result.current.linePath.length).toBeGreaterThan(0);
     expect(result.current.endPoint).not.toBeNull();
-  });
-});
-
-// ===========================================================================
-describe('mastery chart', () => {
-  test('the last point equals the "Mastered" stat card on the same screen', () => {
-    const { result } = renderHook(() => useCountBasedChart(WORDS, MASTERY_CONFIG));
-    // Cross-surface invariant: the chart headline and the stat card both
-    // claim to be "words mastered". They must be the same number.
-    expect(result.current.insights.totalCount).toBe(calculateMasteredWords(WORDS));
-  });
-
-  test('the series never exceeds the words that existed on each day', () => {
-    const { result } = renderHook(() => useCountBasedChart(WORDS, MASTERY_CONFIG));
-    const counts = result.current.tooltipPoints.map(p => p.data.masteredCount);
-    const totals = result.current.tooltipPoints.map(p => p.data.totalCount);
-    counts.forEach((count, i) => {
-      expect(count).toBeLessThanOrEqual(totals[i] as number);
-    });
-  });
-
-  test('the cumulative series is monotonically non-decreasing', () => {
-    // Mastery is cumulative by construction: a word that was state 2 with
-    // stability >= 5 on day D is still counted on day D+1, because the chart
-    // only ever sees today's FSRS state. A dip would mean the counting rule
-    // is reading something time-varying it should not.
-    const { result } = renderHook(() => useCountBasedChart(WORDS, MASTERY_CONFIG));
-    const counts = result.current.tooltipPoints.map(p => p.data.masteredCount);
-    for (let i = 1; i < counts.length; i++) {
-      expect(counts[i]).toBeGreaterThanOrEqual(counts[i - 1] as number);
-    }
-  });
-
-  test('the x-axis labels line up one-per-plotted-marker', () => {
-    const { result } = renderHook(() => useCountBasedChart(WORDS, MASTERY_CONFIG));
-    expect(result.current.xLabels).toHaveLength(result.current.xLabelPositions.length);
-    expect(result.current.points).toHaveLength(result.current.xLabels.length);
-  });
-
-  test('the y-scale covers the largest plotted value', () => {
-    const { result } = renderHook(() => useCountBasedChart(WORDS, MASTERY_CONFIG));
-    const peak = Math.max(...result.current.tooltipPoints.map(p => p.data.masteredCount));
-    expect(result.current.maxCount).toBeGreaterThanOrEqual(peak);
   });
 });
 
@@ -505,10 +448,8 @@ describe('timestamp format robustness', () => {
     expect(Date.parse(normalizeTimestamp(wire)!)).toBe(canonical);
   });
 
-  test('mastery chart is identical for both encodings', () => {
-    const { result: isoResult } = renderHook(() => useCountBasedChart(isoWords, MASTERY_CONFIG));
-    const { result: pgResult } = renderHook(() => useCountBasedChart(pgWords, MASTERY_CONFIG));
-    expect(pgResult.current.insights.totalCount).toBe(isoResult.current.insights.totalCount);
+  test('the mastered count is identical for both encodings', () => {
+    expect(calculateMasteredWords(pgWords)).toBe(calculateMasteredWords(isoWords));
   });
 
   test('a timestamp with no zone is read as UTC, not as device-local time', () => {
@@ -584,6 +525,109 @@ describe('what the memory-strength surfaces claim to measure', () => {
     const actuallyReviewed = MOSTLY_NEW.filter(w => (w.fsrs_reps ?? 0) > 0).length;
     expect(reviewedToday).toBe(actuallyReviewed);
   });
+
+  test('the hero count is the retention average, un-averaged', () => {
+    // The hero's "412 words you'd recall right now" is Σ R, and the forecast's
+    // percentage is Σ R / N — the same fact in two units.
+    //
+    // The memory sheet used to open with that percentage on a gauge, which is
+    // why this invariant was once called a cross-surface check. It is now the
+    // reason the gauge is gone: a detail view that leads with the number you
+    // tapped, divided by its own denominator, has told you nothing. The
+    // invariant still holds and still matters — the hero is derived from this
+    // average, so if they could disagree the hero would be the one lying.
+    const { result } = renderHook(() => useRetrievabilityChart(WORDS));
+    const { recallableWords, currentRetrievability, measuredWords } =
+      result.current.chartData.insights;
+
+    expect(recallableWords).toBe(
+      Math.min(measuredWords, Math.round((currentRetrievability / 100) * measuredWords)),
+    );
+    // And it can never claim more recallable words than there are words.
+    expect(recallableWords).toBeLessThanOrEqual(measuredWords);
+  });
+
+  test('nothing practised yet reports no recallable words, never zero recall', () => {
+    const allNew = NEVER_REVIEWED.map(makeWord);
+    const { result } = renderHook(() => useRetrievabilityChart(allNew));
+    const { recallableWords, measuredWords } = result.current.chartData.insights;
+
+    // measuredWords 0 is what the hero gates its "—" on. recallableWords is
+    // also 0 here, but the UI must never render it: 0 measured is an absence of
+    // measurement, not a measurement of nothing.
+    expect(measuredWords).toBe(0);
+    expect(recallableWords).toBe(0);
+    expect(result.current.chartData.hasData).toBe(false);
+  });
+
+  test('the week-ahead slipping count is a delta, and never negative', () => {
+    // Retrievability decays monotonically with no reviews, so the number of
+    // at-risk words can only grow across the window.
+    const { result } = renderHook(() => useRetrievabilityChart(WORDS));
+    const { criticalWords, criticalWordsInWeek } = result.current.chartData.insights;
+    const forecast = result.current.retrievabilityData;
+
+    expect(criticalWordsInWeek).toBeGreaterThanOrEqual(0);
+    expect(criticalWords + criticalWordsInWeek).toBe(forecast[forecast.length - 1]?.criticalWords);
+  });
+});
+
+// ===========================================================================
+describe('memory horizon constellation', () => {
+  test('the dots account for exactly the practised words, and no others', () => {
+    const { result } = renderHook(() => useMemoryHorizonDistribution(WORDS));
+    const { result: retention } = renderHook(() => useRetrievabilityChart(WORDS));
+
+    const plotted = result.current.bins.reduce((sum, count) => sum + count, 0);
+
+    // Cross-surface: the constellation and the memory gauge must be speaking
+    // about the same population. Both gate on hasBeenPractised, so a word that
+    // has a horizon must also be one the forgetting curve can speak for.
+    expect(plotted).toBe(result.current.practisedCount);
+    expect(plotted).toBe(retention.current.chartData.insights.measuredWords);
+    expect(result.current.practisedCount + result.current.notStartedCount).toBe(WORDS.length);
+  });
+
+  test('the bands partition the same population as the bins', () => {
+    const { result } = renderHook(() => useMemoryHorizonDistribution(WORDS));
+    const banded = result.current.bands.reduce((sum, band) => sum + band.count, 0);
+    expect(banded).toBe(result.current.practisedCount);
+  });
+
+  test('the median sits inside the collection it describes', () => {
+    const { result } = renderHook(() => useMemoryHorizonDistribution(WORDS));
+    const horizons = WORDS.map(getMemoryHorizonDays).filter((d): d is number => d != null);
+
+    expect(result.current.medianDays).not.toBeNull();
+    expect(result.current.medianDays as number).toBeGreaterThanOrEqual(Math.min(...horizons));
+    expect(result.current.medianDays as number).toBeLessThanOrEqual(Math.max(...horizons));
+    // Half at or below, by definition — the property the copy claims out loud.
+    const atOrBelow = horizons.filter(d => d <= (result.current.medianDays as number)).length;
+    expect(atOrBelow).toBeGreaterThanOrEqual(Math.floor(horizons.length / 2));
+  });
+
+  test('a placeholder word contributes to the total and to nothing else', () => {
+    // Exactly what createInitialFSRSEntry / createResetFSRSUpdate write: NOT
+    // nulls. Reading these as a real memory is the trap that has bitten twice.
+    const placeholder = makeWord({
+      id: 900,
+      createdDaysAgo: 0,
+      state: 0,
+      stability: 0.4,
+      reviewedHoursAgo: 0,
+      dueInHours: 0,
+      reps: 0,
+    });
+
+    const { result } = renderHook(() => useMemoryHorizonDistribution([placeholder]));
+
+    expect(result.current.totalWords).toBe(1);
+    expect(result.current.practisedCount).toBe(0);
+    expect(result.current.notStartedCount).toBe(1);
+    expect(result.current.hasDistribution).toBe(false);
+    expect(result.current.medianDays).toBeNull();
+    expect(result.current.bins.every(count => count === 0)).toBe(true);
+  });
 });
 
 // ===========================================================================
@@ -593,9 +637,7 @@ describe('empty and degenerate vocabularies', () => {
     expect(growth.current.totalWords).toBe(0);
     expect(growth.current.monthChange).toBe(0);
 
-    const { result: mastery } = renderHook(() => useCountBasedChart([], MASTERY_CONFIG));
-    expect(mastery.current.insights.totalCount).toBe(0);
-    expect(mastery.current.hasData).toBe(false);
+    expect(calculateMasteredWords([])).toBe(0);
 
     const due = calculateDueWordsForecast([], DAYS_7);
     due.forEach(day => expect(day.dueWords).toBe(0));

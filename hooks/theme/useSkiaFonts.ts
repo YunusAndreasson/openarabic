@@ -8,7 +8,8 @@ import madinaFont from '@/assets/fonts/Madina.otf';
 import nastaliqFont from '@/assets/fonts/Nastaliq.ttf';
 import notoSansFont from '@/assets/fonts/NotoSans.ttf';
 import scheherazadeFont from '@/assets/fonts/Scheherazade.ttf';
-import { LAYOUT } from '@/constants/layout';
+import { resolveArabicFont } from '@/constants/fonts';
+import { clampArabicFontSize } from '@/constants/layout';
 import { useAppSelector } from '@/store/hooks';
 import type { ArabicFontName } from '@/store/settingsSlice';
 
@@ -103,13 +104,15 @@ export interface UseSkiaFontsResult {
  * text style (e.g. `fontStyle: { weight }`), not on an SkFont.
  */
 export const useSkiaFonts = (): UseSkiaFontsResult => {
-  const selectedFontName = useAppSelector(state => state.settings.arabicFont);
-  const storedFontSize = useAppSelector(state => state.settings.arabicFontSize);
+  const selectedFontName = useAppSelector(state => resolveArabicFont(state.settings.arabicFont));
+  // Clamped rather than `|| LARGE`: the fallback only caught 0/undefined, so a
+  // persisted size from outside the supported range — an older build's, or a
+  // corrupted one — was painted at face value.
+  const fontSize = useAppSelector(state => clampArabicFontSize(state.settings.arabicFontSize));
 
   const fontManager = useSyncExternalStore(subscribeToFontManager, getFontManagerSnapshot);
 
   const fontFamily = SKIA_FONT_FAMILY_MAP[selectedFontName] || 'Noto Sans Arabic';
-  const fontSize = storedFontSize || LAYOUT.TYPOGRAPHY.SCALE.LARGE;
 
   return {
     isReady: fontManager !== null,

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LAYOUT } from '@/constants/layout';
 
@@ -45,12 +46,31 @@ interface SheetScreenProps {
  * theme `background` there, so a sheet that painted `elevation1` on this view
  * instead left the band a visibly different colour — the "gap at the bottom".
  *
- * Bottom padding is a fixed `MEDIUM` — NOT `insets.bottom`. A native form sheet
- * clears the home indicator on its own, and with `fitToContents` the inset above
- * already supplies that room; adding it here only makes the sheet taller.
+ * Bottom padding is a fixed `MEDIUM` on iOS — NOT `insets.bottom`. A native form
+ * sheet clears the home indicator on its own, and with `fitToContents` the inset
+ * described above already supplies that room; adding it there only makes the
+ * sheet taller.
+ *
+ * Android is the other half of that same fact: it has neither the extra inset
+ * nor any clearance of its own, so the sheet ends exactly at the screen edge and
+ * the system gesture pill is drawn straight over the last line of content.
+ * Measured on device — the memory sheet's closing sentence and the due-words
+ * caption both had the pill through them. Whichever platform supplies the room,
+ * this container makes up the difference.
  */
 export function SheetScreen({ children }: SheetScreenProps) {
-  return <View style={styles.container}>{children}</View>;
+  const insets = useSafeAreaInsets();
+
+  return (
+    <View
+      style={[
+        styles.container,
+        Platform.OS === 'android' && { paddingBottom: insets.bottom + LAYOUT.SPACING.MEDIUM },
+      ]}
+    >
+      {children}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({

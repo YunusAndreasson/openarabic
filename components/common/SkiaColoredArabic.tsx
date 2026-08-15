@@ -7,7 +7,6 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useSkiaFonts } from '@/hooks/theme/useSkiaFonts';
 import type { ColoredSegment } from '@/types/vocabulary.types';
 import {
-  DIACRITICS_PADDING,
   PARAGRAPH_LAYOUT_WIDTH,
   buildColoredParagraph,
   buildSimpleParagraph,
@@ -110,12 +109,7 @@ const SkiaColoredArabicInternal = function SkiaColoredArabic({
 
   return (
     <Canvas style={canvasStyle}>
-      <SkiaParagraph
-        paragraph={paragraph}
-        x={0}
-        y={DIACRITICS_PADDING}
-        width={canvas.layoutWidth}
-      />
+      <SkiaParagraph paragraph={paragraph} x={0} y={canvas.paintY} width={canvas.layoutWidth} />
     </Canvas>
   );
 };

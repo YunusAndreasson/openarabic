@@ -8,11 +8,7 @@ import { buildSmoothChartPath } from '@/utils/chartPathBuilder';
 import { useMemo } from 'react';
 
 import type { StudyWord } from '@/types/vocabulary.types';
-import {
-  calculateDueWordsForecast,
-  calculateDueWordsTrend,
-  type DueWordsForecast,
-} from '@/utils/fsrsUtils';
+import { calculateDueWordsForecast, type DueWordsForecast } from '@/utils/fsrsUtils';
 
 interface DueWordsChartData {
   dueWordsPath: string;
@@ -21,7 +17,6 @@ interface DueWordsChartData {
   insights: {
     currentDue: number;
     peakDue: number;
-    trend: 'increasing' | 'decreasing' | 'stable';
   };
 }
 
@@ -44,7 +39,7 @@ export function useDueWordsChart(studyWords: StudyWord[]): UseDueWordsChartResul
       return {
         dueWordsPath: '',
         hasData: false,
-        insights: { currentDue: 0, peakDue: 0, trend: 'stable' },
+        insights: { currentDue: 0, peakDue: 0 },
         dataPoints: [],
       };
     }
@@ -67,9 +62,6 @@ export function useDueWordsChart(studyWords: StudyWord[]): UseDueWordsChartResul
       buildPoint: (x, y, data) => ({ x, y, dueWords: data.dueWords, date: data.date }),
     });
 
-    // Calculate trend using utility function
-    const trend = calculateDueWordsTrend(dueWordsData);
-
     // Get insights
     const todayData = dueWordsData[0]; // Today (leftmost)
     const currentDue = todayData?.dueWords || 0;
@@ -83,7 +75,6 @@ export function useDueWordsChart(studyWords: StudyWord[]): UseDueWordsChartResul
       insights: {
         currentDue,
         peakDue,
-        trend,
       },
     };
   }, [dueWordsData, studyWords?.length]);

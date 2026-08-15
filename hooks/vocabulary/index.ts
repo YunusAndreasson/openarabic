@@ -11,5 +11,5 @@ export * from './useWordsToRevisit';
 
 export * from './useChartAxisLabels';
 export * from './useDueWordsChart';
-export * from './useMasteryChart';
+export * from './useMemoryHorizonDistribution';
 export * from './useRetrievabilityChart';

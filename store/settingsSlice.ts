@@ -1,16 +1,14 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
 
-import { LAYOUT } from '@/constants/layout';
+import type { ArabicFontName } from '@/constants/fonts';
+import { ARABIC_FONT_SIZE, clampArabicFontSize } from '@/constants/layout';
 import { AudioLanguage, DisplayLanguage } from '@/types/enums';
 import type { ReminderTime } from '@/types/notifications.types';
 
-export type ArabicFontName =
-  | 'DigitalKhattNewMadinaRegular'
-  | 'Amiri-Regular'
-  | 'ScheherazadeNew-Regular'
-  | 'NotoNastaliqUrdu-Regular'
-  | 'NotoSansArabic-Regular';
+// Re-exported from the font constants, which own the list `useFonts` registers
+// and the resolver that narrows a persisted name back onto it.
+export type { ArabicFontName };
 
 export interface SettingsState {
   reminderTime: ReminderTime;
@@ -52,7 +50,7 @@ const initialState: SettingsState = {
     enabled: false,
   },
   arabicFont: 'NotoSansArabic-Regular', // Default font
-  arabicFontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE, // Default to 24px (slightly above average of 13-40px range)
+  arabicFontSize: ARABIC_FONT_SIZE.DEFAULT,
   audioLanguagePreference: AudioLanguage.ENGLISH_ARABIC, // Default to English + Arabic
   audioShuffleEnabled: false, // Default to sequential playback
   displayLanguagePreference: DisplayLanguage.ARABIC_ENGLISH, // Default to Arabic + English
@@ -79,7 +77,7 @@ const settingsSlice = createSlice({
       state.arabicFont = action.payload;
     },
     setArabicFontSize: (state, action: PayloadAction<number>) => {
-      state.arabicFontSize = action.payload;
+      state.arabicFontSize = clampArabicFontSize(action.payload);
     },
     setAudioLanguagePreference: (state, action: PayloadAction<AudioLanguage>) => {
       state.audioLanguagePreference = action.payload;

@@ -5,6 +5,7 @@
  * from the individual files. (Interactive controls live in `@/components/ui`.)
  */
 
+export { AnimatedCount } from './AnimatedCount';
 export { Badge } from './Badge';
 export { BaseCard } from './BaseCard';
 

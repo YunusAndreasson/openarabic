@@ -196,9 +196,15 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  // Deliberately NOT `alignItems: 'center'`. That centred the card's children by
+  // shrinking them to their content, and BaseCard nests two more auto-width
+  // views between the card and its children — so the Arabic sample was measured
+  // at whatever width it wanted, the row was sized from that, and the text was
+  // then re-laid out inside it. Every child here centres itself instead, which
+  // leaves the sample a full-width box: one width for both passes, so what it
+  // measures is what it paints.
   fontCard: {
     padding: LAYOUT.SPACING.MEDIUM,
-    alignItems: 'center',
   },
   fontHeader: {
     alignItems: 'center',
@@ -208,6 +214,7 @@ const styles = StyleSheet.create({
   fontTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: LAYOUT.SPACING.SMALL,
   },
   fontName: {

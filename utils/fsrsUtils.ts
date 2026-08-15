@@ -3,11 +3,11 @@ import { computeDecayFactor, fsrs, generatorParameters } from 'ts-fsrs';
 import {
   CRITICAL_RETRIEVABILITY_THRESHOLD,
   OPTIMIZED_FSRS_CONFIG,
-  TREND_CHANGE_THRESHOLD,
   URGENT_RETRIEVABILITY_THRESHOLD,
 } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
+import { hasBeenPractised } from '@/utils/wordClassification';
 
 // The app's one FSRS instance. The review engine (useFSRS) grades through it and
 // every read-only derivation here reads through it, so a config or library change
@@ -104,9 +104,16 @@ export function calculateRetrievabilityForecast(
   studyWords: StudyWord[],
   days: number = 7,
 ): RetrievabilityForecast[] {
-  // Filter to only include words that have been reviewed
+  // Filter to only include words that have actually been reviewed.
+  //
+  // `hasBeenPractised` is the app-wide gate (state !== New && reps > 0) and the
+  // only correct one: a never-practised word carries PLACEHOLDER FSRS values,
+  // not nulls, so a looser test silently admits words whose "last review" is
+  // just their save timestamp. Every number derived from this forecast — the
+  // memory gauge and the practice hero among them — inherits this filter, so
+  // it has to be the same rule the rest of the app uses.
   const validWords = studyWords.reduce<(StudyWord & { lastReviewDate: Date })[]>((acc, w) => {
-    if (w.fsrs_last_review && (w.fsrs_reps ?? 0) > 0) {
+    if (hasBeenPractised(w) && w.fsrs_last_review) {
       const lastReviewDate = parseSupabaseTimestamp(w.fsrs_last_review);
       if (lastReviewDate) acc.push({ ...w, lastReviewDate });
     }
@@ -140,31 +147,13 @@ export function calculateRetrievabilityForecast(
   });
 }
 
-/**
- * Calculate trend based on retrievability forecast
- */
-export function calculateRetrievabilityTrend(
-  retrievabilityData: RetrievabilityForecast[],
-): 'improving' | 'declining' | 'stable' {
-  if (retrievabilityData.length < 2) return 'stable';
-
-  const todayData = retrievabilityData[0]; // Today (leftmost)
-  const futureData = retrievabilityData.slice(1);
-
-  const currentRetrievability = todayData?.averageRetrievability || 0;
-  const futureAvg =
-    futureData.length > 0
-      ? futureData.reduce((sum, day) => sum + day.averageRetrievability, 0) / futureData.length
-      : 0;
-
-  // Calculate trend based on future decay prediction
-  const change = futureAvg - currentRetrievability;
-  return change > TREND_CHANGE_THRESHOLD
-    ? 'improving' // Unlikely for memory decay, but possible with reviews
-    : change < -TREND_CHANGE_THRESHOLD
-      ? 'declining' // Expected for memory decay
-      : 'stable';
-}
+// `calculateRetrievabilityTrend` used to live here and was deleted, not moved.
+// It compared today's average recall against the average over a no-review
+// future — but the forgetting curve is monotonically decreasing, so the change
+// was always <= 0 and 'improving' was unreachable. It reported the *rate* of
+// decay dressed up as a judgement about the learner, and nothing rendered it.
+// `calculateDueWordsTrend` went the same way, for the same reason: a
+// forward-only forecast cannot describe a direction the learner is moving in.
 
 /**
  * Pre-computed word due data for efficient forecast calculations
@@ -248,27 +237,6 @@ export function calculateDueWordsForecast(
       totalWords: validWords.length,
     };
   });
-}
-
-/**
- * Calculate trend for due words forecast
- */
-export function calculateDueWordsTrend(
-  dueWordsData: DueWordsForecast[],
-): 'increasing' | 'decreasing' | 'stable' {
-  if (dueWordsData.length < 2) return 'stable';
-
-  const todayData = dueWordsData[0]; // Today (leftmost)
-  const futureData = dueWordsData.slice(1);
-
-  const currentDue = todayData?.dueWords || 0;
-  const peakDue = futureData.reduce((max, d) => Math.max(max, d.dueWords), 0);
-
-  // Calculate trend based on whether due words will increase significantly
-  const change = peakDue - currentDue;
-  const threshold = Math.max(5, currentDue * 0.2); // At least 5 words or 20% increase
-
-  return change > threshold ? 'increasing' : change < -threshold ? 'decreasing' : 'stable';
 }
 
 /**

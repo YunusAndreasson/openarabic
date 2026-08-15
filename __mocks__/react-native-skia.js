@@ -73,6 +73,24 @@ const createMockPathBuilder = () => {
   return builder;
 };
 
+// Mock RSXform — the (scos, ssin, tx, ty) transform Atlas draws each sprite with.
+// `set` mutates in place because that is what useRSXformBuffer's modifier does.
+const createMockRSXform = (scos = 1, ssin = 0, tx = 0, ty = 0) => {
+  const xform = {
+    scos,
+    ssin,
+    tx,
+    ty,
+    set: (nextScos, nextSsin, nextTx, nextTy) => {
+      xform.scos = nextScos;
+      xform.ssin = nextSsin;
+      xform.tx = nextTx;
+      xform.ty = nextTy;
+    },
+  };
+  return xform;
+};
+
 // Mock Skia API
 export const Skia = {
   Color: jest.fn(color => color),
@@ -86,6 +104,8 @@ export const Skia = {
     Make: jest.fn(() => createMockPathBuilder()),
     MakeFromPath: jest.fn(() => createMockPathBuilder()),
   },
+  RSXform: jest.fn((scos, ssin, tx, ty) => createMockRSXform(scos, ssin, tx, ty)),
+  XYWHRect: jest.fn((x, y, width, height) => ({ x, y, width, height })),
 };
 
 // Mock Canvas component
@@ -117,8 +137,59 @@ export const Mask = jest.fn(({ children }) =>
   React.createElement('View', { testID: 'skia-mask' }, children),
 );
 
-// Mock vec helper function (for gradient coordinates)
+// Mock Atlas — draws N sprites of one texture in a single call. Rendered as a
+// leaf so a test can assert it mounted without needing a real GPU surface.
+export const Atlas = jest.fn(() => null);
+
+// Mock DashPathEffect (dashed rules on charts)
+export const DashPathEffect = jest.fn(() => null);
+
+// Mock vec / rect helper functions (gradient + sprite coordinates)
 export const vec = jest.fn((x, y) => ({ x, y }));
+export const rect = jest.fn((x, y, width, height) => ({ x, y, width, height }));
+
+// ---------------------------------------------------------------------------
+// Reanimated-backed hooks.
+//
+// These normally run on the UI thread against a real Skia surface. Under Jest
+// they return plain values of the right SHAPE — the modifier callbacks are
+// invoked once, eagerly, so a buffer's contents are still a function of the data
+// and a test can assert on them. `usePathInterpolation` returns the last path in
+// the output range, which is the settled state every assertion cares about.
+// ---------------------------------------------------------------------------
+
+export const useTexture = jest.fn(() => ({ value: null }));
+
+export const useRSXformBuffer = jest.fn((size, modifier) => {
+  const buffer = Array.from({ length: size }, () => createMockRSXform());
+  buffer.forEach((xform, index) => modifier(xform, index));
+  return buffer;
+});
+
+export const useRectBuffer = jest.fn((size, modifier) => {
+  const buffer = Array.from({ length: size }, () => ({
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+    setXYWH(x, y, width, height) {
+      this.x = x;
+      this.y = y;
+      this.width = width;
+      this.height = height;
+    },
+  }));
+  buffer.forEach((entry, index) => modifier(entry, index));
+  return buffer;
+});
+
+export const usePathInterpolation = jest.fn((_progress, _input, outputRange) => ({
+  value: outputRange?.[outputRange.length - 1] ?? null,
+}));
+
+export const useVectorInterpolation = jest.fn((_progress, _input, outputRange) => ({
+  value: outputRange?.[outputRange.length - 1] ?? { x: 0, y: 0 },
+}));
 
 // Mock matchFont API
 export const matchFont = jest.fn(config => ({
@@ -149,6 +220,18 @@ export const FontSlant = {
   Oblique: 2,
 };
 
+export const BlendMode = {
+  Clear: 0,
+  Src: 1,
+  Dst: 2,
+  SrcOver: 3,
+  DstOver: 4,
+  SrcIn: 5,
+  DstIn: 6,
+  SrcATop: 9,
+  Multiply: 24,
+};
+
 // Default export
 export default {
   Canvas,
@@ -162,10 +245,19 @@ export default {
   RoundedRect,
   Line,
   Mask,
+  Atlas,
+  DashPathEffect,
   vec,
+  rect,
   Skia,
   matchFont,
+  useTexture,
+  useRSXformBuffer,
+  useRectBuffer,
+  usePathInterpolation,
+  useVectorInterpolation,
   TextAlign,
   TextDirection,
   FontSlant,
+  BlendMode,
 };

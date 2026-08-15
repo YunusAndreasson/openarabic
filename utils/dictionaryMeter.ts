@@ -29,11 +29,7 @@
  * traffic light in one row that `SortMeter` warns about.
  */
 
-import {
-  FSRS_DIFFICULTY_MAX,
-  FSRS_DIFFICULTY_MIN,
-  OPTIMIZED_FSRS_CONFIG,
-} from '@/constants/fsrs';
+import { FSRS_DIFFICULTY_MAX, FSRS_DIFFICULTY_MIN, OPTIMIZED_FSRS_CONFIG } from '@/constants/fsrs';
 import type { DictionarySortField } from '@/hooks/vocabulary/useDictionaryList';
 import type { SolidColorName } from '@/constants/colors';
 import type { StudyWord } from '@/types/vocabulary.types';

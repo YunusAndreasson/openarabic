@@ -1,45 +1,32 @@
 import type { JSX } from 'react';
-import { StyleSheet } from 'react-native';
 
 import { SheetScreen } from '@/components/common';
-import { ThemedText } from '@/components/ThemedText';
 import { ChartSheetContent } from '@/components/practice/ChartSheetContent';
-import { MemoryRetentionGauge, RetrievabilityChart } from '@/components/practice/charts';
-import { LAYOUT } from '@/constants/layout';
+import { MemoryHorizonBreakdown } from '@/components/practice/MemoryHorizonBreakdown';
 import { STRINGS } from '@/constants/strings';
-import type { StudyWord } from '@/types/vocabulary.types';
 
 /**
- * "Now" reading (gauge) above the "week ahead" forecast line.
- * Module-level so ChartSheetContent gets a stable component reference.
+ * The detail view under the practice hero: the same words the card's
+ * constellation plots, listed by the band they fall in, each row opening those
+ * words in the dictionary.
+ *
+ * What used to be here — a retention gauge above a seven-day forecast line —
+ * restated the card's own headline as a percentage and then changed the subject
+ * from stability to retrievability. `MemoryHorizonBreakdown` carries the reasons
+ * in full. The forecast itself was not deleted: the week ahead is the
+ * `/due-words` sheet's question, and the slipping counts moved there with it.
+ *
+ * The route keeps its `memory-retention` name so existing links and the
+ * `ROUTE_PATHS` entry stay valid; the screen's title is what a learner reads.
  */
-function MemoryStrengthContent({ studyWords }: { studyWords: StudyWord[] }): JSX.Element {
-  return (
-    <>
-      <MemoryRetentionGauge studyWords={studyWords} embedded />
-      <ThemedText type="caption" colorName="subtleLabelText" style={styles.forecastHint}>
-        {STRINGS.MEMORY_FORECAST_HINT}
-      </ThemedText>
-      <RetrievabilityChart studyWords={studyWords} />
-    </>
-  );
-}
-
 export default function MemoryRetentionScreen(): JSX.Element {
   return (
     <SheetScreen>
       <ChartSheetContent
-        title={STRINGS.MEMORY_STRENGTH}
-        subtitle={STRINGS.MEMORY_STRENGTH_SUBTITLE}
-        ChartComponent={MemoryStrengthContent}
+        title={STRINGS.MEMORY_HORIZON_TITLE}
+        subtitle={STRINGS.MEMORY_HORIZON_SUBTITLE}
+        ChartComponent={MemoryHorizonBreakdown}
       />
     </SheetScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  forecastHint: {
-    marginBottom: LAYOUT.SPACING.SMALL,
-    textAlign: 'center',
-  },
-});

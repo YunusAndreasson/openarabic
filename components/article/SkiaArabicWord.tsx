@@ -13,7 +13,6 @@ import { useArabicWord } from '@/hooks/vocabulary';
 import type { ReanimatedCSSAnimationStyle } from '@/types/ui/base.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import {
-  DIACRITICS_PADDING,
   PARAGRAPH_LAYOUT_WIDTH,
   buildColoredParagraph,
   buildSimpleParagraph,
@@ -22,8 +21,11 @@ import {
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /**
- * Clear space below the glyphs for the marker rule — the bottom counterpart to
- * `DIACRITICS_PADDING`, and constant for the same reason.
+ * Clear space between the deepest descender and the marker rule.
+ *
+ * Sits below the descender reserve `measureParagraphCanvas` returns, so the rule
+ * clears the real ink rather than the line box — which is why it used to cross
+ * the tails on every face but Noto Sans.
  *
  * Arabic descends a long way below the baseline (ن, ج, ي), and a rule drawn
  * flush against that tail crowds the harf and hurts legibility. Reserving the
@@ -276,15 +278,20 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
             <SkiaParagraph
               paragraph={paragraph}
               x={0}
-              y={DIACRITICS_PADDING}
+              y={canvasDimensions.paintY}
               width={canvasDimensions.layoutWidth}
             />
           )}
         </Canvas>
       </AnimatedPressable>
       {/* Drawn last so the rule stays visible over the canvas edge; never
-          interactive, or it would eat taps along the bottom of the word. */}
+          interactive, or it would eat taps along the bottom of the word.
+          Withheld until there is a word to mark: the paragraph lands a frame
+          after mount, and a rule drawn against the placeholder box painted a
+          stray line across whatever the reflow then moved out from under it —
+          most visibly the English translation above. */}
       {markerHeight > 0 &&
+        paragraph &&
         (isHighlighted ? (
           <Animated.View style={[markerBarStyle, HIGHLIGHT_ANIMATION_STYLE]} pointerEvents="none" />
         ) : (
