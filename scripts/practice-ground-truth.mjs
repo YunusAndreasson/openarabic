@@ -108,7 +108,8 @@ async function allStudyWords(url, key, userId) {
 // --- the app's own predicates -------------------------------------------------
 const hasBeenPractised = w => (w.fsrs_state ?? 0) !== 0 && (w.fsrs_reps ?? 0) > 0;
 const isMastered = w => w.fsrs_state === 2 && (w.fsrs_stability ?? 0) >= 5;
-const isLeech = w => (w.fsrs_state ?? 0) !== 0 && (w.fsrs_reps ?? 0) > 0 && (w.fsrs_lapses ?? 0) >= 2;
+const isLeech = w =>
+  (w.fsrs_state ?? 0) !== 0 && (w.fsrs_reps ?? 0) > 0 && (w.fsrs_lapses ?? 0) >= 2;
 
 const horizonDays = w => {
   if (!hasBeenPractised(w)) return null;
