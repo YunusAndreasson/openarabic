@@ -12,6 +12,14 @@
  *   saved word, never a text colour: in this palette `tint` is the same hue as
  *   the grammar palette's "possessive" and as `success` ("Knew it"), so a
  *   tinted word would read as a role or as a verdict.
+ * - each word reaches the painter WHOLE, with its segments alongside it. The
+ *   words used to be coloured spans nested in a `<Text>`; on Android each span
+ *   is its own shaping run, so the Arabic came apart at every colour boundary.
+ *
+ * `SkiaColoredArabic` paints to a canvas, so its glyphs are not in the RN tree
+ * and cannot be queried by text. It is stubbed below with a node that exposes
+ * exactly what this component hands it — the word, its segments, and the
+ * default colour — which is the contract these tests are actually about.
  */
 
 import { describe, expect, jest, test } from '@jest/globals';
@@ -29,6 +37,35 @@ jest.mock('react-native-reanimated', () =>
 jest.mock('@/hooks/theme/useColors', () =>
   require('@/__tests__/helpers/componentMocks').useColorsMockFactory(),
 );
+
+jest.mock('@/components/common/SkiaColoredArabic', () => {
+  const react = require('react');
+  const { Text, View } = require('react-native');
+  return {
+    SkiaColoredArabic: ({
+      text,
+      segments,
+      color,
+    }: {
+      text: string;
+      segments?: { text: string; color: string }[];
+      color?: string;
+    }) =>
+      react.createElement(
+        View,
+        // The whole word, exactly as handed to the painter — a split word would
+        // show up here as a missing or truncated testID.
+        { testID: `painted-word-${text}` },
+        (segments?.length ? segments : [{ text, color: color ?? '' }]).map((segment, index) =>
+          react.createElement(
+            Text,
+            { key: index, style: { color: segment.color || color } },
+            segment.text,
+          ),
+        ),
+      ),
+  };
+});
 
 const ARABIC_TEXT = '#1a1a1a';
 const DEFINITE_ARTICLE = '#C7894A';
@@ -105,6 +142,19 @@ describe('ReviewContextSentence', () => {
 
       expect(getAllByText('قرأت').length).toBeGreaterThan(0);
       expect(getAllByText('كتاب').length).toBeGreaterThan(0);
+    });
+
+    // Regression: the words were coloured spans nested inside one <Text>, which
+    // Android shapes as a separate run per span — `أَزَالَتْ` painted with its
+    // `تْ` floating free of the `ل`. Each word must reach the painter whole,
+    // with its colours as data alongside it rather than as sibling text nodes.
+    test('hands each word to the painter whole, not split per colour', () => {
+      const { queryByTestId } = render(<ReviewContextSentence example={makeExample()} />);
+
+      expect(queryByTestId('painted-word-الكتاب')).toBeTruthy();
+      expect(queryByTestId('painted-word-قرأت')).toBeTruthy();
+      // The prefix must NOT arrive as a word of its own.
+      expect(queryByTestId('painted-word-ال')).toBeNull();
     });
 
     test('paints a grammar segment in its role colour', () => {

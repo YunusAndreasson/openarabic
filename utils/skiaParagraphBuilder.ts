@@ -115,10 +115,7 @@ export interface InkOverhang {
  * @param paragraph A paragraph already laid out at `layoutWidth`
  * @param layoutWidth The width passed to `paragraph.layout()`
  */
-export const measureInkOverhang = (
-  paragraph: SkParagraph,
-  layoutWidth: number,
-): InkOverhang | null => {
+const measureInkOverhang = (paragraph: SkParagraph, layoutWidth: number): InkOverhang | null => {
   if (typeof paragraph.getPath !== 'function') {
     return null;
   }
@@ -147,6 +144,89 @@ export const measureInkOverhang = (
   } catch {
     return null;
   }
+};
+
+/**
+ * Extra vertical space for Arabic diacritics (shadda, tanwin) above the line.
+ *
+ * Deliberately a constant, not a per-word measurement like the horizontal ink
+ * bleed: `forceStrutHeight` makes `getHeight()` identical for every word at a
+ * given font size, so a fixed paint offset keeps every baseline in a sentence
+ * on the same line. Deriving this per word would shift baselines word by word.
+ */
+export const DIACRITICS_PADDING = 8;
+
+/**
+ * Fallback horizontal ink bleed per font family, in em (fraction of font size).
+ * Calligraphic fonts paint well beyond their glyph advances; without this
+ * reserve the canvas clips edge glyphs and the paragraph can force-break
+ * the word onto a hidden second line.
+ *
+ * Only used when the native module can't measure the real bleed — see
+ * `measureInkOverhang`, which supersedes these estimates on Skia >= 2.8.0.
+ */
+const INK_BLEED_EM: Record<string, number> = {
+  'Noto Sans Arabic': 0.08,
+  'Digital Khatt New Madina': 0.3,
+  Amiri: 0.3,
+  'Scheherazade New': 0.3,
+  'Noto Nastaliq Urdu': 0.35,
+};
+const DEFAULT_INK_BLEED_EM = 0.15;
+
+/** Canvas geometry for painting a laid-out single-line Arabic paragraph. */
+export interface ParagraphCanvasMetrics {
+  /** Canvas width: the layout box plus the right-hand paint-only reserve. */
+  width: number;
+  /** Canvas height: paragraph height plus diacritic headroom and `bottomGap`. */
+  height: number;
+  /** Width to lay the paragraph out at inside the canvas. */
+  layoutWidth: number;
+  /** Paint-only reserve left of the glyph advance. */
+  inkLeft: number;
+  /** Paint-only reserve right of the glyph advance. */
+  inkRight: number;
+}
+
+/**
+ * Sizes a canvas so a laid-out Arabic paragraph paints in full.
+ *
+ * Arabic needs room on three sides that the text advance box does not describe:
+ * diacritics stack above it, calligraphic faces bleed past it horizontally, and
+ * callers that draw beneath the glyphs need a reserved strip. Everything here is
+ * paint-only — it never changes where the baseline sits.
+ */
+export const measureParagraphCanvas = (
+  paragraph: SkParagraph | null,
+  {
+    fontSize,
+    fontFamily,
+    bottomGap = 0,
+  }: { fontSize: number; fontFamily: string; bottomGap?: number },
+): ParagraphCanvasMetrics => {
+  if (!paragraph) {
+    return { width: 60, height: 40, layoutWidth: 60, inkLeft: 0, inkRight: 0 };
+  }
+
+  // Real painted extent where the native module can report it, per-family
+  // estimate everywhere else. Measuring also sizes fonts absent from the map.
+  const overhang = measureInkOverhang(paragraph, PARAGRAPH_LAYOUT_WIDTH);
+  const estimate = Math.ceil(fontSize * (INK_BLEED_EM[fontFamily] ?? DEFAULT_INK_BLEED_EM));
+  const inkLeft = overhang ? Math.ceil(overhang.left) : estimate;
+  const inkRight = overhang ? Math.ceil(overhang.right) : estimate;
+
+  // Right-aligned RTL text hugs the layout right edge, so the left reserve
+  // has to widen the layout box itself while the right reserve only widens
+  // the canvas around it.
+  const layoutWidth = Math.ceil(paragraph.getMaxIntrinsicWidth()) + inkLeft;
+
+  return {
+    width: layoutWidth + inkRight,
+    height: Math.ceil(paragraph.getHeight()) + DIACRITICS_PADDING + bottomGap,
+    layoutWidth,
+    inkLeft,
+    inkRight,
+  };
 };
 
 /** Builds a Skia paragraph from colored text segments with consistent diacritics spacing. */

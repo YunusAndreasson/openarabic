@@ -1,4 +1,4 @@
-import { SCREEN_WIDTH } from '@/constants/layout';
+import { MIN_TOUCH_TARGET, SCREEN_WIDTH } from '@/constants/layout';
 
 // ===== TOOLTIP CONSTANTS =====
 export const TOOLTIP_CONSTANTS = {
@@ -10,7 +10,12 @@ export const TOOLTIP_CONSTANTS = {
   // narrower minimum than the view actually renders, the off-screen clamp below
   // positions against a too-small width and short tooltips overflow the edge.
   MIN_WIDTH: 120,
-  HEIGHT: 32, // Reduced for tighter appearance
+  // Must equal the rendered tooltip's `height`, for the same reason as
+  // MIN_WIDTH: `tooltipTop` is `layout.y - HEIGHT`, so a height the view does
+  // not actually render drops the bubble onto the word it is describing. It
+  // was 32 while the view floored itself at the 44 touch target, which pushed
+  // the bubble and its arrow 12px down over the word.
+  HEIGHT: MIN_TOUCH_TARGET.MEDIUM,
   CHAR_WIDTH: 9, // Approximate average char width at fontSize 15 for tighter estimate (tests expect 9)
   BOOKMARK_WIDTH: 32,
   GAP_WIDTH: 8,

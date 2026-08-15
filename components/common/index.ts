@@ -33,3 +33,7 @@ export { ProgressBar } from './ProgressBar';
 export { ScreenScaffold } from './ScreenScaffold';
 export { SectionLabel } from './SectionLabel';
 export { SheetScreen } from './SheetScreen';
+
+// `SkiaColoredArabic` is deliberately NOT exported here: its only consumers are
+// a sibling in this directory and one in components/review, both of which must
+// import it by direct path to keep the ui|common|providers barrels acyclic.

@@ -13,22 +13,13 @@ import { useArabicWord } from '@/hooks/vocabulary';
 import type { ReanimatedCSSAnimationStyle } from '@/types/ui/base.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import {
+  DIACRITICS_PADDING,
   PARAGRAPH_LAYOUT_WIDTH,
   buildColoredParagraph,
   buildSimpleParagraph,
-  measureInkOverhang,
+  measureParagraphCanvas,
 } from '@/utils/skiaParagraphBuilder';
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
-/**
- * Extra vertical space for Arabic diacritics (shadda, tanwin) above the line.
- *
- * Deliberately a constant, not a per-word measurement like the horizontal ink
- * bleed: `forceStrutHeight` makes `getHeight()` identical for every word at a
- * given font size, so a fixed paint offset keeps every baseline in a sentence
- * on the same line. Deriving this per word would shift baselines word by word.
- */
-const DIACRITICS_PADDING = 8;
 
 /**
  * Clear space below the glyphs for the marker rule — the bottom counterpart to
@@ -41,24 +32,6 @@ const DIACRITICS_PADDING = 8;
  * clips absolutely positioned children that overflow their parent.
  */
 const MARKER_UNDERLINE_GAP = 6;
-
-/**
- * Fallback horizontal ink bleed per font family, in em (fraction of font size).
- * Calligraphic fonts paint well beyond their glyph advances; without this
- * reserve the canvas clips edge glyphs and the paragraph can force-break
- * the word onto a hidden second line.
- *
- * Only used when the native module can't measure the real bleed — see
- * `measureInkOverhang`, which supersedes these estimates on Skia >= 2.8.0.
- */
-const INK_BLEED_EM: Record<string, number> = {
-  'Noto Sans Arabic': 0.08,
-  'Digital Khatt New Madina': 0.3,
-  Amiri: 0.3,
-  'Scheherazade New': 0.3,
-  'Noto Nastaliq Urdu': 0.35,
-};
-const DEFAULT_INK_BLEED_EM = 0.15;
 
 // Long-press threshold: long enough not to fire during scroll hesitation,
 // short enough to feel instant (RNGH default is 500ms)
@@ -184,49 +157,27 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
   ]);
 
   const canvasDimensions = useMemo(() => {
-    if (!paragraph) {
-      return {
-        width: 60,
-        height: 40,
-        layoutWidth: 60,
-        marginLeft: 0,
-        marginRight: 0,
-        inkLeft: 0,
-        inkRight: 0,
-      };
-    }
-
-    // Real painted extent where the native module can report it, per-family
-    // estimate everywhere else. Measuring also sizes fonts absent from the map.
-    const overhang = measureInkOverhang(paragraph, PARAGRAPH_LAYOUT_WIDTH);
-    const estimate = Math.ceil(fontSize * (INK_BLEED_EM[fontFamily] ?? DEFAULT_INK_BLEED_EM));
-    const leftReserve = overhang ? Math.ceil(overhang.left) : estimate;
-    const rightReserve = overhang ? Math.ceil(overhang.right) : estimate;
+    // `MARKER_UNDERLINE_GAP` keeps the rule clear of the descenders while
+    // staying inside the word's own bounds.
+    const canvas = measureParagraphCanvas(paragraph, {
+      fontSize,
+      fontFamily,
+      bottomGap: MARKER_UNDERLINE_GAP,
+    });
 
     // Visual breathing room between words stays at the pre-bleed rhythm (~5%
     // of the word width was baked into the old canvas sizing).
     const visualPad = Math.ceil(fontSize * 0.05);
-    // Right-aligned RTL text hugs the layout right edge, so the left reserve
-    // has to widen the layout box itself while the right reserve only widens
-    // the canvas around it.
-    const layoutWidth = Math.ceil(paragraph.getMaxIntrinsicWidth()) + leftReserve;
 
     return {
-      width: layoutWidth + rightReserve,
-      height: Math.ceil(paragraph.getHeight()) + DIACRITICS_PADDING + MARKER_UNDERLINE_GAP,
-      layoutWidth,
+      ...canvas,
       // The reserve is paint-only, so cancel all of it in flex layout and hand
       // back a constant `visualPad` gap instead. That keeps the word rhythm
       // identical whatever the face bleeds — a heavily-bleeding Amiri glyph and
       // a flush Noto one both lay out at advance + 2 * visualPad. These stay
       // signed: a face that bleeds less than visualPad needs positive margin.
-      marginLeft: visualPad - leftReserve,
-      marginRight: visualPad - rightReserve,
-      // Paint-only reserve on each side. The marker underline insets by these
-      // so it tracks the glyph advance rather than the bleed-padded canvas —
-      // a rule wider than the word it marks reads as a mistake.
-      inkLeft: leftReserve,
-      inkRight: rightReserve,
+      marginLeft: visualPad - canvas.inkLeft,
+      marginRight: visualPad - canvas.inkRight,
     };
   }, [paragraph, fontSize, fontFamily]);
 
@@ -335,10 +286,7 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
           interactive, or it would eat taps along the bottom of the word. */}
       {markerHeight > 0 &&
         (isHighlighted ? (
-          <Animated.View
-            style={[markerBarStyle, HIGHLIGHT_ANIMATION_STYLE]}
-            pointerEvents="none"
-          />
+          <Animated.View style={[markerBarStyle, HIGHLIGHT_ANIMATION_STYLE]} pointerEvents="none" />
         ) : (
           <View style={markerBarStyle} pointerEvents="none" />
         ))}

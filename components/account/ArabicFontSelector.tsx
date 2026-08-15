@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BaseCard, OptionCard } from '@/components/common';
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
+import { LAYOUT, LINE_HEIGHT_MULTIPLIERS, getArabicTextStyle } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import {
   useArabicFontSelector,
@@ -60,9 +60,14 @@ function FontPreviewCard({ option, isSelected, fontSize, onSelect }: FontPreview
         </ThemedText>
       </View>
 
+      {/* The whole Arabic style is derived from `fontSize`, not just the size.
+          `type="arabic"` sizes its line box from the *persisted* size, which the
+          slider only writes on release — so overriding the size alone left every
+          preview mid-drag with a line box built for the old size, shearing the
+          tops off the harakat in all four fully-vocalized samples. */}
       <ThemedText
         colorName="arabicText"
-        style={[styles.previewText, { fontFamily: option.name, fontSize }]}
+        style={[getArabicTextStyle(fontSize, {}, option.name), styles.previewText]}
         type="arabic"
       >
         {option.previewText}

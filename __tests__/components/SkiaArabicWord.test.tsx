@@ -44,7 +44,12 @@ jest.mock('@/hooks/vocabulary', () => ({
   useArabicWord: jest.fn(() => ({ isSelected: false })),
 }));
 
+// Only the two builders are stubbed. The canvas-sizing helpers stay real so the
+// component's geometry is exercised rather than replaced by a stub — a partial
+// mock here silently dropped `measureParagraphCanvas` and took the whole suite
+// down with it.
 jest.mock('@/utils/skiaParagraphBuilder', () => ({
+  ...jest.requireActual<object>('@/utils/skiaParagraphBuilder'),
   buildColoredParagraph: jest.fn(() => null),
   buildSimpleParagraph: jest.fn(() => null),
 }));

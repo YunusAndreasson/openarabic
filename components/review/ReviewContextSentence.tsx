@@ -5,13 +5,13 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
+import { SkiaColoredArabic } from '@/components/common/SkiaColoredArabic';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useDebouncedArabicFontSize } from '@/hooks/theme/useDebouncedArabicFontSize';
 import { useColors } from '@/hooks/theme/useColors';
 import type { ExampleWord, WordExample } from '@/services/sentences';
-import type { ColoredSegment } from '@/types/vocabulary.types';
 
 /**
  * Line height for the example, as a multiple of its font size.
@@ -129,32 +129,35 @@ interface Props {
  */
 export const ReviewContextSentence: FC<Props> = memo(({ example, onPlay }) => {
   const colors = useColors();
-  // A clear step below the reader's own size. At 100% the example competed with
-  // the hero Arabic above it — same script, same weight, near enough the same
-  // size — so the answer face read as two headlines stacked rather than an
-  // answer and its evidence. Hierarchy by scale, since colour is spoken for
-  // (see the underline note above) and weight does nothing on Arabic glyphs.
-  const readerFontSize = useDebouncedArabicFontSize(82);
+  // Same debounce as ThemedText's own Arabic path, so the example and the hero
+  // above it resize in lockstep while the size slider is being dragged.
+  const readerFontSize = useDebouncedArabicFontSize(100);
 
   const words = example.words;
 
-  // Mirrors what ThemedText's `arabicCompact` resolves to (the reader's size,
-  // capped) so the line height below is derived from the size actually rendered.
-  // Applied to the parent AND every segment span: each span carries its own
-  // arabicCompact style, so overriding only the parent would leave the spans on
-  // the clipping line height.
-  const arabicLineStyle = useMemo<TextStyle>(() => {
-    const size = Math.min(
-      readerFontSize || LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-      LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    );
-    return {
-      lineHeight: Math.round(size * EXAMPLE_LINE_HEIGHT),
+  // A clear step below the reader's own size. At full size the example competed
+  // with the hero Arabic above it — same script, same weight, near enough the
+  // same size — so the answer face read as two headlines stacked rather than an
+  // answer and its evidence. Hierarchy by scale, since colour is spoken for
+  // (see the underline note above) and weight does nothing on Arabic glyphs.
+  // The cap matches what `arabicCompact` resolves to, which the no-breakdown
+  // fallback below still uses.
+  const exampleFontSize = Math.min(
+    readerFontSize || LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
+  );
+
+  // Only the fallback needs this: Skia sizes its own line box with generous
+  // diacritic headroom, but `arabicCompact`'s 1.6x still clips mark stacks.
+  const arabicLineStyle = useMemo<TextStyle>(
+    () => ({
+      lineHeight: Math.round(exampleFontSize * EXAMPLE_LINE_HEIGHT),
       // Android: keep the font's own vertical padding, which is where the mark
       // stack lives. arabicCompact turns it off for row density.
       includeFontPadding: true,
-    };
-  }, [readerFontSize]);
+    }),
+    [exampleFontSize],
+  );
 
   return (
     <Animated.View
@@ -174,7 +177,7 @@ export const ReviewContextSentence: FC<Props> = memo(({ example, onPlay }) => {
               <ExampleWordText
                 word={word}
                 defaultColor={colors.arabicText}
-                lineStyle={arabicLineStyle}
+                fontSize={exampleFontSize}
               />
               {word.isTarget ? (
                 <View
@@ -239,57 +242,28 @@ export const ReviewContextSentence: FC<Props> = memo(({ example, onPlay }) => {
 ReviewContextSentence.displayName = 'ReviewContextSentence';
 
 /**
- * Character offset within the word, which is a real identity for a contiguous
- * slice of an immutable string: the same text can legitimately appear twice in
- * one word (a repeated letter carrying two roles), so text alone is not unique,
- * and an array index would silently re-key if the analyzer ever changed how it
- * splits a form.
- */
-function keyedSegments(segments: ColoredSegment[]): (ColoredSegment & { key: string })[] {
-  let offset = 0;
-  return segments.map(segment => {
-    const keyed = { ...segment, key: `${offset}-${segment.type}` };
-    offset += segment.text.length;
-    return keyed;
-  });
-}
-
-/**
- * One word, rendered as coloured spans inside a single Text so the glyphs shape
- * and join as one word. Nested `<Text>` colour is the mechanism the reader's
- * ColorCodedText uses; the chip lives on the wrapping View instead, because
- * padding on a nested Text is unreliable on Android.
+ * One word, painted by Skia so the glyphs shape and join as one word.
+ *
+ * This used to be coloured spans nested inside a single `<Text>`, on the
+ * assumption that one Text element means one shaping run. On Android it does
+ * not: each nested Text carries its own metric-affecting spans, `StaticLayout`
+ * shapes each as a separate run, and Arabic comes apart at every colour
+ * boundary — `أَزَالَتْ` rendered with its `تْ` floating free of the `ل`. Skia
+ * shapes the whole word first and applies the colour runs to the shaped
+ * glyphs, which is how the reader has always drawn these words.
  */
 const ExampleWordText: FC<{
   word: ExampleWord;
   defaultColor: string;
-  /** Diacritic headroom — see EXAMPLE_LINE_HEIGHT. */
-  lineStyle: TextStyle;
-}> = ({ word, defaultColor, lineStyle }) => {
-  const segments = word.coloredSegments;
-
-  if (!segments || segments.length === 0) {
-    return (
-      <ThemedText type="arabicCompact" colorName="arabicText" style={lineStyle}>
-        {word.wordForm}
-      </ThemedText>
-    );
-  }
-
-  return (
-    <ThemedText type="arabicCompact" skipDefaultColor style={[lineStyle, { color: defaultColor }]}>
-      {keyedSegments(segments).map(segment => (
-        <ThemedText
-          key={segment.key}
-          type="arabicCompact"
-          skipDefaultColor
-          style={[lineStyle, { color: segment.color }]}
-        >
-          {segment.text}
-        </ThemedText>
-      ))}
-    </ThemedText>
-  );
-};
+  /** Point size for the glyphs — see the note on `readerFontSize`. */
+  fontSize: number;
+}> = ({ word, defaultColor, fontSize }) => (
+  <SkiaColoredArabic
+    text={word.wordForm}
+    segments={word.coloredSegments}
+    fontSize={fontSize}
+    color={defaultColor}
+  />
+);
 
 ExampleWordText.displayName = 'ExampleWordText';

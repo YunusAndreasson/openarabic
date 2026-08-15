@@ -1,5 +1,5 @@
 import type { TextStyle } from 'react-native';
-import { Dimensions, StyleSheet } from 'react-native';
+import { Dimensions, Platform, StyleSheet } from 'react-native';
 
 import { FONTS } from '@/constants/fonts';
 
@@ -185,7 +185,17 @@ export const LAYOUT = {
   },
 
   BOTTOM_BAR: {
-    HEIGHT: 50, // Native tab bar height (Expo Router default) - SafeAreaInsets handles device-specific spacing
+    // Intrinsic height of the NATIVE tab bar, excluding the safe-area inset
+    // below it — only for chrome mounted outside the tabs navigator (the global
+    // mini player), which has to clear the bar itself. Anything rendered inside
+    // a NativeTabs screen already starts above the bar and must NOT add this.
+    //
+    // Platform-split because the two bars are genuinely different components:
+    // UITabBar is 49pt, Material 3's NavigationBar is 80dp. A single 50 read as
+    // "close enough" on iOS and left the mini player 30dp deep inside the
+    // Android bar, slicing every tab icon in half (measured on a 420dpi Pixel:
+    // bar 80dp, gesture inset 24dp).
+    HEIGHT: Platform.OS === 'android' ? 80 : 49,
   },
 
   BORDER_RADIUS: {

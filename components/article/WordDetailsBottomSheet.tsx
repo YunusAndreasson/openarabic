@@ -152,9 +152,7 @@ export function WordDetailsBottomSheet({
                   text={cleanWordText(word.word_form || '')}
                   arabicWord={cleanWordText(word.word_form || '')}
                   englishTranslation={cleanWordText(word.english || '')}
-                  type="heading1"
-                  weight="bold"
-                  style={styles.arabicTitle}
+                  arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.XXHUGE}
                   defaultColor={colors.arabicText}
                   isArabic={true}
                   precomputedSegments={word.coloredSegments}
@@ -223,13 +221,8 @@ const styles = StyleSheet.create({
   },
   titleSection: {
     alignItems: 'center',
+    gap: LAYOUT.SPACING.SMALL,
     marginBottom: LAYOUT.SPACING.XLARGE,
-  },
-  arabicTitle: {
-    marginBottom: LAYOUT.SPACING.SMALL,
-    textAlign: 'center',
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXHUGE, // 34 - larger than heading1 (28)
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXHUGE * 1.58, // 60 - adequate for Arabic text with diacritics
   },
   englishTranslation: {
     textAlign: 'center',

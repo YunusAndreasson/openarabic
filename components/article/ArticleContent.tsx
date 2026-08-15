@@ -323,7 +323,9 @@ const ArticleContentInternal = function ArticleContent({
           own gradient fades to opacity 0 once content scrolls past the hero
           (by design), so without this, body text scrolls directly under the
           status bar and buttons with no scrim for the rest of the article. */}
-      {sortedSentences.length > 0 && <HeaderScrim colors={colors} />}
+      {sortedSentences.length > 0 && (
+        <HeaderScrim colors={colors} scrollY={scrollY} headerHeight={headerHeight} />
+      )}
 
       {/* Floating action buttons - completely outside Animated.View to avoid gesture conflicts */}
       {sortedSentences.length > 0 && (

@@ -7,6 +7,8 @@ import { useArabicWordAnalysis } from '@/hooks/vocabulary';
 import type { ColoredSegment } from '@/types/vocabulary.types';
 import { generateColorCodedSegments } from '@/utils/colorCodedTextUtils';
 
+import { SkiaColoredArabic } from './SkiaColoredArabic';
+
 interface ColorCodedTextProps {
   text: string;
   arabicWord?: string;
@@ -17,13 +19,20 @@ interface ColorCodedTextProps {
   defaultColor?: string;
   isArabic?: boolean;
   precomputedSegments?: ColoredSegment[];
+  /**
+   * Point size for Arabic (`isArabic`). Arabic is painted by Skia rather than
+   * `<Text>`, so it takes a number here instead of a `fontSize` in `style`.
+   * Defaults to the user's Arabic reading size.
+   */
+  arabicFontSize?: number;
 }
 
 /**
  * Reusable component for rendering color-coded text based on Arabic word analysis
- * Used in WordDetailsBottomSheet and WordTooltip for consistent rendering
+ * Used in WordDetailsBottomSheet and ArabicColoringExamples for consistent rendering
  *
- * For Arabic text (isArabic=true): Uses precomputed coloredSegments or dynamic analysis
+ * For Arabic text (isArabic=true): Uses precomputed coloredSegments or dynamic analysis,
+ * painted by Skia — see `SkiaColoredArabic` for why `<Text>` cannot do this.
  * For English text (isArabic=false): Uses generateColorCodedSegments (includes [the] if needed)
  */
 export const ColorCodedText = memo<ColorCodedTextProps>(
@@ -37,6 +46,7 @@ export const ColorCodedText = memo<ColorCodedTextProps>(
     defaultColor,
     isArabic = false,
     precomputedSegments,
+    arabicFontSize,
   }) => {
     const colors = useColors();
 
@@ -57,44 +67,28 @@ export const ColorCodedText = memo<ColorCodedTextProps>(
       shouldRunAnalysis,
     );
 
-    // Generate color-coded segments based on text type
+    // Arabic keeps its segments as-is — Skia takes {text, color} and does its own
+    // painting, so none of the <Text> style plumbing below applies to it.
+    const arabicSegments = precomputedSegments || dynamicSegments;
+
+    // Generate color-coded segments for English
     // Pre-compute styles to avoid creating inline objects during render
     const coloredSegments = useMemo(() => {
-      let segments: { text: string; color: string; key: string }[];
-      if (isArabic) {
-        // Use precomputed segments if available, otherwise use dynamic analysis
-        const sourceSegments = precomputedSegments || dynamicSegments;
-        segments = sourceSegments.map(segment => ({
-          text: segment.text,
-          color: segment.color,
-          key: `${segment.type}-${segment.text}`,
-        }));
-      } else {
-        // For English text, use generateColorCodedSegments (includes [the] if appropriate)
-        segments = generateColorCodedSegments({
-          text: deferredText,
-          formattedAnalysis,
-          analysis,
-          colors,
-          defaultColor: defaultColor || colors.text,
-        });
-      }
+      if (isArabic) return [];
+      // For English text, use generateColorCodedSegments (includes [the] if appropriate)
+      const segments = generateColorCodedSegments({
+        text: deferredText,
+        formattedAnalysis,
+        analysis,
+        colors,
+        defaultColor: defaultColor || colors.text,
+      });
       // Pre-compute segment styles to avoid inline object creation in render
       return segments.map(segment => ({
         ...segment,
         style: style ? [style, { color: segment.color }] : { color: segment.color },
       }));
-    }, [
-      isArabic,
-      precomputedSegments,
-      dynamicSegments,
-      deferredText,
-      formattedAnalysis,
-      analysis,
-      colors,
-      defaultColor,
-      style,
-    ]);
+    }, [isArabic, deferredText, formattedAnalysis, analysis, colors, defaultColor, style]);
 
     // Check if any segment has a non-default color
     const hasColoredComponents = useMemo(
@@ -103,6 +97,20 @@ export const ColorCodedText = memo<ColorCodedTextProps>(
         coloredSegments.some(seg => seg.color !== colors.text && seg.color !== colors.arabicText),
       [coloredSegments, colors.text, colors.arabicText],
     );
+
+    // Arabic joins cursively, and a per-segment <Text> cannot: each nested Text
+    // is its own shaping run on Android, so the letters come apart at every
+    // colour boundary. Skia shapes first and colours the shaped glyphs.
+    if (isArabic) {
+      return (
+        <SkiaColoredArabic
+          text={text}
+          segments={arabicSegments}
+          fontSize={arabicFontSize}
+          color={defaultColor}
+        />
+      );
+    }
 
     // If no components detected, render plain text
     if (!hasColoredComponents) {

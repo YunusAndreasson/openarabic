@@ -5,12 +5,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { ThemedText } from '@/components/ThemedText';
 import { FONTS } from '@/constants/fonts';
 import { getElevation } from '@/constants/elevation';
-import {
-  LAYOUT,
-  LINE_HEIGHT_MULTIPLIERS,
-  MIN_TOUCH_TARGET,
-  SCREEN_WIDTH,
-} from '@/constants/layout';
+import { LAYOUT, LINE_HEIGHT_MULTIPLIERS, SCREEN_WIDTH } from '@/constants/layout';
 import { PRESS_ANIMATION_BUTTON } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useButtonPress } from '@/hooks/ui/useButtonPress';
@@ -57,13 +52,14 @@ const STATIC_STYLES = StyleSheet.create({
     height: 0,
     borderStyle: 'solid',
   },
+  // No `minHeight` here: the tooltip's own height is already the touch target,
+  // and a minimum taller than the padded inner box (44 - 2*8 = 28) overflowed
+  // it, which pinned the label to the top of the bubble with dead space below.
   contentContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
-    minHeight:
-      LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.NORMAL + LAYOUT.SPACING.SMALL,
   },
   singleLineText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
@@ -168,7 +164,10 @@ export function WordTooltip({
     );
   })();
 
-  const effectiveHeight = Math.max(dimensions.tooltipHeight, MIN_TOUCH_TARGET.MEDIUM);
+  // `TOOLTIP_CONSTANTS.HEIGHT` already is the touch-target floor, and the
+  // positioning math above placed the bubble against it — flooring again here
+  // is what let the rendered box outgrow the box it was positioned as.
+  const effectiveHeight = dimensions.tooltipHeight;
   const dynamicStyles = {
     tooltip: {
       ...STATIC_STYLES.tooltip,
