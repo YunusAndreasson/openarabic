@@ -276,15 +276,21 @@ export const TIMING_CONSTANTS = {
   MEDIUM_DELAY: 300,
 
   /**
-   * How long to wait after dismissing a form sheet before presenting anything
-   * else. UIKit refuses to present from a controller that is still dismissing
-   * one, so a navigation fired in the same tick is silently dropped — on iOS the
-   * memory sheet closed and the dictionary never opened, while Android happily
-   * ran both. Set past a sheet's own slide-down (~350ms) rather than at it: the
-   * cost of waiting too long is a beat of animation, the cost of waiting too
-   * little is a tap that does nothing.
+   * How long `dismissSheetThenNavigate` waits before opening the next screen.
+   *
+   * UIKit refuses to present anything from a controller that is still dismissing
+   * one, so a navigation issued while a form sheet closes is dropped — on iOS
+   * the memory sheet closed and the dictionary never opened, while Android ran
+   * both happily. 300ms and 400ms were both tried and both still failed, so this
+   * sits well clear of a sheet's slide-down instead of near it: the cost of
+   * waiting too long is a beat of animation under a sheet that is visibly
+   * closing, and the cost of waiting too little is a tap that does nothing.
+   *
+   * A `transitionEnd` listener beats this timer to the punch wherever the
+   * platform delivers a closing event for the dismissed screen; Android does
+   * not, so there this value is the whole mechanism.
    */
-  SHEET_DISMISS_DELAY: 400,
+  SHEET_DISMISS_FALLBACK: 1000,
 
   /** One second in milliseconds */
   SECOND: 1000,

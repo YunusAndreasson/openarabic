@@ -1,11 +1,9 @@
-import { useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ListRow, ProgressBar } from '@/components/common';
 import { ThemedText } from '@/components/ThemedText';
 import { Ionicons } from '@/components/ui';
-import { TIMING_CONSTANTS } from '@/constants/animation';
 import { CHART_OPACITY, useChartColors } from '@/constants/chartColors';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
@@ -16,6 +14,7 @@ import { HORIZON_BAND_SCOPES, type DictionaryScope } from '@/hooks/vocabulary/us
 import type { StudyWord } from '@/types/vocabulary.types';
 import { mixColors } from '@/utils/colorUtils';
 import { getHorizonBand, HORIZON_BAND_HINTS } from '@/utils/memoryHorizon';
+import { dismissSheetThenNavigate } from '@/utils/sheetNavigation';
 
 const CHEVRON_SIZE = 14;
 
@@ -135,7 +134,6 @@ function HorizonRow({
  * mastery curve did.
  */
 export function MemoryHorizonBreakdown({ studyWords }: { studyWords: StudyWord[] }): JSX.Element {
-  const router = useRouter();
   const distribution = useMemoryHorizonDistribution(studyWords);
   const { bands, notStartedCount, practisedCount, medianDays } = distribution;
 
@@ -148,30 +146,11 @@ export function MemoryHorizonBreakdown({ studyWords }: { studyWords: StudyWord[]
   // put them on an axis they are not on.
   const maxBandCount = bands.reduce((max, band) => Math.max(max, band.count), 0);
 
+  // Dismiss this sheet, then open the band's words once it has actually gone.
+  // The sequencing — and why it cannot be a push, a replace, or a timer — lives
+  // in `dismissSheetThenNavigate`.
   const openScope = (scope: DictionaryScope) => {
-    // Dismiss, wait for the dismissal, THEN push. All three parts are load-bearing.
-    //
-    // *Dismiss first*: this sheet is a root-level form sheet and the dictionary
-    // is a modal inside the practice stack, so pushing while the sheet is still
-    // up presents it BEHIND the sheet — the trap the practice layout documents.
-    //
-    // *`back`, not `replace`*: replacing the sheet with the nested route rebuilt
-    // the tab state without the practice screen underneath, so closing the
-    // dictionary dropped the learner on Explore (measured on Android). Popping
-    // leaves the practice stack intact and the dictionary pushes onto it the
-    // same way the header's own dictionary button does.
-    //
-    // *And the delay*: UIKit will not present a screen from a controller that is
-    // still dismissing one, so on iOS the push in the same tick was swallowed —
-    // the sheet closed and nothing opened. Android tolerates it, which is why
-    // this only showed up on device. The wait is the dismissal itself, not a
-    // guess at a race; `SHEET_DISMISS_DELAY` carries the reasoning, and
-    // `RelatedArticlesByFilter` sequences its modal→modal navigation the same
-    // way with a shorter one.
-    router.back();
-    setTimeout(() => {
-      router.push({ pathname: ROUTE_PATHS.PRACTICE_DICTIONARY, params: { scope } });
-    }, TIMING_CONSTANTS.SHEET_DISMISS_DELAY);
+    dismissSheetThenNavigate({ pathname: ROUTE_PATHS.PRACTICE_DICTIONARY, params: { scope } });
   };
 
   return (

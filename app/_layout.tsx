@@ -74,6 +74,7 @@ import { setTheme } from '@/store/themeSlice';
 import { handleError } from '@/utils/errorHandling';
 import { createNavigationOptions } from '@/utils/navigation';
 import { PERSISTENCE_OPTIONS } from '@/utils/queryPersistence';
+import { flushPendingSheetNavigation } from '@/utils/sheetNavigation';
 import type * as NotificationsModule from 'expo-notifications';
 
 // expo-notifications is unavailable in Expo Go on Android (SDK 53+).
@@ -554,6 +555,24 @@ function AppContent() {
                   headerShadowVisible: false,
                   freezeOnBlur: true,
                   contentStyle: { backgroundColor: colors.background },
+                }}
+                // Opportunistic, not the mechanism — see `sheetNavigation`.
+                //
+                // A sheet that navigates somewhere on its way out cannot present
+                // until its own dismissal finishes, and `transitionEnd` with
+                // `closing: true` is exactly that moment. Measured on Android,
+                // though, it never arrives: the closing screen leaves JS state
+                // before the native transition ends, so its listeners are gone
+                // by the time the event would be delivered (the opening
+                // `closing: false` does fire, which is how we know this is wired
+                // and not silent). iOS may deliver it, and if it does the
+                // navigation happens on that frame instead of on the backstop
+                // timer. Flushing on ANY closing transition is safe: the queue is
+                // only ever filled immediately before a dismissal.
+                screenListeners={{
+                  transitionEnd: e => {
+                    if (e.data.closing) flushPendingSheetNavigation();
+                  },
                 }}
               >
                 {/* Authenticated routes — guard flips on sign-out, router unmounts these */}
