@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { ListRow, ProgressBar } from '@/components/common';
 import { ThemedText } from '@/components/ThemedText';
 import { Ionicons } from '@/components/ui';
+import { TIMING_CONSTANTS } from '@/constants/animation';
 import { CHART_OPACITY, useChartColors } from '@/constants/chartColors';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
@@ -148,20 +149,29 @@ export function MemoryHorizonBreakdown({ studyWords }: { studyWords: StudyWord[]
   const maxBandCount = bands.reduce((max, band) => Math.max(max, band.count), 0);
 
   const openScope = (scope: DictionaryScope) => {
-    // Dismiss, THEN push — two navigators, in this order, for two reasons.
+    // Dismiss, wait for the dismissal, THEN push. All three parts are load-bearing.
     //
-    // This sheet is a root-level form sheet; the dictionary is a modal inside
-    // the practice stack. Pushing while the sheet is still up presents it
-    // BEHIND the sheet — the trap the practice layout documents.
+    // *Dismiss first*: this sheet is a root-level form sheet and the dictionary
+    // is a modal inside the practice stack, so pushing while the sheet is still
+    // up presents it BEHIND the sheet — the trap the practice layout documents.
     //
-    // And it must be `back` + `push`, not `replace`: measured on device,
-    // replacing the sheet with the nested route rebuilt the tab state without
-    // the practice screen underneath, so closing the dictionary dropped the
-    // learner on Explore. Popping the sheet first leaves the practice stack
-    // intact, and the dictionary pushes onto it the same way the header's own
-    // dictionary button does.
+    // *`back`, not `replace`*: replacing the sheet with the nested route rebuilt
+    // the tab state without the practice screen underneath, so closing the
+    // dictionary dropped the learner on Explore (measured on Android). Popping
+    // leaves the practice stack intact and the dictionary pushes onto it the
+    // same way the header's own dictionary button does.
+    //
+    // *And the delay*: UIKit will not present a screen from a controller that is
+    // still dismissing one, so on iOS the push in the same tick was swallowed —
+    // the sheet closed and nothing opened. Android tolerates it, which is why
+    // this only showed up on device. The wait is the dismissal itself, not a
+    // guess at a race; `SHEET_DISMISS_DELAY` carries the reasoning, and
+    // `RelatedArticlesByFilter` sequences its modal→modal navigation the same
+    // way with a shorter one.
     router.back();
-    router.push({ pathname: ROUTE_PATHS.PRACTICE_DICTIONARY, params: { scope } });
+    setTimeout(() => {
+      router.push({ pathname: ROUTE_PATHS.PRACTICE_DICTIONARY, params: { scope } });
+    }, TIMING_CONSTANTS.SHEET_DISMISS_DELAY);
   };
 
   return (

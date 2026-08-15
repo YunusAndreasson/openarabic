@@ -275,6 +275,17 @@ export const TIMING_CONSTANTS = {
   /** Standard medium delay */
   MEDIUM_DELAY: 300,
 
+  /**
+   * How long to wait after dismissing a form sheet before presenting anything
+   * else. UIKit refuses to present from a controller that is still dismissing
+   * one, so a navigation fired in the same tick is silently dropped — on iOS the
+   * memory sheet closed and the dictionary never opened, while Android happily
+   * ran both. Set past a sheet's own slide-down (~350ms) rather than at it: the
+   * cost of waiting too long is a beat of animation, the cost of waiting too
+   * little is a tap that does nothing.
+   */
+  SHEET_DISMISS_DELAY: 400,
+
   /** One second in milliseconds */
   SECOND: 1000,
 
