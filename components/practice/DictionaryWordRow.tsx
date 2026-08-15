@@ -236,7 +236,12 @@ export const DictionaryWordRow = memo<DictionaryWordRowProps>(
           >
             {englishText}
           </ThemedText>
-          <ThemedText type="arabicCompact" align="right" numberOfLines={1} style={styles.arabicText}>
+          <ThemedText
+            type="arabicCompact"
+            align="right"
+            numberOfLines={1}
+            style={styles.arabicText}
+          >
             {arabicText}
           </ThemedText>
           {/* Meter and chevron travel together on a tighter gap: they are one

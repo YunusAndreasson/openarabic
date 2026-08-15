@@ -568,11 +568,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
               wrapper is the actual grade buttons' parent — `ReviewFlipCard`'s
               own remount does not reach it — so it needs the same fresh start
               on a backgrounding-interrupted resume. */}
-          <LayoutAnimationConfig
-            key={`${currentWordKey}-${remountEpoch}`}
-            skipEntering
-            skipExiting
-          >
+          <LayoutAnimationConfig key={`${currentWordKey}-${remountEpoch}`} skipEntering skipExiting>
             {restudying ? (
               // A forgotten card holds here instead of advancing. The whole card
               // is the tap target (see onRestudyContinue on ReviewFlipCard), so

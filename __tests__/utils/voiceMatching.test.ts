@@ -423,9 +423,9 @@ describe('matchSingleWord — head-word pass strips gloss scaffolding', () => {
   });
 
   it('still misses when the head word is genuinely different', () => {
-    expect(matchSingleWord({ spoken: 'to the first ones', expected: 'for close ones' }).matched).toBe(
-      false,
-    );
+    expect(
+      matchSingleWord({ spoken: 'to the first ones', expected: 'for close ones' }).matched,
+    ).toBe(false);
   });
 });
 
