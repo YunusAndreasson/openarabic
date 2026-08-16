@@ -1,5 +1,36 @@
-import type { AccessibilityRole, AccessibilityState, StyleProp, ViewStyle } from 'react-native';
+import type {
+  AccessibilityRole,
+  AccessibilityState,
+  Insets,
+  PressableAndroidRippleConfig,
+  StyleProp,
+  ViewStyle,
+} from 'react-native';
 import type { AnimatedStyle } from 'react-native-reanimated';
+
+/**
+ * The subset of pressable props the shared primitives actually pass down.
+ *
+ * Deliberately not `PressableProps`: react-native's and
+ * react-native-gesture-handler's differ (their press and hover event types are
+ * unrelated), so a prop typed as either one rejects the other component
+ * outright. Naming only what is used keeps both assignable, which is the whole
+ * point — see the `PressableComponent` prop on `BaseCard` and `GlassIconButton`.
+ */
+export interface PressableLikeProps {
+  children?: React.ReactNode;
+  onPress?: () => void;
+  onPressIn?: () => void;
+  onPressOut?: () => void;
+  style?: StyleProp<ViewStyle>;
+  hitSlop?: number | Insets;
+  disabled?: boolean;
+  android_ripple?: PressableAndroidRippleConfig | null;
+  accessibilityLabel?: string;
+  accessibilityRole?: AccessibilityRole;
+  accessibilityState?: AccessibilityState;
+  testID?: string;
+}
 
 /**
  * Base props for components with style

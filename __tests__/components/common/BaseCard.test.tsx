@@ -136,6 +136,26 @@ describe('BaseCard', () => {
       expect(getByTestId('static-card').props.onStartShouldSetResponder).toBeUndefined();
     });
 
+    test('renders the PressableComponent it was handed', () => {
+      // The escape hatch for screens whose gesture arena is owned by
+      // react-native-gesture-handler — the article reader wraps its content in
+      // an RNGH Pressable, and an RNGH ancestor beats any descendant still on
+      // the JS responder system, so those cards took no taps at all. If this
+      // prop stops reaching the tree, they go dead again in silence.
+      const CustomPressable = jest.fn(({ children }: { children?: React.ReactNode }) => (
+        <>{children}</>
+      ));
+
+      const { getByText } = render(
+        <BaseCard onPress={mockOnPress} PressableComponent={CustomPressable}>
+          <Text>Press Me</Text>
+        </BaseCard>,
+      );
+
+      expect(CustomPressable).toHaveBeenCalled();
+      expect(getByText('Press Me')).toBeTruthy();
+    });
+
     test('does not fire onPress when disabled', () => {
       const { getByTestId } = render(
         <BaseCard testID="disabled-card" disabled onPress={mockOnPress}>

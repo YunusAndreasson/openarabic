@@ -1,6 +1,6 @@
-import type { FC, ReactNode } from 'react';
+import type { ComponentType, FC, ReactNode } from 'react';
 import type { AccessibilityRole, AccessibilityState, StyleProp, ViewStyle } from 'react-native';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable as RNPressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { getElevation, type ElevationRole } from '@/constants/elevation';
@@ -8,6 +8,7 @@ import { LAYOUT } from '@/constants/layout';
 import { PRESS_ANIMATION_CARD } from '@/hooks/animations/usePressAnimation';
 import { useColors } from '@/hooks/theme/useColors';
 import { useButtonPress } from '@/hooks/ui/useButtonPress';
+import type { PressableLikeProps } from '@/types/ui/base.types';
 import type { BaseCardProps, CardElevation, CardSurface } from '@/types/ui/card.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import { withAlpha } from '@/utils/colorUtils';
@@ -76,6 +77,7 @@ interface PressableCardProps {
   accessibilityLabel?: string;
   accessibilityRole?: AccessibilityRole;
   accessibilityState?: AccessibilityState;
+  PressableComponent: ComponentType<PressableLikeProps>;
 }
 
 /**
@@ -101,6 +103,7 @@ const PressableCard: FC<PressableCardProps> = ({
   // eleven pressable cards declared no role at all.
   accessibilityRole = 'button',
   accessibilityState,
+  PressableComponent,
 }) => {
   // Shared press engine, same as every button. `hapticType` stays 'none' (the
   // hook's default): a card is a navigation surface, and firing a haptic on
@@ -122,7 +125,7 @@ const PressableCard: FC<PressableCardProps> = ({
 
   return (
     <Animated.View style={[cardStyle, animatedStyle]}>
-      <Pressable
+      <PressableComponent
         testID={testID}
         accessibilityLabel={accessibilityLabel}
         accessibilityRole={accessibilityRole}
@@ -135,7 +138,7 @@ const PressableCard: FC<PressableCardProps> = ({
         onPressOut={handlePressOut}
       >
         <View style={contentStyle}>{children}</View>
-      </Pressable>
+      </PressableComponent>
     </Animated.View>
   );
 };
@@ -156,6 +159,7 @@ export const BaseCard: FC<BaseCardProps> = ({
   accessibilityLabel,
   accessibilityRole,
   accessibilityState,
+  PressableComponent = RNPressable,
 }) => {
   const colors = useColors();
 
@@ -178,6 +182,7 @@ export const BaseCard: FC<BaseCardProps> = ({
         accessibilityLabel={accessibilityLabel}
         accessibilityRole={accessibilityRole}
         accessibilityState={accessibilityState}
+        PressableComponent={PressableComponent}
       >
         {children}
       </PressableCard>

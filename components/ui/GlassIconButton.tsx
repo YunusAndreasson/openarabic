@@ -1,6 +1,6 @@
 import { Ionicons, type IoniconName } from '@/components/ui/Icon';
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
-import type { ComponentType, FC, ReactNode } from 'react';
+import type { ComponentType, FC } from 'react';
 import type { AccessibilityState, Insets, StyleProp, ViewStyle } from 'react-native';
 import { Pressable as RNPressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -9,32 +9,12 @@ import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { PRESS_ANIMATION_BUTTON } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useButtonPress, type HapticType } from '@/hooks/ui/useButtonPress';
+import type { PressableLikeProps } from '@/types/ui/base.types';
 
 // Resolved once: `isLiquidGlassAvailable()` is a native capability check, not
 // state, so it cannot change for the life of the process.
 const GLASS_AVAILABLE = isLiquidGlassAvailable();
 const AnimatedView = Animated.createAnimatedComponent(View);
-
-/**
- * The subset of pressable props this component actually passes down.
- *
- * Deliberately not `PressableProps`: react-native's and
- * react-native-gesture-handler's differ (their `onHoverIn` event types are
- * unrelated), so a prop typed as either one rejects the other component
- * outright. Naming only what is used keeps both assignable.
- */
-export interface PressableLikeProps {
-  children?: ReactNode;
-  onPress?: () => void;
-  style?: StyleProp<ViewStyle>;
-  hitSlop?: number | Insets;
-  onPressIn?: () => void;
-  onPressOut?: () => void;
-  accessibilityLabel?: string;
-  accessibilityRole?: 'button';
-  accessibilityState?: AccessibilityState;
-  testID?: string;
-}
 
 export interface GlassIconButtonProps {
   /** Icon name from Ionicons */

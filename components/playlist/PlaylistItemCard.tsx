@@ -1,5 +1,5 @@
 import { BaseCard, ProgressBar } from '@/components/common';
-import { memo, type FC } from 'react';
+import { memo, type ComponentType, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -14,6 +14,7 @@ import { getEnhancedOpacity, LAYOUT, TEXT_OPACITY, TEXT_STYLES } from '@/constan
 import { useEditModeCardAnimation } from '@/hooks/cards';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import type { PressableLikeProps } from '@/types/ui/base.types';
 
 // Bookmarks thumbnail size with 4:3 ratio for optimal vertical space in portrait mobile
 // Uses centralized constants from layout.ts for consistency
@@ -37,6 +38,9 @@ interface PlaylistItemCardProps {
   progressPercentage?: number;
   // Compact mode — smaller title for constrained widths (e.g. horizontal scroll cards)
   compact?: boolean;
+  // Pressable implementation, forwarded to BaseCard. Rows rendered inside the
+  // article reader must pass react-native-gesture-handler's — see BaseCardProps.
+  PressableComponent?: ComponentType<PressableLikeProps>;
 }
 
 export const PlaylistItemCard: FC<PlaylistItemCardProps> = memo(
@@ -53,6 +57,7 @@ export const PlaylistItemCard: FC<PlaylistItemCardProps> = memo(
     articleId,
     progressPercentage,
     compact = false,
+    PressableComponent,
   }) => {
     const isDarkMode = useIsDarkMode();
     const colors = useColors();
@@ -88,6 +93,7 @@ export const PlaylistItemCard: FC<PlaylistItemCardProps> = memo(
           <BaseCard
             onPress={editMode ? undefined : onPress}
             onPressIn={editMode ? undefined : onPressIn}
+            PressableComponent={PressableComponent}
           >
             <View style={styles.cardContent}>
               {/* Article thumbnail - bookmarks style */}

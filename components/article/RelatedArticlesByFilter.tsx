@@ -1,6 +1,14 @@
 import { useRouter } from 'expo-router';
 import { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
+// Gesture-handler Pressable, NOT react-native's. The article screen wraps its
+// whole content in an RNGH Pressable (see app/article/[id].tsx) to dismiss the
+// word tooltip on a background tap, and these rows render inside it as the
+// list footer. An RNGH ancestor wins the gesture arena against descendants
+// that use the JS responder system, so every related-article card silently
+// stopped responding to taps — the same failure the floating action buttons
+// and the tutorial close button already hit.
+import { Pressable } from 'react-native-gesture-handler';
 
 import { SectionLabel } from '@/components/common';
 import { PlaylistItemCard } from '@/components/playlist';
@@ -120,18 +128,16 @@ export const RelatedArticlesByFilter = memo<RelatedArticlesByFilterProps>(
         .slice(0, maxArticles);
     }, [unreadOrLowProgressArticles, maxArticles]);
 
-    // Navigation handler - dismiss current modal then push new one
-    // This ensures clean modal transitions without state synchronization issues
+    // Push the next article, exactly like every other article link in the app.
+    //
+    // This used to call router.back() and then push 100ms later, on the premise
+    // that the reader is a modal that has to be dismissed first. It is not —
+    // article/[id] is a plain pushed screen (app/_layout.tsx), so that popped
+    // the reader back to Explore and then raced a push into the middle of the
+    // pop animation, with an uncancelled timer left to fire after unmount.
     const handleArticlePress = useCallback(
       (articleId: ArticleId, title: string) => {
-        // Dismiss current article modal
-        router.back();
-
-        // Wait for dismiss animation to start, then push new article
-        // This prevents modal stacking while giving smooth transition
-        setTimeout(() => {
-          router.push(getArticleRoute(articleId, title));
-        }, 100); // Brief delay for dismiss animation to start
+        router.push(getArticleRoute(articleId, title));
       },
       [router],
     );
@@ -153,6 +159,7 @@ export const RelatedArticlesByFilter = memo<RelatedArticlesByFilterProps>(
               articleId={article.id}
               progressPercentage={progressPercentage}
               onPress={() => handleArticlePress(article.id, article.title)}
+              PressableComponent={Pressable}
             />
           </View>
         );

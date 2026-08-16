@@ -1,6 +1,7 @@
+import type { ComponentType } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 
-import type { BaseComponentProps } from './base.types';
+import type { BaseComponentProps, PressableLikeProps } from './base.types';
 
 /** Which theme surface the card paints itself with. */
 export type CardSurface = 'card' | 'elevation1' | 'elevation2';
@@ -42,4 +43,14 @@ export interface BaseCardProps extends Omit<BaseComponentProps, 'loading'> {
   bordered?: boolean;
   /** Additional styling for the content container */
   contentStyle?: StyleProp<ViewStyle>;
+  /**
+   * Pressable implementation. Defaults to react-native's.
+   *
+   * Pass react-native-gesture-handler's when an RNGH ancestor owns the gesture
+   * arena — an RNGH ancestor beats descendants using the JS responder system, so
+   * a react-native Pressable nested under one silently stops receiving taps.
+   * The article reader wraps its whole content in an RNGH Pressable to dismiss
+   * the word tooltip, so every card rendered inside it needs this.
+   */
+  PressableComponent?: ComponentType<PressableLikeProps>;
 }
