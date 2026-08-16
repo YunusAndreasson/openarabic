@@ -464,4 +464,103 @@ describe('matchSingleWord — shared head prefix rescues a long gloss', () => {
     expect(matchSingleWord({ spoken: 'just', expected: 'jest' }).matched).toBe(false);
     expect(matchSingleWord({ spoken: 'cot', expected: 'cat' }).matched).toBe(false);
   });
+
+  // Both widenings run only after the card's own gloss has missed, and both pay
+  // out at `vague` — see the MatchCredit doc. Every real pair below is from the
+  // voice_grading_attempts table.
+  describe('aliases — the learner`s own accept-list', () => {
+    it('credits an exact repeat of a remembered mishear', () => {
+      const r = matchSingleWord({
+        spoken: 'Linear.',
+        expected: 'lineage',
+        aliases: ['linear'],
+      });
+      expect(r.matched).toBe(true);
+      expect(r.method).toBe('alias');
+      expect(r.credit).toBe('vague');
+    });
+
+    it('never awards full credit, however sure the learner was', () => {
+      // The card gloss is the only string that can earn `known`. An alias is
+      // the learner vouching for a transcript, which is weaker evidence than
+      // them producing the answer.
+      expect(
+        matchSingleWord({ spoken: 'on her', expected: 'honor', aliases: ['on her'] }).credit,
+      ).toBe('vague');
+    });
+
+    it('matches exactly — a near-miss of a remembered mishear is still a miss', () => {
+      // Deliberately strict. Fuzzing an alias would compound two approximations
+      // and let a word drift a step further from its answer with each accept.
+      const r = matchSingleWord({ spoken: 'Lineal.', expected: 'lineage', aliases: ['linear'] });
+      expect(r.method).not.toBe('alias');
+    });
+
+    it('cannot rescue a hallucination or silence', () => {
+      // A stock model phrase stored as an alias would credit every future
+      // hallucination on that card, so those never reach the alias pass.
+      expect(
+        matchSingleWord({ spoken: 'thank you', expected: 'honor', aliases: ['thank you'] }).matched,
+      ).toBe(false);
+      expect(matchSingleWord({ spoken: '', expected: 'honor', aliases: [''] }).matched).toBe(false);
+    });
+
+    it('leaves a right answer at full credit rather than demoting it', () => {
+      // The gloss ladder runs first, so an alias can only ever add.
+      const r = matchSingleWord({ spoken: 'lineage', expected: 'lineage', aliases: ['linear'] });
+      expect(r.credit).toBe('known');
+      expect(r.method).toBe('exact');
+    });
+  });
+
+  describe('corpus alternates — the same root, glossed elsewhere', () => {
+    it('accepts another English name the corpus uses for the word', () => {
+      // مَجْلِس is "assembly" on the card and "gathering" in the articles. A
+      // learner who says the second one knows the word.
+      const r = matchSingleWord({
+        spoken: 'gathering',
+        expected: 'assembly',
+        alternates: ['gathering', 'the assembly'],
+      });
+      expect(r.matched).toBe(true);
+      expect(r.method).toBe('corpus');
+      expect(r.credit).toBe('vague');
+    });
+
+    it('strips the scaffolding the recognizer adds', () => {
+      const r = matchSingleWord({
+        spoken: 'a garden',
+        expected: 'paradise',
+        alternates: ['the garden'],
+      });
+      expect(r.matched).toBe(true);
+      expect(r.credit).toBe('vague');
+    });
+
+    it('never awards full credit — a wrong corpus gloss must not bury a word', () => {
+      // Root 10514 is "defame" and also carries "the cup" in sentence_words.
+      // Nothing filters that out, so the payout is what keeps it survivable:
+      // Rating.Hard shortens the interval instead of extending it.
+      const r = matchSingleWord({
+        spoken: 'the cup',
+        expected: 'defame',
+        alternates: ['the cup'],
+      });
+      expect(r.credit).not.toBe('known');
+    });
+
+    it('does not widen a genuinely wrong answer', () => {
+      const r = matchSingleWord({
+        spoken: 'Establishment',
+        expected: 'expansive',
+        alternates: ['the expanse', 'wide'],
+      });
+      expect(r.credit).not.toBe('known');
+    });
+
+    it('is inert when the word has no corpus glosses', () => {
+      const r = matchSingleWord({ spoken: 'mercy', expected: 'mercy', alternates: [] });
+      expect(r.credit).toBe('known');
+    });
+  });
 });

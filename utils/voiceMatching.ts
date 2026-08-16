@@ -431,6 +431,10 @@ export type MatchMethod =
   /** Matched the gloss's head content word once scaffolding was stripped. */
   | 'head'
   | 'near'
+  /** Matched a transcript the learner personally accepted for this word. */
+  | 'alias'
+  /** Matched how the corpus glosses this root elsewhere, not the card's gloss. */
+  | 'corpus'
   | 'hallucination'
   | 'miss';
 
@@ -440,6 +444,12 @@ export type MatchMethod =
  * `near` path is `vague`: the utterance is acoustically the answer but the
  * transcript isn't, so we credit it rather than fail the learner, at the lower
  * confidence tier. See NEAR_MIN_PHONETIC for why that tier is the whole trick.
+ *
+ * `alias` and `corpus` are `vague` for the same reason from the other side:
+ * there the transcript is taken at face value but the EXPECTED string is not
+ * the card's gloss, so what was matched is only probably the right answer.
+ * Everything we are less than certain about pays out at Rating.Hard, which
+ * passes the card while pulling it back sooner.
  */
 export type MatchCredit = 'known' | 'vague' | 'unknown';
 
@@ -451,7 +461,7 @@ export type MatchCredit = 'known' | 'vague' | 'unknown';
  */
 const LEADING_FUNCTION_WORDS = /^(?:to|the|a|an)\s+/;
 
-function stripLeadingFunctionWords(text: string): string {
+export function stripLeadingFunctionWords(text: string): string {
   let out = text;
   let previous: string;
   do {
@@ -1020,13 +1030,13 @@ function matchAgainstOneExpected({
 }
 
 /**
- * Did the learner say the expected answer? Wraps the matcher so a gloss that
- * lists alternatives ("return/end", "precious, noble, valuable") accepts ANY of
- * them — see `expectedAlternatives`. On a miss, reports the alternative that
- * came closest, so the debug HUD and telemetry show the comparison that
- * actually mattered rather than the raw multi-answer string.
+ * Run the full ladder against one gloss string, accepting any of the
+ * alternatives it lists ("return/end", "precious, noble, valuable") — see
+ * `expectedAlternatives`. On a miss, reports the alternative that came closest,
+ * so the debug HUD and telemetry show the comparison that actually mattered
+ * rather than the raw multi-answer string.
  */
-export function matchSingleWord({
+function matchAgainstGloss({
   spoken,
   expected,
 }: {
@@ -1045,4 +1055,74 @@ export function matchSingleWord({
     if (best === null || result.similarity > best.similarity) best = result;
   }
   return best ?? matchAgainstOneExpected({ spoken, expected });
+}
+
+/**
+ * Did the learner say the expected answer?
+ *
+ * The card's own gloss is tried first and is the only string that can earn
+ * `known` credit — it is the only one we know is right. Two widenings run
+ * afterwards, and ONLY after the gloss has missed, both crediting `vague`:
+ *
+ * - `aliases` — transcripts this learner personally pressed "Got it" on for
+ *   this word. Exact normalized equality, no fuzzing: the point is to stop one
+ *   recurring recognizer quirk ("lineage" transcribed as "Linear.") from
+ *   re-interrupting them, not to relax grading. Built by `utils/voiceAliases`,
+ *   which is also where the rules for what may be remembered live.
+ * - `alternates` — how the corpus glosses this same root elsewhere
+ *   (`sentence_words.english`). مَجْلِس is "assembly" on the card but
+ *   "gathering" / "session" in the articles, and a learner who says one of
+ *   those is right. 97% of roots carry a single gloss with no `/`-alternatives,
+ *   so without this `expectedAlternatives` has nothing to work with and the
+ *   learner is failed for knowing the word by a different English name.
+ *
+ * `vague` is Rating.Hard — a pass that SHORTENS the interval. That is the whole
+ * reason both widenings are safe: neither the corpus nor the learner's own
+ * override is trustworthy enough to bury a word on, but both are far better
+ * than marking a right answer wrong.
+ */
+export function matchSingleWord({
+  spoken,
+  expected,
+  aliases,
+  alternates,
+}: {
+  spoken: string;
+  expected: string;
+  /** Already normalized — see `normalizeAlias` in `utils/voiceAliases`. */
+  aliases?: readonly string[];
+  /** Raw corpus glosses; normalized here like any other expected string. */
+  alternates?: readonly string[];
+}): SingleWordMatchResult {
+  const primary = matchAgainstGloss({ spoken, expected });
+  if (primary.matched) return primary;
+
+  const { normalizedSpoken } = primary;
+  // Nothing was said, or the model produced one of its stock phrases. Neither
+  // widening may rescue those: an alias keyed on "thank you" would credit every
+  // future hallucination on that card.
+  if (normalizedSpoken.length === 0 || primary.method === 'hallucination') return primary;
+
+  for (const alias of aliases ?? []) {
+    if (alias.length > 0 && alias === normalizedSpoken) {
+      return {
+        matched: true,
+        credit: 'vague',
+        method: 'alias',
+        similarity: 1,
+        normalizedSpoken,
+        normalizedExpected: alias,
+      };
+    }
+  }
+
+  for (const alternate of alternates ?? []) {
+    const result = matchAgainstGloss({ spoken, expected: alternate });
+    // Downgraded even when the alternate matched exactly: the learner produced
+    // a gloss the card never showed them, so this is credit-by-corpus, not the
+    // demonstrated recall that `known` means.
+    if (result.matched) return { ...result, credit: 'vague', method: 'corpus' };
+  }
+
+  return primary;
 }

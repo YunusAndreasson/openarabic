@@ -752,19 +752,48 @@ export class VoiceCaptureSession {
    * Tear the session's input stream down. Called when the review screen
    * unmounts, when voice is switched off mid-session, and before a reopen
    * forced by an interruption or route change.
+   *
+   * `releaseSession` additionally deactivates the iOS audio session, which is
+   * what makes a post-interruption reopen actually work. Field evidence: after
+   * a call, `recorder.start()` kept failing with "Failed to start audio engine
+   * for recording" while the session reported `active=true`, `inputChannels=1`
+   * and the built-in microphone present in the route. Nothing was wrong with
+   * the session or the route — the engine had been torn down by the
+   * interruption and never rebuilt, because `openInternal`'s
+   * `setAudioSessionActivity(true)` is a no-op against a session iOS already
+   * considers active. Deactivating first forces the activation to mean
+   * something. Three arms failed this way in a row (each after exhausting its
+   * retries) and the microphone stayed dead for the rest of the session.
+   *
+   * Off by default because the playback lane shares this session: an unmount or
+   * a voice-off toggle must not deactivate a session the review prompt may
+   * still be using. Only the "the input is broken, rebuild it" paths pass it.
    */
-  async close(): Promise<void> {
+  async close({ releaseSession = false }: { releaseSession?: boolean } = {}): Promise<void> {
     this.cancelWindow();
     const recorder = this.recorder;
     this.recorder = null;
-    if (!recorder) return;
-    try {
-      recorder.clearOnAudioReady();
-      recorder.clearOnError();
-      await recorder.stop();
-    } catch {
-      // The stream is gone either way; a failed teardown must not block the
-      // caller, which is usually an unmount.
+    if (recorder) {
+      try {
+        // Stop BEFORE dropping the callbacks. The other order removes the
+        // buffer tap while the engine is still running, which leaves the native
+        // side stopping a stream whose sink has already gone.
+        await recorder.stop();
+        recorder.clearOnAudioReady();
+        recorder.clearOnError();
+      } catch {
+        // The stream is gone either way; a failed teardown must not block the
+        // caller, which is usually an unmount.
+      }
+    }
+    if (releaseSession && Platform.OS === 'ios') {
+      try {
+        await AudioManager.setAudioSessionActivity(false);
+      } catch {
+        // Deactivation is refused whenever anything else still holds the
+        // session. The reopen re-activates regardless, so this is a best-effort
+        // nudge rather than a step the caller depends on.
+      }
     }
   }
 }

@@ -93,6 +93,17 @@ export interface WordExample {
  *  keeping one bounded query for the whole session chunk. */
 const EXAMPLE_ROWS_PER_ROOT = 8;
 
+/** Distinct corpus glosses kept per root. Measured on 20 studied roots: 3.5 new
+ *  glosses each on average, but a very common root runs much higher ("who" has
+ *  22 across 120 rows). Past a dozen the extras are inflected repeats of ones
+ *  already in the set, and every entry costs a full ladder run on a miss. */
+const GLOSS_ALTERNATES_PER_ROOT = 12;
+
+/** PostgREST truncates an unbounded select at 1000 rows silently, so this pages.
+ *  A 20-word chunk is ~200 rows; the cap is the runaway guard, not the budget. */
+const GLOSS_PAGE_SIZE = 1000;
+const GLOSS_MAX_PAGES = 4;
+
 export const sentencesService = {
   /**
    * One example sentence for each of many roots, in a single round trip.
@@ -190,6 +201,71 @@ export const sentencesService = {
       });
     }
     return examples;
+  },
+
+  /**
+   * Every distinct English gloss the corpus uses for each of these roots.
+   *
+   * Voice grading compares what was said against `roots.meaning` — one string.
+   * 97% of roots carry a single gloss with no `/`-alternatives, so مَجْلِس is
+   * only ever "assembly" and a learner who answers "gathering", "session" or
+   * "sitting" is marked wrong for knowing the word. The articles already hold
+   * those other names: `sentence_words.english` is the same root glossed in
+   * context, and reading it costs one bounded query against a table the review
+   * lane already queries.
+   *
+   * Returned raw rather than normalized, because the matcher's own
+   * `expectedAlternatives` splits on `/` and `,` and normalizing first would
+   * weld those apart-able glosses into one token.
+   *
+   * Two things this deliberately does NOT do. It does not filter out inflected
+   * or article-prefixed forms ("the matter", "his command", "and matters") —
+   * they cost nothing, since the matcher strips that scaffolding anyway. And it
+   * does not try to detect a wrong gloss in the corpus: root 10514 is "defame"
+   * and also carries "the cup". That is what the caller crediting `vague`
+   * instead of `known` is for — see `matchSingleWord`.
+   */
+  async getGlossAlternatesForRoots(rootIds: RootId[]): Promise<Map<number, string[]>> {
+    if (rootIds.length === 0) return new Map();
+
+    const ids = rootIds.map(id => id as number);
+    const rows: { root_id: number; english: string | null }[] = [];
+    for (let page = 0; page < GLOSS_MAX_PAGES; page++) {
+      const batch = await executeQuery(
+        () =>
+          supabase
+            .from('sentence_words')
+            .select('root_id, english')
+            .in('root_id', ids)
+            .range(page * GLOSS_PAGE_SIZE, (page + 1) * GLOSS_PAGE_SIZE - 1),
+        {
+          ...errorConfig.loadByRootId,
+          analyticsProperties: { rootCount: rootIds.length, page },
+        },
+      );
+      if (batch.length === 0) break;
+      rows.push(...batch);
+      if (batch.length < GLOSS_PAGE_SIZE) break;
+    }
+
+    const seen = new Map<number, Set<string>>();
+    const alternates = new Map<number, string[]>();
+    for (const row of rows) {
+      const gloss = row.english?.trim();
+      if (!gloss) continue;
+      const key = gloss.toLowerCase();
+      let keys = seen.get(row.root_id);
+      if (!keys) {
+        keys = new Set();
+        seen.set(row.root_id, keys);
+        alternates.set(row.root_id, []);
+      }
+      const list = alternates.get(row.root_id);
+      if (!list || keys.has(key) || list.length >= GLOSS_ALTERNATES_PER_ROOT) continue;
+      keys.add(key);
+      list.push(gloss);
+    }
+    return alternates;
   },
 
   /**

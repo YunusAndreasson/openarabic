@@ -29,7 +29,12 @@ import { TIMING_CONFIG, VERDICT } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { TutorialId } from '@/constants/tutorials';
-import { useReview, useReviewExamples, useVoiceReview } from '@/hooks/review';
+import {
+  useReview,
+  useReviewExamples,
+  useReviewGlossAlternates,
+  useVoiceReview,
+} from '@/hooks/review';
 import { useColors } from '@/hooks/theme/useColors';
 import { useTutorial } from '@/hooks/tutorials/useTutorial';
 import { useAppSelectorShallow } from '@/store/hooks';
@@ -107,6 +112,9 @@ const ACTION_ENTERING = FadeIn.delay(TIMING_CONFIG.FLIP.duration / 2).duration(
   TIMING_CONFIG.FAST.duration,
 );
 const ACTION_EXITING = FadeOut.duration(TIMING_CONFIG.FAST.duration);
+
+/** Stable identity for a card with no corpus glosses yet (or none at all). */
+const EMPTY_GLOSSES: string[] = [];
 
 /** Reusable loading state component for review screen */
 function ReviewLoadingState({
@@ -289,6 +297,22 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   const examples = useReviewExamples(wordQueue);
   const currentExample = currentWord ? (examples.get(currentWord.root_id) ?? null) : null;
 
+  // Every English name the corpus gives each word in this chunk. Same bounded,
+  // non-blocking chunk-level prefetch as the examples above; it only widens what
+  // voice grading accepts, so a session runs unchanged without it.
+  const glossAlternates = useReviewGlossAlternates(wordQueue);
+  const currentAlternates = currentWord
+    ? (glossAlternates.get(currentWord.root_id) ?? EMPTY_GLOSSES)
+    : EMPTY_GLOSSES;
+  // The other answers currently in play. Voice grading never matches against
+  // these — they exist only to veto remembering a "Got it" whose transcript is
+  // a different drilled word's meaning, which is the one way the accept-list
+  // could teach the app something actively wrong.
+  const otherGlosses = wordQueue
+    .filter(word => word.root_id !== currentWord?.root_id)
+    .map(word => word.root?.meaning)
+    .filter((meaning): meaning is string => Boolean(meaning));
+
   // Voice grading — when the toggle is on, the action band carries a
   // tap-to-speak button next to "Show answer", and the mic opens only when the
   // learner presses it. Correct match → advance as "Knew it". Miss → mark the
@@ -311,6 +335,8 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     expected: currentWord?.root?.meaning ?? null,
     currentWordKey,
     rootId: currentWord?.root_id ?? null,
+    glossAlternates: currentAlternates,
+    otherGlosses,
     // Stop listening once the answer is revealed — the recall test is over.
     ready: !isUpdating && !isLoading && isAudioReady && !isComplete && !revealed,
     stopAudio,
@@ -459,6 +485,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
           voiceListening={voicePhase === 'listening'}
           onToggleVoice={voiceTogglePause}
           recallRun={sessionMetrics.currentStreak}
+          wordsDone={sessionMetrics.wordsReviewed}
         />
       </View>
 

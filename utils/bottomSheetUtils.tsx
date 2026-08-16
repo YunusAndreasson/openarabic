@@ -2,7 +2,6 @@ import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import { useBottomSheet } from '@gorhom/bottom-sheet';
 import { BlurView } from 'expo-blur';
 import { memo, useCallback, useMemo, useState } from 'react';
-import type { ViewProps } from 'react-native';
 import { Dimensions, StyleSheet } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -32,10 +31,21 @@ const DISAPPEARS_ON_INDEX = -1;
 const BlurBackdropComponent = ({ animatedIndex, style }: BottomSheetBackdropProps) => {
   const { close } = useBottomSheet();
   const { intensity, tint } = useBlurProps('backdrop');
-  const [pointerEvents, setPointerEvents] = useState<ViewProps['pointerEvents']>('auto');
+  /**
+   * Whether the sheet is open far enough for the backdrop to exist at all.
+   *
+   * Starts closed, and `useAnimatedReaction` only fires when its prepared value
+   * *changes* — a sheet that is never opened holds the closed state forever, so
+   * whatever this starts as is what it stays as. It used to start open, which is
+   * how the article reader shipped unscrollable: `WordDetailsBottomSheet` mounts
+   * with `index={-1}` and the backdrop is a full-screen absolutely-positioned
+   * sibling above the reader, so a live backdrop over a closed sheet ate every
+   * touch on the article until the sheet had been opened once.
+   */
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleContainerTouchability = useCallback((shouldDisable: boolean) => {
-    setPointerEvents(shouldDisable ? 'none' : 'auto');
+    setIsOpen(!shouldDisable);
   }, []);
 
   const tapHandler = useMemo(
@@ -58,15 +68,17 @@ const BlurBackdropComponent = ({ animatedIndex, style }: BottomSheetBackdropProp
     [animatedIndex],
   );
 
+  // No `!== previous` guard: `useAnimatedReaction` already runs the reaction only
+  // when its prepared value changes, so the comparison was redundant in the app
+  // and made the open state unreachable under the Reanimated test mock, which
+  // passes the prepared value as its own previous.
   useAnimatedReaction(
     () => {
       'worklet';
       return animatedIndex.value <= DISAPPEARS_ON_INDEX;
     },
-    (shouldDisable, previous) => {
-      if (shouldDisable !== previous) {
-        scheduleOnRN(handleContainerTouchability, shouldDisable);
-      }
+    shouldDisable => {
+      scheduleOnRN(handleContainerTouchability, shouldDisable);
     },
     [],
   );
@@ -76,9 +88,27 @@ const BlurBackdropComponent = ({ animatedIndex, style }: BottomSheetBackdropProp
     [style, animatedOpacity],
   );
 
+  /**
+   * Unmounted while closed rather than merely made non-interactive.
+   *
+   * `pointerEvents="none"` is not enough on Android: it takes the view out of
+   * React Native's own hit-testing (so taps fall through), but the surrounding
+   * `GestureDetector` registers a native handler with Gesture Handler's root
+   * view, which hit-tests the native tree itself. A closed backdrop therefore
+   * still swallowed *drags* — the article read as frozen even though tapping a
+   * word worked. Rendering nothing is the only state with no native view to
+   * intercept anything.
+   *
+   * Both animations survive: the reaction flips this on at the first frame of
+   * the open (so the fade-in starts from the interpolated opacity, which is 0
+   * there), and back off only once the index has fully returned to
+   * `DISAPPEARS_ON_INDEX`, which is the end of the fade-out.
+   */
+  if (!isOpen) return null;
+
   return (
     <GestureDetector gesture={tapHandler}>
-      <Animated.View style={containerStyle} pointerEvents={pointerEvents}>
+      <Animated.View style={containerStyle}>
         {/*
          * No blurMethod on Android — the dimezis methods require a `blurTarget`
          * ref pointing at a <BlurTargetView> wrapping the content to blur, and

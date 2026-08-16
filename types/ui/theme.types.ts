@@ -29,6 +29,7 @@ export interface ThemeColors {
   onError: string;
   tabIconDefault: string;
   tabIconSelected: string;
+  tabLabelSelected: string;
   icon: string;
   disabled: string;
   disabledButtonBg: string;

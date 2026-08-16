@@ -249,10 +249,15 @@ jest.mock('@/services/audioCache', () => ({
 
 // Mock react-native-worklets for thread scheduling
 jest.mock('react-native-worklets', () => ({
-  scheduleOnRN: jest.fn(callback => {
-    // Execute callback immediately in test environment (no threading)
+  // Runs the callback immediately (no threading in tests). The trailing args
+  // must be forwarded and the call must actually happen: this used to return an
+  // uninvoked closure and drop the args, so every `scheduleOnRN(fn, value)` in
+  // the app — the swipe commit arm, the verdict tone, AnimatedCount, the sheet
+  // backdrop — was a silent no-op under test and anything downstream of one
+  // passed vacuously.
+  scheduleOnRN: jest.fn((callback, ...args) => {
     if (typeof callback === 'function') {
-      return (...args) => callback(...args);
+      return callback(...args);
     }
     return callback;
   }),
@@ -986,6 +991,16 @@ beforeEach(() => {
     if (typeof haptics[name]?.mockResolvedValue === 'function') {
       haptics[name].mockResolvedValue(undefined);
     }
+  }
+
+  // Same problem, same fix: `resetMocks` strips the implementation that returns
+  // a subscription, so every AppState.addEventListener() handed back undefined
+  // and any effect cleaning itself up with `subscription.remove()` threw on
+  // unmount. Tests that assert on the listener read `.mock.calls`, which is
+  // untouched by re-arming this.
+  const { AppState } = require('react-native');
+  if (typeof AppState?.addEventListener?.mockImplementation === 'function') {
+    AppState.addEventListener.mockImplementation(() => ({ remove: jest.fn() }));
   }
 });
 

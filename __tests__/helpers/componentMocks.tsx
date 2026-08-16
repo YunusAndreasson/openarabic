@@ -77,6 +77,7 @@ const mockColors = {
   // Tab/navigation colors
   tabIconDefault: '#888888',
   tabIconSelected: '#4A9B8E',
+  tabLabelSelected: '#4A9B8E',
   navigationRipple: '#000000',
   tabBarOverlay: '#ffffff',
   headerOverlay: '#ffffff',

@@ -53,6 +53,8 @@ import {
 } from '@/services/voiceTelemetry';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import { setVoiceEnabled } from '@/store/settingsSlice';
+import { rememberAlias } from '@/store/voiceAliasesSlice';
+import { isAliasStorable } from '@/utils/voiceAliases';
 import { lightFeedback, warningFeedback } from '@/utils/haptics';
 import { getArmStages, markArmTap } from '@/utils/armTelemetry';
 import { getPromptSnapshot, recordPromptCut } from '@/utils/promptTelemetry';
@@ -138,6 +140,13 @@ interface UseVoiceReviewArgs {
   currentWordKey: string;
   /** Current card's root id, recorded with each telemetry attempt. */
   rootId: number | null | undefined;
+  /** Other English names the corpus gives this same root — see
+   *  `useReviewGlossAlternates`. Widens what counts as right, at `vague`. */
+  glossAlternates?: readonly string[];
+  /** Every OTHER answer in the current chunk. Not used for grading: it is the
+   *  one thing that may veto remembering a "Got it", because a transcript that
+   *  is another drilled word's gloss would otherwise pass two cards forever. */
+  otherGlosses?: readonly string[];
   /** Is the review session ready (not loading, no audio preload in flight). */
   ready: boolean;
   /** Stop any in-flight playback (reveal audio) before reopening the mic on a
@@ -172,6 +181,9 @@ interface UseVoiceReviewArgs {
    */
   onMissHeard: () => void;
 }
+
+/** Shared empty list so the optional grading inputs keep a stable identity. */
+const EMPTY_STRINGS: readonly string[] = [];
 
 /** Similarity below this counts as a "clean miss" — a clearly recognized but
  *  wrong word. Anything between this and FUZZY_MIN_SIMILARITY (0.70) is
@@ -224,6 +236,8 @@ export function useVoiceReview({
   expected,
   currentWordKey,
   rootId,
+  glossAlternates,
+  otherGlosses,
   ready,
   stopAudio,
   onKnownAuto,
@@ -259,6 +273,11 @@ export function useVoiceReview({
   );
   const iosRawMode = useAppSelectorShallow(state => state.settings.voiceIosRawMode);
   const debugEnabled = useAppSelectorShallow(state => state.settings.voiceDebugEnabled);
+  // The learner's own accept-list. Selected as the whole map (shallow-compared,
+  // so only a genuine write re-renders) and indexed per card, because the root
+  // changes on every card and a per-root selector would rebuild each time.
+  const aliasesByRoot = useAppSelectorShallow(state => state.voiceAliases.byRoot);
+  const aliases = (rootId != null ? aliasesByRoot[String(rootId)] : undefined) ?? EMPTY_STRINGS;
   const voice = useVoiceGrading();
   const dispatch = useAppDispatch();
   const { showToast } = useToast();
@@ -321,6 +340,13 @@ export function useVoiceReview({
   // voice channel: they need the CURRENT phase to decide whether there is
   // anything to take over or to stop.
   const phaseRef = useRef<VoicePhase>('idle');
+  // The two grading widenings, held in refs for the same reason the settings
+  // are: both arrive as fresh arrays every render, and the arm effect's deps
+  // are load-bearing — adding either would re-run it (and cancel an in-flight
+  // recording) on any incidental re-render.
+  const aliasesRef = useRef<readonly string[]>(EMPTY_STRINGS);
+  const glossAlternatesRef = useRef<readonly string[]>(EMPTY_STRINGS);
+  const otherGlossesRef = useRef<readonly string[]>(EMPTY_STRINGS);
   useEffect(() => {
     onKnownAutoRef.current = onKnownAuto;
     onVagueAutoRef.current = onVagueAuto;
@@ -330,6 +356,9 @@ export function useVoiceReview({
     stopAudioRef.current = stopAudio;
     settingsRef.current = { energyGateEnabled, gainNormalizeEnabled, iosRawMode, debugEnabled };
     phaseRef.current = phase;
+    aliasesRef.current = aliases;
+    glossAlternatesRef.current = glossAlternates ?? EMPTY_STRINGS;
+    otherGlossesRef.current = otherGlosses ?? EMPTY_STRINGS;
   });
 
   // The most recent resolved-or-pending attempt's loggable fields (everything
@@ -646,7 +675,12 @@ export function useVoiceReview({
         stopReason: outcome.result.stopReason,
       });
 
-      const match = matchSingleWord({ spoken: transcript, expected });
+      const match = matchSingleWord({
+        spoken: transcript,
+        expected,
+        aliases: aliasesRef.current,
+        alternates: glossAlternatesRef.current,
+      });
       void analytics.track(ANALYTICS_EVENTS.VOICE_MATCH, {
         matched: match.matched,
         method: match.method,
@@ -858,13 +892,23 @@ export function useVoiceReview({
   const accept = useCallback((): void => {
     const ctx = attemptCtxRef.current;
     if (ctx) void logVoiceAttempt({ ...ctx, resolution: 'accept' });
+    // Remember the mishear so this exact quirk stops interrupting them on this
+    // word. `ctx.transcript` is the raw heard text; `isAliasStorable` is what
+    // decides whether it may be kept at all — see utils/voiceAliases.
+    if (
+      ctx?.rootId != null &&
+      ctx.transcript &&
+      isAliasStorable({ transcript: ctx.transcript, otherGlosses: otherGlossesRef.current })
+    ) {
+      dispatch(rememberAlias({ rootId: ctx.rootId, transcript: ctx.transcript }));
+    }
     attemptCtxRef.current = null;
     setResult(null);
     // Blank the indicator immediately so nothing transient (the cleared result
     // panel, a stale phase) shows during the advance; the next card re-arms.
     setPhase('idle');
     onKnownAutoRef.current();
-  }, []);
+  }, [dispatch]);
 
   const reject = useCallback((): void => {
     const ctx = attemptCtxRef.current;

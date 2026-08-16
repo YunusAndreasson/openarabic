@@ -16,6 +16,7 @@ import editModeReducer from '@/store/editModeSlice';
 import playlistReducer from '@/store/playlistSlice';
 import settingsReducer from '@/store/settingsSlice';
 import themeReducer from '@/store/themeSlice';
+import voiceAliasesReducer from '@/store/voiceAliasesSlice';
 
 // Combine reducers (even if there's only one) so we can use a whitelist.
 const rootReducer = combineReducers({
@@ -23,6 +24,7 @@ const rootReducer = combineReducers({
   settings: settingsReducer,
   playlist: playlistReducer,
   editMode: editModeReducer,
+  voiceAliases: voiceAliasesReducer,
 });
 
 type RootStateShape = ReturnType<typeof rootReducer>;
@@ -31,7 +33,7 @@ type RootStateShape = ReturnType<typeof rootReducer>;
 const persistConfig: PersistConfig<RootStateShape> = {
   key: 'root',
   storage: AsyncStorage,
-  whitelist: ['theme', 'settings', 'playlist', 'editMode'],
+  whitelist: ['theme', 'settings', 'playlist', 'editMode', 'voiceAliases'],
 };
 
 const persistedReducer = persistReducer<RootStateShape>(persistConfig, rootReducer);

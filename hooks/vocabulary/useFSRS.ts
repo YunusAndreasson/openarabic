@@ -35,6 +35,7 @@ import {
 import { FSRS_INSTANCE } from '@/utils/fsrsUtils';
 import { PriorityQueue } from '@/utils/priorityQueue';
 import { decideDrill, type DrillProgress } from '@/utils/review/drillPolicy';
+import { getSessionProgress } from '@/utils/review/sessionProgress';
 
 // Consolidated counters and tracking data
 interface FSRSCounters {
@@ -423,18 +424,12 @@ export function useFSRS({
         return;
       }
 
-      const totalWordsInSession = countersRef.current.totalWords;
-
-      // Progress calculation: ONLY count words that have FINISHED (graduated to
-      // criterion or capped out). Words still being drilled in the spacing queue
-      // should NOT increase progress.
-      const newProgress =
-        totalWordsInSession > 0
-          ? Math.min(
-              Math.round((countersRef.current.finishedWords / totalWordsInSession) * 100),
-              100,
-            )
-          : 0;
+      // Only FINISHED words move the bar — see `getSessionProgress`, which owns
+      // both that rule and the choice of denominator.
+      const newProgress = getSessionProgress(
+        countersRef.current.finishedWords,
+        countersRef.current.totalWords,
+      );
       setProgress(newProgress);
 
       // FIXED: Ensure forward progress when only spaced words remain (avoid deadlock)

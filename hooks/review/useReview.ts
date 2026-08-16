@@ -10,7 +10,7 @@ import {
   useState,
 } from 'react';
 import type { ViewStyle } from 'react-native';
-import { InteractionManager } from 'react-native';
+import { AppState, InteractionManager } from 'react-native';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TIMING_CONFIG, VERDICT } from '@/constants/animation';
@@ -354,6 +354,10 @@ export function useReview({
     playbackPriority(playbackOnly),
   );
   const getVoiceEnabled = useEffectEvent(() => voiceEnabled);
+
+  /** True once the app has actually left the foreground, so returning to it can
+   *  be told apart from the first `active` the listener ever sees. */
+  const wasBackgroundedRef = useRef(false);
 
   // Monotonic token for playAudio calls. play() returning false can mean the
   // call was superseded by a newer play (or a stop); the cache self-heal retry
@@ -1186,6 +1190,58 @@ export function useReview({
         .catch(handleError);
     }
   }, [currentWord, playAudio, playbackPriority]);
+
+  /**
+   * Play the current card's prompt again after the app comes back.
+   *
+   * A prompt cut short by an interruption — a call, Siri, another app taking
+   * the audio session — leaves the card on screen and permanently silent. The
+   * prompt effect is one-shot per `currentWordKey` (see `lastProcessedWordId`),
+   * and that key does not change while the app is away, so returning to the
+   * session replays nothing. Field telemetry caught it exactly: one card
+   * carried its ORIGINAL prompt record (`audibleMs: 1109`, `playMs: 22`) across
+   * a 3.5-minute call and into three failed arms afterwards, with no second
+   * playback of any kind and no row of its own, because the effect returned
+   * before it could log one.
+   *
+   * Unconditional for an unanswered card rather than gated on "was the prompt
+   * actually cut", because nothing downstream can tell. An interruption stalls
+   * the play head, so the watcher's wall-clock backstop settles as `reachedEnd`
+   * and the card records `heardInFull: true` for a word the learner never
+   * heard. Replaying on return is the right behaviour regardless — coming back
+   * to a card you were part-way through and hearing the word is what you want.
+   *
+   * Routed through `handleReplayAudio`, the same path as the replay button, so
+   * it takes playback priority and supersedes cleanly. Deliberately NOT done by
+   * clearing `lastProcessedWordId`: re-entering the prompt effect for a card it
+   * has already run would leave the first run's finish watcher alive on the same
+   * key, and that watcher's `markDone` hands the audio session back — under the
+   * replay it would then be racing.
+   */
+  const resumePromptAfterReturn = useEffectEvent(() => {
+    if (isComplete || stateRefs.current.completionTriggered) return;
+    if (!currentWord?.root?.audio_url) return;
+    // The answer is already up: the recall test is over and the reveal path
+    // does its own playback.
+    if (showTranslation) return;
+    diagMark('prompt.resume');
+    void handleReplayAudio();
+  });
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextState => {
+      if (nextState === 'background') {
+        wasBackgroundedRef.current = true;
+        return;
+      }
+      if (nextState !== 'active' || !wasBackgroundedRef.current) return;
+      wasBackgroundedRef.current = false;
+      resumePromptAfterReturn();
+    });
+    return () => subscription.remove();
+    // `resumePromptAfterReturn` is a useEffectEvent and must never be a dep —
+    // listing it would re-subscribe on every render and defeat the point.
+  }, []);
 
   /**
    * Play an example sentence's audio. Explicitly user-initiated only — it is

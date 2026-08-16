@@ -90,6 +90,11 @@ export const STRINGS = {
   RESTUDY_CONTINUE: 'Continue',
   RESTUDY_HINT: 'Take a moment with this one',
   RECALL_RUN: (count: number) => `${count} in a row`,
+  SESSION_WORDS_DONE: (count: number) => `${count} done`,
+  // Says out loud what the bar can only draw: how far into this sitting you are,
+  // and how many words the whole session has actually put behind you.
+  SESSION_PROGRESS_A11Y: (percent: number, done: number) =>
+    `${percent}% through this round, ${done} words done`,
   GRADE_FORGOT: 'Forgot',
   GRADE_GUESSED: 'Guessed',
   GRADE_KNEW_IT: 'Knew it',

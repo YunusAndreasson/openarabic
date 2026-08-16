@@ -500,8 +500,14 @@ const lightColors: ThemeColors = {
   tintBackground: withAlpha(basePalette.tint.primary, opacity.medium),
   onTint: basePalette.pure.white, // Text/icon color on tint backgrounds
   onError: basePalette.pure.white, // Text/icon on an `error` fill (destructive buttons)
-  tabIconDefault: basePalette.forest.lighter,
+  // `forest.lighter` measured 2.1:1 against the light tab bar (elevation1,
+  // #F8FAF9) — below the 3:1 floor for a glyph, let alone the 4.5:1 the label
+  // beside it needs. `medium` reads 6.9:1, which is where Material 3 puts
+  // `onSurfaceVariant` in a light scheme; the selected tab is still unmistakable
+  // because it carries the tint pill, not just a lighter colour.
+  tabIconDefault: basePalette.forest.medium,
   tabIconSelected: basePalette.tint.primary,
+  tabLabelSelected: basePalette.tint.primary, // 4.7:1 on the light bar — already clears AA
   icon: basePalette.forest.light,
   disabled: basePalette.disabled.universal,
   disabledButtonBg: basePalette.sage.light, // Disabled filled button surface
@@ -593,8 +599,14 @@ const darkColors: ThemeColors = {
   tintBackground: withAlpha(basePalette.tint.primaryDark, opacity.medium),
   onTint: basePalette.pure.black, // Dark text/icon on lighter tint in dark mode
   onError: basePalette.pure.black, // Dark error is light enough that black outreads white on it
-  tabIconDefault: basePalette.forest.light, // Increased from forest.medium for better dark mode visibility
+  // Raised a second rung (medium → light → lighter) now that the label reads off
+  // this token too. `forest.light` is 4.6:1 on the dark bar, which the icon could
+  // carry but which would have *dimmed* the label: it was inheriting the platform
+  // default and sitting at 10.9:1. `lighter` is 8.3:1, so unifying the two channels
+  // improves the icon without spending the label's legibility to do it.
+  tabIconDefault: basePalette.forest.lighter,
   tabIconSelected: basePalette.tint.primaryDark,
+  tabLabelSelected: basePalette.tint.primaryDark, // 8.1:1 on the dark bar
   icon: basePalette.forest.lighter, // Palette-based for consistency (matches light/sepia pattern)
   disabled: basePalette.disabled.universal,
   disabledButtonBg: elevation.dark.level1, // Elevated surface for ~3:1 contrast with disabled text
@@ -686,8 +698,19 @@ const sepiaColors: ThemeColors = {
   tintBackground: withAlpha(basePalette.autumn.accent.primary, opacity.medium),
   onTint: basePalette.sepiaPure.white, // Light text/icon on warm tint backgrounds
   onError: basePalette.sepiaPure.white, // Text/icon on an `error` fill (destructive buttons)
-  tabIconDefault: basePalette.autumn.lighter,
+  // Same correction as the light theme: `autumn.lighter` is 2.3:1 on the sepia
+  // tab bar (autumn.paper.light), `autumn.medium` is 8.2:1. See the light
+  // theme's `tabIconDefault` for why the step is two rungs and not one.
+  tabIconDefault: basePalette.autumn.medium,
   tabIconSelected: basePalette.autumn.accent.primary,
+  // The one theme where the selected label cannot be the tint: the sepia accent
+  // is 3.86:1 on its own tab bar, the last sub-AA text left in the navigation.
+  // Deepening `autumn.accent.primary` itself would have reached every tinted
+  // surface in the theme, so the label steps to the ink ramp instead — 11.6:1,
+  // and still darker than the unselected `autumn.medium` beside it, so selection
+  // continues to read as weight. The tint stays where it belongs, on the filled
+  // pill and the icon directly above.
+  tabLabelSelected: basePalette.autumn.dark,
   icon: basePalette.autumn.light,
   disabled: basePalette.disabled.universal,
   disabledButtonBg: basePalette.autumn.paper.light, // Disabled filled button surface

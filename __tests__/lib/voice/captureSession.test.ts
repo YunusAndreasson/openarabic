@@ -210,6 +210,54 @@ describe('VoiceCaptureSession', () => {
     expect(native._errorCallback).toBeNull();
   });
 
+  test('close() stops the engine before detaching the buffer tap', async () => {
+    const session = new VoiceCaptureSession();
+    await session.open(DEFAULT_RECORDING_CONFIG);
+    const native = recorder();
+
+    await session.close();
+
+    expect(native.callbackAttachedAtStop).toBe(true);
+  });
+
+  // A reopen after an interruption has to make the OS rebuild the audio engine.
+  // Re-activating a session iOS already considers active is a no-op, which is
+  // how a call left `recorder.start()` failing with "Failed to start audio
+  // engine for recording" for the rest of a real session — while the session
+  // reported active with the built-in microphone in the route.
+  test('close({ releaseSession: true }) deactivates the audio session', async () => {
+    const session = new VoiceCaptureSession();
+    await session.open(DEFAULT_RECORDING_CONFIG);
+    __mocks.AudioManager.setAudioSessionActivity.mockClear();
+
+    await session.close({ releaseSession: true });
+
+    expect(__mocks.AudioManager.setAudioSessionActivity).toHaveBeenCalledWith(false);
+  });
+
+  test('a plain close() leaves the audio session alone', async () => {
+    // The playback lane shares this session: an unmount or a voice-off toggle
+    // must not deactivate a session the review prompt may still be using.
+    const session = new VoiceCaptureSession();
+    await session.open(DEFAULT_RECORDING_CONFIG);
+    __mocks.AudioManager.setAudioSessionActivity.mockClear();
+
+    await session.close();
+
+    expect(__mocks.AudioManager.setAudioSessionActivity).not.toHaveBeenCalled();
+  });
+
+  test('a refused deactivation does not stop the stream being released', async () => {
+    // iOS refuses to deactivate whenever anything else still holds the session.
+    // The reopen re-activates regardless, so this must not throw.
+    const session = new VoiceCaptureSession();
+    await session.open(DEFAULT_RECORDING_CONFIG);
+    __mocks.AudioManager.setAudioSessionActivity.mockRejectedValueOnce(new Error('session busy'));
+
+    await expect(session.close({ releaseSession: true })).resolves.toBeUndefined();
+    expect(session.isOpen).toBe(false);
+  });
+
   test('a window opened before the stream simply captures nothing', async () => {
     const session = new VoiceCaptureSession();
     session.beginWindow({}, DEFAULT_RECORDING_CONFIG);

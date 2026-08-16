@@ -50,6 +50,9 @@ const STATIC_STYLES = StyleSheet.create({
     flex: 1,
     marginRight: LAYOUT.SPACING.LARGE,
   },
+  doneContainer: {
+    marginRight: LAYOUT.SPACING.MEDIUM,
+  },
   runContainer: {
     marginRight: LAYOUT.SPACING.MEDIUM,
   },
@@ -74,6 +77,8 @@ interface ReviewHeaderProps {
   onToggleVoice?: () => void;
   /** Consecutive recalls this session (useSessionMetrics.currentStreak). */
   recallRun?: number;
+  /** Unique words answered this session (useSessionMetrics.wordsReviewed). */
+  wordsDone?: number;
 }
 
 export const ReviewHeader: FC<ReviewHeaderProps> = ({
@@ -85,6 +90,7 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({
   voiceListening = false,
   onToggleVoice,
   recallRun = 0,
+  wordsDone = 0,
 }) => {
   const colors = useColors();
 
@@ -122,7 +128,25 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({
 
   return (
     <View style={STATIC_STYLES.header}>
-      <View style={STATIC_STYLES.progressContainer}>
+      {/* The cumulative count, left of the bar and permanent; the run counter on
+          the right is the transient one. Two different questions — how much have
+          I done, and how is it going right now — so they get two places rather
+          than taking turns in one. It carries the session past the point where
+          the bar can: the bar measures a sitting and pins full at the end of it,
+          and on a large backlog the learner keeps going well beyond that. */}
+      {wordsDone > 0 && (
+        <View style={STATIC_STYLES.doneContainer}>
+          <ThemedText type="caption" colorName="secondaryText" numberOfLines={1}>
+            {STRINGS.SESSION_WORDS_DONE(wordsDone)}
+          </ThemedText>
+        </View>
+      )}
+      <View
+        accessible
+        accessibilityRole="progressbar"
+        accessibilityLabel={STRINGS.SESSION_PROGRESS_A11Y(Math.round(displayProgress), wordsDone)}
+        style={STATIC_STYLES.progressContainer}
+      >
         {/* Deliberately thinner than the ProgressBar default (12): next to two
             44pt circular buttons a 12px pill reads as a third control rather
             than as chrome. */}

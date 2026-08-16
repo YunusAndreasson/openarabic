@@ -7,4 +7,5 @@ export * from './useReviewCompletion';
 export * from './useSessionMetrics';
 export * from './useAudioPreloader';
 export * from './useReviewExamples';
+export * from './useReviewGlossAlternates';
 export * from './useVoiceReview';

@@ -7,6 +7,7 @@ import { router, usePathname } from 'expo-router';
 
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 
+import { PRACTICE_DUE_WORDS_LIMIT } from '@/constants/queries';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { TAB_SCREENS } from '@/constants/tabs';
 import { useAuth } from '@/hooks/auth';
@@ -23,8 +24,16 @@ export default function TabLayout(): JSX.Element {
   const colors = useColors();
   const pathname = usePathname();
 
-  // Get due words count using the same hook as the practice screen
-  const { dueWords } = useFSRSQueries({ userId: session?.user?.id });
+  // Same capped query the practice screen runs, cache entry included — the limit
+  // is part of the query key, so passing nothing here was a second, unbounded
+  // fetch of the whole due backlog just to draw a badge. It also made the two
+  // disagree in public: the screen said "100+ to review today" under a tab
+  // wearing "999+", Material's own overflow for a four-digit count, and that pill
+  // is wide enough to cover most of the icon it is attached to.
+  const { dueWords } = useFSRSQueries({
+    userId: session?.user?.id,
+    limit: PRACTICE_DUE_WORDS_LIMIT,
+  });
   const dueWordsCount = dueWords?.length ?? 0;
 
   useEffect(() => {
@@ -64,6 +73,19 @@ export default function TabLayout(): JSX.Element {
         // icon, so the icon needs the contrast color. iOS has no pill — the
         // icon itself carries the tint.
         selected: Platform.OS === 'android' ? colors.onTint : colors.tint,
+      }}
+      // Without this, the unselected label falls through to the platform default
+      // (`Color.android.dynamic.onSurfaceVariant`), which is tuned for Material's
+      // own surfaces rather than ours: it painted a blue-grey #C5C6D0 that
+      // measured 1.6:1 on the light theme's near-white bar — legible in the dark
+      // theme by luck, and effectively invisible in the light and sepia ones. The
+      // label now takes the same token as the icon beside it, so a tab is one
+      // color rather than two. `selected` is spelled out rather than left to
+      // expo-router's fallback to `tintColor`, because in the sepia theme that
+      // tint is 3.86:1 on its own bar — see `tabLabelSelected`.
+      labelStyle={{
+        default: { color: colors.tabIconDefault },
+        selected: { color: colors.tabLabelSelected },
       }}
       // iOS NativeTabs intentionally minimal — matching edenmind's reference
       // impl. Three iOS-only props (minimizeBehavior, blurEffect,

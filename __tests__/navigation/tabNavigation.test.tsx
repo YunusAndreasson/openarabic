@@ -239,6 +239,7 @@ jest.mock('../../hooks/theme/useColors', () => ({
     border: '#ccc',
     borderOverlay: '#ccc',
     tabIconDefault: '#888',
+    tabLabelSelected: '#000',
     navigationRipple: '#000',
     tabBarOverlay: '#fff',
     textShadowLight: '#fff',

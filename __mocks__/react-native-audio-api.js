@@ -61,6 +61,10 @@ class MockAudioRecorder {
   }
   async stop() {
     this.stopCalls += 1;
+    // Snapshotted so a test can assert the teardown ORDER: the buffer tap must
+    // still be attached when the engine is stopped, not removed out from under
+    // a stream that is still running.
+    this.callbackAttachedAtStop = this._callback !== null;
     this.state = 'idle';
     return { status: 'ok', value: { paths: [], size: 0, duration: 0 } };
   }

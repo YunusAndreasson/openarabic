@@ -27,6 +27,7 @@ import {
   type FC,
   type ReactNode,
 } from 'react';
+import { AppState } from 'react-native';
 import { AudioManager } from 'react-native-audio-api';
 import { useSharedValue, type SharedValue } from 'react-native-reanimated';
 
@@ -256,34 +257,56 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
   // for callers — this flag is, since it's set from the actual error class.
   const lastOpenWasPermissionDeniedRef = useRef(false);
 
+  /**
+   * A reopen already running. Four separate signals can ask for one — an
+   * interruption ending, a route change, a stream error, and the app returning
+   * to the foreground — and after a phone call at least two of them fire within
+   * a moment of each other. Two overlapping close/open pairs interleave into a
+   * recorder built against a session the other half is still tearing down, so
+   * the second caller joins the first instead of starting a rival attempt.
+   */
+  const reopenInFlightRef = useRef<Promise<void> | null>(null);
+
   const openCapture = useCallback(
     async (reopen = false): Promise<void> => {
       if (holdersRef.current === 0) return;
-      try {
-        if (reopen) await capture.close();
-        await capture.open(recordingConfigRef.current);
-        lastOpenErrorRef.current = null;
-        lastOpenWasPermissionDeniedRef.current = false;
-        // The screen can close while the stream is still opening. Without this
-        // the release has already run its own close() and we would be left
-        // holding a live microphone with nobody using it.
-        if (holdersRef.current === 0) {
-          await capture.close();
-          return;
+      if (reopen && reopenInFlightRef.current) return reopenInFlightRef.current;
+      const run = (async (): Promise<void> => {
+        try {
+          // A reopen only ever happens because the input is broken — an
+          // interruption, a route change, or a stream error. Release the audio
+          // session on the way down so the reopen genuinely rebuilds the engine;
+          // see VoiceCaptureSession.close, where the field evidence lives.
+          if (reopen) await capture.close({ releaseSession: true });
+          await capture.open(recordingConfigRef.current);
+          lastOpenErrorRef.current = null;
+          lastOpenWasPermissionDeniedRef.current = false;
+          // The screen can close while the stream is still opening. Without this
+          // the release has already run its own close() and we would be left
+          // holding a live microphone with nobody using it.
+          if (holdersRef.current === 0) {
+            await capture.close();
+            return;
+          }
+          diagMark('mic.session.open', { reopen });
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          lastOpenErrorRef.current = message;
+          lastOpenWasPermissionDeniedRef.current = err instanceof MicPermissionDeniedError;
+          diagMark('mic.session.open.failed', { message, reopen });
+          Sentry.addBreadcrumb({
+            category: 'voice',
+            level: 'warning',
+            message: 'voice.session.open.failed',
+            data: { message, reopen },
+          });
         }
-        diagMark('mic.session.open', { reopen });
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        lastOpenErrorRef.current = message;
-        lastOpenWasPermissionDeniedRef.current = err instanceof MicPermissionDeniedError;
-        diagMark('mic.session.open.failed', { message, reopen });
-        Sentry.addBreadcrumb({
-          category: 'voice',
-          level: 'warning',
-          message: 'voice.session.open.failed',
-          data: { message, reopen },
-        });
-      }
+      })();
+      if (!reopen) return run;
+      reopenInFlightRef.current = run.finally(() => {
+        reopenInFlightRef.current = null;
+      });
+      return reopenInFlightRef.current;
     },
     [capture],
   );
@@ -497,6 +520,42 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
       AudioManager.observeAudioInterruptions(false);
     };
   }, [enabled, abortWindow, openCapture]);
+
+  /**
+   * Rebuild the input stream when the app comes back with a review still
+   * holding the microphone.
+   *
+   * The interruption listener above is the precise signal, but it is not a
+   * reliable one: a call takes the app to the background, and an `ended` event
+   * delivered while it is there does its reopen against a session the app is
+   * not allowed to activate — so it fails, silently, and nothing tries again.
+   * That is exactly what the field telemetry shows. After a 3.5-minute call the
+   * learner came back to a card whose microphone was dead, tapped three times,
+   * and got `recorder.start failed` on each, all with a healthy session and the
+   * built-in microphone present in the route. Leaving the app and returning did
+   * not help them because, until this, nothing in the voice lane listened for
+   * it at all.
+   *
+   * Cheap when it is not needed: `openCapture` returns immediately with no
+   * holders, and joins an interruption-driven reopen when one is already in
+   * flight rather than starting a second.
+   */
+  const wasBackgroundedRef = useRef(false);
+  useEffect(() => {
+    if (!enabled) return;
+    const subscription = AppState.addEventListener('change', nextState => {
+      if (nextState === 'background') {
+        wasBackgroundedRef.current = true;
+        return;
+      }
+      if (nextState !== 'active' || !wasBackgroundedRef.current) return;
+      wasBackgroundedRef.current = false;
+      if (holdersRef.current === 0) return;
+      diagMark('mic.session.foreground');
+      void openCapture(true);
+    });
+    return () => subscription.remove();
+  }, [enabled, openCapture]);
 
   // Stop the mic when the user turns the setting off mid-session.
   useEffect(() => {
