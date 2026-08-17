@@ -19,7 +19,7 @@
       },
       "supportsTablet": false,
       "bundleIdentifier": "openarabic",
-      "buildNumber": "258",
+      "buildNumber": "259",
       "appStoreUrl": "https://apps.apple.com/app/openarabic/id1594031029",
       "usesAppleSignIn": true,
       "entitlements": {
@@ -346,7 +346,7 @@
       }
     },
     "owner": "edenmind",
-    "runtimeVersion": "1448.2.10",
+    "runtimeVersion": "1448.3.2",
     "updates": {
       "url": "https://u.expo.dev/644480e0-3ac0-4ce6-b6ca-b950f62ca438",
       "enableBsdiffPatchSupport": true
