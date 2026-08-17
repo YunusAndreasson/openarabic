@@ -1,7 +1,7 @@
-import { skipToken, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
-import { fsrsQueries } from '@/constants/queries';
+import { fsrsQueries, gated } from '@/constants/queries';
 import { useAuth } from '@/hooks/auth/useAuth';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
 
@@ -33,19 +33,15 @@ export function useArabicWord({ word }: UseArabicWordProps): UseArabicWordReturn
 
   // CRITICAL: Use same query as useArticleWordInteractions for DRY consistency
   // Both underline state AND button state must use fsrsQueries.all() to stay in sync
-  const allConfig = fsrsQueries.all(user?.id ?? '');
   const { data: isInStudyList = false } = useQuery({
-    ...allConfig,
-    queryFn: user?.id ? allConfig.queryFn : skipToken,
+    ...gated(fsrsQueries.all, user?.id),
     select: selectHasRoot,
   });
 
   // Due words are a subset of all study words; subscribing to the due query as
   // well only makes the underline appear earlier while `all` is still loading.
-  const dueConfig = fsrsQueries.due(user?.id ?? '');
   const { data: isDueWord = false } = useQuery({
-    ...dueConfig,
-    queryFn: user?.id ? dueConfig.queryFn : skipToken,
+    ...gated(fsrsQueries.due, user?.id),
     select: selectHasRoot,
   });
 

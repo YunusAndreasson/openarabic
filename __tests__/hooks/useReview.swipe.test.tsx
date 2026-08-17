@@ -20,9 +20,10 @@ import { renderHook, act, waitFor } from '@testing-library/react-native';
 import { VERDICT } from '@/constants/animation';
 import { useReview } from '@/hooks/review/useReview';
 import {
-  setupUseReviewMocks,
   createMockWord,
   createWrapper,
+  fsrsState,
+  setupUseReviewMocks,
   type UseReviewMockRefs,
 } from './review/useReviewTestSetup';
 
@@ -60,13 +61,6 @@ jest.mock('@/hooks/utils/useTimerCleanup', () => ({
 
 jest.mock('@/hooks/animations/useOpacityAnimation', () => ({
   useOpacityAnimation: jest.fn(),
-}));
-
-jest.mock('expo-router', () => ({
-  router: {
-    back: jest.fn(),
-    replace: jest.fn(),
-  },
 }));
 
 // Note: getAudio returns synchronously to avoid async timing issues in tests
@@ -122,15 +116,7 @@ describe('useReview Hook - Swipe Gestures', () => {
       { gesture: 'swipe left', confidence: 'unknown' as const, expectedStability: 5 },
     ])('should handle $gesture → $confidence', async ({ confidence, expectedStability }) => {
       const word = createMockWord();
-      useFSRS.mockReturnValue({
-        currentWord: word,
-        wordQueue: [word],
-        isLoading: false,
-        isComplete: false,
-        progress: 0,
-        updateWord: mocks.mockUpdateWord,
-        invalidateQueries: mocks.mockInvalidateQueries,
-      });
+      useFSRS.mockReturnValue(fsrsState(mocks, word));
 
       const wrapper = createWrapper();
       const { result } = renderHook(() => useReview(), { wrapper });
@@ -177,15 +163,7 @@ describe('useReview Hook - Swipe Gestures', () => {
 
     test('a forgotten card commits only once, on the tap that leaves the hold', async () => {
       const word = createMockWord();
-      useFSRS.mockReturnValue({
-        currentWord: word,
-        wordQueue: [word],
-        isLoading: false,
-        isComplete: false,
-        progress: 0,
-        updateWord: mocks.mockUpdateWord,
-        invalidateQueries: mocks.mockInvalidateQueries,
-      });
+      useFSRS.mockReturnValue(fsrsState(mocks, word));
 
       const wrapper = createWrapper();
       const { result } = renderHook(() => useReview(), { wrapper });
@@ -217,15 +195,7 @@ describe('useReview Hook - Swipe Gestures', () => {
     describe('Grade Behavior', () => {
       test('should fade out on grade (card advance)', async () => {
         const word = createMockWord();
-        useFSRS.mockReturnValue({
-          currentWord: word,
-          wordQueue: [word],
-          isLoading: false,
-          isComplete: false,
-          progress: 0,
-          updateWord: mocks.mockUpdateWord,
-          invalidateQueries: mocks.mockInvalidateQueries,
-        });
+        useFSRS.mockReturnValue(fsrsState(mocks, word));
 
         const wrapper = createWrapper();
         const { result } = renderHook(() => useReview(), { wrapper });
@@ -248,15 +218,7 @@ describe('useReview Hook - Swipe Gestures', () => {
       // under a third of its opacity within three frames and never read.
       test('the dissolve waits for the verdict beat', () => {
         const word = createMockWord();
-        useFSRS.mockReturnValue({
-          currentWord: word,
-          wordQueue: [word],
-          isLoading: false,
-          isComplete: false,
-          progress: 0,
-          updateWord: mocks.mockUpdateWord,
-          invalidateQueries: mocks.mockInvalidateQueries,
-        });
+        useFSRS.mockReturnValue(fsrsState(mocks, word));
 
         const wrapper = createWrapper();
         const { result } = renderHook(() => useReview(), { wrapper });
@@ -276,15 +238,7 @@ describe('useReview Hook - Swipe Gestures', () => {
       // at the threshold first would stall a gesture that already said it all.
       test('a swipe skips the beat', () => {
         const word = createMockWord();
-        useFSRS.mockReturnValue({
-          currentWord: word,
-          wordQueue: [word],
-          isLoading: false,
-          isComplete: false,
-          progress: 0,
-          updateWord: mocks.mockUpdateWord,
-          invalidateQueries: mocks.mockInvalidateQueries,
-        });
+        useFSRS.mockReturnValue(fsrsState(mocks, word));
 
         const wrapper = createWrapper();
         const { result } = renderHook(() => useReview(), { wrapper });
@@ -304,15 +258,7 @@ describe('useReview Hook - Swipe Gestures', () => {
       // confirms an outcome that was never written.
       test('grade reports whether it acted', () => {
         const word = createMockWord();
-        useFSRS.mockReturnValue({
-          currentWord: word,
-          wordQueue: [word],
-          isLoading: false,
-          isComplete: false,
-          progress: 0,
-          updateWord: mocks.mockUpdateWord,
-          invalidateQueries: mocks.mockInvalidateQueries,
-        });
+        useFSRS.mockReturnValue(fsrsState(mocks, word));
 
         const wrapper = createWrapper();
         const { result } = renderHook(() => useReview(), { wrapper });
@@ -342,15 +288,7 @@ describe('useReview Hook - Swipe Gestures', () => {
 
       test('reveals the answer (shows the translation) before grading', () => {
         const word = createMockWord();
-        useFSRS.mockReturnValue({
-          currentWord: word,
-          wordQueue: [word],
-          isLoading: false,
-          isComplete: false,
-          progress: 0,
-          updateWord: mocks.mockUpdateWord,
-          invalidateQueries: mocks.mockInvalidateQueries,
-        });
+        useFSRS.mockReturnValue(fsrsState(mocks, word));
 
         const wrapper = createWrapper();
         const { result } = renderHook(() => useReview(), { wrapper });
@@ -383,15 +321,7 @@ describe('useReview Hook - Swipe Gestures', () => {
           },
         });
 
-        useFSRS.mockReturnValue({
-          currentWord: word,
-          wordQueue: [word],
-          isLoading: false,
-          isComplete: false,
-          progress: 0,
-          updateWord: mocks.mockUpdateWord,
-          invalidateQueries: mocks.mockInvalidateQueries,
-        });
+        useFSRS.mockReturnValue(fsrsState(mocks, word));
 
         const wrapper = createWrapper();
         const { result } = renderHook(() => useReview(), { wrapper });

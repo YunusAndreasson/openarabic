@@ -15,7 +15,7 @@ import type { BaseAnimatedStyleProps } from './base.types';
  * - `outlined` — a peer action alongside a `filled` one.
  * - `ghost`    — tertiary: "Not now", "Skip", inline links. No fill, no border.
  */
-export type ButtonVariant = 'filled' | 'tonal' | 'outlined' | 'ghost';
+type ButtonVariant = 'filled' | 'tonal' | 'outlined' | 'ghost';
 
 /**
  * Which hue a button paints itself with. Orthogonal to `variant`, so a
@@ -27,7 +27,7 @@ export type ButtonTone = 'default' | 'destructive';
 /**
  * Button size options
  */
-export type ButtonSize = 'large' | 'medium' | 'small';
+type ButtonSize = 'large' | 'medium' | 'small';
 
 /**
  * The button's corner treatment. Orthogonal to `size` and `variant`.
@@ -39,15 +39,15 @@ export type ButtonSize = 'large' | 'medium' | 'small';
  *   button when it is alone). Two shapes in one row read as two different
  *   controls, so loudness in a row is carried by the fill, not the radius.
  */
-export type ButtonShape = 'rounded' | 'pill';
+type ButtonShape = 'rounded' | 'pill';
 
 /** Where the icon sits relative to the label. */
-export type ButtonIconPosition = 'leading' | 'trailing';
+type ButtonIconPosition = 'leading' | 'trailing';
 
 /**
  * Base button props shared across all button variants
  */
-export interface BaseButtonProps
+interface BaseButtonProps
   extends Omit<PressableProps, 'style' | 'onPress'>, BaseAnimatedStyleProps {
   /**
    * Press handler. The gesture event is optional because the shared press
@@ -69,9 +69,10 @@ export interface BaseButtonProps
 }
 
 /**
- * Props for icon buttons (shared across variants)
+ * The icon slot a ThemedButton can carry. NOT the props of the standalone
+ * `IconButton` component — that has its own, different, local interface.
  */
-export interface IconButtonProps {
+interface ButtonIconProps {
   /** Optional Ionicons icon name to display alongside the title */
   icon?: IoniconName;
   /** Which side of the label the icon sits on (default: 'leading') */
@@ -81,7 +82,7 @@ export interface IconButtonProps {
 /**
  * Simplified ThemedButton props - variant is now optional with 'filled' as default
  */
-export interface ThemedButtonProps extends BaseButtonProps, IconButtonProps {
+export interface ThemedButtonProps extends BaseButtonProps, ButtonIconProps {
   /** Visual style variant of the button */
   variant?: ButtonVariant;
   /** Which hue the button paints itself with (default: 'default') */

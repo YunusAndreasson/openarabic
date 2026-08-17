@@ -58,7 +58,11 @@ jest.mock('@sentry/react-native', () => ({
   captureException: jest.fn(),
 }));
 
+// Spread the real module: only handleError needs silencing, and replacing it
+// wholesale silently drops every other export (the breadcrumb helpers), which
+// surfaces as "authBreadcrumb is not a function" deep inside the hook.
 jest.mock('@/utils/errorHandling', () => ({
+  ...jest.requireActual('@/utils/errorHandling'),
   handleError: jest.fn(),
 }));
 

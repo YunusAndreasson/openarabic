@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 import { OPTIMIZED_FSRS_CONFIG } from '@/constants/fsrs';
 import { useAppSelectorShallow } from '@/store/hooks';
 import { selectAdaptiveNewWordPacingEnabled } from '@/store/settingsSlice';
-import { parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
+import { parseSupabaseTimestamp, toLocalDateString } from '@/utils/dateTimeUtils';
 import { computeAdaptiveNewLimit, type AdaptiveNewLimit } from '@/utils/newWordPacing';
 import { readRecentRecall } from '@/utils/recallSignalStorage';
 
@@ -15,12 +15,9 @@ export const useDailyWordLimit = () => {
   const dailyWordLimit = useAppSelectorShallow(state => state.settings.dailyWordLimit);
   const adaptivePacingEnabled = useAppSelectorShallow(selectAdaptiveNewWordPacingEnabled);
 
-  const getCurrentDateString = useCallback(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
-      now.getDate(),
-    ).padStart(2, '0')}`;
-  }, []);
+  // The day boundary MUST be the same one countReviewedToday and the streak
+  // service use — see toLocalDateString for what went wrong when it wasn't.
+  const getCurrentDateString = useCallback(() => toLocalDateString(new Date()), []);
 
   const getDailyWordCount = useCallback(async (): Promise<number> => {
     try {
@@ -126,11 +123,7 @@ export const useDailyWordLimit = () => {
       const created = parseSupabaseTimestamp(createdAt);
       if (!created) return;
 
-      const createdDateString = `${created.getFullYear()}-${String(created.getMonth() + 1).padStart(
-        2,
-        '0',
-      )}-${String(created.getDate()).padStart(2, '0')}`;
-      if (createdDateString !== getCurrentDateString()) return;
+      if (toLocalDateString(created) !== getCurrentDateString()) return;
 
       await decrementDailyWordCount();
     },

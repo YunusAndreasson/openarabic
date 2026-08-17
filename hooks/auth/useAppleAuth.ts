@@ -6,6 +6,7 @@ import { Platform } from 'react-native';
 import { useOAuthProvider, type OAuthSignInResult } from '@/hooks/auth/useOAuthProvider';
 import { supabase } from '@/services/supabase';
 import { isCancellationError } from '@/utils/authUtils';
+import { authBreadcrumb } from '@/utils/errorHandling';
 
 /** Type for dynamically imported Apple Auth module (iOS only) */
 interface AppleAuthModule {
@@ -91,11 +92,7 @@ export function useAppleAuth(): UseAppleAuthReturn {
       const appleAuth = module as AppleAuthModule;
       if (Platform.OS === 'ios') {
         // iOS: Native Apple Authentication with retry for error 1000
-        Sentry.addBreadcrumb({
-          category: 'auth',
-          message: 'Starting iOS Apple Authentication flow',
-          level: 'info',
-        });
+        authBreadcrumb('Starting iOS Apple Authentication flow');
 
         // Retry logic for ASAuthorizationError.unknown (1000)
         // This error often occurs on first attempt when the module isn't fully ready
@@ -121,12 +118,11 @@ export function useAppleAuth(): UseAppleAuthReturn {
             const isUnknownError = errorCode === '1000';
             const shouldRetry = isUnknownError && attempt < maxRetries;
 
-            Sentry.addBreadcrumb({
-              category: 'auth',
-              message: `Apple auth attempt ${attempt + 1} failed`,
-              level: shouldRetry ? 'warning' : 'error',
-              data: { errorCode, willRetry: shouldRetry },
-            });
+            authBreadcrumb(
+              `Apple auth attempt ${attempt + 1} failed`,
+              { errorCode, willRetry: shouldRetry },
+              shouldRetry ? 'warning' : 'error',
+            );
 
             if (shouldRetry) {
               attempt++;
@@ -144,16 +140,11 @@ export function useAppleAuth(): UseAppleAuthReturn {
           throw new Error('Apple Sign In failed: no credential received');
         }
 
-        Sentry.addBreadcrumb({
-          category: 'auth',
-          message: 'Apple credential received',
-          level: 'info',
-          data: {
-            hasIdentityToken: !!credential.identityToken,
-            hasNonce: !!credential.nonce,
-            hasEmail: !!credential.email,
-            hasFullName: !!credential.fullName,
-          },
+        authBreadcrumb('Apple credential received', {
+          hasIdentityToken: !!credential.identityToken,
+          hasNonce: !!credential.nonce,
+          hasEmail: !!credential.email,
+          hasFullName: !!credential.fullName,
         });
 
         if (!credential.identityToken) {

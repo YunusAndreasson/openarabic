@@ -76,13 +76,15 @@ import {
   calculateRetrievabilityForecast,
 } from '@/utils/fsrsUtils';
 import { getMemoryHorizonDays } from '@/utils/memoryHorizon';
-import {
-  calculateDueWords,
-  calculateMasteredWords,
-  countReviewedToday,
-} from '@/utils/wordClassification';
+import { countReviewedToday, isDueWord, isMasteredWord } from '@/utils/wordClassification';
 import { normalizeTimestamp, parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
 import { DAYS_30, DAYS_7 } from '@/constants/chartConstants';
+
+// The screen counts by mapping the shared predicate over its list — there is no
+// separate aggregate function, deliberately, so a headline can never drift from
+// the filter that produced the rows underneath it. These mirror that exactly.
+const calculateDueWords = (words: StudyWord[]): number => words.filter(isDueWord).length;
+const calculateMasteredWords = (words: StudyWord[]): number => words.filter(isMasteredWord).length;
 
 // ---------------------------------------------------------------------------
 // Pinned clock. 2026-08-09T12:00:00Z — midday UTC, so a UTC/local day flip in

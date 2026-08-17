@@ -40,15 +40,6 @@ import type { StudyWord } from '@/types/vocabulary.types';
 // Mock dependencies
 jest.mock('@/services/studyWordsFSRS');
 // Keep inline for hoisting
-jest.mock('expo-router', () => ({
-  router: {
-    replace: jest.fn(),
-    back: jest.fn(),
-    push: jest.fn(),
-  },
-  useLocalSearchParams: jest.fn(),
-  useRouter: jest.fn(),
-}));
 jest.mock('@/services/supabase', () => ({
   supabase: {
     auth: {

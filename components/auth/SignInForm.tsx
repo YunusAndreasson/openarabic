@@ -1,17 +1,16 @@
 import { router } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback, useRef } from 'react';
-import type { TextInput } from 'react-native';
+import { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AuthEmailInput, AuthPasswordInput } from './AuthFormInputs';
+import { AuthSwitchPrompt } from './AuthSwitchPrompt';
 import { ThemedButton } from '@/components/ThemedButton';
-import { ThemedText } from '@/components/ThemedText';
 import { TextLink } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
-import { useAuthForm } from '@/hooks/auth/useAuthForm';
+import { useAuthFormFields } from '@/hooks/auth/useAuthFormFields';
 
 /**
  * Sign In Form Component
@@ -27,54 +26,25 @@ import { useAuthForm } from '@/hooks/auth/useAuthForm';
  * - Error handling
  */
 export function SignInForm(): JSX.Element {
-  const passwordInputRef = useRef<TextInput>(null);
-
   const {
     email,
-    setEmail,
     password,
-    setPassword,
     loading,
     emailError,
     passwordError,
-    validateEmail,
-    validatePassword,
     signInWithEmail,
     resetPassword,
-  } = useAuthForm();
+    passwordInputRef,
+    focusPasswordInput,
+    handleEmailChange,
+    handlePasswordChange,
+    handleEmailBlur,
+    handlePasswordBlur,
+  } = useAuthFormFields();
 
   const handleForgotPassword = useCallback(async () => {
     await resetPassword();
   }, [resetPassword]);
-
-  const focusPasswordInput = useCallback(() => {
-    passwordInputRef.current?.focus();
-  }, []);
-
-  // Input handlers
-  const handleEmailChange = useCallback(
-    (text: string) => {
-      setEmail(text);
-      if (emailError) validateEmail(text);
-    },
-    [emailError, validateEmail, setEmail],
-  );
-
-  const handlePasswordChange = useCallback(
-    (text: string) => {
-      setPassword(text);
-      if (passwordError) validatePassword(text);
-    },
-    [passwordError, validatePassword, setPassword],
-  );
-
-  const handleEmailBlur = useCallback(() => {
-    if (email) validateEmail(email);
-  }, [email, validateEmail]);
-
-  const handlePasswordBlur = useCallback(() => {
-    if (password) validatePassword(password);
-  }, [password, validatePassword]);
 
   const handleCreateAccount = useCallback(() => {
     router.push(ROUTE_PATHS.AUTH_SIGN_UP);
@@ -120,19 +90,13 @@ export function SignInForm(): JSX.Element {
         />
       </View>
 
-      {/* Link to Create Account */}
-      <View style={styles.createAccountContainer}>
-        <ThemedText type="body" colorName="secondaryText">
-          {STRINGS.DONT_HAVE_ACCOUNT}{' '}
-        </ThemedText>
-        <TextLink
-          accessibilityLabel="Go to create account"
-          label={STRINGS.CREATE_ACCOUNT}
-          testID="navigate-to-sign-up-link"
-          type="bodyBold"
-          onPress={handleCreateAccount}
-        />
-      </View>
+      <AuthSwitchPrompt
+        prompt={STRINGS.DONT_HAVE_ACCOUNT}
+        label={STRINGS.CREATE_ACCOUNT}
+        accessibilityLabel="Go to create account"
+        testID="navigate-to-sign-up-link"
+        onPress={handleCreateAccount}
+      />
     </View>
   );
 }
@@ -142,13 +106,6 @@ const styles = StyleSheet.create({
     marginTop: LAYOUT.SPACING.LARGE,
   },
   container: {
-    width: '100%',
-  },
-  createAccountContainer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: LAYOUT.SPACING.LARGE,
     width: '100%',
   },
   forgotPasswordContainer: {

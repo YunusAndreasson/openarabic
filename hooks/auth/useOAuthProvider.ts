@@ -4,7 +4,7 @@ import { useMountSafety } from '@/hooks/common/useMountSafety';
 import { analytics } from '@/services/analytics';
 import { supabase } from '@/services/supabase';
 import { isCancellationError } from '@/utils/authUtils';
-import { handleError } from '@/utils/errorHandling';
+import { authBreadcrumb, handleError } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
 
 /**
@@ -115,20 +115,12 @@ export function useOAuthProvider(config: OAuthProviderConfig) {
 
     try {
       // STEP 1: Load native module
-      Sentry.addBreadcrumb({
-        category: 'auth',
-        message: `Checking ${providerName} Auth native module availability`,
-        level: 'info',
-      });
+      authBreadcrumb(`Checking ${providerName} Auth native module availability`);
 
       let nativeModule;
       try {
         nativeModule = await config.loadModule();
-        Sentry.addBreadcrumb({
-          category: 'auth',
-          message: `${providerName} Auth native module loaded successfully`,
-          level: 'info',
-        });
+        authBreadcrumb(`${providerName} Auth native module loaded successfully`);
       } catch (moduleError) {
         Sentry.captureException(moduleError, {
           tags: {
@@ -148,11 +140,7 @@ export function useOAuthProvider(config: OAuthProviderConfig) {
       }
 
       // STEP 2: Execute provider-specific sign-in
-      Sentry.addBreadcrumb({
-        category: 'auth',
-        message: `Starting ${providerName} sign-in flow`,
-        level: 'info',
-      });
+      authBreadcrumb(`Starting ${providerName} sign-in flow`);
 
       let signInResult: OAuthSignInResult;
       try {
@@ -179,14 +167,9 @@ export function useOAuthProvider(config: OAuthProviderConfig) {
         throw signInError;
       }
 
-      Sentry.addBreadcrumb({
-        category: 'auth',
-        message: `${providerName} sign-in successful`,
-        level: 'info',
-        data: {
-          hasIdToken: !!signInResult.idToken,
-          hasUserInfo: !!signInResult.userInfo,
-        },
+      authBreadcrumb(`${providerName} sign-in successful`, {
+        hasIdToken: !!signInResult.idToken,
+        hasUserInfo: !!signInResult.userInfo,
       });
 
       if (!signInResult.idToken) {
@@ -202,14 +185,9 @@ export function useOAuthProvider(config: OAuthProviderConfig) {
       }
 
       // STEP 3: Exchange token with Supabase
-      Sentry.addBreadcrumb({
-        category: 'auth',
-        message: `Exchanging ${providerName} token with Supabase`,
-        level: 'info',
-        data: {
-          hasIdToken: true,
-          tokenLength: signInResult.idToken.length,
-        },
+      authBreadcrumb(`Exchanging ${providerName} token with Supabase`, {
+        hasIdToken: true,
+        tokenLength: signInResult.idToken.length,
       });
 
       let authResponse;
@@ -259,14 +237,9 @@ export function useOAuthProvider(config: OAuthProviderConfig) {
         throw enrichedError;
       }
 
-      Sentry.addBreadcrumb({
-        category: 'auth',
-        message: 'Supabase authentication successful',
-        level: 'info',
-        data: {
-          userId: data.user.id,
-          hasSession: !!data.session,
-        },
+      authBreadcrumb('Supabase authentication successful', {
+        userId: data.user.id,
+        hasSession: !!data.session,
       });
 
       // STEP 4: Track analytics
@@ -288,16 +261,11 @@ export function useOAuthProvider(config: OAuthProviderConfig) {
       const isCancellation = isCancellationError(error);
 
       // Add diagnostic breadcrumb BEFORE cancellation check for debugging
-      Sentry.addBreadcrumb({
-        category: 'auth',
-        message: `${providerName} Sign In error caught`,
-        level: isCancellation ? 'info' : 'warning',
-        data: {
-          errorCode,
-          errorMessage: errorMessage.substring(0, 100),
-          isCancellation,
-        },
-      });
+      authBreadcrumb(
+        `${providerName} Sign In error caught`,
+        { errorCode, errorMessage: errorMessage.substring(0, 100), isCancellation },
+        isCancellation ? 'info' : 'warning',
+      );
 
       // Handle user cancellation silently
       if (isCancellation) {

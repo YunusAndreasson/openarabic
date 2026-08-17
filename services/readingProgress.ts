@@ -64,6 +64,7 @@ export interface SafeReadingProgress {
 /**
  * Safely converts nullable ReadingProgress to SafeReadingProgress with defaults
  * Computes progress_percentage from last_sentence_read and total_sentences
+ * @internal
  */
 export function toSafeReadingProgress(
   progress: ReadingProgress | null,

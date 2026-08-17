@@ -256,12 +256,6 @@ export function getPromptSnapshot(key: string | null): PromptSnapshot | null {
   return snapshot;
 }
 
-/** True when the card in flight never produced audible prompt audio — the
- *  condition that deserves a row of its own even if no voice attempt follows. */
-export function isPromptSilent(key: string): boolean {
-  return key === currentKey && snapshot.started === false;
-}
-
 /** Session teardown. Stops a finished session's card leaking into the next. */
 export function resetPromptTelemetry(): void {
   currentKey = null;

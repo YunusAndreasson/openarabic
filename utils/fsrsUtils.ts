@@ -5,9 +5,12 @@ import {
   OPTIMIZED_FSRS_CONFIG,
   URGENT_RETRIEVABILITY_THRESHOLD,
 } from '@/constants/fsrs';
+import { STRINGS } from '@/constants/strings';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
 import { hasBeenPractised } from '@/utils/wordClassification';
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 // The app's one FSRS instance. The review engine (useFSRS) grades through it and
 // every read-only derivation here reads through it, so a config or library change
@@ -240,47 +243,31 @@ export function calculateDueWordsForecast(
 }
 
 /**
- * Calculate the date when the next word becomes due
- * Returns null if no words are scheduled or all words are currently due
+ * How a single word's next review is described to the learner.
+ *
+ * Calendar days apart, not elapsed 24h blocks. Dividing the raw difference
+ * rounded every sub-day gap up to a full day, so a word due ten minutes from
+ * now — the normal state at the end of a session, since the learning steps are
+ * 1m/6m/10m — was announced as "tomorrow", and a word due tomorrow evening as
+ * "in 2 days".
+ *
+ * A word due later the same calendar day is NOT "due now": the due query
+ * (`fsrs_due <= now`) will not serve it yet, so labelling it "Due now"
+ * contradicted a Practice screen already showing "All caught up". That is why
+ * `WORD_DUE_LATER_TODAY` exists as its own branch rather than collapsing into
+ * the `days <= 0` case.
  */
-export function calculateNextDueDate(studyWords: StudyWord[]): Date | null {
-  if (studyWords.length === 0) return null;
-
+export function getNextReviewLabel(due: string | null): string {
+  const dueDate = parseSupabaseTimestamp(due);
+  if (!dueDate) return STRINGS.WORD_STATE_NEW;
   const now = new Date();
-  let earliestMs = Infinity;
-  for (const word of studyWords) {
-    if (word.fsrs_due == null) continue;
-    const due = parseSupabaseTimestamp(word.fsrs_due);
-    if (!due) continue;
-    const dueMs = due.getTime();
-    if (dueMs > now.getTime() && dueMs < earliestMs) {
-      earliestMs = dueMs;
-    }
-  }
+  if (dueDate.getTime() <= now.getTime()) return STRINGS.WORD_DUE_NOW;
 
-  return earliestMs === Infinity ? null : new Date(earliestMs);
-}
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfDueDay = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
+  const days = Math.round((startOfDueDay.getTime() - startOfToday.getTime()) / MS_PER_DAY);
 
-/**
- * Format next due date for display ("today", "tomorrow", "in N days")
- */
-export function formatNextDue(nextDue: Date | null): string {
-  if (!nextDue) return 'soon';
-
-  // Calendar days apart, not elapsed 24h blocks. Dividing the raw difference
-  // rounded every sub-day gap up to a full day, so a word due ten minutes from
-  // now — the normal state at the end of a session, since the learning steps
-  // are 1m/6m/10m — was announced as "tomorrow", and a word due tomorrow
-  // evening as "in 2 days". `calculateNextDueDate` only ever returns a future
-  // date, so the 'today' branch was unreachable entirely.
-  const startOfLocalDay = (date: Date): number =>
-    new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-
-  const days = Math.round(
-    (startOfLocalDay(nextDue) - startOfLocalDay(new Date())) / (1000 * 60 * 60 * 24),
-  );
-
-  if (days <= 0) return 'today';
-  if (days === 1) return 'tomorrow';
-  return `in ${days} days`;
+  if (days <= 0) return STRINGS.WORD_DUE_LATER_TODAY;
+  if (days === 1) return STRINGS.WORD_DUE_TOMORROW;
+  return STRINGS.WORD_DUE_IN_DAYS.replace('{count}', String(days));
 }

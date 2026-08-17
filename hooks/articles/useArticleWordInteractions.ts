@@ -1,10 +1,10 @@
-import { skipToken, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { LayoutRectangle } from 'react-native';
 
 import { useToast } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
-import { fsrsQueries } from '@/constants/queries';
+import { fsrsQueries, gated } from '@/constants/queries';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useModalState } from '@/hooks/ui/useModalState';
@@ -47,10 +47,8 @@ export function useArticleWordInteractions({
   // entry, so reading it reactively gives every consumer (this hook, the
   // dictionary list, the word-detail page) the same answer at the same time —
   // no per-screen local copy that can drift once a word is toggled elsewhere.
-  const allWordsConfig = fsrsQueries.all(user?.id ?? '');
   const studyWordsQuery = useQuery({
-    ...allWordsConfig,
-    queryFn: user?.id ? allWordsConfig.queryFn : skipToken,
+    ...gated(fsrsQueries.all, user?.id),
   });
 
   // Tooltip state for word tap preview

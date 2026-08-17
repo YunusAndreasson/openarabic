@@ -30,13 +30,6 @@ import { store } from '@/store/store';
 import type { StudyWord } from '@/types/vocabulary.types';
 
 // Mock only external dependencies and services
-// Keep inline for hoisting - expo-router is imported by dependencies
-jest.mock('expo-router', () => ({
-  router: {
-    replace: jest.fn(),
-    back: jest.fn(),
-  },
-}));
 
 jest.mock('expo-audio', () => ({
   createAudioPlayer: jest.fn(() => ({

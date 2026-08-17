@@ -5,11 +5,10 @@ import { useCallback, useMemo, useRef } from 'react';
 import { InteractionManager, ScrollView, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import type { ReanimatedCSSAnimationStyle } from '@/types/ui/base.types';
 import { ThemedView } from '@/components/ThemedView';
 import { ErrorState, LoadingState } from '@/components/common';
 import { PracticeEmptyState, PracticeStatCards } from '@/components/practice';
-import { TIMING_CONFIG } from '@/constants/animation';
+import { TIMING_CONFIG, fadeInStyle } from '@/constants/animation';
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { DAYS_7 } from '@/constants/chartConstants';
@@ -30,14 +29,7 @@ import { countReviewedToday } from '@/utils/wordClassification';
 // Mount fade-in — Reanimated 4 CSS @keyframes, module-level so no per-render alloc.
 // Replaces imperative `entering={FadeIn}` which the React Compiler can't track and
 // which forces a Reanimated mount-side-effect on every focus.
-const MOUNT_FADE_IN_STYLE = {
-  animationName: {
-    from: { opacity: 0 },
-    to: { opacity: 1 },
-  },
-  animationDuration: `${TIMING_CONFIG.SLOW.duration}ms`,
-  animationFillMode: 'forwards' as const,
-} as ReanimatedCSSAnimationStyle;
+const MOUNT_FADE_IN_STYLE = fadeInStyle(TIMING_CONFIG.SLOW.duration, 'forwards');
 
 export default function PracticeScreen(): JSX.Element {
   const { user } = useAuth();

@@ -15,12 +15,6 @@ import React from 'react';
 import { DictionaryWordRow } from '@/components/practice/DictionaryWordRow';
 import type { StudyWord } from '@/types/vocabulary.types';
 
-// Mock expo-router to avoid dependency chain issues
-jest.mock('expo-router', () => ({
-  router: { push: jest.fn(), replace: jest.fn() },
-  Link: ({ children }: { children: React.ReactNode }) => children,
-}));
-
 // Use shared mock factories
 jest.mock('react-native-reanimated', () =>
   require('@/__tests__/helpers/componentMocks').createReanimatedMock(),

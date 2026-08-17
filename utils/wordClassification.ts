@@ -1,9 +1,3 @@
-import {
-  DEFAULT_FSRS_DIFFICULTY,
-  DEFAULT_SESSION_COOLDOWN_HOURS,
-  UNSTABLE_DIFFICULTY_THRESHOLD,
-  UNSTABLE_STABILITY_THRESHOLD,
-} from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { normalizeTimestamp } from '@/utils/dateTimeUtils';
 
@@ -17,102 +11,6 @@ import { normalizeTimestamp } from '@/utils/dateTimeUtils';
  */
 export function isHardWord(word: StudyWord): boolean {
   return (word.fsrs_lapses ?? 0) >= 2;
-}
-
-/**
- * Calculate due words from study words
- * Uses FSRS due date logic to determine which words are currently due for review
- */
-export function calculateDueWords(studyWords: StudyWord[]): number {
-  return studyWords.filter(isDueWord).length;
-}
-
-/**
- * Calculate learned words - all words that have graduated to State 2 (Review phase)
- * This includes both consolidating words (stability < 5) and mastered words (stability >= 5)
- *
- * In FSRS progression: New (0) → Learning (1) → Learned (2) → subset: Mastered (2 + high stability)
- */
-export function calculateLearnedWords(studyWords: StudyWord[]): number {
-  return studyWords.filter(word => {
-    const state = word.fsrs_state;
-    // All State 2 words are considered "learned" (graduated to review phase)
-    return state === 2;
-  }).length;
-}
-
-/**
- * Calculate mastered words using server-side logic (matching session logic)
- * Server: 'fsrs_state.eq.2,fsrs_stability.gte.5'
- */
-export function calculateMasteredWords(studyWords: StudyWord[]): number {
-  return studyWords.filter(word => {
-    const state = word.fsrs_state;
-    const stability = word.fsrs_stability ?? 0;
-    return state === 2 && stability >= 5;
-  }).length;
-}
-
-/**
- * Calculate learning phase words for recommendation engine
- * Learning phase = State 1 (Learning), State 3 (Relearning), or State 2 with low stability
- */
-function calculateLearningPhaseWords(studyWords: StudyWord[]): number {
-  return studyWords.filter(word => {
-    const state = word.fsrs_state;
-    const stability = word.fsrs_stability ?? 0;
-    return state === 1 || state === 3 || (state === 2 && stability < 5);
-  }).length;
-}
-
-/**
- * Calculate struggling words that have been reviewed (matching session logic)
- * This ensures the display count matches what users will actually practice
- */
-export function calculateStrugglingWords(studyWords: StudyWord[]): number {
-  const nowMs = Date.now();
-  const cutoffMs = nowMs - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
-
-  return studyWords.filter(word => {
-    const hasBeenReviewed = (word.fsrs_reps ?? 0) > 0;
-    if (!hasBeenReviewed) return false;
-
-    const lastStr = normalizeTimestamp(word.fsrs_last_review);
-    const lastMs = lastStr ? Date.parse(lastStr) : 0;
-    const isRecentlyReviewed = Number.isFinite(lastMs) && lastMs >= cutoffMs;
-    if (isRecentlyReviewed) return false;
-
-    return isHardWord(word);
-  }).length;
-}
-
-/**
- * Calculate all word categories in a single pass for efficiency
- * Returns an object with all category counts
- */
-export function calculateWordCategories(
-  studyWords: StudyWord[],
-  dueWordsProp?: number,
-): {
-  dueWords: number;
-  learnedWords: number;
-  masteredWords: number;
-  strugglingWords: number;
-  learningPhaseWords: number;
-} {
-  const calculatedDueWords = calculateDueWords(studyWords);
-  const learnedWords = calculateLearnedWords(studyWords);
-  const masteredWords = calculateMasteredWords(studyWords);
-  const strugglingWords = calculateStrugglingWords(studyWords);
-  const learningPhaseWords = calculateLearningPhaseWords(studyWords);
-
-  return {
-    dueWords: typeof dueWordsProp === 'number' ? dueWordsProp : calculatedDueWords,
-    learnedWords,
-    masteredWords,
-    strugglingWords,
-    learningPhaseWords,
-  };
 }
 
 /**
@@ -137,17 +35,6 @@ export function countReviewedToday(studyWords: StudyWord[]): number {
     const lastMs = lastStr ? Date.parse(lastStr) : 0;
     return Number.isFinite(lastMs) && lastMs >= startMs;
   }).length;
-}
-
-/**
- * Determines if a word is in an unstable learning state
- * Used for prioritizing review schedules and identifying problematic words
- */
-export function isUnstableWord(word: StudyWord): boolean {
-  const difficulty = word.fsrs_difficulty ?? DEFAULT_FSRS_DIFFICULTY;
-  const stability = word.fsrs_stability ?? 0;
-
-  return stability <= UNSTABLE_STABILITY_THRESHOLD && difficulty >= UNSTABLE_DIFFICULTY_THRESHOLD;
 }
 
 // ===== WORD STATUS UTILITY FUNCTIONS FOR DICTIONARY UI =====
@@ -197,14 +84,6 @@ export function hasBeenPractised(word: StudyWord): boolean {
 }
 
 /**
- * Determines if a word is learned (for Dictionary UI status badges)
- * Learned = State 2 (graduated to review phase)
- */
-export function isLearnedWord(word: StudyWord): boolean {
-  return word.fsrs_state === 2;
-}
-
-/**
  * Determines if a word is mastered (for Dictionary UI status badges)
  * Mastered = State 2 + stability >= 5
  */
@@ -212,13 +91,4 @@ export function isMasteredWord(word: StudyWord): boolean {
   const state = word.fsrs_state;
   const stability = word.fsrs_stability ?? 0;
   return state === 2 && stability >= 5;
-}
-
-/**
- * Determines if a word is extra hard (for Dictionary UI secondary badge)
- * Extra Hard = difficulty > 8.0 (high end of 1.0-10.0 scale)
- */
-export function isExtraHardWord(word: StudyWord): boolean {
-  const difficulty = word.fsrs_difficulty ?? DEFAULT_FSRS_DIFFICULTY;
-  return difficulty > 8.0;
 }

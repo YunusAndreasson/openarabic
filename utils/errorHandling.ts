@@ -61,6 +61,40 @@ export function toError(error: unknown): Error {
   return new Error(describeThrownValue(error));
 }
 
+/**
+ * Leave a breadcrumb on the Sentry trail.
+ *
+ * Thirty-nine call sites wrote out the same five-line object literal, varying
+ * only the message, the data and (rarely) the level. Only three categories have
+ * ever existed, so they are named rather than free text — a typo'd category is
+ * a breadcrumb that silently falls out of the filter you search by.
+ *
+ * Fire-and-forget, like the haptics helpers: a breadcrumb is diagnostic, never
+ * something the user or the caller can act on.
+ */
+type BreadcrumbCategory = 'auth' | 'voice' | 'preloader';
+
+export const breadcrumb = (
+  category: BreadcrumbCategory,
+  message: string,
+  data?: Record<string, unknown>,
+  level: Sentry.Breadcrumb['level'] = 'info',
+): void => {
+  Sentry.addBreadcrumb({ category, level, message, ...(data ? { data } : {}) });
+};
+
+export const authBreadcrumb = (
+  message: string,
+  data?: Record<string, unknown>,
+  level?: Sentry.Breadcrumb['level'],
+): void => breadcrumb('auth', message, data, level);
+
+export const voiceBreadcrumb = (
+  message: string,
+  data?: Record<string, unknown>,
+  level?: Sentry.Breadcrumb['level'],
+): void => breadcrumb('voice', message, data, level);
+
 // Store toast handler globally - updated to support types
 let globalToastHandler: ((message: string, duration?: number, type?: ToastType) => void) | null =
   null;

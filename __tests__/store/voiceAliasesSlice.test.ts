@@ -1,9 +1,4 @@
-import reducer, {
-  clearAllAliases,
-  forgetAliases,
-  rememberAlias,
-  type VoiceAliasesState,
-} from '../../store/voiceAliasesSlice';
+import reducer, { rememberAlias, type VoiceAliasesState } from '../../store/voiceAliasesSlice';
 import { MAX_ALIASES_PER_ROOT } from '../../utils/voiceAliases';
 
 describe('voiceAliasesSlice', () => {
@@ -50,25 +45,6 @@ describe('voiceAliasesSlice', () => {
       // and must not create an empty entry that would match nothing forever.
       const state = reducer(initialState, rememberAlias({ rootId: 8852, transcript: '  ' }));
       expect(state.byRoot['8852']).toBeUndefined();
-    });
-  });
-
-  describe('forgetAliases', () => {
-    it('drops one word`s list', () => {
-      let state = reducer(initialState, rememberAlias({ rootId: 8852, transcript: 'Linear.' }));
-      state = reducer(state, rememberAlias({ rootId: 5502, transcript: 'on her' }));
-      state = reducer(state, forgetAliases(8852));
-      expect(state.byRoot).toEqual({ '5502': ['on her'] });
-    });
-  });
-
-  describe('clearAllAliases', () => {
-    it('empties every word', () => {
-      const state = reducer(
-        reducer(initialState, rememberAlias({ rootId: 8852, transcript: 'Linear.' })),
-        clearAllAliases(),
-      );
-      expect(state.byRoot).toEqual({});
     });
   });
 });

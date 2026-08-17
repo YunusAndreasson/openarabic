@@ -15,7 +15,6 @@
  * stream — happened between the prompt ending and the learner being allowed to
  * speak. That was the wait, and it is now a `resume()`.
  */
-import * as Sentry from '@sentry/react-native';
 import {
   createContext,
   use,
@@ -54,6 +53,7 @@ import {
 import { simpleAudioService } from '@/services/audioPlayer';
 import { useAppSelectorShallow } from '@/store/hooks';
 import { mark as diagMark, span as diagSpan } from '@/utils/reviewDiagnostics';
+import { voiceBreadcrumb } from '@/utils/errorHandling';
 
 export type VoiceArmOutcome =
   | { ok: true; result: RecordingResult }
@@ -294,12 +294,7 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
           lastOpenErrorRef.current = message;
           lastOpenWasPermissionDeniedRef.current = err instanceof MicPermissionDeniedError;
           diagMark('mic.session.open.failed', { message, reopen });
-          Sentry.addBreadcrumb({
-            category: 'voice',
-            level: 'warning',
-            message: 'voice.session.open.failed',
-            data: { message, reopen },
-          });
+          voiceBreadcrumb('voice.session.open.failed', { message, reopen }, 'warning');
         }
       })();
       if (!reopen) return run;
@@ -367,11 +362,7 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
           diagMark('mic.session.toRecord', { restored: capture.isOpen });
           if (!capture.isOpen) {
             playbackPriorityBrokenRef.current = true;
-            Sentry.addBreadcrumb({
-              category: 'voice',
-              level: 'warning',
-              message: 'voice.playbackPriority.disabled',
-            });
+            voiceBreadcrumb('voice.playbackPriority.disabled', undefined, 'warning');
             // Leave the session record-capable so the arm ladder has something to
             // work with; the prompt goes back to being quiet, which is survivable.
             await simpleAudioService.setRecordingSessionEnabled(true);
@@ -476,12 +467,7 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
   // a working microphone back on the next attempt instead of the same dead one.
   useEffect(() => {
     capture.onStreamError(message => {
-      Sentry.addBreadcrumb({
-        category: 'voice',
-        level: 'warning',
-        message: 'voice.recorder.error',
-        data: { message },
-      });
+      voiceBreadcrumb('voice.recorder.error', { message }, 'warning');
       abortWindow('error', message);
       void openCapture(true);
     });
@@ -674,19 +660,14 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
               peakRms: Number(result.peakRms.toFixed(5)),
               samples: result.waveform.length,
             });
-            Sentry.addBreadcrumb({
-              category: 'voice',
-              level: 'info',
-              message: 'voice.recorder.stopped',
-              data: {
-                windowId,
-                durationMs: result.durationMs,
-                bufferCount: result.bufferCount,
-                stopReason: result.stopReason,
-                heardSpeech: result.heardSpeech,
-                peakRms: result.peakRms,
-                firstBufferMs: result.firstBufferMs,
-              },
+            voiceBreadcrumb('voice.recorder.stopped', {
+              windowId,
+              durationMs: result.durationMs,
+              bufferCount: result.bufferCount,
+              stopReason: result.stopReason,
+              heardSpeech: result.heardSpeech,
+              peakRms: result.peakRms,
+              firstBufferMs: result.firstBufferMs,
             });
             if (result.bufferCount === 0) {
               void analytics.track(ANALYTICS_EVENTS.VOICE_MODEL_FAILED, {
@@ -730,24 +711,14 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
               },
               recordingConfigRef.current,
             );
-            Sentry.addBreadcrumb({
-              category: 'voice',
-              level: 'info',
-              message: 'voice.recorder.arm',
-              data: { windowId },
-            });
+            voiceBreadcrumb('voice.recorder.arm', { windowId });
           } catch (err) {
             armResolveRef.current = null;
             finishRef.current = null;
             micLevel.set(0);
             const message = err instanceof Error ? err.message : String(err);
             diagMark('mic.window.failed', { message });
-            Sentry.addBreadcrumb({
-              category: 'voice',
-              level: 'warning',
-              message: 'voice.recorder.start.failed',
-              data: { windowId, error: message },
-            });
+            voiceBreadcrumb('voice.recorder.start.failed', { windowId, error: message }, 'warning');
             if (err instanceof MicPermissionDeniedError) {
               resolve({ ok: false, reason: 'permission' });
             } else {
@@ -816,12 +787,11 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
       endPrewarm({ allowed });
     } catch (err) {
       endPrewarm({ failed: true });
-      Sentry.addBreadcrumb({
-        category: 'voice',
-        level: 'warning',
-        message: 'voice.permission.prewarm.failed',
-        data: { error: err instanceof Error ? err.message : String(err) },
-      });
+      voiceBreadcrumb(
+        'voice.permission.prewarm.failed',
+        { error: err instanceof Error ? err.message : String(err) },
+        'warning',
+      );
     }
   }, []);
 

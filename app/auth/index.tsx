@@ -3,7 +3,7 @@ import type { JSX } from 'react';
 import { memo } from 'react';
 import { StyleSheet } from 'react-native';
 
-import { ThemedView } from '@/components/ThemedView';
+import { KEYBOARD_AWARE_SCROLL_PROPS, ThemedView } from '@/components/ThemedView';
 import { Auth } from '@/components/auth';
 import { LAYOUT } from '@/constants/layout';
 
@@ -14,11 +14,7 @@ const AuthScreen = memo(function AuthScreen(): JSX.Element {
       useSafeArea={false}
       style={styles.container}
       contentContainerStyle={styles.scrollContent}
-      scrollViewProps={{
-        keyboardShouldPersistTaps: 'handled',
-        showsVerticalScrollIndicator: false,
-        keyboardDismissMode: 'interactive',
-      }}
+      scrollViewProps={KEYBOARD_AWARE_SCROLL_PROPS}
     >
       <Stack.Screen
         options={{

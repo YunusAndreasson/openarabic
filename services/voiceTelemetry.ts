@@ -7,12 +7,12 @@
  * Fire-and-forget: failures are swallowed (Sentry breadcrumb only) so logging
  * can never affect the review session. Requires an authenticated user (RLS).
  */
-import * as Sentry from '@sentry/react-native';
 import * as Application from 'expo-application';
 import { Platform } from 'react-native';
 
 import { supabase } from '@/services/supabase';
 import type { Json } from '@/types/database.types';
+import { voiceBreadcrumb } from '@/utils/errorHandling';
 
 /**
  * `arm_failed` rows describe an attempt that never produced audio, so most of
@@ -192,19 +192,13 @@ export async function logVoiceAttempt(log: VoiceAttemptLog): Promise<void> {
     });
 
     if (error) {
-      Sentry.addBreadcrumb({
-        category: 'voice',
-        level: 'warning',
-        message: 'voice.telemetry.insert.failed',
-        data: { message: error.message },
-      });
+      voiceBreadcrumb('voice.telemetry.insert.failed', { message: error.message }, 'warning');
     }
   } catch (err) {
-    Sentry.addBreadcrumb({
-      category: 'voice',
-      level: 'warning',
-      message: 'voice.telemetry.error',
-      data: { message: err instanceof Error ? err.message : String(err) },
-    });
+    voiceBreadcrumb(
+      'voice.telemetry.error',
+      { message: err instanceof Error ? err.message : String(err) },
+      'warning',
+    );
   }
 }

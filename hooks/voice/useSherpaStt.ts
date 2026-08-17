@@ -27,6 +27,7 @@ import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TARGET_SAMPLE_RATE } from '@/lib/voice/recording';
 import { analytics } from '@/services/analytics';
 import { span as diagSpan } from '@/utils/reviewDiagnostics';
+import { voiceBreadcrumb } from '@/utils/errorHandling';
 
 /**
  * NVIDIA Parakeet TDT transducer 110M (English, int8) — ~103 MB.
@@ -131,12 +132,7 @@ function useSherpaStt({
       setDownloadProgress(progress => (progress > 0 ? progress : 0.01));
       const loadStartedAt = Date.now();
       void analytics.track(ANALYTICS_EVENTS.VOICE_MODEL_LOAD_STARTED, { modelId });
-      Sentry.addBreadcrumb({
-        category: 'voice',
-        level: 'info',
-        message: 'voice.model.load.start',
-        data: { modelId },
-      });
+      voiceBreadcrumb('voice.model.load.start', { modelId });
 
       try {
         const ensureOpts = {
@@ -192,12 +188,11 @@ function useSherpaStt({
           );
           endWarmup();
         } catch (warmErr) {
-          Sentry.addBreadcrumb({
-            category: 'voice',
-            level: 'warning',
-            message: 'voice.warmup.failed',
-            data: { message: warmErr instanceof Error ? warmErr.message : String(warmErr) },
-          });
+          voiceBreadcrumb(
+            'voice.warmup.failed',
+            { message: warmErr instanceof Error ? warmErr.message : String(warmErr) },
+            'warning',
+          );
         }
         if (cancelled) return;
 
@@ -207,12 +202,7 @@ function useSherpaStt({
           modelId,
           durationMs: Date.now() - loadStartedAt,
         });
-        Sentry.addBreadcrumb({
-          category: 'voice',
-          level: 'info',
-          message: 'voice.model.ready',
-          data: { modelId, durationMs: Date.now() - loadStartedAt },
-        });
+        voiceBreadcrumb('voice.model.ready', { modelId, durationMs: Date.now() - loadStartedAt });
       } catch (err) {
         if (!cancelled) {
           setReady(false);

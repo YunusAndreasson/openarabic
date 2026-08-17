@@ -34,7 +34,7 @@
  */
 
 // Minimal interface for analytics properties
-import { MIXPANEL_TOKEN } from '@/constants/analytics';
+import { ANALYTICS_EVENTS, MIXPANEL_TOKEN } from '@/constants/analytics';
 
 type AnalyticsProperties = Record<string, string | number | boolean | null | undefined>;
 
@@ -128,14 +128,14 @@ export const analytics = {
 
   // Convenience methods for common events
   trackSignIn: async (method: string = 'email'): Promise<void> => {
-    await analytics.track('Sign In', { method });
+    await analytics.track(ANALYTICS_EVENTS.SIGN_IN, { method });
   },
 
   trackSignUp: async (method: string = 'email'): Promise<void> => {
-    await analytics.track('Sign Up', { method });
+    await analytics.track(ANALYTICS_EVENTS.SIGN_UP, { method });
   },
 
   trackSignOut: async (): Promise<void> => {
-    await analytics.track('Sign Out');
+    await analytics.track(ANALYTICS_EVENTS.SIGN_OUT);
   },
 };

@@ -137,7 +137,9 @@ import { normalizeTranslation } from './arabicAnalysis/translationNormalization'
 
 // Re-export types and functions for backwards compatibility
 export type { WordAnalysis };
-export { clearAnalysisCache, formatWordAnalysis, normalizeArabic, shouldInjectBracket };
+/** @internal */
+export { clearAnalysisCache };
+export { formatWordAnalysis, normalizeArabic, shouldInjectBracket };
 
 /**
  * Main function to analyze an Arabic word and its English translation for components

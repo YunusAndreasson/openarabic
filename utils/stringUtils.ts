@@ -132,6 +132,7 @@ export function formatAuthorCategory(author: string, category: string): string {
  * @example
  * formatArticleMetadata('Ibn Kathir', 'tafsir')
  * // Returns: 'Ibn Kathir · Tafsir'
+ * @internal
  */
 export function formatArticleMetadata(
   author: string,

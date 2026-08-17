@@ -8,8 +8,8 @@
 
 import { afterEach, beforeEach, describe, expect, jest, test } from '@jest/globals';
 
-import { getNextReviewLabel } from '@/app/(tabs)/practice/word';
 import { STRINGS } from '@/constants/strings';
+import { getNextReviewLabel } from '@/utils/fsrsUtils';
 
 describe('getNextReviewLabel', () => {
   beforeEach(() => {
@@ -45,5 +45,19 @@ describe('getNextReviewLabel', () => {
     expect(getNextReviewLabel('2026-08-15T09:00:00.000+00:00')).toBe(
       STRINGS.WORD_DUE_IN_DAYS.replace('{count}', '5'),
     );
+  });
+
+  // Observed live on 2026-08-09 (emulator-5554): a session finished with one
+  // word due ten minutes later and the app said "Next review tomorrow".
+  // FSRS learning steps are 1m / 6m / 10m, so a word due minutes from now is
+  // the NORMAL state at the end of a session, not an edge case — rounding the
+  // raw difference up to a whole day is what produced that copy.
+  test.each([
+    ['1 minute', 1],
+    ['10 minutes', 10],
+    ['2 hours', 120],
+  ])('a word due in %s is never described as tomorrow', (_label, minutes) => {
+    const due = new Date(Date.now() + minutes * 60 * 1000).toISOString();
+    expect(getNextReviewLabel(due)).not.toBe(STRINGS.WORD_DUE_TOMORROW);
   });
 });

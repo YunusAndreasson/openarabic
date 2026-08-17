@@ -145,6 +145,7 @@ function buildActivityWindow(dayKeys: Set<string>, days: number): DailyReadingAc
   return activity;
 }
 
+/** @internal */
 export class ReadingStreakService {
   /**
    * Calculate reading streak from daily activity data
@@ -337,5 +338,3 @@ export class StudySessionStreakService {
 
 // Export type alias for study streaks (same structure as reading streaks)
 export type StudyStreak = ReadingStreak;
-
-export const studySessionStreakService = StudySessionStreakService;

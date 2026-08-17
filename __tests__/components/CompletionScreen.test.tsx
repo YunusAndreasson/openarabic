@@ -28,13 +28,6 @@ import { STRINGS } from '@/constants/strings';
 import type { SessionMetrics } from '@/types/review.types';
 
 // Mock dependencies
-jest.mock('expo-router', () => ({
-  Link: ({ children, testID, onPress }: any) => (
-    <div data-testid={testID} onClick={onPress}>
-      {children}
-    </div>
-  ),
-}));
 
 jest.mock('@/components/ui/Icon', () => {
   const React = require('react');

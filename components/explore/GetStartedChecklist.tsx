@@ -13,7 +13,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { ThemedText } from '@/components/ThemedText';
 import { BaseCard } from '@/components/common';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
-import { TIMING_CONFIG } from '@/constants/animation';
+import { TIMING_CONFIG, fadeInStyle } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { ONBOARDING_CONFIG, OnboardingStep } from '@/constants/onboarding';
 import { getArticleRoute, ROUTE_PATHS } from '@/constants/routes';
@@ -23,7 +23,6 @@ import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useColors } from '@/hooks/theme/useColors';
 import { analytics } from '@/services/analytics';
 import type { Article } from '@/types/articles.types';
-import type { ReanimatedCSSAnimationStyle } from '@/types/ui/base.types';
 import { pickStarterArticle } from '@/utils/articleUtils';
 import { selectionFeedback } from '@/utils/haptics';
 
@@ -32,14 +31,7 @@ const CHECK_ICON_SIZE = 22;
 // Mount fade-in — Reanimated 4 CSS @keyframes, module-level so no per-render
 // alloc. Gives the card a deliberate entrance when the welcome intro dismisses,
 // instead of popping in behind the closing modal.
-const MOUNT_FADE_IN_STYLE = {
-  animationName: {
-    from: { opacity: 0 },
-    to: { opacity: 1 },
-  },
-  animationDuration: `${TIMING_CONFIG.SLOW.duration}ms`,
-  animationFillMode: 'forwards' as const,
-} as ReanimatedCSSAnimationStyle;
+const MOUNT_FADE_IN_STYLE = fadeInStyle(TIMING_CONFIG.SLOW.duration, 'forwards');
 
 interface GetStartedChecklistProps {
   articlesData: Article[];

@@ -9,7 +9,6 @@ import { STRINGS } from '@/constants/strings';
 
 // Standardized chart titles (no emoji — clean, straight to the point)
 export const CHART_LABELS = {
-  STRENGTH: 'Mastery', // Cumulative mastered words over time
   DUE_WORDS_PROGNOSIS: 'This week', // Projected due words (next 7 days)
 } as const;
 
@@ -22,5 +21,4 @@ export const CHART_LABELS = {
 // Updated from generic messages to specific action + benefit format
 export const EMPTY_STATE_MESSAGES = {
   dueWords: STRINGS.EMPTY_STATE_DUE_WORDS,
-  general: STRINGS.EMPTY_STATE_GENERAL,
 } as const;

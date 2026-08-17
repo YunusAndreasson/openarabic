@@ -1,18 +1,16 @@
 import { router } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback, useRef } from 'react';
-import type { TextInput } from 'react-native';
+import { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AuthEmailInput, AuthPasswordInput } from './AuthFormInputs';
+import { AuthSwitchPrompt } from './AuthSwitchPrompt';
 import { PasswordStrengthMeter } from './PasswordStrengthMeter';
 import { ThemedButton } from '@/components/ThemedButton';
-import { ThemedText } from '@/components/ThemedText';
-import { TextLink } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
-import { useAuthForm } from '@/hooks/auth/useAuthForm';
+import { useAuthFormFields } from '@/hooks/auth/useAuthFormFields';
 
 /**
  * Sign Up Form Component
@@ -28,49 +26,20 @@ import { useAuthForm } from '@/hooks/auth/useAuthForm';
  * - Error handling
  */
 export function SignUpForm(): JSX.Element {
-  const passwordInputRef = useRef<TextInput>(null);
-
   const {
     email,
-    setEmail,
     password,
-    setPassword,
     loading,
     emailError,
     passwordError,
-    validateEmail,
-    validatePassword,
     signUpWithEmail,
-  } = useAuthForm();
-
-  const focusPasswordInput = useCallback(() => {
-    passwordInputRef.current?.focus();
-  }, []);
-
-  // Input handlers
-  const handleEmailChange = useCallback(
-    (text: string) => {
-      setEmail(text);
-      if (emailError) validateEmail(text);
-    },
-    [emailError, validateEmail, setEmail],
-  );
-
-  const handlePasswordChange = useCallback(
-    (text: string) => {
-      setPassword(text);
-      if (passwordError) validatePassword(text);
-    },
-    [passwordError, validatePassword, setPassword],
-  );
-
-  const handleEmailBlur = useCallback(() => {
-    if (email) validateEmail(email);
-  }, [email, validateEmail]);
-
-  const handlePasswordBlur = useCallback(() => {
-    if (password) validatePassword(password);
-  }, [password, validatePassword]);
+    passwordInputRef,
+    focusPasswordInput,
+    handleEmailChange,
+    handlePasswordChange,
+    handleEmailBlur,
+    handlePasswordBlur,
+  } = useAuthFormFields();
 
   const handleSignIn = useCallback(() => {
     router.push(ROUTE_PATHS.AUTH_SIGN_IN);
@@ -109,19 +78,13 @@ export function SignUpForm(): JSX.Element {
         onPress={signUpWithEmail}
       />
 
-      {/* Link to Sign In */}
-      <View style={styles.signInContainer}>
-        <ThemedText type="body" colorName="secondaryText">
-          {STRINGS.ALREADY_HAVE_ACCOUNT}{' '}
-        </ThemedText>
-        <TextLink
-          accessibilityLabel="Go to sign in"
-          label={STRINGS.SIGN_IN}
-          testID="navigate-to-sign-in-link"
-          type="bodyBold"
-          onPress={handleSignIn}
-        />
-      </View>
+      <AuthSwitchPrompt
+        prompt={STRINGS.ALREADY_HAVE_ACCOUNT}
+        label={STRINGS.SIGN_IN}
+        accessibilityLabel="Go to sign in"
+        testID="navigate-to-sign-in-link"
+        onPress={handleSignIn}
+      />
     </View>
   );
 }
@@ -131,13 +94,6 @@ const styles = StyleSheet.create({
     marginTop: LAYOUT.SPACING.LARGE,
   },
   container: {
-    width: '100%',
-  },
-  signInContainer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: LAYOUT.SPACING.LARGE,
     width: '100%',
   },
 });

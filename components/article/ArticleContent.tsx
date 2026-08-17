@@ -12,7 +12,7 @@ import { FloatingActionButtons } from '@/components/article/FloatingActionButton
 import { HeaderScrim } from '@/components/article/HeaderScrim';
 import { ParallaxHeader } from '@/components/article/ParallaxHeader';
 import { RelatedArticlesSection } from '@/components/article/RelatedArticlesSection';
-import { SCROLL_EVENT_THROTTLE, TIMING_CONFIG } from '@/constants/animation';
+import { SCROLL_EVENT_THROTTLE, TIMING_CONFIG, fadeInStyle } from '@/constants/animation';
 import {
   LAYOUT,
   LETTER_SPACING,
@@ -23,7 +23,6 @@ import {
 import { useArticleScrollHandler } from '@/hooks/articles/useArticleScrollHandler';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
-import type { ReanimatedCSSAnimationStyle } from '@/types/ui/base.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import { calculateHeaderHeight } from '@/utils/gradientUtils';
 import { STRINGS } from '@/constants/strings';
@@ -35,14 +34,7 @@ const AnimatedFlashList = Animated.createAnimatedComponent(
 );
 
 // Mount fade-in — CSS @keyframes, module-level so no per-render allocation
-const MOUNT_FADE_IN_STYLE = {
-  animationName: {
-    from: { opacity: 0 },
-    to: { opacity: 1 },
-  },
-  animationDuration: `${TIMING_CONFIG.FAST.duration}ms`,
-  animationFillMode: 'forwards' as const,
-} as ReanimatedCSSAnimationStyle;
+const MOUNT_FADE_IN_STYLE = fadeInStyle(TIMING_CONFIG.FAST.duration, 'forwards');
 
 // Comfortable reading space constant
 const COMFORTABLE_READING_SPACE = MIN_TOUCH_TARGET.MEDIUM;

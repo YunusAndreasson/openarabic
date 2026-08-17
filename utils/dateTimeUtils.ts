@@ -90,18 +90,6 @@ export function formatSecondsToClock(seconds: number): string {
 }
 
 /**
- * Format a Date to 12-hour clock string using native toLocaleTimeString
- * Returns format like "2:30 PM" in US locale
- */
-export function formatDateTo12hClock(date: Date): string {
-  return date.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  });
-}
-
-/**
  * Safely compute a percentage (0-100) from position and duration.
  */
 export function safePercent(position: number, duration: number): number {

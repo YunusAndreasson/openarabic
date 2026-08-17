@@ -11,12 +11,7 @@
 
 import { describe, expect, test } from '@jest/globals';
 
-import {
-  formatDateTo12hClock,
-  formatSecondsToClock,
-  parseSupabaseTimestamp,
-  safePercent,
-} from '@/utils/dateTimeUtils';
+import { formatSecondsToClock, parseSupabaseTimestamp, safePercent } from '@/utils/dateTimeUtils';
 
 describe('dateTimeUtils', () => {
   describe('parseSupabaseTimestamp', () => {
@@ -110,31 +105,6 @@ describe('dateTimeUtils', () => {
     test('should handle invalid values', () => {
       expect(formatSecondsToClock(NaN)).toBe('0:00');
       expect(formatSecondsToClock(Infinity)).toBe('0:00');
-    });
-  });
-
-  describe('formatDateTo12hClock', () => {
-    test('should format date using native toLocaleTimeString', () => {
-      const date = new Date('2024-01-01T14:30:00'); // 2:30 PM
-      const formatted = formatDateTo12hClock(date);
-
-      // Verify it contains the expected components (native formatting may vary)
-      expect(formatted).toContain('2');
-      expect(formatted).toContain('30');
-      expect(formatted).toContain('PM');
-    });
-
-    test('should handle midnight and noon', () => {
-      const midnight = new Date('2024-01-01T00:00:00');
-      const noon = new Date('2024-01-01T12:00:00');
-
-      const midnightFormatted = formatDateTo12hClock(midnight);
-      const noonFormatted = formatDateTo12hClock(noon);
-
-      expect(midnightFormatted).toContain('12');
-      expect(midnightFormatted).toContain('AM');
-      expect(noonFormatted).toContain('12');
-      expect(noonFormatted).toContain('PM');
     });
   });
 

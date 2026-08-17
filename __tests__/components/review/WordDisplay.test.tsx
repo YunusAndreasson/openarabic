@@ -54,11 +54,6 @@ jest.mock('@/utils/haptics', () => ({
   errorFeedback: jest.fn(),
 }));
 
-// Mock text style utils
-jest.mock('@/utils/textStyleUtils', () => ({
-  createTextStyle: () => ({ fontSize: 64, color: '#1a1a1a' }),
-}));
-
 // Mock ToastType enum
 jest.mock('@/types/enums', () => ({
   ToastType: {

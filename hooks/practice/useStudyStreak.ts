@@ -1,6 +1,6 @@
-import { skipToken, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
-import { studyStreakQueries } from '@/constants/queries';
+import { gated, studyStreakQueries } from '@/constants/queries';
 import { useAuth } from '@/hooks/auth/useAuth';
 import type { StudyStreak } from '@/services/studyStreak';
 
@@ -24,16 +24,12 @@ interface UseStudyStreakResult {
 export function useStudyStreak(): UseStudyStreakResult {
   const { user } = useAuth();
 
-  const streakConfig = studyStreakQueries.streak(user?.id ?? '');
   const {
     data: streak = null,
     isLoading,
     error,
     refetch,
-  } = useQuery({
-    ...streakConfig,
-    queryFn: user?.id ? streakConfig.queryFn : skipToken,
-  });
+  } = useQuery(gated(studyStreakQueries.streak, user?.id));
 
   return { streak, isLoading, error: error, refetch };
 }

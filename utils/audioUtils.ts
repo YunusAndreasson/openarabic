@@ -37,6 +37,7 @@ export function isAudioBusy(): boolean {
  * Safely stop audio playback with status check
  * Handles both graceful shutdown and fire-and-forget scenarios
  * @param throwOnError - If true, throws errors; if false, silently catches them
+ * @internal
  */
 export async function stopAudioSafely(throwOnError: boolean = false): Promise<void> {
   try {

@@ -94,14 +94,6 @@ jest.mock('@/utils/errorHandling', () => ({
   handleError: jest.fn(),
 }));
 
-jest.mock('expo-router', () => ({
-  router: {
-    replace: jest.fn(),
-    push: jest.fn(),
-    back: jest.fn(),
-  },
-}));
-
 // Mock auth hook
 const mockUserId = 'test-user-id';
 jest.mock('@/hooks/auth/useAuth', () => ({

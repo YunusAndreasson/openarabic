@@ -3,6 +3,7 @@ import * as Sentry from '@sentry/react-native';
 import { useEffect, useState } from 'react';
 import { useOAuthProvider, type OAuthSignInResult } from '@/hooks/auth/useOAuthProvider';
 import { isCancellationError } from '@/utils/authUtils';
+import { authBreadcrumb } from '@/utils/errorHandling';
 
 /** Type for dynamically imported Google Sign In module */
 interface GoogleSignInModule {
@@ -105,14 +106,9 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
         setIsConfigured(true);
 
         // Log successful configuration to Sentry
-        Sentry.addBreadcrumb({
-          category: 'auth',
-          message: 'Google Sign In configured successfully',
-          level: 'info',
-          data: {
-            hasWebClientId: true,
-            hasIosClientId: !!iosClientId,
-          },
+        authBreadcrumb('Google Sign In configured successfully', {
+          hasWebClientId: true,
+          hasIosClientId: !!iosClientId,
         });
       } catch (error) {
         Sentry.captureException(error, {
@@ -160,11 +156,7 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
             // Wait before retry (exponential backoff)
             await new Promise<void>(resolve => setTimeout(resolve, 1000 * signInAttempt));
 
-            Sentry.addBreadcrumb({
-              category: 'auth',
-              message: `Retrying Google Sign In (attempt ${signInAttempt + 1})`,
-              level: 'info',
-            });
+            authBreadcrumb(`Retrying Google Sign In (attempt ${signInAttempt + 1})`);
           }
 
           userInfo = await GoogleSignin.signIn();

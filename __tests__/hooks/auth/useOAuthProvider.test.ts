@@ -31,15 +31,15 @@ import {
 import { supabase } from '@/services/supabase';
 import { analytics } from '@/services/analytics';
 import { successFeedback } from '@/utils/haptics';
-import { handleError } from '@/utils/errorHandling';
-import { addBreadcrumb, captureException } from '@sentry/react-native';
+import { authBreadcrumb, handleError } from '@/utils/errorHandling';
+import { captureException } from '@sentry/react-native';
 import { useMountSafety } from '@/hooks/common/useMountSafety';
 
 const mockSupabase = jest.mocked(supabase);
 const mockAnalytics = jest.mocked(analytics);
 const mockSuccessFeedback = jest.mocked(successFeedback);
 const mockHandleError = jest.mocked(handleError);
-const mockSentryAddBreadcrumb = jest.mocked(addBreadcrumb);
+const mockAuthBreadcrumb = jest.mocked(authBreadcrumb);
 const mockSentryCaptureException = jest.mocked(captureException);
 const mockUseMountSafety = jest.mocked(useMountSafety);
 
@@ -150,27 +150,16 @@ describe('useOAuthProvider', () => {
       await result.current.signIn();
 
       // Verify breadcrumbs
-      expect(mockSentryAddBreadcrumb).toHaveBeenCalledWith(
-        expect.objectContaining({
-          category: 'auth',
-          message: 'Checking Apple Auth native module availability',
-          level: 'info',
-        }),
+      expect(mockAuthBreadcrumb).toHaveBeenCalledWith(
+        'Checking Apple Auth native module availability',
       );
-      expect(mockSentryAddBreadcrumb).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: 'Apple Auth native module loaded successfully',
-        }),
+      expect(mockAuthBreadcrumb).toHaveBeenCalledWith(
+        'Apple Auth native module loaded successfully',
       );
-      expect(mockSentryAddBreadcrumb).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: 'Starting Apple sign-in flow',
-        }),
-      );
-      expect(mockSentryAddBreadcrumb).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: 'Apple sign-in successful',
-        }),
+      expect(mockAuthBreadcrumb).toHaveBeenCalledWith('Starting Apple sign-in flow');
+      expect(mockAuthBreadcrumb).toHaveBeenCalledWith(
+        'Apple sign-in successful',
+        expect.objectContaining({ hasIdToken: true }),
       );
     });
   });
@@ -384,14 +373,10 @@ describe('useOAuthProvider', () => {
       await result.current.signIn();
 
       // Should add diagnostic breadcrumb with isCancellation: true
-      expect(mockSentryAddBreadcrumb).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: 'Google Sign In error caught',
-          level: 'info',
-          data: expect.objectContaining({
-            isCancellation: true,
-          }),
-        }),
+      expect(mockAuthBreadcrumb).toHaveBeenCalledWith(
+        'Google Sign In error caught',
+        expect.objectContaining({ isCancellation: true }),
+        'info',
       );
 
       // Should NOT call handleError
@@ -412,13 +397,10 @@ describe('useOAuthProvider', () => {
       await result.current.signIn();
 
       // Should add diagnostic breadcrumb with isCancellation: true
-      expect(mockSentryAddBreadcrumb).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: 'Google Sign In error caught',
-          data: expect.objectContaining({
-            isCancellation: true,
-          }),
-        }),
+      expect(mockAuthBreadcrumb).toHaveBeenCalledWith(
+        'Google Sign In error caught',
+        expect.objectContaining({ isCancellation: true }),
+        'info',
       );
       expect(mockHandleError).not.toHaveBeenCalled();
     });

@@ -4,8 +4,7 @@
     "app/**/*.{ts,tsx}",
     "*.config.{js,ts,mjs}",
     "plugins/**/*.js",
-    "scripts/**/*.{ts,mjs}",
-    "__tests__/**/*.{ts,tsx}"
+    "scripts/**/*.{ts,mjs}"
   ],
   "project": [
     "**/*.{js,jsx,ts,tsx}",
@@ -14,19 +13,28 @@
     "!**/docs/**",
     "!**/translate/**",
     "!**/supabase/migrations/**",
-    "!**/admin-dashboard/**"
+    "!**/admin-dashboard/**",
+    "!**/__tests__/**",
+    "!**/__mocks__/**"
   ],
-  "ignore": ["admin-dashboard/**", "types/database.types.ts"],
+  "jest": false,
+  "ignore": ["admin-dashboard/**", "types/database.types.ts", "jest.setup.js", "jest.polyfills.js"],
   "ignoreDependencies": [
     "babel-preset-expo",
     "babel-jest",
     "@babel/plugin-transform-react-jsx",
     "@eslint/js",
     "@swmansion/argent",
-    "eslint-plugin-react"
+    "eslint-plugin-react",
+    "@jest/globals",
+    "fast-check"
   ],
-  "ignoreExportsUsedInFile": { "interface": true, "type": true },
+  "ignoreExportsUsedInFile": {
+    "interface": true,
+    "type": true
+  },
   "includeEntryExports": false,
   "ignoreBinaries": ["supabase", "eas"],
-  "exclude": ["duplicates"]
+  "exclude": ["duplicates"],
+  "tags": ["-internal"]
 }

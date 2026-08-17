@@ -81,6 +81,42 @@ export interface UseReviewMockRefs {
 }
 
 /**
+ * What `useFSRS` hands `useReview` for a given card.
+ *
+ * The three useReview suites wrote this same seven-key object 33 times. Four of
+ * the keys never varied across ANY of them (`isLoading`, `updateWord`,
+ * `invalidateQueries`, and usually `isComplete`/`progress`), so every block was
+ * five lines of noise around the one or two values the test actually cared
+ * about — and a new field on the hook meant editing 33 call sites.
+ *
+ * @param mocks the refs from `setupUseReviewMocks`
+ * @param currentWord the card under test, or null for an empty/finished queue
+ * @param overrides anything the test genuinely varies (`isComplete`, `progress`,
+ *   or a `wordQueue` that is not just `[currentWord]`)
+ */
+export function fsrsState(
+  mocks: UseReviewMockRefs,
+  currentWord: StudyWord | null,
+  overrides: Partial<{
+    wordQueue: StudyWord[];
+    isLoading: boolean;
+    isComplete: boolean;
+    progress: number;
+  }> = {},
+) {
+  return {
+    currentWord,
+    wordQueue: currentWord ? [currentWord] : [],
+    isLoading: false,
+    isComplete: false,
+    progress: 0,
+    updateWord: mocks.mockUpdateWord,
+    invalidateQueries: mocks.mockInvalidateQueries,
+    ...overrides,
+  };
+}
+
+/**
  * Sets up all mock return values for useReview hook tests.
  * Call this in beforeEach after jest.clearAllMocks().
  *

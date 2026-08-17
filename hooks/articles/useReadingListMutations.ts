@@ -44,20 +44,24 @@ export const useReadingListMutations = (
   const queryClient = useQueryClient();
   const audioPreference = useAppSelector(state => state.settings.audioLanguagePreference);
 
-  const addToReadingListMutation = useMutation({
-    mutationFn: async ({ userId, articleId }: { userId: string; articleId: ArticleId }) =>
-      bookmarkService.addToReadingList(userId, articleId),
-    onSuccess: (_data, { userId, articleId }) => {
-      // Track bookmark added
+  /**
+   * What both mutations do once the server has confirmed: report it, write the
+   * new membership straight into the cache, then refetch the lists that derive
+   * from it. Identical for add and remove apart from the boolean, so it is
+   * written once — the two copies were a standing invitation for one list to be
+   * invalidated and the other not.
+   */
+  const onMutationSuccess = useCallback(
+    (inList: boolean, userId: string, articleId: ArticleId) => {
       analytics.track(ANALYTICS_EVENTS.ARTICLE_BOOKMARKED, {
         article_id: articleId,
-        action: 'add',
+        action: inList ? 'add' : 'remove',
       });
 
-      // Immediately update cache to reflect the bookmark was added
+      // Immediately update cache to reflect the new membership
       queryClient.setQueryData(
         readingProgressQueries.isInReadingList(userId, articleId).queryKey,
-        true,
+        inList,
       );
 
       // Then refetch to ensure consistency
@@ -69,6 +73,15 @@ export const useReadingListMutations = (
         queryKey: audioQueries.tracks(userId, audioPreference).queryKey,
       });
     },
+    [queryClient, audioPreference, refetchReadingListStatus],
+  );
+
+  const addToReadingListMutation = useMutation({
+    mutationFn: async ({ userId, articleId }: { userId: string; articleId: ArticleId }) =>
+      bookmarkService.addToReadingList(userId, articleId),
+    onSuccess: (_data, { userId, articleId }) => onMutationSuccess(true, userId, articleId),
+    // Only add can violate the unique constraint — there is no duplicate-key
+    // failure mode for a delete, which is why remove has no such filter.
     onError: (error: Error) => {
       // Silently handle errors - no toast notifications for bookmarks actions
       const errorMessage = error.message;
@@ -88,28 +101,7 @@ export const useReadingListMutations = (
   const removeFromReadingListMutation = useMutation({
     mutationFn: async ({ userId, articleId }: { userId: string; articleId: ArticleId }) =>
       bookmarkService.removeFromReadingList(userId, articleId),
-    onSuccess: (_data, { userId, articleId }) => {
-      // Track bookmark removed
-      analytics.track(ANALYTICS_EVENTS.ARTICLE_BOOKMARKED, {
-        article_id: articleId,
-        action: 'remove',
-      });
-
-      // Immediately update cache to reflect the bookmark was removed
-      queryClient.setQueryData(
-        readingProgressQueries.isInReadingList(userId, articleId).queryKey,
-        false,
-      );
-
-      // Then refetch to ensure consistency
-      refetchReadingListStatus();
-      queryClient.invalidateQueries({
-        queryKey: readingProgressQueries.readingList(userId).queryKey,
-      });
-      queryClient.invalidateQueries({
-        queryKey: audioQueries.tracks(userId, audioPreference).queryKey,
-      });
-    },
+    onSuccess: (_data, { userId, articleId }) => onMutationSuccess(false, userId, articleId),
     onError: (error: Error) => {
       // Silently handle errors - no toast notifications for bookmarks actions
       handleError(error, { showToast: false, captureSentry: false });

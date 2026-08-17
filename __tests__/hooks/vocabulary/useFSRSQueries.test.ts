@@ -28,6 +28,9 @@ jest.mock('@tanstack/react-query', () => ({
 
 const mockQueryFn = () => Promise.resolve([]);
 jest.mock('@/constants/queries', () => ({
+  // Spread the real module so `gated` stays the real gate — the factories
+  // below are faked, but the skipToken guard under test must not be.
+  ...jest.requireActual('@/constants/queries'),
   fsrsQueries: {
     all: jest.fn(() => ({
       queryKey: ['fsrs-words', 'all'],

@@ -53,25 +53,15 @@ export const BIN_COUNT = Math.min(
   Math.max(MIN_BIN_COUNT, Math.round(BAND_WIDTH / TARGET_BIN_PITCH)),
 );
 
+/** @internal */
 export const BIN_GAP = 3;
+/** @internal */
 export const BIN_WIDTH = (BAND_WIDTH - (BIN_COUNT - 1) * BIN_GAP) / BIN_COUNT;
 
 /** Left edge of column `index`. */
+/** @internal */
 export function binX(index: number): number {
   return index * (BIN_WIDTH + BIN_GAP);
-}
-
-/**
- * Vertical scale floor.
- *
- * Without it a learner with one practised word gets a single full-height column,
- * which reads as "you are done" rather than "you have started". Same reasoning
- * as the due-words chart's minimum scale.
- */
-export const MIN_BIN_SCALE = 3;
-
-export function getPlotMax(maxBinCount: number): number {
-  return Math.max(MIN_BIN_SCALE, maxBinCount);
 }
 
 // ---------------------------------------------------------------------------
@@ -92,6 +82,7 @@ const DOT_PITCH = DOT_RADIUS * 2 + 1;
 /**
  * How many dots fit in the tallest column before one dot has to stand for more
  * than one word.
+ * @internal
  */
 export const DOT_COLUMN_CAP = Math.max(1, Math.floor(PLOT_HEIGHT / DOT_PITCH));
 
@@ -127,7 +118,6 @@ export function dotCenter(binIndex: number, depth: number): { x: number; y: numb
  * state back into the blank box it exists to avoid.
  */
 const STUB_HEIGHT = 3;
-const BAR_TOP_RADIUS = 2;
 
 /**
  * The empty axis: one short stub per column, built once at module level.
@@ -149,45 +139,3 @@ export const TRACK_PATH: SkPath = (() => {
   }
   return builder.build();
 })();
-
-/**
- * Solid rounded columns for `counts`, as ONE path.
- *
- * The fallback rendering for the dot field, and the shape `usePathInterpolation`
- * morphs. Two invariants make that safe, and both are load-bearing:
- *
- *  1. Always exactly `BIN_COUNT` columns — never skip an empty one.
- *  2. Always the same seven verbs per column. A zero-count column emits them
- *     degenerately, with every point on the baseline, rather than branching to a
- *     shorter sequence. Clamping the corner radius against height would
- *     reintroduce that branch, so the height is floored instead.
- *
- * Break either and `usePathInterpolation` throws — it validates on every render
- * and does not warn first.
- */
-export function buildHorizonBandPath(counts: readonly number[], plotMax: number): SkPath {
-  const builder = Skia.PathBuilder.Make();
-  const safeMax = Math.max(1, plotMax);
-
-  for (let index = 0; index < BIN_COUNT; index++) {
-    const count = counts[index] ?? 0;
-    const height = count <= 0 ? 0 : Math.max(BAR_TOP_RADIUS * 2, (count / safeMax) * PLOT_HEIGHT);
-
-    const left = binX(index);
-    const right = left + BIN_WIDTH;
-    const bottom = PLOT_HEIGHT;
-    const top = bottom - height;
-    const radius = Math.min(BAR_TOP_RADIUS, BIN_WIDTH / 2);
-
-    builder
-      .moveTo(left, bottom)
-      .lineTo(left, top + radius)
-      .quadTo(left, top, left + radius, top)
-      .lineTo(right - radius, top)
-      .quadTo(right, top, right, top + radius)
-      .lineTo(right, bottom)
-      .close();
-  }
-
-  return builder.build();
-}

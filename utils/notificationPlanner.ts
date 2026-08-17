@@ -5,7 +5,7 @@ import {
 import { NOTIFICATION_TYPES, SMART_NOTIFICATIONS } from '@/constants/notifications';
 import type { SmartNotificationType } from '@/constants/notifications';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { normalizeTimestamp } from '@/utils/dateTimeUtils';
+import { normalizeTimestamp, toLocalDateString } from '@/utils/dateTimeUtils';
 import { timeUntilRetrievability } from '@/utils/fsrsUtils';
 
 const MS_PER_HOUR = 60 * 60 * 1000;
@@ -71,12 +71,6 @@ function computeTimelines(words: StudyWord[], nowMs: number): WordTimeline[] {
 
     return { dueMs, slipMs, word };
   });
-}
-
-function formatLocalDate(date: Date): string {
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${date.getFullYear()}-${month}-${day}`;
 }
 
 /**
@@ -148,7 +142,7 @@ export function buildNotificationPlan(input: NotificationPlannerInput): PlannedN
     let planned: PlannedNotification | null = null;
     if (slippingCount >= SMART_NOTIFICATIONS.MIN_SLIPPING_WORDS) {
       planned = {
-        identifier: `${SMART_NOTIFICATIONS.IDENTIFIER_PREFIX}slipping-${formatLocalDate(slot)}`,
+        identifier: `${SMART_NOTIFICATIONS.IDENTIFIER_PREFIX}slipping-${toLocalDateString(slot)}`,
         type: NOTIFICATION_TYPES.SRS_SLIPPING,
         fireDate: slot,
         wordCount: slippingCount,
@@ -157,7 +151,7 @@ export function buildNotificationPlan(input: NotificationPlannerInput): PlannedN
       };
     } else if (dueCount >= SMART_NOTIFICATIONS.MIN_DUE_WORDS) {
       planned = {
-        identifier: `${SMART_NOTIFICATIONS.IDENTIFIER_PREFIX}due-${formatLocalDate(slot)}`,
+        identifier: `${SMART_NOTIFICATIONS.IDENTIFIER_PREFIX}due-${toLocalDateString(slot)}`,
         type: NOTIFICATION_TYPES.SRS_DUE,
         fireDate: slot,
         wordCount: dueCount,

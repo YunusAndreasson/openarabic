@@ -43,6 +43,7 @@ function expectedAlternatives(expected: string): string[] {
 }
 
 /** Levenshtein edit distance — small, for fuzzy single-token matching. */
+/** @internal */
 export function levenshtein(a: string, b: string): number {
   if (a === b) return 0;
   if (!a.length) return b.length;
@@ -75,6 +76,7 @@ export function levenshtein(a: string, b: string): number {
  * "to become"→"to be calm" — which is the costlier error here. A false negative
  * shows the learner a transcript and an override button; a false positive
  * silently writes "known" into FSRS and the word never comes back.
+ * @internal
  */
 export function editBudget(word: string): number {
   if (/\d/.test(word)) return 0;
@@ -88,6 +90,7 @@ export function editBudget(word: string): number {
  * Collapse acoustically-confusable consonants so a near-homophone ASR mishear
  * lines up: nasals n/m, stops b/p · d/t · c/g/k/q, sibilants s/z, labials v/w/f.
  * Repeated folded letters collapse. Vowels and l/r intentionally untouched.
+ * @internal
  */
 export function phoneticFold(word: string): string {
   return word

@@ -14,7 +14,6 @@ import {
   beginPrompt,
   markCardCurrent,
   getPromptSnapshot,
-  isPromptSilent,
   recordPromptAbsent,
   recordPromptCut,
   recordPromptFinish,
@@ -24,6 +23,14 @@ import {
 
 const CARD = 'root-7086-rep-6';
 const OTHER_CARD = 'root-7053-rep-5';
+
+/**
+ * "The card in flight never produced audible prompt audio." Read off the
+ * snapshot rather than a dedicated export: `getPromptSnapshot` already returns
+ * null for a card that is not in flight, so this is the same predicate the
+ * module used to expose as `isPromptSilent` without a second public surface.
+ */
+const isSilent = (key: string): boolean => getPromptSnapshot(key)?.started === false;
 
 const played = { started: true, playMs: 120, cacheMissed: false, healed: false };
 
@@ -58,10 +65,10 @@ describe('promptTelemetry', () => {
     it('flags the card so a row can be written even with no voice attempt', () => {
       markCardCurrent(CARD);
       beginPrompt(CARD);
-      expect(isPromptSilent(CARD)).toBe(false);
+      expect(isSilent(CARD)).toBe(false);
 
       recordPromptPlay(CARD, { started: false, playMs: 4000, cacheMissed: false, healed: false });
-      expect(isPromptSilent(CARD)).toBe(true);
+      expect(isSilent(CARD)).toBe(true);
     });
 
     it('keeps a missing audio_url distinct from a play that failed', () => {
@@ -72,7 +79,7 @@ describe('promptTelemetry', () => {
       // Both are silent, but only one of them tried: playMs separates "there
       // was nothing to play" from "it refused to load".
       expect(getPromptSnapshot(CARD)).toMatchObject({ started: false, playMs: 0 });
-      expect(isPromptSilent(CARD)).toBe(true);
+      expect(isSilent(CARD)).toBe(true);
     });
   });
 
@@ -182,7 +189,7 @@ describe('promptTelemetry', () => {
       recordPromptPlay(CARD, played);
 
       expect(getPromptSnapshot(OTHER_CARD)).toBeNull();
-      expect(isPromptSilent(OTHER_CARD)).toBe(false);
+      expect(isSilent(OTHER_CARD)).toBe(false);
     });
 
     it('ignores late writes from a card that has already been replaced', () => {
@@ -237,7 +244,7 @@ describe('promptTelemetry', () => {
       resetPromptTelemetry();
 
       expect(getPromptSnapshot(CARD)).toBeNull();
-      expect(isPromptSilent(CARD)).toBe(false);
+      expect(isSilent(CARD)).toBe(false);
     });
   });
 });

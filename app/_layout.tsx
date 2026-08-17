@@ -72,7 +72,7 @@ import type { RootState } from '@/store/store';
 import { persistor, store } from '@/store/store';
 import { setTheme } from '@/store/themeSlice';
 import { handleError } from '@/utils/errorHandling';
-import { createNavigationOptions } from '@/utils/navigation';
+import { createNavigationOptions, createSheetOptions } from '@/utils/navigation';
 import { PERSISTENCE_OPTIONS } from '@/utils/queryPersistence';
 import { flushPendingSheetNavigation } from '@/utils/sheetNavigation';
 import type * as NotificationsModule from 'expo-notifications';
@@ -616,83 +616,21 @@ function AppContent() {
                       freezeOnBlur: true,
                     })}
                   />
-                  <Stack.Screen
-                    name="sleep-timer"
-                    options={{
-                      presentation: 'formSheet',
-                      sheetAllowedDetents: [0.4],
-                      // Same reason as the stat sheets below: only the Screen
-                      // paints the bottom safe-area inset of the content wrapper.
-                      contentStyle: { backgroundColor: colors.elevation1 },
-                      sheetGrabberVisible: true,
-                      sheetCornerRadius: 24,
-                      headerShown: false,
-                    }}
-                  />
-                  {/* These four fit their contents: fixed-height charts under a
-                      short header, no scrolling. 'fitToContents' measures the
-                      screen's content wrapper and re-measures it whenever the
-                      content height changes, so an async chart resizes the sheet
-                      instead of being clipped by a guessed fraction.
-                      Their content must therefore stay measurable — no `flex: 1`
-                      child (nothing to measure) and no ScrollView (which iOS
-                      resizes to the whole screen view, see SheetScreen).
-                      `contentStyle` carries the sheet background rather than the
-                      content view, and is NOT optional: with fitToContents and a
-                      hidden header iOS leaves a bottom safe-area inset below the
-                      content wrapper (react-native-screens#3203), and only the
-                      Screen can paint it — react-native-screens lifts this
-                      backgroundColor onto it for exactly that reason. Painting
-                      elevation1 further in left that band on Expo Router's
-                      injected theme `background`: the gap at the bottom. */}
-                  <Stack.Screen
-                    name="due-words"
-                    options={{
-                      presentation: 'formSheet',
-                      sheetAllowedDetents: 'fitToContents',
-                      contentStyle: { backgroundColor: colors.elevation1 },
-                      sheetGrabberVisible: true,
-                      sheetCornerRadius: 24,
-                      headerShown: false,
-                    }}
-                  />
-                  <Stack.Screen
-                    name="memory-retention"
-                    options={{
-                      presentation: 'formSheet',
-                      sheetAllowedDetents: 'fitToContents',
-                      contentStyle: { backgroundColor: colors.elevation1 },
-                      sheetGrabberVisible: true,
-                      sheetCornerRadius: 24,
-                      headerShown: false,
-                    }}
-                  />
-                  <Stack.Screen
-                    name="study-streak"
-                    options={{
-                      presentation: 'formSheet',
-                      sheetAllowedDetents: 'fitToContents',
-                      contentStyle: { backgroundColor: colors.elevation1 },
-                      sheetGrabberVisible: true,
-                      sheetCornerRadius: 24,
-                      headerShown: false,
-                    }}
-                  />
+                  <Stack.Screen name="sleep-timer" options={createSheetOptions(colors, [0.4])} />
+                  {/* These three fit their contents: fixed-height charts under a
+                      short header, no scrolling. See createSheetOptions for what
+                      'fitToContents' requires of the screen's content. */}
+                  <Stack.Screen name="due-words" options={createSheetOptions(colors)} />
+                  <Stack.Screen name="memory-retention" options={createSheetOptions(colors)} />
+                  <Stack.Screen name="study-streak" options={createSheetOptions(colors)} />
+                  {/* The odd one out: up to 20 leech rows never fit their
+                      contents, so this sheet scrolls and needs a fixed detent.
+                      Its screen owns the sheet background because the scroll
+                      view has to be a direct child — the route file documents
+                      the layout react-native-screens requires. */}
                   <Stack.Screen
                     name="words-to-revisit"
-                    options={{
-                      presentation: 'formSheet',
-                      // The odd one out: up to 20 leech rows never fit their
-                      // contents, so this sheet scrolls and needs a fixed
-                      // detent. Its screen owns the sheet background because the
-                      // scroll view has to be a direct child — the route file
-                      // documents the layout react-native-screens requires.
-                      sheetAllowedDetents: [0.6, 1],
-                      contentStyle: { backgroundColor: colors.elevation1 },
-                      sheetGrabberVisible: true,
-                      sheetCornerRadius: 24,
-                      headerShown: false,
-                    }}
+                    options={createSheetOptions(colors, [0.6, 1])}
                   />
                 </Stack.Protected>
 

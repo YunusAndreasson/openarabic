@@ -1,5 +1,7 @@
 import { Easing } from 'react-native-reanimated';
 
+import type { ReanimatedCSSAnimationStyle } from '@/types/ui/base.types';
+
 /**
  * Timing configuration presets for animations
  */
@@ -182,13 +184,6 @@ export const SPRING_CONFIG = {
     overshootClamping: false,
     energyThreshold: 0.01,
   },
-  RESPONSIVE: {
-    damping: 20, // Slightly higher damping for smoother feel
-    stiffness: 250, // Reduced stiffness for less jitter
-    mass: 0.6, // Lighter mass for quicker response
-    overshootClamping: false,
-    energyThreshold: 0.01,
-  },
 } as const;
 
 /** Minimum duration for opacity animations */
@@ -200,8 +195,6 @@ export const MIN_OPACITY_DURATION = 1;
  */
 export const PRESS_SCALE = {
   /** Default press feedback for buttons (subtle) */
-  DEFAULT: 0.96,
-  /** Alias for DEFAULT - buttons use subtle feedback */
   BUTTON: 0.96,
   /** Moderate press for toggles and interactive words */
   MODERATE: 0.95,
@@ -292,39 +285,6 @@ export const TIMING_CONSTANTS = {
    */
   SHEET_DISMISS_FALLBACK: 1000,
 
-  /** One second in milliseconds */
-  SECOND: 1000,
-
-  /** Two and a half seconds */
-  BUFFER_FLUSH: 2500,
-
-  /** Five seconds */
-  LONG_DELAY: 5000,
-
-  /** Ten seconds */
-  VERY_LONG_DELAY: 10000,
-
-  /** Conversion multipliers */
-  MILLISECONDS_PER_SECOND: 1000,
-  SECONDS_PER_MINUTE: 60,
-
-  /** Common animation delays */
-  MOUNT_DELAY: 100,
-  DEBOUNCE_DELAY: 300,
-  FOCUS_DELAY: 100,
-
-  /** Audio-related delays */
-  AUDIO_FADE_DURATION: 300,
-  AUDIO_BUFFER_DELAY: 100,
-
-  /** Network request timeouts */
-  NETWORK_TIMEOUT: 10000,
-  RETRY_DELAY_BASE: 1000,
-
-  /** Help/FAQ animation delays */
-  FAQ_EXPAND_DURATION: 300,
-  FAQ_SCROLL_DELAY: 350,
-
   /** Animation transition delays */
   TRANSITION_DELAY: 150,
 
@@ -347,3 +307,28 @@ export const TIMING_CONSTANTS = {
     BUTTON_WITHOUT_METRICS: 220,
   },
 } as const;
+
+/**
+ * The mount fade-in every list row and screen body uses.
+ *
+ * Five call sites declared this same `from/to opacity` keyframe object inline,
+ * differing only in the duration token and the fill mode. Keyframe blocks that
+ * animate something else (a pulse, a scale, the card entrance) are genuinely
+ * different animations and stay where they are.
+ *
+ * `backwards` holds the FROM frame during any delay before the animation runs —
+ * what a staggered list row needs so it does not flash at full opacity first.
+ * `forwards` holds the TO frame after it ends, which is what a screen body that
+ * fades in once needs.
+ */
+export const fadeInStyle = (
+  duration: number,
+  animationFillMode: 'forwards' | 'backwards' = 'forwards',
+): ReanimatedCSSAnimationStyle => ({
+  animationName: {
+    from: { opacity: 0 },
+    to: { opacity: 1 },
+  },
+  animationDuration: `${duration}ms`,
+  animationFillMode,
+});

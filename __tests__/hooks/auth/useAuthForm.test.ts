@@ -14,11 +14,6 @@ import { PASSWORD_REQUIREMENTS, useAuthForm } from '@/hooks/auth/useAuthForm';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 
-// Mock router
-jest.mock('expo-router', () => ({
-  router: { replace: jest.fn() },
-}));
-
 // Mock Supabase
 jest.mock('@/services/supabase', () => ({
   supabase: {

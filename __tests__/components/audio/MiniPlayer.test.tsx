@@ -13,12 +13,6 @@ import React from 'react';
 
 import { MiniPlayer } from '@/components/audio/MiniPlayer';
 
-// Mock expo-router to avoid dependency chain issues
-jest.mock('expo-router', () => ({
-  router: { push: jest.fn(), replace: jest.fn() },
-  Link: ({ children }: { children: React.ReactNode }) => children,
-}));
-
 // Use shared mock factories
 jest.mock('react-native-reanimated', () =>
   require('@/__tests__/helpers/componentMocks').createReanimatedMock(),

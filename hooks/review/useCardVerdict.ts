@@ -41,6 +41,11 @@ const TONE_FOR_CONFIDENCE: Record<WordConfidence, VerdictTone> = {
  * Which verdict a grade shows. Pure, and exported for the same reason
  * `resolveDetentTone` is: the mapping is the decision, and it is worth testing
  * without a renderer or a UI thread in the way.
+ *
+ * `playVerdict` must go through this rather than indexing `TONE_FOR_CONFIDENCE`
+ * itself — it used to, which left the tested mapping and the rendered one as two
+ * separate paths that only happened to agree.
+ * @internal
  */
 export const resolveVerdictTone = (confidence: WordConfidence): VerdictTone =>
   TONE_FOR_CONFIDENCE[confidence];
@@ -75,6 +80,7 @@ const TONE_FEEDBACK: Partial<Record<VerdictTone, () => void>> = {
  * no outcome to report. Exported so the tone → texture mapping can be tested
  * directly: the reaction that calls it lives on the UI thread, and a renderer
  * cannot step a shared value across a threshold to prove the edge.
+ * @internal
  */
 export const fireVerdictFeedback = (tone: number): void => {
   TONE_FEEDBACK[tone as VerdictTone]?.();
@@ -260,7 +266,7 @@ export const useCardVerdict = (): CardVerdictResult => {
 
   const playVerdict = useCallback(
     (confidence: WordConfidence, cardKey: string) => {
-      animateVerdict(TONE_FOR_CONFIDENCE[confidence], cardKey);
+      animateVerdict(resolveVerdictTone(confidence), cardKey);
     },
     [animateVerdict],
   );

@@ -36,7 +36,11 @@ jest.mock('mixpanel-react-native', () => ({
   Mixpanel: MockMixpanel,
 }));
 
+// Spread the real module: only the token needs faking, and replacing it
+// wholesale silently drops ANALYTICS_EVENTS, which the service reads for its
+// event names.
 jest.mock('@/constants/analytics', () => ({
+  ...jest.requireActual('@/constants/analytics'),
   MIXPANEL_TOKEN: 'test-token-123',
 }));
 

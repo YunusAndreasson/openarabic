@@ -17,7 +17,6 @@ export const DEFAULT_FSRS_DIFFICULTY = 6.5;
 export const CRITICAL_RETRIEVABILITY_THRESHOLD = 0.7;
 
 // Word classification thresholds
-export const UNSTABLE_STABILITY_THRESHOLD = 7;
 export const UNSTABLE_DIFFICULTY_THRESHOLD = 7.5;
 
 /**

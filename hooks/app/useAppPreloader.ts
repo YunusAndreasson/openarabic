@@ -19,7 +19,7 @@ import { readingProgressService } from '@/services/readingProgress';
 import type { Article } from '@/types/articles.types';
 import type { ArticleId } from '@/types/branded.types';
 import { getBeginnerArticles, getRandomItems } from '@/utils/articleUtils';
-import { handleError, toError } from '@/utils/errorHandling';
+import { breadcrumb, handleError, toError } from '@/utils/errorHandling';
 import { MAX_FEATURED_ARTICLES } from '@/hooks/articles/useMultipleFeaturedArticles';
 
 /**
@@ -323,11 +323,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
       setIsLoaded(true);
       setPreloadProgress(100);
 
-      Sentry.addBreadcrumb({
-        category: 'preloader',
-        message: 'App preload complete',
-        level: 'info',
-      });
+      breadcrumb('preloader', 'App preload complete');
     } catch (error) {
       Sentry.captureException(error, {
         tags: { location: 'preloader' },

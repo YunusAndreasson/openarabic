@@ -30,6 +30,9 @@ jest.mock('@tanstack/react-query', () => ({
 // Plain functions (not jest.fn): resetMocks wipes jest.fn implementations
 // before each test, which would make the factory return undefined mid-render.
 jest.mock('@/constants/queries', () => ({
+  // Spread the real module so `gated` stays the real gate — the factories
+  // below are faked, but the skipToken guard under test must not be.
+  ...jest.requireActual('@/constants/queries'),
   fsrsQueries: {
     all: (userId: string) => ({
       queryKey: ['fsrs-words', userId],

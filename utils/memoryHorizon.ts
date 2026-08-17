@@ -22,10 +22,10 @@ import { hasBeenPractised, isMasteredWord } from '@/utils/wordClassification';
  * Where a word sits in its life, in the app's own existing vocabulary.
  *
  * Four rungs, not five, and `mastered` is deliberately NOT a new threshold:
- * it delegates to `isMasteredWord` (state 2 + stability >= 5), the same
- * predicate behind `calculateMasteredWords` and the Practice screen's Mastered
- * count. Inventing a second bar for "mastered" is exactly how the old
- * `Strength: Strong` (stability >= 7) drifted away from it.
+ * it delegates to `isMasteredWord` (state 2 + stability >= 5), the single
+ * predicate every "mastered" surface shares. Inventing a second bar for
+ * "mastered" is exactly how the old `Strength: Strong` (stability >= 7) drifted
+ * away from it.
  */
 export type MemoryStage = 'new' | 'learning' | 'familiar' | 'mastered';
 

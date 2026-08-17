@@ -8,10 +8,9 @@ import { useCallback, useMemo, type FC } from 'react';
 import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
 import { SettingsCard, SettingsSection } from '@/components/account';
 import { useVoiceGrading } from '@/components/providers';
-import { SectionLabel } from '@/components/common';
+import { ScreenScaffold, SectionLabel } from '@/components/common';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
@@ -82,86 +81,62 @@ const AdvancedScreen: FC = () => {
   );
 
   return (
-    <ThemedView
-      includeBottomInset={false}
-      safeAreaEdges={['left', 'right']}
-      style={styles.container}
-    >
-      <ThemedView
-        includeBottomInset={false}
-        scrollable={true}
-        style={styles.flexOne}
-        useSafeArea={false}
-        contentContainerStyle={styles.scrollContent}
-        scrollViewProps={{ showsVerticalScrollIndicator: true }}
-      >
-        <SettingsSection title={STRINGS.ADVANCED_MODELS_SECTION}>
-          <SettingsCard
-            icon="mic"
-            label={STRINGS.ADVANCED_MODEL_PARAKEET}
-            rightType="custom"
-            rightComponent={modelRight}
-          />
-        </SettingsSection>
+    <ScreenScaffold>
+      <SettingsSection title={STRINGS.ADVANCED_MODELS_SECTION}>
+        <SettingsCard
+          icon="mic"
+          label={STRINGS.ADVANCED_MODEL_PARAKEET}
+          rightType="custom"
+          rightComponent={modelRight}
+        />
+      </SettingsSection>
 
-        <SettingsSection title={STRINGS.ADVANCED_RECORDING_SECTION}>
+      <SettingsSection title={STRINGS.ADVANCED_RECORDING_SECTION}>
+        <SettingsCard
+          icon="ear"
+          label={STRINGS.ADVANCED_ENERGY_GATE}
+          subtitle={STRINGS.ADVANCED_ENERGY_GATE_SUBTITLE}
+          rightType="toggle"
+          toggleValue={energyGateEnabled}
+          onToggleChange={handleEnergyGate}
+        />
+        <SettingsCard
+          icon="options"
+          label={STRINGS.ADVANCED_GAIN_NORM}
+          subtitle={STRINGS.ADVANCED_GAIN_NORM_SUBTITLE}
+          rightType="toggle"
+          toggleValue={gainNormalizeEnabled}
+          onToggleChange={handleGainNorm}
+        />
+        {Platform.OS === 'ios' && (
           <SettingsCard
-            icon="ear"
-            label={STRINGS.ADVANCED_ENERGY_GATE}
-            subtitle={STRINGS.ADVANCED_ENERGY_GATE_SUBTITLE}
+            icon="hardware-chip"
+            label={STRINGS.ADVANCED_IOS_RAW}
+            subtitle={STRINGS.ADVANCED_IOS_RAW_SUBTITLE}
             rightType="toggle"
-            toggleValue={energyGateEnabled}
-            onToggleChange={handleEnergyGate}
+            toggleValue={iosRawMode}
+            onToggleChange={handleIosRaw}
           />
-          <SettingsCard
-            icon="options"
-            label={STRINGS.ADVANCED_GAIN_NORM}
-            subtitle={STRINGS.ADVANCED_GAIN_NORM_SUBTITLE}
-            rightType="toggle"
-            toggleValue={gainNormalizeEnabled}
-            onToggleChange={handleGainNorm}
-          />
-          {Platform.OS === 'ios' && (
-            <SettingsCard
-              icon="hardware-chip"
-              label={STRINGS.ADVANCED_IOS_RAW}
-              subtitle={STRINGS.ADVANCED_IOS_RAW_SUBTITLE}
-              rightType="toggle"
-              toggleValue={iosRawMode}
-              onToggleChange={handleIosRaw}
-            />
-          )}
-        </SettingsSection>
+        )}
+      </SettingsSection>
 
-        <SettingsSection title={STRINGS.ADVANCED_DEBUG_SECTION}>
-          <SettingsCard
-            icon="bug"
-            label={STRINGS.ADVANCED_DEBUG_HUD}
-            subtitle={STRINGS.ADVANCED_DEBUG_HUD_SUBTITLE}
-            rightType="toggle"
-            toggleValue={debugEnabled}
-            onToggleChange={handleDebug}
-          />
-        </SettingsSection>
+      <SettingsSection title={STRINGS.ADVANCED_DEBUG_SECTION}>
+        <SettingsCard
+          icon="bug"
+          label={STRINGS.ADVANCED_DEBUG_HUD}
+          subtitle={STRINGS.ADVANCED_DEBUG_HUD_SUBTITLE}
+          rightType="toggle"
+          toggleValue={debugEnabled}
+          onToggleChange={handleDebug}
+        />
+      </SettingsSection>
 
-        <SectionLabel title={STRINGS.ADVANCED_DEBUG_FOOTER} style={styles.footer} />
-      </ThemedView>
-    </ThemedView>
+      <SectionLabel title={STRINGS.ADVANCED_DEBUG_FOOTER} style={styles.footer} />
+    </ScreenScaffold>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  flexOne: {
-    flex: 1,
-  },
-  scrollContent: {
-    ...LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
-    paddingTop: LAYOUT.SPACING.LARGE,
-    paddingBottom: LAYOUT.SPACING.XLARGE,
-  },
   statusRight: {
     alignItems: 'center',
     flexDirection: 'row',

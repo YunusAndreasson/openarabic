@@ -17,6 +17,20 @@ const SCROLL_VIEW_DEFAULTS = {
   overScrollMode: 'always' as const,
 };
 
+/**
+ * `scrollViewProps` for a screen whose content is a form: taps reach the
+ * controls while the keyboard is up, and dragging the list dismisses it.
+ *
+ * Every auth screen wrote this same literal by hand. It is a behaviour preset,
+ * not a style, so it lives with the component that consumes it rather than in
+ * the layout tokens.
+ */
+export const KEYBOARD_AWARE_SCROLL_PROPS = {
+  keyboardShouldPersistTaps: 'handled',
+  showsVerticalScrollIndicator: false,
+  keyboardDismissMode: 'interactive',
+} as const;
+
 export function ThemedView({
   children,
   scrollable = false,

@@ -49,6 +49,7 @@ function isDayKey(value: unknown): value is string {
  * Returns an empty set on any read or parse failure — the caller unions this
  * with the server-derived set, so a failure degrades to today's behaviour
  * rather than blanking the streak.
+ * @internal
  */
 export async function readStudyDays(): Promise<Set<string>> {
   try {

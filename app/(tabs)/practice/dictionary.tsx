@@ -19,7 +19,7 @@ import {
 import { VocabularyProgressChart } from '@/components/practice/charts/VocabularyProgressChart';
 import { SettingsPicker, TextLink } from '@/components/ui';
 import type { SettingsPickerOption } from '@/components/ui/SettingsPicker';
-import { LIST_DRAW_DISTANCE_MULTIPLIER, TIMING_CONFIG } from '@/constants/animation';
+import { LIST_DRAW_DISTANCE_MULTIPLIER, TIMING_CONFIG, fadeInStyle } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { getPracticeWordRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -30,7 +30,6 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useDictionaryList, useFSRSQueries, useResetWordProgress } from '@/hooks/vocabulary';
 import { isHorizonScope } from '@/hooks/vocabulary/useDictionaryList';
 import type { DictionaryScope, PickerScope } from '@/hooks/vocabulary/useDictionaryList';
-import type { ReanimatedCSSAnimationStyle } from '@/types/ui/base.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 
@@ -54,14 +53,7 @@ const SCOPE_EMPTY_MESSAGES: Record<Exclude<DictionaryScope, 'all'>, string> = {
 //
 // Every row fades on the same clock: a per-row stagger across a dozen dense
 // hairline rows reads as a cascade of lines rather than a list appearing.
-const ROW_FADE_IN_STYLE = {
-  animationName: {
-    from: { opacity: 0 },
-    to: { opacity: 1 },
-  },
-  animationDuration: `${TIMING_CONFIG.MEDIUM.duration}ms`,
-  animationFillMode: 'backwards' as const,
-} as ReanimatedCSSAnimationStyle;
+const ROW_FADE_IN_STYLE = fadeInStyle(TIMING_CONFIG.MEDIUM.duration, 'backwards');
 
 export default function DictionaryScreen(): JSX.Element {
   const { user } = useAuth();

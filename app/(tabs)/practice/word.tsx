@@ -26,13 +26,12 @@ import {
 import type { SolidColorName } from '@/constants/colors';
 import type { RootId } from '@/types/branded.types';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
 import { handleError } from '@/utils/errorHandling';
+import { getNextReviewLabel } from '@/utils/fsrsUtils';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 import { DIFFICULTY_COLORS, DIFFICULTY_LABELS, getWordDifficultyLevel } from '@/utils/urgencyScore';
 
 const SENTENCE_EXAMPLES_LIMIT = 5;
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 interface StatRowProps {
   label: string;
@@ -60,25 +59,6 @@ function StatRow({ label, value, colorName }: StatRowProps): JSX.Element {
       </ThemedText>
     </ListRow>
   );
-}
-
-export function getNextReviewLabel(due: string | null): string {
-  const dueDate = parseSupabaseTimestamp(due);
-  if (!dueDate) return STRINGS.WORD_STATE_NEW;
-  const now = new Date();
-  if (dueDate.getTime() <= now.getTime()) return STRINGS.WORD_DUE_NOW;
-
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const startOfDueDay = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
-  const days = Math.round((startOfDueDay.getTime() - startOfToday.getTime()) / DAY_MS);
-  // Same calendar day but still in the future (e.g. due at 6pm, now 10am) is
-  // NOT "due now" — the due query (fsrs_due <= now) won't serve it yet, so
-  // labelling it "Due now" contradicted a Practice screen already showing
-  // "All caught up". Collapsing this into the days<=0 branch below reused the
-  // "now" copy for anything from seconds to hours away.
-  if (days <= 0) return STRINGS.WORD_DUE_LATER_TODAY;
-  if (days === 1) return STRINGS.WORD_DUE_TOMORROW;
-  return STRINGS.WORD_DUE_IN_DAYS.replace('{count}', String(days));
 }
 
 export default function PracticeWordScreen(): JSX.Element {

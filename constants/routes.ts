@@ -18,13 +18,11 @@ export const ROUTE_PATHS = {
   PRIVACY: '/(tabs)/explore/account/privacy',
   LEGAL: '/(tabs)/explore/account/legal',
 
-  PRACTICE_REVIEW: '/review',
   PRACTICE_DICTIONARY: '/(tabs)/practice/dictionary',
   PRACTICE_DUE_WORDS: '/due-words',
   PRACTICE_MEMORY_RETENTION: '/memory-retention',
   PRACTICE_STUDY_STREAK: '/study-streak',
   PRACTICE_WORDS_TO_REVISIT: '/words-to-revisit',
-  PRACTICE_WORD: '/(tabs)/practice/word',
 
   SLEEP_TIMER: '/sleep-timer',
 } as const;

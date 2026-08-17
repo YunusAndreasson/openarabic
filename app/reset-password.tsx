@@ -7,7 +7,7 @@ import { StyleSheet, View } from 'react-native';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedInput } from '@/components/ThemedInput';
 import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { KEYBOARD_AWARE_SCROLL_PROPS, ThemedView } from '@/components/ThemedView';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -218,11 +218,7 @@ export default function ResetPasswordScreen(): JSX.Element {
       useSafeArea={true}
       style={styles.container}
       contentContainerStyle={styles.scrollContent}
-      scrollViewProps={{
-        keyboardShouldPersistTaps: 'handled',
-        showsVerticalScrollIndicator: false,
-        keyboardDismissMode: 'interactive',
-      }}
+      scrollViewProps={KEYBOARD_AWARE_SCROLL_PROPS}
     >
       <Stack.Screen
         options={{

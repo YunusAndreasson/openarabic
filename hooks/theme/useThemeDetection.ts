@@ -6,11 +6,18 @@ import { Theme } from '@/constants/colors';
 import { useAppSelectorShallow } from '@/store/hooks';
 
 /**
- * Hook to get the current theme enum
- * Gracefully falls back to system colors when Redux isn't ready
+ * The theme the app is currently painting in.
+ *
+ * The single resolution point: Redux when it is ready and has a theme, the
+ * system scheme otherwise. `useColors` used to resolve this a second time with
+ * its own fallback, and the two had drifted — with the store ready but
+ * `theme.theme` unset (it is typed `Theme | null`, so redux-persist can rehydrate
+ * one), `useColors` returned Dark while this returned the system scheme, leaving
+ * the palette and every `useIsDarkMode()` branch disagreeing about the theme.
+ *
  * @returns the current theme (light/dark/sepia)
  */
-function useCurrentTheme(): Theme {
+export function useCurrentTheme(): Theme {
   // Check if Redux context is available
   const reduxContext = use(ReactReduxContext);
   const systemColorScheme = useColorScheme();

@@ -33,7 +33,6 @@
  * recognizer should look like. Silence and hallucinated transcripts are exempt;
  * those are us failing to hear, not them being wrong.
  */
-import * as Sentry from '@sentry/react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useToast, useVoiceGrading } from '@/components/providers';
@@ -56,6 +55,7 @@ import { getArmStages, markArmTap } from '@/utils/armTelemetry';
 import { getPromptSnapshot, recordPromptCut } from '@/utils/promptTelemetry';
 import { countDiag, mark as diagMark, span as diagSpan } from '@/utils/reviewDiagnostics';
 import { matchSingleWord } from '@/utils/voiceMatching';
+import { voiceBreadcrumb } from '@/utils/errorHandling';
 
 /**
  * `arming` is the window between asking for the mic and the mic actually
@@ -496,12 +496,7 @@ export function useVoiceReview({
     const run = async () => {
       setPhase('arming');
       void analytics.track(ANALYTICS_EVENTS.VOICE_ARM, { wordKey: currentWordKey });
-      Sentry.addBreadcrumb({
-        category: 'voice',
-        level: 'info',
-        message: 'voice.arm',
-        data: { wordKey: currentWordKey },
-      });
+      voiceBreadcrumb('voice.arm', { wordKey: currentWordKey });
 
       const outcome = await voice.arm({
         // The mic is live — only now is it honest to ask for an answer.
@@ -530,11 +525,7 @@ export function useVoiceReview({
         diagMark('mic.arm.failed', { reason: outcome.reason, message: outcome.message });
         if (outcome.reason === 'permission') {
           void analytics.track(ANALYTICS_EVENTS.VOICE_MIC_DENIED);
-          Sentry.addBreadcrumb({
-            category: 'voice',
-            level: 'warning',
-            message: 'voice.mic.denied',
-          });
+          voiceBreadcrumb('voice.mic.denied', undefined, 'warning');
           showToast(STRINGS.VOICE_MIC_PERMISSION_DENIED);
           dispatch(setVoiceEnabled(false));
           setDebug(d => ({ ...d, armError: 'permission' }));
@@ -559,12 +550,7 @@ export function useVoiceReview({
           setPhase('denied');
           return;
         }
-        Sentry.addBreadcrumb({
-          category: 'voice',
-          level: 'warning',
-          message: 'voice.arm.failed',
-          data: { reason: outcome.reason },
-        });
+        voiceBreadcrumb('voice.arm.failed', { reason: outcome.reason }, 'warning');
         setDebug(d => ({
           ...d,
           armError: outcome.message ? `${outcome.reason}: ${outcome.message}` : outcome.reason,
@@ -654,11 +640,7 @@ export function useVoiceReview({
         // Treat a hung recognizer exactly like hearing nothing: surface the
         // panel so the learner can self-grade or retry. Never auto-Unknown.
         diagMark('stt.timeout', { samples: outcome.result.waveform.length });
-        Sentry.addBreadcrumb({
-          category: 'voice',
-          level: 'warning',
-          message: 'voice.transcribe.timeout',
-        });
+        voiceBreadcrumb('voice.transcribe.timeout', undefined, 'warning');
         setDebug(d => ({ ...d, armError: 'transcribe-timeout' }));
       }
 
@@ -683,16 +665,11 @@ export function useVoiceReview({
         normalizedSpoken: match.normalizedSpoken,
         normalizedExpected: match.normalizedExpected,
       });
-      Sentry.addBreadcrumb({
-        category: 'voice',
-        level: 'info',
-        message: 'voice.match',
-        data: {
-          matched: match.matched,
-          method: match.method,
-          spoken: match.normalizedSpoken,
-          expected: match.normalizedExpected,
-        },
+      voiceBreadcrumb('voice.match', {
+        matched: match.matched,
+        method: match.method,
+        spoken: match.normalizedSpoken,
+        expected: match.normalizedExpected,
       });
       setDebug(d => ({
         ...d,
@@ -827,11 +804,10 @@ export function useVoiceReview({
         // says "we're back, nothing landed" without scoring it against them.
         warningFeedback();
       }
-      Sentry.addBreadcrumb({
-        category: 'voice',
-        level: 'info',
-        message: 'voice.match.miss',
-        data: { similarity: match.similarity, spoken: match.normalizedSpoken, suggestion },
+      voiceBreadcrumb('voice.match.miss', {
+        similarity: match.similarity,
+        spoken: match.normalizedSpoken,
+        suggestion,
       });
       // Hold the attempt; the panel's accept/reject/retry logs it with the verdict.
       attemptCtxRef.current = buildAttemptCtx(suggestion);

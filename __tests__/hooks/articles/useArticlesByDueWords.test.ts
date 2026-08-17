@@ -28,6 +28,9 @@ jest.mock('@/services/articles', () => ({
 
 // Mock queries
 jest.mock('@/constants/queries', () => ({
+  // Spread the real module so `gated` stays the real gate — the factories
+  // below are faked, but the skipToken guard under test must not be.
+  ...jest.requireActual('@/constants/queries'),
   fsrsQueries: {
     due: (userId: string) => ({
       queryKey: ['fsrs', 'due', userId],

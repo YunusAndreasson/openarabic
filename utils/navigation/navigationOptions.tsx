@@ -2,6 +2,7 @@ import type { NativeStackNavigationOptions } from 'expo-router';
 import { Platform, Text, View } from 'react-native';
 
 import { FONTS } from '@/constants/fonts';
+import { LAYOUT } from '@/constants/layout';
 
 // UIKit nav bar title is 17pt semibold; M3 small top app bar is 22pt.
 const NATIVE_TITLE_FONT_SIZE = Platform.OS === 'ios' ? 17 : 22;
@@ -107,5 +108,40 @@ export function createNavigationOptions(
       backgroundColor: colors.background,
     },
     ...baseOptions,
+  };
+}
+
+/**
+ * A bottom form sheet.
+ *
+ * Five screens declared this same block by hand and four of them were
+ * byte-identical; only `sheetAllowedDetents` ever differed.
+ *
+ * `'fitToContents'` measures the screen's content wrapper and re-measures it
+ * whenever the content height changes, so an async chart resizes the sheet
+ * instead of being clipped by a guessed fraction. Content must therefore stay
+ * measurable — no `flex: 1` child (nothing to measure) and no ScrollView (which
+ * iOS resizes to the whole screen view, see `SheetScreen`). A sheet whose
+ * content cannot fit, such as a long list, must pass explicit detents instead.
+ *
+ * `contentStyle` carries the sheet background rather than the content view, and
+ * is NOT optional: with `fitToContents` and a hidden header iOS leaves a bottom
+ * safe-area inset below the content wrapper (react-native-screens#3203), and
+ * only the Screen can paint it — react-native-screens lifts this
+ * `backgroundColor` onto it for exactly that reason. Painting `elevation1`
+ * further in left that band on Expo Router's injected theme `background`: the
+ * gap at the bottom.
+ */
+export function createSheetOptions(
+  colors: { elevation1: string },
+  sheetAllowedDetents: NativeStackNavigationOptions['sheetAllowedDetents'] = 'fitToContents',
+): NativeStackNavigationOptions {
+  return {
+    presentation: 'formSheet',
+    sheetAllowedDetents,
+    contentStyle: { backgroundColor: colors.elevation1 },
+    sheetGrabberVisible: true,
+    sheetCornerRadius: LAYOUT.BORDER_RADIUS.SHEET,
+    headerShown: false,
   };
 }

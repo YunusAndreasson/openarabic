@@ -54,12 +54,9 @@ import {
   BIN_GAP,
   BIN_WIDTH,
   DOT_COLUMN_CAP,
-  MIN_BIN_SCALE,
   PLOT_HEIGHT,
   binX,
-  buildHorizonBandPath,
   dotCenter,
-  getPlotMax,
   getWordsPerDot,
 } from '@/utils/horizonBandPath';
 import {
@@ -70,22 +67,6 @@ import {
   HORIZON_BAND_LABELS,
 } from '@/utils/memoryHorizon';
 
-/** Count the drawing commands the mocked PathBuilder recorded. */
-const verbsOf = (path: { toSVGString: () => string }): string[] =>
-  path
-    .toSVGString()
-    .split(' ')
-    .filter(token => /^[A-Za-z]/.test(token))
-    .map(token => token[0] as string);
-
-const bins = (...counts: number[]): number[] => {
-  const filled = new Array<number>(BIN_COUNT).fill(0);
-  counts.forEach((count, index) => {
-    if (index < BIN_COUNT) filled[index] = count;
-  });
-  return filled;
-};
-
 describe('horizon band geometry', () => {
   test('columns tile the full width without overlapping', () => {
     expect(BIN_COUNT).toBeGreaterThanOrEqual(16);
@@ -95,15 +76,6 @@ describe('horizon band geometry', () => {
     for (let index = 1; index < BIN_COUNT; index++) {
       expect(binX(index)).toBeCloseTo(binX(index - 1) + BIN_WIDTH + BIN_GAP, 5);
     }
-  });
-
-  test('the scale floor stops one word filling the canvas', () => {
-    expect(getPlotMax(0)).toBe(MIN_BIN_SCALE);
-    expect(getPlotMax(1)).toBe(MIN_BIN_SCALE);
-    // A single word occupies at most 1/MIN_BIN_SCALE of the plot.
-    expect(1 / getPlotMax(1)).toBeLessThanOrEqual(1 / MIN_BIN_SCALE);
-    // Past the floor the real peak takes over.
-    expect(getPlotMax(12)).toBe(12);
   });
 
   test('dots stay inside the canvas at every depth up to the cap', () => {
@@ -123,40 +95,6 @@ describe('horizon band geometry', () => {
     expect(perDot).toBeGreaterThan(1);
     // Whatever the ratio, the tallest column must now fit.
     expect(Math.ceil(overflowing / perDot)).toBeLessThanOrEqual(DOT_COLUMN_CAP);
-  });
-});
-
-describe('buildHorizonBandPath — interpolatability contract', () => {
-  const datasets: Record<string, number[]> = {
-    'all empty': bins(),
-    'one word': bins(1),
-    'single bin, many words': bins(0, 0, 0, 40),
-    'every bin full': new Array<number>(BIN_COUNT).fill(7),
-    'sparse tail': bins(3, 0, 0, 1, 0, 0, 0, 9),
-  };
-
-  const verbCounts = Object.entries(datasets).map(([name, counts]) => {
-    const path = buildHorizonBandPath(counts, getPlotMax(Math.max(0, ...counts)));
-    return [name, verbsOf(path)] as const;
-  });
-
-  test('every dataset emits exactly BIN_COUNT columns of seven verbs', () => {
-    verbCounts.forEach(([name, verbs]) => {
-      expect([name, verbs.length]).toEqual([name, BIN_COUNT * 7]);
-    });
-  });
-
-  test('every dataset emits the identical verb sequence', () => {
-    const [, reference] = verbCounts[0] as readonly [string, string[]];
-    verbCounts.forEach(([name, verbs]) => {
-      expect([name, verbs.join('')]).toEqual([name, reference.join('')]);
-    });
-  });
-
-  test('a zero-count column is degenerate, not absent', () => {
-    // An empty dataset still draws every column; they simply have no height.
-    const empty = buildHorizonBandPath(bins(), getPlotMax(0));
-    expect(verbsOf(empty)).toHaveLength(BIN_COUNT * 7);
   });
 });
 

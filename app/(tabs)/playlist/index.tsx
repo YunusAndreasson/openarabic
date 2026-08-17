@@ -12,7 +12,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { SavedEmptyState, PlaylistItemCard } from '@/components/playlist';
 import { useToast } from '@/components/providers';
-import { TIMING_CONFIG } from '@/constants/animation';
+import { TIMING_CONFIG, fadeInStyle } from '@/constants/animation';
 import { PinnedActionButton, usePinnedActionClearance } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -24,7 +24,6 @@ import { useAppSelector } from '@/store/hooks';
 import type { BookmarkItem } from '@/types/bookmark.types';
 import type { ArticleId } from '@/types/branded.types';
 import { AudioLanguage, ToastType } from '@/types/enums';
-import type { ReanimatedCSSAnimationStyle } from '@/types/ui/base.types';
 import { generateStorageUrl } from '@/utils/storageUtils';
 import { getArticleMetadata } from '@/utils/stringUtils';
 
@@ -52,14 +51,9 @@ const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.AUDIO_ITEM;
 // at an in-between opacity. A CSS keyframe returns to the explicit base opacity
 // after the animation, so every row deterministically settles fully visible.
 const ROW_FADE_IN_STYLE = {
+  ...fadeInStyle(TIMING_CONFIG.MEDIUM.duration, 'backwards'),
   opacity: 1,
-  animationName: {
-    from: { opacity: 0 },
-    to: { opacity: 1 },
-  },
-  animationDuration: `${TIMING_CONFIG.MEDIUM.duration}ms`,
-  animationFillMode: 'backwards' as const,
-} as ReanimatedCSSAnimationStyle;
+};
 
 // Memoized separator component for both DraggableFlatList and FlashList
 const ItemSeparator = memo(() => <ListSeparator height={LAYOUT.SPACING.SMALL} />);

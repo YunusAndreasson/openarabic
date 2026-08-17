@@ -5,7 +5,7 @@ import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { simpleAudioService } from '@/services/audioPlayer';
 import { supabase, setupSupabaseAppStateListener } from '@/services/supabase';
 import type { AuthResult, UserSession } from '@/types/auth.types';
-import { handleError } from '@/utils/errorHandling';
+import { authBreadcrumb, handleError } from '@/utils/errorHandling';
 
 // Maximum number of retry attempts for session refresh
 const MAX_REFRESH_RETRIES = 3;
@@ -28,11 +28,7 @@ export function useProvideAuth(): AuthResult {
       const currentAttempt = refreshAttemptsRef.current + 1;
       refreshAttemptsRef.current = currentAttempt;
 
-      Sentry.addBreadcrumb({
-        category: 'auth',
-        message: `Refreshing session (attempt ${currentAttempt})`,
-        level: 'info',
-      });
+      authBreadcrumb(`Refreshing session (attempt ${currentAttempt})`);
 
       try {
         // Check network connectivity before attempting refresh. Only a
@@ -42,11 +38,7 @@ export function useProvideAuth(): AuthResult {
         // form's pre-flight.
         const netState = await NetInfo.fetch();
         if (netState?.isConnected === false) {
-          Sentry.addBreadcrumb({
-            category: 'auth',
-            message: 'No network connection during refresh attempt',
-            level: 'warning',
-          });
+          authBreadcrumb('No network connection during refresh attempt', undefined, 'warning');
           setIsLoading(false);
           return null;
         }
@@ -77,11 +69,7 @@ export function useProvideAuth(): AuthResult {
 
         if (refreshData.session) {
           // Reset refresh attempts on success
-          Sentry.addBreadcrumb({
-            category: 'auth',
-            message: 'Session refreshed successfully',
-            level: 'info',
-          });
+          authBreadcrumb('Session refreshed successfully');
 
           refreshAttemptsRef.current = 0;
           setSession(refreshData.session);
@@ -108,11 +96,7 @@ export function useProvideAuth(): AuthResult {
   // Perform initial auth setup
   const initAuth = useCallback(async () => {
     try {
-      Sentry.addBreadcrumb({
-        category: 'auth',
-        message: 'Starting auth initialization',
-        level: 'info',
-      });
+      authBreadcrumb('Starting auth initialization');
 
       // Modern supabase-js v2 auto-initializes on first use
       // Auto-refresh is enabled with autoRefreshToken: true in client config
@@ -126,19 +110,11 @@ export function useProvideAuth(): AuthResult {
         setSession(null);
         setAuthError(error);
       } else if (data.session) {
-        Sentry.addBreadcrumb({
-          category: 'auth',
-          message: 'Successfully initialized with valid session',
-          level: 'info',
-        });
+        authBreadcrumb('Successfully initialized with valid session');
         setSession(data.session);
         setAuthError(null);
       } else {
-        Sentry.addBreadcrumb({
-          category: 'auth',
-          message: 'Initialized but no valid session found',
-          level: 'info',
-        });
+        authBreadcrumb('Initialized but no valid session found');
         setSession(null);
       }
     } catch (error) {
@@ -182,11 +158,7 @@ export function useProvideAuth(): AuthResult {
         // FIXED: Guard against race condition where component unmounts between setTimeout queue and execution
         if (!isMounted) return;
 
-        Sentry.addBreadcrumb({
-          category: 'auth',
-          message: `Auth state change: ${event}`,
-          level: 'info',
-        });
+        authBreadcrumb(`Auth state change: ${event}`);
 
         if (event === 'SIGNED_OUT') {
           // Stop audio to prevent stale playback state
@@ -197,11 +169,7 @@ export function useProvideAuth(): AuthResult {
           setIsLoading(false);
         } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           if (newSession) {
-            Sentry.addBreadcrumb({
-              category: 'auth',
-              message: 'New session received, updating state',
-              level: 'info',
-            });
+            authBreadcrumb('New session received, updating state');
             setSession(newSession);
             setAuthError(null);
           }

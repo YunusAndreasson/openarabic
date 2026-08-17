@@ -1,4 +1,4 @@
-import { skipToken, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Card } from 'ts-fsrs';
 import { show_diff_message, State } from 'ts-fsrs';
@@ -10,7 +10,7 @@ import {
   REVIEW_REFILL_LOW_WATER,
   REVIEW_SESSION_CHUNK_SIZE,
 } from '@/constants/fsrs';
-import { fsrsQueries } from '@/constants/queries';
+import { fsrsQueries, gated } from '@/constants/queries';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { RootId } from '@/types/branded.types';
 import { ToastType } from '@/types/enums';
@@ -139,10 +139,8 @@ export function useFSRS({
   // The factory owns the due queryFn (conditional cooldown included) — the key
   // encodes the cooldown, so this never collides with differently-parameterized
   // due consumers. Only the skipToken guard for a missing userId is added here.
-  const dueConfig = fsrsQueries.due(userId ?? '', _sessionCooldownHours);
   const { data: dueWords, isLoading } = useQuery({
-    ...dueConfig,
-    queryFn: userId ? dueConfig.queryFn : skipToken,
+    ...gated(id => fsrsQueries.due(id, _sessionCooldownHours), userId),
     refetchOnMount: true,
     refetchOnWindowFocus: false, // Mobile-only: no window focus concept
     refetchOnReconnect: true,

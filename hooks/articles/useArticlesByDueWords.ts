@@ -2,7 +2,7 @@ import { skipToken, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
-import { fsrsQueries, articleQueries } from '@/constants/queries';
+import { articleQueries, fsrsQueries, gated } from '@/constants/queries';
 import { articlesService } from '@/services/articles';
 import type { Article } from '@/types/articles.types';
 import type { RootId } from '@/types/branded.types';
@@ -29,17 +29,18 @@ export function useArticlesByDueWords(
   limit = 10,
 ): UseArticlesByDueWordsResult {
   // Fetch due words for the current user with optimized query
-  const dueConfig = fsrsQueries.due(userId ?? '');
   const { data: dueWords = [], isLoading: isLoadingDueWords } = useQuery({
-    ...dueConfig,
-    queryFn: userId ? dueConfig.queryFn : skipToken,
+    ...gated(fsrsQueries.due, userId),
   });
 
   // Fallback: fetch all study words if no due words (for better recommendations)
-  const cooldownConfig = fsrsQueries.allWithCooldown(userId ?? '', DEFAULT_SESSION_COOLDOWN_HOURS);
+  // Second gate beyond the user id: only reach for the full list when the due
+  // query came back empty.
   const { data: allStudyWords = [], isLoading: isLoadingAllWords } = useQuery({
-    ...cooldownConfig,
-    queryFn: userId && dueWords.length === 0 ? cooldownConfig.queryFn : skipToken,
+    ...gated(
+      id => fsrsQueries.allWithCooldown(id, DEFAULT_SESSION_COOLDOWN_HOURS),
+      userId && dueWords.length === 0 ? userId : undefined,
+    ),
   });
 
   // Use due words if available, otherwise fallback to all study words

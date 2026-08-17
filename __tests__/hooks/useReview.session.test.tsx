@@ -23,9 +23,10 @@ import { renderHook, act, waitFor } from '@testing-library/react-native';
 
 import { useReview } from '@/hooks/review/useReview';
 import {
-  setupUseReviewMocks,
   createMockWord,
   createWrapper,
+  fsrsState,
+  setupUseReviewMocks,
   type UseReviewMockRefs,
 } from './review/useReviewTestSetup';
 
@@ -63,13 +64,6 @@ jest.mock('@/hooks/utils/useTimerCleanup', () => ({
 
 jest.mock('@/hooks/animations/useOpacityAnimation', () => ({
   useOpacityAnimation: jest.fn(),
-}));
-
-jest.mock('expo-router', () => ({
-  router: {
-    back: jest.fn(),
-    replace: jest.fn(),
-  },
 }));
 
 // Replaces the module wholesale, so EVERY export any transitively-loaded module
@@ -138,15 +132,7 @@ describe('useReview Hook - Session Management', () => {
     test('should trigger completion callback when session complete', () => {
       const onComplete = jest.fn();
 
-      useFSRS.mockReturnValue({
-        currentWord: null,
-        wordQueue: [],
-        isLoading: false,
-        isComplete: true,
-        progress: 100,
-        updateWord: mocks.mockUpdateWord,
-        invalidateQueries: mocks.mockInvalidateQueries,
-      });
+      useFSRS.mockReturnValue(fsrsState(mocks, null, { isComplete: true, progress: 100 }));
 
       const wrapper = createWrapper();
       renderHook(() => useReview({ onClose: onComplete }), { wrapper });
@@ -162,28 +148,12 @@ describe('useReview Hook - Session Management', () => {
       const word1 = createMockWord({ id: 1, root_id: 101 });
       const word2 = createMockWord({ id: 2, root_id: 102 });
 
-      useFSRS.mockReturnValue({
-        currentWord: word1,
-        wordQueue: [word1, word2],
-        isLoading: false,
-        isComplete: false,
-        progress: 0,
-        updateWord: mocks.mockUpdateWord,
-        invalidateQueries: mocks.mockInvalidateQueries,
-      });
+      useFSRS.mockReturnValue(fsrsState(mocks, word1, { wordQueue: [word1, word2] }));
 
       const wrapper = createWrapper();
       const { result, rerender } = renderHook(() => useReview(), { wrapper });
 
-      useFSRS.mockReturnValue({
-        currentWord: word2,
-        wordQueue: [word2],
-        isLoading: false,
-        isComplete: false,
-        progress: 50,
-        updateWord: mocks.mockUpdateWord,
-        invalidateQueries: mocks.mockInvalidateQueries,
-      });
+      useFSRS.mockReturnValue(fsrsState(mocks, word2, { progress: 50 }));
 
       rerender();
 
@@ -194,15 +164,7 @@ describe('useReview Hook - Session Management', () => {
 
   describe('Edge Cases', () => {
     test('should handle empty word queue', () => {
-      useFSRS.mockReturnValue({
-        currentWord: null,
-        wordQueue: [],
-        isLoading: false,
-        isComplete: true,
-        progress: 0,
-        updateWord: mocks.mockUpdateWord,
-        invalidateQueries: mocks.mockInvalidateQueries,
-      });
+      useFSRS.mockReturnValue(fsrsState(mocks, null, { isComplete: true }));
 
       const wrapper = createWrapper();
       const { result } = renderHook(() => useReview(), { wrapper });
@@ -213,15 +175,7 @@ describe('useReview Hook - Session Management', () => {
     });
 
     test('should not process swipes when session complete', async () => {
-      useFSRS.mockReturnValue({
-        currentWord: null,
-        wordQueue: [],
-        isLoading: false,
-        isComplete: true,
-        progress: 100,
-        updateWord: mocks.mockUpdateWord,
-        invalidateQueries: mocks.mockInvalidateQueries,
-      });
+      useFSRS.mockReturnValue(fsrsState(mocks, null, { isComplete: true, progress: 100 }));
 
       const wrapper = createWrapper();
       const { result } = renderHook(() => useReview(), { wrapper });
@@ -243,15 +197,7 @@ describe('useReview Hook - Session Management', () => {
     test('revealing the answer fires only the faintest haptic', () => {
       const haptics = jest.requireMock('@/utils/haptics') as Record<string, jest.Mock>;
       const word = createMockWord();
-      useFSRS.mockReturnValue({
-        currentWord: word,
-        wordQueue: [word],
-        isLoading: false,
-        isComplete: false,
-        progress: 0,
-        updateWord: mocks.mockUpdateWord,
-        invalidateQueries: mocks.mockInvalidateQueries,
-      });
+      useFSRS.mockReturnValue(fsrsState(mocks, word));
 
       const wrapper = createWrapper();
       const { result } = renderHook(() => useReview(), { wrapper });
@@ -267,15 +213,7 @@ describe('useReview Hook - Session Management', () => {
 
     test('should not process swipes when already updating', async () => {
       const word = createMockWord();
-      useFSRS.mockReturnValue({
-        currentWord: word,
-        wordQueue: [word],
-        isLoading: false,
-        isComplete: false,
-        progress: 0,
-        updateWord: mocks.mockUpdateWord,
-        invalidateQueries: mocks.mockInvalidateQueries,
-      });
+      useFSRS.mockReturnValue(fsrsState(mocks, word));
 
       const wrapper = createWrapper();
       const { result } = renderHook(() => useReview(), { wrapper });
@@ -304,15 +242,7 @@ describe('useReview Hook - Session Management', () => {
       mocks.mockAudioPlayer.play.mockRejectedValueOnce(new Error('Audio failed'));
 
       const word = createMockWord();
-      useFSRS.mockReturnValue({
-        currentWord: word,
-        wordQueue: [word],
-        isLoading: false,
-        isComplete: false,
-        progress: 0,
-        updateWord: mocks.mockUpdateWord,
-        invalidateQueries: mocks.mockInvalidateQueries,
-      });
+      useFSRS.mockReturnValue(fsrsState(mocks, word));
 
       const wrapper = createWrapper();
       renderHook(() => useReview(), { wrapper });
@@ -326,15 +256,7 @@ describe('useReview Hook - Session Management', () => {
       mocks.mockUpdateWord.mockRejectedValueOnce(new Error('Update failed'));
 
       const word = createMockWord();
-      useFSRS.mockReturnValue({
-        currentWord: word,
-        wordQueue: [word],
-        isLoading: false,
-        isComplete: false,
-        progress: 0,
-        updateWord: mocks.mockUpdateWord,
-        invalidateQueries: mocks.mockInvalidateQueries,
-      });
+      useFSRS.mockReturnValue(fsrsState(mocks, word));
 
       const wrapper = createWrapper();
       const { result } = renderHook(() => useReview(), { wrapper });
@@ -356,15 +278,7 @@ describe('useReview Hook - Session Management', () => {
   describe('Cleanup', () => {
     test('should cleanup audio on unmount', () => {
       const word = createMockWord();
-      useFSRS.mockReturnValue({
-        currentWord: word,
-        wordQueue: [word],
-        isLoading: false,
-        isComplete: false,
-        progress: 0,
-        updateWord: mocks.mockUpdateWord,
-        invalidateQueries: mocks.mockInvalidateQueries,
-      });
+      useFSRS.mockReturnValue(fsrsState(mocks, word));
 
       const wrapper = createWrapper();
       const { unmount } = renderHook(() => useReview(), { wrapper });
@@ -376,15 +290,7 @@ describe('useReview Hook - Session Management', () => {
 
     test('should cleanup all timers on unmount', () => {
       const word = createMockWord();
-      useFSRS.mockReturnValue({
-        currentWord: word,
-        wordQueue: [word],
-        isLoading: false,
-        isComplete: false,
-        progress: 0,
-        updateWord: mocks.mockUpdateWord,
-        invalidateQueries: mocks.mockInvalidateQueries,
-      });
+      useFSRS.mockReturnValue(fsrsState(mocks, word));
 
       const wrapper = createWrapper();
       const { unmount } = renderHook(() => useReview(), { wrapper });
@@ -396,15 +302,7 @@ describe('useReview Hook - Session Management', () => {
 
     test('should reset state on unmount', () => {
       const word = createMockWord();
-      useFSRS.mockReturnValue({
-        currentWord: word,
-        wordQueue: [word],
-        isLoading: false,
-        isComplete: false,
-        progress: 0,
-        updateWord: mocks.mockUpdateWord,
-        invalidateQueries: mocks.mockInvalidateQueries,
-      });
+      useFSRS.mockReturnValue(fsrsState(mocks, word));
 
       const wrapper = createWrapper();
       const { result, unmount } = renderHook(() => useReview(), { wrapper });
@@ -426,15 +324,7 @@ describe('useReview Hook - Session Management', () => {
   describe('Session Metrics', () => {
     test('should track session metrics', () => {
       const word = createMockWord();
-      useFSRS.mockReturnValue({
-        currentWord: word,
-        wordQueue: [word],
-        isLoading: false,
-        isComplete: false,
-        progress: 0,
-        updateWord: mocks.mockUpdateWord,
-        invalidateQueries: mocks.mockInvalidateQueries,
-      });
+      useFSRS.mockReturnValue(fsrsState(mocks, word));
 
       useSessionMetrics.mockReturnValue({
         metrics: {
@@ -458,15 +348,7 @@ describe('useReview Hook - Session Management', () => {
 
     test('should update metrics on swipe', async () => {
       const word = createMockWord({ fsrs_stability: 7 });
-      useFSRS.mockReturnValue({
-        currentWord: word,
-        wordQueue: [word],
-        isLoading: false,
-        isComplete: false,
-        progress: 0,
-        updateWord: mocks.mockUpdateWord,
-        invalidateQueries: mocks.mockInvalidateQueries,
-      });
+      useFSRS.mockReturnValue(fsrsState(mocks, word));
 
       const wrapper = createWrapper();
       const { result } = renderHook(() => useReview(), { wrapper });
@@ -498,15 +380,7 @@ describe('useReview Hook - Session Management', () => {
       });
 
       const word = createMockWord();
-      useFSRS.mockReturnValue({
-        currentWord: word,
-        wordQueue: [word],
-        isLoading: false,
-        isComplete: false,
-        progress: 0,
-        updateWord: mocks.mockUpdateWord,
-        invalidateQueries: mocks.mockInvalidateQueries,
-      });
+      useFSRS.mockReturnValue(fsrsState(mocks, word));
 
       const wrapper = createWrapper();
       renderHook(() => useReview(), { wrapper });
@@ -524,15 +398,7 @@ describe('useReview Hook - Session Management', () => {
       });
 
       const word = createMockWord();
-      useFSRS.mockReturnValue({
-        currentWord: word,
-        wordQueue: [word],
-        isLoading: false,
-        isComplete: false,
-        progress: 0,
-        updateWord: mocks.mockUpdateWord,
-        invalidateQueries: mocks.mockInvalidateQueries,
-      });
+      useFSRS.mockReturnValue(fsrsState(mocks, word));
 
       const wrapper = createWrapper();
       renderHook(() => useReview(), { wrapper });
@@ -550,15 +416,7 @@ describe('useReview Hook - Session Management', () => {
       });
 
       const word = createMockWord();
-      useFSRS.mockReturnValue({
-        currentWord: word,
-        wordQueue: [word],
-        isLoading: false,
-        isComplete: false,
-        progress: 0,
-        updateWord: mocks.mockUpdateWord,
-        invalidateQueries: mocks.mockInvalidateQueries,
-      });
+      useFSRS.mockReturnValue(fsrsState(mocks, word));
 
       const wrapper = createWrapper();
       const { result } = renderHook(() => useReview(), { wrapper });

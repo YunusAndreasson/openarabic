@@ -980,6 +980,17 @@ jest.mock('react-native/Libraries/Image/resolveAssetSource', () =>
 // expo-haptics needs this: utils/haptics attaches a .catch() to swallow
 // "A haptics engine is not available on this device" (the top production error),
 // and .catch() on undefined throws. Re-arm the promise-returning implementations.
+//
+// NOTE for suites tempted to add their own `jest.mock('expo-haptics', …)`: don't.
+// expo-haptics is mocked globally for every suite through jest.config.js
+// `moduleNameMapper` → __mocks__/expo-haptics.js, and this block re-arms it per
+// test. A local factory shadows that with a second mock object that nothing
+// re-arms, so production code chaining .catch() breaks.
+//
+// The same trap applies to `jest.mock('@/utils/haptics', …)`: that module
+// replaces the real one wholesale, so ANY export omitted from the factory is
+// `undefined` at the call site rather than a no-op, and the component under
+// test dies with "is not a function".
 beforeEach(() => {
   const haptics = require('expo-haptics');
   for (const name of [

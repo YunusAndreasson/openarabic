@@ -22,10 +22,9 @@ interface RankStrugglingWordsOptions {
  * revisit" screen and the dictionary's Struggling filter both go through here, so
  * a word can never be a leech on one surface and not on the other.
  *
- * NB: `calculateStrugglingWords` in wordClassification.ts is a DIFFERENT rule —
- * it additionally excludes anything reviewed inside the session cooldown. That
- * one answers "what should I be shown next"; this one answers "what do I keep
- * forgetting", which is a property of the word rather than of the schedule.
+ * NB: this asks "what do I keep forgetting", a property of the word, not "what
+ * should I be shown next", a property of the schedule. It deliberately does NOT
+ * apply the session cooldown — that gate belongs to the due-words query.
  */
 export function isLeechWord(word: StudyWord, minLapses: number = LEECH_MIN_LAPSES): boolean {
   return (

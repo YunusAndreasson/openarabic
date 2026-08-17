@@ -1,7 +1,7 @@
-import { skipToken, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
-import { fsrsQueries } from '@/constants/queries';
+import { fsrsQueries, gated } from '@/constants/queries';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { filterDueWords } from '@/utils/newWordPacing';
 
@@ -26,20 +26,14 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
   const queryClient = useQueryClient();
 
   // allWordsQuery: no initialData needed — useQuery automatically reads its own cache
-  const allConfig = fsrsQueries.all(userId ?? '');
-  const allWordsQuery = useQuery({
-    ...allConfig,
-    queryFn: userId ? allConfig.queryFn : skipToken,
-  });
+  const allWordsQuery = useQuery(gated(fsrsQueries.all, userId));
 
   // Query for due words - uses shorter stale time since it's more time-sensitive.
   // The factory owns the queryFn (conditional session cooldown included) and
   // encodes cooldown + limit in the key, so callers with different limits get
   // distinct cache entries instead of racing over one.
-  const dueConfig = fsrsQueries.due(userId ?? '', DEFAULT_SESSION_COOLDOWN_HOURS, limit);
   const dueWordsQuery = useQuery({
-    ...dueConfig,
-    queryFn: userId ? dueConfig.queryFn : skipToken,
+    ...gated(id => fsrsQueries.due(id, DEFAULT_SESSION_COOLDOWN_HOURS, limit), userId),
     // Use allWords as placeholder while due words fetch — shows filtered data immediately
     // placeholderData (not initialData) so it doesn't create a stale cache entry
     placeholderData: () => {

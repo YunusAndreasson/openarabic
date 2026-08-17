@@ -32,7 +32,7 @@ import { authorsService } from '@/services/authors';
 import { bookmarkService } from '@/services/bookmark';
 import { categoriesService } from '@/services/categories';
 import { readingProgressService } from '@/services/readingProgress';
-import { studySessionStreakService } from '@/services/studyStreak';
+import { StudySessionStreakService } from '@/services/studyStreak';
 import { sentencesService } from '@/services/sentences';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { ArticleId, RootId } from '@/types/branded.types';
@@ -43,6 +43,26 @@ import type { ArticleId, RootId } from '@/types/branded.types';
  * forces a refetch and throws "Attempted to invoke queryFn when set to skipToken".
  */
 const isFetchableQuery = (query: Query): boolean => query.options.queryFn !== skipToken;
+
+/**
+ * A query that only runs once there is a signed-in user.
+ *
+ * Every user-scoped call site did this in two steps — build the config with
+ * `user?.id ?? ''` so the key is stable, then swap the queryFn for `skipToken`
+ * when the id is actually missing. Written out ten times, it was ten chances to
+ * do one half and forget the other: pass the sentinel without the guard and the
+ * query fires with an empty user id.
+ *
+ * Takes the factory rather than the built config so the sentinel and the guard
+ * can never disagree about which id they were given.
+ */
+export function gated<TConfig extends { queryFn?: unknown }>(
+  factory: (userId: string) => TConfig,
+  userId: string | undefined,
+): TConfig {
+  const config = factory(userId ?? '');
+  return userId ? config : { ...config, queryFn: skipToken };
+}
 
 /**
  * React Query configuration constants
@@ -392,7 +412,7 @@ export const studyStreakQueries = {
   streak: (userId: string) =>
     queryOptions({
       queryKey: ['study-streak', userId] as const,
-      queryFn: () => studySessionStreakService.getStudySessionStreak(userId),
+      queryFn: () => StudySessionStreakService.getStudySessionStreak(userId),
       enabled: !!userId,
       ...CACHE_TIMES.CRITICAL, // 30 seconds (time-sensitive)
       retry: 2,
@@ -407,7 +427,7 @@ export const studyStreakQueries = {
   history: (userId: string, days: number = 40) =>
     queryOptions({
       queryKey: ['study-streak-history', userId, days, 'v2'] as const,
-      queryFn: () => studySessionStreakService.getStudySessionHistory(userId, days),
+      queryFn: () => StudySessionStreakService.getStudySessionHistory(userId, days),
       enabled: !!userId,
       ...CACHE_TIMES.CRITICAL, // 30 seconds (match streak counter for consistent UX)
       retry: 2,

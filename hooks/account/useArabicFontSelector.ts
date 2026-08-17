@@ -46,20 +46,13 @@ const ARABIC_FONT_OPTIONS: ArabicFontOption[] = [
   },
 ];
 
-/**
- * Re-exported so the picker keeps its own name for the range while the numbers
- * live next to the clamp every renderer applies — the two used to be separate
- * literals and had drifted apart.
- */
-export const FONT_SIZE_RANGE = ARABIC_FONT_SIZE;
-
 export interface UseArabicFontSelectorResult {
   selectedFont: ArabicFontName;
   selectedFontSize: number;
   fontOptions: ArabicFontOption[];
   selectFont: (fontName: ArabicFontName) => void;
   setFontSize: (size: number) => void;
-  fontSizeRange: typeof FONT_SIZE_RANGE;
+  fontSizeRange: typeof ARABIC_FONT_SIZE;
 }
 
 export const useArabicFontSelector = (): UseArabicFontSelectorResult => {
@@ -96,6 +89,6 @@ export const useArabicFontSelector = (): UseArabicFontSelectorResult => {
     fontOptions: ARABIC_FONT_OPTIONS,
     selectFont,
     setFontSize,
-    fontSizeRange: FONT_SIZE_RANGE,
+    fontSizeRange: ARABIC_FONT_SIZE,
   };
 };

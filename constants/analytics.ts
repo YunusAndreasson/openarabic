@@ -29,8 +29,6 @@ export const ANALYTICS_EVENTS = {
   // Audio playback events
   AUDIO_PLAY_ALL_STARTED: 'Audio Play All Started',
   AUDIO_PLAYBACK_STARTED: 'Audio Playback Started',
-  AUDIO_PLAYBACK_COMPLETED: 'Audio Playback Completed',
-  AUDIO_PLAYBACK_PAUSED: 'Audio Playback Paused',
   SLEEP_TIMER_SET: 'Sleep Timer Set',
 
   // Article/Reading events
@@ -56,13 +54,11 @@ export const ANALYTICS_EVENTS = {
   ONBOARDING_CHECKLIST_SUPPRESSED: 'Onboarding Checklist Suppressed',
 
   // Navigation events
-  SCREEN_VIEWED: 'Screen Viewed',
 
   // Account events
   ACCOUNT_DELETED: 'Account Deleted',
 
   // Error tracking events
-  ERROR_OCCURRED: 'Error Occurred',
 
   // Notification events
   NOTIFICATION_SCHEDULING_FAILED: 'Notification Scheduling Failed',

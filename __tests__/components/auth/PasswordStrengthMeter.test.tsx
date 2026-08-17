@@ -13,11 +13,6 @@ import React from 'react';
 
 import { PasswordStrengthMeter } from '@/components/auth/PasswordStrengthMeter';
 
-// Mock expo-router before imports that depend on it
-jest.mock('expo-router', () => ({
-  router: { push: jest.fn(), replace: jest.fn() },
-}));
-
 // Mock useAuthForm to avoid expo-router dependency chain
 jest.mock('@/hooks/auth/useAuthForm', () => ({
   useAuthForm: () => ({}),

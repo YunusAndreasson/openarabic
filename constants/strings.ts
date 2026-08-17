@@ -88,7 +88,6 @@ export const STRINGS = {
   // Solo button in its row, filled/primary like "Show answer" alone — "Tap to"
   // was naming the gesture every button already asks for.
   RESTUDY_CONTINUE: 'Continue',
-  RESTUDY_HINT: 'Take a moment with this one',
   RECALL_RUN: (count: number) => `${count} in a row`,
   SESSION_WORDS_DONE: (count: number) => `${count} done`,
   // Says out loud what the bar can only draw: how far into this sitting you are,
@@ -289,13 +288,7 @@ export const STRINGS = {
   SECTION_SHORT_READS: 'Quick reads',
   SECTION_ADVANCED: 'Advanced',
   // Difficulty levels
-  DIFFICULTY_BEGINNER: 'Beginner',
-  DIFFICULTY_INTERMEDIATE: 'Intermediate',
-  DIFFICULTY_ADVANCED: 'Advanced',
   // Length categories
-  LENGTH_SHORT: 'Short',
-  LENGTH_MEDIUM: 'Medium',
-  LENGTH_LONG: 'Long',
   RESUMED_READING_TEMPLATE: 'Resuming at {percent}%',
   // Article section headings (for progress-based sorting)
   CONTINUE_READING: 'Continue reading',
@@ -323,7 +316,6 @@ export const STRINGS = {
   PLAYLIST_EMPTY_SEED_CTA: 'Add beginner articles',
   PLAYLIST_BILINGUAL_CAPTION: 'Plays English first, then Arabic',
   // Practice tab empty state - one-tap quick start
-  START_REVIEW: 'Start review',
   PLAY_ALL: 'Play all',
   STUDY_LIST_EMPTY_TITLE: 'No words yet',
   STUDY_LIST_EMPTY_HINT:
@@ -380,11 +372,8 @@ export const STRINGS = {
   WORD_QUICK_REMOVED: 'Removed from practice',
   CHECK_EMAIL_CONFIRMATION: 'Check your email to confirm',
   SUCCESS: 'Success',
-  NEW_RECOMMENDATION_SELECTED: 'New recommendation',
   SELECTED_TO_HELP_PRACTICE_DUE: "Contains words you're practicing",
   CHOSEN_TO_REINFORCE_CHALLENGING: 'Helps reinforce challenging words',
-  PERFECT_FOR_GETTING_STARTED: 'Great for getting started',
-  RANDOMLY_SELECTED_FOR_DISCOVERY: 'Discover something new',
   // Auth - shortened and clearer
   CREATE_ACCOUNT: 'Create account',
   SIGN_IN: 'Sign in',
@@ -556,7 +545,6 @@ export const STRINGS = {
    * and the screen used "review" for two different units.
    */
   TODAY_REVIEWED_TODAY: 'words reviewed today',
-  TODAY_NEXT_REVIEW: 'Next review',
   // Memory horizon hero
   /**
    * Conditional mood on purpose: this is an expectation summed over forgetting
@@ -607,14 +595,10 @@ export const STRINGS = {
   REVIEWS_LABEL: 'Reviews done',
   /** Stat-tile placeholder for a metric with nothing to measure yet. */
   EMPTY_METRIC: '—',
-  MASTERED_LOWER: 'mastered',
   VOCABULARY_GROWTH_LABEL: 'Words in practice',
   // Chart bottom summaries
   SUMMARY_TODAY: 'Today',
-  SUMMARY_IN_A_WEEK: 'In a week',
-  SUMMARY_AT_RISK: 'At risk',
   SUMMARY_BUSIEST_DAY: 'Busiest day',
-  SUMMARY_MASTERED: 'Mastered',
   SUMMARY_THIS_MONTH: 'This month',
   SUMMARY_WORDS_SUFFIX: 'words',
   WORD_SINGULAR: 'word',
@@ -648,7 +632,6 @@ export const STRINGS = {
   RESET_WORD_PROGRESS_CONFIRM: 'This word starts over as new. Your other progress is kept.',
   WORD_PROGRESS_RESET: 'Progress reset',
   FAILED_TO_RESET_WORD_PROGRESS: "Couldn't reset progress. Try again",
-  RESET_WORD_PROGRESS_A11Y: 'Reset progress for this word',
   // Dictionary (All words) list
   SEARCH_WORDS: 'Search words',
   SORT_DIFFICULTY: 'Difficulty',
@@ -756,7 +739,6 @@ export const STRINGS = {
   ERROR_PRIORITY_QUEUE_LENGTH_MISMATCH: 'Items and priorities arrays must have the same length',
   // Cache management - clearer and more actionable
   CLEAR_CACHE: 'Clear cache',
-  CLEAR_CACHE_BUTTON: 'Clear cache',
   NO_CACHE: 'No cache',
   NO_CACHED_FILES: 'Nothing to clear',
   CLEAR_CACHE_CONFIRMATION:
@@ -773,7 +755,6 @@ export const STRINGS = {
   TURN_ON_NOTIFICATIONS:
     'Notifications are off for OpenArabic. Turn them on in system settings to get review reminders.',
   OPEN_SETTINGS: 'Open settings',
-  NOTIFICATIONS_DISABLED: 'Notifications disabled',
   // Notification permission priming (review completion screen)
   NOTIFICATION_PRIMING_TITLE: 'Catch words before they fade',
   NOTIFICATION_PRIMING_BODY:
@@ -864,7 +845,6 @@ export const STRINGS = {
   FAILED_TO_LOAD_ARTICLE: "Couldn't load article. " + tryAgain,
   FAILED_TO_LOAD_FILTER_OPTIONS: "Couldn't load filters. " + tryAgain,
   FAILED_TO_LOAD_AUTHORS: "Couldn't load authors. " + tryAgain,
-  UNABLE_TO_LOAD_CHART_DATA: "Couldn't load chart. " + tryAgain,
   FAILED_TO_GENERATE_AUDIO_TRACK: "Couldn't generate track. " + tryAgain,
   FAILED_TO_GET_ENHANCED_AUDIO_TRACKS: "Couldn't get tracks. " + tryAgain,
   FAILED_TO_LOAD_AUDIO_TRACKS: "Couldn't load audio tracks. " + tryAgain,
@@ -895,7 +875,6 @@ export const STRINGS = {
   FAILED_TO_SIGN_OUT: "Couldn't sign out. " + tryAgain,
   // Account deletion
   DELETE_ACCOUNT: 'Delete account',
-  DELETE_ACCOUNT_TITLE: 'Delete your account?',
   DELETE_ACCOUNT_WARNING:
     'This will permanently delete your account and all associated data, including:',
   DELETE_ACCOUNT_DATA_LIST: [

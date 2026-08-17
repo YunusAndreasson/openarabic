@@ -37,19 +37,9 @@ const voiceAliasesSlice = createSlice({
       const next = addAlias(existing, transcript);
       if (next !== existing) state.byRoot[key] = [...next];
     },
-    /** Escape hatch for a word that has learned something wrong. */
-    forgetAliases: (state, action: PayloadAction<number>) => {
-      const key = String(action.payload);
-      state.byRoot = Object.fromEntries(
-        Object.entries(state.byRoot).filter(([rootId]) => rootId !== key),
-      );
-    },
-    clearAllAliases: state => {
-      state.byRoot = {};
-    },
   },
 });
 
-export const { rememberAlias, forgetAliases, clearAllAliases } = voiceAliasesSlice.actions;
+export const { rememberAlias } = voiceAliasesSlice.actions;
 
 export default voiceAliasesSlice.reducer;

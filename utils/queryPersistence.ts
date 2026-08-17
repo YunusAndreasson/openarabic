@@ -29,6 +29,7 @@ const EXCLUDED_KEYS = new Set([
 const EXCLUDED_PATTERNS = new Set(['due', 'live', 'cooldown']);
 
 // Create the persister backed by AsyncStorage
+/** @internal */
 export const queryPersister = createAsyncStoragePersister({
   storage: AsyncStorage,
   key: CACHE_KEY,

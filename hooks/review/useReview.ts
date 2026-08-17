@@ -655,6 +655,37 @@ export function useReview({
     [resolveCached, forgetCached],
   );
 
+  /**
+   * Take the audio session back from the microphone, then play `url` — but only
+   * if the card that asked for it is still the current one.
+   *
+   * The handoff is AWAITED, not fired alongside the play: until the input stream
+   * is actually closed the audio plays on the quiet `.playAndRecord` route.
+   * Racing the two lost — the answer began while the microphone was still open,
+   * which is exactly what it sounded like.
+   *
+   * The card check is the other half. `simpleAudioService.play()` resolves
+   * purely by call order and has no notion of which card a call belongs to, so a
+   * handoff still in flight when the card moves on (a fast restudy "Continue", a
+   * swipe) would hijack whatever the next card is already playing.
+   *
+   * Three call sites pasted this guard; two carried a comment pointing back at
+   * the first. Resolves `false` when the card changed, so callers can tell "did
+   * not play" from "played".
+   */
+  const playAfterHandoff = useCallback(
+    (url: string): Promise<boolean> => {
+      const keyAtRequest = timeRefs.current.lastProcessedWordId;
+      return playbackPriority(true)
+        .catch(handleError)
+        .then(() => {
+          if (timeRefs.current.lastProcessedWordId !== keyAtRequest) return false;
+          return playAudio(url);
+        });
+    },
+    [playAudio, playbackPriority],
+  );
+
   // Disclose the English meaning without advancing or flipping the card: set
   // the text and play its audio. Shared by the manual reveal (revealAnswer,
   // which flips as well) and the voice-grading miss path (onRevealAnswer, which
@@ -683,26 +714,7 @@ export function useReview({
         // indistinguishable from a player that died on its own.
         recordPromptCut('reveal');
         const endMeaningPlay = diagSpan('meaning.play');
-        // Read through the ref, not the closure: `timeRefs.current` is live at
-        // whatever moment the handoff below actually resolves, while a plain
-        // `currentWordKey` captured here would just be this render's value —
-        // useless for detecting a card change that happens later.
-        const keyAtRequest = timeRefs.current.lastProcessedWordId;
-        // AWAITED, not fired alongside the play: until the input stream is
-        // actually closed the answer plays on the quiet .playAndRecord route.
-        // Racing the two lost — the answer began while the microphone was still
-        // open, which is exactly what it sounded like.
-        playbackPriority(true)
-          .catch(handleError)
-          .then(() => {
-            // The card moved on while the session handoff was in flight (a
-            // fast restudy "Continue", a swipe). Playing now would hijack
-            // simpleAudioService's play() from whichever card is current —
-            // it resolves purely by call order, with no notion of which card
-            // a call belongs to.
-            if (timeRefs.current.lastProcessedWordId !== keyAtRequest) return false;
-            return playAudio(englishAudioUrl);
-          })
+        playAfterHandoff(englishAudioUrl)
           .then(started => endMeaningPlay({ started: started ?? false }))
           .catch(err => {
             endMeaningPlay({ started: false, error: true });
@@ -710,7 +722,7 @@ export function useReview({
           });
       }
     }
-  }, [currentWord, isComplete, playAudio, playbackPriority]);
+  }, [currentWord, isComplete, playAfterHandoff]);
 
   // Reveal the answer: flip the card, show the English meaning persistently and
   // play the English audio. Does NOT advance — the user self-grades next. Setting
@@ -834,20 +846,10 @@ export function useReview({
       const replayUrl = generateStorageUrl('audio', audioPath);
       if (replayUrl) {
         recordPromptCut('reveal');
-        // See revealMeaningPassive: a tap on "Continue" landing while this
-        // handoff is still resolving must not let the replay hijack whatever
-        // the next card's own prompt is already playing.
-        const keyAtRequest = timeRefs.current.lastProcessedWordId;
-        playbackPriority(true)
-          .catch(handleError)
-          .then(() => {
-            if (timeRefs.current.lastProcessedWordId !== keyAtRequest) return false;
-            return playAudio(replayUrl);
-          })
-          .catch(handleError);
+        playAfterHandoff(replayUrl).catch(handleError);
       }
     },
-    [currentWord?.root?.meaning, currentWord?.root?.audio_url, playAudio, playbackPriority],
+    [currentWord?.root?.meaning, currentWord?.root?.audio_url, playAfterHandoff],
   );
 
   const grade = useCallback(
@@ -1178,18 +1180,9 @@ export function useReview({
       // Replaying the same word supersedes an in-flight prompt with itself:
       // the learner heard part of it, then asked for it again.
       recordPromptCut('replay');
-      // See revealMeaningPassive: don't let a handoff that resolves late
-      // hijack whatever the (by-then-current) card is already playing.
-      const keyAtRequest = timeRefs.current.lastProcessedWordId;
-      playbackPriority(true)
-        .catch(handleError)
-        .then(() => {
-          if (timeRefs.current.lastProcessedWordId !== keyAtRequest) return false;
-          return playAudio(audioUrl);
-        })
-        .catch(handleError);
+      playAfterHandoff(audioUrl).catch(handleError);
     }
-  }, [currentWord, playAudio, playbackPriority]);
+  }, [currentWord, playAfterHandoff]);
 
   /**
    * Play the current card's prompt again after the app comes back.

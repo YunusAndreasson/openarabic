@@ -185,7 +185,6 @@ export const LAYOUT = {
    */
   OPACITY: {
     FAINT: 0.15, // Very subtle elements (chart cursors, hints)
-    LIGHT: 0.25, // Dividers, subtle separators
     SUBTLE: 0.3, // Secondary elements, disabled states
     MEDIUM: 0.5, // Mid-level visibility
     PRESSED: 0.6, // Button pressed state
@@ -212,11 +211,10 @@ export const LAYOUT = {
   BORDER_RADIUS: {
     NONE: 0, // No border radius
     MICRO: 2, // For chart dots and small elements
-    TINY: 3, // Perfect circles for 6px elements (STATUS_INDICATOR dots)
-    SMALL_CIRCLE: 6, // Small rounded elements
     SMALL: BASE_UNIT * 2.5, // 10 - compact controls
     MEDIUM: SPACING_SCALE.LARGE, // 16 - standard controls and cards
     LARGE: BASE_UNIT * 5, // 20 - large surfaces
+    SHEET: BASE_UNIT * 6, // 24 - form sheet top corners (see createSheetOptions)
     PILL: 9999, // Keep as is for perfect circles
   },
 
@@ -229,7 +227,6 @@ export const LAYOUT = {
       VOCABULARY_ITEM: TOUCH_TARGETS.MEDIUM + SPACING_SCALE.MEDIUM, // 44 + 12 = 56 (compact hairline dictionary row)
     },
     IMAGE: {
-      MINI_PLAYER: TOUCH_TARGETS.LARGE + SPACING_SCALE.SMALL, // 48 + 8 = 56 (increased from 40 for better balance)
       MINI_PLAYER_ARTWORK: BASE_UNIT * 14, // 56 - MiniPlayer album artwork (modern compact thumb)
       THUMBNAIL: {
         WIDTH: BASE_UNIT * 20, // 80 - bookmark/list thumbnails (2025: larger for visual prominence)
@@ -252,7 +249,6 @@ export const LAYOUT = {
       SMALL: TOUCH_TARGETS.SMALL, // 32 - responsive to touch targets
       MEDIUM: TOUCH_TARGETS.MEDIUM, // 44 - responsive to touch targets
       LARGE: TOUCH_TARGETS.LARGE, // 48 - responsive to touch targets
-      FAB: BASE_UNIT * 14, // 56 - Material 3 FAB size
     },
     ICON_SIZE: {
       SMALL: SPACING_SCALE.LARGE, // 16 - responsive to spacing scale
