@@ -52,16 +52,32 @@ export function useSmartDueWordsCalculator(options: UseSmartDueWordsCalculatorOp
 
       lastRefreshRef.current = now;
 
+      const userId = user.id;
+
       // Use Promise.allSettled to avoid blocking on individual failures.
       // Refresh through the shared factories — each key's ONLY queryFn lives in
       // the factory, so this writes fresh data into the exact cache entries the
       // observers read. staleTime: 0 forces the fetch past cache freshness.
       const refreshPromises = [
-        // Refresh due words with fresh data
-        queryClient.fetchQuery({ ...fsrsQueries.due(user.id), staleTime: 0 }),
+        // EVERY mounted due-words variant, not just the bare one. The due key
+        // encodes (sessionCooldownHours, limit), so `due(userId)` alone writes
+        // ['fsrs-words', id, 'due', null, null] — while the Practice screen's
+        // count reads ['fsrs-words', id, 'due', DEFAULT_SESSION_COOLDOWN_HOURS,
+        // PRACTICE_DUE_WORDS_LIMIT] and the app badge reads a third variant.
+        // Both stayed stale across every background/foreground cycle, so the
+        // "N to review today" number only ever moved on a full app restart.
+        // `type: 'active'` refetches exactly the variants something is
+        // rendering, instead of every stale leftover in the cache.
+        queryClient.refetchQueries({ queryKey: fsrsQueries.duePrefix(userId), type: 'active' }),
+
+        // The bare variant is also read straight from cache (with no observer)
+        // by the due-backlog add gate, so it has to exist and be fresh even
+        // when no screen mounts it — refetchQueries only touches entries that
+        // are already there. Concurrent fetches of the same key are deduped.
+        queryClient.fetchQuery({ ...fsrsQueries.due(userId), staleTime: 0 }),
 
         // Refresh all words for accurate memory strength calculation
-        queryClient.fetchQuery({ ...fsrsQueries.all(user.id), staleTime: 0 }),
+        queryClient.fetchQuery({ ...fsrsQueries.all(userId), staleTime: 0 }),
       ];
 
       // Execute all refreshes in parallel for better performance

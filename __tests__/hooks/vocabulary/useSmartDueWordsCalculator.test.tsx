@@ -12,7 +12,7 @@ jest.unmock('@tanstack/react-query');
 
 import { renderHook, waitFor, act } from '@testing-library/react-native';
 import { beforeEach, afterEach, describe, expect, jest, test } from '@jest/globals';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import React from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 
@@ -54,6 +54,7 @@ jest.mock('@/constants/queries', () => {
         queryKey: ['fsrs-words', userId],
         queryFn: () => studyWordsFSRSService.getFSRSWords(userId, { forStats: false }),
       }),
+      duePrefix: (userId: string) => ['fsrs-words', userId, 'due'],
       stats: (userId: string) => ({ queryKey: ['fsrs-words', userId, 'stats'] }),
     },
     CACHE_TIMES: {
@@ -154,6 +155,36 @@ describe('useSmartDueWordsCalculator', () => {
 
       await waitFor(() => {
         expect(studyWordsFSRSService.getFSRSWords).toHaveBeenCalled();
+      });
+    });
+
+    test('refreshes every mounted due variant, not just the bare one', async () => {
+      // The due key encodes (sessionCooldownHours, limit), so the Practice
+      // screen's count lives in its own entry. Refreshing only `due(userId)`
+      // wrote ['fsrs-words', id, 'due', null, null] and left this one stale on
+      // every resume — the number on screen only moved on a full app restart.
+      const practiceQueryFn = jest.fn<() => Promise<unknown[]>>().mockResolvedValue([]);
+
+      renderHook(
+        () => {
+          useQuery({
+            queryKey: ['fsrs-words', 'test-user-id', 'due', 2, 100],
+            queryFn: practiceQueryFn,
+          });
+          return useSmartDueWordsCalculator({ refreshDelay: 0 });
+        },
+        { wrapper },
+      );
+
+      await waitFor(() => {
+        expect(practiceQueryFn).toHaveBeenCalledTimes(1); // initial mount fetch
+      });
+
+      simulateAppStateChange('background');
+      simulateAppStateChange('active');
+
+      await waitFor(() => {
+        expect(practiceQueryFn).toHaveBeenCalledTimes(2); // refetched on resume
       });
     });
 

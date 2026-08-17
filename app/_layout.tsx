@@ -47,7 +47,7 @@ import { Theme } from '@/constants/colors';
 import { LAYOUT } from '@/constants/layout';
 import { NOTIFICATION_ROUTE_BY_TYPE, NOTIFICATION_TYPES } from '@/constants/notifications';
 import type { AnyNotificationType } from '@/constants/notifications';
-import { QUERY_DEFAULTS } from '@/constants/queries';
+import { QUERY_DEFAULTS, studyStreakQueries } from '@/constants/queries';
 import { STRINGS } from '@/constants/strings';
 import { useAppBadge } from '@/hooks/app/useAppBadge';
 import { useSmartNotifications } from '@/hooks/notifications/useSmartNotifications';
@@ -513,10 +513,22 @@ function AppContent() {
     });
     backgroundedTime.current = null;
 
+    const resumedUserId = session?.user?.id;
+
     if (resumeRefreshTimer.current) clearTimeout(resumeRefreshTimer.current);
     resumeRefreshTimer.current = setTimeout(() => {
       resumeRefreshTimer.current = null;
       void preloadAppData();
+
+      // The streak is date-derived, but its query opts out of every automatic
+      // refetch (refetchOnMount and refetchOnWindowFocus are both false) and
+      // preloadAppData never touches it, so it only moved when a finished
+      // review session invalidated it. Left backgrounded across midnight, the
+      // Practice tile kept showing a figure computed for the previous day.
+      // Invalidating refetches the mounted streak query and marks the (usually
+      // unmounted) history stale — the timer above already collapses rapid
+      // app-switching into a single pass.
+      if (resumedUserId) void studyStreakQueries.invalidateAll(queryClient, resumedUserId);
     }, TIMING_CONSTANTS.MEDIUM_DELAY);
   });
 

@@ -17,6 +17,8 @@ import React from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 
 import { createTestQueryClient } from '@/__tests__/helpers/testUtils';
+import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
+import { fsrsQueries, PRACTICE_DUE_WORDS_LIMIT } from '@/constants/queries';
 import { useAppBadge } from '@/hooks/app/useAppBadge';
 
 // Mock modules at top level
@@ -175,6 +177,61 @@ describe('useAppBadge', () => {
       });
 
       // Due words count is still 1, should not update
+      expect(mockSetAppBadgeCount).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Query cache subscription', () => {
+    const userId = 'test-user-id';
+    const words = (n: number) => Array.from({ length: n }, (_, i) => ({ root_id: i + 1 }));
+
+    // Establish a badge count, then clear the spy and step past the 1s rate
+    // limit so a following update is free to land.
+    const renderWithSettledBadge = async () => {
+      mockDueWords = words(1);
+      renderHook(() => useAppBadge(), { wrapper });
+
+      await waitFor(() => {
+        expect(mockSetAppBadgeCount).toHaveBeenCalledWith(1);
+      });
+      mockSetAppBadgeCount.mockClear();
+
+      await act(async () => {
+        jest.advanceTimersByTime(2000);
+      });
+    };
+
+    test("publishes an update to the badge's own due entry", async () => {
+      await renderWithSettledBadge();
+
+      await act(async () => {
+        queryClient.setQueryData(
+          fsrsQueries.due(userId, DEFAULT_SESSION_COOLDOWN_HOURS, undefined).queryKey,
+          words(4),
+        );
+      });
+
+      expect(mockSetAppBadgeCount).toHaveBeenCalledWith(4);
+    });
+
+    test('ignores due variants the badge does not read', async () => {
+      await renderWithSettledBadge();
+
+      // The due key encodes (sessionCooldownHours, limit), and the variants
+      // answer different questions: the Practice screen's list is capped at
+      // PRACTICE_DUE_WORDS_LIMIT, the bare one applies no session cooldown.
+      // Matching the due PREFIX published whichever of them changed last to the
+      // icon — so an app resume, which refreshes all of them, could leave the
+      // badge showing a count from a list this hook never chose.
+      await act(async () => {
+        queryClient.setQueryData(
+          fsrsQueries.due(userId, DEFAULT_SESSION_COOLDOWN_HOURS, PRACTICE_DUE_WORDS_LIMIT)
+            .queryKey,
+          words(4),
+        );
+        queryClient.setQueryData(fsrsQueries.due(userId).queryKey, words(7));
+      });
+
       expect(mockSetAppBadgeCount).not.toHaveBeenCalled();
     });
   });
