@@ -39,11 +39,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useToast, useVoiceGrading } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { STRINGS } from '@/constants/strings';
-import {
-  PARAKEET_MODEL_ID,
-  VOICE_DECODING_METHOD,
-  VOICE_MAX_ACTIVE_PATHS,
-} from '@/hooks/voice/useSherpaStt';
+import { PARAKEET_MODEL_ID, VOICE_DECODING_METHOD } from '@/hooks/voice/useSherpaStt';
 import { DEFAULT_RECORDING_CONFIG } from '@/lib/voice/recording';
 import { analytics } from '@/services/analytics';
 import {
@@ -756,7 +752,10 @@ export function useVoiceReview({
             gainNormalizeEnabled: settingsRef.current.gainNormalizeEnabled,
             iosRawMode: settingsRef.current.iosRawMode,
           },
-          decoding: { method: VOICE_DECODING_METHOD, maxActivePaths: VOICE_MAX_ACTIVE_PATHS },
+          // Rows written before 2026-08-17 claim `modified_beam_search` here. That
+          // was never true — see the decoding note in useSherpaStt.ts. Treat the
+          // field as valid only from this value onward.
+          decoding: { method: VOICE_DECODING_METHOD },
         },
       });
 

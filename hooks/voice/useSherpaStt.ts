@@ -45,13 +45,31 @@ import { span as diagSpan } from '@/utils/reviewDiagnostics';
  */
 export const PARAKEET_MODEL_ID = 'sherpa-onnx-nemo-parakeet_tdt_transducer_110m-en-36000-int8';
 
-// Decoding config applied via engine.setConfig() once the model is ready. The
-// default greedy_search collapses an ambiguous single word onto its most
-// frequent neighbour (the "bare"→"there" mishear); a small beam keeps the
-// rarer-but-correct hypothesis alive at negligible cost for one-word audio.
-// Exported so voice telemetry can record the exact decoding config per attempt.
-export const VOICE_DECODING_METHOD = 'modified_beam_search';
-export const VOICE_MAX_ACTIVE_PATHS = 8;
+/**
+ * Decoding is greedy, and nothing here can change that.
+ *
+ * This file used to call `engine.setConfig({ decodingMethod: 'modified_beam_search' })`
+ * after load, on the theory that a small beam keeps a rarer-but-correct hypothesis
+ * alive on one-word audio. It never took effect for a single attempt. sherpa-onnx
+ * picks the decoder ONCE, in the `OfflineRecognizerTransducerNeMoImpl` constructor,
+ * from `config.decoding_method`. `OfflineRecognizerImpl::SetConfig` is only
+ * `config_ = config;`, and the NeMo impl does not override it — so a post-load
+ * setConfig mutates a struct that is never read again. Worse, the call RESOLVES, so
+ * the try/catch guarding it never fired and no breadcrumb was ever emitted.
+ *
+ * `createSTT` exposes no decodingMethod option either (nor does the Kotlin
+ * `buildRecognizerConfig`), so the recognizer is always built with the default. The
+ * one construction-time switch is a non-empty `hotwordsFile` on a transducer model,
+ * which forces modified_beam_search — but hotwords need BPE-tokenised entries against
+ * a `bpe.vocab` this model does not ship, and biasing a recogniser toward the
+ * expected answer is the wrong instrument for a grader regardless.
+ *
+ * So: this constant records what actually runs, and every attempt already in
+ * `voice_grading_attempts` — including the 80 that showed one genuine mishear — was
+ * decoded greedily. Do not re-add a decoding config without first checking that
+ * `createSTT` accepts one.
+ */
+export const VOICE_DECODING_METHOD = 'greedy_search';
 
 /** Silence fed through the engine once at load to force the ONNX graph to
  *  build. Half a second at 16 kHz — enough to execute the full pipeline,
@@ -154,22 +172,6 @@ function useSherpaStt({
         }
 
         engineRef.current = engine;
-
-        // Best-effort: widen decoding to a small beam. Greedy still works if the
-        // native layer rejects the runtime config, so never fail load over it.
-        try {
-          await engine.setConfig({
-            decodingMethod: VOICE_DECODING_METHOD,
-            maxActivePaths: VOICE_MAX_ACTIVE_PATHS,
-          });
-        } catch (cfgErr) {
-          Sentry.addBreadcrumb({
-            category: 'voice',
-            level: 'warning',
-            message: 'voice.decoding.config.failed',
-            data: { message: cfgErr instanceof Error ? cfgErr.message : String(cfgErr) },
-          });
-        }
 
         // Run one throwaway inference before announcing readiness. Creating the
         // engine does not build the ONNX execution graph — the FIRST
