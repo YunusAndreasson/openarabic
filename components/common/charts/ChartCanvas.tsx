@@ -141,5 +141,3 @@ const styles = StyleSheet.create({
     top: 0,
   },
 });
-
-export type { DataPoint } from '@/types/ui/chart.types';

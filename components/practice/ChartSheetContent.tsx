@@ -1,8 +1,9 @@
+import { useQuery } from '@tanstack/react-query';
 import { useMemo, type ComponentType } from 'react';
 
 import { BottomSheetHeader } from '@/components/common';
+import { fsrsQueries, gated } from '@/constants/queries';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import type { StudyWord } from '@/types/vocabulary.types';
 
 interface ChartSheetContentProps {
@@ -22,13 +23,15 @@ interface ChartSheetContentProps {
 export function ChartSheetContent({ title, subtitle, ChartComponent }: ChartSheetContentProps) {
   const { user } = useAuth();
 
-  // No `limit`. It reached only the DUE query, which nothing here reads, while
-  // `allWords` — the list these charts are drawn from — ignores it and pages
-  // through the whole table (getFSRSWords), precisely so a heavy account is not
-  // silently charted from PostgREST's implicit first 1000 rows. So the cap
-  // capped nothing and bought a third due-words cache entry, keyed on a limit no
-  // other caller uses, fetched on every chart sheet and thrown away.
-  const { allWords } = useFSRSQueries({ userId: user?.id });
+  // The `all` query on its own, not `useFSRSQueries`. That hook mounts a DUE
+  // query unconditionally — with a placeholderData pass that re-filters the
+  // whole word list — and these charts read only `allWords`, so every sheet
+  // open added an observer and a filter pass for a result nothing here looks at.
+  // (Dropping its `limit` earlier removed a needless third cache entry but left
+  // the query itself.) No limit here by design: `allWords` pages through the
+  // whole table via getFSRSWords, precisely so a heavy account is not silently
+  // charted from PostgREST's implicit first 1000 rows.
+  const { data: allWords } = useQuery(gated(fsrsQueries.all, user?.id));
 
   const studyWords = useMemo(() => allWords ?? [], [allWords]);
 

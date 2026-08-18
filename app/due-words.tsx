@@ -7,8 +7,34 @@ import { ChartSheetContent } from '@/components/practice/ChartSheetContent';
 import { DueWordsPrognosisChart } from '@/components/practice/charts/DueWordsPrognosisChart';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { useMemoryInsights } from '@/hooks/vocabulary/useMemoryInsights';
+import { useMemoryInsights, type MemoryInsights } from '@/hooks/vocabulary/useMemoryInsights';
 import type { StudyWord } from '@/types/vocabulary.types';
+
+/**
+ * The "N slipping now · M this week" line, or `null` when there is nothing to
+ * say about slipping.
+ *
+ * `null` for an UNMEASURED account is the point. `calculateRetrievabilityForecast`
+ * filters to practised words but still returns one entry per forecast day, so a
+ * learner who has saved forty words and reviewed none gets a full forecast whose
+ * `wordCount` is 0 — and both critical counts come back 0, which read as "Nothing
+ * slipping · Nothing slipping this week". That is an all-clear computed over an
+ * empty set, presented as a measurement of the learner's memory.
+ *
+ * Exported so the rule is testable on its own; the screen only renders it.
+ */
+export function buildSlippingSummary(insights: MemoryInsights): string | null {
+  if (insights.measuredWords === 0) return null;
+
+  return [
+    insights.criticalWords > 0
+      ? STRINGS.PRACTICE_SLIPPING_NOW.replace('{count}', String(insights.criticalWords))
+      : STRINGS.PRACTICE_NOTHING_SLIPPING,
+    insights.criticalWordsInWeek > 0
+      ? STRINGS.PRACTICE_SLIPPING_WEEK.replace('{count}', String(insights.criticalWordsInWeek))
+      : STRINGS.PRACTICE_NOTHING_SLIPPING_WEEK,
+  ].join(' · ');
+}
 
 /**
  * The week's workload, and how much of it is already slipping.
@@ -23,22 +49,16 @@ import type { StudyWord } from '@/types/vocabulary.types';
  */
 function DueWordsContent({ studyWords }: { studyWords: StudyWord[] }): JSX.Element {
   const insights = useMemoryInsights(studyWords);
-
-  const slipping = [
-    insights.criticalWords > 0
-      ? STRINGS.PRACTICE_SLIPPING_NOW.replace('{count}', String(insights.criticalWords))
-      : STRINGS.PRACTICE_NOTHING_SLIPPING,
-    insights.criticalWordsInWeek > 0
-      ? STRINGS.PRACTICE_SLIPPING_WEEK.replace('{count}', String(insights.criticalWordsInWeek))
-      : STRINGS.PRACTICE_NOTHING_SLIPPING_WEEK,
-  ].join(' · ');
+  const slipping = buildSlippingSummary(insights);
 
   return (
     <>
       <DueWordsPrognosisChart studyWords={studyWords} />
-      <ThemedText type="caption" colorName="captionText" style={styles.slipping}>
-        {slipping}
-      </ThemedText>
+      {slipping ? (
+        <ThemedText type="caption" colorName="captionText" style={styles.slipping}>
+          {slipping}
+        </ThemedText>
+      ) : null}
     </>
   );
 }

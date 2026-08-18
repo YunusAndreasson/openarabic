@@ -1,10 +1,11 @@
 import { CHART_VISUAL, GRAPH_HEIGHT_LARGE } from '@/constants/chartConstants';
+import type { DataPoint } from '@/types/ui/chart.types';
 import { getChartColors } from '@/constants/chartColors';
 
 import { BaseChart } from './BaseChart';
 import { ChartAreaFill } from './ChartAreaFill';
 import { ChartAxes, Y_AXIS_WIDTH } from './ChartAxes';
-import { ChartCanvas, type DataPoint } from './ChartCanvas';
+import { ChartCanvas } from './ChartCanvas';
 import { ChartDataPoint } from './ChartDataPoint';
 import { ChartGrid } from './ChartGrid';
 import { ChartMainLine } from './ChartMainLine';
@@ -45,47 +46,6 @@ interface VocabularyChartProps<T> {
   emptyStateText: string;
   bottomSummary?: { label: string; value: string }[];
 }
-
-// Optimized comparison function with shallow array checks and stable references
-const VocabularyChartComparison = <T,>(
-  prevProps: VocabularyChartProps<T>,
-  nextProps: VocabularyChartProps<T>,
-): boolean => {
-  // Quick primitive comparisons first
-  if (
-    prevProps.path !== nextProps.path ||
-    prevProps.hasData !== nextProps.hasData ||
-    prevProps.hideTitle !== nextProps.hideTitle ||
-    prevProps.title !== nextProps.title ||
-    prevProps.subtitle !== nextProps.subtitle ||
-    prevProps.emptyStateText !== nextProps.emptyStateText ||
-    prevProps.yMax !== nextProps.yMax ||
-    prevProps.topPadding !== nextProps.topPadding ||
-    prevProps.graphWidth !== nextProps.graphWidth
-  ) {
-    return false;
-  }
-
-  // Shallow array reference comparisons - much faster than deep comparisons
-  if (
-    prevProps.dataPoints !== nextProps.dataPoints ||
-    prevProps.tooltipDataPoints !== nextProps.tooltipDataPoints ||
-    prevProps.xLabels !== nextProps.xLabels ||
-    prevProps.xLabelPositions !== nextProps.xLabelPositions ||
-    // Every remaining prop, because a hand-written comparator that omits one
-    // does not merely miss an optimisation — it silently refuses the update.
-    // `bottomSummary` is the live case: its useMemo tracks the insights, so a
-    // changed "Today: N" would have been held back on any render where the
-    // path and the tooltip points happened to keep their references.
-    prevProps.bottomSummary !== nextProps.bottomSummary ||
-    prevProps.isFuturePrediction !== nextProps.isFuturePrediction ||
-    prevProps.yLabelFormatter !== nextProps.yLabelFormatter
-  ) {
-    return false;
-  }
-
-  return true;
-};
 
 // Static styles object to prevent recreation
 const styles = StyleSheet.create({
@@ -247,7 +207,13 @@ export const VocabularyChart = memo<VocabularyChartProps<unknown>>(
       </BaseChart>
     );
   },
-  VocabularyChartComparison,
+  // No custom comparator. The hand-written one compared all sixteen props by
+  // `!==` — which is precisely what `memo` does by default, only spelled out in
+  // thirty-five lines that had to be edited every time a prop was added. It did
+  // not merely fail to help: a prop it forgot was an update it SILENTLY REFUSED,
+  // and `bottomSummary` was the case that actually shipped — a changed "Today: N"
+  // held back on any render where the path and tooltip points kept their
+  // references. Default `memo` cannot forget a prop.
 );
 
 VocabularyChart.displayName = 'VocabularyChart';

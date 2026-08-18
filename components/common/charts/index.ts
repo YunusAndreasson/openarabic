@@ -7,4 +7,3 @@
  */
 
 export { VocabularyChart } from './VocabularyChart';
-export type { DataPoint } from './ChartCanvas';

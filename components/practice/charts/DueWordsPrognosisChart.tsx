@@ -1,6 +1,7 @@
 import { memo, useMemo } from 'react';
 
-import { VocabularyChart, type DataPoint } from '@/components/common/charts';
+import { VocabularyChart } from '@/components/common/charts';
+import type { DataPoint } from '@/types/ui/chart.types';
 import { CHART_LABELS, EMPTY_STATE_MESSAGES } from '@/constants/chartMessages';
 import { useGraphWidth } from '@/constants/chartConstants';
 import { STRINGS } from '@/constants/strings';

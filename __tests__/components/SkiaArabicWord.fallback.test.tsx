@@ -8,20 +8,22 @@
  */
 
 /**
- * SkiaArabicWord Component Tests
+ * SkiaArabicWord — the NO-FONT-MANAGER branch.
  *
- * Tests the Skia-based Arabic word rendering component with:
- * - GPU-accelerated text rendering via Skia Canvas
- * - Color-coded grammar segments using Skia Paragraph API
- * - Selection states
- * - Tooltip interaction
- * - Single-word rule (no color-coding for single English words)
+ * The component splits at `if (!fontManager)`: with no manager it falls back to
+ * plain text, and only with one does it build a Skia paragraph. This suite
+ * covers the first; `SkiaArabicWord.test.tsx` covers the second. They are not
+ * two copies of one suite — the mock below is what selects the branch.
+ *
+ * It was named `ArabicWord.test.tsx` and imported the component under a name
+ * that no longer exists, which made complementary coverage look like a stale
+ * duplicate.
  */
 
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 
-import { SkiaArabicWord as ArabicWord } from '@/components/article/SkiaArabicWord';
+import { SkiaArabicWord } from '@/components/article/SkiaArabicWord';
 import type { SentenceWord } from '@/types/vocabulary.types';
 
 // Use shared mock factory from componentMocks.tsx
@@ -29,21 +31,16 @@ jest.mock('@/hooks/theme/useColors', () =>
   require('@/__tests__/helpers/componentMocks').useColorsMockFactory(),
 );
 
+// `fontManager: null` is what puts the component on its fallback path, and
+// `isReady` follows it: the real hook derives `isReady` from `fontManager !==
+// null`, so the previous `isReady: true` alongside a null manager described a
+// state the app cannot reach. (The component reads only `fontManager`, so it was
+// inert — but a mock that models an impossible hook is a trap for whoever edits
+// it next.) The `arabicFont` / `getArabicFont` keys went with it: `useSkiaFonts`
+// has not returned either for some time, so they mocked nothing.
 jest.mock('@/hooks/theme/useSkiaFonts', () => ({
   useSkiaFonts: jest.fn(() => ({
-    arabicFont: {
-      getSize: () => 17,
-      getTypeface: () => ({
-        getFamilyName: () => 'Noto Sans Arabic',
-      }),
-    },
-    getArabicFont: jest.fn(() => ({
-      getSize: () => 17,
-      getTypeface: () => ({
-        getFamilyName: () => 'Noto Sans Arabic',
-      }),
-    })),
-    isReady: true,
+    isReady: false,
     fontSize: 17,
     fontFamily: 'Noto Sans Arabic',
     fontManager: null,
@@ -57,7 +54,7 @@ jest.mock('@/hooks/vocabulary', () => ({
 const { useArabicWord } = require('@/hooks/vocabulary');
 const { useSkiaFonts } = require('@/hooks/theme/useSkiaFonts');
 
-describe('ArabicWord Component', () => {
+describe('SkiaArabicWord (no font manager)', () => {
   const createMockWord = (overrides: Partial<SentenceWord> = {}): SentenceWord => ({
     id: 1,
     position: 0,
@@ -98,7 +95,7 @@ describe('ArabicWord Component', () => {
   describe('Basic Rendering', () => {
     test('renders pressable container for Arabic text', () => {
       const word = createMockWord({ word_form: 'كتاب' });
-      const { getByTestId } = render(<ArabicWord word={word} testID="arabic-word-1" />);
+      const { getByTestId } = render(<SkiaArabicWord word={word} testID="arabic-word-1" />);
 
       const element = getByTestId('arabic-word-1');
       expect(element).toBeDefined();
@@ -108,7 +105,7 @@ describe('ArabicWord Component', () => {
 
     test('renders with testID and is queryable', () => {
       const word = createMockWord();
-      const { getByTestId } = render(<ArabicWord word={word} testID="arabic-word-1" />);
+      const { getByTestId } = render(<SkiaArabicWord word={word} testID="arabic-word-1" />);
 
       const element = getByTestId('arabic-word-1');
       expect(element).toBeDefined();
@@ -121,7 +118,7 @@ describe('ArabicWord Component', () => {
         coloredSegments: [],
       });
 
-      const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
+      const { getByTestId } = render(<SkiaArabicWord word={word} testID="word" />);
 
       // Should render successfully with interactive behavior
       const element = getByTestId('word');
@@ -142,7 +139,7 @@ describe('ArabicWord Component', () => {
         ],
       });
 
-      const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
+      const { getByTestId } = render(<SkiaArabicWord word={word} testID="word" />);
 
       // Skia Canvas renders all segments (text is graphics, not React elements)
       expect(getByTestId('word')).toBeTruthy();
@@ -155,7 +152,7 @@ describe('ArabicWord Component', () => {
         coloredSegments: [], // Should be empty due to single-word rule
       });
 
-      const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
+      const { getByTestId } = render(<SkiaArabicWord word={word} testID="word" />);
 
       // Should render successfully without color-coding
       expect(getByTestId('word')).toBeTruthy();
@@ -172,7 +169,7 @@ describe('ArabicWord Component', () => {
         ],
       });
 
-      const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
+      const { getByTestId } = render(<SkiaArabicWord word={word} testID="word" />);
 
       // Should render successfully with color-coded segments
       expect(getByTestId('word')).toBeTruthy();
@@ -189,7 +186,7 @@ describe('ArabicWord Component', () => {
         ],
       });
 
-      const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
+      const { getByTestId } = render(<SkiaArabicWord word={word} testID="word" />);
 
       // Should render successfully with diacritics
       expect(getByTestId('word')).toBeTruthy();
@@ -201,7 +198,7 @@ describe('ArabicWord Component', () => {
       jest.mocked(useArabicWord).mockReturnValue({ isSelected: true });
 
       const word = createMockWord();
-      const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
+      const { getByTestId } = render(<SkiaArabicWord word={word} testID="word" />);
 
       const wordElement = getByTestId('word');
       expect(wordElement).toBeTruthy();
@@ -214,7 +211,7 @@ describe('ArabicWord Component', () => {
       jest.mocked(useArabicWord).mockReturnValue({ isSelected: false });
 
       const word = createMockWord();
-      const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
+      const { getByTestId } = render(<SkiaArabicWord word={word} testID="word" />);
 
       const wordElement = getByTestId('word');
       expect(wordElement).toBeTruthy();
@@ -223,18 +220,17 @@ describe('ArabicWord Component', () => {
 
   describe('Tooltip Interaction', () => {
     // The measured-frame cases — a good measurement, one that throws, and one
-    // that comes back as a zero box — live in SkiaArabicWord.test.tsx, which
-    // covers this same component (this file imports it under its old name).
-    // They were duplicated here, and both copies asserted nothing: each set its
-    // `measureInWindow` mock on a `wordRef` prop the component no longer
-    // accepts, so the ref stayed null and the mock was never installed. The
-    // note that used to sit here — "complex to test properly due to ref timing"
-    // — is what let them stay that way; `createNodeMock` (see the `measuring`
-    // helper) tests it directly.
+    // that comes back as a zero box — live in SkiaArabicWord.test.tsx, on the
+    // font-manager branch. They were duplicated here too, and both copies
+    // asserted nothing: each set its `measureInWindow` mock on a `wordRef` prop
+    // the component no longer accepts, so the ref stayed null and the mock was
+    // never installed. The note that used to sit here — "complex to test
+    // properly due to ref timing" — is what let them stay that way;
+    // `createNodeMock` (see the `measuring` helper) tests it directly.
 
     test('does not crash when onTooltipOpen is not provided', () => {
       const word = createMockWord();
-      const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
+      const { getByTestId } = render(<SkiaArabicWord word={word} testID="word" />);
 
       const wordElement = getByTestId('word');
 
@@ -247,7 +243,7 @@ describe('ArabicWord Component', () => {
     test('handles empty word_form by rendering pressable container', () => {
       const word = createMockWord({ word_form: '' });
 
-      const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
+      const { getByTestId } = render(<SkiaArabicWord word={word} testID="word" />);
       // Component should render a pressable element even with empty word
       expect(getByTestId('word')).toBeDefined();
     });
@@ -256,7 +252,7 @@ describe('ArabicWord Component', () => {
       const longText = 'والكتاب'.repeat(20);
       const word = createMockWord({ word_form: longText });
 
-      const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
+      const { getByTestId } = render(<SkiaArabicWord word={word} testID="word" />);
       const element = getByTestId('word');
       expect(element).toBeDefined();
       // Verify component is pressable (functional)
@@ -267,7 +263,7 @@ describe('ArabicWord Component', () => {
       const diacriticsOnly = '\u064E\u064F\u0650';
       const word = createMockWord({ word_form: diacriticsOnly });
 
-      const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
+      const { getByTestId } = render(<SkiaArabicWord word={word} testID="word" />);
       expect(getByTestId('word')).toBeDefined();
     });
 
@@ -275,7 +271,7 @@ describe('ArabicWord Component', () => {
       const mixedText = 'كتابbook123';
       const word = createMockWord({ word_form: mixedText });
 
-      const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
+      const { getByTestId } = render(<SkiaArabicWord word={word} testID="word" />);
       const element = getByTestId('word');
       expect(element).toBeDefined();
     });
@@ -286,7 +282,7 @@ describe('ArabicWord Component', () => {
         coloredSegments: [],
       });
 
-      const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
+      const { getByTestId } = render(<SkiaArabicWord word={word} testID="word" />);
       const element = getByTestId('word');
       expect(element).toBeDefined();
       expect(element.props.onPress).toBeDefined();
@@ -308,7 +304,7 @@ describe('ArabicWord Component', () => {
 
       const start = Date.now();
       words.forEach(word => {
-        render(<ArabicWord word={word} />);
+        render(<SkiaArabicWord word={word} />);
       });
       const elapsed = Date.now() - start;
 
@@ -333,7 +329,7 @@ describe('ArabicWord Component', () => {
           coloredSegments: [], // Single words should have no colored segments
         });
 
-        const { getByTestId } = render(<ArabicWord word={word} testID={`word-${word_form}`} />);
+        const { getByTestId } = render(<SkiaArabicWord word={word} testID={`word-${word_form}`} />);
         expect(getByTestId(`word-${word_form}`)).toBeTruthy();
       });
     });
@@ -350,7 +346,7 @@ describe('ArabicWord Component', () => {
         ],
       });
 
-      const { getByTestId } = render(<ArabicWord word={word} testID="word" />);
+      const { getByTestId } = render(<SkiaArabicWord word={word} testID="word" />);
 
       // Should render successfully with colored segments
       expect(getByTestId('word')).toBeTruthy();

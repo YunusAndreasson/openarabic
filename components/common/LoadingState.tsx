@@ -25,7 +25,15 @@ export const LOADING_STATE_LOADER_SIZE = 64;
 export function LoadingState({ message, size = LOADING_STATE_LOADER_SIZE }: LoadingStateProps) {
   return (
     <View style={styles.container}>
-      <PulsatingLoader size={size} />
+      {/*
+        The loader announces itself ONLY when nothing else on screen does. With a
+        message beside it, a screen reader would stop on the circle for
+        "Loading…" and then again on the more specific text below — the exact
+        double-announcement PulsatingLoader's `accessibilityLabel={null}` escape
+        hatch exists for, and this is the one call site that always has
+        descriptive text when it has any.
+      */}
+      <PulsatingLoader size={size} accessibilityLabel={message ? null : undefined} />
       {message ? (
         <ThemedText align="center" type="body" colorName="secondaryText" style={styles.message}>
           {message}
