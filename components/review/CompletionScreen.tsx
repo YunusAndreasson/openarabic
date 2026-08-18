@@ -108,19 +108,36 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
 
   const encouragingResult = useEncouragingMetrics(sessionMetrics, colors, currentDailyStreak);
 
-  // Primed notification ask — shows on the first session (and at most once more)
-  const { showPrimingCard, accept, decline } = useNotificationPriming();
-  // Speak-the-answer offer — stands on every completion until answered.
+  // Primed notification ask — stands aside for the voice offer on a learner's
+  // first completions, then shows once, and at most once more after a gap.
+  const { showPrimingCard, resolved, accept, decline } = useNotificationPriming();
+  // Speak-the-answer offer — stands on every completion until answered. Told
+  // whether it actually gets the slot so it reports impressions honestly.
   const {
-    showPrimingCard: showVoicePriming,
+    showPrimingCard: showVoiceCard,
     accept: acceptVoice,
     decline: declineVoice,
-  } = useVoicePriming();
+  } = useVoicePriming('completion', resolved && !showPrimingCard);
 
-  // The two share one slot, so only one may ever render. Notifications win:
-  // that ask is capped at two impressions for the life of the install, while
-  // the voice offer is standing and loses nothing by waiting a session.
-  const showVoiceCard = showVoicePriming && !showPrimingCard;
+  // The two share one slot, so only one may ever render, and on a collision the
+  // notification ask still wins: it is capped at two impressions for the life of
+  // the install, while the voice offer stands until answered and loses nothing
+  // by waiting.
+  //
+  // Voice reaches a learner's early completions because VOICE_FIRST_SESSION_GRACE
+  // in useNotificationPriming holds this ask back, not because of anything here.
+  // Deciding it there is what keeps an impression from being spent on a card that
+  // never rendered.
+  //
+  // `resolved` is load-bearing, not defensive: notification eligibility is an
+  // async read, so without it `showPrimingCard` reads false on the first commits
+  // and the voice card both renders and reports an impression in a slot the
+  // reminders card is about to claim.
+  //
+  // The hook folds the `rendered` argument into the flag it returns, so
+  // `showVoiceCard` is already the whole condition — nothing here re-tests
+  // `showPrimingCard`, because priority encoded twice is priority that can
+  // disagree with itself.
   const showAnyPriming = showPrimingCard || showVoiceCard;
 
   const metrics = encouragingResult?.metrics ?? [];
@@ -193,10 +210,10 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
           exiting={EXITING_PRIMING}
           style={styles.primingContainer}
         >
-          {showPrimingCard ? (
-            <NotificationPrimingCard onAccept={() => void accept()} onDecline={decline} />
-          ) : (
+          {showVoiceCard ? (
             <VoicePrimingCard onAccept={acceptVoice} onDecline={declineVoice} />
+          ) : (
+            <NotificationPrimingCard onAccept={() => void accept()} onDecline={decline} />
           )}
         </Animated.View>
       )}

@@ -18,6 +18,9 @@ import { lightFeedback } from '@/utils/haptics';
 // HIG minimum tap target (Material prefers 48dp). The visible button matches the
 // touch target, so no hitSlop is needed and adjacent hit areas can't overlap.
 
+/** The preparing state has nothing to toggle; GlassIconButton requires onPress. */
+const NOOP = (): undefined => undefined;
+
 /** Tint mixed into the elevation surface to make the progress track visible. */
 const TRACK_TINT = 0.15;
 
@@ -65,8 +68,22 @@ interface ReviewHeaderProps {
   progress: number;
   maxProgress: number;
   onClose?: () => void;
-  /** Show the voice mute toggle (only when voice grading is enabled). */
+  /** Render the mic slot at all. Kept separate from `voiceDormant` so a screen
+   *  that has no voice concept can still omit it entirely. */
   showVoiceControl?: boolean;
+  /** Voice grading is off, so the mic is an offer rather than a mute: it opens
+   *  `onOfferVoice` instead of toggling anything. The slot stays occupied so
+   *  the feature leaves a trace on the one screen where speaking is the natural
+   *  act — without it, a learner who never finishes a session never learns the
+   *  feature exists. */
+  voiceDormant?: boolean;
+  /** Open the speak-the-answer offer. Without it the slot stays empty, since a
+   *  mic that does nothing is worse than no mic. Required when `voiceDormant`. */
+  onOfferVoice?: () => void;
+  /** Voice is enabled but the model is still downloading. The mute toggle would
+   *  be a lie here — there is no recognizer to mute — so the slot shows a quiet
+   *  preparing state instead. */
+  voicePreparing?: boolean;
   /** True when auto-listen is muted for this session — drives the mic glyph. */
   voicePaused?: boolean;
   /** True only while the mic is actively listening — tints the mic icon so the
@@ -86,6 +103,9 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({
   maxProgress,
   onClose,
   showVoiceControl = false,
+  voiceDormant = false,
+  onOfferVoice,
+  voicePreparing = false,
   voicePaused = false,
   voiceListening = false,
   onToggleVoice,
@@ -95,6 +115,38 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({
   const colors = useColors();
 
   const displayProgress = Math.max(progress, maxProgress);
+
+  // One button, two jobs, chosen here so the chrome contract (clear glass,
+  // selection haptic, spacing) is written once and the two states cannot drift.
+  // `null` means the handler for this state was not supplied, which is the only
+  // case where the slot is legitimately empty — rendering a mic that does
+  // nothing would be worse than rendering none.
+  //
+  // Dormant: outline glyph, one step quieter than the live control. Present
+  // enough to invite a tap, never loud enough to compete with the word being
+  // recalled. Live: tint only while actively listening, neutral at rest so it
+  // reads as the same chrome as the close button. `active` would also lift the
+  // surface, which the mic shouldn't do — only the glyph changes colour.
+  const voiceSlot = voiceDormant
+    ? onOfferVoice && {
+        label: STRINGS.VOICE_OFFER_LABEL,
+        icon: 'mic-outline' as const,
+        color: colors.textTertiary,
+        onPress: onOfferVoice,
+      }
+    : voicePreparing
+      ? {
+          label: STRINGS.VOICE_PREPARING_LABEL,
+          icon: 'mic-outline' as const,
+          color: colors.textTertiary,
+          onPress: NOOP,
+        }
+      : onToggleVoice && {
+          label: voicePaused ? STRINGS.VOICE_RESUME_LABEL : STRINGS.VOICE_PAUSE_LABEL,
+          icon: voicePaused ? ('mic-off' as const) : ('mic' as const),
+          color: voiceListening ? colors.tint : colors.secondaryText,
+          onPress: onToggleVoice,
+        };
 
   // A run is the one moment in the session that rewards the learner while they
   // are still in it, and it was visual-only — a caption fading in beside a
@@ -179,19 +231,15 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({
           </ThemedText>
         </Animated.View>
       )}
-      {showVoiceControl && onToggleVoice && (
+      {showVoiceControl && voiceSlot && (
         <GlassIconButton
           clear
-          accessibilityLabel={voicePaused ? STRINGS.VOICE_RESUME_LABEL : STRINGS.VOICE_PAUSE_LABEL}
-          icon={voicePaused ? 'mic-off' : 'mic'}
-          // Tint only while actively listening; neutral at rest so it reads as
-          // the same chrome control as the close button. `active` would also
-          // lift the surface, which the mic shouldn't do — only the glyph
-          // changes colour.
-          iconColor={voiceListening ? colors.tint : colors.secondaryText}
+          accessibilityLabel={voiceSlot.label}
+          icon={voiceSlot.icon}
+          iconColor={voiceSlot.color}
           hapticType="selection"
           style={STATIC_STYLES.voiceButtonSpacing}
-          onPress={onToggleVoice}
+          onPress={voiceSlot.onPress}
         />
       )}
       {onClose && (

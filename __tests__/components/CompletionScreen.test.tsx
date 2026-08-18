@@ -74,9 +74,11 @@ jest.mock('@/hooks/review', () => ({
   useReviewCompletion: jest.fn(),
   useNotificationPriming: jest.fn(() => ({
     showPrimingCard: false,
+    resolved: true,
     accept: jest.fn(),
     decline: jest.fn(),
   })),
+  // Default: the offer is already answered, so `rendered` cannot make it show.
   useVoicePriming: jest.fn(() => ({
     showPrimingCard: false,
     accept: jest.fn(),
@@ -129,6 +131,7 @@ describe('CompletionScreen Component', () => {
     // the component destructures unconditionally
     useNotificationPriming.mockReturnValue({
       showPrimingCard: false,
+      resolved: true,
       accept: jest.fn(),
       decline: jest.fn(),
     });
@@ -485,10 +488,23 @@ describe('CompletionScreen Component', () => {
   // Both priming cards share one slot above the anchored button. Rendering both
   // would stack two asks on a celebration screen and get neither read.
   describe('Priming slot', () => {
-    const primingOn = () => ({ showPrimingCard: true, accept: jest.fn(), decline: jest.fn() });
+    const notificationOn = () => ({
+      showPrimingCard: true,
+      resolved: true,
+      accept: jest.fn(),
+      decline: jest.fn(),
+    });
+    // Mirrors the real hook: it folds `rendered` into the flag it returns, so an
+    // eligible voice offer that was not given the slot reports itself as hidden.
+    const voiceEligible = () =>
+      jest.fn((_source, rendered = true) => ({
+        showPrimingCard: Boolean(rendered),
+        accept: jest.fn(),
+        decline: jest.fn(),
+      }));
 
     test('shows the notification ask when it wants the slot', () => {
-      useNotificationPriming.mockReturnValue(primingOn());
+      useNotificationPriming.mockReturnValue(notificationOn());
 
       const { queryByText } = render(<CompletionScreen />);
       expect(queryByText(STRINGS.NOTIFICATION_PRIMING_TITLE)).toBeTruthy();
@@ -496,20 +512,52 @@ describe('CompletionScreen Component', () => {
     });
 
     test('shows the voice offer when the slot is free', () => {
-      useVoicePriming.mockReturnValue(primingOn());
+      useVoicePriming.mockImplementation(voiceEligible());
 
       const { queryByText } = render(<CompletionScreen />);
       expect(queryByText(STRINGS.VOICE_PRIMING_TITLE)).toBeTruthy();
       expect(queryByText(STRINGS.NOTIFICATION_PRIMING_TITLE)).toBeNull();
     });
 
-    test('notifications win when both want the slot — never both', () => {
-      useNotificationPriming.mockReturnValue(primingOn());
-      useVoicePriming.mockReturnValue(primingOn());
+    // Notifications win a collision — that ask has a two-impression budget for
+    // the life of the install, while the voice offer stands until answered. Voice
+    // reaching the early completions is enforced upstream by
+    // VOICE_FIRST_SESSION_GRACE, not by anything on this screen.
+    test('notifications win when both are eligible — never both', () => {
+      useNotificationPriming.mockReturnValue(notificationOn());
+      useVoicePriming.mockImplementation(voiceEligible());
 
       const { queryByText } = render(<CompletionScreen />);
       expect(queryByText(STRINGS.NOTIFICATION_PRIMING_TITLE)).toBeTruthy();
       expect(queryByText(STRINGS.VOICE_PRIMING_TITLE)).toBeNull();
+    });
+
+    // The `rendered` argument is the whole mechanism keeping the voice funnel
+    // honest, so assert it is actually passed rather than trusting the wiring.
+    test('tells the voice offer it does NOT have the slot when notifications win', () => {
+      useNotificationPriming.mockReturnValue(notificationOn());
+      useVoicePriming.mockImplementation(voiceEligible());
+
+      render(<CompletionScreen />);
+      expect(useVoicePriming).toHaveBeenCalledWith('completion', false);
+    });
+
+    // Notification eligibility is async, so before it settles the slot is not yet
+    // free — the voice card must not claim it and log an impression for a card
+    // the reminders ask is about to take.
+    test('withholds the slot until notification eligibility has resolved', () => {
+      useNotificationPriming.mockReturnValue({
+        showPrimingCard: false,
+        resolved: false,
+        accept: jest.fn(),
+        decline: jest.fn(),
+      });
+      useVoicePriming.mockImplementation(voiceEligible());
+
+      const { queryByText } = render(<CompletionScreen />);
+      expect(useVoicePriming).toHaveBeenCalledWith('completion', false);
+      expect(queryByText(STRINGS.VOICE_PRIMING_TITLE)).toBeNull();
+      expect(queryByText(STRINGS.NOTIFICATION_PRIMING_TITLE)).toBeNull();
     });
 
     test('neither renders when both decline the slot', () => {

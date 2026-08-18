@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { AppState, Platform, StyleSheet, View } from 'react-native';
@@ -27,12 +27,14 @@ import { SwipeGestureTutorial } from '@/components/tutorials/SwipeGestureTutoria
 import { PulsatingLoader } from '@/components/ui';
 import { TIMING_CONFIG, VERDICT } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { TutorialId } from '@/constants/tutorials';
 import {
   useReview,
   useReviewExamples,
   useReviewGlossAlternates,
+  useVoiceOfferEligible,
   useVoiceReview,
 } from '@/hooks/review';
 import { useColors } from '@/hooks/theme/useColors';
@@ -374,6 +376,13 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   // result).
   const voiceShowResult = voicePhase === 'result' && voiceResult !== null;
   const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
+  // With voice off the header keeps its slot and shows a dormant mic that opens
+  // the offer. Eligibility only — the impression is reported by the offer sheet
+  // itself, when the learner actually sees the ask.
+  const voiceOfferOpen = useVoiceOfferEligible();
+  const openVoiceOffer = useCallback(() => {
+    router.push(ROUTE_PATHS.VOICE_OFFER);
+  }, []);
 
   // The two halves of the voice UI, and the split between them: the BUTTON is
   // the action ("Speak to answer" / "Done"), the CARD is the state (a meter that
@@ -484,7 +493,18 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
           maxProgress={maxProgress}
           progress={progress}
           onClose={handleClose}
-          showVoiceControl={voiceEnabled}
+          // The slot is occupied whether or not voice is on: enabled, it is the
+          // mute toggle; off but still on offer, a dormant mic that opens the
+          // ask. It only disappears once the learner has said no, which is the
+          // one state where a standing affordance would be nagging.
+          showVoiceControl={voiceEnabled || voiceOfferOpen}
+          voiceDormant={!voiceEnabled}
+          onOfferVoice={openVoiceOffer}
+          // Accepting mid-session leaves minutes of download before anything can
+          // listen. Without this the header would offer a mute for a recognizer
+          // that does not exist yet, and nothing else on this screen reports the
+          // download at all.
+          voicePreparing={voiceEnabled && !voice.isReady}
           voicePaused={voicePaused}
           voiceListening={voicePhase === 'listening'}
           onToggleVoice={voiceTogglePause}

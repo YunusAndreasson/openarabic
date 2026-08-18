@@ -5,6 +5,10 @@ import { analytics } from '@/services/analytics';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import { setVoiceEnabled, setVoiceOfferDismissed } from '@/store/settingsSlice';
 
+/** Where the learner met the offer. Without this the entry points collapse into
+ *  one number and the next decision about the funnel is blind again. */
+export type VoiceOfferSource = 'completion' | 'review_header';
+
 export interface UseVoicePrimingResult {
   showPrimingCard: boolean;
   accept: () => void;
@@ -12,53 +16,79 @@ export interface UseVoicePrimingResult {
 }
 
 /**
- * The speak-the-answer offer on the review completion screen.
- *
- * Sits at the end of a session rather than before one: the completion screen
- * has the room to make the case, and the learner has just finished practising,
- * so an offer about HOW they practise costs no attention. The review screen
- * itself is deliberately not an option — its empty space is the design (the
- * word floats on the background, see ReviewFlipCard), and a download pitch
- * beside a card someone is trying to recall competes with the recall.
- *
- * Speaking is a flagship feature, so the offer keeps standing rather than
- * snoozing itself: it shows on every completion until the learner either turns
- * it on or explicitly says no. There is deliberately no session gate, no
- * impression cap and no persisted funnel state — the two booleans it needs (is
- * it on, was it refused) already live in persisted settings, so the whole
- * policy is `!on && !refused`.
- *
- * `accept()` only flips the setting, which is what starts the model download.
- * The microphone permission is NOT requested here — `startRecording` asks the
- * first time the learner actually speaks, so each ask lands at the moment it
- * makes sense instead of being bundled into one big yes/no.
+ * Is the speak-the-answer offer still open? Eligibility only, with no impression
+ * tracking, for surfaces that show an affordance rather than the offer itself
+ * (the dormant mic in the review header). Surfaces that actually put the offer
+ * on screen use `useVoicePriming` so the impression is recorded.
  */
-export function useVoicePriming(): UseVoicePrimingResult {
-  const dispatch = useAppDispatch();
+export function useVoiceOfferEligible(): boolean {
   const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
   const dismissed = useAppSelectorShallow(state => state.settings.voiceOfferDismissed);
+  return !voiceEnabled && !dismissed;
+}
+
+/**
+ * The speak-the-answer offer.
+ *
+ * Speaking is a flagship feature, so the offer keeps standing rather than
+ * snoozing itself: it stays available until the learner either turns it on or
+ * explicitly says no. There is deliberately no session gate, no impression cap
+ * and no persisted funnel state — the two booleans it needs (is it on, was it
+ * refused) already live in persisted settings, so the whole policy is
+ * `!on && !refused`.
+ *
+ * Two surfaces carry it, at different moments:
+ *
+ * - **The review header**, as a dormant mic that opens the offer on tap. This
+ *   screen used to be excluded on the grounds that a download pitch beside a
+ *   card someone is trying to recall competes with the recall. That objection
+ *   holds for a pitch *card*, and none is rendered here: the recall area is
+ *   untouched and only the header slot the live control already occupies is
+ *   used. Excluding the screen entirely was worse, because with voice off the
+ *   feature left no trace anywhere in the one place speaking is the natural act.
+ * - **The completion screen**, which has room to make the case and catches the
+ *   learner just after practising, when an offer about HOW they practise costs
+ *   no attention.
+ *
+ * `accept()` only flips the setting, which is what starts the ~103 MB model
+ * download. The microphone permission is NOT requested here — `startRecording`
+ * asks the first time the learner actually speaks, so each ask lands at the
+ * moment it makes sense instead of being bundled into one big yes/no.
+ *
+ * @param source which surface is making the offer, recorded on every event
+ * @param rendered whether this surface is actually putting the offer on screen.
+ *   The impression fires from here rather than from eligibility: the completion
+ *   screen shares one slot with the notification card, and reporting an
+ *   impression for a card that lost the slot inflates the funnel's denominator.
+ */
+export function useVoicePriming(source: VoiceOfferSource, rendered = true): UseVoicePrimingResult {
+  const dispatch = useAppDispatch();
+  const eligible = useVoiceOfferEligible();
   const shownRef = useRef(false);
 
-  const showPrimingCard = !voiceEnabled && !dismissed;
+  // Both the flag and the impression answer the same question, so they are built
+  // from the same expression. Returning bare `eligible` while gating only the
+  // effect on `rendered` would let a caller render a card that is never counted.
+  const showPrimingCard = eligible && rendered;
 
-  // Report the impression once per mount. The card is persistent, so tracking
+  // Report the impression once per mount. The offer is persistent, so tracking
   // every render would drown the funnel in duplicates.
   useEffect(() => {
     if (!showPrimingCard || shownRef.current) return;
     shownRef.current = true;
-    analytics.track(ANALYTICS_EVENTS.VOICE_PRIMING_SHOWN);
-  }, [showPrimingCard]);
+    analytics.track(ANALYTICS_EVENTS.VOICE_PRIMING_SHOWN, { source });
+  }, [showPrimingCard, source]);
 
   const accept = useCallback((): void => {
-    analytics.track(ANALYTICS_EVENTS.VOICE_PRIMING_ACCEPTED);
+    analytics.track(ANALYTICS_EVENTS.VOICE_PRIMING_ACCEPTED, { source });
     // VoiceGradingProvider watches this and starts the model download.
     dispatch(setVoiceEnabled(true));
-  }, [dispatch]);
+  }, [dispatch, source]);
 
   const decline = useCallback((): void => {
-    analytics.track(ANALYTICS_EVENTS.VOICE_PRIMING_DECLINED);
+    analytics.track(ANALYTICS_EVENTS.VOICE_PRIMING_DECLINED, { source });
     dispatch(setVoiceOfferDismissed(true));
-  }, [dispatch]);
+  }, [dispatch, source]);
 
   return { showPrimingCard, accept, decline };
 }

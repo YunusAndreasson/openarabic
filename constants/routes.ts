@@ -25,6 +25,7 @@ export const ROUTE_PATHS = {
   PRACTICE_WORDS_TO_REVISIT: '/words-to-revisit',
 
   SLEEP_TIMER: '/sleep-timer',
+  VOICE_OFFER: '/voice-offer',
 } as const;
 
 // Re-export route builders for backward compatibility

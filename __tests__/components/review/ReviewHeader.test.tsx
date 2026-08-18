@@ -12,6 +12,7 @@ import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import React from 'react';
 
 import { ReviewHeader } from '@/components/review/ReviewHeader';
+import { STRINGS } from '@/constants/strings';
 
 // Use shared mock factories
 jest.mock('react-native-reanimated', () =>
@@ -188,6 +189,87 @@ describe('ReviewHeader', () => {
       rerender(<ReviewHeader progress={3} maxProgress={10} recallRun={0} />);
 
       expect(lightFeedback).not.toHaveBeenCalled();
+    });
+  });
+
+  // With voice grading off the slot used to render nothing at all, so the one
+  // screen where speaking is the natural act left no trace of the feature. It
+  // now holds a dormant mic that opens the offer instead of muting anything.
+  describe('Voice control', () => {
+    test('renders nothing in the slot when the control is not requested', () => {
+      const { queryByTestId } = render(<ReviewHeader progress={1} maxProgress={10} />);
+
+      expect(queryByTestId('icon-mic')).toBeNull();
+      expect(queryByTestId('icon-mic-off')).toBeNull();
+      expect(queryByTestId('icon-mic-outline')).toBeNull();
+    });
+
+    test('renders the dormant mic when voice is off but still on offer', () => {
+      const onOfferVoice = jest.fn();
+      const { getByTestId, queryByTestId } = render(
+        <ReviewHeader
+          showVoiceControl
+          voiceDormant
+          progress={1}
+          maxProgress={10}
+          onOfferVoice={onOfferVoice}
+        />,
+      );
+
+      expect(getByTestId('icon-mic-outline')).toBeTruthy();
+      // The live glyphs belong to the enabled control, not this one.
+      expect(queryByTestId('icon-mic')).toBeNull();
+      expect(queryByTestId('icon-mic-off')).toBeNull();
+    });
+
+    test('the dormant mic opens the offer and never toggles the mute', () => {
+      const onOfferVoice = jest.fn();
+      const onToggleVoice = jest.fn();
+      const { getByLabelText } = render(
+        <ReviewHeader
+          showVoiceControl
+          voiceDormant
+          progress={1}
+          maxProgress={10}
+          onOfferVoice={onOfferVoice}
+          onToggleVoice={onToggleVoice}
+        />,
+      );
+
+      fireEvent.press(getByLabelText(STRINGS.VOICE_OFFER_LABEL));
+
+      expect(onOfferVoice).toHaveBeenCalledTimes(1);
+      expect(onToggleVoice).not.toHaveBeenCalled();
+    });
+
+    test('renders the live mute toggle once voice is enabled', () => {
+      const onToggleVoice = jest.fn();
+      const { getByTestId, queryByTestId } = render(
+        <ReviewHeader
+          showVoiceControl
+          progress={1}
+          maxProgress={10}
+          onToggleVoice={onToggleVoice}
+        />,
+      );
+
+      expect(getByTestId('icon-mic')).toBeTruthy();
+      expect(queryByTestId('icon-mic-outline')).toBeNull();
+    });
+
+    test('the live control shows the muted glyph when paused', () => {
+      const onToggleVoice = jest.fn();
+      const { getByTestId } = render(
+        <ReviewHeader
+          showVoiceControl
+          voicePaused
+          progress={1}
+          maxProgress={10}
+          onToggleVoice={onToggleVoice}
+        />,
+      );
+
+      expect(getByTestId('icon-mic-off')).toBeTruthy();
     });
   });
 
