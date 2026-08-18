@@ -183,6 +183,38 @@ const DEFAULT_OPTIONS: ErrorOptions = {
 };
 
 /**
+ * Merge that treats an explicitly-undefined value as "not provided".
+ *
+ * A plain `{ ...DEFAULT_OPTIONS, ...options }` does NOT do this: object spread
+ * copies every own key regardless of its value, so `{ showToast: undefined }`
+ * overwrites the `true` default with `undefined` and the toast is silently
+ * skipped. `exactOptionalPropertyTypes` is off, so `showToast?: boolean` accepts
+ * an explicit `undefined` and the compiler never objects.
+ *
+ * That is easy to reach without meaning to. `executeQuery` forwards its caller's
+ * `ErrorOptions` straight through, so any call site passing a `boolean | undefined`
+ * flag — a prop, a config lookup, an optional argument — swallows its own error
+ * toast, and `sentrySeverity: undefined` downgrades the Sentry event instead of
+ * defaulting to 'error'.
+ *
+ * Fixed here rather than at the forwarding call sites: every caller of
+ * `handleError` has the same exposure, and the defaults are only meaningful if
+ * absence and explicit-undefined mean the same thing.
+ */
+function applyDefaults(defaults: ErrorOptions, overrides: ErrorOptions): ErrorOptions {
+  const merged: ErrorOptions = { ...defaults };
+  for (const key of Object.keys(overrides) as (keyof ErrorOptions)[]) {
+    if (overrides[key] !== undefined) {
+      // Index-assignment across a union of value types needs the widening cast;
+      // the key/value pair is guaranteed to line up because both sides are
+      // `ErrorOptions` and the key came from `overrides` itself.
+      (merged as Record<string, unknown>)[key] = overrides[key];
+    }
+  }
+  return merged;
+}
+
+/**
  * Checks if an error is an expected authentication failure that shouldn't be logged to Sentry.
  * These are normal user errors (wrong password, invalid credentials) not system errors.
  *
@@ -288,7 +320,7 @@ const trackErrorAnalytics = async (
  * @param options Configuration options for error handling
  */
 export const handleError = async (error: unknown, options: ErrorOptions = {}): Promise<void> => {
-  const opts = { ...DEFAULT_OPTIONS, ...options };
+  const opts = applyDefaults(DEFAULT_OPTIONS, options);
   // Accepts `unknown` so catch blocks can hand the raw value straight over.
   // Normalising here (rather than at ~19 call sites doing
   // `e instanceof Error ? e : String(e)`) is what stops a thrown object becoming

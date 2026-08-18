@@ -46,6 +46,12 @@ export async function executeQuery<T>(
     // `showToast: ... !== false`, both of which `handleError`'s own defaults
     // already apply — and silently dropped every option it hadn't been taught
     // about (`toastType`, `trackAnalytics`, `captureSentry`).
+    //
+    // Forwarding whole is only safe because `handleError` ignores explicitly-
+    // undefined values (see `applyDefaults`). Under a plain spread this line
+    // would turn `executeQuery(fn, { showToast: maybeUndefined })` into a
+    // silently swallowed error, since the old per-field copy's `!== false`
+    // happened to normalise exactly that case.
     await handleError(new Error(error.message), errorConfig);
     throw error;
   }

@@ -315,12 +315,18 @@ describe('errorHandling utility', () => {
   });
 
   describe('handleError - Combined Options', () => {
+    // `ToastType.WARNING` used to stand here. It does not exist — the union is
+    // ERROR/IMPORTANT/INFO/SUCCESS — so the assertion was really `toBe(undefined)`
+    // and passed only because the old `{ ...DEFAULT_OPTIONS, ...options }` spread
+    // copied the undefined over the ERROR default. `__tests__` is outside
+    // tsconfig, so the compiler never objected. Now that absence and explicit
+    // undefined mean the same thing, this asserts a real override.
     test('respects all options together', async () => {
       await handleError(new Error('Test'), {
         showToast: true,
         toastMessage: 'Custom message',
         toastDuration: 3000,
-        toastType: ToastType.WARNING,
+        toastType: ToastType.INFO,
         trackAnalytics: true,
         analyticsEventName: 'Custom Event',
         analyticsProperties: { prop: 'value' },
@@ -330,7 +336,7 @@ describe('errorHandling utility', () => {
         sentryExtra: { extra: 'data' },
       });
 
-      expect(mockToastHandler).toHaveBeenCalledWith('Custom message', 3000, ToastType.WARNING);
+      expect(mockToastHandler).toHaveBeenCalledWith('Custom message', 3000, ToastType.INFO);
       expect(analytics.trackError).toHaveBeenCalledWith(
         'Custom Event',
         expect.objectContaining({ prop: 'value' }),
@@ -512,6 +518,49 @@ describe('errorHandling utility', () => {
       expect(Sentry.captureException).toHaveBeenCalledWith(
         expect.objectContaining({ message: 'Non-Error thrown: Object' }),
       );
+    });
+  });
+
+  // An explicitly-undefined option means "I have no opinion", not "off". Object
+  // spread cannot express that — `{ ...DEFAULT_OPTIONS, ...options }` copies the
+  // key regardless of value — so a caller forwarding an optional flag would
+  // silently disable the very thing the default turns on. Every failure here is
+  // invisible at runtime, which is why it is pinned.
+  describe('option defaults vs explicit undefined', () => {
+    test('an undefined showToast still shows the toast', async () => {
+      await handleError(new Error('boom'), { showToast: undefined });
+
+      expect(mockToastHandler).toHaveBeenCalled();
+    });
+
+    test('an undefined sentrySeverity still reports at error level', async () => {
+      const setLevel = jest.fn();
+      jest.mocked(Sentry.withScope).mockImplementation((callback: (scope: any) => void) => {
+        callback({ setLevel, setTag: jest.fn(), setExtra: jest.fn() });
+      });
+
+      await handleError(new Error('boom'), { showToast: false, sentrySeverity: undefined });
+
+      expect(setLevel).toHaveBeenCalledWith('error');
+    });
+
+    test('an undefined trackAnalytics still tracks', async () => {
+      await handleError(new Error('boom'), { showToast: false, trackAnalytics: undefined });
+
+      expect(analytics.trackError).toHaveBeenCalled();
+    });
+
+    test('an undefined captureSentry still captures', async () => {
+      await handleError(new Error('boom'), { showToast: false, captureSentry: undefined });
+
+      expect(Sentry.captureException).toHaveBeenCalled();
+    });
+
+    test('an explicit false is still honoured — absence and off stay distinct', async () => {
+      await handleError(new Error('boom'), { showToast: false, captureSentry: false });
+
+      expect(mockToastHandler).not.toHaveBeenCalled();
+      expect(Sentry.captureException).not.toHaveBeenCalled();
     });
   });
 });
