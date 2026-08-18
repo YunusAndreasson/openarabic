@@ -12,6 +12,7 @@ import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import React from 'react';
 
 import { ErrorState } from '@/components/common/ErrorState';
+import { STRINGS } from '@/constants/strings';
 
 // Mock ThemedText
 jest.mock('@/components/ThemedText', () => {
@@ -37,13 +38,6 @@ jest.mock('@/components/ThemedButton', () => {
   };
 });
 
-// Mock enums
-jest.mock('@/types/enums', () => ({
-  UiAction: {
-    REFRESH: 'Refresh',
-  },
-}));
-
 describe('ErrorState', () => {
   const mockOnRetry = jest.fn();
 
@@ -62,6 +56,16 @@ describe('ErrorState', () => {
       const { getByTestId } = render(<ErrorState message="Error" onRetry={mockOnRetry} />);
 
       expect(getByTestId('retry-button')).toBeTruthy();
+    });
+
+    test('labels the retry button from STRINGS', () => {
+      // Previously unasserted: the label came from `UiAction.REFRESH`, which this
+      // suite supplied by whole-module-mocking '@/types/enums'. That mock outlived
+      // the import it existed for — inert, and primed to blank out ToastType /
+      // AppTab for anything ErrorState later renders.
+      const { getByText } = render(<ErrorState message="Error" onRetry={mockOnRetry} />);
+
+      expect(getByText(STRINGS.REFRESH)).toBeTruthy();
     });
 
     test('does not render retry button when onRetry is not provided', () => {

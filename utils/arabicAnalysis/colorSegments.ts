@@ -8,6 +8,7 @@ import {
   GRAMMATICAL_ROLE_COLORS,
 } from '@/constants/arabicWordComponents';
 import type { ArabicSegmentType } from '@/types/vocabulary.types';
+import type { ValidColorName } from '@/utils/colorResolution';
 
 import { DIACRITIC_REGEX } from './constants';
 import { normalizeArabic } from './normalization';
@@ -65,7 +66,7 @@ function mapToOriginalPosition(
 function getComponentColorName(
   component: AnalyzedComponent | undefined,
   defaultType: ComponentType,
-): string {
+): ValidColorName {
   if (!component) {
     return COMPONENT_TYPE_CONFIG[defaultType].colorName;
   }
@@ -84,10 +85,10 @@ function getComponentColorName(
  * Solution: The second one falls back to the type color (e.g., PREFIX → tint/sage).
  */
 function deduplicateColor(
-  colorName: string,
-  usedColors: Set<string>,
+  colorName: ValidColorName,
+  usedColors: Set<ValidColorName>,
   fallbackType: ComponentType,
-): string {
+): ValidColorName {
   if (!usedColors.has(colorName)) {
     usedColors.add(colorName);
     return colorName;
@@ -109,8 +110,8 @@ function deduplicateColor(
 function getDiacriticColorName(
   diacritic: AnalyzedComponent | undefined,
   analysis?: WordAnalysis,
-  _usedColors?: Set<string>,
-): string {
+  _usedColors?: Set<ValidColorName>,
+): ValidColorName {
   if (!diacritic) return 'text';
 
   // If diacritic inherits color from a related component, use that component's DEDUPED color
@@ -133,10 +134,19 @@ function getDiacriticColorName(
   return COMPONENT_TYPE_CONFIG[ComponentType.DIACRITIC].colorName;
 }
 
-/** Segment type for internal use */
+/**
+ * Segment type for internal use.
+ *
+ * `colorName` is the closed `ValidColorName` union rather than `string`. Every
+ * value assigned to it already came from `COMPONENT_TYPE_CONFIG`,
+ * `GRAMMATICAL_ROLE_COLORS` or a literal in this file — all of them members of
+ * that union — but typed as `string` nothing said so, and the only thing
+ * standing between a mistyped colour here and a silently unpainted word was a
+ * runtime assertion that THREW at render time, one word into the article.
+ */
 interface Segment {
   text: string;
-  colorName: string;
+  colorName: ValidColorName;
   type: ArabicSegmentType;
 }
 
@@ -146,7 +156,7 @@ interface Segment {
 function addInfixToSegments(
   remainingText: string,
   infixArabic: string,
-  infixColorName: string,
+  infixColorName: ValidColorName,
   segments: Segment[],
 ): number {
   const normalizedRemaining = normalizeArabic(remainingText);
@@ -178,10 +188,10 @@ function addInfixToSegments(
  */
 function splitWithDiacritic(
   text: string,
-  mainColorName: string,
+  mainColorName: ValidColorName,
   mainType: ArabicSegmentType,
   analysis: WordAnalysis,
-  usedColors?: Set<string>,
+  usedColors?: Set<ValidColorName>,
 ): Segment[] {
   if (analysis.diacritic && text.endsWith(analysis.diacritic.arabicMatch)) {
     const mainText = text.substring(0, text.length - analysis.diacritic.arabicMatch.length);
@@ -208,7 +218,7 @@ function reconstructWithColors(analysis: WordAnalysis) {
   let processed = 0;
 
   // Track used colors to deduplicate (e.g., two prepositions both getting amber)
-  const usedColors = new Set<string>();
+  const usedColors = new Set<ValidColorName>();
 
   // An elided connective was consumed to reach the prefixes behind it. Emit it in the
   // plain root colour — unpainted, because the gloss has no word to pair it with — and
@@ -381,14 +391,14 @@ export function formatWordAnalysis(analysis: WordAnalysis) {
     content?: string;
     arabicPart?: string;
     englishPart?: string;
-    colorName?: string;
+    colorName?: ValidColorName;
     icon?: string;
   }[] = [{ type: 'original', content: englishForDisplay }];
 
   // Build a lookup from segment type → colorName using the ACTUAL segments
   // produced by reconstructWithColors. This ensures English sections use the
   // exact same colors as the Arabic rendering (single source of truth).
-  const segmentColorByType = new Map<string, string[]>();
+  const segmentColorByType = new Map<ArabicSegmentType, ValidColorName[]>();
   if (reconstructedArabic) {
     for (const seg of reconstructedArabic.segments) {
       const list = segmentColorByType.get(seg.type) || [];
@@ -405,8 +415,8 @@ export function formatWordAnalysis(analysis: WordAnalysis) {
   const hasSuffixSegment = segmentColorByType.has('suffix');
 
   // Counters to pull correct color from multi-segment types (e.g., multiple prefixes)
-  const typeIndex = new Map<string, number>();
-  function getSegmentColor(type: string, fallback: string): string {
+  const typeIndex = new Map<ArabicSegmentType, number>();
+  function getSegmentColor(type: ArabicSegmentType, fallback: ValidColorName): ValidColorName {
     const colors = segmentColorByType.get(type);
     if (!colors) return fallback;
     const idx = typeIndex.get(type) || 0;

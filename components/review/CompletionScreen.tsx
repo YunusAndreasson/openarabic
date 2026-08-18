@@ -24,7 +24,6 @@ import {
 } from '@/hooks/review';
 import { useStudyStreak } from '@/hooks/practice';
 import { useColors } from '@/hooks/theme/useColors';
-import { UiAction } from '@/types/enums';
 import type { SessionMetrics } from '@/types/review.types';
 import { mixColors } from '@/utils/colorUtils';
 import { successFeedback } from '@/utils/haptics';
@@ -224,18 +223,18 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
             weaker claim about the same thing. */}
         {onContinue ? (
           <ThemedButton
-            title={UiAction.CONTINUE}
+            title={STRINGS.CONTINUE}
             hapticType="selection"
             onPress={onContinue}
             fullWidth
           />
         ) : fromRemember ? (
           <Link href={ROUTE_PATHS.PRACTICE_TAB} dismissTo={true} asChild>
-            <ThemedButton fullWidth title={UiAction.CONTINUE} hapticType="selection" />
+            <ThemedButton fullWidth title={STRINGS.CONTINUE} hapticType="selection" />
           </Link>
         ) : (
           <Link href=".." replace asChild>
-            <ThemedButton fullWidth title={UiAction.CONTINUE} hapticType="selection" />
+            <ThemedButton fullWidth title={STRINGS.CONTINUE} hapticType="selection" />
           </Link>
         )}
       </Animated.View>

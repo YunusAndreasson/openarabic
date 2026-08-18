@@ -28,6 +28,27 @@ export const ARABIC_FONT_NAMES = [
 export type ArabicFontName = (typeof ARABIC_FONT_NAMES)[number];
 
 /**
+ * The family name Skia knows each face by.
+ *
+ * Lives here, beside `ARABIC_FONT_NAMES`, because three separate tables are
+ * keyed by these strings — the typeface sources the font provider registers,
+ * and the per-family vertical ink and horizontal bleed reserves the paragraph
+ * builder uses. Keeping the map next to the font list is what lets those tables
+ * be typed `Record<SkiaFontFamily, …>` instead of open string maps that fall
+ * back silently when a name drifts.
+ */
+export const SKIA_FONT_FAMILY_MAP = {
+  'NotoSansArabic-Regular': 'Noto Sans Arabic',
+  DigitalKhattNewMadinaRegular: 'Digital Khatt New Madina',
+  'Amiri-Regular': 'Amiri',
+  'ScheherazadeNew-Regular': 'Scheherazade New',
+  'NotoNastaliqUrdu-Regular': 'Noto Nastaliq Urdu',
+} as const satisfies Record<ArabicFontName, string>;
+
+/** The family names Skia knows a face by — the values of the map above. */
+export type SkiaFontFamily = (typeof SKIA_FONT_FAMILY_MAP)[ArabicFontName];
+
+/**
  * Narrows a persisted font choice to a face the app can actually render.
  *
  * `settings` is rehydrated from storage with no migration step, so a name a

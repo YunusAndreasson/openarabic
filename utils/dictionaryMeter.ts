@@ -96,6 +96,10 @@ export function getSortMeterFraction(
   sortField: DictionarySortField,
   nowMs: number,
 ): number {
+  // No `default`: every DictionarySortField is answered above, and dropping the
+  // catch-all is what makes a FOURTH sort field a compile error here rather
+  // than a meter that silently reads zero — an empty bar on every row, which
+  // looks like data, not like a missing case.
   switch (sortField) {
     case 'difficulty':
       return getDifficultyFraction(word);
@@ -103,8 +107,6 @@ export function getSortMeterFraction(
       return getHorizonFraction(getMemoryHorizonDays(word));
     case 'recent':
       return getRecencyFraction(word, nowMs);
-    default:
-      return 0;
   }
 }
 
@@ -132,13 +134,13 @@ export function getSortMeterColorName(
   word: StudyWord,
   sortField: DictionarySortField,
 ): SolidColorName {
+  // Exhaustive, no `default` — see getSortMeterFraction above.
   switch (sortField) {
     case 'difficulty':
       return DIFFICULTY_COLORS[getWordDifficultyLevel(word)];
     case 'strength':
       return MEMORY_STAGE_COLORS[getMemoryStage(word)];
     case 'recent':
-    default:
       return 'chartAccent';
   }
 }

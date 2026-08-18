@@ -56,13 +56,7 @@ describe('supabaseHelpers', () => {
 
       await expect(executeQuery(mockQueryFn)).rejects.toEqual(mockError);
 
-      expect(handleErrorMock).toHaveBeenCalledWith(
-        new Error('Database error'),
-        expect.objectContaining({
-          showToast: true,
-          sentrySeverity: 'error',
-        }),
-      );
+      expect(handleErrorMock).toHaveBeenCalledWith(new Error('Database error'), {});
     });
 
     test('should pass custom error config to handleError', async () => {
@@ -94,21 +88,22 @@ describe('supabaseHelpers', () => {
       );
     });
 
-    test('should default showToast to true when not specified', async () => {
+    // `showToast: true` / `sentrySeverity: 'error'` are handleError's own
+    // defaults (see DEFAULT_OPTIONS, covered in errorHandling.test.ts).
+    // executeQuery used to re-apply them on the way past, which meant two
+    // places could disagree about what a bare config means; it now forwards the
+    // config untouched, so what is worth asserting here is exactly that — no
+    // key invented, none dropped.
+    test('forwards the error config verbatim, inventing no defaults of its own', async () => {
       const mockError = { message: 'Error' };
       const mockQueryFn = jest.fn().mockResolvedValue({
         data: null,
         error: mockError,
       });
 
-      await expect(executeQuery(mockQueryFn, {})).rejects.toEqual(mockError);
+      await expect(executeQuery(mockQueryFn, { toastMessage: 'Nope' })).rejects.toEqual(mockError);
 
-      expect(handleErrorMock).toHaveBeenCalledWith(
-        expect.any(Error),
-        expect.objectContaining({
-          showToast: true,
-        }),
-      );
+      expect(handleErrorMock).toHaveBeenCalledWith(expect.any(Error), { toastMessage: 'Nope' });
     });
 
     test('should handle null data without error', async () => {

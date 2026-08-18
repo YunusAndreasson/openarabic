@@ -13,8 +13,8 @@ import { getCategoryDisplayName } from '@/utils/stringUtils';
 /**
  * Get display title for filter screen based on route params
  */
-function getFilterTitle(params: FilterParams): string {
-  const { name } = params;
+function getFilterTitle(params: FilterParams | undefined): string {
+  const name = params?.name;
 
   if (name) {
     return getCategoryDisplayName(decodeURIComponent(name));
@@ -46,7 +46,10 @@ export default function LibraryLayout(): JSX.Element {
       <Stack.Screen
         name="filter"
         options={({ route }) => {
-          const params = route.params as FilterParams;
+          // `route.params` is `object | undefined` — a screen reached without
+          // its query string really does arrive with nothing here, which the
+          // previous `as FilterParams` cast asserted away and then destructured.
+          const params: FilterParams | undefined = route.params;
 
           return createNavigationOptions(colors, {
             title: getFilterTitle(params),

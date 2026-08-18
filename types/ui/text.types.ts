@@ -25,7 +25,7 @@ export type TextTypeName =
  * Prefer picking a `type` that already carries the weight (`bodyBold`,
  * `heading3`) over overriding it here.
  */
-export type TextWeight = 'bold' | 'normal' | 'semibold';
+type TextWeight = 'bold' | 'normal' | 'semibold';
 export type TextAlign = 'center' | 'justify' | 'left' | 'right';
 
 /**

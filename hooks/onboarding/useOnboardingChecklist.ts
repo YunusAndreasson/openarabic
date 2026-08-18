@@ -140,7 +140,10 @@ export function useOnboardingChecklist(articlesData: Article[]) {
     }
   }, [isChecklistVisible, doneCount]);
 
-  const previousDoneRef = useRef<Record<OnboardingStep, boolean> | null>(null);
+  // Partial, not total: `Object.fromEntries` genuinely cannot promise a key per
+  // step, and asserting one meant `previous[step]` claimed `boolean` for a step
+  // the list had not yet rendered.
+  const previousDoneRef = useRef<Partial<Record<OnboardingStep, boolean>> | null>(null);
   useEffect(() => {
     if (!isChecklistVisible) return;
     const previous = previousDoneRef.current;
@@ -152,9 +155,7 @@ export function useOnboardingChecklist(articlesData: Article[]) {
         });
       }
     }
-    previousDoneRef.current = Object.fromEntries(
-      items.map(item => [item.step, item.done]),
-    ) as Record<OnboardingStep, boolean>;
+    previousDoneRef.current = Object.fromEntries(items.map(item => [item.step, item.done]));
   }, [items, isChecklistVisible, state]);
 
   const finalizeCompletion = useCallback(() => {

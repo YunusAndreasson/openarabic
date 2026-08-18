@@ -398,19 +398,37 @@ describe('Color-Coding Edge Cases', () => {
     });
   });
 
-  describe('Unknown Color Handling', () => {
-    test('should fallback to default color for unknown colorName', () => {
+  describe('Color Resolution', () => {
+    /**
+     * This replaced a test that fed `colorName: 'unknownColor' as any` in and
+     * asserted a fallback to `colors.text`.
+     *
+     * That state is now unreachable: `formatWordAnalysis` types `colorName` as
+     * `ValidColorName`, and both colour tables it draws from are pinned to that
+     * union with `satisfies`, so an unknown name is a compile error at the
+     * place it is written. A test that can only reach the branch through a cast
+     * was asserting the cast, not the app — and the fallback it guarded made a
+     * mistyped colour paint as body text instead of failing anywhere visible.
+     *
+     * What is worth checking is the invariant that replaced it: every section a
+     * real analysis produces resolves to an actual colour.
+     */
+    test('every section of a real analysis resolves to a defined color', () => {
       const formattedAnalysis: FormattedAnalysis = {
         sections: [
+          { type: 'original', content: 'and from' },
           {
-            type: 'original',
-            content: 'and from',
+            type: 'components',
+            colorName: 'grammar.conjunction',
+            arabicPart: 'و',
+            englishPart: 'and',
+            icon: '→',
           },
           {
             type: 'components',
-            colorName: 'unknownColor' as any, // Invalid color name
-            arabicPart: 'و',
-            englishPart: 'and',
+            colorName: 'tint',
+            arabicPart: 'من',
+            englishPart: 'from',
             icon: '→',
           },
         ],
@@ -425,11 +443,13 @@ describe('Color-Coding Edge Cases', () => {
         defaultColor: mockColors.text,
       });
 
-      // Should not crash, should fallback to text color
-      const andSegment = result.find(s => s.text === 'and');
-      expect(andSegment).toBeDefined();
-      // Should fallback to colors.text
-      expect(andSegment?.color).toBe(mockColors.text);
+      expect(result.length).toBeGreaterThan(0);
+      for (const segment of result) {
+        expect(segment.color).toBeDefined();
+        expect(segment.color).not.toBe('');
+      }
+      expect(result.find(s => s.text === 'and')?.color).toBe(mockColors.grammar.conjunction);
+      expect(result.find(s => s.text === 'from')?.color).toBe(mockColors.tint);
     });
   });
 

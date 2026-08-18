@@ -34,6 +34,7 @@
  */
 
 // Minimal interface for analytics properties
+import type { AnalyticsEventName } from '@/constants/analytics';
 import { ANALYTICS_EVENTS, MIXPANEL_TOKEN } from '@/constants/analytics';
 
 type AnalyticsProperties = Record<string, string | number | boolean | null | undefined>;
@@ -76,6 +77,23 @@ const initializeMixpanel = async (): Promise<void> => {
   }
 };
 
+/**
+ * The one place an event reaches Mixpanel. Both public doors funnel through it
+ * so the lazy-init and silent-failure contract is written once.
+ */
+const sendToMixpanel = async (event: string, properties?: AnalyticsProperties): Promise<void> => {
+  try {
+    await initializeMixpanel();
+
+    if (mixpanelInstance?.track) {
+      await mixpanelInstance.track(event, properties);
+    }
+    // Silent success - no logging needed for normal operation
+  } catch {
+    // Analytics failed silently - this is expected behavior when MIXPANEL_TOKEN is not configured
+  }
+};
+
 // Simple analytics service with Mixpanel integration
 export const analytics = {
   // Identify user with properties
@@ -98,18 +116,27 @@ export const analytics = {
     }
   },
 
-  // Track custom events
-  track: async (event: string, properties?: AnalyticsProperties): Promise<void> => {
-    try {
-      await initializeMixpanel();
+  /**
+   * Track a product event.
+   *
+   * Narrowed to `AnalyticsEventName`, so the event must come from
+   * `ANALYTICS_EVENTS`. A hand-written string here used to compile, ship, and
+   * quietly split one funnel across two spellings.
+   */
+  track: async (event: AnalyticsEventName, properties?: AnalyticsProperties): Promise<void> => {
+    await sendToMixpanel(event, properties);
+  },
 
-      if (mixpanelInstance?.track) {
-        await mixpanelInstance.track(event, properties);
-      }
-      // Silent success - no logging needed for normal operation
-    } catch {
-      // Analytics failed silently - this is expected behavior when MIXPANEL_TOKEN is not configured
-    }
+  /**
+   * Track a FAILURE, whose name is a free string.
+   *
+   * Errors carry their own taxonomy — one name per `catch` block, read as a
+   * prefix search rather than picked from a list (see `ErrorOptions`). Kept as
+   * its own door so that staying open for errors does not also reopen `track`
+   * to arbitrary strings; `handleError` is the only caller.
+   */
+  trackError: async (event: string, properties?: AnalyticsProperties): Promise<void> => {
+    await sendToMixpanel(event, properties);
   },
 
   // Reset user (for logout)

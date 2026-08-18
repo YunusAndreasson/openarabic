@@ -14,8 +14,16 @@ import {
 } from '@/utils/tutorialStorage';
 
 interface TutorialManagerState {
-  /** Map of tutorial ID to completion state */
-  completedTutorials: Record<TutorialId, boolean>;
+  /**
+   * Map of tutorial ID to completion state.
+   *
+   * `Partial` because that is the truth for the first frames: the map starts
+   * EMPTY and is only total once AsyncStorage has answered. Declared total (and
+   * seeded with `{} as Record<TutorialId, boolean>`) every lookup read as
+   * `boolean` while actually being `undefined`, so the type could not have
+   * caught a reader that trusted it before `isLoaded`.
+   */
+  completedTutorials: Partial<Record<TutorialId, boolean>>;
   /** Whether initial state has been loaded from AsyncStorage */
   isLoaded: boolean;
 }
@@ -30,7 +38,7 @@ export function useTutorialManager() {
   const auth = use(AuthContext);
   const userId = auth?.user?.id ?? null;
   const [state, setState] = useState<TutorialManagerState>({
-    completedTutorials: {} as Record<TutorialId, boolean>,
+    completedTutorials: {},
     isLoaded: false,
   });
 
@@ -94,18 +102,11 @@ export function useTutorialManager() {
   const resetAllTutorials = useCallback(async () => {
     await resetAllTutorialsStorage(userId);
 
-    // Reset in-memory state
-    setState(prev => {
-      const resetStates = {} as Record<TutorialId, boolean>;
-      Object.keys(prev.completedTutorials).forEach(key => {
-        resetStates[key as TutorialId] = false;
-      });
-
-      return {
-        ...prev,
-        completedTutorials: resetStates,
-      };
-    });
+    // Reset in-memory state. Emptying the map is what "none completed" means
+    // here — `shouldShowTutorial` reads `!completedTutorials[id]`, so an absent
+    // key and an explicit `false` are the same answer, and rebuilding a map of
+    // falses only to be read for falsiness was work with no reader.
+    setState(prev => ({ ...prev, completedTutorials: {} }));
   }, [userId]);
 
   return useMemo(

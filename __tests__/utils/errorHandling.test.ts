@@ -42,7 +42,7 @@ describe('errorHandling utility', () => {
     jest.mocked(Sentry.captureException).mockImplementation(() => 'event-id');
 
     // Mock analytics
-    jest.mocked(analytics.track).mockResolvedValue(undefined);
+    jest.mocked(analytics.trackError).mockResolvedValue(undefined);
   });
 
   describe('setGlobalToastHandler', () => {
@@ -102,7 +102,7 @@ describe('errorHandling utility', () => {
       await handleError(error);
 
       expect(Sentry.captureException).toHaveBeenCalled();
-      expect(analytics.track).toHaveBeenCalledWith(
+      expect(analytics.trackError).toHaveBeenCalledWith(
         'Error Occurred',
         expect.objectContaining({
           errorMessage: 'Test error',
@@ -115,7 +115,7 @@ describe('errorHandling utility', () => {
       await handleError('String error');
 
       expect(Sentry.captureException).toHaveBeenCalled();
-      expect(analytics.track).toHaveBeenCalledWith(
+      expect(analytics.trackError).toHaveBeenCalledWith(
         'Error Occurred',
         expect.objectContaining({
           errorMessage: 'String error',
@@ -167,7 +167,7 @@ describe('errorHandling utility', () => {
       await handleError(new Error('Test'), { captureSentry: false });
 
       expect(Sentry.captureException).not.toHaveBeenCalled();
-      expect(analytics.track).toHaveBeenCalled(); // Still tracks in analytics
+      expect(analytics.trackError).toHaveBeenCalled(); // Still tracks in analytics
     });
 
     test('sets Sentry severity level', async () => {
@@ -228,7 +228,7 @@ describe('errorHandling utility', () => {
       await expect(handleError(new Error('Test'))).resolves.not.toThrow();
 
       // Should still attempt analytics and toast
-      expect(analytics.track).toHaveBeenCalled();
+      expect(analytics.trackError).toHaveBeenCalled();
       expect(mockToastHandler).toHaveBeenCalled();
     });
   });
@@ -237,7 +237,7 @@ describe('errorHandling utility', () => {
     test('disables analytics when trackAnalytics is false', async () => {
       await handleError(new Error('Test'), { trackAnalytics: false });
 
-      expect(analytics.track).not.toHaveBeenCalled();
+      expect(analytics.trackError).not.toHaveBeenCalled();
       expect(Sentry.captureException).toHaveBeenCalled(); // Still captures in Sentry
     });
 
@@ -246,7 +246,7 @@ describe('errorHandling utility', () => {
         analyticsEventName: 'Login Failed',
       });
 
-      expect(analytics.track).toHaveBeenCalledWith(
+      expect(analytics.trackError).toHaveBeenCalledWith(
         'Login Failed',
         expect.objectContaining({
           errorMessage: 'Test',
@@ -263,7 +263,7 @@ describe('errorHandling utility', () => {
         },
       });
 
-      expect(analytics.track).toHaveBeenCalledWith(
+      expect(analytics.trackError).toHaveBeenCalledWith(
         'Error Occurred',
         expect.objectContaining({
           errorMessage: 'Test',
@@ -280,7 +280,7 @@ describe('errorHandling utility', () => {
 
       await handleError(error);
 
-      expect(analytics.track).toHaveBeenCalledWith(
+      expect(analytics.trackError).toHaveBeenCalledWith(
         'Error Occurred',
         expect.objectContaining({
           errorMessage: 'Test error',
@@ -297,13 +297,13 @@ describe('errorHandling utility', () => {
 
       await handleError(error);
 
-      const analyticsCall = jest.mocked(analytics.track).mock.calls[0];
+      const analyticsCall = jest.mocked(analytics.trackError).mock.calls[0];
       const properties = analyticsCall[1] as any;
       expect(properties.errorStack.length).toBeLessThanOrEqual(500);
     });
 
     test('handles analytics failure gracefully', async () => {
-      jest.mocked(analytics.track).mockRejectedValue(new Error('Analytics failed'));
+      jest.mocked(analytics.trackError).mockRejectedValue(new Error('Analytics failed'));
 
       // Should not throw despite analytics failure
       await expect(handleError(new Error('Test'))).resolves.not.toThrow();
@@ -331,7 +331,7 @@ describe('errorHandling utility', () => {
       });
 
       expect(mockToastHandler).toHaveBeenCalledWith('Custom message', 3000, ToastType.WARNING);
-      expect(analytics.track).toHaveBeenCalledWith(
+      expect(analytics.trackError).toHaveBeenCalledWith(
         'Custom Event',
         expect.objectContaining({ prop: 'value' }),
       );
@@ -346,7 +346,7 @@ describe('errorHandling utility', () => {
       });
 
       expect(mockToastHandler).not.toHaveBeenCalled();
-      expect(analytics.track).not.toHaveBeenCalled();
+      expect(analytics.trackError).not.toHaveBeenCalled();
       expect(Sentry.captureException).not.toHaveBeenCalled();
     });
   });
@@ -358,7 +358,7 @@ describe('errorHandling utility', () => {
       await handleError(error);
 
       expect(mockToastHandler).toHaveBeenCalledWith('', undefined, ToastType.ERROR);
-      expect(analytics.track).toHaveBeenCalledWith(
+      expect(analytics.trackError).toHaveBeenCalledWith(
         'Error Occurred',
         expect.objectContaining({
           errorMessage: '',
@@ -372,7 +372,7 @@ describe('errorHandling utility', () => {
 
       await handleError(error);
 
-      expect(analytics.track).toHaveBeenCalledWith(
+      expect(analytics.trackError).toHaveBeenCalledWith(
         'Error Occurred',
         expect.objectContaining({
           errorMessage: 'Test',
@@ -395,7 +395,7 @@ describe('errorHandling utility', () => {
 
       // Should still attempt Sentry and analytics
       expect(Sentry.captureException).toHaveBeenCalled();
-      expect(analytics.track).toHaveBeenCalled();
+      expect(analytics.trackError).toHaveBeenCalled();
     });
   });
 
@@ -405,7 +405,7 @@ describe('errorHandling utility', () => {
 
       // All features enabled by default
       expect(mockToastHandler).toHaveBeenCalled();
-      expect(analytics.track).toHaveBeenCalled();
+      expect(analytics.trackError).toHaveBeenCalled();
       expect(Sentry.captureException).toHaveBeenCalled();
 
       // Default toast type is ERROR
@@ -415,7 +415,17 @@ describe('errorHandling utility', () => {
     test('default analytics event name is "Error Occurred"', async () => {
       await handleError(new Error('Test'));
 
-      expect(analytics.track).toHaveBeenCalledWith('Error Occurred', expect.any(Object));
+      expect(analytics.trackError).toHaveBeenCalledWith('Error Occurred', expect.any(Object));
+    });
+
+    test('errors go to trackError, never to the product-event track()', async () => {
+      // `analytics.track` is typed to `AnalyticsEventName`, so an error name
+      // could not be passed to it even if this routing regressed — but the
+      // split only holds if handleError actually uses the other door.
+      await handleError(new Error('Test'), { analyticsEventName: 'Password_Reset_Error' });
+
+      expect(analytics.trackError).toHaveBeenCalledWith('Password_Reset_Error', expect.any(Object));
+      expect(analytics.track).not.toHaveBeenCalled();
     });
 
     test('default Sentry severity is "error"', async () => {
@@ -440,7 +450,7 @@ describe('errorHandling utility', () => {
 
     test('waits for analytics to complete', async () => {
       let analyticsResolved = false;
-      jest.mocked(analytics.track).mockImplementation(async () => {
+      jest.mocked(analytics.trackError).mockImplementation(async () => {
         await new Promise(resolve => setTimeout(resolve, 100));
         analyticsResolved = true;
       });

@@ -118,6 +118,11 @@ export const bookmarkService = {
       errorConfig.readingList.load,
     );
 
+    // The nested `articles!inner(...)` join is beyond what the generated types
+    // express, so the shape is asserted here. `.overrideTypes<BookmarkItem[]>()`
+    // on the query (as `articlesService.getArticles` uses) reads tidier, but it
+    // is the same unchecked override one step earlier — no more checking, and a
+    // runtime method the query mocks would have to grow. Not worth the churn.
     return (data ?? []) as BookmarkItem[];
   },
 

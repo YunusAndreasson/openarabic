@@ -29,13 +29,7 @@ import {
   setWordTapShowsTooltip,
 } from '@/store/settingsSlice';
 import { setTheme } from '@/store/themeSlice';
-import {
-  AccountSection,
-  AudioLanguage,
-  DailyWordLimitDescription,
-  DailyWordLimitTier,
-  DisplayLanguage,
-} from '@/types/enums';
+import { AudioLanguage, DisplayLanguage } from '@/types/enums';
 import { formatBytes } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
 import { errorFeedback, lightFeedback, successFeedback } from '@/utils/haptics';
@@ -134,8 +128,10 @@ const AccountScreen: FC = () => {
   );
 
   const currentDailyWordLimitText = useMemo(() => {
-    if (currentDailyWordLimit === 0) return 'Unlimited';
-    return `${currentDailyWordLimit} words`;
+    // Same constant the "Unlimited" option card below renders, not a second
+    // literal spelling of it.
+    if (currentDailyWordLimit === 0) return STRINGS.DAILY_LIMIT_UNLIMITED;
+    return STRINGS.DAILY_LIMIT_WORDS_COUNT.replace('{count}', String(currentDailyWordLimit));
   }, [currentDailyWordLimit]);
 
   // Unified picker handlers
@@ -313,26 +309,26 @@ const AccountScreen: FC = () => {
         options: [
           {
             id: 10,
-            title: DailyWordLimitTier.GETTING_STARTED,
-            subtitle: DailyWordLimitDescription.GETTING_STARTED,
+            title: STRINGS.DAILY_LIMIT_LOW,
+            subtitle: STRINGS.DAILY_LIMIT_LOW_SUBTITLE,
             icon: 'school' as const,
           },
           {
             id: 20,
-            title: DailyWordLimitTier.STEADY_PROGRESS,
-            subtitle: DailyWordLimitDescription.STEADY_PROGRESS,
+            title: STRINGS.DAILY_LIMIT_MEDIUM,
+            subtitle: STRINGS.DAILY_LIMIT_MEDIUM_SUBTITLE,
             icon: 'trending-up' as const,
           },
           {
             id: 30,
-            title: DailyWordLimitTier.ACTIVE_LEARNING,
-            subtitle: DailyWordLimitDescription.ACTIVE_LEARNING,
+            title: STRINGS.DAILY_LIMIT_HIGH,
+            subtitle: STRINGS.DAILY_LIMIT_HIGH_SUBTITLE,
             icon: 'flash' as const,
           },
           {
             id: 0,
-            title: DailyWordLimitTier.UNLIMITED,
-            subtitle: DailyWordLimitDescription.UNLIMITED,
+            title: STRINGS.DAILY_LIMIT_UNLIMITED,
+            subtitle: STRINGS.DAILY_LIMIT_UNLIMITED_SUBTITLE,
             icon: 'infinite' as const,
           },
         ],
@@ -387,7 +383,7 @@ const AccountScreen: FC = () => {
         />
 
         {/* Learning - Study settings (most frequently adjusted) */}
-        <SettingsSection title={AccountSection.LEARNING}>
+        <SettingsSection title={STRINGS.LEARNING_SECTION}>
           <SettingsCard
             icon="book"
             label={STRINGS.DAILY_WORD_LIMIT}
@@ -442,7 +438,7 @@ const AccountScreen: FC = () => {
         </SettingsSection>
 
         {/* Audio - Audio settings */}
-        <SettingsSection title={AccountSection.AUDIO_PLAYBACK}>
+        <SettingsSection title={STRINGS.AUDIO_SECTION}>
           <SettingsCard
             icon="volume-high"
             label={STRINGS.AUDIO_LANGUAGE}
@@ -479,7 +475,7 @@ const AccountScreen: FC = () => {
         </SettingsSection>
 
         {/* Support - Help, assistance, and rating */}
-        <SettingsSection title={AccountSection.SUPPORT}>
+        <SettingsSection title={STRINGS.HELP_SECTION}>
           <SettingsCard
             icon="help-circle"
             label={STRINGS.HELP_CENTER}

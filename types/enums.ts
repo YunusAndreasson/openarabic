@@ -1,6 +1,18 @@
 /**
- * Core application enums for better type safety and organization
- * Groups related constants and provides type-safe access patterns
+ * Core application enums.
+ *
+ * WHAT BELONGS HERE: a closed set of values the app *behaves* on — persisted in
+ * the settings slice, switched on, or compared. Each is a `const` object plus
+ * the union derived from it, so the values and the type cannot drift.
+ *
+ * WHAT DOES NOT: display copy. Seven "enums" here used to hold English UI text
+ * — section headings, button labels, daily-limit tier names and their
+ * subtitles — each alongside a derived union that nothing ever annotated with.
+ * A union of English sentences carries no invariant, and the drift it invites
+ * was already visible: `UiAction.CANCEL` and `UiAction.RESET` were byte-identical
+ * duplicates of `STRINGS.CANCEL` and `STRINGS.RESET`, and three of the account
+ * screen's section headings came from here while its other eight came from
+ * `STRINGS`. The copy now lives in `constants/strings.ts`, the file that owns it.
  */
 
 // ===== SETTINGS & PREFERENCES =====
@@ -27,92 +39,7 @@ export const DisplayLanguage = {
 
 export type DisplayLanguage = (typeof DisplayLanguage)[keyof typeof DisplayLanguage];
 
-// ===== DAILY WORD LIMITS =====
-
-/**
- * Daily word limit tiers for vocabulary acquisition
- * Using const object for zero runtime overhead
- */
-export const DailyWordLimitTier = {
-  GETTING_STARTED: 'Getting Started',
-  STEADY_PROGRESS: 'Steady Progress',
-  ACTIVE_LEARNING: 'Active Learning',
-  UNLIMITED: 'Unlimited',
-} as const;
-
-export type DailyWordLimitTier = (typeof DailyWordLimitTier)[keyof typeof DailyWordLimitTier];
-
-/**
- * Descriptions for daily word limit tiers
- * Using const object for zero runtime overhead
- */
-export const DailyWordLimitDescription = {
-  GETTING_STARTED: '10 new words per day',
-  STEADY_PROGRESS: '20 new words per day',
-  ACTIVE_LEARNING: '30 new words per day',
-  UNLIMITED: 'No daily limit — reviews may grow quickly',
-} as const;
-
-export type DailyWordLimitDescription =
-  (typeof DailyWordLimitDescription)[keyof typeof DailyWordLimitDescription];
-
-/**
- * Daily word limit status messages
- * Using const object for zero runtime overhead
- */
-export const DailyWordLimitStatus = {
-  REACHED: 'Daily limit reached. You can increase it in Account settings.',
-  PAUSED_LOW_RECALL:
-    'New words paused — your recent recall dipped. Review what you have, and they’ll resume.',
-} as const;
-
-export type DailyWordLimitStatus = (typeof DailyWordLimitStatus)[keyof typeof DailyWordLimitStatus];
-
-// ===== ACCOUNT SECTIONS =====
-
-/**
- * Account section categories for organization
- * Using const object for zero runtime overhead
- */
-export const AccountSection = {
-  AUDIO_PLAYBACK: 'Audio',
-  LEARNING: 'Learning',
-  SUPPORT: 'Help',
-} as const;
-
-export type AccountSection = (typeof AccountSection)[keyof typeof AccountSection];
-
-// ===== FONT OPTIONS =====
-
-/**
- * Available Arabic fonts
- * Using const object for zero runtime overhead
- */
-export const ArabicFont = {
-  MADINA: 'Madina',
-  AMIRI: 'Amiri',
-  SCHEHERAZADE: 'Scheherazade',
-  NASTALIQ: 'Nastaliq',
-  NOTO_SANS: 'Noto Sans',
-} as const;
-
-export type ArabicFont = (typeof ArabicFont)[keyof typeof ArabicFont];
-
-/**
- * Font descriptions for UI display
- * Using const object for zero runtime overhead
- */
-export const FontDescription = {
-  MADINA: 'Modern & clean',
-  AMIRI: 'Traditional',
-  SCHEHERAZADE: 'Flowing',
-  NASTALIQ: 'Calligraphic',
-  NOTO_SANS: 'Simple',
-} as const;
-
-export type FontDescription = (typeof FontDescription)[keyof typeof FontDescription];
-
-// ===== NAVIGATION & UI ACTIONS =====
+// ===== NAVIGATION & UI =====
 
 /**
  * Main app navigation tabs
@@ -125,35 +52,6 @@ export const AppTab = {
 } as const;
 
 export type AppTab = (typeof AppTab)[keyof typeof AppTab];
-
-/**
- * Common UI action buttons
- * Using const object for zero runtime overhead
- */
-export const UiAction = {
-  SORT_BY: 'Sort',
-  ALL_WORDS: 'All Words',
-  FILTERS: 'Filters',
-  RESET_FILTERS: 'Reset',
-  RESET: 'Reset',
-  AUTHORS: 'Authors',
-  DIFFICULTY: 'Difficulty',
-  CATEGORY: 'Category',
-  FILTER: 'Filter',
-  REFRESH: 'Refresh',
-  DONE: 'Done',
-  EDIT: 'Edit',
-  MANAGE: 'Manage',
-  CLOSE: 'Close',
-  BACK: 'Back',
-  CANCEL: 'Cancel',
-  CLEAR: 'Clear',
-  CONTINUE: 'Continue',
-} as const;
-
-export type UiAction = (typeof UiAction)[keyof typeof UiAction];
-
-// ===== NOTIFICATION & TOAST TYPES =====
 
 /**
  * Toast notification types for user feedback
@@ -171,8 +69,11 @@ export type ToastType = (typeof ToastType)[keyof typeof ToastType];
 // ===== FAQ SYSTEM =====
 
 /**
- * FAQ categories for organizing help content
- * Using const object for zero runtime overhead
+ * FAQ categories for organizing help content.
+ *
+ * Earns its place unlike the copy that left this file: the union types
+ * `FAQItem.category`, so every entry in `FAQ_DATA` is grouped under a heading
+ * that exists rather than one spelled slightly differently.
  */
 export const FAQCategory = {
   GETTING_STARTED: 'Getting Started',

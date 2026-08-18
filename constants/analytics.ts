@@ -87,6 +87,20 @@ export const ANALYTICS_EVENTS = {
 } as const;
 
 /**
+ * The product events Mixpanel is allowed to receive.
+ *
+ * `analytics.track` takes this rather than `string`, so a typo'd or ad-hoc
+ * event name is a compile error instead of a row that lands in Mixpanel under
+ * a name no dashboard queries — a loss that is invisible until someone goes
+ * looking for the funnel and finds it short. Every one of the ~40 existing
+ * call sites already spelled the name as `ANALYTICS_EVENTS.X`; this is what
+ * makes that convention enforceable.
+ *
+ * Error taxonomy is deliberately NOT in here — see `analytics.trackError`.
+ */
+export type AnalyticsEventName = (typeof ANALYTICS_EVENTS)[keyof typeof ANALYTICS_EVENTS];
+
+/**
  * Meta (Facebook) app event names, used only for ad attribution in Ads Manager.
  *
  * These are the raw wire names rather than `AppEventsLogger.AppEvents.*` so this

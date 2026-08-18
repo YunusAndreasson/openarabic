@@ -15,7 +15,6 @@ import { simpleAudioService } from '@/services/audioPlayer';
 import { ensurePermissions } from '@/services/notificationService';
 import { ReadingProgressService } from '@/services/readingProgress';
 import { supabase } from '@/services/supabase';
-import { UiAction } from '@/types/enums';
 import { formatBytes } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback, errorFeedback } from '@/utils/haptics';
@@ -82,11 +81,11 @@ export const useAccountScreen = () => {
       STRINGS.CLEAR_CACHE_CONFIRMATION.replace('{size}', formatBytes(cacheSize)),
       [
         {
-          text: UiAction.CANCEL,
+          text: STRINGS.CANCEL,
           style: 'cancel',
         },
         {
-          text: UiAction.CLEAR,
+          text: STRINGS.CLEAR,
           style: 'destructive',
           onPress: async () => {
             try {
@@ -118,7 +117,7 @@ export const useAccountScreen = () => {
       STRINGS.SIGN_OUT_CONFIRMATION,
       [
         {
-          text: UiAction.CANCEL,
+          text: STRINGS.CANCEL,
           style: 'cancel',
         },
         {
@@ -161,11 +160,11 @@ export const useAccountScreen = () => {
       STRINGS.THIS_WILL_DELETE_ALL_READING_PROGRESS,
       [
         {
-          text: UiAction.CANCEL,
+          text: STRINGS.CANCEL,
           style: 'cancel',
         },
         {
-          text: UiAction.RESET,
+          text: STRINGS.RESET,
           style: 'destructive',
           onPress: async () => {
             try {
@@ -207,7 +206,7 @@ export const useAccountScreen = () => {
 
           if (!granted) {
             Alert.alert(STRINGS.ENABLE_NOTIFICATIONS, STRINGS.TURN_ON_NOTIFICATIONS, [
-              { text: UiAction.CANCEL, style: 'cancel' },
+              { text: STRINGS.CANCEL, style: 'cancel' },
               { text: STRINGS.OPEN_SETTINGS, onPress: () => Linking.openSettings() },
             ]);
             return;
@@ -215,7 +214,7 @@ export const useAccountScreen = () => {
         } catch (error) {
           handleError(error, { showToast: false });
           Alert.alert(STRINGS.ENABLE_NOTIFICATIONS, STRINGS.TURN_ON_NOTIFICATIONS, [
-            { text: UiAction.CANCEL, style: 'cancel' },
+            { text: STRINGS.CANCEL, style: 'cancel' },
             { text: STRINGS.OPEN_SETTINGS, onPress: () => Linking.openSettings() },
           ]);
           return;

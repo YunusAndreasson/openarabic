@@ -1,27 +1,8 @@
 import type { PostgrestError } from '@supabase/supabase-js';
 
 import { checkAuthentication } from '@/services/supabase';
+import type { ErrorOptions } from '@/utils/errorHandling';
 import { handleError } from '@/utils/errorHandling';
-
-/**
- * Configuration for error handling in Supabase queries
- */
-export interface ErrorConfig {
-  /** Custom toast message to show to the user */
-  toastMessage?: string;
-  /** Analytics event name for tracking */
-  analyticsEventName?: string;
-  /** Additional analytics properties */
-  analyticsProperties?: Record<string, boolean | number | string>;
-  /** Sentry severity level */
-  sentrySeverity?: 'debug' | 'error' | 'fatal' | 'info' | 'warning';
-  /** Sentry tags for categorization */
-  sentryTags?: Record<string, string>;
-  /** Sentry extra context */
-  sentryExtra?: Record<string, unknown>;
-  /** Whether to show toast to user (default: true) */
-  showToast?: boolean;
-}
 
 /**
  * Result type from Supabase queries
@@ -55,20 +36,17 @@ type SupabaseQueryBuilder<T> = PromiseLike<SupabaseQueryResult<T>>;
  */
 export async function executeQuery<T>(
   queryFn: () => SupabaseQueryBuilder<T>,
-  errorConfig: ErrorConfig = {},
+  errorConfig: ErrorOptions = {},
 ): Promise<T> {
   const { data, error } = await queryFn();
 
   if (error) {
-    await handleError(new Error(error.message), {
-      toastMessage: errorConfig.toastMessage,
-      analyticsEventName: errorConfig.analyticsEventName,
-      analyticsProperties: errorConfig.analyticsProperties,
-      sentrySeverity: errorConfig.sentrySeverity || 'error',
-      sentryTags: errorConfig.sentryTags,
-      sentryExtra: errorConfig.sentryExtra,
-      showToast: errorConfig.showToast !== false, // Default to true
-    });
+    // Forwarded whole rather than field-by-field: the seven-line copy this
+    // replaced re-stated `sentrySeverity: ... || 'error'` and
+    // `showToast: ... !== false`, both of which `handleError`'s own defaults
+    // already apply — and silently dropped every option it hadn't been taught
+    // about (`toastType`, `trackAnalytics`, `captureSentry`).
+    await handleError(new Error(error.message), errorConfig);
     throw error;
   }
 
@@ -97,7 +75,7 @@ export async function executeQuery<T>(
 export async function executeAuthenticatedQuery<T>(
   userId: string,
   queryFn: () => SupabaseQueryBuilder<T>,
-  errorConfig: ErrorConfig = {},
+  errorConfig: ErrorOptions = {},
 ): Promise<T> {
   await checkAuthentication(userId);
   return executeQuery(queryFn, errorConfig);

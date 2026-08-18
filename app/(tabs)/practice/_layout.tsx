@@ -6,7 +6,7 @@ import { CloseButton } from '@/components/ui';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { createNavigationOptions, createTabHeaderOptions } from '@/utils/navigation';
-import { AppTab, UiAction } from '@/types/enums';
+import { AppTab } from '@/types/enums';
 
 export default function StudyLayout(): JSX.Element {
   const colors = useColors();
@@ -24,7 +24,7 @@ export default function StudyLayout(): JSX.Element {
       <Stack.Screen
         name="dictionary"
         options={createNavigationOptions(colors, {
-          title: UiAction.ALL_WORDS,
+          title: STRINGS.ALL_WORDS,
           headerRight: () => <CloseButton />,
         })}
       />

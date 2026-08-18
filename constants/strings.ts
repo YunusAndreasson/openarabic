@@ -5,6 +5,10 @@ export const STRINGS = {
   CANCEL: 'Cancel',
   RETRY: 'Retry',
   RESET: 'Reset',
+  CLEAR: 'Clear',
+  REFRESH: 'Refresh',
+  CONTINUE: 'Continue',
+  ALL_WORDS: 'All Words',
   // Settings & preferences
   STUDY_REMINDERS: 'Smart reminders',
   SMART_REMINDERS_SUBTITLE: 'Timed to when your words start to fade',
@@ -125,6 +129,22 @@ export const STRINGS = {
   DISPLAY_LANGUAGE_ARABIC_SUBTITLE: 'For immersive reading practice',
   DISPLAY_LANGUAGE_BILINGUAL_SUBTITLE: 'See English translations below each sentence',
   DAILY_WORD_LIMIT: 'Daily word limit',
+  DAILY_LIMIT_LOW: 'Getting Started',
+  DAILY_LIMIT_LOW_SUBTITLE: '10 new words per day',
+  DAILY_LIMIT_MEDIUM: 'Steady Progress',
+  DAILY_LIMIT_MEDIUM_SUBTITLE: '20 new words per day',
+  DAILY_LIMIT_HIGH: 'Active Learning',
+  DAILY_LIMIT_HIGH_SUBTITLE: '30 new words per day',
+  DAILY_LIMIT_UNLIMITED: 'Unlimited',
+  DAILY_LIMIT_UNLIMITED_SUBTITLE: 'No daily limit — reviews may grow quickly',
+  DAILY_LIMIT_REACHED: 'Daily limit reached. You can increase it in Account settings.',
+  /** Same message when a finite limit is set, so the number can be named. */
+  DAILY_LIMIT_REACHED_COUNT:
+    'Daily limit of {count} words reached. You can increase it in Account settings.',
+  /** Summary value on the Daily-word-limit row for a finite limit. */
+  DAILY_LIMIT_WORDS_COUNT: '{count} words',
+  DAILY_LIMIT_PAUSED_LOW_RECALL:
+    'New words paused — your recent recall dipped. Review what you have, and they’ll resume.',
   WORDS_REMAINING_TODAY: '{count} new words remaining today',
   ADAPTIVE_PACING: 'Smart pacing',
   ADAPTIVE_PACING_SUBTITLE: 'Pause new words when recent recall drops',
@@ -178,6 +198,9 @@ export const STRINGS = {
   PLAYLIST_A11Y_REORDER: 'Reorder track',
   PLAYLIST_A11Y_REORDER_HINT: 'Press and hold, then drag to move this track',
   APPEARANCE_SECTION: 'Appearance',
+  LEARNING_SECTION: 'Learning',
+  AUDIO_SECTION: 'Audio',
+  HELP_SECTION: 'Help',
   STORAGE_SECTION: 'Storage',
   DANGER_ZONE_SECTION: 'Danger Zone',
   LEGAL_SECTION: 'Legal',

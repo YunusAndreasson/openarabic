@@ -119,7 +119,29 @@ export const showSuccessToast = (
   }
 };
 
-interface ErrorOptions {
+/**
+ * The severity levels this app reports errors at.
+ *
+ * Derived from Sentry's own union rather than re-typed, because the value is
+ * handed straight to `scope.setLevel` — spelled out by hand it had to be cast
+ * back (`as Sentry.SeverityLevel`) at the one place it was used, which is
+ * exactly where a level the SDK stopped recognising would have gone through
+ * silently. `log` is excluded: an error is never merely a log line.
+ */
+export type ErrorSeverityLevel = Exclude<Sentry.SeverityLevel, 'log'>;
+
+/**
+ * Every knob `handleError` understands — and the ONE error-config shape in the
+ * app.
+ *
+ * `executeQuery` and the service-config factory each used to declare their own
+ * near-copy of this list, re-typing the severity union a third and fourth time
+ * and then hand-copying seven fields across at the boundary. A field added here
+ * simply didn't reach `handleError` through those copies; a field whose type
+ * changed didn't fail to compile either, because the copy was rewritten by
+ * hand. They now `Pick` from this, so both are checked against it.
+ */
+export interface ErrorOptions {
   // Whether to show a toast message to the user
   showToast?: boolean;
   // Custom toast message (if not provided, will use error.message)
@@ -130,14 +152,22 @@ interface ErrorOptions {
   toastType?: ToastType;
   // Whether to track in Mixpanel
   trackAnalytics?: boolean;
-  // Custom analytics event name (default: 'Error Occurred')
+  /**
+   * Error-taxonomy event name (default: 'Error Occurred').
+   *
+   * Deliberately a free string, unlike the product events in
+   * `ANALYTICS_EVENTS`: these name a failure at one call site
+   * ('Password_Reset_Error'), are read as a Sentry/Mixpanel prefix search
+   * rather than selected from a list, and enumerating all ~40 of them would
+   * turn every new `catch` block into a two-file change.
+   */
   analyticsEventName?: string;
   // Additional analytics properties
   analyticsProperties?: Record<string, boolean | number | string>;
   // Whether to capture in Sentry
   captureSentry?: boolean;
   // Sentry severity level
-  sentrySeverity?: 'debug' | 'error' | 'fatal' | 'info' | 'warning';
+  sentrySeverity?: ErrorSeverityLevel;
   // Sentry tags for better categorization
   sentryTags?: Record<string, string>;
   // Sentry extra context
@@ -194,14 +224,14 @@ const isExpectedAuthError = (error: Error | string): boolean => {
 // Helper functions to reduce complexity
 const captureInSentry = (
   errorObj: Error,
-  sentrySeverity?: string,
+  sentrySeverity?: ErrorSeverityLevel,
   sentryTags?: Record<string, string>,
   sentryExtra?: Record<string, unknown>,
 ): void => {
   try {
     Sentry.withScope(scope => {
       if (sentrySeverity) {
-        scope.setLevel(sentrySeverity as Sentry.SeverityLevel);
+        scope.setLevel(sentrySeverity);
       }
       if (sentryTags) {
         Object.entries(sentryTags).forEach(([key, value]) => {
@@ -246,7 +276,7 @@ const trackErrorAnalytics = async (
       ...additionalProperties,
     };
 
-    await analytics.track(eventName || 'Error Occurred', analyticsProperties);
+    await analytics.trackError(eventName || 'Error Occurred', analyticsProperties);
   } catch {
     // Silently fail if analytics tracking fails - analytics should not block error handling
   }

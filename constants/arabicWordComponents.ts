@@ -8,6 +8,8 @@
  * so patterns should not include diacritical marks.
  */
 
+import type { ValidColorName } from '@/utils/colorResolution';
+
 /**
  * Component types enum for type safety
  */
@@ -850,7 +852,16 @@ export const COMPONENT_TYPE_CONFIG = {
     colorName: 'accent' as const, // Azure blue for visibility
     icon: '◌',
   },
-} as const;
+  // `satisfies` rather than a plain annotation: the literal types survive (the
+  // renderer needs the exact colour name), while a missing ComponentType or a
+  // colour outside `ValidColorName` becomes a compile error here, where the
+  // wrong value is written. This replaced a runtime assertion that rebuilt the
+  // valid-name list from these very objects and THREW partway through painting
+  // an article.
+} as const satisfies Record<
+  ComponentType,
+  { label: string; colorName: ValidColorName; icon: string }
+>;
 
 /**
  * Grammatical role color mapping for educational differentiation
@@ -871,7 +882,10 @@ export const GRAMMATICAL_ROLE_COLORS = {
   [GrammaticalRole.DEFINITE_ARTICLE]: 'grammar.definiteArticle' as const, // golden (50°)
   [GrammaticalRole.CASE_ENDING]: 'grammar.particle' as const, // Aliases to particle — diacritics typically use inheritColorFrom instead
   [GrammaticalRole.GENERIC]: 'grammar.verbConjugation' as const, // Aliases to verbConjugation — standalone pronouns (هو, هي, etc.)
-} as const;
+  // Exhaustive by construction: a new GrammaticalRole with no colour, or a
+  // `grammar.*` key the theme does not define, fails to compile — see the note
+  // on COMPONENT_TYPE_CONFIG above.
+} as const satisfies Record<GrammaticalRole, ValidColorName>;
 
 /**
  * Derived mapping from icon to component type

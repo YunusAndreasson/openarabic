@@ -41,22 +41,32 @@ const errorConfig = {
   }),
 };
 
-export interface ReadingProgress {
-  user_id: string;
-  article_id: number;
-  last_sentence_read: number;
-  total_sentences: number;
-  updated_at: string | null;
-  created_at: string | null;
-}
+/**
+ * A `reading_progress` row, as read.
+ *
+ * Read off the generated schema rather than listed by hand. The hand-written
+ * copy had drifted already: it omitted the table's `progress_percentage`
+ * column entirely, so nothing in the app could see that the column exists — and
+ * a renamed or re-typed column elsewhere in the row would have kept compiling
+ * against a shape the database no longer has.
+ */
+export type ReadingProgress = Tables<'reading_progress'>;
 
-// Helper type for safe reading progress data with computed percentage
-export interface SafeReadingProgress {
-  user_id: string;
-  article_id: number;
-  last_sentence_read: number;
-  total_sentences: number;
-  progress_percentage: number; // Computed from last_sentence_read and total_sentences
+/**
+ * A row with the nullable parts resolved and the percentage computed — what the
+ * UI consumes.
+ *
+ * Derived from {@link ReadingProgress} so it lists only what it CHANGES: the
+ * percentage becomes non-null (computed in JS from the sentence counts, not
+ * read from the column) and the two timestamps get defaults. As a second
+ * hand-written column list it had to be edited in step with the first.
+ */
+export interface SafeReadingProgress extends Omit<
+  ReadingProgress,
+  'progress_percentage' | 'updated_at' | 'created_at'
+> {
+  /** Computed from last_sentence_read and total_sentences */
+  progress_percentage: number;
   updated_at: string;
   created_at: string;
 }
@@ -176,7 +186,7 @@ export class ReadingProgressService {
 
     // Convert to Map for easy lookup
     const progressMap = new Map<ArticleId, ReadingProgress>();
-    (data as Tables<'reading_progress'>[]).forEach(progress => {
+    data.forEach(progress => {
       progressMap.set(progress.article_id as ArticleId, progress);
     });
 
@@ -219,7 +229,10 @@ export class ReadingProgressService {
       },
     );
 
-    const progressList = (data as Tables<'reading_progress'>[]).map(row => row as ReadingProgress);
+    // Copied before sorting: `sort` mutates, and the previous
+    // `.map(row => row as ReadingProgress)` — an identity map whose only job was
+    // the cast — happened to allocate the copy that made that safe.
+    const progressList = [...data];
 
     // Sort by calculated progress percentage
     return progressList.sort((a, b) => {

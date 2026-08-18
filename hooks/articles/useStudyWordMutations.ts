@@ -13,7 +13,7 @@ import { studyWordsFSRSService, type StudyWordMutationResult } from '@/services/
 import { checkAuthentication } from '@/services/supabase';
 import { useAppSelector } from '@/store/hooks';
 import type { RootId } from '@/types/branded.types';
-import { DailyWordLimitStatus, ToastType } from '@/types/enums';
+import { ToastType } from '@/types/enums';
 import type { StudyWord, StudyWordIntent } from '@/types/vocabulary.types';
 import { OnboardingStep } from '@/constants/onboarding';
 import { handleError } from '@/utils/errorHandling';
@@ -69,11 +69,11 @@ export const useStudyWordMutations = (
   const getLimitReachedMessage = useCallback(async (): Promise<string> => {
     const { status } = await getEffectiveLimitInfo();
     if (status === 'paused') {
-      return DailyWordLimitStatus.PAUSED_LOW_RECALL;
+      return STRINGS.DAILY_LIMIT_PAUSED_LOW_RECALL;
     }
     return dailyWordLimit === 0
-      ? DailyWordLimitStatus.REACHED
-      : `Daily limit of ${dailyWordLimit} words reached. You can increase it in Account settings.`;
+      ? STRINGS.DAILY_LIMIT_REACHED
+      : STRINGS.DAILY_LIMIT_REACHED_COUNT.replace('{count}', String(dailyWordLimit));
   }, [getEffectiveLimitInfo, dailyWordLimit]);
 
   // Due-backlog gate: block NEW saves while the review backlog is high. The

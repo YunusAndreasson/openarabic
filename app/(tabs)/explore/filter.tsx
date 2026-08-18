@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, type JSX } from 'react';
 
 import type { Article } from '@/types/articles.types';
+import type { FilterParams } from '@/types/navigation.types';
 
 import { FilteredArticleView } from '@/components/explore';
 import { articleQueries } from '@/constants/queries';
@@ -11,7 +12,7 @@ import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 
 export default function FilterScreen(): JSX.Element {
-  const searchParams = useLocalSearchParams<{ id: string; name?: string }>();
+  const searchParams = useLocalSearchParams<FilterParams>();
   const { id } = searchParams;
   const filterId = parseInt(id ?? '', 10);
 

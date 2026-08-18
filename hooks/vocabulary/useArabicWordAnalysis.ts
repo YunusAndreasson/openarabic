@@ -6,7 +6,7 @@ import {
   normalizeArabic,
   shouldInjectBracket,
 } from '@/utils/arabicWordAnalysis';
-import { assertValidColorName, resolveColorName } from '@/utils/colorResolution';
+import { resolveColorName } from '@/utils/colorResolution';
 
 interface UseArabicWordAnalysisResult {
   /** Whether the word has analyzable components */
@@ -54,14 +54,11 @@ export function useArabicWordAnalysis(
       return [{ text: arabicWord, color: colors.text, type: 'root' as const }];
     }
 
-    return formattedAnalysis.reconstructedArabic.segments.map(segment => {
-      assertValidColorName(segment.colorName);
-      return {
-        text: segment.text,
-        color: resolveColorName(segment.colorName, colors),
-        type: segment.type,
-      };
-    });
+    return formattedAnalysis.reconstructedArabic.segments.map(segment => ({
+      text: segment.text,
+      color: resolveColorName(segment.colorName, colors),
+      type: segment.type,
+    }));
   })();
 
   return {

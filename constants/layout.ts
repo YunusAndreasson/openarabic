@@ -401,13 +401,16 @@ export const LAYOUT = {
 
   /** Blur effect configuration for translucent surfaces */
   BLUR: {
+    // `as const` on the tint tables so the values stay the literals expo-blur's
+    // `BlurTint` accepts. Widened to `string` they could only reach `useBlurProps`
+    // through an assertion, which then also hid a missing theme.
     TAB_BAR: {
       intensity: 80,
-      tint: { light: 'light', dark: 'dark', sepia: 'light' },
+      tint: { light: 'light', dark: 'dark', sepia: 'light' } as const,
     },
     BACKDROP: {
       intensity: 30,
-      tint: { light: 'light', dark: 'dark', sepia: 'light' },
+      tint: { light: 'light', dark: 'dark', sepia: 'light' } as const,
     },
   },
 

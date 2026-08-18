@@ -1,20 +1,20 @@
-/**
- * Sentry severity levels used for error reporting
- * Excludes 'log' which is not typically used for errors
- */
-export type ErrorSeverityLevel = 'debug' | 'error' | 'fatal' | 'info' | 'warning';
+import type { ErrorOptions, ErrorSeverityLevel } from '@/utils/errorHandling';
 
 /**
- * Error configuration for service operations
- * Used with executeQuery and executeAuthenticatedQuery
+ * What this factory produces: a ready-to-pass `executeQuery` config with the
+ * four fields it decides, all of them settled (no optionals to re-default
+ * downstream).
+ *
+ * Built from `ErrorOptions` so it cannot describe a field `handleError` does
+ * not understand. It replaced a hand-written `ServiceErrorConfig` whose only
+ * appearance anywhere was inside `Omit<ServiceErrorConfig, 'analyticsProperties'>`
+ * — the omitted field was typed `Record<string, unknown>`, incompatible with
+ * the `Record<string, boolean | number | string>` every consumer actually
+ * wanted, which is precisely why every use had to omit it.
  */
-export interface ServiceErrorConfig {
-  toastMessage: string;
-  analyticsEventName: string;
-  sentrySeverity: ErrorSeverityLevel;
-  showToast?: boolean;
-  analyticsProperties?: Record<string, unknown>;
-}
+type ServiceErrorConfig = Required<
+  Pick<ErrorOptions, 'toastMessage' | 'analyticsEventName' | 'sentrySeverity' | 'showToast'>
+>;
 
 /**
  * Common CRUD operation types
@@ -23,31 +23,16 @@ export type CrudOperation =
   'load' | 'add' | 'create' | 'update' | 'delete' | 'remove' | 'check' | 'fetch' | 'save';
 
 /**
- * Options for customizing error configs
+ * Per-operation overrides. Same four fields as {@link ServiceErrorConfig}, all
+ * optional — each one falls back to a default derived from the resource name
+ * and the operation:
+ *
+ * - `toastMessage` — "Failed to {operation} {resource}"
+ * - `analyticsEventName` — `Resource_Name_Operation_Error`
+ * - `sentrySeverity` — 'warning' for check/fetch, 'error' otherwise
+ * - `showToast` — false for check/fetch, true otherwise
  */
-interface ErrorConfigOptions {
-  /**
-   * Custom toast message (overrides default)
-   */
-  toastMessage?: string;
-
-  /**
-   * Custom analytics event name (overrides default)
-   */
-  analyticsEventName?: string;
-
-  /**
-   * Sentry severity level
-   * @default 'error' for most operations, 'warning' for check/fetch
-   */
-  sentrySeverity?: ErrorSeverityLevel;
-
-  /**
-   * Whether to show toast notification
-   * @default true for user-facing operations, false for background operations
-   */
-  showToast?: boolean;
-}
+type ErrorConfigOptions = Partial<ServiceErrorConfig>;
 
 /**
  * Factory function to create standardized error configs for service operations
@@ -78,7 +63,7 @@ export function createServiceErrorConfig(
   resourceName: string,
   operation: CrudOperation,
   options: ErrorConfigOptions = {},
-): Omit<ServiceErrorConfig, 'analyticsProperties'> {
+): ServiceErrorConfig {
   // Convert resource_name to ResourceName for analytics
   const analyticsResourceName = resourceName
     .split('_')
@@ -126,25 +111,21 @@ export function createServiceErrorConfig(
  */
 export function createServiceErrorConfigs<
   T extends Partial<Record<CrudOperation, ErrorConfigOptions>>,
->(
-  resourceName: string,
-  operationsConfig: T,
-): {
-  [K in keyof T]: Omit<ServiceErrorConfig, 'analyticsProperties'>;
-} {
-  const configs = {} as {
-    [K in keyof T]: Omit<ServiceErrorConfig, 'analyticsProperties'>;
-  };
+>(resourceName: string, operationsConfig: T): { [K in keyof T]: ServiceErrorConfig } {
+  const configs = {} as { [K in keyof T]: ServiceErrorConfig };
 
-  for (const operation in operationsConfig) {
-    if (Object.hasOwn(operationsConfig, operation)) {
-      const op = operation as CrudOperation;
-      configs[operation as keyof T] = createServiceErrorConfig(
-        resourceName,
-        op,
-        operationsConfig[operation] as ErrorConfigOptions,
-      );
-    }
+  // Keys are narrowed once, here, rather than each use casting itself back:
+  // `for...in` widens the key to `string`, which is what forced the previous
+  // `as CrudOperation` / `as ErrorConfigOptions` pair — two assertions that
+  // would have kept compiling had the generic's constraint been loosened.
+  const operations = Object.keys(operationsConfig) as (keyof T & CrudOperation)[];
+
+  for (const operation of operations) {
+    configs[operation] = createServiceErrorConfig(
+      resourceName,
+      operation,
+      operationsConfig[operation],
+    );
   }
 
   return configs;

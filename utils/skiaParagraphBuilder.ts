@@ -6,6 +6,7 @@ import {
   TextDirection,
 } from '@shopify/react-native-skia';
 
+import type { SkiaFontFamily } from '@/constants/fonts';
 import type { ColoredSegment } from '@/types/vocabulary.types';
 
 /** Strut height multiplier for consistent Arabic diacritics spacing */
@@ -18,7 +19,7 @@ export const PARAGRAPH_LAYOUT_WIDTH = 2000;
 const ARABIC_LETTER_SPACING = 0.15;
 
 const makeParagraphStyle = (
-  fontFamily: string,
+  fontFamily: SkiaFontFamily,
   fontSize: number,
   textDirection: TextDirection,
 ) => ({
@@ -35,7 +36,7 @@ const makeParagraphStyle = (
 
 interface ParagraphBaseConfig {
   fontSize: number;
-  fontFamily: string;
+  fontFamily: SkiaFontFamily;
   fontManager?: SkTypefaceFontProvider | null;
   textDirection?: TextDirection;
   maxWidth?: number;
@@ -170,15 +171,21 @@ const measureInkOverhang = (paragraph: SkParagraph, layoutWidth: number): InkOve
  *
  * Values are the measured maxima plus roughly 0.09em of headroom for glyph
  * combinations the corpus sample did not contain.
+ *
+ * Keyed by `SkiaFontFamily`, so the table is total over the faces the app ships
+ * and there is no default row to fall through to. As an open `Record<string,
+ * …>` a family name that drifted out of step with `SKIA_FONT_FAMILY_MAP` landed
+ * on a flat 0.4em bottom reserve — the Scheherazade figure — which on the
+ * default face is ~13px of dead leading per line, silently, with the layout
+ * still looking plausible.
  */
-const VERTICAL_INK_EM: Record<string, { top: number; bottom: number }> = {
+const VERTICAL_INK_EM: Record<SkiaFontFamily, { top: number; bottom: number }> = {
   'Noto Sans Arabic': { top: 0.2, bottom: 0.12 },
   'Digital Khatt New Madina': { top: 0.2, bottom: 0.3 },
   Amiri: { top: 0.2, bottom: 0.36 },
   'Scheherazade New': { top: 0.2, bottom: 0.4 },
   'Noto Nastaliq Urdu': { top: 0.2, bottom: 0.32 },
 };
-const DEFAULT_VERTICAL_INK = { top: 0.2, bottom: 0.4 };
 
 /**
  * Fallback horizontal ink bleed per font family, in em (fraction of font size).
@@ -189,14 +196,13 @@ const DEFAULT_VERTICAL_INK = { top: 0.2, bottom: 0.4 };
  * Only used when the native module can't measure the real bleed — see
  * `measureInkOverhang`, which supersedes these estimates on Skia >= 2.8.0.
  */
-const INK_BLEED_EM: Record<string, number> = {
+const INK_BLEED_EM: Record<SkiaFontFamily, number> = {
   'Noto Sans Arabic': 0.08,
   'Digital Khatt New Madina': 0.3,
   Amiri: 0.3,
   'Scheherazade New': 0.3,
   'Noto Nastaliq Urdu': 0.35,
 };
-const DEFAULT_INK_BLEED_EM = 0.15;
 
 /** Canvas geometry for painting a laid-out single-line Arabic paragraph. */
 export interface ParagraphCanvasMetrics {
@@ -230,9 +236,9 @@ export const measureParagraphCanvas = (
     fontSize,
     fontFamily,
     bottomGap = 0,
-  }: { fontSize: number; fontFamily: string; bottomGap?: number },
+  }: { fontSize: number; fontFamily: SkiaFontFamily; bottomGap?: number },
 ): ParagraphCanvasMetrics => {
-  const vertical = VERTICAL_INK_EM[fontFamily] ?? DEFAULT_VERTICAL_INK;
+  const vertical = VERTICAL_INK_EM[fontFamily];
   const paintY = Math.ceil(fontSize * vertical.top);
   const inkBottom = Math.ceil(fontSize * vertical.bottom);
 
@@ -248,9 +254,9 @@ export const measureParagraphCanvas = (
   }
 
   // Real painted extent where the native module can report it, per-family
-  // estimate everywhere else. Measuring also sizes fonts absent from the map.
+  // estimate everywhere else.
   const overhang = measureInkOverhang(paragraph, PARAGRAPH_LAYOUT_WIDTH);
-  const estimate = Math.ceil(fontSize * (INK_BLEED_EM[fontFamily] ?? DEFAULT_INK_BLEED_EM));
+  const estimate = Math.ceil(fontSize * INK_BLEED_EM[fontFamily]);
   const inkLeft = overhang ? Math.ceil(overhang.left) : estimate;
   const inkRight = overhang ? Math.ceil(overhang.right) : estimate;
 

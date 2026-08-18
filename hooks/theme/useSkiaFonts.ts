@@ -8,24 +8,22 @@ import madinaFont from '@/assets/fonts/Madina.otf';
 import nastaliqFont from '@/assets/fonts/Nastaliq.ttf';
 import notoSansFont from '@/assets/fonts/NotoSans.ttf';
 import scheherazadeFont from '@/assets/fonts/Scheherazade.ttf';
-import { resolveArabicFont } from '@/constants/fonts';
+import { resolveArabicFont, SKIA_FONT_FAMILY_MAP, type SkiaFontFamily } from '@/constants/fonts';
 import { clampArabicFontSize } from '@/constants/layout';
 import { useAppSelector } from '@/store/hooks';
-import type { ArabicFontName } from '@/store/settingsSlice';
 
 /**
- * Font mapping for Skia rendering
- * Maps our internal font names to Skia-compatible font families
+ * The .ttf/.otf behind each Skia family, keyed by the family name itself.
+ *
+ * `Record<SkiaFontFamily, number>` rather than `Record<string, number>`: these
+ * keys have to be exactly the VALUES of `SKIA_FONT_FAMILY_MAP`, and as an open
+ * string map they were two independent lists kept in step by eye. Rename a
+ * family on one side only and the provider silently never registers that face,
+ * so `paragraphBuilder` asks for a family nothing loaded and Skia quietly
+ * substitutes a default — the learner's chosen Arabic typeface just stops
+ * appearing, with no error anywhere.
  */
-const SKIA_FONT_FAMILY_MAP: Record<ArabicFontName, string> = {
-  'NotoSansArabic-Regular': 'Noto Sans Arabic',
-  DigitalKhattNewMadinaRegular: 'Digital Khatt New Madina',
-  'Amiri-Regular': 'Amiri',
-  'ScheherazadeNew-Regular': 'Scheherazade New',
-  'NotoNastaliqUrdu-Regular': 'Noto Nastaliq Urdu',
-};
-
-const FONT_SOURCES: Record<string, number> = {
+const FONT_SOURCES: Record<SkiaFontFamily, number> = {
   'Noto Sans Arabic': notoSansFont,
   Amiri: amiriFont,
   'Digital Khatt New Madina': madinaFont,
@@ -92,7 +90,7 @@ export interface UseSkiaFontsResult {
   /** Current font size from settings */
   fontSize: number;
   /** Current font family name for Skia rendering */
-  fontFamily: string;
+  fontFamily: SkiaFontFamily;
   /** Shared Skia font manager for ParagraphBuilder (null until loaded once per app session) */
   fontManager: SkTypefaceFontProvider | null;
 }
@@ -112,7 +110,11 @@ export const useSkiaFonts = (): UseSkiaFontsResult => {
 
   const fontManager = useSyncExternalStore(subscribeToFontManager, getFontManagerSnapshot);
 
-  const fontFamily = SKIA_FONT_FAMILY_MAP[selectedFontName] || 'Noto Sans Arabic';
+  // No `|| 'Noto Sans Arabic'` fallback: `resolveArabicFont` has already
+  // narrowed the persisted name to an ArabicFontName, and the map is total over
+  // those, so the lookup cannot miss. The fallback could only fire for a key the
+  // type system no longer admits.
+  const fontFamily = SKIA_FONT_FAMILY_MAP[selectedFontName];
 
   return {
     isReady: fontManager !== null,
