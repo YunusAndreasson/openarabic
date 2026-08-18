@@ -20,12 +20,23 @@ import React from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 
 import { useProvideAuth } from '@/hooks/auth/useProvideAuth';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type NetInfo from '@react-native-community/netinfo';
+import {
+  createAuthErrorMock,
+  createNetInfoStateMock,
+  createSessionMock,
+  createUserMock,
+} from '@/__tests__/helpers/serviceMocks';
 
 // Mock modules at top level
-const mockGetSession = jest.fn();
-const mockRefreshSession = jest.fn();
-const mockOnAuthStateChange = jest.fn();
-const mockNetInfoFetch = jest.fn();
+// Typed from the real modules: a bare `jest.fn()` is `Mock<UnknownFunction>`,
+// whose `mockResolvedValue` argument is checked against `never` — so none of the
+// session shapes these return were ever verified against what supabase produces.
+const mockGetSession = jest.fn<SupabaseClient['auth']['getSession']>();
+const mockRefreshSession = jest.fn<SupabaseClient['auth']['refreshSession']>();
+const mockOnAuthStateChange = jest.fn<SupabaseClient['auth']['onAuthStateChange']>();
+const mockNetInfoFetch = jest.fn<typeof NetInfo.fetch>();
 const mockRemoveSupabaseListener = jest.fn();
 let mockAuthStateCallback: ((event: string, session: unknown) => void) | null = null;
 
@@ -62,18 +73,18 @@ jest.mock('@sentry/react-native', () => ({
 // wholesale silently drops every other export (the breadcrumb helpers), which
 // surfaces as "authBreadcrumb is not a function" deep inside the hook.
 jest.mock('@/utils/errorHandling', () => ({
-  ...jest.requireActual('@/utils/errorHandling'),
+  ...jest.requireActual<Record<string, unknown>>('@/utils/errorHandling'),
   handleError: jest.fn(),
 }));
 
 describe('Authentication Flow', () => {
   let appStateListeners: ((state: AppStateStatus) => void)[] = [];
 
-  const mockSession = {
-    user: { id: 'test-user-id', email: 'test@example.com' },
+  const mockSession = createSessionMock({
+    user: createUserMock({ id: 'test-user-id', email: 'test@example.com' }),
     access_token: 'test-access-token',
     refresh_token: 'test-refresh-token',
-  };
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -83,8 +94,8 @@ describe('Authentication Flow', () => {
 
     // Default mock implementations
     mockGetSession.mockResolvedValue({ data: { session: null }, error: null });
-    mockRefreshSession.mockResolvedValue({ data: { session: null }, error: null });
-    mockNetInfoFetch.mockResolvedValue({ isConnected: true });
+    mockRefreshSession.mockResolvedValue({ data: { user: null, session: null }, error: null });
+    mockNetInfoFetch.mockResolvedValue(createNetInfoStateMock(true));
 
     // Mock AppState
     Object.defineProperty(AppState, 'currentState', {
@@ -156,7 +167,7 @@ describe('Authentication Flow', () => {
     });
 
     test('handles session retrieval errors', async () => {
-      const error = new Error('Session retrieval failed');
+      const error = createAuthErrorMock('Session retrieval failed');
       mockGetSession.mockResolvedValue({
         data: { session: null },
         error,
@@ -176,7 +187,7 @@ describe('Authentication Flow', () => {
   describe('Session Refresh', () => {
     test('refreshSession checks network connectivity first', async () => {
       mockGetSession.mockResolvedValue({ data: { session: mockSession }, error: null });
-      mockNetInfoFetch.mockResolvedValue({ isConnected: false });
+      mockNetInfoFetch.mockResolvedValue(createNetInfoStateMock(false));
 
       const { result } = renderHook(() => useProvideAuth());
 
@@ -195,9 +206,9 @@ describe('Authentication Flow', () => {
 
     test('refreshSession succeeds with valid session', async () => {
       mockGetSession.mockResolvedValue({ data: { session: null }, error: null });
-      mockNetInfoFetch.mockResolvedValue({ isConnected: true });
+      mockNetInfoFetch.mockResolvedValue(createNetInfoStateMock(true));
       mockRefreshSession.mockResolvedValue({
-        data: { session: mockSession },
+        data: { user: mockSession.user, session: mockSession },
         error: null,
       });
 
@@ -219,10 +230,10 @@ describe('Authentication Flow', () => {
 
     test('refreshSession retries on error up to max attempts', async () => {
       mockGetSession.mockResolvedValue({ data: { session: null }, error: null });
-      mockNetInfoFetch.mockResolvedValue({ isConnected: true });
+      mockNetInfoFetch.mockResolvedValue(createNetInfoStateMock(true));
       mockRefreshSession.mockResolvedValue({
-        data: { session: null },
-        error: new Error('Refresh failed'),
+        data: { user: null, session: null },
+        error: createAuthErrorMock('Refresh failed'),
       });
 
       const { result } = renderHook(() => useProvideAuth());
@@ -333,8 +344,11 @@ describe('Authentication Flow', () => {
         jest.runAllTimers();
       });
 
+      // `UserSession` deliberately narrows the supabase session down to `user`,
+      // so the refreshed token is not reachable through the hook's contract —
+      // assert the session object itself was replaced.
       await waitFor(() => {
-        expect(result.current.session?.access_token).toBe('new-access-token');
+        expect(result.current.session).toEqual(newSession);
       });
     });
   });
@@ -422,7 +436,9 @@ describe('Authentication Flow', () => {
     test('unsubscribes from auth state changes on unmount', () => {
       const mockUnsubscribe = jest.fn();
       jest.mocked(mockOnAuthStateChange).mockReturnValue({
-        data: { subscription: { unsubscribe: mockUnsubscribe } },
+        data: {
+          subscription: { id: 'sub-1', callback: () => undefined, unsubscribe: mockUnsubscribe },
+        },
       });
 
       const { unmount } = renderHook(() => useProvideAuth());

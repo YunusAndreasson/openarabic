@@ -194,6 +194,54 @@ export default defineConfig([
     },
   },
 
+  // The component layering, enforced rather than documented.
+  //
+  //   components/primitives  — ThemedText/View/Button/Input. No barrel: they are
+  //                            imported by BOTH ui and common, so they must sit
+  //                            below both and cannot participate in a cycle.
+  //   components/ui          — interactive controls and form primitives (barrel)
+  //   components/common      — layout, state and composition primitives (barrel)
+  //   feature directories    — everything else, free to use any barrel
+  //
+  // Inside ui | common | providers | primitives, a sibling must be imported by
+  // direct path. Going through a barrel pulls in every other member and closes a
+  // cycle — `ui/index` → `SettingsPicker` → `common/index` → `EmptyState` →
+  // `ui/index`. A cycle resolves to `undefined` at module-init time, so the
+  // failure is a blank component at runtime, not a build error. This rule turns
+  // the next one into a lint failure instead. Currently zero violations.
+  {
+    files: [
+      'components/ui/**/*.{ts,tsx}',
+      'components/common/**/*.{ts,tsx}',
+      'components/providers/**/*.{ts,tsx}',
+      'components/primitives/**/*.{ts,tsx}',
+    ],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@/components/ui',
+              message:
+                'Import the sibling directly (e.g. @/components/ui/IconButton). Barrel imports between ui/common/providers close an import cycle that resolves to undefined at runtime.',
+            },
+            {
+              name: '@/components/common',
+              message:
+                'Import the sibling directly (e.g. @/components/common/EmptyState). Barrel imports between ui/common/providers close an import cycle that resolves to undefined at runtime.',
+            },
+            {
+              name: '@/components/providers',
+              message:
+                'Import the provider directly (e.g. @/components/providers/ToastProvider). Barrel imports between ui/common/providers close an import cycle that resolves to undefined at runtime.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
   // React rules
   {
     files: ['**/*.{js,jsx,ts,tsx}'],

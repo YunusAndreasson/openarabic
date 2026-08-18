@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import Animated, { FadeIn, FadeOut, LayoutAnimationConfig } from 'react-native-reanimated';
 
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import type { ReviewCardHandle } from '@/components/review/ReviewFlipCard';
 import {
   CompletionScreen,

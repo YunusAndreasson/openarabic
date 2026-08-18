@@ -1,0 +1,34 @@
+{
+  // The test suite is larger than the app (73k lines vs 68k) and was excluded from
+  // `tsconfig.json` entirely, so nothing ever type-checked it. Tests then drifted from
+  // the source they cover: assertions against properties that no longer exist pass
+  // green because they compare `undefined` to `undefined`.
+  //
+  // This config type-checks `__tests__` under the same strictness as the app, minus
+  // four flags that are noise in test code specifically (they produced 412 of the
+  // 1466 raw errors and none of them indicated drift).
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "types": ["jest", "node", "react"],
+
+    // `import React from 'react'` is required by the RN test renderer but unused as a
+    // value under the automatic JSX runtime.
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+
+    // RN style objects are index signatures; `props.disabled` is how a test reads them.
+    "noPropertyAccessFromIndexSignature": false,
+
+    // `arr[0]` immediately after asserting `arr.length` is the idiom throughout.
+    "noUncheckedIndexedAccess": false,
+
+    "noImplicitReturns": false,
+
+    // No build cache: this program shares .tsbuildinfo with the source pass otherwise,
+    // and the full run is only ~11s.
+    "incremental": false
+  },
+  "include": ["__tests__/**/*.ts", "__tests__/**/*.tsx", "types/**/*.d.ts", "expo-env.d.ts"],
+  "exclude": []
+}

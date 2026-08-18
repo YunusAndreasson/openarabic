@@ -30,7 +30,7 @@ jest.mock('@/hooks/auth/useAuth', () => ({
 // Mock FSRS service
 jest.mock('@/services/studyWordsFSRS', () => ({
   studyWordsFSRSService: {
-    getFSRSWords: jest.fn().mockResolvedValue([]),
+    getFSRSWords: jest.fn(async (..._args: unknown[]) => []),
   },
 }));
 

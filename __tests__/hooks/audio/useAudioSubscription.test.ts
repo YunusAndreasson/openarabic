@@ -23,6 +23,7 @@ import {
 } from '@/hooks/audio/useAudioSubscription';
 import { simpleAudioService } from '@/services/audioPlayer';
 import type { AudioStatus } from '@/services/audioPlayer';
+import { createAudioStatusMock } from '@/__tests__/helpers/serviceMocks';
 
 const mockSimpleAudioService = jest.mocked(simpleAudioService);
 
@@ -146,10 +147,12 @@ describe('useAudioSubscription', () => {
     });
 
     test('should NOT update status when currentTime changes by < 0.1', () => {
-      mockSimpleAudioService.getStatus.mockReturnValue({
-        ...mockInitialStatus,
-        currentTime: 1.0,
-      });
+      mockSimpleAudioService.getStatus.mockReturnValue(
+        createAudioStatusMock({
+          ...mockInitialStatus,
+          currentTime: 1.0,
+        }),
+      );
 
       const { result } = renderHook(() => useAudioProgressSubscription());
 
@@ -175,7 +178,7 @@ describe('useAudioSubscription', () => {
       const newStatus: AudioStatus = {
         ...mockInitialStatus,
         currentTrack: {
-          id: 123,
+          id: 'article-123',
           title: 'Test Track',
           audioUrl: 'https://example.com/audio.mp3',
         },
@@ -185,7 +188,7 @@ describe('useAudioSubscription', () => {
         subscribeCallback?.(newStatus);
       });
 
-      expect(result.current.status.currentTrack?.id).toBe(123);
+      expect(result.current.status.currentTrack?.id).toBe('article-123');
     });
   });
 

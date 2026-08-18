@@ -20,15 +20,17 @@ import { setupTestStore, type TestRootState } from '@/__tests__/helpers/testStor
 const mockStorage: Record<string, string> = {};
 
 // Mock functions defined at module scope
-let mockGetItem: jest.Mock;
-let mockSetItem: jest.Mock;
-let mockRemoveItem: jest.Mock;
+// Signatures spelled out: a bare `jest.Mock` is `Mock<UnknownFunction>` and
+// discards the implementation's own types.
+let mockGetItem: jest.Mock<(key: string) => Promise<string | null>>;
+let mockSetItem: jest.Mock<(key: string, value: string) => Promise<void>>;
+let mockRemoveItem: jest.Mock<(key: string) => Promise<void>>;
 
 jest.mock('@react-native-async-storage/async-storage', () => ({
   // Delegates so the jest.fn implementations can be reassigned in beforeEach
-  getItem: (...args: unknown[]) => mockGetItem(...args),
-  setItem: (...args: unknown[]) => mockSetItem(...args),
-  removeItem: (...args: unknown[]) => mockRemoveItem(...args),
+  getItem: (key: string) => mockGetItem(key),
+  setItem: (key: string, value: string) => mockSetItem(key, value),
+  removeItem: (key: string) => mockRemoveItem(key),
 }));
 
 const clearMockStorage = () => {

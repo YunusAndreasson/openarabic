@@ -35,22 +35,19 @@ import { setupTestStore, type TestRootState } from './testStore';
 /**
  * Creates mock return value for useAuth hook
  */
-export const createAuthMock = (
-  overrides: Partial<{
-    user: { id: string; email?: string } | null;
-    isLoading: boolean;
-    signIn: jest.Mock;
-    signUp: jest.Mock;
-    signOut: jest.Mock;
-    refreshSession: jest.Mock;
-  }> = {},
-) => ({
+const createAuthMockDefaults = () => ({
   user: { id: 'test-user-123', email: 'test@example.com' },
   isLoading: false,
-  signIn: jest.fn().mockResolvedValue(undefined),
-  signUp: jest.fn().mockResolvedValue(undefined),
-  signOut: jest.fn().mockResolvedValue(undefined),
-  refreshSession: jest.fn().mockResolvedValue(undefined),
+  signIn: jest.fn(async (..._args: unknown[]) => undefined),
+  signUp: jest.fn(async (..._args: unknown[]) => undefined),
+  signOut: jest.fn(async (..._args: unknown[]) => undefined),
+  refreshSession: jest.fn(async (..._args: unknown[]) => undefined),
+});
+
+export const createAuthMock = (
+  overrides: Partial<ReturnType<typeof createAuthMockDefaults>> = {},
+) => ({
+  ...createAuthMockDefaults(),
   ...overrides,
 });
 
@@ -61,43 +58,39 @@ export const createAuthMock = (
 /**
  * Creates mock return value for useSimpleAudioPlayer hook
  */
-export const createAudioPlayerMock = (
-  overrides: Partial<{
-    play: jest.Mock;
-    stop: jest.Mock;
-    preconfigureAudioSession: jest.Mock;
-    playing: boolean;
-    currentUrl: string | null;
-  }> = {},
-) => ({
-  play: jest.fn().mockResolvedValue(true),
-  stop: jest.fn().mockResolvedValue(undefined),
-  preconfigureAudioSession: jest.fn().mockResolvedValue(undefined),
+const createAudioPlayerMockDefaults = () => ({
+  play: jest.fn(async (..._args: unknown[]) => true),
+  stop: jest.fn(async (..._args: unknown[]) => undefined),
+  preconfigureAudioSession: jest.fn(async (..._args: unknown[]) => undefined),
   playing: false,
   currentUrl: null,
+});
+
+export const createAudioPlayerMock = (
+  overrides: Partial<ReturnType<typeof createAudioPlayerMockDefaults>> = {},
+) => ({
+  ...createAudioPlayerMockDefaults(),
   ...overrides,
 });
 
 /**
  * Creates mock return value for useAudioPreloader hook
  */
-export const createAudioPreloaderMock = (
-  overrides: Partial<{
-    isPreloading: boolean;
-    progress: number;
-    isReady: boolean;
-    resolveCached: jest.Mock;
-    forgetCached: jest.Mock;
-  }> = {},
-) => ({
+const createAudioPreloaderMockDefaults = () => ({
   isPreloading: false,
   progress: 100,
   // The first card's audio is cached — later files may still be downloading.
   isReady: true,
   // Defaults to a miss so the play path exercises its audioCache fallback;
   // override with a path to test the preloaded fast path.
-  resolveCached: jest.fn(() => undefined),
+  resolveCached: jest.fn((..._args: unknown[]) => undefined),
   forgetCached: jest.fn(),
+});
+
+export const createAudioPreloaderMock = (
+  overrides: Partial<ReturnType<typeof createAudioPreloaderMockDefaults>> = {},
+) => ({
+  ...createAudioPreloaderMockDefaults(),
   ...overrides,
 });
 
@@ -108,34 +101,31 @@ export const createAudioPreloaderMock = (
 /**
  * Creates mock return value for useFSRS hook
  */
-export const createFSRSMock = (
-  overrides: Partial<{
-    currentWord: StudyWord | null;
-    wordQueue: StudyWord[];
-    isLoading: boolean;
-    isComplete: boolean;
-    progress: number;
-    updateWord: jest.Mock;
-    invalidateQueries: jest.Mock;
-    flushPendingWrites: jest.Mock;
-    dueWords: StudyWord[];
-    totalDue: number;
-  }> = {},
-) => ({
+const createFSRSMockDefaults = () => ({
   currentWord: null,
   wordQueue: [],
   isLoading: false,
   isComplete: false,
   progress: 0,
-  updateWord: jest.fn().mockResolvedValue(7.5), // Returns new stability
-  previewIntervals: jest.fn(() => ({ unknown: '1m', vague: '10m', known: '4d' })),
+  updateWord: jest.fn(async (..._args: unknown[]) => 7.5), // Returns new stability
+  previewIntervals: jest.fn((..._args: unknown[]) => ({
+    unknown: '1m',
+    vague: '10m',
+    known: '4d',
+  })),
   invalidateQueries: jest.fn(),
   // Every review exit awaits this before invalidating, so it must resolve —
   // a mock missing it turns session teardown into a TypeError.
-  flushPendingWrites: jest.fn().mockResolvedValue(undefined),
+  flushPendingWrites: jest.fn(async (..._args: unknown[]) => undefined),
   resetQueue: jest.fn(),
   dueWords: [],
   totalDue: 0,
+});
+
+export const createFSRSMock = (
+  overrides: Partial<ReturnType<typeof createFSRSMockDefaults>> = {},
+) => ({
+  ...createFSRSMockDefaults(),
   ...overrides,
 });
 
@@ -146,13 +136,7 @@ export const createFSRSMock = (
 /**
  * Creates mock return value for useSessionMetrics hook
  */
-export const createSessionMetricsMock = (
-  overrides: Partial<{
-    metrics: Partial<SessionMetrics>;
-    updateMetrics: jest.Mock;
-    resetMetrics: jest.Mock;
-  }> = {},
-) => ({
+const sessionMetricsDefaults = (metrics: Partial<SessionMetrics> = {}) => ({
   metrics: {
     wordsReviewed: 0,
     wordsKnown: 0,
@@ -163,12 +147,20 @@ export const createSessionMetricsMock = (
     averageStabilityIncrease: 0,
     masteredWords: 0,
     startTime: Date.now(),
-    ...overrides.metrics,
+    ...metrics,
   },
   updateMetrics: jest.fn(),
   resetMetrics: jest.fn(),
-  ...overrides,
 });
+
+export const createSessionMetricsMock = (
+  overrides: Partial<Omit<ReturnType<typeof sessionMetricsDefaults>, 'metrics'>> & {
+    metrics?: Partial<SessionMetrics>;
+  } = {},
+) => {
+  const { metrics, ...rest } = overrides;
+  return { ...sessionMetricsDefaults(metrics), ...rest };
+};
 
 // ============================================================================
 // UTILITY HOOKS
@@ -177,35 +169,35 @@ export const createSessionMetricsMock = (
 /**
  * Creates mock return value for useTimerCleanup hook
  */
-export const createTimerCleanupMock = (
-  overrides: Partial<{
-    setTimer: jest.Mock;
-    clearTimer: jest.Mock;
-    clearAllTimers: jest.Mock;
-  }> = {},
-) => ({
+const createTimerCleanupMockDefaults = () => ({
   setTimer: jest.fn((callback: () => void, _delay: number) => {
     callback(); // Execute immediately in tests
     return 1;
   }),
   clearTimer: jest.fn(),
   clearAllTimers: jest.fn(),
+});
+
+export const createTimerCleanupMock = (
+  overrides: Partial<ReturnType<typeof createTimerCleanupMockDefaults>> = {},
+) => ({
+  ...createTimerCleanupMockDefaults(),
   ...overrides,
 });
 
 /**
  * Creates mock return value for useOpacityAnimation hook
  */
-export const createOpacityAnimationMock = (
-  overrides: Partial<{
-    opacity: { value: number };
-    fadeIn: jest.Mock;
-    fadeOut: jest.Mock;
-  }> = {},
-) => ({
+const createOpacityAnimationMockDefaults = () => ({
   opacity: { value: 1 },
   fadeIn: jest.fn(),
   fadeOut: jest.fn(),
+});
+
+export const createOpacityAnimationMock = (
+  overrides: Partial<ReturnType<typeof createOpacityAnimationMockDefaults>> = {},
+) => ({
+  ...createOpacityAnimationMockDefaults(),
   ...overrides,
 });
 
@@ -218,10 +210,15 @@ export const createOpacityAnimationMock = (
  */
 export const setupInteractionManagerMock = () => {
   const { InteractionManager } = require('react-native');
-  jest.spyOn(InteractionManager, 'runAfterInteractions').mockImplementation(callback => {
-    Promise.resolve().then(callback);
-    return { cancel: jest.fn() };
-  });
+  // `require('react-native')` is untyped here, so the spy's implementation is
+  // checked against `(...args: unknown[]) => any`.
+  jest
+    .spyOn(InteractionManager, 'runAfterInteractions')
+    .mockImplementation((...args: unknown[]) => {
+      const callback = args[0] as (() => void) | undefined;
+      void Promise.resolve().then(callback);
+      return { cancel: jest.fn() };
+    });
 };
 
 // ============================================================================

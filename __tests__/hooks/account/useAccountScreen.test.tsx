@@ -3,21 +3,21 @@ import { Alert } from 'react-native';
 
 import { useAccountScreen } from '@/hooks/account/useAccountScreen';
 
-const mockClearCache = jest.fn();
-const mockGetCacheSize = jest.fn();
-const mockUpdateReminderTime = jest.fn();
-const mockEnsurePermissions = jest.fn();
+const mockClearCache = jest.fn(async (..._args: unknown[]) => undefined);
+const mockGetCacheSize = jest.fn(async (..._args: unknown[]) => 1024);
+const mockUpdateReminderTime = jest.fn(async (..._args: unknown[]) => undefined);
+const mockEnsurePermissions = jest.fn(async (..._args: unknown[]) => true);
 const mockRecordAccepted = jest.fn();
-const mockClearPersistedQueryCache = jest.fn();
-const mockStopAudio = jest.fn();
-const mockTrackSignOut = jest.fn();
-const mockAnalyticsReset = jest.fn();
-const mockSignOut = jest.fn();
+const mockClearPersistedQueryCache = jest.fn(async (..._args: unknown[]) => undefined);
+const mockStopAudio = jest.fn(async (..._args: unknown[]) => undefined);
+const mockTrackSignOut = jest.fn(async (..._args: unknown[]) => undefined);
+const mockAnalyticsReset = jest.fn(async (..._args: unknown[]) => undefined);
+const mockSignOut = jest.fn(async (..._args: unknown[]) => ({ error: null }));
 const mockGetUser = jest.fn();
-const mockDeleteAllProgress = jest.fn();
+const mockDeleteAllProgress = jest.fn(async (..._args: unknown[]) => undefined);
 const mockQueryClear = jest.fn();
 const mockRemoveQueries = jest.fn();
-const mockRefetchQueries = jest.fn();
+const mockRefetchQueries = jest.fn(async (..._args: unknown[]) => undefined);
 const mockRouterReplace = jest.fn();
 const mockHandleError = jest.fn();
 
@@ -92,7 +92,7 @@ jest.mock('@/utils/errorHandling', () => ({
 jest.mock('@/utils/haptics', () => ({ lightFeedback: jest.fn(), errorFeedback: jest.fn() }));
 
 describe('useAccountScreen', () => {
-  let alertSpy: jest.SpyInstance;
+  let alertSpy: jest.SpiedFunction<typeof Alert.alert>;
 
   beforeEach(() => {
     jest.useRealTimers();

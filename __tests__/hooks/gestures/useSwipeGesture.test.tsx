@@ -155,7 +155,7 @@ describe('useSwipeGesture Hook', () => {
       const options: SwipeGestureOptions = {
         onSwipeLeft: mockOnSwipeLeft,
         onSwipeRight: mockOnSwipeRight,
-        springConfig: customSpringConfig,
+        springConfig: customSpringConfig as SwipeGestureOptions['springConfig'],
       };
 
       expect(options.springConfig).toEqual(customSpringConfig);

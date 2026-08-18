@@ -21,6 +21,7 @@ import { bookmarkService } from '@/services/bookmark';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { Article } from '@/types/articles.types';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { articleId, authorId, categoryId, rootId, userId } from '@/__tests__/helpers/ids';
 
 // Mock only the service layer (network boundary)
 jest.mock('@/services/articles');
@@ -52,15 +53,19 @@ describe('useArticleData', () => {
 
   test('returns processed article data with real React Query caching', async () => {
     const mockArticle: Article = {
-      id: 1,
+      id: articleId(1),
       title: 'Test Article',
       created_at: '',
-      image_url: null,
+      published: true,
+      book: null,
+      audio_url_bilingual: null,
+      content_hash: 'test-hash',
+      image_url: '',
       difficulty_level: 1,
-      category_id: 1,
-      author_id: 1,
+      category_id: categoryId(1),
+      author_id: authorId(1),
       summary: '',
-      audio_url: null,
+      audio_url: '',
       category: { id: 1, name: 'cat' },
       author: { id: 1, name: 'auth' },
       article_sentences: [
@@ -70,7 +75,11 @@ describe('useArticleData', () => {
           arabic: 'b',
           english: 'b',
           article_id: 1,
-          audio_url: null,
+          audio_url: '',
+          arabic_repeat: false,
+          english_repeat: false,
+          audio_url_bilingual: '',
+          audio_url_english: '',
           sentence_words: [
             {
               id: 20,
@@ -79,9 +88,12 @@ describe('useArticleData', () => {
               english: 'two',
               difficulty_level: 1,
               grammar_note: null,
-              root_id: 2,
+              root_id: rootId(2),
               sentence_id: 2,
               word_type_id: 1,
+              audio_url: null,
+              root: null,
+              word_type: null,
             },
             {
               id: 21,
@@ -90,9 +102,12 @@ describe('useArticleData', () => {
               english: 'one',
               difficulty_level: 1,
               grammar_note: null,
-              root_id: 1,
+              root_id: rootId(1),
               sentence_id: 2,
               word_type_id: 1,
+              audio_url: null,
+              root: null,
+              word_type: null,
             },
           ],
         },
@@ -102,7 +117,11 @@ describe('useArticleData', () => {
           arabic: 'a',
           english: 'a',
           article_id: 1,
-          audio_url: null,
+          audio_url: '',
+          arabic_repeat: false,
+          english_repeat: false,
+          audio_url_bilingual: '',
+          audio_url_english: '',
           sentence_words: [
             {
               id: 10,
@@ -111,9 +130,12 @@ describe('useArticleData', () => {
               english: 'word',
               difficulty_level: 1,
               grammar_note: null,
-              root_id: 1,
+              root_id: rootId(1),
               sentence_id: 1,
               word_type_id: 1,
+              audio_url: null,
+              root: null,
+              word_type: null,
             },
           ],
         },
@@ -121,8 +143,8 @@ describe('useArticleData', () => {
     };
 
     const mockStudyWords: StudyWord[] = [
-      createTestWord({ root_id: 1, user_id: 'u1' }),
-      createTestWord({ root_id: 2, user_id: 'u1' }),
+      createTestWord({ root_id: rootId(1), user_id: userId('u1') }),
+      createTestWord({ root_id: rootId(2), user_id: userId('u1') }),
     ];
 
     // Mock service responses
@@ -130,7 +152,7 @@ describe('useArticleData', () => {
     mockBookmarkService.isInReadingList.mockResolvedValue(true);
     mockStudyWordsFSRSService.getFSRSWords.mockResolvedValue(mockStudyWords);
 
-    const { result } = renderHook(() => useArticleData(1, 'u1'), { wrapper });
+    const { result } = renderHook(() => useArticleData(articleId(1), 'u1'), { wrapper });
 
     // Wait for queries to resolve
     await waitFor(() => {
@@ -179,15 +201,19 @@ describe('useArticleData', () => {
 
   test('uses real React Query caching - second render should use cache', async () => {
     const mockArticle: Article = {
-      id: 1,
+      id: articleId(1),
       title: 'Cached Article',
       created_at: '',
-      image_url: null,
+      published: true,
+      book: null,
+      audio_url_bilingual: null,
+      content_hash: 'test-hash',
+      image_url: '',
       difficulty_level: 1,
-      category_id: 1,
-      author_id: 1,
+      category_id: categoryId(1),
+      author_id: authorId(1),
       summary: '',
-      audio_url: null,
+      audio_url: '',
       category: { id: 1, name: 'cat' },
       author: { id: 1, name: 'auth' },
       article_sentences: [],
@@ -198,14 +224,14 @@ describe('useArticleData', () => {
     mockStudyWordsFSRSService.getFSRSWords.mockResolvedValue([]);
 
     // First render
-    const { result: result1 } = renderHook(() => useArticleData(1, 'u1'), { wrapper });
+    const { result: result1 } = renderHook(() => useArticleData(articleId(1), 'u1'), { wrapper });
     await waitFor(() => expect(result1.current.isLoadingArticle).toBe(false));
 
     // Clear mock calls
     mockArticlesService.getArticleById.mockClear();
 
     // Second render - should use cache
-    const { result: result2 } = renderHook(() => useArticleData(1, 'u1'), { wrapper });
+    const { result: result2 } = renderHook(() => useArticleData(articleId(1), 'u1'), { wrapper });
 
     // Article should be immediately available from cache
     expect(result2.current.article).toEqual(mockArticle);
@@ -220,7 +246,7 @@ describe('useArticleData', () => {
     mockBookmarkService.isInReadingList.mockResolvedValue(false);
     mockStudyWordsFSRSService.getFSRSWords.mockResolvedValue([]);
 
-    const { result } = renderHook(() => useArticleData(1, 'u1'), { wrapper });
+    const { result } = renderHook(() => useArticleData(articleId(1), 'u1'), { wrapper });
 
     // Wait for query to fail (no retries in test config)
     // With retry disabled, the query should fail immediately and stop loading

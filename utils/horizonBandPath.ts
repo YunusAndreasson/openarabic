@@ -52,14 +52,10 @@ export const BIN_COUNT = Math.min(
   MAX_BIN_COUNT,
   Math.max(MIN_BIN_COUNT, Math.round(BAND_WIDTH / TARGET_BIN_PITCH)),
 );
-
-/** @internal */
 export const BIN_GAP = 3;
-/** @internal */
 export const BIN_WIDTH = (BAND_WIDTH - (BIN_COUNT - 1) * BIN_GAP) / BIN_COUNT;
 
 /** Left edge of column `index`. */
-/** @internal */
 export function binX(index: number): number {
   return index * (BIN_WIDTH + BIN_GAP);
 }
@@ -82,7 +78,6 @@ const DOT_PITCH = DOT_RADIUS * 2 + 1;
 /**
  * How many dots fit in the tallest column before one dot has to stand for more
  * than one word.
- * @internal
  */
 export const DOT_COLUMN_CAP = Math.max(1, Math.floor(PLOT_HEIGHT / DOT_PITCH));
 

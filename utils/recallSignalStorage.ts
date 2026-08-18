@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import type { RecentRecall } from '@/utils/newWordPacing';
+import { STORAGE_KEYS } from '@/constants/storageKeys';
 
 /**
  * Local, per-device record of recent realised recall, used to drive adaptive
@@ -16,7 +17,7 @@ import type { RecentRecall } from '@/utils/newWordPacing';
  *   (full ceiling), the safe default.
  */
 
-const RECENT_RECALL_KEY = 'recent_recall_sessions';
+const RECENT_RECALL_KEY = STORAGE_KEYS.RECENT_RECALL_SESSIONS;
 /** Rolling window: the most recent N sessions feed the recall estimate. */
 const MAX_SESSIONS = 10;
 

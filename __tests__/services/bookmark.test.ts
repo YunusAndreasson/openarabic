@@ -14,18 +14,26 @@ import { describe, test, expect, jest, beforeEach } from '@jest/globals';
 import { bookmarkService } from '../../services/bookmark';
 import { checkAuthentication, supabase } from '../../services/supabase';
 import { handleError } from '../../utils/errorHandling';
+import { articleId } from '@/__tests__/helpers/ids';
 
+/**
+ * The slice of PostgREST's query builder these tests stub. `supabase.from`
+ * returns a `PostgrestQueryBuilder`, so a stub has to be cast on the way in —
+ * `asBuilder` is that cast, written once instead of at every call site.
+ */
 type FromReturn = {
-  upsert?: jest.Mock;
-  delete?: jest.Mock<unknown, any> & { error?: any };
-  select?: jest.Mock;
-  eq?: jest.Mock & { error?: any; data?: any };
-  order?: jest.Mock;
-  single?: jest.Mock;
-  maybeSingle?: jest.Mock;
-  error?: any;
-  data?: any;
+  upsert?: jest.Mock<(...args: unknown[]) => unknown>;
+  delete?: jest.Mock<(...args: unknown[]) => unknown> & { error?: unknown };
+  select?: jest.Mock<(...args: unknown[]) => unknown>;
+  eq?: jest.Mock<(...args: unknown[]) => unknown> & { error?: unknown; data?: unknown };
+  order?: jest.Mock<(...args: unknown[]) => unknown>;
+  single?: jest.Mock<(...args: unknown[]) => unknown>;
+  maybeSingle?: jest.Mock<(...args: unknown[]) => unknown>;
+  error?: unknown;
+  data?: unknown;
 };
+
+const asBuilder = (stub: FromReturn) => stub as unknown as ReturnType<typeof supabase.from>;
 
 jest.mock('../../services/supabase', () => ({
   supabase: { from: jest.fn() },
@@ -47,10 +55,10 @@ beforeEach(() => {
 describe('bookmarkService', () => {
   describe('addToReadingList', () => {
     test('upserts the article', async () => {
-      const upsert = jest.fn().mockResolvedValue({ error: null });
-      fromMock.mockReturnValue({ upsert } as FromReturn);
+      const upsert = jest.fn(async (..._args: unknown[]) => ({ error: null }));
+      fromMock.mockReturnValue(asBuilder({ upsert }));
 
-      await bookmarkService.addToReadingList('u1', 10);
+      await bookmarkService.addToReadingList('u1', articleId(10));
 
       expect(mockCheckAuthentication).toHaveBeenCalledWith('u1');
       expect(fromMock).toHaveBeenCalledWith('reading_list');
@@ -71,17 +79,17 @@ describe('bookmarkService', () => {
       const upsertBuilder = { upsert } as FromReturn;
 
       const listQuery: FromReturn = {} as FromReturn;
-      listQuery.select = jest.fn(() => listQuery);
-      listQuery.eq = jest.fn(() => listQuery) as any;
-      listQuery.order = jest.fn(() => ({ data, error: null }));
+      listQuery.select = jest.fn((..._args: unknown[]) => listQuery);
+      listQuery.eq = jest.fn((..._args: unknown[]) => listQuery) as any;
+      listQuery.order = jest.fn((..._args: unknown[]) => ({ data, error: null }));
 
       fromMock
-        .mockReturnValueOnce(upsertBuilder)
-        .mockReturnValueOnce(upsertBuilder)
-        .mockReturnValue(listQuery);
+        .mockReturnValueOnce(asBuilder(upsertBuilder))
+        .mockReturnValueOnce(asBuilder(upsertBuilder))
+        .mockReturnValue(asBuilder(listQuery));
 
-      await bookmarkService.addToReadingList('u1', 7);
-      await bookmarkService.addToReadingList('u1', 7);
+      await bookmarkService.addToReadingList('u1', articleId(7));
+      await bookmarkService.addToReadingList('u1', articleId(7));
       const list = await bookmarkService.getReadingList('u1');
 
       expect(list).toHaveLength(1);
@@ -90,10 +98,10 @@ describe('bookmarkService', () => {
 
     test('handles errors from supabase', async () => {
       const error = new Error('fail');
-      const upsert = jest.fn().mockResolvedValue({ error });
-      fromMock.mockReturnValue({ upsert } as FromReturn);
+      const upsert = jest.fn(async (..._args: unknown[]) => ({ error }));
+      fromMock.mockReturnValue(asBuilder({ upsert }));
 
-      await expect(bookmarkService.addToReadingList('u1', 5)).rejects.toThrow(error);
+      await expect(bookmarkService.addToReadingList('u1', articleId(5))).rejects.toThrow(error);
 
       expect(mockHandleError).toHaveBeenCalledWith(
         error,
@@ -105,12 +113,12 @@ describe('bookmarkService', () => {
   describe('removeFromReadingList', () => {
     test('deletes the entry', async () => {
       const query: FromReturn = {} as FromReturn;
-      query.delete = jest.fn(() => query);
-      query.eq = jest.fn(() => query) as any;
+      query.delete = jest.fn((..._args: unknown[]) => query);
+      query.eq = jest.fn((..._args: unknown[]) => query) as any;
       query.error = null;
-      fromMock.mockReturnValue(query);
+      fromMock.mockReturnValue(asBuilder(query));
 
-      await bookmarkService.removeFromReadingList('u1', 11);
+      await bookmarkService.removeFromReadingList('u1', articleId(11));
 
       expect(fromMock).toHaveBeenCalledWith('reading_list');
       expect(query.delete).toHaveBeenCalled();
@@ -122,24 +130,27 @@ describe('bookmarkService', () => {
   describe('isInReadingList', () => {
     test('returns true when data exists', async () => {
       const query: FromReturn = {} as FromReturn;
-      query.select = jest.fn(() => query);
-      query.eq = jest.fn(() => query) as any;
-      query.maybeSingle = jest.fn(() => ({ data: { article_id: 1 }, error: null }));
-      fromMock.mockReturnValue(query);
+      query.select = jest.fn((..._args: unknown[]) => query);
+      query.eq = jest.fn((..._args: unknown[]) => query) as any;
+      query.maybeSingle = jest.fn((..._args: unknown[]) => ({
+        data: { article_id: 1 },
+        error: null,
+      }));
+      fromMock.mockReturnValue(asBuilder(query));
 
-      const result = await bookmarkService.isInReadingList('u1', 1);
+      const result = await bookmarkService.isInReadingList('u1', articleId(1));
       expect(result).toBeTruthy();
       expect(query.select).toHaveBeenCalledWith('article_id');
     });
 
     test('returns false when no data', async () => {
       const query: FromReturn = {} as FromReturn;
-      query.select = jest.fn(() => query);
-      query.eq = jest.fn(() => query) as any;
-      query.maybeSingle = jest.fn(() => ({ data: null, error: null }));
-      fromMock.mockReturnValue(query);
+      query.select = jest.fn((..._args: unknown[]) => query);
+      query.eq = jest.fn((..._args: unknown[]) => query) as any;
+      query.maybeSingle = jest.fn((..._args: unknown[]) => ({ data: null, error: null }));
+      fromMock.mockReturnValue(asBuilder(query));
 
-      const result = await bookmarkService.isInReadingList('u1', 2);
+      const result = await bookmarkService.isInReadingList('u1', articleId(2));
       expect(result).toBeFalsy();
     });
   });
@@ -147,14 +158,14 @@ describe('bookmarkService', () => {
   describe('getReadingList', () => {
     test('fetches articles with select query', async () => {
       const query: FromReturn = {} as FromReturn;
-      query.select = jest.fn(() => query);
-      query.eq = jest.fn(() => query) as any;
-      query.order = jest.fn(() => ({ data: [], error: null }));
-      fromMock.mockReturnValue(query);
+      query.select = jest.fn((..._args: unknown[]) => query);
+      query.eq = jest.fn((..._args: unknown[]) => query) as any;
+      query.order = jest.fn((..._args: unknown[]) => ({ data: [], error: null }));
+      fromMock.mockReturnValue(asBuilder(query));
 
       await bookmarkService.getReadingList('u1');
 
-      const called = query.select.mock.calls[0][0].replace(/\s/g, '');
+      const called = String(query.select.mock.calls[0][0]).replace(/\s/g, '');
       const expected = `
         user_id,
         article_id,
@@ -185,12 +196,14 @@ describe('bookmarkService', () => {
     test('calls handleError when removal fails', async () => {
       const error = new Error('bad');
       const query: FromReturn = {} as FromReturn;
-      query.delete = jest.fn(() => query);
-      query.eq = jest.fn(() => query) as any;
+      query.delete = jest.fn((..._args: unknown[]) => query);
+      query.eq = jest.fn((..._args: unknown[]) => query) as any;
       query.error = error;
-      fromMock.mockReturnValue(query);
+      fromMock.mockReturnValue(asBuilder(query));
 
-      await expect(bookmarkService.removeFromReadingList('u1', 5)).rejects.toThrow(error);
+      await expect(bookmarkService.removeFromReadingList('u1', articleId(5))).rejects.toThrow(
+        error,
+      );
 
       expect(mockHandleError).toHaveBeenCalledWith(
         error,

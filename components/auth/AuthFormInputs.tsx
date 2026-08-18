@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 import type { TextInput } from 'react-native';
 import { View, StyleSheet } from 'react-native';
 
-import { ThemedInput } from '@/components/ThemedInput';
+import { ThemedInput } from '@/components/primitives/ThemedInput';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 

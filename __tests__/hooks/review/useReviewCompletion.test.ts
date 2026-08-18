@@ -12,14 +12,14 @@ import { renderHook } from '@testing-library/react-native';
 
 // Mock dependencies BEFORE imports
 jest.mock('@tanstack/react-query', () => ({
-  useQueryClient: jest.fn(() => ({
+  useQueryClient: jest.fn((..._args: unknown[]) => ({
     invalidateQueries: jest.fn(),
     setQueryData: jest.fn(),
   })),
 }));
 
 jest.mock('@/hooks/auth/useAuth', () => ({
-  useAuth: jest.fn(() => ({
+  useAuth: jest.fn((..._args: unknown[]) => ({
     user: { id: 'user-123' },
   })),
 }));
@@ -55,7 +55,7 @@ jest.mock('@/utils/recallSignalStorage', () => ({
 }));
 
 jest.mock('@/services/notificationService', () => ({
-  ensurePermissions: jest.fn().mockResolvedValue(true),
+  ensurePermissions: jest.fn(async (..._args: unknown[]) => true),
 }));
 
 jest.mock('@/utils/haptics', () => ({
@@ -109,23 +109,9 @@ describe('useReviewCompletion', () => {
     averageStabilityIncrease: 1.5,
     longestStreak: 5,
     startTime: Date.now() - 60000,
-    sessionDuration: 60,
-    successRate: 80,
-    wordsPerMinute: 0.167,
-    responseTimeAverage: 3000,
-    difficultyBreakdown: {
-      easy: 4,
-      medium: 4,
-      hard: 2,
-    },
-    stabilityBreakdown: {
-      new: 2,
-      learning: 3,
-      review: 5,
-    },
-    newCardsStudied: 2,
-    reviewCardsStudied: 8,
-    cardsCrossedThreshold: 1,
+    currentStreak: 5,
+    firstAttemptKnown: 8,
+    firstAttemptUnknown: 2,
   };
 
   describe('Lifecycle', () => {

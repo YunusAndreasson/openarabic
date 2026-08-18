@@ -4,7 +4,7 @@ import type { TextStyle } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { SkiaColoredArabic } from '@/components/common/SkiaColoredArabic';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';

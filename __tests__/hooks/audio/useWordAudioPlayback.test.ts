@@ -14,7 +14,7 @@ import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
 import type { WordAudioData } from '@/utils/audioUtils';
 
 // Mock dependencies
-const mockPlay = jest.fn();
+const mockPlay = jest.fn(async (..._args: unknown[]) => undefined);
 jest.mock('@/hooks/audio/useSimpleAudioPlayer', () => ({
   useSimpleAudioPlayer: () => ({
     play: mockPlay,
@@ -30,7 +30,7 @@ jest.mock('@/utils/errorHandling', () => ({
   handleError: (...args: unknown[]) => mockHandleError(...args),
 }));
 
-const mockGenerateWordAudioTrack = jest.fn();
+const mockGenerateWordAudioTrack = jest.fn<(...args: unknown[]) => Promise<unknown>>();
 jest.mock('@/utils/audioUtils', () => ({
   generateWordAudioTrack: (...args: unknown[]) => mockGenerateWordAudioTrack(...args),
 }));

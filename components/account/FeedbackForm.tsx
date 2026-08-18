@@ -12,10 +12,10 @@ import {
   View,
 } from 'react-native';
 
-import { ThemedButton } from '@/components/ThemedButton';
+import { ThemedButton } from '@/components/primitives/ThemedButton';
 import { IconButton } from '@/components/ui';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { ThemedText } from '@/components/primitives/ThemedText';
+import { ThemedView } from '@/components/primitives/ThemedView';
 import { FONTS } from '@/constants/fonts';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';

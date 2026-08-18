@@ -7,6 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { isRemoteAudioUrl } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
 import { countDiag, isSessionActive, mark } from '@/utils/reviewDiagnostics';
+import { STORAGE_KEYS } from '@/constants/storageKeys';
 
 // One-time sweep flag (key naming mirrors the onboarding/notification keys).
 // Files downloaded by the pre-overhaul implementation streamed straight into
@@ -14,7 +15,7 @@ import { countDiag, isSessionActive, mark } from '@/utils/reviewDiagnostics';
 // non-empty file that the size>0 check treats as a valid hit forever. The
 // temp-file download flow only protects writes made AFTER that overhaul —
 // anything already on disk is untrusted and is deleted exactly once.
-const LEGACY_CACHE_SWEEP_STORAGE_KEY = '@openarabic/audioCache/legacySweepV1';
+const LEGACY_CACHE_SWEEP_STORAGE_KEY = STORAGE_KEYS.AUDIO_CACHE_LEGACY_SWEEP;
 
 /** Last path segment, for readable diagnostics without dumping signed URLs. */
 function basename(url: string): string {

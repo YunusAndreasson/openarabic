@@ -3,7 +3,7 @@ import type { JSX } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ThemedButton } from '@/components/ThemedButton';
+import { ThemedButton } from '@/components/primitives/ThemedButton';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { useShouldShowMiniPlayer } from '@/hooks/audio/useShouldShowMiniPlayer';
 import { useColors } from '@/hooks/theme/useColors';

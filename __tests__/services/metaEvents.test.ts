@@ -16,7 +16,7 @@ jest.mock('react-native-fbsdk-next/lib/commonjs/FBSettings', () => {
   return {
     default: {
       initializeSDK: mockSettingsInitializeSDK,
-      setAdvertiserTrackingEnabled: jest.fn().mockResolvedValue(false),
+      setAdvertiserTrackingEnabled: jest.fn(async (..._args: unknown[]) => false),
     },
   };
 });

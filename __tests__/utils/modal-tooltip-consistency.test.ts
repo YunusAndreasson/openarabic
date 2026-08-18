@@ -13,15 +13,15 @@ import { describe, expect, test } from '@jest/globals';
 import { MOCK_GRAMMAR_COLORS } from '@/__tests__/setup/mockGrammarColors';
 import { analyzeArabicWord, formatWordAnalysis } from '@/utils/arabicWordAnalysis';
 import { generateColorCodedSegments } from '@/utils/colorCodedTextUtils';
+import { createThemeColorsMock } from '@/__tests__/helpers/themeMocks';
 
-const COLORS = {
+const COLORS = createThemeColorsMock({
   tint: '#00FF00',
-  primary: '#0000FF',
   warning: '#FFAA00',
   secondaryText: '#888888',
   text: '#000000',
   grammar: MOCK_GRAMMAR_COLORS,
-};
+});
 
 describe('Modal-Tooltip Consistency Bug', () => {
   describe('وَمِنْ (and from) - User Report', () => {

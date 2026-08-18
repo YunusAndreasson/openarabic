@@ -2,7 +2,7 @@ import { ScreenScaffold } from '@/components/common/ScreenScaffold';
 import type { FC, ReactNode } from 'react';
 import { Linking, StyleSheet } from 'react-native';
 
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { TextLink } from '@/components/ui/TextLink';
 import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
 

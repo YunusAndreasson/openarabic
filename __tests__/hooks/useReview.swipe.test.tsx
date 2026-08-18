@@ -29,7 +29,7 @@ import {
 
 // Mock dependencies
 jest.mock('@/hooks/auth', () => ({
-  useAuth: jest.fn(() => ({ user: { id: 'test-user-123' } })),
+  useAuth: jest.fn((..._args: unknown[]) => ({ user: { id: 'test-user-123' } })),
 }));
 
 jest.mock('@/services/audioPlayer', () => ({
@@ -37,8 +37,8 @@ jest.mock('@/services/audioPlayer', () => ({
     play: jest.fn(),
     stop: jest.fn(),
     preconfigureAudioSession: jest.fn(),
-    subscribe: jest.fn(() => jest.fn()),
-    getStatus: jest.fn(() => ({})),
+    subscribe: jest.fn((..._args: unknown[]) => jest.fn()),
+    getStatus: jest.fn((..._args: unknown[]) => ({})),
   },
 }));
 
@@ -52,7 +52,7 @@ jest.mock('@/hooks/review/useAudioPreloader', () => ({
 
 jest.mock('@/hooks/vocabulary', () => ({
   useFSRS: jest.fn(),
-  useWordSizing: jest.fn(() => 80),
+  useWordSizing: jest.fn((..._args: unknown[]) => 80),
 }));
 
 jest.mock('@/hooks/utils/useTimerCleanup', () => ({
@@ -67,8 +67,8 @@ jest.mock('@/hooks/animations/useOpacityAnimation', () => ({
 jest.mock('@/services/audioCache', () => ({
   audioCache: {
     getAudio: jest.fn((url: string) => url),
-    preloadAudio: jest.fn(() => Promise.resolve()),
-    clearCache: jest.fn(() => Promise.resolve()),
+    preloadAudio: jest.fn((..._args: unknown[]) => Promise.resolve()),
+    clearCache: jest.fn((..._args: unknown[]) => Promise.resolve()),
   },
 }));
 
@@ -91,11 +91,11 @@ jest.mock('@/utils/storageUtils', () => ({
 }));
 
 jest.mock('@/services/supabase', () => ({
-  ...jest.requireActual('@/services/supabase'),
-  checkAuthentication: jest.fn().mockResolvedValue({
+  ...jest.requireActual<Record<string, unknown>>('@/services/supabase'),
+  checkAuthentication: jest.fn(async (..._args: unknown[]) => ({
     session: { user: { id: 'test-user-123' } } as any,
     user: { id: 'test-user-123' } as any,
-  }),
+  })),
 }));
 
 // Get mocked hooks for direct manipulation in tests

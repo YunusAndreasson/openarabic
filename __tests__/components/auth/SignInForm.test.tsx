@@ -43,8 +43,8 @@ const mockSignInWithEmail = jest.fn();
 const mockResetPassword = jest.fn();
 const mockSetEmail = jest.fn();
 const mockSetPassword = jest.fn();
-const mockValidateEmail = jest.fn(() => true);
-const mockValidatePassword = jest.fn(() => true);
+const mockValidateEmail = jest.fn((..._args: unknown[]) => true);
+const mockValidatePassword = jest.fn((..._args: unknown[]) => true);
 
 jest.mock('@/hooks/auth/useAuthForm', () => ({
   useAuthForm: () => ({
@@ -241,7 +241,7 @@ describe('SignInForm', () => {
     });
 
     test('validates email returns false for invalid email', () => {
-      const invalidEmailValidator = jest.fn(() => false);
+      const invalidEmailValidator = jest.fn((..._args: unknown[]) => false);
       jest.doMock('@/hooks/auth/useAuthForm', () => ({
         useAuthForm: () => ({
           email: 'not-an-email',

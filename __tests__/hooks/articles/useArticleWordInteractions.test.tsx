@@ -16,9 +16,14 @@ import { describe, expect, it, jest } from '@jest/globals';
 
 import { createTestQueryClient } from '@/__tests__/helpers/testUtils';
 import { fsrsQueries } from '@/constants/queries';
-import { useArticleWordInteractions } from '@/hooks/articles/useArticleWordInteractions';
+import {
+  useArticleWordInteractions,
+  type UseArticleWordInteractionsOptions,
+} from '@/hooks/articles/useArticleWordInteractions';
+import type { RootId } from '@/types/branded.types';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
 import * as haptics from '@/utils/haptics';
+import { rootId } from '@/__tests__/helpers/ids';
 
 // Mock auth hook
 jest.mock('@/hooks/auth/useAuth', () => ({
@@ -52,23 +57,31 @@ jest.mock('@/components/providers', () => ({
 // builder (unrelated data shape, and an avoidable async round-trip per test).
 jest.mock('@/services/studyWordsFSRS', () => ({
   studyWordsFSRSService: {
-    getFSRSWords: jest.fn().mockResolvedValue([]),
+    getFSRSWords: jest.fn(async (..._args: unknown[]) => []),
   },
 }));
 
 describe('useArticleWordInteractions', () => {
   let queryClient: QueryClient;
-  let mockHandleRootPress: jest.Mock;
-  let mockRefetchStudyWords: jest.Mock;
+  // Derived from the hook's own options type: a bare `jest.Mock` is
+  // `Mock<UnknownFunction>`, which makes every `.mockResolvedValue()` below
+  // unchecked and the mock unassignable to the option it fills.
+  let mockHandleRootPress: jest.MockedFunction<
+    UseArticleWordInteractionsOptions['handleRootPress']
+  >;
+  let mockRefetchStudyWords: jest.MockedFunction<
+    NonNullable<UseArticleWordInteractionsOptions['refetchStudyWords']>
+  >;
 
-  const createMockWord = (id: number, rootId: number): SentenceWord => ({
+  const createMockWord = (id: number, root_id: RootId): SentenceWord => ({
     id,
     position: 0,
     word_form: `word-${id}`,
     english: `word-${id}`,
     difficulty_level: 1,
     grammar_note: null,
-    root_id: rootId,
+    audio_url: null,
+    root_id,
     sentence_id: 1,
     word_type_id: 1,
     root: null,
@@ -85,8 +98,8 @@ describe('useArticleWordInteractions', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     queryClient = createTestQueryClient();
-    mockHandleRootPress = jest.fn().mockResolvedValue(true);
-    mockRefetchStudyWords = jest.fn().mockResolvedValue(undefined);
+    mockHandleRootPress = jest.fn(async (..._args: unknown[]) => true);
+    mockRefetchStudyWords = jest.fn(async (..._args: unknown[]) => undefined);
   });
 
   afterEach(() => {
@@ -125,7 +138,7 @@ describe('useArticleWordInteractions', () => {
         { wrapper },
       );
 
-      const word = createMockWord(1, 10);
+      const word = createMockWord(1, rootId(10));
       const layout = createMockLayout();
 
       act(() => {
@@ -147,7 +160,7 @@ describe('useArticleWordInteractions', () => {
         { wrapper },
       );
 
-      const word = createMockWord(1, 10);
+      const word = createMockWord(1, rootId(10));
 
       act(() => {
         result.current.handleWordPress(word);
@@ -169,7 +182,7 @@ describe('useArticleWordInteractions', () => {
         { wrapper },
       );
 
-      const word = createMockWord(1, 10);
+      const word = createMockWord(1, rootId(10));
       const layout = createMockLayout();
 
       act(() => {
@@ -191,7 +204,7 @@ describe('useArticleWordInteractions', () => {
         { wrapper },
       );
 
-      const word = createMockWord(1, 10);
+      const word = createMockWord(1, rootId(10));
       const layout = createMockLayout();
 
       // Open tooltip
@@ -220,8 +233,8 @@ describe('useArticleWordInteractions', () => {
         { wrapper },
       );
 
-      const word1 = createMockWord(1, 10);
-      const word2 = createMockWord(2, 20);
+      const word1 = createMockWord(1, rootId(10));
+      const word2 = createMockWord(2, rootId(20));
       const layout = createMockLayout();
 
       // Open tooltip for word1
@@ -250,7 +263,7 @@ describe('useArticleWordInteractions', () => {
         { wrapper },
       );
 
-      const word = createMockWord(1, 10);
+      const word = createMockWord(1, rootId(10));
       const invalidLayout = { x: 0, y: 0, width: 0, height: 0 };
 
       act(() => {
@@ -271,7 +284,7 @@ describe('useArticleWordInteractions', () => {
         { wrapper },
       );
 
-      const word = createMockWord(1, 10);
+      const word = createMockWord(1, rootId(10));
 
       act(() => {
         result.current.handleWordPress(word);
@@ -293,7 +306,7 @@ describe('useArticleWordInteractions', () => {
         { wrapper },
       );
 
-      const word = createMockWord(1, 10);
+      const word = createMockWord(1, rootId(10));
       const layout = createMockLayout();
 
       // Open tooltip
@@ -329,7 +342,7 @@ describe('useArticleWordInteractions', () => {
         { wrapper },
       );
 
-      const word = createMockWord(1, 10);
+      const word = createMockWord(1, rootId(10));
       const layout = createMockLayout();
 
       act(() => {
@@ -367,7 +380,7 @@ describe('useArticleWordInteractions', () => {
         { wrapper },
       );
 
-      const word = createMockWord(1, 10);
+      const word = createMockWord(1, rootId(10));
       const layout = createMockLayout();
 
       // Simulates the real dispatch order: the word's onPress fires, then the
@@ -394,8 +407,8 @@ describe('useArticleWordInteractions', () => {
         { wrapper },
       );
 
-      const word1 = createMockWord(1, 10);
-      const word2 = createMockWord(2, 20);
+      const word1 = createMockWord(1, rootId(10));
+      const word2 = createMockWord(2, rootId(20));
       const layout = createMockLayout();
 
       act(() => {
@@ -422,7 +435,7 @@ describe('useArticleWordInteractions', () => {
         { wrapper },
       );
 
-      const word = createMockWord(1, 10);
+      const word = createMockWord(1, rootId(10));
       const layout = createMockLayout();
 
       act(() => {
@@ -452,7 +465,7 @@ describe('useArticleWordInteractions', () => {
         { wrapper },
       );
 
-      const word = createMockWord(1, 10);
+      const word = createMockWord(1, rootId(10));
       const layout = createMockLayout();
 
       // Open tooltip
@@ -483,7 +496,7 @@ describe('useArticleWordInteractions', () => {
         { wrapper },
       );
 
-      const word = createMockWord(1, 10);
+      const word = createMockWord(1, rootId(10));
       const layout = createMockLayout();
 
       // Open tooltip first
@@ -533,14 +546,14 @@ describe('useArticleWordInteractions', () => {
         { wrapper },
       );
 
-      const word = createMockWord(1, 10);
+      const word = createMockWord(1, rootId(10));
 
       await act(async () => {
         await result.current.handleAddWordToStudy(word);
       });
 
       expect(haptics.selectionFeedback).toHaveBeenCalled();
-      expect(mockHandleRootPress).toHaveBeenCalledWith(10, undefined);
+      expect(mockHandleRootPress).toHaveBeenCalledWith(rootId(10), undefined);
       expect(mockRefetchStudyWords).toHaveBeenCalled();
     });
 
@@ -566,7 +579,7 @@ describe('useArticleWordInteractions', () => {
         { wrapper },
       );
 
-      const word = createMockWord(1, 10);
+      const word = createMockWord(1, rootId(10));
 
       act(() => {
         result.current.wordDetailsModal.open(word);
@@ -603,7 +616,7 @@ describe('useArticleWordInteractions', () => {
         { wrapper },
       );
 
-      const word = createMockWord(1, 10);
+      const word = createMockWord(1, rootId(10));
 
       act(() => {
         result.current.wordDetailsModal.open(word);
@@ -629,7 +642,7 @@ describe('useArticleWordInteractions', () => {
         { wrapper },
       );
 
-      const word = createMockWord(1, 10);
+      const word = createMockWord(1, rootId(10));
 
       await act(async () => {
         await result.current.handleAddWordToStudy(word);
@@ -646,11 +659,11 @@ describe('useArticleWordInteractions', () => {
       const useAuthMock = require('@/hooks/auth/useAuth');
       const originalMock = useAuthMock.useAuth;
 
-      useAuthMock.useAuth = jest.fn().mockReturnValue({
+      useAuthMock.useAuth = jest.fn((..._args: unknown[]) => ({
         user: null,
         session: null,
         isLoading: false,
-      });
+      }));
 
       const { result } = renderHook(
         () =>
@@ -661,7 +674,7 @@ describe('useArticleWordInteractions', () => {
         { wrapper },
       );
 
-      const word = createMockWord(1, 10);
+      const word = createMockWord(1, rootId(10));
 
       await act(async () => {
         await result.current.handleAddWordToStudy(word);
@@ -684,7 +697,7 @@ describe('useArticleWordInteractions', () => {
       );
 
       const wordWithoutRoot = {
-        ...createMockWord(1, 0),
+        ...createMockWord(1, rootId(0)),
         root_id: 0 as any, // Invalid root ID
       };
 
@@ -707,7 +720,7 @@ describe('useArticleWordInteractions', () => {
         { wrapper },
       );
 
-      const word = createMockWord(1, 10);
+      const word = createMockWord(1, rootId(10));
 
       await act(async () => {
         await result.current.handleAddWordToStudy(word);
@@ -741,7 +754,7 @@ describe('useArticleWordInteractions', () => {
         { wrapper },
       );
 
-      const word = createMockWord(1, 10);
+      const word = createMockWord(1, rootId(10));
 
       act(() => {
         result.current.wordDetailsModal.open(word);
@@ -798,7 +811,7 @@ describe('useArticleWordInteractions', () => {
         { wrapper },
       );
 
-      const word = createMockWord(1, 10);
+      const word = createMockWord(1, rootId(10));
 
       // Open modal
       act(() => {
@@ -821,7 +834,7 @@ describe('useArticleWordInteractions', () => {
         { wrapper },
       );
 
-      const word = createMockWord(1, 99);
+      const word = createMockWord(1, rootId(99));
 
       act(() => {
         result.current.wordDetailsModal.open(word);
@@ -865,10 +878,10 @@ describe('useArticleWordInteractions', () => {
 
       // Trigger state change
       act(() => {
-        result.current.handleWordPress(createMockWord(1, 10), createMockLayout());
+        result.current.handleWordPress(createMockWord(1, rootId(10)), createMockLayout());
       });
 
-      rerender();
+      rerender(undefined);
 
       // Callbacks should remain stable
       expect(result.current.handleWordPress).toBe(initialHandlers.handleWordPress);

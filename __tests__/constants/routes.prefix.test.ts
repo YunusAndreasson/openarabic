@@ -1,4 +1,5 @@
 import { ROUTE_PATHS, getArticleRoute, getPracticeReviewRoute } from '@/constants/routes';
+import { articleId } from '@/__tests__/helpers/ids';
 
 describe('ROUTE_PATHS - /(tabs) prefix', () => {
   test('ensures tab routes include /(tabs) prefix', () => {
@@ -11,7 +12,7 @@ describe('ROUTE_PATHS - /(tabs) prefix', () => {
   });
 
   test('getArticleRoute returns /article/:id', () => {
-    expect(getArticleRoute(5)).toBe('/article/5');
+    expect(getArticleRoute(articleId(5))).toBe('/article/5');
   });
 
   test('getPracticeReviewRoute keeps path without /(tabs) (modal route)', () => {

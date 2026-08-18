@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { toLocalDateString } from '@/utils/dateTimeUtils';
+import { STORAGE_KEYS } from '@/constants/storageKeys';
 
 /**
  * Append-only local record of the LOCAL calendar days on which the learner
@@ -34,7 +35,7 @@ import { toLocalDateString } from '@/utils/dateTimeUtils';
  *   `review_logs` table, which is a schema change and out of scope here.
  */
 
-const STUDY_DAYS_KEY = 'study_day_keys';
+const STUDY_DAYS_KEY = STORAGE_KEYS.STUDY_DAYS;
 
 /** `YYYY-MM-DD`, the same shape `toLocalDateString` emits. */
 const DAY_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -49,7 +50,6 @@ function isDayKey(value: unknown): value is string {
  * Returns an empty set on any read or parse failure — the caller unions this
  * with the server-derived set, so a failure degrades to today's behaviour
  * rather than blanking the streak.
- * @internal
  */
 export async function readStudyDays(): Promise<Set<string>> {
   try {

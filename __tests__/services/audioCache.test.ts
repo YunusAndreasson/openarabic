@@ -14,15 +14,27 @@ import { describe, test, expect, jest, beforeEach } from '@jest/globals';
 // Unmock audioCache since this test file tests the real implementation
 jest.unmock('@/services/audioCache');
 
-const mockDownloadFileAsync = jest.fn();
-const mockFileConstructor = jest.fn();
-const mockDirectoryConstructor = jest.fn();
-const mockDigestStringAsync = jest.fn();
-const mockDirectoryCreate = jest.fn();
-const mockDirectoryDelete = jest.fn();
-const mockDirectoryList = jest.fn();
-const mockFileMove = jest.fn();
-const mockFileDelete = jest.fn();
+// These stand in for expo-file-system / expo-crypto, which this suite replaces
+// wholesale, so the signatures come from how the service calls them. A bare
+// `jest.fn()` is `Mock<UnknownFunction>`: its return type is `unknown`, so every
+// `mockResolvedValue` below was checked against `never` and accepted nothing.
+interface FileMock {
+  uri: string;
+  exists: boolean;
+  size: number | null;
+  move: jest.Mock<(destination: unknown, options?: unknown) => void>;
+  delete: jest.Mock<() => void>;
+}
+
+const mockDownloadFileAsync = jest.fn<(url: string, target: unknown) => Promise<unknown>>();
+const mockFileConstructor = jest.fn<(path: string) => FileMock>();
+const mockDirectoryConstructor = jest.fn<(path: string) => unknown>();
+const mockDigestStringAsync = jest.fn<(algorithm: unknown, data: string) => Promise<string>>();
+const mockDirectoryCreate = jest.fn<() => void>();
+const mockDirectoryDelete = jest.fn<() => void>();
+const mockDirectoryList = jest.fn<() => unknown[]>();
+const mockFileMove = jest.fn<(destination: unknown, options?: unknown) => void>();
+const mockFileDelete = jest.fn<() => void>();
 
 /**
  * Path-aware File mock for download-flow tests. Downloads now land in a
@@ -117,6 +129,8 @@ describe('audioCache', () => {
       uri: path,
       exists: true,
       size: 100,
+      move: mockFileMove,
+      delete: mockFileDelete,
     }));
 
     audioCache = require('../../services/audioCache').audioCache;
@@ -471,6 +485,8 @@ describe('audioCache', () => {
       uri: path,
       exists: true,
       size: 100,
+      move: mockFileMove,
+      delete: mockFileDelete,
     }));
 
     audioCache = require('../../services/audioCache').audioCache;
@@ -509,6 +525,8 @@ describe('audioCache', () => {
       uri: path,
       exists: true,
       size: 100,
+      move: mockFileMove,
+      delete: mockFileDelete,
     }));
 
     audioCache = require('../../services/audioCache').audioCache;
@@ -538,6 +556,8 @@ describe('audioCache', () => {
       uri: path,
       exists: true,
       size: 100,
+      move: mockFileMove,
+      delete: mockFileDelete,
     }));
 
     audioCache = require('../../services/audioCache').audioCache;
@@ -577,6 +597,8 @@ describe('audioCache', () => {
       uri: path,
       exists: true,
       size: 100,
+      move: mockFileMove,
+      delete: mockFileDelete,
     }));
 
     audioCache = require('../../services/audioCache').audioCache;

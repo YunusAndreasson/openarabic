@@ -2,7 +2,7 @@ import type { JSX } from 'react';
 import { StyleSheet } from 'react-native';
 
 import { SheetScreen } from '@/components/common';
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { ChartSheetContent } from '@/components/practice/ChartSheetContent';
 import { DueWordsPrognosisChart } from '@/components/practice/charts/DueWordsPrognosisChart';
 import { LAYOUT } from '@/constants/layout';

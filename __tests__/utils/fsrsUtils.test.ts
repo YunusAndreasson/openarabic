@@ -11,7 +11,7 @@
 
 import { describe, expect, test } from '@jest/globals';
 
-import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
+import { LEGACY_NULL_TIMESTAMP, createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { calculateRetrievability, calculateRetrievabilityForecast } from '@/utils/fsrsUtils';
 
@@ -42,7 +42,7 @@ describe('fsrsUtils', () => {
 
     test('should return 0 for words without review history', () => {
       const word = createStudyWord({
-        fsrs_last_review: null,
+        fsrs_last_review: LEGACY_NULL_TIMESTAMP,
         fsrs_stability: 10,
       });
       const targetDate = new Date();
@@ -91,7 +91,7 @@ describe('fsrsUtils', () => {
     test('should filter out unreviewed words', () => {
       const words = [
         createStudyWord({
-          fsrs_last_review: null,
+          fsrs_last_review: LEGACY_NULL_TIMESTAMP,
           fsrs_reps: 0,
         }),
         createStudyWord({

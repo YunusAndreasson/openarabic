@@ -9,8 +9,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import type { ReminderTime } from '@/types/notifications.types';
 import { handleError } from '@/utils/errorHandling';
+import { STORAGE_KEYS } from '@/constants/storageKeys';
 
-const SMART_REMINDER_PREFS_KEY = '@openarabic/notifications/smartReminderPrefs';
+const SMART_REMINDER_PREFS_KEY = STORAGE_KEYS.SMART_REMINDER_PREFS;
 
 export async function readSmartReminderPrefs(): Promise<ReminderTime | null> {
   try {

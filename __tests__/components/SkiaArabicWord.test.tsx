@@ -25,6 +25,7 @@ import { SkiaArabicWord } from '@/components/article/SkiaArabicWord';
 import type { SentenceWord } from '@/types/vocabulary.types';
 
 import { measuring, type MeasureCallback } from '../helpers/testUtils';
+import { rootId } from '@/__tests__/helpers/ids';
 
 // Use shared mock factory from componentMocks.tsx
 jest.mock('@/hooks/theme/useColors', () =>
@@ -32,7 +33,7 @@ jest.mock('@/hooks/theme/useColors', () =>
 );
 
 jest.mock('@/hooks/theme/useSkiaFonts', () => ({
-  useSkiaFonts: jest.fn(() => ({
+  useSkiaFonts: jest.fn((..._args: unknown[]) => ({
     isReady: true,
     fontSize: 17,
     fontFamily: 'Noto Sans Arabic',
@@ -41,7 +42,7 @@ jest.mock('@/hooks/theme/useSkiaFonts', () => ({
 }));
 
 jest.mock('@/hooks/vocabulary', () => ({
-  useArabicWord: jest.fn(() => ({ isSelected: false })),
+  useArabicWord: jest.fn((..._args: unknown[]) => ({ isSelected: false })),
 }));
 
 // Only the two builders are stubbed. The canvas-sizing helpers stay real so the
@@ -50,8 +51,8 @@ jest.mock('@/hooks/vocabulary', () => ({
 // down with it.
 jest.mock('@/utils/skiaParagraphBuilder', () => ({
   ...jest.requireActual<object>('@/utils/skiaParagraphBuilder'),
-  buildColoredParagraph: jest.fn(() => null),
-  buildSimpleParagraph: jest.fn(() => null),
+  buildColoredParagraph: jest.fn((..._args: unknown[]) => null),
+  buildSimpleParagraph: jest.fn((..._args: unknown[]) => null),
 }));
 
 const { useArabicWord } = require('@/hooks/vocabulary');
@@ -66,9 +67,12 @@ describe('SkiaArabicWord Component', () => {
     english: 'book',
     difficulty_level: 1,
     grammar_note: null,
-    root_id: 1,
+    root_id: rootId(1),
     sentence_id: 1,
     word_type_id: 1,
+    audio_url: null,
+    root: null,
+    word_type: null,
     coloredSegments: [],
     ...overrides,
   });
@@ -309,7 +313,7 @@ describe('SkiaArabicWord Component', () => {
             getFamilyName: () => 'Noto Sans Arabic',
           }),
         },
-        getArabicFont: jest.fn(() => null),
+        getArabicFont: jest.fn((..._args: unknown[]) => null),
         fontSize: 17,
         fontFamily: 'Noto Sans Arabic',
         fontManager: null,

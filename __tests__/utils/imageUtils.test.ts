@@ -32,9 +32,9 @@ beforeEach(() => {
 
   // Setup storage mock to return getPublicUrl
   fromMock.mockReturnValue({
-    getPublicUrl: jest.fn().mockReturnValue({
+    getPublicUrl: jest.fn((..._args: unknown[]) => ({
       data: { publicUrl: 'https://example.com/file.jpg' },
-    }),
+    })),
   } as any);
 });
 

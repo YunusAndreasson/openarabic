@@ -24,6 +24,7 @@ import { selectionFeedback } from '@/utils/haptics';
 import { WordDetailsBottomSheet } from '@/components/article/WordDetailsBottomSheet';
 import { STRINGS } from '@/constants/strings';
 import type { SentenceWord } from '@/types/vocabulary.types';
+import { rootId } from '@/__tests__/helpers/ids';
 
 // Mock haptics at the utility level (not expo-haptics) since selectionFeedback
 // has a shouldTriggerHaptic guard that blocks calls without a Redux store
@@ -61,7 +62,7 @@ jest.mock('@/services/audioPlayer', () => ({
   simpleAudioService: {
     stop: jest.fn(),
     play: jest.fn(),
-    getStatus: jest.fn(() => ({ playing: false, isLoading: false })),
+    getStatus: jest.fn((..._args: unknown[]) => ({ playing: false, isLoading: false })),
   },
 }));
 jest.mock('@/utils/errorHandling', () => ({
@@ -77,15 +78,18 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
     sentence_id: 100,
     word_form: 'كَتَبَ',
     english: 'he wrote',
-    root_id: 42,
+    root_id: rootId(42),
     audio_url: '/audio/word.mp3',
     grammar_note: 'Past tense verb',
-    position_in_sentence: 1,
+    position: 1,
+    difficulty_level: 1,
+    word_type_id: 1,
+    root: null,
+    word_type: null,
   };
 
   const mockOnClose = jest.fn();
-  const mockOnAddToStudy = jest.fn();
-
+  const mockOnAddToStudy = jest.fn(async (..._args: unknown[]) => false);
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -277,10 +281,11 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
      */
     test('swallows a rapid second press instead of toggling back', async () => {
       let callCount = 0;
-      mockOnAddToStudy.mockImplementation(async () => {
+      mockOnAddToStudy.mockImplementation(async (): Promise<boolean> => {
         callCount++;
         // Simulate network delay
         await new Promise(resolve => setTimeout(resolve, 100));
+        return true;
       });
 
       const { getByText, rerender } = render(
@@ -569,9 +574,10 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
     });
 
     test('should handle parent state lagging behind optimistic update', async () => {
-      mockOnAddToStudy.mockImplementation(async () => {
+      mockOnAddToStudy.mockImplementation(async (): Promise<boolean> => {
         // Simulate slow mutation
         await new Promise(resolve => setTimeout(resolve, 200));
+        return true;
       });
 
       const { getByText, rerender } = render(

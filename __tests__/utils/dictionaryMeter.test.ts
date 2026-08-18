@@ -1,6 +1,7 @@
 import { FSRS_DIFFICULTY_MAX, FSRS_DIFFICULTY_MIN } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { getSortMeterColorName, getSortMeterFraction } from '@/utils/dictionaryMeter';
+import { LEGACY_NULL_TIMESTAMP } from '@/__tests__/helpers/fsrsTestHelpers';
 
 const NOW = Date.parse('2026-08-11T12:00:00Z');
 const DAY = 86_400_000;
@@ -87,7 +88,9 @@ describe('getSortMeterFraction', () => {
     });
 
     it('survives a missing or unparseable created_at', () => {
-      expect(getSortMeterFraction(makeWord({ created_at: null }), 'recent', NOW)).toBe(0);
+      expect(
+        getSortMeterFraction(makeWord({ created_at: LEGACY_NULL_TIMESTAMP }), 'recent', NOW),
+      ).toBe(0);
     });
   });
 

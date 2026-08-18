@@ -192,8 +192,6 @@ export interface EnergyGateState {
    *  `silenceMs`, and the one that survives a raised noise floor. */
   idleMs: number;
 }
-
-/** @internal */
 export function initialGateState(): EnergyGateState {
   return { noiseFloor: INITIAL_NOISE_FLOOR, speechSeen: false, silenceMs: 0, idleMs: 0 };
 }
@@ -210,7 +208,6 @@ export function initialGateState(): EnergyGateState {
  * Returns the next state, whether this buffer counted as speech, and the stop
  * reason if any. `isSpeech` is reported rather than re-derived by the caller
  * because it is what bounds the region actually sent to the recogniser.
- * @internal
  */
 export function stepEnergyGate(
   state: EnergyGateState,

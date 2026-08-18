@@ -19,6 +19,8 @@ import { readingProgressQueries } from '@/constants/queries';
 import { useReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { readingProgressService } from '@/services/readingProgress';
 import type { ReadingProgress } from '@/services/readingProgress';
+import { articleId } from '@/__tests__/helpers/ids';
+import type { ArticleId } from '@/types/branded.types';
 
 // Mock service layer
 jest.mock('@/services/readingProgress');
@@ -34,21 +36,21 @@ const mockUseAuth = jest.requireMock('@/hooks/auth/useAuth');
 describe('useReadingProgress', () => {
   let queryClient: QueryClient;
   const testUserId = 'test-user-123';
-  const testArticleId = 42;
+  const testArticleId = articleId(42);
 
   beforeEach(() => {
     jest.clearAllMocks();
     queryClient = createTestQueryClient();
 
     // Setup auth mock to return test user
-    mockUseAuth.useAuth = jest.fn(() => ({
+    mockUseAuth.useAuth = jest.fn((..._args: unknown[]) => ({
       user: { id: testUserId },
       isLoading: false,
     }));
 
     // Default mock for bulk reading progress
     mockReadingProgressService.getBulkProgress.mockResolvedValue(
-      new Map<number, ReadingProgress>([
+      new Map<ArticleId, ReadingProgress>([
         [
           testArticleId,
           {
@@ -78,46 +80,19 @@ describe('useReadingProgress', () => {
   };
 
   describe('Query Configuration', () => {
-    test('should have refetchOnMount set to false for optimization', async () => {
-      // Mock getProgress for article open tracking
-      mockReadingProgressService.getProgress.mockResolvedValue({
-        user_id: testUserId,
-        article_id: testArticleId,
-        last_sentence_read: 5,
-        total_sentences: 10,
-        progress_percentage: 50,
-        updated_at: '2024-01-01T12:00:00Z',
-        created_at: '2024-01-01T10:00:00Z',
-      });
-
-      const { result } = renderHook(
-        () =>
-          useReadingProgress({
-            articleId: testArticleId,
-            totalSentences: 10,
-            currentSentenceIndex: 0,
-            isActive: true,
-          }),
-        { wrapper },
-      );
-
-      // Wait for query to settle
-      await waitFor(() => expect(result.current.isLoading).toBe(false));
-
-      // Get the query from the cache to inspect its configuration
-      const queries = queryClient
-        .getQueryCache()
-        .findAll({ queryKey: readingProgressQueries.bulk(testUserId).queryKey });
-
-      expect(queries).toHaveLength(1);
-      const query = queries[0];
-
-      // Verify refetchOnMount is false (optimization to prevent unnecessary refetches)
-      expect(query.options.refetchOnMount).toBeFalsy();
+    // These two options are observer options, not query options: they live on
+    // `readingProgressQueries.bulk()`, and a cached `Query`'s `.options` never
+    // carries them. Reading them off the cache entry (as this suite used to)
+    // compared `undefined` to falsy and could not fail.
+    test('bulk progress does not refetch on mount', () => {
+      expect(readingProgressQueries.bulk(testUserId).refetchOnMount).toBe(false);
     });
 
-    test('should have refetchOnReconnect set to false', async () => {
-      // Mock getProgress for article open tracking
+    test('bulk progress does not refetch on reconnect', () => {
+      expect(readingProgressQueries.bulk(testUserId).refetchOnReconnect).toBe(false);
+    });
+
+    test('the hook registers exactly one bulk-progress query', async () => {
       mockReadingProgressService.getProgress.mockResolvedValue({
         user_id: testUserId,
         article_id: testArticleId,
@@ -139,19 +114,13 @@ describe('useReadingProgress', () => {
         { wrapper },
       );
 
-      // Wait for query to settle
       await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-      // Get the query from the cache to inspect its configuration
       const queries = queryClient
         .getQueryCache()
         .findAll({ queryKey: readingProgressQueries.bulk(testUserId).queryKey });
 
       expect(queries).toHaveLength(1);
-      const query = queries[0];
-
-      // Verify refetchOnReconnect is false (only refresh via pull-to-refresh)
-      expect(query.options.refetchOnReconnect).toBeFalsy();
     });
   });
 
@@ -424,7 +393,7 @@ describe('useReadingProgress', () => {
     test('should handle missing progress gracefully', async () => {
       // Mock empty progress map
       mockReadingProgressService.getBulkProgress.mockResolvedValue(
-        new Map<number, ReadingProgress>(),
+        new Map<ArticleId, ReadingProgress>(),
       );
 
       // Mock getProgress returning null for article open tracking

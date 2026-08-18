@@ -47,13 +47,16 @@ jest.mock('@/components/ui/Icon', () => {
 jest.mock('@/utils/layoutUtils', () => ({
   // Spread the real module: these buttons now reach ThemedButton through the
   // components/ui barrel, and it needs createPadding at module-init time.
-  ...jest.requireActual('@/utils/layoutUtils'),
+  ...jest.requireActual<Record<string, unknown>>('@/utils/layoutUtils'),
   createAndroidRipple: () => ({ color: 'rgba(0,0,0,0.1)' }),
 }));
 
 describe('FloatingActionButtons', () => {
-  const mockOnToggleReadingList = jest.fn().mockResolvedValue(undefined);
+  const mockOnToggleReadingList = jest.fn(async (..._args: unknown[]) => undefined);
   const mockOnClose = jest.fn();
+  // `isListening`, `isListenLoading` and `onToggleListen` are required props that
+  // this suite never passed, so the listen control rendered from `undefined`.
+  const mockOnToggleListen = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -66,6 +69,9 @@ describe('FloatingActionButtons', () => {
           isInReadingList={false}
           onToggleReadingList={mockOnToggleReadingList}
           onClose={mockOnClose}
+          isListening={false}
+          isListenLoading={false}
+          onToggleListen={mockOnToggleListen}
         />,
       );
 
@@ -78,6 +84,9 @@ describe('FloatingActionButtons', () => {
           isInReadingList={false}
           onToggleReadingList={mockOnToggleReadingList}
           onClose={mockOnClose}
+          isListening={false}
+          isListenLoading={false}
+          onToggleListen={mockOnToggleListen}
         />,
       );
 
@@ -90,6 +99,9 @@ describe('FloatingActionButtons', () => {
           isInReadingList={true}
           onToggleReadingList={mockOnToggleReadingList}
           onClose={mockOnClose}
+          isListening={false}
+          isListenLoading={false}
+          onToggleListen={mockOnToggleListen}
         />,
       );
 
@@ -104,6 +116,9 @@ describe('FloatingActionButtons', () => {
           isInReadingList={false}
           onToggleReadingList={mockOnToggleReadingList}
           onClose={mockOnClose}
+          isListening={false}
+          isListenLoading={false}
+          onToggleListen={mockOnToggleListen}
         />,
       );
 
@@ -124,6 +139,9 @@ describe('FloatingActionButtons', () => {
           isInReadingList={false}
           onToggleReadingList={mockOnToggleReadingList}
           onClose={mockOnClose}
+          isListening={false}
+          isListenLoading={false}
+          onToggleListen={mockOnToggleListen}
         />,
       );
 
@@ -142,6 +160,9 @@ describe('FloatingActionButtons', () => {
           isInReadingList={false}
           onToggleReadingList={mockOnToggleReadingList}
           onClose={mockOnClose}
+          isListening={false}
+          isListenLoading={false}
+          onToggleListen={mockOnToggleListen}
         />,
       );
 
@@ -154,6 +175,9 @@ describe('FloatingActionButtons', () => {
           isInReadingList={true}
           onToggleReadingList={mockOnToggleReadingList}
           onClose={mockOnClose}
+          isListening={false}
+          isListenLoading={false}
+          onToggleListen={mockOnToggleListen}
         />,
       );
 
@@ -170,6 +194,9 @@ describe('FloatingActionButtons', () => {
           isInReadingList={true}
           onToggleReadingList={mockOnToggleReadingList}
           onClose={mockOnClose}
+          isListening={false}
+          isListenLoading={false}
+          onToggleListen={mockOnToggleListen}
         />,
       );
 

@@ -21,17 +21,24 @@ import { createTestQueryClient } from '@/__tests__/helpers/testUtils';
 import { useStudyWordMutations } from '@/hooks/articles/useStudyWordMutations';
 import type { RootId } from '@/types/branded.types';
 import { handleError } from '@/utils/errorHandling';
+import { rootId } from '@/__tests__/helpers/ids';
 
 // Mock modules at top level
 const mockShowToast = jest.fn();
 const mockRouterReplace = jest.fn();
-const mockCheckAuthentication = jest.fn();
-const mockToggleFSRSStudyRoot = jest.fn();
-const mockCanAddWord = jest.fn();
-const mockIncrementDailyWordCount = jest.fn();
-const mockDecrementDailyWordCount = jest.fn();
-const mockDecrementIfAddedToday = jest.fn();
-const mockGetEffectiveLimitInfo = jest.fn();
+const mockCheckAuthentication = jest.fn(async (..._args: unknown[]) => ({
+  user: { id: 'test-user-id' },
+}));
+const mockToggleFSRSStudyRoot = jest.fn(async (..._args: unknown[]) => true);
+const mockCanAddWord = jest.fn(async (..._args: unknown[]) => true);
+const mockIncrementDailyWordCount = jest.fn(async (..._args: unknown[]) => true);
+const mockDecrementDailyWordCount = jest.fn(async (..._args: unknown[]) => undefined);
+const mockDecrementIfAddedToday = jest.fn(async (..._args: unknown[]) => undefined);
+const mockGetEffectiveLimitInfo = jest.fn(async (..._args: unknown[]) => ({
+  effective: 10,
+  ceiling: 10,
+  status: 'full',
+}));
 const mockErrorFeedback = jest.fn();
 
 jest.mock('@/components/providers', () => ({
@@ -358,7 +365,7 @@ describe('useStudyWordMutations', () => {
       // reading an empty due-specific entry and waving the add through.
       queryClient.setQueryData(
         ['fsrs-words', 'test-user-id'],
-        Array.from({ length: 20 }, (_, i) => ({ root_id: i + 1, fsrs_state: 0 })),
+        Array.from({ length: 20 }, (_, i) => ({ root_id: rootId(i + 1), fsrs_state: 0 })),
       );
       // No dueKey entry set — the due-specific query has not resolved yet.
 
@@ -488,7 +495,7 @@ describe('useStudyWordMutations', () => {
 
   describe('refetchStudyWords callback', () => {
     test('calls refetchStudyWords on mutation success', async () => {
-      const mockRefetch = jest.fn().mockResolvedValue(undefined);
+      const mockRefetch = jest.fn(async (..._args: unknown[]) => undefined);
       const { result } = renderHook(() => useStudyWordMutations(mockRefetch), {
         wrapper,
       });

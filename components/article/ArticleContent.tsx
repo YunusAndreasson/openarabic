@@ -7,7 +7,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { FloatingActionButtons } from '@/components/article/FloatingActionButtons';
 import { HeaderScrim } from '@/components/article/HeaderScrim';
 import { ParallaxHeader } from '@/components/article/ParallaxHeader';

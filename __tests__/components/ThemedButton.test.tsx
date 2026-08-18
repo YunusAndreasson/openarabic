@@ -11,7 +11,7 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import React from 'react';
 
-import { ThemedButton } from '@/components/ThemedButton';
+import { ThemedButton } from '@/components/primitives/ThemedButton';
 import { PRESS_LOCK_WINDOW_MS } from '@/constants/animation';
 
 /**

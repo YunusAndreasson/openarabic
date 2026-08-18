@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { LAYOUT, LETTER_SPACING } from '@/constants/layout';
 import pkg from '@/package.json';
 

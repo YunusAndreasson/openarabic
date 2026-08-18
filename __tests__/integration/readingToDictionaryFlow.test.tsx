@@ -26,18 +26,28 @@ import { useArticleWordInteractions } from '@/hooks/articles/useArticleWordInter
 import { useStudyWordMutations } from '@/hooks/articles/useStudyWordMutations';
 import type { RootId } from '@/types/branded.types';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
+import { articleId, rootId } from '@/__tests__/helpers/ids';
 
 // Mock modules at top level
-const mockGetArticleById = jest.fn();
-const mockIsInReadingList = jest.fn();
-const mockGetStudyWords = jest.fn();
-const mockSetFSRSStudyRoot = jest.fn();
-const mockCheckAuthentication = jest.fn();
-const mockCanAddWord = jest.fn();
-const mockIncrementDailyWordCount = jest.fn();
+const mockGetArticleById = jest.fn<(...args: unknown[]) => Promise<unknown>>();
+const mockIsInReadingList = jest.fn(async (..._args: unknown[]) => false);
+const mockGetStudyWords = jest.fn(async (..._args: unknown[]) => []);
+const mockSetFSRSStudyRoot = jest.fn(async (..._args: unknown[]) => ({
+  inStudyList: true,
+  changed: true,
+}));
+const mockCheckAuthentication = jest.fn(async (..._args: unknown[]) => ({
+  user: { id: mockUserId },
+}));
+const mockCanAddWord = jest.fn(async (..._args: unknown[]) => true);
+const mockIncrementDailyWordCount = jest.fn(async (..._args: unknown[]) => true);
 const mockDecrementDailyWordCount = jest.fn();
 const mockDecrementIfAddedToday = jest.fn();
-const mockGetEffectiveLimitInfo = jest.fn();
+const mockGetEffectiveLimitInfo = jest.fn(async (..._args: unknown[]) => ({
+  effective: 10,
+  ceiling: 10,
+  status: 'full',
+}));
 const mockShowToast = jest.fn();
 const mockSelectionFeedback = jest.fn();
 
@@ -143,7 +153,7 @@ describe('Reading to Dictionary Flow', () => {
             word_form: 'كتاب',
             english: 'book',
             root_id: 501,
-            root: 'ك-ت-ب',
+            root: { id: 501, letters: 'ك-ت-ب', meaning: 'book', audio_url: '', audio_url_en: '' },
           },
           {
             id: 1002,
@@ -163,8 +173,13 @@ describe('Reading to Dictionary Flow', () => {
     position: 1,
     word_form: 'كتاب',
     english: 'book',
-    root_id: 501 as RootId,
-    root: 'ك-ت-ب',
+    root_id: rootId(501),
+    word_type_id: 1,
+    word_type: null,
+    audio_url: null,
+    difficulty_level: 1,
+    grammar_note: null,
+    root: { id: 501, letters: 'ك-ت-ب', meaning: 'book', audio_url: '', audio_url_en: '' },
     sentence_id: 101,
   };
 
@@ -199,7 +214,7 @@ describe('Reading to Dictionary Flow', () => {
 
   describe('Article Data Loading', () => {
     test('loads article with sentences and words', async () => {
-      const { result } = renderHook(() => useArticleData(1, mockUserId), { wrapper });
+      const { result } = renderHook(() => useArticleData(articleId(1), mockUserId), { wrapper });
 
       await waitFor(() => {
         expect(result.current.isLoadingArticle).toBeFalsy();
@@ -210,7 +225,7 @@ describe('Reading to Dictionary Flow', () => {
     });
 
     test('creates sentence words map with color analysis', async () => {
-      const { result } = renderHook(() => useArticleData(1, mockUserId), { wrapper });
+      const { result } = renderHook(() => useArticleData(articleId(1), mockUserId), { wrapper });
 
       await waitFor(() => {
         expect(result.current.sentenceWordsMap.size).toBeGreaterThan(0);
@@ -227,7 +242,7 @@ describe('Reading to Dictionary Flow', () => {
       const studyWords: StudyWord[] = [{ root_id: 501 } as StudyWord];
       queryClient.setQueryData(['fsrs-words', mockUserId], studyWords);
 
-      const { result } = renderHook(() => useArticleData(1, mockUserId), { wrapper });
+      const { result } = renderHook(() => useArticleData(articleId(1), mockUserId), { wrapper });
 
       await waitFor(() => {
         expect(result.current.isLoadingArticle).toBeFalsy();
@@ -239,7 +254,9 @@ describe('Reading to Dictionary Flow', () => {
 
   describe('Word Interactions', () => {
     test('shows tooltip when word is pressed (tooltip-first)', async () => {
-      const mockHandleRootPress = jest.fn().mockResolvedValue(true);
+      const mockHandleRootPress = jest.fn<(rootId: unknown, intent?: unknown) => Promise<boolean>>(
+        async () => true,
+      );
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
@@ -258,7 +275,9 @@ describe('Reading to Dictionary Flow', () => {
     });
 
     test('closes tooltip when same word is pressed again (tooltip-first)', async () => {
-      const mockHandleRootPress = jest.fn().mockResolvedValue(true);
+      const mockHandleRootPress = jest.fn<(rootId: unknown, intent?: unknown) => Promise<boolean>>(
+        async () => true,
+      );
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
@@ -284,7 +303,9 @@ describe('Reading to Dictionary Flow', () => {
     });
 
     test('opens word details modal from tooltip (tooltip-first)', async () => {
-      const mockHandleRootPress = jest.fn().mockResolvedValue(true);
+      const mockHandleRootPress = jest.fn<(rootId: unknown, intent?: unknown) => Promise<boolean>>(
+        async () => true,
+      );
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
@@ -311,7 +332,9 @@ describe('Reading to Dictionary Flow', () => {
     });
 
     test('closes tooltip on scroll (tooltip-first)', async () => {
-      const mockHandleRootPress = jest.fn().mockResolvedValue(true);
+      const mockHandleRootPress = jest.fn<(rootId: unknown, intent?: unknown) => Promise<boolean>>(
+        async () => true,
+      );
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
@@ -339,7 +362,9 @@ describe('Reading to Dictionary Flow', () => {
 
   describe('Adding Words to Study List', () => {
     test('adds word to study list with haptic feedback', async () => {
-      const mockHandleRootPress = jest.fn().mockResolvedValue(true);
+      const mockHandleRootPress = jest.fn<(rootId: unknown, intent?: unknown) => Promise<boolean>>(
+        async () => true,
+      );
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
@@ -368,7 +393,9 @@ describe('Reading to Dictionary Flow', () => {
         }),
       }));
 
-      const mockHandleRootPress = jest.fn().mockResolvedValue(true);
+      const mockHandleRootPress = jest.fn<(rootId: unknown, intent?: unknown) => Promise<boolean>>(
+        async () => true,
+      );
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
@@ -386,7 +413,7 @@ describe('Reading to Dictionary Flow', () => {
       // mutation, whose onMutate writes the optimistic value straight into
       // the fsrs-words cache — the mock here does the same to stand in for
       // it, since isRootInStudyList now reads that cache reactively.
-      const mockHandleRootPress = jest.fn().mockImplementation(async (rootId: number) => {
+      const mockHandleRootPress = jest.fn(async (rootId: number, _intent?: unknown) => {
         queryClient.setQueryData(['fsrs-words', mockUserId], (old: StudyWord[] = []) => [
           ...old,
           { root_id: rootId } as StudyWord,
@@ -417,8 +444,10 @@ describe('Reading to Dictionary Flow', () => {
     });
 
     test('calls refetchStudyWords callback after adding', async () => {
-      const mockRefetch = jest.fn().mockResolvedValue({});
-      const mockHandleRootPress = jest.fn().mockResolvedValue(true);
+      const mockRefetch = jest.fn(async (..._args: unknown[]) => {});
+      const mockHandleRootPress = jest.fn<(rootId: unknown, intent?: unknown) => Promise<boolean>>(
+        async () => true,
+      );
 
       const { result } = renderHook(
         () =>
@@ -481,7 +510,7 @@ describe('Reading to Dictionary Flow', () => {
 
   describe('Full User Journey', () => {
     test('complete flow: tap word → view details → add to study', async () => {
-      const mockHandleRootPress = jest.fn().mockImplementation(async (rootId: number) => {
+      const mockHandleRootPress = jest.fn(async (rootId: number, _intent?: unknown) => {
         queryClient.setQueryData(['fsrs-words', mockUserId], (old: StudyWord[] = []) => [
           ...old,
           { root_id: rootId } as StudyWord,
@@ -527,7 +556,7 @@ describe('Reading to Dictionary Flow', () => {
       // Set up word as already in study list
       queryClient.setQueryData(['fsrs-words', mockUserId], [{ root_id: 501 }]);
 
-      const mockHandleRootPress = jest.fn().mockImplementation(async (rootId: number) => {
+      const mockHandleRootPress = jest.fn(async (rootId: number, _intent?: unknown) => {
         queryClient.setQueryData(['fsrs-words', mockUserId], (old: StudyWord[] = []) =>
           old.filter(w => w.root_id !== rootId),
         );

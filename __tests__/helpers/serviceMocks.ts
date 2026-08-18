@@ -23,31 +23,15 @@
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import type { ArticleId, RootId, UserId } from '@/types/branded.types';
 import type { Tables } from '@/types/database.types';
-import type { StudyWord } from '@/types/vocabulary.types';
+import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
+import * as Notifications from 'expo-notifications';
+import type { AuthError, PostgrestError, Session, User } from '@supabase/supabase-js';
+import type { NetInfoState } from '@react-native-community/netinfo';
+import type { AudioStatus } from '@/services/audioPlayer';
 
 // ============================================================================
 // ARTICLE FACTORIES
 // ============================================================================
-
-/**
- * Creates a mock article with sensible defaults
- */
-export const createArticleMock = (
-  overrides: Partial<Tables<'articles'>> = {},
-): Tables<'articles'> => ({
-  id: 1,
-  title: 'Test Article',
-  summary: 'A test article summary',
-  audio_url: 'https://example.com/audio.mp3',
-  audio_url_bilingual: 'https://example.com/audio-bilingual.mp3',
-  image_url: 'https://example.com/image.jpg',
-  author_id: 1,
-  category_id: 1,
-  difficulty_level: 1,
-  content_hash: 'abc123',
-  created_at: new Date().toISOString(),
-  ...overrides,
-});
 
 /**
  * Creates a mock article sentence
@@ -68,99 +52,13 @@ export const createSentenceMock = (
   ...overrides,
 });
 
-/**
- * Creates a mock author
- */
-export const createAuthorMock = (
-  overrides: Partial<Tables<'authors'>> = {},
-): Tables<'authors'> => ({
-  id: 1,
-  name: 'Test Author',
-  ...overrides,
-});
-
-/**
- * Creates a mock category
- */
-export const createCategoryMock = (
-  overrides: Partial<Tables<'categories'>> = {},
-): Tables<'categories'> => ({
-  id: 1,
-  name: 'Test Category',
-  ...overrides,
-});
-
 // ============================================================================
 // VOCABULARY FACTORIES
 // ============================================================================
 
-/**
- * Creates a mock root word
- */
-export const createRootMock = (overrides: Partial<Tables<'roots'>> = {}): Tables<'roots'> => ({
-  id: 1,
-  letters: 'ك ت ب',
-  meaning: 'to write',
-  audio_url: 'https://example.com/root.mp3',
-  audio_url_en: 'https://example.com/root-en.mp3',
-  ...overrides,
-});
-
-/**
- * Creates a mock sentence word with type safety
- */
-export const createSentenceWordMock = (
-  overrides: Partial<Tables<'sentence_words'>> = {},
-): Tables<'sentence_words'> => ({
-  id: 1,
-  sentence_id: 1,
-  position: 0,
-  word_form: 'كتب',
-  english: 'wrote',
-  root_id: 1,
-  word_type_id: 1,
-  difficulty_level: 1,
-  grammar_note: null,
-  audio_url: 'https://example.com/word.mp3',
-  ...overrides,
-});
-
-/**
- * Creates a mock word type
- */
-export const createWordTypeMock = (
-  overrides: Partial<Tables<'word_types'>> = {},
-): Tables<'word_types'> => ({
-  id: 1,
-  name: 'verb',
-  ...overrides,
-});
-
-/**
- * Creates a mock study word with FSRS data
- * Re-exports from fsrsTestHelpers for consistency
- */
-export { createTestWord as createStudyWordMock } from './fsrsTestHelpers';
-
 // ============================================================================
 // READING PROGRESS FACTORIES
 // ============================================================================
-
-/**
- * Creates a mock reading progress entry
- */
-export const createReadingProgressMock = (
-  overrides: Partial<Tables<'reading_progress'>> = {},
-): Tables<'reading_progress'> => ({
-  user_id: 'test-user-id',
-  article_id: 1,
-  last_sentence_read: 0,
-  total_sentences: 10,
-  progress_percentage: 0,
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-  ...overrides,
-});
 
 /**
  * Creates a mock reading list entry
@@ -197,97 +95,9 @@ export const createEnhancedAudioTrackMock = (
 // API RESPONSE FACTORIES
 // ============================================================================
 
-/**
- * Creates a successful Supabase response
- */
-export const createSuccessResponse = <T>(data: T) => ({
-  data,
-  error: null,
-  count: Array.isArray(data) ? data.length : null,
-  status: 200,
-  statusText: 'OK',
-});
-
-/**
- * Creates an error Supabase response
- */
-export const createErrorResponse = (
-  message: string,
-  code: string = 'PGRST116',
-  details: string = '',
-) => ({
-  data: null,
-  error: {
-    message,
-    code,
-    details,
-    hint: '',
-  },
-  count: null,
-  status: 400,
-  statusText: 'Bad Request',
-});
-
-/**
- * Creates a not found Supabase response
- */
-export const createNotFoundResponse = () =>
-  createErrorResponse('No rows found', 'PGRST116', 'The result contains 0 rows');
-
-/**
- * Creates a network error response
- */
-export const createNetworkErrorResponse = () =>
-  createErrorResponse('Network request failed', 'NETWORK_ERROR', 'Unable to reach the server');
-
 // ============================================================================
 // BATCH DATA FACTORIES
 // ============================================================================
-
-/**
- * Creates an array of mock articles with sequential IDs
- */
-export const createArticlesMock = (
-  count: number,
-  overrides: Partial<Tables<'articles'>> = {},
-): Tables<'articles'>[] =>
-  Array.from({ length: count }, (_, i) =>
-    createArticleMock({
-      id: i + 1,
-      title: `Test Article ${i + 1}`,
-      ...overrides,
-    }),
-  );
-
-/**
- * Creates an array of mock reading list entries with sequential article IDs
- */
-export const createReadingListArrayMock = (
-  articleIds: number[],
-  userId: string = 'test-user-id',
-): Tables<'reading_list'>[] =>
-  articleIds.map((article_id, i) =>
-    createReadingListMock({
-      article_id,
-      user_id: userId,
-      added_at: new Date(Date.now() - i * 86400000).toISOString(), // Each day older
-    }),
-  );
-
-/**
- * Creates an array of mock enhanced audio tracks
- */
-export const createEnhancedAudioTracksMock = (
-  count: number,
-  overrides: Partial<EnhancedAudioTrack> = {},
-): EnhancedAudioTrack[] =>
-  Array.from({ length: count }, (_, i) =>
-    createEnhancedAudioTrackMock({
-      articleId: (i + 1) as ArticleId,
-      title: `Track ${i + 1}`,
-      ...overrides,
-    }),
-  );
 
 // ============================================================================
 // USER & AUTH FACTORIES
@@ -296,15 +106,7 @@ export const createEnhancedAudioTracksMock = (
 /**
  * Creates a mock Supabase user
  */
-export const createUserMock = (
-  overrides: Partial<{
-    id: string;
-    email: string;
-    created_at: string;
-    app_metadata: Record<string, unknown>;
-    user_metadata: Record<string, unknown>;
-  }> = {},
-) => ({
+export const createUserMock = (overrides: Partial<User> = {}): User => ({
   id: 'test-user-id',
   email: 'test@example.com',
   created_at: new Date().toISOString(),
@@ -316,17 +118,13 @@ export const createUserMock = (
 });
 
 /**
- * Creates a mock Supabase session
+ * Creates a mock Supabase session.
+ *
+ * Typed as the real `Session` so a test cannot hand the auth hooks a shape the
+ * SDK would never produce — the previous version inferred its type from the
+ * literal, which let incomplete sessions through.
  */
-export const createSessionMock = (
-  overrides: Partial<{
-    access_token: string;
-    refresh_token: string;
-    expires_in: number;
-    expires_at: number;
-    user: ReturnType<typeof createUserMock>;
-  }> = {},
-) => ({
+export const createSessionMock = (overrides: Partial<Session> = {}): Session => ({
   access_token: 'test-access-token',
   refresh_token: 'test-refresh-token',
   expires_in: 3600,
@@ -335,3 +133,168 @@ export const createSessionMock = (
   user: createUserMock(),
   ...overrides,
 });
+
+// ============================================================================
+// NOTIFICATION PERMISSION FACTORIES
+// ============================================================================
+
+/**
+ * Builds a complete `NotificationPermissionsStatus`.
+ *
+ * The real shape carries a `PermissionStatus` enum plus eleven iOS fields.
+ * Tests only ever care about `status` and (sometimes) `ios.status`, so those are
+ * the parameters — the rest are filled with the platform defaults so the fixture
+ * satisfies the type the service actually receives.
+ */
+const IOS_STATUS_FOR: Record<string, Notifications.IosAuthorizationStatus> = {
+  granted: Notifications.IosAuthorizationStatus.AUTHORIZED,
+  denied: Notifications.IosAuthorizationStatus.DENIED,
+  undetermined: Notifications.IosAuthorizationStatus.NOT_DETERMINED,
+};
+
+export interface PermissionsMockOverrides {
+  /** iOS authorization detail; defaults from `status`. */
+  iosStatus?: Notifications.IosAuthorizationStatus;
+  /** Defaults to `status !== 'denied'`. */
+  canAskAgain?: boolean;
+  /** Merged into the iOS block, or `null` to model a platform that reports none. */
+  ios?: Partial<NonNullable<Notifications.NotificationPermissionsStatus['ios']>> | null;
+}
+
+export const createPermissionsMock = (
+  status: 'granted' | 'denied' | 'undetermined',
+  overrides: PermissionsMockOverrides = {},
+): Notifications.NotificationPermissionsStatus => {
+  const granted = status === 'granted';
+  const ios =
+    overrides.ios === null
+      ? undefined
+      : {
+          // `undetermined` must map to NOT_DETERMINED, not DENIED: `ensurePermissions`
+          // switches on this and returns early for DENIED without ever asking.
+          status: overrides.iosStatus ?? IOS_STATUS_FOR[status],
+          allowsDisplayInNotificationCenter: granted,
+          allowsDisplayOnLockScreen: granted,
+          allowsDisplayInCarPlay: granted,
+          allowsAlert: granted,
+          allowsBadge: granted,
+          allowsSound: granted,
+          allowsCriticalAlerts: false,
+          alertStyle: Notifications.IosAlertStyle.BANNER,
+          allowsPreviews: Notifications.IosAllowsPreviews.ALWAYS,
+          providesAppNotificationSettings: false,
+          allowsAnnouncements: false,
+          ...overrides.ios,
+        };
+
+  return {
+    status: status as Notifications.PermissionStatus,
+    expires: 'never',
+    granted,
+    canAskAgain: overrides.canAskAgain ?? status !== 'denied',
+    ...(ios ? { ios } : {}),
+  };
+};
+
+/**
+ * Builds a scheduled-notification request as `getAllScheduledNotificationsAsync`
+ * returns it. Tests match on `identifier` and `content.data.type`; the remaining
+ * `NotificationContent` fields are the nulls the platform actually reports.
+ */
+export const createScheduledNotificationMock = (
+  identifier: string,
+  data: Record<string, unknown> = {},
+): Notifications.NotificationRequest => ({
+  identifier,
+  content: {
+    title: null,
+    subtitle: null,
+    body: null,
+    data,
+    sound: null,
+    launchImageName: null,
+    badge: null,
+    attachments: [],
+    categoryIdentifier: null,
+    threadIdentifier: null,
+    targetContentIdentifier: undefined,
+    interruptionLevel: 'active',
+  },
+  trigger: null,
+});
+
+// ============================================================================
+// AUTH + NETWORK FACTORIES
+// ============================================================================
+
+/**
+ * Builds a supabase `AuthError`. `new Error(...)` is not one: the SDK's error
+ * carries `code`, `status`, `__isAuthError` and `toJSON`, and code that narrows
+ * on those fields behaves differently against a plain Error.
+ */
+export const createAuthErrorMock = (message: string, status = 400): AuthError =>
+  Object.assign(new Error(message), {
+    name: 'AuthError',
+    code: 'unknown',
+    status,
+    __isAuthError: true as const,
+    toJSON: () => ({ message, status }),
+  }) as unknown as AuthError;
+
+/**
+ * Builds a `NetInfoState`. Only `isConnected` is ever asserted on, but the real
+ * shape is a discriminated union over `type`, so the rest has to be present.
+ */
+export const createNetInfoStateMock = (isConnected: boolean): NetInfoState =>
+  ({
+    type: isConnected ? 'wifi' : 'none',
+    isConnected,
+    isInternetReachable: isConnected,
+    details: isConnected
+      ? { isConnectionExpensive: false, ssid: null, bssid: null, strength: null }
+      : null,
+  }) as NetInfoState;
+
+// ============================================================================
+// AUDIO FACTORIES
+// ============================================================================
+
+/**
+ * Builds a complete `AudioStatus`.
+ *
+ * The service's status object carries eleven fields and consumers switch on
+ * several of them (`didJustFinish` gates the review prompt, `error` gates the
+ * retry path). Partial literals typed their way past that by omission.
+ */
+export const createAudioStatusMock = (overrides: Partial<AudioStatus> = {}): AudioStatus => ({
+  playing: false,
+  currentTime: 0,
+  duration: 0,
+  currentTrack: null,
+  isLoaded: false,
+  isBuffering: false,
+  playbackState: 'idle',
+  timeControlStatus: 'paused',
+  reasonForWaitingToPlay: '',
+  didJustFinish: false,
+  error: null,
+  ...overrides,
+});
+
+/**
+ * Builds a `PostgrestError`. The SDK's error carries `details`, `hint`, `code`
+ * and `name` alongside `message`, and `executeQuery` forwards the whole object
+ * to `handleError` — a bare `{ message }` is not one.
+ */
+export const createPostgrestErrorMock = (
+  message: string,
+  overrides: Partial<PostgrestError> = {},
+): PostgrestError =>
+  ({
+    name: 'PostgrestError',
+    message,
+    details: '',
+    hint: '',
+    code: 'PGRST000',
+    ...overrides,
+  }) as PostgrestError;

@@ -2,7 +2,7 @@ import { Ionicons } from '@/components/ui';
 import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { ProgressBar } from '@/components/common';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';

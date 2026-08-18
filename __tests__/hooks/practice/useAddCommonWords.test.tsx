@@ -19,10 +19,9 @@ import { createTestQueryClient } from '@/__tests__/helpers/testUtils';
 import { useAddCommonWords } from '@/hooks/practice/useAddCommonWords';
 
 const mockShowToast = jest.fn();
-const mockGetCommonRoots = jest.fn();
-const mockAddMultipleRoots = jest.fn();
-const mockIncrementDailyWordCount = jest.fn();
-
+const mockGetCommonRoots = jest.fn<(...args: unknown[]) => Promise<unknown[]>>();
+const mockAddMultipleRoots = jest.fn(async (..._args: unknown[]) => 4);
+const mockIncrementDailyWordCount = jest.fn(async (..._args: unknown[]) => true);
 jest.mock('@/components/providers', () => ({
   useToast: () => ({
     showToast: mockShowToast,
@@ -51,7 +50,7 @@ jest.mock('@/services/analytics', () => ({
 }));
 
 jest.mock('@/utils/onboardingStorage', () => ({
-  markOnboardingStep: jest.fn().mockResolvedValue(undefined),
+  markOnboardingStep: jest.fn(async (..._args: unknown[]) => undefined),
 }));
 
 jest.mock('@/utils/haptics', () => ({
@@ -70,7 +69,13 @@ describe('useAddCommonWords', () => {
     queryClient = createTestQueryClient();
 
     mockGetCommonRoots.mockResolvedValue(
-      Array.from({ length: 10 }, (_, i) => ({ id: i + 1, letters: `w${i}`, meaning: `word ${i}` })),
+      Array.from({ length: 10 }, (_, i) => ({
+        id: i + 1,
+        letters: `w${i}`,
+        meaning: `word ${i}`,
+        audio_url: '',
+        audio_url_en: '',
+      })),
     );
     mockIncrementDailyWordCount.mockResolvedValue(true);
   });

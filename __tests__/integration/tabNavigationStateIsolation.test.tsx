@@ -27,8 +27,7 @@ import { setTheme } from '@/store/themeSlice';
 import type { StudyWord } from '@/types/vocabulary.types';
 
 // Mock modules at top level
-const mockGetStudyWords = jest.fn();
-
+const mockGetStudyWords = jest.fn(async (..._args: unknown[]) => []);
 jest.mock('@/services/studyWordsFSRS', () => ({
   studyWordsFSRSService: {
     getStudyWords: () => mockGetStudyWords(),

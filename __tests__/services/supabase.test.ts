@@ -11,6 +11,8 @@ import { jest } from '@jest/globals';
 
 import { checkAuthentication, supabase } from '../../services/supabase';
 import { handleError } from '../../utils/errorHandling';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { createSessionMock, createUserMock } from '@/__tests__/helpers/serviceMocks';
 
 jest.mock('@react-native-async-storage/async-storage', () => ({
   setItem: jest.fn(),
@@ -25,10 +27,12 @@ jest.mock('../../utils/errorHandling', () => ({
 }));
 
 describe('checkAuthentication', () => {
-  const initializeMock = jest.fn();
-  const getSessionMock = jest.fn();
-  const startAutoRefreshMock = jest.fn();
-  const session = { user: { id: 'user-1' } } as any;
+  // Typed from the client itself: a bare `jest.fn()` is `Mock<UnknownFunction>`
+  // and cannot stand in for the method it replaces.
+  const initializeMock = jest.fn<SupabaseClient['auth']['initialize']>();
+  const getSessionMock = jest.fn<SupabaseClient['auth']['getSession']>();
+  const startAutoRefreshMock = jest.fn<SupabaseClient['auth']['startAutoRefresh']>();
+  const session = createSessionMock({ user: createUserMock({ id: 'user-1' }) });
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -67,7 +71,7 @@ describe('checkAuthentication', () => {
 
   test('throws an error and calls handleError when user ID mismatches', async () => {
     getSessionMock.mockResolvedValueOnce({
-      data: { session: { user: { id: 'user-2' } } },
+      data: { session: createSessionMock({ user: createUserMock({ id: 'user-2' }) }) },
       error: null,
     });
 

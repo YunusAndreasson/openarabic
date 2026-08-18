@@ -6,7 +6,7 @@ import { useCallback, useMemo, useState, type FC } from 'react';
 import { Alert, StyleSheet } from 'react-native';
 
 import { THEME_OPTIONS } from '@/constants/themeOptions';
-import { ThemedView } from '@/components/ThemedView';
+import { ThemedView } from '@/components/primitives/ThemedView';
 import { AccountBadge, SettingsCard, SettingsSection } from '@/components/account';
 import { AboutSection, AppearanceSection, DangerZoneSection } from '@/components/account/settings';
 import { BrandFooter } from '@/components/explore';

@@ -2,7 +2,7 @@ import type { FC } from 'react';
 import { useCallback } from 'react';
 import { Linking, StyleSheet } from 'react-native';
 
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import type { ThemedTextProps } from '@/types/ui/text.types';
 import { handleError } from '@/utils/errorHandling';
 

@@ -8,6 +8,15 @@ import type { StudyWord } from '../../types/vocabulary.types';
  */
 
 // Base word factory with sensible defaults
+/**
+ * `fsrs_last_review` is generated as NOT NULL, but rows written before the FSRS
+ * migration hold NULL and the app guards for exactly that (see
+ * `utils/wordClassification`). Suites that exercise the legacy shape use this,
+ * so the discrepancy between schema and reality is named once instead of an
+ * `as any` at every site.
+ */
+export const LEGACY_NULL_TIMESTAMP = null as unknown as string;
+
 export const createTestWord = (overrides: Partial<StudyWord> = {}): StudyWord => {
   const now = Date.now();
 
@@ -154,34 +163,7 @@ export const strugglingWordArbitrary = fc.record({
 }) as fc.Arbitrary<StudyWord>;
 
 // Generate due words (overdue)
-export const dueWordArbitrary = fc.record({
-  root_id: fsrsArbitraries.wordId,
-  user_id: fc.constant('test-user'),
-  created_at: fc
-    .date()
-    .filter(d => !isNaN(d.getTime()))
-    .map(d => d.toISOString()),
-  fsrs_due: fc
-    .date({ max: new Date(Date.now() - 60000) }) // At least 1 minute in the past
-    .filter(d => !isNaN(d.getTime()))
-    .map(d => d.toISOString()), // Past due date
-  fsrs_stability: fsrsArbitraries.stability,
-  fsrs_difficulty: fsrsArbitraries.difficulty,
-  fsrs_scheduled_days: fc.integer({ min: 0, max: 365 }),
-  fsrs_learning_steps: fc.integer({ min: 0, max: 10 }),
-  fsrs_reps: fsrsArbitraries.reps,
-  fsrs_lapses: fsrsArbitraries.lapses,
-  fsrs_state: fsrsArbitraries.state,
-  fsrs_last_review: fc
-    .date()
-    .filter(d => !isNaN(d.getTime()))
-    .map(d => d.toISOString()),
-  difficulty: fc.float({ min: 0, max: 1, noDefaultInfinity: true, noNaN: true }),
 
-  root: fc.constant(undefined),
-}) as fc.Arbitrary<StudyWord>;
-
-// Property-based test utilities
 export const propertyTestUtils = {
   // Test that a function is idempotent (same result when called twice)
   testIdempotent: <T>(fn: (input: T) => any, arbitrary: fc.Arbitrary<T>) => {
@@ -331,59 +313,33 @@ export const createWordSet = (
     id: number;
     hoursOverdue?: number;
     stability?: number;
+    /** FSRS difficulty. Callers were already passing this; it was silently
+     *  dropped and every word got 6.5, so suites that claimed to vary
+     *  difficulty were comparing identical values. */
+    difficulty?: number;
     state?: number;
     reps?: number;
     lapses?: number;
   }>,
 ) => {
   const now = Date.now();
-  return scenarios.map(({ id, hoursOverdue = 0, stability = 5, state = 0, reps = 0, lapses = 0 }) =>
-    createTestWord({
-      root_id: id as RootId,
-      fsrs_due: new Date(now - hoursOverdue * 3600 * 1000).toISOString(),
-      fsrs_stability: stability,
-      fsrs_difficulty: 6.5,
-      fsrs_state: state,
-      fsrs_reps: reps,
-      fsrs_lapses: lapses,
-    }),
+  return scenarios.map(
+    ({ id, hoursOverdue = 0, stability = 5, difficulty = 6.5, state = 0, reps = 0, lapses = 0 }) =>
+      createTestWord({
+        root_id: id as RootId,
+        fsrs_due: new Date(now - hoursOverdue * 3600 * 1000).toISOString(),
+        fsrs_stability: stability,
+        fsrs_difficulty: difficulty,
+        fsrs_state: state,
+        fsrs_reps: reps,
+        fsrs_lapses: lapses,
+      }),
   );
 };
 
 // Create words with different FSRS states for testing state transitions
-export const createWordsWithStates = () => ({
-  newWord: createTestWord({
-    root_id: 1 as RootId,
-    fsrs_state: 0, // New
-    fsrs_reps: 0,
-    fsrs_stability: 0,
-    fsrs_difficulty: 6.5,
-  }),
-  learningWord: createTestWord({
-    root_id: 2 as RootId,
-    fsrs_state: 1, // Learning
-    fsrs_reps: 1,
-    fsrs_stability: 1.5,
-    fsrs_difficulty: 6.8,
-  }),
-  reviewWord: createTestWord({
-    root_id: 3 as RootId,
-    fsrs_state: 2, // Review
-    fsrs_reps: 5,
-    fsrs_stability: 10,
-    fsrs_difficulty: 6.2,
-  }),
-  relearningWord: createTestWord({
-    root_id: 4 as RootId,
-    fsrs_state: 3, // Relearning
-    fsrs_reps: 3,
-    fsrs_stability: 2,
-    fsrs_difficulty: 7.5,
-    fsrs_lapses: 2,
-  }),
-});
 
-// Create large dataset for performance testing
+/** @internal Reached through a jest.mock require(); knip cannot see it. */
 export const createLargeWordSet = (count: number) => {
   return Array.from({ length: count }, (_, i) =>
     createTestWord({
@@ -399,6 +355,7 @@ export const createLargeWordSet = (count: number) => {
 };
 
 // Create words with edge case data
+/** @internal Reached through a jest.mock require(); knip cannot see it. */
 export const createEdgeCaseWords = () => ({
   corruptedDates: createTestWord({
     root_id: 1 as RootId,
@@ -407,11 +364,11 @@ export const createEdgeCaseWords = () => ({
   }),
   nullFSRSData: createTestWord({
     root_id: 2 as RootId,
-    fsrs_stability: null as any,
-    fsrs_difficulty: null as any,
-    fsrs_reps: null as any,
-    fsrs_state: null as any,
-    fsrs_last_review: null as any,
+    fsrs_stability: null,
+    fsrs_difficulty: null,
+    fsrs_reps: null,
+    fsrs_state: null,
+    fsrs_last_review: LEGACY_NULL_TIMESTAMP,
   }),
   extremeValues: createTestWord({
     root_id: 3 as RootId,
@@ -423,10 +380,10 @@ export const createEdgeCaseWords = () => ({
   partialData: createTestWord({
     root_id: 4 as RootId,
     fsrs_stability: 5,
-    fsrs_difficulty: null as any,
+    fsrs_difficulty: null,
     fsrs_reps: 2,
     fsrs_state: 1,
-    fsrs_last_review: null as any,
+    fsrs_last_review: LEGACY_NULL_TIMESTAMP,
   }),
 });
 
@@ -506,6 +463,7 @@ export const testPatterns = {
 };
 
 // Test utilities
+/** @internal Reached through a jest.mock require(); knip cannot see it. */
 export const testUtils = {
   // Wait for all timers and promises
   flushAllTimersAndPromises: async () => {

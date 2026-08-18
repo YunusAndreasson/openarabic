@@ -24,6 +24,9 @@ describe('typeMappers', () => {
     root_id: 1,
     sentence_id: 1,
     word_type_id: 1,
+    audio_url: null,
+    root: null,
+    word_type: null,
   } as any;
 
   const rawSentence = {
@@ -33,6 +36,10 @@ describe('typeMappers', () => {
     english: 'a',
     article_id: 1,
     audio_url: null,
+    arabic_repeat: false,
+    english_repeat: false,
+    audio_url_bilingual: '',
+    audio_url_english: '',
     sentence_words: [rawWord],
   } as any;
 
@@ -40,7 +47,11 @@ describe('typeMappers', () => {
     id: 1,
     title: 'Article',
     created_at: '',
-    image_url: null,
+    published: true,
+    book: null,
+    audio_url_bilingual: null,
+    content_hash: 'test-hash',
+    image_url: '',
     difficulty_level: 1,
     category_id: 1,
     author_id: 1,
@@ -72,6 +83,10 @@ describe('typeMappers', () => {
         },
       ],
       created_at: '',
+      published: true,
+      book: null,
+      audio_url_bilingual: null,
+      content_hash: 'test-hash',
       image_url: '',
       difficulty_level: 1,
       category_id: 1,

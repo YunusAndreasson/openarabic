@@ -6,7 +6,7 @@ import { type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 
-import { ThemedButton } from '@/components/ThemedButton';
+import { ThemedButton } from '@/components/primitives/ThemedButton';
 import { BaseCard } from '@/components/common';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';

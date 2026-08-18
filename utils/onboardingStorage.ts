@@ -15,6 +15,7 @@ import {
   type OnboardingStep,
 } from '@/constants/onboarding';
 import { handleError } from '@/utils/errorHandling';
+import { scopedKey } from '@/constants/storageKeys';
 
 function createState(overrides: Partial<OnboardingProgressState> = {}): OnboardingProgressState {
   return {
@@ -32,8 +33,7 @@ let cachedState: OnboardingProgressState | null = null;
 let activeUserId: string | null = null;
 const listeners = new Set<() => void>();
 
-const getStorageKey = (): string =>
-  activeUserId ? `${ONBOARDING_STORAGE_KEY}:${activeUserId}` : ONBOARDING_STORAGE_KEY;
+const getStorageKey = (): string => scopedKey(ONBOARDING_STORAGE_KEY, activeUserId);
 
 /** Switch the in-memory/persistent checklist scope when the auth user changes. */
 export function setOnboardingStorageUser(userId: string | null): void {

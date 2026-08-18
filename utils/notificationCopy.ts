@@ -37,7 +37,6 @@ export interface ReminderContent {
  * Wrap an Arabic word in FSI…PDI so the RTL run stays isolated inside an LTR
  * sentence — without it, trailing punctuation ("Remember X?") can jump to the
  * wrong side of the word on the lock screen.
- * @internal
  */
 export function isolateRtl(word: string): string {
   return `⁦${word}⁩`;

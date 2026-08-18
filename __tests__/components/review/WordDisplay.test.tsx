@@ -34,7 +34,7 @@ jest.mock('@/hooks/animations', () =>
 );
 
 // Mock ThemedText
-jest.mock('@/components/ThemedText', () => {
+jest.mock('@/components/primitives/ThemedText', () => {
   const { Text } = require('react-native');
   const React = require('react');
   return {

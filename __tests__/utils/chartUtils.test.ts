@@ -60,7 +60,7 @@ describe('chartUtils', () => {
 
       // Should default to the last label (Sunday)
       expect(todayIndex).toBe(6);
-      expect(xLabels[todayIndex]).toBe('Sun');
+      expect(xLabels[todayIndex ?? 0]).toBe('Sun');
     });
 
     test('should respect provided todayIndex when specified', () => {

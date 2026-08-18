@@ -19,7 +19,7 @@ const mockQueryClient = {
 
 jest.mock('@tanstack/react-query', () => ({
   useQuery: jest.fn(),
-  useQueryClient: jest.fn(() => mockQueryClient),
+  useQueryClient: jest.fn((..._args: unknown[]) => mockQueryClient),
   QueryClient: jest.fn(),
   QueryClientProvider: ({ children }: { children: ReactNode }) => children,
   queryOptions: jest.fn(options => options),
@@ -30,21 +30,21 @@ const mockQueryFn = () => Promise.resolve([]);
 jest.mock('@/constants/queries', () => ({
   // Spread the real module so `gated` stays the real gate — the factories
   // below are faked, but the skipToken guard under test must not be.
-  ...jest.requireActual('@/constants/queries'),
+  ...jest.requireActual<Record<string, unknown>>('@/constants/queries'),
   fsrsQueries: {
-    all: jest.fn(() => ({
+    all: jest.fn((..._args: unknown[]) => ({
       queryKey: ['fsrs-words', 'all'],
       queryFn: mockQueryFn,
     })),
-    due: jest.fn(() => ({
+    due: jest.fn((..._args: unknown[]) => ({
       queryKey: ['fsrs-words', 'due'],
       queryFn: mockQueryFn,
     })),
-    stats: jest.fn(() => ({
+    stats: jest.fn((..._args: unknown[]) => ({
       queryKey: ['fsrs-words', 'stats'],
       queryFn: mockQueryFn,
     })),
-    lastCompletedAtKey: jest.fn(() => ['fsrs-words', 'lastCompletedAt']),
+    lastCompletedAtKey: jest.fn((..._args: unknown[]) => ['fsrs-words', 'lastCompletedAt']),
   },
 }));
 
@@ -64,28 +64,30 @@ import { fsrsQueries } from '@/constants/queries';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { StudyWord } from '@/types/vocabulary.types';
 import type { RootId, UserId } from '@/types/branded.types';
+import { rootId, userId } from '@/__tests__/helpers/ids';
+import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 
 const mockUseQuery = jest.mocked(useQuery);
 const mockStudyWordsFSRSService = jest.mocked(studyWordsFSRSService);
 const mockFsrsQueries = jest.mocked(fsrsQueries);
 
 describe('useFSRSQueries', () => {
-  const mockStudyWord: StudyWord = {
-    id: 1,
-    root_id: 100 as RootId,
-    user_id: 'user-123' as UserId,
-    stability: 2.5,
-    difficulty: 0.3,
-    due: new Date().toISOString(),
-    last_review: new Date().toISOString(),
-    reps: 5,
-    lapses: 1,
-    state: 2,
-    elapsed_days: 3,
-    scheduled_days: 7,
+  // The FSRS columns are all `fsrs_`-prefixed; this fixture used the bare names
+  // (`stability`, `due`, `reps`…), so none of them landed on the object the
+  // queries actually read.
+  const mockStudyWord: StudyWord = createTestWord({
+    root_id: rootId(100),
+    user_id: userId('user-123'),
+    fsrs_stability: 2.5,
+    fsrs_difficulty: 0.3,
+    fsrs_due: new Date().toISOString(),
+    fsrs_last_review: new Date().toISOString(),
+    fsrs_reps: 5,
+    fsrs_lapses: 1,
+    fsrs_state: 2,
+    fsrs_scheduled_days: 7,
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  };
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -128,7 +130,9 @@ describe('useFSRSQueries', () => {
       const calls = mockUseQuery.mock.calls;
       expect(calls.length).toBeGreaterThanOrEqual(2);
       // skipToken is a Symbol, so queryFn should not be a regular function
-      expect(typeof (calls[0][0] as Record<string, unknown>).queryFn).not.toBe('function');
+      expect(typeof (calls[0][0] as unknown as Record<string, unknown>).queryFn).not.toBe(
+        'function',
+      );
     });
 
     test('should enable queries when userId is provided', () => {
@@ -137,7 +141,7 @@ describe('useFSRSQueries', () => {
       // Both queries should have a function as queryFn when userId is provided
       const calls = mockUseQuery.mock.calls;
       expect(calls.length).toBeGreaterThanOrEqual(2);
-      expect(typeof (calls[0][0] as Record<string, unknown>).queryFn).toBe('function');
+      expect(typeof (calls[0][0] as unknown as Record<string, unknown>).queryFn).toBe('function');
     });
   });
 

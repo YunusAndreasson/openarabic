@@ -44,7 +44,7 @@ jest.mock('react-native-reanimated', () =>
   require('@/__tests__/helpers/componentMocks').createReanimatedMock(),
 );
 
-jest.mock('@/components/ThemedButton', () => {
+jest.mock('@/components/primitives/ThemedButton', () => {
   const React = require('react');
   const { Text } = require('react-native');
   return {
@@ -72,19 +72,19 @@ jest.mock('@/hooks/practice', () => ({
 
 jest.mock('@/hooks/review', () => ({
   useReviewCompletion: jest.fn(),
-  useNotificationPriming: jest.fn(() => ({
+  useNotificationPriming: jest.fn((..._args: unknown[]) => ({
     showPrimingCard: false,
     resolved: true,
     accept: jest.fn(),
     decline: jest.fn(),
   })),
   // Default: the offer is already answered, so `rendered` cannot make it show.
-  useVoicePriming: jest.fn(() => ({
+  useVoicePriming: jest.fn((..._args: unknown[]) => ({
     showPrimingCard: false,
     accept: jest.fn(),
     decline: jest.fn(),
   })),
-  useEncouragingMetrics: jest.fn(() => ({
+  useEncouragingMetrics: jest.fn((..._args: unknown[]) => ({
     metrics: [
       {
         type: 'wordsReviewed',
@@ -117,6 +117,8 @@ describe('CompletionScreen Component', () => {
     wordsReviewed: 10,
     wordsKnown: 8,
     wordsUnknown: 2,
+    firstAttemptKnown: 8,
+    firstAttemptUnknown: 2,
     currentStreak: 5,
     longestStreak: 5,
     masteredWords: 3,

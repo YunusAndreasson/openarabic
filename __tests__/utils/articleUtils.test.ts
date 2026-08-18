@@ -11,7 +11,7 @@
 
 import { describe, expect, test } from '@jest/globals';
 
-import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
+import { LEGACY_NULL_TIMESTAMP, createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import type { Article } from '@/types/articles.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import {
@@ -20,15 +20,22 @@ import {
   pickStarterArticles,
   sortArticlesByProgress,
 } from '@/utils/articleUtils';
+import { articleId, authorId, categoryId, rootId } from '@/__tests__/helpers/ids';
 
 // Mock data for testing
 const mockArticles: Article[] = [
   {
-    id: 1,
+    id: articleId(1),
     title: 'Article 1',
     author: { id: 1, name: 'Author A' },
+    author_id: authorId(1),
+    category_id: categoryId(1),
     difficulty_level: 2,
     created_at: '2024-01-01T00:00:00Z',
+    published: true,
+    book: null,
+    audio_url_bilingual: null,
+    content_hash: 'test-hash',
     image_url: 'test1.jpg',
     summary: 'Test article 1',
     audio_url: 'test1.mp3',
@@ -41,6 +48,10 @@ const mockArticles: Article[] = [
         english: 'word',
         article_id: 1,
         audio_url: 'test1.mp3',
+        arabic_repeat: false,
+        english_repeat: false,
+        audio_url_bilingual: '',
+        audio_url_english: '',
         sentence_words: [
           {
             id: 1,
@@ -49,20 +60,29 @@ const mockArticles: Article[] = [
             english: 'word',
             difficulty_level: 1,
             grammar_note: null,
-            root_id: 1,
+            root_id: rootId(1),
             sentence_id: 1,
             word_type_id: 1,
+            audio_url: null,
+            root: null,
+            word_type: null,
           },
         ],
       },
     ],
   },
   {
-    id: 2,
+    id: articleId(2),
     title: 'Article 2',
     author: { id: 2, name: 'Author B' },
+    author_id: authorId(2),
+    category_id: categoryId(1),
     difficulty_level: 4,
     created_at: '2024-01-15T00:00:00Z',
+    published: true,
+    book: null,
+    audio_url_bilingual: null,
+    content_hash: 'test-hash',
     image_url: 'test2.jpg',
     summary: 'Test article 2',
     audio_url: 'test2.mp3',
@@ -75,6 +95,10 @@ const mockArticles: Article[] = [
         english: 'How are you',
         article_id: 2,
         audio_url: 'test2.mp3',
+        arabic_repeat: false,
+        english_repeat: false,
+        audio_url_bilingual: '',
+        audio_url_english: '',
         sentence_words: [
           {
             id: 2,
@@ -83,9 +107,12 @@ const mockArticles: Article[] = [
             english: 'how',
             difficulty_level: 2,
             grammar_note: null,
-            root_id: 2,
+            root_id: rootId(2),
             sentence_id: 2,
             word_type_id: 1,
+            audio_url: null,
+            root: null,
+            word_type: null,
           },
         ],
       },
@@ -95,24 +122,24 @@ const mockArticles: Article[] = [
 
 const mockStudyWords: StudyWord[] = [
   createTestWord({
-    root_id: 1,
+    root_id: rootId(1),
     fsrs_state: 0,
     fsrs_difficulty: 1.0,
     fsrs_stability: 0,
     fsrs_reps: 0,
     fsrs_lapses: 0,
-    fsrs_last_review: null,
-    root: { id: 1, letters: 'مرحبا', meaning: 'hello', audio_url: null, audio_url_en: null },
+    fsrs_last_review: LEGACY_NULL_TIMESTAMP,
+    root: { id: 1, letters: 'مرحبا', meaning: 'hello', audio_url: '', audio_url_en: '' },
   }),
   createTestWord({
-    root_id: 2,
+    root_id: rootId(2),
     fsrs_state: 1,
     fsrs_difficulty: 2.0,
     fsrs_stability: 5,
     fsrs_reps: 3,
     fsrs_lapses: 1,
     fsrs_last_review: '2024-01-10T00:00:00Z',
-    root: { id: 2, letters: 'كيف', meaning: 'how', audio_url: null, audio_url_en: null },
+    root: { id: 2, letters: 'كيف', meaning: 'how', audio_url: '', audio_url_en: '' },
   }),
 ];
 
@@ -145,14 +172,14 @@ describe('articleUtils', () => {
     test('should sort articles in correct priority order (in-progress > not-opened > completed)', () => {
       // Create extended mock articles for comprehensive testing
       const extendedArticles: Article[] = [
-        { ...mockArticles[0], id: 1 },
-        { ...mockArticles[1], id: 2 },
-        { ...mockArticles[0], id: 3 },
-        { ...mockArticles[1], id: 4 },
-        { ...mockArticles[0], id: 5 },
-        { ...mockArticles[1], id: 6 },
-        { ...mockArticles[0], id: 7 },
-        { ...mockArticles[1], id: 8 },
+        { ...mockArticles[0], id: articleId(1) },
+        { ...mockArticles[1], id: articleId(2) },
+        { ...mockArticles[0], id: articleId(3) },
+        { ...mockArticles[1], id: articleId(4) },
+        { ...mockArticles[0], id: articleId(5) },
+        { ...mockArticles[1], id: articleId(6) },
+        { ...mockArticles[0], id: articleId(7) },
+        { ...mockArticles[1], id: articleId(8) },
       ];
 
       // Test with all three categories (95% threshold for completion):
@@ -191,12 +218,12 @@ describe('articleUtils', () => {
 
     test('should treat 89% as in-progress but 90%+ as completed', () => {
       const extendedArticles: Article[] = [
-        { ...mockArticles[0], id: 1 },
-        { ...mockArticles[1], id: 2 },
-        { ...mockArticles[0], id: 3 },
-        { ...mockArticles[1], id: 4 },
-        { ...mockArticles[0], id: 5 },
-        { ...mockArticles[1], id: 6 },
+        { ...mockArticles[0], id: articleId(1) },
+        { ...mockArticles[1], id: articleId(2) },
+        { ...mockArticles[0], id: articleId(3) },
+        { ...mockArticles[1], id: articleId(4) },
+        { ...mockArticles[0], id: articleId(5) },
+        { ...mockArticles[1], id: articleId(6) },
       ];
 
       // Test edge cases around 90% completion threshold
@@ -258,7 +285,7 @@ describe('articleUtils', () => {
     // "unread" means no progress entry at all.
     const makeArticle = (id: number, difficulty: number, sentenceCount = 1): Article => ({
       ...mockArticles[0],
-      id,
+      id: articleId(id),
       difficulty_level: difficulty,
       article_sentences: Array.from({ length: sentenceCount }, (_, i) => ({
         ...mockArticles[0].article_sentences[0],

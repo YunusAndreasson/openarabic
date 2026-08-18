@@ -21,7 +21,7 @@ const mockQueryClient = {
 jest.mock('@tanstack/react-query', () => ({
   useQuery: jest.fn(),
   useMutation: jest.fn(),
-  useQueryClient: jest.fn(() => mockQueryClient),
+  useQueryClient: jest.fn((..._args: unknown[]) => mockQueryClient),
   QueryClient: jest.fn(),
   QueryClientProvider: ({ children }: { children: ReactNode }) => children,
   queryOptions: jest.fn(options => options),
@@ -32,7 +32,7 @@ jest.mock('@tanstack/react-query', () => ({
 jest.mock('@/constants/queries', () => ({
   // Spread the real module so `gated` stays the real gate — the factories
   // below are faked, but the skipToken guard under test must not be.
-  ...jest.requireActual('@/constants/queries'),
+  ...jest.requireActual<Record<string, unknown>>('@/constants/queries'),
   fsrsQueries: {
     all: (userId: string) => ({
       queryKey: ['fsrs-words', userId],
@@ -56,7 +56,7 @@ jest.mock('@/constants/queries', () => ({
 jest.mock('@/services/studyWordsFSRS', () => ({
   studyWordsFSRSService: {
     getFSRSWords: jest.fn(),
-    updateStudyWord: jest.fn(),
+    updateWordAndReview: jest.fn(),
   },
 }));
 
@@ -65,8 +65,8 @@ jest.mock('@/utils/errorHandling', () => ({
 }));
 
 jest.mock('ts-fsrs', () => ({
-  fsrs: jest.fn(() => ({
-    next: jest.fn(() => ({
+  fsrs: jest.fn((..._args: unknown[]) => ({
+    next: jest.fn((..._args: unknown[]) => ({
       card: {
         stability: 3.0,
         difficulty: 0.3,
@@ -81,8 +81,8 @@ jest.mock('ts-fsrs', () => ({
       log: {},
     })),
   })),
-  generatorParameters: jest.fn(() => ({})),
-  createEmptyCard: jest.fn(() => ({
+  generatorParameters: jest.fn((..._args: unknown[]) => ({})),
+  createEmptyCard: jest.fn((..._args: unknown[]) => ({
     stability: 0,
     difficulty: 0,
     due: new Date(),
@@ -112,43 +112,40 @@ import { useFSRS } from '@/hooks/vocabulary/useFSRS';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { StudyWord } from '@/types/vocabulary.types';
 import type { RootId, UserId } from '@/types/branded.types';
+import { rootId, userId } from '@/__tests__/helpers/ids';
+import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 
 const mockUseQuery = jest.mocked(useQuery);
 const mockUseMutation = jest.mocked(useMutation);
 const mockStudyWordsFSRSService = jest.mocked(studyWordsFSRSService);
 
 describe('useFSRS', () => {
-  const createMockStudyWord = (rootId: number, overrides = {}): StudyWord => ({
-    id: rootId,
-    root_id: rootId as RootId,
-    user_id: 'user-123' as UserId,
-    root: {
-      id: rootId as RootId,
-      arabic_word: `word-${rootId}`,
-      english_meaning: `meaning-${rootId}`,
-    },
-    stability: 2.5,
-    difficulty: 0.3,
-    due: new Date().toISOString(),
-    last_review: new Date().toISOString(),
-    reps: 5,
-    lapses: 1,
-    state: 2,
-    elapsed_days: 3,
-    scheduled_days: 7,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    fsrs_stability: 2.5,
-    fsrs_difficulty: 0.3,
-    fsrs_due: new Date().toISOString(),
-    fsrs_last_review: new Date().toISOString(),
-    fsrs_reps: 5,
-    fsrs_lapses: 1,
-    fsrs_state: 2,
-    fsrs_elapsed_days: 3,
-    fsrs_scheduled_days: 7,
-    ...overrides,
-  });
+  // The fixture used to carry a parallel set of un-prefixed FSRS fields
+  // (`stability`, `due`, `reps`…) and a `roots` join with `arabic_word` /
+  // `english_meaning` — none of which are real columns, so none of them reached
+  // the hook.
+  const createMockStudyWord = (id: number, overrides: Partial<StudyWord> = {}): StudyWord =>
+    createTestWord({
+      root_id: rootId(id),
+      user_id: userId('user-123'),
+      root: {
+        id,
+        letters: `word-${id}`,
+        meaning: `meaning-${id}`,
+        audio_url: '',
+        audio_url_en: '',
+      },
+      fsrs_stability: 2.5,
+      fsrs_difficulty: 0.3,
+      fsrs_due: new Date().toISOString(),
+      fsrs_last_review: new Date().toISOString(),
+      fsrs_reps: 5,
+      fsrs_lapses: 1,
+      fsrs_state: 2,
+      fsrs_scheduled_days: 7,
+      created_at: new Date().toISOString(),
+      ...overrides,
+    });
 
   const mockOnComplete = jest.fn();
 
@@ -167,10 +164,10 @@ describe('useFSRS', () => {
     } as never);
 
     mockUseMutation.mockReturnValue({
-      mutateAsync: jest.fn(() => Promise.resolve(true)),
+      mutateAsync: jest.fn((..._args: unknown[]) => Promise.resolve(true)),
     } as never);
 
-    mockStudyWordsFSRSService.updateStudyWord.mockResolvedValue(undefined);
+    mockStudyWordsFSRSService.updateWordAndReview.mockResolvedValue(true);
   });
 
   afterEach(() => {

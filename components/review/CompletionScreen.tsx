@@ -8,8 +8,8 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { BaseCard } from '@/components/common';
 import { NotificationPrimingCard } from '@/components/review/NotificationPrimingCard';
 import { VoicePrimingCard } from '@/components/review/VoicePrimingCard';
-import { ThemedButton } from '@/components/ThemedButton';
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedButton } from '@/components/primitives/ThemedButton';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { TIMING_CONFIG, TIMING_CONSTANTS } from '@/constants/animation';
 
 import { FONTS } from '@/constants/fonts';

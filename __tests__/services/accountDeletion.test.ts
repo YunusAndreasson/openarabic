@@ -14,6 +14,9 @@
  * This is the only application-callable RPC in the system (see RPC_AUDIT_SUMMARY.md)
  */
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { accountOwnedStorageKeys, STORAGE_KEYS } from '../../constants/storageKeys';
 import { AccountDeletionService } from '../../services/accountDeletion';
 
 // Mock dependencies
@@ -25,7 +28,7 @@ jest.mock('../../services/supabase', () => ({
     },
     rpc: jest.fn(),
   },
-  checkAuthentication: jest.fn().mockResolvedValue(undefined),
+  checkAuthentication: jest.fn(async (..._args: unknown[]) => undefined),
 }));
 
 jest.mock('../../utils/errorHandling', () => ({
@@ -33,6 +36,7 @@ jest.mock('../../utils/errorHandling', () => ({
 }));
 
 const { supabase } = require('../../services/supabase');
+const { handleError } = require('../../utils/errorHandling');
 
 describe('AccountDeletionService', () => {
   const mockUserId = 'user-123';
@@ -141,6 +145,94 @@ describe('AccountDeletionService', () => {
       await expect(AccountDeletionService.deleteAccount()).rejects.toThrow(
         'Account was deleted but the local session could not be cleared: Storage unavailable',
       );
+    });
+
+    describe('local data cleanup', () => {
+      const authenticateAndSucceed = () => {
+        (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+          data: { user: { id: mockUserId, email: mockUserEmail } },
+          error: null,
+        });
+        (supabase.rpc as jest.Mock).mockResolvedValue({ data: null, error: null });
+        (supabase.auth.signOut as jest.Mock).mockResolvedValue({ error: null });
+      };
+
+      test('removes every key the registry attributes to the deleted account', async () => {
+        authenticateAndSucceed();
+
+        await AccountDeletionService.deleteAccount();
+
+        expect(AsyncStorage.multiRemove).toHaveBeenCalledWith(accountOwnedStorageKeys(mockUserId));
+      });
+
+      test('clears the data that would otherwise follow the device to the next account', async () => {
+        authenticateAndSucceed();
+
+        await AccountDeletionService.deleteAccount();
+
+        // Spelled out rather than derived, so a key silently dropping out of the
+        // scope table fails here instead of passing against a shorter list.
+        const removed = (AsyncStorage.multiRemove as jest.Mock).mock.calls[0][0] as string[];
+        expect(removed).toEqual(
+          expect.arrayContaining([
+            STORAGE_KEYS.STUDY_DAYS,
+            STORAGE_KEYS.RECENT_RECALL_SESSIONS,
+            STORAGE_KEYS.DAILY_WORD_COUNT,
+            STORAGE_KEYS.DAILY_WORD_RESET_DATE,
+            STORAGE_KEYS.NOTIFICATION_PROMPT_STATE,
+            STORAGE_KEYS.SMART_REMINDER_PREFS,
+            STORAGE_KEYS.QUERY_CACHE,
+            `${STORAGE_KEYS.ONBOARDING_PROGRESS}:${mockUserId}`,
+            `${STORAGE_KEYS.TUTORIAL_WELCOME_INTRO}:${mockUserId}`,
+            `profile_photo_${mockUserId}`,
+          ]),
+        );
+      });
+
+      test('leaves device-level keys alone', async () => {
+        authenticateAndSucceed();
+
+        await AccountDeletionService.deleteAccount();
+
+        const removed = (AsyncStorage.multiRemove as jest.Mock).mock.calls[0][0] as string[];
+        expect(removed).not.toContain(STORAGE_KEYS.AUDIO_CACHE_LEGACY_SWEEP);
+        expect(removed).not.toContain(STORAGE_KEYS.REDUX_PERSIST_ROOT);
+      });
+
+      test('does not touch local data when the RPC fails', async () => {
+        (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+          data: { user: { id: mockUserId, email: mockUserEmail } },
+          error: null,
+        });
+        (supabase.rpc as jest.Mock).mockResolvedValue({
+          data: null,
+          error: new Error('RPC deletion failed'),
+        });
+
+        await expect(AccountDeletionService.deleteAccount()).rejects.toThrow(
+          'Failed to delete account: RPC deletion failed',
+        );
+
+        expect(AsyncStorage.multiRemove).not.toHaveBeenCalled();
+      });
+
+      test('a storage failure is reported but never masks a successful deletion', async () => {
+        authenticateAndSucceed();
+        const storageError = new Error('Storage unavailable');
+        (AsyncStorage.multiRemove as jest.Mock).mockRejectedValueOnce(storageError);
+
+        await expect(AccountDeletionService.deleteAccount()).resolves.toBeUndefined();
+
+        expect(handleError).toHaveBeenCalledWith(
+          storageError,
+          expect.objectContaining({
+            showToast: false,
+            analyticsEventName: 'Account_Deletion_Local_Cleanup_Error',
+          }),
+        );
+        // The user must still reach the signed-out state.
+        expect(supabase.auth.signOut).toHaveBeenCalledWith({ scope: 'local' });
+      });
     });
 
     test('verifies delete_user_account RPC is the only one used (per audit)', async () => {

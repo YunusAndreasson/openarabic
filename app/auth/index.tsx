@@ -3,7 +3,7 @@ import type { JSX } from 'react';
 import { memo } from 'react';
 import { StyleSheet } from 'react-native';
 
-import { KEYBOARD_AWARE_SCROLL_PROPS, ThemedView } from '@/components/ThemedView';
+import { KEYBOARD_AWARE_SCROLL_PROPS, ThemedView } from '@/components/primitives/ThemedView';
 import { Auth } from '@/components/auth';
 import { LAYOUT } from '@/constants/layout';
 

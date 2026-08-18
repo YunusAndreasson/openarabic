@@ -5,8 +5,8 @@ import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ListRow, LoadingState } from '@/components/common';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { ThemedText } from '@/components/primitives/ThemedText';
+import { ThemedView } from '@/components/primitives/ThemedView';
 import { ArticleSentence } from '@/components/article/ArticleSentence';
 import { WordMemoryPanel } from '@/components/practice';
 import { IconButton, PulsatingLoader } from '@/components/ui';

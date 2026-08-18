@@ -21,15 +21,14 @@ jest.mock('@/utils/errorHandling', () => ({
 
 jest.mock('@react-native-community/netinfo', () => ({
   default: {
-    // @ts-expect-error Mock implementation for testing
-    fetch: jest.fn().mockResolvedValue({ isConnected: true }),
+    fetch: jest.fn(async (..._args: unknown[]) => ({ isConnected: true })),
     addEventListener: jest.fn(),
   },
 }));
 
 jest.mock('react-native', () => ({
   AppState: {
-    addEventListener: jest.fn().mockReturnValue({ remove: jest.fn() }),
+    addEventListener: jest.fn((..._args: unknown[]) => ({ remove: jest.fn() })),
     currentState: 'active',
   },
 }));

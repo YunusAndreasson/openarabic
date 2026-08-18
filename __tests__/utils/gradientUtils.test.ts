@@ -16,25 +16,22 @@ import {
   createBackgroundGradientColors,
   createImageGradientColors,
 } from '@/utils/gradientUtils';
+import { createThemeColorsMock } from '@/__tests__/helpers/themeMocks';
 
-// Mock theme colors for testing - gradientOverlay is the theme-aware overlay base color
-const mockDarkThemeColors = {
-  black: '#000000',
-  white: '#FFFFFF',
+// gradientOverlay is the theme-aware overlay base colour these tests vary.
+const mockDarkThemeColors = createThemeColorsMock({
   background: '#1A2B23',
   gradientOverlay: '#000000', // Dark mode uses black overlay
   shadow: '#000000',
   warning: '#FFA500',
-} as const;
+});
 
-const mockLightThemeColors = {
-  black: '#000000',
-  white: '#FFFFFF',
+const mockLightThemeColors = createThemeColorsMock({
   background: '#F5F5DC',
   gradientOverlay: '#F5F5DC', // Light/sepia uses background as overlay
   shadow: '#000000',
   warning: '#FFA500',
-} as const;
+});
 
 describe('gradientUtils', () => {
   describe('calculateHeaderHeight', () => {

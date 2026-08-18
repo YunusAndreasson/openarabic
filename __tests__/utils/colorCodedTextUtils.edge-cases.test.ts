@@ -15,75 +15,18 @@ import { describe, expect, test } from '@jest/globals';
 import { MOCK_GRAMMAR_COLORS } from '@/__tests__/setup/mockGrammarColors';
 import { generateColorCodedSegments } from '@/utils/colorCodedTextUtils';
 import { shouldApplyColorCoding } from '@/utils/colorResolution';
-import type { ThemeColors } from '@/types/ui/theme.types';
 import type { formatWordAnalysis } from '@/utils/arabicWordAnalysis';
+import { createThemeColorsMock } from '@/__tests__/helpers/themeMocks';
 
 type FormattedAnalysis = ReturnType<typeof formatWordAnalysis>;
 
-const mockColors: ThemeColors = {
-  primary: '#4A9B6F',
-  background: '#FFFFFF',
-  text: '#000000',
-  secondaryText: '#6B7280',
-  textTertiary: '#9CA3AF',
-  border: '#E5E7EB',
-  card: '#F9FAFB',
-  cardBorder: '#E5E7EB',
-  error: '#DC2626',
-  success: '#059669',
-  warning: '#F59E0B',
-  englishText: '#000000',
-  arabicText: '#1F2937',
-  authorText: '#6B7280',
-  headingText: '#111827',
-  subtitleText: '#4B5563',
-  metadataText: '#6B7280',
-  secondaryMetadataText: '#9CA3AF',
-  captionText: '#6B7280',
-  tint: '#4A9B6F',
-  tintBackground: '#F0F9FF',
-  tabIconDefault: '#9CA3AF',
-  tabIconSelected: '#4A9B6F',
-  icon: '#6B7280',
-  disabled: '#D1D5DB',
-  transparent: 'transparent',
-  overlay: 'rgba(0, 0, 0, 0.5)',
-  modalOverlay: 'rgba(0, 0, 0, 0.6)',
-  borderOverlay: 'rgba(0, 0, 0, 0.1)',
-  buttonOverlay: 'rgba(0, 0, 0, 0.05)',
-  shadow: 'rgba(0, 0, 0, 0.1)',
-  elevation0: '#FFFFFF',
-  elevation1: '#FFFFFF',
-  elevation2: '#F9FAFB',
-  elevation3: '#F3F4F6',
-  white: '#FFFFFF',
-  black: '#000000',
-  textOverlay: 'rgba(0, 0, 0, 0.7)',
-  textShadowDark: 'rgba(0, 0, 0, 0.4)',
-  textShadowLight: 'rgba(0, 0, 0, 0.2)',
-  info: '#3B82F6',
-  modalIndicator: '#D1D5DB',
-  backdropOverlay: 'rgba(0, 0, 0, 0.4)',
-  wordTooltipBg: '#FFFFFF',
-  wordTooltipText: '#1F2937',
-  wordTooltipBorder: '#E5E7EB',
-  wordTooltipShadow: 'rgba(0, 0, 0, 0.1)',
-  navigationRipple: 'rgba(74, 155, 111, 0.12)',
-  headerOverlay: 'rgba(255, 255, 255, 0.95)',
-  tabBarOverlay: 'rgba(255, 255, 255, 0.95)',
-  progressIndicator: '#4A9B6F',
-  progressBackground: '#E5E7EB',
-  interactiveSecondary: 'rgba(74, 155, 111, 0.1)',
-  completionSuccess: '#10B981',
-  chartGrid: '#E5E7EB',
-  chartThreshold: '#F59E0B',
-  grammar: MOCK_GRAMMAR_COLORS,
-};
+const mockColors = createThemeColorsMock();
 
 describe('Color-Coding Edge Cases', () => {
   describe('Punctuation Handling', () => {
     test('should match "by" in "by Allah!" (with exclamation)', () => {
       const formattedAnalysis: FormattedAnalysis = {
+        title: '',
         sections: [
           {
             type: 'original',
@@ -116,6 +59,7 @@ describe('Color-Coding Edge Cases', () => {
 
     test('should match "and from" in "(and from)"', () => {
       const formattedAnalysis: FormattedAnalysis = {
+        title: '',
         sections: [
           {
             type: 'original',
@@ -147,6 +91,7 @@ describe('Color-Coding Edge Cases', () => {
 
     test('should match components with quotes: by "Allah"', () => {
       const formattedAnalysis: FormattedAnalysis = {
+        title: '',
         sections: [
           {
             type: 'original',
@@ -184,6 +129,7 @@ describe('Color-Coding Edge Cases', () => {
       expect(shouldApplyColorCoding('and    from')).toBeTruthy();
 
       const formattedAnalysis: FormattedAnalysis = {
+        title: '',
         sections: [
           {
             type: 'original',
@@ -266,6 +212,7 @@ describe('Color-Coding Edge Cases', () => {
 
     test('should handle component with empty englishPart', () => {
       const formattedAnalysis: FormattedAnalysis = {
+        title: '',
         sections: [
           {
             type: 'original',
@@ -299,6 +246,7 @@ describe('Color-Coding Edge Cases', () => {
   describe('Overlapping Matches', () => {
     test('should color both occurrences in "from from"', () => {
       const formattedAnalysis: FormattedAnalysis = {
+        title: '',
         sections: [
           {
             type: 'original',
@@ -335,6 +283,7 @@ describe('Color-Coding Edge Cases', () => {
   describe('Capitalization', () => {
     test('should match "And" (capitalized) to "and" component', () => {
       const formattedAnalysis: FormattedAnalysis = {
+        title: '',
         sections: [
           {
             type: 'original',
@@ -367,6 +316,7 @@ describe('Color-Coding Edge Cases', () => {
 
     test('should preserve case: render "And" not "and"', () => {
       const formattedAnalysis: FormattedAnalysis = {
+        title: '',
         sections: [
           {
             type: 'original',
@@ -415,6 +365,7 @@ describe('Color-Coding Edge Cases', () => {
      */
     test('every section of a real analysis resolves to a defined color', () => {
       const formattedAnalysis: FormattedAnalysis = {
+        title: '',
         sections: [
           { type: 'original', content: 'and from' },
           {
@@ -456,6 +407,7 @@ describe('Color-Coding Edge Cases', () => {
   describe('Contraction Handling', () => {
     test('should match "don\'t" when component says "do not"', () => {
       const formattedAnalysis: FormattedAnalysis = {
+        title: '',
         sections: [
           {
             type: 'original',
@@ -488,6 +440,7 @@ describe('Color-Coding Edge Cases', () => {
 
     test('should match "doesn\'t" when component says "does not"', () => {
       const formattedAnalysis: FormattedAnalysis = {
+        title: '',
         sections: [
           {
             type: 'original',
@@ -522,6 +475,7 @@ describe('Color-Coding Edge Cases', () => {
   describe('Word Boundary Edge Cases', () => {
     test('should NOT match "and" in "sand"', () => {
       const formattedAnalysis: FormattedAnalysis = {
+        title: '',
         sections: [
           {
             type: 'original',
@@ -553,6 +507,7 @@ describe('Color-Coding Edge Cases', () => {
 
     test('should NOT match "and" in "stand"', () => {
       const formattedAnalysis: FormattedAnalysis = {
+        title: '',
         sections: [
           {
             type: 'original',

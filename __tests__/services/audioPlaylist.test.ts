@@ -21,22 +21,22 @@ jest.mock('expo-file-system', () => ({
   File: jest.fn(),
 }));
 jest.mock('expo-crypto', () => ({
-  digestStringAsync: jest.fn().mockResolvedValue('mock-hash'),
+  digestStringAsync: jest.fn(async (..._args: unknown[]) => 'mock-hash'),
 }));
 
 jest.mock('../../services/articles');
 jest.mock('../../services/audioCache');
 jest.mock('../../services/bookmark', () => ({
   bookmarkService: {
-    getReadingList: jest.fn().mockResolvedValue([]),
-    addToReadingList: jest.fn().mockResolvedValue(undefined),
-    removeFromReadingList: jest.fn().mockResolvedValue(undefined),
+    getReadingList: jest.fn(async (..._args: unknown[]) => []),
+    addToReadingList: jest.fn(async (..._args: unknown[]) => undefined),
+    removeFromReadingList: jest.fn(async (..._args: unknown[]) => undefined),
   },
 }));
 // readingList service no longer exists, mocking readingProgress instead
 jest.mock('../../services/readingProgress', () => ({
-  getReadingProgress: jest.fn().mockResolvedValue([]),
-  updateReadingProgress: jest.fn().mockResolvedValue(undefined),
+  getReadingProgress: jest.fn(async (..._args: unknown[]) => []),
+  updateReadingProgress: jest.fn(async (..._args: unknown[]) => undefined),
 }));
 jest.mock('@/utils/errorHandling');
 jest.mock('@/utils/storageUtils');
@@ -49,6 +49,7 @@ import { generateStorageUrl } from '@/utils/storageUtils';
 import { articlesService } from '../../services/articles';
 import { audioCache } from '../../services/audioCache';
 import { bookmarkService } from '../../services/bookmark';
+import { articleId } from '@/__tests__/helpers/ids';
 
 const mockArticlesService = jest.mocked(articlesService);
 const mockAudioCache = jest.mocked(audioCache);
@@ -79,7 +80,10 @@ describe('enhancedAudioService', () => {
       });
       mockAudioCache.getCachedPath.mockResolvedValue('cached-bilingual.mp3');
 
-      const result = await enhancedAudioService.generateEnhancedAudioTrack(1, 'bilingual');
+      const result = await enhancedAudioService.generateEnhancedAudioTrack(
+        articleId(1),
+        'bilingual',
+      );
 
       expect(result).toEqual({
         id: 'article-1',
@@ -102,7 +106,10 @@ describe('enhancedAudioService', () => {
       });
       mockAudioCache.getCachedPath.mockResolvedValue('cached-arabic.mp3');
 
-      const result = await enhancedAudioService.generateEnhancedAudioTrack(1, 'bilingual');
+      const result = await enhancedAudioService.generateEnhancedAudioTrack(
+        articleId(1),
+        'bilingual',
+      );
 
       expect(result).toEqual({
         id: 'article-1',
@@ -124,7 +131,7 @@ describe('enhancedAudioService', () => {
       });
       mockAudioCache.getCachedPath.mockResolvedValue('cached-arabic.mp3');
 
-      const result = await enhancedAudioService.generateEnhancedAudioTrack(1, 'arabic');
+      const result = await enhancedAudioService.generateEnhancedAudioTrack(articleId(1), 'arabic');
 
       expect(result).toEqual({
         id: 'article-1',
@@ -146,7 +153,10 @@ describe('enhancedAudioService', () => {
       });
       mockAudioCache.getCachedPath.mockResolvedValue(null);
 
-      const result = await enhancedAudioService.generateEnhancedAudioTrack(1, 'bilingual');
+      const result = await enhancedAudioService.generateEnhancedAudioTrack(
+        articleId(1),
+        'bilingual',
+      );
 
       // Plays immediately instead of blocking on a full download...
       expect(result?.audioUrl).toBe('https://example.com/test-bilingual.mp3');
@@ -165,7 +175,7 @@ describe('enhancedAudioService', () => {
       mockAudioCache.getCachedPath.mockResolvedValue('cached-bilingual.mp3');
 
       const result = await enhancedAudioService.generateEnhancedAudioTrack(
-        1,
+        articleId(1),
         'bilingual',
         mockArticle as any,
       );
@@ -178,7 +188,7 @@ describe('enhancedAudioService', () => {
       const error = new Error('Article not found');
       mockArticlesService.getArticleById.mockRejectedValue(error);
 
-      const result = await enhancedAudioService.generateEnhancedAudioTrack(1);
+      const result = await enhancedAudioService.generateEnhancedAudioTrack(articleId(1));
 
       expect(result).toBeNull();
       expect(mockHandleError).toHaveBeenCalledWith(error, {

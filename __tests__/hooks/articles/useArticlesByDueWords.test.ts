@@ -14,9 +14,10 @@ import type { Article } from '@/types/articles.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 
 // Mock useQuery from tanstack
-const mockUseQuery = jest.fn();
+type QueryOptionsArg = { queryKey: string[] };
+const mockUseQuery = jest.fn<(options: QueryOptionsArg, ...rest: unknown[]) => unknown>();
 jest.mock('@tanstack/react-query', () => ({
-  useQuery: (...args: unknown[]) => mockUseQuery(...args),
+  useQuery: (options: QueryOptionsArg) => mockUseQuery(options),
 }));
 
 // Mock articles service
@@ -30,7 +31,7 @@ jest.mock('@/services/articles', () => ({
 jest.mock('@/constants/queries', () => ({
   // Spread the real module so `gated` stays the real gate — the factories
   // below are faked, but the skipToken guard under test must not be.
-  ...jest.requireActual('@/constants/queries'),
+  ...jest.requireActual<Record<string, unknown>>('@/constants/queries'),
   fsrsQueries: {
     due: (userId: string) => ({
       queryKey: ['fsrs', 'due', userId],
@@ -47,7 +48,7 @@ jest.mock('@/constants/queries', () => ({
 }));
 
 // Mock article utils
-const mockGetArticlesByDueWords = jest.fn();
+const mockGetArticlesByDueWords = jest.fn((..._args: unknown[]): Article[] => []);
 jest.mock('@/utils/articleUtils', () => ({
   getArticlesByDueWords: (...args: unknown[]) => mockGetArticlesByDueWords(...args),
 }));
@@ -59,6 +60,8 @@ jest.mock('@/constants/fsrs', () => ({
 
 // Import after mocks
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
+import { rootId } from '@/__tests__/helpers/ids';
+import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 
 describe('useArticlesByDueWords', () => {
   const mockUserId = 'user-123';
@@ -72,18 +75,14 @@ describe('useArticlesByDueWords', () => {
       image_url: 'image.jpg',
     }) as Article;
 
-  const createMockStudyWord = (rootId: number): StudyWord =>
-    ({
-      id: rootId,
-      root_id: rootId,
-      fsrs_due: new Date().toISOString(),
-    }) as StudyWord;
+  const createMockStudyWord = (id: number): StudyWord =>
+    createTestWord({ root_id: rootId(id), fsrs_due: new Date().toISOString() });
 
   beforeEach(() => {
     jest.clearAllMocks();
 
     // Default: no due words, no articles
-    mockUseQuery.mockImplementation((options: { queryKey: string[] }) => {
+    mockUseQuery.mockImplementation(options => {
       const key = options.queryKey?.[1];
       if (key === 'due') {
         return { data: [], isLoading: false };
@@ -142,7 +141,7 @@ describe('useArticlesByDueWords', () => {
     test('populates dueWordRootIds from due words', () => {
       const dueWords = [createMockStudyWord(1), createMockStudyWord(2), createMockStudyWord(3)];
 
-      mockUseQuery.mockImplementation((options: { queryKey: string[] }) => {
+      mockUseQuery.mockImplementation(options => {
         const key = options.queryKey?.[1];
         if (key === 'due') {
           return { data: dueWords, isLoading: false };
@@ -153,15 +152,15 @@ describe('useArticlesByDueWords', () => {
       const { result } = renderHook(() => useArticlesByDueWords(mockUserId));
 
       expect(result.current.dueWordRootIds.size).toBe(3);
-      expect(result.current.dueWordRootIds.has(1)).toBeTruthy();
-      expect(result.current.dueWordRootIds.has(2)).toBeTruthy();
-      expect(result.current.dueWordRootIds.has(3)).toBeTruthy();
+      expect(result.current.dueWordRootIds.has(rootId(1))).toBeTruthy();
+      expect(result.current.dueWordRootIds.has(rootId(2))).toBeTruthy();
+      expect(result.current.dueWordRootIds.has(rootId(3))).toBeTruthy();
     });
 
     test('returns due words count', () => {
       const dueWords = [createMockStudyWord(1), createMockStudyWord(2)];
 
-      mockUseQuery.mockImplementation((options: { queryKey: string[] }) => {
+      mockUseQuery.mockImplementation(options => {
         const key = options.queryKey?.[1];
         if (key === 'due') {
           return { data: dueWords, isLoading: false };
@@ -180,7 +179,7 @@ describe('useArticlesByDueWords', () => {
       const dueWords = [createMockStudyWord(1)];
       const articles = [createMockArticle(1)];
 
-      mockUseQuery.mockImplementation((options: { queryKey: string[] }) => {
+      mockUseQuery.mockImplementation(options => {
         const key = options.queryKey?.[1];
         if (key === 'due') {
           return { data: dueWords, isLoading: false };
@@ -202,7 +201,7 @@ describe('useArticlesByDueWords', () => {
       const dueWords = [createMockStudyWord(1)];
       const sortedArticles = [createMockArticle(2), createMockArticle(1)];
 
-      mockUseQuery.mockImplementation((options: { queryKey: string[] }) => {
+      mockUseQuery.mockImplementation(options => {
         const key = options.queryKey?.[1];
         if (key === 'due') {
           return { data: dueWords, isLoading: false };
@@ -226,7 +225,7 @@ describe('useArticlesByDueWords', () => {
       const dueWords = [createMockStudyWord(1)];
       const articles = [createMockArticle(1)];
 
-      mockUseQuery.mockImplementation((options: { queryKey: string[] }) => {
+      mockUseQuery.mockImplementation(options => {
         const key = options.queryKey?.[1];
         if (key === 'due') {
           return { data: dueWords, isLoading: false };
@@ -253,7 +252,7 @@ describe('useArticlesByDueWords', () => {
 
   describe('Loading States', () => {
     test('isLoading true when due words loading', () => {
-      mockUseQuery.mockImplementation((options: { queryKey: string[] }) => {
+      mockUseQuery.mockImplementation(options => {
         const key = options.queryKey?.[1];
         if (key === 'due') {
           return { data: [], isLoading: true };

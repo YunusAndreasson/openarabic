@@ -42,13 +42,13 @@ describe('authorsService', () => {
       // Mock first call for authors table
       const authorsBuilder: any = {
         select: jest.fn().mockReturnThis(),
-        order: jest.fn().mockResolvedValue({ data: allAuthors, error: null }),
+        order: jest.fn(async (..._args: unknown[]) => ({ data: allAuthors, error: null })),
       };
 
       // Mock second call for articles table
       const articlesBuilder: any = {
         select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockResolvedValue({ data: articleAuthors, error: null }),
+        eq: jest.fn(async (..._args: unknown[]) => ({ data: articleAuthors, error: null })),
       };
 
       fromMock.mockReturnValueOnce(authorsBuilder).mockReturnValueOnce(articlesBuilder);
@@ -68,12 +68,12 @@ describe('authorsService', () => {
     test('returns empty array when no authors exist', async () => {
       const authorsBuilder: any = {
         select: jest.fn().mockReturnThis(),
-        order: jest.fn().mockResolvedValue({ data: [], error: null }),
+        order: jest.fn(async (..._args: unknown[]) => ({ data: [], error: null })),
       };
 
       const articlesBuilder: any = {
         select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockResolvedValue({ data: [], error: null }),
+        eq: jest.fn(async (..._args: unknown[]) => ({ data: [], error: null })),
       };
 
       fromMock.mockReturnValueOnce(authorsBuilder).mockReturnValueOnce(articlesBuilder);

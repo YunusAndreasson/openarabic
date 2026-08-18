@@ -19,7 +19,7 @@ import { Pressable as GestureHandlerPressable } from 'react-native-gesture-handl
 // Pressable the component picked. Swap in something distinguishable so the
 // assertion below has teeth.
 jest.mock('react-native-gesture-handler', () => {
-  const actual = jest.requireActual('react-native-gesture-handler');
+  const actual = jest.requireActual<Record<string, unknown>>('react-native-gesture-handler');
   const RN = require('react-native');
   const ReactModule = require('react');
   const Pressable = (props: Record<string, unknown>) =>
@@ -39,12 +39,14 @@ jest.mock('@/components/common', () => ({
   SectionLabel: () => null,
 }));
 
-const mockPlaylistItemCard = jest.fn(() => null);
+const mockPlaylistItemCard = jest.fn((..._args: unknown[]) => null);
 jest.mock('@/components/playlist', () => ({
   PlaylistItemCard: (props: Record<string, unknown>) => mockPlaylistItemCard(props),
 }));
 
-const mockUseMultipleFeaturedArticles = jest.fn();
+const mockUseMultipleFeaturedArticles = jest.fn((..._args: unknown[]) => ({
+  articles: [RELATED_ARTICLE],
+}));
 jest.mock('@/hooks/articles/useMultipleFeaturedArticles', () => ({
   useMultipleFeaturedArticles: (...args: unknown[]) => mockUseMultipleFeaturedArticles(...args),
 }));

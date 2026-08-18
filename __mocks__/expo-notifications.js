@@ -28,6 +28,22 @@ const mockClearLastNotificationResponse = jest.fn();
 
 module.exports = {
   __esModule: true,
+
+  // The iOS permission enums are part of the module's public surface and tests
+  // read them off it (`IosAuthorizationStatus.PROVISIONAL`). They were missing,
+  // so every such reference was `undefined` and the permission fixtures built
+  // from them modelled a state the platform never reports. Values mirror
+  // expo-notifications/build/NotificationPermissions.types.
+  IosAlertStyle: { NONE: 0, BANNER: 1, ALERT: 2 },
+  IosAllowsPreviews: { NEVER: 0, ALWAYS: 1, WHEN_AUTHENTICATED: 2 },
+  IosAuthorizationStatus: {
+    NOT_DETERMINED: 0,
+    DENIED: 1,
+    AUTHORIZED: 2,
+    PROVISIONAL: 3,
+    EPHEMERAL: 4,
+  },
+
   setNotificationHandler: mockSetNotificationHandler,
   setNotificationCategoryAsync: mockSetNotificationCategoryAsync,
   setNotificationChannelAsync: mockSetNotificationChannelAsync,

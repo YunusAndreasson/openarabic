@@ -102,7 +102,7 @@ describe('"whose" suffix detection', () => {
     });
 
     // Find "whose" segment
-    const whoseSegment = segments.find(s => s.text === 'whose');
+    const whoseSegment = segments.find((s: { text: string }) => s.text === 'whose');
     expect(whoseSegment).toBeDefined();
     expect(whoseSegment?.color).toBe(MOCK_GRAMMAR_COLORS.possessive);
   });

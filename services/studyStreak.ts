@@ -144,8 +144,6 @@ function buildActivityWindow(dayKeys: Set<string>, days: number): DailyReadingAc
   }
   return activity;
 }
-
-/** @internal */
 export class ReadingStreakService {
   /**
    * Calculate reading streak from daily activity data

@@ -30,11 +30,12 @@ import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import { useMemoryHorizonDistribution } from '@/hooks/vocabulary/useMemoryHorizonDistribution';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { BIN_COUNT } from '@/utils/horizonBandPath';
+import { rootId } from '@/__tests__/helpers/ids';
 
 /** A word that has genuinely been reviewed, holding for `stability` days. */
 const practised = (id: number, stability: number): StudyWord =>
   createTestWord({
-    id,
+    root_id: rootId(id),
     fsrs_state: 2,
     fsrs_reps: 3,
     fsrs_stability: stability,
@@ -44,7 +45,7 @@ const practised = (id: number, stability: number): StudyWord =>
 /** Exactly what `createInitialFSRSEntry` / `createResetFSRSUpdate` write. */
 const neverPractised = (id: number): StudyWord =>
   createTestWord({
-    id,
+    root_id: rootId(id),
     fsrs_state: 0,
     fsrs_reps: 0,
     fsrs_stability: 0.4,

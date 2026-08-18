@@ -137,7 +137,6 @@ import { normalizeTranslation } from './arabicAnalysis/translationNormalization'
 
 // Re-export types and functions for backwards compatibility
 export type { WordAnalysis };
-/** @internal */
 export { clearAnalysisCache };
 export { formatWordAnalysis, normalizeArabic, shouldInjectBracket };
 

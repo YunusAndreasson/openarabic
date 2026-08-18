@@ -4,7 +4,8 @@
     "app/**/*.{ts,tsx}",
     "*.config.{js,ts,mjs}",
     "plugins/**/*.js",
-    "scripts/**/*.{ts,mjs}"
+    "scripts/**/*.{ts,mjs}",
+    "__tests__/**/*.{test,spec}.{ts,tsx}"
   ],
   "project": [
     "**/*.{js,jsx,ts,tsx}",
@@ -14,7 +15,6 @@
     "!**/translate/**",
     "!**/supabase/migrations/**",
     "!**/admin-dashboard/**",
-    "!**/__tests__/**",
     "!**/__mocks__/**"
   ],
   "jest": false,
@@ -25,9 +25,7 @@
     "@babel/plugin-transform-react-jsx",
     "@eslint/js",
     "@swmansion/argent",
-    "eslint-plugin-react",
-    "@jest/globals",
-    "fast-check"
+    "eslint-plugin-react"
   ],
   "ignoreExportsUsedInFile": {
     "interface": true,

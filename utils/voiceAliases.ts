@@ -31,20 +31,17 @@ import { normalize, stripLeadingFunctionWords } from '@/utils/voiceMatching';
  * several ("lineage" produced "Linear.", "Linach." and "Leaner edge." in one
  * session); past this the card has stopped being a recall test and the cap is
  * the signal that something else is wrong.
- * @internal
  */
 export const MAX_ALIASES_PER_ROOT = 8;
 
 /** Stored and compared in the matcher's own normalized space, so an alias is
  *  insensitive to case and the trailing full stop Parakeet likes to add. */
-/** @internal */
 export function normalizeAlias(transcript: string): string {
   return normalize(transcript);
 }
 
 /** Rule 1: there has to be something to remember. Covers the dead-mic accepts,
  *  which are 43% of every "Got it" pressed so far. */
-/** @internal */
 export function hasStorableText(transcript: string): boolean {
   return normalizeAlias(transcript).length > 0;
 }
@@ -59,7 +56,6 @@ export function hasStorableText(transcript: string): boolean {
  *
  * Compared with leading scaffolding stripped, because the recognizer supplies
  * it and the gloss does not: "to approach" must collide with "approach".
- * @internal
  */
 export function collidesWithAnotherGloss(
   transcript: string,

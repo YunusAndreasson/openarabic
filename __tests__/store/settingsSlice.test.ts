@@ -26,12 +26,14 @@ import reducer, {
 } from '../../store/settingsSlice';
 import { AudioLanguage, DisplayLanguage } from '@/types/enums';
 import type { ReminderTime } from '@/types/notifications.types';
+import { defaultPreloadedState } from '@/__tests__/helpers/testStore';
 
 describe('settingsSlice reducers', () => {
   let initialState: SettingsState;
 
   beforeEach(() => {
     initialState = {
+      ...defaultPreloadedState.settings,
       reminderTime: {
         hour: 19,
         minute: 0,
@@ -96,19 +98,14 @@ describe('settingsSlice reducers', () => {
   });
 
   describe('setAudioLanguagePreference', () => {
-    test('sets to ENGLISH', () => {
-      const state = reducer(initialState, setAudioLanguagePreference(AudioLanguage.ENGLISH));
-      expect(state.audioLanguagePreference).toBe(AudioLanguage.ENGLISH);
-    });
-
-    test('sets to ARABIC', () => {
-      const state = reducer(initialState, setAudioLanguagePreference(AudioLanguage.ARABIC));
-      expect(state.audioLanguagePreference).toBe(AudioLanguage.ARABIC);
+    test('sets to ARABIC_ONLY', () => {
+      const state = reducer(initialState, setAudioLanguagePreference(AudioLanguage.ARABIC_ONLY));
+      expect(state.audioLanguagePreference).toBe('arabic');
     });
 
     test('sets to ENGLISH_ARABIC', () => {
       const state = reducer(initialState, setAudioLanguagePreference(AudioLanguage.ENGLISH_ARABIC));
-      expect(state.audioLanguagePreference).toBe(AudioLanguage.ENGLISH_ARABIC);
+      expect(state.audioLanguagePreference).toBe('bilingual');
     });
   });
 
@@ -126,14 +123,12 @@ describe('settingsSlice reducers', () => {
   });
 
   describe('setDisplayLanguagePreference', () => {
-    test('sets to ARABIC', () => {
-      const state = reducer(initialState, setDisplayLanguagePreference(DisplayLanguage.ARABIC));
-      expect(state.displayLanguagePreference).toBe(DisplayLanguage.ARABIC);
-    });
-
-    test('sets to ENGLISH', () => {
-      const state = reducer(initialState, setDisplayLanguagePreference(DisplayLanguage.ENGLISH));
-      expect(state.displayLanguagePreference).toBe(DisplayLanguage.ENGLISH);
+    test('sets to ARABIC_ONLY', () => {
+      const state = reducer(
+        initialState,
+        setDisplayLanguagePreference(DisplayLanguage.ARABIC_ONLY),
+      );
+      expect(state.displayLanguagePreference).toBe('arabic');
     });
 
     test('sets to ARABIC_ENGLISH', () => {
@@ -141,7 +136,7 @@ describe('settingsSlice reducers', () => {
         initialState,
         setDisplayLanguagePreference(DisplayLanguage.ARABIC_ENGLISH),
       );
-      expect(state.displayLanguagePreference).toBe(DisplayLanguage.ARABIC_ENGLISH);
+      expect(state.displayLanguagePreference).toBe('bilingual');
     });
   });
 

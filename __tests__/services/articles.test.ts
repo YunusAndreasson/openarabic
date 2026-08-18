@@ -24,25 +24,25 @@ const mockQueryChain = {
   order: jest.fn().mockReturnThis(),
   range: jest.fn().mockReturnThis(),
   maybeSingle: jest.fn().mockReturnThis(),
-  returns: jest.fn().mockResolvedValue({ data: [], error: null }),
+  returns: jest.fn(async (..._args: unknown[]) => ({ data: [], error: null })),
 };
 
 Object.keys(mockQueryChain).forEach(key => {
   if (key !== 'returns') {
-    (mockQueryChain as any)[key] = jest.fn(() => mockQueryChain);
+    (mockQueryChain as any)[key] = jest.fn((..._args: unknown[]) => mockQueryChain);
   }
 });
 
 jest.mock('@/services/supabase', () => ({
   supabase: {
-    from: jest.fn(() => ({
-      select: jest.fn(() => mockQueryChain),
+    from: jest.fn((..._args: unknown[]) => ({
+      select: jest.fn((..._args: unknown[]) => mockQueryChain),
     })),
   },
 }));
 
 jest.mock('@/utils/supabaseHelpers', () => ({
-  executeQuery: jest.fn(async queryFn => {
+  executeQuery: jest.fn(async (queryFn: () => Promise<{ data: unknown; error: unknown }>) => {
     const { data, error } = await queryFn();
     if (error) throw error;
     return data;

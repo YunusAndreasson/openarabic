@@ -44,10 +44,18 @@ function filterFilesByExtension(files, extensions) {
   return files.filter(file => extensions.some(ext => file.endsWith(ext)));
 }
 
+// Paths outside the app's TypeScript program AND outside its ESLint config —
+// both callers below filter on this. `__tests__/` is here because it is not in
+// tsconfig.json (it has its own program, added as a separate task) and because
+// eslint.config.mjs ignores it; changed test files therefore reach the tests
+// typecheck and nothing else.
 function isExcludedFile(file) {
-  // Files that are excluded from tsconfig.json
   const excludedPaths = ['admin-dashboard/', 'translate/', '__tests__/', 'scripts/'];
   return excludedPaths.some(path => file.startsWith(path));
+}
+
+function isTestFile(file) {
+  return file.startsWith('__tests__/');
 }
 
 function runCommand(command, args, label) {
@@ -104,7 +112,7 @@ function parseErrors(result) {
   if (!output) return errors;
 
   // Parse TypeScript errors (tsc-files format)
-  if (result.label === 'TypeScript') {
+  if (result.label === 'TypeScript' || result.label === 'TypeScript (tests)') {
     const tsErrorRegex = /(.+?)\((\d+),(\d+)\): error TS(\d+): (.+)/g;
     let match;
     while ((match = tsErrorRegex.exec(output)) !== null) {
@@ -261,6 +269,19 @@ async function main() {
     }
     // Use full tsc --noEmit instead of tsc-files to avoid module resolution issues
     tasks.push(Promise.resolve().then(() => runCommand('yarn', ['tsc', '--noEmit'], 'TypeScript')));
+  }
+
+  // The test suite is a separate TypeScript program. It is larger than the app
+  // and was unchecked for a long time, which let tests drift from the source
+  // they cover — assertions against props and columns that no longer exist pass
+  // green because they compare undefined to undefined.
+  const changedTestFiles = codeFiles.filter(isTestFile);
+  if (changedTestFiles.length > 0) {
+    tasks.push(
+      Promise.resolve().then(() =>
+        runCommand('yarn', ['tsc', '-p', 'tsconfig.test.json', '--noEmit'], 'TypeScript (tests)'),
+      ),
+    );
   }
 
   // ESLint - only non-excluded code files

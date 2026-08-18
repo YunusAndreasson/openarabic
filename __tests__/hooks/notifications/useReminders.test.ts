@@ -32,9 +32,9 @@ const mockReminder: ReminderTime = { hour: 7, minute: 0, enabled: false };
 beforeEach(() => {
   jest.clearAllMocks();
   (useAppDispatch as jest.Mock).mockReturnValue(mockDispatch);
-  (useAppSelector as jest.Mock).mockImplementation(selector =>
-    selector({ settings: { reminderTime: mockReminder } }),
-  );
+  (
+    useAppSelector as jest.Mock<(selector: (state: unknown) => unknown) => unknown>
+  ).mockImplementation(selector => selector({ settings: { reminderTime: mockReminder } }));
 });
 
 describe('useReminders', () => {

@@ -5,8 +5,8 @@ import { startTransition, useCallback, useEffect, useOptimistic, useState } from
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ThemedButton } from '@/components/ThemedButton';
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedButton } from '@/components/primitives/ThemedButton';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { useToast } from '@/components/providers';
 import { LAYOUT, getArabicHeroFontSize } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';

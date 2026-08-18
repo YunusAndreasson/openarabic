@@ -20,12 +20,13 @@ import { createTestQueryClient } from '@/__tests__/helpers/testUtils';
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import { fsrsQueries, PRACTICE_DUE_WORDS_LIMIT } from '@/constants/queries';
 import { useAppBadge } from '@/hooks/app/useAppBadge';
+import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
+import { rootId } from '@/__tests__/helpers/ids';
 
 // Mock modules at top level
-const mockCanUseBadge = jest.fn();
-const mockSetAppBadgeCount = jest.fn();
-const mockClearAppBadge = jest.fn();
-
+const mockCanUseBadge = jest.fn(async (..._args: unknown[]) => true);
+const mockSetAppBadgeCount = jest.fn(async (..._args: unknown[]) => true);
+const mockClearAppBadge = jest.fn(async (..._args: unknown[]) => true);
 jest.mock('@/services/notificationService', () => ({
   canUseBadge: () => mockCanUseBadge(),
   setAppBadgeCount: (count: number) => mockSetAppBadgeCount(count),
@@ -118,7 +119,10 @@ describe('useAppBadge', () => {
 
     test('does not update badge when permission denied', async () => {
       mockCanUseBadge.mockResolvedValue(false);
-      mockDueWords = [{ root_id: 1 }, { root_id: 2 }];
+      mockDueWords = [
+        createTestWord({ root_id: rootId(1) }),
+        createTestWord({ root_id: rootId(2) }),
+      ];
 
       renderHook(() => useAppBadge(), { wrapper });
 
@@ -133,7 +137,11 @@ describe('useAppBadge', () => {
 
   describe('Badge updates', () => {
     test('updates badge when due words change', async () => {
-      mockDueWords = [{ root_id: 1 }, { root_id: 2 }, { root_id: 3 }];
+      mockDueWords = [
+        createTestWord({ root_id: rootId(1) }),
+        createTestWord({ root_id: rootId(2) }),
+        createTestWord({ root_id: rootId(3) }),
+      ];
 
       renderHook(() => useAppBadge(), { wrapper });
 
@@ -143,7 +151,7 @@ describe('useAppBadge', () => {
     });
 
     test('debounces rapid updates (1-second minimum)', async () => {
-      mockDueWords = [{ root_id: 1 }];
+      mockDueWords = [createTestWord({ root_id: rootId(1) })];
 
       renderHook(() => useAppBadge(), { wrapper });
 
@@ -161,7 +169,7 @@ describe('useAppBadge', () => {
     });
 
     test('does not update when count has not changed', async () => {
-      mockDueWords = [{ root_id: 1 }];
+      mockDueWords = [createTestWord({ root_id: rootId(1) })];
 
       renderHook(() => useAppBadge(), { wrapper });
 
@@ -183,7 +191,8 @@ describe('useAppBadge', () => {
 
   describe('Query cache subscription', () => {
     const userId = 'test-user-id';
-    const words = (n: number) => Array.from({ length: n }, (_, i) => ({ root_id: i + 1 }));
+    const words = (n: number) =>
+      Array.from({ length: n }, (_, i) => createTestWord({ root_id: rootId(i + 1) }));
 
     // Establish a badge count, then clear the spy and step past the 1s rate
     // limit so a following update is free to land.
@@ -238,7 +247,7 @@ describe('useAppBadge', () => {
 
   describe('Sign out handling', () => {
     test('clears badge when user signs out', async () => {
-      mockDueWords = [{ root_id: 1 }];
+      mockDueWords = [createTestWord({ root_id: rootId(1) })];
 
       const { rerender } = renderHook(() => useAppBadge(), { wrapper });
 
@@ -264,7 +273,10 @@ describe('useAppBadge', () => {
     });
 
     test('updates badge when app becomes active', async () => {
-      mockDueWords = [{ root_id: 1 }, { root_id: 2 }];
+      mockDueWords = [
+        createTestWord({ root_id: rootId(1) }),
+        createTestWord({ root_id: rootId(2) }),
+      ];
 
       renderHook(() => useAppBadge(), { wrapper });
 
@@ -301,7 +313,7 @@ describe('useAppBadge', () => {
         configurable: true,
       });
 
-      mockDueWords = [{ root_id: 1 }];
+      mockDueWords = [createTestWord({ root_id: rootId(1) })];
 
       renderHook(() => useAppBadge(), { wrapper });
 
@@ -317,7 +329,7 @@ describe('useAppBadge', () => {
   describe('Loading state', () => {
     test('does not update badge while loading', async () => {
       mockIsLoading = true;
-      mockDueWords = [{ root_id: 1 }];
+      mockDueWords = [createTestWord({ root_id: rootId(1) })];
 
       renderHook(() => useAppBadge(), { wrapper });
 

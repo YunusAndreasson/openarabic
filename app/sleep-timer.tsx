@@ -5,9 +5,9 @@ import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomSheetHeader } from '@/components/common';
-import { ThemedButton } from '@/components/ThemedButton';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { ThemedButton } from '@/components/primitives/ThemedButton';
+import { ThemedText } from '@/components/primitives/ThemedText';
+import { ThemedView } from '@/components/primitives/ThemedView';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';

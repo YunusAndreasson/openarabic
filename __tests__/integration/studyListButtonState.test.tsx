@@ -36,6 +36,7 @@ import { useStudyWordMutations } from '@/hooks/articles/useStudyWordMutations';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { RootId } from '@/types/branded.types';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { rootId, userId } from '@/__tests__/helpers/ids';
 
 // Mock dependencies
 jest.mock('@/services/studyWordsFSRS');
@@ -56,15 +57,15 @@ jest.mock('@/components/providers/ToastProvider', () => ({
   }),
 }));
 jest.mock('@/store/hooks', () => ({
-  useAppSelector: jest.fn(() => 'arabic'),
+  useAppSelector: jest.fn((..._args: unknown[]) => 'arabic'),
 }));
 jest.mock('@/hooks/vocabulary', () => ({
   useDailyWordLimit: () => ({
     dailyWordLimit: 50,
-    canAddWord: jest.fn().mockResolvedValue(true),
-    incrementDailyWordCount: jest.fn().mockResolvedValue(true),
-    decrementDailyWordCount: jest.fn().mockResolvedValue(undefined),
-    decrementIfAddedToday: jest.fn().mockResolvedValue(undefined),
+    canAddWord: jest.fn(async (..._args: unknown[]) => true),
+    incrementDailyWordCount: jest.fn(async (..._args: unknown[]) => true),
+    decrementDailyWordCount: jest.fn(async (..._args: unknown[]) => undefined),
+    decrementIfAddedToday: jest.fn(async (..._args: unknown[]) => undefined),
   }),
 }));
 
@@ -72,20 +73,20 @@ const { supabase } = require('@/services/supabase');
 
 describe('Study List Button State - Bug Reproduction', () => {
   let queryClient: QueryClient;
-  const mockUserId = 'test-user-123';
-  const mockRootId = 42 as RootId;
+  const mockUserId = userId('test-user-123');
+  const mockRootId = rootId(42);
 
   // Helper to create study words for this test
-  const createStudyWord = (rootId: number): StudyWord =>
+  const createStudyWord = (id: number): StudyWord =>
     createTestWord({
-      root_id: rootId,
+      root_id: rootId(id),
       user_id: mockUserId,
       root: {
-        id: rootId,
+        id,
         letters: 'ك ت ب',
         meaning: 'to write',
-        audio_url: null,
-        audio_url_en: null,
+        audio_url: '',
+        audio_url_en: '',
       },
     });
 
@@ -123,7 +124,7 @@ describe('Study List Button State - Bug Reproduction', () => {
       queryClient.setQueryData(fsrsQueries.allWithCooldown(mockUserId, 24).queryKey, []);
 
       const { result } = renderHook(
-        () => useStudyWordMutations(jest.fn().mockResolvedValue(undefined)),
+        () => useStudyWordMutations(jest.fn(async (..._args: unknown[]) => undefined)),
         { wrapper },
       );
 
@@ -220,7 +221,7 @@ describe('Study List Button State - Bug Reproduction', () => {
       const expectedLocalState = new Map<number, boolean>();
 
       const { result } = renderHook(
-        () => useStudyWordMutations(jest.fn().mockResolvedValue(undefined)),
+        () => useStudyWordMutations(jest.fn(async (..._args: unknown[]) => undefined)),
         { wrapper },
       );
 
@@ -268,7 +269,7 @@ describe('Study List Button State - Bug Reproduction', () => {
       queryClient.setQueryData(fsrsQueries.all(mockUserId).queryKey, [existingWord]);
 
       const { result } = renderHook(
-        () => useStudyWordMutations(jest.fn().mockResolvedValue(undefined)),
+        () => useStudyWordMutations(jest.fn(async (..._args: unknown[]) => undefined)),
         { wrapper },
       );
 
@@ -289,7 +290,7 @@ describe('Study List Button State - Bug Reproduction', () => {
       queryClient.setQueryData(fsrsQueries.all(mockUserId).queryKey, []);
 
       const { result } = renderHook(
-        () => useStudyWordMutations(jest.fn().mockResolvedValue(undefined)),
+        () => useStudyWordMutations(jest.fn(async (..._args: unknown[]) => undefined)),
         { wrapper },
       );
 
@@ -316,7 +317,7 @@ describe('Study List Button State - Bug Reproduction', () => {
       const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
 
       const { result } = renderHook(
-        () => useStudyWordMutations(jest.fn().mockResolvedValue(undefined)),
+        () => useStudyWordMutations(jest.fn(async (..._args: unknown[]) => undefined)),
         { wrapper },
       );
 
@@ -333,9 +334,9 @@ describe('Study List Button State - Bug Reproduction', () => {
       });
 
       // Verify prefix-based invalidation covers all FSRS queries for this user
-      const invalidatedKeys = invalidateSpy.mock.calls.map(call => call[0].queryKey);
+      const invalidatedKeys = invalidateSpy.mock.calls.map(call => call[0]?.queryKey);
 
-      // invalidateAll uses prefix-based invalidation: ['fsrs-words', userId]
+      // invalidateAll uses prefix-based invalidation: ['fsrs-words', testUserId]
       // This single call covers all, due, stats, and cooldown queries
       expect(invalidatedKeys).toEqual(expect.arrayContaining([['fsrs-words', mockUserId]]));
     });
@@ -350,7 +351,7 @@ describe('Study List Button State - Bug Reproduction', () => {
       ]);
 
       const { result } = renderHook(
-        () => useStudyWordMutations(jest.fn().mockResolvedValue(undefined)),
+        () => useStudyWordMutations(jest.fn(async (..._args: unknown[]) => undefined)),
         { wrapper },
       );
 

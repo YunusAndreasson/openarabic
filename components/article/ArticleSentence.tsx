@@ -9,7 +9,7 @@ import { Pressable } from 'react-native-gesture-handler';
 import type { SharedValue } from 'react-native-reanimated';
 
 import { BaseCard } from '@/components/common';
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { SkiaArabicWord as ArabicWord } from '@/components/article/SkiaArabicWord';
 import { FONTS } from '@/constants/fonts';
 import { LAYOUT } from '@/constants/layout';

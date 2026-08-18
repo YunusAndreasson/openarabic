@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { tonalSurface } from '@/utils/colorUtils';

@@ -28,25 +28,26 @@ import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import { useReview } from '@/hooks/review';
 import { store } from '@/store/store';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { rootId, userId } from '@/__tests__/helpers/ids';
 
 // Mock only external dependencies and services
 
 jest.mock('expo-audio', () => ({
-  createAudioPlayer: jest.fn(() => ({
-    play: jest.fn().mockResolvedValue(undefined),
-    pause: jest.fn().mockResolvedValue(undefined),
-    stop: jest.fn().mockResolvedValue(undefined),
-    addListener: jest.fn(() => ({ remove: jest.fn() })),
+  createAudioPlayer: jest.fn((..._args: unknown[]) => ({
+    play: jest.fn(async (..._args: unknown[]) => undefined),
+    pause: jest.fn(async (..._args: unknown[]) => undefined),
+    stop: jest.fn(async (..._args: unknown[]) => undefined),
+    addListener: jest.fn((..._args: unknown[]) => ({ remove: jest.fn() })),
     remove: jest.fn(),
   })),
-  setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
-  setIsAudioActiveAsync: jest.fn().mockResolvedValue(undefined),
+  setAudioModeAsync: jest.fn(async (..._args: unknown[]) => undefined),
+  setIsAudioActiveAsync: jest.fn(async (..._args: unknown[]) => undefined),
 }));
 
 jest.mock('expo-asset', () => ({
   Asset: {
-    fromModule: jest.fn(() => ({
-      downloadAsync: jest.fn().mockResolvedValue(undefined),
+    fromModule: jest.fn((..._args: unknown[]) => ({
+      downloadAsync: jest.fn(async (..._args: unknown[]) => undefined),
       localUri: '/mock/asset/path.mp3',
     })),
   },
@@ -66,26 +67,26 @@ jest.mock('@/services/studyWordsFSRS', () => ({
 jest.mock('expo-file-system', () => ({
   documentDirectory: '/mock/documents/',
   cacheDirectory: '/mock/cache/',
-  getInfoAsync: jest.fn().mockResolvedValue({ exists: false }),
-  makeDirectoryAsync: jest.fn().mockResolvedValue(undefined),
-  deleteAsync: jest.fn().mockResolvedValue(undefined),
-  readDirectoryAsync: jest.fn().mockResolvedValue([]),
+  getInfoAsync: jest.fn(async (..._args: unknown[]) => ({ exists: false })),
+  makeDirectoryAsync: jest.fn(async (..._args: unknown[]) => undefined),
+  deleteAsync: jest.fn(async (..._args: unknown[]) => undefined),
+  readDirectoryAsync: jest.fn(async (..._args: unknown[]) => []),
 }));
 
 jest.mock('@/services/audioCache', () => ({
   audioCacheManager: {
-    getCachedAudioPath: jest.fn().mockResolvedValue(null),
-    cacheAudio: jest.fn().mockResolvedValue(undefined),
-    clearCache: jest.fn().mockResolvedValue(undefined),
+    getCachedAudioPath: jest.fn(async (..._args: unknown[]) => null),
+    cacheAudio: jest.fn(async (..._args: unknown[]) => undefined),
+    clearCache: jest.fn(async (..._args: unknown[]) => undefined),
   },
 }));
 
 jest.mock('@/hooks/audio/useSimpleAudioPlayer', () => ({
   useSimpleAudioPlayer: () => ({
-    play: jest.fn().mockResolvedValue(undefined),
-    stop: jest.fn().mockResolvedValue(undefined),
-    pause: jest.fn().mockResolvedValue(undefined),
-    getStatus: jest.fn().mockResolvedValue({ playing: false }),
+    play: jest.fn(async (..._args: unknown[]) => undefined),
+    stop: jest.fn(async (..._args: unknown[]) => undefined),
+    pause: jest.fn(async (..._args: unknown[]) => undefined),
+    getStatus: jest.fn(async (..._args: unknown[]) => ({ playing: false })),
   }),
 }));
 
@@ -105,36 +106,36 @@ describe('Visual Practice Flow - Real useReview Hook', () => {
     // Mock service to return some words
     const mockWords = [
       createTestWord({
-        root_id: 1,
-        user_id: 'test-user-123',
+        root_id: rootId(1),
+        user_id: userId('test-user-123'),
         root: {
           id: 1,
           letters: 'word-1',
           meaning: 'meaning-1',
-          audio_url: null,
-          audio_url_en: null,
+          audio_url: '',
+          audio_url_en: '',
         },
       }),
       createTestWord({
-        root_id: 2,
-        user_id: 'test-user-123',
+        root_id: rootId(2),
+        user_id: userId('test-user-123'),
         root: {
           id: 2,
           letters: 'word-2',
           meaning: 'meaning-2',
-          audio_url: null,
-          audio_url_en: null,
+          audio_url: '',
+          audio_url_en: '',
         },
       }),
       createTestWord({
-        root_id: 3,
-        user_id: 'test-user-123',
+        root_id: rootId(3),
+        user_id: userId('test-user-123'),
         root: {
           id: 3,
           letters: 'word-3',
           meaning: 'meaning-3',
-          audio_url: null,
-          audio_url_en: null,
+          audio_url: '',
+          audio_url_en: '',
         },
       }),
     ];

@@ -2,7 +2,7 @@ import { Stack } from 'expo-router';
 import type { JSX } from 'react';
 
 import { CloseButton } from '@/components/ui';
-import { HeaderProfile } from '@/components/HeaderProfile';
+import { HeaderProfile } from '@/components/explore/HeaderProfile';
 import { STRINGS } from '@/constants/strings';
 import { createNavigationOptions, createTabHeaderOptions } from '@/utils/navigation';
 import { useColors } from '@/hooks/theme/useColors';

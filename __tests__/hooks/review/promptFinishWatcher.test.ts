@@ -21,6 +21,7 @@ import type { AudioStatus } from '@/services/audioPlayer';
 const TRACK = { id: 'prompt-1', audioUrl: 'file:///kitab.mp3', title: 'Review Audio' };
 
 const IDLE: AudioStatus = {
+  error: null,
   playing: false,
   currentTime: 0,
   duration: 0,

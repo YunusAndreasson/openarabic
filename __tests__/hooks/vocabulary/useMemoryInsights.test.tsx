@@ -15,6 +15,7 @@ import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import { useMemoryInsights } from '@/hooks/vocabulary/useMemoryInsights';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { rootId } from '@/__tests__/helpers/ids';
 
 jest.mock('@/constants/chartConstants', () => ({
   DAYS_7: 7,
@@ -94,8 +95,8 @@ describe('useMemoryInsights', () => {
 
     test('recallableWords is the percentage un-averaged, never more than the population', () => {
       const words = [
-        createTestWord({ id: 1, fsrs_state: 2, fsrs_stability: 5, fsrs_reps: 3 }),
-        createTestWord({ id: 2, fsrs_state: 2, fsrs_stability: 40, fsrs_reps: 4 }),
+        createTestWord({ root_id: rootId(1), fsrs_state: 2, fsrs_stability: 5, fsrs_reps: 3 }),
+        createTestWord({ root_id: rootId(2), fsrs_state: 2, fsrs_stability: 40, fsrs_reps: 4 }),
       ];
 
       const { result } = renderHook(() => useMemoryInsights(words));
@@ -133,7 +134,7 @@ describe('useMemoryInsights', () => {
 
       const firstData = result.current;
 
-      rerender();
+      rerender(undefined);
 
       // Same input, same object identity — nothing downstream re-renders.
       expect(result.current).toBe(firstData);

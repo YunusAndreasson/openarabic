@@ -5,9 +5,9 @@ import { Fragment, memo, useCallback, useMemo, type FC } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
-import { ThemedButton } from '@/components/ThemedButton';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { ThemedButton } from '@/components/primitives/ThemedButton';
+import { ThemedText } from '@/components/primitives/ThemedText';
+import { ThemedView } from '@/components/primitives/ThemedView';
 import { ArabicColoringExamples } from '@/components/account/ArabicColoringExamples';
 import { BaseCard, EmptyState, SectionLabel } from '@/components/common';
 import { type FAQCategoryData, type FAQItem } from '@/constants/faq';

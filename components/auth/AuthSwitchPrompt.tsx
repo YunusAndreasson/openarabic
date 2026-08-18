@@ -1,7 +1,7 @@
 import type { JSX } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { TextLink } from '@/components/ui/TextLink';
 import { LAYOUT } from '@/constants/layout';
 

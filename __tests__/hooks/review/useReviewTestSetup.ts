@@ -21,49 +21,39 @@ import {
   setupInteractionManagerMock,
 } from '@/__tests__/helpers/hookMocks';
 
-// Re-export for convenience
-export {
-  createAuthMock,
-  createAudioPlayerMock,
-  createFSRSMock,
-  createSessionMetricsMock,
-  createAudioPreloaderMock,
-  createTimerCleanupMock,
-  createOpacityAnimationMock,
-  setupInteractionManagerMock,
-};
+// Re-exported because useReview.test.tsx builds its FSRS state through this module.
+export { createFSRSMock };
 
 import type { StudyWord } from '@/types/vocabulary.types';
+import { rootId, userId } from '@/__tests__/helpers/ids';
+import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 
 /**
  * Creates a mock StudyWord for useReview tests.
  * Includes root data needed for word display.
  */
-export const createMockWord = (overrides: Partial<StudyWord> = {}): StudyWord => ({
-  id: 1,
-  user_id: 'test-user-123',
-  root_id: 101,
-  fsrs_due: new Date(Date.now() - 1000).toISOString(),
-  fsrs_stability: 5,
-  fsrs_difficulty: 5,
-  fsrs_scheduled_days: 1,
-  fsrs_reps: 2,
-  fsrs_lapses: 0,
-  fsrs_state: 2,
-  fsrs_last_review: new Date().toISOString(),
-  created_at: new Date().toISOString(),
-  root: {
-    id: 101,
-    letters: 'كتاب',
-    meaning: 'book',
-    audio_url: 'audio/kitab.mp3',
-    audio_url_en: 'audio/book.mp3',
-  },
-  ...overrides,
-});
-
-// Re-export wrapper creator
-export { createHookTestWrapper } from '@/__tests__/helpers/hookMocks';
+export const createMockWord = (overrides: Partial<StudyWord> = {}): StudyWord =>
+  createTestWord({
+    user_id: userId('test-user-123'),
+    root_id: rootId(101),
+    fsrs_due: new Date(Date.now() - 1000).toISOString(),
+    fsrs_stability: 5,
+    fsrs_difficulty: 5,
+    fsrs_scheduled_days: 1,
+    fsrs_reps: 2,
+    fsrs_lapses: 0,
+    fsrs_state: 2,
+    fsrs_last_review: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    root: {
+      id: 101,
+      letters: 'كتاب',
+      meaning: 'book',
+      audio_url: 'audio/kitab.mp3',
+      audio_url_en: 'audio/book.mp3',
+    },
+    ...overrides,
+  });
 
 /**
  * Mock references returned by setupUseReviewMocks
@@ -148,7 +138,7 @@ export function setupUseReviewMocks(): UseReviewMockRefs {
   simpleAudioService.preconfigureAudioSession = mockAudioPlayer.preconfigureAudioSession;
 
   // Mock FSRS hook
-  const mockUpdateWord = jest.fn().mockResolvedValue(7.5);
+  const mockUpdateWord = jest.fn(async (..._args: unknown[]) => 7.5);
   const mockInvalidateQueries = jest.fn();
   useFSRS.mockReturnValue(
     createFSRSMock({
@@ -181,7 +171,7 @@ export function setupUseReviewMocks(): UseReviewMockRefs {
   const mockClearAllTimers = jest.fn();
   useTimerCleanup.mockReturnValue(
     createTimerCleanupMock({
-      setTimer: mockSetTimer,
+      setTimer: mockSetTimer as unknown as ReturnType<typeof createTimerCleanupMock>['setTimer'],
       clearTimer: mockClearTimer,
       clearAllTimers: mockClearAllTimers,
     }),

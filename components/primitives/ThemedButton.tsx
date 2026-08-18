@@ -3,7 +3,7 @@ import type { JSX } from 'react';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import type { ColorName } from '@/constants/colors';
 import { LAYOUT } from '@/constants/layout';
 import { PRESS_ANIMATION_BUTTON, PRESS_ANIMATION_WIDE } from '@/hooks/animations';

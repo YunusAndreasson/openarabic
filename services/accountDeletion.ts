@@ -1,3 +1,6 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { accountOwnedStorageKeys } from '@/constants/storageKeys';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
 
@@ -44,6 +47,27 @@ export class AccountDeletionService {
 
     if (deleteError) {
       throw new Error(`Failed to delete account: ${deleteError.message}`);
+    }
+
+    // The RPC clears the server side; the device still holds everything this
+    // account wrote locally — onboarding progress, tutorial flags, the streak
+    // ledger, the recall history driving new-word pacing, today's add count, the
+    // notification-priming decision, the cached avatar and the permission-denial
+    // markers. Without this the next account to sign in on the device inherits
+    // all of it. The list is derived from the scope table in constants/storageKeys
+    // rather than restated here, so a new key cannot be forgotten.
+    //
+    // Failure here must not mask a successful deletion, so it is reported and
+    // swallowed: the account is already gone server-side and the user must still
+    // reach the signed-out state below.
+    try {
+      await AsyncStorage.multiRemove(accountOwnedStorageKeys(user.id));
+    } catch (error) {
+      void handleError(error, {
+        showToast: false,
+        analyticsEventName: 'Account_Deletion_Local_Cleanup_Error',
+        sentryTags: { location: 'account_deletion_local_cleanup' },
+      });
     }
 
     // The server-side auth record no longer exists, so a global sign-out can no

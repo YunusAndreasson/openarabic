@@ -7,7 +7,7 @@
 import { useCallback, useMemo, type FC } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { SettingsCard, SettingsSection } from '@/components/account';
 import { useVoiceGrading } from '@/components/providers';
 import { ScreenScaffold, SectionLabel } from '@/components/common';

@@ -3,7 +3,7 @@ import { BaseCard } from '@/components/common/BaseCard';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { FONTS } from '@/constants/fonts';
 import { LAYOUT, LETTER_SPACING, LINE_HEIGHT_MULTIPLIERS, TEXT_STYLES } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';

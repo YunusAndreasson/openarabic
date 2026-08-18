@@ -38,7 +38,7 @@ jest.mock('@/utils/haptics');
 // The hook reads the word-tap preference from Redux; stub the selector so the
 // test doesn't need a store Provider (default: tooltip-first off).
 jest.mock('@/store/hooks', () => ({
-  useAppSelectorShallow: jest.fn(() => false),
+  useAppSelectorShallow: jest.fn((..._args: unknown[]) => false),
 }));
 
 import { renderHook, waitFor, act } from '@testing-library/react-native';
@@ -49,6 +49,7 @@ import { useArticleScreen } from '@/hooks/articles/useArticleScreen';
 import type { ArticleId } from '@/types/branded.types';
 import { ToastType } from '@/types/enums';
 import type { Tables } from '@/types/database.types';
+import { createSentenceMock } from '@/__tests__/helpers/serviceMocks';
 
 const { router } = require('expo-router');
 const { useAuth } = require('@/hooks/auth/useAuth');
@@ -70,6 +71,10 @@ function createMockArticle(overrides: Partial<Tables<'articles'>> = {}): Tables<
     source_url: 'https://example.com',
     readability_score: 5,
     created_at: new Date().toISOString(),
+    published: true,
+    book: null,
+    audio_url_bilingual: null,
+    content_hash: 'test-hash',
     updated_at: new Date().toISOString(),
     category: 'test',
     ...overrides,
@@ -78,20 +83,21 @@ function createMockArticle(overrides: Partial<Tables<'articles'>> = {}): Tables<
 
 // Helper to create mock sentences
 function createMockSentences(count: number): Tables<'article_sentences'>[] {
-  return Array.from({ length: count }, (_, i) => ({
-    id: i + 1,
-    article_id: 1 as ArticleId,
-    sentence_number: i,
-    arabic_text: `Arabic sentence ${i}`,
-    english_text: `English sentence ${i}`,
-    created_at: new Date().toISOString(),
-  })) as Tables<'article_sentences'>[];
+  return Array.from({ length: count }, (_, i) =>
+    createSentenceMock({
+      id: i + 1,
+      article_id: 1,
+      position: i,
+      arabic: `Arabic sentence ${i}`,
+      english: `English sentence ${i}`,
+    }),
+  );
 }
 
 describe('useArticleScreen Hook', () => {
   const mockShowToast = jest.fn();
   const mockUpdateProgress = jest.fn();
-  const mockHandleToggleReadingList = jest.fn();
+  const mockHandleToggleReadingList = jest.fn(async (..._args: unknown[]) => true);
   const mockHandleRootPress = jest.fn();
   const mockHandleWordPress = jest.fn();
   const mockHandleCloseTooltip = jest.fn();
@@ -635,7 +641,11 @@ describe('useArticleScreen Hook', () => {
       );
 
       // Simulate app state change
-      const subscription = (AppState.addEventListener as jest.Mock).mock.calls[0][1];
+      const subscription = (
+        AppState.addEventListener as jest.Mock<
+          (type: string, listener: (state: string) => void) => unknown
+        >
+      ).mock.calls[0][1];
 
       await act(async () => {
         await subscription('active');
@@ -652,7 +662,11 @@ describe('useArticleScreen Hook', () => {
         }),
       );
 
-      const subscription = (AppState.addEventListener as jest.Mock).mock.calls[0][1];
+      const subscription = (
+        AppState.addEventListener as jest.Mock<
+          (type: string, listener: (state: string) => void) => unknown
+        >
+      ).mock.calls[0][1];
 
       await act(async () => {
         await subscription('background');
@@ -772,7 +786,7 @@ describe('useArticleScreen Hook', () => {
 
     test('handles article change and resets state', () => {
       const { result, rerender } = renderHook(
-        ({ id }) =>
+        ({ id }: { id: string }) =>
           useArticleScreen({
             id,
             showToast: mockShowToast,

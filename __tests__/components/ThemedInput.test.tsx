@@ -11,7 +11,7 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import React from 'react';
 
-import { ThemedInput } from '@/components/ThemedInput';
+import { ThemedInput } from '@/components/primitives/ThemedInput';
 
 // Use shared mock factory from componentMocks.tsx
 jest.mock('@/hooks/theme/useColors', () =>

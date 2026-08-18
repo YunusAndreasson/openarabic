@@ -11,7 +11,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BaseCard, OptionCard } from '@/components/common';
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { LAYOUT, LINE_HEIGHT_MULTIPLIERS, getArabicTextStyle } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import {

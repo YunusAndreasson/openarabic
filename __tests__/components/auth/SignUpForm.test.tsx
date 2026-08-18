@@ -42,8 +42,8 @@ jest.mock('expo-router', () => ({
 const mockSignUpWithEmail = jest.fn();
 const mockSetEmail = jest.fn();
 const mockSetPassword = jest.fn();
-const mockValidateEmail = jest.fn(() => true);
-const mockValidatePassword = jest.fn(() => true);
+const mockValidateEmail = jest.fn((..._args: unknown[]) => true);
+const mockValidatePassword = jest.fn((..._args: unknown[]) => true);
 
 let mockPassword = '';
 

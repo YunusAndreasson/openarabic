@@ -62,6 +62,8 @@ describe('Article Reading Flow - Integration Test', () => {
     image_url: 'https://example.com/image.jpg',
     difficulty_level: 2,
     created_at: '2024-01-01T00:00:00Z',
+    published: true,
+    book: null,
     category_id: 1 as CategoryId,
     author_id: 1 as AuthorId,
     audio_url: 'https://example.com/audio.mp3',
@@ -99,7 +101,7 @@ describe('Article Reading Flow - Integration Test', () => {
     jest.clearAllMocks();
 
     // Setup default auth mock
-    mockUseAuth.useAuth = jest.fn(() => ({
+    mockUseAuth.useAuth = jest.fn((..._args: unknown[]) => ({
       user: { id: testUserId },
       isLoading: false,
     }));
@@ -110,7 +112,7 @@ describe('Article Reading Flow - Integration Test', () => {
     // Setup default empty progress
     mockReadingProgressService.getProgress.mockResolvedValue(null);
     mockReadingProgressService.getBulkProgress.mockResolvedValue(
-      new Map<number, ReadingProgress>(),
+      new Map<ArticleId, ReadingProgress>(),
     );
     mockReadingProgressService.updateProgress.mockResolvedValue(undefined);
   });

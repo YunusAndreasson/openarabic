@@ -18,7 +18,7 @@ import { Ionicons, type IoniconName } from '@/components/ui';
 import { type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { Dot } from '@/components/common';
 import { LAYOUT } from '@/constants/layout';
 import { TUTORIAL_STEP_MIN_HEIGHT, TUTORIAL_VISUALS } from '@/constants/tutorials';

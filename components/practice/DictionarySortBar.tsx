@@ -1,7 +1,7 @@
 import { memo, useCallback, useMemo, type FC } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { Ionicons, SegmentedControl, type SegmentedControlOption } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';

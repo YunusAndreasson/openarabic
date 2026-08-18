@@ -65,6 +65,10 @@ describe('sentencesService.getExamplesForRoots', () => {
           arabic: 'قرأت الكتاب',
           english: 'I read the book',
           audio_url: 'sentences/7.mp3',
+          arabic_repeat: false,
+          english_repeat: false,
+          audio_url_bilingual: '',
+          audio_url_english: '',
           sentence_words: [
             // Deliberately out of order: PostgREST does not promise nested-row
             // ordering, and reading order is the whole point of this payload.
@@ -93,6 +97,10 @@ describe('sentencesService.getExamplesForRoots', () => {
           arabic: 'الكتاب و الكتاب',
           english: 'the book and the book',
           audio_url: '',
+          arabic_repeat: false,
+          english_repeat: false,
+          audio_url_bilingual: '',
+          audio_url_english: '',
           sentence_words: [
             { position: 1, word_form: 'الكتاب', english: 'the book', root_id: 42 },
             { position: 2, word_form: 'و', english: 'and', root_id: 3 },
@@ -122,6 +130,10 @@ describe('sentencesService.getExamplesForRoots', () => {
           arabic: 'الكتاب',
           english: 'the book',
           audio_url: '',
+          arabic_repeat: false,
+          english_repeat: false,
+          audio_url_bilingual: '',
+          audio_url_english: '',
           sentence_words: [{ position: 1, word_form: 'الكتاب', english: 'the book', root_id: 42 }],
         },
       ],
@@ -142,6 +154,10 @@ describe('sentencesService.getExamplesForRoots', () => {
           arabic: 'الكتاب',
           english: 'the book',
           audio_url: '',
+          arabic_repeat: false,
+          english_repeat: false,
+          audio_url_bilingual: '',
+          audio_url_english: '',
           sentence_words: [{ position: 1, word_form: 'الكتاب', english: 'the book', root_id: 42 }],
         },
       ],

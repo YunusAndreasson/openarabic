@@ -22,7 +22,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import { State } from 'ts-fsrs';
 
-import { createTestQueryClient, createTestWord } from '@/__tests__/helpers';
+import { createTestQueryClient } from '@/__tests__/helpers/testUtils';
+import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import { fsrsQueries } from '@/constants/queries';
 import type { StudyWord } from '@/types/vocabulary.types';
 import type { RootId, UserId } from '@/types/branded.types';
@@ -60,6 +61,7 @@ jest.mock('@/utils/errorHandling', () => ({
 
 // Import hook after mocks
 import { useFSRS } from '@/hooks/vocabulary/useFSRS';
+import { rootId, userId } from '@/__tests__/helpers/ids';
 
 // ============================================================================
 // TEST SETUP
@@ -97,7 +99,7 @@ describe('Review Session Flow Integration', () => {
       mockWords.push(
         createTestWord({
           root_id: i as RootId,
-          user_id: 'test-user' as UserId,
+          user_id: userId('test-user'),
           fsrs_due: new Date(now.getTime() - i * 3600000).toISOString(), // i hours overdue
           fsrs_state: State.Review,
           fsrs_stability: 5 + i,
@@ -234,7 +236,7 @@ describe('Review Session Flow Integration', () => {
     test.skip('transitions New → Learning on first review', async () => {
       mockWords.push(
         createTestWord({
-          root_id: 1 as RootId,
+          root_id: rootId(1),
           fsrs_state: State.New,
           fsrs_reps: 0,
           fsrs_stability: null,
@@ -264,7 +266,7 @@ describe('Review Session Flow Integration', () => {
     test.skip('increases stability on successful reviews', async () => {
       mockWords.push(
         createTestWord({
-          root_id: 1 as RootId,
+          root_id: rootId(1),
           fsrs_state: State.Review,
           fsrs_stability: 5,
           fsrs_difficulty: 5,
@@ -290,7 +292,7 @@ describe('Review Session Flow Integration', () => {
     test.skip('handles lapse (Review → Relearning) correctly', async () => {
       mockWords.push(
         createTestWord({
-          root_id: 1 as RootId,
+          root_id: rootId(1),
           fsrs_state: State.Review,
           fsrs_stability: 30,
           fsrs_difficulty: 5,

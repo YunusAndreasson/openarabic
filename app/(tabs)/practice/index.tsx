@@ -5,7 +5,7 @@ import { useCallback, useMemo, useRef } from 'react';
 import { InteractionManager, ScrollView, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import { ThemedView } from '@/components/ThemedView';
+import { ThemedView } from '@/components/primitives/ThemedView';
 import { ErrorState, LoadingState } from '@/components/common';
 import { PracticeEmptyState, PracticeStatCards } from '@/components/practice';
 import { TIMING_CONFIG, fadeInStyle } from '@/constants/animation';

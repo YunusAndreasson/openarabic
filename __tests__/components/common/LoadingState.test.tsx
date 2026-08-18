@@ -13,7 +13,7 @@ import React from 'react';
 
 import { LoadingState } from '@/components/common/LoadingState';
 
-jest.mock('@/components/ThemedText', () => {
+jest.mock('@/components/primitives/ThemedText', () => {
   const { Text } = require('react-native');
   const ReactLocal = require('react');
   return {

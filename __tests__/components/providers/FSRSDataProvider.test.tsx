@@ -161,7 +161,7 @@ describe('FSRSDataProvider', () => {
       const { result, rerender } = renderHook(() => useFSRSData(), { wrapper });
 
       const firstValue = result.current;
-      rerender();
+      rerender(undefined);
       const secondValue = result.current;
 
       // Same reference means memoization is working

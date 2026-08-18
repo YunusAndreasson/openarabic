@@ -13,6 +13,13 @@ import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { PASSWORD_REQUIREMENTS, useAuthForm } from '@/hooks/auth/useAuthForm';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import {
+  createAuthErrorMock,
+  createNetInfoStateMock,
+  createSessionMock,
+  createUserMock,
+} from '@/__tests__/helpers/serviceMocks';
 
 // Mock Supabase
 jest.mock('@/services/supabase', () => ({
@@ -53,9 +60,9 @@ jest.mock('@/utils/haptics', () => ({
 // Mock analytics
 jest.mock('@/services/analytics', () => ({
   analytics: {
-    identify: jest.fn().mockResolvedValue(undefined),
-    trackSignUp: jest.fn().mockResolvedValue(undefined),
-    trackSignIn: jest.fn().mockResolvedValue(undefined),
+    identify: jest.fn(async (..._args: unknown[]) => undefined),
+    trackSignUp: jest.fn(async (..._args: unknown[]) => undefined),
+    trackSignIn: jest.fn(async (..._args: unknown[]) => undefined),
   },
 }));
 
@@ -68,8 +75,8 @@ jest.mock('@sentry/react-native', () => ({
 describe('useAuthForm', () => {
   // Get references to mocked functions
   let mockRouterReplace: jest.Mock;
-  let mockSignInWithPassword: jest.Mock;
-  let mockSignUp: jest.Mock;
+  let mockSignInWithPassword: jest.MockedFunction<SupabaseClient['auth']['signInWithPassword']>;
+  let mockSignUp: jest.MockedFunction<SupabaseClient['auth']['signUp']>;
   let mockShowSuccessToast: jest.Mock;
   let mockHandleError: jest.Mock;
   let mockSuccessFeedback: jest.Mock;
@@ -83,8 +90,8 @@ describe('useAuthForm', () => {
     mockRouterReplace = router.router.replace as jest.Mock;
 
     const { supabase } = require('@/services/supabase');
-    mockSignInWithPassword = supabase.auth.signInWithPassword as jest.Mock;
-    mockSignUp = supabase.auth.signUp as jest.Mock;
+    mockSignInWithPassword = supabase.auth.signInWithPassword as typeof mockSignInWithPassword;
+    mockSignUp = supabase.auth.signUp as typeof mockSignUp;
 
     const errorHandling = require('@/utils/errorHandling');
     mockShowSuccessToast = errorHandling.showSuccessToast as jest.Mock;
@@ -103,15 +110,16 @@ describe('useAuthForm', () => {
     jest.useFakeTimers();
 
     // Set default mock implementations
+    const user = createUserMock({ id: '1', email: 'test@example.com' });
     mockSignInWithPassword.mockResolvedValue({
-      data: { user: { id: '1', email: 'test@example.com' }, session: { access_token: 'token' } },
+      data: { user, session: createSessionMock({ user, access_token: 'token' }) },
       error: null,
     });
     mockSignUp.mockResolvedValue({
-      data: { user: { id: '1', email: 'test@example.com' }, session: null },
+      data: { user, session: null },
       error: null,
     });
-    mockNetInfoFetch.mockResolvedValue({ isConnected: true });
+    mockNetInfoFetch.mockResolvedValue(createNetInfoStateMock(true));
   });
 
   afterEach(() => {
@@ -186,8 +194,11 @@ describe('useAuthForm', () => {
         // Mock Supabase to return session immediately
         mockSignUp.mockResolvedValue({
           data: {
-            user: { id: 'user-123', email: 'newuser@example.com' },
-            session: { access_token: 'token-abc', user: { id: 'user-123' } },
+            user: createUserMock({ id: 'user-123', email: 'newuser@example.com' }),
+            session: createSessionMock({
+              access_token: 'token-abc',
+              user: createUserMock({ id: 'user-123' }),
+            }),
           },
           error: null,
         });
@@ -296,7 +307,7 @@ describe('useAuthForm', () => {
         // Mock Supabase to return user but NO session
         mockSignUp.mockResolvedValue({
           data: {
-            user: { id: 'user-456', email: 'confirmemail@example.com' },
+            user: createUserMock({ id: 'user-456', email: 'confirmemail@example.com' }),
             session: null,
           },
           error: null,
@@ -414,7 +425,7 @@ describe('useAuthForm', () => {
         const errorMessage = 'User already exists';
         mockSignUp.mockResolvedValue({
           data: { user: null, session: null },
-          error: { message: errorMessage, status: 400 },
+          error: createAuthErrorMock(errorMessage, 400),
         });
 
         const { result } = renderHook(() => useAuthForm());
@@ -454,7 +465,7 @@ describe('useAuthForm', () => {
     };
 
     test('blocks the request when definitively offline', async () => {
-      mockNetInfoFetch.mockResolvedValue({ isConnected: false });
+      mockNetInfoFetch.mockResolvedValue(createNetInfoStateMock(false));
 
       const result = await submitSignIn();
 

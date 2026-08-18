@@ -23,10 +23,11 @@ import type { ArticleId } from '@/types/branded.types';
 
 // Mock modules at top level
 const mockRouterReplace = jest.fn();
-const mockCheckAuthentication = jest.fn();
-const mockAddToReadingList = jest.fn();
-const mockRemoveFromReadingList = jest.fn();
-
+const mockCheckAuthentication = jest.fn(async (..._args: unknown[]) => ({
+  user: { id: 'test-user-id' },
+}));
+const mockAddToReadingList = jest.fn(async (..._args: unknown[]) => undefined);
+const mockRemoveFromReadingList = jest.fn(async (..._args: unknown[]) => undefined);
 jest.mock('expo-router', () => {
   const mockRouter = {
     replace: (...args: unknown[]) => mockRouterReplace(...args),
@@ -159,7 +160,7 @@ describe('useReadingListMutations', () => {
     test('resolves only after the bookmark mutation settles', async () => {
       let resolveMutation: (() => void) | undefined;
       mockAddToReadingList.mockImplementation(
-        () => new Promise<void>(resolve => (resolveMutation = resolve)),
+        () => new Promise<void>(resolve => (resolveMutation = resolve)) as never,
       );
 
       const { result } = renderHook(() => useReadingListMutations(mockRefetchReadingListStatus), {

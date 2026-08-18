@@ -6,8 +6,8 @@ import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { ThemedText } from '@/components/primitives/ThemedText';
+import { ThemedView } from '@/components/primitives/ThemedView';
 import { ListSeparator, LoadingState } from '@/components/common';
 import {
   DictionaryEmptyState,

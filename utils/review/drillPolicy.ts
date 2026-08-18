@@ -45,7 +45,6 @@ export interface DrillPolicy {
 }
 
 /** Built from constants/fsrs.ts so tuning lives with the other SRS constants. */
-/** @internal */
 export const DEFAULT_DRILL_POLICY: DrillPolicy = {
   criterion: DRILL_CRITERION,
   lagAfterMiss: DRILL_LAG_AFTER_MISS,

@@ -24,10 +24,10 @@ import {
 // Every expo-haptics function returns Promise<void> — the mocks must too, or
 // utils/haptics can't attach the .catch() that swallows "no haptics engine".
 jest.mock('expo-haptics', () => ({
-  selectionAsync: jest.fn(() => Promise.resolve()),
-  impactAsync: jest.fn(() => Promise.resolve()),
-  notificationAsync: jest.fn(() => Promise.resolve()),
-  performAndroidHapticsAsync: jest.fn(() => Promise.resolve()),
+  selectionAsync: jest.fn((..._args: unknown[]) => Promise.resolve()),
+  impactAsync: jest.fn((..._args: unknown[]) => Promise.resolve()),
+  notificationAsync: jest.fn((..._args: unknown[]) => Promise.resolve()),
+  performAndroidHapticsAsync: jest.fn((..._args: unknown[]) => Promise.resolve()),
   ImpactFeedbackStyle: {
     Light: 'light',
     Medium: 'medium',

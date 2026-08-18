@@ -3,10 +3,11 @@ import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persi
 import type { Query } from '@tanstack/react-query';
 
 import { FSRS_BASE_KEY } from '@/constants/fsrs';
+import { STORAGE_KEYS } from '@/constants/storageKeys';
 
 // Constants for better performance and maintainability
-const CACHE_KEY = 'REACT_QUERY_OFFLINE_CACHE_V2';
-const LEGACY_CACHE_KEY = 'REACT_QUERY_OFFLINE_CACHE';
+const CACHE_KEY = STORAGE_KEYS.QUERY_CACHE;
+const LEGACY_CACHE_KEY = STORAGE_KEYS.QUERY_CACHE_LEGACY;
 const THROTTLE_TIME = 1000; // 1 second
 const MAX_AGE = 1000 * 60 * 60 * 24 * 7; // 7 days
 
@@ -29,7 +30,6 @@ const EXCLUDED_KEYS = new Set([
 const EXCLUDED_PATTERNS = new Set(['due', 'live', 'cooldown']);
 
 // Create the persister backed by AsyncStorage
-/** @internal */
 export const queryPersister = createAsyncStoragePersister({
   storage: AsyncStorage,
   key: CACHE_KEY,

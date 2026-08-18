@@ -52,24 +52,34 @@ import * as Notifications from 'expo-notifications';
 import { analytics } from '@/services/analytics';
 import { handleError } from '@/utils/errorHandling';
 
-// Get access to mock functions from expo-notifications mock
+// Get access to mock functions from expo-notifications mock.
+//
+// Each key mirrors an export of the real module, so the signatures are derived
+// from it rather than restated as a bare `jest.Mock` — that is
+// `Mock<UnknownFunction>`, whose `mockResolvedValue` argument resolves to
+// `never`, so every `.mockResolvedValue(...)` below was unchecked. Deriving also
+// means an export expo removes fails here instead of silently mocking nothing.
+type MockedNotificationApi<K extends keyof typeof Notifications> = {
+  [P in K]: jest.MockedFunction<Extract<(typeof Notifications)[P], (...args: never[]) => unknown>>;
+};
+
 const NotificationsMock = Notifications as typeof Notifications & {
-  __mocks: {
-    setNotificationHandler: jest.Mock;
-    setNotificationCategoryAsync: jest.Mock;
-    setNotificationChannelAsync: jest.Mock;
-    addNotificationReceivedListener: jest.Mock;
-    addNotificationResponseReceivedListener: jest.Mock;
-    addNotificationsDroppedListener: jest.Mock;
-    getPermissionsAsync: jest.Mock;
-    requestPermissionsAsync: jest.Mock;
-    scheduleNotificationAsync: jest.Mock;
-    cancelAllScheduledNotificationsAsync: jest.Mock;
-    cancelScheduledNotificationAsync: jest.Mock;
-    getAllScheduledNotificationsAsync: jest.Mock;
-    setBadgeCountAsync: jest.Mock;
-    getBadgeCountAsync: jest.Mock;
-  };
+  __mocks: MockedNotificationApi<
+    | 'setNotificationHandler'
+    | 'setNotificationCategoryAsync'
+    | 'setNotificationChannelAsync'
+    | 'addNotificationReceivedListener'
+    | 'addNotificationResponseReceivedListener'
+    | 'addNotificationsDroppedListener'
+    | 'getPermissionsAsync'
+    | 'requestPermissionsAsync'
+    | 'scheduleNotificationAsync'
+    | 'cancelAllScheduledNotificationsAsync'
+    | 'cancelScheduledNotificationAsync'
+    | 'getAllScheduledNotificationsAsync'
+    | 'setBadgeCountAsync'
+    | 'getBadgeCountAsync'
+  >;
 };
 
 const mockSetNotificationHandler = NotificationsMock.__mocks.setNotificationHandler;
@@ -95,6 +105,10 @@ const mockGetBadgeCountAsync = NotificationsMock.__mocks.getBadgeCountAsync;
 
 // Import service after mocks - service runs setNotificationHandler on load
 import * as notificationService from '@/services/notificationService';
+import {
+  createPermissionsMock,
+  createScheduledNotificationMock,
+} from '@/__tests__/helpers/serviceMocks';
 
 describe('notificationService', () => {
   // Initialize once at the start to set up listeners
@@ -118,15 +132,8 @@ describe('notificationService', () => {
     jest.mocked(analytics.track).mockClear();
 
     // Reset default mock implementations
-    mockGetPermissionsAsync.mockResolvedValue({
-      status: 'granted',
-      ios: { allowsBadge: true, status: 2 },
-    });
-
-    mockRequestPermissionsAsync.mockResolvedValue({
-      status: 'granted',
-      ios: { allowsBadge: true, status: 2 },
-    });
+    mockGetPermissionsAsync.mockResolvedValue(createPermissionsMock('granted'));
+    mockRequestPermissionsAsync.mockResolvedValue(createPermissionsMock('granted'));
 
     mockScheduleNotificationAsync.mockResolvedValue('notification-id-123');
     mockGetAllScheduledNotificationsAsync.mockResolvedValue([]);
@@ -150,7 +157,7 @@ describe('notificationService', () => {
 
   describe('Permission Handling', () => {
     test('should return true if permissions already granted', async () => {
-      mockGetPermissionsAsync.mockResolvedValueOnce({ status: 'granted' });
+      mockGetPermissionsAsync.mockResolvedValueOnce(createPermissionsMock('granted'));
 
       const granted = await notificationService.ensurePermissions();
 
@@ -159,8 +166,8 @@ describe('notificationService', () => {
     });
 
     test('should request permissions if not granted', async () => {
-      mockGetPermissionsAsync.mockResolvedValueOnce({ status: 'undetermined' });
-      mockRequestPermissionsAsync.mockResolvedValueOnce({ status: 'granted' });
+      mockGetPermissionsAsync.mockResolvedValueOnce(createPermissionsMock('undetermined'));
+      mockRequestPermissionsAsync.mockResolvedValueOnce(createPermissionsMock('granted'));
 
       const granted = await notificationService.ensurePermissions();
 
@@ -177,8 +184,8 @@ describe('notificationService', () => {
     });
 
     test('should return false if user denies permissions', async () => {
-      mockGetPermissionsAsync.mockResolvedValueOnce({ status: 'undetermined' });
-      mockRequestPermissionsAsync.mockResolvedValueOnce({ status: 'denied' });
+      mockGetPermissionsAsync.mockResolvedValueOnce(createPermissionsMock('undetermined'));
+      mockRequestPermissionsAsync.mockResolvedValueOnce(createPermissionsMock('denied'));
 
       const granted = await notificationService.ensurePermissions();
 
@@ -187,10 +194,11 @@ describe('notificationService', () => {
 
     test('should handle iOS provisional authorization as granted', async () => {
       Platform.OS = 'ios';
-      mockGetPermissionsAsync.mockResolvedValueOnce({
-        status: 'granted',
-        ios: { status: Notifications.IosAuthorizationStatus.PROVISIONAL },
-      });
+      mockGetPermissionsAsync.mockResolvedValueOnce(
+        createPermissionsMock('granted', {
+          iosStatus: Notifications.IosAuthorizationStatus.PROVISIONAL,
+        }),
+      );
 
       const granted = await notificationService.ensurePermissions();
 
@@ -199,10 +207,9 @@ describe('notificationService', () => {
 
     test('should not request if iOS status is DENIED', async () => {
       Platform.OS = 'ios';
-      mockGetPermissionsAsync.mockResolvedValueOnce({
-        status: 'denied',
-        ios: { status: Notifications.IosAuthorizationStatus.DENIED },
-      });
+      mockGetPermissionsAsync.mockResolvedValueOnce(
+        createPermissionsMock('denied', { iosStatus: Notifications.IosAuthorizationStatus.DENIED }),
+      );
 
       const granted = await notificationService.ensurePermissions();
 
@@ -212,10 +219,11 @@ describe('notificationService', () => {
 
     test('should handle iOS ephemeral status as not granted', async () => {
       Platform.OS = 'ios';
-      mockGetPermissionsAsync.mockResolvedValueOnce({
-        status: 'undetermined',
-        ios: { status: Notifications.IosAuthorizationStatus.EPHEMERAL },
-      });
+      mockGetPermissionsAsync.mockResolvedValueOnce(
+        createPermissionsMock('undetermined', {
+          iosStatus: Notifications.IosAuthorizationStatus.EPHEMERAL,
+        }),
+      );
 
       const granted = await notificationService.ensurePermissions();
 
@@ -225,10 +233,9 @@ describe('notificationService', () => {
 
     test('should check badge-specific permission on iOS', async () => {
       Platform.OS = 'ios';
-      mockGetPermissionsAsync.mockResolvedValueOnce({
-        status: 'granted',
-        ios: { allowsBadge: true },
-      });
+      mockGetPermissionsAsync.mockResolvedValueOnce(
+        createPermissionsMock('granted', { ios: { allowsBadge: true } }),
+      );
 
       const canBadge = await notificationService.canUseBadge();
 
@@ -237,10 +244,9 @@ describe('notificationService', () => {
 
     test('should return false for badge if iOS badge permission denied', async () => {
       Platform.OS = 'ios';
-      mockGetPermissionsAsync.mockResolvedValueOnce({
-        status: 'granted',
-        ios: { allowsBadge: false },
-      });
+      mockGetPermissionsAsync.mockResolvedValueOnce(
+        createPermissionsMock('granted', { ios: { allowsBadge: false } }),
+      );
 
       const canBadge = await notificationService.canUseBadge();
 
@@ -249,9 +255,7 @@ describe('notificationService', () => {
 
     test('should allow badge on Android if notification permission granted', async () => {
       Platform.OS = 'android';
-      mockGetPermissionsAsync.mockResolvedValueOnce({
-        status: 'granted',
-      });
+      mockGetPermissionsAsync.mockResolvedValueOnce(createPermissionsMock('granted'));
 
       const canBadge = await notificationService.canUseBadge();
 
@@ -294,9 +298,9 @@ describe('notificationService', () => {
 
     test('should cancel managed notifications before scheduling (smart prefix + legacy type)', async () => {
       mockGetAllScheduledNotificationsAsync.mockResolvedValueOnce([
-        { identifier: 'srs-due-2026-07-19', content: { data: { type: 'srs-due' } } },
-        { identifier: 'reminder-1234', content: { data: { type: 'study-reminder' } } },
-        { identifier: 'unrelated', content: { data: { type: 'something-else' } } },
+        createScheduledNotificationMock('srs-due-2026-07-19', { type: 'srs-due' }),
+        createScheduledNotificationMock('reminder-1234', { type: 'study-reminder' }),
+        createScheduledNotificationMock('unrelated', { type: 'something-else' }),
       ]);
 
       await notificationService.syncSmartNotifications([makePlan()], 'test');
@@ -306,7 +310,7 @@ describe('notificationService', () => {
     });
 
     test('should not schedule when permission is not granted (check-only, never requests)', async () => {
-      mockGetPermissionsAsync.mockResolvedValue({ status: 'denied' });
+      mockGetPermissionsAsync.mockResolvedValue(createPermissionsMock('denied'));
 
       const count = await notificationService.syncSmartNotifications([makePlan()], 'test');
 
@@ -317,7 +321,7 @@ describe('notificationService', () => {
 
     test('empty plan cancels stale notifications without scheduling', async () => {
       mockGetAllScheduledNotificationsAsync.mockResolvedValueOnce([
-        { identifier: 'srs-due-2026-07-19', content: { data: { type: 'srs-due' } } },
+        createScheduledNotificationMock('srs-due-2026-07-19', { type: 'srs-due' }),
       ]);
 
       const count = await notificationService.syncSmartNotifications([], 'test');
@@ -354,33 +358,38 @@ describe('notificationService', () => {
 
   describe('Permission Status (check-only)', () => {
     test('maps granted status', async () => {
-      mockGetPermissionsAsync.mockResolvedValueOnce({ status: 'granted' });
+      mockGetPermissionsAsync.mockResolvedValueOnce(createPermissionsMock('granted'));
       await expect(notificationService.getPermissionStatus()).resolves.toBe('granted');
     });
 
     test('maps final denial (cannot ask again) to denied', async () => {
-      mockGetPermissionsAsync.mockResolvedValueOnce({ status: 'denied', canAskAgain: false });
+      mockGetPermissionsAsync.mockResolvedValueOnce(
+        createPermissionsMock('denied', { canAskAgain: false }),
+      );
       await expect(notificationService.getPermissionStatus()).resolves.toBe('denied');
     });
 
     test('maps Android never-asked state (denied + canAskAgain) to undetermined', async () => {
       Platform.OS = 'android';
-      mockGetPermissionsAsync.mockResolvedValueOnce({ status: 'denied', canAskAgain: true });
+      mockGetPermissionsAsync.mockResolvedValueOnce(
+        createPermissionsMock('denied', { canAskAgain: true }),
+      );
       await expect(notificationService.getPermissionStatus()).resolves.toBe('undetermined');
     });
 
     test('maps undetermined status without requesting', async () => {
-      mockGetPermissionsAsync.mockResolvedValueOnce({ status: 'undetermined' });
+      mockGetPermissionsAsync.mockResolvedValueOnce(createPermissionsMock('undetermined'));
       await expect(notificationService.getPermissionStatus()).resolves.toBe('undetermined');
       expect(mockRequestPermissionsAsync).not.toHaveBeenCalled();
     });
 
     test('maps iOS provisional to granted', async () => {
       Platform.OS = 'ios';
-      mockGetPermissionsAsync.mockResolvedValueOnce({
-        status: 'undetermined',
-        ios: { status: Notifications.IosAuthorizationStatus.PROVISIONAL },
-      });
+      mockGetPermissionsAsync.mockResolvedValueOnce(
+        createPermissionsMock('undetermined', {
+          iosStatus: Notifications.IosAuthorizationStatus.PROVISIONAL,
+        }),
+      );
       await expect(notificationService.getPermissionStatus()).resolves.toBe('granted');
     });
   });
@@ -451,10 +460,9 @@ describe('notificationService', () => {
 
   describe('Edge Cases', () => {
     test('should handle permission check with missing ios property', async () => {
-      mockGetPermissionsAsync.mockResolvedValueOnce({
-        status: 'granted',
-        ios: undefined,
-      });
+      mockGetPermissionsAsync.mockResolvedValueOnce(
+        createPermissionsMock('granted', { ios: null }),
+      );
 
       const canBadge = await notificationService.canUseBadge();
 

@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import { Alert, Linking } from 'react-native';
 
 import { handleError, toError } from '@/utils/errorHandling';
+import { USER_STORAGE_KEYS } from '@/constants/storageKeys';
 
 interface UseScreenshotAttachmentOptions {
   /** User ID for permission caching (falls back to 'anonymous') */
@@ -53,7 +54,7 @@ export function useScreenshotAttachment({
 
   const handleAddScreenshot = useCallback(async () => {
     try {
-      const permissionDeniedKey = `screenshot_permission_denied_${userId || 'anonymous'}`;
+      const permissionDeniedKey = USER_STORAGE_KEYS.screenshotPermissionDenied(userId);
 
       // Check if permission was previously denied (subsequent attempt)
       const wasPreviouslyDenied = await AsyncStorage.getItem(permissionDeniedKey);

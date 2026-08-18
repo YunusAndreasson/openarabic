@@ -831,7 +831,7 @@ describe('Whole Translation Matching Rejection', () => {
       }, // Suffix has ['we', 'we were', 'we did']
     ];
 
-    testCases.forEach(({ arabic, english, rejectedPattern, _allowedPattern }) => {
+    testCases.forEach(({ arabic, english, rejectedPattern }) => {
       const analysis = analyzeArabicWord(arabic, english);
 
       // Components CAN be found, but not with the whole-translation pattern

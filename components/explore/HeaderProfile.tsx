@@ -5,7 +5,7 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -15,6 +15,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useButtonPress } from '@/hooks/ui/useButtonPress';
 import { handleError } from '@/utils/errorHandling';
 import { getFirstNameFromEmail } from '@/utils/stringUtils';
+import { USER_STORAGE_KEYS } from '@/constants/storageKeys';
 
 // iOS 26 UIBarButton has fixed 36pt glass container
 // Profile fills the glass container completely
@@ -60,7 +61,7 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
     if (!user?.id) return;
 
     try {
-      const savedUri = await AsyncStorage.getItem(`profile_photo_${user.id}`);
+      const savedUri = await AsyncStorage.getItem(USER_STORAGE_KEYS.profilePhoto(user.id));
       if (savedUri) {
         setProfilePhotoUri(savedUri);
       } else {

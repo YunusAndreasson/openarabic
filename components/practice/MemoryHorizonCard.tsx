@@ -2,7 +2,7 @@ import type { JSX } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AnimatedCount, BaseCard } from '@/components/common';
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { FONTS } from '@/constants/fonts';
 import { LAYOUT, LETTER_SPACING } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';

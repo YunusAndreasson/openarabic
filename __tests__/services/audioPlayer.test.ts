@@ -24,7 +24,7 @@ import type { EnhancedAudioTrack } from '@/types/audio.types';
 
 // Mock dependencies BEFORE importing service
 // resetMocks: true (jest.config.js) wipes implementations set at module-factory
-// time, so a jest.fn().mockResolvedValue(...) member returns undefined during
+// time, so a jest.fn(async (..._args: unknown[]) => ...) member returns undefined during
 // tests. That is fine for awaited members (await undefined resolves) but any
 // member the service uses via promise chaining (`.catch()`) would throw a
 // synchronous TypeError mid-test. Fire-and-forget members with no assertion
@@ -33,15 +33,15 @@ import type { EnhancedAudioTrack } from '@/types/audio.types';
 // ever awaited).
 jest.mock('expo-audio', () => ({
   createAudioPlayer: jest.fn(),
-  setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
-  setIsAudioActiveAsync: jest.fn().mockResolvedValue(undefined),
+  setAudioModeAsync: jest.fn(async (..._args: unknown[]) => undefined),
+  setIsAudioActiveAsync: jest.fn(async (..._args: unknown[]) => undefined),
   preload: () => Promise.resolve(undefined),
   clearPreloadedSource: () => Promise.resolve(undefined),
   clearAllPreloadedSources: () => Promise.resolve(undefined),
 }));
 
 // Mock AppState addEventListener - must be defined before mock
-const mockAppStateAddEventListener = jest.fn(() => ({
+const mockAppStateAddEventListener = jest.fn((..._args: unknown[]) => ({
   remove: jest.fn(),
 }));
 
@@ -65,7 +65,7 @@ jest.mock('@/utils/errorHandling', () => ({
 }));
 
 jest.mock('@/utils/transitionSound', () => ({
-  playTransitionSound: jest.fn().mockResolvedValue(undefined),
+  playTransitionSound: jest.fn(async (..._args: unknown[]) => undefined),
 }));
 
 // Import mocked modules
@@ -82,27 +82,44 @@ const mockPlayTransitionSound = jest.mocked(playTransitionSound);
 
 // Import service AFTER mocks
 import type { AudioStatus } from '@/services/audioPlayer';
+import { articleId } from '@/__tests__/helpers/ids';
+import type { AudioPlayer } from 'expo-audio';
 
 describe('audioPlayer service', () => {
-  let SimpleAudioService: typeof import('@/services/audioPlayer').simpleAudioService.constructor;
-  let audioService: InstanceType<typeof SimpleAudioService>;
+  // The class itself is not exported — only the singleton — so the constructor is
+  // reached through it. `.constructor` is typed `Function`, which is not
+  // constructable and left `audioService` (and every status callback below)
+  // implicitly `any`.
+  type SimpleAudioServiceCtor =
+    new () => typeof import('@/services/audioPlayer').simpleAudioService;
 
-  // Mock audio player instance
+  let SimpleAudioService: SimpleAudioServiceCtor;
+  let audioService: InstanceType<SimpleAudioServiceCtor>;
+
+  // Mock audio player instance. The signatures are spelled out because a bare
+  // `jest.Mock` is `Mock<UnknownFunction>`: the `addListener` callback then
+  // arrives as `unknown`, so every status this suite feeds through it was
+  // unchecked.
+  // The native listener receives partial status updates, so any subset of the
+  // service's own AudioStatus is valid.
+  type PlayerStatus = Partial<AudioStatus>;
+  type StatusListener = (status: PlayerStatus) => void;
+
   let mockPlayer: {
-    play: jest.Mock;
-    pause: jest.Mock;
-    remove: jest.Mock;
-    replace: jest.Mock;
-    seekTo: jest.Mock;
-    addListener: jest.Mock;
-    setActiveForLockScreen: jest.Mock;
-    clearLockScreenControls: jest.Mock;
+    play: jest.Mock<() => void>;
+    pause: jest.Mock<() => void>;
+    remove: jest.Mock<() => void>;
+    replace: jest.Mock<(source: unknown) => void>;
+    seekTo: jest.Mock<(seconds: number) => Promise<void>>;
+    addListener: jest.Mock<(event: string, callback: StatusListener) => { remove: () => void }>;
+    setActiveForLockScreen: jest.Mock<(active: boolean) => void>;
+    clearLockScreenControls: jest.Mock<() => void>;
   };
 
   // Test tracks
   const testTrack: EnhancedAudioTrack = {
     id: 'article-1',
-    articleId: 1,
+    articleId: articleId(1),
     audioUrl: 'https://example.com/audio1.mp3',
     title: 'Test Article 1',
     imageUrl: 'https://example.com/image1.jpg',
@@ -110,14 +127,14 @@ describe('audioPlayer service', () => {
 
   const testTrack2: EnhancedAudioTrack = {
     id: 'article-2',
-    articleId: 2,
+    articleId: articleId(2),
     audioUrl: 'https://example.com/audio2.mp3',
     title: 'Test Article 2',
   };
 
   const testTrack3: EnhancedAudioTrack = {
     id: 'article-3',
-    articleId: 3,
+    articleId: articleId(3),
     audioUrl: 'https://example.com/audio3.mp3',
     title: 'Test Article 3',
   };
@@ -127,17 +144,16 @@ describe('audioPlayer service', () => {
 
     // Create fresh mock player for each test
     // CRITICAL: Default mock must fire ready status to prevent waitForPlayerReady from hanging
-    let statusCallback: ((status: { isLoaded?: boolean; playbackState?: string }) => void) | null =
-      null;
+    let statusCallback: StatusListener | null = null;
     mockPlayer = {
       play: jest.fn(),
       pause: jest.fn(),
       remove: jest.fn(),
       replace: jest.fn(),
-      seekTo: jest.fn().mockResolvedValue(undefined),
+      seekTo: jest.fn(async (..._args: unknown[]) => undefined),
       setActiveForLockScreen: jest.fn(),
       clearLockScreenControls: jest.fn(),
-      addListener: jest.fn((event, callback) => {
+      addListener: jest.fn((event: string, callback: StatusListener) => {
         if (event === 'playbackStatusUpdate') {
           statusCallback = callback;
           // Automatically fire ready status to prevent tests from hanging
@@ -152,12 +168,12 @@ describe('audioPlayer service', () => {
       }),
     };
 
-    mockCreateAudioPlayer.mockReturnValue(mockPlayer);
+    mockCreateAudioPlayer.mockReturnValue(mockPlayer as unknown as AudioPlayer);
 
     // Create fresh service instance for each test
     // Import service module to get class
     const audioPlayerModule = require('@/services/audioPlayer');
-    SimpleAudioService = audioPlayerModule.simpleAudioService.constructor;
+    SimpleAudioService = audioPlayerModule.simpleAudioService.constructor as SimpleAudioServiceCtor;
     audioService = new SimpleAudioService();
   });
 
@@ -299,11 +315,11 @@ describe('audioPlayer service', () => {
       // Player whose play() always throws synchronously (e.g. session conflict)
       const mockThrowingPlayer = {
         ...mockPlayer,
-        play: jest.fn(() => {
+        play: jest.fn((..._args: unknown[]) => {
           throw new Error('Player not ready');
         }),
       };
-      mockCreateAudioPlayer.mockReturnValueOnce(mockThrowingPlayer);
+      mockCreateAudioPlayer.mockReturnValueOnce(mockThrowingPlayer as unknown as AudioPlayer);
 
       const success = await audioService.play(testTrack);
 
@@ -318,11 +334,10 @@ describe('audioPlayer service', () => {
     });
 
     test('should resolve immediately if player is ready with playbackState', async () => {
-      let statusCallback:
-        ((status: { isLoaded?: boolean; playbackState?: string }) => void) | null = null;
+      let statusCallback: StatusListener | null = null;
       const mockPlayerWithListener = {
         ...mockPlayer,
-        addListener: jest.fn((event, callback) => {
+        addListener: jest.fn((event: string, callback: StatusListener) => {
           if (event === 'playbackStatusUpdate') {
             statusCallback = callback;
             // Immediately fire ready state
@@ -335,7 +350,7 @@ describe('audioPlayer service', () => {
           return { remove: jest.fn() };
         }),
       };
-      mockCreateAudioPlayer.mockReturnValueOnce(mockPlayerWithListener);
+      mockCreateAudioPlayer.mockReturnValueOnce(mockPlayerWithListener as unknown as AudioPlayer);
 
       const success = await audioService.play(testTrack);
 
@@ -344,11 +359,10 @@ describe('audioPlayer service', () => {
     });
 
     test('should resolve immediately if player is ready with isLoaded', async () => {
-      let statusCallback:
-        ((status: { isLoaded?: boolean; playbackState?: string }) => void) | null = null;
+      let statusCallback: StatusListener | null = null;
       const mockPlayerWithListener = {
         ...mockPlayer,
-        addListener: jest.fn((event, callback) => {
+        addListener: jest.fn((event: string, callback: StatusListener) => {
           if (event === 'playbackStatusUpdate') {
             statusCallback = callback;
             // Immediately fire ready state
@@ -361,7 +375,7 @@ describe('audioPlayer service', () => {
           return { remove: jest.fn() };
         }),
       };
-      mockCreateAudioPlayer.mockReturnValueOnce(mockPlayerWithListener);
+      mockCreateAudioPlayer.mockReturnValueOnce(mockPlayerWithListener as unknown as AudioPlayer);
 
       const success = await audioService.play(testTrack);
 
@@ -376,7 +390,7 @@ describe('audioPlayer service', () => {
       });
 
       // Second attempt (after reset) succeeds
-      mockCreateAudioPlayer.mockReturnValueOnce(mockPlayer);
+      mockCreateAudioPlayer.mockReturnValueOnce(mockPlayer as unknown as AudioPlayer);
 
       const success = await audioService.play(testTrack);
 
@@ -633,7 +647,7 @@ describe('audioPlayer service', () => {
 
   describe('Status Updates and Subscriptions', () => {
     test('should notify subscribers of status changes', async () => {
-      const listener = jest.fn();
+      const listener = jest.fn<(status: AudioStatus) => void>();
       const unsubscribe = audioService.subscribe(listener);
 
       await audioService.play(testTrack);
@@ -660,7 +674,7 @@ describe('audioPlayer service', () => {
     });
 
     test('should unsubscribe correctly', async () => {
-      const listener = jest.fn();
+      const listener = jest.fn<(status: AudioStatus) => void>();
       const unsubscribe = audioService.subscribe(listener);
 
       await audioService.play(testTrack);
@@ -676,7 +690,7 @@ describe('audioPlayer service', () => {
     });
 
     test('should handle listener errors gracefully', async () => {
-      const badListener = jest.fn(() => {
+      const badListener = jest.fn((..._args: unknown[]) => {
         throw new Error('Listener error');
       });
       const goodListener = jest.fn();
@@ -761,7 +775,7 @@ describe('audioPlayer service', () => {
     });
 
     test('should remove all listeners on destroy', async () => {
-      const listener = jest.fn();
+      const listener = jest.fn<(status: AudioStatus) => void>();
       audioService.subscribe(listener);
 
       await audioService.destroy();

@@ -111,6 +111,7 @@ const mockColors = {
  * Creates a useColors mock with optional overrides.
  * Returns the mock factory object for jest.mock().
  */
+/** @internal Reached through a jest.mock require(); knip cannot see it. */
 export const useColorsMockFactory = (overrides: Partial<typeof mockColors> = {}) => ({
   useColors: () => ({ ...mockColors, ...overrides }),
 });
@@ -119,6 +120,7 @@ export const useColorsMockFactory = (overrides: Partial<typeof mockColors> = {})
  * Creates a useThemeDetection mock.
  * Returns the mock factory object for jest.mock().
  */
+/** @internal Reached through a jest.mock require(); knip cannot see it. */
 export const useThemeDetectionMockFactory = (isDarkMode = false) => ({
   useIsDarkMode: () => isDarkMode,
 });
@@ -131,6 +133,7 @@ export const useThemeDetectionMockFactory = (isDarkMode = false) => ({
  * Creates a comprehensive react-native-reanimated mock.
  * Covers all commonly used exports across component tests.
  */
+/** @internal Reached through a jest.mock require(); knip cannot see it. */
 export const createReanimatedMock = () => {
   const mockAnimation = {
     duration: () => mockAnimation,
@@ -250,6 +253,7 @@ export const createReanimatedMock = () => {
 /**
  * Creates a react-native-safe-area-context mock.
  */
+/** @internal Reached through a jest.mock require(); knip cannot see it. */
 export const createSafeAreaContextMock = (insets = { top: 44, bottom: 34, left: 0, right: 0 }) => ({
   useSafeAreaInsets: () => insets,
   SafeAreaProvider: ({ children }: { children: React.ReactNode }) => children,
@@ -264,6 +268,7 @@ export const createSafeAreaContextMock = (insets = { top: 44, bottom: 34, left: 
  * Creates mocks for @/hooks/animations.
  * Covers all hooks exported from hooks/animations/index.ts.
  */
+/** @internal Reached through a jest.mock require(); knip cannot see it. */
 export const createAnimationHooksMock = () => ({
   usePressAnimation: () => ({
     animatedStyle: {},

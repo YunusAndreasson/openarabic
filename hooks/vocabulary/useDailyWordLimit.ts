@@ -7,9 +7,10 @@ import { selectAdaptiveNewWordPacingEnabled } from '@/store/settingsSlice';
 import { parseSupabaseTimestamp, toLocalDateString } from '@/utils/dateTimeUtils';
 import { computeAdaptiveNewLimit, type AdaptiveNewLimit } from '@/utils/newWordPacing';
 import { readRecentRecall } from '@/utils/recallSignalStorage';
+import { STORAGE_KEYS } from '@/constants/storageKeys';
 
-const DAILY_WORD_COUNT_KEY = 'daily_word_count';
-const DAILY_WORD_RESET_KEY = 'daily_word_reset_date';
+const DAILY_WORD_COUNT_KEY = STORAGE_KEYS.DAILY_WORD_COUNT;
+const DAILY_WORD_RESET_KEY = STORAGE_KEYS.DAILY_WORD_RESET_DATE;
 
 export const useDailyWordLimit = () => {
   const dailyWordLimit = useAppSelectorShallow(state => state.settings.dailyWordLimit);

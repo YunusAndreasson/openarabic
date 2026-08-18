@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { combineReducers, configureStore } from '@reduxjs/toolkit';
+import { configureStore } from '@reduxjs/toolkit';
 import {
   FLUSH,
   PAUSE,
@@ -12,28 +12,14 @@ import {
 } from 'redux-persist';
 import type { PersistConfig } from 'redux-persist/es/types';
 
-import editModeReducer from '@/store/editModeSlice';
-import playlistReducer from '@/store/playlistSlice';
-import settingsReducer from '@/store/settingsSlice';
-import themeReducer from '@/store/themeSlice';
-import voiceAliasesReducer from '@/store/voiceAliasesSlice';
-
-// Combine reducers (even if there's only one) so we can use a whitelist.
-const rootReducer = combineReducers({
-  theme: themeReducer,
-  settings: settingsReducer,
-  playlist: playlistReducer,
-  editMode: editModeReducer,
-  voiceAliases: voiceAliasesReducer,
-});
-
-type RootStateShape = ReturnType<typeof rootReducer>;
+import { REDUX_PERSIST_KEY } from '@/constants/storageKeys';
+import { PERSISTED_SLICES, rootReducer, type RootStateShape } from '@/store/rootReducer';
 
 // Configure redux-persist
 const persistConfig: PersistConfig<RootStateShape> = {
-  key: 'root',
+  key: REDUX_PERSIST_KEY,
   storage: AsyncStorage,
-  whitelist: ['theme', 'settings', 'playlist', 'editMode', 'voiceAliases'],
+  whitelist: [...PERSISTED_SLICES],
 };
 
 const persistedReducer = persistReducer<RootStateShape>(persistConfig, rootReducer);

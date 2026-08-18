@@ -20,12 +20,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import { Provider } from 'react-redux';
 
+import { createTestQueryClient } from '@/__tests__/helpers/testUtils';
+import { setupTestStore } from '@/__tests__/helpers/testStore';
 import {
-  createTestQueryClient,
-  setupTestStore,
-  createReadingListMock,
   createEnhancedAudioTrackMock,
-} from '@/__tests__/helpers';
+  createReadingListMock,
+} from '@/__tests__/helpers/serviceMocks';
 import type { ArticleId } from '@/types/branded.types';
 import { AudioLanguage } from '@/types/enums';
 
@@ -54,10 +54,10 @@ jest.mock('@/components/providers', () => ({
 // Mock services - define inline to avoid hoisting issues
 jest.mock('@/services/audioPlayer', () => ({
   simpleAudioService: {
-    getStatus: jest.fn(() => ({ playing: false, currentUrl: null })),
-    stop: jest.fn().mockResolvedValue(undefined),
-    play: jest.fn().mockResolvedValue(true),
-    playPlaylist: jest.fn().mockResolvedValue(true),
+    getStatus: jest.fn((..._args: unknown[]) => ({ playing: false, currentUrl: null })),
+    stop: jest.fn(async (..._args: unknown[]) => undefined),
+    play: jest.fn(async (..._args: unknown[]) => true),
+    playPlaylist: jest.fn(async (..._args: unknown[]) => true),
   },
 }));
 
@@ -65,15 +65,15 @@ jest.mock('@/services/audioPlayer', () => ({
 import { simpleAudioService as mockSimpleAudioService } from '@/services/audioPlayer';
 
 const mockEnhancedAudioService = {
-  getReadingListEnhancedTracks: jest.fn().mockResolvedValue([]),
-  generateEnhancedAudioTrack: jest.fn().mockResolvedValue(null),
+  getReadingListEnhancedTracks: jest.fn(async (..._args: unknown[]) => []),
+  generateEnhancedAudioTrack: jest.fn(async (..._args: unknown[]) => null),
 };
 jest.mock('@/services/audioPlaylist', () => ({
   enhancedAudioService: mockEnhancedAudioService,
 }));
 
 const mockBookmarkService = {
-  removeFromReadingList: jest.fn().mockResolvedValue(undefined),
+  removeFromReadingList: jest.fn(async (..._args: unknown[]) => undefined),
 };
 jest.mock('@/services/bookmark', () => ({
   bookmarkService: mockBookmarkService,
@@ -101,8 +101,8 @@ jest.mock('@/utils/errorHandling', () => ({
 
 // Mock audio utils
 jest.mock('@/utils/audioUtils', () => ({
-  getCurrentArticleId: jest.fn(() => null),
-  isAudioBusy: jest.fn(() => false),
+  getCurrentArticleId: jest.fn((..._args: unknown[]) => null),
+  isAudioBusy: jest.fn((..._args: unknown[]) => false),
   prefetchArticleWithImage: jest.fn(),
   stopAudioSafely: jest.fn(),
 }));
@@ -124,7 +124,7 @@ jest.mock('@/constants/queries', () => ({
   readingProgressQueries: {
     readingList: (userId: string) => ({
       queryKey: ['readingList', userId],
-      queryFn: jest.fn().mockResolvedValue([]),
+      queryFn: jest.fn(async (..._args: unknown[]) => []),
     }),
     keys: {
       readingList: (userId: string) => ['readingList', userId],
@@ -133,7 +133,7 @@ jest.mock('@/constants/queries', () => ({
   audioQueries: {
     tracks: (userId: string, preference: AudioLanguage) => ({
       queryKey: ['enhancedAudioTracks', userId, preference],
-      queryFn: jest.fn().mockResolvedValue([]),
+      queryFn: jest.fn(async (..._args: unknown[]) => []),
     }),
     keys: {
       tracks: (userId: string, preference: AudioLanguage) => [
@@ -156,6 +156,7 @@ jest.mock('expo-router/react-navigation', () => ({
 
 // Import hook after mocks
 import { usePlaylistScreen } from '@/hooks/playlist/usePlaylistScreen';
+import { createAudioStatusMock } from '@/__tests__/helpers/serviceMocks';
 
 // ============================================================================
 // TEST SETUP
@@ -188,16 +189,14 @@ describe('usePlaylistScreen', () => {
         audioShuffleEnabled: false,
         reminderTime: { enabled: false, hour: 9, minute: 0 },
         arabicFontSize: 28,
-        arabicFontFamily: 'Amiri',
-        autoPlayAudio: true,
+        arabicFont: 'NotoSansArabic-Regular',
       },
     });
 
     // Reset service mocks
-    jest.mocked(mockSimpleAudioService.getStatus).mockReturnValue({
-      playing: false,
-      currentUrl: null,
-    });
+    jest
+      .mocked(mockSimpleAudioService.getStatus)
+      .mockReturnValue(createAudioStatusMock({ playing: false }));
   });
 
   // ============================================================================
@@ -271,8 +270,7 @@ describe('usePlaylistScreen', () => {
           audioShuffleEnabled: false,
           reminderTime: { enabled: false, hour: 9, minute: 0 },
           arabicFontSize: 28,
-          arabicFontFamily: 'Amiri',
-          autoPlayAudio: true,
+          arabicFont: 'NotoSansArabic-Regular',
         },
       });
 
@@ -312,10 +310,9 @@ describe('usePlaylistScreen', () => {
     });
 
     test('stops playback when already playing all', async () => {
-      jest.mocked(mockSimpleAudioService.getStatus).mockReturnValue({
-        playing: true,
-        currentUrl: null,
-      });
+      jest
+        .mocked(mockSimpleAudioService.getStatus)
+        .mockReturnValue(createAudioStatusMock({ playing: true }));
 
       const { result } = renderHook(() => usePlaylistScreen(), {
         wrapper: createWrapper(),
@@ -474,10 +471,9 @@ describe('usePlaylistScreen', () => {
     test('stops playback when tapping currently playing article', async () => {
       const { getCurrentArticleId } = require('@/utils/audioUtils');
       jest.mocked(getCurrentArticleId).mockReturnValue(1);
-      jest.mocked(mockSimpleAudioService.getStatus).mockReturnValue({
-        playing: true,
-        currentUrl: null,
-      });
+      jest
+        .mocked(mockSimpleAudioService.getStatus)
+        .mockReturnValue(createAudioStatusMock({ playing: true }));
 
       const { result } = renderHook(() => usePlaylistScreen(), {
         wrapper: createWrapper(),

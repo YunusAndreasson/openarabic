@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { PulsatingLoader } from '@/components/ui/PulsatingLoader';
 import { LAYOUT } from '@/constants/layout';
 

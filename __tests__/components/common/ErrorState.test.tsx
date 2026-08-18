@@ -15,7 +15,7 @@ import { ErrorState } from '@/components/common/ErrorState';
 import { STRINGS } from '@/constants/strings';
 
 // Mock ThemedText
-jest.mock('@/components/ThemedText', () => {
+jest.mock('@/components/primitives/ThemedText', () => {
   const { Text } = require('react-native');
   const React = require('react');
   return {
@@ -25,7 +25,7 @@ jest.mock('@/components/ThemedText', () => {
 });
 
 // Mock ThemedButton
-jest.mock('@/components/ThemedButton', () => {
+jest.mock('@/components/primitives/ThemedButton', () => {
   const { Pressable, Text } = require('react-native');
   const React = require('react');
   return {

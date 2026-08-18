@@ -3,7 +3,7 @@ import { memo } from 'react';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 
 const AudioErrorFallback = memo(function AudioErrorFallback() {

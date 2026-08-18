@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { AuthEmailInput, AuthPasswordInput } from './AuthFormInputs';
 import { AuthSwitchPrompt } from './AuthSwitchPrompt';
-import { ThemedButton } from '@/components/ThemedButton';
+import { ThemedButton } from '@/components/primitives/ThemedButton';
 import { TextLink } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';

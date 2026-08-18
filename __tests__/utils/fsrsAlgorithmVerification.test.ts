@@ -23,7 +23,7 @@ import { describe, expect, test } from '@jest/globals';
 import { createEmptyCard, Rating, State } from 'ts-fsrs';
 import * as fc from 'fast-check';
 
-import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
+import { LEGACY_NULL_TIMESTAMP, createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { calculateRetrievability, calculateRetrievabilityForecast } from '@/utils/fsrsUtils';
 
@@ -213,7 +213,7 @@ describe('FSRS Algorithm Verification', () => {
   describe('Edge Cases and Boundary Conditions', () => {
     test('returns 0 for words without review history', () => {
       const word = createTestWord({
-        fsrs_last_review: null,
+        fsrs_last_review: LEGACY_NULL_TIMESTAMP,
         fsrs_stability: 10,
       });
 
@@ -331,7 +331,7 @@ describe('FSRS Algorithm Verification', () => {
       });
 
       const unreviewedWord = createTestWord({
-        fsrs_last_review: null,
+        fsrs_last_review: LEGACY_NULL_TIMESTAMP,
         fsrs_reps: 0,
       });
 

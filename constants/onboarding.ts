@@ -4,6 +4,8 @@
  * Completion flags are stored as a single JSON blob (see utils/onboardingStorage.ts).
  */
 
+import { STORAGE_KEYS } from '@/constants/storageKeys';
+
 /**
  * Checklist step identifiers (branded type pattern for type safety).
  * Values double as the boolean field names in OnboardingProgressState.
@@ -17,8 +19,8 @@ export const OnboardingStep = {
 
 export type OnboardingStep = (typeof OnboardingStep)[keyof typeof OnboardingStep];
 
-/** AsyncStorage key holding the whole onboarding progress blob */
-export const ONBOARDING_STORAGE_KEY = '@openarabic/onboarding/progress';
+/** AsyncStorage key holding the whole onboarding progress blob. */
+export const ONBOARDING_STORAGE_KEY = STORAGE_KEYS.ONBOARDING_PROGRESS;
 
 /**
  * Persisted onboarding progress.

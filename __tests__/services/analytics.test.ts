@@ -17,14 +17,14 @@
 import { describe, test, expect, jest } from '@jest/globals';
 
 // Mock Mixpanel before importing service
-const mockInit = jest.fn().mockResolvedValue(undefined);
-const mockIdentify = jest.fn().mockResolvedValue(undefined);
-const mockTrack = jest.fn().mockResolvedValue(undefined);
-const mockReset = jest.fn().mockResolvedValue(undefined);
+const mockInit = jest.fn(async (..._args: unknown[]) => undefined);
+const mockIdentify = jest.fn(async (..._args: unknown[]) => undefined);
+const mockTrack = jest.fn(async (..._args: unknown[]) => undefined);
+const mockReset = jest.fn(async (..._args: unknown[]) => undefined);
 const mockSetPeople = jest.fn();
-const mockGetPeople = jest.fn().mockResolvedValue({ set: mockSetPeople });
+const mockGetPeople = jest.fn(async (..._args: unknown[]) => ({ set: mockSetPeople }));
 
-const MockMixpanel = jest.fn().mockImplementation(() => ({
+const MockMixpanel = jest.fn((..._args: unknown[]) => ({
   init: mockInit,
   identify: mockIdentify,
   track: mockTrack,
@@ -40,12 +40,13 @@ jest.mock('mixpanel-react-native', () => ({
 // wholesale silently drops ANALYTICS_EVENTS, which the service reads for its
 // event names.
 jest.mock('@/constants/analytics', () => ({
-  ...jest.requireActual('@/constants/analytics'),
+  ...jest.requireActual<Record<string, unknown>>('@/constants/analytics'),
   MIXPANEL_TOKEN: 'test-token-123',
 }));
 
 // Import service after mocks
 import { analytics } from '@/services/analytics';
+import { ANALYTICS_EVENTS } from '@/constants/analytics';
 
 describe('analytics service', () => {
   /**
@@ -59,8 +60,10 @@ describe('analytics service', () => {
 
   describe('Core Functionality', () => {
     test('should call track without throwing', async () => {
-      await expect(analytics.track('Test Event')).resolves.not.toThrow();
-      await expect(analytics.track('Test Event', { prop: 'value' })).resolves.not.toThrow();
+      await expect(analytics.track(ANALYTICS_EVENTS.APP_OPENED)).resolves.not.toThrow();
+      await expect(
+        analytics.track(ANALYTICS_EVENTS.APP_OPENED, { prop: 'value' }),
+      ).resolves.not.toThrow();
     });
 
     test('should call identify without throwing', async () => {
@@ -94,7 +97,7 @@ describe('analytics service', () => {
   describe('Property Types Support', () => {
     test('should accept various property types', async () => {
       await expect(
-        analytics.track('Event', {
+        analytics.track(ANALYTICS_EVENTS.APP_OPENED, {
           string: 'value',
           number: 42,
           boolean: true,
@@ -112,7 +115,7 @@ describe('analytics service', () => {
       mockIdentify.mockRejectedValueOnce(new Error('Identify failed'));
       mockReset.mockRejectedValueOnce(new Error('Reset failed'));
 
-      await expect(analytics.track('Event')).resolves.not.toThrow();
+      await expect(analytics.track(ANALYTICS_EVENTS.APP_OPENED)).resolves.not.toThrow();
       await expect(analytics.identify('user')).resolves.not.toThrow();
       await expect(analytics.reset()).resolves.not.toThrow();
     });

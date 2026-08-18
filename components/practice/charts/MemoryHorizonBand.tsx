@@ -17,7 +17,7 @@ import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useDerivedValue, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { CHART_OPACITY, useChartColors } from '@/constants/chartColors';
 import { LAYOUT } from '@/constants/layout';

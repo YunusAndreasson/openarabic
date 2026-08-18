@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { WordMemoryCurve } from '@/components/practice/WordMemoryCurve';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';

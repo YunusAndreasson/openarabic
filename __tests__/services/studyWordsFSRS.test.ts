@@ -8,6 +8,7 @@
  */
 
 import { studyWordsFSRSService } from '../../services/studyWordsFSRS';
+import { rootId } from '@/__tests__/helpers/ids';
 
 jest.mock('../../services/supabase', () => ({
   supabase: {
@@ -46,16 +47,16 @@ describe('toggleFSRSStudyRoot', () => {
     const selectObj = {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
-      maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+      maybeSingle: jest.fn(async (..._args: unknown[]) => ({ data: null, error: null })),
     };
-    const insertMock = jest.fn().mockResolvedValue({ error: null });
+    const insertMock = jest.fn(async (..._args: unknown[]) => ({ error: null }));
     const insertObj = { insert: insertMock };
 
     (supabase.from as jest.Mock)
       .mockImplementationOnce(() => selectObj)
       .mockImplementationOnce(() => insertObj);
 
-    const result = await studyWordsFSRSService.toggleFSRSStudyRoot('u1', 1);
+    const result = await studyWordsFSRSService.toggleFSRSStudyRoot('u1', rootId(1));
 
     expect(insertMock).toHaveBeenCalledWith(expect.objectContaining({ user_id: 'u1', root_id: 1 }));
     expect(result).toBeTruthy();
@@ -65,22 +66,22 @@ describe('toggleFSRSStudyRoot', () => {
     const selectObj = {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
-      maybeSingle: jest.fn().mockResolvedValue({ data: { root_id: 1 }, error: null }),
+      maybeSingle: jest.fn(async (..._args: unknown[]) => ({ data: { root_id: 1 }, error: null })),
     };
-    const deleteFinal = jest.fn().mockResolvedValue({ error: null });
+    const deleteFinal = jest.fn(async (..._args: unknown[]) => ({ error: null }));
     const deleteObj = {
-      delete: jest.fn().mockReturnValue({
+      delete: jest.fn((..._args: unknown[]) => ({
         eq: jest.fn().mockReturnValue({
           eq: deleteFinal,
         }),
-      }),
+      })),
     };
 
     (supabase.from as jest.Mock)
       .mockImplementationOnce(() => selectObj)
       .mockImplementationOnce(() => deleteObj);
 
-    const result = await studyWordsFSRSService.toggleFSRSStudyRoot('u1', 1);
+    const result = await studyWordsFSRSService.toggleFSRSStudyRoot('u1', rootId(1));
 
     expect(deleteObj.delete).toHaveBeenCalled();
     expect(deleteFinal).toHaveBeenCalled();
@@ -91,7 +92,7 @@ describe('toggleFSRSStudyRoot', () => {
     const selectObj = {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
-      maybeSingle: jest.fn().mockResolvedValue({ data: { root_id: 1 }, error: null }),
+      maybeSingle: jest.fn(async (..._args: unknown[]) => ({ data: { root_id: 1 }, error: null })),
     };
     const deleteMock = jest.fn();
     const insertMock = jest.fn();
@@ -100,7 +101,7 @@ describe('toggleFSRSStudyRoot', () => {
       .mockImplementationOnce(() => selectObj)
       .mockImplementation(() => ({ delete: deleteMock, insert: insertMock }));
 
-    const result = await studyWordsFSRSService.toggleFSRSStudyRoot('u1', 1, 'add');
+    const result = await studyWordsFSRSService.toggleFSRSStudyRoot('u1', rootId(1), 'add');
 
     expect(result).toBeTruthy();
     expect(deleteMock).not.toHaveBeenCalled();
@@ -111,7 +112,7 @@ describe('toggleFSRSStudyRoot', () => {
     const selectObj = {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
-      maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+      maybeSingle: jest.fn(async (..._args: unknown[]) => ({ data: null, error: null })),
     };
     const deleteMock = jest.fn();
     const insertMock = jest.fn();
@@ -120,7 +121,7 @@ describe('toggleFSRSStudyRoot', () => {
       .mockImplementationOnce(() => selectObj)
       .mockImplementation(() => ({ delete: deleteMock, insert: insertMock }));
 
-    const result = await studyWordsFSRSService.toggleFSRSStudyRoot('u1', 1, 'remove');
+    const result = await studyWordsFSRSService.toggleFSRSStudyRoot('u1', rootId(1), 'remove');
 
     expect(result).toBeFalsy();
     expect(deleteMock).not.toHaveBeenCalled();
@@ -142,7 +143,10 @@ describe('updateWordAndReview', () => {
   };
 
   test('calls direct UPDATE to update word FSRS parameters', async () => {
-    const selectMock = jest.fn().mockResolvedValue({ data: [{ root_id: 5 }], error: null });
+    const selectMock = jest.fn(async (..._args: unknown[]) => ({
+      data: [{ root_id: 5 }],
+      error: null,
+    }));
     const updateObj = {
       update: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
@@ -151,7 +155,7 @@ describe('updateWordAndReview', () => {
 
     (supabase.from as jest.Mock).mockReturnValue(updateObj);
 
-    const result = await studyWordsFSRSService.updateWordAndReview('u1', 5, update);
+    const result = await studyWordsFSRSService.updateWordAndReview('u1', rootId(5), update);
 
     expect(supabase.from).toHaveBeenCalledWith('study_words');
     expect(updateObj.update).toHaveBeenCalledWith(

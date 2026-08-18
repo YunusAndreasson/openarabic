@@ -4,7 +4,7 @@ import { memo, useEffect, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { TIMING_CONFIG, TIMING_CONSTANTS } from '@/constants/animation';
 import { useChartColors } from '@/constants/chartColors';
 import { CHART_VISUAL } from '@/constants/chartConstants';

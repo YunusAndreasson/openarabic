@@ -22,6 +22,12 @@ import {
   type WordAudioData,
 } from '@/utils/audioUtils';
 import { generateStorageUrl } from '@/utils/storageUtils';
+import { articleId } from '@/__tests__/helpers/ids';
+import {
+  createAudioStatusMock,
+  createEnhancedAudioTrackMock,
+} from '@/__tests__/helpers/serviceMocks';
+import type { ArticleId } from '@/types/branded.types';
 
 // Mock dependencies
 jest.mock('@/services/audioPlayer', () => ({
@@ -58,14 +64,16 @@ describe('audioUtils', () => {
 
   describe('getCurrentArticleId', () => {
     test('should return article ID when a track is playing', () => {
-      simpleAudioServiceMock.getStatus.mockReturnValue({
-        currentTrack: { articleId: 123 } as any,
-        playing: true,
-        isLoaded: true,
-        isBuffering: false,
-        currentTime: 0,
-        duration: 100,
-      });
+      simpleAudioServiceMock.getStatus.mockReturnValue(
+        createAudioStatusMock({
+          currentTrack: { articleId: 123 } as any,
+          playing: true,
+          isLoaded: true,
+          isBuffering: false,
+          currentTime: 0,
+          duration: 100,
+        }),
+      );
 
       const result = getCurrentArticleId();
 
@@ -73,14 +81,16 @@ describe('audioUtils', () => {
     });
 
     test('should return undefined when no track is playing', () => {
-      simpleAudioServiceMock.getStatus.mockReturnValue({
-        currentTrack: null,
-        playing: false,
-        isLoaded: true,
-        isBuffering: false,
-        currentTime: 0,
-        duration: 0,
-      });
+      simpleAudioServiceMock.getStatus.mockReturnValue(
+        createAudioStatusMock({
+          currentTrack: null,
+          playing: false,
+          isLoaded: true,
+          isBuffering: false,
+          currentTime: 0,
+          duration: 0,
+        }),
+      );
 
       const result = getCurrentArticleId();
 
@@ -88,14 +98,18 @@ describe('audioUtils', () => {
     });
 
     test('should parse string article IDs to numbers', () => {
-      simpleAudioServiceMock.getStatus.mockReturnValue({
-        currentTrack: { articleId: '456' as any },
-        playing: true,
-        isLoaded: true,
-        isBuffering: false,
-        currentTime: 0,
-        duration: 100,
-      });
+      simpleAudioServiceMock.getStatus.mockReturnValue(
+        createAudioStatusMock({
+          currentTrack: createEnhancedAudioTrackMock({
+            articleId: '456' as unknown as ArticleId,
+          }),
+          playing: true,
+          isLoaded: true,
+          isBuffering: false,
+          currentTime: 0,
+          duration: 100,
+        }),
+      );
 
       const result = getCurrentArticleId();
 
@@ -105,40 +119,46 @@ describe('audioUtils', () => {
 
   describe('isAudioBusy', () => {
     test('should return true when a track is buffering', () => {
-      simpleAudioServiceMock.getStatus.mockReturnValue({
-        currentTrack: {} as any,
-        playing: false,
-        isLoaded: false,
-        isBuffering: true,
-        currentTime: 0,
-        duration: 0,
-      });
+      simpleAudioServiceMock.getStatus.mockReturnValue(
+        createAudioStatusMock({
+          currentTrack: {} as any,
+          playing: false,
+          isLoaded: false,
+          isBuffering: true,
+          currentTime: 0,
+          duration: 0,
+        }),
+      );
 
       expect(isAudioBusy()).toBeTruthy();
     });
 
     test('should return false when a track is fully loaded', () => {
-      simpleAudioServiceMock.getStatus.mockReturnValue({
-        currentTrack: {} as any,
-        playing: false,
-        isLoaded: true,
-        isBuffering: false,
-        currentTime: 0,
-        duration: 0,
-      });
+      simpleAudioServiceMock.getStatus.mockReturnValue(
+        createAudioStatusMock({
+          currentTrack: {} as any,
+          playing: false,
+          isLoaded: true,
+          isBuffering: false,
+          currentTime: 0,
+          duration: 0,
+        }),
+      );
 
       expect(isAudioBusy()).toBeFalsy();
     });
 
     test('should return false in the initial idle state (no track loaded)', () => {
-      simpleAudioServiceMock.getStatus.mockReturnValue({
-        currentTrack: null,
-        playing: false,
-        isLoaded: false,
-        isBuffering: false,
-        currentTime: 0,
-        duration: 0,
-      });
+      simpleAudioServiceMock.getStatus.mockReturnValue(
+        createAudioStatusMock({
+          currentTrack: null,
+          playing: false,
+          isLoaded: false,
+          isBuffering: false,
+          currentTime: 0,
+          duration: 0,
+        }),
+      );
 
       expect(isAudioBusy()).toBeFalsy();
     });
@@ -146,14 +166,16 @@ describe('audioUtils', () => {
 
   describe('stopAudioSafely', () => {
     test('should stop audio when playing', async () => {
-      simpleAudioServiceMock.getStatus.mockReturnValue({
-        currentTrack: {} as any,
-        playing: true,
-        isLoaded: true,
-        isBuffering: false,
-        currentTime: 10,
-        duration: 100,
-      });
+      simpleAudioServiceMock.getStatus.mockReturnValue(
+        createAudioStatusMock({
+          currentTrack: {} as any,
+          playing: true,
+          isLoaded: true,
+          isBuffering: false,
+          currentTime: 10,
+          duration: 100,
+        }),
+      );
       simpleAudioServiceMock.stop.mockResolvedValue(undefined);
 
       await stopAudioSafely();
@@ -162,14 +184,16 @@ describe('audioUtils', () => {
     });
 
     test('should stop audio when loading', async () => {
-      simpleAudioServiceMock.getStatus.mockReturnValue({
-        currentTrack: null,
-        playing: false,
-        isLoaded: false,
-        isBuffering: true,
-        currentTime: 0,
-        duration: 0,
-      });
+      simpleAudioServiceMock.getStatus.mockReturnValue(
+        createAudioStatusMock({
+          currentTrack: null,
+          playing: false,
+          isLoaded: false,
+          isBuffering: true,
+          currentTime: 0,
+          duration: 0,
+        }),
+      );
       simpleAudioServiceMock.stop.mockResolvedValue(undefined);
 
       await stopAudioSafely();
@@ -178,14 +202,16 @@ describe('audioUtils', () => {
     });
 
     test('should not stop audio when not playing or loading', async () => {
-      simpleAudioServiceMock.getStatus.mockReturnValue({
-        currentTrack: null,
-        playing: false,
-        isLoaded: true,
-        isBuffering: false,
-        currentTime: 0,
-        duration: 0,
-      });
+      simpleAudioServiceMock.getStatus.mockReturnValue(
+        createAudioStatusMock({
+          currentTrack: null,
+          playing: false,
+          isLoaded: true,
+          isBuffering: false,
+          currentTime: 0,
+          duration: 0,
+        }),
+      );
 
       await stopAudioSafely();
 
@@ -193,28 +219,32 @@ describe('audioUtils', () => {
     });
 
     test('should silently catch errors by default', async () => {
-      simpleAudioServiceMock.getStatus.mockReturnValue({
-        currentTrack: {} as any,
-        playing: true,
-        isLoaded: true,
-        isBuffering: false,
-        currentTime: 10,
-        duration: 100,
-      });
+      simpleAudioServiceMock.getStatus.mockReturnValue(
+        createAudioStatusMock({
+          currentTrack: {} as any,
+          playing: true,
+          isLoaded: true,
+          isBuffering: false,
+          currentTime: 10,
+          duration: 100,
+        }),
+      );
       simpleAudioServiceMock.stop.mockRejectedValue(new Error('Stop failed'));
 
       await expect(stopAudioSafely()).resolves.toBeUndefined();
     });
 
     test('should throw errors when throwOnError is true', async () => {
-      simpleAudioServiceMock.getStatus.mockReturnValue({
-        currentTrack: {} as any,
-        playing: true,
-        isLoaded: true,
-        isBuffering: false,
-        currentTime: 10,
-        duration: 100,
-      });
+      simpleAudioServiceMock.getStatus.mockReturnValue(
+        createAudioStatusMock({
+          currentTrack: {} as any,
+          playing: true,
+          isLoaded: true,
+          isBuffering: false,
+          currentTime: 10,
+          duration: 100,
+        }),
+      );
       simpleAudioServiceMock.stop.mockRejectedValue(new Error('Stop failed'));
 
       await expect(stopAudioSafely(true)).rejects.toThrow('Stop failed');
@@ -325,18 +355,18 @@ describe('audioUtils', () => {
   describe('prefetchArticleWithImage', () => {
     test('should prefetch article data and image when available', async () => {
       const mockQueryClient = {
-        prefetchQuery: jest.fn().mockResolvedValue(undefined),
-        getQueryData: jest.fn().mockReturnValue({
+        prefetchQuery: jest.fn(async (..._args: unknown[]) => undefined),
+        getQueryData: jest.fn((..._args: unknown[]) => ({
           id: 1,
           image_url: 'test.jpg',
-        }),
+        })),
       } as any;
 
       const { Image } = require('expo-image');
       Image.prefetch.mockResolvedValue(true);
       generateStorageUrlMock.mockReturnValue('https://example.com/test.jpg');
 
-      await prefetchArticleWithImage(1, mockQueryClient);
+      await prefetchArticleWithImage(articleId(1), mockQueryClient);
 
       expect(mockQueryClient.prefetchQuery).toHaveBeenCalled();
       expect(Image.prefetch).toHaveBeenCalledWith('https://example.com/test.jpg', {
@@ -346,25 +376,29 @@ describe('audioUtils', () => {
 
     test('should handle missing image URL gracefully', async () => {
       const mockQueryClient = {
-        prefetchQuery: jest.fn().mockResolvedValue(undefined),
-        getQueryData: jest.fn().mockReturnValue(null),
+        prefetchQuery: jest.fn(async (..._args: unknown[]) => undefined),
+        getQueryData: jest.fn((..._args: unknown[]) => null),
       } as any;
 
-      const mockPrefetchArticle = jest.fn().mockResolvedValue(true);
+      const mockPrefetchArticle = jest.fn(async (..._args: unknown[]) => true);
       generateStorageUrlMock.mockReturnValue('');
 
-      await prefetchArticleWithImage(1, mockQueryClient, mockPrefetchArticle);
+      await prefetchArticleWithImage(articleId(1), mockQueryClient, mockPrefetchArticle);
 
       expect(mockPrefetchArticle).toHaveBeenCalledWith(1);
     });
 
     test('should silently handle prefetch failures', async () => {
       const mockQueryClient = {
-        prefetchQuery: jest.fn().mockRejectedValue(new Error('Prefetch failed')),
-        getQueryData: jest.fn().mockReturnValue(null),
+        prefetchQuery: jest.fn(async (..._args: unknown[]) => {
+          throw new Error('Prefetch failed');
+        }),
+        getQueryData: jest.fn((..._args: unknown[]) => null),
       } as any;
 
-      await expect(prefetchArticleWithImage(1, mockQueryClient)).resolves.toBeUndefined();
+      await expect(
+        prefetchArticleWithImage(articleId(1), mockQueryClient),
+      ).resolves.toBeUndefined();
     });
   });
 });

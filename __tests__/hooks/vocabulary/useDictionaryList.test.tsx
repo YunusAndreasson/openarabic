@@ -25,7 +25,7 @@ const HOUR_MS = 60 * 60 * 1000;
 const withRoot = (word: StudyWord, letters: string, meaning: string): StudyWord =>
   ({
     ...word,
-    root: { id: word.root_id, letters, meaning, audio_url: null, audio_url_en: null },
+    root: { id: word.root_id, letters, meaning, audio_url: '', audio_url_en: '' },
   }) as StudyWord;
 
 /** Graduated, not due for a while, never lapsed, comfortably mastered. */

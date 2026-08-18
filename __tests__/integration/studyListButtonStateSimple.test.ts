@@ -20,6 +20,7 @@
  */
 
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
+import { rootId } from '@/__tests__/helpers/ids';
 
 // Mock the service
 jest.mock('@/services/studyWordsFSRS');
@@ -34,7 +35,7 @@ describe('Study List Button State - Simplified Bug Reproduction', () => {
       // Mock: word doesn't exist, so insert returns true
       (studyWordsFSRSService.toggleFSRSStudyRoot as jest.Mock).mockResolvedValue(true);
 
-      const result = await studyWordsFSRSService.toggleFSRSStudyRoot('user-123', 1);
+      const result = await studyWordsFSRSService.toggleFSRSStudyRoot('user-123', rootId(1));
 
       expect(result).toBeTruthy();
       expect(studyWordsFSRSService.toggleFSRSStudyRoot).toHaveBeenCalledWith('user-123', 1);
@@ -44,7 +45,7 @@ describe('Study List Button State - Simplified Bug Reproduction', () => {
       // Mock: word exists, so delete returns false
       (studyWordsFSRSService.toggleFSRSStudyRoot as jest.Mock).mockResolvedValue(false);
 
-      const result = await studyWordsFSRSService.toggleFSRSStudyRoot('user-123', 1);
+      const result = await studyWordsFSRSService.toggleFSRSStudyRoot('user-123', rootId(1));
 
       expect(result).toBeFalsy();
       expect(studyWordsFSRSService.toggleFSRSStudyRoot).toHaveBeenCalledWith('user-123', 1);
@@ -54,26 +55,26 @@ describe('Study List Button State - Simplified Bug Reproduction', () => {
   describe('Multiple Sequential Toggles (Reproduces Bug)', () => {
     test('should correctly alternate true/false for sequential toggles of same word', async () => {
       const userId = 'user-123';
-      const rootId = 42;
+      const testRootId = rootId(42);
 
       // Add (word doesn't exist) → returns true
       (studyWordsFSRSService.toggleFSRSStudyRoot as jest.Mock).mockResolvedValueOnce(true);
-      const add1 = await studyWordsFSRSService.toggleFSRSStudyRoot(userId, rootId);
+      const add1 = await studyWordsFSRSService.toggleFSRSStudyRoot(userId, testRootId);
       expect(add1).toBeTruthy();
 
       // Remove (word exists) → returns false
       (studyWordsFSRSService.toggleFSRSStudyRoot as jest.Mock).mockResolvedValueOnce(false);
-      const remove1 = await studyWordsFSRSService.toggleFSRSStudyRoot(userId, rootId);
+      const remove1 = await studyWordsFSRSService.toggleFSRSStudyRoot(userId, testRootId);
       expect(remove1).toBeFalsy();
 
       // Add again (word doesn't exist) → should return true
       (studyWordsFSRSService.toggleFSRSStudyRoot as jest.Mock).mockResolvedValueOnce(true);
-      const add2 = await studyWordsFSRSService.toggleFSRSStudyRoot(userId, rootId);
+      const add2 = await studyWordsFSRSService.toggleFSRSStudyRoot(userId, testRootId);
       expect(add2).toBeTruthy();
 
       // Remove again → should return false
       (studyWordsFSRSService.toggleFSRSStudyRoot as jest.Mock).mockResolvedValueOnce(false);
-      const remove2 = await studyWordsFSRSService.toggleFSRSStudyRoot(userId, rootId);
+      const remove2 = await studyWordsFSRSService.toggleFSRSStudyRoot(userId, testRootId);
       expect(remove2).toBeFalsy();
 
       // Verify all calls were made
@@ -86,10 +87,10 @@ describe('Study List Button State - Simplified Bug Reproduction', () => {
 
       const results: boolean[] = [];
 
-      for (const rootId of words) {
+      for (const testRootId of words.map(rootId)) {
         // Each word is new, so all should return true
         (studyWordsFSRSService.toggleFSRSStudyRoot as jest.Mock).mockResolvedValueOnce(true);
-        const result = await studyWordsFSRSService.toggleFSRSStudyRoot(userId, rootId);
+        const result = await studyWordsFSRSService.toggleFSRSStudyRoot(userId, testRootId);
         results.push(result);
       }
 

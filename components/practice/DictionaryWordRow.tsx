@@ -13,7 +13,7 @@ import ReanimatedSwipeable, {
 } from 'react-native-gesture-handler/ReanimatedSwipeable';
 import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 
 import { SortMeter } from '@/components/practice/SortMeter';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';

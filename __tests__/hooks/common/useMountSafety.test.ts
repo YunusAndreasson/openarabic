@@ -34,7 +34,7 @@ describe('useMountSafety', () => {
 
     const firstRef = result.current;
 
-    rerender();
+    rerender(undefined);
 
     expect(result.current).toBe(firstRef);
     expect(result.current.current).toBeTruthy();
@@ -96,23 +96,7 @@ describe('useMountSafety', () => {
 
     // Re-render after unmount doesn't remount in this test setup
     // This just verifies ref state is stable after unmount
-    rerender();
+    rerender(undefined);
     expect(result.current.current).toBeFalsy();
-  });
-
-  test('should work correctly in cleanup scenarios', () => {
-    let isMountedRef: { current: boolean } | null = null;
-
-    const { unmount } = renderHook(() => {
-      const ref = useMountSafety();
-      isMountedRef = ref;
-      return ref;
-    });
-
-    expect(isMountedRef?.current).toBeTruthy();
-
-    unmount();
-
-    expect(isMountedRef?.current).toBeFalsy();
   });
 });

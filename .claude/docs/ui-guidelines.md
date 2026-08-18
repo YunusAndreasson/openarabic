@@ -145,17 +145,25 @@ withTiming(PRESS_SCALE.DRAG_UP); // 1.05
 
 ## The primitive layer
 
-Two buckets, one rule each:
+Three buckets, in dependency order:
 
+- **`components/primitives`** — `ThemedText`, `ThemedView`, `ThemedButton`,
+  `ThemedInput`. The base layer, imported by everything including the two below.
+  It deliberately has **no barrel**: import
+  `@/components/primitives/ThemedText` directly. Sitting below `ui` and `common`
+  with no index is what makes it structurally impossible for these to join a
+  cycle — and `ThemedText` alone has ~84 importers, so a cycle through it would
+  be the worst possible one.
 - **`components/ui`** — interactive controls: buttons, links, pickers, toggles, icons.
 - **`components/common`** — layout, state and composition: cards, rows, screen
   scaffolds, empty/error/loading states, badges, separators.
 
-Import from the barrel (`@/components/ui`, `@/components/common`), not from the
-file. The one exception is files _inside_ those two directories (and
-`components/providers`), which must import each other by direct path — a barrel
-import from inside a barrel closes a cycle that resolves to `undefined` at
-runtime.
+Import `ui` and `common` from their barrels (`@/components/ui`,
+`@/components/common`), not from the file. The one exception is files _inside_
+`ui`, `common`, `providers` or `primitives`, which must import each other by
+direct path — a barrel import from inside a barrel closes a cycle that resolves
+to `undefined` at runtime. `no-restricted-imports` in `eslint.config.mjs` makes
+that a lint error rather than a blank screen.
 
 A component that calls a domain hook or the router is **not** a primitive. It
 belongs in its feature directory (`components/practice/DictionaryButton.tsx`,

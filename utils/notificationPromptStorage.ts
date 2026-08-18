@@ -9,8 +9,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { handleError } from '@/utils/errorHandling';
+import { STORAGE_KEYS } from '@/constants/storageKeys';
 
-const PROMPT_STORAGE_KEY = '@openarabic/notifications/promptState';
+const PROMPT_STORAGE_KEY = STORAGE_KEYS.NOTIFICATION_PROMPT_STATE;
 const PROMPT_STATE_VERSION = 1;
 
 export interface NotificationPromptState {

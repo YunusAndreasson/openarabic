@@ -16,9 +16,9 @@ import { describe, test, expect, jest, beforeEach } from '@jest/globals';
 
 jest.mock('@/services/supabase', () => ({
   supabase: {
-    from: jest.fn(() => ({
-      select: jest.fn(() => ({
-        order: jest.fn(() => ({
+    from: jest.fn((..._args: unknown[]) => ({
+      select: jest.fn((..._args: unknown[]) => ({
+        order: jest.fn((..._args: unknown[]) => ({
           // Supabase query chain
         })),
       })),

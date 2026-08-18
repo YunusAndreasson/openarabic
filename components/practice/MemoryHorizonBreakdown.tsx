@@ -2,7 +2,7 @@ import type { JSX } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ListRow, ProgressBar } from '@/components/common';
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { Ionicons } from '@/components/ui';
 import { CHART_OPACITY, useChartColors } from '@/constants/chartColors';
 import { LAYOUT } from '@/constants/layout';

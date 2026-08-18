@@ -7,9 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { TUTORIALS, type TutorialId } from '@/constants/tutorials';
 import { handleError } from '@/utils/errorHandling';
-
-const scopedTutorialKey = (storageKey: string, userId?: string | null): string =>
-  userId ? `${storageKey}:${userId}` : storageKey;
+import { scopedKey } from '@/constants/storageKeys';
 
 /**
  * Check if a tutorial has been completed
@@ -24,7 +22,7 @@ async function isTutorialCompleted(
 ): Promise<boolean> {
   try {
     const config = TUTORIALS[tutorialId];
-    const value = await AsyncStorage.getItem(scopedTutorialKey(config.storageKey, userId));
+    const value = await AsyncStorage.getItem(scopedKey(config.storageKey, userId));
     return value === 'true';
   } catch (error) {
     handleError(error, {
@@ -47,7 +45,7 @@ export async function markTutorialCompleted(
 ): Promise<void> {
   try {
     const config = TUTORIALS[tutorialId];
-    await AsyncStorage.setItem(scopedTutorialKey(config.storageKey, userId), 'true');
+    await AsyncStorage.setItem(scopedKey(config.storageKey, userId), 'true');
   } catch (error) {
     handleError(error, {
       showToast: false,
@@ -66,7 +64,7 @@ export async function resetAllTutorials(userId?: string | null): Promise<void> {
     await Promise.all(
       tutorialIds.map(id => {
         const config = TUTORIALS[id];
-        return AsyncStorage.removeItem(scopedTutorialKey(config.storageKey, userId));
+        return AsyncStorage.removeItem(scopedKey(config.storageKey, userId));
       }),
     );
   } catch (error) {

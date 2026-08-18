@@ -11,7 +11,7 @@ import { render } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import React from 'react';
 
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 
 // Use shared mock factories from componentMocks.tsx
 jest.mock('@/hooks/theme/useColors', () =>
@@ -106,25 +106,27 @@ describe('ThemedText', () => {
     });
   });
 
-  describe('Semantic Variants', () => {
-    test('renders error variant with error color', () => {
-      const { getByText } = render(<ThemedText variant="error">Error message</ThemedText>);
+  describe('Semantic Colours', () => {
+    test('renders error colour with error color', () => {
+      const { getByText } = render(<ThemedText colorName="error">Error message</ThemedText>);
 
       const element = getByText('Error message');
       // Error variant should apply error color from mockColors (#F44336)
       expect(element).toHaveStyle({ color: '#F44336' });
     });
 
-    test('renders primary variant with text color', () => {
-      const { getByText } = render(<ThemedText variant="primary">Primary text</ThemedText>);
+    test('renders primary colour with text color', () => {
+      const { getByText } = render(<ThemedText colorName="text">Primary text</ThemedText>);
 
       const element = getByText('Primary text');
       // Primary variant uses default text color (#000000)
       expect(element).toHaveStyle({ color: '#000000' });
     });
 
-    test('renders secondary variant with secondary text color', () => {
-      const { getByText } = render(<ThemedText variant="secondary">Secondary text</ThemedText>);
+    test('renders secondary colour with secondary text color', () => {
+      const { getByText } = render(
+        <ThemedText colorName="secondaryText">Secondary text</ThemedText>,
+      );
 
       const element = getByText('Secondary text');
       // Secondary variant uses secondaryText color (#666666)

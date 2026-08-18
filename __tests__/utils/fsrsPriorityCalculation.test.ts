@@ -11,6 +11,7 @@ import { describe, expect, test } from '@jest/globals';
 import { calculateWordPriority } from '../../utils/fsrsSpacing';
 import { PriorityQueue } from '../../utils/priorityQueue';
 import { createTestWord, createWordSet, testPatterns } from '../helpers/fsrsTestHelpers';
+import { rootId } from '@/__tests__/helpers/ids';
 
 // We need to test the priority calculation logic directly
 // Since it's internal to useFSRS, we'll test it through the queue ordering behavior
@@ -32,21 +33,21 @@ describe('FSRS Priority Calculation Logic', () => {
 
       // Test overdue calculation (primary factor)
       const overdueWord = createTestWord({
-        root_id: 1,
+        root_id: rootId(1),
         fsrs_due: new Date(now.getTime() - 24 * 3600 * 1000).toISOString(), // 24 hours overdue
         fsrs_stability: 5,
         fsrs_difficulty: 6.5,
       });
 
       const dueNowWord = createTestWord({
-        root_id: 2,
+        root_id: rootId(2),
         fsrs_due: now.toISOString(), // Due now
         fsrs_stability: 5,
         fsrs_difficulty: 6.5,
       });
 
       const futureWord = createTestWord({
-        root_id: 3,
+        root_id: rootId(3),
         fsrs_due: new Date(now.getTime() + 24 * 3600 * 1000).toISOString(), // Due in 24 hours
         fsrs_stability: 5,
         fsrs_difficulty: 6.5,
@@ -65,14 +66,14 @@ describe('FSRS Priority Calculation Logic', () => {
       const now = new Date();
 
       const unstableWord = createTestWord({
-        root_id: 1,
+        root_id: rootId(1),
         fsrs_due: now.toISOString(),
         fsrs_stability: 1, // Very unstable
         fsrs_difficulty: 6.5,
       });
 
       const stableWord = createTestWord({
-        root_id: 2,
+        root_id: rootId(2),
         fsrs_due: now.toISOString(),
         fsrs_stability: 10, // Very stable
         fsrs_difficulty: 6.5,
@@ -92,14 +93,14 @@ describe('FSRS Priority Calculation Logic', () => {
       const now = new Date();
 
       const hardWord = createTestWord({
-        root_id: 1,
+        root_id: rootId(1),
         fsrs_due: now.toISOString(),
         fsrs_stability: 5,
         fsrs_difficulty: 8.0, // Hard
       });
 
       const easyWord = createTestWord({
-        root_id: 2,
+        root_id: rootId(2),
         fsrs_due: now.toISOString(),
         fsrs_stability: 5,
         fsrs_difficulty: 5.0, // Easy
@@ -119,7 +120,7 @@ describe('FSRS Priority Calculation Logic', () => {
   describe('Priority Edge Cases', () => {
     test('handles null/undefined FSRS values gracefully', () => {
       const wordWithNulls = createTestWord({
-        root_id: 1,
+        root_id: rootId(1),
         fsrs_due: null,
         fsrs_stability: null,
         fsrs_difficulty: null,
@@ -136,7 +137,7 @@ describe('FSRS Priority Calculation Logic', () => {
 
     test('handles extreme values correctly', () => {
       const extremeWord = createTestWord({
-        root_id: 1,
+        root_id: rootId(1),
         fsrs_due: new Date('1970-01-01').toISOString(), // Very overdue
         fsrs_stability: 999, // Extremely stable
         fsrs_difficulty: 15, // Beyond normal range
@@ -149,7 +150,7 @@ describe('FSRS Priority Calculation Logic', () => {
 
     test('handles invalid date strings', () => {
       const invalidDateWord = createTestWord({
-        root_id: 1,
+        root_id: rootId(1),
         fsrs_due: 'invalid-date-string',
         fsrs_stability: 5,
         fsrs_difficulty: 6.5,
@@ -194,7 +195,7 @@ describe('FSRS Priority Calculation Logic', () => {
     test('calculates priorities for large datasets without errors', () => {
       const largeWordSet = Array.from({ length: 1000 }, (_, i) =>
         createTestWord({
-          root_id: i + 1,
+          root_id: rootId(i + 1),
           fsrs_due: new Date(Date.now() - Math.random() * 86400000).toISOString(),
           fsrs_stability: Math.random() * 10 + 1,
           fsrs_difficulty: Math.random() * 5 + 5,
@@ -211,7 +212,7 @@ describe('FSRS Priority Calculation Logic', () => {
   describe('Real-world Priority Scenarios', () => {
     test('prioritizes struggling words correctly', () => {
       const strugglingWord = createTestWord({
-        root_id: 1,
+        root_id: rootId(1),
         fsrs_due: new Date(Date.now() - 12 * 3600 * 1000).toISOString(), // 12 hours overdue
         fsrs_stability: 2, // Low stability (struggling)
         fsrs_difficulty: 8.5, // High difficulty
@@ -219,7 +220,7 @@ describe('FSRS Priority Calculation Logic', () => {
       });
 
       const masteredWord = createTestWord({
-        root_id: 2,
+        root_id: rootId(2),
         fsrs_due: new Date(Date.now() - 6 * 3600 * 1000).toISOString(), // 6 hours overdue
         fsrs_stability: 15, // High stability (mastered)
         fsrs_difficulty: 5.5, // Low difficulty
@@ -234,7 +235,7 @@ describe('FSRS Priority Calculation Logic', () => {
 
     test('balances new vs review words appropriately', () => {
       const newWord = createTestWord({
-        root_id: 1,
+        root_id: rootId(1),
         fsrs_due: new Date().toISOString(), // Due now
         fsrs_stability: 0, // New word
         fsrs_difficulty: 6.5, // Default difficulty
@@ -243,7 +244,7 @@ describe('FSRS Priority Calculation Logic', () => {
       });
 
       const reviewWord = createTestWord({
-        root_id: 2,
+        root_id: rootId(2),
         fsrs_due: new Date(Date.now() - 2 * 3600 * 1000).toISOString(), // 2 hours overdue
         fsrs_stability: 7, // Established stability
         fsrs_difficulty: 6.0, // Learned difficulty
@@ -277,11 +278,11 @@ describe('Priority Queue Integration', () => {
 
   test('requeued words get appropriate spacing priority', () => {
     const wordA = createTestWord({
-      root_id: 1,
+      root_id: rootId(1),
       fsrs_due: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
     });
     const wordB = createTestWord({
-      root_id: 2,
+      root_id: rootId(2),
       fsrs_due: new Date(Date.now() - 1 * 3600 * 1000).toISOString(),
     });
 
@@ -304,13 +305,13 @@ describe('Priority Queue Integration', () => {
 
   test('words with invalid due date are skipped in queue ordering', () => {
     const validEarly = createTestWord({
-      root_id: 1,
+      root_id: rootId(1),
       fsrs_due: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
     });
 
-    const invalidWord = createTestWord({ root_id: 2, fsrs_due: 'not-a-date' });
+    const invalidWord = createTestWord({ root_id: rootId(2), fsrs_due: 'not-a-date' });
 
-    const validLate = createTestWord({ root_id: 3, fsrs_due: new Date().toISOString() });
+    const validLate = createTestWord({ root_id: rootId(3), fsrs_due: new Date().toISOString() });
 
     const queue = new PriorityQueue<typeof validEarly>();
     queue.push(validEarly, calculateWordPriority(validEarly));

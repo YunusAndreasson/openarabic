@@ -123,7 +123,12 @@ describe('SettingsCard', () => {
 
     test('renders without right element when type is none', () => {
       const { toJSON } = render(
-        <SettingsCard icon="info" label="About" rightType="none" onPress={mockOnPress} />,
+        <SettingsCard
+          icon="information-circle"
+          label="About"
+          rightType="none"
+          onPress={mockOnPress}
+        />,
       );
       expect(toJSON()).toBeTruthy();
     });

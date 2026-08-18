@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp, FadeOutDown, FadeOutUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { DEFAULT_TOAST_DURATION, TIMING_CONFIG } from '@/constants/animation';
 import { FONTS } from '@/constants/fonts';
 import { getElevation } from '@/constants/elevation';

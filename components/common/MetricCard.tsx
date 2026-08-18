@@ -2,7 +2,7 @@ import { BaseCard } from '@/components/common/BaseCard';
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { FONTS } from '@/constants/fonts';
 import { LAYOUT } from '@/constants/layout';
 

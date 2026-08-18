@@ -25,6 +25,7 @@ import React from 'react';
 
 import { SkiaArabicWord } from '@/components/article/SkiaArabicWord';
 import type { SentenceWord } from '@/types/vocabulary.types';
+import { rootId } from '@/__tests__/helpers/ids';
 
 // Use shared mock factory from componentMocks.tsx
 jest.mock('@/hooks/theme/useColors', () =>
@@ -39,7 +40,7 @@ jest.mock('@/hooks/theme/useColors', () =>
 // it next.) The `arabicFont` / `getArabicFont` keys went with it: `useSkiaFonts`
 // has not returned either for some time, so they mocked nothing.
 jest.mock('@/hooks/theme/useSkiaFonts', () => ({
-  useSkiaFonts: jest.fn(() => ({
+  useSkiaFonts: jest.fn((..._args: unknown[]) => ({
     isReady: false,
     fontSize: 17,
     fontFamily: 'Noto Sans Arabic',
@@ -48,7 +49,7 @@ jest.mock('@/hooks/theme/useSkiaFonts', () => ({
 }));
 
 jest.mock('@/hooks/vocabulary', () => ({
-  useArabicWord: jest.fn(() => ({ isSelected: false })),
+  useArabicWord: jest.fn((..._args: unknown[]) => ({ isSelected: false })),
 }));
 
 const { useArabicWord } = require('@/hooks/vocabulary');
@@ -62,9 +63,12 @@ describe('SkiaArabicWord (no font manager)', () => {
     english: 'book',
     difficulty_level: 1,
     grammar_note: null,
-    root_id: 1,
+    root_id: rootId(1),
     sentence_id: 1,
     word_type_id: 1,
+    audio_url: null,
+    root: null,
+    word_type: null,
     coloredSegments: [],
     ...overrides,
   });
@@ -79,7 +83,7 @@ describe('SkiaArabicWord (no font manager)', () => {
           getFamilyName: () => 'Noto Sans Arabic',
         }),
       },
-      getArabicFont: jest.fn(() => ({
+      getArabicFont: jest.fn((..._args: unknown[]) => ({
         getSize: () => 17,
         getTypeface: () => ({
           getFamilyName: () => 'Noto Sans Arabic',
@@ -133,9 +137,9 @@ describe('SkiaArabicWord (no font manager)', () => {
         word_form: 'والكتاب',
         english: 'and the book',
         coloredSegments: [
-          { text: 'و', color: '#7c3aed', type: 'prefix', colorName: 'secondary' },
-          { text: 'ال', color: '#2563eb', type: 'prefix', colorName: 'primary' },
-          { text: 'كتاب', color: '#1a1a1a', type: 'root', colorName: 'arabicText' },
+          { text: 'و', color: '#7c3aed', type: 'prefix' },
+          { text: 'ال', color: '#2563eb', type: 'prefix' },
+          { text: 'كتاب', color: '#1a1a1a', type: 'root' },
         ],
       });
 
@@ -163,9 +167,9 @@ describe('SkiaArabicWord (no font manager)', () => {
         word_form: 'والكتاب',
         english: 'and the book', // Multi-word
         coloredSegments: [
-          { text: 'و', color: '#7c3aed', type: 'prefix', colorName: 'secondary' },
-          { text: 'ال', color: '#2563eb', type: 'prefix', colorName: 'primary' },
-          { text: 'كتاب', color: '#1a1a1a', type: 'root', colorName: 'arabicText' },
+          { text: 'و', color: '#7c3aed', type: 'prefix' },
+          { text: 'ال', color: '#2563eb', type: 'prefix' },
+          { text: 'كتاب', color: '#1a1a1a', type: 'root' },
         ],
       });
 
@@ -180,9 +184,9 @@ describe('SkiaArabicWord (no font manager)', () => {
         word_form: 'وَالْكِتَابِ',
         english: 'and the book',
         coloredSegments: [
-          { text: 'وَ', color: '#7c3aed', type: 'prefix', colorName: 'secondary' },
-          { text: 'الْ', color: '#2563eb', type: 'prefix', colorName: 'primary' },
-          { text: 'كِتَابِ', color: '#1a1a1a', type: 'root', colorName: 'arabicText' },
+          { text: 'وَ', color: '#7c3aed', type: 'prefix' },
+          { text: 'الْ', color: '#2563eb', type: 'prefix' },
+          { text: 'كِتَابِ', color: '#1a1a1a', type: 'root' },
         ],
       });
 
@@ -296,8 +300,8 @@ describe('SkiaArabicWord (no font manager)', () => {
           id: i,
           word_form: `كتاب${i}`,
           coloredSegments: [
-            { text: 'و', color: '#7c3aed', type: 'prefix', colorName: 'secondary' },
-            { text: `كتاب${i}`, color: '#1a1a1a', type: 'root', colorName: 'arabicText' },
+            { text: 'و', color: '#7c3aed', type: 'prefix' },
+            { text: `كتاب${i}`, color: '#1a1a1a', type: 'root' },
           ],
         }),
       );
@@ -340,9 +344,9 @@ describe('SkiaArabicWord (no font manager)', () => {
         word_form: 'والكتاب',
         english: 'and the book',
         coloredSegments: [
-          { text: 'و', color: '#7c3aed', type: 'prefix', colorName: 'secondary' },
-          { text: 'ال', color: '#2563eb', type: 'prefix', colorName: 'primary' },
-          { text: 'كتاب', color: '#1a1a1a', type: 'root', colorName: 'arabicText' },
+          { text: 'و', color: '#7c3aed', type: 'prefix' },
+          { text: 'ال', color: '#2563eb', type: 'prefix' },
+          { text: 'كتاب', color: '#1a1a1a', type: 'root' },
         ],
       });
 
@@ -352,7 +356,7 @@ describe('SkiaArabicWord (no font manager)', () => {
       expect(getByTestId('word')).toBeTruthy();
 
       // Segments should combine to form original word
-      const segments = word.coloredSegments.map(s => s.text).join('');
+      const segments = (word.coloredSegments ?? []).map(s => s.text).join('');
       expect(segments).toBe('والكتاب');
     });
   });

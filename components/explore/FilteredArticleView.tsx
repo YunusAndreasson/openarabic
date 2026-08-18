@@ -4,7 +4,7 @@ import { type FC, type JSX, useCallback, useDeferredValue, useMemo } from 'react
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ThemedView } from '@/components/ThemedView';
+import { ThemedView } from '@/components/primitives/ThemedView';
 import { PlaylistItemCard } from '@/components/playlist';
 import { LIST_DRAW_DISTANCE_MULTIPLIER, SCROLL_EVENT_THROTTLE } from '@/constants/animation';
 import { COMPLETION_THRESHOLD, LAYOUT } from '@/constants/layout';

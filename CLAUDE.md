@@ -102,8 +102,10 @@ app/
 
 hooks/                   # Custom React hooks
 components/              # Reusable UI components
+├── primitives/          # ThemedText/View/Button/Input — no barrel, import directly
+├── ui/                  # Interactive controls and form primitives (barrel)
+├── common/              # Layout, state and composition primitives (barrel)
 ├── providers/           # Context providers
-├── ui/                  # Shared UI components
 ├── audio/               # Audio components
 ├── article/             # Article components
 └── ...
@@ -124,6 +126,25 @@ utils/                   # Helper functions
 ## Arabic Text (CRITICAL)
 
 Single English words should **NEVER** have grammar color-coding applied. Color-coding is only educational for multi-word phrases. Always check: `text.trim().split(/\s+/).length === 1`
+
+## Component Layering
+
+Three shared buckets, in dependency order. A new shared component goes in the
+first one that fits:
+
+1. **`components/primitives/`** — `ThemedText`, `ThemedView`, `ThemedButton`,
+   `ThemedInput`. Deliberately has **no `index.ts`**: both `ui` and `common`
+   import these, so they sit below both and cannot join an import cycle.
+2. **`components/ui/`** — interactive controls and form primitives (barrel).
+3. **`components/common/`** — layout, state and composition primitives (barrel).
+
+Feature directories (`article/`, `review/`, `practice/`, …) may import any barrel.
+
+**Inside `ui` / `common` / `providers` / `primitives`, import siblings by direct
+path, never through a barrel.** A barrel pulls in every sibling and closes a cycle
+(`ui/index` → `SettingsPicker` → `common/index` → `EmptyState` → `ui/index`) that
+resolves to `undefined` at module-init time — a blank component at runtime, not a
+build error. `no-restricted-imports` in `eslint.config.mjs` enforces this.
 
 ## Navigation
 

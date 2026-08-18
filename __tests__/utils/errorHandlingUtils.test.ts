@@ -55,7 +55,7 @@ describe('errorHandlingUtils', () => {
 
   describe('withErrorHandling', () => {
     test('should call the wrapped function and return the result on success', async () => {
-      const successFn = jest.fn().mockResolvedValue('success');
+      const successFn = jest.fn(async (..._args: unknown[]) => 'success');
       const wrapped = withErrorHandling(successFn);
 
       const result = await wrapped('arg1', 'arg2');
@@ -67,7 +67,9 @@ describe('errorHandlingUtils', () => {
 
     test('should call handleError and re-throw when the wrapped function fails', async () => {
       const error = new Error('Test error');
-      const failFn = jest.fn().mockRejectedValue(error);
+      const failFn = jest.fn(async (..._args: unknown[]) => {
+        throw error;
+      });
       const wrapped = withErrorHandling(failFn);
 
       await expect(wrapped()).rejects.toThrow('Test error');
@@ -76,7 +78,9 @@ describe('errorHandlingUtils', () => {
 
     test('should pass error options to handleError', async () => {
       const error = new Error('Test error');
-      const failFn = jest.fn().mockRejectedValue(error);
+      const failFn = jest.fn(async (..._args: unknown[]) => {
+        throw error;
+      });
       const errorOptions = {
         toastMessage: 'Custom error message',
         analyticsEventName: 'Custom_Error',
@@ -90,7 +94,7 @@ describe('errorHandlingUtils', () => {
 
   describe('withErrorHandlingDefault', () => {
     test('should call the wrapped function and return the result on success', async () => {
-      const successFn = jest.fn().mockResolvedValue('success');
+      const successFn = jest.fn(async (..._args: unknown[]) => 'success');
       const wrapped = withErrorHandlingDefault(successFn, 'default');
 
       const result = await wrapped('arg1', 'arg2');
@@ -102,7 +106,9 @@ describe('errorHandlingUtils', () => {
 
     test('should return default value when the wrapped function fails', async () => {
       const error = new Error('Test error');
-      const failFn = jest.fn().mockRejectedValue(error);
+      const failFn = jest.fn(async (..._args: unknown[]) => {
+        throw error;
+      });
       const wrapped = withErrorHandlingDefault(failFn, 'default-value');
 
       const result = await wrapped();
@@ -113,7 +119,9 @@ describe('errorHandlingUtils', () => {
 
     test('should pass error options to handleError and return default', async () => {
       const error = new Error('Test error');
-      const failFn = jest.fn().mockRejectedValue(error);
+      const failFn = jest.fn(async (..._args: unknown[]) => {
+        throw error;
+      });
       const errorOptions = {
         toastMessage: 'Custom error message',
         showToast: false,
@@ -128,7 +136,9 @@ describe('errorHandlingUtils', () => {
 
     test('should not re-throw error (unlike withErrorHandling)', async () => {
       const error = new Error('Test error');
-      const failFn = jest.fn().mockRejectedValue(error);
+      const failFn = jest.fn(async (..._args: unknown[]) => {
+        throw error;
+      });
       const wrapped = withErrorHandlingDefault(failFn, 'fallback');
 
       // Should NOT throw - should return default value instead

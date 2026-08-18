@@ -2,9 +2,9 @@ import { ScreenScaffold } from '@/components/common';
 import type { FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { ThemedButton } from '@/components/ThemedButton';
-import { ThemedInput } from '@/components/ThemedInput';
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedButton } from '@/components/primitives/ThemedButton';
+import { ThemedInput } from '@/components/primitives/ThemedInput';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useAccountDeletion } from '@/hooks/account/useAccountDeletion';

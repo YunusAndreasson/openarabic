@@ -29,10 +29,11 @@ import React from 'react';
 
 import { ArticleCard } from '@/components/explore/ArticleCard';
 import type { Article } from '@/types/articles.types';
+import { articleId, authorId, categoryId } from '@/__tests__/helpers/ids';
 
 // Mock dependencies
 jest.mock('expo-router', () => ({
-  useRouter: jest.fn(() => ({
+  useRouter: jest.fn((..._args: unknown[]) => ({
     push: jest.fn(),
   })),
 }));
@@ -63,7 +64,7 @@ jest.mock('@/components/ui/EnhancedImage', () => {
   };
 });
 
-jest.mock('@/components/ThemedText', () => {
+jest.mock('@/components/primitives/ThemedText', () => {
   const React = require('react');
   const { Text } = require('react-native');
   return {
@@ -75,15 +76,19 @@ const { useRouter } = require('expo-router');
 
 describe('ArticleCard Component', () => {
   const createMockArticle = (overrides: Partial<Article> = {}): Article => ({
-    id: 1,
+    id: articleId(1),
     title: 'Introduction to Arabic Grammar',
     summary: 'Learn the basics of Arabic grammar and sentence structure.',
     created_at: '2024-01-01T00:00:00Z',
+    published: true,
+    book: null,
+    audio_url_bilingual: null,
+    content_hash: 'test-hash',
     image_url: 'https://example.com/image.jpg',
     difficulty_level: 2,
-    category_id: 1,
-    author_id: 1,
-    audio_url: null,
+    category_id: categoryId(1),
+    author_id: authorId(1),
+    audio_url: '',
     category: {
       id: 1,
       name: 'Grammar',
@@ -167,7 +172,7 @@ describe('ArticleCard Component', () => {
       const mockPush = jest.fn();
       jest.mocked(useRouter).mockReturnValue({ push: mockPush });
 
-      const article = createMockArticle({ id: 42 });
+      const article = createMockArticle({ id: articleId(42) });
       const props = { ...defaultProps, article };
 
       const { getByTestId } = render(<ArticleCard {...props} testID="article-card" />);
@@ -430,7 +435,7 @@ describe('ArticleCard Component', () => {
     test('renders 10 cards within acceptable time', () => {
       const articles = Array.from({ length: 10 }, (_, i) =>
         createMockArticle({
-          id: i + 1,
+          id: articleId(i + 1),
           title: `Article ${i + 1}`,
         }),
       );
@@ -470,7 +475,7 @@ describe('ArticleCard Component', () => {
       const mockPush = jest.fn();
       jest.mocked(useRouter).mockReturnValue({ push: mockPush });
 
-      const article = createMockArticle({ id: 123 });
+      const article = createMockArticle({ id: articleId(123) });
       const props = { ...defaultProps, article };
 
       const { getByTestId } = render(<ArticleCard {...props} testID="card" />);

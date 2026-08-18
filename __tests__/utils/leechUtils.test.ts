@@ -13,6 +13,7 @@ import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import { LEECH_LIST_LIMIT, LEECH_MIN_LAPSES } from '@/constants/fsrs';
 import type { RootId } from '@/types/branded.types';
 import { isLeechWord, rankStrugglingWords } from '@/utils/leechUtils';
+import { rootId } from '@/__tests__/helpers/ids';
 
 const leech = (root_id: number, lapses: number, difficulty: number) =>
   createTestWord({
@@ -26,9 +27,9 @@ const leech = (root_id: number, lapses: number, difficulty: number) =>
 describe('rankStrugglingWords', () => {
   test('excludes New / never-studied words even with high lapses', () => {
     const words = [
-      createTestWord({ root_id: 1 as RootId, fsrs_state: State.New, fsrs_reps: 0, fsrs_lapses: 9 }),
+      createTestWord({ root_id: rootId(1), fsrs_state: State.New, fsrs_reps: 0, fsrs_lapses: 9 }),
       createTestWord({
-        root_id: 2 as RootId,
+        root_id: rootId(2),
         fsrs_state: State.Review,
         fsrs_reps: 0, // never actually reviewed
         fsrs_lapses: 9,

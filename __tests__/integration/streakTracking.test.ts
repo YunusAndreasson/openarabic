@@ -20,19 +20,20 @@
 
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { ReadingStreakService } from '@/services/studyStreak';
+import { rootId } from '@/__tests__/helpers/ids';
 
 jest.mock('@/services/supabase', () => ({
   supabase: {
     from: jest.fn(),
   },
-  checkAuthentication: jest.fn().mockResolvedValue(undefined),
+  checkAuthentication: jest.fn(async (..._args: unknown[]) => undefined),
 }));
 
 const { supabase } = require('@/services/supabase');
 
 describe('Streak Tracking Integration', () => {
   const userId = 'test-user-123';
-  const rootId = 42;
+  const testRootId = rootId(42);
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -57,16 +58,16 @@ describe('Streak Tracking Integration', () => {
     const mockUpdateObj = {
       update: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
-      select: jest.fn().mockResolvedValue({
-        data: [{ root_id: rootId, fsrs_last_review: timestamp }],
+      select: jest.fn(async (..._args: unknown[]) => ({
+        data: [{ root_id: testRootId, fsrs_last_review: timestamp }],
         error: null,
-      }),
+      })),
     };
 
     (supabase.from as jest.Mock).mockReturnValue(mockUpdateObj);
 
     // Simulate updating a word (this is what happens during practice)
-    await studyWordsFSRSService.updateWordAndReview(userId, rootId, {
+    await studyWordsFSRSService.updateWordAndReview(userId, testRootId, {
       fsrs_due: timestamp,
       fsrs_stability: 5.0,
       fsrs_difficulty: 5.0,
@@ -94,16 +95,16 @@ describe('Streak Tracking Integration', () => {
     // Create mock study_words records with fsrs_last_review timestamps
     const mockRecords = reviewDates.map(date => ({
       fsrs_last_review: date.toISOString(),
-      root_id: rootId,
+      root_id: testRootId,
     }));
 
     // Mock the query that getDailyStudySessionActivity uses
     const mockSelectObj = {
       select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockResolvedValue({
+      eq: jest.fn(async (..._args: unknown[]) => ({
         data: mockRecords,
         error: null,
-      }),
+      })),
     };
 
     (supabase.from as jest.Mock).mockReturnValue(mockSelectObj);

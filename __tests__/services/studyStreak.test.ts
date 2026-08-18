@@ -31,15 +31,15 @@ const { supabase } = require('@/services/supabase');
 // unhandled rejection takes the whole jest worker down.
 const chainableResult = (promise: Promise<any>) =>
   Object.assign(promise, {
-    range: jest.fn(() => promise),
-    gt: jest.fn(() => promise),
+    range: jest.fn((..._args: unknown[]) => promise),
+    gt: jest.fn((..._args: unknown[]) => promise),
   });
 
 // Helper to create query builder chain for SELECT queries
 const createSelectBuilder = (response: any = { data: [], error: null }) => {
   const promise = chainableResult(Promise.resolve(response));
   const selectFn = jest.fn();
-  const eqFn = jest.fn(() => promise);
+  const eqFn = jest.fn((..._args: unknown[]) => promise);
 
   selectFn.mockReturnValue({ eq: eqFn });
 
@@ -658,7 +658,8 @@ describe('StudySessionStreakService', () => {
 
       await StudySessionStreakService.getStudySessionStreak('user-123');
 
-      const chain = (supabase.from as jest.Mock).mock.results[0]?.value;
+      type Chain = Record<string, jest.Mock<(...args: unknown[]) => Chain>>;
+      const chain = (supabase.from as jest.Mock).mock.results[0]?.value as Chain;
       const eqResult = chain.select().eq('user_id', 'user-123');
       expect(eqResult.gt).toHaveBeenCalledWith('fsrs_reps', 0);
     });

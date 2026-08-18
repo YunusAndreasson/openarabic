@@ -34,6 +34,11 @@ import { successFeedback } from '@/utils/haptics';
 import { authBreadcrumb, handleError } from '@/utils/errorHandling';
 import { captureException } from '@sentry/react-native';
 import { useMountSafety } from '@/hooks/common/useMountSafety';
+import {
+  createAuthErrorMock,
+  createSessionMock,
+  createUserMock,
+} from '@/__tests__/helpers/serviceMocks';
 
 const mockSupabase = jest.mocked(supabase);
 const mockAnalytics = jest.mocked(analytics);
@@ -45,21 +50,12 @@ const mockUseMountSafety = jest.mocked(useMountSafety);
 
 describe('useOAuthProvider', () => {
   // Default mock implementations
-  const mockSession = {
+  const mockSession = createSessionMock({
     access_token: 'test-token',
     refresh_token: 'refresh-token',
-    expires_in: 3600,
     expires_at: Date.now() + 3600000,
-    token_type: 'bearer',
-    user: {
-      id: 'user-123',
-      email: 'test@example.com',
-      app_metadata: {},
-      user_metadata: {},
-      aud: 'authenticated',
-      created_at: new Date().toISOString(),
-    },
-  };
+    user: createUserMock({ id: 'user-123', email: 'test@example.com' }),
+  });
 
   const mockAuthResponse: AuthResponse = {
     data: {
@@ -76,18 +72,23 @@ describe('useOAuthProvider', () => {
     mockUseMountSafety.mockReturnValue({ current: true });
 
     // Default Supabase mocks
-    mockSupabase.auth.signInWithIdToken = jest.fn().mockResolvedValue(mockAuthResponse);
-    mockSupabase.auth.getSession = jest
-      .fn()
-      .mockResolvedValue({ data: { session: mockSession }, error: null });
+    // `jest.mock('@/services/supabase')` automocks the module export but not the
+    // nested `auth` methods, so these must be assigned rather than configured.
+    mockSupabase.auth.signInWithIdToken = jest.fn(
+      async () => mockAuthResponse,
+    ) as unknown as typeof mockSupabase.auth.signInWithIdToken;
+    mockSupabase.auth.getSession = jest.fn(async (..._args: unknown[]) => ({
+      data: { session: mockSession },
+      error: null,
+    })) as unknown as typeof mockSupabase.auth.getSession;
 
     // Default analytics mocks
-    mockAnalytics.identify = jest.fn().mockResolvedValue(undefined);
-    mockAnalytics.trackSignIn = jest.fn().mockResolvedValue(undefined);
+    mockAnalytics.identify = jest.fn(async (..._args: unknown[]): Promise<void> => undefined);
+    mockAnalytics.trackSignIn = jest.fn(async (..._args: unknown[]): Promise<void> => undefined);
 
     // Default utility mocks
     mockSuccessFeedback.mockReturnValue(undefined);
-    mockHandleError.mockReturnValue(undefined);
+    mockHandleError.mockResolvedValue(undefined);
 
     // Sentry mocks are already defined via jest.mock factory
   });
@@ -106,8 +107,8 @@ describe('useOAuthProvider', () => {
 
       const config: OAuthProviderConfig = {
         provider: 'google',
-        loadModule: jest.fn().mockResolvedValue(mockModule),
-        executeSignIn: jest.fn().mockResolvedValue(signInResult),
+        loadModule: jest.fn(async (..._args: unknown[]) => mockModule),
+        executeSignIn: jest.fn(async (..._args: unknown[]) => signInResult),
       };
 
       const { result } = renderHook(() => useOAuthProvider(config));
@@ -142,8 +143,8 @@ describe('useOAuthProvider', () => {
     test('should add Sentry breadcrumbs throughout the flow', async () => {
       const config: OAuthProviderConfig = {
         provider: 'apple',
-        loadModule: jest.fn().mockResolvedValue({}),
-        executeSignIn: jest.fn().mockResolvedValue({ idToken: 'token' }),
+        loadModule: jest.fn(async (..._args: unknown[]) => {}),
+        executeSignIn: jest.fn(async (..._args: unknown[]) => ({ idToken: 'token' })),
       };
 
       const { result } = renderHook(() => useOAuthProvider(config));
@@ -168,8 +169,10 @@ describe('useOAuthProvider', () => {
     test('should handle module not available error', async () => {
       const config: OAuthProviderConfig = {
         provider: 'google',
-        loadModule: jest.fn().mockRejectedValue(new Error('Module not found')),
-        executeSignIn: jest.fn(),
+        loadModule: jest.fn(async (..._args: unknown[]) => {
+          throw new Error('Module not found');
+        }),
+        executeSignIn: jest.fn<OAuthProviderConfig['executeSignIn']>(),
       };
 
       const { result } = renderHook(() => useOAuthProvider(config));
@@ -196,8 +199,10 @@ describe('useOAuthProvider', () => {
     test('should use custom module not available message', async () => {
       const config: OAuthProviderConfig = {
         provider: 'google',
-        loadModule: jest.fn().mockRejectedValue(new Error('Module not found')),
-        executeSignIn: jest.fn(),
+        loadModule: jest.fn(async (..._args: unknown[]) => {
+          throw new Error('Module not found');
+        }),
+        executeSignIn: jest.fn<OAuthProviderConfig['executeSignIn']>(),
         moduleNotAvailableMessage: 'Custom error message',
       };
 
@@ -219,8 +224,10 @@ describe('useOAuthProvider', () => {
 
       const config: OAuthProviderConfig = {
         provider: 'google',
-        loadModule: jest.fn().mockResolvedValue({}),
-        executeSignIn: jest.fn().mockRejectedValue(signInError),
+        loadModule: jest.fn(async (..._args: unknown[]) => {}),
+        executeSignIn: jest.fn(async (..._args: unknown[]) => {
+          throw signInError;
+        }),
       };
 
       const { result } = renderHook(() => useOAuthProvider(config));
@@ -239,9 +246,11 @@ describe('useOAuthProvider', () => {
 
       const config: OAuthProviderConfig = {
         provider: 'google',
-        loadModule: jest.fn().mockResolvedValue({}),
-        executeSignIn: jest.fn().mockRejectedValue(customError),
-        handleProviderError: jest.fn().mockReturnValue('Custom error message'),
+        loadModule: jest.fn(async (..._args: unknown[]) => {}),
+        executeSignIn: jest.fn(async (..._args: unknown[]) => {
+          throw customError;
+        }),
+        handleProviderError: jest.fn((..._args: unknown[]) => 'Custom error message'),
       };
 
       const { result } = renderHook(() => useOAuthProvider(config));
@@ -259,9 +268,11 @@ describe('useOAuthProvider', () => {
     test('should skip custom error handler if it returns undefined', async () => {
       const config: OAuthProviderConfig = {
         provider: 'google',
-        loadModule: jest.fn().mockResolvedValue({}),
-        executeSignIn: jest.fn().mockRejectedValue(new Error('Standard error')),
-        handleProviderError: jest.fn().mockReturnValue(undefined),
+        loadModule: jest.fn(async (..._args: unknown[]) => {}),
+        executeSignIn: jest.fn(async (..._args: unknown[]) => {
+          throw new Error('Standard error');
+        }),
+        handleProviderError: jest.fn((..._args: unknown[]) => undefined),
       };
 
       const { result } = renderHook(() => useOAuthProvider(config));
@@ -281,8 +292,8 @@ describe('useOAuthProvider', () => {
     test('should throw error if no ID token returned', async () => {
       const config: OAuthProviderConfig = {
         provider: 'google',
-        loadModule: jest.fn().mockResolvedValue({}),
-        executeSignIn: jest.fn().mockResolvedValue({ idToken: '' }),
+        loadModule: jest.fn(async (..._args: unknown[]) => {}),
+        executeSignIn: jest.fn(async (..._args: unknown[]) => ({ idToken: '' })),
       };
 
       const { result } = renderHook(() => useOAuthProvider(config));
@@ -305,12 +316,14 @@ describe('useOAuthProvider', () => {
   describe('Supabase Exchange Errors', () => {
     test('should handle Supabase signInWithIdToken errors', async () => {
       const supabaseError = new Error('Network error');
-      mockSupabase.auth.signInWithIdToken = jest.fn().mockRejectedValue(supabaseError);
+      mockSupabase.auth.signInWithIdToken = jest.fn(async (..._args: unknown[]) => {
+        throw supabaseError;
+      });
 
       const config: OAuthProviderConfig = {
         provider: 'google',
-        loadModule: jest.fn().mockResolvedValue({}),
-        executeSignIn: jest.fn().mockResolvedValue({ idToken: 'token' }),
+        loadModule: jest.fn(async (..._args: unknown[]) => {}),
+        executeSignIn: jest.fn(async (..._args: unknown[]) => ({ idToken: 'token' })),
       };
 
       const { result } = renderHook(() => useOAuthProvider(config));
@@ -328,19 +341,16 @@ describe('useOAuthProvider', () => {
     });
 
     test('should handle Supabase auth response errors', async () => {
-      const authError = {
-        message: 'Invalid credentials',
-        name: 'AuthError',
-      };
-      mockSupabase.auth.signInWithIdToken = jest.fn().mockResolvedValue({
+      const authError = createAuthErrorMock('Invalid credentials');
+      mockSupabase.auth.signInWithIdToken = jest.fn(async (..._args: unknown[]) => ({
         data: { user: null, session: null },
         error: authError,
-      });
+      })) as unknown as typeof mockSupabase.auth.signInWithIdToken;
 
       const config: OAuthProviderConfig = {
         provider: 'apple',
-        loadModule: jest.fn().mockResolvedValue({}),
-        executeSignIn: jest.fn().mockResolvedValue({ idToken: 'token' }),
+        loadModule: jest.fn(async (..._args: unknown[]) => {}),
+        executeSignIn: jest.fn(async (..._args: unknown[]) => ({ idToken: 'token' })),
       };
 
       const { result } = renderHook(() => useOAuthProvider(config));
@@ -365,8 +375,10 @@ describe('useOAuthProvider', () => {
 
       const config: OAuthProviderConfig = {
         provider: 'google',
-        loadModule: jest.fn().mockResolvedValue({}),
-        executeSignIn: jest.fn().mockRejectedValue(cancellationError),
+        loadModule: jest.fn(async (..._args: unknown[]) => {}),
+        executeSignIn: jest.fn(async (..._args: unknown[]) => {
+          throw cancellationError;
+        }),
       };
 
       const { result } = renderHook(() => useOAuthProvider(config));
@@ -389,8 +401,10 @@ describe('useOAuthProvider', () => {
 
       const config: OAuthProviderConfig = {
         provider: 'google',
-        loadModule: jest.fn().mockResolvedValue({}),
-        executeSignIn: jest.fn().mockRejectedValue(cancellationError),
+        loadModule: jest.fn(async (..._args: unknown[]) => {}),
+        executeSignIn: jest.fn(async (..._args: unknown[]) => {
+          throw cancellationError;
+        }),
       };
 
       const { result } = renderHook(() => useOAuthProvider(config));
@@ -413,8 +427,8 @@ describe('useOAuthProvider', () => {
 
       const config: OAuthProviderConfig = {
         provider: 'google',
-        loadModule: jest.fn().mockResolvedValue({}),
-        executeSignIn: jest.fn().mockImplementation(async () => {
+        loadModule: jest.fn(async (..._args: unknown[]) => {}),
+        executeSignIn: jest.fn(async (..._args: unknown[]) => {
           // Simulate unmount during async operation
           mountedRef.current = false;
           return { idToken: 'token' };
@@ -440,8 +454,8 @@ describe('useOAuthProvider', () => {
     test('should track sign-in with correct provider', async () => {
       const config: OAuthProviderConfig = {
         provider: 'apple',
-        loadModule: jest.fn().mockResolvedValue({}),
-        executeSignIn: jest.fn().mockResolvedValue({ idToken: 'token' }),
+        loadModule: jest.fn(async (..._args: unknown[]) => {}),
+        executeSignIn: jest.fn(async (..._args: unknown[]) => ({ idToken: 'token' })),
       };
 
       const { result } = renderHook(() => useOAuthProvider(config));

@@ -14,6 +14,9 @@ import React from 'react';
 
 import { DictionaryWordRow } from '@/components/practice/DictionaryWordRow';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
+import { rootId, userId } from '@/__tests__/helpers/ids';
+import type { UserId } from '@/types/branded.types';
 
 // Use shared mock factories
 jest.mock('react-native-reanimated', () =>
@@ -86,10 +89,9 @@ describe('DictionaryWordRow', () => {
   const mockOnResetProgress = jest.fn();
 
   const createMockWord = (overrides: Partial<StudyWord> = {}): StudyWord =>
-    ({
-      id: 1,
-      user_id: 'user-123',
-      root_id: 42,
+    createTestWord({
+      user_id: userId('user-123'),
+      root_id: rootId(42),
       fsrs_state: 2,
       fsrs_stability: 5.0,
       fsrs_difficulty: 0.3,
@@ -97,7 +99,6 @@ describe('DictionaryWordRow', () => {
       fsrs_last_review: '2024-01-01T00:00:00Z',
       fsrs_reps: 5,
       fsrs_lapses: 1,
-      fsrs_elapsed_days: 1,
       fsrs_scheduled_days: 3,
       created_at: '2024-01-01T00:00:00Z',
       root: {
@@ -108,12 +109,14 @@ describe('DictionaryWordRow', () => {
         audio_url_en: 'https://example.com/audio_en.mp3',
       },
       ...overrides,
-    }) as StudyWord;
+    });
 
   const renderRow = (word: StudyWord) =>
     render(
       <DictionaryWordRow
         word={word}
+        sortField="difficulty"
+        nowMs={Date.parse('2024-01-02T00:00:00Z')}
         onPress={mockOnPress}
         onRemove={mockOnRemove}
         onResetProgress={mockOnResetProgress}
@@ -186,6 +189,8 @@ describe('DictionaryWordRow', () => {
       rerender(
         <DictionaryWordRow
           word={word}
+          sortField="difficulty"
+          nowMs={Date.parse('2024-01-02T00:00:00Z')}
           onPress={mockOnPress}
           onRemove={mockOnRemove}
           onResetProgress={mockOnResetProgress}
@@ -206,6 +211,8 @@ describe('DictionaryWordRow', () => {
       rerender(
         <DictionaryWordRow
           word={word2}
+          sortField="difficulty"
+          nowMs={Date.parse('2024-01-02T00:00:00Z')}
           onPress={mockOnPress}
           onRemove={mockOnRemove}
           onResetProgress={mockOnResetProgress}

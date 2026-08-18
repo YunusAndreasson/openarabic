@@ -27,6 +27,7 @@
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { rootId } from '@/__tests__/helpers/ids';
 
 // Mock the service layer
 jest.mock('@/services/studyWordsFSRS');
@@ -44,10 +45,8 @@ describe('Complete Practice Session Flow - Integration Test', () => {
       const userId = 'user-123';
       const dueWords: StudyWord[] = [
         createTestWord({
-          id: 1,
-          root_id: 101,
-          word: 'كتاب',
-          definition: 'book',
+          root_id: rootId(101),
+          root: { id: 1, letters: 'كتاب', meaning: 'book', audio_url: '', audio_url_en: '' },
           fsrs_due: new Date(Date.now() - 1000).toISOString(), // Due now
           fsrs_state: 2, // Review state
           fsrs_stability: 5,
@@ -55,10 +54,8 @@ describe('Complete Practice Session Flow - Integration Test', () => {
           fsrs_reps: 2,
         }),
         createTestWord({
-          id: 2,
-          root_id: 102,
-          word: 'بيت',
-          definition: 'house',
+          root_id: rootId(102),
+          root: { id: 1, letters: 'بيت', meaning: 'house', audio_url: '', audio_url_en: '' },
           fsrs_due: new Date(Date.now() - 1000).toISOString(),
           fsrs_state: 2,
           fsrs_stability: 3,
@@ -66,10 +63,8 @@ describe('Complete Practice Session Flow - Integration Test', () => {
           fsrs_reps: 1,
         }),
         createTestWord({
-          id: 3,
-          root_id: 103,
-          word: 'مدرسة',
-          definition: 'school',
+          root_id: rootId(103),
+          root: { id: 1, letters: 'مدرسة', meaning: 'school', audio_url: '', audio_url_en: '' },
           fsrs_due: new Date(Date.now() - 1000).toISOString(),
           fsrs_state: 2,
           fsrs_stability: 4,
@@ -215,10 +210,8 @@ describe('Complete Practice Session Flow - Integration Test', () => {
       const userId = 'user-123';
       const dueWords = [
         createTestWord({
-          id: 1,
-          root_id: 101,
-          word: 'صعب',
-          definition: 'difficult',
+          root_id: rootId(101),
+          root: { id: 1, letters: 'صعب', meaning: 'difficult', audio_url: '', audio_url_en: '' },
           fsrs_due: new Date(Date.now() - 1000).toISOString(),
           fsrs_state: 2,
           fsrs_stability: 2,
@@ -226,10 +219,8 @@ describe('Complete Practice Session Flow - Integration Test', () => {
           fsrs_reps: 1,
         }),
         createTestWord({
-          id: 2,
-          root_id: 102,
-          word: 'معقد',
-          definition: 'complex',
+          root_id: rootId(102),
+          root: { id: 1, letters: 'معقد', meaning: 'complex', audio_url: '', audio_url_en: '' },
           fsrs_due: new Date(Date.now() - 1000).toISOString(),
           fsrs_state: 2,
           fsrs_stability: 1,
@@ -285,13 +276,11 @@ describe('Complete Practice Session Flow - Integration Test', () => {
       const userId = 'user-123';
       const dueWords = [
         createTestWord({
-          id: 1,
-          root_id: 101,
+          root_id: rootId(101),
           fsrs_due: new Date(Date.now() - 1000).toISOString(),
         }),
         createTestWord({
-          id: 2,
-          root_id: 102,
+          root_id: rootId(102),
           fsrs_due: new Date(Date.now() - 1000).toISOString(),
         }),
       ];
@@ -341,10 +330,14 @@ describe('Complete Practice Session Flow - Integration Test', () => {
       // Generate 50 due words
       const dueWords = Array.from({ length: 50 }, (_, i) =>
         createTestWord({
-          id: i + 1,
-          root_id: 1000 + i,
-          word: `word${i}`,
-          definition: `definition${i}`,
+          root_id: rootId(1000 + i),
+          root: {
+            id: 1000 + i,
+            letters: `word${i}`,
+            meaning: `definition${i}`,
+            audio_url: '',
+            audio_url_en: '',
+          },
           fsrs_due: new Date(Date.now() - 1000).toISOString(),
           fsrs_state: 2,
           fsrs_stability: 3 + Math.random() * 5,
@@ -382,8 +375,7 @@ describe('Complete Practice Session Flow - Integration Test', () => {
     test('should maintain valid FSRS field values throughout session', async () => {
       const userId = 'user-123';
       const word = createTestWord({
-        id: 1,
-        root_id: 101,
+        root_id: rootId(101),
         fsrs_due: new Date(Date.now() - 1000).toISOString(),
         fsrs_state: 2,
         fsrs_stability: 5,
@@ -414,9 +406,9 @@ describe('Complete Practice Session Flow - Integration Test', () => {
       const updatedFSRS = updateCall[2];
 
       // Verify FSRS invariants
-      expect(updatedFSRS.fsrs_stability).toBeGreaterThan(word.fsrs_stability); // Stability increased
-      expect(updatedFSRS.fsrs_difficulty).toBeLessThan(word.fsrs_difficulty); // Difficulty decreased
-      expect(updatedFSRS.fsrs_reps).toBe(word.fsrs_reps + 1); // Reps incremented
+      expect(updatedFSRS.fsrs_stability).toBeGreaterThan(word.fsrs_stability ?? 0); // Stability increased
+      expect(updatedFSRS.fsrs_difficulty).toBeLessThan(word.fsrs_difficulty ?? 0); // Difficulty decreased
+      expect(updatedFSRS.fsrs_reps).toBe((word.fsrs_reps ?? 0) + 1); // Reps incremented
       expect(updatedFSRS.fsrs_lapses).toBe(0); // No lapses on Good
       expect(updatedFSRS.fsrs_state).toBe(2); // Still in Review state
 

@@ -13,7 +13,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 // Direct path, not the barrel: a file inside components/common importing from
 // '@/components/common' closes a cycle that resolves to `undefined` at runtime
 // and fails as a blank component rather than a build error.
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { SPRING_CONFIG } from '@/constants/animation';
 import type { SolidColorName } from '@/constants/colors';
 import type { TextTypeName } from '@/types/ui/text.types';

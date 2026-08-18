@@ -3,6 +3,8 @@
  * Defines all tutorial IDs, configurations, and timing for the progressive disclosure tutorial system
  */
 
+import { STORAGE_KEYS } from '@/constants/storageKeys';
+
 /**
  * Tutorial identifiers (branded type pattern for type safety)
  */
@@ -43,18 +45,18 @@ interface TutorialConfig {
  */
 export const TUTORIALS: Record<TutorialId, TutorialConfig> = {
   [TutorialId.WELCOME_INTRO]: {
-    storageKey: '@openarabic/tutorials/welcomeIntroSeen',
+    storageKey: STORAGE_KEYS.TUTORIAL_WELCOME_INTRO,
     showDelay: 600,
   },
   [TutorialId.WORD_TAP]: {
-    storageKey: '@openarabic/tutorials/wordTapCompleted',
+    storageKey: STORAGE_KEYS.TUTORIAL_WORD_TAP,
     showDelay: 800,
   },
   [TutorialId.SWIPE_GESTURE]: {
     // Key bumped again for the three-grade rewrite: the previous version taught
     // a binary swipe and never mentioned "Guessed", so existing users should see
     // the corrected tutorial once.
-    storageKey: '@openarabic/tutorials/reviewGradesCompleted',
+    storageKey: STORAGE_KEYS.TUTORIAL_REVIEW_GRADES,
     showDelay: 500,
   },
 };

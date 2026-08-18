@@ -766,13 +766,6 @@ export const ALL_GROUND_TRUTH_CASES: GroundTruthCase[] = [
 ];
 
 /**
- * Get cases by category
- */
-export function getCasesByCategory(category: GroundTruthCase['category']): GroundTruthCase[] {
-  return ALL_GROUND_TRUTH_CASES.filter(c => c.category === category);
-}
-
-/**
  * Get statistics about the ground truth corpus
  */
 export function getCorpusStats(): {

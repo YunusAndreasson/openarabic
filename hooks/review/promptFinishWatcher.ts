@@ -40,12 +40,10 @@ import { mark as diagMark } from '@/utils/reviewDiagnostics';
  * life and the recorder is only resumed, never opened (see
  * lib/voice/recording.ts). What remains is a guard on the clip's own tail, and
  * every millisecond of it is silence the learner sits through.
- * @internal
  */
 export const PROMPT_FINISH_GRACE_MS = 60;
 /** Safety cap while the clip's duration is still unknown. Once the player
  *  reports a duration the cap tightens to that plus PROMPT_OVERRUN_MS. */
-/** @internal */
 export const PROMPT_MAX_WAIT_MS = 8000;
 /** Slack over the reported duration before giving up on the finish event.
  *  Covers the 500 ms status interval plus a little scheduling jitter. */

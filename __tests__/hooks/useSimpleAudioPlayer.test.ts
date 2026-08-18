@@ -394,7 +394,7 @@ describe('useSimpleAudioPlayer Hook', () => {
         isMounted: true,
       });
 
-      rerender();
+      rerender(undefined);
 
       expect(result.current.playing).toBeTruthy();
     });
@@ -539,7 +539,6 @@ describe('useSimpleAudioPlayer Hook', () => {
     test('should expose all status properties', () => {
       const fullStatus = createMockStatus({
         playing: true,
-        isLoading: false,
         currentTime: 45,
         duration: 180,
         currentTrack: createMockTrack(),
@@ -590,7 +589,7 @@ describe('useSimpleAudioPlayer Hook', () => {
           status: createMockStatus({ currentTime: i }),
           isMounted: true,
         });
-        rerender();
+        rerender(undefined);
       }
 
       // Should not crash or throw

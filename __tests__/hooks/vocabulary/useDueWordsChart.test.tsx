@@ -14,6 +14,7 @@ import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import { useDueWordsChart } from '@/hooks/vocabulary/useDueWordsChart';
 import type { StudyWord } from '@/types/vocabulary.types';
 import type { DueWordsForecast } from '@/utils/fsrsUtils';
+import { rootId } from '@/__tests__/helpers/ids';
 
 // Chart mocks - inline jest.mock() for hoisting (uses shared mock implementations via require)
 jest.mock('@/utils/chartPathBuilder', () => ({
@@ -35,7 +36,7 @@ jest.mock('@/utils/chartPathBuilder', () => ({
 }));
 
 jest.mock('@/constants/chartConstants', () => {
-  const actualConstants = jest.requireActual('@/constants/chartConstants');
+  const actualConstants = jest.requireActual<Record<string, unknown>>('@/constants/chartConstants');
   return {
     ...actualConstants,
     calculateDataPointPositions: (length: number) => Array.from({ length }, (_, i) => i * 10),
@@ -108,9 +109,9 @@ describe('useDueWordsChart', () => {
   describe('Invalid FSRS Data', () => {
     test('should filter out words with null due dates', () => {
       const words: StudyWord[] = [
-        createTestWord({ id: 1, fsrs_due: null }), // ✗ No due date
-        createTestWord({ id: 2, fsrs_due: null }), // ✗ No due date
-        createTestWord({ id: 3, fsrs_due: null }), // ✗ No due date
+        createTestWord({ root_id: rootId(1), fsrs_due: null }), // ✗ No due date
+        createTestWord({ root_id: rootId(2), fsrs_due: null }), // ✗ No due date
+        createTestWord({ root_id: rootId(3), fsrs_due: null }), // ✗ No due date
       ];
 
       const { result } = renderHook(() => useDueWordsChart(words));
@@ -127,10 +128,10 @@ describe('useDueWordsChart', () => {
       tomorrow.setDate(tomorrow.getDate() + 1);
 
       const words: StudyWord[] = [
-        createTestWord({ id: 1, fsrs_due: today.toISOString() }), // ✓ Valid
-        createTestWord({ id: 2, fsrs_due: null }), // ✗ Null
-        createTestWord({ id: 3, fsrs_due: tomorrow.toISOString() }), // ✓ Valid
-        createTestWord({ id: 4, fsrs_due: null }), // ✗ Null
+        createTestWord({ root_id: rootId(1), fsrs_due: today.toISOString() }), // ✓ Valid
+        createTestWord({ root_id: rootId(2), fsrs_due: null }), // ✗ Null
+        createTestWord({ root_id: rootId(3), fsrs_due: tomorrow.toISOString() }), // ✓ Valid
+        createTestWord({ root_id: rootId(4), fsrs_due: null }), // ✗ Null
       ];
 
       const { result } = renderHook(() => useDueWordsChart(words));
@@ -146,9 +147,9 @@ describe('useDueWordsChart', () => {
     test('should generate 7 days of forecast data', () => {
       const today = new Date();
       const words: StudyWord[] = [
-        createTestWord({ id: 1, fsrs_due: today.toISOString() }),
-        createTestWord({ id: 2, fsrs_due: today.toISOString() }),
-        createTestWord({ id: 3, fsrs_due: today.toISOString() }),
+        createTestWord({ root_id: rootId(1), fsrs_due: today.toISOString() }),
+        createTestWord({ root_id: rootId(2), fsrs_due: today.toISOString() }),
+        createTestWord({ root_id: rootId(3), fsrs_due: today.toISOString() }),
       ];
 
       const { result } = renderHook(() => useDueWordsChart(words));
@@ -174,9 +175,9 @@ describe('useDueWordsChart', () => {
       dayFive.setDate(dayFive.getDate() + 5);
 
       const words: StudyWord[] = [
-        createTestWord({ id: 1, fsrs_due: today.toISOString() }), // Due today
-        createTestWord({ id: 2, fsrs_due: dayThree.toISOString() }), // Due day 3
-        createTestWord({ id: 3, fsrs_due: dayFive.toISOString() }), // Due day 5
+        createTestWord({ root_id: rootId(1), fsrs_due: today.toISOString() }), // Due today
+        createTestWord({ root_id: rootId(2), fsrs_due: dayThree.toISOString() }), // Due day 3
+        createTestWord({ root_id: rootId(3), fsrs_due: dayFive.toISOString() }), // Due day 5
       ];
 
       const { result } = renderHook(() => useDueWordsChart(words));
@@ -194,8 +195,8 @@ describe('useDueWordsChart', () => {
     test('should calculate chart insights correctly', () => {
       const today = new Date();
       const words: StudyWord[] = [
-        createTestWord({ id: 1, fsrs_due: today.toISOString() }),
-        createTestWord({ id: 2, fsrs_due: today.toISOString() }),
+        createTestWord({ root_id: rootId(1), fsrs_due: today.toISOString() }),
+        createTestWord({ root_id: rootId(2), fsrs_due: today.toISOString() }),
       ];
 
       const { result } = renderHook(() => useDueWordsChart(words));
@@ -214,8 +215,8 @@ describe('useDueWordsChart', () => {
   describe('hasData Flag', () => {
     test('should be true when studyWords has items, even if all filtered', () => {
       const words: StudyWord[] = [
-        createTestWord({ id: 1, fsrs_due: null }), // Will be filtered
-        createTestWord({ id: 2, fsrs_due: null }), // Will be filtered
+        createTestWord({ root_id: rootId(1), fsrs_due: null }), // Will be filtered
+        createTestWord({ root_id: rootId(2), fsrs_due: null }), // Will be filtered
       ];
 
       const { result } = renderHook(() => useDueWordsChart(words));
@@ -236,7 +237,9 @@ describe('useDueWordsChart', () => {
 
     test('should be true with valid due words', () => {
       const today = new Date();
-      const words: StudyWord[] = [createTestWord({ id: 1, fsrs_due: today.toISOString() })];
+      const words: StudyWord[] = [
+        createTestWord({ root_id: rootId(1), fsrs_due: today.toISOString() }),
+      ];
 
       const { result } = renderHook(() => useDueWordsChart(words));
 
@@ -248,7 +251,9 @@ describe('useDueWordsChart', () => {
   describe('Chart Data Structure', () => {
     test('should return valid chart data structure', () => {
       const today = new Date();
-      const words: StudyWord[] = [createTestWord({ id: 1, fsrs_due: today.toISOString() })];
+      const words: StudyWord[] = [
+        createTestWord({ root_id: rootId(1), fsrs_due: today.toISOString() }),
+      ];
 
       const { result } = renderHook(() => useDueWordsChart(words));
 
@@ -269,7 +274,9 @@ describe('useDueWordsChart', () => {
 
     test('should generate data points matching forecast length', () => {
       const today = new Date();
-      const words: StudyWord[] = [createTestWord({ id: 1, fsrs_due: today.toISOString() })];
+      const words: StudyWord[] = [
+        createTestWord({ root_id: rootId(1), fsrs_due: today.toISOString() }),
+      ];
 
       const { result } = renderHook(() => useDueWordsChart(words));
 

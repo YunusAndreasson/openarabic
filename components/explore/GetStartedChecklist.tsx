@@ -10,7 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { BaseCard } from '@/components/common';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TIMING_CONFIG, fadeInStyle } from '@/constants/animation';

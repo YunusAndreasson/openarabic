@@ -10,80 +10,19 @@
 import { describe, expect, test } from '@jest/globals';
 
 import { MOCK_GRAMMAR_COLORS } from '@/__tests__/setup/mockGrammarColors';
-import type { ThemeColors } from '@/types/ui/theme.types';
 import type { formatWordAnalysis } from '@/utils/arabicWordAnalysis';
 import { generateColorCodedSegments } from '@/utils/colorCodedTextUtils';
+import { createThemeColorsMock } from '@/__tests__/helpers/themeMocks';
 
 type FormattedAnalysis = ReturnType<typeof formatWordAnalysis>;
 
-const mockColors: ThemeColors = {
-  primary: '#4A9B6F',
-  background: '#FFFFFF',
-  text: '#000000',
-  secondaryText: '#6B7280',
-  textTertiary: '#9CA3AF',
-  border: '#E5E7EB',
-  card: '#F9FAFB',
-  cardBorder: '#E5E7EB',
-  error: '#DC2626',
-  success: '#059669',
-  warning: '#F59E0B',
-  englishText: '#000000',
-  arabicText: '#1F2937',
-  authorText: '#6B7280',
-  headingText: '#111827',
-  subtitleText: '#4B5563',
-  metadataText: '#6B7280',
-  secondaryMetadataText: '#9CA3AF',
-  captionText: '#6B7280',
-  tint: '#4A9B6F',
-  tintBackground: '#F0F9FF',
-  tabIconDefault: '#9CA3AF',
-  tabIconSelected: '#4A9B6F',
-  icon: '#6B7280',
-  disabled: '#D1D5DB',
-  transparent: 'transparent',
-  overlay: 'rgba(0, 0, 0, 0.5)',
-  modalOverlay: 'rgba(0, 0, 0, 0.6)',
-  borderOverlay: 'rgba(0, 0, 0, 0.1)',
-  buttonOverlay: 'rgba(0, 0, 0, 0.05)',
-  shadow: 'rgba(0, 0, 0, 0.1)',
-  elevation0: '#FFFFFF',
-  elevation1: '#FFFFFF',
-  elevation2: '#F9FAFB',
-  elevation3: '#F3F4F6',
-  white: '#FFFFFF',
-  black: '#000000',
-  textOverlay: 'rgba(0, 0, 0, 0.7)',
-  textShadowDark: 'rgba(0, 0, 0, 0.4)',
-  textShadowLight: 'rgba(0, 0, 0, 0.2)',
-  info: '#3B82F6',
-  modalIndicator: '#D1D5DB',
-  backdropOverlay: 'rgba(0, 0, 0, 0.4)',
-  wordTooltipBg: '#FFFFFF',
-  wordTooltipText: '#1F2937',
-  wordTooltipBorder: '#E5E7EB',
-  wordTooltipShadow: 'rgba(0, 0, 0, 0.1)',
-  navigationRipple: 'rgba(74, 155, 111, 0.12)',
-  headerOverlay: 'rgba(255, 255, 255, 0.95)',
-  tabBarOverlay: 'rgba(255, 255, 255, 0.95)',
-  progressIndicator: '#4A9B6F',
-  progressBackground: '#E5E7EB',
-  interactiveSecondary: 'rgba(74, 155, 111, 0.1)',
-  completionSuccess: '#10B981',
-  chartGrid: '#E5E7EB',
-  chartThreshold: '#F59E0B',
-  accent: '#3B82F6',
-  violet: '#8B5CF6',
-  indigo: '#6366F1',
-  coral: '#F87171',
-  grammar: MOCK_GRAMMAR_COLORS,
-};
+const mockColors = createThemeColorsMock();
 
 describe('Positional Scoring Edge Cases', () => {
   describe('Bracket Injection Priority', () => {
     test('the article section paints the word inside the brackets, brackets kept', () => {
       const formattedAnalysis: FormattedAnalysis = {
+        title: '',
         sections: [
           {
             type: 'original',
@@ -124,6 +63,7 @@ describe('Positional Scoring Edge Cases', () => {
       // Section order encodes the left-to-right Arabic↔English correspondence:
       // prefixes are emitted before suffixes, so the prefix claims first.
       const formattedAnalysis: FormattedAnalysis = {
+        title: '',
         sections: [
           {
             type: 'original',
@@ -167,6 +107,7 @@ describe('Positional Scoring Edge Cases', () => {
     test('prefix at start of text scores 1.0 (optimal)', () => {
       // When prefix appears at text start (position 0), it gets optimal score
       const formattedAnalysis: FormattedAnalysis = {
+        title: '',
         sections: [
           {
             type: 'original',
@@ -200,6 +141,7 @@ describe('Positional Scoring Edge Cases', () => {
     test('suffix at end of text scores 1.0 (optimal)', () => {
       // When suffix appears at text end, it gets optimal score
       const formattedAnalysis: FormattedAnalysis = {
+        title: '',
         sections: [
           {
             type: 'original',
@@ -234,6 +176,7 @@ describe('Positional Scoring Edge Cases', () => {
       // Prefix score declines as it appears farther from start
       // At start: score = 1.0, at end: score = 0.0
       const formattedAnalysis: FormattedAnalysis = {
+        title: '',
         sections: [
           {
             type: 'original',
@@ -268,6 +211,7 @@ describe('Positional Scoring Edge Cases', () => {
     test('when prefix and suffix overlap, use positional scoring to decide winner', () => {
       // Edge case: both prefix and suffix could match same word
       const formattedAnalysis: FormattedAnalysis = {
+        title: '',
         sections: [
           {
             type: 'original',
@@ -309,6 +253,7 @@ describe('Positional Scoring Edge Cases', () => {
 
     test('multiple overlapping matches at same position - highest score wins', () => {
       const formattedAnalysis: FormattedAnalysis = {
+        title: '',
         sections: [
           {
             type: 'original',
@@ -352,6 +297,7 @@ describe('Positional Scoring Edge Cases', () => {
     test('infix scores neutrally (0.5) regardless of position', () => {
       // Infixes can appear anywhere in the word, so they get neutral score
       const formattedAnalysis: FormattedAnalysis = {
+        title: '',
         sections: [
           {
             type: 'original',
@@ -385,6 +331,7 @@ describe('Positional Scoring Edge Cases', () => {
     test('diacritic scores neutrally (0.5) regardless of position', () => {
       // Diacritics can appear anywhere, so they get neutral score
       const formattedAnalysis: FormattedAnalysis = {
+        title: '',
         sections: [
           {
             type: 'original',
@@ -433,6 +380,7 @@ describe('Positional Scoring Edge Cases', () => {
 
     test('text with no components returns single default segment', () => {
       const formattedAnalysis: FormattedAnalysis = {
+        title: '',
         sections: [
           {
             type: 'original',
@@ -459,6 +407,7 @@ describe('Positional Scoring Edge Cases', () => {
       // If icon is missing or unrecognized, component type is undefined
       // Should default to neutral score (0.5)
       const formattedAnalysis: FormattedAnalysis = {
+        title: '',
         sections: [
           {
             type: 'original',
@@ -494,6 +443,7 @@ describe('Positional Scoring Edge Cases', () => {
       // This test verifies the refactoring uses constants, not magic numbers
       // POSITIONAL_SCORE.BRACKET_INJECTION = 2.0
       const formattedAnalysis: FormattedAnalysis = {
+        title: '',
         sections: [
           {
             type: 'original',
@@ -526,6 +476,7 @@ describe('Positional Scoring Edge Cases', () => {
     test('should use COMPONENT_TYPES constants for type matching', () => {
       // Verifies icon-to-type mapping uses COMPONENT_TYPES constants
       const formattedAnalysis: FormattedAnalysis = {
+        title: '',
         sections: [
           {
             type: 'original',

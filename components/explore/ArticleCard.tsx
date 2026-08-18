@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { TIMING_CONSTANTS } from '@/constants/animation';
 import { LAYOUT, LINE_HEIGHT_MULTIPLIERS, SCREEN_WIDTH, TEXT_STYLES } from '@/constants/layout';
 import { getArticleRoute } from '@/constants/routes';

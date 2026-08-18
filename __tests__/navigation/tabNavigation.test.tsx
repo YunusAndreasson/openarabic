@@ -4,7 +4,11 @@ import { Platform } from 'react-native';
 
 // Default Platform.OS to 'android' for these tests; the NativeTabs mock below
 // behaves identically across platforms so the choice is mostly cosmetic.
-jest.spyOn(Platform, 'select').mockImplementation(obj => obj.android ?? obj.default);
+jest
+  .spyOn(Platform, 'select')
+  .mockImplementation(
+    obj => (obj as Record<string, unknown>).android ?? (obj as Record<string, unknown>).default,
+  );
 Object.defineProperty(Platform, 'OS', { get: () => 'android' });
 
 // Mock expo-router/unstable-native-tabs before it's imported by TabLayout
@@ -145,7 +149,7 @@ jest.mock('expo-router', () => {
     const [index, setIndex] = React.useState(0);
     const navigation = {
       navigate: (name: string) => {
-        const idx = routes.findIndex(r => r.name === name);
+        const idx = routes.findIndex((r: { name: string }) => r.name === name);
         if (idx !== -1) setIndex(idx);
       },
       emit: () => ({ defaultPrevented: false }),
@@ -253,7 +257,7 @@ jest.mock('../../hooks/theme/useThemeDetection', () => ({
   useIsDarkMode: () => false,
 }));
 
-jest.mock('../../components/HeaderProfile', () => () => null);
+jest.mock('../../components/explore/HeaderProfile', () => () => null);
 jest.mock('../../components/playlist/EditModeButton', () => () => null);
 
 // Mock notification service to prevent expo-notifications import error
@@ -263,8 +267,8 @@ jest.mock('../../services/notificationService', () => ({
 
 // Mock reading progress service (no readingStreak service exists)
 jest.mock('../../services/readingProgress', () => ({
-  getReadingProgress: jest.fn().mockResolvedValue([]),
-  updateReadingProgress: jest.fn().mockResolvedValue(undefined),
+  getReadingProgress: jest.fn(async (..._args: unknown[]) => []),
+  updateReadingProgress: jest.fn(async (..._args: unknown[]) => undefined),
 }));
 
 const createWrapper = () => {

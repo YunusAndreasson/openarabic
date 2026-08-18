@@ -34,10 +34,11 @@ import {
   setupUseReviewMocks,
   type UseReviewMockRefs,
 } from './review/useReviewTestSetup';
+import { rootId } from '@/__tests__/helpers/ids';
 
 // Mock dependencies
 jest.mock('@/hooks/auth', () => ({
-  useAuth: jest.fn(() => ({ user: { id: 'test-user-123' } })),
+  useAuth: jest.fn((..._args: unknown[]) => ({ user: { id: 'test-user-123' } })),
 }));
 
 // Mock is in @/hooks/vocabulary below
@@ -47,8 +48,8 @@ jest.mock('@/services/audioPlayer', () => ({
     play: jest.fn(),
     stop: jest.fn(),
     preconfigureAudioSession: jest.fn(),
-    subscribe: jest.fn(() => jest.fn()),
-    getStatus: jest.fn(() => ({})),
+    subscribe: jest.fn((..._args: unknown[]) => jest.fn()),
+    getStatus: jest.fn((..._args: unknown[]) => ({})),
   },
 }));
 
@@ -62,7 +63,7 @@ jest.mock('@/hooks/review/useAudioPreloader', () => ({
 
 jest.mock('@/hooks/vocabulary', () => ({
   useFSRS: jest.fn(),
-  useWordSizing: jest.fn(() => 80),
+  useWordSizing: jest.fn((..._args: unknown[]) => 80),
 }));
 
 jest.mock('@/hooks/utils/useTimerCleanup', () => ({
@@ -80,8 +81,8 @@ jest.mock('@/hooks/animations/useOpacityAnimation', () => ({
 jest.mock('@/services/audioCache', () => ({
   audioCache: {
     getAudio: jest.fn((url: string) => url),
-    preloadAudio: jest.fn(() => Promise.resolve()),
-    clearCache: jest.fn(() => Promise.resolve()),
+    preloadAudio: jest.fn((..._args: unknown[]) => Promise.resolve()),
+    clearCache: jest.fn((..._args: unknown[]) => Promise.resolve()),
   },
 }));
 
@@ -106,11 +107,11 @@ jest.mock('@/utils/storageUtils', () => ({
 
 // Mock checkAuthentication from supabase service
 jest.mock('@/services/supabase', () => ({
-  ...jest.requireActual('@/services/supabase'),
-  checkAuthentication: jest.fn().mockResolvedValue({
+  ...jest.requireActual<Record<string, unknown>>('@/services/supabase'),
+  checkAuthentication: jest.fn(async (..._args: unknown[]) => ({
     session: { user: { id: 'test-user-123' } } as any,
     user: { id: 'test-user-123' } as any,
-  }),
+  })),
 }));
 
 // Get mocked hooks for direct manipulation in tests
@@ -153,8 +154,8 @@ describe('useReview Hook', () => {
     });
 
     test('should initialize with word queue', () => {
-      const word1 = createMockWord({ id: 1, root_id: 101 });
-      const word2 = createMockWord({ id: 2, root_id: 102 });
+      const word1 = createMockWord({ root_id: rootId(101) });
+      const word2 = createMockWord({ root_id: rootId(102) });
 
       useFSRS.mockReturnValue(fsrsState(mocks, word1, { wordQueue: [word1, word2] }));
 

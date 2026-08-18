@@ -32,7 +32,7 @@ describe('useVoicePriming', () => {
   beforeEach(() => {
     // repo jest config sets resetMocks:true — implementations must be reinstalled
     mockSettings = { voiceEnabled: false, voiceOfferDismissed: false };
-    jest.mocked(analytics.track).mockImplementation(() => undefined);
+    jest.mocked(analytics.track).mockImplementation(async () => undefined);
   });
 
   test('reports an impression when this surface actually gets the slot', () => {

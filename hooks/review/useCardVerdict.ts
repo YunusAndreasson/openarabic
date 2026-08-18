@@ -45,7 +45,6 @@ const TONE_FOR_CONFIDENCE: Record<WordConfidence, VerdictTone> = {
  * `playVerdict` must go through this rather than indexing `TONE_FOR_CONFIDENCE`
  * itself — it used to, which left the tested mapping and the rendered one as two
  * separate paths that only happened to agree.
- * @internal
  */
 export const resolveVerdictTone = (confidence: WordConfidence): VerdictTone =>
   TONE_FOR_CONFIDENCE[confidence];
@@ -86,7 +85,6 @@ const TONE_FEEDBACK: Partial<Record<VerdictTone, () => void>> = {
  * assertion at the other end, which is exactly the handoff where a wrong value
  * would arrive. Typed through, a tone outside the four is a compile error at
  * whichever end invents it.
- * @internal
  */
 export const fireVerdictFeedback = (tone: VerdictTone): void => {
   TONE_FEEDBACK[tone]?.();

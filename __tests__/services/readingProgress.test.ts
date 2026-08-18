@@ -13,6 +13,7 @@ import { describe, expect, test, jest, beforeEach } from '@jest/globals';
 
 import type { ReadingProgress } from '@/services/readingProgress';
 import { ReadingProgressService, toSafeReadingProgress } from '@/services/readingProgress';
+import { articleId } from '@/__tests__/helpers/ids';
 
 jest.mock('@/services/supabase', () => ({
   supabase: {
@@ -30,7 +31,7 @@ const createUpsertBuilder = (response: any = { data: null, error: null }) => {
   const promise = Promise.resolve(response);
 
   // Create the upsert function that returns the promise
-  const upsertFn = jest.fn(() => promise);
+  const upsertFn = jest.fn((..._args: unknown[]) => promise);
 
   // Create the builder object that supabase.from() returns
   const builder: any = {
@@ -49,7 +50,7 @@ const createSelectBuilder = (response: any = { data: [], error: null }) => {
   const orderFn = jest.fn();
   const limitFn = jest.fn();
   const gtFn = jest.fn();
-  const maybeSingleFn = jest.fn(() => promise);
+  const maybeSingleFn = jest.fn((..._args: unknown[]) => promise);
 
   // Chain methods
   selectFn.mockReturnValue({ eq: eqFn, in: inFn, order: orderFn });
@@ -75,7 +76,7 @@ const createDeleteBuilder = (response: any = { data: [], error: null }) => {
   const promise = Promise.resolve(response);
   const deleteFn = jest.fn();
   const eqFn = jest.fn();
-  const selectFn = jest.fn(() => promise);
+  const selectFn = jest.fn((..._args: unknown[]) => promise);
 
   deleteFn.mockReturnValue({ eq: eqFn });
   eqFn.mockReturnValue({ select: selectFn });
@@ -90,7 +91,7 @@ const createUpdateBuilder = (response: any = { data: [], error: null }) => {
   const promise = Promise.resolve(response);
   const updateFn = jest.fn();
   const eqFn = jest.fn();
-  const selectFn = jest.fn(() => promise);
+  const selectFn = jest.fn((..._args: unknown[]) => promise);
 
   updateFn.mockReturnValue({ eq: eqFn });
   eqFn.mockReturnValue({ select: selectFn });
@@ -300,7 +301,7 @@ describe('ReadingProgressService', () => {
 
       await ReadingProgressService.updateProgress({
         userId: 'user-123',
-        articleId: 42,
+        articleId: articleId(42),
         lastSentenceRead: 10,
         totalSentences: 50,
       });
@@ -328,7 +329,7 @@ describe('ReadingProgressService', () => {
 
       await ReadingProgressService.updateProgress({
         userId: 'user-123',
-        articleId: 42,
+        articleId: articleId(42),
         lastSentenceRead: 10,
         totalSentences: 50,
       });
@@ -351,7 +352,7 @@ describe('ReadingProgressService', () => {
 
       await ReadingProgressService.updateProgress({
         userId: 'user-123',
-        articleId: 42,
+        articleId: articleId(42),
         lastSentenceRead: 10,
         totalSentences: 50,
       });
@@ -362,7 +363,7 @@ describe('ReadingProgressService', () => {
       const upsertCall = upsertFn.mock.calls[0];
       expect(upsertCall).toBeDefined();
       expect(upsertCall[0]).toBeDefined();
-      const updateTime = new Date(upsertCall[0].updated_at);
+      const updateTime = new Date((upsertCall[0] as { updated_at: string }).updated_at);
 
       expect(updateTime.getTime()).toBeGreaterThanOrEqual(new Date(beforeUpdate).getTime());
       expect(updateTime.getTime()).toBeLessThanOrEqual(new Date(afterUpdate).getTime());
@@ -384,7 +385,7 @@ describe('ReadingProgressService', () => {
       maybeSingleFn.mockReturnValue(Promise.resolve({ data: mockProgress, error: null }));
       (supabase.from as jest.Mock).mockReturnValue(builder);
 
-      const result = await ReadingProgressService.getProgress('user-123', 42);
+      const result = await ReadingProgressService.getProgress('user-123', articleId(42));
 
       expect(supabase.from).toHaveBeenCalledWith('reading_progress');
       expect(result).toEqual(mockProgress);
@@ -395,7 +396,7 @@ describe('ReadingProgressService', () => {
       maybeSingleFn.mockReturnValue(Promise.resolve({ data: null, error: null }));
       (supabase.from as jest.Mock).mockReturnValue(builder);
 
-      const result = await ReadingProgressService.getProgress('user-123', 42);
+      const result = await ReadingProgressService.getProgress('user-123', articleId(42));
 
       expect(result).toBeNull();
     });
@@ -416,7 +417,7 @@ describe('ReadingProgressService', () => {
       maybeSingleFn.mockReturnValue(Promise.resolve({ data: mockProgress, error: null }));
       (supabase.from as jest.Mock).mockReturnValue(builder);
 
-      const result = await ReadingProgressService.getSafeProgress('user-123', 42);
+      const result = await ReadingProgressService.getSafeProgress('user-123', articleId(42));
 
       expect(result).not.toBeNull();
       // calculateProgressPercentage: (10+1)/50*100 = 22%
@@ -428,7 +429,7 @@ describe('ReadingProgressService', () => {
       maybeSingleFn.mockReturnValue(Promise.resolve({ data: null, error: null }));
       (supabase.from as jest.Mock).mockReturnValue(builder);
 
-      const result = await ReadingProgressService.getSafeProgress('user-123', 42);
+      const result = await ReadingProgressService.getSafeProgress('user-123', articleId(42));
 
       expect(result).toBeNull();
     });
@@ -458,12 +459,15 @@ describe('ReadingProgressService', () => {
       inFn.mockReturnValue(Promise.resolve({ data: mockData, error: null }));
       (supabase.from as jest.Mock).mockReturnValue(builder);
 
-      const result = await ReadingProgressService.getBulkProgress('user-123', [1, 2]);
+      const result = await ReadingProgressService.getBulkProgress('user-123', [
+        articleId(1),
+        articleId(2),
+      ]);
 
       expect(result).toBeInstanceOf(Map);
       expect(result.size).toBe(2);
-      expect(result.get(1)?.last_sentence_read).toBe(5);
-      expect(result.get(2)?.last_sentence_read).toBe(15);
+      expect(result.get(articleId(1))?.last_sentence_read).toBe(5);
+      expect(result.get(articleId(2))?.last_sentence_read).toBe(15);
     });
 
     test('should return empty Map when no articles provided and no progress exists', async () => {
@@ -533,11 +537,11 @@ describe('ReadingProgressService', () => {
       inFn.mockReturnValue(Promise.resolve({ data: mockData, error: null }));
       (supabase.from as jest.Mock).mockReturnValue(builder);
 
-      const result = await ReadingProgressService.getBulkSafeProgress('user-123', [1]);
+      const result = await ReadingProgressService.getBulkSafeProgress('user-123', [articleId(1)]);
 
       expect(result).toBeInstanceOf(Map);
       // calculateProgressPercentage: (9+1)/100*100 = 10%
-      expect(result.get(1)?.progress_percentage).toBe(10);
+      expect(result.get(articleId(1))?.progress_percentage).toBe(10);
     });
   });
 

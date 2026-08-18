@@ -20,7 +20,9 @@ import {
   strugglingWordArbitrary,
   studyWordArbitrary,
   wordSetArbitrary,
+  LEGACY_NULL_TIMESTAMP,
 } from '../helpers/fsrsTestHelpers';
+import { rootId } from '@/__tests__/helpers/ids';
 
 /**
  * FSRS Property-Based Tests
@@ -84,7 +86,7 @@ describe('FSRS Property-Based Tests', () => {
             const now = new Date();
             const overdueWords = wordCounts.map((_, index) => ({
               ...createTestWord(),
-              root_id: index + 1,
+              root_id: rootId(index + 1),
               fsrs_due: new Date(now.getTime() - (index + 1) * 3600000).toISOString(), // Increasingly overdue
             }));
 
@@ -108,7 +110,7 @@ describe('FSRS Property-Based Tests', () => {
             const now = new Date();
             const words = stabilities.map((stability, index) => ({
               ...createTestWord(),
-              root_id: index + 1,
+              root_id: rootId(index + 1),
               fsrs_due: now.toISOString(), // Same due date
               fsrs_stability: stability,
               fsrs_difficulty: 6.5, // Same difficulty
@@ -171,14 +173,14 @@ describe('FSRS Property-Based Tests', () => {
             nullFields: fc.subarray(['stability', 'difficulty', 'reps', 'state', 'lastReview']),
           }),
           ({ wordId, nullFields }) => {
-            const word = createTestWord({ root_id: wordId });
+            const word = createTestWord({ root_id: rootId(wordId) });
 
             // Set some fields to null
             if (nullFields.includes('stability')) word.fsrs_stability = null;
             if (nullFields.includes('difficulty')) word.fsrs_difficulty = null;
             if (nullFields.includes('reps')) word.fsrs_reps = null;
             if (nullFields.includes('state')) word.fsrs_state = null;
-            if (nullFields.includes('lastReview')) word.fsrs_last_review = null;
+            if (nullFields.includes('lastReview')) word.fsrs_last_review = LEGACY_NULL_TIMESTAMP;
 
             // Should not throw
             expect(() => calculateWordPriority(word)).not.toThrow();
@@ -210,7 +212,7 @@ describe('FSRS Property-Based Tests', () => {
           }),
           ({ wordId, extremeStability, extremeDifficulty, extremeReps, extremeLapses }) => {
             const word = createTestWord({
-              root_id: wordId,
+              root_id: rootId(wordId),
               fsrs_stability: extremeStability,
               fsrs_difficulty: extremeDifficulty,
               fsrs_reps: extremeReps,
@@ -234,7 +236,7 @@ describe('FSRS Property-Based Tests', () => {
           }),
           ({ wordId, invalidDate }) => {
             const word = createTestWord({
-              root_id: wordId,
+              root_id: rootId(wordId),
               fsrs_due: invalidDate,
               fsrs_last_review: invalidDate,
             });

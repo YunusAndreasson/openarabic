@@ -1,18 +1,8 @@
-import { combineReducers, configureStore } from '@reduxjs/toolkit';
+import { configureStore } from '@reduxjs/toolkit';
 import React, { useMemo, type ReactNode } from 'react';
 import { Provider } from 'react-redux';
 
-import playlistReducer from '../../store/playlistSlice';
-import editModeReducer from '../../store/editModeSlice';
-import settingsReducer from '../../store/settingsSlice';
-import themeReducer from '../../store/themeSlice';
-
-const rootReducer = combineReducers({
-  theme: themeReducer,
-  settings: settingsReducer,
-  playlist: playlistReducer,
-  editMode: editModeReducer,
-});
+import { rootReducer } from '../../store/rootReducer';
 
 export type TestRootState = ReturnType<typeof rootReducer>;
 
@@ -20,28 +10,55 @@ export const defaultPreloadedState: TestRootState = rootReducer(undefined, {
   type: '@@INIT',
 }) as TestRootState;
 
-export const setupTestStore = (preloadedState?: Partial<TestRootState>) =>
+/**
+ * Per-slice overrides. The previous shape was `Partial<TestRootState>`, which
+ * only let a caller replace a WHOLE slice — so overriding one setting meant
+ * restating all twelve, and every call site that did not was relying on the
+ * suite being untyped. Each slice is merged onto its real initial state.
+ */
+export type TestPreloadedState = {
+  [K in keyof TestRootState]?: Partial<TestRootState[K]>;
+};
+
+const mergeSlice = <K extends keyof TestRootState>(
+  key: K,
+  override: Partial<TestRootState[K]> | undefined,
+): TestRootState[K] =>
+  ({
+    ...(defaultPreloadedState[key] as object),
+    ...(override as object),
+  }) as TestRootState[K];
+
+/**
+ * Merges every slice the real root reducer declares. Driven by the keys of
+ * `defaultPreloadedState` rather than a hand-written list, so a slice added to
+ * `store/rootReducer.ts` is carried here automatically — the previous version
+ * enumerated four slices and had already lost `voiceAliases`.
+ */
+const mergeSlices = (overrides: TestPreloadedState): TestRootState => {
+  const keys = Object.keys(defaultPreloadedState) as (keyof TestRootState)[];
+  return Object.fromEntries(
+    keys.map(key => [key, mergeSlice(key, overrides[key])]),
+  ) as TestRootState;
+};
+
+export type TestStore = ReturnType<typeof setupTestStore>;
+
+export const setupTestStore = (preloadedState?: TestPreloadedState) =>
   configureStore({
     reducer: rootReducer,
-    preloadedState: preloadedState
-      ? { ...defaultPreloadedState, ...preloadedState }
-      : defaultPreloadedState,
+    preloadedState: preloadedState ? mergeSlices(preloadedState) : defaultPreloadedState,
   });
 
 type Props = {
   children: ReactNode;
-  preloadedState?: Partial<TestRootState>;
+  preloadedState?: TestPreloadedState;
 };
 
+/** @internal Reached through a jest.mock require(); knip cannot see it. */
 export const TestStoreProvider = ({ children, preloadedState }: Props) => {
   const store = useMemo(() => setupTestStore(preloadedState), [preloadedState]);
   return <Provider store={store}>{children}</Provider>;
 };
 
 export default TestStoreProvider;
-
-// Basic test to avoid Jest "no tests" error
-test('testStore helper initializes store', () => {
-  const store = setupTestStore();
-  expect(store.getState()).toEqual(defaultPreloadedState);
-});

@@ -48,7 +48,7 @@ describe('useGlobalAudioState Hook', () => {
   const mockPreconfigureAudioSession = jest.fn();
   const mockStartTimer = jest.fn();
   const mockCancelTimer = jest.fn();
-  const mockGetQueryData = jest.fn();
+  const mockGetQueryData = jest.fn((..._args: unknown[]) => null);
   const mockMarkSleepTimerExpired = jest.fn();
   const mockGetPlaylistInfo = jest.fn();
 
@@ -504,7 +504,7 @@ describe('useGlobalAudioState Hook', () => {
         preconfigureAudioSession: mockPreconfigureAudioSession,
       } as any);
 
-      rerender();
+      rerender(undefined);
 
       await waitFor(() => {
         expect(mockCancelTimer).toHaveBeenCalled();
@@ -812,7 +812,7 @@ describe('useGlobalAudioState Hook', () => {
         preconfigureAudioSession: mockPreconfigureAudioSession,
       } as any);
 
-      rerender();
+      rerender(undefined);
 
       // Should preserve last valid article (no flicker)
       expect(result.current.currentArticle).toEqual(validArticle);
@@ -859,7 +859,7 @@ describe('useGlobalAudioState Hook', () => {
         preconfigureAudioSession: mockPreconfigureAudioSession,
       } as any);
 
-      rerender();
+      rerender(undefined);
 
       // Should clear article
       expect(result.current.currentArticle).toBeNull();

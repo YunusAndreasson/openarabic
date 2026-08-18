@@ -1,8 +1,8 @@
 import type { JSX, ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { ThemedText } from '@/components/ThemedText';
-import { KEYBOARD_AWARE_SCROLL_PROPS, ThemedView } from '@/components/ThemedView';
+import { ThemedText } from '@/components/primitives/ThemedText';
+import { KEYBOARD_AWARE_SCROLL_PROPS, ThemedView } from '@/components/primitives/ThemedView';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 
 interface AuthScreenShellProps {

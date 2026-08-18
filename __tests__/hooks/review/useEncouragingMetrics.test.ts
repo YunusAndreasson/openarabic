@@ -26,6 +26,8 @@ describe('useEncouragingMetrics', () => {
   };
 
   const baseMetrics: SessionMetrics = {
+    firstAttemptKnown: 4,
+    firstAttemptUnknown: 1,
     wordsReviewed: 5,
     wordsKnown: 4,
     wordsUnknown: 1,
@@ -364,7 +366,15 @@ describe('useEncouragingMetrics', () => {
   describe('Memoization', () => {
     test('should return same reference when inputs unchanged', () => {
       const { result, rerender } = renderHook(
-        ({ metrics, colors, streak }) => useEncouragingMetrics(metrics, colors, streak),
+        ({
+          metrics,
+          colors,
+          streak,
+        }: {
+          metrics: SessionMetrics;
+          colors: ThemeColors;
+          streak: number;
+        }) => useEncouragingMetrics(metrics, colors, streak),
         {
           initialProps: {
             metrics: baseMetrics,

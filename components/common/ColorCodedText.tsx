@@ -1,7 +1,7 @@
 import { memo, useDeferredValue, useMemo } from 'react';
 import type { TextStyle } from 'react-native';
 
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { useColors } from '@/hooks/theme/useColors';
 import { useArabicWordAnalysis } from '@/hooks/vocabulary';
 import type { ColoredSegment } from '@/types/vocabulary.types';

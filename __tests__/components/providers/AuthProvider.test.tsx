@@ -66,7 +66,12 @@ describe('AuthProvider', () => {
     });
 
     test('should have null as default context value', () => {
-      expect(AuthContext._currentValue).toBeNull();
+      // Read the default the way a consumer does; `_currentValue` is a React
+      // internal that is not part of the Context type.
+      const Probe = () => <Text testID="ctx">{String(React.useContext(AuthContext))}</Text>;
+      const { getByTestId } = render(<Probe />);
+
+      expect(getByTestId('ctx').props.children).toBe('null');
     });
   });
 });

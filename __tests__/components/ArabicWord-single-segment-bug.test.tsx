@@ -32,7 +32,7 @@ jest.mock('@/hooks/theme/useSkiaFonts', () => ({
     arabicFont: {
       getSize: () => 17,
     },
-    getArabicFont: jest.fn(() => ({
+    getArabicFont: jest.fn((..._args: unknown[]) => ({
       getSize: () => 17,
     })),
     isReady: true,
@@ -57,6 +57,9 @@ describe('ArabicWord: Single Colored Segment Bug', () => {
       position: 0,
       sentence_id: 2156,
       word_type_id: 6,
+      audio_url: null,
+      root: null,
+      word_type: null,
       difficulty_level: 1,
       coloredSegments: [
         {
@@ -67,9 +70,7 @@ describe('ArabicWord: Single Colored Segment Bug', () => {
       ],
     } as SentenceWord;
 
-    const { getByTestId } = render(
-      <ArabicWord word={word} position={0} testID="word-single-segment" />,
-    );
+    const { getByTestId } = render(<ArabicWord word={word} testID="word-single-segment" />);
 
     // The bug was that colored segments would render without color
     // Now the component should render with hasComponents=true since segment color !== default colors
@@ -86,6 +87,9 @@ describe('ArabicWord: Single Colored Segment Bug', () => {
       position: 0,
       sentence_id: 1,
       word_type_id: 1,
+      audio_url: null,
+      root: null,
+      word_type: null,
       difficulty_level: 1,
       coloredSegments: [
         {
@@ -96,9 +100,7 @@ describe('ArabicWord: Single Colored Segment Bug', () => {
       ],
     } as SentenceWord;
 
-    const { getByTestId } = render(
-      <ArabicWord word={word} position={0} testID="word-default-color" />,
-    );
+    const { getByTestId } = render(<ArabicWord word={word} testID="word-default-color" />);
 
     // Skia Canvas renders text with semantic arabicText color
     expect(getByTestId('word-default-color')).toBeTruthy();
@@ -113,6 +115,9 @@ describe('ArabicWord: Single Colored Segment Bug', () => {
       position: 0,
       sentence_id: 2,
       word_type_id: 1,
+      audio_url: null,
+      root: null,
+      word_type: null,
       difficulty_level: 1,
       coloredSegments: [
         {
@@ -133,9 +138,7 @@ describe('ArabicWord: Single Colored Segment Bug', () => {
       ],
     } as SentenceWord;
 
-    const { getByTestId } = render(
-      <ArabicWord word={word} position={0} testID="word-multi-segment" />,
-    );
+    const { getByTestId } = render(<ArabicWord word={word} testID="word-multi-segment" />);
 
     // Skia Canvas renders all segments with proper colors in single paragraph
     expect(getByTestId('word-multi-segment')).toBeTruthy();

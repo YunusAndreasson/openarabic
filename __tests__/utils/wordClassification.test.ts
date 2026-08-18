@@ -11,7 +11,7 @@
 
 import { describe, expect, test } from '@jest/globals';
 
-import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
+import { LEGACY_NULL_TIMESTAMP, createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { calculateDueWordsForecast } from '@/utils/fsrsUtils';
 import { filterDueWords } from '@/utils/newWordPacing';
@@ -182,7 +182,7 @@ describe('wordClassification', () => {
       const dueWord = createStudyWord({
         fsrs_state: 2,
         fsrs_due: pastDate,
-        fsrs_last_review: null,
+        fsrs_last_review: LEGACY_NULL_TIMESTAMP,
       });
 
       expect(isDueWord(dueWord)).toBeTruthy();

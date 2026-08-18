@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
-import { ThemedButton } from '@/components/ThemedButton';
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedButton } from '@/components/primitives/ThemedButton';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 

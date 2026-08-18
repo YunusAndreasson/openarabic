@@ -18,27 +18,8 @@ import {
   type SpacingState,
 } from '../../utils/fsrsSpacing';
 import { PriorityQueue } from '../../utils/priorityQueue';
-
-const createTestWord = (overrides: Partial<StudyWord> = {}): StudyWord => {
-  const now = Date.now();
-  return {
-    root_id: Math.floor(Math.random() * 10000),
-    user_id: 'test-user',
-    created_at: new Date(now).toISOString(),
-    fsrs_due: new Date(now).toISOString(),
-    fsrs_stability: 5,
-    fsrs_difficulty: 6.5,
-    fsrs_scheduled_days: 1,
-    fsrs_learning_steps: 0,
-    fsrs_reps: 0,
-    fsrs_lapses: 0,
-    fsrs_state: 0,
-    fsrs_last_review: new Date().toISOString(),
-    difficulty: 0.65,
-    root: { id: 1, letters: 'كتاب', meaning: 'book', audio_url: null, audio_url_en: null },
-    ...overrides,
-  } as StudyWord;
-};
+import { rootId } from '@/__tests__/helpers/ids';
+import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 
 const setupQueue = (words: StudyWord[]) => {
   const queue = new PriorityQueue<StudyWord>();
@@ -66,19 +47,19 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
       // Create words with different overdue times
       const words = [
         createTestWord({
-          root_id: 1,
+          root_id: rootId(1),
           fsrs_due: new Date(baseTime - 5 * 3600000).toISOString(), // 5 hours overdue
           fsrs_stability: 5,
           fsrs_difficulty: 6.5,
         }),
         createTestWord({
-          root_id: 2,
+          root_id: rootId(2),
           fsrs_due: new Date(baseTime - 1 * 3600000).toISOString(), // 1 hour overdue
           fsrs_stability: 5,
           fsrs_difficulty: 6.5,
         }),
         createTestWord({
-          root_id: 3,
+          root_id: rootId(3),
           fsrs_due: new Date(baseTime + 1 * 3600000).toISOString(), // 1 hour future
           fsrs_stability: 5,
           fsrs_difficulty: 6.5,
@@ -189,8 +170,8 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
 
     test('should decrement spacing counters for spaced words', () => {
       const state = createSpacingState();
-      const word1 = createTestWord({ root_id: 1 });
-      const word2 = createTestWord({ root_id: 2 });
+      const word1 = createTestWord({ root_id: rootId(1) });
+      const word2 = createTestWord({ root_id: rootId(2) });
 
       state.spacedWords = [
         { word: word1, remainingSpacing: 3 },
@@ -238,7 +219,7 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
     });
 
     test('should return word when no spacing conflicts', () => {
-      const word = createTestWord({ root_id: 1 });
+      const word = createTestWord({ root_id: rootId(1) });
       const queue = setupQueue([word]);
       const state = createSpacingState();
 
@@ -249,8 +230,14 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
 
     test('should skip recently processed words', () => {
       const words = [
-        createTestWord({ root_id: 1, fsrs_due: new Date(Date.now() - 5 * 3600000).toISOString() }),
-        createTestWord({ root_id: 2, fsrs_due: new Date(Date.now() - 4 * 3600000).toISOString() }),
+        createTestWord({
+          root_id: rootId(1),
+          fsrs_due: new Date(Date.now() - 5 * 3600000).toISOString(),
+        }),
+        createTestWord({
+          root_id: rootId(2),
+          fsrs_due: new Date(Date.now() - 4 * 3600000).toISOString(),
+        }),
       ];
       const queue = setupQueue(words);
       const state = createSpacingState();
@@ -269,7 +256,7 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
     });
 
     test('should requeue ready spaced words', () => {
-      const word = createTestWord({ root_id: 1 });
+      const word = createTestWord({ root_id: rootId(1) });
       const queue = new PriorityQueue<StudyWord>();
       const state = createSpacingState();
 
@@ -283,7 +270,7 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
 
     test('should handle circuit breaker for infinite loops', () => {
       // Create 25 words all with the same root_id (conflict scenario)
-      const words = Array.from({ length: 25 }, () => createTestWord({ root_id: 1 }));
+      const words = Array.from({ length: 25 }, () => createTestWord({ root_id: rootId(1) }));
       const queue = setupQueue(words);
       const state = createSpacingState();
 
@@ -313,7 +300,7 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
         test(`should maintain spacing with ${queueSize} words and ${spacing} spacing`, () => {
           const words = Array.from({ length: queueSize }, (_, i) =>
             createTestWord({
-              root_id: i + 1,
+              root_id: rootId(i + 1),
               fsrs_due: new Date(Date.now() - (queueSize - i) * 3600000).toISOString(),
             }),
           );
@@ -357,15 +344,15 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
 
   describe('Edge Cases and Error Conditions', () => {
     test('should handle empty spacing state with ready spaced words', () => {
-      const word = createTestWord({ root_id: 1 });
+      const word = createTestWord({ root_id: rootId(1) });
       const queue = new PriorityQueue<StudyWord>();
       const state = createSpacingState();
 
       // Add multiple words with different remaining spacing
       state.spacedWords = [
         { word, remainingSpacing: 0 },
-        { word: createTestWord({ root_id: 2 }), remainingSpacing: -1 }, // Negative (ready)
-        { word: createTestWord({ root_id: 3 }), remainingSpacing: 2 }, // Not ready
+        { word: createTestWord({ root_id: rootId(2) }), remainingSpacing: -1 }, // Negative (ready)
+        { word: createTestWord({ root_id: rootId(3) }), remainingSpacing: 2 }, // Not ready
       ];
 
       const result = getNextWordWithSpacing(queue, state);
@@ -378,19 +365,19 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
     test('should handle priority queue with mixed word types', () => {
       const words = [
         createTestWord({
-          root_id: 1,
+          root_id: rootId(1),
           fsrs_due: new Date(Date.now() - 10 * 3600000).toISOString(),
           fsrs_stability: 1,
           fsrs_difficulty: 9,
         }),
         createTestWord({
-          root_id: 2,
+          root_id: rootId(2),
           fsrs_due: new Date(Date.now() + 5 * 3600000).toISOString(),
           fsrs_stability: 10,
           fsrs_difficulty: 1,
         }),
         createTestWord({
-          root_id: 3,
+          root_id: rootId(3),
           fsrs_due: null, // No due date
           fsrs_stability: null,
           fsrs_difficulty: null,
@@ -414,7 +401,7 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
 
     test('should handle rapid spacing counter updates', () => {
       const state = createSpacingState();
-      const word = createTestWord({ root_id: 1 });
+      const word = createTestWord({ root_id: rootId(1) });
 
       // Add word to spaced words
       state.spacedWords = [{ word, remainingSpacing: 5 }];
@@ -430,9 +417,9 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
 
     test('should handle queue operations during spacing conflicts', () => {
       const words = [
-        createTestWord({ root_id: 1 }),
-        createTestWord({ root_id: 2 }),
-        createTestWord({ root_id: 1 }), // Duplicate root_id
+        createTestWord({ root_id: rootId(1) }),
+        createTestWord({ root_id: rootId(2) }),
+        createTestWord({ root_id: rootId(1) }), // Duplicate root_id
       ];
       const queue = setupQueue(words);
       const state = createSpacingState();
@@ -456,7 +443,7 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
     test('should maintain state consistency across multiple operations', () => {
       const words = Array.from(
         { length: 10 },
-        (_, i) => createTestWord({ root_id: (i % 3) + 1 }), // Only 3 unique root_ids
+        (_, i) => createTestWord({ root_id: rootId((i % 3) + 1) }), // Only 3 unique root_ids
       );
       const queue = setupQueue(words);
       const state = createSpacingState();
@@ -497,7 +484,7 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
       ];
 
       edgeCases.forEach((caseData, index) => {
-        const word = createTestWord({ root_id: index + 1, ...caseData });
+        const word = createTestWord({ root_id: rootId(index + 1), ...caseData });
         const priority = calculateWordPriority(word);
 
         expect(typeof priority).toBe('number');
@@ -508,8 +495,8 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
 
     test('should handle concurrent spacing state modifications', () => {
       const state = createSpacingState();
-      const word1 = createTestWord({ root_id: 1 });
-      const word2 = createTestWord({ root_id: 2 });
+      const word1 = createTestWord({ root_id: rootId(1) });
+      const word2 = createTestWord({ root_id: rootId(2) });
 
       // Simulate concurrent modifications
       state.spacedWords.push({ word: word1, remainingSpacing: 3 });
@@ -531,7 +518,7 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
       const baseTime = fixedTime.getTime();
       const identicalWords = Array.from({ length: 5 }, (_, i) =>
         createTestWord({
-          root_id: i + 1,
+          root_id: rootId(i + 1),
           fsrs_due: new Date(baseTime - 3600000).toISOString(), // Same due time
           fsrs_stability: 5, // Same stability
           fsrs_difficulty: 6.5, // Same difficulty
@@ -557,7 +544,7 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
 
     test('should handle negative priorities', () => {
       const word = createTestWord({
-        root_id: 1,
+        root_id: rootId(1),
         fsrs_due: new Date(Date.now() + 24 * 3600000).toISOString(), // Future due
         fsrs_stability: 1, // Low stability
         fsrs_difficulty: 9, // High difficulty
@@ -574,7 +561,7 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
     });
 
     test('should handle very large spacing values', () => {
-      const words = Array.from({ length: 3 }, (_, i) => createTestWord({ root_id: i + 1 }));
+      const words = Array.from({ length: 3 }, (_, i) => createTestWord({ root_id: rootId(i + 1) }));
       const queue = setupQueue(words);
       const state = createSpacingState();
       const largeSpacing = 100;
@@ -590,8 +577,8 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
 
     test('should handle zero spacing', () => {
       const words = [
-        createTestWord({ root_id: 1 }),
-        createTestWord({ root_id: 1 }), // Same root_id
+        createTestWord({ root_id: rootId(1) }),
+        createTestWord({ root_id: rootId(1) }), // Same root_id
       ];
       const queue = setupQueue(words);
       const state = createSpacingState();
@@ -607,7 +594,7 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
     });
 
     test('should handle corrupted spacing state', () => {
-      const word = createTestWord({ root_id: 1 });
+      const word = createTestWord({ root_id: rootId(1) });
       const queue = setupQueue([word]);
       const state: SpacingState = {
         recentWords: new Set([1, 2, 3]), // Set handles duplicates automatically
@@ -625,13 +612,13 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
     test('should handle words with extreme FSRS values', () => {
       const extremeWords = [
         createTestWord({
-          root_id: 1,
+          root_id: rootId(1),
           fsrs_stability: 0,
           fsrs_difficulty: 0,
           fsrs_due: new Date(0).toISOString(), // Very old date
         }),
         createTestWord({
-          root_id: 2,
+          root_id: rootId(2),
           fsrs_stability: 1000,
           fsrs_difficulty: 20,
           fsrs_due: new Date(Date.now() + 365 * 24 * 3600000).toISOString(), // Far future
@@ -665,7 +652,7 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
         const difficulty = 1 + ((i * 0.4) % 9); // Deterministic 1-10 difficulty
 
         return createTestWord({
-          root_id: i + 1,
+          root_id: rootId(i + 1),
           fsrs_due: new Date(Date.now() - hoursOverdue * 3600000).toISOString(),
           fsrs_stability: stability,
           fsrs_difficulty: difficulty,
@@ -726,15 +713,15 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
       const baseTime = fixedTime.getTime();
       const words = [
         createTestWord({
-          root_id: 1,
+          root_id: rootId(1),
           fsrs_due: new Date(baseTime - 10 * 3600000).toISOString(), // Highest priority
         }),
         createTestWord({
-          root_id: 2,
+          root_id: rootId(2),
           fsrs_due: new Date(baseTime - 5 * 3600000).toISOString(), // Medium priority
         }),
         createTestWord({
-          root_id: 3,
+          root_id: rootId(3),
           fsrs_due: new Date(baseTime - 1 * 3600000).toISOString(), // Lowest priority
         }),
       ];

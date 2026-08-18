@@ -12,6 +12,7 @@ import { articlesService } from '../../services/articles';
 import { supabase } from '../../services/supabase';
 import { handleError } from '../../utils/errorHandling';
 import { mapToArticle, mapToArticles } from '../../utils/typeMappers';
+import { articleId, authorId, categoryId } from '@/__tests__/helpers/ids';
 
 jest.mock('../../services/supabase', () => ({
   supabase: { from: jest.fn() },
@@ -51,8 +52,8 @@ const createFinalBuilder = (response: any) => {
     eq: jest.fn().mockReturnThis(),
     single: jest.fn().mockReturnThis(),
     maybeSingle: jest.fn().mockReturnThis(),
-    returns: jest.fn().mockResolvedValue(response),
-    overrideTypes: jest.fn().mockResolvedValue(response),
+    returns: jest.fn(async (..._args: unknown[]) => response),
+    overrideTypes: jest.fn(async (..._args: unknown[]) => response),
   };
   return builder;
 };
@@ -70,8 +71,8 @@ describe('articlesService', () => {
       (mapToArticles as jest.Mock).mockReturnValue(['mapped']);
 
       const result = await articlesService.getArticles({
-        categoryId: 2,
-        authorId: 3,
+        categoryId: categoryId(2),
+        authorId: authorId(3),
         limit: 5,
         offset: 10,
         minDifficulty: 1,
@@ -106,7 +107,9 @@ describe('articlesService', () => {
       expect(builder.lte).toHaveBeenCalledWith('difficulty_level', 4);
       expect(builder.order).toHaveBeenCalledWith('title', { ascending: true });
       expect(builder.range).toHaveBeenCalledWith(10, 14);
-      expect(mapToArticles).toHaveBeenCalledWith(response.data);
+      expect(mapToArticles).toHaveBeenCalledWith(
+        response.data as unknown as Parameters<typeof mapToArticles>[0],
+      );
       expect(result).toEqual(['mapped']);
     });
 
@@ -147,7 +150,7 @@ describe('articlesService', () => {
       const builder = createThenBuilder({ data: null, error: err });
       fromMock.mockReturnValue(builder);
 
-      await expect(articlesService.getArticles({ authorId: 5 })).rejects.toThrow(err);
+      await expect(articlesService.getArticles({ authorId: authorId(5) })).rejects.toThrow(err);
       expect(handleError).toHaveBeenCalledWith(
         err,
         expect.objectContaining({
@@ -193,7 +196,9 @@ describe('articlesService', () => {
       `.replace(/\s/g, '');
       expect(called).toBe(expected);
       expect(builder.order).toHaveBeenCalledWith('created_at', { ascending: false });
-      expect(mapToArticles).toHaveBeenCalledWith(response.data);
+      expect(mapToArticles).toHaveBeenCalledWith(
+        response.data as unknown as Parameters<typeof mapToArticles>[0],
+      );
       expect(result).toEqual(['mapped']);
     });
 
@@ -222,13 +227,15 @@ describe('articlesService', () => {
       fromMock.mockReturnValue(builder);
       (mapToArticle as jest.Mock).mockReturnValue('mapped');
 
-      const result = await articlesService.getArticleById(7);
+      const result = await articlesService.getArticleById(articleId(7));
 
       expect(fromMock).toHaveBeenCalledWith('articles');
       const called = builder.select.mock.calls[0][0];
       expect(called).toContain('article_sentences');
       expect(builder.eq).toHaveBeenCalledWith('id', 7);
-      expect(mapToArticle).toHaveBeenCalledWith(response.data);
+      expect(mapToArticle).toHaveBeenCalledWith(
+        response.data as unknown as Parameters<typeof mapToArticle>[0],
+      );
       expect(result).toBe('mapped');
     });
 
@@ -237,7 +244,7 @@ describe('articlesService', () => {
       const builder = createFinalBuilder({ data: null, error: err });
       fromMock.mockReturnValue(builder);
 
-      await expect(articlesService.getArticleById(3)).rejects.toThrow(err);
+      await expect(articlesService.getArticleById(articleId(3))).rejects.toThrow(err);
       expect(handleError).toHaveBeenCalledWith(
         err,
         expect.objectContaining({

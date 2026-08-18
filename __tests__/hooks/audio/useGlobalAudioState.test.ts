@@ -12,7 +12,7 @@ import { renderHook, act, waitFor } from '@testing-library/react-native';
 
 // Mock dependencies BEFORE imports
 jest.mock('@tanstack/react-query', () => ({
-  useQueryClient: jest.fn(() => ({
+  useQueryClient: jest.fn((..._args: unknown[]) => ({
     getQueryData: jest.fn(),
     setQueryData: jest.fn(),
   })),
@@ -42,8 +42,8 @@ jest.mock('@/services/audioPlayer', () => ({
     // The playback clock subscribes to the service's position channel directly
     // (AudioProgressProvider), rather than reading a position off the transport
     // status the rest of the provider uses.
-    getStatus: jest.fn(() => ({ currentTime: 0, duration: 0 })),
-    subscribe: jest.fn(() => jest.fn()),
+    getStatus: jest.fn((..._args: unknown[]) => ({ currentTime: 0, duration: 0 })),
+    subscribe: jest.fn((..._args: unknown[]) => jest.fn()),
   },
 }));
 
@@ -90,7 +90,7 @@ describe('useGlobalAudioState', () => {
     play: jest.fn(),
     pause: jest.fn(),
     stop: jest.fn(),
-    preconfigureAudioSession: jest.fn().mockResolvedValue(undefined),
+    preconfigureAudioSession: jest.fn(async (..._args: unknown[]) => undefined),
   };
 
   const mockSleepTimer = {
@@ -100,7 +100,6 @@ describe('useGlobalAudioState', () => {
     },
     actions: {
       startTimer: jest.fn(),
-      cancelTimer: jest.fn(),
       cancelTimer: jest.fn(),
     },
   };

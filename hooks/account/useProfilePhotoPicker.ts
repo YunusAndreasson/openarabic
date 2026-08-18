@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Alert, Linking } from 'react-native';
 
 import { handleError, toError } from '@/utils/errorHandling';
+import { USER_STORAGE_KEYS } from '@/constants/storageKeys';
 
 interface UseProfilePhotoPickerOptions {
   /** User ID for storage key and permission caching */
@@ -61,7 +62,7 @@ export function useProfilePhotoPicker({
   const [profilePhotoUri, setProfilePhotoUri] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  const storageKey = `profile_photo_${userId}`;
+  const storageKey = USER_STORAGE_KEYS.profilePhoto(userId);
 
   // Load saved profile photo on mount
   useEffect(() => {
@@ -84,7 +85,7 @@ export function useProfilePhotoPicker({
 
   const selectPhoto = useCallback(async () => {
     try {
-      const permissionDeniedKey = `photo_permission_denied_${userId}`;
+      const permissionDeniedKey = USER_STORAGE_KEYS.photoPermissionDenied(userId);
 
       // Check if permission was previously denied (subsequent attempt)
       const wasPreviouslyDenied = await AsyncStorage.getItem(permissionDeniedKey);

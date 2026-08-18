@@ -28,6 +28,8 @@ import { useAudioPreloader } from '@/hooks/review/useAudioPreloader';
 import { audioCache } from '@/services/audioCache';
 import type { StudyWord } from '@/types/vocabulary.types';
 import type { RootId, UserId } from '@/types/branded.types';
+import { rootId, userId } from '@/__tests__/helpers/ids';
+import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 
 const mockAudioCache = jest.mocked(audioCache);
 
@@ -37,29 +39,29 @@ describe('useAudioPreloader', () => {
     mockAudioCache.getAudio.mockResolvedValue('cached-path');
   });
 
-  const createMockWord = (rootId: number, audioUrl?: string, audioUrlEn?: string): StudyWord => ({
-    id: rootId,
-    root_id: rootId as RootId,
-    user_id: 'user-123' as UserId,
-    root: {
-      id: rootId as RootId,
-      arabic_word: 'test',
-      english_meaning: 'test',
-      audio_url: audioUrl,
-      audio_url_en: audioUrlEn,
-    },
-    stability: 2.5,
-    difficulty: 0.3,
-    due: new Date().toISOString(),
-    last_review: new Date().toISOString(),
-    reps: 5,
-    lapses: 1,
-    state: 2,
-    elapsed_days: 3,
-    scheduled_days: 7,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  });
+  // The `roots` join is letters / meaning with NOT NULL audio columns, and the
+  // FSRS fields are all `fsrs_`-prefixed — the previous literal matched neither.
+  const createMockWord = (id: number, audioUrl = '', audioUrlEn = ''): StudyWord =>
+    createTestWord({
+      root_id: rootId(id),
+      user_id: userId('user-123'),
+      root: {
+        id,
+        letters: 'test',
+        meaning: 'test',
+        audio_url: audioUrl,
+        audio_url_en: audioUrlEn,
+      },
+      fsrs_stability: 2.5,
+      fsrs_difficulty: 0.3,
+      fsrs_due: new Date().toISOString(),
+      fsrs_last_review: new Date().toISOString(),
+      fsrs_reps: 5,
+      fsrs_lapses: 1,
+      fsrs_state: 2,
+      fsrs_scheduled_days: 7,
+      created_at: new Date().toISOString(),
+    });
 
   describe('Initial state', () => {
     test('should return initial state with empty word queue', () => {

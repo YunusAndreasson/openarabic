@@ -3,7 +3,7 @@ import type { JSX } from 'react';
 import { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { ThemedButton } from '@/components/ThemedButton';
+import { ThemedButton } from '@/components/primitives/ThemedButton';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';

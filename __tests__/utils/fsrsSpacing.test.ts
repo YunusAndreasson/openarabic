@@ -23,6 +23,7 @@ import {
   updateSpacingCounters,
 } from '@/utils/fsrsSpacing';
 import { PriorityQueue } from '@/utils/priorityQueue';
+import { rootId } from '@/__tests__/helpers/ids';
 
 describe('fsrsSpacing', () => {
   describe('createSpacingState', () => {
@@ -255,8 +256,8 @@ describe('fsrsSpacing', () => {
         recentWords: new Set(),
         recentWordsQueue: [],
         spacedWords: [
-          { word: createTestWord({ root_id: 1 }), remainingSpacing: 3 },
-          { word: createTestWord({ root_id: 2 }), remainingSpacing: 2 },
+          { word: createTestWord({ root_id: rootId(1) }), remainingSpacing: 3 },
+          { word: createTestWord({ root_id: rootId(2) }), remainingSpacing: 2 },
         ],
       };
 
@@ -275,7 +276,7 @@ describe('fsrsSpacing', () => {
       const state: SpacingState = {
         recentWords: new Set(),
         recentWordsQueue: [],
-        spacedWords: [{ word: createTestWord({ root_id: 1 }), remainingSpacing: 0 }],
+        spacedWords: [{ word: createTestWord({ root_id: rootId(1) }), remainingSpacing: 0 }],
       };
 
       updateSpacingCounters(state, 10, MIN_WORD_SPACING);
@@ -307,7 +308,7 @@ describe('fsrsSpacing', () => {
 
   describe('getNextWordWithSpacing', () => {
     test('should return next word from queue when not in recentWords', () => {
-      const word = createTestWord({ root_id: 1 });
+      const word = createTestWord({ root_id: rootId(1) });
       const queue = new PriorityQueue<StudyWord>();
       queue.push(word, calculateWordPriority(word));
 
@@ -319,8 +320,8 @@ describe('fsrsSpacing', () => {
     });
 
     test('should skip word if in recentWords and return next available', () => {
-      const word1 = createTestWord({ root_id: 1 });
-      const word2 = createTestWord({ root_id: 2 });
+      const word1 = createTestWord({ root_id: rootId(1) });
+      const word2 = createTestWord({ root_id: rootId(2) });
 
       const queue = new PriorityQueue<StudyWord>();
       queue.push(word1, calculateWordPriority(word1));
@@ -347,7 +348,7 @@ describe('fsrsSpacing', () => {
     });
 
     test('should add words with remainingSpacing to spacedWords', () => {
-      const word = createTestWord({ root_id: 1 });
+      const word = createTestWord({ root_id: rootId(1) });
       const queue = new PriorityQueue<StudyWord>();
       queue.push(word, calculateWordPriority(word));
 
@@ -363,8 +364,8 @@ describe('fsrsSpacing', () => {
     });
 
     test('should re-add ready spacedWords to queue', () => {
-      const word1 = createTestWord({ root_id: 1 });
-      const word2 = createTestWord({ root_id: 2 });
+      const word1 = createTestWord({ root_id: rootId(1) });
+      const word2 = createTestWord({ root_id: rootId(2) });
 
       const queue = new PriorityQueue<StudyWord>();
       queue.push(word2, calculateWordPriority(word2));
@@ -392,7 +393,7 @@ describe('fsrsSpacing', () => {
       const recentWordsQueue: number[] = [];
 
       for (let i = 1; i <= 100; i++) {
-        const word = createTestWord({ root_id: i });
+        const word = createTestWord({ root_id: rootId(i) });
         queue.push(word, calculateWordPriority(word));
         recentWordsSet.add(i);
         recentWordsQueue.push(i);
@@ -414,7 +415,7 @@ describe('fsrsSpacing', () => {
     });
 
     test('should return ready spacedWord when queue is empty', () => {
-      const readyWord = createTestWord({ root_id: 1 });
+      const readyWord = createTestWord({ root_id: rootId(1) });
       const queue = new PriorityQueue<StudyWord>();
 
       const state: SpacingState = {
@@ -431,11 +432,11 @@ describe('fsrsSpacing', () => {
 
     test('should handle multiple ready spacedWords simultaneously', () => {
       const word1 = createTestWord({
-        root_id: 1,
+        root_id: rootId(1),
         fsrs_due: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
       }); // More overdue
-      const word2 = createTestWord({ root_id: 2, fsrs_due: new Date().toISOString() });
-      const word3 = createTestWord({ root_id: 3 });
+      const word2 = createTestWord({ root_id: rootId(2), fsrs_due: new Date().toISOString() });
+      const word3 = createTestWord({ root_id: rootId(3) });
 
       const queue = new PriorityQueue<StudyWord>();
       queue.push(word3, calculateWordPriority(word3));
@@ -460,8 +461,8 @@ describe('fsrsSpacing', () => {
     });
 
     test('should not return spacedWords that are not ready', () => {
-      const queueWord = createTestWord({ root_id: 1 });
-      const spacedWord = createTestWord({ root_id: 2 });
+      const queueWord = createTestWord({ root_id: rootId(1) });
+      const spacedWord = createTestWord({ root_id: rootId(2) });
 
       const queue = new PriorityQueue<StudyWord>();
       queue.push(queueWord, calculateWordPriority(queueWord));
@@ -481,12 +482,12 @@ describe('fsrsSpacing', () => {
 
     test('should preserve priority order from queue', () => {
       const highPriorityWord = createTestWord({
-        root_id: 1,
+        root_id: rootId(1),
         fsrs_due: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
         fsrs_lapses: 5,
       });
       const lowPriorityWord = createTestWord({
-        root_id: 2,
+        root_id: rootId(2),
         fsrs_due: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         fsrs_lapses: 0,
       });
@@ -503,7 +504,7 @@ describe('fsrsSpacing', () => {
     });
 
     test('should work with single word in queue marked as recent', () => {
-      const word = createTestWord({ root_id: 1 });
+      const word = createTestWord({ root_id: rootId(1) });
       const queue = new PriorityQueue<StudyWord>();
       queue.push(word, calculateWordPriority(word));
 

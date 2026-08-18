@@ -6,15 +6,15 @@ assets.
 
 ## Sources of truth
 
-| Concern                               | Source                                                      | Rule                                                                                                                    |
-| ------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Theme colors                          | `constants/colors.ts` and `types/ui/theme.types.ts`         | Components consume semantic `ThemeColors` through `useColors()`; palette values are implementation details.             |
-| Spacing, size, radius, and type scale | `constants/layout.ts`                                       | Use `LAYOUT` and the exported typography/touch helpers instead of restating shared values.                              |
-| Elevation                             | `constants/elevation.ts`                                    | Resolve through `getElevation(colors, role)`; there is no spreadable raw token, deliberately.                           |
-| Font families                         | `constants/fonts.ts`                                        | English uses Inter; the default Arabic face is Noto Sans Arabic and may be replaced by the user's selected Arabic font. |
-| Text                                  | `components/ThemedText.tsx`                                 | Use a named text type and semantic color/variant before adding local typography.                                        |
-| Buttons and inputs                    | `components/ThemedButton.tsx`, `components/ThemedInput.tsx` | These own the standard control heights, states, typography, borders, and feedback.                                      |
-| Reusable UI                           | `components/ui/index.ts`                                    | Prefer the existing control or header primitive when its semantics match.                                               |
+| Concern                               | Source                                                                            | Rule                                                                                                                    |
+| ------------------------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Theme colors                          | `constants/colors.ts` and `types/ui/theme.types.ts`                               | Components consume semantic `ThemeColors` through `useColors()`; palette values are implementation details.             |
+| Spacing, size, radius, and type scale | `constants/layout.ts`                                                             | Use `LAYOUT` and the exported typography/touch helpers instead of restating shared values.                              |
+| Elevation                             | `constants/elevation.ts`                                                          | Resolve through `getElevation(colors, role)`; there is no spreadable raw token, deliberately.                           |
+| Font families                         | `constants/fonts.ts`                                                              | English uses Inter; the default Arabic face is Noto Sans Arabic and may be replaced by the user's selected Arabic font. |
+| Text                                  | `components/primitives/ThemedText.tsx`                                            | Use a named text type and semantic color/variant before adding local typography.                                        |
+| Buttons and inputs                    | `components/primitives/ThemedButton.tsx`, `components/primitives/ThemedInput.tsx` | These own the standard control heights, states, typography, borders, and feedback.                                      |
+| Reusable UI                           | `components/ui/index.ts`                                                          | Prefer the existing control or header primitive when its semantics match.                                               |
 
 ## Foundations
 

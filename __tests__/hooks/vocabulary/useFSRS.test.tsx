@@ -27,8 +27,9 @@ import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import { fsrsQueries } from '@/constants/queries';
 import { useFSRS } from '@/hooks/vocabulary/useFSRS';
 import type { StudyWord } from '@/types/vocabulary.types';
-import type { RootId } from '@/types/branded.types';
-import type { UserId } from '@/types/branded.types';
+import type { RootId, UserId } from '@/types/branded.types';
+import { LEGACY_NULL_TIMESTAMP } from '@/__tests__/helpers/fsrsTestHelpers';
+import { rootId, userId } from '@/__tests__/helpers/ids';
 
 // Mock only the service layer (network boundary)
 jest.mock('@/services/studyWordsFSRS');
@@ -39,8 +40,8 @@ const { studyWordsFSRSService } = require('@/services/studyWordsFSRS');
 // Helper to create mock study words
 function createMockStudyWord(overrides: Partial<StudyWord> = {}): StudyWord {
   return {
-    root_id: 1 as RootId,
-    user_id: 'test-user' as UserId,
+    root_id: rootId(1),
+    user_id: userId('test-user'),
     created_at: new Date().toISOString(),
     fsrs_difficulty: null,
     fsrs_due: new Date().toISOString(),
@@ -66,8 +67,8 @@ describe('useFSRS Hook', () => {
     queryClient = testWrapper.queryClient;
 
     // Default mock implementations
-    studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue([]);
-    studyWordsFSRSService.updateWordAndReview = jest.fn().mockResolvedValue(undefined);
+    studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => []);
+    studyWordsFSRSService.updateWordAndReview = jest.fn(async (..._args: unknown[]) => undefined);
   });
 
   describe('Initialization & Setup', () => {
@@ -95,16 +96,16 @@ describe('useFSRS Hook', () => {
     test('loads due words and initializes queue', async () => {
       const mockWords = [
         createMockStudyWord({
-          root_id: 1 as RootId,
+          root_id: rootId(1),
           fsrs_due: new Date('2024-01-01').toISOString(),
         }),
         createMockStudyWord({
-          root_id: 2 as RootId,
+          root_id: rootId(2),
           fsrs_due: new Date('2024-01-02').toISOString(),
         }),
       ];
 
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue(mockWords);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => mockWords);
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
@@ -120,7 +121,7 @@ describe('useFSRS Hook', () => {
 
     test('calls onComplete when no due words available', async () => {
       const onComplete = jest.fn();
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue([]);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => []);
 
       renderHook(() => useFSRS({ userId: 'test-user', onComplete }), { wrapper });
 
@@ -136,7 +137,7 @@ describe('useFSRS Hook', () => {
           fsrs_due: new Date(Date.now() - (i + 1) * 3600 * 1000).toISOString(),
         }),
       );
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue(mockWords);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => mockWords);
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
@@ -153,7 +154,7 @@ describe('useFSRS Hook', () => {
       const mockWords = Array.from({ length: 5 }, (_, i) =>
         createMockStudyWord({ root_id: (i + 1) as RootId }),
       );
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue(mockWords);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => mockWords);
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
@@ -177,8 +178,8 @@ describe('useFSRS Hook', () => {
           fsrs_due: new Date(Date.now() - (i + 1) * 3600 * 1000).toISOString(),
         }),
       );
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue(mockWords);
-      studyWordsFSRSService.updateWordAndReview = jest.fn().mockResolvedValue(undefined);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => mockWords);
+      studyWordsFSRSService.updateWordAndReview = jest.fn(async (..._args: unknown[]) => undefined);
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
@@ -216,8 +217,8 @@ describe('useFSRS Hook', () => {
       // queue underneath the completion screen — the session covers what was
       // due when it started; the next one picks these up.
       const initialWord = createMockStudyWord({ root_id: 1 as RootId });
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue([initialWord]);
-      studyWordsFSRSService.updateWordAndReview = jest.fn().mockResolvedValue(undefined);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => [initialWord]);
+      studyWordsFSRSService.updateWordAndReview = jest.fn(async (..._args: unknown[]) => undefined);
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
@@ -235,7 +236,7 @@ describe('useFSRS Hook', () => {
       const backlog = Array.from({ length: 8 }, (_, i) =>
         createMockStudyWord({ root_id: (i + 10) as RootId }),
       );
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue(backlog);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => backlog);
       await act(async () => {
         // The hook subscribes under the cooldown-keyed due entry (the key now
         // encodes the queryFn inputs), so target that exact key.
@@ -259,7 +260,7 @@ describe('useFSRS Hook', () => {
           fsrs_due: new Date(Date.now() - (i + 1) * 3600 * 1000).toISOString(),
         }),
       );
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue(mockWords);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => mockWords);
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
@@ -302,20 +303,20 @@ describe('useFSRS Hook', () => {
       const now = new Date();
       const mockWords = [
         createMockStudyWord({
-          root_id: 3 as RootId,
+          root_id: rootId(3),
           fsrs_due: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days
         }),
         createMockStudyWord({
-          root_id: 1 as RootId,
+          root_id: rootId(1),
           fsrs_due: new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day
         }),
         createMockStudyWord({
-          root_id: 2 as RootId,
+          root_id: rootId(2),
           fsrs_due: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days
         }),
       ];
 
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue(mockWords);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => mockWords);
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
@@ -333,7 +334,7 @@ describe('useFSRS Hook', () => {
         createMockStudyWord({ root_id: 2 as RootId }),
       ];
 
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue(mockWords);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => mockWords);
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
@@ -358,14 +359,14 @@ describe('useFSRS Hook', () => {
   describe('FSRS State Transitions', () => {
     test('transitions New → Learning on first review', async () => {
       const newWord = createMockStudyWord({
-        root_id: 1 as RootId,
+        root_id: rootId(1),
         fsrs_state: State.New,
         fsrs_reps: null,
         fsrs_stability: null,
-        fsrs_last_review: null,
+        fsrs_last_review: LEGACY_NULL_TIMESTAMP,
       });
 
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue([newWord]);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => [newWord]);
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
@@ -389,13 +390,13 @@ describe('useFSRS Hook', () => {
 
     test('updates FSRS card properties on review', async () => {
       const word = createMockStudyWord({
-        root_id: 1 as RootId,
+        root_id: rootId(1),
         fsrs_state: State.Learning,
         fsrs_reps: 1,
         fsrs_stability: 0.5,
       });
 
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue([word]);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => [word]);
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
@@ -456,7 +457,7 @@ describe('useFSRS Hook', () => {
       'maps "$confidence" confidence to $rating rating - $description',
       async ({ confidence, expectedProgress, expectComplete }) => {
         const word = createMockStudyWord({ root_id: 1 as RootId });
-        studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue([word]);
+        studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => [word]);
 
         const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
@@ -486,7 +487,7 @@ describe('useFSRS Hook', () => {
         createMockStudyWord({ root_id: 1 as RootId }),
         createMockStudyWord({ root_id: 2 as RootId }),
       ];
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue(words);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => words);
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
@@ -506,7 +507,7 @@ describe('useFSRS Hook', () => {
 
     test('prevents duplicate updates during processing', async () => {
       const word = createMockStudyWord({ root_id: 1 as RootId });
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue([word]);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => [word]);
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
@@ -526,10 +527,10 @@ describe('useFSRS Hook', () => {
 
     test('returns new stability value after update', async () => {
       const word = createMockStudyWord({
-        root_id: 1 as RootId,
+        root_id: rootId(1),
         fsrs_stability: 0.5,
       });
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue([word]);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => [word]);
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
@@ -548,7 +549,7 @@ describe('useFSRS Hook', () => {
     test('completes session when all words are known', async () => {
       const onComplete = jest.fn();
       const word = createMockStudyWord({ root_id: 1 as RootId });
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue([word]);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => [word]);
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user', onComplete }), {
         wrapper,
@@ -571,7 +572,7 @@ describe('useFSRS Hook', () => {
     test('does not trigger onComplete multiple times', async () => {
       const onComplete = jest.fn();
       const word = createMockStudyWord({ root_id: 1 as RootId });
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue([word]);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => [word]);
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user', onComplete }), {
         wrapper,
@@ -600,7 +601,7 @@ describe('useFSRS Hook', () => {
         createMockStudyWord({ root_id: 1 as RootId }),
         createMockStudyWord({ root_id: 2 as RootId }),
       ];
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue(words);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => words);
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
@@ -632,7 +633,7 @@ describe('useFSRS Hook', () => {
         createMockStudyWord({ root_id: 1 as RootId }),
         createMockStudyWord({ root_id: 2 as RootId }),
       ];
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue(words);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => words);
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
@@ -656,7 +657,7 @@ describe('useFSRS Hook', () => {
         createMockStudyWord({ root_id: 1 as RootId }),
         createMockStudyWord({ root_id: 2 as RootId }),
       ];
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue(words);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => words);
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
@@ -681,7 +682,7 @@ describe('useFSRS Hook', () => {
   describe('previewIntervals', () => {
     test('returns a non-empty interval label for each grade', async () => {
       const word = createMockStudyWord({ root_id: 1 as RootId });
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue([word]);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => [word]);
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
@@ -704,7 +705,7 @@ describe('useFSRS Hook', () => {
   describe('Error Handling', () => {
     test('handles database update errors gracefully', async () => {
       const word = createMockStudyWord({ root_id: 1 as RootId });
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue([word]);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => [word]);
       studyWordsFSRSService.updateWordAndReview = jest
         .fn()
         .mockRejectedValue(new Error('Database error'));
@@ -721,12 +722,12 @@ describe('useFSRS Hook', () => {
 
     test('handles FSRS algorithm errors with fallback', async () => {
       const word = createMockStudyWord({
-        root_id: 1 as RootId,
+        root_id: rootId(1),
         // Invalid FSRS state that might cause algorithm error
         fsrs_stability: -1,
         fsrs_difficulty: 100,
       });
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue([word]);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => [word]);
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
@@ -742,7 +743,9 @@ describe('useFSRS Hook', () => {
     });
 
     test('handles query fetch errors', async () => {
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockRejectedValue(new Error('Network error'));
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => {
+        throw new Error('Network error');
+      });
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
@@ -764,7 +767,7 @@ describe('useFSRS Hook', () => {
   describe('Utility Functions', () => {
     test('resetQueue clears session state and restarts from current due data', async () => {
       const words = [createMockStudyWord({ root_id: 1 as RootId })];
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue(words);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => words);
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
@@ -789,7 +792,7 @@ describe('useFSRS Hook', () => {
 
     test('invalidateQueries resets queue state', async () => {
       const words = [createMockStudyWord({ root_id: 1 as RootId })];
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue(words);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => words);
 
       const userId = 'test-user';
       const { result } = renderHook(() => useFSRS({ userId }), { wrapper });
@@ -807,7 +810,7 @@ describe('useFSRS Hook', () => {
 
     test('cleans up on unmount', async () => {
       const words = [createMockStudyWord({ root_id: 1 as RootId })];
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue(words);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => words);
 
       const { result, unmount } = renderHook(() => useFSRS({ userId: 'test-user' }), {
         wrapper,
@@ -825,7 +828,7 @@ describe('useFSRS Hook', () => {
   describe('Edge Cases', () => {
     test('handles empty due words array', async () => {
       const onComplete = jest.fn();
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue([]);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => []);
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user', onComplete }), {
         wrapper,
@@ -850,7 +853,7 @@ describe('useFSRS Hook', () => {
 
     test('does not update word when session is complete', async () => {
       const word = createMockStudyWord({ root_id: 1 as RootId });
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue([word]);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => [word]);
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
@@ -876,15 +879,15 @@ describe('useFSRS Hook', () => {
 
     test('handles words with null FSRS values (new cards)', async () => {
       const newWord = createMockStudyWord({
-        root_id: 1 as RootId,
+        root_id: rootId(1),
         fsrs_state: State.New,
         fsrs_reps: null,
         fsrs_stability: null,
         fsrs_difficulty: null,
-        fsrs_last_review: null,
+        fsrs_last_review: LEGACY_NULL_TIMESTAMP,
       });
 
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue([newWord]);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => [newWord]);
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
@@ -898,7 +901,7 @@ describe('useFSRS Hook', () => {
 
     test('prevents queue re-initialization with same words', async () => {
       const words = [createMockStudyWord({ root_id: 1 as RootId })];
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue(words);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => words);
 
       const { result, rerender } = renderHook(() => useFSRS({ userId: 'test-user' }), {
         wrapper,
@@ -911,7 +914,7 @@ describe('useFSRS Hook', () => {
       const firstCurrentWord = result.current.currentWord;
 
       // Force re-render
-      rerender();
+      rerender(undefined);
 
       await waitFor(() => {
         expect(result.current.isLoading).toBeFalsy();
@@ -931,7 +934,7 @@ describe('useFSRS Hook', () => {
         }),
       );
 
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue(manyWords);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => manyWords);
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
@@ -949,12 +952,12 @@ describe('useFSRS Hook', () => {
     test('handles words with identical due dates (ordering stability)', async () => {
       const sameTime = new Date('2024-01-01T12:00:00Z').toISOString();
       const wordsWithSameDue = [
-        createMockStudyWord({ root_id: 1 as RootId, fsrs_due: sameTime }),
-        createMockStudyWord({ root_id: 2 as RootId, fsrs_due: sameTime }),
-        createMockStudyWord({ root_id: 3 as RootId, fsrs_due: sameTime }),
+        createMockStudyWord({ root_id: rootId(1), fsrs_due: sameTime }),
+        createMockStudyWord({ root_id: rootId(2), fsrs_due: sameTime }),
+        createMockStudyWord({ root_id: rootId(3), fsrs_due: sameTime }),
       ];
 
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue(wordsWithSameDue);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => wordsWithSameDue);
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
@@ -971,14 +974,14 @@ describe('useFSRS Hook', () => {
       oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 
       const oldWord = createMockStudyWord({
-        root_id: 1 as RootId,
+        root_id: rootId(1),
         fsrs_due: oneYearAgo.toISOString(),
         fsrs_state: State.Review,
         fsrs_stability: 30,
         fsrs_reps: 5,
       });
 
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue([oldWord]);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => [oldWord]);
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
@@ -992,7 +995,7 @@ describe('useFSRS Hook', () => {
 
     test('handles update for wrong root_id gracefully', async () => {
       const word = createMockStudyWord({ root_id: 1 as RootId });
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue([word]);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => [word]);
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
@@ -1009,7 +1012,7 @@ describe('useFSRS Hook', () => {
 
     test('handles service error during update gracefully', async () => {
       const word = createMockStudyWord({ root_id: 1 as RootId });
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue([word]);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => [word]);
       studyWordsFSRSService.updateWordAndReview = jest
         .fn()
         .mockRejectedValue(new Error('Network error'));
@@ -1035,7 +1038,7 @@ describe('useFSRS Hook', () => {
         createMockStudyWord({ root_id: 1 as RootId }),
         createMockStudyWord({ root_id: 2 as RootId }),
       ];
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue(words);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => words);
 
       // A write that never settles — if updateWord awaited it, the grade would
       // hang here exactly as it used to hang on a slow network.
@@ -1063,10 +1066,10 @@ describe('useFSRS Hook', () => {
 
     test('flushPendingWrites settles once in-flight writes finish', async () => {
       const word = createMockStudyWord({ root_id: 1 as RootId });
-      studyWordsFSRSService.getFSRSWords = jest.fn().mockResolvedValue([word]);
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => [word]);
 
       let resolveWrite: (() => void) | undefined;
-      studyWordsFSRSService.updateWordAndReview = jest.fn().mockImplementation(
+      studyWordsFSRSService.updateWordAndReview = jest.fn(
         () =>
           new Promise<void>(resolve => {
             resolveWrite = resolve;

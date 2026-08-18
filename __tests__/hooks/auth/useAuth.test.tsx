@@ -19,14 +19,14 @@ describe('useAuth', () => {
   });
 
   test('returns context when inside AuthProvider', () => {
-    const wrapper = ({ children }) => (
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
       <AuthContext.Provider
         value={{
           session: null,
           user: null,
           isLoading: false,
           authError: null,
-          refreshSession: jest.fn(),
+          refreshSession: jest.fn(async () => null),
           isAuthenticated: false,
         }}
       >

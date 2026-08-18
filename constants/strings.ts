@@ -100,7 +100,6 @@ export const STRINGS = {
   // was naming the gesture every button already asks for.
   RESTUDY_CONTINUE: 'Continue',
   RECALL_RUN: (count: number) => `${count} in a row`,
-  SESSION_WORDS_DONE: (count: number) => `${count} done`,
   // Says out loud what the bar can only draw: how far into this sitting you are,
   // and how many words the whole session has actually put behind you.
   SESSION_PROGRESS_A11Y: (percent: number, done: number) =>
@@ -351,7 +350,6 @@ export const STRINGS = {
   BOOKMARKS_EMPTY_HINT:
     'Every article plays in English first, then Arabic. Tap the headphones on any article to add it here.',
   PLAYLIST_EMPTY_SEED_CTA: 'Add beginner articles',
-  PLAYLIST_BILINGUAL_CAPTION: 'Plays English first, then Arabic',
   // Practice tab empty state - one-tap quick start
   PLAY_ALL: 'Play all',
   STUDY_LIST_EMPTY_TITLE: 'No words yet',

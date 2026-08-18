@@ -5,7 +5,7 @@ import { StyleSheet } from 'react-native';
 import type { Edge } from 'react-native-safe-area-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ThemedView } from '@/components/ThemedView';
+import { ThemedView } from '@/components/primitives/ThemedView';
 import { LAYOUT } from '@/constants/layout';
 
 interface ScreenScaffoldProps {

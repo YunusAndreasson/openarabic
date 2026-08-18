@@ -2,8 +2,8 @@ import { BaseCard } from '@/components/common/BaseCard';
 import type { FC } from 'react';
 import { StyleSheet } from 'react-native';
 
-import { ThemedButton } from '@/components/ThemedButton';
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedButton } from '@/components/primitives/ThemedButton';
+import { ThemedText } from '@/components/primitives/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 
 interface PrimingCardProps {
