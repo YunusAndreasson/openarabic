@@ -51,6 +51,7 @@ import {
   markRestoreWait,
   markStreamState,
 } from '@/utils/armTelemetry';
+import { CaptureOpenQueue } from '@/utils/captureOpenQueue';
 import { simpleAudioService } from '@/services/audioPlayer';
 import { useAppSelectorShallow } from '@/store/hooks';
 import { mark as diagMark, span as diagSpan } from '@/utils/reviewDiagnostics';
@@ -274,14 +275,25 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
   const lastOpenWasPermissionDeniedRef = useRef(false);
 
   /**
-   * A reopen already running. Four separate signals can ask for one — an
-   * interruption ending, a route change, a stream error, and the app returning
-   * to the foreground — and after a phone call at least two of them fire within
-   * a moment of each other. Two overlapping close/open pairs interleave into a
-   * recorder built against a session the other half is still tearing down, so
-   * the second caller joins the first instead of starting a rival attempt.
+   * Serializes every capture open/close transition — see {@link CaptureOpenQueue}
+   * for the join-vs-queue rule.
+   *
+   * Four separate signals can ask for a reopen — an interruption ending, a route
+   * change, a stream error, and the app returning to the foreground — and after
+   * a phone call at least two of them fire within a moment of each other. Two
+   * overlapping close/open pairs interleave into a recorder built against a
+   * session the other half is still tearing down.
+   *
+   * This used to guard only reopen-against-reopen, which left the two mixed
+   * orderings open. A signal-driven `reopenCapture()` and `arm()`'s recovery rung
+   * (a deliberately unqueued `openCapture()`, on the learner's tap) could reach
+   * `capture.close({ releaseSession: true })` and `capture.open()` at the same
+   * moment: `arm` awaits its own `setPlaybackPriority(false)`, which DRAINS the
+   * handoff chain and leaves it empty, so a signal landing in that gap starts a
+   * reopen immediately with nothing to queue behind. Neither call joined the
+   * other — the old guard only fired when both were reopens.
    */
-  const reopenInFlightRef = useRef<Promise<void> | null>(null);
+  const openQueueRef = useRef(new CaptureOpenQueue());
 
   /** True while the session has been handed to playback for a prompt. */
   const playbackPriorityRef = useRef(false);
@@ -295,8 +307,7 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
   const openCapture = useCallback(
     async (reopen = false): Promise<void> => {
       if (holdersRef.current === 0) return;
-      if (reopen && reopenInFlightRef.current) return reopenInFlightRef.current;
-      const run = (async (): Promise<void> => {
+      return openQueueRef.current.run(reopen ? 'reopen' : 'open', async (): Promise<void> => {
         try {
           // A reopen only ever happens because the input is broken — an
           // interruption, a route change, or a stream error. Release the audio
@@ -350,12 +361,7 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
           diagMark('mic.session.open.failed', { message, reopen });
           voiceBreadcrumb('voice.session.open.failed', { message, reopen }, 'warning');
         }
-      })();
-      if (!reopen) return run;
-      reopenInFlightRef.current = run.finally(() => {
-        reopenInFlightRef.current = null;
       });
-      return reopenInFlightRef.current;
     },
     [capture],
   );
@@ -368,10 +374,13 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
    * stream error, the app returning to the foreground — all fired it outside the
    * handoff chain that every other session transition goes through — as did the
    * deaf-microphone recovery, which fires from a window's finish callback. (The
-   * one caller that deliberately stays direct is arm()'s recovery rung: it runs
-   * on the learner's tap, after its own restore has already drained the queue,
-   * and queueing the critical path behind anything is what it is there to
-   * avoid.)
+   * one caller that deliberately stays off THIS chain is arm()'s recovery rung:
+   * it runs on the learner's tap, after its own restore has already drained the
+   * chain, and queueing the critical path behind anything is what it is there to
+   * avoid. It is still serialized against a transition physically in flight —
+   * see `CaptureOpenQueue` — because staying off the handoff chain is not the
+   * same as being free to open a stream while a reopen releases the session
+   * under it.)
    * Returning to
    * a review is the case where that hurts: the provider's foreground listener
    * and the review's own prompt replay run in the same tick, so the rebuild's
