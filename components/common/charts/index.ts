@@ -1,15 +1,10 @@
-// Shared components for vocabulary charts
+/**
+ * Shared chart components.
+ *
+ * `VocabularyChart` is the only public entry point — the pieces it composes
+ * (canvas, axes, grid, line, area fill, data points) are internal to this
+ * directory and import each other by direct path.
+ */
 
-// Note: DataPointOverlay is internal to ChartCanvas; not exported to avoid misuse
-
-// New shared chart components for DRY refactoring
-
-// Unified chart component (eliminates all duplication)
 export { VocabularyChart } from './VocabularyChart';
-
-// Types
 export type { DataPoint } from './ChartCanvas';
-
-// Constants and utilities - re-exported from canonical locations for backward compatibility
-
-// Other shared components (keep existing exports)

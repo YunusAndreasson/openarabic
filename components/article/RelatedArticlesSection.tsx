@@ -15,11 +15,6 @@ interface RelatedArticlesSectionProps {
    * The articles data to select from
    */
   articlesData: Article[];
-
-  /**
-   * Maximum number of related articles to show per section (default: 5)
-   */
-  maxArticles?: number;
 }
 
 /**
@@ -33,7 +28,7 @@ interface RelatedArticlesSectionProps {
  * Uses existing article selection logic for consistency and efficiency.
  */
 export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
-  ({ article, articlesData, maxArticles = 5 }) => {
+  ({ article, articlesData }) => {
     // Memoize article IDs for efficient comparison
     const currentArticleId = article.id;
     const authorId = article.author_id;
@@ -63,7 +58,6 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
           filterType="author"
           filterId={authorId}
           filterName={article.author.name}
-          maxArticles={maxArticles}
         />
         <RelatedArticlesByFilter
           currentArticleId={currentArticleId}
@@ -71,7 +65,6 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
           filterType="category"
           filterId={categoryId}
           filterName={article.category.name}
-          maxArticles={maxArticles}
         />
       </View>
     );

@@ -387,6 +387,8 @@ export const STRINGS = {
   ENTER_PASSWORD: 'Enter your password',
   NO_INTERNET_CONNECTION: 'No internet connection. Check your connection and try again.',
   PASSWORD_USE_AT_LEAST_TEMPLATE: 'Use at least {minLength} characters',
+  SHOW_PASSWORD: 'Show password',
+  HIDE_PASSWORD: 'Hide password',
   FORGOT_PASSWORD: 'Forgot password?',
   RESET_PASSWORD_EMAIL_SENT: 'Check your email for a reset link',
   RESET_PASSWORD_ERROR: "Couldn't send reset email. Check your email address and try again",
@@ -727,7 +729,6 @@ export const STRINGS = {
   REMOVE: 'Remove',
   // Chart Empty States (action + outcome, concise)
   EMPTY_STATE_DUE_WORDS: 'Add words to see your upcoming reviews',
-  EMPTY_STATE_GENERAL: 'Add words to start tracking your progress',
   // Word Sentences Bottom Sheet (dictionary sentence examples)
   NO_SENTENCE_EXAMPLES: 'No sentence examples yet',
   PLAY_AUDIO: 'Play audio',

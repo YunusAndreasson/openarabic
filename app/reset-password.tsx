@@ -250,6 +250,9 @@ export default function ResetPasswordScreen(): JSX.Element {
               placeholder={STRINGS.RESET_PASSWORD_NEW_PLACEHOLDER}
               returnKeyType="next"
               rightIcon={showPassword ? 'eye-off' : 'eye'}
+              rightIconAccessibilityLabel={
+                showPassword ? STRINGS.HIDE_PASSWORD : STRINGS.SHOW_PASSWORD
+              }
               secureTextEntry={!showPassword}
               textAlignVertical="center"
               textContentType="newPassword"
@@ -273,6 +276,9 @@ export default function ResetPasswordScreen(): JSX.Element {
               placeholder={STRINGS.RESET_PASSWORD_CONFIRM_PLACEHOLDER}
               returnKeyType="done"
               rightIcon={showConfirmPassword ? 'eye-off' : 'eye'}
+              rightIconAccessibilityLabel={
+                showConfirmPassword ? STRINGS.HIDE_PASSWORD : STRINGS.SHOW_PASSWORD
+              }
               secureTextEntry={!showConfirmPassword}
               textAlignVertical="center"
               textContentType="newPassword"

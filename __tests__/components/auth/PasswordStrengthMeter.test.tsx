@@ -88,21 +88,46 @@ describe('PasswordStrengthMeter', () => {
   });
 
   describe('Visual States', () => {
-    test('renders different bar widths based on strength', () => {
-      // Strength 0 (< 8 chars) = 0%
-      const { rerender, toJSON } = render(<PasswordStrengthMeter password="short" />);
-      const shortJson = toJSON();
-      expect(shortJson).toBeTruthy();
+    /**
+     * Walks the tree for the `ProgressBar` fill — the only node carrying a
+     * percentage width. Asserting the real number is what makes this a
+     * regression test for the bar's geometry; it previously only checked that
+     * something rendered, so the meter could have shown a flat bar and passed.
+     */
+    const fillWidth = (node: unknown): string | undefined => {
+      if (!node || typeof node !== 'object') return undefined;
+      const { props, children } = node as {
+        props?: { style?: unknown };
+        children?: unknown[] | null;
+      };
+      const style = (Array.isArray(props?.style) ? props?.style : [props?.style]) ?? [];
+      const merged = style
+        .flat(Infinity)
+        .filter(
+          (entry): entry is Record<string, unknown> => Boolean(entry) && typeof entry === 'object',
+        )
+        .reduce<Record<string, unknown>>((acc, entry) => ({ ...acc, ...entry }), {});
+      // Only ProgressBar's fill animates its width — the track and the row
+      // wrapper are both a plain `width: '100%'`, so match on the transition.
+      if (merged.transitionProperty === 'width' && typeof merged.width === 'string') {
+        return merged.width;
+      }
+      for (const child of children ?? []) {
+        const found = fillWidth(child);
+        if (found !== undefined) return found;
+      }
+      return undefined;
+    };
 
-      // Strength 1 (8-11 chars) = 33%
-      rerender(<PasswordStrengthMeter password="password" />);
-      const mediumJson = toJSON();
-      expect(mediumJson).toBeTruthy();
+    test.each([
+      ['below the minimum length', 'short', '0%'],
+      ['at the minimum length (8-11)', 'password', `${(1 / 3) * 100}%`],
+      ['a good length (12-15)', 'passwordpass', `${(2 / 3) * 100}%`],
+      ['a strong length (16+)', 'verylongpassword1', '100%'],
+    ])('fills the bar to %s', (_label, password, expected) => {
+      const { toJSON } = render(<PasswordStrengthMeter password={password} />);
 
-      // Strength 3 (16+ chars) = 100%
-      rerender(<PasswordStrengthMeter password="verylongpassword1" />);
-      const strongJson = toJSON();
-      expect(strongJson).toBeTruthy();
+      expect(fillWidth(toJSON())).toBe(expected);
     });
   });
 });

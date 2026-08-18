@@ -40,17 +40,9 @@ export type AnimatedCountProps = AnimatedCountAccessibility & {
    * a measurement of zero where none was taken. Skips the animation entirely.
    */
   placeholder?: string;
-  /** Appended verbatim and never animated ("%", "+"). */
-  suffix?: string;
   type?: TextTypeName;
   style?: StyleProp<TextStyle>;
   colorName?: SolidColorName;
-  /**
-   * Colour derived from the value currently on screen, not the target — so a
-   * threshold crossing is painted on the frame it visually happens.
-   */
-  resolveColor?: (displayValue: number) => string;
-  spring?: WithSpringConfig;
   /**
    * `0` disables the count-up. Required inside recycled FlashList rows, where a
    * reused row would otherwise animate from the previous item's value; also the
@@ -60,7 +52,7 @@ export type AnimatedCountProps = AnimatedCountAccessibility & {
   testID?: string;
 };
 
-const DEFAULT_SPRING: WithSpringConfig = {
+const COUNT_SPRING: WithSpringConfig = {
   ...SPRING_CONFIG.CARD,
   overshootClamping: true,
 };
@@ -71,18 +63,18 @@ const DEFAULT_SPRING: WithSpringConfig = {
  * The spring runs on the UI thread and only the ROUNDED INTEGER is pushed back
  * to JS — a handful of re-renders across the animation instead of one per frame.
  * That property is the whole reason this is a shared primitive rather than an
- * idiom copied per call site; the version this was lifted from
- * (`MemoryRetentionGauge`) is now a caller.
+ * idiom copied per call site.
+ *
+ * It carried a `suffix`, a `resolveColor` and a `spring` override for the
+ * retention gauge it was lifted from. That gauge is gone, and no caller ever
+ * used any of the three.
  */
 export function AnimatedCount({
   value,
   placeholder,
-  suffix,
   type = 'heading1',
   style,
   colorName,
-  resolveColor,
-  spring,
   animationDuration,
   testID,
   accessibilityLabel,
@@ -95,8 +87,8 @@ export function AnimatedCount({
 
   useEffect(() => {
     if (isStatic) return;
-    progress.set(withSpring(value, spring ?? DEFAULT_SPRING));
-  }, [value, isStatic, progress, spring]);
+    progress.set(withSpring(value, COUNT_SPRING));
+  }, [value, isStatic, progress]);
 
   // A `scheduleOnRN` already in flight would otherwise call setState on an
   // unmounted component.
@@ -123,14 +115,13 @@ export function AnimatedCount({
   );
 
   const shown = isStatic ? value : displayValue;
-  const text = placeholder ?? `${shown}${suffix ?? ''}`;
-  const resolvedColor = resolveColor?.(shown);
+  const text = placeholder ?? String(shown);
 
   return (
     <ThemedText
       type={type}
       colorName={colorName}
-      style={[style, resolvedColor ? { color: resolvedColor } : null]}
+      style={style}
       testID={testID}
       // A silent instance defers entirely to the accessible ancestor that
       // describes the whole card; a labelled one announces its settled value.

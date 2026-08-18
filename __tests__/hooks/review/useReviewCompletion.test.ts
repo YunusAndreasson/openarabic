@@ -78,7 +78,7 @@ jest.mock('react-native', () => ({
 import { useReviewCompletion } from '@/hooks/review/useReviewCompletion';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useQueryClient } from '@tanstack/react-query';
-import type { SessionMetrics } from '@/hooks/review/useSessionMetrics';
+import type { SessionMetrics } from '@/types/review.types';
 
 const mockUseAuth = jest.mocked(useAuth);
 const mockUseQueryClient = jest.mocked(useQueryClient);

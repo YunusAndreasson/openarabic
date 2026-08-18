@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
+import { ProgressBar } from '@/components/common';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { PASSWORD_REQUIREMENTS } from '@/hooks/auth/useAuthForm';
@@ -17,8 +18,11 @@ interface PasswordRequirement {
   met: boolean;
 }
 
+/** Top of the strength scale — the denominator behind the bar's fill percentage. */
+const MAX_STRENGTH = 3;
+
 /**
- * Calculate password strength score based on length (0-3)
+ * Calculate password strength score based on length (0-MAX_STRENGTH)
  * 0: Empty or too short
  * 1: Minimum length met (8-11 chars)
  * 2: Good length (12-15 chars)
@@ -28,7 +32,7 @@ function calculateStrength(password: string): number {
   if (password.length < PASSWORD_REQUIREMENTS.minLength) return 0;
   if (password.length < 12) return 1;
   if (password.length < 16) return 2;
-  return 3;
+  return MAX_STRENGTH;
 }
 
 /**
@@ -76,22 +80,15 @@ export function PasswordStrengthMeter({ password }: PasswordStrengthMeterProps) 
     <View style={styles.container}>
       {/* Strength bar */}
       <View style={styles.strengthBarContainer}>
-        <View
-          style={[
-            styles.strengthBar,
-            {
-              backgroundColor: colors.elevation2,
-            },
-          ]}
-        >
-          <View
-            style={[
-              styles.strengthBarFill,
-              {
-                width: `${(strength / 3) * 100}%`,
-                backgroundColor: strengthColor,
-              },
-            ]}
+        <View style={styles.strengthBarWrapper}>
+          {/* Neutral track, not the tinted `progressBackground` the other bars
+              use: this fill is semantic (warning/success), and a sage track
+              under an amber or green fill puts a third hue in a 4px bar. */}
+          <ProgressBar
+            progress={(strength / MAX_STRENGTH) * 100}
+            height={LAYOUT.SPACING.TINY}
+            backgroundColor={colors.elevation2}
+            fillColor={strengthColor}
           />
         </View>
         {strengthLabel ? (
@@ -148,19 +145,14 @@ const styles = StyleSheet.create({
   requirementsList: {
     marginTop: LAYOUT.SPACING.SMALL,
   },
-  strengthBar: {
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
-    flex: 1,
-    height: LAYOUT.SPACING.TINY,
-    overflow: 'hidden',
-  },
   strengthBarContainer: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: LAYOUT.SPACING.SMALL,
     width: '100%',
   },
-  strengthBarFill: {
-    height: '100%',
+  // ProgressBar is width:100%; the wrapper is what shares the row with the label.
+  strengthBarWrapper: {
+    flex: 1,
   },
 });

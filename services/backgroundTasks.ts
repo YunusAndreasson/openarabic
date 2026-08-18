@@ -54,6 +54,7 @@ import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
 import { buildNotificationPlan } from '@/utils/notificationPlanner';
 import { readSmartReminderPrefs } from '@/utils/smartReminderPrefs';
+import { isDueAt } from '@/utils/wordClassification';
 
 // Background task name
 const BACKGROUND_FETCH_TASK = 'background-due-words-calculation';
@@ -87,13 +88,13 @@ TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
       forStats: false,
     });
 
+    // One clock for the whole pass, and the SHARED due rule — this used to be an
+    // inline copy that called `Date.parse` on the raw column. Postgres can hand
+    // back a stamp with no UTC offset, which `Date.parse` reads as device-local,
+    // so the badge this count feeds could be hours out of step with the number
+    // the app itself shows, in whichever direction the learner is from UTC.
     const nowMs = Date.now();
-    const dueCount = words.filter(word => {
-      if (word.fsrs_state === 0) return true;
-      if (!word.fsrs_due) return false;
-      const dueMs = Date.parse(word.fsrs_due);
-      return !Number.isNaN(dueMs) && dueMs <= nowMs;
-    }).length;
+    const dueCount = words.filter(word => isDueAt(word, nowMs)).length;
 
     // Keep the home-screen icon badge current even while the app is closed: set it
     // to the due-words count, or clear it to 0 once the learner is caught up.

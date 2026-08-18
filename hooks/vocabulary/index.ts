@@ -12,4 +12,4 @@ export * from './useWordsToRevisit';
 export * from './useChartAxisLabels';
 export * from './useDueWordsChart';
 export * from './useMemoryHorizonDistribution';
-export * from './useRetrievabilityChart';
+export * from './useMemoryInsights';

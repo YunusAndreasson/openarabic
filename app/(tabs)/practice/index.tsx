@@ -21,7 +21,7 @@ import { useStudyStreak } from '@/hooks/practice/useStudyStreak';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { PinnedActionButton, usePinnedActionClearance } from '@/components/ui';
 import { useMemoryHorizonDistribution } from '@/hooks/vocabulary/useMemoryHorizonDistribution';
-import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
+import { useMemoryInsights } from '@/hooks/vocabulary/useMemoryInsights';
 import { calculateDueWordsForecast } from '@/utils/fsrsUtils';
 import { isLeechWord } from '@/utils/leechUtils';
 import { countReviewedToday } from '@/utils/wordClassification';
@@ -88,8 +88,8 @@ export default function PracticeScreen(): JSX.Element {
   // Memory capacity gauge needs all words, not just due
   const studyWords = useMemo(() => allWords ?? [], [allWords]);
 
-  // Get chart data for recommendations
-  const { chartData } = useRetrievabilityChart(studyWords);
+  // Forgetting-curve numbers behind the hero card
+  const memory = useMemoryInsights(studyWords);
 
   // Don't show error if user is not authenticated yet - this is expected during auth flow
   const shouldShowError = error && user;
@@ -241,8 +241,8 @@ export default function PracticeScreen(): JSX.Element {
             dueWords={dueWordsCount}
             dueCountCapped={dueCountCapped}
             reviewedToday={reviewedToday}
-            recallableWords={chartData.insights.recallableWords}
-            hasMeasuredMemory={chartData.insights.measuredWords > 0}
+            recallableWords={memory.recallableWords}
+            hasMeasuredMemory={memory.measuredWords > 0}
             distribution={distribution}
             forecast={forecast}
             currentStreak={currentStreak}

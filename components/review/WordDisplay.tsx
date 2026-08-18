@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react';
 import { useMemo } from 'react';
+import type { StyleProp, ViewStyle } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
 import { useDebouncedArabicFontSize } from '@/hooks/theme/useDebouncedArabicFontSize';
-import type { WordDisplayProps } from '@/types/ui/review.types';
 
 /**
  * Combining marks (fatha, damma, kasra, sukun, shadda, tanween, dagger alif)
@@ -99,7 +99,13 @@ const STATIC_STYLES = StyleSheet.create({
   },
 });
 
-interface Props extends WordDisplayProps {
+interface Props {
+  /** The Arabic word to display */
+  word: string;
+  /** Additional style for the container */
+  style?: StyleProp<ViewStyle>;
+  /** Callback when user taps the word (to replay audio) */
+  onWordPress?: () => void;
   /** Grammatical class ("Verb", "Noun"), when the corpus knows one. Optional by
    *  design — it comes from the example-sentence join, which not every root has. */
   wordType?: string | null;

@@ -424,6 +424,13 @@ const ASR_HALLUCINATIONS = new Set([
   'please subscribe',
 ]);
 
+/**
+ * Which button the result panel should emphasise after a miss. `null` means
+ * genuinely ambiguous — let the learner judge. Named because the review hook
+ * and the telemetry row each spelled the same three-way union out by hand.
+ */
+export type VoiceSuggestion = 'unknown' | 'retry' | null;
+
 export type MatchMethod =
   | 'exact'
   | 'equivalent'

@@ -1,4 +1,3 @@
-import { MEMORY_CAPACITY_THRESHOLDS } from '@/constants/fsrs';
 import { GOLDEN_RATIO, LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 
 // Graph dimensions - optimized for perfect alignment and space usage with golden ratio
@@ -61,16 +60,5 @@ export const getEffectiveChartHeight = (): number => {
 // Time periods - optimized for mobile clarity and user comprehension
 export const DAYS_7 = 7; // Weekly view for better mobile experience and cognitive load
 export const DAYS_30 = 30; // Monthly view — long enough for cumulative charts to visibly grow
-
-/**
- * Standardized performance thresholds used across all charts
- * Derives from MEMORY_CAPACITY_THRESHOLDS for consistency with gauges and recommendations
- */
-export const PERFORMANCE_THRESHOLDS = {
-  EXCELLENT: MEMORY_CAPACITY_THRESHOLDS.GOOD, // Green zone - excellent performance (75%+)
-  GOOD: MEMORY_CAPACITY_THRESHOLDS.MODERATE, // Yellow zone - good performance (70-74%)
-  FAIR: MEMORY_CAPACITY_THRESHOLDS.POOR, // Orange zone - fair performance (40-69%)
-  POOR: 0, // Red zone - poor performance (<40%)
-} as const;
 
 export const useGraphWidth = (): number => GRAPH_WIDTH;

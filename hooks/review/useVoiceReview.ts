@@ -40,6 +40,8 @@ import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { STRINGS } from '@/constants/strings';
 import { PARAKEET_MODEL_ID, VOICE_DECODING_METHOD } from '@/hooks/voice/useSherpaStt';
 import { DEFAULT_RECORDING_CONFIG } from '@/lib/voice/recording';
+import type { RecordingStopReason } from '@/lib/voice/recording';
+import type { RootId } from '@/types/branded.types';
 import { analytics } from '@/services/analytics';
 import {
   logVoiceArmFailure,
@@ -55,6 +57,7 @@ import { getArmStages, markArmTap } from '@/utils/armTelemetry';
 import { getPromptSnapshot, recordPromptCut } from '@/utils/promptTelemetry';
 import { countDiag, mark as diagMark, span as diagSpan } from '@/utils/reviewDiagnostics';
 import { matchSingleWord } from '@/utils/voiceMatching';
+import type { MatchMethod, VoiceSuggestion } from '@/utils/voiceMatching';
 import { voiceBreadcrumb } from '@/utils/errorHandling';
 
 /**
@@ -95,12 +98,12 @@ export interface VoiceResult {
   /** Normalized expected meaning, shown as the answer. */
   expected: string;
   /** Which matchSingleWord branch fired (debug / suggestion logic). */
-  method: string;
+  method: MatchMethod;
   similarity: number;
   /** The action the recognizer leans toward, used to emphasise one button.
    *  'retry' when the audio was unusable, 'unknown' for a confident wrong
    *  word, null when genuinely ambiguous (let the learner judge). */
-  suggestion: 'unknown' | 'retry' | null;
+  suggestion: VoiceSuggestion;
 }
 
 /** Last-recording diagnostics surfaced to the on-screen voice HUD. */
@@ -110,7 +113,7 @@ export interface VoiceDebug {
   /** Outcome of matchSingleWord on the most recent recording. */
   match: {
     matched: boolean;
-    method: string;
+    method: MatchMethod;
     similarity: number;
     spoken: string;
     expected: string;
@@ -119,7 +122,7 @@ export interface VoiceDebug {
   recorder: {
     durationMs: number;
     bufferCount: number;
-    stopReason: string;
+    stopReason: RecordingStopReason;
     heardSpeech: boolean;
     peakRms: number;
     firstBufferMs: number | null;
@@ -135,7 +138,7 @@ interface UseVoiceReviewArgs {
   /** Key that changes when a new card is shown. */
   currentWordKey: string;
   /** Current card's root id, recorded with each telemetry attempt. */
-  rootId: number | null | undefined;
+  rootId: RootId | null | undefined;
   /** Other English names the corpus gives this same root — see
    *  `useReviewGlossAlternates`. Widens what counts as right, at `vague`. */
   glossAlternates?: readonly string[];

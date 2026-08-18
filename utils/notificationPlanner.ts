@@ -1,3 +1,5 @@
+import { State } from 'ts-fsrs';
+
 import {
   CRITICAL_RETRIEVABILITY_THRESHOLD,
   DEFAULT_SESSION_COOLDOWN_HOURS,
@@ -48,7 +50,7 @@ interface WordTimeline {
 function computeTimelines(words: StudyWord[], nowMs: number): WordTimeline[] {
   return words.map(word => {
     let dueMs = Number.POSITIVE_INFINITY;
-    if (word.fsrs_state === 0) {
+    if (word.fsrs_state === State.New) {
       dueMs = nowMs; // New words are always due
     } else {
       const dueStr = normalizeTimestamp(word.fsrs_due);
@@ -61,7 +63,7 @@ function computeTimelines(words: StudyWord[], nowMs: number): WordTimeline[] {
     let slipMs = Number.POSITIVE_INFINITY;
     const stability = word.fsrs_stability ?? 0;
     const lastStr = normalizeTimestamp(word.fsrs_last_review);
-    if (word.fsrs_state !== 0 && (word.fsrs_reps ?? 0) > 0 && stability > 0 && lastStr) {
+    if (word.fsrs_state !== State.New && (word.fsrs_reps ?? 0) > 0 && stability > 0 && lastStr) {
       const lastMs = Date.parse(lastStr);
       const slipDays = timeUntilRetrievability(stability, CRITICAL_RETRIEVABILITY_THRESHOLD);
       if (!Number.isNaN(lastMs) && slipDays !== null) {

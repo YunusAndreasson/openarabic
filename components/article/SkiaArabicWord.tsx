@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, type ComponentRef, type RefObject } from 'react';
+import { memo, useEffect, useMemo, useRef, type ComponentRef } from 'react';
 import type { LayoutRectangle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import Animated, { type SharedValue, useAnimatedStyle } from 'react-native-reanimated';
@@ -56,7 +56,6 @@ interface SkiaArabicWordProps {
   onTooltipOpen?: (word: SentenceWord, layout: LayoutRectangle) => void;
   /** Long-press: instant save to practice (toggle) */
   onWordLongPress?: (word: SentenceWord, layout?: LayoutRectangle) => void;
-  wordRef?: RefObject<ComponentRef<typeof Pressable>>;
   testID?: string;
   /** When true, pulses the marker underline to draw attention (used for tutorial) */
   isHighlighted?: boolean;
@@ -70,7 +69,6 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
   word,
   onTooltipOpen,
   onWordLongPress,
-  wordRef,
   testID,
   isHighlighted = false,
   activeWordIdSV,
@@ -82,9 +80,8 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
   // Prevent memory leaks from async callbacks on unmounted components
   const isMountedRef = useRef(true);
 
-  // Fallback ref so the word can measure itself when the parent doesn't pass one
-  const internalWordRef = useRef<ComponentRef<typeof Pressable>>(null);
-  const pressableRef = wordRef ?? internalWordRef;
+  // The word measures itself to place the tooltip over its own frame.
+  const pressableRef = useRef<ComponentRef<typeof Pressable>>(null);
 
   // Active word opacity — derived from SharedValue on UI thread, no React re-renders
   const wordId = word.id;

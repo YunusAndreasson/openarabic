@@ -107,6 +107,7 @@ export function AuthPasswordInput({
         placeholder={STRINGS.YOUR_PASSWORD}
         returnKeyType="done"
         rightIcon={showPassword ? 'eye-off' : 'eye'}
+        rightIconAccessibilityLabel={showPassword ? STRINGS.HIDE_PASSWORD : STRINGS.SHOW_PASSWORD}
         secureTextEntry={!showPassword}
         textAlignVertical="center"
         textContentType={isSignUp ? 'newPassword' : 'password'}

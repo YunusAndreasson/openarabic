@@ -1,6 +1,6 @@
 import { Ionicons } from '@/components/ui';
 import { Link } from 'expo-router';
-import type { ComponentProps, FC } from 'react';
+import type { FC } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 import Animated, { FadeIn, FadeInUp, FadeOut, ZoomIn } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -73,8 +73,6 @@ const MAX_METRICS_WITH_PRIMING = 2;
 
 interface CompletionScreenProps {
   title?: string;
-  buttonText?: string;
-  iconName?: ComponentProps<typeof Ionicons>['name'];
   iconSize?: number;
   contentStyle?: ViewStyle;
   sessionMetrics?: SessionMetrics;
@@ -93,8 +91,6 @@ interface CompletionScreenProps {
 
 export const CompletionScreen: FC<CompletionScreenProps> = ({
   title = STRINGS.SESSION_COMPLETE,
-  buttonText = UiAction.CONTINUE,
-  iconName = 'checkmark-circle',
   iconSize = LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE,
   contentStyle,
   sessionMetrics,
@@ -135,7 +131,7 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
     <View style={[styles.contentContainer, contentStyle]}>
       {/* Success Icon - Primary visual element */}
       <Animated.View entering={ENTERING_ICON} style={styles.iconContainer}>
-        <Ionicons color={colors.completionSuccess} name={iconName} size={iconSize} />
+        <Ionicons color={colors.completionSuccess} name="checkmark-circle" size={iconSize} />
       </Animated.View>
 
       {/* Title Group - Closely grouped for Gestalt proximity */}
@@ -227,14 +223,19 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
             marking; a Light tap on top of it two seconds later is a second,
             weaker claim about the same thing. */}
         {onContinue ? (
-          <ThemedButton title={buttonText} hapticType="selection" onPress={onContinue} fullWidth />
+          <ThemedButton
+            title={UiAction.CONTINUE}
+            hapticType="selection"
+            onPress={onContinue}
+            fullWidth
+          />
         ) : fromRemember ? (
           <Link href={ROUTE_PATHS.PRACTICE_TAB} dismissTo={true} asChild>
-            <ThemedButton fullWidth title={buttonText} hapticType="selection" />
+            <ThemedButton fullWidth title={UiAction.CONTINUE} hapticType="selection" />
           </Link>
         ) : (
           <Link href=".." replace asChild>
-            <ThemedButton fullWidth title={buttonText} hapticType="selection" />
+            <ThemedButton fullWidth title={UiAction.CONTINUE} hapticType="selection" />
           </Link>
         )}
       </Animated.View>

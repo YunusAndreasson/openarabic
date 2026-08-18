@@ -39,6 +39,7 @@ import {
   ensureMicPermission,
   type RecordingConfig,
   type RecordingResult,
+  type VoiceArmFailureReason,
 } from '@/lib/voice/recording';
 import { analytics } from '@/services/analytics';
 import {
@@ -57,7 +58,7 @@ import { voiceBreadcrumb } from '@/utils/errorHandling';
 
 export type VoiceArmOutcome =
   | { ok: true; result: RecordingResult }
-  | { ok: false; reason: 'permission' | 'not-ready' | 'busy' | 'error'; message?: string };
+  | { ok: false; reason: VoiceArmFailureReason; message?: string };
 
 interface VoiceGradingContextValue {
   /** Mirrors the Redux `voiceEnabled` setting. */
@@ -135,6 +136,21 @@ interface VoiceGradingContextValue {
    * earlier open-on-demand attempt produced).
    */
   setPlaybackPriority: (playbackOnly: boolean) => Promise<void>;
+  /**
+   * Is the microphone's input stream open right now?
+   *
+   * A function rather than state: it is read at one instant (a prompt starting)
+   * and publishing it would re-render the review screen on every session
+   * transition for a value nothing draws.
+   *
+   * Exists for telemetry. `simpleAudioService.isRecordingSessionEnabled` says
+   * what the app BELIEVES the session is, and the whole failure mode this was
+   * added for is that belief being wrong — so a second, independently derived
+   * fact is needed to catch it. An open stream can only exist on a
+   * record-capable session, so "playback owns it" plus "the stream is open" is
+   * the desync, stated by the native side rather than by the flag that lied.
+   */
+  isMicStreamOpen: () => boolean;
 }
 
 /**
@@ -267,6 +283,15 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
    */
   const reopenInFlightRef = useRef<Promise<void> | null>(null);
 
+  /** True while the session has been handed to playback for a prompt. */
+  const playbackPriorityRef = useRef(false);
+  /** Latched on the first failure to restore — see setPlaybackPriority. */
+  const playbackPriorityBrokenRef = useRef(false);
+  /** Serializes every playback/record handoff. A same-direction caller must also
+   * join the active transition: `playbackPriorityRef` describes the completed
+   * native state, not merely the most recently requested state. */
+  const handoffRef = useRef<Promise<void> | null>(null);
+
   const openCapture = useCallback(
     async (reopen = false): Promise<void> => {
       if (holdersRef.current === 0) return;
@@ -278,6 +303,35 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
           // session on the way down so the reopen genuinely rebuilds the engine;
           // see VoiceCaptureSession.close, where the field evidence lives.
           if (reopen) await capture.close({ releaseSession: true });
+          // Opening the stream reconfigures the SHARED audio session as
+          // record-capable (`configureVoiceSessionOptions`: `.playAndRecord`,
+          // plus mode `.measurement` when the Advanced iOS raw-mode toggle is
+          // on). Say so through simpleAudioService, which owns the playback
+          // lane's view of that session, BEFORE it happens.
+          //
+          // Two of the five paths into here already did — acquireSession and the
+          // restore half of setPlaybackPriority — and the ones that did not are
+          // why a backgrounded review came back silent. The foreground/
+          // interruption/route-change reopen re-applied the record-capable
+          // session behind simpleAudioService's back, so its
+          // `recordingSessionEnabled` flag still said "playback"; from then on
+          // every guard that would have handed the session back to playback was
+          // an equality check against that stale flag and no-opped, leaving each
+          // prompt on the `.measurement` session that IOS_SESSION_MODE was moved
+          // off precisely because it plays "noticeably quiet". The learner hears
+          // nothing, `play()` still reports success, and nothing is logged.
+          //
+          // The grant has to come first on iOS regardless: react-native-audio-api
+          // cannot switch to .playAndRecord under an already-active
+          // playback-only session (see setRecordingSessionEnabled).
+          await simpleAudioService.setRecordingSessionEnabled(true);
+          // The microphone owns the session from here, so the flag has to agree
+          // — otherwise the next prompt's handoff sees "playback already has it"
+          // and skips the category/mode change it needs. Set at the grant rather
+          // than after a successful open, because the grant is what makes
+          // playback quiet: an open that then fails must still leave the next
+          // prompt able to take the session back.
+          playbackPriorityRef.current = false;
           await capture.open(recordingConfigRef.current);
           lastOpenErrorRef.current = null;
           lastOpenWasPermissionDeniedRef.current = false;
@@ -307,19 +361,73 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
   );
 
   /**
+   * A reopen that takes its turn in the session's handoff queue.
+   *
+   * `openCapture(true)` deactivates and rebuilds the iOS audio session, and the
+   * four SIGNAL-driven reopens — an interruption ending, a route change, a
+   * stream error, the app returning to the foreground — all fired it outside the
+   * handoff chain that every other session transition goes through — as did the
+   * deaf-microphone recovery, which fires from a window's finish callback. (The
+   * one caller that deliberately stays direct is arm()'s recovery rung: it runs
+   * on the learner's tap, after its own restore has already drained the queue,
+   * and queueing the critical path behind anything is what it is there to
+   * avoid.)
+   * Returning to
+   * a review is the case where that hurts: the provider's foreground listener
+   * and the review's own prompt replay run in the same tick, so the rebuild's
+   * `setActive(false)` / `.playAndRecord` landed in the middle of the replay's
+   * handoff, in whichever order the two chains happened to interleave. Queueing
+   * it makes the order the registration order — reopen, then replay — which is
+   * the one that leaves the prompt audible.
+   *
+   * Still one reopen at a time: a caller arriving while another is queued or in
+   * flight joins it, because two overlapping close/open pairs build a recorder
+   * against a session the other half is still tearing down (after a phone call
+   * at least two of those signals fire within a moment of each other).
+   */
+  const reopenQueuedRef = useRef<Promise<void> | null>(null);
+  /**
+   * A reopen that was owed while the prompt held the session, to be paid the
+   * moment playback hands it back.
+   *
+   * A reopen grabs the session for recording, and doing that mid-word is the
+   * quiet-prompt bug itself — `acquireSession` has guarded against exactly this
+   * since it was written ("opening here would switch the prompt back to the
+   * quiet record-capable route mid-word"); the reopen signals never did. But
+   * skipping it outright is not an option either: the plain `open()` the restore
+   * performs is a no-op against a recorder object that still exists, and a
+   * reopen is asked for precisely when that object is dead. So the debt is
+   * carried across the prompt and settled by the restore, which runs before the
+   * learner can tap.
+   */
+  const reopenOwedRef = useRef(false);
+  const reopenCapture = useCallback((): Promise<void> => {
+    const queued = reopenQueuedRef.current;
+    if (queued) return queued;
+    const previous = handoffRef.current;
+    const handoff = (async () => {
+      await previous?.catch(() => undefined);
+      if (playbackPriorityRef.current) {
+        reopenOwedRef.current = true;
+        diagMark('mic.session.reopen.deferred');
+        return;
+      }
+      await openCapture(true);
+    })();
+    reopenQueuedRef.current = handoff;
+    handoffRef.current = handoff;
+    void handoff.finally(() => {
+      if (reopenQueuedRef.current === handoff) reopenQueuedRef.current = null;
+      if (handoffRef.current === handoff) handoffRef.current = null;
+    });
+    return handoff;
+  }, [openCapture]);
+
+  /**
    * Claim the microphone for a review session. The audio session becomes
    * record-capable here and stays that way until the last holder releases it,
    * so no card pays for a category change.
    */
-  /** True while the session has been handed to playback for a prompt. */
-  const playbackPriorityRef = useRef(false);
-  /** Latched on the first failure to restore — see setPlaybackPriority. */
-  const playbackPriorityBrokenRef = useRef(false);
-  /** Serializes every playback/record handoff. A same-direction caller must also
-   * join the active transition: `playbackPriorityRef` describes the completed
-   * native state, not merely the most recently requested state. */
-  const handoffRef = useRef<Promise<void> | null>(null);
-
   const setPlaybackPriority = useCallback(
     async (playbackOnly: boolean): Promise<void> => {
       const previous = handoffRef.current;
@@ -334,7 +442,17 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
         // acquisition effect. Remember that playback already owns the session,
         // so the later acquisition does not turn recording on underneath it.
         if (holdersRef.current === 0) {
-          if (playbackOnly) playbackPriorityRef.current = true;
+          if (playbackOnly) {
+            playbackPriorityRef.current = true;
+            // Say it to the session too, not just to this ref. Remembering it
+            // only here is what made the FIRST card of a session inherit
+            // whatever shape the previous one left behind: a session left
+            // record-capable plays the prompt on the quiet `.measurement`
+            // route, and every card after it then takes the
+            // `playbackOnly === playbackPriorityRef.current` short-circuit
+            // below — so the whole session stayed silent, not just one card.
+            await simpleAudioService.setRecordingSessionEnabled(false);
+          }
           return;
         }
         // Never under a live window: closing the stream would discard the audio
@@ -353,7 +471,12 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
         markRestoreStart();
         try {
           await simpleAudioService.setRecordingSessionEnabled(true);
-          await openCapture();
+          // Settle any reopen deferred while the prompt was playing — see
+          // reopenOwedRef. Forcing it here costs the teardown/rebuild only on
+          // the cards where something actually broke the input.
+          const owed = reopenOwedRef.current;
+          reopenOwedRef.current = false;
+          await openCapture(owed);
           if (!capture.isOpen) {
             // One forced retry, then give up on the mechanism entirely rather
             // than leave the learner tapping a mic that will never open.
@@ -450,9 +573,18 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
       const cleanup = (async () => {
         await previous?.catch(() => undefined);
         await capture.close();
-        await simpleAudioService.setRecordingSessionEnabled(false);
+        // Forced: a review must never hand the app back a recording session.
+        // Without `force` this is an equality check, so it no-ops on exactly the
+        // exit that needs it most — one taken while playback held the session
+        // (the flag already reads false) after a reopen had reconfigured the
+        // session record-capable underneath it. That combination left the whole
+        // app, not just review, on `.playAndRecord` + `.measurement`, with
+        // nothing anywhere that would ever set the category or mode back.
+        await simpleAudioService.setRecordingSessionEnabled(false, { force: true });
         playbackPriorityRef.current = false;
         playbackPriorityBrokenRef.current = false;
+        // A debt owed to a session that no longer exists is not owed.
+        reopenOwedRef.current = false;
       })();
       handoffRef.current = cleanup;
       void cleanup.finally(() => {
@@ -469,10 +601,10 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
     capture.onStreamError(message => {
       voiceBreadcrumb('voice.recorder.error', { message }, 'warning');
       abortWindow('error', message);
-      void openCapture(true);
+      void reopenCapture();
     });
     return () => capture.onStreamError(null);
-  }, [abortWindow, capture, openCapture]);
+  }, [abortWindow, capture, reopenCapture]);
 
   // Interruptions (a call, Siri, another app taking the session) and route
   // changes (a headset arriving or leaving) both leave the input stream
@@ -490,7 +622,7 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
         abortWindow('error', 'interrupted');
         return;
       }
-      void openCapture(true);
+      void reopenCapture();
     });
     const routeChange = AudioManager.addSystemEventListener('routeChange', ({ reason }) => {
       diagMark('mic.routeChange', { reason });
@@ -498,14 +630,14 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
       // cosmetic and reopening would cost a card its microphone for nothing.
       if (reason !== 'NewDeviceAvailable' && reason !== 'OldDeviceUnavailable') return;
       abortWindow('error', `route:${reason}`);
-      void openCapture(true);
+      void reopenCapture();
     });
     return () => {
       interruption?.remove();
       routeChange?.remove();
       AudioManager.observeAudioInterruptions(false);
     };
-  }, [enabled, abortWindow, openCapture]);
+  }, [enabled, abortWindow, reopenCapture]);
 
   /**
    * Rebuild the input stream when the app comes back with a review still
@@ -525,6 +657,12 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
    * Cheap when it is not needed: `openCapture` returns immediately with no
    * holders, and joins an interruption-driven reopen when one is already in
    * flight rather than starting a second.
+   *
+   * Queued rather than fired directly (see reopenCapture). The review's own
+   * foreground listener replays the interrupted prompt in this same tick, and
+   * this rebuild deactivates and reconfigures the session those two lanes share
+   * — unordered, it is the reason the returned-to card came back silent even
+   * though the microphone recovered.
    */
   const wasBackgroundedRef = useRef(false);
   useEffect(() => {
@@ -538,10 +676,10 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
       wasBackgroundedRef.current = false;
       if (holdersRef.current === 0) return;
       diagMark('mic.session.foreground');
-      void openCapture(true);
+      void reopenCapture();
     });
     return () => subscription.remove();
-  }, [enabled, openCapture]);
+  }, [enabled, reopenCapture]);
 
   // Stop the mic when the user turns the setting off mid-session.
   useEffect(() => {
@@ -677,7 +815,17 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
               });
               // The stream is present but deaf. Reopening now means the retry
               // lands on a live microphone rather than the same dead one.
-              void openCapture(true);
+              //
+              // Through the QUEUE, not `openCapture(true)` directly. This is not
+              // arm()'s recovery rung — it fires from a window's finish callback,
+              // off the learner's tap and with no restore ahead of it to drain
+              // the chain — so a direct rebuild would deactivate and re-create
+              // the audio session in the middle of whatever handoff the next
+              // card's prompt had already started. That is the inaudible-prompt
+              // bug this queue exists to prevent, and it would be invisible:
+              // `play()` still reports success. Deferred behind a prompt, the
+              // debt is settled by the restore before the learner can tap.
+              void reopenCapture();
               resolve({ ok: false, reason: 'error', message: 'no audio from microphone' });
               return;
             }
@@ -735,7 +883,7 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
         armClaimRef.current = false;
       }
     },
-    [capture, isReady, micLevel, openCapture, setPlaybackPriority],
+    [capture, isReady, micLevel, openCapture, reopenCapture, setPlaybackPriority],
   );
 
   /**
@@ -795,6 +943,8 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
     }
   }, []);
 
+  const isMicStreamOpen = useCallback((): boolean => capture.isOpen, [capture]);
+
   const value = useMemo<VoiceGradingContextValue>(
     () => ({
       enabled,
@@ -810,6 +960,7 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
       prewarmPermission,
       acquireSession,
       setPlaybackPriority,
+      isMicStreamOpen,
     }),
     [
       enabled,
@@ -825,6 +976,7 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
       prewarmPermission,
       acquireSession,
       setPlaybackPriority,
+      isMicStreamOpen,
     ],
   );
 

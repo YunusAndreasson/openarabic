@@ -13,6 +13,8 @@
  * never disagree.
  */
 
+import { State } from 'ts-fsrs';
+
 import { OPTIMIZED_FSRS_CONFIG } from '@/constants/fsrs';
 import { STRINGS } from '@/constants/strings';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -29,21 +31,17 @@ import { hasBeenPractised, isMasteredWord } from '@/utils/wordClassification';
  */
 export type MemoryStage = 'new' | 'learning' | 'familiar' | 'mastered';
 
-/** ts-fsrs State: 0 New, 1 Learning, 2 Review, 3 Relearning. */
-const STATE_NEW = 0;
-const STATE_REVIEW = 2;
-
 const DAYS_PER_WEEK = 7;
 const DAYS_PER_MONTH = 30;
 const DAYS_PER_YEAR = 365;
 
 export function getMemoryStage(word: StudyWord): MemoryStage {
-  const state = word.fsrs_state ?? STATE_NEW;
-  if (state === STATE_NEW) return 'new';
+  const state = word.fsrs_state ?? State.New;
+  if (state === State.New) return 'new';
   // Learning (1) and Relearning (3) are the same thing to a learner: the word is
   // in short steps and hasn't graduated. Splitting them would surface an
   // implementation detail of the scheduler.
-  if (state !== STATE_REVIEW) return 'learning';
+  if (state !== State.Review) return 'learning';
   return isMasteredWord(word) ? 'mastered' : 'familiar';
 }
 

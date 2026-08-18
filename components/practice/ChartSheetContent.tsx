@@ -9,8 +9,6 @@ interface ChartSheetContentProps {
   title: string;
   subtitle: string;
   ChartComponent: ComponentType<{ studyWords: StudyWord[] }>;
-  filterWords?: (words: StudyWord[]) => StudyWord[];
-  queryLimit?: number;
 }
 
 /**
@@ -21,24 +19,18 @@ interface ChartSheetContentProps {
  * fits itself to them. Wrapping this in a `ScrollView` is what blanked these
  * sheets on iOS — see `SheetScreen`.
  */
-export function ChartSheetContent({
-  title,
-  subtitle,
-  ChartComponent,
-  filterWords,
-  queryLimit = 1000,
-}: ChartSheetContentProps) {
+export function ChartSheetContent({ title, subtitle, ChartComponent }: ChartSheetContentProps) {
   const { user } = useAuth();
 
-  const { allWords } = useFSRSQueries({
-    userId: user?.id,
-    limit: queryLimit,
-  });
+  // No `limit`. It reached only the DUE query, which nothing here reads, while
+  // `allWords` — the list these charts are drawn from — ignores it and pages
+  // through the whole table (getFSRSWords), precisely so a heavy account is not
+  // silently charted from PostgREST's implicit first 1000 rows. So the cap
+  // capped nothing and bought a third due-words cache entry, keyed on a limit no
+  // other caller uses, fetched on every chart sheet and thrown away.
+  const { allWords } = useFSRSQueries({ userId: user?.id });
 
-  const studyWords = useMemo(() => {
-    const words = allWords ?? [];
-    return filterWords ? filterWords(words) : words;
-  }, [allWords, filterWords]);
+  const studyWords = useMemo(() => allWords ?? [], [allWords]);
 
   return (
     <>

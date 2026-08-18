@@ -1,3 +1,5 @@
+import { State } from 'ts-fsrs';
+
 import {
   DEFAULT_SESSION_COOLDOWN_HOURS,
   DUE_BACKLOG_ADD_THRESHOLD,
@@ -5,6 +7,7 @@ import {
 } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { normalizeTimestamp } from '@/utils/dateTimeUtils';
+import { isDueAt } from '@/utils/wordClassification';
 
 /**
  * Retention-gated pacing for *new* words. The daily new-word limit the learner
@@ -150,17 +153,21 @@ export function filterDueWords(
   const cutoffMs = nowMs - cooldownHours * 60 * 60 * 1000;
 
   return allWords.filter(word => {
-    // New words (state 0) are always due for their first review.
-    if (word.fsrs_state === 0) return true;
+    // "Due" itself is `isDueAt` — new words always, otherwise fsrs_due <= now.
+    // Only the cooldown below is this function's own.
+    if (!isDueAt(word, nowMs)) return false;
 
-    const dueStr = normalizeTimestamp(word.fsrs_due);
-    const dueMs = dueStr ? Date.parse(dueStr) : Number.POSITIVE_INFINITY;
-    const isDue = Number.isFinite(dueMs) && dueMs <= nowMs;
-    if (!isDue) return false;
-
-    // Learning (1) and Relearning (3) are exempt from the cooldown — see the
-    // matching exemption and rationale in studyWordsFSRSService.getFSRSWords.
-    if (!applyCooldown || word.fsrs_state === 1 || word.fsrs_state === 3) return true;
+    // New words never had a session to cool down from, and Learning /
+    // Relearning are exempt by design — see the matching exemption and
+    // rationale in studyWordsFSRSService.getFSRSWords.
+    if (
+      !applyCooldown ||
+      word.fsrs_state === State.New ||
+      word.fsrs_state === State.Learning ||
+      word.fsrs_state === State.Relearning
+    ) {
+      return true;
+    }
 
     const lastStr = normalizeTimestamp(word.fsrs_last_review);
     const lastMs = lastStr ? Date.parse(lastStr) : 0;

@@ -1,10 +1,8 @@
 import { useCallback, useRef, useState } from 'react';
 
-import { RECALLED_CONFIDENCE } from '@/constants/fsrs';
+import { MASTERY_MIN_STABILITY, RECALLED_CONFIDENCE } from '@/constants/fsrs';
+import type { RootId } from '@/types/branded.types';
 import type { SessionMetrics, WordConfidence } from '@/types/review.types';
-
-// FSRS mastery threshold - words are considered "mastered" when stability >= 5 days
-const MASTERY_THRESHOLD = 5.0;
 
 function createSessionMetrics(startTime: number): SessionMetrics {
   return {
@@ -27,7 +25,7 @@ function createSessionMetrics(startTime: number): SessionMetrics {
  *
  * @example
  * const { metrics, updateMetrics, resetMetrics } = useSessionMetrics();
- * updateMetrics('known', { rootId: 123, oldStability: 4.5, newStability: 6.2 });
+ * updateMetrics('known', { rootId, oldStability: 4.5, newStability: 6.2 });
  * console.log(metrics.wordsKnown, metrics.currentStreak);
  */
 export const useSessionMetrics = () => {
@@ -36,7 +34,7 @@ export const useSessionMetrics = () => {
   const metricsRef = useRef<SessionMetrics>(createSessionMetrics(sessionStart));
 
   // Track unique words reviewed in this session
-  const reviewedWordsSet = useRef<Set<number>>(new Set());
+  const reviewedWordsSet = useRef<Set<RootId>>(new Set());
 
   /**
    * Update metrics based on user confidence response
@@ -46,7 +44,7 @@ export const useSessionMetrics = () => {
   const updateMetrics = useCallback(
     (
       confidence: WordConfidence,
-      wordData?: { rootId: number; oldStability?: number; newStability?: number },
+      wordData?: { rootId: RootId; oldStability?: number; newStability?: number },
     ) => {
       const metrics = metricsRef.current;
       // "Knew it" and "Guessed" both count as a recall (Guessed is a Hard PASS);
@@ -86,12 +84,14 @@ export const useSessionMetrics = () => {
       const oldStability = wordData?.oldStability;
       const newStability = wordData?.newStability;
 
-      // Check if word became mastered during THIS session.
-      // Count if: (1) recalled (Knew it / Guessed — a Hard pass can cross 5.0),
-      // (2) old < 5.0, (3) new >= 5.0
+      // Did the word become mastered during THIS session? Counted when it was
+      // recalled (Knew it / Guessed — a Hard pass can cross the bar) and its
+      // stability crossed MASTERY_MIN_STABILITY, the same bar `isMasteredWord`
+      // uses everywhere else. This used to hold a private copy of that number,
+      // so the congratulation and the badge could disagree about one word.
       if (recalled && oldStability !== undefined && newStability !== undefined) {
-        const wasNotMastered = oldStability < MASTERY_THRESHOLD;
-        const isNowMastered = newStability >= MASTERY_THRESHOLD;
+        const wasNotMastered = oldStability < MASTERY_MIN_STABILITY;
+        const isNowMastered = newStability >= MASTERY_MIN_STABILITY;
 
         if (wasNotMastered && isNowMastered) {
           metrics.masteredWords++;

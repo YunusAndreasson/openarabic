@@ -1,3 +1,6 @@
+import { State } from 'ts-fsrs';
+
+import { MASTERY_MIN_STABILITY } from '@/constants/fsrs';
 import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
 import type { RootId } from '@/types/branded.types';
@@ -8,6 +11,14 @@ import { createBulkFSRSEntries, createInitialFSRSEntry } from '@/utils/fsrsIniti
 import { createServiceErrorConfig } from '@/utils/serviceErrorConfig';
 import { executeAuthenticatedQuery, executeQuery } from '@/utils/supabaseHelpers';
 import { mapToStudyWord } from '@/utils/typeMappers';
+
+/**
+ * States exempt from the post-session cooldown: New (never asked) plus both
+ * short-step states, whose whole purpose is to come back within minutes. Named
+ * because the same exemption is re-applied client-side in `filterDueWords`, and
+ * two hand-written `(0,1,3)` lists is how the two sides drift apart.
+ */
+const COOLDOWN_EXEMPT_STATES = [State.New, State.Learning, State.Relearning] as const;
 
 const errorConfig = {
   load: createServiceErrorConfig('study_words_fsrs', 'load', {
@@ -66,7 +77,15 @@ export const studyWordsFSRSService = {
       // Define the selection based on options
       let selectQuery;
       if (options.forStats) {
-        // For stats, we only need core fields, not all the relationships
+        // For stats, we only need core fields, not all the relationships.
+        //
+        // Spelled out, like the branch below — supabase-js parses a select
+        // string as a TEMPLATE LITERAL TYPE against the generated schema, so
+        // this list is checked, and the row it produces is what has to satisfy
+        // `StudyWordQueryRow` at `mapToStudyWord`. Add an `fsrs_*` column to the
+        // table and that call stops compiling until this list names it. Build
+        // the string at runtime (`COLUMNS.join(',')`) and it widens to `string`,
+        // which the parser rejects and which throws that check away.
         selectQuery = query.select(
           `
           fsrs_due,
@@ -83,6 +102,12 @@ export const studyWordsFSRSService = {
         );
       } else {
         // Get full data with relationships - root is the only relation we need
+        // Spelled out as a literal, deliberately: supabase-js parses this
+        // string as a TEMPLATE LITERAL TYPE against the generated schema, so a
+        // renamed or misspelled column fails to compile here and the row type
+        // flows through typed. Building it at runtime (`COLUMNS.join(',')`)
+        // widens it to `string`, which the parser rejects outright — this is
+        // already the most strongly checked part of the query.
         const columns = `
           root_id,
           user_id,
@@ -113,15 +138,15 @@ export const studyWordsFSRSService = {
         const now = new Date().toISOString();
         // Include both:
         // 1. Words with due date <= now
-        // 2. New words (state 0) which are always due for their first review
-        filteredQuery = filteredQuery.or(`fsrs_due.lte.${now},fsrs_state.eq.0`);
+        // 2. New words, which are always due for their first review
+        filteredQuery = filteredQuery.or(`fsrs_due.lte.${now},fsrs_state.eq.${State.New}`);
       }
 
       // Session cooldown: after finishing a session, don't immediately re-serve
       // the words that session covered.
       //
-      // It applies ONLY to Review-state words (2). Learning (1) and Relearning (3)
-      // are exempt, and that exemption is the whole point: those are the words the
+      // It applies ONLY to Review-state words. Learning and Relearning are
+      // exempt, and that exemption is the whole point: those are the words the
       // learner has NOT got right yet, and FSRS deliberately schedules them minutes
       // out (learning_steps 1m/10m, relearning_steps 5m/10m). Cooling them by
       // `fsrs_last_review` hid exactly the words that most needed practising —
@@ -136,18 +161,25 @@ export const studyWordsFSRSService = {
       if (options.sessionCooldownHours && options.sessionCooldownHours > 0) {
         const cooldownTime = new Date(Date.now() - options.sessionCooldownHours * 60 * 60 * 1000);
         filteredQuery = filteredQuery.or(
-          `fsrs_state.in.(0,1,3),fsrs_last_review.is.null,fsrs_last_review.lt.${cooldownTime.toISOString()}`,
+          `fsrs_state.in.(${COOLDOWN_EXEMPT_STATES.join(',')}),` +
+            `fsrs_last_review.is.null,fsrs_last_review.lt.${cooldownTime.toISOString()}`,
         );
       }
 
-      // Apply category filters server-side to reduce payload
+      // Apply category filters server-side to reduce payload. The two branches
+      // are exact complements of `isMasteredWord`, expressed in PostgREST —
+      // they share its constants so the boundary cannot land in two places and
+      // strand a word in neither category.
       if (options.category === 'mastered') {
-        filteredQuery = filteredQuery.eq('fsrs_state', 2).gte('fsrs_stability', 5);
+        filteredQuery = filteredQuery
+          .eq('fsrs_state', State.Review)
+          .gte('fsrs_stability', MASTERY_MIN_STABILITY);
       } else if (options.category === 'learning') {
-        // State 0 (New) words are due for first review, not learning
-        // Only states 1, 3, or state 2 with low stability are learning
+        // New words are due for their first review, not learning. Only the short
+        // steps, or a graduated word that has not held long enough yet.
         filteredQuery = filteredQuery.or(
-          'fsrs_state.in.(1,3),and(fsrs_state.eq.2,fsrs_stability.lt.5)',
+          `fsrs_state.in.(${State.Learning},${State.Relearning}),` +
+            `and(fsrs_state.eq.${State.Review},fsrs_stability.lt.${MASTERY_MIN_STABILITY})`,
         );
       }
 

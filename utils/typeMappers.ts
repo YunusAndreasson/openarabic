@@ -7,6 +7,7 @@ import type {
 } from '@/types/articles.types';
 import type { ArticleId, AuthorId, CategoryId, RootId, UserId } from '@/types/branded.types';
 import type { Tables } from '@/types/database.types';
+import type { FSRSColumn } from '@/types/fsrs.types';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
 
 /**
@@ -18,23 +19,14 @@ export interface StudyWordRow extends Tables<'study_words'> {
 }
 
 /**
- * Minimum required fields from study word query
- * Stats queries don't include user_id but always include these core fields
+ * Minimum required fields from a study-word query.
+ *
+ * Stats queries omit `user_id` but always carry the identity, the audit stamp
+ * and every scheduler column — the last of which comes from FSRSColumn rather
+ * than a second hand-written list, so adding a column to the table cannot
+ * leave the mapper reading a field the query never selected.
  */
-export type StudyWordQueryRow = Pick<
-  StudyWordRow,
-  | 'root_id'
-  | 'fsrs_due'
-  | 'fsrs_stability'
-  | 'fsrs_difficulty'
-  | 'fsrs_scheduled_days'
-  | 'fsrs_reps'
-  | 'fsrs_learning_steps'
-  | 'fsrs_lapses'
-  | 'fsrs_state'
-  | 'fsrs_last_review'
-  | 'created_at'
-> & {
+export type StudyWordQueryRow = Pick<StudyWordRow, FSRSColumn | 'root_id' | 'created_at'> & {
   user_id?: string;
   root?: Tables<'roots'> | null;
 };
@@ -94,20 +86,16 @@ export function mapToArticles(items: ArticleRow[]): Article[] {
  * @param fallbackUserId - User ID to use when row doesn't include user_id (stats queries)
  */
 export function mapToStudyWord(row: StudyWordQueryRow, fallbackUserId: string): StudyWord {
+  // Spread rather than re-list every scheduler column by hand: this was the
+  // third copy of that list, and the one that silently dropped a field if it
+  // fell out of step — a mapped row missing `fsrs_lapses` still satisfied
+  // nothing and reached the scheduler as undefined. Only the fields that are
+  // actually TRANSFORMED are named below.
   return {
+    ...row,
     root_id: row.root_id as RootId,
     // Use fallback for stats queries that don't include user_id
     user_id: (row.user_id ?? fallbackUserId) as UserId,
-    fsrs_due: row.fsrs_due,
-    fsrs_stability: row.fsrs_stability,
-    fsrs_difficulty: row.fsrs_difficulty,
-    fsrs_scheduled_days: row.fsrs_scheduled_days,
-    fsrs_reps: row.fsrs_reps,
-    fsrs_learning_steps: row.fsrs_learning_steps,
-    fsrs_lapses: row.fsrs_lapses,
-    fsrs_state: row.fsrs_state,
-    fsrs_last_review: row.fsrs_last_review,
-    created_at: row.created_at,
     root: row.root ?? undefined,
   };
 }

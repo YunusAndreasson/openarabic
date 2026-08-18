@@ -681,7 +681,7 @@ export function computeColoredSegments(
   const segments = formatted.reconstructedArabic.segments.map(segment => ({
     text: segment.text,
     color: resolveColorName(segment.colorName, colors),
-    type: segment.type as ColoredSegment['type'],
+    type: segment.type,
   }));
 
   // Skip coloring when the word is a single colored segment with no breakdown.

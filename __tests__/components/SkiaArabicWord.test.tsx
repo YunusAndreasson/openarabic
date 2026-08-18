@@ -19,12 +19,12 @@
  */
 
 import { fireEvent, render } from '@testing-library/react-native';
-import type { ComponentRef } from 'react';
-import React, { createRef } from 'react';
-import { Pressable } from 'react-native';
+import React from 'react';
 
 import { SkiaArabicWord } from '@/components/article/SkiaArabicWord';
 import type { SentenceWord } from '@/types/vocabulary.types';
+
+import { measuring, type MeasureCallback } from '../helpers/testUtils';
 
 // Use shared mock factory from componentMocks.tsx
 jest.mock('@/hooks/theme/useColors', () =>
@@ -213,46 +213,51 @@ describe('SkiaArabicWord Component', () => {
       expect(() => fireEvent.press(wordElement)).not.toThrow();
     });
 
-    test('does not call tooltip when ref is not provided', () => {
+    test('opens the tooltip on the measured frame', () => {
       const word = createMockWord();
       const onTooltipOpen = jest.fn();
 
       const { getByTestId } = render(
         <SkiaArabicWord word={word} onTooltipOpen={onTooltipOpen} testID="word" />,
+        measuring((cb: MeasureCallback) => cb(12, 34, 56, 20)),
       );
 
-      const wordElement = getByTestId('word');
-      fireEvent.press(wordElement);
+      fireEvent.press(getByTestId('word'));
 
-      // Should not call tooltip without ref
-      expect(onTooltipOpen).not.toHaveBeenCalled();
+      expect(onTooltipOpen).toHaveBeenCalledWith(word, { x: 12, y: 34, width: 56, height: 20 });
     });
 
     test('handles measurement errors gracefully', () => {
       const word = createMockWord();
       const onTooltipOpen = jest.fn();
-      const wordRef = createRef<ComponentRef<typeof Pressable>>();
 
       const { getByTestId } = render(
-        <SkiaArabicWord
-          word={word}
-          onTooltipOpen={onTooltipOpen}
-          wordRef={wordRef}
-          testID="word"
-        />,
-      );
-
-      // Mock measureInWindow to throw error
-      if (wordRef.current) {
-        wordRef.current.measureInWindow = jest.fn(() => {
+        <SkiaArabicWord word={word} onTooltipOpen={onTooltipOpen} testID="word" />,
+        measuring(() => {
           throw new Error('Measurement failed');
-        });
-      }
+        }),
+      );
 
       const wordElement = getByTestId('word');
 
       // Should not crash on measurement error
       expect(() => fireEvent.press(wordElement)).not.toThrow();
+      expect(onTooltipOpen).not.toHaveBeenCalled();
+    });
+
+    test('ignores a measurement that came back with no frame', () => {
+      const word = createMockWord();
+      const onTooltipOpen = jest.fn();
+
+      const { getByTestId } = render(
+        <SkiaArabicWord word={word} onTooltipOpen={onTooltipOpen} testID="word" />,
+        // A word that has scrolled out of the window measures as a zero box —
+        // anchoring a tooltip to it would put it in the corner of the screen.
+        measuring((cb: MeasureCallback) => cb(undefined, undefined, 0, 0)),
+      );
+
+      fireEvent.press(getByTestId('word'));
+
       expect(onTooltipOpen).not.toHaveBeenCalled();
     });
   });

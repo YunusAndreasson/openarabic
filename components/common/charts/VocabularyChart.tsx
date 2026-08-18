@@ -1,5 +1,5 @@
-import { CHART_OPACITY, getChartColors } from '@/constants/chartColors';
 import { CHART_VISUAL, GRAPH_HEIGHT_LARGE } from '@/constants/chartConstants';
+import { getChartColors } from '@/constants/chartColors';
 
 import { BaseChart } from './BaseChart';
 import { ChartAreaFill } from './ChartAreaFill';
@@ -8,16 +8,12 @@ import { ChartCanvas, type DataPoint } from './ChartCanvas';
 import { ChartDataPoint } from './ChartDataPoint';
 import { ChartGrid } from './ChartGrid';
 import { ChartMainLine } from './ChartMainLine';
-import { ChartPerformanceZones } from './ChartPerformanceZones';
-import { ChartReferenceLine } from './ChartReferenceLine';
 import { Group } from '@shopify/react-native-skia';
 import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
-import type { PerformanceZone } from '@/types/ui/chart.types';
-import { generateDataPointKeys, generateMilestoneKeys, type ChartPoint } from '@/utils/chartUtils';
+import { generateDataPointKeys, type ChartPoint } from '@/utils/chartUtils';
 
 // Extract constants outside component for better performance
 const DEFAULT_Y_MAX = 100;
@@ -28,8 +24,6 @@ interface VocabularyChartProps<T> {
   // Chart data
   path: string;
   dataPoints: ChartPoint[];
-  performanceZones?: PerformanceZone[];
-  milestones?: ChartPoint[];
 
   // Tooltip data
   tooltipDataPoints: DataPoint<T>[];
@@ -42,13 +36,10 @@ interface VocabularyChartProps<T> {
   graphWidth: number;
   yLabelFormatter?: (value: number) => string;
   isFuturePrediction?: boolean; // Whether this chart shows future predictions (today = index 0)
-  referenceLine?: number; // Optional reference line percentage (e.g., 75 for 75% target)
-  showAreaFill?: boolean; // Whether to show sage gradient area fill (default: true)
 
   // BaseChart props
   title: string;
   subtitle: string;
-  onCardPress?: () => void;
   hideTitle?: boolean;
   hasData: boolean;
   emptyStateText: string;
@@ -70,10 +61,7 @@ const VocabularyChartComparison = <T,>(
     prevProps.emptyStateText !== nextProps.emptyStateText ||
     prevProps.yMax !== nextProps.yMax ||
     prevProps.topPadding !== nextProps.topPadding ||
-    prevProps.graphWidth !== nextProps.graphWidth ||
-    prevProps.onCardPress !== nextProps.onCardPress ||
-    prevProps.referenceLine !== nextProps.referenceLine ||
-    prevProps.showAreaFill !== nextProps.showAreaFill
+    prevProps.graphWidth !== nextProps.graphWidth
   ) {
     return false;
   }
@@ -81,11 +69,17 @@ const VocabularyChartComparison = <T,>(
   // Shallow array reference comparisons - much faster than deep comparisons
   if (
     prevProps.dataPoints !== nextProps.dataPoints ||
-    prevProps.performanceZones !== nextProps.performanceZones ||
-    prevProps.milestones !== nextProps.milestones ||
     prevProps.tooltipDataPoints !== nextProps.tooltipDataPoints ||
     prevProps.xLabels !== nextProps.xLabels ||
-    prevProps.xLabelPositions !== nextProps.xLabelPositions
+    prevProps.xLabelPositions !== nextProps.xLabelPositions ||
+    // Every remaining prop, because a hand-written comparator that omits one
+    // does not merely miss an optimisation — it silently refuses the update.
+    // `bottomSummary` is the live case: its useMemo tracks the insights, so a
+    // changed "Today: N" would have been held back on any render where the
+    // path and the tooltip points happened to keep their references.
+    prevProps.bottomSummary !== nextProps.bottomSummary ||
+    prevProps.isFuturePrediction !== nextProps.isFuturePrediction ||
+    prevProps.yLabelFormatter !== nextProps.yLabelFormatter
   ) {
     return false;
   }
@@ -104,23 +98,19 @@ const styles = StyleSheet.create({
 });
 
 /**
- * Unified vocabulary chart component that eliminates duplication
- * across MasteryChart, EfficiencyChart, and RetrievabilityChart
+ * A line chart over a short forecast window: grid, area fill, smoothed line,
+ * emphasised "today" point, axes, and an interactive tooltip layer.
  *
- * Optimized with:
- * - React.memo with shallow comparison function
- * - Static style objects
- * - Memoized chart data calculations
- * - Optimized Skia rendering with stable references
+ * It once carried optional coloured performance zones, milestone markers, a
+ * reference line and an area-fill switch, for the three charts it was extracted
+ * from. Those charts are gone — `DueWordsPrognosisChart` is the only caller
+ * left, and it passed none of them, so every one of those branches was dead
+ * weight that still had to be read to understand the render path.
  */
-// Generic component accepts different types for tooltipDataPoints (e.g., MasteryRecord, EfficiencyData)
-// Using 'unknown' for type safety while maintaining generic flexibility
 export const VocabularyChart = memo<VocabularyChartProps<unknown>>(
   ({
     path,
     dataPoints,
-    performanceZones = [],
-    milestones = [],
     tooltipDataPoints,
     xLabels,
     xLabelPositions,
@@ -129,11 +119,8 @@ export const VocabularyChart = memo<VocabularyChartProps<unknown>>(
     graphWidth,
     yLabelFormatter,
     isFuturePrediction = false,
-    referenceLine,
-    showAreaFill = true,
     title,
     subtitle,
-    onCardPress,
     hideTitle = false,
     hasData,
     emptyStateText,
@@ -141,33 +128,17 @@ export const VocabularyChart = memo<VocabularyChartProps<unknown>>(
   }: VocabularyChartProps<unknown>) => {
     // Get colors outside Canvas (Context available here)
     const colors = useColors();
-    const isDarkMode = useIsDarkMode();
     const chartColors = useMemo(() => getChartColors(colors), [colors]);
-    const zoneOpacity = isDarkMode ? CHART_OPACITY.ZONE_DARK : CHART_OPACITY.ZONE;
 
     // Emphasized point: today — index 0 on forecasts, last index on history
     const emphasisIndex = isFuturePrediction ? 0 : dataPoints.length - 1;
 
-    // Memoized chart data calculations for better performance
-    const contentHeight = useMemo(
-      () => GRAPH_HEIGHT_LARGE + CHART_VISUAL.CHART_BOTTOM_PADDING + CONTENT_HEIGHT_OFFSET,
-      [],
-    );
+    const contentHeight = GRAPH_HEIGHT_LARGE + CHART_VISUAL.CHART_BOTTOM_PADDING;
 
-    const chartData = useMemo(
-      () => ({
-        hasChartData: path && dataPoints.length > 0,
-        hasPerformanceZones: path && dataPoints.length > 0 && performanceZones.length > 0,
-        hasMilestones: milestones.length > 0,
-      }),
-      [path, dataPoints.length, performanceZones.length, milestones.length],
-    );
+    const hasChartData = Boolean(path) && dataPoints.length > 0;
 
     // Memoized data point keys for stable rendering
     const dataPointKeys = useMemo(() => generateDataPointKeys(dataPoints), [dataPoints]);
-
-    // Memoized milestone keys for stable rendering
-    const milestoneKeys = useMemo(() => generateMilestoneKeys(milestones), [milestones]);
 
     // Memoized chart components for better Skia rendering performance
     const chartComponents = useMemo(() => {
@@ -177,7 +148,7 @@ export const VocabularyChart = memo<VocabularyChartProps<unknown>>(
       components.push(
         <ChartGrid
           key="chart-grid"
-          height={GRAPH_HEIGHT_LARGE + CHART_VISUAL.CHART_BOTTOM_PADDING}
+          height={contentHeight}
           topPadding={topPadding}
           width={graphWidth}
           yMax={yMax}
@@ -185,23 +156,8 @@ export const VocabularyChart = memo<VocabularyChartProps<unknown>>(
         />,
       );
 
-      // Reference line (e.g., 75% target) - after grid, before area fill
-      if (referenceLine !== undefined) {
-        components.push(
-          <ChartReferenceLine
-            key="reference-line"
-            percentage={referenceLine}
-            graphWidth={graphWidth}
-            chartHeight={GRAPH_HEIGHT_LARGE + CHART_VISUAL.CHART_BOTTOM_PADDING}
-            topPadding={topPadding}
-            yMax={yMax}
-            chartColors={chartColors}
-          />,
-        );
-      }
-
-      // Area fill under the line - extends to full chart width (optional, controlled by showAreaFill)
-      if (chartData.hasChartData && showAreaFill) {
+      // Area fill under the line - extends to full chart width
+      if (hasChartData) {
         components.push(
           <Group key="area-fill">
             <ChartAreaFill path={path} graphWidth={graphWidth} chartColors={chartColors} />
@@ -209,23 +165,8 @@ export const VocabularyChart = memo<VocabularyChartProps<unknown>>(
         );
       }
 
-      // Performance zones - extend to full chart width
-      if (chartData.hasPerformanceZones) {
-        components.push(
-          <Group key="performance-zones">
-            <ChartPerformanceZones
-              zones={performanceZones}
-              maskPath={path}
-              graphWidth={graphWidth}
-              colors={colors}
-              zoneOpacity={zoneOpacity}
-            />
-          </Group>,
-        );
-      }
-
       // Main line and data points
-      if (chartData.hasChartData) {
+      if (hasChartData) {
         components.push(
           <Group key="main-line-data-points">
             <ChartMainLine path={path} chartColors={chartColors} />
@@ -244,41 +185,17 @@ export const VocabularyChart = memo<VocabularyChartProps<unknown>>(
         );
       }
 
-      // Milestone indicators
-      if (chartData.hasMilestones) {
-        components.push(
-          <Group key="milestones">
-            {milestones.map((milestone: ChartPoint, index: number) => (
-              <ChartDataPoint
-                key={milestoneKeys[index]}
-                x={milestone.x}
-                y={milestone.y}
-                uniqueKey={milestoneKeys[index]}
-                chartColors={chartColors}
-                index={index}
-              />
-            ))}
-          </Group>,
-        );
-      }
-
       return components;
     }, [
-      chartData,
+      hasChartData,
       path,
       graphWidth,
       topPadding,
       yMax,
-      referenceLine,
-      performanceZones,
+      contentHeight,
       dataPoints,
       dataPointKeys,
-      milestones,
-      milestoneKeys,
       chartColors,
-      colors,
-      showAreaFill,
-      zoneOpacity,
       emphasisIndex,
     ]);
 
@@ -286,7 +203,7 @@ export const VocabularyChart = memo<VocabularyChartProps<unknown>>(
     const axesComponent = useMemo(
       () => (
         <ChartAxes
-          height={GRAPH_HEIGHT_LARGE + CHART_VISUAL.CHART_BOTTOM_PADDING}
+          height={contentHeight}
           showYAxis={true}
           topPadding={topPadding}
           width={graphWidth}
@@ -297,18 +214,26 @@ export const VocabularyChart = memo<VocabularyChartProps<unknown>>(
           isFuturePrediction={isFuturePrediction}
         />
       ),
-      [topPadding, graphWidth, xLabelPositions, yMax, xLabels, yLabelFormatter, isFuturePrediction],
+      [
+        contentHeight,
+        topPadding,
+        graphWidth,
+        xLabelPositions,
+        yMax,
+        xLabels,
+        yLabelFormatter,
+        isFuturePrediction,
+      ],
     );
 
     return (
       <BaseChart
-        contentHeight={contentHeight}
+        contentHeight={contentHeight + CONTENT_HEIGHT_OFFSET}
         emptyStateText={emptyStateText}
         hasData={hasData}
         hideTitle={hideTitle}
         subtitle={subtitle}
         title={title}
-        onCardPress={onCardPress}
         bottomSummary={bottomSummary}
       >
         <View style={styles.container}>

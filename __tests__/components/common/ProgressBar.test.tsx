@@ -26,30 +26,59 @@ jest.mock('@/hooks/theme/useColors', () =>
   }),
 );
 
+/**
+ * `StyleSheet.flatten` is the identity function under this jest setup, so a
+ * rendered `style` prop is the raw array the component passed. These helpers
+ * merge it so a test can assert on the resolved value instead of settling for
+ * `toBeTruthy()` — which is what every case here used to do, leaving the
+ * clamping and invalid-input handling below completely unverified.
+ */
+type RenderedNode = { props: { style?: unknown }; children?: unknown } | null;
+
+const mergeStyle = (style: unknown): Record<string, unknown> =>
+  (Array.isArray(style) ? style : [style])
+    .flat(Infinity)
+    .filter(
+      (entry): entry is Record<string, unknown> => Boolean(entry) && typeof entry === 'object',
+    )
+    .reduce<Record<string, unknown>>((acc, entry) => ({ ...acc, ...entry }), {});
+
+/** Resolved style of the outer track. */
+const trackStyle = (json: RenderedNode): Record<string, unknown> => mergeStyle(json?.props.style);
+
+/** Resolved style of the inner fill, whose `width` percentage IS the progress. */
+const fillStyle = (json: RenderedNode): Record<string, unknown> => {
+  const fill = (json as { children?: RenderedNode[] } | null)?.children?.[0];
+  return mergeStyle(fill?.props.style);
+};
+
 describe('ProgressBar', () => {
   describe('Rendering', () => {
     test('renders with default props', () => {
       const { toJSON } = render(<ProgressBar progress={50} />);
 
-      expect(toJSON()).toBeTruthy();
+      expect(fillStyle(toJSON() as RenderedNode).width).toBe('50%');
     });
 
     test('renders with zero progress', () => {
       const { toJSON } = render(<ProgressBar progress={0} />);
 
-      expect(toJSON()).toBeTruthy();
+      expect(fillStyle(toJSON() as RenderedNode).width).toBe('0%');
     });
 
     test('renders with full progress', () => {
       const { toJSON } = render(<ProgressBar progress={100} />);
 
-      expect(toJSON()).toBeTruthy();
+      expect(fillStyle(toJSON() as RenderedNode).width).toBe('100%');
     });
 
-    test('renders with custom height', () => {
+    test('custom height also sets the pill radius to half of it', () => {
       const { toJSON } = render(<ProgressBar progress={50} height={20} />);
 
-      expect(toJSON()).toBeTruthy();
+      expect(trackStyle(toJSON() as RenderedNode)).toMatchObject({
+        height: 20,
+        borderRadius: 10,
+      });
     });
   });
 
@@ -57,72 +86,69 @@ describe('ProgressBar', () => {
     test('clamps progress above 100 to 100', () => {
       const { toJSON } = render(<ProgressBar progress={150} />);
 
-      // Should render without crashing
-      expect(toJSON()).toBeTruthy();
+      expect(fillStyle(toJSON() as RenderedNode).width).toBe('100%');
     });
 
     test('clamps negative progress to 0', () => {
       const { toJSON } = render(<ProgressBar progress={-50} />);
 
-      // Should render without crashing
-      expect(toJSON()).toBeTruthy();
+      expect(fillStyle(toJSON() as RenderedNode).width).toBe('0%');
     });
   });
 
   describe('Invalid Input Handling', () => {
-    test('handles NaN progress', () => {
-      const { toJSON } = render(<ProgressBar progress={NaN} />);
+    test.each([
+      ['NaN', NaN],
+      ['Infinity', Infinity],
+      ['negative Infinity', -Infinity],
+    ])('renders %s as 0%% rather than an invalid width', (_label, value) => {
+      const { toJSON } = render(<ProgressBar progress={value} />);
 
-      // Should render without crashing
-      expect(toJSON()).toBeTruthy();
-    });
-
-    test('handles Infinity progress', () => {
-      const { toJSON } = render(<ProgressBar progress={Infinity} />);
-
-      // Should render without crashing
-      expect(toJSON()).toBeTruthy();
-    });
-
-    test('handles negative Infinity progress', () => {
-      const { toJSON } = render(<ProgressBar progress={-Infinity} />);
-
-      // Should render without crashing
-      expect(toJSON()).toBeTruthy();
+      expect(fillStyle(toJSON() as RenderedNode).width).toBe('0%');
     });
   });
 
   describe('Custom Styling', () => {
-    test('accepts custom style prop', () => {
+    test('custom style prop reaches the track', () => {
       const { toJSON } = render(<ProgressBar progress={50} style={{ marginTop: 10 }} />);
 
-      expect(toJSON()).toBeTruthy();
+      expect(trackStyle(toJSON() as RenderedNode).marginTop).toBe(10);
     });
 
-    test('accepts custom fillStyle prop', () => {
+    test('custom fillStyle prop reaches the fill', () => {
       const { toJSON } = render(<ProgressBar progress={50} fillStyle={{ opacity: 0.8 }} />);
 
-      expect(toJSON()).toBeTruthy();
+      expect(fillStyle(toJSON() as RenderedNode).opacity).toBe(0.8);
     });
 
-    test('accepts custom backgroundColor', () => {
+    test('custom backgroundColor overrides the theme track colour', () => {
       const { toJSON } = render(<ProgressBar progress={50} backgroundColor="#FF0000" />);
 
-      expect(toJSON()).toBeTruthy();
+      expect(trackStyle(toJSON() as RenderedNode).backgroundColor).toBe('#FF0000');
     });
 
-    test('accepts custom fillColor', () => {
+    test('custom fillColor overrides the theme indicator colour', () => {
       const { toJSON } = render(<ProgressBar progress={50} fillColor="#00FF00" />);
 
-      expect(toJSON()).toBeTruthy();
+      expect(fillStyle(toJSON() as RenderedNode).backgroundColor).toBe('#00FF00');
+    });
+
+    test('falls back to theme colours when none are passed', () => {
+      const { toJSON } = render(<ProgressBar progress={50} />);
+
+      expect(trackStyle(toJSON() as RenderedNode).backgroundColor).toBe('#E0E0E0');
+      expect(fillStyle(toJSON() as RenderedNode).backgroundColor).toBe('#4CAF50');
     });
   });
 
   describe('Animation', () => {
-    test('accepts custom animationDuration', () => {
+    test('custom animationDuration drives the width transition', () => {
       const { toJSON } = render(<ProgressBar progress={50} animationDuration={500} />);
 
-      expect(toJSON()).toBeTruthy();
+      expect(fillStyle(toJSON() as RenderedNode)).toMatchObject({
+        transitionProperty: 'width',
+        transitionDuration: '500ms',
+      });
     });
   });
 

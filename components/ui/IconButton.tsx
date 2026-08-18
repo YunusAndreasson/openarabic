@@ -1,6 +1,5 @@
 import { Ionicons, type IoniconName } from '@/components/ui/Icon';
 import type { FC } from 'react';
-import type { TextStyle } from 'react-native';
 import { Pressable } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -66,11 +65,6 @@ interface IconButtonProps {
   hapticType?: HapticType;
 
   /**
-   * Additional icon style offset (e.g., for play icon alignment)
-   */
-  iconStyle?: TextStyle;
-
-  /**
    * What the button does, for screen readers. An icon-only control has no
    * text to fall back on, so pass this wherever the icon isn't self-evident.
    */
@@ -92,7 +86,6 @@ export const IconButton: FC<IconButtonProps> = ({
   iconSize,
   tone = 'default',
   hapticType = 'selection',
-  iconStyle,
   accessibilityLabel,
 }) => {
   const colors = useColors();
@@ -142,12 +135,7 @@ export const IconButton: FC<IconButtonProps> = ({
           },
         ]}
       >
-        <Ionicons
-          color={resolvedIconColor}
-          name={icon}
-          size={iconSize ?? config.iconSize}
-          style={iconStyle}
-        />
+        <Ionicons color={resolvedIconColor} name={icon} size={iconSize ?? config.iconSize} />
       </Animated.View>
     </Pressable>
   );

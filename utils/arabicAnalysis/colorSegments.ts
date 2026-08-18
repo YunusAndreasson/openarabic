@@ -7,6 +7,7 @@ import {
   ComponentType,
   GRAMMATICAL_ROLE_COLORS,
 } from '@/constants/arabicWordComponents';
+import type { ArabicSegmentType } from '@/types/vocabulary.types';
 
 import { DIACRITIC_REGEX } from './constants';
 import { normalizeArabic } from './normalization';
@@ -136,7 +137,7 @@ function getDiacriticColorName(
 interface Segment {
   text: string;
   colorName: string;
-  type: string;
+  type: ArabicSegmentType;
 }
 
 /**
@@ -178,7 +179,7 @@ function addInfixToSegments(
 function splitWithDiacritic(
   text: string,
   mainColorName: string,
-  mainType: string,
+  mainType: ArabicSegmentType,
   analysis: WordAnalysis,
   usedColors?: Set<string>,
 ): Segment[] {
@@ -202,7 +203,7 @@ function splitWithDiacritic(
  * Optimized reconstruction for coloring with infix and diacritic support
  */
 function reconstructWithColors(analysis: WordAnalysis) {
-  const segments: { text: string; colorName: string; type: string }[] = [];
+  const segments: Segment[] = [];
   const { arabic } = analysis.original;
   let processed = 0;
 

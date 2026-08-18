@@ -1,6 +1,7 @@
 import { Rating } from 'ts-fsrs';
 import type { Grade, StepUnit } from 'ts-fsrs';
 
+import { WORD_CONFIDENCES } from '@/types/review.types';
 import type { WordConfidence } from '@/types/review.types';
 
 const DEFAULT_LEARNING_STEPS: StepUnit[] = ['1m', '10m'];
@@ -18,6 +19,19 @@ export const CRITICAL_RETRIEVABILITY_THRESHOLD = 0.7;
 
 // Word classification thresholds
 export const UNSTABLE_DIFFICULTY_THRESHOLD = 7.5;
+
+/**
+ * Stability (in days) at which a word counts as "mastered", paired with
+ * ts-fsrs state Review — see `isMasteredWord`, the predicate that owns the rule.
+ *
+ * Named because the bare `5` had four independent homes: the client predicate,
+ * BOTH halves of the server's category filter (mastered `>= 5` / learning
+ * `< 5`, which have to stay exact complements or a word belongs to neither
+ * category), and a private `MASTERY_THRESHOLD` inside useSessionMetrics that
+ * decides whether the completion screen congratulates you for mastering a word.
+ * Four copies of one number, three of them invisible from the others.
+ */
+export const MASTERY_MIN_STABILITY = 5;
 
 /**
  * FSRS difficulty is defined on a closed 1–10 scale, unlike stability, which is
@@ -71,17 +85,25 @@ export const CONFIDENCE_TO_RATING: Record<WordConfidence, Grade> = {
 };
 
 /**
- * Confidences that count as a within-session "miss" (re-drilled to criterion).
- * Only an outright Forgot re-drills — Guessed (Hard) is a pass and is penalized
- * only at the cross-session interval scale, where penalties belong.
+ * The pass / miss partition, DERIVED from CONFIDENCE_TO_RATING rather than
+ * listed by hand.
+ *
+ * "A miss is the grade FSRS scores as Again" is the actual rule, and these two
+ * sets are exact complements of it. Spelled out as two literal lists they were
+ * two independent copies of one decision: re-mapping `vague` to Again (or
+ * adding a fourth grade) would have updated one and left the other claiming the
+ * same card both passed and missed. Derived, that is not expressible.
  */
-export const MISS_CONFIDENCE: ReadonlySet<WordConfidence> = new Set<WordConfidence>(['unknown']);
+const MISSED_RATING = Rating.Again;
+
+export const MISS_CONFIDENCE: ReadonlySet<WordConfidence> = new Set(
+  WORD_CONFIDENCES.filter(confidence => CONFIDENCE_TO_RATING[confidence] === MISSED_RATING),
+);
 
 /** Confidences that count as a successful recall (streak / first-attempt pacing). */
-export const RECALLED_CONFIDENCE: ReadonlySet<WordConfidence> = new Set<WordConfidence>([
-  'known',
-  'vague',
-]);
+export const RECALLED_CONFIDENCE: ReadonlySet<WordConfidence> = new Set(
+  WORD_CONFIDENCES.filter(confidence => CONFIDENCE_TO_RATING[confidence] !== MISSED_RATING),
+);
 
 export const DEFAULT_SESSION_COOLDOWN_HOURS = 2;
 
@@ -130,20 +152,6 @@ export const DUE_BACKLOG_ADD_THRESHOLD = 20;
 export const SPACING_ITERATION_LIMIT = 20;
 // Chart thresholds
 export const URGENT_RETRIEVABILITY_THRESHOLD = 0.5;
-
-/**
- * Memory capacity thresholds for vocabulary retention
- * These values determine when to show warnings, color coding, and recommendation logic
- * Used across: article recommendations, charts, gauges, and retention displays
- */
-export const MEMORY_CAPACITY_THRESHOLDS = {
-  /** Below this threshold shows red warning (poor retention) */
-  POOR: 40,
-  /** Below this threshold shows orange warning (moderate retention) */
-  MODERATE: 70,
-  /** Above this threshold shows green (good retention) */
-  GOOD: 75,
-} as const;
 
 // Optimized FSRS configuration.
 // request_retention 0.90 is the FSRS default target — roughly 40% fewer reviews

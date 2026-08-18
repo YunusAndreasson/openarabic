@@ -32,7 +32,14 @@ const OTHER_CARD = 'root-7053-rep-5';
  */
 const isSilent = (key: string): boolean => getPromptSnapshot(key)?.started === false;
 
-const played = { started: true, playMs: 120, cacheMissed: false, healed: false };
+const played = {
+  started: true,
+  playMs: 120,
+  cacheMissed: false,
+  healed: false,
+  sessionRecordCapable: false,
+  micStreamOpen: false,
+};
 
 describe('promptTelemetry', () => {
   beforeEach(() => {
@@ -48,6 +55,8 @@ describe('promptTelemetry', () => {
         playMs: 4012,
         cacheMissed: true,
         healed: true,
+        sessionRecordCapable: false,
+        micStreamOpen: false,
       });
 
       const snapshot = getPromptSnapshot(CARD);
@@ -67,8 +76,53 @@ describe('promptTelemetry', () => {
       beginPrompt(CARD);
       expect(isSilent(CARD)).toBe(false);
 
-      recordPromptPlay(CARD, { started: false, playMs: 4000, cacheMissed: false, healed: false });
+      recordPromptPlay(CARD, {
+        started: false,
+        playMs: 4000,
+        cacheMissed: false,
+        healed: false,
+        sessionRecordCapable: false,
+        micStreamOpen: false,
+      });
       expect(isSilent(CARD)).toBe(true);
+    });
+
+    /**
+     * The inaudible card, which is NOT the silent card: `started` is true, the
+     * play head moves, the finish watcher is happy — and the learner hears
+     * nothing, because the prompt played on the record-capable session
+     * (`.playAndRecord`, mode `.measurement` with the Advanced iOS raw-mode
+     * toggle on) that the handoff exists to take it off. Six days of iOS rows
+     * carried no trace of it at all.
+     */
+    it('records that the prompt played on a still-record-capable session', () => {
+      markCardCurrent(CARD);
+      beginPrompt(CARD);
+      recordPromptPlay(CARD, { ...played, sessionRecordCapable: true, micStreamOpen: true });
+
+      expect(getPromptSnapshot(CARD)).toMatchObject({
+        started: true,
+        sessionRecordCapable: true,
+        micStreamOpen: true,
+      });
+    });
+
+    /**
+     * The same inaudible card seen through the desync that causes it: the app
+     * believes playback owns the session while the microphone's input stream is
+     * still open — which it cannot be on a playback-only session. Recorded
+     * separately from the flag above because the flag is exactly what is wrong
+     * in this state, so on its own it would report a clean card.
+     */
+    it('records an open input stream even when the flag claims playback', () => {
+      markCardCurrent(CARD);
+      beginPrompt(CARD);
+      recordPromptPlay(CARD, { ...played, sessionRecordCapable: false, micStreamOpen: true });
+
+      expect(getPromptSnapshot(CARD)).toMatchObject({
+        sessionRecordCapable: false,
+        micStreamOpen: true,
+      });
     });
 
     it('keeps a missing audio_url distinct from a play that failed', () => {
@@ -139,7 +193,7 @@ describe('promptTelemetry', () => {
     it('does not invent a cut on a prompt that never started', () => {
       markCardCurrent(CARD);
       beginPrompt(CARD);
-      recordPromptPlay(CARD, { started: false, playMs: 4000, cacheMissed: false, healed: false });
+      recordPromptPlay(CARD, { ...played, started: false, playMs: 4000 });
       recordPromptCut('speak-now');
 
       expect(getPromptSnapshot(CARD)?.cutBy).toBeNull();
@@ -212,7 +266,14 @@ describe('promptTelemetry', () => {
     it('starts every card from a clean record', () => {
       markCardCurrent(CARD);
       beginPrompt(CARD);
-      recordPromptPlay(CARD, { started: false, playMs: 4000, cacheMissed: true, healed: true });
+      recordPromptPlay(CARD, {
+        started: false,
+        playMs: 4000,
+        cacheMissed: true,
+        healed: true,
+        sessionRecordCapable: true,
+        micStreamOpen: true,
+      });
       // Asserted at markCardCurrent, before the prompt is requested: that is the
       // moment a card starts, and nothing of the previous one may survive it.
       markCardCurrent(OTHER_CARD);
@@ -234,6 +295,8 @@ describe('promptTelemetry', () => {
         positionSamples: null,
         lateFinishEventSeen: null,
         lateFinishEventMs: null,
+        sessionRecordCapable: null,
+        micStreamOpen: null,
       });
     });
 

@@ -6,24 +6,10 @@ export interface DataPoint<T = unknown> {
   data?: T;
 }
 
-// Shared performance zone type for vocabulary charts
-export interface PerformanceZone {
-  color: string;
-  y: number;
-  height: number;
-}
-
 /**
  * Expected structure returned by useChartColors
  */
 export interface ChartColors {
-  /** Colors representing performance levels */
-  performance: {
-    excellent: string;
-    good: string;
-    moderate: string;
-    poor: string;
-  };
   /** UI related chart colors */
   ui: {
     background: string;

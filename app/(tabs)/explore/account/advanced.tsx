@@ -5,15 +5,15 @@
  * be A/B tested on-device without a rebuild. No sliders — toggles only.
  */
 import { useCallback, useMemo, type FC } from 'react';
-import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { SettingsCard, SettingsSection } from '@/components/account';
 import { useVoiceGrading } from '@/components/providers';
 import { ScreenScaffold, SectionLabel } from '@/components/common';
+import { PulsatingLoader } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { useColors } from '@/hooks/theme/useColors';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import {
   setVoiceDebugEnabled,
@@ -24,8 +24,14 @@ import {
 
 type StatusColor = 'success' | 'error' | 'tint' | 'textTertiary';
 
+/**
+ * Inline loader sized to sit beside a single line of `body` text in the status
+ * row — `PulsatingLoader`'s own 48pt default is a screen-filling size. It
+ * reserves room for its own pulse, so the row is 24pt tall for a 20pt circle.
+ */
+const STATUS_LOADER_SIZE = LAYOUT.BUTTON.ICON_SIZE.MEDIUM;
+
 const AdvancedScreen: FC = () => {
-  const colors = useColors();
   const dispatch = useAppDispatch();
   const voice = useVoiceGrading();
 
@@ -73,7 +79,12 @@ const AdvancedScreen: FC = () => {
 
   const modelRight = (
     <View style={styles.statusRight}>
-      {modelStatus.spinner && <ActivityIndicator size="small" color={colors.tint} />}
+      {/* Decorative: the label beside it already states the model's status, so
+          a second focus stop announcing a generic "Loading…" would say less
+          than the text next to it. */}
+      {modelStatus.spinner && (
+        <PulsatingLoader size={STATUS_LOADER_SIZE} accessibilityLabel={null} />
+      )}
       <ThemedText type="body" colorName={modelStatus.color} numberOfLines={1}>
         {modelStatus.label}
       </ThemedText>

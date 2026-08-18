@@ -7,7 +7,13 @@
 // ============================================================================
 // RENDER UTILITIES (testUtils.tsx)
 // ============================================================================
-export { createTestQueryClient, flushPromisesAndTimers, advanceTimersByTime } from './testUtils';
+export {
+  createTestQueryClient,
+  flushPromisesAndTimers,
+  advanceTimersByTime,
+  measuring,
+  type MeasureCallback,
+} from './testUtils';
 
 // ============================================================================
 // HOOK MOCKS (hookMocks.ts)
@@ -63,11 +69,6 @@ export {
   defaultPreloadedState,
   type TestRootState,
 } from './testStore';
-
-// ============================================================================
-// CHART MOCKS (chartMocks.ts)
-// ============================================================================
-export { mockChartColors, mockPerformanceZones } from './chartMocks';
 
 // ============================================================================
 // COMPONENT MOCKS (componentMocks.tsx)

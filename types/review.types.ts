@@ -1,4 +1,20 @@
 /**
+ * The three self-grades, ordered worst → best.
+ *
+ * The tuple is the source of truth and `WordConfidence` is derived from it, so
+ * the union can never gain a member that nothing enumerates. Everything that
+ * has to walk every grade — the interval preview, the pass/miss partition in
+ * constants/fsrs, the grade bar's buttons — iterates THIS, rather than casting
+ * `Object.keys` back to the union and quietly missing a new one.
+ *
+ * The order is also the order the grade bar paints (left → right, red → amber →
+ * green) and the order of the swipe outcomes (left = Forgot, right = Knew it).
+ * One list, so a fourth grade cannot appear in the union and be absent from the
+ * row that renders it.
+ */
+export const WORD_CONFIDENCES = ['unknown', 'vague', 'known'] as const;
+
+/**
  * Self-assessed recall confidence when grading a *revealed* vocabulary card.
  * Three-way — the user sees the answer first, then rates honestly (UI labels):
  *   - 'known'   → "Knew it"  — clean recall            (ts-fsrs Good)
@@ -7,25 +23,18 @@
  * Mapped to ts-fsrs Rating via CONFIDENCE_TO_RATING in constants/fsrs.ts.
  * Centralized here to avoid repeating the union across hooks and services.
  */
-export type WordConfidence = 'known' | 'vague' | 'unknown';
+export type WordConfidence = (typeof WORD_CONFIDENCES)[number];
 
 /**
- * Consolidated refs for time tracking during review sessions
+ * Per-grade interval preview ("10m" / "4d") — one label for every grade.
+ *
+ * Total, not `Partial`: the producer (useFSRS.previewIntervals) walks
+ * WORD_CONFIDENCES and fills every key from the same ts-fsrs scheduler that
+ * grading uses, so a missing entry is not a state the app can reach. Typed
+ * total, a consumer that forgets a grade fails to compile instead of silently
+ * rendering a button with no interval under it.
  */
-export interface ReviewTimeRefs {
-  lastProgressUpdate: number;
-  lastProcessedWordId: string | null;
-}
-
-/**
- * Consolidated refs for state tracking during review sessions
- */
-export interface ReviewStateRefs {
-  maxProgress: number;
-  completionTriggered: boolean;
-  isUpdatingWord: boolean;
-  progressUpdatedForCompletion: boolean;
-}
+export type IntervalLabels = Record<WordConfidence, string>;
 
 /**
  * Statistics about a review session such as counts of words reviewed and other metrics

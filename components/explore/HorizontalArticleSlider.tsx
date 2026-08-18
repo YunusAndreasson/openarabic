@@ -34,43 +34,53 @@ const SLIDER_CARD_STYLE = {
 
 /**
  * Horizontal slider displaying multiple articles in a swipeable ScrollView.
- * Uses ScrollView with snapToOffsets for precise snap behavior.
+ * Snaps by a single interval, since every card is the same width.
  */
 const HorizontalArticleSliderComponent: FC<HorizontalArticleSliderProps> = ({ articles }) => {
-  const displayArticles = articles.slice(0, MAX_FEATURED_ARTICLES);
-
-  const snapOffsets = displayArticles.map((_, index) => index * (CARD_WIDTH + CARD_SPACING));
-
   if (!articles.length) return null;
 
+  const displayArticles = articles.slice(0, MAX_FEATURED_ARTICLES);
+
   return (
-    <View>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContainer}
-        decelerationRate="fast"
-        snapToOffsets={snapOffsets}
-        snapToAlignment="start"
-      >
-        {displayArticles.map(article => (
-          <View key={`featured-${article.id}`} style={styles.cardContainer}>
-            <ArticleCard
-              article={article}
-              {...buildArticleCardProps(article)}
-              elevation="hairline"
-              style={SLIDER_CARD_STYLE}
-              testID={`slider-article-${article.id}`}
-              isFeaturedArticle={true}
-            />
-          </View>
-        ))}
-      </ScrollView>
-    </View>
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      // A ScrollView carries RN's `baseHorizontal` — `flexGrow: 1,
+      // flexShrink: 1` — and this one is now a direct child of the section
+      // rather than sitting inside a plain View, which was flex-inert and
+      // absorbed both. Left as-is the rail would stretch past CARD_HEIGHT
+      // wherever there is spare vertical room, and be squeezed below it (
+      // clipping the fixed-height cards) wherever there is not.
+      style={styles.rail}
+      contentContainerStyle={styles.scrollContainer}
+      decelerationRate="fast"
+      // Cards are uniform width, so one interval says what a per-render offsets
+      // array said — and matches how `ArticleRail` snaps, so the two rails on
+      // Explore behave identically.
+      snapToInterval={CARD_WIDTH + CARD_SPACING}
+      snapToAlignment="start"
+    >
+      {displayArticles.map(article => (
+        <View key={`featured-${article.id}`} style={styles.cardContainer}>
+          <ArticleCard
+            article={article}
+            {...buildArticleCardProps(article)}
+            elevation="hairline"
+            style={SLIDER_CARD_STYLE}
+            testID={`slider-article-${article.id}`}
+            isFeaturedArticle={true}
+          />
+        </View>
+      ))}
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
+  rail: {
+    flexGrow: 0,
+    flexShrink: 0,
+  },
   scrollContainer: {
     // Label-to-cards gap is owned by SectionLabel.paddingBottom (8px) — match other sliders.
     paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,

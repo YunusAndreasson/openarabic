@@ -137,6 +137,30 @@ export const DEFAULT_RECORDING_CONFIG: RecordingConfig = {
   iosRawMode: false,
 };
 
+/**
+ * What stopped a recording window: 'silence' (energy gate), 'noSpeech' (gate
+ * never heard speech within noSpeechTimeoutMs), 'maxDuration' (hit cap inside
+ * handleBuffer), 'watchdog' (a cap fired with zero buffers — either the hard
+ * duration cap or the first-buffer deadline), or 'manual' (cancel / external
+ * stop).
+ *
+ * Named because this value travels: the review HUD prints it and every voice
+ * attempt writes it to `voice_grading_attempts`. Both of those ends typed it as
+ * a bare `string`, so the analysis we keep this column FOR could have been
+ * quietly polluted by a sixth spelling that nothing rejected.
+ */
+export type RecordingStopReason = 'silence' | 'noSpeech' | 'maxDuration' | 'watchdog' | 'manual';
+
+/**
+ * Why a request for the microphone did not produce audio.
+ *
+ * Lives here, at the leaf of the voice stack, so the provider that RETURNS one
+ * and the telemetry that RECORDS one share a single set rather than a union on
+ * one side and a `string` plus a doc-comment listing the same four names on the
+ * other.
+ */
+export type VoiceArmFailureReason = 'permission' | 'not-ready' | 'busy' | 'error';
+
 export interface RecordingResult {
   waveform: Float32Array;
   sampleRate: number;
@@ -147,12 +171,8 @@ export interface RecordingResult {
   /** Number of audio buffers the window received. 0 means the mic delivered
    *  no audio at all (session conflict / permission edge case). */
   bufferCount: number;
-  /** What stopped the recording: 'silence' (energy gate), 'noSpeech' (gate
-   *  never heard speech within noSpeechTimeoutMs), 'maxDuration' (hit cap inside
-   *  handleBuffer), 'watchdog' (a cap fired with zero buffers — either the hard
-   *  duration cap or the first-buffer deadline), or 'manual' (cancel / external
-   *  stop). */
-  stopReason: 'silence' | 'noSpeech' | 'maxDuration' | 'watchdog' | 'manual';
+  /** What stopped the recording — see RecordingStopReason. */
+  stopReason: RecordingStopReason;
   /** Wall-clock ms from the window opening to its first buffer. Reveals whether
    *  the mic actually delivered audio and how slow startup was. This is the
    *  number the session-scoped recorder exists to reduce. */

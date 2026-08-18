@@ -19,9 +19,7 @@
  */
 
 import { fireEvent, render } from '@testing-library/react-native';
-import type { ComponentRef } from 'react';
-import React, { createRef } from 'react';
-import { Pressable } from 'react-native';
+import React from 'react';
 
 import { SkiaArabicWord as ArabicWord } from '@/components/article/SkiaArabicWord';
 import type { SentenceWord } from '@/types/vocabulary.types';
@@ -224,9 +222,15 @@ describe('ArabicWord Component', () => {
   });
 
   describe('Tooltip Interaction', () => {
-    // REMOVED: Test was checking implementation details of measureInWindow mock
-    // Tooltip interaction is complex to test properly due to ref timing in React Native
-    // The functionality is verified through manual testing and the other tests ensure no crashes
+    // The measured-frame cases — a good measurement, one that throws, and one
+    // that comes back as a zero box — live in SkiaArabicWord.test.tsx, which
+    // covers this same component (this file imports it under its old name).
+    // They were duplicated here, and both copies asserted nothing: each set its
+    // `measureInWindow` mock on a `wordRef` prop the component no longer
+    // accepts, so the ref stayed null and the mock was never installed. The
+    // note that used to sit here — "complex to test properly due to ref timing"
+    // — is what let them stay that way; `createNodeMock` (see the `measuring`
+    // helper) tests it directly.
 
     test('does not crash when onTooltipOpen is not provided', () => {
       const word = createMockWord();
@@ -236,67 +240,6 @@ describe('ArabicWord Component', () => {
 
       // Should not crash
       expect(() => fireEvent.press(wordElement)).not.toThrow();
-    });
-
-    test('does not call tooltip when ref is not provided', () => {
-      const word = createMockWord();
-      const onTooltipOpen = jest.fn();
-
-      const { getByTestId } = render(
-        <ArabicWord word={word} onTooltipOpen={onTooltipOpen} testID="word" />,
-      );
-
-      const wordElement = getByTestId('word');
-      fireEvent.press(wordElement);
-
-      // Should not call tooltip without ref
-      expect(onTooltipOpen).not.toHaveBeenCalled();
-    });
-
-    test('handles measurement errors gracefully', () => {
-      const word = createMockWord();
-      const onTooltipOpen = jest.fn();
-      const wordRef = createRef<ComponentRef<typeof Pressable>>();
-
-      const { getByTestId } = render(
-        <ArabicWord word={word} onTooltipOpen={onTooltipOpen} wordRef={wordRef} testID="word" />,
-      );
-
-      // Mock measureInWindow to throw error
-      if (wordRef.current) {
-        wordRef.current.measureInWindow = jest.fn(() => {
-          throw new Error('Measurement failed');
-        });
-      }
-
-      const wordElement = getByTestId('word');
-
-      // Should not crash on measurement error
-      expect(() => fireEvent.press(wordElement)).not.toThrow();
-      expect(onTooltipOpen).not.toHaveBeenCalled();
-    });
-
-    test('ignores invalid coordinates from measurement', () => {
-      const word = createMockWord();
-      const onTooltipOpen = jest.fn();
-      const wordRef = createRef<ComponentRef<typeof Pressable>>();
-
-      const { getByTestId } = render(
-        <ArabicWord word={word} onTooltipOpen={onTooltipOpen} wordRef={wordRef} testID="word" />,
-      );
-
-      // Mock with invalid coordinates
-      if (wordRef.current) {
-        wordRef.current.measureInWindow = jest.fn(callback => {
-          callback(undefined, undefined, 0, 0);
-        });
-      }
-
-      const wordElement = getByTestId('word');
-      fireEvent.press(wordElement);
-
-      // Should not call tooltip with invalid coordinates
-      expect(onTooltipOpen).not.toHaveBeenCalled();
     });
   });
 

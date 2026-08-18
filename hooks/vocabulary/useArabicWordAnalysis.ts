@@ -1,4 +1,5 @@
 import { useColors } from '@/hooks/theme/useColors';
+import type { ColoredSegment } from '@/types/vocabulary.types';
 import {
   analyzeArabicWord,
   formatWordAnalysis,
@@ -6,12 +7,6 @@ import {
   shouldInjectBracket,
 } from '@/utils/arabicWordAnalysis';
 import { assertValidColorName, resolveColorName } from '@/utils/colorResolution';
-
-interface ColoredSegment {
-  text: string;
-  color: string;
-  type: 'prefix' | 'infix' | 'suffix' | 'diacritic' | 'root';
-}
 
 interface UseArabicWordAnalysisResult {
   /** Whether the word has analyzable components */
@@ -64,7 +59,7 @@ export function useArabicWordAnalysis(
       return {
         text: segment.text,
         color: resolveColorName(segment.colorName, colors),
-        type: segment.type as ColoredSegment['type'],
+        type: segment.type,
       };
     });
   })();

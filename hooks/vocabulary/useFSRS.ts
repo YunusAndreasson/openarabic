@@ -14,13 +14,8 @@ import { fsrsQueries, gated } from '@/constants/queries';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { RootId } from '@/types/branded.types';
 import { ToastType } from '@/types/enums';
-import type {
-  FSRSStateTracking,
-  FSRSWordUpdate,
-  UseFSRSOptions,
-  UseFSRSResult,
-} from '@/types/fsrs.types';
-import type { WordConfidence } from '@/types/review.types';
+import type { FSRSWordUpdate, UseFSRSOptions, UseFSRSResult } from '@/types/fsrs.types';
+import type { IntervalLabels, WordConfidence } from '@/types/review.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 import { convertToFSRSCard } from '@/utils/fsrsCard';
@@ -56,8 +51,10 @@ interface GradeWriteVariables {
   update: FSRSWordUpdate;
 }
 
-// Enhanced state tracking with more fields
-interface EnhancedFSRSStateTracking extends FSRSStateTracking {
+/** Session-lifecycle latches for the queue. Local: nothing outside this hook
+ *  reads them, and the shared alias it used to extend re-declared these same
+ *  three fields, so the pair were one interface wearing two names. */
+interface FSRSStateTracking {
   completionTriggered: boolean;
   isProcessingUpdate: boolean;
   queueInitialized: boolean;
@@ -114,7 +111,7 @@ export function useFSRS({
   const pendingWritesRef = useRef<Set<Promise<unknown>>>(new Set());
 
   // Enhanced state tracking
-  const stateTrackingRef = useRef<EnhancedFSRSStateTracking>({
+  const stateTrackingRef = useRef<FSRSStateTracking>({
     isProcessingUpdate: false,
     completionTriggered: false,
     queueInitialized: false,
@@ -565,20 +562,27 @@ export function useFSRS({
    * the committed due is a separate fuzz draw and may differ slightly — fine for
    * a terse label.
    */
-  const previewIntervals = useCallback(
-    (word: StudyWord): Partial<Record<WordConfidence, string>> => {
-      const now = new Date();
-      const card = convertToFSRSCard(word);
-      const preview = FSRS_INSTANCE.repeat(card, now);
-      const out: Partial<Record<WordConfidence, string>> = {};
-      (Object.keys(CONFIDENCE_TO_RATING) as WordConfidence[]).forEach(confidence => {
-        const rating = CONFIDENCE_TO_RATING[confidence];
-        out[confidence] = show_diff_message(preview[rating].card.due, now, true, PREVIEW_UNITS);
-      });
-      return out;
-    },
-    [],
-  );
+  const previewIntervals = useCallback((word: StudyWord): IntervalLabels => {
+    const now = new Date();
+    const card = convertToFSRSCard(word);
+    const preview = FSRS_INSTANCE.repeat(card, now);
+    const labelFor = (confidence: WordConfidence): string =>
+      show_diff_message(
+        preview[CONFIDENCE_TO_RATING[confidence]].card.due,
+        now,
+        true,
+        PREVIEW_UNITS,
+      );
+
+    // Written out rather than reduced into an accumulator so the compiler
+    // checks the mapping is TOTAL: a fourth grade added to WordConfidence
+    // fails here, instead of silently shipping a button with no interval.
+    return {
+      unknown: labelFor('unknown'),
+      vague: labelFor('vague'),
+      known: labelFor('known'),
+    };
+  }, []);
 
   const resetQueue = useCallback(() => {
     stateTrackingRef.current.queueInitialized = false;

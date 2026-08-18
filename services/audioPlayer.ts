@@ -192,6 +192,20 @@ class SimpleAudioService {
     return { ...AUDIO_MODE_CONFIG, allowsRecording: this.recordingSessionEnabled };
   }
 
+  /**
+   * Is the shared session currently record-capable (`.playAndRecord`)?
+   *
+   * Exposed for telemetry rather than for control flow: a review prompt must
+   * always play on plain `.playback`, and a card that reports `true` here is the
+   * silent-prompt bug caught in the act — the record-capable session (with the
+   * Advanced iOS raw-mode toggle on, mode `.measurement`) plays quiet enough to
+   * read as nothing at all, while `play()` still reports success. See
+   * `PromptSnapshot.sessionRecordCapable`.
+   */
+  get isRecordingSessionEnabled(): boolean {
+    return this.recordingSessionEnabled;
+  }
+
   // Time-based activation throttling to avoid redundant iOS audio session calls
   private lastActivationTime = 0;
   private readonly ACTIVATION_THROTTLE = 5000; // 5 seconds
@@ -364,14 +378,41 @@ class SimpleAudioService {
    * `allowBluetoothHFP`) and those are what actually take effect, so the
    * hands-free route stays off for the session's lifetime.
    *
+   * `force` re-applies the mode even when the flag already says so. Needed
+   * because react-native-audio-api configures the SAME AVAudioSession directly:
+   * it sets `.playAndRecord` (and, with the Advanced iOS raw-mode toggle on,
+   * mode `.measurement`) without going through here, so this flag can describe a
+   * session that no longer exists. Every guard that restores playback shape is
+   * an equality check on it, and once it is stale they all no-op — leaving every
+   * later prompt on the record-capable, `.measurement` session that this
+   * codebase already measured as "noticeably quiet" (see IOS_SESSION_MODE in
+   * lib/voice/recording.ts). A review teardown forces it for exactly that
+   * reason: whatever the flag believes, the app must not be left holding a
+   * recording session.
+   *
    * Best-effort: playback still works if the switch fails, so this never
    * throws into the voice pipeline.
    */
-  async setRecordingSessionEnabled(enabled: boolean): Promise<void> {
-    if (this.recordingSessionEnabled === enabled) return;
+  async setRecordingSessionEnabled(
+    enabled: boolean,
+    { force = false }: { force?: boolean } = {},
+  ): Promise<void> {
+    if (this.recordingSessionEnabled === enabled && !force) return;
+    // Set before the call because currentAudioMode() reads it, and put back if
+    // that call is the one that failed. A mode the session never entered must
+    // not be remembered as if it had: this flag is the thing every guard tests,
+    // so a lie here silently disables all of them at once — the same
+    // all-guards-off state the `force` escape hatch above exists to recover
+    // from, arrived at from inside this method instead.
+    const previous = this.recordingSessionEnabled;
     this.recordingSessionEnabled = enabled;
     try {
-      await setAudioModeAsync(this.currentAudioMode());
+      try {
+        await setAudioModeAsync(this.currentAudioMode());
+      } catch (modeError) {
+        this.recordingSessionEnabled = previous;
+        throw modeError;
+      }
       // Releasing the mic: on iOS the category change alone does not move
       // output back off the route .playAndRecord opted into — notably the
       // Bluetooth hands-free profile — so the session has to be cycled. Owned

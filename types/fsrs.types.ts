@@ -1,22 +1,33 @@
+import type { State } from 'ts-fsrs';
+
 import type { RootId } from '@/types/branded.types';
-import type { WordConfidence } from '@/types/review.types';
+import type { Tables } from '@/types/database.types';
+import type { IntervalLabels, WordConfidence } from '@/types/review.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 
 /**
- * FSRS-specific update fields for study word review
- * Matches the database schema for study_words table
+ * Every `study_words` column the scheduler owns, read off the generated schema
+ * rather than listed by hand.
+ *
+ * The hand-written list was a ninth copy of the column names that had to be
+ * kept in step with the table by memory alone: a renamed or added `fsrs_*`
+ * column left it stale and still compiling, writing a row missing a field the
+ * scheduler needs. Derived, the same change is a build error at every builder.
  */
-export interface FSRSWordUpdate {
-  fsrs_due: string;
-  fsrs_stability: number;
-  fsrs_difficulty: number;
-  fsrs_scheduled_days: number;
-  fsrs_reps: number;
-  fsrs_learning_steps: number;
-  fsrs_lapses: number;
-  fsrs_state: number;
-  fsrs_last_review: string;
-}
+export type FSRSColumn = Extract<keyof Tables<'study_words'>, `fsrs_${string}`>;
+
+/**
+ * The FSRS field set as WRITTEN back after a grade — the same columns as the
+ * table, minus its nullability.
+ *
+ * Reads tolerate NULL (pre-migration rows); a write never produces one, because
+ * every value comes from a ts-fsrs `Card`. Saying so in the type is what lets
+ * `createResetFSRSUpdate` and the grade mutation be checked for completeness
+ * instead of each hoping the other filled the same nine fields.
+ */
+export type FSRSWordUpdate = {
+  [K in FSRSColumn]: K extends 'fsrs_state' ? State : NonNullable<Tables<'study_words'>[K]>;
+};
 
 /**
  * Options for fetching FSRS words from the database
@@ -34,9 +45,9 @@ export interface GetFSRSWordsOptions {
    */
   sessionCooldownHours?: number;
   /**
-   * Server-side filter for vocabulary category.
-   * - "mastered": fsrs_state = 2 (Review) and fsrs_stability >= 5
-   * - "learning": fsrs_state in (0,1,3) or (fsrs_state = 2 and fsrs_stability < 5)
+   * Server-side filter for vocabulary category. The two branches are exact
+   * complements of `isMasteredWord` (state Review + stability >=
+   * MASTERY_MIN_STABILITY) — see that predicate for the rule itself.
    */
   category?: 'learning' | 'mastered';
 }
@@ -62,12 +73,19 @@ export interface UseFSRSResult {
    * working chunk — the session refills itself until everything is done.
    */
   progress: number;
+  /**
+   * Grade the current card and advance. Resolves with the card's NEW stability
+   * (what the session's mastery counter compares against the old value), or
+   * `undefined` when the grade was dropped — no user, no current word, or a
+   * write already in flight. The FSRS write itself is fired in the background;
+   * see `flushPendingWrites`.
+   */
   updateWord: (rootId: RootId, confidence: WordConfidence) => Promise<number | undefined>;
   /**
-   * Per-grade interval preview ("10m"/"4d") for a card, keyed by WordConfidence.
+   * Per-grade interval preview ("10m"/"4d") for a card, one label per grade.
    * Drives the grade bar's sub-labels. Reuses the live ts-fsrs scheduler.
    */
-  previewIntervals: (word: StudyWord) => Partial<Record<WordConfidence, string>>;
+  previewIntervals: (word: StudyWord) => IntervalLabels;
   invalidateQueries: () => void;
   resetQueue: () => void;
   /**
@@ -77,10 +95,4 @@ export interface UseFSRSResult {
    * await this first or it can race a write still in flight.
    */
   flushPendingWrites: () => Promise<void>;
-}
-
-export interface FSRSStateTracking {
-  isProcessingUpdate: boolean;
-  completionTriggered: boolean;
-  queueInitialized: boolean;
 }

@@ -10,9 +10,12 @@
 import * as Application from 'expo-application';
 import { Platform } from 'react-native';
 
+import type { RecordingStopReason, VoiceArmFailureReason } from '@/lib/voice/recording';
+import type { RootId } from '@/types/branded.types';
 import { supabase } from '@/services/supabase';
 import type { Json } from '@/types/database.types';
 import { voiceBreadcrumb } from '@/utils/errorHandling';
+import type { MatchMethod, VoiceSuggestion } from '@/utils/voiceMatching';
 
 /**
  * `arm_failed` rows describe an attempt that never produced audio, so most of
@@ -42,18 +45,18 @@ export type VoiceResolution =
 
 /** One resolved voice attempt, in app-domain shape (mapped to columns below). */
 export interface VoiceAttemptLog {
-  rootId: number | null;
+  rootId: RootId | null;
   expected: string | null;
   transcript: string | null;
   normalizedSpoken: string | null;
   matched: boolean;
-  matchMethod: string | null;
+  matchMethod: MatchMethod | null;
   similarity: number | null;
-  suggestion: 'unknown' | 'retry' | null;
+  suggestion: VoiceSuggestion;
   resolution: VoiceResolution;
   attemptIndex: number;
   durationMs: number | null;
-  stopReason: string | null;
+  stopReason: RecordingStopReason | null;
   heardSpeech: boolean | null;
   peakRms: number | null;
   bufferCount: number | null;
@@ -68,16 +71,15 @@ export interface VoiceAttemptLog {
  *  this needs no schema change — the table has no CHECK on `resolution` and
  *  `meta` is free-form jsonb. */
 export interface VoiceArmFailureLog {
-  rootId: number | null;
+  rootId: RootId | null;
   expected: string | null;
   /** Which arm attempt on this card (0 = the learner's tap, 1+ = the ladder). */
   attemptIndex: number;
-  /** 'permission' | 'busy' | 'not-ready' | 'error'. */
-  reason: string;
+  reason: VoiceArmFailureReason;
   message: string | null;
   /** From the dead window, when there was one: 'watchdog' means the
    *  first-buffer deadline fired with nothing at all. */
-  stopReason: string | null;
+  stopReason: RecordingStopReason | null;
   durationMs: number | null;
   bufferCount: number | null;
   /** Tap → mic actually capturing, in ms. The number the learner feels, as
@@ -91,7 +93,7 @@ export interface VoiceArmFailureLog {
 /** A card whose Arabic prompt produced no audio. Same trick as the arm failure
  *  above: everything specific rides in `meta`, so no schema change. */
 export interface PromptSilentLog {
-  rootId: number | null;
+  rootId: RootId | null;
   expected: string | null;
   /** ms `playAudio` took to give up. The review lane caps the player's ready
    *  wait at `REVIEW_PLAY_OPTIONS.readyTimeoutMs`, so that deadline shows up

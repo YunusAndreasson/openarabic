@@ -160,12 +160,6 @@ describe('CompletionScreen Component', () => {
       expect(getByText('checkmark-circle')).toBeTruthy();
     });
 
-    test('renders with custom icon', () => {
-      const { getByText } = render(<CompletionScreen iconName="trophy-outline" />);
-
-      expect(getByText('trophy-outline')).toBeTruthy();
-    });
-
     test('renders with testID', () => {
       const { getByTestId } = render(<CompletionScreen testID="completion-screen" />);
 
@@ -298,12 +292,6 @@ describe('CompletionScreen Component', () => {
       const { getByText } = render(<CompletionScreen />);
 
       expect(getByText('Continue')).toBeTruthy();
-    });
-
-    test('renders button with custom text', () => {
-      const { getByText } = render(<CompletionScreen buttonText="Back to Practice" />);
-
-      expect(getByText('Back to Practice')).toBeTruthy();
     });
 
     test('button is pressable', () => {

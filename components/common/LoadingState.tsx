@@ -16,13 +16,13 @@ interface LoadingStateProps {
  * screen-filling state, where 48 reads as lost in the middle of an empty page.
  * Inline loaders inside a section should use `PulsatingLoader` directly.
  */
-const DEFAULT_LOADER_SIZE = 64;
+export const LOADING_STATE_LOADER_SIZE = 64;
 
 /**
  * Generic loading state mirroring EmptyState / ErrorState — a flex-filled,
  * centered container with a PulsatingLoader and an optional message below.
  */
-export function LoadingState({ message, size = DEFAULT_LOADER_SIZE }: LoadingStateProps) {
+export function LoadingState({ message, size = LOADING_STATE_LOADER_SIZE }: LoadingStateProps) {
   return (
     <View style={styles.container}>
       <PulsatingLoader size={size} />

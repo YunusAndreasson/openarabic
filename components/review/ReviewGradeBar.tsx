@@ -5,11 +5,8 @@ import { ReviewActionButton } from '@/components/review/ReviewActionButton';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
-import type { WordConfidence } from '@/types/review.types';
-
-// Left→right, red→amber→green. Mirrors the swipe outcomes (left = Forgot,
-// right = Knew it); Guessed is the deliberate centre tap (no swipe).
-const GRADE_ORDER: WordConfidence[] = ['unknown', 'vague', 'known'];
+import { WORD_CONFIDENCES } from '@/types/review.types';
+import type { IntervalLabels, WordConfidence } from '@/types/review.types';
 
 const GRADE_META: Record<
   WordConfidence,
@@ -29,8 +26,9 @@ const STATIC_STYLES = StyleSheet.create({
 });
 
 interface ReviewGradeBarProps {
-  /** Interval hint per grade ("10m"/"4d"), from useReview.intervalLabels. */
-  intervals?: Partial<Record<WordConfidence, string>>;
+  /** Interval hint per grade ("10m"/"4d"), from useReview.intervalLabels.
+   *  `null` while no card is current — every grade has a label or none do. */
+  intervals?: IntervalLabels | null;
   onGrade: (confidence: WordConfidence) => void;
   disabled?: boolean;
 }
@@ -51,7 +49,12 @@ export const ReviewGradeBar: FC<ReviewGradeBarProps> = ({
 
   return (
     <View style={STATIC_STYLES.container}>
-      {GRADE_ORDER.map(confidence => {
+      {/* WORD_CONFIDENCES is declared worst→best, which IS this row's paint
+          order: left→right, red→amber→green, mirroring the swipe outcomes
+          (left = Forgot, right = Knew it; Guessed is the centre tap). Mapping
+          it directly means a grade cannot exist in the union and be missing
+          from the row that renders it. */}
+      {WORD_CONFIDENCES.map(confidence => {
         const meta = GRADE_META[confidence];
 
         const handlePress = () => {

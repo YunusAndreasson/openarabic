@@ -11,9 +11,6 @@ interface EditModeButtonProps {
    * The type of edit mode this button controls
    */
   type: EditModeType;
-
-  /** Convenience flag to hide when empty without passing count explicitly */
-  hideWhenEmpty?: boolean;
 }
 
 /**
@@ -22,7 +19,7 @@ interface EditModeButtonProps {
  * Lives here rather than in `components/ui` because it reads playlist state and
  * Redux directly; a `components/ui` component should be driveable by props alone.
  */
-const EditModeButtonComponent: FC<EditModeButtonProps> = ({ type, hideWhenEmpty = true }) => {
+const EditModeButtonComponent: FC<EditModeButtonProps> = ({ type }) => {
   const { editMode, toggle } = useEditMode(type);
 
   // React 19: Use native useOptimistic for immediate visual feedback
@@ -46,8 +43,9 @@ const EditModeButtonComponent: FC<EditModeButtonProps> = ({ type, hideWhenEmpty 
     toggle();
   }, [toggle, optimisticEditMode, setOptimisticEditMode]);
 
-  // Guard early return only after all hooks and callbacks above have been created
-  if (hideWhenEmpty && (effectiveCount ?? 0) <= 0) {
+  // Nothing to reorder yet. Guarded only after every hook and callback above
+  // has been created.
+  if ((effectiveCount ?? 0) <= 0) {
     return null;
   }
 

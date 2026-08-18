@@ -2,12 +2,11 @@ import type { JSX } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Badge, BottomSheetHeader, BottomSheetStateHandler } from '@/components/common';
+import { Badge, BottomSheetHeader, BottomSheetStateHandler, ListRow } from '@/components/common';
 import { ThemedText } from '@/components/ThemedText';
 import { IconButton } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { useColors } from '@/hooks/theme/useColors';
 import { useResetWordProgress } from '@/hooks/vocabulary/useResetWordProgress';
 import { useWordsToRevisit } from '@/hooks/vocabulary/useWordsToRevisit';
 import type { RootId } from '@/types/branded.types';
@@ -19,17 +18,17 @@ function formatForgotCount(count: number): string {
 
 interface LeechRowProps {
   word: StudyWord;
+  divider: boolean;
   onReset: (rootId: RootId) => void;
 }
 
-function LeechRow({ word, onReset }: LeechRowProps): JSX.Element {
-  const colors = useColors();
+function LeechRow({ word, divider, onReset }: LeechRowProps): JSX.Element {
   const letters = word.root?.letters ?? '';
   const meaning = word.root?.meaning ?? '';
   const lapses = word.fsrs_lapses ?? 0;
 
   return (
-    <View style={[styles.row, { borderBottomColor: colors.border }]}>
+    <ListRow divider={divider} density="compact">
       <View style={styles.wordColumn}>
         {/* `arabicCompact`, like the dictionary index: this is a navigation row,
             so it caps the reading size and drops the line box to LOOSE. Reading
@@ -56,7 +55,7 @@ function LeechRow({ word, onReset }: LeechRowProps): JSX.Element {
         iconSize={LAYOUT.BUTTON.ICON_SIZE.SMALL}
         onPress={() => onReset(word.root_id)}
       />
-    </View>
+    </ListRow>
   );
 }
 
@@ -113,8 +112,15 @@ export default function WordsToRevisitScreen(): JSX.Element {
           ]}
           showsVerticalScrollIndicator={false}
         >
-          {leeches.map(word => (
-            <LeechRow key={word.root_id} word={word} onReset={confirmReset} />
+          {leeches.map((word, index) => (
+            <LeechRow
+              key={word.root_id}
+              word={word}
+              // No rule under the last row — it would read as a divider before
+              // content that isn't there.
+              divider={index < leeches.length - 1}
+              onReset={confirmReset}
+            />
           ))}
         </ScrollView>
       </BottomSheetStateHandler>
@@ -133,13 +139,6 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: LAYOUT.SPACING.SMALL,
-    paddingVertical: LAYOUT.SPACING.SMALL,
-    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   wordColumn: {
     flex: 1,

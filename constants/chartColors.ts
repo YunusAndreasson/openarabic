@@ -14,18 +14,18 @@ import { withOpacity } from '@/utils/colorUtils';
  * - Fully theme-aware (light/dark/sepia) via semantic tokens.
  */
 
-// Refined opacity levels for data visualization
+// Refined opacity levels for data visualization. Every step here is in use —
+// an unused one is worse than clutter in a palette, because the next chart
+// reaches for it as though it were part of a system that no longer exists.
+// `SUBTLE` ("light overlay for zones") outlived the performance zones by a
+// whole refactor and was the last thing in the file still naming them.
 export const CHART_OPACITY = {
-  SOLID: 1.0,
   HIGH: 0.85, // Strong presence for important data
   MEDIUM: 0.65, // Balanced visibility for secondary data
   LOW: 0.35, // Subtle presence for background elements
-  ZONE_DARK: 0.24, // Performance zone bands on dark surfaces
-  ZONE: 0.18, // Performance zone bands (crisp, no blur)
+  ZONE: 0.18, // Band washes behind a plotted range (crisp, no blur)
   TRACK: 0.16, // Gauge/bar track washes — lighter step of the fill's own hue
-  SUBTLE: 0.15, // Light overlay for zones
   WASH: 0.1, // Flat area fill under the data line
-  MINIMAL: 0.08, // Very subtle grid lines
 } as const;
 
 /**
@@ -34,14 +34,6 @@ export const CHART_OPACITY = {
  */
 export const getChartColors = (colors: ThemeColors): ChartColors => {
   return {
-    // Performance levels - status colors reserved for good/bad meaning
-    performance: {
-      excellent: colors.success, // Green - universally positive
-      good: colors.info, // Blue (not sage) - calm, stable, distinct from green
-      moderate: colors.warning, // Orange/Gold - caution
-      poor: colors.error, // Red - attention needed
-    },
-
     // Chart UI elements - optimized for data visualization contrast
     ui: {
       background: colors.background,

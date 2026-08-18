@@ -67,7 +67,7 @@ jest.mock('@shopify/react-native-skia', () => {
 });
 
 import { useMemoryHorizonDistribution } from '@/hooks/vocabulary/useMemoryHorizonDistribution';
-import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
+import { useMemoryInsights } from '@/hooks/vocabulary/useMemoryInsights';
 import { useVocabularyGrowthChart } from '@/hooks/vocabulary/useVocabularyGrowthChart';
 import type { StudyWord } from '@/types/vocabulary.types';
 import {
@@ -538,9 +538,8 @@ describe('what the memory-strength surfaces claim to measure', () => {
     // tapped, divided by its own denominator, has told you nothing. The
     // invariant still holds and still matters — the hero is derived from this
     // average, so if they could disagree the hero would be the one lying.
-    const { result } = renderHook(() => useRetrievabilityChart(WORDS));
-    const { recallableWords, currentRetrievability, measuredWords } =
-      result.current.chartData.insights;
+    const { result } = renderHook(() => useMemoryInsights(WORDS));
+    const { recallableWords, currentRetrievability, measuredWords } = result.current;
 
     expect(recallableWords).toBe(
       Math.min(measuredWords, Math.round((currentRetrievability / 100) * measuredWords)),
@@ -551,23 +550,22 @@ describe('what the memory-strength surfaces claim to measure', () => {
 
   test('nothing practised yet reports no recallable words, never zero recall', () => {
     const allNew = NEVER_REVIEWED.map(makeWord);
-    const { result } = renderHook(() => useRetrievabilityChart(allNew));
-    const { recallableWords, measuredWords } = result.current.chartData.insights;
+    const { result } = renderHook(() => useMemoryInsights(allNew));
+    const { recallableWords, measuredWords } = result.current;
 
     // measuredWords 0 is what the hero gates its "—" on. recallableWords is
     // also 0 here, but the UI must never render it: 0 measured is an absence of
     // measurement, not a measurement of nothing.
     expect(measuredWords).toBe(0);
     expect(recallableWords).toBe(0);
-    expect(result.current.chartData.hasData).toBe(false);
   });
 
   test('the week-ahead slipping count is a delta, and never negative', () => {
     // Retrievability decays monotonically with no reviews, so the number of
     // at-risk words can only grow across the window.
-    const { result } = renderHook(() => useRetrievabilityChart(WORDS));
-    const { criticalWords, criticalWordsInWeek } = result.current.chartData.insights;
-    const forecast = result.current.retrievabilityData;
+    const { result } = renderHook(() => useMemoryInsights(WORDS));
+    const { criticalWords, criticalWordsInWeek } = result.current;
+    const forecast = calculateRetrievabilityForecast(WORDS, DAYS_7);
 
     expect(criticalWordsInWeek).toBeGreaterThanOrEqual(0);
     expect(criticalWords + criticalWordsInWeek).toBe(forecast[forecast.length - 1]?.criticalWords);
@@ -578,7 +576,7 @@ describe('what the memory-strength surfaces claim to measure', () => {
 describe('memory horizon constellation', () => {
   test('the dots account for exactly the practised words, and no others', () => {
     const { result } = renderHook(() => useMemoryHorizonDistribution(WORDS));
-    const { result: retention } = renderHook(() => useRetrievabilityChart(WORDS));
+    const { result: retention } = renderHook(() => useMemoryInsights(WORDS));
 
     const plotted = result.current.bins.reduce((sum, count) => sum + count, 0);
 
@@ -586,7 +584,7 @@ describe('memory horizon constellation', () => {
     // about the same population. Both gate on hasBeenPractised, so a word that
     // has a horizon must also be one the forgetting curve can speak for.
     expect(plotted).toBe(result.current.practisedCount);
-    expect(plotted).toBe(retention.current.chartData.insights.measuredWords);
+    expect(plotted).toBe(retention.current.measuredWords);
     expect(result.current.practisedCount + result.current.notStartedCount).toBe(WORDS.length);
   });
 

@@ -8,7 +8,7 @@ import {
 import { STRINGS } from '@/constants/strings';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
-import { hasBeenPractised } from '@/utils/wordClassification';
+import { dueTimestampMs, hasBeenPractised } from '@/utils/wordClassification';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -159,44 +159,6 @@ export function calculateRetrievabilityForecast(
 // forward-only forecast cannot describe a direction the learner is moving in.
 
 /**
- * Pre-computed word due data for efficient forecast calculations
- */
-interface WordDueData {
-  dueMs: number;
-  /** State 0 — never studied, so always due for its first review. */
-  isNew: boolean;
-}
-
-/**
- * Pre-compute due timestamps for all words (single pass)
- */
-function precomputeWordDueData(words: StudyWord[]): WordDueData[] {
-  return words.map(word => {
-    const due = parseSupabaseTimestamp(word.fsrs_due);
-
-    return {
-      dueMs: due ? due.getTime() : Number.POSITIVE_INFINITY,
-      isNew: (word.fsrs_state ?? 0) === 0,
-    };
-  });
-}
-
-/**
- * Check if a word is due on a specific date using pre-computed data.
- *
- * Deliberately the same rule the server's `onlyDue` filter and
- * `calculateDueWords` use — `fsrs_due <= target OR state 0` — so the forecast's
- * "Today" and the queue the Practice screen actually serves are the same
- * number. It does NOT apply the session cooldown: that is a gate on re-serving
- * a finished session's words, not a property of the schedule, and anchoring it
- * to each forecast day made the chart disagree with the CTA beside it.
- */
-function isWordDueOnDateFast(wordData: WordDueData, targetDateMs: number): boolean {
-  if (wordData.isNew) return true;
-  return Number.isFinite(wordData.dueMs) && wordData.dueMs <= targetDateMs;
-}
-
-/**
  * Calculate due words forecast for the next 7 days
  * Optimized: Pre-computes word data once, then iterates dates
  */
@@ -204,12 +166,22 @@ export function calculateDueWordsForecast(
   studyWords: StudyWord[],
   days: number = 7,
 ): DueWordsForecast[] {
-  // A new word is due for its first review whether or not it carries a due
-  // date, so it cannot be filtered out on `fsrs_due` alone.
-  const validWords = studyWords.filter(w => w.fsrs_due != null || (w.fsrs_state ?? 0) === 0);
-
-  // Pre-compute due data for all words (single pass)
-  const wordDueData = precomputeWordDueData(validWords);
+  // ONE rule decides both which words belong to this forecast and, per day,
+  // whether they have come due — so the denominator and the counts can never
+  // disagree about the same row. The pre-filter here used to be its own test
+  // (`fsrs_due != null || (state ?? New) === New`), which read a NULL state as
+  // New while the due rule below did not: a stateless row with no due date was
+  // counted in `totalWords` and then never counted as due on any day.
+  //
+  // `+Infinity` is `dueTimestampMs`' "no usable date and not new" — never due,
+  // on any day, so it is not part of the population either.
+  //
+  // Parsed ONCE per word rather than once per word per day; that is the only
+  // reason this precomputes at all. `dueMs <= targetMs` below IS `isDueAt`,
+  // with the parse lifted out of the inner loop.
+  const dueTimestamps = studyWords
+    .map(dueTimestampMs)
+    .filter(dueMs => dueMs < Number.POSITIVE_INFINITY);
 
   // Generate future dates for forecasting
   const dates = generateForecastDates(days);
@@ -219,8 +191,8 @@ export function calculateDueWordsForecast(
   // Calculate due counts for each date
   const dueCounts: number[] = dateData.map(({ targetMs }) => {
     let count = 0;
-    for (const data of wordDueData) {
-      if (isWordDueOnDateFast(data, targetMs)) {
+    for (const dueMs of dueTimestamps) {
+      if (dueMs <= targetMs) {
         count++;
       }
     }
@@ -237,7 +209,7 @@ export function calculateDueWordsForecast(
       date,
       dueWords,
       newlyDue,
-      totalWords: validWords.length,
+      totalWords: dueTimestamps.length,
     };
   });
 }

@@ -188,7 +188,11 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     playSentenceAudio,
     restudying,
     continueFromRestudy,
-  } = useReview({ fromRemember, setPlaybackPriority: voice.setPlaybackPriority });
+  } = useReview({
+    fromRemember,
+    setPlaybackPriority: voice.setPlaybackPriority,
+    isMicStreamOpen: voice.isMicStreamOpen,
+  });
 
   /**
    * Every grade in the session goes through here, whichever input decided it.

@@ -1,3 +1,5 @@
+import { State } from 'ts-fsrs';
+
 import type { TablesInsert } from '@/types/database.types';
 import type { FSRSWordUpdate } from '@/types/fsrs.types';
 
@@ -8,7 +10,6 @@ const INITIAL_FSRS_SCHEDULED_DAYS = 0;
 const INITIAL_FSRS_LEARNING_STEPS = 0;
 const INITIAL_FSRS_REPS = 0;
 const INITIAL_FSRS_LAPSES = 0;
-const INITIAL_FSRS_STATE = 0; // New state - will show as "due" for first review
 
 /**
  * Canonical "new card" FSRS field set, typed as FSRSWordUpdate (non-null).
@@ -30,7 +31,8 @@ export function createResetFSRSUpdate(now: Date = new Date()): FSRSWordUpdate {
     fsrs_learning_steps: INITIAL_FSRS_LEARNING_STEPS,
     fsrs_reps: INITIAL_FSRS_REPS,
     fsrs_lapses: INITIAL_FSRS_LAPSES,
-    fsrs_state: INITIAL_FSRS_STATE,
+    // New — shows as "due" for its first review.
+    fsrs_state: State.New,
     fsrs_last_review: iso, // Explicitly set to ensure database constraint compliance
   };
 }

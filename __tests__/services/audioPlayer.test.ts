@@ -826,6 +826,26 @@ describe('audioPlayer service', () => {
       expect(mockCreateAudioPlayer).toHaveBeenCalled();
     });
 
+    // react-native-audio-api configures the SAME AVAudioSession directly, so
+    // this flag can describe a session that no longer exists: a foreground /
+    // interruption reopen puts it back on .playAndRecord (and, with iOS raw mode
+    // on, mode .measurement) without coming through here. Every guard that
+    // restores playback shape is an equality check on the flag, so a stale one
+    // silently disables all of them — which is how a backgrounded review came
+    // back with prompts nobody could hear. A teardown must be able to insist.
+    test('re-applies the playback mode when forced, even if the flag agrees', async () => {
+      await audioService.setRecordingSessionEnabled(false);
+      mockSetAudioModeAsync.mockClear();
+
+      await audioService.setRecordingSessionEnabled(false);
+      expect(mockSetAudioModeAsync).not.toHaveBeenCalled();
+
+      await audioService.setRecordingSessionEnabled(false, { force: true });
+      expect(mockSetAudioModeAsync).toHaveBeenCalledWith(
+        expect.objectContaining({ allowsRecording: false }),
+      );
+    });
+
     test('leaves the audio mode alone when no recording session is held', async () => {
       await audioService.preconfigureAudioSession();
       mockSetAudioModeAsync.mockClear();

@@ -1,7 +1,3 @@
-import type { ChartColors } from '@/types/ui/chart.types';
-
-import { PERFORMANCE_THRESHOLDS } from '@/constants/chartConstants';
-
 // Generate date range for charts - using UTC to avoid timezone issues
 export const generateDateRange = (days: number) => {
   const today = new Date();
@@ -21,54 +17,6 @@ export const generateDateRange = (days: number) => {
 };
 
 // Note: calculateRetrievability is available from @/utils/fsrsUtils
-
-/**
- * Creates standardized performance zones for charts
- * 3-zone system matching the memory gauge for visual consistency:
- * - Green: 75%+ (excellent retention)
- * - Orange: 40-74% (moderate retention)
- * - Red: <40% (poor retention, needs urgent practice)
- *
- * @param chartHeight - Height of the chart area
- * @param topPadding - Top padding (default 0)
- * @param chartColors - Chart colors object
- * @returns Array of performance zone objects
- */
-export const createStandardizedPerformanceZones = (
-  chartHeight: number,
-  topPadding: number = 0,
-  chartColors: ChartColors,
-) => {
-  const availableHeight = chartHeight - topPadding;
-
-  return [
-    {
-      name: 'Excellent',
-      min: PERFORMANCE_THRESHOLDS.EXCELLENT, // 75%
-      max: 100,
-      color: chartColors.performance.excellent, // Full opacity to match gauge
-      y: topPadding,
-      height: ((100 - PERFORMANCE_THRESHOLDS.EXCELLENT) / 100) * availableHeight,
-    },
-    {
-      name: 'Moderate',
-      min: PERFORMANCE_THRESHOLDS.FAIR, // 40%
-      max: PERFORMANCE_THRESHOLDS.EXCELLENT, // 75%
-      color: chartColors.performance.moderate, // Full opacity to match gauge
-      y: topPadding + ((100 - PERFORMANCE_THRESHOLDS.EXCELLENT) / 100) * availableHeight,
-      height:
-        ((PERFORMANCE_THRESHOLDS.EXCELLENT - PERFORMANCE_THRESHOLDS.FAIR) / 100) * availableHeight,
-    },
-    {
-      name: 'Poor',
-      min: PERFORMANCE_THRESHOLDS.POOR, // 0%
-      max: PERFORMANCE_THRESHOLDS.FAIR, // 40%
-      color: chartColors.performance.poor, // Full opacity to match gauge
-      y: topPadding + ((100 - PERFORMANCE_THRESHOLDS.FAIR) / 100) * availableHeight,
-      height: ((PERFORMANCE_THRESHOLDS.FAIR - PERFORMANCE_THRESHOLDS.POOR) / 100) * availableHeight,
-    },
-  ];
-};
 
 /**
  * Creates a smooth area fill path for line charts

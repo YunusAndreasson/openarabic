@@ -11,7 +11,6 @@ import type { StudyWord } from '@/types/vocabulary.types';
 
 interface DueWordsPrognosisChartProps {
   studyWords: StudyWord[];
-  onInfoPress?: () => void;
   hideTitle?: boolean;
 }
 
@@ -22,8 +21,16 @@ interface DueWordsRecord {
   totalWords: number;
 }
 
+/**
+ * Whole words, no decimals. Hoisted rather than written inline at the call site
+ * because VocabularyChart's memo comparator holds every prop to reference
+ * equality, and an arrow rebuilt on each render would re-render the chart on
+ * every parent render for a function that never changes.
+ */
+const formatWholeNumber = (value: number): string => `${value}`;
+
 export const DueWordsPrognosisChart = memo<DueWordsPrognosisChartProps>(
-  ({ studyWords = [], onInfoPress, hideTitle = true }: DueWordsPrognosisChartProps) => {
+  ({ studyWords = [], hideTitle = true }: DueWordsPrognosisChartProps) => {
     const graphWidth = useGraphWidth();
     const { dueWordsData, chartData } = useDueWordsChart(studyWords);
     const { xLabels, xLabelPositions } = useChartAxisLabels(dueWordsData);
@@ -100,12 +107,11 @@ export const DueWordsPrognosisChart = memo<DueWordsPrognosisChartProps>(
         graphWidth={graphWidth}
         title={CHART_LABELS.DUE_WORDS_PROGNOSIS}
         subtitle={subtitle}
-        onCardPress={onInfoPress}
         hideTitle={hideTitle}
         hasData={chartData.hasData}
         isFuturePrediction={true} // Today is leftmost for future predictions
         emptyStateText={EMPTY_STATE_MESSAGES.dueWords}
-        yLabelFormatter={(value: number) => `${value}`}
+        yLabelFormatter={formatWholeNumber}
         bottomSummary={bottomSummary}
       />
     );

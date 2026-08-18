@@ -75,20 +75,26 @@ const TONE_FEEDBACK: Partial<Record<VerdictTone, () => void>> = {
 /**
  * The JS-side landing point of the animation's haptic reaction.
  *
- * Takes a plain number because it is called across the worklet boundary with
- * whatever the shared value holds. `NONE` has no entry and no haptic — there is
- * no outcome to report. Exported so the tone → texture mapping can be tested
- * directly: the reaction that calls it lives on the UI thread, and a renderer
- * cannot step a shared value across a threshold to prove the edge.
+ * `NONE` has no entry and no haptic — there is no outcome to report. Exported
+ * so the tone → texture mapping can be tested directly: the reaction that calls
+ * it lives on the UI thread, and a renderer cannot step a shared value across a
+ * threshold to prove the edge.
+ *
+ * Takes `VerdictTone`, not a bare `number`. It used to take a number and cast
+ * on the way in — the shared value it reads was itself `SharedValue<number>`,
+ * so the closed union was widened at the worklet boundary and narrowed back by
+ * assertion at the other end, which is exactly the handoff where a wrong value
+ * would arrive. Typed through, a tone outside the four is a compile error at
+ * whichever end invents it.
  * @internal
  */
-export const fireVerdictFeedback = (tone: number): void => {
-  TONE_FEEDBACK[tone as VerdictTone]?.();
+export const fireVerdictFeedback = (tone: VerdictTone): void => {
+  TONE_FEEDBACK[tone]?.();
 };
 
 export interface CardVerdictResult {
   /** Which verdict is showing — read on the UI thread to pick a colour. */
-  verdictTone: SharedValue<number>;
+  verdictTone: SharedValue<VerdictTone>;
   /** 0..1 strength. Drives the ring's opacity, the wash, the pop and the wince. */
   verdictLevel: SharedValue<number>;
   /**
@@ -129,7 +135,7 @@ export interface CardVerdictResult {
  * already documents.
  */
 export const useCardVerdict = (): CardVerdictResult => {
-  const verdictTone = useSharedValue<number>(VERDICT_TONE.NONE);
+  const verdictTone = useSharedValue<VerdictTone>(VERDICT_TONE.NONE);
   const verdictLevel = useSharedValue(0);
   const verdictShakePhase = useSharedValue(0);
   /**
@@ -179,7 +185,7 @@ export const useCardVerdict = (): CardVerdictResult => {
   );
 
   const animateVerdict = useCallback(
-    (tone: number, cardKey: string) => {
+    (tone: VerdictTone, cardKey: string) => {
       'worklet';
       // Stale: the card this verdict was meant for is no longer the one on
       // screen (see activeKey above). A no-op, not a defensive clamp — there is

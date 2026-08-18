@@ -9,8 +9,8 @@ export interface ProgressBarProps {
    */
   progress: number;
   /**
-   * Height of the progress bar
-   * @default LAYOUT.SPACING.SMALL
+   * Height of the progress bar. Also sets the pill radius (height / 2).
+   * @default LAYOUT.SPACING.MEDIUM
    */
   height?: number;
   /**
@@ -27,13 +27,13 @@ export interface ProgressBarProps {
    */
   fillStyle?: ViewStyle;
   /**
-   * Custom background color for the progress bar
-   * If not provided, uses theme-based color
+   * Custom track color for the progress bar.
+   * If not provided, uses `colors.progressBackground`.
    */
   backgroundColor?: string;
   /**
-   * Custom fill color for the progress bar
-   * If not provided, uses theme's tint color
+   * Custom fill color for the progress bar.
+   * If not provided, uses `colors.progressIndicator`.
    */
   fillColor?: string;
 }

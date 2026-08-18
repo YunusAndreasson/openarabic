@@ -94,6 +94,34 @@ export interface PromptSnapshot {
   lateFinishEventSeen: boolean | null;
   /** ms by which it lost that race. */
   lateFinishEventMs: number | null;
+  /**
+   * Was the shared audio session still record-capable when the prompt played?
+   *
+   * Must always be `false`: the prompt takes the session off `.playAndRecord`
+   * first (VoiceGradingProvider.setPlaybackPriority) precisely because that
+   * category — and, with the Advanced iOS raw-mode toggle on, its
+   * `.measurement` mode — plays "noticeably quiet", quiet enough that the
+   * learner reports hearing nothing.
+   *
+   * Recorded because that failure is otherwise invisible from every angle at
+   * once: `started` is `true`, `positionSamples` and `audibleMs` look healthy
+   * (the play head really is moving), nothing throws, so there is no
+   * `prompt_silent` row and no Sentry event — 149 iOS rows across six days all
+   * claimed a clean prompt while the learner was hearing silence. A `true` here
+   * names the cause in one row.
+   */
+  sessionRecordCapable: boolean | null;
+  /**
+   * Was the microphone's input stream open while the prompt played?
+   *
+   * The independent half of the pair above, and the more trustworthy one:
+   * `sessionRecordCapable` is what the app BELIEVES about a session two
+   * libraries configure, and this bug IS that belief being wrong, so on its own
+   * it can only ever confirm the failure, never rule it out. An open input
+   * stream cannot exist on a playback-only session — so `false` here with an
+   * open stream is the desync itself, reported by the native side.
+   */
+  micStreamOpen: boolean | null;
 }
 
 const EMPTY: PromptSnapshot = {
@@ -113,6 +141,8 @@ const EMPTY: PromptSnapshot = {
   positionSamples: null,
   lateFinishEventSeen: null,
   lateFinishEventMs: null,
+  sessionRecordCapable: null,
+  micStreamOpen: null,
 };
 
 /** Finish reasons that mean the clip was allowed to run out. Anything else —
@@ -173,7 +203,17 @@ export function recordPromptAbsent(key: string): void {
 /** `playAudio` resolved. `started:false` here IS the silent-card bug. */
 export function recordPromptPlay(
   key: string,
-  outcome: { started: boolean; playMs: number; cacheMissed: boolean; healed: boolean },
+  outcome: {
+    started: boolean;
+    playMs: number;
+    cacheMissed: boolean;
+    healed: boolean;
+    /** See `PromptSnapshot.sessionRecordCapable` — `true` is the quiet prompt. */
+    sessionRecordCapable: boolean;
+    /** See `PromptSnapshot.micStreamOpen` — `true` with `sessionRecordCapable`
+     *  false is the same quiet prompt, caught from the native side. */
+    micStreamOpen: boolean;
+  },
 ): void {
   if (key !== currentKey) return;
   snapshot = {
@@ -182,6 +222,8 @@ export function recordPromptPlay(
     playMs: outcome.playMs,
     cacheMissed: outcome.cacheMissed,
     healed: outcome.healed,
+    sessionRecordCapable: outcome.sessionRecordCapable,
+    micStreamOpen: outcome.micStreamOpen,
     // Measured from the card, not from the play call, so it includes the gate.
     toAudibleMs: outcome.started ? Date.now() - cardCurrentAt : null,
     // A prompt that never started was never heard — settle it now rather than

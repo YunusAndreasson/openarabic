@@ -7,7 +7,7 @@ import { ChartSheetContent } from '@/components/practice/ChartSheetContent';
 import { DueWordsPrognosisChart } from '@/components/practice/charts/DueWordsPrognosisChart';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
+import { useMemoryInsights } from '@/hooks/vocabulary/useMemoryInsights';
 import type { StudyWord } from '@/types/vocabulary.types';
 
 /**
@@ -22,7 +22,7 @@ import type { StudyWord } from '@/types/vocabulary.types';
  * Module-level so `ChartSheetContent` gets a stable component reference.
  */
 function DueWordsContent({ studyWords }: { studyWords: StudyWord[] }): JSX.Element {
-  const { insights } = useRetrievabilityChart(studyWords).chartData;
+  const insights = useMemoryInsights(studyWords);
 
   const slipping = [
     insights.criticalWords > 0

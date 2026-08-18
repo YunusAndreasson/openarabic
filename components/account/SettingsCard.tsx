@@ -135,7 +135,7 @@ export const SettingsCard = memo((props: SettingsCardProps) => {
           <View style={styles.iconContainer}>
             <Ionicons color={iconColor} name={icon} size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM} />
           </View>
-          <View style={subtitle ? styles.textContainerWithSubtitle : styles.textContainer}>
+          <View style={styles.textContainer}>
             <ThemedText type="body" colorName={textColor === 'error' ? 'error' : 'text'}>
               {label}
             </ThemedText>
@@ -156,7 +156,6 @@ SettingsCard.displayName = 'SettingsCard';
 
 const styles = StyleSheet.create({
   card: {
-    marginBottom: 0,
     minHeight: MIN_TOUCH_TARGET.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
@@ -177,11 +176,6 @@ const styles = StyleSheet.create({
     padding: LAYOUT.SPACING.SMALL,
   },
   textContainer: {
-    marginLeft: LAYOUT.SPACING.MEDIUM,
-    flex: 1,
-  },
-  textContainerWithSubtitle: {
-    flexDirection: 'column',
     marginLeft: LAYOUT.SPACING.MEDIUM,
     flex: 1,
   },

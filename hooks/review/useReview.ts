@@ -32,12 +32,7 @@ import { useTimerCleanup } from '@/hooks/utils';
 import { useFSRS } from '@/hooks/vocabulary';
 import { audioCache } from '@/services/audioCache';
 import { simpleAudioService } from '@/services/audioPlayer';
-import type {
-  ReviewStateRefs,
-  ReviewTimeRefs,
-  SessionMetrics,
-  WordConfidence,
-} from '@/types/review.types';
+import type { IntervalLabels, SessionMetrics, WordConfidence } from '@/types/review.types';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { resetArmTelemetry } from '@/utils/armTelemetry';
@@ -64,6 +59,22 @@ import {
 } from '@/utils/reviewDiagnostics';
 import { generateStorageUrl } from '@/utils/storageUtils';
 
+/** Time tracking for one review session. Local to this hook — nothing else
+ *  reads or writes these, and they are a scratchpad, not a shared contract. */
+interface ReviewTimeRefs {
+  lastProgressUpdate: number;
+  lastProcessedWordId: string | null;
+}
+
+/** Session-lifecycle latches for one review session. Same rationale as
+ *  ReviewTimeRefs: implementation detail of this hook, kept beside it. */
+interface ReviewStateRefs {
+  maxProgress: number;
+  completionTriggered: boolean;
+  isUpdatingWord: boolean;
+  progressUpdatedForCompletion: boolean;
+}
+
 interface UseReviewProps {
   fromRemember?: boolean;
   onClose?: () => void;
@@ -78,6 +89,14 @@ interface UseReviewProps {
    * optional. Absent, the prompt simply plays on whatever session is current.
    */
   setPlaybackPriority?: (playbackOnly: boolean) => Promise<void>;
+  /**
+   * Is the microphone's input stream open? Read at the instant a prompt plays,
+   * for the prompt record only — an open stream while playback is supposed to
+   * own the session is the inaudible-prompt bug, and it is the only half of that
+   * evidence the app does not infer from its own bookkeeping. Same injection
+   * rationale as `setPlaybackPriority`; absent, the field is simply not recorded.
+   */
+  isMicStreamOpen?: () => boolean;
 }
 
 interface UseReviewReturn {
@@ -111,8 +130,10 @@ interface UseReviewReturn {
     confidence: WordConfidence,
     opts?: { fromVoice?: boolean; skipBeat?: boolean },
   ) => boolean;
-  /** Per-grade interval labels ("10m"/"4d") for the current card's grade bar. */
-  intervalLabels: Partial<Record<WordConfidence, string>>;
+  /** Per-grade interval labels ("10m"/"4d") for the current card's grade bar.
+   *  `null` when there is no card to label — an empty object used to stand in
+   *  for that, which typed as "all three labels" while holding none of them. */
+  intervalLabels: IntervalLabels | null;
   handleClose: () => void;
   transparentStyle: AnimatedStyleProp<ViewStyle>;
   sessionMetrics: SessionMetrics;
@@ -215,6 +236,7 @@ export function useReview({
   fromRemember,
   onClose,
   setPlaybackPriority,
+  isMicStreamOpen,
 }: UseReviewProps = {}): UseReviewReturn {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -354,6 +376,13 @@ export function useReview({
     playbackPriority(playbackOnly),
   );
   const getVoiceEnabled = useEffectEvent(() => voiceEnabled);
+  /** Both halves of "what session did this prompt actually play on", sampled
+   *  together at the moment it played. See PromptSnapshot for why one is not
+   *  enough. Effect Event for the same reason as the handoff above. */
+  const getSessionShape = useEffectEvent(() => ({
+    sessionRecordCapable: simpleAudioService.isRecordingSessionEnabled,
+    micStreamOpen: isMicStreamOpen?.() ?? false,
+  }));
 
   /** True once the app has actually left the foreground, so returning to it can
    *  be told apart from the first `active` the listener ever sees. */
@@ -423,7 +452,7 @@ export function useReview({
   // `previewIntervals` is guarded for partial useFSRS mocks in tests; in production
   // it is always present.
   const intervalLabels = useMemo(
-    () => (currentWord && previewIntervals ? previewIntervals(currentWord) : {}),
+    () => (currentWord && previewIntervals ? previewIntervals(currentWord) : null),
     [currentWord, previewIntervals],
   );
 
@@ -1084,7 +1113,11 @@ export function useReview({
       .then(started => {
         const playMs = Date.now() - playStartedAt;
         endPromptPlay({ started, movedOn: movedOn() });
-        recordPromptPlay(keyForRun, { started, playMs, ...playDetail });
+        // Read at the moment the prompt played, not later: a prompt that ran on
+        // a record-capable session — or with the input stream still open, which
+        // is the same thing said by the native side — is the "I hear nothing"
+        // card, and these are the only fields that say so. See PromptSnapshot.
+        recordPromptPlay(keyForRun, { started, playMs, ...playDetail, ...getSessionShape() });
         if (movedOn()) return;
         // Playback didn't start (cache miss / play failure) — don't strand the
         // voice mic waiting; let it arm now.
@@ -1128,6 +1161,7 @@ export function useReview({
           started: false,
           playMs: Date.now() - playStartedAt,
           ...playDetail,
+          ...getSessionShape(),
         });
         handleError(err);
         markDone();

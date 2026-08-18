@@ -14,7 +14,6 @@ interface BaseChartProps {
   title?: string;
   subtitle?: string;
   hideTitle?: boolean;
-  onCardPress?: () => void;
 
   // Content props
   children: ReactNode;
@@ -34,7 +33,6 @@ export function BaseChart({
   title = '',
   subtitle = '',
   hideTitle = true,
-  onCardPress,
   children,
   hasData,
   contentHeight = 176, // Optimized to match GRAPH_HEIGHT_LARGE
@@ -53,7 +51,7 @@ export function BaseChart({
   // Empty state
   if (!hasData) {
     return (
-      <BaseCard onPress={onCardPress}>
+      <BaseCard>
         <View style={styles.content}>
           {!hideTitle && (
             <View style={styles.titleGroup}>
@@ -77,7 +75,7 @@ export function BaseChart({
 
   // Main chart with data
   return (
-    <BaseCard onPress={onCardPress}>
+    <BaseCard>
       <View style={styles.content}>
         {/* Header Section */}
         {!hideTitle && (

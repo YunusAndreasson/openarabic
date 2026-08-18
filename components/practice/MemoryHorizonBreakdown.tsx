@@ -123,7 +123,7 @@ function HorizonRow({
  * This replaced a retention gauge over a seven-day forecast line. Both were
  * true and neither was a detail view. The gauge was the hero's number divided
  * by its own denominator — `recallableWords` IS `currentRetrievability × N`,
- * deliberately so (see `useRetrievabilityChart`) — and the line answered a
+ * deliberately so (see `useMemoryInsights`) — and the line answered a
  * different question in a different FSRS quantity: retrievability decaying over
  * a week, where the card had just taught stability. Tapping a chart should
  * reveal what is inside it, and what is inside this one is words.
