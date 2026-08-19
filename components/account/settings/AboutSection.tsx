@@ -22,10 +22,10 @@ const openSocialLink = async (url: string) => {
 };
 
 /**
- * About settings — split into Legal and Community sections.
+ * About — the legal documents and the maker's credit.
  *
- * Legal: Terms, Privacy, Legal & Attributions.
- * Community: Social media links.
+ * The credit used to be a section of its own holding a single row; it reads the
+ * same here and costs one fewer heading.
  */
 export const AboutSection = memo(() => {
   const handleTermsPress = useCallback(() => router.push(ROUTE_PATHS.TERMS), []);
@@ -34,7 +34,7 @@ export const AboutSection = memo(() => {
 
   return (
     <>
-      <SettingsSection title={STRINGS.LEGAL_SECTION}>
+      <SettingsSection title={STRINGS.ABOUT_SECTION}>
         <SettingsCard
           icon="document-text"
           label={STRINGS.TERMS_OF_SERVICE}
@@ -52,6 +52,12 @@ export const AboutSection = memo(() => {
           label={STRINGS.LEGAL_ATTRIBUTIONS}
           rightType="chevron"
           onPress={handleLegalPress}
+        />
+        <SettingsCard
+          icon="person-circle"
+          label={STRINGS.MAKER_BYLINE}
+          rightType="external"
+          onPress={() => openSocialLink(STRINGS.MAKER_PROJECTS_URL)}
         />
       </SettingsSection>
 
@@ -73,17 +79,6 @@ export const AboutSection = memo(() => {
           label={STRINGS.FACEBOOK}
           rightType="external"
           onPress={() => openSocialLink(STRINGS.FACEBOOK_URL)}
-        />
-      </SettingsSection>
-
-      {/* A single quiet credit. The maker's other apps live on his projects
-          page, so this stays one row instead of a billboard of links. */}
-      <SettingsSection title={STRINGS.MORE_FROM_MAKER}>
-        <SettingsCard
-          icon="person-circle"
-          label={STRINGS.MAKER_BYLINE}
-          rightType="external"
-          onPress={() => openSocialLink(STRINGS.MAKER_PROJECTS_URL)}
         />
       </SettingsSection>
     </>

@@ -1,8 +1,5 @@
-import { EmptyState } from '@/components/common';
-import { useRouter } from 'expo-router';
-import { useCallback } from 'react';
+import { SeededContentEmptyState } from '@/components/common';
 
-import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAddBeginnerArticles } from '@/hooks/playlist/useAddBeginnerArticles';
 
@@ -12,30 +9,18 @@ import { useAddBeginnerArticles } from '@/hooks/playlist/useAddBeginnerArticles'
  * listen; secondary CTA takes the user to Explore to pick their own.
  */
 export function SavedEmptyState() {
-  const router = useRouter();
   const { addArticles, isLoading, hasArticlesAvailable } = useAddBeginnerArticles();
 
-  const handleBrowse = useCallback(() => {
-    router.push({ pathname: ROUTE_PATHS.EXPLORE_TAB, params: { from: 'playlist' } });
-  }, [router]);
-
   return (
-    <EmptyState
+    <SeededContentEmptyState
+      source="playlist"
       icon="headset-outline"
       title={STRINGS.BOOKMARKS_EMPTY_TITLE}
       hint={STRINGS.BOOKMARKS_EMPTY_HINT}
-      action={{
-        label: STRINGS.PLAYLIST_EMPTY_SEED_CTA,
-        onPress: addArticles,
-        icon: 'sparkles-outline',
-        loading: isLoading,
-        disabled: !hasArticlesAvailable,
-      }}
-      secondaryAction={{
-        label: STRINGS.BROWSE_ARTICLES,
-        onPress: handleBrowse,
-        icon: 'compass-outline',
-      }}
+      seedLabel={STRINGS.PLAYLIST_EMPTY_SEED_CTA}
+      onSeed={addArticles}
+      isSeeding={isLoading}
+      canSeed={hasArticlesAvailable}
     />
   );
 }

@@ -8,6 +8,7 @@ import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import type { Article } from '@/types/articles.types';
+import { deduplicateArticlesByImage } from '@/utils/articleUtils';
 import { calculateProgressPercentage } from '@/utils/progressUtils';
 
 import { ArticleRail, type ArticleRailItem } from './ArticleRail';
@@ -41,16 +42,6 @@ function seededRandom(seed: number): () => number {
     x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
     return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
   };
-}
-
-function deduplicateByImageUrl(articles: Article[]): Article[] {
-  const seen = new Set<string>();
-  return articles.filter(article => {
-    if (!article.image_url) return true;
-    if (seen.has(article.image_url)) return false;
-    seen.add(article.image_url);
-    return true;
-  });
 }
 
 function shuffleAndSlice<T>(items: T[], count: number, sectionSeed: number): T[] {
@@ -98,7 +89,7 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
     const baseSeed = APP_SESSION_ID;
 
     // Beginner Friendly (difficulty 1-3)
-    const beginnerArticles = deduplicateByImageUrl(
+    const beginnerArticles = deduplicateArticlesByImage(
       shuffleAndSlice(
         unreadArticles.filter(a => a.difficulty_level <= BEGINNER_MAX_DIFFICULTY),
         MAX_ARTICLES_PER_SECTION,
@@ -114,7 +105,7 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
     }
 
     // Short Reads (< 10 sentences, ~2 min)
-    const shortArticles = deduplicateByImageUrl(
+    const shortArticles = deduplicateArticlesByImage(
       shuffleAndSlice(
         unreadArticles.filter(
           a =>
@@ -134,7 +125,7 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
     }
 
     // Long Reads (>= 15 sentences, ~4+ min)
-    const longArticles = deduplicateByImageUrl(
+    const longArticles = deduplicateArticlesByImage(
       shuffleAndSlice(
         unreadArticles.filter(a => a.article_sentences.length >= LONG_ARTICLE_MIN_SENTENCES),
         MAX_ARTICLES_PER_SECTION,
@@ -150,7 +141,7 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
     }
 
     // Advanced (difficulty >= 4)
-    const advancedArticles = deduplicateByImageUrl(
+    const advancedArticles = deduplicateArticlesByImage(
       shuffleAndSlice(
         unreadArticles.filter(a => a.difficulty_level >= ADVANCED_MIN_DIFFICULTY),
         MAX_ARTICLES_PER_SECTION,

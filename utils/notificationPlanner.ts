@@ -7,11 +7,13 @@ import {
 import { NOTIFICATION_TYPES, SMART_NOTIFICATIONS } from '@/constants/notifications';
 import type { SmartNotificationType } from '@/constants/notifications';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { normalizeTimestamp, toLocalDateString } from '@/utils/dateTimeUtils';
+import {
+  MILLISECONDS_PER_DAY,
+  MILLISECONDS_PER_HOUR,
+  normalizeTimestamp,
+  toLocalDateString,
+} from '@/utils/dateTimeUtils';
 import { timeUntilRetrievability } from '@/utils/fsrsUtils';
-
-const MS_PER_HOUR = 60 * 60 * 1000;
-const MS_PER_DAY = 24 * MS_PER_HOUR;
 
 export interface PlannedNotification {
   /** Stable identifier, e.g. `srs-due-2026-07-21` — makes rescheduling idempotent */
@@ -67,7 +69,7 @@ function computeTimelines(words: StudyWord[], nowMs: number): WordTimeline[] {
       const lastMs = Date.parse(lastStr);
       const slipDays = timeUntilRetrievability(stability, CRITICAL_RETRIEVABILITY_THRESHOLD);
       if (!Number.isNaN(lastMs) && slipDays !== null) {
-        slipMs = lastMs + slipDays * MS_PER_DAY;
+        slipMs = lastMs + slipDays * MILLISECONDS_PER_DAY;
       }
     }
 
@@ -110,9 +112,9 @@ export function buildNotificationPlan(input: NotificationPlannerInput): PlannedN
   const minLeadMs = nowMs + SMART_NOTIFICATIONS.MIN_LEAD_MINUTES * 60 * 1000;
   const cooldownUntilMs =
     lastSessionCompletedAt !== undefined
-      ? lastSessionCompletedAt + DEFAULT_SESSION_COOLDOWN_HOURS * MS_PER_HOUR
+      ? lastSessionCompletedAt + DEFAULT_SESSION_COOLDOWN_HOURS * MILLISECONDS_PER_HOUR
       : 0;
-  const minGapMs = SMART_NOTIFICATIONS.MIN_GAP_HOURS * MS_PER_HOUR;
+  const minGapMs = SMART_NOTIFICATIONS.MIN_GAP_HOURS * MILLISECONDS_PER_HOUR;
 
   const plan: PlannedNotification[] = [];
   let lastKeptMs = Number.NEGATIVE_INFINITY;

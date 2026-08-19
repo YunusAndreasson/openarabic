@@ -10,6 +10,7 @@ import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { analytics } from '@/services/analytics';
 import type { Article } from '@/types/articles.types';
+import { MILLISECONDS_PER_DAY } from '@/utils/dateTimeUtils';
 import {
   getCachedOnboardingState,
   initializeOnboarding,
@@ -18,8 +19,6 @@ import {
   setOnboardingStorageUser,
   subscribeOnboarding,
 } from '@/utils/onboardingStorage';
-
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 export interface ChecklistItem {
   step: OnboardingStep;
@@ -79,7 +78,7 @@ export function useOnboardingChecklist(articlesData: Article[]) {
     const hasWords = (studyWords?.length ?? 0) > 0;
     const hasReadingHistory = (progressMap?.size ?? 0) > 0;
     const accountAgeDays = user.created_at
-      ? (Date.now() - new Date(user.created_at).getTime()) / MS_PER_DAY
+      ? (Date.now() - new Date(user.created_at).getTime()) / MILLISECONDS_PER_DAY
       : null;
     const isOldAccount =
       accountAgeDays !== null && accountAgeDays > ONBOARDING_CONFIG.ESTABLISHED_ACCOUNT_AGE_DAYS;

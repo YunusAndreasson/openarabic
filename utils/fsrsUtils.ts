@@ -7,10 +7,8 @@ import {
 } from '@/constants/fsrs';
 import { STRINGS } from '@/constants/strings';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
+import { MILLISECONDS_PER_DAY, parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
 import { dueTimestampMs, hasBeenPractised } from '@/utils/wordClassification';
-
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 // The app's one FSRS instance. The review engine (useFSRS) grades through it and
 // every read-only derivation here reads through it, so a config or library change
@@ -237,7 +235,9 @@ export function getNextReviewLabel(due: string | null): string {
 
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const startOfDueDay = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
-  const days = Math.round((startOfDueDay.getTime() - startOfToday.getTime()) / MS_PER_DAY);
+  const days = Math.round(
+    (startOfDueDay.getTime() - startOfToday.getTime()) / MILLISECONDS_PER_DAY,
+  );
 
   if (days <= 0) return STRINGS.WORD_DUE_LATER_TODAY;
   if (days === 1) return STRINGS.WORD_DUE_TOMORROW;

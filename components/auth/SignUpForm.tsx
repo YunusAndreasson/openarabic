@@ -3,7 +3,7 @@ import type { JSX } from 'react';
 import { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { AuthEmailInput, AuthPasswordInput } from './AuthFormInputs';
+import { AuthCredentialFields } from './AuthFormInputs';
 import { AuthSwitchPrompt } from './AuthSwitchPrompt';
 import { PasswordStrengthMeter } from './PasswordStrengthMeter';
 import { ThemedButton } from '@/components/primitives/ThemedButton';
@@ -26,20 +26,8 @@ import { useAuthFormFields } from '@/hooks/auth/useAuthFormFields';
  * - Error handling
  */
 export function SignUpForm(): JSX.Element {
-  const {
-    email,
-    password,
-    loading,
-    emailError,
-    passwordError,
-    signUpWithEmail,
-    passwordInputRef,
-    focusPasswordInput,
-    handleEmailChange,
-    handlePasswordChange,
-    handleEmailBlur,
-    handlePasswordBlur,
-  } = useAuthFormFields();
+  const fields = useAuthFormFields();
+  const { password, loading, signUpWithEmail } = fields;
 
   const handleSignIn = useCallback(() => {
     router.push(ROUTE_PATHS.AUTH_SIGN_IN);
@@ -47,25 +35,9 @@ export function SignUpForm(): JSX.Element {
 
   return (
     <View style={styles.container}>
-      <AuthEmailInput
-        value={email}
-        onChangeText={handleEmailChange}
-        onBlur={handleEmailBlur}
-        onSubmitEditing={focusPasswordInput}
-        error={emailError}
-      />
-
-      <AuthPasswordInput
-        value={password}
-        onChangeText={handlePasswordChange}
-        onBlur={handlePasswordBlur}
-        onSubmitEditing={signUpWithEmail}
-        error={passwordError}
-        isSignUp
-        inputRef={passwordInputRef}
-      >
+      <AuthCredentialFields fields={fields} onPasswordSubmit={signUpWithEmail} isSignUp>
         <PasswordStrengthMeter password={password} />
-      </AuthPasswordInput>
+      </AuthCredentialFields>
 
       <ThemedButton
         disabled={loading}

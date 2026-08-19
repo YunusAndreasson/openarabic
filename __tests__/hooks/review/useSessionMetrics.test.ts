@@ -302,6 +302,31 @@ describe('useSessionMetrics', () => {
       // Average should still be 1.5 from first word only
       expect(result.current.metrics.averageStabilityIncrease).toBeCloseTo(1.5, 2);
     });
+
+    test('uses stability samples rather than unique words for repeated grades', () => {
+      const { result } = renderHook(() => useSessionMetrics());
+
+      act(() => {
+        result.current.updateMetrics('unknown', {
+          rootId: rootId(100),
+          oldStability: 3,
+          newStability: 2,
+        });
+        result.current.updateMetrics('known', {
+          rootId: rootId(100),
+          oldStability: 2,
+          newStability: 4,
+        });
+        result.current.updateMetrics('known', {
+          rootId: rootId(100),
+          oldStability: 4,
+          newStability: 7,
+        });
+      });
+
+      expect(result.current.metrics.wordsReviewed).toBe(1);
+      expect(result.current.metrics.averageStabilityIncrease).toBeCloseTo(4 / 3, 5);
+    });
   });
 
   describe('Streak logic', () => {

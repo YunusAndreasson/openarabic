@@ -70,7 +70,9 @@ export function useFSRS({
 }: UseFSRSOptions): UseFSRSResult {
   const [wordQueue, setWordQueue] = useState<StudyWord[]>([]);
   const [currentWord, setCurrentWord] = useState<StudyWord | null>(null);
+  const [enrichmentBatches, setEnrichmentBatches] = useState<StudyWord[][]>([]);
   const [progress, setProgress] = useState<number>(0);
+  const [isEmpty, setIsEmpty] = useState<boolean>(false);
   const [isComplete, setIsComplete] = useState<boolean>(false);
   // Bumped by resetQueue so the init effect re-runs even when the due data's
   // identity hasn't changed (React Query structural sharing).
@@ -180,6 +182,13 @@ export function useFSRS({
       queueRef.current.push(word, calculateWordPriority(word, nowMs));
     });
 
+    if (chunk.length > 0) {
+      // A batch is append-only for the lifetime of the session. The live heap
+      // immediately starts shrinking and reordering after this point, so it
+      // cannot be the identity of a once-per-chunk enrichment query.
+      setEnrichmentBatches(batches => [...batches, chunk]);
+    }
+
     return chunk.length > 0;
   }, []);
 
@@ -243,7 +252,9 @@ export function useFSRS({
       // it only fires on genuine (re-armed) session starts, not on every render.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setProgress(0);
+      setIsEmpty(false);
       setIsComplete(false);
+      setEnrichmentBatches([sessionWords]);
       stateTrackingRef.current.completionTriggered = false;
       stateTrackingRef.current.isProcessingUpdate = false;
 
@@ -268,13 +279,16 @@ export function useFSRS({
         }
       }
     } else {
-      // No words available - complete immediately
-      setIsComplete(true);
+      // An empty due query is not a completed study session. Keep it distinct
+      // so the route can return to Practice without success UI or completion
+      // accounting.
+      setCurrentWord(null);
+      setWordQueue([]);
+      setEnrichmentBatches([]);
+      setProgress(0);
+      setIsEmpty(true);
+      setIsComplete(false);
       backlogRef.current = [];
-      if (onComplete && !stateTrackingRef.current.completionTriggered) {
-        stateTrackingRef.current.completionTriggered = true;
-        onComplete();
-      }
     }
   }, [dueWords, isLoading, onComplete, getNextWordWithSpacing, sessionEpoch]);
 
@@ -588,7 +602,9 @@ export function useFSRS({
     stateTrackingRef.current.queueInitialized = false;
     setWordQueue([]);
     setCurrentWord(null);
+    setEnrichmentBatches([]);
     setProgress(0);
+    setIsEmpty(false);
     setIsComplete(false);
     // Force the init effect to re-run even when the due data hasn't changed
     // identity since the last refetch.
@@ -641,7 +657,9 @@ export function useFSRS({
   return {
     currentWord,
     wordQueue,
+    enrichmentBatches,
     isLoading,
+    isEmpty,
     isComplete,
     progress,
     updateWord,

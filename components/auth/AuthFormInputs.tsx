@@ -1,4 +1,4 @@
-import type { RefObject } from 'react';
+import type { ReactNode, RefObject } from 'react';
 import { useCallback, useState } from 'react';
 import type { TextInput } from 'react-native';
 import { View, StyleSheet } from 'react-native';
@@ -27,6 +27,26 @@ interface AuthPasswordInputProps {
   inputRef?: RefObject<TextInput | null>;
 }
 
+export interface AuthCredentialFieldState {
+  email: string;
+  password: string;
+  emailError?: string;
+  passwordError?: string;
+  passwordInputRef: RefObject<TextInput | null>;
+  handleEmailChange: (text: string) => void;
+  handlePasswordChange: (text: string) => void;
+  handleEmailBlur: () => void;
+  handlePasswordBlur: () => void;
+  focusPasswordInput: () => void;
+}
+
+interface AuthCredentialFieldsProps {
+  fields: AuthCredentialFieldState;
+  onPasswordSubmit: () => void;
+  isSignUp?: boolean;
+  children?: ReactNode;
+}
+
 /**
  * Email input for auth forms with consistent configuration
  *
@@ -36,7 +56,7 @@ interface AuthPasswordInputProps {
  * - Mail icon
  * - Accessibility labels
  */
-export function AuthEmailInput({
+function AuthEmailInput({
   value,
   onChangeText,
   onBlur,
@@ -79,7 +99,7 @@ export function AuthEmailInput({
  * - Show/hide password toggle
  * - Accessibility labels
  */
-export function AuthPasswordInput({
+function AuthPasswordInput({
   value,
   onChangeText,
   onBlur,
@@ -124,6 +144,50 @@ export function AuthPasswordInput({
       />
       {children}
     </View>
+  );
+}
+
+/** The identical email/password field pair shared by both credential forms. */
+export function AuthCredentialFields({
+  fields,
+  onPasswordSubmit,
+  isSignUp = false,
+  children,
+}: AuthCredentialFieldsProps) {
+  const {
+    email,
+    password,
+    emailError,
+    passwordError,
+    passwordInputRef,
+    handleEmailChange,
+    handlePasswordChange,
+    handleEmailBlur,
+    handlePasswordBlur,
+    focusPasswordInput,
+  } = fields;
+
+  return (
+    <>
+      <AuthEmailInput
+        value={email}
+        onChangeText={handleEmailChange}
+        onBlur={handleEmailBlur}
+        onSubmitEditing={focusPasswordInput}
+        error={emailError}
+      />
+      <AuthPasswordInput
+        value={password}
+        onChangeText={handlePasswordChange}
+        onBlur={handlePasswordBlur}
+        onSubmitEditing={onPasswordSubmit}
+        error={passwordError}
+        isSignUp={isSignUp}
+        inputRef={passwordInputRef}
+      >
+        {children}
+      </AuthPasswordInput>
+    </>
   );
 }
 

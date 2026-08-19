@@ -10,11 +10,23 @@ export const STRINGS = {
   CONTINUE: 'Continue',
   ALL_WORDS: 'All Words',
   // Settings & preferences
-  STUDY_REMINDERS: 'Smart reminders',
-  SMART_REMINDERS_SUBTITLE: 'Timed to when your words start to fade',
-  TIME: 'Preferred time',
+  STUDY_REMINDERS: 'Review reminders',
+  SMART_REMINDERS_SUBTITLE: 'Sent when words are due',
+  REMINDER_TIME: 'Time',
   THEME: 'Theme',
-  ARABIC_FONT: 'Arabic font',
+  // The row shows the plain mode; the poetic names live in the picker, where
+  // there is room for them. From a row alone, "Birches in Spring" never told
+  // you whether you were about to go light or dark.
+  THEME_MODE_LIGHT: 'Light',
+  THEME_MODE_DARK: 'Dark',
+  THEME_MODE_SEPIA: 'Sepia',
+  THEME_SUBTITLE_LIGHT: 'Light',
+  THEME_SUBTITLE_DARK: 'Dark',
+  THEME_SUBTITLE_SEPIA: 'Sepia',
+  // "Arabic font" undersold the row: it opens face *and* reading size, and the
+  // size is the setting people actually come looking for.
+  ARABIC_FONT: 'Arabic text',
+  ARABIC_TEXT_VALUE: '{font} · {size}',
   FONT_SIZE: 'Font size',
   // Shared bilingual label
   BILINGUAL_LABEL: 'English + Arabic',
@@ -23,12 +35,13 @@ export const STRINGS = {
   AUDIO_LANGUAGE_ARABIC_SUBTITLE: 'For more fluent listeners',
   AUDIO_LANGUAGE_BILINGUAL_SUBTITLE: 'Hear English first to prepare for Arabic',
   AUDIO_SHUFFLE: 'Shuffle',
-  HAPTICS: 'Haptics',
+  HAPTICS: 'Haptic feedback',
   // Voice grading
-  SPEAK_ANSWER: 'Speak the English answer',
-  SPEAK_ANSWER_IDLE_SUBTITLE: 'Say the English meaning. Close-enough counts.',
+  // The subtitle already says "the English meaning"; the label need not.
+  SPEAK_ANSWER: 'Speak the answer',
+  SPEAK_ANSWER_IDLE_SUBTITLE: 'Answer out loud instead of tapping',
   SPEAK_ANSWER_DOWNLOADING_SUBTITLE: 'Downloading voice model… {pct}%',
-  SPEAK_ANSWER_READY_SUBTITLE: 'Ready · about 100 MB on device',
+  SPEAK_ANSWER_READY_SUBTITLE: 'Ready. Uses 100 MB on device',
   SPEAK_ANSWER_ERROR_SUBTITLE: "Couldn't load voice model. Try again later.",
   // Voice control. Two rules decide every string here, and there are only four
   // of them left:
@@ -109,9 +122,8 @@ export const STRINGS = {
   GRADE_KNEW_IT: 'Knew it',
   NO_TRANSLATION_AVAILABLE: 'No translation available',
   // Advanced (Account → Advanced) — voice grading diagnostics
-  ADVANCED: 'Advanced',
   ADVANCED_VOICE_GRADING: 'Voice grading',
-  ADVANCED_VOICE_GRADING_SUBTITLE: 'Models, recording knobs, and debug',
+  ADVANCED_VOICE_GRADING_SUBTITLE: 'Model status and recording options',
   ADVANCED_MODELS_SECTION: 'Models',
   ADVANCED_RECORDING_SECTION: 'Voice recording',
   ADVANCED_DEBUG_SECTION: 'Debug',
@@ -130,19 +142,15 @@ export const STRINGS = {
   ADVANCED_IOS_RAW_SUBTITLE: "'measurement' mode — no AGC / noise processing",
   ADVANCED_DEBUG_HUD: 'Voice debug HUD',
   ADVANCED_DEBUG_HUD_SUBTITLE: 'Show what was heard + recorder stats in review',
-  DISPLAY_LANGUAGE: 'Display language',
-  DISPLAY_LANGUAGE_ARABIC: 'Arabic only',
-  DISPLAY_LANGUAGE_ARABIC_SUBTITLE: 'For immersive reading practice',
-  DISPLAY_LANGUAGE_BILINGUAL_SUBTITLE: 'See English translations below each sentence',
-  DAILY_WORD_LIMIT: 'Daily word limit',
-  DAILY_LIMIT_LOW: 'Getting Started',
-  DAILY_LIMIT_LOW_SUBTITLE: '10 new words per day',
-  DAILY_LIMIT_MEDIUM: 'Steady Progress',
-  DAILY_LIMIT_MEDIUM_SUBTITLE: '20 new words per day',
-  DAILY_LIMIT_HIGH: 'Active Learning',
-  DAILY_LIMIT_HIGH_SUBTITLE: '30 new words per day',
+  DAILY_WORD_LIMIT: 'New words per day',
+  DAILY_LIMIT_LOW: '10 words',
+  DAILY_LIMIT_LOW_SUBTITLE: 'Recommended',
+  DAILY_LIMIT_MEDIUM: '20 words',
+  DAILY_LIMIT_MEDIUM_SUBTITLE: 'A faster pace',
+  DAILY_LIMIT_HIGH: '30 words',
+  DAILY_LIMIT_HIGH_SUBTITLE: 'More reviews to keep up with',
   DAILY_LIMIT_UNLIMITED: 'Unlimited',
-  DAILY_LIMIT_UNLIMITED_SUBTITLE: 'No daily limit — reviews may grow quickly',
+  DAILY_LIMIT_UNLIMITED_SUBTITLE: 'Reviews can pile up quickly',
   DAILY_LIMIT_REACHED: 'Daily limit reached. You can increase it in Account settings.',
   /** Same message when a finite limit is set, so the number can be named. */
   DAILY_LIMIT_REACHED_COUNT:
@@ -150,15 +158,20 @@ export const STRINGS = {
   /** Summary value on the Daily-word-limit row for a finite limit. */
   DAILY_LIMIT_WORDS_COUNT: '{count} words',
   DAILY_LIMIT_PAUSED_LOW_RECALL:
-    'New words paused — your recent recall dipped. Review what you have, and they’ll resume.',
-  WORDS_REMAINING_TODAY: '{count} new words remaining today',
-  ADAPTIVE_PACING: 'Smart pacing',
-  ADAPTIVE_PACING_SUBTITLE: 'Pause new words when recent recall drops',
-  WORD_TAP_PREVIEW: 'Quick word preview',
-  WORD_TAP_PREVIEW_SUBTITLE: 'Tap a word for a small popup instead of the full card',
-  RESET_TUTORIALS: 'Reset tutorials',
+    'New words are paused until your recall improves. Keep reviewing and they’ll resume.',
+  // The row's right-hand value already states the limit, so the subtitle only
+  // has to report today's standing, and say why it is zero when adaptive pacing
+  // has paused new words — which "0 remaining" never did.
+  DAILY_LIMIT_LEFT_TODAY: '{count} left today',
+  DAILY_LIMIT_PAUSED_SHORT: 'Paused until your recall improves',
+  ADAPTIVE_PACING: 'Adaptive pacing',
+  ADAPTIVE_PACING_SUBTITLE: 'Pauses new words when your recall drops',
+  WORD_TAP_PREVIEW: 'Word preview',
+  WORD_TAP_PREVIEW_SUBTITLE: 'Show a popup instead of the full word card',
+  RESET_TUTORIALS: 'Show tutorials again',
+  RESET_TUTORIALS_SUBTITLE: 'Resets the intro tips and checklist',
   RESET_TUTORIALS_TITLE: 'Reset tutorials?',
-  RESET_TUTORIALS_MESSAGE: 'See helpful tips again as you explore the app.',
+  RESET_TUTORIALS_MESSAGE: 'Tips will show again as you use the app.',
   // Tutorial copy
   TUTORIAL_WORD_TAP_CTA: 'Tap the highlighted word to see its meaning — then add it to practice',
   // Review tutorial - Intro
@@ -203,26 +216,35 @@ export const STRINGS = {
   ACCOUNT_A11Y_CHANGE_PHOTO: 'Change profile photo',
   PLAYLIST_A11Y_REORDER: 'Reorder track',
   PLAYLIST_A11Y_REORDER_HINT: 'Press and hold, then drag to move this track',
-  APPEARANCE_SECTION: 'Appearance',
-  LEARNING_SECTION: 'Learning',
-  AUDIO_SECTION: 'Audio',
+  // Sections are named for where a setting takes effect, not for what it is
+  // made of — a reader looking for the font size looks under "Reading", not
+  // under "Appearance". Sentence case throughout.
+  READING_SECTION: 'Reading',
+  PRACTICE_SECTION: 'Practice',
+  // Answers the question the pace settings otherwise raise: "where do I set my
+  // review interval?" You don't — FSRS does.
+  PRACTICE_SECTION_SUBTITLE: 'Review scheduling is automatic',
+  LISTENING_SECTION: 'Listening',
+  // Carried on the section so neither row below has to spell out its scope.
+  LISTENING_SECTION_SUBTITLE: 'Applies to article audio and playlists',
+  APP_SECTION: 'App',
   HELP_SECTION: 'Help',
-  STORAGE_SECTION: 'Storage',
-  DANGER_ZONE_SECTION: 'Danger Zone',
-  LEGAL_SECTION: 'Legal',
-  RESET_READING_PROGRESS_DESCRIPTION: 'Start fresh with all articles',
+  ABOUT_SECTION: 'About',
+  // "Start fresh with all articles" read like a feature. It deletes every
+  // reading position, so it says so.
+  RESET_READING_PROGRESS_DESCRIPTION: "Clears every article's reading position",
   DELETE_ACCOUNT_DESCRIPTION: 'Permanently remove your account and data',
   // Social Media
-  FOLLOW_US: 'Connect with us',
+  FOLLOW_US: 'Follow OpenArabic',
   TWITTER: 'X',
   INSTAGRAM: 'Instagram',
   FACEBOOK: 'Facebook',
   TWITTER_URL: 'https://x.com/openarabicio',
   INSTAGRAM_URL: 'https://www.instagram.com/openarabic.io/',
   FACEBOOK_URL: 'https://www.facebook.com/OpenArabic.io/',
-  // More from the maker — a single quiet credit. The byline links to Yunus's
-  // projects page, which lists his other apps, so this app doesn't have to.
-  MORE_FROM_MAKER: 'More from the maker',
+  // A single quiet credit, now a row inside About rather than a section of its
+  // own. The byline links to Yunus's projects page, which lists his other apps,
+  // so this app doesn't have to.
   MAKER_BYLINE: 'Made by Yunus Andreasson',
   MAKER_PROJECTS_URL: 'https://andreassonphoto.com/projects',
   // App Store Review
@@ -771,6 +793,7 @@ export const STRINGS = {
   HELP_CENTER: 'Help center',
   CONTACT_SUPPORT: 'Contact support',
   NO_EMAIL: 'No email',
+  ACCOUNT_MEMBER_SINCE: 'Member since {date}',
   BYTE_UNITS: ['Bytes', 'KB', 'MB', 'GB'] as const,
   ERROR_PRIORITY_QUEUE_LENGTH_MISMATCH: 'Items and priorities arrays must have the same length',
   // Cache management - clearer and more actionable

@@ -26,12 +26,12 @@ import {
   type FC,
   type ReactNode,
 } from 'react';
-import { AppState } from 'react-native';
 import { AudioManager } from 'react-native-audio-api';
 import { useSharedValue, type SharedValue } from 'react-native-reanimated';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { useParakeetStt } from '@/hooks/voice/useSherpaStt';
+import { useResumeFromBackground } from '@/hooks/app/useResumeFromBackground';
 import {
   DEFAULT_RECORDING_CONFIG,
   MicPermissionDeniedError,
@@ -54,6 +54,10 @@ import {
 import { CaptureOpenQueue } from '@/utils/captureOpenQueue';
 import { simpleAudioService } from '@/services/audioPlayer';
 import { useAppSelectorShallow } from '@/store/hooks';
+import {
+  selectVoiceEnergyGateEnabled,
+  selectVoiceGainNormalizeEnabled,
+} from '@/store/settingsSlice';
 import { mark as diagMark, span as diagSpan } from '@/utils/reviewDiagnostics';
 import { voiceBreadcrumb } from '@/utils/errorHandling';
 
@@ -183,10 +187,8 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
   // Advanced recording knobs (Account → Advanced). Held in a ref so arm()
   // always reads the latest values without re-creating the callback (its
   // identity flows into the context value consumed by the review screen).
-  const energyGateEnabled = useAppSelectorShallow(state => state.settings.voiceEnergyGateEnabled);
-  const gainNormalizeEnabled = useAppSelectorShallow(
-    state => state.settings.voiceGainNormalizeEnabled,
-  );
+  const energyGateEnabled = useAppSelectorShallow(selectVoiceEnergyGateEnabled);
+  const gainNormalizeEnabled = useAppSelectorShallow(selectVoiceGainNormalizeEnabled);
   const iosRawMode = useAppSelectorShallow(state => state.settings.voiceIosRawMode);
   const recordingConfigRef = useRef<RecordingConfig>(DEFAULT_RECORDING_CONFIG);
   useEffect(() => {
@@ -673,22 +675,11 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
    * — unordered, it is the reason the returned-to card came back silent even
    * though the microphone recovered.
    */
-  const wasBackgroundedRef = useRef(false);
-  useEffect(() => {
-    if (!enabled) return;
-    const subscription = AppState.addEventListener('change', nextState => {
-      if (nextState === 'background') {
-        wasBackgroundedRef.current = true;
-        return;
-      }
-      if (nextState !== 'active' || !wasBackgroundedRef.current) return;
-      wasBackgroundedRef.current = false;
-      if (holdersRef.current === 0) return;
-      diagMark('mic.session.foreground');
-      void reopenCapture();
-    });
-    return () => subscription.remove();
-  }, [enabled, reopenCapture]);
+  useResumeFromBackground(() => {
+    if (holdersRef.current === 0) return;
+    diagMark('mic.session.foreground');
+    void reopenCapture();
+  }, enabled);
 
   // Stop the mic when the user turns the setting off mid-session.
   useEffect(() => {

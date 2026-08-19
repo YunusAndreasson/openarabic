@@ -1,8 +1,5 @@
-import { EmptyState } from '@/components/common';
-import { useRouter } from 'expo-router';
-import { useCallback } from 'react';
+import { SeededContentEmptyState } from '@/components/common';
 
-import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAddCommonWords } from '@/hooks/practice/useAddCommonWords';
 
@@ -12,30 +9,18 @@ import { useAddCommonWords } from '@/hooks/practice/useAddCommonWords';
  * session; secondary CTA takes the user to Explore to save words from reading.
  */
 export function PracticeEmptyState() {
-  const router = useRouter();
   const { addWords, isLoading, hasWordsAvailable } = useAddCommonWords();
 
-  const handleBrowse = useCallback(() => {
-    router.push({ pathname: ROUTE_PATHS.EXPLORE_TAB, params: { from: 'practice' } });
-  }, [router]);
-
   return (
-    <EmptyState
+    <SeededContentEmptyState
+      source="practice"
       icon="school-outline"
       title={STRINGS.STUDY_LIST_EMPTY_TITLE}
       hint={STRINGS.STUDY_LIST_EMPTY_HINT}
-      action={{
-        label: STRINGS.PRACTICE_EMPTY_SEED_CTA,
-        onPress: addWords,
-        icon: 'sparkles-outline',
-        loading: isLoading,
-        disabled: !hasWordsAvailable,
-      }}
-      secondaryAction={{
-        label: STRINGS.BROWSE_ARTICLES,
-        onPress: handleBrowse,
-        icon: 'compass-outline',
-      }}
+      seedLabel={STRINGS.PRACTICE_EMPTY_SEED_CTA}
+      onSeed={addWords}
+      isSeeding={isLoading}
+      canSeed={hasWordsAvailable}
     />
   );
 }

@@ -32,7 +32,7 @@ const formatMemberSince = (createdAt?: string): string | null => {
     month: 'long',
     year: 'numeric',
   });
-  return `Member since ${formatter.format(date)}`;
+  return STRINGS.ACCOUNT_MEMBER_SINCE.replace('{date}', formatter.format(date));
 };
 
 // Helper function to get initials for fallback
@@ -194,10 +194,16 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
           <ThemedText type="heading2" style={styles.userName} numberOfLines={1}>
             {firstName}
           </ThemedText>
+          {/* The email, not just the name derived from it. A settings screen
+              has to answer "which account am I signed in to?" — and this one
+              received the address all along without ever showing it. */}
+          <ThemedText type="caption" colorName="textTertiary" numberOfLines={1}>
+            {userEmail}
+          </ThemedText>
           {memberSince && (
             <ThemedText
-              type="body"
-              colorName="secondaryText"
+              type="caption"
+              colorName="textTertiary"
               style={styles.memberSince}
               numberOfLines={1}
             >
@@ -241,9 +247,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   userName: {
-    marginBottom: LAYOUT.SPACING.TINY,
+    marginBottom: LAYOUT.SPACING.MICRO,
   },
   memberSince: {
+    marginTop: LAYOUT.SPACING.MICRO,
     opacity: LAYOUT.OPACITY.HIGH,
   },
 });

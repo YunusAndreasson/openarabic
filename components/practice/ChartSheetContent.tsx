@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, type ComponentType } from 'react';
 
-import { BottomSheetHeader } from '@/components/common';
+import { BottomSheetHeader, SheetScreen } from '@/components/common';
 import { fsrsQueries, gated } from '@/constants/queries';
 import { useAuth } from '@/hooks/auth/useAuth';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -12,6 +12,15 @@ interface ChartSheetContentProps {
   ChartComponent: ComponentType<{ studyWords: StudyWord[] }>;
 }
 
+/** Complete route shell for the app's fixed-height vocabulary chart sheets. */
+export function ChartSheetScreen(props: ChartSheetContentProps) {
+  return (
+    <SheetScreen>
+      <ChartSheetContent {...props} />
+    </SheetScreen>
+  );
+}
+
 /**
  * Header + chart content for a chart sheet route screen presented via
  * Stack.Screen `presentation: 'formSheet'`.
@@ -20,7 +29,7 @@ interface ChartSheetContentProps {
  * fits itself to them. Wrapping this in a `ScrollView` is what blanked these
  * sheets on iOS — see `SheetScreen`.
  */
-export function ChartSheetContent({ title, subtitle, ChartComponent }: ChartSheetContentProps) {
+function ChartSheetContent({ title, subtitle, ChartComponent }: ChartSheetContentProps) {
   const { user } = useAuth();
 
   // The `all` query on its own, not `useFSRSQueries`. That hook mounts a DUE

@@ -1,7 +1,6 @@
 import type { JSX } from 'react';
 
-import { SheetScreen } from '@/components/common';
-import { ChartSheetContent } from '@/components/practice/ChartSheetContent';
+import { ChartSheetScreen } from '@/components/practice/ChartSheetContent';
 import { MemoryHorizonBreakdown } from '@/components/practice/MemoryHorizonBreakdown';
 import { STRINGS } from '@/constants/strings';
 
@@ -21,12 +20,10 @@ import { STRINGS } from '@/constants/strings';
  */
 export default function MemoryRetentionScreen(): JSX.Element {
   return (
-    <SheetScreen>
-      <ChartSheetContent
-        title={STRINGS.MEMORY_HORIZON_TITLE}
-        subtitle={STRINGS.MEMORY_HORIZON_SUBTITLE}
-        ChartComponent={MemoryHorizonBreakdown}
-      />
-    </SheetScreen>
+    <ChartSheetScreen
+      title={STRINGS.MEMORY_HORIZON_TITLE}
+      subtitle={STRINGS.MEMORY_HORIZON_SUBTITLE}
+      ChartComponent={MemoryHorizonBreakdown}
+    />
   );
 }

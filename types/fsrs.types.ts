@@ -66,7 +66,15 @@ export interface UseFSRSOptions {
 export interface UseFSRSResult {
   currentWord: StudyWord | null;
   wordQueue: StudyWord[];
+  /**
+   * Immutable working-set batches admitted during this session. Enrichment
+   * queries use these instead of the shrinking/reordered live queue so every
+   * batch is fetched once and drilled cards retain their cached context.
+   */
+  enrichmentBatches: readonly (readonly StudyWord[])[];
   isLoading: boolean;
+  /** The due query resolved successfully, but there was nothing to review. */
+  isEmpty: boolean;
   isComplete: boolean;
   /**
    * 0–100 across the WHOLE backlog the session started with, not the current

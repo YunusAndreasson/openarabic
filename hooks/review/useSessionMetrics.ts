@@ -35,6 +35,10 @@ export const useSessionMetrics = () => {
 
   // Track unique words reviewed in this session
   const reviewedWordsSet = useRef<Set<RootId>>(new Set());
+  // Stability samples are per grade, while wordsReviewed is intentionally per
+  // unique word. A separate denominator keeps repeats from corrupting the
+  // running average.
+  const stabilitySampleCountRef = useRef(0);
 
   /**
    * Update metrics based on user confidence response
@@ -69,6 +73,11 @@ export const useSessionMetrics = () => {
       } else {
         // Fallback for backwards compatibility if no rootId provided
         metrics.wordsReviewed++;
+        if (recalled) {
+          metrics.firstAttemptKnown++;
+        } else {
+          metrics.firstAttemptUnknown++;
+        }
       }
 
       // Track response types and streaks
@@ -101,9 +110,11 @@ export const useSessionMetrics = () => {
       // Calculate actual stability increase (for all confidence levels)
       if (oldStability !== undefined && newStability !== undefined) {
         const stabilityIncrease = newStability - oldStability;
+        const sampleCount = stabilitySampleCountRef.current;
         const totalIncrease =
-          metrics.averageStabilityIncrease * (metrics.wordsReviewed - 1) + stabilityIncrease;
-        metrics.averageStabilityIncrease = totalIncrease / metrics.wordsReviewed;
+          metrics.averageStabilityIncrease * sampleCount + stabilityIncrease;
+        stabilitySampleCountRef.current = sampleCount + 1;
+        metrics.averageStabilityIncrease = totalIncrease / stabilitySampleCountRef.current;
       }
     },
     [],
@@ -116,6 +127,7 @@ export const useSessionMetrics = () => {
   const resetMetrics = useCallback(() => {
     Object.assign(metricsRef.current, createSessionMetrics(Date.now()));
     reviewedWordsSet.current.clear();
+    stabilitySampleCountRef.current = 0;
   }, []);
 
   // metricsRef is mutated imperatively in updateMetrics/resetMetrics so consumers

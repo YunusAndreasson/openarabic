@@ -1,86 +1,61 @@
 // External Libraries
 import { SettingsPicker, TimePicker } from '@/components/ui';
-import * as StoreReview from 'expo-store-review';
-import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useState, type FC } from 'react';
-import { Alert, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
+import type { Edge } from 'react-native-safe-area-context';
 
-import { THEME_OPTIONS } from '@/constants/themeOptions';
-import { ThemedView } from '@/components/primitives/ThemedView';
-import { AccountBadge, SettingsCard, SettingsSection } from '@/components/account';
-import { AboutSection, AppearanceSection, DangerZoneSection } from '@/components/account/settings';
-import { BrandFooter } from '@/components/explore';
-import { useTutorialContext, useVoiceGrading } from '@/components/providers';
-import type { Theme } from '@/constants/colors';
-import { LAYOUT } from '@/constants/layout';
-import { ROUTE_PATHS } from '@/constants/routes';
-import { STRINGS } from '@/constants/strings';
-import { useAccountScreen } from '@/hooks/account';
-import { useDailyWordLimit } from '@/hooks/vocabulary';
-import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
+import { AccountBadge } from '@/components/account';
 import {
-  selectAdaptiveNewWordPacingEnabled,
-  setAdaptiveNewWordPacingEnabled,
-  setAudioLanguagePreference,
-  setAudioShuffleEnabled,
-  setDailyWordLimit,
-  setDisplayLanguagePreference,
-  setVoiceEnabled,
-  setWordTapShowsTooltip,
-} from '@/store/settingsSlice';
+  AboutSection,
+  AccountSection,
+  AppSection,
+  ListeningSection,
+  PracticeSection,
+  ReadingSection,
+  SupportSection,
+} from '@/components/account/settings';
+import { BrandFooter } from '@/components/explore';
+import { ThemedView } from '@/components/primitives/ThemedView';
+import { AUDIO_LANGUAGE_OPTIONS } from '@/constants/audioLanguageOptions';
+import type { Theme } from '@/constants/colors';
+import { DAILY_WORD_LIMIT_OPTIONS } from '@/constants/dailyWordLimitOptions';
+import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
+import { THEME_OPTIONS } from '@/constants/themeOptions';
+import { useAccountScreen } from '@/hooks/account';
+import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
+import { setAudioLanguagePreference, setDailyWordLimit } from '@/store/settingsSlice';
 import { setTheme } from '@/store/themeSlice';
-import { AudioLanguage, DisplayLanguage } from '@/types/enums';
+import { AudioLanguage } from '@/types/enums';
 import { formatBytes } from '@/utils/cacheUtils';
-import { handleError } from '@/utils/errorHandling';
-import { errorFeedback, lightFeedback, successFeedback } from '@/utils/haptics';
-import { resetOnboarding } from '@/utils/onboardingStorage';
-
-// Helper function for enum validation
-function validateEnumValue<T>(value: unknown, validValues: readonly T[], defaultValue: T): T {
-  return validValues.includes(value as T) ? (value as T) : defaultValue;
-}
 
 // Type-safe picker state
-type ActivePicker = 'theme' | 'language' | 'audioLanguage' | 'dailyWordLimit' | null;
+type ActivePicker = 'theme' | 'audioLanguage' | 'dailyWordLimit' | null;
 
+/**
+ * Account settings.
+ *
+ * Composition only: every group is a section component that reads the slice
+ * fields it needs. What lives here is the state those groups share — which
+ * picker is open, and the single `SettingsPicker` / `TimePicker` pair they all
+ * drive.
+ */
 const AccountScreen: FC = () => {
-  // Get theme with validation
+  const dispatch = useAppDispatch();
+  const [activePicker, setActivePicker] = useState<ActivePicker>(null);
+
   const rawTheme = useAppSelectorShallow(state => state.theme.theme);
   const currentTheme = useMemo(() => rawTheme ?? ('dark' as const), [rawTheme]);
 
-  // Get language preferences from Redux with validation
-  const rawLanguagePreference = useAppSelectorShallow(
-    state => state.settings.displayLanguagePreference,
-  );
-  const rawAudioLanguagePreference = useAppSelectorShallow(
-    state => state.settings.audioLanguagePreference,
-  );
-
-  // Validate and provide defaults - ensure values are valid enum values
-  const currentLanguage = validateEnumValue(
-    rawLanguagePreference,
-    [DisplayLanguage.ARABIC_ONLY, DisplayLanguage.ARABIC_ENGLISH] as const,
-    DisplayLanguage.ARABIC_ENGLISH,
+  const rawAudioLanguage = useAppSelectorShallow(state => state.settings.audioLanguagePreference);
+  const currentAudioLanguage = useMemo(
+    () =>
+      rawAudioLanguage === AudioLanguage.ARABIC_ONLY
+        ? AudioLanguage.ARABIC_ONLY
+        : AudioLanguage.ENGLISH_ARABIC,
+    [rawAudioLanguage],
   );
 
-  const currentAudioLanguage = validateEnumValue(
-    rawAudioLanguagePreference,
-    [AudioLanguage.ARABIC_ONLY, AudioLanguage.ENGLISH_ARABIC] as const,
-    AudioLanguage.ENGLISH_ARABIC,
-  );
-
-  const audioShuffleEnabled = useAppSelectorShallow(state => state.settings.audioShuffleEnabled);
-  const adaptiveNewWordPacingEnabled = useAppSelectorShallow(selectAdaptiveNewWordPacingEnabled);
-  const wordTapShowsTooltip = useAppSelectorShallow(
-    state => state.settings.wordTapShowsTooltip ?? false,
-  );
-  const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
-  const voice = useVoiceGrading();
-  const dispatch = useAppDispatch();
-
-  const [activePicker, setActivePicker] = useState<ActivePicker>(null);
-
-  // Get daily word limit with validation
   const rawDailyWordLimit = useAppSelectorShallow(state => state.settings.dailyWordLimit);
   const currentDailyWordLimit = useMemo(() => {
     // Validate: must be a number (0, 10, 20, or 30)
@@ -106,144 +81,19 @@ const AccountScreen: FC = () => {
     cacheSize,
   } = useAccountScreen();
 
-  // Tutorial management
-  const { resetAllTutorials } = useTutorialContext();
-
-  // Daily word limit tracking
-  const { getRemainingWords } = useDailyWordLimit();
-  const [wordsRemainingToday, setWordsRemainingToday] = useState<number | null>(null);
-
-  // Refetch every time this screen gains focus, not just on mount — the
-  // count changes from other screens (article reader, dictionary list,
-  // practice empty-state quick-start) while Account may stay mounted in the
-  // background tab stack, so a mount-only fetch could show a stale figure.
-  useFocusEffect(
-    useCallback(() => {
-      const fetchRemainingWords = async () => {
-        const remaining = await getRemainingWords();
-        setWordsRemainingToday(remaining === Infinity ? null : remaining);
-      };
-      fetchRemainingWords();
-    }, [getRemainingWords]),
-  );
-
-  const currentDailyWordLimitText = useMemo(() => {
-    // Same constant the "Unlimited" option card below renders, not a second
-    // literal spelling of it.
-    if (currentDailyWordLimit === 0) return STRINGS.DAILY_LIMIT_UNLIMITED;
-    return STRINGS.DAILY_LIMIT_WORDS_COUNT.replace('{count}', String(currentDailyWordLimit));
-  }, [currentDailyWordLimit]);
-
-  // Unified picker handlers
-  const handlePickerOpen = useCallback((pickerType: Exclude<ActivePicker, null>) => {
-    setActivePicker(pickerType);
-  }, []);
-
   const handlePickerClose = useCallback(() => {
     setActivePicker(null);
   }, []);
 
-  // Reset tutorials handler
-  const handleResetTutorials = useCallback(async () => {
-    Alert.alert(STRINGS.RESET_TUTORIALS_TITLE, STRINGS.RESET_TUTORIALS_MESSAGE, [
-      { text: STRINGS.CANCEL, style: 'cancel' },
-      {
-        text: STRINGS.RESET,
-        onPress: async () => {
-          try {
-            await resetAllTutorials();
-            // Also re-enable the first-run intro + Get started checklist
-            await resetOnboarding();
-            successFeedback();
-          } catch (error) {
-            errorFeedback();
-            handleError(error, {
-              toastMessage: 'Failed to reset tutorials',
-              analyticsEventName: 'Reset_Tutorials_Failed',
-            });
-          }
-        },
-      },
-    ]);
-  }, [resetAllTutorials]);
-
-  // Audio Shuffle toggle handler
-  const handleAudioShuffleToggle = useCallback(
-    (enabled: boolean) => {
-      dispatch(setAudioShuffleEnabled(enabled));
-    },
-    [dispatch],
-  );
-
-  // Adaptive new-word pacing toggle handler
-  const handleAdaptivePacingToggle = useCallback(
-    (enabled: boolean) => {
-      dispatch(setAdaptiveNewWordPacingEnabled(enabled));
-    },
-    [dispatch],
-  );
-
-  // Word-tap preview toggle — ON restores the lightweight inline tooltip;
-  // OFF (default) opens the full word card directly on tap.
-  const handleWordTapPreviewToggle = useCallback(
-    (enabled: boolean) => {
-      dispatch(setWordTapShowsTooltip(enabled));
-    },
-    [dispatch],
-  );
-
-  // Voice grading toggle — flipping ON triggers the ~460 MB Parakeet download
-  // and the OS mic prompt the next time the user enters a Practice card.
-  const handleVoiceToggle = useCallback(
-    (enabled: boolean) => {
-      dispatch(setVoiceEnabled(enabled));
-    },
-    [dispatch],
-  );
-
-  const voiceSubtitle = useMemo(() => {
-    if (!voiceEnabled) return STRINGS.SPEAK_ANSWER_IDLE_SUBTITLE;
-    if (voice.error) return STRINGS.SPEAK_ANSWER_ERROR_SUBTITLE;
-    if (voice.isReady) return STRINGS.SPEAK_ANSWER_READY_SUBTITLE;
-    const pct = Math.round((voice.downloadProgress ?? 0) * 100);
-    return STRINGS.SPEAK_ANSWER_DOWNLOADING_SUBTITLE.replace('{pct}', String(pct));
-  }, [voiceEnabled, voice.error, voice.isReady, voice.downloadProgress]);
-
-  // Rate app handler
-  const handleRequestReview = useCallback(async () => {
-    try {
-      const isAvailable = await StoreReview.isAvailableAsync();
-      if (!isAvailable) {
-        handleError(new Error('StoreReview not available'), {
-          analyticsEventName: 'Store_Review_Not_Available',
-          sentryTags: { location: 'account', action: 'store_review' },
-          sentryExtra: { storeUrl: StoreReview.storeUrl() },
-          sentrySeverity: 'info',
-          showToast: false,
-        });
-        return;
-      }
-      await new Promise<void>(resolve => setTimeout(resolve, 100));
-      await StoreReview.requestReview();
-      lightFeedback();
-    } catch (error) {
-      handleError(error, {
-        analyticsEventName: 'Store_Review_Request_Failed',
-        sentryTags: { location: 'account', action: 'store_review' },
-        showToast: true,
-        sentrySeverity: 'warning',
-      });
-    }
-  }, []);
+  const handleThemePress = useCallback(() => setActivePicker('theme'), []);
+  const handleAudioLanguagePress = useCallback(() => setActivePicker('audioLanguage'), []);
+  const handleDailyWordLimitPress = useCallback(() => setActivePicker('dailyWordLimit'), []);
 
   const handlePickerSelect = useCallback(
     (value: string | number) => {
       switch (activePicker) {
         case 'theme':
           dispatch(setTheme(value as Theme));
-          break;
-        case 'language':
-          dispatch(setDisplayLanguagePreference(value as DisplayLanguage));
           break;
         case 'audioLanguage':
           dispatch(setAudioLanguagePreference(value as AudioLanguage));
@@ -268,106 +118,40 @@ const AccountScreen: FC = () => {
         options: THEME_OPTIONS,
         selectedValue: currentTheme,
       },
-      language: {
-        title: STRINGS.DISPLAY_LANGUAGE,
-        options: [
-          {
-            id: DisplayLanguage.ARABIC_ONLY,
-            title: STRINGS.DISPLAY_LANGUAGE_ARABIC,
-            subtitle: STRINGS.DISPLAY_LANGUAGE_ARABIC_SUBTITLE,
-            icon: 'text' as const,
-          },
-          {
-            id: DisplayLanguage.ARABIC_ENGLISH,
-            title: STRINGS.BILINGUAL_LABEL,
-            subtitle: STRINGS.DISPLAY_LANGUAGE_BILINGUAL_SUBTITLE,
-            icon: 'language' as const,
-          },
-        ],
-        selectedValue: currentLanguage,
-      },
       audioLanguage: {
         title: STRINGS.AUDIO_LANGUAGE,
-        options: [
-          {
-            id: AudioLanguage.ARABIC_ONLY,
-            title: STRINGS.AUDIO_LANGUAGE_ARABIC,
-            subtitle: STRINGS.AUDIO_LANGUAGE_ARABIC_SUBTITLE,
-            icon: 'volume-high' as const,
-          },
-          {
-            id: AudioLanguage.ENGLISH_ARABIC,
-            title: STRINGS.BILINGUAL_LABEL,
-            subtitle: STRINGS.AUDIO_LANGUAGE_BILINGUAL_SUBTITLE,
-            icon: 'language' as const,
-          },
-        ],
+        options: AUDIO_LANGUAGE_OPTIONS,
         selectedValue: currentAudioLanguage,
       },
       dailyWordLimit: {
         title: STRINGS.DAILY_WORD_LIMIT,
-        options: [
-          {
-            id: 10,
-            title: STRINGS.DAILY_LIMIT_LOW,
-            subtitle: STRINGS.DAILY_LIMIT_LOW_SUBTITLE,
-            icon: 'school' as const,
-          },
-          {
-            id: 20,
-            title: STRINGS.DAILY_LIMIT_MEDIUM,
-            subtitle: STRINGS.DAILY_LIMIT_MEDIUM_SUBTITLE,
-            icon: 'trending-up' as const,
-          },
-          {
-            id: 30,
-            title: STRINGS.DAILY_LIMIT_HIGH,
-            subtitle: STRINGS.DAILY_LIMIT_HIGH_SUBTITLE,
-            icon: 'flash' as const,
-          },
-          {
-            id: 0,
-            title: STRINGS.DAILY_LIMIT_UNLIMITED,
-            subtitle: STRINGS.DAILY_LIMIT_UNLIMITED_SUBTITLE,
-            icon: 'infinite' as const,
-          },
-        ],
+        options: DAILY_WORD_LIMIT_OPTIONS,
         selectedValue: currentDailyWordLimit,
       },
     }),
-    [currentTheme, currentLanguage, currentAudioLanguage, currentDailyWordLimit],
+    [currentTheme, currentAudioLanguage, currentDailyWordLimit],
   );
-
-  // Get current audio language display text
-  const currentAudioLanguageText =
-    currentAudioLanguage === 'arabic' ? STRINGS.AUDIO_LANGUAGE_ARABIC : STRINGS.BILINGUAL_LABEL;
 
   // Format cache size for display
   const formattedCacheSize = cacheSize > 0 ? formatBytes(cacheSize) : STRINGS.NO_CACHED_FILES;
 
+  // The two sheets are siblings of the scroll view, never children of it:
+  // `@gorhom/bottom-sheet` positions itself `absolute; top: 0` against its
+  // parent, so inside a scroll container it would anchor to the top of the
+  // *content* and scroll away with it.
   return (
-    <ThemedView
-      includeBottomInset={false}
-      safeAreaEdges={['left', 'right']}
-      style={styles.container}
-    >
+    <ThemedView includeBottomInset={false} safeAreaEdges={SAFE_AREA_EDGES} style={styles.container}>
       <ThemedView
         includeBottomInset={false}
         scrollable={true}
-        style={styles.flexOne}
+        style={styles.container}
         useSafeArea={false}
-        contentContainerStyle={[
-          styles.scrollContent,
-          {
-            paddingTop: LAYOUT.SPACING.XLARGE,
-          },
-        ]}
+        contentContainerStyle={styles.scrollContent}
         scrollViewProps={{
-          style: styles.scrollView,
+          style: styles.container,
           showsVerticalScrollIndicator: true,
         }}
       >
-        {/* Account Badge - Premium header section */}
         {user && (
           <AccountBadge
             userEmail={user.email || STRINGS.NO_EMAIL}
@@ -376,154 +160,34 @@ const AccountScreen: FC = () => {
           />
         )}
 
-        {/* Appearance - All visual customization together */}
-        <AppearanceSection
-          onThemePress={() => handlePickerOpen('theme')}
-          onLanguagePress={() => handlePickerOpen('language')}
+        <ReadingSection />
+
+        <PracticeSection
+          onDailyWordLimitPress={handleDailyWordLimitPress}
+          onReminderTimePress={handleTimePickerOpen}
+          onReminderToggle={handleReminderToggle}
+          reminderTime={reminderTime}
+          formatReminderTime={formatReminderTime}
         />
 
-        {/* Learning - Study settings (most frequently adjusted) */}
-        <SettingsSection title={STRINGS.LEARNING_SECTION}>
-          <SettingsCard
-            icon="book"
-            label={STRINGS.DAILY_WORD_LIMIT}
-            subtitle={
-              wordsRemainingToday !== null
-                ? STRINGS.WORDS_REMAINING_TODAY.replace('{count}', String(wordsRemainingToday))
-                : undefined
-            }
-            rightType="text-chevron"
-            rightText={currentDailyWordLimitText}
-            onPress={() => handlePickerOpen('dailyWordLimit')}
-          />
-          <SettingsCard
-            icon="speedometer"
-            label={STRINGS.ADAPTIVE_PACING}
-            subtitle={STRINGS.ADAPTIVE_PACING_SUBTITLE}
-            rightType="toggle"
-            toggleValue={adaptiveNewWordPacingEnabled}
-            onToggleChange={handleAdaptivePacingToggle}
-          />
-          <SettingsCard
-            icon="chatbubble-ellipses"
-            label={STRINGS.WORD_TAP_PREVIEW}
-            subtitle={STRINGS.WORD_TAP_PREVIEW_SUBTITLE}
-            rightType="toggle"
-            toggleValue={wordTapShowsTooltip}
-            onToggleChange={handleWordTapPreviewToggle}
-          />
-          <SettingsCard
-            icon="school"
-            label={STRINGS.RESET_TUTORIALS}
-            rightType="none"
-            onPress={handleResetTutorials}
-          />
-          <SettingsCard
-            icon="notifications"
-            label={STRINGS.STUDY_REMINDERS}
-            subtitle={STRINGS.SMART_REMINDERS_SUBTITLE}
-            rightType="toggle"
-            toggleValue={reminderTime.enabled}
-            onToggleChange={handleReminderToggle}
-          />
-          {reminderTime.enabled && (
-            <SettingsCard
-              icon="time"
-              label={STRINGS.TIME}
-              rightType="text-chevron"
-              rightText={formatReminderTime(reminderTime.hour, reminderTime.minute)}
-              onPress={handleTimePickerOpen}
-            />
-          )}
-        </SettingsSection>
+        <ListeningSection onAudioLanguagePress={handleAudioLanguagePress} />
 
-        {/* Audio - Audio settings */}
-        <SettingsSection title={STRINGS.AUDIO_SECTION}>
-          <SettingsCard
-            icon="volume-high"
-            label={STRINGS.AUDIO_LANGUAGE}
-            rightType="text-chevron"
-            rightText={currentAudioLanguageText}
-            onPress={() => handlePickerOpen('audioLanguage')}
-          />
-          <SettingsCard
-            icon="shuffle"
-            label={STRINGS.AUDIO_SHUFFLE}
-            rightType="toggle"
-            toggleValue={audioShuffleEnabled}
-            onToggleChange={handleAudioShuffleToggle}
-          />
-          <SettingsCard
-            icon="mic"
-            label={STRINGS.SPEAK_ANSWER}
-            subtitle={voiceSubtitle}
-            rightType="toggle"
-            toggleValue={voiceEnabled}
-            onToggleChange={handleVoiceToggle}
-          />
-        </SettingsSection>
+        <AppSection
+          onThemePress={handleThemePress}
+          onClearCachePress={handleClearCache}
+          cacheSizeText={formattedCacheSize}
+        />
 
-        {/* Storage - Cache management */}
-        <SettingsSection title={STRINGS.STORAGE_SECTION}>
-          <SettingsCard
-            icon="trash-outline"
-            label={STRINGS.CLEAR_CACHE}
-            subtitle={formattedCacheSize}
-            rightType="none"
-            onPress={handleClearCache}
-          />
-        </SettingsSection>
+        <SupportSection onContactSupportPress={handleSupportContact} />
 
-        {/* Support - Help, assistance, and rating */}
-        <SettingsSection title={STRINGS.HELP_SECTION}>
-          <SettingsCard
-            icon="help-circle"
-            label={STRINGS.HELP_CENTER}
-            rightType="chevron"
-            onPress={() => router.push(ROUTE_PATHS.ACCOUNT_HELP)}
-          />
-          <SettingsCard
-            icon="mail"
-            label={STRINGS.CONTACT_SUPPORT}
-            rightType="chevron"
-            onPress={handleSupportContact}
-          />
-          <SettingsCard
-            icon="star"
-            label={STRINGS.RATE_APP}
-            rightType="none"
-            onPress={handleRequestReview}
-          />
-        </SettingsSection>
-
-        {/* Legal + Community (split sections rendered by AboutSection) */}
+        {/* About + Follow OpenArabic */}
         <AboutSection />
 
-        {/* Advanced - Voice grading model status + recording knobs */}
-        <SettingsSection title={STRINGS.ADVANCED}>
-          <SettingsCard
-            icon="construct"
-            label={STRINGS.ADVANCED_VOICE_GRADING}
-            subtitle={STRINGS.ADVANCED_VOICE_GRADING_SUBTITLE}
-            rightType="chevron"
-            onPress={() => router.push(ROUTE_PATHS.ACCOUNT_ADVANCED)}
-          />
-        </SettingsSection>
+        <AccountSection
+          onSignOut={handleSignOut}
+          onResetReadingProgress={handleResetReadingProgress}
+        />
 
-        {/* Account - Session management */}
-        <SettingsSection title={STRINGS.ACCOUNT}>
-          <SettingsCard
-            icon="log-out"
-            label={STRINGS.SIGN_OUT}
-            rightType="none"
-            onPress={handleSignOut}
-          />
-        </SettingsSection>
-
-        {/* Danger Zone - Destructive actions */}
-        <DangerZoneSection onResetReadingProgress={handleResetReadingProgress} />
-
-        {/* App Footer */}
         <BrandFooter showDetails />
       </ThemedView>
 
@@ -549,18 +213,18 @@ const AccountScreen: FC = () => {
   );
 };
 
+// Module-level so the array identity is stable across renders.
+const SAFE_AREA_EDGES: Edge[] = ['left', 'right'];
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  flexOne: {
-    flex: 1,
-  },
   scrollContent: {
     ...LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
-  },
-  scrollView: {
-    flex: 1,
+    // The 12px lead-in every other screen sits below its header by; this one
+    // was alone on 24.
+    paddingTop: LAYOUT.SPACING.MEDIUM,
   },
 });
 

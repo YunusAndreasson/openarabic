@@ -58,7 +58,8 @@ export const useEncouragingMetrics = (
     }
 
     const metrics = sessionMetrics;
-    const knownRatio = metrics.wordsKnown / metrics.wordsReviewed;
+    const firstAttemptTotal = metrics.firstAttemptKnown + metrics.firstAttemptUnknown;
+    const knownRatio = firstAttemptTotal > 0 ? metrics.firstAttemptKnown / firstAttemptTotal : 0;
 
     // Traffic light metrics (always show these 3 in order)
     const trafficLightMetrics: EncouragingMetric[] = [];
@@ -116,13 +117,6 @@ export const useEncouragingMetrics = (
         color: colors.success,
         type: 'mastery',
       });
-    } else if (metrics.wordsKnown > 0) {
-      trafficLightMetrics.push({
-        text: STRINGS.METRIC_WORDS_IMPROVING(metrics.wordsKnown),
-        icon: 'trending-up',
-        color: colors.success,
-        type: 'mastery',
-      });
     } else {
       trafficLightMetrics.push({
         text: STRINGS.METRIC_WORDS_IMPROVING(metrics.wordsReviewed),
@@ -141,7 +135,8 @@ export const useEncouragingMetrics = (
     // Contextual overrides checked first (special session achievements)
     if (
       knownRatio >= 0.7 &&
-      metrics.longestStreak === metrics.wordsReviewed &&
+      metrics.firstAttemptKnown === metrics.wordsReviewed &&
+      metrics.firstAttemptUnknown === 0 &&
       metrics.wordsReviewed >= 5
     ) {
       educationalText = STRINGS.SESSION_ED_PERFECT;

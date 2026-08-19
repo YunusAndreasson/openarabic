@@ -15,19 +15,32 @@ export const THEME_OPTIONS: ThemeOption[] = [
   {
     id: Theme.Light,
     title: STRINGS.THEME_BIRCHES,
-    subtitle: 'Light theme',
+    subtitle: STRINGS.THEME_SUBTITLE_LIGHT,
     icon: 'sunny',
   },
   {
     id: Theme.Dark,
     title: STRINGS.THEME_MIDNIGHT,
-    subtitle: 'Dark theme',
+    subtitle: STRINGS.THEME_SUBTITLE_DARK,
     icon: 'moon',
   },
   {
     id: Theme.Sepia,
     title: STRINGS.THEME_AUTUMN,
-    subtitle: 'Sepia theme',
+    subtitle: STRINGS.THEME_SUBTITLE_SEPIA,
     icon: 'leaf',
   },
 ];
+
+/**
+ * What the settings row says the current theme is.
+ *
+ * The poetic names stay in the picker, where each has a subtitle to explain it.
+ * On the row there is no such room, and "Birches in Spring" never told anyone
+ * whether tapping it would take them light or dark.
+ */
+export const THEME_MODE_LABELS: Record<Theme, string> = {
+  [Theme.Light]: STRINGS.THEME_MODE_LIGHT,
+  [Theme.Dark]: STRINGS.THEME_MODE_DARK,
+  [Theme.Sepia]: STRINGS.THEME_MODE_SEPIA,
+};

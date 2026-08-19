@@ -32,8 +32,8 @@ import scheherazadeFont from '@/assets/fonts/Scheherazade.ttf';
 import interRegular from '@/assets/fonts/Inter-Regular.ttf';
 import interSemiBold from '@/assets/fonts/Inter-SemiBold.ttf';
 import interBold from '@/assets/fonts/Inter-Bold.ttf';
-import { ThemedText } from '@/components/primitives/ThemedText';
 import { AudioErrorBoundary, GlobalMiniPlayer } from '@/components/audio';
+import { AppErrorFallback } from '@/components/common';
 import {
   AuthProvider,
   FSRSDataProvider,
@@ -44,11 +44,9 @@ import {
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TIMING_CONSTANTS } from '@/constants/animation';
 import { Theme } from '@/constants/colors';
-import { LAYOUT } from '@/constants/layout';
 import { NOTIFICATION_ROUTE_BY_TYPE, NOTIFICATION_TYPES } from '@/constants/notifications';
 import type { AnyNotificationType } from '@/constants/notifications';
 import { QUERY_DEFAULTS, studyStreakQueries } from '@/constants/queries';
-import { STRINGS } from '@/constants/strings';
 import { useAppBadge } from '@/hooks/app/useAppBadge';
 import { useSmartNotifications } from '@/hooks/notifications/useSmartNotifications';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
@@ -674,18 +672,6 @@ const styles = StyleSheet.create({
   gestureRoot: {
     flex: 1,
   },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: LAYOUT.SPACING.LARGE,
-  },
-  errorTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  errorMessage: {
-    marginBottom: LAYOUT.SPACING.XLARGE,
-  },
 });
 
 const AudioOverlays = memo(function AudioOverlays() {
@@ -697,20 +683,7 @@ const AudioOverlays = memo(function AudioOverlays() {
 });
 
 const ErrorFallback = memo(function ErrorFallback({ error }: FallbackProps) {
-  const errorMessage = error instanceof Error ? error.toString() : STRINGS.UNKNOWN_ERROR_OCCURRED;
-  return (
-    <View style={styles.errorContainer}>
-      <ThemedText type="heading3" colorName="error" style={styles.errorTitle}>
-        {STRINGS.SOMETHING_WENT_WRONG}
-      </ThemedText>
-      <ThemedText style={styles.errorMessage} type="body">
-        {STRINGS.PLEASE_TRY_AGAIN}
-      </ThemedText>
-      <ThemedText colorName="textTertiary" type="caption">
-        {errorMessage}
-      </ThemedText>
-    </View>
-  );
+  return <AppErrorFallback error={error} showDetails roomy />;
 });
 
 export default Sentry.wrap(function RootLayout() {

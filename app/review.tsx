@@ -168,6 +168,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     currentMeaning,
     revealed,
     isComplete,
+    isEmpty,
     progress,
     maxProgress,
     currentWordKey,
@@ -184,6 +185,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     isAudioReady,
     isLoading,
     wordQueue,
+    enrichmentBatches,
     currentWord,
     revealMeaningPassive,
     stopAudio,
@@ -297,16 +299,17 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     [grade],
   );
 
-  // One example sentence per word in the chunk, fetched once and never on the
-  // per-card path. Non-blocking: a card renders without it and picks it up when
-  // it lands, so a slow or failed lookup can never hold up a session.
-  const examples = useReviewExamples(wordQueue);
+  // One example sentence per word in each immutable scheduler batch, fetched
+  // once and never on the per-card path. Non-blocking: a card renders without
+  // it and picks it up when it lands, so a slow or failed lookup can never hold
+  // up a session.
+  const examples = useReviewExamples(enrichmentBatches);
   const currentExample = currentWord ? (examples.get(currentWord.root_id) ?? null) : null;
 
-  // Every English name the corpus gives each word in this chunk. Same bounded,
-  // non-blocking chunk-level prefetch as the examples above; it only widens what
+  // Every English name the corpus gives each admitted word. Same bounded,
+  // non-blocking batch-level prefetch as the examples above; it only widens what
   // voice grading accepts, so a session runs unchanged without it.
-  const glossAlternates = useReviewGlossAlternates(wordQueue);
+  const glossAlternates = useReviewGlossAlternates(enrichmentBatches);
   const currentAlternates = currentWord
     ? (glossAlternates.get(currentWord.root_id) ?? EMPTY_GLOSSES)
     : EMPTY_GLOSSES;
@@ -445,6 +448,18 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     cardRef.current?.commitTo('left');
     continueFromRestudy();
   }, [continueFromRestudy]);
+
+  // A resolved empty due query is not a successful review session. Replace
+  // the deep-linked route with Practice directly: handleClose deliberately
+  // finalizes a real session, which is exactly what must not happen here.
+  useEffect(() => {
+    if (!isLoading && isEmpty) router.replace(ROUTE_PATHS.PRACTICE_TAB);
+  }, [isEmpty, isLoading]);
+
+  // Keep the route visually neutral for the brief frame before replace lands.
+  if (isEmpty) {
+    return <ReviewLoadingState message={STRINGS.PREPARING_PRACTICE_SESSION} />;
+  }
 
   // `isComplete` now means every word the session started with is done — the
   // queue refills itself from the backlog rather than stopping at the first

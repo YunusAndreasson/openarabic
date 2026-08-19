@@ -187,8 +187,9 @@ describe('useFSRS', () => {
       expect(result.current.currentWord).toBeNull();
       expect(result.current.wordQueue).toEqual([]);
       expect(result.current.progress).toBe(0);
-      // With no user, queue is empty so isComplete is true
-      expect(result.current.isComplete).toBeTruthy();
+      // No authenticated session is empty, not a successfully completed review.
+      expect(result.current.isEmpty).toBe(true);
+      expect(result.current.isComplete).toBe(false);
       expect(result.current.isLoading).toBeFalsy();
     });
 

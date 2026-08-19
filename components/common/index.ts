@@ -6,6 +6,7 @@
  */
 
 export { AnimatedCount } from './AnimatedCount';
+export { AppErrorFallback } from './AppErrorFallback';
 export { Badge } from './Badge';
 export { BaseCard } from './BaseCard';
 
@@ -32,6 +33,7 @@ export { OptionCard } from './OptionCard';
 export { PrimingCard } from './PrimingCard';
 export { ProgressBar } from './ProgressBar';
 export { ScreenScaffold } from './ScreenScaffold';
+export { SeededContentEmptyState } from './SeededContentEmptyState';
 export { SectionLabel } from './SectionLabel';
 export { SheetScreen } from './SheetScreen';
 

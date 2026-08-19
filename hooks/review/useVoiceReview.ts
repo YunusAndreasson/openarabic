@@ -49,7 +49,11 @@ import {
   type VoiceAttemptLog,
 } from '@/services/voiceTelemetry';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
-import { setVoiceEnabled } from '@/store/settingsSlice';
+import {
+  selectVoiceEnergyGateEnabled,
+  selectVoiceGainNormalizeEnabled,
+  setVoiceEnabled,
+} from '@/store/settingsSlice';
 import { rememberAlias } from '@/store/voiceAliasesSlice';
 import { isAliasStorable } from '@/utils/voiceAliases';
 import { lightFeedback, warningFeedback } from '@/utils/haptics';
@@ -266,10 +270,8 @@ export function useVoiceReview({
 } {
   const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
   // Advanced dev toggles — snapshotted into each telemetry attempt's `meta`.
-  const energyGateEnabled = useAppSelectorShallow(state => state.settings.voiceEnergyGateEnabled);
-  const gainNormalizeEnabled = useAppSelectorShallow(
-    state => state.settings.voiceGainNormalizeEnabled,
-  );
+  const energyGateEnabled = useAppSelectorShallow(selectVoiceEnergyGateEnabled);
+  const gainNormalizeEnabled = useAppSelectorShallow(selectVoiceGainNormalizeEnabled);
   const iosRawMode = useAppSelectorShallow(state => state.settings.voiceIosRawMode);
   const debugEnabled = useAppSelectorShallow(state => state.settings.voiceDebugEnabled);
   // The learner's own accept-list. Selected as the whole map (shallow-compared,

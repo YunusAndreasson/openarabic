@@ -3,7 +3,7 @@ import { Rating } from 'ts-fsrs';
 
 import { OPTIMIZED_FSRS_CONFIG } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
+import { MILLISECONDS_PER_DAY, parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
 import { convertToFSRSCard } from '@/utils/fsrsCard';
 import { FSRS_INSTANCE, calculateRetrievability } from '@/utils/fsrsUtils';
 import {
@@ -14,8 +14,6 @@ import {
   getMemoryStage,
   type MemoryStage,
 } from '@/utils/memoryHorizon';
-
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 /** Points sampled along the curve. Enough to read as a curve, cheap to build. */
 const CURVE_SAMPLES = 48;
@@ -115,9 +113,11 @@ export function useWordMemory(word: StudyWord | undefined): WordMemory | null {
     // anchor a decay curve to a review that never happened.
     if (horizonDays == null || !lastReview) return base;
 
-    const nowDays = Math.max(0, (now.getTime() - lastReview.getTime()) / MS_PER_DAY);
+    const nowDays = Math.max(0, (now.getTime() - lastReview.getTime()) / MILLISECONDS_PER_DAY);
     const dueDate = parseSupabaseTimestamp(word.fsrs_due);
-    const dueDays = dueDate ? (dueDate.getTime() - lastReview.getTime()) / MS_PER_DAY : null;
+    const dueDays = dueDate
+      ? (dueDate.getTime() - lastReview.getTime()) / MILLISECONDS_PER_DAY
+      : null;
 
     // The horizon itself is in the max so a word still in short learning steps —
     // due in ten minutes but holding for half a day — is plotted across its

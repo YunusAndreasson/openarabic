@@ -16,6 +16,12 @@ export interface SettingsState {
   arabicFontSize: number;
   audioLanguagePreference: AudioLanguage;
   audioShuffleEnabled: boolean;
+  /**
+   * Retained for rehydration compatibility only — the setting had no reader
+   * outside its own picker, so the control was removed rather than left
+   * pretending to do something. `persistConfig` has no migrate, so the field
+   * stays in the shape.
+   */
   displayLanguagePreference: DisplayLanguage;
   dailyWordLimit: number; // Number of words that can be added per day (0 = unlimited)
   adaptiveNewWordPacingEnabled: boolean; // Throttle new-word adds when recent recall dips
@@ -85,9 +91,6 @@ const settingsSlice = createSlice({
     setAudioShuffleEnabled: (state, action: PayloadAction<boolean>) => {
       state.audioShuffleEnabled = action.payload;
     },
-    setDisplayLanguagePreference: (state, action: PayloadAction<DisplayLanguage>) => {
-      state.displayLanguagePreference = action.payload;
-    },
     setDailyWordLimit: (state, action: PayloadAction<number>) => {
       state.dailyWordLimit = action.payload;
     },
@@ -141,8 +144,22 @@ const settingsSlice = createSlice({
  * the entire point. Narrow rather than RootState so this file stays out of the
  * store's import graph; RootState satisfies it structurally.
  */
-export const selectHapticsEnabled = (state: { settings: { hapticsEnabled?: boolean } }): boolean =>
-  state.settings.hapticsEnabled !== false;
+type DefaultTrueSetting =
+  | 'hapticsEnabled'
+  | 'adaptiveNewWordPacingEnabled'
+  | 'voiceEnergyGateEnabled'
+  | 'voiceGainNormalizeEnabled';
+
+interface RehydratedSettingsState {
+  settings: Partial<Pick<SettingsState, DefaultTrueSetting>>;
+}
+
+const selectDefaultTrueSetting =
+  (setting: DefaultTrueSetting) =>
+  (state: RehydratedSettingsState): boolean =>
+    state.settings[setting] !== false;
+
+export const selectHapticsEnabled = selectDefaultTrueSetting('hapticsEnabled');
 
 /**
  * Same rehydration hazard as {@link selectHapticsEnabled}: `adaptiveNewWordPacingEnabled`
@@ -154,9 +171,22 @@ export const selectHapticsEnabled = (state: { settings: { hapticsEnabled?: boole
  * user despite the field's documented default of `true`. Read through this selector
  * instead of the raw slice field so undefined maps back to the intended default.
  */
-export const selectAdaptiveNewWordPacingEnabled = (state: {
-  settings: { adaptiveNewWordPacingEnabled?: boolean };
-}): boolean => state.settings.adaptiveNewWordPacingEnabled !== false;
+export const selectAdaptiveNewWordPacingEnabled = selectDefaultTrueSetting(
+  'adaptiveNewWordPacingEnabled',
+);
+
+/**
+ * Same hazard again, and this pair was still reading raw. `VoiceGradingProvider`
+ * spreads these over `DEFAULT_RECORDING_CONFIG`, so on any install whose
+ * persisted `settings` predates the fields, `undefined` overwrites the shipped
+ * `true` — the energy gate and gain normalization run off, and the Advanced
+ * toggles render off to match. Route every read through these.
+ */
+export const selectVoiceEnergyGateEnabled = selectDefaultTrueSetting('voiceEnergyGateEnabled');
+
+export const selectVoiceGainNormalizeEnabled = selectDefaultTrueSetting(
+  'voiceGainNormalizeEnabled',
+);
 
 export const {
   setReminderTime,
@@ -164,7 +194,6 @@ export const {
   setArabicFontSize,
   setAudioLanguagePreference,
   setAudioShuffleEnabled,
-  setDisplayLanguagePreference,
   setDailyWordLimit,
   setAdaptiveNewWordPacingEnabled,
   setWordTapShowsTooltip,

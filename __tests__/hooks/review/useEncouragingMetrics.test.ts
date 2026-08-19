@@ -210,7 +210,7 @@ describe('useEncouragingMetrics', () => {
   });
 
   describe('Mastery metric (GREEN)', () => {
-    test('should show words strengthened when no words mastered but some known', () => {
+    test('should show unique words strengthened when no words are mastered', () => {
       const noMasteryMetrics: SessionMetrics = {
         ...baseMetrics,
         masteredWords: 0,
@@ -220,7 +220,7 @@ describe('useEncouragingMetrics', () => {
         useEncouragingMetrics(noMasteryMetrics, mockColors as ThemeColors, 0),
       );
 
-      expect(result.current?.metrics[2].text).toBe('4 words strengthened');
+      expect(result.current?.metrics[2].text).toBe('5 words strengthened');
       expect(result.current?.metrics[2].icon).toBe('trending-up');
     });
 
@@ -268,6 +268,8 @@ describe('useEncouragingMetrics', () => {
     test('should return strong pool text when known ratio >= 70%', () => {
       const strongMetrics: SessionMetrics = {
         ...baseMetrics,
+        firstAttemptKnown: 8,
+        firstAttemptUnknown: 2,
         wordsReviewed: 10,
         wordsKnown: 8,
         wordsUnknown: 2,
@@ -282,6 +284,8 @@ describe('useEncouragingMetrics', () => {
     test('should return struggle pool text when known ratio < 40%', () => {
       const weakMetrics: SessionMetrics = {
         ...baseMetrics,
+        firstAttemptKnown: 3,
+        firstAttemptUnknown: 7,
         wordsReviewed: 10,
         wordsKnown: 3,
         wordsUnknown: 7,
@@ -296,6 +300,8 @@ describe('useEncouragingMetrics', () => {
     test('should return default pool text for moderate performance', () => {
       const moderateMetrics: SessionMetrics = {
         ...baseMetrics,
+        firstAttemptKnown: 5,
+        firstAttemptUnknown: 5,
         wordsReviewed: 10,
         wordsKnown: 5,
         wordsUnknown: 5,
@@ -310,6 +316,8 @@ describe('useEncouragingMetrics', () => {
     test('should return perfect session text for flawless session with 5+ words', () => {
       const perfectMetrics: SessionMetrics = {
         ...baseMetrics,
+        firstAttemptKnown: 8,
+        firstAttemptUnknown: 0,
         wordsReviewed: 8,
         wordsKnown: 8,
         wordsUnknown: 0,
@@ -325,6 +333,8 @@ describe('useEncouragingMetrics', () => {
     test('should return big stability jump text when average stability increase is high', () => {
       const bigJumpMetrics: SessionMetrics = {
         ...baseMetrics,
+        firstAttemptKnown: 8,
+        firstAttemptUnknown: 2,
         wordsReviewed: 10,
         wordsKnown: 8,
         wordsUnknown: 2,
@@ -341,6 +351,8 @@ describe('useEncouragingMetrics', () => {
     test('should rotate messages on different days', () => {
       const strongMetrics: SessionMetrics = {
         ...baseMetrics,
+        firstAttemptKnown: 8,
+        firstAttemptUnknown: 2,
         wordsReviewed: 10,
         wordsKnown: 8,
         wordsUnknown: 2,
@@ -360,6 +372,26 @@ describe('useEncouragingMetrics', () => {
 
       expect(result1.current?.educationalText).toBe(STRINGS.SESSION_ED_STRONG_POOL[0]);
       expect(result2.current?.educationalText).toBe(STRINGS.SESSION_ED_STRONG_POOL[1]);
+    });
+
+    test('uses first attempts for recall copy when a missed word is drilled', () => {
+      const drilledMetrics: SessionMetrics = {
+        ...baseMetrics,
+        wordsReviewed: 1,
+        wordsKnown: 2,
+        wordsUnknown: 1,
+        firstAttemptKnown: 0,
+        firstAttemptUnknown: 1,
+        masteredWords: 0,
+        longestStreak: 2,
+      };
+
+      const { result } = renderHook(() =>
+        useEncouragingMetrics(drilledMetrics, mockColors as ThemeColors, 0),
+      );
+
+      expect(result.current?.metrics[2].text).toBe('1 word strengthened');
+      expect(result.current?.educationalText).toBe(STRINGS.SESSION_ED_STRUGGLE_POOL[0]);
     });
   });
 

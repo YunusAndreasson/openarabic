@@ -1,6 +1,6 @@
 import { BottomSheetErrorBoundary, ColorCodedText } from '@/components/common';
-import { BrandedBottomSheetHandle } from '@/components/ui';
-import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
+import { BrandedBottomSheet } from '@/components/ui';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { startTransition, useCallback, useEffect, useOptimistic, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,8 +18,6 @@ import { preload } from 'expo-audio';
 
 import { audioCache } from '@/services/audioCache';
 import type { SentenceWord, StudyWordIntent } from '@/types/vocabulary.types';
-import { useBottomSheetVisibility } from '@/hooks/ui/useBottomSheetVisibility';
-import { BottomSheetBackdrop, COMMON_BOTTOM_SHEET_PROPS } from '@/utils/bottomSheetUtils';
 import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
 import { generateStorageUrl } from '@/utils/storageUtils';
@@ -45,7 +43,6 @@ export function WordDetailsBottomSheet({
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { showToast } = useToast();
-  const bottomSheetRef = useBottomSheetVisibility(isVisible && !!word);
   // Use consolidated word audio playback hook
   const playWordAudio = useWordAudioPlayback({ showErrorToast: true });
   // Scales with the learner's reading size, like the review card's hero. It was
@@ -159,16 +156,7 @@ export function WordDetailsBottomSheet({
   };
 
   return (
-    <BottomSheet
-      ref={bottomSheetRef}
-      index={-1}
-      {...COMMON_BOTTOM_SHEET_PROPS}
-      enableDynamicSizing={true}
-      onClose={onClose}
-      backdropComponent={BottomSheetBackdrop}
-      backgroundStyle={[styles.background, { backgroundColor: colors.elevation1 }]}
-      handleComponent={BrandedBottomSheetHandle}
-    >
+    <BrandedBottomSheet isVisible={isVisible && !!word} onClose={onClose}>
       <BottomSheetView
         style={[styles.container, { paddingBottom: insets.bottom + LAYOUT.SPACING.LARGE }]}
       >
@@ -236,14 +224,13 @@ export function WordDetailsBottomSheet({
           )}
         </BottomSheetErrorBoundary>
       </BottomSheetView>
-    </BottomSheet>
+    </BrandedBottomSheet>
   );
 }
 
 WordDetailsBottomSheet.displayName = 'WordDetailsBottomSheet';
 
 const styles = StyleSheet.create({
-  background: LAYOUT.BOTTOM_SHEET.STYLES.bottomSheet,
   container: {
     paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
     paddingTop: LAYOUT.SPACING.MEDIUM,

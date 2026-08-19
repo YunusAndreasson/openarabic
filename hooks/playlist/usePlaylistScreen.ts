@@ -134,8 +134,6 @@ export const usePlaylistScreen = () => {
   useRefreshOnFocus(readingListQuery.refetch);
   useRefreshOnFocus(enhancedTracksQuery.refetch);
 
-  const isCurrentlyPlaying = simpleAudioService.getStatus().playing;
-
   // STABILIZATION: Enhanced handlePlayAll with better state management
   const handlePlayAll = useCallback(
     async (forceArabicOnly = false) => {
@@ -168,13 +166,6 @@ export const usePlaylistScreen = () => {
           // STABILIZATION: Set playback mode immediately for UI feedback
           setPlaybackMode('all');
 
-          // Track Play All started
-          analytics.track(ANALYTICS_EVENTS.AUDIO_PLAY_ALL_STARTED, {
-            article_count: currentTracks.length,
-            source: 'listen_tab',
-            shuffle_enabled: audioShuffleEnabled,
-          });
-
           // Use override preference if set (passed as parameter), otherwise use user's setting
           const effectivePreference = forceArabicOnly ? AudioLanguage.ARABIC_ONLY : audioPreference;
 
@@ -186,6 +177,20 @@ export const usePlaylistScreen = () => {
                   effectivePreference,
                 )
               : currentTracks;
+
+          // The override can legitimately have no playable tracks even when
+          // the user's normal-language playlist is populated.
+          if (!effectiveTracks.length) {
+            setPlaybackMode('none');
+            return;
+          }
+
+          // Only report playback after resolving a non-empty effective list.
+          analytics.track(ANALYTICS_EVENTS.AUDIO_PLAY_ALL_STARTED, {
+            article_count: effectiveTracks.length,
+            source: 'listen_tab',
+            shuffle_enabled: audioShuffleEnabled,
+          });
 
           // PLAYLIST SUPPORT: Use the new playlist functionality instead of just playing the first track
           const tracksToPlay = audioShuffleEnabled
@@ -280,6 +285,7 @@ export const usePlaylistScreen = () => {
       if (isAudioBusy()) return;
 
       const currentArticleId = getCurrentArticleId();
+      const isCurrentlyPlaying = simpleAudioService.getStatus().playing;
 
       if (isCurrentlyPlaying && currentArticleId === articleId) {
         selectionFeedback();
@@ -303,10 +309,17 @@ export const usePlaylistScreen = () => {
             articleId,
             audioPreference,
           );
-          if (track) {
-            const played = await simpleAudioService.play(track);
-            if (played) warmTrackCache(track);
+          if (!track) {
+            setPlaybackMode('none');
+            return;
+          }
+
+          const played = await simpleAudioService.play(track);
+          if (played) {
+            warmTrackCache(track);
             void markOnboardingStep(OnboardingStep.LISTEN_AUDIO);
+          } else {
+            setPlaybackMode('none');
           }
           return;
         }
@@ -347,7 +360,6 @@ export const usePlaylistScreen = () => {
       }
     },
     [
-      isCurrentlyPlaying,
       sortedEnhancedTracks,
       audioPreference,
       queryClient,

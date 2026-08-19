@@ -19,6 +19,7 @@ import { useMultipleFeaturedArticles } from '@/hooks/articles/useMultipleFeature
 import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import type { Article } from '@/types/articles.types';
 import type { ArticleId } from '@/types/branded.types';
+import { deduplicateArticlesByImage } from '@/utils/articleUtils';
 import { generateStorageUrl } from '@/utils/storageUtils';
 import { calculateProgressPercentage } from '@/utils/progressUtils';
 import {
@@ -117,15 +118,7 @@ export const RelatedArticlesByFilter = memo<RelatedArticlesByFilterProps>(
 
     // Limit to requested number of unread/low-progress articles, deduplicating by image
     const relatedArticles = useMemo(() => {
-      const seen = new Set<string>();
-      return unreadOrLowProgressArticles
-        .filter(article => {
-          if (!article.image_url) return true;
-          if (seen.has(article.image_url)) return false;
-          seen.add(article.image_url);
-          return true;
-        })
-        .slice(0, maxArticles);
+      return deduplicateArticlesByImage(unreadOrLowProgressArticles).slice(0, maxArticles);
     }, [unreadOrLowProgressArticles, maxArticles]);
 
     // Push the next article, exactly like every other article link in the app.

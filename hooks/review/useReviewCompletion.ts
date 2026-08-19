@@ -29,6 +29,11 @@ export const useReviewCompletion = (sessionMetrics?: SessionMetrics): void => {
    * callback so it lands exactly when the zoom-in settles.)
    */
   useEffect(() => {
+    // Mounting a completion surface without any reviewed words must be a
+    // no-op. The review route now redirects before this can happen, and this
+    // guard keeps future callers from recording empty sessions accidentally.
+    if (!sessionMetrics || sessionMetrics.wordsReviewed <= 0) return;
+
     const invalidateReviewQueries = async (): Promise<void> => {
       if (!user?.id) return;
 
@@ -49,23 +54,19 @@ export const useReviewCompletion = (sessionMetrics?: SessionMetrics): void => {
     InteractionManager.runAfterInteractions(() => {
       void invalidateReviewQueries();
 
-      if (sessionMetrics) {
-        void analytics.track(ANALYTICS_EVENTS.PRACTICE_SESSION_COMPLETE, {
-          wordsReviewed: sessionMetrics.wordsReviewed,
-          wordsKnown: sessionMetrics.wordsKnown,
-          wordsUnknown: sessionMetrics.wordsUnknown,
-          sessionDuration: Date.now() - sessionMetrics.startTime,
-          averageStabilityIncrease: sessionMetrics.averageStabilityIncrease,
-          longestStreak: sessionMetrics.longestStreak,
-          masteredWords: sessionMetrics.masteredWords,
-        });
-      }
+      void analytics.track(ANALYTICS_EVENTS.PRACTICE_SESSION_COMPLETE, {
+        wordsReviewed: sessionMetrics.wordsReviewed,
+        wordsKnown: sessionMetrics.wordsKnown,
+        wordsUnknown: sessionMetrics.wordsUnknown,
+        sessionDuration: Date.now() - sessionMetrics.startTime,
+        averageStabilityIncrease: sessionMetrics.averageStabilityIncrease,
+        longestStreak: sessionMetrics.longestStreak,
+        masteredWords: sessionMetrics.masteredWords,
+      });
 
       // Record this session's first-attempt recall for adaptive new-word pacing.
       // Fire-and-forget (best-effort, local storage).
-      if (sessionMetrics) {
-        void appendSession(sessionMetrics.firstAttemptKnown, sessionMetrics.firstAttemptUnknown);
-      }
+      void appendSession(sessionMetrics.firstAttemptKnown, sessionMetrics.firstAttemptUnknown);
 
       // Stamp today into the append-only study-day ledger. The server cannot
       // remember this: `fsrs_last_review` is overwritten by the next review, so
@@ -73,9 +74,7 @@ export const useReviewCompletion = (sessionMetrics?: SessionMetrics): void => {
       // Gated on a word actually being reviewed, matching the `fsrs_reps > 0`
       // rule the derived set uses — opening and closing a session must not
       // count as a study day.
-      if (sessionMetrics && sessionMetrics.wordsReviewed > 0) {
-        void recordStudyDay();
-      }
+      void recordStudyDay();
 
       // Count completed sessions for the notification priming card's re-ask
       // policy. The OS permission dialog itself is only ever shown from the
@@ -87,12 +86,10 @@ export const useReviewCompletion = (sessionMetrics?: SessionMetrics): void => {
       // been initialized"), and from the middle of this callback that skipped
       // the two calls above it. Nothing the learner depends on may sit behind
       // an ad SDK.
-      if (sessionMetrics) {
-        try {
-          metaEvents.logPracticeSessionComplete(sessionMetrics.wordsReviewed);
-        } catch {
-          // Attribution is non-critical — never let it affect the session.
-        }
+      try {
+        metaEvents.logPracticeSessionComplete(sessionMetrics.wordsReviewed);
+      } catch {
+        // Attribution is non-critical — never let it affect the session.
       }
     });
   }, [queryClient, sessionMetrics, user?.id]);

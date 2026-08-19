@@ -64,39 +64,17 @@ jest.mock('@/hooks/animations/useOpacityAnimation', () => ({
 }));
 
 // Note: getAudio returns synchronously to avoid async timing issues in tests
-jest.mock('@/services/audioCache', () => ({
-  audioCache: {
-    getAudio: jest.fn((url: string) => url),
-    preloadAudio: jest.fn((..._args: unknown[]) => Promise.resolve()),
-    clearCache: jest.fn((..._args: unknown[]) => Promise.resolve()),
-  },
-}));
+jest.mock('@/services/audioCache', () =>
+  require('@/__tests__/helpers/reviewMocks').createReviewAudioCacheMock(),
+);
 
-jest.mock('@/utils/storageUtils', () => ({
-  generateStorageUrl: jest.fn((bucket: string, path: string | null | undefined) => {
-    if (!path || typeof path !== 'string') return '';
-    if (path.startsWith('http://') || path.startsWith('https://')) return path;
-    return `https://example.com/storage/${bucket}/${path}`;
-  }),
-  generateImageUrl: jest.fn((path: string | null | undefined) => {
-    if (!path || typeof path !== 'string') return '';
-    if (path.startsWith('http://') || path.startsWith('https://')) return path;
-    return `https://example.com/storage/images/${path}`;
-  }),
-  generateAudioUrl: jest.fn((path: string | null | undefined) => {
-    if (!path || typeof path !== 'string') return '';
-    if (path.startsWith('http://') || path.startsWith('https://')) return path;
-    return `https://example.com/storage/audio/${path}`;
-  }),
-}));
+jest.mock('@/utils/storageUtils', () =>
+  require('@/__tests__/helpers/reviewMocks').createReviewStorageUtilsMock(),
+);
 
-jest.mock('@/services/supabase', () => ({
-  ...jest.requireActual<Record<string, unknown>>('@/services/supabase'),
-  checkAuthentication: jest.fn(async (..._args: unknown[]) => ({
-    session: { user: { id: 'test-user-123' } } as any,
-    user: { id: 'test-user-123' } as any,
-  })),
-}));
+jest.mock('@/services/supabase', () =>
+  require('@/__tests__/helpers/reviewMocks').createReviewSupabaseMock(),
+);
 
 // Get mocked hooks for direct manipulation in tests
 const { useFSRS } = require('@/hooks/vocabulary');

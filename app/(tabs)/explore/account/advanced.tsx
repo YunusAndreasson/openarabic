@@ -16,6 +16,8 @@ import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import {
+  selectVoiceEnergyGateEnabled,
+  selectVoiceGainNormalizeEnabled,
   setVoiceDebugEnabled,
   setVoiceEnergyGateEnabled,
   setVoiceGainNormalizeEnabled,
@@ -35,10 +37,8 @@ const AdvancedScreen: FC = () => {
   const dispatch = useAppDispatch();
   const voice = useVoiceGrading();
 
-  const energyGateEnabled = useAppSelectorShallow(state => state.settings.voiceEnergyGateEnabled);
-  const gainNormalizeEnabled = useAppSelectorShallow(
-    state => state.settings.voiceGainNormalizeEnabled,
-  );
+  const energyGateEnabled = useAppSelectorShallow(selectVoiceEnergyGateEnabled);
+  const gainNormalizeEnabled = useAppSelectorShallow(selectVoiceGainNormalizeEnabled);
   const iosRawMode = useAppSelectorShallow(state => state.settings.voiceIosRawMode);
   const debugEnabled = useAppSelectorShallow(state => state.settings.voiceDebugEnabled);
 

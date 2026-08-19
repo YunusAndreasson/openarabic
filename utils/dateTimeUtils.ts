@@ -3,6 +3,9 @@
  * Combines date parsing (Supabase timestamps) and time formatting utilities
  */
 
+export const MILLISECONDS_PER_HOUR = 60 * 60 * 1000;
+export const MILLISECONDS_PER_DAY = 24 * MILLISECONDS_PER_HOUR;
+
 /**
  * Normalize Supabase timestamp string format for Date.parse()
  * Converts space-separated timestamp to ISO 8601 T-separator format
@@ -87,6 +90,17 @@ export function formatSecondsToClock(seconds: number): string {
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+/** Format a local hour/minute pair with the app's consistent 24-hour clock. */
+export function format24HourTime(hour: number, minute: number): string {
+  const date = new Date();
+  date.setHours(hour, minute, 0, 0);
+  return date.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
 }
 
 /**

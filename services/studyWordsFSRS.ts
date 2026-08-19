@@ -7,6 +7,7 @@ import type { RootId } from '@/types/branded.types';
 import type { Tables } from '@/types/database.types';
 import type { FSRSWordUpdate, GetFSRSWordsOptions } from '@/types/fsrs.types';
 import type { StudyWord, StudyWordIntent } from '@/types/vocabulary.types';
+import { MILLISECONDS_PER_HOUR } from '@/utils/dateTimeUtils';
 import { createBulkFSRSEntries, createInitialFSRSEntry } from '@/utils/fsrsInitializers';
 import { createServiceErrorConfig } from '@/utils/serviceErrorConfig';
 import { executeAuthenticatedQuery, executeQuery } from '@/utils/supabaseHelpers';
@@ -159,7 +160,9 @@ export const studyWordsFSRSService = {
       // excluded by the `onlyDue` filter above. The cooldown keeps its job (a
       // finished session stays finished) and stops doing the other one.
       if (options.sessionCooldownHours && options.sessionCooldownHours > 0) {
-        const cooldownTime = new Date(Date.now() - options.sessionCooldownHours * 60 * 60 * 1000);
+        const cooldownTime = new Date(
+          Date.now() - options.sessionCooldownHours * MILLISECONDS_PER_HOUR,
+        );
         filteredQuery = filteredQuery.or(
           `fsrs_state.in.(${COOLDOWN_EXEMPT_STATES.join(',')}),` +
             `fsrs_last_review.is.null,fsrs_last_review.lt.${cooldownTime.toISOString()}`,

@@ -6,7 +6,7 @@ import {
   NEW_WORD_PACING,
 } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { normalizeTimestamp } from '@/utils/dateTimeUtils';
+import { MILLISECONDS_PER_HOUR, normalizeTimestamp } from '@/utils/dateTimeUtils';
 import { isDueAt } from '@/utils/wordClassification';
 
 /**
@@ -149,8 +149,9 @@ export function filterDueWords(
   { lastCompletedAt, cooldownHours = DEFAULT_SESSION_COOLDOWN_HOURS, nowMs }: FilterDueWordsOptions,
 ): StudyWord[] {
   const applyCooldown =
-    typeof lastCompletedAt === 'number' && nowMs - lastCompletedAt < cooldownHours * 60 * 60 * 1000;
-  const cutoffMs = nowMs - cooldownHours * 60 * 60 * 1000;
+    typeof lastCompletedAt === 'number' &&
+    nowMs - lastCompletedAt < cooldownHours * MILLISECONDS_PER_HOUR;
+  const cutoffMs = nowMs - cooldownHours * MILLISECONDS_PER_HOUR;
 
   return allWords.filter(word => {
     // "Due" itself is `isDueAt` — new words always, otherwise fsrs_due <= now.

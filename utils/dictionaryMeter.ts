@@ -33,7 +33,7 @@ import { FSRS_DIFFICULTY_MAX, FSRS_DIFFICULTY_MIN, OPTIMIZED_FSRS_CONFIG } from 
 import type { DictionarySortField } from '@/hooks/vocabulary/useDictionaryList';
 import type { SolidColorName } from '@/constants/colors';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
+import { MILLISECONDS_PER_DAY, parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
 import {
   MEMORY_STAGE_COLORS,
   getHorizonFraction,
@@ -42,8 +42,6 @@ import {
 } from '@/utils/memoryHorizon';
 import { DIFFICULTY_COLORS, getWordDifficultyLevel } from '@/utils/urgencyScore';
 import { hasBeenPractised } from '@/utils/wordClassification';
-
-const MS_PER_DAY = 86_400_000;
 
 function clamp01(value: number): number {
   if (!Number.isFinite(value)) return 0;
@@ -78,7 +76,7 @@ function getDifficultyFraction(word: StudyWord): number {
 function getRecencyFraction(word: StudyWord, nowMs: number): number {
   const created = parseSupabaseTimestamp(word.created_at);
   if (created === null) return 0;
-  const ageDays = (nowMs - created.getTime()) / MS_PER_DAY;
+  const ageDays = (nowMs - created.getTime()) / MILLISECONDS_PER_DAY;
   if (!Number.isFinite(ageDays)) return 0;
   if (ageDays <= 0) return 1;
   return clamp01(1 - Math.log1p(ageDays) / Math.log1p(OPTIMIZED_FSRS_CONFIG.maximum_interval));

@@ -78,6 +78,8 @@ describe('useFSRS Hook', () => {
       expect(result.current.currentWord).toBeNull();
       expect(result.current.wordQueue).toEqual([]);
       expect(result.current.progress).toBe(0);
+      expect(result.current.enrichmentBatches).toEqual([]);
+      expect(result.current.isEmpty).toBeFalsy();
       expect(result.current.isComplete).toBeFalsy();
       expect(result.current.isLoading).toBeFalsy();
     });
@@ -115,19 +117,29 @@ describe('useFSRS Hook', () => {
 
       expect(result.current.currentWord).not.toBeNull();
       expect(result.current.wordQueue.length).toBeGreaterThan(0);
+      expect(result.current.enrichmentBatches).toHaveLength(1);
+      expect(result.current.enrichmentBatches[0]).toHaveLength(2);
+      expect(result.current.enrichmentBatches[0]).toContainEqual(result.current.currentWord);
       expect(result.current.progress).toBe(0);
+      expect(result.current.isEmpty).toBeFalsy();
       expect(result.current.isComplete).toBeFalsy();
     });
 
-    test('calls onComplete when no due words available', async () => {
+    test('marks an empty due query without completing the session', async () => {
       const onComplete = jest.fn();
       studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => []);
 
-      renderHook(() => useFSRS({ userId: 'test-user', onComplete }), { wrapper });
+      const { result } = renderHook(() => useFSRS({ userId: 'test-user', onComplete }), {
+        wrapper,
+      });
 
       await waitFor(() => {
-        expect(onComplete).toHaveBeenCalledTimes(1);
+        expect(result.current.isEmpty).toBeTruthy();
       });
+
+      expect(result.current.isComplete).toBeFalsy();
+      expect(result.current.enrichmentBatches).toEqual([]);
+      expect(onComplete).not.toHaveBeenCalled();
     });
 
     test('holds a large backlog as a working set without completing', async () => {
@@ -206,6 +218,9 @@ describe('useFSRS Hook', () => {
       }
 
       expect(graded.size).toBe(total);
+      expect(result.current.enrichmentBatches).toHaveLength(2);
+      expect(result.current.enrichmentBatches[0]).toHaveLength(20);
+      expect(result.current.enrichmentBatches[1]).toHaveLength(10);
       expect(result.current.isComplete).toBeTruthy();
       expect(result.current.progress).toBe(100);
     });
@@ -834,13 +849,12 @@ describe('useFSRS Hook', () => {
         wrapper,
       });
 
-      await waitFor(() => {
-        expect(result.current.isComplete).toBeTruthy();
-      });
+      await waitFor(() => expect(result.current.isEmpty).toBeTruthy());
 
       expect(result.current.currentWord).toBeNull();
       expect(result.current.wordQueue).toEqual([]);
-      expect(onComplete).toHaveBeenCalledTimes(1);
+      expect(result.current.isComplete).toBeFalsy();
+      expect(onComplete).not.toHaveBeenCalled();
     });
 
     test('handles undefined userId', () => {

@@ -13,7 +13,7 @@
  * failure is a blank component at runtime, not a build error.
  */
 
-export { BrandedBottomSheetHandle } from './BrandedBottomSheetHandle';
+export { BrandedBottomSheet } from './BrandedBottomSheet';
 export { CloseButton } from './CloseButton';
 export { EnhancedImage } from './EnhancedImage';
 // `HeaderIconButton` and `Toast` are deliberately not re-exported: their only

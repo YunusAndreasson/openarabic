@@ -39,6 +39,20 @@ export function buildArticleCardProps(article: Article): ArticleCardBaseProps {
 }
 
 /**
+ * Keep the first article for each non-empty image URL. Articles without an
+ * image remain distinct because there is no visual asset to collide on.
+ */
+export function deduplicateArticlesByImage(articles: Article[]): Article[] {
+  const seen = new Set<string>();
+  return articles.filter(article => {
+    if (!article.image_url) return true;
+    if (seen.has(article.image_url)) return false;
+    seen.add(article.image_url);
+    return true;
+  });
+}
+
+/**
  * Helper function to shuffle array and return first N items using Fisher-Yates algorithm
  * @param items - The array to shuffle
  * @param count - The number of items to return

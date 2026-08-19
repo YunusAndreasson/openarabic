@@ -16,7 +16,6 @@ import reducer, {
   setAudioLanguagePreference,
   setAudioShuffleEnabled,
   setDailyWordLimit,
-  setDisplayLanguagePreference,
   setHapticsEnabled,
   setReminderTime,
   setVoiceEnabled,
@@ -119,24 +118,6 @@ describe('settingsSlice reducers', () => {
       const modifiedState = { ...initialState, audioShuffleEnabled: true };
       const state = reducer(modifiedState, setAudioShuffleEnabled(false));
       expect(state.audioShuffleEnabled).toBeFalsy();
-    });
-  });
-
-  describe('setDisplayLanguagePreference', () => {
-    test('sets to ARABIC_ONLY', () => {
-      const state = reducer(
-        initialState,
-        setDisplayLanguagePreference(DisplayLanguage.ARABIC_ONLY),
-      );
-      expect(state.displayLanguagePreference).toBe('arabic');
-    });
-
-    test('sets to ARABIC_ENGLISH', () => {
-      const state = reducer(
-        initialState,
-        setDisplayLanguagePreference(DisplayLanguage.ARABIC_ENGLISH),
-      );
-      expect(state.displayLanguagePreference).toBe('bilingual');
     });
   });
 

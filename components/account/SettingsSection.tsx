@@ -2,35 +2,27 @@ import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { BaseCard, ListSeparator, SectionLabel } from '@/components/common';
-import { OPACITY_HEX } from '@/constants/colors';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
 interface SettingsSectionProps {
   title: string;
+  /**
+   * A caveat the whole group shares, shown under the label.
+   *
+   * Prefer this to repeating the same qualifier on every row: "Applies to
+   * article audio and playlists" on the Listening section is what lets its two
+   * rows stay one word long. Leave it off when the label already says it.
+   */
+  subtitle?: string;
   children: React.ReactNode;
-  dangerZone?: boolean;
 }
 
 /**
  * Reusable section container for Account screen
  * Handles section title + card wrapper + dividers between items
  */
-export const SettingsSection = memo(({ title, children, dangerZone }: SettingsSectionProps) => {
-  const colors = useColors();
-
-  const sectionStyle = dangerZone
-    ? [
-        styles.sectionContainer,
-        {
-          overflow: 'hidden' as const,
-          borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
-          borderColor: colors.error,
-          backgroundColor: `${colors.error}${OPACITY_HEX.LOW}`,
-        },
-      ]
-    : styles.sectionContainer;
-
+export const SettingsSection = memo(({ title, subtitle, children }: SettingsSectionProps) => {
   // Add dividers between children
   const childrenArray = React.Children.toArray(children);
   const childrenWithDividers = childrenArray.reduce<React.ReactNode[]>((acc, child, index) => {
@@ -45,8 +37,10 @@ export const SettingsSection = memo(({ title, children, dangerZone }: SettingsSe
 
   return (
     <>
-      <SectionLabel title={title} style={styles.sectionLabelOverride} />
-      <BaseCard style={sectionStyle}>
+      {/* No style override: `density="comfortable"` is already the 24/8 rhythm
+          this used to restate by hand. */}
+      <SectionLabel title={title} subtitle={subtitle} />
+      <BaseCard style={styles.sectionContainer}>
         <View style={styles.linksContainer}>{childrenWithDividers}</View>
       </BaseCard>
     </>
@@ -87,9 +81,5 @@ const styles = StyleSheet.create({
   },
   divider: {
     opacity: LAYOUT.OPACITY.MEDIUM,
-  },
-  sectionLabelOverride: {
-    paddingTop: LAYOUT.SPACING.XLARGE,
-    paddingBottom: LAYOUT.SPACING.SMALL,
   },
 });

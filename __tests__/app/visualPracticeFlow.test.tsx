@@ -176,6 +176,14 @@ describe('Visual Practice Flow - Real useReview Hook', () => {
       );
     }
 
+    if (review.isEmpty) {
+      return (
+        <View testID="empty-screen">
+          <Text>No words due</Text>
+        </View>
+      );
+    }
+
     return (
       <View testID="review-screen">
         <Text testID="current-word">{review.currentSentence.wordForm}</Text>
@@ -232,19 +240,19 @@ describe('Visual Practice Flow - Real useReview Hook', () => {
     });
   });
 
-  test('should show completion when no words are due', async () => {
+  test('should distinguish an empty session from a completed review', async () => {
     // Mock empty word list BEFORE rendering
     studyWordsFSRSService.getFSRSWords.mockResolvedValueOnce([]);
 
-    const { getByTestId, queryByTestId } = render(<ReviewTestComponent />, { wrapper });
+    const { queryByTestId } = render(<ReviewTestComponent />, { wrapper });
 
     await waitFor(() => {
       expect(queryByTestId('loading-view')).toBeNull();
     });
 
-    // Wait for isComplete to be set to true when there are no words
     await waitFor(() => {
-      expect(queryByTestId('completion-screen')).toBeTruthy();
+      expect(queryByTestId('empty-screen')).toBeTruthy();
+      expect(queryByTestId('completion-screen')).toBeNull();
     });
   });
 });

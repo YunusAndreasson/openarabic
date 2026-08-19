@@ -10,7 +10,7 @@ import {
   useState,
 } from 'react';
 import type { ViewStyle } from 'react-native';
-import { AppState, InteractionManager } from 'react-native';
+import { InteractionManager } from 'react-native';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TIMING_CONFIG, VERDICT } from '@/constants/animation';
@@ -25,6 +25,7 @@ import { useAppSelectorShallow } from '@/store/hooks';
 
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useAuth } from '@/hooks/auth';
+import { useResumeFromBackground } from '@/hooks/app/useResumeFromBackground';
 import { useAudioPreloader } from './useAudioPreloader';
 import { watchPromptFinish } from './promptFinishWatcher';
 import { useSessionMetrics } from './useSessionMetrics';
@@ -107,9 +108,12 @@ interface UseReviewReturn {
   /** Whether the current card's answer has been revealed (flipped). */
   revealed: boolean;
   isComplete: boolean;
+  /** True when the due query resolved with no cards; not a completed session. */
+  isEmpty: boolean;
   isUpdating: boolean;
   isLoading: boolean;
   wordQueue: StudyWord[];
+  enrichmentBatches: readonly (readonly StudyWord[])[];
   progress: number;
   maxProgress: number;
   currentWordKey: string;
@@ -384,10 +388,6 @@ export function useReview({
     micStreamOpen: isMicStreamOpen?.() ?? false,
   }));
 
-  /** True once the app has actually left the foreground, so returning to it can
-   *  be told apart from the first `active` the listener ever sees. */
-  const wasBackgroundedRef = useRef(false);
-
   // Monotonic token for playAudio calls. play() returning false can mean the
   // call was superseded by a newer play (or a stop); the cache self-heal retry
   // must only run for the LATEST call, or a stale retry would invalidate a
@@ -417,11 +417,13 @@ export function useReview({
   const {
     currentWord,
     isComplete,
+    isEmpty,
     progress,
     updateWord,
     previewIntervals,
     invalidateQueries,
     wordQueue,
+    enrichmentBatches,
     isLoading,
     flushPendingWrites,
   } = useFSRS({
@@ -1245,7 +1247,7 @@ export function useReview({
    * key, and that watcher's `markDone` hands the audio session back — under the
    * replay it would then be racing.
    */
-  const resumePromptAfterReturn = useEffectEvent(() => {
+  const resumePromptAfterReturn = () => {
     if (isComplete || stateRefs.current.completionTriggered) return;
     if (!currentWord?.root?.audio_url) return;
     // The answer is already up: the recall test is over and the reveal path
@@ -1253,22 +1255,9 @@ export function useReview({
     if (showTranslation) return;
     diagMark('prompt.resume');
     void handleReplayAudio();
-  });
+  };
 
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', nextState => {
-      if (nextState === 'background') {
-        wasBackgroundedRef.current = true;
-        return;
-      }
-      if (nextState !== 'active' || !wasBackgroundedRef.current) return;
-      wasBackgroundedRef.current = false;
-      resumePromptAfterReturn();
-    });
-    return () => subscription.remove();
-    // `resumePromptAfterReturn` is a useEffectEvent and must never be a dep —
-    // listing it would re-subscribe on every render and defeat the point.
-  }, []);
+  useResumeFromBackground(resumePromptAfterReturn);
 
   /**
    * Play an example sentence's audio. Explicitly user-initiated only — it is
@@ -1501,9 +1490,11 @@ export function useReview({
     showTranslation,
     revealed,
     isComplete,
+    isEmpty,
     isUpdating: isUpdatingUI,
     isLoading,
     wordQueue,
+    enrichmentBatches,
     progress,
     maxProgress,
     currentWordKey,

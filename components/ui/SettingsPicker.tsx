@@ -1,6 +1,6 @@
-import { BrandedBottomSheetHandle } from '@/components/ui/BrandedBottomSheetHandle';
+import { BrandedBottomSheet } from '@/components/ui/BrandedBottomSheet';
 import { Ionicons, type IoniconName } from '@/components/ui/Icon';
-import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -9,9 +9,6 @@ import { OptionCard } from '@/components/common/OptionCard';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { LAYOUT, LINE_HEIGHT_MULTIPLIERS, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import { useBottomSheetDynamicStyles } from '@/hooks/ui/useBottomSheetDynamicStyles';
-import { useBottomSheetVisibility } from '@/hooks/ui/useBottomSheetVisibility';
-import { BottomSheetBackdrop, COMMON_BOTTOM_SHEET_PROPS } from '@/utils/bottomSheetUtils';
 
 export interface SettingsPickerOption<T> {
   id: T;
@@ -46,22 +43,8 @@ function SettingsPickerComponent<T>({
   const currentValue =
     selectedValue !== undefined && selectedValue !== null ? selectedValue : options[0]?.id;
 
-  const bottomSheetRef = useBottomSheetVisibility(isVisible);
-
-  // Use shared dynamic styles hook for theme-aware styling
-  const dynamicStyles = useBottomSheetDynamicStyles();
-
   return (
-    <BottomSheet
-      ref={bottomSheetRef}
-      index={-1}
-      {...COMMON_BOTTOM_SHEET_PROPS}
-      enableDynamicSizing={true}
-      onClose={onClose}
-      backgroundStyle={dynamicStyles.bottomSheet}
-      handleComponent={BrandedBottomSheetHandle}
-      backdropComponent={BottomSheetBackdrop}
-    >
+    <BrandedBottomSheet isVisible={isVisible} onClose={onClose}>
       <BottomSheetView>
         <BottomSheetHeader title={title} />
 
@@ -118,7 +101,7 @@ function SettingsPickerComponent<T>({
           })}
         </View>
       </BottomSheetView>
-    </BottomSheet>
+    </BrandedBottomSheet>
   );
 }
 

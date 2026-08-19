@@ -36,6 +36,7 @@ import { StudySessionStreakService } from '@/services/studyStreak';
 import { sentencesService } from '@/services/sentences';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { ArticleId, RootId } from '@/types/branded.types';
+import { MILLISECONDS_PER_HOUR } from '@/utils/dateTimeUtils';
 
 /**
  * Predicate for invalidateQueries: skip queries whose queryFn is `skipToken`.
@@ -180,7 +181,7 @@ export const fsrsQueries = {
         const recentlyCompleted =
           sessionCooldownHours !== undefined &&
           typeof lastCompletedAt === 'number' &&
-          Date.now() - lastCompletedAt < sessionCooldownHours * 60 * 60 * 1000;
+          Date.now() - lastCompletedAt < sessionCooldownHours * MILLISECONDS_PER_HOUR;
 
         return studyWordsFSRSService.getFSRSWords(userId, {
           onlyDue: true,

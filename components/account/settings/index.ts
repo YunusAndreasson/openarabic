@@ -1,3 +1,7 @@
 export { AboutSection } from './AboutSection';
-export { AppearanceSection } from './AppearanceSection';
-export { DangerZoneSection } from './DangerZoneSection';
+export { AccountSection } from './AccountSection';
+export { AppSection } from './AppSection';
+export { ListeningSection } from './ListeningSection';
+export { PracticeSection } from './PracticeSection';
+export { ReadingSection } from './ReadingSection';
+export { SupportSection } from './SupportSection';

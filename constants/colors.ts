@@ -767,15 +767,6 @@ const sepiaColors: ThemeColors = {
   grammar: createGrammarColors('sepia'),
 } as const;
 
-/**
- * Hex opacity suffixes for use with color strings
- * Example: `${colors.tint}${OPACITY_HEX.HIGH}` → "#5B7F68CC"
- */
-export const OPACITY_HEX = {
-  HIGH: 'CC', // 80%
-  LOW: '26', // 15%
-} as const;
-
 export const Colors = { light: lightColors, dark: darkColors, sepia: sepiaColors } as const;
 
 export const Theme = {

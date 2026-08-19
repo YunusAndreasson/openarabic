@@ -1,11 +1,8 @@
 import * as Sentry from '@sentry/react-native';
-import { Component, memo } from 'react';
+import { Component } from 'react';
 import type { ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
 
-import { ThemedText } from '@/components/primitives/ThemedText';
-import { LAYOUT } from '@/constants/layout';
-import { STRINGS } from '@/constants/strings';
+import { AppErrorFallback } from '@/components/common/AppErrorFallback';
 import { handleError } from '@/utils/errorHandling';
 
 interface ErrorFallbackProps {
@@ -13,29 +10,6 @@ interface ErrorFallbackProps {
   readonly resetError?: () => void;
   readonly componentName?: string;
 }
-
-const DefaultErrorFallback = memo(function DefaultErrorFallback({
-  error,
-  componentName,
-}: Omit<ErrorFallbackProps, 'resetError'>) {
-  const errorMessage = error.message || STRINGS.UNKNOWN_ERROR_OCCURRED;
-  return (
-    <View style={styles.errorContainer}>
-      <ThemedText type="heading3" colorName="error" style={styles.errorTitle}>
-        {STRINGS.SOMETHING_WENT_WRONG}
-      </ThemedText>
-      <ThemedText style={styles.errorMessage} type="body">
-        {STRINGS.PLEASE_TRY_AGAIN}
-      </ThemedText>
-      {__DEV__ && (
-        <ThemedText colorName="textTertiary" type="caption">
-          {componentName ? `[${componentName}] ` : ''}
-          {errorMessage}
-        </ThemedText>
-      )}
-    </View>
-  );
-});
 
 interface ComponentErrorBoundaryProps {
   readonly children: ReactNode;
@@ -105,27 +79,16 @@ export class ComponentErrorBoundary extends Component<
         return fallback;
       }
 
-      return <DefaultErrorFallback error={error} componentName={componentName} />;
+      return (
+        <AppErrorFallback
+          error={error}
+          componentName={componentName}
+          showDetails={__DEV__}
+          centered
+        />
+      );
     }
 
     return children;
   }
 }
-
-const styles = StyleSheet.create({
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: LAYOUT.SPACING.LARGE,
-  },
-  errorTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    marginBottom: LAYOUT.SPACING.SMALL,
-    textAlign: 'center',
-  },
-  errorMessage: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    textAlign: 'center',
-  },
-});

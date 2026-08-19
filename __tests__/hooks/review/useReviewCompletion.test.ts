@@ -8,7 +8,7 @@
  */
 
 import { describe, expect, jest, beforeEach, afterEach } from '@jest/globals';
-import { renderHook } from '@testing-library/react-native';
+import { act, renderHook } from '@testing-library/react-native';
 
 // Mock dependencies BEFORE imports
 jest.mock('@tanstack/react-query', () => ({
@@ -54,6 +54,10 @@ jest.mock('@/utils/recallSignalStorage', () => ({
   appendSession: jest.fn(),
 }));
 
+jest.mock('@/utils/studyDayLedger', () => ({
+  recordStudyDay: jest.fn(),
+}));
+
 jest.mock('@/services/notificationService', () => ({
   ensurePermissions: jest.fn(async (..._args: unknown[]) => true),
 }));
@@ -79,6 +83,13 @@ import { useReviewCompletion } from '@/hooks/review/useReviewCompletion';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useQueryClient } from '@tanstack/react-query';
 import type { SessionMetrics } from '@/types/review.types';
+import { analytics } from '@/services/analytics';
+import { metaEvents } from '@/services/metaEvents';
+import { recordSessionCompleted } from '@/utils/notificationPromptStorage';
+import { appendSession } from '@/utils/recallSignalStorage';
+import { recordStudyDay } from '@/utils/studyDayLedger';
+import { fsrsQueries, studyStreakQueries } from '@/constants/queries';
+import { InteractionManager } from 'react-native';
 
 const mockUseAuth = jest.mocked(useAuth);
 const mockUseQueryClient = jest.mocked(useQueryClient);
@@ -94,6 +105,10 @@ describe('useReviewCompletion', () => {
       invalidateQueries: jest.fn(),
       setQueryData: jest.fn(),
     } as never);
+    jest.mocked(InteractionManager.runAfterInteractions).mockImplementation(callback => {
+      callback();
+      return { cancel: jest.fn() } as never;
+    });
   });
 
   afterEach(() => {
@@ -124,6 +139,41 @@ describe('useReviewCompletion', () => {
 
       // Should unmount without errors
       unmount();
+    });
+
+    test('does nothing for a zero-word session', () => {
+      renderHook(() =>
+        useReviewCompletion({
+          ...mockSessionMetrics,
+          wordsReviewed: 0,
+          wordsKnown: 0,
+          wordsUnknown: 0,
+          firstAttemptKnown: 0,
+          firstAttemptUnknown: 0,
+        }),
+      );
+
+      expect(fsrsQueries.invalidateAll).not.toHaveBeenCalled();
+      expect(studyStreakQueries.invalidateAll).not.toHaveBeenCalled();
+      expect(analytics.track).not.toHaveBeenCalled();
+      expect(appendSession).not.toHaveBeenCalled();
+      expect(recordStudyDay).not.toHaveBeenCalled();
+      expect(recordSessionCompleted).not.toHaveBeenCalled();
+      expect(metaEvents.logPracticeSessionComplete).not.toHaveBeenCalled();
+    });
+
+    test('records every completion effect for a real session', async () => {
+      renderHook(() => useReviewCompletion(mockSessionMetrics));
+
+      await act(async () => {
+        await jest.runAllTimersAsync();
+      });
+
+      expect(analytics.track).toHaveBeenCalledTimes(1);
+      expect(appendSession).toHaveBeenCalledWith(8, 2);
+      expect(recordStudyDay).toHaveBeenCalledTimes(1);
+      expect(recordSessionCompleted).toHaveBeenCalledTimes(1);
+      expect(metaEvents.logPracticeSessionComplete).toHaveBeenCalledWith(10);
     });
   });
 });

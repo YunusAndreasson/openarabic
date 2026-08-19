@@ -1,6 +1,6 @@
-import { BrandedBottomSheetHandle } from '@/components/ui/BrandedBottomSheetHandle';
+import { BrandedBottomSheet } from '@/components/ui/BrandedBottomSheet';
 import { DateTimePicker } from '@expo/ui/community/datetime-picker';
-import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useCallback, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,9 +11,7 @@ import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
-import { useBottomSheetDynamicStyles } from '@/hooks/ui/useBottomSheetDynamicStyles';
-import { useBottomSheetVisibility } from '@/hooks/ui/useBottomSheetVisibility';
-import { BottomSheetBackdrop, COMMON_BOTTOM_SHEET_PROPS } from '@/utils/bottomSheetUtils';
+import { format24HourTime } from '@/utils/dateTimeUtils';
 
 export interface TimePickerProps {
   isVisible: boolean;
@@ -104,7 +102,6 @@ function IosTimePicker({
   const colors = useColors();
   const isDark = useIsDarkMode();
   const insets = useSafeAreaInsets();
-  const bottomSheetRef = useBottomSheetVisibility(isVisible);
 
   const initialDate = new Date();
   initialDate.setHours(initialHour, initialMinute, 0, 0);
@@ -120,32 +117,14 @@ function IosTimePicker({
     onClose();
   };
 
-  const formatTime = (date: Date) =>
-    date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
-
-  const dynamicStyles = useBottomSheetDynamicStyles();
-
   return (
-    <BottomSheet
-      ref={bottomSheetRef}
-      index={-1}
-      {...COMMON_BOTTOM_SHEET_PROPS}
-      enableDynamicSizing={true}
-      onClose={onClose}
-      backgroundStyle={dynamicStyles.bottomSheet}
-      handleComponent={BrandedBottomSheetHandle}
-      backdropComponent={BottomSheetBackdrop}
-    >
+    <BrandedBottomSheet isVisible={isVisible} onClose={onClose}>
       <BottomSheetView
         style={[styles.container, { paddingBottom: insets.bottom + LAYOUT.SPACING.LARGE }]}
       >
         <View style={styles.timeDisplay}>
           <ThemedText colorName="subtitleText" style={styles.timeText} type="heading1">
-            {formatTime(selectedDate)}
+            {format24HourTime(selectedDate.getHours(), selectedDate.getMinutes())}
           </ThemedText>
         </View>
 
@@ -168,7 +147,7 @@ function IosTimePicker({
           <ThemedButton title={STRINGS.SET_TIME} onPress={handleConfirm} />
         </View>
       </BottomSheetView>
-    </BottomSheet>
+    </BrandedBottomSheet>
   );
 }
 

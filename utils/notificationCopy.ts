@@ -1,6 +1,7 @@
 import { NOTIFICATION_TYPES, SMART_NOTIFICATIONS } from '@/constants/notifications';
 import type { SmartNotificationType } from '@/constants/notifications';
 import { STRINGS } from '@/constants/strings';
+import { MILLISECONDS_PER_DAY } from '@/utils/dateTimeUtils';
 
 export type ReminderKind = 'due-few' | 'due-many' | 'slipping' | 'word';
 
@@ -99,5 +100,5 @@ export function buildReminderContent(
  */
 export function dayOfYearSeed(date: Date): number {
   const startOfYear = new Date(date.getFullYear(), 0, 1);
-  return Math.floor((date.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
+  return Math.floor((date.getTime() - startOfYear.getTime()) / MILLISECONDS_PER_DAY);
 }

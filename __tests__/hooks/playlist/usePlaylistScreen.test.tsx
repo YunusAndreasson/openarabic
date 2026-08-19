@@ -29,6 +29,16 @@ import {
 import type { ArticleId } from '@/types/branded.types';
 import { AudioLanguage } from '@/types/enums';
 
+const mockDispatch = jest.fn();
+let mockReduxState = setupTestStore().getState();
+jest.mock('@/store/hooks', () => ({
+  useAppDispatch: () => mockDispatch,
+  useAppSelector: (selector: (state: typeof mockReduxState) => unknown) =>
+    selector(mockReduxState),
+  useAppSelectorShallow: (selector: (state: typeof mockReduxState) => unknown) =>
+    selector(mockReduxState),
+}));
+
 // ============================================================================
 // MOCK SETUP
 // ============================================================================
@@ -36,7 +46,9 @@ import { AudioLanguage } from '@/types/enums';
 // Mock useAuth
 const mockUser = { id: 'test-user-id', email: 'test@example.com' };
 jest.mock('@/hooks/auth/useAuth', () => ({
-  useAuth: () => ({ user: mockUser }),
+  useAuth: () => ({
+    user: { id: 'test-user-id', email: 'test@example.com' },
+  }),
 }));
 
 // Mock useAppPreloader
@@ -64,20 +76,21 @@ jest.mock('@/services/audioPlayer', () => ({
 // Get reference to mock for test manipulation
 import { simpleAudioService as mockSimpleAudioService } from '@/services/audioPlayer';
 
-const mockEnhancedAudioService = {
-  getReadingListEnhancedTracks: jest.fn(async (..._args: unknown[]) => []),
-  generateEnhancedAudioTrack: jest.fn(async (..._args: unknown[]) => null),
-};
 jest.mock('@/services/audioPlaylist', () => ({
-  enhancedAudioService: mockEnhancedAudioService,
+  enhancedAudioService: {
+    getReadingListEnhancedTracks: jest.fn(),
+    generateEnhancedAudioTrack: jest.fn(),
+  },
+  warmTrackCache: jest.fn(),
 }));
+import { enhancedAudioService as mockEnhancedAudioService } from '@/services/audioPlaylist';
 
-const mockBookmarkService = {
-  removeFromReadingList: jest.fn(async (..._args: unknown[]) => undefined),
-};
 jest.mock('@/services/bookmark', () => ({
-  bookmarkService: mockBookmarkService,
+  bookmarkService: {
+    removeFromReadingList: jest.fn(),
+  },
 }));
+import { bookmarkService as mockBookmarkService } from '@/services/bookmark';
 
 jest.mock('@/services/analytics', () => ({
   analytics: {
@@ -104,7 +117,11 @@ jest.mock('@/utils/audioUtils', () => ({
   getCurrentArticleId: jest.fn((..._args: unknown[]) => null),
   isAudioBusy: jest.fn((..._args: unknown[]) => false),
   prefetchArticleWithImage: jest.fn(),
-  stopAudioSafely: jest.fn(),
+  stopNonPlaylistAudioSafely: jest.fn(),
+}));
+
+jest.mock('@/utils/onboardingStorage', () => ({
+  markOnboardingStep: jest.fn(),
 }));
 
 // Mock constants
@@ -124,7 +141,8 @@ jest.mock('@/constants/queries', () => ({
   readingProgressQueries: {
     readingList: (userId: string) => ({
       queryKey: ['readingList', userId],
-      queryFn: jest.fn(async (..._args: unknown[]) => []),
+      queryFn: async () => [],
+      staleTime: Infinity,
     }),
     keys: {
       readingList: (userId: string) => ['readingList', userId],
@@ -133,7 +151,8 @@ jest.mock('@/constants/queries', () => ({
   audioQueries: {
     tracks: (userId: string, preference: AudioLanguage) => ({
       queryKey: ['enhancedAudioTracks', userId, preference],
-      queryFn: jest.fn(async (..._args: unknown[]) => []),
+      queryFn: async () => [],
+      staleTime: Infinity,
     }),
     keys: {
       tracks: (userId: string, preference: AudioLanguage) => [
@@ -145,14 +164,13 @@ jest.mock('@/constants/queries', () => ({
   },
 }));
 
-// Mock focus effects — SDK 56 moved this to expo-router/react-navigation.
-jest.mock('expo-router/react-navigation', () => ({
-  useFocusEffect: jest.fn((callback: () => void | (() => void)) => {
-    // Execute the callback synchronously for testing
-    const cleanup = callback();
-    return cleanup;
-  }),
-}));
+jest.mock('expo-router', () => {
+  const React = require('react');
+  return {
+    useFocusEffect: (callback: () => void | (() => void)) =>
+      React.useEffect(callback, [callback]),
+  };
+});
 
 // Import hook after mocks
 import { usePlaylistScreen } from '@/hooks/playlist/usePlaylistScreen';
@@ -178,6 +196,9 @@ describe('usePlaylistScreen', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    const { getCurrentArticleId, isAudioBusy } = require('@/utils/audioUtils');
+    jest.mocked(getCurrentArticleId).mockReturnValue(null);
+    jest.mocked(isAudioBusy).mockReturnValue(false);
     // Don't use fake timers globally - they conflict with waitFor and async operations
     queryClient = createTestQueryClient();
     store = setupTestStore({
@@ -192,11 +213,18 @@ describe('usePlaylistScreen', () => {
         arabicFont: 'NotoSansArabic-Regular',
       },
     });
+    mockReduxState = store.getState();
 
     // Reset service mocks
     jest
       .mocked(mockSimpleAudioService.getStatus)
       .mockReturnValue(createAudioStatusMock({ playing: false }));
+    jest.mocked(mockSimpleAudioService.stop).mockResolvedValue(undefined);
+    jest.mocked(mockSimpleAudioService.play).mockResolvedValue(true);
+    jest.mocked(mockSimpleAudioService.playPlaylist).mockResolvedValue(true);
+    jest.mocked(mockEnhancedAudioService.getReadingListEnhancedTracks).mockResolvedValue([]);
+    jest.mocked(mockEnhancedAudioService.generateEnhancedAudioTrack).mockResolvedValue(null);
+    jest.mocked(mockBookmarkService.removeFromReadingList).mockResolvedValue(undefined);
   });
 
   // ============================================================================
@@ -232,8 +260,7 @@ describe('usePlaylistScreen', () => {
   // ============================================================================
 
   describe('Reading List Sorting', () => {
-    // TODO: Fix mock setup - Redux store not providing customOrder correctly after clearAllMocks
-    test.skip('deduplicates articles with same ID', async () => {
+    test('deduplicates articles with same ID', async () => {
       const readingList = [
         createReadingListMock({ article_id: 1, added_at: '2024-01-01T00:00:00Z' }),
         createReadingListMock({ article_id: 1, added_at: '2024-01-02T00:00:00Z' }), // Duplicate
@@ -242,18 +269,21 @@ describe('usePlaylistScreen', () => {
 
       queryClient.setQueryData(['readingList', mockUser.id], readingList);
 
+      expect(store.getState().playlist.customOrder).toEqual([]);
+      expect(store.getState().settings.audioLanguagePreference).toBe(
+        AudioLanguage.ARABIC_ONLY,
+      );
+
       const { result } = renderHook(() => usePlaylistScreen(), {
         wrapper: createWrapper(),
       });
 
-      await waitFor(() => {
-        // Should only have 2 unique articles, not 3
-        expect(result.current.sortedReadingList.length).toBeLessThanOrEqual(2);
-      });
+      await waitFor(() =>
+        expect(result.current.sortedReadingList.map(item => item.article_id)).toEqual([2, 1]),
+      );
     });
 
-    // TODO: Fix mock setup - Redux store not providing customOrder correctly
-    test.skip('sorts by custom order when available', async () => {
+    test('sorts by custom order when available', async () => {
       const readingList = [
         createReadingListMock({ article_id: 1, added_at: '2024-01-01T00:00:00Z' }),
         createReadingListMock({ article_id: 2, added_at: '2024-01-02T00:00:00Z' }),
@@ -273,6 +303,7 @@ describe('usePlaylistScreen', () => {
           arabicFont: 'NotoSansArabic-Regular',
         },
       });
+      mockReduxState = store.getState();
 
       queryClient.setQueryData(['readingList', mockUser.id], readingList);
 
@@ -284,8 +315,7 @@ describe('usePlaylistScreen', () => {
         expect(result.current.sortedReadingList.length).toBe(3);
       });
 
-      // First item should be article_id 3 (first in custom order)
-      expect(result.current.sortedReadingList[0].article_id).toBe(3);
+      expect(result.current.sortedReadingList.map(item => item.article_id)).toEqual([3, 1, 2]);
     });
   });
 
@@ -310,27 +340,33 @@ describe('usePlaylistScreen', () => {
     });
 
     test('stops playback when already playing all', async () => {
-      jest
-        .mocked(mockSimpleAudioService.getStatus)
-        .mockReturnValue(createAudioStatusMock({ playing: true }));
+      const tracks = [createEnhancedAudioTrackMock({ articleId: 1 as ArticleId })];
+      queryClient.setQueryData(
+        ['enhancedAudioTracks', mockUser.id, AudioLanguage.ARABIC_ONLY],
+        tracks,
+      );
 
       const { result } = renderHook(() => usePlaylistScreen(), {
         wrapper: createWrapper(),
       });
 
-      // First set playback mode to 'all' by starting playback
       await act(async () => {
-        // Simulate that we're in 'all' playback mode
-        // We need to get the hook into 'all' mode first
+        await result.current.handlePlayAll();
+      });
+      expect(result.current.playbackMode).toBe('all');
+
+      jest
+        .mocked(mockSimpleAudioService.getStatus)
+        .mockReturnValue(createAudioStatusMock({ playing: true }));
+
+      await act(async () => {
+        await result.current.handlePlayAll();
       });
 
-      // Note: Due to the complexity of state management, this test verifies
-      // the stop function exists and can be called
-      expect(mockSimpleAudioService.stop).toBeDefined();
+      expect(mockSimpleAudioService.stop).toHaveBeenCalledTimes(1);
     });
 
-    // TODO: Fix mock setup - Redux store not providing customOrder correctly
-    test.skip('starts playlist playback when tracks available', async () => {
+    test('starts playlist playback when tracks available', async () => {
       const tracks = [
         createEnhancedAudioTrackMock({ articleId: 1 as ArticleId, title: 'Track 1' }),
         createEnhancedAudioTrackMock({ articleId: 2 as ArticleId, title: 'Track 2' }),
@@ -356,8 +392,7 @@ describe('usePlaylistScreen', () => {
       expect(mockSimpleAudioService.playPlaylist).toHaveBeenCalled();
     });
 
-    // TODO: Fix mock setup - Redux store not providing customOrder correctly
-    test.skip('tracks analytics event when starting playback', async () => {
+    test('tracks analytics event when starting playback', async () => {
       const { analytics } = require('@/services/analytics');
       const tracks = [createEnhancedAudioTrackMock({ articleId: 1 as ArticleId })];
 
@@ -393,8 +428,7 @@ describe('usePlaylistScreen', () => {
   // ============================================================================
 
   describe('handlePlayAllArabicOnly', () => {
-    // TODO: Fix mock setup - Redux store not providing customOrder correctly
-    test.skip('shows toast notification', async () => {
+    test('shows a toast but does not start an empty Arabic-only playlist', async () => {
       const tracks = [createEnhancedAudioTrackMock({ articleId: 1 as ArticleId })];
 
       queryClient.setQueryData(
@@ -420,10 +454,13 @@ describe('usePlaylistScreen', () => {
         expect.any(String),
         'bottom',
       );
+      expect(mockSimpleAudioService.playPlaylist).not.toHaveBeenCalled();
+      const { analytics } = require('@/services/analytics');
+      expect(analytics.track).not.toHaveBeenCalled();
+      expect(result.current.playbackMode).toBe('none');
     });
 
-    // TODO: Fix mock setup - Redux store not providing customOrder correctly
-    test.skip('triggers haptic feedback', async () => {
+    test('triggers haptic feedback', async () => {
       const { mediumFeedback } = require('@/utils/haptics');
       const tracks = [createEnhancedAudioTrackMock({ articleId: 1 as ArticleId })];
 
@@ -470,14 +507,17 @@ describe('usePlaylistScreen', () => {
 
     test('stops playback when tapping currently playing article', async () => {
       const { getCurrentArticleId } = require('@/utils/audioUtils');
-      jest.mocked(getCurrentArticleId).mockReturnValue(1);
-      jest
-        .mocked(mockSimpleAudioService.getStatus)
-        .mockReturnValue(createAudioStatusMock({ playing: true }));
 
       const { result } = renderHook(() => usePlaylistScreen(), {
         wrapper: createWrapper(),
       });
+
+      // Audio can start through the global mini-player without causing this
+      // screen hook to render, so the handler must consult live service state.
+      jest.mocked(getCurrentArticleId).mockReturnValue(1);
+      jest
+        .mocked(mockSimpleAudioService.getStatus)
+        .mockReturnValue(createAudioStatusMock({ playing: true }));
 
       await act(async () => {
         await result.current.handleArticlePlay(1 as ArticleId);
@@ -486,8 +526,7 @@ describe('usePlaylistScreen', () => {
       expect(mockSimpleAudioService.stop).toHaveBeenCalled();
     });
 
-    // TODO: Fix mock setup - Redux store not providing customOrder correctly
-    test.skip('plays from article position (Spotify-style)', async () => {
+    test('plays from article position (Spotify-style)', async () => {
       const tracks = [
         createEnhancedAudioTrackMock({ articleId: 1 as ArticleId, title: 'Track 1' }),
         createEnhancedAudioTrackMock({ articleId: 2 as ArticleId, title: 'Track 2' }),
@@ -511,18 +550,11 @@ describe('usePlaylistScreen', () => {
         await result.current.handleArticlePlay(2 as ArticleId);
       });
 
-      // Should play from article 2 onwards (tracks 2 and 3)
-      expect(mockSimpleAudioService.playPlaylist).toHaveBeenCalledWith(
-        expect.arrayContaining([
-          expect.objectContaining({ articleId: 2 }),
-          expect.objectContaining({ articleId: 3 }),
-        ]),
-        expect.any(Function),
-      );
+      const playedTracks = jest.mocked(mockSimpleAudioService.playPlaylist).mock.calls[0][0];
+      expect(playedTracks.map(track => track.articleId)).toEqual([2, 3]);
     });
 
-    // TODO: Fix mock setup - Redux store not providing customOrder correctly
-    test.skip('generates single track for article not in playlist', async () => {
+    test('resets playback state when fallback track generation fails', async () => {
       const tracks = [createEnhancedAudioTrackMock({ articleId: 1 as ArticleId })];
 
       queryClient.setQueryData(
@@ -547,6 +579,23 @@ describe('usePlaylistScreen', () => {
         99,
         AudioLanguage.ARABIC_ONLY,
       );
+      expect(mockSimpleAudioService.play).not.toHaveBeenCalled();
+      expect(result.current.playbackMode).toBe('none');
+
+      const fallbackTrack = createEnhancedAudioTrackMock({ articleId: 100 as ArticleId });
+      jest
+        .mocked(mockEnhancedAudioService.generateEnhancedAudioTrack)
+        .mockResolvedValueOnce(fallbackTrack);
+      jest.mocked(mockSimpleAudioService.play).mockResolvedValueOnce(false);
+
+      await act(async () => {
+        await result.current.handleArticlePlay(100 as ArticleId);
+      });
+
+      const { markOnboardingStep } = require('@/utils/onboardingStorage');
+      expect(mockSimpleAudioService.play).toHaveBeenCalledWith(fallbackTrack);
+      expect(markOnboardingStep).not.toHaveBeenCalled();
+      expect(result.current.playbackMode).toBe('none');
     });
   });
 
@@ -555,8 +604,7 @@ describe('usePlaylistScreen', () => {
   // ============================================================================
 
   describe('handleDelete', () => {
-    // TODO: Fix mock setup - Redux store not providing customOrder correctly
-    test.skip('removes article from reading list', async () => {
+    test('removes article from reading list', async () => {
       const { result } = renderHook(() => usePlaylistScreen(), {
         wrapper: createWrapper(),
       });
@@ -568,8 +616,7 @@ describe('usePlaylistScreen', () => {
       expect(mockBookmarkService.removeFromReadingList).toHaveBeenCalledWith(mockUser.id, 1);
     });
 
-    // TODO: Fix mock setup - simpleAudioService mock not being restored properly
-    test.skip('triggers haptic feedback', async () => {
+    test('triggers haptic feedback', async () => {
       const { selectionFeedback } = require('@/utils/haptics');
 
       const { result } = renderHook(() => usePlaylistScreen(), {
@@ -583,8 +630,7 @@ describe('usePlaylistScreen', () => {
       expect(selectionFeedback).toHaveBeenCalled();
     });
 
-    // TODO: Fix mock setup - simpleAudioService mock not being restored properly
-    test.skip('invalidates reading list queries', async () => {
+    test('invalidates reading list queries', async () => {
       const invalidateQueriesSpy = jest.spyOn(queryClient, 'invalidateQueries');
 
       const { result } = renderHook(() => usePlaylistScreen(), {
@@ -595,13 +641,20 @@ describe('usePlaylistScreen', () => {
         await result.current.handleDelete(1 as ArticleId);
       });
 
-      expect(invalidateQueriesSpy).toHaveBeenCalled();
+      expect(invalidateQueriesSpy).toHaveBeenCalledTimes(2);
+      expect(invalidateQueriesSpy).toHaveBeenNthCalledWith(1, {
+        queryKey: ['readingList', mockUser.id],
+      });
+      expect(invalidateQueriesSpy).toHaveBeenNthCalledWith(2, {
+        queryKey: ['enhancedAudioTracks', mockUser.id, AudioLanguage.ARABIC_ONLY],
+      });
     });
 
-    // TODO: Fix mock setup - simpleAudioService mock not being restored properly
-    test.skip('handles error gracefully', async () => {
+    test('handles error gracefully', async () => {
       const { handleError } = require('@/utils/errorHandling');
-      mockBookmarkService.removeFromReadingList.mockRejectedValueOnce(new Error('Delete failed'));
+      jest
+        .mocked(mockBookmarkService.removeFromReadingList)
+        .mockRejectedValueOnce(new Error('Delete failed'));
 
       const { result } = renderHook(() => usePlaylistScreen(), {
         wrapper: createWrapper(),
@@ -620,18 +673,15 @@ describe('usePlaylistScreen', () => {
   // ============================================================================
 
   describe('Loading States', () => {
-    // TODO: Fix mock setup - simpleAudioService mock not being restored properly
-    test.skip('shows initial loading when data not cached', () => {
+    test('shows initial loading when data not cached', () => {
       const { result } = renderHook(() => usePlaylistScreen(), {
         wrapper: createWrapper(),
       });
 
-      // shouldShowInitialLoading depends on cache state
-      expect(result.current.shouldShowInitialLoading).toBeDefined();
+      expect(result.current.shouldShowInitialLoading).toBe(true);
     });
 
-    // TODO: Fix mock setup - simpleAudioService mock not being restored properly
-    test.skip('hides initial loading when data is cached', async () => {
+    test('hides initial loading when data is cached', async () => {
       const readingList = [createReadingListMock({ article_id: 1 })];
 
       queryClient.setQueryData(['readingList', mockUser.id], readingList);
@@ -651,9 +701,8 @@ describe('usePlaylistScreen', () => {
   // ============================================================================
 
   describe('Cleanup', () => {
-    // TODO: Fix mock setup - simpleAudioService mock not being restored properly
-    test.skip('clears timeouts on unmount', () => {
-      const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+    test('stops non-playlist audio when the screen loses focus', () => {
+      const { stopNonPlaylistAudioSafely } = require('@/utils/audioUtils');
 
       const { unmount } = renderHook(() => usePlaylistScreen(), {
         wrapper: createWrapper(),
@@ -661,9 +710,7 @@ describe('usePlaylistScreen', () => {
 
       unmount();
 
-      // The hook should clean up any pending timeouts
-      // This is verified by the effect cleanup running
-      expect(clearTimeoutSpy).toBeDefined();
+      expect(stopNonPlaylistAudioSafely).toHaveBeenCalledTimes(1);
     });
   });
 });
