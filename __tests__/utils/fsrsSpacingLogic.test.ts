@@ -462,7 +462,9 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
 
         // Verify state consistency
         expect(state.recentWords.size).toBeLessThanOrEqual(MIN_WORD_SPACING);
-        expect(state.spacedWords.every(s => typeof s.remainingSpacing === 'number')).toBeTruthy();
+        expect(state.spacedWords).toEqual(
+          expect.arrayOf(expect.objectContaining({ remainingSpacing: expect.any(Number) })),
+        );
 
         // Prevent infinite loops
         if (operations.length > 50) break;

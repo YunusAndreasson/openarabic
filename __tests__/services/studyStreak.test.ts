@@ -478,7 +478,7 @@ describe('StudySessionStreakService', () => {
       const result = await StudySessionStreakService.getDailyStudySessionActivity('user-123', 7);
 
       expect(result).toHaveLength(7);
-      expect(result.every(day => !day.hasActivity)).toBeTruthy();
+      expect(result).toEqual(expect.arrayOf(expect.objectContaining({ hasActivity: false })));
     });
   });
 
@@ -646,7 +646,9 @@ describe('StudySessionStreakService', () => {
 
       const result = await StudySessionStreakService.getStudySessionHistory('user-123', 30);
 
-      expect(result.dailyActivity.every(day => day.hasActivity)).toBe(true);
+      expect(result.dailyActivity).toEqual(
+        expect.arrayOf(expect.objectContaining({ hasActivity: true })),
+      );
       expect(result.metrics.currentStreak).toBe(30);
     });
 

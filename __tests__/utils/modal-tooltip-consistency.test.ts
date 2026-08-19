@@ -49,7 +49,9 @@ describe('Modal-Tooltip Consistency Bug', () => {
       );
       const prefixSegments = segments.filter(segment => segment.type === 'prefix');
       expect(prefixSegments).toHaveLength(2);
-      expect(prefixSegments.every(segment => segment.colorName !== 'text')).toBe(true);
+      expect(prefixSegments).toEqual(
+        expect.arrayOf(expect.not.objectContaining({ colorName: 'text' })),
+      );
     });
 
     test.failing('colors من as a preposition when it means "from"', () => {

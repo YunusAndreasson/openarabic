@@ -10,7 +10,7 @@
  * - Navigation and cleanup
  * - Completion detection and locking
  *
- * Modern Jest 29 Patterns:
+ * Modern Jest 30 Patterns:
  * - ✅ @jest/globals explicit imports
  * - ✅ jest.mocked() for type-safe mocking
  * - Note: No test.concurrent() - tests share mock state and need isolation
@@ -758,6 +758,49 @@ describe('useArticleScreen Hook', () => {
 
       // Should not crash with empty sentences
       expect(result.current.currentSentenceIndex).toBe(0);
+    });
+
+    test('waits two animation frames before restoring the saved reading position', () => {
+      jest.mocked(useReadingProgress).mockReturnValue({
+        updateProgress: mockUpdateProgress,
+        isInitialProgressReady: true,
+        initialLastSentenceRead: 5,
+        hadExistingProgressOnMount: true,
+      } as any);
+
+      const scrollToIndex = jest.fn();
+      const { result } = renderHook(() =>
+        useArticleScreen({
+          id: '1',
+          showToast: mockShowToast,
+        }),
+      );
+
+      act(() => {
+        result.current.scrollViewRef.current = { scrollToIndex } as any;
+        result.current.handleFlashListLoad();
+      });
+
+      expect(scrollToIndex).not.toHaveBeenCalled();
+
+      act(() => {
+        jest.advanceTimersToNextFrame();
+      });
+      expect(scrollToIndex).not.toHaveBeenCalled();
+
+      act(() => {
+        jest.advanceTimersToNextFrame();
+      });
+      expect(scrollToIndex).toHaveBeenCalledWith({
+        index: 5,
+        animated: true,
+        viewPosition: 0,
+      });
+      expect(mockShowToast).toHaveBeenCalledWith(
+        expect.stringContaining('60'),
+        3000,
+        ToastType.INFO,
+      );
     });
 
     test('handles disableAutoScroll option', () => {

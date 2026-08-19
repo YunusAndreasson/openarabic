@@ -342,6 +342,13 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       await waitFor(() => {
         expect(getByText('In practice')).toBeTruthy();
       });
+
+      // Let the delayed mutation settle before this test exits. Otherwise its
+      // success toast can arrive after the next test has cleared the mocks,
+      // making the suite depend on execution order.
+      await waitFor(() => {
+        expect(mockShowToast).toHaveBeenCalledWith(STRINGS.WORD_ADDED_TO_PRACTICE);
+      });
     });
 
     test('should rollback optimistic update on error', async () => {

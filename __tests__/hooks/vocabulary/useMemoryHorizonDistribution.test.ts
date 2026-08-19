@@ -66,8 +66,8 @@ describe('useMemoryHorizonDistribution', () => {
     expect(result.totalWords).toBe(3);
     // Crucially: nothing is drawn at bin 0. A never-practised word has no
     // horizon, which is not the same as the shortest possible one.
-    expect(result.bins.every(count => count === 0)).toBe(true);
-    expect(result.bands.every(band => band.count === 0)).toBe(true);
+    expect(result.bins).toEqual(expect.arrayOf(0));
+    expect(result.bands).toEqual(expect.arrayOf(expect.objectContaining({ count: 0 })));
     expect(result.medianDays).toBeNull();
     expect(result.medianLabel).toBe('');
   });

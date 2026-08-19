@@ -60,7 +60,7 @@ describe('getMemoryStage', () => {
   });
 
   test('every stage has a label', () => {
-    expect(Object.values(MEMORY_STAGE_LABELS).every(Boolean)).toBe(true);
+    expect(Object.values(MEMORY_STAGE_LABELS)).toEqual(expect.arrayOf(expect.stringMatching(/.+/)));
     expect(MEMORY_STAGE_LABELS.new).toBe(STRINGS.WORD_STATE_NEW);
   });
 });

@@ -273,25 +273,28 @@ describe('Color Consistency: Arabic ↔ English', () => {
     ['فبكتابهم', 'so with their book'], // conj + prep + article + suffix
   ];
 
-  test.each(testCases)('%s → "%s" — Arabic and English colors match', (arabic, english) => {
-    const result = findColorMismatches(arabic, english);
-    if (!result) return; // No components, skip
+  test.each(testCases)(
+    'case %$: %s → "%s" — Arabic and English colors match',
+    (arabic, english) => {
+      const result = findColorMismatches(arabic, english);
+      if (!result) return; // No components, skip
 
-    if (result.mismatches.length > 0) {
-      log(`\n  ⚠️  ${arabic} → "${english}"`);
-      log('  Arabic:');
-      result.arabicComponentColors.forEach(c =>
-        log(`    ${c.type} "${c.text}" → ${c.colorName} (${c.color})`),
-      );
-      log('  English:');
-      result.englishSegments.forEach(s =>
-        log(`    "${s.text}" → ${s.color === defaultColor ? 'default' : s.color}`),
-      );
-      result.mismatches.forEach(m => log(`  ❌ ${m}`));
-    }
+      if (result.mismatches.length > 0) {
+        log(`\n  ⚠️  ${arabic} → "${english}"`);
+        log('  Arabic:');
+        result.arabicComponentColors.forEach(c =>
+          log(`    ${c.type} "${c.text}" → ${c.colorName} (${c.color})`),
+        );
+        log('  English:');
+        result.englishSegments.forEach(s =>
+          log(`    "${s.text}" → ${s.color === defaultColor ? 'default' : s.color}`),
+        );
+        result.mismatches.forEach(m => log(`  ❌ ${m}`));
+      }
 
-    expect(result.mismatches).toHaveLength(0);
-  });
+      expect(result.mismatches).toHaveLength(0);
+    },
+  );
 });
 
 describe('Color Uniqueness: no two SAME-TYPE components share a color', () => {
@@ -301,7 +304,7 @@ describe('Color Uniqueness: no two SAME-TYPE components share a color', () => {
   const multiComponentCases: [string, string][] = DB_WORDS;
 
   test.each(multiComponentCases)(
-    '%s → "%s" — same-type components have distinct colors',
+    'case %$: %s → "%s" — same-type components have distinct colors',
     (arabic, english) => {
       const analysis = analyzeArabicWord(arabic, english);
       if (!analysis.hasComponents) return;
@@ -349,15 +352,18 @@ const allWords: [string, string][] = [
 ];
 
 describe('Arabic Text Coverage: segments reconstruct to original text', () => {
-  test.each(allWords)('%s → "%s" — Arabic segments join back to original', (arabic, english) => {
-    const segments = computeColoredSegments(arabic, english, colors);
-    const reconstructed = segments.map(s => s.text).join('');
-    expect(reconstructed).toBe(arabic);
-  });
+  test.each(allWords)(
+    'case %$: %s → "%s" — Arabic segments join back to original',
+    (arabic, english) => {
+      const segments = computeColoredSegments(arabic, english, colors);
+      const reconstructed = segments.map(s => s.text).join('');
+      expect(reconstructed).toBe(arabic);
+    },
+  );
 });
 
 describe('No Empty Segments: every segment has visible text', () => {
-  test.each(allWords)('%s → "%s" — no empty segments', (arabic, english) => {
+  test.each(allWords)('case %$: %s → "%s" — no empty segments', (arabic, english) => {
     const segments = computeColoredSegments(arabic, english, colors);
     expect(segments.length).toBeGreaterThan(0);
     for (const seg of segments) {
@@ -368,7 +374,7 @@ describe('No Empty Segments: every segment has visible text', () => {
 
 describe('English Text Coverage: segments reconstruct to displayed text', () => {
   test.each(allWords)(
-    '%s → "%s" — English segments join back to displayed text',
+    'case %$: %s → "%s" — English segments join back to displayed text',
     (arabic, english) => {
       const analysis = analyzeArabicWord(arabic, english);
       if (!analysis.hasComponents) return;
@@ -405,10 +411,13 @@ describe('Single-Word Gate: single English words never get component coloring', 
     ['فيه', 'in'],
   ];
 
-  test.each(singleWordCases)('%s → "%s" — single English word never colored', (arabic, english) => {
-    const analysis = analyzeArabicWord(arabic, english);
-    expect(analysis.hasComponents).toBe(false);
-  });
+  test.each(singleWordCases)(
+    'case %$: %s → "%s" — single English word never colored',
+    (arabic, english) => {
+      const analysis = analyzeArabicWord(arabic, english);
+      expect(analysis.hasComponents).toBe(false);
+    },
+  );
 });
 
 describe('Bracket Injection: [the] keeps its brackets, and "the" carries the article color', () => {
@@ -419,7 +428,7 @@ describe('Bracket Injection: [the] keeps its brackets, and "the" carries the art
   ];
 
   test.each(bracketCases)(
-    '%s → "%s" — bracket injection produces "the" colored segment',
+    'case %$: %s → "%s" — bracket injection produces "the" colored segment',
     (arabic, english) => {
       const normalizedArabic = normalizeArabic(arabic);
       if (!shouldInjectBracket(normalizedArabic, english)) return;
@@ -460,7 +469,7 @@ describe('Bracket Injection: [the] keeps its brackets, and "the" carries the art
 describe('Valid Color Values: all segment colors are valid hex or theme colors', () => {
   const hexRegex = /^#[0-9A-Fa-f]{6}$/;
 
-  test.each(allWords)('%s → "%s" — all colors are valid hex', (arabic, english) => {
+  test.each(allWords)('case %$: %s → "%s" — all colors are valid hex', (arabic, english) => {
     const segments = computeColoredSegments(arabic, english, colors);
     for (const seg of segments) {
       expect(seg.color).toMatch(hexRegex);

@@ -626,7 +626,7 @@ describe('memory horizon constellation', () => {
     expect(result.current.notStartedCount).toBe(1);
     expect(result.current.hasDistribution).toBe(false);
     expect(result.current.medianDays).toBeNull();
-    expect(result.current.bins.every(count => count === 0)).toBe(true);
+    expect(result.current.bins).toEqual(expect.arrayOf(0));
   });
 });
 

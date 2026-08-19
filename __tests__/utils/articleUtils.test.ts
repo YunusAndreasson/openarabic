@@ -298,7 +298,7 @@ describe('articleUtils', () => {
       const articles = [makeArticle(1, 4), makeArticle(2, 2), makeArticle(3, 1)];
       const result = pickStarterArticles(articles, new Map());
       expect(result.map(r => r.article.id)).toEqual([2, 3]);
-      expect(result.every(r => r.progress === 0)).toBe(true);
+      expect(result).toEqual(expect.arrayOf(expect.objectContaining({ progress: 0 })));
     });
 
     test('tier 2: falls back to unread difficulty ≤ 3 when no beginner articles', () => {

@@ -204,7 +204,7 @@ describe('FSRS Priority Calculation Logic', () => {
 
       const priorities = largeWordSet.map(calculateWordPriority);
 
-      expect(priorities.every(p => typeof p === 'number')).toBeTruthy();
+      expect(priorities).toEqual(expect.arrayOf(expect.any(Number)));
       expect(priorities).toHaveLength(1000);
     });
   });

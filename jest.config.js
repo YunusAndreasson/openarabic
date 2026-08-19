@@ -15,9 +15,6 @@ module.exports = {
   resetMocks: true, // More thorough cleanup between tests
   restoreMocks: true, // Restore original implementations
 
-  // Fail fast for AI efficiency - don't waste time on multiple failures
-  bail: 1, // Stop after first failure for faster feedback
-
   // Disable watch mode - AI agents run tests programmatically
   watchman: false,
 
