@@ -42,8 +42,6 @@ const mergeSlices = (overrides: TestPreloadedState): TestRootState => {
   ) as TestRootState;
 };
 
-export type TestStore = ReturnType<typeof setupTestStore>;
-
 export const setupTestStore = (preloadedState?: TestPreloadedState) =>
   configureStore({
     reducer: rootReducer,
