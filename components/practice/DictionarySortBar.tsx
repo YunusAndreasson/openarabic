@@ -34,7 +34,6 @@ export const SCOPE_LABELS: Record<DictionaryScope, string> = {
 };
 
 const CHEVRON_SIZE = 12;
-const HIT_SLOP = { top: 12, bottom: 12, left: 12, right: 12 };
 
 export function formatWordCount(count: number): string {
   return count === 1
@@ -133,7 +132,7 @@ const DictionarySortBarComponent: FC<DictionarySortBarProps> = ({
         accessibilityHint={isHorizonFilter ? STRINGS.CLEAR_FILTER_A11Y : STRINGS.FILTER_WORDS_A11Y}
         accessibilityLabel={countLabel}
         accessibilityRole="button"
-        hitSlop={HIT_SLOP}
+        hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
         style={styles.scopeButton}
         onPress={handlePressScope}
       >

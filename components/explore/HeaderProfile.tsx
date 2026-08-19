@@ -6,6 +6,7 @@ import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
+import { IOS_HEADER_CONTROL_SIZE } from '@/constants/iconButton';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -16,10 +17,6 @@ import { useButtonPress } from '@/hooks/ui/useButtonPress';
 import { handleError } from '@/utils/errorHandling';
 import { getFirstNameFromEmail } from '@/utils/stringUtils';
 import { USER_STORAGE_KEYS } from '@/constants/storageKeys';
-
-// iOS 26 UIBarButton has fixed 36pt glass container
-// Profile fills the glass container completely
-const IOS_GLASS_SIZE = 36;
 
 // Initial-letter font scales proportionally with the avatar diameter.
 // 0.45 keeps the glyph centered and visually balanced inside the circle
@@ -37,7 +34,7 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
 
   const isIOS = Platform.OS === 'ios';
   // On iOS, profile fills the glass container; on Android use the provided size
-  const effectiveSize = isIOS ? IOS_GLASS_SIZE : size;
+  const effectiveSize = isIOS ? IOS_HEADER_CONTROL_SIZE : size;
 
   // The shared engine, not a bare usePressAnimation: wiring the animation by
   // hand meant this button silently shipped without the haptic and the Android
@@ -91,7 +88,7 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
 
   // iOS: Use 36pt container to match glass, Android: use content size
   const containerStyle = isIOS
-    ? [styles.container, { width: IOS_GLASS_SIZE, height: IOS_GLASS_SIZE }]
+    ? [styles.container, { width: IOS_HEADER_CONTROL_SIZE, height: IOS_HEADER_CONTROL_SIZE }]
     : styles.container;
 
   return (

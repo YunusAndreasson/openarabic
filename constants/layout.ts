@@ -24,6 +24,9 @@ export const SCREEN_HEIGHT = SCREEN_DIMENSIONS?.height ?? 812;
 // Base scale for systematic sizing
 const BASE_UNIT = 4;
 
+/** One corner treatment for both native form sheets and Gorhom bottom sheets. */
+const SHEET_CORNER_RADIUS = BASE_UNIT * 6;
+
 // Golden ratio for aesthetically pleasing proportions (φ = 1.618)
 export const GOLDEN_RATIO = 1.618;
 
@@ -214,7 +217,7 @@ export const LAYOUT = {
     SMALL: BASE_UNIT * 2.5, // 10 - compact controls
     MEDIUM: SPACING_SCALE.LARGE, // 16 - standard controls and cards
     LARGE: BASE_UNIT * 5, // 20 - large surfaces
-    SHEET: BASE_UNIT * 6, // 24 - form sheet top corners (see createSheetOptions)
+    SHEET: SHEET_CORNER_RADIUS, // 24 - all sheet top corners (see createSheetOptions)
     PILL: 9999, // Keep as is for perfect circles
   },
 
@@ -313,13 +316,13 @@ export const LAYOUT = {
     HEADER: {
       paddingHorizontal: SPACING_SCALE.MEDIUM, // 12 - consistent with practice bottom sheets
       paddingBottom: SPACING_SCALE.TINY, // 4 - consistent with practice bottom sheets
-      marginBottom: SPACING_SCALE.TINY, // 4 - consistent with practice bottom sheets
+      marginBottom: SPACING_SCALE.SMALL, // 8 - label-to-content rhythm for every sheet header
       alignItems: 'center' as const, // Center the title
     },
     STYLES: {
       bottomSheet: {
-        borderTopLeftRadius: BASE_UNIT * 5, // 20 - softer corners (2025 trend)
-        borderTopRightRadius: BASE_UNIT * 5, // 20 - softer corners (2025 trend)
+        borderTopLeftRadius: SHEET_CORNER_RADIUS,
+        borderTopRightRadius: SHEET_CORNER_RADIUS,
       },
       // No `indicator` here: every sheet renders `BrandedBottomSheetHandle`
       // (a Skia pill) via `handleComponent`, so a 36x4 token had no consumer.

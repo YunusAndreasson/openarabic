@@ -3,7 +3,11 @@ import { memo, useMemo } from 'react';
 import { Platform, Pressable, StyleSheet } from 'react-native';
 
 import { TIMING_CONSTANTS } from '@/constants/animation';
-import { ICON_BUTTON_SIZES, type IconButtonSize } from '@/constants/iconButton';
+import {
+  ICON_BUTTON_SIZES,
+  IOS_HEADER_CONTROL_SIZE,
+  type IconButtonSize,
+} from '@/constants/iconButton';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useButtonPress } from '@/hooks/ui/useButtonPress';
@@ -34,9 +38,6 @@ export interface HeaderIconButtonProps {
   /** Test ID for testing */
   testID?: string;
 }
-
-// iOS 26 UIBarButton has fixed 36pt width - use this for header buttons to ensure circular glass
-const IOS_BAR_BUTTON_SIZE = 36;
 
 /**
  * Reusable circular icon button for headers
@@ -85,8 +86,8 @@ export const HeaderIconButton = memo<HeaderIconButtonProps>(
     const isTransparent = finalBackgroundColor === colors.transparent;
     // iOS 26 header buttons: use 36pt to match native UIBarButton for circular glass
     const isIOSHeaderButton = Platform.OS === 'ios' && isTransparent;
-    const buttonDimension = isIOSHeaderButton ? IOS_BAR_BUTTON_SIZE : config.dimension;
-    const buttonRadius = isIOSHeaderButton ? IOS_BAR_BUTTON_SIZE / 2 : config.dimension / 2;
+    const buttonDimension = isIOSHeaderButton ? IOS_HEADER_CONTROL_SIZE : config.dimension;
+    const buttonRadius = buttonDimension / 2;
 
     const buttonStyle = useMemo(
       () => [

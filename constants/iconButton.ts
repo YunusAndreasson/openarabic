@@ -12,6 +12,9 @@ import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
  */
 export type IconButtonSize = 'small' | 'medium' | 'large';
 
+/** Fixed diameter of an iOS 26 native navigation-bar glass control. */
+export const IOS_HEADER_CONTROL_SIZE = 36;
+
 const containers = StyleSheet.create({
   small: {
     alignItems: 'center',

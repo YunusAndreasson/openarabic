@@ -5,7 +5,8 @@ import type { AccessibilityState, Insets, StyleProp, ViewStyle } from 'react-nat
 import { Pressable as RNPressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { ICON_BUTTON_SIZES } from '@/constants/iconButton';
+import { LAYOUT } from '@/constants/layout';
 import { PRESS_ANIMATION_BUTTON } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useButtonPress, type HapticType } from '@/hooks/ui/useButtonPress';
@@ -116,14 +117,16 @@ export const GlassIconButton: FC<GlassIconButtonProps> = ({
     >
       {GLASS_AVAILABLE ? (
         <GlassView
-          style={[styles.button, surfaceStyle]}
+          style={[ICON_BUTTON_SIZES.medium.container, styles.button, surfaceStyle]}
           isInteractive
           {...(clear && { glassEffectStyle: 'clear' as const })}
         >
           <Ionicons color={resolvedIconColor} name={icon} size={iconSize} />
         </GlassView>
       ) : (
-        <AnimatedView style={[styles.button, surfaceStyle, animatedStyle]}>
+        <AnimatedView
+          style={[ICON_BUTTON_SIZES.medium.container, styles.button, surfaceStyle, animatedStyle]}
+        >
           <Ionicons color={resolvedIconColor} name={icon} size={iconSize} />
         </AnimatedView>
       )}
@@ -131,15 +134,12 @@ export const GlassIconButton: FC<GlassIconButtonProps> = ({
   );
 };
 
+// Clips the glass/surface fill to the token's corner radius. Its own
+// StyleSheet rather than a property on ICON_BUTTON_SIZES.medium.container:
+// that token is shared with HeaderIconButton and IconButton, neither of which
+// asked to be clipped.
 const styles = StyleSheet.create({
-  button: {
-    alignItems: 'center',
-    borderRadius: MIN_TOUCH_TARGET.MEDIUM / 2,
-    height: MIN_TOUCH_TARGET.MEDIUM,
-    justifyContent: 'center',
-    overflow: 'hidden',
-    width: MIN_TOUCH_TARGET.MEDIUM,
-  },
+  button: { overflow: 'hidden' },
 });
 
 GlassIconButton.displayName = 'GlassIconButton';
