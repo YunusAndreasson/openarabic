@@ -35,13 +35,10 @@ describe('إِلَيْهِ prefix detection', () => {
     // Normalize word
     const normalized = word.replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '');
 
-    // Test matching - should match yaa form, not maksura form
-    const matchesYaa = normalized.startsWith(constantYaaForm);
-    const matchesMaksura = normalized.startsWith(constantMaksuraForm);
-
     // When إلى takes a suffix, the alef maksura (ى) becomes regular yaa (ي)
-    expect(matchesYaa).toBeTruthy(); // Should match إلي
-    expect(matchesMaksura).toBeFalsy(); // Should NOT match إلى
+    expect(normalized).toBe('إليه');
+    expect(normalized.startsWith(constantYaaForm)).toBe(true);
+    expect(normalized.startsWith(constantMaksuraForm)).toBe(false);
   });
 
   test('should detect إلى as full prefix for إِلَيْهِ', () => {
@@ -68,8 +65,6 @@ describe('إِلَيْهِ prefix detection', () => {
     } as any;
 
     const segments = computeColoredSegments('إِلَيْهِ', 'to it', mockColors);
-
-    console.log('Segments:', JSON.stringify(segments, null, 2));
 
     // Should have 2 segments: prefix + suffix (NO root segment)
     expect(segments).toHaveLength(2);

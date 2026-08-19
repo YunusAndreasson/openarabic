@@ -42,12 +42,15 @@ const mockColors = {
 
   // Theme colors
   tint: '#4a7c59',
+  onTint: '#ffffff',
   background: '#ffffff',
   transparent: 'transparent',
 
   // State colors
   disabled: '#cccccc',
+  disabledButtonBg: '#e5e7eb',
   error: '#F44336',
+  onError: '#ffffff',
   warning: '#FF9800',
   success: '#4CAF50',
   info: '#2196F3',

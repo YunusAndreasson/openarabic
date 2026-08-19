@@ -12,7 +12,6 @@ import { describe, expect, test } from '@jest/globals';
 import React from 'react';
 
 import { PasswordStrengthMeter } from '@/components/auth/PasswordStrengthMeter';
-import { Text } from 'react-native';
 
 // Mock useAuthForm to avoid expo-router dependency chain
 jest.mock('@/hooks/auth/useAuthForm', () => ({
@@ -34,11 +33,6 @@ describe('PasswordStrengthMeter', () => {
     test('returns null when password is empty', () => {
       const { toJSON } = render(<PasswordStrengthMeter password="" />);
       expect(toJSON()).toBeNull();
-    });
-
-    test('renders strength bar when password has content', () => {
-      const { toJSON } = render(<PasswordStrengthMeter password="test" />);
-      expect(toJSON()).toBeTruthy();
     });
 
     test('renders requirement checklist', () => {
@@ -75,16 +69,15 @@ describe('PasswordStrengthMeter', () => {
 
   describe('Requirement Checklist', () => {
     test('shows unmet requirement for short password', () => {
-      const { UNSAFE_root } = render(<PasswordStrengthMeter password="short" />);
-      // Find the icon - should be outline (unmet) for short passwords
-      const icons = UNSAFE_root.findAllByType(Text);
-      expect(icons.length).toBeGreaterThan(0);
+      const { getByTestId } = render(<PasswordStrengthMeter password="short" />);
+
+      expect(getByTestId('mock-icon-ellipse-outline')).toHaveProp('color', '#999999');
     });
 
     test('shows met requirement for valid password', () => {
-      const { UNSAFE_root } = render(<PasswordStrengthMeter password="validpassword" />);
-      // Component should render with checkmark icon
-      expect(UNSAFE_root).toBeTruthy();
+      const { getByTestId } = render(<PasswordStrengthMeter password="validpassword" />);
+
+      expect(getByTestId('mock-icon-checkmark-circle')).toHaveProp('color', '#4CAF50');
     });
   });
 

@@ -262,15 +262,15 @@ describe('haptics', () => {
     process.off('unhandledRejection', unhandled);
     expect(selectionAsync).toHaveBeenCalledTimes(1);
     expect(unhandled).not.toHaveBeenCalled();
+
+    // Let this call's real debounce timer release its module-level key before
+    // the next test. Test order must not decide whether selection haptics fire.
+    await new Promise(resolve => setTimeout(resolve, 60));
+    jest.useFakeTimers();
   });
 
   test('swallows a rejected Android haptic too', async () => {
     jest.useRealTimers();
-    // The debounce flag lives at module scope and is released by a real 50ms
-    // timeout that the previous real-timer test left pending — wait it out, or
-    // shouldTriggerHaptic() short-circuits and nothing is called.
-    await new Promise(resolve => setTimeout(resolve, 60));
-
     const { performAndroidHapticsAsync } = require('expo-haptics');
     jest.replaceProperty(Platform, 'OS', 'android');
     performAndroidHapticsAsync.mockRejectedValue(new Error('A haptics engine is not available'));
@@ -284,5 +284,8 @@ describe('haptics', () => {
     process.off('unhandledRejection', unhandled);
     expect(performAndroidHapticsAsync).toHaveBeenCalledTimes(1);
     expect(unhandled).not.toHaveBeenCalled();
+
+    await new Promise(resolve => setTimeout(resolve, 60));
+    jest.useFakeTimers();
   });
 });

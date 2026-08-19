@@ -134,13 +134,6 @@ describe('useReviewCompletion', () => {
       expect(() => renderHook(() => useReviewCompletion())).not.toThrow();
     });
 
-    test('should cleanup on unmount', () => {
-      const { unmount } = renderHook(() => useReviewCompletion(mockSessionMetrics));
-
-      // Should unmount without errors
-      unmount();
-    });
-
     test('does nothing for a zero-word session', () => {
       renderHook(() =>
         useReviewCompletion({

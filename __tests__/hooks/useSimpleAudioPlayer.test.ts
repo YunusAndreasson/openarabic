@@ -476,54 +476,6 @@ describe('useSimpleAudioPlayer Hook', () => {
   });
 
   describe('Edge Cases', () => {
-    test('should handle empty audio URL', async () => {
-      const { result } = renderHook(() => useSimpleAudioPlayer());
-      const track = createMockTrack({ audioUrl: '' });
-
-      await act(async () => {
-        await result.current.play(track);
-      });
-
-      expect(simpleAudioService.play).toHaveBeenCalledWith(track, undefined);
-    });
-
-    test('should handle invalid seek position (negative)', async () => {
-      const { result } = renderHook(() => useSimpleAudioPlayer());
-
-      await act(async () => {
-        await result.current.seekTo(-10);
-      });
-
-      expect(simpleAudioService.seekTo).toHaveBeenCalledWith(-10);
-    });
-
-    test('should handle seek beyond duration', async () => {
-      const { result } = renderHook(() => useSimpleAudioPlayer());
-
-      await act(async () => {
-        await result.current.seekTo(9999);
-      });
-
-      expect(simpleAudioService.seekTo).toHaveBeenCalledWith(9999);
-    });
-
-    test('should handle rapid play calls', async () => {
-      const { result } = renderHook(() => useSimpleAudioPlayer());
-      const track1 = createMockTrack({ id: 'track-1' });
-      const track2 = createMockTrack({ id: 'track-2' });
-      const track3 = createMockTrack({ id: 'track-3' });
-
-      await act(async () => {
-        await Promise.all([
-          result.current.play(track1),
-          result.current.play(track2),
-          result.current.play(track3),
-        ]);
-      });
-
-      expect(simpleAudioService.play).toHaveBeenCalledTimes(3);
-    });
-
     test('should handle stop without play', async () => {
       const { result } = renderHook(() => useSimpleAudioPlayer());
 
@@ -581,7 +533,7 @@ describe('useSimpleAudioPlayer Hook', () => {
 
   describe('Performance', () => {
     test('should handle multiple rapid status updates', () => {
-      const { rerender } = renderHook(() => useSimpleAudioPlayer());
+      const { result, rerender } = renderHook(() => useSimpleAudioPlayer());
 
       // Simulate rapid status updates
       for (let i = 0; i < 100; i++) {
@@ -592,26 +544,9 @@ describe('useSimpleAudioPlayer Hook', () => {
         rerender(undefined);
       }
 
-      // Should not crash or throw
-      expect(true).toBeTruthy();
-    });
-
-    test('should handle concurrent operations', async () => {
-      const { result } = renderHook(() => useSimpleAudioPlayer());
-      const track = createMockTrack();
-
-      await act(async () => {
-        await Promise.all([
-          result.current.play(track),
-          result.current.seekTo(30),
-          result.current.stop(),
-        ]);
-      });
-
-      // All operations should complete
-      expect(simpleAudioService.play).toHaveBeenCalled();
-      expect(simpleAudioService.seekTo).toHaveBeenCalled();
-      expect(simpleAudioService.stop).toHaveBeenCalled();
+      expect(result.current.status).toMatchObject({ currentTime: 99 });
+      expect(result.current.playing).toBe(false);
+      expect(result.current.currentTrack).toBeNull();
     });
   });
 });

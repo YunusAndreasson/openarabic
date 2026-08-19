@@ -196,17 +196,6 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
    * of the remaining text after prefix removal?
    */
   describe('Bug: Infix Detection at Boundary Positions', () => {
-    test('should detect infix even if at start of remaining text', () => {
-      // Hypothetical case where after removing prefix, infix is at position 0
-      // This tests the boundary condition in infix detection logic
-      const analysis = analyzeArabicWord('استقبل', 'he welcomed');
-
-      // Should detect the Form X infix ست even at boundary
-      if (analysis.infix) {
-        expect(analysis.infix.arabicMatch).toBe('ست');
-      }
-    });
-
     test('should not detect infix at word start (before any prefix)', () => {
       // "ست" at the start of a word shouldn't be detected as infix
       const analysis = analyzeArabicWord('ستة', 'six');
@@ -256,11 +245,8 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
       expect(analysis.hasComponents).toBeTruthy();
       // في (2 chars) + ه (1 char) = 3 chars, so no overlap in 'فيه'
       // Both can coexist without overlapping
-      if (analysis.prefixes[0] && analysis.suffix) {
-        // This is expected behavior - prefix and suffix don't overlap
-        expect(analysis.prefixes[0].arabicMatch).toBe('في');
-        expect(analysis.suffix.arabicMatch).toBe('ه');
-      }
+      expect(analysis.prefixes[0]?.arabicMatch).toBe('في');
+      expect(analysis.suffix?.arabicMatch).toBe('ه');
     });
 
     test('should be deterministic in tie-breaking', () => {
@@ -299,15 +285,6 @@ describe('Arabic Word Analysis: Advanced Edge Cases', () => {
 
       // Should normalize correctly even with multiple diacritics
       expect(analysis.remainingArabic).toBe('كتاب');
-    });
-
-    test('should handle diacritic-only suffix', () => {
-      const analysis = analyzeArabicWord('كتابً', 'a book');
-
-      // Should detect tanween as diacritic
-      if (analysis.diacritic) {
-        expect(analysis.diacritic.arabicMatch).toBe('ً');
-      }
     });
   });
 

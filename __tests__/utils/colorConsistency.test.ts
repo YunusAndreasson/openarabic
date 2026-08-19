@@ -359,6 +359,7 @@ describe('Arabic Text Coverage: segments reconstruct to original text', () => {
 describe('No Empty Segments: every segment has visible text', () => {
   test.each(allWords)('%s → "%s" — no empty segments', (arabic, english) => {
     const segments = computeColoredSegments(arabic, english, colors);
+    expect(segments.length).toBeGreaterThan(0);
     for (const seg of segments) {
       expect(seg.text.length).toBeGreaterThan(0);
     }

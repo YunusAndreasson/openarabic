@@ -40,13 +40,17 @@ describe('ThemedInput', () => {
   describe('Focus States', () => {
     test('handles focus event', () => {
       const onFocus = jest.fn();
-      const { getByPlaceholderText } = render(
-        <ThemedInput placeholder="Focus me" onFocus={onFocus} />,
+      const { getByPlaceholderText, getByTestId } = render(
+        <ThemedInput icon="mail" placeholder="Focus me" onFocus={onFocus} />,
       );
+      const input = getByPlaceholderText('Focus me');
 
-      fireEvent(getByPlaceholderText('Focus me'), 'focus');
+      expect(getByTestId('mock-icon-mail')).toHaveProp('color', '#666666');
 
-      expect(onFocus).toHaveBeenCalled();
+      fireEvent(input, 'focus');
+
+      expect(onFocus).toHaveBeenCalledTimes(1);
+      expect(getByTestId('mock-icon-mail')).toHaveProp('color', '#4a7c59');
     });
 
     test('handles blur event', () => {
@@ -100,25 +104,39 @@ describe('ThemedInput', () => {
   });
 
   describe('Icons', () => {
-    test('renders with left icon', () => {
-      const { toJSON } = render(<ThemedInput icon="mail" placeholder="Email" />);
+    test('renders the requested left icon', () => {
+      const { getByTestId } = render(<ThemedInput icon="mail" placeholder="Email" />);
 
-      expect(toJSON()).toBeTruthy();
+      expect(getByTestId('mock-icon-mail')).toHaveProp('name', 'mail');
     });
 
-    test('renders with right icon', () => {
-      const { toJSON } = render(<ThemedInput rightIcon="eye" placeholder="Password" />);
-
-      expect(toJSON()).toBeTruthy();
-    });
-
-    test('handles right icon press', () => {
-      const onRightIconPress = jest.fn();
-      const { toJSON } = render(
-        <ThemedInput rightIcon="eye" placeholder="Password" onRightIconPress={onRightIconPress} />,
+    test('exposes the right-icon action to screen readers', () => {
+      const { getByLabelText, getByTestId } = render(
+        <ThemedInput
+          rightIcon="eye"
+          rightIconAccessibilityLabel="Show password"
+          placeholder="Password"
+        />,
       );
 
-      expect(toJSON()).toBeTruthy();
+      expect(getByTestId('mock-icon-eye')).toHaveProp('name', 'eye');
+      expect(getByLabelText('Show password')).toHaveProp('accessibilityRole', 'button');
+    });
+
+    test('invokes the right-icon action when pressed', () => {
+      const onRightIconPress = jest.fn();
+      const { getByLabelText } = render(
+        <ThemedInput
+          rightIcon="eye"
+          rightIconAccessibilityLabel="Show password"
+          placeholder="Password"
+          onRightIconPress={onRightIconPress}
+        />,
+      );
+
+      fireEvent.press(getByLabelText('Show password'));
+
+      expect(onRightIconPress).toHaveBeenCalledTimes(1);
     });
   });
 

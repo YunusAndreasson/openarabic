@@ -76,18 +76,12 @@ describe('remainingEnglish calculation', () => {
     expect(analysis.remainingEnglish.toLowerCase()).toBe('book');
   });
 
-  test('should handle words with only prefixes like في (in)', () => {
+  test('single-word rule leaves standalone في unanalyzed', () => {
     const analysis = analyzeArabicWord('في', 'in');
 
-    // This is just a preposition - no root remaining
-    // remainingEnglish should be empty or the unmatched portion
-    if (analysis.prefixes.length > 0) {
-      // If في is detected as a prefix matching "in"
-      // then remainingEnglish should be empty
-      const prefixMatchesIn = analysis.prefixes.some(p => p.englishMatches.includes('in'));
-      if (prefixMatchesIn) {
-        expect(analysis.remainingEnglish).toBe('');
-      }
-    }
+    expect(analysis.prefixes).toHaveLength(0);
+    expect(analysis.hasComponents).toBe(false);
+    expect(analysis.remainingArabic).toBe('في');
+    expect(analysis.remainingEnglish).toBe('in');
   });
 });

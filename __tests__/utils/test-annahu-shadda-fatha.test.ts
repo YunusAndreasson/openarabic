@@ -19,26 +19,6 @@ import { MOCK_GRAMMAR_COLORS } from '@/__tests__/setup/mockGrammarColors';
 import { analyzeArabicWord, computeColoredSegments } from '@/utils/arabicWordAnalysis';
 
 describe('أَنَّهُ shadda + fatha coloring', () => {
-  test('should show what segments we actually get', () => {
-    const mockColors = {
-      info: '#3bacda',
-      violet: '#b28fef',
-      text: '#fcfffd',
-      arabicText: '#fcfffd',
-      grammar: MOCK_GRAMMAR_COLORS,
-    } as any;
-
-    const segments = computeColoredSegments('أَنَّهُ', 'that it', mockColors);
-
-    // Log each segment for debugging
-    segments.forEach((seg, i) => {
-      console.log(`Segment ${i}: type="${seg.type}", text="${seg.text}", chars=${seg.text.length}`);
-    });
-
-    // This test always passes - it's just for debugging
-    expect(segments.length).toBeGreaterThan(0);
-  });
-
   test('should keep shadda + fatha together in prefix for أَنَّهُ', () => {
     const analysis = analyzeArabicWord('أَنَّهُ', 'that it');
 

@@ -384,30 +384,6 @@ describe('Reading to Dictionary Flow', () => {
       expect(mockHandleRootPress).toHaveBeenCalledWith(mockWord.root_id, undefined);
     });
 
-    test('returns false when no user is authenticated', async () => {
-      // Mock auth to return no user
-      jest.doMock('@/hooks/auth/useAuth', () => ({
-        useAuth: () => ({
-          user: null,
-          isAuthenticated: false,
-        }),
-      }));
-
-      const mockHandleRootPress = jest.fn<(rootId: unknown, intent?: unknown) => Promise<boolean>>(
-        async () => true,
-      );
-      const { result } = renderHook(
-        () =>
-          useArticleWordInteractions({
-            handleRootPress: mockHandleRootPress,
-          }),
-        { wrapper },
-      );
-
-      // Reset mock to return no user
-      jest.resetModules();
-    });
-
     test('updates local study state optimistically', async () => {
       // handleRootPress is the boundary to the real useStudyWordMutations
       // mutation, whose onMutate writes the optimistic value straight into

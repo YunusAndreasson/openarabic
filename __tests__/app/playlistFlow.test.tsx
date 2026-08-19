@@ -135,13 +135,11 @@ describe('bookmarks flow', () => {
   test('disables play all when list is empty', () => {
     (global as any).bookmarkItems = [];
 
-    const { queryByTestId } = render(<ListenScreen />);
+    const { getByTestId } = render(<ListenScreen />);
 
-    const primaryButton = queryByTestId('primary-action-button');
-    if (primaryButton) {
-      expect(primaryButton.props.disabled).toBeTruthy();
-      fireEvent.press(primaryButton);
-    }
+    const primaryButton = getByTestId('primary-action-button');
+    expect(primaryButton.props.disabled).toBe(true);
+    fireEvent.press(primaryButton);
 
     expect((global as any).handlePlayAllMock).not.toHaveBeenCalled();
   });
@@ -149,18 +147,16 @@ describe('bookmarks flow', () => {
   test('disables play all after removing last item', () => {
     (global as any).bookmarkItems = [1];
 
-    const { queryByTestId, rerender } = render(<ListenScreen />);
+    const { getByTestId, rerender } = render(<ListenScreen />);
 
     // Remove the item using the toggle handler
     (global as any).handleToggleBookmark(1, true);
     (global as any).bookmarkItems = [];
     rerender(<ListenScreen />);
 
-    const primaryButton = queryByTestId('primary-action-button');
-    if (primaryButton) {
-      expect(primaryButton.props.disabled).toBeTruthy();
-      fireEvent.press(primaryButton);
-    }
+    const primaryButton = getByTestId('primary-action-button');
+    expect(primaryButton.props.disabled).toBe(true);
+    fireEvent.press(primaryButton);
 
     expect((global as any).handlePlayAllMock).not.toHaveBeenCalled();
     expect((global as any).handleToggleBookmark).toHaveBeenCalledWith(1, true);

@@ -50,13 +50,9 @@ describe('False Positive Edge Cases', () => {
         },
       ];
 
-      tests.forEach(({ arabic, english, description }) => {
+      tests.forEach(({ arabic, english }) => {
         const analysis = analyzeArabicWord(arabic, english);
-
-        // Key validation: If components detected, remaining must be ≥3 chars
-        if (analysis.hasComponents) {
-          expect(analysis.remainingArabic.length).toBeGreaterThanOrEqual(3);
-        }
+        expect(analysis.hasComponents).toBeFalsy();
       });
     });
 
@@ -79,12 +75,9 @@ describe('False Positive Edge Cases', () => {
         },
       ];
 
-      tests.forEach(({ arabic, english, description }) => {
+      tests.forEach(({ arabic, english }) => {
         const analysis = analyzeArabicWord(arabic, english);
-
-        if (analysis.hasComponents) {
-          expect(analysis.remainingArabic.length).toBeGreaterThanOrEqual(3);
-        }
+        expect(analysis.hasComponents).toBeFalsy();
       });
     });
 
@@ -170,12 +163,9 @@ describe('False Positive Edge Cases', () => {
         },
       ];
 
-      tests.forEach(({ arabic, english, expectedInfix, description }) => {
+      tests.forEach(({ arabic, english, expectedInfix }) => {
         const analysis = analyzeArabicWord(arabic, english);
-
-        if (analysis.infix) {
-          expect(analysis.infix.arabicMatch).toBe(expectedInfix);
-        }
+        expect(analysis.infix?.arabicMatch).toBe(expectedInfix);
       });
     });
   });
@@ -310,63 +300,6 @@ describe('False Positive Edge Cases', () => {
 
         expect(hasComponent).toBeFalsy();
       });
-    });
-  });
-
-  describe('Summary Statistics', () => {
-    test('should report overall false positive findings', () => {
-      const allTests = [
-        // Short root words
-        { arabic: 'ولد', english: 'boy' },
-        { arabic: 'والد', english: 'father' },
-        { arabic: 'فرق', english: 'difference' },
-
-        // Internal alif/yaa
-        { arabic: 'قال', english: 'he said' },
-        { arabic: 'بيت', english: 'house' },
-
-        // Single-word cases
-        { arabic: 'والبيت', english: 'house' },
-        { arabic: 'كتابه', english: 'book' },
-
-        // Valid cases (should match)
-        { arabic: 'والكتاب', english: 'and the book' },
-        { arabic: 'كتابه', english: 'his book' },
-      ];
-
-      const stats = {
-        total: allTests.length,
-        withComponents: 0,
-        withInfixes: 0,
-        overParsed: 0,
-        correctlyParsed: 0,
-      };
-
-      allTests.forEach(({ arabic, english }) => {
-        const analysis = analyzeArabicWord(arabic, english);
-
-        if (analysis.hasComponents) {
-          stats.withComponents++;
-        }
-        if (analysis.infix) {
-          stats.withInfixes++;
-        }
-
-        // Check for over-parsing (remaining < 3 when components detected)
-        if (analysis.hasComponents && analysis.remainingArabic.length < 3) {
-          stats.overParsed++;
-        }
-
-        // Check for correct parsing (valid multi-word with components)
-        const wordCount = english.trim().split(/\s+/).length;
-        if (wordCount > 1 && analysis.hasComponents) {
-          stats.correctlyParsed++;
-        }
-      });
-
-      // Critical assertions
-      expect(stats.withInfixes).toBe(0); // NO alif/yaa infixes after fix
-      expect(stats.overParsed).toBe(0); // NO over-parsing with <3 char remaining
     });
   });
 });

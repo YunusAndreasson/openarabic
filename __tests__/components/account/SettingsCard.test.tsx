@@ -74,10 +74,10 @@ describe('SettingsCard', () => {
 
   describe('Right Side Variants', () => {
     test('renders chevron by default', () => {
-      const { toJSON } = render(
+      const { getByTestId } = render(
         <SettingsCard icon="settings" label="Settings" rightType="chevron" onPress={mockOnPress} />,
       );
-      expect(toJSON()).toBeTruthy();
+      expect(getByTestId('mock-icon-chevron-forward').props.name).toBe('chevron-forward');
     });
 
     test('renders text with chevron', () => {
@@ -122,7 +122,7 @@ describe('SettingsCard', () => {
     });
 
     test('renders without right element when type is none', () => {
-      const { toJSON } = render(
+      const { queryByTestId } = render(
         <SettingsCard
           icon="information-circle"
           label="About"
@@ -130,7 +130,8 @@ describe('SettingsCard', () => {
           onPress={mockOnPress}
         />,
       );
-      expect(toJSON()).toBeTruthy();
+      expect(queryByTestId('mock-icon-chevron-forward')).toBeNull();
+      expect(queryByTestId('mock-icon-open-outline')).toBeNull();
     });
   });
 
@@ -166,7 +167,7 @@ describe('SettingsCard', () => {
     });
 
     test('calls onToggleChange when toggle is switched', () => {
-      const { toJSON } = render(
+      const { getByLabelText } = render(
         <SettingsCard
           icon="notifications"
           label="Notifications"
@@ -175,8 +176,9 @@ describe('SettingsCard', () => {
           onToggleChange={mockOnToggleChange}
         />,
       );
-      // Toggle component is rendered
-      expect(toJSON()).toBeTruthy();
+      fireEvent.press(getByLabelText('Notifications'));
+      expect(mockOnToggleChange).toHaveBeenCalledTimes(1);
+      expect(mockOnToggleChange).toHaveBeenCalledWith(true);
     });
   });
 
@@ -190,14 +192,14 @@ describe('SettingsCard', () => {
           onPress={mockOnPress}
         />,
       );
-      expect(toJSON()).toBeTruthy();
+      expect(JSON.stringify(toJSON())).toContain('"backgroundColor":"#FF0000"');
     });
 
     test('accepts custom icon color', () => {
-      const { toJSON } = render(
+      const { getByTestId } = render(
         <SettingsCard icon="settings" label="Settings" iconColor="#00FF00" onPress={mockOnPress} />,
       );
-      expect(toJSON()).toBeTruthy();
+      expect(getByTestId('mock-icon-settings').props.color).toBe('#00FF00');
     });
   });
 });

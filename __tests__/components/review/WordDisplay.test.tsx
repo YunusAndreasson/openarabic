@@ -141,15 +141,18 @@ describe('WordDisplay', () => {
     test('accepts custom style prop', () => {
       const { toJSON } = render(<WordDisplay word="كتب" style={{ marginTop: 20 }} />);
 
-      expect(toJSON()).toBeTruthy();
+      const root = toJSON();
+      expect(root).not.toBeNull();
+      const style = Array.isArray(root) ? undefined : root?.props.style;
+      expect(style).toEqual(expect.arrayContaining([{ marginTop: 20 }]));
     });
   });
 
   describe('Edge Cases', () => {
     test('handles empty word', () => {
-      const { toJSON } = render(<WordDisplay word="" />);
+      const { getByTestId } = render(<WordDisplay word="" />);
 
-      expect(toJSON()).toBeTruthy();
+      expect(getByTestId('text-arabic').props.children).toBe('');
     });
 
     test('handles long Arabic word', () => {

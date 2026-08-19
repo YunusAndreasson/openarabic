@@ -50,26 +50,29 @@ describe('IconButton', () => {
   });
 
   describe('Rendering', () => {
-    test('renders with icon', () => {
-      const { toJSON } = render(<IconButton icon="play" onPress={mockOnPress} />);
+    test('renders the requested icon at the token size', () => {
+      const { getByTestId } = render(<IconButton icon="play" onPress={mockOnPress} />);
 
-      expect(toJSON()).toBeTruthy();
+      expect(getByTestId('mock-icon-play')).toHaveProp('size', 20);
     });
 
-    test('renders with custom icon size', () => {
-      const { toJSON } = render(<IconButton icon="play" iconSize={32} onPress={mockOnPress} />);
+    test('honors an explicit icon-size override', () => {
+      const { getByTestId } = render(
+        <IconButton icon="play" iconSize={32} onPress={mockOnPress} />,
+      );
 
-      expect(toJSON()).toBeTruthy();
+      expect(getByTestId('mock-icon-play')).toHaveProp('size', 32);
     });
   });
 
   describe('Tones', () => {
-    test.each(['default', 'destructive'] as const)('renders %s tone', tone => {
-      const { UNSAFE_getByProps } = render(
-        <IconButton accessibilityLabel="Action" icon="trash" tone={tone} onPress={mockOnPress} />,
-      );
+    test.each([
+      ['default', '#ffffff'],
+      ['destructive', '#ffffff'],
+    ] as const)('uses the theme contrast color for the %s tone', (tone, expectedColor) => {
+      const { getByTestId } = render(<IconButton icon="trash" tone={tone} onPress={mockOnPress} />);
 
-      expect(UNSAFE_getByProps({ accessibilityRole: 'button' })).toBeTruthy();
+      expect(getByTestId('mock-icon-trash')).toHaveProp('color', expectedColor);
     });
   });
 
@@ -96,50 +99,75 @@ describe('IconButton', () => {
   });
 
   describe('Interactions', () => {
-    test('renders pressable when onPress provided', () => {
-      const { toJSON } = render(<IconButton icon="play" onPress={mockOnPress} />);
+    test('fires the action and its default selection haptic once', () => {
+      const { selectionFeedback } = require('@/utils/haptics');
+      const { getByLabelText } = render(
+        <IconButton accessibilityLabel="Play" icon="play" onPress={mockOnPress} />,
+      );
 
-      expect(toJSON()).toBeTruthy();
+      fireEvent.press(getByLabelText('Play'));
+
+      expect(mockOnPress).toHaveBeenCalledTimes(1);
+      expect(selectionFeedback).toHaveBeenCalledTimes(1);
     });
 
-    test('renders disabled state', () => {
-      const { toJSON } = render(<IconButton icon="play" disabled onPress={mockOnPress} />);
+    test('a disabled button fires neither the action nor haptics', () => {
+      const { selectionFeedback } = require('@/utils/haptics');
+      const { getByLabelText } = render(
+        <IconButton accessibilityLabel="Play" icon="play" disabled onPress={mockOnPress} />,
+      );
 
-      expect(toJSON()).toBeTruthy();
+      fireEvent.press(getByLabelText('Play'));
+
+      expect(mockOnPress).not.toHaveBeenCalled();
+      expect(selectionFeedback).not.toHaveBeenCalled();
     });
   });
 
   describe('Haptic Feedback', () => {
-    test('renders with haptic props', () => {
-      const { toJSON } = render(
-        <IconButton icon="play" hapticType="light" onPress={mockOnPress} />,
+    test('uses the requested haptic pattern', () => {
+      const { lightFeedback, selectionFeedback } = require('@/utils/haptics');
+      const { getByLabelText } = render(
+        <IconButton
+          accessibilityLabel="Play"
+          icon="play"
+          hapticType="light"
+          onPress={mockOnPress}
+        />,
       );
 
-      expect(toJSON()).toBeTruthy();
+      fireEvent.press(getByLabelText('Play'));
+
+      expect(lightFeedback).toHaveBeenCalledTimes(1);
+      expect(selectionFeedback).not.toHaveBeenCalled();
     });
 
-    test('renders with hapticType none', () => {
-      const { toJSON } = render(<IconButton icon="play" hapticType="none" onPress={mockOnPress} />);
+    test('hapticType none remains silent while still invoking the action', () => {
+      const haptics = require('@/utils/haptics');
+      const { getByLabelText } = render(
+        <IconButton
+          accessibilityLabel="Play"
+          icon="play"
+          hapticType="none"
+          onPress={mockOnPress}
+        />,
+      );
 
-      expect(toJSON()).toBeTruthy();
+      fireEvent.press(getByLabelText('Play'));
+
+      expect(mockOnPress).toHaveBeenCalledTimes(1);
+      expect(haptics.lightFeedback).not.toHaveBeenCalled();
+      expect(haptics.selectionFeedback).not.toHaveBeenCalled();
     });
   });
 
   describe('Custom Colors', () => {
-    test('accepts custom background color', () => {
-      const { toJSON } = render(
-        <IconButton icon="play" backgroundColor="#FF0000" onPress={mockOnPress} />,
-      );
-
-      expect(toJSON()).toBeTruthy();
-    });
-
-    test('accepts custom icon color', () => {
-      const { toJSON } = render(
+    test('an explicit icon color overrides the tone contrast color', () => {
+      const { getByTestId } = render(
         <IconButton icon="play" iconColor="#FFFFFF" onPress={mockOnPress} />,
       );
 
-      expect(toJSON()).toBeTruthy();
+      expect(getByTestId('mock-icon-play')).toHaveProp('color', '#FFFFFF');
     });
   });
 });

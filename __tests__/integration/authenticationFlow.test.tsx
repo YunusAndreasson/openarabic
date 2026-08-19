@@ -35,9 +35,9 @@ import {
 // session shapes these return were ever verified against what supabase produces.
 const mockGetSession = jest.fn<SupabaseClient['auth']['getSession']>();
 const mockRefreshSession = jest.fn<SupabaseClient['auth']['refreshSession']>();
-const mockOnAuthStateChange = jest.fn<SupabaseClient['auth']['onAuthStateChange']>();
 const mockNetInfoFetch = jest.fn<typeof NetInfo.fetch>();
 const mockRemoveSupabaseListener = jest.fn();
+const mockAuthUnsubscribe = jest.fn();
 let mockAuthStateCallback: ((event: string, session: unknown) => void) | null = null;
 
 jest.mock('@/services/supabase', () => ({
@@ -50,7 +50,7 @@ jest.mock('@/services/supabase', () => ({
         return {
           data: {
             subscription: {
-              unsubscribe: jest.fn(),
+              unsubscribe: mockAuthUnsubscribe,
             },
           },
         };
@@ -434,18 +434,10 @@ describe('Authentication Flow', () => {
     });
 
     test('unsubscribes from auth state changes on unmount', () => {
-      const mockUnsubscribe = jest.fn();
-      jest.mocked(mockOnAuthStateChange).mockReturnValue({
-        data: {
-          subscription: { id: 'sub-1', callback: () => undefined, unsubscribe: mockUnsubscribe },
-        },
-      });
-
       const { unmount } = renderHook(() => useProvideAuth());
 
       unmount();
-
-      // Auth subscription cleanup is handled internally
+      expect(mockAuthUnsubscribe).toHaveBeenCalledTimes(1);
     });
   });
 });

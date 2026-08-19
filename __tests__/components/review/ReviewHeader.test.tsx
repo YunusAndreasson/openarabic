@@ -90,20 +90,16 @@ describe('ReviewHeader', () => {
   });
 
   describe('Progress Display', () => {
-    test('uses max of progress and maxProgress for display', () => {
-      // When progress > maxProgress, should still use progress
-      const { toJSON } = render(<ReviewHeader progress={8} maxProgress={10} />);
-      expect(toJSON()).toBeTruthy();
-    });
+    test.each([
+      ['keeps the high-water mark when current progress falls', 8, 10, 10],
+      ['shows current progress when it exceeds the high-water mark', 15, 10, 15],
+      ['keeps a zero baseline at zero', 0, 0, 0],
+    ])('%s', (_label, progress, maxProgress, expected) => {
+      const { getByTestId } = render(
+        <ReviewHeader progress={progress} maxProgress={maxProgress} />,
+      );
 
-    test('handles zero progress', () => {
-      const { toJSON } = render(<ReviewHeader progress={0} maxProgress={10} />);
-      expect(toJSON()).toBeTruthy();
-    });
-
-    test('handles completed progress', () => {
-      const { toJSON } = render(<ReviewHeader progress={10} maxProgress={10} />);
-      expect(toJSON()).toBeTruthy();
+      expect(getByTestId('progress-bar')).toHaveProp('accessibilityValue', { now: expected });
     });
   });
 
@@ -117,10 +113,9 @@ describe('ReviewHeader', () => {
       const closeIcon = getByTestId('icon-close');
       const pressable = closeIcon.parent;
 
-      if (pressable) {
-        fireEvent.press(pressable);
-        expect(mockOnClose).toHaveBeenCalledTimes(1);
-      }
+      expect(pressable).not.toBeNull();
+      fireEvent.press(pressable!);
+      expect(mockOnClose).toHaveBeenCalledTimes(1);
     });
 
     // The close haptic lives on this button rather than in useReview's
@@ -270,24 +265,6 @@ describe('ReviewHeader', () => {
       );
 
       expect(getByTestId('icon-mic-off')).toBeTruthy();
-    });
-  });
-
-  describe('Edge Cases', () => {
-    test('handles progress exceeding maxProgress', () => {
-      // Edge case: progress can exceed max during animation
-      const { toJSON } = render(<ReviewHeader progress={15} maxProgress={10} />);
-      expect(toJSON()).toBeTruthy();
-    });
-
-    test('handles negative progress gracefully', () => {
-      const { toJSON } = render(<ReviewHeader progress={-1} maxProgress={10} />);
-      expect(toJSON()).toBeTruthy();
-    });
-
-    test('handles zero maxProgress', () => {
-      const { toJSON } = render(<ReviewHeader progress={0} maxProgress={0} />);
-      expect(toJSON()).toBeTruthy();
     });
   });
 });

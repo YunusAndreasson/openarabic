@@ -125,10 +125,9 @@ describe('FloatingActionButtons', () => {
       const closeIcon = getByTestId('icon-close');
       const pressable = closeIcon.parent?.parent;
 
-      if (pressable) {
-        fireEvent.press(pressable);
-        expect(mockOnClose).toHaveBeenCalledTimes(1);
-      }
+      expect(pressable).not.toBeNull();
+      fireEvent.press(pressable!);
+      expect(mockOnClose).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -148,10 +147,9 @@ describe('FloatingActionButtons', () => {
       const playlistIcon = getByTestId('icon-headset-outline');
       const pressable = playlistIcon.parent?.parent;
 
-      if (pressable) {
-        fireEvent.press(pressable);
-        expect(mockOnToggleReadingList).toHaveBeenCalledTimes(1);
-      }
+      expect(pressable).not.toBeNull();
+      fireEvent.press(pressable!);
+      expect(mockOnToggleReadingList).toHaveBeenCalledTimes(1);
     });
 
     test('toggles playlist icon optimistically on press', () => {
@@ -184,23 +182,6 @@ describe('FloatingActionButtons', () => {
       // Should now show filled headset
       expect(getByTestId('icon-headset')).toBeTruthy();
       expect(queryByTestId('icon-headset-outline')).toBeNull();
-    });
-  });
-
-  describe('Edge Cases', () => {
-    test('renders correctly with all props', () => {
-      const { toJSON } = render(
-        <FloatingActionButtons
-          isInReadingList={true}
-          onToggleReadingList={mockOnToggleReadingList}
-          onClose={mockOnClose}
-          isListening={false}
-          isListenLoading={false}
-          onToggleListen={mockOnToggleListen}
-        />,
-      );
-
-      expect(toJSON()).toBeTruthy();
     });
   });
 });

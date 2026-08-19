@@ -1,4 +1,4 @@
-import { act, cleanup, renderHook, waitFor } from '@testing-library/react-native';
+import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 
 import { useAccountScreen } from '@/hooks/account/useAccountScreen';
@@ -116,11 +116,6 @@ describe('useAccountScreen', () => {
     alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(jest.fn());
   });
 
-  afterEach(() => {
-    cleanup();
-    alertSpy.mockRestore();
-  });
-
   test('loads and exposes the audio cache size', async () => {
     const { result } = renderHook(() => useAccountScreen());
 
@@ -131,7 +126,9 @@ describe('useAccountScreen', () => {
     mockEnsurePermissions.mockResolvedValue(false);
     const { result } = renderHook(() => useAccountScreen());
 
-    await result.current.handleReminderToggle(true);
+    await act(async () => {
+      await result.current.handleReminderToggle(true);
+    });
 
     expect(mockUpdateReminderTime).not.toHaveBeenCalled();
     expect(alertSpy).toHaveBeenCalledWith(
@@ -144,7 +141,9 @@ describe('useAccountScreen', () => {
   test('enables reminders and records acceptance when permission is granted', async () => {
     const { result } = renderHook(() => useAccountScreen());
 
-    await result.current.handleReminderToggle(true);
+    await act(async () => {
+      await result.current.handleReminderToggle(true);
+    });
 
     expect(mockRecordAccepted).toHaveBeenCalledTimes(1);
     expect(mockUpdateReminderTime).toHaveBeenCalledWith({ enabled: true, hour: 19, minute: 0 });
@@ -158,7 +157,9 @@ describe('useAccountScreen', () => {
 
     const confirmationButtons = alertSpy.mock.calls[0]?.[2];
     const signOutButton = confirmationButtons?.find(button => button.style === 'destructive');
-    await signOutButton?.onPress?.();
+    await act(async () => {
+      await signOutButton?.onPress?.();
+    });
 
     expect(mockStopAudio).toHaveBeenCalledTimes(1);
     expect(mockSignOut).toHaveBeenCalledTimes(1);
@@ -172,7 +173,9 @@ describe('useAccountScreen', () => {
     act(() => result.current.handleResetReadingProgress());
     const confirmationButtons = alertSpy.mock.calls[0]?.[2];
     const resetButton = confirmationButtons?.find(button => button.style === 'destructive');
-    await resetButton?.onPress?.();
+    await act(async () => {
+      await resetButton?.onPress?.();
+    });
 
     expect(mockDeleteAllProgress).toHaveBeenCalledWith('user-1');
     expect(mockRemoveQueries).toHaveBeenCalledTimes(2);
@@ -180,14 +183,17 @@ describe('useAccountScreen', () => {
   });
 
   test('clears audio, in-memory query, and persisted query caches after confirmation', async () => {
-    const { result, unmount } = renderHook(() => useAccountScreen());
+    const { result } = renderHook(() => useAccountScreen());
     await waitFor(() => expect(result.current.cacheSize).toBe(1024));
 
-    act(() => result.current.handleClearCache());
+    await act(async () => {
+      await result.current.handleClearCache();
+    });
     const confirmationButtons = alertSpy.mock.calls[0]?.[2];
     const clearButton = confirmationButtons?.find(button => button.style === 'destructive');
-    unmount();
-    await clearButton?.onPress?.();
+    await act(async () => {
+      await clearButton?.onPress?.();
+    });
 
     expect(mockClearCache).toHaveBeenCalledTimes(1);
     expect(mockQueryClear).toHaveBeenCalledTimes(1);

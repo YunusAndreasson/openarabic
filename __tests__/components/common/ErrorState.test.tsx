@@ -94,11 +94,5 @@ describe('ErrorState', () => {
 
       expect(getByText(longMessage)).toBeTruthy();
     });
-
-    test('handles empty message', () => {
-      const { toJSON } = render(<ErrorState message="" />);
-
-      expect(toJSON()).toBeTruthy();
-    });
   });
 });

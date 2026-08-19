@@ -14,21 +14,9 @@ describe('Fainna (فإن) Normalization', () => {
   test('should detect ف in فإن "fainna"', () => {
     const analysis = analyzeArabicWord('فإن', 'fainna');
 
-    console.log('\n📊 فإن + "fainna":');
-    console.log('  Normalized to:', normalizeTranslation('فإن', 'fainna'));
-    console.log('  hasComponents:', analysis.hasComponents);
-    console.log(
-      '  Prefixes:',
-      analysis.prefixes.map(p => `${p.arabicMatch} (${p.englishMatches.join('/')})`).join(', '),
-    );
-
-    // Should detect ف as prefix
-    const hasFa = analysis.prefixes.some(
-      p => p.arabicMatch === 'ف' && p.englishMatches.includes('so'),
-    );
-
-    expect(hasFa).toBeTruthy();
-    expect(analysis.hasComponents).toBeTruthy();
+    expect(analysis.prefixes.map(prefix => prefix.arabicMatch)).toEqual(['ف', 'إن']);
+    expect(analysis.prefixes[0]?.englishMatches).toContain('so');
+    expect(analysis.hasComponents).toBe(true);
   });
 
   test('should display "so indeed" in UI', () => {

@@ -364,18 +364,4 @@ describe('useFSRS', () => {
       expect(result.current).toBeDefined();
     });
   });
-
-  describe('Cleanup', () => {
-    test('should cleanup on unmount', () => {
-      const { unmount } = renderHook(() =>
-        useFSRS({
-          userId: 'user-123',
-          onComplete: mockOnComplete,
-        }),
-      );
-
-      // Should unmount without errors
-      unmount();
-    });
-  });
 });

@@ -302,16 +302,4 @@ describe('useGlobalAudioState', () => {
       expect(result.current.sleepTimerEndTime).toBeGreaterThan(0);
     });
   });
-
-  describe('Cleanup', () => {
-    test('should cleanup timeout on unmount', () => {
-      const { unmount } = renderHook(() => useGlobalAudioState(), {
-        wrapper: GlobalAudioStateProvider,
-      });
-
-      unmount();
-
-      // No errors should occur during cleanup
-    });
-  });
 });

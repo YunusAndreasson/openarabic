@@ -1,14 +1,29 @@
 function createChain() {
-  const chain = {};
-  chain.onBegin = () => chain;
-  chain.onStart = () => chain;
-  chain.onUpdate = () => chain;
-  chain.onChange = () => chain;
-  chain.onEnd = () => chain;
-  chain.onTouchesDown = () => chain;
-  chain.onTouchesUp = () => chain;
-  chain.onFinalize = () => chain;
-  chain.withTestId = () => chain;
+  const chain = { _config: {}, _handlers: {} };
+
+  for (const name of [
+    'onBegin',
+    'onStart',
+    'onUpdate',
+    'onChange',
+    'onEnd',
+    'onTouchesDown',
+    'onTouchesUp',
+    'onFinalize',
+  ]) {
+    chain[name] = callback => {
+      chain._handlers[name] = callback;
+      return chain;
+    };
+  }
+
+  for (const name of ['enabled', 'minDistance', 'activeOffsetX', 'failOffsetY', 'withTestId']) {
+    chain[name] = value => {
+      chain._config[name] = value;
+      return chain;
+    };
+  }
+
   return chain;
 }
 

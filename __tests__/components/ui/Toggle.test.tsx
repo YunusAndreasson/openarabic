@@ -10,6 +10,7 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import React from 'react';
+import { View } from 'react-native';
 
 import { Toggle } from '@/components/ui/Toggle';
 
@@ -42,26 +43,6 @@ describe('Toggle', () => {
   });
 
   describe('Rendering', () => {
-    test('renders in off state', () => {
-      const { toJSON } = render(<Toggle value={false} onValueChange={mockOnValueChange} />);
-
-      expect(toJSON()).toBeTruthy();
-    });
-
-    test('renders in on state', () => {
-      const { toJSON } = render(<Toggle value={true} onValueChange={mockOnValueChange} />);
-
-      expect(toJSON()).toBeTruthy();
-    });
-
-    test('renders with testID', () => {
-      const { getByTestId } = render(
-        <Toggle value={false} onValueChange={mockOnValueChange} testID="my-toggle" />,
-      );
-
-      expect(getByTestId('my-toggle')).toBeTruthy();
-    });
-
     test('exposes its label and checked state to accessibility services', () => {
       const { getByLabelText, rerender } = render(
         <Toggle
@@ -121,18 +102,23 @@ describe('Toggle', () => {
   });
 
   describe('Visual States', () => {
-    test('displays correct background color for off state', () => {
-      const { toJSON } = render(<Toggle value={false} onValueChange={mockOnValueChange} />);
+    test('switches the track and handle to their on-state colors', () => {
+      const { UNSAFE_getAllByType, rerender } = render(
+        <Toggle value={false} onValueChange={mockOnValueChange} />,
+      );
+      const backgroundColors = () =>
+        UNSAFE_getAllByType(View).map(view => {
+          const styles = Array.isArray(view.props.style)
+            ? view.props.style.flat(Number.POSITIVE_INFINITY)
+            : [view.props.style];
+          return Object.assign({}, ...styles.filter(Boolean)).backgroundColor;
+        });
 
-      // Component should render without errors
-      expect(toJSON()).toBeTruthy();
-    });
+      expect(backgroundColors()).toEqual(expect.arrayContaining(['#DDDDDD', '#EEEEEE']));
 
-    test('displays correct background color for on state', () => {
-      const { toJSON } = render(<Toggle value={true} onValueChange={mockOnValueChange} />);
+      rerender(<Toggle value={true} onValueChange={mockOnValueChange} />);
 
-      // Component should render without errors
-      expect(toJSON()).toBeTruthy();
+      expect(backgroundColors()).toEqual(expect.arrayContaining(['#4a7c59', '#FFFFFF']));
     });
   });
 });

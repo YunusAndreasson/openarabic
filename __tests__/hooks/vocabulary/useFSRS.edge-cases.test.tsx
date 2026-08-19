@@ -549,18 +549,13 @@ describe('useFSRS Hook - Edge Cases', () => {
         expect(result.current.currentWord).not.toBeNull();
       });
 
-      // Should not crash even if onComplete throws
-      // Using try/catch to handle the error gracefully in tests
-      try {
-        await act(async () => {
+      await expect(
+        act(async () => {
           await result.current.updateWord(rootId(1), 'known');
-        });
-      } catch (_e) {
-        // Expected to throw from onComplete
-      }
+        }),
+      ).rejects.toThrow('Callback error');
 
-      // The onComplete callback should have been called
-      expect(onComplete).toHaveBeenCalled();
+      expect(onComplete).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -569,32 +564,6 @@ describe('useFSRS Hook - Edge Cases', () => {
   // ============================================================================
 
   describe('Memory and Cleanup', () => {
-    test('clears pending operations on unmount', async () => {
-      const words = [createMockStudyWord({ root_id: 1 as RootId })];
-
-      let resolvePromise: (value: StudyWord[]) => void;
-      studyWordsFSRSService.getFSRSWords = jest.fn((..._args: unknown[]) => {
-        return new Promise<StudyWord[]>(resolve => {
-          resolvePromise = resolve;
-        });
-      });
-
-      const { unmount } = renderHook(() => useFSRS({ userId: 'test-user' }), {
-        wrapper,
-      });
-
-      // Unmount while loading
-      unmount();
-
-      // Resolve after unmount - should not cause errors
-      await act(async () => {
-        resolvePromise!(words);
-      });
-
-      // No errors means success
-      expect(true).toBeTruthy();
-    });
-
     test('handles multiple mount/unmount cycles', async () => {
       const words = [createMockStudyWord({ root_id: 1 as RootId })];
       studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => words);

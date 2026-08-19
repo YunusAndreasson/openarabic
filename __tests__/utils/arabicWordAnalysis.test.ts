@@ -118,20 +118,13 @@ describe('arabicWordAnalysis', () => {
         // Note: للكتاب has elided alef, so only first ل detected as preposition
         { arabic: 'للكتاب', english: 'for the book', expectedPrefixes: ['ل', 'ل'] },
         { arabic: 'كالكتاب', english: 'like the book', expectedPrefixes: ['ك', 'ال'] },
-        { arabic: 'فيالكتاب', english: 'in the book', expectedPrefixes: ['في'] }, // Single prefix
+        { arabic: 'فيالكتاب', english: 'in the book', expectedPrefixes: ['في', 'ال'] },
       ];
 
       tests.forEach(({ arabic, english, expectedPrefixes }) => {
         const analysis = analyzeArabicWord(arabic, english);
         expect(analysis.hasComponents).toBeTruthy();
-        // Check at least the minimum expected prefixes are detected
-        expect(analysis.prefixes.length).toBeGreaterThanOrEqual(expectedPrefixes.length);
-        // Check first N prefixes match (allowing for possible duplicates)
-        expectedPrefixes.forEach((prefix, index) => {
-          if (analysis.prefixes[index]) {
-            expect(analysis.prefixes[index]?.arabicMatch).toBe(prefix);
-          }
-        });
+        expect(analysis.prefixes.map(prefix => prefix.arabicMatch)).toEqual(expectedPrefixes);
       });
     });
 
@@ -164,14 +157,7 @@ describe('arabicWordAnalysis', () => {
       tests.forEach(({ arabic, english, expectedPrefixes }) => {
         const analysis = analyzeArabicWord(arabic, english);
         expect(analysis.hasComponents).toBeTruthy();
-        // Check at least the minimum expected prefixes are detected
-        expect(analysis.prefixes.length).toBeGreaterThanOrEqual(expectedPrefixes.length);
-        // Check first N prefixes match (allowing for possible duplicates)
-        expectedPrefixes.forEach((prefix, index) => {
-          if (analysis.prefixes[index]) {
-            expect(analysis.prefixes[index]?.arabicMatch).toBe(prefix);
-          }
-        });
+        expect(analysis.prefixes.map(prefix => prefix.arabicMatch)).toEqual(expectedPrefixes);
       });
     });
 
@@ -182,22 +168,10 @@ describe('arabicWordAnalysis', () => {
 
       // The negation particles require their English equivalents to be present
       // 'لا' should match "not" and 'لن' should match "will not"
-      if (analysis1.prefixes[0]) {
-        expect(analysis1.prefixes[0].arabicMatch).toBe('لا');
-        expect(analysis1.hasComponents).toBeTruthy();
-      }
-
-      if (analysis2.prefixes[0]) {
-        expect(analysis2.prefixes[0].arabicMatch).toBe('لن');
-        expect(analysis2.hasComponents).toBeTruthy();
-      } else {
-        // If لن doesn't match, it might be because "will not" as a phrase isn't detected
-        // Let's try with just "not"
-        const analysis3 = analyzeArabicWord('لنيذهب', 'not go');
-        if (analysis3.prefixes[0]) {
-          expect(analysis3.prefixes[0].arabicMatch).toBe('لن');
-        }
-      }
+      expect(analysis1.prefixes[0]?.arabicMatch).toBe('لا');
+      expect(analysis1.hasComponents).toBeTruthy();
+      expect(analysis2.prefixes[0]?.arabicMatch).toBe('لن');
+      expect(analysis2.hasComponents).toBeTruthy();
     });
 
     test('should handle verbal prefix ي for "was" and third person', () => {
@@ -242,14 +216,7 @@ describe('arabicWordAnalysis', () => {
       tests.forEach(({ arabic, english, expectedPrefixes }) => {
         const analysis = analyzeArabicWord(arabic, english);
         expect(analysis.hasComponents).toBeTruthy();
-        // Check at least the minimum expected prefixes are detected
-        expect(analysis.prefixes.length).toBeGreaterThanOrEqual(expectedPrefixes.length);
-        // Check first N prefixes match (allowing for possible duplicates)
-        expectedPrefixes.forEach((prefix, index) => {
-          if (analysis.prefixes[index]) {
-            expect(analysis.prefixes[index]?.arabicMatch).toBe(prefix);
-          }
-        });
+        expect(analysis.prefixes.map(prefix => prefix.arabicMatch)).toEqual(expectedPrefixes);
       });
     });
 
@@ -309,31 +276,25 @@ describe('arabicWordAnalysis', () => {
     test('should detect reflexive infix ت in Form VIII verbs', () => {
       // Example: اِجْتَمَعَ (ijtama'a) - "they gathered together"
       const analysis = analyzeArabicWord('اجتمع', 'they gathered together');
-      if (analysis.infix) {
-        expect(analysis.infix.arabicMatch).toBe('ت');
-        expect(analysis.infix.englishMatches).toContain('together');
-        expect(analysis.hasComponents).toBeTruthy();
-      }
+      expect(analysis.infix?.arabicMatch).toBe('ت');
+      expect(analysis.infix?.englishMatches).toContain('together');
+      expect(analysis.hasComponents).toBeTruthy();
     });
 
     test('should detect seeking infix ست in Form X verbs', () => {
       // Example: اِسْتَطَاعَ (istaTaa'a) - "he was able to / sought to do"
       const analysis = analyzeArabicWord('استطاع', 'he sought to do');
-      if (analysis.infix) {
-        expect(analysis.infix.arabicMatch).toBe('ست');
-        expect(analysis.infix.englishMatches).toContain('sought');
-        expect(analysis.hasComponents).toBeTruthy();
-      }
+      expect(analysis.infix?.arabicMatch).toBe('ست');
+      expect(analysis.infix?.englishMatches).toContain('sought');
+      expect(analysis.hasComponents).toBeTruthy();
     });
 
     test('should detect reflexive infix ن in Form VII verbs', () => {
       // Example: اِنْكَسَرَ (inkasara) - "it broke itself / broke automatically"
       const analysis = analyzeArabicWord('انكسر', 'it broke itself');
-      if (analysis.infix) {
-        expect(analysis.infix.arabicMatch).toBe('ن');
-        expect(analysis.infix.englishMatches).toContain('itself');
-        expect(analysis.hasComponents).toBeTruthy();
-      }
+      expect(analysis.infix?.arabicMatch).toBe('ن');
+      expect(analysis.infix?.englishMatches).toContain('itself');
+      expect(analysis.hasComponents).toBeTruthy();
     });
 
     test('should handle combination of prefix and infix', () => {
@@ -343,10 +304,8 @@ describe('arabicWordAnalysis', () => {
       expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
       expect(analysis.prefixes[0]?.englishMatches).toContain('and');
 
-      if (analysis.infix) {
-        expect(analysis.infix.arabicMatch).toBe('ت');
-        expect(analysis.infix.englishMatches).toContain('together');
-      }
+      expect(analysis.infix?.arabicMatch).toBe('ت');
+      expect(analysis.infix?.englishMatches).toContain('together');
 
       expect(analysis.hasComponents).toBeTruthy();
     });
@@ -355,15 +314,10 @@ describe('arabicWordAnalysis', () => {
       // Example: اجتمعوا - "they gathered together" (plural)
       const analysis = analyzeArabicWord('اجتمعوا', 'they gathered together');
 
-      if (analysis.infix) {
-        expect(analysis.infix.arabicMatch).toBe('ت');
-        expect(analysis.infix.englishMatches).toContain('together');
-      }
-
-      if (analysis.suffix) {
-        expect(analysis.suffix.arabicMatch).toBe('وا');
-        expect(analysis.suffix.englishMatches).toContain('they');
-      }
+      expect(analysis.infix?.arabicMatch).toBe('ت');
+      expect(analysis.infix?.englishMatches).toContain('together');
+      expect(analysis.suffix?.arabicMatch).toBe('وا');
+      expect(analysis.suffix?.englishMatches).toContain('they');
 
       expect(analysis.hasComponents).toBeTruthy();
     });
@@ -375,15 +329,10 @@ describe('arabicWordAnalysis', () => {
       expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
       expect(analysis.prefixes[0]?.englishMatches).toContain('and');
 
-      if (analysis.infix) {
-        expect(analysis.infix.arabicMatch).toBe('ت');
-        expect(analysis.infix.englishMatches).toContain('together');
-      }
-
-      if (analysis.suffix) {
-        expect(analysis.suffix.arabicMatch).toBe('ون');
-        expect(analysis.suffix.englishMatches).toContain('they');
-      }
+      expect(analysis.infix?.arabicMatch).toBe('ت');
+      expect(analysis.infix?.englishMatches).toContain('together');
+      expect(analysis.suffix?.arabicMatch).toBe('ون');
+      expect(analysis.suffix?.englishMatches).toContain('they');
 
       expect(analysis.hasComponents).toBeTruthy();
     });
@@ -397,17 +346,13 @@ describe('arabicWordAnalysis', () => {
 
     test('should include infix information in formatted analysis', () => {
       const analysis = analyzeArabicWord('اجتمع', 'they gathered together');
-      if (analysis.infix) {
-        const formatted = formatWordAnalysis(analysis);
+      expect(analysis.infix?.arabicMatch).toBe('ت');
 
-        // Check that infix appears in the sections
-        const infixSection = formatted.sections.find(
-          s => s.type === 'components' && s.colorName === 'violet',
-        );
-        expect(infixSection).toBeDefined();
-        expect(infixSection?.arabicPart).toBe('ت');
-        expect(infixSection?.icon).toBe('↔');
-      }
+      const formatted = formatWordAnalysis(analysis);
+      const infixSection = formatted.sections.find(
+        s => s.type === 'components' && s.colorName === 'violet',
+      );
+      expect(infixSection).toMatchObject({ arabicPart: 'ت', icon: '↔' });
     });
   });
 
@@ -532,10 +477,7 @@ describe('arabicWordAnalysis', () => {
       expect(analysis.prefixes.length).toBeGreaterThan(0);
       // First prefix should be و (and)
       expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
-      // May have second prefix ب (with)
-      if (analysis.prefixes.length > 1) {
-        expect(analysis.prefixes[1]?.arabicMatch).toBe('ب');
-      }
+      expect(analysis.prefixes[1]?.arabicMatch).toBe('ب');
       expect(analysis.suffix).toBeDefined();
       expect(analysis.suffix?.arabicMatch).toBe('ه');
       // Kasra no longer detected independently (standalone "in" removed from kasra matches)
@@ -573,9 +515,7 @@ describe('arabicWordAnalysis', () => {
 
       expect(analysis.prefixes.length).toBeGreaterThan(0);
       expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
-      if (analysis.prefixes.length > 1) {
-        expect(analysis.prefixes[1]?.arabicMatch).toBe('ال');
-      }
+      expect(analysis.prefixes[1]?.arabicMatch).toBe('ال');
       expect(analysis.diacritic?.arabicMatch).toBe('ُ');
       // At least 2 components (prefix + diacritic) or more if multiple prefixes detected
       expect(formatted.sections.filter(s => s.type === 'components').length).toBeGreaterThanOrEqual(
@@ -664,23 +604,7 @@ describe('Diacritic Double-Matching Prevention', () => {
     // Should have prefix and compound "وفي" or separate components
     expect(analysis.hasComponents).toBeTruthy();
 
-    // If kasra's only unique match is already claimed, it should be filtered
-    // This is a more complex case - the exact behavior depends on which components are found
-    // The key test is that diacritic is only present if it has a unique contribution
-    if (analysis.diacritic) {
-      // If diacritic is present, it MUST have at least one unique English match
-      const otherMatches = [
-        ...(analysis.prefixes[0]?.englishMatches || []),
-        ...(analysis.suffix?.englishMatches || []),
-        ...(analysis.infix?.englishMatches || []),
-      ].map(m => m.toLowerCase());
-
-      const uniqueMatches = analysis.diacritic.englishMatches.filter(
-        m => !otherMatches.includes(m.toLowerCase()),
-      );
-
-      expect(uniqueMatches.length).toBeGreaterThan(0);
-    }
+    expect(analysis.diacritic).toBeUndefined();
   });
 });
 
@@ -775,12 +699,8 @@ describe('Single Word Color-Coding Rule', () => {
       const wordCount = english.trim().split(/\s+/).length;
       expect(wordCount).toBeGreaterThan(1);
 
-      // These should receive color-coding in the tooltip when components are found
-      if (result.hasComponents) {
-        expect(
-          result.prefixes[0] || result.suffix || result.infix || result.diacritic,
-        ).toBeDefined();
-      }
+      expect(result.hasComponents).toBeTruthy();
+      expect(result.prefixes[0] || result.suffix || result.infix || result.diacritic).toBeDefined();
     });
   });
 });
@@ -834,13 +754,7 @@ describe('Whole Translation Matching Rejection', () => {
     testCases.forEach(({ arabic, english, rejectedPattern }) => {
       const analysis = analyzeArabicWord(arabic, english);
 
-      // Components CAN be found, but not with the whole-translation pattern
-      if (analysis.suffix) {
-        // The multi-word pattern should NOT be in the matches
-        expect(analysis.suffix.englishMatches).not.toContain(rejectedPattern);
-        // But single-word patterns CAN still match
-        // (this is okay - only one word will be colored, not both)
-      }
+      expect(analysis.suffix?.englishMatches ?? []).not.toContain(rejectedPattern);
     });
   });
 
@@ -958,11 +872,8 @@ describe('2025 Pattern Enhancements', () => {
       expect(analysis.hasComponents).toBeTruthy();
       expect(analysis.prefixes[0]?.arabicMatch).toBe('ل');
       expect(analysis.prefixes[0]?.englishMatches).toContain('to');
-      // Suffix ي should be detected
-      if (analysis.suffix) {
-        expect(analysis.suffix.arabicMatch).toBe('ي');
-        expect(analysis.suffix.englishMatches).toContain('me');
-      }
+      expect(analysis.suffix?.arabicMatch).toBe('ي');
+      expect(analysis.suffix?.englishMatches).toContain('me');
     });
 
     test('should detect preposition + possessive in في (in me)', () => {

@@ -139,8 +139,9 @@ describe('DictionaryWordRow', () => {
     });
 
     test('renders without crashing when root is missing', () => {
-      const { toJSON } = renderRow(createMockWord({ root: undefined }));
-      expect(toJSON()).toBeTruthy();
+      const { queryByText } = renderRow(createMockWord({ root: undefined }));
+      expect(queryByText('كتب')).toBeNull();
+      expect(queryByText('To write')).toBeNull();
     });
   });
 

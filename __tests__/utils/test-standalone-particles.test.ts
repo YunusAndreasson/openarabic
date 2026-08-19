@@ -122,31 +122,19 @@ describe('Standalone particle optimization', () => {
     });
   });
 
-  describe('Words with diacritics SHOULD be colored', () => {
-    test('should have hasComponents=true when diacritic is detected', () => {
-      // Test the principle: IF a diacritic is detected, THEN hasComponents should be true
+  describe('Bare case endings should not create color coding', () => {
+    test('does not color a single-word gloss solely because كتاب has tanween', () => {
       const analysis = analyzeArabicWord('كِتَابٌ', 'book');
 
-      // Only test IF a diacritic was actually detected
-      // (diacritic detection depends on the word and system configuration)
-      if (analysis.diacritic) {
-        expect(analysis.hasComponents).toBeTruthy();
-      } else {
-        // If no diacritic detected, this test doesn't apply
-        // Just verify the analysis ran without error
-        expect(analysis).toBeDefined();
-      }
+      expect(analysis.diacritic).toBeUndefined();
+      expect(analysis.hasComponents).toBe(false);
     });
 
-    test('should have hasComponents=true when word has only diacritic detected', () => {
-      // Any word with case marking should be colored if diacritic is detected
+    test('does not color a proper name solely because it has tanween', () => {
       const analysis = analyzeArabicWord('مُحَمَّدٌ', 'Muhammad');
 
-      // May or may not detect specific components, but if diacritic detected...
-      if (analysis.diacritic) {
-        // hasComponents should be true
-        expect(analysis.hasComponents).toBeTruthy();
-      }
+      expect(analysis.diacritic).toBeUndefined();
+      expect(analysis.hasComponents).toBe(false);
     });
   });
 

@@ -94,16 +94,6 @@ describe('False positive م detection in morphological patterns', () => {
     });
   });
 
-  describe('Legitimate م contraction (should still work)', () => {
-    test('should detect م in legitimate grammatical contractions', () => {
-      // Note: This is a theoretical test - we may not have real examples in database
-      // If مِمَّن (mimman = from among whom) appears, م could legitimately be detected
-      // But this is very rare and the prefix would need clear grammatical evidence
-      // For now, we'll skip this test until we find a real example
-      // where م genuinely functions as a contracted preposition
-    });
-  });
-
   describe('Edge case: "of" embedded in phrases', () => {
     test('should reject "of" when it appears mid-phrase, not as standalone preposition', () => {
       const analysis = analyzeArabicWord('ومذهب', 'and school of thought');

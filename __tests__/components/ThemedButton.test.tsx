@@ -13,6 +13,7 @@ import React from 'react';
 
 import { ThemedButton } from '@/components/primitives/ThemedButton';
 import { PRESS_LOCK_WINDOW_MS } from '@/constants/animation';
+import { tonalSurface } from '@/utils/colorUtils';
 
 /**
  * jest.setup stubs `StyleSheet.flatten` as the identity function, so calling it
@@ -61,34 +62,43 @@ describe('ThemedButton', () => {
     });
 
     test('renders with icon', () => {
-      const { UNSAFE_queryByType } = render(
-        <ThemedButton title="Add" icon="add" onPress={mockOnPress} />,
-      );
+      const { getByTestId } = render(<ThemedButton title="Add" icon="add" onPress={mockOnPress} />);
 
-      // Icon should be rendered (ActivityIndicator or Ionicons)
-      expect(UNSAFE_queryByType).toBeDefined();
+      expect(getByTestId('mock-icon-add')).toHaveProp('name', 'add');
+      expect(getByTestId('mock-icon-add')).toHaveProp('size', 20);
     });
   });
 
   describe('Variants and tones', () => {
-    // Style assertions are worthless here: jest.setup.js stubs
-    // StyleSheet.flatten as the identity function, so any expectation about a
-    // resolved backgroundColor passes vacuously. These assert on the rendered
-    // tree and on props instead, which the stub does not touch.
-    test.each(['filled', 'tonal', 'outlined', 'ghost'] as const)('renders %s variant', variant => {
-      const { getByText } = render(
+    test.each([
+      ['filled', { backgroundColor: '#4a7c59', borderColor: '#4a7c59' }],
+      ['tonal', tonalSurface('#EEEEEE', '#4a7c59')],
+      ['outlined', { backgroundColor: 'transparent', borderColor: '#4a7c59' }],
+      ['ghost', { backgroundColor: 'transparent' }],
+    ] as const)('paints the %s variant surface', (variant, expectedStyle) => {
+      const { UNSAFE_getByProps } = render(
         <ThemedButton title={variant} variant={variant} onPress={mockOnPress} />,
       );
 
-      expect(getByText(variant)).toBeTruthy();
+      expect(
+        flattenStyle(UNSAFE_getByProps({ accessibilityRole: 'button' }).props.style),
+      ).toMatchObject(expectedStyle);
     });
 
-    test.each(['default', 'destructive'] as const)('renders %s tone', tone => {
-      const { getByText } = render(
+    test.each([
+      ['default', '#4a7c59'],
+      ['destructive', '#F44336'],
+    ] as const)('uses the %s tone hue', (tone, expectedHue) => {
+      const { UNSAFE_getByProps } = render(
         <ThemedButton title="Delete" tone={tone} onPress={mockOnPress} />,
       );
 
-      expect(getByText('Delete')).toBeTruthy();
+      expect(
+        flattenStyle(UNSAFE_getByProps({ accessibilityRole: 'button' }).props.style),
+      ).toMatchObject({
+        backgroundColor: expectedHue,
+        borderColor: expectedHue,
+      });
     });
 
     test('a destructive ghost is still announced as a button', () => {
@@ -140,32 +150,26 @@ describe('ThemedButton', () => {
   });
 
   describe('Sizes', () => {
-    test('renders small size with smaller text', () => {
+    test('renders small size with 13pt text', () => {
       const { getByText } = render(
         <ThemedButton title="Small" size="small" onPress={mockOnPress} />,
       );
 
-      const textElement = getByText('Small');
-      expect(textElement).toBeTruthy();
-      // Small size uses 'label' text type
+      expect(flattenStyle(getByText('Small').props.style)).toMatchObject({ fontSize: 13 });
     });
 
-    test('renders medium size by default', () => {
+    test('renders medium size with 16pt text by default', () => {
       const { getByText } = render(<ThemedButton title="Medium" onPress={mockOnPress} />);
 
-      const textElement = getByText('Medium');
-      expect(textElement).toBeTruthy();
-      // Medium size uses 'bodyBold' text type
+      expect(flattenStyle(getByText('Medium').props.style)).toMatchObject({ fontSize: 16 });
     });
 
-    test('renders large size with larger text', () => {
+    test('renders large size with 18pt text', () => {
       const { getByText } = render(
         <ThemedButton title="Large" size="large" onPress={mockOnPress} />,
       );
 
-      const textElement = getByText('Large');
-      expect(textElement).toBeTruthy();
-      // Large size uses 'heading3' text type
+      expect(flattenStyle(getByText('Large').props.style)).toMatchObject({ fontSize: 18 });
     });
   });
 
@@ -231,16 +235,11 @@ describe('ThemedButton', () => {
   });
 
   describe('Edge Cases', () => {
-    test('handles empty title gracefully', () => {
-      const { toJSON } = render(<ThemedButton title="" onPress={mockOnPress} />);
-      expect(toJSON()).toBeTruthy();
-    });
-
-    test('handles long title text', () => {
+    test('keeps long titles to one line', () => {
       const longTitle = 'This is a very long button title that might wrap';
       const { getByText } = render(<ThemedButton title={longTitle} onPress={mockOnPress} />);
 
-      expect(getByText(longTitle)).toBeTruthy();
+      expect(getByText(longTitle)).toHaveProp('numberOfLines', 1);
     });
   });
 });

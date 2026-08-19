@@ -149,9 +149,13 @@ describe('MiniPlayer', () => {
   });
 
   describe('Timer State', () => {
-    test('renders timer button', () => {
-      const { toJSON } = render(<MiniPlayer {...defaultProps} />);
-      expect(toJSON()).toBeTruthy();
+    test('timer button invokes the timer action', () => {
+      const { getByTestId } = render(<MiniPlayer {...defaultProps} />);
+      const timerIcon = getByTestId('mock-icon-timer');
+      expect(timerIcon.parent).not.toBeNull();
+
+      fireEvent.press(timerIcon.parent!);
+      expect(mockOnTimerPress).toHaveBeenCalledTimes(1);
     });
 
     test('timer button reflects active state visually', () => {

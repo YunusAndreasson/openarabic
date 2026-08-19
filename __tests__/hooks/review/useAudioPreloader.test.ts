@@ -108,15 +108,4 @@ describe('useAudioPreloader', () => {
       expect(mockAudioCache.getAudio).not.toHaveBeenCalled();
     });
   });
-
-  describe('Cleanup', () => {
-    test('should cleanup on unmount', () => {
-      const words = [createMockWord(1, 'audio1.mp3')];
-
-      const { unmount } = renderHook(() => useAudioPreloader(words, false));
-
-      // Should unmount without errors
-      unmount();
-    });
-  });
 });

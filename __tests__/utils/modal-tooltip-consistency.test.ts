@@ -31,33 +31,35 @@ describe('Modal-Tooltip Consistency Bug', () => {
     test('should have components detected', () => {
       const analysis = analyzeArabicWord(arabic, english);
 
-      expect(analysis.hasComponents).toBeTruthy();
-      // Now detects as multi-prefix: و (and) + من (from)
-      expect(analysis.prefixes.length).toBeGreaterThanOrEqual(1);
-      expect(analysis.prefixes[0]?.arabicMatch).toBe('و');
-      if (analysis.prefixes.length > 1) {
-        expect(analysis.prefixes[1]?.arabicMatch).toBe('من');
-      }
+      expect(analysis.hasComponents).toBe(true);
+      expect(analysis.prefixes.map(prefix => prefix.arabicMatch)).toEqual(['و', 'من']);
     });
 
     test('should have colored Arabic segments (modal display)', () => {
       const analysis = analyzeArabicWord(arabic, english);
       const formatted = formatWordAnalysis(analysis);
 
-      expect(formatted.reconstructedArabic).toBeDefined();
-      expect(formatted.reconstructedArabic?.segments).toBeDefined();
-
       const segments = formatted.reconstructedArabic?.segments || [];
-      segments.forEach((seg, i) => {});
 
-      // CRITICAL: Arabic should be colored, not white
-      // Now renders as multiple segments for multi-prefix: و (conjunction) + من (preposition)
-      expect(segments.length).toBeGreaterThan(0);
-      const firstColoredSegment = segments.find(s => s.type === 'prefix');
-      expect(firstColoredSegment).toBeDefined();
-      expect(firstColoredSegment?.colorName).not.toBe('text'); // Not white
-      // First prefix 'و' is conjunction = grammar.conjunction color
-      expect(segments[0]?.colorName).toBe('grammar.conjunction');
+      expect(segments).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ type: 'prefix', colorName: 'grammar.conjunction' }),
+          expect.objectContaining({ type: 'prefix' }),
+        ]),
+      );
+      const prefixSegments = segments.filter(segment => segment.type === 'prefix');
+      expect(prefixSegments).toHaveLength(2);
+      expect(prefixSegments.every(segment => segment.colorName !== 'text')).toBe(true);
+    });
+
+    test.failing('colors من as a preposition when it means "from"', () => {
+      const analysis = analyzeArabicWord(arabic, english);
+      const formatted = formatWordAnalysis(analysis);
+      const minSegment = formatted.reconstructedArabic?.segments.find(segment =>
+        segment.text.includes('م'),
+      );
+
+      expect(minSegment?.colorName).toBe('grammar.preposition');
     });
 
     test('should have colored English segments (tooltip)', () => {
@@ -72,11 +74,7 @@ describe('Modal-Tooltip Consistency Bug', () => {
         defaultColor: COLORS.text,
       });
 
-      coloredSegments.forEach((seg, i) => {});
-
-      // English should be colored
-      const hasColoredSegment = coloredSegments.some(seg => seg.color !== COLORS.text);
-      expect(hasColoredSegment).toBeTruthy();
+      expect(coloredSegments.filter(segment => segment.color !== COLORS.text)).toHaveLength(2);
     });
 
     test('CONSISTENCY CHECK: Arabic and English should both be colored or both be white', () => {
@@ -97,10 +95,10 @@ describe('Modal-Tooltip Consistency Bug', () => {
       });
       const englishIsColored = englishSegments.some(seg => seg.color !== COLORS.text);
 
-      // BUG: If English is colored, Arabic MUST also be colored
-      if (englishIsColored) {
-        expect(arabicIsColored).toBeTruthy();
-      }
+      expect({ arabicIsColored, englishIsColored }).toEqual({
+        arabicIsColored: true,
+        englishIsColored: true,
+      });
     });
   });
 
@@ -124,9 +122,10 @@ describe('Modal-Tooltip Consistency Bug', () => {
       });
       const englishIsColored = englishSegments.some(seg => seg.color !== COLORS.text);
 
-      if (englishIsColored) {
-        expect(arabicIsColored).toBeTruthy();
-      }
+      expect({ arabicIsColored, englishIsColored }).toEqual({
+        arabicIsColored: true,
+        englishIsColored: true,
+      });
     });
   });
 });

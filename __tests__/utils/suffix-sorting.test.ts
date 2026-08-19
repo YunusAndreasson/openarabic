@@ -11,22 +11,10 @@ import { ARABIC_SUFFIXES } from '@/constants/arabicWordComponents';
 
 describe('ARABIC_SUFFIXES sorting', () => {
   test('should be sorted by length (longest first)', () => {
-    let prevLength = Infinity;
+    const actualLengths = ARABIC_SUFFIXES.map(suffix => suffix.arabic.length);
+    const descendingLengths = [...actualLengths].sort((left, right) => right - left);
 
-    for (let i = 0; i < ARABIC_SUFFIXES.length; i++) {
-      const currentLength = ARABIC_SUFFIXES[i]?.arabic.length ?? 0;
-
-      if (currentLength > prevLength) {
-        throw new Error(
-          `Suffix at index ${i} ('${ARABIC_SUFFIXES[i]?.arabic}', length ${currentLength}) is longer than previous suffix (length ${prevLength})`,
-        );
-      }
-
-      prevLength = currentLength;
-    }
-
-    // If we get here, the array is properly sorted
-    expect(true).toBeTruthy();
+    expect(actualLengths).toEqual(descendingLengths);
   });
 
   test('should have longest suffixes first', () => {

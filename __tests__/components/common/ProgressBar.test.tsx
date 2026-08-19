@@ -156,13 +156,13 @@ describe('ProgressBar', () => {
     test('renders with very small progress', () => {
       const { toJSON } = render(<ProgressBar progress={0.1} />);
 
-      expect(toJSON()).toBeTruthy();
+      expect(fillStyle(toJSON() as RenderedNode).width).toBe('0.1%');
     });
 
     test('renders with fractional progress', () => {
       const { toJSON } = render(<ProgressBar progress={33.33} />);
 
-      expect(toJSON()).toBeTruthy();
+      expect(fillStyle(toJSON() as RenderedNode).width).toBe('33.33%');
     });
   });
 });

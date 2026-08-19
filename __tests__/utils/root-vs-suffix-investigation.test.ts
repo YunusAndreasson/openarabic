@@ -60,12 +60,7 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       // FIXED: With improved suffix validation, ה is no longer detected as suffix
       // English has "he" (subject pronoun only, no object/possessive)
       // Our validation correctly rejects ה as false positive
-      if (analysis.suffix?.arabicMatch === 'ه') {
-        console.warn('  ⚠️  FALSE POSITIVE: Root letter ה incorrectly identified as suffix!');
-      }
-
-      // NEW behavior: ה is correctly NOT detected (validation prevents false positive)
-      expect(analysis.suffix?.arabicMatch).not.toBe('ه');
+      expect(analysis.suffix).toBeUndefined();
     });
 
     test('should NOT color ه in سفيه (foolish) with "his" context', () => {
@@ -73,11 +68,7 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       const analysis = analyzeArabicWord('سفيه', 'his foolish behavior');
 
       // "his" appears in English, but ה is root, not possessive suffix
-      if (analysis.suffix?.arabicMatch === 'ه') {
-        console.warn('  ⚠️  FALSE POSITIVE: Root ה misidentified due to "his" in English!');
-      }
-
-      expect(analysis.suffix?.arabicMatch).not.toBe('ه');
+      expect(analysis.suffix).toBeUndefined();
     });
 
     test('should NOT color ه in كره (he hates)', () => {
@@ -86,23 +77,14 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
 
       // Perfect storm: ends in ה AND English has "he"
       // But ה is part of root ك-ר-ه, not pronoun suffix!
-      if (analysis.suffix?.arabicMatch === 'ه') {
-        console.warn('  ⚠️  FALSE POSITIVE: Root ה colored as suffix!');
-      }
-
-      // NEW behavior: ه is correctly NOT detected (subject-only pronoun validation works!)
-      expect(analysis.suffix?.arabicMatch).not.toBe('ه');
+      expect(analysis.suffix).toBeUndefined();
     });
 
     test('should NOT color ه in نزه (integrity, purity)', () => {
       // Root: ن-ز-ه (n-z-h) = to be free from, pure
       const analysis = analyzeArabicWord('نزه', 'he is pure');
 
-      if (analysis.suffix?.arabicMatch === 'ه') {
-        console.warn('  ⚠️  FALSE POSITIVE detected');
-      }
-
-      expect(analysis.suffix?.arabicMatch).not.toBe('ه');
+      expect(analysis.suffix).toBeUndefined();
     });
 
     test('should NOT color ه in يكره (he hates) - prefix + root ending in ه', () => {
@@ -115,12 +97,7 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       expect(analysis.prefixes[0]?.arabicMatch).toBe('ي');
 
       // Should NOT detect ה as suffix (it's part of root ك-ر-ه)
-      if (analysis.suffix?.arabicMatch === 'ه') {
-        console.warn('  ⚠️  FALSE POSITIVE: ه is root letter, not suffix!');
-        console.warn('  Root is ك-ر-ه (k-r-h), not just ك-ر!');
-      }
-
-      expect(analysis.suffix?.arabicMatch).not.toBe('ه');
+      expect(analysis.suffix).toBeUndefined();
     });
   });
 
@@ -140,24 +117,14 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       // The ي makes it an adjective, it's NOT "my"!
       const analysis = analyzeArabicWord('مصري', 'Egyptian man');
 
-      // Nisba ي should NOT be colored (it's derivational, not grammatical)
-      // System may incorrectly detect if "my" appears: "my Egyptian friend"
-      if (analysis.suffix?.arabicMatch === 'ي' && analysis.suffix?.englishMatches.includes('my')) {
-        console.warn('  ⚠️  Nisba ي misidentified as possessive!');
-      }
-
-      // For now, we accept that nisba might be detected
-      // This documents the ambiguity in the system
+      expect(analysis.suffix).toBeUndefined();
     });
 
-    test('should NOT color ي as possessive in عربي (Arabic)', () => {
+    test.failing('should NOT color ي as possessive in عربي (Arabic)', () => {
       const analysis = analyzeArabicWord('عربي', 'my Arabic teacher');
 
-      // "my" in English will trigger false positive
-      // But ي is nisba (makes adjective), not possessive pronoun
-      if (analysis.suffix?.arabicMatch === 'ي') {
-        console.warn('  ⚠️  Nisba ي colored as possessive suffix');
-      }
+      // Known product defect: "my" currently makes the nisba ي look possessive.
+      expect(analysis.suffix).toBeUndefined();
     });
 
     test('should NOT color ي in إسلامي (Islamic)', () => {
@@ -165,7 +132,7 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
 
       // Less likely false positive (no "my" in English)
       // But system would still match if we said "my Islamic values"
-      expect(analysis.suffix?.arabicMatch).not.toBe('ي');
+      expect(analysis.suffix).toBeUndefined();
     });
   });
 
@@ -183,19 +150,14 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       const analysis = analyzeArabicWord('فكاهة', 'humor');
 
       // ها is NOT a pronoun, it's part of the pattern!
-      expect(analysis.suffix?.arabicMatch).not.toBe('ها');
+      expect(analysis.suffix).toBeUndefined();
     });
 
     test('should NOT color ها in جباهة (forehead - poetic)', () => {
       // Root: ج-ب-ه (j-b-h) = forehead
       const analysis = analyzeArabicWord('جباهة', 'his forehead');
 
-      // Even with "his" in English, ها is not possessive suffix
-      if (analysis.suffix?.arabicMatch === 'ها') {
-        console.warn('  ⚠️  Root ها misidentified as suffix!');
-      }
-
-      expect(analysis.suffix?.arabicMatch).not.toBe('ها');
+      expect(analysis.suffix).toBeUndefined();
     });
   });
 
@@ -350,41 +312,6 @@ describe('Root vs Suffix Investigation: False Positive Detection', () => {
       // The ه is part of root ن-ب-ه, not a suffix
       // The ت is Form II prefix, should be detected
       expect(analysis.suffix?.arabicMatch).not.toBe('ه');
-    });
-  });
-
-  /**
-   * STATISTICS & ANALYSIS
-   */
-  describe('📊 Pattern Analysis', () => {
-    test('should measure false positive rate for ه suffix', () => {
-      const testCases = [
-        { arabic: 'فقيه', english: 'scholar', shouldHaveSuffix: false },
-        { arabic: 'وجه', english: 'he faced', shouldHaveSuffix: false },
-        { arabic: 'كره', english: 'he hates', shouldHaveSuffix: false },
-        { arabic: 'كتابه', english: 'his book', shouldHaveSuffix: true },
-        { arabic: 'بيته', english: 'his house', shouldHaveSuffix: true },
-      ];
-
-      let falsePositives = 0;
-      let falseNegatives = 0;
-      let correct = 0;
-
-      testCases.forEach(test => {
-        const analysis = analyzeArabicWord(test.arabic, test.english);
-        const detected = analysis.suffix?.arabicMatch === 'ه';
-
-        if (detected && !test.shouldHaveSuffix) {
-          falsePositives++;
-        } else if (!detected && test.shouldHaveSuffix) {
-          falseNegatives++;
-        } else {
-          correct++;
-        }
-      });
-
-      // We expect some false positives currently
-      // This test documents the baseline
     });
   });
 });

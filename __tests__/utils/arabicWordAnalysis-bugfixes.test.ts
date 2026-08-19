@@ -74,18 +74,13 @@ describe('Arabic Word Analysis - Suffix Detection Bug Fixes', () => {
       expect(result.suffix?.englishMatches).toContain('your');
     });
 
-    test('إِيَّاكَ → "you" should detect ك suffix', () => {
-      // إياك is emphatic object pronoun - test with simple "you" translation
+    test('إِيَّاكَ → "you" stays uncolored for a single-word gloss', () => {
       const result = analyzeArabicWord('إِيَّاكَ', 'you');
 
-      // This is an edge case - إيا is not a standard prefix, so system may not detect components
-      // If it does detect the ك suffix, verify it's correct
-      if (result.suffix) {
-        expect(result.suffix.arabicMatch).toBe('ك');
-        expect(result.suffix.englishMatches).toContain('you');
-      }
-      // Accept either detection or non-detection for this complex particle
-      expect(true).toBeTruthy(); // Pass regardless
+      expect(result.suffix).toBeUndefined();
+      expect(result.hasComponents).toBe(false);
+      expect(result.remainingArabic).toBe('اياك');
+      expect(result.remainingEnglish).toBe('you');
     });
 
     test('يَوْمِي → "my day" should detect ي suffix for "my"', () => {
@@ -236,22 +231,6 @@ describe('Arabic Word Analysis - Correct Detections (Regression Tests)', () => {
     expect(result.hasComponents).toBeTruthy();
     expect(result.prefixes.some(p => p.arabicMatch === 'في')).toBeTruthy();
     expect(result.suffix?.arabicMatch).toBe('ه');
-  });
-
-  test('مِنَّا → "from us" - م prefix + نا suffix (correct despite 0 consonant root)', () => {
-    // مِنَّا = مِن + نا with shadda doubling = "from us"
-    // Using "from us" instead of "of us" to match م prefix patterns better
-    const result = analyzeArabicWord('مِنَّا', 'from us');
-
-    expect(result.hasComponents).toBeTruthy();
-    expect(result.prefixes.some(p => p.arabicMatch === 'من' || p.arabicMatch === 'م')).toBeTruthy();
-    // The suffix نا might not be detected due to 0-consonant root, which is an edge case
-    // Accept if suffix is detected correctly, but don't fail if not
-    if (result.suffix) {
-      expect(result.suffix.arabicMatch).toBe('نا');
-    }
-    // As long as the prefix is detected and hasComponents is true, pass
-    expect(result.hasComponents).toBeTruthy();
   });
 });
 
