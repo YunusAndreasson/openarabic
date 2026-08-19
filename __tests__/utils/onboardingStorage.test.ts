@@ -101,6 +101,42 @@ describe('onboardingStorage', () => {
     expect(firstUser.saveFirstWord).toBe(false);
   });
 
+  test('keeps every concurrently completed step', async () => {
+    const module = freshModule();
+
+    await Promise.all([
+      module.markOnboardingStep(OnboardingStep.READ_TEXT),
+      module.markOnboardingStep(OnboardingStep.LISTEN_AUDIO),
+    ]);
+
+    const state = await module.loadOnboardingState();
+    expect(state.readFirstText).toBe(true);
+    expect(state.listenToAudio).toBe(true);
+  });
+
+  test('does not commit a delayed operation after the active account changes', async () => {
+    let resolveRead: ((value: string | null) => void) | undefined;
+    mockGetItem.mockImplementationOnce(
+      () =>
+        new Promise<string | null>(resolve => {
+          resolveRead = resolve;
+        }),
+    );
+
+    const module = freshModule();
+    module.setOnboardingStorageUser('user-a');
+    const delayedMark = module.markOnboardingStep(OnboardingStep.READ_TEXT);
+    await Promise.resolve();
+
+    module.setOnboardingStorageUser('user-b');
+    resolveRead?.(null);
+    await delayedMark;
+
+    expect(mockMemoryStore.has(`${ONBOARDING_STORAGE_KEY}:user-b`)).toBe(false);
+    expect(module.getCachedOnboardingState()).toBeNull();
+    expect((await module.loadOnboardingState()).readFirstText).toBe(false);
+  });
+
   test('fail-safe: read error yields a dismissed, initialized state without persisting', async () => {
     mockGetItem.mockRejectedValueOnce(new Error('storage broken'));
     const { loadOnboardingState } = freshModule();

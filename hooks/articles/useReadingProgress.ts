@@ -26,6 +26,7 @@ export function useReadingProgress({
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const lastSavedSentenceRef = useRef<number>(0);
+  const pendingSentencesRef = useRef<Set<number>>(new Set());
   // Use bulk query as single source of truth - extract specific article progress
   const { data: progressMap, isLoading, isPlaceholderData } = useBulkReadingProgress([articleId]);
 
@@ -102,8 +103,9 @@ export function useReadingProgress({
       });
     },
     onSuccess: (_, lastSentenceRead) => {
-      // Update our local ref
-      lastSavedSentenceRef.current = lastSentenceRead;
+      // Mutations can settle out of order. Never let an older completion lower
+      // the local high-water mark and reopen an already reserved range.
+      lastSavedSentenceRef.current = Math.max(lastSavedSentenceRef.current, lastSentenceRead);
 
       // Invalidate queries to refresh UI
       if (user?.id) {
@@ -115,6 +117,9 @@ export function useReadingProgress({
     },
     onError: error => {
       handleError(error instanceof Error ? error : new Error('Failed to update reading progress'));
+    },
+    onSettled: (_data, _error, lastSentenceRead) => {
+      pendingSentencesRef.current.delete(lastSentenceRead);
     },
   });
 
@@ -132,9 +137,14 @@ export function useReadingProgress({
       const lastRecorded = Math.max(
         lastSavedSentenceRef.current,
         progress?.last_sentence_read ?? 0,
+        ...pendingSentencesRef.current,
       );
 
       if (validSentenceIndex > lastRecorded) {
+        // Reserve synchronously before starting the request. Failed requests
+        // leave this set in onSettled and can then be retried; successful ones
+        // advance lastSavedSentenceRef in onSuccess.
+        pendingSentencesRef.current.add(validSentenceIndex);
         updateProgressMutation.mutate(validSentenceIndex);
       }
     },

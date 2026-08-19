@@ -109,18 +109,13 @@ export class ReadingProgressService {
     lastSentenceRead,
     totalSentences,
   }: UpdateReadingProgressParams): Promise<void> {
-    const progressData = {
-      user_id: userId,
-      article_id: articleId,
-      last_sentence_read: lastSentenceRead,
-      total_sentences: totalSentences,
-      updated_at: new Date().toISOString(),
-    };
-
     await executeQuery(
       () =>
-        supabase.from('reading_progress').upsert(progressData, {
-          onConflict: 'user_id,article_id',
+        supabase.rpc('update_reading_progress_monotonic', {
+          p_user_id: userId,
+          p_article_id: articleId,
+          p_last_sentence_read: lastSentenceRead,
+          p_total_sentences: totalSentences,
         }),
       {
         ...errorConfig.update,

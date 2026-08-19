@@ -136,6 +136,29 @@ describe('useDailyWordLimit', () => {
       const success = await result.current.incrementDailyWordCount();
       expect(success).toBeTruthy();
     });
+
+    test('serializes concurrent reservations at the configured ceiling', async () => {
+      const { result: first } = renderHook(() => useDailyWordLimit(), { wrapper });
+      const { result: second } = renderHook(() => useDailyWordLimit(), { wrapper });
+
+      const reservations = await Promise.all(
+        Array.from({ length: 12 }, (_, index) =>
+          (index % 2 === 0 ? first : second).current.incrementDailyWordCount(),
+        ),
+      );
+
+      expect(reservations.filter(Boolean)).toHaveLength(10);
+      expect(await first.current.getDailyWordCount()).toBe(10);
+    });
+
+    test('continues processing after a queued storage failure', async () => {
+      const { result } = renderHook(() => useDailyWordLimit(), { wrapper });
+      mockSetItem.mockRejectedValueOnce(new Error('storage unavailable'));
+
+      await expect(result.current.incrementDailyWordCount()).resolves.toBe(false);
+      await expect(result.current.incrementDailyWordCount()).resolves.toBe(true);
+      expect(await result.current.getDailyWordCount()).toBe(1);
+    });
   });
 
   describe('canAddWord', () => {

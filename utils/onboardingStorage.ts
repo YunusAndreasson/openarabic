@@ -31,14 +31,41 @@ function createState(overrides: Partial<OnboardingProgressState> = {}): Onboardi
 
 let cachedState: OnboardingProgressState | null = null;
 let activeUserId: string | null = null;
+let accountGeneration = 0;
+let stateRevision = 0;
+let mutationQueue: Promise<void> = Promise.resolve();
 const listeners = new Set<() => void>();
 
 const getStorageKey = (): string => scopedKey(ONBOARDING_STORAGE_KEY, activeUserId);
+
+interface AccountScope {
+  storageKey: string;
+  generation: number;
+}
+
+function captureAccountScope(): AccountScope {
+  return { storageKey: getStorageKey(), generation: accountGeneration };
+}
+
+function isCurrentScope(scope: AccountScope): boolean {
+  return scope.generation === accountGeneration && scope.storageKey === getStorageKey();
+}
+
+function enqueueMutation<T>(operation: () => Promise<T>): Promise<T> {
+  const result = mutationQueue.then(operation, operation);
+  mutationQueue = result.then(
+    () => undefined,
+    () => undefined,
+  );
+  return result;
+}
 
 /** Switch the in-memory/persistent checklist scope when the auth user changes. */
 export function setOnboardingStorageUser(userId: string | null): void {
   if (activeUserId === userId) return;
   activeUserId = userId;
+  accountGeneration += 1;
+  stateRevision += 1;
   cachedState = null;
   notifyListeners();
 }
@@ -66,35 +93,52 @@ export function getCachedOnboardingState(): OnboardingProgressState | null {
  * not persisted, so a transient error is retried next launch.
  */
 export async function loadOnboardingState(): Promise<OnboardingProgressState> {
-  if (cachedState) return cachedState;
-  const storageKey = getStorageKey();
+  return loadOnboardingStateForScope(captureAccountScope());
+}
+
+async function loadOnboardingStateForScope(scope: AccountScope): Promise<OnboardingProgressState> {
+  if (isCurrentScope(scope) && cachedState) return cachedState;
+  const revisionAtStart = stateRevision;
   try {
-    const raw = await AsyncStorage.getItem(storageKey);
+    const raw = await AsyncStorage.getItem(scope.storageKey);
     const loadedState = raw
       ? { ...createState(), ...(JSON.parse(raw) as Partial<OnboardingProgressState>) }
       : createState();
-    // Ignore a late read from the account that was active when loading began.
-    if (storageKey === getStorageKey()) cachedState = loadedState;
+
+    // Ignore reads made stale by either an account switch or a newer mutation.
+    if (isCurrentScope(scope) && revisionAtStart === stateRevision) {
+      cachedState = loadedState;
+      notifyListeners();
+    }
+    return loadedState;
   } catch (error) {
     handleError(error, {
       showToast: false,
       analyticsEventName: 'Onboarding_Storage_Read_Error',
     });
-    cachedState = createState({ dismissed: true, initializedAt: new Date().toISOString() });
+    const failSafe = createState({ dismissed: true, initializedAt: new Date().toISOString() });
+    if (isCurrentScope(scope) && revisionAtStart === stateRevision) {
+      cachedState = failSafe;
+      notifyListeners();
+    }
+    return failSafe;
   }
-  if (storageKey === getStorageKey()) notifyListeners();
-  return cachedState ?? createState();
 }
 
 function notifyListeners(): void {
   listeners.forEach(listener => listener());
 }
 
-async function writeState(next: OnboardingProgressState): Promise<void> {
+async function writeState(next: OnboardingProgressState, scope: AccountScope): Promise<void> {
+  if (!isCurrentScope(scope)) return;
+
+  stateRevision += 1;
   cachedState = next;
   notifyListeners();
   try {
-    await AsyncStorage.setItem(getStorageKey(), JSON.stringify(next));
+    // Use the key captured with the operation. Never derive a destination from
+    // mutable auth state after asynchronous work has started.
+    await AsyncStorage.setItem(scope.storageKey, JSON.stringify(next));
   } catch (error) {
     handleError(error, {
       showToast: false,
@@ -108,9 +152,13 @@ async function writeState(next: OnboardingProgressState): Promise<void> {
  * call from mutation callbacks / playback start without awaiting.
  */
 export async function markOnboardingStep(step: OnboardingStep): Promise<void> {
-  const state = await loadOnboardingState();
-  if (state[step]) return;
-  await writeState({ ...state, [step]: true });
+  const scope = captureAccountScope();
+  await enqueueMutation(async () => {
+    if (!isCurrentScope(scope)) return;
+    const state = await loadOnboardingStateForScope(scope);
+    if (!isCurrentScope(scope) || state[step]) return;
+    await writeState({ ...state, [step]: true }, scope);
+  });
 }
 
 /**
@@ -118,19 +166,31 @@ export async function markOnboardingStep(step: OnboardingStep): Promise<void> {
  * suppresses the checklist and welcome intro (established accounts).
  */
 export async function initializeOnboarding(options: { dismissed: boolean }): Promise<void> {
-  const state = await loadOnboardingState();
-  await writeState({
-    ...state,
-    dismissed: options.dismissed,
-    initializedAt: new Date().toISOString(),
+  const scope = captureAccountScope();
+  await enqueueMutation(async () => {
+    if (!isCurrentScope(scope)) return;
+    const state = await loadOnboardingStateForScope(scope);
+    if (!isCurrentScope(scope)) return;
+    await writeState(
+      {
+        ...state,
+        dismissed: options.dismissed,
+        initializedAt: new Date().toISOString(),
+      },
+      scope,
+    );
   });
 }
 
 /** Persist that the checklist finished (all steps done, card collapsed). */
 export async function markChecklistCompleted(): Promise<void> {
-  const state = await loadOnboardingState();
-  if (state.completedAt) return;
-  await writeState({ ...state, completedAt: new Date().toISOString() });
+  const scope = captureAccountScope();
+  await enqueueMutation(async () => {
+    if (!isCurrentScope(scope)) return;
+    const state = await loadOnboardingStateForScope(scope);
+    if (!isCurrentScope(scope) || state.completedAt) return;
+    await writeState({ ...state, completedAt: new Date().toISOString() }, scope);
+  });
 }
 
 /**
@@ -139,5 +199,9 @@ export async function markChecklistCompleted(): Promise<void> {
  * an explicit reset means "show me this again".
  */
 export async function resetOnboarding(): Promise<void> {
-  await writeState(createState({ initializedAt: new Date().toISOString() }));
+  const scope = captureAccountScope();
+  await enqueueMutation(async () => {
+    if (!isCurrentScope(scope)) return;
+    await writeState(createState({ initializedAt: new Date().toISOString() }), scope);
+  });
 }

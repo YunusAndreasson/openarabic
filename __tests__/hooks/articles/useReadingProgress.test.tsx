@@ -273,6 +273,74 @@ describe('useReadingProgress', () => {
       });
     });
 
+    test('keeps the high-water mark when requests settle out of order', async () => {
+      const resolvers = new Map<number, () => void>();
+      mockReadingProgressService.updateProgress.mockImplementation(
+        ({ lastSentenceRead }) =>
+          new Promise<void>(resolve => {
+            resolvers.set(lastSentenceRead, resolve);
+          }),
+      );
+
+      const { result } = renderHook(
+        () =>
+          useReadingProgress({
+            articleId: testArticleId,
+            totalSentences: 10,
+            currentSentenceIndex: 0,
+            isActive: true,
+          }),
+        { wrapper },
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      act(() => {
+        result.current.updateProgress(7);
+        result.current.updateProgress(8);
+      });
+      await waitFor(() =>
+        expect(mockReadingProgressService.updateProgress).toHaveBeenCalledTimes(2),
+      );
+
+      await act(async () => {
+        resolvers.get(8)?.();
+        await Promise.resolve();
+        resolvers.get(7)?.();
+      });
+
+      act(() => result.current.updateProgress(8));
+      expect(mockReadingProgressService.updateProgress).toHaveBeenCalledTimes(2);
+    });
+
+    test('allows a failed reserved position to be retried', async () => {
+      mockReadingProgressService.updateProgress
+        .mockRejectedValueOnce(new Error('temporary failure'))
+        .mockResolvedValue(undefined);
+
+      const { result } = renderHook(
+        () =>
+          useReadingProgress({
+            articleId: testArticleId,
+            totalSentences: 10,
+            currentSentenceIndex: 0,
+            isActive: true,
+          }),
+        { wrapper },
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      act(() => result.current.updateProgress(7));
+      await waitFor(() =>
+        expect(mockReadingProgressService.updateProgress).toHaveBeenCalledTimes(1),
+      );
+      await waitFor(() => expect(result.current.isUpdating).toBe(false));
+
+      act(() => result.current.updateProgress(7));
+      await waitFor(() =>
+        expect(mockReadingProgressService.updateProgress).toHaveBeenCalledTimes(2),
+      );
+    });
+
     test('should NOT update progress when inactive via updateProgress callback', async () => {
       // Mock getProgress for article open tracking (returns existing progress)
       mockReadingProgressService.getProgress.mockResolvedValue({

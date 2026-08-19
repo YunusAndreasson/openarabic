@@ -564,6 +564,15 @@ export interface Database {
       //   - Purpose: App Store compliance (5.1.1v) - user account deletion
       //   - Cannot be local code: Requires access to auth.users schema
       delete_user_account: { Args: { user_id: string }; Returns: undefined };
+      update_reading_progress_monotonic: {
+        Args: {
+          p_user_id: string;
+          p_article_id: number;
+          p_last_sentence_read: number;
+          p_total_sentences: number;
+        };
+        Returns: undefined;
+      };
 
       // Database Trigger Functions - NOT callable from app, automatic database operations
       // ---

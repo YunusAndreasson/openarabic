@@ -18,6 +18,7 @@ import { articleId } from '@/__tests__/helpers/ids';
 jest.mock('@/services/supabase', () => ({
   supabase: {
     from: jest.fn(),
+    rpc: jest.fn(),
   },
 }));
 
@@ -25,21 +26,12 @@ jest.mock('@/services/supabase', () => ({
 // It will call our mocked supabase.from
 
 const { supabase } = require('@/services/supabase');
-
-const createUpsertBuilder = (response: any = { data: null, error: null }) => {
-  // Create a promise that resolves to the Supabase response format
-  const promise = Promise.resolve(response);
-
-  // Create the upsert function that returns the promise
-  const upsertFn = jest.fn((..._args: unknown[]) => promise);
-
-  // Create the builder object that supabase.from() returns
-  const builder: any = {
-    upsert: upsertFn,
-  };
-
-  return { builder, upsertFn };
-};
+const mockRpc = supabase.rpc as unknown as jest.Mock<
+  (
+    functionName: string,
+    args: Record<string, unknown>,
+  ) => Promise<{ data: null; error: Error | null }>
+>;
 
 // Helper to create query builder chain for SELECT queries
 const createSelectBuilder = (response: any = { data: [], error: null }) => {
@@ -295,9 +287,8 @@ describe('ReadingProgressService', () => {
   });
 
   describe('updateProgress', () => {
-    test('should calculate and upsert progress correctly', async () => {
-      const { builder, upsertFn } = createUpsertBuilder({ data: null, error: null });
-      (supabase.from as jest.Mock).mockReturnValue(builder);
+    test('uses the atomic monotonic progress RPC', async () => {
+      mockRpc.mockResolvedValue({ data: null, error: null });
 
       await ReadingProgressService.updateProgress({
         userId: 'user-123',
@@ -306,67 +297,27 @@ describe('ReadingProgressService', () => {
         totalSentences: 50,
       });
 
-      expect(supabase.from).toHaveBeenCalledWith('reading_progress');
-      expect(upsertFn).toHaveBeenCalledTimes(1);
-      expect(upsertFn).toHaveBeenCalledWith(
-        expect.objectContaining({
-          user_id: 'user-123',
-          article_id: 42,
-          last_sentence_read: 10,
-          total_sentences: 50,
-          updated_at: expect.any(String),
+      expect(supabase.rpc).toHaveBeenCalledWith('update_reading_progress_monotonic', {
+        p_user_id: 'user-123',
+        p_article_id: 42,
+        p_last_sentence_read: 10,
+        p_total_sentences: 50,
+      });
+      expect(supabase.from).not.toHaveBeenCalled();
+    });
+
+    test('propagates RPC failures', async () => {
+      const error = new Error('rpc failed');
+      mockRpc.mockResolvedValue({ data: null, error });
+
+      await expect(
+        ReadingProgressService.updateProgress({
+          userId: 'user-123',
+          articleId: articleId(42),
+          lastSentenceRead: 10,
+          totalSentences: 50,
         }),
-        {
-          onConflict: 'user_id,article_id',
-        },
-      );
-      // Note: progress_percentage is GENERATED ALWAYS in database, not included in upsert
-    });
-
-    test('should not include progress_percentage in upsert (database GENERATED ALWAYS)', async () => {
-      const { builder, upsertFn } = createUpsertBuilder({ data: null, error: null });
-      (supabase.from as jest.Mock).mockReturnValue(builder);
-
-      await ReadingProgressService.updateProgress({
-        userId: 'user-123',
-        articleId: articleId(42),
-        lastSentenceRead: 10,
-        totalSentences: 50,
-      });
-
-      const upsertCall = upsertFn.mock.calls[0][0];
-      // Verify progress_percentage is NOT included (database calculates it)
-      expect(upsertCall).not.toHaveProperty('progress_percentage');
-      // Verify other fields are present
-      expect(upsertCall).toHaveProperty('user_id', 'user-123');
-      expect(upsertCall).toHaveProperty('article_id', 42);
-      expect(upsertCall).toHaveProperty('last_sentence_read', 10);
-      expect(upsertCall).toHaveProperty('total_sentences', 50);
-    });
-
-    test('should set updated_at timestamp', async () => {
-      const { builder, upsertFn } = createUpsertBuilder({ data: null, error: null });
-      (supabase.from as jest.Mock).mockReturnValue(builder);
-
-      const beforeUpdate = new Date().toISOString();
-
-      await ReadingProgressService.updateProgress({
-        userId: 'user-123',
-        articleId: articleId(42),
-        lastSentenceRead: 10,
-        totalSentences: 50,
-      });
-
-      const afterUpdate = new Date().toISOString();
-
-      expect(upsertFn).toHaveBeenCalledTimes(1);
-      const upsertCall = upsertFn.mock.calls[0];
-      expect(upsertCall).toBeDefined();
-      expect(upsertCall[0]).toBeDefined();
-      const updateTime = new Date((upsertCall[0] as { updated_at: string }).updated_at);
-
-      expect(updateTime.getTime()).toBeGreaterThanOrEqual(new Date(beforeUpdate).getTime());
-      expect(updateTime.getTime()).toBeLessThanOrEqual(new Date(afterUpdate).getTime());
+      ).rejects.toThrow('rpc failed');
     });
   });
 
