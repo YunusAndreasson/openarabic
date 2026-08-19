@@ -32,7 +32,7 @@ export const STORAGE_KEYS = {
 
   TUTORIAL_WELCOME_INTRO: '@openarabic/tutorials/welcomeIntroSeen',
   TUTORIAL_WORD_TAP: '@openarabic/tutorials/wordTapCompleted',
-  TUTORIAL_REVIEW_GRADES: '@openarabic/tutorials/reviewGradesCompleted',
+  TUTORIAL_REVIEW_GRADES: '@openarabic/tutorials/reviewGradesCompleted.v2',
 
   /** Local day ledger behind the practice streak. */
   STUDY_DAYS: 'study_day_keys',

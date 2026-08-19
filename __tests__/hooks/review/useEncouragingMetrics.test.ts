@@ -210,32 +210,42 @@ describe('useEncouragingMetrics', () => {
   });
 
   describe('Mastery metric (GREEN)', () => {
-    test('should show unique words strengthened when no words are mastered', () => {
+    // Counts the words FSRS actually rewarded — recalled cleanly on the first
+    // attempt — not every word the session touched. baseMetrics is 4 clean of 5
+    // reviewed, so the miss must not be counted as strengthened.
+    test('should show cleanly recalled words strengthened when no words are mastered', () => {
       const noMasteryMetrics: SessionMetrics = {
         ...baseMetrics,
         masteredWords: 0,
-        wordsKnown: 4,
       };
       const { result } = renderHook(() =>
         useEncouragingMetrics(noMasteryMetrics, mockColors as ThemeColors, 0),
       );
 
-      expect(result.current?.metrics[2].text).toBe('5 words strengthened');
+      expect(result.current?.metrics[2].text).toBe('4 words strengthened');
       expect(result.current?.metrics[2].icon).toBe('trending-up');
     });
 
-    test('should show words strengthened with total count when none known', () => {
+    // A session where nothing was recalled has no strengthened words to report,
+    // so the green slot is dropped rather than claiming the whole session.
+    // Telling a learner who missed all five that they strengthened five is
+    // contradicted by the session they just sat through, and by FSRS, which
+    // lowered stability on every one of them.
+    test('should omit the strengthened metric when nothing was recalled', () => {
       const noKnownMetrics: SessionMetrics = {
         ...baseMetrics,
         masteredWords: 0,
         wordsKnown: 0,
+        wordsUnknown: 5,
         wordsReviewed: 5,
+        firstAttemptKnown: 0,
+        firstAttemptUnknown: 5,
       };
       const { result } = renderHook(() =>
         useEncouragingMetrics(noKnownMetrics, mockColors as ThemeColors, 0),
       );
 
-      expect(result.current?.metrics[2].text).toBe('5 words strengthened');
+      expect(result.current?.metrics.some(metric => metric.type === 'mastery')).toBe(false);
     });
 
     test('should show singular "word mastered" for 1 word', () => {
@@ -390,7 +400,11 @@ describe('useEncouragingMetrics', () => {
         useEncouragingMetrics(drilledMetrics, mockColors as ThemeColors, 0),
       );
 
-      expect(result.current?.metrics[2].text).toBe('1 word strengthened');
+      // The word was missed and then drilled back. `wordsKnown` counts two
+      // recall events for it, but a miss resets stability before the re-ask
+      // builds off the lower value — nothing here was strengthened, so the
+      // session cannot both read as a struggle and claim a strengthened word.
+      expect(result.current?.metrics.some(metric => metric.type === 'mastery')).toBe(false);
       expect(result.current?.educationalText).toBe(STRINGS.SESSION_ED_STRUGGLE_POOL[0]);
     });
   });

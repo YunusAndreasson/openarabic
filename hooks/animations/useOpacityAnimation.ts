@@ -101,7 +101,7 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
   // wrapper needed). Memoized on the shared value, whose identity never changes,
   // so the object is stable for the hook's lifetime: a fresh object every render
   // would be a new `style` prop for every consumer, and the review screen shares
-  // this one style across three views (card, swipe flash, bottom controls).
+  // this one style across three views (card, wash overlay, bottom controls).
   const animatedStyle = useMemo(() => ({ opacity }) as AnimatedStyleProp<ViewStyle>, [opacity]);
 
   return { animatedStyle, fadeIn, fadeOut };

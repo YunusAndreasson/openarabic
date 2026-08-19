@@ -117,9 +117,26 @@ export const useEncouragingMetrics = (
         color: colors.success,
         type: 'mastery',
       });
-    } else {
+    } else if (metrics.firstAttemptKnown > 0) {
+      // `firstAttemptKnown` — the words whose stability actually went UP.
+      //
+      // The other two candidates both say something untrue. `wordsReviewed`
+      // counts the misses as strengthened: a learner who recalled 3 of 12 was
+      // told they strengthened 12, and a session with nothing recalled still
+      // claimed the full count. `wordsKnown` counts recall EVENTS, not words, so
+      // a single word missed and then drilled reads as "2 words strengthened" —
+      // and that word is not strengthened either way, because a miss resets its
+      // stability before the re-ask builds back off the lower value.
+      //
+      // What remains is the set of words recalled cleanly on the first attempt,
+      // which is unique per word and is exactly the set FSRS rewarded.
+      //
+      // Guarded rather than an unconditional else: with nothing cleanly recalled
+      // there is no true number for a green "strengthened" slot, so the slot is
+      // dropped instead of filled with a zero. The educational line below
+      // already speaks to a hard session.
       trafficLightMetrics.push({
-        text: STRINGS.METRIC_WORDS_IMPROVING(metrics.wordsReviewed),
+        text: STRINGS.METRIC_WORDS_IMPROVING(metrics.firstAttemptKnown),
         icon: 'trending-up',
         color: colors.success,
         type: 'mastery',
@@ -133,12 +150,14 @@ export const useEncouragingMetrics = (
     let educationalText: string;
 
     // Contextual overrides checked first (special session achievements)
-    if (
-      knownRatio >= 0.7 &&
-      metrics.firstAttemptKnown === metrics.wordsReviewed &&
-      metrics.firstAttemptUnknown === 0 &&
-      metrics.wordsReviewed >= 5
-    ) {
+    // Every word recalled on its first attempt, over a session long enough for
+    // that to mean something. `firstAttemptKnown + firstAttemptUnknown` is
+    // `wordsReviewed` by construction (useSessionMetrics increments them in the
+    // same branch), so this one equality already implies both
+    // `firstAttemptUnknown === 0` and `knownRatio === 1` — they were spelled out
+    // as separate clauses and read as independent checks when they cannot fail
+    // on their own.
+    if (metrics.firstAttemptKnown === metrics.wordsReviewed && metrics.wordsReviewed >= 5) {
       educationalText = STRINGS.SESSION_ED_PERFECT;
     } else if (knownRatio >= 0.7 && metrics.averageStabilityIncrease >= 3.0) {
       educationalText = STRINGS.SESSION_ED_BIG_STABILITY_JUMP;

@@ -75,7 +75,6 @@ jest.mock('@/utils/haptics', () => ({
   lightFeedback: jest.fn(),
   mediumFeedback: jest.fn(),
   commitFeedback: jest.fn(),
-  detentFeedback: jest.fn(),
   successFeedback: jest.fn(),
   warningFeedback: jest.fn(),
   errorFeedback: jest.fn(),
@@ -153,7 +152,7 @@ describe('useReview Hook - Session Management', () => {
       expect(result.current.isComplete).toBeTruthy();
     });
 
-    test('should not process swipes when session complete', async () => {
+    test('should not process grades when session complete', async () => {
       useFSRS.mockReturnValue(fsrsState(mocks, null, { isComplete: true, progress: 100 }));
 
       const wrapper = createWrapper();
@@ -190,7 +189,7 @@ describe('useReview Hook - Session Management', () => {
       expect(haptics.mediumFeedback).not.toHaveBeenCalled();
     });
 
-    test('should not process swipes when already updating', async () => {
+    test('should not process grades when already updating', async () => {
       const word = createMockWord();
       useFSRS.mockReturnValue(fsrsState(mocks, word));
 
@@ -225,7 +224,9 @@ describe('useReview Hook - Session Management', () => {
       const { result } = renderHook(() => useReview(), { wrapper });
 
       await act(async () => {
-        await expect(result.current.playSentenceAudio('audio/example.mp3')).resolves.toBeUndefined();
+        await expect(
+          result.current.playSentenceAudio('audio/example.mp3'),
+        ).resolves.toBeUndefined();
       });
       await waitFor(() => {
         expect(mocks.mockAudioPlayer.play).toHaveBeenCalled();
@@ -326,7 +327,7 @@ describe('useReview Hook - Session Management', () => {
       expect(result.current.sessionMetrics.currentStreak).toBe(5);
     });
 
-    test('should update metrics on swipe', async () => {
+    test('should update metrics on grade', async () => {
       const word = createMockWord({ fsrs_stability: 7 });
       useFSRS.mockReturnValue(fsrsState(mocks, word));
 

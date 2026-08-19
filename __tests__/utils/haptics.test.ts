@@ -12,13 +12,7 @@
 import { beforeEach, afterEach, describe, expect, test, jest } from '@jest/globals';
 import { Platform } from 'react-native';
 
-import {
-  commitFeedback,
-  detentFeedback,
-  lightFeedback,
-  selectionFeedback,
-  warningFeedback,
-} from '@/utils/haptics';
+import { commitFeedback, lightFeedback, selectionFeedback, warningFeedback } from '@/utils/haptics';
 
 // Keep inline mock for this test since it needs direct access to jest.fn() instances for assertions.
 // Every expo-haptics function returns Promise<void> — the mocks must too, or
@@ -87,18 +81,18 @@ describe('haptics', () => {
 
   // Regression: the debounce used to be a single global flag, so two
   // semantically DIFFERENT haptics landing in the same 50ms silently dropped
-  // the second — e.g. a swipe crossing its commit threshold and the grade that
-  // follows, or a reveal followed straight away by a grade. The user then felt
-  // a random subset of the feedback the UI was trying to give.
+  // the second — e.g. a reveal followed straight away by a grade, or a mic
+  // going live on the heels of the tap that armed it. The user then felt a
+  // random subset of the feedback the UI was trying to give.
   test('does not let one pattern swallow a different pattern', () => {
     const { selectionAsync, impactAsync } = require('expo-haptics');
 
     selectionFeedback();
     lightFeedback();
-    detentFeedback();
+    commitFeedback();
 
     expect(selectionAsync).toHaveBeenCalledTimes(1);
-    expect(impactAsync).toHaveBeenCalledTimes(2); // light + rigid detent
+    expect(impactAsync).toHaveBeenCalledTimes(2); // light + rigid commit
   });
 
   test('commitFeedback uses the rigid impact on iOS', () => {
@@ -116,81 +110,6 @@ describe('haptics', () => {
     commitFeedback();
 
     expect(performAndroidHapticsAsync).toHaveBeenCalledWith(AndroidHaptics.Clock_Tick);
-  });
-
-  // commitFeedback and detentFeedback('crisp') share a TEXTURE but not a
-  // moment: the detent fires while the finger is still down and the outcome can
-  // still be changed, the commit fires once it cannot. A fast flick produces
-  // both within a frame or two, so they must not share a debounce key — with
-  // one, the commit (the more informative of the two) was the one swallowed.
-  test('a commit is not swallowed by a detent in the same window', () => {
-    const { impactAsync } = require('expo-haptics');
-
-    detentFeedback('crisp');
-    commitFeedback();
-
-    expect(impactAsync).toHaveBeenCalledTimes(2);
-  });
-
-  test('detentFeedback uses the rigid impact on iOS', () => {
-    const { impactAsync, ImpactFeedbackStyle } = require('expo-haptics');
-
-    detentFeedback();
-
-    expect(impactAsync).toHaveBeenCalledWith(ImpactFeedbackStyle.Rigid);
-  });
-
-  test('detentFeedback uses the Android detent tick', () => {
-    const { performAndroidHapticsAsync, AndroidHaptics } = require('expo-haptics');
-    jest.replaceProperty(Platform, 'OS', 'android');
-
-    detentFeedback();
-
-    expect(performAndroidHapticsAsync).toHaveBeenCalledWith(AndroidHaptics.Clock_Tick);
-  });
-
-  // The tone is what tells "armed into Forgot" apart from "armed into Knew it"
-  // and from "dropped back below the line" — one tick, three meanings. Before
-  // this they were the same Rigid impact, so the swipe's only haptic carried no
-  // information about which way it was going.
-  test('detentFeedback weights each tone differently on iOS', () => {
-    const { impactAsync, ImpactFeedbackStyle } = require('expo-haptics');
-
-    detentFeedback('crisp');
-    detentFeedback('heavy');
-    detentFeedback('soft');
-
-    expect(impactAsync).toHaveBeenNthCalledWith(1, ImpactFeedbackStyle.Rigid);
-    expect(impactAsync).toHaveBeenNthCalledWith(2, ImpactFeedbackStyle.Heavy);
-    expect(impactAsync).toHaveBeenNthCalledWith(3, ImpactFeedbackStyle.Soft);
-  });
-
-  test('detentFeedback maps each tone to an Android constant', () => {
-    const { performAndroidHapticsAsync, AndroidHaptics } = require('expo-haptics');
-    jest.replaceProperty(Platform, 'OS', 'android');
-
-    detentFeedback('crisp');
-    detentFeedback('heavy');
-    detentFeedback('soft');
-
-    expect(performAndroidHapticsAsync).toHaveBeenNthCalledWith(1, AndroidHaptics.Clock_Tick);
-    expect(performAndroidHapticsAsync).toHaveBeenNthCalledWith(2, AndroidHaptics.Long_Press);
-    expect(performAndroidHapticsAsync).toHaveBeenNthCalledWith(
-      3,
-      AndroidHaptics.Segment_Frequent_Tick,
-    );
-  });
-
-  // Each tone debounces on its own key. An arm immediately followed by a disarm
-  // (a fast drag past the line and back) is real signal, and a shared key would
-  // silently eat the second tick.
-  test('one detent tone does not swallow another', () => {
-    const { impactAsync } = require('expo-haptics');
-
-    detentFeedback('crisp');
-    detentFeedback('soft');
-
-    expect(impactAsync).toHaveBeenCalledTimes(2);
   });
 
   test('warningFeedback uses the iOS warning notification', () => {

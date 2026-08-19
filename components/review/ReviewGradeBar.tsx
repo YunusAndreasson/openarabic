@@ -50,7 +50,7 @@ export const ReviewGradeBar: FC<ReviewGradeBarProps> = ({
   return (
     <View style={STATIC_STYLES.container}>
       {/* WORD_CONFIDENCES is declared worst→best, which IS this row's paint
-          order: left→right, red→amber→green, mirroring the swipe outcomes
+          order: left→right, red→amber→green, hardest to easiest
           (left = Forgot, right = Knew it; Guessed is the centre tap). Mapping
           it directly means a grade cannot exist in the union and be missing
           from the row that renders it. */}

@@ -38,9 +38,8 @@ const TONE_FOR_CONFIDENCE: Record<WordConfidence, VerdictTone> = {
 };
 
 /**
- * Which verdict a grade shows. Pure, and exported for the same reason
- * `resolveDetentTone` is: the mapping is the decision, and it is worth testing
- * without a renderer or a UI thread in the way.
+ * Which verdict a grade shows. Pure, and exported because the mapping IS the
+ * decision — it is worth testing without a renderer or a UI thread in the way.
  *
  * `playVerdict` must go through this rather than indexing `TONE_FOR_CONFIDENCE`
  * itself — it used to, which left the tested mapping and the rendered one as two
@@ -129,7 +128,7 @@ export interface CardVerdictResult {
  * entrance. Those are state-driven and replay on mount, which is the case the
  * docs put in the CSS column. A verdict is fired at an arbitrary moment from a
  * grade callback with no state change and no remount to hang keyframes on, so
- * it belongs with the gesture work on shared values — the same split the card
+ * it belongs with the other shared-value work — the same split the card
  * already documents.
  */
 export const useCardVerdict = (): CardVerdictResult => {
@@ -222,8 +221,9 @@ export const useCardVerdict = (): CardVerdictResult => {
         // A wince, not a tantrum. One linear sweep of the phase; the shape is
         // the consumer's damped sine, so there are no reversal corners for the
         // eye to catch on. This rides its own shared value on its own layer
-        // rather than joining the drag's translateX, so a swipe-left wince
-        // composes with the spring home instead of fighting it for the value.
+        // rather than joining the card's translateX, so the wince composes with
+        // the left exit a restudy continue starts instead of fighting it for the
+        // value.
         //
         // The sweep is linear (see VERDICT.SHAKE.SWEEP) — the envelope owns the
         // deceleration, so easing the phase too would slow the first swing.

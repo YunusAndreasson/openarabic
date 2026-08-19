@@ -8,11 +8,10 @@
  */
 
 /**
- * useReview Hook Tests - Swipe Gestures
+ * useReview Hook Tests - Grading
  *
- * Tests user swipe interactions:
- * - Swipe right → known
- * - Swipe left → unknown
+ * Tests the grade path end to end: reveal → grade → restudy hold → advance.
+ * Every test drives the hook's own callbacks; there is no input layer here.
  */
 
 import { renderHook, act, waitFor } from '@testing-library/react-native';
@@ -79,7 +78,7 @@ jest.mock('@/services/supabase', () =>
 // Get mocked hooks for direct manipulation in tests
 const { useFSRS } = require('@/hooks/vocabulary');
 
-describe('useReview Hook - Swipe Gestures', () => {
+describe('useReview Hook - Grading', () => {
   let mocks: UseReviewMockRefs;
 
   beforeEach(() => {
@@ -87,12 +86,12 @@ describe('useReview Hook - Swipe Gestures', () => {
     mocks = setupUseReviewMocks();
   });
 
-  describe('Swipe Gestures', () => {
+  describe('Grading', () => {
     // Parameterized test for basic grading: reveal the answer first, then grade.
     test.each([
-      { gesture: 'swipe right', confidence: 'known' as const, expectedStability: 5 },
-      { gesture: 'swipe left', confidence: 'unknown' as const, expectedStability: 5 },
-    ])('should handle $gesture → $confidence', async ({ confidence, expectedStability }) => {
+      { grade: 'Knew it', confidence: 'known' as const, expectedStability: 5 },
+      { grade: 'Forgot', confidence: 'unknown' as const, expectedStability: 5 },
+    ])('should handle $grade → $confidence', async ({ confidence, expectedStability }) => {
       const word = createMockWord();
       useFSRS.mockReturnValue(fsrsState(mocks, word));
 
@@ -211,10 +210,10 @@ describe('useReview Hook - Swipe Gestures', () => {
         expect(mocks.mockFadeOut).toHaveBeenCalledWith(expect.any(Function), VERDICT.BEAT);
       });
 
-      // A swipe is exempt: it has been confirming continuously under the finger
-      // and is throwing the card in the direction of the decision, so parking it
-      // at the threshold first would stall a gesture that already said it all.
-      test('a swipe skips the beat', () => {
+      // The restudy continue is exempt: its verdict has been on the card for the
+      // whole hold, and the screen starts the card's left exit on the same tap,
+      // so beating again would only desync the fade from the throw.
+      test('a grade that already had its moment skips the beat', () => {
         const word = createMockWord();
         useFSRS.mockReturnValue(fsrsState(mocks, word));
 

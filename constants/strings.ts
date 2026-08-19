@@ -172,6 +172,7 @@ export const STRINGS = {
   RESET_TUTORIALS_SUBTITLE: 'Resets the intro tips and checklist',
   RESET_TUTORIALS_TITLE: 'Reset tutorials?',
   RESET_TUTORIALS_MESSAGE: 'Tips will show again as you use the app.',
+  RESET_TUTORIALS_FAILED: 'Failed to reset tutorials',
   // Tutorial copy
   TUTORIAL_WORD_TAP_CTA: 'Tap the highlighted word to see its meaning — then add it to practice',
   // Review tutorial - Intro
@@ -183,8 +184,7 @@ export const STRINGS = {
   // screen it is explaining (it previously taught a binary swipe for a ternary
   // grade bar, and never mentioned "Guessed" at all).
   TUTORIAL_GRADES_TITLE: 'Three answers',
-  TUTORIAL_GRADES_BODY:
-    'Once the answer is showing, tap one — or swipe left for Forgot, right for Knew it.',
+  TUTORIAL_GRADES_BODY: 'Once the answer is showing, tap the one that matches how it went.',
   TUTORIAL_GRADE_FORGOT_HINT: 'Stays for another look, then comes back soon',
   TUTORIAL_GRADE_GUESSED_HINT: 'Comes back sooner than the ones you knew',
   TUTORIAL_GRADE_KNEW_HINT: 'Comes back later, so you skip easy words',

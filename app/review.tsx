@@ -23,10 +23,11 @@ import {
 } from '@/components/review';
 import { useTutorialContext, useVoiceGrading } from '@/components/providers';
 import type { WordConfidence } from '@/types/review.types';
-import { SwipeGestureTutorial } from '@/components/tutorials/SwipeGestureTutorial';
+import { ReviewGradesTutorial } from '@/components/tutorials/ReviewGradesTutorial';
 import { PulsatingLoader } from '@/components/ui';
 import { TIMING_CONFIG, VERDICT } from '@/constants/animation';
-import { LAYOUT } from '@/constants/layout';
+import { getElevation } from '@/constants/elevation';
+import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { TutorialId } from '@/constants/tutorials';
@@ -213,10 +214,9 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
    * what fixes the old ordering here, which flew the card off screen before
    * asking whether the grade would be accepted.
    *
-   * `known` additionally leaves to the right, the same throw a swipe gives it,
-   * with the beat in front of it on every path but the swipe's own.
-   * "Guessed" keeps its plain dissolve: it has no direction and deliberately no
-   * swipe, and that difference is the affordance.
+   * `known` additionally leaves to the right, after the beat. "Guessed" keeps
+   * its plain dissolve — it is the grade with no direction, and the difference
+   * in how the two leave is what tells them apart at a glance.
    */
   const cardRef = useRef<ReviewCardHandle>(null);
 
@@ -289,11 +289,11 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   }, []);
 
   const gradeWithVerdict = useCallback(
-    (confidence: WordConfidence, opts: { fromVoice?: boolean; skipBeat?: boolean } = {}) => {
+    (confidence: WordConfidence, opts: { fromVoice?: boolean } = {}) => {
       if (!grade(confidence, opts)) return;
       cardRef.current?.playVerdict(confidence);
       if (confidence === 'known') {
-        cardRef.current?.commitTo('right', opts.skipBeat ? 0 : VERDICT.BEAT);
+        cardRef.current?.commitTo('right', VERDICT.BEAT);
       }
     },
     [grade],
@@ -403,27 +403,6 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   // rather than a getter call in render — see ReviewDiagSnapshot for why.
   const diag = useSyncExternalStore(subscribeDiag, getDiagSnapshot, getDiagSnapshot);
 
-  // Stable identities: these feed the pan gesture's config, and an inline arrow
-  // rebuilt the whole Gesture object on every render of the screen (voice phase
-  // ticks, audio status, progress) — re-attaching handlers mid-drag.
-  //
-  // `skipBeat` drops the verdict beat. The throw is the beat: the card has been
-  // tinting and tilting under the finger the whole way and is now leaving in the
-  // direction of the decision, so parking it at the threshold first would stall
-  // a gesture that is already saying everything the beat exists to say.
-  const handleSwipeForgot = useCallback(
-    () => gradeWithVerdict('unknown', { skipBeat: true }),
-    [gradeWithVerdict],
-  );
-  const handleSwipeKnewIt = useCallback(
-    () => gradeWithVerdict('known', { skipBeat: true }),
-    [gradeWithVerdict],
-  );
-
-  // A tapped grade produces the same motion as the swipe — Knew it leaves right
-  // on the same CARD_EXIT timing and colour ramp — with the beat in front of it
-  // because a tap gave the card no movement of its own.
-  //
   // "Forgot" from the bar never exits here: it opens a restudy hold, so the
   // card is staying put and throwing it off screen would be a lie. Its left
   // exit is deferred to the tap that leaves the hold, below.
@@ -544,9 +523,6 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
           onReveal={revealAnswer}
           onReplayAudio={() => void handleReplayAudio()}
           opacityStyle={transparentStyle}
-          isUpdating={isUpdating}
-          onSwipeForgot={handleSwipeForgot}
-          onSwipeKnewIt={handleSwipeKnewIt}
           testID="review-card"
           restudying={restudying}
           onRestudyContinue={handleRestudyContinue}
@@ -762,7 +738,14 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
       {voiceDebugEnabled && (
         <View
           pointerEvents="none"
-          style={[voiceDebugStyles.container, { top: insets.top + LAYOUT.SPACING.LARGE * 2 }]}
+          style={[
+            voiceDebugStyles.container,
+            {
+              top: insets.top + LAYOUT.SPACING.LARGE * 2,
+              backgroundColor: colors.elevation3,
+              ...getElevation(colors, 'MODAL'),
+            },
+          ]}
         >
           <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
             {`model: ${voice.isReady ? 'ready' : voice.error ? `error: ${voice.error}` : `dl ${Math.round(voice.downloadProgress * 100)}%`}`}
@@ -829,13 +812,12 @@ const voiceDebugStyles = StyleSheet.create({
     right: LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.SMALL,
-    borderRadius: 8,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    gap: 2,
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+    gap: LAYOUT.SPACING.HALF_TINY,
   },
   line: {
-    fontSize: 11,
-    lineHeight: 14,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY * LINE_HEIGHT_MULTIPLIERS.NORMAL,
   },
 });
 
@@ -851,25 +833,25 @@ export default function ReviewScreen(): JSX.Element {
   // silently failed to appear, every session, forever.
   const { shouldShowTutorial, isLoaded: areTutorialsLoaded } = useTutorialContext();
   const [tutorialDismissed, setTutorialDismissed] = useState(false);
-  const needsTutorial = areTutorialsLoaded && shouldShowTutorial(TutorialId.SWIPE_GESTURE);
+  const needsTutorial = areTutorialsLoaded && shouldShowTutorial(TutorialId.REVIEW_GRADES);
 
   // Tutorial management
-  const swipeTutorial = useTutorial(TutorialId.SWIPE_GESTURE);
+  const gradesTutorial = useTutorial(TutorialId.REVIEW_GRADES);
   const {
-    dismiss: dismissSwipeTutorial,
-    isVisible: isSwipeTutorialVisible,
+    dismiss: dismissGradesTutorial,
+    isVisible: isGradesTutorialVisible,
     trigger,
-  } = swipeTutorial;
+  } = gradesTutorial;
 
   // Handle tutorial dismissal
   const handleTutorialDismiss = () => {
     setTutorialDismissed(true);
-    dismissSwipeTutorial();
+    dismissGradesTutorial();
   };
 
   // Show tutorial immediately if needed
   useEffect(() => {
-    if (shouldShowTutorial(TutorialId.SWIPE_GESTURE)) {
+    if (shouldShowTutorial(TutorialId.REVIEW_GRADES)) {
       trigger();
     }
   }, [shouldShowTutorial, trigger]);
@@ -886,7 +868,7 @@ export default function ReviewScreen(): JSX.Element {
     return (
       <>
         <ReviewLoadingState message={STRINGS.PREPARING_PRACTICE_SESSION} />
-        <SwipeGestureTutorial visible={isSwipeTutorialVisible} onDismiss={handleTutorialDismiss} />
+        <ReviewGradesTutorial visible={isGradesTutorialVisible} onDismiss={handleTutorialDismiss} />
       </>
     );
   }

@@ -46,7 +46,6 @@ jest.mock('@/utils/haptics', () => ({
   mediumFeedback: jest.fn(),
   successFeedback: jest.fn(),
   selectionFeedback: jest.fn(),
-  detentFeedback: jest.fn(),
   warningFeedback: jest.fn(),
   errorFeedback: jest.fn(),
 }));

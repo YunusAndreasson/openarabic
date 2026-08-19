@@ -4,7 +4,7 @@
  * Tests the review session flow with REAL useReview hook and mocked services only.
  * This ensures we test actual hook behavior, not a manual reimplementation.
  *
- * NOTE: Tests for "swipe right (known word)" and "track progress" were removed because
+ * NOTE: Tests for "grade known word" and "track progress" were removed because
  * they cannot be reliably tested due to the hook's complex async architecture:
  * - useTimerCleanup with custom setTimeout management
  * - InteractionManager.runAfterInteractions delays

@@ -1,7 +1,7 @@
 /**
  * Tutorial: the three grades.
  *
- * Replaces the old separate swipe-left / swipe-right steps, which taught a
+ * Replaced the old separate swipe-left / swipe-right steps, which taught a
  * binary model for a ternary grade bar and never mentioned "Guessed". Labels
  * and colours come from the same source ReviewGradeBar uses, so this cannot
  * drift from the screen it explains.

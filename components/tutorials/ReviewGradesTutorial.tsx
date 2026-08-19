@@ -3,9 +3,10 @@
  * how it works → the three grades → ready.
  *
  * Renders through the same TutorialStepLayout as WelcomeIntro so the two
- * first-run walkthroughs look like one product. The previous version was four
- * steps built from separate swipe-left / swipe-right screens that taught a
- * binary model for a ternary grade bar.
+ * first-run walkthroughs look like one product. Two versions ago this was four
+ * steps built from separate swipe-left / swipe-right screens, teaching a binary
+ * model for a ternary grade bar; the swipe itself has since been removed, and
+ * the name followed the content here rather than the other way round.
  */
 
 import type { IoniconName } from '@/components/ui';
@@ -20,7 +21,7 @@ import { TutorialCard } from './TutorialCard';
 import { TutorialOverlay } from './TutorialOverlay';
 import { TutorialStepLayout } from './TutorialStepLayout';
 
-interface SwipeGestureTutorialProps {
+interface ReviewGradesTutorialProps {
   visible: boolean;
   onDismiss: () => void;
 }
@@ -54,7 +55,7 @@ const STEPS: ReviewTutorialStepConfig[] = [
 
 const LAST_STEP = STEPS.length - 1;
 
-export function SwipeGestureTutorial({ visible, onDismiss }: SwipeGestureTutorialProps) {
+export function ReviewGradesTutorial({ visible, onDismiss }: ReviewGradesTutorialProps) {
   const [currentStep, setCurrentStep] = useState<number>(ReviewTutorialStep.INTRO);
 
   const isLastStep = currentStep === LAST_STEP;
@@ -110,4 +111,4 @@ export function SwipeGestureTutorial({ visible, onDismiss }: SwipeGestureTutoria
   );
 }
 
-SwipeGestureTutorial.displayName = 'SwipeGestureTutorial';
+ReviewGradesTutorial.displayName = 'ReviewGradesTutorial';

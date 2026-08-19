@@ -1,3 +1,3 @@
-// Practice hooks - only swipe-based practice remains
+// Practice hooks
 
 export { useStudyStreak } from './useStudyStreak';

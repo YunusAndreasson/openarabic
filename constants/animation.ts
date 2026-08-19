@@ -35,10 +35,10 @@ export const TIMING_CONFIG = {
     easing: Easing.inOut(Easing.cubic), // Symmetric ease for a physical front→back turn
   },
   /**
-   * A graded review card leaving the screen. Shared by the swipe's fling-out
-   * and the review advance's dissolve so the flight and the fade are ONE
-   * motion — previously the card sprang back to centre on a spring clock while
-   * a separate setTimeout chain faded it out ~120ms later, two uncoordinated
+   * A graded review card leaving the screen. Shared by the card's throw and the
+   * review advance's dissolve so the flight and the fade are ONE motion —
+   * previously the card sprang back to centre on a spring clock while a
+   * separate setTimeout chain faded it out ~120ms later, two uncoordinated
    * timelines that visibly drifted apart whenever the JS thread was busy.
    */
   CARD_EXIT: {
@@ -48,13 +48,24 @@ export const TIMING_CONFIG = {
 } as const;
 
 /**
+ * How far a graded card is drawn out, as a fraction of screen width, before it
+ * throws — and the distance the colour wash is scaled to, so the tint reaches
+ * full strength exactly where the throw begins.
+ *
+ * Roughly a quarter of the screen. Small values read as a twitch rather than a
+ * decision; the wash was once scaled to 0.8 of screen width, a distance the card
+ * never travelled, so it stayed faint and told the user nothing.
+ */
+export const CARD_EXIT_DRAW_BACK_RATIO = 0.22;
+
+/**
  * The verdict beat: the moment a graded review card confirms the outcome before
  * it leaves.
  *
  * Grading used to have no confirmation at all — you learned you were right
  * because the next word appeared. The green/red wash that existed was driven
- * entirely by drag distance, so it only spoke while a finger was down, and it
- * said "release now and it counts", which is a different statement from "that
+ * entirely by swipe-drag distance, so it only spoke while a finger was down, and
+ * it said "release now and it counts", which is a different statement from "that
  * was right". Two of the three grades (a voice-correct answer and "Guessed")
  * had no motion whatsoever: the card did not move, it stopped existing.
  *
@@ -69,10 +80,11 @@ export const VERDICT = {
    * How long the card holds at full verdict strength before it leaves, so the
    * confirmation is legible on its own rather than under a dissolve.
    *
-   * Applied to the tap, voice and restudy-continue paths only. A swipe is
-   * exempt: it has already given continuous, finger-driven confirmation and is
-   * throwing the card in the direction of the decision, and hanging a thrown
-   * card in mid-air for 140ms would contradict the gesture.
+   * Applied to the tap and voice paths. The restudy continue is exempt: its
+   * verdict fired when the miss was graded and its ring has been sitting on the
+   * card for the whole hold, which is a far longer moment than the beat could
+   * buy — holding again would only desync the fade from the card's left exit,
+   * which starts on that same tap.
    */
   BEAT: 140,
   /** Verdict rising to full strength. Fast, so the colour arrives as one event. */

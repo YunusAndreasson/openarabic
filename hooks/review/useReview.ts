@@ -209,7 +209,7 @@ const NO_PLAYBACK_PRIORITY = (): Promise<void> => Promise.resolve();
 
 const TRANSITION_DELAYS = {
   /**
-   * Card dissolve on advance. Matched to the swipe's fling-out so a committed
+   * Card dissolve on advance. Matched to the card's throw so a committed
    * card leaves as one motion; the same fade plays the card back in.
    */
   fadeAnimation: TIMING_CONFIG.CARD_EXIT.duration,
@@ -221,7 +221,7 @@ const TRANSITION_DELAYS = {
    * healthy fade.
    *
    * Includes the verdict beat: the fade now starts VERDICT.BEAT after the
-   * grade on every path but a swipe, and a watchdog that ignored the hold
+   * grade on every path but the restudy continue, and a watchdog that ignored the hold
    * would fire mid-beat and advance the card out from under its own
    * confirmation.
    */
@@ -293,7 +293,8 @@ export function useReview({
   // answer (revealAnswer) BEFORE self-grading. Reset to false on every new card.
   const [revealed, setRevealed] = useState(false);
   const [currentMeaning, setCurrentMeaning] = useState('');
-  // Ensure UI re-renders when updating state changes so gestures re-enable
+  // Ensure UI re-renders when updating state changes, so the grade bar and the
+  // reveal button re-enable once an advance lands
   const [isUpdatingUI, setIsUpdatingUI] = useState(false);
   // Progress bar high-water mark, surfaced as state so consumers re-render.
   const [maxProgress, setMaxProgress] = useState(0);
@@ -341,7 +342,7 @@ export function useReview({
   // A grade the learner has already given whose FSRS write has not started yet.
   //
   // `commitGrade` sequences the write off the card's fade-out completion, so
-  // for VERDICT.BEAT + CARD_EXIT (320ms; 180ms on a swipe, which skips the
+  // for VERDICT.BEAT + CARD_EXIT (320ms; 180ms on the restudy continue, which skips the
   // beat) the grade exists only as this pending closure. Every teardown path
   // used to cancel it — the AbortController aborts, useOpacityAnimation drops
   // its callback once isMounted goes false, and clearAllTimers kills the
@@ -558,7 +559,9 @@ export function useReview({
         wordsReviewedCount.current += 1;
 
         // Per-grade telemetry — the Forgot/Guessed/Knew-it distribution the
-        // reveal-first flow is about (binary swipe analytics couldn't express it).
+        // reveal-first flow is about (the old binary analytics couldn't express it).
+        // NOTE: this deliberately does not record which INPUT graded the card —
+        // tap and voice are indistinguishable here.
         analytics.track(ANALYTICS_EVENTS.REVIEW_WORD_GRADED, {
           confidence,
           root_id: rootId,
@@ -698,7 +701,7 @@ export function useReview({
    * The card check is the other half. `simpleAudioService.play()` resolves
    * purely by call order and has no notion of which card a call belongs to, so a
    * handoff still in flight when the card moves on (a fast restudy "Continue", a
-   * swipe) would hijack whatever the next card is already playing.
+   * grade) would hijack whatever the next card is already playing.
    *
    * Three call sites pasted this guard; two carried a comment pointing back at
    * the first. Resolves `false` when the card changed, so callers can tell "did
@@ -824,9 +827,10 @@ export function useReview({
       // Easing.out — fastest off the mark — so a verdict painted at grade time
       // was under 30% opacity within three frames and never read at all.
       //
-      // A swipe is exempt. It has already confirmed continuously under the
-      // finger and is throwing the card in the direction of the decision; the
-      // beat would hang a thrown card in mid-air.
+      // The restudy continue is exempt. Its verdict has been sitting on the card
+      // for the whole hold — a far longer moment than the beat buys — and the
+      // screen starts the card's left exit on the same tap, so holding again
+      // would only desync the fade from the throw.
       //
       // The delay goes INSIDE the animation (withDelay), not in a timer before
       // it. Two clocks drift, and the sequencing below depends on the fade's
@@ -895,7 +899,7 @@ export function useReview({
       // While a restudy hold is up the grade is already decided; only the tap
       // that leaves the hold may commit it. Without this a second "Forgot"
       // arriving during the hold fell straight through to the commit and wrote
-      // the card twice (caught by useReview.swipe.test).
+      // the card twice (caught by useReview.grade.test).
       if (restudyRef.current) return false;
 
       // Graded while the prompt was still playing — the learner answered
@@ -981,9 +985,9 @@ export function useReview({
   }, [isComplete]);
 
   // Effect: Initialize audio session when practice starts and track session start.
-  // Runs ONCE per session — wordQueue.length changes on every swipe, so without
-  // the sessionStarted guard, stopAudioSafely() would race with each new word's
-  // playback and intermittently silence the audio after a swipe.
+  // Runs ONCE per session — wordQueue.length changes on every graded card, so
+  // without the sessionStarted guard, stopAudioSafely() would race with each new
+  // word's playback and intermittently silence the audio after a grade.
   useEffect(() => {
     if (sessionStarted.current) return;
     if (wordQueue.length === 0 || isComplete) return;
@@ -1022,7 +1026,7 @@ export function useReview({
   // Effect: Handle current word changes and play audio (simplified - no more loading).
   // Guard against re-firing for the same word: this effect's deps include
   // showTranslation, which flips false at the same ~3s moment processFeedback
-  // runs in the unknown-swipe flow. Since updateWord is async, currentWord
+  // runs in the Forgot → restudy → Continue flow. Since updateWord is async, currentWord
   // doesn't update synchronously — without the lastProcessedWordId check, the
   // OLD word's Arabic audio briefly replays before the new word's audio starts.
   useEffect(() => {
@@ -1409,7 +1413,7 @@ export function useReview({
 
   // Unmount-only cleanup: tracks abandonment, aborts in-flight work, resets refs.
   // Deps must NOT include wordQueue.length — useFSRS.updateWord shrinks the queue
-  // on every swipe, so a length dep here would re-fire this cleanup mid-session,
+  // on every graded card, so a length dep here would re-fire this cleanup mid-session,
   // double-firing analytics, racing stopAudioSafely() against the new word's
   // playAudio() in the audio-play effect, and clobbering session state.
   useEffect(() => {

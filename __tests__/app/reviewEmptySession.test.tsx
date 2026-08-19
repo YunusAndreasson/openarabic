@@ -41,8 +41,8 @@ jest.mock('@/components/review', () => {
   };
 });
 
-jest.mock('@/components/tutorials/SwipeGestureTutorial', () => ({
-  SwipeGestureTutorial: () => null,
+jest.mock('@/components/tutorials/ReviewGradesTutorial', () => ({
+  ReviewGradesTutorial: () => null,
 }));
 
 jest.mock('@/components/providers', () => ({

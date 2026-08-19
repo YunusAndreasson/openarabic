@@ -41,7 +41,7 @@ export const SupportSection = memo<SupportSectionProps>(({ onContactSupportPress
           } catch (error) {
             errorFeedback();
             handleError(error, {
-              toastMessage: 'Failed to reset tutorials',
+              toastMessage: STRINGS.RESET_TUTORIALS_FAILED,
               analyticsEventName: 'Reset_Tutorials_Failed',
             });
           }

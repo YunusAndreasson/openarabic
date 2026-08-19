@@ -11,7 +11,7 @@ import { STORAGE_KEYS } from '@/constants/storageKeys';
 export const TutorialId = {
   WELCOME_INTRO: 'welcomeIntro',
   WORD_TAP: 'wordTap',
-  SWIPE_GESTURE: 'swipeGesture',
+  REVIEW_GRADES: 'reviewGrades',
 } as const;
 
 export type TutorialId = (typeof TutorialId)[keyof typeof TutorialId];
@@ -52,10 +52,15 @@ export const TUTORIALS: Record<TutorialId, TutorialConfig> = {
     storageKey: STORAGE_KEYS.TUTORIAL_WORD_TAP,
     showDelay: 800,
   },
-  [TutorialId.SWIPE_GESTURE]: {
-    // Key bumped again for the three-grade rewrite: the previous version taught
-    // a binary swipe and never mentioned "Guessed", so existing users should see
-    // the corrected tutorial once.
+  [TutorialId.REVIEW_GRADES]: {
+    // The storage key — NOT this id — is what gates whether a user sees the
+    // tutorial, so bumping the key is the only way to re-show it.
+    //
+    // Bumped for the swipe removal. This is not about the reworded sentence: an
+    // interaction the tutorial actively TAUGHT was deleted, so everyone who
+    // completed the old version is carrying a gesture that now does nothing,
+    // with no other surface in the app to correct them. Re-showing once is the
+    // cheapest way to say so.
     storageKey: STORAGE_KEYS.TUTORIAL_REVIEW_GRADES,
     showDelay: 500,
   },

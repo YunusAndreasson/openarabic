@@ -1,14 +1,11 @@
-import { skipToken, useQueries } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { skipToken, useQueries, type UseQueryResult } from '@tanstack/react-query';
+import { useCallback, useMemo } from 'react';
 
 import { useColors } from '@/hooks/theme/useColors';
 import { sentencesService, type WordExample } from '@/services/sentences';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { computeColoredSegments } from '@/utils/arabicWordAnalysis';
-import {
-  getReviewChunkQueryInputs,
-  REVIEW_CHUNK_STALE_TIME_MS,
-} from './useReviewChunkQueryInputs';
+import { getReviewChunkQueryInputs, REVIEW_CHUNK_STALE_TIME_MS } from './useReviewChunkQueryInputs';
 
 /**
  * One example sentence per word in the current review chunk, fetched once.
@@ -31,40 +28,56 @@ export function useReviewExamples(
     () => enrichmentBatches.map(getReviewChunkQueryInputs),
     [enrichmentBatches],
   );
-  const queries = useQueries({
+  // Grammar colouring, resolved from fetched batches rather than per card — the
+  // same load-time precompute the reader does in `useSentencesByWord`.
+  // `analyzeArabicWord`'s cache absorbs repeated forms across sentences, but
+  // this is still ~200 analyses per chunk, so it must run when the data or the
+  // theme changes and at no other time.
+  //
+  // It is `useQueries`' `combine` rather than a `useMemo` over the returned
+  // array: that array is rebuilt on every render (v5 maps each result through
+  // `trackResult()`), so a `useMemo` keyed on it never hits and the whole
+  // precompute would land in render — on every voice-phase tick, audio-status
+  // change and progress update of a live session — handing back fresh
+  // `WordExample` objects each time and re-rendering the card with them.
+  // TanStack memoizes `combine` on the results, so the work now happens once
+  // per batch arrival.
+  //
+  // `useCallback` is required rather than incidental: TanStack re-runs `combine`
+  // when the function identity changes, so an inline arrow would reintroduce the
+  // very problem this fixes. `useColors` returns a stable object per theme.
+  const combineExamples = useCallback(
+    (results: UseQueryResult<Map<number, WordExample>>[]): Map<number, WordExample> => {
+      if (results.every(result => !result.data)) return EMPTY_EXAMPLES;
+      const colored = new Map<number, WordExample>();
+      for (const result of results) {
+        if (!result.data) continue;
+        for (const [rootId, example] of result.data) {
+          colored.set(rootId, {
+            ...example,
+            words: example.words.map(word => ({
+              ...word,
+              coloredSegments: computeColoredSegments(word.wordForm, word.english, colors),
+            })),
+          });
+        }
+      }
+      return colored;
+    },
+    [colors],
+  );
+
+  return useQueries({
     queries: batchInputs.map(({ rootIds, keySignature }) => ({
       queryKey: ['review', 'examples', keySignature],
-      queryFn:
-        rootIds.length > 0 ? () => sentencesService.getExamplesForRoots(rootIds) : skipToken,
+      queryFn: rootIds.length > 0 ? () => sentencesService.getExamplesForRoots(rootIds) : skipToken,
       staleTime: REVIEW_CHUNK_STALE_TIME_MS,
       // A missing example is cosmetic; retrying costs a session more requests
       // than the feature is worth.
       retry: false,
     })),
+    combine: combineExamples,
   });
-
-  // Grammar colouring, resolved from fetched batches rather than per card — the same
-  // load-time precompute the reader does in `useSentencesByWord`. `useColors`
-  // returns a stable object per theme, so this recomputes on a theme change and
-  // on nothing else; `analyzeArabicWord`'s cache absorbs repeated forms across
-  // sentences. Doing it in render would put ~200 analyses on the card's path.
-  return useMemo(() => {
-    if (queries.every(query => !query.data)) return EMPTY_EXAMPLES;
-    const colored = new Map<number, WordExample>();
-    for (const query of queries) {
-      if (!query.data) continue;
-      for (const [rootId, example] of query.data) {
-        colored.set(rootId, {
-          ...example,
-          words: example.words.map(word => ({
-            ...word,
-            coloredSegments: computeColoredSegments(word.wordForm, word.english, colors),
-          })),
-        });
-      }
-    }
-    return colored;
-  }, [queries, colors]);
 }
 
 /** Stable identity so consumers don't re-render on every miss. */

@@ -30,8 +30,10 @@ export const useReviewCompletion = (sessionMetrics?: SessionMetrics): void => {
    */
   useEffect(() => {
     // Mounting a completion surface without any reviewed words must be a
-    // no-op. The review route now redirects before this can happen, and this
-    // guard keeps future callers from recording empty sessions accidentally.
+    // no-op — including the cache work. Nothing was graded, so no server state
+    // changed and there is nothing stale to refresh; setting the
+    // last-completed stamp would additionally start the session cooldown for a
+    // session that never happened.
     if (!sessionMetrics || sessionMetrics.wordsReviewed <= 0) return;
 
     const invalidateReviewQueries = async (): Promise<void> => {

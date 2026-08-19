@@ -12,7 +12,7 @@
  *
  * Tests the critical practice session hook that manages:
  * - Session initialization with due words
- * - User swipe interactions (left=unknown, right=known, hesitation+right=vague)
+ * - Grade handling (Forgot / Guessed / Knew it)
  * - Word state transitions and FSRS updates
  * - Audio playback (Arabic word audio, English feedback for unknown)
  * - Translation display for vague/unknown words
@@ -256,7 +256,7 @@ describe('useReview Hook', () => {
     });
   });
 
-  // Swipe gesture tests moved to useReview.swipe.test.tsx
+  // Grading tests live in useReview.grade.test.tsx
 
   describe('Progress Tracking', () => {
     test('should update progress as words are reviewed', () => {
@@ -287,5 +287,5 @@ describe('useReview Hook', () => {
   // Session completion, edge cases, cleanup, metrics, and audio preloader tests
   // moved to useReview.session.test.tsx
 
-  // Vague/hint state tests moved to useReview.swipe.test.tsx
+  // Vague/hint state tests live in useReview.grade.test.tsx
 });

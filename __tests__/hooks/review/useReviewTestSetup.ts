@@ -4,7 +4,7 @@
  * Centralizes the beforeEach setup logic used across:
  * - useReview.test.tsx
  * - useReview.session.test.tsx
- * - useReview.swipe.test.tsx
+ * - useReview.grade.test.tsx
  *
  * Note: jest.mock() declarations must remain in each test file due to hoisting.
  * This file handles the mock return value setup that runs in beforeEach.

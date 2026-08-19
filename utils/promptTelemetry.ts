@@ -41,7 +41,7 @@ export type PromptCutSource =
   | 'reveal'
   /** The learner replayed the word, superseding the prompt with itself. */
   | 'replay'
-  /** The card advanced (graded, swiped, session ended). */
+  /** The card advanced (graded, session ended). */
   | 'advance';
 
 /** The prompt's story for one card, flattened for a jsonb column. */
