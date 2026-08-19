@@ -23,8 +23,6 @@
     // `arr[0]` immediately after asserting `arr.length` is the idiom throughout.
     "noUncheckedIndexedAccess": false,
 
-    "noImplicitReturns": false,
-
     // No build cache: this program shares .tsbuildinfo with the source pass otherwise,
     // and the full run is only ~11s.
     "incremental": false

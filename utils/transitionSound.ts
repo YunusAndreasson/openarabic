@@ -12,7 +12,7 @@ export async function playTransitionSound(): Promise<void> {
 
   try {
     // Load and validate asset
-    const [asset] = await Asset.loadAsync(require('@/assets/sounds/switch.mp3'));
+    const [asset] = await Asset.loadAsync(require('@/assets/sounds/switch.mp3') as number);
     if (!asset?.localUri) return;
 
     // Create and start player

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { readingProgressQueries } from '@/constants/queries';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { readingProgressService } from '@/services/readingProgress';
+import { readingProgressService, type ReadingProgress } from '@/services/readingProgress';
 import type { ArticleId } from '@/types/branded.types';
 import { handleError } from '@/utils/errorHandling';
 import { calculateProgressPercentage } from '@/utils/progressUtils';
@@ -275,7 +275,7 @@ export function useBulkReadingProgress(articleIds: ArticleId[]) {
     queryFn: async () => {
       // TypeScript guard - should never happen due to enabled check
       if (!user?.id) {
-        return new Map();
+        return new Map<ArticleId, ReadingProgress>();
       }
       // Fetch ALL reading progress for this user (not just requested articleIds)
       // This creates a single shared cache entry that all components can use
@@ -285,7 +285,7 @@ export function useBulkReadingProgress(articleIds: ArticleId[]) {
     // Enable query only when we have a user ID
     enabled: Boolean(user?.id),
     // Use placeholderData to prevent undefined while query is disabled or fetching
-    placeholderData: new Map(),
+    placeholderData: new Map<ArticleId, ReadingProgress>(),
     // Stale time controls when data needs refetching
     staleTime: 1000 * 10, // 10 seconds - refetch if older
     gcTime: 1000 * 60 * 60 * 24, // Keep in memory for 24 hours
@@ -300,9 +300,9 @@ export function useBulkReadingProgress(articleIds: ArticleId[]) {
     const data = query.data;
     // Early return for missing data, empty articleIds, or non-Map data
     if (!data || articleIds.length === 0 || !(data instanceof Map)) {
-      return new Map();
+      return new Map<ArticleId, ReadingProgress>();
     }
-    const filtered = new Map();
+    const filtered = new Map<ArticleId, ReadingProgress>();
     articleIds.forEach(id => {
       const progress = data.get(id);
       if (progress) {

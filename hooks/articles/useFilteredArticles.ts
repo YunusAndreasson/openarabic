@@ -14,10 +14,7 @@ export const useFilteredArticles = (articles: Article[] | null | undefined) => {
 
   // Fetch bulk reading progress for all articles (single source of truth)
   const articleIds = useMemo(() => safeArticles.map(article => article.id), [safeArticles]);
-  const { data: progressMapRaw = new Map(), isLoading: isProgressLoading } =
-    useBulkReadingProgress(articleIds);
-  // Ensure progressMap is always a Map to prevent runtime errors
-  const progressMap = progressMapRaw instanceof Map ? progressMapRaw : new Map();
+  const { data: progressMap, isLoading: isProgressLoading } = useBulkReadingProgress(articleIds);
 
   const filteredAndSortedArticles = useMemo(() => {
     if (!safeArticles.length) return [];

@@ -100,6 +100,8 @@ export default defineConfig([
       '@typescript-eslint/unbound-method': 'error',
       '@typescript-eslint/no-array-delete': 'error',
       '@typescript-eslint/no-misused-spread': 'error',
+      '@typescript-eslint/no-unsafe-argument': 'error',
+      '@typescript-eslint/no-unsafe-return': 'error',
 
       // A union switch that gains a member should fail loudly rather than fall
       // through silently. `considerDefaultExhaustiveForUnions` keeps switches that
