@@ -42,19 +42,8 @@ class TestBatchTranslateFullSentences:
         """Test successful translation of multiple sentences."""
         from pipeline.engine.batch_ops import batch_translate_full_sentences
 
-        # For multiple sentences: 1 batch call + N individual calls
-        # The batch call returns first result, then individual calls for each
+        # Each sentence is translated by its own standalone API call.
         mock_api.side_effect = [
-            {
-                "success": True,
-                "data": {
-                    "translation": "Hello",
-                    "notes": "Greeting",
-                    "uncertainties": [],
-                    "word_by_word": [],
-                },
-            },
-            # Individual calls for each sentence
             {
                 "success": True,
                 "data": {
@@ -119,7 +108,10 @@ class TestBatchTranslateFullSentences:
         call_args = mock_api.call_args
         messages = call_args[0][0]
         user_message = messages[1]["content"]
-        assert "Context: Islamic greeting context" in user_message
+        assert (
+            "Context (for understanding only — do NOT translate):\nIslamic greeting context"
+            in user_message
+        )
 
     @patch("pipeline.engine.batch_ops.call_response_api")
     @patch("utils.responses_api.token_tracker")
@@ -157,54 +149,10 @@ class TestBatchTranslateFullSentences:
             "error": "API rate limit exceeded",
         }
 
-        with pytest.raises(RuntimeError, match="Translation failed"):
-            batch_translate_full_sentences(
-                sentences=["مرحبا"],
-                contexts=[None],
-            )
-
-    @patch("utils.responses_api.token_tracker")
-    def test_with_conversation_manager(self, mock_tracker, mock_conversation_manager):
-        """Test translation using conversation manager path."""
-        from pipeline.engine.batch_ops import batch_translate_full_sentences
-
-        mock_conversation_manager.continue_with_stage.return_value = {
-            "success": True,
-            "data": {
-                "translation": "Hello from conversation",
-                "notes": "Test",
-                "uncertainties": [],
-                "word_by_word": [],
-            },
-        }
-
-        result = batch_translate_full_sentences(
-            sentences=["مرحبا"],
-            contexts=[None],
-            conversation_manager=mock_conversation_manager,
-        )
-
-        assert len(result) == 1
-        assert result[0].translation == "Hello from conversation"
-        mock_conversation_manager.continue_with_stage.assert_called_once()
-
-    @patch("utils.responses_api.token_tracker")
-    def test_conversation_manager_failure_raises_error(
-        self, mock_tracker, mock_conversation_manager
-    ):
-        """Test that conversation manager failure raises RuntimeError."""
-        from pipeline.engine.batch_ops import batch_translate_full_sentences
-
-        mock_conversation_manager.continue_with_stage.return_value = {
-            "success": False,
-            "error": "Conversation error",
-        }
-
         with pytest.raises(RuntimeError, match="Failed to translate sentence"):
             batch_translate_full_sentences(
                 sentences=["مرحبا"],
                 contexts=[None],
-                conversation_manager=mock_conversation_manager,
             )
 
     @patch("pipeline.engine.batch_ops.call_response_api")
@@ -256,17 +204,8 @@ class TestBatchTranslateFullSentences:
         """Test that result count matches sentence count."""
         from pipeline.engine.batch_ops import batch_translate_full_sentences
 
-        # For 2 sentences: 1 batch call + 2 individual calls
+        # One standalone call per sentence.
         mock_api.side_effect = [
-            {
-                "success": True,
-                "data": {
-                    "translation": "One",
-                    "notes": "",
-                    "uncertainties": [],
-                    "word_by_word": [],
-                },
-            },
             {
                 "success": True,
                 "data": {

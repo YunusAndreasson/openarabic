@@ -8,17 +8,17 @@
  */
 
 /**
- * Integration test to reproduce the "stuck button" bug in study list management
+ * Integration test for the query-cache state that drives the study-list button.
  *
  * BUG REPRODUCTION:
  * When a user adds a word to the study list multiple times (add → remove → add),
  * the button gets stuck showing "Remove from Study List" even after the word
  * has been removed from the study list.
  *
- * ROOT CAUSE:
- * 1. Stale closure in handleAddWordToStudy callback due to localStudyStates dependency
- * 2. Race condition between local optimistic state and query cache state
- * 3. Double optimistic state management (parent + child component)
+ * This suite deliberately uses the real mutation hook and a real QueryClient.
+ * Only the network/service boundary is mocked. Assertions must inspect state
+ * written by the hook itself; manually writing the expected cache value in a
+ * test would merely test QueryClient and could not catch a broken mutation.
  */
 
 // Unmock React Query to use real QueryClient for integration testing
@@ -143,14 +143,7 @@ describe('Study List Button State - Bug Reproduction', () => {
         undefined,
       );
 
-      // Simulate cache update after mutation
-      await waitFor(() => {
-        queryClient.setQueryData(fsrsQueries.all(mockUserId).queryKey, [
-          createStudyWord(mockRootId),
-        ]);
-      });
-
-      // Verify word is in cache
+      // The hook's optimistic mutation itself must put the word in the cache.
       const afterFirstAdd = queryClient.getQueryData<StudyWord[]>(
         fsrsQueries.all(mockUserId).queryKey,
       );
@@ -171,12 +164,7 @@ describe('Study List Button State - Bug Reproduction', () => {
         undefined,
       );
 
-      // Simulate cache update after mutation
-      await waitFor(() => {
-        queryClient.setQueryData(fsrsQueries.all(mockUserId).queryKey, []);
-      });
-
-      // Verify word is NOT in cache
+      // The hook's optimistic mutation itself must remove the word.
       const afterRemove = queryClient.getQueryData<StudyWord[]>(
         fsrsQueries.all(mockUserId).queryKey,
       );
@@ -198,27 +186,17 @@ describe('Study List Button State - Bug Reproduction', () => {
         undefined,
       );
 
-      // Simulate cache update after mutation
-      await waitFor(() => {
-        queryClient.setQueryData(fsrsQueries.all(mockUserId).queryKey, [
-          createStudyWord(mockRootId),
-        ]);
-      });
-
-      // Verify word IS in cache again
+      // A later add must not be affected by a stale result from the removal.
       const afterSecondAdd = queryClient.getQueryData<StudyWord[]>(
         fsrsQueries.all(mockUserId).queryKey,
       );
       expect(afterSecondAdd?.some(w => w.root_id === mockRootId)).toBeTruthy();
     });
 
-    test('should maintain correct local state map through multiple toggles', async () => {
+    test('should maintain the shared query cache through multiple toggles', async () => {
       // SETUP: Start with empty study list
       queryClient.setQueryData(fsrsQueries.all(mockUserId).queryKey, []);
       queryClient.setQueryData(fsrsQueries.allWithCooldown(mockUserId, 24).queryKey, []);
-
-      // Track what localStudyStates Map should contain after each operation
-      const expectedLocalState = new Map<number, boolean>();
 
       const { result } = renderHook(
         () => useStudyWordMutations(jest.fn(async (..._args: unknown[]) => undefined)),
@@ -231,7 +209,11 @@ describe('Study List Button State - Bug Reproduction', () => {
         changed: true,
       });
       await result.current.handleRootPress(mockRootId);
-      expectedLocalState.set(mockRootId, true);
+      expect(
+        queryClient
+          .getQueryData<StudyWord[]>(fsrsQueries.all(mockUserId).queryKey)
+          ?.some(word => word.root_id === mockRootId),
+      ).toBe(true);
 
       // Remove
       (studyWordsFSRSService.setFSRSStudyRoot as jest.Mock).mockResolvedValueOnce({
@@ -239,7 +221,11 @@ describe('Study List Button State - Bug Reproduction', () => {
         changed: true,
       });
       await result.current.handleRootPress(mockRootId);
-      expectedLocalState.set(mockRootId, false);
+      expect(
+        queryClient
+          .getQueryData<StudyWord[]>(fsrsQueries.all(mockUserId).queryKey)
+          ?.some(word => word.root_id === mockRootId),
+      ).toBe(false);
 
       // Second add
       (studyWordsFSRSService.setFSRSStudyRoot as jest.Mock).mockResolvedValueOnce({
@@ -247,7 +233,11 @@ describe('Study List Button State - Bug Reproduction', () => {
         changed: true,
       });
       await result.current.handleRootPress(mockRootId);
-      expectedLocalState.set(mockRootId, true);
+      expect(
+        queryClient
+          .getQueryData<StudyWord[]>(fsrsQueries.all(mockUserId).queryKey)
+          ?.some(word => word.root_id === mockRootId),
+      ).toBe(true);
 
       // Third add (should toggle to false)
       (studyWordsFSRSService.setFSRSStudyRoot as jest.Mock).mockResolvedValueOnce({
@@ -255,16 +245,18 @@ describe('Study List Button State - Bug Reproduction', () => {
         changed: true,
       });
       const finalResult = await result.current.handleRootPress(mockRootId);
-      expectedLocalState.set(mockRootId, false);
 
-      // 🐛 BUG: If stale closure occurs, this will fail
       expect(finalResult).toBeFalsy();
+      expect(
+        queryClient
+          .getQueryData<StudyWord[]>(fsrsQueries.all(mockUserId).queryKey)
+          ?.some(word => word.root_id === mockRootId),
+      ).toBe(false);
     });
   });
 
   describe('Cache and Local State Synchronization', () => {
-    test('should prioritize local state over query cache when both exist', async () => {
-      // SETUP: Word exists in cache but local state says it was removed
+    test('should update the same query cache consumed by the button', async () => {
       const existingWord = createStudyWord(mockRootId);
       queryClient.setQueryData(fsrsQueries.all(mockUserId).queryKey, [existingWord]);
 
@@ -282,8 +274,11 @@ describe('Study List Button State - Bug Reproduction', () => {
 
       expect(removeResult).toBeFalsy();
 
-      // The issue: isInStudyList calculation should prioritize local state
-      // but may use stale cache data instead
+      expect(
+        queryClient
+          .getQueryData<StudyWord[]>(fsrsQueries.all(mockUserId).queryKey)
+          ?.some(word => word.root_id === mockRootId),
+      ).toBe(false);
     });
 
     test('should handle rapid toggles without state desync', async () => {
@@ -304,8 +299,12 @@ describe('Study List Button State - Bug Reproduction', () => {
         });
         const actualResult = await result.current.handleRootPress(mockRootId);
 
-        // 🐛 BUG: May fail on later toggles due to stale closure
         expect(actualResult).toBe(expectedResult);
+        expect(
+          queryClient
+            .getQueryData<StudyWord[]>(fsrsQueries.all(mockUserId).queryKey)
+            ?.some(word => word.root_id === mockRootId),
+        ).toBe(expectedResult);
       }
     });
   });
@@ -346,9 +345,7 @@ describe('Study List Button State - Bug Reproduction', () => {
     test('should rollback optimistic update if mutation fails', async () => {
       // SETUP: Word already in study list
       const existingWord = createStudyWord(mockRootId);
-      queryClient.setQueryData(fsrsQueries.allWithCooldown(mockUserId, 24).queryKey, [
-        existingWord,
-      ]);
+      queryClient.setQueryData(fsrsQueries.all(mockUserId).queryKey, [existingWord]);
 
       const { result } = renderHook(
         () => useStudyWordMutations(jest.fn(async (..._args: unknown[]) => undefined)),
@@ -367,7 +364,7 @@ describe('Study List Button State - Bug Reproduction', () => {
 
       // Cache should still contain the word (rollback occurred)
       const cacheAfterError = queryClient.getQueryData<StudyWord[]>(
-        fsrsQueries.allWithCooldown(mockUserId, 24).queryKey,
+        fsrsQueries.all(mockUserId).queryKey,
       );
       expect(cacheAfterError?.some(w => w.root_id === mockRootId)).toBeTruthy();
     });

@@ -22,6 +22,7 @@ import { Provider } from 'react-redux';
 
 import { createTestQueryClient } from '@/__tests__/helpers/testUtils';
 import { setupTestStore } from '@/__tests__/helpers/testStore';
+import { articleId } from '@/__tests__/helpers/ids';
 import {
   createEnhancedAudioTrackMock,
   createReadingListMock,
@@ -576,7 +577,7 @@ describe('usePlaylistScreen', () => {
       });
 
       expect(mockEnhancedAudioService.generateEnhancedAudioTrack).toHaveBeenCalledWith(
-        99,
+        articleId(99),
         AudioLanguage.ARABIC_ONLY,
       );
       expect(mockSimpleAudioService.play).not.toHaveBeenCalled();
@@ -613,7 +614,10 @@ describe('usePlaylistScreen', () => {
         await result.current.handleDelete(1 as ArticleId);
       });
 
-      expect(mockBookmarkService.removeFromReadingList).toHaveBeenCalledWith(mockUser.id, 1);
+      expect(mockBookmarkService.removeFromReadingList).toHaveBeenCalledWith(
+        mockUser.id,
+        articleId(1),
+      );
     });
 
     test('triggers haptic feedback', async () => {

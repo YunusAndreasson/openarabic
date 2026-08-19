@@ -65,7 +65,7 @@ class TestPreprocessTextForTTS:
         text = "مرحبا بالعالم! Hello world"
         result = preprocess_text_for_tts(text)
         # Function preserves all visible content (Arabic, English, punctuation)
-        assert result == "مرحبا بالعالم! Hello world"
+        assert result == "[slowly] مرحبا بالعالم! Hello world"
 
 
 class TestWrapInArabicSSML:

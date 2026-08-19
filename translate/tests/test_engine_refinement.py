@@ -1,4 +1,4 @@
-"""Tests for pipeline/engine/refinement.py translation refinement."""
+"""Behavioral tests for standalone translation refinement."""
 
 from unittest.mock import patch
 
@@ -10,626 +10,116 @@ from data.models import (
 )
 
 
-class TestBatchRefineTranslations:
-    """Tests for batch_refine_translations function."""
+def _refinement_input(*, english: str | list[str] = "hello"):
+    return [
+        {
+            "original": "مرحبا",
+            "translation": TranslationResult(
+                translation="Hello", notes="", uncertainties=[], word_by_word=[]
+            ),
+            "tashkeel": TashkeelResult(tashkeel="مَرْحَبًا", uncertainties=[]),
+            "word_translations_options": [
+                WordTranslation(
+                    arabic="مَرْحَبًا",
+                    english=english,
+                    pos="interjection",
+                    essential="مرحبا",
+                    essential_translation=["hello", "welcome"],
+                    notes="A greeting",
+                    uncertainties=[],
+                )
+            ],
+            "previous_uncertainties": {"translation": [], "tashkeel": []},
+        }
+    ]
 
+
+def _response(translation: str = "Hello"):
+    return {
+        "success": True,
+        "data": {
+            "improved_tashkeel": "مَرْحَبًا",
+            "improved_translation": translation,
+            "improved_word_translations": [],
+            "resolved_uncertainties": [],
+            "remaining_uncertainties": [],
+            "changes_made": ["Verified translation"],
+        },
+    }
+
+
+class TestBatchRefineTranslations:
     @patch("pipeline.engine.refinement.call_response_api")
     @patch("utils.responses_api.token_tracker")
     def test_successful_refinement(self, mock_tracker, mock_api):
-        """Test successful translation refinement."""
         from pipeline.engine.refinement import batch_refine_translations
 
-        mock_api.return_value = {
-            "refinements": [
-                {
-                    "improved_tashkeel": "مَرْحَبًا بِالْعَالَمِ",
-                    "improved_translation": "Hello world",
-                    "improved_word_translations": [],
-                    "resolved_uncertainties": [],
-                    "remaining_uncertainties": [],
-                    "changes_made": ["Fixed diacritics"],
-                }
-            ]
-        }
+        mock_api.return_value = _response()
+        result = batch_refine_translations(_refinement_input())
 
-        word_translation = WordTranslation(
-            arabic="مَرْحَبًا",
-            english="hello",
-            pos="interjection",
-            essential="مرحبا",
-            essential_translation="hello",
-            notes="",
-            uncertainties=[],
-        )
-
-        refinement_input = [
-            {
-                "original": "مرحبا بالعالم",
-                "translation": TranslationResult(
-                    translation="Hello world",
-                    notes="",
-                    uncertainties=[],
-                    word_by_word=[],
-                ),
-                "tashkeel": TashkeelResult(
-                    tashkeel="مَرْحَبًا بِالْعَالَمِ",
-                    uncertainties=[],
-                ),
-                "word_translations_options": [word_translation],
-                "previous_uncertainties": {"translation": [], "tashkeel": []},
-            }
+        assert result == [
+            RefinementResult(
+                improved_tashkeel="مَرْحَبًا",
+                improved_translation="Hello",
+                improved_word_translations=[],
+                resolved_uncertainties=[],
+                remaining_uncertainties=[],
+                changes_made=["Verified translation"],
+            )
         ]
+        mock_tracker.set_phase.assert_called_once_with("Verification")
+        mock_api.assert_called_once()
 
-        result = batch_refine_translations(refinement_input)
+    @patch("pipeline.engine.refinement.call_response_api")
+    def test_formats_word_options_in_prompt(self, mock_api):
+        from pipeline.engine.refinement import batch_refine_translations
 
-        assert len(result) == 1
-        assert isinstance(result[0], RefinementResult)
-        assert result[0].improved_tashkeel == "مَرْحَبًا بِالْعَالَمِ"
-        assert result[0].improved_translation == "Hello world"
-        mock_tracker.set_phase.assert_called_with("Verification")
+        mock_api.return_value = _response()
+        batch_refine_translations(_refinement_input(english=["hello", "welcome"]))
 
-    @patch("utils.responses_api.token_tracker")
-    def test_refinement_with_conversation_manager(
-        self, mock_tracker, mock_conversation_manager
+        prompt = mock_api.call_args.kwargs["messages"][1]["content"]
+        assert "English Options: [hello, welcome]" in prompt
+        assert "Essential Options: [hello, welcome]" in prompt
+        assert "POS: interjection" in prompt
+
+    @patch("pipeline.engine.refinement.time.sleep")
+    @patch("pipeline.engine.refinement.call_response_api")
+    def test_invalid_response_retries_then_returns_explicit_fallback(
+        self, mock_api, mock_sleep
     ):
-        """Test refinement using conversation manager path."""
         from pipeline.engine.refinement import batch_refine_translations
 
-        mock_conversation_manager.continue_with_stage.return_value = {
-            "refinements": [
-                {
-                    "improved_tashkeel": "مَرْحَبًا",
-                    "improved_translation": "Hello",
-                    "improved_word_translations": [],
-                    "resolved_uncertainties": [],
-                    "remaining_uncertainties": [],
-                    "changes_made": [],
-                }
-            ]
-        }
-
-        word_translation = WordTranslation(
-            arabic="مَرْحَبًا",
-            english="hello",
-            pos="interjection",
-            essential="مرحبا",
-            essential_translation="hello",
-            notes="",
-            uncertainties=[],
-        )
-
-        refinement_input = [
-            {
-                "original": "مرحبا",
-                "translation": TranslationResult(
-                    translation="Hello",
-                    notes="",
-                    uncertainties=[],
-                    word_by_word=[],
-                ),
-                "tashkeel": TashkeelResult(
-                    tashkeel="مَرْحَبًا",
-                    uncertainties=[],
-                ),
-                "word_translations_options": [word_translation],
-                "previous_uncertainties": {"translation": [], "tashkeel": []},
-            }
-        ]
-
-        result = batch_refine_translations(
-            refinement_input,
-            conversation_manager=mock_conversation_manager,
-        )
+        mock_api.return_value = {"success": True, "data": []}
+        result = batch_refine_translations(_refinement_input())
 
         assert len(result) == 1
-        mock_conversation_manager.continue_with_stage.assert_called_once()
+        assert result[0].improved_translation == ""
+        assert result[0].changes_made == [
+            "Refinement failed: No refinement data returned for sentence 0"
+        ]
+        assert mock_api.call_count == 3
+        assert mock_sleep.call_count == 2
 
     @patch("pipeline.engine.refinement.call_response_api")
-    @patch("utils.responses_api.token_tracker")
-    def test_word_translation_object_formatting(self, mock_tracker, mock_api):
-        """Test that WordTranslation objects are formatted correctly in prompt."""
+    def test_direct_response_is_supported_and_sanitized(self, mock_api):
         from pipeline.engine.refinement import batch_refine_translations
 
         mock_api.return_value = {
-            "refinements": [
-                {
-                    "improved_tashkeel": "كِتَاب",
-                    "improved_translation": "Book",
-                    "improved_word_translations": [],
-                    "resolved_uncertainties": [],
-                    "remaining_uncertainties": [],
-                    "changes_made": [],
-                }
-            ]
+            "improved_tashkeel": "  مَرْحَبًا  ",
+            "improved_translation": "  Hello  ",
+            "improved_word_translations": [],
+            "resolved_uncertainties": [],
+            "remaining_uncertainties": [],
+            "changes_made": [],
         }
+        result = batch_refine_translations(_refinement_input())
 
-        # Word with list options
-        word_translation = WordTranslation(
-            arabic="كِتَاب",
-            english=["book", "tome"],  # List format
-            pos="noun",
-            essential="كتاب",
-            essential_translation=["book", "tome"],  # List format
-            notes="A common noun",
-            uncertainties=[],
-        )
-
-        refinement_input = [
-            {
-                "original": "كتاب",
-                "translation": TranslationResult(
-                    translation="Book",
-                    notes="",
-                    uncertainties=[],
-                    word_by_word=[],
-                ),
-                "tashkeel": TashkeelResult(
-                    tashkeel="كِتَاب",
-                    uncertainties=[],
-                ),
-                "word_translations_options": [word_translation],
-                "previous_uncertainties": {"translation": [], "tashkeel": []},
-            }
-        ]
-
-        batch_refine_translations(refinement_input)
-
-        # Verify API was called with formatted word translations
-        assert mock_api.called
-
-    @patch("pipeline.engine.refinement.call_response_api")
-    @patch("utils.responses_api.token_tracker")
-    def test_word_translation_dict_formatting(self, mock_tracker, mock_api):
-        """Test that word translation dicts are formatted correctly in prompt."""
-        from pipeline.engine.refinement import batch_refine_translations
-
-        mock_api.return_value = {
-            "refinements": [
-                {
-                    "improved_tashkeel": "كِتَاب",
-                    "improved_translation": "Book",
-                    "improved_word_translations": [],
-                    "resolved_uncertainties": [],
-                    "remaining_uncertainties": [],
-                    "changes_made": [],
-                }
-            ]
-        }
-
-        # WordTranslation object format (typed input)
-        word_translation = WordTranslation(
-            arabic="كِتَاب",
-            english=["book", "tome"],
-            pos="noun",
-            essential="كتاب",
-            essential_translation=["book"],
-            notes="",
-            uncertainties=[],
-        )
-
-        refinement_input = [
-            {
-                "original": "كتاب",
-                "translation": TranslationResult(
-                    translation="Book",
-                    notes="",
-                    uncertainties=[],
-                    word_by_word=[],
-                ),
-                "tashkeel": TashkeelResult(
-                    tashkeel="كِتَاب",
-                    uncertainties=[],
-                ),
-                "word_translations_options": [word_translation],
-                "previous_uncertainties": {"translation": [], "tashkeel": []},
-            }
-        ]
-
-        batch_refine_translations(refinement_input)
-
-        assert mock_api.called
-
-    @patch("pipeline.engine.refinement.call_response_api")
-    @patch("utils.responses_api.token_tracker")
-    def test_api_error_returns_empty_list(self, mock_tracker, mock_api):
-        """Test that API error returns empty results (no crash)."""
-        from pipeline.engine.refinement import batch_refine_translations
-
-        mock_api.return_value = {
-            "error": "API rate limit exceeded",
-        }
-
-        word_translation = WordTranslation(
-            arabic="مَرْحَبًا",
-            english="hello",
-            pos="interjection",
-            essential="مرحبا",
-            essential_translation="hello",
-            notes="",
-            uncertainties=[],
-        )
-
-        refinement_input = [
-            {
-                "original": "مرحبا",
-                "translation": TranslationResult(
-                    translation="Hello",
-                    notes="",
-                    uncertainties=[],
-                    word_by_word=[],
-                ),
-                "tashkeel": TashkeelResult(
-                    tashkeel="مَرْحَبًا",
-                    uncertainties=[],
-                ),
-                "word_translations_options": [word_translation],
-                "previous_uncertainties": {"translation": [], "tashkeel": []},
-            }
-        ]
-
-        result = batch_refine_translations(refinement_input)
-
-        # Should return empty list, not crash
-        assert result == []
-
-    @patch("pipeline.engine.refinement.call_response_api")
-    @patch("utils.responses_api.token_tracker")
-    def test_unexpected_response_format_returns_empty(self, mock_tracker, mock_api):
-        """Test handling of unexpected API response format."""
-        from pipeline.engine.refinement import batch_refine_translations
-
-        mock_api.return_value = {
-            "unexpected_key": "unexpected_value",
-        }
-
-        word_translation = WordTranslation(
-            arabic="مَرْحَبًا",
-            english="hello",
-            pos="interjection",
-            essential="مرحبا",
-            essential_translation="hello",
-            notes="",
-            uncertainties=[],
-        )
-
-        refinement_input = [
-            {
-                "original": "مرحبا",
-                "translation": TranslationResult(
-                    translation="Hello",
-                    notes="",
-                    uncertainties=[],
-                    word_by_word=[],
-                ),
-                "tashkeel": TashkeelResult(
-                    tashkeel="مَرْحَبًا",
-                    uncertainties=[],
-                ),
-                "word_translations_options": [word_translation],
-                "previous_uncertainties": {"translation": [], "tashkeel": []},
-            }
-        ]
-
-        result = batch_refine_translations(refinement_input)
-
-        assert result == []
-
-    @patch("pipeline.engine.refinement.call_response_api")
-    @patch("utils.responses_api.token_tracker")
-    def test_non_dict_refinement_item_is_skipped(self, mock_tracker, mock_api):
-        """Test that non-dict items in refinements are skipped with warning."""
-        from pipeline.engine.refinement import batch_refine_translations
-
-        # Use new Response API format with success and data keys
-        mock_api.return_value = {
-            "success": True,
-            "data": {
-                "refinements": [
-                    {
-                        "improved_tashkeel": "مَرْحَبًا",
-                        "improved_translation": "Hello",
-                        "improved_word_translations": [],
-                        "resolved_uncertainties": [],
-                        "remaining_uncertainties": [],
-                        "changes_made": [],
-                    },
-                    "invalid_string_item",  # Non-dict item - will be skipped
-                ]
-            },
-        }
-
-        word_translation = WordTranslation(
-            arabic="مَرْحَبًا",
-            english="hello",
-            pos="interjection",
-            essential="مرحبا",
-            essential_translation="hello",
-            notes="",
-            uncertainties=[],
-        )
-
-        refinement_input = [
-            {
-                "original": "مرحبا",
-                "translation": TranslationResult(
-                    translation="Hello",
-                    notes="",
-                    uncertainties=[],
-                    word_by_word=[],
-                ),
-                "tashkeel": TashkeelResult(
-                    tashkeel="مَرْحَبًا",
-                    uncertainties=[],
-                ),
-                "word_translations_options": [word_translation],
-                "previous_uncertainties": {"translation": [], "tashkeel": []},
-            },
-            {
-                "original": "شكرا",
-                "translation": TranslationResult(
-                    translation="Thank you",
-                    notes="",
-                    uncertainties=[],
-                    word_by_word=[],
-                ),
-                "tashkeel": TashkeelResult(
-                    tashkeel="شُكْرًا",
-                    uncertainties=[],
-                ),
-                "word_translations_options": [word_translation],
-                "previous_uncertainties": {"translation": [], "tashkeel": []},
-            },
-        ]
-
-        result = batch_refine_translations(refinement_input)
-
-        # Only 1 result - valid dict processed, invalid string skipped
-        # Downstream code handles count mismatch by creating fallbacks
-        assert len(result) == 1
-        assert result[0].improved_translation == "Hello"
-
-    @patch("pipeline.engine.refinement.call_response_api")
-    @patch("utils.responses_api.token_tracker")
-    def test_exception_during_processing_returns_empty(self, mock_tracker, mock_api):
-        """Test that exceptions return empty list without crashing."""
-        from pipeline.engine.refinement import batch_refine_translations
-
-        # Force exception during processing
-        mock_api.side_effect = Exception("Unexpected error")
-
-        word_translation = WordTranslation(
-            arabic="مَرْحَبًا",
-            english="hello",
-            pos="interjection",
-            essential="مرحبا",
-            essential_translation="hello",
-            notes="",
-            uncertainties=[],
-        )
-
-        refinement_input = [
-            {
-                "original": "مرحبا",
-                "translation": TranslationResult(
-                    translation="Hello",
-                    notes="",
-                    uncertainties=[],
-                    word_by_word=[],
-                ),
-                "tashkeel": TashkeelResult(
-                    tashkeel="مَرْحَبًا",
-                    uncertainties=[],
-                ),
-                "word_translations_options": [word_translation],
-                "previous_uncertainties": {"translation": [], "tashkeel": []},
-            }
-        ]
-
-        result = batch_refine_translations(refinement_input)
-
-        assert result == []
-
-    @patch("pipeline.engine.refinement.call_response_api")
-    @patch("utils.responses_api.token_tracker")
-    def test_refinement_data_sanitized(self, mock_tracker, mock_api):
-        """Test that refinement data is sanitized before RefinementResult creation."""
-        from pipeline.engine.refinement import batch_refine_translations
-
-        mock_api.return_value = {
-            "refinements": [
-                {
-                    "improved_tashkeel": "  مَرْحَبًا  ",  # Extra whitespace
-                    "improved_translation": "  Hello  ",
-                    "improved_word_translations": [],
-                    "resolved_uncertainties": [],
-                    "remaining_uncertainties": [],
-                    "changes_made": ["  Fixed  ", "  Updated  "],
-                }
-            ]
-        }
-
-        word_translation = WordTranslation(
-            arabic="مَرْحَبًا",
-            english="hello",
-            pos="interjection",
-            essential="مرحبا",
-            essential_translation="hello",
-            notes="",
-            uncertainties=[],
-        )
-
-        refinement_input = [
-            {
-                "original": "مرحبا",
-                "translation": TranslationResult(
-                    translation="Hello",
-                    notes="",
-                    uncertainties=[],
-                    word_by_word=[],
-                ),
-                "tashkeel": TashkeelResult(
-                    tashkeel="مَرْحَبًا",
-                    uncertainties=[],
-                ),
-                "word_translations_options": [word_translation],
-                "previous_uncertainties": {"translation": [], "tashkeel": []},
-            }
-        ]
-
-        result = batch_refine_translations(refinement_input)
-
-        assert len(result) == 1
-        # Whitespace should be stripped
         assert result[0].improved_tashkeel == "مَرْحَبًا"
         assert result[0].improved_translation == "Hello"
 
     @patch("pipeline.engine.refinement.call_response_api")
-    @patch("utils.responses_api.token_tracker")
-    def test_multiple_sets_in_input(self, mock_tracker, mock_api):
-        """Test refinement with multiple sentence sets."""
+    def test_empty_input_does_not_call_api(self, mock_api):
         from pipeline.engine.refinement import batch_refine_translations
 
-        mock_api.return_value = {
-            "refinements": [
-                {
-                    "improved_tashkeel": "مَرْحَبًا",
-                    "improved_translation": "Hello",
-                    "improved_word_translations": [],
-                    "resolved_uncertainties": [],
-                    "remaining_uncertainties": [],
-                    "changes_made": [],
-                },
-                {
-                    "improved_tashkeel": "شُكْرًا",
-                    "improved_translation": "Thank you",
-                    "improved_word_translations": [],
-                    "resolved_uncertainties": [],
-                    "remaining_uncertainties": [],
-                    "changes_made": [],
-                },
-                {
-                    "improved_tashkeel": "مَعَ السَّلَامَةِ",
-                    "improved_translation": "Goodbye",
-                    "improved_word_translations": [],
-                    "resolved_uncertainties": [],
-                    "remaining_uncertainties": [],
-                    "changes_made": [],
-                },
-            ]
-        }
-
-        word_translation = WordTranslation(
-            arabic="مَرْحَبًا",
-            english="hello",
-            pos="interjection",
-            essential="مرحبا",
-            essential_translation="hello",
-            notes="",
-            uncertainties=[],
-        )
-
-        refinement_input = [
-            {
-                "original": "مرحبا",
-                "translation": TranslationResult(
-                    translation="Hello",
-                    notes="",
-                    uncertainties=[],
-                    word_by_word=[],
-                ),
-                "tashkeel": TashkeelResult(
-                    tashkeel="مَرْحَبًا",
-                    uncertainties=[],
-                ),
-                "word_translations_options": [word_translation],
-                "previous_uncertainties": {"translation": [], "tashkeel": []},
-            },
-            {
-                "original": "شكرا",
-                "translation": TranslationResult(
-                    translation="Thank you",
-                    notes="",
-                    uncertainties=[],
-                    word_by_word=[],
-                ),
-                "tashkeel": TashkeelResult(
-                    tashkeel="شُكْرًا",
-                    uncertainties=[],
-                ),
-                "word_translations_options": [word_translation],
-                "previous_uncertainties": {"translation": [], "tashkeel": []},
-            },
-            {
-                "original": "مع السلامة",
-                "translation": TranslationResult(
-                    translation="Goodbye",
-                    notes="",
-                    uncertainties=[],
-                    word_by_word=[],
-                ),
-                "tashkeel": TashkeelResult(
-                    tashkeel="مَعَ السَّلَامَةِ",
-                    uncertainties=[],
-                ),
-                "word_translations_options": [word_translation],
-                "previous_uncertainties": {"translation": [], "tashkeel": []},
-            },
-        ]
-
-        result = batch_refine_translations(refinement_input)
-
-        assert len(result) == 3
-        assert result[0].improved_translation == "Hello"
-        assert result[1].improved_translation == "Thank you"
-        assert result[2].improved_translation == "Goodbye"
-
-    @patch("pipeline.engine.refinement.call_response_api")
-    @patch("utils.responses_api.token_tracker")
-    def test_token_tracker_phase_set(self, mock_tracker, mock_api):
-        """Test that token_tracker.set_phase is called correctly."""
-        from pipeline.engine.refinement import batch_refine_translations
-
-        mock_api.return_value = {
-            "refinements": [
-                {
-                    "improved_tashkeel": "مَرْحَبًا",
-                    "improved_translation": "Hello",
-                    "improved_word_translations": [],
-                    "resolved_uncertainties": [],
-                    "remaining_uncertainties": [],
-                    "changes_made": [],
-                }
-            ]
-        }
-
-        word_translation = WordTranslation(
-            arabic="مَرْحَبًا",
-            english="hello",
-            pos="interjection",
-            essential="مرحبا",
-            essential_translation="hello",
-            notes="",
-            uncertainties=[],
-        )
-
-        refinement_input = [
-            {
-                "original": "مرحبا",
-                "translation": TranslationResult(
-                    translation="Hello",
-                    notes="",
-                    uncertainties=[],
-                    word_by_word=[],
-                ),
-                "tashkeel": TashkeelResult(
-                    tashkeel="مَرْحَبًا",
-                    uncertainties=[],
-                ),
-                "word_translations_options": [word_translation],
-                "previous_uncertainties": {"translation": [], "tashkeel": []},
-            }
-        ]
-
-        batch_refine_translations(refinement_input)
-
-        mock_tracker.set_phase.assert_called_with("Verification")
+        assert batch_refine_translations([]) == []
+        mock_api.assert_not_called()

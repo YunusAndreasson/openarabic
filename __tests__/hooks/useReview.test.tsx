@@ -209,9 +209,7 @@ describe('useReview Hook', () => {
       expect(audioCache.getAudio).not.toHaveBeenCalled();
     });
 
-    // SKIP: Complex async timing with playAudio in useEffect makes this hard to test reliably.
-    // The feature works in production - this is a test infrastructure limitation.
-    it.skip('should play Arabic audio when word loads', async () => {
+    it('should play Arabic audio when word loads', async () => {
       const word = createMockWord({
         root: {
           id: 101,

@@ -91,9 +91,7 @@ class TestPipelineModules:
             mock_process_batches.return_value = ([], [])
 
             # Disable conversation continuity to avoid API calls
-            result = translate_file(
-                input_file, output_file, batch_size=2, use_conversation_continuity=False
-            )
+            result = translate_file(input_file, output_file, batch_size=2)
             assert result is True
             mock_load_split.assert_called_once()
 
@@ -167,7 +165,6 @@ class TestEndToEndWorkflow:
                 split_file_path,
                 output_file,
                 batch_size=2,
-                use_conversation_continuity=False,
             )
             assert result is True
             mock_load_split.assert_called_once()

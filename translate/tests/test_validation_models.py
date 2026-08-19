@@ -79,7 +79,6 @@ class TestWordValidationResponse:
             is_correct=True,
             issues=[],
             suggested_english=None,
-            suggested_grammar_note=None,
             reasoning="Translation is accurate and contextually appropriate.",
         )
         assert response.is_correct is True
@@ -93,7 +92,6 @@ class TestWordValidationResponse:
             is_correct=False,
             issues=["Translation too literal", "Missing contextual meaning"],
             suggested_english="he is writing",
-            suggested_grammar_note="Present tense, masculine singular",
             reasoning="The current translation lacks verb form details.",
         )
         assert response.is_correct is False
@@ -109,7 +107,6 @@ class TestWordValidationResponse:
         )
         assert response.issues == []
         assert response.suggested_english is None
-        assert response.suggested_grammar_note is None
 
 
 class TestValidationBatchResponse:
@@ -152,7 +149,6 @@ class TestValidationImprovement:
             original_english="write",
             original_grammar_note="verb",
             suggested_english="to write",
-            suggested_grammar_note="Infinitive verb form",
         )
         assert improvement.sentence_word_id == 100
         assert improvement.status == "pending"  # Default value
@@ -164,7 +160,6 @@ class TestValidationImprovement:
             original_english="book",
             original_grammar_note=None,
             suggested_english="the book",
-            suggested_grammar_note="Definite noun",
             status="approved",
         )
         assert improvement.status == "approved"
@@ -176,10 +171,8 @@ class TestValidationImprovement:
             original_english="and",
             original_grammar_note=None,
             suggested_english="and/then",
-            suggested_grammar_note=None,
         )
         assert improvement.original_grammar_note is None
-        assert improvement.suggested_grammar_note is None
 
 
 class TestRootExampleSentence:

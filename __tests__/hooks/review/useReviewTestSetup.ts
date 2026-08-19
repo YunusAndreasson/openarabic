@@ -136,6 +136,26 @@ export function setupUseReviewMocks(): UseReviewMockRefs {
   simpleAudioService.play = mockAudioPlayer.play;
   simpleAudioService.stop = mockAudioPlayer.stop;
   simpleAudioService.preconfigureAudioSession = mockAudioPlayer.preconfigureAudioSession;
+  // jest.config's resetMocks clears implementations declared in the module
+  // factory before every test. Production's subscribe contract always returns
+  // an unsubscribe callback; leaving this as the reset `undefined` made the
+  // prompt watcher crash only after its timer settled and was the real reason
+  // the automatic-audio tests had been skipped as "timing" failures.
+  simpleAudioService.subscribe.mockReturnValue(jest.fn());
+  simpleAudioService.getStatus.mockReturnValue({});
+
+  // These factory implementations are reset for the same reason. An empty
+  // generateStorageUrl silently short-circuits every playback path before the
+  // audio-service mock is reached, which let audio assertions fail with the
+  // misleading appearance that the effect never ran.
+  const { audioCache } = require('@/services/audioCache');
+  audioCache.getAudio.mockImplementation((url: string) => url);
+  const { generateStorageUrl } = require('@/utils/storageUtils');
+  generateStorageUrl.mockImplementation((bucket: string, path?: string | null) => {
+    if (!path) return '';
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    return `https://example.com/storage/${bucket}/${path}`;
+  });
 
   // Mock FSRS hook
   const mockUpdateWord = jest.fn(async (..._args: unknown[]) => 7.5);

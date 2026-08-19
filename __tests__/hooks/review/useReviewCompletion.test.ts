@@ -73,7 +73,7 @@ jest.mock('@/utils/haptics', () => ({
 jest.mock('react-native', () => ({
   InteractionManager: {
     runAfterInteractions: jest.fn((callback: () => void) => {
-      callback();
+      if (typeof callback === 'function') callback();
       return { cancel: jest.fn() };
     }),
   },
@@ -106,7 +106,7 @@ describe('useReviewCompletion', () => {
       setQueryData: jest.fn(),
     } as never);
     jest.mocked(InteractionManager.runAfterInteractions).mockImplementation(callback => {
-      callback();
+      if (typeof callback === 'function') callback();
       return { cancel: jest.fn() } as never;
     });
   });

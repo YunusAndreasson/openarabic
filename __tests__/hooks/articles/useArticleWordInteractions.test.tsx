@@ -331,7 +331,6 @@ describe('useArticleWordInteractions', () => {
     // the ref immediately), the flag must not stay stuck forever and
     // silently no-op some later, unrelated background tap.
     test('a word press with no paired background press self-clears via the timeout', () => {
-      jest.useFakeTimers();
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
@@ -359,7 +358,6 @@ describe('useArticleWordInteractions', () => {
       });
       expect(result.current.activeTooltip).toBeNull();
 
-      jest.useRealTimers();
     });
 
     // Regression: the article screen wraps the reading area in a

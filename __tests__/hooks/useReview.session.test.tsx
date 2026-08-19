@@ -215,17 +215,18 @@ describe('useReview Hook - Session Management', () => {
       });
     });
 
-    // SKIP: Complex async timing with nested timer callbacks and playAudio makes this hard to test.
-    // The feature works in production - this is a test infrastructure limitation.
-    it.skip('should handle audio playback errors gracefully', async () => {
+    it('should handle explicit sentence-audio playback errors gracefully', async () => {
       mocks.mockAudioPlayer.play.mockRejectedValueOnce(new Error('Audio failed'));
 
       const word = createMockWord();
       useFSRS.mockReturnValue(fsrsState(mocks, word));
 
       const wrapper = createWrapper();
-      renderHook(() => useReview(), { wrapper });
+      const { result } = renderHook(() => useReview(), { wrapper });
 
+      await act(async () => {
+        await expect(result.current.playSentenceAudio('audio/example.mp3')).resolves.toBeUndefined();
+      });
       await waitFor(() => {
         expect(mocks.mockAudioPlayer.play).toHaveBeenCalled();
       });
@@ -367,20 +368,35 @@ describe('useReview Hook - Session Management', () => {
       expect(mocks.mockAudioPlayer.play).not.toHaveBeenCalled();
     });
 
-    // SKIP: Complex async timing with playAudio and preloader state makes this hard to test.
-    // The feature works in production - this is a test infrastructure limitation.
-    it.skip('should play audio after preloading completes', async () => {
+    it('should play audio after preloading completes', async () => {
       useAudioPreloader.mockReturnValue({
-        isPreloading: false,
-        progress: 100,
-        isReady: true,
+        isPreloading: true,
+        progress: 50,
+        isReady: false,
+        resolveCached: jest.fn(() => undefined),
+        forgetCached: jest.fn(),
       });
 
       const word = createMockWord();
       useFSRS.mockReturnValue(fsrsState(mocks, word));
 
       const wrapper = createWrapper();
-      renderHook(() => useReview(), { wrapper });
+      const { result, rerender } = renderHook(() => useReview(), { wrapper });
+
+      expect(mocks.mockAudioPlayer.play).not.toHaveBeenCalled();
+
+      useAudioPreloader.mockReturnValue({
+        isPreloading: false,
+        progress: 100,
+        isReady: true,
+        resolveCached: jest.fn(() => undefined),
+        forgetCached: jest.fn(),
+      });
+      act(() => {
+        rerender(undefined);
+      });
+
+      expect(result.current.isAudioReady).toBe(true);
 
       await waitFor(() => {
         expect(mocks.mockAudioPlayer.play).toHaveBeenCalled();

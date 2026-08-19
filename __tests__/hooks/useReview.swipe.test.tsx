@@ -286,9 +286,7 @@ describe('useReview Hook - Swipe Gestures', () => {
     });
 
     describe('Unknown Word Specific Behavior', () => {
-      // SKIP: Nested timer callbacks with async playAudio make this hard to test reliably.
-      // The feature works in production - this is a test infrastructure limitation.
-      it.skip('should play English audio for unknown words', async () => {
+      it('should play English audio for unknown words', async () => {
         const word = createMockWord({
           root: {
             id: 101,
@@ -316,6 +314,7 @@ describe('useReview Hook - Swipe Gestures', () => {
             expect.objectContaining({
               audioUrl: expect.stringContaining('book.mp3'),
             }),
+            expect.objectContaining({ keepAudioSessionActive: true }),
           );
         });
       });
