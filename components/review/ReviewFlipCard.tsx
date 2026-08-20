@@ -1,7 +1,7 @@
 import { Ionicons } from '@/components/ui';
 import type { ReactNode, Ref } from 'react';
 import { useEffect, useImperativeHandle, useMemo } from 'react';
-import type { ViewStyle } from 'react-native';
+import type { TransformsStyle, ViewStyle } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { AnimatedStyle as ReanimatedAnimatedStyle } from 'react-native-reanimated';
 import Animated, {
@@ -9,6 +9,7 @@ import Animated, {
   interpolate,
   interpolateColor,
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
@@ -80,6 +81,49 @@ const seamMask = (progress: number): number => {
 };
 
 /**
+ * What the face facing the viewer wears once the turn is over: nothing.
+ *
+ * The obvious way to write the two worklets below is to leave the perspective
+ * in place for the whole range and let the angle land on 0° or 360°, which is
+ * geometrically identical — points at z = 0 are unaffected by a rotation about
+ * Y of a whole turn, and a perspective divide does nothing to a plane at z = 0
+ * either. It is not identical to the compositor. On iOS, RN sets
+ *
+ *   layer.allowsEdgeAntialiasing = m12 != 0 || m21 != 0 || m34 != 0
+ *
+ * (RCTViewComponentView.mm), and `perspective` IS m34. So a face that keeps its
+ * perspective at rest keeps a non-identity `layer.transform` and edge
+ * antialiasing forever, and Core Animation has to resample it through a
+ * projective map instead of blitting it 1:1. Any half-point offset anywhere in
+ * the ancestor chain — and there is one, the card is `flex: 1` inside a column
+ * with a percentage lead — then smears the whole face by half a pixel.
+ *
+ * On a 64px hero that is invisible. On the example sentence's ~24px vocalized
+ * Arabic it is not: the hairline marks are one to two pixels tall, so half a
+ * pixel of bilinear filtering is the difference between a kasra and a grey
+ * smudge. It reads as the flip never quite having finished, which is precisely
+ * what it is — the compositor is still treating a resting card as a surface in
+ * mid-turn.
+ *
+ * Android does not have the bug and cannot be used to check it: RN there
+ * decomposes the matrix into View properties, and HWUI takes the plain 2D path
+ * whenever rotationX/rotationY are zero. Both faces screenshot pixel-identical.
+ * facebook/react-native#32886 is the same symptom ("distorted and pixelated",
+ * iOS only, does not reproduce on Android) reported against perspective.
+ *
+ * An empty array really is identity, not a zero matrix: `parseProcessedTransform`
+ * loops over zero operations and returns `Transform{}`, whose default member is
+ * `{1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1}` (graphics/Transform.h).
+ *
+ * Only the face square to the viewer drops its transform. The other one is
+ * holding a half turn to stay hidden behind `backfaceVisibility`, and it isn't
+ * drawn, so its filtering costs nothing. Every other layer in the chain
+ * (cardBox, verdictLayer, entranceLayer) already rests at identity — this face
+ * was the only one that did not.
+ */
+const RESTING_TRANSFORM: TransformsStyle['transform'] = [];
+
+/**
  * A new card rises into place rather than materialising. State-driven (it
  * replays whenever the keyed wrapper remounts on a word change), so per the
  * split documented below it belongs on Reanimated's CSS API, and the builder is
@@ -91,6 +135,8 @@ const seamMask = (progress: number): number => {
  * of keyframes on the inner layer against 180ms of timing on the outer one,
  * started by different events. The card visibly lagged the buttons below it.
  * Duration matches CARD_EXIT so the rise and the fade land on the same frame.
+ *
+ * Applied conditionally on `useReducedMotion` — see `entranceStyle` below.
  */
 const CARD_ENTRANCE: ReanimatedCSSAnimationStyle = {
   animationName: {
@@ -387,6 +433,31 @@ export function ReviewFlipCard({
   // now "does anything need to sample the animation", not "what starts it".
   const flipProgress = useSharedValue(revealed ? 1 : 0);
 
+  /**
+   * The entrance, minus the motion when the learner has asked for less of it.
+   *
+   * Every OTHER animation on this card already handles this for free and
+   * silently: `withTiming` and the layout builders both default to
+   * `ReduceMotion.System`, and Reanimated's response is to assign `toValue` on
+   * the first frame and mark the animation finished (animation/util.js) — so
+   * with the setting on, the flip is instant, the verdict is instant, and the
+   * example sentence's FadeIn is instant.
+   *
+   * The CSS API is the exception. Reanimated 4.5 has no reduced-motion handling
+   * in it at all — not in `lib/module/css`, not in `Common/cpp/reanimated/CSS`,
+   * and `ReducedMotionConfig` only feeds the shared-value path. So the one thing
+   * left moving on a reduce-motion device was this: a card that slides 18px and
+   * scales while everything around it snaps. That is exactly backwards — a
+   * translate-and-scale is the motion a vestibular-sensitive learner turned the
+   * setting on for, and the cross-fade is the one they can tolerate.
+   *
+   * `animationFillMode: 'both'` is what makes dropping the style safe: the layer
+   * simply renders at its natural, untransformed position, which is the `to`
+   * keyframe.
+   */
+  const reduceMotion = useReducedMotion();
+  const entranceStyle = reduceMotion ? null : CARD_ENTRANCE;
+
   // Forward is the reveal. Backward snaps, because `revealed` only goes false on
   // a card change and a new card must arrive on its question face rather than
   // play the reveal in reverse — the same instant return the old
@@ -418,7 +489,16 @@ export function ReviewFlipCard({
     return {
       opacity: mask,
       shadowOpacity: restShadowOpacity * mask,
-      transform: [{ perspective: LAYOUT.PERSPECTIVE.CARD }, { rotateY: `${progress * 180}deg` }],
+      // Identity at rest, not `rotateY: 0deg` under a perspective — see
+      // RESTING_TRANSFORM. Exact equality, not `<= 0`: an overshooting curve
+      // (a spring, if FLIP is ever retuned) passes through the endpoint while
+      // still moving, and a threshold would snap the transform to identity in
+      // the middle of that. `withTiming` and the `set(0)` below both land on
+      // the endpoint exactly, so only a genuinely resting card matches.
+      transform:
+        progress === 0
+          ? RESTING_TRANSFORM
+          : [{ perspective: LAYOUT.PERSPECTIVE.CARD }, { rotateY: `${progress * 180}deg` }],
     };
   });
 
@@ -429,10 +509,10 @@ export function ReviewFlipCard({
     return {
       opacity: mask,
       shadowOpacity: restShadowOpacity * mask,
-      transform: [
-        { perspective: LAYOUT.PERSPECTIVE.CARD },
-        { rotateY: `${180 + progress * 180}deg` },
-      ],
+      transform:
+        progress === 1
+          ? RESTING_TRANSFORM
+          : [{ perspective: LAYOUT.PERSPECTIVE.CARD }, { rotateY: `${180 + progress * 180}deg` }],
     };
   });
 
@@ -638,7 +718,7 @@ export function ReviewFlipCard({
               outside it and keep their identity across cards. */}
           <Animated.View
             key={wordKey}
-            style={[STATIC_STYLES.entranceLayer, CARD_ENTRANCE]}
+            style={[STATIC_STYLES.entranceLayer, entranceStyle]}
             testID={testID}
           >
             <View style={STATIC_STYLES.faceStack}>
