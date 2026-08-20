@@ -111,11 +111,14 @@ describe('DictionaryWordRow', () => {
       ...overrides,
     });
 
-  const renderRow = (word: StudyWord) =>
+  const renderRow = (
+    word: StudyWord,
+    sortField: 'difficulty' | 'strength' | 'recent' = 'difficulty',
+  ) =>
     render(
       <DictionaryWordRow
         word={word}
-        sortField="difficulty"
+        sortField={sortField}
         nowMs={Date.parse('2024-01-02T00:00:00Z')}
         onPress={mockOnPress}
         onRemove={mockOnRemove}
@@ -221,6 +224,49 @@ describe('DictionaryWordRow', () => {
       );
       expect(getByText('قرأ')).toBeTruthy();
       expect(queryByText('كتب')).toBeNull();
+    });
+  });
+
+  /**
+   * The row draws ONE magnitude — whichever the list is sorted by — but speaks
+   * more than it draws, on purpose.
+   *
+   * Difficulty and horizon are properties of the word, true whatever the sort,
+   * so they are always announced. Age is a property of the list's current
+   * ORDER, so it is announced exactly while the meter is drawing it — otherwise
+   * a screen reader hears a number that nothing on screen corresponds to.
+   */
+  describe('Accessibility label', () => {
+    // The action panels carry labels too; only the row's mentions the word.
+    const labelFor = (sortField: 'difficulty' | 'strength' | 'recent') => {
+      const { getByLabelText } = renderRow(createMockWord(), sortField);
+      return String(getByLabelText(/كتب/).props.accessibilityLabel);
+    };
+
+    test.each(['difficulty', 'strength', 'recent'] as const)(
+      'always speaks the word, its meaning, difficulty and horizon under %s',
+      sortField => {
+        const label = labelFor(sortField);
+        expect(label).toContain('كتب');
+        expect(label).toContain('To write');
+        expect(label).toContain('Easy');
+        expect(label).toContain('holds for');
+      },
+    );
+
+    test('adds how long ago it was saved only under the Recent sort', () => {
+      expect(labelFor('recent')).toContain('added');
+      expect(labelFor('difficulty')).not.toContain('added');
+      expect(labelFor('strength')).not.toContain('added');
+    });
+
+    test('says nothing about age when created_at cannot be read', () => {
+      const { getByLabelText } = renderRow(createMockWord({ created_at: 'not-a-date' }), 'recent');
+      const label = String(getByLabelText(/كتب/).props.accessibilityLabel);
+
+      // Not "added  ago" — the clause is dropped whole.
+      expect(label).not.toContain('added');
+      expect(label).toContain('holds for');
     });
   });
 });

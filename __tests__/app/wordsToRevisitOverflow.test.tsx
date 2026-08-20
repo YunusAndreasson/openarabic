@@ -20,7 +20,7 @@ import { State } from 'ts-fsrs';
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import { rootId } from '@/__tests__/helpers/ids';
 import { LEECH_LIST_LIMIT, LEECH_MIN_LAPSES } from '@/constants/fsrs';
-import { ROUTE_PATHS } from '@/constants/routes';
+import { getPracticeWordRoute, ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { isDictionaryScope } from '@/hooks/vocabulary/useDictionaryList';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -59,6 +59,13 @@ const leech = (id: number): StudyWord =>
     fsrs_state: State.Review,
     fsrs_reps: 5,
     fsrs_lapses: LEECH_MIN_LAPSES + (id % 3),
+    root: {
+      id,
+      letters: `كلمة${id}`,
+      meaning: 'corruption',
+      audio_url: '',
+      audio_url_en: '',
+    },
   });
 
 const givenLeeches = (count: number): void => {
@@ -124,5 +131,45 @@ describe('Words to revisit — overflow into the dictionary', () => {
     const view = render(<WordsToRevisitScreen />);
 
     expect(view.queryByText(seeAll(LEECH_LIST_LIMIT))).toBeNull();
+  });
+
+  /**
+   * The rows themselves.
+   *
+   * They used to be a local `LeechRow` — Arabic stacked above the gloss, an
+   * error `Badge`, an inline reset button — so the same objects from the same
+   * cache looked like a different kind of thing here than in the dictionary.
+   * They are now the shared `WordListRow`, and the changes that came with it are
+   * each deliberate enough to pin down.
+   */
+  describe('the rows', () => {
+    test('a row opens that word, instead of leading nowhere', () => {
+      givenLeeches(3);
+      mockNavigate.mockClear();
+
+      const view = render(<WordsToRevisitScreen />);
+      fireEvent.press(view.getByText('كلمة1'));
+
+      expect(mockNavigate).toHaveBeenCalledWith(getPracticeWordRoute(rootId(1)));
+    });
+
+    test('the forgot-count is plain text, not twenty red badges', () => {
+      // Every row here is a leech, so colouring all of them as errors says
+      // nothing the sheet's own title has not already said.
+      givenLeeches(1);
+
+      const view = render(<WordsToRevisitScreen />);
+
+      const lapses = String(LEECH_MIN_LAPSES + 1);
+      expect(view.getByText(STRINGS.FORGOT_N_TIMES.replace('{count}', lapses))).toBeTruthy();
+    });
+
+    test('offers no inline reset — it is destructive, rare, and one tap away', () => {
+      givenLeeches(3);
+
+      const view = render(<WordsToRevisitScreen />);
+
+      expect(view.queryByTestId('mock-icon-refresh')).toBeNull();
+    });
   });
 });

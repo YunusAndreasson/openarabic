@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useMemo, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
@@ -7,10 +7,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ListRow, LoadingState } from '@/components/common';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { ThemedView } from '@/components/primitives/ThemedView';
-import { ArticleSentence } from '@/components/article/ArticleSentence';
 import { WordMemoryPanel } from '@/components/practice';
+// Direct path, not the practice barrel: this component reaches the article
+// renderer and therefore Skia, and the barrel is imported by surfaces (the
+// revisit sheet) that render nothing but text rows.
+import { WordExampleBlock } from '@/components/practice/WordExampleBlock';
+import { SkiaColoredArabic } from '@/components/common/SkiaColoredArabic';
 import { IconButton, PulsatingLoader } from '@/components/ui';
-import { LAYOUT, MIN_TOUCH_TARGET, getArabicHeroFontSize } from '@/constants/layout';
+import {
+  LAYOUT,
+  MIN_TOUCH_TARGET,
+  getArabicHeroFontSize,
+  getCompactArabicFontSize,
+} from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useStudyWordMutations } from '@/hooks/articles/useStudyWordMutations';
 import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
@@ -23,11 +32,15 @@ import {
   useSentencesByWord,
   useWordMemory,
 } from '@/hooks/vocabulary';
+import type { SentenceArticle } from '@/services/sentences';
 import type { SolidColorName } from '@/constants/colors';
 import type { RootId } from '@/types/branded.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 import { getNextReviewLabel } from '@/utils/fsrsUtils';
+import { getArticleRoute } from '@/utils/routeBuilders';
+import { getWordUsage, type WordForm } from '@/utils/wordUsage';
+import { dismissAllThenNavigate } from '@/utils/sheetNavigation';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 import { DIFFICULTY_COLORS, DIFFICULTY_LABELS, getWordDifficultyLevel } from '@/utils/urgencyScore';
 
@@ -71,7 +84,11 @@ export default function PracticeWordScreen(): JSX.Element {
 
   // Debounced like every other Arabic surface, so dragging the size slider does
   // not re-render the headword on every tick.
-  const heroFontSize = getArabicHeroFontSize(useDebouncedArabicFontSize(100));
+  const readingFontSize = useDebouncedArabicFontSize(100);
+  const heroFontSize = getArabicHeroFontSize(readingFontSize);
+  // The "Seen as" forms use the dense-row cap, not the hero size: six of them
+  // wrap across two lines, and at hero size two would fill the screen.
+  const formFontSize = getCompactArabicFontSize(readingFontSize);
   const heroArabicStyle = useMemo(
     () => ({
       fontSize: heroFontSize,
@@ -178,8 +195,27 @@ export default function PracticeWordScreen(): JSX.Element {
   const difficultyLevel = getWordDifficultyLevel(word);
   const nextReviewLabel = getNextReviewLabel(word.fsrs_due);
 
+  // Part of speech and the inflected forms, both read off the examples already
+  // loaded above. `roots` has neither column; the corpus is the only source.
+  const usage = getWordUsage({ rootId: word.root_id, lemma: arabicText, sentences });
+
+  const handleOpenArticle = (article: SentenceArticle) => {
+    // `disableAutoScroll`: the reader normally resumes at the learner's
+    // last-read sentence, which is the wrong place to land when the article was
+    // opened from one word somewhere inside it.
+    //
+    // `dismissAllThenNavigate`, not `push`: this screen sits inside the
+    // dictionary's modal and the reader is itself a root-level modal, so the
+    // stack has to be emptied before the reader can present.
+    dismissAllThenNavigate(getArticleRoute(article.id, article.title, true));
+  };
+
   return (
     <ThemedView style={styles.container}>
+      {/* The header said the literal word "Word" above whichever word you had
+          opened. `setOptions` merges, so the layout's CloseButton and its
+          fallback title both stay. */}
+      <Stack.Screen options={{ title: englishText || STRINGS.WORD_DETAIL_TITLE }} />
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[
@@ -190,9 +226,26 @@ export default function PracticeWordScreen(): JSX.Element {
       >
         {/* Word hero — the word leads, audio sits with it rather than floating
             below. Left-aligned to match the header title directly above it and
-            every other surface in the app. No `weight` on Arabic: see ThemedText. */}
+            every other surface in the app. No `weight` on Arabic: see ThemedText.
+
+            The headword is deliberately NOT grammar-coloured, unlike the same
+            word in the reader's tooltip. This is a dictionary lemma: it carries
+            no prefix and no case, so there is nothing true to paint. (The
+            analyzer would mostly no-op anyway — it gates on the ENGLISH word
+            count, and roots.meaning is usually one word — but on the multi-word
+            glosses it would succeed and colour a form that does not exist.) */}
         <View style={styles.hero}>
           <View style={styles.heroText}>
+            {/* Fixed height, like the review card's meta row: the class comes
+                from the example rows, which land a beat after the word, and a
+                band that grew on arrival would drop the hero mid-read. */}
+            <View style={styles.heroMeta}>
+              {usage.partOfSpeech ? (
+                <ThemedText type="overline" colorName="tint">
+                  {usage.partOfSpeech}
+                </ThemedText>
+              ) : null}
+            </View>
             <ThemedText type="arabic" align="left" numberOfLines={1} style={heroArabicStyle}>
               {arabicText}
             </ThemedText>
@@ -253,9 +306,37 @@ export default function PracticeWordScreen(): JSX.Element {
           )}
         </View>
 
+        {/* The forms the corpus actually shows this word in.
+            Sits between the stats and the examples so the two blocks that
+            arrive with the sentence query are adjacent — nothing above them
+            ever moves when they land.
+
+            Diacritics are deliberately NOT normalised away: فَسَادُ against
+            فَسَادِ differing only in the final harakah is the lesson, not noise
+            to be folded out. */}
+        {usage.forms.length > 0 && (
+          <View style={styles.formsSection}>
+            <ThemedText type="overline" colorName="subtleLabelText" style={styles.sectionTitle}>
+              {STRINGS.WORD_FORMS_TITLE}
+            </ThemedText>
+            {/* row-reverse so the forms read right-to-left, the same order the
+                sentences below them do. Gap only — no dots, no chips. */}
+            <View style={styles.formsRow}>
+              {usage.forms.map(({ form, segments }: WordForm) => (
+                <SkiaColoredArabic
+                  key={form}
+                  text={form}
+                  segments={segments}
+                  fontSize={formFontSize}
+                />
+              ))}
+            </View>
+          </View>
+        )}
+
         {/* Example sentences from articles */}
         <View style={styles.examplesSection}>
-          <ThemedText type="overline" colorName="subtleLabelText" style={styles.examplesTitle}>
+          <ThemedText type="overline" colorName="subtleLabelText" style={styles.sectionTitle}>
             {STRINGS.WORD_EXAMPLES_TITLE}
           </ThemedText>
 
@@ -277,36 +358,13 @@ export default function PracticeWordScreen(): JSX.Element {
           {!sentencesLoading &&
             !sentencesEmpty &&
             sentences.map((sentence, index) => (
-              <View
+              <WordExampleBlock
                 key={sentence.id}
-                style={[
-                  styles.sentenceBlock,
-                  index > 0 && { borderTopWidth: StyleSheet.hairlineWidth },
-                  { borderTopColor: colors.border },
-                ]}
-              >
-                {/* `english` is deliberately blanked so ArticleSentence renders
-                    only the tappable Arabic words. The reader leads with the
-                    translation; a screen about one Arabic word leads with the
-                    Arabic, and the translation follows as support below. */}
-                <ArticleSentence
-                  sentence={{
-                    id: sentence.id,
-                    english: '',
-                    arabic: sentence.arabic,
-                    audio_url: sentence.audio_url,
-                  }}
-                  words={sentence.sentence_words}
-                  colors={colors}
-                  highlightRootId={word.root_id}
-                  containerStyle={styles.sentenceContainer}
-                />
-                {sentence.english ? (
-                  <ThemedText type="caption" colorName="captionText" style={styles.sentenceEnglish}>
-                    {sentence.english}
-                  </ThemedText>
-                ) : null}
-              </View>
+                highlightRootId={word.root_id}
+                sentence={sentence}
+                showDivider={index > 0}
+                onOpenArticle={handleOpenArticle}
+              />
             ))}
         </View>
 
@@ -347,8 +405,9 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
     // Was XLARGE to clear a sheet grabber; the screen now pushes under a real
-    // header, which supplies its own separation.
-    paddingTop: LAYOUT.SPACING.LARGE,
+    // header, which supplies its own separation — and the hero's meta band adds
+    // its own lead above the word, so this drops another step.
+    paddingTop: LAYOUT.SPACING.MEDIUM,
   },
   hero: {
     flexDirection: 'row',
@@ -359,6 +418,19 @@ const styles = StyleSheet.create({
   heroText: {
     flexShrink: 1,
   },
+  // Reserves the band whether or not the class arrives, so a part of speech
+  // landing a beat after the word cannot drop the hero mid-read — the review
+  // card's meta row does the same.
+  //
+  // `minHeight`, not `height`: `overline` is 13pt at a 1.4 line height and
+  // nothing in this app disables font scaling, so a fixed 24dp ceiling clips
+  // the label once the OS text scale passes ~1.3 (Android's "Largest"; iOS goes
+  // far past it). Growing is the correct failure — at every ordinary scale the
+  // text fits inside the reserve and nothing moves.
+  heroMeta: {
+    minHeight: LAYOUT.SPACING.XLARGE,
+    justifyContent: 'center',
+  },
   stats: {
     marginTop: LAYOUT.SPACING.XLARGE,
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -368,26 +440,24 @@ const styles = StyleSheet.create({
   statRow: {
     justifyContent: 'space-between',
   },
+  formsSection: {
+    marginTop: LAYOUT.SPACING.XLARGE,
+  },
+  formsRow: {
+    flexDirection: 'row-reverse',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: LAYOUT.SPACING.MEDIUM,
+  },
   examplesSection: {
     marginTop: LAYOUT.SPACING.XLARGE,
   },
-  examplesTitle: {
+  sectionTitle: {
     marginBottom: LAYOUT.SPACING.SMALL,
   },
   examplesFallback: {
     alignItems: 'center',
     paddingVertical: LAYOUT.SPACING.XLARGE,
-  },
-  sentenceBlock: {
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
-  },
-  sentenceContainer: {
-    marginVertical: 0,
-  },
-  sentenceEnglish: {
-    // ArticleSentence insets its own words by MEDIUM; match it so the
-    // translation lines up under the Arabic rather than under the block edge.
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   actions: {
     marginTop: LAYOUT.SPACING.XLARGE,

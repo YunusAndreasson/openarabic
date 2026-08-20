@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Rating } from 'ts-fsrs';
 
 import { OPTIMIZED_FSRS_CONFIG } from '@/constants/fsrs';
+import { STRINGS } from '@/constants/strings';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { MILLISECONDS_PER_DAY, parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
 import { convertToFSRSCard } from '@/utils/fsrsCard';
@@ -9,7 +10,6 @@ import { FSRS_INSTANCE, calculateRetrievability } from '@/utils/fsrsUtils';
 import {
   MEMORY_STAGE_LABELS,
   formatHorizon,
-  getHorizonFraction,
   getMemoryHorizonDays,
   getMemoryStage,
   type MemoryStage,
@@ -58,12 +58,17 @@ export interface MemoryCurve {
 
 export interface WordMemory {
   stage: MemoryStage;
-  stageLabel: string;
   /** Days this word currently holds, or null when it has never been practised. */
   horizonDays: number | null;
-  horizonLabel: string;
-  /** 0–1, log-scaled — the same value the dictionary row's meter draws. */
-  horizonFraction: number;
+  /**
+   * Stage and horizon in one line — "Familiar · holds for 3 weeks".
+   *
+   * Computed here rather than at each call site so the word screen's panel and
+   * the reader's word sheet say it in exactly the same words. Two `.replace()`
+   * chains written twice is how two surfaces come to describe one word
+   * differently.
+   */
+  summaryLabel: string;
   /** Predicted recall right now as a whole percent, or null without a curve. */
   recallNow: number | null;
   /** What a successful recall would grow the horizon to, e.g. "2 months". */
@@ -96,10 +101,11 @@ export function useWordMemory(word: StudyWord | undefined): WordMemory | null {
 
     const base: WordMemory = {
       stage,
-      stageLabel: MEMORY_STAGE_LABELS[stage],
       horizonDays,
-      horizonLabel: formatHorizon(horizonDays),
-      horizonFraction: getHorizonFraction(horizonDays),
+      summaryLabel: STRINGS.WORD_MEMORY_SUMMARY.replace(
+        '{stage}',
+        MEMORY_STAGE_LABELS[stage],
+      ).replace('{horizon}', formatHorizon(horizonDays)),
       recallNow: null,
       nextHorizonLabel: nextHorizonLabelFor(word, now),
       reps: word.fsrs_reps ?? 0,

@@ -456,6 +456,17 @@ export const getArabicTextStyle = (
 };
 
 /**
+ * The dense-row Arabic size — the cap `getCompactArabicTextStyle` applies, for
+ * renderers that take a point size rather than a `TextStyle` (Skia).
+ *
+ * Extracted so the cap has one definition. A second literal `Math.min(size,
+ * XLARGE)` beside a Skia canvas is exactly how a row and the word beside it come
+ * to disagree by a point.
+ */
+export const getCompactArabicFontSize = (fontSize: number): number =>
+  Math.min(fontSize, LAYOUT.TYPOGRAPHY.SCALE.XLARGE);
+
+/**
  * Arabic sized for a dense index row (the dictionary list).
  *
  * Reading surfaces keep `getArabicTextStyle`: its 2.2x line height and 6px of
@@ -467,7 +478,7 @@ export const getCompactArabicTextStyle = (
   fontSize: number,
   fontFamily: string = FONTS.ARABIC,
 ): TextStyle => {
-  const size = Math.min(fontSize, LAYOUT.TYPOGRAPHY.SCALE.XLARGE);
+  const size = getCompactArabicFontSize(fontSize);
   return {
     ...getArabicTextStyle(size, {}, fontFamily),
     lineHeight: Math.round(size * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.LOOSE),

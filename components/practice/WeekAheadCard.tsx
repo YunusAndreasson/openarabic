@@ -9,6 +9,8 @@ import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { DueWordsForecast } from '@/utils/fsrsUtils';
 
+import { formatWordCount } from '@/utils/wordCountText';
+
 import { WeekAheadBars } from './charts/WeekAheadBars';
 
 interface WeekAheadCardProps {
@@ -71,7 +73,7 @@ export function WeekAheadCard({
           </ThemedText>
           {reviewedToday > 0 && (
             <ThemedText type="caption" colorName="secondaryText" numberOfLines={1}>
-              {`${reviewedToday} ${STRINGS.TODAY_REVIEWED_TODAY}`}
+              {STRINGS.TODAY_REVIEWED_TODAY.replace('{words}', formatWordCount(reviewedToday))}
             </ThemedText>
           )}
         </View>

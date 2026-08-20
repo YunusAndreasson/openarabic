@@ -2,18 +2,19 @@ import type { JSX } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Badge, BottomSheetHeader, BottomSheetStateHandler, ListRow } from '@/components/common';
+import { BottomSheetHeader, BottomSheetStateHandler, ListRow } from '@/components/common';
+import { WordListRow } from '@/components/practice';
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { IconButton, Ionicons } from '@/components/ui';
+import { Ionicons } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
-import { ROUTE_PATHS } from '@/constants/routes';
+import { getPracticeWordRoute, ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
-import { useResetWordProgress } from '@/hooks/vocabulary/useResetWordProgress';
 import { useWordsToRevisit } from '@/hooks/vocabulary/useWordsToRevisit';
-import type { RootId } from '@/types/branded.types';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { getHorizonAccessibilityLabel, getMemoryHorizonDays } from '@/utils/memoryHorizon';
 import { dismissSheetThenNavigate } from '@/utils/sheetNavigation';
+import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 function formatForgotCount(count: number): string {
   return STRINGS.FORGOT_N_TIMES.replace('{count}', String(count));
@@ -22,43 +23,50 @@ function formatForgotCount(count: number): string {
 interface LeechRowProps {
   word: StudyWord;
   divider: boolean;
-  onReset: (rootId: RootId) => void;
 }
 
-function LeechRow({ word, divider, onReset }: LeechRowProps): JSX.Element {
+/**
+ * One struggling word, in the SAME row the dictionary index uses.
+ *
+ * It used to be its own composition — Arabic stacked above the gloss, an error
+ * `Badge`, an inline reset button — which made the same objects out of the same
+ * cache look like a different kind of thing depending on which screen you
+ * reached them from. On the shared one-line row the 0.6 detent also shows
+ * meaningfully more of the twenty.
+ *
+ * **The forgot-count is plain text, not a red badge.** Every row here is a
+ * leech, so colouring all twenty as errors says nothing that the sheet's own
+ * title has not already said — the failure `MEMORY_STAGE_COLORS` refuses for the
+ * same reason.
+ *
+ * **No inline reset.** It is destructive and rare, and it now sits one tap away
+ * on the word screen this row opens (and one swipe away in the dictionary's
+ * `struggling` scope). The sheet promises another pass at these words, not a
+ * way to wipe them.
+ */
+function LeechRow({ word, divider }: LeechRowProps): JSX.Element {
   const letters = word.root?.letters ?? '';
-  const meaning = word.root?.meaning ?? '';
+  const meaning = capitalizeFirstLetter(word.root?.meaning ?? '');
   const lapses = word.fsrs_lapses ?? 0;
 
   return (
-    <ListRow divider={divider} density="compact">
-      <View style={styles.wordColumn}>
-        {/* `arabicCompact`, like the dictionary index: this is a navigation row,
-            so it caps the reading size and drops the line box to LOOSE. Reading
-            Arabic at the 44px ceiling gave the row a 97px line, stranding the
-            gloss at the foot of a row two and a half times its normal height.
-            Left-aligned so the word sits directly above its meaning — the
-            reading style's right alignment put the two at opposite ends of the
-            same column. */}
-        <ThemedText type="arabicCompact" align="left" numberOfLines={1}>
-          {letters}
+    <WordListRow
+      accessibilityLabel={`${letters}, ${meaning}, ${formatForgotCount(lapses)}, ${getHorizonAccessibilityLabel(
+        getMemoryHorizonDays(word),
+      )}`}
+      arabic={letters}
+      divider={divider}
+      gloss={meaning}
+      trailing={
+        <ThemedText type="caption" colorName="textTertiary">
+          {formatForgotCount(lapses)}
         </ThemedText>
-        {meaning ? (
-          <ThemedText type="caption" colorName="textTertiary" numberOfLines={1}>
-            {meaning}
-          </ThemedText>
-        ) : null}
-      </View>
-
-      <Badge colorName="error">{formatForgotCount(lapses)}</Badge>
-
-      <IconButton
-        icon="refresh"
-        tone="destructive"
-        iconSize={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-        onPress={() => onReset(word.root_id)}
-      />
-    </ListRow>
+      }
+      // Twenty rows about words the learner is being told to act on, leading
+      // nowhere, was the defect. `dismissSheetThenNavigate` because nothing can
+      // present from a sheet that is still dismissing.
+      onPress={() => dismissSheetThenNavigate(getPracticeWordRoute(word.root_id))}
+    />
   );
 }
 
@@ -134,7 +142,6 @@ function SeeAllRow({ total, shown }: { total: number; shown: number }): JSX.Elem
  */
 export default function WordsToRevisitScreen(): JSX.Element {
   const { leeches, totalCount, isLoading, isError } = useWordsToRevisit();
-  const { confirmReset } = useResetWordProgress();
   const insets = useSafeAreaInsets();
 
   return (
@@ -173,7 +180,6 @@ export default function WordsToRevisitScreen(): JSX.Element {
               // in which case the rule separates them rather than trailing off
               // before content that isn't there.
               divider={index < leeches.length - 1 || totalCount > leeches.length}
-              onReset={confirmReset}
             />
           ))}
 

@@ -179,3 +179,137 @@ describe('sentencesService.getExamplesForRoots', () => {
     expect(mockExecuteQuery).toHaveBeenCalledTimes(1);
   });
 });
+
+/**
+ * sentencesService.getSentencesByRootId Tests
+ *
+ * The word detail screen's examples. Same two-query shape as above, but the
+ * selection logic is what these guard:
+ *
+ * - the limit is a limit on SENTENCES, not on occurrence rows. `sentence_words`
+ *   holds one row per occurrence, so applying the limit before the dedupe let a
+ *   word that appears twice in one sentence come back with two examples where
+ *   the corpus had five
+ * - the ranking is easiest-first, and it has to survive the second query, which
+ *   cannot order by `difficulty_level` (that column lives on the child table)
+ *   and returns `.in()` rows in an order Postgres does not promise
+ * - an example carries the article it came from, and degrades to `null` rather
+ *   than disappearing when that article is unpublished or hidden by RLS
+ */
+describe('sentencesService.getSentencesByRootId', () => {
+  const TARGET = 7 as unknown as RootId;
+
+  const occurrence = (sentenceId: number) => ({ sentence_id: sentenceId });
+
+  const sentenceRow = (
+    id: number,
+    article: { id: number; title: string } | null = { id: 1, title: 'Bedouin Manners' },
+  ) => ({
+    id,
+    position: 0,
+    arabic: `جملة ${id}`,
+    english: `sentence ${id}`,
+    article_id: article?.id ?? 1,
+    audio_url: '',
+    audio_url_bilingual: '',
+    audio_url_english: '',
+    arabic_repeat: null,
+    english_repeat: null,
+    article,
+    sentence_words: [],
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test('the regression: duplicate occurrences no longer eat the limit', async () => {
+    // Twelve occurrence rows across five distinct sentences, with the
+    // duplicates deliberately packed into the first five rows — the exact shape
+    // that used to return two examples.
+    respondWith(
+      [
+        occurrence(10),
+        occurrence(10),
+        occurrence(10),
+        occurrence(20),
+        occurrence(20),
+        occurrence(30),
+        occurrence(30),
+        occurrence(40),
+        occurrence(40),
+        occurrence(50),
+        occurrence(50),
+        occurrence(50),
+      ],
+      [10, 20, 30, 40, 50].map(id => sentenceRow(id)),
+    );
+
+    const result = await sentencesService.getSentencesByRootId(TARGET, 5);
+
+    expect(result).toHaveLength(5);
+    expect(result.map(sentence => sentence.id)).toEqual([10, 20, 30, 40, 50]);
+  });
+
+  test('the selection order survives the second query returning rows in another order', async () => {
+    respondWith(
+      [occurrence(30), occurrence(10), occurrence(20)],
+      // Postgres does not promise `.in()` preserves the argument order, so the
+      // parent query is mocked returning them sorted by id instead.
+      [sentenceRow(10), sentenceRow(20), sentenceRow(30)],
+    );
+
+    const result = await sentencesService.getSentencesByRootId(TARGET, 5);
+
+    expect(result.map(sentence => sentence.id)).toEqual([30, 10, 20]);
+  });
+
+  test('takes the first `limit` distinct sentences, i.e. the easiest ones', async () => {
+    respondWith(
+      [occurrence(10), occurrence(20), occurrence(30), occurrence(40)],
+      [sentenceRow(10), sentenceRow(20)],
+    );
+
+    const result = await sentencesService.getSentencesByRootId(TARGET, 2);
+
+    expect(result.map(sentence => sentence.id)).toEqual([10, 20]);
+    // Only the two chosen ids reach the second query.
+    expect(mockExecuteQuery).toHaveBeenCalledTimes(2);
+  });
+
+  test('carries the source article through, and keeps null null', async () => {
+    respondWith([occurrence(10), occurrence(20)], [sentenceRow(10), sentenceRow(20, null)]);
+
+    const result = await sentencesService.getSentencesByRootId(TARGET, 5);
+
+    expect(result[0].article).toEqual({ id: 1, title: 'Bedouin Manners' });
+    // An unpublished or RLS-hidden article costs the example its attribution,
+    // never the example itself.
+    expect(result[1].article).toBeNull();
+    expect(result).toHaveLength(2);
+  });
+
+  test('never runs the second query when the word appears nowhere', async () => {
+    mockExecuteQuery.mockResolvedValueOnce([] as never);
+
+    const result = await sentencesService.getSentencesByRootId(TARGET, 5);
+
+    expect(result).toEqual([]);
+    expect(mockExecuteQuery).toHaveBeenCalledTimes(1);
+  });
+
+  test('sorts each sentence’s words into reading order', async () => {
+    const withWords = {
+      ...sentenceRow(10),
+      sentence_words: [
+        { id: 2, position: 2, word_form: 'b', english: 'b', root_id: 7, sentence_id: 10 },
+        { id: 1, position: 1, word_form: 'a', english: 'a', root_id: 8, sentence_id: 10 },
+      ],
+    };
+    respondWith([occurrence(10)], [withWords]);
+
+    const result = await sentencesService.getSentencesByRootId(TARGET, 5);
+
+    expect(result[0].sentence_words.map(word => word.position)).toEqual([1, 2]);
+  });
+});

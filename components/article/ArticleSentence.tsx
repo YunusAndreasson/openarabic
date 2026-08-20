@@ -25,7 +25,6 @@ interface ArticleSentenceProps {
     id: string | number;
     english: string;
     arabic: string;
-    audio_url: string | null;
   };
   words: SentenceWord[];
   onWordPress?: (word: SentenceWord, layout?: LayoutRectangle) => void;

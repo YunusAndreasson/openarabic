@@ -23,7 +23,7 @@ import { selectionFeedback } from '@/utils/haptics';
 
 import { WordDetailsBottomSheet } from '@/components/article/WordDetailsBottomSheet';
 import { STRINGS } from '@/constants/strings';
-import type { SentenceWord } from '@/types/vocabulary.types';
+import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
 import { rootId } from '@/__tests__/helpers/ids';
 
 // Mock haptics at the utility level (not expo-haptics) since selectionFeedback
@@ -71,6 +71,15 @@ jest.mock('@/utils/errorHandling', () => ({
 jest.mock('@/hooks/theme/useThemeDetection', () =>
   require('@/__tests__/helpers/componentMocks').useThemeDetectionMockFactory(),
 );
+
+// The sheet reports the learner's memory of the word, which reads the study-word
+// cache through `useAuth`. Mocked at the hook rather than wrapped in providers:
+// these tests are about the add/remove state machine, and the memory line has
+// its own describe block below that drives this mock directly.
+const mockStudyWord = jest.fn<StudyWord | undefined, [number | undefined]>(() => undefined);
+jest.mock('@/hooks/vocabulary/useStudyWordByRoot', () => ({
+  useStudyWordByRoot: (id: number | undefined) => mockStudyWord(id),
+}));
 
 describe('WordDetailsBottomSheet - Optimistic State Management', () => {
   const mockWord: SentenceWord = {
@@ -672,6 +681,86 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
         expect(mockOnAddToStudy).toHaveBeenCalledWith(mockWord, 'remove');
       });
       expect(mockOnClose).not.toHaveBeenCalled();
+    });
+  });
+
+  /**
+   * What the sheet says about a word the learner is already practising.
+   *
+   * A word practised forty times and one never seen used to render identically
+   * here. One line fixes that; more than one line would turn a sheet whose job
+   * is to keep you reading into a report.
+   *
+   * The gate is `hasBeenPractised`, not "is it saved" — a saved but unpractised
+   * word carries PLACEHOLDER FSRS values (stability 0.4, a `fsrs_last_review`
+   * stamped at save time), so a horizon drawn from them would be a claim about a
+   * review that never happened. This is the single most re-broken rule in the
+   * codebase.
+   */
+  describe('Memory line', () => {
+    const practised = (): StudyWord =>
+      ({
+        root_id: 42,
+        fsrs_state: 2,
+        fsrs_reps: 12,
+        fsrs_lapses: 0,
+        fsrs_stability: 21,
+        fsrs_difficulty: 5,
+        fsrs_due: new Date(Date.now() + 86_400_000).toISOString(),
+        fsrs_last_review: new Date(Date.now() - 86_400_000).toISOString(),
+        created_at: new Date(Date.now() - 86_400_000).toISOString(),
+      }) as StudyWord;
+
+    const renderSheet = () =>
+      render(
+        <WordDetailsBottomSheet
+          isVisible
+          word={mockWord}
+          onClose={jest.fn()}
+          onAddToStudy={jest.fn(async () => true)}
+        />,
+      );
+
+    test('says nothing about a word that is not in practice', () => {
+      mockStudyWord.mockReturnValue(undefined);
+
+      const { queryByText } = renderSheet();
+
+      expect(queryByText(/holds for/)).toBeNull();
+    });
+
+    test('says nothing about a saved word with no review behind it', () => {
+      // The placeholder trap: this word IS saved, so the button below reads
+      // "In practice" — but its stability is a default, not a measurement.
+      mockStudyWord.mockReturnValue({
+        ...practised(),
+        fsrs_state: 0,
+        fsrs_reps: 0,
+        fsrs_stability: 0.4,
+      } as StudyWord);
+
+      const { queryByText } = renderSheet();
+
+      expect(queryByText(/holds for/)).toBeNull();
+    });
+
+    test('reports stage and horizon for a practised word', () => {
+      mockStudyWord.mockReturnValue(practised());
+
+      const { getByText } = renderSheet();
+
+      // The same phrasing the word screen's panel uses, because both now read
+      // `summaryLabel` off one derivation rather than each building their own.
+      expect(getByText(/holds for 3 weeks/)).toBeTruthy();
+    });
+
+    test('looks the word up by its ROOT, not by the inflected form on screen', () => {
+      mockStudyWord.mockClear();
+      mockStudyWord.mockReturnValue(undefined);
+
+      renderSheet();
+
+      expect(mockStudyWord).toHaveBeenCalledWith(mockWord.root_id);
     });
   });
 });

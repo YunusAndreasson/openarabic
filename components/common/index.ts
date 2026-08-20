@@ -38,6 +38,7 @@ export { SectionLabel } from './SectionLabel';
 export { SheetExplainer } from './SheetExplainer';
 export { SheetScreen } from './SheetScreen';
 
-// `SkiaColoredArabic` is deliberately NOT exported here: its only consumers are
-// a sibling in this directory and one in components/review, both of which must
-// import it by direct path to keep the ui|common|providers barrels acyclic.
+// `SkiaColoredArabic` is deliberately NOT exported here: its consumers are a
+// sibling in this directory, one in components/review and the practice word
+// detail, all of which import it by direct path to keep the ui|common|providers
+// barrels acyclic.

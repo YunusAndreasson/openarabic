@@ -8,7 +8,6 @@ export const STRINGS = {
   CLEAR: 'Clear',
   REFRESH: 'Refresh',
   CONTINUE: 'Continue',
-  ALL_WORDS: 'All Words',
   // Settings & preferences
   STUDY_REMINDERS: 'Review reminders',
   SMART_REMINDERS_SUBTITLE: 'Sent when words are due',
@@ -358,7 +357,7 @@ export const STRINGS = {
   SET_TIME: 'Set time',
   // Header buttons are icon-only, so these are their only accessible name
   CLOSE_A11Y: 'Close',
-  DICTIONARY_A11Y: 'All words',
+  DICTIONARY_A11Y: 'Your words',
   EDIT_MODE_START_A11Y: 'Edit list',
   EDIT_MODE_DONE_A11Y: 'Done editing',
   // Article reader floating controls — icon-only, so these are their only accessible name
@@ -670,8 +669,12 @@ export const STRINGS = {
    * WORDS whose last review was today — re-asking the same word inside a session
    * does not add to it. Without the noun this sat beside a "Reviews done" tile
    * and the screen used "review" for two different units.
+   *
+   * `{words}` is filled by `formatWordCount`, so the noun agrees with the
+   * number. Concatenating the count onto a fixed "words reviewed today" printed
+   * "1 words reviewed today" on every learner's first day.
    */
-  TODAY_REVIEWED_TODAY: 'words reviewed today',
+  TODAY_REVIEWED_TODAY: '{words} reviewed today',
   // Memory horizon hero
   /**
    * Conditional mood on purpose: this is an expectation summed over forgetting
@@ -789,7 +792,15 @@ export const STRINGS = {
   RESET_WORD_PROGRESS_CONFIRM: 'This word starts over as new. Your other progress is kept.',
   WORD_PROGRESS_RESET: 'Progress reset',
   FAILED_TO_RESET_WORD_PROGRESS: "Couldn't reset progress. Try again",
-  // Dictionary (All words) list
+  // Dictionary (the learner's saved words) list
+  /**
+   * Title of the saved-word list. Deliberately NOT "All words": that is also
+   * SCOPE_ALL below, so arriving from a horizon band put "All Words" in the
+   * header above twelve filtered words. "Your words" is the one thing that is
+   * true of the screen under every scope, and it is the distinction that
+   * matters — these are the learner's, not the corpus lexicon behind them.
+   */
+  PRACTICE_WORDS_TITLE: 'Your words',
   SEARCH_WORDS: 'Search words',
   SORT_DIFFICULTY: 'Difficulty',
   SORT_STRENGTH: 'Strength',
@@ -799,6 +810,15 @@ export const STRINGS = {
   WORD_COUNT_ONE: '1 word',
   WORD_COUNT_OTHER: '{count} words',
   NO_WORDS_MATCH_SEARCH: 'No words match your search',
+  /**
+   * Spoken, never drawn. Age is the one value the row's meter draws that the
+   * row does not otherwise say: difficulty and horizon are true of the word
+   * whichever sort is active, so they are always announced, while age is a
+   * property of the list's current ORDER and is only worth saying while it is
+   * the thing being measured.
+   */
+  WORD_ADDED_AGO_A11Y: 'added {age} ago',
+  WORD_ADDED_TODAY_A11Y: 'added today',
   // Dictionary scope filter — names what the list is currently showing
   FILTER_WORDS_A11Y: 'Filter words',
   SCOPE_PICKER_TITLE: 'Show',
@@ -886,6 +906,20 @@ export const STRINGS = {
   WORD_DUE_IN_DAYS: 'In {count} days',
   WORD_STATE_NEW: 'New',
   WORD_EXAMPLES_TITLE: 'In articles',
+  /**
+   * Spoken label for an example block that opens its source article. The title
+   * is drawn above the sentence, so sighted readers already have it; this is
+   * what makes the whole block announce itself as one link rather than as a
+   * loose title beside an unrelated line of Arabic.
+   */
+  WORD_EXAMPLE_OPEN_A11Y: 'Read this sentence in {title}',
+  /**
+   * The forms the corpus actually shows this word in — the dictionary only ever
+   * held the lemma. "Seen as" rather than "Forms": it is a report of what the
+   * learner has read, not a conjugation table, and the app has no such table.
+   */
+  WORD_FORMS_TITLE: 'Seen as',
+  /** Fallback title only. The screen sets the word's own meaning once it has it. */
   WORD_DETAIL_TITLE: 'Word',
   /** Shown when the word list has loaded but this word is no longer in it —
    *  e.g. it was removed from another screen. Beats spinning forever. */

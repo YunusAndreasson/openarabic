@@ -460,8 +460,12 @@ export const studyStreakQueries = {
  */
 export const sentenceQueries = {
   /**
-   * Sentences containing a specific word (by root_id)
-   * Used for showing example sentences in dictionary
+   * Sentences containing a specific word (by root_id), easiest usage first and
+   * each carrying the article it came from.
+   *
+   * Used for the word detail screen's examples. Ranked rather than arbitrary
+   * because the infinite staleTime means whatever comes back first is what that
+   * word shows from then on.
    */
   byRootId: (rootId: RootId, limit = 5) =>
     queryOptions({

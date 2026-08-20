@@ -1,32 +1,28 @@
 import { Ionicons } from '@/components/ui';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
-// Gesture-handler's Pressable, NOT react-native's. RN's runs on the JS responder
-// system, which does not negotiate with the swipeable's native pan: a horizontal
-// drag stays inside the row's press rect, so the press was never cancelled and
-// every swipe also fired onPress — the word detail opened on top of the actions
-// the swipe had just revealed. This one is a gesture handler, so the pan
-// activating cancels it the way it should.
+import { StyleSheet } from 'react-native';
+// Gesture-handler's Pressable, NOT react-native's, for the action panels — see
+// the note in WordListRow for the swipe/press negotiation this depends on.
 import { Pressable } from 'react-native-gesture-handler';
 import ReanimatedSwipeable, {
   type SwipeableMethods,
 } from 'react-native-gesture-handler/ReanimatedSwipeable';
 import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 
-import { ThemedText } from '@/components/primitives/ThemedText';
-
 import { SortMeter } from '@/components/practice/SortMeter';
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { WordListRow } from '@/components/practice/WordListRow';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { DictionarySortField } from '@/hooks/vocabulary/useDictionaryList';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { getSortMeterColorName, getSortMeterFraction } from '@/utils/dictionaryMeter';
+import {
+  getRecencyAccessibilityLabel,
+  getSortMeterColorName,
+  getSortMeterFraction,
+} from '@/utils/dictionaryMeter';
 import { getHorizonAccessibilityLabel, getMemoryHorizonDays } from '@/utils/memoryHorizon';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 import { DIFFICULTY_LABELS, getWordDifficultyLevel } from '@/utils/urgencyScore';
-
-const CHEVRON_SIZE = 14;
 
 /**
  * Horizontal travel before the swipe takes over, replacing the library's default
@@ -106,14 +102,10 @@ interface DictionaryWordRowProps {
 }
 
 /**
- * One word in the dictionary index — the meaning, then the Arabic trailing, then
- * a meter, split from its neighbours by the list's hairline separator. Arabic
- * sits on the right so each language keeps its natural text alignment: English
- * ragged-right on the left, Arabic ragged-left on the right, instead of both
- * fighting their default direction.
- *
- * Deliberately flat: an index of hundreds of words should read as a list, not
- * as a stack of elevated cards.
+ * One word in the dictionary index: `WordListRow` plus the two swipe actions and
+ * the FSRS reads that decide what the row's single magnitude draws. The layout
+ * itself — gloss leading, Arabic trailing, flat, ~55dp — lives in `WordListRow`,
+ * which `/words-to-revisit` renders too.
  *
  * **Exactly one magnitude per row, and the sort control names it.** The meter
  * draws whatever the list is sorted by (see `getSortMeterFraction`), so the
@@ -130,7 +122,6 @@ interface DictionaryWordRowProps {
  */
 export const DictionaryWordRow = memo<DictionaryWordRowProps>(
   ({ word, sortField, nowMs, onPress, onRemove, onResetProgress }) => {
-    const colors = useColors();
     const swipeableRef = useRef<SwipeableMethods>(null);
     // Set the moment a drag starts revealing the actions. Belt and braces behind
     // the gesture negotiation: whatever the handlers decide between them, a row
@@ -174,21 +165,6 @@ export const DictionaryWordRow = memo<DictionaryWordRowProps>(
       [handleResetProgress, handleRemove],
     );
 
-    // A flat row has no card press-scale, so feedback comes from the surface:
-    // an Android ripple plus a pressed background on both platforms.
-    const rippleConfig = useMemo(
-      () => ({ color: colors.navigationRipple, borderless: false, foreground: true }),
-      [colors.navigationRipple],
-    );
-
-    const pressableStyle = useCallback(
-      ({ pressed }: { pressed: boolean }) => [
-        styles.row,
-        pressed && { backgroundColor: colors.elevation2 },
-      ],
-      [colors.elevation2],
-    );
-
     const arabicText = word.root?.letters ?? '';
     const englishText = useMemo(
       () => capitalizeFirstLetter(word.root?.meaning ?? ''),
@@ -198,6 +174,24 @@ export const DictionaryWordRow = memo<DictionaryWordRowProps>(
     const difficultyLevel = getWordDifficultyLevel(word);
     const difficultyLabel = DIFFICULTY_LABELS[difficultyLevel];
     const horizonDays = getMemoryHorizonDays(word);
+
+    // Difficulty and horizon are true of the word whichever sort is active, so
+    // they are always spoken even though only one of them is ever drawn:
+    // trimming this to match the visual would take information away from screen
+    // reader users to make them equal with everyone else.
+    //
+    // Age is the exception, and it goes the other way. It says nothing about the
+    // word — only about where the list has put it — so it is announced exactly
+    // while it is the magnitude the meter is drawing.
+    const accessibilityLabel = [
+      arabicText,
+      englishText,
+      difficultyLabel,
+      getHorizonAccessibilityLabel(horizonDays),
+      sortField === 'recent' ? getRecencyAccessibilityLabel(word, nowMs) : null,
+    ]
+      .filter(Boolean)
+      .join(', ');
 
     return (
       <ReanimatedSwipeable
@@ -215,46 +209,18 @@ export const DictionaryWordRow = memo<DictionaryWordRowProps>(
         renderRightActions={renderRightActions}
         containerStyle={styles.container}
       >
-        <Pressable
-          onPress={handlePress}
-          android_ripple={rippleConfig}
-          style={pressableStyle}
-          // Deliberately still both readings, though only one is now drawn: the
-          // meter is length-only, and difficulty and horizon are true of the
-          // word whichever the sort happens to show. Trimming this to match the
-          // visual would take information away from screen reader users to make
-          // them equal with everyone else. (Age, under the Recent sort, is the
-          // one drawn value not spoken — it says nothing about the word itself.)
-          accessibilityLabel={`${arabicText}, ${englishText}, ${difficultyLabel}, ${getHorizonAccessibilityLabel(horizonDays)}`}
-        >
-          <ThemedText
-            type="caption"
-            colorName="secondaryText"
-            align="left"
-            numberOfLines={1}
-            style={styles.englishText}
-          >
-            {englishText}
-          </ThemedText>
-          <ThemedText
-            type="arabicCompact"
-            align="right"
-            numberOfLines={1}
-            style={styles.arabicText}
-          >
-            {arabicText}
-          </ThemedText>
-          {/* Meter and chevron travel together on a tighter gap: they are one
-              trailing accessory, and a full gap between them would cost the
-              meaning another 12dp of width. */}
-          <View style={styles.trailing}>
+        <WordListRow
+          accessibilityLabel={accessibilityLabel}
+          arabic={arabicText}
+          gloss={englishText}
+          trailing={
             <SortMeter
               fraction={getSortMeterFraction(word, sortField, nowMs)}
               colorName={getSortMeterColorName(word, sortField)}
             />
-            <Ionicons name="chevron-forward" size={CHEVRON_SIZE} color={colors.textTertiary} />
-          </View>
-        </Pressable>
+          }
+          onPress={handlePress}
+        />
       </ReanimatedSwipeable>
     );
   },
@@ -292,27 +258,6 @@ const styles = StyleSheet.create({
   container: {
     // Keeps the pressed background and ripple inside the row's bounds
     overflow: 'hidden',
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.SMALL,
-    // Floor for very small Arabic font settings — also stops the 44px swipe
-    // action buttons from dictating the row height
-    minHeight: MIN_TOUCH_TARGET.LARGE,
-  },
-  arabicText: {
-    flexShrink: 1,
-  },
-  englishText: {
-    flex: 1,
-  },
-  trailing: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: LAYOUT.SPACING.SMALL,
-    flexShrink: 0,
   },
   actions: {
     flexDirection: 'row',

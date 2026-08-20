@@ -6,6 +6,7 @@ export * from './useFSRS';
 export * from './useFSRSQueries';
 export * from './useResetWordProgress';
 export * from './useSentencesByWord';
+export * from './useStudyWordByRoot';
 export * from './useWordMemory';
 export * from './useWordsToRevisit';
 

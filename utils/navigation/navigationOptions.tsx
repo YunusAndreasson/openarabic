@@ -61,7 +61,14 @@ export function createNavigationOptions(
         ? { title }
         : {
             title,
-            headerTitle: () => (
+            // `children ?? title`, not `title`: React Navigation passes the
+            // RESOLVED title in as `children`, so reading the closed-over one
+            // made `navigation.setOptions({ title })` from a screen a no-op —
+            // which is why the word detail's header said the literal word
+            // "Word" above whichever word you had opened. Identical output for
+            // every screen that never overrides it, since `children` is then
+            // just `options.title`.
+            headerTitle: ({ children }: { children?: string }) => (
               <View style={{ flex: 1 }}>
                 <Text
                   numberOfLines={1}
@@ -71,7 +78,7 @@ export function createNavigationOptions(
                     fontSize: NATIVE_TITLE_FONT_SIZE,
                   }}
                 >
-                  {title}
+                  {children ?? title}
                 </Text>
               </View>
             ),

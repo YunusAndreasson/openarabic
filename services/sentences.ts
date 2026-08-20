@@ -1,11 +1,12 @@
 import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
 import type { SentenceWordRow } from '@/types/articles.types';
-import type { RootId } from '@/types/branded.types';
+import type { ArticleId, RootId } from '@/types/branded.types';
 import type { Tables } from '@/types/database.types';
 import type { ColoredSegment, SentenceWord } from '@/types/vocabulary.types';
 import { createServiceErrorConfig } from '@/utils/serviceErrorConfig';
 import { executeQuery } from '@/utils/supabaseHelpers';
+import { capitalizeFirstLetter } from '@/utils/stringUtils';
 import { mapToSentenceWord } from '@/utils/typeMappers';
 
 const errorConfig = {
@@ -15,11 +16,25 @@ const errorConfig = {
 };
 
 /**
+ * The article an example sentence came from.
+ *
+ * Selected alongside the sentence rather than looked up in the `articles` query
+ * cache: that cache holds the published library, so a corpus sentence from
+ * anything outside it would silently lose its name.
+ */
+export interface SentenceArticle {
+  id: ArticleId;
+  title: string;
+}
+
+/**
  * Sentence with full word data for display
  * Includes all words in the sentence for proper color-coding
  */
 export interface SentenceWithWords extends Tables<'article_sentences'> {
   sentence_words: SentenceWord[];
+  /** `null` when the article is unpublished or hidden by RLS. */
+  article: SentenceArticle | null;
 }
 
 /**
@@ -27,6 +42,7 @@ export interface SentenceWithWords extends Tables<'article_sentences'> {
  */
 interface SentenceWithWordsRow extends Tables<'article_sentences'> {
   sentence_words: SentenceWordRow[];
+  article: { id: number; title: string } | null;
 }
 
 /**
@@ -38,6 +54,9 @@ function mapToSentenceWithWords(row: SentenceWithWordsRow): SentenceWithWords {
     sentence_words: Array.isArray(row.sentence_words)
       ? row.sentence_words.map(mapToSentenceWord)
       : [],
+    // Branded explicitly rather than carried by the spread — the raw row's `id`
+    // is a plain number and the spread would not narrow it.
+    article: row.article ? { id: row.article.id as ArticleId, title: row.article.title } : null,
   };
 }
 
@@ -99,6 +118,13 @@ const EXAMPLE_ROWS_PER_ROOT = 8;
  *  already in the set, and every entry costs a full ladder run on a miss. */
 const GLOSS_ALTERNATES_PER_ROOT = 12;
 
+/** Occurrence rows pulled per example sentence before deduplication.
+ *  `sentence_words` has one row per occurrence, so a root that appears twice in
+ *  a sentence costs two rows — which is exactly how `limit` rows used to
+ *  collapse into two examples. Same trade as EXAMPLE_ROWS_PER_ROOT: over-fetch
+ *  a cheap id-only projection, then dedupe. */
+const SENTENCE_ROWS_PER_EXAMPLE = 4;
+
 /** PostgREST truncates an unbounded select at 1000 rows silently, so this pages.
  *  A 20-word chunk is ~200 rows; the cap is the runaway guard, not the budget. */
 const GLOSS_PAGE_SIZE = 1000;
@@ -152,7 +178,9 @@ export const sentencesService = {
         chosen.set(row.root_id, {
           sentenceId: row.sentence_id,
           wordForm: row.word_form,
-          wordType: row.word_type.name,
+          // Stored lower case; the answer face renders it through `overline`,
+          // which expects sentence case from every caller.
+          wordType: capitalizeFirstLetter(row.word_type.name),
         });
       }
     }
@@ -279,16 +307,31 @@ export const sentencesService = {
    * @returns Array of sentences with all their words
    */
   async getSentencesByRootId(rootId: RootId, limit = 5): Promise<SentenceWithWords[]> {
-    // First, find sentence IDs that contain this root
-    // We need to do this in two steps because Supabase doesn't support
-    // filtering nested relations and returning the parent with all children
+    // Which sentences to show, and in what order.
+    //
+    // Two things used to go wrong here. The row limit was applied BEFORE the
+    // dedupe, and `sentence_words` holds one row per occurrence — so a root
+    // appearing twice in one sentence burned two of the five rows and the
+    // learner saw two examples where the corpus had plenty. And the parent
+    // query ordered by `position`, which is a sentence's index inside its OWN
+    // article and means nothing across articles.
+    //
+    // Same discipline as `getExamplesForRoots` above: over-fetch occurrences,
+    // rank easiest-first, dedupe, then take `limit`.
     const sentenceIdsResult = await executeQuery(
       () =>
         supabase
           .from('sentence_words')
           .select('sentence_id')
           .eq('root_id', rootId as number)
-          .limit(limit),
+          // The easiest usage wins. An example is there to reinforce the word,
+          // not to introduce three harder ones.
+          .order('difficulty_level', { ascending: true })
+          // Deterministic tiebreak: difficulty is a small integer, so without it
+          // Postgres is free to return a different five sentences every fetch —
+          // and this query's result is cached with an infinite staleTime.
+          .order('sentence_id', { ascending: true })
+          .limit(limit * SENTENCE_ROWS_PER_EXAMPLE),
       {
         ...errorConfig.loadByRootId,
         analyticsProperties: { rootId, limit },
@@ -299,8 +342,16 @@ export const sentencesService = {
       return [];
     }
 
-    // Get unique sentence IDs
-    const sentenceIds = [...new Set(sentenceIdsResult.map(r => r.sentence_id))];
+    // Dedupe in arrival order, so the ranking above survives, and stop at the
+    // caller's limit rather than at some number of occurrence rows.
+    const sentenceIds: number[] = [];
+    const seen = new Set<number>();
+    for (const row of sentenceIdsResult) {
+      if (seen.has(row.sentence_id)) continue;
+      seen.add(row.sentence_id);
+      sentenceIds.push(row.sentence_id);
+      if (sentenceIds.length === limit) break;
+    }
 
     // Now fetch the full sentences with all their words
     const sentencesResult = await executeQuery(
@@ -319,6 +370,7 @@ export const sentencesService = {
             audio_url_english,
             arabic_repeat,
             english_repeat,
+            article:articles(id, title),
             sentence_words(
               id,
               position,
@@ -335,8 +387,9 @@ export const sentencesService = {
             )
           `,
           )
+          // Plain embed, NOT `articles!inner`: an unpublished or RLS-hidden
+          // article must cost the example its attribution, not the example.
           .in('id', sentenceIds)
-          .order('position', { ascending: true })
           .overrideTypes<SentenceWithWordsRow[], { merge: false }>(),
       {
         ...errorConfig.loadByRootId,
@@ -348,12 +401,19 @@ export const sentencesService = {
       return [];
     }
 
-    // Map to typed result and sort sentence_words by position
-    return sentencesResult.map(sentence => {
-      const mapped = mapToSentenceWithWords(sentence);
-      // Sort words by position within each sentence
-      mapped.sentence_words.sort((a, b) => a.position - b.position);
-      return mapped;
-    });
+    // `difficulty_level` lives on `sentence_words`, so the parent query cannot
+    // order by it, and `.in()` returns rows in an order Postgres does not
+    // promise. The ranking has to be carried over from the first query by hand.
+    const rank = new Map(sentenceIds.map((id, index) => [id, index]));
+
+    return sentencesResult
+      .map(sentence => {
+        const mapped = mapToSentenceWithWords(sentence);
+        // Sort words by position within each sentence — here `position` IS
+        // meaningful: it is reading order inside one line.
+        mapped.sentence_words.sort((a, b) => a.position - b.position);
+        return mapped;
+      })
+      .sort((a, b) => (rank.get(a.id) ?? 0) - (rank.get(b.id) ?? 0));
   },
 };

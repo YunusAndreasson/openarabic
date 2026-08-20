@@ -54,10 +54,41 @@ function clearFallback(): void {
  * stack it came from intact.
  */
 export function dismissSheetThenNavigate(href: Href): void {
+  queueThenDismiss(href, () => router.back());
+}
+
+/**
+ * Leave a modal STACK for a screen outside it.
+ *
+ * Same UIKit constraint as `dismissSheetThenNavigate`, different dismissal. The
+ * word screen sits two deep inside the practice modal (index → dictionary →
+ * word) and the article reader is itself a root-level modal, so a single
+ * `back()` would leave the dictionary still presented and the reader would be
+ * asked to appear from behind it — the failure `app/(tabs)/practice/_layout.tsx`
+ * documents. `dismissAll` empties the nested stack in one step.
+ *
+ * The root navigator's `transitionEnd` listener does not fire for a dismissal
+ * inside the practice stack, so this always lands on the backstop timer. That is
+ * already the real-world path on Android for the sheet variant.
+ *
+ * The pending href and its timer are shared with that variant, so only one
+ * navigation can ever be queued.
+ */
+export function dismissAllThenNavigate(href: Href): void {
+  queueThenDismiss(href, () => {
+    if (router.canDismiss()) {
+      router.dismissAll();
+      return;
+    }
+    router.back();
+  });
+}
+
+function queueThenDismiss(href: Href, dismiss: () => void): void {
   pendingHref = href;
   clearFallback();
   fallbackTimer = setTimeout(flushPendingSheetNavigation, DISMISS_DELAY);
-  router.back();
+  dismiss();
 }
 
 /**

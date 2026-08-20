@@ -99,11 +99,16 @@ describe('SkiaArabicWord (no font manager)', () => {
   describe('Basic Rendering', () => {
     test('renders pressable container for Arabic text', () => {
       const word = createMockWord({ word_form: 'كتاب' });
-      const { getByTestId } = render(<SkiaArabicWord word={word} testID="arabic-word-1" />);
+      const { getByTestId } = render(
+        // A word is a control only where something happens when you press it, so
+        // this needs a handler to be testing pressability at all. Without one it
+        // was asserting the very bug that made words on the word detail screen
+        // look tappable and swallow the tap.
+        <SkiaArabicWord word={word} onTooltipOpen={jest.fn()} testID="arabic-word-1" />,
+      );
 
       const element = getByTestId('arabic-word-1');
       expect(element).toBeDefined();
-      // Verify component is interactive
       expect(element.props.onPress).toBeDefined();
     });
 
@@ -124,10 +129,9 @@ describe('SkiaArabicWord (no font manager)', () => {
 
       const { getByTestId } = render(<SkiaArabicWord word={word} testID="word" />);
 
-      // Should render successfully with interactive behavior
-      const element = getByTestId('word');
-      expect(element).toBeDefined();
-      expect(element.props.onPress).toBeDefined();
+      // Should render successfully. Not `onPress`: with no handlers passed the
+      // word is deliberately not a control.
+      expect(getByTestId('word')).toBeDefined();
     });
   });
 
@@ -257,10 +261,7 @@ describe('SkiaArabicWord (no font manager)', () => {
       const word = createMockWord({ word_form: longText });
 
       const { getByTestId } = render(<SkiaArabicWord word={word} testID="word" />);
-      const element = getByTestId('word');
-      expect(element).toBeDefined();
-      // Verify component is pressable (functional)
-      expect(element.props.onPress).toBeDefined();
+      expect(getByTestId('word')).toBeDefined();
     });
 
     test('handles word with only diacritics by rendering container', () => {
@@ -287,9 +288,7 @@ describe('SkiaArabicWord (no font manager)', () => {
       });
 
       const { getByTestId } = render(<SkiaArabicWord word={word} testID="word" />);
-      const element = getByTestId('word');
-      expect(element).toBeDefined();
-      expect(element.props.onPress).toBeDefined();
+      expect(getByTestId('word')).toBeDefined();
     });
   });
 

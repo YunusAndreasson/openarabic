@@ -13,6 +13,7 @@ import type {
   SortDirection,
 } from '@/hooks/vocabulary/useDictionaryList';
 import { selectionFeedback } from '@/utils/haptics';
+import { formatWordCount } from '@/utils/wordCountText';
 
 const SORT_LABELS: { field: DictionarySortField; label: string }[] = [
   { field: 'difficulty', label: STRINGS.SORT_DIFFICULTY },
@@ -42,12 +43,6 @@ export const SCOPE_LABELS: Record<DictionaryScope, string> = {
 };
 
 const CHEVRON_SIZE = 12;
-
-export function formatWordCount(count: number): string {
-  return count === 1
-    ? STRINGS.WORD_COUNT_ONE
-    : STRINGS.WORD_COUNT_OTHER.replace('{count}', String(count));
-}
 
 interface DictionarySortBarProps {
   sortField: DictionarySortField;
@@ -120,6 +115,14 @@ const DictionarySortBarComponent: FC<DictionarySortBarProps> = ({
   const isScoped = scope !== 'all';
   // Scoped, the count leads with the scope's name ("Due now · 24"); unscoped it
   // is the plain total. Either way the line describes exactly what is below it.
+  //
+  // This DOES restate the growth card's headline when the list is unfiltered,
+  // and an attempt to suppress it was reverted: the card's number is the last
+  // point of a 30-day series built from parsed `created_at`s, so a word the
+  // list counts can be missing from it (unparseable timestamp, or saved after
+  // the series' last date). They coincide on a healthy account and are not the
+  // same quantity. This one counts the rows below it, which is the one the
+  // control acts on.
   const countLabel = isScoped
     ? STRINGS.SCOPE_COUNT_TEMPLATE.replace('{scope}', SCOPE_LABELS[scope]).replace(
         '{count}',

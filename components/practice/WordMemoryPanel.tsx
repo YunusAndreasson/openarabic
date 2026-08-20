@@ -24,7 +24,7 @@ interface WordMemoryPanelProps {
  * days keeps moving for as long as the learner keeps earning it.
  */
 export const WordMemoryPanel = memo<WordMemoryPanelProps>(({ memory, dueLabel }) => {
-  const { curve, recallNow, stageLabel, horizonLabel } = memory;
+  const { curve, recallNow, summaryLabel } = memory;
 
   return (
     <View style={styles.section}>
@@ -43,10 +43,7 @@ export const WordMemoryPanel = memo<WordMemoryPanelProps>(({ memory, dueLabel })
           />
           <View style={styles.captionRow}>
             <ThemedText type="caption" colorName="captionText" style={styles.captionLead}>
-              {STRINGS.WORD_MEMORY_SUMMARY.replace('{stage}', stageLabel).replace(
-                '{horizon}',
-                horizonLabel,
-              )}
+              {summaryLabel}
             </ThemedText>
             {/* Sits on the right, under the end of the curve, because it is a
                 reading of this moment rather than a property of the word. */}

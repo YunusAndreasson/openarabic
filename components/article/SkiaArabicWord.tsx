@@ -260,27 +260,49 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
     [canvasDimensions.marginLeft, canvasDimensions.marginRight],
   );
 
+  const canvas = (
+    <Canvas style={canvasStyle} pointerEvents="none">
+      {paragraph && (
+        <SkiaParagraph
+          paragraph={paragraph}
+          x={0}
+          y={canvasDimensions.paintY}
+          width={canvasDimensions.layoutWidth}
+        />
+      )}
+    </Canvas>
+  );
+
+  // A word is a control only where something happens when you press it.
+  //
+  // The Pressable used to be unconditional while `handlePress` early-returned on
+  // a missing `onTooltipOpen`, so a word rendered without handlers — the word
+  // detail screen's examples — looked exactly like a tappable one in the reader,
+  // swallowed the tap, and gave nothing back. It also swallowed taps meant for
+  // whatever wrapped it.
+  //
+  // The marker underline still draws either way: that is information about the
+  // word, not a claim that you can press it.
+  const isInteractive = !!onTooltipOpen || !!onWordLongPress;
+
   return (
     <View style={wrapperStyle}>
-      <AnimatedPressable
-        ref={pressableRef}
-        style={[CONTAINER_STYLE, activeStyle]}
-        testID={testID}
-        onPress={handlePress}
-        onLongPress={onWordLongPress ? handleLongPress : undefined}
-        delayLongPress={LONG_PRESS_DELAY_MS}
-      >
-        <Canvas style={canvasStyle} pointerEvents="none">
-          {paragraph && (
-            <SkiaParagraph
-              paragraph={paragraph}
-              x={0}
-              y={canvasDimensions.paintY}
-              width={canvasDimensions.layoutWidth}
-            />
-          )}
-        </Canvas>
-      </AnimatedPressable>
+      {isInteractive ? (
+        <AnimatedPressable
+          ref={pressableRef}
+          style={[CONTAINER_STYLE, activeStyle]}
+          testID={testID}
+          onPress={handlePress}
+          onLongPress={onWordLongPress ? handleLongPress : undefined}
+          delayLongPress={LONG_PRESS_DELAY_MS}
+        >
+          {canvas}
+        </AnimatedPressable>
+      ) : (
+        <Animated.View style={[CONTAINER_STYLE, activeStyle]} testID={testID}>
+          {canvas}
+        </Animated.View>
+      )}
       {/* Drawn last so the rule stays visible over the canvas edge; never
           interactive, or it would eat taps along the bottom of the word.
           Withheld until there is a word to mark: the paragraph lands a frame

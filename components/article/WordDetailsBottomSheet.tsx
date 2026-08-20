@@ -13,6 +13,8 @@ import { STRINGS } from '@/constants/strings';
 import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
 import { useColors } from '@/hooks/theme/useColors';
 import { useDebouncedArabicFontSize } from '@/hooks/theme/useDebouncedArabicFontSize';
+import { useStudyWordByRoot } from '@/hooks/vocabulary/useStudyWordByRoot';
+import { useWordMemory } from '@/hooks/vocabulary/useWordMemory';
 
 import { preload } from 'expo-audio';
 
@@ -43,6 +45,15 @@ export function WordDetailsBottomSheet({
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { showToast } = useToast();
+
+  // What the learner's memory of this word looks like, if they have one.
+  //
+  // The sheet shows the INFLECTED form with its contextual gloss, but practice
+  // is keyed on the ROOT — so this line describes the dictionary entry behind
+  // the form, which is the same thing the add/remove button below acts on.
+  // Correct, and non-obvious enough to say out loud.
+  const studyWord = useStudyWordByRoot(word?.root_id ?? undefined);
+  const memory = useWordMemory(studyWord);
   // Use consolidated word audio playback hook
   const playWordAudio = useWordAudioPlayback({ showErrorToast: true });
   // Scales with the learner's reading size, like the review card's hero. It was
@@ -184,6 +195,23 @@ export function WordDetailsBottomSheet({
                     isArabic={false}
                   />
                 )}
+                {/* One line, and only for a word with a review behind it.
+                    A word practised forty times and one never seen used to
+                    render identically here.
+
+                    Gated on `horizonDays`, i.e. `hasBeenPractised`: a saved but
+                    unpractised word carries PLACEHOLDER FSRS values, so a
+                    horizon drawn from them would be a claim about a review that
+                    never happened. The button already says it is in practice.
+
+                    Nothing more than this. No difficulty, no due date, no reps —
+                    the sheet's job is to keep the learner reading, and the word
+                    screen is where the full account lives. */}
+                {memory?.horizonDays != null && (
+                  <ThemedText type="caption" colorName="textTertiary" align="center">
+                    {memory.summaryLabel}
+                  </ThemedText>
+                )}
               </View>
 
               {/* Grammar Note */}
@@ -195,6 +223,13 @@ export function WordDetailsBottomSheet({
                 </View>
               )}
 
+              {/* No route to the word detail screen, deliberately. The reader
+                  is itself a root-level modal above the tabs, and
+                  `/(tabs)/practice/word` is a child of a stack whose sibling is
+                  the dictionary modal — reaching it from here means either
+                  tearing down the reading session or presenting modal over
+                  modal, which this codebase has already been bitten by. The two
+                  facts worth having fit on the line above. */}
               {/* Action Buttons */}
               <View style={styles.buttonSection}>
                 <View style={styles.buttonContainer}>

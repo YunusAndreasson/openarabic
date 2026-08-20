@@ -33,9 +33,11 @@ import { FSRS_DIFFICULTY_MAX, FSRS_DIFFICULTY_MIN, OPTIMIZED_FSRS_CONFIG } from 
 import type { DictionarySortField } from '@/hooks/vocabulary/useDictionaryList';
 import type { SolidColorName } from '@/constants/colors';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { STRINGS } from '@/constants/strings';
 import { MILLISECONDS_PER_DAY, parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
 import {
   MEMORY_STAGE_COLORS,
+  formatHorizon,
   getHorizonFraction,
   getMemoryHorizonDays,
   getMemoryStage,
@@ -74,12 +76,45 @@ function getDifficultyFraction(word: StudyWord): number {
  * get most of the travel.
  */
 function getRecencyFraction(word: StudyWord, nowMs: number): number {
-  const created = parseSupabaseTimestamp(word.created_at);
-  if (created === null) return 0;
-  const ageDays = (nowMs - created.getTime()) / MILLISECONDS_PER_DAY;
-  if (!Number.isFinite(ageDays)) return 0;
+  const ageDays = getAgeDays(word, nowMs);
+  if (ageDays === null) return 0;
   if (ageDays <= 0) return 1;
   return clamp01(1 - Math.log1p(ageDays) / Math.log1p(OPTIMIZED_FSRS_CONFIG.maximum_interval));
+}
+
+/**
+ * Days since the word was saved, or `null` when `created_at` is unusable.
+ *
+ * One definition because the bar's LENGTH and the bar's SPOKEN value are the
+ * same magnitude: derived twice, a change to either one's null policy or
+ * rounding drifts them apart precisely where nothing is looking.
+ */
+function getAgeDays(word: StudyWord, nowMs: number): number | null {
+  const created = parseSupabaseTimestamp(word.created_at);
+  if (created === null) return null;
+  const ageDays = (nowMs - created.getTime()) / MILLISECONDS_PER_DAY;
+  return Number.isFinite(ageDays) ? ageDays : null;
+}
+
+/**
+ * Spoken form of the age the `recent` meter draws — `null` when there is no
+ * usable `created_at`, so the caller drops the clause rather than announcing
+ * "added  ago".
+ *
+ * Formatted with `formatHorizon` deliberately: its phrasing is unit-generic
+ * ("3 weeks", "over a year"), so an age and a memory horizon are spoken in the
+ * same words and a listener is never asked to learn two vocabularies for the
+ * same magnitudes.
+ */
+export function getRecencyAccessibilityLabel(word: StudyWord, nowMs: number): string | null {
+  const ageDays = getAgeDays(word, nowMs);
+  if (ageDays === null) return null;
+
+  // `formatHorizon` floors at "1 day", which would call a word saved an hour
+  // ago a day old. Under this sort those are exactly the rows at the top.
+  if (ageDays < 1) return STRINGS.WORD_ADDED_TODAY_A11Y;
+
+  return STRINGS.WORD_ADDED_AGO_A11Y.replace('{age}', formatHorizon(ageDays));
 }
 
 /**

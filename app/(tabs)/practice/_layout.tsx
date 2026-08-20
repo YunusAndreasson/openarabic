@@ -24,7 +24,7 @@ export default function StudyLayout(): JSX.Element {
       <Stack.Screen
         name="dictionary"
         options={createNavigationOptions(colors, {
-          title: STRINGS.ALL_WORDS,
+          title: STRINGS.PRACTICE_WORDS_TITLE,
           headerRight: () => <CloseButton />,
         })}
       />

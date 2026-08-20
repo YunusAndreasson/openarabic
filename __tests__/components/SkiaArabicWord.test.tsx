@@ -207,14 +207,28 @@ describe('SkiaArabicWord Component', () => {
   });
 
   describe('Tooltip Interaction', () => {
-    test('does not crash when onTooltipOpen is not provided', () => {
+    test('is not a control at all without a handler, rather than an inert one', () => {
+      // This used to assert only that pressing did not throw, which passed while
+      // the bug was live: the Pressable was rendered unconditionally and
+      // `handlePress` early-returned, so a word on the word detail screen looked
+      // exactly like a tappable one in the reader, swallowed the tap, and gave
+      // nothing back — including taps meant for whatever wrapped it.
       const word = createMockWord();
       const { getByTestId } = render(<SkiaArabicWord word={word} testID="word" />);
 
       const wordElement = getByTestId('word');
 
-      // Should not crash
+      expect(wordElement.props.onPress).toBeUndefined();
       expect(() => fireEvent.press(wordElement)).not.toThrow();
+    });
+
+    test('becomes a control as soon as either handler is supplied', () => {
+      const word = createMockWord();
+      const { getByTestId } = render(
+        <SkiaArabicWord word={word} onTooltipOpen={jest.fn()} testID="word" />,
+      );
+
+      expect(getByTestId('word').props.onPress).toBeDefined();
     });
 
     test('opens the tooltip on the measured frame', () => {

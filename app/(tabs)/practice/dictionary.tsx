@@ -14,7 +14,6 @@ import {
   DictionarySortBar,
   DictionaryWordRow,
   SCOPE_LABELS,
-  formatWordCount,
 } from '@/components/practice';
 import { VocabularyProgressChart } from '@/components/practice/charts/VocabularyProgressChart';
 import { SettingsPicker, TextLink } from '@/components/ui';
@@ -32,6 +31,7 @@ import { isDictionaryScope, isNarrowScope } from '@/hooks/vocabulary/useDictiona
 import type { DictionaryScope, PickerScope } from '@/hooks/vocabulary/useDictionaryList';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
+import { formatWordCount } from '@/utils/wordCountText';
 
 /** What an empty scope says. `all` is unreachable here — it has its own CTA state. */
 const SCOPE_EMPTY_MESSAGES: Record<Exclude<DictionaryScope, 'all'>, string> = {

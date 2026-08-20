@@ -127,7 +127,10 @@ export const VocabularyProgressChart = memo<VocabularyProgressChartProps>(
                 )}
               </Canvas>
             )}
-            {monthChange > 0 && (
+            {/* `< totalWords`: on a new account every word was added this month,
+                so the delta is the total restated one line below itself. A
+                change is only news when something came before it. */}
+            {monthChange > 0 && monthChange < totalWords && (
               <ThemedText type="caption" colorName="textTertiary" style={styles.delta}>
                 {`+${monthChange} ${STRINGS.SUMMARY_THIS_MONTH.toLowerCase()}`}
               </ThemedText>

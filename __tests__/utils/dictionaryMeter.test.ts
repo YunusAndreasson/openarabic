@@ -1,6 +1,10 @@
 import { FSRS_DIFFICULTY_MAX, FSRS_DIFFICULTY_MIN } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { getSortMeterColorName, getSortMeterFraction } from '@/utils/dictionaryMeter';
+import {
+  getRecencyAccessibilityLabel,
+  getSortMeterColorName,
+  getSortMeterFraction,
+} from '@/utils/dictionaryMeter';
 import { LEGACY_NULL_TIMESTAMP } from '@/__tests__/helpers/fsrsTestHelpers';
 
 const NOW = Date.parse('2026-08-11T12:00:00Z');
@@ -160,5 +164,50 @@ describe('getSortMeterFraction', () => {
       expect(value).toBeGreaterThanOrEqual(0);
       expect(value).toBeLessThanOrEqual(1);
     }
+  });
+});
+
+/**
+ * The one drawn value the row does not otherwise speak.
+ *
+ * Difficulty and horizon are true of the word whatever the sort, so they are
+ * always announced; age is a property of the list's current ORDER, so the row
+ * only adds it while the meter is drawing it.
+ */
+describe('getRecencyAccessibilityLabel', () => {
+  it('says "today" for a word saved within the last day', () => {
+    // `formatHorizon` floors at "1 day", which would age a word saved an hour
+    // ago by a whole day — and under this sort those are the rows at the top.
+    expect(
+      getRecencyAccessibilityLabel(makeWord({ created_at: new Date(NOW).toISOString() }), NOW),
+    ).toBe('added today');
+    expect(
+      getRecencyAccessibilityLabel(
+        makeWord({ created_at: new Date(NOW - DAY / 2).toISOString() }),
+        NOW,
+      ),
+    ).toBe('added today');
+  });
+
+  it('speaks days, weeks and years in the same words the horizon does', () => {
+    const at = (days: number) =>
+      getRecencyAccessibilityLabel(
+        makeWord({ created_at: new Date(NOW - days * DAY).toISOString() }),
+        NOW,
+      );
+
+    expect(at(1)).toBe('added 1 day ago');
+    expect(at(8)).toBe('added 1 week ago');
+    expect(at(400)).toBe('added over a year ago');
+  });
+
+  it('returns null rather than "added  ago" when created_at cannot be read', () => {
+    // `toBeNull`, not `not.toBe('added  ago')`: that only ruled out one
+    // malformed string, so a regression treating the epoch as a real date
+    // ("added over a year ago") would have passed.
+    expect(getRecencyAccessibilityLabel(makeWord({ created_at: 'not-a-date' }), NOW)).toBeNull();
+    expect(
+      getRecencyAccessibilityLabel(makeWord({ created_at: LEGACY_NULL_TIMESTAMP }), NOW),
+    ).toBeNull();
   });
 });
