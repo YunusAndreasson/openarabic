@@ -1,9 +1,9 @@
 import { StyleSheet, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, { useReducedMotion } from 'react-native-reanimated';
 
 import { TIMING_CONSTANTS } from '@/constants/animation';
 import { getElevation } from '@/constants/elevation';
-import { MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { ReanimatedCSSAnimationStyle } from '@/types/ui/base.types';
@@ -60,6 +60,36 @@ const pulsateStyle = {
 } as ReanimatedCSSAnimationStyle;
 
 /**
+ * The same wait, breathed rather than zoomed, for a learner who has asked for
+ * less motion.
+ *
+ * Not simply the animation removed: this circle IS the signal that the app is
+ * working, and a ring frozen at 0.8 scale reads as a component that failed to
+ * start rather than as a wait. Reduce Motion asks for less *movement*, and iOS
+ * makes the intended substitution explicit — its companion setting is "Prefer
+ * Cross-Fade Transitions". So the pulse keeps its rhythm and its meaning on the
+ * one channel the setting is not about.
+ *
+ * Reanimated will not do this for us. `withTiming` and the layout builders both
+ * default to `ReduceMotion.System`, but the CSS API has no reduced-motion
+ * handling at all in 4.5 — see the note on ReviewFlipCard's CARD_ENTRANCE.
+ *
+ * Held at MAX_PULSE_SCALE so the ring is the size the container already
+ * reserves, rather than jumping a size smaller than the layout expects.
+ */
+const pulsateReducedStyle = {
+  animationName: {
+    '0%': { opacity: LAYOUT.OPACITY.SUBTLE },
+    '100%': { opacity: LAYOUT.OPACITY.FULL },
+  },
+  animationDuration: `${TIMING_CONSTANTS.PULSATE_DURATION / 2}ms`,
+  animationIterationCount: 'infinite' as const,
+  animationDirection: 'alternate' as const,
+  animationTimingFunction: 'ease-in-out',
+  transform: [{ scale: MAX_PULSE_SCALE }],
+} as ReanimatedCSSAnimationStyle;
+
+/**
  * A pulsating circle loader component for smooth loading states
  * Uses the brand tint (sage) color and follows Material Design principles
  */
@@ -70,6 +100,7 @@ export function PulsatingLoader({
   const colors = useColors();
   const box = size * MAX_PULSE_SCALE;
   const announced = accessibilityLabel !== null;
+  const reduceMotion = useReducedMotion();
 
   return (
     <View
@@ -91,7 +122,7 @@ export function PulsatingLoader({
       <Animated.View
         style={[
           getElevation(colors, 'HAIRLINE'),
-          pulsateStyle,
+          reduceMotion ? pulsateReducedStyle : pulsateStyle,
           {
             width: size,
             height: size,

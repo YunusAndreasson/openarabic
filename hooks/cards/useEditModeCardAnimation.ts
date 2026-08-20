@@ -1,5 +1,6 @@
 import type { ViewStyle } from 'react-native';
 import type { CSSStyle } from 'react-native-reanimated';
+import { useReducedMotion } from 'react-native-reanimated';
 
 import { PRESS_SCALE, TIMING_CONFIG } from '@/constants/animation';
 
@@ -43,12 +44,28 @@ export function useEditModeCardAnimation({
 }: EditModeCardAnimationOptions): EditModeCardAnimationResult {
   const scale = isBeingDragged ? PRESS_SCALE.DRAG_UP : editMode ? PRESS_SCALE.MODERATE : 1;
 
-  const animatedStyle: CSSStyle<ViewStyle> = {
-    transform: [{ scale }],
-    transitionProperty: 'transform',
-    transitionDuration: `${TIMING_CONFIG.MEDIUM.duration}ms`,
-    transitionTimingFunction: 'ease-out',
-  };
+  /**
+   * The card still changes size — it just stops travelling there.
+   *
+   * The scale is state, not decoration: it is how an editing or dragged card
+   * says which one it is, so it has to survive Reduce Motion. What the setting
+   * asks us to drop is the journey, so the transition goes and the card takes
+   * its new size on the next frame.
+   *
+   * Explicit because Reanimated will not do it: `withTiming` and the layout
+   * builders default to `ReduceMotion.System`, but the CSS API — which is what
+   * `transitionProperty` is — has no reduced-motion handling at all in 4.5.
+   */
+  const reduceMotion = useReducedMotion();
+
+  const animatedStyle: CSSStyle<ViewStyle> = reduceMotion
+    ? { transform: [{ scale }] }
+    : {
+        transform: [{ scale }],
+        transitionProperty: 'transform',
+        transitionDuration: `${TIMING_CONFIG.MEDIUM.duration}ms`,
+        transitionTimingFunction: 'ease-out',
+      };
 
   return { animatedStyle };
 }
