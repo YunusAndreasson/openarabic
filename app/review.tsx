@@ -759,7 +759,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
                 {`rec: ${voiceDebug.recorder.stopReason} @${voiceDebug.recorder.stopDecidedAtMs}ms · dur ${voiceDebug.recorder.durationMs}ms · ${voiceDebug.recorder.bufferCount}buf · 1st ${voiceDebug.recorder.firstBufferMs ?? 'never'}ms`}
               </ThemedText>
               <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
-                {`peak ${voiceDebug.recorder.peakRms.toFixed(5)} · room ${voiceDebug.recorder.noiseFloorDb.toFixed(0)}dB · voice ${voiceDebug.recorder.speechMs}ms · ${voiceDebug.recorder.heardSpeech ? 'speech' : 'silent'}`}
+                {`peak ${voiceDebug.recorder.peakRms.toFixed(5)} · room ${voiceDebug.recorder.noiseFloorDb?.toFixed(0) ?? 'never'}dB · voice ${voiceDebug.recorder.speechMs}ms · ${voiceDebug.recorder.heardSpeech ? 'speech' : 'silent'}`}
               </ThemedText>
             </>
           )}

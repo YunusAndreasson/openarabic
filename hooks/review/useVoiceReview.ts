@@ -131,8 +131,10 @@ export interface VoiceDebug {
     peakRms: number;
     /** The room the gate judged this answer against, and how much of the
      *  window cleared it. A stop that looks wrong is almost always one of
-     *  these two being wrong, and neither is visible from `peakRms`. */
-    noiseFloorDb: number;
+     *  these two being wrong, and neither is visible from `peakRms`.
+     *  `null` when no buffer ever arrived — a dead mic has measured nothing,
+     *  and must not read as a quiet room. */
+    noiseFloorDb: number | null;
     speechMs: number;
     firstBufferMs: number | null;
     stopDecidedAtMs: number;
@@ -747,7 +749,10 @@ export function useVoiceReview({
           // the room measurement are what make a row self-explaining. Rounded
           // integers, ~160 of them at most.
           gate: {
-            noiseFloorDb: Math.round(outcome.result.noiseFloorDb),
+            // Null travels as null: a dead-mic row must stay distinguishable
+            // from one that measured a quiet room. See RecordingResult.
+            noiseFloorDb:
+              outcome.result.noiseFloorDb === null ? null : Math.round(outcome.result.noiseFloorDb),
             speechMs: outcome.result.speechMs,
             levelsDb: outcome.result.levelsDb,
           },

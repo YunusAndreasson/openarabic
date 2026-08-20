@@ -200,6 +200,102 @@ describe('VoiceCaptureSession', () => {
     expect(answered.speechMs).toBeGreaterThan(0);
   });
 
+  test('does not carry a room measured on the learner instead of the room', async () => {
+    // The seed is what makes an instant answer gradeable, but only while it is a
+    // measurement of the ROOM. The floor is the 20th percentile of a 5 s trailing
+    // window, so a window whose tail is nearly all voice reports a floor at
+    // SPEECH level. Seeding the next card with that puts its onset threshold
+    // `onsetMarginDb` ABOVE the learner's own voice — a card that cannot hear
+    // them, which then records only speech and re-seeds the same high floor.
+    const session = new VoiceCaptureSession();
+    await session.open(DEFAULT_RECORDING_CONFIG);
+
+    // Card 1: a quiet room, then an answer long enough to fill the 5 s trailing
+    // window (50 buffers at 100 ms), so the window ENDS with its floor sitting
+    // on the learner's voice rather than on the room.
+    session.beginWindow({}, DEFAULT_RECORDING_CONFIG);
+    for (let i = 0; i < 5; i += 1) recorder().emitBuffer({ level: SILENCE });
+    for (let i = 0; i < 60; i += 1) recorder().emitBuffer({ level: SPEECH });
+    const longAnswer = session.endWindow();
+    expect(longAnswer.heardSpeech).toBe(true);
+    // The premise of the test: this window's own floor really did climb onto
+    // the voice. Without that there is nothing here to carry wrongly.
+    expect(longAnswer.noiseFloorDb as number).toBeGreaterThan(-40);
+
+    // Card 2: the same voice, at the same level, must still be heard.
+    session.beginWindow({}, DEFAULT_RECORDING_CONFIG);
+    for (let i = 0; i < 6; i += 1) recorder().emitBuffer({ level: SILENCE });
+    for (let i = 0; i < 6; i += 1) recorder().emitBuffer({ level: SPEECH });
+    const next = session.endWindow();
+
+    expect(next.heardSpeech).toBe(true);
+    expect(next.speechMs).toBeGreaterThan(0);
+  });
+
+  test('close() drops the room with the stream that measured it', async () => {
+    // Every caller of close() is a rebuild — an interruption, a route change —
+    // and a rebuild is when the capture gain can move. The corpus has two
+    // regimes 17 dB apart, so a floor measured before a headset arrived is not a
+    // floor after it: carrying it across is the absolute-threshold failure this
+    // file was rewritten to remove, arriving through state instead of a constant.
+    const session = new VoiceCaptureSession();
+    await session.open(DEFAULT_RECORDING_CONFIG);
+
+    // Measure a LOUD room, so a carried estimate would be unmistakable.
+    session.beginWindow({}, DEFAULT_RECORDING_CONFIG);
+    for (let i = 0; i < 20; i += 1) recorder().emitBuffer({ level: 0.02 });
+    const loud = session.endWindow();
+    expect(loud.noiseFloorDb).not.toBeNull();
+
+    await session.close();
+    await session.open(DEFAULT_RECORDING_CONFIG);
+
+    // One buffer of a much quieter room: with the old estimate carried, the
+    // reported floor would still be the loud one.
+    session.beginWindow({}, DEFAULT_RECORDING_CONFIG);
+    recorder().emitBuffer({ level: SILENCE });
+    const afterReopen = session.endWindow();
+
+    expect(afterReopen.noiseFloorDb).not.toBeNull();
+    expect(afterReopen.noiseFloorDb as number).toBeLessThan(loud.noiseFloorDb as number);
+  });
+
+  test('a window that received no audio reports no room, rather than a quiet one', async () => {
+    // The dead-mic row (session conflict, permission edge, a stream that died)
+    // used to write the SEED value, so it read as a genuinely quiet room in both
+    // the HUD and `voice_grading_attempts` — the one row an investigation most
+    // needs to tell apart from a measurement.
+    const session = new VoiceCaptureSession();
+    await session.open(DEFAULT_RECORDING_CONFIG);
+
+    session.beginWindow({}, DEFAULT_RECORDING_CONFIG);
+    const dead = session.endWindow();
+
+    expect(dead.bufferCount).toBe(0);
+    expect(dead.noiseFloorDb).toBeNull();
+    expect(dead.firstBufferMs).toBeNull();
+  });
+
+  test('the envelope keeps the most recent buffers, where the stop is decided', async () => {
+    // Head-truncation cut the envelope off exactly before the moment it exists
+    // to explain: every stop except `noSpeech` is decided in the tail. Only bites
+    // on a device delivering small buffers, which is when it matters most.
+    const session = new VoiceCaptureSession();
+    await session.open(DEFAULT_RECORDING_CONFIG);
+
+    session.beginWindow({}, DEFAULT_RECORDING_CONFIG);
+    // 400 short buffers, well past the 160 cap: quiet first, loud last.
+    for (let i = 0; i < 200; i += 1) recorder().emitBuffer({ level: SILENCE, frames: 160 });
+    for (let i = 0; i < 200; i += 1) recorder().emitBuffer({ level: SPEECH, frames: 160 });
+    const result = session.endWindow();
+
+    expect(result.levelsDb).toHaveLength(160);
+    // Every kept entry is from the loud tail, not the quiet head.
+    const quietest = Math.max(...result.levelsDb);
+    expect(quietest).toBeLessThan(0);
+    expect(Math.min(...result.levelsDb)).toBeGreaterThan(-40);
+  });
+
   test('reports the envelope and the room it decided against', async () => {
     // `peak_rms` is one number for a whole window, and it is why all three gate
     // regressions needed a live device session to diagnose. The envelope shows

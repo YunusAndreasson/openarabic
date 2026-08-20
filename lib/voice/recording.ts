@@ -70,9 +70,20 @@ export function dbfs(rms: number): number {
  * 1% per buffer — a half-life of ~7 s inside a 2.5 s recording, i.e. it never
  * adapted, which is why the relative thresholds always collapsed onto the
  * absolute ones. A trailing minimum tracks a room that gets louder (old quiet
- * samples age out) without ever being dragged up onto the learner's own voice
- * (a 2.5 s utterance cannot fill a 5 s window), and needs no speech/non-speech
- * decision to maintain — which matters, since that decision is what it feeds.
+ * samples age out) and needs no speech/non-speech decision to maintain — which
+ * matters, since that decision is what it feeds.
+ *
+ * KNOWN BOUND, stated because the earlier wording here ("a 2.5 s utterance
+ * cannot fill a 5 s window") read as a guarantee and is not one: `maxDurationMs`
+ * is 15 s, so an answer CAN outlast this window. Once voice fills more than
+ * `1 - NOISE_PERCENTILE` of it the floor climbs onto the learner and the window
+ * can end mid-sentence as 'silence'. In practice the answers are single English
+ * glosses — the corpus median is well under a second, and a hesitating speaker
+ * supplies the pauses that keep the percentile down — so this has not been seen
+ * in the field, and the estimator is not being changed again on a theoretical
+ * case after three regressions. What IS fixed is the part that outlived a single
+ * window: a floor measured on a speech-dominated window is no longer carried to
+ * the next card (see VoiceCaptureSession.endWindow).
  */
 const NOISE_WINDOW_MS = 5000;
 
@@ -104,9 +115,19 @@ const COLD_FLOOR_DBFS = -60;
  *  it the first buffer of a session is measured against a guess. Carried state
  *  means only the very first card of a session ever waits. */
 const FLOOR_WARMUP_MS = 300;
-/** Absolute backstop on the onset threshold, kept only for the pathological
- *  case of a floor pinned at FLOOR_MIN_DBFS. −66 dBFS is 13 dB under the
- *  quietest genuine speech in the corpus (0.0023 RMS, −52.6 dBFS). */
+/**
+ * Absolute backstop on the onset threshold. −66 dBFS is 13 dB under the
+ * quietest genuine speech in the corpus (0.0023 RMS, −52.6 dBFS).
+ *
+ * It does NOT bind at the shipped config, and the comment that said it guarded
+ * "a floor pinned at FLOOR_MIN_DBFS" was arithmetically wrong: a pinned floor is
+ * −75, and −75 + `onsetMarginDb` (12) is −63, already above this. What it
+ * actually guards is a LOWERED margin — below 9 dB the seeded threshold would
+ * sink under the quietest speech ever recorded, and this stops it. Nothing in
+ * the app writes `onsetMarginDb` today (VoiceGradingProvider spreads the
+ * defaults and overrides three unrelated flags), so it is a guard on the
+ * parameter, not on the room.
+ */
 const ABS_ONSET_DBFS = -66;
 
 /**
@@ -235,11 +256,19 @@ export const DEFAULT_RECORDING_CONFIG: RecordingConfig = {
 };
 
 /**
- * What stopped a recording window: 'silence' (energy gate), 'noSpeech' (gate
- * never heard speech within noSpeechTimeoutMs), 'maxDuration' (hit cap inside
- * handleBuffer), 'watchdog' (a cap fired with zero buffers — either the hard
- * duration cap or the first-buffer deadline), or 'manual' (cancel / external
- * stop).
+ * What stopped a recording window: 'silence' (energy gate), 'noSpeech' (the gate
+ * never accumulated `minSpeechMs` of voice within `noSpeechTimeoutMs`),
+ * 'maxDuration' (hit cap inside handleBuffer), 'watchdog' (a cap fired with zero
+ * buffers — either the hard duration cap or the first-buffer deadline), or
+ * 'manual' (cancel / external stop).
+ *
+ * 'noSpeech' is deliberately "not ENOUGH speech", not "no speech": the bail
+ * gates on `spokeEnough`, so a transient that confirms onset but never reaches
+ * `minSpeechMs` ends here rather than running to the 15 s cap. A row can
+ * therefore carry `stop_reason: 'noSpeech'` together with `heard_speech: true`,
+ * and that pair is information — onset fired on something that turned out not to
+ * be an answer — rather than the contradiction the old wording made it look
+ * like.
  *
  * Named because this value travels: the review HUD prints it and every voice
  * attempt writes it to `voice_grading_attempts`. Both of those ends typed it as
@@ -264,8 +293,19 @@ export interface RecordingResult {
   durationMs: number;
   heardSpeech: boolean;
   peakRms: number;
-  /** The room, in dBFS, as the gate finally measured it. */
-  noiseFloorDb: number;
+  /**
+   * The room, in dBFS, as the gate finally measured it — or `null` when it
+   * never measured anything.
+   *
+   * Nullable for the same reason `firstBufferMs` is. A window that received no
+   * buffers at all (session conflict, permission edge, a stream that died) used
+   * to report COLD_FLOOR_DBFS here, because that is what the gate was seeded
+   * with — so a dead microphone wrote `-60` into `voice_grading_attempts` and
+   * printed `-60dB` in the HUD, indistinguishable from a genuinely quiet room.
+   * That row is the one a future investigation most needs to tell apart from a
+   * real measurement.
+   */
+  noiseFloorDb: number | null;
   /** Total ms the gate counted as voice. Separates "heard a word" from "heard
    *  a door close" in a way `heardSpeech` alone cannot. */
   speechMs: number;
@@ -633,6 +673,15 @@ export class VoiceCaptureSession {
   private config: RecordingConfig = { ...DEFAULT_RECORDING_CONFIG };
   private bufferCount = 0;
   private levelsDb: number[] = [];
+  /**
+   * The gate's floor as it stood the instant speech was first CONFIRMED — i.e.
+   * measured on the audio before the learner started, which is the room by
+   * construction.
+   *
+   * Null while no speech has been confirmed, in which case the whole window is
+   * room and its final estimate is the one to carry.
+   */
+  private preSpeechRoom: Pick<EnergyGateState, 'levels' | 'noiseFloorDb'> | null = null;
   /** Carried across cards so a new window measures the room from the room, not
    *  from a constant. Same session, same seconds-old room. */
   private roomEstimate: Pick<EnergyGateState, 'levels' | 'noiseFloorDb'> | null = null;
@@ -752,6 +801,7 @@ export class VoiceCaptureSession {
     this.gate = initialGateState(this.roomEstimate ?? undefined);
     this.peakRms = 0;
     this.levelsDb = [];
+    this.preSpeechRoom = null;
     this.candidateStartSample = null;
     this.stopping = false;
     this.handlers = handlers;
@@ -842,8 +892,14 @@ export class VoiceCaptureSession {
     if (rms > this.peakRms) this.peakRms = rms;
     this.handlers.onLevel?.(rms);
 
-    if (this.levelsDb.length < MAX_LOGGED_LEVELS)
-      this.levelsDb.push(Math.round(rms > 0 ? dbfs(rms) : FLOOR_MIN_DBFS));
+    // Most recent MAX_LOGGED_LEVELS, not the first ones. At a normal 100 ms
+    // buffer the 15 s cap is 150 entries and nothing is dropped at all — the
+    // bound only ever bites on a device delivering tiny buffers, and that is
+    // precisely the case where keeping the head is the wrong half: every stop
+    // decision except `noSpeech` is taken in the TAIL, so head-truncation cut
+    // the envelope off exactly before the moment it exists to explain.
+    this.levelsDb.push(Math.round(rms > 0 ? dbfs(rms) : FLOOR_MIN_DBFS));
+    if (this.levelsDb.length > MAX_LOGGED_LEVELS) this.levelsDb.shift();
 
     const wasConfirmed = this.gate.speechSeen;
     const hadCandidate = this.gate.onsetMs > 0;
@@ -853,6 +909,11 @@ export class VoiceCaptureSession {
       this.config,
     );
     this.gate = state;
+    // Freeze the room at the moment speech was confirmed — see `preSpeechRoom`.
+    // Read once, at endWindow; it never feeds a decision inside this window.
+    if (!wasConfirmed && state.speechSeen) {
+      this.preSpeechRoom = { levels: state.levels, noiseFloorDb: state.noiseFloorDb };
+    }
 
     // The speech region is bounded by CONFIRMED speech only. An unconfirmed
     // window leaves both marks null, so `trimToSpeech` hands the recogniser
@@ -922,9 +983,29 @@ export class VoiceCaptureSession {
       });
     }
 
-    // Hand this window's measurement of the room to the next card.
+    // Hand this window's measurement of the ROOM to the next card — which is
+    // not the same as its final floor.
+    //
+    // The floor is the 20th percentile of the trailing NOISE_WINDOW_MS, so it
+    // sits below speech only while at least NOISE_PERCENTILE of that window is
+    // something other than voice. An answer that outlasts the window leaves the
+    // gate reporting a floor at SPEECH level, and seeding the next card with it
+    // puts that card's onset threshold `onsetMarginDb` ABOVE the learner's own
+    // voice. That card hears nothing, records only its own speech, and re-seeds
+    // the same high floor — the "microphone appears dead" failure this file
+    // exists to remove, reached through carried state rather than a constant.
+    //
+    // So what travels is the floor as it stood when speech was CONFIRMED, which
+    // is by construction measured on the audio before the learner started. A
+    // window that never confirmed speech is all room, and carries its final
+    // estimate as before. Both are read once, here; neither feeds a decision
+    // inside a running window, so the floor keeps the property NOISE_WINDOW_MS
+    // documents — it needs no speech/non-speech input to maintain.
     if (this.bufferCount > 0) {
-      this.roomEstimate = { levels: this.gate.levels, noiseFloorDb: this.gate.noiseFloorDb };
+      this.roomEstimate = this.preSpeechRoom ?? {
+        levels: this.gate.levels,
+        noiseFloorDb: this.gate.noiseFloorDb,
+      };
     }
 
     const merged = concat(this.chunks, this.totalSamples);
@@ -952,7 +1033,8 @@ export class VoiceCaptureSession {
       durationMs,
       heardSpeech: this.gate.speechSeen,
       peakRms: this.peakRms,
-      noiseFloorDb: this.gate.noiseFloorDb,
+      // Seeded, not measured, until a buffer has actually been through the gate.
+      noiseFloorDb: this.bufferCount > 0 ? this.gate.noiseFloorDb : null,
       speechMs: this.gate.speechMs,
       levelsDb: this.levelsDb,
       bufferCount: this.bufferCount,
@@ -995,6 +1077,17 @@ export class VoiceCaptureSession {
    */
   async close({ releaseSession = false }: { releaseSession?: boolean } = {}): Promise<void> {
     this.cancelWindow();
+    // Drop the carried room measurement with the stream that measured it.
+    //
+    // Every caller of this is a rebuild — an interruption, a route change, a
+    // voice-off toggle — and a rebuild is exactly when the capture gain can
+    // move. The corpus has the two regimes 17 dB apart, so a floor measured
+    // before a headset arrived, seeded into the first window after it, is the
+    // absolute-threshold failure this whole file was rewritten to remove,
+    // arriving through carried state instead of a constant. The cost of
+    // dropping it is that one window pays FLOOR_WARMUP_MS (300 ms) again, which
+    // is what that constant exists for.
+    this.roomEstimate = null;
     const recorder = this.recorder;
     this.recorder = null;
     if (recorder) {
