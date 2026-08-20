@@ -138,6 +138,11 @@ describe('VoiceCaptureSession', () => {
         }
       };
 
+      // Room tone first, because that is how a window really opens — the
+      // recorder resumes while the learner is still reacting to the prompt.
+      // The gate measures the room from those buffers; handed nothing but
+      // speech from the first one it has no room to measure the speech against.
+      feed(SILENCE, 4);
       // Speech past minDurationMs (600 ms)…
       feed(SPEECH, 8);
       expect(onAutoStop).not.toHaveBeenCalled();
@@ -172,6 +177,48 @@ describe('VoiceCaptureSession', () => {
     expect(result.waveform.length).toBeLessThan(capturedSamples);
     // The speech itself is never clipped.
     expect(result.waveform.length).toBeGreaterThanOrEqual(4 * 1600);
+  });
+
+  test('carries the room it measured into the next card', async () => {
+    // A window that opens onto an answer already in progress has nothing to
+    // measure the answer against — the first buffers ARE the floor. Cards are
+    // seconds apart in one room, so the previous window's measurement is the
+    // best estimate the new one can start from, and it is what makes an instant
+    // answer gradeable.
+    const session = new VoiceCaptureSession();
+    await session.open(DEFAULT_RECORDING_CONFIG);
+
+    session.beginWindow({}, DEFAULT_RECORDING_CONFIG);
+    for (let i = 0; i < 20; i += 1) recorder().emitBuffer({ level: SILENCE });
+    const quietRoom = session.endWindow();
+    expect(quietRoom.heardSpeech).toBe(false);
+
+    session.beginWindow({}, DEFAULT_RECORDING_CONFIG);
+    for (let i = 0; i < 5; i += 1) recorder().emitBuffer({ level: SPEECH });
+    const answered = session.endWindow();
+    expect(answered.heardSpeech).toBe(true);
+    expect(answered.speechMs).toBeGreaterThan(0);
+  });
+
+  test('reports the envelope and the room it decided against', async () => {
+    // `peak_rms` is one number for a whole window, and it is why all three gate
+    // regressions needed a live device session to diagnose. The envelope shows
+    // WHERE the energy was; the floor shows what it was judged against.
+    const session = new VoiceCaptureSession();
+    await session.open(DEFAULT_RECORDING_CONFIG);
+
+    session.beginWindow({}, DEFAULT_RECORDING_CONFIG);
+    for (let i = 0; i < 6; i += 1) recorder().emitBuffer({ level: SILENCE });
+    for (let i = 0; i < 4; i += 1) recorder().emitBuffer({ level: SPEECH });
+    const result = session.endWindow();
+
+    expect(result.levelsDb).toHaveLength(10);
+    expect(result.levelsDb.every(Number.isInteger)).toBe(true);
+    // Quiet buffers first, louder ones after — the shape of a real answer.
+    expect(Math.max(...result.levelsDb.slice(0, 6))).toBeLessThan(
+      Math.min(...result.levelsDb.slice(6)),
+    );
+    expect(result.noiseFloorDb).toBeLessThan(0);
   });
 
   test('keeps a silent recording whole so it can be judged as silence', async () => {

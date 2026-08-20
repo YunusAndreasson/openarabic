@@ -129,6 +129,11 @@ export interface VoiceDebug {
     stopReason: RecordingStopReason;
     heardSpeech: boolean;
     peakRms: number;
+    /** The room the gate judged this answer against, and how much of the
+     *  window cleared it. A stop that looks wrong is almost always one of
+     *  these two being wrong, and neither is visible from `peakRms`. */
+    noiseFloorDb: number;
+    speechMs: number;
     firstBufferMs: number | null;
     stopDecidedAtMs: number;
   } | null;
@@ -629,6 +634,8 @@ export function useVoiceReview({
           stopReason: outcome.result.stopReason,
           heardSpeech: outcome.result.heardSpeech,
           peakRms: outcome.result.peakRms,
+          noiseFloorDb: outcome.result.noiseFloorDb,
+          speechMs: outcome.result.speechMs,
           firstBufferMs: outcome.result.firstBufferMs,
           stopDecidedAtMs: outcome.result.stopDecidedAtMs,
         },
@@ -733,6 +740,16 @@ export function useVoiceReview({
             energyGateEnabled: settingsRef.current.energyGateEnabled,
             gainNormalizeEnabled: settingsRef.current.gainNormalizeEnabled,
             iosRawMode: settingsRef.current.iosRawMode,
+          },
+          // What the energy gate actually saw. `peak_rms` is one number for a
+          // whole window, and three separate gate regressions each needed a
+          // fresh device session to diagnose because of it — the envelope and
+          // the room measurement are what make a row self-explaining. Rounded
+          // integers, ~160 of them at most.
+          gate: {
+            noiseFloorDb: Math.round(outcome.result.noiseFloorDb),
+            speechMs: outcome.result.speechMs,
+            levelsDb: outcome.result.levelsDb,
           },
           // Rows written before 2026-08-17 claim `modified_beam_search` here. That
           // was never true — see the decoding note in useSherpaStt.ts. Treat the

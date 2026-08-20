@@ -32,17 +32,40 @@ import { voiceBreadcrumb } from '@/utils/errorHandling';
 /**
  * NVIDIA Parakeet TDT transducer 110M (English, int8) — ~103 MB.
  *
- * Was the 0.6B v2 int8 at ~460 MB. Field telemetry
- * (`voice_grading_attempts`, 80 resolved attempts) showed transcription is not
- * the constraint: exactly one attempt was a genuine mishear the learner had to
- * override, and the misses that mattered were a wrong-answer matcher and glosses
- * the normalizer had mangled — neither of which a bigger acoustic model fixes.
- * So the 4.5× download was buying headroom the feature never used, on an
- * opt-in feature where that download is the gate people actually bounce off.
+ * **The 0.6B v2 was tried again on 2026-08-19 and reverted the same night.**
+ * That is now a settled question rather than an open one, so do not re-run the
+ * experiment without new evidence of a different kind.
  *
- * Same `nemo_transducer` architecture, so decoding config carries over
- * unchanged. `model_id` is recorded on every attempt, so the accuracy of this
- * swap is measurable against the 0.6B baseline already in the table.
+ * The case for going bigger was that `weighty` and `lineage` were each
+ * overridden several times with a DIFFERENT wrong transcript every time, which
+ * reads like an acoustic model that cannot resolve the word. Two things
+ * disproved it.
+ *
+ * 1. **The decisive word got worse.** `girded with` has 43 attempts across both
+ *    models — the deepest history in the table:
+ *
+ *        110M   40 attempts   15 credited (38%)   "guarded with" x6, "Girdle
+ *                                                  with", "Guard it with", …
+ *        0.6B    3 attempts    0 credited  (0%)   "Arrive.", "Girl of the
+ *                                                  West.", "God it was."
+ *
+ * 2. **Most of the "instability" was never acoustic.** The retry pattern is
+ *    `corruption` → "Pollution." → then "Corruption."; `journey` → "Travel." →
+ *    then "Journey."; `his sessions` → "His assembly." → then "His sessions."
+ *    Those first transcripts are not mishearings, they are OTHER ENGLISH WORDS,
+ *    transcribed correctly. The learner reached for a synonym and the single
+ *    stored gloss failed them. No acoustic model fixes that.
+ *
+ * What remains, having ruled the model out, is two non-ASR problems:
+ * synonyms the corpus does not carry (`corruption`'s root offers "bad |
+ * badness of | evil", never "pollution"), and glosses no recogniser will ever
+ * emit — `girded with` has exactly one alternate in `sentence_words`, itself,
+ * and a transducer's internal LM will always prefer "God it was". See
+ * `useReviewGlossAlternates` for the widening that exists, and note it can only
+ * widen to what the corpus already contains.
+ *
+ * Same `nemo_transducer` architecture either way, so decoding carries over
+ * unchanged. `model_id` is on every attempt, which is what made this decidable.
  */
 export const PARAKEET_MODEL_ID = 'sherpa-onnx-nemo-parakeet_tdt_transducer_110m-en-36000-int8';
 
