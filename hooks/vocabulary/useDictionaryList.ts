@@ -8,6 +8,7 @@ import {
   getWordHorizonBand,
   type HorizonBandKey,
 } from '@/utils/memoryHorizon';
+import { getWordDepthBand, type DepthBandKey } from '@/utils/practiceDepth';
 import { hasBeenPractised, isDueWord, isMasteredWord } from '@/utils/wordClassification';
 
 export type DictionarySortField = 'difficulty' | 'strength' | 'recent';
@@ -28,6 +29,7 @@ export type PickerScope = 'all' | 'due' | 'struggling' | 'mastered';
  * They share the single `scope` slot rather than adding a second filter
  * dimension, which buys two things for free: the list can only ever be under one
  * filter, and the sort bar's existing count line already names whichever it is.
+ * The depth scopes below join the same slot on the same terms.
  */
 export const HORIZON_SCOPES = [
   'horizon-days',
@@ -39,8 +41,39 @@ export const HORIZON_SCOPES = [
 
 export type HorizonScope = (typeof HORIZON_SCOPES)[number];
 
+/**
+ * The practice-depth bands, as scopes.
+ *
+ * Reached from the review-depth sheet exactly as the horizon scopes are reached
+ * from the memory sheet, and kept out of the picker for the same reason.
+ *
+ * `depth-none` and `horizon-none` are near-neighbours but NOT the same set:
+ * this one is `fsrs_reps === 0`, that one is "no measurable horizon", which
+ * additionally catches a practised word whose stability never landed. Each row
+ * points at the scope built from the predicate that produced its own count, so
+ * a list can never disagree with the number that opened it — which is the whole
+ * reason they are separate rather than shared.
+ */
+export const DEPTH_SCOPES = [
+  'depth-deep',
+  'depth-solid',
+  'depth-few',
+  'depth-once',
+  'depth-none',
+] as const;
+
+export type DepthScope = (typeof DEPTH_SCOPES)[number];
+
+/**
+ * The scopes a sheet can hand this list, as opposed to the four the picker
+ * offers. Grouped because every rule that applies to one applies to all of
+ * them: not in the picker, arrives as a route param, and is left through the
+ * sort bar's clear control rather than by being switched away from.
+ */
+export type NarrowScope = HorizonScope | DepthScope;
+
 /** What the list is showing. */
-export type DictionaryScope = PickerScope | HorizonScope;
+export type DictionaryScope = PickerScope | NarrowScope;
 
 /** The scope that shows one band's words — the memory sheet's row targets. */
 export const HORIZON_BAND_SCOPES: Record<HorizonBandKey, HorizonScope> = {
@@ -50,9 +83,21 @@ export const HORIZON_BAND_SCOPES: Record<HorizonBandKey, HorizonScope> = {
   year: 'horizon-year',
 };
 
+/** The review-depth sheet's row targets. */
+export const DEPTH_BAND_SCOPES: Record<DepthBandKey, DepthScope> = {
+  deep: 'depth-deep',
+  solid: 'depth-solid',
+  few: 'depth-few',
+  once: 'depth-once',
+  none: 'depth-none',
+};
+
 /** Takes a bare `string` so a route param can be validated without a cast. */
-export function isHorizonScope(scope: string): scope is HorizonScope {
-  return (HORIZON_SCOPES as readonly string[]).includes(scope);
+export function isNarrowScope(scope: string): scope is NarrowScope {
+  return (
+    (HORIZON_SCOPES as readonly string[]).includes(scope) ||
+    (DEPTH_SCOPES as readonly string[]).includes(scope)
+  );
 }
 
 /** Direction applied when a field is first selected — the reading a learner wants most. */
@@ -86,6 +131,13 @@ const SCOPE_PREDICATES: Record<DictionaryScope, (word: StudyWord) => boolean> = 
   // on the axis. `null` horizon, not stability 0: a never-practised word carries
   // a placeholder stability, so a numeric test would file it under "days".
   'horizon-none': word => getMemoryHorizonDays(word) === null,
+  // Through `getWordDepthBand` for the same reason: the sheet's counts and
+  // these lists then come from one definition of a band, not two.
+  'depth-deep': word => getWordDepthBand(word) === 'deep',
+  'depth-solid': word => getWordDepthBand(word) === 'solid',
+  'depth-few': word => getWordDepthBand(word) === 'few',
+  'depth-once': word => getWordDepthBand(word) === 'once',
+  'depth-none': word => getWordDepthBand(word) === 'none',
 };
 
 /**
@@ -100,8 +152,8 @@ const SCOPE_PREDICATES: Record<DictionaryScope, (word: StudyWord) => boolean> = 
  * (they sort as one undifferentiated block at the end, by design), so they are
  * ordered by when they were saved instead.
  */
-const HORIZON_SCOPE_SORT: Record<
-  HorizonScope,
+const NARROW_SCOPE_SORT: Record<
+  NarrowScope,
   { field: DictionarySortField; direction: SortDirection }
 > = {
   'horizon-days': { field: 'strength', direction: 'asc' },
@@ -109,6 +161,16 @@ const HORIZON_SCOPE_SORT: Record<
   'horizon-months': { field: 'strength', direction: 'asc' },
   'horizon-year': { field: 'strength', direction: 'asc' },
   'horizon-none': { field: 'recent', direction: 'desc' },
+  // Weakest first inside a depth band answers the question that makes the band
+  // worth opening: of the words you have drilled this often, which are still
+  // not holding?
+  'depth-deep': { field: 'strength', direction: 'asc' },
+  'depth-solid': { field: 'strength', direction: 'asc' },
+  'depth-few': { field: 'strength', direction: 'asc' },
+  'depth-once': { field: 'strength', direction: 'asc' },
+  // Same exception as `horizon-none`, and the same reason: nothing here has a
+  // measured stability to rank by, so they are ordered by when they were saved.
+  'depth-none': { field: 'recent', direction: 'desc' },
 };
 
 // Harakat, superscript alef, and tatweel — stripped so typing "كتب" matches "كَتَبَ"
@@ -183,9 +245,10 @@ interface UseDictionaryListReturn {
   setScope: (scope: PickerScope) => void;
   /**
    * How many words each PICKER scope would show — lets the picker state its own
-   * cost. Horizon scopes are absent on purpose: nothing renders their counts
-   * (the memory sheet has them from `useMemoryHorizonDistribution`, off the same
-   * words), so counting them here would be nine predicates per word for nothing.
+   * cost. The narrow scopes are absent on purpose: nothing renders their counts
+   * (each sheet already has them, from `useMemoryHorizonDistribution` and
+   * `useReviewDepthDistribution` off the same words), so counting them here
+   * would be ten more predicates per word for nothing.
    */
   scopeCounts: Record<PickerScope, number>;
 }
@@ -194,12 +257,12 @@ export const useDictionaryList = ({
   studyWords,
   initialScope = 'all',
 }: UseDictionaryListProps): UseDictionaryListReturn => {
-  // A band arrives with its own ordering — see HORIZON_SCOPE_SORT. Applied here
+  // A band arrives with its own ordering — see NARROW_SCOPE_SORT. Applied here
   // rather than by calling `selectSortField` later, which flips the direction
   // when the field is already active and would land some entries on
   // strongest-first.
-  const initialSort = isHorizonScope(initialScope)
-    ? HORIZON_SCOPE_SORT[initialScope]
+  const initialSort = isNarrowScope(initialScope)
+    ? NARROW_SCOPE_SORT[initialScope]
     : { field: 'difficulty' as const, direction: DEFAULT_DIRECTIONS.difficulty };
 
   const [sortField, setSortField] = useState<DictionarySortField>(initialSort.field);

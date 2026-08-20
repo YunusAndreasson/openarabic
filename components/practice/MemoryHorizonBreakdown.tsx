@@ -1,120 +1,14 @@
 import type { JSX } from 'react';
-import { StyleSheet, View } from 'react-native';
 
-import { ListRow, ProgressBar } from '@/components/common';
-import { ThemedText } from '@/components/primitives/ThemedText';
-import { Ionicons } from '@/components/ui';
-import { CHART_OPACITY, useChartColors } from '@/constants/chartColors';
-import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
-import { useColors } from '@/hooks/theme/useColors';
 import { useMemoryHorizonDistribution } from '@/hooks/vocabulary/useMemoryHorizonDistribution';
 import { HORIZON_BAND_SCOPES, type DictionaryScope } from '@/hooks/vocabulary/useDictionaryList';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { mixColors } from '@/utils/colorUtils';
 import { getHorizonBand, HORIZON_BAND_HINTS } from '@/utils/memoryHorizon';
 import { dismissSheetThenNavigate } from '@/utils/sheetNavigation';
 
-const CHEVRON_SIZE = 14;
-
-/**
- * Wide enough to compare four bars at a glance, fixed so they share one left and
- * one right edge — a bar chart laid on its side, not four unrelated meters.
- */
-const METER_WIDTH = 84;
-
-/** Keeps three-digit counts from shunting the meters around as the row changes. */
-const COUNT_WIDTH = 40;
-
-interface HorizonRowProps {
-  label: string;
-  /** The band's span in plain words — there is no drawn axis here to read it off. */
-  hint: string;
-  /**
-   * The same span as a spoken clause. Separate because the caption is a fragment
-   * that only reads correctly under its label, and because "Not started" is not
-   * a duration at all.
-   */
-  spokenHint: string;
-  count: number;
-  /** 0–1 against the tallest band. Omitted for rows that are not on the axis. */
-  fraction?: number;
-  /** Marks the band the median word falls in. */
-  isTypical?: boolean;
-  /** Absent for an empty band: there is nothing on the other side of the tap. */
-  onPress?: () => void;
-}
-
-function HorizonRow({
-  label,
-  hint,
-  spokenHint,
-  count,
-  fraction,
-  isTypical = false,
-  onPress,
-}: HorizonRowProps): JSX.Element {
-  const colors = useColors();
-  const chartColors = useChartColors();
-
-  // The same ink the constellation stamps its dots in, so a row and the column
-  // it came from are visibly the same data. Words with no horizon are not on
-  // that axis, so they are not painted as if they were.
-  const fillColor = fraction == null ? colors.textTertiary : chartColors.ui.dataLine;
-  // Track is a lighter step of the fill's own hue, mixed rather than alpha-washed
-  // — an alpha wash composites toward the sheet's near-black on the dark theme
-  // and collapses into it. Same rule as SortMeter and the constellation rail.
-  const trackColor = mixColors(colors.elevation1, fillColor, CHART_OPACITY.TRACK);
-
-  const caption = isTypical ? `${hint} · ${STRINGS.MEMORY_HORIZON_TYPICAL_TAG}` : hint;
-  const accessibilityLabel = (count > 0 ? STRINGS.HORIZON_ROW_A11Y : STRINGS.HORIZON_ROW_A11Y_EMPTY)
-    .replace('{band}', label)
-    .replace('{count}', String(count))
-    .replace('{spoken}', spokenHint);
-
-  return (
-    <ListRow divider density="compact" onPress={onPress} accessibilityLabel={accessibilityLabel}>
-      <View style={styles.labelColumn}>
-        <ThemedText type="body" colorName={count > 0 ? 'text' : 'textTertiary'}>
-          {label}
-        </ThemedText>
-        <ThemedText type="caption" colorName="textTertiary" numberOfLines={1}>
-          {caption}
-        </ThemedText>
-      </View>
-
-      {/* A length, and only a length — the row says the count out loud beside it
-          and again in its spoken label, so nothing here is carried by pixels
-          alone. */}
-      <View style={styles.meter}>
-        {fraction != null && (
-          <ProgressBar
-            backgroundColor={trackColor}
-            fillColor={fillColor}
-            height={LAYOUT.PROGRESS_BAR.HEIGHT}
-            progress={fraction * 100}
-          />
-        )}
-      </View>
-
-      <ThemedText
-        type="bodyBold"
-        colorName={count > 0 ? 'text' : 'textTertiary'}
-        style={styles.count}
-      >
-        {count}
-      </ThemedText>
-
-      {/* Only rows that lead somewhere claim to. */}
-      <View style={styles.chevron}>
-        {onPress && (
-          <Ionicons color={colors.textTertiary} name="chevron-forward" size={CHEVRON_SIZE} />
-        )}
-      </View>
-    </ListRow>
-  );
-}
+import { BreakdownExplainer, BreakdownRow, breakdownRowLabel } from './BreakdownRow';
 
 /**
  * The memory sheet: the practice hero's own constellation, read out as bands,
@@ -155,62 +49,50 @@ export function MemoryHorizonBreakdown({ studyWords }: { studyWords: StudyWord[]
 
   return (
     <>
-      {bands.map(band => (
-        <HorizonRow
-          key={band.key}
-          label={band.label}
-          hint={HORIZON_BAND_HINTS[band.key]}
-          spokenHint={STRINGS.HORIZON_ROW_HOLDS_A11Y.replace(
-            '{hint}',
-            HORIZON_BAND_HINTS[band.key],
-          )}
-          count={band.count}
-          fraction={maxBandCount > 0 ? band.count / maxBandCount : 0}
-          isTypical={band.key === typicalBand}
-          onPress={band.count > 0 ? () => openScope(HORIZON_BAND_SCOPES[band.key]) : undefined}
-        />
-      ))}
+      {bands.map(band => {
+        const hint = HORIZON_BAND_HINTS[band.key];
+        return (
+          <BreakdownRow
+            key={band.key}
+            label={band.label}
+            hint={hint}
+            count={band.count}
+            fraction={maxBandCount > 0 ? band.count / maxBandCount : 0}
+            tag={band.key === typicalBand ? STRINGS.MEMORY_HORIZON_TYPICAL_TAG : undefined}
+            accessibilityLabel={breakdownRowLabel({
+              band: band.label,
+              count: band.count,
+              // Only a band row can have "holds" put in front of its caption.
+              clause: STRINGS.HORIZON_ROW_HOLDS_A11Y.replace('{hint}', hint),
+            })}
+            onPress={band.count > 0 ? () => openScope(HORIZON_BAND_SCOPES[band.key]) : undefined}
+          />
+        );
+      })}
 
       {/* Saved but never reviewed. Named in words and kept off the axis, the same
           way the card's constellation leaves them out — "no horizon yet" is a
           different statement from "you would forget them immediately". */}
       {notStartedCount > 0 && (
-        <HorizonRow
+        <BreakdownRow
           label={STRINGS.MEMORY_HORIZON_NOT_STARTED}
           hint={STRINGS.MEMORY_HORIZON_NOT_STARTED_HINT}
-          spokenHint={STRINGS.MEMORY_HORIZON_NOT_STARTED_HINT}
           count={notStartedCount}
+          accessibilityLabel={breakdownRowLabel({
+            band: STRINGS.MEMORY_HORIZON_NOT_STARTED,
+            count: notStartedCount,
+            // Supplies its own clause — "holds saved, never reviewed" is not English.
+            clause: STRINGS.MEMORY_HORIZON_NOT_STARTED_HINT,
+          })}
           onPress={() => openScope('horizon-none')}
         />
       )}
 
-      <ThemedText type="caption" colorName="captionText" style={styles.explainer}>
-        {practisedCount > 0 ? STRINGS.MEMORY_HORIZON_EXPLAINER : STRINGS.MEMORY_HORIZON_EMPTY}
-      </ThemedText>
+      <BreakdownExplainer
+        text={practisedCount > 0 ? STRINGS.MEMORY_HORIZON_EXPLAINER : STRINGS.MEMORY_HORIZON_EMPTY}
+      />
     </>
   );
 }
 
 MemoryHorizonBreakdown.displayName = 'MemoryHorizonBreakdown';
-
-const styles = StyleSheet.create({
-  labelColumn: {
-    flex: 1,
-    gap: LAYOUT.SPACING.TINY,
-  },
-  meter: {
-    width: METER_WIDTH,
-    flexShrink: 0,
-  },
-  count: {
-    width: COUNT_WIDTH,
-    textAlign: 'right',
-  },
-  chevron: {
-    width: CHEVRON_SIZE,
-    alignItems: 'center',
-  },
-  explainer: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
-  },
-});

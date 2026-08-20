@@ -13,3 +13,4 @@ export * from './useChartAxisLabels';
 export * from './useDueWordsChart';
 export * from './useMemoryHorizonDistribution';
 export * from './useMemoryInsights';
+export * from './useReviewDepthDistribution';

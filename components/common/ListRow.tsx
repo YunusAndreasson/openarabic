@@ -63,8 +63,21 @@ export const ListRow: FC<ListRowProps> = ({
     style,
   ];
 
+  // A static row still announces its label when it has one. `accessible` is
+  // what makes that true: a bare `accessibilityLabel` on a View is ignored by
+  // both platforms unless the view is an accessibility element, so without it
+  // the label was silently dropped — which is exactly what happened to the
+  // "no words" phrasing on an empty band row in the practice sheets.
   if (!onPress) {
-    return <View style={rowStyle}>{children}</View>;
+    return (
+      <View
+        accessible={accessibilityLabel ? true : undefined}
+        accessibilityLabel={accessibilityLabel}
+        style={rowStyle}
+      >
+        {children}
+      </View>
+    );
   }
 
   return (

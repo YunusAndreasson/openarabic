@@ -53,6 +53,7 @@ interface PracticeStatCardsProps {
   onStreakPress?: () => void;
   onMemoryPress?: () => void;
   onRevisitPress?: () => void;
+  onReviewsPress?: () => void;
 }
 
 export function PracticeStatCards({
@@ -71,6 +72,7 @@ export function PracticeStatCards({
   onStreakPress,
   onMemoryPress,
   onRevisitPress,
+  onReviewsPress,
 }: PracticeStatCardsProps) {
   const colors = useColors();
 
@@ -101,6 +103,13 @@ export function PracticeStatCards({
       // also the one effort number that cannot be taken away — unlike the
       // streak, `fsrs_reps` only falls through an explicit, confirmed reset.
       value: totalReviews,
+      // This tile used to be the one in the row with nowhere to go. Streak and
+      // Revisit beside it each open a sheet, and all three are the same
+      // `BaseCard` at the same size — so a tap that produced the press state and
+      // then nothing read as a broken control rather than as a static readout.
+      // Reported as exactly that. Its sheet is the breakdown of this very
+      // number, so the tap now pays for itself twice.
+      onPress: onReviewsPress,
     },
     // Only surfaced when the learner actually has leeches, so it never nags.
     ...(leechCount > 0

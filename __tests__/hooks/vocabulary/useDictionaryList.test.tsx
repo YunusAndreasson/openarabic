@@ -15,8 +15,14 @@ import { State } from 'ts-fsrs';
 
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import { LEECH_MIN_LAPSES } from '@/constants/fsrs';
-import { HORIZON_BAND_SCOPES, useDictionaryList } from '@/hooks/vocabulary/useDictionaryList';
+import {
+  DEPTH_BAND_SCOPES,
+  HORIZON_BAND_SCOPES,
+  isNarrowScope,
+  useDictionaryList,
+} from '@/hooks/vocabulary/useDictionaryList';
 import { useMemoryHorizonDistribution } from '@/hooks/vocabulary/useMemoryHorizonDistribution';
+import { useReviewDepthDistribution } from '@/hooks/vocabulary/useReviewDepthDistribution';
 import type { RootId } from '@/types/branded.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 
@@ -236,6 +242,82 @@ describe('useDictionaryList horizon scopes', () => {
     act(() => result.current.setScope('all'));
 
     expect(result.current.words).toHaveLength(studyWords.length);
+  });
+});
+
+/**
+ * The review-depth sheet does the same thing the memory sheet does — count words
+ * per band, then open the dictionary at one — so it gets the same guarantee: a
+ * row that says "58" must open a list of 58. Asserted against
+ * `useReviewDepthDistribution` itself rather than a hand-written expectation, so
+ * moving a boundary can never move only one of the two surfaces.
+ */
+describe('useDictionaryList depth scopes', () => {
+  const studyWords = [
+    measured(1, { fsrs_reps: 0, fsrs_state: State.New, fsrs_stability: 0.4 }),
+    measured(2, { fsrs_reps: 1, fsrs_stability: 2 }),
+    measured(3, { fsrs_reps: 3, fsrs_stability: 5 }),
+    measured(4, { fsrs_reps: 4, fsrs_stability: 1 }),
+    measured(5, { fsrs_reps: 7, fsrs_stability: 20 }),
+    measured(6, { fsrs_reps: 30, fsrs_stability: 90 }),
+  ];
+
+  test('each band shows exactly the words the review-depth sheet counts in it', () => {
+    const { result: distribution } = renderHook(() => useReviewDepthDistribution(studyWords));
+    const counted = Object.fromEntries(
+      distribution.current.bands.map(band => [band.key, band.count]),
+    );
+
+    for (const [band, scope] of Object.entries(DEPTH_BAND_SCOPES)) {
+      const { result } = renderHook(() => useDictionaryList({ studyWords, initialScope: scope }));
+      expect(result.current.words).toHaveLength(counted[band] as number);
+    }
+  });
+
+  test('the five depth scopes partition the collection, with no word in two', () => {
+    const seen = Object.values(DEPTH_BAND_SCOPES).flatMap(scope => {
+      const { result } = renderHook(() => useDictionaryList({ studyWords, initialScope: scope }));
+      return ids(result.current.words);
+    });
+
+    expect(seen).toHaveLength(studyWords.length);
+    expect(new Set(seen).size).toBe(studyWords.length);
+  });
+
+  test('a depth band opens weakest-first, so drilled-but-still-shaky words lead', () => {
+    const { result } = renderHook(() =>
+      useDictionaryList({ studyWords, initialScope: 'depth-few' }),
+    );
+
+    expect(result.current.sortField).toBe('strength');
+    expect(result.current.sortDirection).toBe('asc');
+    // reps 4 (stability 1) before reps 3 (stability 5).
+    expect(ids(result.current.words)).toEqual([4, 3]);
+  });
+
+  test('never-reviewed opens by when the words were saved — nothing to rank', () => {
+    const { result } = renderHook(() =>
+      useDictionaryList({ studyWords, initialScope: 'depth-none' }),
+    );
+
+    expect(result.current.sortField).toBe('recent');
+    expect(result.current.sortDirection).toBe('desc');
+  });
+
+  test('every sheet-set scope is recognised as narrow, and no picker scope is', () => {
+    // The route param is validated with this, so a scope the sheets can emit but
+    // the validator does not know would silently open the whole dictionary.
+    for (const scope of [
+      ...Object.values(DEPTH_BAND_SCOPES),
+      ...Object.values(HORIZON_BAND_SCOPES),
+      'horizon-none',
+    ]) {
+      expect(isNarrowScope(scope)).toBe(true);
+    }
+
+    for (const scope of ['all', 'due', 'struggling', 'mastered', 'nonsense']) {
+      expect(isNarrowScope(scope)).toBe(false);
+    }
   });
 });
 

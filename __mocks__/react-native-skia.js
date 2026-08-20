@@ -5,35 +5,66 @@
 
 import React from 'react';
 
+/**
+ * WHY THE NON-COMPONENT EXPORTS BELOW ARE PLAIN FUNCTIONS, NOT `jest.fn()`.
+ *
+ * `resetMocks: true` in jest.config.js strips the implementation off EVERY
+ * `jest.fn()` before each test — including the ones declared here. So a factory
+ * written as `jest.fn(() => builder)` returned `undefined` in every suite that
+ * ever called it, and `Skia.PathBuilder.Make().moveTo(...)` died with "Cannot
+ * read properties of undefined". The mock looked complete and was inert.
+ *
+ * Builders, geometry helpers and the Reanimated-backed hooks are therefore
+ * plain functions: nothing asserts on their call records, and they only have to
+ * return values of the right shape.
+ *
+ * KNOWN LIMITATION, not a design choice. The COMPONENT exports further down are
+ * still `jest.fn()`, so `resetMocks` strips them too — including `Canvas`,
+ * `Group` and `Mask`, which are written to render their children and are reset
+ * to rendering nothing. Anything nested inside a `<Canvas>` (a chart's axis
+ * labels, a legend row) is therefore absent from the tree, and a
+ * `queryByText(...)).toBeNull()` about it passes for the wrong reason. They are
+ * left as they are because every existing suite's assertions were written
+ * against that output; converting them would surface previously-invisible text
+ * and would need those suites re-checked. Fix them together, not by accident.
+ */
+
 // Mock Skia Paragraph API
 const createMockParagraph = () => ({
-  getHeight: jest.fn(() => 40),
-  getMaxWidth: jest.fn(() => 400),
-  getLongestLine: jest.fn(() => 80), // Actual text width
-  getMinIntrinsicWidth: jest.fn(() => 80),
-  getMaxIntrinsicWidth: jest.fn(() => 85), // Slightly wider for accurate measurement
-  layout: jest.fn(),
+  getHeight: () => 40,
+  getMaxWidth: () => 400,
+  getLongestLine: () => 80, // Actual text width
+  getMinIntrinsicWidth: () => 80,
+  getMaxIntrinsicWidth: () => 85, // Slightly wider for accurate measurement
+  layout: () => {},
   // Null keeps callers on their estimate-based fallback, so canvas geometry in
   // tests stays deterministic instead of depending on mocked glyph outlines.
-  getPath: jest.fn(() => null),
+  getPath: () => null,
 });
 
 // Mock Skia ParagraphBuilder API
 const createMockParagraphBuilder = () => ({
-  pushStyle: jest.fn(),
-  addText: jest.fn(),
-  pop: jest.fn(),
-  build: jest.fn(() => createMockParagraph()),
+  pushStyle: () => {},
+  addText: () => {},
+  pop: () => {},
+  build: () => createMockParagraph(),
 });
 
 // Mock Skia Path API (immutable result of PathBuilder.build())
 const createMockPath = () => ({
-  moveTo: jest.fn(),
-  lineTo: jest.fn(),
-  cubicTo: jest.fn(),
-  close: jest.fn(),
-  addArc: jest.fn(),
-  toSVGString: jest.fn(() => 'M0,0'),
+  moveTo: () => {},
+  lineTo: () => {},
+  cubicTo: () => {},
+  close: () => {},
+  addArc: () => {},
+  toSVGString: () => 'M0,0',
+  // Real Skia refuses to interpolate two paths with different verb counts, and
+  // `usePathInterpolation` THROWS on the mismatch rather than degrading — which
+  // is why WeekAheadBars checks this before handing a pair over. Every mock path
+  // is built by the same code path here, so the honest answer is `true`; a chart
+  // that guards correctly must not be punished for it under test.
+  isInterpolatable: () => true,
+  interpolate: () => createMockPath(),
 });
 
 // Mock Skia PathBuilder API — chainable builder where every mutator returns
@@ -67,9 +98,9 @@ const createMockPathBuilder = () => {
     'setIsVolatile',
   ];
   for (const name of chainableMethods) {
-    builder[name] = jest.fn(() => builder);
+    builder[name] = () => builder;
   }
-  builder.build = jest.fn(() => createMockPath());
+  builder.build = () => createMockPath();
   return builder;
 };
 
@@ -93,19 +124,19 @@ const createMockRSXform = (scos = 1, ssin = 0, tx = 0, ty = 0) => {
 
 // Mock Skia API
 export const Skia = {
-  Color: jest.fn(color => color),
+  Color: color => color,
   ParagraphBuilder: {
-    Make: jest.fn(() => createMockParagraphBuilder()),
+    Make: () => createMockParagraphBuilder(),
   },
   Path: {
-    Make: jest.fn(() => createMockPath()),
+    Make: () => createMockPath(),
   },
   PathBuilder: {
-    Make: jest.fn(() => createMockPathBuilder()),
-    MakeFromPath: jest.fn(() => createMockPathBuilder()),
+    Make: () => createMockPathBuilder(),
+    MakeFromPath: () => createMockPathBuilder(),
   },
-  RSXform: jest.fn((scos, ssin, tx, ty) => createMockRSXform(scos, ssin, tx, ty)),
-  XYWHRect: jest.fn((x, y, width, height) => ({ x, y, width, height })),
+  RSXform: (scos, ssin, tx, ty) => createMockRSXform(scos, ssin, tx, ty),
+  XYWHRect: (x, y, width, height) => ({ x, y, width, height }),
 };
 
 // Mock Canvas component
@@ -145,8 +176,8 @@ export const Atlas = jest.fn(() => null);
 export const DashPathEffect = jest.fn(() => null);
 
 // Mock vec / rect helper functions (gradient + sprite coordinates)
-export const vec = jest.fn((x, y) => ({ x, y }));
-export const rect = jest.fn((x, y, width, height) => ({ x, y, width, height }));
+export const vec = (x, y) => ({ x, y });
+export const rect = (x, y, width, height) => ({ x, y, width, height });
 
 // ---------------------------------------------------------------------------
 // Reanimated-backed hooks.
@@ -158,15 +189,15 @@ export const rect = jest.fn((x, y, width, height) => ({ x, y, width, height }));
 // the output range, which is the settled state every assertion cares about.
 // ---------------------------------------------------------------------------
 
-export const useTexture = jest.fn(() => ({ value: null }));
+export const useTexture = () => ({ value: null });
 
-export const useRSXformBuffer = jest.fn((size, modifier) => {
+export const useRSXformBuffer = (size, modifier) => {
   const buffer = Array.from({ length: size }, () => createMockRSXform());
   buffer.forEach((xform, index) => modifier(xform, index));
   return buffer;
-});
+};
 
-export const useRectBuffer = jest.fn((size, modifier) => {
+export const useRectBuffer = (size, modifier) => {
   const buffer = Array.from({ length: size }, () => ({
     x: 0,
     y: 0,
@@ -181,23 +212,23 @@ export const useRectBuffer = jest.fn((size, modifier) => {
   }));
   buffer.forEach((entry, index) => modifier(entry, index));
   return buffer;
+};
+
+export const usePathInterpolation = (_progress, _input, outputRange) => ({
+  value: outputRange?.[outputRange.length - 1] ?? null,
 });
 
-export const usePathInterpolation = jest.fn((_progress, _input, outputRange) => ({
-  value: outputRange?.[outputRange.length - 1] ?? null,
-}));
-
-export const useVectorInterpolation = jest.fn((_progress, _input, outputRange) => ({
+export const useVectorInterpolation = (_progress, _input, outputRange) => ({
   value: outputRange?.[outputRange.length - 1] ?? { x: 0, y: 0 },
-}));
+});
 
 // Mock matchFont API
-export const matchFont = jest.fn(config => ({
-  getSize: jest.fn(() => config.fontSize || 17),
-  getTypeface: jest.fn(() => ({
-    getFamilyName: jest.fn(() => config.fontFamily || 'System'),
-  })),
-}));
+export const matchFont = config => ({
+  getSize: () => config.fontSize || 17,
+  getTypeface: () => ({
+    getFamilyName: () => config.fontFamily || 'System',
+  }),
+});
 
 // Mock enums
 export const TextAlign = {

@@ -21,6 +21,7 @@ export const ROUTE_PATHS = {
   PRACTICE_DICTIONARY: '/(tabs)/practice/dictionary',
   PRACTICE_DUE_WORDS: '/due-words',
   PRACTICE_MEMORY_RETENTION: '/memory-retention',
+  PRACTICE_REVIEW_DEPTH: '/review-depth',
   PRACTICE_STUDY_STREAK: '/study-streak',
   PRACTICE_WORDS_TO_REVISIT: '/words-to-revisit',
 

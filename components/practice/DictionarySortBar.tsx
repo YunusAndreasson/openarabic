@@ -6,7 +6,7 @@ import { Ionicons, SegmentedControl, type SegmentedControlOption } from '@/compo
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
-import { isHorizonScope } from '@/hooks/vocabulary/useDictionaryList';
+import { isNarrowScope } from '@/hooks/vocabulary/useDictionaryList';
 import type {
   DictionaryScope,
   DictionarySortField,
@@ -31,6 +31,14 @@ export const SCOPE_LABELS: Record<DictionaryScope, string> = {
   'horizon-months': STRINGS.SCOPE_HORIZON_MONTHS,
   'horizon-year': STRINGS.SCOPE_HORIZON_YEAR,
   'horizon-none': STRINGS.SCOPE_HORIZON_NONE,
+  // Set from the review-depth sheet. These spell "Reviewed" out where the sheet
+  // row says a bare "5–9 times": under the row's own heading the unit is
+  // obvious, and on a filtered word list it would not be.
+  'depth-deep': STRINGS.SCOPE_DEPTH_DEEP,
+  'depth-solid': STRINGS.SCOPE_DEPTH_SOLID,
+  'depth-few': STRINGS.SCOPE_DEPTH_FEW,
+  'depth-once': STRINGS.SCOPE_DEPTH_ONCE,
+  'depth-none': STRINGS.SCOPE_DEPTH_NONE,
 };
 
 const CHEVRON_SIZE = 12;
@@ -81,7 +89,7 @@ const DictionarySortBarComponent: FC<DictionarySortBarProps> = ({
   onClearScope,
 }) => {
   const colors = useColors();
-  const isHorizonFilter = isHorizonScope(scope);
+  const isNarrowFilter = isNarrowScope(scope);
 
   // The direction arrow rides on whichever option is active, so the option list
   // has to be rebuilt when either the field or the direction changes.
@@ -96,18 +104,18 @@ const DictionarySortBarComponent: FC<DictionarySortBarProps> = ({
   );
 
   // One control, one meaning at a time. Unfiltered (or under a picker scope) it
-  // opens the picker; under a horizon filter it drops it. Making the same
-  // element do both would leave a filter that arrived from another screen with
-  // no visible way out — the picker cannot show it, so a chevron there would
-  // open a list that disagrees with the line above it.
+  // opens the picker; under a filter that arrived from a sheet it drops it.
+  // Making the same element do both would leave such a filter with no visible
+  // way out — the picker cannot show it, so a chevron there would open a list
+  // that disagrees with the line above it.
   const handlePressScope = useCallback(() => {
     selectionFeedback();
-    if (isHorizonFilter) {
+    if (isNarrowFilter) {
       onClearScope();
       return;
     }
     onPressScope();
-  }, [isHorizonFilter, onClearScope, onPressScope]);
+  }, [isNarrowFilter, onClearScope, onPressScope]);
 
   const isScoped = scope !== 'all';
   // Scoped, the count leads with the scope's name ("Due now · 24"); unscoped it
@@ -129,7 +137,7 @@ const DictionarySortBarComponent: FC<DictionarySortBarProps> = ({
       />
 
       <Pressable
-        accessibilityHint={isHorizonFilter ? STRINGS.CLEAR_FILTER_A11Y : STRINGS.FILTER_WORDS_A11Y}
+        accessibilityHint={isNarrowFilter ? STRINGS.CLEAR_FILTER_A11Y : STRINGS.FILTER_WORDS_A11Y}
         accessibilityLabel={countLabel}
         accessibilityRole="button"
         hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
@@ -143,7 +151,7 @@ const DictionarySortBarComponent: FC<DictionarySortBarProps> = ({
           color={isScoped ? colors.tint : colors.textTertiary}
           // The icon says which of the two things the control does, so the
           // affordance is never guessed from the label alone.
-          name={isHorizonFilter ? 'close-circle' : 'chevron-down'}
+          name={isNarrowFilter ? 'close-circle' : 'chevron-down'}
           size={CHEVRON_SIZE}
         />
       </Pressable>

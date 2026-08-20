@@ -618,12 +618,14 @@ function AppContent() {
                   {/* Opened from the review header's dormant mic. Four lines of
                       content, so it fits them. */}
                   <Stack.Screen name="voice-offer" options={createSheetOptions(colors)} />
-                  {/* These three fit their contents: fixed-height charts under a
-                      short header, no scrolling. See createSheetOptions for what
-                      'fitToContents' requires of the screen's content. */}
+                  {/* These four fit their contents: fixed-height charts, or a
+                      handful of rows, under a short header — no scrolling. See
+                      createSheetOptions for what 'fitToContents' requires of the
+                      screen's content. */}
                   <Stack.Screen name="due-words" options={createSheetOptions(colors)} />
                   <Stack.Screen name="memory-retention" options={createSheetOptions(colors)} />
                   <Stack.Screen name="study-streak" options={createSheetOptions(colors)} />
+                  <Stack.Screen name="review-depth" options={createSheetOptions(colors)} />
                   {/* The odd one out: up to 20 leech rows never fit their
                       contents, so this sheet scrolls and needs a fixed detent.
                       Its screen owns the sheet background because the scroll

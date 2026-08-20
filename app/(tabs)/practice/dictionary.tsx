@@ -28,7 +28,7 @@ import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useDictionaryList, useFSRSQueries, useResetWordProgress } from '@/hooks/vocabulary';
-import { isHorizonScope } from '@/hooks/vocabulary/useDictionaryList';
+import { isNarrowScope } from '@/hooks/vocabulary/useDictionaryList';
 import type { DictionaryScope, PickerScope } from '@/hooks/vocabulary/useDictionaryList';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
@@ -38,13 +38,18 @@ const SCOPE_EMPTY_MESSAGES: Record<Exclude<DictionaryScope, 'all'>, string> = {
   due: STRINGS.SCOPE_EMPTY_DUE,
   struggling: STRINGS.SCOPE_EMPTY_STRUGGLING,
   mastered: STRINGS.SCOPE_EMPTY_MASTERED,
-  // Only reachable by searching inside a band: the memory sheet does not make an
-  // empty band pressable, so there is no way to arrive at one of these cold.
+  // Only reachable by searching inside a band: neither sheet makes an empty
+  // band pressable, so there is no way to arrive at one of these cold.
   'horizon-days': STRINGS.SCOPE_EMPTY_HORIZON,
   'horizon-weeks': STRINGS.SCOPE_EMPTY_HORIZON,
   'horizon-months': STRINGS.SCOPE_EMPTY_HORIZON,
   'horizon-year': STRINGS.SCOPE_EMPTY_HORIZON,
   'horizon-none': STRINGS.SCOPE_EMPTY_HORIZON_NONE,
+  'depth-deep': STRINGS.SCOPE_EMPTY_DEPTH,
+  'depth-solid': STRINGS.SCOPE_EMPTY_DEPTH,
+  'depth-few': STRINGS.SCOPE_EMPTY_DEPTH,
+  'depth-once': STRINGS.SCOPE_EMPTY_DEPTH,
+  'depth-none': STRINGS.SCOPE_EMPTY_DEPTH_NONE,
 };
 
 // Row mount fade — Reanimated 4 CSS @keyframes. Unlike entering/exiting layout
@@ -76,11 +81,12 @@ export default function DictionaryScreen(): JSX.Element {
   const toggleRoot = toggleRootMutation.mutateAsync;
   const { confirmReset } = useResetWordProgress();
 
-  // The memory-horizon sheet opens this screen *at* a band. Validated rather
-  // than cast: the value arrives from a URL, and an unrecognised one must fall
-  // back to the whole dictionary instead of filtering it down to nothing.
+  // The memory-horizon and review-depth sheets open this screen *at* a band.
+  // Validated rather than cast: the value arrives from a URL, and an
+  // unrecognised one must fall back to the whole dictionary instead of
+  // filtering it down to nothing.
   const { scope: scopeParam } = useLocalSearchParams<{ scope?: string }>();
-  const initialScope = scopeParam && isHorizonScope(scopeParam) ? scopeParam : undefined;
+  const initialScope = scopeParam && isNarrowScope(scopeParam) ? scopeParam : undefined;
 
   const {
     words,
@@ -392,7 +398,7 @@ export default function DictionaryScreen(): JSX.Element {
         // A horizon band is not one of these four, so under one there is no
         // selection to show. Unreachable in practice — the control that opens
         // this picker clears the band instead while one is active.
-        selectedValue={isHorizonScope(scope) ? undefined : scope}
+        selectedValue={isNarrowScope(scope) ? undefined : scope}
         title={STRINGS.SCOPE_PICKER_TITLE}
         onClose={handleCloseScopePicker}
         onSelect={handleSelectScope}

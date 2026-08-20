@@ -583,15 +583,67 @@ export const STRINGS = {
   HORIZON_BAND_HINT_MONTHS: 'a month to a year',
   HORIZON_BAND_HINT_YEAR: 'over a year',
   /**
-   * `{spoken}` is a whole clause, not the visible caption: the caption reads as
-   * a fragment under a label ("under a week"), and only the band rows can have
-   * "holds" put in front of it. "Not started" describes why a word has no
-   * horizon at all, so it supplies its own — otherwise VoiceOver said "holds
-   * saved, never reviewed".
+   * Shared by BOTH breakdown sheets, because they draw the same row and differ
+   * only in what goes in `{clause}`.
+   *
+   * `{clause}` is a whole clause, not the visible caption. A horizon caption
+   * reads as a fragment under its label ("under a week") and only the band rows
+   * can have "holds" put in front of it — "Not started" describes why a word has
+   * no horizon at all, so it supplies its own, or VoiceOver said "holds saved,
+   * never reviewed". A depth caption is already a full phrase, so it goes in
+   * unchanged.
    */
-  HORIZON_ROW_A11Y: '{band}, {count} words, {spoken}. Opens them in your dictionary.',
-  HORIZON_ROW_A11Y_EMPTY: '{band}, no words, {spoken}.',
+  BREAKDOWN_ROW_A11Y: '{band}, {count} words, {clause}. Opens them in your dictionary.',
+  BREAKDOWN_ROW_A11Y_EMPTY: '{band}, no words, {clause}.',
   HORIZON_ROW_HOLDS_A11Y: 'holds {hint}',
+  // Review-depth sheet — the breakdown one tap under the "Reviews done" tile.
+  //
+  // It answers the tile's own number: `Σ fsrs_reps` is grades given, and this
+  // sheet says where those grades went. It deliberately does NOT draw a bar per
+  // day, however obvious that detail view is for a review count: `study_words`
+  // holds current FSRS state only and `fsrs_last_review` is overwritten by every
+  // review, so a per-day series would be invented rather than measured. See
+  // `utils/practiceDepth`.
+  REVIEW_DEPTH_TITLE: 'Reviews done',
+  REVIEW_DEPTH_SUBTITLE: 'Every grade you have given, and where the effort went',
+  /** Three readings of one quantity, so all three are counts of reviews. */
+  DEPTH_METRIC_TOTAL: 'Total',
+  DEPTH_METRIC_PER_DAY: 'Per study day',
+  /** Reviews ÷ EVERY saved word, matching the rows below, which partition all of them. */
+  DEPTH_METRIC_PER_WORD: 'Per word',
+  /** Marks a mean, so it cannot be read as one of the exact counts beside it. */
+  DEPTH_AVERAGE: '≈{count}',
+  /**
+   * A real but sub-unit mean. `≈0` beside a Total of `1` reads as a
+   * contradiction rather than as an average, and that is exactly the first-week
+   * case — one review spread over three study days — where the sheet is meant to
+   * be encouraging. An inequality claims no precision it does not have.
+   */
+  DEPTH_AVERAGE_UNDER_ONE: '<1',
+  /** Bands by rep count. The label IS the range — see DEPTH_BAND_HINT_* below. */
+  DEPTH_BAND_DEEP: '10+ times',
+  DEPTH_BAND_SOLID: '5–9 times',
+  DEPTH_BAND_FEW: '2–4 times',
+  DEPTH_BAND_ONCE: 'Once',
+  DEPTH_BAND_NONE: 'Not yet',
+  /**
+   * What the band MEANS. The opposite of HORIZON_BAND_HINT_*, which have to
+   * spell out a span because "Weeks" does not: "5–9 times" already has, so
+   * repeating the range here would spend a caption line saying nothing.
+   */
+  DEPTH_BAND_HINT_DEEP: 'your most drilled words',
+  DEPTH_BAND_HINT_SOLID: 'coming back reliably',
+  DEPTH_BAND_HINT_FEW: 'still bedding in',
+  DEPTH_BAND_HINT_ONCE: 'one pass so far',
+  DEPTH_BAND_HINT_NONE: 'saved, never reviewed',
+  /**
+   * The reason depth is worth showing at all, stated once: FSRS grows a word's
+   * stability on every successful review, so the count is not a tally of effort
+   * but the thing that bought the interval.
+   */
+  DEPTH_EXPLAINER:
+    'Every pass you get right pushes a word further out, so the words highest on this list are the ones that now ask least of you.',
+  DEPTH_EMPTY: 'Nothing reviewed yet — your first session fills this in',
   DUE_WORDS_FORECAST_SUBTITLE: 'How many words come up for review each day',
   DUE_WORDS_FORECAST: 'This week',
   // Week-ahead card
@@ -731,6 +783,19 @@ export const STRINGS = {
   SCOPE_HORIZON_NONE: 'Not started',
   SCOPE_EMPTY_HORIZON: 'No words hold for that long yet',
   SCOPE_EMPTY_HORIZON_NONE: 'Every word has a review behind it',
+  /**
+   * Depth scopes. Reached from the review-depth sheet, on the same terms as the
+   * horizon scopes above. These spell "Reviewed" out where the sheet's row says
+   * a bare "5–9 times": under that row's own heading the unit is obvious, and
+   * on a filtered word list it would not be.
+   */
+  SCOPE_DEPTH_DEEP: 'Reviewed 10+ times',
+  SCOPE_DEPTH_SOLID: 'Reviewed 5–9 times',
+  SCOPE_DEPTH_FEW: 'Reviewed 2–4 times',
+  SCOPE_DEPTH_ONCE: 'Reviewed once',
+  SCOPE_DEPTH_NONE: 'Never reviewed',
+  SCOPE_EMPTY_DEPTH: 'No words have been reviewed that often yet',
+  SCOPE_EMPTY_DEPTH_NONE: 'Every word has at least one review',
   /** The filter arrived from another screen, so it says how to leave. */
   CLEAR_FILTER_A11Y: 'Clear filter, show all words',
   SHOW_ALL_WORDS: 'Show all words',

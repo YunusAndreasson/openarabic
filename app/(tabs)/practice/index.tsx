@@ -107,6 +107,10 @@ export default function PracticeScreen(): JSX.Element {
     () => router.push(ROUTE_PATHS.PRACTICE_WORDS_TO_REVISIT),
     [router],
   );
+  const handleReviewsPress = useCallback(
+    () => router.push(ROUTE_PATHS.PRACTICE_REVIEW_DEPTH),
+    [router],
+  );
 
   // Leech count for the (conditional) "Revisit" stat card — reuses the words
   // already fetched, so no extra query.
@@ -253,6 +257,7 @@ export default function PracticeScreen(): JSX.Element {
             onStreakPress={handleStreakPress}
             onMemoryPress={handleMemoryStrengthInfo}
             onRevisitPress={handleRevisitPress}
+            onReviewsPress={handleReviewsPress}
           />
         </Animated.View>
       </ScrollView>
