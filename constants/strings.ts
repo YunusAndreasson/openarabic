@@ -575,7 +575,16 @@ export const STRINGS = {
   /** Tags the band the median word falls in — the hero's "typical", made locatable. */
   MEMORY_HORIZON_TYPICAL_TAG: 'typical',
   MEMORY_HORIZON_NOT_STARTED: 'Not started',
-  MEMORY_HORIZON_NOT_STARTED_HINT: 'saved, never reviewed',
+  /**
+   * NOT the same caption as `DEPTH_BAND_HINT_NONE`, deliberately, because it is
+   * not the same set of words. `horizon-none` is "no measurable horizon", which
+   * also catches a practised word whose stability never landed; `depth-none` is
+   * strictly `fsrs_reps === 0` (see `useDictionaryList`). They were both reading
+   * "saved, never reviewed", so two rows in two sheets gave the identical reason
+   * for two different counts — which reads as a bug rather than as the honest
+   * distinction it is.
+   */
+  MEMORY_HORIZON_NOT_STARTED_HINT: 'no horizon yet',
   MEMORY_HORIZON_EMPTY: 'Nothing practised yet — your first review puts a word on this axis',
   /** Plain-language span per band, so a label never has to be decoded. */
   HORIZON_BAND_HINT_DAYS: 'under a week',
@@ -641,8 +650,15 @@ export const STRINGS = {
    * stability on every successful review, so the count is not a tally of effort
    * but the thing that bought the interval.
    */
+  /**
+   * States the mechanism WITHOUT pointing at a position in the list. It used to
+   * say "the words highest on this list", which was true only while the bands
+   * ran most-drilled first — so the copy silently encoded the row order, and
+   * bound itself to break the moment that order was made to match the memory
+   * sheet's. Say what a review does; let the rows show where each word is.
+   */
   DEPTH_EXPLAINER:
-    'Every pass you get right pushes a word further out, so the words highest on this list are the ones that now ask least of you.',
+    'Every pass you get right pushes a word further out, so the most-reviewed words are the ones that now ask least of you.',
   DEPTH_EMPTY: 'Nothing reviewed yet — your first session fills this in',
   DUE_WORDS_FORECAST_SUBTITLE: 'How many words come up for review each day',
   DUE_WORDS_FORECAST: 'This week',
@@ -704,6 +720,20 @@ export const STRINGS = {
   // Practice stat tiles
   /** Grades given, not words seen — distinct from "words reviewed today" above. */
   REVIEWS_LABEL: 'Reviews done',
+  /**
+   * What each habit tile says out loud.
+   *
+   * A tile that reads only "Day streak, 43" gives a screen-reader user the
+   * number and hides the door — the same gap the chevron closes visually. These
+   * end the way the hero's and the week-ahead card's labels already do, with
+   * what the tap opens, so every pressable panel on the screen announces itself
+   * the same way.
+   */
+  STREAK_TILE_A11Y: 'Day streak, {count}. Opens your practice history.',
+  STREAK_TILE_A11Y_EMPTY: 'Day streak, not loaded yet. Opens your practice history.',
+  REVIEWS_TILE_A11Y:
+    'Reviews done, {count}. Opens the breakdown by how often each word has come up.',
+  REVISIT_TILE_A11Y: '{count} words to revisit. Opens the words you forget most.',
   /** Stat-tile placeholder for a metric with nothing to measure yet. */
   EMPTY_METRIC: '—',
   VOCABULARY_GROWTH_LABEL: 'Words in practice',
@@ -726,8 +756,13 @@ export const STRINGS = {
   STUDY_STREAK_CURRENT: 'Current',
   STUDY_STREAK_LONGEST: 'Longest',
   STUDY_STREAK_TOTAL: 'Total',
-  STUDY_STREAK_CHART_TITLE: 'Last 40 days',
-  STUDY_STREAK_CHART_DESCRIPTION: 'Each bar is a day you practiced',
+  /**
+   * The streak sheet's closing caption. It used to be the subtitle of a SECOND
+   * `BottomSheetHeader` mid-sheet, whose title read "Last 40 days" directly above
+   * a chart already captioned "40 days ago … Today" — so the title restated its
+   * own drawing and the sheet was the only one in the tab with two headers.
+   */
+  STUDY_STREAK_CHART_DESCRIPTION: 'Each bar is a day you practised',
   LOADING_STREAK: 'Loading streak…',
   FAILED_TO_LOAD_STREAK: "Couldn't load streak. Try again",
   STUDY_STREAK_EMPTY_STATE: 'Complete a review to start your streak',
@@ -739,6 +774,17 @@ export const STRINGS = {
   FAILED_TO_LOAD_WORDS_TO_REVISIT: "Couldn't load words. Try again",
   WORDS_TO_REVISIT_EMPTY_STATE: 'Nothing tripping you up right now — nice work',
   FORGOT_N_TIMES: '{count}× forgot',
+  /**
+   * The overflow out of the capped leech list and into the dictionary.
+   *
+   * Only rendered when the list actually truncated. A row offering to "see all"
+   * the twenty words already on screen would be the drill-down that leads back
+   * to what you just read — the same mistake the old retention gauge made under
+   * the memory hero.
+   */
+  WORDS_TO_REVISIT_SEE_ALL: 'See all {count}',
+  WORDS_TO_REVISIT_SEE_ALL_HINT: 'the hardest {shown} are listed above',
+  WORDS_TO_REVISIT_SEE_ALL_A11Y: 'See all {count} words to revisit. Opens them in your dictionary.',
   RESET_WORD_PROGRESS: 'Reset progress?',
   RESET_WORD_PROGRESS_CONFIRM: 'This word starts over as new. Your other progress is kept.',
   WORD_PROGRESS_RESET: 'Progress reset',
@@ -882,7 +928,7 @@ export const STRINGS = {
   // Notification permission priming (review completion screen)
   NOTIFICATION_PRIMING_TITLE: 'Catch words before they fade',
   NOTIFICATION_PRIMING_BODY:
-    "Each word you just practiced is now on its own forgetting curve. We'll nudge you only when a review actually matters — usually just before words start to fade.",
+    "Each word you just practised is now on its own forgetting curve. We'll nudge you only when a review actually matters — usually just before words start to fade.",
   NOTIFICATION_PRIMING_ACCEPT: 'Turn on reminders',
   NOTIFICATION_PRIMING_DECLINE: 'Not now',
   // Speak-the-answer priming (practice screen). The download size is stated in

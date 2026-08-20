@@ -1,4 +1,7 @@
 import { Group, Line } from '@shopify/react-native-skia';
+import { StyleSheet } from 'react-native';
+
+import { ChartBaseline } from './ChartBaseline';
 
 import type { ChartColors } from '@/types/ui/chart.types';
 
@@ -36,20 +39,18 @@ export function ChartGrid({ width, height, topPadding = 0, chartColors }: ChartG
           color={gridColor}
           p1={{ x: 0, y: line.y }}
           p2={{ x: width, y: line.y }}
-          strokeWidth={1}
+          strokeWidth={StyleSheet.hairlineWidth}
           style="stroke"
         />
       ))}
 
-      {/* Baseline — same hairline weight as the grid, no heavier frame */}
-      <Line
-        key="baseline"
-        color={gridColor}
-        p1={{ x: 0, y: height }}
-        p2={{ x: width, y: height }}
-        strokeWidth={1}
-        style="stroke"
-      />
+      {/* Baseline — the shared one, so this chart's floor matches the sparklines'.
+          The grid lines above moved to the same weight with it: they used to be
+          `strokeWidth={1}` under a comment calling that "the same hairline weight
+          as the grid", and changing only the baseline would have left the axis
+          floor FINER than the recessive lines above it — the inverse of the
+          hierarchy either version was aiming at. */}
+      <ChartBaseline width={width} y={height} color={gridColor} />
     </Group>
   );
 }

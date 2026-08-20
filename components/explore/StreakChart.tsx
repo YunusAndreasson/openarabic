@@ -1,4 +1,4 @@
-import { Canvas, Group, Path, Skia, type SkPath } from '@shopify/react-native-skia';
+import { Canvas, Group, Path, type SkPath } from '@shopify/react-native-skia';
 import { memo, useEffect, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useDerivedValue, useSharedValue, withDelay, withSpring } from 'react-native-reanimated';
@@ -9,6 +9,7 @@ import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { DailyReadingActivity, StreakPeriod } from '@/services/studyStreak';
+import { roundedTopBarPath } from '@/utils/barChartPath';
 import { withOpacity } from '@/utils/colorUtils';
 
 interface StreakChartProps {
@@ -19,7 +20,6 @@ interface StreakChartProps {
 const CHART_HEIGHT = LAYOUT.CHART.HEIGHT; // 60 via constants
 const BAR_HEIGHT = LAYOUT.BUTTON.HEIGHT.LARGE / 2; // ~24 via constants
 const BAR_GAP = LAYOUT.CHART.BAR_GAP; // 2 via constants
-const BAR_TOP_RADIUS = 3; // Rounded data-end; baseline stays square
 const INACTIVE_STUB_HEIGHT = Math.round(BAR_HEIGHT * 0.25); // Short baseline stubs
 const STAGGER_PER_BAR_MS = 30;
 
@@ -29,23 +29,9 @@ const ACTIVE_STREAK_OPACITY = 1;
 const PAST_STREAK_OPACITY = 0.55;
 const ISOLATED_DAY_OPACITY = 0.35;
 
-/**
- * Bar with a rounded top and a square baseline. Quadratic corner
- * approximation is indistinguishable from a circular arc at ~6px widths.
- */
-const buildBarPath = (x: number, width: number, height: number): SkPath => {
-  const radius = Math.min(BAR_TOP_RADIUS, width / 2, height);
-  const top = BAR_HEIGHT - height;
-  return Skia.PathBuilder.Make()
-    .moveTo(x, BAR_HEIGHT)
-    .lineTo(x, top + radius)
-    .quadTo(x, top, x + radius, top)
-    .lineTo(x + width - radius, top)
-    .quadTo(x + width, top, x + width, top + radius)
-    .lineTo(x + width, BAR_HEIGHT)
-    .close()
-    .build();
-};
+/** Bar with a rounded top and a square baseline — see `utils/barChartPath`. */
+const buildBarPath = (x: number, width: number, height: number): SkPath =>
+  roundedTopBarPath({ x, width, height, baseline: BAR_HEIGHT });
 
 // Extract expensive calculations outside component
 const createStreakMap = (streakPeriods: StreakPeriod[]): Map<string, StreakPeriod> => {

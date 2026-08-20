@@ -1,7 +1,6 @@
 import {
   Canvas,
   Group,
-  Line,
   Path,
   Skia,
   usePathInterpolation,
@@ -14,7 +13,13 @@ import { StyleSheet, View } from 'react-native';
 import { useDerivedValue, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 
 import { TIMING_CONFIG, TIMING_CONSTANTS } from '@/constants/animation';
+// Direct path, not the `charts` barrel: that barrel also re-exports
+// `VocabularyChart`, and Metro does not tree-shake — importing it here
+// would evaluate the whole line-chart stack on the practice tab's first
+// render for a component that draws no line chart.
+import { ChartBaseline } from '@/components/common/charts/ChartBaseline';
 import { CHART_OPACITY, useChartColors } from '@/constants/chartColors';
+import { appendRoundedTopBar, BAR_TOP_RADIUS } from '@/utils/barChartPath';
 import { withOpacity } from '@/utils/colorUtils';
 
 /**
@@ -45,7 +50,6 @@ const CHART_HEIGHT = 28;
 const DAYS = 7;
 const BAR_GAP = 3;
 const BAR_WIDTH = (CHART_WIDTH - (DAYS - 1) * BAR_GAP) / DAYS;
-const BAR_TOP_RADIUS = 3;
 /** Minimum vertical scale, so a single due word does not fill the canvas. */
 const MIN_SCALE = 4;
 
@@ -56,6 +60,9 @@ const MIN_SCALE = 4;
  *   1. always exactly DAYS columns, even empty ones;
  *   2. always the same seven verbs per column — a zero-count day emits them
  *      degenerately on the baseline rather than branching to a shorter form.
+ *
+ * The second one is now held by `appendRoundedTopBar` having a single code path
+ * rather than by this loop remembering not to add an early return.
  */
 function buildWeekPath(counts: readonly number[], scale: number): SkPath {
   const builder = Skia.PathBuilder.Make();
@@ -66,19 +73,12 @@ function buildWeekPath(counts: readonly number[], scale: number): SkPath {
     const height =
       count <= 0 ? 0 : Math.max(BAR_TOP_RADIUS * 2, (count / safeScale) * CHART_HEIGHT);
 
-    const left = index * (BAR_WIDTH + BAR_GAP);
-    const right = left + BAR_WIDTH;
-    const top = CHART_HEIGHT - height;
-    const radius = Math.min(BAR_TOP_RADIUS, BAR_WIDTH / 2);
-
-    builder
-      .moveTo(left, CHART_HEIGHT)
-      .lineTo(left, top + radius)
-      .quadTo(left, top, left + radius, top)
-      .lineTo(right - radius, top)
-      .quadTo(right, top, right, top + radius)
-      .lineTo(right, CHART_HEIGHT)
-      .close();
+    appendRoundedTopBar(builder, {
+      x: index * (BAR_WIDTH + BAR_GAP),
+      width: BAR_WIDTH,
+      height,
+      baseline: CHART_HEIGHT,
+    });
   }
 
   return builder.build();
@@ -170,13 +170,7 @@ export function WeekAheadBars({ counts }: WeekAheadBarsProps): JSX.Element {
 
         {/* Baseline, so a fully caught-up week still reads as a chart rather
             than as a blank rectangle. */}
-        <Line
-          p1={vec(0, CHART_HEIGHT)}
-          p2={vec(CHART_WIDTH, CHART_HEIGHT)}
-          color={chartColors.ui.grid}
-          strokeWidth={StyleSheet.hairlineWidth}
-          style="stroke"
-        />
+        <ChartBaseline width={CHART_WIDTH} y={CHART_HEIGHT} color={chartColors.ui.grid} />
       </Canvas>
     </View>
   );

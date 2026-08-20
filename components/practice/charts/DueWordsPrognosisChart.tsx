@@ -2,7 +2,7 @@ import { memo, useMemo } from 'react';
 
 import { VocabularyChart } from '@/components/common/charts';
 import type { DataPoint } from '@/types/ui/chart.types';
-import { CHART_LABELS, EMPTY_STATE_MESSAGES } from '@/constants/chartMessages';
+import { EMPTY_STATE_MESSAGES } from '@/constants/chartMessages';
 import { useGraphWidth } from '@/constants/chartConstants';
 import { STRINGS } from '@/constants/strings';
 import { formatMonthDay, formatWeekday } from '@/utils/chartDataUtils';
@@ -12,7 +12,6 @@ import type { StudyWord } from '@/types/vocabulary.types';
 
 interface DueWordsPrognosisChartProps {
   studyWords: StudyWord[];
-  hideTitle?: boolean;
 }
 
 interface DueWordsRecord {
@@ -31,22 +30,15 @@ interface DueWordsRecord {
 const formatWholeNumber = (value: number): string => `${value}`;
 
 export const DueWordsPrognosisChart = memo<DueWordsPrognosisChartProps>(
-  ({ studyWords = [], hideTitle = true }: DueWordsPrognosisChartProps) => {
+  ({ studyWords = [] }: DueWordsPrognosisChartProps) => {
     const graphWidth = useGraphWidth();
     const { dueWordsData, chartData } = useDueWordsChart(studyWords);
     const { xLabels, xLabelPositions } = useChartAxisLabels(dueWordsData);
 
-    // Subtitle: today's count + the heaviest upcoming day, in plain words
-    const subtitle = useMemo(() => {
-      const { currentDue, peakDue } = chartData.insights;
-      const totalWords = studyWords.length;
-
-      if (totalWords === 0) {
-        return EMPTY_STATE_MESSAGES.dueWords;
-      }
-
-      return `${currentDue} ${STRINGS.TODAY_TO_REVIEW} · peak ${peakDue}`;
-    }, [chartData.insights, studyWords.length]);
+    // No title or subtitle: this chart only ever renders inside the /due-words
+    // sheet, which states both in its own header. It used to pass them anyway
+    // with `hideTitle` defaulting to true, so a subtitle was built on every
+    // render for a header that could not draw.
 
     // The busiest upcoming day — the actionable fact in this forecast
     const bottomSummary = useMemo(() => {
@@ -106,9 +98,6 @@ export const DueWordsPrognosisChart = memo<DueWordsPrognosisChartProps>(
         yMax={yMax}
         topPadding={16}
         graphWidth={graphWidth}
-        title={CHART_LABELS.DUE_WORDS_PROGNOSIS}
-        subtitle={subtitle}
-        hideTitle={hideTitle}
         hasData={chartData.hasData}
         isFuturePrediction={true} // Today is leftmost for future predictions
         emptyStateText={EMPTY_STATE_MESSAGES.dueWords}

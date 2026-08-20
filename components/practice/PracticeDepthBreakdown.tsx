@@ -3,16 +3,14 @@ import { StyleSheet, View } from 'react-native';
 
 import { MetricCard } from '@/components/common';
 import { LAYOUT } from '@/constants/layout';
-import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useStudyStreak } from '@/hooks/practice/useStudyStreak';
-import { DEPTH_BAND_SCOPES, type DictionaryScope } from '@/hooks/vocabulary/useDictionaryList';
+import { DEPTH_BAND_SCOPES } from '@/hooks/vocabulary/useDictionaryList';
 import { useReviewDepthDistribution } from '@/hooks/vocabulary/useReviewDepthDistribution';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { DEPTH_BAND_HINTS } from '@/utils/practiceDepth';
-import { dismissSheetThenNavigate } from '@/utils/sheetNavigation';
 
-import { BreakdownExplainer, BreakdownRow, breakdownRowLabel } from './BreakdownRow';
+import { BandBreakdown, type BreakdownBand } from './BandBreakdown';
 
 /**
  * An average worth printing, or the empty metric.
@@ -107,49 +105,37 @@ export function PracticeDepthBreakdown({ studyWords }: { studyWords: StudyWord[]
     },
   ];
 
-  // Dismiss this sheet, then open the band's words once it has actually gone —
-  // the same two-step the memory sheet's rows use, for the reasons in
-  // `dismissSheetThenNavigate`.
-  const openScope = (scope: DictionaryScope) => {
-    dismissSheetThenNavigate({ pathname: ROUTE_PATHS.PRACTICE_DICTIONARY, params: { scope } });
-  };
+  const rows: BreakdownBand[] = bands.map(band => ({
+    key: band.key,
+    label: band.label,
+    hint: DEPTH_BAND_HINTS[band.key],
+    count: band.count,
+    // "Not yet" is kept off the axis for the same reason the memory sheet keeps
+    // "Not started" off its own: those words have no practice behind them, so a
+    // bar drawn on the practice scale would put them on an axis they are not on.
+    fraction: band.key === 'none' ? undefined : maxBandCount > 0 ? band.count / maxBandCount : 0,
+    scope: DEPTH_BAND_SCOPES[band.key],
+    // The depth caption is already a full phrase, so it needs no verb in front
+    // of it the way a horizon band's "under a week" does.
+    clause: DEPTH_BAND_HINTS[band.key],
+  }));
 
   return (
     <>
+      {/* Static readouts, so they carry no chevron — `MetricCard` draws one only
+          for a tile that leads somewhere. These are the same card at the same
+          size as the pressable ones on the practice screen, which is exactly why
+          the signifier has to distinguish them. */}
       <View style={styles.metricsRow}>
         {metrics.map(metric => (
           <MetricCard key={metric.id} value={metric.value} label={metric.label} />
         ))}
       </View>
 
-      {bands.map(band => {
-        const hint = DEPTH_BAND_HINTS[band.key];
-        return (
-          <BreakdownRow
-            key={band.key}
-            label={band.label}
-            hint={hint}
-            count={band.count}
-            // "Not yet" is kept off the axis for the same reason the memory
-            // sheet keeps "Not started" off its own: those words have no
-            // practice behind them, so a bar drawn on the practice scale would
-            // put them on an axis they are not on.
-            fraction={
-              band.key === 'none' ? undefined : maxBandCount > 0 ? band.count / maxBandCount : 0
-            }
-            // The depth caption is already a full phrase, so it needs no verb
-            // in front of it the way a horizon band's "under a week" does.
-            accessibilityLabel={breakdownRowLabel({
-              band: band.label,
-              count: band.count,
-              clause: hint,
-            })}
-            onPress={band.count > 0 ? () => openScope(DEPTH_BAND_SCOPES[band.key]) : undefined}
-          />
-        );
-      })}
-
-      <BreakdownExplainer text={totalReviews > 0 ? STRINGS.DEPTH_EXPLAINER : STRINGS.DEPTH_EMPTY} />
+      <BandBreakdown
+        bands={rows}
+        explainer={totalReviews > 0 ? STRINGS.DEPTH_EXPLAINER : STRINGS.DEPTH_EMPTY}
+      />
     </>
   );
 }

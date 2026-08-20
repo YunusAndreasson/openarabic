@@ -4,13 +4,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Badge, BottomSheetHeader, BottomSheetStateHandler, ListRow } from '@/components/common';
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { IconButton } from '@/components/ui';
+import { IconButton, Ionicons } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
+import { useColors } from '@/hooks/theme/useColors';
 import { useResetWordProgress } from '@/hooks/vocabulary/useResetWordProgress';
 import { useWordsToRevisit } from '@/hooks/vocabulary/useWordsToRevisit';
 import type { RootId } from '@/types/branded.types';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { dismissSheetThenNavigate } from '@/utils/sheetNavigation';
 
 function formatForgotCount(count: number): string {
   return STRINGS.FORGOT_N_TIMES.replace('{count}', String(count));
@@ -60,6 +63,56 @@ function LeechRow({ word, divider, onReset }: LeechRowProps): JSX.Element {
 }
 
 /**
+ * The way out of a capped list.
+ *
+ * This sheet ranks and shows the hardest `LEECH_LIST_LIMIT` (20). The tile that
+ * opens it counts every leech, uncapped — deliberately, because saying "20" to
+ * someone with 47 is a lie — so the two disagree by design, and until now the
+ * sheet was where that disagreement dead-ended: twenty rows, nothing saying more
+ * existed, and no route to them.
+ *
+ * The dictionary already holds the answer. `struggling` is one of its four
+ * picker scopes and it runs the SAME `isLeechWord` predicate this list ranks by,
+ * so the two can never disagree about which words qualify — only about how many
+ * of them are shown.
+ *
+ * Rendered only when the list actually truncated. Offering to "see all" the
+ * twenty words already on screen would be a drill-down leading back to what you
+ * just read.
+ */
+function SeeAllRow({ total, shown }: { total: number; shown: number }): JSX.Element {
+  const colors = useColors();
+
+  return (
+    <ListRow
+      density="compact"
+      accessibilityLabel={STRINGS.WORDS_TO_REVISIT_SEE_ALL_A11Y.replace('{count}', String(total))}
+      onPress={() =>
+        dismissSheetThenNavigate({
+          pathname: ROUTE_PATHS.PRACTICE_DICTIONARY,
+          params: { scope: 'struggling' },
+        })
+      }
+    >
+      <View style={styles.wordColumn}>
+        <ThemedText type="body">
+          {STRINGS.WORDS_TO_REVISIT_SEE_ALL.replace('{count}', String(total))}
+        </ThemedText>
+        <ThemedText type="caption" colorName="textTertiary" numberOfLines={1}>
+          {STRINGS.WORDS_TO_REVISIT_SEE_ALL_HINT.replace('{shown}', String(shown))}
+        </ThemedText>
+      </View>
+
+      <Ionicons
+        color={colors.textTertiary}
+        name="chevron-forward"
+        size={LAYOUT.BUTTON.ICON_SIZE.DISCLOSURE}
+      />
+    </ListRow>
+  );
+}
+
+/**
  * The one sheet that genuinely scrolls — up to `LEECH_LIST_LIMIT` (20) rows
  * never fit a `fitToContents` detent, so this route uses a fixed one.
  *
@@ -80,7 +133,7 @@ function LeechRow({ word, divider, onReset }: LeechRowProps): JSX.Element {
  *   wrapper around the scroll view
  */
 export default function WordsToRevisitScreen(): JSX.Element {
-  const { leeches, isLoading, isError } = useWordsToRevisit();
+  const { leeches, totalCount, isLoading, isError } = useWordsToRevisit();
   const { confirmReset } = useResetWordProgress();
   const insets = useSafeAreaInsets();
 
@@ -116,12 +169,15 @@ export default function WordsToRevisitScreen(): JSX.Element {
             <LeechRow
               key={word.root_id}
               word={word}
-              // No rule under the last row — it would read as a divider before
-              // content that isn't there.
-              divider={index < leeches.length - 1}
+              // No rule under the last row — unless the overflow row follows it,
+              // in which case the rule separates them rather than trailing off
+              // before content that isn't there.
+              divider={index < leeches.length - 1 || totalCount > leeches.length}
               onReset={confirmReset}
             />
           ))}
+
+          {totalCount > leeches.length && <SeeAllRow total={totalCount} shown={leeches.length} />}
         </ScrollView>
       </BottomSheetStateHandler>
     </>

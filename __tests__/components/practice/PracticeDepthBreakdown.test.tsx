@@ -12,7 +12,7 @@
  */
 
 import { describe, expect, jest, test } from '@jest/globals';
-import { render } from '@testing-library/react-native';
+import { render, type RenderResult } from '@testing-library/react-native';
 import { State } from 'ts-fsrs';
 
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
@@ -58,6 +58,38 @@ const withReps = (id: number, reps: number): StudyWord =>
 const words = [withReps(1, 15), withReps(2, 6), withReps(3, 2), withReps(4, 1), withReps(5, 0)];
 
 const average = (value: number): string => STRINGS.DEPTH_AVERAGE.replace('{count}', String(value));
+
+/** The disclosure signifier, as the icon mock renders it. */
+const CHEVRON = 'chevron-forward';
+
+interface RenderedNode {
+  children?: (RenderedNode | string)[] | null;
+}
+
+/**
+ * Every string the tree renders, in painting order.
+ *
+ * `getAllByText` returns matches grouped per query, which cannot answer "in what
+ * order does a reader meet these rows" — and row ORDER is the thing under test.
+ */
+function renderedTextInOrder(view: RenderResult): string[] {
+  const out: string[] = [];
+
+  const walk = (node: RenderedNode | string | null | undefined): void => {
+    if (node == null) return;
+    if (typeof node === 'string') {
+      out.push(node);
+      return;
+    }
+    node.children?.forEach(walk);
+  };
+
+  const tree = view.toJSON() as RenderedNode | RenderedNode[] | null;
+  if (Array.isArray(tree)) tree.forEach(walk);
+  else walk(tree);
+
+  return out;
+}
 
 describe('PracticeDepthBreakdown', () => {
   test('the headline is the exact total, and the two averages are marked as such', () => {
@@ -142,6 +174,52 @@ describe('PracticeDepthBreakdown', () => {
     // One word in each of the five bands.
     expect(view.getAllByText('1')).toHaveLength(5);
     expect(view.getByText(STRINGS.DEPTH_EXPLAINER)).toBeTruthy();
+  });
+
+  test('bands ascend, and the row with no practice behind it comes last', () => {
+    // One rule for both breakdown sheets: ascending, residual last. The memory
+    // sheet's order is fixed by the constellation it details — HORIZON_BAND_KEYS
+    // is the left-to-right order of that chart's log-time axis — so this list is
+    // the one that follows. It used to run most-drilled first, which put two
+    // identical-looking BreakdownRow lists in front of the learner reading in
+    // opposite directions.
+    //
+    // Asserted against literal labels rather than DEPTH_BAND_KEYS: the hook
+    // builds its bands BY mapping that constant, so an assertion that references
+    // it passes whichever way the constant is pointing.
+    setStreak(4);
+    const view = render(<PracticeDepthBreakdown studyWords={words} />);
+
+    const order = renderedTextInOrder(view).filter(text =>
+      (
+        [
+          STRINGS.DEPTH_BAND_ONCE,
+          STRINGS.DEPTH_BAND_FEW,
+          STRINGS.DEPTH_BAND_SOLID,
+          STRINGS.DEPTH_BAND_DEEP,
+          STRINGS.DEPTH_BAND_NONE,
+        ] as string[]
+      ).includes(text),
+    );
+
+    expect(order).toEqual([
+      STRINGS.DEPTH_BAND_ONCE,
+      STRINGS.DEPTH_BAND_FEW,
+      STRINGS.DEPTH_BAND_SOLID,
+      STRINGS.DEPTH_BAND_DEEP,
+      STRINGS.DEPTH_BAND_NONE,
+    ]);
+  });
+
+  test('the three headline tiles are readouts, so none of them claims a disclosure', () => {
+    // These are the same `MetricCard` at the same size as the pressable tiles on
+    // the practice screen. Every band row below them that has words is a link and
+    // carries a chevron; the tiles are not, so they must not.
+    setStreak(4);
+    const view = render(<PracticeDepthBreakdown studyWords={words} />);
+
+    // Five bands, one word in each, so five linked rows — and nothing else.
+    expect(view.getAllByText(CHEVRON)).toHaveLength(5);
   });
 
   test('a band with words leads somewhere; an empty band does not claim to', () => {

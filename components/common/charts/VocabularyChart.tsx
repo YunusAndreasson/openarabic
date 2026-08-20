@@ -39,9 +39,12 @@ interface VocabularyChartProps<T> {
   isFuturePrediction?: boolean; // Whether this chart shows future predictions (today = index 0)
 
   // BaseChart props
-  title: string;
-  subtitle: string;
-  hideTitle?: boolean;
+  // No `title` / `subtitle` / `hideTitle`. This chart's one caller renders inside
+  // a sheet that already has a header, and `hideTitle` was defaulted true — so
+  // the header path was unreachable, and a subtitle was computed and thrown away
+  // on every render. Keeping the props as optional-and-ignored would have left
+  // the next reader three things to trace before learning the header cannot draw.
+  // `BaseChart` defaults `hideTitle` to true on its own.
   hasData: boolean;
   emptyStateText: string;
   bottomSummary?: { label: string; value: string }[];
@@ -79,9 +82,6 @@ export const VocabularyChart = memo<VocabularyChartProps<unknown>>(
     graphWidth,
     yLabelFormatter,
     isFuturePrediction = false,
-    title,
-    subtitle,
-    hideTitle = false,
     hasData,
     emptyStateText,
     bottomSummary,
@@ -191,9 +191,6 @@ export const VocabularyChart = memo<VocabularyChartProps<unknown>>(
         contentHeight={contentHeight + CONTENT_HEIGHT_OFFSET}
         emptyStateText={emptyStateText}
         hasData={hasData}
-        hideTitle={hideTitle}
-        subtitle={subtitle}
-        title={title}
         bottomSummary={bottomSummary}
       >
         <View style={styles.container}>

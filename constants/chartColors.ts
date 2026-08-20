@@ -1,7 +1,7 @@
 import { useColors } from '@/hooks/theme/useColors';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import type { ChartColors } from '@/types/ui/chart.types';
-import { withOpacity } from '@/utils/colorUtils';
+import { mixColors, withOpacity } from '@/utils/colorUtils';
 
 /**
  * Unified Chart Color System for Vocabulary Analytics
@@ -27,6 +27,32 @@ export const CHART_OPACITY = {
   TRACK: 0.16, // Gauge/bar track washes — lighter step of the fill's own hue
   WASH: 0.1, // Flat area fill under the data line
 } as const;
+
+/**
+ * The track a meter's fill runs in: a lighter step of the fill's OWN hue, mixed
+ * against the surface the meter sits on.
+ *
+ * Mixed, never alpha-washed. An alpha wash composites toward whatever is behind
+ * it, which on the dark theme is near-black — so the track turns into a smudge
+ * instead of a lighter azure, and on sepia (whose accent clamps to a much lower
+ * chroma against warm paper) it disappears entirely.
+ *
+ * The rule used to be written out at three call sites, against three different
+ * surfaces and at two different weights. The SURFACE is legitimately per-caller
+ * — a dictionary row, a sheet row and a card are not the same ground — so it
+ * stays a parameter; the rule itself is here once.
+ *
+ * @param surface The colour the meter is drawn on (`colors.card`, `elevation1`, …)
+ * @param fill    The meter's own fill colour
+ * @param weight  How far to step off the surface. `TRACK` for a meter behind a
+ *                fill; `ZONE` where the track is the only thing drawn and has to
+ *                survive sepia on its own.
+ */
+export const getMeterTrackColor = (
+  surface: string,
+  fill: string,
+  weight: number = CHART_OPACITY.TRACK,
+): string => mixColors(surface, fill, weight);
 
 /**
  * Pure function to get theme-aware chart colors

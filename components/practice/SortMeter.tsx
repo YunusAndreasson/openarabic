@@ -2,11 +2,10 @@ import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ProgressBar } from '@/components/common';
-import { CHART_OPACITY } from '@/constants/chartColors';
+import { getMeterTrackColor } from '@/constants/chartColors';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { SolidColorName } from '@/constants/colors';
-import { mixColors } from '@/utils/colorUtils';
 
 /** Fixed width so every meter in a list shares one right edge and one scale. */
 const METER_WIDTH = 32;
@@ -47,11 +46,9 @@ export const SortMeter = memo<SortMeterProps>(({ fraction, colorName, animated =
   const colors = useColors();
   const fillColor = colors[colorName];
 
-  // The chart system's meter rule: the track is a lighter step of the fill's own
-  // hue, never grey. Mixed rather than alpha-blended — an alpha wash composites
-  // against the page, and on the dark theme that is near-black, so any hue at
-  // this weight would collapse into the background instead of reading as a track.
-  const trackColor = mixColors(colors.elevation2, fillColor, CHART_OPACITY.TRACK);
+  // `elevation2` is the ground a dictionary row sits on; the rule that turns it
+  // into a track lives in `getMeterTrackColor`.
+  const trackColor = getMeterTrackColor(colors.elevation2, fillColor);
 
   return (
     <View style={styles.container}>

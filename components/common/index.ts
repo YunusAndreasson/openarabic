@@ -35,6 +35,7 @@ export { ProgressBar } from './ProgressBar';
 export { ScreenScaffold } from './ScreenScaffold';
 export { SeededContentEmptyState } from './SeededContentEmptyState';
 export { SectionLabel } from './SectionLabel';
+export { SheetExplainer } from './SheetExplainer';
 export { SheetScreen } from './SheetScreen';
 
 // `SkiaColoredArabic` is deliberately NOT exported here: its only consumers are

@@ -90,10 +90,7 @@ describe('useDueWordsChart', () => {
       expect(result.current.chartData.hasData).toBeFalsy();
       expect(result.current.chartData.dueWordsPath).toBe('');
       expect(result.current.chartData.dataPoints).toEqual([]);
-      expect(result.current.chartData.insights).toEqual({
-        currentDue: 0,
-        peakDue: 0,
-      });
+      expect(result.current.chartData.insights).toEqual({ currentDue: 0 });
     });
 
     test('should not crash with undefined studyWords', () => {
@@ -138,8 +135,8 @@ describe('useDueWordsChart', () => {
 
       // Should generate forecast with only 2 valid words
       expect(result.current.dueWordsData.length).toBeGreaterThan(0);
-      // Peak should be at most 2 (only 2 valid words)
-      expect(result.current.chartData.insights.peakDue).toBeLessThanOrEqual(2);
+      // No day can come due for more words than exist
+      expect(Math.max(...result.current.dueWordsData.map(d => d.dueWords))).toBeLessThanOrEqual(2);
     });
   });
 
@@ -207,8 +204,12 @@ describe('useDueWordsChart', () => {
       expect(insights.currentDue).toBeDefined();
       expect(insights.currentDue).toBeGreaterThanOrEqual(0);
 
-      // Peak due should be >= current due
-      expect(insights.peakDue).toBeGreaterThanOrEqual(insights.currentDue);
+      // The forecast is cumulative, so no later day can be lighter than today.
+      // (This used to assert `insights.peakDue >= currentDue`; `peakDue` was
+      // removed when the due-words subtitle that read it was deleted, leaving it
+      // a value kept alive only by this assertion.)
+      const peak = Math.max(...result.current.dueWordsData.map(d => d.dueWords));
+      expect(peak).toBeGreaterThanOrEqual(insights.currentDue);
     });
   });
 

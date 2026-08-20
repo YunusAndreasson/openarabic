@@ -93,6 +93,12 @@ export function PracticeStatCards({
       // it — measured on device: every cold start flashed "0" before the query
       // landed, and a failed fetch left it there.
       value: hasStreak ? currentStreak : STRINGS.EMPTY_METRIC,
+      // Spoken labels end with what the tap opens, the same way the hero and the
+      // week-ahead card above them do. Without one, a tile announced its two
+      // words and hid the door.
+      accessibilityLabel: hasStreak
+        ? STRINGS.STREAK_TILE_A11Y.replace('{count}', String(currentStreak))
+        : STRINGS.STREAK_TILE_A11Y_EMPTY,
       onPress: onStreakPress,
     },
     {
@@ -103,6 +109,7 @@ export function PracticeStatCards({
       // also the one effort number that cannot be taken away — unlike the
       // streak, `fsrs_reps` only falls through an explicit, confirmed reset.
       value: totalReviews,
+      accessibilityLabel: STRINGS.REVIEWS_TILE_A11Y.replace('{count}', String(totalReviews)),
       // This tile used to be the one in the row with nowhere to go. Streak and
       // Revisit beside it each open a sheet, and all three are the same
       // `BaseCard` at the same size — so a tap that produced the press state and
@@ -118,6 +125,7 @@ export function PracticeStatCards({
             label: STRINGS.REVISIT_LABEL,
             value: leechCount,
             valueColor: colors.error,
+            accessibilityLabel: STRINGS.REVISIT_TILE_A11Y.replace('{count}', String(leechCount)),
             onPress: onRevisitPress,
           },
         ]
@@ -151,6 +159,7 @@ export function PracticeStatCards({
             value={stat.value}
             label={stat.label}
             valueColor={stat.valueColor}
+            accessibilityLabel={stat.accessibilityLabel}
             onPress={stat.onPress}
           />
         ))}

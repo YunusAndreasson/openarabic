@@ -15,7 +15,9 @@ export type DictionarySortField = 'difficulty' | 'strength' | 'recent';
 export type SortDirection = 'asc' | 'desc';
 
 /** The four the scope picker offers. `all` is the resting state, not a filter. */
-export type PickerScope = 'all' | 'due' | 'struggling' | 'mastered';
+export const PICKER_SCOPES = ['all', 'due', 'struggling', 'mastered'] as const;
+
+export type PickerScope = (typeof PICKER_SCOPES)[number];
 
 /**
  * The horizon bands, as scopes.
@@ -92,12 +94,39 @@ export const DEPTH_BAND_SCOPES: Record<DepthBandKey, DepthScope> = {
   none: 'depth-none',
 };
 
-/** Takes a bare `string` so a route param can be validated without a cast. */
+/**
+ * Takes a bare `string` so a route param can be validated without a cast.
+ *
+ * NARROW specifically: this is what decides whether a scope carries its own
+ * opening sort (`NARROW_SCOPE_SORT` is total over these and nothing else) and
+ * whether the picker shows a selection. It is NOT the test for "may a route ask
+ * for this scope" — see `isDictionaryScope`.
+ */
 export function isNarrowScope(scope: string): scope is NarrowScope {
   return (
     (HORIZON_SCOPES as readonly string[]).includes(scope) ||
     (DEPTH_SCOPES as readonly string[]).includes(scope)
   );
+}
+
+/**
+ * Every scope the list can actually apply, narrow or picker.
+ *
+ * The route-param test, and deliberately wider than `isNarrowScope`. The
+ * dictionary used to validate its `scope` param with that one, which was right
+ * while the only deep links were the horizon and depth bands — and silently
+ * wrong the moment the "Words to revisit" sheet started handing over
+ * `struggling`: a legal scope with a working predicate, rejected by the
+ * validator and quietly replaced with the whole vocabulary. The failure has no
+ * symptom at the call site, which is why the test that only asserted the
+ * navigation arguments passed while the feature was broken.
+ *
+ * A picker scope arriving this way needs nothing else: `SCOPE_PREDICATES`,
+ * `SCOPE_LABELS` and the picker's own `selectedValue` are all total over it, and
+ * it correctly opens under the default hardest-first sort rather than a band's.
+ */
+export function isDictionaryScope(scope: string): scope is DictionaryScope {
+  return (PICKER_SCOPES as readonly string[]).includes(scope) || isNarrowScope(scope);
 }
 
 /** Direction applied when a field is first selected — the reading a learner wants most. */

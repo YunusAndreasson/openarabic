@@ -254,6 +254,17 @@ export const LAYOUT = {
       LARGE: TOUCH_TARGETS.LARGE, // 48 - responsive to touch targets
     },
     ICON_SIZE: {
+      /**
+       * The `chevron-forward` that means "this leads somewhere".
+       *
+       * One size for every disclosure in the app, because they appear together:
+       * on the practice screen a learner meets them on two cards and three
+       * tiles, then again on every row of the sheet those open. It was written
+       * as a local `CHEVRON_SIZE = 14` in three files while the two cards used
+       * SMALL (16), so one screen carried two sizes under comments in each file
+       * claiming they matched.
+       */
+      DISCLOSURE: SPACING_SCALE.LARGE - 2, // 14
       SMALL: SPACING_SCALE.LARGE, // 16 - responsive to spacing scale
       MEDIUM: BASE_UNIT * 5, // 20 - responsive to base unit
       LARGE: SPACING_SCALE.XLARGE, // 24 - responsive to spacing scale

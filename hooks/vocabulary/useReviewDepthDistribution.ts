@@ -11,7 +11,14 @@ import {
 } from '@/utils/practiceDepth';
 
 export interface ReviewDepthDistribution {
-  /** The five bands, most-practised first. Always all five, counts included. */
+  /**
+   * The five bands in `DEPTH_BAND_KEYS` order — least-practised first, with
+   * `none` last. Always all five, counts included.
+   *
+   * Stated rather than left to the constant because callers use it to decide
+   * whether they need to re-sort, and this comment said "most-practised first"
+   * for a while after the constant was inverted.
+   */
   bands: DepthBand[];
   /**
    * Tallest DRAWN band, so the row meters share one scale.

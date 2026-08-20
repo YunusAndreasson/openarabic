@@ -17,9 +17,14 @@ import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useDerivedValue, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 
+// Direct path, not the `charts` barrel: that barrel also re-exports
+// `VocabularyChart`, and Metro does not tree-shake — importing it here
+// would evaluate the whole line-chart stack on the practice tab's first
+// render for a component that draws no line chart.
+import { ChartBaseline } from '@/components/common/charts/ChartBaseline';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { TIMING_CONFIG } from '@/constants/animation';
-import { CHART_OPACITY, useChartColors } from '@/constants/chartColors';
+import { CHART_OPACITY, getMeterTrackColor, useChartColors } from '@/constants/chartColors';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import {
@@ -32,7 +37,6 @@ import {
   dotCenter,
 } from '@/utils/horizonBandPath';
 import { getHorizonFraction, HORIZON_BAND_KEYS, HORIZON_BAND_LABELS } from '@/utils/memoryHorizon';
-import { mixColors } from '@/utils/colorUtils';
 
 /**
  * The memory constellation: every practised word is one dot, placed by how long
@@ -110,16 +114,12 @@ export function MemoryHorizonBand({
   const colors = useColors();
   const chartColors = useChartColors();
 
-  // The track is a lighter step of the fill's own hue via `mixColors`, NOT an
-  // alpha wash: alpha composites toward whatever sits behind it, which on the
-  // dark theme is near-black, so a wash turns the rail into a smudge instead of
-  // a lighter azure. Same rule the dictionary's SortMeter follows.
-  //
-  // ZONE rather than TRACK (0.18 vs 0.16) because sepia's accent clamps to a
-  // much lower chroma against warm paper, and at TRACK the rail disappeared
-  // there — checked on device across all three themes. Still a step, never a
-  // second data colour, and never grey.
-  const trackColor = mixColors(colors.card, chartColors.ui.accent, CHART_OPACITY.ZONE);
+  // ZONE rather than the default TRACK (0.18 vs 0.16) because sepia's accent
+  // clamps to a much lower chroma against warm paper, and at TRACK this rail
+  // disappeared there — checked on device across all three themes. It is also
+  // the only thing drawn before anything is practised, so it has to carry on its
+  // own. Still a step off the card, never a second data colour, and never grey.
+  const trackColor = getMeterTrackColor(colors.card, chartColors.ui.accent, CHART_OPACITY.ZONE);
 
   const slots = buildDotSlots(bins, wordsPerDot);
   const dotCount = slots.length;
@@ -186,13 +186,7 @@ export function MemoryHorizonBand({
         )}
 
         {/* Baseline anchors the stubs into one axis. */}
-        <Line
-          p1={vec(0, PLOT_HEIGHT)}
-          p2={vec(BAND_WIDTH, PLOT_HEIGHT)}
-          color={chartColors.ui.grid}
-          strokeWidth={StyleSheet.hairlineWidth}
-          style="stroke"
-        />
+        <ChartBaseline width={BAND_WIDTH} y={PLOT_HEIGHT} color={chartColors.ui.grid} />
 
         {/* Median rule. Dashed because it is a rule, not a series — the same
             distinction the word-detail forgetting curve draws. */}

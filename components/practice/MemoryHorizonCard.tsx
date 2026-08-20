@@ -3,9 +3,11 @@ import { StyleSheet, View } from 'react-native';
 
 import { AnimatedCount, BaseCard } from '@/components/common';
 import { ThemedText } from '@/components/primitives/ThemedText';
+import { Ionicons } from '@/components/ui';
 import { FONTS } from '@/constants/fonts';
 import { LAYOUT, LETTER_SPACING } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
+import { useColors } from '@/hooks/theme/useColors';
 import type { MemoryHorizonDistribution } from '@/hooks/vocabulary/useMemoryHorizonDistribution';
 import { getHorizonBandsAccessibilityLabel } from '@/utils/memoryHorizon';
 
@@ -36,6 +38,7 @@ export function MemoryHorizonCard({
   distribution,
   onPress,
 }: MemoryHorizonCardProps): JSX.Element {
+  const colors = useColors();
   const { bands, medianLabel, medianFraction, practisedCount, hasDistribution } = distribution;
 
   // The dot scale is a real caveat — a unit chart whose dot has quietly stopped
@@ -99,12 +102,34 @@ export function MemoryHorizonCard({
         />
       </View>
 
+      {/* The footer line and the chevron share one row, so the card gains its
+          disclosure without gaining a millimetre of height. Same signifier, same
+          ink and the same right edge as the week-ahead card below it — this card
+          was the largest tappable surface on the screen with nothing to say it
+          was one. */}
       <View style={styles.footer}>
-        <ThemedText type="caption" colorName="captionText" numberOfLines={1}>
+        <ThemedText
+          type="caption"
+          colorName="captionText"
+          numberOfLines={1}
+          style={styles.footerText}
+        >
           {hasDistribution
             ? STRINGS.PRACTICE_TYPICAL_HORIZON.replace('{horizon}', medianLabel)
             : STRINGS.PRACTICE_RECALL_EMPTY}
         </ThemedText>
+        {/* Guarded on `onPress`, exactly as `MetricCard` and `BreakdownRow`
+            guard theirs. `onPress` is optional here, so an unguarded chevron
+            would make a STATIC card advertise a destination it does not have —
+            the mirror image of the tile that swallowed a press, and a rule this
+            card would otherwise be the one place breaking. */}
+        {onPress && (
+          <Ionicons
+            name="chevron-forward"
+            size={LAYOUT.BUTTON.ICON_SIZE.DISCLOSURE}
+            color={colors.textTertiary}
+          />
+        )}
       </View>
     </BaseCard>
   );
@@ -138,8 +163,14 @@ const styles = StyleSheet.create({
     marginTop: LAYOUT.SPACING.MEDIUM,
   },
   footer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: LAYOUT.SPACING.SMALL,
     paddingBottom: LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     paddingTop: LAYOUT.SPACING.SMALL,
+  },
+  footerText: {
+    flex: 1,
   },
 });

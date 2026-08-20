@@ -20,12 +20,26 @@ import { STRINGS } from '@/constants/strings';
 import type { StudyWord } from '@/types/vocabulary.types';
 
 /**
- * Ordered most-practised first: the sheet answers "where did those reviews go",
- * and the answer leads with where most of them landed. `none` stays last for
- * the same reason "Not started" is last in the memory sheet — it is the row
- * with no reviews behind it at all.
+ * Ordered LEAST-practised first, with `none` last.
+ *
+ * One rule for both breakdown sheets: ascending, residual row at the bottom.
+ * The memory sheet's order is not free — `HORIZON_BAND_KEYS` runs
+ * days → weeks → months → year because that is the left-to-right order of the
+ * hero constellation's log-time axis, so a band's row meter and its column sit
+ * at the same place by construction. This list has no chart above it, so it is
+ * the one that moves.
+ *
+ * It used to run most-practised first, which put two identical-looking
+ * `BreakdownRow` lists in front of the learner reading in opposite directions:
+ * one leading with the words that need work, one leading with a victory lap.
+ * Ascending also matches how the rest of the app leads — `useDictionaryList`
+ * defaults to hardest-first and weakest-memory-first.
+ *
+ * `none` stays last for the same reason "Not started" is last in the memory
+ * sheet: it is the row with no reviews behind it at all, and it is kept off the
+ * shared axis rather than drawn at zero.
  */
-export const DEPTH_BAND_KEYS = ['deep', 'solid', 'few', 'once', 'none'] as const;
+export const DEPTH_BAND_KEYS = ['once', 'few', 'solid', 'deep', 'none'] as const;
 
 export type DepthBandKey = (typeof DEPTH_BAND_KEYS)[number];
 

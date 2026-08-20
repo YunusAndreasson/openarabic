@@ -28,7 +28,7 @@ import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useDictionaryList, useFSRSQueries, useResetWordProgress } from '@/hooks/vocabulary';
-import { isNarrowScope } from '@/hooks/vocabulary/useDictionaryList';
+import { isDictionaryScope, isNarrowScope } from '@/hooks/vocabulary/useDictionaryList';
 import type { DictionaryScope, PickerScope } from '@/hooks/vocabulary/useDictionaryList';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
@@ -81,12 +81,17 @@ export default function DictionaryScreen(): JSX.Element {
   const toggleRoot = toggleRootMutation.mutateAsync;
   const { confirmReset } = useResetWordProgress();
 
-  // The memory-horizon and review-depth sheets open this screen *at* a band.
-  // Validated rather than cast: the value arrives from a URL, and an
-  // unrecognised one must fall back to the whole dictionary instead of
-  // filtering it down to nothing.
+  // The memory-horizon, review-depth and words-to-revisit sheets open this
+  // screen *at* a scope. Validated rather than cast: the value arrives from a
+  // URL, and an unrecognised one must fall back to the whole dictionary instead
+  // of filtering it down to nothing.
+  //
+  // `isDictionaryScope`, NOT `isNarrowScope`: the leech sheet hands over
+  // `struggling`, which is a picker scope. Validating with the narrow test threw
+  // it away and opened the entire vocabulary — a filter that fails open, with
+  // nothing at the call site to show for it.
   const { scope: scopeParam } = useLocalSearchParams<{ scope?: string }>();
-  const initialScope = scopeParam && isNarrowScope(scopeParam) ? scopeParam : undefined;
+  const initialScope = scopeParam && isDictionaryScope(scopeParam) ? scopeParam : undefined;
 
   const {
     words,

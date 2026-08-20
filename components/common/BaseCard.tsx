@@ -192,10 +192,18 @@ export const BaseCard: FC<BaseCardProps> = ({
   // Non-pressable path: a plain View, no animation and no press engine. The
   // accessibility props are applied here too — they used to land only on the
   // `Pressable`, so a labelled static card announced nothing.
+  //
+  // `accessible` is what makes that true. Both platforms IGNORE a label on a view
+  // that is not itself an accessibility element, so the fix the comment above
+  // describes did not actually take effect until this was added. Gated on the
+  // label rather than always on: marking every static card accessible would
+  // collapse its children into one node app-wide, which is a different change
+  // from letting a labelled one speak.
   return (
     <View
       style={cardStyle}
       testID={testID}
+      accessible={accessibilityLabel !== undefined}
       accessibilityLabel={accessibilityLabel}
       accessibilityRole={accessibilityRole}
       accessibilityState={accessibilityState}

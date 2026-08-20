@@ -82,11 +82,15 @@ export function WeekAheadCard({
           <WeekAheadBars counts={counts} />
         </View>
 
-        <Ionicons
-          name="chevron-forward"
-          size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-          color={colors.textTertiary}
-        />
+        {/* Same guard as every other disclosure: `onPress` is optional, and a
+            chevron on a card that does not navigate is a promise it cannot keep. */}
+        {onPress && (
+          <Ionicons
+            name="chevron-forward"
+            size={LAYOUT.BUTTON.ICON_SIZE.DISCLOSURE}
+            color={colors.textTertiary}
+          />
+        )}
       </View>
     </BaseCard>
   );

@@ -4,11 +4,10 @@ import { StyleSheet, View } from 'react-native';
 import { ListRow, ProgressBar } from '@/components/common';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { Ionicons } from '@/components/ui';
-import { CHART_OPACITY, useChartColors } from '@/constants/chartColors';
+import { getMeterTrackColor, useChartColors } from '@/constants/chartColors';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
-import { mixColors } from '@/utils/colorUtils';
 
 /**
  * What a breakdown row says out loud.
@@ -39,7 +38,7 @@ export function breakdownRowLabel({
     .replace('{clause}', clause);
 }
 
-const CHEVRON_SIZE = 14;
+const CHEVRON_SIZE = LAYOUT.BUTTON.ICON_SIZE.DISCLOSURE;
 
 /**
  * Wide enough to compare bars at a glance, fixed so they share one left and one
@@ -98,10 +97,8 @@ export function BreakdownRow({
   // column it came from are visibly the same data. Rows that are not on the
   // axis are not painted as if they were.
   const fillColor = fraction == null ? colors.textTertiary : chartColors.ui.dataLine;
-  // Track is a lighter step of the fill's own hue, mixed rather than
-  // alpha-washed — an alpha wash composites toward the sheet's near-black on the
-  // dark theme and collapses into it. Same rule as SortMeter.
-  const trackColor = mixColors(colors.elevation1, fillColor, CHART_OPACITY.TRACK);
+  // `elevation1` is the sheet's own ground; the rule is `getMeterTrackColor`.
+  const trackColor = getMeterTrackColor(colors.elevation1, fillColor);
 
   const caption = tag ? `${hint} · ${tag}` : hint;
 
@@ -150,17 +147,6 @@ export function BreakdownRow({
 
 BreakdownRow.displayName = 'BreakdownRow';
 
-/** The closing sentence under a breakdown list. */
-export function BreakdownExplainer({ text }: { text: string }): JSX.Element {
-  return (
-    <ThemedText type="caption" colorName="captionText" style={styles.explainer}>
-      {text}
-    </ThemedText>
-  );
-}
-
-BreakdownExplainer.displayName = 'BreakdownExplainer';
-
 const styles = StyleSheet.create({
   labelColumn: {
     flex: 1,
@@ -177,8 +163,5 @@ const styles = StyleSheet.create({
   chevron: {
     width: CHEVRON_SIZE,
     alignItems: 'center',
-  },
-  explainer: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
   },
 });

@@ -7,10 +7,10 @@
 
 import { STRINGS } from '@/constants/strings';
 
-// Standardized chart titles (no emoji — clean, straight to the point)
-export const CHART_LABELS = {
-  DUE_WORDS_PROGNOSIS: 'This week', // Projected due words (next 7 days)
-} as const;
+// `CHART_LABELS` held one title, for the due-words chart. That chart draws
+// inside a sheet whose header already says "This week", and the title path it
+// fed was unreachable, so the constant was a second copy of a string nothing
+// could render. `STRINGS.DUE_WORDS_FORECAST` is the one the learner reads.
 
 // `generateChartSubtitle` lived here with a single member, `retrievability`, and
 // went with the retention line it wrote subtitles for. The memory sheet now

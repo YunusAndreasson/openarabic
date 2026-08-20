@@ -1,10 +1,8 @@
 import type { JSX } from 'react';
-import { StyleSheet } from 'react-native';
 
-import { ThemedText } from '@/components/primitives/ThemedText';
+import { SheetExplainer } from '@/components/common';
 import { ChartSheetScreen } from '@/components/practice/ChartSheetContent';
 import { DueWordsPrognosisChart } from '@/components/practice/charts/DueWordsPrognosisChart';
-import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useMemoryInsights, type MemoryInsights } from '@/hooks/vocabulary/useMemoryInsights';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -53,11 +51,11 @@ function DueWordsContent({ studyWords }: { studyWords: StudyWord[] }): JSX.Eleme
   return (
     <>
       <DueWordsPrognosisChart studyWords={studyWords} />
-      {slipping ? (
-        <ThemedText type="caption" colorName="captionText" style={styles.slipping}>
-          {slipping}
-        </ThemedText>
-      ) : null}
+      {/* The same closing caption the breakdown sheets use. It used to be
+          centred — the only centred body text in the tab — so the one sheet
+          whose closing line carries urgency was also the one that did not look
+          like the others. */}
+      {slipping ? <SheetExplainer text={slipping} /> : null}
     </>
   );
 }
@@ -71,10 +69,3 @@ export default function DueWordsScreen(): JSX.Element {
     />
   );
 }
-
-const styles = StyleSheet.create({
-  slipping: {
-    marginTop: LAYOUT.SPACING.SMALL,
-    textAlign: 'center',
-  },
-});

@@ -16,7 +16,6 @@ interface DueWordsChartData {
   dataPoints: { x: number; y: number; dueWords: number; date: Date }[];
   insights: {
     currentDue: number;
-    peakDue: number;
   };
 }
 
@@ -39,7 +38,7 @@ export function useDueWordsChart(studyWords: StudyWord[]): UseDueWordsChartResul
       return {
         dueWordsPath: '',
         hasData: false,
-        insights: { currentDue: 0, peakDue: 0 },
+        insights: { currentDue: 0 },
         dataPoints: [],
       };
     }
@@ -65,7 +64,6 @@ export function useDueWordsChart(studyWords: StudyWord[]): UseDueWordsChartResul
     // Get insights
     const todayData = dueWordsData[0]; // Today (leftmost)
     const currentDue = todayData?.dueWords || 0;
-    const peakDue = Math.max(...dueWordsData.map(d => d.dueWords));
 
     return {
       dueWordsPath,
@@ -74,7 +72,6 @@ export function useDueWordsChart(studyWords: StudyWord[]): UseDueWordsChartResul
       dataPoints: points,
       insights: {
         currentDue,
-        peakDue,
       },
     };
   }, [dueWordsData, studyWords?.length]);

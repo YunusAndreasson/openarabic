@@ -2,7 +2,12 @@ import type { JSX } from 'react';
 import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { BottomSheetHeader, BottomSheetStateHandler, SheetScreen } from '@/components/common';
+import {
+  BottomSheetHeader,
+  BottomSheetStateHandler,
+  SheetExplainer,
+  SheetScreen,
+} from '@/components/common';
 import { StreakChart, StreakMetrics } from '@/components/explore';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -43,16 +48,19 @@ export default function StudyStreakScreen(): JSX.Element {
           </View>
         )}
 
+        {/* One header per sheet. This was the only practice sheet with two, and
+            the second one said "Last 40 days" directly above a chart whose own
+            axis already reads "40 days ago … Today" — a title restating the
+            drawing under it. What was worth keeping is the sentence that says
+            what a bar IS, and that is a closing caption, in the same place and
+            the same ink as every other sheet's. */}
         {streakHistory?.dailyActivity && streakHistory?.streakPeriods && (
           <>
-            <BottomSheetHeader
-              title={STRINGS.STUDY_STREAK_CHART_TITLE}
-              subtitle={STRINGS.STUDY_STREAK_CHART_DESCRIPTION}
-            />
             <StreakChart
               dailyActivity={streakHistory.dailyActivity}
               streakPeriods={streakHistory.streakPeriods}
             />
+            <SheetExplainer text={STRINGS.STUDY_STREAK_CHART_DESCRIPTION} />
           </>
         )}
       </BottomSheetStateHandler>
