@@ -201,23 +201,36 @@ describe('settingsSlice reducers', () => {
     expect(state.arabicFont).toBe(initialState.arabicFont);
   });
 
-  // Speak-the-answer is promoted on the practice screen until the learner
-  // answers. These two booleans ARE the whole visibility policy — there is no
-  // session gate or impression cap to go stale.
+  // Speak-the-answer ships ON. The offer card and its dismissal flag remain for
+  // the installed base, whose persisted `voiceEnabled: false` survives
+  // rehydration untouched — they are what those two booleans are still for.
   describe('speak-the-answer offer', () => {
     const defaults = () => reducer(undefined, { type: '@@INIT' });
 
-    it('ships off and un-refused, so the offer shows on first visit', () => {
+    it('ships ON for a new install, and un-refused', () => {
+      // The whole point of the default flip: opting in produced four users in
+      // the feature's entire history, so a new learner starts with voice
+      // available rather than having to discover a setting.
       const state = defaults();
-      expect(state.voiceEnabled).toBe(false);
+      expect(state.voiceEnabled).toBe(true);
       expect(state.voiceOfferDismissed).toBe(false);
     });
 
-    it('an explicit refusal is what retires the offer', () => {
+    it('an explicit refusal retires the offer without touching the setting', () => {
+      // `voiceOfferDismissed` only ever governed the CARD. It never turned the
+      // feature off, and now that the default is on, conflating the two would
+      // silently disable voice for anyone who dismissed a card.
       const state = reducer(defaults(), setVoiceOfferDismissed(true));
       expect(state.voiceOfferDismissed).toBe(true);
-      // Refusing must never quietly enable the feature.
-      expect(state.voiceEnabled).toBe(false);
+      expect(state.voiceEnabled).toBe(true);
+    });
+
+    it('an existing install that turned voice off stays off', () => {
+      // redux-persist reconciles with autoMergeLevel1, so a stored `false` wins
+      // over the new default. This is why the flip needs no migration.
+      const off = reducer(defaults(), setVoiceEnabled(false));
+      expect(off.voiceEnabled).toBe(false);
+      expect(reducer(off, { type: '@@OTHER' }).voiceEnabled).toBe(false);
     });
 
     it('turning it on does not need a refusal, and vice versa', () => {

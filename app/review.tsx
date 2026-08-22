@@ -1,7 +1,7 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { AppState, Platform, StyleSheet, View } from 'react-native';
+import { AppState, Linking, Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import Animated, { FadeIn, FadeOut, LayoutAnimationConfig } from 'react-native-reanimated';
@@ -22,6 +22,9 @@ import {
   VoiceResultPanel,
 } from '@/components/review';
 import { useTutorialContext, useVoiceGrading } from '@/components/providers';
+import { useVoiceModel } from '@/hooks/voice/useVoiceModel';
+import { allowMeteredVoiceModelDownload } from '@/services/voiceModelStore';
+import { voiceReadiness } from '@/utils/voiceReadiness';
 import type { WordConfidence } from '@/types/review.types';
 import { ReviewGradesTutorial } from '@/components/tutorials/ReviewGradesTutorial';
 import { PulsatingLoader } from '@/components/ui';
@@ -164,6 +167,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   // Read before useReview: the review hook takes `setPlaybackPriority` from
   // here so the Arabic prompt can claim a full-volume playback session.
   const voice = useVoiceGrading();
+  const voiceModel = useVoiceModel();
   const {
     currentSentence,
     currentMeaning,
@@ -400,20 +404,48 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
 
   // The two halves of the voice UI, and the split between them: the BUTTON is
   // the action ("Speak to answer" / "Done"), the CARD is the state (a meter that
-  // breathes while the mic opens and moves once it is live). Both are null far
-  // more often than not — a refused or still-loading recognizer offers nothing
-  // and says nothing, and "Show answer" simply takes the whole row.
+  // breathes while the mic opens and moves once it is live). The indicator is
+  // still null far more often than not — every state it can show (arming,
+  // listening, checking) is reachable only from a ready recognizer.
   //
-  // Readiness is passed to `voiceButtonMode` rather than tested here: the phase
-  // alone cannot tell a downloading model from a failed one, and both must stop
-  // the button being offered. See its doc for the dead-tap that caused.
-  // The indicator needs no such input — every state it can show (arming,
-  // listening, checking) is already reachable only from a ready recognizer.
+  // The BUTTON now holds its slot through the preparing states rather than
+  // vanishing. Readiness is passed to `voiceButtonMode` rather than tested here:
+  // the phase alone cannot tell a downloading model from a failed one, and those
+  // two want opposite treatment. See its doc.
   //
   // Both suppressed during an advance so a transient phase can't flash while
   // the next card is handed over.
   const voiceActive = voiceEnabled && !isUpdating;
-  const voiceMode = voiceActive ? voiceButtonMode(voicePhase, voice.isReady) : null;
+  const readiness = voiceReadiness({
+    voiceEnabled,
+    micDenied: voicePhase === 'denied',
+    model: voiceModel,
+    engine: { isReady: voice.isReady, isWarming: voice.isWarming, error: null },
+  });
+
+  // NO mid-card latch, and that is a deliberate simplification. The worry was a
+  // recognizer arriving mid-card and swapping the row under the learner's thumb
+  // — which was real while the button VANISHED during preparation, because the
+  // row went from one full-width "Show answer" to a two-up split the instant the
+  // model landed. Now the button holds its slot the whole time, so nothing
+  // reflows: the right-hand peer only changes its own label from
+  // "Preparing voice… 98%" to "Speak to answer" and stops being disabled. A tap
+  // that lands a frame early hits a disabled button and does nothing, which is
+  // the same outcome as before it arrived.
+  const voiceMode = voiceActive ? voiceButtonMode(voicePhase, readiness) : null;
+
+  // The escape hatch for a learner who wants voice now and is not on Wi-Fi. The
+  // size is in the button's own label, so this is a deliberate, informed spend
+  // of their data rather than something we decided for them.
+  const handleDownloadOverCellular = useCallback(() => {
+    void allowMeteredVoiceModelDownload();
+  }, []);
+
+  // A refused microphone no longer turns the feature off, so it needs somewhere
+  // to go. Same escape hatch the account screen uses for its own permissions.
+  const handleEnableMicrophone = useCallback(() => {
+    void Linking.openSettings();
+  }, []);
   const indicatorState = voiceActive ? voiceIndicatorState(voicePhase) : null;
 
   // Live pipeline numbers for the debug HUD. Comes through the store hook
@@ -728,8 +760,11 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
                   {voiceMode ? (
                     <VoiceAnswerButton
                       mode={voiceMode}
+                      progress={readiness.kind === 'preparing' ? readiness.progress : undefined}
                       onSpeakNow={voiceSpeakNow}
                       onStopSpeaking={voiceStopSpeaking}
+                      onDownloadOverCellular={handleDownloadOverCellular}
+                      onEnableMicrophone={handleEnableMicrophone}
                     />
                   ) : null}
                 </View>
@@ -755,7 +790,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
           ]}
         >
           <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
-            {`model: ${voice.isReady ? 'ready' : voice.error ? `error: ${voice.error}` : `dl ${Math.round(voice.downloadProgress * 100)}%`}`}
+            {`model: ${voice.isReady ? 'ready' : voice.error ? `error: ${voice.error}` : `${voiceModel.state} ${Math.round(voiceModel.progress * 100)}%`}`}
           </ThemedText>
           <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
             {`phase: ${voicePhase}`}

@@ -79,6 +79,8 @@ module.exports = {
 
     // Voice grading native modules
     'react-native-audio-api': '<rootDir>/__mocks__/react-native-audio-api.js',
+    // Ships untransformed ESM; only the handful of calls the app makes are mocked.
+    '^@dr\\.pogodin/react-native-fs$': '<rootDir>/__mocks__/@dr.pogodin/react-native-fs.js',
     '^react-native-sherpa-onnx$': '<rootDir>/__mocks__/react-native-sherpa-onnx.js',
     '^react-native-sherpa-onnx/download$':
       '<rootDir>/__mocks__/react-native-sherpa-onnx-download.js',

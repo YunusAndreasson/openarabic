@@ -38,7 +38,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useToast, useVoiceGrading } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { STRINGS } from '@/constants/strings';
-import { PARAKEET_MODEL_ID, VOICE_DECODING_METHOD } from '@/hooks/voice/useSherpaStt';
+import { PARAKEET_MODEL_ID, VOICE_DECODING_METHOD } from '@/constants/voiceModel';
 import { DEFAULT_RECORDING_CONFIG } from '@/lib/voice/recording';
 import type { RecordingStopReason } from '@/lib/voice/recording';
 import type { RootId } from '@/types/branded.types';
@@ -48,11 +48,11 @@ import {
   logVoiceAttempt,
   type VoiceAttemptLog,
 } from '@/services/voiceTelemetry';
+import { getVoiceModelSnapshot } from '@/services/voiceModelStore';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import {
   selectVoiceEnergyGateEnabled,
   selectVoiceGainNormalizeEnabled,
-  setVoiceEnabled,
 } from '@/store/settingsSlice';
 import { rememberAlias } from '@/store/voiceAliasesSlice';
 import { isAliasStorable } from '@/utils/voiceAliases';
@@ -416,24 +416,50 @@ export function useVoiceReview({
     [],
   );
 
-  // Get the microphone permission out of the way at session start. The ask used
-  // to happen inside the first arm(), which put the OS dialog in the middle of a
-  // card — the prompt had already played and the screen showed nothing while the
-  // learner read a system alert. Doing it here keeps the ask contextual (they
-  // just opened a practice session) and off the per-card path.
-  //
-  // Not gated on `ready`: waiting for the audio preloader would put us back in
-  // the same window we are trying to leave.
   // Both effects below depend on the individual callbacks rather than the whole
-  // `voice` context value: that object's identity changes on every
-  // `downloadProgress` tick, so depending on it would tear the session down and
-  // rebuild it dozens of times while the model is still downloading.
-  const { prewarmPermission, acquireSession } = voice;
+  // `voice` context value: that object's identity changes whenever any of its
+  // state does, so depending on it would tear the session down and rebuild it.
+  const { prewarmPermission, acquireSession, acquireEngine } = voice;
 
+  // Hold the recognizer in RAM for the life of the session. The Practice tab
+  // retains it too, so entering review from there does not rebuild it — the
+  // provider's linger covers the gap between the two retainers.
   useEffect(() => {
     if (!voiceEnabled) return;
-    void prewarmPermission();
-  }, [voiceEnabled, prewarmPermission]);
+    return acquireEngine();
+  }, [voiceEnabled, acquireEngine]);
+
+  // The headline metric for whether the prefetch is working: a session that
+  // opened with no usable recognizer. Fired once per session, and deliberately
+  // carries WHY — "still downloading" and "waiting for Wi-Fi" call for
+  // completely different fixes, and before this the two were indistinguishable
+  // from the outside. Ideally this trends to zero.
+  const sessionReadinessLoggedRef = useRef(false);
+  useEffect(() => {
+    if (!voiceEnabled || sessionReadinessLoggedRef.current) return;
+    if (voice.isReady) return;
+    sessionReadinessLoggedRef.current = true;
+    void analytics.track(ANALYTICS_EVENTS.VOICE_SESSION_STARTED_WITHOUT_MODEL, {
+      // Read from the module inside the effect rather than through the hook:
+      // this is a one-shot report, not something that should re-render.
+      modelState: getVoiceModelSnapshot().state,
+    });
+  }, [voiceEnabled, voice.isReady]);
+
+  // The microphone permission is NOT asked for here any more.
+  //
+  // It used to be prewarmed at session start, which was right when voice was
+  // opt-in: a learner who had just tapped "Turn it on" understood what the OS
+  // dialog was for. With voice on by DEFAULT that same code fires an
+  // unexplained microphone prompt seconds into a new learner's first ever
+  // review session, before they have seen a single voice control — and a
+  // contextless prompt gets denied. The tap on "Speak to answer" is
+  // unambiguous intent and supplies its own context, so the ask moves there
+  // (see `speakNow`).
+  //
+  // The reason prewarming existed still holds for every card AFTER the first:
+  // `prewarmPermission` is latched once per provider lifetime, so the first tap
+  // pays the dialog and no later card ever does.
 
   // Claim the microphone for the whole session, not per card. This opens the
   // input stream and the record-capable audio session once, up front, while the
@@ -442,28 +468,37 @@ export function useVoiceReview({
   //
   // The session costs nothing while no window is open, so it is claimed for
   // every card whether or not the learner ever taps "Speak to answer".
-  useEffect(() => {
-    if (!voiceEnabled) return;
-    return acquireSession();
-  }, [voiceEnabled, acquireSession]);
-
-  // Track whether the model is genuinely loading, as distinct from any other
-  // not-ready state (a load error being the one that matters).
   //
-  // NOTHING RENDERS 'loading' any more. It used to drive a passive "Preparing
-  // voice…" pill in the review header; that header slot is gone, and both
-  // selectors return null for it (voiceButtonMode, voiceIndicatorState), as
-  // does the screen's `voice.isReady` gate. So a session whose model is still
-  // downloading now reports nothing at all — the offer card's copy ("Runs on
-  // your device, 100 MB") is the only warning a learner gets. The phase is kept
-  // because it is still the honest internal state and the debug HUD reads it,
-  // but do not assume it is visible: it is not.
+  // Gated on `isReady` as well as the setting. It used to key on the setting
+  // alone, which was harmless while voice was opt-in and a learner who had
+  // turned it on always had the model. Now that it ships ON, a first session
+  // runs with the recognizer still downloading — and claiming the microphone
+  // there put the OS "app is using your mic" indicator on screen for a feature
+  // that could not possibly run yet. Holding an input stream open for nothing
+  // is bad on its own; looking like you are listening when you cannot even
+  // grade is worse.
+  useEffect(() => {
+    if (!voiceEnabled || !voice.isReady) return;
+    return acquireSession();
+  }, [voiceEnabled, voice.isReady, acquireSession]);
+
+  // Track whether the recognizer is genuinely on its way, as distinct from any
+  // other not-ready state (a load error being the one that matters).
+  //
+  // 'loading' IS RENDERED AGAIN. It used to drive a passive "Preparing voice…"
+  // pill in the review header; that header slot went away and nothing replaced
+  // it, so for a while a session whose model was still downloading reported
+  // nothing at all — the voice button was simply absent, which is
+  // indistinguishable from the feature not existing. That silence is what this
+  // phase's own doc warns about ("wait" and "this will never work until you
+  // change a setting" mean opposite things), and it is now shown in the action
+  // band by `voiceButtonMode`, which reads the model state directly.
   useEffect(() => {
     if (!voiceEnabled) return;
     if (voice.isReady) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPhase(voice.isLoading ? 'loading' : 'idle');
-  }, [voiceEnabled, voice.isLoading, voice.isReady]);
+    setPhase(voice.isWarming ? 'loading' : 'idle');
+  }, [voiceEnabled, voice.isWarming, voice.isReady]);
 
   useEffect(() => {
     // Every early return below is a card where the mic does NOT open. The user
@@ -534,10 +569,20 @@ export function useVoiceReview({
         if (outcome.reason === 'permission') {
           void analytics.track(ANALYTICS_EVENTS.VOICE_MIC_DENIED);
           voiceBreadcrumb('voice.mic.denied', undefined, 'warning');
-          showToast(STRINGS.VOICE_MIC_PERMISSION_DENIED);
-          dispatch(setVoiceEnabled(false));
+          showToast(STRINGS.VOICE_MIC_PERMISSION_BLOCKED);
+          // Deliberately NOT `dispatch(setVoiceEnabled(false))` any more.
+          //
+          // That conflated two different facts: "this learner does not want to
+          // speak their answers" and "this learner has not granted a permission
+          // yet". One reflexive "Don't allow" removed the feature for good, and
+          // the only way back was a toggle buried in Account → Practice. With
+          // voice on by default and the OS dialog as the only consent moment,
+          // that was the single largest leak in the funnel. The setting stays
+          // on; the button becomes an actionable "Enable microphone" that opens
+          // system settings, and the learner can grade by tapping meanwhile.
           setDebug(d => ({ ...d, armError: 'permission' }));
-          // Terminal, and it turns the whole feature off — always worth a row.
+          // Still always worth a row: it ends this card's voice attempt, and
+          // the rate of it is how we know whether the ask is landing.
           void logVoiceArmFailure({
             rootId: rootId ?? null,
             expected,
@@ -950,6 +995,13 @@ export function useVoiceReview({
     // re-arming here would throw away audio the learner has already spoken.
     if (phaseRef.current === 'listening' || phaseRef.current === 'checking') return;
     if (!voice.isReady) return;
+    // The permission ask lives here rather than at session start: this tap is
+    // the learner asking for the microphone, which is the context the OS dialog
+    // otherwise lacks. Latched once per provider lifetime, so only the first tap
+    // of the first session ever pays it. Fire-and-forget — arming below already
+    // handles a refusal, and blocking the tap on the dialog would cost the
+    // learner the beat they just decided to spend speaking.
+    void prewarmPermission();
     diagMark('mic.speakNow', { phase: phaseRef.current });
     // The tap is now the only way to arm, so this stop runs on every card —
     // and on any card where the learner is quick, it is what truncates the
@@ -968,7 +1020,7 @@ export function useVoiceReview({
     armRequestedRef.current = true;
     armedForKeyRef.current = null;
     setAttempt(a => a + 1);
-  }, [voice.isReady]);
+  }, [voice.isReady, prewarmPermission]);
 
   /**
    * Hold released. Only meaningful once the mic is genuinely capturing —

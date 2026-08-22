@@ -80,6 +80,14 @@ export const ANALYTICS_EVENTS = {
   VOICE_MODEL_LOAD_STARTED: 'Voice Model Load Started',
   VOICE_MODEL_READY: 'Voice Model Ready',
   VOICE_MODEL_FAILED: 'Voice Model Failed',
+  /** The prefetch actually started moving bytes. `trigger` says what woke it. */
+  VOICE_MODEL_PREFETCH_STARTED: 'Voice Model Prefetch Started',
+  /** The prefetch declined to start, and why. Distinguishes "never tried"
+   *  from "tried and failed" — the two look identical without it. */
+  VOICE_MODEL_PREFETCH_DEFERRED: 'Voice Model Prefetch Deferred',
+  /** The headline metric for whether the prefetch works: a review session that
+   *  opened with no usable recognizer. Ideally this trends to zero. */
+  VOICE_SESSION_STARTED_WITHOUT_MODEL: 'Voice Session Started Without Model',
   VOICE_ARM: 'Voice Arm',
   VOICE_MIC_DENIED: 'Voice Mic Denied',
   VOICE_TRANSCRIPT: 'Voice Transcript',

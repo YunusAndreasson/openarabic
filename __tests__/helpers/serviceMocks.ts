@@ -26,7 +26,9 @@ import type { Tables } from '@/types/database.types';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
 import * as Notifications from 'expo-notifications';
 import type { AuthError, PostgrestError, Session, User } from '@supabase/supabase-js';
-import type { NetInfoState } from '@react-native-community/netinfo';
+import NetInfo, { type NetInfoState, type NetInfoStateType } from '@react-native-community/netinfo';
+import * as sherpaDownload from 'react-native-sherpa-onnx/download';
+import * as sherpaStt from 'react-native-sherpa-onnx/stt';
 import type { AudioStatus } from '@/services/audioPlayer';
 
 // ============================================================================
@@ -245,15 +247,113 @@ export const createAuthErrorMock = (message: string, status = 400): AuthError =>
  * Builds a `NetInfoState`. Only `isConnected` is ever asserted on, but the real
  * shape is a discriminated union over `type`, so the rest has to be present.
  */
-export const createNetInfoStateMock = (isConnected: boolean): NetInfoState =>
+export const createNetInfoStateMock = (
+  isConnected: boolean,
+  overrides: { type?: `${NetInfoStateType}`; isConnectionExpensive?: boolean } = {},
+): NetInfoState =>
   ({
-    type: isConnected ? 'wifi' : 'none',
+    type: overrides.type ?? (isConnected ? 'wifi' : 'none'),
     isConnected,
     isInternetReachable: isConnected,
     details: isConnected
-      ? { isConnectionExpensive: false, ssid: null, bssid: null, strength: null }
+      ? {
+          // Overridable because the voice-model download gates on metered-ness,
+          // not on `type`: an iOS Personal Hotspot reports `wifi` while costing
+          // cellular data, and that case has to be testable.
+          isConnectionExpensive: overrides.isConnectionExpensive ?? false,
+          ssid: null,
+          bssid: null,
+          strength: null,
+        }
       : null,
   }) as NetInfoState;
+
+/**
+ * Arms the bare NetInfo mock and hands back a driver for connection changes.
+ *
+ * Must be called from `beforeEach`: `resetMocks: true` wipes any implementation
+ * set at module scope, so the manual mock deliberately ships without one.
+ */
+export const installNetInfoMock = (
+  initial: NetInfoState = createNetInfoStateMock(true),
+): {
+  /** Deliver a connection change to every registered listener. */
+  emit: (state: NetInfoState) => void;
+  /** Change what `NetInfo.fetch()` resolves to, and deliver it as a change. */
+  transitionTo: (state: NetInfoState) => void;
+  listenerCount: () => number;
+} => {
+  const listeners = new Set<(state: NetInfoState) => void>();
+
+  // A real import, NOT `jest.requireMock`: that returns a SEPARATE module
+  // instance from the one the code under test imported, so arming it has no
+  // effect and every call reads `undefined`. Cost an afternoon once.
+  (NetInfo.fetch as jest.Mock).mockResolvedValue(initial);
+  (NetInfo.addEventListener as jest.Mock).mockImplementation(
+    (listener: (state: NetInfoState) => void) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+  );
+
+  const emit = (state: NetInfoState): void => {
+    listeners.forEach(listener => {
+      listener(state);
+    });
+  };
+
+  return {
+    emit,
+    // Both halves together, because a listener that fires while `fetch()` still
+    // reports the OLD connection is a trap: the code under test re-checks on
+    // wake and would defer again for reasons the test never intended.
+    transitionTo: (state: NetInfoState) => {
+      (NetInfo.fetch as jest.Mock).mockResolvedValue(state);
+      emit(state);
+    },
+    listenerCount: () => listeners.size,
+  };
+};
+
+/**
+ * Arms the bare sherpa-onnx mocks with a working-by-default happy path.
+ * Individual tests override the pieces they are about.
+ */
+export const installSherpaMocks = (): {
+  download: {
+    ensureModelByCategory: jest.Mock;
+    refreshModelsByCategory: jest.Mock;
+    isModelDownloadedByCategory: jest.Mock;
+    getLocalModelPathByCategory: jest.Mock;
+    deleteModelByCategory: jest.Mock;
+  };
+  stt: { createSTT: jest.Mock };
+  engine: { transcribeSamples: jest.Mock; destroy: jest.Mock };
+} => {
+  // Real imports for the same reason as NetInfo above.
+  const download = {
+    ensureModelByCategory: sherpaDownload.ensureModelByCategory as unknown as jest.Mock,
+    refreshModelsByCategory: sherpaDownload.refreshModelsByCategory as unknown as jest.Mock,
+    isModelDownloadedByCategory: sherpaDownload.isModelDownloadedByCategory as unknown as jest.Mock,
+    getLocalModelPathByCategory: sherpaDownload.getLocalModelPathByCategory as unknown as jest.Mock,
+    deleteModelByCategory: sherpaDownload.deleteModelByCategory as unknown as jest.Mock,
+  };
+
+  download.ensureModelByCategory.mockResolvedValue({ localPath: '/mock/model/path' });
+  download.refreshModelsByCategory.mockResolvedValue(undefined);
+  download.isModelDownloadedByCategory.mockResolvedValue(false);
+  download.getLocalModelPathByCategory.mockResolvedValue('/mock/model/path');
+  download.deleteModelByCategory.mockResolvedValue(undefined);
+
+  const engine = {
+    transcribeSamples: jest.fn().mockResolvedValue({ text: '' }),
+    destroy: jest.fn().mockResolvedValue(undefined),
+  };
+  const stt = { createSTT: sherpaStt.createSTT as unknown as jest.Mock };
+  stt.createSTT.mockResolvedValue(engine);
+
+  return { download, stt, engine };
+};
 
 // ============================================================================
 // AUDIO FACTORIES

@@ -7,6 +7,8 @@ import { DAILY_WORD_LIMIT_UNLIMITED } from '@/constants/dailyWordLimitOptions';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useDailyWordLimitSummary } from '@/hooks/account';
+import { useVoiceModel } from '@/hooks/voice/useVoiceModel';
+import { voiceReadiness } from '@/utils/voiceReadiness';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import {
   selectAdaptiveNewWordPacingEnabled,
@@ -45,6 +47,7 @@ export const PracticeSection = memo<PracticeSectionProps>(
   }) => {
     const dispatch = useAppDispatch();
     const voice = useVoiceGrading();
+    const model = useVoiceModel();
 
     const rawDailyWordLimit = useAppSelectorShallow(state => state.settings.dailyWordLimit);
     // Through the selector, not the raw field — see selectHapticsEnabled for
@@ -71,13 +74,45 @@ export const PracticeSection = memo<PracticeSectionProps>(
       return STRINGS.DAILY_LIMIT_WORDS_COUNT.replace('{count}', String(currentDailyWordLimit));
     }, [currentDailyWordLimit]);
 
+    // Every voice surface reads one resolver now. This row used to answer from
+    // the toggle alone — "Answer out loud instead of tapping" whenever voice was
+    // off — which becomes a lie the moment a download is running underneath it,
+    // and it disagreed with the Advanced screen about what "ready" meant.
     const voiceSubtitle = useMemo(() => {
-      if (!voiceEnabled) return STRINGS.SPEAK_ANSWER_IDLE_SUBTITLE;
-      if (voice.error) return STRINGS.SPEAK_ANSWER_ERROR_SUBTITLE;
-      if (voice.isReady) return STRINGS.SPEAK_ANSWER_READY_SUBTITLE;
-      const pct = Math.round((voice.downloadProgress ?? 0) * 100);
-      return STRINGS.SPEAK_ANSWER_DOWNLOADING_SUBTITLE.replace('{pct}', String(pct));
-    }, [voiceEnabled, voice.error, voice.isReady, voice.downloadProgress]);
+      const readiness = voiceReadiness({
+        voiceEnabled,
+        micDenied: false,
+        model,
+        engine: { isReady: voice.isReady, isWarming: voice.isWarming, error: null },
+      });
+      switch (readiness.kind) {
+        case 'off':
+          return STRINGS.SPEAK_ANSWER_IDLE_SUBTITLE;
+        case 'ready':
+        // "Ready. Uses 100 MB on device" is a statement about the download, so
+        // bytes-on-disk is exactly what it should report.
+        case 'model-ready':
+          return STRINGS.SPEAK_ANSWER_READY_SUBTITLE;
+        case 'waiting-wifi':
+          return STRINGS.SPEAK_ANSWER_WAITING_WIFI_SUBTITLE;
+        case 'failed':
+          return readiness.reason === 'disk-space'
+            ? STRINGS.SPEAK_ANSWER_NO_SPACE_SUBTITLE
+            : STRINGS.SPEAK_ANSWER_ERROR_SUBTITLE;
+        case 'pending':
+          // Nothing is downloading yet, so the download subtitle would be a lie.
+          return STRINGS.SPEAK_ANSWER_IDLE_SUBTITLE;
+        case 'mic-denied':
+          // Unreachable from here (micDenied is false above) — the permission is
+          // the review screen's story to tell, not a settings subtitle's.
+          return STRINGS.SPEAK_ANSWER_IDLE_SUBTITLE;
+        default:
+          return STRINGS.SPEAK_ANSWER_DOWNLOADING_SUBTITLE.replace(
+            '{pct}',
+            String(Math.round(readiness.progress * 100)),
+          );
+      }
+    }, [voiceEnabled, model, voice.isReady, voice.isWarming]);
 
     const handleAdaptivePacingToggle = useCallback(
       (enabled: boolean) => {

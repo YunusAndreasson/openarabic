@@ -1,7 +1,5 @@
+/** Bare mock — implementations are armed per test. See the download mock's note. */
 module.exports = {
   __esModule: true,
-  createSTT: jest.fn().mockResolvedValue({
-    transcribeSamples: jest.fn().mockResolvedValue({ text: '' }),
-    destroy: jest.fn().mockResolvedValue(undefined),
-  }),
+  createSTT: jest.fn(),
 };

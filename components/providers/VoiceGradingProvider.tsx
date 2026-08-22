@@ -31,6 +31,8 @@ import { useSharedValue, type SharedValue } from 'react-native-reanimated';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { useParakeetStt } from '@/hooks/voice/useSherpaStt';
+import { useVoiceModel } from '@/hooks/voice/useVoiceModel';
+import { useVoiceModelPrefetch } from '@/hooks/voice/useVoiceModelPrefetch';
 import { useResumeFromBackground } from '@/hooks/app/useResumeFromBackground';
 import {
   DEFAULT_RECORDING_CONFIG,
@@ -68,14 +70,31 @@ export type VoiceArmOutcome =
 interface VoiceGradingContextValue {
   /** Mirrors the Redux `voiceEnabled` setting. */
   enabled: boolean;
-  /** Model loaded and ready to grade. */
+  /** Recognizer built AND warmed — ready to grade. */
   isReady: boolean;
-  /** Model is downloading/loading right now. */
-  isLoading: boolean;
-  /** First-load progress, 0..1. */
-  downloadProgress: number;
-  /** Load error, or null. */
+  /** Recognizer is being built or warmed right now. */
+  isWarming: boolean;
+  /** Engine build error, or null. Download errors live on the model store. */
   error: string | null;
+  /**
+   * Retain the recognizer in RAM; the returned function releases it.
+   *
+   * Mirrors `acquireSession` below, and for the same reason: the resource is
+   * expensive and shared. A ~110M-parameter int8 ONNX model is not something to
+   * hold for the whole app run now that voice is on by default — a learner
+   * reading articles on a 3 GB Android device should not be carrying a
+   * recognizer, and an app that does becomes a prime low-memory-killer target
+   * while backgrounded.
+   *
+   * Retained by the Practice tab (on focus) and by an open review session. The
+   * tab retainer is what buys the warm-up its time: the learner spends several
+   * seconds reading stats before tapping Start, and the engine builds in that
+   * window rather than against their first card.
+   *
+   * Release is deferred by VOICE_ENGINE_LINGER_MS so Practice → review →
+   * Practice never drops to zero and rebuilds.
+   */
+  acquireEngine: () => () => void;
   /**
    * Open a capture window and resolve when the energy gate (or hard duration
    * cap) closes it. Caller hands the resulting waveform to `transcribe()`.
@@ -179,10 +198,66 @@ export const useVoiceGrading = (): VoiceGradingContextValue => {
   return ctx;
 };
 
+/**
+ * How long the recognizer survives its last release.
+ *
+ * Practice → review → Practice releases and re-retains within a second or two,
+ * and rebuilding across that would cost the learner a 3 s warm-up in the middle
+ * of their own session. Two minutes covers the whole visit-cluster while still
+ * handing the memory back to someone who has genuinely moved on to reading.
+ */
+const VOICE_ENGINE_LINGER_MS = 120_000;
+
 export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const enabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
-  const stt = useParakeetStt({ enabled });
-  const { transcribe: rawTranscribe, isReady, isLoading, downloadProgress, error } = stt;
+
+  // The bytes: fetched independently of everything below, on Wi-Fi, and never
+  // torn down by this component's lifecycle.
+  useVoiceModelPrefetch({ active: enabled });
+  const model = useVoiceModel();
+
+  /** Screens currently wanting a live recognizer. Mirrors `holdersRef`. */
+  const engineHoldersRef = useRef(0);
+  const engineLingerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [engineRetained, setEngineRetained] = useState(false);
+
+  const acquireEngine = useCallback((): (() => void) => {
+    engineHoldersRef.current += 1;
+    if (engineLingerRef.current) {
+      clearTimeout(engineLingerRef.current);
+      engineLingerRef.current = null;
+    }
+    setEngineRetained(true);
+
+    // Idempotent release, exactly as `acquireSession` does it: a screen that
+    // unmounts twice (Fast Refresh, a double cleanup) must not drive the count
+    // negative, which would pin the engine for the app's life.
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      engineHoldersRef.current -= 1;
+      if (engineHoldersRef.current > 0) return;
+      if (engineLingerRef.current) clearTimeout(engineLingerRef.current);
+      engineLingerRef.current = setTimeout(() => {
+        engineLingerRef.current = null;
+        if (engineHoldersRef.current === 0) setEngineRetained(false);
+      }, VOICE_ENGINE_LINGER_MS);
+    };
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (engineLingerRef.current) clearTimeout(engineLingerRef.current);
+    },
+    [],
+  );
+
+  const stt = useParakeetStt({
+    retained: enabled && engineRetained,
+    modelPath: model.state === 'ready' ? model.localPath : null,
+  });
+  const { transcribe: rawTranscribe, isReady, isWarming, error } = stt;
 
   // Advanced recording knobs (Account → Advanced). Held in a ref so arm()
   // always reads the latest values without re-creating the callback (its
@@ -949,9 +1024,9 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
     () => ({
       enabled,
       isReady,
-      isLoading,
-      downloadProgress,
+      isWarming,
       error: error?.message ?? null,
+      acquireEngine,
       arm,
       cancel,
       stopListening,
@@ -965,9 +1040,9 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
     [
       enabled,
       isReady,
-      isLoading,
-      downloadProgress,
+      isWarming,
       error,
+      acquireEngine,
       arm,
       cancel,
       stopListening,

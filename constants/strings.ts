@@ -42,6 +42,11 @@ export const STRINGS = {
   SPEAK_ANSWER_DOWNLOADING_SUBTITLE: 'Downloading voice model… {pct}%',
   SPEAK_ANSWER_READY_SUBTITLE: 'Ready. Uses 100 MB on device',
   SPEAK_ANSWER_ERROR_SUBTITLE: "Couldn't load voice model. Try again later.",
+  /** A full disk is not a transient fault, so it must not be reported as one.
+   *  "Try again later" is advice that can never work — waiting frees nothing —
+   *  and it was what the learner saw. Name the number they need. */
+  SPEAK_ANSWER_NO_SPACE_SUBTITLE: 'Needs about 250 MB free to set up voice',
+  SPEAK_ANSWER_WAITING_WIFI_SUBTITLE: 'Waiting for Wi-Fi to download the voice model',
   // Voice control. Two rules decide every string here, and there are only four
   // of them left:
   //
@@ -71,7 +76,33 @@ export const STRINGS = {
    *  as a hang. */
   VOICE_CHECKING: 'Grading…',
   VOICE_CHANNEL_LABEL: 'Voice answer',
+  /** The model is still arriving. This slot used to render NOTHING at all —
+   *  the button was hidden outright, so a learner who had just switched voice
+   *  on saw no trace of it and no reason why. A download is temporary and
+   *  explainable, which is exactly the case where saying so beats hiding. */
+  /** VISIBLE label, and it has to fit HALF a row beside "Show answer" — the
+   *  fuller "Preparing voice… 62%" clipped to "Preparing voice… 6.." on a Pixel.
+   *  The word "voice" is carried by the accessibility label below instead,
+   *  where there is no width budget to blow. */
+  VOICE_PREPARING_TEMPLATE: (pct: number) => `Preparing… ${pct}%`,
+  /** Same wait, no number: once the bytes are down and only the recognizer is
+   *  still building there is no percentage worth quoting, and "100%" next to a
+   *  disabled button reads as a stall rather than as progress. */
+  VOICE_PREPARING: 'Preparing…',
+  /** Spoken form — says what is being prepared, which the short label cannot. */
+  VOICE_PREPARING_A11Y: 'Preparing voice answer',
+  /** Wi-Fi-gated by design: 100 MB on someone's cellular plan without asking is
+   *  not a trade we make for them. Naming the size makes the offer honest. */
+  VOICE_WAITING_WIFI: 'Voice needs Wi-Fi',
+  VOICE_DOWNLOAD_ON_CELLULAR: 'Download over cellular (100 MB)',
+  VOICE_MODEL_RETRY: 'Retry voice setup',
+  /** Shown once the OS has refused the mic. Distinct from the download states
+   *  on purpose: waiting fixes one of these and cannot fix the other. */
+  VOICE_ENABLE_MICROPHONE: 'Enable microphone',
   VOICE_MIC_PERMISSION_DENIED: 'Microphone access is off. Voice grading disabled.',
+  /** Replaces the old copy's second sentence. Denial no longer turns the
+   *  feature off, so promising that it did was both wrong and discouraging. */
+  VOICE_MIC_PERMISSION_BLOCKED: 'Microphone access is off. Turn it on to answer out loud.',
   /** The review header's close button — icon-only, so it needs a spoken name.
    *  It is the only control up there; the mic that used to sit beside it (with
    *  its pause / resume / preparing / offer labels) is gone, because the bottom
@@ -127,6 +158,14 @@ export const STRINGS = {
   ADVANCED_MODEL_NOT_LOADED: 'Not loaded',
   ADVANCED_MODEL_DOWNLOADING: 'Downloading {pct}%',
   ADVANCED_MODEL_VOICE_OFF: 'Voice grading off',
+  ADVANCED_MODEL_WAITING_WIFI: 'Waiting for Wi-Fi',
+  /** Nothing in the app deleted the ~100 MB before this, and there was no UI to
+   *  reclaim it. Tolerable while voice was opt-in and four people had it; not
+   *  once it ships on by default. */
+  ADVANCED_MODEL_REMOVE: 'Remove voice model',
+  ADVANCED_MODEL_REMOVE_CONFIRM_TITLE: 'Remove voice model?',
+  ADVANCED_MODEL_REMOVE_CONFIRM_BODY:
+    'Frees about 100 MB and turns off speaking answers. Turn it back on in Practice settings to download it again.',
   ADVANCED_ENERGY_GATE: 'Energy gate',
   ADVANCED_ENERGY_GATE_SUBTITLE: 'Auto-stop on trailing silence',
   ADVANCED_GAIN_NORM: 'Gain normalization',

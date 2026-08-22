@@ -31,7 +31,7 @@ export interface SettingsState {
   // once the user knows the card is there.
   wordTapShowsTooltip: boolean;
   hapticsEnabled: boolean; // Vibration for button presses and interactions
-  voiceEnabled: boolean; // Speak the English answer in Practice
+  voiceEnabled: boolean; // Speak the English answer in Practice. Default ON — see initialState.
   /**
    * The learner explicitly refused the speak-the-answer offer on the practice
    * screen. Until then the offer is shown every visit — it's a flagship
@@ -64,7 +64,21 @@ const initialState: SettingsState = {
   adaptiveNewWordPacingEnabled: true, // Default on; eases new words when recall dips
   wordTapShowsTooltip: false, // Default: tap a word to open its card directly (discoverable)
   hapticsEnabled: true, // Default to enabled for haptic feedback
-  voiceEnabled: false, // Opt-in; downloads a ~103 MB model on enable
+  /**
+   * ON by default for new installs — speaking the answer is the point of the
+   * product, not a power-user extra, and opt-in had produced four users in the
+   * feature's entire history.
+   *
+   * NO MIGRATION IS NEEDED, and adding one would be wrong. redux-persist
+   * reconciles with autoMergeLevel1, so an existing install's persisted `false`
+   * survives untouched and that learner keeps today's offer card. Only a
+   * genuinely new install — or one predating the field — reads this `true`.
+   *
+   * Flipping this does NOT start a download by itself: the bytes are fetched by
+   * `useVoiceModelPrefetch` on Wi-Fi only, and the recognizer is only built once
+   * something retains it (see `acquireEngine`).
+   */
+  voiceEnabled: true,
   voiceOfferDismissed: false,
   voiceEnergyGateEnabled: true,
   voiceGainNormalizeEnabled: true,

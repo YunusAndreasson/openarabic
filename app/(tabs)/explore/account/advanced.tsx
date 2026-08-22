@@ -5,7 +5,7 @@
  * be A/B tested on-device without a rebuild. No sliders — toggles only.
  */
 import { useCallback, useMemo, type FC } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Alert, Platform, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { SettingsCard, SettingsSection } from '@/components/account';
@@ -14,11 +14,15 @@ import { ScreenScaffold, SectionLabel } from '@/components/common';
 import { PulsatingLoader } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
+import { useVoiceModel } from '@/hooks/voice/useVoiceModel';
+import { deleteVoiceModel } from '@/services/voiceModelStore';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
+import { voiceReadiness } from '@/utils/voiceReadiness';
 import {
   selectVoiceEnergyGateEnabled,
   selectVoiceGainNormalizeEnabled,
   setVoiceDebugEnabled,
+  setVoiceEnabled,
   setVoiceEnergyGateEnabled,
   setVoiceGainNormalizeEnabled,
   setVoiceIosRawMode,
@@ -36,28 +40,81 @@ const STATUS_LOADER_SIZE = LAYOUT.BUTTON.ICON_SIZE.MEDIUM;
 const AdvancedScreen: FC = () => {
   const dispatch = useAppDispatch();
   const voice = useVoiceGrading();
+  const model = useVoiceModel();
 
   const energyGateEnabled = useAppSelectorShallow(selectVoiceEnergyGateEnabled);
   const gainNormalizeEnabled = useAppSelectorShallow(selectVoiceGainNormalizeEnabled);
   const iosRawMode = useAppSelectorShallow(state => state.settings.voiceIosRawMode);
   const debugEnabled = useAppSelectorShallow(state => state.settings.voiceDebugEnabled);
 
+  // Shares `voiceReadiness` with the Practice row and the review screen, so the
+  // three cannot drift apart again. This screen keeps the raw error string,
+  // though — it is the developer surface, and the exact library message is the
+  // whole reason to open it.
   const modelStatus = useMemo<{ label: string; color: StatusColor; spinner: boolean }>(() => {
-    if (!voice.enabled)
-      return { label: STRINGS.ADVANCED_MODEL_VOICE_OFF, color: 'textTertiary', spinner: false };
-    if (voice.error) return { label: voice.error, color: 'error', spinner: false };
-    if (voice.isReady)
-      return { label: STRINGS.ADVANCED_MODEL_READY, color: 'success', spinner: false };
-    if (voice.isLoading) {
-      const pct = Math.round((voice.downloadProgress ?? 0) * 100);
-      return {
-        label: STRINGS.ADVANCED_MODEL_DOWNLOADING.replace('{pct}', String(pct)),
-        color: 'tint',
-        spinner: true,
-      };
+    const readiness = voiceReadiness({
+      voiceEnabled: voice.enabled,
+      micDenied: false,
+      model,
+      engine: { isReady: voice.isReady, isWarming: voice.isWarming, error: null },
+    });
+    switch (readiness.kind) {
+      case 'off':
+        return { label: STRINGS.ADVANCED_MODEL_VOICE_OFF, color: 'textTertiary', spinner: false };
+      case 'ready':
+      // This section reports the MODEL, and bytes-on-disk is what "Ready" means
+      // here. Whether a recognizer is currently resident in RAM is the review
+      // screen's business, not this row's.
+      case 'model-ready':
+        return { label: STRINGS.ADVANCED_MODEL_READY, color: 'success', spinner: false };
+      case 'waiting-wifi':
+        return { label: STRINGS.ADVANCED_MODEL_WAITING_WIFI, color: 'tint', spinner: false };
+      case 'failed':
+        return {
+          label: voice.error ?? model.error ?? readiness.reason,
+          color: 'error',
+          spinner: false,
+        };
+      case 'pending':
+        return { label: STRINGS.ADVANCED_MODEL_NOT_LOADED, color: 'textTertiary', spinner: false };
+      case 'preparing':
+        return {
+          label: STRINGS.ADVANCED_MODEL_DOWNLOADING.replace(
+            '{pct}',
+            String(Math.round(readiness.progress * 100)),
+          ),
+          color: 'tint',
+          spinner: true,
+        };
+      default:
+        return { label: STRINGS.ADVANCED_MODEL_NOT_LOADED, color: 'textTertiary', spinner: false };
     }
-    return { label: STRINGS.ADVANCED_MODEL_NOT_LOADED, color: 'textTertiary', spinner: false };
-  }, [voice.enabled, voice.error, voice.isReady, voice.isLoading, voice.downloadProgress]);
+  }, [voice.enabled, voice.error, voice.isReady, voice.isWarming, model]);
+
+  // Nothing else in the app reclaims the ~100 MB, and with voice on by default
+  // that would otherwise be permanent for every learner.
+  //
+  // Removing also turns voice OFF, and that is the whole reason the button
+  // works: the prefetch is gated on `voiceEnabled`, so leaving it on would
+  // re-download the model within seconds and the learner would have reclaimed
+  // nothing. Turning it back on in Account → Practice fetches it again.
+  const handleRemoveModel = useCallback(() => {
+    Alert.alert(
+      STRINGS.ADVANCED_MODEL_REMOVE_CONFIRM_TITLE,
+      STRINGS.ADVANCED_MODEL_REMOVE_CONFIRM_BODY,
+      [
+        { text: STRINGS.CANCEL, style: 'cancel' },
+        {
+          text: STRINGS.ADVANCED_MODEL_REMOVE,
+          style: 'destructive',
+          onPress: () => {
+            dispatch(setVoiceEnabled(false));
+            void deleteVoiceModel();
+          },
+        },
+      ],
+    );
+  }, [dispatch]);
 
   const makeToggleHandler = useCallback(
     (action: (value: boolean) => { type: string; payload: boolean }) => (value: boolean) => {
@@ -100,6 +157,13 @@ const AdvancedScreen: FC = () => {
           rightType="custom"
           rightComponent={modelRight}
         />
+        {model.state === 'ready' ? (
+          <SettingsCard
+            icon="trash"
+            label={STRINGS.ADVANCED_MODEL_REMOVE}
+            onPress={handleRemoveModel}
+          />
+        ) : null}
       </SettingsSection>
 
       <SettingsSection title={STRINGS.ADVANCED_RECORDING_SECTION}>

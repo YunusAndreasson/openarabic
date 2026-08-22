@@ -47,6 +47,7 @@ import { STRINGS } from '@/constants/strings';
 import type { VoicePhase } from '@/hooks/review/useVoiceReview';
 import { useColors } from '@/hooks/theme/useColors';
 import { selectionFeedback } from '@/utils/haptics';
+import type { VoiceReadiness } from '@/utils/voiceReadiness';
 
 /**
  * What the button offers right now.
@@ -58,35 +59,79 @@ import { selectionFeedback } from '@/utils/haptics';
  * `busy`   — the mic is opening or the answer is being graded. Nothing to press;
  *            the card's meter says what is going on.
  */
-export type VoiceButtonMode = 'ready' | 'live' | 'busy';
+export type VoiceButtonMode =
+  | 'ready'
+  | 'live'
+  | 'busy'
+  /** Model still downloading, or the engine still building. Disabled, but it
+   *  says so — this is the state that used to render nothing at all. */
+  | 'preparing'
+  /** Wanted, but the download is holding out for an unmetered connection.
+   *  Tapping offers the cellular opt-in. */
+  | 'waiting-network'
+  /** The OS refused the mic. Tapping opens system settings. */
+  | 'mic-denied';
 
 /**
  * `null` means don't render the button at all.
  *
- * A refused microphone and a model that is still downloading both used to put
- * their own label in this slot, so the primary control on the screen spent its
- * time apologising. An offer that isn't there needs no excuse: "Show answer"
- * simply takes the row.
+ * THE HIDE RULE IS NARROWER THAN IT WAS, DELIBERATELY. This function used to
+ * return `null` for every not-ready state, on the argument that "an offer that
+ * isn't there needs no excuse" — the primary control should not spend its time
+ * apologising, and "Show answer" simply takes the row.
+ *
+ * That argument is still right for a *permanent* failure: a model that cannot
+ * load is not an offer, and a dead control that fires a haptic and then dies on
+ * `speakNow`'s own `!voice.isReady` guard is worse than no control.
+ *
+ * It was wrong for a download in progress. Voice now ships ON by default, so the
+ * common case is a learner reaching their first session while ~103 MB is still
+ * arriving — and hiding made that indistinguishable from the feature not
+ * existing. A download is temporary and explainable, which is exactly the case
+ * where saying so beats hiding. `useVoiceReview`'s own `VoicePhase` doc has
+ * argued this the whole time: "wait" and "this will never work until you change
+ * a setting" mean opposite things to a learner and must not share a state.
+ *
+ * So: `preparing`, `waiting-network` and `mic-denied` now render (disabled, and
+ * naming themselves); a terminal load error still returns `null`.
  *
  * There is no paused state to check any more. Muting was a header toggle back
  * when the mic armed itself on every card; now nothing opens it but this
  * button, so declining to tap it IS the mute.
- *
- * `ready` is `VoiceGradingProvider.isReady`, and it is checked HERE rather than
- * by the caller because the phase alone cannot answer the question. On a model
- * load error the recognizer is neither ready nor loading, so useVoiceReview's
- * phase effect settles on 'idle' — which every rule below reads as "invite the
- * answer". That rendered a full "Speak to answer" whose tap fired a haptic and
- * then died on speakNow's own `!voice.isReady` guard: a dead control on every
- * card of the session, with nothing on screen saying why. A mic that cannot
- * open is not an offer.
  */
-export function voiceButtonMode(phase: VoicePhase, ready: boolean): VoiceButtonMode | null {
-  if (!ready) return null;
+export function voiceButtonMode(
+  phase: VoicePhase,
+  readiness: VoiceReadiness,
+): VoiceButtonMode | null {
+  switch (readiness.kind) {
+    case 'off':
+      return null;
+    case 'failed':
+      // Terminal for this session. Nothing the learner does in the action band
+      // fixes it, and Account → Advanced carries the actual reason.
+      return null;
+    case 'waiting-wifi':
+      return 'waiting-network';
+    case 'mic-denied':
+      return 'mic-denied';
+    case 'preparing':
+    // The review screen always retains the engine, so a model that is present
+    // but not loaded is a recognizer that is seconds away — same story to tell.
+    case 'model-ready':
+    // Likewise `pending`: reaching this screen with voice on means the prefetch
+    // is running or about to. It renders without a percentage, since there is
+    // no real number to quote yet.
+    case 'pending':
+      return 'preparing';
+    case 'ready':
+      break;
+  }
+
   switch (phase) {
     case 'loading':
+      return 'preparing';
     case 'denied':
-      return null;
+      return 'mic-denied';
     case 'listening':
       return 'live';
     case 'arming':
@@ -99,6 +144,16 @@ export function voiceButtonMode(phase: VoicePhase, ready: boolean): VoiceButtonM
 
 interface VoiceAnswerButtonProps {
   mode: VoiceButtonMode;
+  /**
+   * 0..1 while the model is downloading. Omit once only the engine is left to
+   * build — there is no meaningful percentage for that, and the label drops the
+   * number rather than quoting a fake one.
+   */
+  progress?: number;
+  /** Offered when the download is holding out for Wi-Fi. */
+  onDownloadOverCellular?: () => void;
+  /** Offered once the OS has refused the mic — opens system settings. */
+  onEnableMicrophone?: () => void;
   /** Open the mic now. Stops the prompt on its way in, so a learner who is
    *  ready before the clip ends does not have to sit through it. */
   onSpeakNow: () => void;
@@ -108,11 +163,21 @@ interface VoiceAnswerButtonProps {
 
 export const VoiceAnswerButton: FC<VoiceAnswerButtonProps> = ({
   mode,
+  progress,
   onSpeakNow,
   onStopSpeaking,
+  onDownloadOverCellular,
+  onEnableMicrophone,
 }) => {
   const colors = useColors();
   const isLive = mode === 'live';
+  const isPreparing = mode === 'preparing';
+  const isWaitingNetwork = mode === 'waiting-network';
+  const isMicDenied = mode === 'mic-denied';
+  // The three explain-yourself states are not offers — they carry no haptic and
+  // no tint, and two of them are not even tappable. They occupy the slot only so
+  // the row does not silently lose half its width when voice arrives mid-session.
+  const isOffer = !isPreparing && !isWaitingNetwork && !isMicDenied;
 
   // One target, two meanings, decided by what the mic is doing: open it, or —
   // once it is genuinely capturing — close it. There is no hold gesture. Hold
@@ -127,20 +192,49 @@ export const VoiceAnswerButton: FC<VoiceAnswerButtonProps> = ({
   // you" then "go", far enough apart to read as separate events rather than as
   // one double-buzz.
   const handlePress = useCallback(() => {
+    if (isPreparing) return;
+    if (isWaitingNetwork) {
+      onDownloadOverCellular?.();
+      return;
+    }
+    if (isMicDenied) {
+      onEnableMicrophone?.();
+      return;
+    }
     selectionFeedback();
     if (isLive) {
       onStopSpeaking();
       return;
     }
     onSpeakNow();
-  }, [isLive, onSpeakNow, onStopSpeaking]);
+  }, [
+    isPreparing,
+    isWaitingNetwork,
+    isMicDenied,
+    isLive,
+    onSpeakNow,
+    onStopSpeaking,
+    onDownloadOverCellular,
+    onEnableMicrophone,
+  ]);
+
+  const label = ((): string => {
+    if (isPreparing) {
+      return progress === undefined
+        ? STRINGS.VOICE_PREPARING
+        : STRINGS.VOICE_PREPARING_TEMPLATE(Math.round(progress * 100));
+    }
+    if (isWaitingNetwork) return STRINGS.VOICE_WAITING_WIFI;
+    if (isMicDenied) return STRINGS.VOICE_ENABLE_MICROPHONE;
+    return isLive ? STRINGS.VOICE_DONE_SPEAKING : STRINGS.VOICE_SPEAK_TO_ANSWER;
+  })();
 
   // `busy` outlasts an eyeblink — grading takes about a second — so unlike the
   // card-advance disable it has to be visible, or the learner taps a live-
   // looking button and nothing happens. State-driven, so it rides a CSS
   // transition per the house split, and it stands the button down rather than
   // giving it a fourth label to say so.
-  const standDown = mode === 'busy';
+  const standDown = mode === 'busy' || isPreparing;
 
   return (
     <Animated.View
@@ -154,10 +248,16 @@ export const VoiceAnswerButton: FC<VoiceAnswerButtonProps> = ({
       ]}
     >
       <ReviewActionButton
-        label={isLive ? STRINGS.VOICE_DONE_SPEAKING : STRINGS.VOICE_SPEAK_TO_ANSWER}
-        accessibilityLabel={isLive ? STRINGS.VOICE_DONE_SPEAKING : STRINGS.VOICE_CHANNEL_LABEL}
-        color={colors.tint}
-        variant="primary"
+        label={label}
+        accessibilityLabel={
+          isPreparing
+            ? STRINGS.VOICE_PREPARING_A11Y
+            : isOffer && !isLive
+              ? STRINGS.VOICE_CHANNEL_LABEL
+              : label
+        }
+        color={isOffer ? colors.tint : colors.textTertiary}
+        variant={isOffer ? 'primary' : 'tinted'}
         standalone={false}
         disabled={standDown}
         onPress={handlePress}

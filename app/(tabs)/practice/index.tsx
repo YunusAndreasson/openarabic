@@ -15,10 +15,12 @@ import { DAYS_7 } from '@/constants/chartConstants';
 import { fsrsQueries, PRACTICE_DUE_WORDS_LIMIT } from '@/constants/queries';
 import { ROUTE_PATHS, getPracticeReviewRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
+import { useVoiceGrading } from '@/components/providers';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useStudyStreak } from '@/hooks/practice/useStudyStreak';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
+import { useAppSelectorShallow } from '@/store/hooks';
 import { PinnedActionButton, usePinnedActionClearance } from '@/components/ui';
 import { useMemoryHorizonDistribution } from '@/hooks/vocabulary/useMemoryHorizonDistribution';
 import { useMemoryInsights } from '@/hooks/vocabulary/useMemoryInsights';
@@ -45,8 +47,29 @@ export default function PracticeScreen(): JSX.Element {
   const currentStreak = streak?.currentStreak ?? 0;
   const hasStreak = streak !== null;
 
+  const { acquireEngine } = useVoiceGrading();
+  const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
+
   // Add ref to prevent infinite re-renders
   const hasPrefetchedRef = useRef(false);
+
+  // Hold the recognizer in RAM while the learner is on this tab.
+  //
+  // This is what buys the ~3 s engine build its time: they spend several
+  // seconds reading stats before tapping Start, so by the time the first card
+  // appears the model is warm. Loading it at review-mount instead would land
+  // that build against the first prompt, which is the exact "no mic on card 1"
+  // regression this work exists to remove — and loading it app-wide would make
+  // every article reader carry a 110M-parameter model they are not using.
+  //
+  // The release is deferred inside the provider, so Practice → review →
+  // Practice never drops the count to zero and rebuilds.
+  useFocusEffect(
+    useCallback(() => {
+      if (!voiceEnabled) return;
+      return acquireEngine();
+    }, [voiceEnabled, acquireEngine]),
+  );
 
   // Prefetch vocabulary data on first focus (deduped via ref)
   // Note: useReview.handleClose already invalidates queries when returning from review,

@@ -1,8 +1,18 @@
 /**
- * NVIDIA Parakeet TDT transducer 110M (English, int8) wrapper. Downloads the
- * model on first `enabled` flip (~103 MB), surfaces progress for the Settings
- * screen, then exposes a `transcribe(Float32Array) → string | null` for the
- * review flow.
+ * Recognizer RESIDENCY — building the Parakeet engine from a model that is
+ * already on disk, and holding it in RAM.
+ *
+ * This hook used to do three things in one effect keyed on `voiceEnabled`: the
+ * ~103 MB download, the `createSTT` engine build, and the warm-up inference.
+ * Welding them meant the bytes could not be fetched without also paying the RAM,
+ * and — worse — the effect's cleanup aborted the download and deleted its resume
+ * state. The download now lives in `services/voiceModelStore.ts`, which has no
+ * React lifecycle to be torn down by.
+ *
+ * What is left here is genuinely per-component: an ONNX engine is expensive
+ * enough that who holds it, and for how long, is a real decision. See
+ * `VoiceGradingProvider.acquireEngine` for the retain/release counter that
+ * decides `retained`.
  *
  * Ported from edemind's use-sherpa-stt.ts.
  */
@@ -15,85 +25,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 // @dr.pogodin/react-native-fs" the moment this module is reached. `yarn check-unused`
 // (knip) does resolve through node_modules and sees the import, so it will catch the
 // mistake — a plain grep over app source will not.
-import {
-  ModelCategory,
-  ensureModelByCategory,
-  refreshModelsByCategory,
-  type DownloadProgress,
-} from 'react-native-sherpa-onnx/download';
 import { createSTT, type STTModelType, type SttEngine } from 'react-native-sherpa-onnx/stt';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TARGET_SAMPLE_RATE } from '@/lib/voice/recording';
+import { PARAKEET_MODEL_ID } from '@/constants/voiceModel';
 import { analytics } from '@/services/analytics';
 import { span as diagSpan } from '@/utils/reviewDiagnostics';
 import { voiceBreadcrumb } from '@/utils/errorHandling';
-
-/**
- * NVIDIA Parakeet TDT transducer 110M (English, int8) — ~103 MB.
- *
- * **The 0.6B v2 was tried again on 2026-08-19 and reverted the same night.**
- * That is now a settled question rather than an open one, so do not re-run the
- * experiment without new evidence of a different kind.
- *
- * The case for going bigger was that `weighty` and `lineage` were each
- * overridden several times with a DIFFERENT wrong transcript every time, which
- * reads like an acoustic model that cannot resolve the word. Two things
- * disproved it.
- *
- * 1. **The decisive word got worse.** `girded with` has 43 attempts across both
- *    models — the deepest history in the table:
- *
- *        110M   40 attempts   15 credited (38%)   "guarded with" x6, "Girdle
- *                                                  with", "Guard it with", …
- *        0.6B    3 attempts    0 credited  (0%)   "Arrive.", "Girl of the
- *                                                  West.", "God it was."
- *
- * 2. **Most of the "instability" was never acoustic.** The retry pattern is
- *    `corruption` → "Pollution." → then "Corruption."; `journey` → "Travel." →
- *    then "Journey."; `his sessions` → "His assembly." → then "His sessions."
- *    Those first transcripts are not mishearings, they are OTHER ENGLISH WORDS,
- *    transcribed correctly. The learner reached for a synonym and the single
- *    stored gloss failed them. No acoustic model fixes that.
- *
- * What remains, having ruled the model out, is two non-ASR problems:
- * synonyms the corpus does not carry (`corruption`'s root offers "bad |
- * badness of | evil", never "pollution"), and glosses no recogniser will ever
- * emit — `girded with` has exactly one alternate in `sentence_words`, itself,
- * and a transducer's internal LM will always prefer "God it was". See
- * `useReviewGlossAlternates` for the widening that exists, and note it can only
- * widen to what the corpus already contains.
- *
- * Same `nemo_transducer` architecture either way, so decoding carries over
- * unchanged. `model_id` is on every attempt, which is what made this decidable.
- */
-export const PARAKEET_MODEL_ID = 'sherpa-onnx-nemo-parakeet_tdt_transducer_110m-en-36000-int8';
-
-/**
- * Decoding is greedy, and nothing here can change that.
- *
- * This file used to call `engine.setConfig({ decodingMethod: 'modified_beam_search' })`
- * after load, on the theory that a small beam keeps a rarer-but-correct hypothesis
- * alive on one-word audio. It never took effect for a single attempt. sherpa-onnx
- * picks the decoder ONCE, in the `OfflineRecognizerTransducerNeMoImpl` constructor,
- * from `config.decoding_method`. `OfflineRecognizerImpl::SetConfig` is only
- * `config_ = config;`, and the NeMo impl does not override it — so a post-load
- * setConfig mutates a struct that is never read again. Worse, the call RESOLVES, so
- * the try/catch guarding it never fired and no breadcrumb was ever emitted.
- *
- * `createSTT` exposes no decodingMethod option either (nor does the Kotlin
- * `buildRecognizerConfig`), so the recognizer is always built with the default. The
- * one construction-time switch is a non-empty `hotwordsFile` on a transducer model,
- * which forces modified_beam_search — but hotwords need BPE-tokenised entries against
- * a `bpe.vocab` this model does not ship, and biasing a recogniser toward the
- * expected answer is the wrong instrument for a grader regardless.
- *
- * So: this constant records what actually runs, and every attempt already in
- * `voice_grading_attempts` — including the 80 that showed one genuine mishear — was
- * decoded greedily. Do not re-add a decoding config without first checking that
- * `createSTT` accepts one.
- */
-export const VOICE_DECODING_METHOD = 'greedy_search';
 
 /** Silence fed through the engine once at load to force the ONNX graph to
  *  build. Half a second at 16 kHz — enough to execute the full pipeline,
@@ -117,74 +56,59 @@ function toSampleArray(waveform: Float32Array): number[] {
 export interface SherpaStt {
   /** Transcribe a 16 kHz mono waveform to trimmed text. null when not ready. */
   transcribe: (waveform: Float32Array) => Promise<string | null>;
+  /** True only AFTER the warm-up inference — i.e. the engine is genuinely usable. */
   isReady: boolean;
-  isLoading: boolean;
-  downloadProgress: number;
+  /** Building or warming. Distinct from the model download, which is not this hook's concern. */
+  isWarming: boolean;
   error: Error | null;
 }
 
 function useSherpaStt({
-  enabled,
-  modelId,
+  retained,
+  modelPath,
   modelType = 'auto',
   numThreads = 2,
 }: {
-  enabled: boolean;
-  modelId: string;
+  /** Whether anything currently wants a live recognizer. */
+  retained: boolean;
+  /** Path to an already-downloaded model, or null when the bytes are not there yet. */
+  modelPath: string | null;
   modelType?: STTModelType;
   numThreads?: number;
 }): SherpaStt {
   const engineRef = useRef<SttEngine | null>(null);
   const [isReady, setReady] = useState(false);
-  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [isWarming, setWarming] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    const abortController = new AbortController();
 
     async function load() {
-      if (!enabled) {
+      if (!retained || !modelPath) {
         setReady(false);
-        setDownloadProgress(0);
+        setWarming(false);
         setError(null);
         return;
       }
 
       setError(null);
-      setDownloadProgress(progress => (progress > 0 ? progress : 0.01));
+      setWarming(true);
       const loadStartedAt = Date.now();
-      void analytics.track(ANALYTICS_EVENTS.VOICE_MODEL_LOAD_STARTED, { modelId });
-      voiceBreadcrumb('voice.model.load.start', { modelId });
+      void analytics.track(ANALYTICS_EVENTS.VOICE_MODEL_LOAD_STARTED, {
+        modelId: PARAKEET_MODEL_ID,
+      });
+      voiceBreadcrumb('voice.engine.load.start', { modelId: PARAKEET_MODEL_ID });
 
       try {
-        const ensureOpts = {
-          deleteArchiveAfterExtract: true,
-          signal: abortController.signal,
-          onProgress: (progress: DownloadProgress) => {
-            if (!cancelled) setDownloadProgress(Math.max(0, Math.min(1, progress.percent / 100)));
-          },
-        };
-        // The model id is resolved against an on-device registry the lib caches
-        // from the GitHub release listing. A stale cache reads a valid id as
-        // "Unknown model id" — force-refresh and retry once.
-        let model;
-        try {
-          model = await ensureModelByCategory(ModelCategory.Stt, modelId, ensureOpts);
-        } catch (first) {
-          if (cancelled) return;
-          if (!/unknown model id/i.test(first instanceof Error ? first.message : String(first))) {
-            throw first;
-          }
-          await refreshModelsByCategory(ModelCategory.Stt);
-          model = await ensureModelByCategory(ModelCategory.Stt, modelId, ensureOpts);
-        }
-        if (cancelled) return;
         const engine = await createSTT({
-          modelPath: { type: 'file', path: model.localPath },
+          modelPath: { type: 'file', path: modelPath },
           modelType,
           numThreads,
         });
+        // The hook can unmount while `createSTT` is still resolving. The engine
+        // that arrives afterwards is real and holds native memory, so it has to
+        // be destroyed rather than dropped.
         if (cancelled) {
           await engine.destroy();
           return;
@@ -219,25 +143,30 @@ function useSherpaStt({
         }
         if (cancelled) return;
 
-        setDownloadProgress(1);
+        setWarming(false);
         setReady(true);
         void analytics.track(ANALYTICS_EVENTS.VOICE_MODEL_READY, {
-          modelId,
+          modelId: PARAKEET_MODEL_ID,
           durationMs: Date.now() - loadStartedAt,
         });
-        voiceBreadcrumb('voice.model.ready', { modelId, durationMs: Date.now() - loadStartedAt });
+        voiceBreadcrumb('voice.engine.ready', {
+          modelId: PARAKEET_MODEL_ID,
+          durationMs: Date.now() - loadStartedAt,
+        });
       } catch (err) {
         if (!cancelled) {
           setReady(false);
+          setWarming(false);
           const error = err instanceof Error ? err : new Error(String(err));
           setError(error);
           void analytics.track(ANALYTICS_EVENTS.VOICE_MODEL_FAILED, {
-            modelId,
+            modelId: PARAKEET_MODEL_ID,
             message: error.message,
+            stage: 'engine',
           });
           Sentry.captureException(error, {
             tags: { feature: 'voice-grading', stage: 'model-load' },
-            extra: { modelId },
+            extra: { modelId: PARAKEET_MODEL_ID },
           });
         }
       }
@@ -247,12 +176,11 @@ function useSherpaStt({
 
     return () => {
       cancelled = true;
-      abortController.abort();
       const engine = engineRef.current;
       engineRef.current = null;
       if (engine) void engine.destroy();
     };
-  }, [enabled, modelId, modelType, numThreads]);
+  }, [retained, modelPath, modelType, numThreads]);
 
   const transcribe = useCallback(async (waveform: Float32Array): Promise<string | null> => {
     const engine = engineRef.current;
@@ -262,22 +190,22 @@ function useSherpaStt({
   }, []);
 
   return useMemo<SherpaStt>(
-    () => ({
-      transcribe,
-      isReady,
-      isLoading: enabled && !isReady && error === null,
-      downloadProgress,
-      error,
-    }),
-    [transcribe, isReady, enabled, downloadProgress, error],
+    () => ({ transcribe, isReady, isWarming, error }),
+    [transcribe, isReady, isWarming, error],
   );
 }
 
 /** Primary single-word recognizer: NVIDIA Parakeet TDT transducer 110M int8. */
-export function useParakeetStt({ enabled }: { enabled: boolean }): SherpaStt {
+export function useParakeetStt({
+  retained,
+  modelPath,
+}: {
+  retained: boolean;
+  modelPath: string | null;
+}): SherpaStt {
   return useSherpaStt({
-    enabled,
-    modelId: PARAKEET_MODEL_ID,
+    retained,
+    modelPath,
     modelType: 'nemo_transducer',
     numThreads: 2,
   });
