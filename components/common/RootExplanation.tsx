@@ -3,7 +3,6 @@ import { StyleSheet, View } from 'react-native';
 
 // Direct paths, not the barrel: this file lives in `common`, so importing its
 // own barrel would pull in every sibling and close an import cycle.
-import { DisclosureRow } from '@/components/common/DisclosureRow';
 import { ListRow } from '@/components/common/ListRow';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { LAYOUT, getCompactArabicFontSize } from '@/constants/layout';
@@ -13,38 +12,22 @@ import type { RootId } from '@/types/branded.types';
 import type { RootEnrichment, RootFamilyMember } from '@/types/rootEnrichment.types';
 
 /**
- * Where this renders, which decides how much sits behind a chevron.
+ * Where this renders, which decides how much of the record it shows.
  *
- * One axis rather than four independent flags, because those four never vary
- * independently — they are one decision about which surface you are on, and
- * separate booleans would let a caller assemble a combination neither surface
- * wants.
+ * One axis rather than separate flags, because they never vary independently —
+ * they are one decision about which surface you are on.
  *
- * Both variants now LEAD with the root and its shared sense, and both show the
- * usage note without asking. They differ only in what is deferred:
+ * Nothing is behind a chevron on either surface any more. The sheet deferred the
+ * family list to stay short, and that was the wrong thing to protect: what a
+ * word is built from is why the panel exists, and a learner who tapped a word to
+ * ask what it is should not have to ask twice. The sheet scrolls.
  *
- * - `screen`: nothing is. Senses (when the record has any — see the note on
- *   `senses` below), every family member, attribution, all inline.
- * - `sheet`: the family list is behind a disclosure, and senses and attribution
- *   are dropped. The family is the expensive part — five rows of Arabic plus
- *   glosses — while the usage note is two or three sentences. Measured on a
- *   Pixel emulator, the whole record open filled 85% of the screen and forced a
- *   scroll inside a sheet whose job is keeping the learner in the text.
- *
- * The sheet used to hide the usage note too, behind a single collapsed line
- * placed below the action buttons. That ranked the strongest content on the
- * card last and made it opt-in, while the sentence-scoped grammar note above it
- * was always open — the inverse of what the two are worth.
+ * - `screen`: the full account — senses and the attribution line as well.
+ * - `sheet`: drops those two. Senses are empty on all but a handful of records
+ *   (see below), and the citation is one line between the learner and the
+ *   sentence they were reading.
  */
 type RootExplanationVariant = 'screen' | 'sheet';
-
-/**
- * Three rows in the sheet against every member on the screen. The sheet exists
- * to get the learner back to their sentence, which a full family list works
- * against, and `maxDynamicContentSize` is 85% of the screen so the ceiling is
- * real.
- */
-const SHEET_FAMILY_LIMIT = 3;
 
 interface RootExplanationProps {
   enrichment: RootEnrichment;
@@ -118,9 +101,10 @@ export const RootExplanation: FC<RootExplanationProps> = ({
     rootMeaning,
   );
 
-  const family = isSheet
-    ? enrichment.wordFamily.slice(0, SHEET_FAMILY_LIMIT)
-    : enrichment.wordFamily;
+  // Every member, on both surfaces. The sheet used to show three, to stay short.
+  // What a word is built from is the reason this panel exists, so trimming it to
+  // protect the sheet's height was protecting the wrong thing.
+  const family = enrichment.wordFamily;
 
   /** The root, named and read. Identical on both surfaces — it is the payload. */
   const heading = (
@@ -153,44 +137,45 @@ export const RootExplanation: FC<RootExplanationProps> = ({
     </ThemedText>
   ) : null;
 
-  const familyRows = family.map(member => (
-    <FamilyRow
-      key={`${member.letters}-${member.meaning}`}
-      arabicFontSize={arabicFontSize}
-      canOpen={canOpenFamilyMember}
-      member={member}
-      onOpen={onOpenFamilyMember}
-    />
-  ));
+  /**
+   * Shown outright on both surfaces, never behind a chevron.
+   *
+   * The sheet used to defer it to protect its height. That was the wrong thing
+   * to protect: the family list is the strongest teaching asset in the record,
+   * and a learner who tapped a word to ask what it is should not have to ask
+   * twice. The sheet scrolls; that is what a scroll is for.
+   */
+  const familyBlock =
+    family.length > 0 ? (
+      <View style={styles.block}>
+        <ThemedText colorName="subtleLabelText" type="overline">
+          {STRINGS.WORD_ROOT_FAMILY_TITLE}
+        </ThemedText>
+        {family.map(member => (
+          <FamilyRow
+            key={`${member.letters}-${member.meaning}`}
+            arabicFontSize={arabicFontSize}
+            canOpen={canOpenFamilyMember}
+            member={member}
+            onOpen={onOpenFamilyMember}
+          />
+        ))}
+      </View>
+    ) : null;
 
   if (isSheet) {
     // No `section` style here, and no margin of its own: the sheet decides the
     // lead above this block. Carrying it here made the gap under the card's
-    // action button depend on whether the word HAS a root record — XLARGE when
-    // this rendered, SMALL when the grammar note was the first child instead.
+    // action button depend on whether the word HAS a root record.
+    //
+    // Against the screen variant this drops only senses (empty on all but a
+    // handful of records) and the attribution line, and caps the family — the
+    // sheet is a reading interruption, not the full account.
     return (
       <View style={styles.sheetSection}>
         {heading}
         {prose}
-        {/* The family is the one thing here that costs real height, so it is the
-            one thing deferred. The count says what opening it buys — a
-            disclosure that does not is read as a dead end and never tapped. */}
-        {family.length > 0 && (
-          <View style={styles.familyDisclosure}>
-            <DisclosureRow
-              collapseLabel={STRINGS.WORD_ROOT_COLLAPSE_A11Y}
-              expandLabel={STRINGS.WORD_ROOT_EXPAND_A11Y}
-              summary={
-                <ThemedText colorName="textTertiary" type="caption">
-                  {family.length}
-                </ThemedText>
-              }
-              title={STRINGS.WORD_ROOT_FAMILY_TITLE}
-            >
-              {familyRows}
-            </DisclosureRow>
-          </View>
-        )}
+        {familyBlock}
       </View>
     );
   }
@@ -225,14 +210,7 @@ export const RootExplanation: FC<RootExplanationProps> = ({
         </View>
       )}
 
-      {family.length > 0 && (
-        <View style={styles.block}>
-          <ThemedText colorName="subtleLabelText" type="overline">
-            {STRINGS.WORD_ROOT_FAMILY_TITLE}
-          </ThemedText>
-          {familyRows}
-        </View>
-      )}
+      {familyBlock}
 
       {/* Attribution belongs with the full account. In the reading sheet it is
           one more line between the learner and the sentence they were reading,
@@ -336,11 +314,6 @@ const styles = StyleSheet.create({
   block: {
     gap: LAYOUT.SPACING.TINY,
     marginTop: LAYOUT.SPACING.LARGE,
-  },
-  // Less lead than `block`: the disclosure row carries its own touch padding,
-  // so the larger gap stacked two paddings and read as a break in the section.
-  familyDisclosure: {
-    marginTop: LAYOUT.SPACING.SMALL,
   },
   sense: {
     flexDirection: 'row',

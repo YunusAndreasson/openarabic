@@ -987,14 +987,6 @@ export const STRINGS = {
    * letter at a time with no indication of what they are, so the label says it.
    */
   WORD_ROOT_A11Y: 'Root {root}, meaning {meaning}',
-  /**
-   * Disclosure hints for the family list inside the reader sheet. They used to
-   * name the whole section, back when the sheet hid all of it behind one row;
-   * the root and its usage note are now always visible there and only the
-   * family list is deferred, so the label says what actually opens.
-   */
-  WORD_ROOT_EXPAND_A11Y: 'Show the words from this root',
-  WORD_ROOT_COLLAPSE_A11Y: 'Hide the words from this root',
 
   /**
    * Names the SCOPE of the grammar note, which is the whole reason it sits
@@ -1004,18 +996,6 @@ export const STRINGS = {
    * same thing.
    */
   WORD_SENTENCE_NOTE_TITLE: 'In this sentence',
-  /**
-   * Spoken label for the CLOSED note row, and it carries the whole note.
-   *
-   * The row is a `Pressable`, so a screen reader announces it as one element and
-   * never reaches the preview line inside it. Naming only the action would make
-   * this the one place a screen-reader user hears less than a sighted one — the
-   * note was plain, always-visible text before it gained a disclosure. Long, and
-   * deliberately so; the role announces "button" on its own.
-   */
-  WORD_SENTENCE_NOTE_EXPAND_A11Y: 'In this sentence: {note}',
-  /** Open, the paragraph is its own element, so this only names the action. */
-  WORD_SENTENCE_NOTE_COLLAPSE_A11Y: 'Hide the grammar note for this sentence',
   /** Fallback title only. The screen sets the word's own meaning once it has it. */
   WORD_DETAIL_TITLE: 'Word',
   /** Shown when the word list has loaded but this word is no longer in it —

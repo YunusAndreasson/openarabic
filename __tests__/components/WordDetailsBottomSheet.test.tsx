@@ -822,47 +822,38 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       expect(queryByText(/to write, inscribe/)).toBeNull();
     });
 
-    test('leads with the root, its reading and its usage note, all open', () => {
-      mockEnrichment.mockReturnValue(enrichment());
-
-      const { getByText, queryByText } = renderSheet();
-
-      expect(getByText('ك ت ب')).toBeTruthy();
-      // Both variants now read the radicals the same way: transliteration + sense.
-      expect(getByText(/k-t-b .* to write, inscribe/)).toBeTruthy();
-      expect(getByText(STRINGS.WORD_ROOT_SECTION_TITLE)).toBeTruthy();
-      // The usage note is NOT behind the tap any more. It is the strongest
-      // thing on the card and it used to be opt-in, below the buttons.
-      expect(getByText(/runs through every word/)).toBeTruthy();
-      // Only the family list is deferred.
-      expect(queryByText('book')).toBeNull();
-    });
-
-    test('states how many family members the tap would reveal', () => {
-      // A disclosure that does not say what it opens reads as a dead end. The
-      // count is the whole affordance.
+    test('shows the whole record outright — nothing behind a chevron', () => {
       mockEnrichment.mockReturnValue(enrichment());
 
       const { getByText } = renderSheet();
 
+      expect(getByText('ك ت ب')).toBeTruthy();
+      // Both variants read the radicals the same way: transliteration + sense.
+      expect(getByText(/k-t-b .* to write, inscribe/)).toBeTruthy();
+      expect(getByText(STRINGS.WORD_ROOT_SECTION_TITLE)).toBeTruthy();
+      expect(getByText(/runs through every word/)).toBeTruthy();
       expect(getByText(STRINGS.WORD_ROOT_FAMILY_TITLE)).toBeTruthy();
-      expect(getByText(String(3))).toBeTruthy();
     });
 
-    test('opens to a capped family, and nothing beyond it', () => {
-      // Senses and attribution stay off: measured on a Pixel emulator, the full
-      // record filled 85% of the screen and forced a scroll inside a sheet whose
-      // whole purpose is keeping the learner in the text. The family is the one
-      // part that costs real height, so it is the one part deferred.
+    test('shows every family member, not a capped few', () => {
+      // The sheet used to stop at three to stay short. What a word is built from
+      // is why this panel exists, so the height was the wrong thing to protect.
       mockEnrichment.mockReturnValue(enrichment());
 
-      const { getByLabelText, getByText, queryByText } = renderSheet();
-      fireEvent.press(getByLabelText(STRINGS.WORD_ROOT_EXPAND_A11Y));
+      const { getByText } = renderSheet();
 
       expect(getByText('book')).toBeTruthy();
+      expect(getByText('writer')).toBeTruthy();
+      expect(getByText('desk, office')).toBeTruthy();
+      expect(getByText('library')).toBeTruthy();
+    });
 
-      // Capped at three: the fourth member must not render.
-      expect(queryByText('library')).toBeNull();
+    test('drops senses and attribution, which belong to the full account', () => {
+      // Senses are empty on all but a handful of records, and the citation is one
+      // more line between the learner and the sentence they were reading.
+      mockEnrichment.mockReturnValue(enrichment());
+
+      const { queryByText } = renderSheet();
 
       expect(queryByText(STRINGS.WORD_ROOT_SENSES_TITLE)).toBeNull();
       expect(queryByText(/Lane's Arabic-English Lexicon/)).toBeNull();
@@ -879,8 +870,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
         ],
       } as RootEnrichment);
 
-      const { getByLabelText, getByText } = renderSheet();
-      fireEvent.press(getByLabelText(STRINGS.WORD_ROOT_EXPAND_A11Y));
+      const { getByText } = renderSheet();
 
       expect(getByText(STRINGS.WORD_ROOT_PLURAL)).toBeTruthy();
       expect(getByText('كُتُب')).toBeTruthy();
@@ -930,32 +920,14 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       expect(getByText(STRINGS.WORD_SENTENCE_NOTE_TITLE)).toBeTruthy();
     });
 
-    const expandLabel = (note: string) =>
-      STRINGS.WORD_SENTENCE_NOTE_EXPAND_A11Y.replace('{note}', note);
+    test('shows the note outright, in reach of a screen reader', () => {
+      // It was briefly collapsed behind a labelled Pressable, which makes the row
+      // one accessibility element and takes the note out of TalkBack's reach.
+      const { getByText } = renderWithNote(NOTE);
 
-    test('previews the note collapsed, and opens it on tap', () => {
-      // Collapsed by default: this card opens on a plain word tap, so it is hit
-      // constantly while reading, and the note runs ~200 characters.
-      const { getByLabelText, getByText } = renderWithNote(NOTE);
-
-      // Truncation is visual only, so a bare text match cannot tell the preview
-      // from the paragraph — assert the thing that actually differs. Collapsed,
-      // the note is the one-line preview.
-      expect(getByText(NOTE).props.numberOfLines).toBe(1);
-
-      fireEvent.press(getByLabelText(expandLabel(NOTE)));
-
-      // Opened, the preview gives way to a paragraph with no line cap.
-      expect(getByText(NOTE).props.numberOfLines).toBeUndefined();
-      expect(getByLabelText(STRINGS.WORD_SENTENCE_NOTE_COLLAPSE_A11Y)).toBeTruthy();
-    });
-
-    test('the closed row announces the note, which the preview cannot', () => {
-      // The preview lives inside a Pressable, so a screen reader gets the row
-      // and nothing within it. Before the disclosure the note was plain text.
-      const { getByLabelText } = renderWithNote(NOTE);
-
-      expect(getByLabelText(expandLabel(NOTE))).toBeTruthy();
+      const note = getByText(NOTE);
+      expect(note).toBeTruthy();
+      expect(note.props.numberOfLines).toBeUndefined();
     });
   });
 });

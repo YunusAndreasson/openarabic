@@ -1,9 +1,4 @@
-import {
-  BottomSheetErrorBoundary,
-  ColorCodedText,
-  DisclosureRow,
-  RootExplanation,
-} from '@/components/common';
+import { BottomSheetErrorBoundary, ColorCodedText, RootExplanation } from '@/components/common';
 import { BrandedBottomSheet, IconButton } from '@/components/ui';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { startTransition, useCallback, useEffect, useOptimistic, useState } from 'react';
@@ -41,7 +36,7 @@ export interface WordDetailsBottomSheetProps {
 }
 
 /**
- * The grammar note for this word IN THIS SENTENCE, behind a labelled row.
+ * The grammar note for this word IN THIS SENTENCE.
  *
  * Two things share this card and they are not the same claim: the root block
  * above describes the dictionary entry, this describes the form actually on the
@@ -49,18 +44,11 @@ export interface WordDetailsBottomSheetProps {
  * back to. Unlabelled, as it used to be, the two read as two opinions on one
  * word; the heading is what makes them legible as a pair.
  *
- * Collapsed by default because this card opens on a plain word TAP (the inline
- * tooltip is the opt-in, see `wordTapShowsTooltip`), so it is hit constantly
- * while reading, and the note now runs to a median of ~200 characters after the
- * June rewrite. The preview line carries the note's own opening so the row says
- * what opening it buys.
- *
- * The closed label carries the WHOLE note, which reads long but is the point:
- * the preview lives inside a `Pressable`, so a screen reader announces the row
- * and nothing within it. Before this row existed the note was plain always-
- * visible text, and a label naming only the action would have made this the one
- * place where a screen-reader user hears strictly less than a sighted one. Open,
- * the paragraph is its own element and the label goes back to naming the action.
+ * Open, not behind a disclosure. It was collapsed on the argument that this card
+ * opens on a plain word tap and must stay light — but the note is the answer to
+ * the question the tap asked, and a card that makes you tap twice for it is not
+ * lighter, just slower. Being plain text again also puts it back in reach of a
+ * screen reader, which a labelled `Pressable` had taken it out of.
  *
  * Local to this file rather than shared: `grammar_note` has exactly one render
  * site in the app, and `components/common/` is for what two surfaces share.
@@ -68,27 +56,12 @@ export interface WordDetailsBottomSheetProps {
 function SentenceNote({ note }: { note: string }) {
   return (
     <View style={styles.noteSection}>
-      <DisclosureRow
-        collapseLabel={STRINGS.WORD_SENTENCE_NOTE_COLLAPSE_A11Y}
-        expandLabel={STRINGS.WORD_SENTENCE_NOTE_EXPAND_A11Y.replace('{note}', note)}
-        summary={
-          /* The note's own first line as the preview, not a generic label: it is
-             what tells the learner whether this one is worth opening. */
-          <ThemedText
-            colorName="secondaryText"
-            numberOfLines={1}
-            style={styles.flex}
-            type="caption"
-          >
-            {note}
-          </ThemedText>
-        }
-        title={STRINGS.WORD_SENTENCE_NOTE_TITLE}
-      >
-        <ThemedText style={styles.noteText} type="body">
-          {note}
-        </ThemedText>
-      </DisclosureRow>
+      <ThemedText colorName="subtleLabelText" type="overline">
+        {STRINGS.WORD_SENTENCE_NOTE_TITLE}
+      </ThemedText>
+      <ThemedText style={styles.noteText} type="body">
+        {note}
+      </ThemedText>
     </View>
   );
 }
@@ -411,13 +384,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   noteSection: {
-    marginTop: LAYOUT.SPACING.SMALL,
+    gap: LAYOUT.SPACING.TINY,
+    marginTop: LAYOUT.SPACING.LARGE,
   },
   noteText: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.5,
-    marginTop: LAYOUT.SPACING.SMALL,
-  },
-  flex: {
-    flex: 1,
   },
 });
