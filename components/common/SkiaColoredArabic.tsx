@@ -1,5 +1,5 @@
 import { memo, useMemo } from 'react';
-import { View } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
 
 import { Canvas, Paragraph as SkiaParagraph, TextDirection } from '@shopify/react-native-skia';
 
@@ -45,7 +45,19 @@ const SkiaColoredArabicInternal = function SkiaColoredArabic({
 }: SkiaColoredArabicProps) {
   const colors = useColors();
   const { fontSize: readingFontSize, fontFamily, fontManager } = useSkiaFonts();
-  const fontSize = fontSizeOverride ?? readingFontSize;
+  // Skia sizes glyphs in raw pixels, so it is the one text path in the app that
+  // ignores the OS "Larger Text" setting — nothing here passes
+  // `allowFontScaling={false}`, so every `ThemedText` around it grows and the
+  // Arabic alone stays put. On the word card that reads as the headword being
+  // too small beside its own gloss, which is the complaint that found this.
+  //
+  // `useWindowDimensions` rather than `PixelRatio.getFontScale()`: the former is
+  // reactive, so changing the system setting resizes the word instead of waiting
+  // for a remount.
+  //
+  // A no-op at the default scale of 1.
+  const { fontScale } = useWindowDimensions();
+  const fontSize = Math.round((fontSizeOverride ?? readingFontSize) * fontScale);
   const baseColor = color ?? colors.arabicText;
 
   // A segment set that carries no grammar colour is the same picture as plain

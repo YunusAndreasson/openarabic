@@ -479,12 +479,15 @@ jest.mock('react-native', () => {
 
     // Theme detection
     useColorScheme: jest.fn(() => 'light'),
-    useWindowDimensions: jest.fn(() => ({
+    // A plain function, NOT jest.fn(): `resetMocks` strips every jest.fn()
+    // implementation between tests, so the mocked hook returned `undefined` and
+    // any component destructuring it threw. Same trap as the Skia mock.
+    useWindowDimensions: () => ({
       width: 375,
       height: 812,
       scale: 2,
       fontScale: 1,
-    })),
+    }),
 
     // Platform detection
     Platform: {
