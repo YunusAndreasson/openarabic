@@ -23,6 +23,7 @@ import { selectionFeedback } from '@/utils/haptics';
 
 import { WordDetailsBottomSheet } from '@/components/article/WordDetailsBottomSheet';
 import { STRINGS } from '@/constants/strings';
+import type { RootEnrichment } from '@/types/rootEnrichment.types';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
 import { rootId } from '@/__tests__/helpers/ids';
 
@@ -79,6 +80,15 @@ jest.mock('@/hooks/theme/useThemeDetection', () =>
 const mockStudyWord = jest.fn<StudyWord | undefined, [number | undefined]>(() => undefined);
 jest.mock('@/hooks/vocabulary/useStudyWordByRoot', () => ({
   useStudyWordByRoot: (id: number | undefined) => mockStudyWord(id),
+}));
+
+// Same reasoning as the study-word mock above: the root explanation is a
+// separate query, and these tests are about the add/remove state machine. It
+// returns nothing by default, which is also the production default — most words
+// have no entry.
+const mockEnrichment = jest.fn<RootEnrichment | undefined, [number | undefined]>(() => undefined);
+jest.mock('@/hooks/vocabulary/useRootEnrichment', () => ({
+  useRootEnrichment: (id: number | undefined) => mockEnrichment(id),
 }));
 
 describe('WordDetailsBottomSheet - Optimistic State Management', () => {
@@ -761,6 +771,127 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       renderSheet();
 
       expect(mockStudyWord).toHaveBeenCalledWith(mockWord.root_id);
+    });
+  });
+
+  /**
+   * Where the word comes from.
+   *
+   * Two rules carry the design. It starts collapsed, because the sheet exists to
+   * keep the learner reading and an etymology unfurled by default is a wall in
+   * front of the text. And it is absent — not empty — for a word we have no
+   * entry for, which is most of them: a row that exists only to announce a gap
+   * would fire on nearly every tap.
+   */
+  describe('Root explanation', () => {
+    const enrichment = (): RootEnrichment =>
+      ({
+        rootId: 42,
+        triliteralRoot: 'ك ت ب',
+        rootTransliteration: 'k-t-b',
+        rootMeaning: 'to write, inscribe',
+        headwordTransliteration: 'kataba',
+        senses: [{ gloss: 'to write' }],
+        wordFamily: [
+          { letters: 'كِتَاب', transliteration: 'kitāb', meaning: 'book' },
+          { letters: 'كَاتِب', transliteration: 'kātib', meaning: 'writer' },
+          { letters: 'مَكْتَب', transliteration: 'maktab', meaning: 'desk, office' },
+          { letters: 'مَكْتَبَة', transliteration: 'maktaba', meaning: 'library' },
+        ],
+        usageNote: 'The root runs through every word for writing and what is written.',
+        source: "Lane's Arabic-English Lexicon",
+        sourceUrl: 'https://lanelexicon.com/',
+      }) as RootEnrichment;
+
+    const renderSheet = () =>
+      render(
+        <WordDetailsBottomSheet
+          isVisible
+          word={mockWord}
+          onClose={jest.fn()}
+          onAddToStudy={jest.fn(async () => true)}
+        />,
+      );
+
+    test('renders nothing at all for a word with no entry', () => {
+      mockEnrichment.mockReturnValue(undefined);
+
+      const { queryByText } = renderSheet();
+
+      expect(queryByText(STRINGS.WORD_ROOT_LABEL)).toBeNull();
+      expect(queryByText(/to write, inscribe/)).toBeNull();
+    });
+
+    test('shows the root and its shared sense on one line, collapsed', () => {
+      mockEnrichment.mockReturnValue(enrichment());
+
+      const { getByText, queryByText } = renderSheet();
+
+      expect(getByText('ك ت ب')).toBeTruthy();
+      expect(getByText('to write, inscribe')).toBeTruthy();
+      // The explanation itself stays behind the tap.
+      expect(queryByText(/runs through every word/)).toBeNull();
+    });
+
+    test('opens the explanation on tap', () => {
+      mockEnrichment.mockReturnValue(enrichment());
+
+      const { getByLabelText, getByText } = renderSheet();
+      fireEvent.press(getByLabelText(STRINGS.WORD_ROOT_EXPAND_A11Y));
+
+      expect(getByText(/runs through every word/)).toBeTruthy();
+    });
+
+    test('expands to the usage note and a capped family, nothing else', () => {
+      // Senses and attribution stay off: measured on a Pixel emulator, the full
+      // record filled 85% of the screen and forced a scroll inside a sheet whose
+      // whole purpose is keeping the learner in the text.
+      //
+      // The family DOES belong here. It was suppressed entirely while this file
+      // and the component both documented a cap of three, so an expanded sheet
+      // was a bare paragraph — and the family list is the strongest teaching
+      // asset in the record, which is precisely what a learner who expanded the
+      // row is asking for.
+      mockEnrichment.mockReturnValue(enrichment());
+
+      const { getByLabelText, getByText, queryByText } = renderSheet();
+      fireEvent.press(getByLabelText(STRINGS.WORD_ROOT_EXPAND_A11Y));
+
+      expect(getByText(STRINGS.WORD_ROOT_FAMILY_TITLE)).toBeTruthy();
+      expect(getByText('book')).toBeTruthy();
+
+      // Capped at three: the fourth member must not render.
+      expect(queryByText('library')).toBeNull();
+
+      expect(queryByText(STRINGS.WORD_ROOT_SENSES_TITLE)).toBeNull();
+      expect(queryByText(/Lane's Arabic-English Lexicon/)).toBeNull();
+    });
+
+    test('shows a stated plural, which a learner cannot derive', () => {
+      // Broken plurals are irregular by definition, so where Lane's gives one it
+      // is the highest-value field on the row. The morphological pattern is
+      // carried in the same record and deliberately not rendered.
+      mockEnrichment.mockReturnValue({
+        ...enrichment(),
+        wordFamily: [
+          { letters: 'كِتَاب', transliteration: 'kitāb', meaning: 'book', plural: 'كُتُب' },
+        ],
+      } as RootEnrichment);
+
+      const { getByLabelText, getByText } = renderSheet();
+      fireEvent.press(getByLabelText(STRINGS.WORD_ROOT_EXPAND_A11Y));
+
+      expect(getByText(STRINGS.WORD_ROOT_PLURAL)).toBeTruthy();
+      expect(getByText('كُتُب')).toBeTruthy();
+    });
+
+    test('looks the explanation up by root id', () => {
+      mockEnrichment.mockClear();
+      mockEnrichment.mockReturnValue(undefined);
+
+      renderSheet();
+
+      expect(mockEnrichment).toHaveBeenCalledWith(mockWord.root_id);
     });
   });
 });

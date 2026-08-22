@@ -120,3 +120,7 @@ translate_3/
 
 # Play Store service-account key (CI writes this from a secret; never commit it)
 google-service-account.json
+
+# Scratch credential file — a service_role key pasted in for a one-off seed.
+# Never commit: it bypasses RLS entirely.
+/key

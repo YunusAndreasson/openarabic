@@ -5,6 +5,7 @@ export * from './useDictionaryList';
 export * from './useFSRS';
 export * from './useFSRSQueries';
 export * from './useResetWordProgress';
+export * from './useRootEnrichment';
 export * from './useSentencesByWord';
 export * from './useStudyWordByRoot';
 export * from './useWordMemory';

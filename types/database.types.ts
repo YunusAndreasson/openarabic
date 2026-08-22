@@ -1,10 +1,10 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
-export interface Database {
+export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: '12.2.3 (519615d)';
+    PostgrestVersion: '14.5';
   };
   public: {
     Tables: {
@@ -179,7 +179,6 @@ export interface Database {
           article_id: number;
           created_at: string | null;
           last_sentence_read: number;
-          progress_percentage: number | null;
           total_sentences: number;
           updated_at: string | null;
           user_id: string;
@@ -188,7 +187,6 @@ export interface Database {
           article_id: number;
           created_at?: string | null;
           last_sentence_read?: number;
-          progress_percentage?: number | null;
           total_sentences: number;
           updated_at?: string | null;
           user_id: string;
@@ -197,7 +195,6 @@ export interface Database {
           article_id?: number;
           created_at?: string | null;
           last_sentence_read?: number;
-          progress_percentage?: number | null;
           total_sentences?: number;
           updated_at?: string | null;
           user_id?: string;
@@ -208,6 +205,106 @@ export interface Database {
             columns: ['article_id'];
             isOneToOne: false;
             referencedRelation: 'articles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      root_enrichment: {
+        Row: {
+          created_at: string;
+          faq: Json;
+          headword_transliteration: string;
+          part_of_speech: string;
+          root_id: number;
+          root_meaning: string;
+          root_transliteration: string;
+          senses: Json;
+          source: string;
+          source_url: string;
+          triliteral_root: string;
+          updated_at: string;
+          usage_note: string | null;
+          word_family: Json;
+        };
+        Insert: {
+          created_at?: string;
+          faq?: Json;
+          headword_transliteration: string;
+          part_of_speech: string;
+          root_id: number;
+          root_meaning: string;
+          root_transliteration: string;
+          senses?: Json;
+          source: string;
+          source_url: string;
+          triliteral_root: string;
+          updated_at?: string;
+          usage_note?: string | null;
+          word_family?: Json;
+        };
+        Update: {
+          created_at?: string;
+          faq?: Json;
+          headword_transliteration?: string;
+          part_of_speech?: string;
+          root_id?: number;
+          root_meaning?: string;
+          root_transliteration?: string;
+          senses?: Json;
+          source?: string;
+          source_url?: string;
+          triliteral_root?: string;
+          updated_at?: string;
+          usage_note?: string | null;
+          word_family?: Json;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'root_enrichment_root_id_fkey';
+            columns: ['root_id'];
+            isOneToOne: true;
+            referencedRelation: 'roots';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      root_translation_improvements: {
+        Row: {
+          created_at: string;
+          id: number;
+          reviewer_notes: string | null;
+          root_id: number;
+          status: string;
+          suggested_english: string;
+          suggested_tashkeel: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: number;
+          reviewer_notes?: string | null;
+          root_id: number;
+          status?: string;
+          suggested_english: string;
+          suggested_tashkeel: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: number;
+          reviewer_notes?: string | null;
+          root_id?: number;
+          status?: string;
+          suggested_english?: string;
+          suggested_tashkeel?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'root_translation_improvements_root_id_fkey';
+            columns: ['root_id'];
+            isOneToOne: false;
+            referencedRelation: 'roots';
             referencedColumns: ['id'];
           },
         ];
@@ -557,42 +654,25 @@ export interface Database {
       };
     };
     Functions: {
-      // RPC Functions - Callable from application code via supabase.rpc()
-      // ---
-      // delete_user_account: Multi-table deletion requiring SECURITY DEFINER
-      //   - Used in: services/accountDeletion.ts
-      //   - Purpose: App Store compliance (5.1.1v) - user account deletion
-      //   - Cannot be local code: Requires access to auth.users schema
       delete_user_account: { Args: { user_id: string }; Returns: undefined };
       update_reading_progress_monotonic: {
         Args: {
-          p_user_id: string;
           p_article_id: number;
           p_last_sentence_read: number;
           p_total_sentences: number;
+          p_user_id: string;
         };
         Returns: undefined;
       };
-
-      // Database Trigger Functions - NOT callable from app, automatic database operations
-      // ---
-      // sync_difficulty_scales: Trigger function for automatic difficulty syncing
-      //   - Type: TRIGGER (fires on INSERT/UPDATE/DELETE)
-      //   - Purpose: Maintains data consistency across related tables
-      //   - Do NOT call via supabase.rpc() - handled automatically by database
-      //
-      // update_bookmark_categories_updated_at: Trigger function for timestamp updates
-      //   - Type: TRIGGER (fires on UPDATE)
-      //   - Purpose: Automatically updates updated_at timestamps
-      //   - Do NOT call via supabase.rpc() - handled automatically by database
-      //
-      // Note: Trigger functions appear in this list but are NOT exposed via .rpc()
-      // They are internal database functions attached to table triggers
     };
-    Enums: Record<never, never>;
-    CompositeTypes: Record<never, never>;
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
   };
-}
+};
 
 type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>;
 

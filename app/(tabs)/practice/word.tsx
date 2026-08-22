@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ListRow, LoadingState } from '@/components/common';
+import { ListRow, LoadingState, RootExplanation } from '@/components/common';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { ThemedView } from '@/components/primitives/ThemedView';
 import { WordMemoryPanel } from '@/components/practice';
@@ -29,6 +29,7 @@ import { useDebouncedArabicFontSize } from '@/hooks/theme/useDebouncedArabicFont
 import {
   useFSRSQueries,
   useResetWordProgress,
+  useRootEnrichment,
   useSentencesByWord,
   useWordMemory,
 } from '@/hooks/vocabulary';
@@ -38,7 +39,7 @@ import type { RootId } from '@/types/branded.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 import { getNextReviewLabel } from '@/utils/fsrsUtils';
-import { getArticleRoute } from '@/utils/routeBuilders';
+import { getArticleRoute, getPracticeWordRoute } from '@/utils/routeBuilders';
 import { getWordUsage, type WordForm } from '@/utils/wordUsage';
 import { dismissAllThenNavigate } from '@/utils/sheetNavigation';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
@@ -116,6 +117,11 @@ export default function PracticeWordScreen(): JSX.Element {
   }
 
   const memory = useWordMemory(word);
+
+  // Keyed off the ROUTE param, not the resolved word: the id is known
+  // synchronously on mount, so this is already in flight while the study-word
+  // list is still loading rather than starting a round trip behind it.
+  const enrichment = useRootEnrichment(rootId);
 
   const {
     sentences,
@@ -198,6 +204,17 @@ export default function PracticeWordScreen(): JSX.Element {
   // Part of speech and the inflected forms, both read off the examples already
   // loaded above. `roots` has neither column; the corpus is the only source.
   const usage = getWordUsage({ rootId: word.root_id, lemma: arabicText, sentences });
+
+  // A family member is tappable only when the learner has that word saved: this
+  // screen renders WORD_NOT_FOUND for anything outside the practice list, so a
+  // link to an unsaved word is a dead end. The check is handed to the component
+  // PER MEMBER — it used to be an all-or-nothing prop, which meant one saved
+  // member made all five look pressable.
+  const savedRootIds = new Set((allWords ?? []).map(saved => saved.root_id));
+  const canOpenFamilyMember = (memberRootId: RootId) => savedRootIds.has(memberRootId);
+  const handleOpenFamilyMember = (memberRootId: RootId) => {
+    router.push(getPracticeWordRoute(memberRootId));
+  };
 
   const handleOpenArticle = (article: SentenceArticle) => {
     // `disableAutoScroll`: the reader normally resumes at the learner's
@@ -305,6 +322,29 @@ export default function PracticeWordScreen(): JSX.Element {
             />
           )}
         </View>
+
+        {/* Where the word comes from.
+
+            Below the stats, not under the hero. It was tried under the hero —
+            lexical identity before scheduling — and on a device the section runs
+            about two and a half screens, which pushed the memory panel and every
+            stat onto the third. This screen is opened from a list of words the
+            learner is practising, so what it says about their memory has to stay
+            reachable at a glance; the derivation is what they scroll FOR.
+
+            It also belongs here by the rule stated below: this is the async zone,
+            so nothing above it moves when it lands.
+
+            Absent for most words, and silently so — no empty state. Coverage is
+            a small fraction of the dictionary, and a band explaining its own
+            emptiness on nine words in ten is worse than no band. */}
+        {enrichment && (
+          <RootExplanation
+            canOpenFamilyMember={canOpenFamilyMember}
+            enrichment={enrichment}
+            onOpenFamilyMember={handleOpenFamilyMember}
+          />
+        )}
 
         {/* The forms the corpus actually shows this word in.
             Sits between the stats and the examples so the two blocks that

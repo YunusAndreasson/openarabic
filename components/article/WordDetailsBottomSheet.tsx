@@ -1,6 +1,6 @@
-import { BottomSheetErrorBoundary, ColorCodedText } from '@/components/common';
+import { BottomSheetErrorBoundary, ColorCodedText, RootExplanation } from '@/components/common';
 import { BrandedBottomSheet } from '@/components/ui';
-import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { startTransition, useCallback, useEffect, useOptimistic, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,6 +13,7 @@ import { STRINGS } from '@/constants/strings';
 import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
 import { useColors } from '@/hooks/theme/useColors';
 import { useDebouncedArabicFontSize } from '@/hooks/theme/useDebouncedArabicFontSize';
+import { useRootEnrichment } from '@/hooks/vocabulary/useRootEnrichment';
 import { useStudyWordByRoot } from '@/hooks/vocabulary/useStudyWordByRoot';
 import { useWordMemory } from '@/hooks/vocabulary/useWordMemory';
 
@@ -54,6 +55,9 @@ export function WordDetailsBottomSheet({
   // Correct, and non-obvious enough to say out loud.
   const studyWord = useStudyWordByRoot(word?.root_id ?? undefined);
   const memory = useWordMemory(studyWord);
+  // Keyed on the same root the add/remove button acts on, so the explanation
+  // describes the dictionary entry behind the inflected form on screen.
+  const enrichment = useRootEnrichment(word?.root_id ?? undefined);
   // Use consolidated word audio playback hook
   const playWordAudio = useWordAudioPlayback({ showErrorToast: true });
   // Scales with the learner's reading size, like the review card's hero. It was
@@ -168,8 +172,18 @@ export function WordDetailsBottomSheet({
 
   return (
     <BrandedBottomSheet isVisible={isVisible && !!word} onClose={onClose}>
-      <BottomSheetView
-        style={[styles.container, { paddingBottom: insets.bottom + LAYOUT.SPACING.LARGE }]}
+      {/* BottomSheetScrollView, not BottomSheetView: expanding the root
+          explanation can push the content past `maxDynamicContentSize` (85% of
+          screen height), and a non-scrolling container simply clips the
+          overflow — measured on a Pixel emulator, it put "Add to practice"
+          below the fold with no way to reach it. Dynamic sizing still shrinks
+          the sheet to the content while it is collapsed, so the common case is
+          unchanged; only the overflowing case gains a scroll. */}
+      <BottomSheetScrollView
+        contentContainerStyle={[
+          styles.container,
+          { paddingBottom: insets.bottom + LAYOUT.SPACING.LARGE },
+        ]}
       >
         <BottomSheetErrorBoundary sheetName="WordDetails">
           {!word ? null : (
@@ -255,10 +269,31 @@ export function WordDetailsBottomSheet({
                   />
                 </View>
               </View>
+
+              {/* Where the word comes from — one collapsed line, opened on
+                  demand. The sheet's job is to keep the learner reading, so the
+                  default state costs a single row. Expanded it adds the usage
+                  note and three family members.
+
+                  LAST on purpose, below the actions. It is the only block here
+                  whose height the learner changes, and when it sat above them
+                  expanding it pushed "Add to practice" clean off the screen —
+                  the sheet's primary action, reachable only by scrolling, as a
+                  side effect of asking what a word comes from. Anything that
+                  can grow goes after everything that must stay reachable.
+
+                  Absent entirely for a word we have no entry for, which is most
+                  of them. No placeholder: a row that exists only to say it has
+                  nothing would fire on nearly every tap. */}
+              {enrichment && (
+                <View style={styles.rootSection}>
+                  <RootExplanation enrichment={enrichment} variant="sheet" />
+                </View>
+              )}
             </>
           )}
         </BottomSheetErrorBoundary>
-      </BottomSheetView>
+      </BottomSheetScrollView>
     </BrandedBottomSheet>
   );
 }
@@ -284,9 +319,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
 
+  // Left-aligned, like every block below the hero. It was centred, which put a
+  // centred paragraph directly above the left-aligned root section and read as
+  // an accident rather than a choice — reported on device as "some text
+  // centered and some left aligned". The rule now has no exceptions: the hero
+  // (the Arabic word and its gloss) is centred because it is a title; prose and
+  // lists beneath it are left-aligned because they are read and scanned.
   grammarText: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.5,
-    textAlign: 'center',
+  },
+  // Same rule as grammarText above.
+  rootSection: {
+    marginBottom: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   buttonSection: {
     marginTop: LAYOUT.SPACING.LARGE,

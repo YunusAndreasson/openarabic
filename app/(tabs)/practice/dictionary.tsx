@@ -2,6 +2,7 @@ import { FlashList } from '@shopify/flash-list';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,6 +21,7 @@ import { SettingsPicker, TextLink } from '@/components/ui';
 import type { SettingsPickerOption } from '@/components/ui/SettingsPicker';
 import { LIST_DRAW_DISTANCE_MULTIPLIER, TIMING_CONFIG, fadeInStyle } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
+import { rootEnrichmentQueries } from '@/constants/queries';
 import { getPracticeWordRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useStudyWordMutations } from '@/hooks/articles/useStudyWordMutations';
@@ -63,6 +65,7 @@ const ROW_FADE_IN_STYLE = fadeInStyle(TIMING_CONFIG.MEDIUM.duration, 'backwards'
 export default function DictionaryScreen(): JSX.Element {
   const { user } = useAuth();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { preconfigureAudioSession } = useSimpleAudioPlayer();
@@ -191,9 +194,15 @@ export default function DictionaryScreen(): JSX.Element {
 
   const handleWordPress = useCallback(
     (word: StudyWord) => {
+      // Warm the root explanation before the push, not after the screen mounts.
+      // It renders directly under the hero there, so an arrival one beat late
+      // would shove the memory panel and stats down mid-read. Fetching on the
+      // tap buys the navigation transition as head start, and the infinite
+      // staleTime means it is only ever paid once per word.
+      void queryClient.prefetchQuery(rootEnrichmentQueries.detail(word.root_id));
       router.push(getPracticeWordRoute(word.root_id));
     },
-    [router],
+    [queryClient, router],
   );
 
   // Stable identity per word so recycling, deletions, and sort flips keep

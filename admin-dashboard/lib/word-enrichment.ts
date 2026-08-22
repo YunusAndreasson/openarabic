@@ -14,6 +14,8 @@ export interface WordEnrichmentFamilyMember {
   meaning: string;
   /** Internal /word/... link when this form is in our dictionary. */
   path?: string;
+  /** The same entry's root id — how the mobile app navigates, which has no slugs. */
+  rootId?: number;
 }
 
 export interface WordEnrichmentFaq {
@@ -25,6 +27,8 @@ export interface WordEnrichment {
   rootId: number;
   triliteralRoot: string;
   rootTransliteration: string;
+  /** The sense shared by the whole family, e.g. "to turn, invert, change". */
+  rootMeaning: string;
   headwordTransliteration: string;
   partOfSpeech: string;
   senses: WordEnrichmentSense[];
@@ -40,6 +44,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 9545,
     "triliteralRoot": "ح م د",
     "rootTransliteration": "ḥ-m-d",
+    "rootMeaning": "to praise, commend, give thanks",
     "headwordTransliteration": "ḥamd",
     "partOfSpeech": "noun (verbal noun / maṣdar of حَمِدَ)",
     "senses": [
@@ -76,13 +81,15 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "حَمِيدٌ",
         "transliteration": "ḥamīd",
         "meaning": "praiseworthy, laudable; also used as a divine epithet",
-        "path": "/word/the-praiseworthy-6042"
+        "path": "/word/the-praiseworthy-6042",
+        "rootId": 6042
       },
       {
         "letters": "مَحْمُودٌ",
         "transliteration": "maḥmūd",
         "meaning": "praised, commended (passive participle)",
-        "path": "/word/praiseworthy-6824"
+        "path": "/word/praiseworthy-6824",
+        "rootId": 6824
       },
       {
         "letters": "مُحَمَّدٌ",
@@ -118,6 +125,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 5266,
     "triliteralRoot": "ع ل م",
     "rootTransliteration": "ʿ-l-m",
+    "rootMeaning": "to know, have knowledge",
     "headwordTransliteration": "ʿilm",
     "partOfSpeech": "noun (verbal noun / maṣdar of عَلِمَ, form I)",
     "senses": [
@@ -170,6 +178,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 5277,
     "triliteralRoot": "ذ ن ب",
     "rootTransliteration": "dh-n-b",
+    "rootMeaning": "a tail; to trail behind",
     "headwordTransliteration": "dhunūb",
     "partOfSpeech": "noun (broken plural of ذَنْب, itself a verbal noun / maṣdar)",
     "senses": [
@@ -197,7 +206,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "أَذْنَبَ",
         "transliteration": "adhnaba",
         "meaning": "form IV: to commit a sin, to become guilty of a fault",
-        "path": "/word/he-sinned-18157"
+        "path": "/word/he-sinned-18157",
+        "rootId": 18157
       },
       {
         "letters": "تَذَنَّبَ",
@@ -233,6 +243,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 5975,
     "triliteralRoot": "و ض ع",
     "rootTransliteration": "w-ḍ-ʿ",
+    "rootMeaning": "to put, lay, place, set down",
     "headwordTransliteration": "tawāḍuʿ",
     "partOfSpeech": "noun (verbal noun / maṣdar, form VI)",
     "senses": [
@@ -294,6 +305,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 6734,
     "triliteralRoot": "خ ف ف",
     "rootTransliteration": "kh-f-f",
+    "rootMeaning": "to be light, quick, agile",
     "headwordTransliteration": "khafīf",
     "partOfSpeech": "adjective (participial/intensive adjective, faʿīl pattern)",
     "senses": [
@@ -349,6 +361,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 7720,
     "triliteralRoot": "ق ت ل",
     "rootTransliteration": "q-t-l",
+    "rootMeaning": "to kill, slay",
     "headwordTransliteration": "qatl",
     "partOfSpeech": "noun (verbal noun / maṣdar)",
     "senses": [
@@ -371,7 +384,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "قَاتَلَ",
         "transliteration": "qātala",
         "meaning": "to fight, contend with someone in battle (form III)",
-        "path": "/word/fight-7254"
+        "path": "/word/fight-7254",
+        "rootId": 7254
       },
       {
         "letters": "اِسْتَقْتَلَ",
@@ -387,13 +401,15 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "قَاتِلٌ",
         "transliteration": "qātil",
         "meaning": "deadly, killing (active participle; said of poison or a tree)",
-        "path": "/word/fight-7254"
+        "path": "/word/fight-7254",
+        "rootId": 7254
       },
       {
         "letters": "مَقْتَلٌ",
         "transliteration": "maqtal",
         "meaning": "a vital spot where a wound proves fatal (pl. مَقَاتِل)",
-        "path": "/word/kill-annihilate-8004"
+        "path": "/word/kill-annihilate-8004",
+        "rootId": 8004
       },
       {
         "letters": "مُسْتَقْتِلٌ",
@@ -415,52 +431,11 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "sourceUrl": "https://lanelexicon.com/",
     "usageNote": "قَتْل is the maṣdar of قَتَلَ, naming the act of killing, slaying, or murder; from it comes the plural قُتُول. Related forms extend the root toward combat (قَاتَلَ, 'to fight') and toward courting death (اِسْتَقْتَلَ, مُسْتَقْتِلٌ). Lexicographers also record a distinct, rarer figurative use of قَتَلَ with عِلْمًا or خُبْرًا, meaning 'to know something thoroughly' — a separate, tropical sense unrelated to killing."
   },
-  "10732": {
-    "rootId": 10732,
-    "triliteralRoot": "ح م و",
-    "rootTransliteration": "ḥ-m-w",
-    "headwordTransliteration": "ḥāmī",
-    "partOfSpeech": "noun (active participle, fāʿil-pattern of a final-weak root)",
-    "senses": [
-      {
-        "gloss": "protector, one who protects"
-      }
-    ],
-    "wordFamily": [
-      {
-        "letters": "حَمٌ",
-        "transliteration": "ḥam",
-        "meaning": "a woman's husband's male relative — father-in-law, brother-in-law, etc."
-      },
-      {
-        "letters": "حَمَاةٌ",
-        "transliteration": "ḥamāh",
-        "meaning": "a husband's mother, i.e. mother-in-law (also used for the calf muscle of the leg)"
-      },
-      {
-        "letters": "حَمُو",
-        "transliteration": "ḥamū",
-        "meaning": "variant of ḥam, declined like abū and used only before a following genitive"
-      }
-    ],
-    "faq": [
-      {
-        "q": "How do you say \"protector\" in Arabic?",
-        "a": "حَامِي (ḥāmī)."
-      },
-      {
-        "q": "What does the Arabic root ح م و (ḥ-m-w) mean?",
-        "a": "It covers relatives by marriage: حَمٌ is a husband's male in-law, and حَمَاةٌ is a wife's husband's mother (mother-in-law)."
-      }
-    ],
-    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
-    "sourceUrl": "https://lanelexicon.com/",
-    "usageNote": "Lane's lists this form among the ح م و entries, but the root's own documented vocabulary is about relatives by marriage, not protection: حَمٌ (and its variants) names a woman's husband's male relative, and its feminine حَمَاةٌ names the husband's mother. The headword's sense \"protector\" stands apart from that in-law vocabulary."
-  },
   "11171": {
     "rootId": 11171,
     "triliteralRoot": "ر و ح",
     "rootTransliteration": "r-w-ḥ",
+    "rootMeaning": "wind, breath; moving air",
     "headwordTransliteration": "rūḥ",
     "partOfSpeech": "noun (substantive)",
     "senses": [
@@ -493,7 +468,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "رَاحٌ",
         "transliteration": "rāḥ",
         "meaning": "briskness, liveliness, alacrity",
-        "path": "/word/return-9387"
+        "path": "/word/return-9387",
+        "rootId": 9387
       }
     ],
     "faq": [
@@ -514,6 +490,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 12251,
     "triliteralRoot": "ل و ذ",
     "rootTransliteration": "l-w-ḏ",
+    "rootMeaning": "to take refuge, seek shelter",
     "headwordTransliteration": "malāḏ",
     "partOfSpeech": "noun (noun of place / ism makān)",
     "senses": [
@@ -575,6 +552,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 12652,
     "triliteralRoot": "س ل م",
     "rootTransliteration": "s-l-m",
+    "rootMeaning": "to be safe, free from harm",
     "headwordTransliteration": "salām",
     "partOfSpeech": "noun (verbal noun / maṣdar of سَلِمَ, also used substantively)",
     "senses": [
@@ -637,6 +615,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 18906,
     "triliteralRoot": "ط و ع",
     "rootTransliteration": "ṭ-w-ʿ",
+    "rootMeaning": "to obey, submit, comply willingly",
     "headwordTransliteration": "ṭāʿah",
     "partOfSpeech": "noun (verbal noun / quasi-infinitive noun, of form IV أَطَاعَ)",
     "senses": [
@@ -654,7 +633,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "طَاعَ",
         "transliteration": "ṭāʿa",
         "meaning": "to be, or become, submissive/obedient (to someone)",
-        "path": "/word/obey-7295"
+        "path": "/word/obey-7295",
+        "rootId": 7295
       },
       {
         "letters": "أَطَاعَ",
@@ -670,7 +650,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "تَطَوَّعَ",
         "transliteration": "taṭawwaʿa",
         "meaning": "to do voluntarily, beyond what is obligatory",
-        "path": "/word/volunteer-9517"
+        "path": "/word/volunteer-9517",
+        "rootId": 9517
       },
       {
         "letters": "اسْتَطَاعَ",
@@ -707,83 +688,11 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "sourceUrl": "https://lanelexicon.com/",
     "usageNote": "طَاعَة denotes obedience specifically to a command or authority, distinguished by lexicographers from the more general طَوْع (willing compliance/submission). The root is common in religious vocabulary: صَلَاةُ التَّطَوُّعِ names supererogatory prayer, and مُتَطَوِّعٌ 'volunteer' describes one who performs good deeds beyond what is obligatory — both built on the same idea of voluntary compliance found in طَاعَة."
   },
-  "5335": {
-    "rootId": 5335,
-    "triliteralRoot": "ل ح ظ",
-    "rootTransliteration": "l-ḥ-ẓ",
-    "headwordTransliteration": "laḥẓah",
-    "partOfSpeech": "noun (instance noun / verbal noun, feminine)",
-    "senses": [
-      {
-        "gloss": "a sidelong glance; a look from the outer corner of the eye; an ogle",
-        "note": "the root sense in Lane's: a look aside, toward the right or left, without (or with less) turning of the face"
-      },
-      {
-        "gloss": "a moment; an instant",
-        "note": "extended sense — a span of time likened to the instant a glance takes, as in the phrase في لحظة 'in the twinkling of an eye'"
-      }
-    ],
-    "wordFamily": [
-      {
-        "letters": "لَحَظَ",
-        "transliteration": "laḥaẓa",
-        "meaning": "to glance at someone from the corner of the eye; to watch (form I verb)"
-      },
-      {
-        "letters": "لَاحَظَ",
-        "transliteration": "lāḥaẓa",
-        "meaning": "to regard, have an eye to, pay heed or attention to (figurative, form III)",
-        "path": "/word/to-notice-5867"
-      },
-      {
-        "letters": "تَلَاحَظُوا",
-        "transliteration": "talāḥaẓū",
-        "meaning": "to exchange sidelong glances; to be mutually related (form VI)"
-      },
-      {
-        "letters": "لَحْظٌ",
-        "transliteration": "laḥẓ",
-        "meaning": "verbal noun: a glance from the corner of the eye"
-      },
-      {
-        "letters": "لَحَاظٌ",
-        "transliteration": "laḥāẓ",
-        "meaning": "the outer corner of the eye, near the ear"
-      },
-      {
-        "letters": "مَلْحَظٌ",
-        "transliteration": "malḥaẓ",
-        "meaning": "a glance; the place or act of looking sidelong"
-      },
-      {
-        "letters": "مَلْحُوظٌ",
-        "transliteration": "malḥūẓ",
-        "meaning": "noted, regarded, kept in view (figurative)"
-      },
-      {
-        "letters": "لَحَّاظٌ",
-        "transliteration": "laḥḥāẓ",
-        "meaning": "one given to habitually glancing from the corner of the eye"
-      }
-    ],
-    "faq": [
-      {
-        "q": "How do you say \"moment\" in Arabic?",
-        "a": "لَحْظَة (laḥẓah)."
-      },
-      {
-        "q": "What does لحظة literally mean?",
-        "a": "Literally a sidelong glance — a look from the outer corner of the eye; \"moment\" is an extended sense, comparing a brief span of time to the instant of a glance."
-      }
-    ],
-    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
-    "sourceUrl": "https://lanelexicon.com/",
-    "usageNote": "لَحْظَة originally denotes a physical sidelong glance (the same act as the verb لَحَظَ), but Lane records it used for a brief span of time by analogy — \"I sat with him a laḥẓah\" means \"for as long as a glance takes,\" and في لَحْظَةٍ means \"in an instant.\" This is the sense behind the everyday meaning \"moment.\""
-  },
   "5689": {
     "rootId": 5689,
     "triliteralRoot": "م ل ك",
     "rootTransliteration": "m-l-k",
+    "rootMeaning": "to own, possess, rule",
     "headwordTransliteration": "malak",
     "partOfSpeech": "noun",
     "senses": [
@@ -826,7 +735,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "مَمْلُوكٌ",
         "transliteration": "mamlūk",
         "meaning": "a slave, bondman (lit. 'one possessed')",
-        "path": "/word/servant-5585"
+        "path": "/word/servant-5585",
+        "rootId": 5585
       },
       {
         "letters": "مَلَكُوتُ",
@@ -837,7 +747,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "مَلَكَةٌ",
         "transliteration": "malaka",
         "meaning": "a faculty; a quality firmly rooted in the mind",
-        "path": "/word/reign-6359"
+        "path": "/word/reign-6359",
+        "rootId": 6359
       }
     ],
     "faq": [
@@ -858,6 +769,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 5911,
     "triliteralRoot": "ف ج ر",
     "rootTransliteration": "f-j-r",
+    "rootMeaning": "to burst, break open, gush forth",
     "headwordTransliteration": "fajr",
     "partOfSpeech": "noun (verbal noun / maṣdar)",
     "senses": [
@@ -920,6 +832,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 6600,
     "triliteralRoot": "ب ي ت",
     "rootTransliteration": "b-y-t",
+    "rootMeaning": "to spend the night, lodge",
     "headwordTransliteration": "bayt",
     "partOfSpeech": "noun (also used as the verbal noun/maṣdar of the verb بَاتَ)",
     "senses": [
@@ -941,7 +854,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "بَاتَ",
         "transliteration": "bāta",
         "meaning": "to spend/pass the night (doing something); by extension, to become or be in a given state",
-        "path": "/word/stayed-7726"
+        "path": "/word/stayed-7726",
+        "rootId": 7726
       },
       {
         "letters": "بيّت",
@@ -962,7 +876,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "بَيَاتٌ",
         "transliteration": "bayāt",
         "meaning": "the passing of the night",
-        "path": "/word/overnight-11995"
+        "path": "/word/overnight-11995",
+        "rootId": 11995
       }
     ],
     "faq": [
@@ -983,6 +898,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 7243,
     "triliteralRoot": "ص ح ح",
     "rootTransliteration": "ṣ-ḥ-ḥ",
+    "rootMeaning": "to be sound, healthy, valid",
     "headwordTransliteration": "ṣaḥīḥ",
     "partOfSpeech": "adjective (verbal adjective / ṣifa mushabbaha, faʿīl pattern)",
     "senses": [
@@ -1040,6 +956,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 7519,
     "triliteralRoot": "و ح د",
     "rootTransliteration": "w-ḥ-d",
+    "rootMeaning": "to be one, alone, single",
     "headwordTransliteration": "waḥdahu",
     "partOfSpeech": "noun (maṣdar وَحْدٌ + 3rd person suffix pronoun هُ), used adverbially / as a denotative of state",
     "senses": [
@@ -1072,7 +989,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "وَحْدَةٌ",
         "transliteration": "waḥdah",
         "meaning": "being alone, solitude (verbal noun of وَحَدَ/وَحِدَ)",
-        "path": "/word/solitude-19318"
+        "path": "/word/solitude-19318",
+        "rootId": 19318
       },
       {
         "letters": "وَحِيدٌ",
@@ -1099,68 +1017,11 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "sourceUrl": "https://lanelexicon.com/",
     "usageNote": "وَحْدَهُ is not a separate root-word but the maṣdar وَحْدٌ ('being alone') fixed with a suffix pronoun and used adverbially, always in the accusative when not preceded by a preposition — grammarians debated whether this accusative is an adverb of place, an infinitive noun, or a denotative of state (ḥāl), but in all analyses the phrase functions to mean 'alone.' The pronoun changes with the person referred to (وَحْدَهَا 'she alone', وَحْدَهُمْ 'they alone', etc.), and the same pattern appears in the classical declaration لَا إِلٰهَ إِلَّا ٱللّٰهُ وَحْدَهُ 'there is no god but God, alone.'"
   },
-  "7623": {
-    "rootId": 7623,
-    "triliteralRoot": "د ح ر",
-    "rootTransliteration": "d-ḥ-r",
-    "headwordTransliteration": "ash-shayṭān",
-    "partOfSpeech": "noun (definite proper name / epithet for the Devil)",
-    "senses": [
-      {
-        "gloss": "Satan, the Devil",
-        "note": "Used as the subject of the root's passive participle مَدْحُورٌ in the set phrase 'Satan is driven away from the mercy of God.'"
-      }
-    ],
-    "wordFamily": [
-      {
-        "letters": "دَحَرَهُ",
-        "transliteration": "daḥarahu",
-        "meaning": "he drove him away, expelled or banished him (verb, form I)"
-      },
-      {
-        "letters": "مَدْحُورٌ",
-        "transliteration": "madḥūr",
-        "meaning": "driven away, banished far off — used of Satan in الشيطان مدحور"
-      },
-      {
-        "letters": "دَاحِرٌ",
-        "transliteration": "dāḥir",
-        "meaning": "driving away, expelling, repelling"
-      },
-      {
-        "letters": "دَحُورٌ",
-        "transliteration": "daḥūr",
-        "meaning": "that which drives away or repels (with roughness and ignominy)"
-      },
-      {
-        "letters": "مَدْحَرَةٌ",
-        "transliteration": "madḥarah",
-        "meaning": "a cause or means of driving away"
-      },
-      {
-        "letters": "أَدْحَرُ",
-        "transliteration": "adḥar",
-        "meaning": "more, or most, violently and ignominiously repelled"
-      }
-    ],
-    "faq": [
-      {
-        "q": "How do you say \"Satan\" in Arabic?",
-        "a": "الشَّيْطَانُ (ash-shayṭān)."
-      },
-      {
-        "q": "How do you say \"Satan is driven away from the mercy of God\" in Arabic?",
-        "a": "الشَّيْطَانُ مَدْحُورٌ مِنْ رَحْمَةِ ٱللّٰهِ (ash-shayṭānu madḥūrun min raḥmati llāh) — built on مَدْحُورٌ, the passive participle of دَحَرَ 'to drive away.'"
-      }
-    ],
-    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
-    "sourceUrl": "https://lanelexicon.com/",
-    "usageNote": "الشَّيْطَانُ does not itself come from the root د ح ر, but Lane's cites it as the standard subject of that root's vocabulary of expulsion: the traditional supplication اَللّٰهُمَّ ٱدْحَرْ عَنَّا الشَّيْطَانَ ('O God, drive away from us the devil') uses the verb دَحَرَ, and the phrase الشَّيْطَانُ مَدْحُورٌ مِنْ رَحْمَةِ ٱللّٰهِ ('Satan is driven away, or banished, from the mercy of God') uses the passive participle مَدْحُورٌ — the same word the Qur'an (vii. 17, xvii. 19) uses for one driven far away."
-  },
   "8489": {
     "rootId": 8489,
     "triliteralRoot": "ص د ر",
     "rootTransliteration": "ṣ-d-r",
+    "rootMeaning": "front part; to issue, emanate, return",
     "headwordTransliteration": "ṣadr",
     "partOfSpeech": "noun (masculine)",
     "senses": [
@@ -1193,7 +1054,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "مُصَادَرَةٌ",
         "transliteration": "muṣādara",
         "meaning": "the exacting of a fine or debt from someone; to sue or press someone for payment",
-        "path": "/word/confiscation-9355"
+        "path": "/word/confiscation-9355",
+        "rootId": 9355
       },
       {
         "letters": "تَصْدِيرٌ",
@@ -1220,79 +1082,11 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "sourceUrl": "https://lanelexicon.com/",
     "usageNote": "The root's core sense is physical/directional: to return or go back from a place, extended tropically to a saying or deed 'issuing' from someone. صَدْر (ṣadr) itself is the concrete body part, the chest or breast, but by extension also names the front, upper, or opening part of something — as when a book is given its title or a person takes the foremost seat in an assembly."
   },
-  "9781": {
-    "rootId": 9781,
-    "triliteralRoot": "ع ط ف",
-    "rootTransliteration": "ʿ-ṭ-f",
-    "headwordTransliteration": "yaʿṭifu",
-    "partOfSpeech": "verb (form I, imperfect)",
-    "senses": [
-      {
-        "gloss": "to incline, bend, or turn (toward something)",
-        "note": "The base, literal sense; used of a person or a thing bending or leaning."
-      },
-      {
-        "gloss": "to be favorably inclined, affectionate, or compassionate toward someone (ʿaṭafa ʿalayhi)",
-        "note": "A figurative extension of the literal sense — mercy or compassion is pictured as an inclining toward its object."
-      },
-      {
-        "gloss": "to turn back against someone; to charge or attack, then turn on them (in battle)"
-      },
-      {
-        "gloss": "to turn away or be averse/unkind toward someone (ʿaṭafa ʿanhu)",
-        "note": "The contrary of the compassionate sense, used with ʿan instead of ʿalā."
-      }
-    ],
-    "wordFamily": [
-      {
-        "letters": "عَطَفَ",
-        "transliteration": "ʿaṭafa",
-        "meaning": "he inclined, bent; (figuratively) he was favorably disposed, affectionate, or compassionate"
-      },
-      {
-        "letters": "عَطَّفَ",
-        "transliteration": "ʿaṭṭafa",
-        "meaning": "he bent/inclined (something) much, or repeatedly; also, he draped a garment on someone as a cloak"
-      },
-      {
-        "letters": "تَعَطَّفَ",
-        "transliteration": "taʿaṭṭafa",
-        "meaning": "he became inclined or bent; also, he clad himself with a cloak (ʿiṭāf)"
-      },
-      {
-        "letters": "إِنْعَطَفَ",
-        "transliteration": "inʿaṭafa",
-        "meaning": "it/he inclined or turned (toward something); quasi-passive of ʿaṭafa"
-      },
-      {
-        "letters": "عَطْفٌ",
-        "transliteration": "ʿaṭf",
-        "meaning": "verbal noun: inclining, bending, turning"
-      },
-      {
-        "letters": "عِطَافٌ",
-        "transliteration": "ʿiṭāf",
-        "meaning": "a cloak or mantle worn draped over the shoulders"
-      }
-    ],
-    "faq": [
-      {
-        "q": "How do you say \"incline\" in Arabic?",
-        "a": "يَعْطِفُ (yaʿṭifu), from the root ع ط ف (ʿ-ṭ-f) — the imperfect of عَطَفَ (ʿaṭafa), \"he inclined or bent.\""
-      },
-      {
-        "q": "What does ʿaṭafa ʿalayhi (عَطَفَ عَلَيْهِ) mean?",
-        "a": "To be favorably inclined, affectionate, or compassionate toward someone — literally \"to incline toward\" them, extended figuratively to mercy and kindness."
-      }
-    ],
-    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
-    "sourceUrl": "https://lanelexicon.com/",
-    "usageNote": "The literal sense is physical — bending or inclining an object (a stick, a pillow, the head). Lane's marks the \"favorably inclined / compassionate\" sense as a tropical (figurative) extension of this: showing mercy or affection is pictured as an inclining of the heart toward its object, and it takes the preposition ʿalā (عَلَيْهِ), while the opposite, unfavorable sense takes ʿan (عَنْهُ)."
-  },
   "9815": {
     "rootId": 9815,
     "triliteralRoot": "ب ل و",
     "rootTransliteration": "b-l-w",
+    "rootMeaning": "to test, try, prove by hardship",
     "headwordTransliteration": "balāʾ",
     "partOfSpeech": "noun (verbal noun / maṣdar, from Form I بَلَا, or treated as an independent substantive)",
     "senses": [
@@ -1324,7 +1118,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "أبلى",
         "transliteration": "ablā",
         "meaning": "he tried, or tested, him; some restrict this form to testing by way of a favor or benefit",
-        "path": "/word/test-12131"
+        "path": "/word/test-12131",
+        "rootId": 12131
       },
       {
         "letters": "مُبَالَاة",
@@ -1360,6 +1155,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 10803,
     "triliteralRoot": "ه م م",
     "rootTransliteration": "h-m-m",
+    "rootMeaning": "to be concerned about, resolve upon",
     "headwordTransliteration": "himmah",
     "partOfSpeech": "noun (abstract noun, related to the verb هَمَّ)",
     "senses": [
@@ -1425,6 +1221,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 10981,
     "triliteralRoot": "ف ق ر",
     "rootTransliteration": "f-q-r",
+    "rootMeaning": "to pierce or break the spine",
     "headwordTransliteration": "faqr",
     "partOfSpeech": "noun (verbal noun / maṣdar)",
     "senses": [
@@ -1442,13 +1239,15 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "فَقِيرٌ",
         "transliteration": "faqīr",
         "meaning": "poor, needy (person)",
-        "path": "/word/poor-8011"
+        "path": "/word/poor-8011",
+        "rootId": 8011
       },
       {
         "letters": "اِفْتَقَرَ",
         "transliteration": "iftaqara",
         "meaning": "to become poor, to be in need",
-        "path": "/word/require-13313"
+        "path": "/word/require-13313",
+        "rootId": 13313
       },
       {
         "letters": "أَفْقَرَ",
@@ -1485,77 +1284,11 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "sourceUrl": "https://lanelexicon.com/",
     "usageNote": "فَقْر is the abstract noun for poverty/need, contrasted with فَقِير (a poor person) and غِنًى (wealth). The same root's concrete senses — digging, boring holes, and breaking the vertebrae (فَقَار) — run through related forms, and a 'calamity' is described as one that breaks a person's back (فَاقِرَة), showing how the root's physical and abstract senses of being 'broken' or 'in need' connect."
   },
-  "14195": {
-    "rootId": 14195,
-    "triliteralRoot": "غ ر ر",
-    "rootTransliteration": "gh-r-r",
-    "headwordTransliteration": "ghāri",
-    "partOfSpeech": "noun (common noun)",
-    "senses": [
-      {
-        "gloss": "a cave; a hollow or cavern in a mountain or rock",
-        "note": "shown here with the genitive/construct case ending (-i), as in a phrase like 'the cave of...'"
-      }
-    ],
-    "wordFamily": [
-      {
-        "letters": "غَرَّ",
-        "transliteration": "gharra",
-        "meaning": "to deceive, beguile; to make someone desire what is false (verb, form I)",
-        "path": "/word/deceive-19551"
-      },
-      {
-        "letters": "غُرُورٌ",
-        "transliteration": "ghurūr",
-        "meaning": "delusion; deceptive allure (e.g. of worldly life)"
-      },
-      {
-        "letters": "غِرَّةٌ",
-        "transliteration": "ghirra",
-        "meaning": "heedlessness, inexperience, unwariness",
-        "path": "/word/heedlessness-7346"
-      },
-      {
-        "letters": "غَرَرٌ",
-        "transliteration": "gharar",
-        "meaning": "risk, hazard; rash exposure of oneself to loss or peril",
-        "path": "/word/deceive-10905"
-      },
-      {
-        "letters": "غَرِيرٌ",
-        "transliteration": "gharīr",
-        "meaning": "one who is deceived; an unwary, inexperienced person"
-      },
-      {
-        "letters": "مَغْرُورٌ",
-        "transliteration": "maghrūr",
-        "meaning": "a deceived or deluded person"
-      },
-      {
-        "letters": "غُرَّةٌ",
-        "transliteration": "ghurra",
-        "meaning": "a white blaze on a horse's or camel's forehead",
-        "path": "/word/heedlessness-7346"
-      }
-    ],
-    "faq": [
-      {
-        "q": "How do you say \"cave\" in Arabic?",
-        "a": "غار (ghār)."
-      },
-      {
-        "q": "What does the verb غَرَّ mean?",
-        "a": "It means \"to deceive\" or \"beguile\" — to make someone desire something false, as in the Qur'anic phrase مَا غَرَّكَ, \"what has deceived you?\""
-      }
-    ],
-    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
-    "sourceUrl": "https://lanelexicon.com/",
-    "usageNote": "غَارِ is the everyday concrete noun for a natural cave or cavern, given here in a case-inflected (genitive/construct) form rather than the bare citation form غار. It functions as an ordinary place-noun rather than an abstract or verbal noun."
-  },
   "17640": {
     "rootId": 17640,
     "triliteralRoot": "ع ق ل",
     "rootTransliteration": "ʿ-q-l",
+    "rootMeaning": "to bind, tie, or restrain",
     "headwordTransliteration": "ʿaql",
     "partOfSpeech": "noun (verbal noun / maṣdar of Form I عَقَلَ)",
     "senses": [
@@ -1617,6 +1350,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 5319,
     "triliteralRoot": "ك ل ل",
     "rootTransliteration": "k-l-l",
+    "rootMeaning": "to be whole, complete, encompassing",
     "headwordTransliteration": "kull",
     "partOfSpeech": "noun (quantifier / partitive substantive)",
     "senses": [
@@ -1684,6 +1418,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 5425,
     "triliteralRoot": "ه ج ر",
     "rootTransliteration": "h-j-r",
+    "rootMeaning": "to abandon, forsake, or depart",
     "headwordTransliteration": "muhājir",
     "partOfSpeech": "noun (active participle / ism fāʿil of the form III verb هاجر)",
     "senses": [
@@ -1706,7 +1441,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "هَاجَرَ",
         "transliteration": "hājara",
         "meaning": "to emigrate, leave one's land for another; also, to mutually cut off communion (form III, source of muhājir)",
-        "path": "/word/emigrate-16335"
+        "path": "/word/emigrate-16335",
+        "rootId": 16335
       },
       {
         "letters": "هِجْرَةٌ",
@@ -1717,7 +1453,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "هِجْرَانٌ",
         "transliteration": "hijrān",
         "meaning": "estrangement; a cutting-off of communion, whether in body, speech, or heart",
-        "path": "/word/abandonment-5793"
+        "path": "/word/abandonment-5793",
+        "rootId": 5793
       },
       {
         "letters": "هُجْرٌ",
@@ -1748,6 +1485,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 5786,
     "triliteralRoot": "ع و ن",
     "rootTransliteration": "ʿ-w-n",
+    "rootMeaning": "to help, assist, aid",
     "headwordTransliteration": "aʿāna",
     "partOfSpeech": "verb (form IV)",
     "senses": [
@@ -1765,7 +1503,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "عَوْنٌ",
         "transliteration": "ʿawn",
         "meaning": "aid, help, assistance; also 'a helper, an assistant'",
-        "path": "/word/aid-8510"
+        "path": "/word/aid-8510",
+        "rootId": 8510
       },
       {
         "letters": "أَعْوَانٌ",
@@ -1776,7 +1515,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "مَعُونَةٌ",
         "transliteration": "maʿūnah",
         "meaning": "aid, help, assistance (noun)",
-        "path": "/word/assistance-7997"
+        "path": "/word/assistance-7997",
+        "rootId": 7997
       },
       {
         "letters": "عَاوَنَ",
@@ -1812,6 +1552,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 6542,
     "triliteralRoot": "ج ع ل",
     "rootTransliteration": "j-ʿ-l",
+    "rootMeaning": "to make, create, appoint",
     "headwordTransliteration": "jaʿala",
     "partOfSpeech": "verb (form I)",
     "senses": [
@@ -1877,6 +1618,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 6632,
     "triliteralRoot": "ل غ و",
     "rootTransliteration": "l-gh-w",
+    "rootMeaning": "to talk, chatter, or utter speech",
     "headwordTransliteration": "laghw",
     "partOfSpeech": "noun (verbal noun / maṣdar)",
     "senses": [
@@ -1899,7 +1641,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "اللُّغَةُ",
         "transliteration": "al-lughah",
         "meaning": "the genuine, classical language of the Arabs; \"language\"",
-        "path": "/word/the-language-18320"
+        "path": "/word/the-language-18320",
+        "rootId": 18320
       },
       {
         "letters": "لُغَوِىٌّ",
@@ -1931,69 +1674,11 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "sourceUrl": "https://lanelexicon.com/",
     "usageNote": "Laghw marks speech (or an act, like a careless oath) as empty of value or consequence, opposite to deliberate, meaningful speech. The same root gives اللُّغَةُ, the term for the genuine, classical Arabic tongue itself, and لُغَوِىٌّ for anything pertaining to it — so the root spans both \"idle talk\" and \"language\" proper."
   },
-  "8290": {
-    "rootId": 8290,
-    "triliteralRoot": "ح ب ب",
-    "rootTransliteration": "ḥ-b-b",
-    "headwordTransliteration": "tawaddada",
-    "partOfSpeech": "verb (form V)",
-    "senses": [
-      {
-        "gloss": "draw close, become near (to someone)",
-        "note": "used of actively seeking closeness or friendliness with a person"
-      }
-    ],
-    "wordFamily": [
-      {
-        "letters": "حُبٌّ",
-        "transliteration": "ḥubb",
-        "meaning": "love, affection (verbal noun)"
-      },
-      {
-        "letters": "حَبِيبٌ",
-        "transliteration": "ḥabīb",
-        "meaning": "beloved, loved one"
-      },
-      {
-        "letters": "أَحَبَّ",
-        "transliteration": "aḥabba",
-        "meaning": "to love, hold dear, prefer (form IV)"
-      },
-      {
-        "letters": "حبّبهُ",
-        "transliteration": "ḥabbabahu",
-        "meaning": "to make (something) beloved to someone, endear (form II)"
-      },
-      {
-        "letters": "مُحَابَّةٌ",
-        "transliteration": "muḥābba",
-        "meaning": "treating one another lovingly or in a friendly way (form III)"
-      },
-      {
-        "letters": "حَبَّذَا",
-        "transliteration": "ḥabbadhā",
-        "meaning": "exclamation of praise: \"how excellent/lovely is...!\"",
-        "path": "/word/how-excellent-is-16236"
-      }
-    ],
-    "faq": [
-      {
-        "q": "How do you say \"draw close\" in Arabic?",
-        "a": "تَوَدَّدَ (tawaddada)."
-      },
-      {
-        "q": "What does تودد mean?",
-        "a": "It means to draw close to, or become near to, someone — often in the sense of seeking their friendliness or affection."
-      }
-    ],
-    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
-    "sourceUrl": "https://lanelexicon.com/",
-    "usageNote": "This form-V verb describes actively seeking or building closeness with someone. It sits in the same emotional field as ḥubb (love, affection) found throughout Classical Arabic, alongside words like aḥabba (\"to love\") and ḥabīb (\"beloved\")."
-  },
   "8674": {
     "rootId": 8674,
     "triliteralRoot": "ط ل ق",
     "rootTransliteration": "ṭ-l-q",
+    "rootMeaning": "to release, set loose or free",
     "headwordTransliteration": "iṭlāq",
     "partOfSpeech": "noun (verbal noun / maṣdar, Form IV of طلق)",
     "senses": [
@@ -2016,7 +1701,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "طَلَّقَ",
         "transliteration": "ṭallaqa",
         "meaning": "to divorce (one's wife); to leave or quit",
-        "path": "/word/divorced-16461"
+        "path": "/word/divorced-16461",
+        "rootId": 16461
       },
       {
         "letters": "طَلِيقٌ",
@@ -2042,7 +1728,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "طَلْقٌ",
         "transliteration": "ṭalq",
         "meaning": "unbound, free; also the pains of childbirth",
-        "path": "/word/divorced-16461"
+        "path": "/word/divorced-16461",
+        "rootId": 16461
       }
     ],
     "faq": [
@@ -2059,48 +1746,11 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "sourceUrl": "https://lanelexicon.com/",
     "usageNote": "Iṭlāq is the verbal noun of the causative Form IV verb أَطْلَقَ (\"to loose, set free, let go\"), as in loosing a she-camel from her cord or setting a captive free. The same root gives تَطْلِيق/طَلَاق for divorce, since a divorced wife is likewise \"released\" or \"let go\" from the marriage bond."
   },
-  "8984": {
-    "rootId": 8984,
-    "triliteralRoot": "ب د ي",
-    "rootTransliteration": "b-d-y",
-    "headwordTransliteration": "badāyah",
-    "partOfSpeech": "noun",
-    "senses": [
-      {
-        "gloss": "beginning, start, commencement",
-        "note": "used in the same sense as بَدْءٌ (badʾ), the more classical noun from the separate root بدأ"
-      }
-    ],
-    "wordFamily": [
-      {
-        "letters": "بَدِيتُ",
-        "transliteration": "badaytu",
-        "meaning": "I began, started (with something) — a dialectal variant of بَدَأْتُ, said to be used only by the Ansár"
-      },
-      {
-        "letters": "بِدَايَةٌ",
-        "transliteration": "bidāyah",
-        "meaning": "a beginning — the same noun in its more common vocalisation; some grammarians (e.g. Muṭarrizī) called it a vulgar or erroneous form, while Ibn al-Qattāʿ held it to be genuine Ansári dialect"
-      }
-    ],
-    "faq": [
-      {
-        "q": "How do you say \"beginning\" in Arabic?",
-        "a": "بَدَايَةٌ (badāyah)."
-      },
-      {
-        "q": "Is بَدَايَةٌ the same as بَدْءٌ?",
-        "a": "It carries the same meaning, \"beginning,\" but comes from a different root (بدي rather than بدأ); Lane's notes it as a dialectal form some grammarians disputed and others attributed to the Ansár."
-      }
-    ],
-    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
-    "sourceUrl": "https://lanelexicon.com/",
-    "usageNote": "This noun is bound up with the verb بَدِيتُ, a dialectal form used by the Ansár for \"I began,\" in place of the more standard بَدَأْتُ / اِبْتَدَأْتُ. Lexicographers disagreed sharply on the status of the noun itself: Muṭarrizī labelled it vulgar and Ibn Barrī called it erroneous, while Ibn al-Qattāʿ defended it as authentic Ansári usage — so classical sources treat it as a dialectal counterpart to بَدْءٌ rather than the fully standard literary noun."
-  },
   "9129": {
     "rootId": 9129,
     "triliteralRoot": "س ك ن",
     "rootTransliteration": "s-k-n",
+    "rootMeaning": "to be still, calm, or dwell",
     "headwordTransliteration": "maskan",
     "partOfSpeech": "noun (noun of place / ism al-makān)",
     "senses": [
@@ -2124,7 +1774,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "سُكْنَى",
         "transliteration": "suknā",
         "meaning": "the act of dwelling or residing in a place (verbal noun)",
-        "path": "/word/habitation-9130"
+        "path": "/word/habitation-9130",
+        "rootId": 9130
       },
       {
         "letters": "سُكْنٌ",
@@ -2160,6 +1811,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 10427,
     "triliteralRoot": "ح ف ظ",
     "rootTransliteration": "ḥ-f-ẓ",
+    "rootMeaning": "to keep, guard, or preserve",
     "headwordTransliteration": "maḥfūẓ",
     "partOfSpeech": "noun/adjective (passive participle, ism mafʿūl of form I)",
     "senses": [
@@ -2211,7 +1863,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "تحفّظ",
         "transliteration": "taḥaffaẓa",
         "meaning": "to guard oneself, be careful and watchful (form V)",
-        "path": "/word/memorize-9101"
+        "path": "/word/memorize-9101",
+        "rootId": 9101
       }
     ],
     "faq": [
@@ -2232,6 +1885,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 10911,
     "triliteralRoot": "ل ذ ذ",
     "rootTransliteration": "l-dh-dh",
+    "rootMeaning": "to find pleasure or delight",
     "headwordTransliteration": "ladhīdh",
     "partOfSpeech": "adjective (epithet, from intransitive verb form I)",
     "senses": [
@@ -2257,7 +1911,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "لَذَّ",
         "transliteration": "ladhdha",
         "meaning": "to be/become pleasant; to find something pleasant, delight in it (form I)",
-        "path": "/word/enjoy-6398"
+        "path": "/word/enjoy-6398",
+        "rootId": 6398
       },
       {
         "letters": "لَذَّةٌ",
@@ -2308,6 +1963,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 11126,
     "triliteralRoot": "خ ي ر",
     "rootTransliteration": "kh-y-r",
+    "rootMeaning": "to be good; choose the best",
     "headwordTransliteration": "ikhtāra",
     "partOfSpeech": "verb (form VIII)",
     "senses": [
@@ -2350,7 +2006,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "خِيرَةٌ",
         "transliteration": "khīra",
         "meaning": "the better of two things; the good/blessing sought from God, as in istikhāra",
-        "path": "/word/best-11125"
+        "path": "/word/best-11125",
+        "rootId": 11125
       }
     ],
     "faq": [
@@ -2371,6 +2028,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 11272,
     "triliteralRoot": "ح م ق",
     "rootTransliteration": "ḥ-m-q",
+    "rootMeaning": "to be foolish or stupid",
     "headwordTransliteration": "aḥmaq",
     "partOfSpeech": "adjective / noun (afʿal pattern — intensive adjective, used substantively as 'a fool')",
     "senses": [
@@ -2394,7 +2052,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "حَمَاقَةٌ",
         "transliteration": "ḥamāqah",
         "meaning": "foolishness, stupidity",
-        "path": "/word/foolishness-11180"
+        "path": "/word/foolishness-11180",
+        "rootId": 11180
       },
       {
         "letters": "حُمَاقٌ",
@@ -2435,6 +2094,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 12099,
     "triliteralRoot": "ف ت ق",
     "rootTransliteration": "f-t-q",
+    "rootMeaning": "to split, rend, or tear open",
     "headwordTransliteration": "fataqa",
     "partOfSpeech": "verb (form I)",
     "senses": [
@@ -2457,13 +2117,15 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "فَتْقٌ",
         "transliteration": "fatq",
         "meaning": "a slit, rent, or opening; (fig.) a rift, discord, or outbreak of war within a community",
-        "path": "/word/open-12099"
+        "path": "/word/open-12099",
+        "rootId": 12099
       },
       {
         "letters": "فَتَّقَ",
         "transliteration": "fattaqa",
         "meaning": "to rend or split thoroughly / repeatedly; (fig.) to refine or clarify one's speech",
-        "path": "/word/open-12099"
+        "path": "/word/open-12099",
+        "rootId": 12099
       },
       {
         "letters": "انْفَتَقَ",
@@ -2474,7 +2136,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "تَفَتَّقَ",
         "transliteration": "tafattaqa",
         "meaning": "to become swollen or inflated in the flanks from fatness; (fig.) to be diffuse in speech",
-        "path": "/word/quicken-19324"
+        "path": "/word/quicken-19324",
+        "rootId": 19324
       },
       {
         "letters": "فِتَاقٌ",
@@ -2485,7 +2148,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "فَتَقٌ",
         "transliteration": "fataq",
         "meaning": "abundance of herbage in a year, as in ʿāmu-l-fataq, 'the year of abundance'",
-        "path": "/word/open-12099"
+        "path": "/word/open-12099",
+        "rootId": 12099
       }
     ],
     "faq": [
@@ -2502,120 +2166,11 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "sourceUrl": "https://lanelexicon.com/",
     "usageNote": "فتق is the standard contrary of رتق ('to sew up, close'). The verb appears in Qur'an 21:31 describing the heavens and earth as once رَتْقًا ('closed up') before being split apart (فَفَتَقْنَاهُمَا). Beyond literal tearing or splitting, it extends figuratively to breaking apart human bonds — sowing discord, provoking war, or dissolving an agreement — and to intensifying a scent by mixing."
   },
-  "14566": {
-    "rootId": 14566,
-    "triliteralRoot": "ه ي ت",
-    "rootTransliteration": "hyt",
-    "headwordTransliteration": "hāt",
-    "partOfSpeech": "verb (imperative only — no past-tense or prohibitive form)",
-    "senses": [
-      {
-        "gloss": "Give (me)!",
-        "note": "equivalent to أَعْطِنِى; said to a man as هَاتِ, with distinct forms for dual/plural and for women (هَاتِيَا, هَاتُوا, هَاتِى, هَاتِينَ)"
-      },
-      {
-        "gloss": "Bring",
-        "note": "the common rendering of the same imperative — hand something over"
-      }
-    ],
-    "wordFamily": [
-      {
-        "letters": "هيّت",
-        "transliteration": "hayyata",
-        "meaning": "to cry out to and call someone (form II)"
-      },
-      {
-        "letters": "هَيْتَ لَكَ",
-        "transliteration": "hayta laka",
-        "meaning": "'Come!' — a distinct exclamation, famous from Qur'an 12:23"
-      },
-      {
-        "letters": "هَيَّاتٌ",
-        "transliteration": "hayyāt",
-        "meaning": "clamorous; one who calls out often or loudly"
-      },
-      {
-        "letters": "هِيتٌ",
-        "transliteration": "hītun",
-        "meaning": "a low-lying, depressed piece of ground"
-      }
-    ],
-    "faq": [
-      {
-        "q": "How do you say \"bring\" in Arabic?",
-        "a": "هَاتِ (hāti) — the imperative meaning 'give me!' or 'hand it over,' said to a man; other forms are used for women, pairs, or groups."
-      },
-      {
-        "q": "Is هَاتِ the same as هَيْتَ لَكَ؟",
-        "a": "No — هَاتِ means 'give me/bring,' while هَيْتَ لَكَ is a separate exclamation meaning 'Come!', known from its use in Qur'an 12:23."
-      }
-    ],
-    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
-    "sourceUrl": "https://lanelexicon.com/",
-    "usageNote": "هَاتِ is a defective imperative verb: it exists only in the command form (هَاتِ to a man, هَاتِيَا to two, هَاتُوا to a group of men, هَاتِى to a woman, هَاتِينَ to a group of women), has no past tense (one does not say هَاتَيْتُ), and is never used prohibitively. Some grammarians trace it to أَتَى ('to come'), with the أ changed to هـ, though its pattern matches Form III. It should not be confused with the related exclamation هَيْتَ لَكَ ('Come!'), which occurs in Qur'an 12:23."
-  },
-  "15001": {
-    "rootId": 15001,
-    "triliteralRoot": "ب ق ي",
-    "rootTransliteration": "b-q-y",
-    "headwordTransliteration": "bāqin",
-    "partOfSpeech": "noun (active participle / ism al-fāʿil, of Form I بَقِيَ)",
-    "senses": [
-      {
-        "gloss": "remaining, continuing, lasting",
-        "note": "describing something still present or ongoing"
-      },
-      {
-        "gloss": "enduring, permanent, everlasting",
-        "note": "persisting without end; opposite of فانٍ 'perishing'"
-      }
-    ],
-    "wordFamily": [
-      {
-        "letters": "بَقِيَ",
-        "transliteration": "baqiya",
-        "meaning": "to remain, continue, last, endure (Form I verb)"
-      },
-      {
-        "letters": "بَقَاءٌ",
-        "transliteration": "baqāʾ",
-        "meaning": "remaining, continuance, permanence; lasting forever"
-      },
-      {
-        "letters": "أَبْقَى",
-        "transliteration": "abqā",
-        "meaning": "to make/cause to remain, preserve, spare, let live, pardon (Form IV)",
-        "path": "/word/left-12208"
-      },
-      {
-        "letters": "بَقِيَّةٌ",
-        "transliteration": "baqiyyah",
-        "meaning": "a remainder, remnant, residue left over of a thing"
-      },
-      {
-        "letters": "بَاقِيَةٌ",
-        "transliteration": "bāqiyah",
-        "meaning": "an enduring, everlasting thing (feminine counterpart of بَاقٍ)"
-      }
-    ],
-    "faq": [
-      {
-        "q": "How do you say \"enduring\" in Arabic?",
-        "a": "بَاق (bāqin) — the active participle of بَقِيَ, 'to remain, last, endure.'"
-      },
-      {
-        "q": "What root does بَاقٍ come from and what does it mean?",
-        "a": "It comes from the root ب ق ي (baqiya), 'to remain, continue, last, endure,' the direct opposite of فَنِيَ 'to perish.'"
-      }
-    ],
-    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
-    "sourceUrl": "https://lanelexicon.com/",
-    "usageNote": "بَاقٍ is the active participle of بَقِيَ, which Lane glosses as 'to remain, continue, last, endure; to be or become permanent or perpetual' — explicitly the opposite of فَنِيَ 'to perish.' It describes whatever is still present or ongoing, or, more strongly, whatever persists forever. This sense underlies the classical phrase دَارُ البَقَاءِ, 'the abode of everlasting existence,' used for the world to come."
-  },
   "17408": {
     "rootId": 17408,
     "triliteralRoot": "و ق ت",
     "rootTransliteration": "w-q-t",
+    "rootMeaning": "to fix or appoint a time",
     "headwordTransliteration": "waqt",
     "partOfSpeech": "noun (verbal noun / maṣdar of وَقَتَ, used as a common noun for 'time')",
     "senses": [
@@ -2653,7 +2208,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "مِيقَاتٌ",
         "transliteration": "mīqāt",
         "meaning": "an appointed time; also a place appointed for a rite, e.g. the mīqāt of ḥajj where pilgrims enter the state of iḥrām",
-        "path": "/word/appointed-time-12016"
+        "path": "/word/appointed-time-12016",
+        "rootId": 12016
       },
       {
         "letters": "مَوْقُوتٌ",
@@ -2684,6 +2240,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 19538,
     "triliteralRoot": "و ه م",
     "rootTransliteration": "w-h-m",
+    "rootMeaning": "to imagine, suspect, or err",
     "headwordTransliteration": "wahm",
     "partOfSpeech": "noun (verbal noun / maṣdar)",
     "senses": [
@@ -2724,7 +2281,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "اِتَّهَمَ",
         "transliteration": "ittahama",
         "meaning": "to suspect or accuse someone of something (impute a thing to them)",
-        "path": "/word/accuse-5742"
+        "path": "/word/accuse-5742",
+        "rootId": 5742
       }
     ],
     "faq": [
@@ -2745,6 +2303,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 16534,
     "triliteralRoot": "ز ي د",
     "rootTransliteration": "z-y-d",
+    "rootMeaning": "to increase, grow, add",
     "headwordTransliteration": "zayd",
     "partOfSpeech": "proper name (originally a verbal noun / maṣdar)",
     "senses": [
@@ -2777,7 +2336,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "زَائِدٌ",
         "transliteration": "zāʾid",
         "meaning": "increasing; redundant, superfluous (active participle)",
-        "path": "/word/excessive-10797"
+        "path": "/word/excessive-10797",
+        "rootId": 10797
       },
       {
         "letters": "زايد",
@@ -2788,7 +2348,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "تزايد",
         "transliteration": "tazāyada",
         "meaning": "to increase gradually; to bid up a price successively (form VI)",
-        "path": "/word/increase-5563"
+        "path": "/word/increase-5563",
+        "rootId": 5563
       }
     ],
     "faq": [
@@ -2809,6 +2370,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 10789,
     "triliteralRoot": "ج ن ب",
     "rootTransliteration": "j-n-b",
+    "rootMeaning": "side; to keep apart or aside",
     "headwordTransliteration": "tajannaba",
     "partOfSpeech": "verb (form V, تَفَعَّلَ)",
     "senses": [
@@ -2862,6 +2424,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 7690,
     "triliteralRoot": "ح ي",
     "rootTransliteration": "ḥ-y",
+    "rootMeaning": "to live, be alive",
     "headwordTransliteration": "ḥayāh",
     "partOfSpeech": "noun (verbal noun / maṣdar)",
     "senses": [
@@ -2884,7 +2447,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "أَحْيَا",
         "transliteration": "aḥyā",
         "meaning": "to give life to, quicken, revive (form IV) — used of God reviving the dead or reviving land with rain",
-        "path": "/word/gives-life-11738"
+        "path": "/word/gives-life-11738",
+        "rootId": 11738
       },
       {
         "letters": "حَيَّا",
@@ -2924,6 +2488,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 6743,
     "triliteralRoot": "ف م",
     "rootTransliteration": "f-m",
+    "rootMeaning": "mouth",
     "headwordTransliteration": "fam",
     "partOfSpeech": "noun (masculine; irregular declension)",
     "senses": [
@@ -2985,77 +2550,11 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "sourceUrl": "https://lanelexicon.com/",
     "usageNote": "فَم is a worn-down form of the older word فُوهٌ/فَوْهٌ (root ف و ه): the final ه was dropped and م substituted for the now-quiescent و, which is why the diminutive and plural revert to the original letters — فُوَيْهٌ and أَفْوَاهٌ, not forms built on م. It is unusually irregular, occurring in three vowelings (fam, fum, fim) and taking و/ا/ى endings when attached to a suffix other than 'my' (فُوهُ, فَاهُ, فِيهِ), alongside a simpler فَمُهُ. Beyond the literal body part, it is used figuratively for 'teeth' and for the 'mouth/opening' of a river, a womb, or similar things."
   },
-  "14966": {
-    "rootId": 14966,
-    "triliteralRoot": "ا ب ن",
-    "rootTransliteration": "ʾ-b-n",
-    "headwordTransliteration": "bunayya",
-    "partOfSpeech": "noun (diminutive of اِبْن \"son\", with attached 1st-person possessive suffix)",
-    "senses": [
-      {
-        "gloss": "my dear son",
-        "note": "an affectionate vocative used when addressing one's son; softer and warmer than plain اِبْنِي (\"my son\")"
-      },
-      {
-        "gloss": "little son",
-        "note": "literal sense of the diminutive pattern of اِبْن before the possessive suffix is added"
-      }
-    ],
-    "wordFamily": [
-      {
-        "letters": "اِبْنٌ",
-        "transliteration": "ibn",
-        "meaning": "son (the base word بُنَيَّ is diminutivized from)"
-      },
-      {
-        "letters": "اِبْنَةٌ",
-        "transliteration": "ibna",
-        "meaning": "daughter"
-      },
-      {
-        "letters": "أُبْنَةٌ",
-        "transliteration": "ubna",
-        "meaning": "a knot or fault (in wood, speech, etc.); also rancour or malice"
-      },
-      {
-        "letters": "مَأْبُونٌ",
-        "transliteration": "maʾbūn",
-        "meaning": "one made an object of imputation or suspicion (of evil)"
-      },
-      {
-        "letters": "مُؤَبِّنٌ",
-        "transliteration": "muʾabbin",
-        "meaning": "one who eulogizes and recounts the good deeds of the dead"
-      },
-      {
-        "letters": "إِبَّانٌ",
-        "transliteration": "ibbān",
-        "meaning": "the time or season proper to a thing"
-      },
-      {
-        "letters": "آبِنُوسٌ",
-        "transliteration": "ābinūs",
-        "meaning": "ebony (an arabicized loanword)"
-      }
-    ],
-    "faq": [
-      {
-        "q": "How do you say \"my son\" in Arabic?",
-        "a": "بُنَيَّ (bunayya) — a diminutive of اِبْن (ibn, \"son\") plus the possessive suffix \"my\", used as a warm, affectionate way to address one's son. (A plain, non-affectionate \"my son\" is اِبْنِي, ibnī.)"
-      },
-      {
-        "q": "What root does بُنَيَّ come from?",
-        "a": "It is built on the root ا ب ن, the same root behind اِبْنٌ (\"son\") and اِبْنَةٌ (\"daughter\")."
-      }
-    ],
-    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
-    "sourceUrl": "https://lanelexicon.com/",
-    "usageNote": "بُنَيَّ is not a separate root-word but اِبْن (\"son\") reshaped as a diminutive and fitted with the 1st-person possessive suffix; the effect in speech is tender and affectionate rather than merely diminishing in size — it is how a father addresses a son with warmth."
-  },
   "5698": {
     "rootId": 5698,
     "triliteralRoot": "ك ل ل",
     "rootTransliteration": "k-l-l",
+    "rootMeaning": "to encompass, surround, complete wholly",
     "headwordTransliteration": "kull",
     "partOfSpeech": "noun (quantifier, used in construct annexation)",
     "senses": [
@@ -3131,6 +2630,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 11578,
     "triliteralRoot": "ح س ن",
     "rootTransliteration": "ḥ-s-n",
+    "rootMeaning": "to be good, beautiful, excellent",
     "headwordTransliteration": "ḥassān",
     "partOfSpeech": "proper noun (personal name)",
     "senses": [
@@ -3164,13 +2664,15 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "حُسْنَى",
         "transliteration": "ḥusnā",
         "meaning": "goodness — an alternative verbal-noun form of the same verb",
-        "path": "/word/best-12487"
+        "path": "/word/best-12487",
+        "rootId": 12487
       },
       {
         "letters": "تَحْسِينٌ",
         "transliteration": "taḥsīn",
         "meaning": "beautifying, embellishing, improving — verbal noun of ḥassana",
-        "path": "/word/improvement-8559"
+        "path": "/word/improvement-8559",
+        "rootId": 8559
       }
     ],
     "faq": [
@@ -3191,6 +2693,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 14553,
     "triliteralRoot": "ا ن س",
     "rootTransliteration": "ʾ-n-s",
+    "rootMeaning": "to be sociable, familiar, tame",
     "headwordTransliteration": "ʾanas",
     "partOfSpeech": "proper noun (given name); drawn from the verbal noun (maṣdar) of أَنِسَ",
     "senses": [
@@ -3253,6 +2756,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 19223,
     "triliteralRoot": "ا س د",
     "rootTransliteration": "ʾ-s-d",
+    "rootMeaning": "lion; to be bold, fierce",
     "headwordTransliteration": "asad",
     "partOfSpeech": "noun",
     "senses": [
@@ -3324,75 +2828,11 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "sourceUrl": "https://lanelexicon.com/",
     "usageNote": "أَسَدٌ literally names the lion but is frequently used tropically for a bold, fierce, or lion-hearted man, and by extension for the constellation Leo and the star Regulus. It has an unusually large number of recorded plurals, including آسَادٌ, أُسُودٌ, أُسْدٌ, and أُسْدَانٌ."
   },
-  "5662": {
-    "rootId": 5662,
-    "triliteralRoot": "ا ل ه",
-    "rootTransliteration": "ʾ-l-h",
-    "headwordTransliteration": "wallāhi",
-    "partOfSpeech": "oath expression (particle وَ \"by\" + the proper name اللّٰه)",
-    "senses": [
-      {
-        "gloss": "by Allah! (I swear by God)",
-        "note": "An oath formula used to affirm or emphasize the truth of a statement; extremely common in everyday and classical speech alike."
-      }
-    ],
-    "wordFamily": [
-      {
-        "letters": "إِلٰه",
-        "transliteration": "ilāh",
-        "meaning": "a god; any object of worship or adoration"
-      },
-      {
-        "letters": "اللّٰه",
-        "transliteration": "allāh",
-        "meaning": "God; the proper name of the one true deity, held by the lexicographers to derive from ilāh"
-      },
-      {
-        "letters": "اَللّٰهُمَّ",
-        "transliteration": "allāhumma",
-        "meaning": "\"O Allah!\" — a vocative form used in supplication and emphatic address"
-      },
-      {
-        "letters": "أَلَهَ",
-        "transliteration": "alaha",
-        "meaning": "he served, worshipped, or adored (a deity)",
-        "path": "/word/deify-him-17984"
-      },
-      {
-        "letters": "تَأَلَّهَ",
-        "transliteration": "taʾallaha",
-        "meaning": "he devoted himself to religious worship or acts of devotion"
-      },
-      {
-        "letters": "إِلٰهِىّ",
-        "transliteration": "ilāhī",
-        "meaning": "divine; of or relating to God"
-      },
-      {
-        "letters": "الإِلٰهِيَّة",
-        "transliteration": "al-ilāhiyyah",
-        "meaning": "theology; the study of God's being and attributes",
-        "path": "/word/divinity-6452"
-      }
-    ],
-    "faq": [
-      {
-        "q": "How do you say \"by Allah\" in Arabic?",
-        "a": "والله (wallāhi) — the oath particle وَ \"by\" attached to اللّٰه, the proper name of God."
-      },
-      {
-        "q": "What is والله literally built from?",
-        "a": "It combines the oath prefix و- with اللّٰه, which Arabic lexicographers trace back to إِلٰه (ilāh), \"a god\" or \"an object of worship,\" from the root ا ل ه meaning to serve or worship."
-      }
-    ],
-    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
-    "sourceUrl": "https://lanelexicon.com/",
-    "usageNote": "والله is one of the most common oath expressions in Arabic, used in both classical and everyday speech to swear to or emphasize the truth of what one is saying, roughly like English \"I swear to God.\" It sits alongside other invocations of the same root, such as اللّٰهُمَّ, used when addressing or calling on God directly."
-  },
   "16038": {
     "rootId": 16038,
     "triliteralRoot": "س ع د",
     "rootTransliteration": "s-ʿ-d",
+    "rootMeaning": "good fortune, happiness, blessedness",
     "headwordTransliteration": "saʿīd",
     "partOfSpeech": "adjective (intensive/participial epithet, faʿīl pattern of the verb سَعِدَ); also used as a proper name",
     "senses": [
@@ -3455,132 +2895,11 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
     "sourceUrl": "https://lanelexicon.com/"
   },
-  "5448": {
-    "rootId": 5448,
-    "triliteralRoot": "د ن ر",
-    "rootTransliteration": "d-n-r",
-    "headwordTransliteration": "dīnār",
-    "partOfSpeech": "noun (arabicized loanword)",
-    "senses": [
-      {
-        "gloss": "a dinar — a certain gold coin",
-        "note": "weighs about 71½ barley-corns, the same weight as the mithqāl"
-      },
-      {
-        "gloss": "money, currency in general (chiefly in the plural دَنَانِير, dananir)"
-      }
-    ],
-    "wordFamily": [
-      {
-        "letters": "دَنَّرَ",
-        "transliteration": "dannara",
-        "meaning": "(of a face) to glisten like a dinar; also, to possess many dinars"
-      },
-      {
-        "letters": "تَدَنَّرَ",
-        "transliteration": "tadannara",
-        "meaning": "form V, same sense as دَنَّرَ"
-      },
-      {
-        "letters": "دُنَيْنِيرٌ",
-        "transliteration": "dunaynīr",
-        "meaning": "diminutive of دِينَار, 'little dinar'"
-      },
-      {
-        "letters": "دِينَارِىٌّ",
-        "transliteration": "dīnārī",
-        "meaning": "relating to a dinar, as in a reddish wine named for its dinar-like colour"
-      },
-      {
-        "letters": "مُدَنَّرٌ",
-        "transliteration": "mudannar",
-        "meaning": "coined (of gold); a man with many dinars; a horse or cloth marked with dinar-like spots"
-      }
-    ],
-    "faq": [
-      {
-        "q": "How do you say \"dinar\" in Arabic?",
-        "a": "دِينَار (dīnār)."
-      },
-      {
-        "q": "What is the plural of دينار?",
-        "a": "دَنَانِير (dananir), 'dinars'."
-      }
-    ],
-    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
-    "sourceUrl": "https://lanelexicon.com/",
-    "usageNote": "دِينَار is an arabicized (non-native) word rather than a native Arabic triliteral formation. One account traces it to Persian; another to دِين آر ('the law brought it'). Some say its true original form was دِنّار, with one ن changed to ى to ease pronunciation and avoid confusion with verbal-noun patterns like كِذّاب — which is why its plural is دَنَانِير rather than a form with ى in it. Despite the loanword origin, later Arabic verbs (دَنَّرَ) and derived nouns (دُنَيْنِيرٌ, مُدَنَّرٌ) were built from it as if from a native root."
-  },
-  "13110": {
-    "rootId": 13110,
-    "triliteralRoot": "ن ش أ",
-    "rootTransliteration": "n-sh-ʾ",
-    "headwordTransliteration": "nashaʾa",
-    "partOfSpeech": "verb (form I)",
-    "senses": [
-      {
-        "gloss": "to arise, spring up, appear",
-        "note": "said of clouds gathering, or of an opinion/feeling occurring to someone (nashaʾa lahu raʾy)"
-      },
-      {
-        "gloss": "to grow up, become a youth or young person"
-      },
-      {
-        "gloss": "to originate, come into being; to happen or occur"
-      }
-    ],
-    "wordFamily": [
-      {
-        "letters": "أَنْشَأَ",
-        "transliteration": "anshaʾa",
-        "meaning": "to create, originate, bring into being (form IV, said of God originating creation); also to found/build, or to compose a piece of language",
-        "path": "/word/create-12091"
-      },
-      {
-        "letters": "نَاشِئٌ",
-        "transliteration": "nāshiʾ",
-        "meaning": "a youth; a boy or girl past the age of childhood"
-      },
-      {
-        "letters": "نَشْأَةٌ",
-        "transliteration": "nashʾa",
-        "meaning": "an origination, a creation; also used of 'the other life' (the resurrection)"
-      },
-      {
-        "letters": "مَنْشَأٌ",
-        "transliteration": "manshaʾ",
-        "meaning": "an origin; the place where one grows up or where something arises"
-      },
-      {
-        "letters": "مُنْشِئٌ",
-        "transliteration": "munshiʾ",
-        "meaning": "one who creates or originates something (active participle of anshaʾa)",
-        "path": "/word/creator-9213"
-      },
-      {
-        "letters": "نَشْءٌ",
-        "transliteration": "nashʾ",
-        "meaning": "young people, youths collectively; also clouds in their first rising"
-      }
-    ],
-    "faq": [
-      {
-        "q": "How do you say \"to arise\" in Arabic?",
-        "a": "نَشَأَ (nashaʾa) — it also covers 'to grow up' and 'to originate/come into being.'"
-      },
-      {
-        "q": "What is the difference between نَشَأَ and أَنْشَأَ?",
-        "a": "نَشَأَ (nashaʾa, form I) means something arises or grows up by itself; أَنْشَأَ (anshaʾa, form IV) is causative — someone or something (often God) brings it into being, e.g. originating creation or founding a building."
-      }
-    ],
-    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
-    "sourceUrl": "https://lanelexicon.com/",
-    "usageNote": "The base verb describes something arising on its own — clouds gathering, a person growing into youth, an opinion forming in the mind. The causative form IV, anshaʾa, shifts to an agent bringing something into being: God originating creation, someone founding a building, or composing a piece of language. The related noun nashʾa also appears in Qur'anic phrasing for 'the other/latter life,' i.e. the resurrection."
-  },
   "11776": {
     "rootId": 11776,
     "triliteralRoot": "س م م",
     "rootTransliteration": "s-m-m",
+    "rootMeaning": "to pierce, perforate; a fine hole",
     "headwordTransliteration": "samma",
     "partOfSpeech": "verb (form I)",
     "senses": [
@@ -3616,7 +2935,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "سُمَّةٌ",
         "transliteration": "summah",
         "meaning": "a string of cowrie-shells (from stringing them together)",
-        "path": "/word/demeanor-7577"
+        "path": "/word/demeanor-7577",
+        "rootId": 7577
       },
       {
         "letters": "سَمُومٌ",
@@ -3647,6 +2967,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 16165,
     "triliteralRoot": "ص ف و",
     "rootTransliteration": "ṣ-f-w",
+    "rootMeaning": "to be clear, pure, unmixed",
     "headwordTransliteration": "ṣafwān",
     "partOfSpeech": "proper noun (masculine given name; from a common/collective noun)",
     "senses": [
@@ -3664,13 +2985,15 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "صَفَا",
         "transliteration": "ṣafā",
         "meaning": "to be clear, limpid, or pure (of water, wine, air)",
-        "path": "/word/pure-11109"
+        "path": "/word/pure-11109",
+        "rootId": 11109
       },
       {
         "letters": "صفّى",
         "transliteration": "ṣaffā",
         "meaning": "to clarify, purify, strain",
-        "path": "/word/purifies-19644"
+        "path": "/word/purifies-19644",
+        "rootId": 19644
       },
       {
         "letters": "صافى",
@@ -3681,13 +3004,15 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "اصطفى",
         "transliteration": "iṣṭafā",
         "meaning": "to choose, select, elect (as pure/best)",
-        "path": "/word/chose-18120"
+        "path": "/word/chose-18120",
+        "rootId": 18120
       },
       {
         "letters": "صَفَاءٌ",
         "transliteration": "ṣafāʾ",
         "meaning": "clarity, purity",
-        "path": "/word/purity-6465"
+        "path": "/word/purity-6465",
+        "rootId": 6465
       },
       {
         "letters": "صَفْوَةٌ",
@@ -3698,13 +3023,15 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "صَفِيٌّ",
         "transliteration": "ṣafiyy",
         "meaning": "a close, chosen friend",
-        "path": "/word/be-purified-19645"
+        "path": "/word/be-purified-19645",
+        "rootId": 19645
       },
       {
         "letters": "صَافٍ",
         "transliteration": "ṣāfin",
         "meaning": "clear, pure (active participle)",
-        "path": "/word/saf-15537"
+        "path": "/word/saf-15537",
+        "rootId": 15537
       }
     ],
     "faq": [
@@ -3725,6 +3052,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 9050,
     "triliteralRoot": "س ك ك",
     "rootTransliteration": "s-k-k",
+    "rootMeaning": "to fasten, block; a narrow passage",
     "headwordTransliteration": "sikkah",
     "partOfSpeech": "noun (substantive)",
     "senses": [
@@ -3777,73 +3105,11 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "sourceUrl": "https://lanelexicon.com/",
     "usageNote": "Lane's records سِكَّة primarily as the iron blade of a plough (the ploughshare), and it is cited in a hadith about the ploughshare entering a household. The word is also used more broadly for a track, road, or way, as reflected in the common gloss \"track.\""
   },
-  "9560": {
-    "rootId": 9560,
-    "triliteralRoot": "ا ل ك",
-    "rootTransliteration": "ʾ-l-k",
-    "headwordTransliteration": "malāʾikah",
-    "partOfSpeech": "noun (broken plural)",
-    "senses": [
-      {
-        "gloss": "angels",
-        "note": "plural of مَلَكٌ (malak, 'angel'); Lane's records the alternative plural مَلَائِكُ as well"
-      }
-    ],
-    "wordFamily": [
-      {
-        "letters": "مَلَكٌ",
-        "transliteration": "malak",
-        "meaning": "angel (the singular that malāʾikah is the plural of)"
-      },
-      {
-        "letters": "أَلَكَ",
-        "transliteration": "alaka",
-        "meaning": "to convey/send a message, act as a messenger (also: to champ a horse's bit)"
-      },
-      {
-        "letters": "أَلُوكٌ",
-        "transliteration": "alūk",
-        "meaning": "a message; a messenger"
-      },
-      {
-        "letters": "أَلِكْنِى",
-        "transliteration": "alik-nī",
-        "meaning": "'be my messenger, carry my message' — an imperative used by poets"
-      },
-      {
-        "letters": "اسْتَأْلَكَ",
-        "transliteration": "istaʾlaka",
-        "meaning": "to bear or deliver a message"
-      },
-      {
-        "letters": "مَأْلَكٌ",
-        "transliteration": "maʾlak",
-        "meaning": "a message; said to be the original form behind مَلَكٌ (angel)"
-      },
-      {
-        "letters": "مَأْلَكَةٌ",
-        "transliteration": "maʾlakah",
-        "meaning": "a message"
-      }
-    ],
-    "faq": [
-      {
-        "q": "How do you say \"angels\" in Arabic?",
-        "a": "مَلَائِكَةٌ (malāʾikah) — the plural of مَلَكٌ (malak, 'angel')."
-      },
-      {
-        "q": "What is the singular of ملائكة؟",
-        "a": "مَلَكٌ (malak), 'angel', traced by Lane to a form derived from أَلُوك, 'a message'."
-      }
-    ],
-    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
-    "sourceUrl": "https://lanelexicon.com/",
-    "usageNote": "مَلَائِكَةٌ is the plural of مَلَكٌ (malak), 'angel' — a being who conveys God's message. Lane traces malak back through the forms مَأْلَك and مَلْأَك to أَلُوك, 'a message,' the hemza eventually being dropped from frequent use and then restored in the plural مَلَائِكَة/مَلَائِك. It is the standard word for 'angels' in Qur'anic and classical Arabic."
-  },
   "6105": {
     "rootId": 6105,
     "triliteralRoot": "ن ص ر",
     "rootTransliteration": "n-ṣ-r",
+    "rootMeaning": "to help, aid, grant victory",
     "headwordTransliteration": "nāṣir",
     "partOfSpeech": "noun (active participle / ism al-fāʿil, from Form I naṣara)",
     "senses": [
@@ -3881,13 +3147,15 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "مَنْصُورٌ",
         "transliteration": "manṣūr",
         "meaning": "one who is aided or given victory (passive participle)",
-        "path": "/word/mansur-5432"
+        "path": "/word/mansur-5432",
+        "rootId": 5432
       },
       {
         "letters": "انتصر",
         "transliteration": "intaṣara",
         "meaning": "to defend oneself, be victorious, or avenge oneself (Form VIII)",
-        "path": "/word/to-overcome-5916"
+        "path": "/word/to-overcome-5916",
+        "rootId": 5916
       },
       {
         "letters": "استنصر",
@@ -3918,6 +3186,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 16073,
     "triliteralRoot": "ث ل ث",
     "rootTransliteration": "th-l-th",
+    "rootMeaning": "three; to make threefold",
     "headwordTransliteration": "ath-thālith",
     "partOfSpeech": "adjective / ordinal number (active-participle pattern from the root's number-verb)",
     "senses": [
@@ -3935,7 +3204,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "ثَلَثَ",
         "transliteration": "thalatha",
         "meaning": "to become the third (of a group); to take a third of property",
-        "path": "/word/third-11854"
+        "path": "/word/third-11854",
+        "rootId": 11854
       },
       {
         "letters": "ثلّثهُ",
@@ -3946,7 +3216,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "ثُلُثٌ",
         "transliteration": "thuluth",
         "meaning": "a third; one-third share or fraction",
-        "path": "/word/third-11854"
+        "path": "/word/third-11854",
+        "rootId": 11854
       },
       {
         "letters": "ثَلَاثَةٌ",
@@ -3973,77 +3244,11 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "sourceUrl": "https://lanelexicon.com/",
     "usageNote": "Thālith is the ordinal built on the root's number-verb ثَلَثَ, following the same pattern used for other ordinals (classical usage has a horse or rider come ثالث after the leader, then رابع 'fourth', then خامس 'fifth'). With the article it gives 'the third' (aṯ-ṯāliṯ), and it can take a following count to mean 'third of...', echoing the verb's sense of joining two others to make three."
   },
-  "16751": {
-    "rootId": 16751,
-    "triliteralRoot": "ا س د",
-    "rootTransliteration": "ʾ-s-d",
-    "headwordTransliteration": "usayd",
-    "partOfSpeech": "noun (proper name; diminutive of أَسَد)",
-    "senses": [
-      {
-        "gloss": "Usayd — a traditional masculine given name",
-        "note": "literally \"little lion\": the diminutive (taṣghīr) pattern of أَسَد \"lion\""
-      },
-      {
-        "gloss": "little lion",
-        "note": "the underlying common-noun sense before its use as a proper name"
-      }
-    ],
-    "wordFamily": [
-      {
-        "letters": "أَسَدٌ",
-        "transliteration": "asad",
-        "meaning": "lion, the well-known beast of prey; also used of the constellation Leo"
-      },
-      {
-        "letters": "أَسِدٌ",
-        "transliteration": "asid",
-        "meaning": "bold, daring, lion-like (of a man)"
-      },
-      {
-        "letters": "أَسِدَ",
-        "transliteration": "asida",
-        "meaning": "to become like a lion in boldness (verb, form I)"
-      },
-      {
-        "letters": "أَسَدَةٌ",
-        "transliteration": "asadah",
-        "meaning": "lioness"
-      },
-      {
-        "letters": "آسَدَ",
-        "transliteration": "āsada",
-        "meaning": "to incite a dog to the chase; to stir up strife between people (form IV)"
-      },
-      {
-        "letters": "استأسد",
-        "transliteration": "istaʾsada",
-        "meaning": "to grow tall, strong and tangled (of a plant); to become emboldened (form X)"
-      },
-      {
-        "letters": "مَأْسَدَةٌ",
-        "transliteration": "maʾsadah",
-        "meaning": "a place or land abounding in lions"
-      }
-    ],
-    "faq": [
-      {
-        "q": "How do you say \"Usayd\" in Arabic?",
-        "a": "أُسَيْدُ (usayd)."
-      },
-      {
-        "q": "What does the name Usayd mean?",
-        "a": "It is the diminutive of أَسَد (asad, \"lion\"), so it literally means \"little lion\"; it is used as a masculine given name."
-      }
-    ],
-    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
-    "sourceUrl": "https://lanelexicon.com/",
-    "usageNote": "أُسَيْدُ is not a common noun in everyday use but a personal name: the taṣghīr (diminutive) form of أَسَد \"lion,\" so literally \"little lion.\" It draws on the root اسد, whose core sense is the lion and, by extension, lion-like boldness — seen in words like أَسِدَ \"to become bold as a lion\" and the fem. أَسَدَةٌ \"lioness.\""
-  },
   "10059": {
     "rootId": 10059,
     "triliteralRoot": "ص ل ب",
     "rootTransliteration": "ṣ-l-b",
+    "rootMeaning": "to be firm, hard, rigid",
     "headwordTransliteration": "ṣulb",
     "partOfSpeech": "noun (substantive)",
     "senses": [
@@ -4107,6 +3312,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 16019,
     "triliteralRoot": "ح ر ك",
     "rootTransliteration": "ḥ-r-k",
+    "rootMeaning": "to move, set in motion",
     "headwordTransliteration": "ḥarriku",
     "partOfSpeech": "verb (form II, حرّك)",
     "senses": [
@@ -4129,7 +3335,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "تحرّك",
         "transliteration": "taḥarraka",
         "meaning": "to move, be in motion (intransitive; quasi-passive of حرّك)",
-        "path": "/word/move-7608"
+        "path": "/word/move-7608",
+        "rootId": 7608
       },
       {
         "letters": "حَرَاكٌ",
@@ -4145,7 +3352,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "مُحَرِّكٌ",
         "transliteration": "muḥarrik",
         "meaning": "one who moves, a mover — e.g. \"muḥarrik al-qulūb,\" Mover of hearts",
-        "path": "/word/the-one-who-stirs-up-17642"
+        "path": "/word/the-one-who-stirs-up-17642",
+        "rootId": 17642
       },
       {
         "letters": "مِحْرَاكٌ",
@@ -4171,6 +3379,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 11197,
     "triliteralRoot": "ح م ق",
     "rootTransliteration": "ḥ-m-q",
+    "rootMeaning": "to be foolish, stupid",
     "headwordTransliteration": "aḥmaq",
     "partOfSpeech": "adjective (aḥmaq/aʿfal pattern, denoting a defect — used substantively as \"a fool\")",
     "senses": [
@@ -4198,7 +3407,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "حَمَاقَة",
         "transliteration": "ḥamāqah",
         "meaning": "foolishness, stupidity (verbal noun/substantive)",
-        "path": "/word/foolishness-11180"
+        "path": "/word/foolishness-11180",
+        "rootId": 11180
       },
       {
         "letters": "حمّق",
@@ -4239,6 +3449,7 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "rootId": 6563,
     "triliteralRoot": "ث ب ت",
     "rootTransliteration": "ṯ-b-t",
+    "rootMeaning": "to be firm, fixed, established",
     "headwordTransliteration": "ṯabata",
     "partOfSpeech": "verb (form I)",
     "senses": [
@@ -4306,53 +3517,11 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "sourceUrl": "https://lanelexicon.com/",
     "usageNote": "The root is built around firmness and permanence rather than proof in a courtroom sense: something ṯabata when it stays in place, holds true, or is verified. Form IV (أَثْبَتَ) extends this outward — to actively establish, prove, or record something, such as entering a name in a register."
   },
-  "14557": {
-    "rootId": 14557,
-    "triliteralRoot": "ر ز ي",
-    "rootTransliteration": "r-z-y",
-    "headwordTransliteration": "raziyyah",
-    "partOfSpeech": "noun (feminine, variant spelling of رَزِيئَة)",
-    "senses": [
-      {
-        "gloss": "a calamity, a misfortune",
-        "note": "Given by Lane as a variant spelling of رَزِيئَة, with the hamza smoothed into a yāʾ."
-      }
-    ],
-    "wordFamily": [
-      {
-        "letters": "رَزَى",
-        "transliteration": "razā",
-        "meaning": "to accept someone's bounty or favor (form I)"
-      },
-      {
-        "letters": "أَرْزَى",
-        "transliteration": "arzā",
-        "meaning": "to lean or rely upon someone/something, to seek refuge with them (form IV)"
-      },
-      {
-        "letters": "رَزِيَّة",
-        "transliteration": "raziyyah",
-        "meaning": "a calamity, a misfortune"
-      }
-    ],
-    "faq": [
-      {
-        "q": "How do you say \"a calamity\" in Arabic?",
-        "a": "رَزِيَّة (raziyyah)."
-      },
-      {
-        "q": "Is رَزِيَّة related to رَزِيئَة?",
-        "a": "Yes — Lane's Lexicon treats رَزِيَّة as a variant spelling of رَزِيئَة, formed by smoothing the hamza into a yāʾ, and refers the reader to the entry under the root رزأ."
-      }
-    ],
-    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
-    "sourceUrl": "https://lanelexicon.com/",
-    "usageNote": "رَزِيَّة is the form most often seen in later usage, but Lane's Lexicon notes it is simply an orthographic variant of رَزِيئَة — the hamza smoothed into a yāʾ — and directs the reader to the entry under the root رزأ for its full treatment. Within the رزي root proper, the attested verb senses (رَزَى \"to accept a person's bounty,\" أَرْزَى \"to have recourse to someone for refuge\") are distinct in meaning from the calamity sense carried by رَزِيَّة."
-  },
   "19774": {
     "rootId": 19774,
     "triliteralRoot": "ا ص ل",
     "rootTransliteration": "ʾ-ṣ-l",
+    "rootMeaning": "root or foundation of a thing",
     "headwordTransliteration": "istaʾṣala",
     "partOfSpeech": "verb (form X)",
     "senses": [
@@ -4415,10 +3584,16447 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "sourceUrl": "https://lanelexicon.com/",
     "usageNote": "Form X of أصل, built on the base sense of أَصْل (\"root, foundation\"), so istaʾṣala literally means to go after something's very root and remove it entirely. It is used concretely of trees and other physical things (\"cut off from its root or lowest part\") and figuratively of peoples or enemies (\"cut off their root/stock\" i.e. wipe them out). It appears often in a precative or curse-like register — استأصل الله شأفتهم / استأصل الله الكفار, \"may God extirpate/destroy them utterly\" — a common formula in classical usage against enemies or evildoers."
   },
+  "7623": {
+    "rootId": 7623,
+    "triliteralRoot": "ش ط ن",
+    "rootTransliteration": "sh-ṭ-n",
+    "rootMeaning": "to be far, distant, or remote",
+    "headwordTransliteration": "shayṭān",
+    "partOfSpeech": "noun (substantive), measure فَيْعَال",
+    "senses": [
+      {
+        "gloss": "devil; Satan",
+        "note": "with the article, ash-shayṭān denotes Satan specifically; more generally applied to any being — human, jinn, or beast — marked by excessive pride, corruption, unbelief, or rebellion"
+      },
+      {
+        "gloss": "serpent",
+        "note": "used of a maned, foul-looking species of serpent, or of a slender, active serpent"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "شَطَنَ",
+        "transliteration": "shaṭana",
+        "meaning": "to be, or become, distant or remote (from someone/something)"
+      },
+      {
+        "letters": "شَطَنٌ",
+        "transliteration": "shaṭan",
+        "meaning": "a rope, or long rope"
+      },
+      {
+        "letters": "شَطُونٌ",
+        "transliteration": "shaṭūn",
+        "meaning": "distant, remote (of a place, journey, or expedition); also a deep, curving well"
+      },
+      {
+        "letters": "شَاطِنٌ",
+        "transliteration": "shāṭin",
+        "meaning": "distant, remote; far from the truth; bad, corrupt"
+      },
+      {
+        "letters": "شَيْطَنَ",
+        "transliteration": "shayṭana",
+        "meaning": "to act like a devil, to behave as a shayṭān"
+      },
+      {
+        "letters": "تَشَيْطَنَ",
+        "transliteration": "tashayṭana",
+        "meaning": "to become, or act, like a shayṭān"
+      },
+      {
+        "letters": "شَطِينٌ",
+        "transliteration": "shaṭīn",
+        "meaning": "distant, remote"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"Satan\" in Arabic?",
+        "a": "الشَّيْطَانُ (ash-shayṭān)."
+      },
+      {
+        "q": "What does the root of shayṭān (ش-ط-ن) mean?",
+        "a": "It centers on being distant or remote — literally far away, and figuratively far from the truth and from God's mercy."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Lane gives two views on the derivation. The more common holds that shayṭān comes from shaṭana, 'to be far or remote' — remote from the truth and from God's mercy — with the ن as a genuine root letter (measure فَيْعَال). Others treat the ن as extra and trace the word instead to شَاطَ, 'to burn (with rage)' or 'be rendered void' (measure فَعْلَان). Beyond naming Satan, shayṭān is used broadly for any excessively proud, corrupt, or rebellious being, human, jinn, or animal, and also for a kind of serpent."
+  },
+  "9781": {
+    "rootId": 9781,
+    "triliteralRoot": "ن ظ ر",
+    "rootTransliteration": "n-ẓ-r",
+    "rootMeaning": "to look at, observe, or consider",
+    "headwordTransliteration": "yanẓuru",
+    "partOfSpeech": "verb (form I, imperfect/present tense of naẓara)",
+    "senses": [
+      {
+        "gloss": "to look at, look towards; to gaze upon with the eye",
+        "note": "the everyday, literal sense, most common in ordinary speech"
+      },
+      {
+        "gloss": "to face, be turned toward, be opposite",
+        "note": "figurative use, e.g. of a house or a mountain 'facing' someone"
+      },
+      {
+        "gloss": "to consider, examine, investigate, reflect upon intellectually",
+        "note": "favored by educated/refined speakers over the plain 'sight' sense; used e.g. of looking into an affair or a piece of writing"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "نَظَرَ",
+        "transliteration": "naẓara",
+        "meaning": "to look at; to consider, examine (the base form I verb)"
+      },
+      {
+        "letters": "نَظَرٌ",
+        "transliteration": "naẓar",
+        "meaning": "a look, sight; consideration, examination, speculation"
+      },
+      {
+        "letters": "نَظْرَةٌ",
+        "transliteration": "naẓrah",
+        "meaning": "a look, a single glance"
+      },
+      {
+        "letters": "نَاظِرٌ",
+        "transliteration": "nāẓir",
+        "meaning": "one who looks; an overseer, superintendent"
+      },
+      {
+        "letters": "نَظِيرٌ",
+        "transliteration": "naẓīr",
+        "meaning": "a counterpart, match, equal"
+      },
+      {
+        "letters": "انتظر",
+        "transliteration": "intaẓara",
+        "meaning": "to wait for, to await (form VIII, lit. 'to keep looking out for')",
+        "path": "/word/wait-9394",
+        "rootId": 9394
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"look\" in Arabic?",
+        "a": "يَنْظُر (yanẓuru), \"he looks\" — the imperfect-tense form of the verb نَظَرَ (naẓara), \"to look, to look at.\""
+      },
+      {
+        "q": "What's the difference between نَظَرَ إِلَيْهِ and نَظَرَ فِيهِ?",
+        "a": "نَظَرَ إِلَيْهِ usually means to look at something with the eyes, while نَظَرَ فِيهِ leans toward considering or examining it intellectually, as in looking into a matter or a piece of writing."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "نَظَرَ إِلَيْهِ / يَنْظُرُ إِلَيْهِ is the plain 'to look at' someone or something with the eyes, while نَظَرَ فِى (as in 'looking into' a book or an affair) shifts toward mental consideration or examination — a distinction Lane notes was kept sharper by educated speakers than by common usage. The verb also appears in the Qur'an in the figurative sense of 'facing' (e.g. idols 'facing' onlookers without truly seeing, Q7:197)."
+  },
+  "8290": {
+    "rootId": 8290,
+    "triliteralRoot": "و د د",
+    "rootTransliteration": "w-d-d",
+    "rootMeaning": "to love, cherish, or feel affection",
+    "headwordTransliteration": "tawaddada",
+    "partOfSpeech": "verb (form V)",
+    "senses": [
+      {
+        "gloss": "to show affection, endear oneself, ingratiate oneself (with someone)",
+        "note": "used with the preposition إلى: تودّد إليه, 'he showed love/affection to him'"
+      },
+      {
+        "gloss": "to win over, attract someone's love or affection",
+        "note": "used transitively with a direct object: تودّدهُ, 'he drew that person's affection to himself'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "وَدَّ",
+        "transliteration": "wadda",
+        "meaning": "to love, cherish, hold dear (form I); also 'to wish that'"
+      },
+      {
+        "letters": "وِدٌّ",
+        "transliteration": "widd",
+        "meaning": "love, affection; also a beloved one, a friend"
+      },
+      {
+        "letters": "وَدُودٌ",
+        "transliteration": "wadūd",
+        "meaning": "loving, affectionate; used as a divine epithet, 'the Loving'"
+      },
+      {
+        "letters": "مَوَدَّةٌ",
+        "transliteration": "mawaddah",
+        "meaning": "love, affection"
+      },
+      {
+        "letters": "وادَّ",
+        "transliteration": "wādda",
+        "meaning": "to love and be loved by one another (form III)"
+      },
+      {
+        "letters": "تَوَادَّ",
+        "transliteration": "tawādda",
+        "meaning": "to love one another mutually (form VI)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"draw close\" in Arabic?",
+        "a": "تَوَدَّدَ (tawaddada) — literally to show affection or endear oneself, often used as تودّد إليه, 'he drew close to / ingratiated himself with him.'"
+      },
+      {
+        "q": "What is the difference between تودّدهُ and تودّد إليه?",
+        "a": "تودّدهُ (with a direct object) means he won or attracted that person's love; تودّد إليه (with إلى) means he showed or displayed affection toward that person."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Form V of the root و-د-د, built on وَدَّ 'to love.' It most often appears with إلى (تودّد إليه) meaning to show affection toward someone or work to be liked by them — 'draw close' in the sense of winning someone's goodwill. Less commonly it takes a direct object (تودّدهُ), meaning to attract that person's love to oneself."
+  },
+  "5200": {
+    "rootId": 5200,
+    "triliteralRoot": "و ف ق",
+    "rootTransliteration": "w-f-q",
+    "rootMeaning": "to agree, correspond, or be fitting",
+    "headwordTransliteration": "tawfīq",
+    "partOfSpeech": "noun (verbal noun / maṣdar of Form II وَفَّقَ)",
+    "senses": [
+      {
+        "gloss": "success; being guided or disposed to the right course",
+        "note": "Especially the classical/religious sense of God according someone success — cf. وَفَّقَهُ ٱللّٰهُ, 'God accommodated, disposed, or directed him to the right course.'"
+      },
+      {
+        "gloss": "a certain legal document; a pleading",
+        "note": "A specialized technical use recorded alongside the general sense; compare مَحْضَرٌ."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "وَفِقَ",
+        "transliteration": "wafiqa",
+        "meaning": "to be right, agreeable with what is wished (Form I)"
+      },
+      {
+        "letters": "وَفَّقَ",
+        "transliteration": "waffaqa",
+        "meaning": "to accommodate, adapt, or dispose someone to something; to make prosper (Form II)"
+      },
+      {
+        "letters": "وَافَقَ",
+        "transliteration": "wāfaqa",
+        "meaning": "to agree with, conform to, coincide with, or suit (Form III)"
+      },
+      {
+        "letters": "أَوْفَقَ",
+        "transliteration": "awfaqa",
+        "meaning": "to find one's affair agreeable with one's wish (Form IV)"
+      },
+      {
+        "letters": "اِتَّفَقَ",
+        "transliteration": "ittafaqa",
+        "meaning": "to happen, chance; also to come to agreement with someone (Form VIII)",
+        "path": "/word/agreed-6373",
+        "rootId": 6373
+      },
+      {
+        "letters": "إِتِّفَاقِىٌّ",
+        "transliteration": "ittifāqiyy",
+        "meaning": "casual, accidental"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"success\" in Arabic?",
+        "a": "تَوْفِيقٌ (tawfīq)."
+      },
+      {
+        "q": "What root does تَوْفِيقٌ come from and what does it convey?",
+        "a": "It comes from the root و ف ق (w-f-q), which centers on agreement, fitness, and being rightly guided or disposed toward something — tawfīq is the 'success' or divine guidance that results from this."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "تَوْفِيقٌ is the verbal noun of the Form II verb وَفَّقَ, and its primary sense follows from phrases like وَفَّقَهُ ٱللّٰهُ ('God disposed/guided him to the right course') — hence its common meaning 'success,' particularly success or guidance granted by God. Lane's also records a distinct, specialized legal sense of the word as a type of document or pleading."
+  },
+  "5201": {
+    "rootId": 5201,
+    "triliteralRoot": "ف س د",
+    "rootTransliteration": "f-s-d",
+    "rootMeaning": "to be corrupt, bad, or unsound",
+    "headwordTransliteration": "fasād",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "corruption, badness, unsoundness",
+        "note": "the direct opposite of ṣalāḥ (soundness, rightness); describes something bad, wrong, or vitiated in state"
+      },
+      {
+        "gloss": "disorder, ruin, destruction",
+        "note": "a state of disturbance, waste, or ruin — things falling into disorder or coming to nought"
+      },
+      {
+        "gloss": "wrongdoing, mischief, evildoing",
+        "note": "also used for the act of doing evil or stirring up discord and strife between people"
+      },
+      {
+        "gloss": "wrongful seizure of property",
+        "note": "a specific narrower use: taking someone's property unlawfully"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "فَسَدَ",
+        "transliteration": "fasada",
+        "meaning": "to be or become bad, corrupt, or unsound (form I verb)",
+        "path": "/word/become-corrupt-5740",
+        "rootId": 5740
+      },
+      {
+        "letters": "أَفْسَدَ",
+        "transliteration": "afsada",
+        "meaning": "to make bad, corrupt, spoil, or ruin something (form IV)",
+        "path": "/word/corrupt-5237",
+        "rootId": 5237
+      },
+      {
+        "letters": "فَاسِدٌ",
+        "transliteration": "fāsid",
+        "meaning": "corrupt, bad, unsound (active participle)",
+        "path": "/word/corrupt-9931",
+        "rootId": 9931
+      },
+      {
+        "letters": "مَفْسَدَةٌ",
+        "transliteration": "mafsadah",
+        "meaning": "a cause or source of corruption, harm, or mischief"
+      },
+      {
+        "letters": "فاسدهُ",
+        "transliteration": "fāsadahu",
+        "meaning": "to break off and become at variance with someone (form III)"
+      },
+      {
+        "letters": "استفسد",
+        "transliteration": "istafsada",
+        "meaning": "to treat someone so as to provoke disaffection or rebellion (form X)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"distortion\" in Arabic?",
+        "a": "فَسَادٌ (fasād)."
+      },
+      {
+        "q": "What does the root ف-س-د mean in Arabic?",
+        "a": "It centers on being bad, corrupt, or unsound — the opposite of ṣalāḥ (soundness/rightness) — covering senses from moral corruption to disorder, ruin, and wrongdoing."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Fasād is the standard antonym of ṣalāḥ (soundness/righteousness) and covers everything from moral corruption to physical ruin or civil disorder. Classical commentators cite it in explaining Qur'an 21:22, where it describes the ruin that would follow if there were multiple gods."
+  },
+  "5202": {
+    "rootId": 5202,
+    "triliteralRoot": "ر أ ي",
+    "rootTransliteration": "r-ʾ-y",
+    "rootMeaning": "to see, perceive, or judge",
+    "headwordTransliteration": "raʾy",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "opinion, view, judgment",
+        "note": "The mind's 'seeing' — forming or holding a considered judgment about something; Lane notes this is the sense in which raʾy is most commonly used."
+      },
+      {
+        "gloss": "sight, seeing",
+        "note": "As a plain verbal noun of raʾā 'he saw (with the eye)', alongside ruʾyah."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "رَأَى",
+        "transliteration": "raʾā",
+        "meaning": "to see (with the eye, or mentally/by reflection)"
+      },
+      {
+        "letters": "رُؤْيَةٌ",
+        "transliteration": "ruʾyah",
+        "meaning": "seeing, sight; also mental perception or judgment"
+      },
+      {
+        "letters": "رُؤْيَا",
+        "transliteration": "ruʾyā",
+        "meaning": "a vision or dream seen in sleep"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"opinion\" in Arabic?",
+        "a": "رَأْيٌ (raʾy)."
+      },
+      {
+        "q": "What is the root of رأي?",
+        "a": "It is from ر-أ-ي (r-ʾ-y), the root of رأى 'to see'; raʾy is literally a kind of 'seeing' — with the mind rather than the eye — hence 'opinion, judgment'."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Raʾy is one of several verbal nouns of raʾā ('he saw'), but Lane singles it out as the form most commonly used for the mind's kind of seeing — forming, holding, or judging a view — rather than for plain visual sight, which is more the territory of ruʾyah."
+  },
+  "5203": {
+    "rootId": 5203,
+    "triliteralRoot": "خ ف ي",
+    "rootTransliteration": "kh-f-y",
+    "rootMeaning": "to be hidden or concealed",
+    "headwordTransliteration": "khafā'",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "obscurity, concealment",
+        "note": "the state of being hidden, unperceived, or not apparent; the maṣdar of the verb خَفِىَ, 'to be hidden/unapparent'"
+      },
+      {
+        "gloss": "a secret; a hidden matter",
+        "note": "as in the idiom بَرِحَ الخَفَاءُ, 'the khafā' departed', said when a secret or concealed affair becomes manifest"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "خَفِىَ",
+        "transliteration": "khafiya",
+        "meaning": "to be hidden, unperceived, or unapparent (form I verb)",
+        "path": "/word/hide-8970",
+        "rootId": 8970
+      },
+      {
+        "letters": "أَخْفَى",
+        "transliteration": "akhfā",
+        "meaning": "to conceal, hide (also used, per some readings, in the contrary sense 'to reveal')",
+        "path": "/word/to-hide-13757",
+        "rootId": 13757
+      },
+      {
+        "letters": "اِخْتَفَى",
+        "transliteration": "ikhtafā",
+        "meaning": "to hide oneself, become concealed"
+      },
+      {
+        "letters": "خِفَآءٌ",
+        "transliteration": "khifā'",
+        "meaning": "a covering; that which conceals a thing"
+      },
+      {
+        "letters": "خُفْيَةٌ",
+        "transliteration": "khufyah",
+        "meaning": "secretly, covertly, privately",
+        "path": "/word/hidden-5805",
+        "rootId": 5805
+      },
+      {
+        "letters": "خَافٍ",
+        "transliteration": "khāfin",
+        "meaning": "hidden, unapparent (active participle)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"obscurity\" in Arabic?",
+        "a": "خَفَاءٌ (khafā')."
+      },
+      {
+        "q": "What does the idiom بَرِحَ الخَفَاءُ mean?",
+        "a": "Literally 'the khafā' departed' — it means a hidden matter or secret has become manifest, i.e. the obscurity has lifted."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "خَفِىَ, the verb behind this noun, is a classic case of an Arabic word with two contrary senses: it can mean 'to be hidden/unapparent' or, in the reverse sense some grammarians recognize, 'to become apparent'. خَفَاءٌ itself is used for the state of being obscure or concealed, and appears in the set phrase بَرِحَ الخَفَاءُ, said when something once secret has come to light."
+  },
+  "5205": {
+    "rootId": 5205,
+    "triliteralRoot": "ق ل ب",
+    "rootTransliteration": "q-l-b",
+    "rootMeaning": "to turn, invert, change",
+    "headwordTransliteration": "qalb",
+    "partOfSpeech": "noun ('heart'); also verbal noun (maṣdar) of the Form I verb قَلَبَ",
+    "senses": [
+      {
+        "gloss": "heart (the organ; also the seat of mind, feeling, and understanding)"
+      },
+      {
+        "gloss": "the act of turning something over, inverting it, or altering its state or arrangement",
+        "note": "as the verbal noun (maṣdar) of قَلَبَ — e.g. turning a garment inside out, transposing the letters of a word, or turning over earth or bread"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "قَلَبَهُ",
+        "transliteration": "qalaba(hu)",
+        "meaning": "Form I verb: to turn it over, invert it, or change its mode/state (e.g. turn a garment upside-down, turn over earth or bread)"
+      },
+      {
+        "letters": "قَلَّبَ",
+        "transliteration": "qallaba",
+        "meaning": "to turn something over repeatedly or examine it closely on every side (an intensive counterpart of qalaba)"
+      },
+      {
+        "letters": "أَقْلَبَ",
+        "transliteration": "aqlaba",
+        "meaning": "to turn something over/invert it — a weakly-attested variant of qalaba"
+      },
+      {
+        "letters": "قَلِيبٌ",
+        "transliteration": "qalīb",
+        "meaning": "a (dug) well — from the sense of earth being turned over in digging"
+      },
+      {
+        "letters": "قُلَيْبٌ",
+        "transliteration": "qulayb",
+        "meaning": "little heart (diminutive of qalb)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"heart\" in Arabic?",
+        "a": "قَلْب (qalb)."
+      },
+      {
+        "q": "What is the root meaning behind qalb?",
+        "a": "The root ق-ل-ب means 'to turn, invert, or change'; qalb is both the everyday word for 'heart' and, in its older sense, the verbal noun for the act of turning something over."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Qalb is the ordinary word for the heart, but it shares its form with the verbal noun of qalaba, 'to turn, invert, or change,' the root's core meaning. That same sense of turning something over runs through related words — turning a garment inside-out, turning over earth or bread, or examining a commodity by turning it over before buying it."
+  },
+  "5207": {
+    "rootId": 5207,
+    "triliteralRoot": "ذ ك ر",
+    "rootTransliteration": "ḏ-k-r",
+    "rootMeaning": "to remember or mention",
+    "headwordTransliteration": "ḏikr",
+    "partOfSpeech": "noun (verbal noun / maṣdar of the verb ḏakara, form I)",
+    "senses": [
+      {
+        "gloss": "mention; the act of speaking of, telling, or relating something",
+        "note": "Corresponds to ḏakarahū bi-lisānihī, \"he mentioned it with his tongue\" — saying, telling, or relating something, whether in praise or in blame."
+      },
+      {
+        "gloss": "remembrance; the act of remembering, keeping something in mind",
+        "note": "Corresponds to ḏakarahū bi-qalbihī, \"he remembered it with his heart\" — preserving something in memory or calling it to mind."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "ذَكَرَ",
+        "transliteration": "ḏakara",
+        "meaning": "to remember, keep in memory; also to mention, tell, or relate (form I verb)"
+      },
+      {
+        "letters": "تَذَكَّرَ",
+        "transliteration": "taḏakkara",
+        "meaning": "to remember, recollect, call to mind (form V)"
+      },
+      {
+        "letters": "اِدَّكَرَ",
+        "transliteration": "iddakara",
+        "meaning": "to remember, recollect — a sound-shifted variant of taḏakkara (form VIII)"
+      },
+      {
+        "letters": "إِسْتَذْكَرَ",
+        "transliteration": "istaḏkara",
+        "meaning": "to study something so as to memorize it; to seek to remember (form X)"
+      },
+      {
+        "letters": "ذِكْرَى",
+        "transliteration": "ḏikrā",
+        "meaning": "remembrance, memory — a feminine verbal-noun form of ḏakara"
+      },
+      {
+        "letters": "ذُكْرٌ",
+        "transliteration": "ḏukr",
+        "meaning": "remembrance — an alternate verbal-noun form, sometimes distinguished from ḏikr"
+      },
+      {
+        "letters": "تَذْكَارٌ",
+        "transliteration": "taḏkār",
+        "meaning": "a remembrance, a keepsake or memento — another verbal-noun form of ḏakara"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"mention\" in Arabic?",
+        "a": "ذِكْر (ḏikr) — the verbal noun of ḏakara, \"to mention\" or \"to remember\"."
+      },
+      {
+        "q": "What does the word ḏikr mean?",
+        "a": "Ḏikr covers both remembering something inwardly and speaking of it aloud; it is the noun behind the verb ḏakara, and in religious usage refers to remembrance or mention of God."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Ḏikr is the verbal noun of ḏakara and covers two things kept apart in Lane's account: remembering something inwardly (ḏakarahū bi-qalbihī) and mentioning it aloud (ḏakarahū bi-lisānihī). The underlying verb is also used tropically for glorifying or praising God — the root behind the devotional sense of \"dhikr\" as remembrance or mention of God."
+  },
+  "5208": {
+    "rootId": 5208,
+    "triliteralRoot": "ض ي ع",
+    "rootTransliteration": "ḍ-y-ʿ",
+    "rootMeaning": "to be lost, wasted, or neglected",
+    "headwordTransliteration": "iḍāʿah",
+    "partOfSpeech": "noun (verbal noun / maṣdar — of form II ضيّع and form IV اضاع)",
+    "senses": [
+      {
+        "gloss": "destroying, wasting, or causing something to perish or be lost",
+        "note": "the verbal noun shared by ضيّع (form II) and اضاع (form IV), both of which Lane glosses as 'he made, or caused, the thing to perish, or become lost; he destroyed it, wasted it, or lost it'"
+      },
+      {
+        "gloss": "neglect; leaving something unattended or uncared-for",
+        "note": "e.g. neglecting one's family/household, or, in Qur'anic usage, neglecting or deferring prayer"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "ضَاعَ",
+        "transliteration": "ḍāʿa",
+        "meaning": "(form I) to perish, come to nought, pass away, or become lost; also to be left unattended or neglected",
+        "path": "/word/lost-7786",
+        "rootId": 7786
+      },
+      {
+        "letters": "ضيّع",
+        "transliteration": "ḍayyaʿa",
+        "meaning": "(form II) to destroy, waste, or lose something; to let it perish"
+      },
+      {
+        "letters": "اضاع",
+        "transliteration": "aḍāʿa",
+        "meaning": "(form IV) to cause something to be lost or wasted; to neglect it (e.g. one's family, or prayer)"
+      },
+      {
+        "letters": "تضيّع",
+        "transliteration": "taḍayyaʿa",
+        "meaning": "(form V) said of the wind, to blow (as it destroys what it blows upon); said of musk, to diffuse its fragrance"
+      },
+      {
+        "letters": "ضَيْعَةٌ",
+        "transliteration": "ḍayʿah",
+        "meaning": "a landed estate or property yielding a revenue; also, a single instance of loss or neglect",
+        "path": "/word/livelihood-9502",
+        "rootId": 9502
+      },
+      {
+        "letters": "ضَيَاعٌ",
+        "transliteration": "ḍayāʿ",
+        "meaning": "the state of perishing, coming to nought, or being lost/neglected (verbal noun of ضاع)",
+        "path": "/word/possessions-19765",
+        "rootId": 19765
+      },
+      {
+        "letters": "ضُيَيْعَةٌ",
+        "transliteration": "ḍuyayʿah",
+        "meaning": "diminutive of ḍayʿah, 'estate'"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"waste\" in Arabic?",
+        "a": "إِضَاعَةٌ (iḍāʿah) — the verbal noun for destroying, wasting, or causing something to be lost."
+      },
+      {
+        "q": "What is the root of إضاعة?",
+        "a": "It comes from the root ض ي ع (ḍ-y-ʿ), whose verbs center on perishing, being lost, and neglect."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "إضاعة is the abstract noun for the act of wasting, destroying, or losing something, and Lane notes it is used interchangeably with تضييع as the inf. n. of ضيّع, while the same meaning also belongs to the form-IV verb اضاع. Its sense stretches from material loss (property, milk, estates) to neglect of duty, as in the Qur'anic أَضَاعُوا الصَّلَاةَ, 'they neglected prayer.'"
+  },
+  "5209": {
+    "rootId": 5209,
+    "triliteralRoot": "و ق ت",
+    "rootTransliteration": "w-q-t",
+    "rootMeaning": "to fix or appoint a time",
+    "headwordTransliteration": "waqt",
+    "partOfSpeech": "noun",
+    "senses": [
+      {
+        "gloss": "time; a period or span of time appointed for some affair; a season",
+        "note": "used mostly of past time, though also applied to the future; plural أَوْقَاتٌ (awqāt)"
+      },
+      {
+        "gloss": "(tropical use) a measure of spatial extension, e.g. a mile",
+        "note": "a figurative extension recorded by grammarians (Sb.), distinct from the temporal sense"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "وَقَتَ",
+        "transliteration": "waqata",
+        "meaning": "to determine, define, or fix the time of a thing (form I)"
+      },
+      {
+        "letters": "وَقَّتَ",
+        "transliteration": "waqqata",
+        "meaning": "to assign or appoint a particular time for a thing (form II)"
+      },
+      {
+        "letters": "وَاقَتَ",
+        "transliteration": "wāqata",
+        "meaning": "to make an appointment with someone for a set time (form III)"
+      },
+      {
+        "letters": "مَوْقِتٌ",
+        "transliteration": "mawqit",
+        "meaning": "an appointed time of an event, e.g. the Day of Resurrection"
+      },
+      {
+        "letters": "مِيقَاتٌ",
+        "transliteration": "mīqāt",
+        "meaning": "an appointed time; also a place set for a particular act, e.g. where pilgrims enter iḥrām",
+        "path": "/word/appointed-time-12016",
+        "rootId": 12016
+      },
+      {
+        "letters": "مَوْقُوتٌ",
+        "transliteration": "mawqūt",
+        "meaning": "determined, defined, or fixed as to time; timed, prescribed"
+      },
+      {
+        "letters": "مُوَقَّتٌ",
+        "transliteration": "muwaqqat",
+        "meaning": "timed, fixed as to its appointed time (synonym of mawqūt)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"time\" in Arabic?",
+        "a": "وَقْتٌ (waqt)."
+      },
+      {
+        "q": "What is the plural of وَقْتٌ؟",
+        "a": "أَوْقَاتٌ (awqāt)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Waqt denotes time in an absolute sense, while some grammarians distinguish it from mīqāt, which specifically means a time (or place) appointed for the performance of an action. The word appears in a Qur'anic description of prayer as a mawqūt duty, i.e. bound to its prescribed times."
+  },
+  "5210": {
+    "rootId": 5210,
+    "triliteralRoot": "ن ف ر",
+    "rootTransliteration": "n-f-r",
+    "rootMeaning": "to take fright and flee",
+    "headwordTransliteration": "nafrah",
+    "partOfSpeech": "noun (verbal noun of a single instance, from the form I verb)",
+    "senses": [
+      {
+        "gloss": "aversion; a shrinking or recoiling from something",
+        "note": "the tropical/figurative sense of the root, as in nafartu min hādhā l-amr, 'I shrank from, was averse to, this affair'"
+      },
+      {
+        "gloss": "a fright; a sudden bolting or darting off",
+        "note": "the root's literal, physical sense — a wild animal or beast taking fright and fleeing at random"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "نَفَرَ",
+        "transliteration": "nafara",
+        "meaning": "to take fright and flee at random (of a beast); by extension, to shrink from or be averse to something"
+      },
+      {
+        "letters": "نُفُورٌ",
+        "transliteration": "nufūr",
+        "meaning": "aversion; fleeing or shying away in fright — the main verbal noun of the root"
+      },
+      {
+        "letters": "نِفَارٌ",
+        "transliteration": "nifār",
+        "meaning": "shying, bolting, fleeing in fright — a near-synonym of nufūr",
+        "path": "/word/withdrawal-19666",
+        "rootId": 19666
+      },
+      {
+        "letters": "نَفِيرٌ",
+        "transliteration": "nafīr",
+        "meaning": "a going-forth to fight; a summons or call to arms"
+      },
+      {
+        "letters": "نَفَّرَ",
+        "transliteration": "naffara",
+        "meaning": "to scare away; to make (an animal) take fright and flee"
+      },
+      {
+        "letters": "أَنْفَرَ",
+        "transliteration": "anfara",
+        "meaning": "to scare away, drive off (a form IV synonym of naffara)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"aversion\" in Arabic?",
+        "a": "نَفْرَةٌ (nafrah)."
+      },
+      {
+        "q": "What does the root ن ف ر (n-f-r) of nafrah mean?",
+        "a": "It centers on a wild animal taking fright and bolting; by extension it covers shrinking away from, disliking, or being averse to a person or thing."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "The root's core image is a wild animal bolting in fright (sharada). Lane notes this is used tropically for people: nafartu min hādhā l-amr, 'I shrank from this affair,' or nafarat al-marʾah min zawjihā, 'the woman was averse from her husband.' Nafrah captures that figurative sense of recoiling dislike. The same root gives the Qur'anic phrase illā nufūran, 'save in aversion' (Q 17:43, 35:40)."
+  },
+  "5211": {
+    "rootId": 5211,
+    "triliteralRoot": "خ ل ق",
+    "rootTransliteration": "kh-l-q",
+    "rootMeaning": "to fashion, proportion, or smooth",
+    "headwordTransliteration": "khalq",
+    "partOfSpeech": "noun (verbal noun / maṣdar, form I)",
+    "senses": [
+      {
+        "gloss": "creation; the bringing of something into existence",
+        "note": "Especially of God: originating a thing with no pre-existing pattern or model — e.g. Qur'anic ʿabudū rabbakumu llaḏī khalaqakum, 'serve your Lord who brought you into being.'"
+      },
+      {
+        "gloss": "measuring, proportioning",
+        "note": "The word's primary, original sense (syn. taqdīr) — determining the measure of a hide or material and cutting it to that measure, e.g. before making a water-skin or sandal."
+      },
+      {
+        "gloss": "fabricating or forging (a saying, tale, or lie)",
+        "note": "A tropical extension — used of invented stories or a fabricated falsehood."
+      },
+      {
+        "gloss": "making smooth or even",
+        "note": "Said e.g. of an arrow or a piece of wood worked down to an even, uniform surface."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "خُلُقٌ",
+        "transliteration": "khuluq",
+        "meaning": "innate nature, disposition, character one is created with"
+      },
+      {
+        "letters": "خَلَقٌ",
+        "transliteration": "khalaq",
+        "meaning": "old, worn out (of a garment)"
+      },
+      {
+        "letters": "أَخْلَقَ",
+        "transliteration": "akhlaqa",
+        "meaning": "to become old and worn out (of a garment)"
+      },
+      {
+        "letters": "خَلِقٌ",
+        "transliteration": "khaliq",
+        "meaning": "smooth, even"
+      },
+      {
+        "letters": "خَلَاقَةٌ",
+        "transliteration": "khalāqah",
+        "meaning": "being well-made, goodly in body or form"
+      },
+      {
+        "letters": "خُلُوقَةٌ",
+        "transliteration": "khulūqah",
+        "meaning": "the state of being worn out (of a garment)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"creation\" in Arabic?",
+        "a": "خَلْقٌ (khalq)."
+      },
+      {
+        "q": "What did خَلْقٌ originally mean before it came to mean 'creation'?",
+        "a": "It originally meant to measure or proportion something — e.g. measuring a hide to its intended shape before cutting it. The sense of 'creation' (especially God bringing something into being from nothing) developed from this idea of shaping something to a determined measure."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Originally a craftsman's term for measuring and proportioning material (e.g. a hide) before cutting it to shape. From this developed its central theological sense — God's khalq is bringing creation into existence according to no pre-existing pattern, i.e. creating out of nothing. The same root gives a tropical sense of 'fabricating' or 'forging' a story or lie, since fabrication is a kind of false 'creating.'"
+  },
+  "5212": {
+    "rootId": 5212,
+    "triliteralRoot": "و ح ش",
+    "rootTransliteration": "w-ḥ-sh",
+    "rootMeaning": "to be wild, desolate, lonesome",
+    "headwordTransliteration": "waḥshah",
+    "partOfSpeech": "noun (abstract noun; also the feminine of the adjective وَحْشٌ)",
+    "senses": [
+      {
+        "gloss": "loneliness, solitude, a feeling of estrangement",
+        "note": "the disquiet, sadness, or fear a person feels when separated from others — the state named by the verb استوحش, \"to feel waḥshah\""
+      },
+      {
+        "gloss": "desolation; a deserted, uninhabited state",
+        "note": "used of a place, as in أَرْضٌ وَحْشَةٌ, \"a desolate land\" — the opposite of being settled or familiar"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "وَحْشٌ",
+        "transliteration": "waḥsh",
+        "meaning": "a desert or desolate place; also \"wild animal(s)\" collectively"
+      },
+      {
+        "letters": "وَحْشِىٌّ",
+        "transliteration": "waḥshiyy",
+        "meaning": "wild, of the wilderness (e.g. حِمَارٌ وَحْشِىٌّ, \"a wild ass\")"
+      },
+      {
+        "letters": "أَوْحَشَ",
+        "transliteration": "awḥasha",
+        "meaning": "to become desolate (of a place); to make someone feel lonely — opposite of ānasa, \"to put at ease\"",
+        "path": "/word/to-make-someone-feel-estranged-14717",
+        "rootId": 14717
+      },
+      {
+        "letters": "مُوحِشٌ",
+        "transliteration": "mūḥish",
+        "meaning": "desolate, lonely-making (active participle of awḥasha)"
+      },
+      {
+        "letters": "تَوَحَّشَ",
+        "transliteration": "tawaḥḥasha",
+        "meaning": "to become wild, unsociable, or shy, like a wild animal"
+      },
+      {
+        "letters": "اسْتَوْحَشَ",
+        "transliteration": "istawḥasha",
+        "meaning": "to feel lonely, estranged, or afraid; to be shy of someone",
+        "path": "/word/felt-uneasy-8222",
+        "rootId": 8222
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"estrangement\" in Arabic?",
+        "a": "وَحْشَةٌ (waḥshah) — it covers loneliness, solitude, and the disquiet of estrangement."
+      },
+      {
+        "q": "What does أَوْحَشْتَنَا mean?",
+        "a": "\"You have made us lonely\" — a set phrase (from the same root) said to someone after their absence, meaning roughly \"we missed you.\""
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "waḥshah is the direct opposite of uns (ease, sociable familiarity): awḥasha, \"to make lonely,\" is given as the contrary of ānasa, \"to make at ease.\" The word covers both an emotional sense (missing someone, feeling estranged or ill at ease) and a physical one (a place being deserted). Lane notes the everyday expression أَوْحَشْتَنَا, \"you have made us lonely,\" said to someone after an absence — i.e. \"we missed you.\""
+  },
+  "5213": {
+    "rootId": 5213,
+    "triliteralRoot": "ب ي ن",
+    "rootTransliteration": "b-y-n",
+    "rootMeaning": "to separate, become distinct, clear",
+    "headwordTransliteration": "bayna",
+    "partOfSpeech": "adverb / preposition (ẓarf — the noun بَيْنٌ used adverbially)",
+    "senses": [
+      {
+        "gloss": "between, among",
+        "note": "marks the interval or space separating two or more things, people, or points in time"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "بَانَ",
+        "transliteration": "bāna",
+        "meaning": "to become separated, severed, or disunited; also to become clear, manifest, or evident (form I)",
+        "path": "/word/became-apparent-12046",
+        "rootId": 12046
+      },
+      {
+        "letters": "بَيَّنَ",
+        "transliteration": "bayyana",
+        "meaning": "to make (something) clear, plain, or evident; to explain, notify, make known (form II)"
+      },
+      {
+        "letters": "أَبَانَ",
+        "transliteration": "abāna",
+        "meaning": "to make plain, clarify, declare distinctly (form IV, synonym of bayyana)",
+        "path": "/word/elucidate-8188",
+        "rootId": 8188
+      },
+      {
+        "letters": "تَبَيَّنَ",
+        "transliteration": "tabayyana",
+        "meaning": "to become clear to oneself; to discern or ascertain distinctly (form V)",
+        "path": "/word/be-evident-10552",
+        "rootId": 10552
+      },
+      {
+        "letters": "بَيَانٌ",
+        "transliteration": "bayān",
+        "meaning": "clarity, plainness; exposition, explanation"
+      },
+      {
+        "letters": "بَيْنٌ",
+        "transliteration": "bayn",
+        "meaning": "separation, severance; the interval or space between things — the root noun behind بَيْنَ"
+      },
+      {
+        "letters": "تِبْيَانٌ",
+        "transliteration": "tibyān",
+        "meaning": "explanation, clarification (an irregularly formed verbal noun)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"between\" in Arabic?",
+        "a": "بَيْنَ (bayna)."
+      },
+      {
+        "q": "What root does بَيْنَ come from, and how is it related to بَيَانٌ?",
+        "a": "Both come from the triliteral root ب ي ن (b-y-n). بَيْنَ is the adverbial use of بَيْنٌ, 'interval/separation,' while بَيَانٌ 'clarity, exposition' reflects the same root's sense of things becoming distinct and so clear."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "بَيْنَ is the adverbial use of the noun بَيْنٌ, one of the infinitive nouns of the verb بَانَ 'to become separated, severed, or disunited.' The same root gives بَانَ its second core sense, 'to become clear, manifest, evident' — so the root spans both physical/logical separation and the resulting clarity or distinctness. بَيْنَ is placed before one or more nouns (often paired or plural) to express 'between/among' them."
+  },
+  "5214": {
+    "rootId": 5214,
+    "triliteralRoot": "ع ب د",
+    "rootTransliteration": "ʿ-b-d",
+    "rootMeaning": "to serve, worship, or enslave",
+    "headwordTransliteration": "ʿabd",
+    "partOfSpeech": "noun (substantive, originally used as an epithet)",
+    "senses": [
+      {
+        "gloss": "slave",
+        "note": "a person owned by and in the service of a master; from the root sense 'to be, or become, a slave'"
+      },
+      {
+        "gloss": "servant (of God); worshipper",
+        "note": "one who serves, worships, or obeys God with humility; the verb this noun is tied to is used in this sense only when the object served is God, a false god, or the Devil"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "عِبَادَةٌ",
+        "transliteration": "ʿibādah",
+        "meaning": "worship, religious service or devotion"
+      },
+      {
+        "letters": "عُبُودِيَّةٌ",
+        "transliteration": "ʿubūdiyyah",
+        "meaning": "slavery, the state of being a slave"
+      },
+      {
+        "letters": "تَعَبَّدَ",
+        "transliteration": "taʿabbada",
+        "meaning": "to devote oneself to worship; to become a servant of God (form V)"
+      },
+      {
+        "letters": "اِسْتَعْبَدَ",
+        "transliteration": "istaʿbada",
+        "meaning": "to enslave, to take someone as a slave (form X)"
+      },
+      {
+        "letters": "عَبَّدَ",
+        "transliteration": "ʿabbada",
+        "meaning": "to enslave; to subdue and render submissive (form II)"
+      },
+      {
+        "letters": "عَبِيدٌ",
+        "transliteration": "ʿabīd",
+        "meaning": "slaves (a form of ʿabd listed among the root's nouns)"
+      },
+      {
+        "letters": "عَبِدٌ",
+        "transliteration": "ʿabid",
+        "meaning": "angry; disdainful, scornful"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"servant\" in Arabic?",
+        "a": "عَبْدٌ (ʿabd)."
+      },
+      {
+        "q": "What does the root ʿ-b-d (ع ب د) mean?",
+        "a": "It covers both 'to serve or worship God with humble obedience' and 'to be, or become, a slave' — the two senses that ʿabd itself carries."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "The basic verb ʿabada is applied only when the object served is God, a false god, or the Devil, which is why ʿabd carries the double sense of 'slave' and 'servant/worshipper of God' rather than 'employee' or ordinary helper. The form V verb taʿabbada bi'l-Islām, 'to take Islam as one's religion,' shows the same root used for religious devotion."
+  },
+  "5215": {
+    "rootId": 5215,
+    "triliteralRoot": "ر ب ب",
+    "rootTransliteration": "r-b-b",
+    "rootMeaning": "to own, rule, and nurture",
+    "headwordTransliteration": "rabb",
+    "partOfSpeech": "noun (substantive / epithet)",
+    "senses": [
+      {
+        "gloss": "lord, master, possessor, owner",
+        "note": "one who has rightful ownership of a thing, or command and authority over a person"
+      },
+      {
+        "gloss": "rearer, fosterer, guardian",
+        "note": "by extension of رَبَّهُ 'he reared/brought him up'; a commentator on the Qur'an gives the root's primary sense as bringing something to completion by degrees, i.e. nurturing it to maturity"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "رَبَّهُ",
+        "transliteration": "rabbahu",
+        "meaning": "he owned it and held authority over it; also, he reared and fostered a child (form I)"
+      },
+      {
+        "letters": "ربّب",
+        "transliteration": "rabbaba",
+        "meaning": "reared or fostered intensively, especially said of bringing up an orphan (form II)"
+      },
+      {
+        "letters": "رِبَابَةٌ",
+        "transliteration": "ribābah",
+        "meaning": "the act of ruling or governing people; guardianship"
+      },
+      {
+        "letters": "رُبٌّ",
+        "transliteration": "rubb",
+        "meaning": "rob, a thickened fruit (date) juice used to season a skin or vessel"
+      },
+      {
+        "letters": "رِبَابٌ",
+        "transliteration": "ribāb",
+        "meaning": "a female animal's state of having just given birth or having young newly born"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"Lord\" in Arabic?",
+        "a": "رَبّ (rabb)."
+      },
+      {
+        "q": "What does the Arabic root ر-ب-ب mean?",
+        "a": "It centers on possession and authority (owning or ruling something) together with rearing and fostering (raising a child or thing to completion), as seen in رَبَّهُ 'he owned it / he reared him' and رِبَابَة 'governance'."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "رَبّ is the standard word for a lord, master, or possessor/owner of something, and is used absolutely (الرَّبّ, 'the Lord') as a title for God. Its verb رَبَّهُ links this authority-sense to a nurturing one — 'he reared/brought him up' — and one commentary on the Qur'an holds that the root's core meaning is bringing a thing to completeness by degrees, i.e. fostering it to maturity."
+  },
+  "5216": {
+    "rootId": 5216,
+    "triliteralRoot": "م ن ع",
+    "rootTransliteration": "m-n-ʿ",
+    "rootMeaning": "to prevent, withhold, or refuse",
+    "headwordTransliteration": "manʿ",
+    "partOfSpeech": "noun (verbal noun / maṣdar of مَنَعَ, form I)",
+    "senses": [
+      {
+        "gloss": "prevention, hindrance, restraint",
+        "note": "stopping someone or something from acting or happening; also holding back, withholding, forbidding"
+      },
+      {
+        "gloss": "denial, refusal (of a gift or request)",
+        "note": "explicitly given as the opposite of إِعْطَآءٌ (giving)"
+      },
+      {
+        "gloss": "protection, defense, guarding",
+        "note": "of a place or person against encroachment or attack; a secondary use of the verb مَنَعَهُ"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "مَانِعٌ",
+        "transliteration": "māniʿ",
+        "meaning": "one who prevents, denies, or refuses"
+      },
+      {
+        "letters": "مَنِيعٌ",
+        "transliteration": "manīʿ",
+        "meaning": "unapproachable, inaccessible, fortified, strong"
+      },
+      {
+        "letters": "مَنَعَةٌ",
+        "transliteration": "manaʿah",
+        "meaning": "power of resistance; might that protects one's people"
+      },
+      {
+        "letters": "اِمْتَنَعَ",
+        "transliteration": "imtanaʿa",
+        "meaning": "to refrain, hold back, refuse (form VIII)"
+      },
+      {
+        "letters": "مُمْتَنِعٌ",
+        "transliteration": "mumtaniʿ",
+        "meaning": "resisting, unyielding, incompliant"
+      },
+      {
+        "letters": "مَنَّاعٌ",
+        "transliteration": "mannāʿ",
+        "meaning": "one who habitually denies or refuses to give"
+      },
+      {
+        "letters": "مَانَعَهُ",
+        "transliteration": "mānaʿahu",
+        "meaning": "to dispute with him, or try to keep him from something (form III)"
+      },
+      {
+        "letters": "تَمَنَّعَ",
+        "transliteration": "tamannaʿa",
+        "meaning": "to abstain, hold oneself back, or fortify oneself (form V)",
+        "path": "/word/prevent-18360",
+        "rootId": 18360
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"prevention\" in Arabic?",
+        "a": "مَنْعٌ (manʿ)."
+      },
+      {
+        "q": "What does the root م ن ع mean in Arabic?",
+        "a": "It centers on preventing, hindering, or refusing — منع itself is defined as the opposite of إعطاء ('giving'), and the root also produces words for protection (منيع) and resistance (منعة)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "منع is the standard classical term for prevention or denial, explicitly paired as the opposite of إِعْطَآءٌ ('giving'). It underlies a wide family of forms covering refusal, mutual obstruction (تَمَانَعَا), voluntary abstention (اِمْتَنَعَ), and defensive strength (مَنَعَةٌ, مَنِيعٌ), making it common in both everyday and legal/theological usage."
+  },
+  "5217": {
+    "rootId": 5217,
+    "triliteralRoot": "ج و ب",
+    "rootTransliteration": "j-w-b",
+    "rootMeaning": "to pierce, traverse; also answer",
+    "headwordTransliteration": "ijābah",
+    "partOfSpeech": "noun (verbal noun / maṣdar of Form IV أَجَابَ)",
+    "senses": [
+      {
+        "gloss": "answering, replying, responding to a question, saying, or call",
+        "note": "the response can be either affirmative or negative"
+      },
+      {
+        "gloss": "granting or accepting a prayer or request",
+        "note": "used especially of God accepting a supplicant's prayer (إجابة الدعاء)"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "أَجَابَ",
+        "transliteration": "ajāba",
+        "meaning": "to answer, reply to, respond to (someone or something); of God, to answer/accept a prayer",
+        "path": "/word/answered-replied-12972",
+        "rootId": 12972
+      },
+      {
+        "letters": "جَوَابٌ",
+        "transliteration": "jawāb",
+        "meaning": "an answer, a reply (the content given back)"
+      },
+      {
+        "letters": "جَاوَبَ",
+        "transliteration": "jāwaba",
+        "meaning": "to exchange answers with someone; to hold a dialogue or debate"
+      },
+      {
+        "letters": "تَجَاوَبُوا",
+        "transliteration": "tajāwabū",
+        "meaning": "to answer one another, mutually respond"
+      },
+      {
+        "letters": "جَابَ",
+        "transliteration": "jāba",
+        "meaning": "to pierce, cut, or make a hole through something; also, to traverse a land or darkness",
+        "path": "/word/answer-6070",
+        "rootId": 6070
+      },
+      {
+        "letters": "جَوْبٌ",
+        "transliteration": "jawb",
+        "meaning": "a shield"
+      },
+      {
+        "letters": "جَيْبٌ",
+        "transliteration": "jayb",
+        "meaning": "the cut opening at the neck and bosom of a shirt"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"answering\" in Arabic?",
+        "a": "إِجَابَةٌ (ijābah), the verbal noun of أَجَابَ 'to answer,' from the root ج و ب."
+      },
+      {
+        "q": "What's the difference between إِجَابَةٌ and جَوَابٌ?",
+        "a": "إِجَابَةٌ names the act of answering, while جَوَابٌ is the noun for the answer or reply itself that is given."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "إِجَابَةٌ is the verbal noun of the Form IV verb أَجَابَ (\"to answer\"), covering answering a question or saying, complying with a call or summons, and — often in religious usage — God's acceptance of a servant's prayer (إجابة الدعاء)."
+  },
+  "5218": {
+    "rootId": 5218,
+    "triliteralRoot": "د ع و",
+    "rootTransliteration": "d-ʿ-w",
+    "rootMeaning": "to call, summon, invoke",
+    "headwordTransliteration": "duʿāʾ",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "prayer, supplication, or petition to God",
+        "note": "asking God humbly for something desired — for oneself, on someone's behalf (li-), or against someone (ʿalā)"
+      },
+      {
+        "gloss": "a calling, calling out to, or summoning",
+        "note": "the base sense of the root: to call someone so that they come or respond"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "دَعَا",
+        "transliteration": "daʿā",
+        "meaning": "form I verb: to call, call out to, summon; to pray or supplicate (to God)",
+        "path": "/word/pray-5463",
+        "rootId": 5463
+      },
+      {
+        "letters": "دَعْوَةٌ",
+        "transliteration": "daʿwah",
+        "meaning": "a call; an invitation, e.g. to a meal"
+      },
+      {
+        "letters": "دَعْوَى",
+        "transliteration": "daʿwā",
+        "meaning": "alternate verbal noun of daʿā, used for prayer to God"
+      },
+      {
+        "letters": "مُدَاعَاةٌ",
+        "transliteration": "mudāʿāh",
+        "meaning": "form III: posing a riddle or enigma to someone, or contending in doing so"
+      },
+      {
+        "letters": "دَاعٍ",
+        "transliteration": "dāʿin",
+        "meaning": "one who calls or summons (e.g. the caller to prayer)"
+      },
+      {
+        "letters": "دَاعِيَةٌ",
+        "transliteration": "dāʿiyah",
+        "meaning": "tropical use: milk left remaining in the udder",
+        "path": "/word/preacher-17757",
+        "rootId": 17757
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"prayers\" in Arabic?",
+        "a": "دُعَاءٌ (duʿāʾ) — supplication or prayer, a humble petition addressed to God, distinct from the ritual prayer ṣalāh."
+      },
+      {
+        "q": "What is the difference between دُعَاءٌ and دَعْوَةٌ?",
+        "a": "Both come from the same verb دَعَا ('to call'); duʿāʾ centers on prayer or supplication to God, while daʿwah is used more for a call or invitation, such as to a meal."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Duʿāʾ is the standard word for personal prayer or supplication in Islamic practice, distinct from the formal ritual prayer (ṣalāh). It grows from the root's core sense 'to call' — to call upon God is to ask something of Him, whether seeking good for oneself or another, or invoking harm on someone."
+  },
+  "5223": {
+    "rootId": 5223,
+    "triliteralRoot": "ر ز ق",
+    "rootTransliteration": "r-z-q",
+    "rootMeaning": "to provide or grant sustenance",
+    "headwordTransliteration": "rizq",
+    "partOfSpeech": "noun (verbal noun / substantive)",
+    "senses": [
+      {
+        "gloss": "sustenance, means of subsistence",
+        "note": "what God sends to sustain life; includes both material provision (food) and, per the lexicon, non-material provision (knowledge, understanding)"
+      },
+      {
+        "gloss": "a gift or benefit; a thing from which one profits",
+        "note": "especially something given by God"
+      },
+      {
+        "gloss": "subsistence-money, pay, or allowance",
+        "note": "the regular stipend given to a soldier"
+      },
+      {
+        "gloss": "rain",
+        "note": "an occasional figurative use, found in the Qur'an (45:4, 51:22)"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "رَزَقَ",
+        "transliteration": "razaqa",
+        "meaning": "he (God) granted sustenance to, gave as a gift to; also, he (a bird) fed its young, or a commander paid his troops"
+      },
+      {
+        "letters": "ارتزقوا",
+        "transliteration": "irtazaqū",
+        "meaning": "they (soldiers or people) received their due allowances/subsistence-money"
+      },
+      {
+        "letters": "استرزقهُ",
+        "transliteration": "istarzaqahu",
+        "meaning": "he asked him for sustenance or a stipend"
+      },
+      {
+        "letters": "رَزْقَةٌ",
+        "transliteration": "razqah",
+        "meaning": "a single portion of subsistence-money or pay given at one time"
+      },
+      {
+        "letters": "الرَّزَّاقُ",
+        "transliteration": "ar-Razzāq",
+        "meaning": "\"The All-Provider\" — an intensive epithet of God"
+      },
+      {
+        "letters": "الرَّازِقُ",
+        "transliteration": "ar-Rāziq",
+        "meaning": "\"The Provider\" — an epithet of God (also usable of a person)"
+      },
+      {
+        "letters": "مَرْزُوقٌ",
+        "transliteration": "marzūq",
+        "meaning": "one who is provided with sustenance"
+      },
+      {
+        "letters": "المُرْتَزِقَةُ",
+        "transliteration": "al-murtaziqah",
+        "meaning": "those who draw a stipend or pay, e.g. salaried soldiers"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"sustenance\" in Arabic?",
+        "a": "رِزْق (rizq) — the sustenance or provision, especially as given by God."
+      },
+      {
+        "q": "What is the root of رِزْق and what other words come from it?",
+        "a": "The root ر-ز-ق (r-z-q) also gives رَزَقَ (\"he granted sustenance\"), الرَّزَّاق (\"The All-Provider,\" a name of God), and مَرْزُوق (\"one provided for\")."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "رِزْق most commonly denotes God-given sustenance — food and material provision, but classically extended to non-material provision like knowledge. The Qur'an also uses it for thanking God's provision (56:81) and, figuratively, for rain (45:4, 51:22); in a military context it narrows to a soldier's regular pay or allowance."
+  },
+  "5224": {
+    "rootId": 5224,
+    "triliteralRoot": "ع م ر",
+    "rootTransliteration": "ʿ-m-r",
+    "rootMeaning": "to inhabit, flourish; live long",
+    "headwordTransliteration": "ʿumr",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "lifespan; the span or duration of a person's life"
+      },
+      {
+        "gloss": "long life; old age",
+        "note": "tied to the root verb's sense 'he lived long, his life grew long, he grew old'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "عَمَّرَ",
+        "transliteration": "ʿammara",
+        "meaning": "to prolong someone's life; to grant them long life (form II)"
+      },
+      {
+        "letters": "مُعَمَّرٌ",
+        "transliteration": "muʿammar",
+        "meaning": "one whose life has been prolonged; an aged person"
+      },
+      {
+        "letters": "عَامِرٌ",
+        "transliteration": "ʿāmir",
+        "meaning": "inhabited, populous, flourishing (of a place)"
+      },
+      {
+        "letters": "عِمَارَةٌ",
+        "transliteration": "ʿimārah",
+        "meaning": "inhabiting a place, keeping it in good repair; building, cultivation"
+      },
+      {
+        "letters": "عُمْرَانٌ",
+        "transliteration": "ʿumrān",
+        "meaning": "a flourishing, well-peopled state; prosperity"
+      },
+      {
+        "letters": "عَمَارَةٌ",
+        "transliteration": "ʿamārah",
+        "meaning": "long life (a variant verbal noun alongside ʿumr)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"lifespan\" in Arabic?",
+        "a": "ʿumr (عُمْرٌ)."
+      },
+      {
+        "q": "What does the root ع م ر mean?",
+        "a": "It centers on living, especially living a long life, and on a place being inhabited or flourishing — giving رise to ʿumr \"lifespan,\" ʿammara \"to prolong a life,\" and ʿāmir \"inhabited, flourishing.\""
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "ʿUmr is the everyday word for a person's lifespan or age, built from the verb ʿamira, \"to live long, to grow old.\" The same root also covers a place being lived in and thriving — hence ʿāmir \"flourishing, inhabited\" and ʿimārah \"keeping in good repair\" — since Arabic treats a well-peopled, well-kept place as \"alive\" in a way parallel to a long human life."
+  },
+  "5225": {
+    "rootId": 5225,
+    "triliteralRoot": "ح ر م",
+    "rootTransliteration": "ḥ-r-m",
+    "rootMeaning": "to forbid, prohibit; render sacred",
+    "headwordTransliteration": "ḥirmān",
+    "partOfSpeech": "noun (verbal noun / maṣdar, form I)",
+    "senses": [
+      {
+        "gloss": "deprivation; the denying or refusing of something to someone",
+        "note": "verbal noun of حَرَمَهُ / حَرِمَهُ الشىء, 'he denied him, or refused him, the thing'"
+      },
+      {
+        "gloss": "misfortune; being deprived of prosperity or good luck",
+        "note": "Lane gives this extended sense via the near-synonym حِرْمَةٌ, glossed as 'the rendering unprosperous, or unfortunate'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "حِرْمَةٌ",
+        "transliteration": "ḥirmah",
+        "meaning": "deprivation, denial (Lane notes it is the same as ḥirmān)"
+      },
+      {
+        "letters": "حَرَامٌ",
+        "transliteration": "ḥarām",
+        "meaning": "forbidden, unlawful"
+      },
+      {
+        "letters": "حَرَمٌ",
+        "transliteration": "ḥaram",
+        "meaning": "sacred territory, e.g. Mekkeh or Medina"
+      },
+      {
+        "letters": "حَرِيمٌ",
+        "transliteration": "ḥarīm",
+        "meaning": "sacred, inviolable; something protected from violation"
+      },
+      {
+        "letters": "حُرْمَةٌ",
+        "transliteration": "ḥurmah",
+        "meaning": "sanctity, inviolability; also the state of being forbidden"
+      },
+      {
+        "letters": "حرّمهُ",
+        "transliteration": "ḥarrama-hu",
+        "meaning": "he forbade it, prohibited it, made it unlawful (form II)",
+        "path": "/word/his-sanctuary-19241",
+        "rootId": 19241
+      },
+      {
+        "letters": "احرام",
+        "transliteration": "aḥrama",
+        "meaning": "he entered the sacred pilgrim state, e.g. for ḥajj (form IV)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"deprivation\" in Arabic?",
+        "a": "حِرْمَانٌ (ḥirmān)."
+      },
+      {
+        "q": "What's the difference between ḥirmān and ḥarām?",
+        "a": "ḥirmān (حِرْمَانٌ) is the noun for depriving or denying someone something, from the verb ḥarama/ḥarima. ḥarām (حَرَامٌ) 'forbidden' instead comes from the separate verb ḥaruma, 'to be unlawful.'"
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "ḥirmān is a verbal noun of the transitive verb ḥarama/ḥarima ('he denied him, or refused him, the thing'), not of ḥaruma ('to be forbidden'), so it is a family member distinct from ḥarām and ḥaram even though all three share the root ح ر م. Lane pairs it closely with ḥirmah, which can extend from simple 'denial' to a more fatalistic sense of being denied good fortune."
+  },
+  "5226": {
+    "rootId": 5226,
+    "triliteralRoot": "ع ل م",
+    "rootTransliteration": "ʿ-l-m",
+    "rootMeaning": "to know, be aware, learn",
+    "headwordTransliteration": "ʿilm",
+    "partOfSpeech": "noun (verbal noun / maṣdar of عَلِمَ, form I)",
+    "senses": [
+      {
+        "gloss": "knowledge; the state of knowing or being acquainted with something",
+        "note": "Often treated as synonymous with معرفة (maʿrifah, 'acquaintance/recognition') and شعور (shuʿūr, 'perception')."
+      },
+      {
+        "gloss": "certain, true knowledge — knowledge in its fullest, most certain sense",
+        "note": "Most critics distinguish ʿilm from maʿrifah as the higher category: it is the only kind of knowing attributed to God, who is never called ʿārif or shāʿir."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "عَلِمَ",
+        "transliteration": "ʿalima",
+        "meaning": "to know, to be acquainted with (something); to know something as certain"
+      },
+      {
+        "letters": "عَلُمَ",
+        "transliteration": "ʿaluma",
+        "meaning": "to become learned; to be endowed with knowledge as a firmly-rooted quality, equal to the scholars"
+      },
+      {
+        "letters": "عَلِيمٌ",
+        "transliteration": "ʿalīm",
+        "meaning": "knowing; one who possesses knowledge as an inherent quality"
+      },
+      {
+        "letters": "تَعَلَّمَ",
+        "transliteration": "taʿallama",
+        "meaning": "to learn; also used idiomatically in the imperative in place of 'know' (iʿlam)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"knowledge\" in Arabic?",
+        "a": "عِلْم (ʿilm)."
+      },
+      {
+        "q": "What is the difference between ʿilm and maʿrifah?",
+        "a": "Both can mean 'to know', but most scholars treat ʿilm as the higher, more certain form of knowledge — the only kind attributed to God — while maʿrifah is closer to mere recognition or acquaintance."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Lexicologists debate whether ʿilm is fully synonymous with maʿrifah; most hold that ʿilm denotes the higher, more certain kind of knowing. As a verb, ʿalima takes two objects when it means 'to know for certain' (yaqīn), one object when it means 'to recognize' (maʿrifah), and is followed by bi- when it means 'to become aware/cognizant of' something."
+  },
+  "5227": {
+    "rootId": 5227,
+    "triliteralRoot": "ل ب س",
+    "rootTransliteration": "l-b-s",
+    "rootMeaning": "to clothe, cover; to mix",
+    "headwordTransliteration": "libās",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "clothing, garment, dress; the act of wearing",
+        "note": "given alongside lubs as a maṣdar of labisa, 'he put on/wore a garment'"
+      },
+      {
+        "gloss": "close association, mutual mixing or consorting",
+        "note": "explained as coming from mulābasah, 'the mixing of oneself and congregating, or being mixed and congregated'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "لَبِسَ",
+        "transliteration": "labisa",
+        "meaning": "to wear, put on (a garment or weapon)"
+      },
+      {
+        "letters": "أَلْبَسَ",
+        "transliteration": "albasa",
+        "meaning": "to clothe someone; to cover or overspread (e.g. clouds covering the sky)",
+        "path": "/word/dress-8162",
+        "rootId": 8162
+      },
+      {
+        "letters": "لَبَّسَ",
+        "transliteration": "labbasa",
+        "meaning": "to confuse or render a matter obscure/dubious (intensive; cf. Qur'anic talbīs)"
+      },
+      {
+        "letters": "لَابَسَ",
+        "transliteration": "lābasa",
+        "meaning": "to mix with, consort, or hold close social intercourse with"
+      },
+      {
+        "letters": "تَلَبَّسَ",
+        "transliteration": "talabbasa",
+        "meaning": "to clothe oneself; to become engaged or involved in an affair"
+      },
+      {
+        "letters": "الْتَبَسَ",
+        "transliteration": "iltabasa",
+        "meaning": "to become confused or doubtful"
+      },
+      {
+        "letters": "مَلْبَسٌ",
+        "transliteration": "malbas",
+        "meaning": "clothing, garment; manner or place of dress"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"clothing\" in Arabic?",
+        "a": "لِبَاسٌ (libās)."
+      },
+      {
+        "q": "Does ل-ب-س only mean \"clothing\"?",
+        "a": "No — beyond wearing a garment, the root covers 'covering/overspreading' (e.g. clouds covering the sky), and figuratively 'confusing or obscuring' a matter (talbīs) and 'mixing or consorting' with people (mulābasah)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "The root's core sense is wearing or covering (labisa 'to wear'; albasa 'to clothe, cover, overspread'), but it extends tropically to confusing or obscuring an affair (labbasa/iltabasa, as in Qur'anic uses like 'do not confound truth with falsity') and to mixing or consorting closely with people (lābasa/mulābasah). Libās itself carries both the literal 'garment' sense and, via mulābasah, the sense of close mutual association."
+  },
+  "5228": {
+    "rootId": 5228,
+    "triliteralRoot": "ذ ل ل",
+    "rootTransliteration": "dh-l-l",
+    "rootMeaning": "to be or become abased",
+    "headwordTransliteration": "dhull",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "lowness, baseness, abasement, humiliation, disgrace",
+        "note": "given by Lane as the direct contrary of ʿizz (might, glory, power)"
+      },
+      {
+        "gloss": "weakness, contemptibleness",
+        "note": "closely related nuance listed alongside humiliation as part of the same core sense"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "ذَلَّ",
+        "transliteration": "dhalla",
+        "meaning": "verb (form I): to be/become low, base, abased, humbled; also, of a person or animal, to become easy, tractable, submissive"
+      },
+      {
+        "letters": "ذلّل",
+        "transliteration": "dhallala",
+        "meaning": "verb (form II): to make tractable or submissive; to subdue or tame; also to make grape-vine bunches hang low for easy picking (as in Qurʾān 76:14)",
+        "path": "/word/humble-20005",
+        "rootId": 20005
+      },
+      {
+        "letters": "اذلّهُ",
+        "transliteration": "adhallahu",
+        "meaning": "verb (form IV): to abase, lower, or humble someone"
+      },
+      {
+        "letters": "تَذَلَّلَ",
+        "transliteration": "tadhallala",
+        "meaning": "verb (form V): to humble or lower oneself; to submit to someone",
+        "path": "/word/humble-himself-5586",
+        "rootId": 5586
+      },
+      {
+        "letters": "استذلّهُ",
+        "transliteration": "istadhallahu",
+        "meaning": "verb (form X): to regard or find someone as low/abject"
+      },
+      {
+        "letters": "ذَلِيلٌ",
+        "transliteration": "dhalīl",
+        "meaning": "adjective: low, base, abject, despicable, humbled"
+      },
+      {
+        "letters": "ذَلُولٌ",
+        "transliteration": "dhalūl",
+        "meaning": "adjective: tractable, submissive, manageable, especially of a trained animal"
+      },
+      {
+        "letters": "ذِلَّةٌ",
+        "transliteration": "dhillah",
+        "meaning": "noun: lowness, baseness, abasement, humiliation (near-synonym of dhull)"
+      },
+      {
+        "letters": "مَذَلَّةٌ",
+        "transliteration": "madhallah",
+        "meaning": "noun: a state or condition of abasement, humiliation"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"humiliation\" in Arabic?",
+        "a": "ذُلٌّ (dhull)."
+      },
+      {
+        "q": "What is the root of ذُلٌّ and what does it mean?",
+        "a": "The root is ذ ل ل (dh-l-l), centered on the idea of being low, base, or humbled — explicitly given as the opposite of ʿizz (might, glory)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "ذُلٌّ is the verbal noun of ذَلَّ and is defined by Lane explicitly as the opposite of عِزّ (might, glory, strength) — a state of lowness, baseness, or humiliation rather than an action. It appears in the Qurʾān (17:111) describing God as having no ally out of any \"dhull\" (lowliness) in Him. Note the distinction from the related form ذِلٌّ (with kasra), which instead denotes tractability or submissiveness, as of a trained animal — a different nuance built on the same root."
+  },
+  "5229": {
+    "rootId": 5229,
+    "triliteralRoot": "ه و ن",
+    "rootTransliteration": "h-w-n",
+    "rootMeaning": "to be easy, light, low",
+    "headwordTransliteration": "ihānah",
+    "partOfSpeech": "noun (verbal noun / maṣdar, form IV)",
+    "senses": [
+      {
+        "gloss": "humiliation, abasement",
+        "note": "the act of lowering or degrading someone; rendering them abject, vile, or contemptible"
+      },
+      {
+        "gloss": "contempt, disgrace",
+        "note": "holding someone in mean or light estimation; despising or making light of them"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "هَانَ",
+        "transliteration": "hāna",
+        "meaning": "to be low, base, or contemptible; also to be easy and light"
+      },
+      {
+        "letters": "أَهَانَ",
+        "transliteration": "ahāna",
+        "meaning": "to abase, debase, or humiliate; to despise (the verb إهانة is derived from)",
+        "path": "/word/insult-20008",
+        "rootId": 20008
+      },
+      {
+        "letters": "هَوَّنَ",
+        "transliteration": "hawwana",
+        "meaning": "to make (a matter) easy or light for someone",
+        "path": "/word/ease-7841",
+        "rootId": 7841
+      },
+      {
+        "letters": "هَيِّنٌ",
+        "transliteration": "hayyin",
+        "meaning": "easy, light; also of little worth",
+        "path": "/word/easy-11591",
+        "rootId": 11591
+      },
+      {
+        "letters": "أَهْوَنُ",
+        "transliteration": "ahwan",
+        "meaning": "easier, lighter (comparative)",
+        "path": "/word/less-harmful-18660",
+        "rootId": 18660
+      },
+      {
+        "letters": "مُهَانٌ",
+        "transliteration": "muhān",
+        "meaning": "despised, held in mean estimation",
+        "path": "/word/humiliated-11735",
+        "rootId": 11735
+      },
+      {
+        "letters": "تَهَاوَنَ",
+        "transliteration": "tahāwana",
+        "meaning": "to hold (something) in contempt, to make light of it"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"disgrace\" in Arabic?",
+        "a": "إِهَانَةٌ (ihānah)."
+      },
+      {
+        "q": "What root does إهانة come from, and how is it related to هيّن (\"easy\")?",
+        "a": "Both come from the root هون (h-w-n). إهانة is the verbal noun of أَهَانَ 'to abase/humiliate,' while هَيِّنٌ 'easy, light' reflects the same root's underlying sense of lightness — of effort or of esteem."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "إهانة is the verbal noun of the form IV verb أَهَانَ, 'to abase or humiliate.' The same root هون also yields هَيِّنٌ/هَيْنٌ 'easy, light' — the root's core idea of something being 'light' covers both a trivial, easy matter and a person or thing held in low, contemptible regard."
+  },
+  "5230": {
+    "rootId": 5230,
+    "triliteralRoot": "ع د و",
+    "rootTransliteration": "ʿ-d-w",
+    "rootMeaning": "to pass beyond, transgress a limit",
+    "headwordTransliteration": "ʿaduww",
+    "partOfSpeech": "noun (substantive; fa‘ūl-pattern adjective of the root verb, used as \"enemy\")",
+    "senses": [
+      {
+        "gloss": "enemy, foe",
+        "note": "one who acts with ʿudwān (wrongful, unjust, or aggressive conduct) against another"
+      },
+      {
+        "gloss": "adversary, one who transgresses against another",
+        "note": "tied to the verb ʿadā ʿalayhi, \"he acted wrongfully/aggressively against him\""
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "عَدَا",
+        "transliteration": "ʿadā",
+        "meaning": "to pass beyond or transgress a limit; to run; (with ʿalā) to act wrongfully or aggressively against someone",
+        "path": "/word/come-upon-7617",
+        "rootId": 7617
+      },
+      {
+        "letters": "عَدْوٌ",
+        "transliteration": "ʿadw",
+        "meaning": "running; a passing beyond or transgressing (verbal noun of ʿadā)"
+      },
+      {
+        "letters": "عُدْوَانٌ",
+        "transliteration": "ʿudwān",
+        "meaning": "sheer, unjust or tyrannical wrongdoing; aggression",
+        "path": "/word/aggression-10488",
+        "rootId": 10488
+      },
+      {
+        "letters": "عَدَآءٌ",
+        "transliteration": "ʿadāʾ",
+        "meaning": "wrongful, injurious conduct against another (verbal noun of ʿadā ʿalā)"
+      },
+      {
+        "letters": "عَدْوَى",
+        "transliteration": "ʿadwā",
+        "meaning": "contagion; the passing of something (e.g. mange) from one who has it to one near him"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"enemy\" in Arabic?",
+        "a": "عَدُوٌّ (ʿaduww)."
+      },
+      {
+        "q": "What does the root ع-د-و mean?",
+        "a": "Its core sense is to pass beyond or exceed a limit (as in running, ʿadw); this extends to acting wrongfully or aggressively against someone (ʿudwān), which is how ʿaduww comes to mean \"enemy.\""
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Lane, citing Er-Rāghib, gives the root's basic sense as transition or the going/passing beyond a limit, and also \"incompatibility to coalesce\" — the same root that yields ʿadw (running, exceeding a bound) also yields ʿudwān (wrongful, aggressive conduct against someone). ʿAduww, \"enemy,\" names one who stands in that relation of hostility or transgression toward another, rather than one who merely differs or disagrees."
+  },
+  "5231": {
+    "rootId": 5231,
+    "triliteralRoot": "ض ي ق",
+    "rootTransliteration": "ḍ-y-q",
+    "rootMeaning": "to be or become narrow",
+    "headwordTransliteration": "ḍīq",
+    "partOfSpeech": "noun (substantive; also used as a verbal noun of ضَاقَ, form I)",
+    "senses": [
+      {
+        "gloss": "narrowness, straitness",
+        "note": "the contrary of ampleness or width; the basic sense shared with the verb ضَاقَ"
+      },
+      {
+        "gloss": "distress, strait circumstances; a constriction the mind cannot escape",
+        "note": "figurative extension — Lane's glosses it as what the mind, being contracted, cannot bear, distinguishing it from ضَيْقٌ, which is used more for physical narrowness (a house, a garment)"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "ضَاقَ",
+        "transliteration": "ḍāqa",
+        "meaning": "to be or become narrow, strait (form I verb)",
+        "path": "/word/to-narrow-13111",
+        "rootId": 13111
+      },
+      {
+        "letters": "ضَيَّقَ",
+        "transliteration": "ḍayyaqa",
+        "meaning": "to make narrow, to straiten or constrict something (form II)"
+      },
+      {
+        "letters": "ضَايَقَ",
+        "transliteration": "ḍāyaqa",
+        "meaning": "to straiten someone, treat them with hardness (form III)"
+      },
+      {
+        "letters": "أَضَاقَ",
+        "transliteration": "aḍāqa",
+        "meaning": "to fall into poverty, one's means becoming strait (form IV)",
+        "path": "/word/became-narrow-19306",
+        "rootId": 19306
+      },
+      {
+        "letters": "تَضَايَقَ",
+        "transliteration": "taḍāyaqa",
+        "meaning": "to become mutually straitened, to crowd one another (form VI)"
+      },
+      {
+        "letters": "ضَيِّقٌ",
+        "transliteration": "ḍayyiq",
+        "meaning": "narrow, strait (adjective)"
+      },
+      {
+        "letters": "أَضْيَقُ",
+        "transliteration": "aḍyaq",
+        "meaning": "narrower, more strait (elative)"
+      },
+      {
+        "letters": "مَضِيقٌ",
+        "transliteration": "maḍīq",
+        "meaning": "a narrow place, a strait"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"distress\" in Arabic?",
+        "a": "ضِيقٌ (ḍīq) — from the root ض ي ق, also meaning narrowness or straitness."
+      },
+      {
+        "q": "What is the root of ضِيقٌ and what other words come from it?",
+        "a": "The root is ض ي ق (ḍ-y-q), shared with the verb ضَاقَ 'to become narrow/strait', ضَيَّقَ 'to make narrow', and مَضِيقٌ 'a strait (narrow place)'."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "ضِيقٌ names a strait or constricted state, often the abstract, mental kind that gives rise to the sense 'distress' — a tightness the mind cannot widen out of. This sets it apart somewhat from ضَيْقٌ, which Lane's ties more to physical narrowness, as in a house or a garment. The shared verb ضَاقَ appears in the Qur'an (9:119), describing the earth becoming strait upon those who held back from battle."
+  },
+  "5232": {
+    "rootId": 5232,
+    "triliteralRoot": "ص د ر",
+    "rootTransliteration": "ṣ-d-r",
+    "rootMeaning": "to return; the front, foremost part",
+    "headwordTransliteration": "ṣadr",
+    "partOfSpeech": "noun (also functions as the verbal noun / maṣdar of Form I)",
+    "senses": [
+      {
+        "gloss": "chest, breast",
+        "note": "the front part of the body; the excerpt speaks of striking or hurting someone's ṣadr, and of a person 'having a complaint of the ṣadr' (i.e. a chest ailment)"
+      },
+      {
+        "gloss": "the front, foremost, or upper part (of anything)",
+        "note": "by extension — e.g. the seat of honor at the head of a gathering, or the heading/opening placed at the start of a piece of writing"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "صَدَرَ",
+        "transliteration": "ṣadara",
+        "meaning": "to return, go back; to depart (from water, a place, or an affair)"
+      },
+      {
+        "letters": "أَصْدَرَ",
+        "transliteration": "aṣdara",
+        "meaning": "to send someone/something back; to issue (a saying, an order)"
+      },
+      {
+        "letters": "صَدَّرَ",
+        "transliteration": "ṣaddara",
+        "meaning": "to seat someone in the place of honor; to put a heading/title at the start of a piece of writing"
+      },
+      {
+        "letters": "تَصَدَّرَ",
+        "transliteration": "taṣaddara",
+        "meaning": "to sit in the seat of honor; to become advanced or promoted; (of a horse) to take the lead with its chest"
+      },
+      {
+        "letters": "مُصَادَرَةٌ",
+        "transliteration": "muṣādarah",
+        "meaning": "the exacting of a fine or debt from someone; pressing or suing someone for payment",
+        "path": "/word/confiscation-9355",
+        "rootId": 9355
+      },
+      {
+        "letters": "مَصْدَرٌ",
+        "transliteration": "maṣdar",
+        "meaning": "verbal noun (infinitive) of the verb ṣadara, denoting the act of returning"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"chest\" in Arabic?",
+        "a": "Chest is صَدْرٌ (ṣadr), from the root ص-د-ر."
+      },
+      {
+        "q": "What does the root ص-د-ر (ṣ-d-r) mean?",
+        "a": "It centers on 'returning or going back' (ṣadara), extending to 'sending back / issuing' (aṣdara) and to 'the front or foremost part,' which is how ṣadr also means chest and, by extension, the head of a gathering or the heading of a book."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Beyond the literal body part, ṣadr carries the root's core sense of 'the front, that which faces forward' — hence its tropical use for the head/upper position in a gathering and for the opening or title of a written work."
+  },
+  "5234": {
+    "rootId": 5234,
+    "triliteralRoot": "ق ر ن",
+    "rootTransliteration": "q-r-n",
+    "rootMeaning": "to join, couple, pair together",
+    "headwordTransliteration": "quranāʾ",
+    "partOfSpeech": "noun (broken plural of قَرِينٌ, qarīn)",
+    "senses": [
+      {
+        "gloss": "companions, associates, comrades",
+        "note": "the plural (فُعَلَاء pattern) of the singular قَرِينٌ (qarīn), 'an associate; a comrade; a companion'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "قَرَنَ",
+        "transliteration": "qarana",
+        "meaning": "he connected, coupled, or conjoined one thing with another (form I)"
+      },
+      {
+        "letters": "قَارَنَهُ",
+        "transliteration": "qāranahu",
+        "meaning": "he associated with him, became his companion (form III)"
+      },
+      {
+        "letters": "قِرَانٌ",
+        "transliteration": "qirān",
+        "meaning": "verbal noun of qāranahu: association, companionship"
+      },
+      {
+        "letters": "قَرِينٌ",
+        "transliteration": "qarīn",
+        "meaning": "an associate, comrade, or companion (singular of قُرَنَاءُ)"
+      },
+      {
+        "letters": "قِرْنٌ",
+        "transliteration": "qirn",
+        "meaning": "an opponent or rival, or one's equal/match in courage"
+      },
+      {
+        "letters": "قَرْنٌ",
+        "transliteration": "qarn",
+        "meaning": "one's equal in age; also 'a generation of people' or 'horn'"
+      },
+      {
+        "letters": "قَرِينَةٌ",
+        "transliteration": "qarīnah",
+        "meaning": "a connexion or relation; a context"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"companions\" in Arabic?",
+        "a": "قُرَنَاءُ (quranāʾ) — the plural of قَرِينٌ (qarīn), 'associate, comrade, companion'."
+      },
+      {
+        "q": "What is the singular of قُرَنَاءُ?",
+        "a": "قَرِينٌ (qarīn), meaning an associate, comrade, or companion."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "The root ق ر ن centers on joining or coupling one thing to another (qarana, 'he connected a thing with a thing'). قُرَنَاءُ is the plural of قَرِينٌ, 'an associate, comrade, companion' — someone bound or paired to another, echoing qārana, 'he associated with, became the companion of' someone."
+  },
+  "5235": {
+    "rootId": 5235,
+    "triliteralRoot": "س و أ",
+    "rootTransliteration": "s-w-ʾ",
+    "rootMeaning": "to be bad, evil; to harm",
+    "headwordTransliteration": "sūʾ",
+    "partOfSpeech": "noun (substantive / verbal noun of سَآءَ \"to be evil\" and سَآءَهُ \"to harm/grieve him\")",
+    "senses": [
+      {
+        "gloss": "evil, harm, injury done to someone",
+        "note": "Used as the noun for what one causes another to suffer, from سَآءَهُ 'he did evil to him, displeased, grieved, or vexed him' (opposite of سَرَّهُ, 'he pleased him')."
+      },
+      {
+        "gloss": "badness, evilness, foulness (as a quality)",
+        "note": "Tied to the intransitive sense of سَآءَ, 'it was, or became, evil, bad, abominable, foul, unseemly, or ugly.'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "سَآءَ",
+        "transliteration": "sāʾa",
+        "meaning": "to be/become evil, bad, foul, ugly; also (transitively) to harm, grieve, or vex someone"
+      },
+      {
+        "letters": "أَسَآءَ",
+        "transliteration": "asāʾa",
+        "meaning": "to do evil, act badly, or do something poorly — opposite of أَحْسَنَ, 'to do good'"
+      },
+      {
+        "letters": "سوّأ",
+        "transliteration": "sawwaʾa",
+        "meaning": "to tell someone 'you did wrong'; to discommend a deed, or to corrupt/mar something"
+      },
+      {
+        "letters": "استآء",
+        "transliteration": "istāʾa",
+        "meaning": "to experience evil, displeasure, grief, or anxiety"
+      },
+      {
+        "letters": "مَسَآءَةٌ",
+        "transliteration": "masāʾah",
+        "meaning": "harm, injury, or grief caused to someone (a noun form of سَآءَهُ)"
+      },
+      {
+        "letters": "سَوْءٌ",
+        "transliteration": "sawʾ",
+        "meaning": "evil, badness — the basic verbal noun of سَآءَ"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"bad\" in Arabic?",
+        "a": "سُوءٌ (sūʾ) — used as a noun for evil, harm, or badness."
+      },
+      {
+        "q": "What is the root of سُوءٌ and what other words share it?",
+        "a": "The root is س و أ (s-w-ʾ), shared with سَآءَ ('to be/become evil'), أَسَآءَ ('to do evil, act badly'), and مَسَآءَةٌ ('harm, injury caused')."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Sūʾ and its kin describe both a quality (something being bad or unseemly) and an action (harming, grieving, or displeasing someone). The Qur'anic phrase سَآءَ سَبِيلًا, \"evil is it as a way,\" shows the root condemning a course of action, while everyday phrases like سُؤْتُ بِهِ ظَنًّا, \"I held an evil opinion of him,\" show it applied to judgment and feeling."
+  },
+  "5237": {
+    "rootId": 5237,
+    "triliteralRoot": "ف س د",
+    "rootTransliteration": "f-s-d",
+    "rootMeaning": "to be corrupt, spoiled, ruined",
+    "headwordTransliteration": "afsada",
+    "partOfSpeech": "verb (form IV, causative)",
+    "senses": [
+      {
+        "gloss": "to make or render (something) bad, corrupt, spoiled, unsound, or ruined",
+        "note": "contrary of أَصْلَحَ (to set right); used of concrete things, e.g. rendering property wasted or damaged, as well as abstract states or affairs"
+      },
+      {
+        "gloss": "to act badly, wrongly, or corruptly toward someone; to do evil or mischief"
+      },
+      {
+        "gloss": "to create or stir up discord, disagreement, or strife between people"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "فَسَدَ",
+        "transliteration": "fasada",
+        "meaning": "to be or become bad, corrupt, spoiled, unsound (base form I verb; contrary of صَلَحَ)",
+        "path": "/word/become-corrupt-5740",
+        "rootId": 5740
+      },
+      {
+        "letters": "فَسَادٌ",
+        "transliteration": "fasād",
+        "meaning": "corruption, badness, wrongdoing, mischief, disorder; also the wrongful taking of property"
+      },
+      {
+        "letters": "فَاسِدٌ",
+        "transliteration": "fāsid",
+        "meaning": "corrupt, bad, spoiled, unsound (active participle of fasada)",
+        "path": "/word/corrupt-9931",
+        "rootId": 9931
+      },
+      {
+        "letters": "مَفْسَدَةٌ",
+        "transliteration": "mafsadah",
+        "meaning": "a corrupting thing; a harm, mischief, or instance of corruption"
+      },
+      {
+        "letters": "اسْتَفْسَدَ",
+        "transliteration": "istafsada",
+        "meaning": "to seek to corrupt something, or to treat someone so as to provoke disaffection or rebellion (form X; contrary of استصلح)"
+      },
+      {
+        "letters": "تَفَاسَدُوا",
+        "transliteration": "tafāsadū",
+        "meaning": "to become at variance and sever the ties of kinship or friendship with one another (form VI)"
+      },
+      {
+        "letters": "فَاسَدَهُ",
+        "transliteration": "fāsadahu",
+        "meaning": "to become at variance with someone, cutting the tie of friendship with him (form III)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"corrupt\" in Arabic?",
+        "a": "أَفْسَدَ (afsada) — the form IV causative verb meaning to make or render something bad, spoiled, or corrupt; it is the standard opposite of أَصْلَحَ, \"to set right.\""
+      },
+      {
+        "q": "What is the difference between فَسَدَ and أَفْسَدَ?",
+        "a": "فَسَدَ (fasada, form I) means to be or become corrupt by itself; أَفْسَدَ (afsada, form IV) is the causative — to make or render something corrupt, i.e. to corrupt, spoil, or ruin it."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "أَفْسَدَ is the causative counterpart of فَسَدَ: where فَسَدَ describes something being or becoming corrupt on its own, أَفْسَدَ describes an agent actively corrupting, spoiling, or ruining it. It covers both concrete damage (e.g. wasting property) and abstract wrongdoing, including acting badly toward a person or sowing discord between people — standing throughout as the direct opposite of أَصْلَحَ, 'to set right, to reform.'"
+  },
+  "5238": {
+    "rootId": 5238,
+    "triliteralRoot": "ض ي ع",
+    "rootTransliteration": "ḍ-y-ʿ",
+    "rootMeaning": "to be lost, wasted, perish",
+    "headwordTransliteration": "aḍāʿa",
+    "partOfSpeech": "verb (form IV)",
+    "senses": [
+      {
+        "gloss": "to waste, lose, or destroy (something)",
+        "note": "given by Lane as synonymous with the form II verb ضيّع — causing a thing to perish or come to nought"
+      },
+      {
+        "gloss": "to neglect, abandon, or fail to take care of (a duty, one's family, or prayer)",
+        "note": "used in the Qur'an of neglecting the prayer (19:60) and of God not neglecting one's faith (2:143 per Lane's citation)"
+      },
+      {
+        "gloss": "(intransitive) to find one's affair going to ruin",
+        "note": "a secondary, less common sense noted by Lane"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "ضَاعَ",
+        "transliteration": "ḍāʿa",
+        "meaning": "to perish, be lost, come to nought (form I)",
+        "path": "/word/lost-7786",
+        "rootId": 7786
+      },
+      {
+        "letters": "ضيّع",
+        "transliteration": "ḍayyaʿa",
+        "meaning": "to waste, destroy, or lose something (form II)"
+      },
+      {
+        "letters": "تضيّع",
+        "transliteration": "taḍayyaʿa",
+        "meaning": "of musk, to diffuse its fragrance; of wind, to blow (form V)"
+      },
+      {
+        "letters": "ضَيَاعٌ",
+        "transliteration": "ḍayāʿ",
+        "meaning": "loss, perishing, ruin (verbal noun)",
+        "path": "/word/possessions-19765",
+        "rootId": 19765
+      },
+      {
+        "letters": "ضَيْعَةٌ",
+        "transliteration": "ḍayʿah",
+        "meaning": "an estate or landed property; also a craft or means of livelihood",
+        "path": "/word/livelihood-9502",
+        "rootId": 9502
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"waste\" in Arabic?",
+        "a": "أضاع (aḍāʿa) — the form IV verb meaning to waste, lose, or cause something to perish."
+      },
+      {
+        "q": "What else can أضاع mean besides \"waste\"?",
+        "a": "It also means to neglect or fail to look after something, as in the Qur'anic phrase أضاعوا الصلاة, \"they neglected the prayer.\""
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Aḍāʿa is the causative form IV verb built on the same root as ḍāʿa (\"to be lost\"); Lane treats it as interchangeable with ḍayyaʿa when it means to waste or destroy something, and it is also the verb used, notably in the Qur'an, for neglecting a duty such as prayer."
+  },
+  "5239": {
+    "rootId": 5239,
+    "triliteralRoot": "ط و ل",
+    "rootTransliteration": "ṭ-w-l",
+    "rootMeaning": "to be long, tall, prolonged",
+    "headwordTransliteration": "ṭūl",
+    "partOfSpeech": "noun (verbal noun / maṣdar of Form I طَالَ)",
+    "senses": [
+      {
+        "gloss": "length; elongation, extension",
+        "note": "the state of a thing being long, or extended in space, as opposed to short"
+      },
+      {
+        "gloss": "tallness, height",
+        "note": "used of stature, e.g. exceeding someone 'in ṭūl' means surpassing them in tallness"
+      },
+      {
+        "gloss": "duration; prolongation of time",
+        "note": "said of a night, a lifetime, an assembly, or anxiety that stretches on and on"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "طَالَ",
+        "transliteration": "ṭāla",
+        "meaning": "to be or become long, tall, or extended; to become prolonged (of time, life, or anxiety)",
+        "path": "/word/lasted-long-12235",
+        "rootId": 12235
+      },
+      {
+        "letters": "طَوْلٌ",
+        "transliteration": "ṭawl",
+        "meaning": "bounty, excellence, or the power to bestow favor; also used of surpassing someone in merit"
+      },
+      {
+        "letters": "طوَّلَ",
+        "transliteration": "ṭawwala",
+        "meaning": "to elongate or lengthen something; to prolong; also to loosen an animal's tether so it can graze, or to grant someone a delay"
+      },
+      {
+        "letters": "أَطَالَ",
+        "transliteration": "aṭāla",
+        "meaning": "to lengthen or prolong something; said of a woman, to bear a tall child",
+        "path": "/word/he-prolonged-16509",
+        "rootId": 16509
+      },
+      {
+        "letters": "طَاوَلَ",
+        "transliteration": "ṭāwala",
+        "meaning": "to vie with someone for superiority in tallness or in bounty; to delay or drag out a matter with someone"
+      },
+      {
+        "letters": "طِوَلٌ",
+        "transliteration": "ṭiwal",
+        "meaning": "a tether or rope, as used to let a horse or beast graze more freely"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"prolonged\" in Arabic?",
+        "a": "طُولٌ (ṭūl) — the noun for length or extension, used of things becoming prolonged in time as well as long or tall in space."
+      },
+      {
+        "q": "What does طُولٌ (ṭūl) mean?",
+        "a": "It means length or extension — physical length, tallness of stature, and, of time, duration or prolongation (as of a night, a life, or anxiety)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "ṭūl is the verbal noun of ṭāla and covers both concrete and abstract 'lengthening': physical length or a person's tallness, and the stretching-out of time, as when night, a lifetime, or anxiety is said to ṭāla, 'become prolonged.'"
+  },
+  "5240": {
+    "rootId": 5240,
+    "triliteralRoot": "ه م م",
+    "rootTransliteration": "h-m-m",
+    "rootMeaning": "to be intently concerned or anxious",
+    "headwordTransliteration": "hamm",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "anxiety, distress or disquietude of mind",
+        "note": "distress felt over harm that is expected to happen, as opposed to غَمّ, which is distress over harm that has already happened"
+      },
+      {
+        "gloss": "purpose, intention, resolve",
+        "note": "described as the first stage of determination — stronger than a mere wish (إرادة) but short of firm resolve (عزم)"
+      },
+      {
+        "gloss": "an object of concern or intent",
+        "note": "the particular thing occupying one's mind, e.g. 'his hamm is such-and-such'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "هَمَّ",
+        "transliteration": "hamma",
+        "meaning": "to purpose, intend, or desire to do a thing; also to disquiet or cause anxiety (form I)"
+      },
+      {
+        "letters": "أَهَمَّتُ",
+        "transliteration": "ahammat",
+        "meaning": "to render anxious, disquiet, and grieve (form IV)"
+      },
+      {
+        "letters": "اِهْتَمَّ",
+        "transliteration": "ihtamma",
+        "meaning": "to be anxious or grieved over a matter; also to attend to or undertake it (form VIII)"
+      },
+      {
+        "letters": "هِمَّةٌ",
+        "transliteration": "himma",
+        "meaning": "a purpose or object of endeavor; ambition, high aspiration"
+      },
+      {
+        "letters": "هُمَامٌ",
+        "transliteration": "humām",
+        "meaning": "an aspiring king; a magnanimous, courageous chief"
+      },
+      {
+        "letters": "مُهِمٌّ",
+        "transliteration": "muhimm",
+        "meaning": "a difficult, distressing affair; a matter of importance"
+      },
+      {
+        "letters": "هَامَةٌ",
+        "transliteration": "hāma",
+        "meaning": "a venomous creeping thing such as a scorpion or serpent; tropically, a louse"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"anxiety\" in Arabic?",
+        "a": "هَمّ (hamm) — distress or disquietude of mind, especially over harm one expects may happen."
+      },
+      {
+        "q": "What is the difference between هَمّ and غَمّ?",
+        "a": "Classical lexicographers hold that هَمّ is distress over something anticipated, while غَمّ is distress over something that has already happened, though some scholars treat the two as synonyms."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "The root covers a range from simply purposing or intending something to being weighed down by anxiety about it. As a noun, هَمّ sits between mere wish (إرادة) and firm resolve (عزم), and classical lexicographers distinguish it from the near-synonym غَمّ by tying هَمّ specifically to distress over harm still anticipated. The form VIII verb اهتمّ, 'to care about or attend to,' underlies مُهِمّ's sense of a matter 'of importance.'"
+  },
+  "5241": {
+    "rootId": 5241,
+    "triliteralRoot": "غ م م",
+    "rootTransliteration": "ġ-m-m",
+    "rootMeaning": "to cover, conceal; cause grief",
+    "headwordTransliteration": "ġamm",
+    "partOfSpeech": "noun (verbal noun / maṣdar of Form I ġamma)",
+    "senses": [
+      {
+        "gloss": "grief, sorrow, distress, sadness",
+        "note": "the common sense; given in Lane as synonymous with ḥuzn — the feeling that weighs on or 'covers' the heart"
+      },
+      {
+        "gloss": "covering, veiling, concealment",
+        "note": "the root's primary, literal sense, e.g. clouds veiling the new moon so it cannot be sighted"
+      },
+      {
+        "gloss": "oppressive, sultry heat that tightens the breath",
+        "note": "said of a day so hot, or so close with cloud, that it is hard to breathe"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "غَمَّهُ",
+        "transliteration": "ġammahu",
+        "meaning": "he covered, veiled, or concealed it; also, it grieved or saddened him"
+      },
+      {
+        "letters": "غَامَمْتُهُ",
+        "transliteration": "ġāmamtuhu",
+        "meaning": "we grieved one another (I grieved him and he grieved me)"
+      },
+      {
+        "letters": "اغتمّ",
+        "transliteration": "iġtamma",
+        "meaning": "he was grieved or saddened; also, of a plant, it grew tall and luxuriant"
+      },
+      {
+        "letters": "انغمّ",
+        "transliteration": "inġamma",
+        "meaning": "it became covered, veiled, or concealed"
+      },
+      {
+        "letters": "تغامّ",
+        "transliteration": "taġāmma",
+        "meaning": "he made a show of grief without truly feeling it"
+      },
+      {
+        "letters": "غَمَمٌ",
+        "transliteration": "ġamam",
+        "meaning": "a low hairline, where hair covers down over the forehead and nape"
+      },
+      {
+        "letters": "غَمْغَمَ",
+        "transliteration": "ġamġama",
+        "meaning": "he spoke indistinctly, or muttered; also, a bull bellowing in fright"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"sorrow\" in Arabic?",
+        "a": "غَمّ (ġamm)."
+      },
+      {
+        "q": "What is the root meaning behind غَمّ?",
+        "a": "The root ġ-m-m means 'to cover, veil, or conceal'; ġamm (grief) is an extension of that sense, as grief is felt to 'cover' the heart."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Ġamm is the maṣdar of ġamma, whose core meaning is 'to cover or conceal' — used, for instance, of clouds veiling the new moon so it cannot be sighted (as in the hadith on completing Shaʿbān to thirty days when the crescent is obscured). From this covering sense it extends to grief or sorrow that weighs on the heart (a synonym of ḥuzn), and even to the oppressive, breath-tightening heat of a sultry day."
+  },
+  "5242": {
+    "rootId": 5242,
+    "triliteralRoot": "ض ن ك",
+    "rootTransliteration": "ḍ-n-k",
+    "rootMeaning": "narrowness, straitness; hardship, difficulty",
+    "headwordTransliteration": "ḍank",
+    "partOfSpeech": "noun (verbal noun / maṣdar), also used as an adjective",
+    "senses": [
+      {
+        "gloss": "narrowness, straitness; hardship",
+        "note": "The primary, abstract sense of the maṣdar — the state of being constricted or hard-pressed, whether of a place, of one's livelihood, or of life in general."
+      },
+      {
+        "gloss": "narrow, strait (adjective)",
+        "note": "Used adjectivally for masculine and feminine alike, e.g. مَكَانٌ ضَنْكٌ 'a narrow place' or عَيْشٌ ضَنْكٌ 'a strait life'. Famous from the Qur'an (20:123), مَعِيشَةً ضَنْكًا 'a straitened life' — glossed by commentators variously as an unlawful livelihood, the punishment of the grave, or Hell itself."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "ضَنُكَ",
+        "transliteration": "ḍanuka",
+        "meaning": "to be narrow or strait (of a place or of one's livelihood); also, of a man, to be weak in body, judgment, and intellect",
+        "path": "/word/harshness-5242",
+        "rootId": 5242
+      },
+      {
+        "letters": "ضَنْكٌ",
+        "transliteration": "ḍank",
+        "meaning": "narrowness, hardship; narrow, strait (this headword)",
+        "path": "/word/harshness-5242",
+        "rootId": 5242
+      },
+      {
+        "letters": "ضُنَاكٌ",
+        "transliteration": "ḍunāk",
+        "meaning": "a coryza, a head cold or defluxion from the nose"
+      },
+      {
+        "letters": "ضِنَاكٌ",
+        "transliteration": "ḍināk",
+        "meaning": "compact and firm in flesh, strongly built — said of people, camels, and trees"
+      },
+      {
+        "letters": "ضَنِيكٌ",
+        "transliteration": "ḍanīk",
+        "meaning": "weak in body and mind; also, a servant who labors for his bread"
+      },
+      {
+        "letters": "مَضْنُوكٌ",
+        "transliteration": "maḍnūk",
+        "meaning": "afflicted with a head cold (ضُنَاك)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"harshness\" in Arabic?",
+        "a": "ضَنْكٌ (ḍank) — it literally denotes narrowness or straitness, extended to mean hardship, as in a hard or straitened life."
+      },
+      {
+        "q": "What does مَعِيشَةً ضَنْكًا mean in Qur'an 20:123?",
+        "a": "\"A straitened/hard life\" — traditionally understood as an unlawful livelihood, worldly hardship, or (in some commentaries) the punishment of the grave or Hell."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "ضَنْكٌ is best known from the Qur'anic phrase مَعِيشَةً ضَنْكًا (20:123), 'a straitened life' — commentators differ on whether it means an unlawful livelihood, hardship in this world, the punishment of the grave, or Hell. Note that the same root also covers an unrelated cluster of senses in Lane's: the common cold (ضُنَاك, مَضْنُوك) and physical compactness or robustness (ضِنَاك), alongside the core 'narrow/hard' meaning — so context decides which sense is meant."
+  },
+  "5243": {
+    "rootId": 5243,
+    "triliteralRoot": "ع ي ش",
+    "rootTransliteration": "ʿ-y-sh",
+    "rootMeaning": "to live; livelihood, sustenance",
+    "headwordTransliteration": "maʿīshah",
+    "partOfSpeech": "noun (verbal noun / maṣdar of عَاشَ, form I)",
+    "senses": [
+      {
+        "gloss": "livelihood, sustenance; that by which one lives",
+        "note": "the means of subsistence — food, drink, or earnings — rather than abstract 'life' itself"
+      },
+      {
+        "gloss": "a manner or state of life",
+        "note": "overlaps with عِيشَة; e.g. one may live a good or an evil maʿīshah"
+      },
+      {
+        "gloss": "(Qur'anic) a straitened life",
+        "note": "in maʿīshatan ḍankā (Qur'an 20:123), most commentators take this as the punishment of the grave; others as a hard life in Hellfire"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "عَاشَ",
+        "transliteration": "ʿāsha",
+        "meaning": "to live (form I verb)",
+        "path": "/word/lives-9361",
+        "rootId": 9361
+      },
+      {
+        "letters": "عَيْشٌ",
+        "transliteration": "ʿaysh",
+        "meaning": "life; also 'food, bread' in some dialects"
+      },
+      {
+        "letters": "عِيشَةٌ",
+        "transliteration": "ʿīshah",
+        "meaning": "a manner or sort of life",
+        "path": "/word/life-10010",
+        "rootId": 10010
+      },
+      {
+        "letters": "مَعَاشٌ",
+        "transliteration": "maʿāsh",
+        "meaning": "livelihood; the place or time of subsistence",
+        "path": "/word/livelihood-13688",
+        "rootId": 13688
+      },
+      {
+        "letters": "عَائِشٌ",
+        "transliteration": "ʿāʾish",
+        "meaning": "living, alive; one in a good state of life"
+      },
+      {
+        "letters": "أَعَاشَهُ",
+        "transliteration": "aʿāshahu",
+        "meaning": "he (God) made him live (causative, form IV)"
+      },
+      {
+        "letters": "مُتَعَيِّشٌ",
+        "transliteration": "mutaʿayyish",
+        "meaning": "one scraping by on barely sufficient sustenance"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"living\" in Arabic?",
+        "a": "مَعِيشَةٌ (maʿīshah) — it denotes livelihood or sustenance, the means and manner by which one lives, and is the verbal noun of عَاشَ 'to live'."
+      },
+      {
+        "q": "What is the difference between maʿīshah and ʿaysh?",
+        "a": "Both come from the same root and can mean 'life' or 'livelihood', but maʿīshah leans toward the concrete means of subsistence (food, earnings), while ʿaysh more often names life itself, and can also mean food or bread in certain dialects."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Maʿīshah is the verbal noun of ʿāsha ('to live') but functions chiefly as a concrete noun for one's livelihood or sustenance, distinguishing it from ʿaysh/ʿīshah, which lean more toward 'life' or 'a state of life' in the abstract."
+  },
+  "5246": {
+    "rootId": 5246,
+    "triliteralRoot": "و ل د",
+    "rootTransliteration": "w-l-d",
+    "rootMeaning": "to give birth, beget, originate",
+    "headwordTransliteration": "tawallada",
+    "partOfSpeech": "verb (form V)",
+    "senses": [
+      {
+        "gloss": "to be generated, engendered, or produced; to originate from something",
+        "note": "figurative use — said of one thing arising out of another, e.g. تولّد الشيء من الشيء"
+      },
+      {
+        "gloss": "to arise, spring up, come about",
+        "note": "used of an abstract state or feeling emerging among people, e.g. party-spirit arising among them"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "وَلَدَ",
+        "transliteration": "walada",
+        "meaning": "to give birth to, bring forth; to beget (form I)"
+      },
+      {
+        "letters": "وَلَّدَ",
+        "transliteration": "wallada",
+        "meaning": "to assist in childbirth, deliver; to rear/educate; also to originate a saying or story (form II)"
+      },
+      {
+        "letters": "أَوْلَدَ",
+        "transliteration": "awlada",
+        "meaning": "to reach the time of giving birth; to be about to bring forth (form IV)"
+      },
+      {
+        "letters": "تَوَالَدُوا",
+        "transliteration": "tawāladū",
+        "meaning": "to multiply and beget one another, to propagate (form VI)"
+      },
+      {
+        "letters": "وَلَدٌ",
+        "transliteration": "walad",
+        "meaning": "child, son/daughter, offspring, young one"
+      },
+      {
+        "letters": "وَلِيدٌ",
+        "transliteration": "walīd",
+        "meaning": "a newborn child, young infant"
+      },
+      {
+        "letters": "وَلُودٌ",
+        "transliteration": "walūd",
+        "meaning": "prolific; one that breeds or brings forth plentifully"
+      },
+      {
+        "letters": "مِيلَادٌ",
+        "transliteration": "mīlād",
+        "meaning": "birth, nativity"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"arise\" in Arabic?",
+        "a": "تَوَلَّدَ (tawallada) — literally 'to be generated,' used of something originating or springing up from a cause."
+      },
+      {
+        "q": "What is the root of تَوَلَّدَ and how does it relate to وَلَدٌ (\"child\")?",
+        "a": "Both come from the root و ل د (w-l-d), the same root as وَلَدَ 'to give birth' and وَلَدٌ 'child'; تَوَلَّدَ (form V) figuratively applies that root sense of 'birth' to abstract things being generated or arising."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Form V of و ل د, tawallada extends the root's literal sense of 'giving birth' into a figurative one: something being generated or arising from a cause, whether a physical product coming from a source or an abstract state (like party-spirit) springing up among people. It describes the result of generation rather than the act of bearing offspring itself, which belongs to the form I verb وَلَدَ."
+  },
+  "5248": {
+    "rootId": 5248,
+    "triliteralRoot": "ع ص ي",
+    "rootTransliteration": "ʿ-ṣ-y",
+    "rootMeaning": "to disobey, rebel, transgress",
+    "headwordTransliteration": "maʿṣiyah",
+    "partOfSpeech": "noun (verbal noun / maṣdar, from form I عَصَى)",
+    "senses": [
+      {
+        "gloss": "disobedience, rebellion",
+        "note": "against a master, prince, or commander; opposite of طَاعَة (obedience)"
+      },
+      {
+        "gloss": "sin, transgression",
+        "note": "an act of disobedience, especially in religious usage"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "عَصَاهُ",
+        "transliteration": "ʿaṣāhu",
+        "meaning": "he disobeyed him, rebelled against him (form I)"
+      },
+      {
+        "letters": "عِصْيَانٌ",
+        "transliteration": "ʿiṣyān",
+        "meaning": "disobedience, rebellion (contrary of obedience)"
+      },
+      {
+        "letters": "عَاصٍ",
+        "transliteration": "ʿāṣin",
+        "meaning": "one who disobeys, disobedient, rebellious (active participle)"
+      },
+      {
+        "letters": "عَصِىٌّ",
+        "transliteration": "ʿaṣiyy",
+        "meaning": "very disobedient, rebellious (intensive epithet)",
+        "path": "/word/disobey-7303",
+        "rootId": 7303
+      },
+      {
+        "letters": "عَاصَى",
+        "transliteration": "ʿāṣā",
+        "meaning": "he opposed, resisted, disobeyed (form III)"
+      },
+      {
+        "letters": "تعاصى",
+        "transliteration": "taʿāṣā",
+        "meaning": "he feigned disobedience, or manifested incompliance (form VI)"
+      },
+      {
+        "letters": "اِسْتَعْصَى",
+        "transliteration": "istaʿṣā",
+        "meaning": "he resisted, was unmanageable, defied control (form X)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"sin\" in Arabic?",
+        "a": "مَعْصِيَةٌ (maʿṣiyah), literally 'an act of disobedience,' from the root ع-ص-ي 'to disobey, rebel against.'"
+      },
+      {
+        "q": "What is the difference between مَعْصِيَة and عِصْيَان?",
+        "a": "Both come from the same root and verb عَصَى. عِصْيَانٌ is the abstract noun for 'disobedience/rebellion' in general, while مَعْصِيَةٌ denotes disobedience as a noun of instance — an act of disobedience, i.e. a sin."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "مَعْصِيَةٌ is the verbal noun of عَصَى 'he disobeyed/rebelled against (his master or authority)'; alongside عِصْيَانٌ it names disobedience as the opposite of طَاعَة (obedience). In religious usage this disobedience-to-authority sense narrows to 'sin' — a transgression against what one is commanded to obey."
+  },
+  "5249": {
+    "rootId": 5249,
+    "triliteralRoot": "غ ف ل",
+    "rootTransliteration": "ġ-f-l",
+    "rootMeaning": "to be heedless, unmindful, inattentive",
+    "headwordTransliteration": "ġaflah",
+    "partOfSpeech": "noun (verbal noun / substantive of the form I verb غَفَلَ)",
+    "senses": [
+      {
+        "gloss": "unmindfulness, heedlessness, inattention",
+        "note": "the state of being غَافِل — unaware of, or inadvertent to, something; Lane's sources treat it either as the verbal noun of غَفَلَ or as a substantive in its own right"
+      },
+      {
+        "gloss": "willful neglect, disregard",
+        "note": "Lane notes the related verb can also mean deliberately leaving a thing and turning away from it, not merely forgetting it"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "غَفَلَ",
+        "transliteration": "ġafala",
+        "meaning": "to be unmindful, forgetful, neglectful, or heedless of something"
+      },
+      {
+        "letters": "غفّل",
+        "transliteration": "ġaffala",
+        "meaning": "to make someone unmindful/heedless; also, to conceal a thing"
+      },
+      {
+        "letters": "أغفل",
+        "transliteration": "aġfala",
+        "meaning": "to make someone neglectful of something; to leave an animal unbranded"
+      },
+      {
+        "letters": "تغفّل",
+        "transliteration": "taġaffala",
+        "meaning": "to watch for someone's inattention, catching them off guard"
+      },
+      {
+        "letters": "تغافل",
+        "transliteration": "taġāfala",
+        "meaning": "to feign unmindfulness, pretending not to notice"
+      },
+      {
+        "letters": "غافِل",
+        "transliteration": "ġāfil",
+        "meaning": "unmindful, heedless, inadvertent (one in a state of ġaflah)",
+        "path": "/word/heedless-11005",
+        "rootId": 11005
+      },
+      {
+        "letters": "غُفْل",
+        "transliteration": "ġufl",
+        "meaning": "unmarked or untouched — e.g. land without waymarks, an unnotched gaming arrow, an unbranded animal"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"neglect\" in Arabic?",
+        "a": "غَفْلَةٌ (ġaflah)."
+      },
+      {
+        "q": "What is the root of غَفْلَةٌ and what does it mean?",
+        "a": "The root is غ ف ل (ġ-f-l), from the verb غَفَلَ 'to be unmindful, forgetful, or heedless of something.'"
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "غَفْلَةٌ names the condition of being غَافِل rather than a single act of forgetting: Lane records that the underlying verb can mean overlooking something even while still remembering it, or simply having one's attention wholly absorbed elsewhere — illustrated by a hadith about a hunter so fixed on the chase that he becomes unmindful of everything else."
+  },
+  "5253": {
+    "rootId": 5253,
+    "triliteralRoot": "ز ر ع",
+    "rootTransliteration": "z-r-ʿ",
+    "rootMeaning": "to sow, plant; grow crops",
+    "headwordTransliteration": "zarʿ",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "seed-produce; crops",
+        "note": "What is raised by sowing — used of standing (growing) crop as well as after it has been reaped; predominant application is to wheat and barley, though it can cover plants or herbage more generally. Plural: زُرُوع (zurūʿ)."
+      },
+      {
+        "gloss": "offspring, children",
+        "note": "Tropical (figurative) use, e.g. هٰؤُلَآءِ زَرْعُ فُلَانٍ 'these are the children of so-and-so' — the same 'sowing/growth' imagery applied to a person's descendants."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "زَرَعَ",
+        "transliteration": "zaraʿa",
+        "meaning": "to sow, cast seed (form I; also used transitively, e.g. 'he sowed wheat and barley')"
+      },
+      {
+        "letters": "ازرع",
+        "transliteration": "azraʿa",
+        "meaning": "(of seed-produce) to grow from its seed, become tall, or reach the time for reaping (form IV)"
+      },
+      {
+        "letters": "اِزْدَرَعَ",
+        "transliteration": "izdaraʿa",
+        "meaning": "to sow, cast seed — an assimilated form of the same root (form VIII, originally اِزْتَرَعَ)"
+      },
+      {
+        "letters": "مُزَارَعَةٌ",
+        "transliteration": "muzāraʿah",
+        "meaning": "a sharecropping contract: bargaining with another to till and sow land for a share of its produce (form III)"
+      },
+      {
+        "letters": "زَارِعٌ",
+        "transliteration": "zāriʿ",
+        "meaning": "one who sows; a sower, or causer of growth (active participle, as in the Qur'anic 'are you the sowers, or are We?')"
+      },
+      {
+        "letters": "أَسْتَزْرِعُ",
+        "transliteration": "astazriʿu",
+        "meaning": "to ask God to make (someone, e.g. one's child) grow up sound/for good (form X)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"crops\" in Arabic?",
+        "a": "زَرْعٌ (zarʿ) — seed-produce, what is sown and grown, whether still standing or already reaped."
+      },
+      {
+        "q": "Does زَرْعٌ (zarʿ) ever mean something other than crops?",
+        "a": "Yes — figuratively it can mean 'offspring, children', as in the phrase هٰؤُلَآءِ زَرْعُ فُلَانٍ, 'these are the children of so-and-so.'"
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/"
+  },
+  "5255": {
+    "rootId": 5255,
+    "triliteralRoot": "ح ر ق",
+    "rootTransliteration": "ḥ-r-q",
+    "rootMeaning": "to burn; to rub, grind",
+    "headwordTransliteration": "iḥrāq",
+    "partOfSpeech": "noun (verbal noun / maṣdar of Form IV: أَحْرَقَ)",
+    "senses": [
+      {
+        "gloss": "burning; the act of setting something alight or consuming it with fire"
+      },
+      {
+        "gloss": "(figurative) causing burning pain, affliction, or distress",
+        "note": "e.g. the sting of a blow, fever, anger, or hunger"
+      },
+      {
+        "gloss": "(figurative) sharp reproach or blame",
+        "note": "as in 'scorching' someone with the tongue"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "حَرَقَ",
+        "transliteration": "ḥaraqa",
+        "meaning": "to file; to rub one thing against another; to grind the teeth so they make a grating sound",
+        "path": "/word/burn-13364",
+        "rootId": 13364
+      },
+      {
+        "letters": "حَرَّقَ",
+        "transliteration": "ḥarraqa",
+        "meaning": "to burn intensively or repeatedly; (of pasturage) to make camels thirsty",
+        "path": "/word/burn-13364",
+        "rootId": 13364
+      },
+      {
+        "letters": "حَارَقَ",
+        "transliteration": "ḥāraqa",
+        "meaning": "to lie with her, on the side (a distinct, unrelated sense of the same root)"
+      },
+      {
+        "letters": "تَحَرَّقَ",
+        "transliteration": "taḥarraqa",
+        "meaning": "to burn, catch fire; figuratively, to burn with hunger or longing",
+        "path": "/word/you-burn-14930",
+        "rootId": 14930
+      },
+      {
+        "letters": "اِحْتَرَقَ",
+        "transliteration": "iḥtaraqa",
+        "meaning": "to burn, become burnt (by fire); figuratively, to perish",
+        "path": "/word/burn-13352",
+        "rootId": 13352
+      },
+      {
+        "letters": "حَرَقٌ",
+        "transliteration": "ḥaraq",
+        "meaning": "fire; the flame of fire",
+        "path": "/word/burn-13364",
+        "rootId": 13364
+      },
+      {
+        "letters": "حُرْقٌ",
+        "transliteration": "ḥurq",
+        "meaning": "an angry man, i.e. one 'burning' with anger",
+        "path": "/word/burn-13364",
+        "rootId": 13364
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"burning\" in Arabic?",
+        "a": "إِحْرَاقٌ (iḥrāq)."
+      },
+      {
+        "q": "What is the root of إِحْرَاقٌ?",
+        "a": "The triliteral root ح ر ق (ḥ-r-q), which also gives أَحْرَقَ ('to burn something') and اِحْتَرَقَ ('to catch fire, become burnt')."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "إِحْرَاقٌ is the maṣdar of the causative Form IV verb أَحْرَقَ ('to burn something/someone with fire'), as in أَحْرَقَتْهُ النَّارُ, 'the fire burned him.' Beyond literal burning, the same verb extends figuratively to inflicting pain, distress, or sharp verbal reproach, and this noun carries that same range."
+  },
+  "5257": {
+    "rootId": 5257,
+    "triliteralRoot": "ض د د",
+    "rootTransliteration": "ḍ-d-d",
+    "rootMeaning": "to oppose, be contrary, resist",
+    "headwordTransliteration": "aḍdād",
+    "partOfSpeech": "noun (broken plural, of ضِدّ ḍidd)",
+    "senses": [
+      {
+        "gloss": "opposites, contraries",
+        "note": "things mutually opposed, one overpowering the other in nature — e.g. black and white, life and death"
+      },
+      {
+        "gloss": "equals, counterparts, likes",
+        "note": "less common sense; e.g. \"the people met their aḍdād\" = met their equals or fellows"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "ضِدٌّ",
+        "transliteration": "ḍidd",
+        "meaning": "the contrary/opposite of a thing; also, less commonly, its like or equal (singular of aḍdād)",
+        "path": "/word/contrary-6840",
+        "rootId": 6840
+      },
+      {
+        "letters": "ضَدَّهُ",
+        "transliteration": "ḍaddahu",
+        "meaning": "he overcame him (in a dispute); also, he averted or turned him away from something"
+      },
+      {
+        "letters": "ضَادّهُ",
+        "transliteration": "ḍāddahu",
+        "meaning": "he was, or became, contrary/opposed to him"
+      },
+      {
+        "letters": "تَضَادّا",
+        "transliteration": "taḍāddā",
+        "meaning": "the two of them were mutually contrary, opposed to each other"
+      },
+      {
+        "letters": "أَضَدَّ",
+        "transliteration": "aḍadda",
+        "meaning": "he became angry"
+      },
+      {
+        "letters": "مُتَضَادَّانِ",
+        "transliteration": "mutaḍāddān",
+        "meaning": "two things contrary/incompatible with each other, like night and day"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"opposites\" in Arabic?",
+        "a": "أَضْدَادٌ (aḍdād) — the plural of ضِدّ (ḍidd), \"the contrary or opposite of a thing.\""
+      },
+      {
+        "q": "What is the singular of أَضْدَادٌ?",
+        "a": "ضِدّ (ḍidd), meaning \"contrary/opposite\"; it can also, less commonly, mean \"equal\" or \"like.\""
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Aḍdād is the broken plural of ḍidd. Notably, ḍidd is itself an example of what the term aḍdād names in classical lexicography: a word carrying two contrary meanings at once (like jawn, \"black\" or \"white\") — ḍidd means both \"the opposite of a thing\" and, less often, \"its equal or like.\" Correspondingly, aḍdād is used both for opposing pairs (black/white, life/death) and, more rarely, for matched equals or fellows."
+  },
+  "5259": {
+    "rootId": 5259,
+    "triliteralRoot": "ط و ع",
+    "rootTransliteration": "ṭ-w-ʿ",
+    "rootMeaning": "to obey, submit, comply willingly",
+    "headwordTransliteration": "ṭāʿah",
+    "partOfSpeech": "noun (verbal noun / maṣdar — quasi-infinitive noun of the form IV verb أَطَاعَ)",
+    "senses": [
+      {
+        "gloss": "obedience, submission",
+        "note": "compliance with another's will or wish, or with a command; functions as the quasi-infinitive noun of أَطَاعَ 'he obeyed'"
+      },
+      {
+        "gloss": "compliance",
+        "note": "used broadly like طَوْع, though the lexicographer Er-Rāghib notes it is mostly used specifically for obedience to a command rather than mere agreement"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "طَاعَ",
+        "transliteration": "ṭāʿa",
+        "meaning": "to be, or become, submissive to someone; to obey",
+        "path": "/word/obey-7295",
+        "rootId": 7295
+      },
+      {
+        "letters": "طَوْعٌ",
+        "transliteration": "ṭawʿ",
+        "meaning": "submission, compliance (verbal noun of ṭāʿa)"
+      },
+      {
+        "letters": "أَطَاعَ",
+        "transliteration": "aṭāʿa",
+        "meaning": "to obey; to consent, comply with what is desired"
+      },
+      {
+        "letters": "طَاوَعَ",
+        "transliteration": "ṭāwaʿa",
+        "meaning": "to comply with, agree with someone"
+      },
+      {
+        "letters": "طَوَاعِيَةٌ",
+        "transliteration": "ṭawāʿiyah",
+        "meaning": "compliance (verbal noun of ṭāwaʿa)"
+      },
+      {
+        "letters": "تَطَوَّعَ",
+        "transliteration": "taṭawwaʿa",
+        "meaning": "to volunteer; to do good beyond what is obligatory",
+        "path": "/word/volunteer-9517",
+        "rootId": 9517
+      },
+      {
+        "letters": "مُتَطَوِّعٌ",
+        "transliteration": "mutaṭawwiʿ",
+        "meaning": "volunteer; one who does more than what is required of him"
+      },
+      {
+        "letters": "اسْتَطَاعَ",
+        "transliteration": "istaṭāʿa",
+        "meaning": "to be able, capable of doing something"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"obedience\" in Arabic?",
+        "a": "طَاعَة (ṭāʿah)."
+      },
+      {
+        "q": "What is the root of طاعة, and what other words come from it?",
+        "a": "Its root is ط و ع (ṭ-w-ʿ), shared with أَطَاعَ 'to obey', تَطَوَّعَ 'to volunteer', and اسْتَطَاعَ 'to be able'."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Classical and Qur'anic term for obedience, typically obedience to a command — of God, a ruler, or another with authority — rather than mere agreement. Lane notes that while it resembles طَوْع (plain compliance) in sense, طَاعَة is mostly reserved for obedience in response to a command, distinguishing it from مُطَاوَعَة (willing accord reached without necessarily following an order)."
+  },
+  "5260": {
+    "rootId": 5260,
+    "triliteralRoot": "ط و ب",
+    "rootTransliteration": "ṭ-w-b",
+    "rootMeaning": "goodness, pleasantness, blessedness",
+    "headwordTransliteration": "ṭūbā",
+    "partOfSpeech": "noun (used as an exclamatory noun, 'blessedness/blessed')",
+    "senses": [
+      {
+        "gloss": "blessed; blessedness",
+        "note": "Lane's Lexicon does not treat this word under the root ط و ب itself — it cross-refers the entry to art. طيب, where words for goodness and pleasantness are treated, which matches the sense 'blessed'."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "طُوبٌ",
+        "transliteration": "ṭūb",
+        "meaning": "baked bricks (syn. آجُرّ); a word of disputed origin (Syrian, Egyptian, or Coptic dialect)"
+      },
+      {
+        "letters": "طَوْبَةً",
+        "transliteration": "ṭawbah",
+        "meaning": "'perfume' (الطِّيب) — the second word in the greeting phrase أَوْبَةً وَطَوْبَةً said to someone entering or arriving"
+      },
+      {
+        "letters": "طَوَّابٌ",
+        "transliteration": "ṭawwāb",
+        "meaning": "a baker/maker of baked bricks, derived from طُوبٌ"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"blessed\" in Arabic?",
+        "a": "طُوبَى (ṭūbā)."
+      },
+      {
+        "q": "Is طُوبَى related to the root ط و ب meaning 'bricks'?",
+        "a": "Only in spelling. Lane's Lexicon lists طُوبَى under ط و ب but redirects its meaning to the entry for ط ي ب (goodness/pleasantness), which is the true source of its 'blessed' sense."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "In Lane's Lexicon طُوبَى appears listed under the root ط و ب alongside words for baked bricks, but only as a pointer ('see art. طيب'); its real semantic home is the root ط ي ب (goodness/pleasantness), not the brick-related root. The other words gathered here under ط و ب — bricks, a greeting phrase, and a brick-maker — are not semantically related to the 'blessed' sense of طُوبَى; they simply share the same consonant skeleton."
+  },
+  "5262": {
+    "rootId": 5262,
+    "triliteralRoot": "ن ص ف",
+    "rootTransliteration": "n-ṣ-f",
+    "rootMeaning": "to be half, divide equally",
+    "headwordTransliteration": "anṣafa",
+    "partOfSpeech": "verb (form IV)",
+    "senses": [
+      {
+        "gloss": "to act justly, to deal equitably with someone",
+        "note": "the core sense of the form IV verb"
+      },
+      {
+        "gloss": "to give someone their right or due, or to obtain it for them from another"
+      },
+      {
+        "gloss": "to exact justice for someone against the one who wronged them",
+        "note": "as in أَنْصَفَهُ مِنْ ظَالِمِهِ, 'he exacted justice for him from his wronger'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "إِنْصَاف",
+        "transliteration": "inṣāf",
+        "meaning": "justice, equity; the giving of what is right or due (verbal noun of anṣafa)"
+      },
+      {
+        "letters": "اِنْتَصَفَ",
+        "transliteration": "intaṣafa",
+        "meaning": "to obtain one's right from someone in full, so both parties are made equal; also, to become halved"
+      },
+      {
+        "letters": "النِّصْف",
+        "transliteration": "an-niṣf",
+        "meaning": "half"
+      },
+      {
+        "letters": "نَصَفٌ",
+        "transliteration": "naṣaf",
+        "meaning": "middle-aged (person); also used of a place midway between two others"
+      },
+      {
+        "letters": "نَصِيفٌ",
+        "transliteration": "naṣīf",
+        "meaning": "a woman's muffler or veil"
+      },
+      {
+        "letters": "مُنَصَّفٌ",
+        "transliteration": "munaṣṣaf",
+        "meaning": "a beverage (juice or wine) boiled down until half of it has evaporated"
+      },
+      {
+        "letters": "أَنْصاَفُ",
+        "transliteration": "anṣāf",
+        "meaning": "halves, e.g. أَنْصَافُ اللَّبِن, cut half-bricks used for ornamentation in building"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"to act justly\" in Arabic?",
+        "a": "أَنْصَفَ (anṣafa) — literally, to give someone their due or deal with them equitably."
+      },
+      {
+        "q": "What is the Arabic word for 'justice, equity' related to anṣafa?",
+        "a": "إِنْصَاف (inṣāf), the verbal noun of أَنْصَفَ, meaning the giving of what is right or due."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Takes a direct object for the person treated justly or given their due, and can take مِنْ for the party a right is exacted from, as in أَنْصَفَهُ مِنْ ظَالِمِهِ ('he exacted justice for him from his wronger'). Its verbal noun إِنْصَاف is the standard word for 'justice, equity' in the sense of giving people what is rightfully theirs."
+  },
+  "5263": {
+    "rootId": 5263,
+    "triliteralRoot": "ق ر ر",
+    "rootTransliteration": "q-r-r",
+    "rootMeaning": "to settle, become firm, still",
+    "headwordTransliteration": "ʾaqarra",
+    "partOfSpeech": "verb (form IV)",
+    "senses": [
+      {
+        "gloss": "to acknowledge, admit, or concede (something) as true",
+        "note": "e.g. a fact, statement, or claim"
+      },
+      {
+        "gloss": "to confirm, establish, or affirm (something) as settled",
+        "note": "the causative sense, tied to the root's core meaning 'to become firm or settled'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "قَرَّ",
+        "transliteration": "qarra",
+        "meaning": "to settle, become firm, still, or fixed; to remain, rest, or reside (form I)"
+      },
+      {
+        "letters": "قَرَارٌ",
+        "transliteration": "qarār",
+        "meaning": "a settling; a state of rest or permanence; a fixed resting place"
+      },
+      {
+        "letters": "قُرَّةٌ",
+        "transliteration": "qurrah",
+        "meaning": "coolness or comfort of the eye; joy, delight (from the eye 'cooling' with happiness)",
+        "path": "/word/delight-20150",
+        "rootId": 20150
+      },
+      {
+        "letters": "قَرِيرُ",
+        "transliteration": "qarīr",
+        "meaning": "having a contented, comforted eye; consoled, at ease"
+      },
+      {
+        "letters": "قَرٌّ",
+        "transliteration": "qarr",
+        "meaning": "coldness; cold (as of a day or night)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"acknowledge\" in Arabic?",
+        "a": "أَقَرَّ (ʾaqarra) — the Form IV causative of قَرَّ (qarra, 'to settle, become firm'), used to mean 'to acknowledge, admit, or confirm' something."
+      },
+      {
+        "q": "What is the root of أَقَرَّ?",
+        "a": "The triliteral root ق ر ر (q-r-r). Its base verb قَرَّ means to settle, become firm or still, and to remain or rest in a place."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "أَقَرَّ is the causative (Form IV) of the base verb قَرَّ, whose core sense is to become settled, firm, fixed, still, or to rest. As a causative, أَقَرَّ carries the idea of causing something to be settled or established as true — the basis of its meaning 'to acknowledge, admit, confirm.'"
+  },
+  "5265": {
+    "rootId": 5265,
+    "triliteralRoot": "ج ه ل",
+    "rootTransliteration": "j-h-l",
+    "rootMeaning": "to be ignorant, lack knowledge",
+    "headwordTransliteration": "jahl",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "ignorance; lack of knowledge",
+        "note": "The direct opposite of عِلْم (ʿilm, 'knowledge'). Classed as either simple (no knowledge of a thing) or compound (a false belief held as certain)."
+      },
+      {
+        "gloss": "foolish, silly, or wrongful conduct",
+        "note": "Extended from the verb جَهِلَ used of acting rashly, foolishly, or wrongly toward someone, not just of lacking information."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "جَهِلَ",
+        "transliteration": "jahila",
+        "meaning": "to be ignorant; not to know (form I verb)"
+      },
+      {
+        "letters": "جَاهِلٌ",
+        "transliteration": "jāhil",
+        "meaning": "an ignorant person; one who acts foolishly or wrongly"
+      },
+      {
+        "letters": "الجَاهِلِيَّةُ",
+        "transliteration": "al-jāhiliyyah",
+        "meaning": "the Age of Ignorance, the pre-Islamic era",
+        "path": "/word/the-pre-islamic-period-14215",
+        "rootId": 14215
+      },
+      {
+        "letters": "جَاهِلِىٌّ",
+        "transliteration": "jāhilī",
+        "meaning": "pagan; a pre-Islamic (pagan) poet"
+      },
+      {
+        "letters": "تجاهل",
+        "transliteration": "tajāhala",
+        "meaning": "to feign ignorance (form VI)"
+      },
+      {
+        "letters": "جهّل",
+        "transliteration": "jahhala",
+        "meaning": "to call someone ignorant; to attribute ignorance to him (form II)"
+      },
+      {
+        "letters": "مَجْهَلَةٌ",
+        "transliteration": "majhalah",
+        "meaning": "a thing that incites one to foolish or ignorant conduct"
+      },
+      {
+        "letters": "مَجْهَلٌ",
+        "transliteration": "majhal",
+        "meaning": "a trackless desert; land with no waymarks"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"ignorance\" in Arabic?",
+        "a": "جَهْلٌ (jahl)."
+      },
+      {
+        "q": "What does الجَاهِلِيَّةُ mean?",
+        "a": "It is 'the Age of Ignorance' — the term for the pre-Islamic era, built from the same root as جَهْل ('ignorance')."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "جَهْل is the standard opposite of عِلْم ('knowledge'): it covers both a plain lack of knowledge and a false belief held with confidence. Classical usage widens it to foolish, reckless, or wrongful behavior, as in جَهِلَ عَلَى غَيْرِهِ, 'he acted foolishly/wrongly toward another.' Its adjective feeds الجَاهِلِيَّةُ, the term for the pre-Islamic 'Age of Ignorance.'"
+  },
+  "5268": {
+    "rootId": 5268,
+    "triliteralRoot": "ع م ل",
+    "rootTransliteration": "ʿ-m-l",
+    "rootMeaning": "to work, do, act, perform",
+    "headwordTransliteration": "ʿamal",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "work, labor, or service performed",
+        "note": "the basic sense of the verb ʿamila (عَمِلَ), 'he worked, wrought, laboured, or served'"
+      },
+      {
+        "gloss": "an action, deed, or thing done",
+        "note": "used broadly for doing, acting, or performing — e.g. acting according to a command, or striving toward an end"
+      },
+      {
+        "gloss": "making, manufacturing, or constructing something"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "عَمِلَ",
+        "transliteration": "ʿamila",
+        "meaning": "to work, labour, serve, do, act, or perform (form I verb)"
+      },
+      {
+        "letters": "عَمَّلَ",
+        "transliteration": "ʿammala",
+        "meaning": "to appoint someone as governor over a place; to pay someone wages for work (form II)"
+      },
+      {
+        "letters": "عَامَلَ",
+        "transliteration": "ʿāmala",
+        "meaning": "to deal or transact business with someone, as in buying and selling (form III)",
+        "path": "/word/treat-5994",
+        "rootId": 5994
+      },
+      {
+        "letters": "أَعْمَلَ",
+        "transliteration": "aʿmala",
+        "meaning": "to make someone work; to employ or use something, e.g. one's judgment, an implement, or the tongue (form IV)",
+        "path": "/word/i-will-act-19558",
+        "rootId": 19558
+      },
+      {
+        "letters": "تَعَمَّلَ",
+        "transliteration": "taʿammala",
+        "meaning": "to toil, strive, or endure fatigue and difficulty in labor (form V)"
+      },
+      {
+        "letters": "عَامِلٌ",
+        "transliteration": "ʿāmil",
+        "meaning": "the working part of an implement, e.g. the blade-end of a spear used for thrusting",
+        "path": "/word/treat-5994",
+        "rootId": 5994
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"actions\" in Arabic?",
+        "a": "عَمَل (ʿamal) — literally 'work' or 'deed,' the verbal noun of ʿamila, 'to work, do, or act.'"
+      },
+      {
+        "q": "What does the verb عَمِلَ (ʿamila) mean?",
+        "a": "To work, labor, serve, do, act, or perform — and also to make, manufacture, or construct something."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "ʿamal is the verbal noun of ʿamila, 'to work/act/do,' and covers everything from manual labor and craftsmanship to any deed or action performed — including, in the excerpt, acting according to what is enjoined in scripture, so it carries both a practical and a moral-religious sense of 'deed.'"
+  },
+  "5269": {
+    "rootId": 5269,
+    "triliteralRoot": "ع ي ب",
+    "rootTransliteration": "ʿ-y-b",
+    "rootMeaning": "to be defective, flawed, blemished",
+    "headwordTransliteration": "ʿuyūb",
+    "partOfSpeech": "noun (plural of عَيْب, a maṣdar used as a substantive)",
+    "senses": [
+      {
+        "gloss": "defects, flaws, blemishes",
+        "note": "of things or merchandise — being faulty, unsound, or having something amiss"
+      },
+      {
+        "gloss": "vices, faults",
+        "note": "of a person's character or conduct"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "عَابَ",
+        "transliteration": "ʿāba",
+        "meaning": "to be/become defective; also, to find fault with, blame, or reproach"
+      },
+      {
+        "letters": "عَيْبٌ",
+        "transliteration": "ʿayb",
+        "meaning": "a fault, defect, blemish, or vice (singular of ʿuyūb)",
+        "path": "/word/imperfection-7607",
+        "rootId": 7607
+      },
+      {
+        "letters": "عَيْبَةٌ",
+        "transliteration": "ʿaybah",
+        "meaning": "a bag or receptacle for clothes/goods; figuratively, a keeper of one's secrets"
+      },
+      {
+        "letters": "عَائِبٌ",
+        "transliteration": "ʿāʾib",
+        "meaning": "one who finds fault; a faultfinder"
+      },
+      {
+        "letters": "عَيَّابٌ",
+        "transliteration": "ʿayyāb",
+        "meaning": "one who habitually finds fault (intensive form)"
+      },
+      {
+        "letters": "مَعِيبٌ",
+        "transliteration": "maʿīb",
+        "meaning": "defective, faulty, blemished (passive)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"defects\" in Arabic?",
+        "a": "عُيُوب (ʿuyūb) — the plural of عَيْب (ʿayb), meaning fault, defect, or blemish."
+      },
+      {
+        "q": "What is the singular of عُيُوب؟",
+        "a": "عَيْب (ʿayb), meaning a single fault, defect, blemish, or vice."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "ʿUyūb is the standard plural of ʿayb, the general word for a fault, flaw, or defect. It covers both physical/material shortcomings — as in faulty merchandise — and moral faults or vices in a person. The related verb ʿāba carries the double sense of 'to be defective' and 'to find fault with, blame.'"
+  },
+  "5270": {
+    "rootId": 5270,
+    "triliteralRoot": "ن ف س",
+    "rootTransliteration": "n-f-s",
+    "rootMeaning": "breath; self, soul",
+    "headwordTransliteration": "nafs",
+    "partOfSpeech": "noun",
+    "senses": [
+      {
+        "gloss": "self; one's own being",
+        "note": "the word's ordinary, most common sense."
+      },
+      {
+        "gloss": "blood",
+        "note": "Lane traces the tropical senses 'to give birth' and 'to menstruate' back to نَفْس meaning blood."
+      },
+      {
+        "gloss": "an evil or envious eye",
+        "note": "as in the phrase 'he smote him بنفس' — with an evil eye."
+      },
+      {
+        "gloss": "avarice; envious withholding",
+        "note": "the verbal-noun sense tied to نَفِسَ عليه, 'to grudge/envy someone a thing'."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "نَفُسَ",
+        "transliteration": "nafusa",
+        "meaning": "to be precious, highly prized, held in high estimation"
+      },
+      {
+        "letters": "نفّس",
+        "transliteration": "naffasa",
+        "meaning": "to relieve grief or distress; to grant a delay"
+      },
+      {
+        "letters": "نافس",
+        "transliteration": "nāfasa",
+        "meaning": "to vie for something with emulation, to desire it competitively"
+      },
+      {
+        "letters": "تنفّس",
+        "transliteration": "tanaffasa",
+        "meaning": "to breathe",
+        "path": "/word/relief-19312",
+        "rootId": 19312
+      },
+      {
+        "letters": "تناَفَسَ",
+        "transliteration": "tanāfasa",
+        "meaning": "to vie with one another, to compete for a thing"
+      },
+      {
+        "letters": "نَفَسٌ",
+        "transliteration": "nafas",
+        "meaning": "breath"
+      },
+      {
+        "letters": "نِفَاسٌ",
+        "transliteration": "nifās",
+        "meaning": "childbirth"
+      },
+      {
+        "letters": "نَفِيسٌ",
+        "transliteration": "nafīs",
+        "meaning": "precious, excellent, highly prized"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"self\" in Arabic?",
+        "a": "نَفْس (nafs)."
+      },
+      {
+        "q": "Is نَفْس related to نَفَس (breath)?",
+        "a": "Yes — both come from the root ن ف س. نَفَسٌ means \"breath,\" and تنفّس means \"to breathe,\" from the same root as نَفْس."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "نَفْس is one of the most common words in Arabic, used for the self or one's own person. Lane's Lexicon shows the same root also carrying senses of \"blood,\" \"an evil eye,\" and \"envious withholding\" — the tropical meanings of childbirth and menstruation are explained as deriving from the \"blood\" sense, while related forms give \"precious/highly prized\" (نَفِيسٌ), \"to vie for\" (نافس), and \"breath\" (نَفَسٌ, تنفّس)."
+  },
+  "5271": {
+    "rootId": 5271,
+    "triliteralRoot": "ف ر ط",
+    "rootTransliteration": "f-r-ṭ",
+    "rootMeaning": "to go before, precede; exceed limits",
+    "headwordTransliteration": "tafrīṭ",
+    "partOfSpeech": "noun (verbal noun / maṣdar, Form II)",
+    "senses": [
+      {
+        "gloss": "negligence, remissness; falling short of a duty",
+        "note": "said of failing to do what one ought with respect to something, so that it is lost or slips away through carelessness"
+      },
+      {
+        "gloss": "forsaking or leaving something behind",
+        "note": "quitting or abandoning a thing one was responsible for, rather than seeing it through"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "فَرَطَ",
+        "transliteration": "faraṭa",
+        "meaning": "to go ahead, precede, be first or foremost (Form I)"
+      },
+      {
+        "letters": "فَارِطٌ",
+        "transliteration": "fāriṭ",
+        "meaning": "forerunner; one sent ahead, e.g. to a well to prepare it before the rest arrive"
+      },
+      {
+        "letters": "مُفَرِّطٌ",
+        "transliteration": "mufarriṭ",
+        "meaning": "one who is negligent or remiss (agent noun of the same verb as tafrīṭ)",
+        "path": "/word/excess-6264",
+        "rootId": 6264
+      },
+      {
+        "letters": "فُرُوطٌ",
+        "transliteration": "furūṭ",
+        "meaning": "the state of exceeding due bounds, going too far"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"negligence\" in Arabic?",
+        "a": "تفريط (tafrīṭ)."
+      },
+      {
+        "q": "What does تفريط mean?",
+        "a": "It is the verbal noun of the verb فرّط, meaning negligence or remissness — failing to do what one ought with a duty or task, to the point that it is neglected, forsaken, or lost."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Tafrīṭ describes falling short of a duty or task one was charged with — being careless, slow, or remiss about it until it is neglected or lost. It can also describe forsaking or leaving something one was meant to look after."
+  },
+  "5273": {
+    "rootId": 5273,
+    "triliteralRoot": "ظ ل م",
+    "rootTransliteration": "ẓ-l-m",
+    "rootMeaning": "to wrong, act unjustly, oppress",
+    "headwordTransliteration": "ẓulm",
+    "partOfSpeech": "noun (verbal noun / maṣdar of ظَلَمَ, form I)",
+    "senses": [
+      {
+        "gloss": "wrongdoing, injustice, oppression",
+        "note": "most lexicologists trace it to the basic idea of putting a thing in a place not its own, i.e. misplacement — by exceeding, falling short of, or deviating from the proper measure; said to cover wrong done between man and God, man and man, and a man and himself"
+      },
+      {
+        "gloss": "loss, deprivation, or fraud inflicted on someone",
+        "note": "e.g. ẓalamahu ḥaqqahu, 'he deprived/defrauded him of his due'; also the sense in Qur'anic verses such as 'God does not wrong (deprive) anyone of the weight of an atom'"
+      },
+      {
+        "gloss": "an unreasonable demand",
+        "note": "extended use: imposing on someone a burden or claim beyond their power or ability"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "ظَلَمَ",
+        "transliteration": "ẓalama",
+        "meaning": "to do wrong; to wrong or treat someone unjustly (form I verb)"
+      },
+      {
+        "letters": "ظَلْمٌ",
+        "transliteration": "ẓalm",
+        "meaning": "wrongdoing (a variant/parallel form of the verbal noun ẓulm)"
+      },
+      {
+        "letters": "ظِلَامٌ",
+        "transliteration": "ẓilām",
+        "meaning": "the act of wronging someone; also cited as a plural of ẓulm",
+        "path": "/word/unjust-17697",
+        "rootId": 17697
+      },
+      {
+        "letters": "ظَاْلَمَ",
+        "transliteration": "ẓālama",
+        "meaning": "to contend in wrongdoing with one another (form III; its verbal noun muẓālamah is glossed as 'wronging him')"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"injustice\" in Arabic?",
+        "a": "Injustice is ظُلْم (ẓulm), from the root ظ-ل-م (ẓ-l-m)."
+      },
+      {
+        "q": "What is the original, literal sense behind ظُلْم؟",
+        "a": "Lexicographers say it primarily means putting a thing in a place that is not its own — misplacement — from which the extended sense of wrongdoing, injustice, and depriving someone of their due developed."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Classically ẓulm is the core Arabic term for injustice: lexicographers derive it from the basic sense of \"misplacing\" something — putting a thing where it does not belong, or exceeding/falling short of the proper measure — from which the ethical sense of wronging, oppressing, or defrauding someone develops. It appears repeatedly in the Qur'an for wrongdoing toward God, toward others, and toward oneself."
+  },
+  "5274": {
+    "rootId": 5274,
+    "triliteralRoot": "ع م ل",
+    "rootTransliteration": "ʿ-m-l",
+    "rootMeaning": "to work, do, act, perform",
+    "headwordTransliteration": "muʿāmalah",
+    "partOfSpeech": "noun (verbal noun / maṣdar of Form III عَامَلَ)",
+    "senses": [
+      {
+        "gloss": "dealing, transaction",
+        "note": "esp. buying and selling; the everyday sense used among city-dwellers for doing business with someone"
+      },
+      {
+        "gloss": "treatment, conduct toward someone",
+        "note": "e.g. 'he dealt with him as the lion deals' — how one behaves toward another, not only in trade"
+      },
+      {
+        "gloss": "a cultivation-partnership contract",
+        "note": "Iraqi usage, equivalent to Hijazi مُسَاقَاة: hiring someone to manage palm or vine cultivation for a share of the produce"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "عَمِلَ",
+        "transliteration": "ʿamila",
+        "meaning": "to work, labour, do, act, perform (Form I)"
+      },
+      {
+        "letters": "عَمَلٌ",
+        "transliteration": "ʿamal",
+        "meaning": "work, deed, action (verbal noun of ʿamila)"
+      },
+      {
+        "letters": "عَامِلٌ",
+        "transliteration": "ʿāmil",
+        "meaning": "one who works; agent, official",
+        "path": "/word/treat-5994",
+        "rootId": 5994
+      },
+      {
+        "letters": "عَمَّلَ",
+        "transliteration": "ʿammala",
+        "meaning": "to appoint as governor; to pay someone's wage (Form II)"
+      },
+      {
+        "letters": "عَامَلَ",
+        "transliteration": "ʿāmala",
+        "meaning": "to deal, do business, or transact with someone (Form III, source of muʿāmalah)",
+        "path": "/word/treat-5994",
+        "rootId": 5994
+      },
+      {
+        "letters": "أَعْمَلَ",
+        "transliteration": "aʿmala",
+        "meaning": "to employ, use, put to work — one's judgment, tongue, or a mount (Form IV)",
+        "path": "/word/i-will-act-19558",
+        "rootId": 19558
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"dealings\" in Arabic?",
+        "a": "مُعَامَلَةٌ (muʿāmalah)."
+      },
+      {
+        "q": "What is the root of مُعَامَلَةٌ and how does it relate to عَمَلٌ 'work'?",
+        "a": "Both come from the root ع-م-ل (ʿ-m-l). Muʿāmalah is the verbal noun of Form III عَامَلَ 'to deal/transact with someone,' which is itself built on the base verb عَمِلَ 'to work, do.'"
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Muʿāmalah is the verbal noun of Form III عَامَلَ (ʿāmala, \"to work/deal with someone\"), itself built on عَمِلَ \"to work, do.\" It covers everyday commercial dealings as well as how one treats or conducts oneself toward another person; classical Iraqi usage also applied it narrowly to a cultivation-for-a-share contract equivalent to Hijazi مُسَاقَاة."
+  },
+  "5276": {
+    "rootId": 5276,
+    "triliteralRoot": "أ خ ذ",
+    "rootTransliteration": "ʾ-kh-dh",
+    "rootMeaning": "to take, seize, take hold",
+    "headwordTransliteration": "akhadha",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to take, take hold of, seize with the hand",
+        "note": "The base, literal sense; e.g. خُذِ الخِطَامَ, 'take hold of the nose-rein.'"
+      },
+      {
+        "gloss": "to take, receive, get, acquire",
+        "note": "Opposite of أَعْطَى 'to give'; also used of receiving knowledge or a tradition from someone."
+      },
+      {
+        "gloss": "to accept, receive willingly",
+        "note": "Qur'anic usage, e.g. خُذِ العَفْوَ, 'accept willingly what is freely given.'"
+      },
+      {
+        "gloss": "to call to account, punish, chastise",
+        "note": "Especially in أَخَذَهُ بِذَنْبِهِ, 'He held him to account / punished him for his sin'; the related form III آخَذَ with verbal noun مُؤَاخَذَةٌ carries this same sense."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "أَخْذٌ",
+        "transliteration": "akhdh",
+        "meaning": "verbal noun: the act of taking, taking hold"
+      },
+      {
+        "letters": "آخَذَ",
+        "transliteration": "ākhadha",
+        "meaning": "(form III) to call to account, punish, hold responsible"
+      },
+      {
+        "letters": "آخِذٌ",
+        "transliteration": "ākhidh",
+        "meaning": "active participle: one who takes, taking"
+      },
+      {
+        "letters": "مَأْخُوذٌ",
+        "transliteration": "maʾkhūdh",
+        "meaning": "passive participle: taken, seized"
+      },
+      {
+        "letters": "أَخِيذٌ",
+        "transliteration": "akhīdh",
+        "meaning": "one taken captive; a captive"
+      },
+      {
+        "letters": "مَأْخَذْ",
+        "transliteration": "maʾkhadh",
+        "meaning": "a source or point from which something is taken or derived"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"take to account\" in Arabic?",
+        "a": "أَخَذَ (akhadha), especially in the phrase أَخَذَهُ بِذَنْبِهِ ('He held him to account for his sin'); the related form آخَذَ (ākhadha) with the verbal noun مُؤَاخَذَةٌ (muʾākhadha) specifically means to call to account or punish."
+      },
+      {
+        "q": "What does the root ا-خ-ذ mean in Arabic?",
+        "a": "At its core it means 'to take' or 'to seize' — physically taking hold of something, receiving or acquiring it, or, figuratively, being overcome (by sleep, fear, wine) or held to account for a wrongdoing."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "A very common root spanning literal and figurative use: physical taking or seizing, receiving or accepting (including willingly, as in Qur'anic usage), and — in the form III/مُؤَاخَذَة pairing — holding someone to account or punishing them for a wrong. It also appears with intensified force, describing sleep, drowsiness, fear, or wine as things that 'seize' or overpower a person."
+  },
+  "5278": {
+    "rootId": 5278,
+    "triliteralRoot": "ر أ ي",
+    "rootTransliteration": "r-ʾ-y",
+    "rootMeaning": "to see; to think, perceive",
+    "headwordTransliteration": "raʾā",
+    "partOfSpeech": "verb (form I, irregular/hamzated-weak)",
+    "senses": [
+      {
+        "gloss": "to see with the eye; to perceive visually",
+        "note": "the base, most common sense; takes a single direct object (raʾaytuhū, 'I saw him/it')"
+      },
+      {
+        "gloss": "to think, suppose, or fancy (that something is the case)",
+        "note": "e.g. arā anna Zaydan munṭaliqun, 'I suppose that Zayd is leaving'"
+      },
+      {
+        "gloss": "to consider or perceive through reflection",
+        "note": "used with the mind rather than the eye, as in Qur'anic innī arā mā lā tarawna, 'I see [by reflection] what you do not see'"
+      },
+      {
+        "gloss": "to hold as a mental judgment or opinion",
+        "note": "this sense underlies the related noun raʾy, 'opinion, view'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "رُؤْيَةٌ",
+        "transliteration": "ruʾyah",
+        "meaning": "seeing, sight — the verbal noun of raʾā"
+      },
+      {
+        "letters": "رَأْىٌ",
+        "transliteration": "raʾy",
+        "meaning": "opinion, view, judgment"
+      },
+      {
+        "letters": "رُؤْيَا",
+        "transliteration": "ruʾyā",
+        "meaning": "a vision or dream seen in sleep"
+      },
+      {
+        "letters": "اِرْتَآهُ",
+        "transliteration": "irtaʾā (form VIII)",
+        "meaning": "to see, perceive — used as a synonym of raʾā"
+      },
+      {
+        "letters": "اِسْتَرْآهُ",
+        "transliteration": "istarʾā (form X)",
+        "meaning": "to see, perceive — used as a synonym of raʾā"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"see\" in Arabic?",
+        "a": "رَأَى (raʾā) is the standard verb for 'to see' — raʾaytuhū means 'I saw him/it.'"
+      },
+      {
+        "q": "What is the difference between رَأْى (raʾy) and رُؤْيَة (ruʾyah)?",
+        "a": "Both come from the same root, but raʾy means 'opinion, view' (a mental judgment), while ruʾyah is the act of seeing or sight itself."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Raʾā is one of the most irregular verbs in Arabic: its hamza and final weak letter are routinely dropped in speech, giving contracted forms like rā for raʾā and yarā for yarʾā. Beyond literal eyesight it covers supposition, reflection, and judgment, and its related noun raʾy specifically means 'opinion' or 'view' rather than physical sight. The Qur'anic formula a-lam tara ilā ('have you not considered...') uses the verb to draw attention to something remarkable rather than to describe eyesight."
+  },
+  "5279": {
+    "rootId": 5279,
+    "triliteralRoot": "ع د ل",
+    "rootTransliteration": "ʿ-d-l",
+    "rootMeaning": "to be equal, balanced, just",
+    "headwordTransliteration": "ʿadl",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "justice, equity",
+        "note": "the verbal noun of ʿadala, \"to act equitably, justly, or rightly\" — especially in judging or dealing between people"
+      },
+      {
+        "gloss": "an equivalent; a compensation of equal worth",
+        "note": "used in Qur'anic usage (6:69) for a ransom or substitute matching the value of what it replaces"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "عَادِلٌ",
+        "transliteration": "ʿādil",
+        "meaning": "one who acts justly; a just, equitable person"
+      },
+      {
+        "letters": "عِدْلٌ",
+        "transliteration": "ʿidl",
+        "meaning": "an equal counterpart; a matching load that balances another"
+      },
+      {
+        "letters": "عَدِيلٌ",
+        "transliteration": "ʿadīl",
+        "meaning": "a companion of equal weight or rank, as one sharing a mount's load"
+      },
+      {
+        "letters": "مُعَدَّلٌ",
+        "transliteration": "muʿaddal",
+        "meaning": "made equal, straightened, set right or adjusted"
+      },
+      {
+        "letters": "تَعَادُلٌ",
+        "transliteration": "taʿādul",
+        "meaning": "mutual equivalence; being equally balanced"
+      },
+      {
+        "letters": "اعتدل",
+        "transliteration": "iʿtadala",
+        "meaning": "to become even, straight, or balanced"
+      },
+      {
+        "letters": "مَعْدَلَةٌ",
+        "transliteration": "maʿdala",
+        "meaning": "justice, equity (alternate verbal noun of the same verb)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"justice\" in Arabic?",
+        "a": "عَدْلٌ (ʿadl)."
+      },
+      {
+        "q": "What does the root ع د ل mean?",
+        "a": "To act equitably or justly, or to make two things equal or balanced; ʿadl is the verbal noun meaning justice."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "ʿAdl is the verbal noun of ʿadala, \\\"to act equitably,\\\" and is the standard classical and Qur'anic term for justice — the quality of judging or dealing rightly between people. The same root also covers making two things equal or balanced, which is why the word can extend to an equivalent or matching compensation."
+  },
+  "5280": {
+    "rootId": 5280,
+    "triliteralRoot": "ل م م",
+    "rootTransliteration": "l-m-m",
+    "rootMeaning": "to gather, collect; touch briefly",
+    "headwordTransliteration": "lam",
+    "partOfSpeech": "particle (negation, governs the jussive/majzūm verb)",
+    "senses": [
+      {
+        "gloss": "did not; has not",
+        "note": "placed before an imperfect (aorist) verb, throwing it into the jussive mood; the whole construction negates a past action, e.g. لَمْ يَضْرِبْ 'he did not beat', لَمْ أَرَهُ مُذْ يَوْمَانِ 'I have not seen him for two days'"
+      },
+      {
+        "gloss": "does not",
+        "note": "a present-tense rendering sometimes used in translation for the same construction"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "لَمَّ",
+        "transliteration": "lamma",
+        "meaning": "to rectify and consolidate what was disorganized or unsettled (e.g. one's affairs)"
+      },
+      {
+        "letters": "أَلَمَّ",
+        "transliteration": "alamma",
+        "meaning": "to come to and alight upon a people as a guest; to visit briefly or covertly; to happen; also, to know a meaning or to commit a sin"
+      },
+      {
+        "letters": "اِلْتَمَّ",
+        "transliteration": "iltamma",
+        "meaning": "to be gathered or collected; to congregate"
+      },
+      {
+        "letters": "لَمَمٌ",
+        "transliteration": "lamam",
+        "meaning": "a slight insanity or touch of diabolical possession"
+      },
+      {
+        "letters": "لِمَّةٌ",
+        "transliteration": "limma",
+        "meaning": "hair that hangs down below the lobe of the ear"
+      },
+      {
+        "letters": "مُلِمَّةٌ",
+        "transliteration": "mulimma",
+        "meaning": "a misfortune that befalls one in this world"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"does not\" in Arabic?",
+        "a": "لَمْ (lam) — though it is really a past-negation particle: placed before a jussive verb it means 'did not/has not', as in لَمْ يَضْرِبْ 'he did not beat'."
+      },
+      {
+        "q": "What is the difference between لَمْ and لَمَّا?",
+        "a": "لَمْ simply negates a past action ('he did not beat'), while لَمَّا with the same jussive verb can mean 'not yet' ('he has not yet beaten') or serve as a particle of exception meaning 'except' or 'only'."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "لَمْ is a negation particle that puts the following imperfect verb into the jussive form; together they negate an action understood to be past, and are commonly translated into English with 'did not' or 'has not' rather than a literal present tense. It is distinct from the related particle لَمَّا, which with the same jussive construction can mean 'not yet' (لَمَّا يَضْرِبْ 'he has not yet beaten') or function as a particle of exception meaning 'except' or 'only'."
+  },
+  "5283": {
+    "rootId": 5283,
+    "triliteralRoot": "ع م ل",
+    "rootTransliteration": "ʿ-m-l",
+    "rootMeaning": "to work, do, make, act",
+    "headwordTransliteration": "ʿamila",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to work, labor, or serve; to do, act, or perform",
+        "note": "the general sense — also used of making, wrought, or constructed things"
+      },
+      {
+        "gloss": "to make, manufacture, or construct (a thing)"
+      },
+      {
+        "gloss": "to act upon or take effect on something, e.g. a blade striking; also, to govern a word grammatically",
+        "note": "the grammatical sense underlies the term ʿāmil, the 'operant' or governing word in Arabic syntax"
+      },
+      {
+        "gloss": "(of a she-camel) to move briskly or quickly; (of lightning) to be continual",
+        "note": "idiomatic extensions describing sustained motion or activity"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "عَمَلٌ",
+        "transliteration": "ʿamal",
+        "meaning": "work, deed, action (verbal noun of ʿamila)"
+      },
+      {
+        "letters": "عَامِلٌ",
+        "transliteration": "ʿāmil",
+        "meaning": "one who works; agent; in grammar, the word that governs a case-ending",
+        "path": "/word/treat-5994",
+        "rootId": 5994
+      },
+      {
+        "letters": "عَمَّالٌ",
+        "transliteration": "ʿammāl",
+        "meaning": "workman, laborer"
+      },
+      {
+        "letters": "عُمَالَةٌ",
+        "transliteration": "ʿumālah",
+        "meaning": "pay or salary given for work"
+      },
+      {
+        "letters": "عَامَلَ",
+        "transliteration": "ʿāmala",
+        "meaning": "to deal or transact business with someone (form III)",
+        "path": "/word/treat-5994",
+        "rootId": 5994
+      },
+      {
+        "letters": "أَعْمَلَ",
+        "transliteration": "aʿmala",
+        "meaning": "to put to work, employ, or use — a tool, the mind, or the tongue (form IV)",
+        "path": "/word/i-will-act-19558",
+        "rootId": 19558
+      },
+      {
+        "letters": "تَعَمَّلَ",
+        "transliteration": "taʿammala",
+        "meaning": "to toil, strive, or endure fatigue in doing something (form V)"
+      },
+      {
+        "letters": "اِسْتَعْمَلَ",
+        "transliteration": "istaʿmala",
+        "meaning": "to use or employ (form X)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"perform\" in Arabic?",
+        "a": "عَمِلَ (ʿamila) — the standard verb for working, doing, or performing an action."
+      },
+      {
+        "q": "What is the difference between عَمِلَ and عَامَلَ?",
+        "a": "ʿamila (form I) means simply to work, do, or perform, while ʿāmala (form III) means to deal, transact, or do business with someone."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "ʿamila is a common, general-purpose verb of doing or working, broad enough to cover manual labor, service, and simply performing an action — including deeds enjoined by religious duty, as in the phrase \"he did according to what is in the Book of God.\" Its related noun ʿāmil also became the technical term in Arabic grammar for a word that produces a syntactical effect on another."
+  },
+  "5284": {
+    "rootId": 5284,
+    "triliteralRoot": "ح س ن",
+    "rootTransliteration": "ḥ-s-n",
+    "rootMeaning": "to be good, beautiful",
+    "headwordTransliteration": "ḥasanah",
+    "partOfSpeech": "noun (feminine substantive; fem. of حَسَنٌ)",
+    "senses": [
+      {
+        "gloss": "a good deed, a good act",
+        "note": "the doing described by the verb أَحْسَنَ, 'he did a good deed'"
+      },
+      {
+        "gloss": "a good, goodly, or pleasing thing",
+        "note": "feminine counterpart of the adjective حَسَنٌ 'good, goodly, beautiful'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "حُسْنٌ",
+        "transliteration": "ḥusn",
+        "meaning": "goodness, goodliness, beauty (the basic verbal noun of حَسُنَ)"
+      },
+      {
+        "letters": "حَسَنٌ",
+        "transliteration": "ḥasan",
+        "meaning": "good, goodly, beautiful, comely, pleasing"
+      },
+      {
+        "letters": "أَحْسَنَ",
+        "transliteration": "aḥsana",
+        "meaning": "to do good, to act well, to do a good deed"
+      },
+      {
+        "letters": "إِحْسَانٌ",
+        "transliteration": "iḥsān",
+        "meaning": "doing good, beneficence — opposite of إِسَآءَة (doing ill)"
+      },
+      {
+        "letters": "حَسَّنَ",
+        "transliteration": "ḥassana",
+        "meaning": "to beautify, embellish, adorn, make good or goodly"
+      },
+      {
+        "letters": "اِسْتَحْسَنَ",
+        "transliteration": "istaḥsana",
+        "meaning": "to deem or reckon good, to approve of",
+        "path": "/word/to-deem-good-appropriate-14011",
+        "rootId": 14011
+      },
+      {
+        "letters": "أَحْسَنُ",
+        "transliteration": "aḥsan",
+        "meaning": "better, best (elative of حَسَن)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"good deed\" in Arabic?",
+        "a": "حَسَنَة (ḥasanah)."
+      },
+      {
+        "q": "What root does حَسَنَة come from?",
+        "a": "It comes from ح س ن (ḥ-s-n), the root meaning 'to be good, goodly, or beautiful,' also seen in حُسْن (goodness), حَسَن (good), and إِحْسَان (doing good)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "حَسَنَة is built from the same root as حَسُنَ ('to be or become good, goodly, beautiful') and names a single instance of doing good — what the verb أَحْسَنَ describes. The root's related form IV noun إِحْسَانٌ is explained as going further than mere justice (عَدْل): giving more than one owes and taking less than is owed to one, and being directed both to oneself and to others."
+  },
+  "5285": {
+    "rootId": 5285,
+    "triliteralRoot": "م ن",
+    "rootTransliteration": "m-n",
+    "rootMeaning": "to confer a favor",
+    "headwordTransliteration": "minnah",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "a favour or benefit conferred or bestowed on someone"
+      },
+      {
+        "gloss": "an obligation owed to, or placed upon, someone"
+      },
+      {
+        "gloss": "the act of reproaching someone for a favour given, or recounting one's own gifts to them",
+        "note": "as a verbal noun of مَنَّ عَلَيْهِ, this sense carries a negative, self-congratulatory undertone"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "مَنَّ",
+        "transliteration": "manna",
+        "meaning": "to confer a favour upon someone; also, to reproach someone for a favour already given"
+      },
+      {
+        "letters": "مَنَّانٌ",
+        "transliteration": "mannān",
+        "meaning": "very bountiful or generous; also one who gives nothing without reproaching for it"
+      },
+      {
+        "letters": "اِمْتِنَانِىٌّ",
+        "transliteration": "imtinānī",
+        "meaning": "gratuitous; given freely as a favour, as opposed to owed as a duty"
+      },
+      {
+        "letters": "إِمْتَنَنَ",
+        "transliteration": "imtanana",
+        "meaning": "form VIII of مَنَّ, tied to conferring or claiming a favour"
+      },
+      {
+        "letters": "تَمَنَّنَ",
+        "transliteration": "tamannana",
+        "meaning": "form V of مَنَّ, tied to conferring a favour"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"favor\" in Arabic?",
+        "a": "مِنَّةٌ (minnah)."
+      },
+      {
+        "q": "Does مِنَّةٌ always have a positive sense?",
+        "a": "Not always — since it comes from مَنَّ (\"to confer a favour\" but also \"to reproach someone for a favour given\"), مِنَّةٌ can mean a plain benefit or, more pointedly, an obligation someone is made to feel."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "مِنَّةٌ is the noun bound to the verb مَنَّ عَلَيْهِ, which covers both bestowing a favour on someone and reproaching them for one already given — so the word can mean a plain benefit or, more pointedly, an obligation incurred by another's generosity. اِمْتِنَانِىٌّ (gratuitous) is used in contrast to وُجُوبِىٌّ (obligatory) to mark something given purely as a favour rather than owed."
+  },
+  "5288": {
+    "rootId": 5288,
+    "triliteralRoot": "ق ب ل",
+    "rootTransliteration": "q-b-l",
+    "rootMeaning": "to face, come before, accept",
+    "headwordTransliteration": "qabila",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to accept, receive, or take willingly",
+        "note": "Implies taking something with approbation rather than mere reception."
+      },
+      {
+        "gloss": "(of a sandal) to have its strap break",
+        "note": "A narrow, technical usage referring to the قِبَال (strap) of a sandal."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "قَابَلَهُ",
+        "transliteration": "qābalahu",
+        "meaning": "to face or be opposite him/it; to correspond to, or requite/compare one thing with another"
+      },
+      {
+        "letters": "أَقْبَلَ",
+        "transliteration": "aqbala",
+        "meaning": "to come forward, advance; (of fortune) to turn favorable",
+        "path": "/word/approached-5626",
+        "rootId": 5626
+      },
+      {
+        "letters": "تَقَابَلُوا",
+        "transliteration": "taqābalū",
+        "meaning": "to face, or confront, one another"
+      },
+      {
+        "letters": "اِقْتَبَلَهُ",
+        "transliteration": "iqtabalahu",
+        "meaning": "to begin or commence (an affair)"
+      },
+      {
+        "letters": "اِسْتَقْبَلَهُ",
+        "transliteration": "istaqbalahu",
+        "meaning": "to face, meet, or go to receive someone; also to anticipate something before it occurs"
+      },
+      {
+        "letters": "قَبْلُ",
+        "transliteration": "qablu",
+        "meaning": "before (opposite of after)"
+      },
+      {
+        "letters": "إِقْبَالٌ",
+        "transliteration": "iqbāl",
+        "meaning": "advance, or good fortune",
+        "path": "/word/acceptance-8121",
+        "rootId": 8121
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"accept\" in Arabic?",
+        "a": "قَبِلَ (qabila) — to accept, receive, or take something willingly."
+      },
+      {
+        "q": "What is the difference between قَبِلَ and قَابَلَ?",
+        "a": "قَبِلَ (Form I) means to accept or receive willingly, while قَابَلَ (Form III) means to face, oppose, or correspond to something, and can also mean to requite one thing with another."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "The root ق ب ل yields two distinct Form I readings from the same letters: qabala (fatḥa), used of facing or fronting something and paired with its opposite دبر ('to turn away'), and qabila (kasra), the word treated here, meaning 'to accept.' Because both branches share one root, later forms built on it split between two families of meaning — facing/meeting/advancing (qābala, aqbala, istaqbala) and willing acceptance (qabila) — so vocalization and context matter for telling them apart."
+  },
+  "5289": {
+    "rootId": 5289,
+    "triliteralRoot": "م ن ن",
+    "rootTransliteration": "m-n-n",
+    "rootMeaning": "to confer a favor",
+    "headwordTransliteration": "minnah",
+    "partOfSpeech": "noun (verbal noun / maṣdar), feminine",
+    "senses": [
+      {
+        "gloss": "a favor or benefit bestowed on someone",
+        "note": "the core sense behind the given gloss 'favor'"
+      },
+      {
+        "gloss": "an obligation created by a favor received",
+        "note": "can rest upon one person or be owed to another"
+      },
+      {
+        "gloss": "reproach for a favor already given",
+        "note": "as verbal noun of مَنَّ, used when a giver recounts or throws back a kindness to make the receiver feel indebted"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "مَنَّ",
+        "transliteration": "manna",
+        "meaning": "to confer a favor on someone; also, to reproach someone for a favor already given"
+      },
+      {
+        "letters": "مَنٌّ",
+        "transliteration": "mann",
+        "meaning": "verbal noun of مَنَّ: the act of bestowing a favor, or of reproaching for one"
+      },
+      {
+        "letters": "مَنَّانٌ",
+        "transliteration": "mannān",
+        "meaning": "very bountiful; or, one who never gives without reproaching the receiver for it"
+      },
+      {
+        "letters": "تَمَنَّنَ",
+        "transliteration": "tamannana",
+        "meaning": "form V verb, carrying the same senses as مَنَّ (to confer or to reproach a favor)"
+      },
+      {
+        "letters": "اِمْتِنَانِىٌّ",
+        "transliteration": "imtinānī",
+        "meaning": "gratuitous, granted purely as a favor rather than owed as a duty"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"favor\" in Arabic?",
+        "a": "مِنَّةٌ (minnah) — a favor or benefit conferred or bestowed on someone."
+      },
+      {
+        "q": "Why does مِنَّةٌ sometimes have a negative meaning?",
+        "a": "Because it also serves as the verbal noun for مَنَّ in the sense of reproaching someone for a favor already given, i.e. bringing it up to make them feel indebted."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "مِنَّةٌ is the verbal noun tied to مَنَّ عَلَيْهِ and carries two opposite shades: neutrally, a favor or benefit conferred, and negatively, the act of reproaching someone for a favor already given — recounting one's own generosity in a way that burdens the receiver with obligation. Classical commentary ties this negative sense to Qur'an 2:264."
+  },
+  "5290": {
+    "rootId": 5290,
+    "triliteralRoot": "ث ن ي",
+    "rootTransliteration": "th-n-y",
+    "rootMeaning": "to double, fold, bend",
+    "headwordTransliteration": "thāniyah",
+    "partOfSpeech": "noun/adjective (feminine active participle of form I ثَنَى)",
+    "senses": [
+      {
+        "gloss": "further, another; additional",
+        "note": "used adverbially/adjectivally, e.g. of a repeated or added instance ('a further time')"
+      },
+      {
+        "gloss": "second; a second one — that which follows or pairs with a first",
+        "note": "grounded in the verb's sense 'I became a second to him' (ثَنَيْتُهُ) and 'he is one, so be thou a second to him' (هُوَ وَاحِدٌ فَٱثْنِهِ)"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "ثَنَاهُ",
+        "transliteration": "thanāhu",
+        "meaning": "he doubled or folded it; bent it; turned it away or back (form I, the base verb)"
+      },
+      {
+        "letters": "ثِنْىٌ",
+        "transliteration": "thiny",
+        "meaning": "a fold; a bent or doubled part"
+      },
+      {
+        "letters": "ثنّاهُ",
+        "transliteration": "thannāhu",
+        "meaning": "he doubled it, made it two, or folded it over (form II)"
+      },
+      {
+        "letters": "انثنى",
+        "transliteration": "inthanā",
+        "meaning": "it became folded or bent back; (of the breast) to enfold and conceal enmity within"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"further\" in Arabic?",
+        "a": "ثَانِيَة (thāniyah) — used for 'further, another, additional,' as in a further or second occurrence of something."
+      },
+      {
+        "q": "What is the root of ثانية and what does it literally mean?",
+        "a": "It is from the root ث-ن-ي (thanā), whose base verb means 'to double, fold, or bend'; thāniyah, the feminine participle, extends this to 'second, further, another.'"
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Thāniyah is the feminine counterpart of the participle thānin, drawn from the base verb thanā 'to double, fold, or turn back'; the 'second/further' sense grows from the idea of becoming a second thing alongside a first, as in the cited phrase 'he is one — be thou a second to him.'"
+  },
+  "5291": {
+    "rootId": 5291,
+    "triliteralRoot": "ر د د",
+    "rootTransliteration": "r-d-d",
+    "rootMeaning": "to send back, return, repel",
+    "headwordTransliteration": "radda",
+    "partOfSpeech": "verb (form I, doubled/geminate root)",
+    "senses": [
+      {
+        "gloss": "to send back, return, or restore (something to its place, or someone to where they came from)",
+        "note": "e.g. radda-hu ilā manzili-hi, 'he sent him back to his abode'"
+      },
+      {
+        "gloss": "to reject, refuse, or repel (a gift, a claim, counterfeit money, a beggar)",
+        "note": "radda ʿalayhi al-shayʾ — refused to accept the thing from him"
+      },
+      {
+        "gloss": "to reply, answer, or respond — including refuting or objecting to what was said",
+        "note": "radda al-salām, 'he returned the greeting'; radda ʿalayhi qawla-hu, 'he rejected/refuted his statement'"
+      },
+      {
+        "gloss": "to repeat, do again",
+        "note": "e.g. repeating an oath or an act"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "رَدٌّ",
+        "transliteration": "raddun",
+        "meaning": "a returning; rejection, refusal (the basic verbal noun)"
+      },
+      {
+        "letters": "رِدَّةٌ",
+        "transliteration": "riddatun",
+        "meaning": "a returning, an act of turning back (verbal noun variant of radda)",
+        "path": "/word/apostasy-8186",
+        "rootId": 8186
+      },
+      {
+        "letters": "مَرَدٌّ",
+        "transliteration": "maraddun",
+        "meaning": "a repelling, an averting — as in the Qur'anic 'a day there is no averting'"
+      },
+      {
+        "letters": "مَرْدُودٌ",
+        "transliteration": "mardūdun",
+        "meaning": "rejected, refused, sent back",
+        "path": "/word/refuted-9178",
+        "rootId": 9178
+      },
+      {
+        "letters": "رَادٌّ",
+        "transliteration": "rāddun",
+        "meaning": "one who sends back, rejects, or repels (active participle)"
+      },
+      {
+        "letters": "ردّدهُ",
+        "transliteration": "raddada-hu",
+        "meaning": "to repeat, reiterate (intensive form II — to do something over and over)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"reject\" in Arabic?",
+        "a": "رَدَّ (radda) — literally to send something back or refuse to accept it; used for rejecting a gift, a claim, or counterfeit money."
+      },
+      {
+        "q": "What is the difference between radda ilā and radda ʿalā?",
+        "a": "Radda ilā usually means to return something/someone respectfully, as in radda-hu ilā ummihi ('he restored him to his mother'), while radda ʿalā usually means to reply to, refute, or reject, as in radda ʿalayhi qawla-hu ('he refuted his statement') or radda al-salām ('he returned the greeting')."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Distinguishes two constructions: radda + ilā often carries a sense of returning something/someone respectfully (e.g. restoring a child to his mother), while radda + ʿalā often carries a sense of rejecting, refusing, or answering back (returning a greeting, refuting a statement, refusing a gift) — though this distinction is not perfectly rigid. The verb appears in the Qur'an as yawm lā maradda lahu, \"a day there is no averting,\" describing the Day of Resurrection."
+  },
+  "5292": {
+    "rootId": 5292,
+    "triliteralRoot": "ك و ن",
+    "rootTransliteration": "k-w-n",
+    "rootMeaning": "to be, exist, happen",
+    "headwordTransliteration": "kawn",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "because; since",
+        "note": "used to introduce a reason, as in constructions like لكون ('because of the fact that')"
+      },
+      {
+        "gloss": "being, existence",
+        "note": "the verbal noun of كَانَ ('to be'); with the article, الكَوْن denotes 'the universe' or 'existence' itself"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "كَانَ",
+        "transliteration": "kāna",
+        "meaning": "to be (the basic copula verb, e.g. كَانَ زَيْدٌ قَائِمًا 'Zeyd was standing')"
+      },
+      {
+        "letters": "تَكَوَّنَ",
+        "transliteration": "takawwana",
+        "meaning": "to come into existence, originate, form"
+      },
+      {
+        "letters": "اِسْتَكَانَ",
+        "transliteration": "istakāna",
+        "meaning": "to be humble, submissive, or abased"
+      },
+      {
+        "letters": "كَيْنُونَةٌ",
+        "transliteration": "kaynūnah",
+        "meaning": "being, existence (verbal-noun variant)"
+      },
+      {
+        "letters": "مَكَانَةٌ",
+        "transliteration": "makānah",
+        "meaning": "a place of being; also standing, status, or condition"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"because\" in Arabic?",
+        "a": "كَوْن (kawn), often in the construction لكون (\"because of the fact that\")."
+      },
+      {
+        "q": "What is the root meaning of كَوْن?",
+        "a": "It comes from كَانَ ('to be') and literally means 'being' or 'existence' — the same root gives الكَوْن, 'the universe.'"
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "كَوْن is built from كَانَ, the fundamental Arabic verb 'to be,' which acts as a copula and takes its subject in the nominative and its predicate in the accusative (e.g. كَانَ زَيْدٌ قَائِمًا). As a noun, كَوْن carries the root sense of 'being' or 'existence' (hence الكَوْن, 'the universe'), but it is also used functionally to mean 'because/since' when introducing a reason."
+  },
+  "5293": {
+    "rootId": 5293,
+    "triliteralRoot": "م ث ل",
+    "rootTransliteration": "m-th-l",
+    "rootMeaning": "to resemble, represent, or model",
+    "headwordTransliteration": "mithl",
+    "partOfSpeech": "noun (used substantively, and adverbially as a comparative particle)",
+    "senses": [
+      {
+        "gloss": "a like, similar person or thing; a match, fellow, or counterpart",
+        "note": "the basic substantive sense"
+      },
+      {
+        "gloss": "a likeness or resemblance"
+      },
+      {
+        "gloss": "an equivalent; something given in requital"
+      },
+      {
+        "gloss": "as a denotative of state: 'like'",
+        "note": "e.g. مَرَّ مِثْلَ البَرْقِ 'he passed like the lightning'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "مَثَلَ",
+        "transliteration": "mathala",
+        "meaning": "to stand erect; to stand before someone (form I)"
+      },
+      {
+        "letters": "مَثَّلَ",
+        "transliteration": "maththala",
+        "meaning": "to liken or represent as similar (form II)"
+      },
+      {
+        "letters": "أَمْثَلَهُ",
+        "transliteration": "amthalahu",
+        "meaning": "he set it up, erected it (form IV)"
+      },
+      {
+        "letters": "تَمَثَّلَ",
+        "transliteration": "tamaththala",
+        "meaning": "to imitate, affect to be like; to cite a verse as a proverb (form V)"
+      },
+      {
+        "letters": "تَمَاثَلَ",
+        "transliteration": "tamāthala",
+        "meaning": "to become convalescent, nearly recovered; also, to resemble one another (form VI)",
+        "path": "/word/similarity-13010",
+        "rootId": 13010
+      },
+      {
+        "letters": "اِمْتَثَلَ",
+        "transliteration": "imtathala",
+        "meaning": "to obey, comply with a command (form VIII)"
+      },
+      {
+        "letters": "مَثَلٌ",
+        "transliteration": "mathal",
+        "meaning": "a proverb; a description made by way of comparison"
+      },
+      {
+        "letters": "مِثَالٌ",
+        "transliteration": "mithāl",
+        "meaning": "a model, pattern, or example"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"like it\" in Arabic?",
+        "a": "مِثْله (mithluhu) — the noun مِثْل (mithl, 'a like, an equivalent') plus the suffix -ه ('it/him'); on its own, مِثْل means 'like' or 'a like/counterpart.'"
+      },
+      {
+        "q": "What does the root م-ث-ل mean?",
+        "a": "It centers on likeness and comparison: standing as an equal or match, resembling something, imitating it, or citing it as an example or proverb — as well as an unrelated sense of 'standing erect.'"
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "مِثْل is a noun of comparison rather than a true preposition: مِثْلَ فلان means 'like so-and-so,' a construction found in the Qur'an (e.g. 'like lightning'). It works both as a substantive ('a like, an equivalent, a counterpart') and adverbially to express resemblance between two things."
+  },
+  "5295": {
+    "rootId": 5295,
+    "triliteralRoot": "ص ل ح",
+    "rootTransliteration": "ṣ-l-ḥ",
+    "rootMeaning": "to be good, right, sound",
+    "headwordTransliteration": "ṣalaḥa",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to be, or become, good, right, sound, or in a proper state",
+        "note": "said of a thing or a person; the opposite of فَسَدَ 'to be corrupt/unsound'"
+      },
+      {
+        "gloss": "to be fit, suitable, or proper for something",
+        "note": "tropical extension, e.g. هذا يصلح لك 'this suits/fits you'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "صَلَاحٌ",
+        "transliteration": "ṣalāḥ",
+        "meaning": "goodness, rectitude, soundness (verbal noun of صلح)"
+      },
+      {
+        "letters": "صَالِحٌ",
+        "transliteration": "ṣāliḥ",
+        "meaning": "good, righteous, virtuous, in a sound state"
+      },
+      {
+        "letters": "أَصْلَحَ",
+        "transliteration": "aṣlaḥa",
+        "meaning": "to make good, rectify, reform, repair, or improve (form IV, causative)",
+        "path": "/word/mend-8982",
+        "rootId": 8982
+      },
+      {
+        "letters": "مُصْلِحٌ",
+        "transliteration": "muṣliḥ",
+        "meaning": "reformer, one who rectifies or sets things right"
+      },
+      {
+        "letters": "صُلْحٌ",
+        "transliteration": "ṣulḥ",
+        "meaning": "peace, reconciliation, settlement",
+        "path": "/word/fit-5295",
+        "rootId": 5295
+      },
+      {
+        "letters": "اِصْطِلَاحٌ",
+        "transliteration": "iṣṭilāḥ",
+        "meaning": "mutual agreement on usage; a conventional or technical term (form VIII)"
+      },
+      {
+        "letters": "مَصْلَحَةٌ",
+        "transliteration": "maṣlaḥa",
+        "meaning": "interest, welfare, benefit"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"fit\" in Arabic?",
+        "a": "صَلَحَ (ṣalaḥa) — used of something being sound, right, or suitable, as in 'this thing is fit for you' (هذا يصلح لك)."
+      },
+      {
+        "q": "What is the difference between صلح and أصلح?",
+        "a": "صلح (form I) means to be or become good/sound/fit on its own; أصلح (form IV) is causative — to make something good, to rectify, repair, or reform it."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "صَلَحَ describes a thing or person being sound, right, or in good order — the direct opposite of فَسَدَ 'to be corrupt'. It also extends tropically to mean being fit or suitable for a purpose, matching the gloss 'fit'. The same root gives verbs of making peace (صالح، تصالح، اصطلح) and of actively rectifying or reforming something (أصلح), plus the noun اصطلاح for an agreed-upon technical term."
+  },
+  "5296": {
+    "rootId": 5296,
+    "triliteralRoot": "ا ن ن",
+    "rootTransliteration": "ʾ-n-n",
+    "rootMeaning": "to moan, groan",
+    "headwordTransliteration": "an",
+    "partOfSpeech": "particle (subordinating conjunction, governs the subjunctive)",
+    "senses": [
+      {
+        "gloss": "to (introducing a subjunctive verb)",
+        "note": "Placed directly before an imperfect verb, it puts that verb in the subjunctive mood — functions like English 'to' in 'I want to go.' Lane notes it is kept distinct from the pronoun أَنَ precisely because of this grammatical role."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "أَنَّ",
+        "transliteration": "anna",
+        "meaning": "to moan, groan, or cry out from pain (verb, form I)"
+      },
+      {
+        "letters": "أُنَانٌ",
+        "transliteration": "unān",
+        "meaning": "a moaning, groaning (verbal noun of أَنَّ)"
+      },
+      {
+        "letters": "أَنَ",
+        "transliteration": "ana",
+        "meaning": "I (independent pronoun; dialectal form of أَنَا)"
+      },
+      {
+        "letters": "أَنْتَ",
+        "transliteration": "anta",
+        "meaning": "you (masc. singular pronoun, from the same base plus the ت of address)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"to\" in Arabic?",
+        "a": "أَنْ (an) — the particle placed before a verb to mean 'to,' as in أُرِيدُ أَنْ أَذْهَبَ ('I want to go')."
+      },
+      {
+        "q": "Is أَنْ the same word as أَنَا (I)?",
+        "a": "No. They share the same root letters, but أَنْ is a grammatical particle used before a verb, while أَنَا/أَنَ is the separate pronoun meaning 'I'."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "أَنْ is a small but essential grammatical particle in Classical and Qur'anic Arabic: set before an imperfect verb it governs the subjunctive, as in أُرِيدُ أَنْ أَذْهَبَ ('I want to go'). Lane groups it under the same root as the first-person pronoun أَنَ/أَنَا and the verb أَنَّ ('to moan'), while taking care to mark it as functionally distinct from both — it is a connector, not a noun or verb in its own right."
+  },
+  "5297": {
+    "rootId": 5297,
+    "triliteralRoot": "و ج ه",
+    "rootTransliteration": "w-j-h",
+    "rootMeaning": "to face, turn toward",
+    "headwordTransliteration": "wājaha",
+    "partOfSpeech": "verb (form III)",
+    "senses": [
+      {
+        "gloss": "to face, confront, or meet someone face to face",
+        "note": "the basic sense — direct physical or situational encounter"
+      },
+      {
+        "gloss": "to accost or address someone directly, with speech or words",
+        "note": "the confrontation carried out verbally rather than just physically"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "وَجْهٌ",
+        "transliteration": "wajh",
+        "meaning": "face; also course, direction, or the way/aspect of a matter"
+      },
+      {
+        "letters": "جِهَةٌ",
+        "transliteration": "jihah",
+        "meaning": "direction, aspect, respect (as in 'in respect of...')"
+      },
+      {
+        "letters": "وِجْهَةٌ",
+        "transliteration": "wijhah",
+        "meaning": "a direction one heads toward; a way or manner of acting",
+        "path": "/word/the-destination-20269",
+        "rootId": 20269
+      },
+      {
+        "letters": "تَوَجَّهَ",
+        "transliteration": "tawajjaha",
+        "meaning": "form V: to head toward, betake oneself to a place or goal",
+        "path": "/word/orientation-6473",
+        "rootId": 6473
+      },
+      {
+        "letters": "اِتَّجَهَ",
+        "transliteration": "ittajaha",
+        "meaning": "form VIII: to apply oneself rightly, find one's proper course"
+      },
+      {
+        "letters": "وَجِيهٌ",
+        "transliteration": "wajīh",
+        "meaning": "worthy of regard, distinguished"
+      },
+      {
+        "letters": "تَوْجِيهٌ",
+        "transliteration": "tawjīh",
+        "meaning": "a directing, orienting, or pointing toward"
+      },
+      {
+        "letters": "مُتَوَجَّهٌ",
+        "transliteration": "mutawajjah",
+        "meaning": "a place toward which one tends or is heading"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"confront\" in Arabic?",
+        "a": "وَاجَهَ (wājaha) — to face, confront, or meet someone directly, face to face."
+      },
+      {
+        "q": "What is the root of وَاجَهَ?",
+        "a": "It comes from the triliteral root و-ج-ه (w-j-h), which also gives وَجْهٌ (face) and جِهَةٌ (direction)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Built on form III of the root و-ج-ه ('face'), wājaha frames an action as done directly, face to face — confronting, meeting, or addressing someone rather than acting at a distance or indirectly. It sits alongside the reflexive تَوَجَّهَ (to head toward) and اِتَّجَهَ (to be properly directed), both of which extend the same root's core idea of orientation and facing."
+  },
+  "5302": {
+    "rootId": 5302,
+    "triliteralRoot": "خ ذ ل",
+    "rootTransliteration": "kh-dh-l",
+    "rootMeaning": "to forsake, fail to aid",
+    "headwordTransliteration": "khidhlān",
+    "partOfSpeech": "noun (verbal noun / maṣdar of form I خَذَلَ)",
+    "senses": [
+      {
+        "gloss": "failure to aid or support someone; abandonment",
+        "note": "the act of holding back from helping, forsaking, or deserting a person who needed assistance"
+      },
+      {
+        "gloss": "God's withholding of aid or preservation from a person",
+        "note": "a theological extension, applied to divine failure to preserve someone from an evil action or its consequences"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "خَذَلَ",
+        "transliteration": "khadhala",
+        "meaning": "he failed to aid him, held back from helping, or forsook/deserted him"
+      },
+      {
+        "letters": "خذّل",
+        "transliteration": "khadhdhala",
+        "meaning": "he induced someone to withhold aid, or discouraged him from fighting/helping"
+      },
+      {
+        "letters": "تخاذلوا",
+        "transliteration": "takhādhalū",
+        "meaning": "they abandoned one another, each failing to aid the other",
+        "path": "/word/they-faltered-19898",
+        "rootId": 19898
+      },
+      {
+        "letters": "إِنْخَذَلَ",
+        "transliteration": "inkhadhala",
+        "meaning": "to be left without aid, forsaken"
+      },
+      {
+        "letters": "خَذُولٌ",
+        "transliteration": "khadhūl",
+        "meaning": "one who habitually fails to give aid; applied to Satan in the Qur'an"
+      },
+      {
+        "letters": "خَاذِلٌ",
+        "transliteration": "khādhil",
+        "meaning": "one who withholds aid; a deserter"
+      },
+      {
+        "letters": "مَخْذُولٌ",
+        "transliteration": "makhdhūl",
+        "meaning": "forsaken, left with no helper"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"letting down\" in Arabic?",
+        "a": "خِذْلَان (khidhlān) — failing to give someone the aid or support they needed."
+      },
+      {
+        "q": "What is the root of خِذْلَان and what other words come from it?",
+        "a": "It comes from the root خ ذ ل (kh-dh-l), meaning to abandon or withhold aid. Related words include خَذَلَ (to forsake/fail to aid), خَذُولٌ (one who habitually deserts), and مَخْذُولٌ (forsaken, helpless)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Khidhlān names the act of leaving someone without help at the moment they need it most — the opposite of aiding or supporting them. Lane also records a theological sense: God's khidhlān is His withdrawal of support from a person, letting him fall into error; a verb from this same root appears in this sense in Qur'an 3:154, warning that if God withholds His aid, no one else can help."
+  },
+  "5305": {
+    "rootId": 5305,
+    "triliteralRoot": "ف ق ر",
+    "rootTransliteration": "f-q-r",
+    "rootMeaning": "to pierce, bore; hence poverty",
+    "headwordTransliteration": "faqr",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "poverty, need, neediness",
+        "note": "the common abstract sense, the state opposite of sufficiency/wealth; tied to فَقِير 'a poor, needy person'."
+      },
+      {
+        "gloss": "the act of digging (the ground, or a well)",
+        "note": "an older concrete sense recorded as the verbal noun of فَقَرَ 'he dug'."
+      },
+      {
+        "gloss": "boring or perforating, as of beads for stringing",
+        "note": "also recorded for this same verbal noun."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "فَقِيرٌ",
+        "transliteration": "faqīr",
+        "meaning": "a poor, needy person",
+        "path": "/word/poor-8011",
+        "rootId": 8011
+      },
+      {
+        "letters": "فَقَارٌ",
+        "transliteration": "faqār",
+        "meaning": "the vertebrae, the backbone"
+      },
+      {
+        "letters": "فَاقِرَةٌ",
+        "transliteration": "fāqirah",
+        "meaning": "a crushing calamity (lit. one that 'breaks the vertebrae')"
+      },
+      {
+        "letters": "أَفْقَرَ",
+        "transliteration": "afqara",
+        "meaning": "to render someone poor, needy (also: to lend one's mount for riding)"
+      },
+      {
+        "letters": "تَفَاقَرَ",
+        "transliteration": "tafāqara",
+        "meaning": "to feign the lowliness of poverty, to act humbly before others"
+      },
+      {
+        "letters": "اِفْتَقَرَ",
+        "transliteration": "iftaqara",
+        "meaning": "to cleave, slit, or rend; to open",
+        "path": "/word/require-13313",
+        "rootId": 13313
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"need\" in Arabic?",
+        "a": "فَقْرٌ (faqr)."
+      },
+      {
+        "q": "What is the root of فَقْرٌ and what other words come from it?",
+        "a": "It comes from the triliteral root ف ق ر (f-q-r), which also gives فَقِير 'poor, needy person' and فَقَار 'vertebrae, backbone'."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "فَقْرٌ is the standard abstract noun for poverty or lack, standing opposite غِنًى 'wealth' and closely tied to فَقِير 'poor, needy' (from أَفْقَرَ 'he rendered him فَقِير'). The same verbal noun also carries older, concrete senses recorded by the lexicographers — digging, boring, or making an incision — actions of breaking or opening something, echoed in related words like فَاقِرَةٌ 'a back-breaking calamity' and فَقَارٌ 'vertebrae'."
+  },
+  "5307": {
+    "rootId": 5307,
+    "triliteralRoot": "ر ب ب",
+    "rootTransliteration": "r-b-b",
+    "rootMeaning": "to own, rule, and nurture, foster",
+    "headwordTransliteration": "rabb",
+    "partOfSpeech": "noun (substantive)",
+    "senses": [
+      {
+        "gloss": "Lord, master, possessor, owner",
+        "note": "one who has authority, command, or ownership over a person or thing; commonly used as an epithet of God."
+      },
+      {
+        "gloss": "Chief, ruler",
+        "note": "one placed over a people to govern and manage their affairs."
+      },
+      {
+        "gloss": "Fosterer, one who brings up and sustains",
+        "note": "reflects the root's core sense — bringing something to completion by degrees, as in rearing a child."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "رَبَّهُ",
+        "transliteration": "rabbahu",
+        "meaning": "he possessed or owned it, had authority over it; also, he reared and fostered a child"
+      },
+      {
+        "letters": "ربّب",
+        "transliteration": "rabbaba",
+        "meaning": "he reared, fostered, brought up (emphatic form of rabba)"
+      },
+      {
+        "letters": "رِبَابَةٌ",
+        "transliteration": "ribābah",
+        "meaning": "ruling, governing; the state of having authority over people"
+      },
+      {
+        "letters": "رُبَّى",
+        "transliteration": "rubbā",
+        "meaning": "a ewe or she-goat that has recently given birth",
+        "path": "/word/nurturing-12012",
+        "rootId": 12012
+      },
+      {
+        "letters": "رُبٌّ",
+        "transliteration": "rubb",
+        "meaning": "rob, thickened fruit syrup, used to season a skin so it keeps butter well"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"Lord\" in Arabic?",
+        "a": "رَبّ (rabb)."
+      },
+      {
+        "q": "What is the root meaning behind رَبّ?",
+        "a": "The root ر-ب-ب centers on possessing or having authority over something, and, by extension, on rearing or fostering it to completion — hence رَبّ covers both 'lord/master/owner' and, through the verb, 'one who brings up and sustains.'"
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Lane notes the primary sense of الرَّبّ is التربية — bringing something to a state of completion by degrees, as a fosterer raises a child — which underlies its extended use as 'lord, master, ruler, possessor.'"
+  },
+  "5309": {
+    "rootId": 5309,
+    "triliteralRoot": "غ ف ر",
+    "rootTransliteration": "ġ-f-r",
+    "rootMeaning": "to cover, conceal, veil",
+    "headwordTransliteration": "ġafara",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to cover, veil, conceal, or hide (something)",
+        "note": "The primary, literal sense of the root — e.g. covering white hair with dye, or packing goods into a bag so they are hidden from view."
+      },
+      {
+        "gloss": "to forgive, pardon (a sin or offense)",
+        "note": "Said especially of God forgiving a person's sin (ġafara lahū ḏanbahū); built on the 'covering' sense — the fault is covered over rather than simply erased."
+      },
+      {
+        "gloss": "to set right, rectify (a matter)",
+        "note": "Figurative extension: 'covering' an affair with what is needed to fix it, i.e. putting it right."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "اِسْتَغْفَرَ",
+        "transliteration": "istaġfara",
+        "meaning": "to beg or seek God's forgiveness for a sin"
+      },
+      {
+        "letters": "اِغْتَفَرَ",
+        "transliteration": "iġtafara",
+        "meaning": "to forgive, pardon (someone for what they did)",
+        "path": "/word/be-involved-uncertain-root-13563",
+        "rootId": 13563
+      },
+      {
+        "letters": "غفّرهُ",
+        "transliteration": "ġaffarahū",
+        "meaning": "to say of someone 'may God forgive him'"
+      },
+      {
+        "letters": "تغافرا",
+        "transliteration": "taġāfarā",
+        "meaning": "(of two people) to pray for each other's forgiveness"
+      },
+      {
+        "letters": "غُفْرٌ",
+        "transliteration": "ġufr",
+        "meaning": "the young of a mountain-goat"
+      },
+      {
+        "letters": "غَفَرٌ",
+        "transliteration": "ġafar",
+        "meaning": "the nap or pile of a garment; also fine, downy herbage"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"forgive\" in Arabic?",
+        "a": "غَفَرَ (ġafara) — from the root غ ف ر, whose core meaning is 'to cover'; forgiving a sin is pictured as covering it over."
+      },
+      {
+        "q": "What is the literal meaning of the root غفر?",
+        "a": "It literally means to cover, veil, or conceal something; the sense 'forgive' is a later, figurative extension of this covering idea."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "The word's root meaning is physical covering or concealment; the religious sense 'forgive' grows directly out of this, since God's forgiveness is pictured as covering over a person's sin rather than erasing it. It is typically used with a following person marked by li- ('for/to him') and the sin as object, as in ġafara lahū ḏanbahū, 'He forgave him his sin.'"
+  },
+  "5310": {
+    "rootId": 5310,
+    "triliteralRoot": "م ح ض",
+    "rootTransliteration": "m-ḥ-ḍ",
+    "rootMeaning": "to be pure, unmixed, unadulterated",
+    "headwordTransliteration": "maḥḍ",
+    "partOfSpeech": "noun/adjective (verbal-noun form used as an invariable epithet)",
+    "senses": [
+      {
+        "gloss": "pure milk, unmixed with water",
+        "note": "the base sense: milk (sweet or sour) with nothing added — no other milk is properly called this"
+      },
+      {
+        "gloss": "pure, unmixed, unalloyed (of any substance)",
+        "note": "e.g. فضّة محض 'pure, unalloyed silver'"
+      },
+      {
+        "gloss": "genuine, of unmixed lineage",
+        "note": "figurative use, e.g. عربيّ محض 'a genuine Arab of pure lineage'; used the same in masculine, feminine, dual and plural"
+      },
+      {
+        "gloss": "sincere, true (of love, faith, advice)",
+        "note": "figurative use, e.g. حبّ محض 'a pure/sincere love', محض الإيمان 'pure faith'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "مَحَضَهُ",
+        "transliteration": "maḥaḍahu",
+        "meaning": "he gave him pure milk to drink; he made it (milk, or anything) pure/unmixed"
+      },
+      {
+        "letters": "مَحُضَ",
+        "transliteration": "maḥuḍa",
+        "meaning": "he was/became pure in lineage or in grounds for respect"
+      },
+      {
+        "letters": "مَحِضَ",
+        "transliteration": "maḥiḍa",
+        "meaning": "he drank pure milk"
+      },
+      {
+        "letters": "أَمْحَضَ",
+        "transliteration": "amḥaḍa",
+        "meaning": "he gave pure milk to drink (also: fed a beast with clover)"
+      },
+      {
+        "letters": "اِمْتَحَضَ",
+        "transliteration": "imtaḥaḍa",
+        "meaning": "he drank pure milk"
+      },
+      {
+        "letters": "مَاحِضٌ",
+        "transliteration": "māḥiḍ",
+        "meaning": "one who possesses, or eagerly desires, pure milk"
+      },
+      {
+        "letters": "أُمْحُوضَةٌ",
+        "transliteration": "umḥūḍah",
+        "meaning": "true, sincere advice"
+      },
+      {
+        "letters": "مَمْحُوضٌ",
+        "transliteration": "mamḥūḍ",
+        "meaning": "given pure milk to drink; made pure/unmixed"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"pure\" in Arabic?",
+        "a": "مَحْض (maḥḍ) — literally pure, unmixed milk, and by extension anything free from admixture."
+      },
+      {
+        "q": "What does محض mean besides \"pure\"?",
+        "a": "Figuratively it describes genuine or unmixed lineage (عربيّ محض, a pure-blooded Arab) and sincere love, faith, or advice (حبّ محض, أُمْحُوضَة)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "محض starts from pure, unmixed milk and extends figuratively to anything free of admixture: pure silver, a person of unmixed Arab lineage, or a sincere, unmixed love, faith, or piece of advice. As an epithet it is often kept in the same form for masculine, feminine, dual, and plural alike, though inflected forms also occur."
+  },
+  "5311": {
+    "rootId": 5311,
+    "triliteralRoot": "ح س ن",
+    "rootTransliteration": "ḥ-s-n",
+    "rootMeaning": "to be good, beautiful, excellent",
+    "headwordTransliteration": "iḥsān",
+    "partOfSpeech": "noun (verbal noun / maṣdar of form IV, aḥsana)",
+    "senses": [
+      {
+        "gloss": "doing good; kindness, benevolence",
+        "note": "The opposite of إِسَآءَة (bad conduct/wrongdoing). Unlike إِنْعَام (bestowing a favor, which is directed only at another), iḥsān can be toward oneself or another; it exceeds mere justice (عَدْل) by giving more than one owes and taking less than is owed to one."
+      },
+      {
+        "gloss": "sincerity; excellence in faith and devotion",
+        "note": "In religious usage, explained as الإِخْلَاص (freedom from hypocrisy), a condition for the soundness of faith (إِيمَان) and submission (إِسْلَام) together — denoting watchfulness, dutiful obedience, and keeping to the right way followed by the righteous who came before."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "حَسُنَ",
+        "transliteration": "ḥasuna",
+        "meaning": "to be or become good, goodly, or beautiful (form I)"
+      },
+      {
+        "letters": "حُسْنٌ",
+        "transliteration": "ḥusn",
+        "meaning": "goodness, beauty, goodliness"
+      },
+      {
+        "letters": "حَسَنٌ",
+        "transliteration": "ḥasan",
+        "meaning": "good, goodly, beautiful, comely"
+      },
+      {
+        "letters": "حَسَنَةٌ",
+        "transliteration": "ḥasanah",
+        "meaning": "a good deed"
+      },
+      {
+        "letters": "أَحْسَنُ",
+        "transliteration": "aḥsan",
+        "meaning": "better, best, more excellent (elative)"
+      },
+      {
+        "letters": "حسّنهُ",
+        "transliteration": "ḥassanahu",
+        "meaning": "to make good, beautify, embellish, adorn (form II)"
+      },
+      {
+        "letters": "استحسنهُ",
+        "transliteration": "istaḥsanahu",
+        "meaning": "to deem good, approve of, esteem (form X)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"kindness\" in Arabic?",
+        "a": "إِحْسَان (iḥsān)."
+      },
+      {
+        "q": "What does إِحْسَان mean beyond \"kindness\"?",
+        "a": "Beyond doing good to others, it carries a religious sense of sincerity and watchful devotion, described as a condition for the soundness of faith (إِيمَان) and submission (إِسْلَام)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Iḥsān is the verbal noun of the form IV verb أَحْسَنَ (aḥsana). Its everyday sense is doing good or acting kindly toward others — going beyond strict fairness. In classical religious usage it also carries a deeper sense of sincere, watchful devotion, named alongside إِيمَان (faith) and إِسْلَام (submission) as a condition for their soundness."
+  },
+  "5312": {
+    "rootId": 5312,
+    "triliteralRoot": "ك ر م",
+    "rootTransliteration": "k-r-m",
+    "rootMeaning": "to be noble, generous, precious",
+    "headwordTransliteration": "karam",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "generosity, nobility, liberality",
+        "note": "generous or honourable quality, e.g. in a person or a horse; opposite of لَئِيم (mean, base)"
+      },
+      {
+        "gloss": "high worth, preciousness",
+        "note": "of a thing: being highly esteemed, prized, or valuable (from the verb كَرُمَ, 'to be/become excellent or precious')"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "كَرُمَ",
+        "transliteration": "karuma",
+        "meaning": "to be/become highly esteemed, excellent, or precious; also said of land: to be fertile, well-tilled"
+      },
+      {
+        "letters": "كَرِيمٌ",
+        "transliteration": "karīm",
+        "meaning": "generous, noble, high-born; also 'excellent, valuable' of things and land"
+      },
+      {
+        "letters": "أَكْرَمَ",
+        "transliteration": "akrama",
+        "meaning": "to treat someone with honour or courtesy (form IV)"
+      },
+      {
+        "letters": "إِكْرَام",
+        "transliteration": "ikrām",
+        "meaning": "the act of honouring; bounty, as in the Qur'anic epithet 'Possessor of majesty and bounty'"
+      },
+      {
+        "letters": "كَرَامَة",
+        "transliteration": "karāma",
+        "meaning": "honour, dignity; also the term for a saint's miracle (thaumaturgy)"
+      },
+      {
+        "letters": "مَكْرَمَة",
+        "transliteration": "makrama",
+        "meaning": "a generous or honourable quality or deed; a means of attaining honour"
+      },
+      {
+        "letters": "تَكْرِمَة",
+        "transliteration": "takrima",
+        "meaning": "an honouring, a mark of honour shown to someone"
+      },
+      {
+        "letters": "تَكَرَّمَ",
+        "transliteration": "takarrama",
+        "meaning": "to shun or keep oneself far from something base; or to affect generosity (form V)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"generosity\" in Arabic?",
+        "a": "كَرَم (karam)."
+      },
+      {
+        "q": "What is the difference between كَرَم and كَرِيم؟",
+        "a": "كَرَم (karam) is the abstract noun 'generosity/nobility'; كَرِيم (karīm) is the adjective describing a generous or noble person or thing."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "كَرَم names the core virtue of generosity/nobility of character, prototypically illustrated by a generous horse or a hospitable host, and by extension the high worth of any prized thing or fertile land. The root appears in the Qur'anic divine epithet ذُو الجَلَالِ وَالإِكْرَامِ, \"Possessor of majesty and bounty\" (Qur'an 55:27)."
+  },
+  "5313": {
+    "rootId": 5313,
+    "triliteralRoot": "ن ك ت",
+    "rootTransliteration": "n-k-t",
+    "rootMeaning": "to mark, dot, leave a point",
+    "headwordTransliteration": "nuktah",
+    "partOfSpeech": "noun (substantive)",
+    "senses": [
+      {
+        "gloss": "a point, dot, speck, or small mark",
+        "note": "the literal sense — e.g. a small mark resembling a speck of dirt on a mirror, or a spot in the eye"
+      },
+      {
+        "gloss": "the essential point, gist, or essence of a matter",
+        "note": "an extension of the literal 'point' sense to the core of an idea or argument"
+      },
+      {
+        "gloss": "a subtle, witty, or finely turned saying; an epigram",
+        "note": "figurative (tropical) use — a nice or quaint remark that strikes the heart of the hearer, on reflecting over which one taps the ground with a finger or stick"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "نَكَتَ",
+        "transliteration": "nakata",
+        "meaning": "to strike the ground with a stick or finger leaving a mark, as one does while reflecting or meditating; also to speak in subtle, pointed expressions",
+        "path": "/word/poking-12473",
+        "rootId": 12473
+      },
+      {
+        "letters": "نَكْتٌ",
+        "transliteration": "nakt",
+        "meaning": "the verbal noun of nakata — the act of striking/marking the ground",
+        "path": "/word/poking-12473",
+        "rootId": 12473
+      },
+      {
+        "letters": "انتكت",
+        "transliteration": "intakata",
+        "meaning": "to be thrust down and fall upon one's head"
+      },
+      {
+        "letters": "نكّت",
+        "transliteration": "nakkata",
+        "meaning": "(of dates) to begin ripening and become speckled",
+        "path": "/word/poking-12473",
+        "rootId": 12473
+      },
+      {
+        "letters": "نَكَّاتٌ",
+        "transliteration": "nakkāt",
+        "meaning": "one who habitually wounds others' reputations by speaking against them"
+      },
+      {
+        "letters": "نَاكِتٌ",
+        "transliteration": "nākit",
+        "meaning": "a defect in a camel's elbow that marks or lacerates its side"
+      },
+      {
+        "letters": "مَنْكُوتٌ",
+        "transliteration": "mankūt",
+        "meaning": "a cooked marrow-bone struck open to release the marrow"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"essence\" in Arabic?",
+        "a": "نُكْتَة (nuktah) — literally a 'point' or small mark, extended to mean the essential point or gist of a matter."
+      },
+      {
+        "q": "What does نُكْتَة mean besides \"essence\"?",
+        "a": "It can also mean a literal small mark or speck, and figuratively a subtle, witty saying or epigram that makes a striking impression."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "The root idea is striking or tapping so as to leave a mark — from this, نُكْتَة came to denote a small point or mark, then the central point or essence of a matter, and figuratively a subtle, well-crafted saying that leaves an impression on the listener, much as tapping the ground leaves marks on it."
+  },
+  "5314": {
+    "rootId": 5314,
+    "triliteralRoot": "س أ ل",
+    "rootTransliteration": "s-ʾ-l",
+    "rootMeaning": "to ask, question, request",
+    "headwordTransliteration": "masʾalah",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "a question, issue, or matter",
+        "note": "the common extended sense — a point put forward for inquiry, discussion, or judgment"
+      },
+      {
+        "gloss": "the act of asking, inquiring, or requesting",
+        "note": "the original sense: مسألة is one of the verbal nouns of سَأَلَ 'to ask', alongside سُؤَالٌ"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "سَأَلَ",
+        "transliteration": "saʾala",
+        "meaning": "to ask, question, inquire of someone"
+      },
+      {
+        "letters": "سُؤَالٌ",
+        "transliteration": "suʾāl",
+        "meaning": "a question; the act of asking (verbal noun paired with مسألة)"
+      },
+      {
+        "letters": "سَائِلٌ",
+        "transliteration": "sāʾil",
+        "meaning": "one who asks; an asker or petitioner"
+      },
+      {
+        "letters": "مَسْؤُولٌ",
+        "transliteration": "masʾūl",
+        "meaning": "one who is asked",
+        "path": "/word/questioned-9661",
+        "rootId": 9661
+      },
+      {
+        "letters": "تَسَآءَلُوا",
+        "transliteration": "tasāʾalū",
+        "meaning": "they asked, or begged, one another"
+      },
+      {
+        "letters": "أَسْأَلَ",
+        "transliteration": "asʾala",
+        "meaning": "to fulfil someone's request or need"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"matter\" in Arabic?",
+        "a": "مَسْأَلَةٌ (masʾalah)."
+      },
+      {
+        "q": "What does مسألة literally mean?",
+        "a": "It is the verbal noun of سأل, 'to ask' — literally 'the asking, inquiring, or requesting' — which extended to mean a question, issue, or matter."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "مسألة is the verbal noun of سَأَلَ ('to ask, inquire'); its familiar modern sense of 'a matter, issue, or question' (e.g. a point of law or a problem to be worked out) develops from this original meaning of the act of asking."
+  },
+  "5317": {
+    "rootId": 5317,
+    "triliteralRoot": "ح س ن",
+    "rootTransliteration": "ḥ-s-n",
+    "rootMeaning": "to be good, goodly, beautiful",
+    "headwordTransliteration": "muḥsin",
+    "partOfSpeech": "noun/adjective (active participle of Form IV, أَحْسَنَ)",
+    "senses": [
+      {
+        "gloss": "one who does good; a benefactor, doer of good deeds",
+        "note": "active participle of أَحْسَنَ (Form IV); إِحْسَان is described as the opposite of إِسَاءَة, 'doing wrong'"
+      },
+      {
+        "gloss": "benevolent; one who acts well or kindly toward others",
+        "note": "from أَحْسَنَ إِلَيْهِ / بِهِ, 'he acted well towards him, did good to him, benefited him'"
+      },
+      {
+        "gloss": "one who knows something well, skilled in",
+        "note": "a tropical extension of أَحْسَنَ, 'to know well', e.g. هُوَ يُحْسِنُ بِالعَرَبِيَّةِ, 'he knows Arabic well'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "حُسْنٌ",
+        "transliteration": "ḥusn",
+        "meaning": "goodness, beauty"
+      },
+      {
+        "letters": "حَسَنٌ",
+        "transliteration": "ḥasan",
+        "meaning": "good, goodly, beautiful"
+      },
+      {
+        "letters": "أَحْسَنُ",
+        "transliteration": "aḥsan",
+        "meaning": "better, best; more/most goodly (elative)"
+      },
+      {
+        "letters": "حَسَنَةٌ",
+        "transliteration": "ḥasanah",
+        "meaning": "a good deed; a good thing"
+      },
+      {
+        "letters": "أَحْسَنَ",
+        "transliteration": "aḥsana",
+        "meaning": "to do good, act well — the verb muḥsin comes from"
+      },
+      {
+        "letters": "اِسْتَحْسَنَ",
+        "transliteration": "istaḥsana",
+        "meaning": "to deem good, approve of, esteem as good",
+        "path": "/word/to-deem-good-appropriate-14011",
+        "rootId": 14011
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"benevolent\" in Arabic?",
+        "a": "مُحْسِن (muḥsin) — literally 'one who does good,' the active participle of أَحْسَنَ (Form IV of the root ح س ن), used for someone who acts well or does good toward others."
+      },
+      {
+        "q": "What is the opposite of مُحْسِن?",
+        "a": "مُسِيء ('one who does wrong'), since Lane's notes that إِحْسَان — the quality of a muḥsin — is defined as the direct opposite of إِسَاءَة, 'doing evil.'"
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "مُحْسِن is the active participle of أَحْسَنَ (Form IV), the verb behind إِحْسَانٌ — explicitly said to be the opposite of إِسَاءَةٌ, \"doing wrong.\" Classical usage distinguishes إِحْسَان from mere عَدْل (\"justice\"): justice gives what is owed and takes what is owed, while iḥsān — the quality that makes one a muḥsin — gives more than is owed and takes less. The phrase أَحْسَنَ إِلَيْهِ / بِهِ, \"he did good to him, benefited him,\" captures the core everyday sense of the word."
+  },
+  "5324": {
+    "rootId": 5324,
+    "triliteralRoot": "ف ص ل",
+    "rootTransliteration": "f-ṣ-l",
+    "rootMeaning": "to separate, divide, or cut apart",
+    "headwordTransliteration": "faṣl",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "chapter, section",
+        "note": "A distinct division of a book or discourse — an extension of the root sense of a portion set apart from the rest."
+      },
+      {
+        "gloss": "separation, division",
+        "note": "The verbal noun of فَصَلَ: the act of separating a thing from another, or making a partition between two things."
+      },
+      {
+        "gloss": "decisive judgment, decision",
+        "note": "Used of settling a dispute or distinguishing true from false, as in فَصْلُ الخُصُومَاتِ, 'the deciding of litigations'."
+      },
+      {
+        "gloss": "weaning",
+        "note": "Separating a suckling infant from nursing; also expressed by the related noun فِصَالٌ."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "فَصَلَ",
+        "transliteration": "faṣala",
+        "meaning": "to separate, divide; also to decide (a judgment) or go forth/depart"
+      },
+      {
+        "letters": "فَصَّلَ",
+        "transliteration": "faṣṣala",
+        "meaning": "to divide into distinct parts, or explain in detail (form II)"
+      },
+      {
+        "letters": "فَاصَلَ",
+        "transliteration": "fāṣala",
+        "meaning": "to part ways with, e.g. a partner (form III)"
+      },
+      {
+        "letters": "فِصَالٌ",
+        "transliteration": "fiṣāl",
+        "meaning": "weaning of a suckling"
+      },
+      {
+        "letters": "فَاصِلَةٌ",
+        "transliteration": "fāṣilah",
+        "meaning": "a dividing bead set between strung pearls"
+      },
+      {
+        "letters": "مُفَصَّلٌ",
+        "transliteration": "mufaṣṣal",
+        "meaning": "made up of distinct, separated parts (e.g. a beaded necklace)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"chapter\" in Arabic?",
+        "a": "فَصْل (faṣl)."
+      },
+      {
+        "q": "What is the difference between فَصْل and فِصَال؟",
+        "a": "فَصْل is the general noun for separation, a chapter, or a judicial decision, while فِصَال specifically means weaning a nursing child from its mother."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "فَصْل is the everyday word for a chapter or section of a book, growing out of the root's core sense of separating one part from another; the same word also covers a decisive judgment, as in فَصْلُ الخُصُومَاتِ, 'the deciding of disputes'."
+  },
+  "5321": {
+    "rootId": 5321,
+    "triliteralRoot": "س ر ر",
+    "rootTransliteration": "s-r-r",
+    "rootMeaning": "to hide, conceal, or inwardly rejoice",
+    "headwordTransliteration": "surra",
+    "partOfSpeech": "verb (form I, passive voice)",
+    "senses": [
+      {
+        "gloss": "to be pleased, gladdened, made joyful",
+        "note": "the passive counterpart of سَرَّهُ 'he gladdened him'; commonly followed by بِ, as in سُرَّ بِهِ, 'he rejoiced at it/him'."
+      },
+      {
+        "gloss": "(of a newborn) to have the navel-string cut",
+        "note": "a separate, concrete sense recorded for the same passive form, distinct from the sense of joy."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "سَرَّهُ",
+        "transliteration": "sarrahu",
+        "meaning": "he gladdened, delighted him (active form I)",
+        "path": "/word/his-pleasure-19649",
+        "rootId": 19649
+      },
+      {
+        "letters": "أَسَرَّهُ",
+        "transliteration": "asarrahu",
+        "meaning": "he concealed it — and, contrarily, he revealed/made it known (form IV)"
+      },
+      {
+        "letters": "سَارَّهُ",
+        "transliteration": "sārrahu",
+        "meaning": "he spoke to him secretly, confided in him (form III)"
+      },
+      {
+        "letters": "سِرٌّ",
+        "transliteration": "sirr",
+        "meaning": "a secret"
+      },
+      {
+        "letters": "سُرُورٌ",
+        "transliteration": "surūr",
+        "meaning": "joy, gladness (verbal noun)"
+      },
+      {
+        "letters": "سُرَّةٌ",
+        "transliteration": "surrah",
+        "meaning": "the navel"
+      },
+      {
+        "letters": "سُرِّيَّةٌ",
+        "transliteration": "surriyyah",
+        "meaning": "a concubine slave-girl"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"please\" in Arabic?",
+        "a": "سُرَّ (surra) — the passive of سَرَّ (sarra), 'to gladden'; سُرَّ itself means 'he was pleased, delighted, made glad', often used as سُرَّ بِ, 'he was pleased by/with'."
+      },
+      {
+        "q": "Is سُرَّ (to be pleased) related to سِرّ (secret)?",
+        "a": "Both come from the root س ر ر. Lane's explains the joy denoted by سُرَّ as a delight of the heart with no outward sign — the same 'hidden, inward' idea that underlies سِرّ 'secret' and أَسَرَّ 'to conceal'."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "سُرَّ is the passive/quasi-passive form of سَرَّ, describing the experience of being gladdened rather than the act of gladdening someone; Lane's glosses it as a pleasure or delight of the heart that need show no outward sign, which is what links this 'joy' sense to the root's other core sense of hiding or keeping secret (سِرّ, أَسَرَّ). The same passive shape سُرَّ is also recorded, unrelated in meaning, for a newborn having its umbilical cord cut."
+  },
+  "5330": {
+    "rootId": 5330,
+    "triliteralRoot": "س ج د",
+    "rootTransliteration": "s-j-d",
+    "rootMeaning": "to bow down, be humble",
+    "headwordTransliteration": "sajada",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to prostrate oneself in prayer; to put the forehead on the ground",
+        "note": "the specific sense used for the Islamic prayer prostration"
+      },
+      {
+        "gloss": "to be lowly, humble, or submissive; to bend oneself down toward the ground",
+        "note": "the general, non-ritual sense"
+      },
+      {
+        "gloss": "(of a camel) to lower its head so as to be mounted",
+        "note": "tropical usage"
+      },
+      {
+        "gloss": "to bend or incline, as a fruit-laden palm tree, a ship before the wind, or plants turning toward the sun",
+        "note": "tropical usage"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "سَجْدَةٌ",
+        "transliteration": "sajdah",
+        "meaning": "a single act of prostration (in prayer)"
+      },
+      {
+        "letters": "سِجْدَةٌ",
+        "transliteration": "sijdah",
+        "meaning": "a particular kind or manner of prostration"
+      },
+      {
+        "letters": "سَجَّادٌ",
+        "transliteration": "sajjād",
+        "meaning": "one who prostrates himself often or frequently"
+      },
+      {
+        "letters": "سَجَّادَةٌ",
+        "transliteration": "sajjādah",
+        "meaning": "a prayer mat or small carpet knelt on for prayer; also the mark of prostration left on the forehead"
+      },
+      {
+        "letters": "سَاجِدٌ",
+        "transliteration": "sājid",
+        "meaning": "one who is bowing or prostrating himself (active participle)"
+      },
+      {
+        "letters": "أَسْجَدَ",
+        "transliteration": "asjada",
+        "meaning": "to gaze continuously with lowered, languid eyelids (tropical, form IV)",
+        "path": "/word/caused-to-prostrate-16621",
+        "rootId": 16621
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"bow\" in Arabic?",
+        "a": "سَجَدَ (sajada) — to bow down or prostrate oneself, most notably in the Islamic prayer prostration."
+      },
+      {
+        "q": "What is the Arabic word for a prayer mat?",
+        "a": "سَجَّادَةٌ (sajjādah), from the same root س-ج-د as سَجَدَ, \"to prostrate oneself.\""
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "سَجَدَ is best known as the verb for the Islamic prayer-prostration — dropping to the ground and placing the forehead on it — and appears in this sense repeatedly in the Qur'an (e.g. ii. 55, vii. 161, xvi. 50, lv. 5), including the extended, tropical use of trees and plants \"bowing\" in submission to God. Outside ritual prayer it more broadly means to lower oneself or one's head in humility, and is extended figuratively to things that bend or incline, such as a laden palm tree or a ship yielding to the wind."
+  },
+  "5318": {
+    "rootId": 5318,
+    "triliteralRoot": "س ي أ",
+    "rootTransliteration": "s-y-ʾ",
+    "rootMeaning": "to draw forth or emit milk",
+    "headwordTransliteration": "musīʾ",
+    "partOfSpeech": "noun/adjective (active participle)",
+    "senses": [
+      {
+        "gloss": "faulty, at fault",
+        "note": "as recorded in the source gloss"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "سيّأ",
+        "transliteration": "sayyaʾa",
+        "meaning": "to draw forth a she-camel's sayʾ-milk"
+      },
+      {
+        "letters": "تَسَيَّأَ",
+        "transliteration": "tasayyaʾa",
+        "meaning": "(of a she-camel) to emit her milk without its being drawn forth; also to yield only a little, or, of affairs, to become confused and discordant"
+      },
+      {
+        "letters": "انسيأ",
+        "transliteration": "insayaʾa",
+        "meaning": "(of milk) to issue forth without being drawn out"
+      },
+      {
+        "letters": "سَىْءٌ",
+        "transliteration": "sayʾ",
+        "meaning": "the milk in the fore part of the udder, descending before the full flow"
+      },
+      {
+        "letters": "سِىْءٌ",
+        "transliteration": "siʾ",
+        "meaning": "variant form of sayʾ"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"faulty\" in Arabic?",
+        "a": "مُسِيء (musīʾ)."
+      },
+      {
+        "q": "What does the root س-ي-أ mean in Lane's Lexicon?",
+        "a": "It centers on a she-camel's sayʾ-milk — the milk that descends, or is drawn forth, before the full flow — with related verb forms describing milking it out or its flowing by itself."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Lane's entry for this root is built almost entirely around a she-camel's سَىْء — the milk that descends, or is drawn forth, before the full flow. The look-alike adjective سَيِّئ ('bad, evil'), which this word's stem resembles, is explicitly cross-referenced by Lane to a separate root article (س و أ), so its senses are not part of this root's family."
+  },
+  "5329": {
+    "rootId": 5329,
+    "triliteralRoot": "ع ز ز",
+    "rootTransliteration": "ʿ-z-z",
+    "rootMeaning": "to be mighty, powerful, strong",
+    "headwordTransliteration": "ʿizz",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "might, power, strength",
+        "note": "The primary sense of ʿizz as the verbal noun of ʿazza, 'he was/became mighty, potent, powerful, or strong.'"
+      },
+      {
+        "gloss": "honor, glory, high rank, nobility",
+        "note": "From ʿazza also meaning to become elevated in rank or condition — noble, honorable, glorious, illustrious."
+      },
+      {
+        "gloss": "invincibility; being unconquerable, unyielding",
+        "note": "Lane glosses ʿizz here as resisting or withstanding — being indomitable, not to be overcome."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "عَزَّ",
+        "transliteration": "ʿazza",
+        "meaning": "to be/become mighty, powerful, strong; also to rise in rank, become noble or glorious"
+      },
+      {
+        "letters": "عِزَّةٌ",
+        "transliteration": "ʿizzah",
+        "meaning": "might, power (a related verbal noun); also disdain, or being unconquerable"
+      },
+      {
+        "letters": "تعزّز",
+        "transliteration": "taʿazzaza",
+        "meaning": "to make oneself mighty, to strengthen oneself"
+      },
+      {
+        "letters": "عازّهُ",
+        "transliteration": "ʿāzzahu",
+        "meaning": "to vie or contend with someone to overcome them (in argument)"
+      },
+      {
+        "letters": "عَزِيزٌ",
+        "transliteration": "ʿazīz",
+        "meaning": "mighty, powerful; also dear, highly esteemed, or rare/scarce"
+      },
+      {
+        "letters": "عَزُوزٌ",
+        "transliteration": "ʿazūz",
+        "meaning": "a she-camel or ewe narrow in the orifices of the teats, hard to milk"
+      },
+      {
+        "letters": "عَزٌّ",
+        "transliteration": "ʿazz",
+        "meaning": "overcoming, conquering (verbal noun of 'he overcame him')"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"honor\" in Arabic?",
+        "a": "عِزّ (ʿizz) — it denotes might, power, and high standing, the state opposite to lowliness."
+      },
+      {
+        "q": "What does the Arabic root ʿ-z-z mean?",
+        "a": "It carries the core sense 'to be mighty, powerful, strong,' extending to being high in rank, honored, rare/hard to find, and unconquerable."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "ʿIzz denotes might or power that shows itself as high standing, honor, or the state of being unconquerable — the opposite of lowliness. It appears in the common phrase ʿazza wa jalla ('to Whom belong might and majesty'), used after mentioning God."
+  },
+  "5315": {
+    "rootId": 5315,
+    "triliteralRoot": "ا ن ن",
+    "rootTransliteration": "ʾ-n-n",
+    "rootMeaning": "to moan, groan in pain",
+    "headwordTransliteration": "ʾan",
+    "partOfSpeech": "particle (subordinating conjunction)",
+    "senses": [
+      {
+        "gloss": "that (introducing a subordinate clause)",
+        "note": "the sense given for this word in the dictionary"
+      },
+      {
+        "gloss": "as long as",
+        "note": "in the set phrase مَا أَنَّ ... (e.g. 'as long as there is a star in the sky'), where أَنَّ is described as a dialectal variant of عَنَّ"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "أَنَّ",
+        "transliteration": "ʾanna",
+        "meaning": "to moan, utter a moan or cry (from pain)"
+      },
+      {
+        "letters": "أُنَانٌ",
+        "transliteration": "ʾunān",
+        "meaning": "moaning (verbal noun of أَنَّ)"
+      },
+      {
+        "letters": "أَنَ",
+        "transliteration": "ʾana",
+        "meaning": "I (independent pronoun)"
+      },
+      {
+        "letters": "أَنْتَ",
+        "transliteration": "ʾanta",
+        "meaning": "you, thou (masc. sing. pronoun)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"that\" in Arabic?",
+        "a": "أن (ʾan) — the particle used to introduce a subordinate clause, as in 'I know that...'."
+      },
+      {
+        "q": "What does the root ا ن ن mean in Arabic?",
+        "a": "Its core verb sense is 'to moan, groan in pain' (أَنَّ, أُنَانٌ). The same letters separately spell the pronouns أنا (I) / أنت (you) and the particle أن/إن ('that'), which are distinct words sharing the same consonants."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Grammarians closely associate this particle's 'as long as' use with إِنَّ, at times disputing which of the two is really intended in a given phrase. The same root letters also happen to spell an unrelated verb meaning 'to moan' and the personal pronouns أنا/أنت — same consonants, different words."
+  },
+  "5332": {
+    "rootId": 5332,
+    "triliteralRoot": "ق ط ع",
+    "rootTransliteration": "q-ṭ-ʿ",
+    "rootMeaning": "to cut, sever, cut off",
+    "headwordTransliteration": "iqṭāʿ",
+    "partOfSpeech": "noun (verbal noun / maṣdar, form IV)",
+    "senses": [
+      {
+        "gloss": "estate; a grant, or apportionment, of land",
+        "note": "parallels qaṭīʿah, 'a portion of land held in fee,' within the same root family"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "قَطَّعَ",
+        "transliteration": "qaṭṭaʿa",
+        "meaning": "to cut up, mangle; to articulate a word"
+      },
+      {
+        "letters": "قَاطَعَ",
+        "transliteration": "qāṭaʿa",
+        "meaning": "to sever ties with, separate from (by mutual consent)"
+      },
+      {
+        "letters": "اِنْقَطَعَ",
+        "transliteration": "inqaṭaʿa",
+        "meaning": "to be cut off, interrupted, or stopped; to break off",
+        "path": "/word/to-cease-5878",
+        "rootId": 5878
+      },
+      {
+        "letters": "اِقْتَطَعَ",
+        "transliteration": "iqtaṭaʿa",
+        "meaning": "to cut off, or take, a portion for oneself",
+        "path": "/word/took-18245",
+        "rootId": 18245
+      },
+      {
+        "letters": "قِطْعَةٌ",
+        "transliteration": "qiṭʿah",
+        "meaning": "a piece, bit, or portion cut off from a whole",
+        "path": "/word/a-piece-16373",
+        "rootId": 16373
+      },
+      {
+        "letters": "قَطِيعٌ",
+        "transliteration": "qaṭīʿ",
+        "meaning": "a herd, troop, or flock — a distinct collection"
+      },
+      {
+        "letters": "قَطِيعَةٌ",
+        "transliteration": "qaṭīʿah",
+        "meaning": "a portion of land held in fee"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"estate\" in Arabic?",
+        "a": "إِقْطَاع (iqṭāʿ)."
+      },
+      {
+        "q": "What does the root ق ط ع mean?",
+        "a": "It carries the core sense 'to cut, sever, cut off,' seen across words like qaṭṭaʿa ('to cut up'), inqaṭaʿa ('to be cut off'), and qiṭʿah ('a piece')."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Built on the إِفْعَال maṣdar pattern of the root's cutting sense, iqṭāʿ names a piece of land marked off and granted to someone — an estate — closely tied to qaṭīʿah, 'a portion of land held in fee,' from the same family."
+  },
+  "5331": {
+    "rootId": 5331,
+    "triliteralRoot": "خ ر ج",
+    "rootTransliteration": "kh-r-j",
+    "rootMeaning": "to go out, exit",
+    "headwordTransliteration": "kharaja",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to go out, come out, exit",
+        "note": "the direct opposite of دَخَلَ, 'to enter'"
+      },
+      {
+        "gloss": "to issue, emanate, proceed, or depart (from a place)"
+      },
+      {
+        "gloss": "to get free of, escape, or quit (a state, debt, religion, etc.)",
+        "note": "figurative use, e.g. خرج من دينه, 'he left his religion'"
+      },
+      {
+        "gloss": "to become distinguished or accomplished (in a science or skill)",
+        "note": "tropical use, e.g. خَرَجَ فِى العِلْمِ وَالصِّنَاعَةِ"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "خرّج",
+        "transliteration": "kharraja",
+        "meaning": "to train or educate well (a pupil, a horse); also, to write a text while leaving parts of it blank"
+      },
+      {
+        "letters": "المُخَارَجَةُ",
+        "transliteration": "mukhārajah",
+        "meaning": "reciprocal dealing — playing a finger-guessing game, splitting travel or expedition costs equally, or contracting with a slave for fixed periodic payments"
+      },
+      {
+        "letters": "أَخْرَجَ",
+        "transliteration": "akhraja",
+        "meaning": "to make or cause to go out; to expel, drive out, eject; to bring forth, produce"
+      },
+      {
+        "letters": "اِخْتَرَجَ",
+        "transliteration": "ikhtaraja",
+        "meaning": "to take out, or extract, for oneself"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"expelled\" in Arabic?",
+        "a": "The headword commonly glossed 'expelled' is خَرَجَ (kharaja), literally 'he went out'; the true causative 'to expel, drive out' is the related form أَخْرَجَ (akhraja)."
+      },
+      {
+        "q": "What does the Arabic root خ ر ج mean?",
+        "a": "It centers on going out or coming forth, seen across خُرُوج ('a going out'), مَخْرَج ('an outlet'), and أَخْرَجَ ('to expel, bring out')."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "خَرَجَ is the plain intransitive verb 'to go out' or 'come forth,' set directly against دَخَلَ, 'to enter.' It occurs in the Qur'an in the phrase يَوْمُ الخُرُوج, 'the Day of Going-Forth,' a name for the Day of Resurrection, when the dead are said to rise from their graves. Note that the transitive sense 'to expel, drive out' belongs to the related causative form أَخْرَجَ (akhraja), not to خَرَجَ itself, which never takes a direct object in this basic form."
+  },
+  "5338": {
+    "rootId": 5338,
+    "triliteralRoot": "ق ل ق",
+    "rootTransliteration": "q-l-q",
+    "rootMeaning": "to be unsettled, unsteady, restless",
+    "headwordTransliteration": "qalaq",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "unsettledness, restlessness",
+        "note": "the literal sense: not fixed, steady, or at rest in one's place"
+      },
+      {
+        "gloss": "disquiet, agitation, anxiety",
+        "note": "the extended, now-standard sense: a disturbed, unquiet state of mind"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "قَلِقَ",
+        "transliteration": "qaliqa",
+        "meaning": "to become unsettled, restless, or disquieted (form I verb)"
+      },
+      {
+        "letters": "قَلَّقَ",
+        "transliteration": "qallaqa",
+        "meaning": "to disquiet or disturb someone (form II, causative)"
+      },
+      {
+        "letters": "أَقْلَقَهُ",
+        "transliteration": "aqlaqahu",
+        "meaning": "he disquieted/disturbed him; also, he moved a thing from its place (form IV)"
+      },
+      {
+        "letters": "قَلِقٌ",
+        "transliteration": "qaliq",
+        "meaning": "unsteady, loose"
+      },
+      {
+        "letters": "قَلَاقَةٌ",
+        "transliteration": "qalāqah",
+        "meaning": "looseness, e.g. in an expression"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"anxiety\" in Arabic?",
+        "a": "قَلَق (qalaq) — literally an unsettled, restless state, extended to mean disquiet or anxiety."
+      },
+      {
+        "q": "What does the root ق ل ق convey?",
+        "a": "A sense of being unsettled, unsteady, or restless — whether physically not fixed in place or emotionally disturbed and agitated."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "قَلَق is the standard word for anxiety or worry, extending from the concrete sense of something not staying fixed in place to the emotional sense of disquiet, agitation, and unrest."
+  },
+  "5343": {
+    "rootId": 5343,
+    "triliteralRoot": "ن د م",
+    "rootTransliteration": "n-d-m",
+    "rootMeaning": "to regret, repent",
+    "headwordTransliteration": "nadam",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "regret, remorse",
+        "note": "grieving over something one has done"
+      },
+      {
+        "gloss": "repentance",
+        "note": "close in sense to مَنْدَمٌ, the verbal noun of the same root verb"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "نَدِمَ",
+        "transliteration": "nadima",
+        "meaning": "to regret, repent of what one had done; or to dislike it"
+      },
+      {
+        "letters": "نَدِيمٌ",
+        "transliteration": "nadīm",
+        "meaning": "a drinking companion; by extension, any convivial or boon companion"
+      },
+      {
+        "letters": "مَنْدَمٌ",
+        "transliteration": "mandam",
+        "meaning": "repentance (verbal noun of نَدِمَ)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"regret\" in Arabic?",
+        "a": "نَدَم (nadam)."
+      },
+      {
+        "q": "Is نَدِيمٌ (a drinking companion) related to نَدَم (regret)?",
+        "a": "Yes — Lane's lists نَدِيمٌ under the same root ن د م, though its sense of \"cup-companion / boon companion\" is distinct from the root's core meaning of regret or repentance."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "نَدَم names the feeling itself — grief or remorse over an action already done — and is typically used with عَلَى (\"regret for/over\" something), matching the verb's construction نَدِمَ عَلَى مَا فَعَلَ, \"he regretted what he had done.\""
+  },
+  "5341": {
+    "rootId": 5341,
+    "triliteralRoot": "ك ت ب",
+    "rootTransliteration": "k-t-b",
+    "rootMeaning": "to write; to gather, bring together",
+    "headwordTransliteration": "kataba",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to write, put into writing",
+        "note": "the primary and most common sense"
+      },
+      {
+        "gloss": "to have something written for oneself, or ask another to dictate it",
+        "note": "e.g. said of writing down what one heard or learned from a teacher"
+      },
+      {
+        "gloss": "to prescribe, ordain, decree",
+        "note": "tropical, used of God/a judge; Qur'anic, as in 'fasting is prescribed for you'"
+      },
+      {
+        "gloss": "to draw together, bind, or close up",
+        "note": "concrete sense underlying phrases like binding a waterskin shut"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "كِتَابٌ",
+        "transliteration": "kitāb",
+        "meaning": "book; a piece of writing"
+      },
+      {
+        "letters": "كَاتِبٌ",
+        "transliteration": "kātib",
+        "meaning": "writer, scribe; a learned man"
+      },
+      {
+        "letters": "كِتَابَةٌ",
+        "transliteration": "kitābah",
+        "meaning": "writing; also used for a scribal contract"
+      },
+      {
+        "letters": "مُكَاتَبَةٌ",
+        "transliteration": "mukātabah",
+        "meaning": "a written contract, esp. one by which a slave pays to buy his freedom"
+      },
+      {
+        "letters": "كَتِيبَةٌ",
+        "transliteration": "katībah",
+        "meaning": "a troop or squadron, a body of soldiers drawn together"
+      },
+      {
+        "letters": "إِكْتَتَبَ",
+        "transliteration": "iktataba",
+        "meaning": "to write for oneself; to enroll or register one's name"
+      },
+      {
+        "letters": "أَكْتَبَ",
+        "transliteration": "aktaba",
+        "meaning": "to dictate; to teach the art of writing",
+        "path": "/word/to-write-13272",
+        "rootId": 13272
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"write\" in Arabic?",
+        "a": "كَتَبَ (kataba)."
+      },
+      {
+        "q": "What does the root ك ت ب (k-t-b) mean?",
+        "a": "It centers on writing, and words from it also carry the related idea of drawing or gathering things together, as seen in katībah ('a troop drawn together')."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Beyond literal writing, kataba carries a legal/religious sense of 'to prescribe as obligatory' — the Qur'an uses kutiba ʿalaykum ('it has been prescribed for you') for duties like fasting and retaliation. Kātib likewise extends from 'scribe' to 'a learned man' in Qur'anic usage."
+  },
+  "5337": {
+    "rootId": 5337,
+    "triliteralRoot": "ح ر ر",
+    "rootTransliteration": "ḥ-r-r",
+    "rootMeaning": "to be hot, burn",
+    "headwordTransliteration": "ḥarārah",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "heat, hotness",
+        "note": "Given as a verbal noun (maṣdar) of ḥarra 'to be/become hot'; one grammarian (al-Fayyūmī) instead treats it as a plain substantive rather than a maṣdar."
+      },
+      {
+        "gloss": "thirst",
+        "note": "Lḥ records ḥarārah as an alternative verbal noun for ḥarra in the sense 'he thirsted' — a rarer, secondary use of the word, distinct from its ordinary sense of heat."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "حَرٌّ",
+        "transliteration": "ḥarr",
+        "meaning": "heat; the opposite of cold"
+      },
+      {
+        "letters": "حُرٌّ",
+        "transliteration": "ḥurr",
+        "meaning": "free, freeborn (also: noble, generous)"
+      },
+      {
+        "letters": "حرّر",
+        "transliteration": "ḥarrara",
+        "meaning": "to free or emancipate a slave; also, to write or word something accurately"
+      },
+      {
+        "letters": "حُرِّيَّةٌ",
+        "transliteration": "ḥurriyyah",
+        "meaning": "freedom, being freeborn"
+      },
+      {
+        "letters": "حَرِيرَةٌ",
+        "transliteration": "ḥarīrah",
+        "meaning": "a dish of flour cooked over heat"
+      },
+      {
+        "letters": "استحرّ",
+        "transliteration": "istaḥarra",
+        "meaning": "(of slaughter or death) to grow fierce and widespread"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"heat\" in Arabic?",
+        "a": "حَرَارَةٌ (ḥarārah)."
+      },
+      {
+        "q": "Is ḥarārah (heat) related to ḥurriyyah (freedom)?",
+        "a": "They share the same root, ح-ر-ر, but Lane's Lexicon treats them as two distinct senses within that root family: ḥarārah belongs to the 'heat' branch (ḥarr), while ḥurriyyah belongs to the separate 'freedom' branch (ḥurr) — the classical grammarian Ibn Sīdah explicitly distinguishes the two."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Ḥarārah is the standard word for heat, whether the literal heat of a day or of heated water, or (by extension in the wider family) a burning sensation of grief or distress. It sits in a root that also produced an unrelated-seeming branch of words for freedom (ḥurr, ḥurriyyah) — Lane's lexicographers themselves flag the two branches as distinct senses of the same consonantal root."
+  },
+  "5344": {
+    "rootId": 5344,
+    "triliteralRoot": "س ط ر",
+    "rootTransliteration": "s-ṭ-r",
+    "rootMeaning": "to write, rule a line",
+    "headwordTransliteration": "suṭūr",
+    "partOfSpeech": "noun (plural)",
+    "senses": [
+      {
+        "gloss": "lines of writing, in a book or text",
+        "note": "the ordinary plural of سَطْر"
+      },
+      {
+        "gloss": "rows, e.g. of buildings or trees",
+        "note": "figurative extension of the same word"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "سَطَرَ",
+        "transliteration": "saṭara",
+        "meaning": "to write; to rule lines in a book"
+      },
+      {
+        "letters": "سَطْرٌ",
+        "transliteration": "saṭr",
+        "meaning": "a line of writing; a row (of buildings, trees)"
+      },
+      {
+        "letters": "سطّر",
+        "transliteration": "saṭṭara",
+        "meaning": "to compose fictions or tell embellished, legend-like stories"
+      },
+      {
+        "letters": "أُسْطُورَةٌ",
+        "transliteration": "usṭūrah",
+        "meaning": "a legend or fanciful, unfounded tale"
+      },
+      {
+        "letters": "مِسْطَرَةٌ",
+        "transliteration": "misṭarah",
+        "meaning": "a ruler, the tool used to rule lines on a page"
+      },
+      {
+        "letters": "سَاطُورٌ",
+        "transliteration": "sāṭūr",
+        "meaning": "a butcher's cleaver"
+      },
+      {
+        "letters": "سَيْطَرَ",
+        "transliteration": "sayṭara",
+        "meaning": "to hold absolute authority over, oversee and watch closely"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"lines\" in Arabic?",
+        "a": "سُطُور (suṭūr) — the plural of سَطْر, 'a line'."
+      },
+      {
+        "q": "What is the singular of سُطُور؟",
+        "a": "سَطْر (saṭr), meaning a single line of writing, or a row of things such as trees or buildings."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "سُطُور is simply the plural of سَطْر, 'a line'; it is the everyday word for lines of text on a page, and by extension can describe rows of things like trees or buildings. A separate, less common plural of سَطْر is أَسْطُر, while the further plural أَسَاطِير drifted toward 'legends, fables' (see أُسْطُورَة)."
+  },
+  "5336": {
+    "rootId": 5336,
+    "triliteralRoot": "ث م ر",
+    "rootTransliteration": "ṯ-m-r",
+    "rootMeaning": "to bear fruit; increase, abundance",
+    "headwordTransliteration": "ṯamara",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to bear fruit (of a tree)",
+        "note": "the base sense of the root, shared with the form IV verb أَثْمَرَ"
+      },
+      {
+        "gloss": "(of fruit) to ripen, become ripe"
+      },
+      {
+        "gloss": "to gather fodder trees or shrubs for livestock",
+        "note": "used with لِـ, as in ثَمَرَ لِلْغَنَم, \"he gathered trees for the sheep or goats\""
+      },
+      {
+        "gloss": "(tropical) to become abundant, of a person's wealth",
+        "note": "an extension of the fruit-bearing sense to increase in property"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "ثَمَرٌ",
+        "transliteration": "ṯamar",
+        "meaning": "fruit (of trees); also, tropically, wealth or offspring"
+      },
+      {
+        "letters": "ثِمَارٌ",
+        "transliteration": "ṯimār",
+        "meaning": "fruits (plural of ثَمَرٌ)"
+      },
+      {
+        "letters": "ثَمَرَةٌ",
+        "transliteration": "ṯamarah",
+        "meaning": "a single fruit; tropically, a child or offspring"
+      },
+      {
+        "letters": "أَثْمَرَ",
+        "transliteration": "aṯmara",
+        "meaning": "to put forth fruit, bear fruit; tropically, to grow wealthy"
+      },
+      {
+        "letters": "ثَمَّرَ",
+        "transliteration": "ṯammara",
+        "meaning": "(of a plant) to set and compact its fruit; to increase one's wealth"
+      },
+      {
+        "letters": "ثُمْرٌ",
+        "transliteration": "ṯumr",
+        "meaning": "wealth, property (a variant of ثَمَرٌ in this sense)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"bear fruit\" in Arabic?",
+        "a": "ثَمَرَ (ṯamara)."
+      },
+      {
+        "q": "What does the root of ثَمَرَ mean?",
+        "a": "The root ث م ر (ṯ-m-r) centers on fruit and, by extension, on increase or abundance — it gives ثَمَرٌ \"fruit\" and, tropically, \"wealth.\""
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Used literally of a tree producing or ripening its fruit, and of gathering fodder-trees for livestock. The same root, via the fruit metaphor, is also applied tropically to a person's wealth \"bearing\" increase — a figurative extension common across the ثمر family, including derived terms for property, offspring, and profit."
+  },
+  "5345": {
+    "rootId": 5345,
+    "triliteralRoot": "ح ز ن",
+    "rootTransliteration": "ḥ-z-n",
+    "rootMeaning": "to be rugged, rough; to grieve",
+    "headwordTransliteration": "ḥuzn",
+    "partOfSpeech": "noun (substantive)",
+    "senses": [
+      {
+        "gloss": "grief, sorrow, sadness, mourning, unhappiness",
+        "note": "the general word for sadness, given as the opposite of سُرور (joy, gladness)"
+      },
+      {
+        "gloss": "grieving anxiety over a loss already suffered",
+        "note": "one lexicographer (El-Munāwī) distinguishes it from هَمّ, which is anxious dread of something feared to come, whereas ḥuzn follows an unpleasant event that has already happened"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "حَزِنَ",
+        "transliteration": "ḥazina",
+        "meaning": "to grieve, be sorrowful (form I verb)"
+      },
+      {
+        "letters": "أَحْزَنَ",
+        "transliteration": "aḥzana",
+        "meaning": "to grieve someone, cause sorrow (causative, form IV)"
+      },
+      {
+        "letters": "تَحَزَّنَ",
+        "transliteration": "taḥazzana",
+        "meaning": "to lament or express grief over something (form V)",
+        "path": "/word/grieve-7783",
+        "rootId": 7783
+      },
+      {
+        "letters": "تَحْزِين",
+        "transliteration": "taḥzīn",
+        "meaning": "reciting in a slender, plaintive voice (form II verbal noun)"
+      },
+      {
+        "letters": "حَزِين",
+        "transliteration": "ḥazīn",
+        "meaning": "grieving, sorrowful, sad (adjective)"
+      },
+      {
+        "letters": "حَزْن",
+        "transliteration": "ḥazn",
+        "meaning": "rugged, hard ground — the root's literal 'roughness' sense"
+      },
+      {
+        "letters": "حُزَانَة",
+        "transliteration": "ḥuzānah",
+        "meaning": "one's family or household, over whom one feels concern"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"sadness\" in Arabic?",
+        "a": "Sadness is حُزْن (ḥuzn) in Arabic, from the root ح-ز-ن, meaning grief, sorrow, or mourning."
+      },
+      {
+        "q": "What is the difference between حُزْن and حَزَن?",
+        "a": "Both mean grief/sadness from the same verb حَزِنَ, but grammarians treat حُزْن as a plain noun and حَزَن as its verbal noun (maṣdar); some say ḥuzn is used in the nominative/genitive and ḥazan in the accusative."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Frequent in the Qur'an in the reassurance لَا تَحْزَنْ / لَا تَحْزَنُوا ('do not grieve'); one commentator explains this forbids the deeds that bring on ḥuzn, since the feeling itself is not within human control. Muḥammad himself named عَامُ الحُزْنِ ('the Year of Sorrow') for the year his wife Khadījah and uncle Abū Ṭālib died. Er-Rāghib links the abstract sense to the root's physical one, describing ḥuzn as 'a roughness in the spirit, occasioned by grief.'"
+  },
+  "5333": {
+    "rootId": 5333,
+    "triliteralRoot": "س ك ن",
+    "rootTransliteration": "s-k-n",
+    "rootMeaning": "to be still, motionless, at rest",
+    "headwordTransliteration": "sakana",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "dwell, inhabit, reside (in a house or place)",
+        "note": "sakana l-dāra — to live in a house; the inf. n. for this sense is suknā."
+      },
+      {
+        "gloss": "be or become still, motionless, at rest; calm down, subside",
+        "note": "said of anything that had been moving — wind, heat, cold, rain, pain, anger — once its motion or force has gone away."
+      },
+      {
+        "gloss": "trust in, rely upon, feel at ease with",
+        "note": "sakana ilayhi/ilayhā — to be tranquil and secure in reliance on someone or something; used in the Qur'an of a husband and wife."
+      },
+      {
+        "gloss": "become poor, lowly, or humble",
+        "note": "a rarer sense — to become as one termed miskīn."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "سكّنهُ",
+        "transliteration": "sakkana",
+        "meaning": "to still, calm, or silence (something); the causative of sakana"
+      },
+      {
+        "letters": "اسكن",
+        "transliteration": "askana",
+        "meaning": "to settle, house, or lodge someone"
+      },
+      {
+        "letters": "استكن",
+        "transliteration": "istakana",
+        "meaning": "to become humble, abased, or submissive"
+      },
+      {
+        "letters": "تَمَسْكَنَ",
+        "transliteration": "tamaskana",
+        "meaning": "to act poor, feign humility or destitution"
+      },
+      {
+        "letters": "سُكْنَى",
+        "transliteration": "suknā",
+        "meaning": "dwelling, tenancy; the act of inhabiting a place",
+        "path": "/word/habitation-9130",
+        "rootId": 9130
+      },
+      {
+        "letters": "سَكِينَةٌ",
+        "transliteration": "sakīna",
+        "meaning": "tranquility, calm, stillness of mind"
+      },
+      {
+        "letters": "سِكِّينٌ",
+        "transliteration": "sikkīn",
+        "meaning": "knife"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"dwell\" in Arabic?",
+        "a": "سَكَنَ (sakana) — literally to come to rest or settle in a place."
+      },
+      {
+        "q": "What is the difference between سَكَنَ and سَكَّنَ؟",
+        "a": "سَكَنَ (form I, sakana) means to be/become still or to dwell somewhere; سَكَّنَ (form II, sakkana) is the causative — to make something still or calm it down."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "The same root underlies the grammatical term for a quiescent, vowelless consonant (as opposed to one that is 'moved'), showing how central the idea of stillness is to the whole family — from calming a feeling to settling in a home."
+  },
+  "5350": {
+    "rootId": 5350,
+    "triliteralRoot": "ا س ف",
+    "rootTransliteration": "ʾ-s-f",
+    "rootMeaning": "to grieve, or become angry",
+    "headwordTransliteration": "asaf",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "grief, sorrow, or regret",
+        "note": "especially intense regret for something that has escaped or been lost"
+      },
+      {
+        "gloss": "anger, especially intense anger",
+        "note": "some say the same feeling turns to anger when directed at an inferior, and to grief when directed at a superior"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "أَسِفَ",
+        "transliteration": "asifa",
+        "meaning": "form I verb: he grieved, lamented, or regretted; or he was angry",
+        "path": "/word/regret-5350",
+        "rootId": 5350
+      },
+      {
+        "letters": "آسَفَ",
+        "transliteration": "āsafa",
+        "meaning": "form IV: he angered him, or he grieved him (causative)"
+      },
+      {
+        "letters": "تَأَسَّفَ",
+        "transliteration": "taʾassafa",
+        "meaning": "form V: he grieved or lamented intensely"
+      },
+      {
+        "letters": "أَسِفٌ",
+        "transliteration": "asif",
+        "meaning": "angry, or exceedingly angry",
+        "path": "/word/regret-5350",
+        "rootId": 5350
+      },
+      {
+        "letters": "أَسِيفٌ",
+        "transliteration": "asīf",
+        "meaning": "grieving intensely, quick to grieve, tender-hearted; also: a slave, hired man, or captive"
+      },
+      {
+        "letters": "أَسَافَةٌ",
+        "transliteration": "asāfah",
+        "meaning": "excessive grief, or excessive anger"
+      },
+      {
+        "letters": "إِسَافٌ",
+        "transliteration": "isāf",
+        "meaning": "name of an idol once worshipped by the Kureysh"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"regret\" in Arabic?",
+        "a": "أَسَف (asaf)."
+      },
+      {
+        "q": "Does أسف mean grief or anger?",
+        "a": "Both are attested: it usually means intense grief or regret for something lost, but it can also mean anger, particularly when directed at someone of higher standing."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Appears in the Qur'an: 18:5 has أَسَفًا, glossed by commentators as grief (or, some say, anger); and 12:84 has يَا أَسَفَا عَلَى يُوسُفِ, Jacob's cry of grief for Joseph. The word can carry either sense — grief or anger — depending on context."
+  },
+  "5354": {
+    "rootId": 5354,
+    "triliteralRoot": "ت و ب",
+    "rootTransliteration": "t-w-b",
+    "rootMeaning": "to return, turn back from sin",
+    "headwordTransliteration": "tāba",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to repent; to turn back from sin or disobedience to obedience",
+        "note": "often construed with إِلَى ٱللّٰه 'toward God'"
+      },
+      {
+        "gloss": "(of God) to turn to a servant in forgiveness; to accept one's repentance, to relent"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "تَابَ",
+        "transliteration": "tāba",
+        "meaning": "he repented, returned from sin to obedience",
+        "path": "/word/repented-5354",
+        "rootId": 5354
+      },
+      {
+        "letters": "تَوْبَة",
+        "transliteration": "tawbah",
+        "meaning": "repentance; a returning from sin"
+      },
+      {
+        "letters": "اِسْتَتَابَ",
+        "transliteration": "istatāba",
+        "meaning": "he called on someone to repent, to return from sin"
+      },
+      {
+        "letters": "تَوَّابٌ",
+        "transliteration": "tawwāb",
+        "meaning": "one who repents often; or, of God, the Oft-Relenting/Oft-Forgiving",
+        "path": "/word/ever-accepting-of-repentance-18971",
+        "rootId": 18971
+      },
+      {
+        "letters": "تَائِبٌ",
+        "transliteration": "tāʾib",
+        "meaning": "one who is repenting, a penitent",
+        "path": "/word/repenting-9459",
+        "rootId": 9459
+      },
+      {
+        "letters": "تَابُوتٌ",
+        "transliteration": "tābūt",
+        "meaning": "a chest or box (said to derive from the root sense of 'returning', since what is taken out is put back)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"repented\" in Arabic?",
+        "a": "تَابَ (tāba) — the classical verb for repenting or turning back from sin to obedience."
+      },
+      {
+        "q": "What is the difference between تَائِبٌ and تَوَّابٌ?",
+        "a": "تَائِبٌ (tāʾib) simply means 'one who is repenting'; تَوَّابٌ (tawwāb) is an intensive form meaning 'one who repents often or habitually' — and when applied to God, it means the One who turns to His servants in forgiveness again and again."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "تَابَ is the standard classical/Qur'anic verb for repentance, most often paired with إِلَى ٱللّٰه ('toward God'). The same verb is also used of God Himself — تَابَ ٱللّٰهُ عَلَيْهِ, 'God turned to him in forgiveness' — so the root covers both a person's turning away from sin and God's turning back toward the sinner in acceptance."
+  },
+  "5347": {
+    "rootId": 5347,
+    "triliteralRoot": "ر س ل",
+    "rootTransliteration": "r-s-l",
+    "rootMeaning": "to send forth, or let loose",
+    "headwordTransliteration": "arsala",
+    "partOfSpeech": "verb (form IV)",
+    "senses": [
+      {
+        "gloss": "to send (a person, message, or letter)",
+        "note": "the core sense, e.g. ارسل إليه, 'he sent a message or a messenger to him'"
+      },
+      {
+        "gloss": "to let loose, set free, release",
+        "note": "e.g. letting a bird go from the hand, discharging an arrow, or launching a boat to take its course"
+      },
+      {
+        "gloss": "to let down, let hang loose",
+        "note": "used of hair let down or lowered"
+      },
+      {
+        "gloss": "to give power or dominion (over someone)",
+        "note": "a Qur'anic extension, e.g. of devils being given dominion over unbelievers"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "رَسُولٌ",
+        "transliteration": "rasūl",
+        "meaning": "messenger; one who brings a message"
+      },
+      {
+        "letters": "رِسَالَةٌ",
+        "transliteration": "risālah",
+        "meaning": "message, letter, epistle"
+      },
+      {
+        "letters": "مُرَاسَلَةٌ",
+        "transliteration": "murāsalah",
+        "meaning": "interchange of messages or letters; correspondence (from form III راسلَ)"
+      },
+      {
+        "letters": "تَرْسِيلٌ",
+        "transliteration": "tarsīl",
+        "meaning": "measured, unhurried utterance in reading or reciting"
+      },
+      {
+        "letters": "مُرْسَلٌ",
+        "transliteration": "mursal",
+        "meaning": "sent; a thing or person that has been sent"
+      },
+      {
+        "letters": "رِسْلٌ",
+        "transliteration": "risl",
+        "meaning": "milk (as given to drink)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"send\" in Arabic?",
+        "a": "أَرْسَلَ (arsala)."
+      },
+      {
+        "q": "What is the root of أَرْسَلَ and what does it mean?",
+        "a": "Its root is ر س ل (r-s-l), a family of words centered on sending messages and letting something loose or hang down — it also produces رَسُولٌ 'messenger' and رِسَالَةٌ 'message.'"
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "إِرْسَالٌ, 'the act of sending,' is the verbal noun behind this verb, and the same root gives رَسُولٌ 'messenger' and رِسَالَةٌ 'message' — the vocabulary of prophets bringing revelation. Beyond sending messages, the verb also covers letting something go or hang loose, as with releasing a bird from the hand or letting hair fall down."
+  },
+  "5352": {
+    "rootId": 5352,
+    "triliteralRoot": "ج ي أ",
+    "rootTransliteration": "j-y-ʾ",
+    "rootMeaning": "to come, arrive",
+    "headwordTransliteration": "jāʾa",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to come, arrive; to be or become present",
+        "note": "The basic, most common sense; synonymous with أَتَى, and with حَضَرَ said of a person."
+      },
+      {
+        "gloss": "to happen, come to pass, occur, befall",
+        "note": "Used of abstract as well as concrete subjects, e.g. of God's help or a ruler's command 'arriving', i.e. coming to pass."
+      },
+      {
+        "gloss": "to bring, bring about, produce, do, or say (with بِ)",
+        "note": "جِئْتُ بِهِ, literally 'I came with it', is the standard way to say 'I brought it'; جَآءَ بِشَىْءٍ can mean he did, produced, or uttered a thing."
+      },
+      {
+        "gloss": "to become, turn out to be",
+        "note": "Used as a synonym of صَارَ, e.g. 'the building came to be firm.'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "جَآءَ",
+        "transliteration": "jāʾa",
+        "meaning": "to come, arrive; become present"
+      },
+      {
+        "letters": "مَجِيءٌ",
+        "transliteration": "majīʾ",
+        "meaning": "a coming; the act of coming (verbal noun)"
+      },
+      {
+        "letters": "جَيْئَةٌ",
+        "transliteration": "jayʾah",
+        "meaning": "an instance or manner of coming"
+      },
+      {
+        "letters": "مُجَايَأَةٌ",
+        "transliteration": "mujāyaʾah",
+        "meaning": "facing or being opposite someone; coinciding with someone in coming"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"come\" in Arabic?",
+        "a": "جَاءَ (jāʾa) is the standard verb for 'to come, arrive'."
+      },
+      {
+        "q": "What does جِئْتُ بِهِ mean?",
+        "a": "Literally 'I came with it', it idiomatically means 'I brought it' or 'I brought him' — jāʾa plus بِ is the normal way to express 'bring'."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "جَآءَ is one of the most basic Arabic verbs for 'to come', used of both real and abstract subjects (a person, rain, an order, help). Paired with the preposition بِ it commonly shifts sense to 'bring' (جِئْتُ بِهِ, 'I brought it'), and it can also stand in for صَارَ, 'to become'."
+  },
+  "5356": {
+    "rootId": 5356,
+    "triliteralRoot": "ف ر ح",
+    "rootTransliteration": "f-r-ḥ",
+    "rootMeaning": "to rejoice, be glad",
+    "headwordTransliteration": "fariḥa",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to rejoice, be joyful or glad, be happy",
+        "note": "commonly with بِ, e.g. فَرِحَ بِهِ 'he rejoiced on account of it'; treated as synonymous with سُرَّ"
+      },
+      {
+        "gloss": "to be well pleased or content (with something)"
+      },
+      {
+        "gloss": "to exult, rejoice excessively; to behave insolently or ungratefully",
+        "note": "the sense used in the Qur'an (28:76), 'God does not love those who exult'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "فَرَحٌ",
+        "transliteration": "faraḥ",
+        "meaning": "joy, gladness, happiness (verbal noun); also festivity"
+      },
+      {
+        "letters": "فَرِحٌ",
+        "transliteration": "fariḥ",
+        "meaning": "rejoicing, glad, joyful; also one who exults ungratefully"
+      },
+      {
+        "letters": "فَرْحَانُ",
+        "transliteration": "farḥān",
+        "meaning": "joyful, glad, happy"
+      },
+      {
+        "letters": "أَفْرَحَ",
+        "transliteration": "afraḥa",
+        "meaning": "to gladden, make joyful; oddly, also to grieve or to burden heavily with debt",
+        "path": "/word/rejoices-most-17155",
+        "rootId": 17155
+      },
+      {
+        "letters": "فُرْحَةٌ",
+        "transliteration": "furḥah",
+        "meaning": "a cause of joy; a gift given for bringing good news"
+      },
+      {
+        "letters": "مُفْرَحٌ",
+        "transliteration": "mufraḥ",
+        "meaning": "one heavily burdened by debt; needy, poor"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"rejoiced\" in Arabic?",
+        "a": "فَرِحَ (fariḥa) — \"he rejoiced, was joyful or glad, was happy.\""
+      },
+      {
+        "q": "What is the difference between فَرَحٌ and سُرُورٌ?",
+        "a": "فَرَحٌ denotes a short-lived, fleeting delight (as with worldly pleasures), while سُرُورٌ suggests a calmer, longer-lasting contentment — though classical usage often treats them as synonyms."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Lexicographers distinguish فَرَحٌ from سُرُورٌ: فَرَحٌ is a fleeting, transitory delight (as in worldly pleasures), while سُرُورٌ implies a calmer, more lasting contentment — though the two words are often used as synonyms. The verb also carries a negative Qur'anic sense of exulting or rejoicing above measure, in contexts condemning insolence or ingratitude."
+  },
+  "5358": {
+    "rootId": 5358,
+    "triliteralRoot": "ن ز ل",
+    "rootTransliteration": "n-z-l",
+    "rootMeaning": "to descend, alight, and lodge",
+    "headwordTransliteration": "nuzūl",
+    "partOfSpeech": "noun (verbal noun / maṣdar of Form I)",
+    "senses": [
+      {
+        "gloss": "descent, the act of coming down"
+      },
+      {
+        "gloss": "alighting, stopping, or settling at a place",
+        "note": "matches نَزَلَ بِالمَكَانِ, 'to alight/descend and stop, sojourn, or lodge in a place'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "نَزَلَ",
+        "transliteration": "nazala",
+        "meaning": "to alight, descend, stop or lodge somewhere (Form I)"
+      },
+      {
+        "letters": "نَازَلَهُ",
+        "transliteration": "nāzalahu",
+        "meaning": "to alight with someone to meet him in battle (Form III)"
+      },
+      {
+        "letters": "أَنْزَلَ",
+        "transliteration": "anzala",
+        "meaning": "to lodge someone as a guest, give refuge; to make descend (Form IV)"
+      },
+      {
+        "letters": "تَنَازَلَ",
+        "transliteration": "tanāzala",
+        "meaning": "to descend gradually; to condescend; to abdicate or desist from a thing (Form VI)"
+      },
+      {
+        "letters": "مَنْزِلٌ",
+        "transliteration": "manzil",
+        "meaning": "a place of alighting; a dwelling or abode"
+      },
+      {
+        "letters": "مَنْزِلَةٌ",
+        "transliteration": "manzila",
+        "meaning": "station, rank, or standing (figurative 'place' one occupies)"
+      },
+      {
+        "letters": "نَزِيلٌ",
+        "transliteration": "nazīl",
+        "meaning": "a guest (one who has alighted/lodged)"
+      },
+      {
+        "letters": "نُزُلٌ",
+        "transliteration": "nuzul",
+        "meaning": "food or provisions prepared for a guest"
+      },
+      {
+        "letters": "نَازِلَةٌ",
+        "transliteration": "nāzila",
+        "meaning": "a severe calamity that befalls people (something that 'descends' on them)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"descent\" in Arabic?",
+        "a": "نُزُول (nuzūl)."
+      },
+      {
+        "q": "What is the difference between نُزُول and نُزُل؟",
+        "a": "نُزُول (nuzūl) is the verbal noun 'descent/alighting'; نُزُل (nuzul), from the same root, instead names the food or provisions prepared for a guest at a stopping-place."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "نُزُول is the verbal noun (maṣdar) of نَزَلَ, so it names the act itself — coming down and, at the same time, stopping or settling in a place — rather than just motion downward."
+  },
+  "5353": {
+    "rootId": 5353,
+    "triliteralRoot": "و ق ع",
+    "rootTransliteration": "w-q-ʿ",
+    "rootMeaning": "to fall, befall, happen, occur",
+    "headwordTransliteration": "tawqīʿ",
+    "partOfSpeech": "noun (verbal noun / maṣdar of Form II وَقَّعَ)",
+    "senses": [
+      {
+        "gloss": "signature",
+        "note": "the modern, standard sense: signing a document to give it legal effect"
+      },
+      {
+        "gloss": "official endorsement or ruling appended to a petition",
+        "note": "historically, a note a ruler or administrator wrote beneath or on the back of a submitted case directing that it be acted on"
+      },
+      {
+        "gloss": "a written note or annotation entered in a document",
+        "note": "the endorsement itself, or an entry/postil made in a writing or book"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "وَقَعَ",
+        "transliteration": "waqaʿa",
+        "meaning": "to fall; to happen, befall, take place (Form I)"
+      },
+      {
+        "letters": "وَاقَعَ",
+        "transliteration": "wāqaʿa",
+        "meaning": "to fall upon in conflict; to plunge into an affair (Form III)"
+      },
+      {
+        "letters": "أَوْقَعَ",
+        "transliteration": "awqaʿa",
+        "meaning": "to bring about, make happen; to make an assault upon (Form IV)"
+      },
+      {
+        "letters": "تَوَقَّعَ",
+        "transliteration": "tawaqqaʿa",
+        "meaning": "to expect, look for something's coming to pass (Form V)"
+      },
+      {
+        "letters": "وَقْعَةٌ",
+        "transliteration": "waqʿah",
+        "meaning": "an onslaught; a shock in battle"
+      },
+      {
+        "letters": "مَوْقِعٌ",
+        "transliteration": "mawqiʿ",
+        "meaning": "a place or position where something falls or stands"
+      },
+      {
+        "letters": "مُوَقَّعٌ",
+        "transliteration": "muwaqqaʿ",
+        "meaning": "signed, endorsed (passive participle of Form II)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"signature\" in Arabic?",
+        "a": "تَوْقِيع (tawqīʿ)."
+      },
+      {
+        "q": "What does the root و ق ع mean?",
+        "a": "It carries the sense of falling, happening, or befalling — the same root behind وَقَعَ (\"to happen\"), تَوَقَّعَ (\"to expect\"), and تَوْقِيع (\"signature,\" an endorsement made to give a document effect)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Today تَوْقِيع is the ordinary word for a signature. In earlier administrative use it named the note a Sultan or official appended to a submitted petition to give it effect, and by extension the endorsement-writing itself (plural تَوْقِيعَات); Lane notes it as a term of Islamic administrative usage rather than old classical Arabic."
+  },
+  "5349": {
+    "rootId": 5349,
+    "triliteralRoot": "ن ف س",
+    "rootTransliteration": "n-f-s",
+    "rootMeaning": "breath, and being highly prized",
+    "headwordTransliteration": "anfās",
+    "partOfSpeech": "noun (broken plural of نَفَسٌ, \"breath\")",
+    "senses": [
+      {
+        "gloss": "sighs",
+        "note": "audible breaths released outward, as in longing, relief, or exhaustion"
+      },
+      {
+        "gloss": "breaths",
+        "note": "the plain plural of نَفَسٌ, tied to the verb تنفّس, 'to breathe, draw breath'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "نَفَسٌ",
+        "transliteration": "nafas",
+        "meaning": "breath (singular of anfās)"
+      },
+      {
+        "letters": "تنفّس",
+        "transliteration": "tanaffasa",
+        "meaning": "to breathe, draw breath",
+        "path": "/word/relief-19312",
+        "rootId": 19312
+      },
+      {
+        "letters": "نفّس",
+        "transliteration": "naffasa",
+        "meaning": "to relieve grief or ease a burden"
+      },
+      {
+        "letters": "نافس",
+        "transliteration": "nāfasa",
+        "meaning": "to vie for, desire with emulation"
+      },
+      {
+        "letters": "نَفِيسٌ",
+        "transliteration": "nafīs",
+        "meaning": "precious, excellent, highly prized"
+      },
+      {
+        "letters": "نِفَاسٌ",
+        "transliteration": "nifās",
+        "meaning": "childbirth"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"sighs\" in Arabic?",
+        "a": "أَنْفَاس (anfās)."
+      },
+      {
+        "q": "What is the singular of أنفاس؟",
+        "a": "نَفَسٌ (nafas), meaning \"breath\" — أنفاس is its plural."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "أَنْفَاس is simply the plural of نَفَسٌ (\"breath\"), so it denotes individual breaths — and, by extension, the audible sighs a person lets out. The same root gives تنفّس (\"to breathe\"), showing respiration as the thread running through this word."
+  },
+  "5363": {
+    "rootId": 5363,
+    "triliteralRoot": "غ و ص",
+    "rootTransliteration": "ġ-w-ṣ",
+    "rootMeaning": "to dive, descend beneath water",
+    "headwordTransliteration": "ġāʾiṣ",
+    "partOfSpeech": "noun (active participle, ism fāʿil, of form I غَاصَ)",
+    "senses": [
+      {
+        "gloss": "one who dives in, or descends beneath, water; a diver"
+      },
+      {
+        "gloss": "a diver for pearls in the sea",
+        "note": "a specialized use shared with the intensive form غَوَّاص, particularly for one who dives and fetches out pearls"
+      },
+      {
+        "gloss": "one who pounces, or comes upon a thing suddenly and unawares",
+        "note": "figurative extension of the diving sense"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "غَاصَ",
+        "transliteration": "ghāṣa",
+        "meaning": "to dive, descend beneath water; (fig.) to dive for hidden meanings so as to bring them out"
+      },
+      {
+        "letters": "غوّصهُ",
+        "transliteration": "ghawwaṣahu",
+        "meaning": "to make (someone) dive; to immerse or plunge them in water"
+      },
+      {
+        "letters": "غَوْصٌ",
+        "transliteration": "ghawṣ",
+        "meaning": "diving; the act of diving, especially for pearls"
+      },
+      {
+        "letters": "غَوْصَةٌ",
+        "transliteration": "ghawṣah",
+        "meaning": "a single dive"
+      },
+      {
+        "letters": "غَوَّاصٌ",
+        "transliteration": "ghawwāṣ",
+        "meaning": "diver, especially a professional pearl-diver"
+      },
+      {
+        "letters": "مَغَاصٌ",
+        "transliteration": "maghāṣ",
+        "meaning": "a diving place; a ground where pearls are fetched from the water"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"diver\" in Arabic?",
+        "a": "غَائِص (ghāʾiṣ)."
+      },
+      {
+        "q": "What is the root of غَائِص and what does it mean?",
+        "a": "It comes from the root غ و ص (ghāṣa), which means to dive or descend beneath water."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Used generally of one who dives into water, and particularly of a pearl-diver (a sense it shares with the more intensive غَوَّاص); it is also used figuratively of someone who pounces on a thing unexpectedly."
+  },
+  "5364": {
+    "rootId": 5364,
+    "triliteralRoot": "ل ج ج",
+    "rootTransliteration": "l-j-j",
+    "rootMeaning": "to persist, contend, or be tumultuous",
+    "headwordTransliteration": "lujjah",
+    "partOfSpeech": "noun",
+    "senses": [
+      {
+        "gloss": "the depth of the sea; the fathomless deep",
+        "note": "the main body of water, whose bottom cannot be reached"
+      },
+      {
+        "gloss": "a vast expanse of water or sea",
+        "note": "one whose extremities cannot be seen"
+      },
+      {
+        "gloss": "(figurative) the depth or intensity of something",
+        "note": "e.g. lujjat al-ẓalām, 'the depth of the darkness'; also used of a person likened to a boundless sea"
+      },
+      {
+        "gloss": "(figurative) a numerous, densely-gathered crowd or troop",
+        "note": "an extended sense drawn from the vastness of the sea"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "لَجَّ",
+        "transliteration": "lajja",
+        "meaning": "to persist or persevere in a matter; to contend, wrangle",
+        "path": "/word/brought-12030",
+        "rootId": 12030
+      },
+      {
+        "letters": "لَجُوجٌ",
+        "transliteration": "lajūj",
+        "meaning": "one who persists stubbornly in a matter"
+      },
+      {
+        "letters": "اِلْتَجَّ",
+        "transliteration": "iltajja",
+        "meaning": "to become tumultuous, its waves dashing together (of the sea)"
+      },
+      {
+        "letters": "لَجَّةٌ",
+        "transliteration": "lajjah",
+        "meaning": "voices, cries, or confused clamour",
+        "path": "/word/depth-5364",
+        "rootId": 5364
+      },
+      {
+        "letters": "لُجٌّ",
+        "transliteration": "lujj",
+        "meaning": "the main sea; figuratively a sword, a mirror, or silver",
+        "path": "/word/brought-12030",
+        "rootId": 12030
+      },
+      {
+        "letters": "لُجِّىٌّ",
+        "transliteration": "lujjiyy",
+        "meaning": "vast and deep, said of a sea"
+      },
+      {
+        "letters": "لَجْلَجَ",
+        "transliteration": "lajlaja",
+        "meaning": "to speak with a stammering, indistinct utterance"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"depth\" in Arabic?",
+        "a": "لُجَّةٌ (lujjah) — literally the fathomless deep or main body of the sea, whose bottom cannot be reached."
+      },
+      {
+        "q": "What does the root ل ج ج mean?",
+        "a": "Its core sense is to persist or contend; from the same root comes lujjah, the deep, boundless part of the sea, and iltajja, said of waves becoming turbulent."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Lujjah names the deep main body of the sea, the part whose bottom cannot be reached or whose edges cannot be seen. Classical usage extends this literal sense figuratively to the 'depth' of darkness, night, or an affair, and even to a dense, teeming crowd — all drawing on the image of a boundless sea."
+  },
+  "5365": {
+    "rootId": 5365,
+    "triliteralRoot": "خ ل ف",
+    "rootTransliteration": "kh-l-f",
+    "rootMeaning": "to come after, follow, succeed, replace",
+    "headwordTransliteration": "khalf",
+    "partOfSpeech": "noun (verbal noun / maṣdar), also used adverbially",
+    "senses": [
+      {
+        "gloss": "behind, at the back of",
+        "note": "used adverbially of position, e.g. جَآءَ خَلْفَهُ \"he came behind him\""
+      },
+      {
+        "gloss": "the act of following, coming after, or succeeding another",
+        "note": "as the verbal noun of خَلَفَ, said especially of one who follows after a person who has died or perished"
+      },
+      {
+        "gloss": "posterity, a generation that comes after and succeeds another",
+        "note": "Qur'anic usage (7:169, 19:59), often implying an inferior or evil later generation"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "خَلَفَ",
+        "transliteration": "khalafa",
+        "meaning": "to come after, follow, succeed, or remain after someone (form I verb)"
+      },
+      {
+        "letters": "خَلِيفٌ",
+        "transliteration": "khalīf",
+        "meaning": "successor, one who takes another's place or acts on their behalf"
+      },
+      {
+        "letters": "خِلَافَةٌ",
+        "transliteration": "khilāfah",
+        "meaning": "succession; the office or state of being someone's successor/deputy"
+      },
+      {
+        "letters": "خَلَفٌ",
+        "transliteration": "khalaf",
+        "meaning": "one who takes another's place, a substitute or successor"
+      },
+      {
+        "letters": "خِلْفَةٌ",
+        "transliteration": "khilfah",
+        "meaning": "alternation, coming one after another (e.g. night after day, fruit after fruit)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"behind\" in Arabic?",
+        "a": "خَلْف (khalf)."
+      },
+      {
+        "q": "What does خَلْف mean literally?",
+        "a": "It is the verbal noun of خَلَفَ, meaning the act of coming after or following someone; by extension it also means 'behind' in position, and in the Qur'an can refer to a later, succeeding generation."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "خَلْف is the basic verbal noun tied to the idea of coming after someone or something; it can function adverbially for 'behind' in place, and in the Qur'an it names a 'posterity' or later generation that succeeds an earlier one, sometimes with a negative shade (an unworthy successor generation)."
+  },
+  "5362": {
+    "rootId": 5362,
+    "triliteralRoot": "ه ب ط",
+    "rootTransliteration": "h-b-ṭ",
+    "rootMeaning": "to descend, go down",
+    "headwordTransliteration": "hubūṭ",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "descent, the act of going down",
+        "note": "the verbal noun of هَبَطَ; used of water, a person going down a slope, or entering a valley or town"
+      },
+      {
+        "gloss": "decline, a fall from one's station or condition",
+        "note": "tropical extension, paralleling the verb's figurative sense of being lowered, abased, or diminished"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "هَبَطَ",
+        "transliteration": "habaṭa",
+        "meaning": "to descend, go down; also (transitively) to lower or diminish something"
+      },
+      {
+        "letters": "أَهْبَطَ",
+        "transliteration": "ahbaṭa",
+        "meaning": "to send or bring something down (causative)"
+      },
+      {
+        "letters": "هَبُوطٌ",
+        "transliteration": "habūṭ",
+        "meaning": "a slope or declivity; a place by which one descends"
+      },
+      {
+        "letters": "هَبْطَةٌ",
+        "transliteration": "habṭah",
+        "meaning": "a low or depressed piece of land, opposite of high ground"
+      },
+      {
+        "letters": "هَبِيطٌ",
+        "transliteration": "habīṭ",
+        "meaning": "lean, emaciated by disease, said of a camel"
+      },
+      {
+        "letters": "هَابِطٌ",
+        "transliteration": "hābiṭ",
+        "meaning": "descending; one who or that which goes down"
+      },
+      {
+        "letters": "مَهْبِطُ",
+        "transliteration": "mahbiṭ",
+        "meaning": "a place of descent, as in مَهْبِطُ الوَحْيِ, the place of descent of revelation, a name for Mecca"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"descent\" in Arabic?",
+        "a": "هُبُوط (hubūṭ)."
+      },
+      {
+        "q": "What is the root of هُبُوط?",
+        "a": "The triliteral root ه ب ط (h-b-ṭ), meaning 'to descend, go down'; from it come the verb هَبَطَ ('to descend') and words like مَهْبِطُ ('place of descent')."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "The root's core verb هَبَطَ covers both literal descent (going down a slope, into a valley or town) and figurative decline (falling in rank, loss of wealth, a dropping price). هُبُوط itself is the plain verbal noun for the act of descending."
+  },
+  "5367": {
+    "rootId": 5367,
+    "triliteralRoot": "ص ع د",
+    "rootTransliteration": "ṣ-ʿ-d",
+    "rootMeaning": "to ascend, go up",
+    "headwordTransliteration": "ṣuʿūd",
+    "partOfSpeech": "noun (verbal noun / maṣdar of form I صَعِدَ)",
+    "senses": [
+      {
+        "gloss": "ascending, going up; a climb",
+        "note": "the standard verbal noun of the form I verb صَعِدَ, used of going up a ladder or stairway, a mountain, or a flat roof"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "صَعِدَ",
+        "transliteration": "ṣaʿida",
+        "meaning": "to ascend, go up (a ladder, a mountain, a roof)",
+        "path": "/word/ascend-6032",
+        "rootId": 6032
+      },
+      {
+        "letters": "أَصْعَدَ",
+        "transliteration": "aṣʿada",
+        "meaning": "to journey onward, to go up through a land, valley, or mountains",
+        "path": "/word/ascend-12195",
+        "rootId": 12195
+      },
+      {
+        "letters": "صَعَّدَ",
+        "transliteration": "ṣaʿʿada",
+        "meaning": "to make (someone) ascend, to raise up",
+        "path": "/word/ascend-6032",
+        "rootId": 6032
+      },
+      {
+        "letters": "تَصَاعَدَ",
+        "transliteration": "taṣāʿada",
+        "meaning": "to ascend, rise up"
+      },
+      {
+        "letters": "صَاعِدٌ",
+        "transliteration": "ṣāʿid",
+        "meaning": "ascending; one who or that which ascends"
+      },
+      {
+        "letters": "مَصْعَدٌ",
+        "transliteration": "maṣʿad",
+        "meaning": "a place of ascent"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"ascent\" in Arabic?",
+        "a": "صُعُود (ṣuʿūd) — the verbal noun of صَعِدَ, \"to ascend, go up.\""
+      },
+      {
+        "q": "What is the root of صُعُود and what does it mean?",
+        "a": "The root is ص ع د (ṣ-ʿ-d), carrying the core sense \"to ascend, go up,\" shared by words like صَعِدَ (to ascend) and أَصْعَدَ (to journey upward)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "صُعُود is the ordinary maṣdar (verbal noun) naming the action of the very common verb صَعِدَ, so it covers the plain physical act of climbing or going up — a ladder, a mountain, or onto a roof — rather than a figurative or technical sense."
+  },
+  "5369": {
+    "rootId": 5369,
+    "triliteralRoot": "ق و ل",
+    "rootTransliteration": "q-w-l",
+    "rootMeaning": "to say, speak",
+    "headwordTransliteration": "qawl",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "a saying; something said",
+        "note": "the general term for an utterance, statement, or piece of speech"
+      },
+      {
+        "gloss": "speech, diction",
+        "note": "used of the manner or faculty of speaking, e.g. diction being 'difficult' to someone"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "قَالَ",
+        "transliteration": "qāla",
+        "meaning": "to say, speak (form I verb; also extends to 'to assert a belief,' 'to signal with the hand/head,' 'to pour')"
+      },
+      {
+        "letters": "تَقَوَّلَ",
+        "transliteration": "taqawwala",
+        "meaning": "to lie against someone, fabricate a saying about them (form V)"
+      },
+      {
+        "letters": "اِقْتَالَ",
+        "transliteration": "iqtāla",
+        "meaning": "to arbitrate, pass judgment over someone (form VIII)"
+      },
+      {
+        "letters": "قِيلٌ",
+        "transliteration": "qīl",
+        "meaning": "a saying, something said"
+      },
+      {
+        "letters": "قَالَةٌ",
+        "transliteration": "qālah",
+        "meaning": "a saying, a piece of talk or report"
+      },
+      {
+        "letters": "قَوَّالٌ",
+        "transliteration": "qawwāl",
+        "meaning": "one good in speech; loquacious, chaste and eloquent in expression"
+      },
+      {
+        "letters": "مَقُولٌ",
+        "transliteration": "maqūl",
+        "meaning": "the thing said, the content of an utterance (as in 'maqūl al-qawl')"
+      },
+      {
+        "letters": "المَقُولَاتُ",
+        "transliteration": "al-maqūlāt",
+        "meaning": "the Ten Categories/Predicaments, a logic term built on this root"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"words\" in Arabic?",
+        "a": "قَوْل (qawl) — though qawl more precisely means 'a saying' or 'speech,' the verbal noun of qāla, 'to say.'"
+      },
+      {
+        "q": "What does the root ق و ل mean in Arabic?",
+        "a": "It centers on saying and speaking, giving rise to words like qāla ('he said'), qawl ('a saying'), and qawwāl ('eloquent speaker')."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Qawl is the basic verbal noun of qāla ('he said') and functions as the general Arabic word for a saying, statement, or speech/diction, used both of everyday utterances and, in specialized contexts, extended (as in al-maqūlāt) into logical terminology for the Categories."
+  },
+  "5366": {
+    "rootId": 5366,
+    "triliteralRoot": "د ر ر",
+    "rootTransliteration": "d-r-r",
+    "rootMeaning": "to flow copiously (of milk)",
+    "headwordTransliteration": "durr",
+    "partOfSpeech": "noun (collective / mass noun)",
+    "senses": [
+      {
+        "gloss": "pearl, pearls (fine, lustrous)",
+        "note": "used as a collective noun; a single pearl is دُرَّة"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "دَرَّ",
+        "transliteration": "darra",
+        "meaning": "to flow copiously, be abundant (esp. of milk)"
+      },
+      {
+        "letters": "أَدَرَّ",
+        "transliteration": "adarra",
+        "meaning": "to make milk flow abundantly; to draw out milk"
+      },
+      {
+        "letters": "دَرٌّ",
+        "transliteration": "darr",
+        "meaning": "copious flow, abundance (verbal noun)"
+      },
+      {
+        "letters": "دِرَّةٌ",
+        "transliteration": "dirrah",
+        "meaning": "brisk trade, abundance in the market (tropical)"
+      },
+      {
+        "letters": "دَرِيرٌ",
+        "transliteration": "darīr",
+        "meaning": "running vehemently and smoothly, of a horse"
+      },
+      {
+        "letters": "دُرَّةٌ",
+        "transliteration": "durrah",
+        "meaning": "a single pearl (the unit noun of دُرّ)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"pearl\" in Arabic?",
+        "a": "دُرّ (durr)."
+      },
+      {
+        "q": "What is the difference between دُرّ and دُرَّة؟",
+        "a": "دُرّ is the collective noun for pearls in general; دُرَّة is the singulative, meaning one single pearl."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "دُرّ names fine pearls collectively, with دُرَّة for a single one. It sits on a root whose verb دَرَّ centers on milk (and, by extension, rain, sweat, trade, blood) flowing forth abundantly — an image of steady, plentiful yield that recurs across the wider word family, often in tropical senses."
+  },
+  "5371": {
+    "rootId": 5371,
+    "triliteralRoot": "ج ع ل",
+    "rootTransliteration": "j-ʿ-l",
+    "rootMeaning": "to make, put, appoint",
+    "headwordTransliteration": "jaʿala",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to make, do, produce (a thing)",
+        "note": "Given as synonymous with ṣanaʿa, but said (by Er-Rághib) to be broader in scope than both faʿala and ṣanaʿa."
+      },
+      {
+        "gloss": "to make/appoint (someone or something) to be something; to render, constitute",
+        "note": "Doubly transitive, e.g. Qur'anic 'and He made me a prophet' or 'We made the moon a light'."
+      },
+      {
+        "gloss": "to put, place, lay down, or insert (something) into or upon something",
+        "note": "E.g. 'they put their fingers into their ears'; matches the plain sense 'place'."
+      },
+      {
+        "gloss": "to pronounce, declare, or call (something) to be; also to think or hold (something) to be",
+        "note": "Covers judicial/legal pronouncement, naming, and belief, e.g. 'they called the angels females'."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "جَعْلٌ",
+        "transliteration": "jaʿl",
+        "meaning": "verbal noun: the act of making, doing, or appointing"
+      },
+      {
+        "letters": "جُعْلٌ",
+        "transliteration": "juʿl",
+        "meaning": "verbal noun (alternate form): the act of making"
+      },
+      {
+        "letters": "جَعَالَةٌ",
+        "transliteration": "jaʿālah",
+        "meaning": "verbal noun (alternate form): the act of making"
+      },
+      {
+        "letters": "مَجْعَلٌ",
+        "transliteration": "majʿal",
+        "meaning": "verbal noun (alternate form): the act of making"
+      },
+      {
+        "letters": "جَاعِلٌ",
+        "transliteration": "jāʿil",
+        "meaning": "active participle: one who makes, appoints, or puts"
+      },
+      {
+        "letters": "أَجْعَلَ",
+        "transliteration": "ajʿala",
+        "meaning": "form IV: to make, cause to make (causative)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"place\" in Arabic?",
+        "a": "جَعَلَ (jaʿala) — though its core sense is broader, 'to make, put, or appoint', not just physical placement."
+      },
+      {
+        "q": "What does the Arabic verb جَعَلَ mean?",
+        "a": "It means to make or create something, to make/appoint someone or something to be something else, to put or place a thing, and to pronounce, name, or think something to be."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Very frequent in the Qur'an, where it covers everything from creation ('He made the darknesses and the light') to naming, judgment, and simple placement ('they put their fingers in their ears'). Classical lexicographers treat it as a broader, more general verb of 'making' than either faʿala or ṣanaʿa."
+  },
+  "5368": {
+    "rootId": 5368,
+    "triliteralRoot": "ك م",
+    "rootTransliteration": "km",
+    "rootMeaning": "to cover, conceal",
+    "headwordTransliteration": "kam",
+    "partOfSpeech": "particle (interrogative pronoun of quantity)",
+    "senses": [
+      {
+        "gloss": "how many?, how much?",
+        "note": "interrogative asking for an unspecified number or amount; the noun specified is left out"
+      },
+      {
+        "gloss": "how long?",
+        "note": "used with a period of time understood, as in Qur'an 2:161"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "كِمٌّ",
+        "transliteration": "kimm",
+        "meaning": "the calyx of a flower; the envelope of a palm-spadix"
+      },
+      {
+        "letters": "كُمَّةٌ",
+        "transliteration": "kummah",
+        "meaning": "a round cap (qalansuwah)"
+      },
+      {
+        "letters": "كِمَامَةٌ",
+        "transliteration": "kimāmah",
+        "meaning": "a covering, same as kimm"
+      },
+      {
+        "letters": "مُكَمَّمٌ",
+        "transliteration": "mukammam",
+        "meaning": "covered over, concealed"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"how much\" in Arabic?",
+        "a": "كَمْ (kam)."
+      },
+      {
+        "q": "Is كَمْ used only for quantities?",
+        "a": "No — besides asking 'how many/how much', it can also mean 'how long' when a time-word is understood, as in Qur'an 2:161."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "كَمْ is an interrogative particle used to ask about quantity or number ('how many/how much'), and can also ask 'how long' when a period of time is understood, as in the Qur'an. A variant spelling كَمٌّ is also attested for it, and the related noun كَمِّيَّةٌ (quantity) answers the question it poses."
+  },
+  "5361": {
+    "rootId": 5361,
+    "triliteralRoot": "ا ن",
+    "rootTransliteration": "ʾan",
+    "rootMeaning": "to moan, complain of pain",
+    "headwordTransliteration": "ʾanna",
+    "partOfSpeech": "particle (subordinating conjunction 'that'); also a homograph of the form I verb 'to moan'",
+    "senses": [
+      {
+        "gloss": "that (introducing a subordinate clause)",
+        "note": "The established sense of this headword, e.g. after verbs of knowing or saying."
+      },
+      {
+        "gloss": "as long as, so long as",
+        "note": "Used in oaths, e.g. مَا أَنَّ فِى السَّمَآءِ نَجْمٌ, 'as long as there is a star in the sky'; given as a dialectal variant of عَنَّ in this use."
+      },
+      {
+        "gloss": "to moan, groan; to complain of pain",
+        "note": "Form I verb (aor. يَئِنُّ), said of a man moaning from pain; also said of a bow producing a gentle, prolonged sound."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "أُنَانٌ",
+        "transliteration": "unān",
+        "meaning": "a moan, moaning (verbal noun of أَنَّ 'to moan')"
+      },
+      {
+        "letters": "أَنٌ",
+        "transliteration": "an",
+        "meaning": "I (first-person pronoun, dialectal form)"
+      },
+      {
+        "letters": "أَنْتَ",
+        "transliteration": "anta",
+        "meaning": "you (masculine singular pronoun)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"that\" in Arabic?",
+        "a": "أَنَّ (ʾanna) — the particle used to introduce a subordinate clause, as in 'I know that...'."
+      },
+      {
+        "q": "Is أَنَّ also a verb in Arabic?",
+        "a": "Yes — the identical spelling is a separate form I verb meaning 'to moan' or 'complain of pain' (aor. يَئِنُّ)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "This exact spelling covers two distinct words recorded by Lane: the familiar particle 'that', which introduces a clause, and an older form I verb meaning 'to moan or complain of pain'. The same letters also underlie the personal pronouns أَنَ and أَنْتَ ('I' and 'you')."
+  },
+  "5373": {
+    "rootId": 5373,
+    "triliteralRoot": "خ ل ف",
+    "rootTransliteration": "kh-l-f",
+    "rootMeaning": "to come after, succeed, follow",
+    "headwordTransliteration": "khalīfah",
+    "partOfSpeech": "noun",
+    "senses": [
+      {
+        "gloss": "caliph",
+        "note": "the successor to the Prophet as leader of the Muslim community; the word's standard historical/political application"
+      },
+      {
+        "gloss": "successor, vice-agent, substitute",
+        "note": "the underlying sense: one who comes after another and takes their place, whether in a family, an office, or any position of trust"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "خَلَفَ",
+        "transliteration": "khalafa",
+        "meaning": "to come after, follow, succeed, or remain after another"
+      },
+      {
+        "letters": "خِلَافَةٌ",
+        "transliteration": "khilāfah",
+        "meaning": "succession; the office or act of being someone's successor or vice-agent"
+      },
+      {
+        "letters": "خَلَفٌ",
+        "transliteration": "khalaf",
+        "meaning": "a successor or substitute; that which takes the place of another"
+      },
+      {
+        "letters": "خَلْفٌ",
+        "transliteration": "khalf",
+        "meaning": "those who come after; a succeeding generation or posterity"
+      },
+      {
+        "letters": "خِلْفَةٌ",
+        "transliteration": "khilfah",
+        "meaning": "alternation or succession in turn, as night following day or one thing replacing another"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"caliph\" in Arabic?",
+        "a": "خَلِيفَة (khalīfah)."
+      },
+      {
+        "q": "What does خَلِيفَة literally mean?",
+        "a": "Literally 'successor' or 'vice-agent' — someone who comes after another and takes their place; 'caliph' is this general sense applied specifically to a ruler."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "خَلِيفَة names anyone who takes another's place — the same root gives the phrase 'khalafa Llāhu ʿalayka' ('may God be a khalīfah to you'), said to someone who has lost a father or other irreplaceable relative, invoking God as the one who fills that gap. Applied to a ruler, the word narrows to its best-known sense: 'caliph', the successor who takes up leadership after a predecessor."
+  },
+  "5376": {
+    "rootId": 5376,
+    "triliteralRoot": "ت ب ع",
+    "rootTransliteration": "t-b-ʿ",
+    "rootMeaning": "to follow, go after",
+    "headwordTransliteration": "tabiʿa",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to follow; to go or walk behind or after (a person or group)",
+        "note": "The basic sense: to walk after someone, or after a people who have passed by."
+      },
+      {
+        "gloss": "to overtake, catch up with one who had already gone ahead",
+        "note": "Some lexicographers hold this is the true sense of tabiʿa, distinct from following someone who is still walking ahead of you; used of a shooting star 'overtaking' a devil, and of Pharaoh 'overtaking' the Israelites, in Qur'anic usage."
+      },
+      {
+        "gloss": "to follow as a guide or model, to imitate in conduct",
+        "note": "Tropical use, e.g. following the imam in prayer, or following the Qur'an as a rule of action."
+      },
+      {
+        "gloss": "to prosecute or sue someone for a debt or right owed",
+        "note": "As in tabiʿtu al-rajula bi-ḥaqqī, 'I pursued the man at law for my due'; also used of a debtor's claim being referred on to another party."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "تَبَّعَ",
+        "transliteration": "tabbaʿa",
+        "meaning": "to make one thing follow after another (said of God causing consequence to follow an act)"
+      },
+      {
+        "letters": "تِبَاعٌ",
+        "transliteration": "tibāʿ",
+        "meaning": "succession, consecution — making two things follow one another without a gap"
+      },
+      {
+        "letters": "مُتَتَابِعٌ",
+        "transliteration": "mutatābiʿ",
+        "meaning": "consecutive, following on uninterruptedly"
+      },
+      {
+        "letters": "تَابِعٌ",
+        "transliteration": "tābiʿ",
+        "meaning": "a follower; one who follows"
+      },
+      {
+        "letters": "مَتْبُوعٌ",
+        "transliteration": "matbūʿ",
+        "meaning": "one who is followed"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"follow\" in Arabic?",
+        "a": "تَبِعَ (tabiʿa) — to follow, or to go behind or after someone."
+      },
+      {
+        "q": "What is the Arabic word for \"a follower\"?",
+        "a": "تَابِعٌ (tābiʿ), from the same root ت ب ع as تَبِعَ (tabiʿa), \"to follow.\""
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Beyond ordinary physical following, tabiʿa carries a legal sense of pursuing someone at law for a debt, and a tropical sense of following a person or text (the imam, the Qur'an) as one's guide in action. It occurs in the Qur'an describing a shooting star 'overtaking' a devil and Pharaoh 'overtaking' the Israelites with his troops."
+  },
+  "5374": {
+    "rootId": 5374,
+    "triliteralRoot": "ذ ه ب",
+    "rootTransliteration": "ḏ-h-b",
+    "rootMeaning": "to go, pass along, depart",
+    "headwordTransliteration": "ḏahaba",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to go, walk, proceed, march, journey; to pass along or away",
+        "note": "the basic sense, syn. with مَشَى/سَارَ/مَرَّ; said of a man or beast"
+      },
+      {
+        "gloss": "to go away from, quit, leave, or depart from (someone/something), with عَنْ"
+      },
+      {
+        "gloss": "to escape one's memory; to be forgotten",
+        "note": "tropical use, with عَلَى, e.g. ذَهَبَ عَلَيْهِ 'it escaped his memory'"
+      },
+      {
+        "gloss": "to pursue, hold, or adopt a course, doctrine, opinion, or belief",
+        "note": "tropical use, e.g. ذَهَبَ مَذْهَبًا حَسَنًا 'he pursued a good course', ذَهَبَ إِلَى قَوْلِ فُلَانٍ 'he held such-and-such's opinion'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "مَذْهَبٌ",
+        "transliteration": "maḏhab",
+        "meaning": "a way, course, or manner of acting; also (tropical) a doctrine, creed, opinion, or school of thought"
+      },
+      {
+        "letters": "أَذْهَبَ",
+        "transliteration": "aḏhaba",
+        "meaning": "to make (someone/something) go away, remove, or cause to depart"
+      },
+      {
+        "letters": "ذَهَّبَ",
+        "transliteration": "ḏahhaba",
+        "meaning": "a rarer causative variant of أَذْهَبَ, to make go away or remove"
+      },
+      {
+        "letters": "ذَاهِبٌ",
+        "transliteration": "ḏāhib",
+        "meaning": "going, departing, passing away (active participle)",
+        "path": "/word/going-19856",
+        "rootId": 19856
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"go\" in Arabic?",
+        "a": "ذَهَبَ (ḏahaba) — the classical Form I verb meaning to go, walk, proceed, or depart."
+      },
+      {
+        "q": "What does the Arabic root ذ ه ب mean?",
+        "a": "It centers on 'going, passing along, departing'. From it come مَذْهَب (a course of action, or a doctrine/school of thought) and أَذْهَبَ (to make something go away, remove)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "ذَهَبَ is one of the most common Arabic motion verbs, appearing throughout the Qur'an and classical prose for literal 'going'. It also extends tropically: ذهب إلى مذهب / ذهب مذهبا means to adopt or hold a doctrine, opinion, or way of acting (the source of the noun مَذْهَب, 'school of jurisprudence/thought'), while ذهب عليه or ذهب عنه can mean something slipped from one's memory or left one. With the particle بِ it can mean 'to take/carry off (with one)' or, causatively, 'to remove, make go away'."
+  },
+  "5377": {
+    "rootId": 5377,
+    "triliteralRoot": "ج ر ى",
+    "rootTransliteration": "j-r-y",
+    "rootMeaning": "to run, flow, course along",
+    "headwordTransliteration": "jarā",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to run, flow, course along",
+        "note": "properly said of water; extended to a horse, a ship, and the sun or stars pursuing their course"
+      },
+      {
+        "gloss": "to happen, occur, come to pass",
+        "note": "tropical use — a thing 'ran' to someone, i.e. befell or occurred to him; source of the given gloss 'happened'"
+      },
+      {
+        "gloss": "to aim at, hasten toward, betake oneself to something",
+        "note": "used with إلى; also of a dispute or controversy that 'ran on' between people"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "جرّى",
+        "transliteration": "jarrā",
+        "meaning": "to send, or appoint, as a deputy or commissioned agent (form II)",
+        "path": "/word/happened-5377",
+        "rootId": 5377
+      },
+      {
+        "letters": "جَارَى",
+        "transliteration": "jārā",
+        "meaning": "to run alongside someone; to vie or compete with him, e.g. in discourse (form III)"
+      },
+      {
+        "letters": "أَجْرَى",
+        "transliteration": "ajrā",
+        "meaning": "to make something run or flow; to make a horse or ship run; to grant a standing allowance (form IV)",
+        "path": "/word/conduct-7582",
+        "rootId": 7582
+      },
+      {
+        "letters": "جَرِىٌّ",
+        "transliteration": "jarīy",
+        "meaning": "a deputy, a commissioned agent",
+        "path": "/word/happened-5377",
+        "rootId": 5377
+      },
+      {
+        "letters": "جِرْيَةٌ",
+        "transliteration": "jiryah",
+        "meaning": "a running, a flowing (verbal noun of jarā)"
+      },
+      {
+        "letters": "مُجَارَاةٌ",
+        "transliteration": "mujārāh",
+        "meaning": "the act of vying, running together, or competing (verbal noun of jārā)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"happened\" in Arabic?",
+        "a": "جَرَى (jarā) — literally 'it ran, or flowed', extended to mean 'it happened, occurred'."
+      },
+      {
+        "q": "What is the core meaning of the root ج ر ى؟",
+        "a": "It centers on running or flowing — said originally of water, then of horses, ships, and the sun's course, and figuratively of events that 'run' to someone, i.e. happen."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "جرى describes literal motion (water, a horse, a ship, the sun's course) and is extended figuratively to events 'happening' to a person and to disputes 'running on'; the phrase مَا جَرَى is used to mean 'events, occurrences'."
+  },
+  "5385": {
+    "rootId": 5385,
+    "triliteralRoot": "ص ل ح",
+    "rootTransliteration": "ṣ-l-ḥ",
+    "rootMeaning": "to be good, right, sound",
+    "headwordTransliteration": "ṣāliḥ",
+    "partOfSpeech": "noun/adjective (active participle of form I)",
+    "senses": [
+      {
+        "gloss": "righteous, good, virtuous",
+        "note": "describes a person of upright, incorrupt moral character; opposite of corrupt or unjust"
+      },
+      {
+        "gloss": "fit, suitable, proper",
+        "note": "used of a thing, following the verb's tropical sense of being suitable or fit for a purpose"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "صَلَحَ",
+        "transliteration": "ṣalaḥa / ṣaluḥa",
+        "meaning": "to be good, right, sound; to thrive (opposite of to be corrupt)",
+        "path": "/word/fit-5295",
+        "rootId": 5295
+      },
+      {
+        "letters": "أَصْلَحَ",
+        "transliteration": "aṣlaḥa",
+        "meaning": "to make good, rectify, repair, reform",
+        "path": "/word/mend-8982",
+        "rootId": 8982
+      },
+      {
+        "letters": "صَالَحَ",
+        "transliteration": "ṣālaḥa",
+        "meaning": "to make peace or reconcile with someone"
+      },
+      {
+        "letters": "اِصْطَلَحَ",
+        "transliteration": "iṣṭalaḥa",
+        "meaning": "to reach a reconciliation or agreement together"
+      },
+      {
+        "letters": "صُلْحٌ",
+        "transliteration": "ṣulḥ",
+        "meaning": "peace, reconciliation, settlement",
+        "path": "/word/fit-5295",
+        "rootId": 5295
+      },
+      {
+        "letters": "صَلَاحٌ",
+        "transliteration": "ṣalāḥ",
+        "meaning": "goodness, rectitude, soundness"
+      },
+      {
+        "letters": "مُصْلِحٌ",
+        "transliteration": "muṣliḥ",
+        "meaning": "reformer, one who sets things right"
+      },
+      {
+        "letters": "مَصْلَحَةٌ",
+        "transliteration": "maṣlaḥah",
+        "meaning": "benefit, interest, welfare"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"righteous\" in Arabic?",
+        "a": "صَالِح (ṣāliḥ)."
+      },
+      {
+        "q": "Does صالح only describe people?",
+        "a": "No — as the participle of صَلَحَ it can also describe a thing that is fit, suitable, or proper, not only a morally righteous person."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "As the active participle of صَلَحَ, صالح most often describes a person's moral goodness or righteousness, but it carries the same root sense of being 'in a good, sound, proper state' that also underlies the family's peace-making and repairing derivatives."
+  },
+  "5386": {
+    "rootId": 5386,
+    "triliteralRoot": "ذ ر ر",
+    "rootTransliteration": "ḏ-r-r",
+    "rootMeaning": "to sprinkle, scatter",
+    "headwordTransliteration": "ḏurriyyah",
+    "partOfSpeech": "noun (collective; historically linked to the verb ذَرَّ)",
+    "senses": [
+      {
+        "gloss": "children, offspring, descendants",
+        "note": "the primary sense; used of a person's progeny, male or female"
+      },
+      {
+        "gloss": "progenitors, ancestors",
+        "note": "a less common, tropical use noted in the lexicon"
+      },
+      {
+        "gloss": "women",
+        "note": "a further, rarer sense recorded by lexicographers"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "ذَرَّ",
+        "transliteration": "ḏarra",
+        "meaning": "to sprinkle or scatter (salt, grain, a medicament); also, to spread — said of God spreading mankind over the earth, the image behind ذُرِّيَّة"
+      },
+      {
+        "letters": "ذَرٌّ",
+        "transliteration": "ḏarr",
+        "meaning": "tiny ant grubs, or the fine motes seen drifting in a sunbeam"
+      },
+      {
+        "letters": "ذَرُورٌ",
+        "transliteration": "ḏarūr",
+        "meaning": "a dry powdered medicament sprinkled into the eye or onto a wound"
+      },
+      {
+        "letters": "ذَرِيرَةٌ",
+        "transliteration": "ḏarīrah",
+        "meaning": "a fragrant powder made from imported aromatic reed, used as perfume"
+      },
+      {
+        "letters": "ذَرِّىٌّ",
+        "transliteration": "ḏarrī",
+        "meaning": "the wavy, grain-like watering pattern on a sword blade"
+      },
+      {
+        "letters": "مِذَرَّةٌ",
+        "transliteration": "miḏarrah",
+        "meaning": "an implement used for scattering grain"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"descendants\" in Arabic?",
+        "a": "ذُرِّيَّة (ḏurriyyah) — also covering 'children' or 'offspring' as a collective."
+      },
+      {
+        "q": "What does the root ذ ر ر mean?",
+        "a": "Its core sense is 'to sprinkle, scatter' or 'to spread' — ذُرِّيَّة ('offspring') comes from the image of people being spread across the earth."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "ذُرِّيَّة is grammatically singular but used with both singular and plural force, covering one's children as a whole. Lane links it to ذَرَّ in the sense 'God spread His servants upon the earth' — offspring as what is 'scattered' from a person. It takes the plurals ذُرِّيَّاتٌ and ذَرَارِىُّ, and variant forms ذِرِّيَّة and ذَرِيَّة are also recorded."
+  },
+  "5380": {
+    "rootId": 5380,
+    "triliteralRoot": "و ج د",
+    "rootTransliteration": "w-j-d",
+    "rootMeaning": "to find, discover, attain",
+    "headwordTransliteration": "wujūd",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "existence, being",
+        "note": "the state of existing, having come to be from a state of nonexistence; used of God's existence as well as created things"
+      },
+      {
+        "gloss": "finding, discovery, perception",
+        "note": "as the infinitive noun of وَجَدَ, covering finding by any of the five senses, by the intellect, or by search"
+      },
+      {
+        "gloss": "attainment, acquisition",
+        "note": "obtaining or lighting upon a thing sought or desired"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "وَجَدَ",
+        "transliteration": "wajada",
+        "meaning": "he found, lighted on, attained, or perceived (a thing sought)"
+      },
+      {
+        "letters": "أَوْجَدَ",
+        "transliteration": "awjada",
+        "meaning": "he brought into being, created; also, he enriched (someone)"
+      },
+      {
+        "letters": "مَوْجُودٌ",
+        "transliteration": "mawjūd",
+        "meaning": "existent, found, present"
+      },
+      {
+        "letters": "وَاجِدٌ",
+        "transliteration": "wājid",
+        "meaning": "one who finds; one who has or possesses"
+      },
+      {
+        "letters": "وَجْدٌ",
+        "transliteration": "wajd",
+        "meaning": "grief, sorrow; passionate love"
+      },
+      {
+        "letters": "وُجْدٌ",
+        "transliteration": "wujd",
+        "meaning": "wealth, means, sufficiency"
+      },
+      {
+        "letters": "مُتَوَجِّدٌ",
+        "transliteration": "mutawajjid",
+        "meaning": "grieving, sorrowful"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"existence\" in Arabic?",
+        "a": "Existence is وُجُود (wujūd), the verbal noun of وَجَدَ \"to find,\" used for the state of being or having come into being."
+      },
+      {
+        "q": "What does the root و-ج-د (w-j-d) mean?",
+        "a": "It centers on \"finding\" — by the senses, the intellect, or by search — and extends to related derived senses like existence, wealth, love, and grief."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "As the maṣdar of وَجَدَ (\"to find\"), wujūd is the term classical Arabic philosophy and theology use for existence or being — as in God's necessary existence — while the same root, in its other forms, covers everyday finding, discovering, or perceiving something by the senses or the mind."
+  },
+  "5388": {
+    "rootId": 5388,
+    "triliteralRoot": "ك و ن",
+    "rootTransliteration": "k-w-n",
+    "rootMeaning": "to be, exist",
+    "headwordTransliteration": "kāna",
+    "partOfSpeech": "verb (form I, \"incomplete\"/nāqiṣ verb)",
+    "senses": [
+      {
+        "gloss": "was, existed",
+        "note": "as a complete verb, simply 'he or it was'"
+      },
+      {
+        "gloss": "used to (do something)",
+        "note": "with an imperfect verb, marks habitual or continuous past action"
+      },
+      {
+        "gloss": "is (copula)",
+        "note": "stripped of any time sense, links subject and predicate much like English 'is'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "تَكَوَّنَ",
+        "transliteration": "takawwana",
+        "meaning": "to come into existence, originate"
+      },
+      {
+        "letters": "اِسْتَكَانَ",
+        "transliteration": "istakāna",
+        "meaning": "to be lowly, humble, submissive"
+      },
+      {
+        "letters": "الكَوْن",
+        "transliteration": "al-kawn",
+        "meaning": "existence, being",
+        "path": "/word/cosmos-universe-13621",
+        "rootId": 13621
+      },
+      {
+        "letters": "كَيْنُونَةٌ",
+        "transliteration": "kaynūnah",
+        "meaning": "state of being, existence"
+      },
+      {
+        "letters": "مَكَانَةٌ",
+        "transliteration": "makānah",
+        "meaning": "a place of being; also station, condition"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"used to\" in Arabic?",
+        "a": "كَانَ (kāna), placed before an imperfect-tense verb — e.g. كَانَ يَذْهَبُ, \"he used to go.\""
+      },
+      {
+        "q": "Is كَانَ a complete, independent verb?",
+        "a": "Not usually — it's classed as an 'incomplete' (nāqiṣ) verb, meaning it needs a predicate to form a full statement, though it can also mean simply 'was, existed' on its own."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "كَانَ is one of a set of \"incomplete\" (nāqiṣ) verbs — alongside ظَلَّ, أَصْبَحَ, أَمْسَى, صَارَ, لَيْسَ and others — that put their subject in the nominative and their predicate in the accusative, as in كَانَ زَيْدٌ قَائِمًا \"Zeyd was standing.\" Emptied of any time reference, it can also serve as a plain copula equivalent to \"is,\" and combined with an imperfect verb it produces the \"used to\" habitual-past sense."
+  },
+  "5391": {
+    "rootId": 5391,
+    "triliteralRoot": "م ل ك",
+    "rootTransliteration": "m-l-k",
+    "rootMeaning": "to possess, own, have dominion over",
+    "headwordTransliteration": "malik",
+    "partOfSpeech": "noun/adjective (substantive, intensive pattern faʿil — \"king\")",
+    "senses": [
+      {
+        "gloss": "king, monarch, sovereign ruler",
+        "note": "one who holds mulk (dominion, authority to command and forbid) over a people; cf. malik al-amlāk, \"king of kings\""
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "مُلْكٌ",
+        "transliteration": "mulk",
+        "meaning": "dominion, sovereignty, kingship, rule"
+      },
+      {
+        "letters": "مَالِكٌ",
+        "transliteration": "mālik",
+        "meaning": "owner, possessor, master"
+      },
+      {
+        "letters": "مَمْلَكَةٌ",
+        "transliteration": "mamlaka",
+        "meaning": "kingdom, realm"
+      },
+      {
+        "letters": "مَمْلُوكٌ",
+        "transliteration": "mamlūk",
+        "meaning": "slave, bondman (one possessed)",
+        "path": "/word/servant-5585",
+        "rootId": 5585
+      },
+      {
+        "letters": "مَلَكٌ",
+        "transliteration": "malak",
+        "meaning": "angel"
+      },
+      {
+        "letters": "مَلَكُوتُ",
+        "transliteration": "malakūt",
+        "meaning": "kingdom, sovereign dominion (esp. of God)"
+      },
+      {
+        "letters": "تَمَلَّكَ",
+        "transliteration": "tamallaka",
+        "meaning": "to take possession of, seize (form V)"
+      },
+      {
+        "letters": "مَلَّكَ",
+        "transliteration": "mallaka",
+        "meaning": "to make someone possess something; to make king (form II)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"king\" in Arabic?",
+        "a": "مَلِك (malik)."
+      },
+      {
+        "q": "What is the difference between مَلِك (malik) and مُلْك (mulk)?",
+        "a": "Mulk is the abstract noun for dominion, sovereignty, or ownership itself; malik is the person who holds it — the king."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Malik denotes the person who holds mulk — the exercise of authority to command and forbid over a people — so it is used for an actual reigning king or sovereign, as in the title malik al-amlāk, \"king of kings.\" It sits in a family of words built on the same idea of possession/dominion, ranging from ordinary ownership (mālik, mulk as \"property\") up to God's own sovereignty (malakūt)."
+  },
+  "5392": {
+    "rootId": 5392,
+    "triliteralRoot": "ي و م",
+    "rootTransliteration": "y-w-m",
+    "rootMeaning": "a day; time in general",
+    "headwordTransliteration": "yawm",
+    "partOfSpeech": "noun (masculine)",
+    "senses": [
+      {
+        "gloss": "a day (from sunrise to sunset)",
+        "note": "the common, conventional sense; the legal sense runs from true dawn to sunset"
+      },
+      {
+        "gloss": "time, in general",
+        "note": "the original, broader signification — any period, whether night or day"
+      },
+      {
+        "gloss": "today",
+        "note": "usually with the definite article, اليوم, 'the day' = 'today'"
+      },
+      {
+        "gloss": "an event, or a day of battle",
+        "note": "as in أَيَّامُ العَرَبِ, 'the days (conflicts) of the Arabs'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "يَوْمٌ",
+        "transliteration": "yawm",
+        "meaning": "day; time; today (with the article)"
+      },
+      {
+        "letters": "يَوْمِيَّةٌ",
+        "transliteration": "yawmiyyah",
+        "meaning": "a day's wages"
+      },
+      {
+        "letters": "مُيَاوَمَةٌ",
+        "transliteration": "muyāwamah",
+        "meaning": "dealing or working on a day-by-day basis"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"today\" in Arabic?",
+        "a": "اليوم (al-yawm) — literally 'the day', used idiomatically to mean 'today'."
+      },
+      {
+        "q": "What is the root of يوم and what does it mean?",
+        "a": "The root is ي و م (y-w-m), meaning 'day' or 'time' in general — the same root behind يَوْمِيَّة ('a day's wages') and مُيَاوَمَة ('dealing day by day')."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "يوم is one of the most common nouns in Arabic. Bare, it means 'a day' or, more broadly, 'time' itself; with the definite article, اليوم, it takes the idiomatic sense 'today'. Classically it also extends to mean a notable happening, especially a day of battle, as in the set phrase أَيَّامُ العَرَبِ, 'the days (i.e. battles) of the Arabs'."
+  },
+  "5389": {
+    "rootId": 5389,
+    "triliteralRoot": "د خ ل",
+    "rootTransliteration": "d-kh-l",
+    "rootMeaning": "to enter, go in",
+    "headwordTransliteration": "dakhala",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to enter, go in",
+        "note": "opposite of خَرَجَ 'to exit'; takes its object directly (دخل البيت) with the preposition إلى/في understood"
+      },
+      {
+        "gloss": "to go in to one's wife",
+        "note": "classical euphemism (دخل بامرأته / عليها) for consummating a marriage"
+      },
+      {
+        "gloss": "to enter upon, begin, or commence (an affair)"
+      },
+      {
+        "gloss": "to come in, accrue",
+        "note": "said of income or revenue"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "دخّل",
+        "transliteration": "dakhkhala",
+        "meaning": "to insert, put in (e.g. pack dates into a container)"
+      },
+      {
+        "letters": "داخل",
+        "transliteration": "dākhala",
+        "meaning": "to mix with, socialize, converse; to enter into another's affairs together"
+      },
+      {
+        "letters": "تداخل",
+        "transliteration": "tadākhala",
+        "meaning": "to become mixed, intermingled, or confused together"
+      },
+      {
+        "letters": "دَخْلٌ",
+        "transliteration": "dakhl",
+        "meaning": "income, revenue; that which comes in"
+      },
+      {
+        "letters": "دَخَلٌ",
+        "transliteration": "dakhal",
+        "meaning": "a flaw, corruption, or unsoundness (in mind, body, or an affair)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"enter\" in Arabic?",
+        "a": "دَخَلَ (dakhala)."
+      },
+      {
+        "q": "What does دخل بامرأته mean?",
+        "a": "It is a classical Arabic euphemism meaning 'he consummated the marriage with his wife,' literally 'he went in to his wife.'"
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Though it means 'to enter,' دخل takes a place-noun directly as an object (دخلت البيت, دخلت الدار) rather than with a preposition, because the preposition إلى or في is understood as suppressed. In the phrase دخل بامرأته/عليها it functions as a set euphemism for consummating a marriage."
+  },
+  "5382": {
+    "rootId": 5382,
+    "triliteralRoot": "ج ز ع",
+    "rootTransliteration": "j-z-ʿ",
+    "rootMeaning": "to cut off, break, or divide",
+    "headwordTransliteration": "jaziʿa",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to be impatient, unable to bear hardship",
+        "note": "the opposite of ṣabr, 'patience'"
+      },
+      {
+        "gloss": "to grieve, to be stricken with sorrow"
+      },
+      {
+        "gloss": "to despair; to be seized by grief so violent it turns one from one's purpose",
+        "note": "philologists linked this to the root's core sense of 'cutting off'"
+      },
+      {
+        "gloss": "to cross, pass over (a valley, land, or desert)",
+        "note": "a distinct usage of the same form I verb, applied to physical crossing rather than emotion"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "جِزْعٌ",
+        "transliteration": "jizʿ",
+        "meaning": "the bend, or turning-point, of a valley"
+      },
+      {
+        "letters": "جَزْعٌ",
+        "transliteration": "jazʿ",
+        "meaning": "banded onyx — beads prized for their streaks of black and white"
+      },
+      {
+        "letters": "جَزِعٌ",
+        "transliteration": "jaziʿ",
+        "meaning": "impatient, easily overcome by grief"
+      },
+      {
+        "letters": "انجزع",
+        "transliteration": "injazaʿa",
+        "meaning": "to break, snap in half (of a rope, staff, or spear)"
+      },
+      {
+        "letters": "اجتزعهُ",
+        "transliteration": "ijtazaʿahu",
+        "meaning": "to break off and cut off a branch for oneself"
+      },
+      {
+        "letters": "تَجَزَّعَ",
+        "transliteration": "tajazzaʿa",
+        "meaning": "to divide something up among themselves (e.g. spoils)"
+      },
+      {
+        "letters": "جزّع",
+        "transliteration": "jazzaʿa",
+        "meaning": "to console someone, causing their grief or impatience to cease"
+      },
+      {
+        "letters": "جِزْعَةٌ",
+        "transliteration": "jizʿah",
+        "meaning": "a small remaining portion, of wealth, water, or milk"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"despair\" in Arabic?",
+        "a": "جَزِعَ (jaziʿa), or the noun جَزَعٌ (jazaʿ) for 'impatience, despair' — the opposite of ṣabr, 'patience'."
+      },
+      {
+        "q": "What does the Arabic root ج-ز-ع mean?",
+        "a": "It centers on cutting, breaking, or dividing: it produces words for a snapped rope (انجزع), a portion cut off (جِزْعَة), and despair/impatience (جَزِعَ) — grief severe enough to 'cut' someone off from their composure."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Classical philologists treated 'cutting off' as the root's primary sense, and explained despair/impatience (جَزَعٌ) as grief so severe it 'cuts' a person off from their composure or purpose. In classical and Qur'anic usage جَزَعٌ is regularly paired as the opposite of صَبْرٌ (patient endurance)."
+  },
+  "5387": {
+    "rootId": 5387,
+    "triliteralRoot": "خ ل ف",
+    "rootTransliteration": "kh-l-f",
+    "rootMeaning": "to come after, follow, succeed, replace",
+    "headwordTransliteration": "khalafa",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to come after, remain, or stay behind following another, especially one who died or perished",
+        "note": "matches the sense of being 'left' surviving after someone or something has gone"
+      },
+      {
+        "gloss": "to take someone's place, act as their substitute, or become their khalīfah (successor, deputy, vice-regent)",
+        "note": "used of heirs, deputies over a family, and rulers"
+      },
+      {
+        "gloss": "(of things) to succeed and replace one another, to alternate",
+        "note": "said of night following day, or one crop of fruit replacing another"
+      },
+      {
+        "gloss": "to come up on someone from behind and seize them, or strike off their head unawares"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "خَلِيفٌ",
+        "transliteration": "khalīf",
+        "meaning": "successor, vice-regent — one who takes another's place"
+      },
+      {
+        "letters": "خِلَافَةٌ",
+        "transliteration": "khilāfah",
+        "meaning": "succession; the office of being someone's successor or vice-regent"
+      },
+      {
+        "letters": "خَلَفٌ",
+        "transliteration": "khalaf",
+        "meaning": "a successor; that which takes the place of what came before"
+      },
+      {
+        "letters": "خَلْفٌ",
+        "transliteration": "khalf",
+        "meaning": "posterity, those who come after (esp. an inferior generation)"
+      },
+      {
+        "letters": "خِلْفَةٌ",
+        "transliteration": "khilfah",
+        "meaning": "alternation, succession — e.g. of night and day, or fruit after fruit"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"left\" in Arabic?",
+        "a": "خَلَفَ (khalafa) — used of remaining or staying behind after another person, especially one who has died or departed."
+      },
+      {
+        "q": "What is the core meaning of the root خ-ل-ف?",
+        "a": "It expresses coming after, following, or succeeding — the same idea found in خَليفة (successor/vice-regent) and خِلافة (succession)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Central to the phrase خَلَفَ اللّٰهُ عَلَيْكَ, said to someone who has lost an irreplaceable relative (father, mother, uncle), meaning roughly \"may God be your replacement/support\" or \"may God restore to you what you have lost.\" The verbal noun خِلَافَة and the agent-sense behind خَلِيفَة (successor, vice-regent) carry strong Qur'anic and later caliphal resonance, all rooted in the basic idea of coming after and taking another's place."
+  },
+  "5393": {
+    "rootId": 5393,
+    "triliteralRoot": "ع ب د",
+    "rootTransliteration": "ʿ-b-d",
+    "rootMeaning": "to serve, worship, or be enslaved",
+    "headwordTransliteration": "ʿabd",
+    "partOfSpeech": "noun (substantive; originally an epithet)",
+    "senses": [
+      {
+        "gloss": "slave, bondman",
+        "note": "the opposite of a freeman; common plural عَبِيد (ʿabīd)"
+      },
+      {
+        "gloss": "servant, worshipper (of God)",
+        "note": "from the root verb's sense 'to serve, worship, or obey God with humble submission'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "عِبَادَةٌ",
+        "transliteration": "ʿibādah",
+        "meaning": "worship, service, devotion (to God)"
+      },
+      {
+        "letters": "عُبُودِيَّةٌ",
+        "transliteration": "ʿubūdiyyah",
+        "meaning": "slavery, servitude; the state of being a slave"
+      },
+      {
+        "letters": "عَبِيدٌ",
+        "transliteration": "ʿabīd",
+        "meaning": "slaves (plural of ʿabd)"
+      },
+      {
+        "letters": "عبّدهُ",
+        "transliteration": "ʿabbada",
+        "meaning": "to enslave, to make someone a slave",
+        "path": "/word/his-servant-17156",
+        "rootId": 17156
+      },
+      {
+        "letters": "تعبّد",
+        "transliteration": "taʿabbada",
+        "meaning": "to devote oneself to worship, to act as a servant of God"
+      },
+      {
+        "letters": "إِسْتَعْبَدَ",
+        "transliteration": "istaʿbada",
+        "meaning": "to enslave, to reduce to slavery"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"slaves\" in Arabic?",
+        "a": "عَبْد (ʿabd) means \"slave\"; its plural عَبِيد (ʿabīd) means \"slaves.\""
+      },
+      {
+        "q": "Why does the same word عَبْد mean both \"slave\" and \"servant of God\"?",
+        "a": "Its root ع-ب-د covers both serving/worshipping God with humble obedience and being owned as a slave, so ʿabd carries the literal sense of \"slave\" alongside the religious sense of \"servant\" or \"worshipper.\""
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "The root's basic verb عَبَدَ is used for \"serve, worship, or adore\" only when the object is God (or a false god) — obedience rendered with humility. عَبْد sits on that same axis: it names a slave in the literal, social sense, and by the same logic a \"servant\" bound in devoted obedience to God. The same root also gives عِبَادَةٌ (worship) and عُبُودِيَّةٌ (slavery), showing how closely the two ideas are tied together in Arabic."
+  },
+  "5397": {
+    "rootId": 5397,
+    "triliteralRoot": "ك ي س",
+    "rootTransliteration": "k-y-s",
+    "rootMeaning": "to be sharp, quick in intellect",
+    "headwordTransliteration": "kays",
+    "partOfSpeech": "noun (verbal noun / maṣdar of Form I كَاسَ)",
+    "senses": [
+      {
+        "gloss": "acuteness or sharpness of intellect; shrewdness, cleverness, intelligence",
+        "note": "given as the opposite of ḥumq (stupidity); glossed by lexicographers as ẓarf, fiṭna, ʿaql — quick-wittedness"
+      },
+      {
+        "gloss": "prudence, good sense",
+        "note": "the general English gloss for this word — the practical, sound-judgment side of the same acuteness"
+      },
+      {
+        "gloss": "gentleness, moderation, calmness in conducting an affair",
+        "note": "from the phrase kāsa fī l-amr, 'he acted with kays in the matter'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "كَاسَ",
+        "transliteration": "kāsa",
+        "meaning": "to be/become acute, sharp-witted, clever (Form I verb)"
+      },
+      {
+        "letters": "كَيِّسٌ",
+        "transliteration": "kayyis",
+        "meaning": "clever, sharp-witted, intelligent (said of a person)"
+      },
+      {
+        "letters": "كِيسٌ",
+        "transliteration": "kīs",
+        "meaning": "purse, money-bag (said to 'comprise' its contents)"
+      },
+      {
+        "letters": "أَكْيَسَ",
+        "transliteration": "akyasa",
+        "meaning": "to beget/bear children of sharp intellect (Form IV)"
+      },
+      {
+        "letters": "كَايَسَ",
+        "transliteration": "kāyasa",
+        "meaning": "to vie with someone in cleverness (Form III)"
+      },
+      {
+        "letters": "تَكَيَّسَ",
+        "transliteration": "takayyasa",
+        "meaning": "to affect or feign cleverness (Form V)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"prudence\" in Arabic?",
+        "a": "كَيْس (kays) — it denotes sharpness of intellect and sound, gentle judgment."
+      },
+      {
+        "q": "What does the root ك ي س mean?",
+        "a": "It carries the sense of being sharp or quick in intellect; كَيِّس (kayyis) is 'clever,' and كَاسَ (kāsa) is the verb 'to be clever.'"
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Kays is the abstract noun naming the quality itself — sharp-mindedness paired with good, gentle judgment — rather than the person who has it (that word is kayyis). It is regularly set against ḥumq, 'stupidity,' as its direct opposite."
+  },
+  "5398": {
+    "rootId": 5398,
+    "triliteralRoot": "ف ق د",
+    "rootTransliteration": "f-q-d",
+    "rootMeaning": "to lose, not find, lack",
+    "headwordTransliteration": "faqada",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to lose something; to fail to find it, not see it, or not have it",
+        "note": "The basic sense: something once had or perceived is now absent to the person."
+      },
+      {
+        "gloss": "to be without, be destitute of, or want something",
+        "note": "Near-synonym of ʿadima ('to lack'), but classical lexicographers (Er-Rāghib) treat faqd as more specific: the thing has gone out of the range of perception, so its whereabouts are unknown — not simply that it fails to exist."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "الفَقْدُ",
+        "transliteration": "al-faqd",
+        "meaning": "loss; the verbal noun — the state or act of losing/not finding"
+      },
+      {
+        "letters": "أَفْقَدَهُ",
+        "transliteration": "afqadahu",
+        "meaning": "he caused him to lose (something); deprived him of it"
+      },
+      {
+        "letters": "تفقّدهُ",
+        "transliteration": "tafaqqadahu",
+        "meaning": "he sought it out, looked after it, or checked on it (having lost or missed it)"
+      },
+      {
+        "letters": "تفاقدوا",
+        "transliteration": "tafāqadū",
+        "meaning": "they lost one another"
+      },
+      {
+        "letters": "إِفْتَقَدَ",
+        "transliteration": "iftaqada",
+        "meaning": "he sought after it, or missed it (same range as tafaqqada)"
+      },
+      {
+        "letters": "فَقِيدٌ",
+        "transliteration": "faqīd",
+        "meaning": "lost, missing, not found; a person who has died and is missed",
+        "path": "/word/esteemed-9363",
+        "rootId": 9363
+      },
+      {
+        "letters": "فَاقِدٌ",
+        "transliteration": "fāqid",
+        "meaning": "one who has lost (something/someone); a woman bereft of her husband or child",
+        "path": "/word/finder-12449",
+        "rootId": 12449
+      },
+      {
+        "letters": "مَفْقُودٌ",
+        "transliteration": "mafqūd",
+        "meaning": "lost, missing, not found (passive participle, same sense as faqīd)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"lost\" in Arabic?",
+        "a": "فَقَدَ (faqada) — \"he lost it / did not find it,\" the form I verb from the root ف ق د."
+      },
+      {
+        "q": "What is the difference between فَقَدَ and تَفَقَّدَ?",
+        "a": "Faqada means to lose or fail to find something; tafaqqadahu (form V) means to actively seek it out or check on it after having lost or missed it."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "The root centers on the absence or loss of something once possessed or perceptible. Beyond everyday 'losing' something, it covers being bereaved of a person (fāqid, faqīd) and the reflexive/active forms tafaqqada and iftaqada, which shift the sense toward actively searching for or checking on someone or something that has gone missing."
+  },
+  "5400": {
+    "rootId": 5400,
+    "triliteralRoot": "د و أ",
+    "rootTransliteration": "d-w-ʾ",
+    "rootMeaning": "to be or become diseased, sick",
+    "headwordTransliteration": "dāʾ",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "disease, disorder, distemper, sickness, illness, malady",
+        "note": "physical; can be external or internal to the body"
+      },
+      {
+        "gloss": "vice, defect, fault, blemish",
+        "note": "moral sense, e.g. dāʾ ash-shuḥḥ, 'the vice of avarice,' said to be the gravest of vices"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "دَآءَ",
+        "transliteration": "dāʾa",
+        "meaning": "verb (form I): to become diseased, disordered, sick"
+      },
+      {
+        "letters": "أَدَآءَ",
+        "transliteration": "adāʾa",
+        "meaning": "verb (form IV): to become diseased; also transitive, to afflict (someone) with disease"
+      },
+      {
+        "letters": "أَدْوَآءٌ",
+        "transliteration": "adwāʾ",
+        "meaning": "plural of dāʾ, 'diseases/vices' — noted as the sole final-hamza singular with a final-hamza plural"
+      },
+      {
+        "letters": "دَيِّئٌ",
+        "transliteration": "dayyiʾ",
+        "meaning": "adjective: diseased, sick (epithet applied to a person)"
+      },
+      {
+        "letters": "أَدْوَأُ",
+        "transliteration": "adwaʾ",
+        "meaning": "comparative: more/most diseased, i.e. worse (of a vice or fault)"
+      },
+      {
+        "letters": "مُدِىْءٌ",
+        "transliteration": "mudīʾ",
+        "meaning": "adjective: diseased, sick (synonym of dayyiʾ)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"disease\" in Arabic?",
+        "a": "دَاء (dāʾ)."
+      },
+      {
+        "q": "Does دَاء only mean a physical illness?",
+        "a": "No — it also means a moral vice or fault, as in dāʾ ash-shuḥḥ, 'the vice of avarice.'"
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Dāʾ covers both a literal bodily ailment and a figurative moral failing, so it can describe a physical illness or a character flaw like avarice. It also occurs in fixed phrases naming the 'disease' proverbially associated with something, e.g. dāʾ adh-dhiʾb for hunger, where the sense shifts entirely to the figurative."
+  },
+  "5395": {
+    "rootId": 5395,
+    "triliteralRoot": "ز ل ل",
+    "rootTransliteration": "z-l-l",
+    "rootMeaning": "to slip, slide, or move away",
+    "headwordTransliteration": "zalal",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "a slip, stumble, or lapse",
+        "note": "in mud underfoot, or figuratively in speech, judgment, opinion, or religion — the verbal noun of the verb زَلِلْتَ"
+      },
+      {
+        "gloss": "a light, swift passing or movement",
+        "note": "attested in old poetry describing camels moving briskly toward their destination"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "أَزَلَّ",
+        "transliteration": "azalla",
+        "meaning": "to cause to slip (Form IV); also, metaphorically, to do someone a favor"
+      },
+      {
+        "letters": "زَلَّةٌ",
+        "transliteration": "zallah",
+        "meaning": "a slip or mistake in speech or action"
+      },
+      {
+        "letters": "زُلَّةٌ",
+        "transliteration": "zullah",
+        "meaning": "a favor or benefit done for someone"
+      },
+      {
+        "letters": "زَلِيلٌ",
+        "transliteration": "zalīl",
+        "meaning": "a swift or light gait; the passing of something from one place to another"
+      },
+      {
+        "letters": "اِسْتَزَلَّ",
+        "transliteration": "istazalla",
+        "meaning": "to seek to make someone slip (Form X)",
+        "path": "/word/win-over-18703",
+        "rootId": 18703
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"slip\" in Arabic?",
+        "a": "زَلَل (zalal)."
+      },
+      {
+        "q": "What does the Arabic root ز-ل-ل mean?",
+        "a": "It centers on slipping or moving out of place — literally slipping in mud, and figuratively erring in speech, judgment, or religion."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "The root appears in the Qur'an (2:205, فَإِنْ زَلَلْتُمْ, \"but if you turn away/slip\") and in hadith describing benefits done to a person (مَنْ أُزِلَّتْ إِلَيْهِ نِعْمَةٌ), where the physical sense of slipping or passing from one place to another is extended metaphorically to a favor passing from one person to another. زَلَل itself is classical, used of literal slips as well as errors in judgment or religion."
+  },
+  "5404": {
+    "rootId": 5404,
+    "triliteralRoot": "ع ب د",
+    "rootTransliteration": "ʿ-b-d",
+    "rootMeaning": "to serve, worship, or enslave",
+    "headwordTransliteration": "ʿubūdiyyah",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "slavery, servitude",
+        "note": "the state of being a slave or in bondage; given as an inf. n. of the verb عَبُدَ, alongside عُبُودَة"
+      },
+      {
+        "gloss": "service, worship, or adoration of God",
+        "note": "also listed as an inf. n. of عَبَدَ اللّٰهَ, alongside عِبَادَة and عُبُودَة, denoting humble, submissive obedience to God"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "عَبْدٌ",
+        "transliteration": "ʿabd",
+        "meaning": "slave, servant"
+      },
+      {
+        "letters": "عَبَدَ",
+        "transliteration": "ʿabada",
+        "meaning": "to serve, worship, or obey God"
+      },
+      {
+        "letters": "عِبَادَةٌ",
+        "transliteration": "ʿibādah",
+        "meaning": "worship, religious service"
+      },
+      {
+        "letters": "عُبُودَةٌ",
+        "transliteration": "ʿubūdah",
+        "meaning": "slavery, servitude"
+      },
+      {
+        "letters": "عَبَّدَ",
+        "transliteration": "ʿabbada",
+        "meaning": "to enslave, make a slave of"
+      },
+      {
+        "letters": "اِسْتَعْبَدَ",
+        "transliteration": "istaʿbada",
+        "meaning": "to enslave, reduce to slavery"
+      },
+      {
+        "letters": "تَعَبَّدَ",
+        "transliteration": "taʿabbada",
+        "meaning": "to devote oneself to worship, become a servant of God"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"servitude\" in Arabic?",
+        "a": "عُبُودِيَّة (ʿubūdiyyah)."
+      },
+      {
+        "q": "Is ʿubūdiyyah about slavery or about worshipping God?",
+        "a": "It can carry both senses in Lane's: as an inf. n. of ʿabuda it means slavery/bondage (like ʿubūdah), and as an inf. n. of ʿabada it means humble service or worship of God (like ʿibādah)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "ʿubūdiyyah is a verbal noun standing alongside ʿubūdah for slavery or bondage, and alongside ʿibādah for devoted service or worship of God — the sense shifts with which underlying verb (ʿabada 'serve/worship' or ʿabuda 'be a slave') it is taken from."
+  },
+  "5401": {
+    "rootId": 5401,
+    "triliteralRoot": "ع ج ب",
+    "rootTransliteration": "ʿ-j-b",
+    "rootMeaning": "to wonder, marvel, be amazed",
+    "headwordTransliteration": "ʿujb",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "self-conceit, vanity, self-admiration",
+        "note": "being excessively pleased with, or impressed by, one's own self or qualities — the substantive corresponding to إِعْجَاب and to أُعْجِبَ بِنَفْسِهِ 'he admired himself, was self-conceited, or vain'"
+      },
+      {
+        "gloss": "haughtiness, self-exaltation, pride",
+        "note": "the bearing that follows from ʿujb — 'he exalted and magnified himself; was haughty and proud'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "عَجِبَ",
+        "transliteration": "ʿajiba",
+        "meaning": "to wonder at something, deem it strange or extraordinary (form I)"
+      },
+      {
+        "letters": "أَعْجَبَ",
+        "transliteration": "aʿjaba",
+        "meaning": "to please, delight, or excite admiration in someone (form IV)"
+      },
+      {
+        "letters": "أُعْجِبَ بِـ",
+        "transliteration": "uʿjiba bi-",
+        "meaning": "to be struck with admiration by, to be pleased with (passive of form IV)"
+      },
+      {
+        "letters": "مُعْجَبٌ",
+        "transliteration": "muʿjab",
+        "meaning": "self-conceited, vain, pleased with oneself"
+      },
+      {
+        "letters": "مُعْجِبٌ",
+        "transliteration": "muʿjib",
+        "meaning": "pleasing, impressive, admirable"
+      },
+      {
+        "letters": "تَعَجَّبَ",
+        "transliteration": "taʿajjaba",
+        "meaning": "to wonder at, marvel at (form V)"
+      },
+      {
+        "letters": "عَجَبٌ",
+        "transliteration": "ʿajab",
+        "meaning": "wonder, astonishment (the general verbal noun of ʿajiba)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"conceit\" in Arabic?",
+        "a": "ʿUjb (عُجْب)."
+      },
+      {
+        "q": "What's the difference between ʿujb (عُجْب) and ʿajab (عَجَب)?",
+        "a": "Both come from the root ʿ-j-b 'to wonder,' but ʿajab is wonder or astonishment at something outside oneself, while ʿujb is that same admiration turned inward — being pleased or impressed with one's own self, i.e. self-conceit or vanity."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Where ʿajab is wonder directed at something outside oneself, ʿujb narrows that same root sense inward: being 'impressed by' one's own self. Lane's ties it to the phrase أُعْجِبَ بِنَفْسِهِ ('he admired, exalted, and was haughty and proud of, himself'), which is why ʿujb denotes self-conceit or vanity rather than neutral wonder."
+  },
+  "5406": {
+    "rootId": 5406,
+    "triliteralRoot": "ص خ ر",
+    "rootTransliteration": "ṣ-kh-r",
+    "rootMeaning": "rock, mass of hard stone",
+    "headwordTransliteration": "ṣakhrah",
+    "partOfSpeech": "noun (noun of unity / ism al-waḥda)",
+    "senses": [
+      {
+        "gloss": "a rock; a single mass of hard stone",
+        "note": "the noun of unity (n. un.) of the collective صَخْرٌ, i.e. one piece of it"
+      },
+      {
+        "gloss": "a large rock or crag",
+        "note": "Lane notes صَخْرَةٌ/صَخَرَةٌ carry a more specific sense than the plain collective صَخْرٌ"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "صَخْرٌ",
+        "transliteration": "ṣakhr",
+        "meaning": "rocks; great masses of hard stone (the collective noun صَخْرَةٌ is drawn from)"
+      },
+      {
+        "letters": "صَخِرٌ",
+        "transliteration": "ṣakhir",
+        "meaning": "a place abounding in rocks"
+      },
+      {
+        "letters": "صَاخِرٌ",
+        "transliteration": "ṣākhir",
+        "meaning": "the sound of iron striking upon iron"
+      },
+      {
+        "letters": "صَاخِرَةٌ",
+        "transliteration": "ṣākhirah",
+        "meaning": "a kind of earthen vessel drunk from"
+      },
+      {
+        "letters": "أَصْخَرُ الوَجْهِ",
+        "transliteration": "aṣkhar al-wajh",
+        "meaning": "hard-faced, shameless (figurative)"
+      },
+      {
+        "letters": "صَخِيرٌ",
+        "transliteration": "ṣakhīr",
+        "meaning": "a certain plant"
+      },
+      {
+        "letters": "تَصْخِيرٌ",
+        "transliteration": "taṣkhīr",
+        "meaning": "verbal noun of form II صَخَّرَ, said to be equivalent to تَسْخِيرٌ (subjugation, compulsion)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"rock\" in Arabic?",
+        "a": "صَخْرَةٌ (ṣakhrah)."
+      },
+      {
+        "q": "What is the plural of صخرة؟",
+        "a": "صُخُورٌ, also صُخُورَةٌ and صَخَرَاتٌ."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "In Qur'an 31:15 صَخْرَة refers to a rock hidden beneath the earth. A hadith speaks of 'the صخرة of Paradise,' meaning the Rock of Jerusalem, now enshrined under the Dome of the Rock."
+  },
+  "5405": {
+    "rootId": 5405,
+    "triliteralRoot": "ذ ك ر",
+    "rootTransliteration": "ḏ-k-r",
+    "rootMeaning": "to remember and to mention",
+    "headwordTransliteration": "ḏikr",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "mention; the act of speaking of, telling, or relating something",
+        "note": "the primary infinitive noun of ḏakara in its speech sense — 'he mentioned it, told it, related it, said it'"
+      },
+      {
+        "gloss": "remembrance, memory; recollection",
+        "note": "the same word also serves as infinitive noun for ḏakara meaning 'he remembered it' or 'became reminded of it' after forgetting"
+      },
+      {
+        "gloss": "praise, glorification, especially of God",
+        "note": "used tropically: 'he magnified Him, celebrated, lauded, or praised Him, asserted His unity' — the source of ḏikr as devotional remembrance/praise of God"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "ذَكَرَهُ",
+        "transliteration": "ḏakarahu",
+        "meaning": "he remembered it; he mentioned, told, or related it (form I)",
+        "path": "/word/his-mention-18761",
+        "rootId": 18761
+      },
+      {
+        "letters": "تَذَكَّرَ",
+        "transliteration": "taḏakkara",
+        "meaning": "to remember, recollect, call to mind (form V)"
+      },
+      {
+        "letters": "اِدَّكَرَ",
+        "transliteration": "iddakara",
+        "meaning": "to remember, recollect — a variant form with the same sense as taḏakkara (form VIII)"
+      },
+      {
+        "letters": "ذِكْرَى",
+        "transliteration": "ḏikrā",
+        "meaning": "remembrance, memory, recollection (feminine verbal noun)"
+      },
+      {
+        "letters": "ذُكْرٌ",
+        "transliteration": "ḏukr",
+        "meaning": "remembrance — a related noun distinguished from ḏikr by some grammarians"
+      },
+      {
+        "letters": "ذَكِيرٌ",
+        "transliteration": "ḏakīr",
+        "meaning": "one who remembers well; mindful, retentive of memory"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"mention\" in Arabic?",
+        "a": "ذِكْر (ḏikr)."
+      },
+      {
+        "q": "What is the root of ذِكْر and what does it mean?",
+        "a": "The triliteral root ذ-ك-ر (ḏ-k-r), covering both 'to remember' and 'to mention, speak of'."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "ḏikr treats remembering something and speaking of it as two sides of the same root idea — you 'preserve something in memory' and you 'mention' it with the same word. Its tropical use for magnifying, praising, or asserting the unity of God is the root of ḏikr as devotional remembrance/praise in later religious usage."
+  },
+  "5408": {
+    "rootId": 5408,
+    "triliteralRoot": "ق و م",
+    "rootTransliteration": "q-w-m",
+    "rootMeaning": "to stand, stand up, rise",
+    "headwordTransliteration": "qāma",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to stand up, rise, stand erect",
+        "note": "from sitting or reclining, or standing still in one's place (syn. انتصب)"
+      },
+      {
+        "gloss": "to stop, come to a halt",
+        "note": "said of a riding beast that halts from fatigue"
+      },
+      {
+        "gloss": "to undertake, manage, take charge of",
+        "note": "قَامَ بِالأَمْرِ 'he undertook the affair'; قَامَ بِاليَتِيمِ 'he maintained the orphan'"
+      },
+      {
+        "gloss": "to be established, fixed, settled (in the mind)",
+        "note": "syn. ثبت, e.g. قَامَ فِى نَفْسِهِ أَنَّهُ كَذَا 'it became established in his mind that...'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "قَوَّمَ",
+        "transliteration": "qawwama",
+        "meaning": "to straighten, correct; to set the price of, value"
+      },
+      {
+        "letters": "قَاوَمَ",
+        "transliteration": "qāwama",
+        "meaning": "to rise against, withstand, contend with for equality",
+        "path": "/word/resisted-6190",
+        "rootId": 6190
+      },
+      {
+        "letters": "أَقَامَ",
+        "transliteration": "aqāma",
+        "meaning": "to set up, erect; to remain, reside; to observe (prayer)"
+      },
+      {
+        "letters": "قَائِمٌ",
+        "transliteration": "qāʾim",
+        "meaning": "standing; one who undertakes or manages an affair"
+      },
+      {
+        "letters": "مَقَامٌ",
+        "transliteration": "maqām",
+        "meaning": "a standing-place; station, rank (verbal noun of qāma)",
+        "path": "/word/status-6435",
+        "rootId": 6435
+      },
+      {
+        "letters": "إِقَامَةٌ",
+        "transliteration": "iqāma",
+        "meaning": "residing, setting up; the call recited before prayer"
+      },
+      {
+        "letters": "قِيمَةٌ",
+        "transliteration": "qīma",
+        "meaning": "price, value (from valuing/pricing a thing)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"stood\" in Arabic?",
+        "a": "قَامَ (qāma) — the form I verb 'he stood, stood up, rose,' from the root ق و م."
+      },
+      {
+        "q": "What does the root ق و م mean?",
+        "a": "At its core, 'to stand, stand up, rise' — a sense that extends across the family to halting, undertaking or managing an affair, and setting a price or value."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Qāma is the basic verb of standing, but it stretches to cover halting, undertaking responsibility for someone or something, and even things becoming fixed in the mind. It appears often in religious contexts — قَامَ بِاللَّيْلِ 'he rose in the night to pray' and قَامَ رَمَضَانَ 'he prayed through the nights of Ramadan' — and its irregular verbal noun مَقَامٌ is common as a separate word meaning 'station' or 'place.'"
+  },
+  "5412": {
+    "rootId": 5412,
+    "triliteralRoot": "ن ب أ",
+    "rootTransliteration": "n-b-ʾ",
+    "rootMeaning": "to inform, tell, bring news",
+    "headwordTransliteration": "anbaʾa",
+    "partOfSpeech": "verb (form IV)",
+    "senses": [
+      {
+        "gloss": "to inform, tell, or acquaint someone of something",
+        "note": "Governs the person informed plus the thing told (ايّاه) or is followed by بِ; grammarians note it can take up to three objects when meaning 'to make known'."
+      },
+      {
+        "gloss": "of a shot or cast: to fail to penetrate or cleave",
+        "note": "Said of an arrow or missile that struck without splitting or cutting into its target."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "نَبَأٌ",
+        "transliteration": "naba'",
+        "meaning": "news, a report, a piece of information"
+      },
+      {
+        "letters": "نَبِيّ",
+        "transliteration": "nabiyy",
+        "meaning": "prophet (one who informs, or is informed, of the unseen)"
+      },
+      {
+        "letters": "نبّأ",
+        "transliteration": "nabba'a",
+        "meaning": "to inform, with a more intensive force than anbaʾa"
+      },
+      {
+        "letters": "تنبّأ",
+        "transliteration": "tanabba'a",
+        "meaning": "to claim the gift of prophecy"
+      },
+      {
+        "letters": "استنبأ",
+        "transliteration": "istanba'a",
+        "meaning": "to seek out news or information"
+      },
+      {
+        "letters": "نُبُوْءَةٌ",
+        "transliteration": "nubū'ah",
+        "meaning": "prophethood, the office of a prophet"
+      },
+      {
+        "letters": "نَبْأَةٌ",
+        "transliteration": "nab'ah",
+        "meaning": "a low voice or sound"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"informed\" in Arabic?",
+        "a": "أَنْبَأَ (anbaʾa)."
+      },
+      {
+        "q": "Is أنبأ the same as نبّأ?",
+        "a": "Both mean 'to inform', but نبّأ (nabba'a) is described as carrying a stronger, more intensive sense than أنبأ (anbaʾa)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Anbaʾa is the standard causative verb for 'informing' someone of a fact, as in the Qur'anic line 'man anba'aka hādhā' ('who informed you of this?'). Classical grammarians treated it as a triply-transitive verb when it carries the sense of imparting knowledge, and distinguished it from the intensified form II, nabba'a."
+  },
+  "5402": {
+    "rootId": 5402,
+    "triliteralRoot": "ل ب س",
+    "rootTransliteration": "l-b-s",
+    "rootMeaning": "to cover, wear, or mix together",
+    "headwordTransliteration": "labasa",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to put on, or wear, a garment (or a weapon)",
+        "note": "the base, literal sense of the verb"
+      },
+      {
+        "gloss": "to live with, or keep close company with, a person or people over a long stretch of time",
+        "note": "figurative (tropical) extension of 'wearing'"
+      },
+      {
+        "gloss": "to feign inattention, or make oneself deaf, toward something",
+        "note": "tropical use, literally 'to put one's ear on' it"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "أَلْبَسَ",
+        "transliteration": "albasa",
+        "meaning": "to clothe or dress someone; to cover or overspread something entirely",
+        "path": "/word/dress-8162",
+        "rootId": 8162
+      },
+      {
+        "letters": "لَابَسَ",
+        "transliteration": "lābasa",
+        "meaning": "to mix, consort, or hold close social intercourse with someone"
+      },
+      {
+        "letters": "تَلَبَّسَ",
+        "transliteration": "talabbasa",
+        "meaning": "to clothe oneself; to become engaged or involved in an affair"
+      },
+      {
+        "letters": "لَبَّسَ",
+        "transliteration": "labbasa",
+        "meaning": "to confuse or render dubious, intensively"
+      },
+      {
+        "letters": "لِبَاسٌ",
+        "transliteration": "libās",
+        "meaning": "garment, clothing; linked to the idea of close mixing or association"
+      },
+      {
+        "letters": "لَبْسٌ",
+        "transliteration": "labs",
+        "meaning": "confusion, obscurity, or ambiguity in a matter"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"clothed\" in Arabic?",
+        "a": "لَبِسَ (labisa) — the classical Form I verb meaning to put on or wear a garment."
+      },
+      {
+        "q": "What is the root of لَبَسَ؟",
+        "a": "ل-ب-س (l-b-s), a root centered on wearing and covering, which by extension also gives senses of mixing or confusing things together."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Classical dictionaries vocalize this form I verb two ways from the same root: labisa, \"to put on or wear\" a garment or weapon — the sense behind this entry's gloss \"clothed\" — and labasa (...ʿalā), \"to make confused or dubious\" (used of a case or affair, including in Qur'anic verses about confounding truth with falsehood). Both trace to the same root notion of covering or mixing things together."
+  },
+  "5396": {
+    "rootId": 5396,
+    "triliteralRoot": "س ب ب",
+    "rootTransliteration": "s-b-b",
+    "rootMeaning": "to cut, or to cause",
+    "headwordTransliteration": "sabab",
+    "partOfSpeech": "noun",
+    "senses": [
+      {
+        "gloss": "a means, or cause, by which something is attained or accomplished",
+        "note": "the standard sense, matching the given gloss 'cause'; grounded in the related verb سَبَّبَ, 'to make or appoint a means/cause'"
+      },
+      {
+        "gloss": "a means of access to a thing",
+        "note": "used with بِ + إِلَى, i.e. to make use of something as a way of reaching or obtaining another thing"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "سَبَّ",
+        "transliteration": "sabba",
+        "meaning": "to cut, or to sever; also, to revile or vilify",
+        "path": "/word/insult-8689",
+        "rootId": 8689
+      },
+      {
+        "letters": "سَبَّبَ",
+        "transliteration": "sabbaba",
+        "meaning": "to make, appoint, or provide a means or cause of something"
+      },
+      {
+        "letters": "تَسَبَّبَ",
+        "transliteration": "tasabbaba",
+        "meaning": "to come about as a means or cause; to use something as a means"
+      },
+      {
+        "letters": "سَابَّ",
+        "transliteration": "sābba",
+        "meaning": "to revile one another (with someone)"
+      },
+      {
+        "letters": "اِسْتَسَبَّ",
+        "transliteration": "istasabba",
+        "meaning": "to invite or attract reviling onto someone"
+      },
+      {
+        "letters": "سِبٌّ",
+        "transliteration": "sibb",
+        "meaning": "one who reviles and is reviled in return; a mutual reviler",
+        "path": "/word/insult-8689",
+        "rootId": 8689
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"cause\" in Arabic?",
+        "a": "سَبَب (sabab) — literally 'a means, or cause, by which something is attained or accomplished.'"
+      },
+      {
+        "q": "What root is سَبَب from, and what else shares it?",
+        "a": "It comes from the root س ب ب (s-b-b), shared with سَبَّبَ ('to bring about a means or cause') and, in a separate branch of the same root, سَبَّ ('to revile')."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "The 'cause' sense is drawn out explicitly through the verb سَبَّبَ, as in سَبَّبَ ٱللّٰهُ لَكَ سَبَبَ خَيْرٍ, 'may God appoint for you a means of good.' Later usage extended the reflexive تَسَبَّبَ to mean 'to trade,' since trading is a way of using means to earn a livelihood."
+  },
+  "5411": {
+    "rootId": 5411,
+    "triliteralRoot": "ف ر غ",
+    "rootTransliteration": "f-r-gh",
+    "rootMeaning": "to be empty, vacant, or unoccupied",
+    "headwordTransliteration": "faragha",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to finish, be done with; become free from a task or occupation",
+        "note": "said especially of finishing work or business (فرغ من الشغل); matches the sense 'completed'"
+      },
+      {
+        "gloss": "to be or become empty, vacant, void, or devoid of something",
+        "note": "the general sense, said of a thing or a vessel; syn. خلا"
+      },
+      {
+        "gloss": "to apply oneself exclusively to something; to make it one's sole object",
+        "note": "construed with لَ or إِلَى, syn. قصد; used this way in the Qur'an (55:31)"
+      },
+      {
+        "gloss": "(of water) to pour out or be poured forth; (tropical) to die",
+        "note": "the death sense pictures the body as emptied of its soul"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "فَرَّغَ",
+        "transliteration": "farragha",
+        "meaning": "to empty something, make it vacant or unoccupied (causative of faragha)",
+        "path": "/word/completed-5411",
+        "rootId": 5411
+      },
+      {
+        "letters": "أَفْرَغَ",
+        "transliteration": "afragha",
+        "meaning": "to pour something out (water, blood); to cast metal by pouring it molten into a mould",
+        "path": "/word/pour-out-20204",
+        "rootId": 20204
+      },
+      {
+        "letters": "فَرَاغٌ",
+        "transliteration": "farāgh",
+        "meaning": "leisure, freedom from occupation; emptiness"
+      },
+      {
+        "letters": "مُفْرَغٌ",
+        "transliteration": "mufragh",
+        "meaning": "cast (of metal), poured into a mould"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"completed\" in Arabic?",
+        "a": "فَرَغَ (faragha) — literally 'he became free (of work)', i.e. he finished or completed it."
+      },
+      {
+        "q": "What is the difference between فَرَغَ and أَفْرَغَ؟",
+        "a": "فَرَغَ (form I) means to become empty or free of something, such as finishing a task; أَفْرَغَ (form IV) is the causative — to pour something out or cast it, like pouring water or casting molten metal."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Stem I فَرَغَ covers both literal emptiness and the extended sense of finishing or being free from a task, which is why the existing gloss reads 'completed'. The Qur'an uses it (55:31, سَنَفْرُغُ لَكُمْ) for 'applying Oneself exclusively' to a matter, while the related causative أَفْرَغَ appears in the 'pour patience upon us' verses (2:250, 7:126)."
+  },
+  "5414": {
+    "rootId": 5414,
+    "triliteralRoot": "ع م ر",
+    "rootTransliteration": "ʿ-m-r",
+    "rootMeaning": "to live long, inhabit, or dwell",
+    "headwordTransliteration": "maʿmar",
+    "partOfSpeech": "noun (place/time noun, mīm-pattern from form I عَمَرَ)",
+    "senses": [
+      {
+        "gloss": "a dwelling place; a place where one lives or abides",
+        "note": "from the form I sense عَمَرَ بِمَكَانٍ, 'he remained, dwelt, or abode in a place'"
+      },
+      {
+        "gloss": "a lifetime; the span or duration of one's life",
+        "note": "from the form I sense عَمِرَ, 'he lived, or continued in life, long'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "عَامِرٌ",
+        "transliteration": "ʿāmir",
+        "meaning": "inhabited, well-peopled, flourishing, in a state of good repair"
+      },
+      {
+        "letters": "عُمْرٌ",
+        "transliteration": "ʿumr",
+        "meaning": "life, lifetime (verbal noun of عَمِرَ, 'he lived long')"
+      },
+      {
+        "letters": "عِمَارَةٌ",
+        "transliteration": "ʿimāra",
+        "meaning": "building up, keeping a place inhabited or in good repair; cultivation"
+      },
+      {
+        "letters": "عُمْرَانٌ",
+        "transliteration": "ʿumrān",
+        "meaning": "the state of being well-inhabited and flourishing; civilization"
+      },
+      {
+        "letters": "عَمَّرَهُ",
+        "transliteration": "ʿammarahu",
+        "meaning": "he (God) prolonged or lengthened his life (form II)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"dwelling place\" in Arabic?",
+        "a": "مَعْمَر (maʿmar) — a place/time noun from the root ع-م-ر ('to live long, inhabit, dwell'), denoting a place where one abides."
+      },
+      {
+        "q": "What root does مَعْمَر come from, and what does that root mean?",
+        "a": "It comes from ع-م-ر (ʿ-m-r), the core sense of which is 'to live long, inhabit, or dwell' — the same root behind عُمْر ('life') and عَامِر ('inhabited, flourishing')."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Formed on the مَفْعَل pattern from the form I verb عَمَرَ, so it carries both strands of the root at once — 'to live long' and 'to inhabit/dwell in a place' — giving it the two related senses of 'lifetime' and 'dwelling place'. It is also used as a personal name (Maʿmar), echoing the root's sense of longevity."
+  },
+  "5422": {
+    "rootId": 5422,
+    "triliteralRoot": "ح د ث",
+    "rootTransliteration": "ḥ-d-th",
+    "rootMeaning": "to be new, to happen, originate",
+    "headwordTransliteration": "ḥaddatha",
+    "partOfSpeech": "verb (form II)",
+    "senses": [
+      {
+        "gloss": "to tell, narrate, or relate (a story, narrative, or tradition) to someone",
+        "note": "used with a direct object (ḥaddathahu l-ḥadītha) or with بِ (ḥaddathahu bihi)"
+      },
+      {
+        "gloss": "to narrate a ḥadīth on the authority of someone",
+        "note": "Islamic technical usage: ḥaddatha ʿan fulānin, of transmitting sayings of the Prophet"
+      },
+      {
+        "gloss": "(figurative) to resound, buzz with talk",
+        "note": "e.g. said of a country left 'talking' with a confused noise of voices"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "حَدَثَ",
+        "transliteration": "ḥadatha",
+        "meaning": "to be new/recent; to come into existence, happen (form I)"
+      },
+      {
+        "letters": "حَدِيثٌ",
+        "transliteration": "ḥadīth",
+        "meaning": "narrative, story; a Prophetic tradition"
+      },
+      {
+        "letters": "حَادِثٌ",
+        "transliteration": "ḥādith",
+        "meaning": "happening, occurring; a new event"
+      },
+      {
+        "letters": "حَادِثَةٌ",
+        "transliteration": "ḥādithah",
+        "meaning": "an event, occurrence, or accident",
+        "path": "/word/incident-6378",
+        "rootId": 6378
+      },
+      {
+        "letters": "أَحْدَثَ",
+        "transliteration": "aḥdatha",
+        "meaning": "to bring into being, originate, or innovate (form IV)"
+      },
+      {
+        "letters": "تَحَدَّثَ",
+        "transliteration": "taḥaddatha",
+        "meaning": "to talk, converse, tell a story (form V)"
+      },
+      {
+        "letters": "حَدَاثَةٌ",
+        "transliteration": "ḥadāthah",
+        "meaning": "newness; youthfulness"
+      },
+      {
+        "letters": "مُحْدَثٌ",
+        "transliteration": "muḥdath",
+        "meaning": "newly invented thing; an innovation"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"narrated\" in Arabic?",
+        "a": "حَدَّثَ (ḥaddatha) — the form II verb meaning to tell, relate, or narrate a story or tradition to someone."
+      },
+      {
+        "q": "Is ḥaddatha the same as taḥaddatha?",
+        "a": "No. ḥaddatha (form II) means to tell or narrate something to someone (transitive); taḥaddatha (form V) means to talk or converse, often without a specified object."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "ḥaddatha (form II) is the verb behind ḥadīth — it is the standard term for narrating a report or tradition, especially a saying of the Prophet transmitted through a chain of narrators, but it is also used for ordinary storytelling and conversation."
+  },
+  "5421": {
+    "rootId": 5421,
+    "triliteralRoot": "ع م ر",
+    "rootTransliteration": "ʿ-m-r",
+    "rootMeaning": "to live long; to inhabit, flourish",
+    "headwordTransliteration": "ʿumar",
+    "partOfSpeech": "proper noun (masculine given name)",
+    "senses": [
+      {
+        "gloss": "Umar (a masculine proper name)",
+        "note": "Built on the same root as the words for 'life' and 'lifetime' below; the root's core sense is living long, or a place/thing being inhabited and flourishing."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "عَمِرَ",
+        "transliteration": "ʿamira",
+        "meaning": "he lived, or continued in life, long; his life was, or became, long"
+      },
+      {
+        "letters": "عَمَّرَ",
+        "transliteration": "ʿammara",
+        "meaning": "he (God) lengthened or prolonged someone's life, made him continue in life"
+      },
+      {
+        "letters": "عُمْرٌ",
+        "transliteration": "ʿumr",
+        "meaning": "life, lifetime (the most chaste of the verbal-noun forms)"
+      },
+      {
+        "letters": "عَمْرٌ",
+        "transliteration": "ʿamr",
+        "meaning": "life, lifetime (variant verbal-noun form, also used as a proper name)"
+      },
+      {
+        "letters": "عَامِرٌ",
+        "transliteration": "ʿāmir",
+        "meaning": "inhabited, peopled, flourishing, in a state of good repair"
+      },
+      {
+        "letters": "عِمَارَةٌ",
+        "transliteration": "ʿimārah",
+        "meaning": "the state of a place being inhabited, built up, or kept in good repair"
+      },
+      {
+        "letters": "عُمْرَانٌ",
+        "transliteration": "ʿumrān",
+        "meaning": "a place becoming inhabited and flourishing"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"Umar\" in Arabic?",
+        "a": "عُمَر (ʿumar)."
+      },
+      {
+        "q": "What root does the name Umar come from, and what does it mean?",
+        "a": "It comes from the root ع-م-ر, whose core verb عَمِرَ means 'to live long' or 'continue in life'; the same root gives عُمْر (life, lifetime) and عَامِر (inhabited, flourishing)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "عُمَر itself is a proper name rather than a common noun, but it is built on the same root that gives Arabic its everyday words for 'life' and 'lifetime' (عُمْر, عَمْر) and for a place being 'inhabited' or 'flourishing' (عَامِر, عِمَارَة). Lane's entry centers on the verb عَمِرَ, 'to live long,' and its causative عَمَّرَ, 'to prolong someone's life.'"
+  },
+  "5419": {
+    "rootId": 5419,
+    "triliteralRoot": "ع ز ز",
+    "rootTransliteration": "ʿ-z-z",
+    "rootMeaning": "to be mighty, powerful, or strong",
+    "headwordTransliteration": "ʿazīz",
+    "partOfSpeech": "adjective (fāʿīl-pattern); also used as a personal name",
+    "senses": [
+      {
+        "gloss": "mighty, powerful, potent, strong",
+        "note": "the primary sense of the root, from عَزَّ 'he was/became mighty or strong'"
+      },
+      {
+        "gloss": "noble, honourable, glorious, illustrious; high in rank",
+        "note": "the sense of rising in condition or standing, also carried by عَزَّ"
+      },
+      {
+        "gloss": "dear, highly esteemed, greatly valued"
+      },
+      {
+        "gloss": "rare, scarce, hard to find or attain",
+        "note": "linked to the root sense of being 'hard, difficult, insuperable'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "عَزَّ",
+        "transliteration": "ʿazza",
+        "meaning": "to be/become mighty, strong, or high in rank; also to prevail over, or to be scarce"
+      },
+      {
+        "letters": "عِزّ",
+        "transliteration": "ʿizz",
+        "meaning": "might, power, potency (verbal noun of عَزَّ)"
+      },
+      {
+        "letters": "عِزَّة",
+        "transliteration": "ʿizzah",
+        "meaning": "might, glory; also haughtiness or disdain shown in a blamable way"
+      },
+      {
+        "letters": "عَزَّزَ",
+        "transliteration": "ʿazzaza",
+        "meaning": "to strengthen, corroborate, fortify (form II)"
+      },
+      {
+        "letters": "أَعَزَّ",
+        "transliteration": "aʿazza",
+        "meaning": "to strengthen, make mighty, honour someone (form IV, causative)",
+        "path": "/word/exalt-7638",
+        "rootId": 7638
+      },
+      {
+        "letters": "أَعَزّ",
+        "transliteration": "aʿazz",
+        "meaning": "mightier, or dearer (comparative form)",
+        "path": "/word/exalt-7638",
+        "rootId": 7638
+      },
+      {
+        "letters": "عَزِيزَة",
+        "transliteration": "ʿazīzah",
+        "meaning": "feminine of عَزِيز: a mighty, noble, or dear woman/thing"
+      },
+      {
+        "letters": "عَزُوز",
+        "transliteration": "ʿazūz",
+        "meaning": "a she-camel or ewe narrow in the orifices of the teats (a concrete extension of the root's 'hard, narrow' sense)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"mighty, powerful, strong\" in Arabic?",
+        "a": "عَزِيز (ʿazīz)."
+      },
+      {
+        "q": "How is عَزِيز related to عِزّ?",
+        "a": "عِزّ is the verbal noun of the root, meaning 'might, power, glory'; عَزِيز is the adjective describing one who possesses that quality — mighty, noble, or dear."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Built on the root's core sense of might and difficulty: what is عَزِيز is strong, high in standing, or hard to overcome — and, by extension, something so hard to come by that it is precious. It functions as an ordinary adjective for a mighty or noble person or thing, and is also common as a personal name (ʿAzīz)."
+  },
+  "5420": {
+    "rootId": 5420,
+    "triliteralRoot": "ح م د",
+    "rootTransliteration": "ḥ-m-d",
+    "rootMeaning": "to praise, commend, speak well of",
+    "headwordTransliteration": "aḥmad",
+    "partOfSpeech": "proper noun (personal name); elative (أَفْعَل) pattern of the root",
+    "senses": [
+      {
+        "gloss": "the Arabic personal name Aḥmad",
+        "note": "the given headword; built on the same root as the verb 'to praise'"
+      },
+      {
+        "gloss": "most praiseworthy, most commended",
+        "note": "sense carried by this elative pattern of the root, matching the root verb's meaning of being found praiseworthy or approved"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "حَمْدٌ",
+        "transliteration": "ḥamd",
+        "meaning": "praise, commendation (the basic verbal noun)"
+      },
+      {
+        "letters": "تَحْمِيدٌ",
+        "transliteration": "taḥmīd",
+        "meaning": "praising much or repeatedly, esp. of God"
+      },
+      {
+        "letters": "مَحْمَدَةٌ",
+        "transliteration": "maḥmadah",
+        "meaning": "a praiseworthy quality; a quality for which one is praised"
+      },
+      {
+        "letters": "حَمِيدٌ",
+        "transliteration": "ḥamīd",
+        "meaning": "praiseworthy, commendable",
+        "path": "/word/the-praiseworthy-6042",
+        "rootId": 6042
+      },
+      {
+        "letters": "مَحْمُودٌ",
+        "transliteration": "maḥmūd",
+        "meaning": "praised, commended, approved",
+        "path": "/word/praiseworthy-6824",
+        "rootId": 6824
+      },
+      {
+        "letters": "مُحَمَّدٌ",
+        "transliteration": "muḥammad",
+        "meaning": "much-praised; one who is praised repeatedly"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"Ahmad\" in Arabic?",
+        "a": "أَحْمَد (Aḥmad)."
+      },
+      {
+        "q": "What does the name Aḥmad mean?",
+        "a": "It comes from the root ح م د 'to praise', and as an elative form carries the sense 'most praiseworthy' — the same root that gives حَمْدٌ (praise) and مُحَمَّدٌ (Muhammad)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Aḥmad is a common Arabic personal name built on the ح م د root shared with حَمْدٌ ('praise') and مُحَمَّدٌ ('Muhammad'). Lane groups it with the root's form IV entries (احمد), which describe a person's affair or conduct coming to be regarded as praiseworthy, commendable, or approved."
+  },
+  "5424": {
+    "rootId": 5424,
+    "triliteralRoot": "خ ط ب",
+    "rootTransliteration": "kh-ṭ-b",
+    "rootMeaning": "to speak, address, or discourse formally",
+    "headwordTransliteration": "khaṭīb",
+    "partOfSpeech": "noun (intensive agent noun, faʿīl pattern)",
+    "senses": [
+      {
+        "gloss": "orator, public speaker"
+      },
+      {
+        "gloss": "preacher who delivers the sermon",
+        "note": "Especially the khuṭbah recited from the pulpit (minbar), as at Friday prayer."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "خَطَبَ",
+        "transliteration": "khaṭaba",
+        "meaning": "to deliver a sermon/address; also, to ask a woman in marriage (verb form I)"
+      },
+      {
+        "letters": "خُطْبَةٌ",
+        "transliteration": "khuṭbah",
+        "meaning": "sermon, formal address (recited from the pulpit)"
+      },
+      {
+        "letters": "خِطْبَةٌ",
+        "transliteration": "khiṭbah",
+        "meaning": "a marriage proposal, betrothal"
+      },
+      {
+        "letters": "خَاطِبٌ",
+        "transliteration": "khāṭib",
+        "meaning": "suitor, one asking a woman in marriage",
+        "path": "/word/suitor-7977",
+        "rootId": 7977
+      },
+      {
+        "letters": "خِطَابٌ",
+        "transliteration": "khiṭāb",
+        "meaning": "speech, discourse, address to someone (from form III khāṭaba, 'to converse with')"
+      },
+      {
+        "letters": "خَطْبٌ",
+        "transliteration": "khaṭb",
+        "meaning": "an affair, matter, or business one is concerned with; also calamity"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"preacher\" in Arabic?",
+        "a": "خَطِيب (khaṭīb) — an orator, or specifically the preacher who delivers the sermon (khuṭbah)."
+      },
+      {
+        "q": "What is the difference between خَطِيب and خَاطِب?",
+        "a": "Khaṭīb (from the same root) is an orator/preacher who delivers a khuṭbah, while khāṭib is a suitor who proposes marriage (khiṭbah) — same root, different senses of 'to speak/address.'"
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Khaṭīb most often names the mosque preacher who delivers the khuṭbah from the minbar, but classically it simply denotes a skilled orator. It is distinct from khāṭib, 'suitor,' which comes from the same root's marriage-proposal sense (khaṭaba l-marʾah, 'to ask a woman in marriage')."
+  },
+  "5418": {
+    "rootId": 5418,
+    "triliteralRoot": "أ ب ن",
+    "rootTransliteration": "ʾ-b-n",
+    "rootMeaning": "to impute a fault, or trace",
+    "headwordTransliteration": "ibn",
+    "partOfSpeech": "noun (kinship term)",
+    "senses": [
+      {
+        "gloss": "son"
+      },
+      {
+        "gloss": "son of — used before a name to form a patronymic",
+        "note": "e.g. in genealogical name-chains such as \"Ibn Baṭṭūṭah\""
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "أَبَنَ",
+        "transliteration": "abana",
+        "meaning": "to impute a fault to, or suspect, someone"
+      },
+      {
+        "letters": "أَبَّنَ",
+        "transliteration": "abbana",
+        "meaning": "to trace footprints; to eulogize the dead"
+      },
+      {
+        "letters": "أُبْنَة",
+        "transliteration": "ubna",
+        "meaning": "a knot or flaw; figuratively a fault or rancour"
+      },
+      {
+        "letters": "مَأْبُون",
+        "transliteration": "maʾbūn",
+        "meaning": "one suspected of a fault or vice"
+      },
+      {
+        "letters": "مُؤَبِّن",
+        "transliteration": "muʾabbin",
+        "meaning": "one who eulogizes the dead"
+      },
+      {
+        "letters": "إِبَّان",
+        "transliteration": "ibbān",
+        "meaning": "the time or season of a thing"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"son\" in Arabic?",
+        "a": "ابْن (ibn)."
+      },
+      {
+        "q": "What is ابن used for in Arabic names?",
+        "a": "It is placed before a father's or ancestor's name to form a patronymic, giving the sense \"son of...\" within a name-chain."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Lane's own entry cross-references اِبْن (and its feminine اِبْنَة) to the separate root ب ن ي, so despite sharing its spelling with this entry, \"son\" is not historically part of the impute/trace/eulogize family gathered under ا ب ن here. اِبْن is common in Arabic name-chains, placed directly before a father's name."
+  },
+  "5428": {
+    "rootId": 5428,
+    "triliteralRoot": "ع ب د",
+    "rootTransliteration": "ʿ-b-d",
+    "rootMeaning": "to serve, worship, or be enslaved",
+    "headwordTransliteration": "ʿubayd",
+    "partOfSpeech": "noun (diminutive of ʿabd), used as a proper name",
+    "senses": [
+      {
+        "gloss": "Ubaid — an Arabic personal name",
+        "note": "the diminutive form of ʿabd ('servant, slave')"
+      },
+      {
+        "gloss": "little servant, little slave",
+        "note": "literal sense carried by the diminutive pattern"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "عَبْدٌ",
+        "transliteration": "ʿabd",
+        "meaning": "slave, servant, worshipper"
+      },
+      {
+        "letters": "عِبَادَةٌ",
+        "transliteration": "ʿibādah",
+        "meaning": "worship, service, humble obedience (to God)"
+      },
+      {
+        "letters": "عُبُودِيَّةٌ",
+        "transliteration": "ʿubūdiyyah",
+        "meaning": "slavery, servitude"
+      },
+      {
+        "letters": "تَعَبَّدَ",
+        "transliteration": "taʿabbada",
+        "meaning": "to devote oneself to worship, to serve God"
+      },
+      {
+        "letters": "اِسْتَعْبَدَ",
+        "transliteration": "istaʿbada",
+        "meaning": "to enslave, to take as a slave"
+      },
+      {
+        "letters": "عَبِيدٌ",
+        "transliteration": "ʿabīd",
+        "meaning": "slaves (plural of ʿabd)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"Ubaid\" in Arabic?",
+        "a": "Ubaid is written عُبَيْد (ʿubayd) in Arabic, the diminutive of ʿabd, 'servant'."
+      },
+      {
+        "q": "What does the name Ubaid mean?",
+        "a": "It literally means 'little servant' or 'little slave' — the diminutive of ʿabd ('servant, slave'), from a root (ʿ-b-d) whose core sense is serving or worshipping."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "ʿUbayd is the diminutive of ʿabd ('slave, servant') and functions in Arabic almost entirely as a proper name rather than an everyday common noun."
+  },
+  "5427": {
+    "rootId": 5427,
+    "triliteralRoot": "و ل د",
+    "rootTransliteration": "w-l-d",
+    "rootMeaning": "to give birth, beget, bring forth",
+    "headwordTransliteration": "walīd",
+    "partOfSpeech": "noun (adjective of the measure فَعِيل used in the sense of مَفْعُول)",
+    "senses": [
+      {
+        "gloss": "newborn child; young infant",
+        "note": "Denotes a child right at birth. Lane notes it is generally treated as masculine, though some apply it to a female infant as well; the corresponding form وَلِيدَة is used for a girl."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "وَلَدٌ",
+        "transliteration": "walad",
+        "meaning": "child, offspring, son or daughter"
+      },
+      {
+        "letters": "وَلَدَتْ",
+        "transliteration": "waladat",
+        "meaning": "she gave birth, brought forth a child"
+      },
+      {
+        "letters": "وَلُودٌ",
+        "transliteration": "walūd",
+        "meaning": "prolific; one that bears or breeds plentifully"
+      },
+      {
+        "letters": "تَوَلَّدَ",
+        "transliteration": "tawallada",
+        "meaning": "to be generated or produced, to originate from something else"
+      },
+      {
+        "letters": "تَوَالَدُوا",
+        "transliteration": "tawāladū",
+        "meaning": "to multiply and beget one another by propagation"
+      },
+      {
+        "letters": "لِدَةٌ",
+        "transliteration": "lidah",
+        "meaning": "a coeval; one born at the same time as another"
+      },
+      {
+        "letters": "مَوْلِدٌ",
+        "transliteration": "mawlid",
+        "meaning": "birth (the act or time of being born)"
+      },
+      {
+        "letters": "وَلِيدَةٌ",
+        "transliteration": "walīdah",
+        "meaning": "a newborn girl or female infant"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"newborn child\" in Arabic?",
+        "a": "وَلِيد (walīd) — used for a baby right at birth."
+      },
+      {
+        "q": "What does the name Walid mean?",
+        "a": "It comes from the root و ل د, \"to give birth,\" and literally means \"newborn child\" or \"young infant.\""
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Classically وَلِيد names a child at the moment of birth or in earliest infancy — the passive-sense counterpart to the verb وَلَدَتْ, \"she gave birth.\" It is the root behind everyday words like وَلَد (child) and مَوْلِد (birth), and today survives widely as the Arabic male given name Walid, \"newborn.\""
+  },
+  "5433": {
+    "rootId": 5433,
+    "triliteralRoot": "ز ح م",
+    "rootTransliteration": "z-ḥ-m",
+    "rootMeaning": "to press, push, crowd against",
+    "headwordTransliteration": "muzāḥim",
+    "partOfSpeech": "noun (active participle of Form III زاحم, used as a proper epithet)",
+    "senses": [
+      {
+        "gloss": "the elephant",
+        "note": "also styled أبو مزاحم (Abū Muzāḥim) or ابن مزاحم (Ibn Muzāḥim)"
+      },
+      {
+        "gloss": "a horned bull",
+        "note": "by another account, a bull whose horns have been broken off"
+      },
+      {
+        "gloss": "name of a particular horse",
+        "note": "recorded in Lane's as a proper name"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "زَحَمَهُ",
+        "transliteration": "zaḥamahu",
+        "meaning": "he pressed, pushed, or crowded him"
+      },
+      {
+        "letters": "تَزَاحَمَ",
+        "transliteration": "tazāḥama",
+        "meaning": "they pressed against one another, jostled"
+      },
+      {
+        "letters": "ازدحم",
+        "transliteration": "izdaḥama",
+        "meaning": "they crowded, pressed, or thronged together",
+        "path": "/word/crowded-20107",
+        "rootId": 20107
+      },
+      {
+        "letters": "زَحْمَةٌ",
+        "transliteration": "zaḥmah",
+        "meaning": "a pressing, crowding, throng"
+      },
+      {
+        "letters": "زِحَامٌ",
+        "transliteration": "ziḥām",
+        "meaning": "a crush, crowding, throng"
+      },
+      {
+        "letters": "مِزْحَمٌ",
+        "transliteration": "mizḥam",
+        "meaning": "one that presses or crowds vehemently"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"elephant\" in Arabic?",
+        "a": "مُزَاحِم (muzāḥim) is one of the words Lane's Lexicon gives for \"the elephant\" — also styled أبو مزاحم (Abū Muzāḥim)."
+      },
+      {
+        "q": "What does مُزَاحِم mean besides \"elephant\"?",
+        "a": "It is also used for a horned bull (or, in another account, one with broken horns) and as the proper name of a particular horse — senses tied to its root idea of pressing or pushing."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "As the active participle of زاحم ('to press against, jostle'), مُزَاحِم literally denotes something that pushes or presses; Lane's Lexicon records it applied specifically to the elephant, to a horned bull, and as the proper name of a horse."
+  },
+  "5430": {
+    "rootId": 5430,
+    "triliteralRoot": "ع م ر",
+    "rootTransliteration": "ʿ-m-r",
+    "rootMeaning": "to live long, or become inhabited",
+    "headwordTransliteration": "ʿimrān",
+    "partOfSpeech": "proper noun (masculine given name)",
+    "senses": [
+      {
+        "gloss": "Imran (a masculine personal name)",
+        "note": "a proper name built on this root; it does not carry an independent common-noun meaning of its own in the lexicon"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "عُمْرٌ",
+        "transliteration": "ʿumr",
+        "meaning": "life, lifetime (from 'he lived long')"
+      },
+      {
+        "letters": "عَمَّرَ",
+        "transliteration": "ʿammara",
+        "meaning": "to prolong or lengthen a person's life"
+      },
+      {
+        "letters": "عِمَارَةٌ",
+        "transliteration": "ʿimāra",
+        "meaning": "building up; keeping a place inhabited or in good repair"
+      },
+      {
+        "letters": "عُمْرَانٌ",
+        "transliteration": "ʿumrān",
+        "meaning": "the state of being inhabited, well-peopled, flourishing"
+      },
+      {
+        "letters": "عَامِرٌ",
+        "transliteration": "ʿāmir",
+        "meaning": "inhabited, flourishing, populated (active participle)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"Imran\" in Arabic?",
+        "a": "عِمْرَان (ʿimrān)."
+      },
+      {
+        "q": "What root does the name Imran come from?",
+        "a": "It comes from the root ع م ر (ʿ-m-r), whose other derived words relate to a long life (ʿumr) and to a place becoming inhabited or flourishing (ʿumrān, ʿimāra, ʿāmir)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "ʿImrān is used as a personal name (English \"Imran\"); it belongs to the ع م ر word family, whose other members center on a long life span (ʿumr) and on a place becoming inhabited, built up, or kept in a flourishing state (ʿimāra, ʿumrān, ʿāmir). As a name it functions as a label rather than carrying that common-noun sense directly."
+  },
+  "5436": {
+    "rootId": 5436,
+    "triliteralRoot": "ع ص م",
+    "rootTransliteration": "ʿ-ṣ-m",
+    "rootMeaning": "to protect, defend, preserve",
+    "headwordTransliteration": "ʿāṣim",
+    "partOfSpeech": "noun/adjective (active participle, Form I)",
+    "senses": [
+      {
+        "gloss": "protector, defender",
+        "note": "active participle (ism al-fāʿil) of Form I عَصَمَ, 'to protect, defend, preserve'"
+      },
+      {
+        "gloss": "guardian; one who preserves from harm"
+      },
+      {
+        "gloss": "used as a male given name (Asim/ʿĀṣim)",
+        "note": "the participial meaning 'protector' carried over into use as a personal name"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "عَصَمَ",
+        "transliteration": "ʿaṣama",
+        "meaning": "to protect, defend, preserve; also to withhold, and to bind a water-skin's tie",
+        "path": "/word/adhere-10705",
+        "rootId": 10705
+      },
+      {
+        "letters": "اِعْتَصَمَ",
+        "transliteration": "iʿtaṣama",
+        "meaning": "to hold fast to, cling to, or take refuge in (esp. in God) for protection",
+        "path": "/word/cling-11387",
+        "rootId": 11387
+      },
+      {
+        "letters": "عِصْمَةٌ",
+        "transliteration": "ʿiṣmah",
+        "meaning": "protection, safeguarding (e.g. by God, from evil)",
+        "path": "/word/a-protection-18968",
+        "rootId": 18968
+      },
+      {
+        "letters": "عِصَامٌ",
+        "transliteration": "ʿiṣām",
+        "meaning": "the strap or tie bound round a water-skin's neck to secure it"
+      },
+      {
+        "letters": "عُصْمَةٌ",
+        "transliteration": "ʿuṣmah",
+        "meaning": "a collar, as for a dog, resembling a bracelet",
+        "path": "/word/a-protection-18968",
+        "rootId": 18968
+      },
+      {
+        "letters": "أَعْصَمُ",
+        "transliteration": "aʿṣamu",
+        "meaning": "epithet for a gazelle or mountain-goat marked by a distinctive quality in the foreleg"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"protector\" in Arabic?",
+        "a": "عَاصِم (ʿāṣim) — literally 'one who protects or defends,' the active participle of عَصَمَ. It is also used as the given name Asim."
+      },
+      {
+        "q": "What does the name Asim mean in Arabic?",
+        "a": "Asim comes from عَاصِم (ʿĀṣim), the active participle of عَصَمَ 'to protect, preserve,' so it means 'protector' or 'guardian.'"
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "عَاصِم is the active participle of عَصَمَ ('to protect, defend, preserve'), so it literally denotes one who protects or shields another from harm. The same form is very commonly used as a male given name, ʿĀṣim (Asim), carrying the sense 'protector, guardian.'"
+  },
+  "5440": {
+    "rootId": 5440,
+    "triliteralRoot": "ق د م",
+    "rootTransliteration": "q-d-m",
+    "rootMeaning": "to precede, go before, advance",
+    "headwordTransliteration": "qadima",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to come, arrive at (a place)",
+        "note": "e.g. قَدِمَ البَلَدَ, 'he came to, or arrived at, the town'"
+      },
+      {
+        "gloss": "to advance boldly upon, undertake (a matter)",
+        "note": "as in قَدِمَ عَلَى الأَمْرِ, 'he advanced boldly to undertake the affair'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "قَدَّمَ",
+        "transliteration": "qaddama",
+        "meaning": "to put forward, advance, or prefer something"
+      },
+      {
+        "letters": "أَقْدَمَ",
+        "transliteration": "aqdama",
+        "meaning": "to be bold; to venture upon something daringly",
+        "path": "/word/brought-16075",
+        "rootId": 16075
+      },
+      {
+        "letters": "تَقَدَّمَ",
+        "transliteration": "taqaddama",
+        "meaning": "to go before, precede, advance"
+      },
+      {
+        "letters": "تَقَادَمَ",
+        "transliteration": "taqādama",
+        "meaning": "to become old, age"
+      },
+      {
+        "letters": "اِقْتَدَى",
+        "transliteration": "iqtadā",
+        "meaning": "to follow someone's example, imitate",
+        "path": "/word/emulate-11571",
+        "rootId": 11571
+      },
+      {
+        "letters": "قَدَمٌ",
+        "transliteration": "qadam",
+        "meaning": "the foot"
+      },
+      {
+        "letters": "قِدَمٌ",
+        "transliteration": "qidam",
+        "meaning": "oldness, antiquity"
+      },
+      {
+        "letters": "قَدِيمٌ",
+        "transliteration": "qadīm",
+        "meaning": "ancient, old",
+        "path": "/word/ancient-11347",
+        "rootId": 11347
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"come\" in Arabic?",
+        "a": "قَدِمَ (qadima) — most often used for arriving somewhere, e.g. قَدِمَ البَلَدَ, 'he came to the town.'"
+      },
+      {
+        "q": "What is the difference between قَدِمَ and قَدَّمَ?",
+        "a": "قَدِمَ (form I) means 'to come, arrive,' while قَدَّمَ (form II, doubled middle letter) means 'to put something forward, advance it, or prefer it.'"
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "قَدِمَ (with kasra) is used for physical arrival at a place, distinct from the related fatḥa-vocalized form of the same root meaning 'to precede, go before someone.' It also takes عَلَى to mean advancing boldly upon a task."
+  },
+  "5443": {
+    "rootId": 5443,
+    "triliteralRoot": "ف ر ش",
+    "rootTransliteration": "f-r-š",
+    "rootMeaning": "to spread, lay out flat",
+    "headwordTransliteration": "faraša",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to spread out, furnish (a bed, carpet, or garment) for someone",
+        "note": "the everyday sense — spreading bedding or a carpet for another's use; this 'furnishing' sense underlies the gloss 'give' (i.e. give someone a bed to lie on)."
+      },
+      {
+        "gloss": "to lay one's forearms flat upon the ground",
+        "note": "said of a beast of prey lowering its forelegs, or of a man; doing this while prostrating in prayer is disapproved."
+      },
+      {
+        "gloss": "(tropical) to lay open fully, make ample (one's situation or affair) to someone",
+        "note": "figurative extension of 'spreading out' — disclosing one's case without reserve."
+      },
+      {
+        "gloss": "to lie, speak falsely",
+        "note": "a separate, less common use of the same form I verb."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "فِرَاش",
+        "transliteration": "firāsh",
+        "meaning": "a bed; that which is spread out"
+      },
+      {
+        "letters": "فَرْش",
+        "transliteration": "farsh",
+        "meaning": "the act of spreading; also, young camels (as 'spread abroad')"
+      },
+      {
+        "letters": "إِفْتَرَشَ",
+        "transliteration": "iftaraša",
+        "meaning": "to spread out (a bed) for oneself"
+      },
+      {
+        "letters": "أَفْرَشَ",
+        "transliteration": "afraša",
+        "meaning": "to withdraw from, leave; to speak ill of someone behind their back"
+      },
+      {
+        "letters": "فَرَّشَ",
+        "transliteration": "farraša",
+        "meaning": "to spread out a carpet; of a bird, to flap its wings without alighting"
+      },
+      {
+        "letters": "مَفْرُوشَة",
+        "transliteration": "mafrūshah",
+        "meaning": "spread out, laid flat (e.g. of a leg-joint)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"give\" in Arabic?",
+        "a": "فَرَشَ (faraša) — literally 'to spread out' a bed or carpet for someone, used in the sense of furnishing or giving them bedding."
+      },
+      {
+        "q": "What does the root ف ر ش mean؟",
+        "a": "It centers on spreading or laying something out flat — a bed, carpet, garment, or one's limbs — with figurative extensions like 'laying open' one's affairs."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "The core image is physical spreading — a bed, a carpet, a garment, or a beast's forelegs laid flat on the ground. From this concrete sense the root extends figuratively to 'laying open' one's affairs to someone, and the everyday gloss 'give' reflects the specific act of spreading out bedding for another's use."
+  },
+  "5435": {
+    "rootId": 5435,
+    "triliteralRoot": "ش ع ر",
+    "rootTransliteration": "sh-ʿ-r",
+    "rootMeaning": "to know, perceive",
+    "headwordTransliteration": "ashʿarī",
+    "partOfSpeech": "adjective (nisba / relational adjective)",
+    "senses": [
+      {
+        "gloss": "Ash'ari; of or belonging to al-Ash'ari",
+        "note": "Functions as a proper-name / relational adjective (nisba) rather than a plain descriptive word."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "شِعْرٌ",
+        "transliteration": "shiʿr",
+        "meaning": "poetry, verse (originally a verbal noun of shaʿara, 'knowledge, cognizance')"
+      },
+      {
+        "letters": "شَعْرٌ",
+        "transliteration": "shaʿr",
+        "meaning": "hair"
+      },
+      {
+        "letters": "شَعَرَ",
+        "transliteration": "shaʿara",
+        "meaning": "to know, perceive; also to speak or compose poetry"
+      },
+      {
+        "letters": "أَشْعَرَ",
+        "transliteration": "ashʿara",
+        "meaning": "to inform, make known; also to mark a sacrificial animal",
+        "path": "/word/al-ash-ar-16266",
+        "rootId": 16266
+      },
+      {
+        "letters": "شَاعَرَ",
+        "transliteration": "shāʿara",
+        "meaning": "to compete in poetry with someone; to share a bed or garment with",
+        "path": "/word/poet-6738",
+        "rootId": 6738
+      },
+      {
+        "letters": "شِعَارٌ",
+        "transliteration": "shiʿār",
+        "meaning": "innermost garment; a rallying call or distinguishing sign"
+      },
+      {
+        "letters": "شِعْرِىٌّ",
+        "transliteration": "shiʿriyy",
+        "meaning": "poetic; relating to poetry (nisba of shiʿr)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"Ash'ari\" in Arabic?",
+        "a": "أَشْعَرِي (ashʿarī)."
+      },
+      {
+        "q": "What root does أَشْعَرِي come from?",
+        "a": "The triliteral root ش ع ر (sh-ʿ-r), whose core sense is 'to know, perceive' and which also gives Arabic its words for poetry (شِعْر) and hair (شَعْر)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "أَشْعَرِي is a nisba (relational) adjective formed with the -iyy ending on the root ش ع ر, so it functions as a proper name or surname rather than a plain descriptive word — compare the same nisba pattern in شِعْرِىٌّ, \"poetic, of poetry.\""
+  },
+  "5439": {
+    "rootId": 5439,
+    "triliteralRoot": "ك ع ب",
+    "rootTransliteration": "k-ʿ-b",
+    "rootMeaning": "to swell, become round or prominent",
+    "headwordTransliteration": "kaʿb",
+    "partOfSpeech": "noun",
+    "senses": [
+      {
+        "gloss": "the ankle-bone; the joint where the shank meets the foot",
+        "note": "each foot has two such bones, one on either side; grammarians disputed whether it sits atop the foot or between shank and foot"
+      },
+      {
+        "gloss": "a knuckle-bone or die thrown in games",
+        "note": "the cockal-bone used in a backgammon-like game; playing with it is mentioned as forbidden"
+      },
+      {
+        "gloss": "a cube, in arithmetic; also a knot or joint-segment of a reed, cane, or spear-shaft"
+      },
+      {
+        "gloss": "eminence, nobility, glory (figurative)",
+        "note": "as in the invocation 'may God exalt his glory'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "كَعَبَ",
+        "transliteration": "kaʿaba",
+        "meaning": "for a girl's breast to swell or become prominent"
+      },
+      {
+        "letters": "كَعَّبَ",
+        "transliteration": "kaʿʿaba (form II)",
+        "meaning": "to make square or cubic; to fold cloth firmly; of a reed, to put forth jointed segments"
+      },
+      {
+        "letters": "أَكْعَبَ",
+        "transliteration": "akʿaba (form IV)",
+        "meaning": "to hasten off; to leave hurriedly, heedless of what is left behind"
+      },
+      {
+        "letters": "كَاعِبٌ",
+        "transliteration": "kāʿib",
+        "meaning": "a girl whose breasts have just begun to swell"
+      },
+      {
+        "letters": "مُكَعَّبٌ",
+        "transliteration": "mukaʿʿab",
+        "meaning": "made cubic or square; firmly folded"
+      },
+      {
+        "letters": "مُكَعِّبٌ",
+        "transliteration": "mukaʿʿib",
+        "meaning": "one who strikes; an epithet from beating the protuberances of the head"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"ankle\" in Arabic?",
+        "a": "كَعْب (kaʿb) — the ankle-bone, at the joint where the shank meets the foot."
+      },
+      {
+        "q": "Does كَعْب mean anything besides \"ankle\"?",
+        "a": "Yes: it also names a die or knuckle-bone used in games, a cube in arithmetic, a knot-segment of a reed or spear-shaft, and figuratively \"glory\" or \"eminence.\""
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "كَعْب names the ankle-joint anatomically, but also covers anything with the same round, jointed, or block-like shape: a die or play-bone, a segment of a reed, or a cube in arithmetic. It also carries a figurative sense of standing or glory, as in the classical phrase 'may God exalt his kaʿb.'"
+  },
+  "5442": {
+    "rootId": 5442,
+    "triliteralRoot": "م ر ر",
+    "rootTransliteration": "m-r-r",
+    "rootMeaning": "to pass, go by, elapse",
+    "headwordTransliteration": "marrah",
+    "partOfSpeech": "noun (noun of instance / ism al-marrah, from the verb مَرَّ)",
+    "senses": [
+      {
+        "gloss": "once; a single time",
+        "note": "Used adverbially, denoting a single occurrence of an action."
+      },
+      {
+        "gloss": "a time, an instance, an occurrence",
+        "note": "As a countable noun formed from مَرَّ 'to pass' — literally 'one passing'."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "مَرَّ",
+        "transliteration": "marra",
+        "meaning": "to pass, pass by, go on, elapse (root verb, form I)"
+      },
+      {
+        "letters": "مَرٌّ",
+        "transliteration": "marr",
+        "meaning": "passing; the act of going by (verbal noun of مَرَّ)"
+      },
+      {
+        "letters": "مارّهُ",
+        "transliteration": "mārrahu",
+        "meaning": "he passed by, or went along, together with him (form III)"
+      },
+      {
+        "letters": "امرّهُ",
+        "transliteration": "amarrahu",
+        "meaning": "he made it pass, go by; also, he twisted it tightly, as a rope (form IV)"
+      },
+      {
+        "letters": "مُرٌّ",
+        "transliteration": "murr",
+        "meaning": "bitter (same root letters, a distinct sense-branch)"
+      },
+      {
+        "letters": "مِرَّةٌ",
+        "transliteration": "mirrah",
+        "meaning": "bile, gall — a bodily humor (spelled like مَرَّة but with kasr)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"once\" in Arabic?",
+        "a": "مَرَّة (marrah)."
+      },
+      {
+        "q": "What is the root of مَرَّة and what does it mean?",
+        "a": "It comes from the root م ر ر (m-r-r), whose core verb مَرَّ (marra) means 'to pass, go by, elapse' — مَرَّة literally denotes a single 'passing', i.e. one time or occurrence."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Distinct from مِرَّة (mirrah, with kasr on the mīm) meaning 'bile, gall' — some copyists' texts confuse the two spellings, but they are separate words differing only in the root vowel, not in root letters."
+  },
+  "5453": {
+    "rootId": 5453,
+    "triliteralRoot": "س ج د",
+    "rootTransliteration": "s-j-d",
+    "rootMeaning": "to bow down, prostrate in submission",
+    "headwordTransliteration": "masjid",
+    "partOfSpeech": "noun (place noun / ism makān)",
+    "senses": [
+      {
+        "gloss": "mosque",
+        "note": "the ordinary word for a Muslim place of worship"
+      },
+      {
+        "gloss": "a place of prostration",
+        "note": "literal sense, built on the root's core meaning of bowing down or prostrating oneself"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "سَجَدَ",
+        "transliteration": "sajada",
+        "meaning": "to be lowly, humble; to bend oneself down and put the forehead to the ground (form I verb)"
+      },
+      {
+        "letters": "أَسْجَدَ",
+        "transliteration": "asjada",
+        "meaning": "to lower the head; to gaze steadily with lowered, languid eyelids (form IV)",
+        "path": "/word/caused-to-prostrate-16621",
+        "rootId": 16621
+      },
+      {
+        "letters": "سَجْدَةٌ",
+        "transliteration": "sajdah",
+        "meaning": "a single act of prostration"
+      },
+      {
+        "letters": "سِجْدَةٌ",
+        "transliteration": "sijdah",
+        "meaning": "a particular manner or kind of prostration"
+      },
+      {
+        "letters": "سَجَّادَةٌ",
+        "transliteration": "sajjādah",
+        "meaning": "a small mat or rug spread out to prostrate on; prayer mat"
+      },
+      {
+        "letters": "سَاجِدٌ",
+        "transliteration": "sājid",
+        "meaning": "one who is prostrating himself (active participle), plural سُجَّد/سُجُود"
+      },
+      {
+        "letters": "سَجَّادٌ",
+        "transliteration": "sajjād",
+        "meaning": "a man who prostrates himself often, i.e. very devout in prayer"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"mosque\" in Arabic?",
+        "a": "مَسْجِد (masjid)."
+      },
+      {
+        "q": "What does the root of masjid, س-ج-د, actually mean?",
+        "a": "It means to bow down or prostrate oneself in humility — the same root gives سجد (to prostrate) and سجادة (prayer mat); masjid literally means \"a place of prostration.\""
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "The root سجد centres on lowering and humbling oneself, whether by bending the head and body or, in prayer, by placing the forehead on the ground before God — this specific ritual act is سُجُود. From this literal sense of prostration, masjid denotes the place set aside for it: a mosque. The same root is used tropically of a camel lowering its head to be mounted, a palm tree bending under its fruit, or a ship leaning in the wind — all pictured as a kind of \"bowing down.\""
+  },
+  "5451": {
+    "rootId": 5451,
+    "triliteralRoot": "ح ي ن",
+    "rootTransliteration": "ḥ-y-n",
+    "rootMeaning": "to draw near, become due",
+    "headwordTransliteration": "ḥīna",
+    "partOfSpeech": "adverb / conjunction (accusative of the time-noun ḥīn)",
+    "senses": [
+      {
+        "gloss": "when, at the time that",
+        "note": "Introduces a clause of time, e.g. ḥīna faʿala 'when he did (it)' — the ordinary way Classical/Qur'anic Arabic links an action to the moment it occurred."
+      },
+      {
+        "gloss": "at that time, then",
+        "note": "Retains its literal sense as the accusative of ḥīn ('a time'), used adverbially rather than as a full conjunction."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "حَانَ",
+        "transliteration": "ḥāna",
+        "meaning": "to draw near, become due (of a time); to die or perish"
+      },
+      {
+        "letters": "حِينٌ",
+        "transliteration": "ḥīn",
+        "meaning": "a time, period, or while, of vague or context-set length"
+      },
+      {
+        "letters": "حَيْنٌ",
+        "transliteration": "ḥayn",
+        "meaning": "death, destruction; a trial or affliction"
+      },
+      {
+        "letters": "تَحَيَّنَ",
+        "transliteration": "taḥayyana",
+        "meaning": "to watch for and await the right time (e.g. for food or prayer)"
+      },
+      {
+        "letters": "مُحَايَنَةٌ",
+        "transliteration": "muḥāyanah",
+        "meaning": "contracting or hiring someone for a fixed period"
+      },
+      {
+        "letters": "أَحَانَ",
+        "transliteration": "aḥāna",
+        "meaning": "to cause to perish; also, to endure or remain for a time"
+      },
+      {
+        "letters": "حَيَّنَ",
+        "transliteration": "ḥayyana",
+        "meaning": "to assign or fix a set time for someone or something"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"when\" in Arabic?",
+        "a": "حِينَ (ḥīna) — the accusative form of حِينٌ (ḥīn, 'a time'), used to introduce a time clause, as in ḥīna faʿala, 'when he did (it).'"
+      },
+      {
+        "q": "What is the difference between حِينَ and حِينٌ?",
+        "a": "حِينٌ (ḥīn) is the plain noun meaning 'a time, period, while'; حِينَ (ḥīna) is its accusative form used adverbially/conjunctively to mean 'when.'"
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "ḥīna is the accusative case of the noun ḥīn ('a time, period'), used adverbially to function as the conjunction 'when.' It is common in Classical and Qur'anic Arabic to open a temporal clause, contrasting with ḥīn itself, which stands as a plain noun for 'a time' or 'a while.'"
+  },
+  "5449": {
+    "rootId": 5449,
+    "triliteralRoot": "د ل ل",
+    "rootTransliteration": "d-l-l",
+    "rootMeaning": "to direct, guide, show the way",
+    "headwordTransliteration": "dalla",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to direct, guide, or show (someone the way)",
+        "note": "the basic sense, e.g. dalla-hu ʿalayhi, 'he directed/showed him to it'"
+      },
+      {
+        "gloss": "to indicate, denote, or signify",
+        "note": "said of a word: yadullu ʿalā kadhā, 'it denotes such a thing'"
+      },
+      {
+        "gloss": "(of a woman) to behave with coquettish boldness and feigned coyness toward her husband"
+      },
+      {
+        "gloss": "to embolden, make bold against",
+        "note": "e.g. mā dallaka ʿalayya, 'what emboldened thee against me?'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "اِسْتَدَلَّ",
+        "transliteration": "istadalla",
+        "meaning": "to seek or adduce evidence; to draw an inference or deduction (form X)",
+        "path": "/word/use-as-evidence-10229",
+        "rootId": 10229
+      },
+      {
+        "letters": "أَدَلَّ",
+        "transliteration": "adalla",
+        "meaning": "to act with boldness or presumption toward someone; to overpower an adversary in battle (form IV)"
+      },
+      {
+        "letters": "تَدَلَّلَ",
+        "transliteration": "tadallala",
+        "meaning": "to behave with coquettish boldness; to act proud or haughty (form V)"
+      },
+      {
+        "letters": "اِنْدَلَّ",
+        "transliteration": "indalla",
+        "meaning": "to be directed or guided; also, to pour out or forth (form VII)"
+      },
+      {
+        "letters": "دَلَالَةٌ",
+        "transliteration": "dalālah",
+        "meaning": "guidance, direction, indication (verbal noun)"
+      },
+      {
+        "letters": "دَلٌّ",
+        "transliteration": "dall",
+        "meaning": "the act of guiding; also, amorous coquetry or bold flirtatious manner (verbal noun)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"show\" in Arabic?",
+        "a": "دَلَّ (dalla) — to direct, guide, or show someone the way, as in dalla-hu ʿalayhi, 'he showed/guided him to it'."
+      },
+      {
+        "q": "What is the difference between دَلَّ and اِسْتَدَلَّ?",
+        "a": "دَلَّ (dalla) means to guide or show the way; اِسْتَدَلَّ (istadalla), form X of the same root, means to seek out or adduce evidence and draw an inference."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "The core construction is dalla ʿalā ('to direct/guide to'), used both for physically showing someone a way and, extended to speech, for a word 'signifying' a meaning. The same root later yields the sense of adducing or seeking evidence (istadalla, form X), while the derived forms IV and V shift toward boldness, presumption, and coquettish behaviour."
+  },
+  "5452": {
+    "rootId": 5452,
+    "triliteralRoot": "ب ن ي",
+    "rootTransliteration": "b-n-y",
+    "rootMeaning": "to build, construct; to rear",
+    "headwordTransliteration": "bināʾ",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "building, construction",
+        "note": "the act of erecting or framing something — a house, tent, or other structure — the opposite of demolishing it"
+      },
+      {
+        "gloss": "a building, structure, edifice",
+        "note": "the concrete result of building; also used of construction in general, e.g. of ships"
+      },
+      {
+        "gloss": "(grammar) indeclinability",
+        "note": "a word's fixed, invariable ending, not caused by any governing word"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "بَنَى",
+        "transliteration": "banā",
+        "meaning": "to build, frame, construct (something); opposite of demolishing",
+        "path": "/word/to-build-5920",
+        "rootId": 5920
+      },
+      {
+        "letters": "بَنَّى",
+        "transliteration": "bannā",
+        "meaning": "to build much, or repeatedly; to build palaces, or raise structures high",
+        "path": "/word/to-build-5920",
+        "rootId": 5920
+      },
+      {
+        "letters": "أَبْنَى",
+        "transliteration": "abnā",
+        "meaning": "to supply someone with a house or tent, or make them build one"
+      },
+      {
+        "letters": "ابْتَنَى",
+        "transliteration": "ibtanā",
+        "meaning": "to have one's wife conducted to one at marriage; to consummate a marriage (from pitching the bridal tent)"
+      },
+      {
+        "letters": "تَبَنَّى",
+        "transliteration": "tabannā",
+        "meaning": "to adopt someone as a son"
+      },
+      {
+        "letters": "بُنْيَان",
+        "transliteration": "bunyān",
+        "meaning": "building, construction (a variant verbal noun alongside bināʾ)",
+        "path": "/word/building-8389",
+        "rootId": 8389
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"building\" in Arabic?",
+        "a": "بِنَاء (bināʾ) — the verbal noun of banā, \"to build,\" covering both the act of construction and its result, a structure."
+      },
+      {
+        "q": "What does the root ب ن ي mean?",
+        "a": "It centres on building and construction — banā \"to build,\" bunyān \"a building\" — and extends to rearing or bringing someone up, as in tabannā, \"to adopt (as a son).\""
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Bināʾ is the standard verbal noun of banā (\"to build\"), used for the physical construction of houses, tents, or ships. Lane also records a specialised grammatical sense, where bināʾ describes a word that keeps one fixed ending regardless of its role in the sentence, i.e. indeclinability."
+  },
+  "5447": {
+    "rootId": 5447,
+    "triliteralRoot": "ع ش ر",
+    "rootTransliteration": "ʿ-sh-r",
+    "rootMeaning": "to be or make ten",
+    "headwordTransliteration": "ʿashr",
+    "partOfSpeech": "noun / numeral (cardinal number)",
+    "senses": [
+      {
+        "gloss": "ten (cardinal number)",
+        "note": "Lane's identifies it as the feminine-form counterpart of عَشَرَةٌ"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "عَشَرَ",
+        "transliteration": "ʿashara",
+        "meaning": "to take a tenth of (property, people); to make ten by adding one"
+      },
+      {
+        "letters": "عَشَّرَ",
+        "transliteration": "ʿashshara",
+        "meaning": "to make a number ten; to take the tithe; to mark a Qur'an copy's tenths"
+      },
+      {
+        "letters": "عَاشَرَ",
+        "transliteration": "ʿāshara",
+        "meaning": "to mix with, consort with, keep familiar company with someone"
+      },
+      {
+        "letters": "عَشَرَةٌ",
+        "transliteration": "ʿasharah",
+        "meaning": "ten (the masculine-form cardinal number)"
+      },
+      {
+        "letters": "عُشْرٌ",
+        "transliteration": "ʿushr",
+        "meaning": "a tenth; one part in ten"
+      },
+      {
+        "letters": "عُشَرَآءُ",
+        "transliteration": "ʿushurāʾ",
+        "meaning": "a she-camel in the tenth month of her pregnancy"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"ten\" in Arabic?",
+        "a": "عَشْر (ʿashr) — the feminine-form cardinal number ten, used opposite the masculine-form عَشَرَةٌ."
+      },
+      {
+        "q": "What root does عَشْر come from?",
+        "a": "It comes from the triliteral root ع-ش-ر (ʿ-sh-r), whose verb forms mean to take a tenth of something or to make a number reach ten."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "This is the cardinal number \"ten.\" Lane's lexicon defines it simply as the feminine form of عَشَرَةٌ, its masculine-form counterpart — the two belong to a root whose verb forms describe taking a tenth of something, or making/completing a group of ten."
+  },
+  "5461": {
+    "rootId": 5461,
+    "triliteralRoot": "ق د س",
+    "rootTransliteration": "q-d-s",
+    "rootMeaning": "to be pure, holy",
+    "headwordTransliteration": "quds",
+    "partOfSpeech": "noun (verbal noun / substantive)",
+    "senses": [
+      {
+        "gloss": "holiness, sanctity; purity",
+        "note": "the base abstract sense of the root; قُدْس is a contracted form of the fuller verbal noun قُدُس"
+      },
+      {
+        "gloss": "Jerusalem",
+        "note": "as القُدْس, short for بَيْت المَقْدِس 'the sanctified house' — the common Arabic name for the city"
+      },
+      {
+        "gloss": "blessing",
+        "note": "a secondary, less common sense given for the word"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "قَدَّسَ",
+        "transliteration": "qaddasa",
+        "meaning": "to hallow, sanctify, purify, or bless (something/someone)"
+      },
+      {
+        "letters": "تَقَدَّسَ",
+        "transliteration": "taqaddasa",
+        "meaning": "to become hallowed, purified, or free of all imperfection"
+      },
+      {
+        "letters": "القُدُّوسُ",
+        "transliteration": "al-quddūs",
+        "meaning": "the All-Holy, All-Pure — a name applied to God"
+      },
+      {
+        "letters": "بَيْتُ المَقْدِسِ",
+        "transliteration": "bayt al-maqdis",
+        "meaning": "Jerusalem, lit. 'the sanctified house'"
+      },
+      {
+        "letters": "مُقَدَّسٌ",
+        "transliteration": "muqaddas",
+        "meaning": "hallowed, sanctified, consecrated, blessed",
+        "path": "/word/holy-5678",
+        "rootId": 5678
+      },
+      {
+        "letters": "مُقَدِّسٌ",
+        "transliteration": "muqaddis",
+        "meaning": "a Christian monk or pilgrim who journeys to Jerusalem",
+        "path": "/word/holy-5678",
+        "rootId": 5678
+      },
+      {
+        "letters": "قَدَسٌ",
+        "transliteration": "qadas",
+        "meaning": "a vessel (of the سَطْل kind) used for ritual purification"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"Jerusalem\" in Arabic?",
+        "a": "القُدْس (al-quds), literally 'the holy/purified one', short for بَيْت المَقْدِس."
+      },
+      {
+        "q": "What does the root ق د س mean?",
+        "a": "It carries the sense of being pure or holy, as in قَدُسَ 'to be holy, pure'."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "As القُدْس, this word is the ordinary Arabic name for Jerusalem, tied to the same root sense of purity/holiness as بَيْت المَقْدِس. The compound رُوحُ القُدُس ('Spirit of Holiness') refers to Gabriel in Islamic usage."
+  },
+  "5460": {
+    "rootId": 5460,
+    "triliteralRoot": "ق ب ل",
+    "rootTransliteration": "q-b-l",
+    "rootMeaning": "to face, be in front, before",
+    "headwordTransliteration": "istaqbala",
+    "partOfSpeech": "verb (form X)",
+    "senses": [
+      {
+        "gloss": "to face, turn to face someone or something",
+        "note": "the base sense: turning one's face toward a person or thing"
+      },
+      {
+        "gloss": "to come before someone, go out to meet, encounter",
+        "note": "used of meeting or coming face to face with someone"
+      },
+      {
+        "gloss": "to anticipate, look forward to, know beforehand",
+        "note": "e.g. anticipating the coming of Ramaḍān by fasting before it starts"
+      },
+      {
+        "gloss": "to confront, meet someone with (words, a rebuke, an accusation)",
+        "note": "often with something the person dislikes, said to their face"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "قَبِلَ",
+        "transliteration": "qabila",
+        "meaning": "to accept, receive, or admit willingly"
+      },
+      {
+        "letters": "قَابَلَهُ",
+        "transliteration": "qābalahu",
+        "meaning": "he faced, opposed, or corresponded to him"
+      },
+      {
+        "letters": "أَقْبَلَ",
+        "transliteration": "aqbala",
+        "meaning": "he came facing forward, advanced, approached",
+        "path": "/word/approached-5626",
+        "rootId": 5626
+      },
+      {
+        "letters": "تَقَابَلُوا",
+        "transliteration": "taqābalū",
+        "meaning": "they faced, or confronted, one another"
+      },
+      {
+        "letters": "اِقْتَبَلَهُ",
+        "transliteration": "iqtabalahu",
+        "meaning": "he began or commenced it (an affair)"
+      },
+      {
+        "letters": "قَبْلُ",
+        "transliteration": "qablu",
+        "meaning": "before (opposite of after)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"faced\" in Arabic?",
+        "a": "اِسْتَقْبَلَ (istaqbala) — to face, turn toward, or go to meet someone or something."
+      },
+      {
+        "q": "What does the root ق-ب-ل mean?",
+        "a": "It centers on facing, fronting, and being before something; from it come قَبْلُ (\"before\"), قَابَلَ (\"to face/oppose\"), and اِسْتَقْبَلَ (\"to face, meet, or anticipate\")."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Istaqbala is the form-X (reflexive/seeking) verb of the root: it describes actively turning to face, going out to meet, or facing something that is coming — including facing it before it arrives, as in anticipating a fast, or facing someone with unwelcome words."
+  },
+  "5459": {
+    "rootId": 5459,
+    "triliteralRoot": "ث م م",
+    "rootTransliteration": "ṯ-m-m",
+    "rootMeaning": "to repair, patch, or gather together",
+    "headwordTransliteration": "ṯumma",
+    "partOfSpeech": "particle / conjunction (coordinating, denoting sequence)",
+    "senses": [
+      {
+        "gloss": "then, afterward — introduces a subsequent action, event, or clause",
+        "note": "marks both order and a delay or interval between the two things joined, unlike the plain conjunction wa- ('and'), which implies no such gap."
+      },
+      {
+        "gloss": "as a coordinating particle, links two nouns or clauses so the second takes the same grammatical case as the first",
+        "note": "grammarians disputed whether it always implies strict chronological order; some Qur'anic uses (e.g. 9:119, 39:8) were explained as elliptical, or as ordering by rank/wonder rather than by time."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "ثَمَّهُ",
+        "transliteration": "ṯammahu",
+        "meaning": "to repair or set right (esp. by stuffing with ṯumām); to gather something together"
+      },
+      {
+        "letters": "ثَمَّ",
+        "transliteration": "ṯamma",
+        "meaning": "there (adverb pointing to a remote place, opposite of hunā, 'here')"
+      },
+      {
+        "letters": "ثُمَامٌ",
+        "transliteration": "ṯumām",
+        "meaning": "a rush-like plant material used for stuffing, patching, or covering something (e.g. a milk-skin, to shield it from the sun)"
+      },
+      {
+        "letters": "ثَمَّةٌ",
+        "transliteration": "ṯammah",
+        "meaning": "a quantity of dry herbage gathered together",
+        "path": "/word/there-12413",
+        "rootId": 12413
+      },
+      {
+        "letters": "مِثَمٌّ",
+        "transliteration": "mithamm",
+        "meaning": "an implement for sweeping up and collecting refuse"
+      },
+      {
+        "letters": "مَثْمُومٌ",
+        "transliteration": "mathmūm",
+        "meaning": "something that has been repaired, patched, or stuffed"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"then\" in Arabic?",
+        "a": "ثُمَّ (ṯumma) — the standard classical Arabic conjunction for 'then, afterward,' marking sequence with an implied pause between the two things joined."
+      },
+      {
+        "q": "What's the difference between ثُمَّ (ṯumma) and وَ (wa) in Arabic?",
+        "a": "Both coordinate two items, but ثُمَّ specifically signals order plus a delay or gap between them, while وَ ('and') simply joins them with no implication of sequence or interval."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "ثُمَّ is one of the core classical Arabic coordinating conjunctions (alongside wa- and fa-), used throughout the Qur'an and classical prose to link clauses with a stronger sense of sequence and pause than wa- alone. Variant forms ثُمَّتَ/ثُمَّتْ (and the rarer فُمَّ, with ف for ث) occur in older usage but ثُمَّ is by far the standard form."
+  },
+  "5463": {
+    "rootId": 5463,
+    "triliteralRoot": "د ع و",
+    "rootTransliteration": "d-ʿ-w",
+    "rootMeaning": "to call, summon, invite",
+    "headwordTransliteration": "daʿā",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to pray to God, supplicate, petition humbly",
+        "note": "the sense behind the given gloss 'pray'; also دعا له 'to pray/intercede for someone' and دعا عليه 'to pray against, curse, someone'"
+      },
+      {
+        "gloss": "to call, call out to, summon someone",
+        "note": "e.g. دعوته 'I called him to come to me'"
+      },
+      {
+        "gloss": "to call people to, invite",
+        "note": "e.g. inviting people to a meal, or calling people to a cause such as Islam or to prayer"
+      },
+      {
+        "gloss": "to name, call someone by a name",
+        "note": "a figurative use, e.g. دعوته زيدًا 'I called him Zayd'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "دُعَاءٌ",
+        "transliteration": "duʿāʾ",
+        "meaning": "supplication, prayer; the act of calling upon or asking of God"
+      },
+      {
+        "letters": "دَعْوَى",
+        "transliteration": "daʿwā",
+        "meaning": "a verbal noun paired with duʿāʾ, likewise denoting supplication"
+      },
+      {
+        "letters": "دَعْوَةٌ",
+        "transliteration": "daʿwah",
+        "meaning": "an invitation, e.g. to a meal or gathering"
+      },
+      {
+        "letters": "دَاعٍ",
+        "transliteration": "dāʿin",
+        "meaning": "one who calls, summons, or invites; a caller"
+      },
+      {
+        "letters": "مُدَاعَاةٌ",
+        "transliteration": "mudāʿāh",
+        "meaning": "proposing riddles to one another, or contending in doing so (form III)"
+      },
+      {
+        "letters": "دَاعِيَةٌ",
+        "transliteration": "dāʿiyah",
+        "meaning": "in one classical use, a small remainder of milk left in the udder, as though 'calling' more to follow",
+        "path": "/word/preacher-17757",
+        "rootId": 17757
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"pray\" in Arabic?",
+        "a": "دَعَا (daʿā) — to pray to or call upon God; its verbal noun دُعَاء (duʿāʾ) means 'supplication, prayer'."
+      },
+      {
+        "q": "What does the noun دُعَاء (duʿāʾ) mean?",
+        "a": "It is the verbal noun of دعا, meaning the act of supplicating, calling upon, or asking something of God."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "دعا is a broad root: it covers everyday calling and inviting as well as the specifically religious sense of praying or supplicating God, which is why دُعَاء became the standard word for personal supplication in Islamic usage. The same verb also extends figuratively to naming someone and to one thing 'calling for' or requiring another."
+  },
+  "5464": {
+    "rootId": 5464,
+    "triliteralRoot": "ث ل ث",
+    "rootTransliteration": "ṯ-l-ṯ",
+    "rootMeaning": "to be three, a third part",
+    "headwordTransliteration": "ṯalāṯ",
+    "partOfSpeech": "numeral (cardinal number 'three')",
+    "senses": [
+      {
+        "gloss": "three (the cardinal number 3)",
+        "note": "Base numeral form; the root's verbs describe the same idea in action, e.g. 'he made a group three' or 'he became the third of them.'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "ثَلَثَ",
+        "transliteration": "ṯalaṯa",
+        "meaning": "to take a third of (property); to be, or become, the third of a group, making it three",
+        "path": "/word/third-11854",
+        "rootId": 11854
+      },
+      {
+        "letters": "ثلّث",
+        "transliteration": "ṯallaṯa",
+        "meaning": "to make (something) three, or triple it; later also 'to assert the doctrine of the Trinity'",
+        "path": "/word/third-11854",
+        "rootId": 11854
+      },
+      {
+        "letters": "اثلث",
+        "transliteration": "aṯlaṯa",
+        "meaning": "for a group to become three (or thirty); for a she-camel to bear her third offspring"
+      },
+      {
+        "letters": "ثِلْثٌ",
+        "transliteration": "ṯilṯ",
+        "meaning": "the third-born offspring of a she-camel; also, watering palm trees once every three days",
+        "path": "/word/third-11854",
+        "rootId": 11854
+      },
+      {
+        "letters": "ثَلَاثَةٌ",
+        "transliteration": "ṯalāṯah",
+        "meaning": "three (counterpart form of the numeral)"
+      },
+      {
+        "letters": "ثَلَاثُونَ",
+        "transliteration": "ṯalāṯūn",
+        "meaning": "thirty"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"three\" in Arabic?",
+        "a": "ثَلَاث (ṯalāṯ)."
+      },
+      {
+        "q": "What root does ثَلَاث come from, and what does it cover?",
+        "a": "It comes from the root ث ل ث (ṯ-l-ṯ), which underlies the whole family of 'three'-related words — the numeral itself, verbs meaning 'to make/become three,' and words for 'a third' or 'third-born.'"
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Used as the cardinal number three, placed before the counted noun. The root's verb forms trace the same idea of 'threeness': ثَلَثَ القَوْمَ means either 'he took a third of the people's property' or 'he became the third of the group, making them three with himself,' and the same pattern extends to other numbers (making a pair a trio, a group of twenty-nine into thirty, and so on)."
+  },
+  "5462": {
+    "rootId": 5462,
+    "triliteralRoot": "ك ل ل",
+    "rootTransliteration": "k-l-l",
+    "rootMeaning": "to be whole, entire, or all-encompassing",
+    "headwordTransliteration": "kull",
+    "partOfSpeech": "noun (universal quantifier / indefinite noun)",
+    "senses": [
+      {
+        "gloss": "all; every, each",
+        "note": "the basic distributive/collective quantifier sense, normally followed by a genitive noun or a pronoun suffix"
+      },
+      {
+        "gloss": "any one",
+        "note": "used after a negative plus an exception, e.g. Qur'an 38:13: 'there was not any one (كُلٌّ) but accused the messengers of lying'"
+      },
+      {
+        "gloss": "the whole; the utmost degree",
+        "note": "used in intensifying idioms such as هُوَ العَالِمُ كُلُّ العَالِمِ, 'he is the possessor of knowledge in its entirety', i.e. utterly learned"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "كَلَّلَ",
+        "transliteration": "kallala",
+        "meaning": "to adorn or crown a thing with gems or jewels"
+      },
+      {
+        "letters": "مُكَلَّلٌ",
+        "transliteration": "mukallal",
+        "meaning": "adorned, crowned with gems or jewels"
+      },
+      {
+        "letters": "الإِكْلِيلُ",
+        "transliteration": "al-iklīl",
+        "meaning": "a crown or wreath; also the border of flesh encircling the nail, and a cluster of stars in Scorpio"
+      },
+      {
+        "letters": "كُلِّىٌّ",
+        "transliteration": "kulliyy",
+        "meaning": "universal, relating to the whole; opposite of particular (juz'iyy)"
+      },
+      {
+        "letters": "كِلَّةٌ",
+        "transliteration": "killah",
+        "meaning": "a mosquito-curtain, a netting that wholly encloses"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"all\" in Arabic?",
+        "a": "كُلّ (kull)."
+      },
+      {
+        "q": "What does كُلّ mean after a negative, as in the Qur'an?",
+        "a": "After a negative and an exception it means 'any one' — as in Qur'an 38:13, 'there was not any one but accused the messengers of lying'."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "كُلّ is normally used in construct: followed by a genitive noun (كُلُّ كِتَابٍ, 'every book') or a pronoun suffix (كُلُّهُ, 'all of it'). It combines with مَا and مَنْ to form set expressions such as كُلَّمَا ('whenever, as often as') and كُلَّ مَنْ ('whoever'). It is extremely frequent in Qur'anic and classical Arabic."
+  },
+  "5467": {
+    "rootId": 5467,
+    "triliteralRoot": "ج و ب",
+    "rootTransliteration": "j-w-b",
+    "rootMeaning": "to cut, pierce, or traverse",
+    "headwordTransliteration": "ijāba",
+    "partOfSpeech": "noun (verbal noun / maṣdar of form IV أَجَابَ)",
+    "senses": [
+      {
+        "gloss": "answer, reply, response",
+        "note": "to a question, statement, or call; can be given affirmatively or negatively"
+      },
+      {
+        "gloss": "acceptance, granting (of a prayer or request)",
+        "note": "used especially of God accepting a person's supplication"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "جَوَابٌ",
+        "transliteration": "jawāb",
+        "meaning": "an answer, a reply"
+      },
+      {
+        "letters": "المُجِيبُ",
+        "transliteration": "al-mujīb",
+        "meaning": "the one who answers, responds"
+      },
+      {
+        "letters": "جَاوَبَ",
+        "transliteration": "jāwaba",
+        "meaning": "to answer one another, converse, hold a dialogue"
+      },
+      {
+        "letters": "جَيْبٌ",
+        "transliteration": "jayb",
+        "meaning": "the opening at the neck and bosom of a garment"
+      },
+      {
+        "letters": "جَوْبٌ",
+        "transliteration": "jawb",
+        "meaning": "a hole, cut, or perforation; also a shield"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"response\" in Arabic?",
+        "a": "إِجَابَة (ijāba) — the standard word for a response, answer, or reply."
+      },
+      {
+        "q": "What is the difference between إِجَابَة and جَوَاب?",
+        "a": "إِجَابَة is the verbal noun for the act of answering or responding; جَوَاب is the answer itself, the content of the reply."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "إِجَابَة is the verbal noun of أَجَابَ (form IV), the standard word for a reply to a question or a response to a call. It extends to God accepting a supplication, as in the Qur'anic phrase \"I answer the call of the caller when he calls to me.\""
+  },
+  "5468": {
+    "rootId": 5468,
+    "triliteralRoot": "د ع و",
+    "rootTransliteration": "d-ʿ-w",
+    "rootMeaning": "to call, summon, invite, or ask",
+    "headwordTransliteration": "daʿwah",
+    "partOfSpeech": "noun (verbal noun / noun of a single instance, from دَعَا)",
+    "senses": [
+      {
+        "gloss": "an invitation, especially to a meal or gathering",
+        "note": "attested in daʿawtu n-nāsa, 'I invited people to eat with me, or at my abode'"
+      },
+      {
+        "gloss": "a call, or summons"
+      },
+      {
+        "gloss": "a request, or petition",
+        "note": "reflects the root's core sense of seeking, desiring, or demanding"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "دَعَوْتُ",
+        "transliteration": "daʿawtu",
+        "meaning": "I called, summoned, or prayed/petitioned (form I verb)",
+        "path": "/word/invoked-9720",
+        "rootId": 9720
+      },
+      {
+        "letters": "دُعَآءٌ",
+        "transliteration": "duʿāʾ",
+        "meaning": "the act of calling, asking, or praying; a supplication"
+      },
+      {
+        "letters": "دَعْوَى",
+        "transliteration": "daʿwā",
+        "meaning": "an alternate verbal noun for 'to pray to God', marked feminine"
+      },
+      {
+        "letters": "مُدَاعَاةٌ",
+        "transliteration": "mudāʿāh",
+        "meaning": "proposing riddles to someone, or wearying them with repeated requests (form III)"
+      },
+      {
+        "letters": "دَاعِيَةٌ",
+        "transliteration": "dāʿiyah",
+        "meaning": "milk left remaining in the udder; also functions as an abstract verbal noun",
+        "path": "/word/preacher-17757",
+        "rootId": 17757
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"requests\" in Arabic?",
+        "a": "دَعْوَة (daʿwah) — though its core sense in Lane's is 'an invitation' or 'a call', with 'request' reflecting the shared root meaning of asking or seeking."
+      },
+      {
+        "q": "What is the difference between دَعْوَة and دُعَاء؟",
+        "a": "دُعَاء is the general verbal noun for calling, praying, or asking; دَعْوَة denotes a single instance of that act, such as one specific invitation (e.g., to a meal)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Attested in classical usage as the noun for a single act of calling or inviting — most concretely an invitation to eat — alongside the broader verbal noun دُعَاء, which covers calling, supplicating, and requesting more generally."
+  },
+  "5471": {
+    "rootId": 5471,
+    "triliteralRoot": "أ خ ر",
+    "rootTransliteration": "ʾ-kh-r",
+    "rootMeaning": "to delay, hold back, be last",
+    "headwordTransliteration": "ākhirah",
+    "partOfSpeech": "noun (substantive; feminine of the participle meaning \"last, hindmost\")",
+    "senses": [
+      {
+        "gloss": "the hereafter; the life to come, the next world",
+        "note": "the word's standard sense, as given in the source gloss"
+      },
+      {
+        "gloss": "the last, the latter (of two)",
+        "note": "literal sense tied to the root, as fem. counterpart of the 'last/hindmost' idea running through this word family"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "أَخَّرَ",
+        "transliteration": "akhkhara",
+        "meaning": "to put back, delay, postpone, make late (form II)"
+      },
+      {
+        "letters": "تَأَخَّرَ",
+        "transliteration": "taʾakhkhara",
+        "meaning": "to go back, lag behind, be delayed (form V, quasi-passive of akhkhara)",
+        "path": "/word/future-9732",
+        "rootId": 9732
+      },
+      {
+        "letters": "اِسْتَأْخَرَ",
+        "transliteration": "istaʾkhara",
+        "meaning": "to hold back, remain behind, be delayed (form X, same sense as taʾakhkhara)"
+      },
+      {
+        "letters": "آخَرُ",
+        "transliteration": "ākhar",
+        "meaning": "another, other (a thing or person other than the first)"
+      },
+      {
+        "letters": "أُخُرٌ",
+        "transliteration": "ukhur",
+        "meaning": "the back, hinder, or latter part; the hindmost part"
+      },
+      {
+        "letters": "أَخِرٌ",
+        "transliteration": "akhir",
+        "meaning": "one held back and cast away from good; an outcast (used in reviling)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"hereafter\" in Arabic?",
+        "a": "آخِرَة (ākhirah)."
+      },
+      {
+        "q": "What is the root of آخِرَة and what does it mean?",
+        "a": "The root is أ-خ-ر (ʾ-kh-r), whose core sense across the word family is to delay, hold back, or be last — akhkhara means \"to put off, postpone,\" and taʾakhkhara means \"to lag behind, be delayed.\""
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Built on a root whose verbs (akhkhara, taʾakhkhara, istaʾkhara) all centre on delaying, putting behind, or being last; ākhirah is the feminine substantive form carrying that \"last/latter\" sense, used for \"the hereafter.\""
+  },
+  "5475": {
+    "rootId": 5475,
+    "triliteralRoot": "م ل ك",
+    "rootTransliteration": "m-l-k",
+    "rootMeaning": "to possess, own, have dominion",
+    "headwordTransliteration": "mulk",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "dominion, sovereignty, kingship, rule",
+        "note": "the exercise of authority to command and forbid over a people"
+      },
+      {
+        "gloss": "mastership, ownership, possession, right of possession"
+      },
+      {
+        "gloss": "authority, sway"
+      },
+      {
+        "gloss": "the apparent, worldly dominion",
+        "note": "used in contrast with ملكوت, the unseen realm, e.g. dominion over the earth"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "مَلَكَ",
+        "transliteration": "malaka",
+        "meaning": "he possessed, owned, or held authority over (it)"
+      },
+      {
+        "letters": "مَلَّكَ",
+        "transliteration": "mallaka",
+        "meaning": "he made someone possess a thing; made him king"
+      },
+      {
+        "letters": "مِلْكٌ",
+        "transliteration": "milk",
+        "meaning": "possession, property (pl. أملاك: houses and lands)"
+      },
+      {
+        "letters": "مَلِكٌ",
+        "transliteration": "malik",
+        "meaning": "king"
+      },
+      {
+        "letters": "مَالِكٌ",
+        "transliteration": "mālik",
+        "meaning": "owner, possessor, master"
+      },
+      {
+        "letters": "مَمْلَكَةٌ",
+        "transliteration": "mamlakah",
+        "meaning": "a kingdom, or realm"
+      },
+      {
+        "letters": "مَمْلُوكٌ",
+        "transliteration": "mamlūk",
+        "meaning": "a slave, a bondman",
+        "path": "/word/servant-5585",
+        "rootId": 5585
+      },
+      {
+        "letters": "مَلَكٌ",
+        "transliteration": "malak",
+        "meaning": "an angel"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"kingdom\" in Arabic?",
+        "a": "مُلْك (mulk) denotes the abstract dominion, sovereignty, or rule of a king; the concrete kingdom or realm itself is مَمْلَكَة (mamlakah)."
+      },
+      {
+        "q": "What is the difference between مُلْك and مَمْلَكَة؟",
+        "a": "مُلْك is the abstract dominion, sovereignty, or authority to rule, while مَمْلَكَة is the actual kingdom or realm over which that rule is exercised."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "مُلْك is the abstract noun for dominion, sovereignty, or the right to rule — distinct from مَمْلَكَة, which names the concrete kingdom or realm ruled over. In religious usage it can denote God's world of spirits or the visible, earthly dominion, set against مَلَكُوت for the unseen world."
+  },
+  "5481": {
+    "rootId": 5481,
+    "triliteralRoot": "و ه ب",
+    "rootTransliteration": "w-h-b",
+    "rootMeaning": "to give freely, without compensation",
+    "headwordTransliteration": "wahhāb",
+    "partOfSpeech": "noun/adjective (intensive epithet, ism mubālagha, from Form I)",
+    "senses": [
+      {
+        "gloss": "bountiful giver, one who gives abundantly and liberally",
+        "note": "An intensive form of وَاهِب ('giver'); used especially as an epithet of God, 'the Bestower' — one who gives generously and repeatedly, not for any return."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "وَهَبَ",
+        "transliteration": "wahaba",
+        "meaning": "to give (properly, as a free, disinterested gift)"
+      },
+      {
+        "letters": "هِبَةٌ",
+        "transliteration": "hiba",
+        "meaning": "a gift, a free gift bestowed without compensation"
+      },
+      {
+        "letters": "وَاهِبٌ",
+        "transliteration": "wāhib",
+        "meaning": "one who gives; a giver"
+      },
+      {
+        "letters": "مَوْهِبَةٌ",
+        "transliteration": "mawhiba",
+        "meaning": "a gift bestowed"
+      },
+      {
+        "letters": "مَوْهُوبٌ",
+        "transliteration": "mawhūb",
+        "meaning": "given, granted as a gift"
+      },
+      {
+        "letters": "استوهب",
+        "transliteration": "istawhaba",
+        "meaning": "to ask someone for a gift"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"Bestower\" in Arabic?",
+        "a": "وَهَّاب (wahhāb) — an intensive epithet meaning one who gives abundantly and freely, without expecting anything in return."
+      },
+      {
+        "q": "What does وَهَّاب mean as a name of God?",
+        "a": "As a divine epithet, wahhāb describes God as the one who bestows liberally and repeatedly, purely as a free gift, never for any compensation."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/"
+  },
+  "5485": {
+    "rootId": 5485,
+    "triliteralRoot": "و ف ق",
+    "rootTransliteration": "w-f-q",
+    "rootMeaning": "to agree, suit, be fitting",
+    "headwordTransliteration": "wāfaqa",
+    "partOfSpeech": "verb (form III)",
+    "senses": [
+      {
+        "gloss": "to agree, accord, be of one mind with (someone), on a matter",
+        "note": "used of two parties reaching the same opinion"
+      },
+      {
+        "gloss": "to coincide with, suit, match, tally with",
+        "note": "used of things corresponding to one another"
+      },
+      {
+        "gloss": "to encounter, meet with",
+        "note": "syn. with ṣādafahu"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "وَفِقَ",
+        "transliteration": "wafiqa",
+        "meaning": "to be right, agreeable with what was wished (form I)"
+      },
+      {
+        "letters": "وَفَّقَ",
+        "transliteration": "waffaqa",
+        "meaning": "to accommodate, dispose, or direct rightly; to reconcile two things (form II)"
+      },
+      {
+        "letters": "أَوْفَقَ",
+        "transliteration": "awfaqa",
+        "meaning": "to find one's affair agreeable with one's wish (form IV)"
+      },
+      {
+        "letters": "اِتَّفَقَ",
+        "transliteration": "ittafaqa",
+        "meaning": "to happen, chance; to agree together on a matter (form VIII)",
+        "path": "/word/agreed-6373",
+        "rootId": 6373
+      },
+      {
+        "letters": "تَوْفِيقٌ",
+        "transliteration": "tawfīq",
+        "meaning": "a legal document; a pleading"
+      },
+      {
+        "letters": "إِتِّفَاقِىٌّ",
+        "transliteration": "ittifāqiyy",
+        "meaning": "casual, accidental"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"aligns\" in Arabic?",
+        "a": "وَافَقَ (wāfaqa) — it describes one thing agreeing, conforming, or coinciding with another."
+      },
+      {
+        "q": "What is the difference between وَافَقَ and اِتَّفَقَ؟",
+        "a": "Wāfaqa (form III) is 'he agreed/conformed with' a specific person or thing; ittafaqa (form VIII) means 'it happened, chanced' or 'they agreed together' on a matter."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Wāfaqa most often takes a direct object or 'ʿalā' + a matter, describing one person or thing agreeing, conforming, or coinciding with another — whether two people sharing an opinion, or a punishment corresponding to an offense. It sits alongside waffaqa (God directing someone rightly) and ittafaqa (something merely happening, or two parties agreeing) as the root's cluster of 'agreement/fittingness' senses."
+  },
+  "5478": {
+    "rootId": 5478,
+    "triliteralRoot": "ب ع د",
+    "rootTransliteration": "b-ʿ-d",
+    "rootMeaning": "to be distant, far off",
+    "headwordTransliteration": "baʿd",
+    "partOfSpeech": "particle (ẓarf) — adverb/preposition of time or place",
+    "senses": [
+      {
+        "gloss": "after (in time)",
+        "note": "marks one event, state, or period as following another"
+      },
+      {
+        "gloss": "after, behind (in place or sequence)",
+        "note": "denotes what comes subsequent to something in position or order"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "بَعُدَ",
+        "transliteration": "baʿuda",
+        "meaning": "to be, or become, distant, far off; to withdraw to a distance"
+      },
+      {
+        "letters": "بُعْدٌ",
+        "transliteration": "buʿd",
+        "meaning": "distance, remoteness (verbal noun of baʿuda)"
+      },
+      {
+        "letters": "بَعِيدٌ",
+        "transliteration": "baʿīd",
+        "meaning": "far, distant; also said of a saying that is improbable or strange"
+      },
+      {
+        "letters": "أَبْعَدَ",
+        "transliteration": "abʿada",
+        "meaning": "to remove far away, banish, alienate"
+      },
+      {
+        "letters": "تَبَاعَدَ",
+        "transliteration": "tabāʿada",
+        "meaning": "to grow apart, become mutually distant",
+        "path": "/word/to-grow-distant-14080",
+        "rootId": 14080
+      },
+      {
+        "letters": "اِسْتَبْعَدَ",
+        "transliteration": "istabʿada",
+        "meaning": "to deem far-fetched, consider improbable"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"after\" in Arabic?",
+        "a": "بَعْد (baʿd)."
+      },
+      {
+        "q": "What root does بَعْد come from, and how is it related to بَعِيد and بُعْد؟",
+        "a": "All three come from the root ب ع د (b-ʿ-d), whose core sense is 'to be distant, far off.' بَعِيد means 'far, distant' and بُعْد means 'distance'; بَعْد applies that same idea of separation to time or sequence, giving 'after.'"
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "بَعْد is a core temporal/spatial particle, typically followed by a noun in the genitive (as in بَعْدَ اليوم, 'after the day') or a pronoun suffix (بَعْدِى, 'after me'). Used alone, with damma as بَعْدُ, it stands for 'afterward, thereafter' when the thing referred to is understood rather than stated. It belongs to the same root family as بَعُدَ, whose core sense of physical distance extends here to distance in time or sequence."
+  },
+  "5484": {
+    "rootId": 5484,
+    "triliteralRoot": "ح ك م",
+    "rootTransliteration": "ḥ-k-m",
+    "rootMeaning": "to restrain, and hence to judge",
+    "headwordTransliteration": "ḥukm",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "judgment, judicial decision, verdict",
+        "note": "the sentence a judge passes for or against a party"
+      },
+      {
+        "gloss": "rule, authority, jurisdiction, dominion",
+        "note": "the exercise of governing power over someone"
+      },
+      {
+        "gloss": "ordinance, decree, ruling",
+        "note": "something ordered or decreed as binding"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "حَكَمَ",
+        "transliteration": "ḥakama",
+        "meaning": "to restrain, hold back; to judge, decide"
+      },
+      {
+        "letters": "حَكَّمَ",
+        "transliteration": "ḥakkama",
+        "meaning": "to appoint as judge; to give someone authority to decide"
+      },
+      {
+        "letters": "حَاكَمَ",
+        "transliteration": "ḥākama",
+        "meaning": "to summon before a judge, take to litigation"
+      },
+      {
+        "letters": "أَحْكَمَ",
+        "transliteration": "aḥkama",
+        "meaning": "to make firm, secure, strengthen"
+      },
+      {
+        "letters": "حَكَمٌ",
+        "transliteration": "ḥakam",
+        "meaning": "an arbiter, umpire, judge"
+      },
+      {
+        "letters": "حَكِيمٌ",
+        "transliteration": "ḥakīm",
+        "meaning": "wise"
+      },
+      {
+        "letters": "حِكْمَةٌ",
+        "transliteration": "ḥikma",
+        "meaning": "wisdom"
+      },
+      {
+        "letters": "حُكُومَةٌ",
+        "transliteration": "ḥukūma",
+        "meaning": "judgment, arbitration; government"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"judgment\" in Arabic?",
+        "a": "Judgment is حُكْم (ḥukm) in Arabic."
+      },
+      {
+        "q": "What is the root of حُكْم and what does it mean?",
+        "a": "It comes from the triliteral root ح-ك-م (ḥ-k-m), whose core sense is to restrain or hold back, extended to judging and ruling; the same root gives حَكَم (judge), حَكِيم (wise), حِكْمَة (wisdom), and حُكُومَة (government)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Ḥukm is the main verbal noun of the verb ḥakama \"to judge.\" Lane traces the verb's core sense to restraining or holding someone back from wrongdoing; the judicial sense — passing sentence for or against a party — and the senses of ruling authority and decree all grow from that same idea of holding something in check."
+  },
+  "5473": {
+    "rootId": 5473,
+    "triliteralRoot": "ه ب ب",
+    "rootTransliteration": "h-b-b",
+    "rootMeaning": "to blow, rise, or awaken",
+    "headwordTransliteration": "hab",
+    "partOfSpeech": "verb (imperative)",
+    "senses": [
+      {
+        "gloss": "grant, give",
+        "note": "an imperative directive — 'Grant!' or 'Give!'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "هَبَّتِ الرِّيحُ",
+        "transliteration": "habbat ir-rīḥ",
+        "meaning": "the wind blew, rose, was in commotion"
+      },
+      {
+        "letters": "اهبّ",
+        "transliteration": "ahabba",
+        "meaning": "to make the wind blow; to rouse someone from sleep"
+      },
+      {
+        "letters": "هبّبه",
+        "transliteration": "habbabahu",
+        "meaning": "he tore or rent it severely"
+      },
+      {
+        "letters": "تهبّب",
+        "transliteration": "tahabbaba",
+        "meaning": "(of a garment) to become worn out, ragged"
+      },
+      {
+        "letters": "هَبِيبٌ",
+        "transliteration": "habīb",
+        "meaning": "a blowing (of the wind); verbal noun of habba"
+      },
+      {
+        "letters": "تَهَبْهَبَ",
+        "transliteration": "tahabhaba",
+        "meaning": "(of a goat) to shake itself"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"grant\" in Arabic?",
+        "a": "هَب (hab)."
+      },
+      {
+        "q": "What part of speech is هَب؟",
+        "a": "It's a verb form, used in the imperative to mean 'give' or 'grant'."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Used as a short imperative directing someone to give or grant something."
+  },
+  "5486": {
+    "rootId": 5486,
+    "triliteralRoot": "ف ع ل",
+    "rootTransliteration": "f-ʿ-l",
+    "rootMeaning": "to do, make",
+    "headwordTransliteration": "faʿala",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to do, make (a thing)",
+        "note": "the basic sense; e.g. Qur'anic فَعْل الخَيْرات 'the doing of good works'"
+      },
+      {
+        "gloss": "to do something to someone (فَعَلَ بِهِ)",
+        "note": "used in the classical imprecation فَعَلَ اللّٰهُ بِهِ, 'may God requite/punish him'"
+      },
+      {
+        "gloss": "to have intercourse with a woman",
+        "note": "euphemistic use, فَعَلَ بِالمَرْأَةِ, common in hadith"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "فِعْلٌ",
+        "transliteration": "fiʿl",
+        "meaning": "a deed, an action; also the grammarians' term for 'verb'"
+      },
+      {
+        "letters": "فَعْلٌ",
+        "transliteration": "faʿl",
+        "meaning": "verbal noun of فَعَلَ, 'the doing'"
+      },
+      {
+        "letters": "تَفْعِيلٌ",
+        "transliteration": "tafʿīl",
+        "meaning": "verbal noun of form II; used metonymically for scanning a verse's metre"
+      },
+      {
+        "letters": "فَاعَلَ",
+        "transliteration": "fāʿala",
+        "meaning": "to do a thing together, mutually (form III)"
+      },
+      {
+        "letters": "انفعل",
+        "transliteration": "infaʿala",
+        "meaning": "to be done, to undergo the effect of an act (form VII, quasi-passive)"
+      },
+      {
+        "letters": "افتعل",
+        "transliteration": "iftaʿala",
+        "meaning": "to forge or fabricate, e.g. a lie (form VIII)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"do\" in Arabic?",
+        "a": "فَعَلَ (faʿala)."
+      },
+      {
+        "q": "What does the Arabic root ف ع ل mean?",
+        "a": "It carries the core sense 'to do, make' — the source of فِعْل ('deed, action; verb') and the model verb pattern used throughout Arabic grammar."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "فَعَلَ بِهِ is the classical formula of imprecation (فَعَلَ اللّٰهُ بِهِ, 'may God do to him' i.e. punish him). Its own C-V-C pattern also serves as the model Arabic grammarians use to name and conjugate verb forms generally, and its derivative فِعْل became the technical term for 'verb.'"
+  },
+  "5470": {
+    "rootId": 5470,
+    "triliteralRoot": "ج و ب",
+    "rootTransliteration": "j-w-b",
+    "rootMeaning": "to pierce, cut through; to answer",
+    "headwordTransliteration": "istajāba",
+    "partOfSpeech": "verb (form X / istafʿala)",
+    "senses": [
+      {
+        "gloss": "to respond, to answer",
+        "note": "the form X (istafʿala) counterpart of أجاب (form IV), 'to answer, reply, respond'"
+      },
+      {
+        "gloss": "to comply with, accede to (a call or request)",
+        "note": "reflects the related form IV sense اجاب ... إلى شىء, 'to obey, or comply with a desire, when summoned or invited to do a thing'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "جَابَ",
+        "transliteration": "jāba",
+        "meaning": "to pierce, make a hole in, or cut something (also: to traverse a land or darkness)",
+        "path": "/word/answer-6070",
+        "rootId": 6070
+      },
+      {
+        "letters": "جَيْبٌ",
+        "transliteration": "jayb",
+        "meaning": "the opening cut at the neck and bosom of a garment"
+      },
+      {
+        "letters": "أَجَابَ",
+        "transliteration": "ajāba",
+        "meaning": "to answer, reply, or respond to someone (of God: to answer a prayer)",
+        "path": "/word/answered-replied-12972",
+        "rootId": 12972
+      },
+      {
+        "letters": "جَوَابٌ",
+        "transliteration": "jawāb",
+        "meaning": "an answer, a reply"
+      },
+      {
+        "letters": "جَاوَبَ",
+        "transliteration": "jāwaba",
+        "meaning": "to exchange answers with someone, answer back"
+      },
+      {
+        "letters": "تَجَاوَبَ",
+        "transliteration": "tajāwaba",
+        "meaning": "to answer one another, respond mutually"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"respond\" in Arabic?",
+        "a": "استجاب (istajāba)."
+      },
+      {
+        "q": "What is the root of استجاب, and what other words share it?",
+        "a": "Its triliteral root is ج و ب (j-w-b), which also gives أجاب 'to answer' and جواب 'an answer, reply'."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/"
+  },
+  "5491": {
+    "rootId": 5491,
+    "triliteralRoot": "ر و د",
+    "rootTransliteration": "r-w-d",
+    "rootMeaning": "to move to and fro, seek",
+    "headwordTransliteration": "arāda",
+    "partOfSpeech": "verb (form IV)",
+    "senses": [
+      {
+        "gloss": "to will, wish, desire",
+        "note": "the primary sense of أَرَادَ; the standard classical verb for wanting or intending something"
+      },
+      {
+        "gloss": "to love, care about, be concerned with"
+      },
+      {
+        "gloss": "to seek, seek after; to choose"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "رَادَ",
+        "transliteration": "rāda",
+        "meaning": "form I: to go to and fro, wander; to seek after pasture or water"
+      },
+      {
+        "letters": "الرِّيَادُ",
+        "transliteration": "ar-riyād",
+        "meaning": "verbal noun: a going to and fro in search of pasture"
+      },
+      {
+        "letters": "رَاوَدَ",
+        "transliteration": "rāwada",
+        "meaning": "form III: to try to turn or entice someone by blandishment, to press one's desire on them"
+      },
+      {
+        "letters": "أَرْوَدَ",
+        "transliteration": "arwada",
+        "meaning": "form IV: to proceed gently or leisurely; to deal mildly with someone, granting them respite"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"intend\" in Arabic?",
+        "a": "أَرَادَ (arāda) — the standard verb for to will, wish, or intend something."
+      },
+      {
+        "q": "What does the root ر و د mean?",
+        "a": "At its core it carries the idea of moving to and fro in search of something, as in رَادَ (to wander seeking pasture); أَرَادَ extends this to willing or desiring something."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "أَرَادَ is form IV of the root ر و د. Lane notes it was originally أَرْوَدَ, paralleling رَاوَدَ ('to press one's desire on someone by blandishment'), and its sense runs from plain willing or wishing to caring about a thing or actively seeking and choosing it. It is the ordinary Classical and Qur'anic verb for wanting, wishing, or intending something."
+  },
+  "5493": {
+    "rootId": 5493,
+    "triliteralRoot": "خ ر ج",
+    "rootTransliteration": "kh-r-j",
+    "rootMeaning": "to go out, come forth",
+    "headwordTransliteration": "ʾakhraja",
+    "partOfSpeech": "verb (form IV, causative)",
+    "senses": [
+      {
+        "gloss": "to bring out, take out, cause to go or come forth",
+        "note": "the causative of خَرَجَ 'to go out'; the basic and most common sense"
+      },
+      {
+        "gloss": "to put out, expel, eject, dislodge"
+      },
+      {
+        "gloss": "to produce, give forth"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "خَرَجَ",
+        "transliteration": "kharaja",
+        "meaning": "to go out, come forth, depart (form I; opposite of دخل 'enter')"
+      },
+      {
+        "letters": "خرّج",
+        "transliteration": "kharraja",
+        "meaning": "to train or educate (a pupil) well; to resolve or explain a saying (form II)"
+      },
+      {
+        "letters": "المُخَارَجَةُ",
+        "transliteration": "al-mukhārajah",
+        "meaning": "a mutual finger-guessing wager; also a shared contribution to travel/expedition costs (form III)"
+      },
+      {
+        "letters": "اِخْتَرَجَ",
+        "transliteration": "ikhtaraja",
+        "meaning": "to take something out for oneself (form VIII)"
+      },
+      {
+        "letters": "خَرْجٌ",
+        "transliteration": "kharj",
+        "meaning": "outlay, disbursement, expenditure"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"bring out\" in Arabic?",
+        "a": "أَخْرَجَ (ʾakhraja) — the causative form of خَرَجَ 'to go out,' meaning to bring, take, or put something out."
+      },
+      {
+        "q": "How is أَخْرَجَ related to خَرَجَ?",
+        "a": "أَخْرَجَ is the form IV (causative) verb built from خَرَجَ: while خَرَجَ means 'it went out,' أَخْرَجَ means 'he made it go out,' i.e. he brought or took it out."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "أَخْرَجَ is the causative (form IV) of خَرَجَ 'to go out': where خرج describes something going out on its own, أخرج describes an agent making it go out — bringing, taking, or putting something out or forth. It is also used with بِ (أخرج بـ), literally 'to go out with,' carrying the same sense of taking/bringing something out."
+  },
+  "5489": {
+    "rootId": 5489,
+    "triliteralRoot": "ا ت ى",
+    "rootTransliteration": "ʾ-t-y",
+    "rootMeaning": "to come, arrive",
+    "headwordTransliteration": "atā",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to come; to come to (a person or place)",
+        "note": "the basic, most frequent sense; Er-Rāghib notes the root properly implies coming with ease"
+      },
+      {
+        "gloss": "to have intercourse with (one's wife)",
+        "note": "euphemistic use of 'come to her', as in Qur'an 26:165"
+      },
+      {
+        "gloss": "to do, perform, commit (a deed, sin, or act)",
+        "note": "used with a following noun, e.g. 'to enter into prayer' or 'to commit an indecency'"
+      },
+      {
+        "gloss": "to come upon and destroy; to consume, put an end to",
+        "note": "usually with the preposition ʿalā, said of time, fate, or an enemy overtaking someone"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "إِتْيَانٌ",
+        "transliteration": "ityān",
+        "meaning": "the act of coming; a coming (verbal noun)",
+        "path": "/word/performing-8836",
+        "rootId": 8836
+      },
+      {
+        "letters": "آتٍ",
+        "transliteration": "ātin",
+        "meaning": "coming; one who comes (active participle)",
+        "path": "/word/one-who-comes-15654",
+        "rootId": 15654
+      },
+      {
+        "letters": "مَأْتًى",
+        "transliteration": "maʾtan",
+        "meaning": "a place or time of coming"
+      },
+      {
+        "letters": "مَأْتِىٌّ",
+        "transliteration": "maʾtiyy",
+        "meaning": "come to, arrived at (passive participle)"
+      },
+      {
+        "letters": "أَتِىٌّ",
+        "transliteration": "atiyy",
+        "meaning": "one attached to a people though not of them; a newcomer"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"come\" in Arabic?",
+        "a": "أَتَى (atā) — 'he came' or 'he came to (someone/something)'."
+      },
+      {
+        "q": "What does أَتَى عَلَيْهِ mean?",
+        "a": "Literally 'it came upon him', but idiomatically it means 'it destroyed him' or 'put an end to him' — commonly said of time or an enemy."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Atā is one of the two basic Arabic verbs for 'to come' (alongside jāʾa) and is extremely common in Qur'anic and classical Arabic. Beyond plain motion, it is regularly used idiomatically with a following object or with ʿalā to mean 'to do/commit' an act or 'to come upon and destroy' something, so context decides which sense applies."
+  },
+  "5498": {
+    "rootId": 5498,
+    "triliteralRoot": "ع ظ م",
+    "rootTransliteration": "ʿ-ẓ-m",
+    "rootMeaning": "to be great, big, huge",
+    "headwordTransliteration": "ʿaẓẓama",
+    "partOfSpeech": "verb (form II)",
+    "senses": [
+      {
+        "gloss": "to magnify, honor, revere",
+        "note": "to treat a person or an affair with respect, reverence, or veneration"
+      },
+      {
+        "gloss": "to make great, big, or large"
+      },
+      {
+        "gloss": "to cut up a sheep or goat bone by bone",
+        "note": "a distinct technical, non-figurative sense"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "عَظُمَ",
+        "transliteration": "ʿaẓuma",
+        "meaning": "to be or become great, big, or large (form I)"
+      },
+      {
+        "letters": "عَظِيمٌ",
+        "transliteration": "ʿaẓīm",
+        "meaning": "great, mighty, tremendous"
+      },
+      {
+        "letters": "عَظْمٌ",
+        "transliteration": "ʿaẓm",
+        "meaning": "bone"
+      },
+      {
+        "letters": "عَظَمَةٌ",
+        "transliteration": "ʿaẓamah",
+        "meaning": "greatness, grandeur, majesty"
+      },
+      {
+        "letters": "تعظّم",
+        "transliteration": "taʿaẓẓama",
+        "meaning": "to magnify oneself; to behave proudly or haughtily (form V)"
+      },
+      {
+        "letters": "تعاظم",
+        "transliteration": "taʿāẓama",
+        "meaning": "to be, or hold oneself, great in comparison with others (form VI)"
+      },
+      {
+        "letters": "استعظم",
+        "transliteration": "istaʿẓama",
+        "meaning": "to deem or judge a thing to be great (form X)"
+      },
+      {
+        "letters": "مُعْظَمٌ",
+        "transliteration": "muʿẓam",
+        "meaning": "the greater or main part of a thing",
+        "path": "/word/most-19503",
+        "rootId": 19503
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"magnify\" in Arabic?",
+        "a": "عَظَّمَ (ʿaẓẓama)."
+      },
+      {
+        "q": "What is the difference between عَظَّمَ and عَظِيمٌ؟",
+        "a": "عَظَّمَ (ʿaẓẓama) is the verb meaning \"to magnify, honor, or revere\"; عَظِيمٌ (ʿaẓīm) is the adjective \"great, mighty\" describing something inherently great."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "ʿaẓẓama is the causative/intensive verb built on the root's core sense of greatness: it means to actively render something great in status, or to hold it in reverence — used of honoring people, God, or important matters. It carries a formal, classical register."
+  },
+  "5492": {
+    "rootId": 5492,
+    "triliteralRoot": "ص ل و",
+    "rootTransliteration": "ṣ-l-w",
+    "rootMeaning": "the haunch, lower back near the tail",
+    "headwordTransliteration": "ṣalāh",
+    "partOfSpeech": "noun (verbal noun / quasi-maṣdar of Form II)",
+    "senses": [
+      {
+        "gloss": "the ritual, divinely-appointed prayer",
+        "note": "the formal act of worship performed at fixed times, e.g. the five daily prayers"
+      },
+      {
+        "gloss": "supplication, petition",
+        "note": "prayer in the general sense of asking or petitioning"
+      },
+      {
+        "gloss": "blessing, commendation",
+        "note": "used of God's or an angel's act toward someone, e.g. bestowing blessing/forgiveness on the Prophet"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "صَلَوْتُهُ",
+        "transliteration": "ṣalawtuhu",
+        "meaning": "I struck, or hit, that part of the back (the ṣalā)"
+      },
+      {
+        "letters": "صلّى",
+        "transliteration": "ṣallā",
+        "meaning": "to pray, supplicate; also said of a horse that comes in just behind the leader in a race"
+      },
+      {
+        "letters": "أَصْلَتْ",
+        "transliteration": "aṣlat",
+        "meaning": "said of a mare or she-camel: her haunches relaxed, being near to giving birth"
+      },
+      {
+        "letters": "صَلًا",
+        "transliteration": "ṣalā",
+        "meaning": "the middle of the back, or the part on either side of the tail"
+      },
+      {
+        "letters": "مُصَلًّى",
+        "transliteration": "muṣallā",
+        "meaning": "a place of prayer",
+        "path": "/word/prayer-place-11063",
+        "rootId": 11063
+      },
+      {
+        "letters": "مُصَلٍّ",
+        "transliteration": "muṣallin",
+        "meaning": "one who prays; also, in racing, the horse placed second",
+        "path": "/word/one-praying-6769",
+        "rootId": 6769
+      },
+      {
+        "letters": "مُصْلِيَةٌ",
+        "transliteration": "muṣliyah",
+        "meaning": "a mare or she-camel near to giving birth"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"prayer\" in Arabic?",
+        "a": "Ṣalāh (صَلَاة)."
+      },
+      {
+        "q": "What does the root of ṣalāh literally mean?",
+        "a": "Its root ص-ل-و is tied to ṣalā, the haunch or lower back near the tail; the sense 'prayer' comes through the verb ṣallā, meaning to pray or supplicate."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Ṣalāh is the standard term for the formal, prescribed act of Muslim worship, and appears in the Qur'an (e.g. 9:104) for prayer/supplication more broadly. The related verb underlies the common invocation ṣallā llāhu ʿalayhi wa-sallam, said after mentioning the Prophet."
+  },
+  "5494": {
+    "rootId": 5494,
+    "triliteralRoot": "خ ط أ",
+    "rootTransliteration": "kh-ṭ-ʾ",
+    "rootMeaning": "to err, do wrong, or miss",
+    "headwordTransliteration": "khaṭīʾah",
+    "partOfSpeech": "noun (feminine substantive)",
+    "senses": [
+      {
+        "gloss": "sin, crime, or act of disobedience deserving punishment",
+        "note": "the primary sense; grounded in the lexicon's account of the verb خَطِئَ, from which this noun is formed"
+      },
+      {
+        "gloss": "a fault, offence, or wrongdoing",
+        "note": "the lexicon notes such wrongdoing is sometimes described as being pursued specifically 'in religion,' whether intentional or not"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "خَطَأٌ",
+        "transliteration": "khaṭaʾ",
+        "meaning": "a mistake, an error"
+      },
+      {
+        "letters": "أَخْطَأَ",
+        "transliteration": "akhṭaʾa",
+        "meaning": "to miss (a target); to err, often unintentionally",
+        "path": "/word/err-6855",
+        "rootId": 6855
+      },
+      {
+        "letters": "خَاطِئٌ",
+        "transliteration": "khāṭiʾ",
+        "meaning": "a sinner, a wrongdoer"
+      },
+      {
+        "letters": "مُخْطِئٌ",
+        "transliteration": "mukhṭiʾ",
+        "meaning": "one who errs or makes a mistake unintentionally"
+      },
+      {
+        "letters": "خَطَّأَ",
+        "transliteration": "khaṭṭaʾa",
+        "meaning": "to declare someone wrong; to pronounce a mistake"
+      },
+      {
+        "letters": "تَخَاطَأَ",
+        "transliteration": "takhāṭaʾa",
+        "meaning": "to miss one another; to fail to hit"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"sin\" in Arabic?",
+        "a": "خَطِيئَة (khaṭīʾah)."
+      },
+      {
+        "q": "What is the difference between خَطِيئَة and خَطَأ?",
+        "a": "Both share the root kh-ṭ-ʾ, but khaṭīʾah denotes sin or blameworthy wrongdoing, while khaṭaʾ denotes a mistake or error, which the lexicon associates more with unintentional fault."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Distinguished from the related خَطَأٌ, which the lexicon ties to mistakes or errors (often unintentional), khaṭīʾah denotes sin or wrongdoing described as deserving punishment; the underlying verb خَطِئَ is also said to be used specifically of wrongdoing 'in religion.'"
+  },
+  "5499": {
+    "rootId": 5499,
+    "triliteralRoot": "و ق ر",
+    "rootTransliteration": "w-q-r",
+    "rootMeaning": "to be heavy, laden, or still",
+    "headwordTransliteration": "waqār",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "gravity, staidness, sedateness, calmness",
+        "note": "the primary sense given for this word in Lane's"
+      },
+      {
+        "gloss": "dignity, majesty",
+        "note": "reflects the same root's sense of treating someone with honour and reverence"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "وَقَرَ",
+        "transliteration": "waqara",
+        "meaning": "to be dull of hearing (of an ear); also, to rest or settle (of a thing in the heart)",
+        "path": "/word/honor-5502",
+        "rootId": 5502
+      },
+      {
+        "letters": "أَوْقَرَ",
+        "transliteration": "awqara",
+        "meaning": "to load, or load heavily (a beast of burden; also a palm-tree with fruit)"
+      },
+      {
+        "letters": "وَقَّرَ",
+        "transliteration": "waqqara",
+        "meaning": "to treat with honour, reverence, or respect",
+        "path": "/word/honor-5502",
+        "rootId": 5502
+      },
+      {
+        "letters": "تَوَقَّرَ",
+        "transliteration": "tawaqqara",
+        "meaning": "to comport oneself with gravity, staidness, sedateness"
+      },
+      {
+        "letters": "وِقْرٌ",
+        "transliteration": "wiqr",
+        "meaning": "a load, or heavy load, carried by a beast",
+        "path": "/word/honor-5502",
+        "rootId": 5502
+      },
+      {
+        "letters": "وَقْرٌ",
+        "transliteration": "waqr",
+        "meaning": "heaviness, or dullness, of hearing; deafness",
+        "path": "/word/honor-5502",
+        "rootId": 5502
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"majesty\" in Arabic?",
+        "a": "وَقَار (waqār)."
+      },
+      {
+        "q": "What does the Arabic root و ق ر mean?",
+        "a": "It centres on heaviness and stillness — giving words for a load (وِقْر), a heavy or dull ear (وَقْر), and the settled gravity of وَقَار."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Waqār is the abstract noun for a settled, dignified calm — the same stillness sense (سَكَنَ) that the root carries when it describes something \"resting\" in the heart. Lane cites the Qur'an (33:33), وَقِرْنَ فِى بُيُوتِكُنَّ, where a form of the root is used to enjoin gravity and steadiness."
+  },
+  "5496": {
+    "rootId": 5496,
+    "triliteralRoot": "ا م م",
+    "rootTransliteration": "ʾ-m-m",
+    "rootMeaning": "to aim for, head toward, intend",
+    "headwordTransliteration": "umm",
+    "partOfSpeech": "noun",
+    "senses": [
+      {
+        "gloss": "mother",
+        "note": "the primary and most common sense"
+      },
+      {
+        "gloss": "the membrane enveloping the brain",
+        "note": "used of the head, as in accounts of a head-wound that lays open this part ('he struck the umm of his head')"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "أَمَّ",
+        "transliteration": "amma",
+        "meaning": "to aim at, direct oneself toward, intend; also to go before and lead (e.g. in prayer)"
+      },
+      {
+        "letters": "إِمَام",
+        "transliteration": "imām",
+        "meaning": "leader, exemplar; one whose example is followed"
+      },
+      {
+        "letters": "ائْتَمَّ",
+        "transliteration": "iʾtamma",
+        "meaning": "to follow someone's example, imitate, take as a model"
+      },
+      {
+        "letters": "تَيَمُّم",
+        "transliteration": "tayammum",
+        "meaning": "the act of purifying oneself by wiping the face and hands with dust before prayer"
+      },
+      {
+        "letters": "أُمُومَة",
+        "transliteration": "umūma",
+        "meaning": "motherhood, the state of being a mother"
+      },
+      {
+        "letters": "أُمَّة",
+        "transliteration": "umma",
+        "meaning": "a community, or a way and rule of life followed by a people"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"mother\" in Arabic?",
+        "a": "أُمّ (umm)."
+      },
+      {
+        "q": "What is the connection between umm and imām?",
+        "a": "Both come from the root ا-م-م, whose verb أَمَّ means to aim at, head toward, or lead — imām is literally 'one who is followed toward' or taken as a guide."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "أُمّ shares its root with words built on the idea of 'aiming at' or 'heading toward' something, such as إِمَام (a leader followed as a guide or example) and ائتمّ (to follow another's example). The same root also gives أُمّ a specific anatomical sense in classical usage: the membrane covering the brain, referred to when describing a head wound."
+  },
+  "5495": {
+    "rootId": 5495,
+    "triliteralRoot": "و ل د",
+    "rootTransliteration": "w-l-d",
+    "rootMeaning": "to give birth, beget",
+    "headwordTransliteration": "walada",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to give birth to, bear (a child or young)",
+        "note": "said of a woman, a mother, or any female animal bringing forth offspring"
+      },
+      {
+        "gloss": "to beget, father (a child)",
+        "note": "said of the male parent"
+      },
+      {
+        "gloss": "to produce, yield",
+        "note": "used tropically, e.g. of land yielding a crop, or of nights bringing forth events"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "وَلَدٌ",
+        "transliteration": "walad",
+        "meaning": "child, son or daughter; offspring, young"
+      },
+      {
+        "letters": "وَالِدٌ",
+        "transliteration": "wālid",
+        "meaning": "parent, father; one who begets"
+      },
+      {
+        "letters": "مَوْلُودٌ",
+        "transliteration": "mawlūd",
+        "meaning": "a newborn; one who has been born"
+      },
+      {
+        "letters": "مِيلَادٌ",
+        "transliteration": "mīlād",
+        "meaning": "birth"
+      },
+      {
+        "letters": "وَلِيدٌ",
+        "transliteration": "walīd",
+        "meaning": "a new-born child, a young infant"
+      },
+      {
+        "letters": "تَوَلَّدَ",
+        "transliteration": "tawallada",
+        "meaning": "to be generated or produced; to originate from something"
+      },
+      {
+        "letters": "وَلُودٌ",
+        "transliteration": "walūd",
+        "meaning": "prolific; one that breeds or bears plentifully"
+      },
+      {
+        "letters": "لِدَةٌ",
+        "transliteration": "lida",
+        "meaning": "one born at the same time as another; a coeval"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"bear\" in Arabic?",
+        "a": "وَلَدَ (walada) - to bear or give birth to a child; the feminine form وَلَدَتْ (she bore) is the most commonly cited form."
+      },
+      {
+        "q": "What does the root و-ل-د mean?",
+        "a": "It carries the sense of giving birth or begetting, and underlies related words such as وَلَدٌ (child), وَالِدٌ (parent), and مِيلَادٌ (birth)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "وَلَدَ takes the feminine form وَلَدَتْ for a female subject (she bore, brought forth), which is the form most often cited. Beyond literal childbirth, it is also used tropically of land producing a crop or of time bringing forth events."
+  },
+  "5502": {
+    "rootId": 5502,
+    "triliteralRoot": "و ق ر",
+    "rootTransliteration": "w-q-r",
+    "rootMeaning": "to be heavy, laden, or grave",
+    "headwordTransliteration": "waqqara",
+    "partOfSpeech": "verb (form II)",
+    "senses": [
+      {
+        "gloss": "to honor, revere, treat with reverence or respect",
+        "note": "said of treating a person so as not to hold them in light esteem; a figurative (tropical) use of the root's 'heaviness' sense"
+      },
+      {
+        "gloss": "to deem or pronounce someone grave, staid, or dignified"
+      },
+      {
+        "gloss": "to still or quiet a beast of burden",
+        "note": "said of settling a riding or pack animal"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "وَقَرَ",
+        "transliteration": "waqara",
+        "meaning": "to be grave, staid, or sedate; to sit with dignity; (of an ear) to grow heavy or deaf",
+        "path": "/word/honor-5502",
+        "rootId": 5502
+      },
+      {
+        "letters": "أَوْقَرَ",
+        "transliteration": "awqara",
+        "meaning": "to load, especially to load heavily (a camel, mule, or ass)"
+      },
+      {
+        "letters": "وِقْرٌ",
+        "transliteration": "wiqr",
+        "meaning": "a load, especially a heavy one carried on the back or head",
+        "path": "/word/honor-5502",
+        "rootId": 5502
+      },
+      {
+        "letters": "وَقَارٌ",
+        "transliteration": "waqār",
+        "meaning": "gravity, staidness, dignified calm",
+        "path": "/word/majesty-5499",
+        "rootId": 5499
+      },
+      {
+        "letters": "وَقْرٌ",
+        "transliteration": "waqr",
+        "meaning": "heaviness or dullness in the ear; deafness",
+        "path": "/word/honor-5502",
+        "rootId": 5502
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"honor\" in Arabic?",
+        "a": "وَقَّرَ (waqqara) — to honor, revere, or treat someone with due respect."
+      },
+      {
+        "q": "What does the root و ق ر mean in Arabic?",
+        "a": "It centers on heaviness: a literal load (وِقْرٌ), a heavy or dull ear (وَقْرٌ), and figuratively the 'weight' of gravity or dignity (وَقَارٌ)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "This form II verb is a figurative (tropical) extension of the root's core sense of physical heaviness: instead of a literal load, it is respect or gravity that is placed upon a person. It is used both for showing someone due honor and for judging or reckoning them dignified; a related but distinct use of the same verb describes stilling a pack animal so it stands quietly."
+  },
+  "5500": {
+    "rootId": 5500,
+    "triliteralRoot": "ق ل ب",
+    "rootTransliteration": "q-l-b",
+    "rootMeaning": "to turn, invert, or change",
+    "headwordTransliteration": "qalb",
+    "partOfSpeech": "noun — verbal noun (maṣdar) of Form I قَلَبَ; also used as a substantive meaning \"heart\"",
+    "senses": [
+      {
+        "gloss": "heart (the organ; also the seat of feeling and mind)",
+        "note": "The word's everyday, concrete sense."
+      },
+      {
+        "gloss": "a turning, inverting, or altering",
+        "note": "As the verbal noun (maṣdar) of قَلَبَ, 'he turned it over, inverted it, altered it.'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "قَلَبَ",
+        "transliteration": "qalaba",
+        "meaning": "to turn something over, invert it, or alter its state (the base Form I verb)"
+      },
+      {
+        "letters": "قَلَّبَ",
+        "transliteration": "qallaba",
+        "meaning": "to turn something over repeatedly or examine it thoroughly (intensive Form II)"
+      },
+      {
+        "letters": "أَقْلَبَ",
+        "transliteration": "aqlaba",
+        "meaning": "to turn or invert, said to mean the same as qalaba, though weakly attested (Form IV)"
+      },
+      {
+        "letters": "اِنْقَلَبَ",
+        "transliteration": "inqalaba",
+        "meaning": "to be turned over, to turn about (reflexive/passive Form VII, from انقلاب 'a turning-outward')",
+        "path": "/word/return-6072",
+        "rootId": 6072
+      },
+      {
+        "letters": "قَلَبٌ",
+        "transliteration": "qalab",
+        "meaning": "eversion or flabbiness of the lip, i.e. a lip turned outward"
+      },
+      {
+        "letters": "قَلِيبٌ",
+        "transliteration": "qalīb",
+        "meaning": "a well, so called from earth being turned over in digging it"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"heart\" in Arabic?",
+        "a": "قَلْب (qalb)."
+      },
+      {
+        "q": "What does the root ق-ل-ب mean in Arabic?",
+        "a": "It carries the sense of turning, inverting, or changing — as in turning something upside-down, over, or inside-out, or altering its order."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "قلب is the ordinary Arabic word for the heart, both the physical organ and the seat of feeling and thought. It is also the maṣdar of the verb قَلَبَ, so at root it carries the sense of turning something over, upside-down, or inside-out — extended to altering the order of words or letters, examining goods by turning them over, and even dismissing or \"turning away\" people."
+  },
+  "5503": {
+    "rootId": 5503,
+    "triliteralRoot": "ق ل ب",
+    "rootTransliteration": "q-l-b",
+    "rootMeaning": "to turn, invert, change",
+    "headwordTransliteration": "qulūb",
+    "partOfSpeech": "noun (broken plural of qalb, \"heart\")",
+    "senses": [
+      {
+        "gloss": "hearts",
+        "note": "Broken plural of qalb (heart); qulūb is the standard plural form used in running text."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "قَلْبٌ",
+        "transliteration": "qalb",
+        "meaning": "heart (singular of qulūb)"
+      },
+      {
+        "letters": "قَلَبَ",
+        "transliteration": "qalaba",
+        "meaning": "to turn over, invert, alter the state of something"
+      },
+      {
+        "letters": "قَلَّبَ",
+        "transliteration": "qallaba",
+        "meaning": "to turn over repeatedly, handle and examine closely (intensive of qalaba)"
+      },
+      {
+        "letters": "أَقْلَبَ",
+        "transliteration": "aqlaba",
+        "meaning": "to turn over, invert (variant of qalaba, weaker authority)"
+      },
+      {
+        "letters": "قَلِيبٌ",
+        "transliteration": "qalīb",
+        "meaning": "a dug well (from turning over the earth)"
+      },
+      {
+        "letters": "قَلَبٌ",
+        "transliteration": "qalab",
+        "meaning": "an eversion or flabbiness of the lip"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"hearts\" in Arabic?",
+        "a": "قُلُوب (qulūb) — the plural of قَلْب (qalb), \"heart.\""
+      },
+      {
+        "q": "What is the singular of qulūb?",
+        "a": "The singular is qalb (قَلْب), meaning \"heart.\""
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Qulūb is the everyday broken plural of qalb, \"heart\"; the root q-l-b itself centers on turning, inverting, or changing something's state, a sense carried by the verb qalaba and its derivatives, while qalb as \"heart\" is one specific noun built from the same root."
+  },
+  "5507": {
+    "rootId": 5507,
+    "triliteralRoot": "ع ل ق",
+    "rootTransliteration": "ʿ-l-q",
+    "rootMeaning": "to hang, cling, become attached",
+    "headwordTransliteration": "ʿaliqa",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to hang, cling, or stick fast to something",
+        "note": "the primary physical sense, e.g. thorns catching on a garment"
+      },
+      {
+        "gloss": "to become caught, entangled, or held fast",
+        "note": "said of an animal snared and unable to get loose"
+      },
+      {
+        "gloss": "to fall in love with, become attached to someone"
+      },
+      {
+        "gloss": "to begin, set about doing something"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "تَعَلَّقَ",
+        "transliteration": "taʿallaqa",
+        "meaning": "to become attached, cling to, fall in love with (used interchangeably with ʿaliqa in the love sense)",
+        "path": "/word/pertains-12598",
+        "rootId": 12598
+      },
+      {
+        "letters": "إِعْتَلَقَ",
+        "transliteration": "iʿtalaqa",
+        "meaning": "to become attached or cling to; a near-synonym of taʿallaqa"
+      },
+      {
+        "letters": "علّقهُ",
+        "transliteration": "ʿallaqahu",
+        "meaning": "to make attached; in the passive, to be made to fall in love or become enamoured"
+      },
+      {
+        "letters": "عَلَاقَةٌ",
+        "transliteration": "ʿalāqah",
+        "meaning": "an attachment or bond, as in the 'bond of love'",
+        "path": "/word/relationship-9087",
+        "rootId": 9087
+      },
+      {
+        "letters": "عُلُوقٌ",
+        "transliteration": "ʿulūq",
+        "meaning": "verbal noun for becoming caught, entangled, or clinging fast"
+      },
+      {
+        "letters": "عَلَقٌ",
+        "transliteration": "ʿalaq",
+        "meaning": "verbal noun of ʿaliqa: a clinging or attaching"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"attach\" in Arabic?",
+        "a": "عَلِقَ (ʿaliqa)."
+      },
+      {
+        "q": "What is the core meaning of the root ع ل ق?",
+        "a": "The root carries the sense of hanging, clinging, or becoming attached to something, whether literally (like thorns on cloth) or figuratively (like falling in love)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Construed with بِ (to cling to something), ʿaliqa spans a literal sense — thorns catching on cloth, an animal caught in a snare — through to the figurative sense of falling in love or becoming emotionally attached, where it is used interchangeably with taʿallaqa and iʿtalaqa."
+  },
+  "5510": {
+    "rootId": 5510,
+    "triliteralRoot": "ن ب ت",
+    "rootTransliteration": "n-b-t",
+    "rootMeaning": "to grow, sprout, germinate",
+    "headwordTransliteration": "nabata",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to grow, sprout, germinate, vegetate",
+        "note": "said of a plant, or of a leguminous or other growing thing"
+      },
+      {
+        "gloss": "(of land) to produce or give growth to plants, herbage",
+        "note": "said of the land itself as the agent, نَبَتَتِ الأَرْضُ"
+      },
+      {
+        "gloss": "(of a girl's breast) to swell, become prominent",
+        "note": "figurative (tropical) use, inf. n. نُبُوتٌ"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "نَبَاتٌ",
+        "transliteration": "nabāt",
+        "meaning": "plant, vegetation, herbage; whatever God causes to grow from the earth"
+      },
+      {
+        "letters": "نَبْتٌ",
+        "transliteration": "nabt",
+        "meaning": "a plant, herb (syn. with نَبَاتٌ)"
+      },
+      {
+        "letters": "أَنْبَتَ",
+        "transliteration": "anbata",
+        "meaning": "to make a plant grow; (of God) to cause a child to grow (form IV)",
+        "path": "/word/caused-to-grow-7748",
+        "rootId": 7748
+      },
+      {
+        "letters": "نَبَّتَ",
+        "transliteration": "nabbata",
+        "meaning": "to nourish or rear a child; to plant a tree; to sow seed (form II)"
+      },
+      {
+        "letters": "اسْتَنْبَتَ",
+        "transliteration": "istanbata",
+        "meaning": "to endeavour to make something grow, e.g. by seed, date-stones, or planting (form X)"
+      },
+      {
+        "letters": "مَنْبِتٌ",
+        "transliteration": "manbit",
+        "meaning": "a place where plants grow; figuratively, one's origin or lineage"
+      },
+      {
+        "letters": "نَابِتَةٌ",
+        "transliteration": "nābitah",
+        "meaning": "young offspring newly grown up; also, inexperienced young men"
+      },
+      {
+        "letters": "مَنْبُوتٌ",
+        "transliteration": "manbūt",
+        "meaning": "a plant that has been made to grow or germinate"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"grow\" in Arabic?",
+        "a": "نَبَتَ (nabata) — used of plants sprouting or germinating, and figuratively of a child growing."
+      },
+      {
+        "q": "What does the Arabic root ن-ب-ت mean?",
+        "a": "It carries the sense of growing or sprouting; from it come نَبَاتٌ (plant, vegetation), أَنْبَتَ (to cause to grow), and مَنْبِتٌ (a place of growth, or figuratively one's origin)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "This is the basic classical verb for organic growth, used of plants and, by extension, of children and other living things. It appears in the Qur'an (e.g. 23:20, with variant readings تُنْبِتُ/تَنْبُتُ; 3:32 and 71:16 with the form-IV verbal noun) and was likened by grammarians to weather-verbs such as مَطَرَتِ السَّمَاءُ 'the sky rained.'"
+  },
+  "5514": {
+    "rootId": 5514,
+    "triliteralRoot": "م ك ن",
+    "rootTransliteration": "m-k-n",
+    "rootMeaning": "to settle firmly, hold power",
+    "headwordTransliteration": "tamakkana",
+    "partOfSpeech": "verb (form V)",
+    "senses": [
+      {
+        "gloss": "to settle, become firmly established",
+        "note": "of a person, often implying settled in authority or power; treated as synonymous with istaqarra"
+      },
+      {
+        "gloss": "to gain mastery, power, or ability over something (with مِنْ)",
+        "note": "i.e. to become able to avail oneself of a thing, to have it within one's power"
+      },
+      {
+        "gloss": "to assume authority over someone (تَمَكَّنَ مِنْهُ)"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "مَكَّنَ",
+        "transliteration": "makkana",
+        "meaning": "to give someone a place; to settle, establish, or empower him"
+      },
+      {
+        "letters": "أَمْكَنَ",
+        "transliteration": "amkana",
+        "meaning": "to make possible or within reach; to enable"
+      },
+      {
+        "letters": "اِسْتَمْكَنَ",
+        "transliteration": "istamkana",
+        "meaning": "to become firm; of a plant, to take firm root"
+      },
+      {
+        "letters": "مُكْنَةٌ",
+        "transliteration": "mukna",
+        "meaning": "power, ability, strength"
+      },
+      {
+        "letters": "مَكَانَةٌ",
+        "transliteration": "makāna",
+        "meaning": "high rank or standing"
+      },
+      {
+        "letters": "مُتَمَكِّنًا",
+        "transliteration": "mutamakkinan",
+        "meaning": "firmly settled, in a steady posture"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"establish\" in Arabic?",
+        "a": "تَمَكَّنَ (tamakkana) — literally 'to become settled/established,' from the root م ك ن."
+      },
+      {
+        "q": "What does تَمَكَّنَ مِنْ mean?",
+        "a": "It means to gain mastery, power, or ability over something — to have it within one's reach or control."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Often paired with مِنْ to mean gaining mastery or ability over something; as a plain intransitive verb it describes settling or becoming firmly fixed, as in the phrase جَلَسَ مُتَمَكِّنًا, 'he sat in a firm, settled posture.'"
+  },
+  "5512": {
+    "rootId": 5512,
+    "triliteralRoot": "ح ب ب",
+    "rootTransliteration": "ḥ-b-b",
+    "rootMeaning": "to love, be fond of, approve",
+    "headwordTransliteration": "maḥabbah",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "love, affection",
+        "note": "the state of loving or being loved, held dear, or regarded as an object of love"
+      },
+      {
+        "gloss": "fondness, liking, esteem",
+        "note": "extends to liking, approving of, or taking pleasure in a person or thing"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "حَبَّ",
+        "transliteration": "ḥabba",
+        "meaning": "to love; to be loved, beloved, or an object of love (form I)"
+      },
+      {
+        "letters": "أَحَبَّ",
+        "transliteration": "aḥabba",
+        "meaning": "to love, hold dear, prefer (form IV; the common verb 'to love')"
+      },
+      {
+        "letters": "حُبٌّ",
+        "transliteration": "ḥubb",
+        "meaning": "love (the verbal noun of ḥabba)"
+      },
+      {
+        "letters": "حَبِيبٌ",
+        "transliteration": "ḥabīb",
+        "meaning": "beloved, loved one"
+      },
+      {
+        "letters": "مُحَابَّةٌ",
+        "transliteration": "muḥābbah",
+        "meaning": "mutual love; treating someone in a loving, friendly manner (form III)"
+      },
+      {
+        "letters": "إِسْتَحْبَبَ",
+        "transliteration": "istaḥabba",
+        "meaning": "to deem good, esteem, or prefer one thing above another (form X)"
+      },
+      {
+        "letters": "حَبَّذَا",
+        "transliteration": "ḥabbadhā",
+        "meaning": "how lovely, pleasing, or excellent is...! (exclamation of praise)",
+        "path": "/word/how-excellent-is-16236",
+        "rootId": 16236
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"love\" in Arabic?",
+        "a": "مَحَبَّة (maḥabbah) — or the more common حُبّ (ḥubb) — both verbal nouns from the root ح-ب-ب (ḥ-b-b), meaning to love or be fond of."
+      },
+      {
+        "q": "What is the root of مَحَبَّة and what does it mean?",
+        "a": "The root is ح-ب-ب (ḥ-b-b), meaning to love, be fond of, or approve of someone or something; it also produces ḥabīb ('beloved') and aḥabba ('to love')."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Maḥabbah is one of the standard nouns for 'love' built on this root, alongside the more frequent ḥubb. The root's verbs cover both loving something and being loved or found pleasing by others, and related words like ḥabīb ('beloved') and the exclamation ḥabbadhā ('how lovely is...!') extend the same core sense of affection, liking, and approval."
+  },
+  "5515": {
+    "rootId": 5515,
+    "triliteralRoot": "ق و ي",
+    "rootTransliteration": "q-w-y",
+    "rootMeaning": "to be or become strong",
+    "headwordTransliteration": "qawiya",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to become strong, vigorous, robust, or sturdy"
+      },
+      {
+        "gloss": "(with على) to have strength or power sufficient for a thing, to endure it, or to prevail against it",
+        "note": "used in the construction قَوِىَ عَلَيْهِ"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "قُوَّةٌ",
+        "transliteration": "quwwah",
+        "meaning": "strength, power, might (opposite of weakness); also a single twisted strand of a rope, or a faculty (e.g. of hearing)"
+      },
+      {
+        "letters": "قَوَّى",
+        "transliteration": "qawwā",
+        "meaning": "to strengthen, make someone or something strong"
+      },
+      {
+        "letters": "قَاوَى",
+        "transliteration": "qāwā",
+        "meaning": "to vie with someone, contending for superiority in strength"
+      },
+      {
+        "letters": "تَقَوَّى",
+        "transliteration": "taqawwā",
+        "meaning": "to strengthen oneself, to work at becoming strong"
+      },
+      {
+        "letters": "أَقْوَتِ الدَّارُ",
+        "transliteration": "aqwati (aqwā)",
+        "meaning": "for a house or abode to become empty, vacant, or unoccupied"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"become strong\" in Arabic?",
+        "a": "قَوِيَ (qawiya)."
+      },
+      {
+        "q": "What is the Arabic word for \"strength\" or \"power\"?",
+        "a": "قُوَّةٌ (quwwah), the verbal noun from the same root ق و ي as قَوِيَ."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "قَوِيَ is the plain verb 'to be/become strong'; it commonly takes the preposition على (قَوِىَ عَلَيْهِ) to mean having the strength or power needed for something, or prevailing over it. Its verbal noun قُوَّةٌ ('strength') is the everyday word for physical, mental, or potential power, and also gave rise to more abstract pairs like بِالقُوَّةِ ('potentially') versus بِالفِعْلِ ('actually')."
+  },
+  "5504": {
+    "rootId": 5504,
+    "triliteralRoot": "خ ل ق",
+    "rootTransliteration": "kh-l-q",
+    "rootMeaning": "to measure, proportion, and create",
+    "headwordTransliteration": "khalq",
+    "partOfSpeech": "noun (verbal noun / maṣdar of form I خَلَقَ)",
+    "senses": [
+      {
+        "gloss": "creation; created beings, mankind, people",
+        "note": "the collective sense behind the gloss \"people\" — creation viewed as a whole"
+      },
+      {
+        "gloss": "the act of creating; God's bringing a thing into existence after it was nothing",
+        "note": "as an act of God: originating something with no pre-existing model to copy"
+      },
+      {
+        "gloss": "the act of measuring or proportioning material — e.g. a hide — before cutting or making it",
+        "note": "the primary, literal sense from which the 'creating' sense is said to extend"
+      },
+      {
+        "gloss": "(tropical) fabricating or forging speech, a saying, or a lie",
+        "note": "used of concocted tales or falsehoods, not literal creation"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "خُلُقٌ",
+        "transliteration": "khuluq",
+        "meaning": "innate character, disposition, or nature — the temperament one is \"created\" with"
+      },
+      {
+        "letters": "خِلْقَةٌ",
+        "transliteration": "khilqah",
+        "meaning": "natural form, physical make, or bodily constitution"
+      },
+      {
+        "letters": "خَلَقٌ",
+        "transliteration": "khalaq",
+        "meaning": "worn-out, old (said of a garment)"
+      },
+      {
+        "letters": "خَلِقٌ",
+        "transliteration": "khaliq",
+        "meaning": "smooth, even (said of a surface such as rock)"
+      },
+      {
+        "letters": "أَخْلَقَ",
+        "transliteration": "akhlaqa",
+        "meaning": "to become worn out, old (of a garment) — form IV"
+      },
+      {
+        "letters": "خَلَّقَهُ",
+        "transliteration": "khallaqahu",
+        "meaning": "to make it smooth or even (e.g. wood, an arrow) — form II",
+        "path": "/word/his-creation-14839",
+        "rootId": 14839
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"people\" in Arabic?",
+        "a": "خَلْق (khalq) — literally \"creation\"; used to mean created beings or mankind collectively."
+      },
+      {
+        "q": "What does the root خ ل ق mean?",
+        "a": "Its core sense is to measure or proportion something, extended to mean \"create\" (bring into being to a set measure); other words from the same root mean \"smooth\" or \"worn out.\""
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Khalq's root sense is technical — measuring or proportioning material, as when a hide is measured before it is cut. From this the word extends to God's creating: bringing something into being to an exact measure, and, in the Qur'an, creating out of nothing. From that sense khalq also stands for the creation collectively — created beings, mankind, \"people\" — which is the gloss given here."
+  },
+  "5517": {
+    "rootId": 5517,
+    "triliteralRoot": "ط و ع",
+    "rootTransliteration": "ṭ-w-ʿ",
+    "rootMeaning": "to be submissive, compliant, obedient",
+    "headwordTransliteration": "ṭāʿah",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "obedience, submission to a command",
+        "note": "the core sense — compliance with another's instruction or will, as when one is commanded and obeys"
+      },
+      {
+        "gloss": "compliance, willing submission",
+        "note": "broader sense of yielding or being agreeable to someone, not tied strictly to a command"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "طَاعَ",
+        "transliteration": "ṭāʿa",
+        "meaning": "to be, or become, submissive/obedient (form I)",
+        "path": "/word/obey-7295",
+        "rootId": 7295
+      },
+      {
+        "letters": "أَطَاعَ",
+        "transliteration": "aṭāʿa",
+        "meaning": "to obey (a command) (form IV)"
+      },
+      {
+        "letters": "طَاوَعَ",
+        "transliteration": "ṭāwaʿa",
+        "meaning": "to comply with, agree with someone (form III)"
+      },
+      {
+        "letters": "تَطَوَّعَ",
+        "transliteration": "taṭawwaʿa",
+        "meaning": "to do voluntarily, undertake unobligated good (form V)",
+        "path": "/word/volunteer-9517",
+        "rootId": 9517
+      },
+      {
+        "letters": "اسْتَطَاعَ",
+        "transliteration": "istaṭāʿa",
+        "meaning": "to be able, capable of doing (form X)"
+      },
+      {
+        "letters": "طَوْعٌ",
+        "transliteration": "ṭawʿ",
+        "meaning": "compliance, voluntariness"
+      },
+      {
+        "letters": "طَائِعٌ",
+        "transliteration": "ṭāʾiʿ",
+        "meaning": "one who is obedient/submissive"
+      },
+      {
+        "letters": "مُتَطَوِّعٌ",
+        "transliteration": "mutaṭawwiʿ",
+        "meaning": "a volunteer, one who acts without obligation"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"obedience\" in Arabic?",
+        "a": "طَاعَة (ṭāʿah)."
+      },
+      {
+        "q": "What is the difference between طَوْع and طَاعَة?",
+        "a": "طَوْع is general compliance or voluntariness, while طَاعَة is specifically obedience to a command or authority."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Per Er-Rághib's distinction noted in Lane, طَاعَة is used mostly for obedience to a command, while the related طَوْع denotes compliance more generally, without necessarily implying a command was given. The family also covers the notion of ability (اسْتَطَاعَ, 'to be able') and voluntary, non-obligatory action (تَطَوَّعَ), as in the Qur'anic phrase مَنْ تَطَوَّعَ خَيْرًا, 'whoever does good voluntarily.'"
+  },
+  "5511": {
+    "rootId": 5511,
+    "triliteralRoot": "ش ج ر",
+    "rootTransliteration": "sh-j-r",
+    "rootMeaning": "to be intricate, tangled, or confused",
+    "headwordTransliteration": "shajarah",
+    "partOfSpeech": "noun (feminine, singular/unit noun)",
+    "senses": [
+      {
+        "gloss": "a tree",
+        "note": "a woody plant with a trunk and branches"
+      },
+      {
+        "gloss": "a shrub, bush",
+        "note": "the same word covers smaller woody plants, not only large trees"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "شَجَرٌ",
+        "transliteration": "shajar",
+        "meaning": "trees, shrubs (collective — the plural mass of which shajarah is one unit)"
+      },
+      {
+        "letters": "تَشْجِيرُ",
+        "transliteration": "tashjīr",
+        "meaning": "propping the racemes of palm-trees up onto the branches so they don't break"
+      },
+      {
+        "letters": "شاجر",
+        "transliteration": "shājara",
+        "meaning": "to contend, dispute, or litigate with someone"
+      },
+      {
+        "letters": "اشجرت",
+        "transliteration": "ashjarat",
+        "meaning": "(of land) to produce trees or shrubs"
+      },
+      {
+        "letters": "اشتجر",
+        "transliteration": "ishtajara",
+        "meaning": "to become tangled/knit together; to clash or contend, as with spears in a fight"
+      },
+      {
+        "letters": "مِشْجَرٌ",
+        "transliteration": "mishjar",
+        "meaning": "a rack or stand on which things are hung or thrown"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"tree\" in Arabic?",
+        "a": "شَجَرَة (shajarah)."
+      },
+      {
+        "q": "What is the root of شَجَرَة and what does it mean?",
+        "a": "The root is ش ج ر (sh-j-r), whose basic sense is to be tangled, intricate, or confused — trees (شَجَر) are said to be named for the intermixing of their branches."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Lane traces شَجَرٌ (\"trees, shrubs\") to the same root sense as the verb شَجَرَ (\"to become confused, a matter of dispute between people\"): commentators explain that trees are named shajar because their branches intermix and tangle together. شَجَرَةٌ is the concrete, singular word for one such plant — a tree or shrub — as opposed to the collective شَجَر."
+  },
+  "5516": {
+    "rootId": 5516,
+    "triliteralRoot": "ث م ر",
+    "rootTransliteration": "th-m-r",
+    "rootMeaning": "to bear fruit, become abundant",
+    "headwordTransliteration": "athmara",
+    "partOfSpeech": "verb (form IV)",
+    "senses": [
+      {
+        "gloss": "to put forth fruit, bear fruit (of a tree)",
+        "note": "Lexicographers differ on the exact stage: some say it denotes fruit that has appeared but is still unripe, others that it marks the tree reaching the time of bearing."
+      },
+      {
+        "gloss": "to have fruit appear that is not yet ripe",
+        "note": "said of a person, of his trees"
+      },
+      {
+        "gloss": "to become abundant in wealth",
+        "note": "tropical (figurative) use, paralleling fruit-bearing"
+      },
+      {
+        "gloss": "to feed someone with fruit",
+        "note": "the rarer transitive use of the verb"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "ثَمَرَ",
+        "transliteration": "thamara",
+        "meaning": "form I verb: fruit ripened; or, he gathered shrubs for sheep/goats to graze"
+      },
+      {
+        "letters": "ثمّر",
+        "transliteration": "thammara",
+        "meaning": "form II verb: (of a plant) shed its blossom and set its fruit; (of a person) to make wealth increase"
+      },
+      {
+        "letters": "ثَمَرٌ",
+        "transliteration": "thamar",
+        "meaning": "fruit of trees; also, figuratively, property or wealth, or gold and silver"
+      },
+      {
+        "letters": "ثِمَارٌ",
+        "transliteration": "thimār",
+        "meaning": "fruits (plural of thamar)"
+      },
+      {
+        "letters": "مُثْمِرٌ",
+        "transliteration": "muthmir",
+        "meaning": "fruit-bearing, fruitful (active participle of athmara)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"to bear fruit\" in Arabic?",
+        "a": "أَثْمَرَ (athmara) — the form IV verb used of a tree putting forth or bearing fruit."
+      },
+      {
+        "q": "What is the difference between ثَمَرَ and أَثْمَرَ؟",
+        "a": "ثَمَرَ (form I) is used of fruit itself becoming ripe, while أَثْمَرَ (form IV) is used of the tree putting forth or bearing fruit, and figuratively of a person's wealth becoming abundant."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Form IV of the root ث م ر, set against the form I verb ثَمَرَ by the lexicographers: accounts differ on whether أَثْمَرَ marks a tree bearing fruit while still unripe or a tree that has reached its fruiting season. The same verb extends figuratively to a person whose wealth grows abundant, mirroring the literal sense of a tree producing fruit."
+  },
+  "5519": {
+    "rootId": 5519,
+    "triliteralRoot": "ح ي ن",
+    "rootTransliteration": "ḥ-y-n",
+    "rootMeaning": "to draw near, be at hand (of a time)",
+    "headwordTransliteration": "ḥīn",
+    "partOfSpeech": "noun (temporal noun / substantive)",
+    "senses": [
+      {
+        "gloss": "a period or space of time; a while",
+        "note": "vague in scope — can denote anything from a fleeting moment to an unbounded stretch of time"
+      },
+      {
+        "gloss": "a specific or appointed span of time",
+        "note": "in Qur'anic usage glossed variously as six months, a year, forty years, or seven years depending on context"
+      },
+      {
+        "gloss": "the Day of Resurrection",
+        "note": "an extended sense recorded for one Qur'anic occurrence"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "حَانَ",
+        "transliteration": "ḥāna",
+        "meaning": "to draw near, arrive (of a time); to die"
+      },
+      {
+        "letters": "حَيْنٌ",
+        "transliteration": "ḥayn",
+        "meaning": "death, destruction; a trying affliction"
+      },
+      {
+        "letters": "تَحَيَّنَ",
+        "transliteration": "taḥayyana",
+        "meaning": "to watch for, wait for the right time (e.g. of a meal or of prayer)"
+      },
+      {
+        "letters": "أَحَانَ",
+        "transliteration": "aḥāna",
+        "meaning": "to cause to perish, destroy; also, to remain somewhere for a time"
+      },
+      {
+        "letters": "حَيَّنَ",
+        "transliteration": "ḥayyana",
+        "meaning": "to appoint or fix a time for someone or something"
+      },
+      {
+        "letters": "مُحَايَنَةٌ",
+        "transliteration": "muḥāyanah",
+        "meaning": "contracting or hiring someone for a fixed period"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"time\" in Arabic?",
+        "a": "حِين (ḥīn) — a general word for a period or span of time, vague enough to cover anything from a moment to an age."
+      },
+      {
+        "q": "What is the difference between حِين and حَيْن؟",
+        "a": "They share the same root and consonants, but the vowels differ in meaning: حِين (ḥīn) means 'time,' while حَيْن (ḥayn) means 'death' or 'ruin' — the sense of one's appointed time running out."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "ḥīn appears repeatedly in the Qur'an (e.g. 14:30, 37:178, 76:1) covering senses from a brief instant to time without end; its plural أَحْيَانٌ is used adverbially, as in أَحْيَانًا, 'sometimes.'"
+  },
+  "5522": {
+    "rootId": 5522,
+    "triliteralRoot": "ن ز ل",
+    "rootTransliteration": "n-z-l",
+    "rootMeaning": "to alight, descend, stop, or lodge",
+    "headwordTransliteration": "manāzil",
+    "partOfSpeech": "noun (plural of مَنْزِل, a noun of place)",
+    "senses": [
+      {
+        "gloss": "stopping places, stations; stages (of a journey)",
+        "note": "plural of مَنْزِل, the place where travellers alight and sojourn"
+      },
+      {
+        "gloss": "abodes, dwellings, houses",
+        "note": "a place of settling — likened to a دار (house/mansion) or, more strictly, a smaller lodging of two or three rooms"
+      },
+      {
+        "gloss": "ranks, standings, degrees",
+        "note": "as plural of the related مَنْزِلَة, one's station, footing, or grade"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "نَزَلَ",
+        "transliteration": "nazala",
+        "meaning": "to alight, descend, stop, or lodge somewhere"
+      },
+      {
+        "letters": "أَنْزَلَ",
+        "transliteration": "anzala",
+        "meaning": "to cause to descend; to lodge or host a guest"
+      },
+      {
+        "letters": "نَازَلَ",
+        "transliteration": "nāzala",
+        "meaning": "to meet an opponent in battle, alighting to oppose each other"
+      },
+      {
+        "letters": "تَنَازَلَ",
+        "transliteration": "tanāzala",
+        "meaning": "to descend by degrees; to abdicate or relinquish something"
+      },
+      {
+        "letters": "نَزِيلٌ",
+        "transliteration": "nazīl",
+        "meaning": "a guest"
+      },
+      {
+        "letters": "مَنْزِلٌ",
+        "transliteration": "manzil",
+        "meaning": "a dwelling or stopping place (singular of this headword)"
+      },
+      {
+        "letters": "مَنْزِلَةٌ",
+        "transliteration": "manzila",
+        "meaning": "a station, rank, or standing"
+      },
+      {
+        "letters": "نَازِلَةٌ",
+        "transliteration": "nāzila",
+        "meaning": "a severe calamity or affliction that befalls one"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"stage\" in Arabic?",
+        "a": "مَنَازِل (manāzil) — the plural of مَنْزِل (manzil), meaning stopping places or stages passed through on a journey."
+      },
+      {
+        "q": "What does the root of منازل mean?",
+        "a": "It comes from the root ن-ز-ل (n-z-l), which carries the sense of alighting, descending, and stopping or lodging somewhere."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "مَنَازِل is the plural of مَنْزِل, used for a series of stopping places, dwellings, or stages passed through on a journey; it can also carry the more abstract sense of ranks or standings, drawing on the closely related مَنْزِلَة."
+  },
+  "5518": {
+    "rootId": 5518,
+    "triliteralRoot": "ا ك ل",
+    "rootTransliteration": "a-k-l",
+    "rootMeaning": "to eat, consume, devour",
+    "headwordTransliteration": "ukul",
+    "partOfSpeech": "noun",
+    "senses": [
+      {
+        "gloss": "fruit; the produce or yield of a tree or plant",
+        "note": "the thing eaten or harvested, as opposed to the act of eating itself"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "أَكَلَ",
+        "transliteration": "akala",
+        "meaning": "he ate it (basic verb, form I)"
+      },
+      {
+        "letters": "أَكَّلَ",
+        "transliteration": "akkala",
+        "meaning": "he fed someone, gave them to eat (form II)"
+      },
+      {
+        "letters": "اِيتَكَلَ",
+        "transliteration": "ītakala",
+        "meaning": "it became corroded or decayed, eaten away part by part (form VIII, of a limb or sore)"
+      },
+      {
+        "letters": "أَكَلٌ",
+        "transliteration": "akal",
+        "meaning": "wasting or wearing away (e.g. of teeth rubbing down with age)"
+      },
+      {
+        "letters": "إِكْلَةٌ",
+        "transliteration": "iklah",
+        "meaning": "an itching (tropical sense, as in 'my head itched')"
+      },
+      {
+        "letters": "أَكَالٌ",
+        "transliteration": "akāl",
+        "meaning": "itching (variant noun, also used of an animal's belly itch)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"fruit\" in Arabic?",
+        "a": "أُكُل (ukul)."
+      },
+      {
+        "q": "What is the root of أُكُل and what does it mean?",
+        "a": "Its root is ا ك ل (a-k-l), the same root behind أَكَلَ 'he ate' — it centers on eating and consuming, with أُكُل specifically meaning the fruit or produce eaten."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "The root's basic verb أَكَلَ means simply 'he ate it,' with أَكْلٌ as the verbal noun for the act of eating. أُكُل instead names the result — the fruit or produce that is eaten — and the root also extends tropically to 'devouring' in a broader sense (fire consuming wood, wealth being consumed, even backbiting described as 'eating a brother's flesh')."
+  },
+  "5524": {
+    "rootId": 5524,
+    "triliteralRoot": "ك ث ر",
+    "rootTransliteration": "k-th-r",
+    "rootMeaning": "to be much, numerous, abundant",
+    "headwordTransliteration": "kathīr",
+    "partOfSpeech": "adjective",
+    "senses": [
+      {
+        "gloss": "many, numerous",
+        "note": "used with countable nouns"
+      },
+      {
+        "gloss": "much, abundant, copious",
+        "note": "used with mass or uncountable nouns"
+      },
+      {
+        "gloss": "frequent",
+        "note": "describing an action done often or repeatedly"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "كَثْرَة",
+        "transliteration": "kathrah",
+        "meaning": "muchness, abundance, a large quantity (verbal noun)"
+      },
+      {
+        "letters": "أَكْثَر",
+        "transliteration": "akthar",
+        "meaning": "more, most; the greater part of a thing"
+      },
+      {
+        "letters": "كَثُرَ",
+        "transliteration": "kathura",
+        "meaning": "to be, or become, many, numerous, or abundant (verb I)"
+      },
+      {
+        "letters": "كَاثَرَ",
+        "transliteration": "kāthara",
+        "meaning": "to contend with others for superiority in number (verb III)"
+      },
+      {
+        "letters": "تَكَاثَرَ",
+        "transliteration": "takāthara",
+        "meaning": "to multiply, or vie together for superiority in number (verb VI)"
+      },
+      {
+        "letters": "اِسْتَكْثَرَ",
+        "transliteration": "istakthara",
+        "meaning": "to want, or desire, much of a thing; to deem a thing much (verb X)"
+      },
+      {
+        "letters": "كَثَر",
+        "transliteration": "kathar",
+        "meaning": "the heart (pith) or spadix of a palm tree"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"many\" in Arabic?",
+        "a": "كَثِير (kathīr) — also covers 'much' and 'frequent' depending on context."
+      },
+      {
+        "q": "What does the root of كَثِير mean?",
+        "a": "The root ك-ث-ر (k-th-r) carries the sense of being much, numerous, or abundant; verbs and nouns from it describe things multiplying, people vying for numbers, or wanting an abundance of something."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Kathīr is the everyday adjective for 'many' with countable nouns and 'much' with mass nouns, and by extension 'frequent' for an action repeated often. Its related noun كَثْرَة ('muchness, abundance') is the standard opposite of قِلَّة ('fewness'), the same many/few contrast that كَثِير expresses in a phrase like a people 'many in number.'"
+  },
+  "5521": {
+    "rootId": 5521,
+    "triliteralRoot": "ا و ل",
+    "rootTransliteration": "a-w-l",
+    "rootMeaning": "to return; to precede, go before",
+    "headwordTransliteration": "awwal",
+    "partOfSpeech": "adjective (elative-pattern noun/adjective denoting order)",
+    "senses": [
+      {
+        "gloss": "first, foremost (in time, order, or rank)",
+        "note": "the primary sense; Lane records grammarians deriving it from the root's sense 'to precede, go before', with an original form أَأْوَل"
+      },
+      {
+        "gloss": "preceding, former",
+        "note": "a nuance following directly from the root verb's sense of going before"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "آلَ",
+        "transliteration": "āla",
+        "meaning": "to return, revert; to result in or come to be (said of an affair)"
+      },
+      {
+        "letters": "مَآلٌ",
+        "transliteration": "maʾāl",
+        "meaning": "outcome, result; the state a thing ultimately comes to",
+        "path": "/word/end-6365",
+        "rootId": 6365
+      },
+      {
+        "letters": "إِيَالَةٌ",
+        "transliteration": "iyālah",
+        "meaning": "rule, governance (of subjects)"
+      },
+      {
+        "letters": "أَوْلٌ",
+        "transliteration": "awl",
+        "meaning": "a returning, reverting (basic verbal noun of āla)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"first\" in Arabic?",
+        "a": "أَوَّل (awwal)."
+      },
+      {
+        "q": "What root does أَوَّل come from, and what does it mean?",
+        "a": "It comes from the root ا و ل (a-w-l). Its verb آلَ (āla) means 'to return' and also 'to precede, go before' — the latter sense is what gives rise to أَوَّل, 'first'."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Lane traces أَوَّل to the root verb آلَ in its sense 'to precede, go before, be first', noting its original form was likely أَأْوَل. It is also cited in the colloquial phrase العَشْرُ الأَوَّل ('the first/preceding ten [nights]'), showing its everyday use as an ordinal marker."
+  },
+  "5525": {
+    "rootId": 5525,
+    "triliteralRoot": "س ب ح",
+    "rootTransliteration": "s-b-ḥ",
+    "rootMeaning": "to swim, glide, or range freely",
+    "headwordTransliteration": "tasbīḥ",
+    "partOfSpeech": "noun (verbal noun / maṣdar of Form II سَبَّحَ)",
+    "senses": [
+      {
+        "gloss": "declaring God far removed from every imperfection or impurity",
+        "note": "the core theological sense (tanzīh) — freeing God from anything derogatory to His glory"
+      },
+      {
+        "gloss": "glorifying, magnifying, lauding, or praising God",
+        "note": "done by reciting His names, especially the formula سُبْحَانَ اللّٰه (subḥāna llāh)"
+      },
+      {
+        "gloss": "(plural تَسْبِيحَاتٌ) set formulas or recitations of glorification",
+        "note": "used of repeated ritual praise"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "سَبَحَ",
+        "transliteration": "sabaḥa",
+        "meaning": "he swam; also, he ranged or travelled far, busied himself going to and fro"
+      },
+      {
+        "letters": "سِبَاحَةٌ",
+        "transliteration": "sibāḥah",
+        "meaning": "swimming (coursing along on the surface of water)"
+      },
+      {
+        "letters": "سَبَّاحٌ",
+        "transliteration": "sabbāḥ",
+        "meaning": "a skilled or habitual swimmer"
+      },
+      {
+        "letters": "سُبْحَانٌ",
+        "transliteration": "subḥān",
+        "meaning": "glory be to...! — exclamation declaring God free from imperfection"
+      },
+      {
+        "letters": "مُسَبِّحٌ",
+        "transliteration": "musabbiḥ",
+        "meaning": "one who glorifies God"
+      },
+      {
+        "letters": "مَسْبَحٌ",
+        "transliteration": "masbaḥ",
+        "meaning": "a place of swimming"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"glorify\" in Arabic?",
+        "a": "تَسْبِيح (tasbīḥ) — the act of glorifying God by declaring Him utterly free from imperfection, most familiar in the phrase سُبْحَانَ اللّٰه (subḥāna llāh)."
+      },
+      {
+        "q": "Why does the same root سبح mean both \"to swim\" and \"to glorify God\"?",
+        "a": "The root's basic sense is swimming or moving/ranging freely (also used of travelling far and becoming remote); تسبيح extends this to 'removing' God far from any imperfection, i.e. declaring Him utterly transcendent."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "تَسْبِيح is the verbal noun of Form II سَبَّحَ (سبّح اللّٰهَ / سبّح للّٰهِ), 'he declared God far removed from every imperfection.' It anchors the common devotional formula سُبْحَانَ اللّٰه and appears repeatedly in Qur'anic and classical religious usage for the act of glorifying and praising God."
+  },
+  "5520": {
+    "rootId": 5520,
+    "triliteralRoot": "ا ذ ن",
+    "rootTransliteration": "ʾ-dh-n",
+    "rootMeaning": "to hear, listen, give ear",
+    "headwordTransliteration": "idhn",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "permission, leave, authorization",
+        "note": "the verbal noun of أَذِنَ لَهُ فِى الشَّىءِ, 'he permitted him, allowed him, or gave him leave to do the thing'"
+      },
+      {
+        "gloss": "notice, knowledge, being informed of something",
+        "note": "from the related sense أَذِنَ بِالشَّىءِ 'he knew of it, became informed of it' — e.g. Qur'an 2:279, فَأْذَنُوا بِحَرْبٍ, 'then be ye informed of war'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "أَذِنَ",
+        "transliteration": "adhina",
+        "meaning": "to listen, give ear to; to grant permission or leave"
+      },
+      {
+        "letters": "أَذَّنَ",
+        "transliteration": "adhdhana",
+        "meaning": "to call to prayer; to proclaim, make widely known"
+      },
+      {
+        "letters": "آذَنَ",
+        "transliteration": "ādhana",
+        "meaning": "to inform, notify (someone of a thing)"
+      },
+      {
+        "letters": "أُذُنٌ",
+        "transliteration": "udhun",
+        "meaning": "ear"
+      },
+      {
+        "letters": "أَذَانٌ",
+        "transliteration": "adhān",
+        "meaning": "the call to prayer",
+        "path": "/word/call-to-prayer-6716",
+        "rootId": 6716
+      },
+      {
+        "letters": "مِئْذَنَةٌ",
+        "transliteration": "miʾdhanah",
+        "meaning": "minaret, the place from which the call to prayer is proclaimed"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"permission\" in Arabic?",
+        "a": "إِذْن (idhn)."
+      },
+      {
+        "q": "Why do إِذْن (permission) and أَذَانٌ (call to prayer) come from the same root?",
+        "a": "Both derive from اذن, whose core sense is 'to hear, listen, give ear.' Permission is granted by 'giving ear' to a request, while the adhān is a proclamation meant to be heard."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "إِذْن is the standard word for formal permission or leave to do something, as in giving a servant leave to trade. It shares its root with 'ear' (أُذُنٌ) and 'call to prayer' (أَذَانٌ): the underlying sense of listening/giving ear covers both 'permission' (attending to and granting a request) and 'proclamation' (making something heard)."
+  },
+  "5523": {
+    "rootId": 5523,
+    "triliteralRoot": "ق و م",
+    "rootTransliteration": "q-w-m",
+    "rootMeaning": "to stand, rise, be upright",
+    "headwordTransliteration": "qawm",
+    "partOfSpeech": "noun (collective noun)",
+    "senses": [
+      {
+        "gloss": "people, folk",
+        "note": "a collective noun, not a plural — takes collective/plural agreement"
+      },
+      {
+        "gloss": "a nation, community, or group of persons"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "قَامَ",
+        "transliteration": "qāma",
+        "meaning": "to stand, stand up, rise (form I)"
+      },
+      {
+        "letters": "أَقَامَ",
+        "transliteration": "aqāma",
+        "meaning": "to set up; to stay, reside; to establish (e.g. prayer) (form IV)"
+      },
+      {
+        "letters": "إِقَامَةٌ",
+        "transliteration": "iqāma",
+        "meaning": "staying, residing; the recited call that opens prayer"
+      },
+      {
+        "letters": "قَوَّمَ",
+        "transliteration": "qawwama",
+        "meaning": "to straighten, make right; to set a price on, value (form II)"
+      },
+      {
+        "letters": "قَاوَمَ",
+        "transliteration": "qāwama",
+        "meaning": "to withstand, oppose; to be equal to (form III)",
+        "path": "/word/resisted-6190",
+        "rootId": 6190
+      },
+      {
+        "letters": "مَقَامٌ",
+        "transliteration": "maqām",
+        "meaning": "a standing-place, station",
+        "path": "/word/status-6435",
+        "rootId": 6435
+      },
+      {
+        "letters": "قَائِمٌ",
+        "transliteration": "qā'im",
+        "meaning": "standing; one who undertakes or manages an affair"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"people\" in Arabic?",
+        "a": "قَوْم (qawm)."
+      },
+      {
+        "q": "What is the root of قَوْم and what does it carry?",
+        "a": "Its root is ق و م (q-w-m), whose basic sense is 'to stand, rise, be upright' — seen in قَامَ ('he stood') and مَقَام ('a station')."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "قَوْم functions grammatically as a collective noun — it denotes a people, tribe, or community as a body, and is a very common word throughout classical and Qur'anic Arabic."
+  },
+  "5527": {
+    "rootId": 5527,
+    "triliteralRoot": "ا ص ل",
+    "rootTransliteration": "ʾ-ṣ-l",
+    "rootMeaning": "to be firmly rooted or established",
+    "headwordTransliteration": "aṣīl",
+    "partOfSpeech": "noun (substantive denoting a time of day)",
+    "senses": [
+      {
+        "gloss": "evening",
+        "note": "Names a specific time of day; the related verb آصل ('āṣala') means 'to enter upon the time called aṣīl'."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "أَصْلٌ",
+        "transliteration": "aṣl",
+        "meaning": "root, foundation, or lowest part of a thing"
+      },
+      {
+        "letters": "أَصَالَةٌ",
+        "transliteration": "aṣāla",
+        "meaning": "firmness, or soundness of judgment"
+      },
+      {
+        "letters": "أصّل",
+        "transliteration": "aṣṣala",
+        "meaning": "to give something a firm foundation to build on"
+      },
+      {
+        "letters": "تأصّل",
+        "transliteration": "taʾaṣṣala",
+        "meaning": "to become firmly rooted or established"
+      },
+      {
+        "letters": "استأصل",
+        "transliteration": "istaʾṣala",
+        "meaning": "to uproot, eradicate, or extirpate completely",
+        "path": "/word/to-uproot-19774",
+        "rootId": 19774
+      },
+      {
+        "letters": "آصل",
+        "transliteration": "āṣala",
+        "meaning": "to enter upon the evening (aṣīl)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"evening\" in Arabic?",
+        "a": "أصيل (aṣīl)."
+      },
+      {
+        "q": "What does the root of أصيل mean?",
+        "a": "The root ا-ص-ل (ʾ-ṣ-l) carries the sense of having a root or foundation — being firm, established, or firmly grounded."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Aṣīl names a distinct time of day within this root's family of words, all tied to the core idea of something firm or established; the verb āṣala describes the moment of entering that time."
+  },
+  "5532": {
+    "rootId": 5532,
+    "triliteralRoot": "أ خ ر",
+    "rootTransliteration": "ʾ-kh-r",
+    "rootMeaning": "to put back, delay, be last",
+    "headwordTransliteration": "ākhir",
+    "partOfSpeech": "noun/adjective (active-participle pattern)",
+    "senses": [
+      {
+        "gloss": "last, final, hindmost",
+        "note": "furthest back in time, place, or order — the common word for 'the last (one)'"
+      },
+      {
+        "gloss": "latter, end part of something",
+        "note": "used of the closing or final stretch of a period, event, or series"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "أخّر",
+        "transliteration": "akhkhara",
+        "meaning": "to put back, delay, postpone, make last (form II)"
+      },
+      {
+        "letters": "تأخّر",
+        "transliteration": "taʾakhkhara",
+        "meaning": "to go back, hang back, lag behind, be delayed (form V)",
+        "path": "/word/future-9732",
+        "rootId": 9732
+      },
+      {
+        "letters": "آخَرُ",
+        "transliteration": "ākhar",
+        "meaning": "another, a different one (of two)"
+      },
+      {
+        "letters": "أُخُرٌ",
+        "transliteration": "ukhur",
+        "meaning": "the back or hindmost part, opposite of the front"
+      },
+      {
+        "letters": "أَخِرٌ",
+        "transliteration": "akhir",
+        "meaning": "one alienated or held back from good; used as a term of reviling"
+      },
+      {
+        "letters": "بِأَخِرَةٍ",
+        "transliteration": "bi-akhiratin",
+        "meaning": "on credit, with payment deferred to a later time"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"final\" in Arabic?",
+        "a": "آخِر (ākhir) — the standard word for 'last' or 'final', in time, place, or order."
+      },
+      {
+        "q": "What root does آخِر come from, and what does it mean?",
+        "a": "It comes from the root ء خ ر (ʾ-kh-r), whose core sense is 'to put back, delay, be last' — the same root behind أخّر 'to delay' and تأخّر 'to lag behind'."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/"
+  },
+  "5533": {
+    "rootId": 5533,
+    "triliteralRoot": "ح ي ي",
+    "rootTransliteration": "ḥ-y-y",
+    "rootMeaning": "to live, be alive",
+    "headwordTransliteration": "taḥiyyah",
+    "partOfSpeech": "noun (verbal noun / maṣdar of form II)",
+    "senses": [
+      {
+        "gloss": "greeting, salutation",
+        "note": "the standard word for a greeting, including the Islamic legal salutation 'peace be upon you' (salām ʿalayka)"
+      },
+      {
+        "gloss": "a wish or prayer for someone's continued life and well-being",
+        "note": "reflects the underlying sense of the verb ḥayyā, e.g. ḥayyāka llāh, 'may God preserve you alive'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "حَيِىَ",
+        "transliteration": "ḥayiya",
+        "meaning": "to live, be alive (form I verb)"
+      },
+      {
+        "letters": "حَيَاةٌ",
+        "transliteration": "ḥayāh",
+        "meaning": "life"
+      },
+      {
+        "letters": "حَىٌّ",
+        "transliteration": "ḥayy",
+        "meaning": "alive, living"
+      },
+      {
+        "letters": "حيّا",
+        "transliteration": "ḥayyā",
+        "meaning": "to greet; to pray for someone's life (form II, the verb taḥiyyah derives from)"
+      },
+      {
+        "letters": "أَحْيَا",
+        "transliteration": "aḥyā",
+        "meaning": "to give life to, revive (form IV)",
+        "path": "/word/gives-life-11738",
+        "rootId": 11738
+      },
+      {
+        "letters": "حَيَوَانٌ",
+        "transliteration": "ḥayawān",
+        "meaning": "life, vitality (intensive verbal noun of the same root)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"greeting\" in Arabic?",
+        "a": "تَحِيَّة (taḥiyyah)."
+      },
+      {
+        "q": "What does the root of تَحِيَّة mean?",
+        "a": "It comes from the root ḥ-y-y (ح ي ي), meaning 'to live, be alive' — taḥiyyah literally began as a wish or prayer for someone's life, and came to mean 'greeting'."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Taḥiyyah is the everyday Arabic word for a greeting. It derives from the form II verb ḥayyā, whose primary sense was to wish someone continued life (ḥayyāka llāh, 'may God preserve you alive'); in legal/religious usage this greeting took the specific form of saying salām ʿalayka."
+  },
+  "5528": {
+    "rootId": 5528,
+    "triliteralRoot": "و س ط",
+    "rootTransliteration": "w-s-ṭ",
+    "rootMeaning": "to be, sit, in the middle",
+    "headwordTransliteration": "wasaṭ",
+    "partOfSpeech": "noun (substantive)",
+    "senses": [
+      {
+        "gloss": "the middle, midst, or central part of a thing",
+        "note": "properly the part equally distant from the sides (e.g. the middle finger, or the centre of a circle); more loosely, the part enclosed by the other parts even if not exactly equidistant"
+      },
+      {
+        "gloss": "the best, most excellent, or most balanced part of a thing",
+        "note": "from the sense of being in the part of a thing most remote from either extreme"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "وَسَطَ",
+        "transliteration": "wasaṭa",
+        "meaning": "to be, sit, or become situated in the middle of a people or place",
+        "path": "/word/middle-5528",
+        "rootId": 5528
+      },
+      {
+        "letters": "وَسْط",
+        "transliteration": "wasṭ",
+        "meaning": "adverb 'in the middle of, among' (does not denote a true component part, unlike wasaṭ)",
+        "path": "/word/middle-5528",
+        "rootId": 5528
+      },
+      {
+        "letters": "وَسَطٌ",
+        "transliteration": "wasaṭ",
+        "meaning": "the middle, midst, or middle part of a thing",
+        "path": "/word/middle-5528",
+        "rootId": 5528
+      },
+      {
+        "letters": "وسّطهُ",
+        "transliteration": "wassaṭahu",
+        "meaning": "to put it in the middle; also, to cut it into two halves"
+      },
+      {
+        "letters": "تَوَسَّطَ",
+        "transliteration": "tawassaṭa",
+        "meaning": "to be situated in the middle; to mediate or intercede between people; to take a middle, moderate course",
+        "path": "/word/placed-in-the-middle-15993",
+        "rootId": 15993
+      },
+      {
+        "letters": "وَسَاطَةٌ",
+        "transliteration": "wasāṭah",
+        "meaning": "mediation, intercession; also, holding a middle or worthy standing among one's people"
+      },
+      {
+        "letters": "أَوْسَطُ",
+        "transliteration": "awsaṭ",
+        "meaning": "the middle-most; the best (elative, of one who holds the middle, most excellent rank)",
+        "path": "/word/middle-19196",
+        "rootId": 19196
+      },
+      {
+        "letters": "مُتَوَسِّطٌ",
+        "transliteration": "mutawassiṭ",
+        "meaning": "middling, moderate; one who mediates"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"middle\" in Arabic?",
+        "a": "وَسَط (wasaṭ)."
+      },
+      {
+        "q": "What does تَوَسَّطَ (tawassaṭa) mean?",
+        "a": "It means to be situated in the middle, and by extension to mediate or intercede between people, or to take a moderate, middle course."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Beyond a spatial 'middle,' the root carries a moral sense: to occupy the wasaṭ of one's people is to hold their best or most honorable standing in truth and equity, since the middle part of a thing is also its part most remote from either extreme. From this comes tawassaṭa, 'to mediate' — literally to place oneself in the middle between two sides."
+  },
+  "5529": {
+    "rootId": 5529,
+    "triliteralRoot": "م ل ك",
+    "rootTransliteration": "m-l-k",
+    "rootMeaning": "to possess, own, exercise authority",
+    "headwordTransliteration": "malāʾikah",
+    "partOfSpeech": "noun (broken plural)",
+    "senses": [
+      {
+        "gloss": "angels; heavenly beings",
+        "note": "Plural of مَلَك (malak), 'an angel'."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "مَلَكٌ",
+        "transliteration": "malak",
+        "meaning": "an angel (singular of مَلَائِكَة)"
+      },
+      {
+        "letters": "مَلِكُ",
+        "transliteration": "malik",
+        "meaning": "king (e.g. مَلِكُ الأَمْلاَكِ, 'king of kings')"
+      },
+      {
+        "letters": "مُلْكٌ",
+        "transliteration": "mulk",
+        "meaning": "dominion, sovereignty, kingship"
+      },
+      {
+        "letters": "مَالِكٌ",
+        "transliteration": "mālik",
+        "meaning": "owner, master; possessor of command"
+      },
+      {
+        "letters": "مَمْلَكَةٌ",
+        "transliteration": "mamlakah",
+        "meaning": "a kingdom, or realm"
+      },
+      {
+        "letters": "مَمْلُوكٌ",
+        "transliteration": "mamlūk",
+        "meaning": "a slave, a bondman",
+        "path": "/word/servant-5585",
+        "rootId": 5585
+      },
+      {
+        "letters": "مَلَكُوتُ",
+        "transliteration": "malakūt",
+        "meaning": "God's kingdom; the world of corporeal beings"
+      },
+      {
+        "letters": "مَلَكَهُ",
+        "transliteration": "malaka",
+        "meaning": "he possessed, owned, or had authority over it (form I)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"angels\" in Arabic?",
+        "a": "مَلَائِكَة (malāʾikah)."
+      },
+      {
+        "q": "What is the singular of مَلَائِكَة?",
+        "a": "مَلَك (malak), meaning 'an angel'."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "مَلَائِكَة is the standard classical and Qur'anic plural of مَلَك, 'an angel'. The rest of the root's family runs through possession and rule — مُلْك 'dominion', مَلِك 'king', مَمْلَكَة 'kingdom' — and مَلَكُوت, 'God's kingdom', is the word that visibly bridges the two fields of meaning."
+  },
+  "5534": {
+    "rootId": 5534,
+    "triliteralRoot": "ل ق ي",
+    "rootTransliteration": "l-q-y",
+    "rootMeaning": "to meet, encounter, or throw down",
+    "headwordTransliteration": "laqiya",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to meet, meet with, come face to face with",
+        "note": "the basic sense: encountering a person or thing"
+      },
+      {
+        "gloss": "to find, come upon (in the course of meeting)",
+        "note": "e.g. 'thou wilt find them lions'"
+      },
+      {
+        "gloss": "to encounter, be met with (something good or bad)",
+        "note": "e.g. laqiyahu bi-makrūh, 'he met with mistreatment from him'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "لِقَآءٌ",
+        "transliteration": "liqāʾ",
+        "meaning": "a meeting, encounter; also used for a clash or battle"
+      },
+      {
+        "letters": "أَلْقَى",
+        "transliteration": "alqā",
+        "meaning": "to throw, cast, put down (form IV)"
+      },
+      {
+        "letters": "تَلَقَّى",
+        "transliteration": "talaqqā",
+        "meaning": "to receive something from someone (form V)"
+      },
+      {
+        "letters": "اِلْتَقَى",
+        "transliteration": "iltaqā",
+        "meaning": "to meet together, come together (form VIII)",
+        "path": "/word/meet-6704",
+        "rootId": 6704
+      },
+      {
+        "letters": "اِسْتَلْقَى",
+        "transliteration": "istalqā",
+        "meaning": "to lie on one's back (form X)"
+      },
+      {
+        "letters": "تِلْقَآءَ",
+        "transliteration": "tilqāʾa",
+        "meaning": "in the direction of, facing, towards"
+      },
+      {
+        "letters": "مُلَقًّى",
+        "transliteration": "mulaqqā",
+        "meaning": "greeted (passive participle of laqqā)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"meet\" in Arabic?",
+        "a": "لَقِيَ (laqiya) — to meet, or meet with, someone or something."
+      },
+      {
+        "q": "What is the difference between لَقِيَ and اِلْتَقَى؟",
+        "a": "لَقِيَ (form I) means to meet or encounter someone/something; اِلْتَقَى (form VIII) means to meet together, i.e. two parties coming together mutually."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "لَقِيَ is the plain verb for meeting or encountering someone or something, and by extension for meeting with (experiencing) good or bad treatment. Related forms branch out: form III lāqā for facing someone directly, form IV alqā for throwing or putting something down, and form X istalqā for lying on one's back — Lane links this spread of senses to the root idea of something arriving at, or being placed at, the point where it will be met."
+  },
+  "5531": {
+    "rootId": 5531,
+    "triliteralRoot": "ن و ر",
+    "rootTransliteration": "n-w-r",
+    "rootMeaning": "to shine, blaze, give light",
+    "headwordTransliteration": "nūr",
+    "partOfSpeech": "noun (substantive)",
+    "senses": [
+      {
+        "gloss": "light, illumination, brightness"
+      },
+      {
+        "gloss": "radiance, glow; that by which one sees or is guided",
+        "note": "the lexicon derives the verbs أَنَارَ and نَوَّرَ, both meaning 'to give light,' directly from this noun"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "نَارٌ",
+        "transliteration": "nār",
+        "meaning": "fire; the blaze apparent to the senses"
+      },
+      {
+        "letters": "أَنَارَ",
+        "transliteration": "anāra",
+        "meaning": "to give light, shine, illuminate (denominal from nūr)"
+      },
+      {
+        "letters": "نَوَّرَ",
+        "transliteration": "nawwara",
+        "meaning": "to illuminate; also, of a tree, to blossom"
+      },
+      {
+        "letters": "تَنْوِيرٌ",
+        "transliteration": "tanwīr",
+        "meaning": "illumination; verbal noun of نوّر, also used of a tree's blossoming"
+      },
+      {
+        "letters": "اِسْتَنَارَ",
+        "transliteration": "istanāra",
+        "meaning": "to seek or draw on something's light or rays"
+      },
+      {
+        "letters": "نَوْرٌ",
+        "transliteration": "nawr",
+        "meaning": "blossom, flower (what a tree puts forth)"
+      },
+      {
+        "letters": "نُورَةٌ",
+        "transliteration": "nūra",
+        "meaning": "a lime preparation smeared on the skin to remove hair"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"light\" in Arabic?",
+        "a": "Light is نُور (nūr), from the root ن و ر, which also gives نار 'fire' and the verbs أنار/نوّر 'to shine, illuminate.'"
+      },
+      {
+        "q": "What is the difference between نور and نار in Arabic?",
+        "a": "They share the root ن و ر: نار (nār) is the fire or flame itself, while نور (nūr) is the light or brightness that it, or anything else, gives off."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "نور pairs with نار (fire) from the same root: نار is the blaze itself, نور the light it or anything else gives off. Forms II (نوّر) and IV (أنار) are built straight from this noun to mean 'to shine, illuminate,' and form X (استنار) means to seek or draw on something's light or rays."
+  },
+  "5535": {
+    "rootId": 5535,
+    "triliteralRoot": "س ل م",
+    "rootTransliteration": "s-l-m",
+    "rootMeaning": "to be safe, secure, or free",
+    "headwordTransliteration": "salām",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "peace, safety, security",
+        "note": "one of several maṣdar forms of سَلِمَ ('he was, or became, safe') alongside سَلَامَةٌ, سَلَمٌ, سَلْمٌ, and سِلْمٌ; denotes freedom from harm, evil, or affliction"
+      },
+      {
+        "gloss": "greeting, salutation — \"peace be upon you\"",
+        "note": "the excerpt treats التَّسْلِيمُ (the verbal noun of سلّم) as synonymous with السَّلَام in this sense: saluting someone with a prayer for their safety, as in سَلَامٌ عَلَيْكَ"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "سَلِمَ",
+        "transliteration": "salima",
+        "meaning": "to be, or become, safe, secure, or free from harm/evil"
+      },
+      {
+        "letters": "سَلَّمَ",
+        "transliteration": "sallama",
+        "meaning": "to keep safe/save; to greet with a prayer for safety; to hand over or deliver"
+      },
+      {
+        "letters": "تَسْلِيمٌ",
+        "transliteration": "taslīm",
+        "meaning": "salutation/greeting; the act of delivering or handing something over"
+      },
+      {
+        "letters": "سَلَامَةٌ",
+        "transliteration": "salāmah",
+        "meaning": "safety, security, soundness"
+      },
+      {
+        "letters": "سِلْمٌ",
+        "transliteration": "silm",
+        "meaning": "peace, safety (variant maṣdar of سَلِمَ)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"peace\" in Arabic?",
+        "a": "سَلَام (salām) — from the root س ل م, 'to be safe or secure'; it names the state of safety/peace and is also the customary greeting سَلَامٌ عَلَيْكَ, 'peace be upon you.'"
+      },
+      {
+        "q": "What is the root of سَلَام and what does it literally mean?",
+        "a": "The root is س ل م (s-l-m). Its verb سَلِمَ means 'he was, or became, safe, secure, or free' from harm, evil, or affliction — the core sense that سَلَام itself expresses."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "سَلَام is a maṣdar of سَلِمَ, 'to be or become safe,' so at root it names a state of safety or freedom from harm. From that same sense it became the standard greeting formula سَلَامٌ عَلَيْكَ ('peace be upon you'), which the lexicon explains as a prayer for the addressee's safety rather than a mere pleasantry."
+  },
+  "5540": {
+    "rootId": 5540,
+    "triliteralRoot": "غ ر س",
+    "rootTransliteration": "gh-r-s",
+    "rootMeaning": "to plant, fix firmly in the ground",
+    "headwordTransliteration": "gharasa",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to plant, set (a tree) in the ground",
+        "note": "the basic, literal sense; also expressed by the form IV verb أَغْرَسَ"
+      },
+      {
+        "gloss": "to establish or settle a benefaction in one's possession",
+        "note": "tropical use, e.g. غَرَسَ فُلَانٌ عِنْدِى نِعْمَةً, 'he settled a favor with me'"
+      },
+      {
+        "gloss": "to do good, act kindly",
+        "note": "tropical use with المَعْرُوفَ as object"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "أَغْرَسَ",
+        "transliteration": "aghrasa",
+        "meaning": "to plant (form IV, synonym of غَرَسَ)"
+      },
+      {
+        "letters": "غَرْسٌ",
+        "transliteration": "ghars",
+        "meaning": "a planted tree; a sapling set for planting"
+      },
+      {
+        "letters": "غِرْسٌ",
+        "transliteration": "ghirs",
+        "meaning": "the membrane enclosing a newborn child"
+      },
+      {
+        "letters": "غِرَاسٌ",
+        "transliteration": "ghirās",
+        "meaning": "palm shoots cut off and replanted; also 'the act of planting' or 'planting season'"
+      },
+      {
+        "letters": "غَرِيسَةٌ",
+        "transliteration": "gharīsah",
+        "meaning": "a planted tree (synonym of غَرْسٌ)"
+      },
+      {
+        "letters": "مَغْرِسٌ",
+        "transliteration": "maghris",
+        "meaning": "a place of planting; figuratively, a wife"
+      },
+      {
+        "letters": "مَغْرُوسٌ",
+        "transliteration": "maghrūs",
+        "meaning": "planted (passive participle, synonym of غَرْسٌ)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"plant\" in Arabic?",
+        "a": "غَرَسَ (gharasa) — to plant or fix a tree in the ground."
+      },
+      {
+        "q": "What does غِرْسٌ mean?",
+        "a": "From the same root, غِرْسٌ (ghirs) refers to the membrane that encloses a newborn child, not to planting trees."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Used literally for planting trees, palm shoots, or vines, and extended tropically to 'implanting' a favor or good deed in someone, or to a person's natural place or origin (as in مَسْقَطُ رَأْسِهِ وَمَكَانُ غِرَاسِهِ, 'the place of his birth and planting')."
+  },
+  "5536": {
+    "rootId": 5536,
+    "triliteralRoot": "ف ط ر",
+    "rootTransliteration": "f-ṭ-r",
+    "rootMeaning": "to split, cleave, create, originate",
+    "headwordTransliteration": "fiṭra",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "innate disposition, natural constitution",
+        "note": "the nature or character a person is originally formed with"
+      },
+      {
+        "gloss": "original state, natural make-up of a thing",
+        "note": "tied to the base verb's sense 'to create, bring into being for the first time'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "فَطَرَ",
+        "transliteration": "faṭara",
+        "meaning": "to split, cleave, crack; also to create or originate something anew"
+      },
+      {
+        "letters": "أَفْطَرَ",
+        "transliteration": "afṭara",
+        "meaning": "to break one's fast, to eat and drink after fasting"
+      },
+      {
+        "letters": "انْفَطَرَ",
+        "transliteration": "infaṭara",
+        "meaning": "to become cleft, split, or cracked (passive/reflexive of faṭara)"
+      },
+      {
+        "letters": "فَطِيرٌ",
+        "transliteration": "faṭīr",
+        "meaning": "unleavened bread, dough baked hastily without being left to rise"
+      },
+      {
+        "letters": "فَاطِرٌ",
+        "transliteration": "fāṭir",
+        "meaning": "creator, originator (active participle of the 'create' sense)"
+      },
+      {
+        "letters": "مُفْطِرٌ",
+        "transliteration": "mufṭir",
+        "meaning": "one who is breaking, or about to break, the fast"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"innate disposition\" in Arabic?",
+        "a": "فِطْرَة (fiṭra)."
+      },
+      {
+        "q": "Is فِطْرَة (fiṭra) related to فُطُور (breakfast)?",
+        "a": "Yes — both trace to the root ف ط ر, but through different branches: fiṭra comes from faṭara meaning 'to create, form', while fuṭūr comes from afṭara, 'to break one's fast'."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Fiṭra comes from faṭara in its sense 'to create, bring into being for the first time', so it denotes the original nature a person is formed with — not the physical 'split/crack' sense the same root also carries. It is a different derivation from fuṭūr 'breakfast', which comes from the root's fast-breaking branch (afṭara)."
+  },
+  "5542": {
+    "rootId": 5542,
+    "triliteralRoot": "ا م ن",
+    "rootTransliteration": "ʾ-m-n",
+    "rootMeaning": "to be secure, safe, free from fear",
+    "headwordTransliteration": "īmān",
+    "partOfSpeech": "noun (verbal noun / maṣdar, form IV)",
+    "senses": [
+      {
+        "gloss": "faith, belief",
+        "note": "the verbal noun of آمَنَ (form IV); the standard term for religious faith"
+      },
+      {
+        "gloss": "trust, security of heart",
+        "note": "carries the root's underlying sense of being rendered secure and free from fear, extended to inward trust and conviction"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "أَمْنٌ",
+        "transliteration": "amn",
+        "meaning": "security, safety (opposite of fear)"
+      },
+      {
+        "letters": "أَمَانٌ",
+        "transliteration": "amān",
+        "meaning": "safety, protection, freedom from fear",
+        "path": "/word/safety-11369",
+        "rootId": 11369
+      },
+      {
+        "letters": "أَمَانَةٌ",
+        "transliteration": "amānah",
+        "meaning": "trustworthiness; a trust or deposit"
+      },
+      {
+        "letters": "أَمِينٌ",
+        "transliteration": "amīn",
+        "meaning": "trusty, trustworthy; one given charge over something",
+        "path": "/word/the-trustworthy-13947",
+        "rootId": 13947
+      },
+      {
+        "letters": "آمِنٌ",
+        "transliteration": "āmin",
+        "meaning": "secure, safe, free from fear"
+      },
+      {
+        "letters": "آمَنَ",
+        "transliteration": "āmana",
+        "meaning": "to render secure/safe; to trust or believe (form IV)"
+      },
+      {
+        "letters": "مُؤْمِنٌ",
+        "transliteration": "muʾmin",
+        "meaning": "believer; one who has faith (active participle of آمَنَ)"
+      },
+      {
+        "letters": "مَأْمُونٌ",
+        "transliteration": "maʾmūn",
+        "meaning": "trusted, one relied upon as safe"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"faith\" in Arabic?",
+        "a": "إِيمَان (īmān)."
+      },
+      {
+        "q": "What root does إِيمَان come from and what does it mean?",
+        "a": "It comes from the root ا م ن (ʾ-m-n), whose core sense is security, safety, and freedom from fear; إِيمَان is the verbal noun of آمَنَ, 'to render secure' or 'to trust/believe'."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Classical and Qur'anic term for faith or belief; grammatically it is the verbal noun (maṣdar) of the form IV verb آمَنَ, whose base sense is \"to render secure or safe,\" extended to trusting or believing."
+  },
+  "5544": {
+    "rootId": 5544,
+    "triliteralRoot": "و ر ث",
+    "rootTransliteration": "w-r-th",
+    "rootMeaning": "to inherit",
+    "headwordTransliteration": "awratha",
+    "partOfSpeech": "verb (form IV, causative)",
+    "senses": [
+      {
+        "gloss": "to make someone inherit; to bequeath",
+        "note": "causative of the base verb وَرِثَ — a father or predecessor is the one who 'makes' the heir inherit a thing"
+      },
+      {
+        "gloss": "to occasion, give rise to, yield (a result)",
+        "note": "tropical extension: used of a cause producing an effect, e.g. an illness 'yielding' weakness"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "وَرِثَ",
+        "transliteration": "waritha",
+        "meaning": "to inherit (base form I verb)"
+      },
+      {
+        "letters": "وَارِثٌ",
+        "transliteration": "wārith",
+        "meaning": "heir; one who inherits (also an epithet of God, who remains after all else perishes)"
+      },
+      {
+        "letters": "مِيرَاثٌ",
+        "transliteration": "mīrāth",
+        "meaning": "inheritance, what is inherited (property)",
+        "path": "/word/inheritance-13099",
+        "rootId": 13099
+      },
+      {
+        "letters": "إِرْثٌ",
+        "transliteration": "irth",
+        "meaning": "inheritance, heritage (esp. of rank or nobility)"
+      },
+      {
+        "letters": "تُرَاثٌ",
+        "transliteration": "turāth",
+        "meaning": "heritage, legacy"
+      },
+      {
+        "letters": "مَوْرُوثٌ",
+        "transliteration": "mawrūth",
+        "meaning": "inherited property"
+      },
+      {
+        "letters": "تَوَارَثوُهُ",
+        "transliteration": "tawārathūhu",
+        "meaning": "they inherited it by degrees, one from another (form VI)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"yield\" in Arabic?",
+        "a": "أَوْرَثَ (awratha) — used tropically for a cause 'yielding' or occasioning a result, alongside its literal sense 'to make someone inherit.'"
+      },
+      {
+        "q": "What is the difference between أَوْرَثَ and وَرِثَ؟",
+        "a": "وَرِثَ (waritha) means 'to inherit'; أَوْرَثَ (awratha) is its causative form IV, meaning 'to make someone inherit' or, tropically, 'to bring about/yield' something as a result."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "أَوْرَثَ is the form IV causative of وَرِثَ: literally 'to make (someone) inherit' a thing, heritage, or heir-status. It also carries a tropical sense — 'to occasion' or 'yield' something as a consequence, as when a disease is said to 'yield' weakness in the one it afflicts."
+  },
+  "5537": {
+    "rootId": 5537,
+    "triliteralRoot": "ر ح ب",
+    "rootTransliteration": "r-ḥ-b",
+    "rootMeaning": "to be spacious, wide, ample",
+    "headwordTransliteration": "raḥbah",
+    "partOfSpeech": "adjective (feminine of رَحْب)",
+    "senses": [
+      {
+        "gloss": "spacious, wide, roomy, ample",
+        "note": "the feminine form of رَحْب, agreeing with feminine nouns such as أَرْض 'land' or دَار 'house, abode' — e.g. أَرْضٌ رَحْبَةٌ 'a spacious land'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "رَحُبَ",
+        "transliteration": "raḥuba",
+        "meaning": "to be, or become, ample, spacious, wide, roomy"
+      },
+      {
+        "letters": "رَحَّبَ",
+        "transliteration": "raḥḥaba (bihi)",
+        "meaning": "to welcome someone, greet with marḥaban"
+      },
+      {
+        "letters": "أَرْحَبَ",
+        "transliteration": "arḥaba",
+        "meaning": "to make wide or spacious; (to a horse) 'make room, withdraw'"
+      },
+      {
+        "letters": "رَحْبٌ",
+        "transliteration": "raḥb",
+        "meaning": "ample, spacious, wide, roomy (masc.)"
+      },
+      {
+        "letters": "رُحْبٌ",
+        "transliteration": "ruḥb",
+        "meaning": "ampleness, spaciousness, wideness"
+      },
+      {
+        "letters": "رَحِيبٌ",
+        "transliteration": "raḥīb",
+        "meaning": "ample, spacious; also, of a person, voracious"
+      },
+      {
+        "letters": "مَرْحَبٌ",
+        "transliteration": "marḥaban",
+        "meaning": "welcome! (greeting formula, lit. 'ample space')"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"expansive\" in Arabic?",
+        "a": "رَحْبَة (raḥbah) — spacious, wide, roomy, said of a place such as a house or a stretch of land."
+      },
+      {
+        "q": "What is the connection between رَحْبَة and the greeting مَرْحَبًا?",
+        "a": "Both come from the root ر ح ب, meaning 'to be spacious'; مَرْحَبًا literally invites the guest into ampleness, i.e. 'welcome.'"
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "رَحْبَة is simply the feminine counterpart of رَحْب, used with feminine nouns like أَرْض (land), دَار (house), or بِلَاد (country) to describe them as wide and roomy. The same root gives the everyday greeting مَرْحَبًا ('welcome'), literally an invitation to ampleness, and appears in the Qur'an (9:118) in the phrase ضَاقَتْ عَلَيْهِمُ الأَرْضُ بِمَا رَحُبَتْ, 'the earth became strait to them despite its spaciousness.'"
+  },
+  "5547": {
+    "rootId": 5547,
+    "triliteralRoot": "ه و ي",
+    "rootTransliteration": "h-w-y",
+    "rootMeaning": "to fall, drop, or descend",
+    "headwordTransliteration": "hawā",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "love, passionate attachment"
+      },
+      {
+        "gloss": "inclination of the soul toward something, especially an unlawful or excessive appetite",
+        "note": "the sense Lane singles out as usually unpraiseworthy, as in the phrase اتّبع هواه, 'he followed his low desire'"
+      },
+      {
+        "gloss": "a beloved; an object of love",
+        "note": "the verbal noun standing for its own object"
+      },
+      {
+        "gloss": "an opinion that swerves from the truth (mainly in the plural أَهْوَاء)",
+        "note": "cf. أهل الأهواء, 'people of misguided opinions'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "أَهْوَى",
+        "transliteration": "ʾahwā",
+        "meaning": "to reach out or stretch forth the hand toward something (form IV)"
+      },
+      {
+        "letters": "هُوَّةٌ",
+        "transliteration": "huwwa",
+        "meaning": "a deep pit or hollow in the ground"
+      },
+      {
+        "letters": "هَوَآءٌ",
+        "transliteration": "hawāʾ",
+        "meaning": "open air; an empty, vacant space"
+      },
+      {
+        "letters": "هَاوِيَةٌ",
+        "transliteration": "hāwiya",
+        "meaning": "an abyss; a bottomless depth"
+      },
+      {
+        "letters": "مَهْوَاةٌ",
+        "transliteration": "mahwāh",
+        "meaning": "a pit, or the space between two mountains"
+      },
+      {
+        "letters": "هَاوَنٌ",
+        "transliteration": "hāwan",
+        "meaning": "a mortar, for pounding"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"desire\" in Arabic?",
+        "a": "هَوَى (hawā) — the verbal noun for the soul's inclination toward something, often love, but frequently an unlawful or excessive craving."
+      },
+      {
+        "q": "What is the difference between هَوَى and حُبّ?",
+        "a": "Both mean love or attachment, but هَوَى usually stresses an unchecked or blameworthy inclination (as in اتّبع هواه, \"he followed his own desire\"), while حُبّ is the more general word for love."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "هَوَى/الهَوَى most often carries a cautionary shade — the soul's pull toward something, frequently an unlawful or unchecked appetite — rather than neutral wanting; Lane cross-references it with حُبّ for love in the more general sense."
+  },
+  "5548": {
+    "rootId": 5548,
+    "triliteralRoot": "ث م ر",
+    "rootTransliteration": "ṯ-m-r",
+    "rootMeaning": "to bear fruit, become abundant",
+    "headwordTransliteration": "ṯamar",
+    "partOfSpeech": "noun (collective noun / coll. gen. n.)",
+    "senses": [
+      {
+        "gloss": "fruit; the fruit of trees",
+        "note": "a collective noun for the various kinds of fruit a tree produces, whether or not it is eaten"
+      },
+      {
+        "gloss": "(tropical) property or wealth, especially once increased and multiplied",
+        "note": "some read this sense into Qur'an 18:32 rather than literal 'fruit'"
+      },
+      {
+        "gloss": "(tropical) gold and silver",
+        "note": "given by some commentators for Qur'an 18:32, though not attested as ordinary usage"
+      },
+      {
+        "gloss": "trees, or shrubs"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "ثَمَرَ",
+        "transliteration": "ṯamara",
+        "meaning": "to ripen (of fruit)"
+      },
+      {
+        "letters": "ثمّر",
+        "transliteration": "ṯammara",
+        "meaning": "to set and organize its fruit (of a plant); to make wealth abundant"
+      },
+      {
+        "letters": "اثمر",
+        "transliteration": "aṯmara",
+        "meaning": "to put forth or bear fruit; to become abundant in wealth"
+      },
+      {
+        "letters": "ثِمَارٌ",
+        "transliteration": "ṯimār",
+        "meaning": "fruits (plural of thamar)"
+      },
+      {
+        "letters": "ثُمْرٌ",
+        "transliteration": "ṯumr",
+        "meaning": "variant of thamar, sharing its senses of fruit and wealth"
+      },
+      {
+        "letters": "مُثْمِرٌ",
+        "transliteration": "muṯmir",
+        "meaning": "fruit-bearing (a tree that has put forth its fruit)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"fruit\" in Arabic?",
+        "a": "ثَمَرٌ (ṯamar)."
+      },
+      {
+        "q": "Does ثَمَرٌ only mean 'fruit'?",
+        "a": "No — besides literal fruit, it is used figuratively for abundant wealth or property, and by some Qur'an commentators for gold and silver."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "ثَمَرٌ occurs in the Qur'an (18:32), where commentators disagree on whether it means literal fruit or, figuratively, wealth and property (some even gloss it as gold and silver); outside that context it is the ordinary word for the fruit of a tree."
+  },
+  "5546": {
+    "rootId": 5546,
+    "triliteralRoot": "ا ب د",
+    "rootTransliteration": "ʾ-b-d",
+    "rootMeaning": "to remain, continue, endure permanently",
+    "headwordTransliteration": "abad",
+    "partOfSpeech": "noun (abstract noun)",
+    "senses": [
+      {
+        "gloss": "time, a long or unlimited period",
+        "note": "used in an absolute sense, roughly synonymous with dahr ('time/age')"
+      },
+      {
+        "gloss": "eternity, endless duration",
+        "note": "unlimited time with no end, distinguished from azal ('beginningless eternity'); underlies the adverb abadan, 'ever/forever'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "أَبَدَ",
+        "transliteration": "abada",
+        "meaning": "to remain, dwell, or abide continually and permanently in a place"
+      },
+      {
+        "letters": "أبّد",
+        "transliteration": "abbada",
+        "meaning": "to make (something) perpetual"
+      },
+      {
+        "letters": "تأبّد",
+        "transliteration": "taʾabbada",
+        "meaning": "to become deserted and given over to wild animals (of a dwelling); to remain long away from home"
+      },
+      {
+        "letters": "آبِدَةٌ",
+        "transliteration": "ābidah",
+        "meaning": "a wild, untamed animal (one that shuns and flees mankind)"
+      },
+      {
+        "letters": "مُؤَبَّدٌ",
+        "transliteration": "muʾabbad",
+        "meaning": "made perpetual, permanent"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"eternity\" in Arabic?",
+        "a": "أَبَدٌ (abad) — an unlimited, endless span of time."
+      },
+      {
+        "q": "What does أَبَدًا mean in a sentence?",
+        "a": "As an adverb it spans all future time: paired with a negative verb it means 'never,' and on its own it means 'ever' or 'forever.'"
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "The accusative form أَبَدًا (abadan) works adverbially and covers all future time: with a negative verb it gives 'never' (لَا أَفْعَلُهُ أَبَدًا, 'I will never do it'), and without one it gives 'ever, forever.' Phrases like إِلَى الأَبَد ('to the end of time') and عَلَى الأَبَد carry the same sense of unbroken continuation."
+  },
+  "5550": {
+    "rootId": 5550,
+    "triliteralRoot": "ر ج ع",
+    "rootTransliteration": "r-j-ʿ",
+    "rootMeaning": "to return, go back",
+    "headwordTransliteration": "rajaʿa",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to return, go back (to a place, person, or former state)",
+        "note": "the basic sense; contrasted in Lane with ذَهَبَ 'to go'"
+      },
+      {
+        "gloss": "to revert, turn back (from an affair, or in a saying or judgment)",
+        "note": "tropical use, e.g. retracting a statement or ruling"
+      },
+      {
+        "gloss": "to repent, relinquish (a sin)",
+        "note": "tropical use reflected in Qur'anic usage"
+      },
+      {
+        "gloss": "to take back (a gift already given)",
+        "note": "tropical use"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "رُجُوعٌ",
+        "transliteration": "rujūʿ",
+        "meaning": "returning, going back (verbal noun)",
+        "path": "/word/return-9110",
+        "rootId": 9110
+      },
+      {
+        "letters": "رَجْعٌ",
+        "transliteration": "rajʿ",
+        "meaning": "a return, a bringing back; also used of migratory birds returning"
+      },
+      {
+        "letters": "مَرْجِعٌ",
+        "transliteration": "marjiʿ",
+        "meaning": "place or time of return, as in the Qur'anic 'unto your Lord is your return'"
+      },
+      {
+        "letters": "رُجْعَى",
+        "transliteration": "rujʿā",
+        "meaning": "a return (Qur'anic verbal noun)"
+      },
+      {
+        "letters": "ارتجع",
+        "transliteration": "irtajaʿa",
+        "meaning": "to reclaim, demand restitution of something (form VIII)"
+      },
+      {
+        "letters": "رِجَاعٌ",
+        "transliteration": "rijāʿ",
+        "meaning": "the return (of migratory birds after wintering abroad)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"return\" in Arabic?",
+        "a": "رَجَعَ (rajaʿa)."
+      },
+      {
+        "q": "What is the root of رَجَعَ and what does it mean?",
+        "a": "The root is ر ج ع (r-j-ʿ), carrying the core sense 'to return, go back', shared by words like رُجُوعٌ (returning) and مَرْجِعٌ (place of return)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "رَجَعَ is the standard classical and Qur'anic verb for 'to return', used both intransitively (he went back) and, less commonly, transitively (he brought something back). It appears often in the Qur'an, e.g. describing the return of the soul or of people to God, and extends tropically to reverting from an action, retracting a statement, or repenting of sin."
+  },
+  "5551": {
+    "rootId": 5551,
+    "triliteralRoot": "ط ل ب",
+    "rootTransliteration": "ṭ-l-b",
+    "rootMeaning": "to seek, desire, or demand",
+    "headwordTransliteration": "ṭalaba",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to seek, desire, or ask for (something)",
+        "note": "the base, most general sense; covers seeking to find and to obtain or take a thing"
+      },
+      {
+        "gloss": "to pursue, go after, or follow in quest of"
+      },
+      {
+        "gloss": "to demand or press a claim for (a right or due)",
+        "note": "used with بِحَقٍّ, where it takes the sense of طَالَبَ, 'to sue or prosecute someone for a due'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "طَلَبٌ",
+        "transliteration": "ṭalab",
+        "meaning": "a seeking, a request, a quest (verbal noun of ṭalaba)"
+      },
+      {
+        "letters": "طَالِبٌ",
+        "transliteration": "ṭālib",
+        "meaning": "seeker; one who seeks"
+      },
+      {
+        "letters": "طَالَبَ",
+        "transliteration": "ṭālaba",
+        "meaning": "to demand of someone a right or due; to sue or press a claim against"
+      },
+      {
+        "letters": "أَطْلَبَ",
+        "transliteration": "aṭlaba",
+        "meaning": "to grant someone what they sought; or, oppositely, to make a thing so scarce it must be sought out"
+      },
+      {
+        "letters": "تَطَلَّبَ",
+        "transliteration": "taṭallaba",
+        "meaning": "to seek repeatedly, diligently, or time after time"
+      },
+      {
+        "letters": "طَلِبَةٌ",
+        "transliteration": "ṭalibah",
+        "meaning": "a thing sought; an object of desire, want, or need",
+        "path": "/word/students-of-6992",
+        "rootId": 6992
+      },
+      {
+        "letters": "طُلْبَةٌ",
+        "transliteration": "ṭulbah",
+        "meaning": "a far-extending journey",
+        "path": "/word/students-of-6992",
+        "rootId": 6992
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"seek\" in Arabic?",
+        "a": "طَلَبَ (ṭalaba) — to seek, desire, or ask for something."
+      },
+      {
+        "q": "What is the difference between طَلَبَ and طَالَبَ؟",
+        "a": "طَلَبَ is the general verb for seeking or asking for something; طَالَبَ (form III) narrows this to demanding or suing someone for a right or due owed to you."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Lane notes that ṭalaba does not usually govern its object through a preposition, but مِن or إِلَى can appear to name the person asked of (طَلَبَ مِنْهُ / طَلَبَ إِلَيْهِ, 'he sought it of/petitioned him'). Followed by بِحَقٍّ, it shifts toward the sense of طَالَبَ — pressing someone for a due rather than simply wanting a thing."
+  },
+  "5549": {
+    "rootId": 5549,
+    "triliteralRoot": "م ر ر",
+    "rootTransliteration": "m-r-r",
+    "rootMeaning": "to pass, go by, proceed",
+    "headwordTransliteration": "murr",
+    "partOfSpeech": "adjective",
+    "senses": [
+      {
+        "gloss": "bitter (taste), the opposite of sweet",
+        "note": "Basic sense; the root's causative verbs (make bitter) are built directly on this adjective."
+      },
+      {
+        "gloss": "harsh, grievous (of a misfortune or period of time)",
+        "note": "Figurative extension noted in the lexicon alongside مَرَّ عَلَيْهِ, 'a calamity came upon him.'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "مَرَّ",
+        "transliteration": "marra",
+        "meaning": "to pass, pass by, go on, proceed"
+      },
+      {
+        "letters": "مرّرهُ",
+        "transliteration": "marrara",
+        "meaning": "to make (something) bitter, intensively"
+      },
+      {
+        "letters": "مارّهُ",
+        "transliteration": "mārra",
+        "meaning": "to pass along together with someone"
+      },
+      {
+        "letters": "امرّهُ",
+        "transliteration": "amarra",
+        "meaning": "to make pass; also, to make bitter; also, to twist (a rope or thread) tightly"
+      },
+      {
+        "letters": "مِرَّةٌ",
+        "transliteration": "mirrah",
+        "meaning": "bile, gall"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"bitter\" in Arabic?",
+        "a": "مُرّ (murr)."
+      },
+      {
+        "q": "What root does مُرّ come from?",
+        "a": "The triliteral (geminate) root م-ر-ر, whose base verb مَرَّ (marra) means 'to pass, go by' — the same root that gives مِرَّة (bile, gall) and the causative verbs 'to make bitter.'"
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "مُرّ is the plain adjective for a bitter taste, standing opposite 'sweet.' It shares its root with the causative verbs مرّرهُ and امرّهُ, both meaning 'to make bitter,' showing the direct link between the quality and the act of causing it."
+  },
+  "5553": {
+    "rootId": 5553,
+    "triliteralRoot": "س م ع",
+    "rootTransliteration": "s-m-ʿ",
+    "rootMeaning": "to hear, listen",
+    "headwordTransliteration": "samʿ",
+    "partOfSpeech": "noun (verbal noun / maṣdar of سَمِعَ)",
+    "senses": [
+      {
+        "gloss": "hearing; the faculty or act of hearing",
+        "note": "the primary maṣdar (verbal noun) of سَمِعَ, 'he heard'"
+      },
+      {
+        "gloss": "ear(s)",
+        "note": "concrete sense; cf. the plural أَسَامِع, 'ears', used in a hadith on God exposing hidden intentions"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "سَمِعَ",
+        "transliteration": "samiʿa",
+        "meaning": "to hear, listen to; also to understand, to accept/answer (e.g. a prayer), or to obey"
+      },
+      {
+        "letters": "اِسْتَمَعَ",
+        "transliteration": "istamaʿa",
+        "meaning": "to listen attentively, hearken (marks intentional listening, unlike samiʿa which covers unintentional hearing too)"
+      },
+      {
+        "letters": "سَمَّعَ",
+        "transliteration": "sammaʿa",
+        "meaning": "to make (someone) hear; also, to make a person or deed notorious by spreading word of it"
+      },
+      {
+        "letters": "سَمَاعٌ",
+        "transliteration": "samāʿ",
+        "meaning": "hearing, listening (a related simple noun alongside samʿ)"
+      },
+      {
+        "letters": "سِمْعٌ",
+        "transliteration": "simʿ",
+        "meaning": "hearing (a simple noun synonymous with samʿ)"
+      },
+      {
+        "letters": "سُمْعَةٌ",
+        "transliteration": "sumʿa",
+        "meaning": "reputation, notoriety — what people have 'heard of'"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"hearing\" in Arabic?",
+        "a": "سَمْعٌ (samʿ)."
+      },
+      {
+        "q": "What root does سَمْعٌ come from, and what else is built on it?",
+        "a": "The triliteral root س م ع (s-m-ʿ), 'to hear, listen', which also gives سَمِعَ ('he heard'), اِسْتَمَعَ ('he listened attentively'), and سَمَّعَ ('he made someone hear' / 'made notorious')."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "سَمْعٌ is the main verbal noun of سَمِعَ and is used both abstractly, for the faculty or act of hearing, and concretely, for the ear itself — its plural أَسَامِع ('ears') appears in a hadith warning that God will make the ears of His creatures hear of one who acts only to be seen and heard."
+  },
+  "5554": {
+    "rootId": 5554,
+    "triliteralRoot": "ل س ن",
+    "rootTransliteration": "l-s-n",
+    "rootMeaning": "tongue, and eloquence of speech",
+    "headwordTransliteration": "lisān",
+    "partOfSpeech": "noun",
+    "senses": [
+      {
+        "gloss": "tongue (the organ of speech)",
+        "note": "the primary, literal sense"
+      },
+      {
+        "gloss": "the tongue, or cock, of a balance",
+        "note": "the moving pointer/indicator on a scale"
+      },
+      {
+        "gloss": "a projecting piece on the fore part of a sandal"
+      },
+      {
+        "gloss": "information, news, tidings",
+        "note": "used as a synonym of khabar (news)"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "لَسَنٌ",
+        "transliteration": "lasan",
+        "meaning": "chasteness, clarity, or eloquence of speech"
+      },
+      {
+        "letters": "تَلَسُّنٌ",
+        "transliteration": "talassun",
+        "meaning": "a related term, cross-referenced under a separate entry (khaliyy)"
+      },
+      {
+        "letters": "مُلَسَّنٌ",
+        "transliteration": "mulassan",
+        "meaning": "a long, slender sandal shaped like the tip of the tongue"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"tongue\" in Arabic?",
+        "a": "لِسَان (lisān)."
+      },
+      {
+        "q": "Does لِسَان only mean the body part?",
+        "a": "No — beyond the organ, it can also mean the pointer of a balance, a sandal's projecting strap-piece, or news/tidings."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "لِسَان most literally names the physical tongue, but Lane's shows it stretched by shape and function to other things: the pointer of a balance, a projecting strap-piece on a sandal, and even \"news\" or \"tidings\" — since word and report travel by the tongue. The same root gives لَسَنٌ for eloquence or sharpness of speech, showing the family's tie between the organ and the quality of speaking well."
+  },
+  "5552": {
+    "rootId": 5552,
+    "triliteralRoot": "ع ي ن",
+    "rootTransliteration": "ʿ-y-n",
+    "rootMeaning": "the eye; to see, watch, spy",
+    "headwordTransliteration": "ʿayn",
+    "partOfSpeech": "noun (also analysed as the verbal noun of the verb 'to smite with the eye')",
+    "senses": [
+      {
+        "gloss": "eye(s) — the organ of sight"
+      },
+      {
+        "gloss": "the evil eye; harm done to someone by an envious or admiring gaze",
+        "note": "Lane's notes this sense is affirmed as real in a hadith."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "عيّن",
+        "transliteration": "ʿayyana",
+        "meaning": "to specify or single something out; to appoint or assign it particularly"
+      },
+      {
+        "letters": "عَايَنَ",
+        "transliteration": "ʿāyana",
+        "meaning": "to see with one's own eyes; to view directly, face to face",
+        "path": "/word/see-17277",
+        "rootId": 17277
+      },
+      {
+        "letters": "عِيَانٌ",
+        "transliteration": "ʿiyān",
+        "meaning": "direct eyewitnessing; seeing something with one's own eyes, beyond doubt",
+        "path": "/word/seeing-10100",
+        "rootId": 10100
+      },
+      {
+        "letters": "أَعْيَنُ",
+        "transliteration": "aʿyan",
+        "meaning": "wide-eyed; having large, wide eyes"
+      },
+      {
+        "letters": "عِينَةٌ",
+        "transliteration": "ʿīna",
+        "meaning": "a credit sale — goods sold for deferred payment and bought back for less in cash"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"eyes\" in Arabic?",
+        "a": "عَيْن (ʿayn)."
+      },
+      {
+        "q": "How is عيّن (\"to specify\") related to عَيْن (\"eye\")?",
+        "a": "Both come from the root ع ي ن; specifying or appointing something builds on the idea of picking it out precisely with the eye."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Lane's treats عَيْن as covering both the literal eye and the harm of an envious look (the 'evil eye'). The same root branches into words for direct eyewitnessing (عِيَانٌ, عَايَنَ) and for singling something out precisely (عيّن) — the sense of 'the eye' extended to watching, verifying, and specifying."
+  },
+  "10732": {
+    "rootId": 10732,
+    "triliteralRoot": "ح م و",
+    "rootTransliteration": "ḥ-m-w",
+    "rootMeaning": "in-law relative; kinship by marriage",
+    "headwordTransliteration": "ḥāmī",
+    "partOfSpeech": "noun (active participle, fāʿil-pattern of a final-weak root)",
+    "senses": [
+      {
+        "gloss": "protector, one who protects"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "حَمٌ",
+        "transliteration": "ḥam",
+        "meaning": "a woman's husband's male relative — father-in-law, brother-in-law, etc."
+      },
+      {
+        "letters": "حَمَاةٌ",
+        "transliteration": "ḥamāh",
+        "meaning": "a husband's mother, i.e. mother-in-law (also used for the calf muscle of the leg)"
+      },
+      {
+        "letters": "حَمُو",
+        "transliteration": "ḥamū",
+        "meaning": "variant of ḥam, declined like abū and used only before a following genitive"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"protector\" in Arabic?",
+        "a": "حَامِي (ḥāmī)."
+      },
+      {
+        "q": "What does the Arabic root ح م و (ḥ-m-w) mean?",
+        "a": "It covers relatives by marriage: حَمٌ is a husband's male in-law, and حَمَاةٌ is a wife's husband's mother (mother-in-law)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Lane's lists this form among the ح م و entries, but the root's own documented vocabulary is about relatives by marriage, not protection: حَمٌ (and its variants) names a woman's husband's male relative, and its feminine حَمَاةٌ names the husband's mother. The headword's sense \"protector\" stands apart from that in-law vocabulary."
+  },
+  "5335": {
+    "rootId": 5335,
+    "triliteralRoot": "ل ح ظ",
+    "rootTransliteration": "l-ḥ-ẓ",
+    "rootMeaning": "to glance sidelong, watch closely",
+    "headwordTransliteration": "laḥẓah",
+    "partOfSpeech": "noun (instance noun / verbal noun, feminine)",
+    "senses": [
+      {
+        "gloss": "a sidelong glance; a look from the outer corner of the eye; an ogle",
+        "note": "the root sense in Lane's: a look aside, toward the right or left, without (or with less) turning of the face"
+      },
+      {
+        "gloss": "a moment; an instant",
+        "note": "extended sense — a span of time likened to the instant a glance takes, as in the phrase في لحظة 'in the twinkling of an eye'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "لَحَظَ",
+        "transliteration": "laḥaẓa",
+        "meaning": "to glance at someone from the corner of the eye; to watch (form I verb)"
+      },
+      {
+        "letters": "لَاحَظَ",
+        "transliteration": "lāḥaẓa",
+        "meaning": "to regard, have an eye to, pay heed or attention to (figurative, form III)",
+        "path": "/word/to-notice-5867",
+        "rootId": 5867
+      },
+      {
+        "letters": "تَلَاحَظُوا",
+        "transliteration": "talāḥaẓū",
+        "meaning": "to exchange sidelong glances; to be mutually related (form VI)"
+      },
+      {
+        "letters": "لَحْظٌ",
+        "transliteration": "laḥẓ",
+        "meaning": "verbal noun: a glance from the corner of the eye"
+      },
+      {
+        "letters": "لَحَاظٌ",
+        "transliteration": "laḥāẓ",
+        "meaning": "the outer corner of the eye, near the ear"
+      },
+      {
+        "letters": "مَلْحَظٌ",
+        "transliteration": "malḥaẓ",
+        "meaning": "a glance; the place or act of looking sidelong"
+      },
+      {
+        "letters": "مَلْحُوظٌ",
+        "transliteration": "malḥūẓ",
+        "meaning": "noted, regarded, kept in view (figurative)"
+      },
+      {
+        "letters": "لَحَّاظٌ",
+        "transliteration": "laḥḥāẓ",
+        "meaning": "one given to habitually glancing from the corner of the eye"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"moment\" in Arabic?",
+        "a": "لَحْظَة (laḥẓah)."
+      },
+      {
+        "q": "What does لحظة literally mean?",
+        "a": "Literally a sidelong glance — a look from the outer corner of the eye; \"moment\" is an extended sense, comparing a brief span of time to the instant of a glance."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "لَحْظَة originally denotes a physical sidelong glance (the same act as the verb لَحَظَ), but Lane records it used for a brief span of time by analogy — \"I sat with him a laḥẓah\" means \"for as long as a glance takes,\" and في لَحْظَةٍ means \"in an instant.\" This is the sense behind the everyday meaning \"moment.\""
+  },
+  "8984": {
+    "rootId": 8984,
+    "triliteralRoot": "ب د ي",
+    "rootTransliteration": "b-d-y",
+    "rootMeaning": "to begin, start, commence",
+    "headwordTransliteration": "badāyah",
+    "partOfSpeech": "noun",
+    "senses": [
+      {
+        "gloss": "beginning, start, commencement",
+        "note": "used in the same sense as بَدْءٌ (badʾ), the more classical noun from the separate root بدأ"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "بَدِيتُ",
+        "transliteration": "badaytu",
+        "meaning": "I began, started (with something) — a dialectal variant of بَدَأْتُ, said to be used only by the Ansár"
+      },
+      {
+        "letters": "بِدَايَةٌ",
+        "transliteration": "bidāyah",
+        "meaning": "a beginning — the same noun in its more common vocalisation; some grammarians (e.g. Muṭarrizī) called it a vulgar or erroneous form, while Ibn al-Qattāʿ held it to be genuine Ansári dialect"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"beginning\" in Arabic?",
+        "a": "بَدَايَةٌ (badāyah)."
+      },
+      {
+        "q": "Is بَدَايَةٌ the same as بَدْءٌ?",
+        "a": "It carries the same meaning, \"beginning,\" but comes from a different root (بدي rather than بدأ); Lane's notes it as a dialectal form some grammarians disputed and others attributed to the Ansár."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "This noun is bound up with the verb بَدِيتُ, a dialectal form used by the Ansár for \"I began,\" in place of the more standard بَدَأْتُ / اِبْتَدَأْتُ. Lexicographers disagreed sharply on the status of the noun itself: Muṭarrizī labelled it vulgar and Ibn Barrī called it erroneous, while Ibn al-Qattāʿ defended it as authentic Ansári usage — so classical sources treat it as a dialectal counterpart to بَدْءٌ rather than the fully standard literary noun."
+  },
+  "14566": {
+    "rootId": 14566,
+    "triliteralRoot": "ه ي ت",
+    "rootTransliteration": "hyt",
+    "rootMeaning": "to call out, summon, bring",
+    "headwordTransliteration": "hāt",
+    "partOfSpeech": "verb (imperative only — no past-tense or prohibitive form)",
+    "senses": [
+      {
+        "gloss": "Give (me)!",
+        "note": "equivalent to أَعْطِنِى; said to a man as هَاتِ, with distinct forms for dual/plural and for women (هَاتِيَا, هَاتُوا, هَاتِى, هَاتِينَ)"
+      },
+      {
+        "gloss": "Bring",
+        "note": "the common rendering of the same imperative — hand something over"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "هيّت",
+        "transliteration": "hayyata",
+        "meaning": "to cry out to and call someone (form II)"
+      },
+      {
+        "letters": "هَيْتَ لَكَ",
+        "transliteration": "hayta laka",
+        "meaning": "'Come!' — a distinct exclamation, famous from Qur'an 12:23"
+      },
+      {
+        "letters": "هَيَّاتٌ",
+        "transliteration": "hayyāt",
+        "meaning": "clamorous; one who calls out often or loudly"
+      },
+      {
+        "letters": "هِيتٌ",
+        "transliteration": "hītun",
+        "meaning": "a low-lying, depressed piece of ground"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"bring\" in Arabic?",
+        "a": "هَاتِ (hāti) — the imperative meaning 'give me!' or 'hand it over,' said to a man; other forms are used for women, pairs, or groups."
+      },
+      {
+        "q": "Is هَاتِ the same as هَيْتَ لَكَ؟",
+        "a": "No — هَاتِ means 'give me/bring,' while هَيْتَ لَكَ is a separate exclamation meaning 'Come!', known from its use in Qur'an 12:23."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "هَاتِ is a defective imperative verb: it exists only in the command form (هَاتِ to a man, هَاتِيَا to two, هَاتُوا to a group of men, هَاتِى to a woman, هَاتِينَ to a group of women), has no past tense (one does not say هَاتَيْتُ), and is never used prohibitively. Some grammarians trace it to أَتَى ('to come'), with the أ changed to هـ, though its pattern matches Form III. It should not be confused with the related exclamation هَيْتَ لَكَ ('Come!'), which occurs in Qur'an 12:23."
+  },
+  "15001": {
+    "rootId": 15001,
+    "triliteralRoot": "ب ق ي",
+    "rootTransliteration": "b-q-y",
+    "rootMeaning": "to remain, endure, or continue",
+    "headwordTransliteration": "bāqin",
+    "partOfSpeech": "noun (active participle / ism al-fāʿil, of Form I بَقِيَ)",
+    "senses": [
+      {
+        "gloss": "remaining, continuing, lasting",
+        "note": "describing something still present or ongoing"
+      },
+      {
+        "gloss": "enduring, permanent, everlasting",
+        "note": "persisting without end; opposite of فانٍ 'perishing'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "بَقِيَ",
+        "transliteration": "baqiya",
+        "meaning": "to remain, continue, last, endure (Form I verb)"
+      },
+      {
+        "letters": "بَقَاءٌ",
+        "transliteration": "baqāʾ",
+        "meaning": "remaining, continuance, permanence; lasting forever"
+      },
+      {
+        "letters": "أَبْقَى",
+        "transliteration": "abqā",
+        "meaning": "to make/cause to remain, preserve, spare, let live, pardon (Form IV)",
+        "path": "/word/left-12208",
+        "rootId": 12208
+      },
+      {
+        "letters": "بَقِيَّةٌ",
+        "transliteration": "baqiyyah",
+        "meaning": "a remainder, remnant, residue left over of a thing"
+      },
+      {
+        "letters": "بَاقِيَةٌ",
+        "transliteration": "bāqiyah",
+        "meaning": "an enduring, everlasting thing (feminine counterpart of بَاقٍ)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"enduring\" in Arabic?",
+        "a": "بَاق (bāqin) — the active participle of بَقِيَ, 'to remain, last, endure.'"
+      },
+      {
+        "q": "What root does بَاقٍ come from and what does it mean?",
+        "a": "It comes from the root ب ق ي (baqiya), 'to remain, continue, last, endure,' the direct opposite of فَنِيَ 'to perish.'"
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "بَاقٍ is the active participle of بَقِيَ, which Lane glosses as 'to remain, continue, last, endure; to be or become permanent or perpetual' — explicitly the opposite of فَنِيَ 'to perish.' It describes whatever is still present or ongoing, or, more strongly, whatever persists forever. This sense underlies the classical phrase دَارُ البَقَاءِ, 'the abode of everlasting existence,' used for the world to come."
+  },
+  "14966": {
+    "rootId": 14966,
+    "triliteralRoot": "ا ب ن",
+    "rootTransliteration": "ʾ-b-n",
+    "rootMeaning": "to ascribe, attribute, or belong",
+    "headwordTransliteration": "bunayya",
+    "partOfSpeech": "noun (diminutive of اِبْن \"son\", with attached 1st-person possessive suffix)",
+    "senses": [
+      {
+        "gloss": "my dear son",
+        "note": "an affectionate vocative used when addressing one's son; softer and warmer than plain اِبْنِي (\"my son\")"
+      },
+      {
+        "gloss": "little son",
+        "note": "literal sense of the diminutive pattern of اِبْن before the possessive suffix is added"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "اِبْنٌ",
+        "transliteration": "ibn",
+        "meaning": "son (the base word بُنَيَّ is diminutivized from)"
+      },
+      {
+        "letters": "اِبْنَةٌ",
+        "transliteration": "ibna",
+        "meaning": "daughter"
+      },
+      {
+        "letters": "أُبْنَةٌ",
+        "transliteration": "ubna",
+        "meaning": "a knot or fault (in wood, speech, etc.); also rancour or malice"
+      },
+      {
+        "letters": "مَأْبُونٌ",
+        "transliteration": "maʾbūn",
+        "meaning": "one made an object of imputation or suspicion (of evil)"
+      },
+      {
+        "letters": "مُؤَبِّنٌ",
+        "transliteration": "muʾabbin",
+        "meaning": "one who eulogizes and recounts the good deeds of the dead"
+      },
+      {
+        "letters": "إِبَّانٌ",
+        "transliteration": "ibbān",
+        "meaning": "the time or season proper to a thing"
+      },
+      {
+        "letters": "آبِنُوسٌ",
+        "transliteration": "ābinūs",
+        "meaning": "ebony (an arabicized loanword)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"my son\" in Arabic?",
+        "a": "بُنَيَّ (bunayya) — a diminutive of اِبْن (ibn, \"son\") plus the possessive suffix \"my\", used as a warm, affectionate way to address one's son. (A plain, non-affectionate \"my son\" is اِبْنِي, ibnī.)"
+      },
+      {
+        "q": "What root does بُنَيَّ come from?",
+        "a": "It is built on the root ا ب ن, the same root behind اِبْنٌ (\"son\") and اِبْنَةٌ (\"daughter\")."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "بُنَيَّ is not a separate root-word but اِبْن (\"son\") reshaped as a diminutive and fitted with the 1st-person possessive suffix; the effect in speech is tender and affectionate rather than merely diminishing in size — it is how a father addresses a son with warmth."
+  },
+  "5662": {
+    "rootId": 5662,
+    "triliteralRoot": "ا ل ه",
+    "rootTransliteration": "ʾ-l-h",
+    "rootMeaning": "to worship or serve a deity",
+    "headwordTransliteration": "wallāhi",
+    "partOfSpeech": "oath expression (particle وَ \"by\" + the proper name اللّٰه)",
+    "senses": [
+      {
+        "gloss": "by Allah! (I swear by God)",
+        "note": "An oath formula used to affirm or emphasize the truth of a statement; extremely common in everyday and classical speech alike."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "إِلٰه",
+        "transliteration": "ilāh",
+        "meaning": "a god; any object of worship or adoration"
+      },
+      {
+        "letters": "اللّٰه",
+        "transliteration": "allāh",
+        "meaning": "God; the proper name of the one true deity, held by the lexicographers to derive from ilāh"
+      },
+      {
+        "letters": "اَللّٰهُمَّ",
+        "transliteration": "allāhumma",
+        "meaning": "\"O Allah!\" — a vocative form used in supplication and emphatic address"
+      },
+      {
+        "letters": "أَلَهَ",
+        "transliteration": "alaha",
+        "meaning": "he served, worshipped, or adored (a deity)",
+        "path": "/word/deify-him-17984",
+        "rootId": 17984
+      },
+      {
+        "letters": "تَأَلَّهَ",
+        "transliteration": "taʾallaha",
+        "meaning": "he devoted himself to religious worship or acts of devotion"
+      },
+      {
+        "letters": "إِلٰهِىّ",
+        "transliteration": "ilāhī",
+        "meaning": "divine; of or relating to God"
+      },
+      {
+        "letters": "الإِلٰهِيَّة",
+        "transliteration": "al-ilāhiyyah",
+        "meaning": "theology; the study of God's being and attributes",
+        "path": "/word/divinity-6452",
+        "rootId": 6452
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"by Allah\" in Arabic?",
+        "a": "والله (wallāhi) — the oath particle وَ \"by\" attached to اللّٰه, the proper name of God."
+      },
+      {
+        "q": "What is والله literally built from?",
+        "a": "It combines the oath prefix و- with اللّٰه, which Arabic lexicographers trace back to إِلٰه (ilāh), \"a god\" or \"an object of worship,\" from the root ا ل ه meaning to serve or worship."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "والله is one of the most common oath expressions in Arabic, used in both classical and everyday speech to swear to or emphasize the truth of what one is saying, roughly like English \"I swear to God.\" It sits alongside other invocations of the same root, such as اللّٰهُمَّ, used when addressing or calling on God directly."
+  },
+  "5448": {
+    "rootId": 5448,
+    "triliteralRoot": "د ن ر",
+    "rootTransliteration": "d-n-r",
+    "rootMeaning": "dinar, a gold coin, golden colour",
+    "headwordTransliteration": "dīnār",
+    "partOfSpeech": "noun (arabicized loanword)",
+    "senses": [
+      {
+        "gloss": "a dinar — a certain gold coin",
+        "note": "weighs about 71½ barley-corns, the same weight as the mithqāl"
+      },
+      {
+        "gloss": "money, currency in general (chiefly in the plural دَنَانِير, dananir)"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "دَنَّرَ",
+        "transliteration": "dannara",
+        "meaning": "(of a face) to glisten like a dinar; also, to possess many dinars"
+      },
+      {
+        "letters": "تَدَنَّرَ",
+        "transliteration": "tadannara",
+        "meaning": "form V, same sense as دَنَّرَ"
+      },
+      {
+        "letters": "دُنَيْنِيرٌ",
+        "transliteration": "dunaynīr",
+        "meaning": "diminutive of دِينَار, 'little dinar'"
+      },
+      {
+        "letters": "دِينَارِىٌّ",
+        "transliteration": "dīnārī",
+        "meaning": "relating to a dinar, as in a reddish wine named for its dinar-like colour"
+      },
+      {
+        "letters": "مُدَنَّرٌ",
+        "transliteration": "mudannar",
+        "meaning": "coined (of gold); a man with many dinars; a horse or cloth marked with dinar-like spots"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"dinar\" in Arabic?",
+        "a": "دِينَار (dīnār)."
+      },
+      {
+        "q": "What is the plural of دينار?",
+        "a": "دَنَانِير (dananir), 'dinars'."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "دِينَار is an arabicized (non-native) word rather than a native Arabic triliteral formation. One account traces it to Persian; another to دِين آر ('the law brought it'). Some say its true original form was دِنّار, with one ن changed to ى to ease pronunciation and avoid confusion with verbal-noun patterns like كِذّاب — which is why its plural is دَنَانِير rather than a form with ى in it. Despite the loanword origin, later Arabic verbs (دَنَّرَ) and derived nouns (دُنَيْنِيرٌ, مُدَنَّرٌ) were built from it as if from a native root."
+  },
+  "13110": {
+    "rootId": 13110,
+    "triliteralRoot": "ن ش أ",
+    "rootTransliteration": "n-sh-ʾ",
+    "rootMeaning": "to arise, originate, grow up",
+    "headwordTransliteration": "nashaʾa",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to arise, spring up, appear",
+        "note": "said of clouds gathering, or of an opinion/feeling occurring to someone (nashaʾa lahu raʾy)"
+      },
+      {
+        "gloss": "to grow up, become a youth or young person"
+      },
+      {
+        "gloss": "to originate, come into being; to happen or occur"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "أَنْشَأَ",
+        "transliteration": "anshaʾa",
+        "meaning": "to create, originate, bring into being (form IV, said of God originating creation); also to found/build, or to compose a piece of language",
+        "path": "/word/create-12091",
+        "rootId": 12091
+      },
+      {
+        "letters": "نَاشِئٌ",
+        "transliteration": "nāshiʾ",
+        "meaning": "a youth; a boy or girl past the age of childhood"
+      },
+      {
+        "letters": "نَشْأَةٌ",
+        "transliteration": "nashʾa",
+        "meaning": "an origination, a creation; also used of 'the other life' (the resurrection)"
+      },
+      {
+        "letters": "مَنْشَأٌ",
+        "transliteration": "manshaʾ",
+        "meaning": "an origin; the place where one grows up or where something arises"
+      },
+      {
+        "letters": "مُنْشِئٌ",
+        "transliteration": "munshiʾ",
+        "meaning": "one who creates or originates something (active participle of anshaʾa)",
+        "path": "/word/creator-9213",
+        "rootId": 9213
+      },
+      {
+        "letters": "نَشْءٌ",
+        "transliteration": "nashʾ",
+        "meaning": "young people, youths collectively; also clouds in their first rising"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"to arise\" in Arabic?",
+        "a": "نَشَأَ (nashaʾa) — it also covers 'to grow up' and 'to originate/come into being.'"
+      },
+      {
+        "q": "What is the difference between نَشَأَ and أَنْشَأَ?",
+        "a": "نَشَأَ (nashaʾa, form I) means something arises or grows up by itself; أَنْشَأَ (anshaʾa, form IV) is causative — someone or something (often God) brings it into being, e.g. originating creation or founding a building."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "The base verb describes something arising on its own — clouds gathering, a person growing into youth, an opinion forming in the mind. The causative form IV, anshaʾa, shifts to an agent bringing something into being: God originating creation, someone founding a building, or composing a piece of language. The related noun nashʾa also appears in Qur'anic phrasing for 'the other/latter life,' i.e. the resurrection."
+  },
+  "9560": {
+    "rootId": 9560,
+    "triliteralRoot": "ا ل ك",
+    "rootTransliteration": "ʾ-l-k",
+    "rootMeaning": "to send a message; a messenger",
+    "headwordTransliteration": "malāʾikah",
+    "partOfSpeech": "noun (broken plural)",
+    "senses": [
+      {
+        "gloss": "angels",
+        "note": "plural of مَلَكٌ (malak, 'angel'); Lane's records the alternative plural مَلَائِكُ as well"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "مَلَكٌ",
+        "transliteration": "malak",
+        "meaning": "angel (the singular that malāʾikah is the plural of)"
+      },
+      {
+        "letters": "أَلَكَ",
+        "transliteration": "alaka",
+        "meaning": "to convey/send a message, act as a messenger (also: to champ a horse's bit)"
+      },
+      {
+        "letters": "أَلُوكٌ",
+        "transliteration": "alūk",
+        "meaning": "a message; a messenger"
+      },
+      {
+        "letters": "أَلِكْنِى",
+        "transliteration": "alik-nī",
+        "meaning": "'be my messenger, carry my message' — an imperative used by poets"
+      },
+      {
+        "letters": "اسْتَأْلَكَ",
+        "transliteration": "istaʾlaka",
+        "meaning": "to bear or deliver a message"
+      },
+      {
+        "letters": "مَأْلَكٌ",
+        "transliteration": "maʾlak",
+        "meaning": "a message; said to be the original form behind مَلَكٌ (angel)"
+      },
+      {
+        "letters": "مَأْلَكَةٌ",
+        "transliteration": "maʾlakah",
+        "meaning": "a message"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"angels\" in Arabic?",
+        "a": "مَلَائِكَةٌ (malāʾikah) — the plural of مَلَكٌ (malak, 'angel')."
+      },
+      {
+        "q": "What is the singular of ملائكة؟",
+        "a": "مَلَكٌ (malak), 'angel', traced by Lane to a form derived from أَلُوك, 'a message'."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "مَلَائِكَةٌ is the plural of مَلَكٌ (malak), 'angel' — a being who conveys God's message. Lane traces malak back through the forms مَأْلَك and مَلْأَك to أَلُوك, 'a message,' the hemza eventually being dropped from frequent use and then restored in the plural مَلَائِكَة/مَلَائِك. It is the standard word for 'angels' in Qur'anic and classical Arabic."
+  },
+  "14557": {
+    "rootId": 14557,
+    "triliteralRoot": "ر ز ي",
+    "rootTransliteration": "r-z-y",
+    "rootMeaning": "to befall or weigh upon",
+    "headwordTransliteration": "raziyyah",
+    "partOfSpeech": "noun (feminine, variant spelling of رَزِيئَة)",
+    "senses": [
+      {
+        "gloss": "a calamity, a misfortune",
+        "note": "Given by Lane as a variant spelling of رَزِيئَة, with the hamza smoothed into a yāʾ."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "رَزَى",
+        "transliteration": "razā",
+        "meaning": "to accept someone's bounty or favor (form I)"
+      },
+      {
+        "letters": "أَرْزَى",
+        "transliteration": "arzā",
+        "meaning": "to lean or rely upon someone/something, to seek refuge with them (form IV)"
+      },
+      {
+        "letters": "رَزِيَّة",
+        "transliteration": "raziyyah",
+        "meaning": "a calamity, a misfortune"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"a calamity\" in Arabic?",
+        "a": "رَزِيَّة (raziyyah)."
+      },
+      {
+        "q": "Is رَزِيَّة related to رَزِيئَة?",
+        "a": "Yes — Lane's Lexicon treats رَزِيَّة as a variant spelling of رَزِيئَة, formed by smoothing the hamza into a yāʾ, and refers the reader to the entry under the root رزأ."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "رَزِيَّة is the form most often seen in later usage, but Lane's Lexicon notes it is simply an orthographic variant of رَزِيئَة — the hamza smoothed into a yāʾ — and directs the reader to the entry under the root رزأ for its full treatment. Within the رزي root proper, the attested verb senses (رَزَى \"to accept a person's bounty,\" أَرْزَى \"to have recourse to someone for refuge\") are distinct in meaning from the calamity sense carried by رَزِيَّة."
+  },
   "19165": {
     "rootId": 19165,
     "triliteralRoot": "خ ل و",
     "rootTransliteration": "kh-l-w",
+    "rootMeaning": "to be empty, vacant, or alone",
     "headwordTransliteration": "takhallat",
     "partOfSpeech": "verb (form V, perfect tense, 3rd person feminine singular)",
     "senses": [
@@ -4440,7 +20046,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "خَلَّى",
         "transliteration": "khallā",
         "meaning": "to leave a place empty, to vacate it",
-        "path": "/word/let-9420"
+        "path": "/word/let-9420",
+        "rootId": 9420
       },
       {
         "letters": "خَلْوَةٌ",
@@ -4456,7 +20063,8 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
         "letters": "خَالٍ",
         "transliteration": "khālin",
         "meaning": "empty, vacant; alone (active participle of khalā)",
-        "path": "/word/mole-skin-mark-14001"
+        "path": "/word/mole-skin-mark-14001",
+        "rootId": 14001
       },
       {
         "letters": "مُسْتَخْلٍ",
@@ -4477,6 +20085,2241 @@ export const WORD_ENRICHMENT: Record<number, WordEnrichment> = {
     "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
     "sourceUrl": "https://lanelexicon.com/",
     "usageNote": "Rooted in the core sense of \"emptiness\" — the same root gives خَلَا (a place or thing becoming empty, vacant, or free of something) and خَلْوَةٌ (being alone with someone in private). تَخَلَّتْ, a form V verb, carries this notion reflexively: the subject removes or empties herself from a place, i.e. departs or withdraws."
+  },
+  "5199": {
+    "rootId": 5199,
+    "triliteralRoot": "ق ل ل",
+    "rootTransliteration": "q-l-l",
+    "rootMeaning": "to be few, small, or scanty",
+    "headwordTransliteration": "qillah",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "paucity, fewness, or smallness in number, quantity, or amount; scantiness"
+      },
+      {
+        "gloss": "lack, want of due amount of something",
+        "note": "often the best rendering of qillah, as in qillat mubālāh, 'lack of due care'; Lane notes it can also be equivalent to ʿadam, 'absence, non-existence'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "قَلَّ",
+        "transliteration": "qalla",
+        "meaning": "to be or become few, small, or scanty in number or amount (form I)"
+      },
+      {
+        "letters": "قَلِيلٌ",
+        "transliteration": "qalīl",
+        "meaning": "few, little, scanty; a small quantity of something"
+      },
+      {
+        "letters": "أَقَلُّ",
+        "transliteration": "aqallu",
+        "meaning": "fewer, less (elative)"
+      },
+      {
+        "letters": "قُلٌّ",
+        "transliteration": "qull",
+        "meaning": "poverty"
+      },
+      {
+        "letters": "أَقَلَّ",
+        "transliteration": "aqalla",
+        "meaning": "to become poor, to have little property (form IV)"
+      },
+      {
+        "letters": "قَلَّلَهُ",
+        "transliteration": "qallalahu",
+        "meaning": "to make it, or consider it, little (form II)"
+      },
+      {
+        "letters": "مُسْتَقِلٌّ",
+        "transliteration": "mustaqill",
+        "meaning": "independent, self-managing, standing alone (form X active participle)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"lack\" in Arabic?",
+        "a": "قِلَّةٌ (qillah)."
+      },
+      {
+        "q": "What is the difference between qillah and qalīl?",
+        "a": "Qillah (قِلَّةٌ) is the abstract noun meaning 'lack, paucity, fewness,' while qalīl (قَلِيلٌ) is the adjective 'few, little, scanty' used to describe something that has little of a thing."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Qillah is the abstract noun tied to the verb qalla ('to be few/little'), so it spans paucity, scantiness, and lack. In set phrases like qillat mubālāh ('lack of due care') it works much like the English word 'lack'; Lane also records it as sometimes equivalent to ʿadam, 'absence' or 'non-existence'."
+  },
+  "5204": {
+    "rootId": 5204,
+    "triliteralRoot": "ح ق ق",
+    "rootTransliteration": "ḥ-q-q",
+    "rootMeaning": "to be true, right, or established",
+    "headwordTransliteration": "ḥaqq",
+    "partOfSpeech": "noun (verbal noun / maṣdar)",
+    "senses": [
+      {
+        "gloss": "truth, reality, fact",
+        "note": "the primary abstract sense; opposite of falsehood"
+      },
+      {
+        "gloss": "that which is right, just, correct, valid, or sound"
+      },
+      {
+        "gloss": "something necessary, binding, obligatory, incumbent, or due",
+        "note": "a legal/ethical sense — a duty owed or a right owed to someone"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "حَقَّ",
+        "transliteration": "ḥaqqa",
+        "meaning": "to be or become true, right, just, established, or necessary (verb I)"
+      },
+      {
+        "letters": "حَقِيقَةٌ",
+        "transliteration": "ḥaqīqah",
+        "meaning": "reality, truth; the essential nature of a thing that one is bound to uphold"
+      },
+      {
+        "letters": "حَقِيقٌ",
+        "transliteration": "ḥaqīq",
+        "meaning": "fit, worthy, suited, or apt (for something)"
+      },
+      {
+        "letters": "حِقَّةٌ",
+        "transliteration": "ḥiqqah",
+        "meaning": "a she-camel that has completed three years (a technical pastoral term from the same root)"
+      },
+      {
+        "letters": "حَقَّانِىٌّ",
+        "transliteration": "ḥaqqānī",
+        "meaning": "real, genuine, rightful — an adjective built directly on ḥaqq"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"truth\" in Arabic?",
+        "a": "Ḥaqq (حَقّ)."
+      },
+      {
+        "q": "Does ḥaqq only mean \"truth\", or also \"a right\"?",
+        "a": "Both — as a verbal noun of ḥaqqa ('to be true, right, or necessary'), ḥaqq covers truth/reality as well as something binding, due, or owed, i.e. a right or obligation."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Ḥaqq is the verbal noun of ḥaqqa ('to be true, right, just, or necessary'), so it carries both an abstract sense — truth, reality, fact — and a legal-ethical sense — a binding right, due, or obligation. The related verb is used in the Qur'an (e.g. 36:6) for a decree or sentence 'becoming due,' i.e. inevitably taking effect, showing the same core idea of something being firmly established as certain or required."
+  },
+  "5206": {
+    "rootId": 5206,
+    "triliteralRoot": "خ م ل",
+    "rootTransliteration": "kh-m-l",
+    "rootMeaning": "to be obscure, hidden, or unnoticed",
+    "headwordTransliteration": "khumūl",
+    "partOfSpeech": "noun (verbal noun / maṣdar of form I خَمَلَ)",
+    "senses": [
+      {
+        "gloss": "obscurity; being unnoted, reputeless, or of no reputation",
+        "note": "said of a person, or of a person's reputation (ذِكْر) or renown (صَوْت), fading into obscurity"
+      },
+      {
+        "gloss": "effacement; being obliterated or imperceptible",
+        "note": "the earlier, more concrete sense — used of a place of abode, or a tattoo-mark, wearing away and disappearing"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "خَمَلَ",
+        "transliteration": "khamala",
+        "meaning": "to become obscure/unnoted; to be effaced (form I verb)"
+      },
+      {
+        "letters": "أَخْمَلَ",
+        "transliteration": "akhmala",
+        "meaning": "to render someone obscure or reputeless (form IV; explicit opposite of نَبَّهَ, 'to make renowned')"
+      },
+      {
+        "letters": "خَامِلٌ",
+        "transliteration": "khāmil",
+        "meaning": "an obscure, unnoted, reputeless person"
+      },
+      {
+        "letters": "خَمِيلَةٌ",
+        "transliteration": "khamīlah",
+        "meaning": "a dense grove of trees, or a fertile meadow/lowland"
+      },
+      {
+        "letters": "خِمْلَةٌ",
+        "transliteration": "khimlah",
+        "meaning": "a person's hidden secret or concealed inner disposition"
+      },
+      {
+        "letters": "خَمْلٌ",
+        "transliteration": "khaml",
+        "meaning": "the nap or pile on the surface of a garment or carpet"
+      },
+      {
+        "letters": "خُمَالٌ",
+        "transliteration": "khumāl",
+        "meaning": "a lameness or joint ailment, in a person or in a beast's legs"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"obscurity\" in Arabic?",
+        "a": "خُمُولٌ (khumūl) — the verbal noun of خَمَلَ, used of a person or their reputation sinking into obscurity."
+      },
+      {
+        "q": "What does خَامِلٌ (khāmil) mean?",
+        "a": "An obscure, unnoted, reputeless person — the adjective from the same root as خُمُولٌ, describing someone with no standing or renown."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Khumūl and its root sit as the standing opposite of fame: form IV اخمل is glossed directly as the contrary of نَبَّهَ ('to make renowned'), and a related infinitive noun even appears in a description of the Prophet purely to be paired against نَبَاهَة ('renown'). So the word marks a person or a thing's reputation as having faded into obscurity, extending an older, more concrete sense of a mark or dwelling being effaced and no longer perceptible."
+  },
+  "5220": {
+    "rootId": 5220,
+    "triliteralRoot": "م ح ق",
+    "rootTransliteration": "m-ḥ-q",
+    "rootMeaning": "to blot out, efface, annihilate",
+    "headwordTransliteration": "maḥq",
+    "partOfSpeech": "noun (verbal noun / maṣdar of form I)",
+    "senses": [
+      {
+        "gloss": "removal, deprivation of blessing or increase",
+        "note": "rendering a thing deficient by taking away its increase or baraka"
+      },
+      {
+        "gloss": "annihilation, annulment, total obliteration",
+        "note": "doing away with something wholly, so that no trace of it remains"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "مَحَقَ",
+        "transliteration": "maḥaqa",
+        "meaning": "form I verb: to render deficient and deprive of blessing; to annihilate or wipe out entirely"
+      },
+      {
+        "letters": "مَحَّقَ",
+        "transliteration": "maḥḥaqa",
+        "meaning": "form II verb, same sense as maḥaqa (intensified obliteration)"
+      },
+      {
+        "letters": "المُحَاقِ",
+        "transliteration": "al-muḥāq",
+        "meaning": "the dark nights of the lunar month, when the moon's light is effaced"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"removal\" in Arabic?",
+        "a": "مَحْقٌ (maḥq)."
+      },
+      {
+        "q": "What does the root م ح ق (m-ḥ-q) mean?",
+        "a": "To deprive something of its blessing or increase, or to annihilate and obliterate it so no trace remains."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Applied to something being drained of its blessing or increase, or more broadly to a thing being blotted out so completely that nothing of it is left; the related term al-muḥāq names the moonless nights at month's end, where the moon's light is effaced."
+  },
+  "5221": {
+    "rootId": 5221,
+    "triliteralRoot": "ب ر ك",
+    "rootTransliteration": "b-r-k",
+    "rootMeaning": "to settle firmly; to bless",
+    "headwordTransliteration": "baraka",
+    "partOfSpeech": "noun (feminine singular)",
+    "senses": [
+      {
+        "gloss": "blessing; divine favor",
+        "note": "what God is said to 'put into' someone or something, per بارك الله فيك"
+      },
+      {
+        "gloss": "good fortune, prosperity, increase",
+        "note": "any lasting good bestowed on a person, place, or thing"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "بَرَكَ",
+        "transliteration": "baraka",
+        "meaning": "to kneel down and settle on the breast (of a camel); also, to be firm, steadfast, or remain fixed in a place"
+      },
+      {
+        "letters": "بارك",
+        "transliteration": "bāraka",
+        "meaning": "to bless (as in بارك الله فيك, 'God bless you'); also, to persevere constantly at something",
+        "path": "/word/bless-11202",
+        "rootId": 11202
+      },
+      {
+        "letters": "بَرَّكَ",
+        "transliteration": "barraka",
+        "meaning": "to invoke a blessing on someone or something"
+      },
+      {
+        "letters": "أَبْرَكَ",
+        "transliteration": "abraka",
+        "meaning": "to make a camel kneel down"
+      },
+      {
+        "letters": "تَبَرَّكَ",
+        "transliteration": "tabarraka",
+        "meaning": "to seek a blessing through someone or something; to regard it as a source of good"
+      },
+      {
+        "letters": "تَبَارَكَ",
+        "transliteration": "tabāraka",
+        "meaning": "to be greatly exalted or glorified (as in تبارك الله, 'Blessed/exalted is God')"
+      },
+      {
+        "letters": "بَرْكٌ",
+        "transliteration": "birk",
+        "meaning": "the breast of a camel, the part it kneels down upon"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"blessing\" in Arabic?",
+        "a": "بَرَكَة (baraka)."
+      },
+      {
+        "q": "What does بارك الله فيك mean?",
+        "a": "Literally \"God bless you\" — from the same root, meaning God has placed a baraka (blessing, good fortune) in you."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "The root's physical core is a camel kneeling and settling firmly on its breast; lexicographers trace بَرَكَة and بارك back to this idea of something taking hold and abiding in a place. Common set phrases keep this sense alive: بارك الله فيك ('God bless you,' lit. may God put a baraka in you) and تبارك الله ('Blessed/exalted is God'), both built on the same root."
+  },
+  "5251": {
+    "rootId": 5251,
+    "triliteralRoot": "ا ل ه",
+    "rootTransliteration": "ʾ-l-h",
+    "rootMeaning": "to worship, serve as deity",
+    "headwordTransliteration": "allāh",
+    "partOfSpeech": "proper noun (divine name)",
+    "senses": [
+      {
+        "gloss": "God; Allāh — the proper name of the one true God",
+        "note": "A proper name applied to the Being who exists necessarily and comprises all attributes of perfection; the initial ال is inseparable from it."
+      },
+      {
+        "gloss": "traditionally linked to إِلٰه ('a god, an object of worship')",
+        "note": "Most grammarians hold that اللَّهُ is originally إِلٰه/إِلَاه with the ال prefixed and the two hamzahs contracted, though some (e.g. Al-Layth) treat it as underived."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "إِلٰهٌ",
+        "transliteration": "ilāh",
+        "meaning": "a god; deity — anything taken as an object of worship (pl. آلهة, 'gods, idols')"
+      },
+      {
+        "letters": "أَلَهَ",
+        "transliteration": "aliha / alaha",
+        "meaning": "he served, worshipped, or adored (form I verb)",
+        "path": "/word/deify-him-17984",
+        "rootId": 17984
+      },
+      {
+        "letters": "تَأَلَّهَ",
+        "transliteration": "taʾallaha",
+        "meaning": "he devoted himself to religious exercises, applied himself to acts of devotion (form V)"
+      },
+      {
+        "letters": "تَأْلِيهٌ",
+        "transliteration": "taʾlīh",
+        "meaning": "making someone an object of service/worship; also glossed as enslaving (form II)"
+      },
+      {
+        "letters": "إِلَاهَةٌ",
+        "transliteration": "ilāhah",
+        "meaning": "the act of serving/worshipping; also 'godship, divinity'"
+      },
+      {
+        "letters": "إِلهِىٌّ",
+        "transliteration": "ilāhiyy",
+        "meaning": "divine; of or relating to God or a god"
+      },
+      {
+        "letters": "الإِلهِيَّةُ",
+        "transliteration": "al-ilāhiyyah",
+        "meaning": "theology — the science of God's being and attributes",
+        "path": "/word/divinity-6452",
+        "rootId": 6452
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"God\" in Arabic?",
+        "a": "Allāh (اللَّهُ) — the proper name for God used across Arabic, by speakers of all faiths."
+      },
+      {
+        "q": "What is the root of the word Allāh?",
+        "a": "Its root is ا ل ه; most grammarians trace اللَّهُ to إِلٰه ('a god, an object of worship'), with the ال prefixed, though a minority view holds the name is underived."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "اللَّهُ is the standard Arabic proper name for God, its initial ال never dropped. Lane records the leading grammatical view that it derives from إِلٰه/إِلَاه, an ordinary noun meaning 'a thing worshipped' (measure فِعَال used in the sense of مَفْعُول, like كِتَاب for 'written'), though other authorities held the name to be underived altogether. The related root produces the everyday verb أَلَهَ 'to worship' and abstract nouns for divinity (إِلَاهَة) and theology (الإِلهِيَّة)."
+  },
+  "5254": {
+    "rootId": 5254,
+    "triliteralRoot": "م و أ",
+    "rootTransliteration": "m-w-ʾ",
+    "rootMeaning": "to mew, cry like a cat",
+    "headwordTransliteration": "māʾ",
+    "partOfSpeech": "noun (collective/generic noun, اسم جنس)",
+    "senses": [
+      {
+        "gloss": "water",
+        "note": "the basic and most common sense; a generic collective noun, with مَاءَة (māʾa) as its singulative ('a body of water')"
+      },
+      {
+        "gloss": "lustre, sheen, or wavy grain-pattern",
+        "note": "of teeth, or 'the water of a sword' — the shine or watered pattern in a blade's metal"
+      },
+      {
+        "gloss": "freshness of youth; honour, self-respect",
+        "note": "as in مَاءُ الشَّبَابِ ('the water/bloom of youth') and مَاءُ الوَجْهِ ('the water of the face', i.e. one's honour)"
+      },
+      {
+        "gloss": "seminal fluid",
+        "note": "as in مَاءُ الظَّهْرِ, linked in the source to Qur'an 86:6-7"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "مَآءَ",
+        "transliteration": "māʾa",
+        "meaning": "to mew (of a cat) — form I verb"
+      },
+      {
+        "letters": "أَمْوَأَ",
+        "transliteration": "amwaʾa",
+        "meaning": "to mimic a cat's mew (said of a man) — form IV"
+      },
+      {
+        "letters": "مُؤَآءٌ",
+        "transliteration": "muʾāʾ",
+        "meaning": "a cat's mew; the sound of mewing"
+      },
+      {
+        "letters": "مَؤُوْءٌ",
+        "transliteration": "maʾūʾ",
+        "meaning": "a mewing cat"
+      },
+      {
+        "letters": "مَائِئَةٌ",
+        "transliteration": "māʾiʾa",
+        "meaning": "a cat (epithet)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"water\" in Arabic?",
+        "a": "مَاءٌ (māʾ)."
+      },
+      {
+        "q": "What does مَاءُ الذَّهَبِ mean?",
+        "a": "Literally 'water of gold' — a gold-wash used for gilding an object (مَاءُ الفِضَّةِ is the equivalent silver-wash for silvering)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "مَاءٌ is a generic/collective noun (اسم جنس) with singulative مَاءَة, so it can take a plural adjective, as in مَاءٌ عِذَابٌ ('sweet waters'); it also builds compounds like مَاءُ الذَّهَبِ ('gold-wash') and اِبْنُ المَاءِ ('waterbird'), extending 'water' to shine, moisture, or bloom. Lane's lexicon lists this root's other headwords (مَآءَ, مُؤَآءٌ, etc.) as an unrelated set meaning 'to mew' like a cat, sharing only the root letters with مَاءٌ."
+  },
+  "5256": {
+    "rootId": 5256,
+    "triliteralRoot": "ن و ر",
+    "rootTransliteration": "n-w-r",
+    "rootMeaning": "to shine, burn, give light",
+    "headwordTransliteration": "nār",
+    "partOfSpeech": "noun (mostly feminine, sometimes masculine)",
+    "senses": [
+      {
+        "gloss": "fire, flame",
+        "note": "the visible blazing; the word's basic, well-known sense"
+      },
+      {
+        "gloss": "the fire of hell",
+        "note": "used for hellfire in religious contexts"
+      },
+      {
+        "gloss": "heat"
+      },
+      {
+        "gloss": "evil, strife, or war; also opinion or counsel",
+        "note": "figurative (tropical) extension, as in 'the fire of war'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "نُورٌ",
+        "transliteration": "nūr",
+        "meaning": "light"
+      },
+      {
+        "letters": "نَوْرٌ",
+        "transliteration": "nawr",
+        "meaning": "blossom, flower (of a tree or plant)"
+      },
+      {
+        "letters": "تَنْوِيرٌ",
+        "transliteration": "tanwīr",
+        "meaning": "illumination; the act of shining, or of a tree blossoming"
+      },
+      {
+        "letters": "مُنِيرٌ",
+        "transliteration": "munīr",
+        "meaning": "shining, giving light"
+      },
+      {
+        "letters": "مُسْتَنِيرٌ",
+        "transliteration": "mustanīr",
+        "meaning": "radiant; one who seeks or gains light"
+      },
+      {
+        "letters": "نُورَةٌ",
+        "transliteration": "nūra",
+        "meaning": "a substance smeared on the body"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"fire\" in Arabic?",
+        "a": "نَارٌ (nār)."
+      },
+      {
+        "q": "What is the plural of نار?",
+        "a": "The most common plural is نِيرَانٌ (nīrān); less common plurals include أَنْوُرٌ, نُورٌ, نِيَرَةٌ, and نِيَارٌ."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "نَارٌ is usually feminine but occasionally treated as masculine; its commonest plural is نِيرَانٌ, alongside less frequent plurals أَنْوُرٌ, نُورٌ, نِيَرَةٌ and نِيَارٌ. Beyond literal fire, it extends figuratively to heat, to hellfire, and to the 'fire' of war, strife, or even opinion and counsel."
+  },
+  "5272": {
+    "rootId": 5272,
+    "triliteralRoot": "ح ق ق",
+    "rootTransliteration": "ḥ-q-q",
+    "rootMeaning": "to be true, real, rightfully due",
+    "headwordTransliteration": "ḥaqq",
+    "partOfSpeech": "noun (also used as a quasi-adjective/predicate)",
+    "senses": [
+      {
+        "gloss": "truth, reality, fact; what is correct or genuine",
+        "note": "Lane traces this to the primary sense of the root: being suitable to the requirements of wisdom, justice, or reality — i.e. established, sound, and indubitable."
+      },
+      {
+        "gloss": "a right, due, or duty; that which is binding, obligatory, or incumbent",
+        "note": "Corresponds to the root's sense of وَجَبَ (to be necessitated) — what one owes, or what is owed to one."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "حَقَّ",
+        "transliteration": "ḥaqqa",
+        "meaning": "verb: to be/become true, right, just, real, or established as fact; also, to become necessary, due, or incumbent"
+      },
+      {
+        "letters": "حَقِيقَةٌ",
+        "transliteration": "ḥaqīqah",
+        "meaning": "reality, truth; that which it is necessary for one to defend or uphold"
+      },
+      {
+        "letters": "حَقِيقٌ",
+        "transliteration": "ḥaqīq",
+        "meaning": "fit, suited, apt, or worthy (to do a given thing)"
+      },
+      {
+        "letters": "حِقَّةٌ",
+        "transliteration": "ḥiqqah",
+        "meaning": "a she-camel that has completed three years and entered her fourth"
+      },
+      {
+        "letters": "أَحَقَّ",
+        "transliteration": "aḥaqqa",
+        "meaning": "verb (of a camel): to become a ḥiqq, i.e. old enough and fit to be laden"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"duty\" in Arabic?",
+        "a": "حَقّ (ḥaqq) — the same word also covers 'right' and 'truth/reality', since all three senses stem from the idea of something being as it truly and rightfully ought to be."
+      },
+      {
+        "q": "What is the difference between ḥaqq and ḥaqīqah?",
+        "a": "Ḥaqq is the root noun for truth/right/due; ḥaqīqah is a derived noun meaning 'reality' or 'truth' — specifically that which one is bound to defend or uphold as true."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "At root, ḥaqq marks something as matching the demands of truth, justice, or reality — hence its two closely linked uses: as an abstract noun for 'truth/reality' and as a term for a binding right, claim, or duty. Lane cites the Qur'an (36:6): the 'saying' (sentence of punishment) 'ḥaqqa' — had become inevitably true/incumbent — showing the same root sense of necessity applied to a decree."
+  },
+  "5286": {
+    "rootId": 5286,
+    "triliteralRoot": "ص د ق",
+    "rootTransliteration": "ṣ-d-q",
+    "rootMeaning": "to be true, truthful",
+    "headwordTransliteration": "ṣadaqah",
+    "partOfSpeech": "noun (feminine noun, from the root ص-د-ق)",
+    "senses": [
+      {
+        "gloss": "charity; a charitable gift"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "صَدَقَ",
+        "transliteration": "ṣadaqa",
+        "meaning": "to speak the truth, tell truly (verb I)"
+      },
+      {
+        "letters": "صِدْقٌ",
+        "transliteration": "ṣidq",
+        "meaning": "truth, truthfulness — opposite of falsehood (kadhib)"
+      },
+      {
+        "letters": "صَدَّقَ",
+        "transliteration": "ṣaddaqa",
+        "meaning": "to believe, accept as true; to confirm or verify (verb II)"
+      },
+      {
+        "letters": "تَصْدِيقٌ",
+        "transliteration": "taṣdīq",
+        "meaning": "belief, acceptance as true; confirmation (verbal noun of ṣaddaqa)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"charity\" in Arabic?",
+        "a": "Charity is صَدَقَة (ṣadaqah) in Arabic."
+      },
+      {
+        "q": "What root does صَدَقَة come from, and how is it related to \"truth\"?",
+        "a": "It comes from the triliteral root ص-د-ق (ṣ-d-q), whose core sense is truthfulness — the same root behind صَدَقَ (\"to speak the truth\") and صِدْق (\"truthfulness\")."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "The root ص-د-ق centers on truthfulness: the base verb صَدَقَ means to speak truly and stands as the direct opposite of كَذَبَ (\"to lie\"). صَدَقَةٌ belongs to a cluster of similarly patterned nouns built on this same root (e.g. صَدْقَةٌ, صُدْقَةٌ), so although its own sense is specifically \"charity,\" it carries the root's underlying association with sincerity and truth."
+  },
+  "5299": {
+    "rootId": 5299,
+    "triliteralRoot": "س و أ",
+    "rootTransliteration": "s-w-ʾ",
+    "rootMeaning": "to be evil, bad",
+    "headwordTransliteration": "sayyiʾah",
+    "partOfSpeech": "noun (feminine substantive, from the adjective سَيِّئٌ)",
+    "senses": [
+      {
+        "gloss": "a bad deed, misdeed, wrongdoing",
+        "note": "the ordinary sense, as opposed to a good act"
+      },
+      {
+        "gloss": "an evil, harm, or offense done to someone",
+        "note": "broader use tied to the root sense 'to grieve, displease, or do evil to' (cf. مَسَآءَةٌ)"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "سَآءَ",
+        "transliteration": "sāʾa",
+        "meaning": "to be or become evil, bad, abominable, unseemly (verb, form I)"
+      },
+      {
+        "letters": "أَسَآءَ",
+        "transliteration": "asāʾa",
+        "meaning": "to do evil, act badly; opposite of أَحْسَنَ 'to do good' (verb, form IV)"
+      },
+      {
+        "letters": "سَوْءٌ",
+        "transliteration": "sawʾ",
+        "meaning": "evil, badness, harm (verbal noun of سَآءَ)"
+      },
+      {
+        "letters": "سَيِّئٌ",
+        "transliteration": "sayyiʾ",
+        "meaning": "evil, bad (masculine adjective; base of سَيِّئَةٌ)"
+      },
+      {
+        "letters": "مَسَآءَةٌ",
+        "transliteration": "masāʾah",
+        "meaning": "an evil or injury done to someone; a cause of grief or displeasure"
+      },
+      {
+        "letters": "مَسَاوٍ",
+        "transliteration": "masāwin",
+        "meaning": "evils, faults, misdeeds (plural form)"
+      },
+      {
+        "letters": "استآء",
+        "transliteration": "istāʾa",
+        "meaning": "to experience evil, be grieved or displeased (verb, form VIII)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"bad deed\" in Arabic?",
+        "a": "سَيِّئَةٌ (sayyiʾah)."
+      },
+      {
+        "q": "What root does سَيِّئَةٌ come from?",
+        "a": "The triliteral root س و أ (s-w-ʾ), also behind سَآءَ 'to be evil/bad' and أَسَآءَ 'to do evil.'"
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "سَيِّئَةٌ is the feminine of the adjective سَيِّئٌ, itself tied to the verb سَآءَ 'to be or become evil, bad, abominable, foul, or unseemly.' Used as a noun it names a concrete bad deed or misdeed, paralleling the form IV verb أَسَآءَ 'to do evil, act ill' — the stated opposite of أَحْسَنَ 'to do good.'"
+  },
+  "5300": {
+    "rootId": 5300,
+    "triliteralRoot": "خ ل و",
+    "rootTransliteration": "kh-l-w",
+    "rootMeaning": "to be empty, vacant, free",
+    "headwordTransliteration": "takhallī",
+    "partOfSpeech": "noun (verbal noun / maṣdar, form V — تفعّل)",
+    "senses": [
+      {
+        "gloss": "abandonment; giving up, relinquishment of something"
+      },
+      {
+        "gloss": "divesting or freeing oneself of something",
+        "note": "the reflexive counterpart to causative خَلَّى ('to vacate, leave'); built on the root's core sense of being empty or free of something"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "خَلَا",
+        "transliteration": "khalā",
+        "meaning": "to be empty, vacant, or devoid (of something); to be alone; to become free of a fault or thing"
+      },
+      {
+        "letters": "خَلَّى",
+        "transliteration": "khallā",
+        "meaning": "to vacate, leave, or let go of (a place or thing) — the causative form V is built on",
+        "path": "/word/let-9420",
+        "rootId": 9420
+      },
+      {
+        "letters": "خالاهُ",
+        "transliteration": "khālāhu",
+        "meaning": "to try to deceive, outwit, or beguile someone"
+      },
+      {
+        "letters": "خَلْوَةٌ",
+        "transliteration": "khalwa",
+        "meaning": "privacy, solitude; a private meeting alone with someone"
+      },
+      {
+        "letters": "خَالٍ",
+        "transliteration": "khālin",
+        "meaning": "empty, vacant; alone — active participle of خَلَا",
+        "path": "/word/mole-skin-mark-14001",
+        "rootId": 14001
+      },
+      {
+        "letters": "خَلَآءٌ",
+        "transliteration": "khalāʾ",
+        "meaning": "emptiness, vacancy; an open, unoccupied space"
+      },
+      {
+        "letters": "مُسْتَخْلٍ",
+        "transliteration": "mustakhlin",
+        "meaning": "one who withdraws into seclusion, e.g. to devote himself to religious exercises"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"abandonment\" in Arabic?",
+        "a": "تَخَلٍّ (takhallī)."
+      },
+      {
+        "q": "What root does تخلي come from?",
+        "a": "The root خ ل و (kh-l-w), meaning 'empty, vacant, free of'; تخلي is its form V (تفعّل) verbal noun, denoting the act of divesting or freeing oneself of something."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "The root خ ل و centers on emptiness, vacancy, and being free or alone. تَخَلٍّ, the form V verbal noun, takes that sense reflexively: rather than a place simply being empty, the subject actively empties or frees himself of something — hence 'abandonment,' divesting oneself of a possession, duty, or attachment by one's own act."
+  },
+  "5323": {
+    "rootId": 5323,
+    "triliteralRoot": "س و أ",
+    "rootTransliteration": "s-w-ʾ",
+    "rootMeaning": "to be evil, bad, or ugly",
+    "headwordTransliteration": "sāʾa",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to be or become evil, bad, foul, unseemly, or ugly",
+        "note": "intransitive; used like بِئْسَ for exclamatory censure, e.g. Qur'an 17:34 سَآءَ سَبِيلًا 'evil is it as a way (of acting)!'"
+      },
+      {
+        "gloss": "to displease, grieve, or vex (someone)",
+        "note": "transitive (سَآءَهُ 'it grieved him'); given as the opposite of سَرَّ 'to please'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "سَوّأ",
+        "transliteration": "sawwaʾa",
+        "meaning": "to corrupt or mar something; to tell someone 'you have done ill' about a deed"
+      },
+      {
+        "letters": "أَسَآءَ",
+        "transliteration": "asāʾa",
+        "meaning": "to do evil, act badly, or do something poorly — opposite of doing well (aḥsana)"
+      },
+      {
+        "letters": "استآء",
+        "transliteration": "istāʾa",
+        "meaning": "to experience evil, displeasure, grief, or anxiety"
+      },
+      {
+        "letters": "سَوْءٌ",
+        "transliteration": "sawʾ",
+        "meaning": "evil, badness (verbal noun of sāʾa)"
+      },
+      {
+        "letters": "مَسَآءَةٌ",
+        "transliteration": "masāʾah",
+        "meaning": "the act of grieving or vexing someone; harm done"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"displease\" in Arabic?",
+        "a": "سَاءَ (sāʾa) — it also covers being or becoming evil, bad, or ugly; sāʾahu means 'it displeased/grieved him.'"
+      },
+      {
+        "q": "What does سَآءَ سَبِيلًا mean in the Qur'an?",
+        "a": "It works like the exclamation بِئْسَ: 'Evil is it as a way (of acting)!' — a censure of a course of conduct."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Sāʾa is often used impersonally like بِئْسَ, followed by a specificative noun in the accusative, to voice censure (as in the Qur'anic sāʾa sabīlan, 'evil is it as a way'). Used with a direct object (sāʾahu), it means to grieve, displease, or vex a person, the opposite of sarrahu 'it pleased him.'"
+  },
+  "5322": {
+    "rootId": 5322,
+    "triliteralRoot": "ا ل ه",
+    "rootTransliteration": "ʾ-l-h",
+    "rootMeaning": "to worship, serve, or adore",
+    "headwordTransliteration": "Allāh",
+    "partOfSpeech": "proper noun (divine name)",
+    "senses": [
+      {
+        "gloss": "God; the Supreme Being, the one true deity",
+        "note": "a proper name comprising all the excellent divine names and attributes of perfection; the ال is inseparable from it and it takes no plural"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "أَلَهَ",
+        "transliteration": "alaha",
+        "meaning": "he served, worshipped, or adored (verb, form I)",
+        "path": "/word/deify-him-17984",
+        "rootId": 17984
+      },
+      {
+        "letters": "إِلٰهٌ",
+        "transliteration": "ilāh",
+        "meaning": "a god; anything taken as an object of worship or adoration"
+      },
+      {
+        "letters": "إِلَاهَةٌ",
+        "transliteration": "ilāhah",
+        "meaning": "worship, service, adoration; also godship, divinity"
+      },
+      {
+        "letters": "تَأَلَّهَ",
+        "transliteration": "taʾallaha",
+        "meaning": "he devoted himself to religious worship, applied himself to acts of devotion (form V)"
+      },
+      {
+        "letters": "تَأْلِيهٌ",
+        "transliteration": "taʾlīh",
+        "meaning": "enslavement; making someone serve (form II inf. n., syn. taʿbīd)"
+      },
+      {
+        "letters": "إِلٰهِىٌّ",
+        "transliteration": "ilāhī",
+        "meaning": "divine; relating to God or a god; theological"
+      },
+      {
+        "letters": "الإِلٰهِيَّةُ",
+        "transliteration": "al-ilāhiyyah",
+        "meaning": "theology; the science of God's being and attributes",
+        "path": "/word/divinity-6452",
+        "rootId": 6452
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"God\" in Arabic?",
+        "a": "God is اللّٰه (Allāh) — the Arabic proper name for the one true God, comprising all the divine attributes of perfection."
+      },
+      {
+        "q": "Is اللّٰه related to the word إله (ilāh)?",
+        "a": "Many grammarians trace اللّٰه to إلٰه ('a god, an object of worship'), with the hamzah dropped and the article ال permanently fixed; others hold that اللّٰه is an underived proper name."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "اللّٰه is a proper name, not a common noun, and always carries the inseparable article ال. Lane records some twenty or more scholarly opinions on its origin: many hold it underived, while others trace it to إلٰه/إلاه ('a god, an object of worship') with the hamzah dropped and the article fixed to it permanently, distinguishing it from إلٰه, the general term polytheists apply to their own objects of worship."
+  },
+  "5328": {
+    "rootId": 5328,
+    "triliteralRoot": "ز و ل",
+    "rootTransliteration": "z-w-l",
+    "rootMeaning": "to depart, pass away, cease",
+    "headwordTransliteration": "zāla",
+    "partOfSpeech": "verb (form I, intransitive)",
+    "senses": [
+      {
+        "gloss": "to depart, go away, remove (from a place)",
+        "note": "said of a thing itself leaving its place, e.g. زال الشيء عن مكانه — 'the thing departed, or removed itself, from its place'"
+      },
+      {
+        "gloss": "to cease to exist, pass away, come to nought",
+        "note": "e.g. الدُّنْيَا وَشِيكَةُ الزَّوَالِ — 'worldly life is quick to pass away'"
+      },
+      {
+        "gloss": "(of the sun) to decline from the meridian; (of daylight or shade) to advance, grow high",
+        "note": "figurative extension of the basic sense"
+      },
+      {
+        "gloss": "to move, stir, be in motion or commotion",
+        "note": "said of a body or figure seen moving"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "أَزَالَهُ",
+        "transliteration": "azālahu",
+        "meaning": "to remove it, cause it to depart (causative, form IV)"
+      },
+      {
+        "letters": "زَوَالٌ",
+        "transliteration": "zawāl",
+        "meaning": "passing away, decline, cessation",
+        "path": "/word/removal-8712",
+        "rootId": 8712
+      },
+      {
+        "letters": "زَائِلٌ",
+        "transliteration": "zāʾil",
+        "meaning": "passing away, transient (active participle)",
+        "path": "/word/fleeting-19251",
+        "rootId": 19251
+      },
+      {
+        "letters": "زَاوَلَهُ",
+        "transliteration": "zāwalahu",
+        "meaning": "to strive with, labor to obtain, contend with (form III)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"remove\" in Arabic?",
+        "a": "زَالَ (zāla) — though classically it means to depart or go away from a place (said of the thing itself), not to actively take something away; that causative sense ('to remove, take away') is expressed by the related form أَزَالَ (azāla)."
+      },
+      {
+        "q": "What does زَوَالٌ (zawāl) mean?",
+        "a": "زَوَالٌ is the verbal noun of زَالَ, meaning 'passing away, declining, ceasing to exist' — used of the sun declining from the meridian or of worldly things passing away."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Classical register; often appears in the negative-continuous construction مَا زَالَ ('it has not ceased to...', i.e. 'it is still...'). Also used technically of the sun declining from the meridian (زَوَالُ الشَّمْسِ) and, famously, of worldly things passing away, as in الدُّنْيَا وَشِيكَةُ الزَّوَالِ ('the world is quick to pass away')."
+  },
+  "5339": {
+    "rootId": 5339,
+    "triliteralRoot": "ا ل ف",
+    "rootTransliteration": "ʾ-l-f",
+    "rootMeaning": "to unite, become familiar or accustomed",
+    "headwordTransliteration": "ʾalf",
+    "partOfSpeech": "noun (cardinal numeral)",
+    "senses": [
+      {
+        "gloss": "thousand; the cardinal number 1,000",
+        "note": "Used as a counting noun, e.g. for large quantities of property or livestock."
+      },
+      {
+        "gloss": "a specific gift-quantity of a thousand (camels, goods)",
+        "note": "Reflected in the related verb أَلَفَهُ, 'he gave him a thousand', of articles of property or camels."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "أَلِفَ",
+        "transliteration": "alifa",
+        "meaning": "to keep to, cleave to a place or thing; to become familiar, accustomed (form I verb)"
+      },
+      {
+        "letters": "أَلَّفَ",
+        "transliteration": "allafa",
+        "meaning": "to unite, bring people together, cause companionship between them (form II verb)"
+      },
+      {
+        "letters": "إِلْفٌ",
+        "transliteration": "ilf",
+        "meaning": "an intimate friend, familiar companion",
+        "path": "/word/close-companions-11988",
+        "rootId": 11988
+      },
+      {
+        "letters": "أُلْفَةٌ",
+        "transliteration": "ulfah",
+        "meaning": "familiarity, union, companionship"
+      },
+      {
+        "letters": "إِيلَافٌ",
+        "transliteration": "īlāf",
+        "meaning": "the keeping to or frequenting of something habitually; a covenant or safeguard (Qur'anic term for Quraysh's trade journeys)"
+      },
+      {
+        "letters": "مُؤَلِّفٌ",
+        "transliteration": "muʾallif",
+        "meaning": "one who unites or composes; author, compiler"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"thousand\" in Arabic?",
+        "a": "أَلْف (ʾalf)."
+      },
+      {
+        "q": "Is أَلْف (thousand) related to إِلْفٌ (companion)?",
+        "a": "They share the same triliteral root ا ل ف, but أَلْف is used purely as the numeral 'thousand', while إِلْفٌ, أُلْفَة, and أَلِفَ carry the root's other core sense of familiarity and union."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "أَلْفٌ is used purely as the numeral 'a thousand', e.g. counting camels or goods given as gifts (cf. the verb أَلَفَهُ, 'he gave him a thousand'). It shares its triliteral root with a distinct cluster of senses centred on familiarity, cleaving to a place, and uniting people, which is the root's more prominent semantic field in Lane's entry."
+  },
+  "5346": {
+    "rootId": 5346,
+    "triliteralRoot": "ق ص ص",
+    "rootTransliteration": "q-ṣ-ṣ",
+    "rootMeaning": "to cut; to follow a track",
+    "headwordTransliteration": "qaṣaṣ",
+    "partOfSpeech": "noun (verbal noun / collective plural of qiṣṣah)",
+    "senses": [
+      {
+        "gloss": "stories, narratives; an account or piece of news related in due order",
+        "note": "Qur'anic, e.g. 'naḥnu naquṣṣu ʿalayka aḥsana l-qaṣaṣ' — 'We relate to you the best of narratives'"
+      },
+      {
+        "gloss": "the following of a track or trail, step by step",
+        "note": "as the verbal noun of qaṣṣa 'to follow footsteps in pursuit'; cf. Qur'an 18:63, 'they retraced their footsteps' (qaṣaṣan)"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "قَصَّ",
+        "transliteration": "qaṣṣa",
+        "meaning": "to cut or clip (hair, wool, a nail); also to follow a track in pursuit, and to relate a piece of news or a story in its proper order"
+      },
+      {
+        "letters": "قِصَّةٌ",
+        "transliteration": "qiṣṣah",
+        "meaning": "a story, narrative (used as a synonym of qaṣaṣ)"
+      },
+      {
+        "letters": "قِصَاصٌ",
+        "transliteration": "qiṣāṣ",
+        "meaning": "retaliation in kind, for killing, wounding, or mutilation",
+        "path": "/word/retribution-11322",
+        "rootId": 11322
+      },
+      {
+        "letters": "قاصّ",
+        "transliteration": "qāṣṣa",
+        "meaning": "to retaliate upon someone so as to make even; also, to settle a debt by withholding an equal amount owed"
+      },
+      {
+        "letters": "اقصّ",
+        "transliteration": "aqaṣṣa",
+        "meaning": "to carry out retaliation on another's behalf (said of a ruler or judge)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"stories\" in Arabic?",
+        "a": "قَصَص (qaṣaṣ)."
+      },
+      {
+        "q": "What does the root of qaṣaṣ mean?",
+        "a": "The root ق ص ص (q-ṣ-ṣ) carries the senses 'to cut' and 'to follow a track'; narrating a story (qaṣaṣ, qiṣṣah) developed from tracing an account step by step, while qiṣāṣ 'retaliation' developed from tracking down an offender."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Qaṣaṣ covers two linked ideas in the classical texts: literally, following someone's footprints step by step, and by extension, relating an account or story in its proper sequence, as if tracing it out — the sense behind the Qur'anic 'aḥsan al-qaṣaṣ', 'the best of narratives'."
+  },
+  "5372": {
+    "rootId": 5372,
+    "triliteralRoot": "ا ر ض",
+    "rootTransliteration": "ʾ-r-ḍ",
+    "rootMeaning": "earth, ground, land",
+    "headwordTransliteration": "arḍ",
+    "partOfSpeech": "noun (feminine, collective)",
+    "senses": [
+      {
+        "gloss": "the earth (as opposed to heaven)",
+        "note": "that whereon mankind dwells"
+      },
+      {
+        "gloss": "the ground, floor; the surface trodden, sat, or lain upon"
+      },
+      {
+        "gloss": "a land, country, territory",
+        "note": "used without the article for a specific tract of land"
+      },
+      {
+        "gloss": "soil, ground considered by its quality"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "أَرَضُونَ",
+        "transliteration": "araḍūn",
+        "meaning": "lands, earths (an irregular plural of arḍ)"
+      },
+      {
+        "letters": "أَرَاضَةٌ",
+        "transliteration": "arāḍah",
+        "meaning": "the state of land becoming thriving and productive"
+      },
+      {
+        "letters": "أَرَضَةٌ",
+        "transliteration": "araḍah",
+        "meaning": "termite, wood-worm (the insect that eats wood)"
+      },
+      {
+        "letters": "أَرَضٌ",
+        "transliteration": "araḍ",
+        "meaning": "blistering and corruption of an ulcer or sore"
+      },
+      {
+        "letters": "تَأَرُّضٌ",
+        "transliteration": "taʾarrud",
+        "meaning": "clinging to the ground; remaining fixed in a place, tarrying"
+      },
+      {
+        "letters": "آرَضَ",
+        "transliteration": "āraḍa",
+        "meaning": "to afflict someone with rheum (a head-cold)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"earth\" in Arabic?",
+        "a": "أَرْض (arḍ)."
+      },
+      {
+        "q": "Is أَرْض masculine or feminine?",
+        "a": "Feminine, even though it has no feminine ending."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Feminine even without a feminine ending, and used both with the article for 'the earth' (as opposed to heaven) and without it for 'a land' or 'country'. Common in Qur'anic and classical Arabic paired with 'the heaven(s)'."
+  },
+  "5394": {
+    "rootId": 5394,
+    "triliteralRoot": "ك أ س",
+    "rootTransliteration": "k-ʾ-s",
+    "rootMeaning": "a cup, especially one of wine",
+    "headwordTransliteration": "kaʾs",
+    "partOfSpeech": "noun (feminine)",
+    "senses": [
+      {
+        "gloss": "a drinking-cup",
+        "note": "some hold that a cup is only called كَأْس while it contains wine; empty, it is called قَدَح instead"
+      },
+      {
+        "gloss": "a cup of wine; a cup full of wine"
+      },
+      {
+        "gloss": "wine itself",
+        "note": "an extension from the vessel to its contents"
+      },
+      {
+        "gloss": "(figurative) a bitter draught — of abasement, separation, death, or love",
+        "note": "e.g. سَقَاهُ كَأْسًا مِنَ المَوْتِ, 'he gave him to drink a cup of death'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "كَاسٌ",
+        "transliteration": "kās",
+        "meaning": "variant form of كَأْس with the hamza dropped; same meaning, cup"
+      },
+      {
+        "letters": "أَكْؤُسٌ",
+        "transliteration": "akʾus",
+        "meaning": "plural of paucity: (a few) cups"
+      },
+      {
+        "letters": "كُؤُوسٌ",
+        "transliteration": "kuʾūs",
+        "meaning": "plural: cups"
+      },
+      {
+        "letters": "كِئَاسٌ",
+        "transliteration": "kiʾās",
+        "meaning": "plural: cups"
+      },
+      {
+        "letters": "كَاسَاتٌ",
+        "transliteration": "kāsāt",
+        "meaning": "plural of the variant كَاسٌ: cups"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"cup\" in Arabic?",
+        "a": "كَأْس (kaʾs) — a drinking-cup, especially one holding wine."
+      },
+      {
+        "q": "Does كأس only mean a physical cup?",
+        "a": "No — it can also stand for wine itself, and figuratively for a bitter experience one is made to endure, such as death or separation."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "كَأْس is grammatically feminine. Beyond the literal cup, it is used tropically for any hateful or painful experience one is made to 'drink,' as in سَقَاهُ الكَأْسَ الأَمَرَّ, 'he gave him to drink the most bitter cup,' meaning death."
+  },
+  "5403": {
+    "rootId": 5403,
+    "triliteralRoot": "خ ل ع",
+    "rootTransliteration": "kh-l-ʿ",
+    "rootMeaning": "to pull off, take off, remove",
+    "headwordTransliteration": "khilʿa",
+    "partOfSpeech": "noun",
+    "senses": [
+      {
+        "gloss": "a garment, robe",
+        "note": "Especially a garment given as a gift, echoing the related verb phrase khalaʿa ʿalayhi, 'he bestowed a garment upon him' — generally meaning a robe of honour."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "خَلَعَ",
+        "transliteration": "khalaʿa",
+        "meaning": "to pull off, strip off, or take off (a garment, sandal, etc.)"
+      },
+      {
+        "letters": "خُلْعٌ",
+        "transliteration": "khulʿ",
+        "meaning": "divorce obtained by the wife in exchange for compensation she gives up"
+      },
+      {
+        "letters": "مُخَالَعَةٌ",
+        "transliteration": "mukhālaʿa",
+        "meaning": "the mutual arrangement of releasing a wife from marriage for a compensation"
+      },
+      {
+        "letters": "مَخْلُوعٌ",
+        "transliteration": "makhlūʿ",
+        "meaning": "one deposed, or removed from office"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"garment\" in Arabic?",
+        "a": "خِلْعَة (khilʿa)."
+      },
+      {
+        "q": "What does the root kh-l-ʿ mean in Arabic?",
+        "a": "It carries the sense of pulling off or taking off something (like a garment or sandal), and extends tropically to bestowing a robe of honour, deposing someone from office, and a wife-initiated divorce (khulʿ)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Tied to the root's verb khalaʿa ʿalayhi, used of taking a garment off oneself and bestowing it on another, commonly rendered 'to invest someone with a robe of honour.'"
+  },
+  "5415": {
+    "rootId": 5415,
+    "triliteralRoot": "ن ص ر",
+    "rootTransliteration": "n-ṣ-r",
+    "rootMeaning": "to aid, help, assist",
+    "headwordTransliteration": "anṣārī",
+    "partOfSpeech": "noun/adjective (nisba, relational form)",
+    "senses": [
+      {
+        "gloss": "Ansari; a helper, one connected with the anṣār ('helpers')",
+        "note": "A nisba (relational) adjective built on anṣār; widely used today as a personal or family name."
+      },
+      {
+        "gloss": "of or belonging to the anṣār",
+        "note": "Adjectival use, describing something characteristic of or attributed to 'helpers.'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "نَصَرَهُ",
+        "transliteration": "naṣarahu",
+        "meaning": "he aided, helped, or assisted him (form I)"
+      },
+      {
+        "letters": "نَصْرٌ",
+        "transliteration": "naṣr",
+        "meaning": "aid, help; victory"
+      },
+      {
+        "letters": "نُصْرَةٌ",
+        "transliteration": "nuṣra",
+        "meaning": "aid, assistance"
+      },
+      {
+        "letters": "أَنْصَارٌ",
+        "transliteration": "anṣār",
+        "meaning": "helpers (the plural base this word's nisba is formed from)"
+      },
+      {
+        "letters": "انتصر",
+        "transliteration": "intaṣara",
+        "meaning": "he defended himself; took revenge (form VIII)",
+        "path": "/word/to-overcome-5916",
+        "rootId": 5916
+      },
+      {
+        "letters": "استنصر",
+        "transliteration": "istanṣara",
+        "meaning": "he sought or asked for aid (form X)"
+      },
+      {
+        "letters": "نَصْرَانِىٌّ",
+        "transliteration": "naṣrānī",
+        "meaning": "a Christian (a separate branch of the same root)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"Ansari\" in Arabic?",
+        "a": "أَنْصَارِي (anṣārī)."
+      },
+      {
+        "q": "What is the root of أَنْصَارِي and what does it mean?",
+        "a": "It comes from the triliteral root ن ص ر (n-ṣ-r), meaning 'to aid, help, assist' — the same root gives نَصْرٌ (aid, victory) and أَنْصَارٌ (helpers)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Built as a nisba (relational adjective) on anṣār, 'helpers'; the given gloss 'Ansari' reflects its common use today as a personal or family name rather than a plain descriptive adjective."
+  },
+  "5429": {
+    "rootId": 5429,
+    "triliteralRoot": "ا ل ه",
+    "rootTransliteration": "ʾ-l-h",
+    "rootMeaning": "to serve, worship, or adore",
+    "headwordTransliteration": "allāh",
+    "partOfSpeech": "proper noun (the divine name)",
+    "senses": [
+      {
+        "gloss": "God; the one, true, supreme deity, as a proper name",
+        "note": "Not a common noun — distinguished from إِلٰه (ilāh), the generic word for 'a god' used even of false or polytheistic deities."
+      },
+      {
+        "gloss": "The Being who exists necessarily by Himself, comprising all attributes of perfection",
+        "note": "The traditional theological gloss given for this name (cited from Ibn al-ʿArabī), rather than a separate everyday meaning."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "إِلٰه",
+        "transliteration": "ilāh",
+        "meaning": "a god; any object of worship or adoration (plural: آلهة)"
+      },
+      {
+        "letters": "إِلَاهَة",
+        "transliteration": "ilāhah",
+        "meaning": "worship, service, adoration; also godship, divinity"
+      },
+      {
+        "letters": "تَأْلِيه",
+        "transliteration": "taʾlīh",
+        "meaning": "making someone serve/enslaving; (by extension) deifying, holding as a god"
+      },
+      {
+        "letters": "تَأَلَّه",
+        "transliteration": "taʾallaha",
+        "meaning": "to devote oneself to religious worship or devotion"
+      },
+      {
+        "letters": "إِلٰهِيّ",
+        "transliteration": "ilāhī",
+        "meaning": "divine; of or relating to God"
+      },
+      {
+        "letters": "الإِلٰهِيَّة",
+        "transliteration": "al-ilāhiyyah",
+        "meaning": "theology; the science of God's being and attributes",
+        "path": "/word/divinity-6452",
+        "rootId": 6452
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"Allah\" in Arabic?",
+        "a": "الله (allāh) — written as one word with the article permanently fused in, used as the proper name of God."
+      },
+      {
+        "q": "What is the difference between الله and إله؟",
+        "a": "إله (ilāh) is the generic word for 'a god' or object of worship (plural آلهة); الله (Allāh) is the proper name reserved for the one true God."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "الله is always written and used as a single proper name (the ال is inseparable), reserved for the one true God, and is distinct from the common noun إله ('a god'), which polytheists apply to their own objects of worship. Grammarians dispute its derivation: some hold it underived, others trace it to al- + ilāh ('the god')."
+  },
+  "5432": {
+    "rootId": 5432,
+    "triliteralRoot": "ن ص ر",
+    "rootTransliteration": "n-ṣ-r",
+    "rootMeaning": "to aid, help, give victory",
+    "headwordTransliteration": "manṣūr",
+    "partOfSpeech": "noun/adjective (passive participle, ism mafʿūl of form I)",
+    "senses": [
+      {
+        "gloss": "aided, helped",
+        "note": "one to whom assistance has been given, especially against an enemy"
+      },
+      {
+        "gloss": "made victorious, given victory",
+        "note": "used especially of one whom God has granted triumph, as in the Qurʾanic sense of نَصَرَهُ ٱللّٰهُ"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "نَصَرَ",
+        "transliteration": "naṣara",
+        "meaning": "to aid or assist someone, especially against an enemy; to give victory"
+      },
+      {
+        "letters": "نَصْرٌ",
+        "transliteration": "naṣr",
+        "meaning": "aid, assistance; victory, conquest"
+      },
+      {
+        "letters": "نَاصِرٌ",
+        "transliteration": "nāṣir",
+        "meaning": "a helper, one who aids"
+      },
+      {
+        "letters": "انتصر",
+        "transliteration": "intaṣara",
+        "meaning": "to defend oneself; to take one's due, avenge oneself",
+        "path": "/word/to-overcome-5916",
+        "rootId": 5916
+      },
+      {
+        "letters": "استنصر",
+        "transliteration": "istanṣara",
+        "meaning": "to ask or seek aid from someone"
+      },
+      {
+        "letters": "تنصّر",
+        "transliteration": "tanaṣṣara",
+        "meaning": "to strive to give aid; also, to become a Christian",
+        "path": "/word/had-become-a-christian-14214",
+        "rootId": 14214
+      },
+      {
+        "letters": "نَصْرَانِىٌّ",
+        "transliteration": "naṣrānī",
+        "meaning": "a Christian"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"victorious\" in Arabic?",
+        "a": "مَنْصُور (manṣūr) — literally 'made victorious' or 'aided', the passive participle of نَصَرَ, 'to aid, help'."
+      },
+      {
+        "q": "What root does مَنْصُور come from?",
+        "a": "It is built on the triliteral root ن-ص-ر (n-ṣ-r), whose core sense is 'to aid, help, give victory'."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "منصور is the passive participle of the form I verb نَصَرَ ('he aided him', also 'God made him victorious'), so it literally means 'one who has been aided' or 'one made victorious'. This victory sense made it a favoured personal name, matching the existing gloss 'Mansur'."
+  },
+  "5445": {
+    "rootId": 5445,
+    "triliteralRoot": "ه و د",
+    "rootTransliteration": "h-w-d",
+    "rootMeaning": "to return, repent, or be gentle",
+    "headwordTransliteration": "yahūd",
+    "partOfSpeech": "noun (collective/tribal proper noun); also used adjectivally",
+    "senses": [
+      {
+        "gloss": "the Jews (a people, tribe)",
+        "note": "a tribal proper name; treated as feminine and imperfectly declinable, though the article can be prefixed (اليهود) standing for اليهوديّون"
+      },
+      {
+        "gloss": "Jewish; of or belonging to the Jews",
+        "note": "reflects the adjectival use given in the source gloss, closely tied to the related-noun form يَهُودِيّ"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "هَادَ",
+        "transliteration": "hāda",
+        "meaning": "to repent and return to the truth; also, to become a Jew"
+      },
+      {
+        "letters": "هوّدُه",
+        "transliteration": "hawwadahu",
+        "meaning": "to make someone a Jew; to convert and raise him in that religion"
+      },
+      {
+        "letters": "هاودهُ",
+        "transliteration": "hāwadahu",
+        "meaning": "to make peace with someone; to reconcile with him"
+      },
+      {
+        "letters": "تَهَوَّدَ",
+        "transliteration": "tahawwada",
+        "meaning": "to become a Jew; also, to walk gently, imitating the Jews' manner"
+      },
+      {
+        "letters": "هَوَادَةٌ",
+        "transliteration": "hawādah",
+        "meaning": "gentleness, lenity; inclination toward reconciliation or peace"
+      },
+      {
+        "letters": "يَهُودِىٌّ",
+        "transliteration": "yahūdiyy",
+        "meaning": "a Jew; Jewish (the relative-noun/demonym form)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"Jewish\" in Arabic?",
+        "a": "يَهُود (yahūd) — properly the collective/tribal name \"the Jews\"; the more specifically adjectival form for \"Jewish\" is يَهُودِيّ (yahūdiyy)."
+      },
+      {
+        "q": "What does the root ه و د (h-w-d) mean?",
+        "a": "At its core it carries the sense of returning or repenting, and by extension being gentle or quiet; from the same root, هَادَ also came to mean \"to become a Jew.\""
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "يَهُودُ names the Jewish people as a tribe and is grammatically a proper noun (feminine, imperfectly declinable); it is also used with the article, اليَهُودُ, standing for اليَهُودِيُّونَ. Lane's notes a debated origin: some say it is an arabicized form of يَهُوذُ (Judah), while others derive it from هَادَ \"he repented,\" linking the name to the root's sense of returning or repenting."
+  },
+  "5446": {
+    "rootId": 5446,
+    "triliteralRoot": "ب ض ع",
+    "rootTransliteration": "b-ḍ-ʿ",
+    "rootMeaning": "to cut, cut off, slit",
+    "headwordTransliteration": "biḍʿah",
+    "partOfSpeech": "noun (indefinite numeral)",
+    "senses": [
+      {
+        "gloss": "a few, several — an indefinite number between two round numbers",
+        "note": "Covers roughly three to nine of a thing, or eleven to nineteen; used before a counted noun rather than stating an exact figure."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "بَضَعَ",
+        "transliteration": "baḍaʿa",
+        "meaning": "to cut, or slit (flesh, a wound, a vein)"
+      },
+      {
+        "letters": "بَاضَعَ",
+        "transliteration": "bāḍaʿa",
+        "meaning": "to have intercourse with (a woman); figurative use of 'cut/slit'"
+      },
+      {
+        "letters": "أَبْضَعَ",
+        "transliteration": "abḍaʿa",
+        "meaning": "to give (a woman) in marriage"
+      },
+      {
+        "letters": "بِضَاعَةٌ",
+        "transliteration": "biḍāʿah",
+        "meaning": "merchandise, an article of trade",
+        "path": "/word/goods-7694",
+        "rootId": 7694
+      },
+      {
+        "letters": "بُضْعٌ",
+        "transliteration": "buḍʿ",
+        "meaning": "sexual intercourse; marriage or the marriage-contract; (euphemistically) the vulva"
+      },
+      {
+        "letters": "بِضْعٌ",
+        "transliteration": "biḍʿ",
+        "meaning": "the same numeral 'a few, several', used with feminine-agreeing counted nouns"
+      },
+      {
+        "letters": "اِسْتِبْضَاعٌ",
+        "transliteration": "istibḍāʿ",
+        "meaning": "a pre-Islamic practice of seeking intercourse with another man solely to obtain noble offspring"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"few\" in Arabic?",
+        "a": "بِضْعَةٌ (biḍʿah) — an indefinite numeral for 'a few, several', roughly three to nine of something."
+      },
+      {
+        "q": "Is بِضْعَةٌ the same word as بِضْعٌ?",
+        "a": "Yes — both come from the root ب ض ع and carry the same meaning, 'a number between two round numbers'; they are simply the two forms used depending on the counted noun's gender."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "بِضْعَةٌ is an indefinite numeral, not an exact count: it names a quantity between two round decades, roughly three to nine (or eleven to nineteen), and is placed before the counted noun, e.g. 'a few days'. It is the counterpart of بِضْعٌ, the two sharing the same sense and differing mainly by which noun-gender they accompany."
+  },
+  "5456": {
+    "rootId": 5456,
+    "triliteralRoot": "ن ح و",
+    "rootTransliteration": "n-ḥ-w",
+    "rootMeaning": "to go toward, or turn away",
+    "headwordTransliteration": "nāḥiya",
+    "partOfSpeech": "noun (feminine active-participle form, fāʿila used in the sense of mafʿūla)",
+    "senses": [
+      {
+        "gloss": "side, flank; a lateral or outward part of something",
+        "note": "the basic sense, equivalent to جانب (jānib)"
+      },
+      {
+        "gloss": "region, district, quarter, or tract; a part of a country or province"
+      },
+      {
+        "gloss": "an apartment or section of a house"
+      },
+      {
+        "gloss": "aside, apart (in the phrase عَلَى نَاحِيَةٍ / فِى نَاحِيَةٍ)",
+        "note": "used adverbially: جلس في ناحية منهم = 'he sat apart from them'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "نَحَا",
+        "transliteration": "naḥā",
+        "meaning": "to go towards, or in the direction of, someone or something (form I)"
+      },
+      {
+        "letters": "نَحَّى",
+        "transliteration": "naḥḥā",
+        "meaning": "to put a thing aside or away, remove it from its place (form II)"
+      },
+      {
+        "letters": "أَنْحَى",
+        "transliteration": "anḥā",
+        "meaning": "to lean or press upon; to apply forcefully, e.g. a knife or a blow (form IV)"
+      },
+      {
+        "letters": "تَنَحَّى",
+        "transliteration": "tanaḥḥā",
+        "meaning": "to withdraw, move away, or retire to a distance (form V)"
+      },
+      {
+        "letters": "اِنْتَحَى",
+        "transliteration": "intaḥā",
+        "meaning": "to fall or incline forward, as in prostration (form VIII)"
+      },
+      {
+        "letters": "نَحْوٌ",
+        "transliteration": "naḥw",
+        "meaning": "direction, likeness, quantity; also 'about' in approximations (e.g. نحو ثلاثة, 'about three')"
+      },
+      {
+        "letters": "نِحْىٌ",
+        "transliteration": "niḥy",
+        "meaning": "a skin for holding liquids or clarified butter"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"area\" in Arabic?",
+        "a": "نَاحِيَة (nāḥiya) — it also covers 'side,' 'region,' 'district,' and 'part' of a place."
+      },
+      {
+        "q": "What does نَاحِيَة literally mean?",
+        "a": "Literally 'a thing gone towards' (from the root nḥw, 'to go toward'), used for a side, part, or district of something."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Nāḥiya literally denotes a point one goes towards, hence any side, part, or district considered in relation to a whole. Its plural nawāḥin covers the outer parts or regions of a thing, and the singular is often best rendered simply as 'a part' or 'a region' of a place."
+  },
+  "5457": {
+    "rootId": 5457,
+    "triliteralRoot": "س ب ط",
+    "rootTransliteration": "s-b-ṭ",
+    "rootMeaning": "to be lank, straight, or extended",
+    "headwordTransliteration": "asbāṭ",
+    "partOfSpeech": "noun (broken plural of سِبْط)",
+    "senses": [
+      {
+        "gloss": "tribes, especially the twelve tribes of the Israelites",
+        "note": "Plural of سِبْط; used in the Qur'an (7:160) for the twelve tribes of the Children of Israel, standing to them as qabāʾil stands to the Arabs."
+      },
+      {
+        "gloss": "grandchildren, descendants",
+        "note": "As the plural of سِبْط 'grandchild' — a son's child or a daughter's child."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "سِبْط",
+        "transliteration": "sibṭ",
+        "meaning": "a grandchild; also a tribe (of the Israelites) — the singular of asbāṭ"
+      },
+      {
+        "letters": "سَبِطَ",
+        "transliteration": "sabiṭa",
+        "meaning": "to be, or become, lank and not crisp (of hair)"
+      },
+      {
+        "letters": "سَبِطٌ",
+        "transliteration": "sabiṭ",
+        "meaning": "lank-haired, straight-haired"
+      },
+      {
+        "letters": "سَبَّطَتْ",
+        "transliteration": "sabbaṭat",
+        "meaning": "she (a she-camel or ewe) cast her young prematurely"
+      },
+      {
+        "letters": "اسْبَطَ",
+        "transliteration": "asbaṭa",
+        "meaning": "to stretch oneself out and fall prostrate on the ground (from a blow, weakness, or fear)"
+      },
+      {
+        "letters": "سَبَطٌ",
+        "transliteration": "sabaṭ",
+        "meaning": "a sand-growing plant that becomes tall while still fresh"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"tribes\" in Arabic?",
+        "a": "أَسْبَاط (asbāṭ) — especially used for the twelve tribes of the Israelites."
+      },
+      {
+        "q": "What is the singular of أَسْبَاط (asbāṭ)?",
+        "a": "سِبْط (sibṭ), meaning 'grandchild', and by extension 'tribe' (of the Israelites)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Asbāṭ is the standard term, notably Qur'anic (7:160), for the twelve tribes of the Children of Israel, built as the plural of sibṭ the way qabāʾil is the plural of qabīlah for the Arabs. The same singular sibṭ is also used for a grandchild — as in the hadith calling al-Ḥasan and al-Ḥusayn 'the two grandsons (sibṭā) of the Messenger of God.'"
+  },
+  "5458": {
+    "rootId": 5458,
+    "triliteralRoot": "ق و ل",
+    "rootTransliteration": "q-w-l",
+    "rootMeaning": "to say, speak, utter",
+    "headwordTransliteration": "qāla",
+    "partOfSpeech": "verb (form I)",
+    "senses": [
+      {
+        "gloss": "to say, speak, utter (a word, saying, or statement)",
+        "note": "The complement of qāla (the thing said) must be a full statement, a command, or an utterance of sound — never a bare verbal noun."
+      },
+      {
+        "gloss": "to assert, maintain, hold as an opinion or doctrine",
+        "note": "Especially in the construction qāla bi-kadhā, 'he professed such a belief.'"
+      },
+      {
+        "gloss": "to make a sign or gesture, in place of speech",
+        "note": "Idiomatic with a following bi- phrase, e.g. 'he signalled with his hand/head/eyes,' or performed an action such as pouring water or raising his garment."
+      },
+      {
+        "gloss": "to lie, or say something false, against someone",
+        "note": "In the construction qāla ʿalayhi (with aorist qawula); compare the form V taqawwala."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "قَوْلٌ",
+        "transliteration": "qawl",
+        "meaning": "a saying; speech, diction"
+      },
+      {
+        "letters": "قِيلٌ",
+        "transliteration": "qīl",
+        "meaning": "a saying; something said"
+      },
+      {
+        "letters": "تَقَوَّلَ",
+        "transliteration": "taqawwala",
+        "meaning": "to lie, or fabricate a false saying, against someone"
+      },
+      {
+        "letters": "اِقْتَالَ",
+        "transliteration": "iqtāla",
+        "meaning": "to judge, or exercise authority/arbitration over"
+      },
+      {
+        "letters": "قَوَّالٌ",
+        "transliteration": "qawwāl",
+        "meaning": "eloquent; a copious, chaste speaker; a great talker"
+      },
+      {
+        "letters": "مَقُولٌ",
+        "transliteration": "maqūl",
+        "meaning": "that which is said; the utterance spoken"
+      },
+      {
+        "letters": "المَقُولَاتُ العَشْرُ",
+        "transliteration": "al-maqūlāt al-ʿashr",
+        "meaning": "the Ten Categories/Predicaments (a term of logic)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"said\" in Arabic?",
+        "a": "قَالَ (qāla) — the classical form I verb 'to say.'"
+      },
+      {
+        "q": "What is the difference between قَالَ and تَقَوَّلَ?",
+        "a": "قَالَ (qāla) simply means 'to say,' while its form V, تَقَوَّلَ (taqawwala), means 'to lie against someone,' i.e. to fabricate a false saying."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Qāla is the standard classical verb for introducing direct speech, but its sense shifts with the preposition that follows it: qāla lahū (he addressed him), qāla ʿanhu (he reported/narrated from him), qāla ʿalayhi (he fabricated a lie about him), qāla bihī (he judged/ruled by it), and qāla fīhi (he exerted an opinion on it, or spoke against him). It can also head idioms of gesture (qāla bi-yadihī, 'he signed with his hand') where no words are actually spoken."
+  },
+  "5466": {
+    "rootId": 5466,
+    "triliteralRoot": "ع ج ل",
+    "rootTransliteration": "ʿ-j-l",
+    "rootMeaning": "to hasten, speed, make haste",
+    "headwordTransliteration": "taʿjīl",
+    "partOfSpeech": "noun (verbal noun / maṣdar of Form II ʿajjala)",
+    "senses": [
+      {
+        "gloss": "hastening, speeding something up; acceleration",
+        "note": "The general sense: bringing an event or process forward in time rather than letting it happen at its due course."
+      },
+      {
+        "gloss": "advance or prompt payment",
+        "note": "Used of money, price, or hire given in ready money before it is due, as opposed to deferred payment."
+      },
+      {
+        "gloss": "doing or preparing something hastily",
+        "note": "E.g. cooking meat quickly rather than in the usual time."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "عَجِلَ",
+        "transliteration": "ʿajila",
+        "meaning": "to hasten, make haste, be quick"
+      },
+      {
+        "letters": "عَجَّلَ",
+        "transliteration": "ʿajjala",
+        "meaning": "to hasten something; to pay or give in advance"
+      },
+      {
+        "letters": "عَاجَلَ",
+        "transliteration": "ʿājala",
+        "meaning": "to race to do something first; to punish without delay"
+      },
+      {
+        "letters": "أَعْجَلَ",
+        "transliteration": "aʿjala",
+        "meaning": "to urge someone to hurry; to get ahead of, precede"
+      },
+      {
+        "letters": "تَعَجَّلَ",
+        "transliteration": "taʿajjala",
+        "meaning": "to hasten oneself, force oneself to hurry"
+      },
+      {
+        "letters": "عَجَلٌ",
+        "transliteration": "ʿajal",
+        "meaning": "haste, speed (verbal noun of ʿajila)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"acceleration\" in Arabic?",
+        "a": "تَعْجِيل (taʿjīl) — literally 'hastening' or 'speeding up' something."
+      },
+      {
+        "q": "What does taʿjīl mean in a financial or legal context?",
+        "a": "Paying or giving something in advance / in ready money, before its due date, as opposed to deferred payment."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Taʿjīl is the maṣdar of Form II ʿajjala and most commonly appears in commercial and legal speech for paying or delivering something before its due time — the opposite of deferring it. The same root verb is used in the Qur'an (38:16), 'Our Lord, hasten to us our portion before the Day of Reckoning,' in the same sense of bringing something forward."
+  },
+  "5477": {
+    "rootId": 5477,
+    "triliteralRoot": "و ح د",
+    "rootTransliteration": "w-ḥ-d",
+    "rootMeaning": "to be alone, become one",
+    "headwordTransliteration": "aḥad",
+    "partOfSpeech": "noun / indefinite pronoun",
+    "senses": [
+      {
+        "gloss": "anyone, someone",
+        "note": "an indefinite reference to a person, built from the same root as وَاحِدٌ 'one'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "وَاحِدٌ",
+        "transliteration": "wāḥid",
+        "meaning": "one (the cardinal number)"
+      },
+      {
+        "letters": "وَحِيدٌ",
+        "transliteration": "waḥīd",
+        "meaning": "alone, solitary; unique"
+      },
+      {
+        "letters": "تَوْحِيدٌ",
+        "transliteration": "tawḥīd",
+        "meaning": "belief in the oneness of God"
+      },
+      {
+        "letters": "وَحْدَةٌ",
+        "transliteration": "waḥdah",
+        "meaning": "the state of being alone; solitude",
+        "path": "/word/solitude-19318",
+        "rootId": 19318
+      },
+      {
+        "letters": "مُوحِدٌ",
+        "transliteration": "muwaḥḥid",
+        "meaning": "one who professes God's oneness"
+      },
+      {
+        "letters": "اِتَّحَدَ",
+        "transliteration": "ittaḥada",
+        "meaning": "to become one, unite"
+      },
+      {
+        "letters": "أَوْحَدُ",
+        "transliteration": "awḥad",
+        "meaning": "unequalled, having no peer"
+      },
+      {
+        "letters": "إِحْدَى",
+        "transliteration": "iḥdā",
+        "meaning": "one (feminine form)",
+        "path": "/word/one-of-them-11894",
+        "rootId": 11894
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"anyone\" in Arabic?",
+        "a": "أحد (aḥad)."
+      },
+      {
+        "q": "What does the root of أحد mean?",
+        "a": "The root و ح د (w-ḥ-d) carries the sense of being alone or becoming one, as seen in واحد ('one') and توحيد ('the oneness of God')."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Aḥad shares its root with وَاحِدٌ ('one') and وَحِيدٌ ('alone'), all built on the idea of oneness or being by oneself. As an indefinite pronoun it points to an unspecified single person rather than naming anyone in particular."
+  },
+  "5509": {
+    "rootId": 5509,
+    "triliteralRoot": "ع ر ف",
+    "rootTransliteration": "ʿ-r-f",
+    "rootMeaning": "to know, be acquainted with",
+    "headwordTransliteration": "maʿrifah",
+    "partOfSpeech": "noun (verbal noun / maṣdar of ʿarafa)",
+    "senses": [
+      {
+        "gloss": "knowledge, cognition, acquaintance",
+        "note": "Knowing a thing by means of any of the five senses, or by reflection and mental perception."
+      },
+      {
+        "gloss": "a specific, experiential knowing of a thing itself",
+        "note": "Per Er-Rāghib, more restricted than ʿilm: it concerns the thing itself rather than its states or qualities, and typically applies to something previously absent from the mind. Its opposite is inkār (denial), whereas ʿilm's opposite is jahl (ignorance)."
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "عَرَفَ",
+        "transliteration": "ʿarafa",
+        "meaning": "to know, recognize, be acquainted with (verb I)"
+      },
+      {
+        "letters": "تَعْرِيفٌ",
+        "transliteration": "taʿrīf",
+        "meaning": "making known, informing, acquainting someone with something (verb II)"
+      },
+      {
+        "letters": "عِرْفَانٌ",
+        "transliteration": "ʿirfān",
+        "meaning": "knowledge, cognition (verbal noun of ʿarafa)"
+      },
+      {
+        "letters": "اِعْتَرَفَ",
+        "transliteration": "iʿtarafa",
+        "meaning": "to acknowledge, admit, confess (verb VIII)",
+        "path": "/word/admit-20082",
+        "rootId": 20082
+      },
+      {
+        "letters": "عَرِيفٌ",
+        "transliteration": "ʿarīf",
+        "meaning": "an overseer who manages the affairs of a people (a nqīb)"
+      },
+      {
+        "letters": "عِرَافَةٌ",
+        "transliteration": "ʿirāfah",
+        "meaning": "the office or function of being an ʿarīf"
+      },
+      {
+        "letters": "عُرْفٌ",
+        "transliteration": "ʿurf",
+        "meaning": "the mane of a horse"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"knowledge\" in Arabic?",
+        "a": "مَعْرِفَة (maʿrifah)."
+      },
+      {
+        "q": "What's the difference between maʿrifah and ʿilm?",
+        "a": "Maʿrifah is a more specific kind of knowing — gained via the senses or reflection, concerned with the thing itself — while ʿilm is broader and concerns a thing's states and qualities; the opposite of maʿrifah is inkār (denial), while the opposite of ʿilm is jahl (ignorance)."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Maʿrifah is knowing gained through the senses or through reflecting on a thing's effects, so it is used for a narrower, more specific kind of knowledge than ʿilm. One says 'fulānun yaʿrifu Llāha wa-rasūlahu' (such a one knows God and His messenger) but not 'yaʿlamu Llāha', since knowledge of God here comes from considering His effects rather than perceiving His essence directly."
+  },
+  "5526": {
+    "rootId": 5526,
+    "triliteralRoot": "ب ك ر",
+    "rootTransliteration": "b-k-r",
+    "rootMeaning": "to be early, go early, precede",
+    "headwordTransliteration": "bukrah",
+    "partOfSpeech": "noun (time noun), also used adverbially",
+    "senses": [
+      {
+        "gloss": "early morning; the first part of the day, between the dawn prayer and sunrise"
+      },
+      {
+        "gloss": "used adverbially without a preposition to mean 'early in the morning' or 'at daybreak'",
+        "note": "e.g. أَتَاهُ بُكْرَةٌ, 'he came to him early in the morning'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "بَكَرَ",
+        "transliteration": "bakara",
+        "meaning": "to go out or come early in the morning; to hasten to a thing"
+      },
+      {
+        "letters": "بكّر",
+        "transliteration": "bakkara",
+        "meaning": "to do something early, at the very start of its time; to go before others, precede"
+      },
+      {
+        "letters": "بَاْكَرَ",
+        "transliteration": "bākara",
+        "meaning": "to hasten early to something"
+      },
+      {
+        "letters": "أَبْكَرَ",
+        "transliteration": "abkara",
+        "meaning": "to make someone go early; said of camels coming to water early in the morning"
+      },
+      {
+        "letters": "ابتكر",
+        "transliteration": "ibtakara",
+        "meaning": "to arrive early (e.g. in time for the first part of the Friday sermon); to eat the first ripe fruit"
+      },
+      {
+        "letters": "بَاكُورَة",
+        "transliteration": "bākūrah",
+        "meaning": "the first-ripening fruit; the first of a thing"
+      },
+      {
+        "letters": "إِبْكَار",
+        "transliteration": "ibkār",
+        "meaning": "the verbal noun of أَبْكَرَ: entering upon, or setting out at, the early morning"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"morning\" in Arabic?",
+        "a": "بُكْرَة (bukrah) — it specifically denotes the early morning, roughly between the dawn prayer and sunrise."
+      },
+      {
+        "q": "What does the Arabic root ب ك ر (b-k-r) mean?",
+        "a": "It revolves around being early or first: going out early in the morning, hastening to something, arriving before others, or getting the first of something like ripe fruit."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/"
+  },
+  "5538": {
+    "rootId": 5538,
+    "triliteralRoot": "ق ب ل",
+    "rootTransliteration": "q-b-l",
+    "rootMeaning": "to face, turn toward, accept",
+    "headwordTransliteration": "qābila",
+    "partOfSpeech": "active participle (feminine), form I",
+    "senses": [
+      {
+        "gloss": "receptive, accepting",
+        "note": "feminine active participle of qabila, 'to take, receive, or admit willingly'"
+      },
+      {
+        "gloss": "one that takes in or admits readily",
+        "note": "describes a person or thing open to receiving something"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "قَبِلَ",
+        "transliteration": "qabila",
+        "meaning": "to take, receive, or admit willingly; to accept"
+      },
+      {
+        "letters": "قَابَلَ",
+        "transliteration": "qābala",
+        "meaning": "to face, be opposite; to correspond to, compare, or requite",
+        "path": "/word/meet-6850",
+        "rootId": 6850
+      },
+      {
+        "letters": "أَقْبَلَ",
+        "transliteration": "aqbala",
+        "meaning": "to come facing, advance, come forward (opposite of turning away)",
+        "path": "/word/approached-5626",
+        "rootId": 5626
+      },
+      {
+        "letters": "تَقَابَلُوا",
+        "transliteration": "taqābalū",
+        "meaning": "they faced or confronted one another"
+      },
+      {
+        "letters": "اِسْتَقْبَلَ",
+        "transliteration": "istaqbala",
+        "meaning": "to face, turn toward, go to meet, or anticipate",
+        "path": "/word/faced-5460",
+        "rootId": 5460
+      },
+      {
+        "letters": "اِقْتَبَلَ",
+        "transliteration": "iqtabala",
+        "meaning": "to begin or commence (an affair)"
+      },
+      {
+        "letters": "قَبْلُ",
+        "transliteration": "qablu",
+        "meaning": "before (in time, place, or rank); opposite of after"
+      },
+      {
+        "letters": "قَابِلٌ",
+        "transliteration": "qābil",
+        "meaning": "accepting, receptive (masculine counterpart of this word)",
+        "path": "/word/meet-6850",
+        "rootId": 6850
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"receptive\" in Arabic?",
+        "a": "قَابِلَة (qābila) — the feminine active participle of qabila, 'to accept or receive willingly.'"
+      },
+      {
+        "q": "What root does qābila come from, and what else shares it?",
+        "a": "It comes from ق ب ل (q-b-l), the root behind qabila 'to accept,' qābala 'to face or meet,' and aqbala 'to advance, come forward.'"
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "Qābila is the feminine active participle of qabila (form I), 'to take, receive, or admit willingly.' It sits in a root family built around facing and accepting — qābala 'to face/meet,' aqbala 'to advance, come forward' (opposite of turning away), and istaqbala 'to face, go to meet' all share the same forward-facing core sense that qabila extends into 'accept.'"
+  },
+  "5543": {
+    "rootId": 5543,
+    "triliteralRoot": "ق و ي",
+    "rootTransliteration": "q-w-y",
+    "rootMeaning": "to be or become strong",
+    "headwordTransliteration": "taqwā",
+    "partOfSpeech": "noun (verbal noun / maṣdar, form V)",
+    "senses": [
+      {
+        "gloss": "piety, godfearingness",
+        "note": "the established religious sense of the word"
+      },
+      {
+        "gloss": "self-restraint, fortifying oneself against wrongdoing",
+        "note": "reflects its source verb تَقَوَّى, 'he strengthened himself, or constrained himself to be strong'"
+      }
+    ],
+    "wordFamily": [
+      {
+        "letters": "قَوِىَ",
+        "transliteration": "qawiya",
+        "meaning": "to become strong, vigorous, sturdy"
+      },
+      {
+        "letters": "قُوَّةٌ",
+        "transliteration": "quwwah",
+        "meaning": "strength, power, potency, faculty (opposite of ضَعْف, weakness)"
+      },
+      {
+        "letters": "قَوَّى",
+        "transliteration": "qawwā",
+        "meaning": "to strengthen, make strong (someone or something)"
+      },
+      {
+        "letters": "قَاوَى",
+        "transliteration": "qāwā",
+        "meaning": "to vie with, contend with for superiority in strength"
+      },
+      {
+        "letters": "تَقَوَّى",
+        "transliteration": "taqawwā",
+        "meaning": "to strengthen oneself, endeavour to acquire strength"
+      },
+      {
+        "letters": "إِقْتَوَى",
+        "transliteration": "iqtawā",
+        "meaning": "to become strong (same sense as qawiya)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "How do you say \"piety\" in Arabic?",
+        "a": "تقوى (taqwā)."
+      },
+      {
+        "q": "How is تقوى related to قوة (strength)?",
+        "a": "Taqwā is the verbal noun of تَقَوَّى, 'to strengthen or constrain oneself,' from the root ق و ي meaning 'to be strong'; in religious usage it denotes piety, the self-restraint of one who fortifies himself against wrongdoing."
+      }
+    ],
+    "source": "Lane's Arabic-English Lexicon (E. W. Lane, 1863–1893)",
+    "sourceUrl": "https://lanelexicon.com/",
+    "usageNote": "تقوى is a classical and Qur'anic term for one who fortifies or restrains himself against wrongdoing out of fear of God; as the verbal noun of تَقَوَّى ('to strengthen or constrain oneself') it carries the religious sense of piety or god-consciousness."
   }
 };
 

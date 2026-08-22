@@ -1,13 +1,32 @@
 """Automated trust gate for generated enrichments.
 
-Since there is no per-entry human review, this is what earns the "trust the
-pipeline" stance: programmatic guards that catch the main hallucination risk —
-Arabic word forms the model could have invented. For every record we re-derive
-the Lane's grounding and require:
+Programmatic guards that catch the main hallucination risk — Arabic word forms
+the model could have invented. For every record we re-derive the Lane's
+grounding and require:
   - the stated triliteral root matches the resolved root,
   - every word_family Arabic form actually appears in the grounding's headwords,
   - required fields are present and non-empty, source is set.
-Passing records → verified.jsonl; anything failing → flagged.jsonl (never shipped).
+
+Those checks share a blind spot: they re-derive the root with `lexicon.lookup()`,
+the SAME resolver that produced the grounding the model was shown. When it
+mis-files a word the model repeats the wrong root and the check sees agreement.
+All 11 records that passed this gate and were still rejected by human review
+(build_ts.MANUAL_EXCLUDE) are that class.
+
+So a second, independent opinion runs alongside it: `arramooz.check` looks the
+word up in a morphological dictionary that knows nothing about Lane's. Measured
+over the 89-record run (see eval_gate.py) it separates the sets cleanly —
+0 of 11 known-bad records clear it, against 53 of 70 known-good. It is
+deliberately NOT a hard failure: of the 17 known-good it does not clear, three
+turned out to be genuine errors human review had missed, and the rest are
+lexicographical convention (Lane files malāʾikah under ا ل ك, Arramooz under
+م ل ك) or weak-radical notation. Treat it as triage, not judgement.
+
+Routing:
+  flagged.jsonl   hard failure — never shipped
+  review.jsonl    passes the hard checks, second opinion does not corroborate
+                  — needs human eyes before shipping
+  verified.jsonl  passes both — safe to ship
 
 Run:  uv run python -m word_enrichment.verify
 """
@@ -17,12 +36,13 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from word_enrichment import lexicon
+from word_enrichment import arramooz, camel_roots, lexicon
 
 BASE = Path(__file__).resolve().parent
 IN = BASE / "enriched.jsonl"
 VERIFIED = BASE / "verified.jsonl"
 FLAGGED = BASE / "flagged.jsonl"
+REVIEW = BASE / "review.jsonl"
 
 
 # Orthographic normalisation for root/family comparison: alef-maqsura↔yaa, the
@@ -55,7 +75,12 @@ def check(record: dict) -> list[str]:
         return problems
 
     # Read the full (untruncated) entry so a form near the end isn't a false miss.
-    grounding = lexicon.lookup(record["letters"], text_budget=200_000)
+    # Reproduce the SAME grounding generation used: a record built from a root
+    # hint must be checked against that root, otherwise this re-derives the
+    # broken surface-form root and reports the corrected record as mismatched.
+    grounding = lexicon.lookup(
+        record["letters"], text_budget=200_000, root_hint=record.get("_root_hint")
+    )
     if not grounding:
         return ["grounding no longer resolves"]
 
@@ -87,27 +112,66 @@ def main() -> None:
     if not IN.exists():
         print(f"no input at {IN}")
         return
-    VERIFIED.unlink(missing_ok=True)
-    FLAGGED.unlink(missing_ok=True)
+    for path in (VERIFIED, FLAGGED, REVIEW):
+        path.unlink(missing_ok=True)
 
-    ok = bad = 0
-    for line in IN.read_text(encoding="utf-8").splitlines():
-        if not line.strip():
-            continue
-        record = json.loads(line)
-        problems = check(record)
-        target = VERIFIED if not problems else FLAGGED
-        out = record if not problems else {**record, "_problems": problems}
-        with target.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(out, ensure_ascii=False) + "\n")
-        if problems:
-            bad += 1
-            print(f"  ✗ {record['root_id']} {record['letters']}: {problems}")
-        else:
-            ok += 1
-            print(f"  ✓ {record['root_id']} {record['letters']} ({record['meaning']})")
+    conn = arramooz._connect()
+    ok = bad = review = 0
+    try:
+        for line in IN.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            record = json.loads(line)
+            problems = check(record)
+            if problems:
+                bad += 1
+                target, out = FLAGGED, {**record, "_problems": problems}
+                print(f"  ✗ {record['root_id']} {record['letters']}: {problems}")
+            else:
+                opinion = arramooz.check(record["letters"], record["triliteral_root"], conn)
+                adjudged = arramooz.adjudication(record["root_id"], record["triliteral_root"])
+                out = {
+                    **record,
+                    "_second_opinion": {
+                        "verdict": opinion.verdict,
+                        "candidates": opinion.candidates,
+                        "matched_stem": opinion.matched_stem,
+                        "source": arramooz.SOURCE_NAME,
+                        **({"adjudicated": adjudged} if adjudged else {}),
+                    },
+                }
+                # A proper noun goes to the judge even when the sources agree.
+                # Sampling 30 gate-PASSED records found no wrong roots at all,
+                # but two entries whose only sense was a personal name (Hassan,
+                # Zayd) — a root explanation for a given name is odd rather than
+                # false, and the judge is what tells the two apart. Cannot be a
+                # blanket drop: مُحَمَّد really is a passive participle of ح م د,
+                # and يَهُود ← ه و د is the standard derivation. Costs ~1% of the
+                # batch in extra adjudication.
+                is_proper = camel_roots.dominant_pos(
+                    arramooz.bareword(record["letters"])
+                ) == "noun_prop"
+                if (opinion.is_trustworthy or adjudged) and not is_proper:
+                    ok += 1
+                    target = VERIFIED
+                    print(f"  ✓ {record['root_id']} {record['letters']} ({record['meaning']})")
+                else:
+                    review += 1
+                    target = REVIEW
+                    print(
+                        f"  ? {record['root_id']} {record['letters']} ({record['meaning']}): "
+                        f"{opinion.verdict} — Lane's {record['triliteral_root']!r} vs "
+                        f"Arramooz {opinion.candidates[:3]}"
+                    )
+            with target.open("a", encoding="utf-8") as fh:
+                fh.write(json.dumps(out, ensure_ascii=False) + "\n")
+    finally:
+        conn.close()
 
-    print(f"\nVerified {ok}, flagged {bad}. → {VERIFIED.name} / {FLAGGED.name}")
+    print(
+        f"\nVerified {ok}, needs review {review}, flagged {bad}."
+        f"\n→ {VERIFIED.name} / {REVIEW.name} / {FLAGGED.name}"
+    )
 
 
 if __name__ == "__main__":

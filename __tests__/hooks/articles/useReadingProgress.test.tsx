@@ -58,7 +58,6 @@ describe('useReadingProgress', () => {
             article_id: testArticleId,
             last_sentence_read: 5,
             total_sentences: 10,
-            progress_percentage: 50,
             updated_at: '2024-01-01T12:00:00Z',
             created_at: '2024-01-01T10:00:00Z',
           },
@@ -98,7 +97,6 @@ describe('useReadingProgress', () => {
         article_id: testArticleId,
         last_sentence_read: 5,
         total_sentences: 10,
-        progress_percentage: 50,
         updated_at: '2024-01-01T12:00:00Z',
         created_at: '2024-01-01T10:00:00Z',
       });
@@ -135,7 +133,6 @@ describe('useReadingProgress', () => {
         article_id: testArticleId,
         last_sentence_read: 5,
         total_sentences: 10,
-        progress_percentage: 50,
         updated_at: '2024-01-01T12:00:00Z',
         created_at: '2024-01-01T10:00:00Z',
       });
@@ -189,7 +186,6 @@ describe('useReadingProgress', () => {
         article_id: testArticleId,
         last_sentence_read: 5,
         total_sentences: 10,
-        progress_percentage: 50,
         updated_at: '2024-01-01T12:00:00Z',
         created_at: '2024-01-01T10:00:00Z',
       });
@@ -239,7 +235,6 @@ describe('useReadingProgress', () => {
         article_id: testArticleId,
         last_sentence_read: 5,
         total_sentences: 10,
-        progress_percentage: 50,
         updated_at: '2024-01-01T12:00:00Z',
         created_at: '2024-01-01T10:00:00Z',
       });
@@ -348,7 +343,6 @@ describe('useReadingProgress', () => {
         article_id: testArticleId,
         last_sentence_read: 5,
         total_sentences: 10,
-        progress_percentage: 50,
         updated_at: '2024-01-01T12:00:00Z',
         created_at: '2024-01-01T10:00:00Z',
       });
@@ -421,7 +415,6 @@ describe('useReadingProgress', () => {
         article_id: testArticleId,
         last_sentence_read: 5,
         total_sentences: 10,
-        progress_percentage: 50,
         updated_at: '2024-01-01T12:00:00Z',
         created_at: '2024-01-01T10:00:00Z',
       });

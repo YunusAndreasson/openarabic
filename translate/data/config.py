@@ -134,7 +134,12 @@ VALID_CATEGORIES = {
 
 # OpenRouter configuration for validation
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
-DEEPSEEK_MODEL = "deepseek/deepseek-v3.2"  # Latest DeepSeek v3.2 model
+# Latest non-experimental DeepSeek. The v4 line supersedes v3.2 (Dec 2025);
+# deepseek-v4-flash-vision-exp is newer still but experimental and vision-
+# oriented, which is the wrong trade for text lexicography.
+DEEPSEEK_MODEL = "deepseek/deepseek-v4-pro-0813"
+# Same generation, ~15x cheaper, for bulk work where quality has been checked.
+DEEPSEEK_CHEAP_MODEL = "deepseek/deepseek-v4-flash-0731"
 VALIDATION_MAX_RETRIES = 3
 
 # Split phase configuration

@@ -194,7 +194,6 @@ describe('Article Reading Flow - Integration Test', () => {
         article_id: testArticleId,
         last_sentence_read: 5,
         total_sentences: 10,
-        progress_percentage: 50,
         updated_at: '2024-01-01T12:00:00Z',
         created_at: '2024-01-01T10:00:00Z',
       };
@@ -214,7 +213,6 @@ describe('Article Reading Flow - Integration Test', () => {
 
       expect(existingProgress).not.toBeNull();
       expect(existingProgress?.last_sentence_read).toBe(5);
-      expect(existingProgress?.progress_percentage).toBe(50);
 
       // ====== STEP 3: Verify scroll-to-position logic ======
       const lastSentenceRead = existingProgress?.last_sentence_read ?? 0;
@@ -296,7 +294,6 @@ describe('Article Reading Flow - Integration Test', () => {
         article_id: testArticleId,
         last_sentence_read: 3,
         total_sentences: 10,
-        progress_percentage: 30,
         updated_at: '2024-01-01T12:00:00Z',
         created_at: '2024-01-01T10:00:00Z',
       };
@@ -319,7 +316,6 @@ describe('Article Reading Flow - Integration Test', () => {
         article_id: testArticleId,
         last_sentence_read: 7,
         total_sentences: 10,
-        progress_percentage: 70,
         updated_at: '2024-01-01T13:00:00Z',
         created_at: '2024-01-01T10:00:00Z',
       };

@@ -32,6 +32,7 @@ export { MetricCard } from './MetricCard';
 export { OptionCard } from './OptionCard';
 export { PrimingCard } from './PrimingCard';
 export { ProgressBar } from './ProgressBar';
+export { RootExplanation } from './RootExplanation';
 export { ScreenScaffold } from './ScreenScaffold';
 export { SeededContentEmptyState } from './SeededContentEmptyState';
 export { SectionLabel } from './SectionLabel';

@@ -357,7 +357,6 @@ describe('useArticleWordInteractions', () => {
         result.current.handleBackgroundPress();
       });
       expect(result.current.activeTooltip).toBeNull();
-
     });
 
     // Regression: the article screen wraps the reading area in a

@@ -63,6 +63,41 @@ def _extract_json(text: str) -> Any:
     raise json.JSONDecodeError("No valid JSON found in response", text, 0)
 
 
+def _usage_of(envelope: dict) -> dict[str, Any]:
+    """The token counts and price for one `claude --print` invocation.
+
+    `cache_creation` is the expensive one: a cold harness costs about 20x a warm
+    one ($0.275 vs $0.014 measured on an empty prompt), and every parallel worker
+    starts its own. A batch whose cache_creation count is a large fraction of its
+    calls is paying that repeatedly and wants fewer workers, not more.
+    """
+    u = envelope.get("usage") or {}
+    return {
+        "input": u.get("input_tokens", 0),
+        "cache_creation": u.get("cache_creation_input_tokens", 0),
+        "cache_read": u.get("cache_read_input_tokens", 0),
+        "output": u.get("output_tokens", 0),
+        "cost_usd": envelope.get("total_cost_usd") or 0.0,
+    }
+
+
+def summarise_usage(records: list[dict[str, Any]]) -> str:
+    """One line totalling a batch, for a run to print when it finishes."""
+    if not records:
+        return "no usage recorded"
+    tot = {k: sum(r.get(k, 0) for r in records) for k in
+           ("input", "cache_creation", "cache_read", "output", "cost_usd")}
+    cold = sum(1 for r in records if r.get("cache_creation", 0) > 1000)
+    billed = tot["input"] + tot["cache_creation"] + tot["cache_read"] + tot["output"]
+    return (
+        f"{len(records)} call(s), {cold} with a cold cache\n"
+        f"  input {tot['input']:,}  cache_write {tot['cache_creation']:,}  "
+        f"cache_read {tot['cache_read']:,}  output {tot['output']:,}\n"
+        f"  {billed:,} tokens total, ${tot['cost_usd']:.2f}  "
+        f"(${tot['cost_usd'] / len(records):.3f}/call)"
+    )
+
+
 def call_claude_cli(
     messages: list[dict[str, str]],
     response_model: Any = None,
@@ -101,6 +136,11 @@ def call_claude_cli(
         "--output-format", "json",
         "--model", model,
         "--no-session-persistence",
+        # This pipeline uses neither skills nor MCP servers, and loading them is
+        # pure startup cost on a call that only wants one structured completion.
+        # Measured on a trivial prompt: 6115ms -> 3838ms per invocation.
+        "--disable-slash-commands",
+        "--strict-mcp-config",
     ]
 
     if system_prompt:
@@ -139,6 +179,14 @@ def call_claude_cli(
             logger.error(f"Claude CLI returned error: {error_msg}")
             return {"data": {}, "success": False, "error": error_msg}
 
+        # `claude --print` is not an API call — it boots a Claude Code harness per
+        # invocation, measured at 45,838 cached prefix tokens against ~3,500 tokens
+        # of actual content. The envelope reports exactly what that cost and this
+        # wrapper used to drop it on the floor, so no batch this pipeline has ever
+        # run has a recorded price; the only figures available were estimates.
+        # Hand it back so callers can total it.
+        usage = _usage_of(envelope)
+
         # Parse structured output — check structured_output field first,
         # then fall back to result field
         if response_model is not None:
@@ -150,10 +198,12 @@ def call_claude_cli(
                 parsed = _extract_json(raw_result)
             # Validate with Pydantic model
             validated = response_model.model_validate(parsed)
-            return {"data": validated.model_dump(), "success": True}
+            return {"data": validated.model_dump(), "success": True, "usage": usage}
 
-        # Plain text response
-        return {"data": {"text": raw_result}, "success": True}
+        # Plain text response. `raw_result` is only bound inside the structured
+        # branch above, so reading it here raised UnboundLocalError on every
+        # response_model=None call; read the envelope directly instead.
+        return {"data": {"text": envelope.get("result", "")}, "success": True, "usage": usage}
 
     except subprocess.TimeoutExpired:
         logger.error("Claude CLI timed out after 600s")

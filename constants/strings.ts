@@ -919,6 +919,47 @@ export const STRINGS = {
    * learner has read, not a conjugation table, and the app has no such table.
    */
   WORD_FORMS_TITLE: 'Seen as',
+  // Practice word detail / reader sheet — root explanation
+  /**
+   * Names the concept, not the jargon. "Root" alone is a term a beginner has to
+   * already own; this states what the section is for, and the radicals directly
+   * beneath it are then self-evidently the thing it refers to.
+   */
+  WORD_ROOT_SECTION_TITLE: 'Where this word comes from',
+  /** Prefix for the compact one-line form inside the reader sheet, where the
+   *  section title has no room. */
+  WORD_ROOT_LABEL: 'Root',
+  /** Transliteration and shared sense, under the radicals. */
+  WORD_ROOT_SUMMARY: '{transliteration} · {meaning}',
+  WORD_ROOT_SENSES_TITLE: 'Senses',
+  /**
+   * "Words from this root", not "Related words": relatedness is a vaguer claim
+   * that a thesaurus also satisfies. The whole point of the section is that
+   * these share a derivation.
+   */
+  WORD_ROOT_FAMILY_TITLE: 'Words from this root',
+  /**
+   * Prefixes the broken plural on a family row. Written as the bare
+   * lexicographic abbreviation rather than "Plural:" because it sits inline
+   * beside Arabic script on a phone-width row, where a full word costs more of
+   * the line than it explains — and "pl." is the form a learner meets in every
+   * dictionary they will use after this one.
+   */
+  WORD_ROOT_PLURAL: 'pl.',
+  /**
+   * Attribution. "Synthesised from" rather than "From": the text is generated
+   * against Lane's as grounding, not quoted from it, and claiming otherwise
+   * would borrow an authority the sentence has not earned.
+   */
+  WORD_ROOT_SOURCE: 'Synthesised from {source}',
+  /**
+   * Spoken form of the root line. Screen readers announce spaced radicals one
+   * letter at a time with no indication of what they are, so the label says it.
+   */
+  WORD_ROOT_A11Y: 'Root {root}, meaning {meaning}',
+  /** Disclosure hints for the collapsed row in the reader sheet. */
+  WORD_ROOT_EXPAND_A11Y: 'Show where this word comes from',
+  WORD_ROOT_COLLAPSE_A11Y: 'Hide where this word comes from',
   /** Fallback title only. The screen sets the word's own meaning once it has it. */
   WORD_DETAIL_TITLE: 'Word',
   /** Shown when the word list has loaded but this word is no longer in it —

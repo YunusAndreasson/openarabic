@@ -115,7 +115,6 @@ describe('ReadingProgressService', () => {
         article_id: 42,
         last_sentence_read: 10,
         total_sentences: 50,
-        progress_percentage: 20,
         updated_at: '2024-01-01T12:00:00Z',
         created_at: '2024-01-01T10:00:00Z',
       };
@@ -139,7 +138,6 @@ describe('ReadingProgressService', () => {
         article_id: 42,
         last_sentence_read: 0,
         total_sentences: 50,
-        progress_percentage: null,
         updated_at: '2024-01-01T12:00:00Z',
         created_at: '2024-01-01T10:00:00Z',
       };
@@ -156,7 +154,6 @@ describe('ReadingProgressService', () => {
         article_id: 42,
         last_sentence_read: 5,
         total_sentences: 50,
-        progress_percentage: 10,
         updated_at: null,
         created_at: '2024-01-01T10:00:00Z',
       };
@@ -174,7 +171,6 @@ describe('ReadingProgressService', () => {
         article_id: 42,
         last_sentence_read: 5,
         total_sentences: 50,
-        progress_percentage: 10,
         updated_at: null,
         created_at: null,
       };
@@ -197,7 +193,6 @@ describe('ReadingProgressService', () => {
         article_id: 42,
         last_sentence_read: 5,
         total_sentences: 50,
-        progress_percentage: 10,
         updated_at: '2024-01-01T12:00:00Z',
         created_at: null,
       };
@@ -218,7 +213,6 @@ describe('ReadingProgressService', () => {
         article_id: 42,
         last_sentence_read: 0,
         total_sentences: 100,
-        progress_percentage: 0,
         updated_at: '2024-01-01T12:00:00Z',
         created_at: '2024-01-01T10:00:00Z',
       };
@@ -236,7 +230,6 @@ describe('ReadingProgressService', () => {
         article_id: 42,
         last_sentence_read: 99,
         total_sentences: 100,
-        progress_percentage: 100,
         updated_at: '2024-01-01T12:00:00Z',
         created_at: '2024-01-01T10:00:00Z',
       };
@@ -254,7 +247,6 @@ describe('ReadingProgressService', () => {
         article_id: 42,
         last_sentence_read: 5,
         total_sentences: 50,
-        progress_percentage: null,
         updated_at: null,
         created_at: null,
       };
@@ -274,7 +266,6 @@ describe('ReadingProgressService', () => {
         article_id: 999,
         last_sentence_read: 1,
         total_sentences: 10,
-        progress_percentage: null,
         updated_at: null,
         created_at: null,
       };

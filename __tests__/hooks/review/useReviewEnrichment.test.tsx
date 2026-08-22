@@ -47,11 +47,11 @@ function example(id: number): WordExample {
 describe('review enrichment batches', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    sentencesService.getExamplesForRoots.mockImplementation(async (ids: number[]) =>
-      new Map(ids.map(id => [id, example(id)])),
+    sentencesService.getExamplesForRoots.mockImplementation(
+      async (ids: number[]) => new Map(ids.map(id => [id, example(id)])),
     );
-    sentencesService.getGlossAlternatesForRoots.mockImplementation(async (ids: number[]) =>
-      new Map(ids.map(id => [id, [`gloss-${id}`]])),
+    sentencesService.getGlossAlternatesForRoots.mockImplementation(
+      async (ids: number[]) => new Map(ids.map(id => [id, [`gloss-${id}`]])),
     );
   });
 
@@ -59,8 +59,7 @@ describe('review enrichment batches', () => {
     const firstBatch = [studyWord(2), studyWord(1)];
     const { wrapper } = createHookTestWrapper();
     const { result, rerender } = renderHook(
-      ({ batches }: { batches: readonly (readonly StudyWord[])[] }) =>
-        useReviewExamples(batches),
+      ({ batches }: { batches: readonly (readonly StudyWord[])[] }) => useReviewExamples(batches),
       { initialProps: { batches: [firstBatch] }, wrapper },
     );
 

@@ -34,8 +34,7 @@ const mockDispatch = jest.fn();
 let mockReduxState = setupTestStore().getState();
 jest.mock('@/store/hooks', () => ({
   useAppDispatch: () => mockDispatch,
-  useAppSelector: (selector: (state: typeof mockReduxState) => unknown) =>
-    selector(mockReduxState),
+  useAppSelector: (selector: (state: typeof mockReduxState) => unknown) => selector(mockReduxState),
   useAppSelectorShallow: (selector: (state: typeof mockReduxState) => unknown) =>
     selector(mockReduxState),
 }));
@@ -168,8 +167,7 @@ jest.mock('@/constants/queries', () => ({
 jest.mock('expo-router', () => {
   const React = require('react');
   return {
-    useFocusEffect: (callback: () => void | (() => void)) =>
-      React.useEffect(callback, [callback]),
+    useFocusEffect: (callback: () => void | (() => void)) => React.useEffect(callback, [callback]),
   };
 });
 
@@ -271,9 +269,7 @@ describe('usePlaylistScreen', () => {
       queryClient.setQueryData(['readingList', mockUser.id], readingList);
 
       expect(store.getState().playlist.customOrder).toEqual([]);
-      expect(store.getState().settings.audioLanguagePreference).toBe(
-        AudioLanguage.ARABIC_ONLY,
-      );
+      expect(store.getState().settings.audioLanguagePreference).toBe(AudioLanguage.ARABIC_ONLY);
 
       const { result } = renderHook(() => usePlaylistScreen(), {
         wrapper: createWrapper(),

@@ -32,6 +32,7 @@ import { authorsService } from '@/services/authors';
 import { bookmarkService } from '@/services/bookmark';
 import { categoriesService } from '@/services/categories';
 import { readingProgressService } from '@/services/readingProgress';
+import { rootEnrichmentService } from '@/services/rootEnrichment';
 import { StudySessionStreakService } from '@/services/studyStreak';
 import { sentencesService } from '@/services/sentences';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
@@ -474,5 +475,30 @@ export const sentenceQueries = {
       ...CACHE_TIMES.ARTICLES, // Sentences never change (infinite staleTime)
       enabled: !!rootId,
       retry: 2,
+    }),
+} as const;
+
+/**
+ * Root enrichment queries
+ * The synthesised "where this word comes from" explanation for one headword.
+ */
+export const rootEnrichmentQueries = {
+  /**
+   * One headword's root explanation, or `null` when none has been generated.
+   *
+   * STATIC rather than ARTICLES: both are `staleTime: Infinity`, but this is
+   * reference content keyed to the dictionary, not article text.
+   *
+   * Deliberately NOT added to `PERSIST_KEYS` in utils/queryPersistence.ts. That
+   * layer already excludes `articles` because Android's CursorWindow caps a read
+   * at ~2MB, and this cache grows with every word a learner opens — unbounded,
+   * where the persisted set has to stay small and predictable.
+   */
+  detail: (rootId: RootId | undefined) =>
+    queryOptions({
+      queryKey: ['root-enrichment', rootId] as const,
+      queryFn: rootId ? () => rootEnrichmentService.getByRootId(rootId) : skipToken,
+      ...CACHE_TIMES.STATIC,
+      retry: 1,
     }),
 } as const;

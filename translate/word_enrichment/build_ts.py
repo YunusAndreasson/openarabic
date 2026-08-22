@@ -19,7 +19,7 @@ import re
 import urllib.request
 from pathlib import Path
 
-from word_enrichment import lexicon
+from word_enrichment import lexicon, sql_seed
 
 BASE = Path(__file__).resolve().parent
 IN = BASE / "verified.jsonl"
@@ -29,6 +29,9 @@ OUT = (
     / "lib"
     / "word-enrichment.ts"
 )
+
+SQL_OUT = BASE / "seed_root_enrichment.sql"
+JSON_OUT = BASE / "seed_root_enrichment.json"
 
 SUPABASE = "https://kkmnzbeugdoajtzfjkxg.supabase.co"
 ANON = (
@@ -45,7 +48,42 @@ ANON = (
 # agreement, not whether the resolver picked the right root. These are the cases
 # that a human diff-review caught. The real fix is root derivation via CAMeL Tools
 # (translate/utils/camel_tools_service.py) before lexicon lookup — revisit then.
+# Records the second opinion does not corroborate but a human has cleared, with
+# the reason it stands. Without this the stricter gate silently un-publishes
+# pages that were reviewed and are correct: the dissent here is lexicographical
+# convention, weak-radical notation, or Arramooz simply being wrong — not error.
+# Reviewed 2026-08-20 against Lane's; four words in the same batch turned out to
+# be genuine errors and were regenerated instead of listed here.
+REVIEWED_OK: dict[int, str] = {
+    5335: "لحظة 'moment' — ل ح ظ correct; Arramooz lacks the noun",
+    5448: "دينار — Arramooz treats the loanword as its own root; Lane's د ن ر is better",
+    5662: "والله — و + الله; Lane files the name under ا ل ه",
+    8984: "بداية — ب د ي / بدا, weak-final notation only",
+    9560: "ملائكة — Lane derives it from أ ل ك (ʾalūk 'message'); a real scholarly split with م ل ك",
+    10732: "حامي — ح م و / حمي, weak-final notation only",
+    13110: "نشأ — ن ش أ, matches Arramooz's نشا once hamza is folded",
+    14557: "رزية — ر ز ي / رزا, weak-final notation only",
+    14566: "هات — ه ي ت confirmed: Lane lists هَات and هَيْتَ as headwords there; "
+           "Arramooz simply has no entry for the imperative particle",
+    14966: "بني 'my son' — Lane files it under ا ب ن (ibn), Arramooz under ب ن ي; both standard",
+    15001: "باق — ب ق ي correct; Arramooz lacks the participle",
+    16751: "أسيد — diminutive of أسد, so Lane's ا س د is right and Arramooz's سود is wrong",
+    19165: "تخلت — خ ل و correct (form V of خلا); Arramooz lacks the inflected form",
+}
+
+# Function words that PASSED the automated gate and were therefore never seen by
+# the judge (it only adjudicates gate failures, i.e. review.jsonl). A primitive
+# particle has no derivational root, but an invented one can still corroborate
+# across Arramooz/CAMeL/Lane's and sail straight through. Found 2026-08-21 by
+# POS-tagging the published set with CAMeL; مِنْ alone accounts for 619 corpus
+# occurrences, so it would have been the first root explanation most learners
+# ever saw. The real fix is to POS-gate targets before generation.
 MANUAL_EXCLUDE: dict[int, str] = {
+    5247: "مِنْ 'from' — primitive preposition, not derived from م ن ن 'to bestow a favour'",
+    5250: "عَنْ 'of' — primitive preposition; the note itself admits Lane only reaches it "
+          "via عَنْعَنَة, a dialectal ع/hamzah feature, which is not a derivation",
+    5281: "بِهَا 'for it' — بِ + هَا, a preposition plus a clitic pronoun; ب ه و "
+          "'to be beautiful' is a spurious match on the bare letters",
     5334: "Adam — foreign name, resolver gave root د م م",
     5761: "إلى 'to' — preposition, no derivational root (ا ل و)",
     5858: "زاد 'to increase' — mis-resolved to provisions root ز و د (real root ز ي د)",
@@ -92,27 +130,41 @@ def load_roots_index() -> dict[str, list[dict]]:
     return index
 
 
-def resolve_link(letters: str, roots_index: dict[str, list[dict]]) -> str | None:
+def resolve_member(letters: str, roots_index: dict[str, list[dict]]) -> dict | None:
+    """The dictionary entry this family member is, when it is unambiguously one.
+
+    Returns both the id and the web path. The website links by path; the app has
+    no slug routes and navigates by root id, so storing the id is what lets one
+    row serve both. Still conservative: a bareword matching two entries is left
+    unlinked rather than guessed at.
+    """
     bw = lexicon.bareword(letters).replace(" ", "")
     matches = roots_index.get(bw)
     if matches and len(matches) == 1:  # conservative: only unique matches
         m = matches[0]
-        return word_path(m["id"], m["meaning"])
+        return {"root_id": m["id"], "path": word_path(m["id"], m["meaning"])}
     return None
+
+
+def resolve_link(letters: str, roots_index: dict[str, list[dict]]) -> str | None:
+    member = resolve_member(letters, roots_index)
+    return member["path"] if member else None
 
 
 def to_ts_record(rec: dict, roots_index: dict[str, list[dict]]) -> dict:
     family = []
     for m in rec["word_family"]:
         entry = {"letters": m["letters"], "transliteration": m["transliteration"], "meaning": m["meaning"]}
-        path = resolve_link(m["letters"], roots_index)
-        if path:
-            entry["path"] = path
+        resolved = resolve_member(m["letters"], roots_index)
+        if resolved:
+            entry["path"] = resolved["path"]
+            entry["rootId"] = resolved["root_id"]
         family.append(entry)
     out = {
         "rootId": rec["root_id"],
         "triliteralRoot": rec["triliteral_root"],
         "rootTransliteration": rec["root_transliteration"],
+        "rootMeaning": rec.get("root_meaning", ""),
         "headwordTransliteration": rec["headword_transliteration"],
         "partOfSpeech": rec["part_of_speech"],
         "senses": [{"gloss": s["gloss"], **({"note": s["note"]} if s.get("note") else {})}
@@ -144,6 +196,8 @@ export interface WordEnrichmentFamilyMember {
   meaning: string;
   /** Internal /word/... link when this form is in our dictionary. */
   path?: string;
+  /** The same entry's root id — how the mobile app navigates, which has no slugs. */
+  rootId?: number;
 }
 
 export interface WordEnrichmentFaq {
@@ -155,6 +209,8 @@ export interface WordEnrichment {
   rootId: number;
   triliteralRoot: string;
   rootTransliteration: string;
+  /** The sense shared by the whole family, e.g. "to turn, invert, change". */
+  rootMeaning: string;
   headwordTransliteration: string;
   partOfSpeech: string;
   senses: WordEnrichmentSense[];
@@ -174,15 +230,72 @@ export function getWordEnrichment(rootId: number): WordEnrichment | undefined {
 """
 
 
+def publishable() -> tuple[list[dict], list[dict]]:
+    """(records that publish, records withheld) under the current verdicts.
+
+    Extracted so this routing has exactly one implementation. `ledger.py` reports
+    coverage from it and this module writes the seeds from it, which is what stops
+    the ledger from claiming a word is live that the seed would never have written.
+
+    Withheld records carry `_withheld` naming the reason.
+    """
+    if not IN.exists():
+        return [], []
+    records = [json.loads(line) for line in IN.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+    # verify.py routes anything the second opinion does not corroborate to
+    # review.jsonl. Pull back the ones a human has explicitly cleared; the rest
+    # stay withheld until someone looks at them.
+    review_path = IN.parent / "review.jsonl"
+    verdicts_path = IN.parent / "verdicts.json"
+    verdicts: dict[int, dict] = {}
+    if verdicts_path.exists():
+        verdicts = {
+            v["root_id"]: v
+            for v in json.loads(verdicts_path.read_text(encoding="utf-8"))
+        }
+    pending: list[dict] = []
+    if review_path.exists():
+        for line in review_path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            rec = json.loads(line)
+            rid = rec["root_id"]
+            verdict = (verdicts.get(rid) or {}).get("verdict")
+            # The judge decides; REVIEWED_OK is only a fallback for records it
+            # has not seen, and MANUAL_EXCLUDE still overrides everything.
+            if verdict == "publish":
+                records.append(rec)
+            elif verdict in ("skip", "fix_root", "fix_senses"):
+                pending.append({**rec, "_withheld": verdict})
+            elif rid in REVIEWED_OK:
+                records.append(rec)
+            elif rid not in MANUAL_EXCLUDE:
+                pending.append({**rec, "_withheld": "unadjudicated"})
+
+    excluded = [r for r in records if r["root_id"] in MANUAL_EXCLUDE]
+    records = [r for r in records if r["root_id"] not in MANUAL_EXCLUDE]
+    pending.extend({**r, "_withheld": "manual-exclude"} for r in excluded)
+    return records, pending
+
+
 def main() -> None:
     if not IN.exists():
         print(f"no verified input at {IN}")
         return
-    records = [json.loads(line) for line in IN.read_text(encoding="utf-8").splitlines() if line.strip()]
-    excluded = [r for r in records if r["root_id"] in MANUAL_EXCLUDE]
-    records = [r for r in records if r["root_id"] not in MANUAL_EXCLUDE]
-    for r in excluded:
-        print(f"  – manual exclude {r['root_id']} {r['letters']}: {MANUAL_EXCLUDE[r['root_id']]}")
+    records, pending = publishable()
+    for rec in pending:
+        why = rec.get("_withheld")
+        if why == "manual-exclude":
+            print(f"  – manual exclude {rec['root_id']} {rec['letters']}: {MANUAL_EXCLUDE[rec['root_id']]}")
+        else:
+            op = rec.get("_second_opinion", {})
+            print(
+                f"  ! withheld {rec['root_id']} {rec['letters']} "
+                f"({rec['meaning']}): {why if why != 'unadjudicated' else op.get('verdict')}"
+            )
+    if pending:
+        print(f"  {len(pending)} record(s) withheld\n")
     print(f"loading roots index for internal-link resolution…")
     roots_index = load_roots_index()
     print(f"  {len(roots_index)} distinct barewords indexed")
@@ -198,6 +311,21 @@ def main() -> None:
         json.dumps(by_id, ensure_ascii=False, indent=2) + ";\n"
     OUT.write_text(HEADER + body + FOOTER, encoding="utf-8")
     print(f"wrote {len(by_id)} enrichment(s), {linked} internal family links → {OUT}")
+
+    # Same records, second sink. The TS module still feeds the website until it
+    # is switched over to read the table; the SQL is what puts the identical rows
+    # in Supabase so the app can reach them.
+    written = sql_seed.write(
+        SQL_OUT, records, lambda letters: resolve_member(letters, roots_index)
+    )
+    rows_json = sql_seed.write_json(
+        JSON_OUT, records, lambda letters: resolve_member(letters, roots_index)
+    )
+    missing = sum(1 for r in records if not r.get("root_meaning"))
+    print(f"wrote {written} row(s) → {SQL_OUT}")
+    print(f"wrote {rows_json} row(s) → {JSON_OUT}")
+    if missing:
+        print(f"  ! {missing} record(s) have no root_meaning — run backfill_root_meaning")
 
 
 if __name__ == "__main__":

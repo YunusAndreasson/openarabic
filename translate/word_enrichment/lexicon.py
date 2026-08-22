@@ -21,8 +21,19 @@ SOURCE_URL = "https://lanelexicon.com/"
 
 DB_PATH = Path(__file__).resolve().parent / "sources" / "lexicon.sqlite"
 
-# Arabic diacritics (harakat, shadda, sukun, superscript alef) + tatweel.
-_DIACRITICS = re.compile(r"[ؐ-ًؚ-ٰٟۖ-ۭـ]")
+# Codepoints, not a character class. A literal Arabic class displays in a
+# different order than it is stored, so an edit can transpose a range boundary
+# without looking any different -- which is exactly how pool.py ended up with
+# U+061A-U+0670, a "diacritics" range covering the entire Arabic alphabet.
+# Integers cannot be reordered by a bidi renderer.
+_MARK_RANGES = (
+    (0x0610, 0x061A),  # Arabic-script honorific marks
+    (0x064B, 0x065F),  # tanwin, harakat, shadda, sukun, low/high marks
+    (0x0670, 0x0670),  # superscript alef
+    (0x06D6, 0x06ED),  # Qur'anic annotation marks
+    (0x0640, 0x0640),  # tatweel
+)
+_MARKS_TABLE = {cp: None for lo, hi in _MARK_RANGES for cp in range(lo, hi + 1)}
 _TAG = re.compile(r"<[^>]+>")
 _WS = re.compile(r"\s+")
 
@@ -35,7 +46,7 @@ _FORM = {
 
 def bareword(text: str) -> str:
     """Strip diacritics + tatweel so word forms compare on their skeleton."""
-    return _DIACRITICS.sub("", text or "").strip()
+    return (text or "").translate(_MARKS_TABLE).strip()
 
 
 def _xml_to_text(xml: str) -> str:
@@ -90,13 +101,65 @@ def _resolve_root(conn: sqlite3.Connection, word: str) -> tuple[str, str] | None
     return None
 
 
-def lookup(word: str, *, text_budget: int = 6000, db_path: Path = DB_PATH) -> Grounding | None:
-    """Grounding for an Arabic word, or None if the root isn't found in Lane's."""
+# Local fold for matching a supplied root against Lane's own spelling. Kept here
+# rather than imported from arramooz so this module stays the lower layer; the
+# rules are the same (hamza carriers -> alef, maqsura -> yaa, marbuta -> haa).
+_ROOT_FOLD = str.maketrans(
+    {"أ": "ا", "إ": "ا", "آ": "ا", "ء": "ا", "ؤ": "ا", "ئ": "ا", "ٱ": "ا", "ى": "ي", "ة": "ه"}
+)
+
+
+def _fold(text: str) -> str:
+    bw = bareword(text).replace(" ", "").translate(_ROOT_FOLD)
+    return bw[:-1] if len(bw) >= 2 and bw[-1] == bw[-2] else bw
+
+
+def resolve_root_letters(conn: sqlite3.Connection, arabic_root: str) -> tuple[str, str] | None:
+    """(root, broot) for a root given by its Arabic letters, e.g. 'ش ط ن'.
+
+    Lets a caller bypass `_resolve_root`, which infers the root from the surface
+    form and is the pipeline's main error source: it happily matches a word that
+    merely OCCURS inside an unrelated root's prose (شيطان appears under د ح ر as
+    the Qur'anic مَدْحُور, يَنْظُر under ع ط ف). With an externally-verified root
+    we can fetch the right entry directly.
+    """
+    target = _fold(arabic_root)
+    if not target:
+        return None
+    cur = conn.cursor()
+    row = cur.execute(
+        "SELECT root, broot FROM entry WHERE root=? AND root!='' LIMIT 1",
+        (bareword(arabic_root).replace(" ", ""),),
+    ).fetchone()
+    if row:
+        return row[0], row[1]
+    # Orthography differs between sources (ن ش أ vs نشا), so fall back to a
+    # folded scan over Lane's ~5k distinct roots — cheap and exact enough.
+    for root, broot in cur.execute("SELECT DISTINCT root, broot FROM entry WHERE root!=''"):
+        if _fold(root) == target:
+            return root, broot
+    return None
+
+
+def lookup(
+    word: str,
+    *,
+    text_budget: int = 6000,
+    db_path: Path = DB_PATH,
+    root_hint: str | None = None,
+) -> Grounding | None:
+    """Grounding for an Arabic word, or None if the root isn't found in Lane's.
+
+    `root_hint` (Arabic letters) overrides the surface-form resolver — pass the
+    root a second source corroborated. See `resolve_root_letters`.
+    """
     if not db_path.exists():
         raise FileNotFoundError(f"Lane's SQLite not found at {db_path}")
     conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
     try:
-        resolved = _resolve_root(conn, word)
+        resolved = (
+            resolve_root_letters(conn, root_hint) if root_hint else _resolve_root(conn, word)
+        )
         if not resolved:
             return None
         root, broot = resolved

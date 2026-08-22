@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
 // Mock BottomSheet component
 const BottomSheet = React.forwardRef((props, ref) => {
@@ -28,6 +28,14 @@ const BottomSheetView = props => {
   return React.createElement(View, props);
 };
 
+// Mock BottomSheetScrollView component.
+// Rendered as a ScrollView, not a View: the real one scrolls, and a View mock
+// would let a test pass while the shipped sheet clipped its own action buttons.
+const BottomSheetScrollView = props => {
+  const { contentContainerStyle, children, ...rest } = props;
+  return React.createElement(ScrollView, { ...rest, contentContainerStyle }, children);
+};
+
 // Mock BottomSheetBackdrop component
 const BottomSheetBackdrop = props => {
   return React.createElement(View, props);
@@ -53,6 +61,7 @@ module.exports = {
   BottomSheet,
   BottomSheetModal,
   BottomSheetView,
+  BottomSheetScrollView,
   BottomSheetBackdrop,
   useBottomSheetDynamicSnapPoints,
   SNAP_POINT_TYPE,
