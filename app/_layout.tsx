@@ -605,6 +605,28 @@ function AppContent() {
                     options={createNavigationOptions(colors, {
                       headerShown: false,
                       freezeOnBlur: true, // Optimize article screen when backgrounded
+                      /*
+                       * The reader does NOT swipe down to close, unlike every
+                       * other modal here. It is the only one that hosts a bottom
+                       * sheet, and on iOS `presentation: 'modal'` is a pageSheet
+                       * whose interactive dismissal is driven by any scroll view
+                       * inside it — including the word card's. Dragging the card
+                       * down dragged the article away with it, and once the card
+                       * shows the whole root record it is tall enough to scroll
+                       * on nearly every word, so this is the common path.
+                       *
+                       * Set statically rather than toggled while the card is
+                       * open: the same option applied through `setOptions` from
+                       * inside the screen did not reach the native view, so the
+                       * conditional version was a no-op on device. A static
+                       * screen option is read at presentation time and cannot
+                       * silently fail.
+                       *
+                       * The cost is the swipe-down exit; `CloseButton` in the
+                       * header and the Android back gesture both still work.
+                       */
+                      gestureEnabled: false,
+                      fullScreenGestureEnabled: false,
                     })}
                   />
                   <Stack.Screen
