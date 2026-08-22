@@ -3869,7 +3869,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@supabase/supabase-js@npm:^2.110.8":
+"@supabase/supabase-js@npm:^2.112.3":
   version: 2.112.3
   resolution: "@supabase/supabase-js@npm:2.112.3"
   dependencies:
@@ -4654,7 +4654,7 @@ __metadata:
     "@sentry/react-native": "npm:~7.11.0"
     "@shopify/flash-list": "npm:2.0.2"
     "@shopify/react-native-skia": "npm:^2.10.0"
-    "@supabase/supabase-js": "npm:^2.110.8"
+    "@supabase/supabase-js": "npm:^2.112.3"
     "@swmansion/argent": "npm:0.20.0"
     "@tanstack/query-async-storage-persister": "npm:^5.101.4"
     "@tanstack/react-query": "npm:^5.101.4"
@@ -4665,7 +4665,7 @@ __metadata:
     "@types/moment-hijri": "npm:^2.1.4"
     "@types/react": "npm:~19.2.17"
     culori: "npm:^4.0.2"
-    eslint: "npm:10.8.0"
+    eslint: "npm:10.9.0"
     eslint-config-expo: "npm:~57.0.1"
     eslint-config-prettier: "npm:^10.1.8"
     eslint-plugin-react: "npm:^7.37.5"
@@ -4699,10 +4699,10 @@ __metadata:
     expo-task-manager: "npm:~57.0.12"
     expo-updates: "npm:~57.0.16"
     fast-check: "npm:^4.9.0"
-    globals: "npm:^17.7.0"
+    globals: "npm:^17.11.0"
     jest: "npm:~30.4.2"
     jest-expo: "npm:~57.0.4"
-    knip: "npm:^6.29.0"
+    knip: "npm:^6.32.2"
     mixpanel-react-native: "npm:^3.5.0"
     moment-hijri: "npm:^3.0.0"
     prettier: "npm:^3.9.6"
@@ -4723,7 +4723,7 @@ __metadata:
     redux-persist: "npm:^6.0.0"
     ts-fsrs: "npm:^5.4.1"
     typescript: "npm:~6.0.3"
-    typescript-eslint: "npm:^8.65.0"
+    typescript-eslint: "npm:^8.67.0"
   languageName: unknown
   linkType: soft
 
@@ -6804,9 +6804,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint@npm:10.8.0":
-  version: 10.8.0
-  resolution: "eslint@npm:10.8.0"
+"eslint@npm:10.9.0":
+  version: 10.9.0
+  resolution: "eslint@npm:10.9.0"
   dependencies:
     "@eslint-community/eslint-utils": "npm:^4.8.0"
     "@eslint-community/regexpp": "npm:^4.12.2"
@@ -6845,7 +6845,7 @@ __metadata:
       optional: true
   bin:
     eslint: bin/eslint.js
-  checksum: 10c0/2dbc523578834088615f388e08418d2620b25655f7a398f6d415765fa2a3a25d6b8b43bd3293d40f977e12752323a841d52654a2648697a00c0102c9794bb3dc
+  checksum: 10c0/bc6c9f4a5c0b97e37ab1aa1753ae30ad5b0cf43a25ca3dcfff937f2b47243654c3ca34e37f71006474a3c1b95d6d4e046149facc6d66af4af6e993a619c23509
   languageName: node
   linkType: hard
 
@@ -8219,7 +8219,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"globals@npm:^17.7.0":
+"globals@npm:^17.11.0":
   version: 17.11.0
   resolution: "globals@npm:17.11.0"
   checksum: 10c0/5e1be3d816e04d4d0d01b1cdd40e46b5fb6b5e9f15aece9a5919b060e0fb1b3f1b9e7327dce97ef19e05513a6d65872e0834999ddea251557556dddd0f5fde30
@@ -9977,7 +9977,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"knip@npm:^6.29.0":
+"knip@npm:^6.32.2":
   version: 6.32.2
   resolution: "knip@npm:6.32.2"
   dependencies:
@@ -13687,7 +13687,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript-eslint@npm:^8.65.0":
+"typescript-eslint@npm:^8.67.0":
   version: 8.67.0
   resolution: "typescript-eslint@npm:8.67.0"
   dependencies:

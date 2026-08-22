@@ -30,7 +30,12 @@ npx expo install --check --yarn || true
 
 echo
 echo "▸ [2/5] Checking for outdated dependencies…"
-yarn outdated || true
+# NOT `yarn outdated`: Yarn 4 removed it, and with `|| true` swallowing the usage
+# error this step reported nothing at all from the Yarn 4 migration onwards — the
+# whole non-Expo half of the tree went unchecked while the script still printed a
+# clean run. npm-check-updates reads package.json directly and is report-only
+# without `-u`.
+npx --yes npm-check-updates || true
 
 if [ "$APPLY" -eq 0 ]; then
   echo
