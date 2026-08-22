@@ -58,19 +58,27 @@ describe('useVoicePriming', () => {
     expect(result.current.showPrimingCard).toBe(false);
   });
 
-  test('carries the surface through to the accept and decline events', () => {
-    const { result } = renderHook(() => useVoicePriming('completion'));
+  // Both members of VoiceOfferSource, deliberately, even though only
+  // 'completion' has a live caller since the review-header mic was removed. The
+  // property under test is that the ARGUMENT reaches the events — assert one
+  // value and the hook could hard-code it and still pass, which is exactly what
+  // this test exists to catch.
+  test.each(['completion', 'review_header'] as const)(
+    'carries the surface through to the accept and decline events (%s)',
+    source => {
+      const { result } = renderHook(() => useVoicePriming(source));
 
-    result.current.accept();
-    expect(analytics.track).toHaveBeenCalledWith(ANALYTICS_EVENTS.VOICE_PRIMING_ACCEPTED, {
-      source: 'completion',
-    });
+      result.current.accept();
+      expect(analytics.track).toHaveBeenCalledWith(ANALYTICS_EVENTS.VOICE_PRIMING_ACCEPTED, {
+        source,
+      });
 
-    result.current.decline();
-    expect(analytics.track).toHaveBeenCalledWith(ANALYTICS_EVENTS.VOICE_PRIMING_DECLINED, {
-      source: 'completion',
-    });
-  });
+      result.current.decline();
+      expect(analytics.track).toHaveBeenCalledWith(ANALYTICS_EVENTS.VOICE_PRIMING_DECLINED, {
+        source,
+      });
+    },
+  );
 
   test('stays silent once the learner has answered, on every surface', () => {
     mockSettings = { voiceEnabled: false, voiceOfferDismissed: true };

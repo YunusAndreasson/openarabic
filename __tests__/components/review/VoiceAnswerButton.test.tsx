@@ -38,7 +38,7 @@ const onSpeakNow = jest.fn();
 const onStopSpeaking = jest.fn();
 
 function renderButton(phase: VoicePhase) {
-  const mode = voiceButtonMode(phase);
+  const mode = voiceButtonMode(phase, true);
   if (mode === null) throw new Error(`expected ${phase} to render a button`);
   return render(
     <VoiceAnswerButton mode={mode} onSpeakNow={onSpeakNow} onStopSpeaking={onStopSpeaking} />,
@@ -47,31 +47,52 @@ function renderButton(phase: VoicePhase) {
 
 describe('voiceButtonMode', () => {
   test('a resting card invites the answer whenever the learner is ready', () => {
-    expect(voiceButtonMode('idle')).toBe('ready');
+    expect(voiceButtonMode('idle', true)).toBe('ready');
   });
 
   test('a playing prompt still invites the answer — the tap cuts the clip short', () => {
     // Being ready before the Arabic finishes is a good thing, so there is no
     // separate "Listen…" state telling the learner to wait through it.
-    expect(voiceButtonMode('idle')).toBe('ready');
-    expect(voiceButtonMode('result')).toBe('ready');
+    expect(voiceButtonMode('idle', true)).toBe('ready');
+    expect(voiceButtonMode('result', true)).toBe('ready');
   });
 
   test('a live mic offers the way out of it', () => {
-    expect(voiceButtonMode('listening')).toBe('live');
+    expect(voiceButtonMode('listening', true)).toBe('live');
   });
 
   test('opening and grading stand the button down rather than renaming it', () => {
-    expect(voiceButtonMode('arming')).toBe('busy');
-    expect(voiceButtonMode('checking')).toBe('busy');
+    expect(voiceButtonMode('arming', true)).toBe('busy');
+    expect(voiceButtonMode('checking', true)).toBe('busy');
   });
 
   // The whole reason those two used to need their own labels was that the
   // button was always rendered. An offer that isn't there needs no excuse —
   // "Show answer" simply takes the row.
   test('a mic that cannot be used is not offered at all', () => {
-    expect(voiceButtonMode('loading')).toBeNull();
-    expect(voiceButtonMode('denied')).toBeNull();
+    expect(voiceButtonMode('loading', true)).toBeNull();
+    expect(voiceButtonMode('denied', true)).toBeNull();
+  });
+
+  // A model that failed to load leaves the recognizer neither ready nor
+  // loading, so the phase effect settles on 'idle' and every rule below it
+  // reads that as "invite the answer". Without the readiness input the row
+  // offered a full "Speak to answer" that buzzed on tap and then died inside
+  // speakNow — on every card of the session. Asserted across the whole union,
+  // because 'idle' is merely the phase that error happens to produce.
+  test('an unready recognizer is never offered, whatever the phase says', () => {
+    const every: VoicePhase[] = [
+      'idle',
+      'loading',
+      'arming',
+      'listening',
+      'checking',
+      'result',
+      'denied',
+    ];
+    for (const phase of every) {
+      expect(voiceButtonMode(phase, false)).toBeNull();
+    }
   });
 });
 

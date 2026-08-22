@@ -31,13 +31,13 @@ import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { TutorialId } from '@/constants/tutorials';
+import { useKeepScreenAwake } from '@/hooks/common/useKeepScreenAwake';
 import {
   useReview,
   useReviewExamples,
   useReviewGlossAlternates,
   useVoiceReview,
 } from '@/hooks/review';
-import { useKeepScreenAwake } from '@/hooks/common/useKeepScreenAwake';
 import { useColors } from '@/hooks/theme/useColors';
 import { useTutorial } from '@/hooks/tutorials/useTutorial';
 import { useAppSelectorShallow } from '@/store/hooks';
@@ -209,7 +209,15 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   // same route, and a finished session left face-up on a table would otherwise
   // hold the display on until the learner came back and closed it — the summary
   // is the one state here that nobody is mid-thought over.
-  useKeepScreenAwake(!isComplete);
+  //
+  // The condition mirrors the completion-screen early return below EXACTLY,
+  // rather than the shorter `!isComplete`: the last grade of a session sets
+  // `isComplete` while `isUpdating` is still true for the FSRS write, and for
+  // that window the card, its verdict ring and its exit are all still on
+  // screen. Releasing on the shorter form dropped the lock while the learner
+  // was still looking at a card.
+  const showingCompletion = isComplete && !isUpdating;
+  useKeepScreenAwake(!showingCompletion);
 
   /**
    * Every grade in the session goes through here, whichever input decided it.
@@ -396,19 +404,17 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   // more often than not — a refused or still-loading recognizer offers nothing
   // and says nothing, and "Show answer" simply takes the whole row.
   //
-  // `voice.isReady` is part of the gate, not just the phase. On a load error
-  // the model is neither ready nor loading, so useVoiceReview's phase effect
-  // settles on 'idle' — which `voiceButtonMode` reads as "invite the answer".
-  // That rendered a full "Speak to answer" whose tap fired a haptic and then
-  // died on speakNow's own `!voice.isReady` guard: a dead control on every
-  // card, with nothing on screen saying why. Not offering it is the honest
-  // state, and it matches what the learner sees while the model downloads.
+  // Readiness is passed to `voiceButtonMode` rather than tested here: the phase
+  // alone cannot tell a downloading model from a failed one, and both must stop
+  // the button being offered. See its doc for the dead-tap that caused.
+  // The indicator needs no such input — every state it can show (arming,
+  // listening, checking) is already reachable only from a ready recognizer.
   //
-  // Suppressed during an advance so a transient phase can't flash while the
-  // next card is handed over.
-  const voiceLive = voiceEnabled && voice.isReady && !isUpdating;
-  const voiceMode = voiceLive ? voiceButtonMode(voicePhase) : null;
-  const indicatorState = voiceLive ? voiceIndicatorState(voicePhase) : null;
+  // Both suppressed during an advance so a transient phase can't flash while
+  // the next card is handed over.
+  const voiceActive = voiceEnabled && !isUpdating;
+  const voiceMode = voiceActive ? voiceButtonMode(voicePhase, voice.isReady) : null;
+  const indicatorState = voiceActive ? voiceIndicatorState(voicePhase) : null;
 
   // Live pipeline numbers for the debug HUD. Comes through the store hook
   // rather than a getter call in render — see ReviewDiagSnapshot for why.
@@ -454,7 +460,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   // `isComplete` now means every word the session started with is done — the
   // queue refills itself from the backlog rather than stopping at the first
   // chunk, so reaching here is the real end and there is nothing left to offer.
-  if (isComplete && !isUpdating) {
+  if (showingCompletion) {
     return (
       <CompletionScreen
         sessionMetrics={sessionMetrics}
@@ -856,6 +862,20 @@ export default function ReviewScreen(): JSX.Element {
       trigger();
     }
   }, [shouldShowTutorial, trigger]);
+
+  // The lock for the two states ReviewContent never mounts in. It holds its own
+  // (see useKeepScreenAwake there), so this one covers only the gap: the
+  // hydration wait, and the grades tutorial.
+  //
+  // The tutorial is the state that most needs it. It is multi-step reading with
+  // no touches between steps, on a learner's very first session — the exact
+  // shape of dwell this whole change exists for — and gating the lock inside
+  // ReviewContent left it uncovered, because these two branches return before
+  // ReviewContent is ever rendered. Two separate hooks rather than one lifted
+  // to this component: only ReviewContent knows when the session has finished,
+  // and a lock held here could not be released for the completion screen.
+  const showingPreSession = !areTutorialsLoaded || (needsTutorial && !tutorialDismissed);
+  useKeepScreenAwake(showingPreSession);
 
   // Hold until the tutorial store has hydrated, so we never start the session
   // and then pop the tutorial over it a moment later. In practice this is

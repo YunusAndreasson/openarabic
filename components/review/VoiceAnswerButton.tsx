@@ -27,10 +27,13 @@
  * rather than an obligation — which is why it no longer needs the "Tap when
  * you're done" line that used to sit above the row explaining it.
  *
- * It is also the only thing that opens the mic. The review header used to carry
- * a mute toggle beside the close button; with arming driven entirely from here,
- * not tapping is the mute, and the toggle was a second control for a decision
- * this one already expresses.
+ * It is also the only thing that opens the mic on a fresh card. (`retry()` from
+ * the voice-result panel re-opens it on a card already answered, and the
+ * transient-failure backoff finishes a request this button started — see
+ * `armRequestedRef` in useVoiceReview; neither is a new invitation to speak.)
+ * The review header used to carry a mute toggle beside the close button; with
+ * arming driven from here, not tapping is the mute, and the toggle was a second
+ * control for a decision this one already expresses.
  */
 import type { FC } from 'react';
 import { useCallback } from 'react';
@@ -68,8 +71,18 @@ export type VoiceButtonMode = 'ready' | 'live' | 'busy';
  * There is no paused state to check any more. Muting was a header toggle back
  * when the mic armed itself on every card; now nothing opens it but this
  * button, so declining to tap it IS the mute.
+ *
+ * `ready` is `VoiceGradingProvider.isReady`, and it is checked HERE rather than
+ * by the caller because the phase alone cannot answer the question. On a model
+ * load error the recognizer is neither ready nor loading, so useVoiceReview's
+ * phase effect settles on 'idle' — which every rule below reads as "invite the
+ * answer". That rendered a full "Speak to answer" whose tap fired a haptic and
+ * then died on speakNow's own `!voice.isReady` guard: a dead control on every
+ * card of the session, with nothing on screen saying why. A mic that cannot
+ * open is not an offer.
  */
-export function voiceButtonMode(phase: VoicePhase): VoiceButtonMode | null {
+export function voiceButtonMode(phase: VoicePhase, ready: boolean): VoiceButtonMode | null {
+  if (!ready) return null;
   switch (phase) {
     case 'loading':
     case 'denied':

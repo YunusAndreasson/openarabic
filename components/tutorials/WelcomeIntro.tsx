@@ -13,8 +13,10 @@
  * the toggle in Account → Practice), where a yes costs a 103 MB download the
  * learner has to agree to. It used to have a second home, a dormant mic in the
  * review header; that whole header slot is gone, which makes this slide the
- * earliest a learner hears of the feature at all. The final CTA stays "Open your first text" regardless of which
- * slide is last: the intro always ends by sending you off to read.
+ * earliest a learner hears of the feature at all.
+ *
+ * The final CTA stays "Open your first text" regardless of which slide is
+ * last: the intro always ends by sending you off to read.
  *
  * Shown once after first sign-in, gated by TutorialId.WELCOME_INTRO.
  */

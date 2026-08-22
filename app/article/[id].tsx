@@ -278,8 +278,19 @@ export default function ArticleScreen(): JSX.Element {
   const colors = useColors();
 
   // Held for the whole route, the loading state included — a reader waiting on
-  // a slow fetch is still a reader. Unconditional here: unlike the review
-  // route, every state this screen can be in is one someone is looking at.
+  // a slow fetch is still a reader.
+  //
+  // Unconditional, unlike the review route, and the one state worth arguing
+  // about is audio playback: the article does NOT follow the audio (the
+  // highlight is driven by the tooltip and the only auto-scroll is the
+  // resume-position jump), so a learner who starts playback and puts the phone
+  // down holds the display for the whole clip. Gating on
+  // `isListeningToThisArticle` would fix that and break the commoner case —
+  // listening WHILE following the Arabic on screen, which is most of why the
+  // audio exists. Dimming the page out from under a learner reading along is
+  // the exact complaint this change was made to fix, so the battery cost is
+  // taken deliberately. Leaving the reader unmounts it and releases the lock;
+  // the MiniPlayer keeps the audio going without one.
   useKeepScreenAwake();
 
   const containerStyle = [FLEX_ONE_STYLE, { backgroundColor: colors.background }];

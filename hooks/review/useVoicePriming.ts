@@ -5,11 +5,19 @@ import { analytics } from '@/services/analytics';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import { setVoiceEnabled, setVoiceOfferDismissed } from '@/store/settingsSlice';
 
-/** Where the learner met the offer. `review_header` — a dormant mic in the
- *  review header, opening the offer as a sheet — no longer exists; the whole
- *  header slot was removed. The value stays in the union anyway, because the
- *  funnel's history contains it and narrowing to a single member would both
- *  erase that record and leave `source` a parameter no caller can vary. */
+/**
+ * Where the learner met the offer.
+ *
+ * `completion` is the only surface with a live caller. `review_header` — a
+ * dormant mic in the review header, opening the offer as a sheet — no longer
+ * exists; that whole header slot was removed, so nothing in the app can emit it
+ * any more.
+ *
+ * @deprecated `'review_header'` — kept so the union stays two-membered rather
+ * than collapsing `source` into a compile-time constant, and so the value the
+ * funnel's history already contains still type-checks. Do not add a new caller
+ * for it; add a new member instead.
+ */
 export type VoiceOfferSource = 'completion' | 'review_header';
 
 export interface UseVoicePrimingResult {

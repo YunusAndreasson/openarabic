@@ -447,10 +447,17 @@ export function useVoiceReview({
     return acquireSession();
   }, [voiceEnabled, acquireSession]);
 
-  // Surface a passive "Preparing voice…" pill ONLY while the model is genuinely
-  // loading. On a load error (or any non-loading not-ready state) stay idle —
-  // otherwise the pill spins forever on a failure that will never resolve; the
-  // user just grades manually. Becomes ready → the arm effect takes over.
+  // Track whether the model is genuinely loading, as distinct from any other
+  // not-ready state (a load error being the one that matters).
+  //
+  // NOTHING RENDERS 'loading' any more. It used to drive a passive "Preparing
+  // voice…" pill in the review header; that header slot is gone, and both
+  // selectors return null for it (voiceButtonMode, voiceIndicatorState), as
+  // does the screen's `voice.isReady` gate. So a session whose model is still
+  // downloading now reports nothing at all — the offer card's copy ("Runs on
+  // your device, 100 MB") is the only warning a learner gets. The phase is kept
+  // because it is still the honest internal state and the debug HUD reads it,
+  // but do not assume it is visible: it is not.
   useEffect(() => {
     if (!voiceEnabled) return;
     if (voice.isReady) return;
