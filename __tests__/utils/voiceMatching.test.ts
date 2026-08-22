@@ -489,11 +489,52 @@ describe('matchSingleWord — shared head prefix rescues a long gloss', () => {
       ).toBe('vague');
     });
 
-    it('matches exactly — a near-miss of a remembered mishear is still a miss', () => {
-      // Deliberately strict. Fuzzing an alias would compound two approximations
-      // and let a word drift a step further from its answer with each accept.
+    it('will not reach an alias through raw edit distance', () => {
+      // The boundary the old exact-only rule existed to hold, and it still
+      // holds: fuzzing an alias compounds two approximations — transcript ≈
+      // alias ≈ answer — and lets a word drift a step further from its gloss
+      // with each accept. "Lineal." scores 0.83 edit distance against the
+      // remembered "linear" and is still, correctly, a miss.
       const r = matchSingleWord({ spoken: 'Lineal.', expected: 'lineage', aliases: ['linear'] });
       expect(r.method).not.toBe('alias');
+    });
+
+    it('reaches an alias through a grammatical form of it', () => {
+      // Why the rule moved off exact-only: the words that generate repeat
+      // overrides are the ones the recognizer mangles DIFFERENTLY every time,
+      // so an exact-keyed list never converges and the learner re-answers the
+      // same card forever. `weighty` came back as "Wait.", "Waiting.", "Wade.",
+      // "Lady" and "Oh, hey." across one week.
+      const r = matchSingleWord({ spoken: 'Waiting.', expected: 'weighty', aliases: ['wait'] });
+      expect(r.matched).toBe(true);
+      expect(r.method).toBe('alias');
+      expect(r.credit).toBe('vague');
+    });
+
+    it('reaches an alias through its head content word', () => {
+      const r = matchSingleWord({
+        spoken: 'They feel as one.',
+        expected: 'the filthy one',
+        aliases: ['they feel the ones'],
+      });
+      expect(r.matched).toBe(true);
+      expect(r.method).toBe('alias');
+    });
+
+    it('reaches an alias through the tuned near tier', () => {
+      const r = matchSingleWord({ spoken: 'on our', expected: 'honor', aliases: ['on her'] });
+      expect(r.matched).toBe(true);
+      expect(r.method).toBe('alias');
+    });
+
+    it('never awards more than vague credit however it reached the alias', () => {
+      // Every widened tier still routes through the same demotion: reaching a
+      // remembered mishearing is weaker evidence than producing the answer.
+      for (const spoken of ['Waiting.', 'on our']) {
+        const expected = spoken === 'Waiting.' ? 'weighty' : 'honor';
+        const aliases = spoken === 'Waiting.' ? ['wait'] : ['on her'];
+        expect(matchSingleWord({ spoken, expected, aliases }).credit).toBe('vague');
+      }
     });
 
     it('cannot rescue a hallucination or silence', () => {

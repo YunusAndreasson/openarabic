@@ -1088,6 +1088,49 @@ function matchAgainstGloss({
  * override is trustworthy enough to bury a word on, but both are far better
  * than marking a right answer wrong.
  */
+/**
+ * Which tiers an ALIAS may be matched through.
+ *
+ * An alias used to be exact-string only, and the reason was sound: fuzzing one
+ * would compound two approximations — transcript ≈ alias ≈ answer — and let a
+ * word drift a step further from its gloss with every accept.
+ *
+ * What the field data showed is that exact-only cannot do the job it exists for.
+ * The words that generate repeat overrides are the ones the recognizer mangles
+ * DIFFERENTLY every time: `lineage` came back as "Linear.", "Linach.",
+ * "Linich.", "Linch." and "Leaner edge."; `weighty` as "Wait.", "Waiting.",
+ * "Wade.", "Lady" and "Oh, hey.". An accept-list keyed on exact strings never
+ * converges on those, so the learner re-answers the same card forever — which
+ * is precisely the "I said it right and it didn't count" complaint.
+ *
+ * So the line moves from "exact" to "structural or tuned-phonetic, never raw
+ * fuzz". `inflection` and `head` are structural (a grammatical form of, or the
+ * content head of, a string the learner already vouched for). `near` is the
+ * tier with its own measured floors (NEAR_MIN_PHONETIC / NEAR_MIN_LEXICAL).
+ * `edit` and `fuzzy` stay out, and they are exactly the "compounding" the old
+ * rule was protecting against — `lineage`←"Lineal." via alias "linear" scores
+ * 0.83 on edit distance and is still, correctly, a miss.
+ *
+ * Measured by replaying every real captured attempt against the learner's own
+ * accept/reject labels with the accept-list rebuilt as it actually grew
+ * (`scripts/replay-voice-matcher.ts`, 421 captures since the last matcher
+ * change): recovers 6 of 34 labelled false negatives, up from 2, and credits
+ * ZERO additional answers the learner had rejected. Re-run that script before
+ * touching this set.
+ *
+ * Drift is bounded by construction, which the exact-only rule could not rely on:
+ * an alias is stored ONLY from an explicit "Got it" (`useVoiceReview.accept`),
+ * so a card auto-credited through this path adds nothing to the list. The list
+ * grows only from cases the matcher still misses.
+ */
+const ALIAS_LADDER_TIERS = new Set<MatchMethod>([
+  'exact',
+  'equivalent',
+  'inflection',
+  'head',
+  'near',
+]);
+
 export function matchSingleWord({
   spoken,
   expected,
@@ -1111,7 +1154,8 @@ export function matchSingleWord({
   if (normalizedSpoken.length === 0 || primary.method === 'hallucination') return primary;
 
   for (const alias of aliases ?? []) {
-    if (alias.length > 0 && alias === normalizedSpoken) {
+    if (alias.length === 0) continue;
+    if (alias === normalizedSpoken) {
       return {
         matched: true,
         credit: 'vague',
@@ -1120,6 +1164,14 @@ export function matchSingleWord({
         normalizedSpoken,
         normalizedExpected: alias,
       };
+    }
+    // Run the alias through the gloss ladder, then keep only the tiers
+    // ALIAS_LADDER_TIERS allows. Reported as `alias` and demoted to `vague`
+    // either way: however it was reached, this is the learner vouching for a
+    // transcript, not them producing the card's answer.
+    const viaLadder = matchAgainstGloss({ spoken, expected: alias });
+    if (viaLadder.matched && ALIAS_LADDER_TIERS.has(viaLadder.method)) {
+      return { ...viaLadder, credit: 'vague', method: 'alias' };
     }
   }
 
