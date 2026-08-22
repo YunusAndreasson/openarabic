@@ -1,9 +1,9 @@
 import type { FlashListRef } from '@shopify/flash-list';
-import { useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import type { JSX, RefObject } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { LayoutRectangle } from 'react-native';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 import { Pressable } from 'react-native-gesture-handler';
 import { useSharedValue } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -230,6 +230,30 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
 
   return (
     <View style={FLEX_ONE_STYLE}>
+      {/* Hand the reader's own dismissal gesture over to the word card while it
+          is open.
+
+          This screen is `presentation: 'modal'` with `gestureEnabled` and
+          `fullScreenGestureEnabled` both true, so on iOS the entire reader is a
+          drag-to-dismiss surface. The word card is a bottom sheet drawn on top
+          of it that ALSO pans down — so one downward drag was recognised by
+          both, and pulling the card down dragged the article away behind it.
+
+          `gestureEnabled: false` maps to UIKit's `modalInPresentation` in
+          react-native-screens, which suspends exactly that interactive
+          dismissal and nothing else; the CloseButton, the back gesture on
+          Android and the sheet's own pan-down-to-close all keep working.
+
+          iOS only, and deliberately: Android's modal slides up with no
+          drag-to-dismiss, so there is no gesture to take away — and
+          `gestureEnabled: false` there would reach the system back gesture,
+          which is the one way out of a sheet that must never be blocked.
+
+          Latent before this was reachable — the card used to be short enough
+          that there was nothing to pull. */}
+      {Platform.OS === 'ios' && (
+        <Stack.Screen options={{ gestureEnabled: !wordDetailsModal.isVisible }} />
+      )}
       {/* scrollViewRef is forwarded to ArticleContent (which attaches it imperatively); lint sees it as ref-read-in-render. */}
       {/* Dismiss the tooltip on any tap that doesn't land on a word or the
           tooltip bubble itself — without this, WordTooltip's box-none overlay
