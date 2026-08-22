@@ -606,25 +606,31 @@ function AppContent() {
                       headerShown: false,
                       freezeOnBlur: true, // Optimize article screen when backgrounded
                       /*
-                       * The reader does NOT swipe down to close, unlike every
-                       * other modal here. It is the only one that hosts a bottom
-                       * sheet, and on iOS `presentation: 'modal'` is a pageSheet
-                       * whose interactive dismissal is driven by any scroll view
-                       * inside it — including the word card's. Dragging the card
-                       * down dragged the article away with it, and once the card
-                       * shows the whole root record it is tall enough to scroll
-                       * on nearly every word, so this is the common path.
+                       * Full screen, not the app's usual pageSheet — the reader
+                       * is the one modal that hosts a bottom sheet.
                        *
-                       * Set statically rather than toggled while the card is
-                       * open: the same option applied through `setOptions` from
-                       * inside the screen did not reach the native view, so the
-                       * conditional version was a no-op on device. A static
-                       * screen option is read at presentation time and cannot
-                       * silently fail.
+                       * iOS drives a pageSheet's interactive dismissal from any
+                       * scroll view inside it, so dragging the word card down
+                       * dragged the article with it. `gestureEnabled: false`
+                       * does NOT fix that: on `presentation: 'modal'` it blocks
+                       * only the final dismissal and leaves the modal tracking
+                       * the finger and springing back
+                       * (software-mansion/react-native-screens#1410, open since
+                       * 2022). That matches the report exactly — "both pull down
+                       * like the finger is pulling both".
                        *
-                       * The cost is the swipe-down exit; `CloseButton` in the
-                       * header and the Android back gesture both still work.
+                       * `fullScreenModal` is `UIModalPresentationFullScreen`,
+                       * which has no dismissal gesture to conflict with. The
+                       * conflict cannot be suppressed on a pageSheet, so the
+                       * reader stops being one.
+                       *
+                       * Costs the swipe-down exit and the inset card look;
+                       * `CloseButton` and the Android back gesture are
+                       * unaffected, and Android falls back to `modal` anyway.
+                       * `gestureEnabled` stays false to state the intent if the
+                       * presentation is ever changed back.
                        */
+                      presentation: 'fullScreenModal',
                       gestureEnabled: false,
                       fullScreenGestureEnabled: false,
                     })}
