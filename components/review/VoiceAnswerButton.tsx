@@ -26,6 +26,11 @@
  * The energy gate still ends a recording on its own, so "Done" is an option
  * rather than an obligation — which is why it no longer needs the "Tap when
  * you're done" line that used to sit above the row explaining it.
+ *
+ * It is also the only thing that opens the mic. The review header used to carry
+ * a mute toggle beside the close button; with arming driven entirely from here,
+ * not tapping is the mute, and the toggle was a second control for a decision
+ * this one already expresses.
  */
 import type { FC } from 'react';
 import { useCallback } from 'react';
@@ -55,14 +60,16 @@ export type VoiceButtonMode = 'ready' | 'live' | 'busy';
 /**
  * `null` means don't render the button at all.
  *
- * A paused session, a refused microphone and a model that is still downloading
- * all used to put their own label in this slot, so the primary control on the
- * screen spent its time apologising. An offer that isn't there needs no excuse:
- * "Show answer" simply takes the row, and the header's mic toggle is where a
- * paused session is visible and undone.
+ * A refused microphone and a model that is still downloading both used to put
+ * their own label in this slot, so the primary control on the screen spent its
+ * time apologising. An offer that isn't there needs no excuse: "Show answer"
+ * simply takes the row.
+ *
+ * There is no paused state to check any more. Muting was a header toggle back
+ * when the mic armed itself on every card; now nothing opens it but this
+ * button, so declining to tap it IS the mute.
  */
-export function voiceButtonMode(phase: VoicePhase, paused: boolean): VoiceButtonMode | null {
-  if (paused) return null;
+export function voiceButtonMode(phase: VoicePhase): VoiceButtonMode | null {
   switch (phase) {
     case 'loading':
     case 'denied':

@@ -59,22 +59,22 @@ describe('useVoicePriming', () => {
   });
 
   test('carries the surface through to the accept and decline events', () => {
-    const { result } = renderHook(() => useVoicePriming('review_header'));
+    const { result } = renderHook(() => useVoicePriming('completion'));
 
     result.current.accept();
     expect(analytics.track).toHaveBeenCalledWith(ANALYTICS_EVENTS.VOICE_PRIMING_ACCEPTED, {
-      source: 'review_header',
+      source: 'completion',
     });
 
     result.current.decline();
     expect(analytics.track).toHaveBeenCalledWith(ANALYTICS_EVENTS.VOICE_PRIMING_DECLINED, {
-      source: 'review_header',
+      source: 'completion',
     });
   });
 
   test('stays silent once the learner has answered, on every surface', () => {
     mockSettings = { voiceEnabled: false, voiceOfferDismissed: true };
-    const { result } = renderHook(() => useVoicePriming('review_header'));
+    const { result } = renderHook(() => useVoicePriming('completion'));
 
     expect(result.current.showPrimingCard).toBe(false);
     expect(analytics.track).not.toHaveBeenCalled();

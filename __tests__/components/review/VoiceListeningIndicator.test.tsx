@@ -40,9 +40,9 @@ function renderIndicator(state: Props['state']) {
 
 describe('voiceIndicatorState', () => {
   test('shows only while the microphone is actually working', () => {
-    expect(voiceIndicatorState('arming', false)).toBe('opening');
-    expect(voiceIndicatorState('listening', false)).toBe('live');
-    expect(voiceIndicatorState('checking', false)).toBe('grading');
+    expect(voiceIndicatorState('arming')).toBe('opening');
+    expect(voiceIndicatorState('listening')).toBe('live');
+    expect(voiceIndicatorState('checking')).toBe('grading');
   });
 
   // An idle card shows its replay control in this slot; the states that mean
@@ -50,13 +50,7 @@ describe('voiceIndicatorState', () => {
   test('every other phase yields the slot back', () => {
     const quiet: VoicePhase[] = ['idle', 'result', 'loading', 'denied'];
     for (const phase of quiet) {
-      expect(voiceIndicatorState(phase, false)).toBeNull();
-    }
-  });
-
-  test('a paused session is silent whatever the phase says', () => {
-    for (const phase of ['arming', 'listening', 'checking'] as VoicePhase[]) {
-      expect(voiceIndicatorState(phase, true)).toBeNull();
+      expect(voiceIndicatorState(phase)).toBeNull();
     }
   });
 });

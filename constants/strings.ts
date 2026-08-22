@@ -72,16 +72,10 @@ export const STRINGS = {
   VOICE_CHECKING: 'Grading…',
   VOICE_CHANNEL_LABEL: 'Voice answer',
   VOICE_MIC_PERMISSION_DENIED: 'Microphone access is off. Voice grading disabled.',
-  VOICE_PAUSE_LABEL: 'Pause voice grading for this session',
-  VOICE_RESUME_LABEL: 'Resume voice grading',
-  /** The dormant mic shown when voice grading is off. It does not toggle
-   *  anything, it opens the offer, so the label promises that and not a mute. */
-  VOICE_OFFER_LABEL: 'Answer out loud instead of tapping',
-  /** Voice is on but the ~103 MB model is still downloading. Muting a recognizer
-   *  that does not exist yet is meaningless, so the slot says what is actually
-   *  happening rather than offering a control that would do nothing. */
-  VOICE_PREPARING_LABEL: 'Preparing voice, downloading once',
-  /** The review header's close button — icon-only, so it needs a spoken name. */
+  /** The review header's close button — icon-only, so it needs a spoken name.
+   *  It is the only control up there; the mic that used to sit beside it (with
+   *  its pause / resume / preparing / offer labels) is gone, because the bottom
+   *  band's "Speak to answer" is the only thing that opens the mic. */
   REVIEW_CLOSE_A11Y: 'End review session',
   // Voice result panel — shown when the recognizer couldn't confirm a match.
   // Framed as a neutral self-grade ("did you get it right?") rather than a

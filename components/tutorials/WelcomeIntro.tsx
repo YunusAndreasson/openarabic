@@ -9,9 +9,11 @@
  * is about HOW you review, which only makes sense once review does.
  *
  * The speak slide is awareness only. It never asks, never downloads and never
- * flips `voiceEnabled` — the offer itself lives on the review header and the
- * completion screen, where a yes costs a 103 MB download the learner has to
- * agree to. The final CTA stays "Open your first text" regardless of which
+ * flips `voiceEnabled` — the offer itself lives on the completion screen (and
+ * the toggle in Account → Practice), where a yes costs a 103 MB download the
+ * learner has to agree to. It used to have a second home, a dormant mic in the
+ * review header; that whole header slot is gone, which makes this slide the
+ * earliest a learner hears of the feature at all. The final CTA stays "Open your first text" regardless of which
  * slide is last: the intro always ends by sending you off to read.
  *
  * Shown once after first sign-in, gated by TutorialId.WELCOME_INTRO.

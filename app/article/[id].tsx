@@ -20,6 +20,7 @@ import { ToastProvider, useTutorialContext, useToast } from '@/components/provid
 import { TutorialId } from '@/constants/tutorials';
 import { useArticleListen } from '@/hooks/articles/useArticleListen';
 import { useArticleScreen } from '@/hooks/articles/useArticleScreen';
+import { useKeepScreenAwake } from '@/hooks/common/useKeepScreenAwake';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Tables } from '@/types/database.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
@@ -275,6 +276,11 @@ ArticleScreenContent.displayName = 'ArticleScreenContent';
 export default function ArticleScreen(): JSX.Element {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
+
+  // Held for the whole route, the loading state included — a reader waiting on
+  // a slow fetch is still a reader. Unconditional here: unlike the review
+  // route, every state this screen can be in is one someone is looking at.
+  useKeepScreenAwake();
 
   const containerStyle = [FLEX_ONE_STYLE, { backgroundColor: colors.background }];
 

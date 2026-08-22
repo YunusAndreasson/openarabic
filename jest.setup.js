@@ -165,6 +165,27 @@ jest.mock('expo-system-ui', () => ({
   getBackgroundColorAsync: jest.fn().mockResolvedValue('#000000'),
 }));
 
+// Mock expo-keep-awake. The review session and the article reader hold a wake
+// lock (hooks/common/useKeepScreenAwake) while mounted, and jest-expo does not
+// stub the native module, so importing either screen threw "Cannot find native
+// module 'ExpoKeepAwake'" before the suite could render anything.
+//
+// Plain functions, NOT jest.fn(): `resetMocks: true` strips every jest.fn()
+// implementation between tests, so the second test in any file rendering those
+// screens would get `undefined` back from activateKeepAwakeAsync and throw on
+// the hook's `.catch()`. This mock is therefore deliberately un-assertable —
+// it exists to keep unrelated suites running. The lock's own behaviour (tag
+// identity, release on unmount, release on going inactive) is covered by
+// __tests__/hooks/common/useKeepScreenAwake.test.ts, which installs its own
+// assertable jest.fn() mock and reinstates the implementations per test.
+jest.mock('expo-keep-awake', () => ({
+  useKeepAwake: () => undefined,
+  activateKeepAwakeAsync: () => Promise.resolve(),
+  deactivateKeepAwake: () => Promise.resolve(),
+  isAvailableAsync: () => Promise.resolve(true),
+  ExpoKeepAwakeTag: 'ExpoKeepAwakeDefaultTag',
+}));
+
 // Mock expo-file-system for file operations
 jest.mock('expo-file-system', () => ({
   Paths: {

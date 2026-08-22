@@ -8,8 +8,9 @@
  * on one control) is not among them.
  *
  * - two labels, and which one is showing depends only on whether the mic is live
- * - a mic that cannot be used is not offered: paused / refused / still loading
- *   render nothing at all rather than putting an excuse in the primary control
+ * - a mic that cannot be used is not offered: a refused or still-loading
+ *   recognizer renders nothing rather than putting an excuse in the primary
+ *   control
  * - one target, two meanings: tap to open the mic, tap again to end it — and
  *   nothing else, because a second gesture on the same target is what made a
  *   slow tap grade a recording the learner thought they were starting
@@ -37,7 +38,7 @@ const onSpeakNow = jest.fn();
 const onStopSpeaking = jest.fn();
 
 function renderButton(phase: VoicePhase) {
-  const mode = voiceButtonMode(phase, false);
+  const mode = voiceButtonMode(phase);
   if (mode === null) throw new Error(`expected ${phase} to render a button`);
   return render(
     <VoiceAnswerButton mode={mode} onSpeakNow={onSpeakNow} onStopSpeaking={onStopSpeaking} />,
@@ -46,36 +47,31 @@ function renderButton(phase: VoicePhase) {
 
 describe('voiceButtonMode', () => {
   test('a resting card invites the answer whenever the learner is ready', () => {
-    expect(voiceButtonMode('idle', false)).toBe('ready');
+    expect(voiceButtonMode('idle')).toBe('ready');
   });
 
   test('a playing prompt still invites the answer — the tap cuts the clip short', () => {
     // Being ready before the Arabic finishes is a good thing, so there is no
     // separate "Listen…" state telling the learner to wait through it.
-    expect(voiceButtonMode('idle', false)).toBe('ready');
-    expect(voiceButtonMode('result', false)).toBe('ready');
+    expect(voiceButtonMode('idle')).toBe('ready');
+    expect(voiceButtonMode('result')).toBe('ready');
   });
 
   test('a live mic offers the way out of it', () => {
-    expect(voiceButtonMode('listening', false)).toBe('live');
+    expect(voiceButtonMode('listening')).toBe('live');
   });
 
   test('opening and grading stand the button down rather than renaming it', () => {
-    expect(voiceButtonMode('arming', false)).toBe('busy');
-    expect(voiceButtonMode('checking', false)).toBe('busy');
+    expect(voiceButtonMode('arming')).toBe('busy');
+    expect(voiceButtonMode('checking')).toBe('busy');
   });
 
-  // The whole reason those three used to need their own labels was that the
+  // The whole reason those two used to need their own labels was that the
   // button was always rendered. An offer that isn't there needs no excuse —
-  // "Show answer" takes the row, and the header's mic toggle is where a paused
-  // session is visible and undone.
+  // "Show answer" simply takes the row.
   test('a mic that cannot be used is not offered at all', () => {
-    expect(voiceButtonMode('loading', false)).toBeNull();
-    expect(voiceButtonMode('denied', false)).toBeNull();
-    // Paused wins over every phase — the mic is muted either way.
-    for (const phase of ['idle', 'arming', 'listening', 'checking'] as VoicePhase[]) {
-      expect(voiceButtonMode(phase, true)).toBeNull();
-    }
+    expect(voiceButtonMode('loading')).toBeNull();
+    expect(voiceButtonMode('denied')).toBeNull();
   });
 });
 

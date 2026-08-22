@@ -35,9 +35,9 @@ import {
   useReview,
   useReviewExamples,
   useReviewGlossAlternates,
-  useVoiceOfferEligible,
   useVoiceReview,
 } from '@/hooks/review';
+import { useKeepScreenAwake } from '@/hooks/common/useKeepScreenAwake';
 import { useColors } from '@/hooks/theme/useColors';
 import { useTutorial } from '@/hooks/tutorials/useTutorial';
 import { useAppSelectorShallow } from '@/store/hooks';
@@ -199,6 +199,18 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     isMicStreamOpen: voice.isMicStreamOpen,
   });
 
+  // A card is read, thought about, and sometimes spoken to — all of which the
+  // OS scores as idle, so the display dimmed and locked mid-recall on the
+  // default timeout and the learner had to wake the phone to answer. Sits above
+  // the early returns below, so it also covers the word fetch and the
+  // audio-preload wait: the stretches with no touches at all.
+  //
+  // Dropped once the session is over. The completion screen renders from this
+  // same route, and a finished session left face-up on a table would otherwise
+  // hold the display on until the learner came back and closed it — the summary
+  // is the one state here that nobody is mid-thought over.
+  useKeepScreenAwake(!isComplete);
+
   /**
    * Every grade in the session goes through here, whichever input decided it.
    *
@@ -333,11 +345,9 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     phase: voicePhase,
     debug: voiceDebug,
     result: voiceResult,
-    paused: voicePaused,
     accept: voiceAccept,
     reject: voiceReject,
     retry: voiceRetry,
-    togglePause: voiceTogglePause,
     speakNow: voiceSpeakNow,
     stopSpeaking: voiceStopSpeaking,
   } = useVoiceReview({
@@ -379,25 +389,26 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   // result).
   const voiceShowResult = voicePhase === 'result' && voiceResult !== null;
   const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
-  // With voice off the header keeps its slot and shows a dormant mic that opens
-  // the offer. Eligibility only — the impression is reported by the offer sheet
-  // itself, when the learner actually sees the ask.
-  const voiceOfferOpen = useVoiceOfferEligible();
-  const openVoiceOffer = useCallback(() => {
-    router.push(ROUTE_PATHS.VOICE_OFFER);
-  }, []);
 
   // The two halves of the voice UI, and the split between them: the BUTTON is
   // the action ("Speak to answer" / "Done"), the CARD is the state (a meter that
   // breathes while the mic opens and moves once it is live). Both are null far
-  // more often than not — a paused, refused or still-loading recognizer offers
-  // nothing and says nothing, and "Show answer" simply takes the whole row.
+  // more often than not — a refused or still-loading recognizer offers nothing
+  // and says nothing, and "Show answer" simply takes the whole row.
+  //
+  // `voice.isReady` is part of the gate, not just the phase. On a load error
+  // the model is neither ready nor loading, so useVoiceReview's phase effect
+  // settles on 'idle' — which `voiceButtonMode` reads as "invite the answer".
+  // That rendered a full "Speak to answer" whose tap fired a haptic and then
+  // died on speakNow's own `!voice.isReady` guard: a dead control on every
+  // card, with nothing on screen saying why. Not offering it is the honest
+  // state, and it matches what the learner sees while the model downloads.
   //
   // Suppressed during an advance so a transient phase can't flash while the
   // next card is handed over.
-  const voiceMode = voiceEnabled && !isUpdating ? voiceButtonMode(voicePhase, voicePaused) : null;
-  const indicatorState =
-    voiceEnabled && !isUpdating ? voiceIndicatorState(voicePhase, voicePaused) : null;
+  const voiceLive = voiceEnabled && voice.isReady && !isUpdating;
+  const voiceMode = voiceLive ? voiceButtonMode(voicePhase) : null;
+  const indicatorState = voiceLive ? voiceIndicatorState(voicePhase) : null;
 
   // Live pipeline numbers for the debug HUD. Comes through the store hook
   // rather than a getter call in render — see ReviewDiagSnapshot for why.
@@ -483,25 +494,15 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
       <View
         style={[baseStyles.headerPadding, Platform.OS === 'android' && { paddingTop: insets.top }]}
       >
+        {/* Progress, the run counter and the way out — nothing else. The mic
+            that used to sit beside the close button is gone: speaking is
+            offered by the bottom band, where the learner is already choosing
+            how to answer, and a second mic up here was a control for a
+            decision that band already carries. */}
         <ReviewHeader
           maxProgress={maxProgress}
           progress={progress}
           onClose={handleClose}
-          // The slot is occupied whether or not voice is on: enabled, it is the
-          // mute toggle; off but still on offer, a dormant mic that opens the
-          // ask. It only disappears once the learner has said no, which is the
-          // one state where a standing affordance would be nagging.
-          showVoiceControl={voiceEnabled || voiceOfferOpen}
-          voiceDormant={!voiceEnabled}
-          onOfferVoice={openVoiceOffer}
-          // Accepting mid-session leaves minutes of download before anything can
-          // listen. Without this the header would offer a mute for a recognizer
-          // that does not exist yet, and nothing else on this screen reports the
-          // download at all.
-          voicePreparing={voiceEnabled && !voice.isReady}
-          voicePaused={voicePaused}
-          voiceListening={voicePhase === 'listening'}
-          onToggleVoice={voiceTogglePause}
           recallRun={sessionMetrics.currentStreak}
           wordsDone={sessionMetrics.wordsReviewed}
         />

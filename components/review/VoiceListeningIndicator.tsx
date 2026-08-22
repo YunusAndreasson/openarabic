@@ -36,16 +36,12 @@ import type { ReanimatedCSSAnimationStyle } from '@/types/ui/base.types';
 
 /**
  * The three beats worth showing. `null` everywhere else: an idle card shows its
- * replay control instead, and a paused / refused / still-downloading recognizer
- * shows nothing at all rather than explaining itself.
+ * replay control instead, and a refused or still-downloading recognizer shows
+ * nothing at all rather than explaining itself.
  */
 export type VoiceIndicatorState = 'opening' | 'live' | 'grading';
 
-export function voiceIndicatorState(
-  phase: VoicePhase,
-  paused: boolean,
-): VoiceIndicatorState | null {
-  if (paused) return null;
+export function voiceIndicatorState(phase: VoicePhase): VoiceIndicatorState | null {
   switch (phase) {
     case 'arming':
       return 'opening';

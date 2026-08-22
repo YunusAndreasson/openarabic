@@ -259,16 +259,12 @@ export function useVoiceReview({
   phase: VoicePhase;
   debug: VoiceDebug;
   result: VoiceResult | null;
-  /** True while auto-listen is muted for the rest of this session. */
-  paused: boolean;
   /** Mark the current card Known (the spoken answer was right). */
   accept: () => void;
   /** Mark the current card Unknown. */
   reject: () => void;
   /** Re-open the mic for another attempt on the same card. */
   retry: () => void;
-  /** Mute / unmute auto-listen for the rest of this session. */
-  togglePause: () => void;
   /** Open the mic for this card right now, whatever the gates say — the
    *  learner asked for it (hold-to-talk / skip the prompt). */
   speakNow: () => void;
@@ -305,10 +301,10 @@ export function useVoiceReview({
    * The learner has asked for the mic and the effect may arm exactly once.
    *
    * This is the trigger now — there is no automatic arm. Set by `speakNow()`
-   * (the tap), by `retry()`, by resuming from pause, and by the transient-
-   * failure backoff, which is the one case where the request outlives its
-   * first attempt: the learner already asked, so the ladder is finishing their
-   * request rather than starting one of its own.
+   * (the tap), by `retry()`, and by the transient-failure backoff, which is the
+   * one case where the request outlives its first attempt: the learner already
+   * asked, so the ladder is finishing their request rather than starting one of
+   * its own.
    */
   const armRequestedRef = useRef(false);
 
@@ -326,12 +322,6 @@ export function useVoiceReview({
    * A row with an arm and a null trigger is an arm nobody asked for.
    */
   const armTriggerRef = useRef<'tap' | 'retry' | 'ladder' | null>(null);
-
-  // Session-local mute. When true the arm effect bails (no auto-listen) and any
-  // in-flight recording is cancelled. Does NOT touch the global `voiceEnabled`
-  // setting or persist — it only quiets the mic for the rest of this session.
-  const [paused, setPaused] = useState(false);
-  const pausedRef = useRef(false);
 
   // Stable refs for callback identity.
   const onKnownAutoRef = useRef(onKnownAuto);
@@ -383,8 +373,9 @@ export function useVoiceReview({
   const armFailuresRef = useRef(0);
   const armRetryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Mirror of `result` so togglePause (a stable callback) can tell whether a
-  // wrong-answer panel is currently awaiting the user without re-arming under it.
+  // Mirror of `result` so the arm effect's cleanup (which closes over the run
+  // that scheduled it) can tell whether a wrong-answer panel is currently
+  // awaiting the user, and leave the already-armed latch alone if so.
   const resultRef = useRef<VoiceResult | null>(null);
   useEffect(() => {
     resultRef.current = result;
@@ -404,7 +395,7 @@ export function useVoiceReview({
     armFailuresRef.current = 0;
     // A request to open the mic belongs to the card that asked for it. Without
     // this, a request still pending when the card advanced (an arm-failure
-    // backoff, a resume from pause) would open a live mic on the next card
+    // backoff) would open a live mic on the next card
     // while its Arabic prompt is playing — nobody asked for that, and the
     // recording captures the prompt.
     armRequestedRef.current = false;
@@ -440,18 +431,17 @@ export function useVoiceReview({
   const { prewarmPermission, acquireSession } = voice;
 
   useEffect(() => {
-    if (!voiceEnabled || paused) return;
+    if (!voiceEnabled) return;
     void prewarmPermission();
-  }, [voiceEnabled, paused, prewarmPermission]);
+  }, [voiceEnabled, prewarmPermission]);
 
   // Claim the microphone for the whole session, not per card. This opens the
   // input stream and the record-capable audio session once, up front, while the
   // first card's audio is still preloading — so by the time the first prompt
   // ends there is nothing left to set up and arming is a `resume()`.
   //
-  // Deliberately NOT gated on `paused`: a learner who un-pauses mid-session
-  // should get the mic on the very next card, not wait for a stream to open.
-  // The session costs nothing while no window is open.
+  // The session costs nothing while no window is open, so it is claimed for
+  // every card whether or not the learner ever taps "Speak to answer".
   useEffect(() => {
     if (!voiceEnabled) return;
     return acquireSession();
@@ -476,7 +466,6 @@ export function useVoiceReview({
     if (currentWordKey === 'none') return;
     let blockedBy: string | null = null;
     if (!voice.isReady) blockedBy = 'model-not-ready';
-    else if (paused) blockedBy = 'paused';
     else if (!ready) blockedBy = 'session-not-ready';
     else if (!expected || expected.length === 0) blockedBy = 'no-expected';
     // A wrong-answer panel is waiting on the learner. Opening the mic here
@@ -880,7 +869,6 @@ export function useVoiceReview({
   }, [
     voiceEnabled,
     voice,
-    paused,
     ready,
     result,
     expected,
@@ -954,7 +942,6 @@ export function useVoiceReview({
     // A mic that is already open (or grading) is not something to take over —
     // re-arming here would throw away audio the learner has already spoken.
     if (phaseRef.current === 'listening' || phaseRef.current === 'checking') return;
-    if (pausedRef.current) return;
     if (!voice.isReady) return;
     diagMark('mic.speakNow', { phase: phaseRef.current });
     // The tap is now the only way to arm, so this stop runs on every card —
@@ -986,38 +973,13 @@ export function useVoiceReview({
     voice.stopListening();
   }, [voice]);
 
-  const togglePause = useCallback((): void => {
-    const next = !pausedRef.current;
-    pausedRef.current = next;
-    setPaused(next);
-    if (next) {
-      // Pausing — the arm effect's cleanup cancels any in-flight recording once
-      // `paused` flips in its deps; clear the live indicator here so the pill
-      // doesn't linger while the recorder unwinds. A waiting result panel stays.
-      setPhase(p => (p === 'arming' || p === 'listening' || p === 'checking' ? 'idle' : p));
-    } else if (resultRef.current === null) {
-      // Resuming just returns the button to rest. It used to re-open the mic on
-      // the spot, which made sense when arming was automatic — un-muting was
-      // the only way to ask for it. Now the button is right there, and opening
-      // a live mic on a toggle nobody aimed at the microphone is a surprise.
-      // The latch has to be released either way: the cancelled recording left
-      // it pointing at this card, and without this the next tap would bail on
-      // 'already-armed'.
-      armedForKeyRef.current = null;
-    }
-    // Resuming while a wrong-answer panel is up: keep armedForKeyRef so the arm
-    // effect bails under the panel; the next card arms once the user resolves it.
-  }, []);
-
   return {
     phase,
     debug,
     result,
-    paused,
     accept,
     reject,
     retry,
-    togglePause,
     speakNow,
     stopSpeaking,
   };

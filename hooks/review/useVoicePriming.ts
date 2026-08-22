@@ -5,8 +5,11 @@ import { analytics } from '@/services/analytics';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import { setVoiceEnabled, setVoiceOfferDismissed } from '@/store/settingsSlice';
 
-/** Where the learner met the offer. Without this the entry points collapse into
- *  one number and the next decision about the funnel is blind again. */
+/** Where the learner met the offer. `review_header` — a dormant mic in the
+ *  review header, opening the offer as a sheet — no longer exists; the whole
+ *  header slot was removed. The value stays in the union anyway, because the
+ *  funnel's history contains it and narrowing to a single member would both
+ *  erase that record and leave `source` a parameter no caller can vary. */
 export type VoiceOfferSource = 'completion' | 'review_header';
 
 export interface UseVoicePrimingResult {
@@ -17,9 +20,10 @@ export interface UseVoicePrimingResult {
 
 /**
  * Is the speak-the-answer offer still open? Eligibility only, with no impression
- * tracking, for surfaces that show an affordance rather than the offer itself
- * (the dormant mic in the review header). Surfaces that actually put the offer
- * on screen use `useVoicePriming` so the impression is recorded.
+ * tracking, for callers that need to know whether the ask is still outstanding
+ * without making it (`useNotificationPriming` stands its own card aside while
+ * this is true). Surfaces that actually put the offer on screen use
+ * `useVoicePriming` so the impression is recorded.
  */
 export function useVoiceOfferEligible(): boolean {
   const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
@@ -37,18 +41,16 @@ export function useVoiceOfferEligible(): boolean {
  * refused) already live in persisted settings, so the whole policy is
  * `!on && !refused`.
  *
- * Two surfaces carry it, at different moments:
+ * One surface carries it: **the completion screen**, which has room to make the
+ * case and catches the learner just after practising, when an offer about HOW
+ * they practise costs no attention. A second surface — a dormant mic in the
+ * review header, opening the offer as a sheet — was removed with the rest of
+ * that header slot; awareness now comes from the last `WelcomeIntro` slide and
+ * from Account → Practice, neither of which interrupts a recall.
  *
- * - **The review header**, as a dormant mic that opens the offer on tap. This
- *   screen used to be excluded on the grounds that a download pitch beside a
- *   card someone is trying to recall competes with the recall. That objection
- *   holds for a pitch *card*, and none is rendered here: the recall area is
- *   untouched and only the header slot the live control already occupies is
- *   used. Excluding the screen entirely was worse, because with voice off the
- *   feature left no trace anywhere in the one place speaking is the natural act.
- * - **The completion screen**, which has room to make the case and catches the
- *   learner just after practising, when an offer about HOW they practise costs
- *   no attention.
+ * `VOICE_FIRST_SESSION_GRACE` in `useNotificationPriming` is what keeps this
+ * surface reachable early: without it the notification ask would take the
+ * shared slot on the first completion and the offer would wait for the second.
  *
  * `accept()` only flips the setting, which is what starts the ~103 MB model
  * download. The microphone permission is NOT requested here — `startRecording`

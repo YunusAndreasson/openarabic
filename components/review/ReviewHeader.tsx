@@ -14,12 +14,18 @@ import { useColors } from '@/hooks/theme/useColors';
 import { mixColors } from '@/utils/colorUtils';
 import { lightFeedback } from '@/utils/haptics';
 
-// The mic and close controls are `GlassIconButton`s, which are 44pt — the Apple
-// HIG minimum tap target (Material prefers 48dp). The visible button matches the
-// touch target, so no hitSlop is needed and adjacent hit areas can't overlap.
-
-/** The preparing state has nothing to toggle; GlassIconButton requires onPress. */
-const NOOP = (): undefined => undefined;
+// Close is a `GlassIconButton`, which is 44pt — the Apple HIG minimum tap
+// target (Material prefers 48dp). The visible button matches the touch target,
+// so no hitSlop is needed.
+//
+// It is the only control up here. The header used to carry a mic beside it,
+// wearing three hats at once — a session mute, a "still downloading" notice and
+// a dormant offer that opened the voice pitch — none of which the learner had
+// asked for at the moment they were trying to recall a word. Voice is now
+// entirely a bottom-band act: "Speak to answer" opens the mic when it is
+// tapped, and not tapping it is the mute. Nothing was left for a second glyph
+// to say, so the chrome is a progress bar, an occasional run counter, and the
+// way out.
 
 /** Tint mixed into the elevation surface to make the progress track visible. */
 const TRACK_TINT = 0.15;
@@ -44,7 +50,7 @@ const STATIC_STYLES = StyleSheet.create({
   header: {
     alignItems: 'center',
     flexDirection: 'row',
-    height: MIN_TOUCH_TARGET.MEDIUM, // 44px - fits the tap-target-sized icon buttons
+    height: MIN_TOUCH_TARGET.MEDIUM, // 44px - fits the tap-target-sized icon button
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     width: '100%',
     zIndex: LAYOUT.Z_INDEX.HEADER,
@@ -56,39 +62,12 @@ const STATIC_STYLES = StyleSheet.create({
   runContainer: {
     marginRight: LAYOUT.SPACING.MEDIUM,
   },
-  voiceButtonSpacing: {
-    marginRight: LAYOUT.SPACING.MEDIUM, // 12px gap ≥ Material's 8dp min between targets
-  },
 });
 
 interface ReviewHeaderProps {
   progress: number;
   maxProgress: number;
   onClose?: () => void;
-  /** Render the mic slot at all. Kept separate from `voiceDormant` so a screen
-   *  that has no voice concept can still omit it entirely. */
-  showVoiceControl?: boolean;
-  /** Voice grading is off, so the mic is an offer rather than a mute: it opens
-   *  `onOfferVoice` instead of toggling anything. The slot stays occupied so
-   *  the feature leaves a trace on the one screen where speaking is the natural
-   *  act — without it, a learner who never finishes a session never learns the
-   *  feature exists. */
-  voiceDormant?: boolean;
-  /** Open the speak-the-answer offer. Without it the slot stays empty, since a
-   *  mic that does nothing is worse than no mic. Required when `voiceDormant`. */
-  onOfferVoice?: () => void;
-  /** Voice is enabled but the model is still downloading. The mute toggle would
-   *  be a lie here — there is no recognizer to mute — so the slot shows a quiet
-   *  preparing state instead. */
-  voicePreparing?: boolean;
-  /** True when auto-listen is muted for this session — drives the mic glyph. */
-  voicePaused?: boolean;
-  /** True only while the mic is actively listening — tints the mic icon so the
-   *  brand color reads as a live "listening now" cue. At rest the mic stays the
-   *  same neutral color as the close button. */
-  voiceListening?: boolean;
-  /** Toggle the session-local voice mute. */
-  onToggleVoice?: () => void;
   /** Consecutive recalls this session (useSessionMetrics.currentStreak). */
   recallRun?: number;
   /** Unique words answered this session (useSessionMetrics.wordsReviewed).
@@ -101,51 +80,12 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({
   progress,
   maxProgress,
   onClose,
-  showVoiceControl = false,
-  voiceDormant = false,
-  onOfferVoice,
-  voicePreparing = false,
-  voicePaused = false,
-  voiceListening = false,
-  onToggleVoice,
   recallRun = 0,
   wordsDone = 0,
 }) => {
   const colors = useColors();
 
   const displayProgress = Math.max(progress, maxProgress);
-
-  // One button, two jobs, chosen here so the chrome contract (clear glass,
-  // selection haptic, spacing) is written once and the two states cannot drift.
-  // `null` means the handler for this state was not supplied, which is the only
-  // case where the slot is legitimately empty — rendering a mic that does
-  // nothing would be worse than rendering none.
-  //
-  // Dormant: outline glyph, one step quieter than the live control. Present
-  // enough to invite a tap, never loud enough to compete with the word being
-  // recalled. Live: tint only while actively listening, neutral at rest so it
-  // reads as the same chrome as the close button. `active` would also lift the
-  // surface, which the mic shouldn't do — only the glyph changes colour.
-  const voiceSlot = voiceDormant
-    ? onOfferVoice && {
-        label: STRINGS.VOICE_OFFER_LABEL,
-        icon: 'mic-outline' as const,
-        color: colors.textTertiary,
-        onPress: onOfferVoice,
-      }
-    : voicePreparing
-      ? {
-          label: STRINGS.VOICE_PREPARING_LABEL,
-          icon: 'mic-outline' as const,
-          color: colors.textTertiary,
-          onPress: NOOP,
-        }
-      : onToggleVoice && {
-          label: voicePaused ? STRINGS.VOICE_RESUME_LABEL : STRINGS.VOICE_PAUSE_LABEL,
-          icon: voicePaused ? ('mic-off' as const) : ('mic' as const),
-          color: voiceListening ? colors.tint : colors.secondaryText,
-          onPress: onToggleVoice,
-        };
 
   // A run is the one moment in the session that rewards the learner while they
   // are still in it, and it was visual-only — a caption fading in beside a
@@ -169,10 +109,9 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({
   // that exit is also reached from the completion screen's ThemedButtons, which
   // fire their own, so keeping it in the hook buzzed Continue twice in one tick.
   //
-  // Both chrome buttons pass hapticType="selection" explicitly, overriding
-  // GlassIconButton's 'light' default — tier 0 in utils/haptics. Leaving the
-  // session and muting the mic are navigation, and a session where the chrome
-  // buzzes as hard as a grade has no room left to mark the grade.
+  // hapticType="selection" overrides GlassIconButton's 'light' default — tier 0
+  // in utils/haptics. Leaving the session is navigation, and a session where the
+  // chrome buzzes as hard as a grade has no room left to mark the grade.
   const handleClose = () => {
     onClose?.();
   };
@@ -185,8 +124,8 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({
         accessibilityLabel={STRINGS.SESSION_PROGRESS_A11Y(Math.round(displayProgress), wordsDone)}
         style={STATIC_STYLES.progressContainer}
       >
-        {/* Deliberately thinner than the ProgressBar default (12): next to two
-            44pt circular buttons a 12px pill reads as a third control rather
+        {/* Deliberately thinner than the ProgressBar default (12): next to a
+            44pt circular button a 12px pill reads as a second control rather
             than as chrome. */}
         <ProgressBar
           animationDuration={TIMING_CONFIG.PROGRESS.duration}
@@ -216,17 +155,6 @@ export const ReviewHeader: FC<ReviewHeaderProps> = ({
             {STRINGS.RECALL_RUN(recallRun)}
           </ThemedText>
         </Animated.View>
-      )}
-      {showVoiceControl && voiceSlot && (
-        <GlassIconButton
-          clear
-          accessibilityLabel={voiceSlot.label}
-          icon={voiceSlot.icon}
-          iconColor={voiceSlot.color}
-          hapticType="selection"
-          style={STATIC_STYLES.voiceButtonSpacing}
-          onPress={voiceSlot.onPress}
-        />
       )}
       {onClose && (
         <GlassIconButton

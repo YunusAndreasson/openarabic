@@ -615,9 +615,6 @@ function AppContent() {
                     })}
                   />
                   <Stack.Screen name="sleep-timer" options={createSheetOptions(colors, [0.4])} />
-                  {/* Opened from the review header's dormant mic. Four lines of
-                      content, so it fits them. */}
-                  <Stack.Screen name="voice-offer" options={createSheetOptions(colors)} />
                   {/* These four fit their contents: fixed-height charts, or a
                       handful of rows, under a short header — no scrolling. See
                       createSheetOptions for what 'fitToContents' requires of the
