@@ -14,9 +14,7 @@ export interface ReviewChunkQueryInputs {
  * Stable query identity for data fetched once per immutable review batch.
  * Sorting also makes equivalent reconstructed batches hit the same cache key.
  */
-export function getReviewChunkQueryInputs(
-  wordBatch: readonly StudyWord[],
-): ReviewChunkQueryInputs {
+export function getReviewChunkQueryInputs(wordBatch: readonly StudyWord[]): ReviewChunkQueryInputs {
   const rootIds = [...new Set(wordBatch.map(word => word.root_id))].sort((a, b) => a - b);
   return { rootIds, keySignature: rootIds.join(',') };
 }

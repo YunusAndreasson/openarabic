@@ -49,9 +49,7 @@ export function useReviewGlossAlternates(
  * Declared at module scope so its identity is stable; TanStack re-runs it when
  * the function changes as well as when the results do.
  */
-function mergeAlternates(
-  results: UseQueryResult<Map<number, string[]>>[],
-): Map<number, string[]> {
+function mergeAlternates(results: UseQueryResult<Map<number, string[]>>[]): Map<number, string[]> {
   if (results.every(result => !result.data)) return EMPTY_ALTERNATES;
   const merged = new Map<number, string[]>();
   for (const result of results) {

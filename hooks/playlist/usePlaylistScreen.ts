@@ -359,13 +359,7 @@ export const usePlaylistScreen = () => {
         handleError(error);
       }
     },
-    [
-      sortedEnhancedTracks,
-      audioPreference,
-      queryClient,
-      prefetchArticle,
-      setTimer,
-    ],
+    [sortedEnhancedTracks, audioPreference, queryClient, prefetchArticle, setTimer],
   );
 
   // Clean up leaked non-playlist audio when the screen loses focus.

@@ -111,8 +111,7 @@ export const useSessionMetrics = () => {
       if (oldStability !== undefined && newStability !== undefined) {
         const stabilityIncrease = newStability - oldStability;
         const sampleCount = stabilitySampleCountRef.current;
-        const totalIncrease =
-          metrics.averageStabilityIncrease * sampleCount + stabilityIncrease;
+        const totalIncrease = metrics.averageStabilityIncrease * sampleCount + stabilityIncrease;
         stabilitySampleCountRef.current = sampleCount + 1;
         metrics.averageStabilityIncrease = totalIncrease / stabilitySampleCountRef.current;
       }
