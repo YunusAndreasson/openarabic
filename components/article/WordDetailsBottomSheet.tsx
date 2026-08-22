@@ -238,6 +238,20 @@ export function WordDetailsBottomSheet({
           the sheet to the content while everything is collapsed, so the common
           case is unchanged; only the overflowing case gains a scroll. */}
       <BottomSheetScrollView
+        /* iOS hands a pageSheet's interactive dismissal to any scroll view it
+           contains: at contentOffset 0, a downward drag stops being a scroll and
+           becomes a drag on the presented view controller. The reader IS such a
+           sheet (`presentation: 'modal'`), so pulling this card down closed the
+           article behind it.
+
+           `bounces={false}` removes the top rubber-band that UIKit reads as that
+           drag, which also hands the gesture cleanly to the sheet's own
+           pan-down-to-close instead of leaving two recognisers to fight.
+
+           Latent until the card grew: with content that fits, the scroll view
+           has nothing to overscroll and never offers UIKit a gesture. Nothing to
+           do on Android — its modal has no drag-to-dismiss. */
+        bounces={false}
         contentContainerStyle={[
           styles.container,
           { paddingBottom: insets.bottom + LAYOUT.SPACING.LARGE },
