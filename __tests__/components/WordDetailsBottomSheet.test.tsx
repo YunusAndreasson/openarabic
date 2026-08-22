@@ -818,46 +818,47 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
 
       const { queryByText } = renderSheet();
 
-      expect(queryByText(STRINGS.WORD_ROOT_LABEL)).toBeNull();
+      expect(queryByText(STRINGS.WORD_ROOT_SECTION_TITLE)).toBeNull();
       expect(queryByText(/to write, inscribe/)).toBeNull();
     });
 
-    test('shows the root and its shared sense on one line, collapsed', () => {
+    test('leads with the root, its reading and its usage note, all open', () => {
       mockEnrichment.mockReturnValue(enrichment());
 
       const { getByText, queryByText } = renderSheet();
 
       expect(getByText('ك ت ب')).toBeTruthy();
-      expect(getByText('to write, inscribe')).toBeTruthy();
-      // The explanation itself stays behind the tap.
-      expect(queryByText(/runs through every word/)).toBeNull();
+      // Both variants now read the radicals the same way: transliteration + sense.
+      expect(getByText(/k-t-b .* to write, inscribe/)).toBeTruthy();
+      expect(getByText(STRINGS.WORD_ROOT_SECTION_TITLE)).toBeTruthy();
+      // The usage note is NOT behind the tap any more. It is the strongest
+      // thing on the card and it used to be opt-in, below the buttons.
+      expect(getByText(/runs through every word/)).toBeTruthy();
+      // Only the family list is deferred.
+      expect(queryByText('book')).toBeNull();
     });
 
-    test('opens the explanation on tap', () => {
+    test('states how many family members the tap would reveal', () => {
+      // A disclosure that does not say what it opens reads as a dead end. The
+      // count is the whole affordance.
       mockEnrichment.mockReturnValue(enrichment());
 
-      const { getByLabelText, getByText } = renderSheet();
-      fireEvent.press(getByLabelText(STRINGS.WORD_ROOT_EXPAND_A11Y));
+      const { getByText } = renderSheet();
 
-      expect(getByText(/runs through every word/)).toBeTruthy();
+      expect(getByText(STRINGS.WORD_ROOT_FAMILY_TITLE)).toBeTruthy();
+      expect(getByText(String(3))).toBeTruthy();
     });
 
-    test('expands to the usage note and a capped family, nothing else', () => {
+    test('opens to a capped family, and nothing beyond it', () => {
       // Senses and attribution stay off: measured on a Pixel emulator, the full
       // record filled 85% of the screen and forced a scroll inside a sheet whose
-      // whole purpose is keeping the learner in the text.
-      //
-      // The family DOES belong here. It was suppressed entirely while this file
-      // and the component both documented a cap of three, so an expanded sheet
-      // was a bare paragraph — and the family list is the strongest teaching
-      // asset in the record, which is precisely what a learner who expanded the
-      // row is asking for.
+      // whole purpose is keeping the learner in the text. The family is the one
+      // part that costs real height, so it is the one part deferred.
       mockEnrichment.mockReturnValue(enrichment());
 
       const { getByLabelText, getByText, queryByText } = renderSheet();
       fireEvent.press(getByLabelText(STRINGS.WORD_ROOT_EXPAND_A11Y));
 
-      expect(getByText(STRINGS.WORD_ROOT_FAMILY_TITLE)).toBeTruthy();
       expect(getByText('book')).toBeTruthy();
 
       // Capped at three: the fourth member must not render.
@@ -892,6 +893,69 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       renderSheet();
 
       expect(mockEnrichment).toHaveBeenCalledWith(mockWord.root_id);
+    });
+  });
+
+  describe('Sentence note', () => {
+    const NOTE =
+      'A past-tense verb in the causative pattern, the verb inside the simile. ' +
+      'The subject is carried inside the verb, and it governs the object next.';
+
+    const renderWithNote = (note: string | null) =>
+      render(
+        <WordDetailsBottomSheet
+          isVisible
+          word={{ ...mockWord, grammar_note: note }}
+          onClose={jest.fn()}
+          onAddToStudy={jest.fn(async () => true)}
+        />,
+      );
+
+    beforeEach(() => {
+      mockEnrichment.mockReturnValue(undefined);
+    });
+
+    test('renders nothing at all for a word with no note', () => {
+      const { queryByText } = renderWithNote(null);
+
+      expect(queryByText(STRINGS.WORD_SENTENCE_NOTE_TITLE)).toBeNull();
+    });
+
+    test('names the scope, so it cannot be read as a second opinion on the root', () => {
+      // The two blocks on this card answer different questions — this one is
+      // about the form in the sentence, the root block about the dictionary
+      // entry. Unlabelled, as this was, they read as two takes on one word.
+      const { getByText } = renderWithNote(NOTE);
+
+      expect(getByText(STRINGS.WORD_SENTENCE_NOTE_TITLE)).toBeTruthy();
+    });
+
+    const expandLabel = (note: string) =>
+      STRINGS.WORD_SENTENCE_NOTE_EXPAND_A11Y.replace('{note}', note);
+
+    test('previews the note collapsed, and opens it on tap', () => {
+      // Collapsed by default: this card opens on a plain word tap, so it is hit
+      // constantly while reading, and the note runs ~200 characters.
+      const { getByLabelText, getByText } = renderWithNote(NOTE);
+
+      // Truncation is visual only, so a bare text match cannot tell the preview
+      // from the paragraph — assert the thing that actually differs. Collapsed,
+      // the note is the one-line preview.
+      expect(getByText(NOTE).props.numberOfLines).toBe(1);
+
+      fireEvent.press(getByLabelText(expandLabel(NOTE)));
+
+      // Opened, the preview gives way to a paragraph with no line cap.
+      expect(getByText(NOTE).props.numberOfLines).toBeUndefined();
+      expect(getByLabelText(STRINGS.WORD_SENTENCE_NOTE_COLLAPSE_A11Y)).toBeTruthy();
+    });
+
+    test('the closed row announces the note, which the preview cannot', () => {
+      // The preview lives inside a Pressable, so a screen reader gets the row
+      // and nothing within it. Before the disclosure the note was plain text.
+      const { getByLabelText } = renderWithNote(NOTE);
+
+      expect(getByLabelText(expandLabel(NOTE))).toBeTruthy();
     });
   });
 });

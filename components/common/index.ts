@@ -16,6 +16,7 @@ export { BottomSheetStateHandler } from './BottomSheetStateHandler';
 
 export { ColorCodedText } from './ColorCodedText';
 export { ComponentErrorBoundary } from './ComponentErrorBoundary';
+export { DisclosureRow } from './DisclosureRow';
 export { Dot } from './Dot';
 export { EmailLink } from './EmailLink';
 export { EmptyState } from './EmptyState';

@@ -1,5 +1,10 @@
-import { BottomSheetErrorBoundary, ColorCodedText, RootExplanation } from '@/components/common';
-import { BrandedBottomSheet } from '@/components/ui';
+import {
+  BottomSheetErrorBoundary,
+  ColorCodedText,
+  DisclosureRow,
+  RootExplanation,
+} from '@/components/common';
+import { BrandedBottomSheet, IconButton } from '@/components/ui';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { startTransition, useCallback, useEffect, useOptimistic, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -33,6 +38,59 @@ export interface WordDetailsBottomSheetProps {
   onAddToStudy: (word: SentenceWord, intent: StudyWordIntent) => Promise<boolean>;
   isInStudyList?: boolean;
   isStudyStateLoading?: boolean;
+}
+
+/**
+ * The grammar note for this word IN THIS SENTENCE, behind a labelled row.
+ *
+ * Two things share this card and they are not the same claim: the root block
+ * above describes the dictionary entry, this describes the form actually on the
+ * page — its voice, its mood and what triggered it, which noun a suffix reaches
+ * back to. Unlabelled, as it used to be, the two read as two opinions on one
+ * word; the heading is what makes them legible as a pair.
+ *
+ * Collapsed by default because this card opens on a plain word TAP (the inline
+ * tooltip is the opt-in, see `wordTapShowsTooltip`), so it is hit constantly
+ * while reading, and the note now runs to a median of ~200 characters after the
+ * June rewrite. The preview line carries the note's own opening so the row says
+ * what opening it buys.
+ *
+ * The closed label carries the WHOLE note, which reads long but is the point:
+ * the preview lives inside a `Pressable`, so a screen reader announces the row
+ * and nothing within it. Before this row existed the note was plain always-
+ * visible text, and a label naming only the action would have made this the one
+ * place where a screen-reader user hears strictly less than a sighted one. Open,
+ * the paragraph is its own element and the label goes back to naming the action.
+ *
+ * Local to this file rather than shared: `grammar_note` has exactly one render
+ * site in the app, and `components/common/` is for what two surfaces share.
+ */
+function SentenceNote({ note }: { note: string }) {
+  return (
+    <View style={styles.noteSection}>
+      <DisclosureRow
+        collapseLabel={STRINGS.WORD_SENTENCE_NOTE_COLLAPSE_A11Y}
+        expandLabel={STRINGS.WORD_SENTENCE_NOTE_EXPAND_A11Y.replace('{note}', note)}
+        summary={
+          /* The note's own first line as the preview, not a generic label: it is
+             what tells the learner whether this one is worth opening. */
+          <ThemedText
+            colorName="secondaryText"
+            numberOfLines={1}
+            style={styles.flex}
+            type="caption"
+          >
+            {note}
+          </ThemedText>
+        }
+        title={STRINGS.WORD_SENTENCE_NOTE_TITLE}
+      >
+        <ThemedText style={styles.noteText} type="body">
+          {note}
+        </ThemedText>
+      </DisclosureRow>
+    </View>
+  );
 }
 
 export function WordDetailsBottomSheet({
@@ -172,13 +230,13 @@ export function WordDetailsBottomSheet({
 
   return (
     <BrandedBottomSheet isVisible={isVisible && !!word} onClose={onClose}>
-      {/* BottomSheetScrollView, not BottomSheetView: expanding the root
-          explanation can push the content past `maxDynamicContentSize` (85% of
-          screen height), and a non-scrolling container simply clips the
+      {/* BottomSheetScrollView, not BottomSheetView: expanding the family list
+          or the sentence note can push the content past `maxDynamicContentSize`
+          (85% of screen height), and a non-scrolling container simply clips the
           overflow — measured on a Pixel emulator, it put "Add to practice"
           below the fold with no way to reach it. Dynamic sizing still shrinks
-          the sheet to the content while it is collapsed, so the common case is
-          unchanged; only the overflowing case gains a scroll. */}
+          the sheet to the content while everything is collapsed, so the common
+          case is unchanged; only the overflowing case gains a scroll. */}
       <BottomSheetScrollView
         contentContainerStyle={[
           styles.container,
@@ -226,16 +284,51 @@ export function WordDetailsBottomSheet({
                     {memory.summaryLabel}
                   </ThemedText>
                 )}
+                {/* An icon, not a full-width button — which is what the word
+                    screen already does with this exact action. As a button it
+                    took a whole row and carried the same weight as "Add to
+                    practice", so the card offered two equal primary actions
+                    when only one of them is.
+
+                    It sits UNDER the word rather than beside it, unlike the
+                    word screen, because that hero is a left-aligned row and
+                    this one is a centred title block; an icon pushed to one
+                    edge of a centred block breaks the centring it belongs to.
+                    Last inside the block so it never separates the word from
+                    its gloss. */}
+                <IconButton
+                  icon="volume-high"
+                  onPress={handlePlayAudio}
+                  disabled={!word.audio_url}
+                  backgroundColor={colors.elevation2}
+                  iconColor={colors.text}
+                  hapticType="light"
+                  accessibilityLabel={STRINGS.PLAY_AUDIO}
+                />
               </View>
 
-              {/* Grammar Note */}
-              {word.grammar_note && (
-                <View style={styles.grammarSection}>
-                  <ThemedText type="body" style={styles.grammarText}>
-                    {word.grammar_note}
-                  </ThemedText>
-                </View>
-              )}
+              {/* The one action, directly under the word.
+                  ABOVE both explanations, not below them: this is the only
+                  thing here that must stay reachable without a thought, and
+                  both blocks beneath it can be opened by the learner. Putting
+                  it first is what lets either of them grow freely — the root
+                  block used to be exiled below the buttons for exactly that
+                  reason, which cost it its place in the reading order. */}
+              <View style={styles.buttonSection}>
+                <ThemedButton
+                  title={
+                    isStudyStateLoading || isToggling
+                      ? STRINGS.LOADING_GENERIC
+                      : optimisticIsInStudyList
+                        ? STRINGS.REMOVE_FROM_PRACTICE
+                        : STRINGS.ADD_TO_PRACTICE
+                  }
+                  variant={optimisticIsInStudyList ? 'outlined' : 'filled'}
+                  onPress={handleAddToStudy}
+                  disabled={isStudyStateLoading || isToggling}
+                  fullWidth
+                />
+              </View>
 
               {/* No route to the word detail screen, deliberately. The reader
                   is itself a root-level modal above the tabs, and
@@ -243,53 +336,24 @@ export function WordDetailsBottomSheet({
                   the dictionary modal — reaching it from here means either
                   tearing down the reading session or presenting modal over
                   modal, which this codebase has already been bitten by. The two
-                  facts worth having fit on the line above. */}
-              {/* Action Buttons */}
-              <View style={styles.buttonSection}>
-                <View style={styles.buttonContainer}>
-                  <ThemedButton
-                    title={STRINGS.PLAY_AUDIO}
-                    variant="outlined"
-                    onPress={handlePlayAudio}
-                    disabled={!word.audio_url}
-                    fullWidth
-                  />
-                  <ThemedButton
-                    title={
-                      isStudyStateLoading || isToggling
-                        ? STRINGS.LOADING_GENERIC
-                        : optimisticIsInStudyList
-                          ? STRINGS.REMOVE_FROM_PRACTICE
-                          : STRINGS.ADD_TO_PRACTICE
-                    }
-                    variant={optimisticIsInStudyList ? 'outlined' : 'filled'}
-                    onPress={handleAddToStudy}
-                    disabled={isStudyStateLoading || isToggling}
-                    fullWidth
-                  />
-                </View>
+                  facts worth having fit in the blocks below. */}
+
+              {/* Where the word comes from — the Lane's-grounded account of the
+                  root, leading. It is the stronger of the two explanations and
+                  the one the learner cannot get anywhere else in the reader, so
+                  it goes first and its usage note is not hidden. Only the
+                  family list is behind a chevron; see RootExplanation.
+
+                  Absent entirely for a word we have no entry for. No
+                  placeholder: a row that exists only to say it has nothing
+                  would fire on roughly one tap in six. */}
+              <View style={styles.contentSection}>
+                {enrichment && <RootExplanation enrichment={enrichment} variant="sheet" />}
+
+                {/* And why it looks like THIS, here. Scoped to the occurrence,
+                    which the root block above structurally cannot be. */}
+                {word.grammar_note && <SentenceNote note={word.grammar_note} />}
               </View>
-
-              {/* Where the word comes from — one collapsed line, opened on
-                  demand. The sheet's job is to keep the learner reading, so the
-                  default state costs a single row. Expanded it adds the usage
-                  note and three family members.
-
-                  LAST on purpose, below the actions. It is the only block here
-                  whose height the learner changes, and when it sat above them
-                  expanding it pushed "Add to practice" clean off the screen —
-                  the sheet's primary action, reachable only by scrolling, as a
-                  side effect of asking what a word comes from. Anything that
-                  can grow goes after everything that must stay reachable.
-
-                  Absent entirely for a word we have no entry for, which is most
-                  of them. No placeholder: a row that exists only to say it has
-                  nothing would fire on nearly every tap. */}
-              {enrichment && (
-                <View style={styles.rootSection}>
-                  <RootExplanation enrichment={enrichment} variant="sheet" />
-                </View>
-              )}
             </>
           )}
         </BottomSheetErrorBoundary>
@@ -308,14 +372,13 @@ const styles = StyleSheet.create({
   titleSection: {
     alignItems: 'center',
     gap: LAYOUT.SPACING.SMALL,
-    marginBottom: LAYOUT.SPACING.XLARGE,
   },
   englishTranslation: {
     textAlign: 'center',
     // Font size handled by ThemedText type="heading3"
   },
-  grammarSection: {
-    marginBottom: LAYOUT.SPACING.LARGE,
+  buttonSection: {
+    marginTop: LAYOUT.SPACING.XLARGE,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
 
@@ -324,20 +387,23 @@ const styles = StyleSheet.create({
   // an accident rather than a choice — reported on device as "some text
   // centered and some left aligned". The rule now has no exceptions: the hero
   // (the Arabic word and its gloss) is centred because it is a title; prose and
-  // lists beneath it are left-aligned because they are read and scanned.
-  grammarText: {
+  // lists beneath it are read and scanned, so they are left-aligned.
+  // The lead lives HERE, not on whichever block happens to come first. It used
+  // to ride on RootExplanation's own section margin, which meant the gap under
+  // "Add to practice" was XLARGE for a word with a root record and SMALL for one
+  // without — two card layouts decided by data availability.
+  contentSection: {
+    marginTop: LAYOUT.SPACING.XLARGE,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+  },
+  noteSection: {
+    marginTop: LAYOUT.SPACING.SMALL,
+  },
+  noteText: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.5,
+    marginTop: LAYOUT.SPACING.SMALL,
   },
-  // Same rule as grammarText above.
-  rootSection: {
-    marginBottom: LAYOUT.SPACING.SMALL,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-  },
-  buttonSection: {
-    marginTop: LAYOUT.SPACING.LARGE,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-  },
-  buttonContainer: {
-    gap: LAYOUT.SPACING.MEDIUM,
+  flex: {
+    flex: 1,
   },
 });

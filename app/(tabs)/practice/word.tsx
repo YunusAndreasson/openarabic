@@ -266,6 +266,31 @@ export default function PracticeWordScreen(): JSX.Element {
             <ThemedText type="arabic" align="left" numberOfLines={1} style={heroArabicStyle}>
               {arabicText}
             </ThemedText>
+            {/* How to say it. `headwordTransliteration` is 100% populated on
+                every enriched record and was being fetched, mapped onto
+                `RootEnrichment` and rendered nowhere — so the only answer the
+                app gave to "how do I pronounce this" was the audio button.
+
+                Correct HERE and not in the reader's word card: this hero is
+                `roots.letters`, the lemma, which is exactly what the field
+                transliterates. The card's hero is the INFLECTED form, so the
+                same string there would be a reading of a different word.
+
+                Height-reserved, like the class band above it: this comes from
+                the enrichment query, so it lands a beat after the word and
+                without the reserve it would push the gloss, the memory panel
+                and every stat down mid-read — the one thing the rest of this
+                screen is arranged to avoid. The reserve costs an empty line on
+                the ~15% of words with no record, which is the cheaper failure.
+                `minHeight` for the same reason `heroMeta` uses it: a fixed
+                height clips the line once the OS text scale climbs. */}
+            <View style={styles.heroReading}>
+              {enrichment?.headwordTransliteration ? (
+                <ThemedText type="body" colorName="textTertiary">
+                  {enrichment.headwordTransliteration}
+                </ThemedText>
+              ) : null}
+            </View>
             <ThemedText type="body" colorName="secondaryText">
               {englishText}
             </ThemedText>
@@ -469,6 +494,12 @@ const styles = StyleSheet.create({
   // text fits inside the reserve and nothing moves.
   heroMeta: {
     minHeight: LAYOUT.SPACING.XLARGE,
+    justifyContent: 'center',
+  },
+  // Reserves the transliteration line whether or not the enrichment record
+  // arrives — see the comment at the render site.
+  heroReading: {
+    minHeight: LAYOUT.SPACING.LARGE,
     justifyContent: 'center',
   },
   stats: {
