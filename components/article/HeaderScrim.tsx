@@ -1,5 +1,5 @@
 import { memo, useMemo } from 'react';
-import { Platform, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -54,7 +54,11 @@ interface HeaderScrimProps {
 const HeaderScrimInternal = memo<HeaderScrimProps>(({ colors, scrollY, headerHeight }) => {
   const insets = useSafeAreaInsets();
 
-  const buttonTop = Platform.OS === 'android' ? insets.top : LAYOUT.SPACING.LARGE;
+  // Must track FloatingActionButtons exactly — this band exists to keep those
+  // icons legible, so a different top leaves the scrim covering the wrong strip.
+  // See the note there on why iOS no longer hardcodes an offset: the reader is a
+  // full-screen modal now, not a pageSheet inset below the status bar.
+  const buttonTop = insets.top;
   const scrimHeight = buttonTop + MIN_TOUCH_TARGET.MEDIUM + LAYOUT.SPACING.LARGE;
 
   const gradientColors = useMemo(() => {

@@ -1,6 +1,6 @@
 import { GlassIconButton } from '@/components/ui';
 import { memo, startTransition, useOptimistic } from 'react';
-import { Platform, View } from 'react-native';
+import { View } from 'react-native';
 // Gesture-handler Pressable, NOT react-native's. The article screen wraps its
 // whole content in an RNGH Pressable (see app/article/[id].tsx) to dismiss the
 // word tooltip on a background tap. An RNGH ancestor wins the gesture arena
@@ -38,11 +38,17 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
     onToggleListen,
   }) => {
     const insets = useSafeAreaInsets();
-    // The buttons sit at the screen corners (left/right edges), so on iOS the
-    // dynamic island / notch — which is centered — doesn't overlap them, and a
-    // 16px offset from the screen top keeps them visually tight against the
-    // hero. Android has a full-width status bar, so we still need insets.top.
-    const buttonTop = Platform.OS === 'android' ? insets.top : LAYOUT.SPACING.LARGE;
+    // Clear of the status bar on both platforms.
+    //
+    // iOS used to hardcode a 16px offset here, on the reasoning that these sit
+    // at the screen corners while the dynamic island is centred. That only held
+    // while the reader was a pageSheet — the sheet is itself inset below the
+    // status bar, so 16px from ITS top was already clear. The reader is now
+    // `fullScreenModal` (it had to be, so the word card could scroll without
+    // dragging the article away), and 16px from the true screen top put Close,
+    // Listen and Add-to-playlist underneath the status bar — with the swipe-down
+    // exit gone too, that left no way out of an article at all.
+    const buttonTop = insets.top;
 
     const closeButtonStyle = {
       position: 'absolute' as const,
