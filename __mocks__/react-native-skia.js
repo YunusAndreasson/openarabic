@@ -57,6 +57,12 @@ const createMockPath = () => ({
   cubicTo: () => {},
   close: () => {},
   addArc: () => {},
+  // Real Skia's `copy()` forks a path so a second shape can be grown from the
+  // first — `WordMemoryCurve` builds its decay line, then copies it and closes
+  // it down to the baseline for the wash beneath. Omitted here until the word
+  // sheet became the first surface to render that curve under test, which
+  // failed with "line.copy is not a function".
+  copy: () => createMockPath(),
   toSVGString: () => 'M0,0',
   // Real Skia refuses to interpolate two paths with different verb counts, and
   // `usePathInterpolation` THROWS on the mismatch rather than degrading — which

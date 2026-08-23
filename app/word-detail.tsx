@@ -1,0 +1,273 @@
+import { useLocalSearchParams } from 'expo-router';
+import type { JSX } from 'react';
+import { useCallback, useMemo } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import {
+  BottomSheetHeader,
+  BottomSheetStateHandler,
+  ListRow,
+  RootExplanation,
+} from '@/components/common';
+// Direct paths, not the practice barrel: this sheet renders two of that
+// folder's components and none of its swipeable dictionary rows, and the barrel
+// would drag the lot into a route whose whole point is to open fast.
+import { StatRow } from '@/components/practice/StatRow';
+import { WordMemoryPanel } from '@/components/practice/WordMemoryPanel';
+import { ThemedText } from '@/components/primitives/ThemedText';
+import { IconButton, Ionicons } from '@/components/ui';
+import { LAYOUT, getArabicHeroFontSize } from '@/constants/layout';
+import { getPracticeWordRoute } from '@/constants/routes';
+import { STRINGS } from '@/constants/strings';
+import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
+import { useAuth } from '@/hooks/auth/useAuth';
+import { useColors } from '@/hooks/theme/useColors';
+import { useDebouncedArabicFontSize } from '@/hooks/theme/useDebouncedArabicFontSize';
+import { useFSRSQueries, useRootEnrichment, useWordMemory } from '@/hooks/vocabulary';
+import type { RootId } from '@/types/branded.types';
+import { getNextReviewLabel } from '@/utils/fsrsUtils';
+import { dismissSheetThenNavigate } from '@/utils/sheetNavigation';
+import { capitalizeFirstLetter } from '@/utils/stringUtils';
+import { DIFFICULTY_COLORS, DIFFICULTY_LABELS, getWordDifficultyLevel } from '@/utils/urgencyScore';
+
+/**
+ * One saved word, as a sheet that can present over any tab.
+ *
+ * **Why this is a route and not a `<BottomSheet>` on the Explore screen.** The
+ * app has exactly three gorhom sheet instances and they are all owned by a
+ * screen that can host one; Explore cannot. Its container is a plain
+ * `ScrollView`, and gorhom's sheet is `position: absolute; top: 0`, which
+ * resolves against the nearest parent — inside a scroll view that is the top of
+ * the *content*, so the sheet sizes to the full scroll height and scrolls away
+ * with the page. Everything else in this app that looks like a sheet is a
+ * `presentation: 'formSheet'` route, and so is this.
+ *
+ * **Why not `/(tabs)/practice/word`.** That screen answers the same question and
+ * answers more of it, but it lives inside the practice stack by design, so
+ * opening it from Explore means changing tabs before the learner has seen
+ * anything. This sheet carries what a glance is for — how well the word is held,
+ * when it comes back, where it comes from — and hands off to that screen for the
+ * examples and the destructive actions.
+ *
+ * **Layout is dictated by react-native-screens, not taste.** On iOS a form
+ * sheet's scroll view is sized correctly only when it is a direct child of the
+ * screen at index 0, or at index 1 behind a single non-collapsable header view.
+ * Anything deeper and the fallback force-sets the scroll view's frame to the
+ * whole screen view — content jumps to the sheet's top-left corner at full sheet
+ * size and paints over the header. So: two children, `collapsable={false}` on
+ * the first (view flattening would otherwise remove it and make the scroll view
+ * child 0), padding on the header and on `contentContainerStyle` and never on a
+ * wrapper in between, and the background from the route's `contentStyle`. The
+ * same rules `app/words-to-revisit.tsx` documents, for the same reason.
+ *
+ * The hero is that header — so the word stays on screen while its numbers
+ * scroll, which is what makes the sheet readable at the 0.6 detent.
+ */
+export default function WordDetailSheet(): JSX.Element {
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
+  const { user } = useAuth();
+  const { rootId: rootIdParam } = useLocalSearchParams<{ rootId?: string }>();
+  const rootId = Number(rootIdParam) as RootId;
+
+  const heroFontSize = getArabicHeroFontSize(useDebouncedArabicFontSize(100));
+  const heroArabicStyle = useMemo(
+    () => ({
+      fontSize: heroFontSize,
+      lineHeight: Math.round(heroFontSize * 1.58), // headroom for diacritics
+    }),
+    [heroFontSize],
+  );
+
+  // `useFSRSQueries` rather than `useStudyWordByRoot`: this screen has to tell
+  // "still fetching" apart from "not in the practice list", and the narrower
+  // hook returns only data. Opened from the Explore rail the cache is already
+  // warm — the rail was rendered from it — so the loading state is really for a
+  // cold deep link.
+  const { allWords, isLoading, error } = useFSRSQueries({ userId: user?.id });
+  const word = useMemo(
+    () => allWords?.find(candidate => candidate.root_id === rootId),
+    [allWords, rootId],
+  );
+
+  const memory = useWordMemory(word);
+  // Keyed off the ROUTE param, not the resolved word: the id is known
+  // synchronously on mount, so this is in flight alongside the study-word list
+  // rather than behind it. The rail also prefetches it on press.
+  const enrichment = useRootEnrichment(rootId);
+
+  const playWordAudio = useWordAudioPlayback({ showErrorToast: true });
+  // Sync, with the promise explicitly discarded: `playWordAudio` catches its
+  // own failures and toasts them (`showErrorToast`), so there is nothing here
+  // to await and nothing to handle. Handing an async function straight to
+  // `onPress` is what the rest of the app does and what the lint ratchet counts.
+  const handlePlayAudio = useCallback(() => {
+    if (!word?.root) return;
+    void playWordAudio({
+      id: word.root_id,
+      audio_url: word.root.audio_url,
+      audio_url_en: word.root.audio_url_en,
+      letters: word.root.letters,
+      meaning: word.root.meaning,
+    });
+  }, [word, playWordAudio]);
+
+  const arabicText = word?.root?.letters ?? '';
+  const englishText = capitalizeFirstLetter(word?.root?.meaning ?? '');
+
+  const handleOpenInDictionary = useCallback(() => {
+    // Two navigations that iOS refuses to overlap: UIKit will not present from
+    // a controller that is still dismissing, so the push is queued until the
+    // sheet has gone. This lands on the Practice tab — the row says so.
+    dismissSheetThenNavigate(getPracticeWordRoute(rootId));
+  }, [rootId]);
+
+  return (
+    <>
+      <View collapsable={false} style={styles.header}>
+        {word ? (
+          <View style={styles.hero}>
+            <View style={styles.heroText}>
+              {/* The lemma, and deliberately uncoloured: `roots.letters` carries
+                  no prefix and no case, so grammar colouring would have nothing
+                  true to paint. One line, so the reading-size setting cannot
+                  push the numbers below the fold. */}
+              <ThemedText align="left" numberOfLines={1} style={heroArabicStyle} type="arabic">
+                {arabicText}
+              </ThemedText>
+              <ThemedText colorName="secondaryText" type="body">
+                {englishText}
+              </ThemedText>
+            </View>
+            {word.root?.audio_url ? (
+              <IconButton
+                accessibilityLabel={STRINGS.PLAY_AUDIO}
+                backgroundColor={colors.elevation2}
+                hapticType="light"
+                icon="volume-high"
+                iconColor={colors.text}
+                onPress={handlePlayAudio}
+              />
+            ) : null}
+          </View>
+        ) : (
+          <BottomSheetHeader title={STRINGS.WORD_DETAIL_TITLE} />
+        )}
+      </View>
+
+      <BottomSheetStateHandler
+        emptyMessage={STRINGS.WORD_NOT_FOUND}
+        errorMessage={STRINGS.WORD_SHEET_ERROR}
+        // All three gates are `&& !word`: the study-word list is a shared cache
+        // that keeps refetching underneath this sheet, and a background refresh
+        // that fails still leaves the word on screen. Reporting the error over a
+        // word we are holding would replace something correct with an apology.
+        isEmpty={!word}
+        isError={Boolean(error) && !word}
+        isLoading={isLoading && !word}
+        loadingMessage={STRINGS.WORD_SHEET_LOADING}
+      >
+        <ScrollView
+          // `flex: 1` is what sizes this on Android and pre-empts the iOS
+          // correction; the fixed detent gives the wrapper a definite height, so
+          // there is nothing here for iOS to measure and lose.
+          style={styles.body}
+          contentContainerStyle={[
+            styles.bodyContent,
+            { paddingBottom: insets.bottom + LAYOUT.SPACING.MEDIUM },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* The only thing here that shows the model rather than a reading of
+              it: the decay this word is on, and where the schedule sits on it. */}
+          {memory && word ? (
+            <WordMemoryPanel dueLabel={getNextReviewLabel(word.fsrs_due)} memory={memory} />
+          ) : null}
+
+          {word ? (
+            <View style={[styles.stats, { borderTopColor: colors.border }]}>
+              <StatRow
+                colorName={DIFFICULTY_COLORS[getWordDifficultyLevel(word)]}
+                label={STRINGS.WORD_STAT_DIFFICULTY}
+                value={DIFFICULTY_LABELS[getWordDifficultyLevel(word)]}
+              />
+              <StatRow
+                label={STRINGS.WORD_STAT_NEXT_REVIEW}
+                value={getNextReviewLabel(word.fsrs_due)}
+              />
+              {memory && memory.reps > 0 ? (
+                <StatRow
+                  label={STRINGS.WORD_STAT_REVIEWS}
+                  value={
+                    memory.lapses > 0
+                      ? STRINGS.WORD_REVIEWS_WITH_LAPSES.replace(
+                          '{count}',
+                          String(memory.reps),
+                        ).replace('{lapses}', String(memory.lapses))
+                      : STRINGS.WORD_REVIEWS_VALUE.replace('{count}', String(memory.reps))
+                  }
+                />
+              ) : null}
+            </View>
+          ) : null}
+
+          {/* Absent for most words, and silently so — coverage is a small
+              fraction of the dictionary, and a band explaining its own emptiness
+              on nine words in ten is worse than no band. */}
+          {enrichment ? <RootExplanation enrichment={enrichment} variant="sheet" /> : null}
+
+          {/* Everything this sheet does not carry — the inflected forms, the
+              example sentences, reset and remove — lives on the word screen,
+              which is inside the practice stack. Named for where it lands
+              because it lands on another tab. */}
+          <ListRow
+            accessibilityLabel={STRINGS.WORD_SHEET_OPEN_IN_DICTIONARY_A11Y.replace(
+              '{word}',
+              englishText,
+            )}
+            style={styles.openRow}
+            onPress={handleOpenInDictionary}
+          >
+            <ThemedText type="body">{STRINGS.WORD_SHEET_OPEN_IN_DICTIONARY}</ThemedText>
+            <Ionicons
+              color={colors.textTertiary}
+              name="chevron-forward"
+              size={LAYOUT.BUTTON.ICON_SIZE.DISCLOSURE}
+            />
+          </ListRow>
+        </ScrollView>
+      </BottomSheetStateHandler>
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  body: {
+    flex: 1,
+  },
+  bodyContent: {
+    paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
+  },
+  header: {
+    // Clears the OS grabber pill, which otherwise draws through the hero.
+    paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
+    paddingTop: LAYOUT.SPACING.XLARGE,
+  },
+  hero: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
+  },
+  heroText: {
+    flex: 1,
+  },
+  openRow: {
+    justifyContent: 'space-between',
+  },
+  stats: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    marginTop: LAYOUT.SPACING.XLARGE,
+  },
+});

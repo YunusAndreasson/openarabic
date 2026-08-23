@@ -12,6 +12,7 @@ import {
   DiscoverySections,
   FilterSection,
   GetStartedChecklist,
+  HardestWordsSection,
   HorizontalFeaturedSection,
 } from '@/components/explore';
 import { WelcomeIntro } from '@/components/tutorials/WelcomeIntro';
@@ -194,6 +195,13 @@ export default function ExploreScreen(): JSX.Element {
         />
       </View>,
     );
+
+    // The words the learner keeps forgetting. Between the topic grid and the
+    // discovery rails deliberately: the three article rails above stay
+    // contiguous, and this is the change of pace before the browse block
+    // resumes. Self-contained — it owns its own query, so it is not in the
+    // dependency list below and does not need to be.
+    sections.push(<HardestWordsSection key="hardest-words" />);
 
     // Discovery sections (compact horizontal cards: beginner, short reads, long reads, advanced)
     sections.push(<DiscoverySections key="discovery" articlesData={articlesData} />);

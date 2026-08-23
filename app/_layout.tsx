@@ -660,6 +660,12 @@ function AppContent() {
                     name="words-to-revisit"
                     options={createSheetOptions(colors, [0.6, 1])}
                   />
+                  {/* One saved word, root-level so the Explore rail can present
+                      it without changing tabs. Fixed detents for the same reason
+                      as the sheet above: a memory panel, a stat block and a root
+                      explanation do not fit their contents, so this one scrolls
+                      and its screen owns the two-child layout that requires. */}
+                  <Stack.Screen name="word-detail" options={createSheetOptions(colors, [0.6, 1])} />
                 </Stack.Protected>
 
                 {/* Unauthenticated routes — guard flips on sign-in, router unmounts auth */}

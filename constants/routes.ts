@@ -25,6 +25,12 @@ export const ROUTE_PATHS = {
   PRACTICE_STUDY_STREAK: '/study-streak',
   PRACTICE_WORDS_TO_REVISIT: '/words-to-revisit',
 
+  /**
+   * The word sheet, root-level so it can present over any tab. Distinct from
+   * `/(tabs)/practice/word`, which is the full screen inside the practice stack.
+   */
+  WORD_DETAIL: '/word-detail',
+
   SLEEP_TIMER: '/sleep-timer',
 } as const;
 
@@ -35,4 +41,5 @@ export {
   getCategoryFilterRoute,
   getPracticeReviewRoute,
   getPracticeWordRoute,
+  getWordDetailRoute,
 } from '@/utils/routeBuilders';

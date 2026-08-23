@@ -377,6 +377,19 @@ export const STRINGS = {
   SECTION_BEGINNER_FRIENDLY: 'Beginner friendly',
   SECTION_SHORT_READS: 'Quick reads',
   SECTION_ADVANCED: 'Advanced',
+  /**
+   * The hardest-words rail on Explore.
+   *
+   * "Hardest right now" rather than "Words to revisit": the Practice sheet of
+   * that name is the full, ranked list and this is a swipeable slice of its top,
+   * so the two must not read as the same thing sitting on two tabs.
+   *
+   * **No subtitle.** It had one — "The words you keep forgetting" — and every
+   * card underneath already says "N× forgot" against a word the learner saved.
+   * A line of prose restating the row beneath it is the kind of text that reads
+   * as filler on the second viewing and never earns its space again.
+   */
+  SECTION_HARDEST_WORDS: 'Hardest right now',
   // Difficulty levels
   // Length categories
   RESUMED_READING_TEMPLATE: 'Resuming at {percent}%',
@@ -811,6 +824,16 @@ export const STRINGS = {
   WORDS_TO_REVISIT_EMPTY_STATE: 'Nothing tripping you up right now — nice work',
   FORGOT_N_TIMES: '{count}× forgot',
   /**
+   * One card in the Explore rail, read out whole — headword, meaning, how often
+   * it has been forgotten, in the order a revisit row uses.
+   *
+   * It used to end "Opens the word." A label should say what the thing IS; that
+   * it can be opened is the job of `accessibilityRole="button"`, which the card
+   * now sets, and a screen reader already announces. Saying both means every
+   * card in the rail reads its own affordance out loud.
+   */
+  HARDEST_WORD_CARD_A11Y: '{arabic}, {meaning}, {forgot}',
+  /**
    * The overflow out of the capped leech list and into the dictionary.
    *
    * Only rendered when the list actually truncated. A row offering to "see all"
@@ -1001,6 +1024,23 @@ export const STRINGS = {
   /** Shown when the word list has loaded but this word is no longer in it —
    *  e.g. it was removed from another screen. Beats spinning forever. */
   WORD_NOT_FOUND: 'This word is no longer in your practice list',
+  /**
+   * The root-level word sheet (`/word-detail`), opened from the Explore rail.
+   *
+   * It reports on a word the learner has already saved, so a root that is not in
+   * the practice list is a genuine miss — the same one the practice word screen
+   * reports, in the same words, because they are the same claim.
+   */
+  WORD_SHEET_LOADING: 'Loading word…',
+  WORD_SHEET_ERROR: "Couldn't load this word. Try again",
+  /**
+   * The way out of the sheet and into everything it does not carry — the
+   * inflected forms, the example sentences, reset and remove. Named for the
+   * destination rather than the action ("Open full details") because it lands on
+   * another tab, and a row that changes tabs should say where it is going.
+   */
+  WORD_SHEET_OPEN_IN_DICTIONARY: 'Open in your dictionary',
+  WORD_SHEET_OPEN_IN_DICTIONARY_A11Y: 'Open {word} in your dictionary',
   RESET_PROGRESS_ACTION: 'Reset progress',
   REMOVE_FROM_PRACTICE_ACTION: 'Remove from practice',
   REMOVE_WORD_TITLE: 'Remove word?',

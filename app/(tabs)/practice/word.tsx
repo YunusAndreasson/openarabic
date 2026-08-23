@@ -12,6 +12,11 @@ import { WordMemoryPanel } from '@/components/practice';
 // renderer and therefore Skia, and the barrel is imported by surfaces (the
 // revisit sheet) that render nothing but text rows.
 import { WordExampleBlock } from '@/components/practice/WordExampleBlock';
+// Direct path because the OTHER caller needs it to be: `StatRow` is shared with
+// the root-level word sheet, which renders two components from this folder and
+// none of its swipeable dictionary rows. Imported the same way here so the rule
+// is visible from both ends.
+import { StatRow } from '@/components/practice/StatRow';
 import { SkiaColoredArabic } from '@/components/common/SkiaColoredArabic';
 import { IconButton, PulsatingLoader } from '@/components/ui';
 import {
@@ -34,7 +39,6 @@ import {
   useWordMemory,
 } from '@/hooks/vocabulary';
 import type { SentenceArticle } from '@/services/sentences';
-import type { SolidColorName } from '@/constants/colors';
 import type { RootId } from '@/types/branded.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
@@ -46,34 +50,6 @@ import { capitalizeFirstLetter } from '@/utils/stringUtils';
 import { DIFFICULTY_COLORS, DIFFICULTY_LABELS, getWordDifficultyLevel } from '@/utils/urgencyScore';
 
 const SENTENCE_EXAMPLES_LIMIT = 5;
-
-interface StatRowProps {
-  label: string;
-  value: string;
-  /** Omit for values that carry no judgement (a due date isn't good or bad) */
-  colorName?: SolidColorName;
-}
-
-/**
- * One label/value pair as a hairline row.
- *
- * Replaces a three-column stat block: equal-width columns gave Strength,
- * Difficulty and Next review identical weight, and with two of the three
- * colored red a perfectly normal word read as an error state. Rows also put
- * this screen on the same left-aligned scan axis as the dictionary list.
- */
-function StatRow({ label, value, colorName }: StatRowProps): JSX.Element {
-  return (
-    <ListRow divider style={styles.statRow}>
-      <ThemedText colorName="secondaryText" type="body">
-        {label}
-      </ThemedText>
-      <ThemedText colorName={colorName} type="bodyBold">
-        {value}
-      </ThemedText>
-    </ListRow>
-  );
-}
 
 export default function PracticeWordScreen(): JSX.Element {
   const router = useRouter();
@@ -505,11 +481,6 @@ const styles = StyleSheet.create({
   stats: {
     marginTop: LAYOUT.SPACING.XLARGE,
     borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  // ListRow supplies the row layout and the rule; this only spreads the
-  // label and value to opposite edges.
-  statRow: {
-    justifyContent: 'space-between',
   },
   formsSection: {
     marginTop: LAYOUT.SPACING.XLARGE,

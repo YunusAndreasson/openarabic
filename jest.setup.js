@@ -343,6 +343,14 @@ jest.mock('react-native-reanimated', () => {
       }
     },
     useDerivedValue: callback => ({ value: callback() }),
+    // The device setting, not an animation value. `false` is the honest default
+    // for a test environment: components branch on it to swap a looping
+    // animation for a still frame, and reporting "reduced" would render every
+    // such component in its fallback shape and quietly stop testing the real
+    // one. Absent until the first test rendered `PulsatingLoader`, which reads
+    // it — the failure is "useReducedMotion is not a function", one layer below
+    // whatever component pulled the loader in.
+    useReducedMotion: () => false,
     useAnimatedProps: callback => callback(),
     useAnimatedReaction: (prepare, react) => {
       // Execute the reaction immediately in tests
