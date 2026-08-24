@@ -857,6 +857,8 @@ export const STRINGS = {
   WORDS_TO_REVISIT_SEE_ALL: 'See all {count}',
   WORDS_TO_REVISIT_SEE_ALL_HINT: 'the hardest {shown} are listed above',
   WORDS_TO_REVISIT_SEE_ALL_A11Y: 'See all {count} words to revisit. Opens them in your dictionary.',
+  /** The back control shown when a word's detail is opened inline over this list. */
+  WORDS_TO_REVISIT_BACK_A11Y: 'Back to words to revisit',
   RESET_WORD_PROGRESS: 'Reset progress?',
   RESET_WORD_PROGRESS_CONFIRM: 'This word starts over as new. Your other progress is kept.',
   WORD_PROGRESS_RESET: 'Progress reset',

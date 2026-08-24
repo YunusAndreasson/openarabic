@@ -1,16 +1,19 @@
 import type { JSX } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { BackHandler, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomSheetHeader, BottomSheetStateHandler, ListRow } from '@/components/common';
 import { WordListRow } from '@/components/practice';
+import { WordDetailContent } from '@/components/practice/WordDetailContent';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { Ionicons } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
-import { getPracticeWordRoute, ROUTE_PATHS } from '@/constants/routes';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { useWordsToRevisit } from '@/hooks/vocabulary/useWordsToRevisit';
+import type { RootId } from '@/types/branded.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { getHorizonAccessibilityLabel, getMemoryHorizonDays } from '@/utils/memoryHorizon';
 import { dismissSheetThenNavigate } from '@/utils/sheetNavigation';
@@ -23,6 +26,7 @@ function formatForgotCount(count: number): string {
 interface LeechRowProps {
   word: StudyWord;
   divider: boolean;
+  onSelect: (rootId: RootId) => void;
 }
 
 /**
@@ -43,8 +47,18 @@ interface LeechRowProps {
  * on the word screen this row opens (and one swipe away in the dictionary's
  * `struggling` scope). The sheet promises another pass at these words, not a
  * way to wipe them.
+ *
+ * **Tapping a row swaps this sheet's own content, not a navigation.** It used
+ * to `dismissSheetThenNavigate` to the practice tab's word screen — dismiss
+ * this sheet, wait out iOS's "can't present while dismissing" backstop timer
+ * (up to a second), then present a new one. Twenty rows about words the
+ * learner is being told to act on, leading to a real gap before anything
+ * happened, was the original defect that pattern fixed; the gap itself was
+ * never the fix. `WordDetailContent` is the same content that word screen's
+ * sibling `/word-detail` sheet shows, so selecting a root here just renders it
+ * in place, instantly, with its own way back to this list.
  */
-function LeechRow({ word, divider }: LeechRowProps): JSX.Element {
+function LeechRow({ word, divider, onSelect }: LeechRowProps): JSX.Element {
   const { arabicText: letters, englishText: meaning } = getRootLemma(word);
   const lapses = word.fsrs_lapses ?? 0;
 
@@ -61,10 +75,7 @@ function LeechRow({ word, divider }: LeechRowProps): JSX.Element {
           {formatForgotCount(lapses)}
         </ThemedText>
       }
-      // Twenty rows about words the learner is being told to act on, leading
-      // nowhere, was the defect. `dismissSheetThenNavigate` because nothing can
-      // present from a sheet that is still dismissing.
-      onPress={() => dismissSheetThenNavigate(getPracticeWordRoute(word.root_id))}
+      onPress={() => onSelect(word.root_id)}
     />
   );
 }
@@ -138,10 +149,34 @@ function SeeAllRow({ total, shown }: { total: number; shown: number }): JSX.Elem
  *   native hierarchy and the scroll view silently becomes child 0
  * - padding lives on the header and on `contentContainerStyle`, never on a
  *   wrapper around the scroll view
+ *
+ * Selecting a row swaps in `WordDetailContent` for that same pair — its own
+ * non-collapsable header View and its own `ScrollView`, so the screen's native
+ * children are still exactly a header then a scroll view no matter which state
+ * is showing. Neither branch may be wrapped in anything (an `Animated.View` for
+ * a transition, a container `View`) without reintroducing the exact bug this
+ * file's layout already had to be rebuilt around.
  */
 export default function WordsToRevisitScreen(): JSX.Element {
   const { leeches, totalCount, isLoading, isError } = useWordsToRevisit();
   const insets = useSafeAreaInsets();
+  const [selectedRootId, setSelectedRootId] = useState<RootId | null>(null);
+
+  // Android's hardware/gesture back would otherwise close the whole sheet
+  // while a word is open inline — this returns to the list first, the same
+  // place the on-screen back control lands.
+  useEffect(() => {
+    if (Platform.OS !== 'android' || selectedRootId === null) return;
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      setSelectedRootId(null);
+      return true;
+    });
+    return () => subscription.remove();
+  }, [selectedRootId]);
+
+  if (selectedRootId !== null) {
+    return <WordDetailContent rootId={selectedRootId} onBack={() => setSelectedRootId(null)} />;
+  }
 
   return (
     <>
@@ -179,6 +214,7 @@ export default function WordsToRevisitScreen(): JSX.Element {
               // in which case the rule separates them rather than trailing off
               // before content that isn't there.
               divider={index < leeches.length - 1 || totalCount > leeches.length}
+              onSelect={setSelectedRootId}
             />
           ))}
 

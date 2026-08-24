@@ -49,6 +49,17 @@ jest.mock('@/hooks/vocabulary/useResetWordProgress', () => ({
   useResetWordProgress: () => ({ confirmReset: jest.fn() }),
 }));
 
+// A row's tap now renders `WordDetailContent` inline over this list (see the
+// suite below), rather than navigating away — same mocks `wordDetailSheet.test`
+// uses to render that content, since it is the same component.
+jest.mock('@/hooks/vocabulary/useRootEnrichment', () => ({
+  useRootEnrichment: () => undefined,
+}));
+
+jest.mock('@/hooks/audio/useWordAudioPlayback', () => ({
+  useWordAudioPlayback: () => jest.fn(),
+}));
+
 // eslint-disable-next-line import/first -- must be imported after the mocks above
 import WordsToRevisitScreen from '@/app/words-to-revisit';
 
@@ -143,12 +154,43 @@ describe('Words to revisit — overflow into the dictionary', () => {
    * each deliberate enough to pin down.
    */
   describe('the rows', () => {
-    test('a row opens that word, instead of leading nowhere', () => {
+    test('a row opens that word inline, instead of leading nowhere', () => {
       givenLeeches(3);
       mockNavigate.mockClear();
 
       const view = render(<WordsToRevisitScreen />);
       fireEvent.press(view.getByText('كلمة1'));
+
+      // No second navigation — the sheet stays open and swaps its own content
+      // for the word's detail, the fix for the close-then-reopen gap
+      // `dismissSheetThenNavigate` used to leave between this list and the word.
+      expect(mockNavigate).not.toHaveBeenCalled();
+      expect(view.getByText(STRINGS.WORD_SHEET_OPEN_IN_DICTIONARY)).toBeTruthy();
+    });
+
+    test('the back control returns from a word to the list', () => {
+      givenLeeches(3);
+
+      const view = render(<WordsToRevisitScreen />);
+      fireEvent.press(view.getByText('كلمة1'));
+      expect(view.getByText(STRINGS.WORD_SHEET_OPEN_IN_DICTIONARY)).toBeTruthy();
+
+      fireEvent.press(view.getByLabelText(STRINGS.WORDS_TO_REVISIT_BACK_A11Y));
+
+      expect(view.queryByText(STRINGS.WORD_SHEET_OPEN_IN_DICTIONARY)).toBeNull();
+      expect(view.getByText('كلمة2')).toBeTruthy();
+    });
+
+    test('opening a word from the dictionary hop still goes through the practice tab', () => {
+      // The one hop this refactor did not remove: from the inline word detail,
+      // "open in your dictionary" still leaves this sheet's tab entirely, so it
+      // keeps paying iOS's dismiss-before-present cost.
+      givenLeeches(3);
+      mockNavigate.mockClear();
+
+      const view = render(<WordsToRevisitScreen />);
+      fireEvent.press(view.getByText('كلمة1'));
+      fireEvent.press(view.getByText(STRINGS.WORD_SHEET_OPEN_IN_DICTIONARY));
 
       expect(mockNavigate).toHaveBeenCalledWith(getPracticeWordRoute(rootId(1)));
     });
