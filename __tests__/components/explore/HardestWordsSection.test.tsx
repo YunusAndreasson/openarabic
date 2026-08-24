@@ -126,8 +126,8 @@ describe('HardestWordsSection', () => {
   });
 
   test('does not print the lapse count on the card', () => {
-    // The count is the sort key, not content: "Hardest right now" above the rail
-    // has already said these are the ones being lost, so a per-card "4× forgot"
+    // The count is the sort key, not content: "Hardest words right now" above
+    // the rail has already said these are the ones being lost, so a per-card "4× forgot"
     // restates the heading on every card and reads as a scoreboard. It survives
     // where it is the subject — the revisit sheet, and the stat row in the sheet
     // this card opens.

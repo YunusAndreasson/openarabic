@@ -380,16 +380,19 @@ export const STRINGS = {
   /**
    * The hardest-words rail on Explore.
    *
-   * "Hardest right now" rather than "Words to revisit": the Practice sheet of
-   * that name is the full, ranked list and this is a swipeable slice of its top,
-   * so the two must not read as the same thing sitting on two tabs.
+   * Says "words" outright — the bare "Hardest right now" this replaced read as
+   * a fragment with nothing named, and only the row underneath (word cards)
+   * resolved it. "Right now" itself stays for the same reason it was added:
+   * the Practice sheet of the "Words to revisit" name is the full, ranked
+   * list and this is a swipeable slice of its top, so the two must not read
+   * as the same thing sitting on two tabs.
    *
    * **No subtitle.** It had one — "The words you keep forgetting" — and every
    * card underneath already says "N× forgot" against a word the learner saved.
    * A line of prose restating the row beneath it is the kind of text that reads
    * as filler on the second viewing and never earns its space again.
    */
-  SECTION_HARDEST_WORDS: 'Hardest right now',
+  SECTION_HARDEST_WORDS: 'Hardest words right now',
   // Difficulty levels
   // Length categories
   RESUMED_READING_TEMPLATE: 'Resuming at {percent}%',

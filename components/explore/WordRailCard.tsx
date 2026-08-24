@@ -19,7 +19,7 @@ interface WordRailCardProps {
  * The word and what it means, and nothing else.
  *
  * **No forgot-count.** It was here, as plain tertiary text, and it was the sort
- * key wearing a label: "Hardest right now" above the rail has already said
+ * key wearing a label: "Hardest words right now" above the rail has already said
  * these are the ones being lost, so a per-card "4× forgot" restates the section
  * heading on every card and turns a reading tab into a scoreboard of failures.
  * The revisit sheet keeps the number because there it IS the subject; the sheet
