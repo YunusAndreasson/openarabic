@@ -380,11 +380,16 @@ describe('useFSRS Hook - Edge Cases', () => {
         await result.current.updateWord(rootId(1), 'unknown');
       });
 
+      // "Again" from Review always increments lapses by exactly one and moves
+      // the card to Relearning — pinned to concrete values so a scheduler
+      // regression that leaves lapses unchanged (or resets it) fails here,
+      // instead of passing any Number.
       expect(studyWordsFSRSService.updateWordAndReview).toHaveBeenCalledWith(
         'test-user',
         1,
         expect.objectContaining({
-          fsrs_lapses: expect.any(Number), // Should increment lapses
+          fsrs_lapses: 3,
+          fsrs_state: State.Relearning,
         }),
       );
     });

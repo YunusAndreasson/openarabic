@@ -421,19 +421,24 @@ describe('useFSRS Hook', () => {
 
       await result.current.updateWord(1, 'known');
 
+      // A first "Good" grade on a Learning-state card with 2 configured learning
+      // steps (['1m', '10m']) advances one step rather than graduating to Review —
+      // pinned to the deterministic ts-fsrs output for this exact input so a
+      // scheduler regression (e.g. reps not incrementing, state stuck/skipped)
+      // fails the test instead of passing any `Number`/`String`.
       await waitFor(() => {
         expect(studyWordsFSRSService.updateWordAndReview).toHaveBeenCalledWith(
           'test-user',
           1,
           expect.objectContaining({
             fsrs_due: expect.any(String),
-            fsrs_stability: expect.any(Number),
-            fsrs_difficulty: expect.any(Number),
-            fsrs_scheduled_days: expect.any(Number),
-            fsrs_reps: expect.any(Number),
-            fsrs_learning_steps: expect.any(Number),
-            fsrs_lapses: expect.any(Number),
-            fsrs_state: expect.any(Number),
+            fsrs_stability: expect.closeTo(0.54987621, 6),
+            fsrs_difficulty: expect.closeTo(6.48872837, 6),
+            fsrs_scheduled_days: 0,
+            fsrs_reps: 2,
+            fsrs_learning_steps: 1,
+            fsrs_lapses: 0,
+            fsrs_state: State.Learning,
             fsrs_last_review: expect.any(String),
           }),
         );
@@ -450,6 +455,10 @@ describe('useFSRS Hook', () => {
       {
         confidence: 'known' as const,
         rating: 'Good',
+        // Deterministic ts-fsrs output for a fresh (State.New) card graded Good
+        // under this app's OPTIMIZED_FSRS_CONFIG — see the probe used to derive
+        // it in the "updates FSRS card properties on review" test above.
+        expectedStability: 2.3065,
         expectedProgress: 100,
         expectComplete: true,
         description: 'completes session (100% progress with 1 word)',
@@ -457,6 +466,7 @@ describe('useFSRS Hook', () => {
       {
         confidence: 'vague' as const,
         rating: 'Hard',
+        expectedStability: 1.2931,
         expectedProgress: 100,
         expectComplete: true,
         description: 'completes session (Hard is a pass — no in-session re-drill)',
@@ -464,13 +474,14 @@ describe('useFSRS Hook', () => {
       {
         confidence: 'unknown' as const,
         rating: 'Again',
+        expectedStability: 0.212,
         expectedProgress: 0,
         expectComplete: false,
         description: 'adds to spacing queue (no progress increase)',
       },
     ])(
       'maps "$confidence" confidence to $rating rating - $description',
-      async ({ confidence, expectedProgress, expectComplete }) => {
+      async ({ confidence, expectedStability, expectedProgress, expectComplete }) => {
         const word = createMockStudyWord({ root_id: 1 as RootId });
         studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => [word]);
 
@@ -485,6 +496,16 @@ describe('useFSRS Hook', () => {
         await waitFor(() => {
           expect(studyWordsFSRSService.updateWordAndReview).toHaveBeenCalled();
         });
+
+        // The point of this table is "confidence X maps to FSRS rating Y" — a
+        // bare toHaveBeenCalled() would pass even if every confidence graded
+        // the same rating. Good/Hard/Again each produce a distinct resulting
+        // stability from a fresh card, so pinning it catches a broken mapping.
+        expect(studyWordsFSRSService.updateWordAndReview).toHaveBeenCalledWith(
+          'test-user',
+          1,
+          expect.objectContaining({ fsrs_stability: expect.closeTo(expectedStability, 3) }),
+        );
 
         if (expectComplete) {
           await waitFor(() => {
@@ -738,7 +759,13 @@ describe('useFSRS Hook', () => {
     test('handles FSRS algorithm errors with fallback', async () => {
       const word = createMockStudyWord({
         root_id: rootId(1),
-        // Invalid FSRS state that might cause algorithm error
+        // convertToFSRSCard special-cases State.New into a fresh createEmptyCard(),
+        // which discards invalid stability/difficulty before ts-fsrs ever sees
+        // them — so the catch block below is only reachable from a non-New state
+        // with reps/last_review set, forwarding these invalid values unconverted.
+        fsrs_state: State.Review,
+        fsrs_reps: 5,
+        fsrs_last_review: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
         fsrs_stability: -1,
         fsrs_difficulty: 100,
       });
@@ -753,8 +780,24 @@ describe('useFSRS Hook', () => {
       // Should use fallback card instead of throwing
       await expect(result.current.updateWord(1, 'known')).resolves.toBeDefined();
 
-      // Should still update database
-      expect(studyWordsFSRSService.updateWordAndReview).toHaveBeenCalled();
+      // Fallback shape from hooks/vocabulary/useFSRS.ts's catch block: due ~10
+      // minutes out, stability/state/lapses/learning_steps carried over as-is
+      // (not recomputed), reps incremented by exactly one.
+      expect(studyWordsFSRSService.updateWordAndReview).toHaveBeenCalledWith(
+        'test-user',
+        1,
+        expect.objectContaining({
+          fsrs_stability: -1,
+          fsrs_reps: 6,
+          fsrs_lapses: 0,
+          fsrs_state: State.Review,
+          fsrs_due: expect.any(String),
+        }),
+      );
+      const [, , writtenData] = studyWordsFSRSService.updateWordAndReview.mock.calls[0];
+      const dueMs = new Date(writtenData.fsrs_due).getTime();
+      expect(dueMs).toBeGreaterThan(Date.now() + 9 * 60 * 1000);
+      expect(dueMs).toBeLessThan(Date.now() + 11 * 60 * 1000);
     });
 
     test('handles query fetch errors', async () => {

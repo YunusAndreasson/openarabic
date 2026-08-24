@@ -193,7 +193,15 @@ describe('useSimpleAudioPlayer Hook', () => {
 
   describe('Stop Function', () => {
     test('should stop audio playback', async () => {
+      // Distinct from "should handle stop without play" below: this simulates
+      // a track already in progress (status.playing: true from the subscription)
+      // so the assertion actually distinguishes "was playing" from the no-op case.
+      useAudioSubscription.mockReturnValue({
+        status: createMockStatus({ playing: true, currentTrack: createMockTrack() }),
+        isMounted: true,
+      });
       const { result } = renderHook(() => useSimpleAudioPlayer());
+      expect(result.current.playing).toBe(true);
 
       await act(async () => {
         await result.current.stop();

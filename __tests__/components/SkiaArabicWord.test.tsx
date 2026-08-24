@@ -104,10 +104,14 @@ describe('SkiaArabicWord Component', () => {
     });
 
     test('renders without colored segments when none provided', () => {
-      const word = createMockWord({
+      // coloredSegments is optional (types/vocabulary.types.ts) and the
+      // component falls back via `word.coloredSegments || []` — omit the prop
+      // entirely so this exercises the undefined path, not the same explicit
+      // `[]` case already covered by "handles empty coloredSegments array".
+      const { coloredSegments: _omit, ...wordWithoutSegments } = createMockWord({
         word_form: 'كتاب',
-        coloredSegments: [],
       });
+      const word = wordWithoutSegments as SentenceWord;
 
       const { getByTestId } = render(<SkiaArabicWord word={word} testID="word" />);
 

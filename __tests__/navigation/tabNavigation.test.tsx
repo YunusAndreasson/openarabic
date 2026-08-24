@@ -33,13 +33,18 @@ jest.mock('expo-router/unstable-native-tabs', () => {
     const Active = getScreens()[activeName];
 
     const tabBar = triggers.map(child => {
-      const labelChild = React.Children.toArray(child.props.children).find(
+      const kids = React.Children.toArray(child.props.children);
+      const labelChild = kids.find(
         (c: any) => c?.type?.displayName === 'NativeTabsLabel' || c?.props?.children != null,
       ) as React.ReactElement<{ children: string }> | undefined;
       const title =
         typeof labelChild?.props?.children === 'string'
           ? labelChild.props.children
           : child.props.name;
+      // The badge is real app-passed content (see app/(tabs)/_layout.tsx), not
+      // mock chrome — render it so tests can assert on it, same as the label.
+      const badgeChild = kids.find((c: any) => c?.type === Trigger.Badge) as
+        React.ReactElement<{ children: React.ReactNode }> | undefined;
 
       return React.createElement(
         TouchableOpacity,
@@ -49,6 +54,7 @@ jest.mock('expo-router/unstable-native-tabs', () => {
           onPress: () => setActiveName(child.props.name),
         },
         React.createElement(Text, null, title),
+        badgeChild,
       );
     });
 
@@ -97,15 +103,15 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import TestStoreProvider from '../helpers/testStore';
 
 import { createTestQueryClient } from '../helpers/testUtils';
+import { createTestWord } from '../helpers/fsrsTestHelpers';
 import TabLayout from '../../app/(tabs)/_layout';
 
-// Mock the FSRSDataProvider context to simplify tests
-jest.mock('@/components/providers/FSRSDataProvider', () => ({
-  useFSRSData: () => ({
-    studyWords: [],
-    isLoading: false,
-    error: null,
-  }),
+// The layout's badge count comes from useFSRSQueries (see app/(tabs)/_layout.tsx),
+// not FSRSDataProvider — mock the hook it actually calls so tests can drive the
+// badge instead of asserting against dead configuration.
+const mockUseFSRSQueries = jest.fn();
+jest.mock('@/hooks/vocabulary/useFSRSQueries', () => ({
+  useFSRSQueries: (...args: unknown[]) => mockUseFSRSQueries(...args),
 }));
 
 jest.mock('@/components/ui/Icon', () => ({
@@ -283,6 +289,15 @@ const createWrapper = () => {
 };
 
 describe('Tab navigation', () => {
+  beforeEach(() => {
+    mockUseFSRSQueries.mockReturnValue({
+      dueWords: [],
+      isLoading: false,
+      isFetching: false,
+      error: null,
+    });
+  });
+
   test('renders default Explore tab and navigates between tabs', () => {
     const { getByText, getByTestId } = render(<TabLayout />, { wrapper: createWrapper() });
 
@@ -295,27 +310,29 @@ describe('Tab navigation', () => {
     expect(getByText('PRACTICE_MOCK')).toBeDefined();
   });
 
-  test('shows memory capacity badge on practice tab when due words exist (red phase)', async () => {
-    const { getByTestId } = render(<TabLayout />, { wrapper: createWrapper() });
-
-    // Wait for the component to render
-    await waitFor(() => {
-      expect(getByTestId('tab-practice')).toBeDefined();
+  test('shows memory capacity badge on practice tab when due words exist', async () => {
+    mockUseFSRSQueries.mockReturnValue({
+      dueWords: [createTestWord(), createTestWord(), createTestWord()],
+      isLoading: false,
+      isFetching: false,
+      error: null,
     });
 
-    // Verify the practice tab renders correctly
-    expect(getByTestId('tab-practice')).toBeDefined();
+    const { getByTestId } = render(<TabLayout />, { wrapper: createWrapper() });
+
+    await waitFor(() => {
+      expect(getByTestId('tab-badge')).toBeDefined();
+    });
+    expect(getByTestId('tab-badge').props.children).toBe('3');
   });
 
-  test('does not show memory capacity badge when only struggling words exist (orange phase)', async () => {
-    const { getByTestId } = render(<TabLayout />, { wrapper: createWrapper() });
+  test('does not show memory capacity badge when no words are due', async () => {
+    const { getByTestId, queryByTestId } = render(<TabLayout />, { wrapper: createWrapper() });
 
-    // Wait for the component to render
     await waitFor(() => {
       expect(getByTestId('tab-practice')).toBeDefined();
     });
 
-    // Verify the practice tab renders correctly
-    expect(getByTestId('tab-practice')).toBeDefined();
+    expect(queryByTestId('tab-badge')).toBeNull();
   });
 });
