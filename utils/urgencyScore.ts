@@ -58,7 +58,7 @@ export const DIFFICULTY_LABELS = {
   easy: STRINGS.WORD_DIFFICULTY_EASY,
   moderate: STRINGS.WORD_DIFFICULTY_MODERATE,
   hard: STRINGS.WORD_DIFFICULTY_HARD,
-} as const;
+} as const satisfies Record<ReturnType<typeof getDifficultyLevel>, string>;
 
 /**
  * Theme color key for a difficulty level. Red reads as "needs your attention",
