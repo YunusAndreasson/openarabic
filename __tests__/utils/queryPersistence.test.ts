@@ -15,14 +15,18 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { PERSISTENCE_OPTIONS, queryPersister } from '@/utils/queryPersistence';
 
-// Capture options passed into the persister factory
-const captured: { lastOptions?: any } = {};
+// Capture options passed into the persister factory. queryPersistence.ts
+// creates two persisters on the same storage key — the throttled
+// `queryPersister` (exported) and an internal unthrottled one used only by
+// `flushPersistedQueryCache` — so every call is captured and tests select
+// the one they care about rather than assuming there is only one.
+const captured: { allOptions: any[] } = { allOptions: [] };
 
 // Mock the persister factory to capture configuration
 jest.mock('@tanstack/query-async-storage-persister', () => ({
   __esModule: true,
   createAsyncStoragePersister: (opts: any) => {
-    captured.lastOptions = opts;
+    captured.allOptions.push(opts);
     return {
       persistClient: jest.fn(),
       restoreClient: jest.fn(),
@@ -50,13 +54,14 @@ describe('Query Persistence', () => {
       expect(typeof (queryPersister as any).restoreClient).toBe('function');
       expect(typeof (queryPersister as any).removeClient).toBe('function');
 
-      // Captured config from factory
-      expect(captured.lastOptions).toBeDefined();
-      expect(captured.lastOptions.key).toBe('REACT_QUERY_OFFLINE_CACHE_V2');
-      expect(captured.lastOptions.throttleTime).toBe(1000);
-      expect(captured.lastOptions.storage).toBe(AsyncStorage);
-      expect(typeof captured.lastOptions.serialize).toBe('function');
-      expect(typeof captured.lastOptions.deserialize).toBe('function');
+      // Captured config from factory — the throttled persister backing the
+      // exported `queryPersister`, not the internal unthrottled one.
+      const throttledOptions = captured.allOptions.find(opts => opts.throttleTime === 1000);
+      expect(throttledOptions).toBeDefined();
+      expect(throttledOptions.key).toBe('REACT_QUERY_OFFLINE_CACHE_V2');
+      expect(throttledOptions.storage).toBe(AsyncStorage);
+      expect(typeof throttledOptions.serialize).toBe('function');
+      expect(typeof throttledOptions.deserialize).toBe('function');
     });
   });
 

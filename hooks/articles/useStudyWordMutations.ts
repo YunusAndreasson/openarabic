@@ -18,6 +18,7 @@ import type { StudyWord, StudyWordIntent } from '@/types/vocabulary.types';
 import { OnboardingStep } from '@/constants/onboarding';
 import { handleError } from '@/utils/errorHandling';
 import { errorFeedback } from '@/utils/haptics';
+import { STUDY_WORD_TOGGLE_MUTATION_KEY } from '@/utils/mutationDefaults';
 import { evaluateDueBacklogGate, filterDueWords } from '@/utils/newWordPacing';
 import { markOnboardingStep } from '@/utils/onboardingStorage';
 
@@ -129,6 +130,7 @@ export const useStudyWordMutations = (
   );
 
   const toggleStudyOptions = {
+    mutationKey: STUDY_WORD_TOGGLE_MUTATION_KEY,
     mutationFn: async ({ userId, rootId, intent }: ToggleStudyVariables) => {
       return studyWordsFSRSService.setFSRSStudyRoot(userId, rootId, intent);
     },

@@ -70,8 +70,9 @@ import type { RootState } from '@/store/store';
 import { persistor, store } from '@/store/store';
 import { setTheme } from '@/store/themeSlice';
 import { handleError } from '@/utils/errorHandling';
+import { registerMutationDefaults } from '@/utils/mutationDefaults';
 import { createNavigationOptions, createSheetOptions } from '@/utils/navigation';
-import { PERSISTENCE_OPTIONS } from '@/utils/queryPersistence';
+import { flushPersistedQueryCache, PERSISTENCE_OPTIONS } from '@/utils/queryPersistence';
 import { flushPendingSheetNavigation } from '@/utils/sheetNavigation';
 import type * as NotificationsModule from 'expo-notifications';
 
@@ -167,13 +168,37 @@ const queryClient = new QueryClient({
   },
 });
 
+// Must run before PersistQueryClientProvider's restore effect (first mount)
+// sees a rehydrated mutation — see registerMutationDefaults' own comment for
+// why a mutation resumed with no registered default fails outright.
+registerMutationDefaults(queryClient);
+
 // A mutation paused offline (networkMode 'online') is dehydrated with the rest
 // of the persisted cache on app close. Without resuming it here, it stays
 // dormant forever after a restart — the write it represents (e.g. a review
 // grade) is silently lost instead of firing the moment the app comes back up
 // with a connection.
+//
+// `onlineManager` defaults to online (`#online = true`, query-core) until the
+// first real NetInfo signal arrives, and that arrives asynchronously — a
+// cold start reliably wins this race, restoring and resuming before the
+// bridge round trip resolves. Resuming against that stale "online" default
+// on a connection that isn't genuinely up yet fails the mutation outright,
+// and with `gcTime: 0` on mutations it is garbage-collected the moment it
+// settles — gone before the real connection comes up moments later. A fresh,
+// awaited check closes that window; if it turns out we're still offline the
+// mutation simply stays paused, exactly as intended.
 const resumePausedMutationsOnRestore = (): void => {
-  void queryClient.resumePausedMutations();
+  NetInfo.fetch()
+    .then((state: NetInfoState) => {
+      onlineManager.setOnline(Boolean(state.isConnected));
+      return queryClient.resumePausedMutations();
+    })
+    .catch(() => {
+      // Fall back to whatever onlineManager already believes — better than
+      // never attempting the resume at all.
+      void queryClient.resumePausedMutations();
+    });
 };
 
 // Memoize navigation integration for Sentry
@@ -501,6 +526,13 @@ function AppContent() {
       analytics.track(ANALYTICS_EVENTS.APP_BACKGROUNDED, {
         session_duration_ms: sessionDurationMs,
       });
+
+      // The process can be killed with no further warning once backgrounded —
+      // by the OS, or by the user swiping it away. A paused offline mutation
+      // (FSRS grade, saved word) otherwise only survives that if the cache
+      // persister's 1s throttle had already fired on its own; this forces an
+      // immediate, unthrottled write of whatever is pending right now.
+      void flushPersistedQueryCache(queryClient);
     }
 
     if (!isActivating || !appReady) return;

@@ -1183,6 +1183,17 @@ export const STRINGS = {
   REFRESH_FAILED: 'Refresh failed',
   FAILED_TO_LOAD_ARTICLES: "Couldn't load articles. " + tryAgain,
   FAILED_TO_LOAD_ARTICLE: "Couldn't load article. " + tryAgain,
+  /**
+   * The reader is reachable by a real external deep link (`open-arabic:///article/[id]`).
+   * Same distinction as `WORD_SHEET_INVALID_LINK`/`WORD_NOT_FOUND`: a malformed
+   * or missing id is a broken link, never a real article; a well-formed id that
+   * doesn't resolve is a genuine miss. Screen has `headerShown: false`, so this
+   * is the only way out other than the Android back gesture.
+   */
+  ARTICLE_INVALID_LINK: "This link isn't valid",
+  ARTICLE_NOT_FOUND: 'Article not found',
+  ARTICLE_NOT_FOUND_HINT: 'It may have been removed, or the link may be broken.',
+  ARTICLE_NOT_FOUND_GO_BACK: 'Go back',
   FAILED_TO_LOAD_FILTER_OPTIONS: "Couldn't load filters. " + tryAgain,
   FAILED_TO_LOAD_AUTHORS: "Couldn't load authors. " + tryAgain,
   FAILED_TO_GENERATE_AUDIO_TRACK: "Couldn't generate track. " + tryAgain,

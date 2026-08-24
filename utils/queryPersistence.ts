@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
-import type { Query } from '@tanstack/react-query';
+import type { Query, QueryClient } from '@tanstack/react-query';
+import { persistQueryClientSave } from '@tanstack/react-query-persist-client';
 
 import { FSRS_BASE_KEY } from '@/constants/fsrs';
 import { STORAGE_KEYS } from '@/constants/storageKeys';
@@ -34,6 +35,22 @@ export const queryPersister = createAsyncStoragePersister({
   storage: AsyncStorage,
   key: CACHE_KEY,
   throttleTime: THROTTLE_TIME,
+  serialize: JSON.stringify,
+  deserialize: JSON.parse,
+});
+
+// A second persister on the same storage key, with no throttle. `queryPersister`
+// above throttles its own `persistClient` internally (see `asyncThrottle` in
+// @tanstack/query-async-storage-persister) — calling IT again from an app-state
+// checkpoint doesn't bypass that throttle, it just updates the args of whatever
+// invocation is already queued. This persister exists solely so
+// `flushPersistedQueryCache` can force an immediate write: a review grade or a
+// saved word can otherwise sit unwritten for up to a second, and the OS/user can
+// kill the process inside that window with no further chance to flush.
+const immediatePersister = createAsyncStoragePersister({
+  storage: AsyncStorage,
+  key: CACHE_KEY,
+  throttleTime: 0,
   serialize: JSON.stringify,
   deserialize: JSON.parse,
 });
@@ -115,6 +132,21 @@ export const PERSISTENCE_OPTIONS = {
     shouldDehydrateQuery,
   },
 } as const;
+
+/**
+ * Forces an immediate, unthrottled write of the query/mutation cache to
+ * AsyncStorage. Call this at app-lifecycle checkpoints (backgrounding) where
+ * the process may be killed with no further chance to flush — a paused
+ * mutation (FSRS grade, saved word, etc.) otherwise only survives a kill if
+ * `queryPersister`'s 1s throttle happened to have already fired.
+ */
+export const flushPersistedQueryCache = (queryClient: QueryClient): Promise<void> =>
+  persistQueryClientSave({
+    queryClient,
+    persister: immediatePersister,
+    buster: PERSISTENCE_OPTIONS.buster,
+    dehydrateOptions: PERSISTENCE_OPTIONS.dehydrateOptions,
+  });
 
 // Fire-and-forget removal of the pre-V2 cache blob: the V2 persister only
 // reads/writes CACHE_KEY, so it can never see (or reclaim) the legacy entry.

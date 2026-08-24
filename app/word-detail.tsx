@@ -76,7 +76,7 @@ export default function WordDetailSheet(): JSX.Element {
   // word screen (always pushed with a known-good id) — a missing or malformed
   // param needs a distinct message from "removed from another screen", not the
   // same WORD_NOT_FOUND claim about a link that never carried a valid id.
-  const hasValidRootId = !Number.isNaN(rootId);
+  const hasValidRootId = Number.isFinite(rootId);
 
   const heroFontSize = getArabicHeroFontSize(useDebouncedArabicFontSize(100));
   const heroArabicStyle = getArabicHeroTextStyle(heroFontSize);

@@ -325,6 +325,11 @@ export function useArticleScreen({
 
   return {
     isLoadingArticle,
+    // A malformed or missing `id` route param (articleId undefined) is a
+    // broken link, never a real article — distinct from a well-formed id
+    // that simply doesn't resolve to a row. Lets the screen tell the two
+    // apart instead of rendering nothing for either.
+    hasValidArticleId: articleId !== undefined,
     article,
     sortedSentences,
     sentenceWordsMap,

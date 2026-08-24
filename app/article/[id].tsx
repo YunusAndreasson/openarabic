@@ -15,8 +15,9 @@ import {
   ArticleContent,
 } from '@/components/article';
 import { AudioErrorBoundary, GlobalMiniPlayer } from '@/components/audio';
-import { ComponentErrorBoundary, LoadingState } from '@/components/common';
+import { ComponentErrorBoundary, EmptyState, LoadingState } from '@/components/common';
 import { ToastProvider, useTutorialContext, useToast } from '@/components/providers';
+import { STRINGS } from '@/constants/strings';
 import { TutorialId } from '@/constants/tutorials';
 import { useArticleListen } from '@/hooks/articles/useArticleListen';
 import { useArticleScreen } from '@/hooks/articles/useArticleScreen';
@@ -46,6 +47,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   // Extract all business logic into hook
   const {
     isLoadingArticle,
+    hasValidArticleId,
     article,
     sortedSentences,
     sentenceWordsMap,
@@ -226,6 +228,24 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   // Show loader while article is loading
   if (isLoadingArticle) {
     return <LoadingState />;
+  }
+
+  // A malformed/missing id never resolves to an article, and a well-formed id
+  // can point at nothing (deleted, or never existed) — either way `article`
+  // stays undefined once loading settles. Screen has no header, so this is the
+  // only in-app way out other than the Android back gesture.
+  if (!article) {
+    return (
+      <EmptyState
+        icon="alert-circle-outline"
+        title={hasValidArticleId ? STRINGS.ARTICLE_NOT_FOUND : STRINGS.ARTICLE_INVALID_LINK}
+        hint={STRINGS.ARTICLE_NOT_FOUND_HINT}
+        action={{
+          label: STRINGS.ARTICLE_NOT_FOUND_GO_BACK,
+          onPress: () => void handleClose(),
+        }}
+      />
+    );
   }
 
   return (

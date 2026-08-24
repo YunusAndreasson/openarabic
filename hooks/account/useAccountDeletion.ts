@@ -55,7 +55,7 @@ export function useAccountDeletion(): UseAccountDeletionReturn {
    */
   const validateConfirmation = useCallback(
     (text: string) => {
-      const trimmedText = text.trim().toUpperCase();
+      const trimmedText = text.trim();
       if (trimmedText !== STRINGS.DELETE_ACCOUNT_CONFIRMATION_WORD) {
         if (isMountedRef.current) {
           setConfirmationError(STRINGS.DELETE_ACCOUNT_CONFIRMATION_MISMATCH);
