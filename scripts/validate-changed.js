@@ -44,11 +44,12 @@ function filterFilesByExtension(files, extensions) {
   return files.filter(file => extensions.some(ext => file.endsWith(ext)));
 }
 
-// Paths outside the app's TypeScript program AND outside its ESLint config —
-// both callers below filter on this. `__tests__/` is here because it is not in
-// tsconfig.json (it has its own program, added as a separate task) and because
-// eslint.config.mjs ignores it; changed test files therefore reach the tests
-// typecheck and nothing else.
+// Paths outside the app's TypeScript program AND outside its main ESLint
+// config — both callers below filter on this. `__tests__/` is here because it
+// is not in tsconfig.json (it has its own program, added as a separate task)
+// and because eslint.config.mjs ignores it; changed test files instead reach
+// the tests typecheck and eslint.tests.config.mjs (added as separate tasks
+// below), not the main ESLint run.
 function isExcludedFile(file) {
   const excludedPaths = ['admin-dashboard/', 'translate/', '__tests__/', 'scripts/'];
   return excludedPaths.some(path => file.startsWith(path));
@@ -280,6 +281,35 @@ async function main() {
     tasks.push(
       Promise.resolve().then(() =>
         runCommand('yarn', ['tsc', '-p', 'tsconfig.test.json', '--noEmit'], 'TypeScript (tests)'),
+      ),
+    );
+  }
+
+  // eslint-plugin-testing-library, scoped to __tests__ only (see
+  // eslint.tests.config.mjs) — catches the false-pass RNTL bug shapes fixed by
+  // hand in 87c8e51b (un-awaited async queries/utils, a waitFor doing more than
+  // one job, lifecycle/cleanup ordering) so the next one fails CI instead of
+  // needing another manual sweep.
+  const changedTestTsFiles = changedTestFiles.filter(
+    file => file.endsWith('.ts') || file.endsWith('.tsx'),
+  );
+  if (changedTestTsFiles.length > 0) {
+    tasks.push(
+      Promise.resolve().then(() =>
+        runCommand(
+          'npx',
+          [
+            'eslint',
+            '-c',
+            'eslint.tests.config.mjs',
+            '--no-inline-config',
+            '--cache',
+            '--cache-location',
+            '.eslintcache-tests',
+            ...changedTestTsFiles,
+          ],
+          'ESLint (tests)',
+        ),
       ),
     );
   }

@@ -49,6 +49,7 @@ yarn-error.*
 
 # linting and formatting caches
 .eslintcache
+.eslintcache-tests
 .prettiercache
 
 app-example
