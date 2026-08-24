@@ -824,15 +824,16 @@ export const STRINGS = {
   WORDS_TO_REVISIT_EMPTY_STATE: 'Nothing tripping you up right now — nice work',
   FORGOT_N_TIMES: '{count}× forgot',
   /**
-   * One card in the Explore rail, read out whole — headword, meaning, how often
-   * it has been forgotten, in the order a revisit row uses.
+   * One card in the Explore rail, read out whole — and it reads out exactly what
+   * is drawn, which is the headword and its meaning.
    *
    * It used to end "Opens the word." A label should say what the thing IS; that
    * it can be opened is the job of `accessibilityRole="button"`, which the card
    * now sets, and a screen reader already announces. Saying both means every
-   * card in the rail reads its own affordance out loud.
+   * card in the rail reads its own affordance out loud. It also used to carry
+   * the forgot-count, which the card no longer shows.
    */
-  HARDEST_WORD_CARD_A11Y: '{arabic}, {meaning}, {forgot}',
+  HARDEST_WORD_CARD_A11Y: '{arabic}, {meaning}',
   /**
    * The overflow out of the capped leech list and into the dictionary.
    *

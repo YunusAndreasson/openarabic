@@ -16,13 +16,14 @@ import { WordExampleBlock } from '@/components/practice/WordExampleBlock';
 // the root-level word sheet, which renders two components from this folder and
 // none of its swipeable dictionary rows. Imported the same way here so the rule
 // is visible from both ends.
-import { StatRow } from '@/components/practice/StatRow';
+import { WordFsrsStats } from '@/components/practice/WordFsrsStats';
 import { SkiaColoredArabic } from '@/components/common/SkiaColoredArabic';
 import { IconButton, PulsatingLoader } from '@/components/ui';
 import {
   LAYOUT,
   MIN_TOUCH_TARGET,
   getArabicHeroFontSize,
+  getArabicHeroTextStyle,
   getCompactArabicFontSize,
 } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -41,13 +42,13 @@ import {
 import type { SentenceArticle } from '@/services/sentences';
 import type { RootId } from '@/types/branded.types';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { toWordAudioData } from '@/utils/audioUtils';
 import { handleError } from '@/utils/errorHandling';
 import { getNextReviewLabel } from '@/utils/fsrsUtils';
 import { getArticleRoute, getPracticeWordRoute } from '@/utils/routeBuilders';
 import { getWordUsage, type WordForm } from '@/utils/wordUsage';
 import { dismissAllThenNavigate } from '@/utils/sheetNavigation';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
-import { DIFFICULTY_COLORS, DIFFICULTY_LABELS, getWordDifficultyLevel } from '@/utils/urgencyScore';
 
 const SENTENCE_EXAMPLES_LIMIT = 5;
 
@@ -66,13 +67,7 @@ export default function PracticeWordScreen(): JSX.Element {
   // The "Seen as" forms use the dense-row cap, not the hero size: six of them
   // wrap across two lines, and at hero size two would fill the screen.
   const formFontSize = getCompactArabicFontSize(readingFontSize);
-  const heroArabicStyle = useMemo(
-    () => ({
-      fontSize: heroFontSize,
-      lineHeight: Math.round(heroFontSize * 1.58), // headroom for diacritics
-    }),
-    [heroFontSize],
-  );
+  const heroArabicStyle = useMemo(() => getArabicHeroTextStyle(heroFontSize), [heroFontSize]);
 
   const { allWords, isLoading } = useFSRSQueries({ userId: user?.id });
   const { toggleRootMutation } = useStudyWordMutations();
@@ -112,14 +107,9 @@ export default function PracticeWordScreen(): JSX.Element {
   const playWordAudio = useWordAudioPlayback({ showErrorToast: true });
 
   const handlePlayAudio = useCallback(async () => {
-    if (!word?.root) return;
-    await playWordAudio({
-      id: word.root_id,
-      audio_url: word.root.audio_url,
-      audio_url_en: word.root.audio_url_en,
-      letters: word.root.letters,
-      meaning: word.root.meaning,
-    });
+    const audio = word && toWordAudioData(word);
+    if (!audio) return;
+    await playWordAudio(audio);
   }, [word, playWordAudio]);
 
   const handleResetProgress = useCallback(() => {
@@ -173,8 +163,6 @@ export default function PracticeWordScreen(): JSX.Element {
 
   const arabicText = word.root?.letters ?? '';
   const englishText = capitalizeFirstLetter(word.root?.meaning ?? '');
-  // Same level → same color as the dot on this word's dictionary row
-  const difficultyLevel = getWordDifficultyLevel(word);
   const nextReviewLabel = getNextReviewLabel(word.fsrs_due);
 
   // Part of speech and the inflected forms, both read off the examples already
@@ -288,41 +276,7 @@ export default function PracticeWordScreen(): JSX.Element {
             on that decay. */}
         {memory && <WordMemoryPanel dueLabel={nextReviewLabel} memory={memory} />}
 
-        {/* FSRS stats — one hairline row each */}
-        <View style={[styles.stats, { borderTopColor: colors.border }]}>
-          <StatRow
-            colorName={DIFFICULTY_COLORS[difficultyLevel]}
-            label={STRINGS.WORD_STAT_DIFFICULTY}
-            value={DIFFICULTY_LABELS[difficultyLevel]}
-          />
-          <StatRow label={STRINGS.WORD_STAT_NEXT_REVIEW} value={nextReviewLabel} />
-          {/* Feedforward: what recalling it would buy, stated before the learner
-              spends the effort. The figure comes from the same ts-fsrs call the
-              review screen's grade bar previews with, so it cannot promise an
-              interval that grading would not give. */}
-          {memory?.nextHorizonLabel && (
-            <StatRow
-              label={STRINGS.WORD_STAT_NEXT_GAIN}
-              value={STRINGS.WORD_STAT_NEXT_GAIN_VALUE.replace(
-                '{horizon}',
-                memory.nextHorizonLabel,
-              )}
-            />
-          )}
-          {memory && memory.reps > 0 && (
-            <StatRow
-              label={STRINGS.WORD_STAT_REVIEWS}
-              value={
-                memory.lapses > 0
-                  ? STRINGS.WORD_REVIEWS_WITH_LAPSES.replace(
-                      '{count}',
-                      String(memory.reps),
-                    ).replace('{lapses}', String(memory.lapses))
-                  : STRINGS.WORD_REVIEWS_VALUE.replace('{count}', String(memory.reps))
-              }
-            />
-          )}
-        </View>
+        <WordFsrsStats memory={memory} word={word} />
 
         {/* Where the word comes from.
 
@@ -477,10 +431,6 @@ const styles = StyleSheet.create({
   heroReading: {
     minHeight: LAYOUT.SPACING.LARGE,
     justifyContent: 'center',
-  },
-  stats: {
-    marginTop: LAYOUT.SPACING.XLARGE,
-    borderTopWidth: StyleSheet.hairlineWidth,
   },
   formsSection: {
     marginTop: LAYOUT.SPACING.XLARGE,

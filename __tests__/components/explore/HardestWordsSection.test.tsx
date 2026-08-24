@@ -109,17 +109,27 @@ describe('HardestWordsSection', () => {
     expect(screen.queryByText(STRINGS.SECTION_HARDEST_WORDS)).toBeNull();
   });
 
-  test('shows one card per leech, with its headword, meaning and forgot-count', () => {
-    const word = leech(3);
-    setRevisit({ leeches: [word], totalCount: 1 });
+  test('shows one card per leech, with its headword and meaning', () => {
+    setRevisit({ leeches: [leech(3)], totalCount: 1 });
     render(<HardestWordsSection />);
 
     expect(screen.getByText(STRINGS.SECTION_HARDEST_WORDS)).toBeTruthy();
     expect(screen.getByText('كلمة3')).toBeTruthy();
     expect(screen.getByText('Corruption')).toBeTruthy();
+  });
+
+  test('does not print the lapse count on the card', () => {
+    // The count is the sort key, not content: "Hardest right now" above the rail
+    // has already said these are the ones being lost, so a per-card "4× forgot"
+    // restates the heading on every card and reads as a scoreboard. It survives
+    // where it is the subject — the revisit sheet, and the stat row in the sheet
+    // this card opens.
+    setRevisit({ leeches: [leech(3)], totalCount: 1 });
+    render(<HardestWordsSection />);
+
     expect(
-      screen.getByText(STRINGS.FORGOT_N_TIMES.replace('{count}', String(LEECH_MIN_LAPSES + 3))),
-    ).toBeTruthy();
+      screen.queryByText(STRINGS.FORGOT_N_TIMES.replace('{count}', String(LEECH_MIN_LAPSES + 3))),
+    ).toBeNull();
   });
 
   test('caps the rail at ten cards even though the hook hands back more', () => {

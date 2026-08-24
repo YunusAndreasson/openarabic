@@ -8,6 +8,7 @@ import type { Article } from '@/types/articles.types';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import type { ArticleId } from '@/types/branded.types';
 import { generateStorageUrl } from '@/utils/storageUtils';
+import type { StudyWord } from '@/types/vocabulary.types';
 
 /**
  * Extract current article ID from audio status
@@ -113,6 +114,25 @@ export interface WordAudioData {
   meaning?: string;
   english?: string;
   word_form?: string;
+}
+
+/**
+ * A saved word, as the audio player wants it.
+ *
+ * The mapping is trivial and that is the point: it was written out by hand on
+ * the word screen and again on the word sheet, so a fifth field — or a rename
+ * on `roots` — would have had to be found in two places. Returns `null` for a
+ * word whose root never loaded, which is also the "nothing to play" answer.
+ */
+export function toWordAudioData(word: StudyWord): WordAudioData | null {
+  if (!word.root) return null;
+  return {
+    id: word.root_id,
+    audio_url: word.root.audio_url,
+    audio_url_en: word.root.audio_url_en,
+    letters: word.root.letters,
+    meaning: word.root.meaning,
+  };
 }
 
 /**

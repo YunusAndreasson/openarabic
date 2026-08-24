@@ -36,6 +36,7 @@ export { RootExplanation } from './RootExplanation';
 export { ScreenScaffold } from './ScreenScaffold';
 export { SeededContentEmptyState } from './SeededContentEmptyState';
 export { SectionLabel } from './SectionLabel';
+export { SnapRail } from './SnapRail';
 export { SheetExplainer } from './SheetExplainer';
 export { SheetScreen } from './SheetScreen';
 

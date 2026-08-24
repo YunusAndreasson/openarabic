@@ -1,15 +1,14 @@
 import { memo, type FC } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { SnapRail } from '@/components/common';
 import { PlaylistItemCard } from '@/components/playlist/PlaylistItemCard';
-import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
+import { SCREEN_WIDTH } from '@/constants/layout';
 import { useArticlePrefetch } from '@/hooks/articles/useArticlePrefetch';
 import type { Article } from '@/types/articles.types';
 import { generateStorageUrl } from '@/utils/storageUtils';
 import { getArticleMetadataWithoutCategory } from '@/utils/stringUtils';
 
 const CARD_WIDTH = SCREEN_WIDTH * 0.7;
-const CARD_SPACING = LAYOUT.SPACING.SMALL;
 
 export interface ArticleRailItem {
   article: Article;
@@ -35,41 +34,23 @@ const ArticleRailComponent: FC<ArticleRailProps> = ({ items, keyPrefix, onArticl
   const prefetchArticle = useArticlePrefetch();
 
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.scrollContent}
-      decelerationRate="fast"
-      snapToInterval={CARD_WIDTH + CARD_SPACING}
-      snapToAlignment="start"
-    >
+    <SnapRail itemWidth={CARD_WIDTH}>
       {items.map(({ article, progress }) => (
-        <View key={`${keyPrefix}-${article.id}`} style={styles.cardContainer}>
-          <PlaylistItemCard
-            title={article.title}
-            secondaryText={getArticleMetadataWithoutCategory(article)}
-            imageUrl={generateStorageUrl('images', article.image_url)}
-            articleId={article.id}
-            progressPercentage={progress}
-            onPress={() => onArticlePress(article)}
-            onPressIn={() => prefetchArticle(article.id)}
-            compact
-          />
-        </View>
+        <PlaylistItemCard
+          key={`${keyPrefix}-${article.id}`}
+          title={article.title}
+          secondaryText={getArticleMetadataWithoutCategory(article)}
+          imageUrl={generateStorageUrl('images', article.image_url)}
+          articleId={article.id}
+          progressPercentage={progress}
+          onPress={() => onArticlePress(article)}
+          onPressIn={() => prefetchArticle(article.id)}
+          compact
+        />
       ))}
-    </ScrollView>
+    </SnapRail>
   );
 };
-
-const styles = StyleSheet.create({
-  scrollContent: {
-    paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
-    gap: CARD_SPACING,
-  },
-  cardContainer: {
-    width: CARD_WIDTH,
-  },
-});
 
 export const ArticleRail = memo(ArticleRailComponent);
 ArticleRail.displayName = 'ArticleRail';

@@ -13,11 +13,11 @@ import {
 // Direct paths, not the practice barrel: this sheet renders two of that
 // folder's components and none of its swipeable dictionary rows, and the barrel
 // would drag the lot into a route whose whole point is to open fast.
-import { StatRow } from '@/components/practice/StatRow';
+import { WordFsrsStats } from '@/components/practice/WordFsrsStats';
 import { WordMemoryPanel } from '@/components/practice/WordMemoryPanel';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { IconButton, Ionicons } from '@/components/ui';
-import { LAYOUT, getArabicHeroFontSize } from '@/constants/layout';
+import { LAYOUT, getArabicHeroFontSize, getArabicHeroTextStyle } from '@/constants/layout';
 import { getPracticeWordRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
@@ -26,10 +26,10 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useDebouncedArabicFontSize } from '@/hooks/theme/useDebouncedArabicFontSize';
 import { useFSRSQueries, useRootEnrichment, useWordMemory } from '@/hooks/vocabulary';
 import type { RootId } from '@/types/branded.types';
+import { toWordAudioData } from '@/utils/audioUtils';
 import { getNextReviewLabel } from '@/utils/fsrsUtils';
 import { dismissSheetThenNavigate } from '@/utils/sheetNavigation';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
-import { DIFFICULTY_COLORS, DIFFICULTY_LABELS, getWordDifficultyLevel } from '@/utils/urgencyScore';
 
 /**
  * One saved word, as a sheet that can present over any tab.
@@ -72,13 +72,7 @@ export default function WordDetailSheet(): JSX.Element {
   const rootId = Number(rootIdParam) as RootId;
 
   const heroFontSize = getArabicHeroFontSize(useDebouncedArabicFontSize(100));
-  const heroArabicStyle = useMemo(
-    () => ({
-      fontSize: heroFontSize,
-      lineHeight: Math.round(heroFontSize * 1.58), // headroom for diacritics
-    }),
-    [heroFontSize],
-  );
+  const heroArabicStyle = useMemo(() => getArabicHeroTextStyle(heroFontSize), [heroFontSize]);
 
   // `useFSRSQueries` rather than `useStudyWordByRoot`: this screen has to tell
   // "still fetching" apart from "not in the practice list", and the narrower
@@ -103,14 +97,9 @@ export default function WordDetailSheet(): JSX.Element {
   // to await and nothing to handle. Handing an async function straight to
   // `onPress` is what the rest of the app does and what the lint ratchet counts.
   const handlePlayAudio = useCallback(() => {
-    if (!word?.root) return;
-    void playWordAudio({
-      id: word.root_id,
-      audio_url: word.root.audio_url,
-      audio_url_en: word.root.audio_url_en,
-      letters: word.root.letters,
-      meaning: word.root.meaning,
-    });
+    const audio = word && toWordAudioData(word);
+    if (!audio) return;
+    void playWordAudio(audio);
   }, [word, playWordAudio]);
 
   const arabicText = word?.root?.letters ?? '';
@@ -185,32 +174,7 @@ export default function WordDetailSheet(): JSX.Element {
             <WordMemoryPanel dueLabel={getNextReviewLabel(word.fsrs_due)} memory={memory} />
           ) : null}
 
-          {word ? (
-            <View style={[styles.stats, { borderTopColor: colors.border }]}>
-              <StatRow
-                colorName={DIFFICULTY_COLORS[getWordDifficultyLevel(word)]}
-                label={STRINGS.WORD_STAT_DIFFICULTY}
-                value={DIFFICULTY_LABELS[getWordDifficultyLevel(word)]}
-              />
-              <StatRow
-                label={STRINGS.WORD_STAT_NEXT_REVIEW}
-                value={getNextReviewLabel(word.fsrs_due)}
-              />
-              {memory && memory.reps > 0 ? (
-                <StatRow
-                  label={STRINGS.WORD_STAT_REVIEWS}
-                  value={
-                    memory.lapses > 0
-                      ? STRINGS.WORD_REVIEWS_WITH_LAPSES.replace(
-                          '{count}',
-                          String(memory.reps),
-                        ).replace('{lapses}', String(memory.lapses))
-                      : STRINGS.WORD_REVIEWS_VALUE.replace('{count}', String(memory.reps))
-                  }
-                />
-              ) : null}
-            </View>
-          ) : null}
+          {word ? <WordFsrsStats memory={memory} variant="sheet" word={word} /> : null}
 
           {/* Absent for most words, and silently so — coverage is a small
               fraction of the dictionary, and a band explaining its own emptiness
@@ -265,9 +229,5 @@ const styles = StyleSheet.create({
   },
   openRow: {
     justifyContent: 'space-between',
-  },
-  stats: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    marginTop: LAYOUT.SPACING.XLARGE,
   },
 });

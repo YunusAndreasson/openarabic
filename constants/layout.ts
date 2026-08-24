@@ -463,6 +463,22 @@ export const getArabicTextStyle = (
  * XLARGE)` beside a Skia canvas is exactly how a row and the word beside it come
  * to disagree by a point.
  */
+/**
+ * Headroom above and below an Arabic hero, as a multiple of its font size.
+ *
+ * Arabic ink runs past the strut in both directions — see the fatha/kasra on a
+ * vocalised headword — so a hero set at its font size clips. 1.58 is the
+ * measured figure; named because three surfaces set it and a bare `* 1.58` in
+ * each is three chances to round it differently.
+ */
+const ARABIC_HERO_LINE_HEIGHT_RATIO = 1.58;
+
+/** Font size and matching line height for an Arabic hero headword. */
+export const getArabicHeroTextStyle = (heroFontSize: number): TextStyle => ({
+  fontSize: heroFontSize,
+  lineHeight: Math.round(heroFontSize * ARABIC_HERO_LINE_HEIGHT_RATIO),
+});
+
 export const getCompactArabicFontSize = (fontSize: number): number =>
   Math.min(fontSize, LAYOUT.TYPOGRAPHY.SCALE.XLARGE);
 

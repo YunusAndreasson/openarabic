@@ -1,7 +1,7 @@
 import { memo, type FC } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 
-import { BaseCard } from '@/components/common';
+import { BaseCard, SnapRail } from '@/components/common';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { Ionicons } from '@/components/ui';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
@@ -17,7 +17,6 @@ import { WordRailCard } from './WordRailCard';
  * something to swipe rather than as a row that happens to overflow.
  */
 const CARD_WIDTH = SCREEN_WIDTH * 0.44;
-const CARD_SPACING = LAYOUT.SPACING.SMALL;
 
 interface SeeAllTarget {
   /** The uncapped leech count, not the number of cards shown. */
@@ -91,46 +90,26 @@ SeeAllCard.displayName = 'SeeAllCard';
  * clip the rail 12px early.
  */
 const WordRailComponent: FC<WordRailProps> = ({ words, onWordPress, seeAll }) => (
-  <ScrollView
-    horizontal
-    contentContainerStyle={styles.scrollContent}
-    decelerationRate="fast"
-    showsHorizontalScrollIndicator={false}
-    snapToAlignment="start"
-    snapToInterval={CARD_WIDTH + CARD_SPACING}
-  >
+  <SnapRail itemWidth={CARD_WIDTH}>
     {words.map(word => (
-      <View key={word.root_id} style={styles.cardContainer}>
-        <WordRailCard word={word} onPress={() => onWordPress(word)} />
-      </View>
+      <WordRailCard key={word.root_id} word={word} onPress={() => onWordPress(word)} />
     ))}
 
-    {seeAll ? (
-      <View style={styles.cardContainer}>
-        <SeeAllCard count={seeAll.count} onPress={seeAll.onPress} />
-      </View>
-    ) : null}
-  </ScrollView>
+    {seeAll ? <SeeAllCard count={seeAll.count} onPress={seeAll.onPress} /> : null}
+  </SnapRail>
 );
 
 const styles = StyleSheet.create({
   /**
-   * Every card fills its slot, and the slots are already equal: a horizontal
-   * `ScrollView`'s content container stretches its children to the tallest one.
-   * Without this the cards were only as tall as their own text, so the "see all"
-   * card — an icon and one line against a headword, a gloss and a count — sat a
-   * third shorter than the words beside it and read as a different kind of
+   * Every card fills the slot `SnapRail` gave it, and the slots are already
+   * equal: a horizontal content container stretches its children to the tallest
+   * one. Without this the cards were only as tall as their own text, so the "see
+   * all" card — an icon and one line against a headword, a gloss and a count —
+   * sat a third shorter than the words beside it and read as a different kind of
    * object rather than the end of the same row.
    */
   card: {
     flex: 1,
-  },
-  cardContainer: {
-    width: CARD_WIDTH,
-  },
-  scrollContent: {
-    gap: CARD_SPACING,
-    paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
   },
   seeAllContent: {
     alignItems: 'center',

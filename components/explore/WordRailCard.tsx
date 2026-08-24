@@ -8,10 +8,6 @@ import { STRINGS } from '@/constants/strings';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
-function formatForgotCount(count: number): string {
-  return STRINGS.FORGOT_N_TIMES.replace('{count}', String(count));
-}
-
 interface WordRailCardProps {
   word: StudyWord;
   onPress: () => void;
@@ -20,20 +16,21 @@ interface WordRailCardProps {
 /**
  * One saved word the learner keeps forgetting, as a rail card.
  *
- * The three facts and their order are the revisit sheet's row, stacked instead
- * of laid out on one line: headword, meaning, how often it has been forgotten.
- * A rail slot is a fraction of a screen wide, so the one-line arrangement
- * `WordListRow` uses — gloss left, Arabic right — has nowhere to put them.
+ * The word and what it means, and nothing else.
+ *
+ * **No forgot-count.** It was here, as plain tertiary text, and it was the sort
+ * key wearing a label: "Hardest right now" above the rail has already said
+ * these are the ones being lost, so a per-card "4× forgot" restates the section
+ * heading on every card and turns a reading tab into a scoreboard of failures.
+ * The revisit sheet keeps the number because there it IS the subject; the sheet
+ * this card opens keeps it too, as one factual stat beside the memory curve.
+ * That is the same argument the revisit sheet already makes for refusing to
+ * paint its rows red.
  *
  * **A card here, a flat row there, and both are right.** `WordListRow` argues
  * against elevated cards because a list of hundreds should read as a list; a
  * horizontal rail of ten has the opposite problem — with no boundary between
  * items there is nothing to tell the eye that this scrolls sideways.
- *
- * **The forgot-count is plain tertiary text, never a red badge.** Every card in
- * this rail is a leech, so painting all ten as errors says nothing the section
- * label above them has not already said. Same rule, same reason, as the revisit
- * sheet's rows.
  *
  * The Arabic is `roots.letters` — the lemma — and deliberately uncoloured: it
  * carries no prefix and no case, so grammar colouring would have nothing true
@@ -42,13 +39,13 @@ interface WordRailCardProps {
 const WordRailCardComponent: FC<WordRailCardProps> = ({ word, onPress }) => {
   const letters = word.root?.letters ?? '';
   const meaning = capitalizeFirstLetter(word.root?.meaning ?? '');
-  const forgot = formatForgotCount(word.fsrs_lapses ?? 0);
 
   return (
     <BaseCard
-      accessibilityLabel={STRINGS.HARDEST_WORD_CARD_A11Y.replace('{arabic}', letters)
-        .replace('{meaning}', meaning)
-        .replace('{forgot}', forgot)}
+      accessibilityLabel={STRINGS.HARDEST_WORD_CARD_A11Y.replace('{arabic}', letters).replace(
+        '{meaning}',
+        meaning,
+      )}
       // Explicit, because `BaseCard` has no default and the label no longer says
       // "Opens the word" — the role is what carries that now.
       accessibilityRole="button"
@@ -74,10 +71,6 @@ const WordRailCardComponent: FC<WordRailCardProps> = ({ word, onPress }) => {
 
       <ThemedText colorName="secondaryText" numberOfLines={2} type="caption">
         {meaning}
-      </ThemedText>
-
-      <ThemedText colorName="textTertiary" numberOfLines={1} type="caption">
-        {forgot}
       </ThemedText>
     </BaseCard>
   );
