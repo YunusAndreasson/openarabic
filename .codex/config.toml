@@ -73,7 +73,13 @@ approval_mode = "approve"
 [mcp_servers.argent.tools.keyboard]
 approval_mode = "approve"
 
+[mcp_servers.argent.tools.paste]
+approval_mode = "approve"
+
 [mcp_servers.argent.tools.rotate]
+approval_mode = "approve"
+
+[mcp_servers.argent.tools.shake]
 approval_mode = "approve"
 
 [mcp_servers.argent.tools.tv-remote]
