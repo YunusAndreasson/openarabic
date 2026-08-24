@@ -296,6 +296,105 @@ export const DICTIONARY_BUCKETS: string[] = [
   '0-9', 'other',
 ];
 
+/** A dictionary entry matched by search, linked to its live page. */
+export interface SearchResult {
+  id: number;
+  letters: string;
+  meaning: string;
+  path: string;
+}
+
+/** Raw ilike matches to gather (per field) before the usage gate narrows them. */
+const SEARCH_CANDIDATE_LIMIT = 150;
+
+/** Results returned to the search page. */
+const MAX_SEARCH_RESULTS = 40;
+
+/** Arabic diacritics (harakat, tanwin, Qur'anic annotation marks) + tatweel
+ *  -- mirrors translate/word_enrichment/lexicon.py's bareword() ranges exactly
+ *  (U+0610-U+061A, U+064B-U+065F, U+0670, U+06D6-U+06ED, U+0640), so search
+ *  agrees with how the rest of the pipeline compares Arabic word forms. */
+const ARABIC_MARKS_RE =
+  /[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g;
+/** Any Arabic-script codepoint (U+0600-U+06FF) -- detects an Arabic query. */
+const ARABIC_SCRIPT_RE = /[\u0600-\u06FF]/;
+
+function bareArabic(text: string): string {
+  return text.replace(ARABIC_MARKS_RE, '');
+}
+
+/**
+ * Dictionary entries whose meaning or Arabic letters contain `query`, limited
+ * to ones with a live `/word/...` page (same usage gate as everywhere else —
+ * search must not link to a 404). Ranked so a match at the start of the
+ * meaning outranks one buried in it.
+ */
+export const searchDictionary = cache(
+  async (query: string): Promise<SearchResult[]> => {
+    const q = query.trim();
+    if (!q) return [];
+
+    const [byMeaning, byLetters] = await Promise.all([
+      supabase
+        .from('roots')
+        .select('id, letters, meaning')
+        .ilike('meaning', `%${q}%`)
+        .limit(SEARCH_CANDIDATE_LIMIT),
+      supabase
+        .from('roots')
+        .select('id, letters, meaning')
+        .ilike('letters', `%${q}%`)
+        .limit(SEARCH_CANDIDATE_LIMIT),
+    ]);
+
+    const byId = new Map<number, { id: number; letters: string; meaning: string }>();
+    for (const r of [...(byMeaning.data || []), ...(byLetters.data || [])]) {
+      if (r.meaning?.trim() && r.letters?.trim()) byId.set(r.id, r);
+    }
+
+    // A literal substring match on `letters` mostly misses Arabic queries:
+    // dictionary entries are stored fully vocalised ("رَحْمَةٌ"), but people type
+    // bare consonants ("رحم"). Fall back to a diacritic-stripped scan over the
+    // same qualifying set the rest of the dictionary already uses.
+    if (ARABIC_SCRIPT_RE.test(q)) {
+      const bareQuery = bareArabic(q);
+      if (bareQuery) {
+        const all = await getAllDictionaryEntries();
+        for (const e of all) {
+          if (bareArabic(e.letters).includes(bareQuery)) byId.set(e.id, e);
+        }
+      }
+    }
+    if (!byId.size) return [];
+
+    const ids = [...byId.keys()];
+    const { data: usageRows } = await supabase
+      .from('sentence_words')
+      .select('root_id')
+      .in('root_id', ids);
+
+    const usage = new Map<number, number>();
+    for (const row of usageRows || []) {
+      usage.set(row.root_id, (usage.get(row.root_id) || 0) + 1);
+    }
+
+    const qLower = q.toLowerCase();
+    const rank = (r: { meaning: string }) => {
+      const m = r.meaning.toLowerCase();
+      if (m === qLower) return 0;
+      if (m.startsWith(qLower)) return 1;
+      return 2;
+    };
+
+    return ids
+      .map((id) => byId.get(id)!)
+      .filter((r) => (usage.get(r.id) || 0) >= MIN_USAGES_FOR_WORD_PAGE)
+      .sort((a, b) => rank(a) - rank(b) || a.meaning.localeCompare(b.meaning))
+      .slice(0, MAX_SEARCH_RESULTS)
+      .map((r) => ({ id: r.id, letters: r.letters, meaning: r.meaning, path: wordPagePath(r) }));
+  },
+);
+
 /** The browse bucket a dictionary entry belongs to (see DICTIONARY_BUCKETS). */
 export function dictionaryBucket(meaning: string): string {
   let m = meaning.trim().toLowerCase();

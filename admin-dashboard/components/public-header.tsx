@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Filter, MessageCircle, Info, Mail, Download } from 'lucide-react';
+import { Filter, MessageCircle, Info, Mail, Download, BookOpen } from 'lucide-react';
 
 interface PublicHeaderProps {
   categories: Category[];
@@ -98,6 +98,15 @@ export function PublicHeader({
               {selectedLabel}
             </button>
             <Link
+              href="/dictionary"
+              prefetch={null}
+              className="flex items-center justify-center w-8 h-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors duration-150 flex-shrink-0"
+              title="Dictionary"
+              aria-label="Arabic Dictionary"
+            >
+              <BookOpen className="h-4 w-4" />
+            </Link>
+            <Link
               href="/download-app"
               className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground hover:bg-primary/85 active:bg-primary/70 transition-colors duration-150 flex-shrink-0"
               title="Get the app"
@@ -141,6 +150,16 @@ export function PublicHeader({
                 title="All Articles"
               >
                 All
+              </Link>
+
+              {/* Dictionary — the site's other main content type, not a category filter */}
+              <Link
+                href="/dictionary"
+                prefetch={null}
+                className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all duration-150"
+                title="Arabic Dictionary"
+              >
+                Dictionary
               </Link>
 
               {/* Category pills — real links to each category hub */}

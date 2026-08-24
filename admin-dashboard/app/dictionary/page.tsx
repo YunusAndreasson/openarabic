@@ -8,6 +8,7 @@ import {
 } from '@/lib/word-pages';
 import { ArticleNav } from '@/components/article-nav';
 import { DictionaryAzNav } from '@/components/dictionary-az-nav';
+import { DictionarySearchForm } from '@/components/dictionary-search-form';
 import { Footer } from '@/components/footer';
 import { SITE_URL } from '@/lib/constants';
 import type { Category } from '@/lib/types';
@@ -99,6 +100,9 @@ export default async function DictionaryPage() {
             . Every entry links to the passages it appears in, so you learn each
             word the way it is actually used.
           </p>
+          <div className="mt-6 max-w-md">
+            <DictionarySearchForm />
+          </div>
         </header>
 
         {letters.length > 0 && (
