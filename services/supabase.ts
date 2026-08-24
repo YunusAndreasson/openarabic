@@ -69,9 +69,9 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
 export function setupSupabaseAppStateListener(): () => void {
   const subscription = AppState.addEventListener('change', state => {
     if (state === 'active') {
-      supabase.auth.startAutoRefresh();
+      void supabase.auth.startAutoRefresh();
     } else {
-      supabase.auth.stopAutoRefresh();
+      void supabase.auth.stopAutoRefresh();
     }
   });
 

@@ -25,10 +25,10 @@ export function useSystemUITheme(): void {
         await SystemUI.setBackgroundColorAsync(colors.background);
       } catch (error) {
         // Silently handle system UI errors - not critical for app functionality
-        handleError(error, { showToast: false, captureSentry: false });
+        void handleError(error, { showToast: false, captureSentry: false });
       }
     };
 
-    updateSystemUI();
+    void updateSystemUI();
   }, [colors.background]);
 }

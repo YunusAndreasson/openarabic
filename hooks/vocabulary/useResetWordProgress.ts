@@ -36,12 +36,12 @@ export function useResetWordProgress(): UseResetWordProgressResult {
     },
     onSuccess: () => {
       if (user?.id) {
-        fsrsQueries.invalidateAll(queryClient, user.id);
+        void fsrsQueries.invalidateAll(queryClient, user.id);
       }
       showToast(STRINGS.WORD_PROGRESS_RESET, undefined, ToastType.SUCCESS);
     },
     onError: (error: Error) => {
-      handleError(error);
+      void handleError(error);
       showToast(STRINGS.FAILED_TO_RESET_WORD_PROGRESS, undefined, ToastType.ERROR);
     },
   });

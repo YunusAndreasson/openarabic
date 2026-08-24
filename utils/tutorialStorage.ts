@@ -25,7 +25,7 @@ async function isTutorialCompleted(
     const value = await AsyncStorage.getItem(scopedKey(config.storageKey, userId));
     return value === 'true';
   } catch (error) {
-    handleError(error, {
+    void handleError(error, {
       showToast: false,
       analyticsEventName: 'Tutorial_Storage_Read_Error',
     });
@@ -47,7 +47,7 @@ export async function markTutorialCompleted(
     const config = TUTORIALS[tutorialId];
     await AsyncStorage.setItem(scopedKey(config.storageKey, userId), 'true');
   } catch (error) {
-    handleError(error, {
+    void handleError(error, {
       showToast: false,
       analyticsEventName: 'Tutorial_Storage_Write_Error',
     });
@@ -68,7 +68,7 @@ export async function resetAllTutorials(userId?: string | null): Promise<void> {
       }),
     );
   } catch (error) {
-    handleError(error, {
+    void handleError(error, {
       showToast: false,
       analyticsEventName: 'Tutorial_Storage_Reset_Error',
     });

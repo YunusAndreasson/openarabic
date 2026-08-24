@@ -67,7 +67,7 @@ class AudioCacheManager {
   private cacheKeys = new Map<string, string>();
 
   private constructor() {
-    this.ensureCacheDirectoryExists();
+    void this.ensureCacheDirectoryExists();
   }
 
   /**

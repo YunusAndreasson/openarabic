@@ -112,7 +112,7 @@ async function loadOnboardingStateForScope(scope: AccountScope): Promise<Onboard
     }
     return loadedState;
   } catch (error) {
-    handleError(error, {
+    void handleError(error, {
       showToast: false,
       analyticsEventName: 'Onboarding_Storage_Read_Error',
     });
@@ -140,7 +140,7 @@ async function writeState(next: OnboardingProgressState, scope: AccountScope): P
     // mutable auth state after asynchronous work has started.
     await AsyncStorage.setItem(scope.storageKey, JSON.stringify(next));
   } catch (error) {
-    handleError(error, {
+    void handleError(error, {
       showToast: false,
       analyticsEventName: 'Onboarding_Storage_Write_Error',
     });

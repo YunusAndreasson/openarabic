@@ -51,7 +51,7 @@ export async function loadNotificationPromptState(): Promise<NotificationPromptS
       ? { ...createState(), ...(JSON.parse(raw) as Partial<NotificationPromptState>) }
       : createState();
   } catch (error) {
-    handleError(error, { showToast: false });
+    void handleError(error, { showToast: false });
     cachedState = createState({ impressions: Number.MAX_SAFE_INTEGER });
   }
   return cachedState;
@@ -62,7 +62,7 @@ async function writeState(next: NotificationPromptState): Promise<void> {
   try {
     await AsyncStorage.setItem(PROMPT_STORAGE_KEY, JSON.stringify(next));
   } catch (error) {
-    handleError(error, { showToast: false });
+    void handleError(error, { showToast: false });
   }
 }
 

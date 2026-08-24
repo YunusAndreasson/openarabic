@@ -276,7 +276,7 @@ function AppContent() {
   // fonts rather than never starting.
   useEffect(() => {
     if (fontError) {
-      handleError(fontError, {
+      void handleError(fontError, {
         showToast: false,
         analyticsEventName: 'Font_Load_Failed',
         sentryTags: { location: 'app', action: 'font_load' },
@@ -302,7 +302,7 @@ function AppContent() {
   const hasTriggeredPreload = useRef(false);
 
   useEffect(() => {
-    if (navigationRef?.current) {
+    if (navigationRef.current) {
       navigationIntegration.registerNavigationContainer(navigationRef);
       // Also register for performance route tracking used by rerender logger
     }
@@ -341,12 +341,12 @@ function AppContent() {
           });
         } catch (err) {
           // Silently ignore analytics errors
-          handleError(err, { showToast: false });
+          void handleError(err, { showToast: false });
         }
       }
     };
 
-    identifyUser();
+    void identifyUser();
   }, [session, appReady, isAuthLoading]);
 
   const colors = useColors();
@@ -414,7 +414,7 @@ function AppContent() {
       SplashScreen.hide();
 
       // Track app opened event
-      analytics.track(ANALYTICS_EVENTS.APP_OPENED, {
+      void analytics.track(ANALYTICS_EVENTS.APP_OPENED, {
         timestamp: new Date().toISOString(),
       });
     }
@@ -432,7 +432,7 @@ function AppContent() {
         }
       };
 
-      initializeAppServices();
+      void initializeAppServices();
     }
   }, [appReady]);
 
@@ -467,7 +467,7 @@ function AppContent() {
             const route = NOTIFICATION_ROUTE_BY_TYPE[type as AnyNotificationType];
             if (route) {
               if (type === NOTIFICATION_TYPES.SRS_DUE || type === NOTIFICATION_TYPES.SRS_SLIPPING) {
-                analytics.track(ANALYTICS_EVENTS.SMART_REMINDER_OPENED, { type, coldStart: true });
+                void analytics.track(ANALYTICS_EVENTS.SMART_REMINDER_OPENED, { type, coldStart: true });
               }
               router.push(route);
             }
@@ -478,14 +478,14 @@ function AppContent() {
         }
       } catch (error) {
         // Silently handle cold start notification errors
-        handleError(error, {
+        void handleError(error, {
           showToast: false,
           analyticsEventName: 'Cold_Start_Notification_Error',
         });
       }
     };
 
-    handleColdStartNotification();
+    void handleColdStartNotification();
   }, [appReady, router]);
 
   // Cleanup notifications, background tasks, audio, and app badge on unmount
@@ -502,7 +502,7 @@ function AppContent() {
       // Clear app badge when app is unmounted (async cleanup)
       clearAppBadge().catch(error => {
         // Silently handle badge cleanup errors during unmount
-        handleError(error as Error, {
+        void handleError(error as Error, {
           analyticsEventName: 'App_Badge_Cleanup_Failed',
           sentryTags: { location: 'app', action: 'badge_cleanup' },
           showToast: false, // Silent failure during cleanup
@@ -523,7 +523,7 @@ function AppContent() {
     if (isBackgrounding && appReady) {
       backgroundedTime.current = Date.now();
       const sessionDurationMs = Date.now() - sessionStartTime;
-      analytics.track(ANALYTICS_EVENTS.APP_BACKGROUNDED, {
+      void analytics.track(ANALYTICS_EVENTS.APP_BACKGROUNDED, {
         session_duration_ms: sessionDurationMs,
       });
 
@@ -538,7 +538,7 @@ function AppContent() {
     if (!isActivating || !appReady) return;
 
     const timeBackgroundedMs = backgroundedTime.current ? Date.now() - backgroundedTime.current : 0;
-    analytics.track(ANALYTICS_EVENTS.APP_RESUMED, {
+    void analytics.track(ANALYTICS_EVENTS.APP_RESUMED, {
       time_backgrounded_ms: timeBackgroundedMs,
     });
     backgroundedTime.current = null;
