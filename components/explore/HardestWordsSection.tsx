@@ -55,8 +55,11 @@ export function HardestWordsSection(): JSX.Element | null {
   const handleWordPress = (word: StudyWord) => {
     // Warm the root explanation before the sheet asks for it — the same
     // prefetch-on-tap the dictionary does, and the reason its word screen has
-    // the panel painted by the time the push lands.
-    void queryClient.prefetchQuery(rootEnrichmentQueries.detail(word.root_id));
+    // the panel painted by the time the push lands. `query`, not the
+    // deprecated `prefetchQuery`: same effect (writes into the cache, does not
+    // return data to a render), but `prefetchQuery`'s built-in error
+    // swallowing has to be done explicitly here instead.
+    void queryClient.query(rootEnrichmentQueries.detail(word.root_id)).catch(() => undefined);
     router.push(getWordDetailRoute(word.root_id));
   };
 

@@ -21,7 +21,7 @@ import {
   getSortMeterFraction,
 } from '@/utils/dictionaryMeter';
 import { getHorizonAccessibilityLabel, getMemoryHorizonDays } from '@/utils/memoryHorizon';
-import { capitalizeFirstLetter } from '@/utils/stringUtils';
+import { getRootLemma } from '@/utils/stringUtils';
 import { DIFFICULTY_LABELS, getWordDifficultyLevel } from '@/utils/urgencyScore';
 
 /**
@@ -165,11 +165,7 @@ export const DictionaryWordRow = memo<DictionaryWordRowProps>(
       [handleResetProgress, handleRemove],
     );
 
-    const arabicText = word.root?.letters ?? '';
-    const englishText = useMemo(
-      () => capitalizeFirstLetter(word.root?.meaning ?? ''),
-      [word.root?.meaning],
-    );
+    const { arabicText, englishText } = useMemo(() => getRootLemma(word), [word]);
 
     const difficultyLevel = getWordDifficultyLevel(word);
     const difficultyLabel = DIFFICULTY_LABELS[difficultyLevel];

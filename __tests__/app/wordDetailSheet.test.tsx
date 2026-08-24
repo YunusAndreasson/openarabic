@@ -23,12 +23,15 @@ import { rootId } from '@/__tests__/helpers/ids';
 import { LEECH_MIN_LAPSES } from '@/constants/fsrs';
 import { getPracticeWordRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
+import type { RootEnrichment } from '@/types/rootEnrichment.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 
 const mockNavigate = jest.fn();
 
+const searchParams: { rootId?: string } = { rootId: '42' };
+
 jest.mock('expo-router', () => ({
-  useLocalSearchParams: () => ({ rootId: '42' }),
+  useLocalSearchParams: () => searchParams,
 }));
 
 jest.mock('@/utils/sheetNavigation', () => ({
@@ -53,8 +56,10 @@ jest.mock('@/hooks/vocabulary/useFSRSQueries', () => ({
   useFSRSQueries: () => fsrs,
 }));
 
+let mockEnrichment: RootEnrichment | undefined;
+
 jest.mock('@/hooks/vocabulary/useRootEnrichment', () => ({
-  useRootEnrichment: () => undefined,
+  useRootEnrichment: () => mockEnrichment,
 }));
 
 jest.mock('@/hooks/auth/useAuth', () => ({
@@ -91,10 +96,25 @@ const setFsrs = (next: Partial<typeof fsrs>): void => {
   Object.assign(fsrs, { allWords: [], isLoading: false, error: null }, next);
 };
 
+const familyEnrichment = (member: RootEnrichment['wordFamily'][number]): RootEnrichment => ({
+  rootId: rootId(42),
+  triliteralRoot: 'ف س د',
+  rootTransliteration: 'f-s-d',
+  rootMeaning: 'to corrupt, spoil',
+  headwordTransliteration: 'fasād',
+  senses: [{ gloss: 'corruption' }],
+  wordFamily: [member],
+  usageNote: null,
+  source: 'test',
+  sourceUrl: '',
+});
+
 describe('WordDetailSheet', () => {
   beforeEach(() => {
     mockNavigate.mockClear();
     mockPlayAudio.mockClear();
+    searchParams.rootId = '42';
+    mockEnrichment = undefined;
   });
 
   test('leads with the headword and its meaning', () => {
@@ -193,5 +213,68 @@ describe('WordDetailSheet', () => {
     render(<WordDetailSheet />);
 
     expect(screen.queryByLabelText(STRINGS.PLAY_AUDIO)).toBeNull();
+  });
+
+  test('shows how to say the word once the enrichment record arrives', () => {
+    setFsrs({ allWords: [savedWord()] });
+    mockEnrichment = familyEnrichment({
+      letters: 'فَاسِد',
+      transliteration: 'fāsid',
+      meaning: 'corrupt',
+      rootId: rootId(99),
+    });
+    render(<WordDetailSheet />);
+
+    expect(screen.getByText('fasād')).toBeTruthy();
+  });
+
+  test('a family member already in the practice list opens it', () => {
+    setFsrs({
+      allWords: [
+        savedWord(),
+        savedWord({
+          root_id: rootId(99),
+          root: { id: 99, letters: 'فَاسِد', meaning: 'corrupt', audio_url: '', audio_url_en: '' },
+        }),
+      ],
+    });
+    mockEnrichment = familyEnrichment({
+      letters: 'فَاسِد',
+      transliteration: 'fāsid',
+      meaning: 'corrupt',
+      rootId: rootId(99),
+    });
+    render(<WordDetailSheet />);
+
+    fireEvent.press(screen.getByText('فَاسِد'));
+
+    expect(mockNavigate).toHaveBeenCalledWith(getPracticeWordRoute(rootId(99)));
+  });
+
+  test('a family member not in the practice list stays a dead end', () => {
+    // Only root 42 is saved — the family member's root (99) is not, so the row
+    // must render as plain text, not a link to "no longer in your practice
+    // list" for a word that was never saved in the first place.
+    setFsrs({ allWords: [savedWord()] });
+    mockEnrichment = familyEnrichment({
+      letters: 'فَاسِد',
+      transliteration: 'fāsid',
+      meaning: 'corrupt',
+      rootId: rootId(99),
+    });
+    render(<WordDetailSheet />);
+
+    fireEvent.press(screen.getByText('فَاسِد'));
+
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  test('a missing rootId says the link is invalid, not that the word left the practice list', () => {
+    searchParams.rootId = undefined;
+    setFsrs({ allWords: [savedWord()] });
+    render(<WordDetailSheet />);
+
+    expect(screen.getByText(STRINGS.WORD_SHEET_INVALID_LINK)).toBeTruthy();
+    expect(screen.queryByText(STRINGS.WORD_NOT_FOUND)).toBeNull();
   });
 });

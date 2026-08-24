@@ -36,10 +36,17 @@ jest.mock('expo-router', () => ({
 
 // Only `useQueryClient` is replaced. Mocking the whole module also removes
 // `queryOptions`, which `rootEnrichmentQueries.detail` calls to build the very
-// prefetch argument this suite is asserting on.
+// prefetch argument this suite is asserting on. `query`, not the deprecated
+// `prefetchQuery` the source used to call — must resolve, since the source
+// chains `.catch()` off it.
 jest.mock('@tanstack/react-query', () => ({
   ...jest.requireActual<object>('@tanstack/react-query'),
-  useQueryClient: () => ({ prefetchQuery: (...args: unknown[]) => mockPrefetch(...args) }),
+  useQueryClient: () => ({
+    query: (...args: unknown[]) => {
+      mockPrefetch(...args);
+      return Promise.resolve();
+    },
+  }),
 }));
 
 jest.mock('@/hooks/theme/useColors', () =>

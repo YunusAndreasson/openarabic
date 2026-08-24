@@ -1,4 +1,4 @@
-import { Children, memo, useMemo, type FC, type ReactNode } from 'react';
+import { Children, memo, type FC, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
@@ -54,10 +54,10 @@ interface SnapRailProps {
  * the same height without anyone measuring anything.
  */
 const SnapRailComponent: FC<SnapRailProps> = ({ itemWidth, itemHeight, children }) => {
-  const slotStyle = useMemo(
-    () => ({ width: itemWidth, ...(itemHeight === undefined ? null : { height: itemHeight }) }),
-    [itemWidth, itemHeight],
-  );
+  const slotStyle = {
+    width: itemWidth,
+    ...(itemHeight === undefined ? null : { height: itemHeight }),
+  };
 
   return (
     <ScrollView

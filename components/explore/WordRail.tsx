@@ -46,7 +46,7 @@ const SeeAllCard: FC<SeeAllTarget> = ({ count, onPress }) => {
 
   return (
     <BaseCard
-      accessibilityLabel={STRINGS.WORDS_TO_REVISIT_SEE_ALL_A11Y.replace('{count}', String(count))}
+      accessibilityLabel={STRINGS.HARDEST_WORDS_SEE_ALL_A11Y.replace('{count}', String(count))}
       accessibilityRole="button"
       bordered
       contentStyle={styles.seeAllContent}

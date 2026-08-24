@@ -1,9 +1,11 @@
 import type { FC } from 'react';
 import { StyleSheet } from 'react-native';
 
-// Direct paths, not the `common` barrel: this file is imported by the root-level
-// word sheet, and pulling a barrel in would drag every sibling of `ListRow`
-// along with it.
+// Direct path, matching the rest of this folder's imports from `common`: both
+// callers already pull the `common` barrel in for other components (`ListRow`
+// itself, `RootExplanation`), so this buys nothing — but importing every
+// sibling one way keeps the rule visible instead of half the file going
+// through the barrel and half not.
 import { ListRow } from '@/components/common/ListRow';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import type { SolidColorName } from '@/constants/colors';

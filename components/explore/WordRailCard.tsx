@@ -6,7 +6,7 @@ import { ThemedText } from '@/components/primitives/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { capitalizeFirstLetter } from '@/utils/stringUtils';
+import { getRootLemma } from '@/utils/stringUtils';
 
 interface WordRailCardProps {
   word: StudyWord;
@@ -37,8 +37,7 @@ interface WordRailCardProps {
  * to paint.
  */
 const WordRailCardComponent: FC<WordRailCardProps> = ({ word, onPress }) => {
-  const letters = word.root?.letters ?? '';
-  const meaning = capitalizeFirstLetter(word.root?.meaning ?? '');
+  const { arabicText: letters, englishText: meaning } = getRootLemma(word);
 
   return (
     <BaseCard

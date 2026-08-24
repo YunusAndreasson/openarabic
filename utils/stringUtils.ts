@@ -3,6 +3,7 @@
  */
 
 import { STRINGS } from '@/constants/strings';
+import type { StudyWord } from '@/types/vocabulary.types';
 
 /**
  * Validates if a value is a non-empty string.
@@ -79,6 +80,22 @@ const METADATA_SEPARATOR = '·'; // Middle dot - clean and modern
 export function capitalizeFirstLetter(str: string): string {
   if (!str) return '';
   return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+/**
+ * A study word's root, read as the lemma line every word screen, rail card and
+ * dictionary row shows: the Arabic letters and a capitalized English gloss.
+ * `word` is optional so a caller mid-resolution (a sheet whose word hasn't
+ * loaded yet) can pass it straight through instead of guarding first.
+ */
+export function getRootLemma(word?: Pick<StudyWord, 'root'>): {
+  arabicText: string;
+  englishText: string;
+} {
+  return {
+    arabicText: word?.root?.letters ?? '',
+    englishText: capitalizeFirstLetter(word?.root?.meaning ?? ''),
+  };
 }
 
 /**

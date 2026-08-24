@@ -17,8 +17,9 @@ import { WordExampleBlock } from '@/components/practice/WordExampleBlock';
 // none of its swipeable dictionary rows. Imported the same way here so the rule
 // is visible from both ends.
 import { WordFsrsStats } from '@/components/practice/WordFsrsStats';
+import { WordHeroText } from '@/components/practice/WordHeroText';
 import { SkiaColoredArabic } from '@/components/common/SkiaColoredArabic';
-import { IconButton, PulsatingLoader } from '@/components/ui';
+import { PulsatingLoader } from '@/components/ui';
 import {
   LAYOUT,
   MIN_TOUCH_TARGET,
@@ -48,7 +49,7 @@ import { getNextReviewLabel } from '@/utils/fsrsUtils';
 import { getArticleRoute, getPracticeWordRoute } from '@/utils/routeBuilders';
 import { getWordUsage, type WordForm } from '@/utils/wordUsage';
 import { dismissAllThenNavigate } from '@/utils/sheetNavigation';
-import { capitalizeFirstLetter } from '@/utils/stringUtils';
+import { getRootLemma } from '@/utils/stringUtils';
 
 const SENTENCE_EXAMPLES_LIMIT = 5;
 
@@ -69,7 +70,7 @@ export default function PracticeWordScreen(): JSX.Element {
   const formFontSize = getCompactArabicFontSize(readingFontSize);
   const heroArabicStyle = useMemo(() => getArabicHeroTextStyle(heroFontSize), [heroFontSize]);
 
-  const { allWords, isLoading } = useFSRSQueries({ userId: user?.id });
+  const { allWords, isLoading, error } = useFSRSQueries({ userId: user?.id });
   const { toggleRootMutation } = useStudyWordMutations();
   const toggleRoot = toggleRootMutation.mutateAsync;
   const { confirmReset } = useResetWordProgress();
@@ -142,9 +143,11 @@ export default function PracticeWordScreen(): JSX.Element {
     ]);
   }, [user, word, toggleRoot, router]);
 
-  // Distinguish "still fetching" from "not in the list". Both used to render an
-  // indefinite spinner, so a word that genuinely wasn't there (removed from
-  // another screen, stale deep link) looked like a screen that never loaded.
+  // Distinguish "still fetching" from "not in the list" from "the fetch
+  // failed" — all three used to render the same "not in your practice list"
+  // text (or, before that, an indefinite spinner), so a genuine fetch failure
+  // read as a correct answer about a word that was never there. Mirrors the
+  // three-way gate `BottomSheetStateHandler` gives the root-level word sheet.
   if (!word) {
     return (
       <ThemedView style={styles.container}>
@@ -153,7 +156,7 @@ export default function PracticeWordScreen(): JSX.Element {
             <LoadingState />
           ) : (
             <ThemedText align="center" colorName="secondaryText" type="body">
-              {STRINGS.WORD_NOT_FOUND}
+              {error ? STRINGS.WORD_SHEET_ERROR : STRINGS.WORD_NOT_FOUND}
             </ThemedText>
           )}
         </View>
@@ -161,8 +164,7 @@ export default function PracticeWordScreen(): JSX.Element {
     );
   }
 
-  const arabicText = word.root?.letters ?? '';
-  const englishText = capitalizeFirstLetter(word.root?.meaning ?? '');
+  const { arabicText, englishText } = getRootLemma(word);
   const nextReviewLabel = getNextReviewLabel(word.fsrs_due);
 
   // Part of speech and the inflected forms, both read off the examples already
@@ -206,70 +208,32 @@ export default function PracticeWordScreen(): JSX.Element {
         showsVerticalScrollIndicator={false}
       >
         {/* Word hero — the word leads, audio sits with it rather than floating
-            below. Left-aligned to match the header title directly above it and
-            every other surface in the app. No `weight` on Arabic: see ThemedText.
+            below. No `weight` on Arabic: see ThemedText.
 
             The headword is deliberately NOT grammar-coloured, unlike the same
             word in the reader's tooltip. This is a dictionary lemma: it carries
             no prefix and no case, so there is nothing true to paint. (The
             analyzer would mostly no-op anyway — it gates on the ENGLISH word
             count, and roots.meaning is usually one word — but on the multi-word
-            glosses it would succeed and colour a form that does not exist.) */}
-        <View style={styles.hero}>
-          <View style={styles.heroText}>
-            {/* Fixed height, like the review card's meta row: the class comes
-                from the example rows, which land a beat after the word, and a
-                band that grew on arrival would drop the hero mid-read. */}
-            <View style={styles.heroMeta}>
-              {usage.partOfSpeech ? (
-                <ThemedText type="overline" colorName="tint">
-                  {usage.partOfSpeech}
-                </ThemedText>
-              ) : null}
-            </View>
-            <ThemedText type="arabic" align="left" numberOfLines={1} style={heroArabicStyle}>
-              {arabicText}
-            </ThemedText>
-            {/* How to say it. `headwordTransliteration` is 100% populated on
-                every enriched record and was being fetched, mapped onto
-                `RootEnrichment` and rendered nowhere — so the only answer the
-                app gave to "how do I pronounce this" was the audio button.
+            glosses it would succeed and colour a form that does not exist.)
 
-                Correct HERE and not in the reader's word card: this hero is
-                `roots.letters`, the lemma, which is exactly what the field
-                transliterates. The card's hero is the INFLECTED form, so the
-                same string there would be a reading of a different word.
-
-                Height-reserved, like the class band above it: this comes from
-                the enrichment query, so it lands a beat after the word and
-                without the reserve it would push the gloss, the memory panel
-                and every stat down mid-read — the one thing the rest of this
-                screen is arranged to avoid. The reserve costs an empty line on
-                the ~15% of words with no record, which is the cheaper failure.
-                `minHeight` for the same reason `heroMeta` uses it: a fixed
-                height clips the line once the OS text scale climbs. */}
-            <View style={styles.heroReading}>
-              {enrichment?.headwordTransliteration ? (
-                <ThemedText type="body" colorName="textTertiary">
-                  {enrichment.headwordTransliteration}
-                </ThemedText>
-              ) : null}
-            </View>
-            <ThemedText type="body" colorName="secondaryText">
-              {englishText}
-            </ThemedText>
-          </View>
-          {word.root?.audio_url && (
-            <IconButton
-              icon="volume-high"
-              onPress={handlePlayAudio}
-              backgroundColor={colors.elevation2}
-              iconColor={colors.text}
-              hapticType="light"
-              accessibilityLabel={STRINGS.PLAY_AUDIO}
-            />
-          )}
-        </View>
+            `headwordTransliteration` is 100% populated on every enriched
+            record and used to be fetched, mapped onto `RootEnrichment` and
+            rendered nowhere — so the only answer the app gave to "how do I
+            pronounce this" was the audio button. Correct HERE and not in the
+            reader's word card: this hero is `roots.letters`, the lemma, which
+            is exactly what the field transliterates. The card's hero is the
+            INFLECTED form, so the same string there would be a reading of a
+            different word. */}
+        <WordHeroText
+          arabicStyle={heroArabicStyle}
+          arabicText={arabicText}
+          audioUrl={word.root?.audio_url}
+          englishText={englishText}
+          partOfSpeech={usage.partOfSpeech}
+          transliteration={enrichment?.headwordTransliteration}
+          onPlayAudio={handlePlayAudio}
+        />
 
         {/* The one thing on this screen that shows the model rather than a
             reading of it: the decay this word is on, and where the schedule sits
@@ -403,34 +367,6 @@ const styles = StyleSheet.create({
     // header, which supplies its own separation — and the hero's meta band adds
     // its own lead above the word, so this drops another step.
     paddingTop: LAYOUT.SPACING.MEDIUM,
-  },
-  hero: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: LAYOUT.SPACING.MEDIUM,
-  },
-  heroText: {
-    flexShrink: 1,
-  },
-  // Reserves the band whether or not the class arrives, so a part of speech
-  // landing a beat after the word cannot drop the hero mid-read — the review
-  // card's meta row does the same.
-  //
-  // `minHeight`, not `height`: `overline` is 13pt at a 1.4 line height and
-  // nothing in this app disables font scaling, so a fixed 24dp ceiling clips
-  // the label once the OS text scale passes ~1.3 (Android's "Largest"; iOS goes
-  // far past it). Growing is the correct failure — at every ordinary scale the
-  // text fits inside the reserve and nothing moves.
-  heroMeta: {
-    minHeight: LAYOUT.SPACING.XLARGE,
-    justifyContent: 'center',
-  },
-  // Reserves the transliteration line whether or not the enrichment record
-  // arrives — see the comment at the render site.
-  heroReading: {
-    minHeight: LAYOUT.SPACING.LARGE,
-    justifyContent: 'center',
   },
   formsSection: {
     marginTop: LAYOUT.SPACING.XLARGE,

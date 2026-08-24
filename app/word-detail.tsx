@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback, useMemo } from 'react';
+import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -10,13 +10,14 @@ import {
   ListRow,
   RootExplanation,
 } from '@/components/common';
-// Direct paths, not the practice barrel: this sheet renders two of that
+// Direct paths, not the practice barrel: this sheet renders three of that
 // folder's components and none of its swipeable dictionary rows, and the barrel
 // would drag the lot into a route whose whole point is to open fast.
 import { WordFsrsStats } from '@/components/practice/WordFsrsStats';
+import { WordHeroText } from '@/components/practice/WordHeroText';
 import { WordMemoryPanel } from '@/components/practice/WordMemoryPanel';
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { IconButton, Ionicons } from '@/components/ui';
+import { Ionicons } from '@/components/ui';
 import { LAYOUT, getArabicHeroFontSize, getArabicHeroTextStyle } from '@/constants/layout';
 import { getPracticeWordRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -26,10 +27,11 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useDebouncedArabicFontSize } from '@/hooks/theme/useDebouncedArabicFontSize';
 import { useFSRSQueries, useRootEnrichment, useWordMemory } from '@/hooks/vocabulary';
 import type { RootId } from '@/types/branded.types';
+import type { StudyWord } from '@/types/vocabulary.types';
 import { toWordAudioData } from '@/utils/audioUtils';
 import { getNextReviewLabel } from '@/utils/fsrsUtils';
 import { dismissSheetThenNavigate } from '@/utils/sheetNavigation';
-import { capitalizeFirstLetter } from '@/utils/stringUtils';
+import { getRootLemma } from '@/utils/stringUtils';
 
 /**
  * One saved word, as a sheet that can present over any tab.
@@ -70,9 +72,14 @@ export default function WordDetailSheet(): JSX.Element {
   const { user } = useAuth();
   const { rootId: rootIdParam } = useLocalSearchParams<{ rootId?: string }>();
   const rootId = Number(rootIdParam) as RootId;
+  // The route is reachable by a real external deep link, unlike the practice
+  // word screen (always pushed with a known-good id) — a missing or malformed
+  // param needs a distinct message from "removed from another screen", not the
+  // same WORD_NOT_FOUND claim about a link that never carried a valid id.
+  const hasValidRootId = !Number.isNaN(rootId);
 
   const heroFontSize = getArabicHeroFontSize(useDebouncedArabicFontSize(100));
-  const heroArabicStyle = useMemo(() => getArabicHeroTextStyle(heroFontSize), [heroFontSize]);
+  const heroArabicStyle = getArabicHeroTextStyle(heroFontSize);
 
   // `useFSRSQueries` rather than `useStudyWordByRoot`: this screen has to tell
   // "still fetching" apart from "not in the practice list", and the narrower
@@ -80,10 +87,18 @@ export default function WordDetailSheet(): JSX.Element {
   // warm — the rail was rendered from it — so the loading state is really for a
   // cold deep link.
   const { allWords, isLoading, error } = useFSRSQueries({ userId: user?.id });
-  const word = useMemo(
-    () => allWords?.find(candidate => candidate.root_id === rootId),
-    [allWords, rootId],
-  );
+
+  // Hold the last seen word so the sheet stays rendered while it dismisses if
+  // the shared FSRS cache loses this root under it — e.g. a remove-mutation on
+  // this exact word firing from the dictionary or the practice word screen
+  // while this sheet happens to be open. Same pattern as
+  // app/(tabs)/practice/word.tsx, same reason: guarded set-state during render
+  // is the sanctioned "storing information from previous renders" pattern.
+  const found = allWords?.find(candidate => candidate.root_id === rootId);
+  const [word, setWord] = useState<StudyWord | undefined>(found);
+  if (found && found !== word) {
+    setWord(found);
+  }
 
   const memory = useWordMemory(word);
   // Keyed off the ROUTE param, not the resolved word: the id is known
@@ -96,57 +111,57 @@ export default function WordDetailSheet(): JSX.Element {
   // own failures and toasts them (`showErrorToast`), so there is nothing here
   // to await and nothing to handle. Handing an async function straight to
   // `onPress` is what the rest of the app does and what the lint ratchet counts.
-  const handlePlayAudio = useCallback(() => {
+  const handlePlayAudio = () => {
     const audio = word && toWordAudioData(word);
     if (!audio) return;
     void playWordAudio(audio);
-  }, [word, playWordAudio]);
+  };
 
-  const arabicText = word?.root?.letters ?? '';
-  const englishText = capitalizeFirstLetter(word?.root?.meaning ?? '');
+  const { arabicText, englishText } = getRootLemma(word);
 
-  const handleOpenInDictionary = useCallback(() => {
+  const handleOpenInDictionary = () => {
     // Two navigations that iOS refuses to overlap: UIKit will not present from
     // a controller that is still dismissing, so the push is queued until the
     // sheet has gone. This lands on the Practice tab — the row says so.
     dismissSheetThenNavigate(getPracticeWordRoute(rootId));
-  }, [rootId]);
+  };
+
+  // A family member is tappable only when the learner has that word saved —
+  // see the identical note on the practice word screen, which this mirrors so
+  // the two surfaces can't disagree about which rows are dead ends.
+  const savedRootIds = new Set((allWords ?? []).map(saved => saved.root_id));
+  const canOpenFamilyMember = (memberRootId: RootId) => savedRootIds.has(memberRootId);
+  const handleOpenFamilyMember = (memberRootId: RootId) => {
+    // Same two-step as `handleOpenInDictionary`, and for the same reason: this
+    // sheet has to be gone before the practice tab's own word screen can
+    // present over it.
+    dismissSheetThenNavigate(getPracticeWordRoute(memberRootId));
+  };
 
   return (
     <>
       <View collapsable={false} style={styles.header}>
         {word ? (
-          <View style={styles.hero}>
-            <View style={styles.heroText}>
-              {/* The lemma, and deliberately uncoloured: `roots.letters` carries
-                  no prefix and no case, so grammar colouring would have nothing
-                  true to paint. One line, so the reading-size setting cannot
-                  push the numbers below the fold. */}
-              <ThemedText align="left" numberOfLines={1} style={heroArabicStyle} type="arabic">
-                {arabicText}
-              </ThemedText>
-              <ThemedText colorName="secondaryText" type="body">
-                {englishText}
-              </ThemedText>
-            </View>
-            {word.root?.audio_url ? (
-              <IconButton
-                accessibilityLabel={STRINGS.PLAY_AUDIO}
-                backgroundColor={colors.elevation2}
-                hapticType="light"
-                icon="volume-high"
-                iconColor={colors.text}
-                onPress={handlePlayAudio}
-              />
-            ) : null}
-          </View>
+          // The lemma, and deliberately uncoloured: `roots.letters` carries no
+          // prefix and no case, so grammar colouring would have nothing true
+          // to paint. One line, so the reading-size setting cannot push the
+          // numbers below the fold.
+          <WordHeroText
+            arabicStyle={heroArabicStyle}
+            arabicText={arabicText}
+            audioUrl={word.root?.audio_url}
+            englishText={englishText}
+            style={styles.hero}
+            transliteration={enrichment?.headwordTransliteration}
+            onPlayAudio={handlePlayAudio}
+          />
         ) : (
           <BottomSheetHeader title={STRINGS.WORD_DETAIL_TITLE} />
         )}
       </View>
 
       <BottomSheetStateHandler
-        emptyMessage={STRINGS.WORD_NOT_FOUND}
+        emptyMessage={hasValidRootId ? STRINGS.WORD_NOT_FOUND : STRINGS.WORD_SHEET_INVALID_LINK}
         errorMessage={STRINGS.WORD_SHEET_ERROR}
         // All three gates are `&& !word`: the study-word list is a shared cache
         // that keeps refetching underneath this sheet, and a background refresh
@@ -179,7 +194,14 @@ export default function WordDetailSheet(): JSX.Element {
           {/* Absent for most words, and silently so — coverage is a small
               fraction of the dictionary, and a band explaining its own emptiness
               on nine words in ten is worse than no band. */}
-          {enrichment ? <RootExplanation enrichment={enrichment} variant="sheet" /> : null}
+          {enrichment ? (
+            <RootExplanation
+              canOpenFamilyMember={canOpenFamilyMember}
+              enrichment={enrichment}
+              variant="sheet"
+              onOpenFamilyMember={handleOpenFamilyMember}
+            />
+          ) : null}
 
           {/* Everything this sheet does not carry — the inflected forms, the
               example sentences, reset and remove — lives on the word screen,
@@ -218,14 +240,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
     paddingTop: LAYOUT.SPACING.XLARGE,
   },
+  // Layout itself lives in WordHeroText; this is the gap between the hero and
+  // the ScrollView below it.
   hero: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: LAYOUT.SPACING.MEDIUM,
     paddingBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  heroText: {
-    flex: 1,
   },
   openRow: {
     justifyContent: 'space-between',

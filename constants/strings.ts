@@ -835,6 +835,15 @@ export const STRINGS = {
    */
   HARDEST_WORD_CARD_A11Y: '{arabic}, {meaning}',
   /**
+   * The terminal "see all" card on the Explore rail (`WordRail`'s
+   * `SeeAllCard`). Deliberately its own string, NOT
+   * `WORDS_TO_REVISIT_SEE_ALL_A11Y`: that one claims "Opens them in your
+   * dictionary", which is true for the words-to-revisit sheet's own overflow
+   * row but not for this card — `HardestWordsSection` sends it to the
+   * words-to-revisit sheet instead, so the dictionary claim would be wrong.
+   */
+  HARDEST_WORDS_SEE_ALL_A11Y: 'See all {count} words to revisit.',
+  /**
    * The overflow out of the capped leech list and into the dictionary.
    *
    * Only rendered when the list actually truncated. A row offering to "see all"
@@ -1034,6 +1043,15 @@ export const STRINGS = {
    */
   WORD_SHEET_LOADING: 'Loading word…',
   WORD_SHEET_ERROR: "Couldn't load this word. Try again",
+  /**
+   * The route is reachable by a real external deep link
+   * (`open-arabic:///word-detail`), unlike the practice word screen, which is
+   * only ever pushed with a known-good id. A missing or malformed `rootId`
+   * query param is a broken link, not a word that used to be saved — telling
+   * the learner it left their practice list would blame them for a link that
+   * never carried a valid id in the first place.
+   */
+  WORD_SHEET_INVALID_LINK: "This link isn't valid",
   /**
    * The way out of the sheet and into everything it does not carry — the
    * inflected forms, the example sentences, reset and remove. Named for the

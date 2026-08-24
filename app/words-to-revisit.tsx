@@ -14,7 +14,7 @@ import { useWordsToRevisit } from '@/hooks/vocabulary/useWordsToRevisit';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { getHorizonAccessibilityLabel, getMemoryHorizonDays } from '@/utils/memoryHorizon';
 import { dismissSheetThenNavigate } from '@/utils/sheetNavigation';
-import { capitalizeFirstLetter } from '@/utils/stringUtils';
+import { getRootLemma } from '@/utils/stringUtils';
 
 function formatForgotCount(count: number): string {
   return STRINGS.FORGOT_N_TIMES.replace('{count}', String(count));
@@ -45,8 +45,7 @@ interface LeechRowProps {
  * way to wipe them.
  */
 function LeechRow({ word, divider }: LeechRowProps): JSX.Element {
-  const letters = word.root?.letters ?? '';
-  const meaning = capitalizeFirstLetter(word.root?.meaning ?? '');
+  const { arabicText: letters, englishText: meaning } = getRootLemma(word);
   const lapses = word.fsrs_lapses ?? 0;
 
   return (
