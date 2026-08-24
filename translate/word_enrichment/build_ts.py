@@ -100,6 +100,10 @@ MANUAL_EXCLUDE: dict[int, str] = {
 _NONALNUM = re.compile(r"[^a-z0-9]+")
 
 
+def _norm_meaning(text: str) -> str:
+    return _NONALNUM.sub(" ", text.lower()).strip()
+
+
 def slugify(text: str) -> str:
     """Mirror admin-dashboard/lib/slugify.ts slugifyText."""
     return _NONALNUM.sub("-", text.lower()).strip("-")
@@ -130,24 +134,39 @@ def load_roots_index() -> dict[str, list[dict]]:
     return index
 
 
-def resolve_member(letters: str, roots_index: dict[str, list[dict]]) -> dict | None:
+def resolve_member(letters: str, meaning: str, roots_index: dict[str, list[dict]]) -> dict | None:
     """The dictionary entry this family member is, when it is unambiguously one.
 
     Returns both the id and the web path. The website links by path; the app has
     no slug routes and navigates by root id, so storing the id is what lets one
-    row serve both. Still conservative: a bareword matching two entries is left
-    unlinked rather than guessed at.
+    row serve both. A bareword matching several dictionary entries (common —
+    diacritics/case endings collapse to the same skeleton) is resolved by the
+    family member's own gloss: if exactly one candidate's stored meaning agrees
+    with it (either contains the other), that is unambiguous enough to link.
+    Otherwise it is left unlinked rather than guessed at.
     """
     bw = lexicon.bareword(letters).replace(" ", "")
     matches = roots_index.get(bw)
-    if matches and len(matches) == 1:  # conservative: only unique matches
+    if not matches:
+        return None
+    if len(matches) == 1:
         m = matches[0]
         return {"root_id": m["id"], "path": word_path(m["id"], m["meaning"])}
+    fam_meaning = _norm_meaning(meaning)
+    if fam_meaning:
+        agree = [
+            c
+            for c in matches
+            if (cm := _norm_meaning(c["meaning"])) and (fam_meaning in cm or cm in fam_meaning)
+        ]
+        if len(agree) == 1:
+            m = agree[0]
+            return {"root_id": m["id"], "path": word_path(m["id"], m["meaning"])}
     return None
 
 
-def resolve_link(letters: str, roots_index: dict[str, list[dict]]) -> str | None:
-    member = resolve_member(letters, roots_index)
+def resolve_link(letters: str, meaning: str, roots_index: dict[str, list[dict]]) -> str | None:
+    member = resolve_member(letters, meaning, roots_index)
     return member["path"] if member else None
 
 
@@ -155,7 +174,7 @@ def to_ts_record(rec: dict, roots_index: dict[str, list[dict]]) -> dict:
     family = []
     for m in rec["word_family"]:
         entry = {"letters": m["letters"], "transliteration": m["transliteration"], "meaning": m["meaning"]}
-        resolved = resolve_member(m["letters"], roots_index)
+        resolved = resolve_member(m["letters"], m["meaning"], roots_index)
         if resolved:
             entry["path"] = resolved["path"]
             entry["rootId"] = resolved["root_id"]
@@ -316,10 +335,10 @@ def main() -> None:
     # is switched over to read the table; the SQL is what puts the identical rows
     # in Supabase so the app can reach them.
     written = sql_seed.write(
-        SQL_OUT, records, lambda letters: resolve_member(letters, roots_index)
+        SQL_OUT, records, lambda letters, meaning: resolve_member(letters, meaning, roots_index)
     )
     rows_json = sql_seed.write_json(
-        JSON_OUT, records, lambda letters: resolve_member(letters, roots_index)
+        JSON_OUT, records, lambda letters, meaning: resolve_member(letters, meaning, roots_index)
     )
     missing = sum(1 for r in records if not r.get("root_meaning"))
     print(f"wrote {written} row(s) → {SQL_OUT}")

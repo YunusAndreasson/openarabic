@@ -57,7 +57,7 @@ def build_rows(records: list[dict], resolve_member) -> list[str]:
                 "transliteration": m["transliteration"],
                 "meaning": m["meaning"],
             }
-            resolved = resolve_member(m["letters"])
+            resolved = resolve_member(m["letters"], m["meaning"])
             if resolved:
                 entry["root_id"] = resolved["root_id"]
             family.append(entry)
@@ -110,7 +110,7 @@ def build_json_rows(records: list[dict], resolve_member) -> list[dict]:
                 "transliteration": m["transliteration"],
                 "meaning": m["meaning"],
             }
-            resolved = resolve_member(m["letters"])
+            resolved = resolve_member(m["letters"], m["meaning"])
             if resolved:
                 entry["root_id"] = resolved["root_id"]
             family.append(entry)
