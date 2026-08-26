@@ -798,5 +798,25 @@
       "commentId": "18105413567028365",
       "storyMediaId": "18109377662323068"
     }
+  },
+  {
+    "timestamp": "2026-08-26T21:06:32.022Z",
+    "root_id": 5268,
+    "arabic": "عَمَل",
+    "translit": "ʿamal",
+    "english": "deed, action",
+    "slug": "actions-5268",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/actions-5268-20260826-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/actions-5268-20260826-story.jpg",
+    "x": {
+      "ok": false,
+      "error": "media/upload: Could not authenticate you"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "18020469569880095",
+      "commentId": "18131333257564704",
+      "storyMediaId": "17877242949625111"
+    }
   }
 ]
