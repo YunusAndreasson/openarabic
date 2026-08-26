@@ -18,5 +18,785 @@
       "commentId": "18449754577142727",
       "storyMediaId": "18114756358724601"
     }
+  },
+  {
+    "timestamp": "2026-07-12T08:01:00.535Z",
+    "root_id": 5270,
+    "arabic": "نَفْس",
+    "translit": "nafs",
+    "english": "soul, self",
+    "slug": "self-5270",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/self-5270-20260712-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/self-5270-20260712-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2076215067868041364"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "18470212114109963",
+      "commentId": "17902205331310725",
+      "storyMediaId": "18119500204828478"
+    }
+  },
+  {
+    "timestamp": "2026-07-12T17:00:57.567Z",
+    "root_id": 5272,
+    "arabic": "حَقّ",
+    "translit": "ḥaqq",
+    "english": "truth, right",
+    "slug": "duty-5272",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/duty-5272-20260712-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/duty-5272-20260712-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2076350949598130431"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "18115883420504187",
+      "commentId": "18086286923403384",
+      "storyMediaId": "17927744355363345"
+    }
+  },
+  {
+    "timestamp": "2026-07-13T08:01:17.601Z",
+    "root_id": 5276,
+    "arabic": "أَخَذَ",
+    "translit": "akhadha",
+    "english": "to take",
+    "slug": "take-to-account-5276",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/take-to-account-5276-20260713-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/take-to-account-5276-20260713-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2076577498284871982"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "17935506558299465",
+      "commentId": "18015146345862395",
+      "storyMediaId": "18410252308157385"
+    }
+  },
+  {
+    "timestamp": "2026-07-13T17:00:45.787Z",
+    "root_id": 5278,
+    "arabic": "رَأَى",
+    "translit": "raʾā",
+    "english": "to see",
+    "slug": "see-5278",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/see-5278-20260713-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/see-5278-20260713-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2076713299845013869"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "18086174864556607",
+      "commentId": "18120044120309031",
+      "storyMediaId": "18080698310671392"
+    }
+  },
+  {
+    "timestamp": "2026-07-14T08:00:45.647Z",
+    "root_id": 5307,
+    "arabic": "رَبّ",
+    "translit": "rabb",
+    "english": "lord",
+    "slug": "lord-5307",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/lord-5307-20260714-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/lord-5307-20260714-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2076939770953941364"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "17970599946089792",
+      "commentId": "18053971046780209",
+      "storyMediaId": "18098803960960918"
+    }
+  },
+  {
+    "timestamp": "2026-07-15T08:01:13.957Z",
+    "root_id": 5322,
+    "arabic": "اللَّه",
+    "translit": "Allāh",
+    "english": "God",
+    "slug": "god-5322",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/god-5322-20260715-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/god-5322-20260715-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2077302273353400515"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "17939061597269630",
+      "commentId": "18107669438119010",
+      "storyMediaId": "18258773665305265"
+    }
+  },
+  {
+    "timestamp": "2026-07-15T17:00:47.768Z",
+    "root_id": 5331,
+    "arabic": "خَرَجَ",
+    "translit": "kharaja",
+    "english": "to go out",
+    "slug": "expelled-5331",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/expelled-5331-20260715-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/expelled-5331-20260715-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2077438054151668174"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "18110097592982737",
+      "commentId": "18120704236759915",
+      "storyMediaId": "18081501476291569"
+    }
+  },
+  {
+    "timestamp": "2026-07-16T08:00:42.431Z",
+    "root_id": 5352,
+    "arabic": "جَاءَ",
+    "translit": "jāʾa",
+    "english": "to come",
+    "slug": "come-5352",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/come-5352-20260716-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/come-5352-20260716-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2077664547582734639"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "18188997916389879",
+      "commentId": "17900030217530946",
+      "storyMediaId": "17974961081900319"
+    }
+  },
+  {
+    "timestamp": "2026-07-16T17:00:54.404Z",
+    "root_id": 5369,
+    "arabic": "قَوْل",
+    "translit": "qawl",
+    "english": "saying, statement",
+    "slug": "words-5369",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/words-5369-20260716-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/words-5369-20260716-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2077800468655362124"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "18043866368801749",
+      "commentId": "18100486669937049",
+      "storyMediaId": "18459089443118073"
+    }
+  },
+  {
+    "timestamp": "2026-07-17T08:00:51.521Z",
+    "root_id": 5371,
+    "arabic": "جَعَلَ",
+    "translit": "jaʿala",
+    "english": "to make",
+    "slug": "place-5371",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/place-5371-20260717-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/place-5371-20260717-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2078026933795713240"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "18143127586530605",
+      "commentId": "18084829346405078",
+      "storyMediaId": "18109246430074572"
+    }
+  },
+  {
+    "timestamp": "2026-07-17T17:00:40.254Z",
+    "root_id": 5372,
+    "arabic": "أَرْض",
+    "translit": "arḍ",
+    "english": "earth, land",
+    "slug": "earth-5372",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/earth-5372-20260717-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/earth-5372-20260717-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2078162832420385058"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "17967447075124463",
+      "commentId": "18108930428101846",
+      "storyMediaId": "17904792573464008"
+    }
+  },
+  {
+    "timestamp": "2026-07-18T08:00:40.410Z",
+    "root_id": 5389,
+    "arabic": "دَخَلَ",
+    "translit": "dakhala",
+    "english": "to enter",
+    "slug": "enter-5389",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/enter-5389-20260718-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/enter-5389-20260718-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2078389318431670622"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "18142062301557911",
+      "commentId": "17938295367291622",
+      "storyMediaId": "18094262696036102"
+    }
+  },
+  {
+    "timestamp": "2026-07-18T17:00:44.113Z",
+    "root_id": 5392,
+    "arabic": "يَوْم",
+    "translit": "yawm",
+    "english": "day",
+    "slug": "today-5392",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/today-5392-20260718-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/today-5392-20260718-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2078525220260880565"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "17932988892347361",
+      "commentId": "18093631490624777",
+      "storyMediaId": "18433321291126419"
+    }
+  },
+  {
+    "timestamp": "2026-07-19T08:01:00.928Z",
+    "root_id": 5393,
+    "arabic": "عَبْد",
+    "translit": "ʿabd",
+    "english": "servant",
+    "slug": "slaves-5393",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/slaves-5393-20260719-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/slaves-5393-20260719-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2078751740732559746"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "17935695159335082",
+      "commentId": "18044509955602099",
+      "storyMediaId": "18089650385437527"
+    }
+  },
+  {
+    "timestamp": "2026-07-19T17:00:44.257Z",
+    "root_id": 5405,
+    "arabic": "ذِكْر",
+    "translit": "dhikr",
+    "english": "remembrance",
+    "slug": "mention-5405",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/mention-5405-20260719-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/mention-5405-20260719-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2078887606956241150"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "18065782568718709",
+      "commentId": "18108217334022189",
+      "storyMediaId": "18085008371188159"
+    }
+  },
+  {
+    "timestamp": "2026-07-20T08:00:41.437Z",
+    "root_id": 5408,
+    "arabic": "قَامَ",
+    "translit": "qāma",
+    "english": "to stand, rise",
+    "slug": "stood-5408",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/stood-5408-20260720-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/stood-5408-20260720-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2079114093877776747"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "18015621194714060",
+      "commentId": "18014229203872582",
+      "storyMediaId": "17938687278085736"
+    }
+  },
+  {
+    "timestamp": "2026-07-20T17:00:42.567Z",
+    "root_id": 5458,
+    "arabic": "قَالَ",
+    "translit": "qāla",
+    "english": "to say",
+    "slug": "said-5458",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/said-5458-20260720-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/said-5458-20260720-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2079249989138579724"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "18094538090052352",
+      "commentId": "18007478711947863",
+      "storyMediaId": "17966382630020948"
+    }
+  },
+  {
+    "timestamp": "2026-07-21T08:01:14.646Z",
+    "root_id": 5463,
+    "arabic": "دَعَا",
+    "translit": "daʿā",
+    "english": "to call, supplicate",
+    "slug": "pray-5463",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/pray-5463-20260721-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/pray-5463-20260721-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2079476600693837892"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "18094672565041151",
+      "commentId": "18073116884349360",
+      "storyMediaId": "18088340807426106"
+    }
+  },
+  {
+    "timestamp": "2026-07-21T17:00:43.907Z",
+    "root_id": 5486,
+    "arabic": "فَعَلَ",
+    "translit": "faʿala",
+    "english": "to do",
+    "slug": "do-5486",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/do-5486-20260721-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/do-5486-20260721-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2079612390031724927"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "18191322712383822",
+      "commentId": "18109251814969136",
+      "storyMediaId": "18608968321028455"
+    }
+  },
+  {
+    "timestamp": "2026-07-22T08:01:06.754Z",
+    "root_id": 5491,
+    "arabic": "أَرَادَ",
+    "translit": "arāda",
+    "english": "to want",
+    "slug": "intend-5491",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/intend-5491-20260722-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/intend-5491-20260722-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2079838989981307232"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "18099235625193929",
+      "commentId": "17894368086579149",
+      "storyMediaId": "18109474084802926"
+    }
+  },
+  {
+    "timestamp": "2026-07-22T17:00:41.532Z",
+    "root_id": 5500,
+    "arabic": "قَلْب",
+    "translit": "qalb",
+    "english": "heart",
+    "slug": "heart-5500",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/heart-5500-20260722-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/heart-5500-20260722-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2079974771534532651"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "17958858024170168",
+      "commentId": "18342353209220502",
+      "storyMediaId": "17865643260649968"
+    }
+  },
+  {
+    "timestamp": "2026-07-23T08:00:45.622Z",
+    "root_id": 5547,
+    "arabic": "هَوَى",
+    "translit": "hawā",
+    "english": "desire, whim",
+    "slug": "desire-5547",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/desire-5547-20260723-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/desire-5547-20260723-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2080201265301086621"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "18113705537071364",
+      "commentId": "17999262755970425",
+      "storyMediaId": "18033498758815503"
+    }
+  },
+  {
+    "timestamp": "2026-07-23T17:00:50.992Z",
+    "root_id": 5573,
+    "arabic": "شَيْء",
+    "translit": "shayʾ",
+    "english": "thing",
+    "slug": "thing-5573",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/thing-5573-20260723-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/thing-5573-20260723-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2080337159848874114"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "17949707622217021",
+      "commentId": "18129237466729671",
+      "storyMediaId": "18218330491334686"
+    }
+  },
+  {
+    "timestamp": "2026-07-24T08:00:59.808Z",
+    "root_id": 5624,
+    "arabic": "نَبِيٌّ",
+    "translit": "nabī",
+    "english": "prophet",
+    "slug": "prophet-5624",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/prophet-5624-20260724-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/prophet-5624-20260724-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2080563698586825047"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "17897832687352273",
+      "commentId": "18543865972079227",
+      "storyMediaId": "18184735429399749"
+    }
+  },
+  {
+    "timestamp": "2026-07-24T17:00:44.068Z",
+    "root_id": 5716,
+    "arabic": "أَمْر",
+    "translit": "amr",
+    "english": "matter, command",
+    "slug": "matter-5716",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/matter-5716-20260724-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/matter-5716-20260724-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2080699543444681163"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "17944261284051280",
+      "commentId": "18054843779685632",
+      "storyMediaId": "18108518828090041"
+    }
+  },
+  {
+    "timestamp": "2026-07-25T08:00:42.690Z",
+    "root_id": 5739,
+    "arabic": "تَرَكَ",
+    "translit": "taraka",
+    "english": "to leave, abandon",
+    "slug": "leave-5739",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/leave-5739-20260725-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/leave-5739-20260725-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2080926048259100887"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "17899424085535575",
+      "commentId": "18122124820830722",
+      "storyMediaId": "18006509921932797"
+    }
+  },
+  {
+    "timestamp": "2026-07-25T17:00:47.706Z",
+    "root_id": 5818,
+    "arabic": "صَارَ",
+    "translit": "ṣāra",
+    "english": "to become",
+    "slug": "to-become-5818",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/to-become-5818-20260725-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/to-become-5818-20260725-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2081061964998963709"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "17971762217914764",
+      "commentId": "17980314129101858",
+      "storyMediaId": "17994642287797503"
+    }
+  },
+  {
+    "timestamp": "2026-07-26T08:00:54.808Z",
+    "root_id": 5895,
+    "arabic": "ذَكَرَ",
+    "translit": "dhakara",
+    "english": "to mention",
+    "slug": "to-remember-5895",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/to-remember-5895-20260726-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/to-remember-5895-20260726-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2081288483696435307"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "18348742741219506",
+      "commentId": "17921110449184771",
+      "storyMediaId": "17971479119916679"
+    }
+  },
+  {
+    "timestamp": "2026-07-26T17:00:47.251Z",
+    "root_id": 5969,
+    "arabic": "سَأَلَ",
+    "translit": "saʾala",
+    "english": "to ask",
+    "slug": "ask-5969",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/ask-5969-20260726-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/ask-5969-20260726-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2081424329405845898"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "18103541360131868",
+      "commentId": "18108407516107581",
+      "storyMediaId": "18098471756248282"
+    }
+  },
+  {
+    "timestamp": "2026-07-27T08:00:47.302Z",
+    "root_id": 6049,
+    "arabic": "سَمِعَ",
+    "translit": "samiʿa",
+    "english": "to hear",
+    "slug": "heard-6049",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/heard-6049-20260727-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/heard-6049-20260727-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2081650832114622807"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "18013982399871491",
+      "commentId": "18116773678713842",
+      "storyMediaId": "18167864650448573"
+    }
+  },
+  {
+    "timestamp": "2026-07-27T17:00:43.554Z",
+    "root_id": 6074,
+    "arabic": "نَاس",
+    "translit": "nās",
+    "english": "people",
+    "slug": "people-6074",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/people-6074-20260727-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/people-6074-20260727-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2081786712238309465"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "18085662143195949",
+      "commentId": "18119001581490703",
+      "storyMediaId": "17915690133226250"
+    }
+  },
+  {
+    "timestamp": "2026-07-28T08:00:50.493Z",
+    "root_id": 6126,
+    "arabic": "رَجُلٌ",
+    "translit": "rajul",
+    "english": "man",
+    "slug": "man-6126",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/man-6126-20260728-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/man-6126-20260728-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2082013233125167184"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "18086770382548846",
+      "commentId": "17972743554090138",
+      "storyMediaId": "18040034789628153"
+    }
+  },
+  {
+    "timestamp": "2026-07-28T17:00:58.403Z",
+    "root_id": 6182,
+    "arabic": "أَمَرَ",
+    "translit": "amara",
+    "english": "to command",
+    "slug": "commanded-6182",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/commanded-6182-20260728-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/commanded-6182-20260728-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2082149141757493330"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "17874032883626287",
+      "commentId": "18112166527760719",
+      "storyMediaId": "17964688983140471"
+    }
+  },
+  {
+    "timestamp": "2026-07-29T08:00:54.719Z",
+    "root_id": 6428,
+    "arabic": "أَهْل",
+    "translit": "ahl",
+    "english": "family, people",
+    "slug": "people-6428",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/people-6428-20260729-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/people-6428-20260729-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2082375622332985739"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "18109835323963498",
+      "commentId": "17945552208252715",
+      "storyMediaId": "18122739577700822"
+    }
+  },
+  {
+    "timestamp": "2026-07-29T17:01:00.510Z",
+    "root_id": 6708,
+    "arabic": "رَسُول",
+    "translit": "rasūl",
+    "english": "messenger",
+    "slug": "messenger-6708",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/messenger-6708-20260729-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/messenger-6708-20260729-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2082511565765373983"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "18137622727600558",
+      "commentId": "17906871945283812",
+      "storyMediaId": "18124046044683167"
+    }
+  },
+  {
+    "timestamp": "2026-07-30T08:01:02.964Z",
+    "root_id": 7043,
+    "arabic": "وَجْه",
+    "translit": "wajh",
+    "english": "face",
+    "slug": "way-7043",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/way-7043-20260730-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/way-7043-20260730-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2082738039630037177"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "18104547320152867",
+      "commentId": "18123433444802534",
+      "storyMediaId": "18094325153527991"
+    }
+  },
+  {
+    "timestamp": "2026-07-30T17:00:39.617Z",
+    "root_id": 7278,
+    "arabic": "خَيْر",
+    "translit": "khayr",
+    "english": "goodness",
+    "slug": "good-7278",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/good-7278-20260730-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/good-7278-20260730-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2082873878360019261"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "17958417462216775",
+      "commentId": "18119325724859090",
+      "storyMediaId": "18123555352704916"
+    }
+  },
+  {
+    "timestamp": "2026-07-31T08:00:46.319Z",
+    "root_id": 8049,
+    "arabic": "صَلَّى",
+    "translit": "ṣallā",
+    "english": "to pray",
+    "slug": "pray-8049",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/pray-8049-20260731-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/pray-8049-20260731-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2083100368913715328"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "17899617510515164",
+      "commentId": "18089682896432539",
+      "storyMediaId": "18131874145620251"
+    }
+  },
+  {
+    "timestamp": "2026-07-31T17:01:11.592Z",
+    "root_id": 8278,
+    "arabic": "دُنْيَا",
+    "translit": "dunyā",
+    "english": "world",
+    "slug": "world-8278",
+    "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/world-8278-20260731-square.jpg",
+    "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/world-8278-20260731-story.jpg",
+    "x": {
+      "ok": true,
+      "id": "2083236376502292534"
+    },
+    "ig": {
+      "ok": true,
+      "mediaId": "17963223941960910",
+      "commentId": "18105413567028365",
+      "storyMediaId": "18109377662323068"
+    }
   }
 ]

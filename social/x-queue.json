@@ -1,0 +1,2884 @@
+{
+  "_comment": "C2 \"one word, three parts\" cards for X. Built from sentence_words; the stem is taken from the vocalised surface form (ground truth for that word) and confirmed against Arramooz Alwaseet, which also restores a final ta-marbuta. Never read roots.letters for this — it often holds an inflected form. status=ready is postable; status=hold needs a human.",
+  "_sources": [
+    "sentence_words (read-only)",
+    "Arramooz Alwaseet, GPL-2.0"
+  ],
+  "cards": [
+    {
+      "word_form": "بِخِذْلَانِهِ",
+      "english": "by His abandonment",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "خِذْلَان",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 5302,
+      "sentence_id": 1696,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِتَوْفِيقِهِ",
+      "english": "by His guidance",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "تَوْفِيق",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 5558,
+      "sentence_id": 1695,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِثَمَرَتِهِ",
+      "english": "by its outcome",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "ثَمَرَة",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 6177,
+      "sentence_id": 1875,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِطَبْعِهَا",
+      "english": "by its nature",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "طَبْع",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هَا",
+        "role": "possessive",
+        "gloss": "her, its"
+      },
+      "root_id": 5780,
+      "sentence_id": 1773,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "لِنَفْسِهِ",
+      "english": "to his self",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "نَفْس",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 5768,
+      "sentence_id": 1777,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "لِتَفْرِيطِهِ",
+      "english": "due to his negligence",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "تَفْرِيط",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 6943,
+      "sentence_id": 2083,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "لِعِزَّتِهِ",
+      "english": "to His might",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "عِزَّة",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 7571,
+      "sentence_id": 2321,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِعِلْمِهِ",
+      "english": "by His knowledge",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "عِلْم",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 5266,
+      "sentence_id": 2339,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِإِذْنِهِ",
+      "english": "by His permission",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "إِذْن",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 5520,
+      "sentence_id": 2340,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "لِعَبْدِهِ",
+      "english": "for His servant",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "عَبْد",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 5393,
+      "sentence_id": 2317,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِذِكْرِهِ",
+      "english": "in His remembrance",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "ذِكْر",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 5405,
+      "sentence_id": 2359,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِرَأْيِهِمْ",
+      "english": "by their own opinion",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "رَأْي",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِمْ",
+        "role": "possessive",
+        "gloss": "their"
+      },
+      "root_id": 7719,
+      "sentence_id": 2713,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِدُنْيَاهُ",
+      "english": "by his worldliness",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "دُنْيَا",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هُ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 8070,
+      "sentence_id": 2492,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِيَسَارِهِ",
+      "english": "with his left hand",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "يَسَار",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 8769,
+      "sentence_id": 2761,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِقَهْرِهِ",
+      "english": "by His might",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "قَهْر",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 6375,
+      "sentence_id": 4012,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِأَجْنِحَتِهِمْ",
+      "english": "with their wings",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "أَجْنِحَة",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِمْ",
+        "role": "possessive",
+        "gloss": "their"
+      },
+      "root_id": 9569,
+      "sentence_id": 3021,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِقَلْبِهِ",
+      "english": "with his heart",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "قَلْب",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 5500,
+      "sentence_id": 2975,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِعَمَلِهِ",
+      "english": "with his deeds",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "عَمَل",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 11631,
+      "sentence_id": 3887,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِقُوَّتِهِ",
+      "english": "with his strength",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "قُوَّة",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 7423,
+      "sentence_id": 3176,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "لِنَفْسِهِ",
+      "english": "for his self",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "نَفْس",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 5270,
+      "sentence_id": 3969,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِزَعْمِهِ",
+      "english": "by his claim",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "زَعْم",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 11480,
+      "sentence_id": 3814,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "لِنَعِيمِهِ",
+      "english": "for his bliss",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "نَعِيم",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 8089,
+      "sentence_id": 3547,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِإِرَادَتِهِ",
+      "english": "by His will",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "إِرَادَة",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 11117,
+      "sentence_id": 3634,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِرَاكِبِهَا",
+      "english": "with its rider",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "رَاكِب",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هَا",
+        "role": "possessive",
+        "gloss": "her, its"
+      },
+      "root_id": 11917,
+      "sentence_id": 3989,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِمَالِحِهِ",
+      "english": "with its saltiness",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "مَالِح",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 12350,
+      "sentence_id": 4135,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِرَاحِلَتِهِ",
+      "english": "with his mount",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "رَاحِلَة",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 12450,
+      "sentence_id": 4195,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِرَسُولِهِ",
+      "english": "in His Messenger",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "رَسُول",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 12636,
+      "sentence_id": 4282,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "لِصَاحِبِهِ",
+      "english": "for his companion",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "صَاحِب",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 13861,
+      "sentence_id": 6744,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "لِأَهْلِهِ",
+      "english": "for its people",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "أَهْل",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 10305,
+      "sentence_id": 6762,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِعِلْمِهِ",
+      "english": "by his knowledge",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "عِلْم",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 14540,
+      "sentence_id": 5128,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِأَمْرِنَا",
+      "english": "by our command",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "أَمْر",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "نَا",
+        "role": "possessive",
+        "gloss": "our"
+      },
+      "root_id": 17484,
+      "sentence_id": 6752,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بقهره",
+      "english": "by His overpowering might",
+      "prefix": {
+        "letters": "ب",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "قهر",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "ه",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 13629,
+      "sentence_id": 4743,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بصَدْرِهِ",
+      "english": "with his chest",
+      "prefix": {
+        "letters": "ب",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "صَدْر",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 17151,
+      "sentence_id": 6620,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِقَلبِهِ",
+      "english": "with his heart",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "قَلب",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 17076,
+      "sentence_id": 6602,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِرَاكِبِهَا",
+      "english": "with its rider",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "رَاكِب",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هَا",
+        "role": "possessive",
+        "gloss": "her, its"
+      },
+      "root_id": 15234,
+      "sentence_id": 5409,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِمَحْبُوبِهِ",
+      "english": "with his beloved",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "مَحْبُوب",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 7674,
+      "sentence_id": 2358,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "لِمَحْبُوبِهِ",
+      "english": "for his beloved",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "مَحْبُوب",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 18050,
+      "sentence_id": 6997,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِجِسْمِهِ",
+      "english": "in his body",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "جِسْم",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 19083,
+      "sentence_id": 7484,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بداره",
+      "english": "in his household",
+      "prefix": {
+        "letters": "ب",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "دار",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "ه",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 19758,
+      "sentence_id": 7777,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِثِقْلِهِ",
+      "english": "with its weight",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "ثِقْل",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 19769,
+      "sentence_id": 7786,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِإِقْرَارِهِ",
+      "english": "by His acknowledgment",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "إِقْرَار",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 6510,
+      "sentence_id": 3400,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِدَسَمِهِ",
+      "english": "with its fatness",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "دَسَم",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 12352,
+      "sentence_id": 4136,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِحَامِضِهِ",
+      "english": "with its sourness",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "حَامِض",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 12348,
+      "sentence_id": 4134,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِصُورَتِهِ",
+      "english": "with his appearance",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "صُورَة",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 9117,
+      "sentence_id": 3534,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِمَالِهِ",
+      "english": "by his wealth",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "مَال",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 13148,
+      "sentence_id": 5134,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِعَمَلِهِ",
+      "english": "by his deeds",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "عَمَل",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 5268,
+      "sentence_id": 2053,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "لِنَفْسِهِ",
+      "english": "for his self",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "نَفْس",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 5727,
+      "sentence_id": 2086,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "لِنَفْسِهِ",
+      "english": "for his self",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "نَفْس",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 11478,
+      "sentence_id": 3814,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "لِأَهْلِهَا",
+      "english": "for its inhabitants",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "أَهْل",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هَا",
+        "role": "possessive",
+        "gloss": "her, its"
+      },
+      "root_id": 6428,
+      "sentence_id": 3859,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِحُزْنِهِ",
+      "english": "with his sadness",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "حُزْن",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 5345,
+      "sentence_id": 4277,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "لِعَدُوِّهِ",
+      "english": "for his enemy",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "عَدُو",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 5702,
+      "sentence_id": 2286,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "لِصَاحِبِهِ",
+      "english": "to his companion",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "صَاحِب",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 6458,
+      "sentence_id": 4273,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِمُجَالَسَتِهِ",
+      "english": "with his company",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "مُجَالَسَة",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 7395,
+      "sentence_id": 2278,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "لِعَظَمَتِهِ",
+      "english": "to His greatness",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "عَظَمَة",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 7569,
+      "sentence_id": 2321,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "لِشَرَابِهِ",
+      "english": "for his drink",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "شَرَاب",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 11855,
+      "sentence_id": 3969,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِيَمِينِهِ",
+      "english": "with his right hand",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "يَمِين",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 8767,
+      "sentence_id": 2761,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "لِطَعَامِهِ",
+      "english": "for his food",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "طَعَام",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 6674,
+      "sentence_id": 3969,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِمُخَالِفِهِ",
+      "english": "with his opponent",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "مُخَالِف",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 8925,
+      "sentence_id": 2798,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِحِمْلِهِ",
+      "english": "by his carrying",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "حِمْل",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 15086,
+      "sentence_id": 5353,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِدُخُولِهِمْ",
+      "english": "by their entering",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "دُخُول",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِمْ",
+        "role": "possessive",
+        "gloss": "their"
+      },
+      "root_id": 15300,
+      "sentence_id": 5430,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِأَيْدِيهِمْ",
+      "english": "in their hands",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "أَيْدِي",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِمْ",
+        "role": "possessive",
+        "gloss": "their"
+      },
+      "root_id": 15373,
+      "sentence_id": 5466,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِغَنَمِهِ",
+      "english": "with his flock",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "غَنَم",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 15913,
+      "sentence_id": 5770,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِنَفْسِهِ",
+      "english": "by his own self",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "نَفْس",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 14623,
+      "sentence_id": 6521,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "لِشَيْطَانِهِ",
+      "english": "to his devil",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "شَيْطَان",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 17061,
+      "sentence_id": 6553,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِخِطامِهَا",
+      "english": "by its bridle",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "خِطام",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هَا",
+        "role": "possessive",
+        "gloss": "her, its"
+      },
+      "root_id": 17173,
+      "sentence_id": 6640,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "لِأَهْلِهِ",
+      "english": "for His people",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "أَهْل",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 14140,
+      "sentence_id": 6746,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِهِدَايَتِهِ",
+      "english": "by His guidance",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "هِدَايَة",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 17465,
+      "sentence_id": 6747,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِخِطَامِهَا",
+      "english": "by its bridle",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "خِطَام",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هَا",
+        "role": "possessive",
+        "gloss": "her, its"
+      },
+      "root_id": 17585,
+      "sentence_id": 6790,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِزِمَامِهَا",
+      "english": "with its rein",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "زِمَام",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هَا",
+        "role": "possessive",
+        "gloss": "her, its"
+      },
+      "root_id": 17572,
+      "sentence_id": 6791,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِأَمْرِهِ",
+      "english": "by His command",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "أَمْر",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 14383,
+      "sentence_id": 7010,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِتَسْلِيمِهِ",
+      "english": "in his handing over",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "تَسْلِيم",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 18229,
+      "sentence_id": 7085,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِمَشْوَرَتِهِ",
+      "english": "by his instigation",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "مَشْوَرَة",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 18221,
+      "sentence_id": 7081,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "لِابْنِهِ",
+      "english": "to his son",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "ابْن",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 18726,
+      "sentence_id": 7295,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "لِابْنِهِ",
+      "english": "to his son",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "ابْن",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 12825,
+      "sentence_id": 7324,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "لِرَحِيلِهِ",
+      "english": "for his departure",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "رَحِيل",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 19549,
+      "sentence_id": 7675,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِذِرَاعِهِ",
+      "english": "with his arm",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "ذِرَاع",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 20064,
+      "sentence_id": 7969,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "بِصُورَتِهِ",
+      "english": "in his outward appearance",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "صُورَة",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 20311,
+      "sentence_id": 8101,
+      "lemma_source": "arramooz-confirmed",
+      "status": "ready"
+    },
+    {
+      "word_form": "كَقَوْلِهِ",
+      "english": "as in his saying",
+      "prefix": {
+        "letters": "كَ",
+        "role": "preposition",
+        "gloss": "like, as"
+      },
+      "stem": {
+        "letters": "قَوْل",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 5369,
+      "sentence_id": 2039,
+      "lemma_source": "arramooz-confirmed",
+      "status": "hold",
+      "hold_reason": "broken plural of قَوَّالٌ — label or drop"
+    },
+    {
+      "word_form": "بِقُدْرَتِهِ",
+      "english": "by His power",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "قُدْرَة",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 6912,
+      "sentence_id": 4010,
+      "lemma_source": "arramooz-confirmed",
+      "status": "hold",
+      "hold_reason": "broken plural of قَادِرٌ — label or drop"
+    },
+    {
+      "word_form": "بقدرته",
+      "english": "by His power",
+      "prefix": {
+        "letters": "ب",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "قدرة",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "ه",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 13623,
+      "sentence_id": 4741,
+      "lemma_source": "arramooz-confirmed",
+      "status": "hold",
+      "hold_reason": "broken plural of قَادِرٌ — label or drop"
+    },
+    {
+      "word_form": "لِنُصُوصِهَا",
+      "english": "to its texts",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "نُصُوص",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هَا",
+        "role": "possessive",
+        "gloss": "her, its"
+      },
+      "root_id": 17250,
+      "sentence_id": 6666,
+      "lemma_source": "arramooz-confirmed",
+      "status": "hold",
+      "hold_reason": "broken plural of نَصٌّ — label or drop"
+    },
+    {
+      "word_form": "بِأَسْرِهِمْ",
+      "english": "in their entirety",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "أَسْر",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِمْ",
+        "role": "possessive",
+        "gloss": "their"
+      },
+      "root_id": 8557,
+      "sentence_id": 2699,
+      "lemma_source": "arramooz-confirmed",
+      "status": "hold",
+      "hold_reason": "broken plural of أُسْرَةٌ — label or drop"
+    },
+    {
+      "word_form": "بِعُلُومِهِ",
+      "english": "with his knowledge",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "عُلُوم",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 18357,
+      "sentence_id": 7137,
+      "lemma_source": "arramooz-confirmed",
+      "status": "hold",
+      "hold_reason": "broken plural of عِلْمٌ — label or drop"
+    },
+    {
+      "word_form": "بِعَوَاقِبِهِ",
+      "english": "with its consequences",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "عَوَاقِب",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 19182,
+      "sentence_id": 7523,
+      "lemma_source": "arramooz-confirmed",
+      "status": "hold",
+      "hold_reason": "broken plural of عَاقِبٌ — label or drop"
+    },
+    {
+      "word_form": "كَقَوْلِهِم",
+      "english": "like their saying",
+      "prefix": {
+        "letters": "كَ",
+        "role": "preposition",
+        "gloss": "like, as"
+      },
+      "stem": {
+        "letters": "قَوْل",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِم",
+        "role": "possessive",
+        "gloss": "their"
+      },
+      "root_id": 8068,
+      "sentence_id": 3187,
+      "lemma_source": "arramooz-confirmed",
+      "status": "hold",
+      "hold_reason": "broken plural of قَوَّالٌ — label or drop"
+    },
+    {
+      "word_form": "بِقَوْلِهِ",
+      "english": "by His saying",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "قَوْل",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 10359,
+      "sentence_id": 3327,
+      "lemma_source": "arramooz-confirmed",
+      "status": "hold",
+      "hold_reason": "broken plural of قَوَّالٌ — label or drop"
+    },
+    {
+      "word_form": "لِأَصْحَابِهِ",
+      "english": "to his companions",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "أَصْحَاب",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 7171,
+      "sentence_id": 3720,
+      "lemma_source": "arramooz-confirmed",
+      "status": "hold",
+      "hold_reason": "broken plural of صَاحِبٌ — label or drop"
+    },
+    {
+      "word_form": "لِعِرْضِهِ",
+      "english": "for his honor",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "عِرْض",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 9780,
+      "sentence_id": 4259,
+      "lemma_source": "arramooz-confirmed",
+      "status": "hold",
+      "hold_reason": "broken plural of عِرَاضٌ — label or drop"
+    },
+    {
+      "word_form": "لِعِبَادِهِ",
+      "english": "to His servants",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "عِبَاد",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 7435,
+      "sentence_id": 2290,
+      "lemma_source": "arramooz-confirmed",
+      "status": "hold",
+      "hold_reason": "broken plural of عَبْدٌ — label or drop"
+    },
+    {
+      "word_form": "بِحَضْرَتِهِ",
+      "english": "in his presence",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "حَضْرَة",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 8047,
+      "sentence_id": 2485,
+      "lemma_source": "arramooz-confirmed",
+      "status": "hold",
+      "hold_reason": "broken plural of حَاضِرٌ — label or drop"
+    },
+    {
+      "word_form": "بدورهم",
+      "english": "in their turn",
+      "prefix": {
+        "letters": "ب",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "دور",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هم",
+        "role": "possessive",
+        "gloss": "their"
+      },
+      "root_id": 15345,
+      "sentence_id": 5452,
+      "lemma_source": "arramooz-confirmed",
+      "status": "hold",
+      "hold_reason": "broken plural of دَارٌ — label or drop"
+    },
+    {
+      "word_form": "لِصُحْبَتِهِ",
+      "english": "for his companionship",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "صُحْبَة",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 16341,
+      "sentence_id": 6066,
+      "lemma_source": "arramooz-confirmed",
+      "status": "hold",
+      "hold_reason": "broken plural of صَاحِبٌ — label or drop"
+    },
+    {
+      "word_form": "بِعُدُولِهِمْ",
+      "english": "by their deviation",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "عُدُول",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِمْ",
+        "role": "possessive",
+        "gloss": "their"
+      },
+      "root_id": 17256,
+      "sentence_id": 6668,
+      "lemma_source": "arramooz-confirmed",
+      "status": "hold",
+      "hold_reason": "broken plural of عِدْلٌ — label or drop"
+    },
+    {
+      "word_form": "لِأَصْحَابِهِ",
+      "english": "for his companions",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "أَصْحَاب",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 15857,
+      "sentence_id": 7399,
+      "lemma_source": "arramooz-confirmed",
+      "status": "hold",
+      "hold_reason": "broken plural of صَاحِبٌ — label or drop"
+    },
+    {
+      "word_form": "كَظَواهِرِهِمْ",
+      "english": "like their outward appearance",
+      "prefix": {
+        "letters": "كَ",
+        "role": "preposition",
+        "gloss": "like, as"
+      },
+      "stem": {
+        "letters": "ظَواهِر",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِمْ",
+        "role": "possessive",
+        "gloss": "their"
+      },
+      "root_id": 19526,
+      "sentence_id": 7661,
+      "lemma_source": "arramooz-confirmed",
+      "status": "hold",
+      "hold_reason": "broken plural of ظَاهِرٌ — label or drop"
+    },
+    {
+      "word_form": "بِطَاعَتِهِمْ",
+      "english": "with obedience their",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "طَاعَة",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِمْ",
+        "role": "possessive",
+        "gloss": "their"
+      },
+      "root_id": 5259,
+      "sentence_id": 1880,
+      "lemma_source": "arramooz-confirmed",
+      "status": "hold",
+      "hold_reason": "english word order"
+    },
+    {
+      "word_form": "بِرَأْيِهِ",
+      "english": "by opinion his",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "رَأْي",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 14772,
+      "sentence_id": 5196,
+      "lemma_source": "arramooz-confirmed",
+      "status": "hold",
+      "hold_reason": "english word order"
+    },
+    {
+      "word_form": "بِقَضَائِهِ",
+      "english": "with His judgment",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "قَضَائ",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 6442,
+      "sentence_id": 1960,
+      "lemma_source": "surface-derived",
+      "status": "hold",
+      "hold_reason": "lemma not attested in Arramooz — verify by hand"
+    },
+    {
+      "word_form": "بِأَحِبَّائِهِمْ",
+      "english": "in their loved ones",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "أَحِبَّائ",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِمْ",
+        "role": "possessive",
+        "gloss": "their"
+      },
+      "root_id": 8282,
+      "sentence_id": 2573,
+      "lemma_source": "surface-derived",
+      "status": "hold",
+      "hold_reason": "lemma not attested in Arramooz — verify by hand"
+    },
+    {
+      "word_form": "لِأَخِيهِ",
+      "english": "to his brother",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "أَخِي",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 16043,
+      "sentence_id": 5857,
+      "lemma_source": "surface-derived",
+      "status": "hold",
+      "hold_reason": "lemma not attested in Arramooz — verify by hand"
+    },
+    {
+      "word_form": "لِهَوَاهُ",
+      "english": "for his desire",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "هَوَا",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هُ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 12659,
+      "sentence_id": 4286,
+      "lemma_source": "surface-derived",
+      "status": "hold",
+      "hold_reason": "lemma not attested in Arramooz — verify by hand"
+    },
+    {
+      "word_form": "بِآيَاتِنَا",
+      "english": "by Our signs",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "آيَات",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "نَا",
+        "role": "possessive",
+        "gloss": "our"
+      },
+      "root_id": 17485,
+      "sentence_id": 6753,
+      "lemma_source": "surface-derived",
+      "status": "hold",
+      "hold_reason": "lemma not attested in Arramooz — verify by hand"
+    },
+    {
+      "word_form": "بِرِئَاسَتِهِ",
+      "english": "with his leadership",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "رِئَاسَت",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 14761,
+      "sentence_id": 5193,
+      "lemma_source": "surface-derived",
+      "status": "hold",
+      "hold_reason": "lemma not attested in Arramooz — verify by hand"
+    },
+    {
+      "word_form": "لِشَقَائِهِ",
+      "english": "for his misery",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "شَقَائ",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 10889,
+      "sentence_id": 3546,
+      "lemma_source": "surface-derived",
+      "status": "hold",
+      "hold_reason": "lemma not attested in Arramooz — verify by hand"
+    },
+    {
+      "word_form": "لِأَهْوَائِهِمْ",
+      "english": "for their desires",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "أَهْوَائ",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِمْ",
+        "role": "possessive",
+        "gloss": "their"
+      },
+      "root_id": 14424,
+      "sentence_id": 5090,
+      "lemma_source": "surface-derived",
+      "status": "hold",
+      "hold_reason": "lemma not attested in Arramooz — verify by hand"
+    },
+    {
+      "word_form": "بِإِخْفَائِهِ",
+      "english": "by his concealing",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "إِخْفَائ",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 11487,
+      "sentence_id": 3817,
+      "lemma_source": "surface-derived",
+      "status": "hold",
+      "hold_reason": "lemma not attested in Arramooz — verify by hand"
+    },
+    {
+      "word_form": "لِأَوْلِيَائِهِ",
+      "english": "for His allies",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "أَوْلِيَائ",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 7553,
+      "sentence_id": 2312,
+      "lemma_source": "surface-derived",
+      "status": "hold",
+      "hold_reason": "lemma not attested in Arramooz — verify by hand"
+    },
+    {
+      "word_form": "بِشُبُهَاتِهِ",
+      "english": "with his doubts",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "شُبُهَات",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 8066,
+      "sentence_id": 2492,
+      "lemma_source": "surface-derived",
+      "status": "hold",
+      "hold_reason": "lemma not attested in Arramooz — verify by hand"
+    },
+    {
+      "word_form": "بعزته",
+      "english": "by His might",
+      "prefix": {
+        "letters": "ب",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "عزت",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "ه",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 13634,
+      "sentence_id": 4744,
+      "lemma_source": "surface-derived",
+      "status": "hold",
+      "hold_reason": "lemma not attested in Arramooz — verify by hand"
+    },
+    {
+      "word_form": "لِأَوْلِيَائِهِ",
+      "english": "for His close ones",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "أَوْلِيَائ",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 11870,
+      "sentence_id": 3978,
+      "lemma_source": "surface-derived",
+      "status": "hold",
+      "hold_reason": "lemma not attested in Arramooz — verify by hand"
+    },
+    {
+      "word_form": "بِأَبِيهِ",
+      "english": "with his father",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "أَبِي",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 13498,
+      "sentence_id": 5342,
+      "lemma_source": "surface-derived",
+      "status": "hold",
+      "hold_reason": "lemma not attested in Arramooz — verify by hand"
+    },
+    {
+      "word_form": "لِإِرْتِفَاقِهِ",
+      "english": "for his staying close",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "إِرْتِفَاق",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 15061,
+      "sentence_id": 5347,
+      "lemma_source": "surface-derived",
+      "status": "hold",
+      "hold_reason": "lemma not attested in Arramooz — verify by hand"
+    },
+    {
+      "word_form": "لِأَوْلِيَائِهِ",
+      "english": "for His close ones",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "أَوْلِيَائ",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 15186,
+      "sentence_id": 5396,
+      "lemma_source": "surface-derived",
+      "status": "hold",
+      "hold_reason": "lemma not attested in Arramooz — verify by hand"
+    },
+    {
+      "word_form": "بِمِحْجَنِهِ",
+      "english": "with his staff",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "مِحْجَن",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 16892,
+      "sentence_id": 6454,
+      "lemma_source": "surface-derived",
+      "status": "hold",
+      "hold_reason": "lemma not attested in Arramooz — verify by hand"
+    },
+    {
+      "word_form": "بِمُهَاوْشَتِهِ",
+      "english": "with his bickering",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "مُهَاوْشَت",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 17395,
+      "sentence_id": 6724,
+      "lemma_source": "surface-derived",
+      "status": "hold",
+      "hold_reason": "lemma not attested in Arramooz — verify by hand"
+    },
+    {
+      "word_form": "بِصَدَدِهِ",
+      "english": "in his preoccupation",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "صَدَد",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 17404,
+      "sentence_id": 6729,
+      "lemma_source": "surface-derived",
+      "status": "hold",
+      "hold_reason": "lemma not attested in Arramooz — verify by hand"
+    },
+    {
+      "word_form": "بِإِلَاهِيَّتِهِ",
+      "english": "by His divinity",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "إِلَاهِيَّت",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 17948,
+      "sentence_id": 6955,
+      "lemma_source": "surface-derived",
+      "status": "hold",
+      "hold_reason": "lemma not attested in Arramooz — verify by hand"
+    },
+    {
+      "word_form": "كَعَلَانِيَّتِهِمْ",
+      "english": "like their public declarations",
+      "prefix": {
+        "letters": "كَ",
+        "role": "preposition",
+        "gloss": "like, as"
+      },
+      "stem": {
+        "letters": "عَلَانِيَّت",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِمْ",
+        "role": "possessive",
+        "gloss": "their"
+      },
+      "root_id": 19529,
+      "sentence_id": 7663,
+      "lemma_source": "surface-derived",
+      "status": "hold",
+      "hold_reason": "lemma not attested in Arramooz — verify by hand"
+    },
+    {
+      "word_form": "لِهَوَانِهِمْ",
+      "english": "for their belittling of them",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "هَوَان",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِمْ",
+        "role": "possessive",
+        "gloss": "their"
+      },
+      "root_id": 11372,
+      "sentence_id": 7916,
+      "lemma_source": "surface-derived",
+      "status": "hold",
+      "hold_reason": "lemma not attested in Arramooz — verify by hand"
+    },
+    {
+      "word_form": "بِشَهِقَاتِهِ",
+      "english": "with its sobs",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "شَهِقَات",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 20240,
+      "sentence_id": 8052,
+      "lemma_source": "surface-derived",
+      "status": "hold",
+      "hold_reason": "lemma not attested in Arramooz — verify by hand"
+    },
+    {
+      "word_form": "بِرِسَالَاتِهِ",
+      "english": "with His messages",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "رِسَالَات",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 9726,
+      "sentence_id": 8078,
+      "lemma_source": "surface-derived",
+      "status": "hold",
+      "hold_reason": "lemma not attested in Arramooz — verify by hand"
+    },
+    {
+      "word_form": "بِهَوَّاتِهِ",
+      "english": "by whims his",
+      "prefix": {
+        "letters": "بِ",
+        "role": "preposition",
+        "gloss": "by, with"
+      },
+      "stem": {
+        "letters": "هَوَّات",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هِ",
+        "role": "possessive",
+        "gloss": "his, its"
+      },
+      "root_id": 14779,
+      "sentence_id": 5197,
+      "lemma_source": "surface-derived",
+      "status": "hold",
+      "hold_reason": "lemma not attested in Arramooz — verify by hand; english word order"
+    },
+    {
+      "word_form": "لِيُزَوِّجَهَا",
+      "english": "to have him marry her",
+      "prefix": {
+        "letters": "لِ",
+        "role": "preposition",
+        "gloss": "to, for"
+      },
+      "stem": {
+        "letters": "يُزَوِّج",
+        "role": "root",
+        "gloss": ""
+      },
+      "suffix": {
+        "letters": "هَا",
+        "role": "possessive",
+        "gloss": "her, its"
+      },
+      "root_id": 19224,
+      "sentence_id": 7543,
+      "lemma_source": "surface-derived",
+      "status": "hold",
+      "hold_reason": "lemma not attested in Arramooz — verify by hand; english word order"
+    }
+  ]
+}

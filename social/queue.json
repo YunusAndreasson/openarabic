@@ -6,357 +6,537 @@
     "english": "deed, action",
     "slug": "actions-5268",
     "usageCount": 43,
-    "added_at": "2026-07-11T21:01:30.892Z"
+    "added_at": "2026-08-26T21:02:26.647Z"
   },
   {
-    "root_id": 5270,
-    "arabic": "نَفْس",
-    "translit": "nafs",
-    "english": "soul, self",
-    "slug": "self-5270",
-    "usageCount": 53,
-    "added_at": "2026-07-11T21:01:30.892Z"
-  },
-  {
-    "root_id": 5272,
-    "arabic": "حَقّ",
-    "translit": "ḥaqq",
-    "english": "truth, right",
-    "slug": "duty-5272",
-    "usageCount": 34,
-    "added_at": "2026-07-11T21:01:30.892Z"
-  },
-  {
-    "root_id": 5276,
-    "arabic": "أَخَذَ",
-    "translit": "akhadha",
-    "english": "to take",
-    "slug": "take-to-account-5276",
-    "usageCount": 25,
-    "added_at": "2026-07-11T21:01:30.892Z"
-  },
-  {
-    "root_id": 5278,
-    "arabic": "رَأَى",
-    "translit": "raʾā",
-    "english": "to see",
-    "slug": "see-5278",
-    "usageCount": 76,
-    "added_at": "2026-07-11T21:01:30.892Z"
-  },
-  {
-    "root_id": 5307,
-    "arabic": "رَبّ",
-    "translit": "rabb",
-    "english": "lord",
-    "slug": "lord-5307",
-    "usageCount": 45,
-    "added_at": "2026-07-11T21:01:30.892Z"
-  },
-  {
-    "root_id": 5322,
-    "arabic": "اللَّه",
-    "translit": "Allāh",
-    "english": "God",
-    "slug": "god-5322",
-    "usageCount": 170,
-    "added_at": "2026-07-11T21:01:30.892Z"
-  },
-  {
-    "root_id": 5331,
-    "arabic": "خَرَجَ",
-    "translit": "kharaja",
-    "english": "to go out",
-    "slug": "expelled-5331",
-    "usageCount": 28,
-    "added_at": "2026-07-11T21:01:30.892Z"
-  },
-  {
-    "root_id": 5352,
-    "arabic": "جَاءَ",
-    "translit": "jāʾa",
+    "root_id": 5489,
+    "arabic": "أَتَى",
+    "translit": "atā",
     "english": "to come",
-    "slug": "come-5352",
-    "usageCount": 67,
-    "added_at": "2026-07-11T21:01:30.892Z"
+    "slug": "come-5489",
+    "usageCount": 42,
+    "added_at": "2026-08-26T21:02:26.647Z"
   },
   {
-    "root_id": 5369,
-    "arabic": "قَوْل",
-    "translit": "qawl",
-    "english": "saying, statement",
-    "slug": "words-5369",
-    "usageCount": 90,
-    "added_at": "2026-07-11T21:01:30.892Z"
-  },
-  {
-    "root_id": 5371,
-    "arabic": "جَعَلَ",
-    "translit": "jaʿala",
-    "english": "to make",
-    "slug": "place-5371",
-    "usageCount": 44,
-    "added_at": "2026-07-11T21:01:30.892Z"
-  },
-  {
-    "root_id": 5372,
-    "arabic": "أَرْض",
-    "translit": "arḍ",
-    "english": "earth, land",
-    "slug": "earth-5372",
-    "usageCount": 35,
-    "added_at": "2026-07-11T21:01:30.892Z"
-  },
-  {
-    "root_id": 5389,
-    "arabic": "دَخَلَ",
-    "translit": "dakhala",
-    "english": "to enter",
-    "slug": "enter-5389",
-    "usageCount": 41,
-    "added_at": "2026-07-11T21:01:30.892Z"
-  },
-  {
-    "root_id": 5392,
-    "arabic": "يَوْم",
-    "translit": "yawm",
-    "english": "day",
-    "slug": "today-5392",
-    "usageCount": 38,
-    "added_at": "2026-07-11T21:01:30.892Z"
-  },
-  {
-    "root_id": 5393,
-    "arabic": "عَبْد",
-    "translit": "ʿabd",
-    "english": "servant",
-    "slug": "slaves-5393",
-    "usageCount": 54,
-    "added_at": "2026-07-11T21:01:30.892Z"
-  },
-  {
-    "root_id": 5405,
-    "arabic": "ذِكْر",
-    "translit": "dhikr",
-    "english": "remembrance",
-    "slug": "mention-5405",
-    "usageCount": 31,
-    "added_at": "2026-07-11T21:01:30.892Z"
-  },
-  {
-    "root_id": 5408,
-    "arabic": "قَامَ",
-    "translit": "qāma",
-    "english": "to stand, rise",
-    "slug": "stood-5408",
-    "usageCount": 21,
-    "added_at": "2026-07-11T21:01:30.892Z"
-  },
-  {
-    "root_id": 5458,
-    "arabic": "قَالَ",
-    "translit": "qāla",
-    "english": "to say",
-    "slug": "said-5458",
-    "usageCount": 894,
-    "added_at": "2026-07-11T21:01:30.892Z"
-  },
-  {
-    "root_id": 5463,
-    "arabic": "دَعَا",
-    "translit": "daʿā",
-    "english": "to call, supplicate",
-    "slug": "pray-5463",
-    "usageCount": 23,
-    "added_at": "2026-07-11T21:01:30.892Z"
-  },
-  {
-    "root_id": 5486,
-    "arabic": "فَعَلَ",
-    "translit": "faʿala",
-    "english": "to do",
-    "slug": "do-5486",
-    "usageCount": 25,
-    "added_at": "2026-07-11T21:01:30.892Z"
-  },
-  {
-    "root_id": 5491,
-    "arabic": "أَرَادَ",
-    "translit": "arāda",
-    "english": "to want",
-    "slug": "intend-5491",
-    "usageCount": 25,
-    "added_at": "2026-07-11T21:01:30.892Z"
-  },
-  {
-    "root_id": 5500,
-    "arabic": "قَلْب",
-    "translit": "qalb",
-    "english": "heart",
-    "slug": "heart-5500",
+    "root_id": 7595,
+    "arabic": "رَضِيَ",
+    "translit": "raḍiya",
+    "english": "to be pleased",
+    "slug": "be-pleased-7595",
     "usageCount": 36,
-    "added_at": "2026-07-11T21:01:30.892Z"
+    "added_at": "2026-08-26T21:02:26.647Z"
   },
   {
-    "root_id": 5547,
-    "arabic": "هَوَى",
-    "translit": "hawā",
-    "english": "desire, whim",
-    "slug": "desire-5547",
+    "root_id": 6104,
+    "arabic": "أَخْبَرَ",
+    "translit": "akhbara",
+    "english": "to inform",
+    "slug": "informed-6104",
     "usageCount": 29,
-    "added_at": "2026-07-11T21:01:30.892Z"
+    "added_at": "2026-08-26T21:02:26.647Z"
   },
   {
-    "root_id": 5573,
-    "arabic": "شَيْء",
-    "translit": "shayʾ",
-    "english": "thing",
-    "slug": "thing-5573",
-    "usageCount": 36,
-    "added_at": "2026-07-11T21:01:30.892Z"
+    "root_id": 5976,
+    "arabic": "أَحَدٌ",
+    "translit": "aḥad",
+    "english": "one",
+    "slug": "one-5976",
+    "usageCount": 21,
+    "added_at": "2026-08-26T21:02:26.647Z"
   },
   {
-    "root_id": 5624,
-    "arabic": "نَبِيٌّ",
-    "translit": "nabī",
-    "english": "prophet",
-    "slug": "prophet-5624",
-    "usageCount": 30,
-    "added_at": "2026-07-11T21:01:30.892Z"
+    "root_id": 6499,
+    "arabic": "كَلَام",
+    "translit": "kalām",
+    "english": "speech",
+    "slug": "speech-6499",
+    "usageCount": 21,
+    "added_at": "2026-08-26T21:02:26.647Z"
   },
   {
-    "root_id": 5716,
-    "arabic": "أَمْر",
-    "translit": "amr",
-    "english": "matter, command",
-    "slug": "matter-5716",
-    "usageCount": 36,
-    "added_at": "2026-07-11T21:01:30.892Z"
+    "root_id": 5482,
+    "arabic": "أَعْطَى",
+    "translit": "aʿṭā",
+    "english": "to give",
+    "slug": "grant-5482",
+    "usageCount": 21,
+    "added_at": "2026-08-26T21:02:26.647Z"
   },
   {
-    "root_id": 5739,
-    "arabic": "تَرَكَ",
-    "translit": "taraka",
-    "english": "to leave, abandon",
-    "slug": "leave-5739",
-    "usageCount": 30,
-    "added_at": "2026-07-11T21:01:30.892Z"
+    "root_id": 5374,
+    "arabic": "ذَهَبَ",
+    "translit": "dhahaba",
+    "english": "to go",
+    "slug": "go-5374",
+    "usageCount": 20,
+    "added_at": "2026-08-26T21:02:26.647Z"
   },
   {
-    "root_id": 5818,
-    "arabic": "صَارَ",
-    "translit": "ṣāra",
-    "english": "to become",
-    "slug": "to-become-5818",
-    "usageCount": 23,
-    "added_at": "2026-07-11T21:01:30.892Z"
+    "root_id": 5550,
+    "arabic": "رَجَعَ",
+    "translit": "rajaʿa",
+    "english": "to return",
+    "slug": "return-5550",
+    "usageCount": 20,
+    "added_at": "2026-08-26T21:02:26.647Z"
   },
   {
-    "root_id": 5895,
-    "arabic": "ذَكَرَ",
-    "translit": "dhakara",
-    "english": "to mention",
-    "slug": "to-remember-5895",
-    "usageCount": 22,
-    "added_at": "2026-07-11T21:01:30.892Z"
+    "root_id": 6351,
+    "arabic": "وَقَعَ",
+    "translit": "waqaʿa",
+    "english": "to happen",
+    "slug": "occurs-6351",
+    "usageCount": 20,
+    "added_at": "2026-08-26T21:02:26.647Z"
   },
   {
-    "root_id": 5969,
-    "arabic": "سَأَلَ",
-    "translit": "saʾala",
-    "english": "to ask",
-    "slug": "ask-5969",
-    "usageCount": 39,
-    "added_at": "2026-07-11T21:01:30.892Z"
+    "root_id": 6489,
+    "arabic": "مَعْنَى",
+    "translit": "maʿnā",
+    "english": "meaning",
+    "slug": "meaning-6489",
+    "usageCount": 20,
+    "added_at": "2026-08-26T21:02:26.647Z"
   },
   {
-    "root_id": 6049,
-    "arabic": "سَمِعَ",
-    "translit": "samiʿa",
-    "english": "to hear",
-    "slug": "heard-6049",
-    "usageCount": 22,
-    "added_at": "2026-07-11T21:01:30.892Z"
+    "root_id": 9649,
+    "arabic": "مَطَر",
+    "translit": "maṭar",
+    "english": "rain",
+    "slug": "rain-9649",
+    "usageCount": 20,
+    "added_at": "2026-08-26T21:02:26.647Z"
   },
   {
-    "root_id": 6074,
-    "arabic": "نَاس",
-    "translit": "nās",
-    "english": "people",
-    "slug": "people-6074",
-    "usageCount": 35,
-    "added_at": "2026-07-11T21:01:30.892Z"
+    "root_id": 5347,
+    "arabic": "أَرْسَلَ",
+    "translit": "arsala",
+    "english": "to send",
+    "slug": "send-5347",
+    "usageCount": 19,
+    "added_at": "2026-08-26T21:02:26.647Z"
   },
   {
-    "root_id": 6126,
-    "arabic": "رَجُلٌ",
-    "translit": "rajul",
-    "english": "man",
-    "slug": "man-6126",
-    "usageCount": 45,
-    "added_at": "2026-07-11T21:01:30.892Z"
+    "root_id": 5504,
+    "arabic": "خَلْق",
+    "translit": "khalq",
+    "english": "creation",
+    "slug": "people-5504",
+    "usageCount": 19,
+    "added_at": "2026-08-26T21:02:26.647Z"
   },
   {
-    "root_id": 6182,
-    "arabic": "أَمَرَ",
-    "translit": "amara",
-    "english": "to command",
-    "slug": "commanded-6182",
-    "usageCount": 35,
-    "added_at": "2026-07-11T21:01:30.892Z"
+    "root_id": 6744,
+    "arabic": "آيَة",
+    "translit": "āya",
+    "english": "verse, sign",
+    "slug": "verse-6744",
+    "usageCount": 19,
+    "added_at": "2026-08-26T21:02:26.647Z"
   },
   {
-    "root_id": 6428,
-    "arabic": "أَهْل",
-    "translit": "ahl",
-    "english": "family, people",
-    "slug": "people-6428",
-    "usageCount": 30,
-    "added_at": "2026-07-11T21:01:30.892Z"
+    "root_id": 9944,
+    "arabic": "أَقْسَمَ",
+    "translit": "aqsama",
+    "english": "to swear an oath",
+    "slug": "swore-9944",
+    "usageCount": 18,
+    "added_at": "2026-08-26T21:02:26.647Z"
   },
   {
-    "root_id": 6708,
-    "arabic": "رَسُول",
-    "translit": "rasūl",
-    "english": "messenger",
-    "slug": "messenger-6708",
-    "usageCount": 68,
-    "added_at": "2026-07-11T21:01:30.892Z"
+    "root_id": 6733,
+    "arabic": "كَلِمَة",
+    "translit": "kalima",
+    "english": "word",
+    "slug": "word-6733",
+    "usageCount": 17,
+    "added_at": "2026-08-26T21:02:26.647Z"
   },
   {
-    "root_id": 7043,
-    "arabic": "وَجْه",
-    "translit": "wajh",
-    "english": "face",
-    "slug": "way-7043",
-    "usageCount": 22,
-    "added_at": "2026-07-11T21:01:30.892Z"
+    "root_id": 7022,
+    "arabic": "دَلِيل",
+    "translit": "dalīl",
+    "english": "proof, evidence",
+    "slug": "argument-7022",
+    "usageCount": 17,
+    "added_at": "2026-08-26T21:02:26.647Z"
   },
   {
-    "root_id": 7278,
-    "arabic": "خَيْر",
-    "translit": "khayr",
-    "english": "goodness",
-    "slug": "good-7278",
-    "usageCount": 24,
-    "added_at": "2026-07-11T21:01:30.892Z"
+    "root_id": 7723,
+    "arabic": "سَمَاء",
+    "translit": "samāʾ",
+    "english": "sky, heaven",
+    "slug": "heavens-7723",
+    "usageCount": 17,
+    "added_at": "2026-08-26T21:02:26.647Z"
   },
   {
-    "root_id": 8049,
-    "arabic": "صَلَّى",
-    "translit": "ṣallā",
-    "english": "to pray",
-    "slug": "pray-8049",
-    "usageCount": 195,
-    "added_at": "2026-07-11T21:01:30.892Z"
+    "root_id": 9362,
+    "arabic": "مَاتَ",
+    "translit": "māta",
+    "english": "to die",
+    "slug": "dies-9362",
+    "usageCount": 17,
+    "added_at": "2026-08-26T21:02:26.647Z"
   },
   {
-    "root_id": 8278,
-    "arabic": "دُنْيَا",
-    "translit": "dunyā",
-    "english": "world",
-    "slug": "world-8278",
-    "usageCount": 38,
-    "added_at": "2026-07-11T21:01:30.892Z"
+    "root_id": 9484,
+    "arabic": "جَنَّة",
+    "translit": "janna",
+    "english": "paradise, garden",
+    "slug": "paradise-9484",
+    "usageCount": 17,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 9912,
+    "arabic": "حَال",
+    "translit": "ḥāl",
+    "english": "state, condition",
+    "slug": "condition-9912",
+    "usageCount": 17,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 5663,
+    "arabic": "حَمْدٌ",
+    "translit": "ḥamd",
+    "english": "praise",
+    "slug": "praise-5663",
+    "usageCount": 16,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 5675,
+    "arabic": "نَزَلَ",
+    "translit": "nazala",
+    "english": "to descend",
+    "slug": "descend-5675",
+    "usageCount": 16,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 6372,
+    "arabic": "وَقْت",
+    "translit": "waqt",
+    "english": "time",
+    "slug": "time-6372",
+    "usageCount": 16,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 7423,
+    "arabic": "قُوَّة",
+    "translit": "quwwa",
+    "english": "strength",
+    "slug": "strength-7423",
+    "usageCount": 16,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 5254,
+    "arabic": "مَاءٌ",
+    "translit": "māʾ",
+    "english": "water",
+    "slug": "water-5254",
+    "usageCount": 15,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 5669,
+    "arabic": "قَرَأَ",
+    "translit": "qaraʾa",
+    "english": "to read",
+    "slug": "read-5669",
+    "usageCount": 15,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 6747,
+    "arabic": "صِدْق",
+    "translit": "ṣidq",
+    "english": "truthfulness",
+    "slug": "truth-6747",
+    "usageCount": 15,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 5720,
+    "arabic": "حَمَلَ",
+    "translit": "ḥamala",
+    "english": "to carry",
+    "slug": "to-carry-5720",
+    "usageCount": 15,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 6783,
+    "arabic": "كِتَاب",
+    "translit": "kitāb",
+    "english": "book",
+    "slug": "book-6783",
+    "usageCount": 14,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 6818,
+    "arabic": "قُرْآن",
+    "translit": "qurʾān",
+    "english": "Qur’an",
+    "slug": "scripture-6818",
+    "usageCount": 14,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 8018,
+    "arabic": "نَار",
+    "translit": "nār",
+    "english": "fire",
+    "slug": "fire-8018",
+    "usageCount": 14,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 5552,
+    "arabic": "عَيْن",
+    "translit": "ʿayn",
+    "english": "eye, spring",
+    "slug": "eyes-5552",
+    "usageCount": 13,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 6462,
+    "arabic": "دُعَاء",
+    "translit": "duʿāʾ",
+    "english": "supplication",
+    "slug": "supplication-6462",
+    "usageCount": 13,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 7007,
+    "arabic": "دِين",
+    "translit": "dīn",
+    "english": "religion",
+    "slug": "religion-7007",
+    "usageCount": 13,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 8450,
+    "arabic": "حَدِيث",
+    "translit": "ḥadīth",
+    "english": "narration",
+    "slug": "narration-8450",
+    "usageCount": 13,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 9909,
+    "arabic": "إِنْسَان",
+    "translit": "insān",
+    "english": "human being",
+    "slug": "man-9909",
+    "usageCount": 13,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 9981,
+    "arabic": "نَبَات",
+    "translit": "nabāt",
+    "english": "plant",
+    "slug": "plant-9981",
+    "usageCount": 13,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 5517,
+    "arabic": "طَاعَة",
+    "translit": "ṭāʿa",
+    "english": "obedience",
+    "slug": "obedience-5517",
+    "usageCount": 12,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 5554,
+    "arabic": "لِسَان",
+    "translit": "lisān",
+    "english": "tongue",
+    "slug": "tongue-5554",
+    "usageCount": 12,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 6642,
+    "arabic": "مِيزَان",
+    "translit": "mīzān",
+    "english": "scale, balance",
+    "slug": "scale-6642",
+    "usageCount": 12,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 5702,
+    "arabic": "عَدُوّ",
+    "translit": "ʿaduww",
+    "english": "enemy",
+    "slug": "enemy-5702",
+    "usageCount": 12,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 8118,
+    "arabic": "غَضَب",
+    "translit": "ghaḍab",
+    "english": "anger",
+    "slug": "anger-8118",
+    "usageCount": 12,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 6433,
+    "arabic": "تَوْحِيد",
+    "translit": "tawḥīd",
+    "english": "monotheism",
+    "slug": "monotheism-6433",
+    "usageCount": 12,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 5731,
+    "arabic": "طَرِيقٌ",
+    "translit": "ṭarīq",
+    "english": "path",
+    "slug": "path-5731",
+    "usageCount": 11,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 7377,
+    "arabic": "طَعَامٌ",
+    "translit": "ṭaʿām",
+    "english": "food",
+    "slug": "food-7377",
+    "usageCount": 11,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 6125,
+    "arabic": "حِكْمَةٌ",
+    "translit": "ḥikma",
+    "english": "wisdom",
+    "slug": "wisdom-6125",
+    "usageCount": 10,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 5471,
+    "arabic": "آخِرَة",
+    "translit": "ākhira",
+    "english": "the hereafter",
+    "slug": "hereafter-5471",
+    "usageCount": 10,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 6803,
+    "arabic": "قِيَامَة",
+    "translit": "qiyāma",
+    "english": "resurrection",
+    "slug": "judgment-6803",
+    "usageCount": 10,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 7298,
+    "arabic": "مُسْلِم",
+    "translit": "muslim",
+    "english": "Muslim",
+    "slug": "muslim-7298",
+    "usageCount": 10,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 8451,
+    "arabic": "صَحِيح",
+    "translit": "ṣaḥīḥ",
+    "english": "sound, authentic",
+    "slug": "authentic-8451",
+    "usageCount": 10,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 5426,
+    "arabic": "أَب",
+    "translit": "ab",
+    "english": "father",
+    "slug": "father-5426",
+    "usageCount": 10,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 6784,
+    "arabic": "سُنَّة",
+    "translit": "sunna",
+    "english": "sunnah",
+    "slug": "sunnah-6784",
+    "usageCount": 10,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 5827,
+    "arabic": "وَجَدَ",
+    "translit": "wajada",
+    "english": "to find",
+    "slug": "to-find-5827",
+    "usageCount": 10,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 5858,
+    "arabic": "زَادَ",
+    "translit": "zāda",
+    "english": "to increase",
+    "slug": "to-increase-5858",
+    "usageCount": 10,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 5512,
+    "arabic": "مَحَبَّة",
+    "translit": "maḥabba",
+    "english": "love",
+    "slug": "love-5512",
+    "usageCount": 9,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 5615,
+    "arabic": "بَابٌ",
+    "translit": "bāb",
+    "english": "door",
+    "slug": "door-of-5615",
+    "usageCount": 9,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 5551,
+    "arabic": "طَلَبَ",
+    "translit": "ṭalaba",
+    "english": "to seek",
+    "slug": "seek-5551",
+    "usageCount": 9,
+    "added_at": "2026-08-26T21:02:26.647Z"
+  },
+  {
+    "root_id": 5385,
+    "arabic": "صَالِح",
+    "translit": "ṣāliḥ",
+    "english": "righteous",
+    "slug": "righteous-5385",
+    "usageCount": 9,
+    "added_at": "2026-08-26T21:02:26.647Z"
   }
 ]
