@@ -809,8 +809,9 @@
     "feedUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/actions-5268-20260826-square.jpg",
     "storyUrl": "https://kkmnzbeugdoajtzfjkxg.supabase.co/storage/v1/object/public/batch_scheduled/word-of-the-day/actions-5268-20260826-story.jpg",
     "x": {
-      "ok": false,
-      "error": "media/upload: Could not authenticate you"
+      "ok": true,
+      "id": "2092723992700285396",
+      "note": "posted after re-auth"
     },
     "ig": {
       "ok": true,
