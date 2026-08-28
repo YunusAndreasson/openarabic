@@ -169,6 +169,87 @@ describe('useReview Hook - Grading', () => {
       });
     });
 
+    test('a repeated root starts a fresh restudy hold under its new card key', async () => {
+      const first = createMockWord({
+        fsrs_last_review: '2026-08-01T00:00:00.000Z',
+        fsrs_reps: 2,
+      });
+      useFSRS.mockReturnValue(fsrsState(mocks, first));
+
+      const wrapper = createWrapper();
+      const { result, rerender } = renderHook(() => useReview(), { wrapper });
+
+      act(() => result.current.revealAnswer());
+      act(() => result.current.grade('unknown'));
+      act(() => result.current.continueFromRestudy());
+      await waitFor(() => expect(result.current.isUpdating).toBe(false));
+
+      const repeated = createMockWord({
+        fsrs_last_review: '2026-08-02T00:00:00.000Z',
+        fsrs_reps: 3,
+      });
+      useFSRS.mockReturnValue(fsrsState(mocks, repeated));
+      rerender(undefined);
+
+      act(() => result.current.revealAnswer());
+      act(() => result.current.grade('unknown'));
+
+      expect(result.current.currentWordKey).not.toContain('2026-08-01');
+      expect(result.current.restudying).toBe(true);
+    });
+
+    test('a rejected known grade restores the revealed card and permits retry', async () => {
+      const word = createMockWord();
+      mocks.mockUpdateWord
+        .mockResolvedValueOnce({ status: 'rejected', reason: 'scheduler-error' })
+        .mockResolvedValueOnce({ status: 'committed', stability: 7.5 });
+      useFSRS.mockReturnValue(fsrsState(mocks, word));
+
+      const wrapper = createWrapper();
+      const { result } = renderHook(() => useReview(), { wrapper });
+
+      act(() => result.current.revealAnswer());
+      act(() => result.current.grade('known'));
+
+      await waitFor(() => {
+        expect(result.current.isUpdating).toBe(false);
+        expect(result.current.gradeRecoveryEpoch).toBe(1);
+      });
+      expect(result.current.revealed).toBe(true);
+      expect(result.current.showTranslation).toBe(true);
+      expect(result.current.restudying).toBe(false);
+      expect(mocks.mockUpdateMetrics).not.toHaveBeenCalled();
+
+      act(() => result.current.grade('known'));
+      await waitFor(() => expect(mocks.mockUpdateMetrics).toHaveBeenCalledTimes(1));
+      expect(mocks.mockUpdateWord).toHaveBeenCalledTimes(2);
+    });
+
+    test('a rejected restudy continue returns to the grade choices', async () => {
+      const word = createMockWord();
+      mocks.mockUpdateWord.mockResolvedValueOnce({
+        status: 'rejected',
+        reason: 'scheduler-error',
+      });
+      useFSRS.mockReturnValue(fsrsState(mocks, word));
+
+      const wrapper = createWrapper();
+      const { result } = renderHook(() => useReview(), { wrapper });
+
+      act(() => result.current.revealAnswer());
+      act(() => result.current.grade('unknown'));
+      expect(result.current.restudying).toBe(true);
+      act(() => result.current.continueFromRestudy());
+
+      await waitFor(() => {
+        expect(result.current.isUpdating).toBe(false);
+        expect(result.current.restudying).toBe(false);
+        expect(result.current.gradeRecoveryEpoch).toBe(1);
+      });
+      expect(result.current.revealed).toBe(true);
+      expect(mocks.mockUpdateMetrics).not.toHaveBeenCalled();
+    });
+
     describe('Grade Behavior', () => {
       test('should fade out on grade (card advance)', async () => {
         const word = createMockWord();

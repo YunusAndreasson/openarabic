@@ -95,6 +95,7 @@ jest.mock('@/hooks/review', () => ({
     enrichmentBatches: [],
     progress: 0,
     maxProgress: 0,
+    gradeRecoveryEpoch: 0,
     currentWordKey: 'none',
     revealAnswer: jest.fn(),
     grade: jest.fn(),
@@ -126,12 +127,14 @@ jest.mock('@/hooks/review', () => ({
   }),
 }));
 
+const mockSubscribeDiag = jest.fn(() => () => {});
+
 jest.mock('@/utils/reviewDiagnostics', () => {
   const snapshot = { enabled: false, entries: [] };
   return {
     getDiagSnapshot: () => snapshot,
     setDiagnosticsEnabled: jest.fn(),
-    subscribeDiag: () => () => {},
+    subscribeDiag: mockSubscribeDiag,
   };
 });
 
@@ -146,6 +149,7 @@ describe('empty review route', () => {
 
     expect(getByTestId('review-loader')).toBeTruthy();
     expect(queryByTestId('completion-screen')).toBeNull();
+    expect(mockSubscribeDiag).not.toHaveBeenCalled();
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith(ROUTE_PATHS.PRACTICE_TAB));
   });
 });

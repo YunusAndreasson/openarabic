@@ -310,6 +310,11 @@ export interface ReviewCardHandle {
    * the attempt that produced the mark is being discarded.
    */
   clearVerdict: () => void;
+  /**
+   * Undo the throw and verdict for a grade that the scheduler rejected while
+   * preserving the card's revealed face so the learner can retry.
+   */
+  resetGradePresentation: () => void;
 }
 
 interface ReviewFlipCardProps {
@@ -418,8 +423,14 @@ export function ReviewFlipCard({
       commitTo,
       playVerdict: (confidence: WordConfidence) => playVerdict(confidence, wordKey ?? ''),
       clearVerdict: () => resetVerdict(wordKey ?? ''),
+      resetGradePresentation: () => {
+        cancelAnimation(translateX);
+        translateX.set(0);
+        isAnimatingRef.set(false);
+        resetVerdict(wordKey ?? '');
+      },
     }),
-    [commitTo, playVerdict, resetVerdict, wordKey],
+    [commitTo, playVerdict, resetVerdict, wordKey, translateX, isAnimatingRef],
   );
 
   // The flip: 0 = question face, 1 = answer face.

@@ -63,6 +63,13 @@ export interface UseFSRSOptions {
   sessionCooldownHours?: number;
 }
 
+export type FSRSUpdateResult =
+  | { status: 'committed'; stability: number }
+  | {
+      status: 'rejected';
+      reason: 'unavailable' | 'busy' | 'mismatched-root' | 'scheduler-error';
+    };
+
 export interface UseFSRSResult {
   currentWord: StudyWord | null;
   wordQueue: StudyWord[];
@@ -82,18 +89,17 @@ export interface UseFSRSResult {
    */
   progress: number;
   /**
-   * Grade the current card and advance. Resolves with the card's NEW stability
-   * (what the session's mastery counter compares against the old value), or
-   * `undefined` when the grade was dropped — no user, no current word, or a
-   * write already in flight. The FSRS write itself is fired in the background;
-   * see `flushPendingWrites`.
+   * Grade the current card and advance. A committed result carries the card's
+   * new stability; a rejected result leaves the queue and persistence untouched
+   * and names why the grade could not be accepted. The FSRS write itself is
+   * fired in the background; see `flushPendingWrites`.
    */
-  updateWord: (rootId: RootId, confidence: WordConfidence) => Promise<number | undefined>;
+  updateWord: (rootId: RootId, confidence: WordConfidence) => Promise<FSRSUpdateResult>;
   /**
    * Per-grade interval preview ("10m"/"4d") for a card, one label per grade.
    * Drives the grade bar's sub-labels. Reuses the live ts-fsrs scheduler.
    */
-  previewIntervals: (word: StudyWord) => IntervalLabels;
+  previewIntervals: (word: StudyWord) => IntervalLabels | null;
   invalidateQueries: () => void;
   resetQueue: () => void;
   /**

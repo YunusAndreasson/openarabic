@@ -26,6 +26,7 @@ import { createHookTestWrapper } from '@/__tests__/helpers/hookMocks';
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import { fsrsQueries } from '@/constants/queries';
 import { useFSRS } from '@/hooks/vocabulary/useFSRS';
+import { FSRS_INSTANCE } from '@/utils/fsrsUtils';
 import type { StudyWord } from '@/types/vocabulary.types';
 import type { RootId, UserId } from '@/types/branded.types';
 import { LEGACY_NULL_TIMESTAMP } from '@/__tests__/helpers/fsrsTestHelpers';
@@ -574,10 +575,10 @@ describe('useFSRS Hook', () => {
         expect(result.current.currentWord).not.toBeNull();
       });
 
-      const newStability = await result.current.updateWord(1, 'known');
+      const update = await result.current.updateWord(1, 'known');
 
-      expect(typeof newStability).toBe('number');
-      expect(newStability).toBeGreaterThan(0);
+      expect(update.status).toBe('committed');
+      if (update.status === 'committed') expect(update.stability).toBeGreaterThan(0);
     });
   });
 
@@ -727,6 +728,8 @@ describe('useFSRS Hook', () => {
       });
 
       const labels = result.current.previewIntervals(word);
+      expect(labels).not.toBeNull();
+      if (!labels) throw new Error('Expected interval labels');
 
       // Reuses the live ts-fsrs scheduler — every ternary grade gets a label.
       expect(typeof labels.unknown).toBe('string');
@@ -735,6 +738,17 @@ describe('useFSRS Hook', () => {
       expect((labels.unknown ?? '').length).toBeGreaterThan(0);
       expect((labels.vague ?? '').length).toBeGreaterThan(0);
       expect((labels.known ?? '').length).toBeGreaterThan(0);
+    });
+
+    test('returns null instead of crashing for invalid scheduler data', () => {
+      const word = createMockStudyWord({ root_id: rootId(1) });
+      jest.spyOn(FSRS_INSTANCE, 'repeat').mockImplementationOnce(() => {
+        throw new Error('Invalid scheduler card');
+      });
+
+      const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
+
+      expect(result.current.previewIntervals(word)).toBeNull();
     });
   });
 
@@ -756,20 +770,12 @@ describe('useFSRS Hook', () => {
       await expect(result.current.updateWord(1, 'known')).resolves.toBeDefined();
     });
 
-    test('handles FSRS algorithm errors with fallback', async () => {
-      const word = createMockStudyWord({
-        root_id: rootId(1),
-        // convertToFSRSCard special-cases State.New into a fresh createEmptyCard(),
-        // which discards invalid stability/difficulty before ts-fsrs ever sees
-        // them — so the catch block below is only reachable from a non-New state
-        // with reps/last_review set, forwarding these invalid values unconverted.
-        fsrs_state: State.Review,
-        fsrs_reps: 5,
-        fsrs_last_review: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        fsrs_stability: -1,
-        fsrs_difficulty: 100,
-      });
+    test('rejects scheduler errors atomically and releases the update lock', async () => {
+      const word = createMockStudyWord({ root_id: rootId(1) });
       studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => [word]);
+      jest.spyOn(FSRS_INSTANCE, 'next').mockImplementationOnce(() => {
+        throw new Error('Invalid scheduler card');
+      });
 
       const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
@@ -777,27 +783,15 @@ describe('useFSRS Hook', () => {
         expect(result.current.currentWord).not.toBeNull();
       });
 
-      // Should use fallback card instead of throwing
-      await expect(result.current.updateWord(1, 'known')).resolves.toBeDefined();
+      const rejected = await result.current.updateWord(1, 'known');
+      expect(rejected).toEqual({ status: 'rejected', reason: 'scheduler-error' });
+      expect(result.current.currentWord?.root_id).toBe(1);
+      expect(result.current.progress).toBe(0);
+      expect(studyWordsFSRSService.updateWordAndReview).not.toHaveBeenCalled();
 
-      // Fallback shape from hooks/vocabulary/useFSRS.ts's catch block: due ~10
-      // minutes out, stability/state/lapses/learning_steps carried over as-is
-      // (not recomputed), reps incremented by exactly one.
-      expect(studyWordsFSRSService.updateWordAndReview).toHaveBeenCalledWith(
-        'test-user',
-        1,
-        expect.objectContaining({
-          fsrs_stability: -1,
-          fsrs_reps: 6,
-          fsrs_lapses: 0,
-          fsrs_state: State.Review,
-          fsrs_due: expect.any(String),
-        }),
-      );
-      const [, , writtenData] = studyWordsFSRSService.updateWordAndReview.mock.calls[0];
-      const dueMs = new Date(writtenData.fsrs_due).getTime();
-      expect(dueMs).toBeGreaterThan(Date.now() + 9 * 60 * 1000);
-      expect(dueMs).toBeLessThan(Date.now() + 11 * 60 * 1000);
+      const retry = await result.current.updateWord(1, 'known');
+      expect(retry.status).toBe('committed');
+      expect(studyWordsFSRSService.updateWordAndReview).toHaveBeenCalledTimes(1);
     });
 
     test('handles query fetch errors', async () => {
@@ -1060,11 +1054,12 @@ describe('useFSRS Hook', () => {
         expect(result.current.currentWord).not.toBeNull();
       });
 
-      // Try to update a non-existent word
-      await result.current.updateWord(999, 'known');
+      const rejected = await result.current.updateWord(999, 'known');
 
-      // Should not crash and should not update anything
+      expect(rejected).toEqual({ status: 'rejected', reason: 'mismatched-root' });
       expect(result.current.currentWord?.root_id).toBe(1);
+      expect(result.current.progress).toBe(0);
+      expect(studyWordsFSRSService.updateWordAndReview).not.toHaveBeenCalled();
     });
 
     test('handles service error during update gracefully', async () => {
@@ -1081,11 +1076,10 @@ describe('useFSRS Hook', () => {
       });
 
       // Hook handles errors internally and still returns a value (FSRS calculation)
-      const stability = await result.current.updateWord(1, 'known');
+      const update = await result.current.updateWord(1, 'known');
 
-      // Should still return a stability value despite service error
-      expect(typeof stability).toBe('number');
-      expect(stability).toBeGreaterThan(0);
+      expect(update.status).toBe('committed');
+      if (update.status === 'committed') expect(update.stability).toBeGreaterThan(0);
     });
   });
 

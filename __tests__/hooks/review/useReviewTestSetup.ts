@@ -101,6 +101,7 @@ export function fsrsState(
     isComplete: false,
     progress: 0,
     updateWord: mocks.mockUpdateWord,
+    previewIntervals: jest.fn(() => ({ unknown: '1m', vague: '10m', known: '4d' })),
     invalidateQueries: mocks.mockInvalidateQueries,
     ...overrides,
   };
@@ -158,7 +159,10 @@ export function setupUseReviewMocks(): UseReviewMockRefs {
   });
 
   // Mock FSRS hook
-  const mockUpdateWord = jest.fn(async (..._args: unknown[]) => 7.5);
+  const mockUpdateWord = jest.fn(async (..._args: unknown[]) => ({
+    status: 'committed' as const,
+    stability: 7.5,
+  }));
   const mockInvalidateQueries = jest.fn();
   useFSRS.mockReturnValue(
     createFSRSMock({

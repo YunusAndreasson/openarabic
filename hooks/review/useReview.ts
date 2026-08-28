@@ -54,6 +54,7 @@ import {
 import {
   endDiagSession,
   mark as diagMark,
+  setDiagnosticsEnabled,
   setDiagCard,
   span as diagSpan,
   startDiagSession,
@@ -79,6 +80,8 @@ interface ReviewStateRefs {
 interface UseReviewProps {
   fromRemember?: boolean;
   onClose?: () => void;
+  /** Snapshot for this session; controls timeline collection and the optional HUD. */
+  diagnosticsEnabled?: boolean;
   /**
    * Hands the audio session to playback for the prompt and gives it back
    * afterwards, so the Arabic is not played through the quieter
@@ -116,6 +119,8 @@ interface UseReviewReturn {
   enrichmentBatches: readonly (readonly StudyWord[])[];
   progress: number;
   maxProgress: number;
+  /** Remounts only the card presentation after a rejected scheduler transition. */
+  gradeRecoveryEpoch: number;
   currentWordKey: string;
   /** Flip the current card to its answer (English meaning + audio). Does not advance. */
   revealAnswer: () => void;
@@ -239,6 +244,7 @@ const TRANSITION_DELAYS = {
 export function useReview({
   fromRemember,
   onClose,
+  diagnosticsEnabled = __DEV__,
   setPlaybackPriority,
   isMicStreamOpen,
 }: UseReviewProps = {}): UseReviewReturn {
@@ -250,8 +256,9 @@ export function useReview({
   // and audio-session setup already fall inside the window; it is closed (and
   // its report printed) by the unmount cleanup at the bottom, which runs last.
   useEffect(() => {
+    setDiagnosticsEnabled(diagnosticsEnabled);
     startDiagSession({ fromRemember: fromRemember ?? false });
-  }, []);
+  }, [diagnosticsEnabled, fromRemember]);
 
   // Talks to the audio service directly rather than through
   // useSimpleAudioPlayer. This hook only ever *commands* playback — play, stop,
@@ -296,6 +303,7 @@ export function useReview({
   // Ensure UI re-renders when updating state changes, so the grade bar and the
   // reveal button re-enable once an advance lands
   const [isUpdatingUI, setIsUpdatingUI] = useState(false);
+  const [gradeRecoveryEpoch, setGradeRecoveryEpoch] = useState(0);
   // Progress bar high-water mark, surfaced as state so consumers re-render.
   const [maxProgress, setMaxProgress] = useState(0);
   // Holding a forgotten card on its answer face for a restudy beat before it
@@ -455,7 +463,7 @@ export function useReview({
   // `previewIntervals` is guarded for partial useFSRS mocks in tests; in production
   // it is always present.
   const intervalLabels = useMemo(
-    () => (currentWord && previewIntervals ? previewIntervals(currentWord) : null),
+    () => (currentWord ? previewIntervals(currentWord) : null),
     [currentWord, previewIntervals],
   );
 
@@ -512,6 +520,18 @@ export function useReview({
     }
   }, [currentWordKey, clearTimer]);
 
+  const recoverRejectedGrade = useCallback(
+    (reason: string) => {
+      diagMark('grade.rejected', { reason });
+      if (finalizedRef.current) return;
+      restudyRef.current = false;
+      setRestudyKey(null);
+      setGradeRecoveryEpoch(epoch => epoch + 1);
+      releasePendingFadeIn();
+    },
+    [releasePendingFadeIn],
+  );
+
   // Process the word update in FSRS
   const processFeedback = useCallback(
     async (confidence: WordConfidence, controller: AbortController) => {
@@ -533,11 +553,6 @@ export function useReview({
       const reps = currentWord.fsrs_reps ?? 0;
       const rootId = currentWord.root_id;
 
-      // Onboarding: this is the single funnel every committed grade passes
-      // through (fade completion, watchdog, teardown drain, restudy exit), so
-      // the checkmark can't be lost the way the fade callback alone could be.
-      void markOnboardingStep(OnboardingStep.PRACTICE_WORD);
-
       try {
         // Arm BEFORE the await, not after.
         //
@@ -552,8 +567,16 @@ export function useReview({
         pendingFadeInRef.current = true;
         setTimer('fadeInWatchdog', releasePendingFadeIn, TRANSITION_DELAYS.fadeInWatchdog);
 
-        // Call updateWord and capture the new stability value
-        const newStability = await updateWord(rootId, confidence);
+        const updateResult = await updateWord(rootId, confidence);
+        if (updateResult.status === 'rejected') {
+          recoverRejectedGrade(updateResult.reason);
+          return;
+        }
+        const newStability = updateResult.stability;
+
+        // Onboarding is a success signal, so a rejected scheduler transition
+        // must not mark the practice step complete.
+        void markOnboardingStep(OnboardingStep.PRACTICE_WORD);
 
         // Increment words reviewed count for analytics
         wordsReviewedCount.current += 1;
@@ -600,13 +623,12 @@ export function useReview({
         // showing the card that was just graded and swapped a few frames later.
         // Filmed at 30fps: ~265ms of the outgoing card at full opacity.
       } catch (error) {
-        handleError(error);
+        void handleError(error);
         if (!stateRefs.current.isUpdatingWord) return;
-        // The armed fade-in has no commit coming; un-hide the card now.
-        releasePendingFadeIn();
+        recoverRejectedGrade('unexpected-error');
       } finally {
         stateRefs.current.isUpdatingWord = false;
-        setIsUpdatingUI(false);
+        if (!finalizedRef.current) setIsUpdatingUI(false);
         clearTimer('meaningTimeout');
       }
     },
@@ -616,7 +638,7 @@ export function useReview({
       currentWord?.fsrs_reps,
       updateWord,
       updateMetrics,
-      fadeIn,
+      recoverRejectedGrade,
       releasePendingFadeIn,
       setTimer,
       isComplete,
@@ -884,7 +906,7 @@ export function useReview({
         playAfterHandoff(replayUrl).catch(handleError);
       }
     },
-    [currentWord?.root?.meaning, currentWord?.root?.audio_url, playAfterHandoff],
+    [currentWordKey, currentWord?.root?.meaning, currentWord?.root?.audio_url, playAfterHandoff],
   );
 
   const grade = useCallback(
@@ -1453,20 +1475,10 @@ export function useReview({
       stateRefs.current.completionTriggered = true;
       stateRefs.current.progressUpdatedForCompletion = false;
 
-      setShowTranslation(false);
-      setRevealed(false);
-
-      try {
-        fadeIn();
-      } catch {
-        // Animation cleanup failed - continue
-      }
-
       stopAudioSafely();
       clearAllTimers();
 
       stateRefs.current.isUpdatingWord = false;
-      setIsUpdatingUI(false);
       stateRefs.current.maxProgress = 0;
       timeRefs.current.lastProcessedWordId = null;
       timeRefs.current.lastProgressUpdate = Date.now();
@@ -1485,7 +1497,7 @@ export function useReview({
       // every teardown step above it.
       endDiagSession();
     };
-  }, [fadeIn, stopAudioSafely, clearAllTimers]);
+  }, [stopAudioSafely, clearAllTimers]);
 
   return {
     currentSentence,
@@ -1501,6 +1513,7 @@ export function useReview({
     enrichmentBatches,
     progress,
     maxProgress,
+    gradeRecoveryEpoch,
     currentWordKey,
     revealAnswer,
     grade,

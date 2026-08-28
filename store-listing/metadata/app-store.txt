@@ -1,0 +1,53 @@
+=== APP NAME (max 30) ===
+OpenArabic: Read the Classics
+
+=== SUBTITLE (max 30) ===
+Classical Arabic made readable
+
+=== PROMOTIONAL TEXT (max 170) ===
+Real works by Ibn al-Qayyim, Ibn Taymiyyah and Imam Nawawī — with English above every
+Arabic line, native audio on every word, and reviews timed to your memory.
+
+=== KEYWORDS (max 100, comma-separated, no spaces) ===
+arabic,quran,islam,hadith,tafsir,vocabulary,flashcards,spaced,repetition,nawawi,fusha,reading
+
+=== DESCRIPTION (max 4000) ===
+Read classical Arabic — even as a beginner.
+
+OpenArabic gives you real works by real scholars — Ibn al-Qayyim, Ibn Taymiyyah,
+Ibn al-Jawzī, Imam Nawawī and more — with the English above each Arabic line. You
+read the actual text, not a translation of it.
+
+READ WITHOUT DECODING
+• Every line of Arabic sits under its English, so you are never stuck on a sentence
+• Real works on creed, fiqh, sīrah, ḥadīth and tafsīr — sorted by topic
+• Graded by difficulty, from beginner-friendly to advanced
+• Switch to Arabic-only when the help starts to feel slow
+• The app keeps your place for next time
+
+TAP ANY WORD YOU DON'T KNOW
+• One tap gives you the meaning, a short grammar note and native audio
+• See where the word comes from — its root, and the other words built on it
+• Colour shows you the grammar: prefixes, suffixes, cases and particles
+• Save it to practice without losing your place on the page
+
+HEAR EVERY LINE READ ALOUD
+• Queue any text and listen to it narrated, Arabic line then English
+• Built for a walk or a commute
+• Works offline once downloaded
+
+ANSWER OUT LOUD
+• Say the word instead of tapping a button — the app listens and grades you
+• Harder to fool yourself, and you practise pronunciation at the same time
+• Speech recognition runs on your device
+
+WORDS RETURN BEFORE YOU FORGET THEM
+• Saved words come back for review just before you would forget them
+• FSRS scheduling adapts to how well you actually knew each word
+• A few minutes a day is enough
+• Track your vocabulary, your streak and how long each word holds
+
+Free. No ads. No subscription.
+
+Choose your Arabic face — Scheherazade, Amiri, Madina, Nastaliq or Noto — and read
+in light, dark or sepia.

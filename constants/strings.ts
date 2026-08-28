@@ -292,6 +292,7 @@ export const STRINGS = {
   LOADING_GENERIC: 'Loading…',
   AUDIO_READY: 'Audio ready',
   PREPARING_PRACTICE_SESSION: 'Preparing session…',
+  REVIEW_GRADE_FAILED: "Couldn't save that review. Please try again.",
   // Timer controls
   SLEEP_TIMER: 'Sleep timer',
   SET_TIMER: 'Set timer',

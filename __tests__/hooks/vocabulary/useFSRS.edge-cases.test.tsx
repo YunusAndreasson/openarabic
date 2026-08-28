@@ -311,7 +311,8 @@ describe('useFSRS Hook - Edge Cases', () => {
         expect(result.current.progress).toBeLessThanOrEqual(100);
 
         await act(async () => {
-          await result.current.updateWord(i as RootId, 'known');
+          const currentRoot = result.current.currentWord?.root_id;
+          if (currentRoot) await result.current.updateWord(currentRoot, 'known');
         });
       }
 
@@ -413,10 +414,13 @@ describe('useFSRS Hook - Edge Cases', () => {
       });
 
       // Should handle without overflow
-      const newStability = await result.current.updateWord(rootId(1), 'known');
+      const update = await result.current.updateWord(rootId(1), 'known');
 
-      expect(newStability).toBeGreaterThan(0);
-      expect(Number.isFinite(newStability)).toBeTruthy();
+      expect(update.status).toBe('committed');
+      if (update.status === 'committed') {
+        expect(update.stability).toBeGreaterThan(0);
+        expect(Number.isFinite(update.stability)).toBeTruthy();
+      }
     });
 
     test('handles zero stability (edge case)', async () => {
@@ -438,9 +442,10 @@ describe('useFSRS Hook - Edge Cases', () => {
       });
 
       // Should not crash
-      const newStability = await result.current.updateWord(rootId(1), 'known');
+      const update = await result.current.updateWord(rootId(1), 'known');
 
-      expect(newStability).toBeGreaterThan(0);
+      expect(update.status).toBe('committed');
+      if (update.status === 'committed') expect(update.stability).toBeGreaterThan(0);
     });
   });
 
@@ -554,11 +559,11 @@ describe('useFSRS Hook - Edge Cases', () => {
         expect(result.current.currentWord).not.toBeNull();
       });
 
-      await expect(
-        act(async () => {
-          await result.current.updateWord(rootId(1), 'known');
-        }),
-      ).rejects.toThrow('Callback error');
+      await act(async () => {
+        await expect(result.current.updateWord(rootId(1), 'known')).resolves.toEqual(
+          expect.objectContaining({ status: 'committed' }),
+        );
+      });
 
       expect(onComplete).toHaveBeenCalledTimes(1);
     });

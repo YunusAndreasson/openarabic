@@ -1,6 +1,13 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import { AppState, Linking, Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -44,7 +51,7 @@ import {
 import { useColors } from '@/hooks/theme/useColors';
 import { useTutorial } from '@/hooks/tutorials/useTutorial';
 import { useAppSelectorShallow } from '@/store/hooks';
-import { getDiagSnapshot, setDiagnosticsEnabled, subscribeDiag } from '@/utils/reviewDiagnostics';
+import { getDiagSnapshot, subscribeDiag } from '@/utils/reviewDiagnostics';
 
 const baseStyles = StyleSheet.create({
   container: {
@@ -153,16 +160,100 @@ function ReviewLoadingState({
   );
 }
 
+/**
+ * Owns the diagnostics-store subscription so counter/timeline updates repaint
+ * only this overlay, rather than the full review screen. The component is
+ * mounted only while the HUD is visible, so normal review sessions do not
+ * subscribe to diagnostics at all.
+ */
+function ReviewDebugHud({
+  insetTop,
+  modelLabel,
+  phase,
+  debug,
+}: {
+  insetTop: number;
+  modelLabel: string;
+  phase: string;
+  debug: ReturnType<typeof useVoiceReview>['debug'];
+}): JSX.Element {
+  const colors = useColors();
+  const diag = useSyncExternalStore(subscribeDiag, getDiagSnapshot, getDiagSnapshot);
+
+  return (
+    <View
+      pointerEvents="none"
+      style={[
+        voiceDebugStyles.container,
+        {
+          top: insetTop + LAYOUT.SPACING.LARGE * 2,
+          backgroundColor: colors.elevation3,
+          ...getElevation(colors, 'MODAL'),
+        },
+      ]}
+    >
+      <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
+        {`model: ${modelLabel}`}
+      </ThemedText>
+      <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
+        {`phase: ${phase}`}
+      </ThemedText>
+      {debug.recorder && (
+        <>
+          <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
+            {`rec: ${debug.recorder.stopReason} @${debug.recorder.stopDecidedAtMs}ms · dur ${debug.recorder.durationMs}ms · ${debug.recorder.bufferCount}buf · 1st ${debug.recorder.firstBufferMs ?? 'never'}ms`}
+          </ThemedText>
+          <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
+            {`peak ${debug.recorder.peakRms.toFixed(5)} · room ${debug.recorder.noiseFloorDb?.toFixed(0) ?? 'never'}dB · voice ${debug.recorder.speechMs}ms · ${debug.recorder.heardSpeech ? 'speech' : 'silent'}`}
+          </ThemedText>
+        </>
+      )}
+      {debug.transcript.length > 0 && (
+        <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
+          {`heard: "${debug.transcript}"`}
+        </ThemedText>
+      )}
+      {debug.match && (
+        <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
+          {`match: ${debug.match.matched ? '✓' : '✗'} ${debug.match.method} · sim ${debug.match.similarity.toFixed(2)} · expected "${debug.match.expected}"`}
+        </ThemedText>
+      )}
+      {debug.armError && (
+        <ThemedText colorName="error" type="caption" style={voiceDebugStyles.line}>
+          {`arm error: ${debug.armError}`}
+        </ThemedText>
+      )}
+      {/* A healthy session downloads nothing: everything was preloaded. */}
+      <ThemedText
+        colorName={diag.counters.networkDownloads > 0 ? 'error' : 'textTertiary'}
+        type="caption"
+        style={voiceDebugStyles.line}
+      >
+        {`net: ${diag.counters.networkDownloads} dl (${diag.counters.networkMs}ms, ${diag.counters.networkFailures} fail) · cache ${diag.counters.cacheHits}`}
+      </ThemedText>
+      <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
+        {`mic: ${diag.counters.micArms}ok/${diag.counters.micArmFailures}fail · open ${diag.counters.lastPromptToMicMs}ms (worst ${diag.counters.worstPromptToMicMs}ms)`}
+      </ThemedText>
+      {diag.tail.map(entry => (
+        <ThemedText
+          key={`${entry.at}-${entry.event}`}
+          colorName="textTertiary"
+          type="caption"
+          style={voiceDebugStyles.line}
+        >
+          {`Δ${entry.delta} ${entry.event}`}
+        </ThemedText>
+      ))}
+    </View>
+  );
+}
+
 // Main review content component (only rendered after tutorial is dismissed)
 function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element {
   const insets = useSafeAreaInsets();
   const colors = useColors();
   const voiceDebugEnabled = useAppSelectorShallow(state => state.settings.voiceDebugEnabled);
-
-  // Arm the pipeline timeline BEFORE useReview opens its session below — an
-  // effect would run too late and the session would never start. Writing a
-  // module boolean is idempotent, so a double render is harmless.
-  setDiagnosticsEnabled(__DEV__ || voiceDebugEnabled);
+  const diagnosticsEnabled = __DEV__ || voiceDebugEnabled;
 
   // Read before useReview: the review hook takes `setPlaybackPriority` from
   // here so the Arabic prompt can claim a full-volume playback session.
@@ -176,6 +267,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     isEmpty,
     progress,
     maxProgress,
+    gradeRecoveryEpoch,
     currentWordKey,
     revealAnswer,
     grade,
@@ -201,6 +293,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     fromRemember,
     setPlaybackPriority: voice.setPlaybackPriority,
     isMicStreamOpen: voice.isMicStreamOpen,
+    diagnosticsEnabled,
   });
 
   // A card is read, thought about, and sometimes spoken to — all of which the
@@ -311,6 +404,13 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     });
     return () => subscription.remove();
   }, []);
+
+  // A rejected grade keeps the same revealed card available for retry. Reset
+  // only the presentation started by the attempted grade; remounting the card
+  // would also run its new-word effect and incorrectly flip back to the prompt.
+  useLayoutEffect(() => {
+    if (gradeRecoveryEpoch > 0) cardRef.current?.resetGradePresentation();
+  }, [gradeRecoveryEpoch]);
 
   const gradeWithVerdict = useCallback(
     (confidence: WordConfidence, opts: { fromVoice?: boolean } = {}) => {
@@ -447,10 +547,6 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     void Linking.openSettings();
   }, []);
   const indicatorState = voiceActive ? voiceIndicatorState(voicePhase) : null;
-
-  // Live pipeline numbers for the debug HUD. Comes through the store hook
-  // rather than a getter call in render — see ReviewDiagSnapshot for why.
-  const diag = useSyncExternalStore(subscribeDiag, getDiagSnapshot, getDiagSnapshot);
 
   // "Forgot" from the bar never exits here: it opens a restudy hold, so the
   // card is staying put and throwing it off screen would be a lie. Its left
@@ -778,70 +874,18 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
           the user can see exactly what the pipeline is doing without leaving
           the screen. */}
       {voiceDebugEnabled && (
-        <View
-          pointerEvents="none"
-          style={[
-            voiceDebugStyles.container,
-            {
-              top: insets.top + LAYOUT.SPACING.LARGE * 2,
-              backgroundColor: colors.elevation3,
-              ...getElevation(colors, 'MODAL'),
-            },
-          ]}
-        >
-          <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
-            {`model: ${voice.isReady ? 'ready' : voice.error ? `error: ${voice.error}` : `${voiceModel.state} ${Math.round(voiceModel.progress * 100)}%`}`}
-          </ThemedText>
-          <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
-            {`phase: ${voicePhase}`}
-          </ThemedText>
-          {voiceDebug.recorder && (
-            <>
-              <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
-                {`rec: ${voiceDebug.recorder.stopReason} @${voiceDebug.recorder.stopDecidedAtMs}ms · dur ${voiceDebug.recorder.durationMs}ms · ${voiceDebug.recorder.bufferCount}buf · 1st ${voiceDebug.recorder.firstBufferMs ?? 'never'}ms`}
-              </ThemedText>
-              <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
-                {`peak ${voiceDebug.recorder.peakRms.toFixed(5)} · room ${voiceDebug.recorder.noiseFloorDb?.toFixed(0) ?? 'never'}dB · voice ${voiceDebug.recorder.speechMs}ms · ${voiceDebug.recorder.heardSpeech ? 'speech' : 'silent'}`}
-              </ThemedText>
-            </>
-          )}
-          {voiceDebug.transcript.length > 0 && (
-            <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
-              {`heard: "${voiceDebug.transcript}"`}
-            </ThemedText>
-          )}
-          {voiceDebug.match && (
-            <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
-              {`match: ${voiceDebug.match.matched ? '✓' : '✗'} ${voiceDebug.match.method} · sim ${voiceDebug.match.similarity.toFixed(2)} · expected "${voiceDebug.match.expected}"`}
-            </ThemedText>
-          )}
-          {voiceDebug.armError && (
-            <ThemedText colorName="error" type="caption" style={voiceDebugStyles.line}>
-              {`arm error: ${voiceDebug.armError}`}
-            </ThemedText>
-          )}
-          {/* A healthy session downloads nothing: everything was preloaded. */}
-          <ThemedText
-            colorName={diag.counters.networkDownloads > 0 ? 'error' : 'textTertiary'}
-            type="caption"
-            style={voiceDebugStyles.line}
-          >
-            {`net: ${diag.counters.networkDownloads} dl (${diag.counters.networkMs}ms, ${diag.counters.networkFailures} fail) · cache ${diag.counters.cacheHits}`}
-          </ThemedText>
-          <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
-            {`mic: ${diag.counters.micArms}ok/${diag.counters.micArmFailures}fail · open ${diag.counters.lastPromptToMicMs}ms (worst ${diag.counters.worstPromptToMicMs}ms)`}
-          </ThemedText>
-          {diag.tail.map(entry => (
-            <ThemedText
-              key={`${entry.at}-${entry.event}`}
-              colorName="textTertiary"
-              type="caption"
-              style={voiceDebugStyles.line}
-            >
-              {`Δ${entry.delta} ${entry.event}`}
-            </ThemedText>
-          ))}
-        </View>
+        <ReviewDebugHud
+          insetTop={insets.top}
+          modelLabel={
+            voice.isReady
+              ? 'ready'
+              : voice.error
+                ? `error: ${voice.error}`
+                : `${voiceModel.state} ${Math.round(voiceModel.progress * 100)}%`
+          }
+          phase={voicePhase}
+          debug={voiceDebug}
+        />
       )}
     </View>
   );

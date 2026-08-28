@@ -31,7 +31,7 @@ const BATCH_DELAY = 100;
 interface UseAudioPreloaderReturn {
   /** True only while the first card's audio is being fetched. Blocks the UI. */
   isPreloading: boolean;
-  /** Percentage across ALL session files, including the background ones. */
+  /** Percentage across the first card's blocking audio files. */
   progress: number;
   /**
    * The session may start: the first card's audio is cached (or gave up).
@@ -121,8 +121,12 @@ export const useAudioPreloader = (
       const localPath = await audioCache.getAudio(url);
       // A failed download resolves to the remote url itself, which is not a
       // cached file and must not be recorded as one — the play path's self-heal
-      // is gated on the two differing.
-      if (localPath !== url) resolvedPathsRef.current.set(url, localPath);
+      // is gated on the two differing. Guard the value as well: although the
+      // cache contract returns a string, an invalid native/mock result should
+      // be treated as a miss rather than passed into expo-audio.
+      if (!localPath || localPath === url) return;
+
+      resolvedPathsRef.current.set(url, localPath);
       try {
         // Buffer in native memory for near-instant playback
         await preload(localPath);
@@ -156,8 +160,6 @@ export const useAudioPreloader = (
       urls: string[],
       isStale: () => boolean,
       deadlineMs: number,
-      /** Progress tick. Omitted by the top-up, which nothing is waiting on. */
-      onOne?: () => void,
     ): Promise<{ batched: number; abandoned: boolean; deadlineHit: boolean }> => {
       let deadlineHit = false;
       const deadline = setTimeout(() => {
@@ -173,7 +175,7 @@ export const useAudioPreloader = (
           batched += Math.min(BATCH_SIZE, urls.length - i);
 
           const batch = urls.slice(i, i + BATCH_SIZE);
-          await Promise.all(batch.map(url => cacheOne(url).then(() => onOne?.())));
+          await Promise.all(batch.map(cacheOne));
 
           if (!deadlineHit && i + BATCH_SIZE < urls.length) {
             await new Promise<void>(resolve => setTimeout(resolve, BATCH_DELAY));
@@ -203,6 +205,7 @@ export const useAudioPreloader = (
       // previous `includes` scan re-walked the whole list for every file, and
       // the two partitioning filters below did it twice more.
       const audioUrls = [...new Set(words.flatMap(audioUrlsForWord))];
+      const totalUrls = audioUrls.length;
 
       if (audioUrls.length === 0) {
         setIsPreloading(false);
@@ -210,19 +213,24 @@ export const useAudioPreloader = (
         return;
       }
 
-      const totalUrls = audioUrls.length;
-      let completedUrls = 0;
-      const trackProgress = (): void => {
-        completedUrls++;
-        if (!isStale()) setProgress((completedUrls / totalUrls) * 100);
-      };
-
       // The first card's own files — the only ones the user is actually waiting
       // on. Everything else is prefetch for cards they haven't reached yet.
       const firstWord = words[0];
       const priorityUrls = firstWord ? audioUrlsForWord(firstWord) : [];
       const priority = new Set(priorityUrls);
       const backgroundUrls = audioUrls.filter(url => !priority.has(url));
+
+      // React state reflects only work that can keep the loading screen visible.
+      // Background files are deliberately absent: publishing each completion
+      // would rerender the review screen after the session had already started.
+      let priorityCompleted = 0;
+      let isBlockingFirstCard = true;
+      const trackPriorityProgress = (): void => {
+        priorityCompleted++;
+        if (!isStale() && isBlockingFirstCard) {
+          setProgress((priorityCompleted / priorityUrls.length) * 100);
+        }
+      };
 
       diagMark('preload.start', {
         words: words.length,
@@ -242,10 +250,11 @@ export const useAudioPreloader = (
         });
         try {
           await Promise.race([
-            Promise.all(priorityUrls.map(url => cacheOne(url).then(trackProgress))),
+            Promise.all(priorityUrls.map(url => cacheOne(url).then(trackPriorityProgress))),
             deadline,
           ]);
         } finally {
+          isBlockingFirstCard = false;
           if (deadlineTimer) clearTimeout(deadlineTimer);
         }
       }
@@ -266,11 +275,10 @@ export const useAudioPreloader = (
         backgroundUrls,
         isStale,
         PRELOAD_DEADLINE_MS,
-        trackProgress,
       );
       endAll({ files: batched, of: backgroundUrls.length, abandoned, deadlineHit });
     },
-    [cacheInBatches],
+    [cacheInBatches, cacheOne],
   );
 
   /**
@@ -315,7 +323,7 @@ export const useAudioPreloader = (
   // Effect: Preload audio when session starts
   useEffect(() => {
     const shouldPreload =
-      wordQueue && wordQueue.length > 0 && !isPreloading && !isSessionComplete && !isReady;
+      wordQueue.length > 0 && !isPreloading && !isSessionComplete && !isReady;
 
     if (!shouldPreload) return;
 
@@ -331,7 +339,19 @@ export const useAudioPreloader = (
     lastPreloadedWordsRef.current = currentWords;
     wordQueue.forEach(word => preloadedIdsRef.current.add(word.root_id));
 
-    preloadSessionAudio(wordQueue);
+    const preloadPromise = preloadSessionAudio(wordQueue);
+    // preloadSessionAudio increments the run id synchronously before its first
+    // await, so this identifies exactly the detached pass we just launched.
+    const runId = runIdRef.current;
+    void preloadPromise.catch(error => {
+      diagMark('preload.error', {
+        message: error instanceof Error ? error.message : String(error),
+      });
+      if (runId === runIdRef.current) {
+        setIsPreloading(false);
+        setIsReady(true);
+      }
+    });
   }, [wordQueue, isPreloading, isSessionComplete, isReady, preloadSessionAudio]);
 
   // Effect: cache words that joined the queue after the session started.
@@ -347,7 +367,11 @@ export const useAudioPreloader = (
     if (fresh.length === 0) return;
 
     fresh.forEach(word => preloadedIdsRef.current.add(word.root_id));
-    void topUpSessionAudio(fresh);
+    void topUpSessionAudio(fresh).catch(error => {
+      diagMark('preload.topup-error', {
+        message: error instanceof Error ? error.message : String(error),
+      });
+    });
   }, [wordQueue, isReady, isSessionComplete, topUpSessionAudio]);
 
   // Reset preload flag and clear native preloaded sources when session completes
@@ -380,8 +404,9 @@ export const useAudioPreloader = (
 
   // Unmount: stop the background loop so it can't outlive the review screen.
   useEffect(() => {
+    const runId = runIdRef;
     return () => {
-      runIdRef.current++;
+      runId.current++;
     };
   }, []);
 
