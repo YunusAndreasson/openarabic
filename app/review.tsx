@@ -520,7 +520,11 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     voiceEnabled,
     micDenied: voicePhase === 'denied',
     model: voiceModel,
-    engine: { isReady: voice.isReady, isWarming: voice.isWarming, error: null },
+    engine: {
+      isReady: voice.isReady,
+      isWarming: voice.isWarming,
+      error: voice.error ? new Error(voice.error) : null,
+    },
   });
 
   // NO mid-card latch, and that is a deliberate simplification. The worry was a

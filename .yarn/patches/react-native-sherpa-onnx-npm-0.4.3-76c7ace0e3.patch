@@ -1,0 +1,35 @@
+diff --git a/android/src/main/java/com/sherpaonnx/SherpaOnnxSttHelper.kt b/android/src/main/java/com/sherpaonnx/SherpaOnnxSttHelper.kt
+index 5df6a93c8f0dfb02150568a917b578302c2a7adb..13208b96d585d81f663802beacdde26f25b25ea8 100644
+--- a/android/src/main/java/com/sherpaonnx/SherpaOnnxSttHelper.kt
++++ b/android/src/main/java/com/sherpaonnx/SherpaOnnxSttHelper.kt
+@@ -170,7 +170,13 @@ internal class SherpaOnnxSttHelper(
+     bpeVocab: String?,
+     promise: Promise
+   ) {
+-    try {
++    // TurboModules may invoke this method synchronously through JSI. Model
++    // detection and config construction both touch the model files and can be
++    // expensive, so moving only OfflineRecognizer construction off-thread is
++    // too late: JavaScript timers and navigation can remain blocked before this
++    // method returns. Queue the complete initialization pipeline instead.
++    fun initializeOnBackgroundThread() {
++      try {
+       val modelDirFile = File(modelDir)
+       if (!modelDirFile.exists()) {
+         val errorMsg = "Model directory does not exist: $modelDir"
+@@ -309,10 +315,12 @@ internal class SherpaOnnxSttHelper(
+           promise.reject("INIT_ERROR", errorMsg, e)
+         }
+       }
+-    } catch (e: Exception) {
+-      val errorMsg = "Exception during initialization: ${e.message ?: e.javaClass.simpleName}"
+-      Log.e(logTag, errorMsg, e)
+-      promise.reject("INIT_ERROR", errorMsg, e)
++      } catch (e: Exception) {
++        val errorMsg = "Exception during initialization: ${e.message ?: e.javaClass.simpleName}"
++        Log.e(logTag, errorMsg, e)
++        promise.reject("INIT_ERROR", errorMsg, e)
++      }
+     }
++    initHandler.post(::initializeOnBackgroundThread)
+   }

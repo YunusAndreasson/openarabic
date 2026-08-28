@@ -20,6 +20,7 @@ import type { Article } from '@/types/articles.types';
 import type { ArticleId } from '@/types/branded.types';
 import { getBeginnerArticles, getRandomItems } from '@/utils/articleUtils';
 import { breadcrumb, handleError, toError } from '@/utils/errorHandling';
+import { generateStorageUrl } from '@/utils/storageUtils';
 import { MAX_FEATURED_ARTICLES } from '@/hooks/articles/useMultipleFeaturedArticles';
 
 /**
@@ -225,7 +226,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
 
             // Prefetch images and details for featured articles with error handling
             const imagePrefetches = featured
-              .map(a => String(a.image_url))
+              .map(a => generateStorageUrl('images', a.image_url))
               .filter(Boolean)
               .map(url => Image.prefetch(url, { cachePolicy: 'memory-disk' }).catch(() => null)); // Silently handle prefetch failures
 
@@ -265,7 +266,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
             );
             if (readingList.length > 0) {
               const imagePrefetches = readingList
-                .map(item => String(item.articles.image_url))
+                .map(item => generateStorageUrl('images', item.articles.image_url))
                 .filter(Boolean)
                 .map(url => Image.prefetch(url, { cachePolicy: 'memory-disk' }).catch(() => null));
 

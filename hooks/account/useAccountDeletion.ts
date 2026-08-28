@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
+import { useAuth } from '@/hooks/auth';
 import { useMountSafety } from '@/hooks/common/useMountSafety';
 import { analytics } from '@/services/analytics';
 import { AccountDeletionService } from '@/services/accountDeletion';
@@ -30,8 +31,9 @@ export interface UseAccountDeletionReturn {
  * Supports all auth types including private relay emails
  */
 export function useAccountDeletion(): UseAccountDeletionReturn {
+  const { user } = useAuth();
   // Form state
-  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [fetchedUserEmail, setFetchedUserEmail] = useState<string | null>(null);
   const [confirmationText, setConfirmationText] = useState('');
   const [loading, setLoading] = useState(false);
   const [confirmationError, setConfirmationError] = useState('');
@@ -41,14 +43,15 @@ export function useAccountDeletion(): UseAccountDeletionReturn {
 
   // Fetch user email on mount
   useEffect(() => {
+    if (user?.email) return;
     const fetchEmail = async () => {
       const email = await AccountDeletionService.getCurrentUserEmail();
       if (isMountedRef.current) {
-        setUserEmail(email);
+        setFetchedUserEmail(email);
       }
     };
-    fetchEmail();
-  }, [isMountedRef]);
+    void fetchEmail();
+  }, [isMountedRef, user?.email]);
 
   /**
    * Validates confirmation text matches "DELETE"
@@ -127,7 +130,7 @@ export function useAccountDeletion(): UseAccountDeletionReturn {
 
   return {
     // State
-    userEmail,
+    userEmail: user?.email ?? fetchedUserEmail,
     confirmationText,
     setConfirmationText,
     loading,

@@ -496,19 +496,34 @@ export async function ensureMicPermission(): Promise<boolean> {
   // afterwards, and `openInternal` re-checks permission on every reopen. Both
   // platforms terminate the app when the user revokes a permission from
   // Settings, so a cached grant cannot outlive the truth.
-  if (permissionGranted) return true;
-  const current = await AudioManager.checkRecordingPermissions();
-  if (current === 'Granted') {
-    permissionGranted = true;
-    return true;
-  }
-  const requested = await AudioManager.requestRecordingPermissions();
-  permissionGranted = requested === 'Granted';
-  return permissionGranted;
+  if (permissionDecision !== null) return permissionDecision;
+  if (permissionRequestInFlight) return permissionRequestInFlight;
+
+  permissionRequestInFlight = (async () => {
+    const current = await AudioManager.checkRecordingPermissions();
+    if (current === 'Granted') {
+      permissionDecision = true;
+      return true;
+    }
+    const requested = await AudioManager.requestRecordingPermissions();
+    permissionDecision = requested === 'Granted';
+    return permissionDecision;
+  })().finally(() => {
+    permissionRequestInFlight = null;
+  });
+  return permissionRequestInFlight;
 }
 
-/** Set once the OS has said yes; see ensureMicPermission for why it sticks. */
-let permissionGranted = false;
+/** Set once the OS has answered; a denied tap must not immediately prompt a
+ * second time when the capture-open path performs its own permission check. */
+let permissionDecision: boolean | null = null;
+let permissionRequestInFlight: Promise<boolean> | null = null;
+
+/** Test seam for the process-wide permission cache. */
+export function __resetMicPermissionForTests(): void {
+  permissionDecision = null;
+  permissionRequestInFlight = null;
+}
 
 /**
  * Claim the audio session the review screen needs for its whole life: playback

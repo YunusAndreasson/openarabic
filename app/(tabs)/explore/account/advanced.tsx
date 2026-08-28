@@ -56,7 +56,11 @@ const AdvancedScreen: FC = () => {
       voiceEnabled: voice.enabled,
       micDenied: false,
       model,
-      engine: { isReady: voice.isReady, isWarming: voice.isWarming, error: null },
+      engine: {
+        isReady: voice.isReady,
+        isWarming: voice.isWarming,
+        error: voice.error ? new Error(voice.error) : null,
+      },
     });
     switch (readiness.kind) {
       case 'off':

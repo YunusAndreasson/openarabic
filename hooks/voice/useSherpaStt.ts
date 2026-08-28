@@ -38,6 +38,31 @@ import { voiceBreadcrumb } from '@/utils/errorHandling';
  *  build. Half a second at 16 kHz — enough to execute the full pipeline,
  *  short enough that the warm-up itself is cheap. */
 const WARMUP_SAMPLE_COUNT = TARGET_SAMPLE_RATE / 2;
+/** A native engine build must settle into ready or failed; never spin forever. */
+export const VOICE_ENGINE_LOAD_TIMEOUT_MS = 45_000;
+
+export async function createEngineWithTimeout(
+  create: () => Promise<SttEngine>,
+  timeoutMs = VOICE_ENGINE_LOAD_TIMEOUT_MS,
+): Promise<SttEngine> {
+  const pending = create();
+  let timer!: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      // Native creation cannot be cancelled. If it eventually returns after
+      // the UI has failed closed, release that orphan rather than leaking
+      // ~100 MB.
+      void pending.then(engine => engine.destroy()).catch(() => undefined);
+      reject(new Error(`Voice engine did not load within ${Math.round(timeoutMs / 1000)} seconds`));
+    }, timeoutMs);
+  });
+
+  try {
+    return await Promise.race([pending, timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 /**
  * Copy a waveform into the plain `number[]` the native bridge takes.
@@ -101,11 +126,13 @@ function useSherpaStt({
       voiceBreadcrumb('voice.engine.load.start', { modelId: PARAKEET_MODEL_ID });
 
       try {
-        const engine = await createSTT({
-          modelPath: { type: 'file', path: modelPath },
-          modelType,
-          numThreads,
-        });
+        const engine = await createEngineWithTimeout(() =>
+          createSTT({
+            modelPath: { type: 'file', path: modelPath },
+            modelType,
+            numThreads,
+          }),
+        );
         // The hook can unmount while `createSTT` is still resolving. The engine
         // that arrives afterwards is real and holds native memory, so it has to
         // be destroyed rather than dropped.
@@ -119,14 +146,7 @@ function useSherpaStt({
         // Run one throwaway inference before announcing readiness. Creating the
         // engine does not build the ONNX execution graph — the FIRST
         // transcribeSamples() does, and that cost lands inside the learner's
-        // "Grading…" wait on the first card of every session. Measured on the
-        // Android emulator: 2949 ms for the first transcription vs ~1150 ms for
-        // every subsequent one on comparable audio. Paying it here costs nothing
-        // (the model has only just finished loading and no card is waiting).
-        //
-        // Deliberately before setReady(true): while this runs the UI still says
-        // "Preparing voice…", which is true. Failures are swallowed — a model
-        // that cannot warm up is still worth trying on real speech.
+        // "Grading…" wait on the first card of every session.
         try {
           const endWarmup = diagSpan('stt.warmup');
           await engine.transcribeSamples(

@@ -300,6 +300,7 @@
       "./plugins/withRemoveExpoAudioBootReceiver.js",
       "./plugins/withDisableAudioapiFFmpeg.js",
       "./plugins/withGoogleModularHeaders.js",
+      "./plugins/withPracticeBadgeDescription.js",
       [
         "react-native-audio-api",
         {

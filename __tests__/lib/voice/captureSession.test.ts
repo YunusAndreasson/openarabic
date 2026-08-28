@@ -12,7 +12,12 @@
  */
 import { describe, expect, jest, beforeEach, test } from '@jest/globals';
 
-import { DEFAULT_RECORDING_CONFIG, VoiceCaptureSession } from '@/lib/voice/recording';
+import {
+  __resetMicPermissionForTests,
+  DEFAULT_RECORDING_CONFIG,
+  ensureMicPermission,
+  VoiceCaptureSession,
+} from '@/lib/voice/recording';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { __mocks } = require('react-native-audio-api');
@@ -29,6 +34,7 @@ function recorder() {
 describe('VoiceCaptureSession', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    __resetMicPermissionForTests();
     __mocks.resetRecorders();
     // clearAllMocks wipes the default resolutions on the shared AudioManager
     // mock, and an unresolved permission check reads as a denial.
@@ -60,6 +66,36 @@ describe('VoiceCaptureSession', () => {
     ]);
 
     expect(__mocks.recorderCount()).toBe(1);
+  });
+
+  test('concurrent permission callers share one system prompt', async () => {
+    __mocks.AudioManager.checkRecordingPermissions.mockResolvedValue('Undetermined');
+    let answer: (value: string) => void = () => {};
+    __mocks.AudioManager.requestRecordingPermissions.mockReturnValue(
+      new Promise(resolve => {
+        answer = resolve;
+      }),
+    );
+
+    const prewarm = ensureMicPermission();
+    const captureOpen = ensureMicPermission();
+    await Promise.resolve();
+
+    expect(__mocks.AudioManager.requestRecordingPermissions).toHaveBeenCalledTimes(1);
+    answer('Denied');
+    await expect(Promise.all([prewarm, captureOpen])).resolves.toEqual([false, false]);
+    expect(__mocks.AudioManager.requestRecordingPermissions).toHaveBeenCalledTimes(1);
+  });
+
+  test('a denied permission decision is not requested again in the same process', async () => {
+    __mocks.AudioManager.checkRecordingPermissions.mockResolvedValue('Undetermined');
+    __mocks.AudioManager.requestRecordingPermissions.mockResolvedValue('Denied');
+
+    await expect(ensureMicPermission()).resolves.toBe(false);
+    await expect(ensureMicPermission()).resolves.toBe(false);
+
+    expect(__mocks.AudioManager.checkRecordingPermissions).toHaveBeenCalledTimes(1);
+    expect(__mocks.AudioManager.requestRecordingPermissions).toHaveBeenCalledTimes(1);
   });
 
   test('idles the stream until a card asks for it', async () => {

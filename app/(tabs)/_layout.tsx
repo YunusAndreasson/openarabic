@@ -102,7 +102,7 @@ export default function TabLayout(): JSX.Element {
       rippleColor={colors.navigationRipple}
     >
       {TAB_SCREENS.map(screen => (
-        <NativeTabs.Trigger key={screen.name} name={screen.name}>
+        <NativeTabs.Trigger key={screen.name} name={screen.name} accessibilityLabel={screen.title}>
           <NativeTabs.Trigger.Icon
             sf={screen.icon.sf}
             src={{

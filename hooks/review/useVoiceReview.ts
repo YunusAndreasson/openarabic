@@ -297,6 +297,10 @@ export function useVoiceReview({
 
   // Bumped by every path that asks for the mic, so the arm effect re-runs.
   const [attempt, setAttempt] = useState(0);
+  // Opening the capture session is itself microphone use (and lights the OS
+  // privacy indicator), so it must be downstream of an explicit voice action.
+  // Once requested, keep it warm for the remainder of this review session.
+  const [sessionRequested, setSessionRequested] = useState(false);
   /**
    * The learner has asked for the mic and the effect may arm exactly once.
    *
@@ -461,26 +465,14 @@ export function useVoiceReview({
   // `prewarmPermission` is latched once per provider lifetime, so the first tap
   // pays the dialog and no later card ever does.
 
-  // Claim the microphone for the whole session, not per card. This opens the
-  // input stream and the record-capable audio session once, up front, while the
-  // first card's audio is still preloading — so by the time the first prompt
-  // ends there is nothing left to set up and arming is a `resume()`.
-  //
-  // The session costs nothing while no window is open, so it is claimed for
-  // every card whether or not the learner ever taps "Speak to answer".
-  //
-  // Gated on `isReady` as well as the setting. It used to key on the setting
-  // alone, which was harmless while voice was opt-in and a learner who had
-  // turned it on always had the model. Now that it ships ON, a first session
-  // runs with the recognizer still downloading — and claiming the microphone
-  // there put the OS "app is using your mic" indicator on screen for a feature
-  // that could not possibly run yet. Holding an input stream open for nothing
-  // is bad on its own; looking like you are listening when you cannot even
-  // grade is worse.
+  // Keep the input warm after the learner has asked to speak, but never acquire
+  // it merely because the review screen mounted. `acquireSession()` opens a
+  // real native input stream; doing that before intent both triggered the OS
+  // prompt and lit the microphone privacy indicator behind an idle button.
   useEffect(() => {
-    if (!voiceEnabled || !voice.isReady) return;
+    if (!voiceEnabled || !voice.isReady || !sessionRequested) return;
     return acquireSession();
-  }, [voiceEnabled, voice.isReady, acquireSession]);
+  }, [voiceEnabled, voice.isReady, sessionRequested, acquireSession]);
 
   // Track whether the recognizer is genuinely on its way, as distinct from any
   // other not-ready state (a load error being the one that matters).
@@ -495,8 +487,14 @@ export function useVoiceReview({
   // band by `voiceButtonMode`, which reads the model state directly.
   useEffect(() => {
     if (!voiceEnabled) return;
-    if (voice.isReady) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (voice.isReady) {
+      // Loading is a transient readiness phase. Once the engine arrives, put
+      // the action back into its tappable idle state; returning here used to
+      // strand the button on "Preparing…" despite a usable recognizer.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPhase(current => (current === 'loading' ? 'idle' : current));
+      return;
+    }
     setPhase(voice.isWarming ? 'loading' : 'idle');
   }, [voiceEnabled, voice.isWarming, voice.isReady]);
 
@@ -1002,6 +1000,7 @@ export function useVoiceReview({
     // handles a refusal, and blocking the tap on the dialog would cost the
     // learner the beat they just decided to spend speaking.
     void prewarmPermission();
+    setSessionRequested(true);
     diagMark('mic.speakNow', { phase: phaseRef.current });
     // The tap is now the only way to arm, so this stop runs on every card —
     // and on any card where the learner is quick, it is what truncates the

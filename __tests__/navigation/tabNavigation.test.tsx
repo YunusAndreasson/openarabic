@@ -27,7 +27,13 @@ jest.mock('expo-router/unstable-native-tabs', () => {
   const NativeTabs = ({ children }: { children: React.ReactNode }) => {
     const triggers = React.Children.toArray(children).filter(
       (child: any) => child?.props?.name,
-    ) as Array<React.ReactElement<{ name: string; children: React.ReactNode }>>;
+    ) as Array<
+      React.ReactElement<{
+        name: string;
+        children: React.ReactNode;
+        accessibilityLabel?: string;
+      }>
+    >;
 
     const [activeName, setActiveName] = React.useState(triggers[0]?.props.name ?? 'explore');
     const Active = getScreens()[activeName];
@@ -51,6 +57,7 @@ jest.mock('expo-router/unstable-native-tabs', () => {
         {
           key: child.props.name,
           testID: `tab-${child.props.name}`,
+          accessibilityLabel: child.props.accessibilityLabel,
           onPress: () => setActiveName(child.props.name),
         },
         React.createElement(Text, null, title),
@@ -324,6 +331,20 @@ describe('Tab navigation', () => {
       expect(getByTestId('tab-badge')).toBeDefined();
     });
     expect(getByTestId('tab-badge').props.children).toBe('3');
+    expect(getByTestId('tab-practice').props.accessibilityLabel).toBe('Practice');
+  });
+
+  test('keeps the practice label stable while the native badge supplies its due-word meaning', () => {
+    mockUseFSRSQueries.mockReturnValue({
+      dueWords: [createTestWord()],
+      isLoading: false,
+      isFetching: false,
+      error: null,
+    });
+
+    const { getByTestId } = render(<TabLayout />, { wrapper: createWrapper() });
+
+    expect(getByTestId('tab-practice').props.accessibilityLabel).toBe('Practice');
   });
 
   test('does not show memory capacity badge when no words are due', async () => {
