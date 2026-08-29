@@ -11,7 +11,7 @@
     "start": "expo start -c",
     "dev": "./scripts/dev-android.sh",
     "test": "jest --onlyChanged --bail=1 --maxWorkers=75% --testTimeout=10000",
-    "test:all": "jest --randomize --showSeed --maxWorkers=75% --testTimeout=10000",
+    "test:all": "jest --randomize --showSeed --maxWorkers=75% --testTimeout=10000 --forceExit",
     "test:changed": "jest --onlyChanged --bail=1 --maxWorkers=75% --testTimeout=10000",
     "test:watch": "jest --watch --maxWorkers=50% --testTimeout=10000",
     "test:coverage": "jest --coverage --maxWorkers=100% --testTimeout=10000",
