@@ -1,7 +1,7 @@
 {
   "name": "OpenArabic",
   "main": "expo-router/entry",
-  "version": "1448.3.8+265",
+  "version": "1448.3.9+266",
   "scripts": {
     "eas-build-pre-install": "corepack enable",
     "lint:fix": "eslint . --fix --cache",
