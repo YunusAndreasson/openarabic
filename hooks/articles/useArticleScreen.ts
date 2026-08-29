@@ -62,6 +62,7 @@ export function useArticleScreen({
     isLoadingArticle,
     sortedSentences,
     sentenceWordsMap,
+    selectedWordIds,
     refetchStudyWords,
     isLoadingStudyWords,
     isInReadingList,
@@ -81,9 +82,6 @@ export function useArticleScreen({
       void markOnboardingStep(OnboardingStep.READ_TEXT);
     }
   }, [article]);
-
-  // Current sentence index for reading progress
-  const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
 
   // Article mutations - using focused hooks directly
   const { handleToggleReadingList } = useReadingListMutations(refetchReadingListStatus);
@@ -150,17 +148,20 @@ export function useArticleScreen({
     } else {
       router.push(ROUTE_PATHS.EXPLORE_TAB);
     }
-  }, [stopNonPlaylistAudioSafely]);
+  }, []);
 
   // Reading progress
   const isActive = Boolean(article) && !isLoadingArticle;
-  const { isInitialProgressReady, initialLastSentenceRead, hadExistingProgressOnMount } =
-    useReadingProgress({
-      articleId: articleId ?? (0 as ArticleId),
-      totalSentences: sortedSentences?.length ?? 0,
-      currentSentenceIndex,
-      isActive,
-    });
+  const {
+    isInitialProgressReady,
+    initialLastSentenceRead,
+    hadExistingProgressOnMount,
+    scheduleProgressUpdate,
+  } = useReadingProgress({
+    articleId: articleId ?? (0 as ArticleId),
+    totalSentences: sortedSentences?.length ?? 0,
+    isActive,
+  });
 
   // Track current sentence for reading progress
   const scrollViewRef = useRef<FlashListRef<Tables<'article_sentences'>> | null>(null);
@@ -216,11 +217,11 @@ export function useArticleScreen({
         const newHighWater = Math.max(highWaterMarkRef.current, maxVisibleSentenceIndex);
         if (newHighWater !== highWaterMarkRef.current) {
           highWaterMarkRef.current = newHighWater;
-          setCurrentSentenceIndex(newHighWater);
+          scheduleProgressUpdate(newHighWater);
         }
       }
     },
-    [sortedSentences?.length],
+    [sortedSentences?.length, scheduleProgressUpdate],
   );
 
   // Handle scroll end - placeholder for ArticleContent onMomentumScrollEnd prop
@@ -333,8 +334,8 @@ export function useArticleScreen({
     article,
     sortedSentences,
     sentenceWordsMap,
+    selectedWordIds,
     isInReadingList,
-    currentSentenceIndex,
     scrollViewRef,
     activeTooltip,
     wordDetailsModal,

@@ -5,6 +5,7 @@ import { useToast } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { OnboardingStep } from '@/constants/onboarding';
 import { fsrsQueries } from '@/constants/queries';
+import { STARTER_WORD_COUNT } from '@/constants/starterWords';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useDailyWordLimit } from '@/hooks/vocabulary';
@@ -16,8 +17,12 @@ import { handleError } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
 import { markOnboardingStep } from '@/utils/onboardingStorage';
 
-/** Number of common words to add (matches the default daily word limit) */
-const COMMON_WORDS_COUNT = 10;
+/**
+ * Number of common words to add (matches the default daily word limit).
+ * Sourced from the starter-deck constant so the count and the curated list
+ * cannot drift apart.
+ */
+const COMMON_WORDS_COUNT = STARTER_WORD_COUNT;
 
 // NB: this bulk path skips the due-backlog gate on purpose — its only consumer
 // is the practice empty state, shown when the user has no study words at all.

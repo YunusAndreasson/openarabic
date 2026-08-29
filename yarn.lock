@@ -12337,7 +12337,7 @@ __metadata:
 
 "react-native-sherpa-onnx@patch:react-native-sherpa-onnx@npm%3A0.4.3#~/.yarn/patches/react-native-sherpa-onnx-npm-0.4.3-76c7ace0e3.patch":
   version: 0.4.3
-  resolution: "react-native-sherpa-onnx@patch:react-native-sherpa-onnx@npm%3A0.4.3#~/.yarn/patches/react-native-sherpa-onnx-npm-0.4.3-76c7ace0e3.patch::version=0.4.3&hash=e344bb"
+  resolution: "react-native-sherpa-onnx@patch:react-native-sherpa-onnx@npm%3A0.4.3#~/.yarn/patches/react-native-sherpa-onnx-npm-0.4.3-76c7ace0e3.patch::version=0.4.3&hash=bbb4bf"
   dependencies:
     "@kesha-antonov/react-native-background-downloader": "npm:^4.5.4"
     buffer: "npm:^6.0.3"

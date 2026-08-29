@@ -89,6 +89,14 @@ describe('SkiaArabicWord Component', () => {
   });
 
   describe('Basic Rendering', () => {
+    test('uses controlled selection without mounting a word-level query observer', () => {
+      const word = createMockWord();
+
+      render(<SkiaArabicWord word={word} isSelected={true} testID="word" />);
+
+      expect(useArabicWord).not.toHaveBeenCalled();
+    });
+
     test('renders Skia Canvas for Arabic text', () => {
       const word = createMockWord({ word_form: 'كتاب' });
       const { getByTestId } = render(<SkiaArabicWord word={word} testID="arabic-word-1" />);

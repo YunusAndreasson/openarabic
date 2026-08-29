@@ -143,6 +143,7 @@ interface ArticleContentProps {
   onClose: () => void;
   // FlashList ready callback for scroll-to-position
   onFlashListLoad: () => void;
+  selectedRootIds: ReadonlySet<number>;
 }
 
 const ArticleContentInternal = function ArticleContent({
@@ -161,6 +162,7 @@ const ArticleContentInternal = function ArticleContent({
   onToggleListen,
   onClose,
   onFlashListLoad,
+  selectedRootIds,
 }: ArticleContentProps) {
   const insets = useSafeAreaInsets();
 
@@ -304,7 +306,7 @@ const ArticleContentInternal = function ArticleContent({
               alwaysBounceVertical={true}
               bounces={true}
               overScrollMode="always"
-              extraData={colors.text}
+              extraData={selectedRootIds}
               onLoad={onFlashListLoad}
             />
           </View>

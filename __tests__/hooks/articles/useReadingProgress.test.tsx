@@ -106,7 +106,6 @@ describe('useReadingProgress', () => {
           useReadingProgress({
             articleId: testArticleId,
             totalSentences: 10,
-            currentSentenceIndex: 0,
             isActive: true,
           }),
         { wrapper },
@@ -122,8 +121,8 @@ describe('useReadingProgress', () => {
     });
   });
 
-  describe('Cache Invalidation', () => {
-    test('should invalidate reading progress queries on successful mutation', async () => {
+  describe('Cache Updates', () => {
+    test('updates bulk progress locally without refetching it', async () => {
       // Mock successful update (updateProgress returns void)
       mockReadingProgressService.updateProgress.mockResolvedValue(undefined);
 
@@ -145,7 +144,6 @@ describe('useReadingProgress', () => {
           useReadingProgress({
             articleId: testArticleId,
             totalSentences: 10,
-            currentSentenceIndex: 0,
             isActive: true,
           }),
         { wrapper },
@@ -164,13 +162,14 @@ describe('useReadingProgress', () => {
         await waitFor(() => expect(mockReadingProgressService.updateProgress).toHaveBeenCalled());
       });
 
-      // Verify cache invalidation happened with correct query keys
-      expect(invalidateQueriesSpy).toHaveBeenCalledWith({
-        queryKey: readingProgressQueries.bulk(testUserId).queryKey,
-      });
-
-      // Should have been called exactly once (for bulk progress)
-      expect(invalidateQueriesSpy).toHaveBeenCalledTimes(1);
+      expect(invalidateQueriesSpy).not.toHaveBeenCalled();
+      expect(
+        queryClient
+          .getQueryData<Map<ArticleId, ReadingProgress>>(
+            readingProgressQueries.bulk(testUserId).queryKey,
+          )
+          ?.get(testArticleId)?.last_sentence_read,
+      ).toBe(7);
 
       invalidateQueriesSpy.mockRestore();
     });
@@ -198,7 +197,6 @@ describe('useReadingProgress', () => {
           useReadingProgress({
             articleId: testArticleId,
             totalSentences: 10,
-            currentSentenceIndex: 0,
             isActive: true,
           }),
         { wrapper },
@@ -225,6 +223,42 @@ describe('useReadingProgress', () => {
   });
 
   describe('Mutation Flow', () => {
+    test('coalesces visible sentences into one latest-position write', async () => {
+      const { result } = renderHook(
+        () =>
+          useReadingProgress({
+            articleId: testArticleId,
+            totalSentences: 10,
+            isActive: true,
+          }),
+        { wrapper },
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      mockReadingProgressService.updateProgress.mockClear();
+
+      jest.useFakeTimers();
+      try {
+        act(() => {
+          result.current.scheduleProgressUpdate(6);
+          result.current.scheduleProgressUpdate(8);
+        });
+
+        expect(mockReadingProgressService.updateProgress).not.toHaveBeenCalled();
+
+        await act(async () => {
+          jest.advanceTimersByTime(500);
+          await Promise.resolve();
+        });
+
+        expect(mockReadingProgressService.updateProgress).toHaveBeenCalledTimes(1);
+        expect(mockReadingProgressService.updateProgress).toHaveBeenCalledWith(
+          expect.objectContaining({ lastSentenceRead: 8 }),
+        );
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
     test('should successfully update reading progress when active', async () => {
       // Mock successful update (updateProgress returns void)
       mockReadingProgressService.updateProgress.mockResolvedValue(undefined);
@@ -244,7 +278,6 @@ describe('useReadingProgress', () => {
           useReadingProgress({
             articleId: testArticleId,
             totalSentences: 10,
-            currentSentenceIndex: 0,
             isActive: true,
           }),
         { wrapper },
@@ -282,7 +315,6 @@ describe('useReadingProgress', () => {
           useReadingProgress({
             articleId: testArticleId,
             totalSentences: 10,
-            currentSentenceIndex: 0,
             isActive: true,
           }),
         { wrapper },
@@ -317,7 +349,6 @@ describe('useReadingProgress', () => {
           useReadingProgress({
             articleId: testArticleId,
             totalSentences: 10,
-            currentSentenceIndex: 0,
             isActive: true,
           }),
         { wrapper },
@@ -352,7 +383,6 @@ describe('useReadingProgress', () => {
           useReadingProgress({
             articleId: testArticleId,
             totalSentences: 10,
-            currentSentenceIndex: 0,
             isActive: false, // Inactive
           }),
         { wrapper },
@@ -386,7 +416,6 @@ describe('useReadingProgress', () => {
           useReadingProgress({
             articleId: testArticleId,
             totalSentences: 10,
-            currentSentenceIndex: 0,
             isActive: true,
           }),
         { wrapper },
@@ -424,7 +453,6 @@ describe('useReadingProgress', () => {
           useReadingProgress({
             articleId: testArticleId,
             totalSentences: 10,
-            currentSentenceIndex: 0,
             isActive: true,
           }),
         { wrapper },
@@ -465,7 +493,6 @@ describe('useReadingProgress', () => {
           useReadingProgress({
             articleId: testArticleId,
             totalSentences: 10,
-            currentSentenceIndex: 0,
             isActive: true,
           }),
         { wrapper },
@@ -483,7 +510,6 @@ describe('useReadingProgress', () => {
           useReadingProgress({
             articleId: testArticleId,
             totalSentences: 10,
-            currentSentenceIndex: 0,
             isActive: true,
           }),
         { wrapper },

@@ -38,6 +38,7 @@ const MARKER_UNDERLINE_GAP = 6;
 // Long-press threshold: long enough not to fire during scroll hesitation,
 // short enough to feel instant (RNGH default is 500ms)
 const LONG_PRESS_DELAY_MS = 400;
+const EMPTY_COLORED_SEGMENTS: NonNullable<SentenceWord['coloredSegments']> = [];
 
 // Module-level constant — no per-render allocation
 const HIGHLIGHT_ANIMATION_STYLE = {
@@ -63,6 +64,12 @@ interface SkiaArabicWordProps {
   activeWordIdSV?: SharedValue<string | number | null>;
   /** When true, marks this as the looked-up word (used for dictionary sentence examples) */
   isTargetWord?: boolean;
+  /** Controlled selection state. Omit for compatibility with standalone callers. */
+  isSelected?: boolean;
+}
+
+interface ControlledSkiaArabicWordProps extends SkiaArabicWordProps {
+  isSelected: boolean;
 }
 
 const SkiaArabicWordInternal = function SkiaArabicWord({
@@ -73,7 +80,8 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
   isHighlighted = false,
   activeWordIdSV,
   isTargetWord = false,
-}: SkiaArabicWordProps) {
+  isSelected,
+}: ControlledSkiaArabicWordProps) {
   const colors = useColors();
   const { fontSize, fontFamily, fontManager } = useSkiaFonts();
 
@@ -91,11 +99,8 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
     return { opacity: isActive ? LAYOUT.OPACITY.HIGH : LAYOUT.OPACITY.FULL };
   });
 
-  // Use our existing hook for word selection state
-  const { isSelected } = useArabicWord({ word });
-
   // Use pre-computed colored segments from data loading (optimized for performance)
-  const coloredSegments = word.coloredSegments || [];
+  const coloredSegments = word.coloredSegments ?? EMPTY_COLORED_SEGMENTS;
 
   // Check if word has colored components (not just multiple segments)
   const hasComponents =
@@ -342,4 +347,20 @@ const CONTAINER_STYLE = [styles.wordContainer];
 
 SkiaArabicWordInternal.displayName = 'SkiaArabicWord';
 
-export const SkiaArabicWord = memo(SkiaArabicWordInternal);
+const QueryConnectedSkiaArabicWord = function QueryConnectedSkiaArabicWord(
+  props: SkiaArabicWordProps,
+) {
+  const { isSelected } = useArabicWord({ word: props.word });
+  return <SkiaArabicWordInternal {...props} isSelected={isSelected} />;
+};
+
+const SkiaArabicWordAdapter = function SkiaArabicWordAdapter(props: SkiaArabicWordProps) {
+  if (props.isSelected === undefined) {
+    return <QueryConnectedSkiaArabicWord {...props} />;
+  }
+  return <SkiaArabicWordInternal {...props} isSelected={props.isSelected} />;
+};
+
+SkiaArabicWordAdapter.displayName = 'SkiaArabicWord';
+
+export const SkiaArabicWord = memo(SkiaArabicWordAdapter);

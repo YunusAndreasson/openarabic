@@ -1,6 +1,7 @@
 import { State } from 'ts-fsrs';
 
 import { MASTERY_MIN_STABILITY } from '@/constants/fsrs';
+import { STARTER_ROOT_IDS, STARTER_WORD_COUNT } from '@/constants/starterWords';
 import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
 import type { RootId } from '@/types/branded.types';
@@ -350,23 +351,34 @@ export const studyWordsFSRSService = {
   },
 
   /**
-   * Get common beginner-friendly roots from the database.
-   * Returns roots that are foundational for Arabic learning.
+   * Get the curated starter roots for a brand-new learner's first deck.
+   *
+   * The list itself lives in `constants/starterWords.ts` — see the comment there
+   * for why this is an explicit, vetted set rather than an ordering over
+   * `roots`. Every candidate ordering available in the database (by id, by
+   * corpus usage) produces a deck with duplicate English answers in it.
    */
-  async getCommonRoots(limit: number = 10): Promise<Tables<'roots'>[]> {
-    // Query roots ordered by ID (foundational words have lower IDs)
-    // This provides reliable, high-quality starter vocabulary
+  async getCommonRoots(limit: number = STARTER_WORD_COUNT): Promise<Tables<'roots'>[]> {
     const data = await executeQuery(
       () =>
         supabase
           .from('roots')
           .select('id, letters, meaning, audio_url, audio_url_en')
-          .order('id', { ascending: true })
-          .limit(limit),
+          .in('id', [...STARTER_ROOT_IDS]),
       errorConfig.allRoots,
     );
 
-    return data ?? [];
+    if (!data) return [];
+
+    // `.in()` gives no ordering guarantee, and the curated sequence is the
+    // point — concrete nouns first. Restore it, then take the requested count,
+    // so a row missing from the dictionary drops out of the tail rather than
+    // leaving a hole where a learner's first card should be.
+    const byId = new Map(data.map(root => [root.id, root]));
+
+    return STARTER_ROOT_IDS.map(id => byId.get(id))
+      .filter((root): root is Tables<'roots'> => root !== undefined)
+      .slice(0, limit);
   },
 
   /**

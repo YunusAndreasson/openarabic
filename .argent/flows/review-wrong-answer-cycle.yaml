@@ -1,0 +1,22 @@
+steps:
+  - echo: Advance from the root insight to the next review prompt
+  - tap:
+      text: Continue
+  - await:
+      visible: { text: Show answer }
+  - await: { idle: true }
+  - echo: Reveal the answer
+  - tap:
+      text: Show answer
+  - await:
+      visible: { text: Forgot }
+  - await: { idle: true }
+  - echo: Grade the answer as forgotten and wait for feedback
+  - tap:
+      text: Forgot
+  - await:
+      visible: { text: Continue }
+  - await: { idle: true }
+executionPrerequisite: Open Arabic is running on Android on the review
+  wrong-answer feedback state, with the Continue button visible and at least one
+  review card remaining.

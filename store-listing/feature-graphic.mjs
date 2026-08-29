@@ -26,8 +26,10 @@ function fontFace(family, file, weight) {
 
 // Rendered straight from brand/dist/ring/mark.svg. NOT from the built PNGs — brand/build.py
 // still bakes in the stale #568066, whereas constants/colors.ts moved to #507A60 for WCAG AA.
-const ring = readFileSync(resolve(ROOT, '../brand/dist/ring/mark.svg'), 'utf8')
-  .replace('fill="currentColor"', `fill="${PALETTE.tint}"`);
+const ring = readFileSync(resolve(ROOT, '../brand/dist/ring/mark.svg'), 'utf8').replace(
+  'fill="currentColor"',
+  `fill="${PALETTE.tint}"`,
+);
 const ringUri = `data:image/svg+xml;base64,${Buffer.from(ring).toString('base64')}`;
 
 const html = `<!doctype html><meta charset="utf-8"><style>
@@ -61,12 +63,40 @@ try {
   const page = resolve(work, 'fg.html');
   writeFileSync(page, html);
   const raw = resolve(work, 'raw.png');
-  execFileSync(CHROME, ['--headless', '--disable-gpu', '--hide-scrollbars',
-    '--force-device-scale-factor=1', `--window-size=${W},${H}`,
-    `--screenshot=${raw}`, `file://${page}`], { stdio: 'pipe' });
-  execFileSync('magick', [raw, '-background', PALETTE.sage, '-alpha', 'remove',
-    '-alpha', 'off', '-depth', '8', '-colorspace', 'sRGB', OUT], { stdio: 'pipe' });
+  execFileSync(
+    CHROME,
+    [
+      '--headless',
+      '--disable-gpu',
+      '--hide-scrollbars',
+      '--force-device-scale-factor=1',
+      `--window-size=${W},${H}`,
+      `--screenshot=${raw}`,
+      `file://${page}`,
+    ],
+    { stdio: 'pipe' },
+  );
+  execFileSync(
+    'magick',
+    [
+      raw,
+      '-background',
+      PALETTE.sage,
+      '-alpha',
+      'remove',
+      '-alpha',
+      'off',
+      '-depth',
+      '8',
+      '-colorspace',
+      'sRGB',
+      OUT,
+    ],
+    { stdio: 'pipe' },
+  );
 } finally {
   rmSync(work, { recursive: true, force: true });
 }
-console.log(`feature-graphic.png  ${execFileSync('magick', ['identify', '-format', '%wx%h %[channels]', OUT])}`);
+console.log(
+  `feature-graphic.png  ${execFileSync('magick', ['identify', '-format', '%wx%h %[channels]', OUT])}`,
+);

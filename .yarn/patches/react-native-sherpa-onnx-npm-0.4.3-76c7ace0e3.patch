@@ -17,7 +17,7 @@ index 5df6a93c8f0dfb02150568a917b578302c2a7adb..13208b96d585d81f663802beacdde26f
        val modelDirFile = File(modelDir)
        if (!modelDirFile.exists()) {
          val errorMsg = "Model directory does not exist: $modelDir"
-@@ -309,10 +315,12 @@ internal class SherpaOnnxSttHelper(
+@@ -309,9 +315,11 @@ internal class SherpaOnnxSttHelper(
            promise.reject("INIT_ERROR", errorMsg, e)
          }
        }

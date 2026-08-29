@@ -38,7 +38,7 @@ export const SLIDES = [
  * size slot you picked, so each accepted size gets its own build.
  */
 function tallCanvas(width, height, ext) {
-  const f = (n) => Math.round(width * n);
+  const f = n => Math.round(width * n);
   return {
     width,
     height,

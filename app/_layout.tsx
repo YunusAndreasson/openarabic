@@ -467,7 +467,10 @@ function AppContent() {
             const route = NOTIFICATION_ROUTE_BY_TYPE[type as AnyNotificationType];
             if (route) {
               if (type === NOTIFICATION_TYPES.SRS_DUE || type === NOTIFICATION_TYPES.SRS_SLIPPING) {
-                void analytics.track(ANALYTICS_EVENTS.SMART_REMINDER_OPENED, { type, coldStart: true });
+                void analytics.track(ANALYTICS_EVENTS.SMART_REMINDER_OPENED, {
+                  type,
+                  coldStart: true,
+                });
               }
               router.push(route);
             }

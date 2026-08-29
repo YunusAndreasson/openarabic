@@ -867,6 +867,7 @@ describe('useArticleWordInteractions', () => {
 
       const initialHandlers = {
         handleWordPress: result.current.handleWordPress,
+        handleWordLongPress: result.current.handleWordLongPress,
         handleCloseTooltip: result.current.handleCloseTooltip,
         handleOpenWordDetails: result.current.handleOpenWordDetails,
         handleAddWordToStudy: result.current.handleAddWordToStudy,
@@ -882,10 +883,44 @@ describe('useArticleWordInteractions', () => {
 
       // Callbacks should remain stable
       expect(result.current.handleWordPress).toBe(initialHandlers.handleWordPress);
+      expect(result.current.handleWordLongPress).toBe(initialHandlers.handleWordLongPress);
       expect(result.current.handleCloseTooltip).toBe(initialHandlers.handleCloseTooltip);
       expect(result.current.handleOpenWordDetails).toBe(initialHandlers.handleOpenWordDetails);
       expect(result.current.handleAddWordToStudy).toBe(initialHandlers.handleAddWordToStudy);
       expect(result.current.closeTooltipOnScroll).toBe(initialHandlers.closeTooltipOnScroll);
+    });
+
+    test('keeps long-press stable while using the latest mutation callback', async () => {
+      const replacementHandleRootPress = jest.fn(async (..._args: unknown[]) => true);
+      const replacementRefetch = jest.fn(async (..._args: unknown[]) => undefined);
+
+      const { result, rerender } = renderHook(
+        ({ handleRootPress, refetchStudyWords }) =>
+          useArticleWordInteractions({ handleRootPress, refetchStudyWords }),
+        {
+          wrapper,
+          initialProps: {
+            handleRootPress: mockHandleRootPress,
+            refetchStudyWords: mockRefetchStudyWords,
+          },
+        },
+      );
+      const initialLongPress = result.current.handleWordLongPress;
+
+      rerender({
+        handleRootPress: replacementHandleRootPress,
+        refetchStudyWords: replacementRefetch,
+      });
+
+      expect(result.current.handleWordLongPress).toBe(initialLongPress);
+
+      await act(async () => {
+        await result.current.handleWordLongPress(createMockWord(1, rootId(10)));
+      });
+
+      expect(replacementHandleRootPress).toHaveBeenCalledWith(rootId(10), 'add');
+      expect(replacementRefetch).toHaveBeenCalledTimes(1);
+      expect(mockHandleRootPress).not.toHaveBeenCalled();
     });
   });
 });

@@ -154,6 +154,7 @@ describe('useArticleScreen Hook', () => {
 
     jest.mocked(useReadingProgress).mockReturnValue({
       updateProgress: mockUpdateProgress,
+      scheduleProgressUpdate: mockUpdateProgress,
       isInitialProgressReady: true,
       initialLastSentenceRead: 0,
       hadExistingProgressOnMount: false,
@@ -496,13 +497,15 @@ describe('useArticleScreen Hook', () => {
   });
 
   describe('Viewable Items & Reading Progress', () => {
-    test('updates current sentence index from viewable items', () => {
-      const { result } = renderHook(() =>
-        useArticleScreen({
+    test('schedules progress from viewable items without screen state', () => {
+      let renderCount = 0;
+      const { result } = renderHook(() => {
+        renderCount += 1;
+        return useArticleScreen({
           id: '1',
           showToast: mockShowToast,
-        }),
-      );
+        });
+      });
 
       // Mark FlashList as ready and enable progress updates
       act(() => {
@@ -521,8 +524,8 @@ describe('useArticleScreen Hook', () => {
         result.current.handleViewableItemsChanged({ viewableItems } as any);
       });
 
-      // Current sentence index maps 1:1 to the data index (no header offset in v2)
-      expect(result.current.currentSentenceIndex).toBe(1);
+      expect(mockUpdateProgress).toHaveBeenCalledWith(1);
+      expect(renderCount).toBe(2); // initial render + mounted effects only
     });
 
     test('ignores viewable items with no items', () => {
@@ -533,13 +536,11 @@ describe('useArticleScreen Hook', () => {
         }),
       );
 
-      const initialIndex = result.current.currentSentenceIndex;
-
       act(() => {
         result.current.handleViewableItemsChanged({ viewableItems: [] } as any);
       });
 
-      expect(result.current.currentSentenceIndex).toBe(initialIndex);
+      expect(mockUpdateProgress).not.toHaveBeenCalled();
     });
 
     test('accepts index 0 as the first sentence and tracks the highest visible', () => {
@@ -571,8 +572,7 @@ describe('useArticleScreen Hook', () => {
         result.current.handleViewableItemsChanged({ viewableItems } as any);
       });
 
-      // Should track the highest visible sentence index directly
-      expect(result.current.currentSentenceIndex).toBe(2);
+      expect(mockUpdateProgress).toHaveBeenCalledWith(2);
     });
   });
 
@@ -756,13 +756,15 @@ describe('useArticleScreen Hook', () => {
 
       expect(result.current.sortedSentences).toEqual([]);
 
-      // Should not crash with empty sentences
-      expect(result.current.currentSentenceIndex).toBe(0);
+      expect(() =>
+        result.current.handleViewableItemsChanged({ viewableItems: [] } as any),
+      ).not.toThrow();
     });
 
     test('waits two animation frames before restoring the saved reading position', () => {
       jest.mocked(useReadingProgress).mockReturnValue({
         updateProgress: mockUpdateProgress,
+        scheduleProgressUpdate: mockUpdateProgress,
         isInitialProgressReady: true,
         initialLastSentenceRead: 5,
         hadExistingProgressOnMount: true,
@@ -806,6 +808,7 @@ describe('useArticleScreen Hook', () => {
     test('handles disableAutoScroll option', () => {
       jest.mocked(useReadingProgress).mockReturnValue({
         updateProgress: mockUpdateProgress,
+        scheduleProgressUpdate: mockUpdateProgress,
         initialLastSentenceRead: 5,
         hadExistingProgressOnMount: true,
       } as any);
@@ -872,9 +875,7 @@ describe('useArticleScreen Hook', () => {
         } as any);
       });
 
-      expect(useReadingProgress).toHaveBeenLastCalledWith(
-        expect.objectContaining({ currentSentenceIndex: 3 }),
-      );
+      expect(mockUpdateProgress).toHaveBeenCalledWith(3);
     });
   });
 });

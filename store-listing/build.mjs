@@ -45,8 +45,19 @@ function renderSlide(html, { width, height }, outPng) {
 
 /** Both stores REJECT alpha. Flatten every export — this is the rejection trap. */
 function flatten(png, target, out) {
-  const args = [png, '-background', '#F2F7F4', '-alpha', 'remove', '-alpha', 'off',
-    '-depth', '8', '-colorspace', 'sRGB'];
+  const args = [
+    png,
+    '-background',
+    '#F2F7F4',
+    '-alpha',
+    'remove',
+    '-alpha',
+    'off',
+    '-depth',
+    '8',
+    '-colorspace',
+    'sRGB',
+  ];
   if (target.ext === 'jpg') args.push('-quality', '92');
   execFileSync('magick', [...args, out], { stdio: 'pipe' });
 }

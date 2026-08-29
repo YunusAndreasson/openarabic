@@ -20,7 +20,7 @@ import type { RootId } from '@/types/branded.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 
-interface ArticleSentenceProps {
+export interface ArticleSentenceProps {
   sentence: {
     id: string | number;
     english: string;
@@ -38,7 +38,49 @@ interface ArticleSentenceProps {
   activeWordIdSV?: SharedValue<string | number | null>;
   /** Root ID to highlight as target word (used in dictionary sentence examples) */
   highlightRootId?: RootId | null;
+  /** Screen-level selection snapshot; avoids per-word query subscriptions. */
+  selectedRootIds?: ReadonlySet<number>;
 }
+
+/**
+ * A selected-root set is shared by the whole reader and gets a new identity
+ * whenever one word is saved. Only invalidate this sentence when membership
+ * changed for one of the roots it actually renders.
+ */
+export const areArticleSentencePropsEqual = (
+  previous: ArticleSentenceProps,
+  next: ArticleSentenceProps,
+): boolean => {
+  if (
+    previous.sentence !== next.sentence ||
+    previous.words !== next.words ||
+    previous.onWordPress !== next.onWordPress ||
+    previous.onWordLongPress !== next.onWordLongPress ||
+    previous.colors !== next.colors ||
+    previous.containerStyle !== next.containerStyle ||
+    previous.showTutorialCard !== next.showTutorialCard ||
+    previous.onDismissTutorial !== next.onDismissTutorial ||
+    previous.activeWordIdSV !== next.activeWordIdSV ||
+    previous.highlightRootId !== next.highlightRootId
+  ) {
+    return false;
+  }
+
+  const previousSelectedRootIds = previous.selectedRootIds;
+  const nextSelectedRootIds = next.selectedRootIds;
+
+  if (previousSelectedRootIds === nextSelectedRootIds) {
+    return true;
+  }
+
+  if (previousSelectedRootIds === undefined || nextSelectedRootIds === undefined) {
+    return false;
+  }
+
+  return previous.words.every(
+    word => previousSelectedRootIds.has(word.root_id) === nextSelectedRootIds.has(word.root_id),
+  );
+};
 
 const ArticleSentenceInternal = function ArticleSentence({
   sentence,
@@ -51,6 +93,7 @@ const ArticleSentenceInternal = function ArticleSentence({
   onDismissTutorial,
   activeWordIdSV,
   highlightRootId,
+  selectedRootIds,
 }: ArticleSentenceProps) {
   const defaultColors = useColors();
   const colors = propColors || defaultColors;
@@ -86,10 +129,19 @@ const ArticleSentenceInternal = function ArticleSentence({
           isHighlighted={isFirstWord && showTutorialCard}
           activeWordIdSV={activeWordIdSV}
           isTargetWord={isTargetWord}
+          isSelected={selectedRootIds === undefined ? undefined : selectedRootIds.has(word.root_id)}
         />
       );
     });
-  }, [words, onWordPress, onWordLongPress, showTutorialCard, activeWordIdSV, highlightRootId]);
+  }, [
+    words,
+    onWordPress,
+    onWordLongPress,
+    showTutorialCard,
+    activeWordIdSV,
+    highlightRootId,
+    selectedRootIds,
+  ]);
 
   return (
     <View style={[styles.container, containerStyle]}>
@@ -149,7 +201,7 @@ const ArticleSentenceInternal = function ArticleSentence({
 
 ArticleSentenceInternal.displayName = 'ArticleSentence';
 
-export const ArticleSentence = memo(ArticleSentenceInternal);
+export const ArticleSentence = memo(ArticleSentenceInternal, areArticleSentencePropsEqual);
 
 const styles = StyleSheet.create({
   container: {

@@ -11,7 +11,8 @@ function fontFace(family, file, weight) {
     src:url(data:font/ttf;base64,${b64}) format('truetype');}`;
 }
 
-const FONTS = fontFace('Inter', 'Inter-Bold.ttf', 700) + fontFace('Inter', 'Inter-SemiBold.ttf', 600);
+const FONTS =
+  fontFace('Inter', 'Inter-Bold.ttf', 700) + fontFace('Inter', 'Inter-SemiBold.ttf', 600);
 
 /** The capture is inlined too, so the page has zero external requests. */
 function dataUri(path) {
@@ -31,7 +32,7 @@ export function slideHtml(slide, target, captureDir) {
   const visibleH = t.height - t.deviceTop;
   const caption = slide.caption
     .split('\n')
-    .map((l) => `<span>${l}</span>`)
+    .map(l => `<span>${l}</span>`)
     .join('');
 
   return `<!doctype html><meta charset="utf-8"><style>

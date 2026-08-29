@@ -1,0 +1,44 @@
+steps:
+  - await: { visible: { text: Continue reading }, timeout: 10000 }
+  - echo: On Explore; open Faith and Worship from Continue reading.
+  - tap:
+      text: Faith and Worship, Ibn Taymiyyah · 12 min
+  - await: { visible: { text: Close article }, timeout: 10000 }
+  - await: { idle: true, timeout: 15000 }
+  - echo: On the Faith and Worship reader; perform three controlled, momentum-free
+      scrolls.
+  - tool: gesture-swipe
+    args:
+      fromX: 0.5
+      fromY: 0.82
+      toX: 0.5
+      toY: 0.28
+      durationMs: 500
+      settle: true
+  - tool: screenshot
+    args:
+      includeImageInContext: false
+  - tool: gesture-swipe
+    args:
+      fromX: 0.5
+      fromY: 0.82
+      toX: 0.5
+      toY: 0.28
+      durationMs: 500
+      settle: true
+  - tool: screenshot
+    args:
+      includeImageInContext: false
+  - tool: gesture-swipe
+    args:
+      fromX: 0.5
+      fromY: 0.82
+      toX: 0.5
+      toY: 0.28
+      durationMs: 500
+      settle: true
+  - tool: screenshot
+    args:
+      includeImageInContext: false
+executionPrerequisite: Open Arabic development build is connected to Metro on
+  port 8081 and Explore is visible.

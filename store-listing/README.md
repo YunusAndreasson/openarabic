@@ -15,25 +15,25 @@ Override the browser with `CHROMIUM_BIN`.
 
 ## Layout
 
-| file | role |
-|---|---|
-| `slides.mjs` | caption + capture per slide, palette, and the two canvas configs |
-| `template.mjs` | HTML/CSS for one slide |
-| `build.mjs` | renders, flattens, writes `dist/` |
-| `feature-graphic.mjs` | the Play feature graphic |
-| `verify.mjs` | dimensions, alpha, bit depth, Play aspect cap |
-| `captures/ios/` | source screenshots, 8-bit sRGB, no alpha |
-| `metadata/` | store copy with character limits noted |
+| file                  | role                                                             |
+| --------------------- | ---------------------------------------------------------------- |
+| `slides.mjs`          | caption + capture per slide, palette, and the two canvas configs |
+| `template.mjs`        | HTML/CSS for one slide                                           |
+| `build.mjs`           | renders, flattens, writes `dist/`                                |
+| `feature-graphic.mjs` | the Play feature graphic                                         |
+| `verify.mjs`          | dimensions, alpha, bit depth, Play aspect cap                    |
+| `captures/ios/`       | source screenshots, 8-bit sRGB, no alpha                         |
+| `metadata/`           | store copy with character limits noted                           |
 
 ## Constraints these scripts enforce
 
 - **App Store**: 1320×2868 is the only required iPhone size — Apple scales it down to every
   smaller device. iPad is not needed while `supportsTablet: false`.
-- **Play caps aspect ratio at 2:1.** The App Store canvas is 1:2.17, so it can *not* be
+- **Play caps aspect ratio at 2:1.** The App Store canvas is 1:2.17, so it can _not_ be
   rescaled for Play. The two sets are laid out independently; `verify.mjs` asserts the cap.
 - **Both stores reject alpha.** Apple made this explicit on 8 Jul 2026 and it is the most
   likely automated-rejection cause, so every export is flattened and `verify.mjs` fails on
-  any alpha channel. (The Play *icon* is the one asset that requires alpha — it is not
+  any alpha channel. (The Play _icon_ is the one asset that requires alpha — it is not
   produced here.)
 - Play metadata policy bans ranking claims, award icons and price/promo text.
 

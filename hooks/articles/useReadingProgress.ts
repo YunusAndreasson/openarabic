@@ -11,7 +11,6 @@ import { calculateProgressPercentage } from '@/utils/progressUtils';
 interface UseReadingProgressOptions {
   articleId: ArticleId;
   totalSentences: number;
-  currentSentenceIndex: number;
   isActive: boolean; // Only track when article is actually being read
 }
 
@@ -20,15 +19,28 @@ const DEBOUNCE_DELAY = 500; // Reduced from 2000ms to 500ms for more responsive 
 export function useReadingProgress({
   articleId,
   totalSentences,
-  currentSentenceIndex,
   isActive,
 }: UseReadingProgressOptions) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const lastSavedSentenceRef = useRef<number>(0);
+  const latestSentenceRef = useRef<number>(0);
   const pendingSentencesRef = useRef<Set<number>>(new Set());
+  const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Use bulk query as single source of truth - extract specific article progress
   const { data: progressMap, isLoading, isPlaceholderData } = useBulkReadingProgress([articleId]);
+
+  // Route params can change without unmounting this hook. Do not let the old
+  // article's timer or high-water refs suppress writes for the new article.
+  useEffect(() => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+      debounceTimeoutRef.current = null;
+    }
+    lastSavedSentenceRef.current = 0;
+    latestSentenceRef.current = 0;
+    pendingSentencesRef.current.clear();
+  }, [articleId, user?.id]);
 
   // Extract progress for this specific article from the bulk cache
   const rawProgress = useMemo(() => {
@@ -81,11 +93,13 @@ export function useReadingProgress({
   }, [rawProgress, progress, user?.id, articleId, totalSentences]);
 
   // Update the ref when we load progress
+  const progressLastSentence = progress?.last_sentence_read;
   useEffect(() => {
-    if (progress) {
-      lastSavedSentenceRef.current = progress.last_sentence_read;
+    if (progressLastSentence !== undefined) {
+      lastSavedSentenceRef.current = progressLastSentence;
+      latestSentenceRef.current = Math.max(latestSentenceRef.current, progressLastSentence);
     }
-  }, [progress?.last_sentence_read]);
+  }, [progressLastSentence]);
 
   const isInitialProgressReady = !isLoading && !isPlaceholderData;
   const initialLastSentenceRead = isInitialProgressReady ? (progress?.last_sentence_read ?? 0) : 0;
@@ -107,12 +121,28 @@ export function useReadingProgress({
       // the local high-water mark and reopen an already reserved range.
       lastSavedSentenceRef.current = Math.max(lastSavedSentenceRef.current, lastSentenceRead);
 
-      // Invalidate queries to refresh UI
+      // Update the shared cache directly. Invalidating here used to refetch the
+      // entire user's progress map after every reading pause, notifying every
+      // progress consumer in the app.
       if (user?.id) {
-        // Invalidate bulk progress query (single source of truth)
-        queryClient.invalidateQueries({
-          queryKey: readingProgressQueries.bulk(user.id).queryKey,
-        });
+        queryClient.setQueryData<Map<ArticleId, ReadingProgress>>(
+          readingProgressQueries.bulk(user.id).queryKey,
+          current => {
+            const next = new Map(current);
+            const existing = next.get(articleId);
+            const now = new Date().toISOString();
+
+            next.set(articleId, {
+              article_id: articleId,
+              user_id: user.id,
+              last_sentence_read: Math.max(existing?.last_sentence_read ?? 0, lastSentenceRead),
+              total_sentences: totalSentences,
+              created_at: existing?.created_at ?? now,
+              updated_at: now,
+            });
+            return next;
+          },
+        );
       }
     },
     onError: error => {
@@ -158,21 +188,27 @@ export function useReadingProgress({
     ],
   );
 
-  // Auto-save progress with debouncing
-  useEffect(() => {
-    if (!isActive || !user?.id || currentSentenceIndex < 0) return;
+  // Called directly by the list's viewability callback. Keeping the current
+  // position in refs avoids a React render for every newly visible sentence.
+  const scheduleProgressUpdate = useCallback(
+    (sentenceIndex: number) => {
+      if (!isActive || !user?.id || sentenceIndex < 0) return;
 
-    const timeoutId = setTimeout(() => {
-      updateProgress(currentSentenceIndex);
-    }, DEBOUNCE_DELAY);
-
-    return () => clearTimeout(timeoutId);
-  }, [currentSentenceIndex, isActive, updateProgress, user?.id, articleId]);
+      latestSentenceRef.current = Math.max(latestSentenceRef.current, sentenceIndex);
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+      debounceTimeoutRef.current = setTimeout(() => {
+        debounceTimeoutRef.current = null;
+        updateProgress(latestSentenceRef.current);
+      }, DEBOUNCE_DELAY);
+    },
+    [isActive, updateProgress, user?.id],
+  );
 
   // Refs to capture latest values for unmount cleanup (avoid stale closure)
   const unmountDataRef = useRef({
     isActive,
-    currentSentenceIndex,
     userId: user?.id,
     articleId,
     totalSentences,
@@ -189,51 +225,48 @@ export function useReadingProgress({
   useEffect(() => {
     unmountDataRef.current = {
       isActive,
-      currentSentenceIndex,
       userId: user?.id,
       articleId,
       totalSentences,
       progressLastSentence: progress?.last_sentence_read ?? 0,
     };
-  }, [
-    isActive,
-    currentSentenceIndex,
-    user?.id,
-    articleId,
-    totalSentences,
-    progress?.last_sentence_read,
-  ]);
+  }, [isActive, user?.id, articleId, totalSentences, progress?.last_sentence_read]);
 
   // Also save progress immediately when component unmounts (article closed)
   useEffect(() => {
     return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+        debounceTimeoutRef.current = null;
+      }
+
       // Save final progress when hook unmounts using latest values from ref
       const data = unmountDataRef.current;
-      if (data.isActive && data.currentSentenceIndex >= 0 && data.userId && data.articleId > 0) {
+      if (data.isActive && latestSentenceRef.current >= 0 && data.userId && data.articleId > 0) {
         const lastRecorded = Math.max(lastSavedSentenceRef.current, data.progressLastSentence);
         // Ensure valid bounds before saving
         const validFinalSentenceIndex = Math.max(
           0,
-          Math.min(data.currentSentenceIndex, data.totalSentences - 1),
+          Math.min(latestSentenceRef.current, data.totalSentences - 1),
         );
 
         // Never overwrite newer stored progress with an earlier position.
         if (validFinalSentenceIndex > lastRecorded) {
-          // Save final progress and invalidate cache so Explore tab updates immediately
+          const userId = data.userId;
+          // Save final progress. Successful debounced mutations already keep
+          // the shared cache current; this is only the last-chance flush.
           readingProgressService
             .updateProgress({
-              userId: data.userId,
+              userId,
               articleId: data.articleId,
               lastSentenceRead: validFinalSentenceIndex,
               totalSentences: data.totalSentences,
             })
-            .then(() => {
-              if (data.userId) {
-                queryClientRef.current.invalidateQueries({
-                  queryKey: readingProgressQueries.bulk(data.userId).queryKey,
-                });
-              }
-            })
+            .then(() =>
+              queryClientRef.current.invalidateQueries({
+                queryKey: readingProgressQueries.bulk(userId).queryKey,
+              }),
+            )
             .catch(() => {
               // Silent error - final progress save failed
             });
@@ -257,6 +290,7 @@ export function useReadingProgress({
       : null,
     isLoading,
     updateProgress,
+    scheduleProgressUpdate,
     isUpdating: updateProgressMutation.isPending,
     lastSentenceRead: progress?.last_sentence_read ?? 0,
     isInitialProgressReady,

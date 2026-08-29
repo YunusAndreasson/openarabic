@@ -8,6 +8,8 @@ import type { ArticleId } from '@/types/branded.types';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
 import { computeColoredSegments } from '@/utils/arabicWordAnalysis';
 
+const EMPTY_STUDY_WORDS: StudyWord[] = [];
+
 interface ArticleDataResult {
   article: Article | undefined;
   isLoadingArticle: boolean;
@@ -52,7 +54,17 @@ export const useArticleData = (
     placeholderData: old => old,
   });
 
-  const studyWords = studyWordsQuery.data || [];
+  // Keep the fast cached-due fallback that individual words previously used,
+  // but subscribe once for the screen instead of once per mounted word.
+  const dueWordsQuery = useQuery({
+    ...gated(fsrsQueries.due, userId),
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    placeholderData: old => old,
+  });
+
+  const studyWords = studyWordsQuery.data ?? EMPTY_STUDY_WORDS;
+  const dueWords = dueWordsQuery.data ?? EMPTY_STUDY_WORDS;
   const refetchStudyWords = studyWordsQuery.refetch;
   const isLoadingStudyWords = studyWordsQuery.isLoading;
 
@@ -68,7 +80,7 @@ export const useArticleData = (
   // Extract selected root IDs since study is now root-based
   const selectedWordIds = useMemo(() => {
     // Skip recalculation if no study words
-    if (!studyWords.length) return new Set<number>();
+    if (!studyWords.length && !dueWords.length) return new Set<number>();
 
     const ids = new Set<number>();
     studyWords.forEach(w => {
@@ -76,8 +88,13 @@ export const useArticleData = (
         ids.add(w.root_id);
       }
     });
+    dueWords.forEach(w => {
+      if (w.root_id != null) {
+        ids.add(w.root_id);
+      }
+    });
     return ids;
-  }, [studyWords]);
+  }, [studyWords, dueWords]);
 
   // Create sentence words map from article data - no additional fetch needed
   // Pre-compute color analysis at load time for optimal render performance

@@ -51,6 +51,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     article,
     sortedSentences,
     sentenceWordsMap,
+    selectedWordIds,
     isInReadingList,
     scrollViewRef,
     activeTooltip,
@@ -159,6 +160,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
           showTutorialCard={showTutorialCard}
           onDismissTutorial={handleDismissTutorial}
           activeWordIdSV={activeWordIdSV}
+          selectedRootIds={selectedWordIds}
         />
       );
     },
@@ -171,6 +173,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       isTutorialCardDismissed,
       handleDismissTutorial,
       activeWordIdSV,
+      selectedWordIds,
     ],
   );
 
@@ -206,6 +209,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       onToggleListen: handleToggleListen,
       onClose: handleClose,
       onFlashListLoad: handleFlashListLoad,
+      selectedRootIds: selectedWordIds,
     };
   }, [
     article,
@@ -223,6 +227,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     handleToggleListen,
     handleClose,
     handleFlashListLoad,
+    selectedWordIds,
   ]);
 
   // Show loader while article is loading

@@ -9,6 +9,7 @@
 
 import { studyWordsFSRSService } from '../../services/studyWordsFSRS';
 import { rootId } from '@/__tests__/helpers/ids';
+import { STARTER_ROOT_IDS, STARTER_WORD_COUNT } from '@/constants/starterWords';
 
 jest.mock('../../services/supabase', () => ({
   supabase: {
@@ -353,5 +354,93 @@ describe('getFSRSWords', () => {
         expect.stringContaining('fsrs_last_review.is.null,fsrs_last_review.lt.'), // Cooldown filter
       );
     });
+  });
+});
+
+describe('getCommonRoots', () => {
+  /** `.in()` builder — the starter deck is fetched by id set, not by ordering. */
+  const createInBuilder = (rows: unknown[] | null) => {
+    const builder: any = {
+      select: jest.fn().mockReturnThis(),
+      in: jest.fn().mockReturnThis(),
+      // Present so "did not rank by id" is an assertion about the code rather
+      // than about an absent mock method.
+      order: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
+    };
+    builder.then = jest.fn((resolve: any, reject: any) =>
+      Promise.resolve({ data: rows, error: null }).then(resolve, reject),
+    );
+    return builder;
+  };
+
+  const rootRow = (id: number) => ({
+    id,
+    letters: `letters-${id}`,
+    meaning: `meaning-${id}`,
+    audio_url: 'a.mp3',
+    audio_url_en: 'e.mp3',
+  });
+
+  test('queries the curated starter ids rather than ordering the whole table', async () => {
+    const builder = createInBuilder([]);
+    (supabase.from as jest.Mock).mockImplementation(() => builder);
+
+    await studyWordsFSRSService.getCommonRoots();
+
+    expect(supabase.from).toHaveBeenCalledWith('roots');
+    expect(builder.in).toHaveBeenCalledWith('id', [...STARTER_ROOT_IDS]);
+    // The old implementation ranked by id; nothing may reintroduce that.
+    expect(builder.order).not.toHaveBeenCalled();
+    expect(builder.limit).not.toHaveBeenCalled();
+  });
+
+  test('restores the curated order when the database returns rows shuffled', async () => {
+    // PostgREST gives no ordering guarantee for `.in()`; hand back the exact
+    // reverse to prove the curated sequence is re-imposed and not just inherited.
+    const shuffled = [...STARTER_ROOT_IDS].reverse().map(id => rootRow(id as number));
+    (supabase.from as jest.Mock).mockImplementation(() => createInBuilder(shuffled));
+
+    const result = await studyWordsFSRSService.getCommonRoots(STARTER_WORD_COUNT);
+
+    expect(result.map(r => r.id)).toEqual(
+      STARTER_ROOT_IDS.slice(0, STARTER_WORD_COUNT).map(id => id as number),
+    );
+    // The first card a new learner ever sees is the curated first card.
+    expect(result[0].id).toBe(STARTER_ROOT_IDS[0] as number);
+  });
+
+  test('falls through to the spares so a missing row shortens the tail, not the deck', async () => {
+    // Drop the first curated word entirely, as a dictionary change would, and
+    // return the rest shuffled so passing requires re-imposing the order, not
+    // inheriting it from the input.
+    const withoutFirst = STARTER_ROOT_IDS.slice(1)
+      .map(id => rootRow(id as number))
+      .reverse();
+    (supabase.from as jest.Mock).mockImplementation(() => createInBuilder(withoutFirst));
+
+    const result = await studyWordsFSRSService.getCommonRoots(STARTER_WORD_COUNT);
+
+    // Exactly the curated sequence with the gap closed up: still a full deck,
+    // still in curated order, and the first spare has been pulled in to fill it.
+    expect(result.map(r => r.id)).toEqual(
+      STARTER_ROOT_IDS.slice(1, STARTER_WORD_COUNT + 1).map(id => id as number),
+    );
+  });
+
+  test('returns an empty deck rather than throwing when the query yields nothing', async () => {
+    (supabase.from as jest.Mock).mockImplementation(() => createInBuilder(null));
+
+    await expect(studyWordsFSRSService.getCommonRoots()).resolves.toEqual([]);
+  });
+});
+
+describe('STARTER_ROOT_IDS', () => {
+  test('holds enough entries to fill a deck, with spares', () => {
+    expect(STARTER_ROOT_IDS.length).toBeGreaterThan(STARTER_WORD_COUNT);
+  });
+
+  test('contains no duplicate root — a repeated id would show one word twice', () => {
+    expect(new Set(STARTER_ROOT_IDS).size).toBe(STARTER_ROOT_IDS.length);
   });
 });

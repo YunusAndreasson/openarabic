@@ -193,6 +193,14 @@ export function useArticleWordInteractions({
     isRootInStudyListRef.current = isRootInStudyList;
   });
 
+  // The query mutation/refetch callbacks can receive new identities when the
+  // study cache updates. Long-press is handed to every mounted word, so keep
+  // that public callback stable and read the latest mutation through a ref.
+  const handleAddWordToStudyRef = useRef(handleAddWordToStudy);
+  useEffect(() => {
+    handleAddWordToStudyRef.current = handleAddWordToStudy;
+  });
+
   /**
    * Long-press on a word: instant save to practice (toggle — long-press again
    * to undo). Words without a root fall back to the regular tap behavior.
@@ -214,11 +222,14 @@ export function useArticleWordInteractions({
       mediumFeedback();
       const wasInStudy = isRootInStudyListRef.current(word.root_id);
       // Explicit intent: the toast below promises this exact direction
-      const succeeded = await handleAddWordToStudy(word, wasInStudy ? 'remove' : 'add');
+      const succeeded = await handleAddWordToStudyRef.current(
+        word,
+        wasInStudy ? 'remove' : 'add',
+      );
       // Guard failures (daily limit, auth) already showed their own feedback
       if (!succeeded) return;
 
-      analytics.track(ANALYTICS_EVENTS.WORD_LONG_PRESS_SAVE, {
+      void analytics.track(ANALYTICS_EVENTS.WORD_LONG_PRESS_SAVE, {
         root_id: word.root_id,
         action: wasInStudy ? 'remove' : 'add',
       });
@@ -228,7 +239,7 @@ export function useArticleWordInteractions({
         wasInStudy ? ToastType.INFO : ToastType.SUCCESS,
       );
     },
-    [handleWordPress, handleAddWordToStudy, showToast],
+    [handleWordPress, showToast],
   );
 
   /**
