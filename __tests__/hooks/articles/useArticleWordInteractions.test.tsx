@@ -893,8 +893,15 @@ describe('useArticleWordInteractions', () => {
     test('keeps long-press stable while using the latest mutation callback', async () => {
       const replacementHandleRootPress = jest.fn(async (..._args: unknown[]) => true);
       const replacementRefetch = jest.fn(async (..._args: unknown[]) => undefined);
+      type CallbackProps = {
+        handleRootPress: UseArticleWordInteractionsOptions['handleRootPress'];
+        refetchStudyWords: NonNullable<UseArticleWordInteractionsOptions['refetchStudyWords']>;
+      };
 
-      const { result, rerender } = renderHook(
+      const { result, rerender } = renderHook<
+        ReturnType<typeof useArticleWordInteractions>,
+        CallbackProps
+      >(
         ({ handleRootPress, refetchStudyWords }) =>
           useArticleWordInteractions({ handleRootPress, refetchStudyWords }),
         {

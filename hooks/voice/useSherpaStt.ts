@@ -39,7 +39,7 @@ import { voiceBreadcrumb } from '@/utils/errorHandling';
  *  short enough that the warm-up itself is cheap. */
 const WARMUP_SAMPLE_COUNT = TARGET_SAMPLE_RATE / 2;
 /** A native engine build must settle into ready or failed; never spin forever. */
-export const VOICE_ENGINE_LOAD_TIMEOUT_MS = 45_000;
+const VOICE_ENGINE_LOAD_TIMEOUT_MS = 45_000;
 
 export async function createEngineWithTimeout(
   create: () => Promise<SttEngine>,

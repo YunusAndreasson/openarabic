@@ -15,9 +15,9 @@ import { TIMING_CONFIG, fadeInStyle } from '@/constants/animation';
 import { PinnedActionButton, usePinnedActionClearance } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
+import { useShouldShowMiniPlayer } from '@/hooks/audio/useShouldShowMiniPlayer';
 import { usePlaylistScreen, usePlaylistUI } from '@/hooks/playlist';
 import { usePlaylistHeaderActions } from '@/hooks/playlist/usePlaylistHeaderActions';
-import { useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import type { BookmarkItem } from '@/types/bookmark.types';
 import type { ArticleId } from '@/types/branded.types';
@@ -157,8 +157,7 @@ export default function PlaylistScreen(): JSX.Element {
 
   // Play All action (reuses existing hook logic)
   const { handlePlayAll, isLoading: isPlayAllLoading } = usePlaylistHeaderActions();
-  const { currentArticle } = useGlobalAudioState();
-  const isMiniPlayerVisible = Boolean(currentArticle);
+  const isMiniPlayerVisible = useShouldShowMiniPlayer();
 
   useEffect(() => {
     if (enhancedTracksError) {

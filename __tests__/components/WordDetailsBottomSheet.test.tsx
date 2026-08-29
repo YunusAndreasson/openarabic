@@ -16,7 +16,7 @@
  * 3. These can desynchronize, especially during rapid toggles
  */
 
-import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
 import { selectionFeedback } from '@/utils/haptics';
@@ -166,12 +166,12 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
         />,
       );
 
-      fireEvent.press(getByText('Add to practice'));
+      await act(async () => {
+        fireEvent.press(getByText('Add to practice'));
+      });
 
       // …and the word goes back to being offerable, rather than reading as saved.
-      await waitFor(() => {
-        expect(getByText('Add to practice')).toBeTruthy();
-      });
+      expect(getByText('Add to practice')).toBeTruthy();
 
       expect(mockShowToast).not.toHaveBeenCalledWith(STRINGS.WORD_ADDED_TO_PRACTICE);
     });
