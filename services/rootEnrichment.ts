@@ -39,7 +39,51 @@ type RootEnrichmentRow = Pick<
   | 'source_url'
 >;
 
+function parseRootEnrichment(row: RootEnrichmentRow): RootEnrichment {
+  return {
+    rootId: row.root_id as RootId,
+    triliteralRoot: row.triliteral_root,
+    rootTransliteration: row.root_transliteration,
+    rootMeaning: row.root_meaning,
+    headwordTransliteration: row.headword_transliteration,
+    senses: parseSenses(row.senses),
+    wordFamily: parseWordFamily(row.word_family),
+    usageNote: row.usage_note,
+    source: row.source,
+    sourceUrl: row.source_url,
+  };
+}
+
 export const rootEnrichmentService = {
+  /**
+   * Fetch the root stories for one immutable review chunk in a single query.
+   *
+   * Review enrichment is deliberately batch-shaped: starting a request when a
+   * learner reaches each card makes the explanation race the answer they just
+   * gave. Loading the whole admitted chunk once keeps the per-card path quiet
+   * and makes the story ready if that card becomes a restudy hold.
+   */
+  async getByRootIds(rootIds: RootId[]): Promise<Map<number, RootEnrichment>> {
+    if (rootIds.length === 0) return new Map();
+
+    const rows = await executeQuery<RootEnrichmentRow[]>(
+      () =>
+        supabase
+          .from('root_enrichment')
+          .select(
+            'root_id, triliteral_root, root_transliteration, root_meaning, headword_transliteration, senses, word_family, usage_note, source, source_url',
+          )
+          .in(
+            'root_id',
+            rootIds.map(rootId => rootId as number),
+          )
+          .overrideTypes<RootEnrichmentRow[], { merge: false }>(),
+      errorConfig,
+    );
+
+    return new Map(rows.map(row => [row.root_id, parseRootEnrichment(row)]));
+  },
+
   /**
    * The root explanation for one headword, or `null` when we have not generated
    * one yet.
@@ -71,17 +115,6 @@ export const rootEnrichmentService = {
     );
     if (!row) return null;
 
-    return {
-      rootId: row.root_id as RootId,
-      triliteralRoot: row.triliteral_root,
-      rootTransliteration: row.root_transliteration,
-      rootMeaning: row.root_meaning,
-      headwordTransliteration: row.headword_transliteration,
-      senses: parseSenses(row.senses),
-      wordFamily: parseWordFamily(row.word_family),
-      usageNote: row.usage_note,
-      source: row.source,
-      sourceUrl: row.source_url,
-    };
+    return parseRootEnrichment(row);
   },
 };

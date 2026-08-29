@@ -218,6 +218,7 @@ export const createReanimatedMock = () => {
       value: derivation(),
       get: () => derivation(),
     }),
+    useReducedMotion: jest.fn(() => false),
     useAnimatedProps: <T extends Record<string, unknown>>(propsCallback: () => T): T => {
       try {
         return propsCallback() || ({} as T);

@@ -290,11 +290,18 @@ export function requestVoiceModel(opts: {
             fraction * (PROGRESS_BANDS.extractEnd - PROGRESS_BANDS.downloadEnd)
           : PROGRESS_BANDS.downloadStart +
             fraction * (PROGRESS_BANDS.downloadEnd - PROGRESS_BANDS.downloadStart);
+      const state = progress.phase === 'extracting' ? 'extracting' : 'downloading';
+      // Every consumer renders a whole percentage. Native downloaders can emit
+      // many callbacks inside that same visible percent; publishing each one
+      // invalidates every useSyncExternalStore subscriber for no UI change.
+      // Store the visible precision so snapshot identity also stays stable.
+      const visibleProgress = Math.round(Math.max(snapshot.progress, banded) * 100) / 100;
+      if (snapshot.state === state && snapshot.progress === visibleProgress) return;
       emit({
-        state: progress.phase === 'extracting' ? 'extracting' : 'downloading',
+        state,
         // Monotonic: the two phases each count 0→100, and a bar that goes
         // backwards reads as a failure even when nothing is wrong.
-        progress: Math.max(snapshot.progress, banded),
+        progress: visibleProgress,
       });
     };
 

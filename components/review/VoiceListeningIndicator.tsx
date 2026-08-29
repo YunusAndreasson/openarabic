@@ -25,7 +25,12 @@ import type { FC } from 'react';
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { SharedValue } from 'react-native-reanimated';
-import Animated, { useAnimatedStyle, useDerivedValue, withTiming } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  useDerivedValue,
+  useReducedMotion,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { LAYOUT } from '@/constants/layout';
@@ -142,6 +147,7 @@ interface VoiceListeningIndicatorProps {
 
 export const VoiceListeningIndicator: FC<VoiceListeningIndicatorProps> = ({ state, level }) => {
   const colors = useColors();
+  const reduceMotion = useReducedMotion();
   const isLive = state === 'live';
 
   // Smoothed once, here, rather than once per bar: seven timing animations
@@ -168,7 +174,9 @@ export const VoiceListeningIndicator: FC<VoiceListeningIndicatorProps> = ({ stat
       accessibilityRole="progressbar"
       accessibilityLabel={caption || STRINGS.VOICE_CHANNEL_LABEL}
     >
-      <Animated.View style={[STATIC_STYLES.barRow, state === 'opening' && OPENING_PULSE]}>
+      <Animated.View
+        style={[STATIC_STYLES.barRow, state === 'opening' && !reduceMotion && OPENING_PULSE]}
+      >
         {BARS.map(bar => (
           <VoiceBar key={bar.id} level={smoothed} weight={bar.weight} color={barColor} />
         ))}

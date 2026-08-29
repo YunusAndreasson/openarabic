@@ -88,23 +88,25 @@ const PlaylistListItem = memo(
     const authorCategoryText = getArticleMetadata(item.articles);
 
     return (
-      <Animated.View
-        style={ROW_FADE_IN_STYLE}
-        exiting={FadeOut.duration(TIMING_CONFIG.FAST.duration)}
-      >
-        <PlaylistItemCard
-          title={item.articles.title}
-          secondaryText={authorCategoryText}
-          editMode={editMode}
-          isBeingDragged={_isBeingDragged}
-          onDelete={handleDelete}
-          // Entire card triggers article navigation when not in edit mode
-          onPress={!editMode ? handlePress : undefined}
-          // Add article image for bookmarks-style appearance
-          imageUrl={generateStorageUrl('images', item.articles.image_url)}
-          articleId={item.article_id}
-          dragHandleProps={dragHandleProps}
-        />
+      <Animated.View exiting={FadeOut.duration(TIMING_CONFIG.FAST.duration)}>
+        {/* Keep the recyclable-row CSS fade on a child. Reanimated's exiting
+            animation also owns opacity, and putting both systems on the same
+            view lets either one overwrite the other during deletion. */}
+        <Animated.View style={ROW_FADE_IN_STYLE}>
+          <PlaylistItemCard
+            title={item.articles.title}
+            secondaryText={authorCategoryText}
+            editMode={editMode}
+            isBeingDragged={_isBeingDragged}
+            onDelete={handleDelete}
+            // Entire card triggers article navigation when not in edit mode
+            onPress={!editMode ? handlePress : undefined}
+            // Add article image for bookmarks-style appearance
+            imageUrl={generateStorageUrl('images', item.articles.image_url)}
+            articleId={item.article_id}
+            dragHandleProps={dragHandleProps}
+          />
+        </Animated.View>
       </Animated.View>
     );
   },

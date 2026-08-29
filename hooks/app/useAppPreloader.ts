@@ -2,7 +2,6 @@ import * as Sentry from '@sentry/react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { useCallback, useRef, useState } from 'react';
-import { InteractionManager } from 'react-native';
 
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import {
@@ -20,6 +19,7 @@ import type { Article } from '@/types/articles.types';
 import type { ArticleId } from '@/types/branded.types';
 import { getBeginnerArticles, getRandomItems } from '@/utils/articleUtils';
 import { breadcrumb, handleError, toError } from '@/utils/errorHandling';
+import { runWhenIdle } from '@/utils/runWhenIdle';
 import { generateStorageUrl } from '@/utils/storageUtils';
 import { MAX_FEATURED_ARTICLES } from '@/hooks/articles/useMultipleFeaturedArticles';
 
@@ -194,10 +194,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
       // CRITICAL: Only generate new featured articles if none exist for this session
       // This prevents articles from changing on app resume (backgrounding/foregrounding)
       if (Array.isArray(_articles) && _articles.length > 0) {
-        // (split work + requestIdleCallback) changes *when* this runs, not just its name.
-        // These sit in preload/review hot paths; migrating needs per-site profiling.
-        // eslint-disable-next-line @typescript-eslint/no-deprecated -- see note above
-        InteractionManager.runAfterInteractions(() => {
+        runWhenIdle(() => {
           try {
             // Check if featured articles already exist for this session
             const existingFeatured = queryClient.getQueryData([
@@ -256,30 +253,31 @@ export const useAppPreloader = (): AppPreloaderResult => {
       // Prefetch bookmark images for instant loading when user opens bookmarks
       // Uses ensureQueryData to reuse the TanStack Query cache and prevent N+1 API calls
       if (user?.id) {
-        // (split work + requestIdleCallback) changes *when* this runs, not just its name.
-        // These sit in preload/review hot paths; migrating needs per-site profiling.
-        // eslint-disable-next-line @typescript-eslint/no-deprecated -- see note above
-        InteractionManager.runAfterInteractions(async () => {
-          try {
-            const readingList = await queryClient.ensureQueryData(
-              readingProgressQueries.readingList(user.id),
-            );
-            if (readingList.length > 0) {
-              const imagePrefetches = readingList
-                .map(item => generateStorageUrl('images', item.articles.image_url))
-                .filter(Boolean)
-                .map(url => Image.prefetch(url, { cachePolicy: 'memory-disk' }).catch(() => null));
+        runWhenIdle(() => {
+          void (async () => {
+            try {
+              const readingList = await queryClient.ensureQueryData(
+                readingProgressQueries.readingList(user.id),
+              );
+              if (readingList.length > 0) {
+                const imagePrefetches = readingList
+                  .map(item => generateStorageUrl('images', item.articles.image_url))
+                  .filter(Boolean)
+                  .map(url =>
+                    Image.prefetch(url, { cachePolicy: 'memory-disk' }).catch(() => null),
+                  );
 
-              // Fire-and-forget; do not block loader
-              Promise.allSettled(imagePrefetches).catch(error => {
-                Sentry.captureException(error, {
-                  tags: { location: 'preloader:bookmark-prefetch' },
+                // Fire-and-forget; do not block loader
+                Promise.allSettled(imagePrefetches).catch(error => {
+                  Sentry.captureException(error, {
+                    tags: { location: 'preloader:bookmark-prefetch' },
+                  });
                 });
-              });
+              }
+            } catch {
+              // Ignore bookmark prefetch errors
             }
-          } catch {
-            // Ignore bookmark prefetch errors
-          }
+          })();
         });
       }
 

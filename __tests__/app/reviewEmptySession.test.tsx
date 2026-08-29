@@ -115,6 +115,7 @@ jest.mock('@/hooks/review', () => ({
   }),
   useReviewExamples: () => new Map(),
   useReviewGlossAlternates: () => new Map(),
+  useReviewRootEnrichments: () => new Map(),
   useVoiceReview: () => ({
     phase: 'idle',
     debug: null,

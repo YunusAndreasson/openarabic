@@ -1,6 +1,5 @@
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { InteractionManager } from 'react-native';
 
 import { getArticleRoute } from '@/constants/routes';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
@@ -9,6 +8,7 @@ import { setCustomOrder } from '@/store/playlistSlice';
 import type { BookmarkItem } from '@/types/bookmark.types';
 import type { ArticleId } from '@/types/branded.types';
 import { selectionFeedback } from '@/utils/haptics';
+import { runWhenIdle } from '@/utils/runWhenIdle';
 
 interface ListenUIParams {
   sortedReadingList: BookmarkItem[];
@@ -34,10 +34,9 @@ export const usePlaylistUI = ({ sortedReadingList, editMode }: ListenUIParams) =
 
       const article = sortedReadingList.find(item => item.article_id === articleId)?.articles;
       if (article) {
-        // (split work + requestIdleCallback) changes *when* this runs, not just its name.
-        // These sit in preload/review hot paths; migrating needs per-site profiling.
-        // eslint-disable-next-line @typescript-eslint/no-deprecated -- see note above
-        InteractionManager.runAfterInteractions(() => prefetchArticle(articleId));
+        runWhenIdle(() => {
+          void prefetchArticle(articleId);
+        });
         router.push(getArticleRoute(articleId, article.title));
       }
     },

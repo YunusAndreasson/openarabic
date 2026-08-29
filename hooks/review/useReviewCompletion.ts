@@ -1,6 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { InteractionManager } from 'react-native';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { fsrsQueries, studyStreakQueries } from '@/constants/queries';
@@ -10,6 +9,7 @@ import { metaEvents } from '@/services/metaEvents';
 import type { SessionMetrics } from '@/types/review.types';
 import { recordSessionCompleted } from '@/utils/notificationPromptStorage';
 import { appendSession } from '@/utils/recallSignalStorage';
+import { runWhenIdle } from '@/utils/runWhenIdle';
 import { recordStudyDay } from '@/utils/studyDayLedger';
 
 /**
@@ -50,10 +50,7 @@ export const useReviewCompletion = (sessionMetrics?: SessionMetrics): void => {
       void fsrsQueries.invalidateAll(queryClient, user.id);
     };
 
-    // (split work + requestIdleCallback) changes *when* this runs, not just its name.
-    // These sit in preload/review hot paths; migrating needs per-site profiling.
-    // eslint-disable-next-line @typescript-eslint/no-deprecated -- see note above
-    InteractionManager.runAfterInteractions(() => {
+    runWhenIdle(() => {
       void invalidateReviewQueries();
 
       void analytics.track(ANALYTICS_EVENTS.PRACTICE_SESSION_COMPLETE, {

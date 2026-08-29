@@ -213,6 +213,30 @@ describe('voiceModelStore', () => {
   });
 
   describe('progress reporting', () => {
+    it('publishes at most once per visible percentage during a noisy download', async () => {
+      const listener = jest.fn();
+      subscribeVoiceModel(listener);
+
+      sherpa.download.ensureModelByCategory.mockImplementation(
+        async (
+          _category: string,
+          _id: string,
+          options: { onProgress?: (p: { percent: number; phase: string }) => void },
+        ) => {
+          for (let tenth = 0; tenth <= 1000; tenth++) {
+            options.onProgress?.({ percent: tenth / 10, phase: 'downloading' });
+          }
+          return { localPath: '/mock/model/path' };
+        },
+      );
+
+      await requestVoiceModel({ reason: 'prefetch' });
+
+      // Probe `absent`, initial `downloading`, 90 visible download-band changes,
+      // then `ready`. Raw native callbacks must not become 1001 React updates.
+      expect(listener).toHaveBeenCalledTimes(93);
+    });
+
     it('never goes backwards across the download/extract phase change', async () => {
       // The library counts 0→100 for the download and then 0→100 again for the
       // extract. Mapping both onto one bar made it visibly reset, which reads as

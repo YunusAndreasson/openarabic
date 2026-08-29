@@ -33,7 +33,7 @@
  * recognizer should look like. Silence and hallucinated transcripts are exempt;
  * those are us failing to hear, not them being wrong.
  */
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { type SetStateAction, useCallback, useEffect, useRef, useState } from 'react';
 
 import { useToast, useVoiceGrading } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
@@ -142,6 +142,13 @@ export interface VoiceDebug {
   /** Last terminal arm() outcome (permission / busy / error / etc.). */
   armError: string | null;
 }
+
+const createEmptyVoiceDebug = (): VoiceDebug => ({
+  transcript: '',
+  match: null,
+  recorder: null,
+  armError: null,
+});
 
 interface UseVoiceReviewArgs {
   /** The English meaning expected from the user. Empty if no current card. */
@@ -288,12 +295,27 @@ export function useVoiceReview({
 
   const [phase, setPhase] = useState<VoicePhase>('idle');
   const [result, setResult] = useState<VoiceResult | null>(null);
-  const [debug, setDebug] = useState<VoiceDebug>({
-    transcript: '',
-    match: null,
-    recorder: null,
-    armError: null,
-  });
+  const [debug, setDebug] = useState<VoiceDebug>(createEmptyVoiceDebug);
+  const debugRef = useRef(debug);
+  const debugEnabledRef = useRef(debugEnabled);
+
+  // Diagnostics must keep their latest snapshot for a HUD that is enabled
+  // mid-attempt, but hidden instrumentation must not repaint ReviewContent.
+  // Keep the canonical value in a ref and publish it to React only while the
+  // advanced HUD is actually visible.
+  const publishDebug = useCallback((update: SetStateAction<VoiceDebug>): void => {
+    const next =
+      typeof update === 'function'
+        ? update(debugRef.current)
+        : update;
+    debugRef.current = next;
+    if (debugEnabledRef.current) setDebug(next);
+  }, []);
+
+  useEffect(() => {
+    debugEnabledRef.current = debugEnabled;
+    if (debugEnabled) setDebug(debugRef.current);
+  }, [debugEnabled]);
 
   // Bumped by every path that asks for the mic, so the arm effect re-runs.
   const [attempt, setAttempt] = useState(0);
@@ -393,7 +415,7 @@ export function useVoiceReview({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPhase('idle');
     setResult(null);
-    setDebug({ transcript: '', match: null, recorder: null, armError: null });
+    publishDebug(createEmptyVoiceDebug());
     armedForKeyRef.current = null;
     attemptCtxRef.current = null;
     armFailuresRef.current = 0;
@@ -410,7 +432,7 @@ export function useVoiceReview({
       clearTimeout(armRetryTimerRef.current);
       armRetryTimerRef.current = null;
     }
-  }, [currentWordKey]);
+  }, [currentWordKey, publishDebug]);
 
   // Drop a pending arm retry if the screen goes away mid-backoff.
   useEffect(
@@ -578,7 +600,7 @@ export function useVoiceReview({
           // that was the single largest leak in the funnel. The setting stays
           // on; the button becomes an actionable "Enable microphone" that opens
           // system settings, and the learner can grade by tapping meanwhile.
-          setDebug(d => ({ ...d, armError: 'permission' }));
+          publishDebug(d => ({ ...d, armError: 'permission' }));
           // Still always worth a row: it ends this card's voice attempt, and
           // the rate of it is how we know whether the ask is landing.
           void logVoiceArmFailure({
@@ -602,7 +624,7 @@ export function useVoiceReview({
           return;
         }
         voiceBreadcrumb('voice.arm.failed', { reason: outcome.reason }, 'warning');
-        setDebug(d => ({
+        publishDebug(d => ({
           ...d,
           armError: outcome.message ? `${outcome.reason}: ${outcome.message}` : outcome.reason,
         }));
@@ -666,7 +688,7 @@ export function useVoiceReview({
 
       countDiag({ micArms: 1 });
       setPhase('checking');
-      setDebug(d => ({
+      publishDebug(d => ({
         ...d,
         armError: null,
         recorder: {
@@ -694,7 +716,7 @@ export function useVoiceReview({
         // panel so the learner can self-grade or retry. Never auto-Unknown.
         diagMark('stt.timeout', { samples: outcome.result.waveform.length });
         voiceBreadcrumb('voice.transcribe.timeout', undefined, 'warning');
-        setDebug(d => ({ ...d, armError: 'transcribe-timeout' }));
+        publishDebug(d => ({ ...d, armError: 'transcribe-timeout' }));
       }
 
       void analytics.track(ANALYTICS_EVENTS.VOICE_TRANSCRIPT, {
@@ -724,7 +746,7 @@ export function useVoiceReview({
         spoken: match.normalizedSpoken,
         expected: match.normalizedExpected,
       });
-      setDebug(d => ({
+      publishDebug(d => ({
         ...d,
         transcript,
         match: {
@@ -927,6 +949,7 @@ export function useVoiceReview({
     attempt,
     dispatch,
     showToast,
+    publishDebug,
   ]);
 
   const accept = useCallback((): void => {

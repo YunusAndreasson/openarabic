@@ -998,6 +998,8 @@ export const STRINGS = {
    * beneath it are then self-evidently the thing it refers to.
    */
   WORD_ROOT_SECTION_TITLE: 'Where this word comes from',
+  /** The compact root story shown after a learner marks a review as forgotten. */
+  REVIEW_ROOT_INSIGHT_TITLE: 'Root insight',
   /** Transliteration and shared sense, under the radicals. */
   WORD_ROOT_SUMMARY: '{transliteration} · {meaning}',
   WORD_ROOT_SENSES_TITLE: 'Senses',

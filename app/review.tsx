@@ -22,6 +22,7 @@ import {
   ReviewFlipCard,
   ReviewGradeBar,
   ReviewHeader,
+  ReviewRootInsight,
   VoiceAnswerButton,
   voiceButtonMode,
   VoiceListeningIndicator,
@@ -46,6 +47,7 @@ import {
   useReview,
   useReviewExamples,
   useReviewGlossAlternates,
+  useReviewRootEnrichments,
   useVoiceReview,
 } from '@/hooks/review';
 import { useColors } from '@/hooks/theme/useColors';
@@ -430,6 +432,14 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   const examples = useReviewExamples(enrichmentBatches);
   const currentExample = currentWord ? (examples.get(currentWord.root_id) ?? null) : null;
 
+  // Root stories share the example lane's batch-level, non-blocking fetch. A
+  // forgotten card therefore has its explanation ready without introducing a
+  // request into the moment the learner is waiting for feedback.
+  const rootEnrichments = useReviewRootEnrichments(enrichmentBatches);
+  const currentRootInsight = currentWord
+    ? (rootEnrichments.get(currentWord.root_id)?.usageNote ?? null)
+    : null;
+
   // Every English name the corpus gives each admitted word. Same bounded,
   // non-blocking batch-level prefetch as the examples above; it only widens what
   // voice grading accepts, so a session runs unchanged without it.
@@ -676,7 +686,9 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
             ) : null
           }
           answerSlot={
-            currentExample ? (
+            restudying && currentRootInsight ? (
+              <ReviewRootInsight explanation={currentRootInsight} />
+            ) : currentExample ? (
               <ReviewContextSentence
                 example={currentExample}
                 onPlay={

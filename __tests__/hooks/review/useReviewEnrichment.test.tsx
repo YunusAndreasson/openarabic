@@ -7,7 +7,9 @@ import { createHookTestWrapper } from '@/__tests__/helpers/hookMocks';
 import { rootId } from '@/__tests__/helpers/ids';
 import { useReviewExamples } from '@/hooks/review/useReviewExamples';
 import { useReviewGlossAlternates } from '@/hooks/review/useReviewGlossAlternates';
+import { useReviewRootEnrichments } from '@/hooks/review/useReviewRootEnrichments';
 import type { WordExample } from '@/services/sentences';
+import type { RootEnrichment } from '@/types/rootEnrichment.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 
 jest.mock('@/hooks/theme/useColors', () => ({
@@ -25,7 +27,14 @@ jest.mock('@/services/sentences', () => ({
   },
 }));
 
+jest.mock('@/services/rootEnrichment', () => ({
+  rootEnrichmentService: {
+    getByRootIds: jest.fn(),
+  },
+}));
+
 const { sentencesService } = require('@/services/sentences');
+const { rootEnrichmentService } = require('@/services/rootEnrichment');
 
 function studyWord(id: number): StudyWord {
   return { root_id: rootId(id) } as StudyWord;
@@ -44,6 +53,21 @@ function example(id: number): WordExample {
   };
 }
 
+function enrichment(id: number): RootEnrichment {
+  return {
+    rootId: rootId(id),
+    triliteralRoot: 'ق ل ب',
+    rootTransliteration: 'q-l-b',
+    rootMeaning: 'turn or change',
+    headwordTransliteration: 'qalb',
+    senses: [],
+    wordFamily: [],
+    usageNote: `root-story-${id}`,
+    source: "Lane's Lexicon",
+    sourceUrl: 'https://example.com',
+  };
+}
+
 describe('review enrichment batches', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -52,6 +76,9 @@ describe('review enrichment batches', () => {
     );
     sentencesService.getGlossAlternatesForRoots.mockImplementation(
       async (ids: number[]) => new Map(ids.map(id => [id, [`gloss-${id}`]])),
+    );
+    rootEnrichmentService.getByRootIds.mockImplementation(
+      async (ids: number[]) => new Map(ids.map(id => [id, enrichment(id)])),
     );
   });
 
@@ -95,5 +122,25 @@ describe('review enrichment batches', () => {
     expect(sentencesService.getGlossAlternatesForRoots).toHaveBeenCalledTimes(2);
     expect(result.current.get(1)).toEqual(['gloss-1']);
     expect(result.current.get(3)).toEqual(['gloss-3']);
+  });
+
+  test('loads root stories once per batch and retains earlier explanations', async () => {
+    const firstBatch = [studyWord(2), studyWord(1)];
+    const { wrapper } = createHookTestWrapper();
+    const { result, rerender } = renderHook(
+      ({ batches }: { batches: readonly (readonly StudyWord[])[] }) =>
+        useReviewRootEnrichments(batches),
+      { initialProps: { batches: [firstBatch] }, wrapper },
+    );
+
+    await waitFor(() => expect(result.current.size).toBe(2));
+    expect(rootEnrichmentService.getByRootIds).toHaveBeenCalledWith([rootId(1), rootId(2)]);
+
+    rerender({ batches: [[...firstBatch], [studyWord(3)]] });
+    await waitFor(() => expect(result.current.size).toBe(3));
+
+    expect(rootEnrichmentService.getByRootIds).toHaveBeenCalledTimes(2);
+    expect(rootEnrichmentService.getByRootIds).toHaveBeenLastCalledWith([rootId(3)]);
+    expect(result.current.get(1)?.usageNote).toBe('root-story-1');
   });
 });

@@ -209,6 +209,53 @@ describe('useReview Hook', () => {
       expect(audioCache.getAudio).not.toHaveBeenCalled();
     });
 
+    test('a slow cache lookup cannot replace a newer replay', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { audioCache } = require('@/services/audioCache');
+      const word = createMockWord();
+      let resolveOldLookup!: (path: string) => void;
+      const oldLookup = new Promise<string>(resolve => {
+        resolveOldLookup = resolve;
+      });
+      const resolveCached = jest
+        .fn()
+        .mockReturnValueOnce(null)
+        .mockReturnValueOnce('/cache/newest.mp3');
+
+      useAudioPreloader.mockReturnValue({
+        isPreloading: true,
+        progress: 50,
+        isReady: false,
+        resolveCached,
+        forgetCached: jest.fn(),
+      });
+      useFSRS.mockReturnValue(fsrsState(mocks, word));
+      audioCache.getAudio.mockReturnValueOnce(oldLookup);
+      mocks.mockAudioPlayer.play.mockResolvedValue(true);
+
+      const wrapper = createWrapper();
+      const { result } = renderHook(() => useReview(), { wrapper });
+
+      act(() => {
+        void result.current.handleReplayAudio();
+        void result.current.handleReplayAudio();
+      });
+      await waitFor(() => {
+        expect(mocks.mockAudioPlayer.play).toHaveBeenCalledWith(
+          expect.objectContaining({ audioUrl: '/cache/newest.mp3' }),
+          expect.anything(),
+        );
+      });
+
+      resolveOldLookup('/cache/stale.mp3');
+      await act(async () => {
+        await oldLookup;
+        await Promise.resolve();
+      });
+
+      expect(mocks.mockAudioPlayer.play).toHaveBeenCalledTimes(1);
+    });
+
     it('should play Arabic audio when word loads', async () => {
       const word = createMockWord({
         root: {

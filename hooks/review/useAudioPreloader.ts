@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { clearAllPreloadedSources, preload } from 'expo-audio';
+import { clearPreloadedSource, preload } from 'expo-audio';
 
 import { audioCache } from '@/services/audioCache';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -27,6 +27,22 @@ const PRELOAD_DEADLINE_MS = 45000;
 const BATCH_SIZE = 5;
 /** Breather between batches, so downloads leave headroom for live playback. */
 const BATCH_DELAY = 100;
+
+/** Release only buffers this review hook owns. A global clear would also evict
+ * article/playlist audio that happens to be warm at the same time. */
+function releasePreloadedSources(paths: Set<string>): void {
+  const owned = [...paths];
+  paths.clear();
+  owned.forEach(path => {
+    try {
+      void clearPreloadedSource(path).catch(() => {
+        // Best-effort native memory cleanup.
+      });
+    } catch {
+      // Best-effort native memory cleanup.
+    }
+  });
+}
 
 interface UseAudioPreloaderReturn {
   /** True only while the first card's audio is being fetched. Blocks the UI. */
@@ -111,12 +127,15 @@ export const useAudioPreloader = (
   // `resolveCached`: this is the answer the play path used to go and ask
   // audioCache for all over again, on every single card.
   const resolvedPathsRef = useRef(new Map<string, string>());
+  // Local paths this hook successfully buffered in expo-audio. Kept separate
+  // from the disk-cache map because only native buffers need explicit release.
+  const nativePreloadedPathsRef = useRef(new Set<string>());
 
   /**
    * Fetch one URL into the disk cache and buffer it natively. Never throws —
    * a failure here must not stop the rest of the queue from preloading.
    */
-  const cacheOne = useCallback(async (url: string): Promise<void> => {
+  const cacheOne = useCallback(async (url: string, isStale: () => boolean): Promise<void> => {
     try {
       const localPath = await audioCache.getAudio(url);
       // A failed download resolves to the remote url itself, which is not a
@@ -125,11 +144,24 @@ export const useAudioPreloader = (
       // cache contract returns a string, an invalid native/mock result should
       // be treated as a miss rather than passed into expo-audio.
       if (!localPath || localPath === url) return;
+      // A route exit may happen while the disk lookup is in flight. Do not turn
+      // its late result into a native allocation owned by a dead review.
+      if (isStale()) return;
 
       resolvedPathsRef.current.set(url, localPath);
       try {
         // Buffer in native memory for near-instant playback
         await preload(localPath);
+        if (isStale()) {
+          resolvedPathsRef.current.delete(url);
+          try {
+            void clearPreloadedSource(localPath).catch(() => undefined);
+          } catch {
+            // Best-effort cleanup for a preload that finished during unmount.
+          }
+          return;
+        }
+        nativePreloadedPathsRef.current.add(localPath);
       } catch {
         // preload is an enhancement - disk cache is sufficient
       }
@@ -175,7 +207,7 @@ export const useAudioPreloader = (
           batched += Math.min(BATCH_SIZE, urls.length - i);
 
           const batch = urls.slice(i, i + BATCH_SIZE);
-          await Promise.all(batch.map(cacheOne));
+          await Promise.all(batch.map(url => cacheOne(url, isStale)));
 
           if (!deadlineHit && i + BATCH_SIZE < urls.length) {
             await new Promise<void>(resolve => setTimeout(resolve, BATCH_DELAY));
@@ -250,7 +282,9 @@ export const useAudioPreloader = (
         });
         try {
           await Promise.race([
-            Promise.all(priorityUrls.map(url => cacheOne(url).then(trackPriorityProgress))),
+            Promise.all(
+              priorityUrls.map(url => cacheOne(url, isStale).then(trackPriorityProgress)),
+            ),
             deadline,
           ]);
         } finally {
@@ -322,8 +356,7 @@ export const useAudioPreloader = (
 
   // Effect: Preload audio when session starts
   useEffect(() => {
-    const shouldPreload =
-      wordQueue.length > 0 && !isPreloading && !isSessionComplete && !isReady;
+    const shouldPreload = wordQueue.length > 0 && !isPreloading && !isSessionComplete && !isReady;
 
     if (!shouldPreload) return;
 
@@ -388,25 +421,22 @@ export const useAudioPreloader = (
       // survive on disk, but the next chunk re-preloads its own set and this
       // map should not accumulate across them.
       resolvedPathsRef.current.clear();
+      releasePreloadedSources(nativePreloadedPathsRef.current);
       // Resets local readiness so the next session can re-arm preloading.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsReady(false);
-      // Free native memory used by preloaded audio
-      try {
-        clearAllPreloadedSources().catch(() => {
-          // Non-critical cleanup
-        });
-      } catch {
-        // Non-critical cleanup
-      }
     }
   }, [isSessionComplete]);
 
   // Unmount: stop the background loop so it can't outlive the review screen.
   useEffect(() => {
     const runId = runIdRef;
+    const resolvedPaths = resolvedPathsRef;
+    const nativePreloadedPaths = nativePreloadedPathsRef;
     return () => {
       runId.current++;
+      resolvedPaths.current.clear();
+      releasePreloadedSources(nativePreloadedPaths.current);
     };
   }, []);
 

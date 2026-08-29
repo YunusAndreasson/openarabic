@@ -170,13 +170,6 @@ const FLIP_SHADOW = {
 } as const;
 
 const STATIC_STYLES = StyleSheet.create({
-  fill: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
   centered: {
     flex: 1,
     justifyContent: 'center',

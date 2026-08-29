@@ -10,7 +10,6 @@ import {
   useState,
 } from 'react';
 import type { ViewStyle } from 'react-native';
-import { InteractionManager } from 'react-native';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TIMING_CONFIG, VERDICT } from '@/constants/animation';
@@ -30,6 +29,7 @@ import { useAudioPreloader } from './useAudioPreloader';
 import { watchPromptFinish } from './promptFinishWatcher';
 import { useSessionMetrics } from './useSessionMetrics';
 import { useTimerCleanup } from '@/hooks/utils';
+import { runWhenIdle } from '@/utils/runWhenIdle';
 import { useFSRS } from '@/hooks/vocabulary';
 import { audioCache } from '@/services/audioCache';
 import { simpleAudioService } from '@/services/audioPlayer';
@@ -661,6 +661,12 @@ export function useReview({
     async (url: string, onResolved?: (detail: PlayAudioDetail) => void) => {
       if (!url) return false;
 
+      // Claim this request before the first asynchronous cache lookup. If an
+      // older cold-cache request resumes after a newer card/replay has already
+      // started, it must not become "latest" merely because its lookup was
+      // slower and replace the audio the learner just asked for.
+      const seq = ++playAudioSeqRef.current;
+
       const preloaded = resolveCached(url);
       // Reported rather than inferred: a play-time cache miss and a cache
       // self-heal both cost seconds, and from the outside they look identical
@@ -670,17 +676,16 @@ export function useReview({
         onResolved?.(detail);
         return started;
       };
-      const localPath = preloaded ?? (await audioCache.getAudio(url, { quick: true }));
-
       const makeTrack = (audioUrl: string) => ({
         id: `review-${Date.now()}`,
         audioUrl,
         title: 'Review Audio',
       });
 
-      const seq = ++playAudioSeqRef.current;
-
       try {
+        const localPath = preloaded ?? (await audioCache.getAudio(url, { quick: true }));
+        if (playAudioSeqRef.current !== seq) return report(false);
+
         const success = await simpleAudioService.play(makeTrack(localPath), REVIEW_PLAY_OPTIONS);
         if (success) return report(true);
 
@@ -1410,10 +1415,7 @@ export function useReview({
     // first or the refetch can overtake them and repopulate the practice screen
     // with pre-grade data. The flush must complete even though this closure
     // outlives the screen.
-    // (split work + requestIdleCallback) changes *when* this runs, not just its name.
-    // These sit in preload/review hot paths; migrating needs per-site profiling.
-    // eslint-disable-next-line @typescript-eslint/no-deprecated -- see note above
-    InteractionManager.runAfterInteractions(() => {
+    runWhenIdle(() => {
       finalizeSession();
     });
 

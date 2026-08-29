@@ -2,7 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useFocusEffect, useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useMemo, useRef } from 'react';
-import { InteractionManager, ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedView } from '@/components/primitives/ThemedView';
@@ -26,6 +26,7 @@ import { useMemoryHorizonDistribution } from '@/hooks/vocabulary/useMemoryHorizo
 import { useMemoryInsights } from '@/hooks/vocabulary/useMemoryInsights';
 import { calculateDueWordsForecast } from '@/utils/fsrsUtils';
 import { isLeechWord } from '@/utils/leechUtils';
+import { runWhenIdle } from '@/utils/runWhenIdle';
 import { countReviewedToday } from '@/utils/wordClassification';
 
 // Mount fade-in — Reanimated 4 CSS @keyframes, module-level so no per-render alloc.
@@ -92,11 +93,8 @@ export default function PracticeScreen(): JSX.Element {
 
       // Only fetch if we're missing either data set
       if (!hasStudyWords || !hasDueWords) {
-        // (split work + requestIdleCallback) changes *when* this runs, not just its name.
-        // These sit in preload/review hot paths; migrating needs per-site profiling.
-        // eslint-disable-next-line @typescript-eslint/no-deprecated -- see note above
-        InteractionManager.runAfterInteractions(() => {
-          prefetchVocabularyData();
+        runWhenIdle(() => {
+          void prefetchVocabularyData();
         });
       }
     }, [user, prefetchVocabularyData, queryClient]),

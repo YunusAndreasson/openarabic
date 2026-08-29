@@ -9,7 +9,7 @@
 
 import { describe, expect, jest, beforeEach } from '@jest/globals';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import { preload } from 'expo-audio';
+import { clearAllPreloadedSources, clearPreloadedSource, preload } from 'expo-audio';
 
 // expo-audio is mocked via moduleNameMapper → __mocks__/expo-audio.js
 
@@ -34,6 +34,8 @@ import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 
 const mockAudioCache = jest.mocked(audioCache);
 const mockPreload = jest.mocked(preload);
+const mockClearPreloadedSource = jest.mocked(clearPreloadedSource);
+const mockClearAllPreloadedSources = jest.mocked(clearAllPreloadedSources);
 const mockGenerateStorageUrl = jest.mocked(generateStorageUrl);
 
 function deferred<T>() {
@@ -253,6 +255,33 @@ describe('useAudioPreloader', () => {
   });
 
   describe('Cancellation', () => {
+    test('does not enter native preload when a cache lookup finishes after unmount', async () => {
+      const audio = deferred<string>();
+      mockAudioCache.getAudio.mockReturnValue(audio.promise);
+
+      const { unmount } = renderHook(() =>
+        useAudioPreloader([createMockWord(1, 'audio1.mp3')], false),
+      );
+      await waitFor(() => expect(mockAudioCache.getAudio).toHaveBeenCalledTimes(1));
+
+      unmount();
+      await act(async () => audio.resolve('/cache/audio1.mp3'));
+
+      expect(mockPreload).not.toHaveBeenCalled();
+    });
+
+    test('releases only review-owned native buffers when unmounted', async () => {
+      const { result, unmount } = renderHook(() =>
+        useAudioPreloader([createMockWord(1, 'audio1.mp3')], false),
+      );
+      await waitFor(() => expect(result.current.isReady).toBe(true));
+
+      unmount();
+
+      expect(mockClearPreloadedSource).toHaveBeenCalledWith('cached-path');
+      expect(mockClearAllPreloadedSources).not.toHaveBeenCalled();
+    });
+
     test('does not start another background batch after unmount', async () => {
       jest.useFakeTimers();
       const background = Array.from({ length: 6 }, () => deferred<string>());
