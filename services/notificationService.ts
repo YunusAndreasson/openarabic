@@ -67,7 +67,12 @@ if (Notifications) {
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
       shouldPlaySound: true,
-      shouldSetBadge: true,
+      // Foreground-only presentation. A reminder's `badge:` payload is a count
+      // PROJECTED when it was scheduled, so applying it over an open app would
+      // overwrite the live count `useAppBadge` just wrote — and nothing would
+      // correct it, since there is no background->active transition to trigger
+      // a re-assert. While the app is open the hook owns the badge.
+      shouldSetBadge: false,
       shouldShowBanner: true,
       shouldShowList: true,
     }),

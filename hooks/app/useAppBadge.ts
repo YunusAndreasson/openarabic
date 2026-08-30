@@ -7,8 +7,8 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { setAppBadgeCount } from '@/services/notificationService';
 
 /**
- * `undefined` = the count is not known yet (cold start, offline). Leave the
- * icon alone rather than blanking a number the OS legitimately put there.
+ * `undefined` = the count is not knowable yet. Leave the icon alone rather than
+ * blanking a number the OS legitimately put there.
  */
 function syncBadge(count: number | undefined): void {
   if (count === undefined) return;
@@ -38,11 +38,21 @@ function syncBadge(count: number | undefined): void {
  * that entry, so this adds no request.
  */
 export function useAppBadge(): void {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
   const { data: dueWords } = useQuery(gated(fsrsQueries.due, user?.id));
 
-  const badgeCount = isAuthenticated ? dueWords?.length : 0;
+  // Auth starts every launch as "loading, not authenticated". Reading that as
+  // "signed out, so 0" would wipe a reminder's badge on every cold start —
+  // permanently, if the due query then never resolves (offline). Wait it out.
+  let badgeCount: number | undefined;
+  if (isAuthLoading) {
+    badgeCount = undefined;
+  } else if (!isAuthenticated) {
+    badgeCount = 0;
+  } else {
+    badgeCount = dueWords?.length; // undefined until the due list first loads
+  }
 
   useEffect(() => syncBadge(badgeCount), [badgeCount]);
 

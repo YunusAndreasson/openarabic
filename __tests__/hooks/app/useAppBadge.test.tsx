@@ -26,11 +26,13 @@ jest.mock('@/services/notificationService', () => ({
 
 const USER_ID = 'test-user-id';
 let mockIsAuthenticated = true;
+let mockIsAuthLoading = false;
 
 jest.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({
     user: mockIsAuthenticated ? { id: USER_ID } : null,
     isAuthenticated: mockIsAuthenticated,
+    isLoading: mockIsAuthLoading,
   }),
 }));
 
@@ -49,6 +51,7 @@ describe('useAppBadge', () => {
     queryClient = createTestQueryClient();
     appStateListeners = [];
     mockIsAuthenticated = true;
+    mockIsAuthLoading = false;
     mockSetAppBadgeCount.mockResolvedValue(true);
 
     jest.spyOn(AppState, 'addEventListener').mockImplementation((type, handler) => {
@@ -82,6 +85,26 @@ describe('useAppBadge', () => {
     await act(async () => {});
 
     expect(mockSetAppBadgeCount).not.toHaveBeenCalled();
+  });
+
+  test('leaves the badge alone while auth is still restoring', async () => {
+    // Every launch starts here: isLoading true, isAuthenticated false. Reading
+    // that as "signed out, so 0" wiped a reminder's badge on every cold start.
+    mockIsAuthLoading = true;
+    mockIsAuthenticated = false;
+
+    const { rerender } = renderHook(() => useAppBadge(), { wrapper });
+
+    await act(async () => {});
+    expect(mockSetAppBadgeCount).not.toHaveBeenCalled();
+
+    // Session restores and the due list lands: now the icon may be written.
+    mockIsAuthLoading = false;
+    mockIsAuthenticated = true;
+    seedDueWords(5);
+    rerender({});
+
+    await waitFor(() => expect(mockSetAppBadgeCount).toHaveBeenCalledWith(5));
   });
 
   test('writes 0 when the learner is caught up', async () => {

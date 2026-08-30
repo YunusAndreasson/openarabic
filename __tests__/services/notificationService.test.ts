@@ -105,6 +105,10 @@ const mockGetBadgeCountAsync = NotificationsMock.__mocks.getBadgeCountAsync;
 
 // Import service after mocks - service runs setNotificationHandler on load
 import * as notificationService from '@/services/notificationService';
+
+// Captured at import time: the global `resetMocks` wipes `mock.calls` before
+// every test, and the handler is only registered once, on module load.
+const foregroundHandler = mockSetNotificationHandler.mock.calls[0]?.[0];
 import {
   createPermissionsMock,
   createScheduledNotificationMock,
@@ -232,6 +236,19 @@ describe('notificationService', () => {
 
       // Ephemeral is treated as not granted
       expect(typeof granted).toBe('boolean');
+    });
+  });
+
+  describe('Foreground presentation', () => {
+    test('does not apply a reminder badge payload over an open app', async () => {
+      const behaviour = await foregroundHandler?.handleNotification(
+        {} as Notifications.Notification,
+      );
+
+      // A reminder's `badge:` is projected at schedule time. Applying it while
+      // the app is open would overwrite the live count useAppBadge just wrote,
+      // with no background->active transition left to correct it.
+      expect(behaviour?.shouldSetBadge).toBe(false);
     });
   });
 
