@@ -60,7 +60,6 @@ import { simpleAudioService } from '@/services/audioPlayer';
 import { registerBackgroundTasks, unregisterBackgroundTasks } from '@/services/backgroundTasks';
 import {
   cleanupNotifications,
-  clearAppBadge,
   clearNotificationNavigationCallback,
   initializeNotifications,
   setNotificationNavigationCallback,
@@ -491,7 +490,11 @@ function AppContent() {
     void handleColdStartNotification();
   }, [appReady, router]);
 
-  // Cleanup notifications, background tasks, audio, and app badge on unmount
+  // Cleanup notifications, background tasks and audio on unmount.
+  //
+  // The app badge is deliberately NOT cleared here: surviving teardown is the
+  // whole point of it — it is what tells a learner there is work waiting while
+  // the app is closed. `useAppBadge` owns it, and already writes 0 on sign-out.
   useEffect(() => {
     return () => {
       cleanupNotifications();
@@ -501,16 +504,6 @@ function AppContent() {
       // Cleanup audio service to release audio session
       simpleAudioService.destroy().catch(() => {
         // Silently handle audio cleanup errors during unmount
-      });
-      // Clear app badge when app is unmounted (async cleanup)
-      clearAppBadge().catch(error => {
-        // Silently handle badge cleanup errors during unmount
-        void handleError(error as Error, {
-          analyticsEventName: 'App_Badge_Cleanup_Failed',
-          sentryTags: { location: 'app', action: 'badge_cleanup' },
-          showToast: false, // Silent failure during cleanup
-          sentrySeverity: 'info', // Not critical, just cleanup failure
-        });
       });
     };
   }, []);

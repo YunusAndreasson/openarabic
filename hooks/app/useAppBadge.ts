@@ -1,150 +1,52 @@
-import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
-import type { AppStateStatus } from 'react-native';
-import { AppState } from 'react-native';
+import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
 
-import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
-import { fsrsQueries } from '@/constants/queries';
+import { fsrsQueries, gated } from '@/constants/queries';
+import { useResumeFromBackground } from '@/hooks/app/useResumeFromBackground';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
-import { canUseBadge, clearAppBadge, setAppBadgeCount } from '@/services/notificationService';
-import type { StudyWord } from '@/types/vocabulary.types';
+import { setAppBadgeCount } from '@/services/notificationService';
 
 /**
- * Hook that efficiently monitors due words count and updates the app badge
- * Uses Expo's permission system and AppState for optimal performance
+ * `undefined` = the count is not known yet (cold start, offline). Leave the
+ * icon alone rather than blanking a number the OS legitimately put there.
+ */
+function syncBadge(count: number | undefined): void {
+  if (count === undefined) return;
+  void setAppBadgeCount(count);
+}
+
+/**
+ * Mirrors the due-words count onto the app icon badge.
+ *
+ * The badge is SHARED state: the OS writes it too. A delivered smart reminder
+ * carries a `badge:` payload, and the headless background task sets it while
+ * the app is closed. So this hook keeps no memory of what it last wrote — that
+ * memory was the bug. It started at 0 and never read the real badge, so a
+ * reminder could set the icon to 9, the app would reopen with a true count of
+ * 0, and the "already 0, nothing to do" guard skipped the one write that would
+ * have cleared it. The icon then sat at 9 until some *different* non-zero count
+ * happened along.
+ *
+ * `setBadgeCountAsync` is a cheap, idempotent native call that reports false by
+ * itself when badge permission is missing, so there is nothing worth caching
+ * and no permission to pre-check: just re-assert the count whenever it changes,
+ * and on every resume.
+ *
+ * Reads the SAME due list as the background task and the reminder planner —
+ * `fsrsQueries.due(userId)`, no session cooldown — so the icon cannot disagree
+ * with the number the next reminder puts there. The preloader already fetches
+ * that entry, so this adds no request.
  */
 export function useAppBadge(): void {
   const { user, isAuthenticated } = useAuth();
-  const queryClient = useQueryClient();
 
-  // Track current badge count to avoid unnecessary updates
-  const currentBadgeCountRef = useRef<number>(0);
-  const lastUpdateTimeRef = useRef<number>(0);
-  const appStateRef = useRef<AppStateStatus>(AppState.currentState);
+  const { data: dueWords } = useQuery(gated(fsrsQueries.due, user?.id));
 
-  // Efficient badge permission state
-  const [canUseBadgeState, setCanUseBadgeState] = useState<boolean>(false);
+  const badgeCount = isAuthenticated ? dueWords?.length : 0;
 
-  // Check badge permissions once when component mounts
-  useEffect(() => {
-    const checkBadgePermission = async () => {
-      const badgeAllowed = await canUseBadge();
-      setCanUseBadgeState(badgeAllowed);
-    };
+  useEffect(() => syncBadge(badgeCount), [badgeCount]);
 
-    checkBadgePermission();
-  }, []);
-
-  // Get due words data efficiently
-  const { dueWords, isLoading } = useFSRSQueries({
-    userId: user?.id,
-    limit: undefined, // We want all due words for badge count
-  });
-
-  // Debounced badge update to prevent rapid changes
-  const updateBadgeDebounced = useCallback(
-    async (count: number) => {
-      // Don't update if count hasn't changed
-      if (currentBadgeCountRef.current === count) return;
-
-      // Rate limit updates to prevent spam
-      const now = Date.now();
-      const timeSinceLastUpdate = now - lastUpdateTimeRef.current;
-      if (timeSinceLastUpdate < 1000) {
-        // 1 second minimum between updates
-        return;
-      }
-
-      // Only update if badge permissions allow it
-      if (canUseBadgeState) {
-        const success = await setAppBadgeCount(count);
-        if (success) {
-          currentBadgeCountRef.current = count;
-          lastUpdateTimeRef.current = now;
-        }
-      }
-    },
-    [canUseBadgeState],
-  );
-
-  // Clear badge efficiently
-  const clearBadge = useCallback(async () => {
-    if (currentBadgeCountRef.current === 0) return; // Already cleared
-    if (!canUseBadgeState) return; // No permission to clear
-
-    const success = await clearAppBadge();
-    if (success) {
-      currentBadgeCountRef.current = 0;
-    }
-  }, [canUseBadgeState]);
-
-  // Update badge when due words change (only when app is active)
-  useEffect(() => {
-    if (!isAuthenticated || isLoading || appStateRef.current !== 'active') {
-      return;
-    }
-
-    const dueWordsCount = dueWords?.length ?? 0;
-    updateBadgeDebounced(dueWordsCount);
-  }, [dueWords, isAuthenticated, isLoading, updateBadgeDebounced]);
-
-  // Clear badge when user signs out
-  useEffect(() => {
-    if (!isAuthenticated) {
-      clearBadge();
-    }
-  }, [isAuthenticated, clearBadge]);
-
-  // useEffectEvent isolates the listener bodies from their dependency closures
-  // so subscriptions don't tear down / re-attach on every dueWords change.
-  const handleAppStateChange = useEffectEvent((nextAppState: AppStateStatus) => {
-    appStateRef.current = nextAppState;
-    if (nextAppState === 'active') {
-      // Re-check badge permission on every foreground so a grant made after mount
-      // (e.g. the post-practice prompt) takes effect without an app restart —
-      // otherwise the mount-time value would keep the badge off for the session.
-      void canUseBadge().then(setCanUseBadgeState);
-      if (isAuthenticated && !isLoading && dueWords) {
-        updateBadgeDebounced(dueWords.length);
-      }
-    }
-  });
-
-  const handleQueryCacheUpdate = useEffectEvent((newDueWords: StudyWord[] | undefined) => {
-    if (newDueWords && appStateRef.current === 'active') {
-      updateBadgeDebounced(newDueWords.length);
-    }
-  });
-
-  // Subscribe once — handler reads latest closure via useEffectEvent.
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', handleAppStateChange);
-    return () => subscription.remove();
-  }, []);
-
-  // Subscribe to the badge's own due-words entry; re-subscribe only when user changes.
-  useEffect(() => {
-    if (!user?.id || !isAuthenticated) return;
-
-    // The EXACT key `useFSRSQueries` reads above — NOT the ['fsrs-words', id,
-    // 'due', ...] prefix. Prefix matching published whichever due variant last
-    // changed to the badge, and the variants are not interchangeable: the
-    // Practice screen's is capped at PRACTICE_DUE_WORDS_LIMIT and the bare one
-    // applies no session cooldown. So an app resume, which refreshes all of
-    // them, could leave the icon showing a count from a list this hook never
-    // chose. Still compared element-wise, not by reference: the factory returns
-    // a fresh array on every call, so an identity check never matches.
-    const badgeKey = fsrsQueries.due(user.id, DEFAULT_SESSION_COOLDOWN_HOURS, undefined).queryKey;
-
-    const unsubscribe = queryClient.getQueryCache().subscribe(event => {
-      if (event.type !== 'updated') return;
-      const key = event.query.queryKey;
-      if (key.length === badgeKey.length && badgeKey.every((part, i) => part === key[i])) {
-        handleQueryCacheUpdate(event.query.state.data as StudyWord[] | undefined);
-      }
-    });
-
-    return () => unsubscribe();
-  }, [user?.id, isAuthenticated, queryClient]);
+  // A resume is the only moment the icon can be wrong without the count having
+  // changed — a reminder delivered while the app was away moved it.
+  useResumeFromBackground(() => syncBadge(badgeCount));
 }

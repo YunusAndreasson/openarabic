@@ -36,19 +36,10 @@
 
 import NetInfo from '@react-native-community/netinfo';
 import * as BackgroundTask from 'expo-background-task';
-import type * as NotificationsModule from 'expo-notifications';
-
-// expo-notifications is unavailable in Expo Go on Android (SDK 53+).
-let Notifications: typeof NotificationsModule | null = null;
-try {
-  Notifications = require('expo-notifications');
-} catch {
-  // expo-notifications unavailable in Expo Go on Android (SDK 53+)
-}
 import * as TaskManager from 'expo-task-manager';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
-import { syncSmartNotifications } from '@/services/notificationService';
+import { setAppBadgeCount, syncSmartNotifications } from '@/services/notificationService';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
@@ -100,13 +91,7 @@ TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
     // to the due-words count, or clear it to 0 once the learner is caught up.
     // Best-effort — no-ops without badge permission / on launchers that don't
     // support numeric badges.
-    if (Notifications) {
-      try {
-        await Notifications.setBadgeCountAsync(Math.max(0, dueCount));
-      } catch {
-        // Unsupported launcher / revoked permission — leave the badge as-is.
-      }
-    }
+    await setAppBadgeCount(dueCount);
 
     // Refresh the forward smart-reminder plan headlessly. The foreground hook
     // is the primary scheduler; this run corrects multi-device staleness.

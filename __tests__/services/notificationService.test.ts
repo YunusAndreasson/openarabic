@@ -124,7 +124,10 @@ describe('notificationService', () => {
     mockCancelAllScheduledNotificationsAsync.mockClear();
     mockCancelScheduledNotificationAsync.mockClear();
     mockGetAllScheduledNotificationsAsync.mockClear();
+    // `setAppBadgeCount` now passes Expo's own answer through, and the global
+    // `resetMocks` wipes the shared mock's resolved value before every test.
     mockSetBadgeCountAsync.mockClear();
+    mockSetBadgeCountAsync.mockResolvedValue(true);
     mockGetBadgeCountAsync.mockClear();
     mockSetNotificationCategoryAsync.mockClear();
     mockSetNotificationChannelAsync.mockClear();
@@ -229,37 +232,6 @@ describe('notificationService', () => {
 
       // Ephemeral is treated as not granted
       expect(typeof granted).toBe('boolean');
-    });
-
-    test('should check badge-specific permission on iOS', async () => {
-      Platform.OS = 'ios';
-      mockGetPermissionsAsync.mockResolvedValueOnce(
-        createPermissionsMock('granted', { ios: { allowsBadge: true } }),
-      );
-
-      const canBadge = await notificationService.canUseBadge();
-
-      expect(canBadge).toBeTruthy();
-    });
-
-    test('should return false for badge if iOS badge permission denied', async () => {
-      Platform.OS = 'ios';
-      mockGetPermissionsAsync.mockResolvedValueOnce(
-        createPermissionsMock('granted', { ios: { allowsBadge: false } }),
-      );
-
-      const canBadge = await notificationService.canUseBadge();
-
-      expect(canBadge).toBeFalsy();
-    });
-
-    test('should allow badge on Android if notification permission granted', async () => {
-      Platform.OS = 'android';
-      mockGetPermissionsAsync.mockResolvedValueOnce(createPermissionsMock('granted'));
-
-      const canBadge = await notificationService.canUseBadge();
-
-      expect(canBadge).toBeTruthy();
     });
   });
 
@@ -422,22 +394,6 @@ describe('notificationService', () => {
       expect(success).toBeFalsy();
       expect(handleError).toHaveBeenCalled();
     });
-
-    test('should clear app badge', async () => {
-      const success = await notificationService.clearAppBadge();
-
-      expect(success).toBeTruthy();
-      expect(mockSetBadgeCountAsync).toHaveBeenCalledWith(0);
-    });
-
-    test('should handle badge clear errors', async () => {
-      mockSetBadgeCountAsync.mockRejectedValueOnce(new Error('Clear failed'));
-
-      const success = await notificationService.clearAppBadge();
-
-      expect(success).toBeFalsy();
-      expect(handleError).toHaveBeenCalled();
-    });
   });
 
   describe('Notification Listeners and Navigation', () => {
@@ -455,19 +411,6 @@ describe('notificationService', () => {
 
     test('should handle cleanup when no listeners exist', () => {
       expect(() => notificationService.cleanupNotifications()).not.toThrow();
-    });
-  });
-
-  describe('Edge Cases', () => {
-    test('should handle permission check with missing ios property', async () => {
-      mockGetPermissionsAsync.mockResolvedValueOnce(
-        createPermissionsMock('granted', { ios: null }),
-      );
-
-      const canBadge = await notificationService.canUseBadge();
-
-      // Should handle gracefully
-      expect(typeof canBadge).toBe('boolean');
     });
   });
 });
