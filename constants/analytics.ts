@@ -73,6 +73,7 @@ export const ANALYTICS_EVENTS = {
   VOICE_PRIMING_ACCEPTED: 'Voice Priming Accepted',
   VOICE_PRIMING_DECLINED: 'Voice Priming Declined',
   NOTIFICATION_PERMISSION_RESULT: 'Notification Permission Result',
+  BADGE_WRITE_REJECTED: 'Badge Write Rejected',
   REMINDER_SCHEDULING_ERROR: 'Reminder_Scheduling_Error',
   BACKGROUND_TASK_ERROR: 'Background_Task_Error',
 

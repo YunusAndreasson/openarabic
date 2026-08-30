@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useEffectEvent } from 'react';
 
 import { fsrsQueries, gated } from '@/constants/queries';
 import { useResumeFromBackground } from '@/hooks/app/useResumeFromBackground';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { setAppBadgeCount } from '@/services/notificationService';
+import { useAppSelector } from '@/store/hooks';
 
 /**
  * `undefined` = the count is not knowable yet. Leave the icon alone rather than
@@ -27,10 +28,26 @@ function syncBadge(count: number | undefined): void {
  * have cleared it. The icon then sat at 9 until some *different* non-zero count
  * happened along.
  *
- * `setBadgeCountAsync` is a cheap, idempotent native call that reports false by
- * itself when badge permission is missing, so there is nothing worth caching
- * and no permission to pre-check: just re-assert the count whenever it changes,
- * and on every resume.
+ * It also keeps no memory of whether a write LANDED, because it can't act on
+ * one: `setAppBadgeCount` is permission-gated (iOS grants the badge with
+ * notification authorization) and reports a rejected write by returning false,
+ * having changed nothing. An unauthorized install therefore wears whatever
+ * number was last written while it *was* authorized — a stale count no amount
+ * of reviewing can move, since only the OS may clear it. The answer is not to
+ * track the failures but to re-assert often enough that the first write after
+ * authorization returns repairs the icon:
+ *
+ *   - whenever the count changes,
+ *   - on every FRESH READ of it, changed or not (`dataUpdatedAt`) — a review
+ *     invalidates the due entry and a resume refetches it, so this is the
+ *     ordinary path back from a stale icon,
+ *   - the moment reminders are enabled, which is the one place that runs the
+ *     OS permission dialog (`useAccountScreen` -> `ensurePermissions`) and so
+ *     the first instant a write can land after a stretch of rejected ones,
+ *   - and on every resume.
+ *
+ * `setBadgeCountAsync` is a cheap, idempotent native call, so re-asserting
+ * costs nothing worth saving.
  *
  * Reads the SAME due list as the background task and the reminder planner —
  * `fsrsQueries.due(userId)`, no session cooldown — so the icon cannot disagree
@@ -39,8 +56,9 @@ function syncBadge(count: number | undefined): void {
  */
 export function useAppBadge(): void {
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const remindersEnabled = useAppSelector(state => state.settings.reminderTime.enabled);
 
-  const { data: dueWords } = useQuery(gated(fsrsQueries.due, user?.id));
+  const { data: dueWords, dataUpdatedAt } = useQuery(gated(fsrsQueries.due, user?.id));
 
   // Auth starts every launch as "loading, not authenticated". Reading that as
   // "signed out, so 0" would wipe a reminder's badge on every cold start —
@@ -54,7 +72,16 @@ export function useAppBadge(): void {
     badgeCount = dueWords?.length; // undefined until the due list first loads
   }
 
-  useEffect(() => syncBadge(badgeCount), [badgeCount]);
+  // `dataUpdatedAt` alongside the count: a refetch that returns the SAME number
+  // still has to be written, because the icon may not be showing that number.
+  useEffect(() => syncBadge(badgeCount), [badgeCount, dataUpdatedAt]);
+
+  // Non-reactive on purpose — this must fire on the permission moment only, not
+  // again on every count change while reminders happen to be on.
+  const assertBadge = useEffectEvent(() => syncBadge(badgeCount));
+  useEffect(() => {
+    if (remindersEnabled) assertBadge();
+  }, [remindersEnabled]);
 
   // A resume is the only moment the icon can be wrong without the count having
   // changed — a reminder delivered while the app was away moved it.

@@ -2,7 +2,8 @@
  * useAppBadge Hook Tests
  *
  * The badge is shared state — a delivered reminder and the headless background
- * task write it too — so the contract under test is "re-assert, never cache".
+ * task write it too, and iOS rejects the write outright until notifications are
+ * authorized — so the contract under test is "re-assert, never cache".
  */
 
 jest.unmock('@tanstack/react-query');
@@ -27,6 +28,12 @@ jest.mock('@/services/notificationService', () => ({
 const USER_ID = 'test-user-id';
 let mockIsAuthenticated = true;
 let mockIsAuthLoading = false;
+let mockRemindersEnabled = false;
+
+jest.mock('@/store/hooks', () => ({
+  useAppSelector: (selector: (state: unknown) => unknown) =>
+    selector({ settings: { reminderTime: { enabled: mockRemindersEnabled } } }),
+}));
 
 jest.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({
@@ -39,6 +46,7 @@ jest.mock('@/hooks/auth/useAuth', () => ({
 describe('useAppBadge', () => {
   let queryClient: QueryClient;
   let appStateListeners: ((state: AppStateStatus) => void)[] = [];
+  let seedClock = Date.now();
 
   const words = (n: number) =>
     Array.from({ length: n }, (_, i) => createTestWord({ root_id: rootId(i + 1) }));
@@ -50,8 +58,10 @@ describe('useAppBadge', () => {
     jest.clearAllMocks();
     queryClient = createTestQueryClient();
     appStateListeners = [];
+    seedClock = Date.now();
     mockIsAuthenticated = true;
     mockIsAuthLoading = false;
+    mockRemindersEnabled = false;
     mockSetAppBadgeCount.mockResolvedValue(true);
 
     jest.spyOn(AppState, 'addEventListener').mockImplementation((type, handler) => {
@@ -67,7 +77,12 @@ describe('useAppBadge', () => {
   const emitAppState = (state: AppStateStatus) =>
     appStateListeners.forEach(listener => listener(state));
 
-  const seedDueWords = (count: number) => queryClient.setQueryData(dueKey, words(count));
+  // Every seed is a distinct fetch moment. Without an explicit `updatedAt`, two
+  // seeds inside the same millisecond leave `dataUpdatedAt` unchanged, and the
+  // re-assert this hook now performs on a fresh read would be untestable —
+  // vacuously passing or, here, vacuously failing.
+  const seedDueWords = (count: number) =>
+    queryClient.setQueryData(dueKey, words(count), { updatedAt: (seedClock += 1000) });
 
   test('mirrors the due-words count onto the badge', async () => {
     seedDueWords(3);
@@ -143,6 +158,44 @@ describe('useAppBadge', () => {
     await act(async () => {
       seedDueWords(4);
     });
+
+    await waitFor(() => expect(mockSetAppBadgeCount).toHaveBeenCalledWith(4));
+  });
+
+  test('re-asserts on a refetch that returns the same count', async () => {
+    // The write is permission-gated: an unauthorized install swallows it and
+    // keeps a stale number. Writing only when the NUMBER changes leaves that
+    // icon wrong indefinitely, so a fresh read must re-assert even when it
+    // agrees with the last one.
+    seedDueWords(3);
+
+    renderHook(() => useAppBadge(), { wrapper });
+
+    await waitFor(() => expect(mockSetAppBadgeCount).toHaveBeenCalledWith(3));
+    mockSetAppBadgeCount.mockClear();
+
+    // Same count, freshly fetched — what a post-review invalidation looks like
+    // when the reviewed word was replaced by another that came due.
+    await act(async () => {
+      seedDueWords(3);
+    });
+
+    await waitFor(() => expect(mockSetAppBadgeCount).toHaveBeenCalledWith(3));
+  });
+
+  test('re-asserts when reminders are enabled', async () => {
+    // Enabling reminders is what runs the OS permission dialog, so it is the
+    // first instant a rejected write can land. Nothing else would re-assert
+    // until the count next changed.
+    seedDueWords(4);
+
+    const { rerender } = renderHook(() => useAppBadge(), { wrapper });
+
+    await waitFor(() => expect(mockSetAppBadgeCount).toHaveBeenCalledWith(4));
+    mockSetAppBadgeCount.mockClear();
+
+    mockRemindersEnabled = true;
+    rerender({});
 
     await waitFor(() => expect(mockSetAppBadgeCount).toHaveBeenCalledWith(4));
   });

@@ -372,7 +372,30 @@ export async function dismissDeliveredSmartNotifications(): Promise<void> {
   }
 }
 
-// Optimized badge management functions using Expo best practices
+/**
+ * Reported once per app session. A rejected badge write is not an error and not
+ * rare — it is the normal state of every install that has never granted
+ * notifications — so one event per session is the signal, and a per-write event
+ * would be pure noise.
+ */
+let badgeRejectionReported = false;
+
+/**
+ * Write the app icon badge. Returns whether the OS actually took the number.
+ *
+ * THE WRITE IS PERMISSION-GATED. iOS grants the badge as part of notification
+ * authorization, so on an install that has never granted notifications — or has
+ * since revoked them — `setBadgeCountAsync` takes the call, changes nothing and
+ * returns false. It does not throw, and the icon keeps whatever number was last
+ * written back when the app *was* authorized: measured 2026-08-30 on a real
+ * device, an icon reading 9 while every count in the app said 11, unmovable by
+ * reviewing, and corrected the instant the learner enabled reminders (which is
+ * what runs `ensurePermissions`). Every caller had discarded the boolean, so
+ * nothing anywhere could tell a written badge from a rejected one.
+ *
+ * Callers that need the badge to be RIGHT must therefore re-assert it rather
+ * than write once and assume — see `useAppBadge`.
+ */
 export async function setAppBadgeCount(count: number): Promise<boolean> {
   if (!Notifications) return false;
   try {
@@ -381,7 +404,14 @@ export async function setAppBadgeCount(count: number): Promise<boolean> {
 
     // Expo already reports false by itself when badge permission is missing,
     // so pass its answer through rather than claiming success.
-    return await Notifications.setBadgeCountAsync(validCount);
+    const applied = await Notifications.setBadgeCountAsync(validCount);
+
+    if (!applied && !badgeRejectionReported) {
+      badgeRejectionReported = true;
+      analytics.track(ANALYTICS_EVENTS.BADGE_WRITE_REJECTED, { count: validCount });
+    }
+
+    return applied;
   } catch (error) {
     handleError(error, {
       showToast: false,
