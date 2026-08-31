@@ -39,18 +39,37 @@ jest.mock('expo-router/unstable-native-tabs', () => {
     const Active = getScreens()[activeName];
 
     const tabBar = triggers.map(child => {
-      const kids = React.Children.toArray(child.props.children);
-      const labelChild = kids.find(
-        (c: any) => c?.type?.displayName === 'NativeTabsLabel' || c?.props?.children != null,
-      ) as React.ReactElement<{ children: string }> | undefined;
+      // expo-router does NOT render a Trigger's children: `convertTabPropsToOptions`
+      // walks `props.children` and keeps only elements whose `type` is IDENTICAL to
+      // the Icon / Label / Badge components it exports. Use its own filter here so a
+      // wrapper component around an icon (which renders fine but fails the identity
+      // check, and ships a tab bar with no icons) fails this suite instead of the
+      // App Store build.
+      const {
+        filterAllowedChildrenElements,
+        isChildOfType,
+      } = require('expo-router/build/utils/children');
+      const kids = filterAllowedChildrenElements(child.props.children, [
+        Trigger.Badge,
+        Trigger.Label,
+        Trigger.Icon,
+      ]);
+
+      const labelChild = kids.find((c: any) => isChildOfType(c, Trigger.Label)) as
+        | React.ReactElement<{ children: string }>
+        | undefined;
       const title =
         typeof labelChild?.props?.children === 'string'
           ? labelChild.props.children
           : child.props.name;
       // The badge is real app-passed content (see app/(tabs)/_layout.tsx), not
       // mock chrome — render it so tests can assert on it, same as the label.
-      const badgeChild = kids.find((c: any) => c?.type === Trigger.Badge) as
-        React.ReactElement<{ children: React.ReactNode }> | undefined;
+      const badgeChild = kids.find((c: any) => isChildOfType(c, Trigger.Badge)) as
+        | React.ReactElement<{ children: React.ReactNode }>
+        | undefined;
+      const iconChild = kids.find((c: any) => isChildOfType(c, Trigger.Icon)) as
+        | React.ReactElement<{ sf?: { default: string } }>
+        | undefined;
 
       return React.createElement(
         TouchableOpacity,
@@ -61,6 +80,13 @@ jest.mock('expo-router/unstable-native-tabs', () => {
           onPress: () => setActiveName(child.props.name),
         },
         React.createElement(Text, null, title),
+        iconChild
+          ? React.createElement(
+              Text,
+              { testID: `tab-icon-${child.props.name}` },
+              iconChild.props.sf?.default ?? '',
+            )
+          : null,
         badgeChild,
       );
     });
@@ -292,6 +318,14 @@ const createWrapper = () => {
   );
 };
 
+// Asserted rather than read back from TAB_SCREENS: a test that looks up the same
+// table the layout does would pass even if the table itself were wrong.
+const TAB_ICONS_BY_TAB = {
+  explore: 'safari',
+  playlist: 'headphones',
+  practice: 'graduationcap',
+} as const;
+
 describe('Tab navigation', () => {
   beforeEach(() => {
     mockUseDueWordsCount.mockReturnValue(0);
@@ -307,6 +341,18 @@ describe('Tab navigation', () => {
 
     fireEvent.press(getByTestId('tab-practice'));
     expect(getByText('PRACTICE_MOCK')).toBeDefined();
+  });
+
+  test('gives every tab an icon expo-router will actually read', () => {
+    // Regression: the icon was moved into a memoised <TabIcon /> wrapper. It
+    // rendered correctly in isolation, but expo-router matches Trigger children
+    // by element identity and never renders them, so all three icons were
+    // dropped and iOS shipped a label-only tab bar.
+    const { getByTestId } = render(<TabLayout />, { wrapper: createWrapper() });
+
+    expect(getByTestId('tab-icon-explore')).toHaveTextContent(TAB_ICONS_BY_TAB.explore);
+    expect(getByTestId('tab-icon-playlist')).toHaveTextContent(TAB_ICONS_BY_TAB.playlist);
+    expect(getByTestId('tab-icon-practice')).toHaveTextContent(TAB_ICONS_BY_TAB.practice);
   });
 
   test('shows memory capacity badge on practice tab when due words exist', async () => {

@@ -1,6 +1,6 @@
 import { Ionicons } from '@/components/ui';
 import type { JSX } from 'react';
-import { memo, useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { BackHandler, Platform } from 'react-native';
 
 import { router, usePathname } from 'expo-router';
@@ -38,22 +38,6 @@ function AndroidTabBackHandler(): null {
 
   return null;
 }
-
-const TabIcon = memo(function TabIcon({
-  screen,
-}: {
-  screen: (typeof TAB_SCREENS)[number];
-}): JSX.Element {
-  const source = useMemo(
-    () => ({
-      default: <NativeTabs.Trigger.VectorIcon family={Ionicons} name={screen.icon.ion.default} />,
-      selected: <NativeTabs.Trigger.VectorIcon family={Ionicons} name={screen.icon.ion.selected} />,
-    }),
-    [screen],
-  );
-
-  return <NativeTabs.Trigger.Icon sf={screen.icon.sf} src={source} />;
-});
 
 export default function TabLayout(): JSX.Element {
   const { session } = useAuth();
@@ -121,7 +105,24 @@ export default function TabLayout(): JSX.Element {
             name={screen.name}
             accessibilityLabel={screen.title}
           >
-            <TabIcon screen={screen} />
+            {/* These three must be *direct* children and the exact element
+                types expo-router exports: NativeTabTrigger reads its own
+                `props.children` and keeps only elements whose `type ===`
+                NativeTabsTriggerIcon / Label / Badge (identity check in
+                `filterAllowedChildrenElements`). It never renders them, so a
+                wrapper component — even one that returns the right element —
+                is silently dropped and the tab loses its icon entirely. */}
+            <NativeTabs.Trigger.Icon
+              sf={screen.icon.sf}
+              src={{
+                default: (
+                  <NativeTabs.Trigger.VectorIcon family={Ionicons} name={screen.icon.ion.default} />
+                ),
+                selected: (
+                  <NativeTabs.Trigger.VectorIcon family={Ionicons} name={screen.icon.ion.selected} />
+                ),
+              }}
+            />
             <NativeTabs.Trigger.Label>{screen.title}</NativeTabs.Trigger.Label>
             {screen.name === 'practice' && dueWordsCount > 0 && (
               <NativeTabs.Trigger.Badge>{String(dueWordsCount)}</NativeTabs.Trigger.Badge>
