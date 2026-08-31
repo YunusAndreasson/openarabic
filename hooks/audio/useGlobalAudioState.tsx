@@ -70,6 +70,7 @@ export interface AudioProgress {
 function useGlobalAudioStateInternal(): GlobalAudioState {
   const { user } = useAuth();
   const audioPlayer = useSimpleAudioPlayer();
+  const { preconfigureAudioSession, stop: stopAudio } = audioPlayer;
   const queryClient = useQueryClient();
 
   // Get reading list for queue tracking
@@ -99,7 +100,7 @@ function useGlobalAudioStateInternal(): GlobalAudioState {
         // finished naturally within the 30s grace window is a no-op here
         // either way.
         if (simpleAudioService.getStatus().playing) {
-          audioPlayer.stop();
+          void stopAudio();
         }
       },
       30000,
@@ -220,17 +221,18 @@ function useGlobalAudioStateInternal(): GlobalAudioState {
     queryClient,
     user?.id,
     audioPlayer.currentTrack?.title,
+    audioPlayer.currentTrack?.imageUrl,
     audioPlayer.playing,
     audioPlayer.isLoading,
   ]);
 
   // Action handlers
   // MiniPlayer only shows when playing, so this only needs to handle stop
-  const handlePlayPause = useCallback(async () => {
+  const handlePlayPause = useCallback(() => {
     // Stop behavior: stops playback and clears current track (hides MiniPlayer)
     // Note: Play is only initiated via PLAY ALL from Listen tab
-    await audioPlayer.stop();
-  }, [audioPlayer.stop]);
+    void stopAudio();
+  }, [stopAudio]);
 
   const handleTimerPress = useCallback(() => {
     router.push(ROUTE_PATHS.SLEEP_TIMER);
@@ -249,8 +251,8 @@ function useGlobalAudioStateInternal(): GlobalAudioState {
   }, [sleepTimer.actions]);
 
   const handlePreconfigureAudioSession = useCallback(async () => {
-    await audioPlayer.preconfigureAudioSession();
-  }, [audioPlayer.preconfigureAudioSession]);
+    await preconfigureAudioSession();
+  }, [preconfigureAudioSession]);
 
   // Explicit useMemo rather than relying on React Compiler: the ref latch in
   // the currentArticle memo makes this hook a compiler bail-out candidate, and
@@ -308,8 +310,8 @@ const AudioProgressContext = createContext<AudioProgress | null>(null);
  */
 function AudioProgressProvider({ children }: { children: ReactNode }) {
   const { status } = useAudioProgressSubscription();
-  const position = status?.currentTime ?? 0;
-  const duration = status?.duration ?? 0;
+  const position = status.currentTime;
+  const duration = status.duration;
   const progress = useMemo<AudioProgress>(() => ({ position, duration }), [position, duration]);
   return <AudioProgressContext value={progress}>{children}</AudioProgressContext>;
 }

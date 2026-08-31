@@ -1,5 +1,5 @@
 import { Stack } from 'expo-router';
-import type { JSX } from 'react';
+import { useCallback, type JSX } from 'react';
 
 import { CloseButton } from '@/components/ui';
 import { HeaderProfile } from '@/components/explore/HeaderProfile';
@@ -23,6 +23,9 @@ function getFilterTitle(params: FilterParams | undefined): string {
   return STRINGS.CATEGORY;
 }
 
+const renderHeaderProfile = () => <HeaderProfile />;
+const renderCloseButton = () => <CloseButton />;
+
 export default function LibraryLayout(): JSX.Element {
   const colors = useColors();
 
@@ -32,7 +35,7 @@ export default function LibraryLayout(): JSX.Element {
         name="index"
         options={createTabHeaderOptions({
           title: AppTab.EXPLORE,
-          rightComponent: () => <HeaderProfile />,
+          rightComponent: renderHeaderProfile,
           colors,
         })}
       />
@@ -45,17 +48,20 @@ export default function LibraryLayout(): JSX.Element {
 
       <Stack.Screen
         name="filter"
-        options={({ route }) => {
-          // `route.params` is `object | undefined` — a screen reached without
-          // its query string really does arrive with nothing here, which the
-          // previous `as FilterParams` cast asserted away and then destructured.
-          const params: FilterParams | undefined = route.params;
+        options={useCallback(
+          ({ route }) => {
+            // `route.params` is `object | undefined` — a screen reached without
+            // its query string really does arrive with nothing here, which the
+            // previous `as FilterParams` cast asserted away and then destructured.
+            const params: FilterParams | undefined = route.params;
 
-          return createNavigationOptions(colors, {
-            title: getFilterTitle(params),
-            headerRight: () => <CloseButton />,
-          });
-        }}
+            return createNavigationOptions(colors, {
+              title: getFilterTitle(params),
+              headerRight: renderCloseButton,
+            });
+          },
+          [colors],
+        )}
       />
     </Stack>
   );

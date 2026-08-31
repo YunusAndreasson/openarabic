@@ -6,6 +6,8 @@ import { useColors } from '@/hooks/theme/useColors';
 import { AppTab } from '@/types/enums';
 import { createTabHeaderOptions } from '@/utils/navigation';
 
+const renderEditModeButton = () => <EditModeButton type="playlist" />;
+
 export default function BookmarksLayout(): JSX.Element {
   const colors = useColors();
 
@@ -15,7 +17,7 @@ export default function BookmarksLayout(): JSX.Element {
         name="index"
         options={createTabHeaderOptions({
           title: AppTab.PLAYLIST,
-          rightComponent: () => <EditModeButton type="playlist" />,
+          rightComponent: renderEditModeButton,
           colors,
         })}
       />

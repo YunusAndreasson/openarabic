@@ -119,7 +119,7 @@ export default function ExploreScreen(): JSX.Element {
     [categoriesData, categoryCounts],
   );
 
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     if (isRefreshing) return;
 
     setIsRefreshing(true);
@@ -139,11 +139,15 @@ export default function ExploreScreen(): JSX.Element {
       // Force new article selection only if refresh was successful
       setRefreshKey(prev => prev + 1);
     } catch (error) {
-      handleError(error instanceof Error ? error : new Error(STRINGS.REFRESH_FAILED));
+      void handleError(error instanceof Error ? error : new Error(STRINGS.REFRESH_FAILED));
     } finally {
       setIsRefreshing(false);
     }
-  };
+  }, [isRefreshing, queryClient, user]);
+
+  const handleRefreshRequest = useCallback(() => {
+    void handleRefresh();
+  }, [handleRefresh]);
 
   const handleSelectFilter = useCallback((id: number, _name?: string, filterType?: string) => {
     if (filterType === 'category') {
@@ -225,7 +229,7 @@ export default function ExploreScreen(): JSX.Element {
         ListHeaderComponent={<>{headerSections}</>}
         ListFooterComponent={FOOTER_COMPONENT}
         progressViewOffset={LAYOUT.SPACING.XLARGE}
-        onRefresh={handleRefresh}
+        onRefresh={handleRefreshRequest}
       />
       <WelcomeIntro
         visible={intro.isVisible}

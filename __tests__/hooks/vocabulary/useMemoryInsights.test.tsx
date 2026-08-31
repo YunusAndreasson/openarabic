@@ -13,33 +13,35 @@ import { renderHook } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
-import { useMemoryInsights } from '@/hooks/vocabulary/useMemoryInsights';
+import { useMemoryInsights, useRecallableMemory } from '@/hooks/vocabulary/useMemoryInsights';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { rootId } from '@/__tests__/helpers/ids';
+import { calculateRetrievabilityForecast } from '@/utils/fsrsUtils';
 
 jest.mock('@/constants/chartConstants', () => ({
   DAYS_7: 7,
 }));
 
 jest.mock('@/utils/fsrsUtils', () => ({
-  calculateRetrievabilityForecast: (words: StudyWord[], days: number) => {
-    if (words.length === 0) return [];
-    // `wordCount` is part of RetrievabilityForecast and the hook reads it as
-    // the population the score speaks for — omitting it made every mocked
-    // forecast look like it had measured nothing.
-    const measured = words.filter(w => (w.fsrs_reps ?? 0) > 0).length;
-    return Array.from({ length: days }, (_, i) => ({
-      date: new Date(Date.now() + i * 24 * 60 * 60 * 1000),
-      averageRetrievability: 80 - i * 5, // Declining
-      criticalWords: i,
-      wordCount: measured,
-    }));
-  },
+  calculateRetrievabilityForecast: jest.fn(),
 }));
 
 describe('useMemoryInsights', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.mocked(calculateRetrievabilityForecast).mockImplementation((words, days) => {
+      if (words.length === 0) return [];
+      // `wordCount` is part of RetrievabilityForecast and the hook reads it as
+      // the population the score speaks for — omitting it made every mocked
+      // forecast look like it had measured nothing.
+      const measured = words.filter(w => (w.fsrs_reps ?? 0) > 0).length;
+      return Array.from({ length: days ?? 0 }, (_, i) => ({
+        date: new Date(Date.now() + i * 24 * 60 * 60 * 1000),
+        averageRetrievability: 80 - i * 5, // Declining
+        criticalWords: i,
+        urgentWords: i,
+        wordCount: measured,
+      }));
+    });
   });
 
   describe('Empty State', () => {
@@ -138,6 +140,16 @@ describe('useMemoryInsights', () => {
 
       // Same input, same object identity — nothing downstream re-renders.
       expect(result.current).toBe(firstData);
+    });
+  });
+
+  describe('Practice hero snapshot', () => {
+    test('requests only the current forecast bucket', () => {
+      const words = [createTestWord({ fsrs_state: 2, fsrs_stability: 5, fsrs_reps: 3 })];
+      const { result } = renderHook(() => useRecallableMemory(words));
+
+      expect(result.current).toEqual({ recallableWords: 1, measuredWords: 1 });
+      expect(jest.mocked(calculateRetrievabilityForecast)).toHaveBeenCalledWith(words, 1);
     });
   });
 });

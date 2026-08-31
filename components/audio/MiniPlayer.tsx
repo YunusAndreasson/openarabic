@@ -1,5 +1,5 @@
 import { BaseCard, ProgressBar } from '@/components/common';
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -110,6 +110,10 @@ const MiniPlayerComponent = ({
   const timerButtonColor = isTimerActive ? colors.warning : withAlpha(colors.tint, 0.12);
   const timerIconColor = isTimerActive ? colors.white : colors.tint;
   const stopButtonColor = withAlpha(colors.tint, 0.12);
+  const containerStyle = useMemo(
+    () => [styles.container, { bottom: containerBottom }],
+    [containerBottom],
+  );
 
   const inner = (
     // The miniplayer must remain readable over arbitrary scrolling content.
@@ -222,7 +226,7 @@ const MiniPlayerComponent = ({
         TIMING_CONFIG.GENTLE.duration,
       )}
       exiting={FadeOutDown.duration(TIMING_CONFIG.MEDIUM.duration)}
-      style={[styles.container, { bottom: containerBottom }]}
+      style={containerStyle}
     >
       {inner}
     </Animated.View>

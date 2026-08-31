@@ -110,15 +110,12 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import TestStoreProvider from '../helpers/testStore';
 
 import { createTestQueryClient } from '../helpers/testUtils';
-import { createTestWord } from '../helpers/fsrsTestHelpers';
 import TabLayout from '../../app/(tabs)/_layout';
 
-// The layout's badge count comes from useFSRSQueries (see app/(tabs)/_layout.tsx),
-// not FSRSDataProvider — mock the hook it actually calls so tests can drive the
-// badge instead of asserting against dead configuration.
-const mockUseFSRSQueries = jest.fn();
+// The layout subscribes only to the primitive count its badge needs.
+const mockUseDueWordsCount = jest.fn();
 jest.mock('@/hooks/vocabulary/useFSRSQueries', () => ({
-  useFSRSQueries: (...args: unknown[]) => mockUseFSRSQueries(...args),
+  useDueWordsCount: (...args: unknown[]) => mockUseDueWordsCount(...args),
 }));
 
 jest.mock('@/components/ui/Icon', () => ({
@@ -297,12 +294,7 @@ const createWrapper = () => {
 
 describe('Tab navigation', () => {
   beforeEach(() => {
-    mockUseFSRSQueries.mockReturnValue({
-      dueWords: [],
-      isLoading: false,
-      isFetching: false,
-      error: null,
-    });
+    mockUseDueWordsCount.mockReturnValue(0);
   });
 
   test('renders default Explore tab and navigates between tabs', () => {
@@ -318,12 +310,7 @@ describe('Tab navigation', () => {
   });
 
   test('shows memory capacity badge on practice tab when due words exist', async () => {
-    mockUseFSRSQueries.mockReturnValue({
-      dueWords: [createTestWord(), createTestWord(), createTestWord()],
-      isLoading: false,
-      isFetching: false,
-      error: null,
-    });
+    mockUseDueWordsCount.mockReturnValue(3);
 
     const { getByTestId } = render(<TabLayout />, { wrapper: createWrapper() });
 
@@ -335,12 +322,7 @@ describe('Tab navigation', () => {
   });
 
   test('keeps the practice label stable while the native badge supplies its due-word meaning', () => {
-    mockUseFSRSQueries.mockReturnValue({
-      dueWords: [createTestWord()],
-      isLoading: false,
-      isFetching: false,
-      error: null,
-    });
+    mockUseDueWordsCount.mockReturnValue(1);
 
     const { getByTestId } = render(<TabLayout />, { wrapper: createWrapper() });
 

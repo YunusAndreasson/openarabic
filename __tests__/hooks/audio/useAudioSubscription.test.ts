@@ -131,26 +131,26 @@ describe('useAudioSubscription', () => {
       expect(result.current.status.isLoaded).toBeFalsy();
     });
 
-    test('should update status when currentTime changes by >= 0.1', () => {
+    test('should update progress status when currentTime crosses a whole-second boundary', () => {
       const { result } = renderHook(() => useAudioProgressSubscription());
 
       const newStatus: AudioStatus = {
         ...mockInitialStatus,
-        currentTime: 0.5,
+        currentTime: 1,
       };
 
       act(() => {
         subscribeCallback?.(newStatus);
       });
 
-      expect(result.current.status.currentTime).toBe(0.5);
+      expect(result.current.status.currentTime).toBe(1);
     });
 
-    test('should NOT update status when currentTime changes by < 0.1', () => {
+    test('should NOT update progress status within the same displayed second', () => {
       mockSimpleAudioService.getStatus.mockReturnValue(
         createAudioStatusMock({
           ...mockInitialStatus,
-          currentTime: 1.0,
+          currentTime: 1.1,
         }),
       );
 
@@ -161,7 +161,7 @@ describe('useAudioSubscription', () => {
       // Small change that shouldn't trigger update
       const newStatus: AudioStatus = {
         ...mockInitialStatus,
-        currentTime: 1.05,
+        currentTime: 1.9,
       };
 
       act(() => {

@@ -1,0 +1,46 @@
+executionPrerequisite: The signed-in Open Arabic app is connected to Metro and the Explore tab is visible with Review data already cached.
+steps:
+  - echo: Open the Review (Practice) tab and wait for its metrics.
+  - tap: { text: Practice }
+  - await: { visible: { text: "Words you'd recall right now" }, timeout: 10000 }
+  - await: { idle: true }
+
+  - echo: Open the memory-horizon graph sheet.
+  - tap: { text: 'Memory horizon.' }
+  - await: { visible: { text: How long each practised word holds }, timeout: 10000 }
+  - await: { idle: true }
+  - echo: Dismiss the memory-horizon sheet and return to Review.
+  - tool: button
+    args: { button: back }
+  - await: { visible: { text: "Words you'd recall right now" }, timeout: 10000 }
+  - await: { idle: true }
+
+  - echo: Open the weekly review forecast sheet.
+  - tap: { text: Reviews this week. }
+  - await: { visible: { text: How many words come up for review each day }, timeout: 10000 }
+  - await: { idle: true }
+  - echo: Dismiss the weekly forecast sheet and return to Review.
+  - tool: button
+    args: { button: back }
+  - await: { visible: { text: "Words you'd recall right now" }, timeout: 10000 }
+  - await: { idle: true }
+
+  - echo: Open the Reviews done depth sheet.
+  - tap: { text: Reviews done }
+  - await: { visible: { text: Every grade you have given }, timeout: 10000 }
+  - await: { idle: true }
+  - echo: Dismiss the review-depth sheet and return to Review.
+  - tool: button
+    args: { button: back }
+  - await: { visible: { text: "Words you'd recall right now" }, timeout: 10000 }
+  - await: { idle: true }
+
+  - echo: Open the study-streak graph sheet.
+  - tap: { text: Opens your practice history. }
+  - await: { visible: { text: Each bar is a day you practised }, timeout: 10000 }
+  - await: { idle: true }
+  - echo: Dismiss the streak sheet and finish on the Review tab.
+  - tool: button
+    args: { button: back }
+  - await: { visible: { text: "Words you'd recall right now" }, timeout: 10000 }
+  - await: { idle: true }

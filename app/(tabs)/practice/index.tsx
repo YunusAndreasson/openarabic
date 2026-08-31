@@ -23,7 +23,7 @@ import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { useAppSelectorShallow } from '@/store/hooks';
 import { PinnedActionButton, usePinnedActionClearance } from '@/components/ui';
 import { useMemoryHorizonDistribution } from '@/hooks/vocabulary/useMemoryHorizonDistribution';
-import { useMemoryInsights } from '@/hooks/vocabulary/useMemoryInsights';
+import { useRecallableMemory } from '@/hooks/vocabulary/useMemoryInsights';
 import { calculateDueWordsForecast } from '@/utils/fsrsUtils';
 import { isLeechWord } from '@/utils/leechUtils';
 import { runWhenIdle } from '@/utils/runWhenIdle';
@@ -36,6 +36,7 @@ const MOUNT_FADE_IN_STYLE = fadeInStyle(TIMING_CONFIG.SLOW.duration, 'forwards')
 
 export default function PracticeScreen(): JSX.Element {
   const { user } = useAuth();
+  const userId = user?.id;
   const router = useRouter();
   const queryClient = useQueryClient();
   const { prefetchVocabularyData } = useAppPreloader();
@@ -109,8 +110,10 @@ export default function PracticeScreen(): JSX.Element {
   // Memory capacity gauge needs all words, not just due
   const studyWords = useMemo(() => allWords ?? [], [allWords]);
 
-  // Forgetting-curve numbers behind the hero card
-  const memory = useMemoryInsights(studyWords);
+  // Only the current recall snapshot is needed here. The full seven-day
+  // forgetting forecast belongs to the due-words sheet and is intentionally
+  // not computed on the tab's reveal path.
+  const memory = useRecallableMemory(studyWords);
 
   // Don't show error if user is not authenticated yet - this is expected during auth flow
   const shouldShowError = error && user;
@@ -132,6 +135,11 @@ export default function PracticeScreen(): JSX.Element {
     () => router.push(ROUTE_PATHS.PRACTICE_REVIEW_DEPTH),
     [router],
   );
+  const handleRetry = useCallback(() => {
+    if (!userId) return;
+    // Use helper to invalidate all FSRS queries.
+    void fsrsQueries.invalidateAll(queryClient, userId);
+  }, [queryClient, userId]);
 
   // Leech count for the (conditional) "Revisit" stat card — reuses the words
   // already fetched, so no extra query.
@@ -173,6 +181,10 @@ export default function PracticeScreen(): JSX.Element {
 
   // The distribution behind the memory constellation.
   const distribution = useMemoryHorizonDistribution(studyWords);
+  const scrollContentStyle = useMemo(
+    () => [styles.contentContainer, { paddingBottom: pinnedClearance }],
+    [pinnedClearance],
+  );
 
   // No double-tap guard here any more: every ThemedButton is behind the shared
   // press lock in useButtonPress, so a second tap inside 300ms never reaches
@@ -186,7 +198,7 @@ export default function PracticeScreen(): JSX.Element {
   // rather than leaving the screen without an action. Matches the empty state's
   // secondary CTA, including the `from` param Explore uses for its hint toast.
   const handleBrowseArticles = useCallback(
-    () => router.push({ pathname: ROUTE_PATHS.EXPLORE_TAB, params: { from: 'practice' } }),
+    () => router.navigate({ pathname: ROUTE_PATHS.EXPLORE_TAB, params: { from: 'practice' } }),
     [router],
   );
 
@@ -197,13 +209,6 @@ export default function PracticeScreen(): JSX.Element {
 
   // Show error message if there was an error loading data
   if (shouldShowError) {
-    const handleRetry = () => {
-      if (user?.id) {
-        // Use helper to invalidate all FSRS queries
-        fsrsQueries.invalidateAll(queryClient, user.id);
-      }
-    };
-
     return (
       <ThemedView style={styles.container}>
         <ErrorState
@@ -259,9 +264,9 @@ export default function PracticeScreen(): JSX.Element {
         style={styles.container}
         contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.contentContainer, { paddingBottom: pinnedClearance }]}
+        contentContainerStyle={scrollContentStyle}
       >
-        <Animated.View style={[styles.vocabularySection, MOUNT_FADE_IN_STYLE]}>
+        <Animated.View style={VOCABULARY_SECTION_STYLE}>
           <PracticeStatCards
             dueWords={dueWordsCount}
             dueCountCapped={dueCountCapped}
@@ -312,3 +317,5 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.SMALL, // 8px gap for perfect consistency with stat cards
   },
 });
+
+const VOCABULARY_SECTION_STYLE = [styles.vocabularySection, MOUNT_FADE_IN_STYLE];

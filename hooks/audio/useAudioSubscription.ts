@@ -20,8 +20,11 @@ export function useAudioSubscription() {
 }
 
 /**
- * The same status, plus `currentTime` / `duration` ticks. One consumer: the
- * playback clock behind `AudioProgressContext`.
+ * The same status, plus whole-second `currentTime` / `duration` ticks. The only
+ * consumer is the MiniPlayer clock, which renders whole seconds and already
+ * discards sub-second positions. Filtering at the subscription boundary avoids
+ * a React commit for every native 500 ms status event (and every 100 ms review
+ * event) without changing anything the player can display.
  */
 export function useAudioProgressSubscription() {
   return useAudioStatusSubscription(true);
@@ -43,7 +46,7 @@ function useAudioStatusSubscription(withPosition: boolean) {
             previousStatus.didJustFinish !== newStatus.didJustFinish ||
             previousStatus.error !== newStatus.error ||
             (withPosition &&
-              (Math.abs(previousStatus.currentTime - newStatus.currentTime) >= 0.1 ||
+              (Math.floor(previousStatus.currentTime) !== Math.floor(newStatus.currentTime) ||
                 Math.floor(previousStatus.duration) !== Math.floor(newStatus.duration))) ||
             (previousStatus.currentTrack?.id ?? null) !== (newStatus.currentTrack?.id ?? null);
 

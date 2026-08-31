@@ -2,7 +2,8 @@ import { TransparentHeaderButton } from '@/components/ui';
 import { memo, startTransition, useCallback, useOptimistic, type FC } from 'react';
 
 import { STRINGS } from '@/constants/strings';
-import { usePlaylistScreen } from '@/hooks/playlist/usePlaylistScreen';
+import { useAuth } from '@/hooks/auth';
+import { useReadingListCount } from '@/hooks/playlist/useReadingListCount';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import type { EditModeType } from '@/store/editModeSlice';
 
@@ -21,15 +22,14 @@ interface EditModeButtonProps {
  */
 const EditModeButtonComponent: FC<EditModeButtonProps> = ({ type }) => {
   const { editMode, toggle } = useEditMode(type);
+  const { user } = useAuth();
 
   // React 19: Use native useOptimistic for immediate visual feedback
   const [optimisticEditMode, setOptimisticEditMode] = useOptimistic(
     editMode,
     (_currentState, newValue: boolean) => newValue,
   );
-  // Derive count internally for playlist type
-  const { sortedReadingList } = usePlaylistScreen();
-  const effectiveCount = type === 'playlist' ? sortedReadingList.length : undefined;
+  const readingListCount = useReadingListCount(user?.id);
 
   // Simple toggle handler - single action, no menu needed
   const handleToggle = useCallback((): void => {
@@ -45,7 +45,7 @@ const EditModeButtonComponent: FC<EditModeButtonProps> = ({ type }) => {
 
   // Nothing to reorder yet. Guarded only after every hook and callback above
   // has been created.
-  if ((effectiveCount ?? 0) <= 0) {
+  if (readingListCount <= 0) {
     return null;
   }
 

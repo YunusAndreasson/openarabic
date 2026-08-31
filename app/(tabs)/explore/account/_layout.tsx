@@ -1,9 +1,12 @@
 import { Stack } from 'expo-router';
+import { useCallback } from 'react';
 
 import { CloseButton } from '@/components/ui';
 import { STRINGS } from '@/constants/strings';
 import { createNavigationOptions } from '@/utils/navigation';
 import { useColors } from '@/hooks/theme/useColors';
+
+const renderCloseButton = () => <CloseButton />;
 
 export default function AccountLayout() {
   const colors = useColors();
@@ -16,12 +19,15 @@ export default function AccountLayout() {
   // platforms. Setting isRegularScreen on the index itself is a no-op (the root
   // can't override the parent's presentation), but keeping the helper uniform
   // makes the layout easier to read.
-  const screenOptions = (title: string) =>
-    createNavigationOptions(colors, {
-      title,
-      headerRight: () => <CloseButton />,
-      isRegularScreen: true,
-    });
+  const screenOptions = useCallback(
+    (title: string) =>
+      createNavigationOptions(colors, {
+        title,
+        headerRight: renderCloseButton,
+        isRegularScreen: true,
+      }),
+    [colors],
+  );
 
   return (
     <Stack>

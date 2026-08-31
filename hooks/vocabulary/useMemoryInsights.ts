@@ -34,6 +34,31 @@ export interface MemoryInsights {
   measuredWords: number;
 }
 
+export interface RecallableMemory {
+  recallableWords: number;
+  measuredWords: number;
+}
+
+const EMPTY_RECALLABLE_MEMORY: RecallableMemory = Object.freeze({
+  recallableWords: 0,
+  measuredWords: 0,
+});
+
+function getRecallableMemory(
+  todayData: ReturnType<typeof calculateRetrievabilityForecast>[number] | undefined,
+): RecallableMemory {
+  if (!todayData) return EMPTY_RECALLABLE_MEMORY;
+
+  const measuredWords = todayData.wordCount;
+  return {
+    measuredWords,
+    recallableWords: Math.min(
+      measuredWords,
+      Math.round((todayData.averageRetrievability / 100) * measuredWords),
+    ),
+  };
+}
+
 /**
  * Handed back by identity to every caller on the empty path, so it is frozen:
  * the non-empty branch builds a fresh object each time, and one shared mutable
@@ -78,18 +103,7 @@ export function useMemoryInsights(studyWords: StudyWord[]): MemoryInsights {
     const currentRetrievability = todayData?.averageRetrievability || 0;
     const criticalWords = todayData?.criticalWords || 0;
     const weekRetrievability = weekData?.averageRetrievability || 0;
-
-    // Only words with a review behind them carry a memory state, so they are
-    // the only ones the forgetting curve can speak for.
-    const measuredWords = todayData?.wordCount ?? 0;
-
-    // Σ R over measured words. Computed from the UNROUNDED average so it stays
-    // the same quantity the gauge shows, and clamped so it can never claim more
-    // recallable words than there are words to recall.
-    const recallableWords = Math.min(
-      measuredWords,
-      Math.round((currentRetrievability / 100) * measuredWords),
-    );
+    const { recallableWords, measuredWords } = getRecallableMemory(todayData);
 
     // How many more words slip below the critical line across the window.
     // Max(0, …) is defensive only: retrievability decays monotonically, so the
@@ -105,4 +119,16 @@ export function useMemoryInsights(studyWords: StudyWord[]): MemoryInsights {
       measuredWords,
     };
   }, [retrievabilityData]);
+}
+
+/**
+ * The Practice hero needs only the current instant, not the due sheet's full
+ * seven-day decay forecast. Keeping this as a separate hook avoids six extra
+ * full-vocabulary FSRS passes whenever the Review tab's word data changes.
+ */
+export function useRecallableMemory(studyWords: StudyWord[]): RecallableMemory {
+  return useMemo(
+    () => getRecallableMemory(calculateRetrievabilityForecast(studyWords, 1)[0]),
+    [studyWords],
+  );
 }

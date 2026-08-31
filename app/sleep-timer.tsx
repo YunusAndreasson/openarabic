@@ -54,7 +54,7 @@ export default function SleepTimerScreen(): JSX.Element {
 
   const handleSetTimer = useCallback(() => {
     successFeedback();
-    analytics.track(ANALYTICS_EVENTS.SLEEP_TIMER_SET, {
+    void analytics.track(ANALYTICS_EVENTS.SLEEP_TIMER_SET, {
       duration_minutes: selectedMinutes,
     });
     onSleepTimerSet(selectedMinutes);

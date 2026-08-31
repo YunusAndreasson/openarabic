@@ -1,6 +1,6 @@
 import { EmptyState } from '@/components/common';
 import { useRouter } from 'expo-router';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -13,19 +13,23 @@ export function DictionaryEmptyState() {
   const router = useRouter();
 
   const handleBrowse = useCallback(() => {
-    router.push({ pathname: ROUTE_PATHS.EXPLORE_TAB, params: { from: 'practice' } });
+    router.navigate({ pathname: ROUTE_PATHS.EXPLORE_TAB, params: { from: 'practice' } });
   }, [router]);
+  const action = useMemo(
+    () => ({
+      label: STRINGS.BROWSE_ARTICLES,
+      onPress: handleBrowse,
+      icon: 'compass-outline' as const,
+    }),
+    [handleBrowse],
+  );
 
   return (
     <EmptyState
       icon="book-outline"
       title={STRINGS.STUDY_LIST_EMPTY_TITLE}
       hint={STRINGS.STUDY_LIST_EMPTY_HINT}
-      action={{
-        label: STRINGS.BROWSE_ARTICLES,
-        onPress: handleBrowse,
-        icon: 'compass-outline',
-      }}
+      action={action}
     />
   );
 }

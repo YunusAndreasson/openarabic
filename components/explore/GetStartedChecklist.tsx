@@ -106,14 +106,14 @@ const GetStartedChecklistComponent: FC<GetStartedChecklistProps> = ({
   const handleRowPress = useCallback(
     (step: OnboardingStep) => {
       selectionFeedback();
-      analytics.track(ANALYTICS_EVENTS.ONBOARDING_CHECKLIST_ITEM_TAPPED, { item: step });
+      void analytics.track(ANALYTICS_EVENTS.ONBOARDING_CHECKLIST_ITEM_TAPPED, { item: step });
 
       // Practice is the one step that doesn't happen inside an article. Send the
       // user to the tab rather than straight into a session — a first-run user
       // has probably never opened it, and the point is to show them their saved
       // words are waiting there.
       if (step === OnboardingStep.PRACTICE_WORD) {
-        router.push(ROUTE_PATHS.PRACTICE_TAB);
+        router.navigate(ROUTE_PATHS.PRACTICE_TAB);
         return;
       }
 

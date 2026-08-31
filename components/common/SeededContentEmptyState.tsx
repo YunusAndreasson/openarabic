@@ -43,7 +43,8 @@ export function SeededContentEmptyState({
       }}
       secondaryAction={{
         label: STRINGS.BROWSE_ARTICLES,
-        onPress: () => router.push({ pathname: ROUTE_PATHS.EXPLORE_TAB, params: { from: source } }),
+        onPress: () =>
+          router.navigate({ pathname: ROUTE_PATHS.EXPLORE_TAB, params: { from: source } }),
         icon: 'compass-outline',
       }}
     />

@@ -83,6 +83,14 @@ try {
   // expo-notifications unavailable in Expo Go on Android (SDK 53+)
 }
 
+const TAB_ROUTE_OPTIONS = { animation: 'fade', freezeOnBlur: false } as const;
+const AUTH_ROUTE_OPTIONS = { animation: 'fade', freezeOnBlur: false } as const;
+const ROOT_SCREEN_LISTENERS = {
+  transitionEnd: (event: { data: { closing: boolean } }) => {
+    if (event.data.closing) flushPendingSheetNavigation();
+  },
+};
+
 // The expo-font config plugin (app.json) embeds all fonts natively on both
 // platforms, so useFonts gets an empty map that resolves immediately and the
 // splash-hide path skips a redundant font resolve.
@@ -259,11 +267,12 @@ function AppContent() {
   const theme = useAppSelectorShallow((state: RootState) => state.theme.theme);
   const isDark = theme === Theme.Dark;
   const [appReady, setAppReady] = useState(false);
-  const appState = useRef(AppState.currentState);
-  const [sessionStartTime] = useState<number>(() => Date.now());
+  const [initialSessionStartedAt] = useState(() => Date.now());
+  const activeSessionStartedAt = useRef(initialSessionStartedAt);
   const backgroundedTime = useRef<number | null>(null);
   const resumeRefreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { isLoading: isAuthLoading, session } = useAuth();
+  const userId = session?.user?.id;
   const navigationRef = useNavigationContainerRef();
   const router = useRouter();
 
@@ -333,9 +342,9 @@ function AppContent() {
     });
 
     const identifyUser = async () => {
-      if (session?.user) {
+      if (userId) {
         try {
-          await analytics.identify(session.user.id, {
+          await analytics.identify(userId, {
             last_active: new Date().toISOString(),
           });
         } catch (err) {
@@ -346,7 +355,7 @@ function AppContent() {
     };
 
     void identifyUser();
-  }, [session, appReady, isAuthLoading]);
+  }, [userId, appReady, isAuthLoading]);
 
   const colors = useColors();
 
@@ -441,7 +450,7 @@ function AppContent() {
 
     // Set navigation callback for when user taps notifications
     setNotificationNavigationCallback((path: string) => {
-      router.push(path);
+      router.navigate(path);
     });
 
     return () => {
@@ -471,7 +480,7 @@ function AppContent() {
                   coldStart: true,
                 });
               }
-              router.push(route);
+              router.navigate(route);
             }
           }
 
@@ -509,16 +518,15 @@ function AppContent() {
   }, []);
 
   const handleAppStateChange = useEffectEvent((nextAppState: AppStateStatus) => {
-    const wasActive = appState.current === 'active';
-    const wasInactive = appState.current !== 'active';
-    const isActivating = wasInactive && nextAppState === 'active';
-    const isBackgrounding = wasActive && nextAppState !== 'active';
-
-    appState.current = nextAppState;
+    // `inactive` is a transient interruption (Control Center, permission prompt,
+    // app switcher), not a background session. Use the background timestamp as
+    // the transition latch so background → inactive → active still resumes once.
+    const isActivating = backgroundedTime.current !== null && nextAppState === 'active';
+    const isBackgrounding = backgroundedTime.current === null && nextAppState === 'background';
 
     if (isBackgrounding && appReady) {
       backgroundedTime.current = Date.now();
-      const sessionDurationMs = Date.now() - sessionStartTime;
+      const sessionDurationMs = Date.now() - activeSessionStartedAt.current;
       void analytics.track(ANALYTICS_EVENTS.APP_BACKGROUNDED, {
         session_duration_ms: sessionDurationMs,
       });
@@ -528,7 +536,12 @@ function AppContent() {
       // (FSRS grade, saved word) otherwise only survives that if the cache
       // persister's 1s throttle had already fired on its own; this forces an
       // immediate, unthrottled write of whatever is pending right now.
-      void flushPersistedQueryCache(queryClient);
+      void flushPersistedQueryCache(queryClient).catch(error => {
+        void handleError(error, {
+          showToast: false,
+          analyticsEventName: 'Persist_Query_Cache_On_Background_Error',
+        });
+      });
     }
 
     if (!isActivating || !appReady) return;
@@ -538,8 +551,9 @@ function AppContent() {
       time_backgrounded_ms: timeBackgroundedMs,
     });
     backgroundedTime.current = null;
+    activeSessionStartedAt.current = Date.now();
 
-    const resumedUserId = session?.user?.id;
+    const resumedUserId = userId;
 
     if (resumeRefreshTimer.current) clearTimeout(resumeRefreshTimer.current);
     resumeRefreshTimer.current = setTimeout(() => {
@@ -573,6 +587,21 @@ function AppContent() {
   // available unprotected route when a guard flips, and enforces guards on
   // deep links automatically — no imperative router.replace needed.
 
+  const containerStyle = useMemo(
+    () => [styles.container, { backgroundColor: colors.background }],
+    [colors.background],
+  );
+  const rootScreenOptions = useMemo(
+    () => ({
+      headerShown: false,
+      headerTitle: '',
+      headerShadowVisible: false,
+      freezeOnBlur: true,
+      contentStyle: { backgroundColor: colors.background },
+    }),
+    [colors.background],
+  );
+
   // Don't render Stack until app is ready to prevent slide animation on initial load
   if (!appReady) {
     return null;
@@ -582,18 +611,12 @@ function AppContent() {
 
   return (
     <NavigationThemeProvider value={navigationTheme}>
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={containerStyle}>
         <FSRSDataProvider userId={session?.user?.id}>
           <VoiceGradingProvider>
             <GlobalAudioStateProvider>
               <Stack
-                screenOptions={{
-                  headerShown: false,
-                  headerTitle: '',
-                  headerShadowVisible: false,
-                  freezeOnBlur: true,
-                  contentStyle: { backgroundColor: colors.background },
-                }}
+                screenOptions={rootScreenOptions}
                 // Opportunistic, not the mechanism — see `sheetNavigation`.
                 //
                 // A sheet that navigates somewhere on its way out cannot present
@@ -607,27 +630,17 @@ function AppContent() {
                 // navigation happens on that frame instead of on the backstop
                 // timer. Flushing on ANY closing transition is safe: the queue is
                 // only ever filled immediately before a dismissal.
-                screenListeners={{
-                  transitionEnd: e => {
-                    if (e.data.closing) flushPendingSheetNavigation();
-                  },
-                }}
+                screenListeners={ROOT_SCREEN_LISTENERS}
               >
                 {/* Authenticated routes — guard flips on sign-out, router unmounts these */}
                 <Stack.Protected guard={isAuthenticated}>
-                  <Stack.Screen
-                    name="(tabs)"
-                    options={{
-                      // Animation re-enabled after Stack.Protected migration. The
-                      // previous `animation: 'none'` worked around a black-screen
-                      // bug caused by imperative router.replace racing with mount.
-                      // Declarative guards mount directly into the right route, so
-                      // the race is gone — fade matches the auth screen for a
-                      // symmetric sign-in / sign-out transition.
-                      animation: 'fade',
-                      freezeOnBlur: false, // Keep tabs active
-                    }}
-                  />
+                  {/* Animation re-enabled after Stack.Protected migration. The
+                      previous `animation: 'none'` worked around a black-screen
+                      bug caused by imperative router.replace racing with mount.
+                      Declarative guards mount directly into the right route, so
+                      the race is gone — fade matches the auth screen for a
+                      symmetric sign-in / sign-out transition. */}
+                  <Stack.Screen name="(tabs)" options={TAB_ROUTE_OPTIONS} />
                   <Stack.Screen
                     name="article/[id]"
                     options={createNavigationOptions(colors, {
@@ -698,13 +711,7 @@ function AppContent() {
 
                 {/* Unauthenticated routes — guard flips on sign-in, router unmounts auth */}
                 <Stack.Protected guard={!isAuthenticated}>
-                  <Stack.Screen
-                    name="auth"
-                    options={{
-                      animation: 'fade',
-                      freezeOnBlur: false, // Keep auth screen active
-                    }}
-                  />
+                  <Stack.Screen name="auth" options={AUTH_ROUTE_OPTIONS} />
                 </Stack.Protected>
 
                 {/* Audio overlays - mini-player and sleep timer */}
@@ -747,11 +754,14 @@ const ErrorFallback = memo(function ErrorFallback({ error }: FallbackProps) {
   return <AppErrorFallback error={error} showDetails roomy />;
 });
 
+const PERSIST_GATE_LOADING = <View />;
+const renderSentryFallback = ({ error }: FallbackProps) => <ErrorFallback error={error} />;
+
 export default Sentry.wrap(function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.gestureRoot}>
       <Provider store={store}>
-        <PersistGate loading={<View />} persistor={persistor}>
+        <PersistGate loading={PERSIST_GATE_LOADING} persistor={persistor}>
           <PersistQueryClientProvider
             client={queryClient}
             persistOptions={PERSISTENCE_OPTIONS}
@@ -764,7 +774,7 @@ export default Sentry.wrap(function RootLayout() {
               <SafeAreaProvider initialMetrics={initialWindowMetrics}>
                 <TutorialProvider>
                   <ToastProvider>
-                    <Sentry.ErrorBoundary fallback={({ error }) => <ErrorFallback error={error} />}>
+                    <Sentry.ErrorBoundary fallback={renderSentryFallback}>
                       <AppContent />
                     </Sentry.ErrorBoundary>
                   </ToastProvider>

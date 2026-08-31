@@ -8,6 +8,9 @@ import { useColors } from '@/hooks/theme/useColors';
 import { createNavigationOptions, createTabHeaderOptions } from '@/utils/navigation';
 import { AppTab } from '@/types/enums';
 
+const renderDictionaryButton = () => <DictionaryButton />;
+const renderCloseButton = () => <CloseButton />;
+
 export default function StudyLayout(): JSX.Element {
   const colors = useColors();
 
@@ -17,7 +20,7 @@ export default function StudyLayout(): JSX.Element {
         name="index"
         options={createTabHeaderOptions({
           title: AppTab.PRACTICE,
-          rightComponent: () => <DictionaryButton />,
+          rightComponent: renderDictionaryButton,
           colors,
         })}
       />
@@ -25,7 +28,7 @@ export default function StudyLayout(): JSX.Element {
         name="dictionary"
         options={createNavigationOptions(colors, {
           title: STRINGS.PRACTICE_WORDS_TITLE,
-          headerRight: () => <CloseButton />,
+          headerRight: renderCloseButton,
         })}
       />
       {/* Word detail lives in THIS stack, not the root one. `dictionary` is
@@ -48,7 +51,7 @@ export default function StudyLayout(): JSX.Element {
           title: STRINGS.WORD_DETAIL_TITLE,
           isRegularScreen: true,
           headerBackVisible: false,
-          headerRight: () => <CloseButton />,
+          headerRight: renderCloseButton,
         })}
       />
     </Stack>

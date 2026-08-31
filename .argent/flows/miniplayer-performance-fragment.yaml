@@ -1,0 +1,22 @@
+steps:
+  - echo: Open Playlist
+  - tap: { text: Playlist }
+  - await:
+      visible: { text: Play all }
+      timeout: 10000
+  - await: { idle: true }
+  - echo: Start playlist playback
+  - tap: { text: Play all }
+  - await:
+      visible: { text: Stop listening }
+      timeout: 10000
+  - echo: Switch to Explore while playback continues
+  - tap: { text: Explore }
+  - await:
+      visible: { text: Explore }
+      timeout: 10000
+  - await:
+      visible: { text: Stop listening }
+      timeout: 10000
+executionPrerequisite: Open Arabic development build is connected to Metro and
+  showing the Explore tab with no active miniplayer.

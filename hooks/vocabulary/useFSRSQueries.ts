@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 
 import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import { fsrsQueries, gated } from '@/constants/queries';
@@ -16,6 +16,25 @@ interface FSRSQueriesResult {
   isLoading: boolean;
   isFetching: boolean;
   error: unknown;
+}
+
+function getDueWordsPlaceholder(
+  queryClient: QueryClient,
+  userId: string | undefined,
+  limit: number | undefined,
+): StudyWord[] | undefined {
+  if (!userId) return undefined;
+  const allWords = queryClient.getQueryData<StudyWord[]>(fsrsQueries.all(userId).queryKey);
+  if (!allWords) return undefined;
+
+  const lastCompletedAt = queryClient.getQueryData<number>(fsrsQueries.lastCompletedAtKey(userId));
+  const filtered = filterDueWords(allWords, {
+    lastCompletedAt,
+    cooldownHours: DEFAULT_SESSION_COOLDOWN_HOURS,
+    nowMs: Date.now(),
+  });
+
+  return filtered.slice(0, limit);
 }
 
 /**
@@ -36,29 +55,36 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
     ...gated(id => fsrsQueries.due(id, DEFAULT_SESSION_COOLDOWN_HOURS, limit), userId),
     // Use allWords as placeholder while due words fetch — shows filtered data immediately
     // placeholderData (not initialData) so it doesn't create a stale cache entry
-    placeholderData: () => {
-      if (!userId) return undefined;
-      const allWords = queryClient.getQueryData<StudyWord[]>(fsrsQueries.all(userId).queryKey);
-      if (!allWords) return undefined;
-
-      const lastCompletedAt = queryClient.getQueryData<number>(
-        fsrsQueries.lastCompletedAtKey(userId),
-      );
-      const filtered = filterDueWords(allWords, {
-        lastCompletedAt,
-        cooldownHours: DEFAULT_SESSION_COOLDOWN_HOURS,
-        nowMs: Date.now(),
-      });
-
-      return filtered.slice(0, limit);
-    },
+    placeholderData: () => getDueWordsPlaceholder(queryClient, userId, limit),
   });
 
   return {
-    allWords: allWordsQuery?.data,
-    dueWords: dueWordsQuery?.data,
-    isLoading: allWordsQuery?.isLoading || dueWordsQuery?.isLoading || false,
-    isFetching: allWordsQuery?.isFetching || dueWordsQuery?.isFetching || false,
-    error: allWordsQuery?.error || dueWordsQuery?.error || null,
+    allWords: allWordsQuery.data,
+    dueWords: dueWordsQuery.data,
+    isLoading: allWordsQuery.isLoading || dueWordsQuery.isLoading,
+    isFetching: allWordsQuery.isFetching || dueWordsQuery.isFetching,
+    error: allWordsQuery.error || dueWordsQuery.error || null,
   };
+}
+
+/** Subscribe only to the due-word count needed by navigation chrome. */
+export function useDueWordsCount({ userId, limit }: UseFSRSQueriesOptions): number {
+  const queryClient = useQueryClient();
+  const query = useQuery({
+    ...gated(id => fsrsQueries.due(id, DEFAULT_SESSION_COOLDOWN_HOURS, limit), userId),
+    placeholderData: () => getDueWordsPlaceholder(queryClient, userId, limit),
+    select: words => words.length,
+  });
+
+  return query.data ?? 0;
+}
+
+/** Subscribe only to whether a user has any saved study words. */
+export function useHasStudyWords(userId: string | undefined): boolean {
+  const query = useQuery({
+    ...gated(fsrsQueries.all, userId),
+    select: words => words.length > 0,
+  });
+
+  return query.data ?? false;
 }

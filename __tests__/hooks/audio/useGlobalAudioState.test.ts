@@ -130,6 +130,7 @@ describe('useGlobalAudioState', () => {
       sortedEnhancedTracks: [],
       isLoading: false,
     } as never);
+    mockSimpleAudioService.getStatus.mockReturnValue({ currentTime: 0, duration: 0 } as never);
     mockSimpleAudioService.getPlaylistInfo.mockReturnValue({
       isPlaylistMode: false,
       currentIndex: 0,

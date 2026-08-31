@@ -1,0 +1,35 @@
+executionPrerequisite: The signed-in Open Arabic app is connected to Metro, Explore is visible, and tab/account/practice data is cached.
+steps:
+  - echo: From Explore, switch to Playlist and preserve the tab shell.
+  - tap: { text: Playlist }
+  - await: { visible: { text: Play all }, timeout: 10000 }
+  - await: { idle: true }
+
+  - echo: From Playlist, switch to Practice without rebuilding the tab navigator.
+  - tap: { text: Practice }
+  - await: { visible: { text: "Words you'd recall right now" }, timeout: 20000 }
+  - await: { idle: true }
+
+  - echo: Return from Practice to the existing Explore tab.
+  - tap: { text: Explore }
+  - await: { visible: { text: Continue reading }, timeout: 10000 }
+  - await: { idle: true }
+
+  - echo: Open an article through the root full-screen stack.
+  - tap: { text: "An Exiled Scholar's Trials" }
+  - await: { visible: { text: "An Exiled Scholar's Trials" }, timeout: 10000 }
+  - await: { idle: true }
+
+  - echo: Close the article and restore the existing Explore tab stack.
+  - tap: { text: Close article }
+  - await: { visible: { text: Continue reading }, timeout: 10000 }
+  - await: { idle: true }
+
+  - echo: Switch to Practice, then verify Android back returns to the home tab root.
+  - tap: { text: Practice }
+  - await: { visible: { text: "Words you'd recall right now" }, timeout: 20000 }
+  - await: { idle: true }
+  - tool: button
+    args: { button: back }
+  - await: { visible: { text: Continue reading }, timeout: 20000 }
+  - await: { idle: true }

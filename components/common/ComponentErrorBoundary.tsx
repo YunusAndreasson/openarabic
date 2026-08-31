@@ -39,7 +39,7 @@ export class ComponentErrorBoundary extends Component<
   override componentDidCatch(error: Error): void {
     const { componentName, onError } = this.props;
 
-    handleError(error, {
+    void handleError(error, {
       captureSentry: true,
       showToast: false,
       trackAnalytics: true,

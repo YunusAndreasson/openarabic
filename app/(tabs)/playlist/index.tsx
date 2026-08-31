@@ -184,10 +184,21 @@ export default function PlaylistScreen(): JSX.Element {
   // Create the article press handler - plays audio in miniplayer
   const handleArticlePress = useCallback(
     (articleId: ArticleId, _title: string) => {
-      handleArticlePlay(articleId);
+      void handleArticlePlay(articleId);
     },
     [handleArticlePlay],
   );
+
+  const handleDeletePress = useCallback(
+    (articleId: ArticleId) => {
+      void handleDelete(articleId);
+    },
+    [handleDelete],
+  );
+
+  const handlePlayAllPress = useCallback(() => {
+    void handlePlayAll();
+  }, [handlePlayAll]);
 
   // Optimized render function - unified for both list types
   const renderItem = useCallback(
@@ -202,14 +213,14 @@ export default function PlaylistScreen(): JSX.Element {
         <PlaylistListItem
           editMode={editMode}
           item={item}
-          onDelete={handleDelete}
+          onDelete={handleDeletePress}
           onArticlePress={handleArticlePress}
           drag={drag}
           _isBeingDragged={isDragging}
         />
       );
     },
-    [editMode, handleDelete, handleArticlePress],
+    [editMode, handleDeletePress, handleArticlePress],
   );
 
   // keyExtractor is a module-level constant, already stable.
@@ -231,7 +242,7 @@ export default function PlaylistScreen(): JSX.Element {
     );
   }
 
-  const showPlayAll = hasArticles && !shouldShowEmpty && !isMiniPlayerVisible;
+  const showPlayAll = hasArticles && !isMiniPlayerVisible;
 
   return (
     <>
@@ -281,7 +292,7 @@ export default function PlaylistScreen(): JSX.Element {
       {showPlayAll && (
         <PinnedActionButton
           title={STRINGS.PLAY_ALL}
-          onPress={handlePlayAll}
+          onPress={handlePlayAllPress}
           loading={isPlayAllLoading}
         />
       )}

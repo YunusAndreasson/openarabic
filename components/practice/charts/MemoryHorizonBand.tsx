@@ -13,7 +13,7 @@ import {
   type SkRect,
 } from '@shopify/react-native-skia';
 import type { JSX } from 'react';
-import { useEffect } from 'react';
+import { memo, useEffect, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useDerivedValue, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 
@@ -24,7 +24,7 @@ import { useDerivedValue, useSharedValue, withDelay, withTiming } from 'react-na
 import { ChartBaseline } from '@/components/common/charts/ChartBaseline';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { TIMING_CONFIG } from '@/constants/animation';
-import { CHART_OPACITY, getMeterTrackColor, useChartColors } from '@/constants/chartColors';
+import { CHART_OPACITY, getChartColors, getMeterTrackColor } from '@/constants/chartColors';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import {
@@ -73,11 +73,26 @@ const AXIS_TICK_DAYS: Record<(typeof HORIZON_BAND_KEYS)[number], number> = {
   year: 365,
 };
 
-const AXIS_TICKS = HORIZON_BAND_KEYS.map(key => ({
-  key,
-  label: HORIZON_BAND_LABELS[key],
-  fraction: getHorizonFraction(AXIS_TICK_DAYS[key]),
-}));
+const AXIS_LABEL_BASE_STYLE = {
+  position: 'absolute' as const,
+  top: 0,
+};
+
+const AXIS_TICKS = HORIZON_BAND_KEYS.map(key => {
+  const fraction = getHorizonFraction(AXIS_TICK_DAYS[key]);
+  return {
+    key,
+    label: HORIZON_BAND_LABELS[key],
+    fraction,
+    style:
+      fraction >= 1
+        ? { ...AXIS_LABEL_BASE_STYLE, right: LAYOUT.SPACING.MEDIUM }
+        : { ...AXIS_LABEL_BASE_STYLE, left: fraction * BAND_WIDTH },
+  };
+});
+
+const GROW_ORIGIN = vec(0, PLOT_HEIGHT);
+const MEDIAN_DASH_INTERVALS = [3, 4];
 
 interface MemoryHorizonBandProps {
   /** Practised-word count per column. Length is BIN_COUNT. */
@@ -105,14 +120,17 @@ function buildDotSlots(bins: readonly number[], wordsPerDot: number): { x: numbe
   return slots;
 }
 
-export function MemoryHorizonBand({
+function MemoryHorizonBandComponent({
   bins,
   wordsPerDot,
   medianFraction,
   hasDistribution,
 }: MemoryHorizonBandProps): JSX.Element {
   const colors = useColors();
-  const chartColors = useChartColors();
+  // This component also needs the base card colour. Derive chart tokens from
+  // the same palette rather than mounting a second theme subscription through
+  // useChartColors().
+  const chartColors = getChartColors(colors);
 
   // ZONE rather than the default TRACK (0.18 vs 0.16) because sepia's accent
   // clamps to a much lower chroma against warm paper, and at TRACK this rail
@@ -121,7 +139,11 @@ export function MemoryHorizonBand({
   // own. Still a step off the card, never a second data colour, and never grey.
   const trackColor = getMeterTrackColor(colors.card, chartColors.ui.accent, CHART_OPACITY.ZONE);
 
-  const slots = buildDotSlots(bins, wordsPerDot);
+  // The profiler showed this boundary rebuilding hundreds of dot/rect objects
+  // during unrelated Practice renders. React Compiler did not optimize this
+  // component in the measured build, so keep the geometry explicitly keyed to
+  // the distribution that can actually change it.
+  const slots = useMemo(() => buildDotSlots(bins, wordsPerDot), [bins, wordsPerDot]);
   const dotCount = slots.length;
 
   // A single dot, drawn once into a texture and stamped N times by Atlas. The
@@ -133,7 +155,10 @@ export function MemoryHorizonBand({
     [chartColors.ui.dataLine],
   );
 
-  const sprites: SkRect[] = slots.map(() => rect(0, 0, DOT_TEXTURE_SIZE, DOT_TEXTURE_SIZE));
+  const sprites = useMemo<SkRect[]>(
+    () => slots.map(() => rect(0, 0, DOT_TEXTURE_SIZE, DOT_TEXTURE_SIZE)),
+    [slots],
+  );
 
   // Positions resolved on the UI thread. `set` takes (scos, ssin, tx, ty):
   // (1, 0) means no rotation and no scale, so each dot is only translated — and
@@ -180,7 +205,7 @@ export function MemoryHorizonBand({
         <Path path={TRACK_PATH} color={trackColor} />
 
         {hasDistribution && dotCount > 0 && (
-          <Group transform={growTransform} origin={vec(0, PLOT_HEIGHT)}>
+          <Group transform={growTransform} origin={GROW_ORIGIN}>
             <Atlas image={dotTexture} sprites={sprites} transforms={transforms} />
           </Group>
         )}
@@ -199,7 +224,7 @@ export function MemoryHorizonBand({
               strokeWidth={1}
               style="stroke"
             >
-              <DashPathEffect intervals={[3, 4]} />
+              <DashPathEffect intervals={MEDIAN_DASH_INTERVALS} />
             </Line>
           </Group>
         )}
@@ -218,12 +243,7 @@ export function MemoryHorizonBand({
             // tick — except the last, whose tick sits at the very right edge
             // (fraction 1.0 by definition) and which would otherwise render
             // entirely off-canvas.
-            style={[
-              styles.axisLabel,
-              tick.fraction >= 1
-                ? { right: LAYOUT.SPACING.MEDIUM }
-                : { left: tick.fraction * BAND_WIDTH },
-            ]}
+            style={tick.style}
           >
             {tick.label}
           </ThemedText>
@@ -232,6 +252,8 @@ export function MemoryHorizonBand({
     </View>
   );
 }
+
+export const MemoryHorizonBand = memo(MemoryHorizonBandComponent);
 
 MemoryHorizonBand.displayName = 'MemoryHorizonBand';
 
@@ -243,9 +265,5 @@ const styles = StyleSheet.create({
   axis: {
     height: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     marginTop: LAYOUT.SPACING.TINY,
-  },
-  axisLabel: {
-    position: 'absolute',
-    top: 0,
   },
 });

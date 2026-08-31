@@ -1,11 +1,11 @@
 import { TransparentHeaderButton } from '@/components/ui';
 import { router } from 'expo-router';
-import type { JSX } from 'react';
+import { useCallback, type JSX } from 'react';
 
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth';
-import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
+import { useHasStudyWords } from '@/hooks/vocabulary/useFSRSQueries';
 
 /**
  * The Practice tab's `headerRight` — opens the full word list, and hides itself
@@ -18,14 +18,12 @@ import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 export function DictionaryButton(): JSX.Element | null {
   const { session } = useAuth();
 
-  // Get study words count to determine if button should be shown
-  const { allWords, dueWords } = useFSRSQueries({ userId: session?.user?.id });
-  const studyWordsCount = (allWords?.length ?? 0) + (dueWords?.length ?? 0);
+  const hasStudyWords = useHasStudyWords(session?.user?.id);
 
-  const handlePressAction = () => router.push(ROUTE_PATHS.PRACTICE_DICTIONARY);
+  const handlePressAction = useCallback(() => router.push(ROUTE_PATHS.PRACTICE_DICTIONARY), []);
 
   // Nothing to look at yet — the header stays clean until there is
-  if (studyWordsCount <= 0) {
+  if (!hasStudyWords) {
     return null;
   }
 

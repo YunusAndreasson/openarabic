@@ -59,7 +59,11 @@ jest.mock('@/utils/dateTimeUtils', () => ({
 }));
 
 import { useQuery } from '@tanstack/react-query';
-import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
+import {
+  useDueWordsCount,
+  useFSRSQueries,
+  useHasStudyWords,
+} from '@/hooks/vocabulary/useFSRSQueries';
 import { fsrsQueries } from '@/constants/queries';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -319,6 +323,28 @@ describe('useFSRSQueries', () => {
 
       // The limit is passed to the query function, verify useQuery was called 2 times (all, due)
       expect(mockUseQuery).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('navigation-shell selectors', () => {
+    test('due badge subscribes to a primitive count through the capped due query', () => {
+      renderHook(() => useDueWordsCount({ userId: 'user-123', limit: 10 }));
+
+      expect(mockFsrsQueries.due).toHaveBeenCalledWith('user-123', expect.any(Number), 10);
+      const options = mockUseQuery.mock.calls[0][0] as { select: (words: StudyWord[]) => number };
+      expect(options.select([mockStudyWord, mockStudyWord])).toBe(2);
+    });
+
+    test('dictionary visibility subscribes only to the all-words query', () => {
+      renderHook(() => useHasStudyWords('user-123'));
+
+      expect(mockFsrsQueries.all).toHaveBeenCalledWith('user-123');
+      expect(mockFsrsQueries.due).not.toHaveBeenCalled();
+      const options = mockUseQuery.mock.calls[0][0] as {
+        select: (words: StudyWord[]) => boolean;
+      };
+      expect(options.select([])).toBe(false);
+      expect(options.select([mockStudyWord])).toBe(true);
     });
   });
 });

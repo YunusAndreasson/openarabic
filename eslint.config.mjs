@@ -2,6 +2,8 @@ import { fixupPluginRules } from '@eslint/compat';
 import { defineConfig } from 'eslint/config';
 import expoConfig from 'eslint-config-expo/flat.js';
 import reactHooks from 'eslint-plugin-react-hooks';
+import reactNative from 'eslint-plugin-react-native';
+import reactPerf from 'eslint-plugin-react-perf';
 import { configs as tseslintConfigs, parser as tsParser } from 'typescript-eslint';
 import unusedImportsPlugin from 'eslint-plugin-unused-imports';
 import prettierConfig from 'eslint-config-prettier';
@@ -177,6 +179,104 @@ export default defineConfig([
   // Placed BEFORE the React block below so that block's deliberate
   // `exhaustive-deps: 'warn'` keeps winning over the preset's own setting.
   reactHooks.configs.flat['recommended-latest'],
+
+  // Performance checks used for the global audio/miniplayer render path. These
+  // intentionally stay targeted: each hit requires profiling-backed judgment,
+  // and enabling them repo-wide would turn this optimization into backlog churn.
+  {
+    files: [
+      'components/audio/{GlobalMiniPlayer,MiniPlayer}.{js,jsx,ts,tsx}',
+      'hooks/audio/useGlobalAudioState.tsx',
+      'hooks/audio/useShouldShowMiniPlayer.ts',
+    ],
+    plugins: {
+      'react-native': fixupPluginRules(reactNative),
+      'react-perf': fixupPluginRules(reactPerf),
+    },
+    rules: {
+      'react-perf/jsx-no-new-object-as-prop': 'warn',
+      'react-perf/jsx-no-new-array-as-prop': 'warn',
+      'react-perf/jsx-no-new-function-as-prop': 'warn',
+      'react-perf/jsx-no-jsx-as-prop': 'warn',
+      'react/jsx-no-bind': 'warn',
+      'react/jsx-no-constructed-context-values': 'warn',
+      'react/no-unstable-nested-components': 'warn',
+      'react/no-object-type-as-default-prop': 'warn',
+      'react-native/no-inline-styles': 'warn',
+      'react-native/no-unused-styles': 'warn',
+      'react-native/no-color-literals': 'warn',
+      'react-native/no-single-element-style-arrays': 'warn',
+      'react-hooks/exhaustive-deps': 'warn',
+      'react-hooks/rules-of-hooks': 'error',
+      'no-empty': ['error', { allowEmptyCatch: false }],
+    },
+  },
+
+  // Performance checks for the Practice surfaces changed by this optimization.
+  // Keep the scope to measured files so enabling the rules does not turn the
+  // pre-existing chart and dictionary backlog into new lint-budget debt.
+  {
+    files: [
+      'app/(tabs)/practice/index.tsx',
+      'components/practice/charts/MemoryHorizonBand.tsx',
+      'hooks/vocabulary/useMemoryInsights.ts',
+    ],
+    plugins: {
+      'react-native': fixupPluginRules(reactNative),
+      'react-perf': fixupPluginRules(reactPerf),
+    },
+    rules: {
+      'react-perf/jsx-no-new-object-as-prop': 'warn',
+      'react-perf/jsx-no-new-array-as-prop': 'warn',
+      'react-perf/jsx-no-new-function-as-prop': 'warn',
+      'react-perf/jsx-no-jsx-as-prop': 'warn',
+      'react/jsx-no-bind': 'warn',
+      'react/jsx-no-constructed-context-values': 'warn',
+      'react/no-unstable-nested-components': 'warn',
+      'react/no-object-type-as-default-prop': 'warn',
+      'react-native/no-inline-styles': 'warn',
+      'react-native/no-unused-styles': 'warn',
+      'react-native/no-color-literals': 'warn',
+      'react-native/no-single-element-style-arrays': 'warn',
+      'react-hooks/exhaustive-deps': 'warn',
+      'react-hooks/rules-of-hooks': 'error',
+      'no-empty': ['error', { allowEmptyCatch: false }],
+    },
+  },
+
+  // Performance checks for the routing shell itself. Navigation layouts stay
+  // mounted for most of the session, so an unstable option, header factory, or
+  // tab descriptor here propagates through every screen transition.
+  {
+    files: [
+      'app/_layout.tsx',
+      'app/index.tsx',
+      'app/(tabs)/**/_layout.tsx',
+      'app/auth/_layout.tsx',
+      'components/ui/CloseButton.tsx',
+    ],
+    plugins: {
+      'react-native': fixupPluginRules(reactNative),
+      'react-perf': fixupPluginRules(reactPerf),
+    },
+    rules: {
+      'react-perf/jsx-no-new-object-as-prop': 'warn',
+      'react-perf/jsx-no-new-array-as-prop': 'warn',
+      'react-perf/jsx-no-new-function-as-prop': 'warn',
+      'react-perf/jsx-no-jsx-as-prop': 'warn',
+      'react/jsx-no-bind': 'warn',
+      'react/jsx-no-constructed-context-values': 'warn',
+      'react/no-unstable-nested-components': 'warn',
+      'react/no-object-type-as-default-prop': 'warn',
+      'react-native/no-inline-styles': 'warn',
+      'react-native/no-unused-styles': 'warn',
+      'react-native/no-color-literals': 'warn',
+      'react-native/no-single-element-style-arrays': 'warn',
+      'react-hooks/exhaustive-deps': 'warn',
+      'react-hooks/rules-of-hooks': 'error',
+      'no-empty': ['error', { allowEmptyCatch: false }],
+    },
+  },
 
   // The rules that actually add signal: NOT in the preset and NOT in expo's config,
   // and unlike everything above these have real hits (+21). Same error/warn split as

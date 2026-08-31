@@ -15,9 +15,10 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import type { Article } from '@/types/articles.types';
 
 const mockPush = jest.fn();
+const mockNavigate = jest.fn();
 
 jest.mock('expo-router', () => ({
-  useRouter: () => ({ push: mockPush }),
+  useRouter: () => ({ push: mockPush, navigate: mockNavigate }),
 }));
 
 jest.mock('@/hooks/theme/useColors', () =>
@@ -65,6 +66,7 @@ const buildChecklist = (overrides: Partial<ChecklistProp> = {}): ChecklistProp =
 describe('GetStartedChecklist', () => {
   beforeEach(() => {
     mockPush.mockReset();
+    mockNavigate.mockReset();
   });
 
   it('derives the progress denominator from the item list', () => {
@@ -82,7 +84,8 @@ describe('GetStartedChecklist', () => {
 
     fireEvent.press(getByText('Practice your first word'));
 
-    expect(mockPush).toHaveBeenCalledWith(ROUTE_PATHS.PRACTICE_TAB);
+    expect(mockNavigate).toHaveBeenCalledWith(ROUTE_PATHS.PRACTICE_TAB);
+    expect(mockPush).not.toHaveBeenCalled();
   });
 
   it('sends the reading rows into the starter article', () => {
