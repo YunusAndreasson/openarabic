@@ -365,18 +365,16 @@ class SimpleAudioService {
   /**
    * Put the shared audio session into (or out of) record-capable mode.
    *
-   * The voice recorder needs AVAudioSession.playAndRecord, and on iOS
-   * react-native-audio-api cannot switch to it under an already-active
-   * playback-only session — so expo-audio has to grant it first. Everything
-   * else in the app is better off on plain .playback: it is louder, and it
-   * keeps output off the Bluetooth hands-free profile that .playAndRecord opts
-   * into. Call with `true` when a review session claims the microphone and
-   * `false` when it releases it — once each, not per card.
+   * Playback keeps its existing Expo configuration. On a normal iOS restore,
+   * `deferToRecorder` records ownership without changing the native category:
+   * the provider first deactivates audio-api's session so capture.open applies
+   * the actual OS category/options before attaching input. This avoids Expo's
+   * intermediate playAndRecord + Bluetooth HFP configuration immediately before
+   * the recorder applies playAndRecord without HFP.
    *
-   * react-native-audio-api applies its own session options straight after this
-   * (`configureVoiceSessionOptions`, with `defaultToSpeaker` and no
-   * `allowBluetoothHFP`) and those are what actually take effect, so the
-   * hands-free route stays off for the session's lifetime.
+   * Only use deferral after successful deactivation and immediately before
+   * opening the recorder in the serialized handoff. Keep the ownership flag true even if open fails, so the next prompt
+   * always restores playback. Forced recovery still uses the Expo grant.
    *
    * `force` re-applies the mode even when the flag already says so. Needed
    * because react-native-audio-api configures the SAME AVAudioSession directly:
@@ -395,7 +393,7 @@ class SimpleAudioService {
    */
   async setRecordingSessionEnabled(
     enabled: boolean,
-    { force = false }: { force?: boolean } = {},
+    { force = false, deferToRecorder = false }: { force?: boolean; deferToRecorder?: boolean } = {},
   ): Promise<void> {
     if (this.recordingSessionEnabled === enabled && !force) return;
     // Set before the call because currentAudioMode() reads it, and put back if
@@ -406,6 +404,7 @@ class SimpleAudioService {
     // from, arrived at from inside this method instead.
     const previous = this.recordingSessionEnabled;
     this.recordingSessionEnabled = enabled;
+    if (enabled && deferToRecorder && !force && Platform.OS === 'ios') return;
     try {
       try {
         await setAudioModeAsync(this.currentAudioMode());

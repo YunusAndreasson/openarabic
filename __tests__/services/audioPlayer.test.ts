@@ -18,7 +18,7 @@
  */
 
 import { describe, test, expect, jest, beforeEach, afterEach } from '@jest/globals';
-import { AppState } from 'react-native';
+import { Platform } from 'react-native';
 
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 
@@ -40,17 +40,13 @@ jest.mock('expo-audio', () => ({
   clearAllPreloadedSources: () => Promise.resolve(undefined),
 }));
 
-// Mock AppState addEventListener - must be defined before mock
-const mockAppStateAddEventListener = jest.fn((..._args: unknown[]) => ({
-  remove: jest.fn(),
-}));
-
 jest.mock(
   'react-native',
   () => {
     return {
+      Platform: { OS: 'ios' },
       AppState: {
-        addEventListener: mockAppStateAddEventListener,
+        addEventListener: jest.fn(() => ({ remove: jest.fn() })),
       },
     };
   },
@@ -141,6 +137,7 @@ describe('audioPlayer service', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    Platform.OS = 'ios';
 
     // Create fresh mock player for each test
     // CRITICAL: Default mock must fire ready status to prevent waitForPlayerReady from hanging
@@ -857,6 +854,36 @@ describe('audioPlayer service', () => {
       await audioService.setRecordingSessionEnabled(false, { force: true });
       expect(mockSetAudioModeAsync).toHaveBeenCalledWith(
         expect.objectContaining({ allowsRecording: false }),
+      );
+    });
+
+    test('delegates iOS restore but still restores playback after an unsuccessful open', async () => {
+      await audioService.setRecordingSessionEnabled(true, { deferToRecorder: true });
+      expect(audioService.isRecordingSessionEnabled).toBe(true);
+      expect(mockSetAudioModeAsync).not.toHaveBeenCalled();
+
+      // Even if the recorder never opens, ownership must allow the next prompt
+      // to reclaim playback (including raw measurement-mode failures).
+      await audioService.setRecordingSessionEnabled(false);
+      expect(mockSetAudioModeAsync).toHaveBeenCalledWith(
+        expect.objectContaining({ allowsRecording: false }),
+      );
+      expect(mockSetIsAudioActiveAsync).toHaveBeenCalledWith(true);
+    });
+
+    test('forced recovery grants recording despite previously delegated ownership', async () => {
+      await audioService.setRecordingSessionEnabled(true, { deferToRecorder: true });
+      await audioService.setRecordingSessionEnabled(true, { force: true, deferToRecorder: true });
+      expect(mockSetAudioModeAsync).toHaveBeenCalledWith(
+        expect.objectContaining({ allowsRecording: true }),
+      );
+    });
+
+    test('keeps the existing recording grant on Android', async () => {
+      Platform.OS = 'android';
+      await audioService.setRecordingSessionEnabled(true, { deferToRecorder: true });
+      expect(mockSetAudioModeAsync).toHaveBeenCalledWith(
+        expect.objectContaining({ allowsRecording: true }),
       );
     });
 

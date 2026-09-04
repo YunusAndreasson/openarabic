@@ -50,6 +50,10 @@ export interface ArmStages {
   restorePendingAtTap: boolean | null;
   /** ms the tap spent waiting on an already-in-flight restore to finish. */
   restoreWaitMs: number | null;
+  /** Session reset and Expo grant/ownership handoff before input opening. */
+  restoreModeMs: number | null;
+  /** Remaining restore work: input configuration/open and any recovery. */
+  restoreInputMs: number | null;
 }
 
 const EMPTY: ArmStages = {
@@ -60,6 +64,8 @@ const EMPTY: ArmStages = {
   restoreMs: null,
   restorePendingAtTap: null,
   restoreWaitMs: null,
+  restoreModeMs: null,
+  restoreInputMs: null,
 };
 
 let tapAt: number | null = null;
@@ -69,18 +75,36 @@ let stages: ArmStages = { ...EMPTY };
 let restoreStartedAt: number | null = null;
 /** Duration of the last restore that completed, kept across the tap reset. */
 let lastRestoreMs: number | null = null;
+let restoreModeReadyAt: number | null = null;
+let lastRestoreModeMs: number | null = null;
+let lastRestoreInputMs: number | null = null;
 
 /** The microphone is being handed back after a prompt. */
 export function markRestoreStart(): void {
   restoreStartedAt = Date.now();
+  restoreModeReadyAt = null;
+  lastRestoreModeMs = null;
+  lastRestoreInputMs = null;
+  stages = { ...stages, restoreModeMs: null, restoreInputMs: null };
+}
+
+/** Separate session reset/ownership work from input configuration and opening. */
+export function markRestoreModeReady(): void {
+  if (restoreStartedAt === null) return;
+  restoreModeReadyAt = Date.now();
+  lastRestoreModeMs = restoreModeReadyAt - restoreStartedAt;
+  stages = { ...stages, restoreModeMs: lastRestoreModeMs };
 }
 
 /** The hand-back finished — this is the budget an eager tap has to beat. */
 export function markRestoreEnd(): void {
   if (restoreStartedAt === null) return;
-  lastRestoreMs = Date.now() - restoreStartedAt;
+  const now = Date.now();
+  lastRestoreMs = now - restoreStartedAt;
+  lastRestoreInputMs = restoreModeReadyAt === null ? null : now - restoreModeReadyAt;
   restoreStartedAt = null;
-  stages = { ...stages, restoreMs: lastRestoreMs };
+  restoreModeReadyAt = null;
+  stages = { ...stages, restoreMs: lastRestoreMs, restoreInputMs: lastRestoreInputMs };
 }
 
 /** How long the tap waited on a restore that was still running when it landed. */
@@ -98,6 +122,8 @@ export function markArmTap(): void {
     ...EMPTY,
     restoreMs: lastRestoreMs,
     restorePendingAtTap: restoreStartedAt !== null,
+    restoreModeMs: lastRestoreModeMs,
+    restoreInputMs: lastRestoreInputMs,
   };
 }
 
@@ -133,5 +159,8 @@ export function resetArmTelemetry(): void {
   armAt = null;
   restoreStartedAt = null;
   lastRestoreMs = null;
+  restoreModeReadyAt = null;
+  lastRestoreModeMs = null;
+  lastRestoreInputMs = null;
   stages = { ...EMPTY };
 }

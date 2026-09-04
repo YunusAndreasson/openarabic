@@ -304,10 +304,7 @@ export function useVoiceReview({
   // Keep the canonical value in a ref and publish it to React only while the
   // advanced HUD is actually visible.
   const publishDebug = useCallback((update: SetStateAction<VoiceDebug>): void => {
-    const next =
-      typeof update === 'function'
-        ? update(debugRef.current)
-        : update;
+    const next = typeof update === 'function' ? update(debugRef.current) : update;
     debugRef.current = next;
     if (debugEnabledRef.current) setDebug(next);
   }, []);
@@ -1014,8 +1011,17 @@ export function useVoiceReview({
   const speakNow = useCallback((): void => {
     // A mic that is already open (or grading) is not something to take over —
     // re-arming here would throw away audio the learner has already spoken.
-    if (phaseRef.current === 'listening' || phaseRef.current === 'checking') return;
+    if (
+      phaseRef.current === 'arming' ||
+      phaseRef.current === 'listening' ||
+      phaseRef.current === 'checking'
+    )
+      return;
     if (!voice.isReady) return;
+    // Claim the tap before React commits: another press must not cancel and
+    // restart the native open already requested by this one.
+    const previousPhase = phaseRef.current;
+    phaseRef.current = 'arming';
     // The permission ask lives here rather than at session start: this tap is
     // the learner asking for the microphone, which is the context the OS dialog
     // otherwise lacks. Latched once per provider lifetime, so only the first tap
@@ -1024,7 +1030,7 @@ export function useVoiceReview({
     // learner the beat they just decided to spend speaking.
     void prewarmPermission();
     setSessionRequested(true);
-    diagMark('mic.speakNow', { phase: phaseRef.current });
+    diagMark('mic.speakNow', { phase: previousPhase });
     // The tap is now the only way to arm, so this stop runs on every card —
     // and on any card where the learner is quick, it is what truncates the
     // Arabic. Recorded before the stop, while there is still a prompt to

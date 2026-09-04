@@ -8,12 +8,10 @@
  * Grading flow: arm() → energy gate stops → transcribe(waveform) → caller runs
  * the pure matchSingleWord() against the card's expected English.
  *
- * The microphone is opened ONCE and then paused between cards. Everything that
- * used to happen per card — awaiting the previous recorder's teardown, granting
- * the record-capable category, deactivating and reactivating the iOS session,
- * constructing a recorder, re-checking permission, opening an exclusive input
- * stream — happened between the prompt ending and the learner being allowed to
- * speak. That was the wait, and it is now a `resume()`.
+ * A capture session is retained after the first explicit voice action. Retries
+ * resume its input stream, but Arabic prompts temporarily close that stream
+ * and take playback priority to preserve iOS output volume. Restoring the input
+ * after a prompt is asynchronous; arm() joins that restore if a tap beats it.
  */
 import {
   createContext,
@@ -26,6 +24,7 @@ import {
   type FC,
   type ReactNode,
 } from 'react';
+import { Platform } from 'react-native';
 import { AudioManager } from 'react-native-audio-api';
 import { useSharedValue, type SharedValue } from 'react-native-reanimated';
 
@@ -49,6 +48,7 @@ import {
   markAwaitOpen,
   markBeginWindow,
   markRestoreEnd,
+  markRestoreModeReady,
   markRestoreStart,
   markRestoreWait,
   markStreamState,
@@ -376,6 +376,9 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
   const playbackPriorityRef = useRef(false);
   /** Latched on the first failure to restore — see setPlaybackPriority. */
   const playbackPriorityBrokenRef = useRef(false);
+  // Any forced input recovery disables deferral for this provider's life.
+  // Recovery keeps the established Expo grant + deactivate/rebuild sequence.
+  const recordingGrantRequiredRef = useRef(false);
   /** Serializes every playback/record handoff. A same-direction caller must also
    * join the active transition: `playbackPriorityRef` describes the completed
    * native state, not merely the most recently requested state. */
@@ -390,7 +393,10 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
           // interruption, a route change, or a stream error. Release the audio
           // session on the way down so the reopen genuinely rebuilds the engine;
           // see VoiceCaptureSession.close, where the field evidence lives.
-          if (reopen) await capture.close({ releaseSession: true });
+          if (reopen) {
+            recordingGrantRequiredRef.current = true;
+            await capture.close({ releaseSession: true });
+          }
           // Opening the stream reconfigures the SHARED audio session as
           // record-capable (`configureVoiceSessionOptions`: `.playAndRecord`,
           // plus mode `.measurement` when the Advanced iOS raw-mode toggle is
@@ -409,10 +415,10 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
           // off precisely because it plays "noticeably quiet". The learner hears
           // nothing, `play()` still reports success, and nothing is logged.
           //
-          // The grant has to come first on iOS regardless: react-native-audio-api
-          // cannot switch to .playAndRecord under an already-active
-          // playback-only session (see setRecordingSessionEnabled).
-          await simpleAudioService.setRecordingSessionEnabled(true);
+          // Normal restore may already have delegated the category switch to
+          // the recorder. Recovery must override that logical ownership flag
+          // and reapply the established Expo grant after deactivation.
+          await simpleAudioService.setRecordingSessionEnabled(true, { force: reopen });
           // The microphone owns the session from here, so the flag has to agree
           // — otherwise the next prompt's handoff sees "playback already has it"
           // and skips the category/mode change it needs. Set at the grant rather
@@ -556,7 +562,28 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
 
         markRestoreStart();
         try {
-          await simpleAudioService.setRecordingSessionEnabled(true);
+          const directRestore =
+            Platform.OS === 'ios' && !recordingGrantRequiredRef.current && !reopenOwedRef.current;
+          if (directRestore) {
+            // audio-api caches both desired options and activation. After Expo
+            // playback, both can look unchanged even though the actual category
+            // is playback-only. Reset BEFORE capture.open: native start attaches
+            // input before its final forced activation, which is too late to
+            // safely change the category of an already materialized input graph.
+            await capture.close();
+            try {
+              await AudioManager.setAudioSessionActivity(false);
+            } catch {
+              // A reset we cannot confirm must not take the direct path. Unlike
+              // close({releaseSession:true}), this await surfaces rejection.
+              recordingGrantRequiredRef.current = true;
+              diagMark('mic.session.directRestore.resetFailed');
+            }
+          }
+          await simpleAudioService.setRecordingSessionEnabled(true, {
+            deferToRecorder: directRestore && !recordingGrantRequiredRef.current,
+          });
+          markRestoreModeReady();
           // Settle any reopen deferred while the prompt was playing — see
           // reopenOwedRef. Forcing it here costs the teardown/rebuild only on
           // the cards where something actually broke the input.
@@ -564,6 +591,8 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
           reopenOwedRef.current = false;
           await openCapture(owed);
           if (!capture.isOpen) {
+            recordingGrantRequiredRef.current = true;
+            diagMark('mic.session.directRestore.failed');
             // One forced retry, then give up on the mechanism entirely rather
             // than leave the learner tapping a mic that will never open.
             await openCapture(true);

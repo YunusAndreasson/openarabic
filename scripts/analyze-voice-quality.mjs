@@ -23,6 +23,10 @@
  *
  * Usage:
  *   node scripts/analyze-voice-quality.mjs [--limit 400] [--days 30]
+ *   node scripts/analyze-voice-quality.mjs --latency [--limit 150] [--days 30]
+ *
+ * --latency reads iOS timing fields only and prints aggregate percentiles,
+ * including the restore-mode/input breakdown when instrumented rows exist.
  */
 import { execFile } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
@@ -132,6 +136,57 @@ function printGroup(label, rows) {
   );
 }
 
+async function printIosLatency(url, key, since, limit) {
+  const cols = [
+    'created_at',
+    'app_version',
+    'first_buffer_ms',
+    'tap_ms:meta->tapToCapturingMs',
+    'arm_stages:meta->armStages',
+  ].join(',');
+  const rows = await rest(
+    url,
+    key,
+    `voice_grading_attempts?select=${cols}&platform=eq.ios&created_at=gte.${since}` +
+      `&order=created_at.desc&limit=${limit}`,
+  );
+  if (rows.length === 0) {
+    console.log('No iOS attempts in the requested period.');
+    return;
+  }
+  const stats = values => {
+    const sorted = values
+      .filter(v => typeof v === 'number' && Number.isFinite(v) && v >= 0)
+      .sort((a, b) => a - b);
+    if (sorted.length === 0) return { samples: 0, medianMs: null, p90Ms: null };
+    return {
+      samples: sorted.length,
+      medianMs: sorted[Math.floor(sorted.length * 0.5)],
+      p90Ms: sorted[Math.floor(sorted.length * 0.9)],
+    };
+  };
+  const versions = [...new Set(rows.map(r => r.app_version))];
+  for (const version of versions) {
+    const group = rows.filter(r => r.app_version === version);
+    console.log(
+      `\niOS ${version ?? 'unknown'}: ${group.length} attempts, ` +
+        `${group.at(-1).created_at} → ${group[0].created_at}`,
+    );
+    console.table({
+      tapToCapturing: stats(group.map(r => r.tap_ms)),
+      tapToArm: stats(group.map(r => r.arm_stages?.tapToArmMs)),
+      restore: stats(group.map(r => r.arm_stages?.restoreMs)),
+      restoreWait: stats(group.map(r => r.arm_stages?.restoreWaitMs)),
+      restoreMode: stats(group.map(r => r.arm_stages?.restoreModeMs)),
+      restoreInput: stats(group.map(r => r.arm_stages?.restoreInputMs)),
+      firstBuffer: stats(group.map(r => r.first_buffer_ms)),
+    });
+  }
+  console.log(
+    'Missing timing fields are excluded, not treated as zero. Spans overlap; do not add percentiles.',
+  );
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const limit = Number(args[args.indexOf('--limit') + 1]) || 400;
@@ -139,6 +194,11 @@ async function main() {
 
   const { url, key } = await credentials();
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+
+  if (args.includes('--latency')) {
+    await printIosLatency(url, key, since, limit);
+    return;
+  }
 
   const cols = [
     'id',
