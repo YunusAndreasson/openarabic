@@ -1,18 +1,38 @@
 import type { NativeStackNavigationOptions } from 'expo-router';
-import { Platform } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
+
+import { LAYOUT } from '@/constants/layout';
 
 interface TabHeaderOptions {
   readonly title: string;
   /**
-   * The tab's own tools — edit, dictionary. Leading, because that is where a
-   * left-to-right reader looks first and where both platforms put a screen's
-   * secondary controls; the trailing slot is reserved for the one action the
-   * screen exists to start.
+   * The tab's own tools — edit, dictionary.
+   *
+   * Named for where it lands on iOS, which is the leading slot: that is where a
+   * left-to-right reader looks first, and the trailing slot is reserved for the
+   * one action the screen exists to start.
+   *
+   * ON ANDROID IT IS RENDERED TRAILING INSTEAD, next to `rightComponent`. A
+   * Material top app bar reserves its leading slot for *navigation* — the back
+   * arrow or the menu — and puts every action after the title. An icon button
+   * placed leading there does not read as a button at all: it sits flush
+   * against the title and reads as an ornament on the word ("📖 Practice",
+   * "✏️ Playlist"). Actions belong trailing on Android; the prop name follows
+   * the iOS layout because that is the one it matches literally.
    */
   readonly leftComponent?: () => React.ReactElement;
   /** The screen's primary action, as text (`Play all`, `Review`). */
   readonly rightComponent?: () => React.ReactElement;
 }
+
+const styles = StyleSheet.create({
+  /** Android's trailing action group: tools first, primary action outermost. */
+  androidActions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: LAYOUT.SPACING.SMALL,
+  },
+});
 
 /**
  * Tab-root header options: native iOS large title that collapses to a small
@@ -64,13 +84,36 @@ export function createTabHeaderOptions({
   leftComponent,
   rightComponent,
 }: TabHeaderOptions): NativeStackNavigationOptions {
-  return {
+  const base: NativeStackNavigationOptions = {
     title,
     headerLargeTitle: Platform.OS === 'ios',
     headerLargeTitleShadowVisible: false,
     headerShadowVisible: false,
     headerBackButtonDisplayMode: 'minimal',
-    headerLeft: leftComponent,
-    headerRight: rightComponent,
+  };
+
+  // iOS: tools lead, the primary action trails — see `leftComponent`.
+  if (Platform.OS !== 'android') {
+    return { ...base, headerLeft: leftComponent, headerRight: rightComponent };
+  }
+
+  // Android: everything trails. Tools sit inboard of the primary action, so
+  // `Review` and `Play all` stay exactly where they already are and the icon
+  // joins them from the left rather than displacing them.
+  if (!leftComponent) {
+    return { ...base, headerRight: rightComponent };
+  }
+
+  const Tools = leftComponent;
+  const Primary = rightComponent;
+
+  return {
+    ...base,
+    headerRight: () => (
+      <View style={styles.androidActions}>
+        <Tools />
+        {Primary ? <Primary /> : null}
+      </View>
+    ),
   };
 }
