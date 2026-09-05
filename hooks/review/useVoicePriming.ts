@@ -13,10 +13,14 @@ import { setVoiceEnabled, setVoiceOfferDismissed } from '@/store/settingsSlice';
  * exists; that whole header slot was removed, so nothing in the app can emit it
  * any more.
  *
- * @deprecated `'review_header'` — kept so the union stays two-membered rather
- * than collapsing `source` into a compile-time constant, and so the value the
+ * `'review_header'` is kept so the union stays two-membered rather than
+ * collapsing `source` into a compile-time constant, and so the value the
  * funnel's history already contains still type-checks. Do not add a new caller
  * for it; add a new member instead.
+ *
+ * Deliberately NOT an `@deprecated` tag: JSDoc cannot mark a single union
+ * member, so the tag deprecated the whole alias — flagging every correct use of
+ * the type that callers are required to pass.
  */
 export type VoiceOfferSource = 'completion' | 'review_header';
 

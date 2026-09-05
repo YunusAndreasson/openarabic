@@ -114,12 +114,20 @@ export default function TabLayout(): JSX.Element {
                 is silently dropped and the tab loses its icon entirely. */}
             <NativeTabs.Trigger.Icon
               sf={screen.icon.sf}
+              // Hoisting or memoising this buys nothing: the VectorIcon elements
+              // inside are new on every render either way, the tab bar renders once
+              // rather than per row, and restructuring risks the identity check
+              // described above.
+              // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop
               src={{
                 default: (
                   <NativeTabs.Trigger.VectorIcon family={Ionicons} name={screen.icon.ion.default} />
                 ),
                 selected: (
-                  <NativeTabs.Trigger.VectorIcon family={Ionicons} name={screen.icon.ion.selected} />
+                  <NativeTabs.Trigger.VectorIcon
+                    family={Ionicons}
+                    name={screen.icon.ion.selected}
+                  />
                 ),
               }}
             />
