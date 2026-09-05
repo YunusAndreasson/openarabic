@@ -165,7 +165,7 @@ const AccountScreen: FC = () => {
         <PracticeSection
           onDailyWordLimitPress={handleDailyWordLimitPress}
           onReminderTimePress={handleTimePickerOpen}
-          onReminderToggle={handleReminderToggle}
+          onReminderToggle={enabled => void handleReminderToggle(enabled)}
           reminderTime={reminderTime}
           formatReminderTime={formatReminderTime}
         />
@@ -174,7 +174,7 @@ const AccountScreen: FC = () => {
 
         <AppSection
           onThemePress={handleThemePress}
-          onClearCachePress={handleClearCache}
+          onClearCachePress={() => void handleClearCache()}
           cacheSizeText={formattedCacheSize}
         />
 
@@ -197,7 +197,7 @@ const AccountScreen: FC = () => {
         initialMinute={reminderTime.minute}
         isVisible={showTimePicker}
         onClose={handleTimePickerClose}
-        onTimeSet={handleTimeSet}
+        onTimeSet={(hour, minute) => void handleTimeSet(hour, minute)}
       />
 
       {/* Unified SettingsPicker Modal - Controlled Mode */}

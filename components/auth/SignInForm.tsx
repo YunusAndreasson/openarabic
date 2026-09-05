@@ -39,7 +39,7 @@ export function SignInForm(): JSX.Element {
 
   return (
     <View style={styles.container}>
-      <AuthCredentialFields fields={fields} onPasswordSubmit={signInWithEmail} />
+      <AuthCredentialFields fields={fields} onPasswordSubmit={() => void signInWithEmail()} />
 
       <ThemedButton
         disabled={loading}
@@ -49,7 +49,7 @@ export function SignInForm(): JSX.Element {
         title={STRINGS.SIGN_IN}
         testID="sign-in-button"
         accessibilityLabel="Sign in"
-        onPress={signInWithEmail}
+        onPress={() => void signInWithEmail()}
       />
 
       {/* Forgot Password Link */}
@@ -58,7 +58,7 @@ export function SignInForm(): JSX.Element {
           accessibilityLabel="Forgot password"
           label={STRINGS.FORGOT_PASSWORD}
           testID="forgot-password-button"
-          onPress={handleForgotPassword}
+          onPress={() => void handleForgotPassword()}
         />
       </View>
 

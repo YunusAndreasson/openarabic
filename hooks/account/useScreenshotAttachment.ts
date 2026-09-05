@@ -67,7 +67,7 @@ export function useScreenshotAttachment({
           'Photo library access is needed to attach screenshots. Please enable it in Settings.',
           [
             { text: 'Cancel', style: 'cancel' },
-            { text: 'Open Settings', onPress: () => Linking.openSettings() },
+            { text: 'Open Settings', onPress: () => void Linking.openSettings() },
           ],
         );
         return;

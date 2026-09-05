@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useCallback } from 'react';
 
 import { gated, studyStreakQueries } from '@/constants/queries';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -31,5 +32,13 @@ export function useStudyStreak(): UseStudyStreakResult {
     refetch,
   } = useQuery(gated(studyStreakQueries.streak, user?.id));
 
-  return { streak, isLoading, error: error, refetch };
+  // The result type promises `() => void`, and every caller uses it that way.
+  // TanStack's refetch returns a promise, so hand back a voided wrapper rather
+  // than one the contract quietly lies about — memoised, because an unstable
+  // identity here would retrigger any effect that depends on it.
+  const refetchStreak = useCallback(() => {
+    void refetch();
+  }, [refetch]);
+
+  return { streak, isLoading, error: error, refetch: refetchStreak };
 }

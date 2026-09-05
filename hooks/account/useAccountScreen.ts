@@ -87,25 +87,26 @@ export const useAccountScreen = () => {
         {
           text: STRINGS.CLEAR,
           style: 'destructive',
-          onPress: async () => {
-            try {
-              // Clear audio cache
-              await clearCache();
-              setCacheSize(0);
+          onPress: () =>
+            void (async () => {
+              try {
+                // Clear audio cache
+                await clearCache();
+                setCacheSize(0);
 
-              // Clear React Query in-memory cache
-              queryClient.clear();
+                // Clear React Query in-memory cache
+                queryClient.clear();
 
-              // Clear React Query persisted AsyncStorage cache
-              await clearPersistedQueryCache();
+                // Clear React Query persisted AsyncStorage cache
+                await clearPersistedQueryCache();
 
-              lightFeedback();
-              Alert.alert(STRINGS.SUCCESS, STRINGS.CLEAR_CACHE_SUCCESS);
-            } catch (error) {
-              Alert.alert(STRINGS.ERROR, STRINGS.FAILED_TO_CLEAR_OFFLINE_CACHE);
-              handleError(error, { showToast: false });
-            }
-          },
+                lightFeedback();
+                Alert.alert(STRINGS.SUCCESS, STRINGS.CLEAR_CACHE_SUCCESS);
+              } catch (error) {
+                Alert.alert(STRINGS.ERROR, STRINGS.FAILED_TO_CLEAR_OFFLINE_CACHE);
+                handleError(error, { showToast: false });
+              }
+            })(),
         },
       ],
     );
@@ -123,25 +124,26 @@ export const useAccountScreen = () => {
         {
           text: STRINGS.SIGN_OUT,
           style: 'destructive',
-          onPress: async () => {
-            try {
-              // Stop audio before signing out to prevent stale audio state
-              await simpleAudioService.stop();
-              await analytics.trackSignOut();
-              const { error } = await supabase.auth.signOut();
-              if (error) {
-                Alert.alert(STRINGS.ERROR, error.message);
-                return;
+          onPress: () =>
+            void (async () => {
+              try {
+                // Stop audio before signing out to prevent stale audio state
+                await simpleAudioService.stop();
+                await analytics.trackSignOut();
+                const { error } = await supabase.auth.signOut();
+                if (error) {
+                  Alert.alert(STRINGS.ERROR, error.message);
+                  return;
+                }
+                await analytics.reset();
+                router.replace(ROUTE_PATHS.AUTH);
+              } catch (error) {
+                Alert.alert(
+                  STRINGS.ERROR,
+                  error instanceof Error ? error.message : STRINGS.FAILED_TO_SIGN_OUT,
+                );
               }
-              await analytics.reset();
-              router.replace(ROUTE_PATHS.AUTH);
-            } catch (error) {
-              Alert.alert(
-                STRINGS.ERROR,
-                error instanceof Error ? error.message : STRINGS.FAILED_TO_SIGN_OUT,
-              );
-            }
-          },
+            })(),
         },
       ],
       { cancelable: true },
@@ -166,32 +168,33 @@ export const useAccountScreen = () => {
         {
           text: STRINGS.RESET,
           style: 'destructive',
-          onPress: async () => {
-            try {
-              // Delete all reading progress from database (or reset to 0 if RLS blocks DELETE)
-              await ReadingProgressService.deleteAllProgress(user.id);
+          onPress: () =>
+            void (async () => {
+              try {
+                // Delete all reading progress from database (or reset to 0 if RLS blocks DELETE)
+                await ReadingProgressService.deleteAllProgress(user.id);
 
-              // Completely remove all reading progress queries from cache
-              // Using removeQueries instead of invalidate to force complete cache clear
-              queryClient.removeQueries({
-                queryKey: readingProgressQueries.bulk(user.id).queryKey,
-              });
-              queryClient.removeQueries({
-                queryKey: readingProgressQueries.readingList(user.id).queryKey,
-              });
+                // Completely remove all reading progress queries from cache
+                // Using removeQueries instead of invalidate to force complete cache clear
+                queryClient.removeQueries({
+                  queryKey: readingProgressQueries.bulk(user.id).queryKey,
+                });
+                queryClient.removeQueries({
+                  queryKey: readingProgressQueries.readingList(user.id).queryKey,
+                });
 
-              // Refetch to populate cache with fresh (empty or reset) data
-              await queryClient.refetchQueries({
-                queryKey: readingProgressQueries.bulk(user.id).queryKey,
-              });
+                // Refetch to populate cache with fresh (empty or reset) data
+                await queryClient.refetchQueries({
+                  queryKey: readingProgressQueries.bulk(user.id).queryKey,
+                });
 
-              lightFeedback();
-              Alert.alert(STRINGS.SUCCESS, STRINGS.READING_PROGRESS_RESET_SUCCESSFULLY);
-            } catch (error) {
-              Alert.alert(STRINGS.ERROR, STRINGS.FAILED_TO_RESET_READING_PROGRESS);
-              handleError(error, { showToast: false });
-            }
-          },
+                lightFeedback();
+                Alert.alert(STRINGS.SUCCESS, STRINGS.READING_PROGRESS_RESET_SUCCESSFULLY);
+              } catch (error) {
+                Alert.alert(STRINGS.ERROR, STRINGS.FAILED_TO_RESET_READING_PROGRESS);
+                handleError(error, { showToast: false });
+              }
+            })(),
         },
       ],
       { cancelable: true },
@@ -207,7 +210,7 @@ export const useAccountScreen = () => {
           if (!granted) {
             Alert.alert(STRINGS.ENABLE_NOTIFICATIONS, STRINGS.TURN_ON_NOTIFICATIONS, [
               { text: STRINGS.CANCEL, style: 'cancel' },
-              { text: STRINGS.OPEN_SETTINGS, onPress: () => Linking.openSettings() },
+              { text: STRINGS.OPEN_SETTINGS, onPress: () => void Linking.openSettings() },
             ]);
             return;
           }
@@ -215,7 +218,7 @@ export const useAccountScreen = () => {
           handleError(error, { showToast: false });
           Alert.alert(STRINGS.ENABLE_NOTIFICATIONS, STRINGS.TURN_ON_NOTIFICATIONS, [
             { text: STRINGS.CANCEL, style: 'cancel' },
-            { text: STRINGS.OPEN_SETTINGS, onPress: () => Linking.openSettings() },
+            { text: STRINGS.OPEN_SETTINGS, onPress: () => void Linking.openSettings() },
           ]);
           return;
         }

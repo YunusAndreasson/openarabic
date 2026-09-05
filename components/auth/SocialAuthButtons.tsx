@@ -53,7 +53,7 @@ export function SocialAuthButtons({ appleAuth, googleAuth }: SocialAuthButtonsPr
           fullWidth
           testID="apple-sign-in-button"
           accessibilityLabel="Sign in with Apple"
-          onPress={signInWithApple}
+          onPress={() => void signInWithApple()}
         />
       )}
 
@@ -67,7 +67,7 @@ export function SocialAuthButtons({ appleAuth, googleAuth }: SocialAuthButtonsPr
         fullWidth
         testID="google-sign-in-button"
         accessibilityLabel="Sign in with Google"
-        onPress={signInWithGoogle}
+        onPress={() => void signInWithGoogle()}
       />
 
       {/* Divider with "or" text - appears after social buttons */}

@@ -300,7 +300,7 @@ export default function ResetPasswordScreen(): JSX.Element {
             title={STRINGS.RESET_PASSWORD_BUTTON}
             testID="reset-password-button"
             accessibilityLabel="Reset password"
-            onPress={handleResetPassword}
+            onPress={() => void handleResetPassword()}
           />
         </View>
       </View>

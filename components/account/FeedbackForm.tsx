@@ -210,7 +210,7 @@ export const FeedbackForm = memo(() => {
                 style={styles.addScreenshotButton}
                 title={STRINGS.FEEDBACK_SCREENSHOT_LABEL}
                 variant="outlined"
-                onPress={handleAddScreenshot}
+                onPress={() => void handleAddScreenshot()}
               />
             )}
 
@@ -228,7 +228,7 @@ export const FeedbackForm = memo(() => {
 
             <ThemedButton
               title={isSubmitting ? STRINGS.FEEDBACK_SENDING : STRINGS.FEEDBACK_SUBMIT}
-              onPress={handleSubmit}
+              onPress={() => void handleSubmit()}
               disabled={isSubmitting || characterCount < MIN_CHARACTERS}
               variant={characterCount < MIN_CHARACTERS ? 'outlined' : 'filled'}
               style={styles.submitButton}

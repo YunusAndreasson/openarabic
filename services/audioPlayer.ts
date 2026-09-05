@@ -460,49 +460,51 @@ class SimpleAudioService {
       this.appStateSubscription.remove();
     }
 
-    this.appStateSubscription = AppState.addEventListener('change', async nextAppState => {
-      try {
-        if (nextAppState === 'background' || nextAppState === 'inactive') {
-          // App is going to background - ensure audio session stays active
-          // Only attempt if we're actively playing (iOS may reject otherwise)
-          if (this.status.playing || this.isPlaylistMode) {
-            await this.safeActivateAudioSession({
-              location: 'AppState.background',
-              playing: this.status.playing,
-              isPlaylistMode: this.isPlaylistMode,
-            });
-            // Re-configure audio session to maintain background playback
-            try {
-              await setAudioModeAsync(this.currentAudioMode());
-            } catch {
-              // Audio mode configuration may fail in background - not critical
+    this.appStateSubscription = AppState.addEventListener('change', nextAppState => {
+      void (async () => {
+        try {
+          if (nextAppState === 'background' || nextAppState === 'inactive') {
+            // App is going to background - ensure audio session stays active
+            // Only attempt if we're actively playing (iOS may reject otherwise)
+            if (this.status.playing || this.isPlaylistMode) {
+              await this.safeActivateAudioSession({
+                location: 'AppState.background',
+                playing: this.status.playing,
+                isPlaylistMode: this.isPlaylistMode,
+              });
+              // Re-configure audio session to maintain background playback
+              try {
+                await setAudioModeAsync(this.currentAudioMode());
+              } catch {
+                // Audio mode configuration may fail in background - not critical
+              }
             }
+          } else if (nextAppState === 'active') {
+            // App is coming to foreground - reconfigure audio session
+            // iOS may have invalidated the session while in background
+            this.audioSessionConfigured = false;
+            await this.configureAudioSession();
           }
-        } else if (nextAppState === 'active') {
-          // App is coming to foreground - reconfigure audio session
-          // iOS may have invalidated the session while in background
-          this.audioSessionConfigured = false;
-          await this.configureAudioSession();
+        } catch (error) {
+          // Don't log AppState listener errors to Sentry - they're often expected
+          // (e.g., iOS rejecting audio activation in certain system states)
+          // Only log if it's a critical error that prevents playback
+          const playing = this.status.playing || this.isPlaylistMode;
+          if (playing && nextAppState === 'active') {
+            // Only log if we're trying to play and app became active
+            await handleError(error, {
+              showToast: false,
+              sentryExtra: {
+                operation: 'AppState.addEventListener',
+                appState: nextAppState,
+                playing,
+                isPlaylistMode: this.isPlaylistMode,
+              },
+            });
+          }
+          // Don't throw errors from AppState listener as it can cause crashes
         }
-      } catch (error) {
-        // Don't log AppState listener errors to Sentry - they're often expected
-        // (e.g., iOS rejecting audio activation in certain system states)
-        // Only log if it's a critical error that prevents playback
-        const playing = this.status.playing || this.isPlaylistMode;
-        if (playing && nextAppState === 'active') {
-          // Only log if we're trying to play and app became active
-          await handleError(error, {
-            showToast: false,
-            sentryExtra: {
-              operation: 'AppState.addEventListener',
-              appState: nextAppState,
-              playing,
-              isPlaylistMode: this.isPlaylistMode,
-            },
-          });
-        }
-        // Don't throw errors from AppState listener as it can cause crashes
-      }
+      })();
     });
   }
 

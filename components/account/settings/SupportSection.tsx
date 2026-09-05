@@ -32,20 +32,21 @@ export const SupportSection = memo<SupportSectionProps>(({ onContactSupportPress
       { text: STRINGS.CANCEL, style: 'cancel' },
       {
         text: STRINGS.RESET,
-        onPress: async () => {
-          try {
-            await resetAllTutorials();
-            // Also re-enable the first-run intro + Get started checklist
-            await resetOnboarding();
-            successFeedback();
-          } catch (error) {
-            errorFeedback();
-            handleError(error, {
-              toastMessage: STRINGS.RESET_TUTORIALS_FAILED,
-              analyticsEventName: 'Reset_Tutorials_Failed',
-            });
-          }
-        },
+        onPress: () =>
+          void (async () => {
+            try {
+              await resetAllTutorials();
+              // Also re-enable the first-run intro + Get started checklist
+              await resetOnboarding();
+              successFeedback();
+            } catch (error) {
+              errorFeedback();
+              handleError(error, {
+                toastMessage: STRINGS.RESET_TUTORIALS_FAILED,
+                analyticsEventName: 'Reset_Tutorials_Failed',
+              });
+            }
+          })(),
       },
     ]);
   }, [resetAllTutorials]);
@@ -103,7 +104,7 @@ export const SupportSection = memo<SupportSectionProps>(({ onContactSupportPress
         icon="star"
         label={STRINGS.RATE_APP}
         rightType="external"
-        onPress={handleRequestReview}
+        onPress={() => void handleRequestReview()}
       />
     </SettingsSection>
   );

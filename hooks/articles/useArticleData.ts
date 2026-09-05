@@ -1,5 +1,5 @@
 import { useQuery, type QueryObserverResult } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { articleQueries, fsrsQueries, gated, readingProgressQueries } from '@/constants/queries';
 import { useColors } from '@/hooks/theme/useColors';
@@ -119,11 +119,17 @@ export const useArticleData = (
     }, new Map<number, SentenceWord[]>());
   }, [sortedSentences, colors]);
 
+  // Voided to match the declared `() => void`, memoised to stay stable for the
+  // consumers that hold it (useReadingListMutations takes it as a dependency).
+  const refetchReadingListStatusVoid = useCallback(() => {
+    void refetchReadingListStatus();
+  }, [refetchReadingListStatus]);
+
   return {
     article,
     isLoadingArticle,
     isInReadingList,
-    refetchReadingListStatus,
+    refetchReadingListStatus: refetchReadingListStatusVoid,
     selectedWordIds,
     sortedSentences,
     sentenceWordsMap,

@@ -35,7 +35,7 @@ export function SignUpForm(): JSX.Element {
 
   return (
     <View style={styles.container}>
-      <AuthCredentialFields fields={fields} onPasswordSubmit={signUpWithEmail} isSignUp>
+      <AuthCredentialFields fields={fields} onPasswordSubmit={() => void signUpWithEmail()} isSignUp>
         <PasswordStrengthMeter password={password} />
       </AuthCredentialFields>
 
@@ -47,7 +47,7 @@ export function SignUpForm(): JSX.Element {
         title={STRINGS.CREATE_ACCOUNT}
         testID="create-account-button"
         accessibilityLabel="Create account"
-        onPress={signUpWithEmail}
+        onPress={() => void signUpWithEmail()}
       />
 
       <AuthSwitchPrompt

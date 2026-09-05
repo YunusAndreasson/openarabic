@@ -285,7 +285,7 @@ export function WordDetailsBottomSheet({
                     its gloss. */}
                 <IconButton
                   icon="volume-high"
-                  onPress={handlePlayAudio}
+                  onPress={() => void handlePlayAudio()}
                   disabled={!word.audio_url}
                   backgroundColor={colors.elevation2}
                   iconColor={colors.text}

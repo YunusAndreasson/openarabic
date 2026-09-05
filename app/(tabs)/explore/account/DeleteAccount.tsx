@@ -82,7 +82,7 @@ const DeleteAccountScreen: FC = () => {
           autoCorrect={false}
           editable={!loading}
           error={confirmationError}
-          onSubmitEditing={handleDeletePress}
+          onSubmitEditing={() => void handleDeletePress()}
           returnKeyType="done"
         />
       </View>
@@ -94,7 +94,7 @@ const DeleteAccountScreen: FC = () => {
         fullWidth
         title={loading ? STRINGS.ACCOUNT_DELETION_IN_PROGRESS : STRINGS.DELETE_ACCOUNT}
         tone="destructive"
-        onPress={handleDeletePress}
+        onPress={() => void handleDeletePress()}
       />
     </ScreenScaffold>
   );

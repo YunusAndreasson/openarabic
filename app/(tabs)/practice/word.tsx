@@ -232,7 +232,7 @@ export default function PracticeWordScreen(): JSX.Element {
           englishText={englishText}
           partOfSpeech={usage.partOfSpeech}
           transliteration={enrichment?.headwordTransliteration}
-          onPlayAudio={handlePlayAudio}
+          onPlayAudio={() => void handlePlayAudio()}
         />
 
         {/* The one thing on this screen that shows the model rather than a

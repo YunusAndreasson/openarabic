@@ -96,7 +96,7 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
     handlePressIn,
     handlePressOut,
   } = useButtonPress({
-    onPress: selectPhoto,
+    onPress: () => void selectPhoto(),
     hapticType: 'selection',
     animationOptions: PRESS_ANIMATION_BUTTON,
   });

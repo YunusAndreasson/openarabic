@@ -98,7 +98,7 @@ export function useProfilePhotoPicker({
           'Photo library access is needed to select a profile photo. Please enable it in Settings.',
           [
             { text: 'Cancel', style: 'cancel' },
-            { text: 'Open Settings', onPress: () => Linking.openSettings() },
+            { text: 'Open Settings', onPress: () => void Linking.openSettings() },
           ],
         );
         return;

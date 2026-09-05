@@ -57,7 +57,7 @@ export const AboutSection = memo(() => {
           icon="person-circle"
           label={STRINGS.MAKER_BYLINE}
           rightType="external"
-          onPress={() => openSocialLink(STRINGS.MAKER_PROJECTS_URL)}
+          onPress={() => void openSocialLink(STRINGS.MAKER_PROJECTS_URL)}
         />
       </SettingsSection>
 
@@ -66,19 +66,19 @@ export const AboutSection = memo(() => {
           icon="logo-x"
           label={STRINGS.TWITTER}
           rightType="external"
-          onPress={() => openSocialLink(STRINGS.TWITTER_URL)}
+          onPress={() => void openSocialLink(STRINGS.TWITTER_URL)}
         />
         <SettingsCard
           icon="logo-instagram"
           label={STRINGS.INSTAGRAM}
           rightType="external"
-          onPress={() => openSocialLink(STRINGS.INSTAGRAM_URL)}
+          onPress={() => void openSocialLink(STRINGS.INSTAGRAM_URL)}
         />
         <SettingsCard
           icon="logo-facebook"
           label={STRINGS.FACEBOOK}
           rightType="external"
-          onPress={() => openSocialLink(STRINGS.FACEBOOK_URL)}
+          onPress={() => void openSocialLink(STRINGS.FACEBOOK_URL)}
         />
       </SettingsSection>
     </>
