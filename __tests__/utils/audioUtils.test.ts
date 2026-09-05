@@ -355,7 +355,7 @@ describe('audioUtils', () => {
   describe('prefetchArticleWithImage', () => {
     test('should prefetch article data and image when available', async () => {
       const mockQueryClient = {
-        prefetchQuery: jest.fn(async (..._args: unknown[]) => undefined),
+        query: jest.fn(async (..._args: unknown[]) => undefined),
         getQueryData: jest.fn((..._args: unknown[]) => ({
           id: 1,
           image_url: 'test.jpg',
@@ -368,7 +368,7 @@ describe('audioUtils', () => {
 
       await prefetchArticleWithImage(articleId(1), mockQueryClient);
 
-      expect(mockQueryClient.prefetchQuery).toHaveBeenCalled();
+      expect(mockQueryClient.query).toHaveBeenCalled();
       expect(Image.prefetch).toHaveBeenCalledWith('https://example.com/test.jpg', {
         cachePolicy: 'memory-disk',
       });
@@ -376,7 +376,7 @@ describe('audioUtils', () => {
 
     test('should handle missing image URL gracefully', async () => {
       const mockQueryClient = {
-        prefetchQuery: jest.fn(async (..._args: unknown[]) => undefined),
+        query: jest.fn(async (..._args: unknown[]) => undefined),
         getQueryData: jest.fn((..._args: unknown[]) => null),
       } as any;
 
@@ -390,7 +390,7 @@ describe('audioUtils', () => {
 
     test('should silently handle prefetch failures', async () => {
       const mockQueryClient = {
-        prefetchQuery: jest.fn(async (..._args: unknown[]) => {
+        query: jest.fn(async (..._args: unknown[]) => {
           throw new Error('Prefetch failed');
         }),
         getQueryData: jest.fn((..._args: unknown[]) => null),

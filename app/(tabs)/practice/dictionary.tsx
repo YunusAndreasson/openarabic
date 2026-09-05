@@ -199,7 +199,8 @@ export default function DictionaryScreen(): JSX.Element {
       // would shove the memory panel and stats down mid-read. Fetching on the
       // tap buys the navigation transition as head start, and the infinite
       // staleTime means it is only ever paid once per word.
-      void queryClient.prefetchQuery(rootEnrichmentQueries.detail(word.root_id));
+      // query() rejects where prefetchQuery swallowed — keep this fire-and-forget.
+      void queryClient.query(rootEnrichmentQueries.detail(word.root_id)).catch(() => undefined);
       router.push(getPracticeWordRoute(word.root_id));
     },
     [queryClient, router],
@@ -253,7 +254,7 @@ export default function DictionaryScreen(): JSX.Element {
           sortField={sortField}
           nowMs={nowMs}
           onPress={handleWordPress}
-          onRemove={handleRemoveWord}
+          onRemove={word => void handleRemoveWord(word)}
           onResetProgress={handleResetProgress}
         />
       </Animated.View>

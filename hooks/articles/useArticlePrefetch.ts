@@ -15,7 +15,8 @@ export function useArticlePrefetch(): (articleId: ArticleId) => void {
 
   return useCallback(
     (articleId: ArticleId) => {
-      void queryClient.prefetchQuery(articleQueries.detail(articleId));
+      // query() rejects where prefetchQuery swallowed — keep this fire-and-forget.
+      void queryClient.query(articleQueries.detail(articleId)).catch(() => undefined);
     },
     [queryClient],
   );

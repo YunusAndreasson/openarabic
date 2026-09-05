@@ -80,7 +80,7 @@ export async function prefetchArticleWithImage(
   prefetchArticle?: (id: ArticleId) => Promise<boolean | undefined>,
 ): Promise<void> {
   // Prefetch article data
-  queryClient.prefetchQuery(articleQueries.detail(articleId)).catch(() => {
+  queryClient.query(articleQueries.detail(articleId)).catch(() => {
     // Silent failure
   });
 

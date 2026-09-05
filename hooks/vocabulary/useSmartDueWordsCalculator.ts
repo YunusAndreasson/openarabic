@@ -74,10 +74,10 @@ export function useSmartDueWordsCalculator(options: UseSmartDueWordsCalculatorOp
         // by the due-backlog add gate, so it has to exist and be fresh even
         // when no screen mounts it — refetchQueries only touches entries that
         // are already there. Concurrent fetches of the same key are deduped.
-        queryClient.fetchQuery({ ...fsrsQueries.due(userId), staleTime: 0 }),
+        queryClient.query({ ...fsrsQueries.due(userId), staleTime: 0 }),
 
         // Refresh all words for accurate memory strength calculation
-        queryClient.fetchQuery({ ...fsrsQueries.all(userId), staleTime: 0 }),
+        queryClient.query({ ...fsrsQueries.all(userId), staleTime: 0 }),
       ];
 
       // Execute all refreshes in parallel for better performance

@@ -72,26 +72,29 @@ export const useAppPreloader = (): AppPreloaderResult => {
 
     try {
       // Use ensureQueryData to prioritize cache for immutable articles
-      const allArticles = await queryClient.ensureQueryData({
+      const allArticles = await queryClient.query({
         ...articleQueries.all(),
         ...OFFLINE_FIRST,
+        staleTime: 'static',
       });
 
       if (!allArticles || allArticles.length === 0) return false;
 
       // Get user's study words to determine selection strategy
       // Use ensureQueryData to reuse cached data from useAppBadge/preloader
-      const allStudyWords = await queryClient.ensureQueryData({
+      const allStudyWords = await queryClient.query({
         ...fsrsQueries.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
         ...OFFLINE_FIRST,
+        staleTime: 'static',
       });
 
       const hasAnyStudyWords = allStudyWords.length > 0;
 
       // Get due words for intelligent selection (already cached from preloader)
-      const dueWords = await queryClient.ensureQueryData({
+      const dueWords = await queryClient.query({
         ...fsrsQueries.due(user.id),
         ...OFFLINE_FIRST,
+        staleTime: 'static',
       });
 
       const dueWordRootIds = new Set(dueWords.map(word => word.root_id));
@@ -165,22 +168,29 @@ export const useAppPreloader = (): AppPreloaderResult => {
       // Load static data first (categories, basic articles list)
       // Use ensureQueryData to prioritize cache over network (TanStack Query v5 best practice)
       const criticalPromises = [
-        queryClient.ensureQueryData({ ...articleQueries.categories(), ...OFFLINE_FIRST }),
-        queryClient.ensureQueryData({ ...articleQueries.all(), ...OFFLINE_FIRST }),
+        queryClient.query({
+          ...articleQueries.categories(),
+          ...OFFLINE_FIRST,
+          staleTime: 'static',
+        }),
+        queryClient.query({ ...articleQueries.all(), ...OFFLINE_FIRST, staleTime: 'static' }),
       ];
 
       // CRITICAL FIX: Load reading progress synchronously with articles
       // This prevents race condition where filtered view renders before progress data is available
-      // (prefetchQuery never throws, but it must SETTLE — hence OFFLINE_FIRST)
+      // (this must SETTLE, never reject — hence OFFLINE_FIRST and the .catch
+      // below: it is awaited in the Promise.all that gates the whole preload)
       const readingProgressPromise = user?.id
-        ? queryClient.prefetchQuery({
-            queryKey: readingProgressQueries.bulk(user.id).queryKey,
-            queryFn: () => readingProgressService.getBulkProgress(user.id, []),
-            staleTime: 0, // CRITICAL: Always fetch fresh data on app startup to prevent stale cache from blocking updates
-            gcTime: 1000 * 60 * 60 * 24, // Keep in memory for 24 hours
-            retry: 2,
-            ...OFFLINE_FIRST,
-          })
+        ? queryClient
+            .query({
+              queryKey: readingProgressQueries.bulk(user.id).queryKey,
+              queryFn: () => readingProgressService.getBulkProgress(user.id, []),
+              staleTime: 0, // CRITICAL: Always fetch fresh data on app startup to prevent stale cache from blocking updates
+              gcTime: 1000 * 60 * 60 * 24, // Keep in memory for 24 hours
+              retry: 2,
+              ...OFFLINE_FIRST,
+            })
+            .catch(() => undefined)
         : Promise.resolve();
 
       // Wait for BOTH articles AND reading progress to complete
@@ -256,9 +266,10 @@ export const useAppPreloader = (): AppPreloaderResult => {
         runWhenIdle(() => {
           void (async () => {
             try {
-              const readingList = await queryClient.ensureQueryData(
-                readingProgressQueries.readingList(user.id),
-              );
+              const readingList = await queryClient.query({
+                ...readingProgressQueries.readingList(user.id),
+                staleTime: 'static',
+              });
               if (readingList.length > 0) {
                 const imagePrefetches = readingList
                   .map(item => generateStorageUrl('images', item.articles.image_url))
@@ -286,8 +297,16 @@ export const useAppPreloader = (): AppPreloaderResult => {
       // due-backlog gate read; fsrsQueries.all feeds the word lists.
       if (user?.id) {
         try {
-          await queryClient.ensureQueryData({ ...fsrsQueries.due(user.id), ...OFFLINE_FIRST });
-          await queryClient.ensureQueryData({ ...fsrsQueries.all(user.id), ...OFFLINE_FIRST });
+          await queryClient.query({
+            ...fsrsQueries.due(user.id),
+            ...OFFLINE_FIRST,
+            staleTime: 'static',
+          });
+          await queryClient.query({
+            ...fsrsQueries.all(user.id),
+            ...OFFLINE_FIRST,
+            staleTime: 'static',
+          });
 
           // Preload featured articles to prevent glitching when library loads
           try {
@@ -307,8 +326,11 @@ export const useAppPreloader = (): AppPreloaderResult => {
         // Use setTimeout to defer background loading slightly, allowing UI to become responsive first
         setTimeout(() => {
           const backgroundPromises = [
-            queryClient.ensureQueryData(articleQueries.authors()),
-            queryClient.ensureQueryData(readingProgressQueries.readingList(user.id)),
+            queryClient.query({ ...articleQueries.authors(), staleTime: 'static' }),
+            queryClient.query({
+              ...readingProgressQueries.readingList(user.id),
+              staleTime: 'static',
+            }),
           ];
 
           // Don't await - let these load in background
@@ -354,7 +376,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
   const prefetchArticle = useCallback(
     async (articleId: ArticleId) => {
       try {
-        await queryClient.prefetchQuery(articleQueries.detail(articleId));
+        await queryClient.query(articleQueries.detail(articleId));
         return true;
       } catch {
         return false;
@@ -371,8 +393,8 @@ export const useAppPreloader = (): AppPreloaderResult => {
       // useFSRSQueries (fsrsQueries.all + the cooldown/limit-keyed due entry) —
       // any other shape would fill a cache entry nobody reads.
       await Promise.allSettled([
-        queryClient.prefetchQuery(fsrsQueries.all(user.id)),
-        queryClient.prefetchQuery(
+        queryClient.query(fsrsQueries.all(user.id)),
+        queryClient.query(
           fsrsQueries.due(user.id, DEFAULT_SESSION_COOLDOWN_HOURS, PRACTICE_DUE_WORDS_LIMIT),
         ),
       ]);
