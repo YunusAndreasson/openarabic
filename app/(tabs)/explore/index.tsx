@@ -25,6 +25,7 @@ import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useOnboardingChecklist } from '@/hooks/onboarding/useOnboardingChecklist';
 import { useTutorial } from '@/hooks/tutorials/useTutorial';
+import { useTabBarAutoHide } from '@/hooks/ui/useTabBarAutoHide';
 import { useToast } from '@/components/providers/ToastProvider';
 import type { CategoryId } from '@/types/branded.types';
 import { pickStarterArticle } from '@/utils/articleUtils';
@@ -52,6 +53,7 @@ export default function ExploreScreen(): JSX.Element {
   const { user } = useAuth();
   const { showToast } = useToast();
   const { from } = useLocalSearchParams<{ from?: string }>();
+  const tabBarAutoHide = useTabBarAutoHide();
 
   // Show welcome toast when navigating from empty states
   const hasShownWelcomeRef = useRef<string | null>(null);
@@ -225,6 +227,9 @@ export default function ExploreScreen(): JSX.Element {
       {/* No horizontal padding on the scroll container — each section owns the
           standard screen inset so horizontal rails can bleed edge-to-edge */}
       <ArticleList
+        // Scroll direction drives the tab bar out of the way on Android; on iOS
+        // UIKit reads this same scroll view itself. See `useTabBarAutoHide`.
+        {...tabBarAutoHide}
         isRefreshing={isRefreshing}
         ListHeaderComponent={<>{headerSections}</>}
         ListFooterComponent={FOOTER_COMPONENT}

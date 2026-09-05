@@ -1,5 +1,12 @@
 import { useTransition, type ReactElement } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, type ViewStyle } from 'react-native';
+import {
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+  type ViewStyle,
+} from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
@@ -11,6 +18,12 @@ interface ArticleListProps {
   contentContainerStyle?: ViewStyle;
   progressViewOffset?: number;
   isRefreshing?: boolean;
+  /**
+   * Scroll passthrough. Explore is a tab root, and the tab bar's hide-on-scroll
+   * is driven from the direction of this scroll view — see `useTabBarAutoHide`.
+   */
+  onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
+  scrollEventThrottle?: number;
 }
 
 /**
@@ -26,6 +39,8 @@ export function ArticleList({
   contentContainerStyle,
   progressViewOffset = LAYOUT.SPACING.XLARGE,
   isRefreshing = false,
+  onScroll,
+  scrollEventThrottle,
 }: ArticleListProps) {
   const colors = useColors();
   const [, startTransition] = useTransition();
@@ -40,6 +55,8 @@ export function ArticleList({
 
   return (
     <ScrollView
+      onScroll={onScroll}
+      scrollEventThrottle={scrollEventThrottle}
       // `flex: 1` makes the ScrollView fill the route's content view — required
       // so UIKit treats it as the screen's primary scrollable and runs the
       // large-title collapse on scroll. Background is set so we don't see the

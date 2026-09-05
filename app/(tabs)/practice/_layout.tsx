@@ -2,6 +2,7 @@ import { Stack } from 'expo-router';
 import type { JSX } from 'react';
 
 import { DictionaryButton } from '@/components/practice/DictionaryButton';
+import { ReviewButton } from '@/components/practice/ReviewButton';
 import { CloseButton } from '@/components/ui';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
@@ -9,6 +10,7 @@ import { createNavigationOptions, createTabHeaderOptions } from '@/utils/navigat
 import { AppTab } from '@/types/enums';
 
 const renderDictionaryButton = () => <DictionaryButton />;
+const renderReviewButton = () => <ReviewButton />;
 const renderCloseButton = () => <CloseButton />;
 
 export default function StudyLayout(): JSX.Element {
@@ -18,10 +20,12 @@ export default function StudyLayout(): JSX.Element {
     <Stack>
       <Stack.Screen
         name="index"
+        // Leading: the tab's own tool (your words). Trailing: the one action
+        // the tab exists for, in words rather than a glyph.
         options={createTabHeaderOptions({
           title: AppTab.PRACTICE,
-          rightComponent: renderDictionaryButton,
-          colors,
+          leftComponent: renderDictionaryButton,
+          rightComponent: renderReviewButton,
         })}
       />
       <Stack.Screen

@@ -1,8 +1,7 @@
 // External Libraries
 import { SettingsPicker, TimePicker } from '@/components/ui';
 import { useCallback, useMemo, useState, type FC } from 'react';
-import { StyleSheet } from 'react-native';
-import type { Edge } from 'react-native-safe-area-context';
+import { ScrollView, StyleSheet } from 'react-native';
 
 import { AccountBadge } from '@/components/account';
 import {
@@ -15,7 +14,6 @@ import {
   SupportSection,
 } from '@/components/account/settings';
 import { BrandFooter } from '@/components/explore';
-import { ThemedView } from '@/components/primitives/ThemedView';
 import { AUDIO_LANGUAGE_OPTIONS } from '@/constants/audioLanguageOptions';
 import type { Theme } from '@/constants/colors';
 import { DAILY_WORD_LIMIT_OPTIONS } from '@/constants/dailyWordLimitOptions';
@@ -23,6 +21,8 @@ import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { THEME_OPTIONS } from '@/constants/themeOptions';
 import { useAccountScreen } from '@/hooks/account';
+import { useMiniPlayerClearance } from '@/hooks/audio/useMiniPlayerClearance';
+import { useTabBarAutoHide } from '@/hooks/ui/useTabBarAutoHide';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import { setAudioLanguagePreference, setDailyWordLimit } from '@/store/settingsSlice';
 import { setTheme } from '@/store/themeSlice';
@@ -43,6 +43,8 @@ type ActivePicker = 'theme' | 'audioLanguage' | 'dailyWordLimit' | null;
 const AccountScreen: FC = () => {
   const dispatch = useAppDispatch();
   const [activePicker, setActivePicker] = useState<ActivePicker>(null);
+  const tabBarAutoHide = useTabBarAutoHide();
+  const miniPlayerClearance = useMiniPlayerClearance();
 
   const rawTheme = useAppSelectorShallow(state => state.theme.theme);
   const currentTheme = useMemo(() => rawTheme ?? ('dark' as const), [rawTheme]);
@@ -135,22 +137,38 @@ const AccountScreen: FC = () => {
   // Format cache size for display
   const formattedCacheSize = cacheSize > 0 ? formatBytes(cacheSize) : STRINGS.NO_CACHED_FILES;
 
-  // The two sheets are siblings of the scroll view, never children of it:
+  const scrollContentStyle = useMemo(
+    () => [styles.scrollContent, { paddingBottom: miniPlayerClearance }],
+    [miniPlayerClearance],
+  );
+
+  // A bare ScrollView at the top of the tree, NOT a nested pair of ThemedViews.
+  // UIKit finds the scroll view that drives the large-title collapse with a
+  // shallow search of the screen's view controller, so the two native views
+  // this screen used to wrap it in (a SafeAreaView, then a plain View) hid it:
+  // Account was the one tab whose big title never shrank into the nav bar.
+  // Explore, Playlist and Practice all put their scrollable at the top for the
+  // same reason — see `createTabHeaderOptions`.
+  //
+  // Nothing is lost by dropping those wrappers. The route's own content view
+  // carries the theme background (that is why the other three set no
+  // backgroundColor either), the app is portrait-only so the left/right insets
+  // the SafeAreaView applied are always zero, and the bottom inset was already
+  // switched off — the clearance now comes from `useMiniPlayerClearance`.
+  //
+  // The two sheets stay siblings of the scroll view, never children of it:
   // `@gorhom/bottom-sheet` positions itself `absolute; top: 0` against its
   // parent, so inside a scroll container it would anchor to the top of the
-  // *content* and scroll away with it.
+  // *content* and scroll away with it. A fragment keeps them siblings without
+  // adding back a native view between the route and the ScrollView.
   return (
-    <ThemedView includeBottomInset={false} safeAreaEdges={SAFE_AREA_EDGES} style={styles.container}>
-      <ThemedView
-        includeBottomInset={false}
-        scrollable={true}
+    <>
+      <ScrollView
+        {...tabBarAutoHide}
         style={styles.container}
-        useSafeArea={false}
-        contentContainerStyle={styles.scrollContent}
-        scrollViewProps={{
-          style: styles.container,
-          showsVerticalScrollIndicator: true,
-        }}
+        contentInsetAdjustmentBehavior="automatic"
+        showsVerticalScrollIndicator
+        contentContainerStyle={scrollContentStyle}
       >
         {user && (
           <AccountBadge
@@ -189,7 +207,7 @@ const AccountScreen: FC = () => {
         />
 
         <BrandFooter showDetails />
-      </ThemedView>
+      </ScrollView>
 
       {/* Time Picker Modal */}
       <TimePicker
@@ -209,12 +227,9 @@ const AccountScreen: FC = () => {
         options={activePicker ? pickerConfigs[activePicker].options : []}
         selectedValue={activePicker ? pickerConfigs[activePicker].selectedValue : undefined}
       />
-    </ThemedView>
+    </>
   );
 };
-
-// Module-level so the array identity is stable across renders.
-const SAFE_AREA_EDGES: Edge[] = ['left', 'right'];
 
 const styles = StyleSheet.create({
   container: {

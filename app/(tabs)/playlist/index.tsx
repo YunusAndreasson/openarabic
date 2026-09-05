@@ -12,13 +12,12 @@ import { ThemedView } from '@/components/primitives/ThemedView';
 import { SavedEmptyState, PlaylistItemCard } from '@/components/playlist';
 import { useToast } from '@/components/providers';
 import { TIMING_CONFIG, fadeInStyle } from '@/constants/animation';
-import { PinnedActionButton, usePinnedActionClearance } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { useShouldShowMiniPlayer } from '@/hooks/audio/useShouldShowMiniPlayer';
+import { useMiniPlayerClearance } from '@/hooks/audio/useMiniPlayerClearance';
 import { usePlaylistScreen, usePlaylistUI } from '@/hooks/playlist';
-import { usePlaylistHeaderActions } from '@/hooks/playlist/usePlaylistHeaderActions';
 import { useEditMode } from '@/hooks/ui/useEditMode';
+import { useTabBarAutoHide } from '@/hooks/ui/useTabBarAutoHide';
 import type { BookmarkItem } from '@/types/bookmark.types';
 import type { ArticleId } from '@/types/branded.types';
 import { ToastType } from '@/types/enums';
@@ -121,7 +120,8 @@ const PlaylistListItem = memo(
 PlaylistListItem.displayName = 'PlaylistListItem';
 
 export default function PlaylistScreen(): JSX.Element {
-  const pinnedClearance = usePinnedActionClearance();
+  const miniPlayerClearance = useMiniPlayerClearance();
+  const tabBarAutoHide = useTabBarAutoHide();
   const { editMode, reset } = useEditMode('playlist');
   const { showToast } = useToast();
 
@@ -155,10 +155,6 @@ export default function PlaylistScreen(): JSX.Element {
   // Check if there are articles for UI state
   const hasArticles = sortedReadingList.length > 0;
 
-  // Play All action (reuses existing hook logic)
-  const { handlePlayAll, isLoading: isPlayAllLoading } = usePlaylistHeaderActions();
-  const isMiniPlayerVisible = useShouldShowMiniPlayer();
-
   useEffect(() => {
     if (enhancedTracksError) {
       showToast(STRINGS.FAILED_TO_LOAD_AUDIO_TRACKS, 4000, ToastType.ERROR);
@@ -172,13 +168,13 @@ export default function PlaylistScreen(): JSX.Element {
       ...LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
       // 12px first-content lead-in under the header — same rhythm as Explore/Practice
       paddingTop: LAYOUT.SPACING.MEDIUM,
-      // Room for the pinned play-all button so the last row never hides behind it.
-      // Derived from the button's own geometry, so it also accounts for the mini
-      // player raising the button — a hardcoded 48+24 left the last rows stranded
-      // behind the player with no way to scroll them clear.
-      paddingBottom: pinnedClearance,
+      // Room for the floating mini player so the last row never hides behind
+      // it. Derived from the player's own geometry rather than a constant: a
+      // hardcoded inset left the last rows stranded behind it the moment audio
+      // started, with no way to scroll them clear.
+      paddingBottom: miniPlayerClearance,
     }),
-    [pinnedClearance],
+    [miniPlayerClearance],
   );
 
   // Create the article press handler - plays audio in miniplayer
@@ -195,10 +191,6 @@ export default function PlaylistScreen(): JSX.Element {
     },
     [handleDelete],
   );
-
-  const handlePlayAllPress = useCallback(() => {
-    void handlePlayAll();
-  }, [handlePlayAll]);
 
   // Optimized render function - unified for both list types
   const renderItem = useCallback(
@@ -242,60 +234,57 @@ export default function PlaylistScreen(): JSX.Element {
     );
   }
 
-  const showPlayAll = hasArticles && !isMiniPlayerVisible;
-
-  return (
-    <>
-      {editMode ? (
-        <DraggableFlatList<BookmarkItem>
-          data={sortedReadingList}
-          keyExtractor={memoizedKeyExtractor}
-          renderItem={renderItem}
-          onDragEnd={handleDragEnd}
-          // iOS best practice: Allow natural bounce behavior for tactile feedback
-          bounces={true}
-          alwaysBounceVertical={true}
-          overScrollMode="always"
-          // `automatic` is required for the iOS large-title collapse-on-scroll
-          // animation that the parent Stack.Screen opts into.
-          contentInsetAdjustmentBehavior="automatic"
-          showsVerticalScrollIndicator={true}
-          // The list is the route's primary scrollable — must fill the screen
-          // for UIKit to collapse the large title (per RN-Stack docs).
-          containerStyle={styles.container}
-          contentContainerStyle={listContainerStyle}
-          ItemSeparatorComponent={ItemSeparator}
-          removeClippedSubviews
-          initialNumToRender={6}
-          windowSize={7}
-        />
-      ) : (
-        <FlashList<BookmarkItem>
-          data={sortedReadingList}
-          drawDistance={ITEM_HEIGHT * 3}
-          keyExtractor={memoizedKeyExtractor}
-          scrollEventThrottle={64}
-          // iOS best practice: Allow natural bounce behavior for tactile feedback
-          bounces={true}
-          alwaysBounceVertical={true}
-          overScrollMode="always"
-          // `automatic` is required for the iOS large-title collapse-on-scroll
-          // animation that the parent Stack.Screen opts into.
-          contentInsetAdjustmentBehavior="automatic"
-          showsVerticalScrollIndicator={true}
-          contentContainerStyle={listContainerStyle}
-          ItemSeparatorComponent={ItemSeparator}
-          renderItem={renderItem}
-          maintainVisibleContentPosition={{}} // Prevent scroll jumps when items change (enabled by default)
-        />
-      )}
-      {showPlayAll && (
-        <PinnedActionButton
-          title={STRINGS.PLAY_ALL}
-          onPress={handlePlayAllPress}
-          loading={isPlayAllLoading}
-        />
-      )}
-    </>
+  return editMode ? (
+    <DraggableFlatList<BookmarkItem>
+      // NOT `{...tabBarAutoHide}`. DraggableFlatList renders its inner list as
+      // `{...props}` and then sets its own `onScroll` / `scrollEventThrottle`
+      // after it, so a spread handler is dropped on the floor — the code reads
+      // as working and the tab bar simply never hides in edit mode. This is the
+      // library's supported way in.
+      onScrollOffsetChange={tabBarAutoHide.onScrollOffset}
+      data={sortedReadingList}
+      keyExtractor={memoizedKeyExtractor}
+      renderItem={renderItem}
+      onDragEnd={handleDragEnd}
+      // iOS best practice: Allow natural bounce behavior for tactile feedback
+      bounces={true}
+      alwaysBounceVertical={true}
+      overScrollMode="always"
+      // `automatic` is required for the iOS large-title collapse-on-scroll
+      // animation that the parent Stack.Screen opts into.
+      contentInsetAdjustmentBehavior="automatic"
+      showsVerticalScrollIndicator={true}
+      // The list is the route's primary scrollable — must fill the screen
+      // for UIKit to collapse the large title (per RN-Stack docs).
+      containerStyle={styles.container}
+      contentContainerStyle={listContainerStyle}
+      ItemSeparatorComponent={ItemSeparator}
+      removeClippedSubviews
+      initialNumToRender={6}
+      windowSize={7}
+    />
+  ) : (
+    <FlashList<BookmarkItem>
+      // Brings `scrollEventThrottle: 16`, replacing the 64ms this list used to
+      // set: at 64ms a fast flick delivers only three or four samples, too
+      // coarse to tell a direction change from one long run — the tab bar
+      // stayed hidden after the user had already scrolled back up.
+      {...tabBarAutoHide}
+      data={sortedReadingList}
+      drawDistance={ITEM_HEIGHT * 3}
+      keyExtractor={memoizedKeyExtractor}
+      // iOS best practice: Allow natural bounce behavior for tactile feedback
+      bounces={true}
+      alwaysBounceVertical={true}
+      overScrollMode="always"
+      // `automatic` is required for the iOS large-title collapse-on-scroll
+      // animation that the parent Stack.Screen opts into.
+      contentInsetAdjustmentBehavior="automatic"
+      showsVerticalScrollIndicator={true}
+      contentContainerStyle={listContainerStyle}
+      ItemSeparatorComponent={ItemSeparator}
+      renderItem={renderItem}
+      maintainVisibleContentPosition={{}} // Prevent scroll jumps when items change (enabled by default)
+    />
   );
 }

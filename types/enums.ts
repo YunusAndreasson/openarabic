@@ -49,6 +49,7 @@ export const AppTab = {
   EXPLORE: 'Explore',
   PLAYLIST: 'Playlist',
   PRACTICE: 'Practice',
+  ACCOUNT: 'Account',
 } as const;
 
 export type AppTab = (typeof AppTab)[keyof typeof AppTab];

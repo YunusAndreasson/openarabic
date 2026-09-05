@@ -12,12 +12,13 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import { TAB_SCREENS } from '@/constants/tabs';
 import { useAuth } from '@/hooks/auth';
 import { useColors } from '@/hooks/theme';
+import { useIsTabBarHidden } from '@/hooks/ui/useTabBarAutoHide';
 import { useDueWordsCount } from '@/hooks/vocabulary/useFSRSQueries';
 
 // Tab roots that are not the home tab — hardware back returns to Explore from
 // these instead of exiting the app (standard Android back pattern). Nested
 // screens are untouched: their pathnames don't match, so back pops normally.
-const NON_HOME_TAB_ROOT_PATHS = ['/practice', '/playlist'];
+const NON_HOME_TAB_ROOT_PATHS = ['/practice', '/playlist', '/account'];
 
 function AndroidTabBackHandler(): null {
   const pathname = usePathname();
@@ -42,6 +43,9 @@ function AndroidTabBackHandler(): null {
 export default function TabLayout(): JSX.Element {
   const { session } = useAuth();
   const colors = useColors();
+  // Android only — always false on iOS, where `minimizeBehavior` below hands
+  // the same job to UIKit. See `useTabBarAutoHide`.
+  const isTabBarHidden = useIsTabBarHidden();
   const dueWordsCount = useDueWordsCount({
     userId: session?.user?.id,
     limit: PRACTICE_DUE_WORDS_LIMIT,
@@ -67,6 +71,20 @@ export default function TabLayout(): JSX.Element {
       {Platform.OS === 'android' && <AndroidTabBackHandler />}
       <NativeTabs
         tintColor={colors.tint}
+        // Scrolled-away tab bar. Two mechanisms for one behaviour, because only
+        // iOS has a native one:
+        //   iOS 26+ — UIKit watches the screen's primary scroll view and
+        //     minimizes the bar to a pill on the way down. Re-introduced
+        //     deliberately: this prop was removed once alongside `blurEffect`
+        //     and `disableTransparentOnScrollEdge` when one of the three was
+        //     killing the top nav bar's large-title collapse. The other two set
+        //     `scrollEdgeAppearance` and are the far likelier culprits, so only
+        //     this one comes back — verify the large title still collapses on
+        //     the next iOS build before assuming it is innocent.
+        //   Android — no equivalent exists, so `hidden` is driven from JS by
+        //     the scroll-direction hook the tab roots spread onto their lists.
+        minimizeBehavior={Platform.OS === 'ios' ? 'onScrollDown' : undefined}
+        hidden={isTabBarHidden}
         badgeBackgroundColor={colors.error}
         // iOS has NO API for badge text color — UIKit always paints system white
         // on whatever background you set. badgeTextColor is Android/Web only
@@ -85,13 +103,11 @@ export default function TabLayout(): JSX.Element {
         // expo-router's fallback to `tintColor`, because in the sepia theme that
         // tint is 3.86:1 on its own bar — see `tabLabelSelected`.
         labelStyle={labelStyle}
-        // iOS NativeTabs intentionally minimal — matching edenmind's reference
-        // impl. Three iOS-only props (minimizeBehavior, blurEffect,
-        // disableTransparentOnScrollEdge) were previously set; they hook into the
-        // same scroll observers UIKit uses for the top nav bar's large-title
-        // collapse + scroll-edge fade, and at least one of them was silently
-        // killing both. Leaving them at their iOS defaults is what makes Mail /
-        // Photos behave correctly, so we do the same.
+        // `blurEffect` and `disableTransparentOnScrollEdge` stay unset on iOS:
+        // both write `scrollEdgeAppearance`, which is what killed the top nav
+        // bar's large-title collapse and scroll-edge fade when the three iOS
+        // props were set together. Leaving them at their iOS defaults is what
+        // makes Mail / Photos behave correctly, so we do the same.
         // Android-only: explicit background because there's no system blur to
         // fall back on (otherwise the bar reads as bright white in dark mode).
         backgroundColor={Platform.OS === 'android' ? colors.elevation1 : undefined}

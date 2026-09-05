@@ -9,7 +9,7 @@ import { AppTab } from '@/types/enums';
  * `Record<string, …>` and the screen list re-spelled the union inline, so a
  * renamed tab agreed with itself only by luck.
  */
-const TAB_ORDER = ['explore', 'playlist', 'practice'] as const;
+const TAB_ORDER = ['explore', 'playlist', 'practice', 'account'] as const;
 
 type TabName = (typeof TAB_ORDER)[number];
 
@@ -65,6 +65,16 @@ const TAB_ICONS = {
     sf: { default: 'graduationcap', selected: 'graduationcap.fill' },
     ion: { default: 'school-outline', selected: 'school' },
   },
+  // Rightmost by convention: settings is where a user looks last, and both
+  // platforms park it there (iOS Settings/Music "More", Material's trailing
+  // destination). It used to be an avatar in the Explore header, which put the
+  // one screen a learner needs least in the corner hardest to reach.
+  account: {
+    filled: 'settings',
+    outline: 'settings-outline',
+    sf: { default: 'gearshape', selected: 'gearshape.fill' },
+    ion: { default: 'settings-outline', selected: 'settings' },
+  },
   // Keyed by the tab's own route segment, not by free string and not by an
   // uppercased variant of it: the key IS the name the screen list looks up, so
   // there is no second spelling to keep in step.
@@ -77,6 +87,7 @@ const TAB_TITLES = {
   explore: AppTab.EXPLORE,
   playlist: AppTab.PLAYLIST,
   practice: AppTab.PRACTICE,
+  account: AppTab.ACCOUNT,
 } as const satisfies Record<TabName, AppTab>;
 
 /**

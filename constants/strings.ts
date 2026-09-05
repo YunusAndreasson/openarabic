@@ -244,7 +244,6 @@ export const STRINGS = {
   FEEDBACK_SUBMIT: 'Send feedback',
   // Account section titles - now imported directly from enums in components
   ACCOUNT: 'Account',
-  ACCOUNT_A11Y_OPEN: 'Open account',
   ACCOUNT_A11Y_CHANGE_PHOTO: 'Change profile photo',
   PLAYLIST_A11Y_REORDER: 'Reorder track',
   PLAYLIST_A11Y_REORDER_HINT: 'Press and hold, then drag to move this track',
@@ -794,10 +793,11 @@ export const STRINGS = {
   SUMMARY_TODAY: 'Today',
   SUMMARY_BUSIEST_DAY: 'Busiest day',
   SUMMARY_THIS_MONTH: 'This month',
-  SUMMARY_WORDS_SUFFIX: 'words',
-  WORD_SINGULAR: 'word',
   NEWLY_DUE_SUFFIX: 'new',
-  REVIEW_CTA_PREFIX: 'Review',
+  // The whole label, not a prefix: the due count it used to carry ("Review 12
+  // words") is on the tab badge and the "Due" stat card now that this is a
+  // navigation-bar action.
+  REVIEW_CTA: 'Review',
   // Streak chart axis captions
   STREAK_CHART_START_LABEL: '40 days ago',
   STREAK_CHART_TODAY_LABEL: 'Today',

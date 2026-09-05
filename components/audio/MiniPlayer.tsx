@@ -11,6 +11,7 @@ import { FONTS } from '@/constants/fonts';
 import { LAYOUT, TEXT_STYLES } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
+import { useIsTabBarHidden } from '@/hooks/ui/useTabBarAutoHide';
 import { withAlpha } from '@/utils/colorUtils';
 import { formatSecondsToClock, safePercent } from '@/utils/dateTimeUtils';
 import { generateStorageUrl } from '@/utils/storageUtils';
@@ -89,14 +90,19 @@ const MiniPlayerComponent = ({
 }: MiniPlayerProps) => {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const isTabBarHidden = useIsTabBarHidden();
 
   // Float above the native tab bar. `insets.bottom` covers the home-indicator
   // area on iOS; `BOTTOM_BAR.HEIGHT` is the tab bar's own intrinsic height.
-  // Inside a modal screen there is no tab bar, so only the inset is cleared.
-  const containerBottom =
-    placement === 'screen'
-      ? insets.bottom + LAYOUT.SPACING.SMALL
-      : insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.TINY;
+  // Inside a modal screen there is no tab bar, so only the inset is cleared —
+  // and neither is there one to clear while the tab bar is scrolled away, or
+  // the player would hang over an empty strip where the bar used to be. This
+  // overlay is mounted next to the navigator, not inside it, so nothing else
+  // moves it.
+  const hasTabBarBelow = placement !== 'screen' && !isTabBarHidden;
+  const containerBottom = hasTabBarBelow
+    ? insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.TINY
+    : insets.bottom + LAYOUT.SPACING.SMALL;
 
   // React Compiler auto-memoizes these derivations
   const imageUrl = generateStorageUrl('images', article.image_url);

@@ -56,8 +56,7 @@ jest.mock('expo-router/unstable-native-tabs', () => {
       ]);
 
       const labelChild = kids.find((c: any) => isChildOfType(c, Trigger.Label)) as
-        | React.ReactElement<{ children: string }>
-        | undefined;
+        React.ReactElement<{ children: string }> | undefined;
       const title =
         typeof labelChild?.props?.children === 'string'
           ? labelChild.props.children
@@ -65,11 +64,9 @@ jest.mock('expo-router/unstable-native-tabs', () => {
       // The badge is real app-passed content (see app/(tabs)/_layout.tsx), not
       // mock chrome — render it so tests can assert on it, same as the label.
       const badgeChild = kids.find((c: any) => isChildOfType(c, Trigger.Badge)) as
-        | React.ReactElement<{ children: React.ReactNode }>
-        | undefined;
+        React.ReactElement<{ children: React.ReactNode }> | undefined;
       const iconChild = kids.find((c: any) => isChildOfType(c, Trigger.Icon)) as
-        | React.ReactElement<{ sf?: { default: string } }>
-        | undefined;
+        React.ReactElement<{ sf?: { default: string } }> | undefined;
 
       return React.createElement(
         TouchableOpacity,
@@ -293,7 +290,6 @@ jest.mock('../../hooks/theme/useThemeDetection', () => ({
   useIsDarkMode: () => false,
 }));
 
-jest.mock('../../components/explore/HeaderProfile', () => () => null);
 jest.mock('../../components/playlist/EditModeButton', () => () => null);
 
 // Mock notification service to prevent expo-notifications import error
@@ -324,6 +320,7 @@ const TAB_ICONS_BY_TAB = {
   explore: 'safari',
   playlist: 'headphones',
   practice: 'graduationcap',
+  account: 'gearshape',
 } as const;
 
 describe('Tab navigation', () => {
@@ -353,6 +350,21 @@ describe('Tab navigation', () => {
     expect(getByTestId('tab-icon-explore')).toHaveTextContent(TAB_ICONS_BY_TAB.explore);
     expect(getByTestId('tab-icon-playlist')).toHaveTextContent(TAB_ICONS_BY_TAB.playlist);
     expect(getByTestId('tab-icon-practice')).toHaveTextContent(TAB_ICONS_BY_TAB.practice);
+    expect(getByTestId('tab-icon-account')).toHaveTextContent(TAB_ICONS_BY_TAB.account);
+  });
+
+  test('parks Account in the rightmost slot', () => {
+    // Order is the whole point of the tab: settings is the destination a
+    // learner needs least, so it takes the corner and Explore keeps the
+    // reachable end. Read off the rendered bar rather than off TAB_SCREENS,
+    // which is the table the layout itself maps over.
+    const { getAllByTestId } = render(<TabLayout />, { wrapper: createWrapper() });
+
+    const renderedOrder = getAllByTestId(/^tab-(explore|playlist|practice|account)$/).map(
+      tab => tab.props.testID,
+    );
+
+    expect(renderedOrder).toEqual(['tab-explore', 'tab-playlist', 'tab-practice', 'tab-account']);
   });
 
   test('shows memory capacity badge on practice tab when due words exist', async () => {

@@ -20,10 +20,10 @@ export { EnhancedImage } from './EnhancedImage';
 // consumers live inside components/ui and components/providers, which must import
 // by direct path (see the cycle note above).
 export { GlassIconButton } from './GlassIconButton';
+export { HeaderTextButton } from './HeaderTextButton';
 export { Ionicons } from './Icon';
 export type { IoniconName } from './Icon';
 export { IconButton } from './IconButton';
-export { PinnedActionButton, usePinnedActionClearance } from './PinnedActionButton';
 export { PulsatingLoader } from './PulsatingLoader';
 export { SegmentedControl } from './SegmentedControl';
 export type { SegmentedControlOption } from './SegmentedControl';

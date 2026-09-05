@@ -2,7 +2,6 @@ import { Stack } from 'expo-router';
 import { useCallback, type JSX } from 'react';
 
 import { CloseButton } from '@/components/ui';
-import { HeaderProfile } from '@/components/explore/HeaderProfile';
 import { STRINGS } from '@/constants/strings';
 import { createNavigationOptions, createTabHeaderOptions } from '@/utils/navigation';
 import { useColors } from '@/hooks/theme/useColors';
@@ -23,7 +22,6 @@ function getFilterTitle(params: FilterParams | undefined): string {
   return STRINGS.CATEGORY;
 }
 
-const renderHeaderProfile = () => <HeaderProfile />;
 const renderCloseButton = () => <CloseButton />;
 
 export default function LibraryLayout(): JSX.Element {
@@ -33,19 +31,10 @@ export default function LibraryLayout(): JSX.Element {
     <Stack>
       <Stack.Screen
         name="index"
-        options={createTabHeaderOptions({
-          title: AppTab.EXPLORE,
-          rightComponent: renderHeaderProfile,
-          colors,
-        })}
+        // No header action of its own: the account avatar that used to sit here
+        // is now the Account tab, and browsing is what this screen already is.
+        options={createTabHeaderOptions({ title: AppTab.EXPLORE })}
       />
-      <Stack.Screen
-        name="account"
-        options={createNavigationOptions(colors, {
-          headerShown: false,
-        })}
-      />
-
       <Stack.Screen
         name="filter"
         options={useCallback(

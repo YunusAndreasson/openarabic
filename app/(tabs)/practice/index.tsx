@@ -13,15 +13,16 @@ import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { DAYS_7 } from '@/constants/chartConstants';
 import { fsrsQueries, PRACTICE_DUE_WORDS_LIMIT } from '@/constants/queries';
-import { ROUTE_PATHS, getPracticeReviewRoute } from '@/constants/routes';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useVoiceGrading } from '@/components/providers';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
+import { useMiniPlayerClearance } from '@/hooks/audio/useMiniPlayerClearance';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useStudyStreak } from '@/hooks/practice/useStudyStreak';
+import { useTabBarAutoHide } from '@/hooks/ui/useTabBarAutoHide';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { useAppSelectorShallow } from '@/store/hooks';
-import { PinnedActionButton, usePinnedActionClearance } from '@/components/ui';
 import { useMemoryHorizonDistribution } from '@/hooks/vocabulary/useMemoryHorizonDistribution';
 import { useRecallableMemory } from '@/hooks/vocabulary/useMemoryInsights';
 import { calculateDueWordsForecast } from '@/utils/fsrsUtils';
@@ -40,7 +41,8 @@ export default function PracticeScreen(): JSX.Element {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { prefetchVocabularyData } = useAppPreloader();
-  const pinnedClearance = usePinnedActionClearance();
+  const miniPlayerClearance = useMiniPlayerClearance();
+  const tabBarAutoHide = useTabBarAutoHide();
 
   // Fetch study streak data. `streak` is null until the query resolves and
   // stays null if it fails, which is NOT the same as a zero streak — the tile
@@ -182,24 +184,8 @@ export default function PracticeScreen(): JSX.Element {
   // The distribution behind the memory constellation.
   const distribution = useMemoryHorizonDistribution(studyWords);
   const scrollContentStyle = useMemo(
-    () => [styles.contentContainer, { paddingBottom: pinnedClearance }],
-    [pinnedClearance],
-  );
-
-  // No double-tap guard here any more: every ThemedButton is behind the shared
-  // press lock in useButtonPress, so a second tap inside 300ms never reaches
-  // this handler.
-  const handleStartReview = useCallback(() => {
-    if (!user) return;
-    router.push(getPracticeReviewRoute());
-  }, [user, router]);
-
-  // Shown when nothing is due: more words come from reading, so send them there
-  // rather than leaving the screen without an action. Matches the empty state's
-  // secondary CTA, including the `from` param Explore uses for its hint toast.
-  const handleBrowseArticles = useCallback(
-    () => router.navigate({ pathname: ROUTE_PATHS.EXPLORE_TAB, params: { from: 'practice' } }),
-    [router],
+    () => [styles.contentContainer, { paddingBottom: miniPlayerClearance }],
+    [miniPlayerClearance],
   );
 
   // Show main UI if there are any words available in either query source
@@ -240,67 +226,46 @@ export default function PracticeScreen(): JSX.Element {
     );
   }
 
-  // Single start-review CTA, pinned within thumb reach above the tab bar.
-  // The title carries the workload so no separate status text is needed.
-  const showReviewCta = dueWordsCount > 0 && hasAnyStudyWords;
-  const reviewCtaTitle = `${STRINGS.REVIEW_CTA_PREFIX} ${
-    dueCountCapped ? `${dueWordsCount}+` : dueWordsCount
-  } ${dueWordsCount === 1 && !dueCountCapped ? STRINGS.WORD_SINGULAR : STRINGS.SUMMARY_WORDS_SUFFIX}`;
-
-  // Caught up is not the same as nothing to do: when there is nothing due, the
-  // one CTA below becomes "Browse articles" rather than disappearing. Without
-  // that the screen renders stat cards and no action at all, plus 72px of
-  // padding reserved for a button that never arrives — so the tab reads as a
-  // dead end at exactly the moment the user came looking for something to
-  // practise.
+  // The start-review CTA lives in the navigation bar now (`ReviewButton`), not
+  // as a pinned pill over the list: it is a once-per-visit action, and a
+  // full-width button plus its scrim were spending a thumb's worth of screen
+  // and covering the stat cards the learner came to read.
 
   return (
-    <>
-      <ScrollView
-        // `flex: 1` makes this ScrollView fill the route's content view so
-        // UIKit recognises it as the screen's primary scrollable. Without it
-        // the ScrollView only grows to its children's height — the large title
-        // never collapses on scroll even though the bar background fade fires.
-        style={styles.container}
-        contentInsetAdjustmentBehavior="automatic"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={scrollContentStyle}
-      >
-        <Animated.View style={VOCABULARY_SECTION_STYLE}>
-          <PracticeStatCards
-            dueWords={dueWordsCount}
-            dueCountCapped={dueCountCapped}
-            reviewedToday={reviewedToday}
-            recallableWords={memory.recallableWords}
-            hasMeasuredMemory={memory.measuredWords > 0}
-            distribution={distribution}
-            forecast={forecast}
-            currentStreak={currentStreak}
-            hasStreak={hasStreak}
-            totalReviews={totalReviews}
-            leechCount={leechCount}
-            onDuePress={handleDuePress}
-            onStreakPress={handleStreakPress}
-            onMemoryPress={handleMemoryStrengthInfo}
-            onRevisitPress={handleRevisitPress}
-            onReviewsPress={handleReviewsPress}
-          />
-        </Animated.View>
-      </ScrollView>
-      {/* ONE button whose label and action change, not two that swap places.
-          `allWords` and `dueWords` are separate queries: the loading gate above
-          opens as soon as `allWords` lands, and until `dueWords` follows,
-          `dueWordsCount` is still 0 — so on a cold start this rendered "Browse
-          articles" first, then unmounted it and mounted the review button in
-          its place. Two different components meant the CTA visibly vanished and
-          came back (replaying its mount animation) on every first open. As one
-          instance the worst case is a label settling, which is a far quieter
-          correction than a button disappearing. */}
-      <PinnedActionButton
-        title={showReviewCta ? reviewCtaTitle : STRINGS.BROWSE_ARTICLES}
-        onPress={showReviewCta ? handleStartReview : handleBrowseArticles}
-      />
-    </>
+    <ScrollView
+      // Scroll direction drives the tab bar out of the way on Android; on iOS
+      // UIKit reads this same scroll view itself. See `useTabBarAutoHide`.
+      {...tabBarAutoHide}
+      // `flex: 1` makes this ScrollView fill the route's content view so
+      // UIKit recognises it as the screen's primary scrollable. Without it
+      // the ScrollView only grows to its children's height — the large title
+      // never collapses on scroll even though the bar background fade fires.
+      style={styles.container}
+      contentInsetAdjustmentBehavior="automatic"
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={scrollContentStyle}
+    >
+      <Animated.View style={VOCABULARY_SECTION_STYLE}>
+        <PracticeStatCards
+          dueWords={dueWordsCount}
+          dueCountCapped={dueCountCapped}
+          reviewedToday={reviewedToday}
+          recallableWords={memory.recallableWords}
+          hasMeasuredMemory={memory.measuredWords > 0}
+          distribution={distribution}
+          forecast={forecast}
+          currentStreak={currentStreak}
+          hasStreak={hasStreak}
+          totalReviews={totalReviews}
+          leechCount={leechCount}
+          onDuePress={handleDuePress}
+          onStreakPress={handleStreakPress}
+          onMemoryPress={handleMemoryStrengthInfo}
+          onRevisitPress={handleRevisitPress}
+          onReviewsPress={handleReviewsPress}
+        />
+      </Animated.View>
+    </ScrollView>
   );
 }
 
@@ -310,7 +275,7 @@ const styles = StyleSheet.create({
     ...LAYOUT.COMMON_STYLES.CONTENT_CONTAINER,
     // 12px first-content lead-in under the header — same rhythm as Explore/Playlist
     paddingTop: LAYOUT.SPACING.MEDIUM,
-    // paddingBottom comes from usePinnedActionClearance() at the call site — it
+    // paddingBottom comes from useMiniPlayerClearance() at the call site — it
     // depends on the safe-area inset and on whether the mini player is up.
   },
   vocabularySection: {

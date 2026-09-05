@@ -3,12 +3,15 @@ import { Platform } from 'react-native';
 
 interface TabHeaderOptions {
   readonly title: string;
+  /**
+   * The tab's own tools — edit, dictionary. Leading, because that is where a
+   * left-to-right reader looks first and where both platforms put a screen's
+   * secondary controls; the trailing slot is reserved for the one action the
+   * screen exists to start.
+   */
+  readonly leftComponent?: () => React.ReactElement;
+  /** The screen's primary action, as text (`Play all`, `Review`). */
   readonly rightComponent?: () => React.ReactElement;
-  readonly colors: {
-    background: string;
-    headingText: string;
-    shadow: string;
-  };
 }
 
 /**
@@ -21,7 +24,14 @@ interface TabHeaderOptions {
  *   2. A native string `title` (NOT a custom `headerTitle` JSX — UIKit can't
  *      drive a collapse animation against a React Element).
  *   3. The screen's content scrollable sets
- *      `contentInsetAdjustmentBehavior="automatic"` and fills the screen.
+ *      `contentInsetAdjustmentBehavior="automatic"`, fills the screen, and sits
+ *      at the TOP of the screen's tree — a fragment sibling is fine, a wrapping
+ *      View is not. UIKit finds the scroll view that drives the collapse with a
+ *      shallow search of the view controller, so burying it under even one or
+ *      two native views silently costs the animation and nothing else: the bar
+ *      still fades, the title just never shrinks. Account shipped that way
+ *      (SafeAreaView > View > ScrollView) and was the one tab whose large title
+ *      stayed large.
  *
  * Why this helper does NOT go through `createNavigationOptions`:
  *   - createNavigationOptions sets `headerStyle: { backgroundColor }` for every
@@ -44,15 +54,15 @@ interface TabHeaderOptions {
  *   name="index"
  *   options={createTabHeaderOptions({
  *     title: AppTab.PLAYLIST,
- *     rightComponent: () => <EditModeButton />,
- *     colors,
+ *     leftComponent: () => <EditModeButton />,
+ *     rightComponent: () => <PlayAllButton />,
  *   })}
  * />
  */
 export function createTabHeaderOptions({
   title,
+  leftComponent,
   rightComponent,
-  colors: _colors,
 }: TabHeaderOptions): NativeStackNavigationOptions {
   return {
     title,
@@ -60,6 +70,7 @@ export function createTabHeaderOptions({
     headerLargeTitleShadowVisible: false,
     headerShadowVisible: false,
     headerBackButtonDisplayMode: 'minimal',
+    headerLeft: leftComponent,
     headerRight: rightComponent,
   };
 }
