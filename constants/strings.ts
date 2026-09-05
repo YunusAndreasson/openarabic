@@ -432,6 +432,23 @@ export const STRINGS = {
   // Explore category/filter empty state
   CATEGORY_EMPTY_TITLE: 'No articles here yet',
   CATEGORY_EMPTY_HINT: 'New articles are added regularly — check back soon',
+  // Searching the texts, from the Explore header
+  SEARCH_TEXTS_TITLE: 'Search',
+  SEARCH_TEXTS_PLACEHOLDER: 'Search texts',
+  /** Names the Explore header's magnifier for screen readers. */
+  SEARCH_TEXTS_A11Y: 'Search texts',
+  SEARCH_TEXTS_IDLE_TITLE: 'Search the library',
+  SEARCH_TEXTS_IDLE_HINT:
+    'Find a text by its title, book or author — or by a phrase inside it, in Arabic or English',
+  SEARCH_TEXTS_NO_RESULTS_TITLE: 'No texts found',
+  SEARCH_TEXTS_NO_RESULTS_HINT: 'Try a different word, or fewer of them',
+  /** Shown under a result whose only match is in the body, before the snippet. */
+  SEARCH_TEXTS_MATCH_IN_BODY: 'In this text',
+  SEARCH_TEXTS_RESULT_COUNT_ONE: '1 text',
+  SEARCH_TEXTS_RESULT_COUNT_OTHER: '{count} texts',
+  /** While the sentence corpus is still downloading; title matches show already. */
+  SEARCH_TEXTS_BODY_LOADING: 'Still searching inside the texts…',
+  SEARCH_TEXTS_BODY_FAILED: "Couldn't search inside the texts. " + tryAgain,
   // Welcome toasts when navigating from empty states
   EXPLORE_WELCOME_FROM_PLAYLIST: 'Tap the headphones on any article to add it to your playlist',
   // Success toasts for empty state actions

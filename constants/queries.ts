@@ -266,6 +266,25 @@ export const articleQueries = {
     }),
 
   /**
+   * Every sentence in the library, folded into the search index that backs
+   * searching the texts by their contents.
+   *
+   * Fetched only when the search screen mounts, so it costs nothing at cold
+   * start. Not persisted — the `articles` prefix is excluded from
+   * `PERSIST_KEYS` (`utils/queryPersistence.ts`), which is what we want for a
+   * ~1 MB payload on Android.
+   */
+  searchCorpus: () =>
+    queryOptions({
+      queryKey: ['articles', 'search-corpus'] as const,
+      queryFn: () => articlesService.getSearchCorpus(),
+      ...CACHE_TIMES.ARTICLES, // Sentences never change (infinite staleTime)
+      retry: 2,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+    }),
+
+  /**
    * All categories (static, rarely change)
    * Used for filter sections and navigation
    */

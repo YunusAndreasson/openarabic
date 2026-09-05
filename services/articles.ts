@@ -1,6 +1,6 @@
 import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
-import type { Article, ArticleRow } from '@/types/articles.types';
+import type { Article, ArticleRow, SearchCorpusSentence } from '@/types/articles.types';
 import type { ArticleId, AuthorId, CategoryId } from '@/types/branded.types';
 import { createServiceErrorConfig } from '@/utils/serviceErrorConfig';
 import { executeQuery } from '@/utils/supabaseHelpers';
@@ -21,7 +21,20 @@ const errorConfig = {
     toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLES,
     analyticsEventName: 'Articles_Bulk_Load_Error',
   }),
+  loadSearchCorpus: createServiceErrorConfig('articles', 'load', {
+    toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLES,
+    analyticsEventName: 'Articles_Search_Corpus_Load_Error',
+  }),
 };
+
+/**
+ * PostgREST silently truncates an unbounded `.select()` at its implicit
+ * 1000-row default, so the corpus is paged. Same page size, and the same
+ * reason, as `services/studyStreak.ts` and `services/studyWordsFSRS.ts`.
+ */
+const SEARCH_CORPUS_PAGE_SIZE = 1000;
+
+const SEARCH_CORPUS_COLUMNS = 'article_id, position, arabic, english';
 
 // Define different column sets for different use cases
 const LIST_VIEW_COLUMNS = `
@@ -251,5 +264,51 @@ export const articlesService = {
     );
 
     return mapToArticles(data ?? []);
+  },
+
+  /**
+   * Every sentence in the library, for searching the texts by their contents.
+   *
+   * Fetched whole rather than queried per keystroke because the database cannot
+   * do this search: it has no full-text index, and neither `pg_trgm` nor
+   * `unaccent` is installed, so a server-side `ilike` would miss both
+   * undiacritized Arabic and unaccented transliteration — the two things
+   * learners actually type. Folding happens locally instead
+   * (`utils/searchNormalization.ts`), which also makes search work offline.
+   *
+   * ~5.5k rows / ~1 MB. Held in memory for the session and deliberately not
+   * persisted: the `articles` query-key prefix is excluded from
+   * `PERSIST_KEYS` (`utils/queryPersistence.ts`) because a payload this size
+   * threatens Android's 2 MB CursorWindow.
+   *
+   * Unpublished articles are not filtered out here. There is no `published`
+   * column on `article_sentences`, and adding the join would buy nothing: a hit
+   * is only ever surfaced by joining back to the published catalogue, which
+   * drops them anyway.
+   */
+  async getSearchCorpus(): Promise<SearchCorpusSentence[]> {
+    const sentences: SearchCorpusSentence[] = [];
+
+    for (let offset = 0; ; offset += SEARCH_CORPUS_PAGE_SIZE) {
+      const page = await executeQuery(
+        () =>
+          supabase
+            .from('article_sentences')
+            .select(SEARCH_CORPUS_COLUMNS)
+            .order('article_id', { ascending: true })
+            .order('position', { ascending: true })
+            .range(offset, offset + SEARCH_CORPUS_PAGE_SIZE - 1)
+            .overrideTypes<SearchCorpusSentence[], { merge: false }>(),
+        {
+          ...errorConfig.loadSearchCorpus,
+          analyticsProperties: { offset },
+        },
+      );
+
+      sentences.push(...page);
+      if (page.length < SEARCH_CORPUS_PAGE_SIZE) break;
+    }
+
+    return sentences;
   },
 };

@@ -128,6 +128,10 @@ jest.mock('expo-router', () => {
   const Stack = Object.assign(({ children }) => children, {
     Screen: () => null,
     Protected: ({ children }) => children,
+    // Renders null in the real module too — it only folds its props into the
+    // parent Stack's header options. Without it, any test rendering a screen
+    // with a search bar throws on an undefined JSX type.
+    SearchBar: () => null,
   });
   return {
     router,

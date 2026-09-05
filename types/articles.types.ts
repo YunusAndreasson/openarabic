@@ -43,6 +43,22 @@ export interface Article extends Omit<Tables<'articles'>, 'id' | 'category_id' |
 }
 
 /**
+ * One sentence, reduced to what searching the texts needs: which article it
+ * belongs to, where in that article it sits, and the two language sides.
+ *
+ * Deliberately not an `ArticleSentence` — the search corpus is every sentence
+ * in the library at once, so it carries no audio urls, no `sentence_words` and
+ * no id. At ~5.5k rows that is the difference between a payload worth holding
+ * in memory and one that is not.
+ */
+export interface SearchCorpusSentence {
+  article_id: number;
+  position: number;
+  arabic: string;
+  english: string;
+}
+
+/**
  * Raw article row from database with optional relations
  * Used primarily in services layer before mapping to Article
  */

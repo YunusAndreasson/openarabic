@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 import { useCallback, type JSX } from 'react';
 
+import { ExploreSearchButton } from '@/components/explore/ExploreSearchButton';
 import { CloseButton } from '@/components/ui';
 import { STRINGS } from '@/constants/strings';
 import { createNavigationOptions, createTabHeaderOptions } from '@/utils/navigation';
@@ -23,6 +24,7 @@ function getFilterTitle(params: FilterParams | undefined): string {
 }
 
 const renderCloseButton = () => <CloseButton />;
+const renderSearchButton = () => <ExploreSearchButton />;
 
 export default function LibraryLayout(): JSX.Element {
   const colors = useColors();
@@ -31,9 +33,25 @@ export default function LibraryLayout(): JSX.Element {
     <Stack>
       <Stack.Screen
         name="index"
-        // No header action of its own: the account avatar that used to sit here
-        // is now the Account tab, and browsing is what this screen already is.
-        options={createTabHeaderOptions({ title: AppTab.EXPLORE })}
+        // Search is the one action this screen has: the account avatar that used
+        // to sit here is now the Account tab, and everything else Explore does,
+        // it does by being browsed.
+        options={createTabHeaderOptions({
+          title: AppTab.EXPLORE,
+          rightComponent: renderSearchButton,
+        })}
+      />
+      <Stack.Screen
+        name="search"
+        // Pushed, not the modal `filter` gets: search is a place inside the
+        // library rather than something presented over it, and the back button
+        // is the way out. `useNativeTitle` keeps the title a plain string —
+        // UIKit hangs the search controller off a real UILabel.
+        options={createNavigationOptions(colors, {
+          title: STRINGS.SEARCH_TEXTS_TITLE,
+          isRegularScreen: true,
+          useNativeTitle: true,
+        })}
       />
       <Stack.Screen
         name="filter"

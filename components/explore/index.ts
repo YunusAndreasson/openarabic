@@ -7,6 +7,7 @@ export { FilterSection } from './FilterSection';
 export { GetStartedChecklist } from './GetStartedChecklist';
 export { HardestWordsSection } from './HardestWordsSection';
 export { DiscoverySections } from './DiscoverySections';
+export { SearchResultList } from './SearchResultList';
 
 export { HorizontalFeaturedSection } from './HorizontalFeaturedSection';
 export { StreakChart } from './StreakChart';

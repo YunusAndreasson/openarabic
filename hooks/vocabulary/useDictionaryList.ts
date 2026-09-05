@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import type { StudyWord } from '@/types/vocabulary.types';
+import { normalizeForSearch } from '@/utils/searchNormalization';
 import { parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
 import { isLeechWord } from '@/utils/leechUtils';
 import {
@@ -201,13 +202,6 @@ const NARROW_SCOPE_SORT: Record<
   // measured stability to rank by, so they are ordered by when they were saved.
   'depth-none': { field: 'recent', direction: 'desc' },
 };
-
-// Harakat, superscript alef, and tatweel — stripped so typing "كتب" matches "كَتَبَ"
-const ARABIC_DIACRITICS = /[ً-ْٰـ]/g;
-
-function normalizeForSearch(text: string): string {
-  return text.replace(ARABIC_DIACRITICS, '').toLowerCase();
-}
 
 /**
  * A word with no review behind it has no difficulty and no memory to compare.

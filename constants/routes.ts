@@ -6,6 +6,7 @@ export const ROUTE_PATHS = {
   AUTH_PRIVACY: '/auth/privacy',
   TABS: '/(tabs)',
   EXPLORE_TAB: '/(tabs)/explore',
+  EXPLORE_SEARCH: '/(tabs)/explore/search',
   PRACTICE_TAB: '/(tabs)/practice',
   PLAYLIST_TAB: '/(tabs)/playlist',
   ACCOUNT: '/(tabs)/account',
