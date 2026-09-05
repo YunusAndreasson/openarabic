@@ -257,7 +257,7 @@ export const VoiceAnswerButton: FC<VoiceAnswerButtonProps> = ({
               : label
         }
         color={isOffer ? colors.tint : colors.textTertiary}
-        variant={isOffer ? 'primary' : 'tinted'}
+        variant={isOffer ? 'primary' : 'quiet'}
         standalone={false}
         disabled={standDown}
         onPress={handlePress}

@@ -865,7 +865,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
                     // grey ghost. See ReviewActionButton on where `primary` may
                     // and may not appear.
                     color={colors.tint}
-                    variant={voiceMode ? 'tinted' : 'primary'}
+                    variant={voiceMode ? 'quiet' : 'primary'}
                     disabled={isUpdating}
                     onPress={revealAnswer}
                   />

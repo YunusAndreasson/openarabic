@@ -2,9 +2,9 @@ import type { FC } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
+import { getElevation } from '@/constants/elevation';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import { tonalSurface } from '@/utils/colorUtils';
 
 const STATIC_STYLES = StyleSheet.create({
   button: {
@@ -30,8 +30,8 @@ const STATIC_STYLES = StyleSheet.create({
   },
   // Tabular figures keep a centered "10m"/"4d" from jittering between cards.
   // No opacity: the interval is already a tier below the label by size and
-  // weight, and dimming it on top of that was most of why the chips read as
-  // washed out.
+  // weight, and dimming it on top of that was most of why the old tonal chips
+  // read as washed out.
   sublabel: {
     marginTop: LAYOUT.SPACING.TINY,
     fontVariant: ['tabular-nums'],
@@ -46,17 +46,17 @@ interface ReviewActionButtonProps {
   /** Quiet second line — the interval a grade buys. */
   sublabel?: string;
   /**
-   * `tinted` (default) is a peer in a row of outcomes.
+   * `quiet` (default) is a peer in a row of outcomes.
    *
    * `primary` is the loud, solid-fill treatment — the one action in the band
    * that's asking to be tapped. See the note on solid fills below for where
    * it may and may not appear.
    */
-  variant?: 'tinted' | 'primary';
+  variant?: 'quiet' | 'primary';
   /**
    * Only meaningful on a `primary` button. `true` (default) takes the app's
    * standalone-CTA pill shape — valid when this button is the row's only
-   * occupant. Pass `false` when a `primary` button has a `tinted` peer, so
+   * occupant. Pass `false` when a `primary` button has a `quiet` peer, so
    * both keep the row's shared rounded-rect shape and differ by fill alone.
    */
   standalone?: boolean;
@@ -96,9 +96,9 @@ interface ReviewActionButtonProps {
  * this screen's invitation: the voice CTA when a mic is offered (this is the
  * exercise; revealing is the way out of it), or "Show answer" alone once voice
  * is off and there is no CTA to defer to. The one not carrying `primary` stays
- * `tinted`, neutral against it rather than competing with it.
+ * `quiet`, neutral against it rather than competing with it.
  *
- * The voice CTA passes `standalone={false}`: it has a `tinted` peer, so the
+ * The voice CTA passes `standalone={false}`: it has a `quiet` peer, so the
  * capsule shape is reserved for "Show answer" alone. Loudness there comes
  * entirely from the fill going solid, not from also changing the corner
  * radius underneath it — two shapes in one row would read as two different
@@ -108,7 +108,7 @@ export const ReviewActionButton: FC<ReviewActionButtonProps> = ({
   label,
   color,
   sublabel,
-  variant = 'tinted',
+  variant = 'quiet',
   standalone = true,
   disabled = false,
   accessibilityLabel,
@@ -118,22 +118,26 @@ export const ReviewActionButton: FC<ReviewActionButtonProps> = ({
   const isPrimary = variant === 'primary';
   const isCapsule = isPrimary && standalone;
 
-  // A tinted chip is the shared tonal surface — the same fill/border weights
-  // `ThemedButton variant="tonal"` paints, just with a caller-supplied hue
-  // instead of the theme tint. This file used to carry its own byte-identical
-  // copy of those weights.
-  const tinted = tonalSurface(colors.elevation2, color);
-  const tintedPressed = tonalSurface(colors.elevation2, color, true);
+  // Every button in this band wears the CARD's own material — the app's CARD
+  // elevation, and for a quiet button `colors.card`, the same fill BaseCard and
+  // the flip card directly above paint.
+  //
+  // A quiet button used to be a tonal chip instead: the outcome hue mixed into
+  // the fill AND drawn as the border AND set on the label, so three washes of
+  // red / amber / green sat in a row under a neutral card. Saying the same
+  // thing three ways made the band the loudest part of the screen and left it
+  // reading as a strip of foreign controls rather than a continuation of the
+  // card it grades. The hue now lives only in the type, which is where the
+  // grade's meaning is, and the surface is shared — so the card and the row
+  // below it are visibly the same material (gestalt similarity).
+  //
+  // Loudness is reserved for `primary`, the one button in the band that is
+  // asking to be tapped. Its filled tokens still mirror `ThemedButton`'s, so
+  // the review screen's CTA is the same button the rest of the app uses.
+  const cardElevation = getElevation(colors, 'CARD');
 
-  // Filled variant mirrors ThemedButton's `filled` tokens so the review screen's
-  // CTA is the same button the rest of the app uses, not a lookalike.
-  const restBg = isPrimary
-    ? disabled
-      ? colors.disabledButtonBg
-      : colors.tint
-    : tinted.backgroundColor;
-  const pressedBg = isPrimary ? colors.tint : tintedPressed.backgroundColor;
-  const borderColor = isPrimary ? (disabled ? colors.cardBorder : colors.tint) : tinted.borderColor;
+  const restBg = isPrimary ? (disabled ? colors.disabledButtonBg : colors.tint) : colors.card;
+  const pressedBg = isPrimary ? colors.tint : colors.elevation2;
   const labelColor = isPrimary ? (disabled ? colors.disabled : colors.onTint) : color;
 
   return (
@@ -150,18 +154,45 @@ export const ReviewActionButton: FC<ReviewActionButtonProps> = ({
       // step with the card, and dimming on top of that read as an unrelated
       // flicker on every single grade. A caller that stays disabled longer than
       // an eyeblink is responsible for showing it (see VoiceAnswerButton).
-      style={({ pressed }) => [
-        STATIC_STYLES.button,
-        isCapsule && STATIC_STYLES.capsule,
-        { backgroundColor: pressed ? pressedBg : restBg, borderColor },
-        // A filled surface has no headroom for a deeper fill on press, so the
-        // capsule dims instead — the same press idiom as the card's own
-        // controls. The tinted chips keep the fill swap, which reads better on
-        // a surface that is mostly its own background.
-        isPrimary && pressed && { opacity: LAYOUT.OPACITY.PRESSED },
-      ]}
+      style={({ pressed }) => {
+        const background = pressed ? pressedBg : restBg;
+        return [
+          STATIC_STYLES.button,
+          isCapsule && STATIC_STYLES.capsule,
+          cardElevation,
+          {
+            backgroundColor: background,
+            // A quiet button has no visible edge, matching the card above,
+            // which separates from the page by elevation alone and carries no
+            // stroke. The border WIDTH stays, painted in the current fill, so a
+            // quiet button and a `primary` peer in the same row keep identical
+            // box metrics — the band's height must not move between states, or
+            // the card above it shifts.
+            borderColor: isPrimary
+              ? disabled
+                ? colors.cardBorder
+                : colors.tint
+              : background,
+          },
+          // A filled surface has no headroom for a deeper fill on press, so the
+          // capsule dims instead — the same press idiom as the card's own
+          // controls. A quiet button keeps the fill swap, which reads better on
+          // a surface that is mostly its own background.
+          isPrimary && pressed && { opacity: LAYOUT.OPACITY.PRESSED },
+        ];
+      }}
     >
-      <ThemedText skipDefaultColor type="bodyBold" numberOfLines={1} style={{ color: labelColor }}>
+      <ThemedText
+        skipDefaultColor
+        type="bodyBold"
+        numberOfLines={1}
+        // Each grade button is a third of the row, and "Guessed" is the label
+        // that runs out of room first at large system font scales. Shrinking a
+        // touch is better than clipping the word that names the outcome.
+        adjustsFontSizeToFit
+        minimumFontScale={0.85}
+        style={{ color: labelColor }}
+      >
         {label}
       </ThemedText>
       {sublabel ? (
@@ -171,10 +202,9 @@ export const ReviewActionButton: FC<ReviewActionButtonProps> = ({
           numberOfLines={1}
           // The outcome hue at full strength. It used to be the same hue at 70%
           // opacity, which on the old near-black fill left the interval as a
-          // smudge; a neutral grey fixes the contrast but reads as dead matter
-          // sitting in a coloured chip. With the fill now carrying real colour,
-          // size and weight are enough of a tier on their own — 13pt regular
-          // under 16pt semibold — so the hue can stay lit.
+          // smudge. On the card fill the hue reads cleanly at full strength, and
+          // size and weight are tier enough on their own — 13pt regular under
+          // 16pt semibold — so it stays lit rather than dimmed.
           style={[STATIC_STYLES.sublabel, { color }]}
         >
           {sublabel}
