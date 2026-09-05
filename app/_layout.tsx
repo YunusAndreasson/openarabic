@@ -231,7 +231,12 @@ Sentry.init({
       // Additional context (user email, app version, etc.) will be added via setContext() when widget opens
     }),
   ],
-  enabled: !!sentryDsn, // Only enable if DSN is available
+  // Only enable if a DSN is available, and never in development: a dev build
+  // reports against the same project as the store build, so a Fast Refresh
+  // artifact on the workstation emulator lands in the issue list next to real
+  // user crashes and reads exactly like one (OPEAN-ARABIC-S7 was a local
+  // emulator, not a user). Local failures are already visible in Metro.
+  enabled: !!sentryDsn && !__DEV__,
   tracesSampleRate: __DEV__ ? 1.0 : 0.1, // Sample everything in dev; 10% in production (Sentry guidance: don't ship 1.0)
   attachScreenshot: true, // Helps debug UI crashes
   debug: false, // Disable Sentry debug logging for performance

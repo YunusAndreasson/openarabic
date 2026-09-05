@@ -253,6 +253,34 @@ const isExpectedAuthError = (error: Error | string): boolean => {
   return isUserMistake || isInvalidCredentialsAuthError;
 };
 
+/**
+ * Connectivity failures that say only "this user was offline".
+ *
+ * They are unactionable — no build fixes a train tunnel — and they crowd the
+ * issue list, where volume is the signal we actually triage on. Suppressed for
+ * Sentry ONLY: the caller's toast still fires, so the user is still told why
+ * nothing loaded.
+ *
+ * Deliberately NOT suppressed: AbortError / FetchRequestCanceledException. Those
+ * are usually OUR 20s fetch timeout firing (supabase-js ships no timeout of its
+ * own), and a socket that goes dead often enough to trip it is a real report.
+ */
+const isExpectedNetworkError = (error: Error): boolean => {
+  // supabase-js marks these retryable and retries them itself.
+  if (error.name === 'AuthRetryableFetchError') {
+    return true;
+  }
+
+  const message = error.message?.toLowerCase() || '';
+  return [
+    'unable to resolve host', // Android DNS, no connection
+    'unknownhostexception',
+    'the internet connection appears to be offline', // iOS URLSession
+    'the network connection was lost',
+    'network request failed', // React Native's generic fetch failure
+  ].some(pattern => message.includes(pattern));
+};
+
 // Helper functions to reduce complexity
 const captureInSentry = (
   errorObj: Error,
@@ -328,7 +356,7 @@ export const handleError = async (error: unknown, options: ErrorOptions = {}): P
   const errorObj = toError(error);
 
   // Skip Sentry logging for expected authentication errors (wrong password, invalid credentials, etc.)
-  const shouldSkipSentry = isExpectedAuthError(errorObj);
+  const shouldSkipSentry = isExpectedAuthError(errorObj) || isExpectedNetworkError(errorObj);
   const shouldCaptureSentry = opts.captureSentry && !shouldSkipSentry;
 
   try {
