@@ -675,7 +675,7 @@ export function useFSRS({
     if (!userId) return;
 
     // Invalidate all FSRS-related queries to ensure cache consistency
-    fsrsQueries.invalidateAll(queryClient, userId);
+    void fsrsQueries.invalidateAll(queryClient, userId);
 
     stateTrackingRef.current.queueInitialized = false;
     queueRef.current = new PriorityQueue<StudyWord>();

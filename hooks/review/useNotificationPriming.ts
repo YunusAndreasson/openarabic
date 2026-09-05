@@ -108,7 +108,7 @@ export function useNotificationPriming(): UseNotificationPrimingResult {
       impressionRecordedRef.current = true;
       setShowPrimingCard(true);
       void recordImpression();
-      analytics.track(ANALYTICS_EVENTS.NOTIFICATION_PRIMING_SHOWN);
+      void analytics.track(ANALYTICS_EVENTS.NOTIFICATION_PRIMING_SHOWN);
     };
 
     void evaluate().finally(() => {
@@ -120,11 +120,11 @@ export function useNotificationPriming(): UseNotificationPrimingResult {
   }, [reminderTime.enabled, voiceOfferOpen]);
 
   const accept = useCallback(async (): Promise<void> => {
-    analytics.track(ANALYTICS_EVENTS.NOTIFICATION_PRIMING_ACCEPTED);
+    void analytics.track(ANALYTICS_EVENTS.NOTIFICATION_PRIMING_ACCEPTED);
     await recordAccepted();
 
     const granted = await ensurePermissions();
-    analytics.track(ANALYTICS_EVENTS.NOTIFICATION_PERMISSION_RESULT, { granted });
+    void analytics.track(ANALYTICS_EVENTS.NOTIFICATION_PERMISSION_RESULT, { granted });
 
     if (granted) {
       // useSmartNotifications watches this setting and schedules the plan.
@@ -135,7 +135,7 @@ export function useNotificationPriming(): UseNotificationPrimingResult {
   }, [dispatch, reminderTime]);
 
   const decline = useCallback((): void => {
-    analytics.track(ANALYTICS_EVENTS.NOTIFICATION_PRIMING_DECLINED);
+    void analytics.track(ANALYTICS_EVENTS.NOTIFICATION_PRIMING_DECLINED);
     setShowPrimingCard(false);
   }, []);
 

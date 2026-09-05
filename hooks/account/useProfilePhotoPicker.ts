@@ -73,14 +73,14 @@ export function useProfilePhotoPicker({
           setProfilePhotoUri(savedUri);
         }
       } catch (error) {
-        handleError(toError(error), { showToast: false });
+        void handleError(toError(error), { showToast: false });
       } finally {
         setIsLoaded(true);
         onPhotoLoaded?.();
       }
     };
 
-    loadProfilePhoto();
+    void loadProfilePhoto();
   }, [userId, storageKey, onPhotoLoaded]);
 
   const selectPhoto = useCallback(async () => {
@@ -148,7 +148,7 @@ export function useProfilePhotoPicker({
         setProfilePhotoUri(selectedUri);
       }
     } catch (error) {
-      handleError(toError(error), {
+      void handleError(toError(error), {
         toastMessage: 'Failed to select profile photo',
         showToast: true,
       });
@@ -160,7 +160,7 @@ export function useProfilePhotoPicker({
       await AsyncStorage.removeItem(storageKey);
       setProfilePhotoUri(null);
     } catch (error) {
-      handleError(toError(error), { showToast: false });
+      void handleError(toError(error), { showToast: false });
     }
   }, [storageKey]);
 

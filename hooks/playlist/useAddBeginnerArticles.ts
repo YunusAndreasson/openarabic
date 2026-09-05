@@ -84,7 +84,7 @@ export function useAddBeginnerArticles(
       showToast(STRINGS.ARTICLES_ADDED_SUCCESS, undefined, ToastType.SUCCESS);
 
       // Track analytics
-      analytics.track(ANALYTICS_EVENTS.BEGINNER_ARTICLES_ADDED, {
+      void analytics.track(ANALYTICS_EVENTS.BEGINNER_ARTICLES_ADDED, {
         count: addedCount,
       });
 
@@ -92,14 +92,14 @@ export function useAddBeginnerArticles(
       dispatch(resetEditMode('playlist'));
 
       // Invalidate queries in background (UI updates when ready)
-      queryClient.invalidateQueries({ queryKey: ['readingList', user.id] });
-      audioQueries.invalidateAll(queryClient, user.id);
+      void queryClient.invalidateQueries({ queryKey: ['readingList', user.id] });
+      void audioQueries.invalidateAll(queryClient, user.id);
 
       // Call onSuccess callback
       options?.onSuccess?.();
     },
     onError: (error: Error) => {
-      handleError(error);
+      void handleError(error);
       showToast(STRINGS.FAILED_TO_ADD_BEGINNER_ARTICLES, undefined, ToastType.ERROR);
     },
   });

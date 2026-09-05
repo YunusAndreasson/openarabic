@@ -82,7 +82,7 @@ export function useProvideAuth(): AuthResult {
           return null;
         }
       } catch (error) {
-        handleError(error instanceof Error ? error : new Error('Unknown auth error'), {
+        void handleError(error instanceof Error ? error : new Error('Unknown auth error'), {
           analyticsEventName: 'Session_Refresh_Error',
           sentrySeverity: 'error',
           showToast: false,
@@ -118,7 +118,7 @@ export function useProvideAuth(): AuthResult {
         setSession(null);
       }
     } catch (error) {
-      handleError(error, {
+      void handleError(error, {
         analyticsEventName: 'Auth_Initialization_Failed',
         sentrySeverity: 'error',
         showToast: false,
@@ -143,7 +143,7 @@ export function useProvideAuth(): AuthResult {
     // Initialize auth — async session fetch that must run once on mount; setState
     // happens after awaited supabase call resolves, not synchronously in effect body.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    initAuth();
+    void initAuth();
 
     // Listen for auth state changes
     // CRITICAL: Callback must NOT be async and should defer all operations to prevent deadlocks

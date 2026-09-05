@@ -83,7 +83,7 @@ export function useSmartDueWordsCalculator(options: UseSmartDueWordsCalculatorOp
       // Execute all refreshes in parallel for better performance
       await Promise.allSettled(refreshPromises);
     } catch (error) {
-      handleError(error, {
+      void handleError(error, {
         showToast: false,
         analyticsEventName: 'Due_Words_Refresh_Error',
       });
@@ -108,10 +108,10 @@ export function useSmartDueWordsCalculator(options: UseSmartDueWordsCalculatorOp
         refreshTimeoutRef.current = setTimeout(() => {
           refreshTimeoutRef.current = null;
           setIsRefreshing(false);
-          refreshDueWordsData();
+          void refreshDueWordsData();
         }, refreshDelay);
       } else {
-        refreshDueWordsData();
+        void refreshDueWordsData();
       }
     }
 
@@ -144,7 +144,7 @@ export function useSmartDueWordsCalculator(options: UseSmartDueWordsCalculatorOp
    * Manual refresh function for immediate updates
    */
   const forceRefresh = useCallback(() => {
-    refreshDueWordsData();
+    void refreshDueWordsData();
   }, [refreshDueWordsData]);
 
   return {

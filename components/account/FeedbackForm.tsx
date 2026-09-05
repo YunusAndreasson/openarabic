@@ -135,7 +135,7 @@ export const FeedbackForm = memo(() => {
         Alert.alert(STRINGS.FEEDBACK_SUCCESS_TITLE, STRINGS.FEEDBACK_SUCCESS_MESSAGE);
       }, 300);
     } catch (error) {
-      handleError(error, {
+      void handleError(error, {
         showToast: false,
         analyticsEventName: 'Feedback_Capture_Error',
       });

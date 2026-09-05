@@ -70,7 +70,7 @@ export const DocLink: FC<{ url: string }> = ({ url }) => (
     style={styles.linkContainer}
     type="body"
     onPress={() => {
-      Linking.openURL(url);
+      void Linking.openURL(url);
     }}
   />
 );

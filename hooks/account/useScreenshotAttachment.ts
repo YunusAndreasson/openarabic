@@ -118,7 +118,7 @@ export function useScreenshotAttachment({
         setScreenshotUri(result.assets[0].uri);
       }
     } catch (error) {
-      handleError(toError(error), {
+      void handleError(toError(error), {
         showToast: false,
         analyticsEventName: 'Screenshot_Picker_Error',
       });

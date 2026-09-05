@@ -41,7 +41,7 @@ export const SupportSection = memo<SupportSectionProps>(({ onContactSupportPress
               successFeedback();
             } catch (error) {
               errorFeedback();
-              handleError(error, {
+              void handleError(error, {
                 toastMessage: STRINGS.RESET_TUTORIALS_FAILED,
                 analyticsEventName: 'Reset_Tutorials_Failed',
               });
@@ -55,7 +55,7 @@ export const SupportSection = memo<SupportSectionProps>(({ onContactSupportPress
     try {
       const isAvailable = await StoreReview.isAvailableAsync();
       if (!isAvailable) {
-        handleError(new Error('StoreReview not available'), {
+        void handleError(new Error('StoreReview not available'), {
           analyticsEventName: 'Store_Review_Not_Available',
           sentryTags: { location: 'account', action: 'store_review' },
           sentryExtra: { storeUrl: StoreReview.storeUrl() },
@@ -68,7 +68,7 @@ export const SupportSection = memo<SupportSectionProps>(({ onContactSupportPress
       await StoreReview.requestReview();
       lightFeedback();
     } catch (error) {
-      handleError(error, {
+      void handleError(error, {
         analyticsEventName: 'Store_Review_Request_Failed',
         sentryTags: { location: 'account', action: 'store_review' },
         showToast: true,

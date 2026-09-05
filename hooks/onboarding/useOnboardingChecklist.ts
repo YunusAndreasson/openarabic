@@ -87,7 +87,7 @@ export function useOnboardingChecklist(articlesData: Article[]) {
     if (isEstablished) {
       void initializeOnboarding({ dismissed: true });
       completeTutorial(TutorialId.WELCOME_INTRO);
-      analytics.track(ANALYTICS_EVENTS.ONBOARDING_CHECKLIST_SUPPRESSED, {
+      void analytics.track(ANALYTICS_EVENTS.ONBOARDING_CHECKLIST_SUPPRESSED, {
         reason: isOldAccount ? 'account_age' : 'server_activity',
       });
     } else {
@@ -135,7 +135,7 @@ export function useOnboardingChecklist(articlesData: Article[]) {
   useEffect(() => {
     if (isChecklistVisible && !hasTrackedShownRef.current) {
       hasTrackedShownRef.current = true;
-      analytics.track(ANALYTICS_EVENTS.ONBOARDING_CHECKLIST_SHOWN, { done_count: doneCount });
+      void analytics.track(ANALYTICS_EVENTS.ONBOARDING_CHECKLIST_SHOWN, { done_count: doneCount });
     }
   }, [isChecklistVisible, doneCount]);
 
@@ -148,7 +148,7 @@ export function useOnboardingChecklist(articlesData: Article[]) {
     const previous = previousDoneRef.current;
     for (const item of items) {
       if (previous && !previous[item.step] && item.done) {
-        analytics.track(ANALYTICS_EVENTS.ONBOARDING_CHECKLIST_ITEM_COMPLETED, {
+        void analytics.track(ANALYTICS_EVENTS.ONBOARDING_CHECKLIST_ITEM_COMPLETED, {
           item: item.step,
           source: state?.[item.step] ? 'local' : 'server',
         });
@@ -158,7 +158,7 @@ export function useOnboardingChecklist(articlesData: Article[]) {
   }, [items, isChecklistVisible, state]);
 
   const finalizeCompletion = useCallback(() => {
-    analytics.track(ANALYTICS_EVENTS.ONBOARDING_CHECKLIST_COMPLETED);
+    void analytics.track(ANALYTICS_EVENTS.ONBOARDING_CHECKLIST_COMPLETED);
     void markChecklistCompleted();
   }, []);
 

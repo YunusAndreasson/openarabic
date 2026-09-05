@@ -124,7 +124,7 @@ export function WordDetailsBottomSheet({
       }
     };
 
-    prefetchAudio();
+    void prefetchAudio();
   }, [isVisible, word?.audio_url, word?.id]);
 
   // Handle play audio using consolidated hook
@@ -194,7 +194,7 @@ export function WordDetailsBottomSheet({
         }
       } catch (error) {
         if (newValue) setOptimisticIsInStudyList(false);
-        handleError(error, { toastMessage: 'Failed to update study list' });
+        void handleError(error, { toastMessage: 'Failed to update study list' });
       } finally {
         if (!newValue) setIsToggling(false);
       }

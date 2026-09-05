@@ -23,7 +23,7 @@ export function useReminders(): UseRemindersResult {
         // reschedules the smart reminder plan on change.
         dispatch(setReminderTime(newReminderTime));
       } catch (error) {
-        handleError(toError(error), { showToast: false });
+        void handleError(toError(error), { showToast: false });
       }
     },
     [dispatch],

@@ -84,7 +84,7 @@ export function useAddCommonWords(options?: UseAddCommonWordsOptions): UseAddCom
       showToast(STRINGS.WORDS_ADDED_SUCCESS, undefined, ToastType.SUCCESS);
 
       // Track analytics
-      analytics.track(ANALYTICS_EVENTS.COMMON_WORDS_ADDED, {
+      void analytics.track(ANALYTICS_EVENTS.COMMON_WORDS_ADDED, {
         count: addedCount,
       });
 
@@ -93,7 +93,7 @@ export function useAddCommonWords(options?: UseAddCommonWordsOptions): UseAddCom
       void markOnboardingStep(OnboardingStep.SAVE_WORD);
 
       // Invalidate queries in background (UI updates when ready)
-      fsrsQueries.invalidateAll(queryClient, user.id);
+      void fsrsQueries.invalidateAll(queryClient, user.id);
 
       // This bulk path skips the daily-limit CHECK on purpose (see note above),
       // but must still reserve today's quota for what it actually added —
@@ -110,7 +110,7 @@ export function useAddCommonWords(options?: UseAddCommonWordsOptions): UseAddCom
       options?.onSuccess?.();
     },
     onError: (error: Error) => {
-      handleError(error);
+      void handleError(error);
       showToast(STRINGS.FAILED_TO_ADD_COMMON_WORDS, undefined, ToastType.ERROR);
     },
   });

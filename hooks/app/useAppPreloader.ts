@@ -400,7 +400,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
       ]);
       return true;
     } catch (error) {
-      handleError(toError(error), { showToast: false });
+      void handleError(toError(error), { showToast: false });
       return false;
     }
   }, [queryClient, user]);

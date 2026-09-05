@@ -134,7 +134,7 @@ export function useAuthForm(): UseAuthFormReturn {
     if (!isDefinitelyOffline) return true;
 
     if (isMountedRef.current) setPasswordError(STRINGS.NO_INTERNET_CONNECTION);
-    handleError(new Error('No network connection available'), {
+    void handleError(new Error('No network connection available'), {
       toastMessage: STRINGS.NO_INTERNET_CONNECTION,
       analyticsEventName: 'Auth_No_Network',
       captureSentry: false,
@@ -164,7 +164,7 @@ export function useAuthForm(): UseAuthFormReturn {
         if (!isMountedRef.current) return;
         // Show inline error so it's visible even when auth screen overlays the toast
         setPasswordError(error.message);
-        handleError(error, {
+        void handleError(error, {
           toastMessage: `${STRINGS.SIGN_IN_FAILED}. ${error.message}`,
           analyticsEventName: 'Sign_In_Error',
           sentrySeverity: 'error',
@@ -180,7 +180,7 @@ export function useAuthForm(): UseAuthFormReturn {
     } catch (err) {
       if (!isMountedRef.current) return;
       setPasswordError(STRINGS.PLEASE_TRY_AGAIN);
-      handleError(err instanceof Error ? err : new Error('Sign in error'), {
+      void handleError(err instanceof Error ? err : new Error('Sign in error'), {
         toastMessage: `${STRINGS.SIGN_IN_FAILED}. ${STRINGS.PLEASE_TRY_AGAIN}`,
         analyticsEventName: 'Sign_In_Error',
         sentrySeverity: 'error',
@@ -214,7 +214,7 @@ export function useAuthForm(): UseAuthFormReturn {
         // "User already registered" is expected user behavior, not a system error
         const isAlreadyRegistered = error.message?.toLowerCase().includes('already registered');
         setPasswordError(error.message);
-        handleError(error, {
+        void handleError(error, {
           toastMessage: `${STRINGS.ACCOUNT_CREATION_FAILED}. ${error.message}`,
           analyticsEventName: 'Sign_Up_Error',
           captureSentry: !isAlreadyRegistered,
@@ -259,7 +259,7 @@ export function useAuthForm(): UseAuthFormReturn {
     } catch (err) {
       if (!isMountedRef.current) return;
       setPasswordError(STRINGS.PLEASE_TRY_AGAIN);
-      handleError(err instanceof Error ? err : new Error('Sign up error'), {
+      void handleError(err instanceof Error ? err : new Error('Sign up error'), {
         toastMessage: `${STRINGS.ACCOUNT_CREATION_FAILED}. ${STRINGS.PLEASE_TRY_AGAIN}`,
         analyticsEventName: 'Sign_Up_Error',
         sentrySeverity: 'error',
@@ -282,7 +282,7 @@ export function useAuthForm(): UseAuthFormReturn {
     if (!isEmailValid) {
       // Show inline error (already set by validateEmail) and toast message
       // This is expected user validation, not a system error
-      handleError(new Error('Invalid email'), {
+      void handleError(new Error('Invalid email'), {
         toastMessage: email ? STRINGS.ENTER_VALID_EMAIL : STRINGS.ERROR_EMPTY_EMAIL,
         analyticsEventName: 'Password_Reset_Invalid_Email',
         captureSentry: false, // Don't log user validation errors to Sentry
@@ -312,7 +312,7 @@ export function useAuthForm(): UseAuthFormReturn {
             level: 'warning',
           });
         }
-        handleError(error, {
+        void handleError(error, {
           toastMessage: isRateLimit ? STRINGS.PLEASE_TRY_AGAIN : STRINGS.RESET_PASSWORD_ERROR,
           analyticsEventName: 'Password_Reset_Error',
           captureSentry: false, // Already handled above or skipped for rate limits
@@ -325,7 +325,7 @@ export function useAuthForm(): UseAuthFormReturn {
       }
     } catch (err) {
       if (!isMountedRef.current) return;
-      handleError(err instanceof Error ? err : new Error('Password reset error'), {
+      void handleError(err instanceof Error ? err : new Error('Password reset error'), {
         toastMessage: STRINGS.RESET_PASSWORD_ERROR,
         analyticsEventName: 'Password_Reset_Error',
         sentrySeverity: 'error',

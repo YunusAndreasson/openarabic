@@ -102,13 +102,13 @@ export function WelcomeIntro({ visible, onDismiss, onOpenFirstText }: WelcomeInt
 
   useEffect(() => {
     if (visible) {
-      analytics.track(ANALYTICS_EVENTS.ONBOARDING_INTRO_VIEWED);
+      void analytics.track(ANALYTICS_EVENTS.ONBOARDING_INTRO_VIEWED);
     }
   }, [visible]);
 
   useEffect(() => {
     if (visible && step) {
-      analytics.track(ANALYTICS_EVENTS.ONBOARDING_INTRO_STEP_VIEWED, {
+      void analytics.track(ANALYTICS_EVENTS.ONBOARDING_INTRO_STEP_VIEWED, {
         step_index: currentStep,
         step_name: step.key,
       });
@@ -117,7 +117,7 @@ export function WelcomeIntro({ visible, onDismiss, onOpenFirstText }: WelcomeInt
 
   // Skip (visible affordance or backdrop tap) still completes the tutorial (one-shot)
   const handleSkip = useCallback(() => {
-    analytics.track(ANALYTICS_EVENTS.ONBOARDING_INTRO_SKIPPED, { step_index: currentStep });
+    void analytics.track(ANALYTICS_EVENTS.ONBOARDING_INTRO_SKIPPED, { step_index: currentStep });
     onDismiss();
   }, [currentStep, onDismiss]);
 
@@ -126,7 +126,7 @@ export function WelcomeIntro({ visible, onDismiss, onOpenFirstText }: WelcomeInt
       if (completed) return;
       setCompleted(true);
       lightFeedback();
-      analytics.track(ANALYTICS_EVENTS.ONBOARDING_INTRO_COMPLETED, { cta: 'open_first_text' });
+      void analytics.track(ANALYTICS_EVENTS.ONBOARDING_INTRO_COMPLETED, { cta: 'open_first_text' });
       metaEvents.logTutorialComplete();
       onDismiss();
       onOpenFirstText();

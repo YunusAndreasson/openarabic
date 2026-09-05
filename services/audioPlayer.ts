@@ -922,7 +922,7 @@ class SimpleAudioService {
       // resolves would flash an error over audio that is about to work.
       // Single-shot callers without self-heal fail quietly too; the playlist
       // lane surfaces exactly one toast itself if it ultimately stops.
-      handleError(error, {
+      void handleError(error, {
         showToast: !isReadyTimeout,
         toastMessage: 'Failed to start audio playback',
       });
@@ -1186,7 +1186,7 @@ class SimpleAudioService {
    * ready-timeout handling in playCore's catch).
    */
   private notifyPlaylistStoppedByFailures(): void {
-    handleError(new Error('Playlist stopped after repeated track playback failures'), {
+    void handleError(new Error('Playlist stopped after repeated track playback failures'), {
       showToast: true,
       toastMessage: STRINGS.FAILED_TO_LOAD_AUDIO_TRACKS,
     });

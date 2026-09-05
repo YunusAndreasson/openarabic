@@ -118,7 +118,7 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
       }
     };
 
-    configure();
+    void configure();
   }, []);
 
   // Use OAuth provider factory with Google-specific configuration

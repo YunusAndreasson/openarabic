@@ -46,7 +46,7 @@ function useRefreshOnFocus<T>(refetch: () => Promise<T>) {
         firstTimeRef.current = false;
         return;
       }
-      refetch();
+      void refetch();
     }, [refetch]),
   );
 }
@@ -186,7 +186,7 @@ export const usePlaylistScreen = () => {
           }
 
           // Only report playback after resolving a non-empty effective list.
-          analytics.track(ANALYTICS_EVENTS.AUDIO_PLAY_ALL_STARTED, {
+          void analytics.track(ANALYTICS_EVENTS.AUDIO_PLAY_ALL_STARTED, {
             article_count: effectiveTracks.length,
             source: 'listen_tab',
             shuffle_enabled: audioShuffleEnabled,
@@ -201,7 +201,7 @@ export const usePlaylistScreen = () => {
             // Callback when a track completes and the next one starts
             if (nextTrack?.articleId) {
               // Prefetch the next article's data and image for smooth transitions
-              prefetchArticleWithImage(nextTrack.articleId, queryClient, prefetchArticle);
+              void prefetchArticleWithImage(nextTrack.articleId, queryClient, prefetchArticle);
               // Cache the now-playing track for offline replay (no-op if it was
               // already local). Only ever the current track — warming the whole
               // playlist is what used to saturate the connection.
@@ -222,7 +222,7 @@ export const usePlaylistScreen = () => {
           }
         } catch (error) {
           setTimer('playbackMode', () => setPlaybackMode('none'), TIMING_CONSTANTS.QUICK_DELAY);
-          handleError(error);
+          void handleError(error);
         }
       }
     },
@@ -269,14 +269,14 @@ export const usePlaylistScreen = () => {
       queryClient.setQueryData(['readingList', user.id, articleId], false);
 
       // Then invalidate related queries to ensure consistency
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: readingProgressQueries.readingList(user.id).queryKey,
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: audioQueries.tracks(user.id, audioPreference).queryKey,
       });
     } catch (error) {
-      handleError(error);
+      void handleError(error);
     }
   };
 
@@ -330,7 +330,7 @@ export const usePlaylistScreen = () => {
         // Play playlist starting from tapped article
         const tracksFromHere = sortedEnhancedTracks.slice(startIndex);
 
-        analytics.track(ANALYTICS_EVENTS.AUDIO_PLAYBACK_STARTED, {
+        void analytics.track(ANALYTICS_EVENTS.AUDIO_PLAYBACK_STARTED, {
           article_id: articleId,
           article_title: tracksFromHere[0]?.title || '',
           playlist_position: startIndex + 1,
@@ -339,7 +339,7 @@ export const usePlaylistScreen = () => {
 
         const success = await simpleAudioService.playPlaylist(tracksFromHere, nextTrack => {
           if (nextTrack?.articleId) {
-            prefetchArticleWithImage(nextTrack.articleId, queryClient, prefetchArticle);
+            void prefetchArticleWithImage(nextTrack.articleId, queryClient, prefetchArticle);
             warmTrackCache(nextTrack);
           } else {
             // Playlist complete
@@ -356,7 +356,7 @@ export const usePlaylistScreen = () => {
         }
       } catch (error) {
         setTimer('playbackMode', () => setPlaybackMode('none'), TIMING_CONSTANTS.QUICK_DELAY);
-        handleError(error);
+        void handleError(error);
       }
     },
     [sortedEnhancedTracks, audioPreference, queryClient, prefetchArticle, setTimer],
@@ -368,7 +368,7 @@ export const usePlaylistScreen = () => {
   useFocusEffect(
     useCallback(() => {
       return () => {
-        stopNonPlaylistAudioSafely();
+        void stopNonPlaylistAudioSafely();
       };
     }, []),
   );

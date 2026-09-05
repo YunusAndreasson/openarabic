@@ -585,7 +585,7 @@ export function useReview({
         // reveal-first flow is about (the old binary analytics couldn't express it).
         // NOTE: this deliberately does not record which INPUT graded the card —
         // tap and voice are indistinguishable here.
-        analytics.track(ANALYTICS_EVENTS.REVIEW_WORD_GRADED, {
+        void analytics.track(ANALYTICS_EVENTS.REVIEW_WORD_GRADED, {
           confidence,
           root_id: rootId,
           old_stability: oldStability,
@@ -709,7 +709,7 @@ export function useReview({
         }
         return report(false);
       } catch (error) {
-        handleError(error);
+        void handleError(error);
         return report(false);
       }
     },
@@ -779,7 +779,7 @@ export function useReview({
           .then(started => endMeaningPlay({ started: started ?? false }))
           .catch(err => {
             endMeaningPlay({ started: false, error: true });
-            handleError(err);
+            void handleError(err);
           });
       }
     }
@@ -842,7 +842,7 @@ export function useReview({
         advanced = true;
         pendingGradeRef.current = null;
         clearTimer('fadeAnimation');
-        processFeedback(confidence, controller);
+        void processFeedback(confidence, controller);
       };
 
       // Registered before the fade starts, so a close landing inside the fade
@@ -1030,7 +1030,7 @@ export function useReview({
     sessionStarted.current = true;
     sessionStartTime.current = Date.now();
     totalWordsInSessionRef.current = wordQueue.length;
-    analytics.track(ANALYTICS_EVENTS.REVIEW_SESSION_STARTED, {
+    void analytics.track(ANALYTICS_EVENTS.REVIEW_SESSION_STARTED, {
       word_count: wordQueue.length,
       source: 'practice_tab',
     });
@@ -1196,7 +1196,7 @@ export function useReview({
           ...playDetail,
           ...getSessionShape(),
         });
-        handleError(err);
+        void handleError(err);
         markDone();
       });
   }, [
@@ -1344,7 +1344,7 @@ export function useReview({
       const controller = new AbortController();
       abortControllerRef.current = controller;
       stateRefs.current.isUpdatingWord = true;
-      processFeedback('unknown', controller);
+      void processFeedback('unknown', controller);
       return;
     }
 
@@ -1383,7 +1383,7 @@ export function useReview({
         })
         .catch(handleError);
     } catch (error) {
-      handleError(error);
+      void handleError(error);
     }
   }, [commitPendingGrade, flushPendingWrites, invalidateQueries, queryClient, user]);
 
@@ -1457,7 +1457,7 @@ export function useReview({
         const sessionDurationMs = Date.now() - sessionStartTime.current;
         const wordsRemaining = totalWordsInSessionRef.current - wordsReviewedCount.current;
 
-        analytics.track(ANALYTICS_EVENTS.REVIEW_SESSION_ABANDONED, {
+        void analytics.track(ANALYTICS_EVENTS.REVIEW_SESSION_ABANDONED, {
           words_reviewed: wordsReviewedCount.current,
           words_remaining: Math.max(0, wordsRemaining),
           session_duration_ms: sessionDurationMs,

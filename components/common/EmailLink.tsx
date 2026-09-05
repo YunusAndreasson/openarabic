@@ -34,7 +34,7 @@ export const EmailLink: FC<EmailLinkProps> = ({ email, type = 'body' }) => {
         await Linking.openURL(mailtoUrl);
       } else {
         // Use handleError for consistent error tracking
-        handleError(new Error('Cannot open email client'), {
+        void handleError(new Error('Cannot open email client'), {
           analyticsEventName: 'Email_Client_Unavailable',
           sentryTags: { location: 'email_link', action: 'canOpenURL' },
           sentryExtra: { email, mailtoUrl },
@@ -43,7 +43,7 @@ export const EmailLink: FC<EmailLinkProps> = ({ email, type = 'body' }) => {
         });
       }
     } catch (error) {
-      handleError(error, {
+      void handleError(error, {
         analyticsEventName: 'Email_Link_Failed',
         sentryTags: { location: 'email_link', action: 'mailto' },
         sentryExtra: { email },

@@ -52,7 +52,7 @@ export default function ResetPasswordScreen(): JSX.Element {
             });
 
             if (error) {
-              handleError(error, {
+              void handleError(error, {
                 toastMessage: 'Invalid or expired reset link. Please request a new one.',
                 showToast: true,
               });
@@ -72,14 +72,14 @@ export default function ResetPasswordScreen(): JSX.Element {
           setIsValidSession(true);
         } else {
           // No session and no valid reset link
-          handleError(new Error('Invalid or expired reset link'), {
+          void handleError(new Error('Invalid or expired reset link'), {
             toastMessage: 'Invalid or expired reset link. Please request a new one.',
             showToast: true,
           });
           router.replace(ROUTE_PATHS.AUTH);
         }
       } catch (error) {
-        handleError(error, {
+        void handleError(error, {
           toastMessage: 'Failed to verify reset link. Please try again.',
           showToast: true,
         });
@@ -87,7 +87,7 @@ export default function ResetPasswordScreen(): JSX.Element {
       }
     };
 
-    handleResetLink();
+    void handleResetLink();
   }, [router]);
 
   const validatePassword = useCallback((value: string): boolean => {
@@ -170,7 +170,7 @@ export default function ResetPasswordScreen(): JSX.Element {
       });
 
       if (error) {
-        handleError(error, {
+        void handleError(error, {
           toastMessage: `Password reset failed. ${error.message}`,
           analyticsEventName: 'Password_Reset_Error',
           sentrySeverity: 'error',
@@ -184,7 +184,7 @@ export default function ResetPasswordScreen(): JSX.Element {
         router.replace(ROUTE_PATHS.EXPLORE_TAB);
       }
     } catch (err) {
-      handleError(err instanceof Error ? err : new Error('Password reset error'), {
+      void handleError(err instanceof Error ? err : new Error('Password reset error'), {
         toastMessage: 'Password reset failed. Please try again.',
         analyticsEventName: 'Password_Reset_Error',
         sentrySeverity: 'error',

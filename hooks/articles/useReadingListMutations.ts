@@ -53,7 +53,7 @@ export const useReadingListMutations = (
    */
   const onMutationSuccess = useCallback(
     (inList: boolean, userId: string, articleId: ArticleId) => {
-      analytics.track(ANALYTICS_EVENTS.ARTICLE_BOOKMARKED, {
+      void analytics.track(ANALYTICS_EVENTS.ARTICLE_BOOKMARKED, {
         article_id: articleId,
         action: inList ? 'add' : 'remove',
       });
@@ -66,10 +66,10 @@ export const useReadingListMutations = (
 
       // Then refetch to ensure consistency
       refetchReadingListStatus();
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: readingProgressQueries.readingList(userId).queryKey,
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: audioQueries.tracks(userId, audioPreference).queryKey,
       });
     },
@@ -90,7 +90,7 @@ export const useReadingListMutations = (
         !errorMessage.includes('duplicate key value')
       ) {
         // Only log non-duplicate errors to console for debugging
-        handleError(new Error(`Failed to add to reading list: ${errorMessage}`), {
+        void handleError(new Error(`Failed to add to reading list: ${errorMessage}`), {
           showToast: false,
           captureSentry: false,
         });
@@ -104,7 +104,7 @@ export const useReadingListMutations = (
     onSuccess: (_data, { userId, articleId }) => onMutationSuccess(false, userId, articleId),
     onError: (error: Error) => {
       // Silently handle errors - no toast notifications for bookmarks actions
-      handleError(error, { showToast: false, captureSentry: false });
+      void handleError(error, { showToast: false, captureSentry: false });
     },
   });
 

@@ -122,7 +122,7 @@ TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
     }
 
     // Log other errors to Sentry (unexpected errors)
-    handleError(error, {
+    void handleError(error, {
       showToast: false,
       analyticsEventName: ANALYTICS_EVENTS.BACKGROUND_TASK_ERROR,
       sentrySeverity: 'warning',
@@ -164,7 +164,7 @@ export async function registerBackgroundTasks(): Promise<void> {
     }
 
     // Log other errors to Sentry with warning severity (not critical)
-    handleError(error, {
+    void handleError(error, {
       showToast: false,
       analyticsEventName: 'Background_Task_Registration_Error',
       sentrySeverity: 'warning', // Not critical - background fetch is optional
@@ -180,7 +180,7 @@ export async function unregisterBackgroundTasks(): Promise<void> {
     await BackgroundTask.unregisterTaskAsync(BACKGROUND_FETCH_TASK);
     // Background task unregistered
   } catch (error) {
-    handleError(error, {
+    void handleError(error, {
       showToast: false,
       analyticsEventName: 'Background_Task_Unregistration_Error',
     });

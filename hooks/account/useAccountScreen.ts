@@ -31,17 +31,17 @@ const useUserWithCreationDate = () => {
         try {
           const { data, error } = await supabase.auth.getUser();
           if (error) {
-            handleError(error, { showToast: false });
+            void handleError(error, { showToast: false });
           } else if (data.user) {
             setUserWithCreatedAt(data.user);
           }
         } catch (error) {
-          handleError(error, { showToast: false });
+          void handleError(error, { showToast: false });
         }
       }
     };
 
-    fetchUserData();
+    void fetchUserData();
   }, [user?.id]);
 
   return userWithCreatedAt;
@@ -62,11 +62,11 @@ export const useAccountScreen = () => {
         const audioSize = await getCacheSize();
         setCacheSize(audioSize);
       } catch (error) {
-        handleError(error, { showToast: false });
+        void handleError(error, { showToast: false });
       }
     };
 
-    loadCacheSize();
+    void loadCacheSize();
   }, [getCacheSize]);
 
   // Clear all caches: audio files, query data, and persisted storage
@@ -104,7 +104,7 @@ export const useAccountScreen = () => {
                 Alert.alert(STRINGS.SUCCESS, STRINGS.CLEAR_CACHE_SUCCESS);
               } catch (error) {
                 Alert.alert(STRINGS.ERROR, STRINGS.FAILED_TO_CLEAR_OFFLINE_CACHE);
-                handleError(error, { showToast: false });
+                void handleError(error, { showToast: false });
               }
             })(),
         },
@@ -192,7 +192,7 @@ export const useAccountScreen = () => {
                 Alert.alert(STRINGS.SUCCESS, STRINGS.READING_PROGRESS_RESET_SUCCESSFULLY);
               } catch (error) {
                 Alert.alert(STRINGS.ERROR, STRINGS.FAILED_TO_RESET_READING_PROGRESS);
-                handleError(error, { showToast: false });
+                void handleError(error, { showToast: false });
               }
             })(),
         },
@@ -215,7 +215,7 @@ export const useAccountScreen = () => {
             return;
           }
         } catch (error) {
-          handleError(error, { showToast: false });
+          void handleError(error, { showToast: false });
           Alert.alert(STRINGS.ENABLE_NOTIFICATIONS, STRINGS.TURN_ON_NOTIFICATIONS, [
             { text: STRINGS.CANCEL, style: 'cancel' },
             { text: STRINGS.OPEN_SETTINGS, onPress: () => void Linking.openSettings() },
@@ -233,10 +233,10 @@ export const useAccountScreen = () => {
       try {
         const newReminderTime = { ...reminderTime, enabled };
         await updateReminderTime(newReminderTime);
-        analytics.track(ANALYTICS_EVENTS.SMART_REMINDERS_TOGGLED, { enabled });
+        void analytics.track(ANALYTICS_EVENTS.SMART_REMINDERS_TOGGLED, { enabled });
         lightFeedback();
       } catch (error) {
-        handleError(error, { showToast: false });
+        void handleError(error, { showToast: false });
         Alert.alert(STRINGS.ERROR, 'Could not update reminders. Please try again.');
       }
     },
@@ -258,7 +258,7 @@ export const useAccountScreen = () => {
         await updateReminderTime(newReminderTime);
         lightFeedback();
       } catch (error) {
-        handleError(error, { showToast: false });
+        void handleError(error, { showToast: false });
         Alert.alert(STRINGS.ERROR, 'Could not update the reminder time. Please try again.');
       }
     },

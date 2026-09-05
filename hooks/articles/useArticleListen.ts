@@ -64,7 +64,7 @@ export function useArticleListen(
         // Playback is live — now it's safe to pull the file down for next time
         // without stealing bandwidth from the stream that just started.
         warmTrackCache(track);
-        analytics.track(ANALYTICS_EVENTS.AUDIO_PLAYBACK_STARTED, {
+        void analytics.track(ANALYTICS_EVENTS.AUDIO_PLAYBACK_STARTED, {
           article_id: articleId,
           article_title: articleTitle ?? track.title,
           source: 'article_reader',
@@ -73,7 +73,7 @@ export function useArticleListen(
         void markOnboardingStep(OnboardingStep.LISTEN_AUDIO);
       }
     } catch (error) {
-      handleError(error);
+      void handleError(error);
     }
   }, [articleId, articleTitle, audioPreference, article, isListeningToThisArticle]);
 

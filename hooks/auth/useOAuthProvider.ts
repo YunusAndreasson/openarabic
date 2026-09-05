@@ -323,7 +323,7 @@ export function useOAuthProvider(config: OAuthProviderConfig) {
         .join('\n');
 
       // Use handleError to avoid duplicate Sentry captures
-      handleError(error instanceof Error ? error : new Error(`${providerName} Sign In failed`), {
+      void handleError(error instanceof Error ? error : new Error(`${providerName} Sign In failed`), {
         toastMessage: detailedErrorMessage,
         toastDuration: 15000,
         analyticsEventName: `${providerName}_Sign_In_Error`,

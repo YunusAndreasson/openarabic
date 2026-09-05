@@ -74,7 +74,7 @@ export function useArticleScreen({
   useEffect(() => {
     if (article && !hasTrackedArticleView.current) {
       hasTrackedArticleView.current = true;
-      analytics.track(ANALYTICS_EVENTS.ARTICLE_VIEWED, {
+      void analytics.track(ANALYTICS_EVENTS.ARTICLE_VIEWED, {
         article_id: article.id,
         article_title: article.title,
         category: article.category.name,
@@ -139,7 +139,7 @@ export function useArticleScreen({
     try {
       await stopNonPlaylistAudioSafely(true);
     } catch (error) {
-      handleError(error, { toastMessage: STRINGS.FAILED_TO_STOP_AUDIO_ON_CLOSE });
+      void handleError(error, { toastMessage: STRINGS.FAILED_TO_STOP_AUDIO_ON_CLOSE });
     }
 
     // Dismiss the modal screen, or navigate to library home if not dismissible
@@ -269,7 +269,7 @@ export function useArticleScreen({
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           try {
-            scrollViewRef.current?.scrollToIndex({
+            void scrollViewRef.current?.scrollToIndex({
               index: targetIndex,
               animated: true,
               viewPosition: 0, // Place last-read sentence at top of viewport
@@ -320,7 +320,7 @@ export function useArticleScreen({
   // (article Listen / Play All) keeps playing — the MiniPlayer controls it.
   useEffect(() => {
     return () => {
-      stopNonPlaylistAudioSafely();
+      void stopNonPlaylistAudioSafely();
     };
   }, []);
 

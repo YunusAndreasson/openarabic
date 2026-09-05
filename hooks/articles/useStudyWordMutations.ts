@@ -170,10 +170,10 @@ export const useStudyWordMutations = (
       if (context?.previousStudyWords) {
         queryClient.setQueryData(fsrsQueries.all(userId).queryKey, context.previousStudyWords);
       }
-      handleError(error);
+      void handleError(error);
       showToast(STRINGS.ERROR_UPDATING_STUDY_LIST, undefined, ToastType.ERROR);
       // Invalidate to ensure we have fresh data
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: fsrsQueries.all(userId).queryKey,
       });
     },
@@ -187,7 +187,7 @@ export const useStudyWordMutations = (
         context?.previousStudyWords?.some(sw => sw.root_id === rootId) ?? false;
 
       if (result.changed && !result.inStudyList && wasInStudyList) {
-        analytics.track(ANALYTICS_EVENTS.WORD_REMOVED_FROM_STUDY, {
+        void analytics.track(ANALYTICS_EVENTS.WORD_REMOVED_FROM_STUDY, {
           root_id: rootId,
         });
         // A same-day add-then-remove nets to zero words spent against today's
@@ -195,7 +195,7 @@ export const useStudyWordMutations = (
         const removedWord = context?.previousStudyWords?.find(sw => sw.root_id === rootId);
         void decrementIfAddedToday(removedWord?.created_at);
       } else if (result.changed && result.inStudyList && !wasInStudyList) {
-        analytics.track(ANALYTICS_EVENTS.WORD_ADDED_TO_STUDY, {
+        void analytics.track(ANALYTICS_EVENTS.WORD_ADDED_TO_STUDY, {
           root_id: rootId,
           source: 'article',
         });
@@ -205,13 +205,13 @@ export const useStudyWordMutations = (
       // No event when an intent-carrying call was a no-op (state unchanged)
 
       // Invalidate queries in background (don't await - optimistic update already applied)
-      fsrsQueries.invalidateAll(queryClient, userId);
+      void fsrsQueries.invalidateAll(queryClient, userId);
       if (audioPreference) {
-        audioQueries.invalidateAll(queryClient, userId);
+        void audioQueries.invalidateAll(queryClient, userId);
       }
 
       // Call refetch callback if provided (also don't await)
-      refetchStudyWords?.();
+      void refetchStudyWords?.();
     },
   };
 
@@ -308,7 +308,7 @@ export const useStudyWordMutations = (
         // Reached only by an error that did NOT come from the mutation above
         // — everything from the mutation itself already returned before this
         // catch runs.
-        handleError(error);
+        void handleError(error);
         return undefined;
       }
     },

@@ -90,17 +90,17 @@ export function useVoicePriming(source: VoiceOfferSource, rendered = true): UseV
   useEffect(() => {
     if (!showPrimingCard || shownRef.current) return;
     shownRef.current = true;
-    analytics.track(ANALYTICS_EVENTS.VOICE_PRIMING_SHOWN, { source });
+    void analytics.track(ANALYTICS_EVENTS.VOICE_PRIMING_SHOWN, { source });
   }, [showPrimingCard, source]);
 
   const accept = useCallback((): void => {
-    analytics.track(ANALYTICS_EVENTS.VOICE_PRIMING_ACCEPTED, { source });
+    void analytics.track(ANALYTICS_EVENTS.VOICE_PRIMING_ACCEPTED, { source });
     // VoiceGradingProvider watches this and starts the model download.
     dispatch(setVoiceEnabled(true));
   }, [dispatch, source]);
 
   const decline = useCallback((): void => {
-    analytics.track(ANALYTICS_EVENTS.VOICE_PRIMING_DECLINED, { source });
+    void analytics.track(ANALYTICS_EVENTS.VOICE_PRIMING_DECLINED, { source });
     dispatch(setVoiceOfferDismissed(true));
   }, [dispatch, source]);
 

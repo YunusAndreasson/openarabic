@@ -82,7 +82,7 @@ if (Notifications) {
     },
     handleError: (notificationId: string, error: Error) => {
       // Handle scheduling errors gracefully
-      handleError(error, {
+      void handleError(error, {
         analyticsEventName: ANALYTICS_EVENTS.NOTIFICATION_SCHEDULING_FAILED,
         sentryTags: { location: 'notifications', notificationId },
         sentryExtra: { notificationId },
@@ -158,7 +158,7 @@ export async function initializeNotifications(): Promise<boolean> {
     isInitialized = true;
     return true;
   } catch (error) {
-    handleError(error, { showToast: false });
+    void handleError(error, { showToast: false });
     return false;
   }
 }
@@ -197,7 +197,7 @@ function setupNotificationListeners(): void {
       if (!route) return;
 
       if (type === NOTIFICATION_TYPES.SRS_DUE || type === NOTIFICATION_TYPES.SRS_SLIPPING) {
-        analytics.track(ANALYTICS_EVENTS.SMART_REMINDER_OPENED, { type });
+        void analytics.track(ANALYTICS_EVENTS.SMART_REMINDER_OPENED, { type });
       }
       if (navigationCallback) {
         navigationCallback(route);
@@ -209,13 +209,13 @@ function setupNotificationListeners(): void {
   // This occurs when the notification queue overflows
   droppedSubscription = Notifications.addNotificationsDroppedListener(() => {
     // Track dropped notifications for monitoring
-    analytics.track(ANALYTICS_EVENTS.NOTIFICATIONS_DROPPED, {
+    void analytics.track(ANALYTICS_EVENTS.NOTIFICATIONS_DROPPED, {
       platform: Platform.OS,
       timestamp: new Date().toISOString(),
     });
 
     // Also log to Sentry as a warning
-    handleError(new Error('Notifications were dropped due to queue overflow'), {
+    void handleError(new Error('Notifications were dropped due to queue overflow'), {
       showToast: false,
       analyticsEventName: ANALYTICS_EVENTS.NOTIFICATIONS_DROPPED,
       sentrySeverity: 'warning',
@@ -270,7 +270,7 @@ export async function cancelSmartNotifications(): Promise<void> {
   try {
     await cancelManagedNotifications(Notifications);
   } catch (error) {
-    handleError(error, { showToast: false });
+    void handleError(error, { showToast: false });
   }
 }
 
@@ -331,14 +331,14 @@ export async function syncSmartNotifications(
         });
         scheduledCount++;
       } catch (error) {
-        handleError(error, {
+        void handleError(error, {
           showToast: false,
           analyticsEventName: ANALYTICS_EVENTS.REMINDER_SCHEDULING_ERROR,
         });
       }
     }
 
-    analytics.track(ANALYTICS_EVENTS.SMART_REMINDERS_SYNCED, {
+    void analytics.track(ANALYTICS_EVENTS.SMART_REMINDERS_SYNCED, {
       scheduledCount,
       planned: plan.length,
       horizonDays: SMART_NOTIFICATIONS.HORIZON_DAYS,
@@ -346,7 +346,7 @@ export async function syncSmartNotifications(
     });
     return scheduledCount;
   } catch (error) {
-    handleError(error, {
+    void handleError(error, {
       showToast: false,
       analyticsEventName: ANALYTICS_EVENTS.REMINDER_SCHEDULING_ERROR,
     });
@@ -368,7 +368,7 @@ export async function dismissDeliveredSmartNotifications(): Promise<void> {
       }
     }
   } catch (error) {
-    handleError(error, { showToast: false });
+    void handleError(error, { showToast: false });
   }
 }
 
@@ -408,12 +408,12 @@ export async function setAppBadgeCount(count: number): Promise<boolean> {
 
     if (!applied && !badgeRejectionReported) {
       badgeRejectionReported = true;
-      analytics.track(ANALYTICS_EVENTS.BADGE_WRITE_REJECTED, { count: validCount });
+      void analytics.track(ANALYTICS_EVENTS.BADGE_WRITE_REJECTED, { count: validCount });
     }
 
     return applied;
   } catch (error) {
-    handleError(error, {
+    void handleError(error, {
       showToast: false,
       analyticsEventName: 'Badge_Set_Error',
     });
@@ -452,7 +452,7 @@ export async function getPermissionStatus(): Promise<NotificationPermissionStatu
     if (status === 'denied') return canAskAgain ? 'undetermined' : 'denied';
     return 'undetermined';
   } catch (error) {
-    handleError(error, { showToast: false });
+    void handleError(error, { showToast: false });
     return 'unavailable';
   }
 }
@@ -530,7 +530,7 @@ export async function ensurePermissions(): Promise<boolean> {
         return false;
     }
   } catch (error) {
-    handleError(error, {
+    void handleError(error, {
       showToast: false,
       analyticsEventName: 'Notification_Permission_Error',
     });

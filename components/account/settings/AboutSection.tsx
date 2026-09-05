@@ -11,7 +11,7 @@ const openSocialLink = async (url: string) => {
   try {
     await Linking.openURL(url);
   } catch (error) {
-    handleError(error, {
+    void handleError(error, {
       analyticsEventName: 'Social_Media_Link_Failed',
       sentryTags: { location: 'account_screen', action: 'social_media' },
       sentryExtra: { url },

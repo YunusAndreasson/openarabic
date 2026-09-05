@@ -49,7 +49,7 @@ export const useDailyWordLimitSummary = (): string | null => {
         }
       };
 
-      fetchSummary();
+      void fetchSummary();
 
       return () => {
         cancelled = true;

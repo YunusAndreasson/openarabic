@@ -65,19 +65,19 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
         setProfilePhotoUri(null);
       }
     } catch (error) {
-      handleError(error, { showToast: false });
+      void handleError(error, { showToast: false });
     }
   }, [user?.id]);
 
   // Load on mount
   useEffect(() => {
-    loadProfilePhoto();
+    void loadProfilePhoto();
   }, [loadProfilePhoto]);
 
   // Reload when screen comes into focus (e.g., after updating profile picture)
   useFocusEffect(
     useCallback(() => {
-      loadProfilePhoto();
+      void loadProfilePhoto();
     }, [loadProfilePhoto]),
   );
 

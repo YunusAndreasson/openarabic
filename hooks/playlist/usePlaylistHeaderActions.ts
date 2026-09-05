@@ -57,7 +57,7 @@ export function usePlaylistHeaderActions() {
       setIsLoading(true);
       selectionFeedback();
 
-      analytics.track(ANALYTICS_EVENTS.AUDIO_PLAY_ALL_STARTED, {
+      void analytics.track(ANALYTICS_EVENTS.AUDIO_PLAY_ALL_STARTED, {
         article_count: tracks.length,
         source: 'header_button',
         shuffle_enabled: audioShuffleEnabled,
@@ -69,7 +69,7 @@ export function usePlaylistHeaderActions() {
         void markOnboardingStep(OnboardingStep.LISTEN_AUDIO);
       }
     } catch (error) {
-      handleError(error);
+      void handleError(error);
     } finally {
       setIsLoading(false);
     }
