@@ -1,19 +1,26 @@
 /**
- * Wires the voice-grading pipeline into a Practice review session. The mic
- * opens when the learner asks for it — never on a timer.
+ * Wires the voice-grading pipeline into a Practice review session. The mic opens
+ * by itself once the Arabic prompt has played, and the learner just answers.
  *
- * It used to arm itself on every card as soon as the Arabic prompt finished.
- * That meant guessing when someone was ready to speak, and a guess can only be
- * wrong: arm too eagerly and the mic is open while they are still thinking (the
- * energy gate then closes on room tone and grades silence); arm behind any of
- * the seven gates below and the card sits with a mic that never opens, which
- * reads as "the mic is unreliable". Neither failure is visible from the outside,
- * which is why it stayed hard to pin down.
+ * That is the second time this has been automatic, and the reason it is safe now
+ * is worth stating, because the first attempt was removed for good cause.
  *
- * Making the tap the trigger removes the guess entirely, and it is also the
- * better exercise: the pause before answering IS the retrieval, so the learner
- * should own when it ends. Every gate below is still here — they still decide
- * whether an arm CAN happen — but nothing arms until `speakNow()` says so.
+ * Arming on the prompt used to mean the microphone stood open while the learner
+ * was still thinking — and the gate deciding what it heard read LOUDNESS. Room
+ * tone, a passing conversation or a television clears 12 dB over a quiet room
+ * easily, so the window confirmed speech on nobody, closed on 900 ms of quiet,
+ * and graded an empty transcript against a card that had never been answered.
+ * The tap was introduced to remove the guess: it is unambiguous intent, and the
+ * pause before answering IS the retrieval, so the learner owned when it ended.
+ *
+ * What changed is the question the gate asks. A voice-activity detector answers
+ * *is this a voice*, not *is this loud* (see `hooks/voice/useSpeechGate.ts`), so
+ * an open microphone through the thinking pause costs nothing — which is what
+ * makes taking the tap away an improvement rather than a regression. The tap did
+ * not disappear: `speakNow()` is still the way to answer over a prompt still
+ * playing, still the way back after a window that heard nothing, and still the
+ * only thing that will show the OS microphone dialog. Every gate below is
+ * unchanged; hands-free simply supplies the request the tap used to.
  *
  * On stop it transcribes via Parakeet and runs `matchSingleWord` against the
  * card's English meaning.
@@ -39,8 +46,8 @@ import { useToast, useVoiceGrading } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { STRINGS } from '@/constants/strings';
 import { PARAKEET_MODEL_ID, VOICE_DECODING_METHOD } from '@/constants/voiceModel';
-import { DEFAULT_RECORDING_CONFIG } from '@/lib/voice/recording';
-import type { RecordingStopReason } from '@/lib/voice/recording';
+import { DEFAULT_RECORDING_CONFIG, getMicPermissionStatus } from '@/lib/voice/recording';
+import type { RecordingStopReason, SpeechGateKind } from '@/lib/voice/recording';
 import type { RootId } from '@/types/branded.types';
 import { analytics } from '@/services/analytics';
 import {
@@ -127,6 +134,11 @@ export interface VoiceDebug {
     durationMs: number;
     bufferCount: number;
     stopReason: RecordingStopReason;
+    /** Which detector decided this window. The config says only what was
+     *  ASKED for: the VAD is skipped before its model lands and handed back
+     *  mid-window on a bad capture rate, and a stop that looks wrong reads
+     *  completely differently depending on which one took it. */
+    gateUsed: SpeechGateKind;
     heardSpeech: boolean;
     peakRms: number;
     /** The room the gate judged this answer against, and how much of the
@@ -166,6 +178,16 @@ interface UseVoiceReviewArgs {
   otherGlosses?: readonly string[];
   /** Is the review session ready (not loading, no audio preload in flight). */
   ready: boolean;
+  /**
+   * The card whose Arabic prompt has finished — the moment hands-free arming
+   * waits for. See `useReview.promptAudioDoneKey`.
+   */
+  promptDoneKey: string | null;
+  /**
+   * Open the microphone as soon as this card's prompt ends, with no tap.
+   * Off restores the explicit "Speak to answer" button.
+   */
+  handsFree: boolean;
   /** Stop any in-flight playback (reveal audio) before reopening the mic on a
    *  retry, so its tail isn't captured by the recording. */
   stopAudio: () => void;
@@ -256,6 +278,8 @@ export function useVoiceReview({
   glossAlternates,
   otherGlosses,
   ready,
+  promptDoneKey,
+  handsFree,
   stopAudio,
   onKnownAuto,
   onVagueAuto,
@@ -277,6 +301,23 @@ export function useVoiceReview({
   speakNow: () => void;
   /** End a hold-to-talk recording and grade what was captured. */
   stopSpeaking: () => void;
+  /**
+   * Hands-free is genuinely driving THIS card, so the screen may drop the
+   * "Speak to answer" button.
+   *
+   * One value, computed here, because every term in it lives here and the
+   * screen re-deriving any of them is how the control disappears in a state
+   * that still needs it. It shipped that way once: the screen tested only the
+   * setting, so a fresh install — where the OS has not been asked for the
+   * microphone yet, and the tap on that button is the ONLY thing that asks —
+   * rendered no button, never armed, never prompted, and left voice
+   * permanently unreachable with no way out.
+   *
+   * False therefore whenever the learner still needs the manual control: voice
+   * switched off, the permission not yet granted, or this card's window having
+   * already waited out its budget and heard nobody.
+   */
+  handsFreeActive: boolean;
 } {
   const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
   // Advanced dev toggles — snapshotted into each telemetry attempt's `meta`.
@@ -321,13 +362,13 @@ export function useVoiceReview({
   // Once requested, keep it warm for the remainder of this review session.
   const [sessionRequested, setSessionRequested] = useState(false);
   /**
-   * The learner has asked for the mic and the effect may arm exactly once.
+   * A microphone has been asked for and the effect may arm exactly once.
    *
-   * This is the trigger now — there is no automatic arm. Set by `speakNow()`
-   * (the tap), by `retry()`, and by the transient-failure backoff, which is the
-   * one case where the request outlives its first attempt: the learner already
-   * asked, so the ladder is finishing their request rather than starting one of
-   * its own.
+   * The one trigger every path goes through, so there is a single place a window
+   * can be opened from: hands-free (the card's prompt ending), `speakNow()` (the
+   * tap), `retry()`, and the transient-failure backoff — which is the one case
+   * where the request outlives its first attempt, since the asking already
+   * happened and the ladder is only finishing it.
    */
   const armRequestedRef = useRef(false);
 
@@ -344,7 +385,24 @@ export function useVoiceReview({
    * (`tapAtRef` was cleared and read, never assigned), so it proved nothing.
    * A row with an arm and a null trigger is an arm nobody asked for.
    */
-  const armTriggerRef = useRef<'tap' | 'retry' | 'ladder' | null>(null);
+  const armTriggerRef = useRef<'tap' | 'auto' | 'retry' | 'ladder' | null>(null);
+  /**
+   * Whether the window currently being graded was one the learner opened.
+   *
+   * Read after the recording stops, where a `noSpeech` result means opposite
+   * things for the two: a tapped window that heard nothing is a failed answer
+   * worth showing, and a self-opened one is a card nobody chose to speak to.
+   */
+  const handsFreeWindowRef = useRef(false);
+  /**
+   * The card whose hands-free window ran out its budget without hearing
+   * anything. Its microphone is not reopened — that would be a loop — and the
+   * manual control comes back for that card instead.
+   */
+  const handsFreeExhaustedRef = useRef<string | null>(null);
+  const [handsFreeExhausted, setHandsFreeExhausted] = useState<string | null>(null);
+  /** The card hands-free has already opened once, so it opens exactly once. */
+  const autoArmedForKeyRef = useRef<string | null>(null);
 
   // Stable refs for callback identity.
   const onKnownAutoRef = useRef(onKnownAuto);
@@ -517,6 +575,85 @@ export function useVoiceReview({
     setPhase(voice.isWarming ? 'loading' : 'idle');
   }, [voiceEnabled, voice.isWarming, voice.isReady]);
 
+  /**
+   * Has the OS already granted the microphone? Checked without prompting, once
+   * per mount, because hands-free has no tap to attach a dialog to.
+   */
+  const [micPermission, setMicPermission] = useState<'granted' | 'denied' | 'unknown'>('unknown');
+  const micGranted = micPermission === 'granted';
+  useEffect(() => {
+    // Both answers are terminal for this process — changing the permission in
+    // Settings terminates the app, so a relaunch is the only thing that can
+    // revise either. Stopping on both is what keeps a refused learner from
+    // paying a native round-trip on every phase hop of every card, forever.
+    if (!voiceEnabled || micPermission !== 'unknown') return;
+    let active = true;
+    void getMicPermissionStatus().then(status => {
+      if (active && status !== 'unknown') setMicPermission(status);
+    });
+    return () => {
+      active = false;
+    };
+    // `phase` is a trigger, not a value read here: the first tap on "Speak to
+    // answer" is what shows the OS dialog, so the answer changes underneath us
+    // exactly once — when that tap resolves — and re-reading on the phase it
+    // moves through is how hands-free takes over for the rest of the session
+    // instead of waiting for a remount. It stops re-asking on both terminal
+    // answers, which is why `micGranted` and the denial latch are gates here
+    // and not just targets.
+  }, [voiceEnabled, micPermission, phase]);
+
+  /**
+   * Hands-free arming: the microphone opens itself once the Arabic has played.
+   *
+   * This is the same request `speakNow()` makes, minus the tap — it sets the
+   * trigger and bumps `attempt`, and the effect below does the actual arming, so
+   * there is exactly one path that opens a microphone.
+   *
+   * Why it waits for the prompt rather than opening with the card: the input
+   * stream is dropped for the duration of every prompt so the word plays at full
+   * volume, so there is no earlier moment at which a window could exist. That
+   * also means hands-free cannot answer OVER the prompt — for that the learner
+   * still has the button, which is why `speakNow` keeps its prompt-cutting
+   * behaviour.
+   *
+   * Every guard here is a reason NOT to take the tap away:
+   *   - no permission yet — the tap is the only honest place for the OS dialog
+   *   - a result panel is open — the mic must not record them reading the answer
+   *   - this card already had its window — one automatic open per card, so a
+   *     re-render can't reopen a mic the learner just finished with
+   *   - the budget already ran out on this card — see `handsFreeExhaustedRef`
+   */
+  useEffect(() => {
+    if (!handsFree || !voiceEnabled || !micGranted) return;
+    if (currentWordKey === 'none' || promptDoneKey !== currentWordKey) return;
+    if (!voice.isReady || !ready) return;
+    if (!expected || expected.length === 0) return;
+    if (result !== null) return;
+    if (autoArmedForKeyRef.current === currentWordKey) return;
+    if (handsFreeExhaustedRef.current === currentWordKey) return;
+    if (armedForKeyRef.current === currentWordKey) return;
+
+    autoArmedForKeyRef.current = currentWordKey;
+    diagMark('mic.autoArm', { key: currentWordKey });
+    setSessionRequested(true);
+    tapAtRef.current = Date.now();
+    armTriggerRef.current = 'auto';
+    markArmTap();
+    armRequestedRef.current = true;
+    setAttempt(a => a + 1);
+  }, [
+    handsFree,
+    voiceEnabled,
+    micGranted,
+    currentWordKey,
+    promptDoneKey,
+    voice.isReady,
+    ready,
+    expected,
+    result,
+  ]);
+
   useEffect(() => {
     // Every early return below is a card where the mic does NOT open. The user
     // experiences that as "I had to wait for the mic", so each reason is
@@ -551,14 +688,28 @@ export function useVoiceReview({
     // tap as the trigger there is nothing to race.
     armedForKeyRef.current = currentWordKey;
     armRequestedRef.current = false;
+    // Latched here rather than read later: `armTriggerRef` is overwritten by the
+    // retry ladder, and by the time the recording stops it may no longer say who
+    // opened the window this result came out of.
+    handsFreeWindowRef.current = armTriggerRef.current === 'auto';
     let cancelled = false;
 
     const run = async () => {
       setPhase('arming');
-      void analytics.track(ANALYTICS_EVENTS.VOICE_ARM, { wordKey: currentWordKey });
+      // `trigger` matters more than it used to: hands-free arms on essentially
+      // every card, so without it this event is a card counter rather than a
+      // measure of anyone reaching for the microphone.
+      void analytics.track(ANALYTICS_EVENTS.VOICE_ARM, {
+        wordKey: currentWordKey,
+        trigger: armTriggerRef.current ?? 'unknown',
+      });
       voiceBreadcrumb('voice.arm', { wordKey: currentWordKey });
 
       const outcome = await voice.arm({
+        // A window nobody asked for has to outlast the learner thinking; one
+        // opened by a tap does not. Only the two deadlines that wait for speech
+        // move — see `withHandsFreeBudget`.
+        handsFree: handsFreeWindowRef.current,
         // The mic is live — only now is it honest to ask for an answer.
         onCapturing: () => {
           tapToCapturingRef.current =
@@ -671,12 +822,21 @@ export function useVoiceReview({
           },
         });
         // The ladder is out of rungs: this card never got a microphone. The
-        // button just goes quietly back to "Speak to answer", which is
+        // button goes quietly back to "Speak to answer", which is
         // indistinguishable from it never having been pressed — so the one
         // signal the learner gets that anything went wrong is this. A warning
         // rather than an error: the mic failing is not a wrong answer.
         // (The missing VISUAL for this state is a real gap, but out of scope
         // for a haptics pass.)
+        //
+        // Hands-free has no button to go back to, so the failure would be a
+        // buzz and nothing else — a card that silently cannot be answered by
+        // the only means it offers. Mark it the same way an exhausted window is
+        // marked, which hands the manual control back for this one card.
+        if (handsFreeWindowRef.current) {
+          handsFreeExhaustedRef.current = currentWordKey;
+          setHandsFreeExhausted(currentWordKey);
+        }
         warningFeedback();
         setPhase('idle');
         return;
@@ -692,6 +852,7 @@ export function useVoiceReview({
           durationMs: outcome.result.durationMs,
           bufferCount: outcome.result.bufferCount,
           stopReason: outcome.result.stopReason,
+          gateUsed: outcome.result.gateUsed,
           heardSpeech: outcome.result.heardSpeech,
           peakRms: outcome.result.peakRms,
           noiseFloorDb: outcome.result.noiseFloorDb,
@@ -700,6 +861,41 @@ export function useVoiceReview({
           stopDecidedAtMs: outcome.result.stopDecidedAtMs,
         },
       }));
+      // A self-opened window that ran its whole budget without hearing anyone
+      // is not a wrong answer — it is a card the learner never chose to speak
+      // to. Grading it would put a transcript panel (or worse, a mark) on a
+      // question they were still reading, so the microphone simply closes and
+      // the manual control comes back for this one card. Nothing is logged as
+      // an attempt, because nothing was attempted.
+      //
+      // `heardSpeech` is the line, and it is load-bearing: `noSpeech` means "not
+      // ENOUGH speech", not "none", so a short answer the detector confirmed but
+      // that fell under `minSpeechMs` stops here too. Discarding THAT would be
+      // the worst outcome this feature can produce — the learner speaks, waits
+      // out the whole hands-free budget, and is told nothing. If a run of voice
+      // was confirmed, it gets transcribed and graded like any other answer;
+      // an empty transcript then surfaces the result panel, which is the honest
+      // "we didn't catch that" rather than silence.
+      if (
+        handsFreeWindowRef.current &&
+        outcome.result.stopReason === 'noSpeech' &&
+        !outcome.result.heardSpeech
+      ) {
+        diagMark('mic.handsFree.exhausted', {
+          key: currentWordKey,
+          durationMs: outcome.result.durationMs,
+          gate: outcome.result.gateUsed,
+        });
+        voiceBreadcrumb('voice.handsFree.exhausted', {
+          durationMs: outcome.result.durationMs,
+          gateUsed: outcome.result.gateUsed,
+        });
+        handsFreeExhaustedRef.current = currentWordKey;
+        setHandsFreeExhausted(currentWordKey);
+        setPhase('idle');
+        return;
+      }
+
       const endTranscribe = diagSpan('stt.transcribe', {
         samples: outcome.result.waveform.length,
       });
@@ -807,6 +1003,10 @@ export function useVoiceReview({
           // the room measurement are what make a row self-explaining. Rounded
           // integers, ~160 of them at most.
           gate: {
+            // WHICH detector decided, never inferred from the config: the VAD is
+            // skipped before its model lands and handed back mid-window on a bad
+            // capture rate, so a row that assumed 'vad' would be a guess.
+            used: outcome.result.gateUsed,
             // Null travels as null: a dead-mic row must stay distinguishable
             // from one that measured a quiet room. See RecordingResult.
             noiseFloorDb:
@@ -1069,5 +1269,10 @@ export function useVoiceReview({
     retry,
     speakNow,
     stopSpeaking,
+    // `handsFreeExhausted` is compared against the LIVE key rather than cleared
+    // on advance: the marker is a fact about one card, and a card that is no
+    // longer showing cannot be the one holding the button open.
+    handsFreeActive:
+      handsFree && voiceEnabled && micGranted && handsFreeExhausted !== currentWordKey,
   };
 }

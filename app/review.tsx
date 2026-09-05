@@ -53,6 +53,7 @@ import {
 import { useColors } from '@/hooks/theme/useColors';
 import { useTutorial } from '@/hooks/tutorials/useTutorial';
 import { useAppSelectorShallow } from '@/store/hooks';
+import { selectVoiceHandsFree } from '@/store/settingsSlice';
 import { getDiagSnapshot, subscribeDiag } from '@/utils/reviewDiagnostics';
 
 const baseStyles = StyleSheet.create({
@@ -203,7 +204,7 @@ function ReviewDebugHud({
       {debug.recorder && (
         <>
           <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
-            {`rec: ${debug.recorder.stopReason} @${debug.recorder.stopDecidedAtMs}ms · dur ${debug.recorder.durationMs}ms · ${debug.recorder.bufferCount}buf · 1st ${debug.recorder.firstBufferMs ?? 'never'}ms`}
+            {`rec: ${debug.recorder.stopReason} @${debug.recorder.stopDecidedAtMs}ms · ${debug.recorder.gateUsed} · dur ${debug.recorder.durationMs}ms · ${debug.recorder.bufferCount}buf · 1st ${debug.recorder.firstBufferMs ?? 'never'}ms`}
           </ThemedText>
           <ThemedText colorName="textTertiary" type="caption" style={voiceDebugStyles.line}>
             {`peak ${debug.recorder.peakRms.toFixed(5)} · room ${debug.recorder.noiseFloorDb?.toFixed(0) ?? 'never'}dB · voice ${debug.recorder.speechMs}ms · ${debug.recorder.heardSpeech ? 'speech' : 'silent'}`}
@@ -255,6 +256,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   const insets = useSafeAreaInsets();
   const colors = useColors();
   const voiceDebugEnabled = useAppSelectorShallow(state => state.settings.voiceDebugEnabled);
+  const voiceHandsFree = useAppSelectorShallow(selectVoiceHandsFree);
   const diagnosticsEnabled = __DEV__ || voiceDebugEnabled;
 
   // Read before useReview: the review hook takes `setPlaybackPriority` from
@@ -271,6 +273,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     maxProgress,
     gradeRecoveryEpoch,
     currentWordKey,
+    promptAudioDoneKey,
     revealAnswer,
     grade,
     intervalLabels,
@@ -456,13 +459,15 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     .map(word => word.root?.meaning)
     .filter((meaning): meaning is string => Boolean(meaning));
 
-  // Voice grading — when the toggle is on, the action band carries a
-  // tap-to-speak button next to "Show answer", and the mic opens only when the
-  // learner presses it. Correct match → advance as "Knew it". Miss → mark the
-  // card wrong on the spot, play the English audio, and show the result row
-  // (transcript + answer + Missed it/Try again/Got it); that row is the answer
-  // surface for voice, so the card is NOT flipped (a retry stays clean on the
-  // question face).
+  // Voice grading — the microphone opens itself once the Arabic prompt has
+  // played and the learner simply answers, so the action band carries "Show
+  // answer" alone. With hands-free off (Account → Practice) the band carries a
+  // tap-to-speak button beside it and the mic opens only on that press.
+  //
+  // Correct match → advance as "Knew it". Miss → mark the card wrong on the
+  // spot, play the English audio, and show the result row (transcript + answer
+  // + Missed it/Try again/Got it); that row is the answer surface for voice, so
+  // the card is NOT flipped (a retry stays clean on the question face).
   const {
     phase: voicePhase,
     debug: voiceDebug,
@@ -472,6 +477,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     retry: voiceRetry,
     speakNow: voiceSpeakNow,
     stopSpeaking: voiceStopSpeaking,
+    handsFreeActive,
   } = useVoiceReview({
     expected: currentWord?.root?.meaning ?? null,
     currentWordKey,
@@ -480,6 +486,11 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     otherGlosses,
     // Stop listening once the answer is revealed — the recall test is over.
     ready: !isUpdating && !isLoading && isAudioReady && !isComplete && !revealed,
+    // The mic opens itself the moment the Arabic finishes. It cannot open any
+    // earlier: the input stream is dropped for every prompt so the word plays
+    // at full volume.
+    promptDoneKey: promptAudioDoneKey,
+    handsFree: voiceHandsFree,
     stopAudio,
     // Correct match → advance as "Knew it" (speaking the answer is the proof;
     // fromVoice bypasses the reveal guard). This used to be the worst path in
@@ -546,7 +557,18 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   // "Preparing voice… 98%" to "Speak to answer" and stops being disabled. A tap
   // that lands a frame early hits a disabled button and does nothing, which is
   // the same outcome as before it arrived.
-  const voiceMode = voiceActive ? voiceButtonMode(voicePhase, readiness) : null;
+  //
+  // Hands-free suppresses only the two states that mean "open the mic" and
+  // "close it" — a card that opens its own microphone needs neither — so the
+  // band holds "Show answer" alone and reads as one thing to do rather than a
+  // choice between two.
+  //
+  // `handsFreeActive` is taken whole from the hook and deliberately NOT
+  // re-derived from the setting here: it also carries "the OS has granted the
+  // microphone" and "this card's window already heard nobody", and both are
+  // states where the button is the learner's only way forward. See its doc for
+  // what re-deriving it cost.
+  const voiceMode = voiceActive ? voiceButtonMode(voicePhase, readiness, handsFreeActive) : null;
 
   // The escape hatch for a learner who wants voice now and is not on Wi-Fi. The
   // size is in the button's own label, so this is a deliberate, informed spend
@@ -821,22 +843,22 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
                 />
               </Animated.View>
             ) : (
-              // The two ways to answer a card, side by side, in the one place
-              // this screen puts things you can do. The mic used to sit on the
-              // card and "Show answer" below it — two invitations, two shapes,
-              // two places, and no way to see them as alternatives.
+              // What the learner can do about this card, in the one place this
+              // screen puts things you can do.
               //
-              // Two peers now: same height, same shape, one line of text each,
-              // no glyphs. Fill now carries the hierarchy the tint used to
-              // carry alone — the voice CTA goes solid, "Show answer" stays
-              // the quieter tinted fallback beside it — so the pair reads as
-              // "the exercise, and the way out of it" rather than two equally
-              // muted buttons in different colours. The shape stays shared
-              // between the two; only "Show answer" alone (voice off) takes
-              // the app's standalone pill shape. There is no line of copy
-              // above them either — the pair is the whole instruction, and
-              // everything that used to be written here ("Tap when you're
-              // done") was explaining a control that can show it instead.
+              // Hands-free leaves ONE button here. The exercise is speaking,
+              // and speaking now has no control — the mic opens itself and the
+              // card's own meter shows it listening — so the band is left with
+              // the way out of the exercise and nothing else. That is the whole
+              // point of the change: the band used to carry two buttons and an
+              // implied instruction ("tap this to speak, tap that to give up"),
+              // and the version with a self-opening microphone needs neither.
+              //
+              // With hands-free off it is a pair again: same height, same
+              // shape, one line of text each, no glyphs, with fill carrying
+              // the hierarchy — the voice CTA solid, "Show answer" the quieter
+              // tinted chip beside it, reading as "the exercise, and the way
+              // out of it" rather than two muted buttons in different colours.
               <Animated.View
                 key="reveal"
                 entering={ACTION_ENTERING}
@@ -859,13 +881,20 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
                     // voice CTA carries `primary` instead (see VoiceAnswerButton)
                     // and this one stays the quieter `tinted` chip beside it.
                     //
-                    // With voice off there is no mic to defer to, and the band
-                    // holds this button alone — so it takes the app's
-                    // standalone-CTA shape itself rather than sitting there as a
-                    // grey ghost. See ReviewActionButton on where `primary` may
-                    // and may not appear.
+                    // Loud ONLY when voice is off, where revealing is the whole
+                    // exercise and this button is the band's only occupant — so
+                    // it takes the app's standalone-CTA shape rather than
+                    // sitting there as a grey ghost.
+                    //
+                    // It stays quiet under hands-free even though it is alone
+                    // there too. Being the only button does not make it the
+                    // main action: the main action is speaking, which has no
+                    // button, and painting the escape hatch as the loudest
+                    // thing on the card would invite exactly the tap the
+                    // exercise exists to avoid. See ReviewActionButton on where
+                    // `primary` may and may not appear.
                     color={colors.tint}
-                    variant={voiceMode ? 'quiet' : 'primary'}
+                    variant={voiceMode || handsFreeActive ? 'quiet' : 'primary'}
                     disabled={isUpdating}
                     onPress={revealAnswer}
                   />

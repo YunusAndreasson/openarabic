@@ -32,14 +32,17 @@ import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { useParakeetStt } from '@/hooks/voice/useSherpaStt';
 import { useVoiceModel } from '@/hooks/voice/useVoiceModel';
 import { useVoiceModelPrefetch } from '@/hooks/voice/useVoiceModelPrefetch';
+import { useSpeechGate } from '@/hooks/voice/useSpeechGate';
 import { useResumeFromBackground } from '@/hooks/app/useResumeFromBackground';
 import {
   DEFAULT_RECORDING_CONFIG,
   MicPermissionDeniedError,
   VoiceCaptureSession,
   ensureMicPermission,
+  withHandsFreeBudget,
   type RecordingConfig,
   type RecordingResult,
+  type SpeechGate,
   type VoiceArmFailureReason,
 } from '@/lib/voice/recording';
 import { analytics } from '@/services/analytics';
@@ -103,7 +106,15 @@ interface VoiceGradingContextValue {
    * On a warm session that is now near-immediate, but it is still a distinct
    * moment and the UI must not invite the learner to speak before it.
    */
-  arm: (handlers?: { onCapturing?: () => void }) => Promise<VoiceArmOutcome>;
+  arm: (options?: {
+    onCapturing?: () => void;
+    /**
+     * The window is opening on the card's behalf rather than on a tap, so it
+     * has to outlast the learner thinking. Widens only the two deadlines that
+     * measure the wait for speech — see `withHandsFreeBudget`.
+     */
+    handsFree?: boolean;
+  }) => Promise<VoiceArmOutcome>;
   /** Cancel any in-flight recording without resolving its promise. */
   cancel: () => Promise<void>;
   /**
@@ -258,6 +269,32 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
     modelPath: model.state === 'ready' ? model.localPath : null,
   });
   const { transcribe: rawTranscribe, isReady, isWarming, error } = stt;
+
+  /**
+   * The voice-activity detector, loaded next to the recogniser so one setting
+   * still gates every voice download.
+   *
+   * Gated on `enabled` rather than on `engineRetained`: at ~1.8 MB it is under
+   * two per cent of Parakeet's ~103 MB, and holding it in memory for the app's
+   * lifetime costs far less than re-loading it at the top of every session —
+   * which is the moment a card is already waiting on a microphone. Its readiness
+   * is never a gate on anything: a window that opens before it lands simply runs
+   * on the energy gate — and `RecordingResult.gateUsed`, which every attempt
+   * writes to `voice_grading_attempts`, is how we find out whether it ever did.
+   */
+  const { gate: speechGate } = useSpeechGate({ enabled });
+  /**
+   * Read inside `arm()`, which must not be re-created when the gate loads.
+   *
+   * `arm`'s identity flows into the context value, and `useVoiceReview`'s arm
+   * effect takes that value as a dependency — so a new one mid-card runs the
+   * effect's cleanup, which cancels the recording in progress. The model
+   * landing while someone is mid-answer would have thrown their answer away.
+   */
+  const speechGateRef = useRef<SpeechGate | null>(null);
+  useEffect(() => {
+    speechGateRef.current = speechGate;
+  }, [speechGate]);
 
   // Advanced recording knobs (Account → Advanced). Held in a ref so arm()
   // always reads the latest values without re-creating the callback (its
@@ -793,7 +830,10 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
   }, [enabled, abortWindow, capture]);
 
   const arm = useCallback(
-    async function arm(handlers?: { onCapturing?: () => void }): Promise<VoiceArmOutcome> {
+    async function arm(options?: {
+      onCapturing?: () => void;
+      handsFree?: boolean;
+    }): Promise<VoiceArmOutcome> {
       // Synchronous — before any await — so a second call arriving before
       // this one reaches `armResolveRef.current = resolve` still sees the
       // claim and bails, instead of racing it. See armClaimRef's own comment.
@@ -946,7 +986,7 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
                 onCapturing: () => {
                   // Stale guard: a window from a superseded arm() must not flip
                   // the current card's UI to "listening".
-                  if (windowId === windowSeqRef.current) handlers?.onCapturing?.();
+                  if (windowId === windowSeqRef.current) options?.onCapturing?.();
                 },
                 onLevel: rms => {
                   if (windowId !== windowSeqRef.current) return;
@@ -961,7 +1001,10 @@ export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) 
                   micLevel.set(Math.min(1, Math.sqrt(rms / reference)));
                 },
               },
-              recordingConfigRef.current,
+              options?.handsFree
+                ? withHandsFreeBudget(recordingConfigRef.current)
+                : recordingConfigRef.current,
+              speechGateRef.current,
             );
             voiceBreadcrumb('voice.recorder.arm', { windowId });
           } catch (err) {

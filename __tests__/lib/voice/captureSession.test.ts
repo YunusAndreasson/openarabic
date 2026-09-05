@@ -17,6 +17,7 @@ import {
   DEFAULT_RECORDING_CONFIG,
   ensureMicPermission,
   VoiceCaptureSession,
+  type SpeechGate,
 } from '@/lib/voice/recording';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -320,12 +321,15 @@ describe('VoiceCaptureSession', () => {
     await session.open(DEFAULT_RECORDING_CONFIG);
 
     session.beginWindow({}, DEFAULT_RECORDING_CONFIG);
-    // 400 short buffers, well past the 160 cap: quiet first, loud last.
-    for (let i = 0; i < 200; i += 1) recorder().emitBuffer({ level: SILENCE, frames: 160 });
-    for (let i = 0; i < 200; i += 1) recorder().emitBuffer({ level: SPEECH, frames: 160 });
+    // 800 short buffers, well past the 320 cap: quiet first, loud last. The cap
+    // is 320 rather than 160 because a hands-free window runs to 30 s, twice the
+    // tapped one — at 160 the first half of every self-opened window's envelope,
+    // onset included, would have been dropped.
+    for (let i = 0; i < 400; i += 1) recorder().emitBuffer({ level: SILENCE, frames: 160 });
+    for (let i = 0; i < 400; i += 1) recorder().emitBuffer({ level: SPEECH, frames: 160 });
     const result = session.endWindow();
 
-    expect(result.levelsDb).toHaveLength(160);
+    expect(result.levelsDb).toHaveLength(320);
     // Every kept entry is from the loud tail, not the quiet head.
     const quietest = Math.max(...result.levelsDb);
     expect(quietest).toBeLessThan(0);
@@ -435,6 +439,139 @@ describe('VoiceCaptureSession', () => {
 
     await expect(session.close({ releaseSession: true })).resolves.toBeUndefined();
     expect(session.isOpen).toBe(false);
+  });
+
+  describe('the speech gate', () => {
+    /**
+     * A stand-in for the FSMN VAD. It reports what the recorder did to it, and
+     * `speaking` is flipped by the test rather than by a model — which is the
+     * whole reason the recorder takes an interface here and not a module.
+     */
+    function stubGate(overrides: Partial<SpeechGate> = {}) {
+      const inserted: Float32Array[] = [];
+      let handlers: { onSpeechBegin: () => void; onSpeechEnd: () => void } | null = null;
+      const gate: SpeechGate & {
+        inserted: Float32Array[];
+        speak: () => void;
+        hush: () => void;
+        stopped: number;
+      } = {
+        isReady: true,
+        inserted,
+        stopped: 0,
+        start: h => {
+          handlers = h;
+        },
+        insert: waveform => {
+          inserted.push(waveform);
+        },
+        stop: () => {
+          gate.stopped += 1;
+        },
+        speak: () => handlers?.onSpeechBegin(),
+        hush: () => handlers?.onSpeechEnd(),
+        ...overrides,
+      };
+      return gate;
+    }
+
+    test('drives the window from the VAD and says so in the result', async () => {
+      const session = new VoiceCaptureSession();
+      await session.open(DEFAULT_RECORDING_CONFIG);
+      const gate = stubGate();
+
+      session.beginWindow({}, DEFAULT_RECORDING_CONFIG, gate);
+      // Loud audio the VAD has not called speech: under the energy gate this is
+      // an answer, and the whole point of the VAD is that it is not.
+      for (let i = 0; i < 6; i += 1) recorder().emitBuffer({ level: SPEECH });
+      expect(session.endWindow()).toMatchObject({ gateUsed: 'vad', heardSpeech: false });
+      expect(gate.inserted).toHaveLength(6);
+      expect(gate.stopped).toBe(1);
+    });
+
+    test('hears an answer the moment the VAD calls one', async () => {
+      const session = new VoiceCaptureSession();
+      await session.open(DEFAULT_RECORDING_CONFIG);
+      const gate = stubGate();
+
+      session.beginWindow({}, DEFAULT_RECORDING_CONFIG, gate);
+      gate.speak();
+      // Quiet enough that the dB gate would never have confirmed it.
+      for (let i = 0; i < 6; i += 1) recorder().emitBuffer({ level: SILENCE });
+      expect(session.endWindow()).toMatchObject({ gateUsed: 'vad', heardSpeech: true });
+    });
+
+    test('falls back to the energy gate when the VAD session dies mid-answer', async () => {
+      const session = new VoiceCaptureSession();
+      await session.open(DEFAULT_RECORDING_CONFIG);
+      let alive = true;
+      const gate = stubGate({
+        insert: () => {
+          if (!alive) throw new Error('VAD stream failed');
+        },
+      });
+
+      session.beginWindow({}, DEFAULT_RECORDING_CONFIG, gate);
+      recorder().emitBuffer({ level: SILENCE });
+      alive = false;
+      // Stranding the learner over a detector that is not the point of the
+      // exercise is the one outcome this must never produce: the window carries
+      // on, and the result reports which gate actually finished it.
+      for (let i = 0; i < 6; i += 1) recorder().emitBuffer({ level: SPEECH });
+      expect(session.endWindow()).toMatchObject({ gateUsed: 'energy', heardSpeech: true });
+    });
+
+    test('hands the window back when the capture rate is not the model rate', async () => {
+      const session = new VoiceCaptureSession();
+      await session.open(DEFAULT_RECORDING_CONFIG);
+      const gate = stubGate();
+
+      session.beginWindow({}, DEFAULT_RECORDING_CONFIG, gate);
+      // FSMN is a 16 kHz model and the resample only happens at endWindow, far
+      // too late to feed a live detector.
+      recorder().emitBuffer({ level: SPEECH, sampleRate: 44100 });
+      expect(session.endWindow().gateUsed).toBe('energy');
+      expect(gate.inserted).toHaveLength(0);
+    });
+
+    test('runs on the energy gate while the model is still downloading', async () => {
+      const session = new VoiceCaptureSession();
+      await session.open(DEFAULT_RECORDING_CONFIG);
+      const gate = stubGate({ isReady: false });
+
+      session.beginWindow({}, DEFAULT_RECORDING_CONFIG, gate);
+      recorder().emitBuffer({ level: SPEECH });
+      expect(session.endWindow().gateUsed).toBe('energy');
+      expect(gate.inserted).toHaveLength(0);
+    });
+
+    test('never starts the VAD while auto-stop is switched off', async () => {
+      const session = new VoiceCaptureSession();
+      await session.open(DEFAULT_RECORDING_CONFIG);
+      const gate = stubGate();
+
+      // Advanced → "Auto-stop on silence" off means the VAD's verdict is
+      // discarded, so running the model would be a native inference every
+      // 100 ms for a 30 s window to compute a number nothing reads — and would
+      // then report `gateUsed: 'vad'` for a window the dB gate decided, which
+      // is the one thing that field promises never to do.
+      session.beginWindow({}, { ...DEFAULT_RECORDING_CONFIG, energyGateEnabled: false }, gate);
+      for (let i = 0; i < 4; i += 1) recorder().emitBuffer({ level: SPEECH });
+
+      expect(session.endWindow().gateUsed).toBe('energy');
+      expect(gate.inserted).toHaveLength(0);
+    });
+
+    test('honours a config that asks for the energy gate outright', async () => {
+      const session = new VoiceCaptureSession();
+      await session.open(DEFAULT_RECORDING_CONFIG);
+      const gate = stubGate();
+
+      session.beginWindow({}, { ...DEFAULT_RECORDING_CONFIG, speechGate: 'energy' }, gate);
+      recorder().emitBuffer({ level: SPEECH });
+      expect(session.endWindow().gateUsed).toBe('energy');
+      expect(gate.inserted).toHaveLength(0);
+    });
   });
 
   test('a window opened before the stream simply captures nothing', async () => {

@@ -1910,6 +1910,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@huggingface/jinja@npm:^0.5.0":
+  version: 0.5.10
+  resolution: "@huggingface/jinja@npm:0.5.10"
+  checksum: 10c0/662f0fe1da5ed93d6e8885edf74a19c60e9d522d0df6ebe00e78ea14d3564de8ac851abcb21abef17d0ef49e70f86f515b3ab8aa8b2e04dac2cdd0b084a29306
+  languageName: node
+  linkType: hard
+
 "@humanfs/core@npm:^0.19.2":
   version: 0.19.2
   resolution: "@humanfs/core@npm:0.19.2"
@@ -4797,6 +4804,8 @@ __metadata:
     react-native: "npm:0.86.3"
     react-native-audio-api: "npm:0.13.2"
     react-native-draggable-flatlist: "npm:^4.0.3"
+    react-native-executorch: "npm:0.9.3"
+    react-native-executorch-expo-resource-fetcher: "npm:0.9.1"
     react-native-fbsdk-next: "npm:^13.4.3"
     react-native-gesture-handler: "npm:~2.32.0"
     react-native-reanimated: "npm:4.5.1"
@@ -10075,6 +10084,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jsonrepair@npm:^3.12.0":
+  version: 3.15.0
+  resolution: "jsonrepair@npm:3.15.0"
+  bin:
+    jsonrepair: bin/cli.js
+  checksum: 10c0/9e3e18e6ab1d00731731bd21bffba4e3f0238c581da7824a0b28c410690ecf52601c6fae3f4913a49d03daed6b47f807ac3ede938990168ed08aef87e2bf58d2
+  languageName: node
+  linkType: hard
+
+"jsonschema@npm:^1.5.0":
+  version: 1.5.0
+  resolution: "jsonschema@npm:1.5.0"
+  checksum: 10c0/c24ddb8d741f02efc0da3ad9b597a275f6b595062903d3edbfaa535c3f9c4c98613df68da5cb6635ed9aeab30d658986fea61d7662fc5b2b92840d5a1e21235e
+  languageName: node
+  linkType: hard
+
 "jsx-ast-utils@npm:^2.4.1 || ^3.0.0":
   version: 3.3.5
   resolution: "jsx-ast-utils@npm:3.3.5"
@@ -12261,6 +12286,34 @@ __metadata:
     react-native-gesture-handler: ">= 2.0.0"
     react-native-reanimated: ">= 2.0.0"
   checksum: 10c0/0ce6389d1b45ff0da860b9344caaa13a84a51b30cd3cdda8358e6a4315225365faf9a7ad6c238fe0965eff54b45ca23ae2975e69760925487e06201aa12e84b8
+  languageName: node
+  linkType: hard
+
+"react-native-executorch-expo-resource-fetcher@npm:0.9.1":
+  version: 0.9.1
+  resolution: "react-native-executorch-expo-resource-fetcher@npm:0.9.1"
+  peerDependencies:
+    expo: ">=54.0.0"
+    expo-asset: ">=12.0.0"
+    expo-file-system: ">=19.0.0"
+    react-native: "*"
+    react-native-executorch: "*"
+  checksum: 10c0/09e69bb71084ebb1ca505bce174c50f2a3fde18fa76b81fae7ce9954e5225059f62236c3753f87c0f5841f378003feaf311af02e9d103d9d59d8fce4634c4665
+  languageName: node
+  linkType: hard
+
+"react-native-executorch@npm:0.9.3":
+  version: 0.9.3
+  resolution: "react-native-executorch@npm:0.9.3"
+  dependencies:
+    "@huggingface/jinja": "npm:^0.5.0"
+    jsonrepair: "npm:^3.12.0"
+    jsonschema: "npm:^1.5.0"
+    zod: "npm:^4.3.6"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 10c0/dacecda35d47b660a93c98e4a8b0535d9173207b1e59621fc1863d728ecf509045af92a55844c2c317573d00bae4242ce192e816c08d91ea54fd632029e3d661
   languageName: node
   linkType: hard
 
@@ -14873,5 +14926,12 @@ __metadata:
   version: 3.25.76
   resolution: "zod@npm:3.25.76"
   checksum: 10c0/5718ec35e3c40b600316c5b4c5e4976f7fee68151bc8f8d90ec18a469be9571f072e1bbaace10f1e85cf8892ea12d90821b200e980ab46916a6166a4260a983c
+  languageName: node
+  linkType: hard
+
+"zod@npm:^4.3.6":
+  version: 4.5.4
+  resolution: "zod@npm:4.5.4"
+  checksum: 10c0/511a2a4d1a6f875dfdd70a1586989a8b14ef126776cd6218a2c760b9f65f14ef389ec20d92ee1aa4fcb4566d4ff3fa012956044f9dc503510d82e4c756a8ba92
   languageName: node
   linkType: hard

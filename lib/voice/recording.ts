@@ -1,11 +1,26 @@
 /**
  * Microphone capture for the Practice "speak the English answer" flow. Records
  * mono PCM via react-native-audio-api and hands back a 16 kHz Float32Array —
- * exactly what Parakeet expects. Stopping is hands-free: an energy gate watches
- * each buffer, measures the room it is in, and auto-stops once the learner has
- * spoken over that room and then gone quiet, backed up by a hard duration cap.
- * It decides in dB relative to the room and never in absolute rms — see the
- * note above `dbfs`, which is the third regression that lesson cost.
+ * exactly what Parakeet expects. The window closes itself once the learner has
+ * spoken and then gone quiet, backed by a hard duration cap.
+ *
+ * **Two detectors answer "is this buffer voice", and only that.** The default is
+ * a real VAD, supplied by the React layer as a {@link SpeechGate} and fed
+ * buffer by buffer, because loudness is the wrong question for a microphone that
+ * now opens by itself and stands open through the learner's whole thinking pause
+ * — a television or a passing conversation is loud, and a window that confirms
+ * speech on one grades an answer nobody gave. The original **energy gate** (a
+ * margin in dB over the measured room) remains the fallback and covers what the
+ * VAD cannot: the first session before its model lands, devices without
+ * executorch, and any capture the OS hands back at a rate other than 16 kHz.
+ * Which one actually decided is reported as `gateUsed` — never assumed.
+ *
+ * Everything the decision is made OF is shared: the confirmation run, the hang
+ * timers, the room measurement, every stop reason. `stepEnergyGate` takes the
+ * VAD's verdict as an override rather than being bypassed, so there is one copy
+ * of rules that have cost three production regressions. The energy gate decides
+ * in dB relative to the room and never in absolute rms — see the note above
+ * `dbfs`, which is the third of those.
  *
  * The input stream is opened ONCE per review session and only paused between
  * cards. It used to be built and destroyed per card, and that is where the
@@ -31,6 +46,36 @@ interface AudioReadyEvent {
 
 /** Parakeet expects 16 kHz mono. */
 export const TARGET_SAMPLE_RATE = 16000;
+
+/** Which detector decided speech vs. silence for a window. */
+export type SpeechGateKind = 'vad' | 'energy';
+
+/**
+ * A voice-activity detector the recorder can consult instead of deciding from
+ * loudness alone.
+ *
+ * Kept as an interface so this file stays free of model plumbing: the
+ * implementation (`hooks/voice/useSpeechGate.ts`, over executorch's FSMN VAD)
+ * owns the download, the native handle and the React lifecycle, and a plain
+ * object stands in for it in tests.
+ *
+ * **`start` is synchronous, unlike the library it wraps.** `beginWindow` is
+ * synchronous by design — it resumes an already-open stream and must not put an
+ * `await` between the learner and a live microphone — and the underlying
+ * `stream()` cannot be awaited anyway: it resolves when the session *stops*.
+ * The implementation therefore fires it and reports a late failure through
+ * `insert`, which is the call this recorder actually makes every buffer.
+ */
+export interface SpeechGate {
+  /** False while the model is still downloading/loading, or unsupported. */
+  readonly isReady: boolean;
+  /** Open a detection session. Throws if the model isn't loaded. */
+  start(handlers: { onSpeechBegin: () => void; onSpeechEnd: () => void }): void;
+  /** Feed one 16 kHz mono buffer. Throws if the session has died. */
+  insert(waveform: Float32Array): void;
+  /** Close the session. Safe to call when none is open. */
+  stop(): void;
+}
 
 /**
  * The gate decides in dBFS against a floor measured from the room, because the
@@ -153,12 +198,32 @@ const WINDOW_FIRST_BUFFER_TIMEOUT_MS = 700;
  *  that a soft onset or a trailing consonant is never clipped, short enough
  *  that the recogniser isn't handed seconds of room tone to decode. */
 const TRIM_PREROLL_MS = 200;
+/**
+ * The same pad when the VAD drove the window, and wider on purpose.
+ *
+ * The energy gate decides on the buffer in hand, so its first speech mark is
+ * at most one buffer late. The VAD's verdict arrives from a native polling loop
+ * (100 ms between inferences, plus its own detection margin), so `vadSpeaking`
+ * can turn true two or three buffers after the syllable that turned it — and a
+ * 200 ms pad in front of that mark would clip the start of the word the
+ * recogniser most needs.
+ */
+const VAD_TRIM_PREROLL_MS = 450;
 const TRIM_POSTROLL_MS = 250;
 
-/** Envelope entries kept per window. 160 buffers is the 15 s cap at 100 ms,
- *  so nothing real is ever truncated; the bound exists so a device that
- *  delivers tiny buffers cannot grow the telemetry row without limit. */
-const MAX_LOGGED_LEVELS = 160;
+/**
+ * Envelope entries kept per window. 320 buffers is the 30 s hands-free cap at
+ * 100 ms, so nothing real is ever truncated; the bound exists so a device that
+ * delivers tiny buffers cannot grow the telemetry row without limit.
+ *
+ * It was 160 — the tapped window's 15 s cap — and a self-opening window is
+ * twice that. Left there, every hands-free row would have kept only its last
+ * 16 s, and `levelsDb.shift()` drops from the FRONT: the onset the gate
+ * confirmed against, which is the whole reason the envelope is logged, would
+ * have been the first thing gone, silently, from exactly the rows we are adding
+ * a new detector to explain.
+ */
+const MAX_LOGGED_LEVELS = 320;
 
 /**
  * The iOS session mode held for the whole review session.
@@ -176,6 +241,16 @@ const MAX_LOGGED_LEVELS = 160;
 const IOS_SESSION_MODE = 'default';
 
 export interface RecordingConfig {
+  /**
+   * Which detector should decide speech vs. silence. `'vad'` uses the
+   * {@link SpeechGate} handed to `beginWindow` when it is ready and the capture
+   * is at 16 kHz, and falls back to the energy gate otherwise; `'energy'` forces
+   * the dB gate, which is also what a device without the model gets anyway.
+   *
+   * The request, not the outcome — read `RecordingResult.gateUsed` for what
+   * actually ran.
+   */
+  speechGate: SpeechGateKind;
   energyGateEnabled: boolean;
   /** dB above the measured room a buffer must reach to count as voice. 12 dB
    *  is a quarter of the 20–30 dB margin real speech held over room tone in
@@ -229,6 +304,7 @@ export interface RecordingConfig {
 }
 
 export const DEFAULT_RECORDING_CONFIG: RecordingConfig = {
+  speechGate: 'vad',
   energyGateEnabled: true,
   onsetMarginDb: 12,
   releaseMarginDb: 6,
@@ -254,6 +330,38 @@ export const DEFAULT_RECORDING_CONFIG: RecordingConfig = {
   captureMaxGain: 60,
   iosRawMode: false,
 };
+
+/**
+ * The window is opened for the learner rather than by them, so the two deadlines
+ * above have to cover the thinking pause as well as the answer.
+ *
+ * `noSpeechTimeoutMs: 8000` is right for a tapped window — the tap IS "I am
+ * about to speak", so eight seconds of nothing means the microphone is not
+ * hearing them. Hands-free it would be a stopwatch on recall: the pause before
+ * answering is the retrieval, and ending the window mid-thought would grade
+ * their silence.
+ *
+ * Both are still finite. An open microphone has a privacy indicator and a
+ * battery cost, and a window that never closes is a bug with no symptom — so a
+ * card that hears nothing for this long hands the learner the manual control
+ * back instead (see `useVoiceReview`), which is a recoverable state rather than
+ * a graded one.
+ *
+ * Only these two move. Everything measured from speech — `silenceHangMs`,
+ * `minSpeechMs`, the confidence doubling — describes the answer itself and is
+ * identical whichever way the mic was opened.
+ */
+const HANDS_FREE_NO_SPEECH_TIMEOUT_MS = 25000;
+const HANDS_FREE_MAX_DURATION_MS = 30000;
+
+/** The same config with the two deadlines widened for a self-opening window. */
+export function withHandsFreeBudget(config: RecordingConfig): RecordingConfig {
+  return {
+    ...config,
+    noSpeechTimeoutMs: HANDS_FREE_NO_SPEECH_TIMEOUT_MS,
+    maxDurationMs: HANDS_FREE_MAX_DURATION_MS,
+  };
+}
 
 /**
  * What stopped a recording window: 'silence' (energy gate), 'noSpeech' (the gate
@@ -288,6 +396,13 @@ export type RecordingStopReason = 'silence' | 'noSpeech' | 'maxDuration' | 'watc
 export type VoiceArmFailureReason = 'permission' | 'not-ready' | 'busy' | 'error';
 
 export interface RecordingResult {
+  /**
+   * Which detector actually decided speech here. `config.speechGate` is only
+   * the request: the VAD is skipped when the model has not landed, and handed
+   * back mid-window if the capture rate is wrong or the session dies. Every
+   * reading of this data has to come from here, never from the config.
+   */
+  gateUsed: SpeechGateKind;
   waveform: Float32Array;
   sampleRate: number;
   durationMs: number;
@@ -396,10 +511,26 @@ export function initialGateState(
  */
 export function stepEnergyGate(
   state: EnergyGateState,
-  sample: { rms: number; bufferMs: number; elapsedMs: number },
+  sample: {
+    rms: number;
+    bufferMs: number;
+    elapsedMs: number;
+    /**
+     * The VAD's verdict for this buffer, when one is driving. `null` (the
+     * default) leaves the dB comparison below in charge.
+     *
+     * Only the "is this voice" question is answered elsewhere; everything the
+     * decision is made OF — the confirmation run, the hang timers, the
+     * confidence doubling, every stop reason — is the same code either way.
+     * That is deliberate: those rules are what three production regressions
+     * were spent on, they are unit-tested here, and a second copy of them
+     * behind the VAD would be a second place for them to be wrong.
+     */
+    voiced?: boolean | null;
+  },
   config: RecordingConfig,
 ): { state: EnergyGateState; isSpeech: boolean; stop: RecordingResult['stopReason'] | null } {
-  const { rms, bufferMs, elapsedMs } = sample;
+  const { rms, bufferMs, elapsedMs, voiced = null } = sample;
   const db = dbfs(rms);
 
   // The floor is fed a CLAMPED level: a dropout must not pin it at −140 dB
@@ -430,12 +561,27 @@ export function stepEnergyGate(
   // threshold", and the hysteresis lives in the two timers instead. Audio in
   // the band between the thresholds accrues `idleMs` but not `silenceMs`, which
   // is what stops that band from being a state the gate can never leave.
-  const isSpeech = db >= onsetDb;
-  const aboveRelease = db >= releaseDb;
+  // Under the VAD there is no hysteresis band to resolve: the model has already
+  // smoothed its own decision, so a buffer is voice or it is not, and both
+  // timers move together. The floor above is still tracked — it feeds the level
+  // meter, the telemetry envelope and the seed for the next card, and it is
+  // what the energy gate falls back onto if the VAD dies mid-window.
+  //
+  // The override is ignored when the gate is switched off, because that toggle
+  // is the learner's "don't close the recording on me" and not a choice of
+  // detector. Reading `voiced` here would have made Advanced → Auto-stop say
+  // off while a VAD-driven window still ended itself on silence.
+  const detected = config.energyGateEnabled ? voiced : null;
+  const isSpeech = detected ?? db >= onsetDb;
+  const aboveRelease = detected ?? db >= releaseDb;
 
   if (!speechSeen) {
     onsetMs = isSpeech ? onsetMs + bufferMs : 0;
-    if (onsetMs >= config.onsetConfirmMs && (warm || !config.energyGateEnabled)) speechSeen = true;
+    // The warm-up guard exists so the very first buffer of a session is not
+    // judged against a guessed room. A VAD has no room to guess at, so it is
+    // not held behind a measurement it never uses.
+    const confirmable = detected !== null || warm || !config.energyGateEnabled;
+    if (onsetMs >= config.onsetConfirmMs && confirmable) speechSeen = true;
   }
 
   if (isSpeech) {
@@ -512,6 +658,31 @@ export async function ensureMicPermission(): Promise<boolean> {
     permissionRequestInFlight = null;
   });
   return permissionRequestInFlight;
+}
+
+/**
+ * Does the app already hold the microphone permission — asked WITHOUT prompting.
+ *
+ * Hands-free arming needs this. The tap on "Speak to answer" used to be the one
+ * moment the OS dialog could appear with a reason attached, and a microphone
+ * prompt that arrives seconds into a first session, unasked for, is the kind
+ * that gets refused for good. So the first card of a first install keeps the
+ * button, the tap grants the permission in context, and every card after it
+ * opens by itself.
+ */
+export async function getMicPermissionStatus(): Promise<'granted' | 'denied' | 'unknown'> {
+  if (permissionDecision !== null) return permissionDecision ? 'granted' : 'denied';
+  const current = await AudioManager.checkRecordingPermissions();
+  // Only a grant is cached into `permissionDecision`: that variable means "the
+  // OS has answered us", and an Undetermined reading is the absence of an
+  // answer. Caching a refusal here would make `ensureMicPermission` skip the
+  // ask — the reading is reported to the caller, not remembered.
+  if (current === 'Granted') permissionDecision = true;
+  if (current === 'Granted') return 'granted';
+  // 'Denied' is terminal for this process: changing it in Settings terminates
+  // the app on both platforms, so nothing short of a relaunch can revise it.
+  // Callers use that to stop asking.
+  return current === 'Denied' ? 'denied' : 'unknown';
 }
 
 /** Set once the OS has answered; a denied tap must not immediately prompt a
@@ -647,12 +818,13 @@ function trimToSpeech(
   input: Float32Array,
   range: { firstSpeechSample: number | null; lastSpeechSample: number | null },
   sampleRate: number,
+  prerollMs: number,
 ): Float32Array {
   const { firstSpeechSample, lastSpeechSample } = range;
   if (firstSpeechSample === null || lastSpeechSample === null) return input;
   if (lastSpeechSample <= firstSpeechSample) return input;
 
-  const start = Math.max(0, firstSpeechSample - Math.round((TRIM_PREROLL_MS * sampleRate) / 1000));
+  const start = Math.max(0, firstSpeechSample - Math.round((prerollMs * sampleRate) / 1000));
   const end = Math.min(
     input.length,
     lastSpeechSample + Math.round((TRIM_POSTROLL_MS * sampleRate) / 1000),
@@ -682,6 +854,11 @@ export class VoiceCaptureSession {
   private sourceSampleRate = TARGET_SAMPLE_RATE;
   private startedAt = 0;
   private gate: EnergyGateState = initialGateState();
+  /** The VAD driving this window, or null when the energy gate is deciding. */
+  private speechGate: SpeechGate | null = null;
+  private gateUsed: SpeechGateKind = 'energy';
+  /** The VAD's latest verdict. Written from its callbacks, read per buffer. */
+  private vadSpeaking = false;
   private peakRms = 0;
   private stopping = false;
   private handlers: RecordingHandlers = {};
@@ -806,7 +983,11 @@ export class VoiceCaptureSession {
    * whole point of the session-scoped design: there is no device negotiation,
    * no permission round-trip and no audio-session change on this path.
    */
-  beginWindow(handlers: RecordingHandlers = {}, config?: RecordingConfig): void {
+  beginWindow(
+    handlers: RecordingHandlers = {},
+    config?: RecordingConfig,
+    gate?: SpeechGate | null,
+  ): void {
     if (this.windowOpen) return;
 
     this.config = config ?? { ...DEFAULT_RECORDING_CONFIG };
@@ -827,6 +1008,42 @@ export class VoiceCaptureSession {
     this.stopDecidedAt = 0;
     this.firstSpeechSample = null;
     this.lastSpeechSample = null;
+    this.speechGate = null;
+    this.gateUsed = 'energy';
+    this.vadSpeaking = false;
+
+    // Open the detection session BEFORE the stream is resumed, so no buffer
+    // reaches `handleBuffer` un-analysed. A gate that refuses to start is not an
+    // error the learner should ever see: the window simply runs on the energy
+    // gate, which is the same thing every device without the model does.
+    //
+    // `energyGateEnabled` is part of the condition, not just of the decision.
+    // That toggle means "do not close the recording on me", so the VAD's verdict
+    // is discarded when it is off — and starting the model anyway would run a
+    // native inference every 100 ms for a 30 s window to compute a number
+    // nothing reads, then report `gateUsed: 'vad'` for a window the dB gate
+    // decided. This file's header promises that field is what ACTUALLY decided.
+    if (this.config.speechGate === 'vad' && this.config.energyGateEnabled && gate?.isReady) {
+      // Claimed before `start`, because the callbacks it may fire — synchronously
+      // or from a microtask — both bail unless `gateUsed` already reads 'vad',
+      // and a verdict dropped here is one the window never recovers.
+      this.speechGate = gate;
+      this.gateUsed = 'vad';
+      try {
+        gate.start({
+          onSpeechBegin: () => this.onGateSpeechBegin(),
+          onSpeechEnd: () => this.onGateSpeechEnd(),
+        });
+      } catch (err) {
+        this.speechGate = null;
+        this.gateUsed = 'energy';
+        this.vadSpeaking = false;
+        diagMark('mic.gate.startFailed', {
+          message: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+
     this.windowOpen = true;
 
     const endResume = diagSpan('mic.window.resume');
@@ -850,6 +1067,41 @@ export class VoiceCaptureSession {
     );
   }
 
+  /**
+   * Hand the rest of this window back to the energy gate.
+   *
+   * Speech the VAD already latched stands — `speechSeen` and the sample marks
+   * are the window's own state, not the detector's — so this only changes who
+   * decides from here. Called when the capture rate turns out to be wrong for
+   * the model, and when the streaming session dies mid-answer; both are silent
+   * degradations by design, because the alternative is stranding a learner
+   * mid-sentence over a detector that is not the point of the exercise.
+   */
+  private releaseGate(reason: string): void {
+    if (this.gateUsed !== 'vad') return;
+    diagMark('mic.gate.released', { reason, at: Date.now() - this.startedAt });
+    try {
+      this.speechGate?.stop();
+    } catch {
+      // Already gone; the energy gate is taking over either way.
+    }
+    this.speechGate = null;
+    this.gateUsed = 'energy';
+    this.vadSpeaking = false;
+  }
+
+  /** The VAD heard a voice. */
+  private onGateSpeechBegin(): void {
+    if (this.gateUsed !== 'vad') return;
+    this.vadSpeaking = true;
+  }
+
+  /** The VAD stopped hearing one; the hang timers take it from here. */
+  private onGateSpeechEnd(): void {
+    if (this.gateUsed !== 'vad') return;
+    this.vadSpeaking = false;
+  }
+
   /** Stop from a timer rather than from the gate. */
   private forceStop(reason: RecordingResult['stopReason'], scheduled: number): void {
     if (this.stopping || !this.windowOpen) return;
@@ -869,9 +1121,26 @@ export class VoiceCaptureSession {
     const channel = event.buffer.getChannelData(0);
     this.sourceSampleRate = event.buffer.sampleRate;
     const bufferStartSample = this.totalSamples;
-    this.chunks.push(channel.slice());
+    // Copied because the native buffer is reused across callbacks — the VAD is
+    // handed this same copy, not the live one.
+    const samples = channel.slice();
+    this.chunks.push(samples);
     this.totalSamples += channel.length;
     this.bufferCount += 1;
+
+    if (this.gateUsed === 'vad') {
+      // FSMN is a 16 kHz model, and the resample that would fix a mismatched
+      // rate only happens at endWindow — far too late to feed a live detector.
+      if (this.sourceSampleRate !== TARGET_SAMPLE_RATE) {
+        this.releaseGate(`rate:${this.sourceSampleRate}`);
+      } else {
+        try {
+          this.speechGate?.insert(samples);
+        } catch (err) {
+          this.releaseGate(err instanceof Error ? err.message : String(err));
+        }
+      }
+    }
     if (this.firstBufferAt === null) {
       this.firstBufferAt = Date.now() - this.startedAt;
       if (this.firstBufferTimer) {
@@ -920,7 +1189,15 @@ export class VoiceCaptureSession {
     const hadCandidate = this.gate.onsetMs > 0;
     const { state, isSpeech, stop } = stepEnergyGate(
       this.gate,
-      { rms, bufferMs, elapsedMs: elapsed },
+      {
+        rms,
+        bufferMs,
+        elapsedMs: elapsed,
+        // Null once the gate has been handed back, so a window that starts on
+        // the VAD and loses it finishes on the dB thresholds mid-answer rather
+        // than on a verdict frozen at whatever the model last said.
+        voiced: this.gateUsed === 'vad' ? this.vadSpeaking : null,
+      },
       this.config,
     );
     this.gate = state;
@@ -950,6 +1227,7 @@ export class VoiceCaptureSession {
       diagMark('mic.stopDecided', {
         reason: this.stopReason,
         at: elapsed,
+        gate: this.gateUsed,
         speechSeen: this.gate.speechSeen,
         speechMs: this.gate.speechMs,
         silenceMs: this.gate.silenceMs,
@@ -984,6 +1262,18 @@ export class VoiceCaptureSession {
     const wasOpen = this.windowOpen;
     this.windowOpen = false;
     this.handlers = {};
+
+    // Close the detection session before anything else touches it: `gateUsed`
+    // has to survive into the result below, so this deliberately does not go
+    // through `releaseGate`, which resets it.
+    const gateUsed = this.gateUsed;
+    try {
+      this.speechGate?.stop();
+    } catch {
+      // Nothing to close, or it closed itself when its stream died.
+    }
+    this.speechGate = null;
+    this.vadSpeaking = false;
 
     if (wasOpen) {
       // Deferred by a microtask because the common caller is `onAutoStop`,
@@ -1029,6 +1319,7 @@ export class VoiceCaptureSession {
       merged,
       { firstSpeechSample: this.firstSpeechSample, lastSpeechSample: this.lastSpeechSample },
       this.sourceSampleRate,
+      gateUsed === 'vad' ? VAD_TRIM_PREROLL_MS : TRIM_PREROLL_MS,
     );
     if (spoken.length !== merged.length) {
       diagMark('mic.trim', {
@@ -1043,6 +1334,7 @@ export class VoiceCaptureSession {
       : { output: resampled };
 
     const result: RecordingResult = {
+      gateUsed,
       waveform,
       sampleRate: TARGET_SAMPLE_RATE,
       durationMs,

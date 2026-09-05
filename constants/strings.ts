@@ -66,6 +66,8 @@ export const STRINGS = {
    *  this screen is tapped, so saying so here is the one thing this label
    *  does NOT need to say; what it needs to say is what happens next. */
   VOICE_SPEAK_TO_ANSWER: 'Speak to answer',
+  VOICE_HANDS_FREE: 'Answer hands-free',
+  VOICE_HANDS_FREE_SUBTITLE: 'The mic opens by itself after the word plays. Turn off to tap first.',
   /** While the mic is live. An action, not a state: "Listening…" belongs on the
    *  card, where a meter that moves with the voice already says it. */
   VOICE_DONE_SPEAKING: 'Done',

@@ -82,6 +82,11 @@ module.exports = {
     // Ships untransformed ESM; only the handful of calls the app makes are mocked.
     '^@dr\\.pogodin/react-native-fs$': '<rootDir>/__mocks__/@dr.pogodin/react-native-fs.js',
     '^react-native-sherpa-onnx$': '<rootDir>/__mocks__/react-native-sherpa-onnx.js',
+    // Reaches for a JSI installer at import time, so the real module cannot be
+    // loaded under Jest at all — not even to be spied on.
+    '^react-native-executorch$': '<rootDir>/__mocks__/react-native-executorch.js',
+    '^react-native-executorch-expo-resource-fetcher$':
+      '<rootDir>/__mocks__/react-native-executorch-expo-resource-fetcher.js',
     '^react-native-sherpa-onnx/download$':
       '<rootDir>/__mocks__/react-native-sherpa-onnx-download.js',
     '^react-native-sherpa-onnx/stt$': '<rootDir>/__mocks__/react-native-sherpa-onnx-stt.js',

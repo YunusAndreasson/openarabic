@@ -27,6 +27,7 @@ import {
   dbfs,
   initialGateState,
   stepEnergyGate,
+  withHandsFreeBudget,
   type EnergyGateState,
   type RecordingConfig,
 } from '@/lib/voice/recording';
@@ -296,6 +297,149 @@ describe('stepEnergyGate', () => {
       expect(stop).toBe('silence');
       expect(elapsedMs).toBeLessThan(5000);
     }
+  });
+
+  describe('the VAD override', () => {
+    // Hands-free is what these exist for. The microphone opens itself and then
+    // stands open through the whole pause while the learner remembers the word,
+    // which is exactly the condition the dB gate was never asked to survive: a
+    // television, a passing conversation or music clears 12 dB over room tone
+    // for far longer than `onsetConfirmMs`, and the window would close on 900 ms
+    // of quiet and grade an empty transcript against a card nobody answered.
+    //
+    // The override answers only "is this voice". Every timer, threshold and
+    // stop reason below is the same code the energy gate runs — the point of
+    // these cases is that swapping the detector changed nothing else.
+    const LOUD_ROOM = 0.05;
+    const QUIET_VOICE = 0.001;
+
+    /** Feed buffers whose loudness and voicedness are stated separately. */
+    const feedVoiced = (
+      state: EnergyGateState,
+      rms: number,
+      voiced: boolean,
+      count: number,
+      startMs: number,
+      config: RecordingConfig = DEFAULT_RECORDING_CONFIG,
+    ): { state: EnergyGateState; stop: string | null; atMs: number } => {
+      let current = state;
+      let elapsedMs = startMs;
+      for (let i = 0; i < count; i += 1) {
+        elapsedMs += BUFFER_MS;
+        const result = stepEnergyGate(
+          current,
+          { rms, bufferMs: BUFFER_MS, elapsedMs, voiced },
+          config,
+        );
+        current = result.state;
+        if (result.stop) return { state: current, stop: result.stop, atMs: elapsedMs };
+      }
+      return { state: current, stop: null, atMs: elapsedMs };
+    };
+
+    it('ignores a loud room the dB gate would have answered for', () => {
+      // 40 dB over the seeded floor — the dB gate confirms speech on this in
+      // 200 ms and closes the window ~1.2 s later with nothing recorded, which
+      // is the 2026-08-18 failure arriving through an unattended microphone
+      // instead of through AGC.
+      const quiet = feed(initialGateState(), 0.0005, 20, 0).state;
+      const byLoudness = feed(initialGateState(quiet), LOUD_ROOM, 20, 0);
+      expect(byLoudness.state.speechSeen).toBe(true);
+
+      const byVoice = feedVoiced(initialGateState(quiet), LOUD_ROOM, false, 20, 0);
+      expect(byVoice.state.speechSeen).toBe(false);
+    });
+
+    it('hears a voice too quiet to clear the threshold it was measured against', () => {
+      // The mirror image: a floor left high by a noisy stretch puts the onset
+      // threshold above the learner, and the dB gate hears nothing at all.
+      const noisy = feed(initialGateState(), 0.03, 60, 0).state;
+      expect(feed(initialGateState(noisy), QUIET_VOICE, 20, 0).state.speechSeen).toBe(false);
+
+      expect(feedVoiced(initialGateState(noisy), QUIET_VOICE, true, 20, 0).state.speechSeen).toBe(
+        true,
+      );
+    });
+
+    it('still needs a run, not one buffer, before it counts as an answer', () => {
+      // A single voiced frame is a cough or a false positive, and latching on it
+      // is what let a transient end a window for someone who had not started.
+      const one = feedVoiced(initialGateState(), 0.02, true, 1, 0);
+      expect(one.state.speechSeen).toBe(false);
+
+      const run = feedVoiced(initialGateState(), 0.02, true, 3, 0);
+      expect(run.state.speechSeen).toBe(true);
+    });
+
+    it('ends the window on the same silence hang the energy gate uses', () => {
+      const spoke = feedVoiced(initialGateState(), 0.02, true, 6, 0);
+      expect(spoke.stop).toBeNull();
+
+      const quiet = feedVoiced(spoke.state, 0.02, false, 40, spoke.atMs);
+      expect(quiet.stop).toBe('silence');
+      // Same 900 ms hang, unaffected by the buffers still being loud: under the
+      // VAD, loud-and-not-voice is silence.
+      expect(quiet.atMs - spoke.atMs).toBe(DEFAULT_RECORDING_CONFIG.silenceHangMs);
+    });
+
+    it('bails as noSpeech when a self-opened window hears nobody', () => {
+      // Hands-free widens this deadline rather than removing it; the reason it
+      // still exists is that an open microphone with nothing to grade has to
+      // end somewhere.
+      const nobody = feedVoiced(initialGateState(), LOUD_ROOM, false, 200, 0);
+      expect(nobody.stop).toBe('noSpeech');
+      expect(nobody.atMs).toBe(DEFAULT_RECORDING_CONFIG.noSpeechTimeoutMs);
+    });
+
+    it('is ignored while auto-stop is switched off', () => {
+      // Advanced → "Auto-stop on silence" means "do not close the recording on
+      // me", not "choose a detector". Reading the VAD here would have made that
+      // toggle say off while a window still ended itself on trailing silence.
+      const config: RecordingConfig = { ...DEFAULT_RECORDING_CONFIG, energyGateEnabled: false };
+      const spoke = feedVoiced(initialGateState(), 0.02, true, 6, 0, config);
+      const quiet = feedVoiced(spoke.state, 0.0001, false, 60, spoke.atMs, config);
+      expect(quiet.stop).toBeNull();
+    });
+  });
+
+  describe('the hands-free budget', () => {
+    const handsFree = withHandsFreeBudget(DEFAULT_RECORDING_CONFIG);
+
+    it('widens only the two deadlines that wait for speech', () => {
+      // A window opened FOR the learner has to cover the pause while they
+      // remember the word; one they opened by tapping does not, because the tap
+      // is itself "I am about to speak". Eight seconds of nothing means a dead
+      // microphone there, and a stopwatch on recall here.
+      expect(handsFree.noSpeechTimeoutMs).toBeGreaterThan(
+        DEFAULT_RECORDING_CONFIG.noSpeechTimeoutMs,
+      );
+      expect(handsFree.maxDurationMs).toBeGreaterThan(DEFAULT_RECORDING_CONFIG.maxDurationMs);
+      // Room for the wait plus a whole answer inside it.
+      expect(handsFree.maxDurationMs).toBeGreaterThan(handsFree.noSpeechTimeoutMs);
+    });
+
+    it('leaves everything measured from the answer alone', () => {
+      // These describe the utterance, which is the same utterance either way.
+      const { noSpeechTimeoutMs: _n, maxDurationMs: _m, ...rest } = handsFree;
+      expect(rest).toEqual(
+        expect.objectContaining({
+          silenceHangMs: DEFAULT_RECORDING_CONFIG.silenceHangMs,
+          idleHangMs: DEFAULT_RECORDING_CONFIG.idleHangMs,
+          minSpeechMs: DEFAULT_RECORDING_CONFIG.minSpeechMs,
+          onsetConfirmMs: DEFAULT_RECORDING_CONFIG.onsetConfirmMs,
+          onsetMarginDb: DEFAULT_RECORDING_CONFIG.onsetMarginDb,
+        }),
+      );
+    });
+
+    it('still ends a window that hears nobody at all', () => {
+      // The deadline moves; it does not disappear. An open microphone has a
+      // privacy indicator and a battery cost, and a window nothing can close is
+      // a bug with no symptom.
+      const nobody = feed(initialGateState(), 0.0005, 400, 0, handsFree);
+      expect(nobody.stop).toBe('noSpeech');
+      expect(nobody.atMs).toBe(handsFree.noSpeechTimeoutMs);
+    });
   });
 
   describe('seeding from the previous card', () => {

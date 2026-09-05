@@ -122,6 +122,22 @@ interface UseReviewReturn {
   /** Remounts only the card presentation after a rejected scheduler transition. */
   gradeRecoveryEpoch: number;
   currentWordKey: string;
+  /**
+   * The `currentWordKey` whose Arabic prompt has finished playing — or which
+   * never had audio to play.
+   *
+   * Only hands-free arming reads it, and it is the only honest moment to open
+   * the microphone: the input stream is dropped for the duration of every
+   * prompt (a record-capable session plays the word quiet — see
+   * `VoiceGradingProvider.setPlaybackPriority`), so a window opened any earlier
+   * would either silence the prompt or record it.
+   *
+   * Never reset on its own. It is cleared at the top of each card and set only
+   * by that card's own run, so a stale value cannot match the new key — which
+   * encodes reps — and the gate can only ever be satisfied by a prompt this run
+   * actually finished.
+   */
+  promptAudioDoneKey: string | null;
   /** Flip the current card to its answer (English meaning + audio). Does not advance. */
   revealAnswer: () => void;
   /**
@@ -306,6 +322,7 @@ export function useReview({
   const [gradeRecoveryEpoch, setGradeRecoveryEpoch] = useState(0);
   // Progress bar high-water mark, surfaced as state so consumers re-render.
   const [maxProgress, setMaxProgress] = useState(0);
+  const [promptAudioDoneKey, setPromptAudioDoneKey] = useState<string | null>(null);
   // Holding a forgotten card on its answer face for a restudy beat before it
   // advances.
   //
@@ -1091,6 +1108,12 @@ export function useReview({
     setDiagCard(keyForRun);
     diagMark('card.show', { rootId: currentWord.root_id });
 
+    // Clear before this card's own prompt runs. The key encodes reps, so a value
+    // left from a previous card practically never collides — but "practically
+    // never" is the wrong guarantee for the flag that decides whether a live
+    // microphone opens over the Arabic.
+    setPromptAudioDoneKey(null);
+
     // Cancel a still-running watcher from a previous card before this one's.
     if (promptWatchRef.current && promptWatchRef.current.key !== keyForRun) {
       promptWatchRef.current.cancel();
@@ -1109,8 +1132,11 @@ export function useReview({
       // instead would only delay the gate that lets the learner tap at all.
       void setPlaybackPriorityEvent(false).catch(handleError);
       if (promptWatchRef.current?.key === keyForRun) promptWatchRef.current = null;
+      // A stale watcher (the card already advanced) would publish an old key,
+      // which hands-free arming harmlessly ignores — but skip the re-render.
       if (movedOn()) return;
       diagMark('prompt.done');
+      setPromptAudioDoneKey(keyForRun);
     };
 
     // Opens this card's prompt record. Everything below reports into it, and
@@ -1517,6 +1543,7 @@ export function useReview({
     maxProgress,
     gradeRecoveryEpoch,
     currentWordKey,
+    promptAudioDoneKey,
     revealAnswer,
     grade,
     intervalLabels,

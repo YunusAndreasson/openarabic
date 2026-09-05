@@ -14,6 +14,8 @@ import {
   selectAdaptiveNewWordPacingEnabled,
   setAdaptiveNewWordPacingEnabled,
   setVoiceEnabled,
+  setVoiceHandsFree,
+  selectVoiceHandsFree,
 } from '@/store/settingsSlice';
 import type { ReminderTime } from '@/types/notifications.types';
 
@@ -54,6 +56,7 @@ export const PracticeSection = memo<PracticeSectionProps>(
     // why a field added after a user's install rehydrates as `undefined`.
     const adaptiveNewWordPacingEnabled = useAppSelectorShallow(selectAdaptiveNewWordPacingEnabled);
     const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
+    const voiceHandsFree = useAppSelectorShallow(selectVoiceHandsFree);
 
     const dailyLimitSummary = useDailyWordLimitSummary();
 
@@ -130,6 +133,13 @@ export const PracticeSection = memo<PracticeSectionProps>(
       [dispatch],
     );
 
+    const handleHandsFreeToggle = useCallback(
+      (enabled: boolean) => {
+        dispatch(setVoiceHandsFree(enabled));
+      },
+      [dispatch],
+    );
+
     const handleAdvancedPress = useCallback(() => {
       router.push(ROUTE_PATHS.ACCOUNT_ADVANCED);
     }, []);
@@ -163,6 +173,16 @@ export const PracticeSection = memo<PracticeSectionProps>(
           toggleValue={voiceEnabled}
           onToggleChange={handleVoiceToggle}
         />
+        {voiceEnabled && (
+          <SettingsCard
+            icon="ear"
+            label={STRINGS.VOICE_HANDS_FREE}
+            subtitle={STRINGS.VOICE_HANDS_FREE_SUBTITLE}
+            rightType="toggle"
+            toggleValue={voiceHandsFree}
+            onToggleChange={handleHandsFreeToggle}
+          />
+        )}
         {voiceEnabled && (
           <SettingsCard
             icon="construct"

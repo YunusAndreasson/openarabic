@@ -102,6 +102,19 @@ export type VoiceButtonMode =
 export function voiceButtonMode(
   phase: VoicePhase,
   readiness: VoiceReadiness,
+  /**
+   * Hands-free is running this card: the microphone opens itself when the
+   * Arabic ends, so there is nothing for a "Speak to answer" button to do.
+   *
+   * The button is not deleted, it is *unneeded* — which is a different claim,
+   * and the difference is every state below. A model still downloading, a
+   * download held for Wi-Fi and a refused microphone are all things hands-free
+   * cannot fix and the learner can, so those keep their control whatever this
+   * says. What goes is the pair of states that only ever meant "open the mic"
+   * and "close it" — both of which the card now does on its own — leaving one
+   * button in the band instead of two, and no instruction to read.
+   */
+  handsFree = false,
 ): VoiceButtonMode | null {
   switch (readiness.kind) {
     case 'off':
@@ -133,12 +146,18 @@ export function voiceButtonMode(
     case 'denied':
       return 'mic-denied';
     case 'listening':
-      return 'live';
+      // Hands-free: the gate closes the window on its own, and the card's meter
+      // already says it is listening. A "Done" button appearing here would also
+      // reflow the band under the learner's thumb at the exact moment they are
+      // speaking, which is the reflow this screen was rewritten to remove.
+      return handsFree ? null : 'live';
     case 'arming':
     case 'checking':
-      return 'busy';
+      // Nothing to press either way — but with no peer in the band, a lone
+      // disabled chip is just an obstacle where hands-free needs none.
+      return handsFree ? null : 'busy';
     default:
-      return 'ready';
+      return handsFree ? null : 'ready';
   }
 }
 

@@ -40,6 +40,16 @@ export interface SettingsState {
    * later.
    */
   voiceOfferDismissed: boolean;
+  /**
+   * The microphone opens itself once the Arabic prompt has finished, and the
+   * learner just answers. Default ON — see initialState.
+   *
+   * Off restores the explicit "Speak to answer" button, which is what a learner
+   * in a shared room or on a bus wants: an unattended microphone is the right
+   * default only where speaking aloud is already the plan. Nothing else about
+   * grading changes — the same detector, the same window, only who opens it.
+   */
+  voiceHandsFree: boolean;
   // Advanced voice-grading knobs (Account → Advanced). Defaults mirror
   // DEFAULT_RECORDING_CONFIG; surfaced so quiet-capture issues can be tuned /
   // A-B tested on-device without a rebuild.
@@ -80,6 +90,7 @@ const initialState: SettingsState = {
    */
   voiceEnabled: true,
   voiceOfferDismissed: false,
+  voiceHandsFree: true,
   voiceEnergyGateEnabled: true,
   voiceGainNormalizeEnabled: true,
   voiceIosRawMode: false,
@@ -123,6 +134,9 @@ const settingsSlice = createSlice({
     setVoiceOfferDismissed: (state, action: PayloadAction<boolean>) => {
       state.voiceOfferDismissed = action.payload;
     },
+    setVoiceHandsFree: (state, action: PayloadAction<boolean>) => {
+      state.voiceHandsFree = action.payload;
+    },
     setVoiceEnergyGateEnabled: (state, action: PayloadAction<boolean>) => {
       state.voiceEnergyGateEnabled = action.payload;
     },
@@ -162,7 +176,8 @@ type DefaultTrueSetting =
   | 'hapticsEnabled'
   | 'adaptiveNewWordPacingEnabled'
   | 'voiceEnergyGateEnabled'
-  | 'voiceGainNormalizeEnabled';
+  | 'voiceGainNormalizeEnabled'
+  | 'voiceHandsFree';
 
 interface RehydratedSettingsState {
   settings: Partial<Pick<SettingsState, DefaultTrueSetting>>;
@@ -202,6 +217,15 @@ export const selectVoiceGainNormalizeEnabled = selectDefaultTrueSetting(
   'voiceGainNormalizeEnabled',
 );
 
+/**
+ * And once more for hands-free, which ships on. Every install that predates it
+ * rehydrates the key as `undefined`; read raw, that would land the existing user
+ * base — the people who have already learned to speak their answers — on the
+ * tap-to-answer path the feature exists to remove, with the toggle showing off
+ * to match.
+ */
+export const selectVoiceHandsFree = selectDefaultTrueSetting('voiceHandsFree');
+
 export const {
   setReminderTime,
   setArabicFont,
@@ -214,6 +238,7 @@ export const {
   setHapticsEnabled,
   setVoiceEnabled,
   setVoiceOfferDismissed,
+  setVoiceHandsFree,
   setVoiceEnergyGateEnabled,
   setVoiceGainNormalizeEnabled,
   setVoiceIosRawMode,

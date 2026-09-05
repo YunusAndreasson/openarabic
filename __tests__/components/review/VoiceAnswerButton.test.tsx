@@ -130,6 +130,38 @@ describe('voiceButtonMode', () => {
 
   // Readiness outranks the phase: a recognizer that is still arriving cannot be
   // 'live' or 'busy' no matter what the phase effect last wrote.
+  describe('hands-free', () => {
+    // The microphone opens itself once the Arabic has played, so the states
+    // that only ever meant "open the mic" and "close it" have nothing to offer
+    // — the band is left with "Show answer" alone and no instruction to read.
+    test('drops the offer and the way out of it, because the card does both', () => {
+      expect(voiceButtonMode('idle', READY, true)).toBeNull();
+      expect(voiceButtonMode('listening', READY, true)).toBeNull();
+      expect(voiceButtonMode('arming', READY, true)).toBeNull();
+      expect(voiceButtonMode('checking', READY, true)).toBeNull();
+      expect(voiceButtonMode('result', READY, true)).toBeNull();
+    });
+
+    // The distinction the whole feature turns on: hands-free removes a control
+    // that is UNNEEDED, never one the learner still needs. Each of these is
+    // something the card cannot do for them.
+    test('keeps every control the learner still has to act on', () => {
+      expect(voiceButtonMode('idle', PREPARING, true)).toBe('preparing');
+      expect(voiceButtonMode('idle', WAITING_WIFI, true)).toBe('waiting-network');
+      expect(voiceButtonMode('idle', MIC_DENIED, true)).toBe('mic-denied');
+      expect(voiceButtonMode('denied', READY, true)).toBe('mic-denied');
+      expect(voiceButtonMode('loading', READY, true)).toBe('preparing');
+    });
+
+    test('changes nothing when it is switched off', () => {
+      expect(voiceButtonMode('idle', READY, false)).toBe('ready');
+      expect(voiceButtonMode('listening', READY, false)).toBe('live');
+      // And the default is off, so every caller that predates hands-free reads
+      // exactly as it did.
+      expect(voiceButtonMode('idle', READY)).toBe('ready');
+    });
+  });
+
   test('readiness outranks a stale phase', () => {
     expect(voiceButtonMode('listening', PREPARING)).toBe('preparing');
     expect(voiceButtonMode('checking', WAITING_WIFI)).toBe('waiting-network');
