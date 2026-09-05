@@ -381,10 +381,16 @@ describe('audioPlayer service', () => {
     });
 
     test('should attempt audio session reset on first play failure', async () => {
-      // First attempt fails
-      mockCreateAudioPlayer.mockImplementationOnce(() => {
-        throw new Error('Audio creation failed');
-      });
+      // A corrupted audio session surfaces when the loaded player is told to
+      // play. It deliberately does NOT surface in the constructor — that is a
+      // terminal device failure with its own (retry-free) path, below.
+      const failingPlayer = {
+        ...mockPlayer,
+        play: jest.fn(() => {
+          throw new Error('Audio session is corrupted');
+        }),
+      };
+      mockCreateAudioPlayer.mockReturnValueOnce(failingPlayer as unknown as AudioPlayer);
 
       // Second attempt (after reset) succeeds
       mockCreateAudioPlayer.mockReturnValueOnce(mockPlayer as unknown as AudioPlayer);
@@ -394,6 +400,20 @@ describe('audioPlayer service', () => {
       // Should have tried twice (initial + retry after reset)
       expect(mockCreateAudioPlayer).toHaveBeenCalledTimes(2);
       expect(success).toBeTruthy();
+    });
+
+    test('does not retry when the native player cannot be constructed', async () => {
+      // Android rejects the AudioPlayer constructor when the platform
+      // MediaSession comes back null; it then rejects for every subsequent
+      // track too, so resetting the session and retrying only fails again.
+      mockCreateAudioPlayer.mockImplementation(() => {
+        throw new Error("Call to function 'AudioPlayer.constructor' has been rejected.");
+      });
+
+      const success = await audioService.play(testTrack);
+
+      expect(success).toBeFalsy();
+      expect(mockCreateAudioPlayer).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -897,21 +917,40 @@ describe('audioPlayer service', () => {
     });
 
     test('should handle playlist error and return false', async () => {
-      // Make both attempts fail (initial + retry)
-      mockCreateAudioPlayer
-        .mockImplementationOnce(() => {
-          throw new Error('Player creation failed');
-        })
-        .mockImplementationOnce(() => {
-          throw new Error('Player creation failed again');
-        });
+      mockCreateAudioPlayer.mockImplementation(() => {
+        throw new Error("Call to function 'AudioPlayer.constructor' has been rejected.");
+      });
 
-      // playPlaylist returns false when play() fails
       const success = await audioService.playPlaylist([testTrack, testTrack2]);
       expect(success).toBeFalsy();
 
-      // Note: Playlist state is NOT reset when play() returns false (only when exception is thrown)
-      // This is the actual behavior - playlist state remains until stop() is called
+      // A player that cannot be constructed is terminal: one attempt, no
+      // session-reset retry and no cache self-heal round trip.
+      expect(mockCreateAudioPlayer).toHaveBeenCalledTimes(1);
+
+      // Playlist mode is dropped rather than left open over a playlist that
+      // can never start, which would strand the MiniPlayer on screen.
+      expect(audioService.getPlaylistInfo().isPlaylistMode).toBeFalsy();
+    });
+
+    test('stops the playlist rather than walking it when no player can be constructed', async () => {
+      await audioService.playPlaylist([testTrack, testTrack2, testTrack3]);
+      mockCreateAudioPlayer.mockClear();
+
+      // The device loses the ability to build a player part-way through.
+      mockCreateAudioPlayer.mockImplementation(() => {
+        throw new Error("Call to function 'AudioPlayer.constructor' has been rejected.");
+      });
+
+      const eventHandler = mockPlayer.addListener.mock.calls[0][1];
+      eventHandler({ didJustFinish: true });
+
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      // Exactly one attempt for track 2 — no retry, and no skip onwards into
+      // track 3, which would fail in precisely the same way.
+      expect(mockCreateAudioPlayer).toHaveBeenCalledTimes(1);
+      expect(audioService.getPlaylistInfo().isPlaylistMode).toBeFalsy();
     });
   });
 });

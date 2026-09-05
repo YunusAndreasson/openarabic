@@ -68,6 +68,27 @@ export interface AudioPlayOptions {
 // audio session — only the latter is worth a session-reset retry.
 const PLAYER_READY_TIMEOUT_MESSAGE = 'Player ready timeout - audio may be corrupted or unavailable';
 
+/**
+ * The native player object itself could not be constructed.
+ *
+ * Unlike every other playback failure, nothing about the source, the cached
+ * file or the audio session is wrong here — so none of the recovery paths can
+ * help. Android builds a platform MediaSession inside the AudioPlayer
+ * constructor (expo-audio's AudioPlayer.kt), and on devices where that binder
+ * call returns null the constructor rejects for EVERY track: the session-reset
+ * retry, the cache re-download and the playlist's skip-to-next all fail
+ * identically. One affected user was producing ~4 error reports per track for
+ * the length of a whole playlist, plus a full re-download of each one, and sat
+ * through a long silence before the playlist gave up. Tagging the failure at
+ * the throw site makes it terminal: one report, one toast, one stop.
+ */
+class PlayerCreationError extends Error {
+  constructor(cause: unknown) {
+    super(`Audio player could not be created: ${toError(cause).message}`, { cause });
+    this.name = 'PlayerCreationError';
+  }
+}
+
 // How often the native player emits a status update. 500 ms is right for the
 // listening surfaces (a progress bar cannot use more), but it also bounds how
 // quickly `didJustFinish` can be observed — and the review screen gates the
@@ -152,7 +173,7 @@ export interface AudioSubscribeOptions {
 // play()/stop()/destroy() took over mid-flight — the stale call must return
 // quietly (callers see `false`) without touching the player, status, or
 // subscriptions the newer call now owns.
-type PlayOutcome = 'failure' | 'success' | 'superseded';
+type PlayOutcome = 'failure' | 'success' | 'superseded' | 'unplayable';
 
 /**
  * Playlist track that remembers the pre-resolution source URL.
@@ -671,7 +692,14 @@ class SimpleAudioService {
       updateInterval: updateIntervalMs,
       keepAudioSessionActive,
     };
-    this.currentPlayer = createAudioPlayer(audioUrl, playerOptions);
+    try {
+      this.currentPlayer = createAudioPlayer(audioUrl, playerOptions);
+    } catch (error) {
+      // Tagged here rather than sniffed out of the message in playCore's catch:
+      // the wording belongs to expo, and a terminal failure must not quietly
+      // degrade back into a retry storm the next time they reword it.
+      throw new PlayerCreationError(error);
+    }
     return this.currentPlayer;
   }
 
@@ -863,7 +891,10 @@ class SimpleAudioService {
       // another 5s to fail again; the caller's cache-invalidate retry handles it.
       const isReadyTimeout =
         error instanceof Error && error.message === PLAYER_READY_TIMEOUT_MESSAGE;
-      if (!options.isRetry && !isReadyTimeout) {
+      // Terminal for this device: resetting the session only hands the retry
+      // the same constructor that just rejected.
+      const isUnplayable = error instanceof PlayerCreationError;
+      if (!options.isRetry && !isReadyTimeout && !isUnplayable) {
         try {
           await this.resetAudioSession();
           if (isSuperseded()) {
@@ -893,7 +924,7 @@ class SimpleAudioService {
         showToast: !isReadyTimeout,
         toastMessage: 'Failed to start audio playback',
       });
-      return 'failure';
+      return isUnplayable ? 'unplayable' : 'failure';
     }
   }
 
@@ -936,9 +967,15 @@ class SimpleAudioService {
       // seconds to show up". Publishing the loading state puts the player on
       // screen immediately, buffering, with the article's title and artwork.
       const isStreaming = isRemoteAudioUrl(firstTrack.audioUrl);
-      return (
-        (await this.playPlaylistTrack(firstTrack, { skipLoadingState: !isStreaming })) === 'success'
-      );
+      const outcome = await this.playPlaylistTrack(firstTrack, {
+        skipLoadingState: !isStreaming,
+      });
+      if (outcome === 'unplayable') {
+        // Leaving playlist mode on would strand the MiniPlayer over a playlist
+        // that can never start.
+        this.resetPlaylistState();
+      }
+      return outcome === 'success';
     } catch (error) {
       this.isPlaylistMode = false;
       this.playlist = [];
@@ -968,7 +1005,9 @@ class SimpleAudioService {
       this.consecutivePlaylistFailures = 0;
       return outcome;
     }
-    if (outcome === 'superseded') {
+    if (outcome === 'superseded' || outcome === 'unplayable') {
+      // 'unplayable' is not a cache problem — invalidating and re-downloading
+      // would spend a round trip handing the same broken constructor a new path.
       return outcome;
     }
 
@@ -1097,6 +1136,14 @@ class SimpleAudioService {
     }
     if (outcome === 'superseded') {
       // A newer play()/stop() owns playback now — abort the advance silently.
+      return false;
+    }
+    if (outcome === 'unplayable') {
+      // Every remaining track would fail in exactly the same way, so skipping
+      // ahead only buys more silence. playCore has already surfaced the single
+      // toast this deserves, so stop quietly rather than adding a second.
+      this.resetPlaylistState();
+      await this.stop();
       return false;
     }
 
