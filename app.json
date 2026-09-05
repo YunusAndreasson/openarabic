@@ -2,7 +2,7 @@
   "expo": {
     "name": "Open Arabic",
     "slug": "open-arabic",
-    "version": "1448.3.10",
+    "version": "1448.3.11",
     "description": "Learn Arabic through immersive reading, listening, and spaced repetition practice. Master vocabulary with authentic articles and audio content.",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -22,7 +22,7 @@
       },
       "supportsTablet": false,
       "bundleIdentifier": "openarabic",
-      "buildNumber": "267",
+      "buildNumber": "268",
       "appStoreUrl": "https://apps.apple.com/app/openarabic/id1594031029",
       "usesAppleSignIn": true,
       "entitlements": {
@@ -147,7 +147,7 @@
         "monochromeImage": "./assets/images/adaptive-monochrome.png"
       },
       "package": "com.edenmind.OpenArabic",
-      "versionCode": 267,
+      "versionCode": 268,
       "permissions": [
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.WAKE_LOCK",
@@ -354,7 +354,7 @@
         "expo-build-properties",
         {
           "_comment_deployment_target": "react-native-executorch's ExecutorchLib.xcframework declares :ios => '17.0', which is above the SDK 57 default, so CocoaPods refuses to integrate it without this. It is the FSMN voice-activity detector behind hands-free answering (hooks/voice/useSpeechGate.ts) that pulls it in. The cost is real and deliberate: iOS 16 devices no longer get updates. Removing the VAD is what it takes to lower this again.",
-        "_comment": "MMKV/MMKVCore arrive transitively via @kesha-antonov/react-native-background-downloader, whose podspec floats 'MMKV >= 1.2.0'. With no Podfile.lock in the repo (CNG), every EAS build re-resolves pods, so on 2026-08-02 it picked up MMKVCore 2.4.1 (published 2026-07-30), which calls memset_s — C11 Annex K, which Apple's libc does not implement — and the iOS build failed to compile AESCrypt.cpp. Pinning BOTH is required: MMKV 2.4.0 declares 'MMKVCore ~> 2.4.0', which would still admit 2.4.1. Drop this once upstream ships a fix.",
+          "_comment": "MMKV/MMKVCore arrive transitively via @kesha-antonov/react-native-background-downloader, whose podspec floats 'MMKV >= 1.2.0'. With no Podfile.lock in the repo (CNG), every EAS build re-resolves pods, so on 2026-08-02 it picked up MMKVCore 2.4.1 (published 2026-07-30), which calls memset_s — C11 Annex K, which Apple's libc does not implement — and the iOS build failed to compile AESCrypt.cpp. Pinning BOTH is required: MMKV 2.4.0 declares 'MMKVCore ~> 2.4.0', which would still admit 2.4.1. Drop this once upstream ships a fix.",
           "ios": {
             "deploymentTarget": "17.0",
             "extraPods": [
