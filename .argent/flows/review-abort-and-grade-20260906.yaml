@@ -1,0 +1,81 @@
+steps:
+  - echo: Reopen after no-answer abort; check initial progress and reveal.
+  - tap:
+      text: Review
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Show answer
+  - echo: Double-tap Show answer; expect a single reveal and no grade.
+  - tap:
+      on:
+        text: Show answer
+      times: 2
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Forgot, 1m
+  - echo: Double-tap Forgot; expect one grade and one new card.
+  - tap:
+      on:
+        text: Forgot, 1m
+      times: 2
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        identifier: review-root-insight
+  - echo: Forgot opens root insight without advancing. Double-tap Continue to commit
+      one answer.
+  - tap:
+      on:
+        text: Continue
+      times: 2
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Voice answer
+  - echo: Start voice on the next ungraded card; test no speech and cancellation.
+  - tap:
+      text: Speak to answer
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        identifier: com.android.permissioncontroller:id/permission_deny_button
+  - echo: Deny microphone permission; manual review must remain usable.
+  - tap:
+      id: com.android.permissioncontroller:id/permission_deny_button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Enable microphone
+  - echo: Permission denied; reveal manually and grade Knew it.
+  - tap:
+      text: Show answer
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Knew it, 10m
+  - tap:
+      on:
+        text: Knew it, 10m
+      times: 2
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Voice answer
+  - echo: Two cards answered. Force-stop and relaunch mid-session; verify persisted
+      totals.
+  - launch: com.edenmind.OpenArabic
+  - tool: open-url
+    args:
+      url: open-arabic://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8082
+executionPrerequisite: Fresh review test account signed in, Practice dashboard
+  visible, starter words due, first review tutorial dismissed.

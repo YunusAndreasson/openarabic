@@ -210,6 +210,19 @@ describe('hands-free arming', () => {
     expect(voice.arm).toHaveBeenCalledWith(expect.objectContaining({ handsFree: true }));
   });
 
+  test('keeps microphone denial across card changes', async () => {
+    jest.mocked(voice.arm).mockResolvedValueOnce({ ok: false, reason: 'permission' });
+    const view = renderReview({ key: 'first', handsFree: false, promptDoneKey: 'first' });
+    await act(async () => undefined);
+    await act(async () => view.result.current.speakNow());
+    expect(view.result.current.micDenied).toBe(true);
+    await act(async () =>
+      view.rerender({ key: 'second', handsFree: false, promptDoneKey: 'second' }),
+    );
+    expect(view.result.current.micDenied).toBe(true);
+    expect(view.result.current.handsFreeActive).toBe(false);
+  });
+
   test('keeps the tap until the microphone permission exists', async () => {
     // The tap on "Speak to answer" used to be the one moment the OS dialog
     // could appear with a reason attached to it, and a microphone prompt that

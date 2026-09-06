@@ -1235,31 +1235,8 @@ export function useReview({
     isAudioReady,
   ]);
 
-  // Safety watchdog: if no current word and not transitioning, force completion.
-  // Must guard on !isLoading — without it, a slow initial FSRS query (>300ms)
-  // misfires this watchdog while the loading screen is still showing.
-  useEffect(() => {
-    if (
-      !isComplete &&
-      !isLoading &&
-      !stateRefs.current.completionTriggered &&
-      !stateRefs.current.isUpdatingWord &&
-      !currentWord
-    ) {
-      const timer = setTimeout(() => {
-        if (
-          !isComplete &&
-          !stateRefs.current.completionTriggered &&
-          !stateRefs.current.isUpdatingWord &&
-          !currentWord
-        ) {
-          triggerCompletionTransition();
-        }
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-    return undefined;
-  }, [currentWord, isComplete, isLoading, triggerCompletionTransition]);
+  // Session completion is owned by useFSRS. A missing card can also mean
+  // an empty queue or initialization, so elapsed time cannot prove completion.
 
   // Replay audio for current word (passed to WordDisplay via ReviewFlipCard).
   // playAudio → service.play() disposes any existing player and creates a

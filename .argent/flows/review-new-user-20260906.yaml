@@ -1,0 +1,13 @@
+steps:
+  - echo: Launch Open Arabic for new-user review edge-case exploration.
+  - launch: com.edenmind.OpenArabic
+  - echo: Explore loaded on port 8082; open Account to switch to the isolated fresh
+      test user.
+  - tap:
+      x: 0.875
+      y: 0.93
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Change profile photo

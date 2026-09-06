@@ -58,12 +58,12 @@ export function voiceReadiness(input: {
   const { voiceEnabled, micDenied, model, engine } = input;
 
   if (!voiceEnabled) return { kind: 'off' };
-  if (engine.isReady) return { kind: 'ready' };
 
   // A refused microphone outranks every model state: no amount of downloading
   // makes it work, and telling someone to wait when they need to change a
   // setting is the worst of the available answers.
   if (micDenied) return { kind: 'mic-denied' };
+  if (engine.isReady) return { kind: 'ready' };
 
   if (engine.error) return { kind: 'failed', reason: 'unknown' };
 

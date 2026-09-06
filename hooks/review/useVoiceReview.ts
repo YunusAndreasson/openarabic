@@ -287,6 +287,7 @@ export function useVoiceReview({
   onRevealAnswer,
   onMissHeard,
 }: UseVoiceReviewArgs): {
+  micDenied: boolean;
   phase: VoicePhase;
   debug: VoiceDebug;
   result: VoiceResult | null;
@@ -768,6 +769,7 @@ export function useVoiceReview({
               prompt: getPromptSnapshot(currentWordKey),
             },
           });
+          setMicPermission('denied');
           setPhase('denied');
           return;
         }
@@ -1261,6 +1263,7 @@ export function useVoiceReview({
   }, [voice]);
 
   return {
+    micDenied: micPermission === 'denied',
     phase,
     debug,
     result,

@@ -478,6 +478,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     speakNow: voiceSpeakNow,
     stopSpeaking: voiceStopSpeaking,
     handsFreeActive,
+    micDenied,
   } = useVoiceReview({
     expected: currentWord?.root?.meaning ?? null,
     currentWordKey,
@@ -539,7 +540,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   const voiceActive = voiceEnabled && !isUpdating;
   const readiness = voiceReadiness({
     voiceEnabled,
-    micDenied: voicePhase === 'denied',
+    micDenied: micDenied || voicePhase === 'denied',
     model: voiceModel,
     engine: {
       isReady: voice.isReady,

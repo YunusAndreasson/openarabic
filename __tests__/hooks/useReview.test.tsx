@@ -306,6 +306,17 @@ describe('useReview Hook', () => {
   // Grading tests live in useReview.grade.test.tsx
 
   describe('Progress Tracking', () => {
+    test('does not complete while an uninitialized queue has no current card', () => {
+      useFSRS.mockReturnValue(fsrsState(mocks, null, { isLoading: false, progress: 0 }));
+      const { result, rerender } = renderHook(() => useReview(), { wrapper: createWrapper() });
+      act(() => jest.advanceTimersByTime(1000));
+      expect(result.current.maxProgress).toBe(0);
+      useFSRS.mockReturnValue(fsrsState(mocks, createMockWord(), { progress: 0 }));
+      rerender({});
+      expect(result.current.maxProgress).toBe(0);
+      expect(result.current.isComplete).toBe(false);
+    });
+
     test('should update progress as words are reviewed', () => {
       useFSRS.mockReturnValue(
         fsrsState(mocks, createMockWord(), {

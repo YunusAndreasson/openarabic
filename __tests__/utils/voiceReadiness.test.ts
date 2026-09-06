@@ -30,6 +30,17 @@ const engine = (
 });
 
 describe('voiceReadiness', () => {
+  it('keeps microphone denial actionable even when the recognizer is ready', () => {
+    expect(
+      voiceReadiness({
+        voiceEnabled: true,
+        micDenied: true,
+        model: model('ready'),
+        engine: engine({ isReady: true }),
+      }),
+    ).toEqual({ kind: 'mic-denied' });
+  });
+
   it('reports off whenever the learner has turned voice off, whatever the model is doing', () => {
     const states: VoiceModelState[] = ['unknown', 'absent', 'downloading', 'ready', 'failed'];
     for (const state of states) {
@@ -137,19 +148,6 @@ describe('voiceReadiness', () => {
         engine: engine({}),
       }),
     ).toEqual({ kind: 'mic-denied' });
-  });
-
-  it('lets a working recognizer outrank a stale denial', () => {
-    // The learner can grant the permission in system settings and come back
-    // without relaunching; a ready engine is proof it took.
-    expect(
-      voiceReadiness({
-        voiceEnabled: true,
-        micDenied: true,
-        model: model('ready'),
-        engine: engine({ isReady: true }),
-      }),
-    ).toEqual({ kind: 'ready' });
   });
 
   it('reports a not-yet-started fetch as pending, never as zero progress', () => {

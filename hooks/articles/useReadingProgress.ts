@@ -146,7 +146,9 @@ export function useReadingProgress({
       }
     },
     onError: error => {
-      void handleError(error instanceof Error ? error : new Error('Failed to update reading progress'));
+      void handleError(
+        error instanceof Error ? error : new Error('Failed to update reading progress'),
+      );
     },
     onSettled: (_data, _error, lastSentenceRead) => {
       pendingSentencesRef.current.delete(lastSentenceRead);

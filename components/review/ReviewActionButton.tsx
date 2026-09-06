@@ -168,11 +168,7 @@ export const ReviewActionButton: FC<ReviewActionButtonProps> = ({
             // quiet button and a `primary` peer in the same row keep identical
             // box metrics — the band's height must not move between states, or
             // the card above it shifts.
-            borderColor: isPrimary
-              ? disabled
-                ? colors.cardBorder
-                : colors.tint
-              : background,
+            borderColor: isPrimary ? (disabled ? colors.cardBorder : colors.tint) : background,
           },
           // A filled surface has no headroom for a deeper fill on press, so the
           // capsule dims instead — the same press idiom as the card's own

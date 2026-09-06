@@ -3,7 +3,7 @@
  * Step 3: LLM-label the eval corpus.
  *
  * Reads scripts/output/eval-corpus.enriched.json (600 entries with current analyzer output).
- * For each entry, asks Claude Opus 4.7 to produce expected component labels:
+ * For each entry, asks Claude Opus 5 to produce expected component labels:
  * expectedPrefixes, expectedSuffix, expectedInfix, expectedHasComponents.
  * Cross-checks against the captured current analyzer output and flags disagreements.
  *
@@ -33,9 +33,9 @@ const DRY_RUN = FLAG('dry-run');
 const LIMIT = ARG('limit') ? parseInt(ARG('limit')!, 10) : Infinity;
 const CONCURRENCY = ARG('concurrency') ? parseInt(ARG('concurrency')!, 10) : 4;
 
-const MODEL = 'claude-opus-4-5'; // Opus 4.5 — strong linguistic reasoning
-// Pricing in USD per million tokens (Opus 4.5)
-const PRICE = { input: 15.0, cached: 1.5, output: 75.0 };
+const MODEL = 'claude-opus-5'; // Opus 5 — strong linguistic reasoning
+// Pricing in USD per million tokens (Opus 5)
+const PRICE = { input: 5.0, cached: 0.5, output: 25.0 };
 
 const SYSTEM_PROMPT = `You are an expert in Classical and Modern Standard Arabic morphology. Given an Arabic word and its English translation, you identify the morphological components that should be color-coded for educational display in a language-learning app.
 

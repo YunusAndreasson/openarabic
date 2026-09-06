@@ -1,0 +1,10 @@
+steps:
+  - echo: 'Explicit edge case: open review via deep link with no due words. Expect
+      safe return to caught-up Practice, without a fake completed session.'
+  - tool: open-url
+    args:
+      url: open-arabic://review
+  - await: { visible: { text: All caught up }, timeout: 15000 }
+  - await: { idle: true }
+executionPrerequisite: Signed-in isolated test account has no words currently
+  due. Open Arabic is running on Practice.

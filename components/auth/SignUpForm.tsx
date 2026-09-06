@@ -35,7 +35,11 @@ export function SignUpForm(): JSX.Element {
 
   return (
     <View style={styles.container}>
-      <AuthCredentialFields fields={fields} onPasswordSubmit={() => void signUpWithEmail()} isSignUp>
+      <AuthCredentialFields
+        fields={fields}
+        onPasswordSubmit={() => void signUpWithEmail()}
+        isSignUp
+      >
         <PasswordStrengthMeter password={password} />
       </AuthCredentialFields>
 

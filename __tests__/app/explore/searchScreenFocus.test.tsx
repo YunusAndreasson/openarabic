@@ -17,8 +17,7 @@ type TransitionHandler = (event: TransitionEvent) => void;
 
 const mockFocus = jest.fn();
 const mockListeners: Record<string, TransitionHandler> = {};
-const mockAddListener =
-  jest.fn<(event: string, handler: TransitionHandler) => () => void>();
+const mockAddListener = jest.fn<(event: string, handler: TransitionHandler) => () => void>();
 
 jest.mock('expo-router', () => {
   const React = require('react');

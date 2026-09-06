@@ -1,0 +1,91 @@
+steps:
+  - echo: 'Auth landing: sign in to the fresh review test account.'
+  - tap:
+      text: Sign in with email
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        identifier: email-input
+  - tool: run-sequence
+    args:
+      steps:
+        - tool: gesture-tap
+          args:
+            x: 0.54
+            y: 0.25
+        - tool: keyboard
+          args:
+            text: '{{secret:OPEN_ARABIC_REVIEW_NEW_EMAIL}}'
+        - tool: keyboard
+          args:
+            key: tab
+        - tool: keyboard
+          args:
+            text: '{{secret:OPEN_ARABIC_REVIEW_NEW_PASSWORD}}'
+        - tool: keyboard
+          args:
+            key: enter
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Read without decoding
+  - echo: Fresh account sees onboarding. Skip it and inspect empty Practice.
+  - tap:
+      text: Skip
+  - tool: await-ui-element
+    args:
+      condition: hidden
+      selector:
+        text: Read without decoding
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Practice your first word
+  - tap:
+      text: Practice your first word
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: No words yet
+  - echo: Empty Practice offers Add common words. Open the starter-word chooser.
+  - tap:
+      text: Add common words
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Nothing measured yet
+  - echo: 'Starter set added: 10 due, zero reviews. Open first review.'
+  - tap:
+      text: Review
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: How it works
+  - echo: 'First review tutorial: use Android Back to dismiss; expect an ungraded
+      card.'
+  - tool: button
+    args:
+      button: back
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Show answer
+      timeoutMs: 15000
+  - echo: 'Finding: first ungraded card announces 100% through this round, 0 words
+      done. Test hardware Back before answering.'
+  - tool: button
+    args:
+      button: back
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Nothing measured yet
+executionPrerequisite: Open Arabic auth landing, isolated new account exists, Metro on port 8082.

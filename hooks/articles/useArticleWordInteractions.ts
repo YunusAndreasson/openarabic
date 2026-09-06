@@ -222,10 +222,7 @@ export function useArticleWordInteractions({
       mediumFeedback();
       const wasInStudy = isRootInStudyListRef.current(word.root_id);
       // Explicit intent: the toast below promises this exact direction
-      const succeeded = await handleAddWordToStudyRef.current(
-        word,
-        wasInStudy ? 'remove' : 'add',
-      );
+      const succeeded = await handleAddWordToStudyRef.current(word, wasInStudy ? 'remove' : 'add');
       // Guard failures (daily limit, auth) already showed their own feedback
       if (!succeeded) return;
 

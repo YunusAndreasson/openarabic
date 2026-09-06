@@ -1,0 +1,867 @@
+steps:
+  - tap:
+      x: 0.875
+      y: 0.93
+  - tool: gesture-swipe
+    args:
+      fromX: 0.5
+      fromY: 0.8
+      toX: 0.5
+      toY: 0.25
+  - tool: gesture-swipe
+    args:
+      fromX: 0.5
+      fromY: 0.8
+      toX: 0.5
+      toY: 0.35
+  - tap:
+      text: Sign out
+  - tool: gesture-swipe
+    args:
+      fromX: 0.5
+      fromY: 0.8
+      toX: 0.5
+      toY: 0.5
+  - tap:
+      text: Sign out
+  - tap:
+      id: android:id/button1
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Sign in with email
+      timeoutMs: 15000
+  - tap:
+      text: Sign in with email
+  - tool: run-sequence
+    args:
+      steps:
+        - tool: gesture-tap
+          args:
+            x: 0.54
+            y: 0.25
+        - tool: keyboard
+          args:
+            text: '{{secret:OPEN_ARABIC_REVIEW_FIXES_EMAIL}}'
+        - tool: keyboard
+          args:
+            key: tab
+        - tool: keyboard
+          args:
+            text: '{{secret:OPEN_ARABIC_REVIEW_FIXES_PASSWORD}}'
+        - tool: keyboard
+          args:
+            key: enter
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Read without decoding
+      timeoutMs: 15000
+  - tool: run-sequence
+    args:
+      steps:
+        - tool: gesture-tap
+          args:
+            x: 0.5
+            y: 0.3295
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            text: '{{secret:OPEN_ARABIC_REVIEW_FIXES_PASSWORD}}'
+  - tap:
+      text: Sign in
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Read without decoding
+      timeoutMs: 15000
+  - tool: run-sequence
+    args:
+      steps:
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: paste
+          args:
+            text: '{{secret:OPEN_ARABIC_REVIEW_FIXES_PASSWORD}}'
+        - tool: keyboard
+          args:
+            key: enter
+  - tool: run-sequence
+    args:
+      steps:
+        - tool: gesture-tap
+          args:
+            x: 0.5
+            y: 0.3295
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            key: backspace
+          delayMs: 0
+        - tool: keyboard
+          args:
+            text: '{{secret:OPEN_ARABIC_REVIEW_FIXES_PASSWORD}}'
+        - tool: keyboard
+          args:
+            key: enter
+  - tap:
+      role: StaticText
+  - tap:
+      text: Sign in with email
+  - tool: run-sequence
+    args:
+      steps:
+        - tool: gesture-tap
+          args:
+            x: 0.54
+            y: 0.25
+        - tool: keyboard
+          args:
+            text: '{{secret:OPEN_ARABIC_REVIEW_FIXES_EMAIL}}'
+        - tool: keyboard
+          args:
+            key: tab
+        - tool: keyboard
+          args:
+            text: '{{secret:OPEN_ARABIC_REVIEW_FIXES_PASSWORD}}'
+  - tool: keyboard
+    args:
+      text: '9'
+  - tool: keyboard
+    args:
+      key: enter
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Read without decoding
+      timeoutMs: 15000
+  - tap:
+      text: Skip
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Practice your first word
+      timeoutMs: 15000
+  - tap:
+      text: Practice your first word
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: No words yet
+      timeoutMs: 15000
+  - tap:
+      text: Add common words
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Nothing measured yet
+      timeoutMs: 15000
+  - tap:
+      text: Review
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: How it works
+      timeoutMs: 15000
+  - tool: button
+    args:
+      button: back
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Show answer
+      timeoutMs: 15000
+  - tap:
+      on:
+        text: Show answer
+      times: 2
+  - tap:
+      text: Continue
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Enable microphone
+      timeoutMs: 15000
+  - tap:
+      on:
+        text: Show answer
+      times: 2
+  - tap:
+      on:
+        text: Knew it, 10m
+      times: 2
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Enable microphone
+      timeoutMs: 15000
+  - tap:
+      text: Enable microphone
+  - tool: settings-permissions
+    args:
+      action: grant
+      permission: microphone
+      bundleId: com.edenmind.OpenArabic
+  - launch: com.edenmind.OpenArabic
+  - tool: open-url
+    args:
+      url: open-arabic://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8082
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Practice
+      timeoutMs: 15000
+  - tap:
+      x: 0.625
+      y: 0.93
+  - tap:
+      text: Review
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Show answer
+      timeoutMs: 15000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Speak to answer
+      timeoutMs: 20000
+  - tap:
+      text: Speak to answer
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Try again
+      timeoutMs: 20000
+  - tap:
+      text: Try again
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Try again
+      timeoutMs: 20000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Try again
+      timeoutMs: 20000
+  - tap:
+      x: 0.908
+      y: 0.077
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Reviews done, 2. Opens the breakdown by how often each word has come up.
+      timeoutMs: 15000
+executionPrerequisite: Signed in to first test account on Practice; fresh
+  fix-verification account exists.

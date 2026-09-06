@@ -16,7 +16,10 @@ const createProps = (
   }) as ArticleSentenceProps;
 
 describe('ArticleSentence memo comparison', () => {
-  const words = [{ id: 10, root_id: 100 }, { id: 11, root_id: 101 }] as SentenceWord[];
+  const words = [
+    { id: 10, root_id: 100 },
+    { id: 11, root_id: 101 },
+  ] as SentenceWord[];
 
   it('keeps an unaffected sentence mounted when another root changes', () => {
     const previous = createProps(new Set([100]), words);

@@ -323,18 +323,21 @@ export function useOAuthProvider(config: OAuthProviderConfig) {
         .join('\n');
 
       // Use handleError to avoid duplicate Sentry captures
-      void handleError(error instanceof Error ? error : new Error(`${providerName} Sign In failed`), {
-        toastMessage: detailedErrorMessage,
-        toastDuration: 15000,
-        analyticsEventName: `${providerName}_Sign_In_Error`,
-        sentrySeverity: 'error',
-        sentryTags: {
-          location: `${config.provider}_auth`,
-          step: failedStep,
-          errorCode: errorDetails.errorCode,
+      void handleError(
+        error instanceof Error ? error : new Error(`${providerName} Sign In failed`),
+        {
+          toastMessage: detailedErrorMessage,
+          toastDuration: 15000,
+          analyticsEventName: `${providerName}_Sign_In_Error`,
+          sentrySeverity: 'error',
+          sentryTags: {
+            location: `${config.provider}_auth`,
+            step: failedStep,
+            errorCode: errorDetails.errorCode,
+          },
+          sentryExtra: { ...errorDetails, failedStep },
         },
-        sentryExtra: { ...errorDetails, failedStep },
-      });
+      );
     } finally {
       if (isMountedRef.current) {
         setLoading(false);

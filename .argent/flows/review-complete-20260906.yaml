@@ -1,0 +1,148 @@
+steps:
+  - tap:
+      text: Review
+  - echo: Complete starter cards with Knew it, checking each revealed grade control
+      and next-card state.
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Show answer
+  - tap:
+      text: Show answer
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Knew it, 10m
+  - tap:
+      text: Knew it, 10m
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Show answer
+  - tap:
+      text: Show answer
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Knew it, 10m
+  - tap:
+      text: Knew it, 10m
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Show answer
+  - tap:
+      text: Show answer
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Knew it, 10m
+  - tap:
+      text: Knew it, 10m
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Show answer
+  - tap:
+      text: Show answer
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Knew it, 10m
+  - tap:
+      text: Knew it, 10m
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Show answer
+  - tap:
+      text: Show answer
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Knew it, 10m
+  - tap:
+      text: Knew it, 10m
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Show answer
+  - tap:
+      text: Show answer
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Knew it, 10m
+  - tap:
+      text: Knew it, 10m
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Show answer
+  - tap:
+      text: Show answer
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Knew it, 10m
+  - tap:
+      text: Knew it, 10m
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Show answer
+  - tap:
+      text: Show answer
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Knew it, 10m
+  - tap:
+      text: Knew it, 10m
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Show answer
+  - tap:
+      text: Show answer
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Knew it, 10m
+  - tap:
+      text: Knew it, 10m
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Session complete
+  - echo: Session complete with nine words. Decline reminders.
+  - tap:
+      text: Not now
+  - tap:
+      text: Continue
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: All caught up
+executionPrerequisite: Isolated review test account on Practice dashboard with
+  due starter words; onboarding dismissed.
