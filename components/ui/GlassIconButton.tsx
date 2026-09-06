@@ -10,10 +10,13 @@ import { LAYOUT } from '@/constants/layout';
 import { PRESS_ANIMATION_BUTTON } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useButtonPress, type HapticType } from '@/hooks/ui/useButtonPress';
+import { useReduceTransparency } from '@/hooks/ui/useReduceTransparency';
 import type { PressableLikeProps } from '@/types/ui/base.types';
 
 // Resolved once: `isLiquidGlassAvailable()` is a native capability check, not
-// state, so it cannot change for the life of the process.
+// state, so it cannot change for the life of the process. It is only half the
+// question though — it reports that the components EXIST, and stays true for a
+// user running Reduce Transparency. See `onGlass` below.
 const GLASS_AVAILABLE = isLiquidGlassAvailable();
 const AnimatedView = Animated.createAnimatedComponent(View);
 
@@ -84,6 +87,15 @@ export const GlassIconButton: FC<GlassIconButtonProps> = ({
   testID,
 }) => {
   const colors = useColors();
+  // Reduce Transparency takes the glass path off the table: iOS flattens the
+  // material for that user, and `isInteractive` has correspondingly little to
+  // show for a press. Branching on availability alone therefore handed the
+  // no-feedback button described below to precisely the people least able to
+  // absorb it — the glass path deliberately drops the scale animation, so
+  // there would have been nothing left answering the tap.
+  const reduceTransparency = useReduceTransparency();
+  const onGlass = GLASS_AVAILABLE && !reduceTransparency;
+
   // On iOS 26 the glass container answers the press itself (`isInteractive`).
   // Everywhere else the fallback is a plain View, which for a long time meant
   // this button — the article reader's floating controls and the review
@@ -95,8 +107,9 @@ export const GlassIconButton: FC<GlassIconButtonProps> = ({
     animationOptions: PRESS_ANIMATION_BUTTON,
   });
 
-  // Fallback background for platforms without liquid glass. On iOS 26 the glass
-  // effect paints over this; everywhere else it IS the button.
+  // Fallback background for platforms without liquid glass — and for a user on
+  // Reduce Transparency, where it is what the button is made of. On the glass
+  // path the effect paints over this; everywhere else it IS the button.
   const surfaceStyle = active
     ? { backgroundColor: colors.elevation2, opacity: LAYOUT.OPACITY.ACTIVE }
     : { backgroundColor: colors.elevation1, opacity: LAYOUT.OPACITY.PRESSED };
@@ -112,10 +125,10 @@ export const GlassIconButton: FC<GlassIconButtonProps> = ({
       style={style}
       testID={testID}
       onPress={handlePress}
-      onPressIn={GLASS_AVAILABLE ? undefined : handlePressIn}
-      onPressOut={GLASS_AVAILABLE ? undefined : handlePressOut}
+      onPressIn={onGlass ? undefined : handlePressIn}
+      onPressOut={onGlass ? undefined : handlePressOut}
     >
-      {GLASS_AVAILABLE ? (
+      {onGlass ? (
         <GlassView
           style={[ICON_BUTTON_SIZES.medium.container, styles.button, surfaceStyle]}
           isInteractive

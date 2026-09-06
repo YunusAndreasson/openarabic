@@ -476,6 +476,19 @@ jest.mock('react-native', () => {
       currentState: 'active',
     },
 
+    // Accessibility settings.
+    // Plain functions, NOT jest.fn(): `resetMocks` strips every jest.fn()
+    // implementation between tests, which would make these return `undefined`
+    // and throw on the `.then()` that reads them. Same trap as
+    // `useWindowDimensions` below.
+    AccessibilityInfo: {
+      isReduceTransparencyEnabled: () => Promise.resolve(false),
+      isReduceMotionEnabled: () => Promise.resolve(false),
+      isScreenReaderEnabled: () => Promise.resolve(false),
+      addEventListener: () => ({ remove: () => {} }),
+      announceForAccessibility: () => {},
+    },
+
     // Device information
     Dimensions: {
       get: jest.fn(dimension => {
