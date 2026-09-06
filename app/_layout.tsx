@@ -48,6 +48,7 @@ import { NOTIFICATION_ROUTE_BY_TYPE, NOTIFICATION_TYPES } from '@/constants/noti
 import type { AnyNotificationType } from '@/constants/notifications';
 import { QUERY_DEFAULTS, studyStreakQueries } from '@/constants/queries';
 import { useAppBadge } from '@/hooks/app/useAppBadge';
+import { useUpdateReady } from '@/hooks/app/useUpdateReady';
 import { useSmartNotifications } from '@/hooks/notifications/useSmartNotifications';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { GlobalAudioStateProvider } from '@/hooks/audio/useGlobalAudioState';
@@ -302,6 +303,9 @@ function AppContent() {
 
   // App badge management - monitors due words and updates app icon badge
   useAppBadge();
+
+  // Says so when an OTA bundle has downloaded and is waiting for the next launch
+  useUpdateReady();
 
   // Smart SRS reminders - keeps the scheduled notification plan in sync with FSRS state
   useSmartNotifications();

@@ -8,6 +8,11 @@ export const STRINGS = {
   CLEAR: 'Clear',
   REFRESH: 'Refresh',
   CONTINUE: 'Continue',
+
+  // Over-the-air updates. The download is silent and the new bundle only runs on
+  // the NEXT launch, so this is the one line that admits it happened — without
+  // asking for anything, because it needs nothing.
+  UPDATE_DOWNLOADED: 'Update downloaded. It applies next time you open the app.',
   // Settings & preferences
   STUDY_REMINDERS: 'Review reminders',
   SMART_REMINDERS_SUBTITLE: 'Sent when words are due',
