@@ -1,0 +1,21 @@
+steps:
+  - await: { visible: { text: Speak to answer }, timeout: 40000 }
+  - await: { idle: true }
+  - tap:
+      text: Speak to answer
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: No, I missed it
+      timeoutMs: 30000
+  - tap:
+      text: No, I missed it
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Continue
+      timeoutMs: 10000
+executionPrerequisite: Android QA account in active review on an unrevealed
+  card, voice model ready, Speak to answer visible.

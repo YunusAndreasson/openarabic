@@ -1,5 +1,5 @@
 import { act, render } from '@testing-library/react-native';
-import { describe, expect, jest, test } from '@jest/globals';
+import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import { createRef } from 'react';
 
 import type { ReviewCardHandle } from '@/components/review/ReviewFlipCard';
@@ -13,9 +13,12 @@ const mockIsAnimating = {
   get: jest.fn(() => true),
   set: jest.fn(),
 };
+let mockFlipValue = 1;
 const mockFlipProgress = {
-  get: jest.fn(() => 1),
-  set: jest.fn(),
+  get: () => mockFlipValue,
+  set: jest.fn((value: number) => {
+    mockFlipValue = value;
+  }),
 };
 const mockResetVerdict = jest.fn();
 
@@ -24,6 +27,7 @@ jest.mock('react-native-reanimated', () => {
   return {
     ...base,
     cancelAnimation: jest.fn(),
+    withTiming: (value: number) => value,
     interpolateColor: () => 'transparent',
     useReducedMotion: () => false,
     useSharedValue: () => mockFlipProgress,
@@ -64,6 +68,13 @@ jest.mock('@/components/ui', () => {
 jest.mock('@/components/primitives/ThemedText', () => ({ ThemedText: () => null }));
 jest.mock('@/components/review/WordDisplay', () => ({ WordDisplay: () => null }));
 
+beforeEach(() => {
+  mockFlipValue = 0;
+  mockFlipProgress.set.mockImplementation((value: number) => {
+    mockFlipValue = value;
+  });
+});
+
 describe('ReviewFlipCard rejected-grade recovery', () => {
   test('recentres the attempted grade without resetting the revealed face', () => {
     const ref = createRef<ReviewCardHandle>();
@@ -90,5 +101,37 @@ describe('ReviewFlipCard rejected-grade recovery', () => {
     expect(mockIsAnimating.set).toHaveBeenCalledWith(false);
     expect(mockResetVerdict).toHaveBeenCalledWith('word-1');
     expect(mockFlipProgress.set).not.toHaveBeenCalled();
+  });
+});
+
+describe('ReviewFlipCard face synchronization', () => {
+  test('keeps an already revealed card on its answer face after mounting', () => {
+    render(
+      <ReviewFlipCard
+        word="كتاب"
+        answer="book"
+        revealed
+        onReveal={jest.fn()}
+        opacityStyle={{}}
+        wordKey="word-1"
+      />,
+    );
+    expect(mockFlipProgress.get()).toBe(1);
+  });
+
+  test('reveals the current card and resets the next card to its question face', () => {
+    const props = {
+      word: 'كتاب',
+      answer: 'book',
+      onReveal: jest.fn(),
+      opacityStyle: {},
+      wordKey: 'word-1',
+    };
+    const { rerender } = render(<ReviewFlipCard {...props} revealed={false} />);
+    expect(mockFlipProgress.get()).toBe(0);
+    rerender(<ReviewFlipCard {...props} revealed />);
+    expect(mockFlipProgress.get()).toBe(1);
+    rerender(<ReviewFlipCard {...props} wordKey="word-2" revealed={false} />);
+    expect(mockFlipProgress.get()).toBe(0);
   });
 });

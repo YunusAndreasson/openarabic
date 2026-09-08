@@ -236,9 +236,8 @@ const STATIC_STYLES = StyleSheet.create({
     // Kept in lockstep with `face`'s radius — see the comment there.
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
-  // The verdict ring. An overlay rather than the faces' own borderColor: there
-  // are two faces, only one is ever facing the viewer, and recolouring both
-  // means the answer to "what did I score" is hidden on the back of the card.
+  // Each face owns a verdict ring so feedback follows its rotation. Keeping
+  // it separate from the surface lets verdict and face opacity multiply.
   verdictRing: {
     position: 'absolute',
     top: 0,
@@ -473,7 +472,7 @@ export function ReviewFlipCard({
     }
     cancelAnimation(flipProgress);
     flipProgress.set(0);
-  }, [revealed, flipProgress]);
+  }, [revealed, wordKey, flipProgress]);
 
   // Both faces turn together, half a turn apart, and both drop out across the
   // seam. backfaceVisibility still does the actual face hiding either side of
@@ -520,16 +519,6 @@ export function ReviewFlipCard({
     };
   });
 
-  // The overlays are siblings of the faces, not children, so they do not rotate:
-  // without this they stay full-size rounded rectangles around a card that has
-  // folded to nothing. A voice verdict can land while the flip is still running
-  // — it marks a mishear the moment it is heard, not when the turn ends — so the
-  // wash and the ring really can be lit mid-fold.
-  const seamStyle = useAnimatedStyle(() => {
-    'worklet';
-    return { opacity: seamMask(flipProgress.get()) };
-  });
-
   // Dark mode carries no shadow, same as BaseCard. This card doesn't compensate
   // with a border or a step up to elevation2 either — `colors.card` is already
   // +4% L above the page background (sage.dark vs. sage.darkest), which is the
@@ -557,12 +546,6 @@ export function ReviewFlipCard({
     cancelAnimation(translateX);
     translateX.set(0);
     isAnimatingRef.set(false);
-    // Belt and braces with the `revealed` effect above: a new card must never
-    // arrive mid-turn or already turned. Both paths snap to 0 and the card is
-    // riding the advance fade at opacity 0 while this runs, so a redundant set
-    // costs nothing and a missed one would show the answer face for a frame.
-    cancelAnimation(flipProgress);
-    flipProgress.set(0);
     // A miss holds its ring for the restudy hold, so unlike the throw offset the
     // verdict has no self-clearing animation — the new card has to clear it, or
     // the word after a forgotten one arrives already marked red. Passing
@@ -575,7 +558,7 @@ export function ReviewFlipCard({
     // background/foreground gap, which is a Reanimated-level gap this effect
     // cannot close by itself.
     resetVerdict(wordKey ?? '');
-  }, [wordKey, translateX, isAnimatingRef, resetVerdict, flipProgress]);
+  }, [wordKey, translateX, isAnimatingRef, resetVerdict]);
 
   const flashColors = useMemo(
     () => ({
@@ -755,6 +738,16 @@ export function ReviewFlipCard({
                     </View>
                   </WordDisplay>
                 </Pressable>
+                {/* Feedback belongs to the face so its geometry and seam
+                    opacity follow the turn; ring opacity remains independent. */}
+                <Animated.View
+                  style={[STATIC_STYLES.flashOverlay, washStyle]}
+                  pointerEvents="none"
+                />
+                <Animated.View
+                  style={[STATIC_STYLES.verdictRing, verdictRingStyle]}
+                  pointerEvents="none"
+                />
               </Animated.View>
 
               {/* Question face: the Arabic alone, with the voice channel below
@@ -829,22 +822,17 @@ export function ReviewFlipCard({
                     </View>
                   </WordDisplay>
                 </Pressable>
+                {/* Feedback belongs to the face so its geometry and seam
+                    opacity follow the turn; ring opacity remains independent. */}
+                <Animated.View
+                  style={[STATIC_STYLES.flashOverlay, washStyle]}
+                  pointerEvents="none"
+                />
+                <Animated.View
+                  style={[STATIC_STYLES.verdictRing, verdictRingStyle]}
+                  pointerEvents="none"
+                />
               </Animated.View>
-
-              {/* Verdict feedback, above both faces so it marks whichever is
-                  up. These do not rotate with the faces, so each rides the seam
-                  mask as well — otherwise a wash or a ring lit while the flip is
-                  still running keeps its full rectangle after the card it
-                  belongs to has folded away. Nested opacities multiply, which is
-                  exactly the wanted behaviour. */}
-              <Animated.View
-                style={[STATIC_STYLES.flashOverlay, washStyle, seamStyle]}
-                pointerEvents="none"
-              />
-              <Animated.View
-                style={[STATIC_STYLES.verdictRing, verdictRingStyle, seamStyle]}
-                pointerEvents="none"
-              />
             </View>
           </Animated.View>
         </Animated.View>

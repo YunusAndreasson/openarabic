@@ -211,6 +211,7 @@ describe('useFSRS Hook', () => {
         // The session must never declare itself complete while it still has a
         // card up — that is exactly the false "Session complete" being fixed.
         expect(result.current.isComplete).toBeFalsy();
+        expect(result.current.progress).toBeLessThan(100);
 
         graded.add(word.root_id);
         await act(async () => {
@@ -223,6 +224,41 @@ describe('useFSRS Hook', () => {
       expect(result.current.enrichmentBatches[0]).toHaveLength(20);
       expect(result.current.enrichmentBatches[1]).toHaveLength(10);
       expect(result.current.isComplete).toBeTruthy();
+      expect(result.current.progress).toBe(100);
+    });
+
+    test('keeps progress below full across a backlog and repeated wrong-answer retries', async () => {
+      const words = Array.from({ length: 21 }, (_, i) =>
+        createMockStudyWord({ root_id: rootId(i + 1) }),
+      );
+      studyWordsFSRSService.getFSRSWords = jest.fn(async () => words);
+      const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
+      await waitFor(() => expect(result.current.currentWord).not.toBeNull());
+
+      // Leave one word to drill after the first 20 have graduated.
+      for (let i = 0; i < 20; i += 1) {
+        const word = result.current.currentWord!;
+        await act(async () => {
+          await result.current.updateWord(word.root_id, 'known');
+        });
+        expect(result.current.progress).toBeLessThan(100);
+      }
+      expect(result.current.isComplete).toBe(false);
+      const lastWord = result.current.currentWord!;
+      const beforeMiss = result.current.progress;
+      for (const confidence of ['unknown', 'known', 'unknown', 'known'] as const) {
+        await act(async () => {
+          await result.current.updateWord(lastWord.root_id, confidence);
+        });
+        expect(result.current.currentWord?.root_id).toBe(lastWord.root_id);
+        expect(result.current.isComplete).toBe(false);
+        expect(result.current.progress).toBe(beforeMiss);
+      }
+      await act(async () => {
+        await result.current.updateWord(lastWord.root_id, 'known');
+      });
+      expect(result.current.currentWord).toBeNull();
+      expect(result.current.isComplete).toBe(true);
       expect(result.current.progress).toBe(100);
     });
 

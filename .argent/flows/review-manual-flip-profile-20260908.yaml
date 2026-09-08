@@ -1,0 +1,49 @@
+steps:
+  - tap:
+      text: Review
+  - await: { visible: { text: Show answer }, timeout: 20000 }
+  - await: { idle: true }
+  - tap:
+      text: Show answer
+  - await: { visible: { text: Forgot }, timeout: 10000 }
+  - await: { idle: true }
+  - tap:
+      text: Forgot
+  - await: { visible: { text: Continue }, timeout: 10000 }
+  - await: { idle: true }
+  - tap:
+      text: Continue
+  - await: { visible: { text: Show answer }, timeout: 10000 }
+  - await: { idle: true }
+  - tap:
+      on:
+        text: Show answer
+      times: 2
+  - await: { visible: { text: Forgot }, timeout: 10000 }
+  - await: { idle: true }
+  - tap:
+      on:
+        text: Forgot
+      times: 2
+  - await: { visible: { text: Continue }, timeout: 10000 }
+  - await: { idle: true }
+  - tap:
+      on:
+        text: Continue
+      times: 2
+  - await: { visible: { text: Show answer }, timeout: 10000 }
+  - await: { idle: true }
+  - tap:
+      text: Show answer
+  - await: { visible: { text: Forgot }, timeout: 10000 }
+  - await: { idle: true }
+  - tap:
+      text: Forgot
+  - await: { visible: { text: Continue }, timeout: 10000 }
+  - await: { idle: true }
+  - tap:
+      text: Continue
+  - await: { visible: { text: Show answer }, timeout: 10000 }
+  - await: { idle: true }
+executionPrerequisite: Android reusable Argent QA account on Practice with at least
+  three due words, manual answer controls available, and no active session.

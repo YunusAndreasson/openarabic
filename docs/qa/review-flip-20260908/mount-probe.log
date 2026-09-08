@@ -1,0 +1,46 @@
+FAIL undefined __tests__/components/review/ReviewFlipCard.mount-probe.test.tsx
+  ReviewFlipCard mount probe
+    ✕ an already revealed card mounts on the answer face (23 ms)
+
+  ● ReviewFlipCard mount probe › an already revealed card mounts on the answer face
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 0
+
+      70 |   test('an already revealed card mounts on the answer face', () => {
+      71 |     render(<ReviewFlipCard word="كتاب" answer="book" revealed onReveal={jest.fn()} opacityStyle={{}} wordKey="word-1" />);
+    > 72 |     expect(mockFlipProgress.get()).toBe(1);
+         |                                    ^
+      73 |   });
+      74 | });
+      75 |
+
+      at Object.toBe (__tests__/components/review/ReviewFlipCard.mount-probe.test.tsx:72:36)
+
+Summary of all failing tests
+FAIL __tests__/components/review/ReviewFlipCard.mount-probe.test.tsx
+  ● ReviewFlipCard mount probe › an already revealed card mounts on the answer face
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 0
+
+      70 |   test('an already revealed card mounts on the answer face', () => {
+      71 |     render(<ReviewFlipCard word="كتاب" answer="book" revealed onReveal={jest.fn()} opacityStyle={{}} wordKey="word-1" />);
+    > 72 |     expect(mockFlipProgress.get()).toBe(1);
+         |                                    ^
+      73 |   });
+      74 | });
+      75 |
+
+      at Object.toBe (__tests__/components/review/ReviewFlipCard.mount-probe.test.tsx:72:36)
+
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 1 total
+Snapshots:   0 total
+Time:        0.898 s, estimated 2 s
+Ran all test suites within paths "__tests__/components/review/ReviewFlipCard.mount-probe.test.tsx".

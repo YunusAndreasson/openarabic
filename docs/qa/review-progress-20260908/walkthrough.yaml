@@ -1,0 +1,335 @@
+steps:
+  - tap:
+      text: Review
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Show answer
+      timeoutMs: 20000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 0% through this round, 0 words done
+  - tap:
+      text: Show answer
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Forgot
+      timeoutMs: 10000
+  - tap:
+      text: Forgot, 1m
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Continue
+      timeoutMs: 15000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 0% through this round, 0 words done
+      timeoutMs: 15000
+  - tap:
+      text: Continue
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Show answer
+      timeoutMs: 15000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 0% through this round, 1 words done
+  - tap:
+      text: Show answer
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Knew it
+      timeoutMs: 10000
+  - tap:
+      text: Knew it, 10m
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 10% through this round
+      timeoutMs: 15000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Show answer
+      timeoutMs: 10000
+  - tap:
+      text: Show answer
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Knew it
+      timeoutMs: 10000
+  - tap:
+      text: Knew it, 10m
+  - tool: await-ui-element
+    args:
+      condition: hidden
+      selector:
+        text: Knew it
+      timeoutMs: 10000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 20% through this round, 3 words done
+      timeoutMs: 10000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Show answer
+      timeoutMs: 10000
+  - tap:
+      text: Show answer
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Knew it
+      timeoutMs: 10000
+  - tap:
+      text: Knew it, 10m
+  - tool: await-ui-element
+    args:
+      condition: hidden
+      selector:
+        text: Knew it
+      timeoutMs: 10000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 30% through this round, 4 words done
+      timeoutMs: 10000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Show answer
+      timeoutMs: 10000
+  - tap:
+      text: Show answer
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Knew it
+      timeoutMs: 10000
+  - tap:
+      text: Knew it, 10m
+  - tool: await-ui-element
+    args:
+      condition: hidden
+      selector:
+        text: Knew it
+      timeoutMs: 10000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 40% through this round, 5 words done
+      timeoutMs: 10000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Show answer
+      timeoutMs: 10000
+  - tap:
+      text: Show answer
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Knew it
+      timeoutMs: 10000
+  - tap:
+      text: Knew it, 10m
+  - tool: await-ui-element
+    args:
+      condition: hidden
+      selector:
+        text: Knew it
+      timeoutMs: 10000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 50% through this round, 6 words done
+      timeoutMs: 10000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Show answer
+      timeoutMs: 10000
+  - tap:
+      text: Show answer
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Knew it
+      timeoutMs: 10000
+  - tap:
+      text: Knew it, 10m
+  - tool: await-ui-element
+    args:
+      condition: hidden
+      selector:
+        text: Knew it
+      timeoutMs: 10000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 60% through this round, 7 words done
+      timeoutMs: 10000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Show answer
+      timeoutMs: 10000
+  - tap:
+      text: Show answer
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Knew it
+      timeoutMs: 10000
+  - tap:
+      text: Knew it, 10m
+  - tool: await-ui-element
+    args:
+      condition: hidden
+      selector:
+        text: Knew it
+      timeoutMs: 10000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 70% through this round, 8 words done
+      timeoutMs: 10000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Show answer
+      timeoutMs: 10000
+  - tap:
+      text: Show answer
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Knew it
+      timeoutMs: 10000
+  - tap:
+      text: Knew it, 10m
+  - tool: await-ui-element
+    args:
+      condition: hidden
+      selector:
+        text: Knew it
+      timeoutMs: 10000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 80% through this round, 9 words done
+      timeoutMs: 10000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Show answer
+      timeoutMs: 10000
+  - tap:
+      text: Show answer
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Knew it
+      timeoutMs: 10000
+  - tap:
+      text: Knew it, 10m
+  - tool: await-ui-element
+    args:
+      condition: hidden
+      selector:
+        text: Knew it
+      timeoutMs: 10000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 90% through this round, 10 words done
+      timeoutMs: 10000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Show answer
+      timeoutMs: 10000
+  - tap:
+      text: Show answer
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Knew it
+      timeoutMs: 10000
+  - tap:
+      text: Knew it, 10m
+  - tool: await-ui-element
+    args:
+      condition: hidden
+      selector:
+        text: Knew it
+      timeoutMs: 10000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 90% through this round, 10 words done
+      timeoutMs: 10000
+  - tap:
+      text: Show answer
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Knew it
+      timeoutMs: 10000
+  - tap:
+      text: Knew it, 1d
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Session complete
+      timeoutMs: 20000
+executionPrerequisite: Android isolated review-fixes test account on Practice
+  with 10 due words and no active review session.
