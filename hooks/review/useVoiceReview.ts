@@ -97,6 +97,24 @@ export type VoicePhase =
   | 'denied';
 
 /**
+ * The microphone owns the audio session right now, so nothing else may play.
+ *
+ * `setPlaybackPriority` refuses to close a capturing stream ("closing the
+ * stream would discard the audio the learner is producing right now"), so a
+ * playback request inside this window does not take the session — it plays on
+ * the quiet record-capable route AND into the recording. Inaudible to the
+ * learner, noise to the recognizer.
+ *
+ * A fact about the phase, kept here with the phase rather than derived from
+ * `voiceIndicatorState`: that one answers "what should the card be saying",
+ * which is a display question the screen additionally suppresses during an
+ * advance. Reading a caption selector as a safety gate meant the gate opened
+ * on every grade commit while the mic was still live.
+ */
+export const micHoldsAudioSession = (phase: VoicePhase): boolean =>
+  phase === 'arming' || phase === 'listening' || phase === 'checking';
+
+/**
  * A wrong / ambiguous answer the learner can act on. A *correct* answer never
  * produces one — the card just proceeds — so the presence of a result always
  * means "we stopped because the spoken answer didn't match; show what was

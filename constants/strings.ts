@@ -139,7 +139,9 @@ export const STRINGS = {
   // Reveal-first self-grade (shown after the card flips to its answer)
   SHOW_ANSWER: 'Show answer',
   PLAY_SENTENCE_AUDIO: 'Play sentence',
-  REPLAY_WORD_AUDIO: 'Replay word',
+  // An accessibility HINT, not a label: the word itself is the control, so the
+  // Arabic is what gets announced and this says what pressing it does.
+  REPLAY_WORD_AUDIO: 'Plays the word again',
   // Solo button in its row, filled/primary like "Show answer" alone — "Tap to"
   // was naming the gesture every button already asks for.
   RESTUDY_CONTINUE: 'Continue',

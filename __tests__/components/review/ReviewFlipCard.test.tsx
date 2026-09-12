@@ -60,11 +60,6 @@ jest.mock('@/hooks/theme/useColors', () =>
 jest.mock('@/hooks/theme/useThemeDetection', () =>
   require('@/__tests__/helpers/componentMocks').useThemeDetectionMockFactory(),
 );
-jest.mock('@/components/ui', () => {
-  const React = require('react');
-  const { View } = require('react-native');
-  return { Ionicons: () => React.createElement(View) };
-});
 jest.mock('@/components/primitives/ThemedText', () => ({ ThemedText: () => null }));
 jest.mock('@/components/review/WordDisplay', () => ({ WordDisplay: () => null }));
 

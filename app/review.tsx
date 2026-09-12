@@ -44,6 +44,7 @@ import { STRINGS } from '@/constants/strings';
 import { TutorialId } from '@/constants/tutorials';
 import { useKeepScreenAwake } from '@/hooks/common/useKeepScreenAwake';
 import {
+  micHoldsAudioSession,
   useReview,
   useReviewExamples,
   useReviewGlossAlternates,
@@ -585,6 +586,19 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   }, []);
   const indicatorState = voiceActive ? voiceIndicatorState(voicePhase) : null;
 
+  // Replay is the word itself now, on both faces — offered whenever the
+  // microphone is not holding the audio session (see `micHoldsAudioSession`).
+  // Outside that window the word takes the press; inside it the word takes no
+  // press at all and the tap reveals, as every other part of the face does.
+  //
+  // Read from the PHASE, not from `indicatorState` above. The two agree on the
+  // three phases that matter, but `indicatorState` is additionally suppressed
+  // by `isUpdating` because a transient caption must not flash during a card
+  // handover — and a grade commit sets `isUpdating` while the mic can still be
+  // live, so a gate built on it would open in exactly the window it exists to
+  // close.
+  const canReplayAudio = !micHoldsAudioSession(voicePhase);
+
   // "Forgot" from the bar never exits here: it opens a restudy hold, so the
   // card is staying put and throwing it off screen would be a lie. Its left
   // exit is deferred to the tap that leaves the hold, below.
@@ -693,7 +707,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
           wordType={currentExample?.wordType}
           revealed={revealed}
           onReveal={revealAnswer}
-          onReplayAudio={() => void handleReplayAudio()}
+          onReplayAudio={canReplayAudio ? () => void handleReplayAudio() : undefined}
           opacityStyle={transparentStyle}
           testID="review-card"
           restudying={restudying}

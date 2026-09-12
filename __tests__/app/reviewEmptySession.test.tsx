@@ -82,6 +82,14 @@ const mockEmptyMetrics = {
 };
 
 jest.mock('@/hooks/review', () => ({
+  // The REAL predicate, not a stub: it is a pure function of the voice phase, so
+  // a hand-written `() => false` here would assert nothing and would keep
+  // passing if the screen's replay gate inverted.
+  micHoldsAudioSession: (
+    jest.requireActual(
+      '@/hooks/review/useVoiceReview',
+    ) as typeof import('@/hooks/review/useVoiceReview')
+  ).micHoldsAudioSession,
   useReview: () => ({
     currentSentence: { wordForm: '' },
     currentMeaning: '',

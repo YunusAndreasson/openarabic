@@ -1,4 +1,3 @@
-import { Ionicons } from '@/components/ui';
 import type { ReactNode, Ref } from 'react';
 import { useEffect, useImperativeHandle, useMemo } from 'react';
 import type { TransformsStyle, ViewStyle } from 'react-native';
@@ -259,21 +258,13 @@ const STATIC_STYLES = StyleSheet.create({
   },
   // Content-sized, like answerBody: WordDisplay's trailer owns the slack below
   // the block now, so neither face's body may grow into it.
+  // No `gap`: the slot resolves to exactly one node (see `questionBody` in the
+  // component), so there is never a second child to space against. It carried
+  // one back when the slot also held a replay button to fall back to.
   questionBody: {
     width: '100%',
     alignItems: 'center',
     paddingTop: LAYOUT.SPACING.XLARGE,
-    gap: LAYOUT.SPACING.LARGE,
-  },
-  // Replay is an explicit control now. It used to be "tap the Arabic", which
-  // was undiscoverable and only worked on the answer face.
-  replayButton: {
-    width: LAYOUT.BUTTON.HEIGHT.MEDIUM,
-    height: LAYOUT.BUTTON.HEIGHT.MEDIUM,
-    borderRadius: LAYOUT.BUTTON.HEIGHT.MEDIUM / 2,
-    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   meaning: {
     textAlign: 'center',
@@ -323,7 +314,18 @@ interface ReviewFlipCardProps {
   revealed: boolean;
   /** Flip to the answer (tap the front face). */
   onReveal: () => void;
-  /** Replay the Arabic prompt audio (tap the word). */
+  /**
+   * Replay the Arabic prompt audio. Wired to the word itself on both faces —
+   * tapping the thing you want to hear again is the whole affordance, and it is
+   * the one the card used to hide behind a speaker button that was on screen
+   * for less than a second.
+   *
+   * Omitted, not disabled, when a replay would be wrong — the screen leaves it
+   * out while the microphone is capturing, because the audio session refuses to
+   * leave a live window, so the word would play on the quiet record-capable
+   * route and straight into the recording. The word then takes no press and the
+   * tap falls through to the face, which is what it did before.
+   */
   onReplayAudio?: () => void;
   /** Fade style applied during a grade advance (useReview.transparentStyle). */
   opacityStyle: ReanimatedAnimatedStyle<ViewStyle> | AppAnimatedStyleProp<ViewStyle>;
@@ -339,10 +341,9 @@ interface ReviewFlipCardProps {
   answerSlot?: ReactNode;
   /**
    * Whatever the question face has to say right now, directly under the Arabic:
-   * the microphone's state while it is working, or the English answer after a
-   * voice miss. Takes the replay control's place while it is present —
-   * replaying the Arabic into an open mic is not something to offer — and it is
-   * the same slot either way, so the face does not resize as the state changes.
+   * the microphone's state while it is working. Shares its slot with the
+   * disclosed answer below, so the face does not resize as the state changes,
+   * and collapses to nothing when neither has anything to show.
    */
   questionSlot?: ReactNode;
   /**
@@ -693,6 +694,18 @@ export function ReviewFlipCard({
     return { transform: [{ translateX: translateX.get() }] };
   });
 
+  // The question face's one slot, resolved once: the disclosed English outranks
+  // the microphone (a result is up only when the mic is idle), and most cards
+  // have neither, which is the case the face has to collapse for.
+  const questionBody =
+    discloseAnswer && answer ? (
+      <ThemedText type="heading2" colorName="englishText" style={STATIC_STYLES.meaning}>
+        {capitalizeFirstLetter(answer)}
+      </ThemedText>
+    ) : (
+      questionSlot
+    );
+
   return (
     <Animated.View style={STATIC_STYLES.centered}>
       <Animated.View style={[STATIC_STYLES.cardBox, cardSlideStyle, opacityStyle]}>
@@ -762,64 +775,43 @@ export function ReviewFlipCard({
                   accessibilityRole="button"
                   accessibilityLabel={STRINGS.SHOW_ANSWER}
                 >
-                  {/* No onWordPress here on purpose. Tapping the word is the
-                      most natural way to ask for the answer, and making the
-                      hero a replay button on this face swallowed that tap —
-                      the card played the audio again instead of flipping.
-                      Replay gets its own control below; the whole question
-                      face reveals.
+                  {/* The word is the replay control on this face too, exactly
+                      as it is on the answer face — `onReplayAudio` is simply
+                      absent while a replay would be wrong (see the prop).
+
+                      It used to have its own speaker button below the Arabic,
+                      which was worse than having nothing: the button's slot is
+                      shared with the voice channel, so on a voice card it
+                      appeared for the length of the prompt and was replaced by
+                      the listening meter the moment the mic armed. A control
+                      that is on screen for under a second is not a control.
+
+                      The tap this takes off the face is the reveal, and that is
+                      the intended trade rather than a cost: everything else on
+                      the card still reveals, and "Show answer" is in the band
+                      below. What the hero gains is the only gesture anyone
+                      guesses for "say that again".
 
                       No wordType either: "Verb" narrows the guess, and this is
                       the face the recall is tested on. WordDisplay reserves the
                       band regardless of content, which is what holds the Arabic
                       at an identical y through the flip. */}
-                  <WordDisplay word={word}>
-                    <View style={STATIC_STYLES.questionBody}>
-                      {/* One slot, three occupants. While the mic is working
-                          it shows what it is doing; after a voice miss it shows
-                          the English. Both belong here rather than under the
-                          card, next to the word they are about — the answer in
-                          particular was a caption in the action band, set at
-                          the smallest type in the app, which is a strange place
-                          to put the one thing the learner failed to recall.
-                          Falls back to the replay control. */}
-                      {discloseAnswer && answer ? (
-                        <ThemedText
-                          type="heading2"
-                          colorName="englishText"
-                          style={STATIC_STYLES.meaning}
-                        >
-                          {capitalizeFirstLetter(answer)}
-                        </ThemedText>
-                      ) : (
-                        (questionSlot ??
-                        (onReplayAudio ? (
-                          <Pressable
-                            onPress={onReplayAudio}
-                            accessibilityRole="button"
-                            accessibilityLabel={STRINGS.REPLAY_WORD_AUDIO}
-                            hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-                            style={({ pressed }) => [
-                              STATIC_STYLES.replayButton,
-                              {
-                                borderColor: colors.border,
-                                opacity: pressed ? LAYOUT.OPACITY.PRESSED : LAYOUT.OPACITY.FULL,
-                              },
-                            ]}
-                          >
-                            {/* `icon`, not `secondaryText`: replay is a
-                                  secondary control on a face whose whole job is
-                                  to show one word, and a near-white glyph gave
-                                  it the weight of a second subject. */}
-                            <Ionicons
-                              name="volume-medium-outline"
-                              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                              color={colors.icon}
-                            />
-                          </Pressable>
-                        ) : null))
-                      )}
-                    </View>
+                  <WordDisplay word={word} onWordPress={onReplayAudio}>
+                    {/* One slot, two occupants. While the mic is working it
+                        shows what it is doing; after a voice miss it shows the
+                        English. Both belong here rather than under the card,
+                        next to the word they are about — the answer in
+                        particular was a caption in the action band, set at the
+                        smallest type in the app, which is a strange place to
+                        put the one thing the learner failed to recall.
+
+                        Rendered only when occupied. The slot used to have a
+                        third occupant to fall back on, so it was effectively
+                        always full; with that gone the common case is an empty
+                        wrapper, and the wrapper carries its own top padding. */}
+                    {questionBody ? (
+                      <View style={STATIC_STYLES.questionBody}>{questionBody}</View>
+                    ) : null}
                   </WordDisplay>
                 </Pressable>
                 {/* Feedback belongs to the face so its geometry and seam

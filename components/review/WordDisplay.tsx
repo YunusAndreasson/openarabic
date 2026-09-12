@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useDebouncedArabicFontSize } from '@/hooks/theme/useDebouncedArabicFontSize';
 
 /**
@@ -79,6 +80,13 @@ const STATIC_STYLES = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // The word IS the replay control, so the tap has to answer for itself. There
+  // is no border or glyph to dim — audio starts a beat later than the finger
+  // lifts, and without this the learner cannot tell a registered tap from a
+  // missed one and taps again.
+  heroPressed: {
+    opacity: LAYOUT.OPACITY.PRESSED,
+  },
   // Sized by its content now, not by a share of the card. It grew to fill
   // everything below the hero, so a word with no example sentence ended with
   // half a card of dead air inside a bordered box.
@@ -104,7 +112,9 @@ interface Props {
   word: string;
   /** Additional style for the container */
   style?: StyleProp<ViewStyle>;
-  /** Callback when user taps the word (to replay audio) */
+  /** Replay this word's audio. Omitted when replay is unavailable — the word
+   *  then takes no press of its own and the tap falls through to whatever the
+   *  face does with it. */
   onWordPress?: () => void;
   /** Grammatical class ("Verb", "Noun"), when the corpus knows one. Optional by
    *  design — it comes from the example-sentence join, which not every root has. */
@@ -159,10 +169,16 @@ export function WordDisplay({ word, style, onWordPress, wordType, children }: Pr
 
       <View style={[STATIC_STYLES.heroRow, { height: heroBlockHeight(heroFontSize) }]}>
         <Pressable
-          style={STATIC_STYLES.heroPressable}
+          style={({ pressed }) => [
+            STATIC_STYLES.heroPressable,
+            pressed ? STATIC_STYLES.heroPressed : null,
+          ]}
           onPress={onWordPress}
           disabled={!onWordPress}
           accessibilityRole={onWordPress ? 'button' : undefined}
+          // A hint, not a label: the label is the Arabic itself, which is the
+          // one thing a screen reader must still announce here.
+          accessibilityHint={onWordPress ? STRINGS.REPLAY_WORD_AUDIO : undefined}
         >
           <ThemedText type="arabic" colorName="arabicText" align="center" style={heroTextStyle}>
             {word}
