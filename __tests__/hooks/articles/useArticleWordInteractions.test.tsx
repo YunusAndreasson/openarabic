@@ -533,7 +533,7 @@ describe('useArticleWordInteractions', () => {
   });
 
   describe('handleAddWordToStudy', () => {
-    test('adds word to study with haptic feedback', async () => {
+    test('adds word to study without firing a second press haptic', async () => {
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
@@ -549,8 +549,10 @@ describe('useArticleWordInteractions', () => {
         await result.current.handleAddWordToStudy(word);
       });
 
-      expect(haptics.selectionFeedback).toHaveBeenCalled();
-      expect(mockHandleRootPress).toHaveBeenCalledWith(rootId(10), undefined);
+      // No haptic from this hook: the word sheet and long-press each fire their
+      // own for the press, and firing a second made one save buzz twice.
+      expect(haptics.selectionFeedback).not.toHaveBeenCalled();
+      expect(mockHandleRootPress).toHaveBeenCalledWith(rootId(10), undefined, undefined);
       expect(mockRefetchStudyWords).toHaveBeenCalled();
     });
 
@@ -925,7 +927,7 @@ describe('useArticleWordInteractions', () => {
         await result.current.handleWordLongPress(createMockWord(1, rootId(10)));
       });
 
-      expect(replacementHandleRootPress).toHaveBeenCalledWith(rootId(10), 'add');
+      expect(replacementHandleRootPress).toHaveBeenCalledWith(rootId(10), 'add', undefined);
       expect(replacementRefetch).toHaveBeenCalledTimes(1);
       expect(mockHandleRootPress).not.toHaveBeenCalled();
     });

@@ -52,8 +52,9 @@ const fsrs: { allWords: StudyWord[]; isLoading: boolean; error: Error | null } =
   error: null,
 };
 
-jest.mock('@/hooks/vocabulary/useFSRSQueries', () => ({
-  useFSRSQueries: () => fsrs,
+jest.mock('@tanstack/react-query', () => ({
+  ...jest.requireActual<typeof import('@tanstack/react-query')>('@tanstack/react-query'),
+  useQuery: () => ({ data: fsrs.allWords, isLoading: fsrs.isLoading, error: fsrs.error }),
 }));
 
 let mockEnrichment: RootEnrichment | undefined;

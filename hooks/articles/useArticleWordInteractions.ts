@@ -12,11 +12,16 @@ import { analytics } from '@/services/analytics';
 import type { RootId } from '@/types/branded.types';
 import { ToastType } from '@/types/enums';
 import type { SentenceWord, StudyWordIntent } from '@/types/vocabulary.types';
-import { mediumFeedback, selectionFeedback } from '@/utils/haptics';
+import type { StudyWordPressOptions } from '@/hooks/articles/useStudyWordMutations';
+import { mediumFeedback } from '@/utils/haptics';
 
 export interface UseArticleWordInteractionsOptions {
   /** Handler for toggling word study status */
-  handleRootPress: (rootId: RootId, intent?: StudyWordIntent) => Promise<boolean | undefined>;
+  handleRootPress: (
+    rootId: RootId,
+    intent?: StudyWordIntent,
+    options?: StudyWordPressOptions,
+  ) => Promise<boolean | undefined>;
   /** Callback to refetch study words after mutations */
   refetchStudyWords?: () => Promise<unknown>;
   /**
@@ -157,12 +162,17 @@ export function useArticleWordInteractions({
    * @returns true if operation succeeded, false if it failed (e.g., daily limit reached)
    */
   const handleAddWordToStudy = useCallback(
-    async (word: SentenceWord, intent?: StudyWordIntent): Promise<boolean> => {
+    async (
+      word: SentenceWord,
+      intent?: StudyWordIntent,
+      options?: StudyWordPressOptions,
+    ): Promise<boolean> => {
       if (!user?.id || !word.root_id) return false;
 
-      selectionFeedback();
-
-      const result = await handleRootPress(word.root_id, intent);
+      // No haptic here: every caller has already fired its own for the press
+      // that got us here (the word sheet a selection tick, long-press a medium
+      // one). Firing a second one made a single save buzz twice.
+      const result = await handleRootPress(word.root_id, intent, options);
       if (result === undefined) return false;
 
       // No local state to update: the mutation's onMutate already wrote the

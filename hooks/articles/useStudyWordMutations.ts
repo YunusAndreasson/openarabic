@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 
 import { useToast } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
+import { REFUSAL_TOAST_DURATION } from '@/constants/animation';
 import { audioQueries, fsrsQueries } from '@/constants/queries';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -17,7 +18,7 @@ import { ToastType } from '@/types/enums';
 import type { StudyWord, StudyWordIntent } from '@/types/vocabulary.types';
 import { OnboardingStep } from '@/constants/onboarding';
 import { handleError } from '@/utils/errorHandling';
-import { errorFeedback } from '@/utils/haptics';
+import { warningFeedback } from '@/utils/haptics';
 import { STUDY_WORD_TOGGLE_MUTATION_KEY } from '@/utils/mutationDefaults';
 import { evaluateDueBacklogGate, filterDueWords } from '@/utils/newWordPacing';
 import { markOnboardingStep } from '@/utils/onboardingStorage';
@@ -33,8 +34,37 @@ interface ToggleStudyVariables {
   intent?: StudyWordIntent;
 }
 
+/**
+ * Why an add was declined, and the copy that explains it. A refusal is not an
+ * error: nothing failed, the app deliberately declined a request the user is
+ * welcome to make again later.
+ */
+export interface AddRefusal {
+  reason: 'daily-limit' | 'due-backlog';
+  message: string;
+}
+
+export interface StudyWordPressOptions {
+  /**
+   * Fired once the gates have passed and the quota is reserved, immediately
+   * before the write goes out — so a caller can commit to UI that implies
+   * success (dismissing a sheet, most of all) without waiting for the network,
+   * and without ever doing so for an add that is about to be refused.
+   *
+   * Deliberately a callback rather than a `checkAddAllowed()` a caller runs for
+   * itself: a second evaluation can disagree with this one (it would read a
+   * different user id, and re-running the gates re-reads storage), and any gate
+   * a future change adds here would be invisible to it.
+   */
+  onAllowed?: () => void;
+}
+
 interface StudyWordMutationsResult {
-  handleRootPress: (rootId: RootId, intent?: StudyWordIntent) => Promise<boolean | undefined>;
+  handleRootPress: (
+    rootId: RootId,
+    intent?: StudyWordIntent,
+    options?: StudyWordPressOptions,
+  ) => Promise<boolean | undefined>;
   toggleRootMutation: UseMutationResult<
     StudyWordMutationResult,
     Error,
@@ -127,6 +157,44 @@ export const useStudyWordMutations = (
       return gate.blocked ? gate.dueCount : null;
     },
     [queryClient],
+  );
+
+  // The single place that decides whether an add may proceed. Not exported: it
+  // is not side-effect free (reading today's count rolls the day over and resets
+  // the stored counter), so it is not something a caller can safely run just to
+  // ask a question.
+  const checkAddAllowed = useCallback(
+    async (userId?: string): Promise<AddRefusal | null> => {
+      if (!(await canAddWord())) {
+        return { reason: 'daily-limit', message: await getLimitReachedMessage() };
+      }
+      const backlogCount = getDueBacklogBlock(userId);
+      if (backlogCount !== null) {
+        return {
+          reason: 'due-backlog',
+          message: STRINGS.BACKLOG_CLEAR_REVIEWS_TOAST.replace('{count}', String(backlogCount)),
+        };
+      }
+      return null;
+    },
+    [canAddWord, getLimitReachedMessage, getDueBacklogBlock],
+  );
+
+  // Both refusals announce themselves the same way, because to the user they
+  // are the same event: the save did not happen, and here is why.
+  //
+  // A WARNING haptic, not an error one. Apple's own guidance reserves the error
+  // notification for something that went wrong; a gate declining an add is the
+  // app working as designed. The due-backlog gate used to fire NO haptic at all
+  // and render a neutral `info` toast, so a refused save was physically
+  // indistinguishable from a successful one — the one signal the user is most
+  // likely to be relying on, since the sheet had already dismissed.
+  const announceRefusal = useCallback(
+    (refusal: AddRefusal) => {
+      showToast(refusal.message, REFUSAL_TOAST_DURATION, ToastType.IMPORTANT);
+      warningFeedback();
+    },
+    [showToast],
   );
 
   const toggleStudyOptions = {
@@ -224,7 +292,11 @@ export const useStudyWordMutations = (
 
   // Handle root press with validation
   const handleRootPress = useCallback(
-    async (rootId: RootId, intent?: StudyWordIntent): Promise<boolean | undefined> => {
+    async (
+      rootId: RootId,
+      intent?: StudyWordIntent,
+      options?: StudyWordPressOptions,
+    ): Promise<boolean | undefined> => {
       try {
         // Use centralized auth check (handles getSession automatically)
         let currentUserId: string;
@@ -248,25 +320,11 @@ export const useStudyWordMutations = (
         // Explicit intent (from the button the user saw) wins over the cache guess
         const isAdd = intent ? intent === 'add' : !wordExists;
 
-        // Only check daily limit for add operations
+        // Gates apply to adds only — removing must always be possible
         if (isAdd) {
-          const canAdd = await canAddWord();
-          if (!canAdd) {
-            showToast(await getLimitReachedMessage(), 6000, ToastType.IMPORTANT);
-            errorFeedback(); // Use error haptic for daily limit reached
-            return undefined;
-          }
-        }
-
-        // Due-backlog gate applies to adds only — removing must always be possible
-        if (isAdd) {
-          const backlogCount = getDueBacklogBlock(currentUserId);
-          if (backlogCount !== null) {
-            showToast(
-              STRINGS.BACKLOG_CLEAR_REVIEWS_TOAST.replace('{count}', String(backlogCount)),
-              3000,
-              ToastType.INFO,
-            );
+          const refusal = await checkAddAllowed(currentUserId);
+          if (refusal) {
+            announceRefusal(refusal);
             return undefined;
           }
         }
@@ -275,11 +333,21 @@ export const useStudyWordMutations = (
         if (isAdd) {
           const incrementSuccess = await incrementDailyWordCount();
           if (!incrementSuccess) {
-            showToast(await getLimitReachedMessage(), 6000, ToastType.IMPORTANT);
-            errorFeedback(); // Use error haptic for daily limit reached
+            // Lost a race against a concurrent add rather than a cold refusal,
+            // but it is the same outcome and the same explanation.
+            announceRefusal({
+              reason: 'daily-limit',
+              message: await getLimitReachedMessage(),
+            });
             return undefined;
           }
         }
+
+        // Past every gate and the quota is reserved: this add is going out. Tell
+        // the caller now, so UI that means "done" lands before the network round
+        // trip rather than after it — and never at all for a refused add, which
+        // returned above.
+        options?.onAllowed?.();
 
         // Always use the user ID from the session directly
         try {
@@ -315,12 +383,12 @@ export const useStudyWordMutations = (
     [
       toggleRootMutation,
       showToast,
-      canAddWord,
+      checkAddAllowed,
+      announceRefusal,
       incrementDailyWordCount,
       decrementDailyWordCount,
       getLimitReachedMessage,
       queryClient,
-      getDueBacklogBlock,
     ],
   );
 

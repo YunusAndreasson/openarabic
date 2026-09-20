@@ -1,0 +1,16 @@
+steps:
+  - echo: Open first word's detail sheet from the first sentence.
+  # Canvas word has no accessible text or testID at this call site.
+  # Point derived from describe: first sentence, rightmost word frame.
+  - tap: { x: 0.862, y: 0.701 }
+  - await: { visible: { text: Play audio } }
+  - await: { idle: true }
+  - echo: Close word sheet with Android back; expect its audio control to disappear
+      and reader to remain.
+  - tool: button
+    args:
+      button: back
+  - await: { hidden: { text: Play audio } }
+  - await: { idle: true }
+executionPrerequisite: Android QA account, article 330 at initial scroll
+  position, word preview disabled; first sentence visible. No audio playing.

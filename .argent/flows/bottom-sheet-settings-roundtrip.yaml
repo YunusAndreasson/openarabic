@@ -1,0 +1,9 @@
+executionPrerequisite: Android Open Arabic Account tab visible, no sheet open, authenticated QA account.
+steps:
+  - tap: { text: New words per day, role: Button }
+  - await: { visible: { text: 10 words. Recommended } }
+  - await: { idle: true }
+  - tool: button
+    args: { button: back }
+  - await: { hidden: { text: 10 words. Recommended } }
+  - await: { idle: true }

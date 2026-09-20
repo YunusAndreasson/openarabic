@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { fsrsQueries, gated } from '@/constants/queries';
 
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { isLeechWord, rankStrugglingWords } from '@/utils/leechUtils';
 
@@ -30,7 +31,7 @@ interface UseWordsToRevisitResult {
  */
 export function useWordsToRevisit(): UseWordsToRevisitResult {
   const { user } = useAuth();
-  const { allWords, isLoading, error } = useFSRSQueries({ userId: user?.id });
+  const { data: allWords, isLoading, error } = useQuery(gated(fsrsQueries.all, user?.id));
 
   // Filtered ONCE, then counted and ranked off the same array. `allWords` pages
   // the whole table for a heavy account, and `rankStrugglingWords` runs this very

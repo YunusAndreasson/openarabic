@@ -85,6 +85,41 @@ const measured = (root_id: number, overrides: Partial<StudyWord>) =>
 
 const ids = (words: StudyWord[]): number[] => words.map(word => word.root_id);
 
+describe('dictionary search preparation', () => {
+  test('preserves sorted order, ties and unmeasured-last while searching and clearing', () => {
+    const studyWords = [
+      withRoot(unmeasured(4), 'ب', 'Shared new'),
+      withRoot(measured(3, { fsrs_difficulty: 8 }), 'ت', 'Shared hard'),
+      withRoot(measured(2, { fsrs_difficulty: 3 }), 'ث', 'Shared easy'),
+      withRoot(measured(1, { fsrs_difficulty: 3 }), 'ج', 'Shared easy'),
+    ];
+    const { result } = renderHook(() => useDictionaryList({ studyWords }));
+    act(() => result.current.setSearchQuery('shared'));
+    expect(ids(result.current.words)).toEqual([3, 1, 2, 4]);
+    act(() => result.current.selectSortField('difficulty'));
+    expect(ids(result.current.words)).toEqual([1, 2, 3, 4]);
+    act(() => result.current.setSearchQuery(''));
+    expect(ids(result.current.words)).toEqual([1, 2, 3, 4]);
+    expect(ids(studyWords)).toEqual([4, 3, 2, 1]);
+  });
+
+  test('refreshes search text when cached words with the same IDs are replaced', () => {
+    const original = withRoot(mastered(1), 'التَّوْفِيق', 'Ṣayd');
+    const { result, rerender } = renderHook(
+      ({ studyWords }: { studyWords: StudyWord[] }) => useDictionaryList({ studyWords }),
+      { initialProps: { studyWords: [original] } },
+    );
+    act(() => result.current.setSearchQuery('SAYD'));
+    expect(ids(result.current.words)).toEqual([1]);
+    rerender({ studyWords: [withRoot(original, 'التَّوْفِيق', 'Changed')] });
+    expect(result.current.words).toEqual([]);
+    act(() => result.current.setSearchQuery('التوفيق'));
+    expect(ids(result.current.words)).toEqual([1]);
+    act(() => result.current.setSearchQuery('changedالتوفيق'));
+    expect(result.current.words).toEqual([]);
+  });
+});
+
 describe('useDictionaryList scopes', () => {
   const studyWords = [mastered(1), struggling(2), unmeasured(3)];
 

@@ -254,9 +254,9 @@ describe('Reading to Dictionary Flow', () => {
 
   describe('Word Interactions', () => {
     test('shows tooltip when word is pressed (tooltip-first)', async () => {
-      const mockHandleRootPress = jest.fn<(rootId: unknown, intent?: unknown) => Promise<boolean>>(
-        async () => true,
-      );
+      const mockHandleRootPress = jest.fn<
+        (rootId: unknown, intent?: unknown, options?: unknown) => Promise<boolean>
+      >(async () => true);
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
@@ -275,9 +275,9 @@ describe('Reading to Dictionary Flow', () => {
     });
 
     test('closes tooltip when same word is pressed again (tooltip-first)', async () => {
-      const mockHandleRootPress = jest.fn<(rootId: unknown, intent?: unknown) => Promise<boolean>>(
-        async () => true,
-      );
+      const mockHandleRootPress = jest.fn<
+        (rootId: unknown, intent?: unknown, options?: unknown) => Promise<boolean>
+      >(async () => true);
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
@@ -303,9 +303,9 @@ describe('Reading to Dictionary Flow', () => {
     });
 
     test('opens word details modal from tooltip (tooltip-first)', async () => {
-      const mockHandleRootPress = jest.fn<(rootId: unknown, intent?: unknown) => Promise<boolean>>(
-        async () => true,
-      );
+      const mockHandleRootPress = jest.fn<
+        (rootId: unknown, intent?: unknown, options?: unknown) => Promise<boolean>
+      >(async () => true);
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
@@ -332,9 +332,9 @@ describe('Reading to Dictionary Flow', () => {
     });
 
     test('closes tooltip on scroll (tooltip-first)', async () => {
-      const mockHandleRootPress = jest.fn<(rootId: unknown, intent?: unknown) => Promise<boolean>>(
-        async () => true,
-      );
+      const mockHandleRootPress = jest.fn<
+        (rootId: unknown, intent?: unknown, options?: unknown) => Promise<boolean>
+      >(async () => true);
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
@@ -361,10 +361,10 @@ describe('Reading to Dictionary Flow', () => {
   });
 
   describe('Adding Words to Study List', () => {
-    test('adds word to study list with haptic feedback', async () => {
-      const mockHandleRootPress = jest.fn<(rootId: unknown, intent?: unknown) => Promise<boolean>>(
-        async () => true,
-      );
+    test('adds word to study list without firing a second press haptic', async () => {
+      const mockHandleRootPress = jest.fn<
+        (rootId: unknown, intent?: unknown, options?: unknown) => Promise<boolean>
+      >(async () => true);
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
@@ -379,9 +379,12 @@ describe('Reading to Dictionary Flow', () => {
       });
 
       expect(addResult!).toBeTruthy();
+      // The haptic belongs to the press, which each caller fires for itself (the
+      // word sheet a selection tick, long-press a medium one). This hook firing
+      // one too made a single save buzz twice.
       const { selectionFeedback } = require('@/utils/haptics');
-      expect(selectionFeedback).toHaveBeenCalled();
-      expect(mockHandleRootPress).toHaveBeenCalledWith(mockWord.root_id, undefined);
+      expect(selectionFeedback).not.toHaveBeenCalled();
+      expect(mockHandleRootPress).toHaveBeenCalledWith(mockWord.root_id, undefined, undefined);
     });
 
     test('updates local study state optimistically', async () => {
@@ -389,13 +392,15 @@ describe('Reading to Dictionary Flow', () => {
       // mutation, whose onMutate writes the optimistic value straight into
       // the fsrs-words cache — the mock here does the same to stand in for
       // it, since isRootInStudyList now reads that cache reactively.
-      const mockHandleRootPress = jest.fn(async (rootId: number, _intent?: unknown) => {
-        queryClient.setQueryData(['fsrs-words', mockUserId], (old: StudyWord[] = []) => [
-          ...old,
-          { root_id: rootId } as StudyWord,
-        ]);
-        return true;
-      });
+      const mockHandleRootPress = jest.fn(
+        async (rootId: number, _intent?: unknown, _options?: unknown) => {
+          queryClient.setQueryData(['fsrs-words', mockUserId], (old: StudyWord[] = []) => [
+            ...old,
+            { root_id: rootId } as StudyWord,
+          ]);
+          return true;
+        },
+      );
       const { result } = renderHook(
         () =>
           useArticleWordInteractions({
@@ -421,9 +426,9 @@ describe('Reading to Dictionary Flow', () => {
 
     test('calls refetchStudyWords callback after adding', async () => {
       const mockRefetch = jest.fn(async (..._args: unknown[]) => {});
-      const mockHandleRootPress = jest.fn<(rootId: unknown, intent?: unknown) => Promise<boolean>>(
-        async () => true,
-      );
+      const mockHandleRootPress = jest.fn<
+        (rootId: unknown, intent?: unknown, options?: unknown) => Promise<boolean>
+      >(async () => true);
 
       const { result } = renderHook(
         () =>
@@ -486,13 +491,15 @@ describe('Reading to Dictionary Flow', () => {
 
   describe('Full User Journey', () => {
     test('complete flow: tap word → view details → add to study', async () => {
-      const mockHandleRootPress = jest.fn(async (rootId: number, _intent?: unknown) => {
-        queryClient.setQueryData(['fsrs-words', mockUserId], (old: StudyWord[] = []) => [
-          ...old,
-          { root_id: rootId } as StudyWord,
-        ]);
-        return true;
-      });
+      const mockHandleRootPress = jest.fn(
+        async (rootId: number, _intent?: unknown, _options?: unknown) => {
+          queryClient.setQueryData(['fsrs-words', mockUserId], (old: StudyWord[] = []) => [
+            ...old,
+            { root_id: rootId } as StudyWord,
+          ]);
+          return true;
+        },
+      );
 
       const { result } = renderHook(
         () =>
@@ -522,7 +529,7 @@ describe('Reading to Dictionary Flow', () => {
         await result.current.handleAddWordToStudy(mockWord);
       });
 
-      expect(mockHandleRootPress).toHaveBeenCalledWith(mockWord.root_id, undefined);
+      expect(mockHandleRootPress).toHaveBeenCalledWith(mockWord.root_id, undefined, undefined);
       await waitFor(() => {
         expect(result.current.isInStudyList).toBeTruthy();
       });
@@ -532,12 +539,14 @@ describe('Reading to Dictionary Flow', () => {
       // Set up word as already in study list
       queryClient.setQueryData(['fsrs-words', mockUserId], [{ root_id: 501 }]);
 
-      const mockHandleRootPress = jest.fn(async (rootId: number, _intent?: unknown) => {
-        queryClient.setQueryData(['fsrs-words', mockUserId], (old: StudyWord[] = []) =>
-          old.filter(w => w.root_id !== rootId),
-        );
-        return false; // Returns false when removing
-      });
+      const mockHandleRootPress = jest.fn(
+        async (rootId: number, _intent?: unknown, _options?: unknown) => {
+          queryClient.setQueryData(['fsrs-words', mockUserId], (old: StudyWord[] = []) =>
+            old.filter(w => w.root_id !== rootId),
+          );
+          return false; // Returns false when removing
+        },
+      );
 
       const { result } = renderHook(
         () =>

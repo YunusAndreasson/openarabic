@@ -18,7 +18,9 @@ import { useWordAudioPlayback } from '@/hooks/audio/useWordAudioPlayback';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useDebouncedArabicFontSize } from '@/hooks/theme/useDebouncedArabicFontSize';
-import { useFSRSQueries, useRootEnrichment, useWordMemory } from '@/hooks/vocabulary';
+import { useRootEnrichment, useWordMemory } from '@/hooks/vocabulary';
+import { useQuery } from '@tanstack/react-query';
+import { fsrsQueries, gated } from '@/constants/queries';
 import type { RootId } from '@/types/branded.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { toWordAudioData } from '@/utils/audioUtils';
@@ -68,11 +70,10 @@ export const WordDetailContent: FC<WordDetailContentProps> = ({
   const heroFontSize = getArabicHeroFontSize(useDebouncedArabicFontSize(100));
   const heroArabicStyle = getArabicHeroTextStyle(heroFontSize);
 
-  // `useFSRSQueries` rather than `useStudyWordByRoot`: this content has to tell
-  // "still fetching" apart from "not in the practice list", and the narrower
-  // hook returns only data. The cache is shared with whatever screen sent us
-  // here, so the loading state is really for a cold deep link.
-  const { allWords, isLoading, error } = useFSRSQueries({ userId: user?.id });
+  // Only the saved-word query belongs to this sheet. Subscribing to the due
+  // queue also filtered the entire cache on mount and let unrelated queue
+  // loading/errors hide an already available word.
+  const { data: allWords, isLoading, error } = useQuery(gated(fsrsQueries.all, user?.id));
 
   // Hold the last seen word so the content stays rendered while its host
   // dismisses if the shared FSRS cache loses this root under it — e.g. a

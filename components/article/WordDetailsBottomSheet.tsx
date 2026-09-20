@@ -1,7 +1,8 @@
 import { BottomSheetErrorBoundary, ColorCodedText, RootExplanation } from '@/components/common';
 import { BrandedBottomSheet, IconButton } from '@/components/ui';
+import type { BrandedBottomSheetMethods } from '@/components/ui/BrandedBottomSheet';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { startTransition, useCallback, useEffect, useOptimistic, useState } from 'react';
+import { startTransition, useCallback, useEffect, useOptimistic, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -20,9 +21,9 @@ import { useWordMemory } from '@/hooks/vocabulary/useWordMemory';
 import { preload } from 'expo-audio';
 
 import { audioCache } from '@/services/audioCache';
+import type { StudyWordPressOptions } from '@/hooks/articles/useStudyWordMutations';
 import type { SentenceWord, StudyWordIntent } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
-import { selectionFeedback } from '@/utils/haptics';
 import { generateStorageUrl } from '@/utils/storageUtils';
 import { cleanWordText } from '@/utils/stringUtils';
 
@@ -30,7 +31,11 @@ export interface WordDetailsBottomSheetProps {
   isVisible: boolean;
   onClose: () => void;
   word: SentenceWord | null;
-  onAddToStudy: (word: SentenceWord, intent: StudyWordIntent) => Promise<boolean>;
+  onAddToStudy: (
+    word: SentenceWord,
+    intent: StudyWordIntent,
+    options?: StudyWordPressOptions,
+  ) => Promise<boolean>;
   isInStudyList?: boolean;
   isStudyStateLoading?: boolean;
 }
@@ -69,14 +74,35 @@ function SentenceNote({ note }: { note: string }) {
 export function WordDetailsBottomSheet({
   isVisible,
   onClose,
-  word,
+  word: selectedWord,
   onAddToStudy,
   isInStudyList = false,
   isStudyStateLoading = false,
 }: WordDetailsBottomSheetProps) {
+  // Keep one prepared word while the mounted sheet is closed. Clearing it
+  // tears down the entire explanation tree on every dismissal, then rebuilds
+  // it during the next entrance. A new selection replaces this bounded cache.
+  const [word, setWord] = useState(selectedWord);
+  if (selectedWord && selectedWord !== word) setWord(selectedWord);
+
+  const [opening, setOpening] = useState({ isVisible, wordId: selectedWord?.id });
+  if (opening.isVisible !== isVisible || opening.wordId !== selectedWord?.id) {
+    setOpening({ isVisible, wordId: selectedWord?.id });
+  }
+
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { showToast } = useToast();
+  const sheetRef = useRef<BrandedBottomSheetMethods>(null);
+  const openingGeneration = useRef(0);
+
+  // A gate for an old opening must never dismiss a newer word (including a
+  // second opening of the same word) or act after this component unmounts.
+  useEffect(() => {
+    return () => {
+      openingGeneration.current += 1;
+    };
+  }, [isVisible, selectedWord?.id]);
 
   // What the learner's memory of this word looks like, if they have one.
   //
@@ -98,10 +124,14 @@ export function WordDetailsBottomSheet({
 
   // React 19: useOptimistic auto-reverts when the underlying prop unchanged after the
   // transition settles, so no manual revert/sync code is needed.
-  const [optimisticIsInStudyList, setOptimisticIsInStudyList] = useOptimistic(
-    isInStudyList,
-    (_state, newValue: boolean) => newValue,
+  const [optimisticStudyState, setOptimisticStudyState] = useOptimistic(
+    { opening, value: isInStudyList },
+    (state, update: { opening: typeof opening; value: boolean }) =>
+      update.opening === state.opening ? update : state,
   );
+  const optimisticIsInStudyList = optimisticStudyState.value;
+  const setOptimisticIsInStudyList = (value: boolean) =>
+    setOptimisticStudyState({ opening, value });
 
   // Prefetch and cache audio when sheet opens for instant playback
   useEffect(() => {
@@ -141,14 +171,20 @@ export function WordDetailsBottomSheet({
   // lands, `optimisticIsInStudyList` has usually already flipped — so the
   // second tap doesn't just re-fire the same mutation, it computes the
   // OPPOSITE `newValue` and re-adds the word the user just removed.
-  const [isToggling, setIsToggling] = useState(false);
+  // Offline mutations can stay paused after dismissal. Only the opening that
+  // started the request is busy; older completions must not unlock a newer one.
+  const [pendingOpening, setPendingOpening] = useState<typeof opening | null>(null);
+  const isToggling = pendingOpening === opening;
 
   // Handle add to study with optimistic update for instant feedback
   const handleAddToStudy = () => {
-    if (!word || isStudyStateLoading || isToggling) return;
+    if (!isVisible || !selectedWord || !word || isStudyStateLoading || isToggling) return;
 
     const newValue = !optimisticIsInStudyList;
-    selectionFeedback();
+    const generation = openingGeneration.current;
+    const requestClose = () => {
+      if (openingGeneration.current === generation) sheetRef.current?.close();
+    };
 
     // A removal always succeeds, so it can be confirmed up front — and a silent
     // removal reads as a failed save.
@@ -165,44 +201,56 @@ export function WordDetailsBottomSheet({
       showToast(STRINGS.WORD_QUICK_REMOVED);
     }
 
-    // Closing still happens immediately, so saving keeps its one-tap feel:
-    // saving is the terminal action for this sheet, and staying open only forces
-    // a third interaction to get back to the text. Removal is a correction
-    // rather than an exit — keep the sheet open there so the user can
-    // immediately re-add if they tapped by mistake.
-    if (newValue) {
-      onClose();
-    } else {
-      setIsToggling(true);
-    }
+    // Held for BOTH directions. An add can now leave the sheet open (a refused
+    // one does), and `optimisticIsInStudyList` has already flipped by then — so
+    // without this a second tap computes the OPPOSITE `newValue` and fires a
+    // REMOVE for a word that was never saved. That is the same inversion the
+    // remove path has always guarded against; only closing-on-every-add hid it
+    // from the add path.
+    setPendingOpening(opening);
 
     startTransition(async () => {
       setOptimisticIsInStudyList(newValue);
       try {
         // Explicit intent: the user acted on the button label they saw, so a
-        // stale study-list cache can never invert this into the opposite action
-        const succeeded = await onAddToStudy(word, newValue ? 'add' : 'remove');
+        // stale study-list cache can never invert this into the opposite action.
+        //
+        // Dismissing this sheet is the strongest "done" signal the app has, so
+        // it waits for `onAllowed` — fired once the gates have passed and the
+        // quota is reserved, still before the network write, so saving keeps its
+        // one-tap feel. It used to fire unconditionally the instant the button
+        // was pressed, so a refused save played out as: sheet vanishes, button
+        // never visibly reverts, and the only correction is a toast the user is
+        // now reading against the article they were returned to.
+        //
+        // Removal is a correction rather than an exit — keep the sheet open
+        // there so a mistaken tap can be undone in place.
+        const succeeded = await onAddToStudy(word, newValue ? 'add' : 'remove', {
+          onAllowed: newValue ? requestClose : undefined,
+        });
 
         if (newValue) {
           if (succeeded) {
             showToast(STRINGS.WORD_ADDED_TO_PRACTICE);
           } else {
-            // Refused by a gate that has already said why. Put the optimistic
-            // state back so the word does not read as saved.
-            setOptimisticIsInStudyList(false);
+            // Refused by a gate that has already said why (toast + warning
+            // haptic). Put the optimistic state back so the word does not read
+            // as saved, and leave the sheet open on the word it refused —
+            // the explanation and the thing it is about stay together.
+            if (openingGeneration.current === generation) setOptimisticIsInStudyList(false);
           }
         }
       } catch (error) {
-        if (newValue) setOptimisticIsInStudyList(false);
+        if (newValue && openingGeneration.current === generation) setOptimisticIsInStudyList(false);
         void handleError(error, { toastMessage: 'Failed to update study list' });
       } finally {
-        if (!newValue) setIsToggling(false);
+        setPendingOpening(current => (current === opening ? null : current));
       }
     });
   };
 
   return (
-    <BrandedBottomSheet isVisible={isVisible && !!word} onClose={onClose}>
+    <BrandedBottomSheet ref={sheetRef} isVisible={isVisible && !!selectedWord} onClose={onClose}>
       {/* BottomSheetScrollView, not BottomSheetView: expanding the family list
           or the sentence note can push the content past `maxDynamicContentSize`
           (85% of screen height), and a non-scrolling container simply clips the
@@ -311,6 +359,11 @@ export function WordDetailsBottomSheet({
                         : STRINGS.ADD_TO_PRACTICE
                   }
                   variant={optimisticIsInStudyList ? 'outlined' : 'filled'}
+                  // ThemedButton fires the press haptic itself (it defaults to
+                  // 'light'); `selection` is the apt type for a toggle. This
+                  // used to be a manual selectionFeedback() on top of the
+                  // button's own, so one save buzzed twice.
+                  hapticType="selection"
                   onPress={handleAddToStudy}
                   disabled={isStudyStateLoading || isToggling}
                   fullWidth

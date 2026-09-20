@@ -16,7 +16,7 @@
  * 3. These can desynchronize, especially during rapid toggles
  */
 
-import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
 import { selectionFeedback } from '@/utils/haptics';
@@ -26,6 +26,22 @@ import { STRINGS } from '@/constants/strings';
 import type { RootEnrichment } from '@/types/rootEnrichment.types';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
 import { rootId } from '@/__tests__/helpers/ids';
+
+// The native close method starts an animation; it does not synchronously fire
+// onClose. Drive completion separately so content-clear regressions are visible.
+const mockSheetClose = jest.fn();
+jest.mock('@gorhom/bottom-sheet', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  const base = jest.requireActual('../../__mocks__/@gorhom/bottom-sheet');
+  return {
+    ...base,
+    default: React.forwardRef((props: object, ref: unknown) => {
+      React.useImperativeHandle(ref, () => ({ close: mockSheetClose, expand: jest.fn() }));
+      return React.createElement(View, { ...props, testID: 'native-word-sheet' });
+    }),
+  };
+});
 
 // Mock haptics at the utility level (not expo-haptics) since selectionFeedback
 // has a shouldTriggerHaptic guard that blocks calls without a Redux store
@@ -109,6 +125,19 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
 
   const mockOnClose = jest.fn();
   const mockOnAddToStudy = jest.fn(async (..._args: unknown[]) => false);
+
+  /**
+   * Stands in for a PERMITTED toggle. The real `handleRootPress` fires
+   * `onAllowed` once the gates have passed and the quota is reserved — that
+   * signal, not the resolved value, is what dismisses the sheet. A mock that
+   * only resolves `true` silently models an add the gates never allowed.
+   */
+  const permitted =
+    (result = true) =>
+    async (..._args: unknown[]) => {
+      (_args[2] as { onAllowed?: () => void } | undefined)?.onAllowed?.();
+      return result;
+    };
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -177,7 +206,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
     });
 
     test('a removal is still confirmed immediately — it cannot be refused', async () => {
-      mockOnAddToStudy.mockResolvedValueOnce(true);
+      mockOnAddToStudy.mockImplementationOnce(permitted());
 
       const { getByText } = render(
         <WordDetailsBottomSheet
@@ -259,8 +288,8 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       });
     });
 
-    test('should update optimistic state immediately on button press', async () => {
-      mockOnAddToStudy.mockResolvedValue(true);
+    test('dispatches the add on press, with exactly one press haptic', async () => {
+      mockOnAddToStudy.mockImplementation(permitted());
 
       const { getByText } = render(
         <WordDetailsBottomSheet
@@ -275,13 +304,16 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       const addButton = getByText('Add to practice');
       fireEvent.press(addButton);
 
-      // Optimistic update should happen immediately
-      await waitFor(() => {
-        expect(getByText('In practice')).toBeTruthy();
-      });
+      // The button is held busy for the whole in-flight window now — that guard
+      // is what stops a second tap inverting an add into a remove — so the
+      // optimistic label is deliberately not observable between press and
+      // settle. What the flip does is asserted through the settled state below.
 
-      expect(mockOnAddToStudy).toHaveBeenCalledWith(mockWord, 'add');
-      expect(selectionFeedback).toHaveBeenCalled();
+      expect(mockOnAddToStudy).toHaveBeenCalledWith(mockWord, 'add', expect.anything());
+      // Exactly one. The press haptic belongs to ThemedButton
+      // (hapticType="selection"); the sheet firing its own on top of the
+      // button's made a single save buzz twice.
+      expect(selectionFeedback).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -387,17 +419,17 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       const addButton = getByText('Add to practice');
       fireEvent.press(addButton);
 
-      // Optimistic update happens immediately
-      await waitFor(() => {
-        expect(getByText('In practice')).toBeTruthy();
-      });
+      // The button is held busy for the whole in-flight window now — that guard
+      // is what stops a second tap inverting an add into a remove — so the
+      // optimistic label is deliberately not observable between press and
+      // settle. What the flip does is asserted through the settled state below.
 
       // Wait for error and rollback
       await waitFor(() => {
         expect(getByText('Add to practice')).toBeTruthy();
       });
 
-      expect(mockOnAddToStudy).toHaveBeenCalledWith(mockWord, 'add');
+      expect(mockOnAddToStudy).toHaveBeenCalledWith(mockWord, 'add', expect.anything());
     });
 
     test('should rollback optimistic update when daily limit is reached', async () => {
@@ -417,17 +449,17 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       const addButton = getByText('Add to practice');
       fireEvent.press(addButton);
 
-      // Optimistic update happens immediately
-      await waitFor(() => {
-        expect(getByText('In practice')).toBeTruthy();
-      });
+      // The button is held busy for the whole in-flight window now — that guard
+      // is what stops a second tap inverting an add into a remove — so the
+      // optimistic label is deliberately not observable between press and
+      // settle. What the flip does is asserted through the settled state below.
 
       // Wait for rollback when operation fails
       await waitFor(() => {
         expect(getByText('Add to practice')).toBeTruthy();
       });
 
-      expect(mockOnAddToStudy).toHaveBeenCalledWith(mockWord, 'add');
+      expect(mockOnAddToStudy).toHaveBeenCalledWith(mockWord, 'add', expect.anything());
     });
   });
 
@@ -470,8 +502,8 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
         expect(mockOnAddToStudy).toHaveBeenCalledTimes(1);
       });
 
-      expect(mockOnAddToStudy).toHaveBeenCalledWith(mockWord, 'remove');
-      expect(mockOnAddToStudy).not.toHaveBeenCalledWith(mockWord, 'add');
+      expect(mockOnAddToStudy).toHaveBeenCalledWith(mockWord, 'remove', expect.anything());
+      expect(mockOnAddToStudy).not.toHaveBeenCalledWith(mockWord, 'add', expect.anything());
     });
   });
 
@@ -513,12 +545,14 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
         />,
       );
 
-      expect(queryByText('Add to practice')).toBeNull();
+      // Retained content keeps its measured height during close, but can no
+      // longer dispatch an action once the parent clears the selection.
+      fireEvent.press(queryByText('Add to practice')!);
       expect(mockOnAddToStudy).not.toHaveBeenCalled();
     });
 
     test('should preserve optimistic state during word changes', async () => {
-      mockOnAddToStudy.mockResolvedValue(true);
+      mockOnAddToStudy.mockImplementation(permitted());
 
       const { getByText, rerender } = render(
         <WordDetailsBottomSheet
@@ -533,9 +567,10 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       // Press add button
       fireEvent.press(getByText('Add to practice'));
 
-      await waitFor(() => {
-        expect(getByText('In practice')).toBeTruthy();
-      });
+      // The button is held busy for the whole in-flight window now — that guard
+      // is what stops a second tap inverting an add into a remove — so the
+      // optimistic label is deliberately not observable between press and
+      // settle. What the flip does is asserted through the settled state below.
 
       // Change to different word with same root_id
       const differentWord: SentenceWord = {
@@ -564,7 +599,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
 
   describe('Integration with Parent State', () => {
     test('should reflect parent state changes after successful mutation', async () => {
-      mockOnAddToStudy.mockResolvedValue(true);
+      mockOnAddToStudy.mockImplementation(permitted());
 
       const { getByText, rerender } = render(
         <WordDetailsBottomSheet
@@ -577,11 +612,8 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       );
 
       // User clicks "Add to practice"
-      fireEvent.press(getByText('Add to practice'));
-
-      // Optimistic update
-      await waitFor(() => {
-        expect(getByText('In practice')).toBeTruthy();
+      await act(async () => {
+        fireEvent.press(getByText('Add to practice'));
       });
 
       // Parent updates prop after mutation completes
@@ -596,7 +628,9 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       );
 
       // State should remain consistent
-      expect(getByText('In practice')).toBeTruthy();
+      await waitFor(() => {
+        expect(getByText('In practice')).toBeTruthy();
+      });
     });
 
     test('should handle parent state lagging behind optimistic update', async () => {
@@ -619,10 +653,10 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       // User clicks "Add to practice"
       fireEvent.press(getByText('Add to practice'));
 
-      // Optimistic update happens immediately
-      await waitFor(() => {
-        expect(getByText('In practice')).toBeTruthy();
-      });
+      // The button is held busy for the whole in-flight window now — that guard
+      // is what stops a second tap inverting an add into a remove — so the
+      // optimistic label is deliberately not observable between press and
+      // settle. What the flip does is asserted through the settled state below.
 
       // Parent hasn't updated yet (still false)
       rerender(
@@ -651,9 +685,208 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
   // Onboarding promises "tap a word … then save it to practice". It used to take
   // three interactions because the sheet stayed open after a save and the user
   // had to dismiss it themselves.
+  /**
+   * Dismissing the sheet is the strongest "done" signal the app has, so it must
+   * follow the outcome rather than the tap. It used to fire unconditionally the
+   * instant the button was pressed, so a refused save played out as: sheet
+   * vanishes, button never visibly reverts, and the only correction is a toast
+   * the user is now reading against the article they were returned to.
+   */
   describe('Dismissal after saving', () => {
-    test('closes itself once the word is added', async () => {
-      mockOnAddToStudy.mockResolvedValue(true);
+    test('stays open when the add is refused, and swallows a second tap', async () => {
+      // A refusal never fires onAllowed.
+      mockOnAddToStudy.mockImplementationOnce(async () => false);
+
+      const { getByText, queryByText } = render(
+        <WordDetailsBottomSheet
+          isVisible={true}
+          onClose={mockOnClose}
+          word={mockWord}
+          onAddToStudy={mockOnAddToStudy}
+          isInStudyList={false}
+        />,
+      );
+
+      await act(async () => {
+        fireEvent.press(getByText('Add to practice'));
+      });
+
+      expect(mockOnClose).not.toHaveBeenCalled();
+      // The refusal and the word it is about stay on screen together.
+      expect(getByText('Add to practice')).toBeTruthy();
+      expect(queryByText('In practice')).toBeNull();
+
+      // The sheet now outlives a refused add, and the optimistic value flipped
+      // while the write was in flight — so a second tap must not be read as the
+      // OPPOSITE action and fire a remove for a word that was never saved.
+      await act(async () => {
+        fireEvent.press(getByText('Add to practice'));
+      });
+      expect(mockOnAddToStudy).not.toHaveBeenCalledWith(mockWord, 'remove', expect.anything());
+    });
+
+    test('animates an allowed save before clearing content, without waiting for the write', async () => {
+      let resolveAdd: (value: boolean) => void = () => undefined;
+      mockOnAddToStudy.mockImplementationOnce(
+        async (..._args: unknown[]) =>
+          new Promise<boolean>(resolve => {
+            resolveAdd = resolve;
+          }),
+      );
+
+      const { getByText } = render(
+        <WordDetailsBottomSheet
+          isVisible={true}
+          onClose={mockOnClose}
+          word={mockWord}
+          onAddToStudy={mockOnAddToStudy}
+          isInStudyList={false}
+        />,
+      );
+
+      await act(async () => {
+        fireEvent.press(getByText('Add to practice'));
+      });
+
+      // Eligibility starts the native animation. Parent cleanup waits until
+      // native completion, preserving content and its measured height.
+      const options = mockOnAddToStudy.mock.calls[0]?.[2] as { onAllowed?: () => void } | undefined;
+      expect(options?.onAllowed).toBeDefined();
+      act(() => {
+        options?.onAllowed?.();
+      });
+      expect(mockSheetClose).toHaveBeenCalledTimes(1);
+      expect(mockOnClose).not.toHaveBeenCalled();
+      expect(getByText('he wrote')).toBeTruthy();
+      fireEvent(screen.getByTestId('native-word-sheet'), 'close');
+      expect(mockOnClose).toHaveBeenCalledTimes(1);
+
+      await act(async () => {
+        resolveAdd(true);
+      });
+    });
+
+    test.each(['different word', 'same word reopened'])(
+      'ignores a late gate for %s',
+      async mode => {
+        let resolveAdd: (value: boolean) => void = () => undefined;
+        mockOnAddToStudy.mockImplementationOnce(
+          () =>
+            new Promise<boolean>(resolve => {
+              resolveAdd = resolve;
+            }),
+        );
+        const props = {
+          isVisible: true,
+          onClose: mockOnClose,
+          word: mockWord,
+          onAddToStudy: mockOnAddToStudy,
+          isInStudyList: false,
+        };
+        const { getByText, rerender } = render(<WordDetailsBottomSheet {...props} />);
+        await act(async () => {
+          fireEvent.press(getByText('Add to practice'));
+        });
+        const options = mockOnAddToStudy.mock.calls[0]?.[2] as { onAllowed?: () => void };
+        if (mode === 'same word reopened') {
+          rerender(<WordDetailsBottomSheet {...props} isVisible={false} word={null} />);
+          rerender(<WordDetailsBottomSheet {...props} />);
+        } else {
+          rerender(<WordDetailsBottomSheet {...props} word={{ ...mockWord, id: 2 }} />);
+        }
+        mockSheetClose.mockClear();
+        act(() => {
+          options.onAllowed?.();
+        });
+        expect(mockSheetClose).not.toHaveBeenCalled();
+        expect(mockOnClose).not.toHaveBeenCalled();
+        await act(async () => {
+          resolveAdd(true);
+        });
+      },
+    );
+
+    test.each(['different word', 'same word reopened'])(
+      'allows a save in %s while the previous save is paused',
+      async mode => {
+        let finishFirst: (value: boolean) => void = () => undefined;
+        let finishSecond: (value: boolean) => void = () => undefined;
+        mockOnAddToStudy
+          .mockImplementationOnce((...args: unknown[]) => {
+            (args[2] as { onAllowed?: () => void }).onAllowed?.();
+            return new Promise<boolean>(resolve => {
+              finishFirst = resolve;
+            });
+          })
+          .mockImplementationOnce(
+            () =>
+              new Promise<boolean>(resolve => {
+                finishSecond = resolve;
+              }),
+          );
+        const props = {
+          isVisible: true,
+          onClose: mockOnClose,
+          word: mockWord,
+          onAddToStudy: mockOnAddToStudy,
+          isInStudyList: false,
+        };
+        const { getByText, rerender } = render(<WordDetailsBottomSheet {...props} />);
+        await act(async () => {
+          fireEvent.press(getByText('Add to practice'));
+        });
+        expect(mockSheetClose).toHaveBeenCalledTimes(1);
+        rerender(<WordDetailsBottomSheet {...props} isVisible={false} word={null} />);
+        const nextWord =
+          mode === 'same word reopened' ? mockWord : { ...mockWord, id: 2, root_id: rootId(43) };
+        rerender(<WordDetailsBottomSheet {...props} word={nextWord} />);
+        // Let the button's independent 300 ms double-tap lock expire, while
+        // the offline mutation itself remains unresolved.
+        act(() => {
+          jest.advanceTimersByTime(500);
+        });
+        await act(async () => {
+          fireEvent.press(getByText('Add to practice'));
+        });
+        expect(mockOnAddToStudy).toHaveBeenCalledTimes(2);
+        expect(mockOnAddToStudy.mock.calls[1]?.[1]).toBe('add');
+        // An older refusal must neither revert nor unlock the newer request.
+        await act(async () => {
+          finishFirst(false);
+        });
+        fireEvent.press(getByText(STRINGS.LOADING_GENERIC));
+        expect(mockOnAddToStudy).toHaveBeenCalledTimes(2);
+        await act(async () => {
+          finishSecond(false);
+        });
+        expect(getByText('Add to practice')).toBeTruthy();
+      },
+    );
+
+    test('hands no dismissal callback to a removal', async () => {
+      mockOnAddToStudy.mockImplementationOnce(permitted());
+
+      const { getByText } = render(
+        <WordDetailsBottomSheet
+          isVisible={true}
+          onClose={mockOnClose}
+          word={mockWord}
+          onAddToStudy={mockOnAddToStudy}
+          isInStudyList={true}
+        />,
+      );
+
+      await act(async () => {
+        fireEvent.press(getByText('In practice'));
+      });
+
+      const options = mockOnAddToStudy.mock.calls[0]?.[2] as { onAllowed?: () => void } | undefined;
+      expect(options?.onAllowed).toBeUndefined();
+      expect(mockOnClose).not.toHaveBeenCalled();
+    });
+
+    test('requests the close animation once the word is allowed', async () => {
+      mockOnAddToStudy.mockImplementation(permitted());
 
       const { getByText } = render(
         <WordDetailsBottomSheet
@@ -668,12 +901,12 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       fireEvent.press(getByText('Add to practice'));
 
       await waitFor(() => {
-        expect(mockOnClose).toHaveBeenCalled();
+        expect(mockSheetClose).toHaveBeenCalled();
       });
     });
 
     test('stays open on removal, so a mistaken tap can be undone in place', async () => {
-      mockOnAddToStudy.mockResolvedValue(true);
+      mockOnAddToStudy.mockImplementation(permitted());
 
       const { getByText } = render(
         <WordDetailsBottomSheet
@@ -688,7 +921,7 @@ describe('WordDetailsBottomSheet - Optimistic State Management', () => {
       fireEvent.press(getByText('In practice'));
 
       await waitFor(() => {
-        expect(mockOnAddToStudy).toHaveBeenCalledWith(mockWord, 'remove');
+        expect(mockOnAddToStudy).toHaveBeenCalledWith(mockWord, 'remove', expect.anything());
       });
       expect(mockOnClose).not.toHaveBeenCalled();
     });

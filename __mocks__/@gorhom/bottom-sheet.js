@@ -64,5 +64,6 @@ module.exports = {
   BottomSheetScrollView,
   BottomSheetBackdrop,
   useBottomSheetDynamicSnapPoints,
+  useBottomSheetTimingConfigs: configs => configs,
   SNAP_POINT_TYPE,
 };

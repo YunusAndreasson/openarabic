@@ -19,8 +19,11 @@ import { Provider } from 'react-redux';
 import { setupTestStore } from '@/__tests__/helpers/testStore';
 import { createTestQueryClient } from '@/__tests__/helpers/testUtils';
 import { useStudyWordMutations } from '@/hooks/articles/useStudyWordMutations';
+import { REFUSAL_TOAST_DURATION } from '@/constants/animation';
 import type { RootId } from '@/types/branded.types';
+import { ToastType } from '@/types/enums';
 import { handleError } from '@/utils/errorHandling';
+import { warningFeedback, errorFeedback } from '@/utils/haptics';
 import { rootId } from '@/__tests__/helpers/ids';
 
 // Mock modules at top level
@@ -82,6 +85,7 @@ jest.mock('@/utils/haptics', () => ({
   mediumFeedback: jest.fn(),
   successFeedback: jest.fn(),
   selectionFeedback: jest.fn(),
+  warningFeedback: jest.fn(),
   errorFeedback: jest.fn(),
 }));
 
@@ -326,10 +330,65 @@ describe('useStudyWordMutations', () => {
       expect(returned).toBeUndefined();
       expect(mockShowToast).toHaveBeenCalledWith(
         expect.stringContaining('20'),
-        3000,
-        expect.anything(),
+        REFUSAL_TOAST_DURATION,
+        ToastType.IMPORTANT,
       );
       expect(mockToggleFSRSStudyRoot).not.toHaveBeenCalled();
+    });
+
+    // A refusal used to be silent here and neutral-coloured in the toast, so it
+    // was indistinguishable from the save having worked.
+    test('announces a backlog refusal with a warning haptic, not an error one', async () => {
+      queryClient.setQueryData(['fsrs-words', 'test-user-id'], []);
+      queryClient.setQueryData(dueKey, twentyDue);
+
+      const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
+
+      await act(async () => {
+        await result.current.handleRootPress(999 as RootId, 'add');
+      });
+
+      expect(warningFeedback).toHaveBeenCalledTimes(1);
+      expect(errorFeedback).not.toHaveBeenCalled();
+    });
+
+    test('does not signal onAllowed for a refused add', async () => {
+      queryClient.setQueryData(['fsrs-words', 'test-user-id'], []);
+      queryClient.setQueryData(dueKey, twentyDue);
+
+      const onAllowed = jest.fn();
+      const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
+
+      await act(async () => {
+        await result.current.handleRootPress(999 as RootId, 'add', { onAllowed });
+      });
+
+      // The caller dismisses UI on this signal, so a refused add must never fire it.
+      expect(onAllowed).not.toHaveBeenCalled();
+      expect(mockToggleFSRSStudyRoot).not.toHaveBeenCalled();
+    });
+
+    test('signals onAllowed before the write when nothing blocks the add', async () => {
+      queryClient.setQueryData(['fsrs-words', 'test-user-id'], []);
+      queryClient.setQueryData(dueKey, []);
+
+      const callOrder: string[] = [];
+      mockToggleFSRSStudyRoot.mockImplementationOnce(async (..._args: unknown[]) => {
+        callOrder.push('write');
+        return true;
+      });
+
+      const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
+
+      await act(async () => {
+        await result.current.handleRootPress(999 as RootId, 'add', {
+          onAllowed: () => callOrder.push('allowed'),
+        });
+      });
+
+      // Order is the whole point: the sheet closes before the network round trip,
+      // which is what keeps saving feeling like one tap.
+      expect(callOrder).toEqual(['allowed', 'write']);
     });
 
     test('still allows removing despite a high backlog', async () => {

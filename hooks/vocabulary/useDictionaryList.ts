@@ -221,17 +221,14 @@ function isUnmeasured(word: StudyWord, field: DictionarySortField): boolean {
   return !hasBeenPractised(word);
 }
 
-function compareWords(a: StudyWord, b: StudyWord, field: DictionarySortField): number {
+function sortValue(word: StudyWord, field: DictionarySortField): number {
   switch (field) {
     case 'difficulty':
-      return (a.fsrs_difficulty ?? 0) - (b.fsrs_difficulty ?? 0);
+      return word.fsrs_difficulty ?? 0;
     case 'strength':
-      return (a.fsrs_stability ?? 0) - (b.fsrs_stability ?? 0);
+      return word.fsrs_stability ?? 0;
     case 'recent':
-      return (
-        (parseSupabaseTimestamp(a.created_at)?.getTime() ?? 0) -
-        (parseSupabaseTimestamp(b.created_at)?.getTime() ?? 0)
-      );
+      return parseSupabaseTimestamp(word.created_at)?.getTime() ?? 0;
   }
 }
 
@@ -315,35 +312,53 @@ export const useDictionaryList = ({
     [studyWords],
   );
 
-  const words = useMemo(() => {
-    if (!studyWords?.length) return [];
-
-    // Scope first, then search, then sort: the scope says what the list is, and
-    // a search is a question asked inside it.
-    const inScope = scope === 'all' ? studyWords : studyWords.filter(SCOPE_PREDICATES[scope]);
-
-    const query = normalizeForSearch(searchQuery.trim());
-    const visible = query
-      ? inScope.filter(
-          word =>
-            normalizeForSearch(word.root?.meaning ?? '').includes(query) ||
-            normalizeForSearch(word.root?.letters ?? '').includes(query),
-        )
-      : inScope;
-
+  // Sorting is independent of scope and search. Prepare it only when data or
+  // ordering changes, and parse each timestamp once rather than per comparison.
+  const sortedWords = useMemo(() => {
     const direction = sortDirection === 'asc' ? 1 : -1;
-    // root_id tiebreak keeps equal-valued words (e.g. all-new, no FSRS state yet)
-    // in a stable order across re-sorts
-    return [...visible].sort((a, b) => {
-      // Words with nothing to measure sort as one block at the end, whichever way
-      // the measured ones are running.
-      const aUnmeasured = isUnmeasured(a, sortField);
-      const bUnmeasured = isUnmeasured(b, sortField);
-      if (aUnmeasured !== bUnmeasured) return aUnmeasured ? 1 : -1;
+    return studyWords
+      .map(word => ({
+        word,
+        value: sortValue(word, sortField),
+        unmeasured: isUnmeasured(word, sortField),
+      }))
+      .sort((a, b) => {
+        if (a.unmeasured !== b.unmeasured) return a.unmeasured ? 1 : -1;
+        return direction * (a.value - b.value) || a.word.root_id - b.word.root_id;
+      })
+      .map(entry => entry.word);
+  }, [studyWords, sortField, sortDirection]);
 
-      return direction * compareWords(a, b, sortField) || a.root_id - b.root_id;
+  const query = normalizeForSearch(searchQuery.trim());
+  const hasSearch = query.length > 0;
+  // Allocate the search index only while searching. Separate fields preserve
+  // substring semantics; a query must not match across meaning/Arabic boundaries.
+  const searchIndex = useMemo(
+    () =>
+      hasSearch
+        ? new Map(
+            studyWords.map(word => [
+              word,
+              {
+                meaning: normalizeForSearch(word.root?.meaning ?? ''),
+                letters: normalizeForSearch(word.root?.letters ?? ''),
+              },
+            ]),
+          )
+        : null,
+    [studyWords, hasSearch],
+  );
+
+  const words = useMemo(() => {
+    // Keep time-sensitive scope predicates on the filtering path: typing can
+    // reveal a word that became due since the vocabulary cache last changed.
+    const inScope = scope === 'all' ? sortedWords : sortedWords.filter(SCOPE_PREDICATES[scope]);
+    if (!query || !searchIndex) return inScope;
+    return inScope.filter(word => {
+      const text = searchIndex.get(word);
+      return text?.meaning.includes(query) || text?.letters.includes(query);
     });
-  }, [studyWords, searchQuery, sortField, sortDirection, scope]);
+  }, [sortedWords, query, searchIndex, scope]);
 
   return {
     words,

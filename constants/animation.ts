@@ -6,6 +6,11 @@ import type { ReanimatedCSSAnimationStyle } from '@/types/ui/base.types';
  * Timing configuration presets for animations
  */
 export const TIMING_CONFIG = {
+  /** Short, bounded travel for opening and dismissing app-owned sheets. */
+  BOTTOM_SHEET: {
+    duration: 180,
+    easing: Easing.out(Easing.exp),
+  },
   FAST: {
     duration: 120, // Faster for more responsive feel
     easing: Easing.out(Easing.cubic), // More natural easing
@@ -266,6 +271,14 @@ export const SCROLL_EVENT_THROTTLE = 8;
  * 4 seconds provides adequate reading time for most messages.
  */
 export const DEFAULT_TOAST_DURATION = 4000;
+
+/**
+ * Visibility duration for a toast that explains why an action was REFUSED.
+ * Longer than the default: a refusal arrives unrequested, carries a reason the
+ * user has to read to act on, and is the only correction shown for an action
+ * they believe they just completed.
+ */
+export const REFUSAL_TOAST_DURATION = 6000;
 
 /**
  * General timing constants for delays, timeouts, and intervals

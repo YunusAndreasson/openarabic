@@ -1,0 +1,24 @@
+steps:
+  - echo: Open Revisit from Practice; expect the revisit list subtitle.
+  - tap:
+      text: Revisit
+  - await: { visible: { text: 'The words you forget most — give them another pass' } }
+  - await: { idle: true }
+  - echo: Select Everything; expect inline detail.
+  - tap:
+      text: Everything
+  - await: { visible: { text: 'Back to words to revisit' } }
+  - await: { idle: true }
+  - echo: Back returns to list, then a second back dismisses the native sheet.
+  - tool: button
+    args:
+      button: back
+  - await: { visible: { text: 'The words you forget most — give them another pass' } }
+  - await: { idle: true }
+  - tool: button
+    args:
+      button: back
+  - await: { hidden: { text: 'The words you forget most — give them another pass' } }
+  - await: { idle: true }
+executionPrerequisite: Android Open Arabic Practice tab, QA account with
+  Everything in revisit list; no sheet open.

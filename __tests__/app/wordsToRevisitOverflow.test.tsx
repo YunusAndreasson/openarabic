@@ -37,8 +37,9 @@ jest.mock('react-native-safe-area-context', () => ({
 
 const mockLeeches: { allWords: StudyWord[] } = { allWords: [] };
 
-jest.mock('@/hooks/vocabulary/useFSRSQueries', () => ({
-  useFSRSQueries: () => ({ allWords: mockLeeches.allWords, isLoading: false, error: null }),
+jest.mock('@tanstack/react-query', () => ({
+  ...jest.requireActual<typeof import('@tanstack/react-query')>('@tanstack/react-query'),
+  useQuery: () => ({ data: mockLeeches.allWords, isLoading: false, error: null }),
 }));
 
 jest.mock('@/hooks/auth/useAuth', () => ({
