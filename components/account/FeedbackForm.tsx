@@ -102,30 +102,37 @@ export const FeedbackForm = memo(() => {
         }
       }
 
-      // Set user context for Sentry
-      Sentry.setUser({
-        email: user?.email || undefined,
-        id: user?.id || undefined,
-        username: user?.email?.split('@')[0] || undefined,
-      });
-
-      Sentry.setContext('feedback_metadata', {
-        app_version: pkg.version,
-        submitted_at: new Date().toISOString(),
-        message_length: message.trim().length,
-        has_screenshot: !!screenshotUrl,
-        screenshot_url: screenshotUrl || undefined,
-      });
-
       // Use Sentry's captureFeedback API
       const feedbackMessage = screenshotUrl
         ? `${message.trim()}\n\nScreenshot: ${screenshotUrl}`
         : message.trim();
 
-      Sentry.captureFeedback({
-        name: user?.email?.split('@')[0] || 'Anonymous',
-        email: user?.email || 'no-email@example.com',
-        message: feedbackMessage,
+      // The user and the metadata belong to THIS feedback event only. They used
+      // to be set on the global scope and never cleared, so every error for the
+      // rest of the session — another account's included, after a sign-out —
+      // was filed under this learner's email and carried their screenshot URL.
+      Sentry.withScope(scope => {
+        scope.setUser({
+          email: user?.email || undefined,
+          id: user?.id || undefined,
+          username: user?.email?.split('@')[0] || undefined,
+        });
+        scope.setContext('feedback_metadata', {
+          app_version: pkg.version,
+          submitted_at: new Date().toISOString(),
+          message_length: message.trim().length,
+          has_screenshot: !!screenshotUrl,
+          screenshot_url: screenshotUrl || undefined,
+        });
+        Sentry.captureFeedback(
+          {
+            name: user?.email?.split('@')[0] || 'Anonymous',
+            email: user?.email || 'no-email@example.com',
+            message: feedbackMessage,
+          },
+          undefined,
+          scope,
+        );
       });
 
       router.back();
