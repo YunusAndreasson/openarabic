@@ -5,7 +5,7 @@ import { StyleSheet } from 'react-native';
 import type { Edge } from 'react-native-safe-area-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ThemedView } from '@/components/primitives/ThemedView';
+import { KEYBOARD_AWARE_SCROLL_PROPS, ThemedView } from '@/components/primitives/ThemedView';
 import { LAYOUT } from '@/constants/layout';
 
 interface ScreenScaffoldProps {
@@ -70,12 +70,18 @@ export const ScreenScaffold: FC<ScreenScaffoldProps> = ({
 
   return (
     <ThemedView includeBottomInset={false} safeAreaEdges={EDGES} style={styles.container}>
+      {/* Keyboard-aware: the ScrollView default, keyboardShouldPersistTaps
+          "never", spends the first tap while the keyboard is up on dismissing
+          it — and a parent ScrollView's setting wins over a nested one's. So
+          on Feedback and Delete account the first tap on the action button
+          did nothing but close the keyboard. */}
       <ThemedView
         scrollable
         contentContainerStyle={scrollContentStyle}
         includeBottomInset={false}
         style={styles.container}
         useSafeArea={false}
+        scrollViewProps={KEYBOARD_AWARE_SCROLL_PROPS}
       >
         {children}
       </ThemedView>
