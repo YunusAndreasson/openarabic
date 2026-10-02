@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { Platform } from 'react-native';
 
 import { useOAuthProvider, type OAuthSignInResult } from '@/hooks/auth/useOAuthProvider';
-import { supabase } from '@/services/supabase';
 import { isCancellationError } from '@/utils/authUtils';
 import { authBreadcrumb } from '@/utils/errorHandling';
 
@@ -151,18 +150,8 @@ export function useAppleAuth(): UseAppleAuthReturn {
           throw new Error('No identity token returned from Apple');
         }
 
-        // Save full name if provided (only available on first sign-in)
-        // Fire-and-forget update - doesn't block auth flow, no mount safety concerns
-        if (credential.fullName) {
-          const fullName =
-            `${credential.fullName.givenName ?? ''} ${credential.fullName.familyName ?? ''}`.trim();
-          if (fullName) {
-            supabase.auth.updateUser({ data: { full_name: fullName } }).catch(() => {
-              // Silently fail - not critical
-            });
-          }
-        }
-
+        // The full name (only sent on the first authorization) rides out in
+        // `userInfo.name`; useOAuthProvider saves it once the session exists.
         return {
           idToken: credential.identityToken,
           nonce: credential.nonce ?? undefined,

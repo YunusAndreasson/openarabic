@@ -242,6 +242,31 @@ export function useOAuthProvider(config: OAuthProviderConfig) {
         hasSession: !!data.session,
       });
 
+      // Apple hands over the user's name ONCE — on the very first authorization
+      // — and outside the ID token, so Supabase cannot record it by itself. It
+      // can only be saved now that a session exists: the Apple step used to
+      // save it before signInWithIdToken, where updateUser resolves with "auth
+      // session missing" (it does not reject, so nothing noticed) and the name
+      // was gone for good. A provider whose token already carries the name
+      // (Google) has it in the metadata, so this never overwrites one.
+      const providedName = signInResult.userInfo?.name;
+      if (providedName && !data.user.user_metadata['full_name']) {
+        void supabase.auth
+          .updateUser({ data: { full_name: providedName } })
+          .then(({ error }) => {
+            if (error) {
+              authBreadcrumb(
+                'Saving the provider name failed',
+                { message: error.message },
+                'warning',
+              );
+            }
+          })
+          .catch(() => {
+            // Not critical: the account works without a display name.
+          });
+      }
+
       // STEP 4: Track analytics
       await analytics.identify(data.user.id, {
         last_sign_in: new Date().toISOString(),

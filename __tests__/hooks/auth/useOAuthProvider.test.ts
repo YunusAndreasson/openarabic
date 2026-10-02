@@ -81,6 +81,10 @@ describe('useOAuthProvider', () => {
       data: { session: mockSession },
       error: null,
     })) as unknown as typeof mockSupabase.auth.getSession;
+    mockSupabase.auth.updateUser = jest.fn(async (..._args: unknown[]) => ({
+      data: { user: mockSession.user },
+      error: null,
+    })) as unknown as typeof mockSupabase.auth.updateUser;
 
     // Default analytics mocks
     mockAnalytics.identify = jest.fn(async (..._args: unknown[]): Promise<void> => undefined);
@@ -95,6 +99,48 @@ describe('useOAuthProvider', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe('Provider-supplied name', () => {
+    const appleConfig = (name?: string): OAuthProviderConfig => ({
+      provider: 'apple',
+      loadModule: jest.fn(async (..._args: unknown[]) => {}),
+      executeSignIn: jest.fn(async (..._args: unknown[]) => ({
+        idToken: 'apple-token',
+        userInfo: { name },
+      })),
+    });
+
+    test('saves the name once Supabase has created the session', async () => {
+      // Apple sends the name only on the first authorization, outside the
+      // token — saving it before the session existed silently failed.
+      const { result } = renderHook(() => useOAuthProvider(appleConfig('Amina Yusuf')));
+      await result.current.signIn();
+
+      expect(mockSupabase.auth.updateUser).toHaveBeenCalledWith({
+        data: { full_name: 'Amina Yusuf' },
+      });
+      const signInOrder = jest.mocked(mockSupabase.auth.signInWithIdToken).mock
+        .invocationCallOrder[0];
+      const updateOrder = jest.mocked(mockSupabase.auth.updateUser).mock.invocationCallOrder[0];
+      expect(updateOrder).toBeGreaterThan(signInOrder ?? Infinity);
+    });
+
+    test('never overwrites a name the account already has', async () => {
+      const namedUser = createUserMock({
+        id: 'user-123',
+        user_metadata: { full_name: 'From The Token' },
+      });
+      mockSupabase.auth.signInWithIdToken = jest.fn(async () => ({
+        data: { user: namedUser, session: { ...mockSession, user: namedUser } },
+        error: null,
+      })) as unknown as typeof mockSupabase.auth.signInWithIdToken;
+
+      const { result } = renderHook(() => useOAuthProvider(appleConfig('Amina Yusuf')));
+      await result.current.signIn();
+
+      expect(mockSupabase.auth.updateUser).not.toHaveBeenCalled();
+    });
   });
 
   describe('Successful OAuth Flow', () => {
