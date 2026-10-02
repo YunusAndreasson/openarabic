@@ -43,7 +43,7 @@ export function ChartCanvas({
   // Data points then stagger in on top via their own per-index spring.
   const entryProgress = useSharedValue(0);
   useEffect(() => {
-    entryProgress.value = withTiming(1, { duration: TIMING_CONFIG.SLOW.duration });
+    entryProgress.set(withTiming(1, { duration: TIMING_CONFIG.SLOW.duration }));
   }, [entryProgress]);
 
   // Validate dataPoints to prevent frozen object errors (React Compiler auto-memoizes)

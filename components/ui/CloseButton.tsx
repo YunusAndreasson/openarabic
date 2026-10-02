@@ -1,6 +1,5 @@
 import { TransparentHeaderButton } from '@/components/ui/TransparentHeaderButton';
 import { router } from 'expo-router';
-import type { FC } from 'react';
 import { useCallback, useEffect, useRef } from 'react';
 
 import { TIMING_CONSTANTS } from '@/constants/animation';
@@ -24,7 +23,7 @@ interface CloseButtonProps {
  * existed to give this one component one prop; the deferred `router.back()`
  * it contributed now lives here directly.
  */
-export const CloseButton: FC<CloseButtonProps> = ({ onPress, accessibilityLabel }) => {
+export const CloseButton = ({ onPress, accessibilityLabel }: CloseButtonProps) => {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {

@@ -32,7 +32,7 @@ function ProgressBarComponent({
 
   // Handle invalid inputs that could crash (React Compiler auto-memoizes)
   let safeProgress = 0;
-  if (typeof rawProgress === 'number' && !isNaN(rawProgress) && isFinite(rawProgress)) {
+  if (typeof rawProgress === 'number' && Number.isFinite(rawProgress)) {
     // Clamp to 0-100 range and ensure it's a safe number
     safeProgress = Math.max(0, Math.min(100, rawProgress));
   }

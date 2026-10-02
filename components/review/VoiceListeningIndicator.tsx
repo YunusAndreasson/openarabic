@@ -21,7 +21,6 @@
  * times a second (VoiceGradingProvider.micLevel), so a moving bar costs no
  * React render. Bars, not a canvas: at seven bars a Skia surface buys nothing.
  */
-import type { FC } from 'react';
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { SharedValue } from 'react-native-reanimated';
@@ -125,8 +124,8 @@ const STATIC_STYLES = StyleSheet.create({
 /** One bar. Its own component so each gets a hook of its own — the alternative
  *  is calling useAnimatedStyle inside a map, which is a lint error for good
  *  reasons even when the array length is constant. */
-const VoiceBar: FC<{ level: SharedValue<number>; weight: number; color: string }> = memo(
-  ({ level, weight, color }) => {
+const VoiceBar = memo(
+  ({ level, weight, color }: { level: SharedValue<number>; weight: number; color: string }) => {
     const style = useAnimatedStyle(() => {
       'worklet';
       return {
@@ -145,7 +144,7 @@ interface VoiceListeningIndicatorProps {
   level: SharedValue<number>;
 }
 
-export const VoiceListeningIndicator: FC<VoiceListeningIndicatorProps> = ({ state, level }) => {
+export const VoiceListeningIndicator = ({ state, level }: VoiceListeningIndicatorProps) => {
   const colors = useColors();
   const reduceMotion = useReducedMotion();
   const isLive = state === 'live';

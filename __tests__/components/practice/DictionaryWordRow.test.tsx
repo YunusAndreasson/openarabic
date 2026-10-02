@@ -66,8 +66,8 @@ jest.mock('react-native-gesture-handler/ReanimatedSwipeable', () => {
       props: {
         children?: React.ReactNode;
         renderRightActions?: (
-          progress: { value: number },
-          drag: { value: number },
+          progress: { value: number; get: () => number },
+          drag: { value: number; get: () => number },
         ) => React.ReactNode;
       },
       _ref: unknown,
@@ -77,7 +77,9 @@ jest.mock('react-native-gesture-handler/ReanimatedSwipeable', () => {
         null,
         props.children,
         // The real signature passes shared values; the actions read `drag`.
-        props.renderRightActions ? props.renderRightActions({ value: 0 }, { value: 0 }) : null,
+        props.renderRightActions
+          ? props.renderRightActions({ value: 0, get: () => 0 }, { value: 0, get: () => 0 })
+          : null,
       ),
   );
   return { __esModule: true, default: MockSwipeable, Pressable };

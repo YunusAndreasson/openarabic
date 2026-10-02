@@ -1,4 +1,3 @@
-import type { FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 // Direct path, not the practice barrel: the root-level word sheet renders this
@@ -41,7 +40,7 @@ interface WordFsrsStatsProps {
  * copies of the same JSX, down to the lapse-aware reps string. Two copies of a
  * reading is two readings waiting to disagree.
  */
-export const WordFsrsStats: FC<WordFsrsStatsProps> = ({ word, memory, variant = 'screen' }) => {
+export const WordFsrsStats = ({ word, memory, variant = 'screen' }: WordFsrsStatsProps) => {
   const colors = useColors();
   const difficultyLevel = getWordDifficultyLevel(word);
 

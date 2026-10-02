@@ -1,4 +1,4 @@
-import { memo, type FC } from 'react';
+import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { BaseCard } from '@/components/common';
@@ -36,7 +36,7 @@ interface WordRailCardProps {
  * carries no prefix and no case, so grammar colouring would have nothing true
  * to paint.
  */
-const WordRailCardComponent: FC<WordRailCardProps> = ({ word, onPress }) => {
+const WordRailCardComponent = ({ word, onPress }: WordRailCardProps) => {
   const { arabicText: letters, englishText: meaning } = getRootLemma(word);
 
   return (

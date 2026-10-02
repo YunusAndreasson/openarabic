@@ -1,5 +1,5 @@
 import { BaseCard, ProgressBar } from '@/components/common';
-import { memo, type ComponentType, type FC } from 'react';
+import { memo, type ComponentType } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -43,7 +43,7 @@ interface PlaylistItemCardProps {
   PressableComponent?: ComponentType<PressableLikeProps>;
 }
 
-export const PlaylistItemCard: FC<PlaylistItemCardProps> = memo(
+export const PlaylistItemCard = memo(
   ({
     title,
     secondaryText,
@@ -58,7 +58,7 @@ export const PlaylistItemCard: FC<PlaylistItemCardProps> = memo(
     progressPercentage,
     compact = false,
     PressableComponent,
-  }) => {
+  }: PlaylistItemCardProps) => {
     const isDarkMode = useIsDarkMode();
     const colors = useColors();
 

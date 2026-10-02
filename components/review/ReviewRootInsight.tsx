@@ -1,4 +1,4 @@
-import { memo, type FC } from 'react';
+import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
@@ -19,7 +19,7 @@ interface Props {
  * root reference panel: review needs one memorable paragraph, not senses,
  * citations and a family list competing for attention before the next card.
  */
-export const ReviewRootInsight: FC<Props> = memo(({ explanation }) => {
+export const ReviewRootInsight = memo(({ explanation }: Props) => {
   const colors = useColors();
   const accessibilityLabel = `${STRINGS.REVIEW_ROOT_INSIGHT_TITLE}. ${explanation}`;
 

@@ -40,9 +40,16 @@ const mockContextValue = {
 const React = require('react');
 const mockContext = React.createContext(mockContextValue);
 
+// The real hooks carry `.withTypes()`, which returns the same hook pre-typed;
+// `store/hooks.ts` builds `useAppSelector` / `useAppDispatch` from it.
+const useSelector = selector => selector(mockState);
+useSelector.withTypes = () => useSelector;
+const useDispatch = () => () => {};
+useDispatch.withTypes = () => useDispatch;
+
 module.exports = {
-  useSelector: selector => selector(mockState),
-  useDispatch: () => () => {},
+  useSelector,
+  useDispatch,
   Provider: ({ children }) => children,
   connect: () => component => component,
   ReactReduxContext: mockContext,

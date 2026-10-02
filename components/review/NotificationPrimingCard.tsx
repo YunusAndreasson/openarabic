@@ -1,5 +1,4 @@
 import { PrimingCard } from '@/components/common';
-import type { FC } from 'react';
 
 import { STRINGS } from '@/constants/strings';
 
@@ -13,10 +12,7 @@ interface NotificationPrimingCardProps {
  * explains the forgetting-curve value before any OS permission dialog appears.
  * The calm sibling of the metric rows above it, so it takes the quiet title.
  */
-export const NotificationPrimingCard: FC<NotificationPrimingCardProps> = ({
-  onAccept,
-  onDecline,
-}) => (
+export const NotificationPrimingCard = ({ onAccept, onDecline }: NotificationPrimingCardProps) => (
   <PrimingCard
     acceptLabel={STRINGS.NOTIFICATION_PRIMING_ACCEPT}
     body={STRINGS.NOTIFICATION_PRIMING_BODY}

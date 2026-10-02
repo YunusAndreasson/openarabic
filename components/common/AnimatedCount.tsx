@@ -105,7 +105,7 @@ export function AnimatedCount({
   useAnimatedReaction(
     () => {
       'worklet';
-      return Math.round(progress.value);
+      return Math.round(progress.get());
     },
     (rounded, previous) => {
       if (rounded !== previous) {

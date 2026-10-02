@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { Fragment, memo, useCallback, useMemo, type FC } from 'react';
+import { Fragment, memo, useCallback, useMemo } from 'react';
 
 import { SectionLabel } from '@/components/common';
 import { COMPLETION_THRESHOLD } from '@/constants/layout';
@@ -62,7 +62,7 @@ function shuffleAndSlice<T>(items: T[], count: number, sectionSeed: number): T[]
  * Sections: Beginner Friendly, Short Reads, Long Reads, Advanced.
  * Each section self-hides when no matching articles are found.
  */
-const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }) => {
+const DiscoverySectionsComponent = ({ articlesData }: DiscoverySectionsProps) => {
   const router = useRouter();
   const articleIds = useMemo(() => articlesData.map(a => a.id), [articlesData]);
   const { data: progressMap } = useBulkReadingProgress(articleIds);

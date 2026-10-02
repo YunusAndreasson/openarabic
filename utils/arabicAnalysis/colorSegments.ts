@@ -123,7 +123,7 @@ function getDiacriticColorName(
 
   if (diacritic.inheritColorFrom === ComponentType.PREFIX && analysis?.prefixes) {
     // Use LAST prefix for grammatical correctness (e.g., preposition → genitive kasra)
-    const prefix = analysis.prefixes[analysis.prefixes.length - 1];
+    const prefix = analysis.prefixes.at(-1);
     return getComponentColorName(prefix, ComponentType.PREFIX);
   }
 

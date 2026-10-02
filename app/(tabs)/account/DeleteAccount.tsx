@@ -1,5 +1,4 @@
 import { ScreenScaffold } from '@/components/common';
-import type { FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedButton } from '@/components/primitives/ThemedButton';
@@ -10,7 +9,7 @@ import { STRINGS } from '@/constants/strings';
 import { useAccountDeletion } from '@/hooks/account/useAccountDeletion';
 import { router } from 'expo-router';
 
-const DeleteAccountScreen: FC = () => {
+const DeleteAccountScreen = () => {
   const {
     userEmail,
     confirmationText,

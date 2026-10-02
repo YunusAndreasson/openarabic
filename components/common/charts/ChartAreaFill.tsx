@@ -26,11 +26,8 @@ export const ChartAreaFill = memo<ChartAreaFillProps>(({ path, graphWidth, chart
 
   const opacity = useSharedValue(0);
   useEffect(() => {
-    opacity.value = 0;
-    opacity.value = withDelay(
-      TIMING_CONFIG.PROGRESS.duration,
-      withTiming(1, TIMING_CONFIG.ENTRANCE),
-    );
+    opacity.set(0);
+    opacity.set(withDelay(TIMING_CONFIG.PROGRESS.duration, withTiming(1, TIMING_CONFIG.ENTRANCE)));
   }, [opacity, path]);
 
   if (!path || !areaPath) return null;

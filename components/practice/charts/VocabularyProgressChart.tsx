@@ -59,17 +59,16 @@ export const VocabularyProgressChart = memo<VocabularyProgressChartProps>(
     const progress = useSharedValue(0);
     const settleOpacity = useSharedValue(0);
     useEffect(() => {
-      progress.value = 0;
-      settleOpacity.value = 0;
+      progress.set(0);
+      settleOpacity.set(0);
       // Last of the three charts to arrive, so the screen resolves top-to-bottom.
-      progress.value = withDelay(
-        TIMING_CONSTANTS.STAGGER.FAST,
-        withTiming(1, TIMING_CONFIG.PROGRESS),
-      );
+      progress.set(withDelay(TIMING_CONSTANTS.STAGGER.FAST, withTiming(1, TIMING_CONFIG.PROGRESS)));
       // Wash + endpoint dot appear once the line has finished drawing
-      settleOpacity.value = withDelay(
-        TIMING_CONSTANTS.STAGGER.FAST + TIMING_CONFIG.PROGRESS.duration,
-        withTiming(1, TIMING_CONFIG.ENTRANCE),
+      settleOpacity.set(
+        withDelay(
+          TIMING_CONSTANTS.STAGGER.FAST + TIMING_CONFIG.PROGRESS.duration,
+          withTiming(1, TIMING_CONFIG.ENTRANCE),
+        ),
       );
     }, [progress, settleOpacity, linePath]);
 

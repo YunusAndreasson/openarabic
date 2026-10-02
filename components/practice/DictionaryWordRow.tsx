@@ -62,7 +62,7 @@ function RowActions({ drag, onReset, onRemove }: RowActionsProps) {
   const animatedStyle = useAnimatedStyle(() => ({
     // `drag` is 0 at rest and -ACTIONS_WIDTH when fully open, so this holds the
     // panel exactly against the row's trailing edge at every point of the drag.
-    transform: [{ translateX: drag.value + ACTIONS_WIDTH }],
+    transform: [{ translateX: drag.get() + ACTIONS_WIDTH }],
   }));
 
   return (

@@ -4,7 +4,7 @@
  * DEFAULT_RECORDING_CONFIG, so quiet-capture issues (notably iOS raw mode) can
  * be A/B tested on-device without a rebuild. No sliders — toggles only.
  */
-import { useCallback, useMemo, type FC } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Alert, Platform, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
@@ -37,7 +37,7 @@ type StatusColor = 'success' | 'error' | 'tint' | 'textTertiary';
  */
 const STATUS_LOADER_SIZE = LAYOUT.BUTTON.ICON_SIZE.MEDIUM;
 
-const AdvancedScreen: FC = () => {
+const AdvancedScreen = () => {
   const dispatch = useAppDispatch();
   const voice = useVoiceGrading();
   const model = useVoiceModel();

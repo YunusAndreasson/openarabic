@@ -1,6 +1,6 @@
 // External Libraries
 import { SettingsPicker, TimePicker } from '@/components/ui';
-import { useCallback, useMemo, useState, type FC } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 
 import { AccountBadge } from '@/components/account';
@@ -44,7 +44,7 @@ type ActivePicker = 'theme' | 'audioLanguage' | 'dailyWordLimit' | null;
  * picker is open, and the single `SettingsPicker` / `TimePicker` pair they all
  * drive.
  */
-const AccountScreen: FC = () => {
+const AccountScreen = () => {
   const dispatch = useAppDispatch();
   const [activePicker, setActivePicker] = useState<ActivePicker>(null);
   const tabBarAutoHide = useTabBarAutoHide();

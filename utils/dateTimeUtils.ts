@@ -79,7 +79,7 @@ export function parseSupabaseTimestamp(ts: string | null | undefined): Date | nu
   const date = new Date(normalized);
 
   // Return null if parsing resulted in invalid date
-  return isNaN(date.getTime()) ? null : date;
+  return Number.isNaN(date.getTime()) ? null : date;
 }
 
 /**

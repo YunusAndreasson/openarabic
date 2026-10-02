@@ -1352,9 +1352,8 @@ class SimpleAudioService {
           }
 
           // Guard against NaN/Infinity from native — observed during seek/replace.
-          const safeCurrentTime =
-            isNaN(currentTime) || !isFinite(currentTime) ? 0 : Math.max(0, currentTime);
-          const safeDuration = isNaN(duration) || !isFinite(duration) ? 0 : Math.max(0, duration);
+          const safeCurrentTime = Number.isFinite(currentTime) ? Math.max(0, currentTime) : 0;
+          const safeDuration = Number.isFinite(duration) ? Math.max(0, duration) : 0;
 
           // PLAYLIST SUPPORT: Use native didJustFinish for track completion
           if (this.isPlaylistMode && didJustFinish) {

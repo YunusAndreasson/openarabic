@@ -1,5 +1,4 @@
 import { BaseCard } from '@/components/common/BaseCard';
-import type { FC } from 'react';
 import { StyleSheet } from 'react-native';
 
 import { ThemedButton } from '@/components/primitives/ThemedButton';
@@ -33,7 +32,7 @@ interface PrimingCardProps {
  * same colour and neither reads as the primary thing to do. The notification
  * card used to break this rule while its sibling's comment claimed it didn't.
  */
-export const PrimingCard: FC<PrimingCardProps> = ({
+export const PrimingCard = ({
   title,
   body,
   acceptLabel,
@@ -41,7 +40,7 @@ export const PrimingCard: FC<PrimingCardProps> = ({
   declineLabel,
   onDecline,
   emphasis = 'quiet',
-}) => (
+}: PrimingCardProps) => (
   <BaseCard contentStyle={styles.content}>
     <ThemedText type={emphasis === 'flagship' ? 'heading3' : 'bodyBold'}>{title}</ThemedText>
     <ThemedText colorName="secondaryText" style={styles.body} type="body">

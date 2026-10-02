@@ -1,4 +1,4 @@
-import { type FC, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { ReviewChoiceRow } from '@/components/review/ReviewChoiceRow';
 import { STRINGS } from '@/constants/strings';
@@ -25,11 +25,7 @@ interface ReviewGradeBarProps {
  * its button with the voice-miss row so the two states of the bottom band are
  * the same shape.
  */
-export const ReviewGradeBar: FC<ReviewGradeBarProps> = ({
-  intervals,
-  onGrade,
-  disabled = false,
-}) => {
+export const ReviewGradeBar = ({ intervals, onGrade, disabled = false }: ReviewGradeBarProps) => {
   // The incoming buttons occupy the reveal button's touch area before their
   // entering animation is visible. Ignore the second tap of a double reveal.
   const [settled, setSettled] = useState(false);

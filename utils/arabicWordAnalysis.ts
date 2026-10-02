@@ -335,8 +335,7 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
   const diacritic = findDiacritic(arabic, normalizedEnglish);
 
   // Resolve overlaps between the last prefix and suffix (only last prefix can overlap with suffix)
-  const lastPrefix =
-    detectedPrefixes.length > 0 ? detectedPrefixes[detectedPrefixes.length - 1] : undefined;
+  const lastPrefix = detectedPrefixes.at(-1);
   const { resolvedPrefix, resolvedSuffix } = resolveOverlap(normalized, lastPrefix, suffix);
 
   // If last prefix was removed due to overlap, remove it from the detected prefixes array

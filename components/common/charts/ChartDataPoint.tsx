@@ -31,9 +31,11 @@ export const ChartDataPoint = memo<ChartDataPointProps>(
     const scale = useSharedValue(0);
 
     useEffect(() => {
-      scale.value = withDelay(
-        TIMING_CONFIG.PROGRESS.duration + index * STAGGER_PER_POINT_MS,
-        withSpring(1, SPRING_CONFIG.CARD),
+      scale.set(
+        withDelay(
+          TIMING_CONFIG.PROGRESS.duration + index * STAGGER_PER_POINT_MS,
+          withSpring(1, SPRING_CONFIG.CARD),
+        ),
       );
     }, [scale, index]);
 
@@ -44,11 +46,11 @@ export const ChartDataPoint = memo<ChartDataPointProps>(
 
     const animatedDotR = useDerivedValue(() => {
       'worklet';
-      return scale.value * dotRadius;
+      return scale.get() * dotRadius;
     });
     const animatedRingR = useDerivedValue(() => {
       'worklet';
-      return scale.value * ringRadius;
+      return scale.get() * ringRadius;
     });
 
     return (

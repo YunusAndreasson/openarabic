@@ -1,4 +1,3 @@
-import type { FC } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { Pressable, StyleSheet } from 'react-native';
 
@@ -32,7 +31,7 @@ interface TextLinkProps {
  * inline in a sentence without breaking the line box; `hitSlop` rather than
  * height gives it a reachable target.
  */
-export const TextLink: FC<TextLinkProps> = ({
+export const TextLink = ({
   label,
   onPress,
   type = 'body',
@@ -40,7 +39,7 @@ export const TextLink: FC<TextLinkProps> = ({
   accessibilityLabel,
   style,
   testID,
-}) => (
+}: TextLinkProps) => (
   <Pressable
     accessibilityLabel={accessibilityLabel ?? label}
     accessibilityRole="link"

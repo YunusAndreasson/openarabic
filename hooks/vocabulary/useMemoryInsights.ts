@@ -98,7 +98,7 @@ export function useMemoryInsights(studyWords: StudyWord[]): MemoryInsights {
     // Today (leftmost, in UTC) and the far end of the forecast window — where
     // memory lands if nothing is reviewed.
     const todayData = retrievabilityData[0];
-    const weekData = retrievabilityData[retrievabilityData.length - 1];
+    const weekData = retrievabilityData.at(-1);
 
     const currentRetrievability = todayData?.averageRetrievability || 0;
     const criticalWords = todayData?.criticalWords || 0;

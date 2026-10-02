@@ -1,6 +1,5 @@
 import { GlassIconButton } from '@/components/ui';
 import { ProgressBar } from '@/components/common';
-import type { FC } from 'react';
 import { useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -76,13 +75,13 @@ interface ReviewHeaderProps {
   wordsDone?: number;
 }
 
-export const ReviewHeader: FC<ReviewHeaderProps> = ({
+export const ReviewHeader = ({
   progress,
   maxProgress,
   onClose,
   recallRun = 0,
   wordsDone = 0,
-}) => {
+}: ReviewHeaderProps) => {
   const colors = useColors();
 
   const displayProgress = Math.max(progress, maxProgress);

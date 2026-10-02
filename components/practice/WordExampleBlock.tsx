@@ -1,4 +1,4 @@
-import { memo, type FC } from 'react';
+import { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ArticleSentence } from '@/components/article/ArticleSentence';
@@ -40,12 +40,12 @@ interface WordExampleBlockProps {
  * exists in `ArticleSentence` because the article screen wraps its body in an
  * RNGH background-tap catcher. This screen is an ordinary `ScrollView`.
  */
-const WordExampleBlockComponent: FC<WordExampleBlockProps> = ({
+const WordExampleBlockComponent = ({
   sentence,
   highlightRootId,
   showDivider,
   onOpenArticle,
-}) => {
+}: WordExampleBlockProps) => {
   const colors = useColors();
   const { article } = sentence;
   const canOpen = !!article && !!onOpenArticle;

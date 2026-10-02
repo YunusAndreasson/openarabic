@@ -1,4 +1,3 @@
-import type { FC } from 'react';
 import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 
@@ -41,7 +40,7 @@ interface WordHeroTextProps {
  * exact class of drift `WordFsrsStats` already exists to prevent for the stat
  * rows below this.
  */
-export const WordHeroText: FC<WordHeroTextProps> = ({
+export const WordHeroText = ({
   arabicText,
   englishText,
   arabicStyle,
@@ -50,7 +49,7 @@ export const WordHeroText: FC<WordHeroTextProps> = ({
   audioUrl,
   onPlayAudio,
   style,
-}) => {
+}: WordHeroTextProps) => {
   const colors = useColors();
 
   return (

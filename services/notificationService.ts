@@ -140,10 +140,7 @@ export function handleNotificationResponse(
 
   const { notification } = response;
   const { type } = notification.request.content.data ?? {};
-  if (
-    typeof type !== 'string' ||
-    !Object.prototype.hasOwnProperty.call(NOTIFICATION_ROUTE_BY_TYPE, type)
-  ) {
+  if (typeof type !== 'string' || !Object.hasOwn(NOTIFICATION_ROUTE_BY_TYPE, type)) {
     return false;
   }
 

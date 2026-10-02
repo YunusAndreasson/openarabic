@@ -1,4 +1,4 @@
-import { Children, memo, type FC, type ReactNode } from 'react';
+import { Children, memo, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
@@ -53,7 +53,7 @@ interface SnapRailProps {
  * stretches its children to the tallest, so cards that fill their slot come out
  * the same height without anyone measuring anything.
  */
-const SnapRailComponent: FC<SnapRailProps> = ({ itemWidth, itemHeight, children }) => {
+const SnapRailComponent = ({ itemWidth, itemHeight, children }: SnapRailProps) => {
   const slotStyle = {
     width: itemWidth,
     ...(itemHeight === undefined ? null : { height: itemHeight }),

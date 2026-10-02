@@ -1,7 +1,7 @@
 // External Libraries
 import { Ionicons } from '@/components/ui';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Fragment, memo, useCallback, useMemo, type FC } from 'react';
+import { Fragment, memo, useCallback, useMemo } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
@@ -27,8 +27,8 @@ interface FAQItemComponentProps {
 }
 
 // Minimal, robust FAQ item component
-const FAQItemComponent: FC<FAQItemComponentProps> = memo(
-  ({ item, isExpanded, onToggle, uniqueKey }) => {
+const FAQItemComponent = memo(
+  ({ item, isExpanded, onToggle, uniqueKey }: FAQItemComponentProps) => {
     const colors = useColors();
 
     const handlePress = useCallback(() => {
@@ -113,8 +113,8 @@ interface FAQCategorySectionProps {
 }
 
 // Reusable FAQ category section with header and items
-const FAQCategorySection: FC<FAQCategorySectionProps> = memo(
-  ({ title, items, expandedItems, onToggle, keyPrefix }) => {
+const FAQCategorySection = memo(
+  ({ title, items, expandedItems, onToggle, keyPrefix }: FAQCategorySectionProps) => {
     return (
       <Fragment>
         <SectionLabel title={title} />
@@ -139,7 +139,7 @@ const FAQCategorySection: FC<FAQCategorySectionProps> = memo(
 FAQCategorySection.displayName = 'FAQCategorySection';
 
 // Main Help screen
-const HelpScreen: FC = () => {
+const HelpScreen = () => {
   const colors = useColors();
   const params = useLocalSearchParams<{ expandItem?: string }>();
 

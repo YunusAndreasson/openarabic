@@ -1,4 +1,4 @@
-import { memo, type FC } from 'react';
+import { memo } from 'react';
 
 import { SnapRail } from '@/components/common';
 import { PlaylistItemCard } from '@/components/playlist/PlaylistItemCard';
@@ -30,7 +30,7 @@ interface ArticleRailProps {
  * keeps the first card on the standard screen padding, flush with the section
  * label above it.
  */
-const ArticleRailComponent: FC<ArticleRailProps> = ({ items, keyPrefix, onArticlePress }) => {
+const ArticleRailComponent = ({ items, keyPrefix, onArticlePress }: ArticleRailProps) => {
   const prefetchArticle = useArticlePrefetch();
 
   return (

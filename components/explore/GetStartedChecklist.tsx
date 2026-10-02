@@ -1,6 +1,6 @@
 import { Ionicons } from '@/components/ui';
 import { useRouter } from 'expo-router';
-import { memo, useCallback, useEffect, useMemo, useRef, useState, type FC } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -48,11 +48,11 @@ interface GetStartedChecklistProps {
  * user in a starter article where all three actions live. Once everything is
  * done the card pauses, collapses away, and never returns.
  */
-const GetStartedChecklistComponent: FC<GetStartedChecklistProps> = ({
+const GetStartedChecklistComponent = ({
   articlesData,
   checklist,
   isSuppressedByIntro = false,
-}) => {
+}: GetStartedChecklistProps) => {
   const colors = useColors();
   const router = useRouter();
   const { isChecklistVisible, items, doneCount, allDone, finalizeCompletion } = checklist;
@@ -79,26 +79,24 @@ const GetStartedChecklistComponent: FC<GetStartedChecklistProps> = ({
     }
 
     const timeout = setTimeout(() => {
-      collapseProgress.value = withTiming(
-        1,
-        { duration: ONBOARDING_CONFIG.CHECKLIST_COLLAPSE_DURATION_MS },
-        finished => {
+      collapseProgress.set(
+        withTiming(1, { duration: ONBOARDING_CONFIG.CHECKLIST_COLLAPSE_DURATION_MS }, finished => {
           if (finished) {
             scheduleOnRN(finalizeCompletion);
           }
-        },
+        }),
       );
     }, ONBOARDING_CONFIG.CHECKLIST_COLLAPSE_DELAY_MS);
     return () => clearTimeout(timeout);
   }, [allDone, isChecklistVisible, collapseProgress, finalizeCompletion]);
 
   const animatedStyle = useAnimatedStyle(() => {
-    if (collapseProgress.value === 0 || measuredHeight === 0) {
-      return { opacity: 1 - collapseProgress.value };
+    if (collapseProgress.get() === 0 || measuredHeight === 0) {
+      return { opacity: 1 - collapseProgress.get() };
     }
     return {
-      opacity: 1 - collapseProgress.value,
-      height: measuredHeight * (1 - collapseProgress.value),
+      opacity: 1 - collapseProgress.get(),
+      height: measuredHeight * (1 - collapseProgress.get()),
       overflow: 'hidden' as const,
     };
   }, [measuredHeight]);

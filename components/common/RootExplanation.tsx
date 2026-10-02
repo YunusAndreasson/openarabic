@@ -1,4 +1,3 @@
-import type { FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 // Direct paths, not the barrel: this file lives in `common`, so importing its
@@ -82,12 +81,12 @@ interface RootExplanationProps {
  * describes prefixes and case endings on an inflected form, and a bare root has
  * neither.
  */
-export const RootExplanation: FC<RootExplanationProps> = ({
+export const RootExplanation = ({
   enrichment,
   variant = 'screen',
   onOpenFamilyMember,
   canOpenFamilyMember,
-}) => {
+}: RootExplanationProps) => {
   const isSheet = variant === 'sheet';
   const arabicFontSize = getCompactArabicFontSize(useDebouncedArabicFontSize(100));
 
@@ -239,7 +238,7 @@ interface FamilyRowProps {
  * for unsaved members looked tappable and landed on "no longer in your practice
  * list". Unlinkable members stay plain text, which is honest.
  */
-const FamilyRow: FC<FamilyRowProps> = ({ member, arabicFontSize, onOpen, canOpen }) => {
+const FamilyRow = ({ member, arabicFontSize, onOpen, canOpen }: FamilyRowProps) => {
   const { rootId } = member;
   const isLinkable = rootId != null && !!onOpen && (canOpen?.(rootId) ?? true);
 

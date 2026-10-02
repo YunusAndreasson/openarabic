@@ -1,6 +1,6 @@
 import { EmptyState, ListSeparator, LoadingState, SectionLabel } from '@/components/common';
 import { FlashList } from '@shopify/flash-list';
-import { type FC, type JSX, useCallback, useDeferredValue, useMemo } from 'react';
+import { type JSX, useCallback, useDeferredValue, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -139,7 +139,7 @@ interface FilteredArticleViewProps {
 /**
  * A specialized component for displaying filtered articles
  */
-export const FilteredArticleView: FC<FilteredArticleViewProps> = ({ articles, onArticlePress }) => {
+export const FilteredArticleView = ({ articles, onArticlePress }: FilteredArticleViewProps) => {
   const insets = useSafeAreaInsets();
 
   const {

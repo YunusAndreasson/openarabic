@@ -69,11 +69,11 @@ export function useVocabularyGrowthChart(
       buildPoint: (x, y) => ({ x, y }),
     });
 
-    const endPoint = points[points.length - 1] ?? null;
+    const endPoint = points.at(-1) ?? null;
     const areaPath = path ? createAreaFillPath(path, height, 0, lineWidth) : '';
 
     const first = counts[0] ?? 0;
-    const last = counts[counts.length - 1] ?? 0;
+    const last = counts.at(-1) ?? 0;
 
     return {
       linePath: path,

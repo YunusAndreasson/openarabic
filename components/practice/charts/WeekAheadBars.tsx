@@ -127,8 +127,8 @@ export function WeekAheadBars({ counts }: WeekAheadBarsProps): JSX.Element {
   }
 
   useEffect(() => {
-    morph.value = 0;
-    morph.value = withTiming(1, TIMING_CONFIG.SLOW);
+    morph.set(0);
+    morph.set(withTiming(1, TIMING_CONFIG.SLOW));
   }, [signature, morph]);
 
   // Belt and braces. Even with a fixed verb sequence, an unexpected build must
@@ -145,13 +145,13 @@ export function WeekAheadBars({ counts }: WeekAheadBarsProps): JSX.Element {
   // hero so the two charts never start animating on the same frame.
   const growth = useSharedValue(0);
   useEffect(() => {
-    growth.value = 0;
-    growth.value = withDelay(TIMING_CONSTANTS.STAGGER.BASE, withTiming(1, TIMING_CONFIG.PROGRESS));
+    growth.set(0);
+    growth.set(withDelay(TIMING_CONSTANTS.STAGGER.BASE, withTiming(1, TIMING_CONFIG.PROGRESS)));
   }, [growth]);
 
   const growTransform = useDerivedValue(() => {
     'worklet';
-    return [{ scaleY: growth.value }];
+    return [{ scaleY: growth.get() }];
   });
 
   return (

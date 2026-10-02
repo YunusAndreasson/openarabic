@@ -65,14 +65,14 @@ const StreakBar = memo<StreakBarProps>(({ path, color, index, animated }) => {
 
   useEffect(() => {
     if (animated) {
-      grow.value = withDelay(index * STAGGER_PER_BAR_MS, withSpring(1, SPRING_CONFIG.CARD));
+      grow.set(withDelay(index * STAGGER_PER_BAR_MS, withSpring(1, SPRING_CONFIG.CARD)));
     }
   }, [grow, index, animated]);
 
   // Grow from the baseline: scaleY pivoted at the bottom of the canvas
   const transform = useDerivedValue(() => {
     'worklet';
-    return [{ scaleY: grow.value }];
+    return [{ scaleY: grow.get() }];
   });
 
   return (

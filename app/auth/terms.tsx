@@ -1,7 +1,5 @@
-import type { FC } from 'react';
-
 import { TermsOfServiceContent } from '@/components/common/legal/TermsOfServiceContent';
 
-const TermsOfServiceScreen: FC = () => <TermsOfServiceContent />;
+const TermsOfServiceScreen = () => <TermsOfServiceContent />;
 
 export default TermsOfServiceScreen;

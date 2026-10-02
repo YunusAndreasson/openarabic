@@ -1,5 +1,5 @@
 import { Ionicons } from '@/components/ui';
-import { memo, useMemo, type FC } from 'react';
+import { memo, useMemo } from 'react';
 import type { TextStyle } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -127,7 +127,7 @@ interface Props {
  * does" — and reusing the app's one existing "this word is yours" mark keeps
  * it legible as the same claim rather than inventing a second one.
  */
-export const ReviewContextSentence: FC<Props> = memo(({ example, onPlay }) => {
+export const ReviewContextSentence = memo(({ example, onPlay }: Props) => {
   const colors = useColors();
   // Same debounce as ThemedText's own Arabic path, so the example and the hero
   // above it resize in lockstep while the size slider is being dragged.
@@ -252,12 +252,16 @@ ReviewContextSentence.displayName = 'ReviewContextSentence';
  * shapes the whole word first and applies the colour runs to the shaped
  * glyphs, which is how the reader has always drawn these words.
  */
-const ExampleWordText: FC<{
+const ExampleWordText = ({
+  word,
+  defaultColor,
+  fontSize,
+}: {
   word: ExampleWord;
   defaultColor: string;
   /** Point size for the glyphs — see the note on `readerFontSize`. */
   fontSize: number;
-}> = ({ word, defaultColor, fontSize }) => (
+}) => (
   <SkiaColoredArabic
     text={word.wordForm}
     segments={word.coloredSegments}

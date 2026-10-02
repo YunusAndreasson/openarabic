@@ -1,4 +1,3 @@
-import type { FC } from 'react';
 import { useCallback } from 'react';
 import { Linking, StyleSheet } from 'react-native';
 
@@ -24,7 +23,7 @@ interface EmailLinkProps {
  * </ThemedText>
  * ```
  */
-export const EmailLink: FC<EmailLinkProps> = ({ email, type = 'body' }) => {
+export const EmailLink = ({ email, type = 'body' }: EmailLinkProps) => {
   const handleEmailPress = useCallback(async () => {
     try {
       const mailtoUrl = `mailto:${email}`;

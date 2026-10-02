@@ -1,5 +1,5 @@
 import { BaseCard } from '@/components/common/BaseCard';
-import type { FC, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet } from 'react-native';
 
@@ -25,13 +25,13 @@ interface OptionCardProps {
  * depending on which screen you opened. `elevation2` wins: these lists appear
  * inside sheets, where `card` is barely distinguishable from the sheet itself.
  */
-export const OptionCard: FC<OptionCardProps> = ({
+export const OptionCard = ({
   children,
   selected,
   onPress,
   accessibilityLabel,
   style,
-}) => {
+}: OptionCardProps) => {
   const colors = useColors();
 
   return (

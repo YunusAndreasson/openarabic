@@ -70,7 +70,7 @@ export function timeUntilRetrievability(stabilityDays: number, threshold: number
   if (stabilityDays <= 0 || threshold <= 0 || threshold >= 1) return null;
 
   const { decay, factor } = computeDecayFactor(FSRS_PARAMS.w);
-  return (stabilityDays / factor) * (Math.pow(threshold, 1 / decay) - 1);
+  return (stabilityDays / factor) * (threshold ** (1 / decay) - 1);
 }
 
 /**

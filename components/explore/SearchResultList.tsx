@@ -1,6 +1,6 @@
 import { EmptyState, ListSeparator } from '@/components/common';
 import { FlashList } from '@shopify/flash-list';
-import { type FC, type JSX, useCallback, useMemo } from 'react';
+import { type JSX, useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -73,14 +73,14 @@ interface SearchResultListProps {
  * no inset and paints behind the search bar, invisible — the bug that hid the
  * dictionary's sort bar for two releases (commit `b20a0695`).
  */
-export const SearchResultList: FC<SearchResultListProps> = ({
+export const SearchResultList = ({
   results,
   hasQuery,
   isBodyLoading,
   isBodyError,
   onRetryBody,
   onArticlePress,
-}) => {
+}: SearchResultListProps) => {
   const insets = useSafeAreaInsets();
   const prefetchArticle = useArticlePrefetch();
 

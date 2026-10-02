@@ -1,4 +1,4 @@
-import type { ComponentType, FC, ReactNode } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import type { AccessibilityRole, AccessibilityState, StyleProp, ViewStyle } from 'react-native';
 import { Pressable as RNPressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -90,7 +90,7 @@ interface PressableCardProps {
  * Android ripple config, and a second theme subscription — per row, in a
  * FlashList.
  */
-const PressableCard: FC<PressableCardProps> = ({
+const PressableCard = ({
   cardStyle,
   contentStyle,
   children,
@@ -104,7 +104,7 @@ const PressableCard: FC<PressableCardProps> = ({
   accessibilityRole = 'button',
   accessibilityState,
   PressableComponent,
-}) => {
+}: PressableCardProps) => {
   // Shared press engine, same as every button. `hapticType` stays 'none' (the
   // hook's default): a card is a navigation surface, and firing a haptic on
   // every list-row tap would be a different app.
@@ -145,7 +145,7 @@ const PressableCard: FC<PressableCardProps> = ({
 
 PressableCard.displayName = 'PressableCard';
 
-export const BaseCard: FC<BaseCardProps> = ({
+export const BaseCard = ({
   children,
   style,
   onPress,
@@ -160,7 +160,7 @@ export const BaseCard: FC<BaseCardProps> = ({
   accessibilityRole,
   accessibilityState,
   PressableComponent = RNPressable,
-}) => {
+}: BaseCardProps) => {
   const colors = useColors();
 
   const cardStyle = [

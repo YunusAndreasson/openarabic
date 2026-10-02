@@ -110,7 +110,7 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors, scr
 
   // Animated parallax and pull-to-stretch effect
   const animatedImageStyle = useAnimatedStyle(() => {
-    const y = scrollY.value;
+    const y = scrollY.get();
     const translateY = y > 0 ? -y * 0.6 : 0; // slower upward movement for parallax
     const maxExtraScale = 0.08; // cap stretch at +8%
     const scale = y < 0 ? 1 + Math.min(-y / headerHeight, maxExtraScale) : 1;

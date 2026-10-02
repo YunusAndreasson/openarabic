@@ -1,4 +1,4 @@
-import type { FC, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -40,7 +40,7 @@ interface ListRowProps {
  * block, and the dictionary, word-detail and revisit screens — three views of
  * the same data — disagreed on all three numbers.
  */
-export const ListRow: FC<ListRowProps> = ({
+export const ListRow = ({
   children,
   onPress,
   divider = false,
@@ -49,7 +49,7 @@ export const ListRow: FC<ListRowProps> = ({
   accessibilityLabel,
   accessibilityRole = 'button',
   style,
-}) => {
+}: ListRowProps) => {
   const colors = useColors();
   const { handlePress, rippleConfig } = useButtonPress({ onPress, hapticType });
 

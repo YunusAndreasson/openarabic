@@ -35,7 +35,6 @@
  * arming driven from here, not tapping is the mute, and the toggle was a second
  * control for a decision this one already expresses.
  */
-import type { FC } from 'react';
 import { useCallback } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -180,14 +179,14 @@ interface VoiceAnswerButtonProps {
   onStopSpeaking: () => void;
 }
 
-export const VoiceAnswerButton: FC<VoiceAnswerButtonProps> = ({
+export const VoiceAnswerButton = ({
   mode,
   progress,
   onSpeakNow,
   onStopSpeaking,
   onDownloadOverCellular,
   onEnableMicrophone,
-}) => {
+}: VoiceAnswerButtonProps) => {
   const colors = useColors();
   const isLive = mode === 'live';
   const isPreparing = mode === 'preparing';

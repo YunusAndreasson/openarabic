@@ -1,5 +1,4 @@
 import { Ionicons } from '@/components/ui';
-import type { FC } from 'react';
 import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
 import { TIMING_CONFIG } from '@/constants/animation';
@@ -15,12 +14,12 @@ export interface DragHandleProps {
   testID?: string;
 }
 
-export const DragHandle: FC<DragHandleProps> = ({
+export const DragHandle = ({
   onLongPress,
   delayLongPress = TIMING_CONFIG.FAST.duration,
   style,
   testID,
-}) => {
+}: DragHandleProps) => {
   const colors = useColors();
 
   return (

@@ -1,5 +1,4 @@
 import { PrimingCard } from '@/components/common';
-import type { FC } from 'react';
 
 import { STRINGS } from '@/constants/strings';
 
@@ -16,7 +15,7 @@ interface VoicePrimingCardProps {
  * It stands until answered: no "not now" snooze, just "Turn it on" or an
  * explicit "No thanks" that retires it for good.
  */
-export const VoicePrimingCard: FC<VoicePrimingCardProps> = ({ onAccept, onDecline }) => (
+export const VoicePrimingCard = ({ onAccept, onDecline }: VoicePrimingCardProps) => (
   <PrimingCard
     acceptLabel={STRINGS.VOICE_PRIMING_ACCEPT}
     body={STRINGS.VOICE_PRIMING_BODY}

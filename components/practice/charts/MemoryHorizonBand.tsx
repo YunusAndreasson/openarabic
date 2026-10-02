@@ -178,20 +178,17 @@ function MemoryHorizonBandComponent({
   const settle = useSharedValue(0);
 
   useEffect(() => {
-    growth.value = 0;
-    settle.value = 0;
-    growth.value = withTiming(1, TIMING_CONFIG.PROGRESS);
+    growth.set(0);
+    settle.set(0);
+    growth.set(withTiming(1, TIMING_CONFIG.PROGRESS));
     // The median rule annotates the shape, so it lands after the shape does —
     // the same settle idiom the vocabulary sparkline uses.
-    settle.value = withDelay(
-      TIMING_CONFIG.PROGRESS.duration,
-      withTiming(1, TIMING_CONFIG.ENTRANCE),
-    );
+    settle.set(withDelay(TIMING_CONFIG.PROGRESS.duration, withTiming(1, TIMING_CONFIG.ENTRANCE)));
   }, [growth, settle, dotCount]);
 
   const growTransform = useDerivedValue(() => {
     'worklet';
-    return [{ scaleY: growth.value }];
+    return [{ scaleY: growth.get() }];
   });
 
   const medianX = medianFraction * BAND_WIDTH;

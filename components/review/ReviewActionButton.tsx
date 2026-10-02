@@ -1,4 +1,3 @@
-import type { FC } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
@@ -104,7 +103,7 @@ interface ReviewActionButtonProps {
  * radius underneath it — two shapes in one row would read as two different
  * controls rather than one control's louder and quieter states.
  */
-export const ReviewActionButton: FC<ReviewActionButtonProps> = ({
+export const ReviewActionButton = ({
   label,
   color,
   sublabel,
@@ -113,7 +112,7 @@ export const ReviewActionButton: FC<ReviewActionButtonProps> = ({
   disabled = false,
   accessibilityLabel,
   onPress,
-}) => {
+}: ReviewActionButtonProps) => {
   const colors = useColors();
   const isPrimary = variant === 'primary';
   const isCapsule = isPrimary && standalone;

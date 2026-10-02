@@ -86,7 +86,7 @@ function calculateStreakFromDayKeys(dayKeys: Set<string>): ReadingStreak {
   if (dayKeys.size === 0) return { ...EMPTY_STREAK };
 
   const sortedKeys = Array.from(dayKeys).sort();
-  const mostRecentKey = sortedKeys[sortedKeys.length - 1] ?? '';
+  const mostRecentKey = sortedKeys.at(-1) ?? '';
 
   const todayKey = toLocalDateString(new Date());
   const yesterday = new Date();
@@ -206,7 +206,7 @@ export class ReadingStreakService {
 
     // Mark the most recent period as active if it's current
     if (periods.length > 0) {
-      const lastPeriod = periods[periods.length - 1];
+      const lastPeriod = periods.at(-1);
       const todayStr = toLocalDateString(new Date());
 
       const yesterday = new Date();

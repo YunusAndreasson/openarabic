@@ -1,13 +1,10 @@
-import type { TypedUseSelectorHook } from 'react-redux';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 
 import type { AppDispatch, RootState } from '@/store/store';
 
 // Use throughout your app instead of plain `useDispatch` and `useSelector`
-export const useAppDispatch = () => useDispatch<AppDispatch>();
-
-// Create a more selective version of useAppSelector that memoizes the selector function
-export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
+export const useAppDispatch = useDispatch.withTypes<AppDispatch>();
+export const useAppSelector = useSelector.withTypes<RootState>();
 
 /**
  * Custom hook for selecting specific parts of the state with shallow equality checking.

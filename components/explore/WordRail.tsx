@@ -1,4 +1,4 @@
-import { memo, type FC } from 'react';
+import { memo } from 'react';
 import { StyleSheet } from 'react-native';
 
 import { BaseCard, SnapRail } from '@/components/common';
@@ -40,7 +40,7 @@ interface WordRailProps {
  * terminal card is reached by the same swipe the learner is already making, and
  * it is the same shape as the `SeeAllRow` that ends the revisit sheet.
  */
-const SeeAllCard: FC<SeeAllTarget> = ({ count, onPress }) => {
+const SeeAllCard = ({ count, onPress }: SeeAllTarget) => {
   const colors = useColors();
   const label = STRINGS.WORDS_TO_REVISIT_SEE_ALL.replace('{count}', String(count));
 
@@ -89,7 +89,7 @@ SeeAllCard.displayName = 'SeeAllCard';
  * and cards scroll under the screen edges. Padding the container instead would
  * clip the rail 12px early.
  */
-const WordRailComponent: FC<WordRailProps> = ({ words, onWordPress, seeAll }) => (
+const WordRailComponent = ({ words, onWordPress, seeAll }: WordRailProps) => (
   <SnapRail itemWidth={CARD_WIDTH}>
     {words.map(word => (
       <WordRailCard key={word.root_id} word={word} onPress={() => onWordPress(word)} />

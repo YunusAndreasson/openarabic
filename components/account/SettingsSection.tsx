@@ -1,4 +1,5 @@
-import React, { memo } from 'react';
+import type { ReactNode } from 'react';
+import { Children, isValidElement, memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { BaseCard, ListSeparator, SectionLabel } from '@/components/common';
@@ -15,7 +16,7 @@ interface SettingsSectionProps {
    * rows stay one word long. Leave it off when the label already says it.
    */
   subtitle?: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 /**
@@ -24,12 +25,12 @@ interface SettingsSectionProps {
  */
 export const SettingsSection = memo(({ title, subtitle, children }: SettingsSectionProps) => {
   // Add dividers between children
-  const childrenArray = React.Children.toArray(children);
-  const childrenWithDividers = childrenArray.reduce<React.ReactNode[]>((acc, child, index) => {
+  const childrenArray = Children.toArray(children);
+  const childrenWithDividers = childrenArray.reduce<ReactNode[]>((acc, child, index) => {
     acc.push(child);
     if (index < childrenArray.length - 1) {
       // Use child key to generate unique divider key (safer than index)
-      const childKey = React.isValidElement(child) && child.key ? child.key : index;
+      const childKey = isValidElement(child) && child.key ? child.key : index;
       acc.push(<Divider key={`divider-${childKey}`} />);
     }
     return acc;

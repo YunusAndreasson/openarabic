@@ -1,4 +1,4 @@
-import type { FC, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 
@@ -25,12 +25,12 @@ interface BadgeProps {
  * different shape depending on the screen. `PILL` wins: it stays a capsule at
  * any height.
  */
-export const Badge: FC<BadgeProps> = ({
+export const Badge = ({
   children,
   colorName = 'secondaryText',
   backgroundColorName = 'elevation2',
   style,
-}) => {
+}: BadgeProps) => {
   const colors = useColors();
 
   return (

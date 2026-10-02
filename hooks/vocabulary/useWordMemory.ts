@@ -146,7 +146,7 @@ export function useWordMemory(word: StudyWord | undefined): WordMemory | null {
     // the plotted span recall may only fall from 100% to 85%, and against a
     // 0–100 axis that is a flat line that explains nothing. The `min` keeps the
     // target rule on the chart even for a word that has barely decayed at all.
-    const lowest = points[points.length - 1]?.retrievability ?? target;
+    const lowest = points.at(-1)?.retrievability ?? target;
     const floorRetrievability = Math.max(0, Math.min(lowest, target) - FLOOR_PADDING);
 
     return {

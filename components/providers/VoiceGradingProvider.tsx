@@ -21,7 +21,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type FC,
   type ReactNode,
 } from 'react';
 import { Platform } from 'react-native';
@@ -219,7 +218,7 @@ export const useVoiceGrading = (): VoiceGradingContextValue => {
  */
 const VOICE_ENGINE_LINGER_MS = 120_000;
 
-export const VoiceGradingProvider: FC<{ children: ReactNode }> = ({ children }) => {
+export const VoiceGradingProvider = ({ children }: { children: ReactNode }) => {
   const enabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
 
   // The bytes: fetched independently of everything below, on Wi-Fi, and never

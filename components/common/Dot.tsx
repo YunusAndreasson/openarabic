@@ -1,4 +1,3 @@
-import type { FC } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 
@@ -18,7 +17,7 @@ interface DotProps {
  * block. `flexShrink: 0` is in here rather than at the call site because a dot
  * that shrinks is a dot that has stopped being round.
  */
-export const Dot: FC<DotProps> = ({ color, style }) => (
+export const Dot = ({ color, style }: DotProps) => (
   <View style={[styles.dot, { backgroundColor: color }, style]} />
 );
 

@@ -94,7 +94,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   // without causing React re-renders across all sentences
   const activeWordIdSV = useSharedValue<string | number | null>(null);
   useEffect(() => {
-    activeWordIdSV.value = activeTooltip?.word.id ?? null;
+    activeWordIdSV.set(activeTooltip?.word.id ?? null);
   }, [activeTooltip?.word.id, activeWordIdSV]);
 
   // Handle tutorial card dismissal

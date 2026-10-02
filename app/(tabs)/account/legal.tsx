@@ -1,5 +1,5 @@
 import { DocCredit, DocHeading, DocLink, DocParagraph, LegalDocument } from '@/components/common';
-import { Fragment, type FC } from 'react';
+import { Fragment } from 'react';
 
 import { STRINGS } from '@/constants/strings';
 
@@ -34,7 +34,7 @@ const ENGLISH_FONTS: { name: string; description: string }[] = [
  * Legal & Attributions Screen
  * Displays third-party service acknowledgments and open source license information
  */
-const LegalAttributionsScreen: FC = () => (
+const LegalAttributionsScreen = () => (
   <LegalDocument>
     <DocParagraph>{STRINGS.LEGAL_INTRO}</DocParagraph>
 

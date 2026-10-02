@@ -6,7 +6,6 @@ import {
   useEffect,
   useMemo,
   useState,
-  type FC,
   type ReactNode,
 } from 'react';
 
@@ -34,7 +33,7 @@ export const useToast = (): ToastContextType => {
   return context;
 };
 
-export const ToastProvider: FC<{ children: ReactNode }> = ({ children }) => {
+export const ToastProvider = ({ children }: { children: ReactNode }) => {
   const [toastState, setToastState] = useState<{
     visible: boolean;
     message: string;

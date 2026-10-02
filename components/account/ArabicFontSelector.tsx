@@ -6,7 +6,7 @@
 // is not deprecated — revisit only if @expo/ui grows a release event.
 import { Ionicons } from '@/components/ui';
 import Slider from '@react-native-community/slider';
-import { useState, type FC } from 'react';
+import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -78,7 +78,7 @@ function FontPreviewCard({ option, isSelected, fontSize, onSelect }: FontPreview
 
 FontPreviewCard.displayName = 'FontPreviewCard';
 
-export const ArabicFontSelector: FC = () => {
+export const ArabicFontSelector = () => {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { selectedFont, selectedFontSize, fontOptions, selectFont, setFontSize, fontSizeRange } =

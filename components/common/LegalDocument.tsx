@@ -1,5 +1,5 @@
 import { ScreenScaffold } from '@/components/common/ScreenScaffold';
-import type { FC, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Linking, StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
@@ -17,7 +17,7 @@ import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
  */
 
 /** A full legal/prose screen. */
-export const LegalDocument: FC<{ children: ReactNode }> = ({ children }) => (
+export const LegalDocument = ({ children }: { children: ReactNode }) => (
   <ScreenScaffold>{children}</ScreenScaffold>
 );
 
@@ -26,9 +26,12 @@ export const LegalDocument: FC<{ children: ReactNode }> = ({ children }) => (
  * the documents used to add `weight="semibold"` on every one of ~40 headings,
  * which did nothing.
  */
-export const DocHeading: FC<{ children: ReactNode; level?: 'section' | 'subsection' }> = ({
+export const DocHeading = ({
   children,
   level = 'section',
+}: {
+  children: ReactNode;
+  level?: 'section' | 'subsection';
 }) => {
   const isSection = level === 'section';
   return (
@@ -47,9 +50,12 @@ export const DocHeading: FC<{ children: ReactNode; level?: 'section' | 'subsecti
  * A body paragraph. `last` drops the trailing margin for a paragraph that ends
  * the document, so the scroll doesn't finish on dead space.
  */
-export const DocParagraph: FC<{ children: ReactNode; last?: boolean }> = ({
+export const DocParagraph = ({
   children,
   last = false,
+}: {
+  children: ReactNode;
+  last?: boolean;
 }) => (
   <ThemedText style={[styles.paragraph, last && styles.paragraphLast]} type="body">
     {children}
@@ -63,7 +69,7 @@ export const DocParagraph: FC<{ children: ReactNode; last?: boolean }> = ({
  * a pressed-opacity style callback — a verbatim copy of the very pattern
  * `TextLink` exists to have deleted. It also picked up a hit slop it never had.
  */
-export const DocLink: FC<{ url: string }> = ({ url }) => (
+export const DocLink = ({ url }: { url: string }) => (
   <TextLink
     underline
     label={url}
@@ -76,7 +82,7 @@ export const DocLink: FC<{ url: string }> = ({ url }) => (
 );
 
 /** A credited item — a font, a library — with its one-line description. */
-export const DocCredit: FC<{ name: string; description: string }> = ({ name, description }) => (
+export const DocCredit = ({ name, description }: { name: string; description: string }) => (
   <>
     <ThemedText style={styles.creditName} type="bodyBold">
       {name}
@@ -88,7 +94,7 @@ export const DocCredit: FC<{ name: string; description: string }> = ({ name, des
 );
 
 /** The "Effective date: …" line that opens a document. */
-export const DocEffectiveDate: FC<{ children: ReactNode }> = ({ children }) => (
+export const DocEffectiveDate = ({ children }: { children: ReactNode }) => (
   <ThemedText colorName="textTertiary" style={styles.effectiveDate} type="caption">
     {children}
   </ThemedText>

@@ -1,4 +1,3 @@
-import type { FC } from 'react';
 import { StyleSheet } from 'react-native';
 
 // Direct path, matching the rest of this folder's imports from `common`: both
@@ -30,7 +29,7 @@ interface StatRowProps {
  * that reads differently depending on which one you opened is the drift this
  * whole row style exists to prevent.
  */
-export const StatRow: FC<StatRowProps> = ({ label, value, colorName }) => (
+export const StatRow = ({ label, value, colorName }: StatRowProps) => (
   <ListRow divider style={styles.row}>
     <ThemedText colorName="secondaryText" type="body">
       {label}

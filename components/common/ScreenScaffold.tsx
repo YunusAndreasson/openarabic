@@ -1,4 +1,4 @@
-import type { FC, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { useMemo } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet } from 'react-native';
@@ -37,12 +37,12 @@ interface ScreenScaffoldProps {
  * article reader) should keep using `ThemedView` directly, and form sheets must
  * use `SheetScreen` instead — see the constraints documented there.
  */
-export const ScreenScaffold: FC<ScreenScaffoldProps> = ({
+export const ScreenScaffold = ({
   children,
   scrollable = true,
   padded = true,
   contentContainerStyle,
-}) => {
+}: ScreenScaffoldProps) => {
   const insets = useSafeAreaInsets();
 
   const scrollContentStyle = useMemo(

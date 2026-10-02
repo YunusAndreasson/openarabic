@@ -14,7 +14,7 @@ export function useAudioCache() {
     async () => {
       const size = await audioCache.getCacheSize();
       // Ensure we always return a valid number, default to 0 for invalid values
-      return typeof size === 'number' && !isNaN(size) && size >= 0 ? size : 0;
+      return typeof size === 'number' && !Number.isNaN(size) && size >= 0 ? size : 0;
     },
     0,
     { toastMessage: STRINGS.FAILED_TO_GET_CACHE_SIZE },

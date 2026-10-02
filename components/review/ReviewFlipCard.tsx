@@ -610,7 +610,7 @@ export function ReviewFlipCard({
     'worklet';
     const tx = translateX.get();
     const throwProgress = Math.min(Math.abs(tx) / swipeThreshold, 1);
-    const displacement = 1 - Math.pow(1 - throwProgress, 2); // quadratic ease-out
+    const displacement = 1 - (1 - throwProgress) ** 2; // quadratic ease-out
     const verdict = verdictLevel.get();
     const tone = verdictTone.get();
 

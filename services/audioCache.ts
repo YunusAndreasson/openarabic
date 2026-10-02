@@ -158,7 +158,7 @@ class AudioCacheManager {
     const hash = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.MD5, url);
     // Extract file extension from URL if available
     const urlParts = url.split('.');
-    const lastPart = urlParts.length > 1 ? urlParts[urlParts.length - 1] : '';
+    const lastPart = urlParts.length > 1 ? urlParts.at(-1) : '';
     const extension = lastPart ? lastPart.split('?')[0] : 'mp3';
     const cacheKey = `${hash}.${extension}`;
     this.cacheKeys.set(url, cacheKey);

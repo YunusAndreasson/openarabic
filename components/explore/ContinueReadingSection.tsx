@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { Fragment, memo, useCallback, useMemo, type FC } from 'react';
+import { Fragment, memo, useCallback, useMemo } from 'react';
 
 import { SectionLabel } from '@/components/common';
 import { COMPLETION_THRESHOLD } from '@/constants/layout';
@@ -24,7 +24,7 @@ interface ContinueReadingSectionProps {
  * - OR "Getting Started" via the starter-article cascade (beginner-first with
  *   fallbacks), so a start-here rail always renders when articles exist
  */
-const ContinueReadingSectionComponent: FC<ContinueReadingSectionProps> = ({ articlesData }) => {
+const ContinueReadingSectionComponent = ({ articlesData }: ContinueReadingSectionProps) => {
   const router = useRouter();
 
   // Get all article IDs for bulk progress fetch

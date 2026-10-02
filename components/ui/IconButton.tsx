@@ -1,5 +1,4 @@
 import { Ionicons, type IoniconName } from '@/components/ui/Icon';
-import type { FC } from 'react';
 import { Pressable } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -76,7 +75,7 @@ interface IconButtonProps {
  * delete, reset). For the transparent variant used in navigation headers see
  * `HeaderIconButton`; for chrome floating over content see `GlassIconButton`.
  */
-export const IconButton: FC<IconButtonProps> = ({
+export const IconButton = ({
   icon,
   onPress,
   disabled = false,
@@ -87,7 +86,7 @@ export const IconButton: FC<IconButtonProps> = ({
   tone = 'default',
   hapticType = 'selection',
   accessibilityLabel,
-}) => {
+}: IconButtonProps) => {
   const colors = useColors();
   const config = ICON_BUTTON_SIZES[size];
 

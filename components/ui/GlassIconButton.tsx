@@ -1,6 +1,6 @@
 import { Ionicons, type IoniconName } from '@/components/ui/Icon';
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
-import type { ComponentType, FC } from 'react';
+import type { ComponentType } from 'react';
 import type { AccessibilityState, Insets, StyleProp, ViewStyle } from 'react-native';
 import { Pressable as RNPressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -71,7 +71,7 @@ export interface GlassIconButtonProps {
  * `GLASS_AVAILABLE`/`GlassContainer` pair, the same six-property circle style
  * and the same non-glass fallback. Neither labelled its close button.
  */
-export const GlassIconButton: FC<GlassIconButtonProps> = ({
+export const GlassIconButton = ({
   icon,
   accessibilityLabel,
   onPress,
@@ -85,7 +85,7 @@ export const GlassIconButton: FC<GlassIconButtonProps> = ({
   clear = false,
   PressableComponent = RNPressable,
   testID,
-}) => {
+}: GlassIconButtonProps) => {
   const colors = useColors();
   // Reduce Transparency takes the glass path off the table: iOS flattens the
   // material for that user, and `isInteractive` has correspondingly little to

@@ -22,8 +22,8 @@ export const ChartMainLine = memo<ChartMainLineProps>(({ path, chartColors }) =>
 
   const progress = useSharedValue(0);
   useEffect(() => {
-    progress.value = 0;
-    progress.value = withTiming(1, TIMING_CONFIG.PROGRESS);
+    progress.set(0);
+    progress.set(withTiming(1, TIMING_CONFIG.PROGRESS));
   }, [progress, path]);
 
   if (!skPath) return null;

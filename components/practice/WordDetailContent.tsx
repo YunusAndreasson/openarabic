@@ -1,4 +1,3 @@
-import type { FC } from 'react';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -58,11 +57,11 @@ interface WordDetailContentProps {
  * word screen, which is a different navigation context no matter which sheet
  * this content is rendered inside, so that hop is unavoidable there.
  */
-export const WordDetailContent: FC<WordDetailContentProps> = ({
+export const WordDetailContent = ({
   rootId,
   hasValidRootId = true,
   onBack,
-}) => {
+}: WordDetailContentProps) => {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();

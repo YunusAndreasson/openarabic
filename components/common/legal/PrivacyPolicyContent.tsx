@@ -5,7 +5,7 @@ import {
   LegalDocument,
 } from '@/components/common/LegalDocument';
 import { EmailLink } from '@/components/common/EmailLink';
-import { Fragment, type FC } from 'react';
+import { Fragment } from 'react';
 
 import { STRINGS } from '@/constants/strings';
 
@@ -61,7 +61,7 @@ const TAIL_SECTIONS: { title: string; body: string }[] = [
  * settings copy and the pre-signup auth copy. They were separate ~196-line
  * files that had already diverged.
  */
-export const PrivacyPolicyContent: FC = () => (
+export const PrivacyPolicyContent = () => (
   <LegalDocument>
     <DocEffectiveDate>{STRINGS.PRIVACY_EFFECTIVE_DATE}</DocEffectiveDate>
     <DocParagraph>{STRINGS.PRIVACY_INTRO}</DocParagraph>

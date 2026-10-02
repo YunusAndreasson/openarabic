@@ -1,4 +1,4 @@
-import type { ComponentProps, FC } from 'react';
+import type { ComponentProps } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ReviewActionButton } from '@/components/review/ReviewActionButton';
@@ -25,7 +25,7 @@ const styles = StyleSheet.create({
 });
 
 /** Shared quiet red–amber–green choices for manual and voice review. */
-export const ReviewChoiceRow: FC<ReviewChoiceRowProps> = ({ choices }) => {
+export const ReviewChoiceRow = ({ choices }: ReviewChoiceRowProps) => {
   const colors = useColors();
   const slots = [
     { color: colors.error, choice: choices[0], key: 'negative' },

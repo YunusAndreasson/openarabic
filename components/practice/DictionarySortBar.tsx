@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, type FC } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
@@ -74,7 +74,7 @@ interface DictionarySortBarProps {
  * header would let a list quietly show a third of the words with nothing on
  * screen saying so.
  */
-const DictionarySortBarComponent: FC<DictionarySortBarProps> = ({
+const DictionarySortBarComponent = ({
   sortField,
   sortDirection,
   onSelectField,
@@ -82,7 +82,7 @@ const DictionarySortBarComponent: FC<DictionarySortBarProps> = ({
   scope,
   onPressScope,
   onClearScope,
-}) => {
+}: DictionarySortBarProps) => {
   const colors = useColors();
   const isNarrowFilter = isNarrowScope(scope);
 

@@ -1,6 +1,5 @@
 import { Ionicons } from '@/components/ui';
 import { Link } from 'expo-router';
-import type { FC } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 import Animated, { FadeIn, FadeInUp, FadeOut, ZoomIn } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -88,7 +87,7 @@ interface CompletionScreenProps {
   onContinue?: () => void;
 }
 
-export const CompletionScreen: FC<CompletionScreenProps> = ({
+export const CompletionScreen = ({
   title = STRINGS.SESSION_COMPLETE,
   iconSize = LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE,
   contentStyle,
@@ -96,7 +95,7 @@ export const CompletionScreen: FC<CompletionScreenProps> = ({
   testID,
   fromRemember = false,
   onContinue,
-}) => {
+}: CompletionScreenProps) => {
   const colors = useColors();
 
   // Fetch current daily study streak

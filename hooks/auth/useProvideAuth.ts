@@ -60,7 +60,7 @@ export function useProvideAuth(): AuthResult {
           }
 
           // Implement exponential backoff for retries
-          const retryDelay = RETRY_DELAY_MS * Math.pow(2, currentAttempt - 1);
+          const retryDelay = RETRY_DELAY_MS * 2 ** (currentAttempt - 1);
           await new Promise<void>(resolve => setTimeout(resolve, retryDelay));
 
           // Try another refresh with exponential backoff

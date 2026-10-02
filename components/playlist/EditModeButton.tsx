@@ -1,5 +1,5 @@
 import { TransparentHeaderButton } from '@/components/ui';
-import { memo, startTransition, useCallback, useOptimistic, type FC } from 'react';
+import { memo, startTransition, useCallback, useOptimistic } from 'react';
 
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth';
@@ -20,7 +20,7 @@ interface EditModeButtonProps {
  * Lives here rather than in `components/ui` because it reads playlist state and
  * Redux directly; a `components/ui` component should be driveable by props alone.
  */
-const EditModeButtonComponent: FC<EditModeButtonProps> = ({ type }) => {
+const EditModeButtonComponent = ({ type }: EditModeButtonProps) => {
   const { editMode, toggle } = useEditMode(type);
   const { user } = useAuth();
 

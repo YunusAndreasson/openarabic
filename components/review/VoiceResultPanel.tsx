@@ -12,7 +12,7 @@
  * moment the learner started reading the result. Now both states of the band
  * are the same shape, and the card never moves.
  */
-import { memo, type FC } from 'react';
+import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
@@ -34,8 +34,8 @@ interface VoiceResultPanelProps {
   onRetry: () => void;
 }
 
-export const VoiceResultPanel: FC<VoiceResultPanelProps> = memo(
-  ({ result, onAccept, onReject, onRetry }) => {
+export const VoiceResultPanel = memo(
+  ({ result, onAccept, onReject, onRetry }: VoiceResultPanelProps) => {
     const heardSomething = result.heard.length > 0;
 
     return (

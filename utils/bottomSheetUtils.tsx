@@ -59,7 +59,7 @@ const BlurBackdropComponent = ({ animatedIndex, style }: BottomSheetBackdropProp
   const animatedOpacity = useAnimatedStyle(
     () => ({
       opacity: interpolate(
-        animatedIndex.value,
+        animatedIndex.get(),
         [-1, DISAPPEARS_ON_INDEX, APPEARS_ON_INDEX],
         [0, 0, BACKDROP_OPACITY],
         Extrapolation.CLAMP,
@@ -75,7 +75,7 @@ const BlurBackdropComponent = ({ animatedIndex, style }: BottomSheetBackdropProp
   useAnimatedReaction(
     () => {
       'worklet';
-      return animatedIndex.value <= DISAPPEARS_ON_INDEX;
+      return animatedIndex.get() <= DISAPPEARS_ON_INDEX;
     },
     shouldDisable => {
       scheduleOnRN(handleContainerTouchability, shouldDisable);

@@ -1,4 +1,4 @@
-import { memo, type FC } from 'react';
+import { memo } from 'react';
 
 import { SnapRail } from '@/components/common';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
@@ -36,7 +36,7 @@ const SLIDER_CARD_STYLE = {
  * Horizontal slider displaying multiple articles in a swipeable ScrollView.
  * Snaps by a single interval, since every card is the same width.
  */
-const HorizontalArticleSliderComponent: FC<HorizontalArticleSliderProps> = ({ articles }) => {
+const HorizontalArticleSliderComponent = ({ articles }: HorizontalArticleSliderProps) => {
   if (!articles.length) return null;
 
   const displayArticles = articles.slice(0, MAX_FEATURED_ARTICLES);

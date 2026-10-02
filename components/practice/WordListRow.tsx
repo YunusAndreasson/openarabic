@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, type FC, type ReactNode } from 'react';
+import { memo, useCallback, useMemo, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 // Gesture-handler's Pressable, NOT react-native's. The dictionary wraps this row
 // in a `ReanimatedSwipeable`, and RN's Pressable runs on the JS responder
@@ -69,14 +69,14 @@ interface WordListRowProps {
  * one caller. The duplication is deliberate and it is exactly two style rules;
  * if `ListRow` ever gains a `PressableComponent` prop, fold this into it.
  */
-const WordListRowComponent: FC<WordListRowProps> = ({
+const WordListRowComponent = ({
   arabic,
   gloss,
   trailing,
   onPress,
   accessibilityLabel,
   divider = false,
-}) => {
+}: WordListRowProps) => {
   const colors = useColors();
 
   // A flat row has no card press-scale, so feedback comes from the surface: an

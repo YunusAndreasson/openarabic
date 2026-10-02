@@ -1,6 +1,5 @@
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { LAYOUT } from '@/constants/layout';
-import type { FC } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 
@@ -33,12 +32,12 @@ const DENSITY_TOP_PADDING: Record<SectionLabelDensity, number> = {
  *
  * Example: Topics, Continue reading, Featured, Appearance.
  */
-export const SectionLabel: FC<SectionLabelProps> = ({
+export const SectionLabel = ({
   title,
   subtitle,
   style,
   density = 'comfortable',
-}) => (
+}: SectionLabelProps) => (
   <View style={[styles.container, { paddingTop: DENSITY_TOP_PADDING[density] }, style]}>
     <ThemedText type="overline">{title}</ThemedText>
     {subtitle ? (

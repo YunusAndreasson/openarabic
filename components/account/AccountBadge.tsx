@@ -72,9 +72,7 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
   // Container opacity — fade in when photo loaded
   useEffect(() => {
     if (photoLoaded) {
-      // Reanimated shared values are intentionally mutable across effects.
-      // eslint-disable-next-line react-hooks/immutability
-      containerOpacity.value = withTiming(1, TIMING_CONFIG.ENTRANCE);
+      containerOpacity.set(withTiming(1, TIMING_CONFIG.ENTRANCE));
     }
   }, [photoLoaded, containerOpacity]);
 
