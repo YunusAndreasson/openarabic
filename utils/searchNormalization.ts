@@ -78,6 +78,12 @@ const ARABIC_MARKS_REGEX = /[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u0640
  * Letter folds, following the standard Arabic search normalization: every alef
  * variant to bare alef, alef maqsura to yeh, ta marbuta to heh.
  *
+ * Plus the letters a Persian or Urdu keyboard types in place of their Arabic
+ * equivalents — Farsi yeh `ی`, keheh `ک`, heh goal `ہ`, heh doachashmee `ھ`.
+ * A learner on one of those keyboards types `کتاب` for `كتاب`, and without
+ * the fold every such query misses. None of these letters occur in the Arabic
+ * corpus, so folding them can only add matches, never merge two real words.
+ *
  * NOTE THE DIVERGENCE FROM `normalizeArabic`
  * (`utils/arabicAnalysis/normalization.ts`): that function deliberately
  * preserves `أ` so the classifier can tell the first-person prefix from the
@@ -87,8 +93,9 @@ const ARABIC_MARKS_REGEX = /[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u0640
  */
 const ARABIC_LETTER_FOLDS: [RegExp, string][] = [
   [/[\u0622\u0623\u0625\u0671]/g, '\u0627'], // alef madda / hamza above / hamza below / wasla → alef
-  [/\u0649/g, '\u064A'], // alef maqsura → yeh
-  [/\u0629/g, '\u0647'], // ta marbuta → heh
+  [/[\u0649\u06CC]/g, '\u064A'], // alef maqsura / Farsi yeh → yeh
+  [/\u06A9/g, '\u0643'], // keheh → kaf
+  [/[\u0629\u06C1\u06BE]/g, '\u0647'], // ta marbuta / heh goal / heh doachashmee → heh
 ];
 
 const WHITESPACE_REGEX = /\s+/g;

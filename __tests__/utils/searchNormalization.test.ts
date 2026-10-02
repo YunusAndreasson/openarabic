@@ -54,6 +54,14 @@ describe('normalizeForSearch', () => {
     expect(normalizeForSearch('قلّة')).toBe('قله');
   });
 
+  test('folds the letters Persian and Urdu keyboards type for Arabic ones', () => {
+    // Farsi yeh and keheh, as a Persian or Urdu keyboard types كتابي.
+    expect(normalizeForSearch('کتابی')).toBe(normalizeForSearch('كتابي'));
+    // Urdu heh goal and heh doachashmee both stand in for Arabic heh.
+    expect(normalizeForSearch('ہو')).toBe('هو');
+    expect(normalizeForSearch('ھو')).toBe('هو');
+  });
+
   test('removes typographic punctuation the corpus is typeset with', () => {
     expect(normalizeForSearch('“Reason restrains…”')).toBe('reason restrains');
     expect(normalizeForSearch('one—two – three')).toBe('onetwo three');
