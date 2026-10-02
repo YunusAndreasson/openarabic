@@ -90,7 +90,18 @@ export function useProfilePhotoPicker({
       // Check if permission was previously denied (subsequent attempt)
       const wasPreviouslyDenied = await AsyncStorage.getItem(permissionDeniedKey);
 
-      if (wasPreviouslyDenied === 'true') {
+      // The flag records that the OS once said no — the learner may have
+      // allowed access in Settings since (the alert below sends them there).
+      // Trusting it forever sent every later tap to "enable it in Settings"
+      // even after they had, so a grant clears it and the flow goes on.
+      const isStillDenied =
+        wasPreviouslyDenied === 'true' &&
+        (await ImagePicker.getMediaLibraryPermissionsAsync()).status !== 'granted';
+      if (wasPreviouslyDenied === 'true' && !isStillDenied) {
+        await AsyncStorage.removeItem(permissionDeniedKey);
+      }
+
+      if (isStillDenied) {
         // User is trying to use feature after denying permission - show informational alert
         // This is explicitly allowed by both Apple and Google Play policies
         Alert.alert(
