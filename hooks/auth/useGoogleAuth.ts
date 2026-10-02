@@ -13,14 +13,18 @@ interface GoogleSignInModule {
     offlineAccess?: boolean;
   }) => void | Promise<void>;
   hasPlayServices: (options: { showPlayServicesUpdateDialog: boolean }) => Promise<void>;
-  signIn: () => Promise<{
-    data?: {
-      idToken?: string;
-      user?: { email?: string; name?: string };
-      serverAuthCode?: string;
-      accessToken?: string;
-    };
-  }>;
+  /** Resolves `{ type: 'cancelled' }` when the user backs out — it does not throw. */
+  signIn: () => Promise<
+    | {
+        type: 'success';
+        data: {
+          idToken?: string | null;
+          user?: { email?: string; name?: string | null };
+          serverAuthCode?: string | null;
+        };
+      }
+    | { type: 'cancelled'; data: null }
+  >;
 }
 
 /**
@@ -198,7 +202,17 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
         }
       }
 
-      if (!userInfo?.data?.idToken) {
+      // Backing out of the account picker RESOLVES with { type: 'cancelled' } —
+      // google-signin stopped throwing for it in v13. Unhandled, it fell through
+      // to the missing-token branch below: a Sentry warning plus a 15-second
+      // "update Google Play Services" toast for someone who changed their mind.
+      // Raised as a cancellation, useOAuthProvider handles it silently, like
+      // every other cancel.
+      if (userInfo?.type === 'cancelled') {
+        throw new Error('Google Sign-In cancelled by user');
+      }
+
+      if (!userInfo?.data.idToken) {
         // Log what we actually received for debugging
         // Downgraded to warning: this is typically a Google Play Services environmental issue
         // on low-end Android devices, not an app bug
@@ -209,9 +223,8 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
           },
           level: 'warning',
           extra: {
-            hasUser: !!userInfo?.data?.user,
-            hasServerAuthCode: !!userInfo?.data?.serverAuthCode,
-            userEmail: userInfo?.data?.user?.email,
+            hasUser: !!userInfo?.data.user,
+            hasServerAuthCode: !!userInfo?.data.serverAuthCode,
           },
         });
 
@@ -224,7 +237,7 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
         idToken: userInfo.data.idToken,
         userInfo: {
           email: userInfo.data.user?.email,
-          name: userInfo.data.user?.name,
+          name: userInfo.data.user?.name ?? undefined,
         },
       };
     },
