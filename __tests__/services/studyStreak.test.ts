@@ -121,6 +121,23 @@ describe('StudyStreakService', () => {
       expect(result.lastReadingDate).toEqual(localMidnight(yesterday));
     });
 
+    test('a study day ahead of the local date does not zero the streak', () => {
+      // Studied just after midnight in Tokyo, then flew to Los Angeles: that
+      // session's key is tomorrow by the local calendar.
+      const tomorrow = localKey(1);
+      const activities = [
+        createActivity(twoDaysAgo),
+        createActivity(yesterday),
+        createActivity(today),
+        createActivity(tomorrow),
+      ];
+
+      const result = ReadingStreakService.calculateStreak(activities);
+
+      expect(result.currentStreak).toBe(3);
+      expect(result.totalReadingDays).toBe(4);
+    });
+
     test('should break streak when no reading for 2+ days', () => {
       const activities = [
         createActivity(threeDaysAgo),

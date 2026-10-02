@@ -93,11 +93,19 @@ function calculateStreakFromDayKeys(dayKeys: Set<string>): ReadingStreak {
   yesterday.setDate(yesterday.getDate() - 1);
   const yesterdayKey = toLocalDateString(yesterday);
 
+  // Anchor on the latest day that is not in the future. A key can be ahead of
+  // today's local date: a review just after midnight in Tokyo is keyed to that
+  // date, and after the flight to Los Angeles "today" is the day before it —
+  // anchoring on the newest key then showed a 0-day streak until the local
+  // date caught up (as does a clock set ahead and back). Keys are YYYY-MM-DD,
+  // so string order is date order.
+  const anchorKey = sortedKeys.filter(key => key <= todayKey).pop() ?? '';
+
   // Yesterday still counts: the streak must not evaporate at midnight, before
   // the learner has had today to keep it alive.
   let currentStreak = 0;
-  if (mostRecentKey === todayKey || mostRecentKey === yesterdayKey) {
-    const cursor = parseDayKey(mostRecentKey);
+  if (anchorKey === todayKey || anchorKey === yesterdayKey) {
+    const cursor = parseDayKey(anchorKey);
     while (dayKeys.has(toLocalDateString(cursor))) {
       currentStreak++;
       cursor.setDate(cursor.getDate() - 1);
