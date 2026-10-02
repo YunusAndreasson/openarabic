@@ -113,6 +113,12 @@ const PlaylistListItem = memo(
     // Optimized comparison: only check props that actually change
     if (prevProps.editMode !== nextProps.editMode) return false;
     if (prevProps._isBeingDragged !== nextProps._isBeingDragged) return false;
+    // The handlers too. They are memoized upstream, so they only change when
+    // what a tap does changes — the tracks or the audio language. Skipping
+    // them kept each row on the closure it mounted with: after switching the
+    // audio language, a row tap still played the old language's URLs.
+    if (prevProps.onArticlePress !== nextProps.onArticlePress) return false;
+    if (prevProps.onDelete !== nextProps.onDelete) return false;
     return prevProps.item.article_id === nextProps.item.article_id;
   },
 );
