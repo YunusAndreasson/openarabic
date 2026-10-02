@@ -49,6 +49,7 @@ jest.mock('@/constants/colors', () => ({
 
 // Import after mocks
 import * as Notifications from 'expo-notifications';
+import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { analytics } from '@/services/analytics';
 import { handleError } from '@/utils/errorHandling';
 
@@ -428,6 +429,134 @@ describe('notificationService', () => {
 
     test('should handle cleanup when no listeners exist', () => {
       expect(() => notificationService.cleanupNotifications()).not.toThrow();
+    });
+  });
+
+  describe('handleNotificationResponse', () => {
+    const buildResponse = ({
+      actionIdentifier = Notifications.DEFAULT_ACTION_IDENTIFIER,
+      type,
+      identifier = 'srs-due-123',
+      date = 1_700_000_000_000,
+    }: {
+      actionIdentifier?: string;
+      type?: string;
+      identifier?: string;
+      date?: number;
+    }): Notifications.NotificationResponse => ({
+      actionIdentifier,
+      notification: {
+        date,
+        request: {
+          identifier,
+          trigger: null,
+          content: {
+            title: null,
+            subtitle: null,
+            body: null,
+            categoryIdentifier: null,
+            sound: null,
+            data: type === undefined ? {} : { type },
+          },
+        },
+      },
+    });
+
+    test('a tap on the notification body opens its screen and counts as opened', () => {
+      const navigate = jest.fn();
+
+      // Distinct identifiers per test: the handler deliberately remembers the
+      // last notification it routed, and that memory outlives a single test.
+      const routed = notificationService.handleNotificationResponse(
+        buildResponse({ type: 'srs-due', identifier: 'tap-body' }),
+        navigate,
+      );
+
+      expect(routed).toBe(true);
+      expect(navigate).toHaveBeenCalledWith('/practice');
+      expect(analytics.track).toHaveBeenCalledWith(ANALYTICS_EVENTS.SMART_REMINDER_OPENED, {
+        type: 'srs-due',
+      });
+    });
+
+    test('the bare "DEFAULT" string is not the default action', () => {
+      const navigate = jest.fn();
+
+      notificationService.handleNotificationResponse(
+        buildResponse({ actionIdentifier: 'DEFAULT', type: 'srs-due', identifier: 'bare' }),
+        navigate,
+      );
+
+      expect(navigate).not.toHaveBeenCalled();
+    });
+
+    test('pressing the "Complete" action never navigates, on a cold start included', () => {
+      const navigate = jest.fn();
+
+      notificationService.handleNotificationResponse(
+        buildResponse({ actionIdentifier: 'complete', type: 'srs-due', identifier: 'complete' }),
+        navigate,
+        { coldStart: true },
+      );
+
+      expect(navigate).not.toHaveBeenCalled();
+      expect(analytics.track).not.toHaveBeenCalled();
+    });
+
+    test('a launch tap seen by both the listener and the cold-start path routes once', () => {
+      const navigate = jest.fn();
+      const response = buildResponse({ type: 'srs-slipping', identifier: 'launch-tap' });
+
+      notificationService.handleNotificationResponse(response, navigate);
+      notificationService.handleNotificationResponse(response, navigate, { coldStart: true });
+
+      expect(navigate).toHaveBeenCalledTimes(1);
+      expect(analytics.track).toHaveBeenCalledTimes(1);
+    });
+
+    test('a repeating reminder routes again when it is delivered again', () => {
+      const navigate = jest.fn();
+
+      notificationService.handleNotificationResponse(
+        buildResponse({ type: 'study-reminder', identifier: 'daily', date: 1 }),
+        navigate,
+      );
+      notificationService.handleNotificationResponse(
+        buildResponse({ type: 'study-reminder', identifier: 'daily', date: 2 }),
+        navigate,
+      );
+
+      expect(navigate).toHaveBeenCalledTimes(2);
+    });
+
+    test('a response is not consumed while nothing can navigate yet', () => {
+      const navigate = jest.fn();
+      const response = buildResponse({ type: 'srs-due', identifier: 'early' });
+
+      // The listener can fire before the root layout registers its callback.
+      expect(notificationService.handleNotificationResponse(response, null)).toBe(false);
+      notificationService.handleNotificationResponse(response, navigate, { coldStart: true });
+
+      expect(navigate).toHaveBeenCalledWith('/practice');
+      expect(analytics.track).toHaveBeenCalledWith(ANALYTICS_EVENTS.SMART_REMINDER_OPENED, {
+        type: 'srs-due',
+        coldStart: true,
+      });
+    });
+
+    test('ignores notifications without a routable type', () => {
+      const navigate = jest.fn();
+
+      notificationService.handleNotificationResponse(
+        buildResponse({ identifier: 'untyped' }),
+        navigate,
+      );
+      notificationService.handleNotificationResponse(
+        buildResponse({ type: 'toString', identifier: 'proto' }),
+        navigate,
+      );
+
+      expect(navigate).not.toHaveBeenCalled();
     });
   });
 });

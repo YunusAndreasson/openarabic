@@ -64,6 +64,9 @@ module.exports = {
   clearLastNotificationResponse: mockClearLastNotificationResponse,
 
   // Constants
+  // What `actionIdentifier` holds when the user taps the notification body
+  // itself, on both platforms (expo-notifications/build/NotificationsEmitter).
+  DEFAULT_ACTION_IDENTIFIER: 'expo.modules.notifications.actions.DEFAULT',
   AndroidImportance: {
     MIN: 1,
     LOW: 2,

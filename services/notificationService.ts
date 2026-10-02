@@ -109,6 +109,58 @@ export function clearNotificationNavigationCallback(): void {
   navigationCallback = null;
 }
 
+/** The delivered notification that last navigated — see handleNotificationResponse. */
+let lastRoutedNotificationKey: string | null = null;
+
+/**
+ * Open the screen a tapped notification points at.
+ *
+ * Only a tap on the notification body routes, and expo-notifications reports
+ * that tap as `DEFAULT_ACTION_IDENTIFIER` on both platforms. The live listener
+ * used to compare against a bare 'DEFAULT', which never matched — so tapping a
+ * reminder while the app was suspended resumed whatever screen was last open.
+ * A press on an action button (the reminder's "Complete") acknowledges the
+ * reminder and never routes, on a cold start included.
+ *
+ * The live listener and the cold-start path in app/_layout.tsx both come
+ * through here. A launch tap can reach both, so a delivered notification that
+ * already navigated is ignored: it is routed, and counted as opened, once.
+ * Keyed on identifier + delivery date, because a repeating reminder reuses
+ * its identifier every day.
+ *
+ * @returns whether it navigated
+ */
+export function handleNotificationResponse(
+  response: NotificationsModule.NotificationResponse,
+  navigate: ((path: string) => void) | null,
+  { coldStart = false }: { coldStart?: boolean } = {},
+): boolean {
+  if (!Notifications || !navigate) return false;
+  if (response.actionIdentifier !== Notifications.DEFAULT_ACTION_IDENTIFIER) return false;
+
+  const { notification } = response;
+  const { type } = notification.request.content.data ?? {};
+  if (
+    typeof type !== 'string' ||
+    !Object.prototype.hasOwnProperty.call(NOTIFICATION_ROUTE_BY_TYPE, type)
+  ) {
+    return false;
+  }
+
+  const notificationKey = `${notification.request.identifier}:${notification.date}`;
+  if (notificationKey === lastRoutedNotificationKey) return false;
+  lastRoutedNotificationKey = notificationKey;
+
+  if (type === NOTIFICATION_TYPES.SRS_DUE || type === NOTIFICATION_TYPES.SRS_SLIPPING) {
+    void analytics.track(
+      ANALYTICS_EVENTS.SMART_REMINDER_OPENED,
+      coldStart ? { type, coldStart } : { type },
+    );
+  }
+  navigate(NOTIFICATION_ROUTE_BY_TYPE[type as AnyNotificationType]);
+  return true;
+}
+
 // Initialize notifications during app startup (Expo best practice)
 export async function initializeNotifications(): Promise<boolean> {
   if (!Notifications) return false;
@@ -184,25 +236,7 @@ function setupNotificationListeners(): void {
 
   // Listen for notification response events (when user interacts with notification)
   responseSubscription = Notifications.addNotificationResponseReceivedListener(response => {
-    const { actionIdentifier } = response;
-    const { type } = response.notification.request.content.data || {};
-
-    // If user tapped "Complete" action button, do nothing (already acknowledged)
-    if (actionIdentifier === 'complete') {
-      return;
-    }
-
-    if (actionIdentifier === 'DEFAULT' && typeof type === 'string') {
-      const route = NOTIFICATION_ROUTE_BY_TYPE[type as AnyNotificationType];
-      if (!route) return;
-
-      if (type === NOTIFICATION_TYPES.SRS_DUE || type === NOTIFICATION_TYPES.SRS_SLIPPING) {
-        void analytics.track(ANALYTICS_EVENTS.SMART_REMINDER_OPENED, { type });
-      }
-      if (navigationCallback) {
-        navigationCallback(route);
-      }
-    }
+    handleNotificationResponse(response, navigationCallback);
   });
 
   // Listen for dropped notifications (Android FCM only)

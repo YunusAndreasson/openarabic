@@ -44,8 +44,6 @@ import {
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TIMING_CONSTANTS } from '@/constants/animation';
 import { Theme } from '@/constants/colors';
-import { NOTIFICATION_ROUTE_BY_TYPE, NOTIFICATION_TYPES } from '@/constants/notifications';
-import type { AnyNotificationType } from '@/constants/notifications';
 import { QUERY_DEFAULTS, studyStreakQueries } from '@/constants/queries';
 import { useAppBadge } from '@/hooks/app/useAppBadge';
 import { useUpdateReady } from '@/hooks/app/useUpdateReady';
@@ -62,6 +60,7 @@ import { registerBackgroundTasks, unregisterBackgroundTasks } from '@/services/b
 import {
   cleanupNotifications,
   clearNotificationNavigationCallback,
+  handleNotificationResponse,
   initializeNotifications,
   setNotificationNavigationCallback,
 } from '@/services/notificationService';
@@ -478,20 +477,7 @@ function AppContent() {
         const response = Notifications.getLastNotificationResponse();
 
         if (response) {
-          const { type } = response.notification.request.content.data || {};
-
-          if (typeof type === 'string') {
-            const route = NOTIFICATION_ROUTE_BY_TYPE[type as AnyNotificationType];
-            if (route) {
-              if (type === NOTIFICATION_TYPES.SRS_DUE || type === NOTIFICATION_TYPES.SRS_SLIPPING) {
-                void analytics.track(ANALYTICS_EVENTS.SMART_REMINDER_OPENED, {
-                  type,
-                  coldStart: true,
-                });
-              }
-              router.navigate(route);
-            }
-          }
+          handleNotificationResponse(response, path => router.navigate(path), { coldStart: true });
 
           // Clear the last notification response to prevent re-handling on next launch
           Notifications.clearLastNotificationResponse();
