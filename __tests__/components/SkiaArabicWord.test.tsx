@@ -417,4 +417,39 @@ describe('SkiaArabicWord Component', () => {
       expect(getByTestId('word')).toBeTruthy();
     });
   });
+
+  describe('Screen readers', () => {
+    // The word is painted on a Skia canvas, so without these props a screen
+    // reader met a silent, unlabelled stop for every Arabic word.
+    test('announces an interactive word as an Arabic button with a save action', () => {
+      const word = createMockWord();
+      const onWordLongPress = jest.fn();
+      const { getByLabelText } = render(
+        <SkiaArabicWord
+          word={word}
+          onTooltipOpen={jest.fn()}
+          onWordLongPress={onWordLongPress}
+          testID="word"
+        />,
+        measuring((cb: MeasureCallback) => cb(12, 34, 56, 20)),
+      );
+
+      const element = getByLabelText('كتاب');
+      expect(element.props.accessibilityRole).toBe('button');
+      expect(element.props.accessibilityLanguage).toBe('ar');
+      expect(element.props.accessibilityActions).toEqual([
+        expect.objectContaining({ name: 'longpress' }),
+      ]);
+
+      // The save that press-and-hold does, reachable without press-and-hold.
+      fireEvent(element, 'accessibilityAction', { nativeEvent: { actionName: 'longpress' } });
+      expect(onWordLongPress).toHaveBeenCalledWith(word, { x: 12, y: 34, width: 56, height: 20 });
+    });
+
+    test('reads a non-interactive word as text', () => {
+      const { getByLabelText } = render(<SkiaArabicWord word={createMockWord()} testID="word" />);
+
+      expect(getByLabelText('كتاب').props.accessibilityRole).toBe('text');
+    });
+  });
 });

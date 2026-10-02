@@ -256,6 +256,8 @@ export const STRINGS = {
   ACCOUNT_A11Y_CHANGE_PHOTO: 'Change profile photo',
   PLAYLIST_A11Y_REORDER: 'Reorder track',
   PLAYLIST_A11Y_REORDER_HINT: 'Press and hold, then drag to move this track',
+  ARABIC_WORD_A11Y_HINT: 'Shows the meaning',
+  ARABIC_WORD_A11Y_TOGGLE_PRACTICE: 'Add to or remove from practice',
   // Sections are named for where a setting takes effect, not for what it is
   // made of — a reader looking for the font size looks under "Reading", not
   // under "Appearance". Sentence case throughout.

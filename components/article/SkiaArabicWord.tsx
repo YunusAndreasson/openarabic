@@ -7,6 +7,7 @@ import { Pressable } from 'react-native-gesture-handler';
 import { Canvas, Paragraph as SkiaParagraph, TextDirection } from '@shopify/react-native-skia';
 
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { useSkiaFonts } from '@/hooks/theme/useSkiaFonts';
 import { useArabicWord } from '@/hooks/vocabulary';
@@ -290,6 +291,20 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
   // word, not a claim that you can press it.
   const isInteractive = !!onTooltipOpen || !!onWordLongPress;
 
+  // The word is painted on a Skia canvas, so a screen reader has no text to
+  // read: without these, every word was a silent, unlabelled stop — the Arabic
+  // could not be heard, its meaning opened, or the word saved. The long-press
+  // save is offered as a named action (the VoiceOver actions rotor; TalkBack's
+  // long-press), since press-and-hold is not something a screen-reader user
+  // can aim at a word.
+  const accessibilityProps = {
+    accessibilityLabel: word.word_form,
+    accessibilityLanguage: 'ar',
+  } as const;
+  const longPressActions = onWordLongPress
+    ? [{ name: 'longpress', label: STRINGS.ARABIC_WORD_A11Y_TOGGLE_PRACTICE }]
+    : undefined;
+
   return (
     <View style={wrapperStyle}>
       {isInteractive ? (
@@ -300,11 +315,24 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
           onPress={handlePress}
           onLongPress={onWordLongPress ? handleLongPress : undefined}
           delayLongPress={LONG_PRESS_DELAY_MS}
+          {...accessibilityProps}
+          accessibilityRole="button"
+          accessibilityHint={onTooltipOpen ? STRINGS.ARABIC_WORD_A11Y_HINT : undefined}
+          accessibilityActions={longPressActions}
+          onAccessibilityAction={event => {
+            if (event.nativeEvent.actionName === 'longpress') handleLongPress();
+          }}
         >
           {canvas}
         </AnimatedPressable>
       ) : (
-        <Animated.View style={[CONTAINER_STYLE, activeStyle]} testID={testID}>
+        <Animated.View
+          style={[CONTAINER_STYLE, activeStyle]}
+          testID={testID}
+          accessible
+          {...accessibilityProps}
+          accessibilityRole="text"
+        >
           {canvas}
         </Animated.View>
       )}
