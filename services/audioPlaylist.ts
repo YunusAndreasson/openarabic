@@ -160,11 +160,19 @@ export const enhancedAudioService = {
 
       return allTracks;
     } catch (error) {
+      // Rethrown, not answered with []: this runs as an app-wide query, and an
+      // empty array is a SUCCESS to React Query — a network blip at startup was
+      // cached as an empty playlist (no retry, `error` never set, so the
+      // Playlist screen's own failure toast could not fire), and a failed
+      // refetch overwrote good tracks with nothing. Thrown, the query retries,
+      // keeps the last good tracks, and surfaces the error once — so no toast
+      // here, where it would repeat on every retry.
       await handleError(error, {
         ...errorConfig.playlist,
+        showToast: false,
         analyticsProperties: { userId },
       });
-      return [];
+      throw error;
     }
   },
 };

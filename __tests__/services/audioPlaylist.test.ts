@@ -316,18 +316,20 @@ describe('enhancedAudioService', () => {
       ]);
     });
 
-    test('handles errors gracefully and returns empty array', async () => {
+    test('reports and rethrows a failure instead of answering with an empty playlist', async () => {
       const error = new Error('Reading list fetch failed');
       mockBookmarkService.getReadingList.mockRejectedValue(error);
 
-      const result = await enhancedAudioService.getReadingListEnhancedTracks('user123');
-
-      expect(result).toEqual([]);
+      // An empty array would be cached as a successful, empty playlist: no
+      // retry, no error state, and a failed refetch would wipe good tracks.
+      await expect(enhancedAudioService.getReadingListEnhancedTracks('user123')).rejects.toBe(
+        error,
+      );
       expect(mockHandleError).toHaveBeenCalledWith(error, {
         toastMessage: STRINGS.FAILED_TO_GET_ENHANCED_AUDIO_TRACKS,
         analyticsEventName: 'Enhanced_Audio_Playlist_Error',
         sentrySeverity: 'error',
-        showToast: true,
+        showToast: false,
         analyticsProperties: { userId: 'user123' },
       });
     });
