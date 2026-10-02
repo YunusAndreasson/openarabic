@@ -679,10 +679,26 @@ export async function getMicPermissionStatus(): Promise<'granted' | 'denied' | '
   // ask — the reading is reported to the caller, not remembered.
   if (current === 'Granted') permissionDecision = true;
   if (current === 'Granted') return 'granted';
-  // 'Denied' is terminal for this process: changing it in Settings terminates
-  // the app on both platforms, so nothing short of a relaunch can revise it.
-  // Callers use that to stop asking.
+  // 'Denied' holds until the app comes back from the background — callers use
+  // it to stop asking meanwhile. Revoking in Settings kills the app on both
+  // platforms, but GRANTING on Android does not, so a refusal is re-read on
+  // resume (see forgetMicPermissionRefusal) rather than trusted for the
+  // process's lifetime.
   return current === 'Denied' ? 'denied' : 'unknown';
+}
+
+/**
+ * Drop a cached refusal so the next check asks the OS again.
+ *
+ * Call it when the app returns to the foreground. The refusal cache exists so
+ * one denied tap does not prompt twice (the capture-open path re-checks), not
+ * to outlive a trip to Settings: Android keeps the process alive when the
+ * permission is GRANTED there — only a revocation kills it — so without this,
+ * "Enable microphone" → Settings → Allow left voice dead until a force-stop.
+ * A cached grant is kept; revoking it terminates the process anyway.
+ */
+export function forgetMicPermissionRefusal(): void {
+  if (permissionDecision === false) permissionDecision = null;
 }
 
 /** Set once the OS has answered; a denied tap must not immediately prompt a

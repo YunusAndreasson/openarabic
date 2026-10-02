@@ -45,8 +45,13 @@ import { type SetStateAction, useCallback, useEffect, useRef, useState } from 'r
 import { useToast, useVoiceGrading } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { STRINGS } from '@/constants/strings';
+import { useResumeFromBackground } from '@/hooks/app/useResumeFromBackground';
 import { PARAKEET_MODEL_ID, VOICE_DECODING_METHOD } from '@/constants/voiceModel';
-import { DEFAULT_RECORDING_CONFIG, getMicPermissionStatus } from '@/lib/voice/recording';
+import {
+  DEFAULT_RECORDING_CONFIG,
+  forgetMicPermissionRefusal,
+  getMicPermissionStatus,
+} from '@/lib/voice/recording';
 import type { RecordingStopReason, SpeechGateKind } from '@/lib/voice/recording';
 import type { RootId } from '@/types/branded.types';
 import { analytics } from '@/services/analytics';
@@ -621,6 +626,17 @@ export function useVoiceReview({
     // answers, which is why `micGranted` and the denial latch are gates here
     // and not just targets.
   }, [voiceEnabled, micPermission, phase]);
+
+  // A refusal is not final: "Enable microphone" sends the learner to Settings,
+  // and on Android granting there keeps this process alive (only revoking
+  // kills it). Coming back re-reads the permission instead of trusting the
+  // refusal, so a grant unlocks voice on the spot — this card included — and a
+  // still-refused microphone lands straight back on "Enable microphone".
+  useResumeFromBackground(() => {
+    forgetMicPermissionRefusal();
+    setMicPermission(current => (current === 'denied' ? 'unknown' : current));
+    setPhase(current => (current === 'denied' ? 'idle' : current));
+  }, micPermission === 'denied');
 
   /**
    * Hands-free arming: the microphone opens itself once the Arabic has played.

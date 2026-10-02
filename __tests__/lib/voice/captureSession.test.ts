@@ -16,6 +16,8 @@ import {
   __resetMicPermissionForTests,
   DEFAULT_RECORDING_CONFIG,
   ensureMicPermission,
+  forgetMicPermissionRefusal,
+  getMicPermissionStatus,
   VoiceCaptureSession,
   type SpeechGate,
 } from '@/lib/voice/recording';
@@ -97,6 +99,29 @@ describe('VoiceCaptureSession', () => {
 
     expect(__mocks.AudioManager.checkRecordingPermissions).toHaveBeenCalledTimes(1);
     expect(__mocks.AudioManager.requestRecordingPermissions).toHaveBeenCalledTimes(1);
+  });
+
+  test('a refusal is re-read after a trip to Settings, where Android can grant it live', async () => {
+    __mocks.AudioManager.checkRecordingPermissions.mockResolvedValue('Undetermined');
+    __mocks.AudioManager.requestRecordingPermissions.mockResolvedValue('Denied');
+    await expect(ensureMicPermission()).resolves.toBe(false);
+    await expect(getMicPermissionStatus()).resolves.toBe('denied');
+
+    // "Enable microphone" → Settings → Allow. Android keeps the process alive.
+    __mocks.AudioManager.checkRecordingPermissions.mockResolvedValue('Granted');
+    forgetMicPermissionRefusal();
+
+    await expect(getMicPermissionStatus()).resolves.toBe('granted');
+    await expect(ensureMicPermission()).resolves.toBe(true);
+    expect(__mocks.AudioManager.requestRecordingPermissions).toHaveBeenCalledTimes(1);
+  });
+
+  test('forgetting a refusal leaves a cached grant alone', async () => {
+    await expect(ensureMicPermission()).resolves.toBe(true);
+    forgetMicPermissionRefusal();
+    await expect(ensureMicPermission()).resolves.toBe(true);
+
+    expect(__mocks.AudioManager.checkRecordingPermissions).toHaveBeenCalledTimes(1);
   });
 
   test('idles the stream until a card asks for it', async () => {
