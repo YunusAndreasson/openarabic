@@ -79,6 +79,7 @@ const mockPlayTransitionSound = jest.mocked(playTransitionSound);
 // Import service AFTER mocks
 import type { AudioStatus } from '@/services/audioPlayer';
 import { articleId } from '@/__tests__/helpers/ids';
+import { STRINGS } from '@/constants/strings';
 import type { AudioPlayer } from 'expo-audio';
 
 describe('audioPlayer service', () => {
@@ -306,6 +307,25 @@ describe('audioPlayer service', () => {
 
       const status = audioService.getStatus();
       expect(status.playing).toBeFalsy();
+    });
+
+    test('a play that fails for good leaves no track behind', async () => {
+      // Every player this play builds refuses to start, the session-reset
+      // retry's included.
+      mockCreateAudioPlayer.mockReturnValue({
+        ...mockPlayer,
+        play: jest.fn((..._args: unknown[]) => {
+          throw new Error('Player not ready');
+        }),
+      } as unknown as AudioPlayer);
+
+      const success = await audioService.play(testTrack);
+
+      // The streamed track's loading state was published first. Leaving its
+      // track in the status read as "still loading" forever (isAudioBusy),
+      // which silently swallowed every later Listen / Play All tap.
+      expect(success).toBeFalsy();
+      expect(audioService.getStatus().currentTrack).toBeNull();
     });
 
     test('should recover from a synchronous play() throw via session reset with a fresh player', async () => {
@@ -931,6 +951,29 @@ describe('audioPlayer service', () => {
       // Playlist mode is dropped rather than left open over a playlist that
       // can never start, which would strand the MiniPlayer on screen.
       expect(audioService.getPlaylistInfo().isPlaylistMode).toBeFalsy();
+    });
+
+    test('a first track that fails for good stops the playlist and says so once', async () => {
+      mockCreateAudioPlayer.mockReturnValue({
+        ...mockPlayer,
+        play: jest.fn((..._args: unknown[]) => {
+          throw new Error('Player not ready');
+        }),
+      } as unknown as AudioPlayer);
+      mockHandleError.mockClear();
+
+      const success = await audioService.playPlaylist([testTrack, testTrack2]);
+
+      expect(success).toBeFalsy();
+      expect(audioService.getPlaylistInfo().isPlaylistMode).toBeFalsy();
+      expect(audioService.getStatus().currentTrack).toBeNull();
+      expect(mockHandleError).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({
+          showToast: true,
+          toastMessage: STRINGS.FAILED_TO_LOAD_AUDIO_TRACKS,
+        }),
+      );
     });
 
     test('stops the playlist rather than walking it when no player can be constructed', async () => {

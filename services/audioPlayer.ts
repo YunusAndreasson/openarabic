@@ -871,8 +871,13 @@ class SimpleAudioService {
         return 'superseded';
       }
 
-      // RESET: Clear progress on play error
-      this.updateStatus(RESET_AUDIO_STATUS);
+      // RESET: Clear progress AND the track on play error. The published status
+      // used to keep `currentTrack` (RESET_AUDIO_STATUS has no track field)
+      // while the service dropped it below — so a failed play left
+      // "article, not loaded" on screen for good: isAudioBusy() read it as
+      // still loading, every Listen / Play All / row tap returned silently,
+      // and the MiniPlayer spun at 0:00 until its stop button was found.
+      this.resetStatus();
 
       // Destroy player on error so retry gets a fresh one
       if (this.currentPlayer) {
@@ -976,6 +981,14 @@ class SimpleAudioService {
         // Leaving playlist mode on would strand the MiniPlayer over a playlist
         // that can never start.
         this.resetPlaylistState();
+      } else if (outcome === 'failure') {
+        // The first track failed even after the self-heal retry — typically a
+        // stream that never became ready (offline, dead URL), which playCore
+        // keeps quiet. Stop the playlist and say so once, exactly as
+        // advanceToNextTrack does when tracks keep failing mid-queue; before,
+        // playlist mode stayed on and the tap just ended in silence.
+        await this.stop();
+        this.notifyPlaylistStoppedByFailures();
       }
       return outcome === 'success';
     } catch (error) {
