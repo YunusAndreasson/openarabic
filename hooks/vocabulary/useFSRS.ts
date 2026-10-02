@@ -34,7 +34,7 @@ import {
   type SpacingState,
 } from '@/utils/fsrsSpacing';
 import { FSRS_INSTANCE } from '@/utils/fsrsUtils';
-import { FSRS_GRADE_MUTATION_KEY } from '@/utils/mutationDefaults';
+import { FSRS_GRADE_MUTATION_KEY, FSRS_GRADE_MUTATION_SCOPE } from '@/utils/mutationDefaults';
 import { PriorityQueue } from '@/utils/priorityQueue';
 import { decideDrill, type DrillProgress } from '@/utils/review/drillPolicy';
 import { getSessionProgress } from '@/utils/review/sessionProgress';
@@ -138,6 +138,7 @@ export function useFSRS({
   // on the raw service call, so the card advance is never held up by it.
   const gradeMutation = useMutation({
     mutationKey: FSRS_GRADE_MUTATION_KEY,
+    scope: FSRS_GRADE_MUTATION_SCOPE,
     mutationFn: ({ userId: mutationUserId, rootId, update }: GradeWriteVariables) =>
       studyWordsFSRSService.updateWordAndReview(mutationUserId, rootId, update),
   });

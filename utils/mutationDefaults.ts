@@ -11,6 +11,23 @@ export const FSRS_GRADE_MUTATION_KEY = ['fsrs-words', 'grade'] as const;
 export const STUDY_WORD_TOGGLE_MUTATION_KEY = ['study-words', 'toggle'] as const;
 
 /**
+ * Each of these writes stores an absolute state — a grade writes the card's
+ * whole FSRS state, a toggle adds or removes the row — so they must land in
+ * the order they were made. TanStack only serializes mutations that share a
+ * scope: without one, `resumePausedMutations` (on reconnect, or on restart
+ * through the persisted cache) continues every paused write at once with
+ * `Promise.all`. Three offline grades of one word (Forgot, then Knew it twice
+ * in the drill) could then land in any order, the oldest state overwriting the
+ * newest; an offline save-then-remove could end with the word saved.
+ *
+ * A scope runs its mutations one at a time, in the order they were made, and
+ * is persisted with them. Set on both the hooks and the defaults below, so
+ * writes persisted by a build that predates the scope get it on restore too.
+ */
+export const FSRS_GRADE_MUTATION_SCOPE = { id: 'fsrs-grade' };
+export const STUDY_WORD_TOGGLE_MUTATION_SCOPE = { id: 'study-word-toggle' };
+
+/**
  * Registers a `mutationFn` default for every mutation whose write must
  * survive the app being killed while offline (a review grade, a saved word).
  *
@@ -27,6 +44,7 @@ export const STUDY_WORD_TOGGLE_MUTATION_KEY = ['study-words', 'toggle'] as const
  */
 export function registerMutationDefaults(queryClient: QueryClient): void {
   queryClient.setMutationDefaults(FSRS_GRADE_MUTATION_KEY, {
+    scope: FSRS_GRADE_MUTATION_SCOPE,
     mutationFn: ({
       userId,
       rootId,
@@ -39,6 +57,7 @@ export function registerMutationDefaults(queryClient: QueryClient): void {
   });
 
   queryClient.setMutationDefaults(STUDY_WORD_TOGGLE_MUTATION_KEY, {
+    scope: STUDY_WORD_TOGGLE_MUTATION_SCOPE,
     mutationFn: ({
       userId,
       rootId,
