@@ -167,7 +167,17 @@ export function useProvideAuth(): AuthResult {
           });
           setSession(null);
           setIsLoading(false);
-        } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        } else if (
+          event === 'SIGNED_IN' ||
+          event === 'TOKEN_REFRESHED' ||
+          // A recovery link's verifyOtp signs the user in with PASSWORD_RECOVERY,
+          // and updateUser (the new password itself) emits USER_UPDATED. Ignoring
+          // them left React's session behind the client's: after a cold-start
+          // reset the tabs stayed guarded, so "success" left the user stranded
+          // on the form, and requests ran as a user the UI did not show.
+          event === 'PASSWORD_RECOVERY' ||
+          event === 'USER_UPDATED'
+        ) {
           if (newSession) {
             authBreadcrumb('New session received, updating state');
             setSession(newSession);

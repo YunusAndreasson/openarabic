@@ -351,6 +351,55 @@ describe('Authentication Flow', () => {
         expect(result.current.session).toEqual(newSession);
       });
     });
+
+    test('adopts the session a password-recovery link signs in with', async () => {
+      // A cold-started reset link: nobody is signed in until verifyOtp runs.
+      mockGetSession.mockResolvedValue({ data: { session: null }, error: null });
+
+      const { result } = renderHook(() => useProvideAuth());
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBeFalsy();
+      });
+
+      await act(async () => {
+        if (mockAuthStateCallback) {
+          mockAuthStateCallback('PASSWORD_RECOVERY', mockSession);
+        }
+        jest.runAllTimers();
+      });
+
+      // Without it the tabs stay guarded and "reset succeeded" goes nowhere.
+      await waitFor(() => {
+        expect(result.current.isAuthenticated).toBeTruthy();
+      });
+    });
+
+    test('follows USER_UPDATED to the updated session', async () => {
+      mockGetSession.mockResolvedValue({
+        data: { session: mockSession },
+        error: null,
+      });
+
+      const { result } = renderHook(() => useProvideAuth());
+
+      await waitFor(() => {
+        expect(result.current.session).toEqual(mockSession);
+      });
+
+      const updatedSession = { ...mockSession, access_token: 'after-password-change' };
+
+      await act(async () => {
+        if (mockAuthStateCallback) {
+          mockAuthStateCallback('USER_UPDATED', updatedSession);
+        }
+        jest.runAllTimers();
+      });
+
+      await waitFor(() => {
+        expect(result.current.session).toEqual(updatedSession);
+      });
+    });
   });
 
   describe('App State Handling', () => {
