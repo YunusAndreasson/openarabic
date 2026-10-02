@@ -1,8 +1,8 @@
-import * as Linking from 'expo-linking';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import type { TextInput } from 'react-native';
 
 import { ThemedButton } from '@/components/primitives/ThemedButton';
 import { ThemedInput } from '@/components/primitives/ThemedInput';
@@ -22,6 +22,13 @@ import { successFeedback } from '@/utils/haptics';
  */
 export default function ResetPasswordScreen(): JSX.Element {
   const router = useRouter();
+  // The link's own query string, as Expo Router routed it here. Read from the
+  // route rather than `Linking.getInitialURL()`, which only ever returns the URL
+  // that cold-launched the app — so a link tapped while the app was already
+  // running (the usual case: "Forgot password", switch to Mail, tap the link)
+  // was never read, and the screen bounced to /auth as "invalid or expired".
+  const { token, type } = useLocalSearchParams<{ token?: string; type?: string }>();
+  const confirmPasswordRef = useRef<TextInput>(null);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
@@ -35,35 +42,25 @@ export default function ResetPasswordScreen(): JSX.Element {
   useEffect(() => {
     const handleResetLink = async () => {
       try {
-        // Get the initial URL that opened the app
-        const url = await Linking.getInitialURL();
+        if (token && type === 'recovery') {
+          // Verify the OTP token to establish a session
+          const { error } = await supabase.auth.verifyOtp({
+            token_hash: token,
+            type: 'recovery',
+          });
 
-        if (url) {
-          // Parse URL to extract token and type
-          const parsed = Linking.parse(url);
-          const token = parsed.queryParams?.['token'] as string;
-          const type = parsed.queryParams?.['type'] as string;
-
-          if (token && type === 'recovery') {
-            // Verify the OTP token to establish a session
-            const { error } = await supabase.auth.verifyOtp({
-              token_hash: token,
-              type: 'recovery',
+          if (error) {
+            void handleError(error, {
+              toastMessage: STRINGS.RESET_PASSWORD_LINK_INVALID,
+              showToast: true,
             });
-
-            if (error) {
-              void handleError(error, {
-                toastMessage: 'Invalid or expired reset link. Please request a new one.',
-                showToast: true,
-              });
-              router.replace(ROUTE_PATHS.AUTH);
-              return;
-            }
-
-            // Session established successfully
-            setIsValidSession(true);
+            router.replace(ROUTE_PATHS.AUTH);
             return;
           }
+
+          // Session established successfully
+          setIsValidSession(true);
+          return;
         }
 
         // If no URL or tokens, check if there's already a valid session
@@ -73,14 +70,14 @@ export default function ResetPasswordScreen(): JSX.Element {
         } else {
           // No session and no valid reset link
           void handleError(new Error('Invalid or expired reset link'), {
-            toastMessage: 'Invalid or expired reset link. Please request a new one.',
+            toastMessage: STRINGS.RESET_PASSWORD_LINK_INVALID,
             showToast: true,
           });
           router.replace(ROUTE_PATHS.AUTH);
         }
       } catch (error) {
         void handleError(error, {
-          toastMessage: 'Failed to verify reset link. Please try again.',
+          toastMessage: STRINGS.RESET_PASSWORD_LINK_VERIFY_FAILED,
           showToast: true,
         });
         router.replace(ROUTE_PATHS.AUTH);
@@ -88,7 +85,7 @@ export default function ResetPasswordScreen(): JSX.Element {
     };
 
     void handleResetLink();
-  }, [router]);
+  }, [router, token, type]);
 
   const validatePassword = useCallback((value: string): boolean => {
     if (!value) {
@@ -249,6 +246,7 @@ export default function ResetPasswordScreen(): JSX.Element {
               importantForAutofill="yes"
               placeholder={STRINGS.RESET_PASSWORD_NEW_PLACEHOLDER}
               returnKeyType="next"
+              submitBehavior="submit"
               rightIcon={showPassword ? 'eye-off' : 'eye'}
               rightIconAccessibilityLabel={
                 showPassword ? STRINGS.HIDE_PASSWORD : STRINGS.SHOW_PASSWORD
@@ -263,11 +261,13 @@ export default function ResetPasswordScreen(): JSX.Element {
               onBlur={handlePasswordBlur}
               onChangeText={handlePasswordChange}
               onRightIconPress={handleTogglePassword}
+              onSubmitEditing={() => confirmPasswordRef.current?.focus()}
             />
           </View>
 
           <View style={styles.inputWrapper}>
             <ThemedInput
+              ref={confirmPasswordRef}
               autoCapitalize="none"
               autoComplete="password-new"
               error={confirmPasswordError}
@@ -289,6 +289,7 @@ export default function ResetPasswordScreen(): JSX.Element {
               onBlur={handleConfirmPasswordBlur}
               onChangeText={handleConfirmPasswordChange}
               onRightIconPress={handleToggleConfirmPassword}
+              onSubmitEditing={() => void handleResetPassword()}
             />
           </View>
 

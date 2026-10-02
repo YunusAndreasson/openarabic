@@ -531,6 +531,8 @@ export const STRINGS = {
   RESET_PASSWORD_BUTTON: 'Reset password',
   RESET_PASSWORD_CONFIRM_ERROR: 'Confirm your password',
   RESET_PASSWORD_MISMATCH: 'Passwords do not match',
+  RESET_PASSWORD_LINK_INVALID: 'Invalid or expired reset link. Please request a new one.',
+  RESET_PASSWORD_LINK_VERIFY_FAILED: 'Failed to verify reset link. Please try again.',
   PASSWORD_STRENGTH_FAIR: 'Fair',
   PASSWORD_STRENGTH_GOOD: 'Good',
   PASSWORD_STRENGTH_STRONG: 'Strong',
