@@ -522,10 +522,10 @@ describe('useGlobalAudioState Hook', () => {
 
       jest.mocked(useSimpleAudioPlayer).mockReturnValue({
         playing: false,
-        isLoading: true, // Still loading
+        isLoading: true, // Still loading — only ever true with a track loading
         currentTime: 0,
         duration: 0,
-        currentTrack: null,
+        currentTrack: { id: 'track-1' },
         stop: mockStop,
         preconfigureAudioSession: mockPreconfigureAudioSession,
       } as any);
@@ -533,6 +533,60 @@ describe('useGlobalAudioState Hook', () => {
       renderHook(() => useGlobalAudioState(), { wrapper: GlobalAudioStateProvider });
 
       expect(mockCancelTimer).not.toHaveBeenCalled();
+    });
+
+    test('does not auto-cancel when playback is merely paused', () => {
+      // A lock-screen, headphone or phone-call pause: loaded, not playing.
+      // Cancelling here lost the timer, and the playlist played on all night.
+      jest.mocked(useSleepTimer).mockReturnValue({
+        state: { isActive: true, endTime: Date.now() + 120000 },
+        actions: {
+          startTimer: mockStartTimer,
+          cancelTimer: mockCancelTimer,
+        },
+      } as any);
+
+      jest.mocked(useSimpleAudioPlayer).mockReturnValue({
+        playing: false,
+        isLoading: false,
+        currentTime: 30,
+        duration: 120,
+        currentTrack: { id: 'track-1' },
+        status: { playbackState: 'paused' },
+        stop: mockStop,
+        preconfigureAudioSession: mockPreconfigureAudioSession,
+      } as any);
+
+      renderHook(() => useGlobalAudioState(), { wrapper: GlobalAudioStateProvider });
+
+      expect(mockCancelTimer).not.toHaveBeenCalled();
+    });
+
+    test('auto-cancels when a single article plays to its end', async () => {
+      jest.mocked(useSleepTimer).mockReturnValue({
+        state: { isActive: true, endTime: Date.now() + 120000 },
+        actions: {
+          startTimer: mockStartTimer,
+          cancelTimer: mockCancelTimer,
+        },
+      } as any);
+
+      jest.mocked(useSimpleAudioPlayer).mockReturnValue({
+        playing: false,
+        isLoading: false,
+        currentTime: 120,
+        duration: 120,
+        currentTrack: { id: 'track-1' },
+        status: { playbackState: 'ended' },
+        stop: mockStop,
+        preconfigureAudioSession: mockPreconfigureAudioSession,
+      } as any);
+
+      renderHook(() => useGlobalAudioState(), { wrapper: GlobalAudioStateProvider });
+
+      await waitFor(() => {
+        expect(mockCancelTimer).toHaveBeenCalled();
+      });
     });
 
     test('does not auto-cancel when timer is not active', () => {

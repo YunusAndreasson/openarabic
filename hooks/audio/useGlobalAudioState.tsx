@@ -107,12 +107,23 @@ function useGlobalAudioStateInternal(): GlobalAudioState {
     );
   });
 
-  // Auto-cancel sleep timer when audio stops
+  // Auto-cancel the sleep timer when the listening session ends: playback was
+  // stopped or the queue ran out (no current track), or a single article
+  // played to its end. NOT on a pause — a lock-screen, headphone, Siri or
+  // phone-call pause reports `playing: false` on a still-loaded player, and
+  // cancelling there meant the timer was silently gone when playback resumed,
+  // so a "15 minutes" playlist played on all night. Playlist mode never
+  // publishes 'ended' between tracks; the guard keeps it that way.
+  const { currentTrack } = audioPlayer;
+  const playbackEnded = audioPlayer.status?.playbackState === 'ended';
   useEffect(() => {
-    if (!audioPlayer.playing && !audioPlayer.isLoading && sleepTimer.state.isActive) {
+    if (!sleepTimer.state.isActive) return;
+    const sessionOver =
+      !currentTrack || (playbackEnded && !simpleAudioService.getPlaylistInfo().isPlaylistMode);
+    if (sessionOver) {
       sleepTimer.actions.cancelTimer();
     }
-  }, [audioPlayer.playing, audioPlayer.isLoading, sleepTimer.state.isActive, sleepTimer.actions]);
+  }, [currentTrack, playbackEnded, sleepTimer.state.isActive, sleepTimer.actions]);
 
   // Get current article ID from audio player
   const currentArticleId = audioPlayer.currentTrack?.articleId ?? null;
