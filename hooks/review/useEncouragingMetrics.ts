@@ -144,8 +144,11 @@ export const useEncouragingMetrics = (
     }
 
     // Contextual educational text based on performance
-    // Day-based rotation for variety (same message all day, different tomorrow)
-    const dayIndex = Math.floor(now / 86400000);
+    // Day-based rotation for variety (same message all day, different tomorrow).
+    // Counted in LOCAL days: `now / 86400000` alone flips at UTC midnight —
+    // mid-evening in the Americas, so two sessions an hour apart got different
+    // "messages of the day".
+    const dayIndex = Math.floor((now - new Date(now).getTimezoneOffset() * 60000) / 86400000);
 
     let educationalText: string;
 

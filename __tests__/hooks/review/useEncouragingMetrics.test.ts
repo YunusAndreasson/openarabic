@@ -42,6 +42,9 @@ describe('useEncouragingMetrics', () => {
 
   beforeEach(() => {
     dateNowSpy = jest.spyOn(Date, 'now').mockReturnValue(FIXED_NOW);
+    // Messages rotate by LOCAL day; pin the zone to UTC so the fixed instants
+    // below mean the same day on every machine.
+    jest.spyOn(Date.prototype, 'getTimezoneOffset').mockReturnValue(0);
   });
 
   afterEach(() => {
@@ -382,6 +385,30 @@ describe('useEncouragingMetrics', () => {
 
       expect(result1.current?.educationalText).toBe(STRINGS.SESSION_ED_STRONG_POOL[0]);
       expect(result2.current?.educationalText).toBe(STRINGS.SESSION_ED_STRONG_POOL[1]);
+    });
+
+    test('keeps the same message across UTC midnight within one local evening', () => {
+      const strongMetrics: SessionMetrics = {
+        ...baseMetrics,
+        firstAttemptKnown: 8,
+        firstAttemptUnknown: 2,
+        wordsReviewed: 10,
+        wordsKnown: 8,
+        wordsUnknown: 2,
+      };
+      // New York in October (UTC-4): 19:30 and 20:30 local straddle UTC midnight.
+      jest.spyOn(Date.prototype, 'getTimezoneOffset').mockReturnValue(240);
+
+      dateNowSpy.mockReturnValue(Date.UTC(2026, 9, 1, 23, 30));
+      const { result: early } = renderHook(() =>
+        useEncouragingMetrics(strongMetrics, mockColors as ThemeColors, 0),
+      );
+      dateNowSpy.mockReturnValue(Date.UTC(2026, 9, 2, 0, 30));
+      const { result: late } = renderHook(() =>
+        useEncouragingMetrics(strongMetrics, mockColors as ThemeColors, 0),
+      );
+
+      expect(late.current?.educationalText).toBe(early.current?.educationalText);
     });
 
     test('uses first attempts for recall copy when a missed word is drilled', () => {
