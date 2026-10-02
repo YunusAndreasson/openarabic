@@ -21,6 +21,14 @@ import { lightFeedback, errorFeedback } from '@/utils/haptics';
 import { recordAccepted } from '@/utils/notificationPromptStorage';
 import { clearPersistedQueryCache } from '@/utils/queryPersistence';
 
+/** iOS never re-prompts, so a refused reminder toggle can only point at Settings. */
+function showEnableNotificationsAlert(): void {
+  Alert.alert(STRINGS.ENABLE_NOTIFICATIONS, STRINGS.TURN_ON_NOTIFICATIONS, [
+    { text: STRINGS.CANCEL, style: 'cancel' },
+    { text: STRINGS.OPEN_SETTINGS, onPress: () => void Linking.openSettings() },
+  ]);
+}
+
 const useUserWithCreationDate = () => {
   const { user } = useAuth();
   const [userWithCreatedAt, setUserWithCreatedAt] = useState<typeof user>(user);
@@ -208,18 +216,12 @@ export const useAccountScreen = () => {
           const granted = await ensurePermissions();
 
           if (!granted) {
-            Alert.alert(STRINGS.ENABLE_NOTIFICATIONS, STRINGS.TURN_ON_NOTIFICATIONS, [
-              { text: STRINGS.CANCEL, style: 'cancel' },
-              { text: STRINGS.OPEN_SETTINGS, onPress: () => void Linking.openSettings() },
-            ]);
+            showEnableNotificationsAlert();
             return;
           }
         } catch (error) {
           void handleError(error, { showToast: false });
-          Alert.alert(STRINGS.ENABLE_NOTIFICATIONS, STRINGS.TURN_ON_NOTIFICATIONS, [
-            { text: STRINGS.CANCEL, style: 'cancel' },
-            { text: STRINGS.OPEN_SETTINGS, onPress: () => void Linking.openSettings() },
-          ]);
+          showEnableNotificationsAlert();
           return;
         }
       }

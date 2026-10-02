@@ -1,10 +1,10 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useState } from 'react';
-import { Alert, Linking } from 'react-native';
+import { Alert } from 'react-native';
 
 import { handleError, toError } from '@/utils/errorHandling';
 import { USER_STORAGE_KEYS } from '@/constants/storageKeys';
+import { requestPhotoLibraryAccess } from '@/utils/photoLibraryAccess';
 
 interface UseScreenshotAttachmentOptions {
   /** User ID for permission caching (falls back to 'anonymous') */
@@ -20,8 +20,6 @@ interface UseScreenshotAttachmentResult {
   handleAddScreenshot: () => Promise<void>;
   /** Handler to remove the current screenshot */
   handleRemoveScreenshot: () => void;
-  /** Clear the screenshot URI (useful for form reset) */
-  clearScreenshot: () => void;
 }
 
 /**
@@ -54,68 +52,15 @@ export function useScreenshotAttachment({
 
   const handleAddScreenshot = useCallback(async () => {
     try {
-      const permissionDeniedKey = USER_STORAGE_KEYS.screenshotPermissionDenied(userId);
-
-      // Check if permission was previously denied (subsequent attempt)
-      const wasPreviouslyDenied = await AsyncStorage.getItem(permissionDeniedKey);
-
-      // The flag records that the OS once said no — the learner may have
-      // allowed access in Settings since (the alert below sends them there).
-      // Trusting it forever sent every later tap to "enable it in Settings"
-      // even after they had, so a grant clears it and the flow goes on.
-      const isStillDenied =
-        wasPreviouslyDenied === 'true' &&
-        (await ImagePicker.getMediaLibraryPermissionsAsync()).status !== 'granted';
-      if (wasPreviouslyDenied === 'true' && !isStillDenied) {
-        await AsyncStorage.removeItem(permissionDeniedKey);
-      }
-
-      if (isStillDenied) {
-        // User is trying to use feature after denying permission - show informational alert
-        // This is explicitly allowed by both Apple and Google Play policies
-        Alert.alert(
-          'Permission Required',
+      const canPick = await requestPhotoLibraryAccess({
+        deniedKey: USER_STORAGE_KEYS.screenshotPermissionDenied(userId),
+        deniedMessage:
           'Photo library access is needed to attach screenshots. Please enable it in Settings.',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Open Settings', onPress: () => void Linking.openSettings() },
-          ],
-        );
-        return;
-      }
-
-      // Show prominent disclosure BEFORE requesting permissions (Google Play requirement)
-      // Note: No "Cancel" button per Apple guideline 5.1.1 - user must proceed to system dialog
-      await new Promise<void>(resolve => {
-        Alert.alert(
-          'Screenshot Upload Notice',
+        disclosureTitle: 'Screenshot Upload Notice',
+        disclosureMessage:
           'OpenArabic collects screenshot images to help our team investigate and resolve reported issues. Screenshots are uploaded to our servers and attached to your feedback report.',
-          [
-            {
-              text: 'Continue',
-              onPress: () => resolve(),
-            },
-          ],
-        );
       });
-
-      // Check current permission status first
-      const { status: existingStatus } = await ImagePicker.getMediaLibraryPermissionsAsync();
-
-      let finalStatus = existingStatus;
-
-      // Only request if not already granted
-      if (existingStatus !== 'granted') {
-        const { status: newStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        finalStatus = newStatus;
-      }
-
-      if (finalStatus !== 'granted') {
-        // Save denied state for subsequent attempts
-        await AsyncStorage.setItem(permissionDeniedKey, 'true');
-        // Accept denial silently (Apple requirement - no retry, no auto-redirect)
-        return;
-      }
+      if (!canPick) return;
 
       // Launch image picker
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -141,14 +86,9 @@ export function useScreenshotAttachment({
     setScreenshotUri(null);
   }, []);
 
-  const clearScreenshot = useCallback(() => {
-    setScreenshotUri(null);
-  }, []);
-
   return {
     screenshotUri,
     handleAddScreenshot,
     handleRemoveScreenshot,
-    clearScreenshot,
   };
 }

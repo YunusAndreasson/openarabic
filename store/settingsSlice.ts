@@ -191,6 +191,15 @@ const selectDefaultTrueSetting =
 export const selectHapticsEnabled = selectDefaultTrueSetting('hapticsEnabled');
 
 /**
+ * The saved daily new-word limit (0 = unlimited), falling back to the shipped
+ * default when the persisted value is missing or malformed.
+ */
+export const selectDailyWordLimit = (state: { settings: { dailyWordLimit?: unknown } }): number => {
+  const limit = state.settings.dailyWordLimit;
+  return typeof limit === 'number' && limit >= 0 ? limit : initialState.dailyWordLimit;
+};
+
+/**
  * Same rehydration hazard as {@link selectHapticsEnabled}: `adaptiveNewWordPacingEnabled`
  * was added in `12f21454` (FSRS learning port), well after `settings` joined the
  * redux-persist whitelist, and `persistConfig` still carries no `version`/`migrate`.

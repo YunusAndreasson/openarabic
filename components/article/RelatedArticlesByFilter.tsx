@@ -21,7 +21,7 @@ import type { Article } from '@/types/articles.types';
 import type { ArticleId } from '@/types/branded.types';
 import { deduplicateArticlesByImage } from '@/utils/articleUtils';
 import { generateStorageUrl } from '@/utils/storageUtils';
-import { calculateProgressPercentage } from '@/utils/progressUtils';
+import { getArticleProgressPercentage } from '@/utils/progressUtils';
 import {
   getArticleMetadata,
   getAuthorDisplayName,
@@ -101,19 +101,10 @@ export const RelatedArticlesByFilter = memo<RelatedArticlesByFilterProps>(
     // Filter to only show unread or low-progress articles (< 20%)
     const unreadOrLowProgressArticles = useMemo(() => {
       if (!selectedArticles.length) return selectedArticles;
-      return selectedArticles.filter(article => {
-        const progress = progressMap?.get?.(article.id);
-
-        // Include if unread (no progress entry)
-        if (!progress) return true;
-
-        // Include if low progress (< 20%)
-        const progressPercentage = calculateProgressPercentage(
-          progress.last_sentence_read,
-          progress.total_sentences,
-        );
-        return progressPercentage < 20;
-      });
+      // Unread reads as 0%, so one comparison covers both cases.
+      return selectedArticles.filter(
+        article => getArticleProgressPercentage(progressMap, article.id) < 20,
+      );
     }, [selectedArticles, progressMap]);
 
     // Limit to requested number of unread/low-progress articles, deduplicating by image
@@ -138,10 +129,7 @@ export const RelatedArticlesByFilter = memo<RelatedArticlesByFilterProps>(
     // Memoize the article cards to prevent unnecessary re-renders
     const articleCards = useMemo(() => {
       return relatedArticles.map((article, index) => {
-        const progress = progressMap?.get?.(article.id);
-        const progressPercentage = progress
-          ? calculateProgressPercentage(progress.last_sentence_read, progress.total_sentences)
-          : 0;
+        const progressPercentage = getArticleProgressPercentage(progressMap, article.id);
 
         return (
           <View key={article.id} style={index > 0 ? styles.articleSpacing : undefined}>

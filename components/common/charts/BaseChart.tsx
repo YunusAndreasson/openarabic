@@ -48,21 +48,24 @@ export function BaseChart({
   ];
   const chartSectionStyle = [styles.chartSection, { minHeight: contentHeight }];
 
+  // The same heading sits above the chart and above its empty state.
+  const titleGroup = hideTitle ? null : (
+    <View style={styles.titleGroup}>
+      <ThemedText style={styles.cardTitle} type="heading2">
+        {title}
+      </ThemedText>
+      <ThemedText style={styles.cardSubtitle} type="caption" colorName="secondaryText">
+        {subtitle}
+      </ThemedText>
+    </View>
+  );
+
   // Empty state
   if (!hasData) {
     return (
       <BaseCard>
         <View style={styles.content}>
-          {!hideTitle && (
-            <View style={styles.titleGroup}>
-              <ThemedText style={styles.cardTitle} type="heading2">
-                {title}
-              </ThemedText>
-              <ThemedText style={styles.cardSubtitle} type="caption" colorName="secondaryText">
-                {subtitle}
-              </ThemedText>
-            </View>
-          )}
+          {titleGroup}
           <View style={emptyContainerStyle}>
             <ThemedText colorName="secondaryText" style={styles.emptyText}>
               {emptyStateText}
@@ -78,18 +81,7 @@ export function BaseChart({
     <BaseCard>
       <View style={styles.content}>
         {/* Header Section */}
-        {!hideTitle && (
-          <View style={styles.headerSection}>
-            <View style={styles.titleGroup}>
-              <ThemedText style={styles.cardTitle} type="heading2">
-                {title}
-              </ThemedText>
-              <ThemedText style={styles.cardSubtitle} type="caption" colorName="secondaryText">
-                {subtitle}
-              </ThemedText>
-            </View>
-          </View>
-        )}
+        {titleGroup && <View style={styles.headerSection}>{titleGroup}</View>}
 
         {/* Chart Content */}
         <View style={chartSectionStyle}>{children}</View>

@@ -706,6 +706,15 @@ export function ReviewFlipCard({
       questionSlot
     );
 
+  // Feedback belongs to the face so its geometry and seam opacity follow the
+  // turn; ring opacity remains independent. Both faces draw the same pair.
+  const faceFeedback = (
+    <>
+      <Animated.View style={[STATIC_STYLES.flashOverlay, washStyle]} pointerEvents="none" />
+      <Animated.View style={[STATIC_STYLES.verdictRing, verdictRingStyle]} pointerEvents="none" />
+    </>
+  );
+
   return (
     <Animated.View style={STATIC_STYLES.centered}>
       <Animated.View style={[STATIC_STYLES.cardBox, cardSlideStyle, opacityStyle]}>
@@ -751,16 +760,7 @@ export function ReviewFlipCard({
                     </View>
                   </WordDisplay>
                 </Pressable>
-                {/* Feedback belongs to the face so its geometry and seam
-                    opacity follow the turn; ring opacity remains independent. */}
-                <Animated.View
-                  style={[STATIC_STYLES.flashOverlay, washStyle]}
-                  pointerEvents="none"
-                />
-                <Animated.View
-                  style={[STATIC_STYLES.verdictRing, verdictRingStyle]}
-                  pointerEvents="none"
-                />
+                {faceFeedback}
               </Animated.View>
 
               {/* Question face: the Arabic alone, with the voice channel below
@@ -814,16 +814,7 @@ export function ReviewFlipCard({
                     ) : null}
                   </WordDisplay>
                 </Pressable>
-                {/* Feedback belongs to the face so its geometry and seam
-                    opacity follow the turn; ring opacity remains independent. */}
-                <Animated.View
-                  style={[STATIC_STYLES.flashOverlay, washStyle]}
-                  pointerEvents="none"
-                />
-                <Animated.View
-                  style={[STATIC_STYLES.verdictRing, verdictRingStyle]}
-                  pointerEvents="none"
-                />
+                {faceFeedback}
               </Animated.View>
             </View>
           </Animated.View>

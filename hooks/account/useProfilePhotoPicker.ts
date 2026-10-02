@@ -1,10 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Linking } from 'react-native';
 
 import { handleError, toError } from '@/utils/errorHandling';
 import { USER_STORAGE_KEYS } from '@/constants/storageKeys';
+import { requestPhotoLibraryAccess } from '@/utils/photoLibraryAccess';
 
 interface UseProfilePhotoPickerOptions {
   /** User ID for storage key and permission caching */
@@ -85,60 +85,15 @@ export function useProfilePhotoPicker({
 
   const selectPhoto = useCallback(async () => {
     try {
-      const permissionDeniedKey = USER_STORAGE_KEYS.photoPermissionDenied(userId);
-
-      // Check if permission was previously denied (subsequent attempt)
-      const wasPreviouslyDenied = await AsyncStorage.getItem(permissionDeniedKey);
-
-      // The flag records that the OS once said no — the learner may have
-      // allowed access in Settings since (the alert below sends them there).
-      // Trusting it forever sent every later tap to "enable it in Settings"
-      // even after they had, so a grant clears it and the flow goes on.
-      const isStillDenied =
-        wasPreviouslyDenied === 'true' &&
-        (await ImagePicker.getMediaLibraryPermissionsAsync()).status !== 'granted';
-      if (wasPreviouslyDenied === 'true' && !isStillDenied) {
-        await AsyncStorage.removeItem(permissionDeniedKey);
-      }
-
-      if (isStillDenied) {
-        // User is trying to use feature after denying permission - show informational alert
-        // This is explicitly allowed by both Apple and Google Play policies
-        Alert.alert(
-          'Permission Required',
+      const canPick = await requestPhotoLibraryAccess({
+        deniedKey: USER_STORAGE_KEYS.photoPermissionDenied(userId),
+        deniedMessage:
           'Photo library access is needed to select a profile photo. Please enable it in Settings.',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Open Settings', onPress: () => void Linking.openSettings() },
-          ],
-        );
-        return;
-      }
-
-      // Show prominent disclosure BEFORE requesting permissions (Google Play requirement)
-      // Note: No "Cancel" button per Apple guideline 5.1.1 - user must proceed to system dialog
-      await new Promise<void>(resolve => {
-        Alert.alert(
-          'Profile Photo',
+        disclosureTitle: 'Profile Photo',
+        disclosureMessage:
           'OpenArabic accesses your photo library to let you select a profile photo for your account. The photo is stored locally on your device and is never uploaded to our servers.',
-          [
-            {
-              text: 'Continue',
-              onPress: () => resolve(),
-            },
-          ],
-        );
       });
-
-      // Request permissions - this will show the system permission dialog
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-      if (status !== 'granted') {
-        // Save denied state for subsequent attempts
-        await AsyncStorage.setItem(permissionDeniedKey, 'true');
-        // Accept denial silently (Apple requirement - no retry, no auto-redirect)
-        return;
-      }
+      if (!canPick) return;
 
       // Launch image picker with square aspect ratio for profile photos
       const result = await ImagePicker.launchImageLibraryAsync({

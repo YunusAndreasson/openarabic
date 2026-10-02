@@ -2,7 +2,7 @@ import { COMPLETION_THRESHOLD } from '@/constants/layout';
 import type { Article } from '@/types/articles.types';
 import type { RootId } from '@/types/branded.types';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { calculateProgressPercentage } from '@/utils/progressUtils';
+import { getArticleProgressPercentage, type ReadingProgressLookup } from '@/utils/progressUtils';
 import { generateStorageUrl } from '@/utils/storageUtils';
 
 /**
@@ -130,6 +130,21 @@ export interface StarterArticlePick {
 }
 
 /**
+ * Each article's progress percentage, computed once so a sort or a filter over
+ * the list reads it instead of recomputing per comparison.
+ */
+function buildProgressCache(
+  articles: Article[],
+  progressMap: ReadingProgressLookup,
+): Map<number, number> {
+  const progressCache = new Map<number, number>();
+  for (const article of articles) {
+    progressCache.set(article.id, getArticleProgressPercentage(progressMap, article.id));
+  }
+  return progressCache;
+}
+
+/**
  * Pick "start here" articles for a fresh (or nearly fresh) user.
  * Guaranteed non-empty whenever `articles` is non-empty via a fallback cascade:
  * 1. unread beginner articles (difficulty ≤ 2)
@@ -142,19 +157,12 @@ export interface StarterArticlePick {
  */
 export function pickStarterArticles(
   articles: Article[],
-  progressMap: ReadonlyMap<number, { last_sentence_read: number; total_sentences: number }>,
+  progressMap: ReadingProgressLookup,
   max = 5,
 ): StarterArticlePick[] {
   if (articles.length === 0) return [];
 
-  const progressCache = new Map<number, number>();
-  for (const article of articles) {
-    const data = progressMap.get(article.id);
-    progressCache.set(
-      article.id,
-      data ? calculateProgressPercentage(data.last_sentence_read, data.total_sentences) : 0,
-    );
-  }
+  const progressCache = buildProgressCache(articles, progressMap);
 
   const unread = articles.filter(article => (progressCache.get(article.id) ?? 0) === 0);
 
@@ -177,7 +185,7 @@ export function pickStarterArticles(
  */
 export function pickStarterArticle(
   articles: Article[],
-  progressMap: ReadonlyMap<number, { last_sentence_read: number; total_sentences: number }>,
+  progressMap: ReadingProgressLookup,
 ): Article | undefined {
   return pickStarterArticles(articles, progressMap, 1)[0]?.article;
 }
@@ -246,6 +254,21 @@ function filterArticlesByWordSet(
 }
 
 /**
+ * Articles in which at least one word belongs to the given set of roots, in
+ * their original order. Use {@link getArticlesByDueWords} to rank by overlap.
+ */
+export function filterArticlesContainingRoots(
+  articles: Article[],
+  rootIds: ReadonlySet<number>,
+): Article[] {
+  return articles.filter(article =>
+    article.article_sentences.some(sentence =>
+      sentence.sentence_words?.some(word => rootIds.has(word.root_id)),
+    ),
+  );
+}
+
+/**
  * Gets articles sorted by due words count - articles with more due words are prioritized
  * @param articles - The articles to sort
  * @param dueWords - The user's due words (from studyWordsFSRSService)
@@ -271,17 +294,9 @@ export function getArticlesByDueWords(
  */
 export function sortArticlesByProgress(
   articles: Article[],
-  progressMap: Map<number, { last_sentence_read: number; total_sentences: number }>,
+  progressMap: ReadingProgressLookup,
 ): Article[] {
-  // Pre-calculate progress percentages for all articles (O(n) instead of O(n log n))
-  const progressCache = new Map<number, number>();
-  for (const article of articles) {
-    const data = progressMap.get(article.id);
-    progressCache.set(
-      article.id,
-      data ? calculateProgressPercentage(data.last_sentence_read, data.total_sentences) : 0,
-    );
-  }
+  const progressCache = buildProgressCache(articles, progressMap);
 
   return [...articles].sort((a, b) => {
     // Use cached progress values

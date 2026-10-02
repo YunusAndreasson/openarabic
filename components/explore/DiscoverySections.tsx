@@ -9,7 +9,7 @@ import { STRINGS } from '@/constants/strings';
 import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import type { Article } from '@/types/articles.types';
 import { deduplicateArticlesByImage } from '@/utils/articleUtils';
-import { calculateProgressPercentage } from '@/utils/progressUtils';
+import { getArticleProgressPercentage } from '@/utils/progressUtils';
 
 import { ArticleRail, type ArticleRailItem } from './ArticleRail';
 
@@ -69,15 +69,9 @@ const DiscoverySectionsComponent: FC<DiscoverySectionsProps> = ({ articlesData }
 
   // Filter out completed articles once for all sections
   const unreadArticles = useMemo(() => {
-    return articlesData.filter(article => {
-      const progressData = progressMap.get(article.id);
-      if (!progressData) return true;
-      const percentage = calculateProgressPercentage(
-        progressData.last_sentence_read,
-        progressData.total_sentences,
-      );
-      return percentage < COMPLETION_THRESHOLD;
-    });
+    return articlesData.filter(
+      article => getArticleProgressPercentage(progressMap, article.id) < COMPLETION_THRESHOLD,
+    );
   }, [articlesData, progressMap]);
 
   const sections = useMemo((): SectionConfig[] => {

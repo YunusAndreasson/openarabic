@@ -105,52 +105,48 @@ export interface PromptSilentLog {
   meta: Record<string, unknown>;
 }
 
+/** The columns of a row that never reached the recogniser: nothing was heard,
+ *  so nothing was transcribed, matched or timed. */
+const NOTHING_HEARD = {
+  transcript: null,
+  normalizedSpoken: null,
+  matched: false,
+  matchMethod: null,
+  similarity: null,
+  suggestion: null,
+  heardSpeech: null,
+  peakRms: null,
+  firstBufferMs: null,
+  stopDecidedAtMs: null,
+  modelId: null,
+} satisfies Partial<VoiceAttemptLog>;
+
 export async function logPromptSilent(log: PromptSilentLog): Promise<void> {
   await logVoiceAttempt({
+    ...NOTHING_HEARD,
     rootId: log.rootId,
     expected: log.expected,
-    transcript: null,
-    normalizedSpoken: null,
-    matched: false,
-    matchMethod: null,
-    similarity: null,
-    suggestion: null,
     resolution: 'prompt_silent',
     // No arm happened, and no attempt was consumed — this row describes the
     // card, not a try at answering it.
     attemptIndex: 0,
     durationMs: log.playMs,
     stopReason: null,
-    heardSpeech: null,
-    peakRms: null,
     bufferCount: null,
-    firstBufferMs: null,
-    stopDecidedAtMs: null,
-    modelId: null,
     meta: { ...log.meta, voiceEnabled: log.voiceEnabled },
   });
 }
 
 export async function logVoiceArmFailure(log: VoiceArmFailureLog): Promise<void> {
   await logVoiceAttempt({
+    ...NOTHING_HEARD,
     rootId: log.rootId,
     expected: log.expected,
-    transcript: null,
-    normalizedSpoken: null,
-    matched: false,
-    matchMethod: null,
-    similarity: null,
-    suggestion: null,
     resolution: 'arm_failed',
     attemptIndex: log.attemptIndex,
     durationMs: log.durationMs,
     stopReason: log.stopReason,
-    heardSpeech: null,
-    peakRms: null,
     bufferCount: log.bufferCount,
-    firstBufferMs: null,
-    stopDecidedAtMs: null,
-    modelId: null,
     meta: {
       ...log.meta,
       armReason: log.reason,

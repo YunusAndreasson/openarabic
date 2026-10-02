@@ -15,7 +15,7 @@ import { useArticlePrefetch } from '@/hooks/articles/useArticlePrefetch';
 import type { ArticleSearchResult } from '@/hooks/articles/useArticleSearch';
 import type { Article } from '@/types/articles.types';
 import { generateStorageUrl } from '@/utils/storageUtils';
-import { calculateReadingTime, getAuthorDisplayName } from '@/utils/stringUtils';
+import { getArticleMetadataWithoutCategory } from '@/utils/stringUtils';
 
 const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.LIST_ITEM;
 
@@ -99,11 +99,7 @@ export const SearchResultList: FC<SearchResultListProps> = ({
 
       // A body hit says why it is in the list; everything else keeps the
       // catalogue's own subtitle, as the rest of the app shows it.
-      const secondaryText =
-        bodySnippet ??
-        `${getAuthorDisplayName(article.author.name)} · ${calculateReadingTime(
-          article.article_sentences.length,
-        )}`;
+      const secondaryText = bodySnippet ?? getArticleMetadataWithoutCategory(article);
 
       return (
         <PlaylistItemCard

@@ -34,3 +34,26 @@ export function calculateProgressPercentage(
   // Example: index 99 in 100 sentences = (99 + 1) / 100 = 100%
   return Math.round(((lastSentenceRead + 1) / totalSentences) * 100);
 }
+
+/** The two fields a percentage is computed from; every reading-progress row carries them. */
+export interface SentenceProgress {
+  last_sentence_read: number;
+  total_sentences: number;
+}
+
+/** A bulk reading-progress lookup keyed by article id. */
+export type ReadingProgressLookup = ReadonlyMap<number, SentenceProgress>;
+
+/**
+ * Progress percentage for one article out of a bulk progress lookup.
+ * An article with no progress row — or a lookup that has not loaded — reads as 0.
+ */
+export function getArticleProgressPercentage(
+  progressMap: ReadingProgressLookup | null | undefined,
+  articleId: number,
+): number {
+  const progress = progressMap?.get(articleId);
+  return progress
+    ? calculateProgressPercentage(progress.last_sentence_read, progress.total_sentences)
+    : 0;
+}

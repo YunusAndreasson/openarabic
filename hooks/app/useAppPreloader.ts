@@ -17,7 +17,11 @@ import { articlesService } from '@/services/articles';
 import { readingProgressService } from '@/services/readingProgress';
 import type { Article } from '@/types/articles.types';
 import type { ArticleId } from '@/types/branded.types';
-import { getBeginnerArticles, getRandomItems } from '@/utils/articleUtils';
+import {
+  filterArticlesContainingRoots,
+  getBeginnerArticles,
+  getRandomItems,
+} from '@/utils/articleUtils';
 import { breadcrumb, handleError, toError } from '@/utils/errorHandling';
 import { runWhenIdle } from '@/utils/runWhenIdle';
 import { generateStorageUrl } from '@/utils/storageUtils';
@@ -102,11 +106,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
       // Perform intelligent featured article selection
       const performIntelligentSelection = () => {
         if (dueWordRootIds.size > 0) {
-          const dueWordArticles = allArticles.filter(article =>
-            article.article_sentences.some(sentence =>
-              sentence.sentence_words?.some(word => dueWordRootIds.has(word.root_id)),
-            ),
-          );
+          const dueWordArticles = filterArticlesContainingRoots(allArticles, dueWordRootIds);
 
           if (dueWordArticles.length > 0) {
             const selected = getRandomItems(dueWordArticles, MAX_FEATURED_ARTICLES);

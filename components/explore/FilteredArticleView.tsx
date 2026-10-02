@@ -13,8 +13,8 @@ import { useArticlePrefetch } from '@/hooks/articles/useArticlePrefetch';
 import { useFilteredArticles } from '@/hooks/articles/useFilteredArticles';
 import type { Article } from '@/types/articles.types';
 import { generateStorageUrl } from '@/utils/storageUtils';
-import { calculateProgressPercentage } from '@/utils/progressUtils';
-import { calculateReadingTime, getAuthorDisplayName } from '@/utils/stringUtils';
+import { getArticleProgressPercentage, type ReadingProgressLookup } from '@/utils/progressUtils';
+import { getArticleMetadataWithoutCategory } from '@/utils/stringUtils';
 
 // List item types
 interface SectionHeaderItem {
@@ -91,7 +91,7 @@ function spreadByImageUrl(articles: Article[]): Article[] {
  */
 function groupArticlesWithHeaders(
   articles: Article[],
-  progressMap: Map<number, { last_sentence_read: number; total_sentences: number }>,
+  progressMap: ReadingProgressLookup,
 ): ListItem[] {
   if (articles.length === 0) return [];
 
@@ -101,10 +101,7 @@ function groupArticlesWithHeaders(
   const completed: Article[] = [];
 
   articles.forEach(article => {
-    const progressData = progressMap.get(article.id);
-    const progress = progressData
-      ? calculateProgressPercentage(progressData.last_sentence_read, progressData.total_sentences)
-      : 0;
+    const progress = getArticleProgressPercentage(progressMap, article.id);
     if (progress > 0 && progress < COMPLETION_THRESHOLD) {
       continueReading.push(article);
     } else if (progress >= COMPLETION_THRESHOLD) {
@@ -117,23 +114,16 @@ function groupArticlesWithHeaders(
   // Flatten into list items with headers
   const listItems: ListItem[] = [];
 
-  if (continueReading.length > 0) {
-    listItems.push({ type: 'header', id: 'header-continue', title: STRINGS.CONTINUE_READING });
-    spreadByImageUrl(continueReading).forEach(article => {
-      listItems.push({ type: 'article', id: `article-${article.id}`, data: article });
-    });
-  }
+  const sections = [
+    { id: 'header-continue', title: STRINGS.CONTINUE_READING, articles: continueReading },
+    { id: 'header-unread', title: STRINGS.UNREAD, articles: unread },
+    { id: 'header-completed', title: STRINGS.COMPLETED, articles: completed },
+  ];
 
-  if (unread.length > 0) {
-    listItems.push({ type: 'header', id: 'header-unread', title: STRINGS.UNREAD });
-    spreadByImageUrl(unread).forEach(article => {
-      listItems.push({ type: 'article', id: `article-${article.id}`, data: article });
-    });
-  }
-
-  if (completed.length > 0) {
-    listItems.push({ type: 'header', id: 'header-completed', title: STRINGS.COMPLETED });
-    spreadByImageUrl(completed).forEach(article => {
+  for (const section of sections) {
+    if (section.articles.length === 0) continue;
+    listItems.push({ type: 'header', id: section.id, title: section.title });
+    spreadByImageUrl(section.articles).forEach(article => {
       listItems.push({ type: 'article', id: `article-${article.id}`, data: article });
     });
   }
@@ -189,18 +179,12 @@ export const FilteredArticleView: FC<FilteredArticleViewProps> = ({ articles, on
       }
 
       const article = item.data;
-      const progress = progressMap.get(article.id);
-      const progressPercentage = progress
-        ? calculateProgressPercentage(progress.last_sentence_read, progress.total_sentences)
-        : 0;
-
-      const readingTime = calculateReadingTime(article.article_sentences.length);
-      const secondaryText = `${getAuthorDisplayName(article.author.name)} · ${readingTime}`;
+      const progressPercentage = getArticleProgressPercentage(progressMap, article.id);
 
       return (
         <PlaylistItemCard
           title={article.title}
-          secondaryText={secondaryText}
+          secondaryText={getArticleMetadataWithoutCategory(article)}
           imageUrl={generateStorageUrl('images', article.image_url)}
           articleId={article.id}
           onPress={onArticlePress ? () => onArticlePress(article) : undefined}

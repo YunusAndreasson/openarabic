@@ -27,6 +27,22 @@ const LEGEND = [
   { role: 'negation', label: 'Negation' },
 ] as const;
 
+/** One worked phrase per combination of parts the legend names. */
+const EXAMPLES = [
+  // Conjunction + Article
+  { arabic: 'وَالْبَيْتِ', english: 'and the house', breakdown: 'و (and) + ال (the) + root word' },
+  // Preposition + Possessive
+  { arabic: 'بِكِتَابِي', english: 'with my book', breakdown: 'ب (with) + root + ي (my)' },
+  // Conjunction + Verb + Plural
+  { arabic: 'فَقَالُوا', english: 'so they said', breakdown: 'ف (so) + root + وا (they/plural)' },
+  // Preposition + Article + Plural
+  {
+    arabic: 'لِلْمُسْلِمِينَ',
+    english: 'to the Muslims',
+    breakdown: 'ل (to) + ال (the) + root + ين (plural)',
+  },
+] as const;
+
 /**
  * Displays interactive colored examples of Arabic text analysis
  * Shows how prefixes, suffixes, and other components are identified and colored
@@ -53,105 +69,31 @@ export const ArabicColoringExamples = memo(() => {
         </View>
       </View>
 
-      {/* Example 1: Conjunction + Article */}
-      <View style={styles.exampleContainer}>
-        <View style={styles.arabicRow}>
-          <ColorCodedText
-            text="وَالْبَيْتِ"
-            arabicWord="وَالْبَيْتِ"
-            englishTranslation="and the house"
-            isArabic={true}
-            arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.HUGE}
-          />
+      {EXAMPLES.map(example => (
+        <View key={example.arabic} style={styles.exampleContainer}>
+          <View style={styles.arabicRow}>
+            <ColorCodedText
+              text={example.arabic}
+              arabicWord={example.arabic}
+              englishTranslation={example.english}
+              isArabic={true}
+              arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.HUGE}
+            />
+          </View>
+          <View style={styles.translationRow}>
+            <ColorCodedText
+              text={example.english}
+              arabicWord={example.arabic}
+              englishTranslation={example.english}
+              isArabic={false}
+              type="body"
+            />
+          </View>
+          <ThemedText type="caption" colorName="textTertiary" style={styles.explanation}>
+            {example.breakdown}
+          </ThemedText>
         </View>
-        <View style={styles.translationRow}>
-          <ColorCodedText
-            text="and the house"
-            arabicWord="وَالْبَيْتِ"
-            englishTranslation="and the house"
-            isArabic={false}
-            type="body"
-          />
-        </View>
-        <ThemedText type="caption" colorName="textTertiary" style={styles.explanation}>
-          و (and) + ال (the) + root word
-        </ThemedText>
-      </View>
-
-      {/* Example 2: Preposition + Possessive */}
-      <View style={styles.exampleContainer}>
-        <View style={styles.arabicRow}>
-          <ColorCodedText
-            text="بِكِتَابِي"
-            arabicWord="بِكِتَابِي"
-            englishTranslation="with my book"
-            isArabic={true}
-            arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.HUGE}
-          />
-        </View>
-        <View style={styles.translationRow}>
-          <ColorCodedText
-            text="with my book"
-            arabicWord="بِكِتَابِي"
-            englishTranslation="with my book"
-            isArabic={false}
-            type="body"
-          />
-        </View>
-        <ThemedText type="caption" colorName="textTertiary" style={styles.explanation}>
-          ب (with) + root + ي (my)
-        </ThemedText>
-      </View>
-
-      {/* Example 3: Conjunction + Verb + Plural */}
-      <View style={styles.exampleContainer}>
-        <View style={styles.arabicRow}>
-          <ColorCodedText
-            text="فَقَالُوا"
-            arabicWord="فَقَالُوا"
-            englishTranslation="so they said"
-            isArabic={true}
-            arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.HUGE}
-          />
-        </View>
-        <View style={styles.translationRow}>
-          <ColorCodedText
-            text="so they said"
-            arabicWord="فَقَالُوا"
-            englishTranslation="so they said"
-            isArabic={false}
-            type="body"
-          />
-        </View>
-        <ThemedText type="caption" colorName="textTertiary" style={styles.explanation}>
-          ف (so) + root + وا (they/plural)
-        </ThemedText>
-      </View>
-
-      {/* Example 4: Preposition + Article + Plural */}
-      <View style={styles.exampleContainer}>
-        <View style={styles.arabicRow}>
-          <ColorCodedText
-            text="لِلْمُسْلِمِينَ"
-            arabicWord="لِلْمُسْلِمِينَ"
-            englishTranslation="to the Muslims"
-            isArabic={true}
-            arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.HUGE}
-          />
-        </View>
-        <View style={styles.translationRow}>
-          <ColorCodedText
-            text="to the Muslims"
-            arabicWord="لِلْمُسْلِمِينَ"
-            englishTranslation="to the Muslims"
-            isArabic={false}
-            type="body"
-          />
-        </View>
-        <ThemedText type="caption" colorName="textTertiary" style={styles.explanation}>
-          ل (to) + ال (the) + root + ين (plural)
-        </ThemedText>
-      </View>
+      ))}
 
       {/* Note about single words */}
       <View style={[styles.noteContainer, { borderTopColor: colors.border }]}>

@@ -302,6 +302,17 @@ export function runDetailedBenchmark(cases: GroundTruthCase[]): DetailedBenchmar
   // Pattern-level analysis
   const patternMetrics = new Map<string, PatternMetrics>();
 
+  // The running tally for one affix, created on first sight.
+  const metricFor = (type: PatternMetrics['type'], pattern: string): PatternMetrics => {
+    const key = `${type}:${pattern}`;
+    let metric = patternMetrics.get(key);
+    if (!metric) {
+      metric = { pattern, type, detections: 0, correct: 0, incorrect: 0, missed: 0, precision: 0 };
+      patternMetrics.set(key, metric);
+    }
+    return metric;
+  };
+
   // Collect failures
   const failures: FailureCase[] = [];
 
@@ -316,16 +327,7 @@ export function runDetailedBenchmark(cases: GroundTruthCase[]): DetailedBenchmar
 
     // Track prefix patterns
     for (const expected of testCase.expectedPrefixes) {
-      const key = `prefix:${expected}`;
-      const current = patternMetrics.get(key) || {
-        pattern: expected,
-        type: 'prefix' as const,
-        detections: 0,
-        correct: 0,
-        incorrect: 0,
-        missed: 0,
-        precision: 0,
-      };
+      const current = metricFor('prefix', expected);
 
       if (detectedPrefixes.includes(expected)) {
         current.detections++;
@@ -334,26 +336,15 @@ export function runDetailedBenchmark(cases: GroundTruthCase[]): DetailedBenchmar
         current.missed++;
       }
       current.precision = calculatePrecision(current.correct, current.incorrect);
-      patternMetrics.set(key, current);
     }
 
     // Track false positive prefixes
     for (const detected of detectedPrefixes) {
       if (!testCase.expectedPrefixes.includes(detected)) {
-        const key = `prefix:${detected}`;
-        const current = patternMetrics.get(key) || {
-          pattern: detected,
-          type: 'prefix' as const,
-          detections: 0,
-          correct: 0,
-          incorrect: 0,
-          missed: 0,
-          precision: 0,
-        };
+        const current = metricFor('prefix', detected);
         current.detections++;
         current.incorrect++;
         current.precision = calculatePrecision(current.correct, current.incorrect);
-        patternMetrics.set(key, current);
 
         failures.push({
           testCase,
@@ -366,16 +357,7 @@ export function runDetailedBenchmark(cases: GroundTruthCase[]): DetailedBenchmar
 
     // Track suffix patterns
     if (testCase.expectedSuffix) {
-      const key = `suffix:${testCase.expectedSuffix}`;
-      const current = patternMetrics.get(key) || {
-        pattern: testCase.expectedSuffix,
-        type: 'suffix' as const,
-        detections: 0,
-        correct: 0,
-        incorrect: 0,
-        missed: 0,
-        precision: 0,
-      };
+      const current = metricFor('suffix', testCase.expectedSuffix);
 
       if (detectedSuffix === testCase.expectedSuffix) {
         current.detections++;
@@ -390,25 +372,14 @@ export function runDetailedBenchmark(cases: GroundTruthCase[]): DetailedBenchmar
         });
       }
       current.precision = calculatePrecision(current.correct, current.incorrect);
-      patternMetrics.set(key, current);
     }
 
     // Track false positive suffix
     if (detectedSuffix && !testCase.expectedSuffix) {
-      const key = `suffix:${detectedSuffix}`;
-      const current = patternMetrics.get(key) || {
-        pattern: detectedSuffix,
-        type: 'suffix' as const,
-        detections: 0,
-        correct: 0,
-        incorrect: 0,
-        missed: 0,
-        precision: 0,
-      };
+      const current = metricFor('suffix', detectedSuffix);
       current.detections++;
       current.incorrect++;
       current.precision = calculatePrecision(current.correct, current.incorrect);
-      patternMetrics.set(key, current);
 
       failures.push({
         testCase,

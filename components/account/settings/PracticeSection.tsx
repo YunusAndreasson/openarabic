@@ -12,6 +12,7 @@ import { voiceReadiness } from '@/utils/voiceReadiness';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import {
   selectAdaptiveNewWordPacingEnabled,
+  selectDailyWordLimit,
   setAdaptiveNewWordPacingEnabled,
   setVoiceEnabled,
   setVoiceHandsFree,
@@ -51,7 +52,7 @@ export const PracticeSection = memo<PracticeSectionProps>(
     const voice = useVoiceGrading();
     const model = useVoiceModel();
 
-    const rawDailyWordLimit = useAppSelectorShallow(state => state.settings.dailyWordLimit);
+    const currentDailyWordLimit = useAppSelectorShallow(selectDailyWordLimit);
     // Through the selector, not the raw field — see selectHapticsEnabled for
     // why a field added after a user's install rehydrates as `undefined`.
     const adaptiveNewWordPacingEnabled = useAppSelectorShallow(selectAdaptiveNewWordPacingEnabled);
@@ -59,14 +60,6 @@ export const PracticeSection = memo<PracticeSectionProps>(
     const voiceHandsFree = useAppSelectorShallow(selectVoiceHandsFree);
 
     const dailyLimitSummary = useDailyWordLimitSummary();
-
-    const currentDailyWordLimit = useMemo(() => {
-      // Validate: must be a number (0, 10, 20, or 30)
-      if (typeof rawDailyWordLimit === 'number' && rawDailyWordLimit >= 0) {
-        return rawDailyWordLimit;
-      }
-      return 10; // Default to 10 words
-    }, [rawDailyWordLimit]);
 
     const currentDailyWordLimitText = useMemo(() => {
       // Same constant the "Unlimited" option card renders, not a second literal

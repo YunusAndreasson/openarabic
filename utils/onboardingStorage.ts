@@ -148,17 +148,28 @@ async function writeState(next: OnboardingProgressState, scope: AccountScope): P
 }
 
 /**
- * Mark a checklist step as done. Idempotent, fire-and-forget safe —
- * call from mutation callbacks / playback start without awaiting.
+ * Queued read-modify-write, bound to the account that was active when the
+ * caller asked. `update` returns the next state, or null to leave it untouched.
  */
-export async function markOnboardingStep(step: OnboardingStep): Promise<void> {
+async function updateState(
+  update: (state: OnboardingProgressState) => OnboardingProgressState | null,
+): Promise<void> {
   const scope = captureAccountScope();
   await enqueueMutation(async () => {
     if (!isCurrentScope(scope)) return;
     const state = await loadOnboardingStateForScope(scope);
-    if (!isCurrentScope(scope) || state[step]) return;
-    await writeState({ ...state, [step]: true }, scope);
+    if (!isCurrentScope(scope)) return;
+    const next = update(state);
+    if (next) await writeState(next, scope);
   });
+}
+
+/**
+ * Mark a checklist step as done. Idempotent, fire-and-forget safe —
+ * call from mutation callbacks / playback start without awaiting.
+ */
+export async function markOnboardingStep(step: OnboardingStep): Promise<void> {
+  await updateState(state => (state[step] ? null : { ...state, [step]: true }));
 }
 
 /**
@@ -166,31 +177,18 @@ export async function markOnboardingStep(step: OnboardingStep): Promise<void> {
  * suppresses the checklist and welcome intro (established accounts).
  */
 export async function initializeOnboarding(options: { dismissed: boolean }): Promise<void> {
-  const scope = captureAccountScope();
-  await enqueueMutation(async () => {
-    if (!isCurrentScope(scope)) return;
-    const state = await loadOnboardingStateForScope(scope);
-    if (!isCurrentScope(scope)) return;
-    await writeState(
-      {
-        ...state,
-        dismissed: options.dismissed,
-        initializedAt: new Date().toISOString(),
-      },
-      scope,
-    );
-  });
+  await updateState(state => ({
+    ...state,
+    dismissed: options.dismissed,
+    initializedAt: new Date().toISOString(),
+  }));
 }
 
 /** Persist that the checklist finished (all steps done, card collapsed). */
 export async function markChecklistCompleted(): Promise<void> {
-  const scope = captureAccountScope();
-  await enqueueMutation(async () => {
-    if (!isCurrentScope(scope)) return;
-    const state = await loadOnboardingStateForScope(scope);
-    if (!isCurrentScope(scope) || state.completedAt) return;
-    await writeState({ ...state, completedAt: new Date().toISOString() }, scope);
-  });
+  await updateState(state =>
+    state.completedAt ? null : { ...state, completedAt: new Date().toISOString() },
+  );
 }
 
 /**

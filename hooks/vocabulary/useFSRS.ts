@@ -393,18 +393,7 @@ export function useFSRS({
           // Re-ask within this session. The FSRS-advanced copy continues from the
           // new (Relearning/Review) state; `decision.lag` rides the existing
           // spacing-counter decrement, so no change to fsrsSpacing is needed.
-          const updatedWord: StudyWord = {
-            ...currentWord,
-            fsrs_stability: newCard.stability,
-            fsrs_difficulty: newCard.difficulty,
-            fsrs_scheduled_days: newCard.scheduled_days,
-            fsrs_reps: newCard.reps,
-            fsrs_learning_steps: newCard.learning_steps,
-            fsrs_lapses: newCard.lapses,
-            fsrs_state: newCard.state,
-            fsrs_last_review: now.toISOString(),
-            fsrs_due: newCard.due.toISOString(),
-          };
+          const updatedWord: StudyWord = { ...currentWord, ...wordUpdateData };
           spacingQueueRef.current.spacedWords.push({
             word: updatedWord,
             remainingSpacing: decision.lag,

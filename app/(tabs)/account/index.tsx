@@ -24,7 +24,11 @@ import { useAccountScreen } from '@/hooks/account';
 import { useMiniPlayerClearance } from '@/hooks/audio/useMiniPlayerClearance';
 import { useTabBarAutoHide } from '@/hooks/ui/useTabBarAutoHide';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
-import { setAudioLanguagePreference, setDailyWordLimit } from '@/store/settingsSlice';
+import {
+  selectDailyWordLimit,
+  setAudioLanguagePreference,
+  setDailyWordLimit,
+} from '@/store/settingsSlice';
 import { setTheme } from '@/store/themeSlice';
 import { AudioLanguage } from '@/types/enums';
 import { formatBytes } from '@/utils/cacheUtils';
@@ -58,14 +62,7 @@ const AccountScreen: FC = () => {
     [rawAudioLanguage],
   );
 
-  const rawDailyWordLimit = useAppSelectorShallow(state => state.settings.dailyWordLimit);
-  const currentDailyWordLimit = useMemo(() => {
-    // Validate: must be a number (0, 10, 20, or 30)
-    if (typeof rawDailyWordLimit === 'number' && rawDailyWordLimit >= 0) {
-      return rawDailyWordLimit;
-    }
-    return 10; // Default to 10 words
-  }, [rawDailyWordLimit]);
+  const currentDailyWordLimit = useAppSelectorShallow(selectDailyWordLimit);
 
   const {
     reminderTime,

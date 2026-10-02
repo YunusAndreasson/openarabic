@@ -12,7 +12,7 @@ import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { analytics } from '@/services/analytics';
 import { enhancedAudioService, warmTrackCache } from '@/services/audioPlaylist';
-import { simpleAudioService } from '@/services/audioPlayer';
+import { simpleAudioService, type SourceTrackedAudioTrack } from '@/services/audioPlayer';
 import { bookmarkService } from '@/services/bookmark';
 import { useAppDispatch, useAppSelector, useAppSelectorShallow } from '@/store/hooks';
 import { removeFromCustomOrder } from '@/store/playlistSlice';
@@ -134,6 +134,42 @@ export const usePlaylistScreen = () => {
   useRefreshOnFocus(readingListQuery.refetch);
   useRefreshOnFocus(enhancedTracksQuery.refetch);
 
+  // STABILIZATION: Debounce the return to idle so a stop/start pair doesn't
+  // flicker the Play All control.
+  const resetPlaybackModeSoon = useCallback(() => {
+    setTimer('playbackMode', () => setPlaybackMode('none'), TIMING_CONSTANTS.QUICK_DELAY);
+  }, [setTimer]);
+
+  /** Start a playlist and keep the screen's playback mode in step with it. */
+  const startPlaylist = useCallback(
+    async (tracks: SourceTrackedAudioTrack[]) => {
+      const success = await simpleAudioService.playPlaylist(tracks, nextTrack => {
+        // Callback when a track completes and the next one starts
+        if (nextTrack?.articleId) {
+          // Prefetch the next article's data and image for smooth transitions
+          void prefetchArticleWithImage(nextTrack.articleId, queryClient, prefetchArticle);
+          // Cache the now-playing track for offline replay (no-op if it was
+          // already local). Only ever the current track — warming the whole
+          // playlist is what used to saturate the connection.
+          warmTrackCache(nextTrack);
+        } else {
+          // Playlist is complete, reset playback mode
+          resetPlaybackModeSoon();
+        }
+      });
+
+      if (success) {
+        // Playback is live — warm only the track that's actually playing.
+        const firstTrack = tracks[0];
+        if (firstTrack) warmTrackCache(firstTrack);
+        void markOnboardingStep(OnboardingStep.LISTEN_AUDIO);
+      } else {
+        resetPlaybackModeSoon();
+      }
+    },
+    [queryClient, prefetchArticle, resetPlaybackModeSoon],
+  );
+
   // STABILIZATION: Enhanced handlePlayAll with better state management
   const handlePlayAll = useCallback(
     async (forceArabicOnly = false) => {
@@ -155,10 +191,9 @@ export const usePlaylistScreen = () => {
         try {
           selectionFeedback();
           await simpleAudioService.stop();
-          // STABILIZATION: Debounce playback mode change
-          setTimer('playbackMode', () => setPlaybackMode('none'), TIMING_CONSTANTS.QUICK_DELAY);
+          resetPlaybackModeSoon();
         } catch {
-          setTimer('playbackMode', () => setPlaybackMode('none'), TIMING_CONSTANTS.QUICK_DELAY);
+          resetPlaybackModeSoon();
         }
       } else if (currentTracks.length) {
         try {
@@ -197,31 +232,9 @@ export const usePlaylistScreen = () => {
             ? shuffleArray(effectiveTracks)
             : effectiveTracks;
 
-          const success = await simpleAudioService.playPlaylist(tracksToPlay, nextTrack => {
-            // Callback when a track completes and the next one starts
-            if (nextTrack?.articleId) {
-              // Prefetch the next article's data and image for smooth transitions
-              void prefetchArticleWithImage(nextTrack.articleId, queryClient, prefetchArticle);
-              // Cache the now-playing track for offline replay (no-op if it was
-              // already local). Only ever the current track — warming the whole
-              // playlist is what used to saturate the connection.
-              warmTrackCache(nextTrack);
-            } else {
-              // Playlist is complete, reset playback mode
-              setTimer('playbackMode', () => setPlaybackMode('none'), TIMING_CONSTANTS.QUICK_DELAY);
-            }
-          });
-
-          if (success) {
-            // Playback is live — warm only the track that's actually playing.
-            const firstTrack = tracksToPlay[0];
-            if (firstTrack) warmTrackCache(firstTrack);
-            void markOnboardingStep(OnboardingStep.LISTEN_AUDIO);
-          } else {
-            setTimer('playbackMode', () => setPlaybackMode('none'), TIMING_CONSTANTS.QUICK_DELAY);
-          }
+          await startPlaylist(tracksToPlay);
         } catch (error) {
-          setTimer('playbackMode', () => setPlaybackMode('none'), TIMING_CONSTANTS.QUICK_DELAY);
+          resetPlaybackModeSoon();
           void handleError(error);
         }
       }
@@ -232,10 +245,9 @@ export const usePlaylistScreen = () => {
       audioPreference,
       audioShuffleEnabled,
       user,
-      queryClient,
-      prefetchArticle,
       clearTimer,
-      setTimer,
+      resetPlaybackModeSoon,
+      startPlaylist,
     ],
   );
 
@@ -290,8 +302,7 @@ export const usePlaylistScreen = () => {
       if (isCurrentlyPlaying && currentArticleId === articleId) {
         selectionFeedback();
         await simpleAudioService.stop();
-        // STABILIZATION: Debounce playback mode change
-        setTimer('playbackMode', () => setPlaybackMode('none'), TIMING_CONSTANTS.QUICK_DELAY);
+        resetPlaybackModeSoon();
         return;
       }
 
@@ -337,29 +348,20 @@ export const usePlaylistScreen = () => {
           playlist_total: sortedEnhancedTracks.length,
         });
 
-        const success = await simpleAudioService.playPlaylist(tracksFromHere, nextTrack => {
-          if (nextTrack?.articleId) {
-            void prefetchArticleWithImage(nextTrack.articleId, queryClient, prefetchArticle);
-            warmTrackCache(nextTrack);
-          } else {
-            // Playlist complete
-            setTimer('playbackMode', () => setPlaybackMode('none'), TIMING_CONSTANTS.QUICK_DELAY);
-          }
-        });
-
-        if (success) {
-          const firstTrack = tracksFromHere[0];
-          if (firstTrack) warmTrackCache(firstTrack);
-          void markOnboardingStep(OnboardingStep.LISTEN_AUDIO);
-        } else {
-          setTimer('playbackMode', () => setPlaybackMode('none'), TIMING_CONSTANTS.QUICK_DELAY);
-        }
+        await startPlaylist(tracksFromHere);
       } catch (error) {
-        setTimer('playbackMode', () => setPlaybackMode('none'), TIMING_CONSTANTS.QUICK_DELAY);
+        resetPlaybackModeSoon();
         void handleError(error);
       }
     },
-    [sortedEnhancedTracks, audioPreference, queryClient, prefetchArticle, setTimer],
+    [
+      sortedEnhancedTracks,
+      audioPreference,
+      queryClient,
+      prefetchArticle,
+      resetPlaybackModeSoon,
+      startPlaylist,
+    ],
   );
 
   // Clean up leaked non-playlist audio when the screen loses focus.

@@ -8,9 +8,12 @@ import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
 import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useAuth } from '@/hooks/auth/useAuth';
 import type { Article } from '@/types/articles.types';
-import type { SentenceWord } from '@/types/vocabulary.types';
-import { getBeginnerArticles, getRandomItems } from '@/utils/articleUtils';
-import { calculateProgressPercentage } from '@/utils/progressUtils';
+import {
+  filterArticlesContainingRoots,
+  getBeginnerArticles,
+  getRandomItems,
+} from '@/utils/articleUtils';
+import { getArticleProgressPercentage } from '@/utils/progressUtils';
 import { isHardWord } from '@/utils/wordClassification';
 
 interface MultipleFeaturedArticlesResult {
@@ -85,19 +88,10 @@ export function useMultipleFeaturedArticles(
   const unreadArticles = useMemo(() => {
     if (!progressMap || progressMap.size === 0) return articlesData;
 
-    return articlesData.filter(article => {
-      const progress = progressMap.get(article.id);
-
-      // Include if unread (no progress entry)
-      if (!progress) return true;
-
-      // Include only if truly unread (0% progress)
-      const progressPercentage = calculateProgressPercentage(
-        progress.last_sentence_read,
-        progress.total_sentences,
-      );
-      return progressPercentage === 0;
-    });
+    // No progress row and a row at 0% are both unread.
+    return articlesData.filter(
+      article => getArticleProgressPercentage(progressMap, article.id) === 0,
+    );
   }, [articlesData, progressMap]);
 
   // Cache the initial selection to prevent flashing
@@ -155,6 +149,14 @@ export function useMultipleFeaturedArticles(
 
   // Memoize the selection logic to prevent infinite re-renders
   const selectionLogic = useCallback(() => {
+    // The fallback every strategy lands on when it has nothing more specific.
+    const randomSelection = (): MultipleFeaturedArticlesResult => ({
+      articles: getRandomItems(unreadArticles, MAX_FEATURED_ARTICLES),
+      reason: STRINGS.RECOMMENDED,
+      type: 'random',
+      dueWordRootIds: stableDueWordSet,
+    });
+
     // Determine the selection strategy and compute the result once
     let result: MultipleFeaturedArticlesResult;
 
@@ -177,29 +179,16 @@ export function useMultipleFeaturedArticles(
 
         // Strategy 1: If user has due words and enough articles with those words
         if (user?.id && hasDueWordArticles && stableDueWordSet.size > 0) {
-          const dueWordArticles = unreadArticles.filter(article =>
-            article.article_sentences.some(sentence =>
-              sentence.sentence_words?.some((word: SentenceWord) =>
-                stableDueWordSet.has(word.root_id),
-              ),
-            ),
-          );
-
-          if (dueWordArticles.length > 0) {
-            intelligentSelection = {
-              articles: getRandomItems(dueWordArticles, MAX_FEATURED_ARTICLES),
-              reason: STRINGS.SELECTED_TO_HELP_PRACTICE_DUE,
-              type: 'due-words',
-              dueWordRootIds: stableDueWordSet,
-            };
-          } else {
-            intelligentSelection = {
-              articles: getRandomItems(unreadArticles, MAX_FEATURED_ARTICLES),
-              reason: STRINGS.RECOMMENDED,
-              type: 'random' as const,
-              dueWordRootIds: stableDueWordSet,
-            };
-          }
+          const dueWordArticles = filterArticlesContainingRoots(unreadArticles, stableDueWordSet);
+          intelligentSelection =
+            dueWordArticles.length > 0
+              ? {
+                  articles: getRandomItems(dueWordArticles, MAX_FEATURED_ARTICLES),
+                  reason: STRINGS.SELECTED_TO_HELP_PRACTICE_DUE,
+                  type: 'due-words',
+                  dueWordRootIds: stableDueWordSet,
+                }
+              : randomSelection();
         }
         // Strategy 2: If user has difficult words and study progress
         else if (
@@ -208,57 +197,36 @@ export function useMultipleFeaturedArticles(
           stableDifficultWordSet.size > 0 &&
           hasAnyStudyWords
         ) {
-          const difficultWordArticles = unreadArticles.filter(article =>
-            article.article_sentences.some(sentence =>
-              sentence.sentence_words?.some((word: SentenceWord) =>
-                stableDifficultWordSet.has(word.root_id),
-              ),
-            ),
+          const difficultWordArticles = filterArticlesContainingRoots(
+            unreadArticles,
+            stableDifficultWordSet,
           );
-
-          if (difficultWordArticles.length > 0) {
-            intelligentSelection = {
-              articles: getRandomItems(difficultWordArticles, MAX_FEATURED_ARTICLES),
-              reason: STRINGS.CHOSEN_TO_REINFORCE_CHALLENGING,
-              type: 'difficult-words',
-              dueWordRootIds: stableDueWordSet,
-            };
-          } else {
-            intelligentSelection = {
-              articles: getRandomItems(unreadArticles, MAX_FEATURED_ARTICLES),
-              reason: STRINGS.RECOMMENDED,
-              type: 'random' as const,
-              dueWordRootIds: stableDueWordSet,
-            };
-          }
+          intelligentSelection =
+            difficultWordArticles.length > 0
+              ? {
+                  articles: getRandomItems(difficultWordArticles, MAX_FEATURED_ARTICLES),
+                  reason: STRINGS.CHOSEN_TO_REINFORCE_CHALLENGING,
+                  type: 'difficult-words',
+                  dueWordRootIds: stableDueWordSet,
+                }
+              : randomSelection();
         }
         // Strategy 3: If new user, show beginner-friendly articles
         else if (!user?.id || !hasAnyStudyWords) {
           const beginnerArticles = getBeginnerArticles(unreadArticles);
-          if (beginnerArticles.length > 0) {
-            intelligentSelection = {
-              articles: getRandomItems(beginnerArticles, MAX_FEATURED_ARTICLES),
-              reason: STRINGS.RECOMMENDED,
-              type: 'beginner',
-              dueWordRootIds: stableDueWordSet,
-            };
-          } else {
-            intelligentSelection = {
-              articles: getRandomItems(unreadArticles, MAX_FEATURED_ARTICLES),
-              reason: STRINGS.RECOMMENDED,
-              type: 'random' as const,
-              dueWordRootIds: stableDueWordSet,
-            };
-          }
+          intelligentSelection =
+            beginnerArticles.length > 0
+              ? {
+                  articles: getRandomItems(beginnerArticles, MAX_FEATURED_ARTICLES),
+                  reason: STRINGS.RECOMMENDED,
+                  type: 'beginner',
+                  dueWordRootIds: stableDueWordSet,
+                }
+              : randomSelection();
         }
         // Strategy 4: Fallback to random selection
         else {
-          intelligentSelection = {
-            articles: getRandomItems(unreadArticles, MAX_FEATURED_ARTICLES),
-            reason: STRINGS.RECOMMENDED,
-            type: 'random' as const,
-            dueWordRootIds: stableDueWordSet,
-          };
+          intelligentSelection = randomSelection();
         }
 
         // Cache the intelligent selection (including session ID for fresh selection on app relaunch)
@@ -281,12 +249,7 @@ export function useMultipleFeaturedArticles(
       }
     } else {
       // For refreshes, always perform new selection for variety from unread/low-progress articles
-      result = {
-        articles: getRandomItems(unreadArticles, MAX_FEATURED_ARTICLES),
-        reason: STRINGS.RECOMMENDED,
-        type: 'random' as const,
-        dueWordRootIds: stableDueWordSet,
-      };
+      result = randomSelection();
     }
 
     // Set the result only once per execution
