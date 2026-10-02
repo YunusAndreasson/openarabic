@@ -5,14 +5,13 @@ import { useCallback } from 'react';
 import { useToast } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { REFUSAL_TOAST_DURATION } from '@/constants/animation';
-import { audioQueries, fsrsQueries } from '@/constants/queries';
+import { fsrsQueries } from '@/constants/queries';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useDailyWordLimit } from '@/hooks/vocabulary';
 import { analytics } from '@/services/analytics';
 import { studyWordsFSRSService, type StudyWordMutationResult } from '@/services/studyWordsFSRS';
 import { checkAuthentication } from '@/services/supabase';
-import { useAppSelector } from '@/store/hooks';
 import type { RootId } from '@/types/branded.types';
 import { ToastType } from '@/types/enums';
 import type { StudyWord, StudyWordIntent } from '@/types/vocabulary.types';
@@ -88,7 +87,6 @@ export const useStudyWordMutations = (
 ): StudyWordMutationsResult => {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
-  const audioPreference = useAppSelector(state => state.settings.audioLanguagePreference);
   const {
     dailyWordLimit,
     canAddWord,
@@ -279,11 +277,12 @@ export const useStudyWordMutations = (
       }
       // No event when an intent-carrying call was a no-op (state unchanged)
 
-      // Invalidate queries in background (don't await - optimistic update already applied)
+      // Invalidate queries in background (don't await - optimistic update already applied).
+      // FSRS only: the audio tracks are built from the reading list, which a
+      // saved word does not touch. (The guard on the audio language — always
+      // set — re-fetched the reading list and re-checked every article's audio
+      // cache on each save.)
       void fsrsQueries.invalidateAll(queryClient, userId);
-      if (audioPreference) {
-        void audioQueries.invalidateAll(queryClient, userId);
-      }
 
       // Call refetch callback if provided (also don't await)
       void refetchStudyWords?.();

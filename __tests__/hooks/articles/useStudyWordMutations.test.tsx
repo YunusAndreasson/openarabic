@@ -591,5 +591,26 @@ describe('useStudyWordMutations', () => {
         expect(mockRefetch).toHaveBeenCalled();
       });
     });
+
+    test('a word save refreshes the study lists, not the audio playlist', async () => {
+      // The playlist's tracks come from the reading list, which saving a word
+      // does not touch; invalidating them re-fetched the reading list and
+      // re-checked every article's audio cache on each save.
+      const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
+      const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
+
+      await act(async () => {
+        await result.current.toggleRootMutation.mutateAsync({
+          userId: 'test-user-id',
+          rootId: 1 as RootId,
+        });
+      });
+
+      await waitFor(() => {
+        expect(invalidate).toHaveBeenCalled();
+      });
+      const invalidatedKeys = invalidate.mock.calls.map(([filters]) => filters?.queryKey?.[0]);
+      expect(invalidatedKeys).not.toContain('enhancedAudioTracks');
+    });
   });
 });

@@ -65,7 +65,12 @@ export const useArticleData = (
 
   const studyWords = studyWordsQuery.data ?? EMPTY_STUDY_WORDS;
   const dueWords = dueWordsQuery.data ?? EMPTY_STUDY_WORDS;
-  const refetchStudyWords = studyWordsQuery.refetch;
+  // Joins a fetch already in flight instead of TanStack's default of cancelling
+  // and restarting it. A word save triggers three refreshes of this same list —
+  // the mutation's invalidation, its success callback and the save handler —
+  // and each cancel-and-restart re-downloaded the whole vocabulary (the
+  // service ignores the abort, so the "cancelled" requests ran to completion).
+  const refetchStudyWords = () => studyWordsQuery.refetch({ cancelRefetch: false });
   const isLoadingStudyWords = studyWordsQuery.isLoading;
 
   // Process sentences from article data - no additional fetch needed
