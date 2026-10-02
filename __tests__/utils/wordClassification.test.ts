@@ -16,6 +16,7 @@ import type { StudyWord } from '@/types/vocabulary.types';
 import { calculateDueWordsForecast } from '@/utils/fsrsUtils';
 import { filterDueWords } from '@/utils/newWordPacing';
 import {
+  countReviewedToday,
   dueTimestampMs,
   isDueAt,
   isDueWord,
@@ -252,6 +253,22 @@ describe('wordClassification', () => {
         fsrs_stability: null,
       });
       expect(isMasteredWord(wordWithNullStability)).toBeFalsy();
+    });
+  });
+
+  describe('countReviewedToday', () => {
+    test('counts from the local midnight of the instant it is given', () => {
+      // A word last reviewed at 22:00 belongs to that day only. Computed for
+      // the next morning it no longer counts — the figure has to move with the
+      // instant, not with whenever the word list was last fetched.
+      const lateEvening = new Date(2026, 9, 1, 22, 0);
+      const word = createStudyWord({
+        fsrs_reps: 3,
+        fsrs_last_review: lateEvening.toISOString(),
+      });
+
+      expect(countReviewedToday([word], new Date(2026, 9, 1, 23, 30))).toBe(1);
+      expect(countReviewedToday([word], new Date(2026, 9, 2, 8, 0))).toBe(0);
     });
   });
 });

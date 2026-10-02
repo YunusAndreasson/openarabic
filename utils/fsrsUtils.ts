@@ -77,9 +77,7 @@ export function timeUntilRetrievability(stabilityDays: number, threshold: number
  * Generate forecast dates for the next 7 days
  * Internal helper function for calculateRetrievabilityForecast and calculateDueWordsForecast
  */
-function generateForecastDates(days: number = 7): Date[] {
-  const now = new Date();
-
+function generateForecastDates(days: number = 7, now: Date = new Date()): Date[] {
   // The first bucket is NOW, not the end of today. Both charts label it
   // "Today" and read as a statement about this moment — the due chart's
   // "<N> to review today" sits beside a CTA that counts what is due right now,
@@ -104,6 +102,7 @@ function generateForecastDates(days: number = 7): Date[] {
 export function calculateRetrievabilityForecast(
   studyWords: StudyWord[],
   days: number = 7,
+  now: Date = new Date(),
 ): RetrievabilityForecast[] {
   // Filter to only include words that have actually been reviewed.
   //
@@ -122,7 +121,7 @@ export function calculateRetrievabilityForecast(
   }, []);
 
   // Generate future dates for forecasting
-  const dates = generateForecastDates(days);
+  const dates = generateForecastDates(days, now);
 
   return dates.map(date => {
     let totalRetrievability = 0;
@@ -163,6 +162,7 @@ export function calculateRetrievabilityForecast(
 export function calculateDueWordsForecast(
   studyWords: StudyWord[],
   days: number = 7,
+  now: Date = new Date(),
 ): DueWordsForecast[] {
   // ONE rule decides both which words belong to this forecast and, per day,
   // whether they have come due — so the denominator and the counts can never
@@ -182,7 +182,7 @@ export function calculateDueWordsForecast(
     .filter(dueMs => dueMs < Number.POSITIVE_INFINITY);
 
   // Generate future dates for forecasting
-  const dates = generateForecastDates(days);
+  const dates = generateForecastDates(days, now);
 
   const dateData = dates.map(date => ({ date, targetMs: date.getTime() }));
 

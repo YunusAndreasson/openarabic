@@ -21,8 +21,8 @@ export function isHardWord(word: StudyWord): boolean {
  * One fsrs_last_review per word is the only per-day review granularity the
  * schema allows — unique words reviewed, which is the unit a learner thinks in.
  */
-export function countReviewedToday(studyWords: StudyWord[]): number {
-  const startOfToday = new Date();
+export function countReviewedToday(studyWords: StudyWord[], now: Date = new Date()): number {
+  const startOfToday = new Date(now);
   startOfToday.setHours(0, 0, 0, 0);
   const startMs = startOfToday.getTime();
 

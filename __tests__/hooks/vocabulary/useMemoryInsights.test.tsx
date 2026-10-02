@@ -146,10 +146,34 @@ describe('useMemoryInsights', () => {
   describe('Practice hero snapshot', () => {
     test('requests only the current forecast bucket', () => {
       const words = [createTestWord({ fsrs_state: 2, fsrs_stability: 5, fsrs_reps: 3 })];
-      const { result } = renderHook(() => useRecallableMemory(words));
+      const now = Date.UTC(2026, 9, 2, 12);
+      const { result } = renderHook(() => useRecallableMemory(words, now));
 
       expect(result.current).toEqual({ recallableWords: 1, measuredWords: 1 });
-      expect(jest.mocked(calculateRetrievabilityForecast)).toHaveBeenCalledWith(words, 1);
+      expect(jest.mocked(calculateRetrievabilityForecast)).toHaveBeenCalledWith(
+        words,
+        1,
+        new Date(now),
+      );
+    });
+
+    test('recomputes for a new instant even when the word list is unchanged', () => {
+      // The list keeps its identity across identical refetches, so the
+      // instant has to be what moves the snapshot on (overnight, on resume).
+      const words = [createTestWord({ fsrs_state: 2, fsrs_stability: 5, fsrs_reps: 3 })];
+      const { rerender } = renderHook(
+        ({ now }: { now: number }) => useRecallableMemory(words, now),
+        { initialProps: { now: Date.UTC(2026, 9, 2, 12) } },
+      );
+      jest.mocked(calculateRetrievabilityForecast).mockClear();
+
+      rerender({ now: Date.UTC(2026, 9, 3, 8) });
+
+      expect(jest.mocked(calculateRetrievabilityForecast)).toHaveBeenCalledWith(
+        words,
+        1,
+        new Date(Date.UTC(2026, 9, 3, 8)),
+      );
     });
   });
 });

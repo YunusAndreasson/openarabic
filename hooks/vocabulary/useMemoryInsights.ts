@@ -126,9 +126,9 @@ export function useMemoryInsights(studyWords: StudyWord[]): MemoryInsights {
  * seven-day decay forecast. Keeping this as a separate hook avoids six extra
  * full-vocabulary FSRS passes whenever the Review tab's word data changes.
  */
-export function useRecallableMemory(studyWords: StudyWord[]): RecallableMemory {
+export function useRecallableMemory(studyWords: StudyWord[], now: number): RecallableMemory {
   return useMemo(
-    () => getRecallableMemory(calculateRetrievabilityForecast(studyWords, 1)[0]),
-    [studyWords],
+    () => getRecallableMemory(calculateRetrievabilityForecast(studyWords, 1, new Date(now))[0]),
+    [studyWords, now],
   );
 }

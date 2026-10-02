@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useFocusEffect, useRouter } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -17,6 +17,7 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useVoiceGrading } from '@/components/providers';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
+import { useResumeFromBackground } from '@/hooks/app/useResumeFromBackground';
 import { useMiniPlayerClearance } from '@/hooks/audio/useMiniPlayerClearance';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useStudyStreak } from '@/hooks/practice/useStudyStreak';
@@ -112,10 +113,21 @@ export default function PracticeScreen(): JSX.Element {
   // Memory capacity gauge needs all words, not just due
   const studyWords = useMemo(() => allWords ?? [], [allWords]);
 
+  // The instant the time-dependent figures below are computed for. They used
+  // to read the clock inside memos keyed only on the word list — and the list
+  // keeps its identity across identical refetches, so a tab left open
+  // overnight, or resumed days later, kept showing yesterday's "reviewed
+  // today", recall and week-ahead figures. Refreshed whenever the tab is shown
+  // or the app comes back.
+  const [now, setNow] = useState(() => Date.now());
+  const refreshNow = useCallback(() => setNow(Date.now()), []);
+  useFocusEffect(refreshNow);
+  useResumeFromBackground(refreshNow);
+
   // Only the current recall snapshot is needed here. The full seven-day
   // forgetting forecast belongs to the due-words sheet and is intentionally
   // not computed on the tab's reveal path.
-  const memory = useRecallableMemory(studyWords);
+  const memory = useRecallableMemory(studyWords, now);
 
   // Don't show error if user is not authenticated yet - this is expected during auth flow
   const shouldShowError = error && user;
@@ -167,7 +179,10 @@ export default function PracticeScreen(): JSX.Element {
   // the only per-day granularity the schema allows, so re-asking the same word
   // inside a session does not add to this — which is why the label says "words
   // reviewed today" rather than "reviews".
-  const reviewedToday = useMemo(() => countReviewedToday(studyWords), [studyWords]);
+  const reviewedToday = useMemo(
+    () => countReviewedToday(studyWords, new Date(now)),
+    [studyWords, now],
+  );
 
   // Grades given across the whole collection. Exact, and monotone in a way the
   // streak is not: `fsrs_reps` only ever falls through an explicit, confirmed
@@ -179,7 +194,10 @@ export default function PracticeScreen(): JSX.Element {
 
   // Seven days of due counts for the week-ahead card. The same series the
   // /due-words sheet plots — one fact at two resolutions, never two facts.
-  const forecast = useMemo(() => calculateDueWordsForecast(studyWords, DAYS_7), [studyWords]);
+  const forecast = useMemo(
+    () => calculateDueWordsForecast(studyWords, DAYS_7, new Date(now)),
+    [studyWords, now],
+  );
 
   // The distribution behind the memory constellation.
   const distribution = useMemoryHorizonDistribution(studyWords);
