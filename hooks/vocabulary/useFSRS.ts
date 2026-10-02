@@ -652,12 +652,14 @@ export function useFSRS({
     backlogRef.current = [];
   }, []);
 
-  // Clean up on unmount
-  useEffect(() => {
-    return () => {
-      resetQueue();
-    };
-  }, [resetQueue]);
+  // Deliberately NO unmount cleanup that resets the queue. It would reset only
+  // this instance's own refs and state, which die with it anyway — and React
+  // runs unmount cleanups in declaration order, so it ran BEFORE the consumer's
+  // (useReview's finalize, declared after this hook is called). That flipped
+  // `queueInitialized` off first, so the grade the consumer commits on its way
+  // out — a "Forgot" during the restudy hold, or any grade still on its fade
+  // when Android back or the swipe-down closes the review — was rejected as
+  // 'unavailable' and never written.
 
   /**
    * Settle every backgrounded FSRS write. Callers that are about to re-read the

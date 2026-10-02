@@ -18,6 +18,7 @@
 // Unmock React Query to test real hook behavior
 jest.unmock('@tanstack/react-query');
 
+import { useEffect, useRef } from 'react';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import { State } from 'ts-fsrs';
@@ -910,6 +911,48 @@ describe('useFSRS Hook', () => {
 
       // Should not throw on unmount
       expect(() => unmount()).not.toThrow();
+    });
+
+    test('a grade committed from a later unmount cleanup is still written', async () => {
+      const words = [createMockStudyWord({ root_id: 1 as RootId })];
+      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => words);
+
+      // Mirrors useReview: it calls useFSRS first and declares its own unmount
+      // cleanup afterwards, so React runs that cleanup after useFSRS's — and
+      // the cleanup commits a grade still waiting on the fade/restudy hold.
+      let exitGrade: ReturnType<ReturnType<typeof useFSRS>['updateWord']> | undefined;
+      const { result, unmount } = renderHook(
+        () => {
+          const fsrs = useFSRS({ userId: 'test-user' });
+          const updateWordRef = useRef(fsrs.updateWord);
+          useEffect(() => {
+            updateWordRef.current = fsrs.updateWord;
+          });
+          useEffect(
+            () => () => {
+              exitGrade = updateWordRef.current(1 as RootId, 'unknown');
+            },
+            [],
+          );
+          return fsrs;
+        },
+        { wrapper },
+      );
+
+      await waitFor(() => {
+        expect(result.current.currentWord).not.toBeNull();
+      });
+
+      unmount();
+
+      await expect(exitGrade).resolves.toMatchObject({ status: 'committed' });
+      await waitFor(() => {
+        expect(studyWordsFSRSService.updateWordAndReview).toHaveBeenCalledWith(
+          'test-user',
+          1,
+          expect.any(Object),
+        );
+      });
     });
   });
 
