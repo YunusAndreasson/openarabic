@@ -35,6 +35,11 @@ export function BrandedBottomSheet({ ref, isVisible, onClose, children }: Brande
       ref={bottomSheetRef}
       index={-1}
       {...COMMON_BOTTOM_SHEET_PROPS}
+      // gorhom defaults the content wrapper to accessible="true" (label "Bottom
+      // Sheet", role "adjustable"). On iOS that collapses the whole sheet into
+      // ONE VoiceOver element, so nothing inside it — "Add to practice", every
+      // picker option, the time picker — could be focused or activated.
+      accessible={false}
       enableDynamicSizing
       animationConfigs={animationConfigs}
       onClose={onClose}

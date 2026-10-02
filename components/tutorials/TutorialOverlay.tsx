@@ -49,14 +49,27 @@ export function TutorialOverlay({ visible, onDismiss, children }: TutorialOverla
       // backdrop tap, which is not a discoverable affordance.
       onRequestClose={onDismiss}
     >
-      <Pressable style={styles.container} onPress={onDismiss}>
+      {/* Both Pressables are layout/touch plumbing, not controls: a Pressable
+          is an accessibility element by default, which on iOS folded the whole
+          tutorial into ONE VoiceOver stop — Next, Skip and "open first text"
+          were unreachable. The escape gesture dismisses, like the backdrop. */}
+      <Pressable
+        style={styles.container}
+        onPress={onDismiss}
+        accessible={false}
+        onAccessibilityEscape={onDismiss}
+      >
         <Animated.View
           entering={FadeIn.duration(TUTORIAL_ANIMATION.FADE_IN_DURATION)}
           exiting={FadeOut.duration(TUTORIAL_ANIMATION.FADE_OUT_DURATION)}
           style={[styles.backdrop, { backgroundColor: colors.backdropOverlay }]}
         />
         {/* Prevent dismissal when pressing tutorial content */}
-        <Pressable style={styles.contentContainer} onPress={e => e.stopPropagation()}>
+        <Pressable
+          style={styles.contentContainer}
+          onPress={e => e.stopPropagation()}
+          accessible={false}
+        >
           {children}
         </Pressable>
       </Pressable>
