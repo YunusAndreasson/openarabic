@@ -1,6 +1,6 @@
 import { Ionicons } from '@/components/ui/Icon';
 import { useEffect, useEffectEvent, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { AccessibilityInfo, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp, FadeOutDown, FadeOutUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -76,6 +76,15 @@ export function Toast({
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closeToast = useEffectEvent(onClose);
+
+  // A toast is visual only — it takes no focus and disappears on its own — so
+  // screen-reader users never heard a confirmation or an error. Announce it as
+  // it appears (a no-op when no screen reader is running).
+  useEffect(() => {
+    if (visible && message) {
+      AccessibilityInfo.announceForAccessibility(message);
+    }
+  }, [visible, message]);
 
   useEffect(() => {
     if (timerRef.current) {

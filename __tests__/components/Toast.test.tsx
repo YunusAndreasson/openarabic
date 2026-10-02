@@ -20,6 +20,7 @@
 
 import { act, render } from '@testing-library/react-native';
 import React from 'react';
+import { AccessibilityInfo } from 'react-native';
 
 import { Toast } from '@/components/ui/Toast';
 import { ToastType } from '@/types/enums';
@@ -60,6 +61,20 @@ describe('Toast', () => {
     );
 
     expect(getByText('Test message')).toBeDefined();
+  });
+
+  test('announces the message to screen readers as it appears', () => {
+    // A toast never takes focus, so without this a screen-reader user heard
+    // no confirmation and no error at all.
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
+
+    const { rerender } = render(
+      <Toast visible={false} message="Added to practice" onClose={mockOnClose} />,
+    );
+    expect(announce).not.toHaveBeenCalled();
+
+    rerender(<Toast visible={true} message="Added to practice" onClose={mockOnClose} />);
+    expect(announce).toHaveBeenCalledWith('Added to practice');
   });
 
   test('should not render when visible is false', () => {
