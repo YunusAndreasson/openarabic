@@ -231,8 +231,11 @@ export const useStudyWordMutations = (
           return old; // Add intent on an already-cached word — no duplicate
         }
         // For optimistic add, create a minimal StudyWord-like object
-        // The actual full object will be fetched on success
-        return [...old, { root_id: rootId } as StudyWord];
+        // The actual full object will be fetched on success. `created_at` is
+        // stamped now because a remove that lands before that refetch reads it
+        // from here: without it the same-day refund below could not tell the
+        // word was added today, and the daily slot stayed spent.
+        return [...old, { root_id: rootId, created_at: new Date().toISOString() } as StudyWord];
       });
 
       return { previousStudyWords };

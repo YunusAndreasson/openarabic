@@ -279,6 +279,27 @@ describe('useStudyWordMutations', () => {
       });
     });
 
+    test('refunds a word removed before its add was refetched', async () => {
+      queryClient.setQueryData(['fsrs-words', 'test-user-id'], []);
+      const { result } = renderHook(() => useStudyWordMutations(), { wrapper });
+
+      // Save, then remove at once — the optimistic entry is still in the cache.
+      mockToggleFSRSStudyRoot.mockResolvedValueOnce(true);
+      await act(async () => {
+        await result.current.handleRootPress(3 as RootId, 'add');
+      });
+      mockToggleFSRSStudyRoot.mockResolvedValueOnce(false);
+      await act(async () => {
+        await result.current.handleRootPress(3 as RootId, 'remove');
+      });
+
+      // The optimistic entry carried no created_at, so the same-day refund
+      // could not tell it was added today and the slot stayed spent.
+      await waitFor(() => {
+        expect(mockDecrementIfAddedToday).toHaveBeenCalledWith(expect.any(String));
+      });
+    });
+
     test('does not call decrementIfAddedToday on a successful add', async () => {
       queryClient.setQueryData(['fsrs-words', 'test-user-id'], []);
       mockToggleFSRSStudyRoot.mockResolvedValue(true);
