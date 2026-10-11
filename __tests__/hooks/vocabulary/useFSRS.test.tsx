@@ -24,7 +24,11 @@ import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import { State } from 'ts-fsrs';
 
 import { createHookTestWrapper } from '@/__tests__/helpers/hookMocks';
-import { DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
+import {
+  DEFAULT_SESSION_COOLDOWN_HOURS,
+  DRILL_LAG_AFTER_CORRECT,
+  DRILL_LAG_AFTER_MISS,
+} from '@/constants/fsrs';
 import { fsrsQueries } from '@/constants/queries';
 import { useFSRS } from '@/hooks/vocabulary/useFSRS';
 import { FSRS_INSTANCE } from '@/utils/fsrsUtils';
@@ -1236,6 +1240,47 @@ describe('useFSRS Hook', () => {
       });
 
       expect(flushed).toBe(true);
+    });
+  });
+
+  describe('Drill re-ask distance', () => {
+    // Counts the cards shown between a grade and the same word coming back.
+    async function interveningCardsAfter(
+      result: { current: ReturnType<typeof useFSRS> },
+      target: RootId,
+      limit: number,
+    ): Promise<number> {
+      let intervening = 0;
+      while (result.current.currentWord && result.current.currentWord.root_id !== target) {
+        if (intervening > limit) throw new Error('re-ask never came back');
+        const word = result.current.currentWord;
+        intervening += 1;
+        await act(async () => {
+          await result.current.updateWord(word.root_id, 'known');
+        });
+      }
+      return intervening;
+    }
+
+    test('a missed word returns after DRILL_LAG_AFTER_MISS cards, then DRILL_LAG_AFTER_CORRECT', async () => {
+      const words = Array.from({ length: 20 }, (_, i) =>
+        createMockStudyWord({ root_id: rootId(i + 1) }),
+      );
+      studyWordsFSRSService.getFSRSWords = jest.fn(async () => words);
+      const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
+      await waitFor(() => expect(result.current.currentWord).not.toBeNull());
+
+      const missed = result.current.currentWord!.root_id;
+      await act(async () => {
+        await result.current.updateWord(missed, 'unknown');
+      });
+      expect(await interveningCardsAfter(result, missed, 19)).toBe(DRILL_LAG_AFTER_MISS);
+
+      // First correct recall of a drilled word: re-asked once more, further out.
+      await act(async () => {
+        await result.current.updateWord(missed, 'known');
+      });
+      expect(await interveningCardsAfter(result, missed, 19)).toBe(DRILL_LAG_AFTER_CORRECT);
     });
   });
 });

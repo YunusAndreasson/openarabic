@@ -355,9 +355,11 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
         { word: createTestWord({ root_id: rootId(3) }), remainingSpacing: 2 }, // Not ready
       ];
 
-      const result = getNextWordWithSpacing(queue, state);
-      expect(result).not.toBeNull();
-      expect(queue.size()).toBe(1); // Only ready words should be requeued
+      // Ready words are served straight from the buffer, longest-waiting first,
+      // and never by way of the heap.
+      expect(getNextWordWithSpacing(queue, state)?.root_id).toBe(2);
+      expect(getNextWordWithSpacing(queue, state)?.root_id).toBe(1);
+      expect(queue.size()).toBe(0);
       expect(state.spacedWords).toHaveLength(1); // Only non-ready word should remain
       expect(state.spacedWords[0].remainingSpacing).toBe(2);
     });

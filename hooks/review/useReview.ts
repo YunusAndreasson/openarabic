@@ -385,6 +385,13 @@ export function useReview({
   // handler and the unmount cleanup don't both schedule the same work.
   const finalizedRef = useRef(false);
 
+  // Up from the first moment the session is on its way out — the ✕ tap, or the
+  // unmount for exits that never reach it. The screen stays mounted through
+  // the navigation delay and the dismiss animation, and committing a pending
+  // grade in that window advances the queue: without this latch the NEXT card
+  // faded in and began its Arabic prompt on a screen already leaving.
+  const closingRef = useRef(false);
+
   // Active prompt-finish watcher, keyed by the card it belongs to. Held in a
   // ref (not tied to the audio effect's cleanup) so an incidental re-render
   // mid-prompt can't tear it down.
@@ -584,8 +591,13 @@ export function useReview({
         // the 380ms watchdog became the real path — measured as ~633ms of black
         // between cards on a 30fps capture. Armed here, the release lands on
         // the commit itself.
-        pendingFadeInRef.current = true;
-        setTimer('fadeInWatchdog', releasePendingFadeIn, TRANSITION_DELAYS.fadeInWatchdog);
+        //
+        // Not while closing: the grade still has to be written, but there is no
+        // next card to bring back on a screen that is leaving.
+        if (!closingRef.current) {
+          pendingFadeInRef.current = true;
+          setTimer('fadeInWatchdog', releasePendingFadeIn, TRANSITION_DELAYS.fadeInWatchdog);
+        }
 
         const updateResult = await updateWord(rootId, confidence);
         if (updateResult.status === 'rejected') {
@@ -1077,7 +1089,7 @@ export function useReview({
   // doesn't update synchronously — without the lastProcessedWordId check, the
   // OLD word's Arabic audio briefly replays before the new word's audio starts.
   useEffect(() => {
-    if (stateRefs.current.completionTriggered || isComplete) {
+    if (stateRefs.current.completionTriggered || isComplete || closingRef.current) {
       return;
     }
 
@@ -1285,7 +1297,7 @@ export function useReview({
    * replay it would then be racing.
    */
   const resumePromptAfterReturn = () => {
-    if (isComplete || stateRefs.current.completionTriggered) return;
+    if (isComplete || stateRefs.current.completionTriggered || closingRef.current) return;
     if (!currentWord?.root?.audio_url) return;
     // The answer is already up: the recall test is over and the reveal path
     // does its own playback.
@@ -1339,7 +1351,7 @@ export function useReview({
    * rather than through the fade-driven commitGrade/advance path, which has
    * no card left to animate once the screen is on its way out.
    */
-  const commitPendingGrade = useCallback(() => {
+  const commitPendingGrade = useCallback((): boolean => {
     if (restudyRef.current) {
       restudyRef.current = false;
       setRestudyKey(null);
@@ -1351,19 +1363,23 @@ export function useReview({
       abortControllerRef.current = controller;
       stateRefs.current.isUpdatingWord = true;
       void processFeedback('unknown', controller);
-      return;
+      return true;
     }
 
     const pendingGrade = pendingGradeRef.current;
     pendingGradeRef.current = null;
     pendingGrade?.();
+    return pendingGrade !== null;
   }, [processFeedback]);
 
   const finalizeSession = useCallback(() => {
     if (finalizedRef.current) return;
     finalizedRef.current = true;
 
-    commitPendingGrade();
+    // Read NOW, not in the `.then` below: on the unmount path the cleanup that
+    // called this zeroes the counter before the flush resolves.
+    const committedOnExit = commitPendingGrade();
+    const hadGrades = committedOnExit || wordsReviewedCount.current > 0;
 
     // The flush must complete even though this closure outlives the screen.
     //
@@ -1382,7 +1398,13 @@ export function useReview({
           // Android back) never reaches it, so the streak and the due-cooldown
           // window silently stayed on yesterday's values. Every exit owes the
           // rest of the app the same freshness natural completion does.
-          if (user?.id) {
+          //
+          // Only for a session that graded something. Opening review and
+          // closing it again is not a completed session, and stamping one
+          // started the cooldown anyway — which the reminder planner reads as
+          // "just practised" and drops the next slot for. useReviewCompletion
+          // has always held the same line.
+          if (user?.id && hadGrades) {
             queryClient.setQueryData(fsrsQueries.lastCompletedAtKey(user.id), Date.now());
             void studyStreakQueries.invalidateAll(queryClient, user.id);
           }
@@ -1401,6 +1423,8 @@ export function useReview({
   }, [finalizeSession]);
 
   const handleClose = () => {
+    closingRef.current = true;
+
     // Stop any playing audio when closing
     stopAudioSafely();
 
@@ -1453,6 +1477,7 @@ export function useReview({
       // hook exits that never reach `handleClose` have — Android's back button
       // and back gesture, or a parent navigation. Idempotent, so the ✕ path
       // (which already finalized) falls straight through.
+      closingRef.current = true;
       finalizeSessionRef.current();
 
       if (

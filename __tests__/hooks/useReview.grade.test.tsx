@@ -400,4 +400,85 @@ describe('useReview Hook - Grading', () => {
       });
     });
   });
+
+  describe('Closing', () => {
+    // Not a jest.fn: `resetMocks` strips implementations between tests, and a
+    // flush that returns undefined turns the whole exit into a caught TypeError.
+    const flushPendingWrites = async (): Promise<void> => undefined;
+
+    test('committing a held "Forgot" on close does not start the next card', async () => {
+      const word = createMockWord();
+      useFSRS.mockReturnValue({ ...fsrsState(mocks, word), flushPendingWrites });
+
+      const wrapper = createWrapper();
+      const { result, rerender } = renderHook(() => useReview(), { wrapper });
+      await waitFor(() => expect(mocks.mockAudioPlayer.play).toHaveBeenCalledTimes(1));
+
+      act(() => result.current.revealAnswer());
+      act(() => result.current.grade('unknown'));
+      expect(result.current.restudying).toBe(true);
+      // The hold replays the Arabic; let it land so it is not mistaken for the
+      // next card's prompt below.
+      await waitFor(() => expect(mocks.mockAudioPlayer.play).toHaveBeenCalledTimes(2));
+
+      mocks.mockAudioPlayer.play.mockClear();
+      mocks.mockFadeIn.mockClear();
+      await act(async () => {
+        result.current.handleClose();
+        await Promise.resolve();
+      });
+
+      // The grade the learner was shown is still written...
+      expect(mocks.mockUpdateWord).toHaveBeenCalledWith(101, 'unknown');
+
+      // ...but the queue advancing underneath a closing screen must stay
+      // silent and out of sight.
+      const next = createMockWord({
+        root_id: 202 as never,
+        root: {
+          id: 202,
+          letters: 'قلم',
+          meaning: 'pen',
+          audio_url: 'audio/qalam.mp3',
+          audio_url_en: 'audio/pen.mp3',
+        },
+      });
+      useFSRS.mockReturnValue({ ...fsrsState(mocks, next), flushPendingWrites });
+      await act(async () => {
+        rerender({});
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+
+      expect(result.current.currentWord?.root_id).toBe(202);
+      expect(mocks.mockAudioPlayer.play).not.toHaveBeenCalled();
+      expect(mocks.mockFadeIn).not.toHaveBeenCalled();
+    });
+
+    test('leaving without grading does not stamp a completed session', async () => {
+      const { useQueryClient } = require('@tanstack/react-query');
+      const { fsrsQueries } = require('@/constants/queries');
+      const setQueryData = jest.fn();
+      useQueryClient.mockReturnValue({ ...useQueryClient(), setQueryData });
+      const key = fsrsQueries.lastCompletedAtKey('test-user-123');
+      const wrapper = createWrapper();
+
+      useFSRS.mockReturnValue({ ...fsrsState(mocks, createMockWord()), flushPendingWrites });
+      const first = renderHook(() => useReview(), { wrapper });
+      act(() => first.unmount());
+      // The exit still settles its writes; only the stamp is withheld.
+      await waitFor(() => expect(mocks.mockInvalidateQueries).toHaveBeenCalled());
+      expect(setQueryData).not.toHaveBeenCalled();
+
+      // The same exit after a grade does.
+      const second = renderHook(() => useReview(), { wrapper });
+      act(() => second.result.current.revealAnswer());
+      act(() => {
+        second.result.current.grade('known');
+      });
+      await waitFor(() => expect(mocks.mockUpdateMetrics).toHaveBeenCalled());
+      act(() => second.unmount());
+      await waitFor(() => expect(setQueryData).toHaveBeenCalledWith(key, expect.any(Number)));
+    });
+  });
 });

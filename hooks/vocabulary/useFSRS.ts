@@ -216,10 +216,9 @@ export function useFSRS({
 
     // Freeze the live session: once initialized, new dueWords from background
     // refetches (reconnect, invalidation) NEVER re-init and wipe the session.
-    // Re-initialization happens only via the explicit re-arm paths
-    // (resetQueue/invalidateQueries), which clear queueInitialized — with
-    // resetQueue also bumping sessionEpoch so this effect re-runs even when the
-    // due data's identity is unchanged.
+    // Re-initialization happens only via resetQueue, which clears
+    // queueInitialized and bumps sessionEpoch so this effect re-runs even when
+    // the due data's identity is unchanged.
     if (stateTrackingRef.current.queueInitialized) {
       return;
     }
@@ -392,10 +391,15 @@ export function useFSRS({
         const priorDrill = drillRef.current.get(rootId) ?? null;
         const decision = decideDrill(priorDrill, missed);
 
+        // Age the spacing buffer BEFORE this word joins it. Decrementing after
+        // the push took one card off its own lag in the same grade that set it,
+        // so it fell due while still inside the recent window.
+        updateSpacingCounters(rootId);
+
         if (decision.requeue) {
           // Re-ask within this session. The FSRS-advanced copy continues from the
-          // new (Relearning/Review) state; `decision.lag` rides the existing
-          // spacing-counter decrement, so no change to fsrsSpacing is needed.
+          // new (Relearning/Review) state; `decision.lag` is counted down by
+          // the spacing counters and the word is served the card it reaches 0.
           const updatedWord: StudyWord = { ...currentWord, ...wordUpdateData };
           spacingQueueRef.current.spacedWords.push({
             word: updatedWord,
@@ -408,9 +412,6 @@ export function useFSRS({
           drillRef.current.delete(rootId);
           countersRef.current.finishedWords += 1;
         }
-
-        // Update spacing counters before selecting next word
-        updateSpacingCounters(rootId);
 
         // Top the working set up BEFORE choosing the next card, so the incoming
         // words can compete for this pick and — more importantly — so their audio
@@ -666,16 +667,15 @@ export function useFSRS({
     }
   }, []);
 
+  // Cache invalidation only. This used to re-arm queue initialization as well
+  // (queueInitialized = false, heap and backlog wiped), and its one caller is
+  // the session's exit: when the due refetch landed before the screen had
+  // finished dismissing, the init effect rebuilt a session underneath it — a
+  // different first card and its prompt, or `isEmpty` and a second navigation
+  // on top of the dismiss. Restarting a session is resetQueue's job.
   const invalidateQueries = useCallback(() => {
     if (!userId) return;
-
-    // Invalidate all FSRS-related queries to ensure cache consistency
     void fsrsQueries.invalidateAll(queryClient, userId);
-
-    stateTrackingRef.current.queueInitialized = false;
-    queueRef.current = new PriorityQueue<StudyWord>();
-    spacingQueueRef.current = createSpacingState();
-    backlogRef.current = [];
   }, [queryClient, userId]);
 
   return {

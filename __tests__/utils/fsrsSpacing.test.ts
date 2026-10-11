@@ -452,12 +452,11 @@ describe('fsrsSpacing', () => {
 
       const nextWord = getNextWordWithSpacing(queue, state, MIN_WORD_SPACING);
 
-      // Should return a word (priority determines which)
-      expect(nextWord).toBeTruthy();
-      expect([1, 2, 3]).toContain(nextWord?.root_id);
-
-      // All ready spacedWords should be cleared
-      expect(state.spacedWords.length).toBe(0);
+      // A ready re-ask outranks the heap, and the longest-waiting one goes
+      // first; the other stays buffered for the next pick.
+      expect(nextWord?.root_id).toBe(1);
+      expect(state.spacedWords.map(item => item.word.root_id)).toEqual([2]);
+      expect(queue.size()).toBe(1);
     });
 
     test('should not return spacedWords that are not ready', () => {

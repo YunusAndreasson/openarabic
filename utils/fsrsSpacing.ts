@@ -70,14 +70,27 @@ export function getNextWordWithSpacing(
   spacingState: SpacingState,
   minSpacing: number = MIN_WORD_SPACING,
 ): StudyWord | null {
-  const readySpaced = spacingState.spacedWords.filter(item => item.remainingSpacing <= 0);
-  if (readySpaced.length > 0) {
-    spacingState.spacedWords = spacingState.spacedWords.filter(item => item.remainingSpacing > 0);
-    const nowMs = Date.now(); // Single timestamp for batch
-    readySpaced.forEach(item => {
-      const priority = calculateWordPriority(item.word, nowMs);
-      queue.push(item.word, priority);
-    });
+  // A word whose spacing has elapsed is served before anything in the heap.
+  //
+  // It used to be pushed back into the heap and left to compete on priority,
+  // and it always lost: a re-ask carries the due date its last grade just
+  // wrote (minutes from now), which makes it the least urgent word in the
+  // session. A missed word therefore came back only once the working set had
+  // drained — 19 cards later in a 20-word chunk, and later still behind every
+  // backlog refill — where the drill asks for DRILL_LAG_AFTER_MISS. The lag IS
+  // the schedule for a spaced word; priority only orders words not yet shown.
+  //
+  // Longest-waiting first, and never one still inside the recent window.
+  let readyIndex = -1;
+  spacingState.spacedWords.forEach((item, index) => {
+    if (item.remainingSpacing > 0 || spacingState.recentWords.has(item.word.root_id)) return;
+    const best = spacingState.spacedWords[readyIndex];
+    if (!best || item.remainingSpacing < best.remainingSpacing) readyIndex = index;
+  });
+  const ready = spacingState.spacedWords[readyIndex];
+  if (ready) {
+    spacingState.spacedWords.splice(readyIndex, 1);
+    return ready.word;
   }
 
   let nextWord = queue.pop();
