@@ -473,11 +473,18 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   // `undefined` until the session has loaded its words. The voice hook holds
   // off building the recogniser until it is told the vocabulary, and "none yet"
   // must not look like "none".
-  const sessionGlosses = isLoading
-    ? undefined
-    : sessionWords
-        .map(word => word.root?.meaning)
-        .filter((meaning): meaning is string => Boolean(meaning));
+  //
+  // "Loaded" means the words are HERE, not that the query has settled: the
+  // session fills `sessionWords` in an effect, one commit after `isLoading`
+  // drops, and for that commit an empty list read as a known, empty vocabulary
+  // — which retained the engine and started the unbiased build this exists to
+  // prevent. A session with no words has no card to grade either.
+  const sessionGlosses =
+    isLoading || sessionWords.length === 0
+      ? undefined
+      : sessionWords
+          .map(word => word.root?.meaning)
+          .filter((meaning): meaning is string => Boolean(meaning));
 
   // Voice grading — the microphone opens itself once the Arabic prompt has
   // played and the learner simply answers, so the action band carries "Show

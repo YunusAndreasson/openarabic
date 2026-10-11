@@ -66,6 +66,8 @@ jest.mock('@/utils/errorHandling', () => ({
 
 jest.mock('ts-fsrs', () => ({
   fsrs: jest.fn((..._args: unknown[]) => ({
+    // Session ordering reads retrievability off the same instance it grades with.
+    forgetting_curve: () => 0.9,
     next: jest.fn((..._args: unknown[]) => ({
       card: {
         stability: 3.0,

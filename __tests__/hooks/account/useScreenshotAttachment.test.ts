@@ -1,7 +1,7 @@
 /**
  * A stored photo-library refusal is re-checked against the OS.
  *
- * The flag only records that the OS once said no. The "Permission Required"
+ * The flag only records that the OS once said no. The "Permission required"
  * alert sends the learner to Settings — so once they allow access there, the
  * next tap has to go through instead of showing the same alert forever.
  */
@@ -72,7 +72,7 @@ describe('useScreenshotAttachment', () => {
 
     expect(AsyncStorage.removeItem).toHaveBeenCalledWith(DENIED_KEY);
     expect(Alert.alert).not.toHaveBeenCalledWith(
-      'Permission Required',
+      'Permission required',
       expect.anything(),
       expect.anything(),
     );
@@ -90,7 +90,7 @@ describe('useScreenshotAttachment', () => {
     });
 
     expect(Alert.alert).toHaveBeenCalledWith(
-      'Permission Required',
+      'Permission required',
       expect.any(String),
       expect.any(Array),
     );

@@ -65,8 +65,8 @@ function toHotwords(phrases: ReadonlySet<string>): string {
  * nothing, and one that brings new answers adds them to what is there. Growing
  * also keeps the list from ever narrowing toward the card in hand. Only when the
  * union would pass the cap does the new session's vocabulary replace the old —
- * and only if it fits the cap itself. A session too large to bias toward leaves
- * `current` in place: answering it with the empty string threw away a working
+ * and only if it is a vocabulary itself. A session too large to bias toward, or
+ * a single-phrase one, leaves `current` in place: answering it with the empty string threw away a working
  * vocabulary and rebuilt the recogniser unbiased at the first card, for the
  * long-backlog sessions least able to afford the wait.
  */
@@ -77,7 +77,7 @@ export function mergeHotwords(current: string, glosses: readonly string[]): stri
   for (const phrase of offered) merged.add(phrase);
   if (merged.size === before) return current;
   if (merged.size <= VOICE_HOTWORDS_MAX_PHRASES) return toHotwords(merged);
-  return offered.size > VOICE_HOTWORDS_MAX_PHRASES ? current : toHotwords(offered);
+  return toHotwords(offered) || current;
 }
 
 /** How many phrases a hotwords string carries. */

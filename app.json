@@ -10,10 +10,7 @@
     "userInterfaceStyle": "automatic",
     "backgroundColor": "#040D07",
     "primaryColor": "#568066",
-    "platforms": [
-      "ios",
-      "android"
-    ],
+    "platforms": ["ios", "android"],
     "ios": {
       "icon": {
         "light": "./assets/images/icon.png",
@@ -26,16 +23,10 @@
       "appStoreUrl": "https://apps.apple.com/app/openarabic/id1594031029",
       "usesAppleSignIn": true,
       "entitlements": {
-        "com.apple.developer.applesignin": [
-          "Default"
-        ]
+        "com.apple.developer.applesignin": ["Default"]
       },
       "infoPlist": {
-        "UIBackgroundModes": [
-          "audio",
-          "processing",
-          "fetch"
-        ],
+        "UIBackgroundModes": ["audio", "processing", "fetch"],
         "ITSAppUsesNonExemptEncryption": false,
         "BGTaskSchedulerPermittedIdentifiers": [
           "openarabic.backgroundtask",
@@ -51,28 +42,19 @@
         "NSPrivacyAccessedAPITypes": [
           {
             "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
-            "NSPrivacyAccessedAPITypeReasons": [
-              "CA92.1"
-            ]
+            "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
           },
           {
             "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
-            "NSPrivacyAccessedAPITypeReasons": [
-              "C617.1",
-              "DDA9.1"
-            ]
+            "NSPrivacyAccessedAPITypeReasons": ["C617.1", "DDA9.1"]
           },
           {
             "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategorySystemBootTime",
-            "NSPrivacyAccessedAPITypeReasons": [
-              "35F9.1"
-            ]
+            "NSPrivacyAccessedAPITypeReasons": ["35F9.1"]
           },
           {
             "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryDiskSpace",
-            "NSPrivacyAccessedAPITypeReasons": [
-              "E174.1"
-            ]
+            "NSPrivacyAccessedAPITypeReasons": ["E174.1"]
           }
         ],
         "NSPrivacyCollectedDataTypes": [
@@ -157,9 +139,7 @@
         "android.permission.VIBRATE",
         "com.google.android.gms.permission.AD_ID"
       ],
-      "blockedPermissions": [
-        "android.permission.CAMERA"
-      ]
+      "blockedPermissions": ["android.permission.CAMERA"]
     },
     "plugins": [
       "expo-router",
@@ -382,7 +362,7 @@
       }
     },
     "owner": "edenmind",
-    "runtimeVersion": "1448.3.12",
+    "runtimeVersion": "1448.4.3",
     "updates": {
       "url": "https://u.expo.dev/644480e0-3ac0-4ce6-b6ca-b950f62ca438",
       "enableBsdiffPatchSupport": true

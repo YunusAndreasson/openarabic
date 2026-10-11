@@ -181,7 +181,7 @@ export const ReviewActionButton = ({
         skipDefaultColor
         type="bodyBold"
         numberOfLines={1}
-        // Each grade button is a third of the row, and "Guessed" is the label
+        // Each grade button is a third of the row, and the longest label is the one
         // that runs out of room first at large system font scales. Shrinking a
         // touch is better than clipping the word that names the outcome.
         adjustsFontSizeToFit

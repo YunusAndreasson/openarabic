@@ -1,11 +1,14 @@
-import {
-  DEFAULT_FSRS_DIFFICULTY,
-  MIN_WORD_SPACING,
-  SPACING_ITERATION_LIMIT,
-} from '@/constants/fsrs';
+import { State } from 'ts-fsrs';
+
+import { MIN_WORD_SPACING, SPACING_ITERATION_LIMIT } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
+import {
+  MILLISECONDS_PER_DAY,
+  MILLISECONDS_PER_HOUR,
+  parseSupabaseTimestamp,
+} from '@/utils/dateTimeUtils';
+import { calculateRetrievability } from '@/utils/fsrsUtils';
 import type { PriorityQueue } from '@/utils/priorityQueue';
-import { isHardWord } from '@/utils/wordClassification';
 
 export interface SpacingState {
   recentWords: Set<number>;
@@ -13,26 +16,49 @@ export interface SpacingState {
   spacedWords: { word: StudyWord; remainingSpacing: number }[];
 }
 
+/** Squashes any real onto (0, 1), descending: a larger input sorts sooner. */
+const sooner = (value: number): number => 0.5 - Math.atan(value) / Math.PI;
+
+/**
+ * Where a due word sits in the session. Lower = sooner (min-heap semantics).
+ *
+ * A pure read of FSRS state, in three bands:
+ *
+ *   0–1  Learning / Relearning, longest-due first. These are the minute-scale
+ *        steps FSRS scheduled on purpose, so they are the time-critical ones.
+ *   1–2  Review, lowest retrievability first: the words closest to being
+ *        forgotten. This is what the reminders promise ("3 words are close to
+ *        the forgetting point. One pass brings them back"), so a learner who
+ *        opens one and does ten cards has to have met those three.
+ *   2–3  New, longest-saved first. A new word loses nothing by waiting a few
+ *        cards; a due review is decaying while it waits.
+ *
+ * Retrievability is the whole of a review's urgency. This used to be a
+ * hand-weighted sum of hours overdue, stability, difficulty and lapses, with a
+ * flat bonus that put every word with two lapses at the very front — ahead of
+ * words that were actually slipping, and counting the hours since a new word
+ * was SAVED as "overdue", so a month-old unpractised word outranked every
+ * review. An hour overdue means nothing without the interval it is an hour
+ * past; retrievability is that comparison, already made by the scheduler.
+ *
+ * The FSRS sort-order simulations favour the opposite order within the review
+ * band (highest retrievability first) for clearing a large backlog. They
+ * measure a queue that is never finished; here the session drains the backlog
+ * and the median one is eight words, so the order only decides what an early
+ * leaver saw — and that has to be what they were told they would see.
+ */
 export function calculateWordPriority(word: StudyWord, nowMs: number = Date.now()): number {
-  const dueMs = word.fsrs_due ? new Date(word.fsrs_due).getTime() : nowMs;
-  const hoursOverdue = (nowMs - dueMs) / (1000 * 60 * 60);
-  const stability = word.fsrs_stability ?? 1;
-  const difficulty = word.fsrs_difficulty ?? DEFAULT_FSRS_DIFFICULTY;
-  const difficultyFactor = (difficulty - 5) * 0.01;
-  const lapseFactor = (word.fsrs_lapses ?? 0) * 0.5;
+  if (word.fsrs_state === State.New) {
+    const savedMs = parseSupabaseTimestamp(word.created_at)?.getTime() ?? nowMs;
+    return 2 + sooner((nowMs - savedMs) / MILLISECONDS_PER_DAY);
+  }
 
-  const basePriority = 10; // Start with a high base value
-  const stabilityFactor = Math.max(0, 10 - stability) * 0.1; // Lower stability = more urgent (lower number)
-  const hardWordFactor = isHardWord(word) ? -10.0 : 0; // Hard words get much higher priority (lower number)
+  if (word.fsrs_state === State.Learning || word.fsrs_state === State.Relearning) {
+    const dueMs = parseSupabaseTimestamp(word.fsrs_due)?.getTime() ?? nowMs;
+    return sooner((nowMs - dueMs) / MILLISECONDS_PER_HOUR);
+  }
 
-  return (
-    basePriority -
-    hoursOverdue * 0.1 +
-    stabilityFactor -
-    lapseFactor + // More lapses = lower priority (more urgent)
-    difficultyFactor +
-    hardWordFactor
-  );
+  return 1 + calculateRetrievability(word, new Date(nowMs));
 }
 
 /**

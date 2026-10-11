@@ -76,59 +76,6 @@ describe('FSRS Property-Based Tests', () => {
         propertyTestUtils.testConsistentTypes(calculateWordPriority, studyWordArbitrary, 'number'),
       );
     });
-
-    test('should preserve ordering - more overdue words have lower priority', () => {
-      fc.assert(
-        fc.property(
-          fc.array(fc.integer({ min: 2, max: 10 }), { minLength: 2, maxLength: 10 }),
-          wordCounts => {
-            // Create words with different overdue times
-            const now = new Date();
-            const overdueWords = wordCounts.map((_, index) => ({
-              ...createTestWord(),
-              root_id: rootId(index + 1),
-              fsrs_due: new Date(now.getTime() - (index + 1) * 3600000).toISOString(), // Increasingly overdue
-            }));
-
-            const priorities = overdueWords.map(calculateWordPriority);
-
-            // More overdue words should have lower priority values (higher urgency)
-            // Use approximate comparison for floating point precision
-            for (let i = 0; i < priorities.length - 1; i++) {
-              expect(priorities[i]).toBeLessThanOrEqual(priorities[i + 1] + 2.0); // Allow larger tolerance for priority differences
-            }
-          },
-        ),
-      );
-    });
-
-    test('should maintain stability ordering when due dates are equal', () => {
-      fc.assert(
-        fc.property(
-          fc.array(fsrsArbitraries.stability, { minLength: 2, maxLength: 5 }),
-          stabilities => {
-            const now = new Date();
-            const words = stabilities.map((stability, index) => ({
-              ...createTestWord(),
-              root_id: rootId(index + 1),
-              fsrs_due: now.toISOString(), // Same due date
-              fsrs_stability: stability,
-              fsrs_difficulty: 6.5, // Same difficulty
-            }));
-
-            const priorities = words.map(calculateWordPriority);
-
-            // Lower stability should have lower priority (higher urgency)
-            // Use approximate comparison for floating point precision
-            for (let i = 0; i < priorities.length - 1; i++) {
-              if (stabilities[i] < stabilities[i + 1]) {
-                expect(priorities[i]).toBeLessThanOrEqual(priorities[i + 1] + 2.0); // Allow larger tolerance for priority differences
-              }
-            }
-          },
-        ),
-      );
-    });
   });
 
   describe('Struggling Word Classification Properties', () => {
@@ -326,63 +273,19 @@ describe('FSRS Property-Based Tests', () => {
   });
 
   describe('Business Logic Properties', () => {
-    test('should prioritize struggling words over regular words when due dates are similar', () => {
+    // The order is a read of FSRS memory state alone. Lapses and difficulty
+    // used to pull a "struggling" word to the front of the session, which is
+    // the hardest-first order the sort-order simulations rank last.
+    test('should not move a word for its lapses or difficulty', () => {
       fc.assert(
-        fc.property(
-          fc.record({
-            strugglingWord: strugglingWordArbitrary,
-            regularWord: fc.record({
-              root_id: fsrsArbitraries.wordId,
-              user_id: fc.constant('test-user'),
-              created_at: fc
-                .date()
-                .filter(d => !isNaN(d.getTime()))
-                .map(d => d.toISOString()),
-              fsrs_due: fc
-                .date()
-                .filter(d => !isNaN(d.getTime()))
-                .map(d => d.toISOString()),
-              fsrs_stability: fc.float({
-                min: Math.fround(5),
-                max: Math.fround(20),
-                noDefaultInfinity: true,
-                noNaN: true,
-              }), // Moderate stability
-              fsrs_difficulty: fc.float({
-                min: Math.fround(1.3),
-                max: Math.fround(5),
-                noDefaultInfinity: true,
-                noNaN: true,
-              }), // Low to moderate difficulty
-              fsrs_scheduled_days: fc.integer({ min: 0, max: 365 }),
-              fsrs_learning_steps: fc.integer({ min: 0, max: 10 }),
-              fsrs_reps: fc.integer({ min: 0, max: 10 }),
-              fsrs_lapses: fc.integer({ min: 0, max: 1 }), // Low lapses (< 2, not hard)
-              fsrs_state: fc.integer({ min: 1, max: 3 }),
-              fsrs_last_review: fc.option(
-                fc
-                  .date()
-                  .filter(d => !isNaN(d.getTime()))
-                  .map(d => d.toISOString()),
-              ),
-              difficulty: fc.float({ min: 0, max: 0.5, noDefaultInfinity: true, noNaN: true }), // Low difficulty
-              root: fc.constant(undefined),
-            }) as fc.Arbitrary<StudyWord>,
-          }),
-          ({ strugglingWord, regularWord }) => {
-            // Set similar due dates
-            const now = new Date();
-            strugglingWord.fsrs_due = now.toISOString();
-            regularWord.fsrs_due = now.toISOString();
+        fc.property(strugglingWordArbitrary, word => {
+          const nowMs = Date.now();
+          const unremarkable = { ...word, fsrs_lapses: 0, fsrs_difficulty: 5 } as StudyWord;
 
-            const strugglingPriority = calculateWordPriority(strugglingWord);
-            const regularPriority = calculateWordPriority(regularWord);
-
-            // Struggling word should have lower priority (higher urgency)
-            // Use approximate comparison for floating point precision
-            expect(strugglingPriority).toBeLessThanOrEqual(regularPriority + 2.0); // Allow reasonable tolerance
-          },
-        ),
+          expect(calculateWordPriority(word as StudyWord, nowMs)).toBe(
+            calculateWordPriority(unremarkable, nowMs),
+          );
+        }),
       );
     });
 

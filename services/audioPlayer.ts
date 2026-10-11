@@ -1146,6 +1146,16 @@ class SimpleAudioService {
       if (!this.isPlaylistMode || this.playlistGeneration !== generation) {
         return false;
       }
+
+      // The sleep timer can run out during the transition sound. The check
+      // before this advance has already passed, and the 30s force-stop is
+      // bound to the track that was playing at expiry, so a track started
+      // here would play to its end with nothing left to stop it.
+      if (this.hasSleepTimerElapsed()) {
+        this.resetPlaylistState();
+        await this.stop();
+        return false;
+      }
     }
 
     // Play the next track (with cache self-heal and skip-on-failure)

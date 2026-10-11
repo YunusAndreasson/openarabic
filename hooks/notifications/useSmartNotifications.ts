@@ -32,7 +32,7 @@ const SYNC_DEBOUNCE_MS = 3000;
  * Mount once at app root, next to useAppBadge.
  */
 export function useSmartNotifications(): void {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const queryClient = useQueryClient();
   const reminderTime = useAppSelector(state => state.settings.reminderTime);
 
@@ -109,10 +109,14 @@ export function useSmartNotifications(): void {
     scheduleSync('data-change');
   }, [words, reminderTime, isAuthenticated, userId]);
 
-  // Mirror the setting for the headless background task
+  // Mirror the setting for the headless background task. Not while auth is
+  // still restoring: with no user yet there is no cooldown to resolve, and the
+  // write would save the settings without it — erasing, on every launch, the
+  // one durable copy the read-back above depends on.
   useEffect(() => {
+    if (isAuthLoading) return;
     void writeMirror();
-  }, [reminderTime, userId]);
+  }, [reminderTime, userId, isAuthLoading]);
 
   // Foreground: clear delivered reminders from the tray, then refresh the plan
   const handleAppStateChange = useEffectEvent((nextAppState: AppStateStatus) => {

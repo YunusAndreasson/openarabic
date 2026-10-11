@@ -42,190 +42,6 @@ describe('fsrsSpacing', () => {
     });
   });
 
-  describe('calculateWordPriority', () => {
-    test('should calculate priority for normal word', () => {
-      const word = createTestWord({
-        fsrs_due: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day overdue
-        fsrs_stability: 5,
-        fsrs_difficulty: 6.5,
-        fsrs_lapses: 1,
-      });
-
-      const priority = calculateWordPriority(word);
-      expect(typeof priority).toBe('number');
-      expect(priority).toBeLessThan(15); // Base priority is 10, should be modified
-    });
-
-    test('should prioritize struggling words higher (lower priority number)', () => {
-      const strugglingWord = createTestWord({
-        fsrs_difficulty: 8.5,
-        fsrs_lapses: 3,
-        fsrs_reps: 5,
-        fsrs_stability: 2,
-      });
-
-      const normalWord = createTestWord({
-        fsrs_difficulty: 5.0,
-        fsrs_lapses: 0,
-        fsrs_reps: 5,
-        fsrs_stability: 5,
-      });
-
-      const strugglingPriority = calculateWordPriority(strugglingWord);
-      const normalPriority = calculateWordPriority(normalWord);
-
-      // Lower priority number = higher priority
-      expect(strugglingPriority).toBeLessThan(normalPriority);
-    });
-
-    test('should prioritize overdue words higher', () => {
-      const overdueWord = createTestWord({
-        fsrs_due: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(), // 2 days overdue
-        fsrs_stability: 5,
-      });
-
-      const onTimeWord = createTestWord({
-        fsrs_due: new Date().toISOString(), // Due now
-        fsrs_stability: 5,
-      });
-
-      const overduePriority = calculateWordPriority(overdueWord);
-      const onTimePriority = calculateWordPriority(onTimeWord);
-
-      expect(overduePriority).toBeLessThan(onTimePriority);
-    });
-
-    test('should handle words with null due date', () => {
-      const word = createTestWord({
-        fsrs_due: null,
-        fsrs_stability: 5,
-      });
-
-      const priority = calculateWordPriority(word);
-      expect(typeof priority).toBe('number');
-      expect(isNaN(priority)).toBeFalsy();
-    });
-
-    test('should calculate different priorities for different stability values', () => {
-      const lowStabilityWord = createTestWord({
-        fsrs_stability: 1,
-        fsrs_due: new Date().toISOString(),
-        fsrs_lapses: 0,
-        fsrs_difficulty: 6.5,
-      });
-
-      const highStabilityWord = createTestWord({
-        fsrs_stability: 10,
-        fsrs_due: new Date().toISOString(),
-        fsrs_lapses: 0,
-        fsrs_difficulty: 6.5,
-      });
-
-      const lowPriority = calculateWordPriority(lowStabilityWord);
-      const highPriority = calculateWordPriority(highStabilityWord);
-
-      // Both should be valid numbers
-      expect(typeof lowPriority).toBe('number');
-      expect(typeof highPriority).toBe('number');
-      // Stability affects the priority calculation
-      expect(lowPriority).not.toBe(highPriority);
-    });
-
-    test('should factor in lapses for priority calculation', () => {
-      const manyLapsesWord = createTestWord({
-        fsrs_lapses: 5,
-        fsrs_stability: 5,
-      });
-
-      const noLapsesWord = createTestWord({
-        fsrs_lapses: 0,
-        fsrs_stability: 5,
-      });
-
-      const manyLapsesPriority = calculateWordPriority(manyLapsesWord);
-      const noLapsesPriority = calculateWordPriority(noLapsesWord);
-
-      expect(manyLapsesPriority).toBeLessThan(noLapsesPriority);
-    });
-
-    test('should handle null stability with default value', () => {
-      const word = createTestWord({
-        fsrs_stability: null,
-        fsrs_due: new Date().toISOString(),
-      });
-
-      const priority = calculateWordPriority(word);
-      expect(typeof priority).toBe('number');
-      expect(isNaN(priority)).toBeFalsy();
-    });
-
-    test('should handle null difficulty with default value', () => {
-      const word = createTestWord({
-        fsrs_difficulty: null,
-        fsrs_due: new Date().toISOString(),
-      });
-
-      const priority = calculateWordPriority(word);
-      expect(typeof priority).toBe('number');
-      expect(isNaN(priority)).toBeFalsy();
-    });
-
-    test('should handle null lapses with default value', () => {
-      const word = createTestWord({
-        fsrs_lapses: null,
-        fsrs_due: new Date().toISOString(),
-      });
-
-      const priority = calculateWordPriority(word);
-      expect(typeof priority).toBe('number');
-      expect(isNaN(priority)).toBeFalsy();
-    });
-
-    test('should handle words not yet due (future due date)', () => {
-      const futureWord = createTestWord({
-        fsrs_due: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Due tomorrow
-        fsrs_stability: 5,
-      });
-
-      const dueNowWord = createTestWord({
-        fsrs_due: new Date().toISOString(),
-        fsrs_stability: 5,
-      });
-
-      const futurePriority = calculateWordPriority(futureWord);
-      const dueNowPriority = calculateWordPriority(dueNowWord);
-
-      // Future word should have higher priority number (less urgent)
-      expect(futurePriority).toBeGreaterThan(dueNowPriority);
-    });
-
-    test('should give very overdue words high priority (low number)', () => {
-      const veryOverdueWord = createTestWord({
-        fsrs_due: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days overdue
-        fsrs_stability: 5,
-        fsrs_difficulty: 6.5,
-      });
-
-      const priority = calculateWordPriority(veryOverdueWord);
-      // Very overdue word should have low priority number (urgent)
-      expect(priority).toBeLessThan(10); // Base priority is 10
-    });
-
-    test('should calculate priority for new word with no FSRS data', () => {
-      const newWord = createTestWord({
-        fsrs_due: null,
-        fsrs_stability: null,
-        fsrs_difficulty: null,
-        fsrs_lapses: null,
-        fsrs_reps: 0,
-      });
-
-      const priority = calculateWordPriority(newWord);
-      expect(typeof priority).toBe('number');
-      expect(isNaN(priority)).toBeFalsy();
-    });
-  });
-
   describe('updateSpacingCounters', () => {
     test('should add word to recentWords', () => {
       const state = createSpacingState();
@@ -483,12 +299,12 @@ describe('fsrsSpacing', () => {
       const highPriorityWord = createTestWord({
         root_id: rootId(1),
         fsrs_due: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
-        fsrs_lapses: 5,
+        fsrs_state: 1,
       });
       const lowPriorityWord = createTestWord({
         root_id: rootId(2),
         fsrs_due: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-        fsrs_lapses: 0,
+        fsrs_state: 1,
       });
 
       const queue = new PriorityQueue<StudyWord>();
@@ -526,7 +342,7 @@ describe('fsrsSpacing', () => {
   describe('partitionSessionChunk', () => {
     const nowMs = Date.now();
 
-    // A barely-due, stable word — the filler the urgent ones must beat.
+    // A never-practised word — the filler anything already in memory must beat.
     const fillerWord = (id: number): StudyWord =>
       createTestWord({
         root_id: id as StudyWord['root_id'],
@@ -576,27 +392,26 @@ describe('fsrsSpacing', () => {
       expect(second.chunk).toEqual(rest.slice(0, 10));
     });
 
-    test('keeps the most urgent words: overdue and hard beat barely-due stable', () => {
-      const overdue = createTestWord({
+    test('keeps the time-sensitive words: a relearning step and a due review beat new words', () => {
+      const relearning = createTestWord({
         root_id: 100 as StudyWord['root_id'],
-        fsrs_due: new Date(nowMs - 48 * 3600 * 1000).toISOString(), // 48h overdue
-        fsrs_stability: 10,
+        fsrs_due: new Date(nowMs - 10 * 60 * 1000).toISOString(),
+        fsrs_state: 3,
+        fsrs_reps: 4,
       });
-      const hard = createTestWord({
+      const review = createTestWord({
         root_id: 200 as StudyWord['root_id'],
         fsrs_due: new Date(nowMs).toISOString(),
-        fsrs_stability: 2,
-        fsrs_lapses: 3, // isHardWord territory
+        fsrs_last_review: new Date(nowMs - 5 * 24 * 3600 * 1000).toISOString(),
+        fsrs_stability: 5,
         fsrs_reps: 5,
         fsrs_state: 2,
       });
       const fillers = Array.from({ length: 10 }, (_, i) => fillerWord(i + 1));
 
-      const { chunk } = partitionSessionChunk([...fillers, overdue, hard], 5, nowMs);
-      const ids = chunk.map(w => w.root_id);
+      const { chunk } = partitionSessionChunk([...fillers, review, relearning], 5, nowMs);
 
-      expect(ids).toContain(100);
-      expect(ids).toContain(200);
+      expect(chunk.slice(0, 2).map(w => w.root_id)).toEqual([100, 200]);
       expect(chunk).toHaveLength(5);
     });
 

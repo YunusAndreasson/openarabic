@@ -71,10 +71,10 @@ export const DRILL_MAX_REASKS = 6; // hard cap per word per session (prevents a 
 
 /**
  * Self-grade (WordConfidence) → ts-fsrs Rating. The card is graded on a
- * three-way confidence scale once its answer is revealed (UI: Forgot/Guessed/
+ * three-way confidence scale once its answer is revealed (UI: Forgot/Barely/
  * Knew it):
  *   - known   ("Knew it") → Good   — clean recall
- *   - vague   ("Guessed") → Hard   — recalled but effortful (a PASS, not a miss)
+ *   - vague   ("Barely")  → Hard   — recalled but effortful (a PASS, not a miss)
  *   - unknown ("Forgot")  → Again  — failed recall
  * Easy is intentionally unused — learners can't reliably self-assess Easy vs Good.
  */

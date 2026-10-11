@@ -2,6 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { Alert, Linking } from 'react-native';
 
+import { STRINGS } from '@/constants/strings';
+
 interface PhotoLibraryAccessRequest {
   /** Storage key remembering that the OS refused — iOS never re-prompts. */
   deniedKey: string;
@@ -44,9 +46,9 @@ export async function requestPhotoLibraryAccess({
   if (isStillDenied) {
     // User is trying to use feature after denying permission - show informational alert
     // This is explicitly allowed by both Apple and Google Play policies
-    Alert.alert('Permission Required', deniedMessage, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Open Settings', onPress: () => void Linking.openSettings() },
+    Alert.alert(STRINGS.PERMISSION_REQUIRED, deniedMessage, [
+      { text: STRINGS.CANCEL, style: 'cancel' },
+      { text: STRINGS.OPEN_SETTINGS, onPress: () => void Linking.openSettings() },
     ]);
     return false;
   }
@@ -55,7 +57,7 @@ export async function requestPhotoLibraryAccess({
   // Note: No "Cancel" button per Apple guideline 5.1.1 - user must proceed to system dialog
   await new Promise<void>(resolve => {
     Alert.alert(disclosureTitle, disclosureMessage, [
-      { text: 'Continue', onPress: () => resolve() },
+      { text: STRINGS.CONTINUE, onPress: () => resolve() },
     ]);
   });
 

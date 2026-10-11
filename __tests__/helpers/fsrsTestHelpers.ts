@@ -307,36 +307,6 @@ export const advancedTestScenarios = {
   },
 };
 
-// Factory for creating word sets with priority scenarios
-export const createWordSet = (
-  scenarios: Array<{
-    id: number;
-    hoursOverdue?: number;
-    stability?: number;
-    /** FSRS difficulty. Callers were already passing this; it was silently
-     *  dropped and every word got 6.5, so suites that claimed to vary
-     *  difficulty were comparing identical values. */
-    difficulty?: number;
-    state?: number;
-    reps?: number;
-    lapses?: number;
-  }>,
-) => {
-  const now = Date.now();
-  return scenarios.map(
-    ({ id, hoursOverdue = 0, stability = 5, difficulty = 6.5, state = 0, reps = 0, lapses = 0 }) =>
-      createTestWord({
-        root_id: id as RootId,
-        fsrs_due: new Date(now - hoursOverdue * 3600 * 1000).toISOString(),
-        fsrs_stability: stability,
-        fsrs_difficulty: difficulty,
-        fsrs_state: state,
-        fsrs_reps: reps,
-        fsrs_lapses: lapses,
-      }),
-  );
-};
-
 // Create words with different FSRS states for testing state transitions
 
 /** @internal Reached through a jest.mock require(); knip cannot see it. */
@@ -386,81 +356,6 @@ export const createEdgeCaseWords = () => ({
     fsrs_last_review: LEGACY_NULL_TIMESTAMP,
   }),
 });
-
-// Common test patterns
-export const testPatterns = {
-  // Pattern for testing priority ordering
-  priorityTestCases: [
-    {
-      name: 'overdue words get highest priority',
-      words: [
-        { id: 1, hoursOverdue: 24, stability: 5, difficulty: 6.5 },
-        { id: 2, hoursOverdue: 12, stability: 5, difficulty: 6.5 },
-        { id: 3, hoursOverdue: 0, stability: 5, difficulty: 6.5 },
-      ],
-      expectedOrder: [1, 2, 3],
-    },
-    {
-      name: 'lower stability gets higher priority when due dates equal',
-      words: [
-        { id: 1, hoursOverdue: 0, stability: 1, difficulty: 6.5 },
-        { id: 2, hoursOverdue: 0, stability: 10, difficulty: 6.5 },
-        { id: 3, hoursOverdue: 0, stability: 5, difficulty: 6.5 },
-      ],
-      expectedOrder: [1, 3, 2],
-    },
-    {
-      name: 'higher difficulty gets slight priority boost',
-      words: [
-        { id: 1, hoursOverdue: 0, stability: 5, difficulty: 8.0 },
-        { id: 2, hoursOverdue: 0, stability: 5, difficulty: 5.0 },
-        { id: 3, hoursOverdue: 0, stability: 5, difficulty: 6.5 },
-      ],
-      expectedOrder: [1, 3, 2],
-    },
-  ],
-
-  // Pattern for testing confidence to rating mapping
-  confidenceRatingCases: [
-    { confidence: 'known' as const, expectedRating: 3, description: 'known maps to Good' },
-    { confidence: 'vague' as const, expectedRating: 2, description: 'vague maps to Hard' },
-    { confidence: 'unknown' as const, expectedRating: 1, description: 'unknown maps to Again' },
-  ],
-
-  // Pattern for testing data transformation scenarios
-  dataTransformationCases: [
-    {
-      name: 'new word with no FSRS history',
-      word: {
-        fsrs_stability: null,
-        fsrs_difficulty: null,
-        fsrs_reps: null,
-        fsrs_state: null,
-        fsrs_last_review: null,
-      },
-    },
-    {
-      name: 'word with partial FSRS data',
-      word: {
-        fsrs_stability: 5,
-        fsrs_difficulty: null,
-        fsrs_reps: 2,
-        fsrs_state: 1,
-        fsrs_last_review: null,
-      },
-    },
-    {
-      name: 'word with complete FSRS history',
-      word: {
-        fsrs_stability: 10,
-        fsrs_difficulty: 7.5,
-        fsrs_reps: 5,
-        fsrs_state: 2,
-        fsrs_last_review: new Date().toISOString(),
-      },
-    },
-  ],
-};
 
 // Test utilities
 /** @internal Reached through a jest.mock require(); knip cannot see it. */

@@ -1,331 +1,143 @@
-/**
- *
- * Modern Jest 29 Patterns:
- * - ✅ @jest/globals explicit imports
- * - Note: No test.concurrent() - these are synchronous tests
- * - Note: No jest.mocked() needed - no mocks used
- */
-
 import { describe, expect, test } from '@jest/globals';
+import { State } from 'ts-fsrs';
 
 import { calculateWordPriority } from '../../utils/fsrsSpacing';
 import { PriorityQueue } from '../../utils/priorityQueue';
-import { createTestWord, createWordSet, testPatterns } from '../helpers/fsrsTestHelpers';
+import { createTestWord } from '../helpers/fsrsTestHelpers';
 import { rootId } from '@/__tests__/helpers/ids';
+import type { StudyWord } from '@/types/vocabulary.types';
 
-// We need to test the priority calculation logic directly
-// Since it's internal to useFSRS, we'll test it through the queue ordering behavior
+const NOW_MS = new Date('2024-01-01T00:00:00Z').getTime();
+const HOUR = 3600 * 1000;
+const DAY = 24 * HOUR;
 
-describe('FSRS Priority Calculation Logic', () => {
-  beforeAll(() => {
-    jest.useFakeTimers();
-    jest.setSystemTime(new Date('2024-01-01T00:00:00Z'));
+const ago = (ms: number) => new Date(NOW_MS - ms).toISOString();
+
+const newWord = (id: number, savedAgoMs: number) =>
+  createTestWord({ root_id: rootId(id), fsrs_state: State.New, created_at: ago(savedAgoMs) });
+
+const stepWord = (id: number, dueAgoMs: number, state: State = State.Learning) =>
+  createTestWord({ root_id: rootId(id), fsrs_state: state, fsrs_reps: 1, fsrs_due: ago(dueAgoMs) });
+
+/** A Review word last seen `sinceReviewMs` ago; retrievability falls as that grows. */
+const reviewWord = (id: number, sinceReviewMs: number, overrides: Partial<StudyWord> = {}) =>
+  createTestWord({
+    root_id: rootId(id),
+    fsrs_state: State.Review,
+    fsrs_reps: 5,
+    fsrs_stability: 5,
+    fsrs_last_review: ago(sinceReviewMs),
+    fsrs_due: ago(HOUR),
+    ...overrides,
   });
 
-  afterAll(() => {
-    jest.useRealTimers();
-  });
+const priority = (word: StudyWord) => calculateWordPriority(word, NOW_MS);
 
-  // Test the mathematical priority calculation
-  describe('Priority Formula Validation', () => {
-    test('calculates correct priority values for different scenarios', () => {
-      const now = new Date();
+/** Root ids in the order the session would serve them. */
+const servedOrder = (words: StudyWord[]) => {
+  const queue = new PriorityQueue<StudyWord>();
+  words.forEach(word => queue.push(word, priority(word)));
+  const order: number[] = [];
+  while (!queue.isEmpty()) order.push(queue.pop()!.root_id);
+  return order;
+};
 
-      // Test overdue calculation (primary factor)
-      const overdueWord = createTestWord({
-        root_id: rootId(1),
-        fsrs_due: new Date(now.getTime() - 24 * 3600 * 1000).toISOString(), // 24 hours overdue
-        fsrs_stability: 5,
-        fsrs_difficulty: 6.5,
-      });
+describe('calculateWordPriority', () => {
+  describe('bands', () => {
+    test('serves learning steps, then reviews, then new words', () => {
+      const words = [newWord(1, 30 * DAY), reviewWord(2, 6 * DAY), stepWord(3, 5 * 60 * 1000)];
 
-      const dueNowWord = createTestWord({
-        root_id: rootId(2),
-        fsrs_due: now.toISOString(), // Due now
-        fsrs_stability: 5,
-        fsrs_difficulty: 6.5,
-      });
-
-      const futureWord = createTestWord({
-        root_id: rootId(3),
-        fsrs_due: new Date(now.getTime() + 24 * 3600 * 1000).toISOString(), // Due in 24 hours
-        fsrs_stability: 5,
-        fsrs_difficulty: 6.5,
-      });
-
-      const overduePriority = calculateWordPriority(overdueWord);
-      const dueNowPriority = calculateWordPriority(dueNowWord);
-      const futurePriority = calculateWordPriority(futureWord);
-
-      // More overdue words should have lower priority values
-      expect(overduePriority).toBeLessThan(dueNowPriority);
-      expect(dueNowPriority).toBeLessThan(futurePriority);
+      expect(servedOrder(words)).toEqual([3, 2, 1]);
     });
 
-    test('stability factor affects priority correctly', () => {
-      const now = new Date();
-
-      const unstableWord = createTestWord({
-        root_id: rootId(1),
-        fsrs_due: now.toISOString(),
-        fsrs_stability: 1, // Very unstable
-        fsrs_difficulty: 6.5,
-      });
-
-      const stableWord = createTestWord({
-        root_id: rootId(2),
-        fsrs_due: now.toISOString(),
-        fsrs_stability: 10, // Very stable
-        fsrs_difficulty: 6.5,
-      });
-
-      // Stability factor = Math.max(0, 10 - stability) * 0.1
-      // Unstable: Math.max(0, 10 - 1) * 0.1 = 0.9
-      // Stable: Math.max(0, 10 - 10) * 0.1 = 0.0
-      const unstablePriority = calculateWordPriority(unstableWord);
-      const stablePriority = calculateWordPriority(stableWord);
-
-      // Higher stability results in lower numeric priority
-      expect(stablePriority).toBeLessThan(unstablePriority);
+    test('a relearning step is as time-critical as a learning step', () => {
+      expect(priority(stepWord(1, HOUR, State.Relearning))).toBe(priority(stepWord(2, HOUR)));
     });
 
-    test('difficulty factor provides minor priority adjustment', () => {
-      const now = new Date();
+    // The case the old formula got backwards: it counted hours since the save
+    // as "overdue", so a word saved a month ago and never practised outranked
+    // every review that was actually decaying.
+    test('a new word saved a month ago waits behind a review due an hour ago', () => {
+      expect(priority(reviewWord(1, 5 * DAY))).toBeLessThan(priority(newWord(2, 30 * DAY)));
+    });
 
-      const hardWord = createTestWord({
-        root_id: rootId(1),
-        fsrs_due: now.toISOString(),
-        fsrs_stability: 5,
-        fsrs_difficulty: 8.0, // Hard
-      });
+    test('no band overlaps another, however extreme the word', () => {
+      const lastStep = priority(stepWord(1, -365 * DAY));
+      const firstReview = priority(reviewWord(2, 50 * 365 * DAY));
+      const lastReview = priority(reviewWord(3, 0));
+      const firstNew = priority(newWord(4, 50 * 365 * DAY));
 
-      const easyWord = createTestWord({
-        root_id: rootId(2),
-        fsrs_due: now.toISOString(),
-        fsrs_stability: 5,
-        fsrs_difficulty: 5.0, // Easy
-      });
-
-      // Difficulty factor = (difficulty - 5) * 0.01
-      // Hard: (8.0 - 5) * 0.01 = 0.03
-      // Easy: (5.0 - 5) * 0.01 = 0.00
-      const hardPriority = calculateWordPriority(hardWord);
-      const easyPriority = calculateWordPriority(easyWord);
-
-      // Harder words result in a slightly higher priority value
-      expect(hardPriority).toBeGreaterThan(easyPriority);
+      expect(lastStep).toBeLessThan(firstReview);
+      expect(firstReview).toBeLessThan(lastReview);
+      expect(lastReview).toBeLessThanOrEqual(firstNew);
     });
   });
 
-  describe('Priority Edge Cases', () => {
-    test('handles null/undefined FSRS values gracefully', () => {
-      const wordWithNulls = createTestWord({
-        root_id: rootId(1),
-        fsrs_due: null,
-        fsrs_stability: null,
-        fsrs_difficulty: null,
-      });
-
-      // Should use default values without crashing
-      // fsrs_due: null -> should default to now
-      // fsrs_stability: null -> should default to 1
-      // fsrs_difficulty: null -> should default to 6.5
-      const priority = calculateWordPriority(wordWithNulls);
-      expect(typeof priority).toBe('number');
-      expect(isFinite(priority)).toBeTruthy();
-    });
-
-    test('handles extreme values correctly', () => {
-      const extremeWord = createTestWord({
-        root_id: rootId(1),
-        fsrs_due: new Date('1970-01-01').toISOString(), // Very overdue
-        fsrs_stability: 999, // Extremely stable
-        fsrs_difficulty: 15, // Beyond normal range
-      });
-
-      const priority = calculateWordPriority(extremeWord);
-      expect(priority).toBeLessThan(0);
-      expect(isFinite(priority)).toBeTruthy();
-    });
-
-    test('handles invalid date strings', () => {
-      const invalidDateWord = createTestWord({
-        root_id: rootId(1),
-        fsrs_due: 'invalid-date-string',
-        fsrs_stability: 5,
-        fsrs_difficulty: 6.5,
-      });
-
-      const priority = calculateWordPriority(invalidDateWord);
-      expect(isNaN(priority)).toBeTruthy();
-    });
-  });
-
-  describe('Priority Consistency', () => {
-    test('maintains consistent ordering across multiple calculations', () => {
-      // Create a set of words with known priority relationships
-      const words = createWordSet([
-        { id: 1, hoursOverdue: 48, stability: 2, difficulty: 8.0 }, // Highest priority
-        { id: 2, hoursOverdue: 24, stability: 5, difficulty: 6.5 }, // High priority
-        { id: 3, hoursOverdue: 12, stability: 8, difficulty: 5.0 }, // Medium priority
-        { id: 4, hoursOverdue: 0, stability: 10, difficulty: 6.0 }, // Low priority
-        { id: 5, hoursOverdue: -12, stability: 15, difficulty: 5.5 }, // Lowest priority (future)
+  describe('within a band', () => {
+    test('learning steps: longest due first', () => {
+      expect(servedOrder([stepWord(1, HOUR), stepWord(2, 5 * HOUR), stepWord(3, -HOUR)])).toEqual([
+        2, 1, 3,
       ]);
-
-      const priorities = words.map(w => ({ id: w.root_id, p: calculateWordPriority(w) }));
-      const ordered = [...priorities].sort((a, b) => a.p - b.p).map(p => p.id);
-      expect(ordered).toEqual([1, 2, 3, 4, 5]);
     });
 
-    test('handles identical priority values with stable ordering', () => {
-      // Create words with identical priority factors
-      const identicalWords = createWordSet([
-        { id: 1, hoursOverdue: 24, stability: 5, difficulty: 6.5 },
-        { id: 2, hoursOverdue: 24, stability: 5, difficulty: 6.5 },
-        { id: 3, hoursOverdue: 24, stability: 5, difficulty: 6.5 },
-      ]);
+    // What the reminders promise: the words nearest the forgetting point.
+    test('reviews: lowest retrievability first', () => {
+      const fresh = reviewWord(1, 2 * DAY);
+      const fading = reviewWord(2, 10 * DAY);
+      const nearlyGone = reviewWord(3, 60 * DAY);
 
-      const priorities = identicalWords.map(calculateWordPriority);
-      expect(priorities[0]).toBeCloseTo(priorities[1]);
-      expect(priorities[1]).toBeCloseTo(priorities[2]);
+      expect(servedOrder([fresh, nearlyGone, fading])).toEqual([3, 2, 1]);
+    });
+
+    test('reviews: equally overdue, the more fragile word is the more urgent', () => {
+      const stable = reviewWord(1, 10 * DAY, { fsrs_stability: 30 });
+      const fragile = reviewWord(2, 10 * DAY, { fsrs_stability: 3 });
+
+      expect(priority(fragile)).toBeLessThan(priority(stable));
+    });
+
+    test('new words: longest saved first', () => {
+      expect(servedOrder([newWord(1, HOUR), newWord(2, 9 * DAY), newWord(3, 2 * DAY)])).toEqual([
+        2, 3, 1,
+      ]);
     });
   });
 
-  describe('Priority Performance', () => {
-    test('calculates priorities for large datasets without errors', () => {
-      const largeWordSet = Array.from({ length: 1000 }, (_, i) =>
-        createTestWord({
-          root_id: rootId(i + 1),
-          fsrs_due: new Date(Date.now() - Math.random() * 86400000).toISOString(),
-          fsrs_stability: Math.random() * 10 + 1,
-          fsrs_difficulty: Math.random() * 5 + 5,
-        }),
+  describe('what no longer moves a word', () => {
+    test('lapses and difficulty', () => {
+      const leech = reviewWord(1, 5 * DAY, { fsrs_lapses: 6, fsrs_difficulty: 9.5 });
+      const easy = reviewWord(2, 5 * DAY, { fsrs_lapses: 0, fsrs_difficulty: 2 });
+
+      expect(priority(leech)).toBe(priority(easy));
+    });
+
+    test("a review's due date, beyond what its retrievability already says", () => {
+      expect(priority(reviewWord(1, 5 * DAY, { fsrs_due: ago(48 * HOUR) }))).toBe(
+        priority(reviewWord(2, 5 * DAY, { fsrs_due: ago(HOUR) })),
       );
-
-      const priorities = largeWordSet.map(calculateWordPriority);
-
-      expect(priorities).toEqual(expect.arrayOf(expect.any(Number)));
-      expect(priorities).toHaveLength(1000);
     });
   });
 
-  describe('Real-world Priority Scenarios', () => {
-    test('prioritizes struggling words correctly', () => {
-      const strugglingWord = createTestWord({
-        root_id: rootId(1),
-        fsrs_due: new Date(Date.now() - 12 * 3600 * 1000).toISOString(), // 12 hours overdue
-        fsrs_stability: 2, // Low stability (struggling)
-        fsrs_difficulty: 8.5, // High difficulty
-        fsrs_lapses: 3, // Multiple failures
-      });
+  describe('bad data', () => {
+    test.each([
+      ['a null due date', { fsrs_state: State.Learning, fsrs_due: null }],
+      ['an unparseable due date', { fsrs_state: State.Learning, fsrs_due: 'not-a-date' }],
+      ['a new word with no save date', { fsrs_state: State.New, created_at: 'not-a-date' }],
+      ['a review with no stability', { fsrs_state: State.Review, fsrs_stability: null }],
+      ['a null state', { fsrs_state: null }],
+    ] as const)('%s still gets a finite priority', (_name, overrides) => {
+      const word = createTestWord({ root_id: rootId(1), ...overrides } as Partial<StudyWord>);
 
-      const masteredWord = createTestWord({
-        root_id: rootId(2),
-        fsrs_due: new Date(Date.now() - 6 * 3600 * 1000).toISOString(), // 6 hours overdue
-        fsrs_stability: 15, // High stability (mastered)
-        fsrs_difficulty: 5.5, // Low difficulty
-        fsrs_lapses: 0, // No failures
-      });
-
-      const strugglingPriority = calculateWordPriority(strugglingWord);
-      const masteredPriority = calculateWordPriority(masteredWord);
-
-      expect(strugglingPriority).toBeLessThan(masteredPriority);
+      expect(Number.isFinite(priority(word))).toBe(true);
     });
 
-    test('balances new vs review words appropriately', () => {
-      const newWord = createTestWord({
-        root_id: rootId(1),
-        fsrs_due: new Date().toISOString(), // Due now
-        fsrs_stability: 0, // New word
-        fsrs_difficulty: 6.5, // Default difficulty
-        fsrs_state: 0, // New state
-        fsrs_reps: 0,
-      });
+    // Retrievability 0 is "FSRS cannot say", which sorts as most forgotten —
+    // still inside the review band, never ahead of a learning step.
+    test('a review with no usable stability stays inside the review band', () => {
+      const unscored = priority(reviewWord(1, DAY, { fsrs_stability: null }));
 
-      const reviewWord = createTestWord({
-        root_id: rootId(2),
-        fsrs_due: new Date(Date.now() - 2 * 3600 * 1000).toISOString(), // 2 hours overdue
-        fsrs_stability: 7, // Established stability
-        fsrs_difficulty: 6.0, // Learned difficulty
-        fsrs_state: 2, // Review state
-        fsrs_reps: 5,
-      });
-
-      const newPriority = calculateWordPriority(newWord);
-      const reviewPriority = calculateWordPriority(reviewWord);
-
-      expect(reviewPriority).toBeLessThan(newPriority);
+      expect(unscored).toBeGreaterThan(priority(stepWord(2, -365 * DAY)));
+      expect(unscored).toBeLessThan(priority(newWord(3, 50 * 365 * DAY)));
     });
-  });
-});
-
-// Integration test with actual priority queue behavior
-describe('Priority Queue Integration', () => {
-  test('priority queue maintains correct order after insertions', () => {
-    const caseData = testPatterns.priorityTestCases[0];
-    const words = createWordSet(caseData.words);
-    const queue = new PriorityQueue<(typeof words)[0]>();
-    words.forEach(w => queue.push(w, calculateWordPriority(w)));
-
-    const order: number[] = [];
-    while (!queue.isEmpty()) {
-      order.push(queue.pop()!.root_id);
-    }
-
-    expect(order).toEqual(caseData.expectedOrder);
-  });
-
-  test('requeued words get appropriate spacing priority', () => {
-    const wordA = createTestWord({
-      root_id: rootId(1),
-      fsrs_due: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
-    });
-    const wordB = createTestWord({
-      root_id: rootId(2),
-      fsrs_due: new Date(Date.now() - 1 * 3600 * 1000).toISOString(),
-    });
-
-    const queue = new PriorityQueue<typeof wordA>();
-    queue.push(wordA, calculateWordPriority(wordA));
-    queue.push(wordB, calculateWordPriority(wordB));
-
-    const first = queue.pop()!;
-    const penalty = 2; // simulate spacing penalty
-    queue.push(first, calculateWordPriority(first) + penalty);
-    queue.push(wordB, calculateWordPriority(wordB));
-
-    const order: number[] = [];
-    while (!queue.isEmpty()) {
-      order.push(queue.pop()!.root_id);
-    }
-
-    expect(order[0]).toBe(2);
-  });
-
-  test('words with invalid due date are skipped in queue ordering', () => {
-    const validEarly = createTestWord({
-      root_id: rootId(1),
-      fsrs_due: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
-    });
-
-    const invalidWord = createTestWord({ root_id: rootId(2), fsrs_due: 'not-a-date' });
-
-    const validLate = createTestWord({ root_id: rootId(3), fsrs_due: new Date().toISOString() });
-
-    const queue = new PriorityQueue<typeof validEarly>();
-    queue.push(validEarly, calculateWordPriority(validEarly));
-    queue.push(invalidWord, calculateWordPriority(invalidWord));
-    queue.push(validLate, calculateWordPriority(validLate));
-
-    const priorityInvalid = calculateWordPriority(invalidWord);
-    expect(isNaN(priorityInvalid)).toBeTruthy();
-
-    const order: number[] = [];
-    while (!queue.isEmpty()) {
-      order.push(queue.pop()!.root_id);
-    }
-
-    expect(order).toEqual([1, 3, 2]);
   });
 });

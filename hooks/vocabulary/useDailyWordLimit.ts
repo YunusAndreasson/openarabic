@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 
 import { OPTIMIZED_FSRS_CONFIG } from '@/constants/fsrs';
 import { useAppSelectorShallow } from '@/store/hooks';
-import { selectAdaptiveNewWordPacingEnabled } from '@/store/settingsSlice';
+import { selectAdaptiveNewWordPacingEnabled, selectDailyWordLimit } from '@/store/settingsSlice';
 import { parseSupabaseTimestamp, toLocalDateString } from '@/utils/dateTimeUtils';
 import { computeAdaptiveNewLimit, type AdaptiveNewLimit } from '@/utils/newWordPacing';
 import { readRecentRecall } from '@/utils/recallSignalStorage';
@@ -40,7 +40,7 @@ async function getDailyWordCountUnlocked(currentDate: string): Promise<number> {
 }
 
 export const useDailyWordLimit = () => {
-  const dailyWordLimit = useAppSelectorShallow(state => state.settings.dailyWordLimit);
+  const dailyWordLimit = useAppSelectorShallow(selectDailyWordLimit);
   const adaptivePacingEnabled = useAppSelectorShallow(selectAdaptiveNewWordPacingEnabled);
 
   // The day boundary MUST be the same one countReviewedToday and the streak

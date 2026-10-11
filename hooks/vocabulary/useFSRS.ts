@@ -178,13 +178,13 @@ export function useFSRS({
   const refillWorkingSet = useCallback((): boolean => {
     if (backlogRef.current.length === 0) return false;
 
+    // The backlog was put in priority order when the session started, so the
+    // next chunk is simply its head. Re-partitioning here scored and sorted
+    // every remaining word on each refill — a forgetting-curve evaluation per
+    // word, on the path between a grade and the next card.
     const nowMs = Date.now();
-    const { chunk, rest } = partitionSessionChunk(
-      backlogRef.current,
-      REVIEW_SESSION_CHUNK_SIZE,
-      nowMs,
-    );
-    backlogRef.current = rest;
+    const chunk = backlogRef.current.slice(0, REVIEW_SESSION_CHUNK_SIZE);
+    backlogRef.current = backlogRef.current.slice(REVIEW_SESSION_CHUNK_SIZE);
 
     chunk.forEach(word => {
       countersRef.current.uniqueWords.add(word.root_id);

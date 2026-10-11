@@ -8,6 +8,7 @@ export const STRINGS = {
   CLEAR: 'Clear',
   REFRESH: 'Refresh',
   CONTINUE: 'Continue',
+  PERMISSION_REQUIRED: 'Permission required',
 
   // Over-the-air updates. The download is silent and the new bundle only runs on
   // the NEXT launch, so this is the one line that admits it happened — without
@@ -151,7 +152,7 @@ export const STRINGS = {
   SESSION_PROGRESS_A11Y: (percent: number, done: number) =>
     `${percent}% through this round, ${done} words done`,
   GRADE_FORGOT: 'Forgot',
-  GRADE_GUESSED: 'Guessed',
+  GRADE_GUESSED: 'Barely',
   GRADE_KNEW_IT: 'Knew it',
   NO_TRANSLATION_AVAILABLE: 'No translation available',
   // Advanced (Account → Advanced) — voice grading diagnostics
@@ -227,7 +228,7 @@ export const STRINGS = {
   TUTORIAL_GRADES_TITLE: 'Three answers',
   TUTORIAL_GRADES_BODY: 'Once the answer is showing, tap the one that matches how it went.',
   TUTORIAL_GRADE_FORGOT_HINT: 'Stays for another look, then comes back soon',
-  TUTORIAL_GRADE_GUESSED_HINT: 'Comes back sooner than the ones you knew',
+  TUTORIAL_GRADE_GUESSED_HINT: 'You got it, but only just. Comes back sooner',
   TUTORIAL_GRADE_KNEW_HINT: 'Comes back later, so you skip easy words',
   // Review tutorial - Ready step
   TUTORIAL_SRS_TITLE: "You're ready",

@@ -360,20 +360,23 @@ describe('useFSRS Hook', () => {
   });
 
   describe('Priority Queue Management', () => {
-    test('orders words by due date (earliest first)', async () => {
+    test('orders learning-step words by due date (earliest first)', async () => {
       const now = new Date();
       const mockWords = [
         createMockStudyWord({
           root_id: rootId(3),
           fsrs_due: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days
+          fsrs_state: 1,
         }),
         createMockStudyWord({
           root_id: rootId(1),
           fsrs_due: new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day
+          fsrs_state: 1,
         }),
         createMockStudyWord({
           root_id: rootId(2),
           fsrs_due: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days
+          fsrs_state: 1,
         }),
       ];
 
@@ -887,22 +890,37 @@ describe('useFSRS Hook', () => {
       expect(result.current.wordQueue).toHaveLength(1);
     });
 
-    test('invalidateQueries resets queue state', async () => {
-      const words = [createMockStudyWord({ root_id: 1 as RootId })];
-      studyWordsFSRSService.getFSRSWords = jest.fn(async (..._args: unknown[]) => words);
+    // Invalidation refreshes the cache and nothing else. It used to re-arm
+    // the init effect as well, so the refetch that follows a close rebuilt a
+    // session underneath the dismissing screen. Restarting is resetQueue's job.
+    test('invalidateQueries leaves the running session alone', async () => {
+      const getFSRSWords = jest.fn(async (..._args: unknown[]) => [
+        createMockStudyWord({ root_id: 1 as RootId }),
+      ]);
+      studyWordsFSRSService.getFSRSWords = getFSRSWords;
 
-      const userId = 'test-user';
-      const { result } = renderHook(() => useFSRS({ userId }), { wrapper });
+      const { result } = renderHook(() => useFSRS({ userId: 'test-user' }), { wrapper });
 
       await waitFor(() => {
-        expect(result.current.currentWord).not.toBeNull();
+        expect(result.current.currentWord?.root_id).toBe(1);
+      });
+      const callsBefore = getFSRSWords.mock.calls.length;
+
+      // The refetch comes back with a different due list entirely.
+      getFSRSWords.mockImplementation(async () => [
+        createMockStudyWord({ root_id: 7 as RootId }),
+        createMockStudyWord({ root_id: 8 as RootId }),
+      ]);
+      act(() => {
+        result.current.invalidateQueries();
       });
 
-      // Invalidating queries should reset queue state
-      result.current.invalidateQueries();
-
-      // Function should not throw
-      expect(() => result.current.invalidateQueries()).not.toThrow();
+      await waitFor(() => {
+        expect(getFSRSWords.mock.calls.length).toBeGreaterThan(callsBefore);
+      });
+      expect(result.current.currentWord?.root_id).toBe(1);
+      expect(result.current.wordQueue.map(word => word.root_id)).toEqual([1]);
+      expect(result.current.isEmpty).toBeFalsy();
     });
 
     test('cleans up on unmount', async () => {

@@ -29,7 +29,7 @@ import { useRecallableMemory } from '@/hooks/vocabulary/useMemoryInsights';
 import { calculateDueWordsForecast } from '@/utils/fsrsUtils';
 import { isLeechWord } from '@/utils/leechUtils';
 import { runWhenIdle } from '@/utils/runWhenIdle';
-import { countReviewedToday } from '@/utils/wordClassification';
+import { countReviewedToday, isDueWord } from '@/utils/wordClassification';
 
 // Mount fade-in — Reanimated 4 CSS @keyframes, module-level so no per-render alloc.
 // Replaces imperative `entering={FadeIn}` which the React Compiler can't track and
@@ -108,7 +108,14 @@ export default function PracticeScreen(): JSX.Element {
   // it — and not before they have loaded. Retained unbiased, it was torn down
   // and rebuilt the moment review mounted and offered the very same words, and
   // the warm engine this tab exists to provide was never the one card 1 used.
-  const dueGlossKey = (dueWords ?? [])
+  //
+  // The due query here is capped, and review offers every word in the session.
+  // At the cap the two lists differ, the vocabulary grows when review mounts,
+  // and the warm engine is rebuilt during card 1 after all — so past the cap
+  // this reads the due words out of the full list instead.
+  const dueWordsCapped = (dueWords?.length ?? 0) >= PRACTICE_DUE_WORDS_LIMIT;
+  const vocabularyWords = dueWordsCapped ? (allWords ?? []).filter(isDueWord) : (dueWords ?? []);
+  const dueGlossKey = vocabularyWords
     .map(word => word.root?.meaning)
     .filter((meaning): meaning is string => Boolean(meaning))
     .sort()

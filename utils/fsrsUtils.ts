@@ -54,7 +54,13 @@ export function calculateRetrievability(
     return 0;
   }
 
-  const daysSinceReview = (targetDate.getTime() - lastReview.getTime()) / (1000 * 60 * 60 * 24);
+  // Clamped at zero: a review stamped after `targetDate` (a device clock that
+  // has since moved back) is a word seen just now, and a negative elapsed time
+  // takes the curve's base below zero, which is NaN rather than a recall.
+  const daysSinceReview = Math.max(
+    0,
+    (targetDate.getTime() - lastReview.getTime()) / MILLISECONDS_PER_DAY,
+  );
 
   return Math.max(0, Math.min(1, FSRS_INSTANCE.forgetting_curve(daysSinceReview, stability)));
 }

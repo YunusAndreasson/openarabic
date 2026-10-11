@@ -31,19 +31,21 @@ export function useProvideAuth(): AuthResult {
     dispatchRef.current = dispatch;
   }, [dispatch]);
 
-  // Called whenever a session is established. A no-op unless a different
-  // account last used this device — see claimDeviceForAccount.
-  const claimDevice = useCallback((userId: string) => {
-    claimDeviceForAccount(userId)
-      .then(switched => {
-        if (switched) dispatchRef.current(accountSwitched());
-      })
-      .catch(error => {
-        void handleError(error, {
-          showToast: false,
-          analyticsEventName: 'Account_Switch_Cleanup_Error',
-        });
+  // Called whenever a session is established, and AWAITED before that session
+  // is published. A no-op unless a different account last used this device —
+  // see claimDeviceForAccount. Publishing first let the new account's screens
+  // read the previous account's streak and pacing data in the gap before the
+  // sweep landed, and write the merged result back under their own name.
+  // Never rejects: a failed sweep must not keep anyone signed out.
+  const claimDevice = useCallback(async (userId: string): Promise<void> => {
+    try {
+      if (await claimDeviceForAccount(userId)) dispatchRef.current(accountSwitched());
+    } catch (error) {
+      void handleError(error, {
+        showToast: false,
+        analyticsEventName: 'Account_Switch_Cleanup_Error',
       });
+    }
   }, []);
 
   // Refresh session function with exponential backoff retry logic
@@ -137,7 +139,7 @@ export function useProvideAuth(): AuthResult {
         setAuthError(error);
       } else if (data.session) {
         authBreadcrumb('Successfully initialized with valid session');
-        claimDevice(data.session.user.id);
+        await claimDevice(data.session.user.id);
         setSession(data.session);
         setAuthError(null);
       } else {
@@ -166,6 +168,8 @@ export function useProvideAuth(): AuthResult {
     const removeSupabaseListener = setupSupabaseAppStateListener();
     let isMounted = true;
     let authSubscriptionUnsubscribe: () => void = () => undefined;
+    // Counts handled auth events, so a deferred publish can tell it was overtaken.
+    let authEventSeq = 0;
 
     // Initialize auth — async session fetch that must run once on mount; setState
     // happens after awaited supabase call resolves, not synchronously in effect body.
@@ -184,6 +188,9 @@ export function useProvideAuth(): AuthResult {
       setTimeout(() => {
         // FIXED: Guard against race condition where component unmounts between setTimeout queue and execution
         if (!isMounted) return;
+
+        authEventSeq += 1;
+        const eventSeq = authEventSeq;
 
         authBreadcrumb(`Auth state change: ${event}`);
 
@@ -205,9 +212,21 @@ export function useProvideAuth(): AuthResult {
           event === 'PASSWORD_RECOVERY' ||
           event === 'USER_UPDATED'
         ) {
+          if (newSession && event === 'SIGNED_IN') {
+            authBreadcrumb('New session received, updating state');
+            // Publish only once the claim has settled, and only if no later
+            // auth event overtook it while it ran — that one has already
+            // published the state this would now be overwriting.
+            void claimDevice(newSession.user.id).then(() => {
+              if (!isMounted || authEventSeq !== eventSeq) return;
+              setSession(newSession);
+              setAuthError(null);
+              setIsLoading(false);
+            });
+            return;
+          }
           if (newSession) {
             authBreadcrumb('New session received, updating state');
-            if (event === 'SIGNED_IN') claimDevice(newSession.user.id);
             setSession(newSession);
             setAuthError(null);
           }

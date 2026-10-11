@@ -40,107 +40,6 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
     jest.useRealTimers();
   });
 
-  describe('calculateWordPriority', () => {
-    test('should prioritize overdue words correctly', () => {
-      const baseTime = fixedTime.getTime();
-
-      // Create words with different overdue times
-      const words = [
-        createTestWord({
-          root_id: rootId(1),
-          fsrs_due: new Date(baseTime - 5 * 3600000).toISOString(), // 5 hours overdue
-          fsrs_stability: 5,
-          fsrs_difficulty: 6.5,
-        }),
-        createTestWord({
-          root_id: rootId(2),
-          fsrs_due: new Date(baseTime - 1 * 3600000).toISOString(), // 1 hour overdue
-          fsrs_stability: 5,
-          fsrs_difficulty: 6.5,
-        }),
-        createTestWord({
-          root_id: rootId(3),
-          fsrs_due: new Date(baseTime + 1 * 3600000).toISOString(), // 1 hour future
-          fsrs_stability: 5,
-          fsrs_difficulty: 6.5,
-        }),
-      ];
-
-      const priorities = words.map(calculateWordPriority);
-
-      // More overdue should have lower priority (higher urgency)
-      expect(priorities[0]).toBeLessThan(priorities[1]); // 5h overdue < 1h overdue
-      expect(priorities[1]).toBeLessThan(priorities[2]); // 1h overdue < future due
-    });
-
-    test('should handle stability factor correctly', () => {
-      const baseTime = fixedTime.getTime();
-      const dueTime = new Date(baseTime - 3600000).toISOString(); // 1 hour overdue
-
-      const lowStability = createTestWord({
-        fsrs_due: dueTime,
-        fsrs_stability: 1,
-        fsrs_difficulty: 6.5,
-      });
-      const highStability = createTestWord({
-        fsrs_due: dueTime,
-        fsrs_stability: 10,
-        fsrs_difficulty: 6.5,
-      });
-
-      const lowPriority = calculateWordPriority(lowStability);
-      const highPriority = calculateWordPriority(highStability);
-
-      // Lower stability should have higher urgency (lower priority value)
-      // stabilityFactor = Math.max(0, 10 - stability) * 0.1
-      // For stability=1: stabilityFactor = 9 * 0.1 = 0.9
-      // For stability=10: stabilityFactor = 0 * 0.1 = 0
-      // So lowPriority = 10 - 0.1 - 0.9 + 0.015 = 9.015
-      // And highPriority = 10 - 0.1 - 0 + 0.015 = 9.915
-      expect(lowPriority).toBeGreaterThan(highPriority);
-    });
-
-    test('should handle difficulty factor correctly', () => {
-      const baseTime = fixedTime.getTime();
-      const dueTime = new Date(baseTime - 3600000).toISOString();
-
-      const easyWord = createTestWord({
-        fsrs_due: dueTime,
-        fsrs_stability: 5,
-        fsrs_difficulty: 3,
-      });
-      const hardWord = createTestWord({
-        fsrs_due: dueTime,
-        fsrs_stability: 5,
-        fsrs_difficulty: 9,
-      });
-
-      const easyPriority = calculateWordPriority(easyWord);
-      const hardPriority = calculateWordPriority(hardWord);
-
-      // Harder words should have higher urgency (lower priority value)
-      // difficultyFactor = (difficulty - 5) * 0.01
-      // For difficulty=3: difficultyFactor = (3 - 5) * 0.01 = -0.02
-      // For difficulty=9: difficultyFactor = (9 - 5) * 0.01 = 0.04
-      // So easyPriority = -1 + 0.5 + (-0.02) = -0.52
-      // And hardPriority = -1 + 0.5 + 0.04 = -0.46
-      expect(hardPriority).toBeGreaterThan(easyPriority);
-    });
-
-    test('should handle null/undefined values gracefully', () => {
-      const wordWithNulls = createTestWord({
-        fsrs_due: null,
-        fsrs_stability: null,
-        fsrs_difficulty: null,
-      });
-
-      expect(() => calculateWordPriority(wordWithNulls)).not.toThrow();
-      const priority = calculateWordPriority(wordWithNulls);
-      expect(typeof priority).toBe('number');
-      expect(isFinite(priority)).toBeTruthy();
-    });
-  });
-
   describe('createSpacingState', () => {
     test('should create empty state', () => {
       const state = createSpacingState();
@@ -719,14 +618,17 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
         createTestWord({
           root_id: rootId(1),
           fsrs_due: new Date(baseTime - 10 * 3600000).toISOString(), // Highest priority
+          fsrs_state: 1,
         }),
         createTestWord({
           root_id: rootId(2),
           fsrs_due: new Date(baseTime - 5 * 3600000).toISOString(), // Medium priority
+          fsrs_state: 1,
         }),
         createTestWord({
           root_id: rootId(3),
           fsrs_due: new Date(baseTime - 1 * 3600000).toISOString(), // Lowest priority
+          fsrs_state: 1,
         }),
       ];
 
