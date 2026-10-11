@@ -66,19 +66,22 @@ export const WordMemoryCurve = memo<WordMemoryCurveProps>(
         return VERTICAL_INSET + usableHeight * (1 - Math.min(1, Math.max(0, normalized)));
       };
 
-      const line = Skia.Path.Make();
+      const builder = Skia.PathBuilder.Make();
       points.forEach((point, index) => {
         const x = toX(point.days);
         const y = toY(point.retrievability);
-        if (index === 0) line.moveTo(x, y);
-        else line.lineTo(x, y);
+        if (index === 0) builder.moveTo(x, y);
+        else builder.lineTo(x, y);
       });
+      // `build()` snapshots without resetting, so the builder can keep growing.
+      const line = builder.build();
 
       // Same outline closed down to the baseline for the wash beneath it.
-      const area = line.copy();
-      area.lineTo(toX(spanDays), PLOT_HEIGHT);
-      area.lineTo(0, PLOT_HEIGHT);
-      area.close();
+      const area = builder
+        .lineTo(toX(spanDays), PLOT_HEIGHT)
+        .lineTo(0, PLOT_HEIGHT)
+        .close()
+        .build();
 
       const at = (days: number): { x: number; y: number } => {
         const clamped = Math.min(spanDays, Math.max(0, days));

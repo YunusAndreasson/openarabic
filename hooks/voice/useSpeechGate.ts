@@ -1,11 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  VADModule,
-  initExecutorch,
-  isAvailable as executorchAvailable,
-  models,
-} from 'react-native-executorch';
-import { ExpoResourceFetcher } from 'react-native-executorch-expo-resource-fetcher';
+import type * as ExecuTorch from 'react-native-executorch';
 
 import type { SpeechGate } from '@/lib/voice/recording';
 import { voiceBreadcrumb } from '@/utils/errorHandling';
@@ -31,46 +25,48 @@ import { mark as diagMark } from '@/utils/reviewDiagnostics';
  * lands, devices without executorch, and any capture the OS hands back at a rate
  * other than the model's 16 kHz.
  *
- * **`VADModule` is driven directly rather than through the library's `useVAD`
- * hook.** That hook routes every call through `runForward`, which refuses a
- * second call while one is in flight — and `stream()` is in flight for the whole
- * session, so the `streamInsert` calls feeding it would race its own guard. The
- * module underneath has no such guard.
+ * **The task runner is built directly rather than through the library's
+ * `useVoiceActivityDetector` hook.** That hook starts its download the moment it
+ * mounts, and this one is mounted by `VoiceGradingProvider` for the whole app —
+ * a learner who has voice switched off should not fetch a model they will never
+ * run.
  */
-const FSMN_VAD = models.vad.fsmn_vad();
 
 /**
- * executorch has no default way to fetch a model — it throws until an adapter is
- * registered — so this hands it the Expo one (expo-file-system + expo-asset).
+ * Downloads the model if it is not cached and builds a detector over it.
  *
- * Registered lazily, from the load effect, rather than at import: this module is
- * pulled in by `VoiceGradingProvider`, which mounts for the whole app, and a
- * learner who has voice switched off should not pay for a file-system adapter
- * they will never use.
+ * The library is required here and not imported at the top of the file because
+ * its entry point throws when the executorch JSI bindings are missing from the
+ * binary. A static import would take `VoiceGradingProvider`, and with it the
+ * whole app, down on such a build; from here the same failure is a rejected
+ * load and the recorder stays on the energy gate. `require` rather than
+ * `import()`: Metro inlines both, but Jest cannot run a dynamic import at all.
  *
- * The download itself is ~1.8 MB and deliberately does NOT go through the
+ * The download is ~1.8 MB and deliberately does NOT go through the
  * metered-connection gate the Parakeet model uses. That gate exists because
  * Parakeet is ~103 MB — a real decision to put in front of someone on cellular —
  * and asking the same question about a file two per cent of its size would be
  * ceremony rather than consent.
  */
-let fetcherRegistered = false;
-function registerResourceFetcher(): void {
-  if (fetcherRegistered) return;
-  initExecutorch({ resourceFetcher: ExpoResourceFetcher });
-  fetcherRegistered = true;
+async function loadDetector(signal: AbortSignal): Promise<ExecuTorch.FsmnVoiceActivityDetector> {
+  const { createFsmnVoiceActivityDetector, download, models } =
+    require('react-native-executorch') as typeof ExecuTorch;
+  const model = await download(models.voiceActivityDetection.FSMN_VAD.DEFAULT, { signal });
+  return createFsmnVoiceActivityDetector(model);
 }
 
 /**
- * How long the native side waits between inferences, and how far apart two
- * detections may be and still count as one run of speech.
+ * How close to the end of the rolling window the last speech segment has to
+ * reach for the learner to still count as speaking.
  *
- * Both left at the library defaults (100 ms) deliberately. They are the reason
+ * Left at the library default (100 ms) deliberately. It is part of the reason
  * the recorder pads a VAD-driven window with a wider pre-roll — the verdict can
- * trail the syllable that caused it — and moving them is a change to answer
+ * trail the syllable that caused it — and moving it is a change to answer
  * latency that should be made against captured audio, not guessed at here.
  */
-const STREAM_OPTIONS = { timeout: 100, detectionMargin: 100 } as const;
+const STREAM_OPTIONS = { detectionMargin: 100 } as const;
+
+type GateHandlers = Parameters<SpeechGate['start']>[0];
 
 export interface SpeechGateState {
   /** Handed to the recorder's `beginWindow`; inert until `isReady`. */
@@ -92,28 +88,21 @@ export interface SpeechGateState {
  */
 
 export function useSpeechGate({ enabled }: { enabled: boolean }): SpeechGateState {
-  const moduleRef = useRef<VADModule | null>(null);
-  /**
-   * Set when the streaming session dies after `start` has already returned.
-   * The recorder can only learn about that through `insert`, so the flag is
-   * turned into a throw there rather than being logged and forgotten — a
-   * silent no-op would leave the window running to its cap with the model
-   * saying nothing, which is indistinguishable from a learner who never spoke.
-   */
-  const brokenRef = useRef(false);
+  const detectorRef = useRef<ExecuTorch.FsmnVoiceActivityDetector | null>(null);
+  const handlersRef = useRef<GateHandlers | null>(null);
   const [isLoaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    if (!enabled || !executorchAvailable) return;
+    if (!enabled) return;
     let active = true;
-    registerResourceFetcher();
-    VADModule.fromModelName(FSMN_VAD)
-      .then(instance => {
+    const controller = new AbortController();
+    loadDetector(controller.signal)
+      .then(detector => {
         if (!active) {
-          instance.delete();
+          detector.dispose();
           return;
         }
-        moduleRef.current = instance;
+        detectorRef.current = detector;
         setLoaded(true);
         diagMark('vad.loaded');
       })
@@ -128,75 +117,41 @@ export function useSpeechGate({ enabled }: { enabled: boolean }): SpeechGateStat
       });
     return () => {
       active = false;
+      controller.abort();
       setLoaded(false);
-      moduleRef.current?.delete();
-      moduleRef.current = null;
+      handlersRef.current = null;
+      detectorRef.current?.dispose();
+      detectorRef.current = null;
     };
   }, [enabled]);
 
-  const start = useCallback(
-    (handlers: { onSpeechBegin: () => void; onSpeechEnd: () => void }): void => {
-      const instance = moduleRef.current;
-      if (!instance) throw new Error('VAD not loaded');
-      brokenRef.current = false;
-      // A window torn down without a clean stop (an unmount mid-answer, a
-      // cancelled arm) would otherwise leave its session running and swallow
-      // this one's audio.
-      try {
-        instance.streamStop();
-      } catch {
-        // No session to stop — the normal case.
-      }
-      // `stream()` settles only when the session STOPS, so it cannot be awaited
-      // here — this returns before the session is provably live, and anything
-      // that goes wrong arrives after the recorder has already committed to the
-      // VAD. Either way the gate is marked broken so the next `insert` throws
-      // and the window falls back to the energy gate mid-take.
-      //
-      // **A clean resolve is treated exactly like a rejection, and that is the
-      // point.** Watching only `.catch` reads "the session ended" as "the
-      // session is fine": inserts keep succeeding as no-ops, `vadSpeaking`
-      // freezes at whatever it last was, and the recorder never learns to fall
-      // back — so a hands-free window burns its full 25 s and is discarded as
-      // "nobody spoke". The learner spoke, waited, and is told nothing. A
-      // resolve here can only mean the session is over, and after the window's
-      // own `stop()` nothing inserts again, so this cannot misfire on the
-      // normal teardown path.
-      void instance
-        .stream({ ...handlers, options: STREAM_OPTIONS })
-        .then(() => {
-          brokenRef.current = true;
-        })
-        .catch((err: unknown) => {
-          brokenRef.current = true;
-          voiceBreadcrumb(
-            'voice.vad.streamFailed',
-            { message: err instanceof Error ? err.message : String(err) },
-            'warning',
-          );
-        });
-    },
-    [],
-  );
+  const start = useCallback((handlers: GateHandlers): void => {
+    const detector = detectorRef.current;
+    if (!detector) throw new Error('VAD not loaded');
+    // A window torn down without a clean stop (an unmount mid-answer, a
+    // cancelled arm) would otherwise leave its audio in the rolling window and
+    // its speaking state set, and this one would open already "speaking".
+    detector.resetStream();
+    handlersRef.current = handlers;
+  }, []);
 
   const insert = useCallback((waveform: Float32Array): void => {
-    // Throwing is the contract: `VoiceCaptureSession` catches it and hands the
-    // rest of the window to the energy gate.
-    if (brokenRef.current) throw new Error('VAD stream failed');
-    const instance = moduleRef.current;
-    if (!instance) throw new Error('VAD not loaded');
-    instance.streamInsert(waveform);
+    const detector = detectorRef.current;
+    if (!detector) throw new Error('VAD not loaded');
+    // Detection runs right here, on the buffer in hand, and anything it throws
+    // is the contract: `VoiceCaptureSession` catches it and hands the rest of
+    // the window to the energy gate.
+    const event = detector.detectVoiceOnStream(waveform, STREAM_OPTIONS);
+    if (event === 'speechStart') handlersRef.current?.onSpeechBegin();
+    else if (event === 'speechEnd') handlersRef.current?.onSpeechEnd();
   }, []);
 
   const stop = useCallback((): void => {
-    try {
-      moduleRef.current?.streamStop();
-    } catch {
-      // Already stopped.
-    }
+    handlersRef.current = null;
+    detectorRef.current?.resetStream();
   }, []);
 
-  const isReady = isLoaded && enabled && executorchAvailable;
+  const isReady = isLoaded && enabled;
   const gate = useMemo<SpeechGate>(
     () => ({ isReady, start, insert, stop }),
     [isReady, start, insert, stop],

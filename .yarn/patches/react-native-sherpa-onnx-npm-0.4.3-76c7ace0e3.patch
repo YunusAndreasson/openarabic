@@ -33,3 +33,58 @@ index 5df6a93c8f0dfb02150568a917b578302c2a7adb..13208b96d585d81f663802beacdde26f
      }
 +    initHandler.post(::initializeOnBackgroundThread)
    }
+diff --git a/ios/SherpaOnnx+STT.mm b/ios/SherpaOnnx+STT.mm
+--- a/ios/SherpaOnnx+STT.mm
++++ b/ios/SherpaOnnx+STT.mm
+@@ -225,7 +225,9 @@
+         sherpaonnx::SttInitializeResult result = inst->wrapper->initialize(
+             modelDirStr, preferInt8Opt, modelTypeOpt, debugVal, hotwordsFileOpt, hotwordsScoreOpt,
+             numThreadsOpt, providerOpt, ruleFstsOpt, ruleFarsOpt, ditherOpt,
+-            whisperOptsPtr, senseVoiceOptsPtr, canaryOptsPtr, funasrNanoOptsPtr, qwen3AsrOptsPtr);
++            whisperOptsPtr, senseVoiceOptsPtr, canaryOptsPtr, funasrNanoOptsPtr, qwen3AsrOptsPtr,
++            modelingUnit != nil ? std::string([modelingUnit UTF8String]) : std::string(),
++            bpeVocab != nil ? std::string([bpeVocab UTF8String]) : std::string());
+ 
+         if (result.success) {
+             RCTLogInfo(@"Sherpa-onnx initialized successfully");
+diff --git a/ios/stt/sherpa-onnx-stt-wrapper.h b/ios/stt/sherpa-onnx-stt-wrapper.h
+--- a/ios/stt/sherpa-onnx-stt-wrapper.h
++++ b/ios/stt/sherpa-onnx-stt-wrapper.h
+@@ -118,7 +118,9 @@
+         const SttSenseVoiceOptions* senseVoiceOpts = nullptr,
+         const SttCanaryOptions* canaryOpts = nullptr,
+         const SttFunAsrNanoOptions* funasrNanoOpts = nullptr,
+-        const SttQwen3AsrOptions* qwen3AsrOpts = nullptr
++        const SttQwen3AsrOptions* qwen3AsrOpts = nullptr,
++        const std::string& modelingUnit = "",
++        const std::string& bpeVocab = ""
+     );
+ 
+     SttRecognitionResult transcribeFile(const std::string& filePath);
+diff --git a/ios/stt/sherpa-onnx-stt-wrapper.mm b/ios/stt/sherpa-onnx-stt-wrapper.mm
+--- a/ios/stt/sherpa-onnx-stt-wrapper.mm
++++ b/ios/stt/sherpa-onnx-stt-wrapper.mm
+@@ -139,7 +139,9 @@
+     const SttSenseVoiceOptions* senseVoiceOpts,
+     const SttCanaryOptions* canaryOpts,
+     const SttFunAsrNanoOptions* funasrNanoOpts,
+-    const SttQwen3AsrOptions* qwen3AsrOpts
++    const SttQwen3AsrOptions* qwen3AsrOpts,
++    const std::string& modelingUnit,
++    const std::string& bpeVocab
+ ) {
+     SttInitializeResult result;
+     result.success = false;
+@@ -158,6 +160,12 @@
+         sherpa_onnx::cxx::OfflineRecognizerConfig config;
+         config.feat_config.sample_rate = 16000;
+         config.feat_config.feature_dim = 80;
++        // The hotword tokenizer needs both of these, and the bridge above this
++        // call received them from JavaScript and dropped them. Without them a
++        // hotwords file is encoded against the default `cjkchar` unit, which
++        // splits an English phrase into single characters the model never emits.
++        if (!modelingUnit.empty()) config.model_config.modeling_unit = modelingUnit;
++        if (!bpeVocab.empty()) config.model_config.bpe_vocab = bpeVocab;
+ 
+         auto detect = DetectSttModel(modelDir, preferInt8, modelType, debug);
+         if (!detect.ok) {

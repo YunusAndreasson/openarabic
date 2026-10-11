@@ -50,18 +50,13 @@ const createMockParagraphBuilder = () => ({
   build: () => createMockParagraph(),
 });
 
-// Mock Skia Path API (immutable result of PathBuilder.build())
+// Mock Skia Path API (immutable result of PathBuilder.build()).
+//
+// Deliberately has NO mutators (`moveTo`, `lineTo`, `close`, …). Skia 2.14
+// removed them from `SkPath` — paths are grown on a PathBuilder only — and
+// while this mock still offered them, `WordMemoryCurve` kept passing its tests
+// on an API the library no longer had. Typecheck caught it; this would not have.
 const createMockPath = () => ({
-  moveTo: () => {},
-  lineTo: () => {},
-  cubicTo: () => {},
-  close: () => {},
-  addArc: () => {},
-  // Real Skia's `copy()` forks a path so a second shape can be grown from the
-  // first — `WordMemoryCurve` builds its decay line, then copies it and closes
-  // it down to the baseline for the wash beneath. Omitted here until the word
-  // sheet became the first surface to render that curve under test, which
-  // failed with "line.copy is not a function".
   copy: () => createMockPath(),
   toSVGString: () => 'M0,0',
   // Real Skia refuses to interpolate two paths with different verb counts, and

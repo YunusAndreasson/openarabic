@@ -59,12 +59,10 @@ export type SpeechGateKind = 'vad' | 'energy';
  * owns the download, the native handle and the React lifecycle, and a plain
  * object stands in for it in tests.
  *
- * **`start` is synchronous, unlike the library it wraps.** `beginWindow` is
- * synchronous by design — it resumes an already-open stream and must not put an
- * `await` between the learner and a live microphone — and the underlying
- * `stream()` cannot be awaited anyway: it resolves when the session *stops*.
- * The implementation therefore fires it and reports a late failure through
- * `insert`, which is the call this recorder actually makes every buffer.
+ * **`start` is synchronous.** `beginWindow` is synchronous by design — it
+ * resumes an already-open stream and must not put an `await` between the
+ * learner and a live microphone. A detector that fails mid-window reports it
+ * through `insert`, which is the call this recorder actually makes every buffer.
  */
 export interface SpeechGate {
   /** False while the model is still downloading/loading, or unsupported. */
@@ -202,11 +200,11 @@ const TRIM_PREROLL_MS = 200;
  * The same pad when the VAD drove the window, and wider on purpose.
  *
  * The energy gate decides on the buffer in hand, so its first speech mark is
- * at most one buffer late. The VAD's verdict arrives from a native polling loop
- * (100 ms between inferences, plus its own detection margin), so `vadSpeaking`
- * can turn true two or three buffers after the syllable that turned it — and a
- * 200 ms pad in front of that mark would clip the start of the word the
- * recogniser most needs.
+ * at most one buffer late. The VAD only opens a segment once speech has held
+ * for its minimum duration (250 ms, plus its own detection margin), so
+ * `vadSpeaking` can turn true two or three buffers after the syllable that
+ * turned it — and a 200 ms pad in front of that mark would clip the start of
+ * the word the recogniser most needs.
  */
 const VAD_TRIM_PREROLL_MS = 450;
 const TRIM_POSTROLL_MS = 250;

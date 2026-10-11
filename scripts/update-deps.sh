@@ -90,11 +90,6 @@ const held = {
   '@react-native/jest-preset':
     'Must track the react-native version (jest-expo requests it exactly); letting it ' +
     'drift ahead of RN breaks the preset.',
-  'react-native-executorch':
-    '0.10.x adds hard native peers (react-native-blob-util, @kesha-antonov/…) that are ' +
-    'not installed. Bump only together with those.',
-  'react-native-executorch-expo-resource-fetcher':
-    'Version-locked to react-native-executorch.',
 };
 
 for (const name of Object.keys(direct).sort()) {
