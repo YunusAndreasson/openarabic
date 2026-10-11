@@ -398,7 +398,6 @@ export default function DictionaryScreen(): JSX.Element {
             drawDistance={LAYOUT.CARD.HEIGHT.VOCABULARY_ITEM * LIST_DRAW_DISTANCE_MULTIPLIER}
             // v2 performance optimizations
             maxItemsInRecyclePool={40} // Control memory usage for vocabulary lists
-            maintainVisibleContentPosition={{}} // Prevent scroll jumps when words are deleted (enabled by default)
             // v2 automatically handles layout - no estimates needed
           />
         </View>

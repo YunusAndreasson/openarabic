@@ -1,6 +1,5 @@
 import { EnhancedImage } from '@/components/ui';
 import { BaseCard } from '@/components/common';
-import { Canvas, LinearGradient, Rect, vec } from '@shopify/react-native-skia';
 import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -19,9 +18,6 @@ import { getArticleMetadata } from '@/utils/stringUtils';
 const CARD_WIDTH = SCREEN_WIDTH - LAYOUT.SCREEN_HORIZONTAL_PADDING * 2;
 const IMAGE_HEIGHT = Math.round(CARD_WIDTH / 1.618); // Golden ratio
 const GRADIENT_HEIGHT = Math.round(IMAGE_HEIGHT * 0.6);
-// Skia Canvas occasionally leaves a 1px hairline when stacked over an image;
-// extend the gradient 2px past the container to swallow the seam.
-const GRADIENT_OVERSHOOT = 2;
 
 type ArticleCardProps = Omit<
   BaseCardProps,
@@ -41,8 +37,8 @@ const styles = StyleSheet.create({
     paddingBottom: LAYOUT.SPACING.LARGE, // 16px - breathing room at card bottom
   },
   gradientOverlay: {
-    bottom: -GRADIENT_OVERSHOOT,
-    height: GRADIENT_HEIGHT + GRADIENT_OVERSHOOT,
+    bottom: 0,
+    height: GRADIENT_HEIGHT,
     left: 0,
     position: 'absolute',
     right: 0,
@@ -55,7 +51,6 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     height: IMAGE_HEIGHT,
-    overflow: 'visible', // Allow gradient to extend slightly past bottom
     position: 'relative',
     width: '100%',
   },
@@ -97,6 +92,12 @@ export function ArticleCard({
   const router = useRouter();
   const prefetchArticle = useArticlePrefetch();
 
+  // A native gradient, not a Skia canvas: this card repeats down a list, and a
+  // canvas per row is a GPU surface per row for what is a static scrim.
+  const gradientStyle = {
+    experimental_backgroundImage: `linear-gradient(to bottom, ${colors.cardGradient.join(', ')})`,
+  };
+
   // Full metadata: Author · Category · Reading time
   const metadataText = getArticleMetadata(article);
 
@@ -127,15 +128,7 @@ export function ArticleCard({
           recyclingKey={`article-${article.id}`}
           transition={TIMING_CONSTANTS.TRANSITION_DELAY}
         />
-        <Canvas style={styles.gradientOverlay} pointerEvents="none">
-          <Rect x={0} y={0} width={CARD_WIDTH} height={GRADIENT_HEIGHT + GRADIENT_OVERSHOOT}>
-            <LinearGradient
-              start={vec(0, 0)}
-              end={vec(0, GRADIENT_HEIGHT)}
-              colors={[...colors.cardGradient]}
-            />
-          </Rect>
-        </Canvas>
+        <View style={[styles.gradientOverlay, gradientStyle]} pointerEvents="none" />
 
         <View style={styles.overlayTextContainer}>
           <ThemedText

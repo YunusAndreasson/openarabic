@@ -290,7 +290,6 @@ export default function PlaylistScreen(): JSX.Element {
       contentContainerStyle={listContainerStyle}
       ItemSeparatorComponent={ItemSeparator}
       renderItem={renderItem}
-      maintainVisibleContentPosition={{}} // Prevent scroll jumps when items change (enabled by default)
     />
   );
 }

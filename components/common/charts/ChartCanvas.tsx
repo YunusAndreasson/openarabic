@@ -1,7 +1,7 @@
 import { Canvas, Group } from '@shopify/react-native-skia';
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
-import { StyleSheet, TouchableWithoutFeedback, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { TIMING_CONFIG } from '@/constants/animation';
@@ -81,34 +81,32 @@ export function ChartCanvas({
   }
 
   return (
-    <TouchableWithoutFeedback onPress={hideTooltip}>
-      <View style={[styles.container, { width: resolvedWidth, height }]}>
-        {/* Main Chart Canvas */}
-        <Canvas style={canvasStyle}>
-          <Group opacity={entryProgress}>{children}</Group>
-        </Canvas>
+    <Pressable style={[styles.container, { width: resolvedWidth, height }]} onPress={hideTooltip}>
+      {/* Main Chart Canvas */}
+      <Canvas style={canvasStyle}>
+        <Group opacity={entryProgress}>{children}</Group>
+      </Canvas>
 
-        {/* Interactive Data Point Overlays */}
-        {validDataPoints.map(point => {
-          return (
-            <DataPointOverlay
-              key={`data-point-${Math.round(point.x)}-${Math.round(point.y)}`}
-              label={point.label}
-              value={point.value}
-              x={point.x}
-              y={point.y}
-              onPress={showTooltip}
-            />
-          );
-        })}
+      {/* Interactive Data Point Overlays */}
+      {validDataPoints.map(point => {
+        return (
+          <DataPointOverlay
+            key={`data-point-${Math.round(point.x)}-${Math.round(point.y)}`}
+            label={point.label}
+            value={point.value}
+            x={point.x}
+            y={point.y}
+            onPress={showTooltip}
+          />
+        );
+      })}
 
-        {/* Active cursor when tooltip is shown */}
-        {activeCursor}
+      {/* Active cursor when tooltip is shown */}
+      {activeCursor}
 
-        {/* Tooltip Component */}
-        <ChartTooltipData maxWidth={width || resolvedWidth} tooltip={tooltip} />
-      </View>
-    </TouchableWithoutFeedback>
+      {/* Tooltip Component */}
+      <ChartTooltipData maxWidth={width || resolvedWidth} tooltip={tooltip} />
+    </Pressable>
   );
 }
 
