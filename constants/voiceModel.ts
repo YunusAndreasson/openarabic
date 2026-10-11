@@ -7,6 +7,8 @@
  * they are the reason this file is worth reading before changing a string.
  */
 
+import { Platform } from 'react-native';
+
 /**
  * NVIDIA Parakeet TDT transducer 110M (English, int8) — ~103 MB.
  *
@@ -79,14 +81,21 @@ export const VOICE_HOTWORD_DECODING_METHOD = 'modified_beam_search';
  * is open (`utils/voiceHotwords.ts`).
  *
  * This is the answer to glosses like `girded with` above, which the model's own
- * language model will never prefer. It is one switch for both platforms, and it
- * is here to be turned off: the sibling app that shipped this first disabled it
- * on iOS after a watchdog termination while rebuilding its (four times larger)
- * recogniser with hotwords, and nothing has yet measured it on this model. Every
- * attempt row records the decoding method and the phrase count, which is what a
- * bias-on / bias-off comparison needs.
+ * language model will never prefer.
+ *
+ * Off on iOS. Build 274 (the first with this on) was killed by the OS watchdog
+ * on opening a review — the moment the recogniser is rebuilt with the session's
+ * hotwords. The sibling app this was ported from hit the same termination on
+ * its own recogniser and bypassed hotwords on iOS in exactly this way; ours is a
+ * quarter the size and did not escape it. With no vocabulary offered the engine
+ * is built once, unbiased, on greedy search, and never rebuilt. Android keeps
+ * the bias. Do not turn this back on for iOS without a hardware run of a
+ * session opened cold.
+ *
+ * Every attempt row records the decoding method and the phrase count, which is
+ * what a bias-on / bias-off comparison needs.
  */
-export const VOICE_HOTWORDS_ENABLED: boolean = true;
+export const VOICE_HOTWORDS_ENABLED: boolean = Platform.OS !== 'ios';
 
 /** Boost per matched token. sherpa-onnx defaults to 1.5; a grader wants less pull. */
 export const VOICE_HOTWORDS_SCORE = 1.0;
