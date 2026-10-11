@@ -4,7 +4,10 @@ import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 
 import { simpleAudioService } from '@/services/audioPlayer';
 import { supabase, setupSupabaseAppStateListener } from '@/services/supabase';
+import { useAppDispatch } from '@/store/hooks';
+import { accountSwitched } from '@/store/accountActions';
 import type { AuthResult, UserSession } from '@/types/auth.types';
+import { claimDeviceForAccount } from '@/utils/accountSwitch';
 import { authBreadcrumb, handleError } from '@/utils/errorHandling';
 
 // Maximum number of retry attempts for session refresh
@@ -19,6 +22,29 @@ export function useProvideAuth(): AuthResult {
   const [isLoading, setIsLoading] = useState(true);
   const [authError, setAuthError] = useState<Error | null>(null);
   const refreshAttemptsRef = useRef(0);
+  const dispatch = useAppDispatch();
+  // Read through a ref so `claimDevice` keeps one identity for the life of the
+  // hook: it is reached from `initAuth` and the auth listener, and a changing
+  // identity there would tear down and re-create the subscription.
+  const dispatchRef = useRef(dispatch);
+  useEffect(() => {
+    dispatchRef.current = dispatch;
+  }, [dispatch]);
+
+  // Called whenever a session is established. A no-op unless a different
+  // account last used this device — see claimDeviceForAccount.
+  const claimDevice = useCallback((userId: string) => {
+    claimDeviceForAccount(userId)
+      .then(switched => {
+        if (switched) dispatchRef.current(accountSwitched());
+      })
+      .catch(error => {
+        void handleError(error, {
+          showToast: false,
+          analyticsEventName: 'Account_Switch_Cleanup_Error',
+        });
+      });
+  }, []);
 
   // Refresh session function with exponential backoff retry logic
   const refreshSession = useCallback(async (): Promise<UserSession | null> => {
@@ -111,6 +137,7 @@ export function useProvideAuth(): AuthResult {
         setAuthError(error);
       } else if (data.session) {
         authBreadcrumb('Successfully initialized with valid session');
+        claimDevice(data.session.user.id);
         setSession(data.session);
         setAuthError(null);
       } else {
@@ -128,7 +155,7 @@ export function useProvideAuth(): AuthResult {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [claimDevice]);
 
   useEffect(() => {
     // The supabase service's AppState listener starts/stops the auth-js
@@ -180,6 +207,7 @@ export function useProvideAuth(): AuthResult {
         ) {
           if (newSession) {
             authBreadcrumb('New session received, updating state');
+            if (event === 'SIGNED_IN') claimDevice(newSession.user.id);
             setSession(newSession);
             setAuthError(null);
           }
@@ -198,7 +226,7 @@ export function useProvideAuth(): AuthResult {
       }
       removeSupabaseListener();
     };
-  }, [initAuth]);
+  }, [initAuth, claimDevice]);
 
   // Memoize the returned object to ensure reference stability
   const authResult = useMemo(

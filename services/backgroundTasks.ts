@@ -59,7 +59,7 @@ TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
   try {
     // Check network connectivity before making any requests
     const netState = await NetInfo.fetch();
-    if (!netState.isConnected) {
+    if (netState.isConnected === false) {
       // No network - fail silently (expected in background)
       return BackgroundTask.BackgroundTaskResult.Failed;
     }
@@ -102,6 +102,9 @@ TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
         now: new Date(),
         preferredHour: prefs.hour,
         preferredMinute: prefs.minute,
+        ...(prefs.lastSessionCompletedAt !== undefined
+          ? { lastSessionCompletedAt: prefs.lastSessionCompletedAt }
+          : {}),
       });
       await syncSmartNotifications(plan, 'background-task');
     }

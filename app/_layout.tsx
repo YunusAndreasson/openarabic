@@ -130,13 +130,17 @@ SplashScreen.preventAutoHideAsync().catch(() => {
 SplashScreen.setOptions({ fade: true, duration: 400 });
 
 // Sync React Query online status with device connectivity
+//
+// NetInfo reports `isConnected: null` while it does not know yet. Only a
+// definite `false` is offline: coercing null paused every query and mutation
+// until the next connectivity event, on a device that was online throughout.
 onlineManager.setEventListener((setOnline: (online: boolean) => void) => {
   return NetInfo.addEventListener((state: NetInfoState) => {
-    setOnline(Boolean(state.isConnected));
+    setOnline(state.isConnected !== false);
   });
 });
 NetInfo.fetch()
-  .then((state: NetInfoState) => onlineManager.setOnline(Boolean(state.isConnected)))
+  .then((state: NetInfoState) => onlineManager.setOnline(state.isConnected !== false))
   .catch(() => {
     // A rejection here would be an unhandled rejection at startup; the
     // onlineManager listener above covers the steady state.
@@ -198,7 +202,7 @@ registerMutationDefaults(queryClient);
 const resumePausedMutationsOnRestore = (): void => {
   NetInfo.fetch()
     .then((state: NetInfoState) => {
-      onlineManager.setOnline(Boolean(state.isConnected));
+      onlineManager.setOnline(state.isConnected !== false);
       return queryClient.resumePausedMutations();
     })
     .catch(() => {

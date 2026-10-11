@@ -59,6 +59,11 @@ export function useSmartNotifications(): void {
     const lastCompletedAt = queryClient.getQueryData<number>(
       fsrsQueries.lastCompletedAtKey(userId),
     );
+    // Keep the headless mirror's cooldown in step with the plan built here.
+    void writeSmartReminderPrefs({
+      ...reminderTime,
+      ...(typeof lastCompletedAt === 'number' ? { lastSessionCompletedAt: lastCompletedAt } : {}),
+    });
     const plan = buildNotificationPlan({
       words,
       now: new Date(),
@@ -84,8 +89,14 @@ export function useSmartNotifications(): void {
 
   // Mirror the setting for the headless background task
   useEffect(() => {
-    void writeSmartReminderPrefs(reminderTime);
-  }, [reminderTime]);
+    const lastCompletedAt = userId
+      ? queryClient.getQueryData<number>(fsrsQueries.lastCompletedAtKey(userId))
+      : undefined;
+    void writeSmartReminderPrefs({
+      ...reminderTime,
+      ...(typeof lastCompletedAt === 'number' ? { lastSessionCompletedAt: lastCompletedAt } : {}),
+    });
+  }, [reminderTime, userId, queryClient]);
 
   // Foreground: clear delivered reminders from the tray, then refresh the plan
   const handleAppStateChange = useEffectEvent((nextAppState: AppStateStatus) => {

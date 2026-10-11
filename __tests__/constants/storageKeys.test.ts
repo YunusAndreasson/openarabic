@@ -101,7 +101,11 @@ describe('storageKeys', () => {
       // Guards the derivation itself: if `accountOwnedStorageKeys` stopped
       // walking the scope table and went back to a hand-written list, a key
       // added to STORAGE_KEYS would fall out of this count.
-      const deviceKeys = [STORAGE_KEYS.AUDIO_CACHE_LEGACY_SWEEP, STORAGE_KEYS.REDUX_PERSIST_ROOT];
+      const deviceKeys = [
+        STORAGE_KEYS.AUDIO_CACHE_LEGACY_SWEEP,
+        STORAGE_KEYS.LAST_SIGNED_IN_USER,
+        STORAGE_KEYS.REDUX_PERSIST_ROOT,
+      ];
       const expectedStatic = Object.values(STORAGE_KEYS).length - deviceKeys.length;
       const expectedBuilders = Object.keys(USER_STORAGE_KEYS).length;
 

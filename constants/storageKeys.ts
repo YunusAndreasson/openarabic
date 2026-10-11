@@ -29,6 +29,8 @@ export const STORAGE_KEYS = {
   NOTIFICATION_PROMPT_STATE: '@openarabic/notifications/promptState',
   SMART_REMINDER_PREFS: '@openarabic/notifications/smartReminderPrefs',
   AUDIO_CACHE_LEGACY_SWEEP: '@openarabic/audioCache/legacySweepV1',
+  /** Id of the account that last signed in here — see utils/accountSwitch. */
+  LAST_SIGNED_IN_USER: '@openarabic/auth/lastSignedInUser',
 
   TUTORIAL_WELCOME_INTRO: '@openarabic/tutorials/welcomeIntroSeen',
   TUTORIAL_WORD_TAP: '@openarabic/tutorials/wordTapCompleted',
@@ -97,6 +99,8 @@ const STORAGE_KEY_SCOPES = {
 
   /** One-time migration marker for files on this filesystem. */
   AUDIO_CACHE_LEGACY_SWEEP: 'device',
+  /** Remembers who owns the unscoped keys above; must outlive a sign-out. */
+  LAST_SIGNED_IN_USER: 'device',
   /** See the note on the key itself — mixed contents, swept a different way. */
   REDUX_PERSIST_ROOT: 'device',
 } satisfies Record<keyof typeof STORAGE_KEYS, StorageKeyScope>;
@@ -143,3 +147,14 @@ export const accountOwnedStorageKeys = (userId: string): string[] => {
     ...userKeyBuilders.map(build => build(userId)),
   ];
 };
+
+/**
+ * The account-owned keys that are NOT namespaced by user id — the ones a second
+ * account on the same device would otherwise read as its own (streak ledger,
+ * pacing history, today's add count, reminder prefs). Keys already scoped per
+ * user are left out: they cannot leak, and their owner may sign back in.
+ */
+export const sharedAccountStorageKeys = (): string[] =>
+  STORAGE_KEY_NAMES.filter(name => STORAGE_KEY_SCOPES[name] === 'account').map(
+    name => STORAGE_KEYS[name],
+  );

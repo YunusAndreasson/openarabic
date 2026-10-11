@@ -153,7 +153,8 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
           if (signInAttempt > 0) {
             // Check network before retry
             const netState = await NetInfo.fetch();
-            if (!netState.isConnected) {
+            // `null` means not yet known; only a definite `false` is offline.
+            if (netState.isConnected === false) {
               throw new Error('No network connection available');
             }
 
@@ -171,8 +172,10 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
               ? signInError.code
               : 'unknown';
 
-          // Retry only for INTERNAL_ERROR (code 8) on first attempt
-          const isInternalError = errorCode === 8;
+          // Retry only for INTERNAL_ERROR (code 8) on first attempt. The native
+          // module rejects with the code as a STRING, so a strict comparison
+          // against the number never matched and this retry never ran.
+          const isInternalError = String(errorCode) === '8';
           const shouldRetry = isInternalError && signInAttempt < maxRetries;
 
           // Skip Sentry for user cancellations — useOAuthProvider handles these silently

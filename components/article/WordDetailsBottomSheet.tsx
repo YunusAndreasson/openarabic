@@ -242,7 +242,7 @@ export function WordDetailsBottomSheet({
         }
       } catch (error) {
         if (newValue && openingGeneration.current === generation) setOptimisticIsInStudyList(false);
-        void handleError(error, { toastMessage: 'Failed to update study list' });
+        void handleError(error, { toastMessage: STRINGS.ERROR_UPDATING_STUDY_LIST });
       } finally {
         setPendingOpening(current => (current === opening ? null : current));
       }

@@ -1,5 +1,7 @@
 import { combineReducers } from '@reduxjs/toolkit';
 
+import { accountSwitched } from '@/store/accountActions';
+
 import editModeReducer from '@/store/editModeSlice';
 import playlistReducer from '@/store/playlistSlice';
 import settingsReducer from '@/store/settingsSlice';
@@ -17,13 +19,20 @@ import voiceAliasesReducer from '@/store/voiceAliasesSlice';
  * `undefined` from a store the app never produces. One definition, no side
  * effects, both consumers.
  */
-export const rootReducer = combineReducers({
+const sliceReducer = combineReducers({
   theme: themeReducer,
   settings: settingsReducer,
   playlist: playlistReducer,
   editMode: editModeReducer,
   voiceAliases: voiceAliasesReducer,
 });
+
+// On an account switch every slice but the theme returns to its initial state:
+// settings, the playlist and the learned voice aliases belong to whoever made
+// them, and one persisted blob holds them for the whole device. The theme is
+// the device's, so it stays.
+export const rootReducer: typeof sliceReducer = (state, action) =>
+  sliceReducer(accountSwitched.match(action) && state ? { theme: state.theme } : state, action);
 
 export type RootStateShape = ReturnType<typeof rootReducer>;
 
