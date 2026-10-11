@@ -308,6 +308,7 @@ export const STRINGS = {
   SET_TIMER: 'Set timer',
   // Welcome & onboarding
   WELCOME_TITLE: 'OpenArabic',
+  SIGN_UP_WELCOME: 'Welcome to OpenArabic. Your account is ready.',
   // Auth value proposition — three terse lines, bold leading verb
   AUTH_VALUE_READ_VERB: 'Read',
   AUTH_VALUE_READ: 'classical texts in Arabic and English',

@@ -1,4 +1,5 @@
 import { STRINGS } from '@/constants/strings';
+import { formatCount } from '@/utils/stringUtils';
 
 /**
  * "1 word" / "{n} words".
@@ -15,5 +16,12 @@ import { STRINGS } from '@/constants/strings';
 export function formatWordCount(count: number): string {
   return count === 1
     ? STRINGS.WORD_COUNT_ONE
-    : STRINGS.WORD_COUNT_OTHER.replace('{count}', String(count));
+    : STRINGS.WORD_COUNT_OTHER.replace('{count}', formatCount(count));
+}
+
+/** "1 text" / "{n} texts" — the same rule, for the library's unit. */
+export function formatTextCount(count: number): string {
+  return count === 1
+    ? STRINGS.SEARCH_TEXTS_RESULT_COUNT_ONE
+    : STRINGS.SEARCH_TEXTS_RESULT_COUNT_OTHER.replace('{count}', formatCount(count));
 }

@@ -20,6 +20,7 @@ const FIXED_NOW = 0;
 describe('useEncouragingMetrics', () => {
   const mockColors: Partial<ThemeColors> = {
     error: '#FF0000',
+    tint: '#22AA66',
     warning: '#FFAA00',
     success: '#00FF00',
     info: '#0088FF',
@@ -105,7 +106,7 @@ describe('useEncouragingMetrics', () => {
         useEncouragingMetrics(metricsWithDuration, mockColors as ThemeColors, 5),
       );
 
-      expect(result.current?.metrics[0].color).toBe(mockColors.error);
+      expect(result.current?.metrics[0].color).toBe(mockColors.tint);
       expect(result.current?.metrics[1].color).toBe(mockColors.info);
       expect(result.current?.metrics[2].color).toBe(mockColors.warning);
       expect(result.current?.metrics[3].color).toBe(mockColors.success);
@@ -130,12 +131,12 @@ describe('useEncouragingMetrics', () => {
       expect(result.current?.metrics[0].text).toBe('5 words reviewed');
     });
 
-    test('should have time icon for due metric', () => {
+    test('should mark the due metric as done', () => {
       const { result } = renderHook(() =>
         useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 0),
       );
 
-      expect(result.current?.metrics[0].icon).toBe('time');
+      expect(result.current?.metrics[0].icon).toBe('checkmark-done');
     });
   });
 

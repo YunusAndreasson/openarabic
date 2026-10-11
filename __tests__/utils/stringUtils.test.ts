@@ -14,6 +14,7 @@ import { describe, expect, test } from '@jest/globals';
 import {
   capitalizeFirstLetter,
   formatArticleMetadata,
+  formatCount,
   getAuthorDisplayName,
   getCategoryDisplayName,
   getCategorySubtitle,
@@ -21,6 +22,22 @@ import {
 } from '../../utils/stringUtils';
 
 describe('stringUtils', () => {
+  describe('formatCount', () => {
+    test.each([
+      [0, '0'],
+      [999, '999'],
+      [1000, '1,000'],
+      [7519, '7,519'],
+      [1234567, '1,234,567'],
+    ])('groups %d as %s', (value, expected) => {
+      expect(formatCount(value)).toBe(expected);
+    });
+
+    test('rounds a fractional count rather than printing decimals', () => {
+      expect(formatCount(1999.6)).toBe('2,000');
+    });
+  });
+
   describe('capitalizeFirstLetter', () => {
     test('should capitalize the first letter of a string', () => {
       expect(capitalizeFirstLetter('hello')).toBe('Hello');

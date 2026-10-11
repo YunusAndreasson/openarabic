@@ -197,6 +197,7 @@ const MiniPlayerComponent = ({
             iconColor={timerIconColor}
             iconSize={LAYOUT.BUTTON.ICON_SIZE.LARGE}
             hapticType="light"
+            accessibilityLabel={STRINGS.SLEEP_TIMER}
           />
           <IconButton
             // There is no pause/resume in this player — onPlayPause always stops

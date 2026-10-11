@@ -455,6 +455,25 @@ describe('useReview Hook - Grading', () => {
       expect(mocks.mockFadeIn).not.toHaveBeenCalled();
     });
 
+    test('a session with nothing beneath it closes to the Practice tab', async () => {
+      const { router } = require('expo-router');
+      const { ROUTE_PATHS } = require('@/constants/routes');
+      // Opened from a reminder or a link while the app was closed: the session
+      // is the whole stack, and `dismiss()` there does nothing at all.
+      const canDismiss = jest.spyOn(router, 'canDismiss').mockReturnValue(false);
+      useFSRS.mockReturnValue({ ...fsrsState(mocks, createMockWord()), flushPendingWrites });
+
+      const { result } = renderHook(() => useReview(), { wrapper: createWrapper() });
+      await act(async () => {
+        result.current.handleClose();
+        await Promise.resolve();
+      });
+
+      await waitFor(() => expect(router.replace).toHaveBeenCalledWith(ROUTE_PATHS.PRACTICE_TAB));
+      expect(router.dismiss).not.toHaveBeenCalled();
+      canDismiss.mockRestore();
+    });
+
     test('leaving without grading does not stamp a completed session', async () => {
       const { useQueryClient } = require('@tanstack/react-query');
       const { fsrsQueries } = require('@/constants/queries');

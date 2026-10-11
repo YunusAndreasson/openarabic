@@ -11,8 +11,6 @@ interface UseProfilePhotoPickerOptions {
   userId: string;
   /** Image quality (0-1), defaults to 0.8 */
   quality?: number;
-  /** Callback when photo finishes loading from storage */
-  onPhotoLoaded?: () => void;
 }
 
 interface UseProfilePhotoPickerResult {
@@ -42,7 +40,6 @@ interface UseProfilePhotoPickerResult {
  * ```tsx
  * const { profilePhotoUri, selectPhoto, isLoaded } = useProfilePhotoPicker({
  *   userId: user.id,
- *   onPhotoLoaded: () => fadeIn(),
  * });
  *
  * if (!isLoaded) return <Skeleton />;
@@ -57,7 +54,6 @@ interface UseProfilePhotoPickerResult {
 export function useProfilePhotoPicker({
   userId,
   quality = 0.8,
-  onPhotoLoaded,
 }: UseProfilePhotoPickerOptions): UseProfilePhotoPickerResult {
   const [profilePhotoUri, setProfilePhotoUri] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -76,12 +72,11 @@ export function useProfilePhotoPicker({
         void handleError(toError(error), { showToast: false });
       } finally {
         setIsLoaded(true);
-        onPhotoLoaded?.();
       }
     };
 
     void loadProfilePhoto();
-  }, [userId, storageKey, onPhotoLoaded]);
+  }, [userId, storageKey]);
 
   const selectPhoto = useCallback(async () => {
     try {

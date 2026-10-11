@@ -7,7 +7,6 @@
 
 export { AnimatedCount } from './AnimatedCount';
 export { AppErrorFallback } from './AppErrorFallback';
-export { Badge } from './Badge';
 export { BaseCard } from './BaseCard';
 
 export { BottomSheetErrorBoundary } from './BottomSheetErrorBoundary';

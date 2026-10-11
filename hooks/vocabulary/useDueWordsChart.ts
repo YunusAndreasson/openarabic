@@ -5,10 +5,25 @@ import {
   getEffectiveChartHeight,
 } from '@/constants/chartConstants';
 import { buildSmoothChartPath } from '@/utils/chartPathBuilder';
+import { getNiceAxisMax } from '@/utils/chartUtils';
 import { useMemo } from 'react';
 
 import type { StudyWord } from '@/types/vocabulary.types';
 import { calculateDueWordsForecast, type DueWordsForecast } from '@/utils/fsrsUtils';
+
+/** Below this the forecast is a handful of words and the line would fill the box. */
+const MIN_DUE_WORDS_SCALE = 10;
+
+/**
+ * The top of the forecast's y-axis. The hook scales the line to it and the
+ * chart labels the gridlines from it, so both read it from here.
+ */
+export function getDueWordsAxisMax(
+  forecast: readonly Pick<DueWordsForecast, 'dueWords'>[],
+): number {
+  const peak = forecast.reduce((max, day) => Math.max(max, day.dueWords), 0);
+  return getNiceAxisMax(Math.max(MIN_DUE_WORDS_SCALE, peak));
+}
 
 interface DueWordsChartData {
   dueWordsPath: string;
@@ -43,10 +58,7 @@ export function useDueWordsChart(studyWords: StudyWord[]): UseDueWordsChartResul
       };
     }
 
-    const maxDueWords = Math.max(
-      10, // Minimum scale of 10 for better visualization
-      Math.max(...dueWordsData.map(d => d.dueWords)),
-    );
+    const maxDueWords = getDueWordsAxisMax(dueWordsData);
 
     // Create smooth curve using shared path builder utility
     const chartHeight = getEffectiveChartHeight();

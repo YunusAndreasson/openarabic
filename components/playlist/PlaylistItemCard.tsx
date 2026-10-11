@@ -78,7 +78,7 @@ export const PlaylistItemCard = memo(
     const secondaryTextStyle = [styles.secondaryText, { opacity: secondaryOpacity }];
 
     return (
-      <Animated.View style={[styles.cardContainer, animatedStyle]}>
+      <Animated.View style={[styles.cardContainer, compact && styles.railContainer, animatedStyle]}>
         {/* Drag Handle - shows on left in edit mode */}
         {editMode && dragHandleProps && (
           <View style={styles.dragHandleContainer}>
@@ -91,11 +91,13 @@ export const PlaylistItemCard = memo(
 
         <View style={styles.cardWrapper}>
           <BaseCard
+            contentStyle={compact ? styles.railFill : undefined}
+            style={compact ? styles.railFill : undefined}
             onPress={editMode ? undefined : onPress}
             onPressIn={editMode ? undefined : onPressIn}
             PressableComponent={PressableComponent}
           >
-            <View style={styles.cardContent}>
+            <View style={[styles.cardContent, compact && styles.railFill]}>
               {/* Article thumbnail - bookmarks style */}
               {imageUrl && (
                 <View style={styles.imageContainer}>
@@ -177,6 +179,17 @@ const styles = StyleSheet.create({
   },
   cardWrapper: {
     flex: 1,
+  },
+  // A rail stretches every slot to its tallest card, but a card only takes that
+  // height if each layer down to its content agrees to grow. Without these a
+  // one-line title sat 4pt shorter than the two-line title beside it, and the
+  // row of cards had a ragged bottom edge.
+  railContainer: {
+    flexGrow: 1,
+    alignItems: 'stretch',
+  },
+  railFill: {
+    flexGrow: 1,
   },
   cardContent: {
     flexDirection: 'row',

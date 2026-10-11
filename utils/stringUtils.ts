@@ -83,6 +83,21 @@ export function capitalizeFirstLetter(str: string): string {
 }
 
 /**
+ * A count as a learner reads it: "7,519", not "7519".
+ *
+ * Every dashboard number goes through this. Practice totals pass a thousand
+ * within weeks, and a bare four-digit run has to be counted digit by digit to
+ * tell 1967 from 19670. Grouping is done by hand rather than through
+ * `toLocaleString` so the output is identical on Hermes, in jest and on every
+ * device locale — the copy around it is English, and so is the separator.
+ */
+export function formatCount(value: number): string {
+  return Math.round(value)
+    .toString()
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+/**
  * A study word's root, read as the lemma line every word screen, rail card and
  * dictionary row shows: the Arabic letters and a capitalized English gloss.
  * `word` is optional so a caller mid-resolution (a sheet whose word hasn't

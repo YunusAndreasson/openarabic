@@ -216,10 +216,7 @@ describe('useAuthForm', () => {
           await result.current.signUpWithEmail();
         });
 
-        expect(mockShowSuccessToast).toHaveBeenCalledWith(
-          `${STRINGS.WELCOME_TITLE}! Let's start learning.`,
-          5000,
-        );
+        expect(mockShowSuccessToast).toHaveBeenCalledWith(STRINGS.SIGN_UP_WELCOME, 5000);
       });
 
       test('triggers haptic feedback', async () => {

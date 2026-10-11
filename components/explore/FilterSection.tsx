@@ -1,28 +1,34 @@
-import { Badge, BaseCard } from '@/components/common';
+import { BaseCard } from '@/components/common';
 import type { JSX } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { FONTS } from '@/constants/fonts';
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { getCategoryDisplayName, getCategorySubtitle } from '@/utils/stringUtils';
+import { formatTextCount } from '@/utils/wordCountText';
+
+const COLUMNS = 2;
 
 const styles = StyleSheet.create({
+  // Section owns its screen inset (Explore's scroll container is unpadded so
+  // rails can bleed full-width) — keeps the grid flush with section labels.
   filterSectionContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    rowGap: LAYOUT.SPACING.SMALL,
-    columnGap: LAYOUT.SPACING.SMALL,
-    // Section owns its screen inset (Explore's scroll container is unpadded so
-    // rails can bleed full-width) — keeps the grid flush with section labels.
+    gap: LAYOUT.SPACING.SMALL,
     paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
   },
-  // Two-column grid using flexBasis. The 1px deduction keeps rounding-safe so two
-  // siblings + an 8px column gap never overflow the parent row.
+  // Rows are built explicitly rather than left to `flexWrap`. A percentage
+  // `flexBasis` cannot account for the column gap: two 49% cells plus an 8pt gap
+  // only fit a row wider than 400pt, so on every phone the second cell wrapped
+  // and the "grid" drew as a single column twice as tall as intended.
+  gridRow: {
+    flexDirection: 'row',
+    gap: LAYOUT.SPACING.SMALL,
+  },
+  // `minWidth: 0` lets a long subtitle truncate instead of widening its column.
+  // An odd final row gets an empty cell, so its card keeps the column width.
   gridItem: {
-    flexBasis: '49%',
-    flexGrow: 1,
+    flex: 1,
     minWidth: 0,
   },
 });
@@ -54,29 +60,35 @@ function CompactNavCard({
 
   const subtitleStyle = [compactCardStyles.subtitle, { color: colors.secondaryText }];
 
+  // Read in the order that makes sense aloud, with the count given its noun: on
+  // its own the number between the two names was just "forty-three".
+  const countLabel = count === undefined ? undefined : formatTextCount(count);
+  const accessibilityLabel = [label, subtitle, countLabel].filter(Boolean).join(', ');
+
   return (
-    <BaseCard style={compactCardStyles.card} onPress={onPress}>
-      <View style={compactCardStyles.row}>
-        <View style={compactCardStyles.labelGroup}>
-          <ThemedText numberOfLines={1} style={compactCardStyles.label} type="body" weight="bold">
-            {label}
-          </ThemedText>
-          {subtitle && (
-            <ThemedText numberOfLines={1} skipDefaultColor style={subtitleStyle} type="caption">
-              {subtitle}
-            </ThemedText>
-          )}
-        </View>
+    <BaseCard
+      accessibilityLabel={accessibilityLabel}
+      style={compactCardStyles.card}
+      onPress={onPress}
+    >
+      {/* The count shares the title's line, not the card's full height. Beside
+          both lines it took its width out of the subtitle too, and in a
+          half-width card that cut "Prophetic Traditions" off mid-word. */}
+      <View style={compactCardStyles.titleRow}>
+        <ThemedText numberOfLines={1} style={compactCardStyles.label} type="bodyBold">
+          {label}
+        </ThemedText>
         {count !== undefined && (
-          <Badge
-            backgroundColorName="elevation3"
-            colorName="text"
-            style={compactCardStyles.countBadge}
-          >
+          <ThemedText colorName="textTertiary" style={compactCardStyles.count} type="caption">
             {count}
-          </Badge>
+          </ThemedText>
         )}
       </View>
+      {subtitle && (
+        <ThemedText numberOfLines={1} skipDefaultColor style={subtitleStyle} type="caption">
+          {subtitle}
+        </ThemedText>
+      )}
     </BaseCard>
   );
 }
@@ -88,26 +100,22 @@ const compactCardStyles = StyleSheet.create({
   card: {
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  labelGroup: {
-    flex: 1,
     gap: LAYOUT.SPACING.HALF_TINY,
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: LAYOUT.SPACING.SMALL,
+  },
   label: {
-    fontFamily: FONTS.ENGLISH_SEMIBOLD,
+    flex: 1,
+  },
+  // Tabular so the counts in a column end on the same edge digit for digit.
+  count: {
+    fontVariant: ['tabular-nums'],
   },
   subtitle: {
     opacity: LAYOUT.OPACITY.HIGH,
-  },
-  // Radius, padding and alignment come from `Badge`; this only reserves the
-  // width a two-digit count needs and separates it from the label.
-  countBadge: {
-    marginLeft: LAYOUT.SPACING.SMALL,
-    minWidth: MIN_TOUCH_TARGET.SMALL,
   },
 });
 
@@ -122,16 +130,26 @@ export function FilterSection({
     return null;
   }
 
+  const rows: FilterItem[][] = [];
+  for (let start = 0; start < items.length; start += COLUMNS) {
+    rows.push(items.slice(start, start + COLUMNS));
+  }
+
   return (
     <View style={styles.filterSectionContainer}>
-      {items.map(item => (
-        <View key={`filter-${item.id}`} style={styles.gridItem}>
-          <CompactNavCard
-            count={item.count}
-            label={getCategoryDisplayName(item.name)}
-            subtitle={getCategorySubtitle(item.name)}
-            onPress={handleSelect(item.id, item.name)}
-          />
+      {rows.map(row => (
+        <View key={`filter-row-${row[0]?.id}`} style={styles.gridRow}>
+          {row.map(item => (
+            <View key={`filter-${item.id}`} style={styles.gridItem}>
+              <CompactNavCard
+                count={item.count}
+                label={getCategoryDisplayName(item.name)}
+                subtitle={getCategorySubtitle(item.name)}
+                onPress={handleSelect(item.id, item.name)}
+              />
+            </View>
+          ))}
+          {row.length < COLUMNS && <View style={styles.gridItem} />}
         </View>
       ))}
     </View>

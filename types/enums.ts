@@ -77,7 +77,7 @@ export type ToastType = (typeof ToastType)[keyof typeof ToastType];
  * that exists rather than one spelled slightly differently.
  */
 export const FAQCategory = {
-  GETTING_STARTED: 'Getting Started',
+  GETTING_STARTED: 'Getting started',
   FEATURES: 'Features',
   OFFLINE_STORAGE: 'Offline & storage',
   LEARNING_APPROACH: 'Learning approach',

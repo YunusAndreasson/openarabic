@@ -7,8 +7,9 @@ import { useGraphWidth } from '@/constants/chartConstants';
 import { STRINGS } from '@/constants/strings';
 import { formatMonthDay, formatWeekday } from '@/utils/chartDataUtils';
 import { useChartAxisLabels } from '@/hooks/vocabulary/useChartAxisLabels';
-import { useDueWordsChart } from '@/hooks/vocabulary/useDueWordsChart';
+import { getDueWordsAxisMax, useDueWordsChart } from '@/hooks/vocabulary/useDueWordsChart';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { formatCount } from '@/utils/stringUtils';
 
 interface DueWordsPrognosisChartProps {
   studyWords: StudyWord[];
@@ -27,7 +28,14 @@ interface DueWordsRecord {
  * equality, and an arrow rebuilt on each render would re-render the chart on
  * every parent render for a function that never changes.
  */
-const formatWholeNumber = (value: number): string => `${value}`;
+/**
+ * Axis ticks only. The gutter holds four characters, so a grouped "2,000" was
+ * cut to "2,00"; a tick is a scale mark rather than a reading, and "2k" says the
+ * same thing in the room there is. The exact counts are in the summary below.
+ */
+const THOUSAND = 1000;
+const formatAxisTick = (value: number): string =>
+  value >= THOUSAND ? `${Number((value / THOUSAND).toFixed(1))}k` : `${value}`;
 
 export const DueWordsPrognosisChart = memo<DueWordsPrognosisChartProps>(
   ({ studyWords = [] }: DueWordsPrognosisChartProps) => {
@@ -53,8 +61,11 @@ export const DueWordsPrognosisChart = memo<DueWordsPrognosisChartProps>(
           : formatWeekday(busiest.date);
 
       return [
-        { label: STRINGS.SUMMARY_TODAY, value: `${currentDue}` },
-        { label: STRINGS.SUMMARY_BUSIEST_DAY, value: `${busiestLabel} (${busiest.dueWords})` },
+        { label: STRINGS.SUMMARY_TODAY, value: formatCount(currentDue) },
+        {
+          label: STRINGS.SUMMARY_BUSIEST_DAY,
+          value: `${busiestLabel} (${formatCount(busiest.dueWords)})`,
+        },
       ];
     }, [chartData.insights, dueWordsData]);
 
@@ -82,10 +93,7 @@ export const DueWordsPrognosisChart = memo<DueWordsPrognosisChartProps>(
     }, [chartData.dataPoints, dueWordsData, studyWords.length]);
 
     // Calculate the maximum Y value for better scaling
-    const yMax = useMemo(() => {
-      const maxDue = Math.max(...dueWordsData.map(d => d.dueWords));
-      return Math.max(10, maxDue); // Minimum scale of 10
-    }, [dueWordsData]);
+    const yMax = useMemo(() => getDueWordsAxisMax(dueWordsData), [dueWordsData]);
 
     // 🚀 Unified chart with due words progression:
     return (
@@ -101,7 +109,7 @@ export const DueWordsPrognosisChart = memo<DueWordsPrognosisChartProps>(
         hasData={chartData.hasData}
         isFuturePrediction={true} // Today is leftmost for future predictions
         emptyStateText={EMPTY_STATE_MESSAGES.dueWords}
-        yLabelFormatter={formatWholeNumber}
+        yLabelFormatter={formatAxisTick}
         bottomSummary={bottomSummary}
       />
     );

@@ -13,6 +13,7 @@ import { LAYOUT, LETTER_SPACING, SCREEN_WIDTH } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useVocabularyGrowthChart } from '@/hooks/vocabulary/useVocabularyGrowthChart';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { formatCount } from '@/utils/stringUtils';
 
 /**
  * Half the card width, minus its padding and the label column beside it. The
@@ -85,7 +86,7 @@ export const VocabularyProgressChart = memo<VocabularyProgressChartProps>(
             <ThemedText type="caption" colorName="subtleLabelText">
               {STRINGS.VOCABULARY_GROWTH_LABEL}
             </ThemedText>
-            <ThemedText style={styles.value}>{totalWords}</ThemedText>
+            <ThemedText style={styles.value}>{formatCount(totalWords)}</ThemedText>
           </View>
 
           <View

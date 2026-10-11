@@ -64,12 +64,14 @@ export const useEncouragingMetrics = (
     // Traffic light metrics (always show these 3 in order)
     const trafficLightMetrics: EncouragingMetric[] = [];
 
-    // 🔴 RED - Due words practiced
+    // Words reviewed — the session's headline result, so it takes the brand
+    // tint. It was the error red with a clock, which on a screen titled
+    // "Session complete" read as a warning about the thing just achieved.
     const wordText = metrics.wordsReviewed === 1 ? 'word' : 'words';
     trafficLightMetrics.push({
       text: `${metrics.wordsReviewed} ${wordText} reviewed`,
-      icon: 'time',
-      color: colors.error,
+      icon: 'checkmark-done',
+      color: colors.tint,
       type: 'due',
     });
 

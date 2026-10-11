@@ -74,9 +74,10 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
 RelatedArticlesSection.displayName = 'RelatedArticlesSection';
 
 const styles = StyleSheet.create({
+  // No horizontal padding here: each section below sets the screen inset once,
+  // so its label and cards share the left edge the article text reads from.
   container: {
     paddingTop: LAYOUT.SPACING.LARGE,
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
     // paddingBottom removed - FlashList contentContainerStyle handles bottom spacing
   },
 });

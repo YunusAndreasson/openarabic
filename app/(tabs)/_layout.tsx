@@ -103,6 +103,11 @@ export default function TabLayout(): JSX.Element {
         // expo-router's fallback to `tintColor`, because in the sepia theme that
         // tint is 3.86:1 on its own bar — see `tabLabelSelected`.
         labelStyle={labelStyle}
+        // Material hides the labels of unselected tabs by default, which left
+        // three of the four destinations as a bare compass, headphones and
+        // graduation cap. With four tabs there is room for every name, and a
+        // name is what tells a new learner that the cap is where practice lives.
+        labelVisibilityMode="labeled"
         // `blurEffect` and `disableTransparentOnScrollEdge` stay unset on iOS:
         // both write `scrollEdgeAppearance`, which is what killed the top nav
         // bar's large-title collapse and scroll-edge fade when the three iOS

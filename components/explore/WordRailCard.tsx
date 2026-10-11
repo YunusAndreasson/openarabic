@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 import { BaseCard } from '@/components/common';
 import { ThemedText } from '@/components/primitives/ThemedText';
@@ -59,16 +59,19 @@ const WordRailCardComponent = ({ word, onPress }: WordRailCardProps) => {
     >
       {/* `arabicCompact` caps the size and keeps the box to one line, so the
           learner's reading-size setting cannot grow a rail card past the rail.
-          The wrapper is what gives the headword its own row: Arabic is
-          right-aligned inside it, so the card reads RTL at the top and LTR
-          below without either language fighting its natural direction. */}
-      <View style={styles.arabicRow}>
-        <ThemedText align="right" numberOfLines={1} type="arabicCompact">
-          {letters}
-        </ThemedText>
-      </View>
 
-      <ThemedText colorName="secondaryText" numberOfLines={2} type="caption">
+          Both lines are centred. The headword used to sit right-aligned over a
+          left-aligned gloss, each in its language's own direction, and in a
+          card this narrow that put them in opposite corners: the eye crossed
+          the card diagonally and read two unrelated labels. A shared axis makes
+          them one word, neither direction is favoured, and it is the layout the
+          reader's word sheet and the "see all" card ending this rail already
+          use. */}
+      <ThemedText align="center" numberOfLines={1} type="arabicCompact">
+        {letters}
+      </ThemedText>
+
+      <ThemedText align="center" colorName="secondaryText" numberOfLines={2} type="caption">
         {meaning}
       </ThemedText>
     </BaseCard>
@@ -76,14 +79,15 @@ const WordRailCardComponent = ({ word, onPress }: WordRailCardProps) => {
 };
 
 const styles = StyleSheet.create({
-  arabicRow: {
-    width: '100%',
-  },
   card: {
     flex: 1,
   },
+  // Centred on both axes: a one-line gloss beside a two-line one would
+  // otherwise hang from the top of a card the rail has stretched taller.
   content: {
+    flex: 1,
     gap: LAYOUT.SPACING.TINY,
+    justifyContent: 'center',
     padding: LAYOUT.SPACING.MEDIUM,
   },
 });

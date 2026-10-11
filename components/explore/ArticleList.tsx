@@ -14,7 +14,6 @@ import { useColors } from '@/hooks/theme/useColors';
 interface ArticleListProps {
   onRefresh?: () => void;
   ListHeaderComponent?: ReactElement | null;
-  ListFooterComponent?: ReactElement | null;
   contentContainerStyle?: ViewStyle;
   progressViewOffset?: number;
   isRefreshing?: boolean;
@@ -28,14 +27,13 @@ interface ArticleListProps {
 
 /**
  * ArticleList component that renders featured articles and filter sections.
- * Uses ScrollView since there are no list items — all content is in header/footer.
+ * Uses ScrollView since there are no list items — all content is in the header.
  * Each horizontal section (featured, continue reading, discovery) renders its own
  * inner ScrollView; we don't need FlashList here.
  */
 export function ArticleList({
   onRefresh,
   ListHeaderComponent,
-  ListFooterComponent,
   contentContainerStyle,
   progressViewOffset = LAYOUT.SPACING.XLARGE,
   isRefreshing = false,
@@ -79,7 +77,6 @@ export function ArticleList({
       contentInsetAdjustmentBehavior="automatic"
     >
       {ListHeaderComponent}
-      {ListFooterComponent}
     </ScrollView>
   );
 }

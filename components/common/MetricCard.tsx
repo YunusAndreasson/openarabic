@@ -10,6 +10,7 @@ import { Ionicons } from '@/components/ui/Icon';
 import { FONTS } from '@/constants/fonts';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import { formatCount } from '@/utils/stringUtils';
 
 interface MetricCardProps {
   value: string | number;
@@ -55,7 +56,7 @@ interface MetricCardProps {
 export const MetricCard = memo<MetricCardProps>(
   ({ value, label, valueColor, accessibilityLabel, onPress }) => {
     const colors = useColors();
-    const displayValue = typeof value === 'number' ? Math.round(value).toString() : value;
+    const displayValue = typeof value === 'number' ? formatCount(value) : value;
 
     return (
       <BaseCard style={styles.card} onPress={onPress} accessibilityLabel={accessibilityLabel}>

@@ -1455,7 +1455,11 @@ export function useReview({
       () => {
         if (onClose) {
           onClose();
-        } else if (fromRemember) {
+        } else if (fromRemember || !router.canDismiss()) {
+          // `canDismiss` is false when the session is the only screen on the
+          // stack — opened from a reminder notification or a link while the app
+          // was closed. `dismiss()` is a no-op there, which left the ✕ and the
+          // completion screen's "Continue" both doing nothing.
           router.replace(ROUTE_PATHS.PRACTICE_TAB);
         } else {
           router.dismiss();

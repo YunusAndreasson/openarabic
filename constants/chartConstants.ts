@@ -58,6 +58,13 @@ export const getEffectiveChartHeight = (): number => {
 };
 
 // Time periods - optimized for mobile clarity and user comprehension
+/**
+ * Horizontal gridlines on a chart's y-axis, the zero line included. An axis
+ * maximum is only "nice" relative to this: `getNiceAxisMax` divides by the gaps
+ * between these lines, so both read the count from here.
+ */
+export const Y_AXIS_LINES = 5;
+
 export const DAYS_7 = 7; // Weekly view for better mobile experience and cognitive load
 export const DAYS_30 = 30; // Monthly view — long enough for cumulative charts to visibly grow
 

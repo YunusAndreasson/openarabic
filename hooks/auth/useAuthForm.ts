@@ -229,7 +229,7 @@ export function useAuthForm(): UseAuthFormReturn {
 
         // If session exists, user is auto-confirmed and can be logged in
         if (hasImmediateSession) {
-          showSuccessToast(`${STRINGS.WELCOME_TITLE}! Let's start learning.`, 5000);
+          showSuccessToast(STRINGS.SIGN_UP_WELCOME, 5000);
           // Navigate to library after brief delay to show toast
           // Store ref for cleanup on unmount to prevent navigation race conditions
           navigationTimeoutRef.current = setTimeout(() => {

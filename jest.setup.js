@@ -120,6 +120,10 @@ jest.mock('expo-router', () => {
     replace: jest.fn(),
     back: jest.fn(),
     canGoBack: jest.fn(() => true),
+    // A plain function, not a jest.fn: `resetMocks` strips mock implementations
+    // between tests, and an undefined answer here reads as "nothing to dismiss
+    // to" and reroutes every close. A test that needs `false` spies on it.
+    canDismiss: () => true,
     setParams: jest.fn(),
     navigate: jest.fn(),
     dismiss: jest.fn(),

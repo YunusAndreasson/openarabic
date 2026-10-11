@@ -12,8 +12,8 @@ import type { StudyWord } from '@/types/vocabulary.types';
 import { WordRailCard } from './WordRailCard';
 
 /**
- * Narrower than the article rails' 0.7/0.8, because the content is: a headword,
- * a short gloss and a count. At ~2.3 cards to a screen the rail reads as
+ * Narrower than the article rails' 0.7/0.8, because the content is: a headword
+ * and a short gloss. At ~2.3 cards to a screen the rail reads as
  * something to swipe rather than as a row that happens to overflow.
  */
 const CARD_WIDTH = SCREEN_WIDTH * 0.44;

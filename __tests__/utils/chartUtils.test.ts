@@ -11,9 +11,36 @@
 
 import { describe, expect, test } from '@jest/globals';
 
-import { generateDataPointKeys, type ChartPoint } from '@/utils/chartUtils';
+import { generateDataPointKeys, getNiceAxisMax, type ChartPoint } from '@/utils/chartUtils';
 
 describe('chartUtils', () => {
+  describe('getNiceAxisMax', () => {
+    test.each([
+      [1967, 2000],
+      [10, 12],
+      [37, 40],
+      [130, 160],
+      [21, 24],
+      [201, 240],
+      [2001, 2400],
+      [400, 400],
+      [3, 4],
+    ])('rounds %d up to %d so the quarter-lines are whole steps', (max, expected) => {
+      expect(getNiceAxisMax(max)).toBe(expected);
+    });
+
+    test('never returns less than the data needs', () => {
+      for (let max = 1; max <= 2500; max += 7) {
+        expect(getNiceAxisMax(max)).toBeGreaterThanOrEqual(max);
+        expect((getNiceAxisMax(max) / 4) % 1).toBe(0);
+      }
+    });
+
+    test('an empty axis still has a scale', () => {
+      expect(getNiceAxisMax(0)).toBe(4);
+    });
+  });
+
   const mockDate1 = new Date('2023-01-01T00:00:00.000Z');
   const mockDate2 = new Date('2023-01-02T00:00:00.000Z');
   const mockDate3 = new Date('2023-01-03T00:00:00.000Z');

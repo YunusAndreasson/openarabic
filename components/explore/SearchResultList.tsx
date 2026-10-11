@@ -16,6 +16,7 @@ import type { ArticleSearchResult } from '@/hooks/articles/useArticleSearch';
 import type { Article } from '@/types/articles.types';
 import { generateStorageUrl } from '@/utils/storageUtils';
 import { getArticleMetadataWithoutCategory } from '@/utils/stringUtils';
+import { formatTextCount } from '@/utils/wordCountText';
 
 const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.LIST_ITEM;
 
@@ -40,12 +41,6 @@ const SeparatorComponent = () => <ListSeparator height={LAYOUT.SPACING.SMALL} />
 // Stable at module scope: FlashList v2 re-renders every visible cell when a
 // list callback's identity changes.
 const keyExtractor = (item: ArticleSearchResult) => `search-${item.article.id}`;
-
-function formatResultCount(count: number): string {
-  return count === 1
-    ? STRINGS.SEARCH_TEXTS_RESULT_COUNT_ONE
-    : STRINGS.SEARCH_TEXTS_RESULT_COUNT_OTHER.replace('{count}', String(count));
-}
 
 interface SearchResultListProps {
   results: ArticleSearchResult[];
@@ -121,7 +116,7 @@ export const SearchResultList = ({
     return (
       <View style={styles.listHeader}>
         <ThemedText type="caption" colorName="secondaryText">
-          {formatResultCount(results.length)}
+          {formatTextCount(results.length)}
         </ThemedText>
         {isBodyError ? (
           <TextLink label={STRINGS.SEARCH_TEXTS_BODY_FAILED} onPress={onRetryBody} />

@@ -52,7 +52,7 @@ export default function PracticeScreen(): JSX.Element {
   const currentStreak = streak?.currentStreak ?? 0;
   const hasStreak = streak !== null;
 
-  const { acquireEngine } = useVoiceGrading();
+  const { acquireEngine, offerHotwordGlosses } = useVoiceGrading();
   const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
 
   // Add ref to prevent infinite re-renders
@@ -69,13 +69,6 @@ export default function PracticeScreen(): JSX.Element {
   //
   // The release is deferred inside the provider, so Practice → review →
   // Practice never drops the count to zero and rebuilds.
-  useFocusEffect(
-    useCallback(() => {
-      if (!voiceEnabled) return;
-      return acquireEngine();
-    }, [voiceEnabled, acquireEngine]),
-  );
-
   // Prefetch vocabulary data on first focus (deduped via ref)
   // Note: useReview.handleClose already invalidates queries when returning from review,
   // so we don't need to refetch here - React Query's staleTime handles freshness
@@ -109,6 +102,24 @@ export default function PracticeScreen(): JSX.Element {
     userId: user?.id,
     limit: PRACTICE_DUE_WORDS_LIMIT,
   });
+
+  // The recogniser is built for a vocabulary and rebuilt for every new one, so
+  // it is told the due words' answers here, in the same pass that first retains
+  // it — and not before they have loaded. Retained unbiased, it was torn down
+  // and rebuilt the moment review mounted and offered the very same words, and
+  // the warm engine this tab exists to provide was never the one card 1 used.
+  const dueGlossKey = (dueWords ?? [])
+    .map(word => word.root?.meaning)
+    .filter((meaning): meaning is string => Boolean(meaning))
+    .sort()
+    .join('\n');
+  useFocusEffect(
+    useCallback(() => {
+      if (!voiceEnabled || isLoading) return;
+      if (dueGlossKey) offerHotwordGlosses(dueGlossKey.split('\n'));
+      return acquireEngine();
+    }, [voiceEnabled, isLoading, dueGlossKey, acquireEngine, offerHotwordGlosses]),
+  );
 
   // Memory capacity gauge needs all words, not just due
   const studyWords = useMemo(() => allWords ?? [], [allWords]);
@@ -215,10 +226,7 @@ export default function PracticeScreen(): JSX.Element {
   if (shouldShowError) {
     return (
       <ThemedView style={styles.container}>
-        <ErrorState
-          message={error instanceof Error ? error.message : STRINGS.FAILED_TO_LOAD_PRACTICE_DATA}
-          onRetry={handleRetry}
-        />
+        <ErrorState message={STRINGS.FAILED_TO_LOAD_PRACTICE_DATA} onRetry={handleRetry} />
       </ThemedView>
     );
   }

@@ -9,6 +9,7 @@ import { DEPTH_BAND_SCOPES } from '@/hooks/vocabulary/useDictionaryList';
 import { useReviewDepthDistribution } from '@/hooks/vocabulary/useReviewDepthDistribution';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { DEPTH_BAND_HINTS } from '@/utils/practiceDepth';
+import { formatCount } from '@/utils/stringUtils';
 
 import { BandBreakdown, type BreakdownBand } from './BandBreakdown';
 
@@ -36,7 +37,7 @@ function formatAverage(total: number, divisor: number): string {
   if (mean === 0) return '0';
   if (Math.round(mean) === 0) return STRINGS.DEPTH_AVERAGE_UNDER_ONE;
 
-  return STRINGS.DEPTH_AVERAGE.replace('{count}', String(Math.round(mean)));
+  return STRINGS.DEPTH_AVERAGE.replace('{count}', formatCount(mean));
 }
 
 /**

@@ -7,7 +7,6 @@ import { View } from 'react-native';
 import { SectionLabel } from '@/components/common';
 import {
   ArticleList,
-  BrandFooter,
   ContinueReadingSection,
   DiscoverySections,
   FilterSection,
@@ -25,14 +24,13 @@ import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useOnboardingChecklist } from '@/hooks/onboarding/useOnboardingChecklist';
 import { useTutorial } from '@/hooks/tutorials/useTutorial';
+import { useMiniPlayerClearance } from '@/hooks/audio/useMiniPlayerClearance';
 import { useTabBarAutoHide } from '@/hooks/ui/useTabBarAutoHide';
 import { useToast } from '@/components/providers/ToastProvider';
 import type { CategoryId } from '@/types/branded.types';
 import { pickStarterArticle } from '@/utils/articleUtils';
 import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback } from '@/utils/haptics';
-
-const FOOTER_COMPONENT = <BrandFooter />;
 
 /**
  * Generic helper to build entities (categories/authors) with article counts
@@ -54,6 +52,11 @@ export default function ExploreScreen(): JSX.Element {
   const { showToast } = useToast();
   const { from } = useLocalSearchParams<{ from?: string }>();
   const tabBarAutoHide = useTabBarAutoHide();
+  // The feed used to end on a brand footer whose dimmed ring logo read as a
+  // stalled loading spinner under the last rail. It now ends on the same
+  // clearance the other three tabs use, which also keeps the last rail out from
+  // under the mini player — Explore was the one tab that let it cover content.
+  const miniPlayerClearance = useMiniPlayerClearance();
 
   // Show welcome toast when navigating from empty states
   const hasShownWelcomeRef = useRef<string | null>(null);
@@ -232,7 +235,7 @@ export default function ExploreScreen(): JSX.Element {
         {...tabBarAutoHide}
         isRefreshing={isRefreshing}
         ListHeaderComponent={<>{headerSections}</>}
-        ListFooterComponent={FOOTER_COMPONENT}
+        contentContainerStyle={{ paddingBottom: miniPlayerClearance }}
         progressViewOffset={LAYOUT.SPACING.XLARGE}
         onRefresh={handleRefreshRequest}
       />

@@ -34,12 +34,7 @@ export default function FilterScreen(): JSX.Element {
   }, []);
 
   if (error) {
-    return (
-      <ErrorState
-        message={error instanceof Error ? error.message : STRINGS.FAILED_TO_LOAD_ARTICLES}
-        onRetry={() => void refetch()}
-      />
-    );
+    return <ErrorState message={STRINGS.FAILED_TO_LOAD_ARTICLES} onRetry={() => void refetch()} />;
   }
 
   if (isFetching) {

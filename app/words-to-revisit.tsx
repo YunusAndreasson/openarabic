@@ -33,7 +33,7 @@ interface LeechRowProps {
  * One struggling word, in the SAME row the dictionary index uses.
  *
  * It used to be its own composition — Arabic stacked above the gloss, an error
- * `Badge`, an inline reset button — which made the same objects out of the same
+ * badge, an inline reset button — which made the same objects out of the same
  * cache look like a different kind of thing depending on which screen you
  * reached them from. On the shared one-line row the 0.6 detent also shows
  * meaningfully more of the twenty.

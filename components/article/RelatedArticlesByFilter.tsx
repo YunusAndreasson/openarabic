@@ -163,9 +163,9 @@ export const RelatedArticlesByFilter = memo<RelatedArticlesByFilterProps>(
     }
 
     return (
-      <View style={styles.container}>
+      <View>
         <SectionLabel density="compact" title={sectionTitle} />
-        {articleCards}
+        <View style={styles.cards}>{articleCards}</View>
       </View>
     );
   },
@@ -174,10 +174,11 @@ export const RelatedArticlesByFilter = memo<RelatedArticlesByFilterProps>(
 RelatedArticlesByFilter.displayName = 'RelatedArticlesByFilter';
 
 const styles = StyleSheet.create({
-  container: {
-    paddingTop: LAYOUT.SPACING.LARGE,
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
-    // paddingBottom removed - FlashList contentContainerStyle handles bottom spacing
+  // The label brings its own screen inset and top spacing. These used to sit
+  // inside two padded wrappers, which put the cards 16pt in and the label 28pt
+  // in under an article whose text starts at 12.
+  cards: {
+    paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
   },
   articleSpacing: {
     marginTop: LAYOUT.SPACING.SMALL,

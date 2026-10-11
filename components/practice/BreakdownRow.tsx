@@ -8,6 +8,7 @@ import { getMeterTrackColor, useChartColors } from '@/constants/chartColors';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
+import { formatCount } from '@/utils/stringUtils';
 
 /**
  * What a breakdown row says out loud.
@@ -46,8 +47,13 @@ const CHEVRON_SIZE = LAYOUT.BUTTON.ICON_SIZE.DISCLOSURE;
  */
 const METER_WIDTH = 84;
 
-/** Keeps three-digit counts from shunting the meters around as the row changes. */
-const COUNT_WIDTH = 40;
+/**
+ * Keeps the counts from shunting the meters around as the row changes. Sized
+ * for a grouped four-digit count: "9,999" in the 16pt semibold measures 44.5pt,
+ * and at the old 40 a band of a thousand words wrapped its last digit onto a
+ * second line.
+ */
+const COUNT_WIDTH = 48;
 
 interface BreakdownRowProps {
   label: string;
@@ -131,8 +137,9 @@ export function BreakdownRow({
         type="bodyBold"
         colorName={count > 0 ? 'text' : 'textTertiary'}
         style={styles.count}
+        numberOfLines={1}
       >
-        {count}
+        {formatCount(count)}
       </ThemedText>
 
       {/* Only rows that lead somewhere claim to. */}

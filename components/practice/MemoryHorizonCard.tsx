@@ -10,6 +10,7 @@ import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { MemoryHorizonDistribution } from '@/hooks/vocabulary/useMemoryHorizonDistribution';
 import { getHorizonBandsAccessibilityLabel } from '@/utils/memoryHorizon';
+import { formatCount } from '@/utils/stringUtils';
 
 import { MemoryHorizonBand } from './charts/MemoryHorizonBand';
 
@@ -79,7 +80,7 @@ export function MemoryHorizonCard({
           />
           {hasMeasuredMemory && (
             <ThemedText type="caption" colorName="textTertiary" style={styles.denominator}>
-              {STRINGS.PRACTICE_RECALL_OF_TOTAL.replace('{total}', String(practisedCount))}
+              {STRINGS.PRACTICE_RECALL_OF_TOTAL.replace('{total}', formatCount(practisedCount))}
             </ThemedText>
           )}
         </View>

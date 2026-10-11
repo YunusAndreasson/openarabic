@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { FONTS } from '@/constants/fonts';
+import { Y_AXIS_LINES } from '@/constants/chartConstants';
 import { LAYOUT, LINE_HEIGHT_MULTIPLIERS, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
@@ -20,9 +21,6 @@ interface AxisLabelsProps {
   yLabelFormatter?: (value: number) => string;
   isFuturePrediction?: boolean; // Whether this chart shows future predictions (today = index 0)
 }
-
-// Number of horizontal lines/labels on y-axis
-const Y_AXIS_LINES = 5;
 
 /**
  * Comprehensive axis labels component for charts with proper padding and alignment

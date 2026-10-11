@@ -17,6 +17,7 @@ import { ThemedText } from '@/components/primitives/ThemedText';
 import { SPRING_CONFIG } from '@/constants/animation';
 import type { SolidColorName } from '@/constants/colors';
 import type { TextTypeName } from '@/types/ui/text.types';
+import { formatCount } from '@/utils/stringUtils';
 
 /**
  * Accessibility is a required, mutually exclusive choice.
@@ -115,7 +116,7 @@ export function AnimatedCount({
   );
 
   const shown = isStatic ? value : displayValue;
-  const text = placeholder ?? String(shown);
+  const text = placeholder ?? formatCount(shown);
 
   return (
     <ThemedText

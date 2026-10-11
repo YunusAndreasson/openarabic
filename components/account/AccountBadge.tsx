@@ -1,12 +1,10 @@
 import { Ionicons } from '@/components/ui';
 import { Image } from 'expo-image';
-import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Animated, { cancelAnimation, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
 import { BaseCard } from '@/components/common';
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { PRESS_ANIMATION_BUTTON } from '@/hooks/animations';
@@ -48,36 +46,16 @@ const getInitials = (name: string): string => {
 export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps) {
   const colors = useColors();
 
-  // Animation values — the photo's press scale belongs to useButtonPress now.
-  const containerOpacity = useSharedValue(0);
-  const [photoLoaded, setPhotoLoaded] = useState(false);
-
-  // Profile photo picker with local storage persistence
-  const { profilePhotoUri, selectPhoto } = useProfilePhotoPicker({
-    userId,
-    onPhotoLoaded: () => setPhotoLoaded(true),
-  });
-
-  // Cleanup animations on unmount
-  useEffect(() => {
-    return () => {
-      try {
-        cancelAnimation(containerOpacity);
-      } catch {
-        // Animation cleanup failed - continue
-      }
-    };
-  }, [containerOpacity]);
-
-  // Container opacity — fade in when photo loaded
-  useEffect(() => {
-    if (photoLoaded) {
-      containerOpacity.set(withTiming(1, TIMING_CONFIG.ENTRANCE));
-    }
-  }, [photoLoaded, containerOpacity]);
-
-  // Reanimated 4: pass shared value directly (no useAnimatedStyle wrapper needed)
-  const containerAnimatedStyle = { opacity: containerOpacity };
+  // Profile photo picker with local storage persistence.
+  //
+  // The card does not wait for it. It used to start at opacity 0 and fade in
+  // once the saved photo had been read back, which tied the name, the email and
+  // the whole top of the Account screen to an animation that could fail to land
+  // — and when it did, the card kept its space and painted nothing, leaving a
+  // 100pt hole under the title. Everything but the photo is known on the first
+  // render; the initials stand in until the image arrives, and the image brings
+  // its own cross-fade.
+  const { profilePhotoUri, selectPhoto } = useProfilePhotoPicker({ userId });
 
   // Derived values
   const firstName = getFirstNameFromEmail(userEmail);
@@ -136,81 +114,74 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
   };
 
   return (
-    // The card is BaseCard's; the Animated.View outside it exists only to carry
-    // the photo-load fade. This used to hand-roll the whole surface — radius,
+    // The card is BaseCard's. This used to hand-roll the whole surface — radius,
     // overflow, elevation1 fill and a raw LAYOUT.ELEVATION.SMALL spread, which
     // skipped the theme-aware wrapper and made it one of only two cards in the
     // app still casting a shadow in dark mode.
-    <Animated.View style={containerAnimatedStyle}>
-      <BaseCard
-        surface="elevation1"
-        style={styles.profileCard}
-        contentStyle={styles.profileContent}
+    <BaseCard surface="elevation1" style={styles.profileCard} contentStyle={styles.profileContent}>
+      {/* Profile Photo */}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={STRINGS.ACCOUNT_A11Y_CHANGE_PHOTO}
+        onPress={handlePhotoPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        style={styles.photoContainer}
+        hitSlop={LAYOUT.HIT_SLOP.SMALL}
       >
-        {/* Profile Photo */}
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={STRINGS.ACCOUNT_A11Y_CHANGE_PHOTO}
-          onPress={handlePhotoPress}
-          onPressIn={handlePressIn}
-          onPressOut={handlePressOut}
-          style={styles.photoContainer}
-          hitSlop={LAYOUT.HIT_SLOP.SMALL}
-        >
-          <Animated.View style={photoAnimatedStyle}>
-            <View style={dynamicStyles.photoRing}>
-              {profilePhotoUri ? (
-                <Image
-                  source={{ uri: profilePhotoUri }}
-                  style={styles.profilePhoto}
-                  contentFit="cover"
-                  cachePolicy="memory-disk"
-                  transition={200}
-                  priority="high"
-                />
-              ) : (
-                <View style={dynamicStyles.initialsContainer}>
-                  <ThemedText
-                    type="heading2"
-                    style={[styles.initialsText, dynamicStyles.initialsText]}
-                  >
-                    {initials}
-                  </ThemedText>
-                </View>
-              )}
-
-              {/* Edit Icon Overlay */}
-              <View style={dynamicStyles.editIconContainer}>
-                <Ionicons name="camera" size={14} color={colors.background} />
+        <Animated.View style={photoAnimatedStyle}>
+          <View style={dynamicStyles.photoRing}>
+            {profilePhotoUri ? (
+              <Image
+                source={{ uri: profilePhotoUri }}
+                style={styles.profilePhoto}
+                contentFit="cover"
+                cachePolicy="memory-disk"
+                transition={200}
+                priority="high"
+              />
+            ) : (
+              <View style={dynamicStyles.initialsContainer}>
+                <ThemedText
+                  type="heading2"
+                  style={[styles.initialsText, dynamicStyles.initialsText]}
+                >
+                  {initials}
+                </ThemedText>
               </View>
-            </View>
-          </Animated.View>
-        </Pressable>
+            )}
 
-        {/* User Info */}
-        <View style={styles.userInfo}>
-          <ThemedText type="heading2" style={styles.userName} numberOfLines={1}>
-            {firstName}
-          </ThemedText>
-          {/* The email, not just the name derived from it. A settings screen
+            {/* Edit Icon Overlay */}
+            <View style={dynamicStyles.editIconContainer}>
+              <Ionicons name="camera" size={14} color={colors.background} />
+            </View>
+          </View>
+        </Animated.View>
+      </Pressable>
+
+      {/* User Info */}
+      <View style={styles.userInfo}>
+        <ThemedText type="heading2" style={styles.userName} numberOfLines={1}>
+          {firstName}
+        </ThemedText>
+        {/* The email, not just the name derived from it. A settings screen
               has to answer "which account am I signed in to?" — and this one
               received the address all along without ever showing it. */}
-          <ThemedText type="caption" colorName="textTertiary" numberOfLines={1}>
-            {userEmail}
+        <ThemedText type="caption" colorName="textTertiary" numberOfLines={1}>
+          {userEmail}
+        </ThemedText>
+        {memberSince && (
+          <ThemedText
+            type="caption"
+            colorName="textTertiary"
+            style={styles.memberSince}
+            numberOfLines={1}
+          >
+            {memberSince}
           </ThemedText>
-          {memberSince && (
-            <ThemedText
-              type="caption"
-              colorName="textTertiary"
-              style={styles.memberSince}
-              numberOfLines={1}
-            >
-              {memberSince}
-            </ThemedText>
-          )}
-        </View>
-      </BaseCard>
-    </Animated.View>
+        )}
+      </View>
+    </BaseCard>
   );
 }
 
