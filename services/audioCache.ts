@@ -248,7 +248,11 @@ class AudioCacheManager {
         `${cachedFilePath}.tmp-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`,
       );
       const abortController = new AbortController();
-      const abortTimer = setTimeout(() => abortController.abort(), timeoutMs);
+      // Armed only once the transfer is about to start (below). Armed here it
+      // also counted the retry backoff and the wait for a background slot, so a
+      // download queued behind a preload burst could be aborted before it had
+      // sent a byte — and spend every retry that way.
+      let abortTimer: ReturnType<typeof setTimeout> | undefined;
       const attemptStartedAt = Date.now();
 
       try {
@@ -263,6 +267,7 @@ class AudioCacheManager {
         }
 
         if (!quick) await this.acquireBackgroundDownloadSlot();
+        abortTimer = setTimeout(() => abortController.abort(), timeoutMs);
         try {
           await File.downloadFileAsync(url, tempFile, {
             idempotent: true,
@@ -356,7 +361,22 @@ class AudioCacheManager {
       if (pendingDownload) {
         if (isSessionActive()) mark('cache.await-inflight', { url: basename(url) });
         // Reuse the existing download promise instead of starting a new download
-        return await pendingDownload;
+        if (!options.quick) return await pendingDownload;
+
+        // A quick caller is the card on screen. The download it is joining may
+        // be a patient one still queued for a background slot with three
+        // attempts ahead of it, so it joins on its own budget and otherwise
+        // falls back to the remote URL — what a quick miss returns anyway. The
+        // patient download carries on and fills the cache for next time.
+        let quickTimer: ReturnType<typeof setTimeout> | undefined;
+        const quickBudget = new Promise<string>(resolve => {
+          quickTimer = setTimeout(() => resolve(url), this.QUICK_DOWNLOAD_TIMEOUT_MS);
+        });
+        try {
+          return await Promise.race([pendingDownload, quickBudget]);
+        } finally {
+          clearTimeout(quickTimer);
+        }
       }
 
       // A miss during a live review session means the preloader did not get

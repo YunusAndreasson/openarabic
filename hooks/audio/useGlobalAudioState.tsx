@@ -76,7 +76,7 @@ function useGlobalAudioStateInternal(): GlobalAudioState {
   // Get reading list for queue tracking
   const { sortedEnhancedTracks } = usePlaylistScreen();
 
-  const { setTimer } = useTimerCleanup();
+  const { setTimer, clearTimer } = useTimerCleanup();
 
   // Sleep timer integration
   const sleepTimer = useSleepTimer(() => {
@@ -88,6 +88,11 @@ function useGlobalAudioStateInternal(): GlobalAudioState {
 
     // Force stop after a reasonable delay (30 seconds)
     // This ensures we don't get stuck if audio never stops naturally
+    //
+    // Bound to the track that was playing when the timer ran out. Unbound, it
+    // stopped whatever was playing 30 seconds later — including something the
+    // listener had started on purpose after the timer had done its job.
+    const trackAtExpiry = simpleAudioService.getStatus().currentTrack?.id;
     setTimer(
       'forceStop',
       () => {
@@ -99,7 +104,8 @@ function useGlobalAudioStateInternal(): GlobalAudioState {
         // playing status instead covers both lanes; a track that already
         // finished naturally within the 30s grace window is a no-op here
         // either way.
-        if (simpleAudioService.getStatus().playing) {
+        const status = simpleAudioService.getStatus();
+        if (status.playing && status.currentTrack?.id === trackAtExpiry) {
           void stopAudio();
         }
       },
@@ -118,12 +124,22 @@ function useGlobalAudioStateInternal(): GlobalAudioState {
   const playbackEnded = audioPlayer.status?.playbackState === 'ended';
   useEffect(() => {
     if (!sleepTimer.state.isActive) return;
+    // Playlist mode guards BOTH arms. A track that fails to load publishes "no
+    // current track" while the queue heals or skips it, and reading that as
+    // the end of the session cancelled the timer on a playlist that then
+    // carried on. A stop or a finished queue leaves playlist mode first.
     const sessionOver =
-      !currentTrack || (playbackEnded && !simpleAudioService.getPlaylistInfo().isPlaylistMode);
+      !simpleAudioService.getPlaylistInfo().isPlaylistMode && (!currentTrack || playbackEnded);
     if (sessionOver) {
       sleepTimer.actions.cancelTimer();
     }
   }, [currentTrack, playbackEnded, sleepTimer.state.isActive, sleepTimer.actions]);
+
+  // A new timer supersedes the previous one's pending force-stop.
+  const sleepEndTime = sleepTimer.state.endTime;
+  useEffect(() => {
+    if (sleepEndTime > 0) clearTimer('forceStop');
+  }, [sleepEndTime, clearTimer]);
 
   // Get current article ID from audio player
   const currentArticleId = audioPlayer.currentTrack?.articleId ?? null;

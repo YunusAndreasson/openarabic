@@ -251,6 +251,14 @@ class SimpleAudioService {
 
   // SLEEP TIMER SUPPORT: Track when sleep timer has expired
   private sleepTimerExpired = false;
+  // Wall-clock instant the running sleep timer ends, or null. Held here as
+  // well as in the hook because the hook can only expire on a JS timer, and a
+  // backgrounded app does not run those on time; the track-finish event that
+  // advances the queue does arrive, so that is where the deadline is checked.
+  private sleepDeadline: number | null = null;
+  // Bumped whenever the queue is replaced or dropped, so an advance parked on
+  // an await can tell the playlist it was advancing no longer exists.
+  private playlistGeneration = 0;
 
   // RACE CONDITION GUARD: Prevent duplicate track advancement from rapid-fire events
   private isAdvancingTrack = false;
@@ -288,6 +296,7 @@ class SimpleAudioService {
    * Reset playlist state to default values
    */
   private resetPlaylistState(): void {
+    this.playlistGeneration++;
     this.isPlaylistMode = false;
     this.playlist = [];
     this.currentPlaylistIndex = 0;
@@ -947,6 +956,7 @@ class SimpleAudioService {
     }
 
     try {
+      this.playlistGeneration++;
       this.playlist = [...tracks];
       this.currentPlaylistIndex = 0;
       this.isPlaylistMode = true;
@@ -1125,11 +1135,15 @@ class SimpleAudioService {
         }
       }
 
+      const generation = this.playlistGeneration;
       await playTransitionSound();
 
       // A foreign play() during the transition sound exits playlist mode —
-      // don't advance a playlist the user just navigated away from.
-      if (!this.isPlaylistMode) {
+      // don't advance a playlist the user just navigated away from. Playlist
+      // mode alone is not enough: starting ANOTHER playlist in that gap leaves
+      // the flag on, and this advance then restarted (or superseded) the track
+      // the user had just chosen, at this queue's stale index.
+      if (!this.isPlaylistMode || this.playlistGeneration !== generation) {
         return false;
       }
     }
@@ -1289,6 +1303,27 @@ class SimpleAudioService {
    */
   resetSleepTimerExpired(): void {
     this.sleepTimerExpired = false;
+    // A deadline already behind us has done its job; left in place it would
+    // stop the next queue at the end of its first track.
+    if (this.sleepDeadline !== null && Date.now() >= this.sleepDeadline) {
+      this.sleepDeadline = null;
+    }
+  }
+
+  /**
+   * SLEEP TIMER SUPPORT: The running timer's end (ms since epoch), or null when
+   * none is running. Setting it starts a fresh timer as far as the service is
+   * concerned, so an earlier expiry is forgotten.
+   */
+  setSleepDeadline(deadline: number | null): void {
+    this.sleepDeadline = deadline;
+    this.sleepTimerExpired = false;
+  }
+
+  private hasSleepTimerElapsed(): boolean {
+    return (
+      this.sleepTimerExpired || (this.sleepDeadline !== null && Date.now() >= this.sleepDeadline)
+    );
   }
 
   /**
@@ -1363,7 +1398,7 @@ class SimpleAudioService {
             }
 
             // Don't advance if sleep timer has expired
-            if (this.sleepTimerExpired) {
+            if (this.hasSleepTimerElapsed()) {
               // Sleep timer expired - stop playlist instead of advancing
               this.resetPlaylistState();
               this.stop().catch(() => {

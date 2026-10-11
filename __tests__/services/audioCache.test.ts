@@ -720,6 +720,40 @@ describe('audioCache', () => {
     expect(mockDownloadFileAsync).toHaveBeenCalledTimes(1);
   });
 
+  test('a quick request joining a stalled patient download falls back on its own budget', async () => {
+    const stalledUrl = 'http://example.com/stalled-test.mp3';
+    mockDigestStringAsync.mockResolvedValue('stalledhash');
+    mockFileConstructor.mockClear();
+    mockDownloadFileAsync.mockClear();
+    // The preloader's download never completes within the test.
+    mockDownloadFileAsync.mockImplementation(() => new Promise(() => undefined));
+
+    audioCache = require('../../services/audioCache').audioCache;
+    mockFileConstructor.mockImplementation(makeFileMock({ cachedExists: false }));
+
+    jest.useFakeTimers();
+    try {
+      void audioCache.getAudio(stalledUrl);
+      await jest.advanceTimersByTimeAsync(0);
+
+      let quickResult: string | undefined;
+      void audioCache.getAudio(stalledUrl, { quick: true }).then((path: string) => {
+        quickResult = path;
+      });
+
+      await jest.advanceTimersByTimeAsync(5000);
+      expect(quickResult).toBeUndefined();
+
+      // Past the 6 s quick budget, well inside the patient one: the card gets
+      // the remote URL to stream instead of waiting out the queue.
+      await jest.advanceTimersByTimeAsync(1500);
+      expect(quickResult).toBe(stalledUrl);
+      expect(mockDownloadFileAsync).toHaveBeenCalledTimes(1);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   test('one-time sweep deletes pre-overhaul cache files before first use and sets the flag', async () => {
     const AsyncStorage = require('@react-native-async-storage/async-storage');
     const sweepUrl = 'http://example.com/sweep-test.mp3';

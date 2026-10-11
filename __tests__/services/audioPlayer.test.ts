@@ -680,6 +680,78 @@ describe('audioPlayer service', () => {
 
       expect(audioService.isSleepTimerExpired()).toBeFalsy();
     });
+
+    // The hook's own expiry is a JS timer, which a backgrounded app does not
+    // run on time. The track-finish event still arrives, so the deadline has to
+    // be enforced there.
+    test('stops at the end of a track once the deadline has passed, without the hook', async () => {
+      await audioService.playPlaylist([testTrack, testTrack2]);
+      audioService.setSleepDeadline(Date.now() - 1);
+
+      const eventHandler = mockPlayer.addListener.mock.calls[0][1];
+      eventHandler({ didJustFinish: true });
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      expect(audioService.getPlaylistInfo().isPlaylistMode).toBeFalsy();
+      expect(mockPlayTransitionSound).not.toHaveBeenCalled();
+    });
+
+    test('a deadline still ahead lets the queue advance', async () => {
+      await audioService.playPlaylist([testTrack, testTrack2]);
+      audioService.setSleepDeadline(Date.now() + 60_000);
+
+      const eventHandler = mockPlayer.addListener.mock.calls[0][1];
+      eventHandler({ didJustFinish: true });
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      expect(audioService.getPlaylistInfo().isPlaylistMode).toBeTruthy();
+      expect(mockPlayTransitionSound).toHaveBeenCalled();
+    });
+
+    test('a new timer forgets the previous expiry, and a spent deadline does not stop the next queue', async () => {
+      audioService.markSleepTimerExpired();
+      audioService.setSleepDeadline(Date.now() + 60_000);
+      expect(audioService.isSleepTimerExpired()).toBeFalsy();
+
+      audioService.setSleepDeadline(Date.now() - 1);
+      await audioService.playPlaylist([testTrack, testTrack2]);
+
+      const eventHandler = mockPlayer.addListener.mock.calls[0][1];
+      eventHandler({ didJustFinish: true });
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      expect(audioService.getPlaylistInfo().isPlaylistMode).toBeTruthy();
+    });
+  });
+
+  describe('Playlist replaced mid-advance', () => {
+    test('an advance parked on the transition sound does not touch a playlist started meanwhile', async () => {
+      const otherTrack = { ...testTrack, id: 'other-1', title: 'Other' };
+      const otherTrack2 = { ...testTrack2, id: 'other-2', title: 'Other 2' };
+      let releaseTransition: () => void = () => undefined;
+      mockPlayTransitionSound.mockImplementationOnce(
+        () =>
+          new Promise<void>(resolve => {
+            releaseTransition = resolve;
+          }),
+      );
+
+      await audioService.playPlaylist([testTrack, testTrack2]);
+      const eventHandler = mockPlayer.addListener.mock.calls[0][1];
+      eventHandler({ didJustFinish: true });
+      await Promise.resolve();
+
+      // The listener picks something else while the chime is still playing.
+      await audioService.playPlaylist([otherTrack, otherTrack2]);
+      const playsBefore = mockPlayer.play.mock.calls.length;
+
+      releaseTransition();
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      expect(mockPlayer.play.mock.calls.length).toBe(playsBefore);
+      expect(audioService.getStatus().currentTrack?.id).toBe('other-1');
+      expect(audioService.getPlaylistInfo().currentIndex).toBe(0);
+    });
   });
 
   describe('Status Updates and Subscriptions', () => {

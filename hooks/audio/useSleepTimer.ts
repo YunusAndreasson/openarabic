@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 
 import { STRINGS } from '@/constants/strings';
+import { simpleAudioService } from '@/services/audioPlayer';
 import { handleError } from '@/utils/errorHandling';
 
 export interface SleepTimerState {
@@ -59,6 +60,9 @@ export function useSleepTimer(onTimerComplete?: () => void): UseSleepTimerResult
 
         setEndTime(end);
         setIsActive(true);
+        // The service checks this at every track end, which keeps working in
+        // the background where the timeout below does not.
+        simpleAudioService.setSleepDeadline(end);
 
         timeoutRef.current = setTimeout(fireCompletion, durationMs);
       } catch (error) {
@@ -75,6 +79,7 @@ export function useSleepTimer(onTimerComplete?: () => void): UseSleepTimerResult
     setIsActive(false);
     setEndTime(0);
     clearTimerTimeout();
+    simpleAudioService.setSleepDeadline(null);
   }, [clearTimerTimeout]);
 
   // Cleanup on unmount
