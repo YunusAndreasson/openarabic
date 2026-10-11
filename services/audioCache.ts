@@ -259,7 +259,10 @@ class AudioCacheManager {
         // Check network before retry (skip check on first attempt for efficiency)
         if (attempt > 0) {
           const netState = await NetInfo.fetch();
-          if (!netState.isConnected) {
+          // `=== false`, not falsy: NetInfo reports `null` while it has not yet
+          // determined the state (just after resume), and treating that as
+          // offline spent both retries without sending a byte.
+          if (netState.isConnected === false) {
             throw new Error('No network connection available');
           }
           // Exponential backoff: 1s, 2s

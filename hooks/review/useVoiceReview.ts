@@ -199,12 +199,13 @@ interface UseVoiceReviewArgs {
   /** Other English names the corpus gives this same root — see
    *  `useReviewGlossAlternates`. Widens what counts as right, at `vague`. */
   glossAlternates?: readonly string[];
-  /** Every OTHER answer in the current chunk. Not used for grading: it is the
+  /** Every OTHER answer in the session. Not used for grading: it is the
    *  one thing that may veto remembering a "Got it", because a transcript that
    *  is another drilled word's gloss would otherwise pass two cards forever. */
   otherGlosses?: readonly string[];
   /** Every answer due this session, fixed at its start — what the recogniser is
-   *  biased toward. See `utils/voiceHotwords.ts`. */
+   *  biased toward. See `utils/voiceHotwords.ts`. `undefined` while the session
+   *  is still loading: the recogniser is not built until this is known. */
   sessionGlosses?: readonly string[];
   /** Is the review session ready (not loading, no audio preload in flight). */
   ready: boolean;
@@ -534,22 +535,30 @@ export function useVoiceReview({
   // state does, so depending on it would tear the session down and rebuild it.
   const { prewarmPermission, acquireSession, acquireEngine, offerHotwordGlosses } = voice;
 
-  // Hold the recognizer in RAM for the life of the session. The Practice tab
-  // retains it too, so entering review from there does not rebuild it — the
-  // provider's linger covers the gap between the two retainers.
-  useEffect(() => {
-    if (!voiceEnabled) return;
-    return acquireEngine();
-  }, [voiceEnabled, acquireEngine]);
-
   // Bias the recogniser toward this session's answers — all of them, so the
   // list never says which one the current card wants. Keyed on the sorted
   // glosses because the array is rebuilt on every render.
+  //
+  // Declared before the retain below, and the retain waits for it: hotwords are
+  // fixed when the engine is built, so retaining first started an unbiased
+  // build that the vocabulary arriving a moment later tore down and replaced —
+  // two full builds back to back on a session opened from a reminder, with the
+  // mic shut for the whole of card 1.
+  const vocabularyKnown = sessionGlosses !== undefined;
   const sessionGlossKey = [...(sessionGlosses ?? [])].sort().join('\n');
   useEffect(() => {
     if (!voiceEnabled || !sessionGlossKey) return;
     offerHotwordGlosses(sessionGlossKey.split('\n'));
   }, [voiceEnabled, sessionGlossKey, offerHotwordGlosses]);
+
+  // Hold the recognizer in RAM for the life of the session. The Practice tab
+  // retains it too, so entering review from there does not rebuild it — the
+  // provider's linger covers the gap between the two retainers, and is far
+  // longer than the session takes to load its words.
+  useEffect(() => {
+    if (!voiceEnabled || !vocabularyKnown) return;
+    return acquireEngine();
+  }, [voiceEnabled, vocabularyKnown, acquireEngine]);
 
   // The headline metric for whether the prefetch is working: a session that
   // opened with no usable recognizer. Fired once per session, and deliberately

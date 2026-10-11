@@ -49,6 +49,15 @@ describe('mergeHotwords', () => {
   });
 });
 
+describe('mergeHotwords past the cap', () => {
+  it('keeps the vocabulary it has when a session is too large to bias toward', () => {
+    const current = ['book', 'house', 'pen'].sort().join('\n') + '\n';
+    const backlog = Array.from({ length: 300 }, (_, i) => `word ${'a'.repeat(i + 1)}`);
+    expect(mergeHotwords(current, backlog)).toBe(current);
+    expect(mergeHotwords('', backlog)).toBe('');
+  });
+});
+
 describe('countHotwords', () => {
   it('counts phrases, not lines', () => {
     expect(countHotwords('')).toBe(0);

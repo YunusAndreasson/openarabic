@@ -456,7 +456,12 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   // these — they exist only to veto remembering a "Got it" whose transcript is
   // a different drilled word's meaning, which is the one way the accept-list
   // could teach the app something actively wrong.
-  const otherGlosses = wordQueue
+  //
+  // Read from the whole session, not `wordQueue`. That is only the working
+  // heap, and a missed word waiting out its drill lag is held outside it and
+  // served straight back — so the very words being drilled, the likeliest to be
+  // said by mistake, were the ones missing from the veto.
+  const otherGlosses = sessionWords
     .filter(word => word.root_id !== currentWord?.root_id)
     .map(word => word.root?.meaning)
     .filter((meaning): meaning is string => Boolean(meaning));
@@ -464,9 +469,15 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   // The recogniser's hotwords: every answer due this session, known once at the
   // start. Not `wordQueue` — that is a 20-word working heap that refills, and
   // each refill would be a new vocabulary and another recogniser build.
-  const sessionGlosses = sessionWords
-    .map(word => word.root?.meaning)
-    .filter((meaning): meaning is string => Boolean(meaning));
+  //
+  // `undefined` until the session has loaded its words. The voice hook holds
+  // off building the recogniser until it is told the vocabulary, and "none yet"
+  // must not look like "none".
+  const sessionGlosses = isLoading
+    ? undefined
+    : sessionWords
+        .map(word => word.root?.meaning)
+        .filter((meaning): meaning is string => Boolean(meaning));
 
   // Voice grading — the microphone opens itself once the Arabic prompt has
   // played and the learner simply answers, so the action band carries "Show

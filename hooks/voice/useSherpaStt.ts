@@ -161,6 +161,8 @@ function useSherpaStt({
    * hotword files the dying engine was built from.
    */
   const operationsRef = useRef<Promise<unknown>>(Promise.resolve());
+  /** Whether an engine has come up since the recogniser was last released. */
+  const hasBuiltRef = useRef(false);
   const [hotwordCount, setHotwordCount] = useState(0);
   const [isReady, setReady] = useState(false);
   const [isWarming, setWarming] = useState(false);
@@ -176,6 +178,8 @@ function useSherpaStt({
 
     async function load() {
       if (!retained || !modelPath) {
+        // Released: the next build is a load again, not a rebuild.
+        hasBuiltRef.current = false;
         setReady(false);
         setWarming(false);
         setError(null);
@@ -188,8 +192,13 @@ function useSherpaStt({
       setReady(false);
       setWarming(true);
       const loadStartedAt = Date.now();
+      // A new vocabulary rebuilds the engine through this same path. Without
+      // the flag every such rebuild counted as a model load, and cold-load time
+      // on a dashboard became an average of two different things.
+      const rebuild = hasBuiltRef.current;
       void analytics.track(ANALYTICS_EVENTS.VOICE_MODEL_LOAD_STARTED, {
         modelId: PARAKEET_MODEL_ID,
+        rebuild,
       });
       voiceBreadcrumb('voice.engine.load.start', { modelId: PARAKEET_MODEL_ID });
 
@@ -234,9 +243,11 @@ function useSherpaStt({
 
         setWarming(false);
         setReady(true);
+        hasBuiltRef.current = true;
         void analytics.track(ANALYTICS_EVENTS.VOICE_MODEL_READY, {
           modelId: PARAKEET_MODEL_ID,
           durationMs: Date.now() - loadStartedAt,
+          rebuild,
         });
         voiceBreadcrumb('voice.engine.ready', {
           modelId: PARAKEET_MODEL_ID,

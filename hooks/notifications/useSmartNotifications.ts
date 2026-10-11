@@ -12,7 +12,7 @@ import {
 } from '@/services/notificationService';
 import { useAppSelector } from '@/store/hooks';
 import { buildNotificationPlan } from '@/utils/notificationPlanner';
-import { writeSmartReminderPrefs } from '@/utils/smartReminderPrefs';
+import { readSmartReminderPrefs, writeSmartReminderPrefs } from '@/utils/smartReminderPrefs';
 
 /**
  * Debounce so a burst of triggers (session invalidation refetch + foreground +
@@ -44,6 +44,34 @@ export function useSmartNotifications(): void {
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  /**
+   * When the last session finished, for the planner's cooldown.
+   *
+   * The query cache is the live copy but it is memory only, so after a relaunch
+   * it is empty while the cooldown may still be running. The mirror below is the
+   * one durable copy, so it is read back here rather than only written: the
+   * mount-time write used to save the settings WITHOUT the timestamp and erase
+   * it, and the next plan re-added the reminder the session had just earned the
+   * learner a break from. Signed out there is no session to cool down from, and
+   * the write that follows clears whatever the last account left.
+   */
+  const resolveLastCompletedAt = useEffectEvent(async (): Promise<number | undefined> => {
+    if (!userId) return undefined;
+    const cached = queryClient.getQueryData<number>(fsrsQueries.lastCompletedAtKey(userId));
+    if (typeof cached === 'number') return cached;
+    return (await readSmartReminderPrefs())?.lastSessionCompletedAt;
+  });
+
+  /** Mirrors the setting, and the cooldown with it, for the headless task. */
+  const writeMirror = useEffectEvent(async (): Promise<number | undefined> => {
+    const lastSessionCompletedAt = await resolveLastCompletedAt();
+    await writeSmartReminderPrefs({
+      ...reminderTime,
+      ...(lastSessionCompletedAt === undefined ? {} : { lastSessionCompletedAt }),
+    });
+    return lastSessionCompletedAt;
+  });
+
   const runSync = useEffectEvent(async (trigger: string) => {
     if (!isAuthenticated || !userId || !reminderTime.enabled) {
       await cancelSmartNotifications();
@@ -56,20 +84,14 @@ export function useSmartNotifications(): void {
     // The data-change effect re-fires scheduleSync when `words` resolves.
     if (words === undefined) return;
 
-    const lastCompletedAt = queryClient.getQueryData<number>(
-      fsrsQueries.lastCompletedAtKey(userId),
-    );
     // Keep the headless mirror's cooldown in step with the plan built here.
-    void writeSmartReminderPrefs({
-      ...reminderTime,
-      ...(typeof lastCompletedAt === 'number' ? { lastSessionCompletedAt: lastCompletedAt } : {}),
-    });
+    const lastSessionCompletedAt = await writeMirror();
     const plan = buildNotificationPlan({
       words,
       now: new Date(),
       preferredHour: reminderTime.hour,
       preferredMinute: reminderTime.minute,
-      ...(typeof lastCompletedAt === 'number' ? { lastSessionCompletedAt: lastCompletedAt } : {}),
+      ...(lastSessionCompletedAt === undefined ? {} : { lastSessionCompletedAt }),
     });
     await syncSmartNotifications(plan, trigger);
   });
@@ -89,14 +111,8 @@ export function useSmartNotifications(): void {
 
   // Mirror the setting for the headless background task
   useEffect(() => {
-    const lastCompletedAt = userId
-      ? queryClient.getQueryData<number>(fsrsQueries.lastCompletedAtKey(userId))
-      : undefined;
-    void writeSmartReminderPrefs({
-      ...reminderTime,
-      ...(typeof lastCompletedAt === 'number' ? { lastSessionCompletedAt: lastCompletedAt } : {}),
-    });
-  }, [reminderTime, userId, queryClient]);
+    void writeMirror();
+  }, [reminderTime, userId]);
 
   // Foreground: clear delivered reminders from the tray, then refresh the plan
   const handleAppStateChange = useEffectEvent((nextAppState: AppStateStatus) => {

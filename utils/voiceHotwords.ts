@@ -64,7 +64,11 @@ function toHotwords(phrases: ReadonlySet<string>): string {
  * a session whose answers it already covers returns `current` itself and costs
  * nothing, and one that brings new answers adds them to what is there. Growing
  * also keeps the list from ever narrowing toward the card in hand. Only when the
- * union would pass the cap does the new session's vocabulary replace the old.
+ * union would pass the cap does the new session's vocabulary replace the old —
+ * and only if it fits the cap itself. A session too large to bias toward leaves
+ * `current` in place: answering it with the empty string threw away a working
+ * vocabulary and rebuilt the recogniser unbiased at the first card, for the
+ * long-backlog sessions least able to afford the wait.
  */
 export function mergeHotwords(current: string, glosses: readonly string[]): string {
   const offered = phrasesOf(glosses);
@@ -72,7 +76,8 @@ export function mergeHotwords(current: string, glosses: readonly string[]): stri
   const before = merged.size;
   for (const phrase of offered) merged.add(phrase);
   if (merged.size === before) return current;
-  return merged.size > VOICE_HOTWORDS_MAX_PHRASES ? toHotwords(offered) : toHotwords(merged);
+  if (merged.size <= VOICE_HOTWORDS_MAX_PHRASES) return toHotwords(merged);
+  return offered.size > VOICE_HOTWORDS_MAX_PHRASES ? current : toHotwords(offered);
 }
 
 /** How many phrases a hotwords string carries. */
