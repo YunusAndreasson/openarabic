@@ -28,6 +28,7 @@ import { AudioManager } from 'react-native-audio-api';
 import { useSharedValue, type SharedValue } from 'react-native-reanimated';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
+import { VOICE_HOTWORDS_ENABLED } from '@/constants/voiceModel';
 import { useParakeetStt } from '@/hooks/voice/useSherpaStt';
 import { useVoiceModel } from '@/hooks/voice/useVoiceModel';
 import { useVoiceModelPrefetch } from '@/hooks/voice/useVoiceModelPrefetch';
@@ -64,6 +65,7 @@ import {
 } from '@/store/settingsSlice';
 import { mark as diagMark, span as diagSpan } from '@/utils/reviewDiagnostics';
 import { voiceBreadcrumb } from '@/utils/errorHandling';
+import { mergeHotwords } from '@/utils/voiceHotwords';
 
 export type VoiceArmOutcome =
   | { ok: true; result: RecordingResult }
@@ -97,6 +99,18 @@ interface VoiceGradingContextValue {
    * Practice never drops to zero and rebuilds.
    */
   acquireEngine: () => () => void;
+  /**
+   * Offer the answers of the review that is open as the recogniser's hotwords.
+   *
+   * Hotwords are fixed when the engine is built, so a vocabulary the engine does
+   * not already cover rebuilds it — `isReady` is false until the new one is
+   * warm. The vocabulary only grows, and is deliberately kept after the review
+   * closes: the engine lingers for the next session, which usually draws on the
+   * same words and then rebuilds nothing.
+   */
+  offerHotwordGlosses: (glosses: readonly string[]) => void;
+  /** Phrases the live engine is biased toward; 0 when it decodes greedily. */
+  hotwordCount: number;
   /**
    * Open a capture window and resolve when the energy gate (or hard duration
    * cap) closes it. Caller hands the resulting waveform to `transcribe()`.
@@ -263,11 +277,18 @@ export const VoiceGradingProvider = ({ children }: { children: ReactNode }) => {
     [],
   );
 
+  const [hotwords, setHotwords] = useState('');
+  const offerHotwordGlosses = useCallback((glosses: readonly string[]): void => {
+    if (!VOICE_HOTWORDS_ENABLED) return;
+    setHotwords(current => mergeHotwords(current, glosses));
+  }, []);
+
   const stt = useParakeetStt({
     retained: enabled && engineRetained,
     modelPath: model.state === 'ready' ? model.localPath : null,
+    hotwords,
   });
-  const { transcribe: rawTranscribe, isReady, isWarming, error } = stt;
+  const { transcribe: rawTranscribe, isReady, isWarming, hotwordCount, error } = stt;
 
   /**
    * The voice-activity detector, loaded next to the recogniser so one setting
@@ -1098,6 +1119,8 @@ export const VoiceGradingProvider = ({ children }: { children: ReactNode }) => {
       isWarming,
       error: error?.message ?? null,
       acquireEngine,
+      offerHotwordGlosses,
+      hotwordCount,
       arm,
       cancel,
       stopListening,
@@ -1114,6 +1137,8 @@ export const VoiceGradingProvider = ({ children }: { children: ReactNode }) => {
       isWarming,
       error,
       acquireEngine,
+      offerHotwordGlosses,
+      hotwordCount,
       arm,
       cancel,
       stopListening,

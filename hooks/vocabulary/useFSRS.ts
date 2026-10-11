@@ -78,6 +78,7 @@ export function useFSRS({
   const [wordQueue, setWordQueue] = useState<StudyWord[]>([]);
   const [currentWord, setCurrentWord] = useState<StudyWord | null>(null);
   const [enrichmentBatches, setEnrichmentBatches] = useState<StudyWord[][]>([]);
+  const [allSessionWords, setAllSessionWords] = useState<StudyWord[]>([]);
   const [progress, setProgress] = useState<number>(0);
   const [isEmpty, setIsEmpty] = useState<boolean>(false);
   const [isComplete, setIsComplete] = useState<boolean>(false);
@@ -263,6 +264,7 @@ export function useFSRS({
       setIsEmpty(false);
       setIsComplete(false);
       setEnrichmentBatches([sessionWords]);
+      setAllSessionWords(effectiveDueWords);
       stateTrackingRef.current.completionTriggered = false;
       stateTrackingRef.current.isProcessingUpdate = false;
 
@@ -297,6 +299,7 @@ export function useFSRS({
       setCurrentWord(null);
       setWordQueue([]);
       setEnrichmentBatches([]);
+      setAllSessionWords([]);
       setProgress(0);
       setIsEmpty(true);
       setIsComplete(false);
@@ -679,6 +682,7 @@ export function useFSRS({
     currentWord,
     wordQueue,
     enrichmentBatches,
+    sessionWords: allSessionWords,
     isLoading,
     isEmpty,
     isComplete,

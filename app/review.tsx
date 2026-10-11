@@ -289,6 +289,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     isLoading,
     wordQueue,
     enrichmentBatches,
+    sessionWords,
     currentWord,
     revealMeaningPassive,
     stopAudio,
@@ -460,6 +461,13 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     .map(word => word.root?.meaning)
     .filter((meaning): meaning is string => Boolean(meaning));
 
+  // The recogniser's hotwords: every answer due this session, known once at the
+  // start. Not `wordQueue` — that is a 20-word working heap that refills, and
+  // each refill would be a new vocabulary and another recogniser build.
+  const sessionGlosses = sessionWords
+    .map(word => word.root?.meaning)
+    .filter((meaning): meaning is string => Boolean(meaning));
+
   // Voice grading — the microphone opens itself once the Arabic prompt has
   // played and the learner simply answers, so the action band carries "Show
   // answer" alone. With hands-free off (Account → Practice) the band carries a
@@ -486,6 +494,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     rootId: currentWord?.root_id ?? null,
     glossAlternates: currentAlternates,
     otherGlosses,
+    sessionGlosses,
     // Stop listening once the answer is revealed — the recall test is over.
     ready: !isUpdating && !isLoading && isAudioReady && !isComplete && !revealed,
     // The mic opens itself the moment the Arabic finishes. It cannot open any

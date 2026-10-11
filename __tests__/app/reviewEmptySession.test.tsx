@@ -101,6 +101,7 @@ jest.mock('@/hooks/review', () => ({
     isLoading: false,
     wordQueue: [],
     enrichmentBatches: [],
+    sessionWords: [],
     progress: 0,
     maxProgress: 0,
     gradeRecoveryEpoch: 0,

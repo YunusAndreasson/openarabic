@@ -79,6 +79,12 @@ export interface UseFSRSResult {
    * batch is fetched once and drilled cards retain their cached context.
    */
   enrichmentBatches: readonly (readonly StudyWord[])[];
+  /**
+   * Every word due in this session, fixed at session start — the working chunk
+   * plus the backlog behind it. For consumers that need the session's whole
+   * vocabulary once, rather than a heap that refills and reorders.
+   */
+  sessionWords: readonly StudyWord[];
   isLoading: boolean;
   /** The due query resolved successfully, but there was nothing to review. */
   isEmpty: boolean;

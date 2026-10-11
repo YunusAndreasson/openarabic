@@ -34,7 +34,7 @@ export function normalize(text: string): string {
  * one valid alternative and the expected string is a word that does not exist.
  * Saying ANY listed alternative is full credit.
  */
-function expectedAlternatives(expected: string): string[] {
+export function expectedAlternatives(expected: string): string[] {
   const parts = expected
     .split(/[/,]/)
     .map(part => part.trim())

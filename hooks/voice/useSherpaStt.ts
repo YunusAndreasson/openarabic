@@ -31,6 +31,8 @@ import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TARGET_SAMPLE_RATE } from '@/lib/voice/recording';
 import { PARAKEET_MODEL_ID } from '@/constants/voiceModel';
 import { analytics } from '@/services/analytics';
+import { prepareHotwordFiles } from '@/services/voiceHotwordFiles';
+import { countHotwords } from '@/utils/voiceHotwords';
 import { span as diagSpan } from '@/utils/reviewDiagnostics';
 import { voiceBreadcrumb } from '@/utils/errorHandling';
 
@@ -40,6 +42,9 @@ import { voiceBreadcrumb } from '@/utils/errorHandling';
 const WARMUP_SAMPLE_COUNT = TARGET_SAMPLE_RATE / 2;
 /** A native engine build must settle into ready or failed; never spin forever. */
 const VOICE_ENGINE_LOAD_TIMEOUT_MS = 45_000;
+
+/** The native build never settled. Distinct so nothing retries into a hung native thread. */
+class EngineLoadTimeoutError extends Error {}
 
 export async function createEngineWithTimeout(
   create: () => Promise<SttEngine>,
@@ -53,7 +58,11 @@ export async function createEngineWithTimeout(
       // the UI has failed closed, release that orphan rather than leaking
       // ~100 MB.
       void pending.then(engine => engine.destroy()).catch(() => undefined);
-      reject(new Error(`Voice engine did not load within ${Math.round(timeoutMs / 1000)} seconds`));
+      reject(
+        new EngineLoadTimeoutError(
+          `Voice engine did not load within ${Math.round(timeoutMs / 1000)} seconds`,
+        ),
+      );
     }, timeoutMs);
   });
 
@@ -85,7 +94,44 @@ export interface SherpaStt {
   isReady: boolean;
   /** Building or warming. Distinct from the model download, which is not this hook's concern. */
   isWarming: boolean;
+  /** Phrases the live engine is biased toward. 0 means it decodes greedily. */
+  hotwordCount: number;
   error: Error | null;
+}
+
+/**
+ * Build the engine biased toward `hotwords`, or unbiased when there are none.
+ *
+ * Hotwords are an improvement to a recogniser that already works, so nothing
+ * about them may cost the learner their voice review: a vocabulary that cannot
+ * be prepared, or an engine that refuses it, falls back to the unbiased build.
+ */
+async function createEngine(
+  options: { modelPath: string; modelType: STTModelType; numThreads: number },
+  hotwords: string,
+): Promise<{ engine: SttEngine; hotwordCount: number }> {
+  const base = {
+    modelPath: { type: 'file' as const, path: options.modelPath },
+    modelType: options.modelType,
+    numThreads: options.numThreads,
+  };
+  if (hotwords) {
+    try {
+      const hotwordOptions = await prepareHotwordFiles(options.modelPath, hotwords);
+      const engine = await createEngineWithTimeout(() => createSTT({ ...base, ...hotwordOptions }));
+      return { engine, hotwordCount: countHotwords(hotwords) };
+    } catch (err) {
+      // A build that timed out is still running natively. Starting the unbiased
+      // one behind it would double the wait rather than rescue it.
+      if (err instanceof EngineLoadTimeoutError) throw err;
+      voiceBreadcrumb(
+        'voice.hotwords.failed',
+        { message: err instanceof Error ? err.message : String(err) },
+        'warning',
+      );
+    }
+  }
+  return { engine: await createEngineWithTimeout(() => createSTT(base)), hotwordCount: 0 };
 }
 
 function useSherpaStt({
@@ -93,6 +139,7 @@ function useSherpaStt({
   modelPath,
   modelType = 'auto',
   numThreads = 2,
+  hotwords,
 }: {
   /** Whether anything currently wants a live recognizer. */
   retained: boolean;
@@ -100,14 +147,32 @@ function useSherpaStt({
   modelPath: string | null;
   modelType?: STTModelType;
   numThreads?: number;
+  /** One phrase per line; empty for an unbiased engine. Fixed for an engine's life. */
+  hotwords: string;
 }): SherpaStt {
   const engineRef = useRef<SttEngine | null>(null);
+  /**
+   * One native operation at a time, across effect generations.
+   *
+   * Hotwords are fixed when an engine is constructed, so a new vocabulary means
+   * a new engine — and the old one has to be fully destroyed first. Without this
+   * the cleanup's `destroy()` and the next `createSTT` ran side by side, which
+   * holds two ~100 MB models at once and lets the new build overwrite the
+   * hotword files the dying engine was built from.
+   */
+  const operationsRef = useRef<Promise<unknown>>(Promise.resolve());
+  const [hotwordCount, setHotwordCount] = useState(0);
   const [isReady, setReady] = useState(false);
   const [isWarming, setWarming] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+    const enqueue = <T>(work: () => Promise<T>): Promise<T> => {
+      const next = operationsRef.current.then(work);
+      operationsRef.current = next.catch(() => undefined);
+      return next;
+    };
 
     async function load() {
       if (!retained || !modelPath) {
@@ -118,6 +183,9 @@ function useSherpaStt({
       }
 
       setError(null);
+      // The previous engine is already gone by the time this runs for a new
+      // vocabulary, so the old readiness must not outlive it.
+      setReady(false);
       setWarming(true);
       const loadStartedAt = Date.now();
       void analytics.track(ANALYTICS_EVENTS.VOICE_MODEL_LOAD_STARTED, {
@@ -126,22 +194,23 @@ function useSherpaStt({
       voiceBreadcrumb('voice.engine.load.start', { modelId: PARAKEET_MODEL_ID });
 
       try {
-        const engine = await createEngineWithTimeout(() =>
-          createSTT({
-            modelPath: { type: 'file', path: modelPath },
-            modelType,
-            numThreads,
-          }),
-        );
-        // The hook can unmount while `createSTT` is still resolving. The engine
-        // that arrives afterwards is real and holds native memory, so it has to
-        // be destroyed rather than dropped.
-        if (cancelled) {
-          await engine.destroy();
-          return;
-        }
+        // Queued behind the previous engine's destroy. A load superseded while
+        // it waited builds nothing, and one superseded while it was building
+        // destroys what it built before the queue moves on — as a separate
+        // queued step that destroy would land BEHIND the next build, and two
+        // engines would be resident at once.
+        const built = await enqueue(async () => {
+          if (cancelled) return null;
+          const result = await createEngine({ modelPath, modelType, numThreads }, hotwords);
+          if (!cancelled) return result;
+          await result.engine.destroy();
+          return null;
+        });
+        if (!built) return;
+        const { engine } = built;
 
         engineRef.current = engine;
+        setHotwordCount(built.hotwordCount);
 
         // Run one throwaway inference before announcing readiness. Creating the
         // engine does not build the ONNX execution graph — the FIRST
@@ -172,6 +241,7 @@ function useSherpaStt({
         voiceBreadcrumb('voice.engine.ready', {
           modelId: PARAKEET_MODEL_ID,
           durationMs: Date.now() - loadStartedAt,
+          hotwordCount: built.hotwordCount,
         });
       } catch (err) {
         if (!cancelled) {
@@ -198,9 +268,9 @@ function useSherpaStt({
       cancelled = true;
       const engine = engineRef.current;
       engineRef.current = null;
-      if (engine) void engine.destroy();
+      if (engine) void enqueue(() => engine.destroy()).catch(() => undefined);
     };
-  }, [retained, modelPath, modelType, numThreads]);
+  }, [retained, modelPath, modelType, numThreads, hotwords]);
 
   const transcribe = useCallback(async (waveform: Float32Array): Promise<string | null> => {
     const engine = engineRef.current;
@@ -210,8 +280,8 @@ function useSherpaStt({
   }, []);
 
   return useMemo<SherpaStt>(
-    () => ({ transcribe, isReady, isWarming, error }),
-    [transcribe, isReady, isWarming, error],
+    () => ({ transcribe, isReady, isWarming, hotwordCount, error }),
+    [transcribe, isReady, isWarming, hotwordCount, error],
   );
 }
 
@@ -219,14 +289,17 @@ function useSherpaStt({
 export function useParakeetStt({
   retained,
   modelPath,
+  hotwords,
 }: {
   retained: boolean;
   modelPath: string | null;
+  hotwords: string;
 }): SherpaStt {
   return useSherpaStt({
     retained,
     modelPath,
     modelType: 'nemo_transducer',
     numThreads: 2,
+    hotwords,
   });
 }

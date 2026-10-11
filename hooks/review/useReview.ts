@@ -117,6 +117,8 @@ interface UseReviewReturn {
   isLoading: boolean;
   wordQueue: StudyWord[];
   enrichmentBatches: readonly (readonly StudyWord[])[];
+  /** Every word due in this session, fixed at session start. */
+  sessionWords: readonly StudyWord[];
   progress: number;
   maxProgress: number;
   /** Remounts only the card presentation after a rejected scheduler transition. */
@@ -450,6 +452,7 @@ export function useReview({
     invalidateQueries,
     wordQueue,
     enrichmentBatches,
+    sessionWords,
     isLoading,
     flushPendingWrites,
   } = useFSRS({
@@ -1516,6 +1519,7 @@ export function useReview({
     isLoading,
     wordQueue,
     enrichmentBatches,
+    sessionWords,
     progress,
     maxProgress,
     gradeRecoveryEpoch,

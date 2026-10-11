@@ -62,6 +62,8 @@ beforeEach(() => {
     isWarming: false,
     error: null,
     acquireEngine: jest.fn(() => jest.fn()),
+    offerHotwordGlosses: jest.fn(),
+    hotwordCount: 0,
     acquireSession: jest.fn(() => jest.fn()),
     prewarmPermission: jest.fn(async () => undefined),
     // Keep native opening pending until the test chooses its outcome.
@@ -78,6 +80,7 @@ beforeEach(() => {
 
 interface Props {
   key: string;
+  sessionGlosses?: readonly string[];
   /** The card whose Arabic prompt has finished — hands-free arms on this. */
   promptDoneKey?: string | null;
   handsFree?: boolean;
@@ -85,10 +88,11 @@ interface Props {
 
 function renderReview(initialProps: Props = { key: 'first' }) {
   return renderHook<ReturnType<typeof useVoiceReview>, Props>(
-    ({ key, promptDoneKey = null, handsFree = false }) =>
+    ({ key, sessionGlosses, promptDoneKey = null, handsFree = false }) =>
       useVoiceReview({
         expected: 'book',
         currentWordKey: key,
+        sessionGlosses,
         rootId: null,
         ready: true,
         promptDoneKey,
@@ -346,4 +350,19 @@ describe('hands-free arming', () => {
     // the one shape this must never take.
     expect(voice.arm).toHaveBeenCalledTimes(1);
   });
+});
+
+test("offers the session's answers as hotwords once, however the list is ordered", () => {
+  const { rerender } = renderReview({ key: 'first', sessionGlosses: ['house', 'book'] });
+  expect(voice.offerHotwordGlosses).toHaveBeenCalledTimes(1);
+  expect(voice.offerHotwordGlosses).toHaveBeenCalledWith(['book', 'house']);
+
+  // A new card and a reordered, rebuilt array are the same vocabulary.
+  rerender({ key: 'second', sessionGlosses: ['book', 'house'] });
+  expect(voice.offerHotwordGlosses).toHaveBeenCalledTimes(1);
+});
+
+test('offers nothing before the session knows its words', () => {
+  renderReview({ key: 'first', sessionGlosses: [] });
+  expect(voice.offerHotwordGlosses).not.toHaveBeenCalled();
 });

@@ -122,6 +122,7 @@ describe('useFSRS Hook', () => {
       expect(result.current.enrichmentBatches).toHaveLength(1);
       expect(result.current.enrichmentBatches[0]).toHaveLength(2);
       expect(result.current.enrichmentBatches[0]).toContainEqual(result.current.currentWord);
+      expect(result.current.sessionWords).toEqual(mockWords);
       expect(result.current.progress).toBe(0);
       expect(result.current.isEmpty).toBeFalsy();
       expect(result.current.isComplete).toBeFalsy();
@@ -224,6 +225,9 @@ describe('useFSRS Hook', () => {
       expect(result.current.enrichmentBatches).toHaveLength(2);
       expect(result.current.enrichmentBatches[0]).toHaveLength(20);
       expect(result.current.enrichmentBatches[1]).toHaveLength(10);
+      // The whole due set, fixed at the start — not the 20-word working chunk,
+      // and not shrinking as cards are graded.
+      expect(result.current.sessionWords).toHaveLength(total);
       expect(result.current.isComplete).toBeTruthy();
       expect(result.current.progress).toBe(100);
     });

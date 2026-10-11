@@ -60,15 +60,36 @@ export const PARAKEET_MODEL_ID = 'sherpa-onnx-nemo-parakeet_tdt_transducer_110m-
  * the try/catch guarding it never fired and no breadcrumb was ever emitted.
  *
  * `createSTT` exposes no decodingMethod option either (nor does the Kotlin
- * `buildRecognizerConfig`), so the recognizer is always built with the default. The
- * one construction-time switch is a non-empty `hotwordsFile` on a transducer model,
- * which forces modified_beam_search — but hotwords need BPE-tokenised entries against
- * a `bpe.vocab` this model does not ship, and biasing a recogniser toward the
- * expected answer is the wrong instrument for a grader regardless.
+ * `buildRecognizerConfig`), so the recognizer is built with the default. The one
+ * construction-time switch is a non-empty `hotwordsFile` on a transducer model,
+ * which forces modified_beam_search — see the hotwords constants below.
  *
- * So: this constant records what actually runs, and every attempt already in
- * `voice_grading_attempts` — including the 80 that showed one genuine mishear — was
- * decoded greedily. Do not re-add a decoding config without first checking that
- * `createSTT` accepts one.
+ * So: this constant records what runs without hotwords, and every attempt in
+ * `voice_grading_attempts` before hotwords shipped — including the 80 that showed
+ * one genuine mishear — was decoded greedily. Do not re-add a decoding config
+ * without first checking that `createSTT` accepts one.
  */
 export const VOICE_DECODING_METHOD = 'greedy_search';
+
+/** What the recogniser decodes with once it has been built from a hotwords file. */
+export const VOICE_HOTWORD_DECODING_METHOD = 'modified_beam_search';
+
+/**
+ * Session hotwords: bias the recogniser toward the answers of the review that
+ * is open (`utils/voiceHotwords.ts`).
+ *
+ * This is the answer to glosses like `girded with` above, which the model's own
+ * language model will never prefer. It is one switch for both platforms, and it
+ * is here to be turned off: the sibling app that shipped this first disabled it
+ * on iOS after a watchdog termination while rebuilding its (four times larger)
+ * recogniser with hotwords, and nothing has yet measured it on this model. Every
+ * attempt row records the decoding method and the phrase count, which is what a
+ * bias-on / bias-off comparison needs.
+ */
+export const VOICE_HOTWORDS_ENABLED: boolean = true;
+
+/** Boost per matched token. sherpa-onnx defaults to 1.5; a grader wants less pull. */
+export const VOICE_HOTWORDS_SCORE = 1.0;
+
+/** Past this a vocabulary stops being a session and the decoder carries it for nothing. */
+export const VOICE_HOTWORDS_MAX_PHRASES = 256;

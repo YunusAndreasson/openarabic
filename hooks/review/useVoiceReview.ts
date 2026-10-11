@@ -46,7 +46,11 @@ import { useToast, useVoiceGrading } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { STRINGS } from '@/constants/strings';
 import { useResumeFromBackground } from '@/hooks/app/useResumeFromBackground';
-import { PARAKEET_MODEL_ID, VOICE_DECODING_METHOD } from '@/constants/voiceModel';
+import {
+  PARAKEET_MODEL_ID,
+  VOICE_DECODING_METHOD,
+  VOICE_HOTWORD_DECODING_METHOD,
+} from '@/constants/voiceModel';
 import {
   DEFAULT_RECORDING_CONFIG,
   forgetMicPermissionRefusal,
@@ -199,6 +203,9 @@ interface UseVoiceReviewArgs {
    *  one thing that may veto remembering a "Got it", because a transcript that
    *  is another drilled word's gloss would otherwise pass two cards forever. */
   otherGlosses?: readonly string[];
+  /** Every answer due this session, fixed at its start — what the recogniser is
+   *  biased toward. See `utils/voiceHotwords.ts`. */
+  sessionGlosses?: readonly string[];
   /** Is the review session ready (not loading, no audio preload in flight). */
   ready: boolean;
   /**
@@ -300,6 +307,7 @@ export function useVoiceReview({
   rootId,
   glossAlternates,
   otherGlosses,
+  sessionGlosses,
   ready,
   promptDoneKey,
   handsFree,
@@ -524,7 +532,7 @@ export function useVoiceReview({
   // Both effects below depend on the individual callbacks rather than the whole
   // `voice` context value: that object's identity changes whenever any of its
   // state does, so depending on it would tear the session down and rebuild it.
-  const { prewarmPermission, acquireSession, acquireEngine } = voice;
+  const { prewarmPermission, acquireSession, acquireEngine, offerHotwordGlosses } = voice;
 
   // Hold the recognizer in RAM for the life of the session. The Practice tab
   // retains it too, so entering review from there does not rebuild it — the
@@ -534,6 +542,15 @@ export function useVoiceReview({
     return acquireEngine();
   }, [voiceEnabled, acquireEngine]);
 
+  // Bias the recogniser toward this session's answers — all of them, so the
+  // list never says which one the current card wants. Keyed on the sorted
+  // glosses because the array is rebuilt on every render.
+  const sessionGlossKey = [...(sessionGlosses ?? [])].sort().join('\n');
+  useEffect(() => {
+    if (!voiceEnabled || !sessionGlossKey) return;
+    offerHotwordGlosses(sessionGlossKey.split('\n'));
+  }, [voiceEnabled, sessionGlossKey, offerHotwordGlosses]);
+
   // The headline metric for whether the prefetch is working: a session that
   // opened with no usable recognizer. Fired once per session, and deliberately
   // carries WHY — "still downloading" and "waiting for Wi-Fi" call for
@@ -542,8 +559,11 @@ export function useVoiceReview({
   const sessionReadinessLoggedRef = useRef(false);
   useEffect(() => {
     if (!voiceEnabled || sessionReadinessLoggedRef.current) return;
-    if (voice.isReady) return;
+    // Latched on the first look either way. The recogniser is rebuilt when the
+    // session's hotwords arrive, and that later not-ready pass is not a session
+    // that opened without a model.
     sessionReadinessLoggedRef.current = true;
+    if (voice.isReady) return;
     void analytics.track(ANALYTICS_EVENTS.VOICE_SESSION_STARTED_WITHOUT_MODEL, {
       // Read from the module inside the effect rather than through the hook:
       // this is a one-shot report, not something that should re-render.
@@ -1053,7 +1073,14 @@ export function useVoiceReview({
           // Rows written before 2026-08-17 claim `modified_beam_search` here. That
           // was never true — see the decoding note in useSherpaStt.ts. Treat the
           // field as valid only from this value onward.
-          decoding: { method: VOICE_DECODING_METHOD },
+          //
+          // `hotwords` is the phrase count the engine that produced THIS
+          // transcript was built with, which is what a bias-on / bias-off
+          // comparison has to segment on.
+          decoding: {
+            method: voice.hotwordCount > 0 ? VOICE_HOTWORD_DECODING_METHOD : VOICE_DECODING_METHOD,
+            hotwords: voice.hotwordCount,
+          },
         },
       });
 

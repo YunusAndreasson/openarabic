@@ -100,9 +100,13 @@ beforeEach(() => {
   jest
     .mocked(useVoiceModel)
     .mockReturnValue({ state: 'ready', localPath: '/model' } as ReturnType<typeof useVoiceModel>);
-  jest
-    .mocked(useParakeetStt)
-    .mockReturnValue({ isReady: true, isWarming: false, error: null, transcribe: jest.fn() });
+  jest.mocked(useParakeetStt).mockReturnValue({
+    isReady: true,
+    isWarming: false,
+    hotwordCount: 0,
+    error: null,
+    transcribe: jest.fn(),
+  });
   jest
     .mocked(simpleAudioService.setRecordingSessionEnabled)
     .mockImplementation(async (enabled, options) => {
