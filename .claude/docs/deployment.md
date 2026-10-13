@@ -76,6 +76,11 @@ eas config
 
 ## OTA Pre-flight Checklist
 
+Native dependency updates and the Android tab hit-testing patch require a new
+binary. Runtime `1448.4.5` separates this native update from iOS build 274
+(`1448.4.3`) and older Android builds (`1448.3.12`). Publish its production OTA
+only after the corresponding native builds succeed.
+
 Before publishing an OTA, verify:
 
 1. **Local is in sync with origin** — `yarn release` auto-bumps app version

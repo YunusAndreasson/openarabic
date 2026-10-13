@@ -143,6 +143,10 @@ const changed = [];
 for (const field of ['dependencies', 'devDependencies', 'optionalDependencies']) {
   for (const name of Object.keys(pkg[field] ?? {})) {
     if (!Object.hasOwn(bundled, name) || excluded.has(name)) continue;
+    // Preserve native patches and exact versions held for production OTAs.
+    const resolution = pkg.resolutions?.[name];
+    if (pkg[field][name].startsWith('patch:')) continue;
+    if (typeof resolution === 'string' && /^\d+\.\d+\.\d+$/.test(resolution)) continue;
     if (pkg[field][name] === bundled[name]) continue;
     changed.push(`  ${name}: ${pkg[field][name]} -> ${bundled[name]}`);
     pkg[field][name] = bundled[name];

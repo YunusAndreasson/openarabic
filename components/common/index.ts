@@ -27,7 +27,6 @@ export { DocCredit, DocHeading, DocLink, DocParagraph, LegalDocument } from './L
 export { ListRow } from './ListRow';
 export { ListSeparator } from './ListSeparator';
 export { LoadingState } from './LoadingState';
-export { MetricCard } from './MetricCard';
 export { OptionCard } from './OptionCard';
 export { PrimingCard } from './PrimingCard';
 export { ProgressBar } from './ProgressBar';
@@ -37,7 +36,6 @@ export { SeededContentEmptyState } from './SeededContentEmptyState';
 export { SectionLabel } from './SectionLabel';
 export { SnapRail } from './SnapRail';
 export { SheetExplainer } from './SheetExplainer';
-export { SheetScreen } from './SheetScreen';
 
 // `SkiaColoredArabic` is deliberately NOT exported here: its consumers are a
 // sibling in this directory, one in components/review and the practice word
