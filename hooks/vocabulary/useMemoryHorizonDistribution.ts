@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import type { RootId } from '@/types/branded.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import {
   formatHorizon,
@@ -11,7 +12,7 @@ import {
   type HorizonBand,
   type HorizonBandKey,
 } from '@/utils/memoryHorizon';
-import { BIN_COUNT, getWordsPerDot } from '@/utils/horizonBandPath';
+import { BIN_COUNT, getHorizonBinIndex, getWordsPerDot } from '@/utils/horizonBandPath';
 
 export interface MemoryHorizonDistribution {
   /** One entry per column, counting the practised words whose horizon falls in it. */
@@ -34,9 +35,16 @@ export interface MemoryHorizonDistribution {
   notStartedCount: number;
   totalWords: number;
   hasDistribution: boolean;
+  /**
+   * Every practised word's horizon in days, by word. What lets the
+   * constellation tell WHICH dots a review moved, so they can travel to their
+   * new column instead of the whole field being redrawn around them.
+   */
+  horizonByRootId: ReadonlyMap<RootId, number>;
 }
 
 const EMPTY_BINS = (): number[] => new Array<number>(BIN_COUNT).fill(0);
+const NO_HORIZONS: ReadonlyMap<RootId, number> = new Map();
 
 /**
  * The distribution of memory horizons across a learner's vocabulary, binned onto
@@ -61,9 +69,12 @@ const EMPTY_BINS = (): number[] => new Array<number>(BIN_COUNT).fill(0);
 export function useMemoryHorizonDistribution(studyWords: StudyWord[]): MemoryHorizonDistribution {
   return useMemo<MemoryHorizonDistribution>(() => {
     const horizons: number[] = [];
+    const horizonByRootId = new Map<RootId, number>();
     for (const word of studyWords) {
       const days = getMemoryHorizonDays(word);
-      if (days != null) horizons.push(days);
+      if (days == null) continue;
+      horizons.push(days);
+      horizonByRootId.set(word.root_id, days);
     }
 
     const totalWords = studyWords.length;
@@ -87,6 +98,7 @@ export function useMemoryHorizonDistribution(studyWords: StudyWord[]): MemoryHor
         notStartedCount,
         totalWords,
         hasDistribution: false,
+        horizonByRootId: NO_HORIZONS,
       };
     }
 
@@ -99,9 +111,7 @@ export function useMemoryHorizonDistribution(studyWords: StudyWord[]): MemoryHor
     };
 
     for (const days of horizons) {
-      // `min` guards the top of the range: a word at exactly maximum_interval
-      // scores a fraction of 1 and would otherwise index one past the last bin.
-      const index = Math.min(BIN_COUNT - 1, Math.floor(getHorizonFraction(days) * BIN_COUNT));
+      const index = getHorizonBinIndex(days);
       bins[index] = (bins[index] ?? 0) + 1;
 
       const band = getHorizonBand(days);
@@ -138,6 +148,7 @@ export function useMemoryHorizonDistribution(studyWords: StudyWord[]): MemoryHor
       notStartedCount,
       totalWords,
       hasDistribution: true,
+      horizonByRootId,
     };
   }, [studyWords]);
 }

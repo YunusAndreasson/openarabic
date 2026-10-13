@@ -1,8 +1,6 @@
-import { MetricCard } from '@/components/common';
+import { MetricCardGrid } from '@/components/common/MetricCardGrid';
 import { memo, useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
 
-import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import type { StreakHistoryData } from '@/services/studyStreak';
 
@@ -36,21 +34,7 @@ export const StreakMetrics = memo<StreakMetricsProps>(({ metrics }) => {
     [metrics.currentStreak, metrics.longestStreak, metrics.totalReadingDays],
   );
 
-  return (
-    <View style={styles.metricsRow}>
-      {metricData.map(metric => (
-        <MetricCard key={metric.id} value={metric.value} label={metric.label} />
-      ))}
-    </View>
-  );
+  return <MetricCardGrid metrics={metricData} />;
 });
 
 StreakMetrics.displayName = 'StreakMetrics';
-
-const styles = StyleSheet.create({
-  metricsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: LAYOUT.SPACING.SMALL, // 8px - balanced card separation
-  },
-});

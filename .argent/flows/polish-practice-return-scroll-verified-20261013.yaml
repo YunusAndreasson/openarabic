@@ -1,0 +1,27 @@
+steps:
+  - run: polish-practice-return-scroll-20261013.yaml
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 7,594
+        role: StaticText
+      timeoutMs: 5000
+  - tool: gesture-swipe
+    args:
+      fromX: 0.5
+      fromY: 0.35
+      toX: 0.5
+      toY: 0.75
+      durationMs: 500
+      momentum: false
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Explore
+        role: FrameLayout
+      timeoutMs: 5000
+executionPrerequisite: Practice root visible on signed-in QA account with 7,594
+  review grades. Compact density 540/font scale 2.0. No active sheet or
+  playback. Read-only navigation.

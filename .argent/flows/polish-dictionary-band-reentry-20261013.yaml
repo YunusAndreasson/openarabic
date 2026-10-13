@@ -1,0 +1,122 @@
+steps:
+  - tap:
+      text: Reviewed once · 335
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 1,993 words
+        role: Button
+  - tap:
+      text: Close
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: hidden
+      selector:
+        identifier: dictionary-word-list
+  - tap:
+      text: Practice
+      role: FrameLayout
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Your words
+        role: Button
+  - tap:
+      text: Your words
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 1,993 words
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: Close
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Your words
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: Reviews done, 7594. Opens the breakdown by how often each word has come
+        up.
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Once, 335 words
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: Once, 335 words, one pass so far. Opens them in your dictionary.
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Reviewed once · 335
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: Close
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Your words
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: Reviews done, 7594. Opens the breakdown by how often each word has come
+        up.
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 2–4 times, 194 words
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: 2–4 times, 194 words, still bedding in. Opens them in your dictionary.
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Reviewed 2–4 times · 194
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: Reviewed 2–4 times · 194
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 1,993 words
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: Close
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Your words
+        role: Button
+      timeoutMs: 10000
+executionPrerequisite: Dictionary at top with Reviewed once · 335, search/picker
+  closed, normal display. QA has 194 words reviewed 2–4 times. Read-only filter
+  and navigation checks.

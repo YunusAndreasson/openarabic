@@ -1,5 +1,6 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useRef, useSyncExternalStore } from 'react';
+import type { RefObject } from 'react';
 import { Platform } from 'react-native';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 
@@ -64,6 +65,19 @@ function setTabBarHidden(next: boolean): void {
   }
 }
 
+function recordViewportHeight(
+  height: number,
+  viewportHeight: RefObject<number | undefined>,
+  hasSample: RefObject<boolean>,
+): void {
+  const previousHeight = viewportHeight.current;
+  viewportHeight.current = height;
+  if (previousHeight !== undefined && previousHeight !== height) {
+    // The next offset is a new layout position, not a scroll direction.
+    hasSample.current = false;
+  }
+}
+
 /**
  * Whether the tab bar is currently scrolled out of the way. Read by
  * `app/(tabs)/_layout.tsx`; always `false` on iOS, where UIKit owns this.
@@ -91,6 +105,8 @@ export interface TabBarAutoHideScrollProps {
    * instead of being written twice.
    */
   onScrollOffset: (y: number) => void;
+  /** Report viewport resizing when the list only exposes bare scroll offsets. */
+  onViewportHeightChange: (height: number) => void;
 }
 
 /**
@@ -110,6 +126,11 @@ export function useTabBarAutoHide(): TabBarAutoHideScrollProps {
   const lastYRef = useRef(0);
   const wasScrollingDownRef = useRef(false);
   const hasSampleRef = useRef(false);
+  const viewportHeightRef = useRef<number | undefined>(undefined);
+
+  const onViewportHeightChange = (height: number) => {
+    recordViewportHeight(height, viewportHeightRef, hasSampleRef);
+  };
 
   // Arriving on a screen — by tab press or by popping back to it — always finds
   // the tab bar up, even if it was left mid-scroll. Leaving one restores it for
@@ -121,6 +142,7 @@ export function useTabBarAutoHide(): TabBarAutoHideScrollProps {
       lastYRef.current = 0;
       wasScrollingDownRef.current = false;
       hasSampleRef.current = false;
+      viewportHeightRef.current = undefined;
       setTabBarHidden(false);
       return () => setTabBarHidden(false);
     }, []),
@@ -176,7 +198,12 @@ export function useTabBarAutoHide(): TabBarAutoHideScrollProps {
 
   const onScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      onScrollOffset(event.nativeEvent.contentOffset.y);
+      const { contentOffset, layoutMeasurement } = event.nativeEvent;
+      // Hiding the bar grows the viewport and can clamp the offset backward
+      // near the list's end. That is layout, not an upward swipe: interpreting
+      // it as one immediately reveals the bar and strands the last row behind it.
+      recordViewportHeight(layoutMeasurement.height, viewportHeightRef, hasSampleRef);
+      onScrollOffset(contentOffset.y);
     },
     [onScrollOffset],
   );
@@ -187,5 +214,6 @@ export function useTabBarAutoHide(): TabBarAutoHideScrollProps {
     onScroll: AUTO_HIDES ? onScroll : undefined,
     scrollEventThrottle: AUTO_HIDES ? 16 : undefined,
     onScrollOffset,
+    onViewportHeightChange,
   };
 }

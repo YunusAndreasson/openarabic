@@ -1,0 +1,7 @@
+executionPrerequisite: Explore visible, QA account, no nested Account route or playback. Opens empty support draft; never presses Send feedback.
+steps:
+  - tap: { text: Account }
+  - scroll-to: { target: { text: Contact support, role: Button } }
+  - tap: { text: Contact support, role: Button }
+  - await: { visible: { text: Message, role: TextField }, timeout: 15000 }
+  - await: { visible: { text: 10 more characters needed, role: StaticText } }

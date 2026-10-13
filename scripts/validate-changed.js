@@ -14,27 +14,23 @@ const colors = {
 };
 
 function getChangedFiles() {
-  const { execSync } = require('child_process');
+  const { execFileSync } = require('child_process');
   const commands = [
-    'git diff --name-only --diff-filter=d',
-    'git diff --cached --name-only --diff-filter=d',
-    'git ls-files --others --exclude-standard',
+    ['diff', '--name-only', '--diff-filter=d', '-z'],
+    ['diff', '--cached', '--name-only', '--diff-filter=d', '-z'],
+    ['ls-files', '--others', '--exclude-standard', '-z'],
   ];
 
   const files = new Set();
-  commands.forEach(cmd => {
-    try {
-      const output = execSync(cmd, { encoding: 'utf8' });
-      if (output) {
-        output.split('\n').forEach(file => {
-          if (file && existsSync(file)) {
-            files.add(file);
-          }
-        });
+  commands.forEach(args => {
+    // Let main report Git failures. A blocked subprocess or broken repository
+    // must not produce a successful "no changed files" validation result.
+    const output = execFileSync('git', args, { encoding: 'utf8' });
+    output.split('\0').forEach(file => {
+      if (file && existsSync(file)) {
+        files.add(file);
       }
-    } catch {
-      // Ignore errors
-    }
+    });
   });
 
   return Array.from(files);

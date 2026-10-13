@@ -1,0 +1,135 @@
+steps:
+  - tap:
+      text: Explore
+      role: FrameLayout
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Search texts
+        role: Button
+      timeoutMs: 10000
+  - tool: gesture-swipe
+    args:
+      fromX: 0.5
+      fromY: 0.8
+      toX: 0.5
+      toY: 0.3
+      durationMs: 400
+      momentum: false
+  - tool: gesture-swipe
+    args:
+      fromX: 0.5
+      fromY: 0.8
+      toX: 0.5
+      toY: 0.35
+      durationMs: 400
+      momentum: false
+  - tool: gesture-swipe
+    args:
+      fromX: 0.8
+      fromY: 0.7815
+      toX: 0.2
+      toY: 0.7815
+      durationMs: 400
+      momentum: false
+  - tap:
+      text: Silence and Supplication
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Close article
+        role: Button
+      timeoutMs: 15000
+  - tap:
+      text: Close article
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Silence and Supplication
+        role: Button
+      timeoutMs: 10000
+  - tool: gesture-swipe
+    args:
+      fromX: 0.5
+      fromY: 0.8
+      toX: 0.5
+      toY: 0.4
+      durationMs: 400
+      momentum: false
+  - tool: gesture-swipe
+    args:
+      fromX: 0.5
+      fromY: 0.7
+      toX: 0.5
+      toY: 0.3
+      durationMs: 400
+      momentum: false
+  - tool: gesture-swipe
+    args:
+      fromX: 0.2
+      fromY: 0.7735
+      toX: 0.8
+      toY: 0.7735
+      durationMs: 400
+      momentum: false
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: How the Companions Preserved Hadith
+        role: Button
+      timeoutMs: 10000
+  - tool: run-sequence
+    args:
+      steps:
+        - tool: gesture-swipe
+          args:
+            fromX: 0.5
+            fromY: 0.3
+            toX: 0.5
+            toY: 0.8
+            durationMs: 400
+            momentum: false
+        - tool: gesture-swipe
+          args:
+            fromX: 0.5
+            fromY: 0.3
+            toX: 0.5
+            toY: 0.8
+            durationMs: 400
+            momentum: false
+        - tool: gesture-swipe
+          args:
+            fromX: 0.5
+            fromY: 0.3
+            toX: 0.5
+            toY: 0.8
+            durationMs: 400
+            momentum: false
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Continue reading
+        role: StaticText
+      timeoutMs: 10000
+  - tap:
+      text: Account
+      role: FrameLayout
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Account
+        role: StaticText
+      timeoutMs: 10000
+executionPrerequisite: Account root, dark normal
+  density420/fontScale1, QA account, no audio playing. Explore discovery
+  inspection; do not grade or save words. Explore feed at top with Deep dives
+  first card How the Companions Preserved Hadith followed by Silence and
+  Supplication. Session-seeded content; normal portrait fixture only.

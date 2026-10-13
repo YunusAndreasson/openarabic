@@ -1,0 +1,12 @@
+executionPrerequisite: Dictionary visible at top with Reviewed once · 335, search closed, QA has 1993 saved and 626 mastered words. Normal display. Clear narrowed filter and inspect scope picker; no learner mutations.
+steps:
+  - tap: { text: 'Reviewed once · 335', role: Button }
+  - await: { visible: { text: '1,993 words', role: Button }, timeout: 10000 }
+  - tap: { text: '1,993 words', role: Button }
+  - await: { visible: { text: 'Mastered. 626 words', role: RadioButton } }
+  - tap: { text: 'Mastered. 626 words', role: RadioButton }
+  - await: { visible: { text: 'Mastered · 626', role: Button }, timeout: 10000 }
+  - tap: { text: 'Mastered · 626', role: Button }
+  - await: { visible: { text: 'All words. 1,993 words', role: RadioButton } }
+  - tap: { text: 'All words. 1,993 words', role: RadioButton }
+  - await: { visible: { text: '1,993 words', role: Button }, timeout: 10000 }

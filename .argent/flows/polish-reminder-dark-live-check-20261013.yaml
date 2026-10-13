@@ -1,0 +1,85 @@
+# DIAGNOSTIC / UNVERIFIED: live checks recorded; no uninterrupted passing replay.
+steps:
+  - tap:
+      text: OK
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 20:30
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: Time
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Select minutes
+        role: View
+      timeoutMs: 10000
+  - tap:
+      text: 21 hours
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 21 hours
+      timeoutMs: 10000
+  - tap:
+      text: Cancel
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 20:30
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: Time
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Select minutes
+        role: View
+      timeoutMs: 10000
+  - tap:
+      text: 19 hours
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 19 hours
+      timeoutMs: 10000
+  - tap:
+      x: 0.6465000000000001
+      y: 0.3015
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 0 minutes
+        role: StaticText
+      timeoutMs: 10000
+  - tap:
+      text: OK
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 19:00
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: Review reminders
+  - tool: await-ui-element
+    args:
+      condition: hidden
+      selector:
+        text: 19:00
+        role: Button
+      timeoutMs: 10000
+executionPrerequisite: Normal Android dark reminder picker open, 20:30 selected
+  but not saved; prior saved value 19:00, reminders on. Diagnostic recording;
+  restore off19:00.

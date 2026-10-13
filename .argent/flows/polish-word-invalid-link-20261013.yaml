@@ -1,0 +1,26 @@
+executionPrerequisite: Signed-in QA app on Explore, no reader or playback. Opens malformed word links and dismisses each without learner-data writes.
+steps:
+  - tool: open-url
+    args: { url: 'open-arabic://word-detail?rootId=0' }
+  - await: { visible: { text: "This link isn't valid", role: StaticText }, timeout: 15000 }
+  - tool: button
+    args: { button: back }
+  - await: { hidden: { text: "This link isn't valid", role: StaticText } }
+  - tool: open-url
+    args: { url: 'open-arabic://word-detail?rootId=-1' }
+  - await: { visible: { text: "This link isn't valid", role: StaticText }, timeout: 15000 }
+  - tool: button
+    args: { button: back }
+  - await: { hidden: { text: "This link isn't valid", role: StaticText } }
+  - tool: open-url
+    args: { url: 'open-arabic://word-detail?rootId=1.5' }
+  - await: { visible: { text: "This link isn't valid", role: StaticText }, timeout: 15000 }
+  - tool: button
+    args: { button: back }
+  - await: { hidden: { text: "This link isn't valid", role: StaticText } }
+  - tool: open-url
+    args: { url: 'open-arabic://word-detail' }
+  - await: { visible: { text: "This link isn't valid", role: StaticText }, timeout: 15000 }
+  - tool: button
+    args: { button: back }
+  - await: { hidden: { text: "This link isn't valid", role: StaticText } }

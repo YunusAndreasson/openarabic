@@ -1,9 +1,9 @@
 import { BaseCard } from '@/components/common';
 import type { JSX } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, TOPIC_GRID_MIN_COLUMN_WIDTH } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { getCategoryDisplayName, getCategorySubtitle } from '@/utils/stringUtils';
 import { formatTextCount } from '@/utils/wordCountText';
@@ -25,7 +25,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: LAYOUT.SPACING.SMALL,
   },
-  // `minWidth: 0` lets a long subtitle truncate instead of widening its column.
+  // `minWidth: 0` lets long labels wrap instead of widening their column.
   // An odd final row gets an empty cell, so its card keeps the column width.
   gridItem: {
     flex: 1,
@@ -75,7 +75,7 @@ function CompactNavCard({
           both lines it took its width out of the subtitle too, and in a
           half-width card that cut "Prophetic Traditions" off mid-word. */}
       <View style={compactCardStyles.titleRow}>
-        <ThemedText numberOfLines={1} style={compactCardStyles.label} type="bodyBold">
+        <ThemedText style={compactCardStyles.label} type="bodyBold">
           {label}
         </ThemedText>
         {count !== undefined && (
@@ -85,7 +85,7 @@ function CompactNavCard({
         )}
       </View>
       {subtitle && (
-        <ThemedText numberOfLines={1} skipDefaultColor style={subtitleStyle} type="caption">
+        <ThemedText skipDefaultColor style={subtitleStyle} type="caption">
           {subtitle}
         </ThemedText>
       )}
@@ -124,6 +124,12 @@ export function FilterSection({
   onSelect,
   filterType,
 }: FilterSectionProps): JSX.Element | null {
+  const { width, fontScale } = useWindowDimensions();
+  const contentWidth = width - LAYOUT.SCREEN_HORIZONTAL_PADDING * 2;
+  const columns =
+    (contentWidth - LAYOUT.SPACING.SMALL) / COLUMNS / fontScale >= TOPIC_GRID_MIN_COLUMN_WIDTH
+      ? COLUMNS
+      : 1;
   const handleSelect = (id: number, name?: string) => () => onSelect(id, name, filterType);
 
   if (!items?.length) {
@@ -131,8 +137,8 @@ export function FilterSection({
   }
 
   const rows: FilterItem[][] = [];
-  for (let start = 0; start < items.length; start += COLUMNS) {
-    rows.push(items.slice(start, start + COLUMNS));
+  for (let start = 0; start < items.length; start += columns) {
+    rows.push(items.slice(start, start + columns));
   }
 
   return (
@@ -149,7 +155,7 @@ export function FilterSection({
               />
             </View>
           ))}
-          {row.length < COLUMNS && <View style={styles.gridItem} />}
+          {row.length < columns && <View style={styles.gridItem} />}
         </View>
       ))}
     </View>

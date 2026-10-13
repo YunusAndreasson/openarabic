@@ -1,0 +1,53 @@
+# DIAGNOSTIC / UNVERIFIED: live checks recorded; no uninterrupted passing replay.
+steps:
+  - tap:
+      text: Review reminders
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 19:30
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: Time
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Select minutes
+        role: View
+      timeoutMs: 10000
+  - tap:
+      text: 30 minutes
+  - tap:
+      text: 0 minutes
+  - tool: await-ui-element
+    args:
+      condition: text
+      selector:
+        text: minutes
+        role: StaticText
+      expectedText: 0 minutes
+      textMatch: equals
+      timeoutMs: 10000
+  - tap:
+      text: OK
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 19:00
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: Review reminders
+  - tool: await-ui-element
+    args:
+      condition: hidden
+      selector:
+        text: 19:00
+        role: Button
+      timeoutMs: 10000
+executionPrerequisite: Account Review reminders off at 19:30 after clock
+  selector mismatch; restore original19:00/off. Diagnostic recording.

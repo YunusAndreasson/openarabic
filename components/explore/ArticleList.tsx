@@ -53,6 +53,7 @@ export function ArticleList({
 
   return (
     <ScrollView
+      testID="explore-feed"
       onScroll={onScroll}
       scrollEventThrottle={scrollEventThrottle}
       // `flex: 1` makes the ScrollView fill the route's content view — required

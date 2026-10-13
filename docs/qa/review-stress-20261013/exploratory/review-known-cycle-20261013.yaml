@@ -1,0 +1,9 @@
+executionPrerequisite: Android QA account in unrevealed review with at least two words remaining.
+steps:
+  - echo: Reveal and grade Knew it; expect the next unrevealed prompt.
+  - tap: { text: Show answer }
+  - await: { visible: { text: Knew it } }
+  - await: { idle: true }
+  - tap: { text: Knew it }
+  - await: { visible: { text: Show answer } }
+  - await: { idle: true }

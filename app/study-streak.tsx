@@ -1,13 +1,9 @@
+import { ResponsiveSheetScreen } from '@/components/common/ResponsiveSheetScreen';
 import type { JSX } from 'react';
 import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import {
-  BottomSheetHeader,
-  BottomSheetStateHandler,
-  SheetExplainer,
-  SheetScreen,
-} from '@/components/common';
+import { BottomSheetHeader, BottomSheetStateHandler, SheetExplainer } from '@/components/common';
 import { StreakChart, StreakMetrics } from '@/components/explore';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -31,7 +27,7 @@ export default function StudyStreakScreen(): JSX.Element {
   }, [streakHistory]);
 
   return (
-    <SheetScreen>
+    <ResponsiveSheetScreen testID="study-streak-sheet">
       <BottomSheetStateHandler
         isLoading={isStreakLoading}
         isError={isStreakError}
@@ -64,7 +60,7 @@ export default function StudyStreakScreen(): JSX.Element {
           </>
         )}
       </BottomSheetStateHandler>
-    </SheetScreen>
+    </ResponsiveSheetScreen>
   );
 }
 

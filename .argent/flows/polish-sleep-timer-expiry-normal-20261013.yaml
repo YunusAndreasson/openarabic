@@ -1,0 +1,52 @@
+# DIAGNOSTIC: live expiry evidence exists separately; this recording is not replay-verified.
+steps:
+  - tap:
+      text: Play all
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Sleep timer
+        role: Button
+      timeoutMs: 15000
+  - tap:
+      x: 0.8975
+      y: 0.792
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Set timer
+        role: Button
+      timeoutMs: 15000
+  - tap:
+      text: When Gabriel Came to Teach
+  - tap:
+      text: Practice, 100+
+  - tool: await-ui-element
+    args:
+      condition: hidden
+      selector:
+        text: Set timer
+        role: Button
+      timeoutMs: 15000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Sleep timer
+        role: Button
+      timeoutMs: 15000
+  - tap:
+      x: 0.8975
+      y: 0.792
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Cancel
+        role: Button
+      timeoutMs: 15000
+executionPrerequisite: QA normal dark Playlist with11 tracks, no playback or
+  active timer. Play queue and choose real5-minute timer; verify expiry/cleanup.
+  No playlist changes.

@@ -1,0 +1,152 @@
+steps:
+  - scroll-to:
+      target:
+        text: Sign out
+        role: Button
+      direction: down
+  - await:
+      visible:
+        text: Sign out
+        role: Button
+      timeout: 5000
+  - tap:
+      text: Sign out
+  - tap:
+      id: android:id/button1
+  - await:
+      visible:
+        id: navigate-to-sign-in-button
+      timeout: 15000
+  - await:
+      idle: true
+  - tap:
+      id: navigate-to-sign-in-button
+  - await:
+      visible:
+        id: email-input
+      timeout: 10000
+  - await:
+      idle: true
+  - tap:
+      id: sign-in-button
+  - await:
+      visible:
+        text: Enter your email address
+        role: StaticText
+      timeout: 5000
+  - await:
+      visible:
+        text: Enter your password
+        role: StaticText
+      timeout: 5000
+  - tap:
+      id: navigate-to-sign-up-link
+  - await:
+      visible:
+        id: create-account-button
+      timeout: 10000
+  - await:
+      idle: true
+  - tap:
+      id: password-input
+  - tool: keyboard
+    args:
+      text: test
+  - tap:
+      id: create-account-button
+  - await:
+      visible:
+        text: Use at least 8 characters
+        role: StaticText
+      timeout: 5000
+  - tap:
+      text: Close
+      role: Button
+  - await:
+      visible:
+        id: sign-in-button
+      timeout: 10000
+  - await:
+      idle: true
+  - tap:
+      text: Close
+      role: Button
+  - await:
+      visible:
+        id: navigate-to-sign-in-button
+      timeout: 10000
+  - await:
+      idle: true
+  - tap:
+      text: Terms of Service
+  - await:
+      visible:
+        text: Terms of Service
+        role: StaticText
+      timeout: 10000
+  - await:
+      idle: true
+  - tap:
+      text: Close
+      role: Button
+  - await:
+      visible:
+        id: navigate-to-sign-in-button
+      timeout: 10000
+  - await:
+      idle: true
+  - tap:
+      text: Privacy Policy
+  - await:
+      visible:
+        text: Privacy Policy
+        role: StaticText
+      timeout: 10000
+  - await:
+      idle: true
+  - tap:
+      text: Close
+      role: Button
+  - await:
+      visible:
+        id: navigate-to-sign-in-button
+      timeout: 10000
+  - await:
+      idle: true
+  - tap:
+      id: navigate-to-sign-in-button
+  - await:
+      visible:
+        id: email-input
+      timeout: 10000
+  - await:
+      idle: true
+  - tap:
+      id: email-input
+  - tool: run-sequence
+    args:
+      steps:
+        - tool: keyboard
+          args:
+            text: '{{secret:OPEN_ARABIC_TEST_EMAIL}}'
+        - tool: keyboard
+          args:
+            key: enter
+          delayMs: 800
+        - tool: keyboard
+          args:
+            text: '{{secret:OPEN_ARABIC_TEST_PASSWORD}}'
+        - tool: keyboard
+          args:
+            key: enter
+          delayMs: 500
+  - await:
+      visible:
+        text: Explore
+        role: StaticText
+      timeout: 15000
+  - await:
+      idle: true
+executionPrerequisite: QA argent-qa signed in; Account tab open, normal dark,
+  reminders off19:00. No account creation or password reset email; restores same
+  QA sign-in using project secret placeholders.

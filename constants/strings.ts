@@ -240,6 +240,12 @@ export const STRINGS = {
   CONTACT_EMAIL: 'yunus+openarabic@edenmind.com',
   // Feedback form
   FEEDBACK_PLACEHOLDER: 'What happened? How can we help?',
+  FEEDBACK_MESSAGE_LABEL: 'Message',
+  FEEDBACK_CHARACTERS_NEEDED: '{count} more characters needed',
+  FEEDBACK_CHARACTER_NEEDED: '1 more character needed',
+  FEEDBACK_CHARACTER_COUNT: '{count} characters',
+  FEEDBACK_EMAIL_INCLUDED: 'Your email ({email}) will be included',
+  FEEDBACK_EMAIL_UNAVAILABLE: 'No email address is available for a reply',
   FEEDBACK_EMPTY_TITLE: 'Add a message',
   FEEDBACK_EMPTY_MESSAGE: 'Describe what happened so we can help.',
   FEEDBACK_SHORT_TITLE: 'A bit more detail?',
@@ -256,6 +262,8 @@ export const STRINGS = {
   ACCOUNT: 'Account',
   ACCOUNT_A11Y_CHANGE_PHOTO: 'Change profile photo',
   PLAYLIST_A11Y_REORDER: 'Reorder track',
+  PLAYLIST_A11Y_REORDER_ARTICLE: 'Reorder {title}',
+  PLAYLIST_A11Y_REMOVE_ARTICLE: 'Remove {title} from playlist',
   PLAYLIST_A11Y_REORDER_HINT: 'Press and hold, then drag to move this track',
   ARABIC_WORD_A11Y_HINT: 'Shows the meaning',
   ARABIC_WORD_A11Y_TOGGLE_PRACTICE: 'Add to or remove from practice',
@@ -453,6 +461,8 @@ export const STRINGS = {
     'Find a text by its title, book or author — or by a phrase inside it, in Arabic or English',
   SEARCH_TEXTS_NO_RESULTS_TITLE: 'No texts found',
   SEARCH_TEXTS_NO_RESULTS_HINT: 'Try a different word, or fewer of them',
+  SEARCH_TEXTS_INCOMPLETE_TITLE: 'Search is incomplete',
+  SEARCH_TEXTS_INCOMPLETE_HINT: "Couldn't search inside the texts. Retry to finish searching.",
   /** Shown under a result whose only match is in the body, before the snippet. */
   SEARCH_TEXTS_MATCH_IN_BODY: 'In this text',
   SEARCH_TEXTS_RESULT_COUNT_ONE: '1 text',
@@ -742,9 +752,12 @@ export const STRINGS = {
   DEPTH_EMPTY: 'Nothing reviewed yet — your first session fills this in',
   DUE_WORDS_FORECAST_SUBTITLE: 'How many words come up for review each day',
   DUE_WORDS_FORECAST: 'This week',
-  // Week-ahead card
+  // Due-today card (the practice screen's lead)
+  /** The label over the number the tab badge shows. */
+  DUE_TODAY_LABEL: 'Due today',
   TODAY_ALL_CAUGHT_UP: 'All caught up',
-  TODAY_TO_REVIEW: 'to review today',
+  /** Holds the footer line while words are due and none has been reviewed yet. */
+  TODAY_NOTHING_REVIEWED: 'Nothing reviewed yet today',
   /**
    * Says "words", not just "reviewed today", because the number counts unique
    * WORDS whose last review was today — re-asking the same word inside a session
@@ -817,7 +830,6 @@ export const STRINGS = {
   STREAK_TILE_A11Y_EMPTY: 'Day streak, not loaded yet. Opens your practice history.',
   REVIEWS_TILE_A11Y:
     'Reviews done, {count}. Opens the breakdown by how often each word has come up.',
-  REVISIT_TILE_A11Y: '{count} words to revisit. Opens the words you forget most.',
   /** Stat-tile placeholder for a metric with nothing to measure yet. */
   EMPTY_METRIC: '—',
   VOCABULARY_GROWTH_LABEL: 'Words in practice',
@@ -827,8 +839,8 @@ export const STRINGS = {
   SUMMARY_THIS_MONTH: 'This month',
   NEWLY_DUE_SUFFIX: 'new',
   // The whole label, not a prefix: the due count it used to carry ("Review 12
-  // words") is on the tab badge and the "Due" stat card now that this is a
-  // navigation-bar action.
+  // words") is on the tab badge and the "Due today" card directly below, now
+  // that this is a navigation-bar action.
   REVIEW_CTA: 'Review',
   // Streak chart axis captions
   STREAK_CHART_START_LABEL: '40 days ago',
@@ -853,7 +865,6 @@ export const STRINGS = {
   STUDY_STREAK_EMPTY_STATE: 'Complete a review to start your streak',
   // Words to revisit (leeches)
   WORDS_TO_REVISIT: 'Words to revisit',
-  REVISIT_LABEL: 'Revisit',
   WORDS_TO_REVISIT_SUBTITLE: 'The words you forget most — give them another pass',
   LOADING_WORDS_TO_REVISIT: 'Loading words…',
   FAILED_TO_LOAD_WORDS_TO_REVISIT: "Couldn't load words. Try again",
@@ -911,6 +922,9 @@ export const STRINGS = {
   SORT_RECENT: 'Recent',
   /** Names the dictionary sort group for screen readers. */
   SORT_BY_A11Y: 'Sort by',
+  SORT_OPTION_A11Y: '{label}, {direction}',
+  SORT_ASCENDING: 'ascending',
+  SORT_DESCENDING: 'descending',
   WORD_COUNT_ONE: '1 word',
   WORD_COUNT_OTHER: '{count} words',
   NO_WORDS_MATCH_SEARCH: 'No words match your search',
@@ -1287,7 +1301,7 @@ export const STRINGS = {
   PLEASE_SIGN_IN_TO_ADD_WORDS: 'Sign in to add words',
   PLEASE_SIGN_IN_TO_ADD_ROOTS: 'Sign in to add roots',
   ERROR_EMPTY_EMAIL: 'Enter your email address',
-  HELP_SEARCH_PLACEHOLDER: 'Search help articles',
+  HELP_SEARCH_PLACEHOLDER: 'Search help',
   HELP_SEARCH_CLEAR: 'Clear search',
   HELP_SEARCH_RESULTS_SINGULAR: 'result',
   HELP_SEARCH_RESULTS_PLURAL: 'results',

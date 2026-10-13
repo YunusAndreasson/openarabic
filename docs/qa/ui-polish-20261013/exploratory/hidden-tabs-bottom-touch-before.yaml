@@ -1,0 +1,99 @@
+steps:
+  - tap:
+      x: 0.875
+      y: 0.901
+  - tool: run-sequence
+    args:
+      steps:
+        - tool: gesture-swipe
+          args:
+            fromX: 0.5
+            fromY: 0.8
+            toX: 0.5
+            toY: 0.3
+            durationMs: 400
+            momentum: false
+        - tool: gesture-swipe
+          args:
+            fromX: 0.5
+            fromY: 0.8
+            toX: 0.5
+            toY: 0.3
+            durationMs: 400
+            momentum: false
+        - tool: gesture-swipe
+          args:
+            fromX: 0.5
+            fromY: 0.8
+            toX: 0.5
+            toY: 0.3
+            durationMs: 400
+            momentum: false
+        - tool: gesture-swipe
+          args:
+            fromX: 0.5
+            fromY: 0.8
+            toX: 0.5
+            toY: 0.3
+            durationMs: 400
+            momentum: false
+        - tool: gesture-swipe
+          args:
+            fromX: 0.5
+            fromY: 0.8
+            toX: 0.5
+            toY: 0.3
+            durationMs: 400
+            momentum: false
+        - tool: gesture-swipe
+          args:
+            fromX: 0.5
+            fromY: 0.8
+            toX: 0.5
+            toY: 0.3
+            durationMs: 400
+            momentum: false
+        - tool: gesture-swipe
+          args:
+            fromX: 0.5
+            fromY: 0.8
+            toX: 0.5
+            toY: 0.3
+            durationMs: 400
+            momentum: false
+        - tool: gesture-swipe
+          args:
+            fromX: 0.5
+            fromY: 0.8
+            toX: 0.5
+            toY: 0.3
+            durationMs: 400
+            momentum: false
+  - tool: gesture-swipe
+    args:
+      fromX: 0.5
+      fromY: 0.75
+      toX: 0.5
+      toY: 0.55
+      durationMs: 400
+      momentum: false
+  - tool: gesture-swipe
+    args:
+      fromX: 0.5
+      fromY: 0.8
+      toX: 0.5
+      toY: 0.4
+      durationMs: 400
+      momentum: false
+  - tap:
+      text: Help center
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Search help
+        role: TextField
+      timeoutMs: 5000
+executionPrerequisite: Explore visible after fresh app process launch, QA
+  account, density 540 and font scale 2.0, dark theme. Requires known account
+  section geometry and no active playback.

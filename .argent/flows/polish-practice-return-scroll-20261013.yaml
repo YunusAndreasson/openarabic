@@ -1,0 +1,56 @@
+steps:
+  - tool: run-sequence
+    args:
+      steps:
+        - tool: gesture-swipe
+          args:
+            fromX: 0.5
+            fromY: 0.8
+            toX: 0.5
+            toY: 0.25
+            durationMs: 500
+            momentum: false
+        - tool: gesture-swipe
+          args:
+            fromX: 0.5
+            fromY: 0.8
+            toX: 0.5
+            toY: 0.25
+            durationMs: 500
+            momentum: false
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 7,594
+        role: StaticText
+  - tap:
+      text: Reviews done, 7594. Opens the breakdown by how often each word has come
+        up.
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Every grade you have given
+        role: StaticText
+      timeoutMs: 10000
+  - tool: button
+    args:
+      button: back
+  - tool: await-ui-element
+    args:
+      condition: hidden
+      selector:
+        identifier: practice-chart-sheet
+      timeoutMs: 10000
+  - tool: gesture-swipe
+    args:
+      fromX: 0.5
+      fromY: 0.75
+      toX: 0.5
+      toY: 0.3
+      durationMs: 500
+      momentum: false
+executionPrerequisite: Fresh Practice root visible on signed-in QA account with
+  Day streak and Reviews done cards; compact density 540/font scale 2.0. No
+  playback or practice grading.

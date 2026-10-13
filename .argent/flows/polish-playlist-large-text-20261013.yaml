@@ -1,0 +1,11 @@
+executionPrerequisite: Explore visible, QA playlist contains Adam and the Rebel near top, density 540 font scale 2, dark theme, no active playback. Saved flow verifies playback controls; title geometry and end-of-list clearance are separately inspected in QA artifacts.
+steps:
+  - tap: { text: Playlist }
+  - await: { visible: { text: Edit list } }
+  - await: { idle: true }
+  - tap: { text: Adam and the Rebel, role: Button }
+  - await: { visible: { text: Stop listening, role: Button }, timeout: 20000 }
+  - await: { visible: { text: Sleep timer, role: Button } }
+  - tap: { text: Stop listening, role: Button }
+  - await: { hidden: { text: Sleep timer, role: Button } }
+  - await: { idle: true }

@@ -1,6 +1,7 @@
+import { AnimatedCount } from '@/components/common/AnimatedCount';
 import { BaseCard } from '@/components/common/BaseCard';
 import { memo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
 // Direct path, not the `@/components/ui` barrel: `common` sits above `ui`, and
@@ -13,14 +14,9 @@ import { useColors } from '@/hooks/theme/useColors';
 import { formatCount } from '@/utils/stringUtils';
 
 interface MetricCardProps {
+  style?: StyleProp<ViewStyle>;
   value: string | number;
   label: string;
-  /**
-   * Applied to the value only when the colour is DATA — memory health being
-   * good/bad. Left undefined for tiles whose colour was decorative, so a row of
-   * stats reads as one restrained family instead of a paint chart.
-   */
-  valueColor?: string;
   /**
    * Spoken in place of "label, value". Pass one wherever the tile leads
    * somewhere, so it can end with what tapping does — the way the hero and the
@@ -28,6 +24,22 @@ interface MetricCardProps {
    * gives a screen-reader user no way to know it is a door.
    */
   accessibilityLabel?: string;
+  /**
+   * Inner padding. `compact` (default) is for a three-up row, where a tile is
+   * ~88pt wide and every point goes to the label. `comfortable` matches a full
+   * card's 16pt inset: use it in a two-up row sitting under full-width cards, so
+   * the tiles' text and chevrons land on the same edges as the cards' own.
+   */
+  density?: 'compact' | 'comfortable';
+  /**
+   * Count to a new numeric value instead of swapping to it. For a tile whose
+   * number changes while the learner is looking at it — the practice screen's
+   * habit row after a session. Leave it off for a readout that is only ever
+   * opened at its final value, and always pass `accessibilityLabel` with it:
+   * the counting numeral is hidden from a screen reader, so the card's own
+   * label is the only thing that speaks.
+   */
+  animated?: boolean;
   onPress?: () => void;
 }
 
@@ -54,13 +66,17 @@ interface MetricCardProps {
  * tile in a690def7); with it on all of them, the static ones would lie.
  */
 export const MetricCard = memo<MetricCardProps>(
-  ({ value, label, valueColor, accessibilityLabel, onPress }) => {
+  ({ value, label, accessibilityLabel, density = 'compact', animated = false, onPress, style }) => {
     const colors = useColors();
     const displayValue = typeof value === 'number' ? formatCount(value) : value;
 
     return (
-      <BaseCard style={styles.card} onPress={onPress} accessibilityLabel={accessibilityLabel}>
-        <View style={styles.cardWrapper}>
+      <BaseCard
+        style={[styles.card, style]}
+        onPress={onPress}
+        accessibilityLabel={accessibilityLabel}
+      >
+        <View style={[styles.cardWrapper, density === 'comfortable' && styles.comfortable]}>
           <ThemedText
             type="caption"
             colorName="subtleLabelText"
@@ -79,21 +95,32 @@ export const MetricCard = memo<MetricCardProps>(
           </ThemedText>
 
           <View style={styles.valueRow}>
-            <ThemedText
-              type="heading2"
-              skipDefaultColor={valueColor !== undefined}
-              style={[styles.value, valueColor !== undefined && { color: valueColor }]}
-              numberOfLines={1}
-              // The same protection the label above already carries, and for the
-              // same reason now that a chevron shares this row: a four-digit
-              // review count at an accessibility Dynamic Type size is wider than
-              // its third of a 375pt screen, and RN text does not shrink on its
-              // own — it wraps, and the tile grows taller than the two beside it.
-              adjustsFontSizeToFit
-              minimumFontScale={0.85}
-            >
-              {displayValue}
-            </ThemedText>
+            {/* The same protection the label above already carries, and for the
+                same reason now that a chevron shares this row: a four-digit
+                review count at an accessibility Dynamic Type size is wider than
+                its third of a 375pt screen, and RN text does not shrink on its
+                own — it wraps, and the tile grows taller than the two beside it. */}
+            {animated && typeof value === 'number' ? (
+              <AnimatedCount
+                value={value}
+                type="heading2"
+                style={styles.value}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.85}
+                silent
+              />
+            ) : (
+              <ThemedText
+                type="heading2"
+                style={styles.value}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.85}
+              >
+                {displayValue}
+              </ThemedText>
+            )}
 
             {/* Only tiles that lead somewhere claim to. */}
             {onPress && (
@@ -122,6 +149,10 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     gap: LAYOUT.SPACING.SMALL,
+  },
+  comfortable: {
+    paddingVertical: LAYOUT.SPACING.LARGE,
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
   },
   // The chevron sits on the value's baseline row and is pushed to the tile's
   // right edge, so a one-digit and a four-digit value put it in the same place.

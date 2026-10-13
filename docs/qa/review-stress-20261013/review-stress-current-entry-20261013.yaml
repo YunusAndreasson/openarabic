@@ -1,0 +1,12 @@
+steps:
+  - launch: com.edenmind.OpenArabic
+  - echo: Connect the installed development client to local Metro; this starts the app bundle.
+  - tool: open-url
+    args:
+      url: open-arabic://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
+  - await: { visible: { text: Continue reading }, timeout: 20000 }
+  - await: { idle: true }
+  - run: review-practice-selector-probe.yaml
+  - tap: { text: Review }
+  - await: { visible: { text: Show answer }, timeout: 20000 }
+  - await: { idle: true }

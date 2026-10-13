@@ -1,0 +1,10 @@
+executionPrerequisite: Signed-in QA account has 335 words reviewed once. Normal portrait display, no playback. Read-only breakdown to dictionary handoff; no grading/add/remove/reset.
+steps:
+  - tool: open-url
+    args: { url: 'open-arabic://review-depth' }
+  - await: { visible: { text: 'Once, 335 words', role: Button }, timeout: 10000 }
+  - tap: { text: 'Once, 335 words', role: Button }
+  - await: { visible: { text: 'Reviewed once · 335', role: Button }, timeout: 10000 }
+  - await: { visible: { text: Your words, role: StaticText } }
+  - tap: { text: Close, role: Button }
+  - await: { visible: { text: Your words, role: Button } }

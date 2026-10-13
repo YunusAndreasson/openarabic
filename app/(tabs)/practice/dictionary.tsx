@@ -61,6 +61,9 @@ const SCOPE_EMPTY_MESSAGES: Record<Exclude<DictionaryScope, 'all'>, string> = {
 // Every row fades on the same clock: a per-row stagger across a dozen dense
 // hairline rows reads as a cascade of lines rather than a list appearing.
 const ROW_FADE_IN_STYLE = fadeInStyle(TIMING_CONFIG.MEDIUM.duration, 'backwards');
+// Search and sorting replace the visible collection. Retaining a recycled
+// item's position can jump past the header when an empty search is cleared.
+const DISABLED_SCROLL_ANCHORING = { disabled: true };
 
 export default function DictionaryScreen(): JSX.Element {
   const { user } = useAuth();
@@ -362,7 +365,11 @@ export default function DictionaryScreen(): JSX.Element {
   }, [hasWords, searchQuery, scope, handleShowAllWords]);
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView
+      includeBottomInset={false}
+      safeAreaEdges={['left', 'right']}
+      style={styles.container}
+    >
       {/* Native header search bar (UISearchController on iOS, SearchView on
           Android). Declarative in SDK 57 — it renders null and folds its props
           into the parent Stack's header options, so it replaces the old
@@ -384,6 +391,8 @@ export default function DictionaryScreen(): JSX.Element {
       ) : (
         <View style={styles.contentContainer}>
           <FlashList
+            testID="dictionary-word-list"
+            maintainVisibleContentPosition={DISABLED_SCROLL_ANCHORING}
             data={words}
             renderItem={renderItem}
             keyExtractor={keyExtractor}

@@ -10,6 +10,12 @@ const GRADE_LABELS: Record<WordConfidence, string> = {
   known: STRINGS.GRADE_KNEW_IT,
 };
 
+const GRADE_TONES = {
+  unknown: 'negative',
+  vague: 'intermediate',
+  known: 'positive',
+} as const satisfies Record<WordConfidence, string>;
+
 interface ReviewGradeBarProps {
   /** Interval hint per grade ("10m"/"4d"), from useReview.intervalLabels.
    *  `null` while no card is current — every grade has a label or none do. */
@@ -35,6 +41,8 @@ export const ReviewGradeBar = ({ intervals, onGrade, disabled = false }: ReviewG
   }, []);
   const blocked = disabled || !settled;
   const choice = (confidence: WordConfidence) => ({
+    testID: `review-grade-${confidence}`,
+    tone: GRADE_TONES[confidence],
     label: GRADE_LABELS[confidence],
     sublabel: intervals?.[confidence],
     disabled: blocked,

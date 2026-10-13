@@ -173,6 +173,7 @@ export const WordDetailContent = ({
         loadingMessage={STRINGS.WORD_SHEET_LOADING}
       >
         <ScrollView
+          testID="word-detail-body"
           // `flex: 1` is what sizes this on Android and pre-empts the iOS
           // correction; the fixed detent gives the wrapper a definite height, so
           // there is nothing here for iOS to measure and lose.
@@ -215,7 +216,9 @@ export const WordDetailContent = ({
             style={styles.openRow}
             onPress={handleOpenInDictionary}
           >
-            <ThemedText type="body">{STRINGS.WORD_SHEET_OPEN_IN_DICTIONARY}</ThemedText>
+            <ThemedText style={styles.openLabel} type="body">
+              {STRINGS.WORD_SHEET_OPEN_IN_DICTIONARY}
+            </ThemedText>
             <Ionicons
               color={colors.textTertiary}
               name="chevron-forward"
@@ -253,5 +256,8 @@ const styles = StyleSheet.create({
   },
   openRow: {
     justifyContent: 'space-between',
+  },
+  openLabel: {
+    flex: 1,
   },
 });

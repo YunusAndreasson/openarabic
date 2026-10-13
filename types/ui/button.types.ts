@@ -83,6 +83,8 @@ interface ButtonIconProps {
  * Simplified ThemedButton props - variant is now optional with 'filled' as default
  */
 export interface ThemedButtonProps extends BaseButtonProps, ButtonIconProps {
+  /** Let longer labels wrap and the button grow with large text. */
+  allowTitleWrap?: boolean;
   /** Visual style variant of the button */
   variant?: ButtonVariant;
   /** Which hue the button paints itself with (default: 'default') */

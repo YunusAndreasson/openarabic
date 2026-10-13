@@ -1,0 +1,7 @@
+executionPrerequisite: Search has query zzzzqatestnomatch, zero results and a temporary in-memory failed corpus query. Search is incomplete and Retry visible; network available. Android QA account, dark theme.
+steps:
+  - await: { visible: { text: Search is incomplete } }
+  - tap: { text: Retry, role: Button }
+  - await: { visible: { text: No texts found }, timeout: 20000 }
+  - await: { hidden: { text: Search is incomplete } }
+  - await: { idle: true }

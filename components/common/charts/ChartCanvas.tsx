@@ -81,11 +81,19 @@ export function ChartCanvas({
   }
 
   return (
-    <Pressable style={[styles.container, { width: resolvedWidth, height }]} onPress={hideTooltip}>
+    <View style={[styles.container, { width: resolvedWidth, height }]}>
       {/* Main Chart Canvas */}
-      <Canvas style={canvasStyle}>
-        <Group opacity={entryProgress}>{children}</Group>
-      </Canvas>
+      <Pressable
+        testID="chart-background"
+        accessible={false}
+        importantForAccessibility="no"
+        style={StyleSheet.absoluteFill}
+        onPress={hideTooltip}
+      >
+        <Canvas style={canvasStyle}>
+          <Group opacity={entryProgress}>{children}</Group>
+        </Canvas>
+      </Pressable>
 
       {/* Interactive Data Point Overlays */}
       {validDataPoints.map(point => {
@@ -106,7 +114,7 @@ export function ChartCanvas({
 
       {/* Tooltip Component */}
       <ChartTooltipData maxWidth={width || resolvedWidth} tooltip={tooltip} />
-    </Pressable>
+    </View>
   );
 }
 

@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, type ComponentType } from 'react';
 
-import { BottomSheetHeader, BottomSheetStateHandler, SheetScreen } from '@/components/common';
+import { BottomSheetHeader, BottomSheetStateHandler } from '@/components/common';
 import { fsrsQueries, gated } from '@/constants/queries';
+import { ResponsiveSheetScreen } from '@/components/common/ResponsiveSheetScreen';
 import { useAuth } from '@/hooks/auth/useAuth';
 import type { StudyWord } from '@/types/vocabulary.types';
 
@@ -12,12 +13,12 @@ interface ChartSheetContentProps {
   ChartComponent: ComponentType<{ studyWords: StudyWord[] }>;
 }
 
-/** Complete route shell for the app's fixed-height vocabulary chart sheets. */
+/** Fitted chart sheets at standard text; bounded scrolling when content needs more room. */
 export function ChartSheetScreen(props: ChartSheetContentProps) {
   return (
-    <SheetScreen>
+    <ResponsiveSheetScreen testID="practice-chart-sheet">
       <ChartSheetContent {...props} />
-    </SheetScreen>
+    </ResponsiveSheetScreen>
   );
 }
 

@@ -62,6 +62,7 @@ interface ReviewActionButtonProps {
   disabled?: boolean;
   /** Defaults to `label`; pass the long form when the label is abbreviated. */
   accessibilityLabel?: string;
+  testID?: string;
   onPress: () => void;
 }
 
@@ -111,6 +112,7 @@ export const ReviewActionButton = ({
   standalone = true,
   disabled = false,
   accessibilityLabel,
+  testID,
   onPress,
 }: ReviewActionButtonProps) => {
   const colors = useColors();
@@ -141,6 +143,7 @@ export const ReviewActionButton = ({
 
   return (
     <Pressable
+      testID={testID}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityValue={sublabel ? { text: sublabel } : undefined}

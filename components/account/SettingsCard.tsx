@@ -1,10 +1,10 @@
 import { memo, type ComponentProps, type ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { BaseCard } from '@/components/common';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { Ionicons, Toggle } from '@/components/ui';
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { INLINE_VALUE_MIN_WIDTH, LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
@@ -61,6 +61,10 @@ type SettingsCardProps =
  */
 export const SettingsCard = memo((props: SettingsCardProps) => {
   const colors = useColors();
+  const { width, fontScale } = useWindowDimensions();
+  const stackValue =
+    (props.rightType === 'text-chevron' || props.rightType === 'custom') &&
+    width / fontScale < INLINE_VALUE_MIN_WIDTH;
   const {
     icon,
     label,
@@ -72,6 +76,14 @@ export const SettingsCard = memo((props: SettingsCardProps) => {
   } = props;
 
   const cardStyle = backgroundColor ? [styles.card, { backgroundColor }] : styles.card;
+  const navigationIndicator = (
+    <Ionicons
+      color={colors.secondaryMetadataText}
+      name={props.rightType === 'external' ? 'open-outline' : 'chevron-forward'}
+      size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+      style={styles.chevron}
+    />
+  );
 
   // Render right side based on type
   const renderRight = () => {
@@ -86,50 +98,31 @@ export const SettingsCard = memo((props: SettingsCardProps) => {
         );
 
       case 'text-chevron':
+        if (stackValue) return navigationIndicator;
         return (
           <View style={styles.rightValue}>
             <ThemedText type="body" colorName="secondaryMetadataText">
               {props.rightText}
             </ThemedText>
-            <Ionicons
-              color={colors.secondaryMetadataText}
-              name="chevron-forward"
-              size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-            />
+            {navigationIndicator}
           </View>
         );
 
       case 'custom':
-        return props.rightComponent;
-
-      case 'external':
-        return (
-          <Ionicons
-            color={colors.secondaryMetadataText}
-            name="open-outline"
-            size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-            style={styles.chevron}
-          />
-        );
+        return stackValue ? null : props.rightComponent;
 
       case 'none':
         return null;
 
       case 'chevron':
+      case 'external':
       default:
-        return (
-          <Ionicons
-            color={colors.secondaryMetadataText}
-            name="chevron-forward"
-            size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-            style={styles.chevron}
-          />
-        );
+        return navigationIndicator;
     }
   };
 
   return (
-    <BaseCard elevation="hairline" style={cardStyle} onPress={onPress}>
+    <BaseCard elevation="none" style={cardStyle} onPress={onPress}>
       <View style={styles.content}>
         <View style={styles.left}>
           <View style={styles.iconContainer}>
@@ -144,6 +137,14 @@ export const SettingsCard = memo((props: SettingsCardProps) => {
                 {subtitle}
               </ThemedText>
             )}
+            {stackValue && props.rightType === 'text-chevron' && (
+              <ThemedText colorName="secondaryMetadataText" style={styles.subtitle} type="body">
+                {props.rightText}
+              </ThemedText>
+            )}
+            {stackValue && props.rightType === 'custom' && (
+              <View style={styles.subtitle}>{props.rightComponent}</View>
+            )}
           </View>
         </View>
         {renderRight()}
@@ -156,6 +157,8 @@ SettingsCard.displayName = 'SettingsCard';
 
 const styles = StyleSheet.create({
   card: {
+    // SettingsSection owns the group's rounded surface and elevation.
+    borderRadius: LAYOUT.BORDER_RADIUS.NONE,
     minHeight: MIN_TOUCH_TARGET.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
@@ -164,6 +167,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: LAYOUT.SPACING.SMALL,
   },
   left: {
     alignItems: 'center',
@@ -186,6 +190,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: LAYOUT.SPACING.TINY,
+    flexShrink: 1,
   },
   chevron: {
     minWidth: LAYOUT.SPACING.XLARGE,

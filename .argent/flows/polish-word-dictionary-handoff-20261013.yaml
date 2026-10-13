@@ -1,0 +1,27 @@
+executionPrerequisite: Explore visible, QA account Everything word saved. Standard or compact 200% portrait dark display, no playback. Navigate and inspect only; never activate reset/remove.
+steps:
+  - scroll-to: { target: { text: Everything, role: Button }, within: { identifier: explore-feed } }
+  - tap: { text: Everything, role: Button }
+  - await: { visible: { text: Memory, role: StaticText } }
+  - tool: gesture-swipe
+    args: { fromX: 0.5, fromY: 0.85, toX: 0.5, toY: 0.5, durationMs: 400, momentum: false }
+  - scroll-to:
+      {
+        target: { text: Open Everything in your dictionary, role: Button },
+        within: { identifier: word-detail-body },
+      }
+  - tap: { text: Open Everything in your dictionary, role: Button }
+  - scroll-to:
+      {
+        target: { text: Recall it again, role: StaticText },
+        within: { identifier: dictionary-word-content },
+      }
+  - await: { visible: { text: Recall it again, role: StaticText } }
+  - scroll-to:
+      {
+        target: { text: In articles, role: StaticText },
+        within: { identifier: dictionary-word-content },
+      }
+  - await: { visible: { text: Read this sentence in Luqman } }
+  - tap: { text: Close, role: Button }
+  - await: { visible: { text: Your words, role: Button } }

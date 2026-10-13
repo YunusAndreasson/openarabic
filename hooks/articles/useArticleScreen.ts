@@ -8,11 +8,13 @@ import {
 } from 'react-native';
 
 import type { FlashListRef } from '@shopify/flash-list';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { OnboardingStep } from '@/constants/onboarding';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { analytics } from '@/services/analytics';
 import { useArticleData } from '@/hooks/articles/useArticleData';
 import { useReadingListMutations } from '@/hooks/articles/useReadingListMutations';
@@ -33,6 +35,7 @@ export interface UseArticleScreenOptions {
   id: string;
   showToast: (message: string, duration: number, type: ToastType) => void;
   disableAutoScroll?: boolean;
+  targetSentenceId?: number;
 }
 
 /**
@@ -46,8 +49,11 @@ export function useArticleScreen({
   id,
   showToast,
   disableAutoScroll = false,
+  targetSentenceId,
 }: UseArticleScreenOptions) {
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
+  const readerTopClearance = insets.top + MIN_TOUCH_TARGET.MEDIUM + LAYOUT.SPACING.SMALL;
 
   // Parse article ID
   const articleId = useMemo(() => {
@@ -221,7 +227,7 @@ export function useArticleScreen({
         }
       }
     },
-    [sortedSentences?.length, scheduleProgressUpdate],
+    [sortedSentences.length, scheduleProgressUpdate],
   );
 
   // Handle scroll end - placeholder for ArticleContent onMomentumScrollEnd prop
@@ -232,6 +238,9 @@ export function useArticleScreen({
   // Scroll to position effect - triggers when all conditions are met
   useEffect(() => {
     const totalSentences = sortedSentences?.length ?? 0;
+    const requestedIndex = sortedSentences.findIndex(sentence => sentence.id === targetSentenceId);
+    const canResume =
+      !disableAutoScroll && hadExistingProgressOnMount && initialLastSentenceRead > 0;
 
     if (
       !hasScrolledToPositionRef.current &&
@@ -239,18 +248,19 @@ export function useArticleScreen({
       isFlashListReady &&
       !isLoadingArticle &&
       article &&
-      !disableAutoScroll &&
-      hadExistingProgressOnMount &&
-      initialLastSentenceRead > 0 &&
+      (requestedIndex >= 0 || canResume) &&
       totalSentences > 0
     ) {
       // FlashList v2 scrollToIndex takes props.data indices (the header
       // offset is added internally), so the target is the sentence index
-      // itself: put the last-read sentence at the top of the viewport.
-      const targetIndex = Math.min(initialLastSentenceRead, totalSentences - 1);
+      // itself: put the requested or last-read sentence below the floating toolbar.
+      const targetIndex =
+        requestedIndex >= 0
+          ? requestedIndex
+          : Math.min(initialLastSentenceRead, totalSentences - 1);
 
       // Index 0 means the reader barely started — no scroll or toast needed.
-      if (targetIndex < 1) {
+      if (targetIndex < 1 && requestedIndex < 0) {
         hasScrolledToPositionRef.current = true;
         return;
       }
@@ -261,8 +271,8 @@ export function useArticleScreen({
 
       hasScrolledToPositionRef.current = true;
 
-      // Initialize high water mark to the saved position so viewability
-      // tracking only records progress BEYOND the resume point.
+      // Initialize high water mark to the destination so viewability
+      // tracking only records progress beyond it.
       highWaterMarkRef.current = targetIndex;
 
       // Double RAF ensures FlashList layout is complete (v2 best practice)
@@ -272,11 +282,17 @@ export function useArticleScreen({
             void scrollViewRef.current?.scrollToIndex({
               index: targetIndex,
               animated: true,
-              viewPosition: 0, // Place last-read sentence at top of viewport
+              viewPosition: 0,
+              // FlashList v2 adds viewOffset to the scroll offset, so a
+              // negative value leaves space above the resumed sentence.
+              viewOffset: -readerTopClearance,
             });
           } catch {
             // Silent error - scroll failed
           }
+
+          // Opening a specific example is navigation, not a saved-position resume.
+          if (requestedIndex >= 0) return;
 
           // Show toast
           const percentage = Math.round(((targetIndex + 1) / totalSentences) * 100);
@@ -287,7 +303,13 @@ export function useArticleScreen({
           showToast(message, 3000, ToastType.INFO);
         });
       });
-    } else if (!hasScrolledToPositionRef.current && isInitialProgressReady && isFlashListReady) {
+    } else if (
+      !hasScrolledToPositionRef.current &&
+      isInitialProgressReady &&
+      isFlashListReady &&
+      !isLoadingArticle &&
+      article
+    ) {
       hasScrolledToPositionRef.current = true;
     }
   }, [
@@ -297,9 +319,11 @@ export function useArticleScreen({
     article,
     sortedSentences,
     disableAutoScroll,
+    targetSentenceId,
     hadExistingProgressOnMount,
     initialLastSentenceRead,
     showToast,
+    readerTopClearance,
   ]);
 
   // Refetch on app state change — useEffectEvent keeps the listener stable so

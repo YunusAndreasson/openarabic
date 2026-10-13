@@ -1,0 +1,8 @@
+executionPrerequisite: Explore visible, QA account, dark theme, no playback. Open Quran topic and close without reading an article.
+steps:
+  - scroll-to: { target: { text: Quranic Studies, role: Button } }
+  - tap: { text: Quranic Studies, role: Button }
+  - await: { visible: { text: Unread, role: StaticText } }
+  - await: { visible: { text: When Scripture Answers Proverbs, role: Button } }
+  - tap: { text: Close, role: Button }
+  - await: { visible: { text: Search texts, role: Button } }

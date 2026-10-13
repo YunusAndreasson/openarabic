@@ -48,9 +48,11 @@ export function ThemedButton({
   onPress,
   size = 'medium', // Most common value - hardcoded
   fullWidth = false,
+  allowTitleWrap = false,
   shape = 'rounded',
   hapticType = 'light',
   accessibilityRole = 'button',
+  accessibilityState,
   ...props
 }: ThemedButtonProps): JSX.Element {
   const colors = useColors();
@@ -153,10 +155,14 @@ export function ThemedButton({
     </View>
   ) : null;
 
+  const labelStyle = allowTitleWrap
+    ? [styles.buttonText, styles.wrappingButtonText]
+    : styles.buttonText;
+
   return (
     <AnimatedPressable
       accessibilityRole={accessibilityRole}
-      accessibilityState={{ busy: loading, disabled: isInert }}
+      accessibilityState={{ ...accessibilityState, busy: loading, disabled: isInert }}
       android_ripple={androidRipple}
       disabled={isInert}
       // A 32pt-tall button is under the 44pt minimum; hit slop makes up the rest.
@@ -173,8 +179,8 @@ export function ThemedButton({
         <ThemedText
           skipDefaultColor
           colorName={textColorName}
-          numberOfLines={1}
-          style={styles.buttonText}
+          numberOfLines={allowTitleWrap ? undefined : 1}
+          style={labelStyle}
           type={TEXT_TYPE_MAP[size]}
         >
           {title}
@@ -220,6 +226,9 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     textAlign: 'center',
+  },
+  wrappingButtonText: {
+    flexShrink: 1,
   },
   iconContainer: {
     alignItems: 'center',

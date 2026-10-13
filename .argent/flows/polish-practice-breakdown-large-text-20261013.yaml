@@ -1,0 +1,11 @@
+executionPrerequisite: Memory horizon detail sheet open, QA measured practice words plus not-started words, density 540/font scale 2.0. Read-only scrolling and Back.
+steps:
+  - scroll-to:
+      {
+        target: { text: A horizon is how long, role: StaticText },
+        within: { identifier: practice-chart-sheet },
+      }
+  - await: { visible: { text: A horizon is how long, role: StaticText } }
+  - tool: button
+    args: { button: back }
+  - await: { hidden: { identifier: practice-chart-sheet } }

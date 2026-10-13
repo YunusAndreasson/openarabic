@@ -58,7 +58,13 @@ const FAQItemComponent = memo(
 
     return (
       <View>
-        <BaseCard style={buttonStyle} onPress={handlePress}>
+        <BaseCard
+          style={buttonStyle}
+          onPress={handlePress}
+          accessibilityRole="button"
+          accessibilityLabel={item.question}
+          accessibilityState={{ expanded: isExpanded }}
+        >
           <View style={styles.faqButtonContent}>
             <ThemedText
               type="body"
@@ -68,6 +74,8 @@ const FAQItemComponent = memo(
               {item.question}
             </ThemedText>
             <Ionicons
+              accessible={false}
+              importantForAccessibility="no"
               name={isExpanded ? 'chevron-up' : 'chevron-down'}
               size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
               color={isExpanded ? colors.tint : colors.textTertiary}
@@ -188,6 +196,7 @@ const HelpScreen = () => {
             style={styles.searchIcon}
           />
           <TextInput
+            accessibilityLabel={STRINGS.HELP_SEARCH_PLACEHOLDER}
             style={[styles.searchInput, { color: colors.text }]}
             placeholder={STRINGS.HELP_SEARCH_PLACEHOLDER}
             placeholderTextColor={colors.textTertiary}
@@ -325,7 +334,7 @@ const styles = StyleSheet.create({
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    height: LAYOUT.BUTTON.HEIGHT.MEDIUM,
+    minHeight: LAYOUT.BUTTON.HEIGHT.MEDIUM,
   },
   searchIcon: {
     marginRight: LAYOUT.SPACING.SMALL,

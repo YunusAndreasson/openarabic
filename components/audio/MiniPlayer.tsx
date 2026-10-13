@@ -1,6 +1,6 @@
 import { BaseCard, ProgressBar } from '@/components/common';
 import { memo, useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -12,6 +12,7 @@ import { LAYOUT, TEXT_STYLES } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsTabBarHidden } from '@/hooks/ui/useTabBarAutoHide';
+import { updateMiniPlayerHeight } from '@/hooks/audio/useMiniPlayerHeight';
 import { withAlpha } from '@/utils/colorUtils';
 import { formatSecondsToClock, safePercent } from '@/utils/dateTimeUtils';
 import { generateStorageUrl } from '@/utils/storageUtils';
@@ -60,6 +61,10 @@ export interface MiniPlayerProps {
 // Layout constants
 const MINI_PLAYER_HEIGHT = LAYOUT.CARD.HEIGHT.MINI_PLAYER;
 const PROGRESS_HEIGHT = LAYOUT.PROGRESS_BAR.HEIGHT;
+
+function handleMiniPlayerLayout(event: LayoutChangeEvent): void {
+  updateMiniPlayerHeight(event.nativeEvent.layout.height);
+}
 
 // Custom memo comparison — keeps the one optimization React Compiler can't do:
 // skip re-renders for sub-second position changes (position updates 2x/sec but display shows seconds)
@@ -128,14 +133,7 @@ const MiniPlayerComponent = ({
     // samples, so only a real opaque surface provides a contrast guarantee —
     // hence `elevation2` rather than the plain card fill, and a hairline border
     // to keep that guarantee in dark mode, where shadows are suppressed.
-    <BaseCard
-      testID="mini-player-surface"
-      surface="elevation2"
-      elevation="floating"
-      bordered
-      style={styles.card}
-      contentStyle={styles.cardContent}
-    >
+    <BaseCard testID="mini-player-surface" surface="elevation2" elevation="floating" bordered>
       {/* Main Content Row */}
       <View style={styles.contentRow}>
         {/* Artwork Thumbnail */}
@@ -176,14 +174,14 @@ const MiniPlayerComponent = ({
               {timeDisplay}
             </ThemedText>
             {queueDisplay && (
-              <>
+              <View style={styles.queueInfo}>
                 <ThemedText colorName="textTertiary" type="caption">
                   •
                 </ThemedText>
                 <ThemedText colorName="textTertiary" style={styles.queuePosition} type="caption">
                   {queueDisplay}
                 </ThemedText>
-              </>
+              </View>
             )}
           </View>
         </View>
@@ -234,6 +232,7 @@ const MiniPlayerComponent = ({
       )}
       exiting={FadeOutDown.duration(TIMING_CONFIG.MEDIUM.duration)}
       style={containerStyle}
+      onLayout={handleMiniPlayerLayout}
     >
       {inner}
     </Animated.View>
@@ -252,24 +251,12 @@ const styles = StyleSheet.create({
     zIndex: LAYOUT.Z_INDEX.HEADER,
   },
 
-  // BaseCard supplies the radius, the surface, the border and the clipping.
-  card: {
-    height: MINI_PLAYER_HEIGHT,
-  },
-
-  // BaseCard wraps children in a content box; it has to fill the fixed card
-  // height or `contentRow`'s flex and the absolutely-placed progress bar would
-  // both measure against a content-sized box instead.
-  cardContent: {
-    flex: 1,
-  },
-
   contentRow: {
-    flex: 1,
+    minHeight: MINI_PLAYER_HEIGHT,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: LAYOUT.SPACING.SMALL,
-    paddingTop: PROGRESS_HEIGHT,
+    paddingVertical: LAYOUT.SPACING.SMALL,
   },
 
   textColumn: {
@@ -305,6 +292,13 @@ const styles = StyleSheet.create({
   },
 
   timeAndQueueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: LAYOUT.SPACING.SMALL,
+    flexWrap: 'wrap',
+  },
+
+  queueInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: LAYOUT.SPACING.SMALL,

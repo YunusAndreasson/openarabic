@@ -70,16 +70,23 @@ const baseStyles = StyleSheet.create({
   // The card's lane in the column: it takes whatever is left between the header
   // and the action row, so the card sizes itself to the device instead of the
   // old fixed 360px box that left a void on tall screens.
+  //
+  // One frame for the whole screen: header, card and action band share the
+  // XLARGE side inset. Below the card, LARGE is the whole gap to the buttons —
+  // the band is exactly the button row. Above it, MEDIUM plus the air around
+  // the header's thin bar and bare glyph (both centred in a 44pt row) comes to
+  // roughly twice that, which is the proportion the screen is drawn to: room
+  // over the card, the actions held close under it.
   cardArea: {
     flex: 1,
     width: '100%',
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    paddingHorizontal: LAYOUT.SPACING.XLARGE,
     paddingTop: LAYOUT.SPACING.MEDIUM,
     paddingBottom: LAYOUT.SPACING.LARGE,
   },
   bottomSlot: {
     width: '100%',
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    paddingHorizontal: LAYOUT.SPACING.XLARGE,
   },
   // Fixed band. Every state the bottom can hold lives inside it, absolutely
   // anchored to the bottom edge, so the card above (which is flex: 1) keeps its
@@ -744,6 +751,17 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
           // its own `answer` there rather than the screen passing a second copy
           // of the same string.
           discloseAnswer={voiceShowResult}
+          // What the recognizer heard, under that answer. It is evidence for
+          // the three choices in the band below and a miss must never be
+          // graded without it — it just no longer needs a reserved line in
+          // the band to be shown.
+          discloseCaption={
+            voiceShowResult
+              ? voiceResult.heard.length > 0
+                ? STRINGS.VOICE_RESULT_HEARD_TEMPLATE(voiceResult.heard)
+                : STRINGS.VOICE_RESULT_NOT_HEARD
+              : undefined
+          }
           questionSlot={
             indicatorState ? (
               <VoiceListeningIndicator state={indicatorState} level={voice.micLevel} />
@@ -848,6 +866,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
                 <View style={baseStyles.actionRow}>
                   <ReviewActionButton
                     label={STRINGS.RESTUDY_CONTINUE}
+                    testID="review-restudy-continue"
                     // Alone in the band, same as "Show answer" with voice off —
                     // takes the app's standalone-CTA pill shape instead of
                     // sitting there as a quiet, easy-to-miss chip.
@@ -865,7 +884,6 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
                 style={baseStyles.actionState}
               >
                 <VoiceResultPanel
-                  result={voiceResult}
                   onAccept={voiceAccept}
                   onReject={voiceReject}
                   onRetry={handleVoiceRetry}
@@ -910,6 +928,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
                 <View style={baseStyles.actionRow}>
                   <ReviewActionButton
                     label={STRINGS.SHOW_ANSWER}
+                    testID="review-show-answer"
                     // Same hue as the voice CTA, not a neutral grey: `secondaryText`
                     // is a near-white, almost-no-chroma token, and mixed into a
                     // tinted chip it read as a flat, lifeless grey rather than a

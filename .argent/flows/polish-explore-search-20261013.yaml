@@ -1,0 +1,16 @@
+executionPrerequisite: Account root visible, QA account signed in, dark theme, standard display scale.
+steps:
+  - tap: { text: Explore }
+  - await: { visible: { text: Continue reading } }
+  - await: { idle: true }
+  - tap: { text: Search texts, role: Button }
+  - await: { visible: { id: search_src_text } }
+  - await: { idle: true }
+  - tool: keyboard
+    args: { text: prayer }
+  - await: { visible: { text: Prayer During Illness } }
+  - tap: { id: search_close_btn }
+  - await: { visible: { text: Search the library } }
+  - tool: keyboard
+    args: { text: zzzzqatestnomatch }
+  - await: { visible: { text: No texts found } }

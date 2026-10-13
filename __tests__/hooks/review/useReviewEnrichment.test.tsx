@@ -11,9 +11,12 @@ import { useReviewRootEnrichments } from '@/hooks/review/useReviewRootEnrichment
 import type { WordExample } from '@/services/sentences';
 import type { RootEnrichment } from '@/types/rootEnrichment.types';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { computeColoredSegments } from '@/utils/arabicWordAnalysis';
+
+let mockColors = { text: '#111111' };
 
 jest.mock('@/hooks/theme/useColors', () => ({
-  useColors: () => ({ wordNoun: '#111111' }),
+  useColors: () => mockColors,
 }));
 
 jest.mock('@/utils/arabicWordAnalysis', () => ({
@@ -49,7 +52,9 @@ function example(id: number): WordExample {
     audioUrl: null,
     wordForm: `word-${id}`,
     wordType: 'noun',
-    words: [],
+    words: [
+      { position: 0, wordForm: `word-${id}`, english: `english-${id}`, rootId: id, isTarget: true },
+    ],
   };
 }
 
@@ -71,6 +76,12 @@ function enrichment(id: number): RootEnrichment {
 describe('review enrichment batches', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockColors = { text: '#111111' };
+    jest
+      .mocked(computeColoredSegments)
+      .mockImplementation((word, _english, colors) => [
+        { text: word, color: colors.text, type: 'root' },
+      ]);
     sentencesService.getExamplesForRoots.mockImplementation(
       async (ids: number[]) => new Map(ids.map(id => [id, example(id)])),
     );
@@ -80,6 +91,62 @@ describe('review enrichment batches', () => {
     rootEnrichmentService.getByRootIds.mockImplementation(
       async (ids: number[]) => new Map(ids.map(id => [id, enrichment(id)])),
     );
+  });
+
+  test('colors only new batch words across three refills and preserves earlier example identities', async () => {
+    const batches = [
+      [studyWord(1), studyWord(2)],
+      [studyWord(3), studyWord(4)],
+      [studyWord(5), studyWord(6)],
+    ];
+    const { wrapper } = createHookTestWrapper();
+    const { result, rerender } = renderHook(
+      ({ batches }: { batches: readonly (readonly StudyWord[])[] }) => useReviewExamples(batches),
+      { initialProps: { batches: batches.slice(0, 1) }, wrapper },
+    );
+
+    await waitFor(() => expect(result.current.size).toBe(2));
+    const firstExample = result.current.get(1);
+    const counts = [jest.mocked(computeColoredSegments).mock.calls.length];
+    rerender({ batches: batches.slice(0, 2) });
+    await waitFor(() => expect(result.current.size).toBe(4));
+    counts.push(jest.mocked(computeColoredSegments).mock.calls.length);
+    rerender({ batches });
+    await waitFor(() => expect(result.current.size).toBe(6));
+    counts.push(jest.mocked(computeColoredSegments).mock.calls.length);
+
+    expect(counts).toEqual([2, 4, 6]);
+    expect(result.current.get(1)).toBe(firstExample);
+    rerender({ batches: batches.map(batch => [...batch]) });
+    expect(computeColoredSegments).toHaveBeenCalledTimes(6);
+    expect(result.current.get(1)).toBe(firstExample);
+  });
+
+  test('recolors cached examples for a changed theme without refetching', async () => {
+    const batches = [
+      [studyWord(1), studyWord(2)],
+      [studyWord(3), studyWord(4)],
+      [studyWord(5), studyWord(6)],
+    ];
+    const { wrapper } = createHookTestWrapper();
+    const { result, rerender } = renderHook(() => useReviewExamples(batches), { wrapper });
+
+    await waitFor(() => expect(result.current.size).toBe(6));
+    const firstExample = result.current.get(1);
+    jest.mocked(computeColoredSegments).mockClear();
+    mockColors = { text: '#222222' };
+    rerender({});
+
+    await waitFor(() =>
+      expect(result.current.get(1)?.words[0]?.coloredSegments?.[0]?.color).toBe('#222222'),
+    );
+
+    expect(computeColoredSegments).toHaveBeenCalledTimes(6);
+    expect(
+      jest.mocked(computeColoredSegments).mock.calls.every(call => call[2] === mockColors),
+    ).toBe(true);
+    expect(result.current.get(1)).not.toBe(firstExample);
+    expect(sentencesService.getExamplesForRoots).toHaveBeenCalledTimes(3);
   });
 
   test('fetches each example batch once and retains earlier card context', async () => {

@@ -1,0 +1,24 @@
+executionPrerequisite: Account root visible, QA account signed in, dark theme, standard display scale.
+steps:
+  - echo: Scroll to Theme and inspect the theme picker.
+  - scroll-to: { target: { text: Theme, role: Button } }
+  - await: { visible: { text: Theme, role: Button } }
+  - tap: { text: Theme, role: Button }
+  - await: { visible: { text: Light, role: RadioButton } }
+  - await: { idle: true }
+  - tap: { text: Birches in Spring, role: RadioButton }
+  - await: { visible: { text: 'Theme, Light', role: Button } }
+  - tool: button
+    args: { button: back }
+  - await: { hidden: { text: Light, role: RadioButton } }
+  - await: { idle: true }
+  - echo: Restore the original dark theme.
+  - tap: { text: Theme, role: Button }
+  - await: { visible: { text: Dark, role: RadioButton } }
+  - await: { idle: true }
+  - tap: { text: Midnight Summer, role: RadioButton }
+  - await: { visible: { text: 'Theme, Dark', role: Button } }
+  - tool: button
+    args: { button: back }
+  - await: { hidden: { text: Dark, role: RadioButton } }
+  - await: { idle: true }

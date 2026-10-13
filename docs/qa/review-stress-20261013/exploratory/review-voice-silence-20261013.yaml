@@ -1,0 +1,72 @@
+steps:
+  - tap:
+      text: Review
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        identifier: review-show-answer
+      timeoutMs: 20000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Listening
+      timeoutMs: 12000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Didn't catch that
+      timeoutMs: 45000
+  - echo: Hands-free silence closes the mic and restores manual speaking without
+      grading; now request a voice attempt explicitly.
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Voice answer
+  - tap:
+      text: Speak to answer
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Done speaking
+      timeoutMs: 15000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Didn't catch that
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Try again
+  - tap:
+      text: Try again
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Done
+      timeoutMs: 10000
+  - tap:
+      text: Yes, I got it
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Try again
+      timeoutMs: 20000
+  - tap:
+      text: Show answer
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        identifier: review-restudy-continue
+executionPrerequisite: Android QA account on Practice, voice enabled and model
+  downloaded; emulator microphone provides silence. At least two due cards
+  remain.

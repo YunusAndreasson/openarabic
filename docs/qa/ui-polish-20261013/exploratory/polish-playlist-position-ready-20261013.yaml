@@ -1,0 +1,29 @@
+# REJECTED CANDIDATE / DIAGNOSTIC: restoration implementation reverted.
+steps:
+  - tool: gesture-swipe
+    args:
+      fromX: 0.5
+      fromY: 0.8
+      toX: 0.5
+      toY: 0.3
+      durationMs: 400
+      momentum: false
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: The Secret Migration, al
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      role: StaticText
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Remove The Secret Migration from playlist
+        role: Button
+      timeoutMs: 10000
+executionPrerequisite: QA playlist11, normal dark, normal mode/top and Adam and
+  the Rebel card rendered, no playback. Preserve position across Edit/Done; no
+  reorder/delete.

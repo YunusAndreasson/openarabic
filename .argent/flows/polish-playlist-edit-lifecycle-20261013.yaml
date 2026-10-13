@@ -1,0 +1,47 @@
+steps:
+  - tap:
+      text: Edit list
+      role: Button
+  - await:
+      visible:
+        text: Remove Adam and the Rebel from playlist
+        role: Button
+      timeout: 10000
+  - await:
+      idle: true
+  - launch: com.edenmind.OpenArabic
+  - tool: open-url
+    args:
+      url: open-arabic://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
+  - await:
+      visible:
+        text: Explore
+        role: StaticText
+      timeout: 30000
+  - await:
+      idle: true
+  - tap:
+      text: Playlist
+      role: FrameLayout
+  - await:
+      visible:
+        text: Edit list
+        role: Button
+      timeout: 10000
+  - await:
+      idle: true
+  - await:
+      visible:
+        text: Adam and the Rebel, Ibn
+        role: Button
+      timeout: 10000
+  - await:
+      idle: true
+  - await:
+      hidden:
+        text: Remove Adam and the Rebel from playlist
+        role: Button
+      timeout: 10000
+executionPrerequisite: QA signed in, normal dark, Playlist normal mode/top and
+  populated11 tracks, no playback. Enter Edit, cold-restart current Metro8081
+  bundle, then verify normal mode. No reorder/delete.

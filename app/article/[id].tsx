@@ -41,8 +41,13 @@ const ArticleScreenContentComparison = (
 const ArticleScreenContent = memo(({ id }: { id: string }) => {
   const colors = useColors();
   const { showToast } = useToast();
-  const params = useLocalSearchParams<{ disableAutoScroll?: string }>();
+  const params = useLocalSearchParams<{ disableAutoScroll?: string; sentenceId?: string }>();
   const disableAutoScroll = params.disableAutoScroll === 'true';
+  const requestedSentenceId = Number(params.sentenceId);
+  const targetSentenceId =
+    Number.isSafeInteger(requestedSentenceId) && requestedSentenceId > 0
+      ? requestedSentenceId
+      : undefined;
 
   // Extract all business logic into hook
   const {
@@ -70,7 +75,7 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     handleOpenWordDetails,
     handleAddWordToStudy,
     handleFlashListLoad,
-  } = useArticleScreen({ id, showToast, disableAutoScroll });
+  } = useArticleScreen({ id, showToast, disableAutoScroll, targetSentenceId });
 
   // In-article Listen control (podcast-style playback via the global MiniPlayer)
   const { isListeningToThisArticle, isListenLoading, handleToggleListen } = useArticleListen(

@@ -116,11 +116,13 @@ const SkiaColoredArabicInternal = function SkiaColoredArabic({
   // Nothing to paint yet: hold the height so the surrounding layout does not
   // jump when the fonts land a frame later.
   if (!paragraph) {
-    return <View style={canvasStyle} />;
+    return (
+      <View style={canvasStyle} accessible accessibilityRole="text" accessibilityLabel={text} />
+    );
   }
 
   return (
-    <Canvas style={canvasStyle}>
+    <Canvas style={canvasStyle} accessible accessibilityRole="text" accessibilityLabel={text}>
       <SkiaParagraph paragraph={paragraph} x={0} y={canvas.paintY} width={canvas.layoutWidth} />
     </Canvas>
   );

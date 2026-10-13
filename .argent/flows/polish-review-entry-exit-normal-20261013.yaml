@@ -1,0 +1,79 @@
+steps:
+  - tap:
+      text: Practice
+      role: FrameLayout
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Review
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: Review
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Show answer
+        role: Button
+      timeoutMs: 20000
+  - tap:
+      identifier: review-show-answer
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        identifier: review-grade-known
+      timeoutMs: 10000
+  - tap:
+      text: End review session
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Your words
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: Review
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Show answer
+        role: Button
+      timeoutMs: 20000
+  - tool: button
+    args:
+      button: back
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Your words
+        role: Button
+      timeoutMs: 20000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Reviews done, 7594.
+        role: Button
+      timeoutMs: 20000
+  - tap:
+      text: Account
+      role: FrameLayout
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Help center
+        role: Button
+      timeoutMs: 20000
+executionPrerequisite: Account Help/About section, QA signed in, dark normal
+  density420/fontScale1, no playback. Enter/exit Review only; no grade buttons
+  or recognition input.

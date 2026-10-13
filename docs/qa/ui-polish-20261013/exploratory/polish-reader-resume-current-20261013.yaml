@@ -1,0 +1,33 @@
+steps:
+  - tap:
+      text: Prayer During Illness
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Close article
+      timeoutMs: 20000
+  - tap:
+      text: وَالنَّاسُ
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: وَالنَّاسُ
+        role: StaticText
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: and the people
+  - tool: button
+    args:
+      button: back
+  - tool: await-ui-element
+    args:
+      condition: hidden
+      selector:
+        text: وَالنَّاسُ
+        role: StaticText
+executionPrerequisite: Explore root visible, QA Prayer During Illness has saved
+  reading progress, standard dark layout.

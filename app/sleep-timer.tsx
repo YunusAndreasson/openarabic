@@ -87,11 +87,13 @@ export default function SleepTimerScreen(): JSX.Element {
 
       {!isTimerActive ? (
         <>
-          <View style={styles.optionsGrid}>
+          <View accessibilityRole="radiogroup" style={styles.optionsGrid}>
             {TIMER_OPTIONS.map(minutes => (
               <View key={minutes} style={styles.optionContainer}>
                 <ThemedButton
                   title={`${minutes} min`}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: selectedMinutes === minutes }}
                   variant={selectedMinutes === minutes ? 'filled' : 'outlined'}
                   onPress={handleOptionSelect(minutes)}
                   fullWidth

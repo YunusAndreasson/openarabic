@@ -1,7 +1,7 @@
-import { GlassIconButton } from '@/components/ui';
+import { Ionicons } from '@/components/ui';
 import { ProgressBar } from '@/components/common';
 import { useEffect, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
@@ -10,12 +10,17 @@ import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
+import { useButtonPress } from '@/hooks/ui/useButtonPress';
 import { mixColors } from '@/utils/colorUtils';
 import { lightFeedback } from '@/utils/haptics';
 
-// Close is a `GlassIconButton`, which is 44pt — the Apple HIG minimum tap
-// target (Material prefers 48dp). The visible button matches the touch target,
-// so no hitSlop is needed.
+// Close is a bare glyph in a 44pt box — the Apple HIG minimum tap target
+// (Material prefers 48dp) — so the box needs no hitSlop and paints nothing.
+//
+// It used to be a `GlassIconButton`: a filled 44pt circle. Beside a thin
+// progress bar that made the exit the heaviest thing in the header, on a screen
+// whose subject is the card below it. The reference this follows (edenmind's
+// review screen) draws the same control as an X and nothing else.
 //
 // It is the only control up here. The header used to carry a mic beside it,
 // wearing three hats at once — a session mute, a "still downloading" notice and
@@ -49,8 +54,11 @@ const STATIC_STYLES = StyleSheet.create({
   header: {
     alignItems: 'center',
     flexDirection: 'row',
-    height: MIN_TOUCH_TARGET.MEDIUM, // 44px - fits the tap-target-sized icon button
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    height: MIN_TOUCH_TARGET.MEDIUM, // 44px - fits the tap-target-sized close box
+    // The screen's frame: the same inset as the card and the action band in
+    // app/review.tsx, so the bar starts on the card's left edge and the close
+    // box ends on its right.
+    paddingHorizontal: LAYOUT.SPACING.XLARGE,
     width: '100%',
     zIndex: LAYOUT.Z_INDEX.HEADER,
   },
@@ -61,7 +69,19 @@ const STATIC_STYLES = StyleSheet.create({
   runContainer: {
     marginRight: LAYOUT.SPACING.MEDIUM,
   },
+  close: {
+    alignItems: 'center',
+    height: MIN_TOUCH_TARGET.MEDIUM,
+    justifyContent: 'center',
+    width: MIN_TOUCH_TARGET.MEDIUM,
+  },
+  closePressed: {
+    opacity: LAYOUT.OPACITY.PRESSED,
+  },
 });
+
+/** Progress track thickness. Thin enough to read as chrome beside a bare glyph. */
+const PROGRESS_HEIGHT = LAYOUT.SPACING.SMALL - LAYOUT.SPACING.HALF_TINY; // 6
 
 interface ReviewHeaderProps {
   progress: number;
@@ -108,12 +128,17 @@ export const ReviewHeader = ({
   // that exit is also reached from the completion screen's ThemedButtons, which
   // fire their own, so keeping it in the hook buzzed Continue twice in one tick.
   //
-  // hapticType="selection" overrides GlassIconButton's 'light' default — tier 0
-  // in utils/haptics. Leaving the session is navigation, and a session where the
-  // chrome buzzes as hard as a grade has no room left to mark the grade.
-  const handleClose = () => {
-    onClose?.();
-  };
+  // `selection` is tier 0 in utils/haptics. Leaving the session is navigation,
+  // and a session where the chrome buzzes as hard as a grade has no room left
+  // to mark the grade.
+  //
+  // No scale on press, the same call `HeaderIconButton` makes: a control that
+  // shrinks inside the header reads as loose. Pressed opacity and the Android
+  // ripple answer the tap.
+  const { handlePress: handleClose, rippleConfig } = useButtonPress({
+    onPress: () => onClose?.(),
+    hapticType: 'selection',
+  });
 
   return (
     <View style={STATIC_STYLES.header}>
@@ -123,13 +148,13 @@ export const ReviewHeader = ({
         accessibilityLabel={STRINGS.SESSION_PROGRESS_A11Y(Math.round(displayProgress), wordsDone)}
         style={STATIC_STYLES.progressContainer}
       >
-        {/* Deliberately thinner than the ProgressBar default (12): next to a
-            44pt circular button a 12px pill reads as a second control rather
-            than as chrome. */}
+        {/* Deliberately thinner than the ProgressBar default (12), which beside
+            a bare glyph would be the header's loudest element and read as a
+            control rather than as chrome. */}
         <ProgressBar
           animationDuration={TIMING_CONFIG.PROGRESS.duration}
           progress={displayProgress}
-          height={LAYOUT.SPACING.SMALL}
+          height={PROGRESS_HEIGHT}
           // The default track is tint at 15%, which over this screen's near-black
           // background is within a shade of the page — so on the first card, when
           // the fill is still zero-width, the bar was invisible and the session
@@ -156,13 +181,21 @@ export const ReviewHeader = ({
         </Animated.View>
       )}
       {onClose && (
-        <GlassIconButton
-          clear
+        <Pressable
           accessibilityLabel={STRINGS.REVIEW_CLOSE_A11Y}
-          icon="close"
-          hapticType="selection"
+          accessibilityRole="button"
+          android_ripple={rippleConfig}
+          style={({ pressed }) => [STATIC_STYLES.close, pressed && STATIC_STYLES.closePressed]}
           onPress={handleClose}
-        />
+        >
+          <Ionicons
+            color={colors.secondaryText}
+            // The outline cut: Ionicons' plain `close` is the filled, heavy-stroke
+            // variant, which without a circle around it reads as a bold mark.
+            name="close-outline"
+            size={LAYOUT.BUTTON.ICON_SIZE.XLARGE}
+          />
+        </Pressable>
       )}
     </View>
   );

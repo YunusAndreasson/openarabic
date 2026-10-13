@@ -30,7 +30,7 @@ Does the data come from an API/database?
 
 - `themeSlice` - Theme preference (light/dark mode)
 - `settingsSlice` - User preferences (audio language, fonts, shuffle)
-- `editModeSlice` - Dictionary edit mode state
+- `editModeSlice` - Temporary playlist edit mode (not persisted)
 - `playlistSlice` - Audio playlist custom order
 - `filterSlice` - Library filter selections
 

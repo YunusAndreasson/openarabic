@@ -12,6 +12,7 @@ export interface DragHandleProps {
   delayLongPress: number;
   style?: StyleProp<ViewStyle>;
   testID?: string;
+  accessibilityLabel?: string;
 }
 
 export const DragHandle = ({
@@ -19,13 +20,14 @@ export const DragHandle = ({
   delayLongPress = TIMING_CONFIG.FAST.duration,
   style,
   testID,
+  accessibilityLabel = STRINGS.PLAYLIST_A11Y_REORDER,
 }: DragHandleProps) => {
   const colors = useColors();
 
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={STRINGS.PLAYLIST_A11Y_REORDER}
+      accessibilityLabel={accessibilityLabel}
       accessibilityHint={STRINGS.PLAYLIST_A11Y_REORDER_HINT}
       style={[styles.container, style]}
       onLongPress={onLongPress}

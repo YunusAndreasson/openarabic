@@ -13,8 +13,9 @@ import { useDueWordsCount, useHasStudyWords } from '@/hooks/vocabulary/useFSRSQu
  *
  * Was a full-width pill pinned above the tab bar; the label carried the
  * workload ("Review 12 words") because it had the room. Up here it is one word,
- * and the count it used to spell out is already on the tab badge and the "Due"
- * stat card — the same fact at three sizes was never worth the header width,
+ * and the count it used to spell out is already on the tab badge and the "Due
+ * today" card directly below — the same fact at three sizes was never worth the
+ * header width,
  * and a label that changes length as the session drains would make the header
  * twitch.
  *

@@ -1,6 +1,7 @@
 import { Skia, type SkPath } from '@shopify/react-native-skia';
 
 import { LAYOUT, SCREEN_HEIGHT, SCREEN_WIDTH } from '@/constants/layout';
+import { getHorizonFraction } from '@/utils/memoryHorizon';
 
 /**
  * Geometry for the practice screen's memory constellation, and the pure path
@@ -54,6 +55,19 @@ export const BIN_COUNT = Math.min(
 );
 export const BIN_GAP = 3;
 export const BIN_WIDTH = (BAND_WIDTH - (BIN_COUNT - 1) * BIN_GAP) / BIN_COUNT;
+
+/**
+ * Which column a horizon of `days` falls in.
+ *
+ * `min` guards the top of the range: a word at exactly maximum_interval scores
+ * a fraction of 1 and would otherwise index one past the last column. The one
+ * place this is decided, so the distribution that counts a column and the
+ * travel plan that moves a dot between columns can never disagree about where
+ * a word sits.
+ */
+export function getHorizonBinIndex(days: number): number {
+  return Math.min(BIN_COUNT - 1, Math.floor(getHorizonFraction(days) * BIN_COUNT));
+}
 
 /** Left edge of column `index`. */
 export function binX(index: number): number {

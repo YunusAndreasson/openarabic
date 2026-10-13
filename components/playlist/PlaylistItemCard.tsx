@@ -1,6 +1,6 @@
 import { BaseCard, ProgressBar } from '@/components/common';
 import { memo, type ComponentType } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { EnhancedImage, IconButton } from '@/components/ui';
@@ -61,6 +61,10 @@ export const PlaylistItemCard = memo(
   }: PlaylistItemCardProps) => {
     const isDarkMode = useIsDarkMode();
     const colors = useColors();
+    const { fontScale } = useWindowDimensions();
+    // Larger system text is a request for readability; keep the article's full
+    // title and byline available instead of preserving the compact line caps.
+    const wrapText = fontScale > 1;
 
     // Edit mode animation (scales down when in edit mode or being dragged)
     const { animatedStyle } = useEditModeCardAnimation({
@@ -83,6 +87,7 @@ export const PlaylistItemCard = memo(
         {editMode && dragHandleProps && (
           <View style={styles.dragHandleContainer}>
             <DragHandle
+              accessibilityLabel={STRINGS.PLAYLIST_A11Y_REORDER_ARTICLE.replace('{title}', title)}
               onLongPress={dragHandleProps.onLongPress}
               delayLongPress={dragHandleProps.delayLongPress}
             />
@@ -117,7 +122,7 @@ export const PlaylistItemCard = memo(
                     style={titleTextStyle}
                     type={compact ? 'body' : 'heading3'}
                     weight={compact ? 'semibold' : undefined}
-                    numberOfLines={2}
+                    numberOfLines={wrapText ? undefined : 2}
                     ellipsizeMode="tail"
                   >
                     {title}
@@ -126,7 +131,7 @@ export const PlaylistItemCard = memo(
                     <ThemedText
                       skipDefaultColor
                       colorName="authorText"
-                      numberOfLines={1}
+                      numberOfLines={wrapText ? undefined : 1}
                       ellipsizeMode="tail"
                       style={secondaryTextStyle}
                       type="label"
@@ -155,7 +160,7 @@ export const PlaylistItemCard = memo(
         {editMode && onDelete && (
           <View style={styles.deleteButtonContainer}>
             <IconButton
-              accessibilityLabel={STRINGS.ARTICLE_REMOVE_FROM_PLAYLIST_A11Y}
+              accessibilityLabel={STRINGS.PLAYLIST_A11Y_REMOVE_ARTICLE.replace('{title}', title)}
               hapticType="selection"
               icon="trash"
               size="small"

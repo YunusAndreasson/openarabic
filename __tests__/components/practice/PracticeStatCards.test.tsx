@@ -17,7 +17,7 @@
  */
 
 import { describe, expect, jest, test } from '@jest/globals';
-import { fireEvent, render } from '@testing-library/react-native';
+import { fireEvent, render, within } from '@testing-library/react-native';
 
 import { PracticeStatCards } from '@/components/practice/PracticeStatCards';
 import { STRINGS } from '@/constants/strings';
@@ -35,6 +35,7 @@ const distribution: MemoryHorizonDistribution = {
   notStartedCount: 0,
   totalWords: 0,
   hasDistribution: false,
+  horizonByRootId: new Map(),
 };
 
 /** The disclosure signifier, as the icon mock renders it. */
@@ -44,8 +45,25 @@ const handlers = () => ({
   onDuePress: jest.fn(),
   onStreakPress: jest.fn(),
   onMemoryPress: jest.fn(),
-  onRevisitPress: jest.fn(),
   onReviewsPress: jest.fn(),
+});
+
+describe('PracticeStatCards order', () => {
+  test('the due count comes first — it is the number the tab badge points at', () => {
+    const view = render(
+      <PracticeStatCards distribution={distribution} dueWords={23} {...handlers()} />,
+    );
+
+    // Document order of the three labels, read off the rendered tree.
+    const tree = JSON.stringify(view.toJSON());
+    const due = tree.indexOf(STRINGS.DUE_TODAY_LABEL);
+    const recall = tree.indexOf(STRINGS.PRACTICE_RECALL_NOW_LABEL);
+    const streak = tree.indexOf(STRINGS.STREAK_LABEL);
+
+    expect(due).toBeGreaterThan(-1);
+    expect(due).toBeLessThan(recall);
+    expect(recall).toBeLessThan(streak);
+  });
 });
 
 describe('PracticeStatCards habit row', () => {
@@ -56,7 +74,6 @@ describe('PracticeStatCards habit row', () => {
         distribution={distribution}
         currentStreak={9}
         totalReviews={412}
-        leechCount={3}
         {...press}
       />,
     );
@@ -66,9 +83,6 @@ describe('PracticeStatCards habit row', () => {
 
     fireEvent.press(view.getByText(STRINGS.REVIEWS_LABEL));
     expect(press.onReviewsPress).toHaveBeenCalled();
-
-    fireEvent.press(view.getByText(STRINGS.REVISIT_LABEL));
-    expect(press.onRevisitPress).toHaveBeenCalled();
   });
 
   test('every panel that opens something shows the chevron — and only those', () => {
@@ -77,23 +91,12 @@ describe('PracticeStatCards habit row', () => {
         distribution={distribution}
         currentStreak={9}
         totalReviews={412}
-        leechCount={3}
         {...handlers()}
       />,
     );
 
-    // Five pressable panels: the memory hero, the week-ahead row, and the three
-    // habit tiles. One signifier each, no more and no fewer.
-    expect(view.getAllByText(CHEVRON)).toHaveLength(5);
-  });
-
-  test('a panel that is not there cannot claim a disclosure', () => {
-    // Revisit is conditional, so the count of signifiers has to follow the count
-    // of panels rather than being hardcoded anywhere.
-    const view = render(
-      <PracticeStatCards distribution={distribution} leechCount={0} {...handlers()} />,
-    );
-
+    // Four pressable panels: the due card, the recall card, and the two habit
+    // tiles. One signifier each, no more and no fewer.
     expect(view.getAllByText(CHEVRON)).toHaveLength(4);
   });
 
@@ -101,7 +104,9 @@ describe('PracticeStatCards habit row', () => {
     // Unlike the streak beside it, zero reviews is a fact and not a pending
     // read — it sits directly above a "Review N words" button and reads as an
     // invitation.
-    // A non-zero streak beside it, so the only `0` on screen is the one under test.
+    // The numeral counts to its value, so it is hidden from a screen reader
+    // and read through the tile's own label instead — which also scopes the
+    // query: the due and recall cards above render a hidden `0` of their own.
     const view = render(
       <PracticeStatCards
         distribution={distribution}
@@ -111,16 +116,10 @@ describe('PracticeStatCards habit row', () => {
       />,
     );
 
-    expect(view.getByText(STRINGS.REVIEWS_LABEL)).toBeTruthy();
-    expect(view.getByText('0')).toBeTruthy();
-    expect(view.queryByText(STRINGS.EMPTY_METRIC)).toBeNull();
-  });
+    const tile = within(view.getByLabelText(STRINGS.REVIEWS_TILE_A11Y.replace('{count}', '0')));
 
-  test('the revisit tile stays away until there is something to revisit', () => {
-    const view = render(
-      <PracticeStatCards distribution={distribution} leechCount={0} {...handlers()} />,
-    );
-
-    expect(view.queryByText(STRINGS.REVISIT_LABEL)).toBeNull();
+    expect(tile.getByText(STRINGS.REVIEWS_LABEL)).toBeTruthy();
+    expect(tile.getByText('0', { includeHiddenElements: true })).toBeTruthy();
+    expect(tile.queryByText(STRINGS.EMPTY_METRIC, { includeHiddenElements: true })).toBeNull();
   });
 });

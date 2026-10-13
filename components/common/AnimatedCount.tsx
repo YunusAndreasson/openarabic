@@ -5,8 +5,7 @@ import {
   cancelAnimation,
   useAnimatedReaction,
   useSharedValue,
-  withSpring,
-  type WithSpringConfig,
+  withTiming,
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
@@ -14,7 +13,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 // '@/components/common' closes a cycle that resolves to `undefined` at runtime
 // and fails as a blank component rather than a build error.
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { SPRING_CONFIG } from '@/constants/animation';
+import { TIMING_CONFIG } from '@/constants/animation';
 import type { SolidColorName } from '@/constants/colors';
 import type { TextTypeName } from '@/types/ui/text.types';
 import { formatCount } from '@/utils/stringUtils';
@@ -33,7 +32,7 @@ type AnimatedCountAccessibility =
   { accessibilityLabel: string; silent?: never } | { silent: true; accessibilityLabel?: never };
 
 export type AnimatedCountProps = AnimatedCountAccessibility & {
-  /** The target. Counts up from the previous value on every change. */
+  /** The target. Counts from the previous value on every change, up or down. */
   value: number;
   /**
    * Rendered instead of the number when there is nothing to count — pass
@@ -50,21 +49,29 @@ export type AnimatedCountProps = AnimatedCountAccessibility & {
    * seam for reduced motion when that lands app-wide.
    */
   animationDuration?: 0;
+  /**
+   * Text fitting, passed straight through. A count inside a narrow tile needs
+   * the same protection a static numeral there has: shrink a little rather than
+   * wrap and make the tile taller than its neighbours.
+   */
+  numberOfLines?: number;
+  adjustsFontSizeToFit?: boolean;
+  minimumFontScale?: number;
   testID?: string;
 };
 
-const COUNT_SPRING: WithSpringConfig = {
-  ...SPRING_CONFIG.CARD,
-  overshootClamping: true,
-};
-
 /**
- * A number that counts up to its value.
+ * A number that counts to its value.
  *
- * The spring runs on the UI thread and only the ROUNDED INTEGER is pushed back
- * to JS — a handful of re-renders across the animation instead of one per frame.
- * That property is the whole reason this is a shared primitive rather than an
- * idiom copied per call site.
+ * The count runs on the UI thread and only the ROUNDED INTEGER is pushed back
+ * to JS, so it re-renders once per integer it passes through rather than once
+ * per frame. For a small change that is a handful of renders; for a change
+ * larger than the frames available it approaches one per frame, of this one
+ * text node. Keeping that work in one place is the reason this is a shared
+ * primitive rather than an idiom copied per call site.
+ *
+ * It never animates on mount, only on a change, so a screen that opens does not
+ * count up from zero; a number that moves is always a number that changed.
  *
  * It carried a `suffix`, a `resolveColor` and a `spring` override for the
  * retention gauge it was lifted from. That gauge is gone, and no caller ever
@@ -77,6 +84,9 @@ export function AnimatedCount({
   style,
   colorName,
   animationDuration,
+  numberOfLines,
+  adjustsFontSizeToFit,
+  minimumFontScale,
   testID,
   accessibilityLabel,
   silent,
@@ -88,7 +98,7 @@ export function AnimatedCount({
 
   useEffect(() => {
     if (isStatic) return;
-    progress.set(withSpring(value, COUNT_SPRING));
+    progress.set(withTiming(value, TIMING_CONFIG.COUNT));
   }, [value, isStatic, progress]);
 
   // A `scheduleOnRN` already in flight would otherwise call setState on an
@@ -123,6 +133,9 @@ export function AnimatedCount({
       type={type}
       colorName={colorName}
       style={style}
+      numberOfLines={numberOfLines}
+      adjustsFontSizeToFit={adjustsFontSizeToFit}
+      minimumFontScale={minimumFontScale}
       testID={testID}
       // A silent instance defers entirely to the accessible ancestor that
       // describes the whole card; a labelled one announces its settled value.

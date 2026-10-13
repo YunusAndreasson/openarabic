@@ -35,6 +35,16 @@ export const TIMING_CONFIG = {
     duration: 400, // Progress bar animations
     easing: Easing.out(Easing.cubic), // Smooth progress easing
   },
+  /**
+   * A numeral counting to a new value. Long enough to be read as counting: the
+   * snappy card spring this replaced settled in about 150ms, which is a swap,
+   * not a count, and a learner back from a session saw the new number without
+   * ever seeing it change.
+   */
+  COUNT: {
+    duration: 700,
+    easing: Easing.out(Easing.cubic),
+  },
   FLIP: {
     duration: 320, // 3D card flip (reveal) — a touch slower than SLOW so the rotation reads
     easing: Easing.inOut(Easing.cubic), // Symmetric ease for a physical front→back turn
@@ -174,6 +184,77 @@ export const VERDICT = {
    * held RESIDUAL level instead of snapping back the moment the shake ends.
    */
   WINCE_SCALE: 0.99,
+} as const;
+
+/**
+ * Coming back to the Practice tab: its figures hold what they showed when the
+ * tab was covered, then play their changes in three beats, top to bottom — what
+ * is due, what memory did with it, the habit numbers.
+ *
+ * The tab stays mounted under the review screen and refetches there, so without
+ * the hold every number had already changed by the time anyone could see it.
+ */
+export const PRACTICE_REPLAY = {
+  /** Lets the screen that was covering the tab get out of the way first. */
+  START_DELAY: 400,
+  /**
+   * The longest the figures wait on a refetch still in flight, measured from the
+   * return. A slow network must never leave stale numbers on screen.
+   */
+  MAX_WAIT: 1500,
+  /** Gap between one beat and the next. */
+  BEAT: 400,
+} as const;
+
+/**
+ * A word's dot travelling along the memory constellation to where it now holds.
+ *
+ * One linear sweep drives every travelling dot. Each dot eases on its own slice
+ * of it, so they leave as a stream rather than as a block.
+ */
+export const HORIZON_TRAVEL = {
+  SWEEP: {
+    duration: 1100,
+    easing: Easing.linear,
+  },
+  /** The median rule sliding to where the typical word now sits. */
+  MEDIAN: {
+    duration: 1100,
+    easing: Easing.inOut(Easing.cubic),
+  },
+  /** Share of the sweep the departures are spread across. */
+  STAGGER: 0.4,
+  /** How high a dot lifts at the top of its arc, in points. */
+  ARC_LIFT: 16,
+  /** Share of the sweep the rest of the field takes to dim, and to return. */
+  DIM_RAMP: 0.15,
+  /**
+   * Above this many travelling dots the field regrows instead: a bulk change is
+   * not a session, and that many arcs at once is noise rather than a story.
+   */
+  MAX_MOVERS: 160,
+  /**
+   * How far through its own travel a dot counts as landed, for the tick that
+   * goes with it. The last tenth of the ease-out moves a dot a point or two, so
+   * a tick held for the true end would arrive after the eye had already seen
+   * the dot seat.
+   */
+  LANDED_AT: 0.9,
+  /**
+   * Shortest gap between two landing ticks, in ms. This, and not the number of
+   * words, is what bounds the haptic: the landings are spread over a fixed
+   * share of the sweep, so a session of five words is five separate taps and a
+   * session of a hundred and fifty is the same handful of ticks run together
+   * into a roll. Kept clear of the 50ms same-pattern debounce in
+   * `utils/haptics`, which would otherwise eat every other tick.
+   */
+  HAPTIC_MIN_GAP: 70,
+  /**
+   * How much of its height a regrown field has reached when it counts as
+   * landed. Its ease-out spends the last quarter of its time on the last two
+   * percent.
+   */
+  REGROWN_AT: 0.98,
 } as const;
 
 /**

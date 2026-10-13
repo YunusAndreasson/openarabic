@@ -452,6 +452,12 @@ export const VoiceGradingProvider = ({ children }: { children: ReactNode }) => {
           // see VoiceCaptureSession.close, where the field evidence lives.
           if (reopen) {
             recordingGrantRequiredRef.current = true;
+            // close() cancels capture's window without invoking its auto-stop
+            // callback. Settle the provider's matching arm promise before the
+            // rebuild, including when only an interruption-ended signal arrives
+            // after a window has already opened. Otherwise it stays pending
+            // forever and every later arm sees the abandoned attempt as busy.
+            abortWindow('error', 'input stream reopening');
             await capture.close({ releaseSession: true });
           }
           // Opening the stream reconfigures the SHARED audio session as
@@ -503,7 +509,7 @@ export const VoiceGradingProvider = ({ children }: { children: ReactNode }) => {
         }
       });
     },
-    [capture],
+    [abortWindow, capture],
   );
 
   /**

@@ -24,8 +24,10 @@ Object.defineProperty(Platform, 'OS', { get: () => 'android', configurable: true
 const { useIsTabBarHidden, useTabBarAutoHide } =
   require('@/hooks/ui/useTabBarAutoHide') as typeof import('@/hooks/ui/useTabBarAutoHide');
 
-const scrollTo = (y: number) =>
-  ({ nativeEvent: { contentOffset: { y } } }) as NativeSyntheticEvent<NativeScrollEvent>;
+const scrollTo = (y: number, height = 600) =>
+  ({
+    nativeEvent: { contentOffset: { y }, layoutMeasurement: { height } },
+  }) as NativeSyntheticEvent<NativeScrollEvent>;
 
 /** Drives one screen's scroll handler and one reader of the shared store. */
 function renderAutoHide() {
@@ -108,6 +110,38 @@ describe('useTabBarAutoHide', () => {
 
     // Otherwise a hidden bar outlives the screen that hid it and the next tab
     // opens with no navigation at all.
+    expect(isHidden()).toBeFalsy();
+  });
+
+  test('keeps the bar hidden when viewport growth clamps the scroll offset', () => {
+    const { scroller, scroll, isHidden } = renderAutoHide();
+    scroll(60, 140);
+    expect(isHidden()).toBeTruthy();
+
+    act(() => scroller.result.current.onScroll?.(scrollTo(100, 700)));
+    expect(isHidden()).toBeTruthy();
+
+    // A real upward move after the resize still reveals navigation.
+    act(() => scroller.result.current.onScroll?.(scrollTo(90, 700)));
+    expect(isHidden()).toBeFalsy();
+  });
+
+  test('handles viewport growth for lists that report bare offsets', () => {
+    const { scroller, isHidden } = renderAutoHide();
+    act(() => {
+      scroller.result.current.onViewportHeightChange(600);
+      scroller.result.current.onScrollOffset(60);
+      scroller.result.current.onScrollOffset(140);
+    });
+    expect(isHidden()).toBeTruthy();
+
+    act(() => {
+      scroller.result.current.onViewportHeightChange(700);
+      scroller.result.current.onScrollOffset(100);
+    });
+    expect(isHidden()).toBeTruthy();
+
+    act(() => scroller.result.current.onScrollOffset(90));
     expect(isHidden()).toBeFalsy();
   });
 });

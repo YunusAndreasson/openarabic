@@ -20,14 +20,15 @@ import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useResumeFromBackground } from '@/hooks/app/useResumeFromBackground';
 import { useMiniPlayerClearance } from '@/hooks/audio/useMiniPlayerClearance';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { useHeldFigures } from '@/hooks/practice/useHeldFigures';
 import { useStudyStreak } from '@/hooks/practice/useStudyStreak';
 import { useTabBarAutoHide } from '@/hooks/ui/useTabBarAutoHide';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { useAppSelectorShallow } from '@/store/hooks';
 import { useMemoryHorizonDistribution } from '@/hooks/vocabulary/useMemoryHorizonDistribution';
 import { useRecallableMemory } from '@/hooks/vocabulary/useMemoryInsights';
+import { isDueCountCapped } from '@/utils/dueCountText';
 import { calculateDueWordsForecast } from '@/utils/fsrsUtils';
-import { isLeechWord } from '@/utils/leechUtils';
 import { runWhenIdle } from '@/utils/runWhenIdle';
 import { countReviewedToday, isDueWord } from '@/utils/wordClassification';
 
@@ -98,7 +99,7 @@ export default function PracticeScreen(): JSX.Element {
   );
 
   // Use the FSRS queries hook for data fetching
-  const { allWords, dueWords, error, isLoading } = useFSRSQueries({
+  const { allWords, dueWords, error, isLoading, isFetching } = useFSRSQueries({
     userId: user?.id,
     limit: PRACTICE_DUE_WORDS_LIMIT,
   });
@@ -113,7 +114,7 @@ export default function PracticeScreen(): JSX.Element {
   // At the cap the two lists differ, the vocabulary grows when review mounts,
   // and the warm engine is rebuilt during card 1 after all — so past the cap
   // this reads the due words out of the full list instead.
-  const dueWordsCapped = (dueWords?.length ?? 0) >= PRACTICE_DUE_WORDS_LIMIT;
+  const dueWordsCapped = isDueCountCapped(dueWords?.length ?? 0);
   const vocabularyWords = dueWordsCapped ? (allWords ?? []).filter(isDueWord) : (dueWords ?? []);
   const dueGlossKey = vocabularyWords
     .map(word => word.root?.meaning)
@@ -159,10 +160,6 @@ export default function PracticeScreen(): JSX.Element {
     () => router.push(ROUTE_PATHS.PRACTICE_STUDY_STREAK),
     [router],
   );
-  const handleRevisitPress = useCallback(
-    () => router.push(ROUTE_PATHS.PRACTICE_WORDS_TO_REVISIT),
-    [router],
-  );
   const handleReviewsPress = useCallback(
     () => router.push(ROUTE_PATHS.PRACTICE_REVIEW_DEPTH),
     [router],
@@ -173,25 +170,9 @@ export default function PracticeScreen(): JSX.Element {
     void fsrsQueries.invalidateAll(queryClient, userId);
   }, [queryClient, userId]);
 
-  // Leech count for the (conditional) "Revisit" stat card — reuses the words
-  // already fetched, so no extra query.
-  //
-  // Counted with the predicate, NOT with `rankStrugglingWords`: that function
-  // slices to LEECH_LIST_LIMIT (20), which is the right cap for the *list*
-  // screen and a lie on a tile — a learner with 47 leeches was told 20.
-  // The arrow wrapper is load-bearing: `Array.filter` passes the index as its
-  // second argument, which lands on `isLeechWord`'s `minLapses` parameter and
-  // makes every word at index 0/1 a leech (same trap as useDictionaryList).
-  const leechCount = useMemo(
-    () => studyWords.filter(word => isLeechWord(word)).length,
-    [studyWords],
-  );
-
   // Fix: Use the actual due words data count instead of database view
   // This ensures consistency between display and practice session
   const dueWordsCount = dueWords?.length ?? 0;
-  // The due query clips at the fetch limit — never imply exactness past it
-  const dueCountCapped = dueWordsCount >= PRACTICE_DUE_WORDS_LIMIT;
 
   // Unique words whose last review was today. One `fsrs_last_review` per word is
   // the only per-day granularity the schema allows, so re-asking the same word
@@ -219,15 +200,36 @@ export default function PracticeScreen(): JSX.Element {
 
   // The distribution behind the memory constellation.
   const distribution = useMemoryHorizonDistribution(studyWords);
-  const scrollContentStyle = useMemo(
-    () => [styles.contentContainer, { paddingBottom: miniPlayerClearance }],
-    [miniPlayerClearance],
-  );
 
   // Show main UI if there are any words available in either query source
   // - allWords may lag if mutations only invalidate 'due' keys
   // - dueWords reflects immediate availability for study
   const hasAnyStudyWords = (allWords?.length ?? 0) > 0 || dueWordsCount > 0;
+
+  // What the cards are actually given. This tab stays mounted under the review
+  // screen and refetches there, so left to themselves the figures above have
+  // all changed before anyone can see them — the hold keeps what was on screen
+  // until the tab is back in view, then releases the groups in reading order so
+  // the session's effect is something that visibly happens. It is told whether
+  // the cards are on screen at all, because figures nobody saw are not worth
+  // holding: behind the loading and empty states they are placeholder zeros.
+  const shown = useHeldFigures(
+    {
+      cost: { dueWords: dueWordsCount, reviewedToday, forecast },
+      memory: {
+        recallableWords: memory.recallableWords,
+        hasMeasuredMemory: memory.measuredWords > 0,
+        distribution,
+      },
+      habit: { currentStreak, hasStreak, totalReviews },
+    },
+    !isFetching,
+    hasAnyStudyWords && !shouldShowError,
+  );
+  const scrollContentStyle = useMemo(
+    () => [styles.contentContainer, { paddingBottom: miniPlayerClearance }],
+    [miniPlayerClearance],
+  );
 
   // Show error message if there was an error loading data
   if (shouldShowError) {
@@ -266,6 +268,7 @@ export default function PracticeScreen(): JSX.Element {
 
   return (
     <ScrollView
+      testID="practice-dashboard"
       // Scroll direction drives the tab bar out of the way on Android; on iOS
       // UIKit reads this same scroll view itself. See `useTabBarAutoHide`.
       {...tabBarAutoHide}
@@ -280,21 +283,18 @@ export default function PracticeScreen(): JSX.Element {
     >
       <Animated.View style={VOCABULARY_SECTION_STYLE}>
         <PracticeStatCards
-          dueWords={dueWordsCount}
-          dueCountCapped={dueCountCapped}
-          reviewedToday={reviewedToday}
-          recallableWords={memory.recallableWords}
-          hasMeasuredMemory={memory.measuredWords > 0}
-          distribution={distribution}
-          forecast={forecast}
-          currentStreak={currentStreak}
-          hasStreak={hasStreak}
-          totalReviews={totalReviews}
-          leechCount={leechCount}
+          dueWords={shown.cost.dueWords}
+          reviewedToday={shown.cost.reviewedToday}
+          recallableWords={shown.memory.recallableWords}
+          hasMeasuredMemory={shown.memory.hasMeasuredMemory}
+          distribution={shown.memory.distribution}
+          forecast={shown.cost.forecast}
+          currentStreak={shown.habit.currentStreak}
+          hasStreak={shown.habit.hasStreak}
+          totalReviews={shown.habit.totalReviews}
           onDuePress={handleDuePress}
           onStreakPress={handleStreakPress}
           onMemoryPress={handleMemoryStrengthInfo}
-          onRevisitPress={handleRevisitPress}
           onReviewsPress={handleReviewsPress}
         />
       </Animated.View>

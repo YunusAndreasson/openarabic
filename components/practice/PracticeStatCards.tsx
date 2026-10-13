@@ -1,14 +1,17 @@
 /**
  * PracticeStatCards Component
  *
- * The practice home's surface, deliberately shallow: **one story, then the
- * action**.
+ * The practice home's surface, deliberately shallow, in the order a learner
+ * asks about it:
  *
- *   1. what you can recall right now, and how deeply it sits — the hero, which
- *      owns the screen;
- *   2. today's workload, as a slim row with the week's shape beside it;
- *   3. three habit numbers, as tiles;
- *   4. the single pinned CTA, owned by the screen rather than by this file.
+ *   1. what is due today — the number the tab badge shows, directly under the
+ *      header's Review action, with the week's shape beside it;
+ *   2. what you can recall right now, and how deeply it sits;
+ *   3. two habit numbers, as tiles.
+ *
+ * Due leads because the badge points here. Recall led for a while, and the
+ * count the learner had just seen on the tab icon was then the smallest number
+ * on the screen it opened.
  *
  * Everything else is one tap away, and that is the point. An earlier version of
  * this screen carried the same four blocks PLUS a per-day forecast with its own
@@ -20,12 +23,11 @@
  * counts in /due-words; the growth series on the dictionary screen it
  * describes.
  */
-import { MetricCard } from '@/components/common';
+import { MetricCardGrid } from '@/components/common/MetricCardGrid';
 import { StyleSheet, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { useColors } from '@/hooks/theme/useColors';
 import type { MemoryHorizonDistribution } from '@/hooks/vocabulary/useMemoryHorizonDistribution';
 import type { DueWordsForecast } from '@/utils/fsrsUtils';
 
@@ -34,7 +36,6 @@ import { WeekAheadCard } from './WeekAheadCard';
 
 interface PracticeStatCardsProps {
   dueWords?: number;
-  dueCountCapped?: boolean;
   reviewedToday?: number;
   /** Expected words recallable right now. */
   recallableWords?: number;
@@ -48,17 +49,14 @@ interface PracticeStatCardsProps {
   hasStreak?: boolean;
   /** Σ fsrs_reps — grades given, across the whole collection. */
   totalReviews?: number;
-  leechCount?: number;
   onDuePress?: () => void;
   onStreakPress?: () => void;
   onMemoryPress?: () => void;
-  onRevisitPress?: () => void;
   onReviewsPress?: () => void;
 }
 
 export function PracticeStatCards({
   dueWords = 0,
-  dueCountCapped = false,
   reviewedToday = 0,
   recallableWords = 0,
   hasMeasuredMemory = true,
@@ -67,19 +65,19 @@ export function PracticeStatCards({
   currentStreak = 0,
   hasStreak = true,
   totalReviews = 0,
-  leechCount = 0,
   onDuePress,
   onStreakPress,
   onMemoryPress,
-  onRevisitPress,
   onReviewsPress,
 }: PracticeStatCardsProps) {
-  const colors = useColors();
-
-  // Colour is spent only where it carries information. A leech count only ever
-  // appears because something needs attention; a streak and a review total are
-  // just numbers, and painting those too turned the row into three unrelated
-  // accent colours.
+  // Two tiles, both plain ink: a streak and a review total are just numbers.
+  //
+  // There was a third, "Revisit", counting words forgotten twice or more. It is
+  // gone because the scheduler already brings a forgotten word back sooner —
+  // starting a review IS the revisit — and the tile had no action of its own,
+  // only a list. It put a coloured count of "problems" under the due count on a
+  // screen whose one instruction is to review what is due. Those words are
+  // still browsable through the dictionary's Struggling scope.
   //
   // The old "Memory" tile is gone: the hero now says the same thing in a better
   // unit — a count of words rather than an abstract percentage — and it was also
@@ -87,14 +85,15 @@ export function PracticeStatCards({
   // that anyone returning from a break was met with red.
   const stats = [
     {
+      id: 'streak',
       label: STRINGS.STREAK_LABEL,
       // An unread streak is not a streak of zero. Rendering the pending (or
       // failed) state as "0" tells someone on a 43-day run that they have lost
       // it — measured on device: every cold start flashed "0" before the query
       // landed, and a failed fetch left it there.
       value: hasStreak ? currentStreak : STRINGS.EMPTY_METRIC,
-      // Spoken labels end with what the tap opens, the same way the hero and the
-      // week-ahead card above them do. Without one, a tile announced its two
+      // Spoken labels end with what the tap opens, the same way the two cards
+      // above them do. Without one, a tile announced its two
       // words and hid the door.
       accessibilityLabel: hasStreak
         ? STRINGS.STREAK_TILE_A11Y.replace('{count}', String(currentStreak))
@@ -102,6 +101,7 @@ export function PracticeStatCards({
       onPress: onStreakPress,
     },
     {
+      id: 'reviews',
       label: STRINGS.REVIEWS_LABEL,
       // `0` here, not "—", and the difference matters: zero reviews is a
       // MEASURED fact for a new learner, sitting directly above a "Review N
@@ -110,30 +110,26 @@ export function PracticeStatCards({
       // streak, `fsrs_reps` only falls through an explicit, confirmed reset.
       value: totalReviews,
       accessibilityLabel: STRINGS.REVIEWS_TILE_A11Y.replace('{count}', String(totalReviews)),
-      // This tile used to be the one in the row with nowhere to go. Streak and
-      // Revisit beside it each open a sheet, and all three are the same
-      // `BaseCard` at the same size — so a tap that produced the press state and
-      // then nothing read as a broken control rather than as a static readout.
+      // This tile used to be the one in the row with nowhere to go. Streak
+      // beside it opens a sheet, and both are the same `BaseCard` at the same
+      // size — so a tap that produced the press state and then nothing read as
+      // a broken control rather than as a static readout.
       // Reported as exactly that. Its sheet is the breakdown of this very
       // number, so the tap now pays for itself twice.
       onPress: onReviewsPress,
     },
-    // Only surfaced when the learner actually has leeches, so it never nags.
-    ...(leechCount > 0
-      ? [
-          {
-            label: STRINGS.REVISIT_LABEL,
-            value: leechCount,
-            valueColor: colors.error,
-            accessibilityLabel: STRINGS.REVISIT_TILE_A11Y.replace('{count}', String(leechCount)),
-            onPress: onRevisitPress,
-          },
-        ]
-      : []),
   ];
 
   return (
     <View style={styles.container}>
+      {/* Cost: what is due today, and what the week ahead asks of you */}
+      <WeekAheadCard
+        forecast={forecast}
+        dueCount={dueWords}
+        reviewedToday={reviewedToday}
+        onPress={onDuePress}
+      />
+
       {/* Capability: what you know right now, and how far it reaches */}
       <MemoryHorizonCard
         recallableWords={recallableWords}
@@ -142,28 +138,8 @@ export function PracticeStatCards({
         onPress={onMemoryPress}
       />
 
-      {/* Cost: what the week ahead asks of you */}
-      <WeekAheadCard
-        forecast={forecast}
-        dueCount={dueWords}
-        dueCountCapped={dueCountCapped}
-        reviewedToday={reviewedToday}
-        onPress={onDuePress}
-      />
-
       {/* Habit */}
-      <View style={styles.statsRow}>
-        {stats.map(stat => (
-          <MetricCard
-            key={stat.label}
-            value={stat.value}
-            label={stat.label}
-            valueColor={stat.valueColor}
-            accessibilityLabel={stat.accessibilityLabel}
-            onPress={stat.onPress}
-          />
-        ))}
-      </View>
+      <MetricCardGrid metrics={stats} density="comfortable" animated />
     </View>
   );
 }
@@ -172,11 +148,6 @@ PracticeStatCards.displayName = 'PracticeStatCards';
 
 const styles = StyleSheet.create({
   container: {
-    gap: LAYOUT.SPACING.SMALL,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     gap: LAYOUT.SPACING.SMALL,
   },
 });

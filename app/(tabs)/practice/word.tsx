@@ -182,7 +182,7 @@ export default function PracticeWordScreen(): JSX.Element {
     router.push(getPracticeWordRoute(memberRootId));
   };
 
-  const handleOpenArticle = (article: SentenceArticle) => {
+  const handleOpenArticle = (article: SentenceArticle, sentenceId: number) => {
     // `disableAutoScroll`: the reader normally resumes at the learner's
     // last-read sentence, which is the wrong place to land when the article was
     // opened from one word somewhere inside it.
@@ -190,16 +190,21 @@ export default function PracticeWordScreen(): JSX.Element {
     // `dismissAllThenNavigate`, not `push`: this screen sits inside the
     // dictionary's modal and the reader is itself a root-level modal, so the
     // stack has to be emptied before the reader can present.
-    dismissAllThenNavigate(getArticleRoute(article.id, article.title, true));
+    dismissAllThenNavigate(getArticleRoute(article.id, article.title, true, sentenceId));
   };
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView
+      includeBottomInset={false}
+      safeAreaEdges={['left', 'right']}
+      style={styles.container}
+    >
       {/* The header said the literal word "Word" above whichever word you had
           opened. `setOptions` merges, so the layout's CloseButton and its
           fallback title both stay. */}
       <Stack.Screen options={{ title: englishText || STRINGS.WORD_DETAIL_TITLE }} />
       <ScrollView
+        testID="dictionary-word-content"
         style={styles.scrollView}
         contentContainerStyle={[
           styles.scrollContent,

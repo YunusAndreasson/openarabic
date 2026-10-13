@@ -1,0 +1,11 @@
+executionPrerequisite: Search results screen visible with query zzzzqatestnomatch; QA account, dark theme, standard display scale.
+steps:
+  - tap: { text: Navigate up, role: Button }
+  - await: { visible: { text: Continue reading } }
+  - await: { idle: true }
+  - tap: { text: Fiqh, role: Button }
+  - await: { visible: { text: Unread } }
+  - await: { idle: true }
+  - tap: { text: Close, role: Button }
+  - await: { visible: { text: Search texts, role: Button } }
+  - await: { idle: true }

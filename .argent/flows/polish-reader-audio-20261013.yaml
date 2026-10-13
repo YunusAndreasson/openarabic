@@ -1,0 +1,14 @@
+executionPrerequisite: Prayer During Illness reader open in QA account, no word sheet, no active playback, standard dark layout.
+steps:
+  - tap: { text: Listen to this article, role: Button }
+  - await: { visible: { text: Stop listening, role: Button }, timeout: 20000 }
+  - tap: { text: Sleep timer, role: Button }
+  - await: { visible: { text: Set timer, role: Button } }
+  - tool: button
+    args: { button: back }
+  - await: { hidden: { text: Set timer, role: Button } }
+  - tap: { text: Close article, role: Button }
+  - await: { visible: { text: Search texts, role: Button } }
+  - await: { visible: { text: Sleep timer, role: Button } }
+  - tap: { text: Stop listening, role: Button }
+  - await: { hidden: { text: Sleep timer, role: Button } }

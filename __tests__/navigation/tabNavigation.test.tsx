@@ -134,6 +134,7 @@ import TestStoreProvider from '../helpers/testStore';
 
 import { createTestQueryClient } from '../helpers/testUtils';
 import TabLayout from '../../app/(tabs)/_layout';
+import { PRACTICE_DUE_WORDS_LIMIT } from '../../constants/queries';
 
 // The layout subscribes only to the primitive count its badge needs.
 const mockUseDueWordsCount = jest.fn();
@@ -385,6 +386,16 @@ describe('Tab navigation', () => {
     const { getByTestId } = render(<TabLayout />, { wrapper: createWrapper() });
 
     expect(getByTestId('tab-practice').props.accessibilityLabel).toBe('Practice');
+  });
+
+  test('marks the badge as a floor once the due query clips', () => {
+    // The practice screen's lead card prints "100+" for this same count; a bare
+    // "100" here would be the one place the two disagree.
+    mockUseDueWordsCount.mockReturnValue(PRACTICE_DUE_WORDS_LIMIT);
+
+    const { getByTestId } = render(<TabLayout />, { wrapper: createWrapper() });
+
+    expect(getByTestId('tab-badge').props.children).toBe(`${PRACTICE_DUE_WORDS_LIMIT}+`);
   });
 
   test('does not show memory capacity badge when no words are due', async () => {

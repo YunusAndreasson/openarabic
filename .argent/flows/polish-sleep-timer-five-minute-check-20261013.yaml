@@ -1,0 +1,61 @@
+# DIAGNOSTIC: live expiry evidence exists separately; this recording is not replay-verified.
+steps:
+  - tap:
+      text: Playlist
+      role: FrameLayout
+  - await:
+      visible:
+        text: Adam and the Rebel, Ibn
+        role: Button
+      timeout: 10000
+  - tap:
+      text: Play all
+  - await:
+      visible:
+        text: Sleep timer
+        role: Button
+      timeout: 15000
+  - tap:
+      text: Sleep timer
+      role: Button
+  - await:
+      visible:
+        text: Set timer
+        role: Button
+      timeout: 15000
+  - await:
+      idle: true
+  - tap:
+      text: 5 min
+      role: RadioButton
+  - tap:
+      text: Set timer
+  - await:
+      hidden:
+        text: Set timer
+        role: Button
+      timeout: 10000
+  - tap:
+      text: Sleep timer
+      role: Button
+  - await:
+      visible:
+        text: Cancel
+        role: Button
+      timeout: 10000
+  - await:
+      visible:
+        text: Set timer
+        role: Button
+      timeout: 315000
+  - tool: button
+    args:
+      button: back
+  - await:
+      hidden:
+        text: Sleep timer
+        role: Button
+      timeout: 45000
+executionPrerequisite: QA normal dark Practice root, no playback or active
+  timer. Open Playlist, play queue, set5-minute timer from settled sheet, verify
+  expiry; no playlist changes.

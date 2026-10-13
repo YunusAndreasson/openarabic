@@ -1,0 +1,30 @@
+# REJECTED CANDIDATE / DIAGNOSTIC: restoration implementation reverted.
+steps:
+  - tap:
+      id: com.edenmind.OpenArabic:id/navigation_bar_item_active_indicator_view
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Edit list
+        role: Button
+      timeoutMs: 10000
+  - tool: gesture-swipe
+    args:
+      fromX: 0.5
+      fromY: 0.8
+      toX: 0.5
+      toY: 0.3
+      durationMs: 400
+      momentum: false
+  - tap:
+      role: StaticText
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Remove Adam and the Rebel from playlist
+        role: Button
+      timeoutMs: 10000
+executionPrerequisite: QA signed in, normal dark, playlist11 unchanged tracks,
+  no playback, Explore root. Observe Edit/Done context. No reorder/delete.

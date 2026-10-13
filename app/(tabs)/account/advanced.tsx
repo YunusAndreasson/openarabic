@@ -146,7 +146,7 @@ const AdvancedScreen = () => {
       {modelStatus.spinner && (
         <PulsatingLoader size={STATUS_LOADER_SIZE} accessibilityLabel={null} />
       )}
-      <ThemedText type="body" colorName={modelStatus.color} numberOfLines={1}>
+      <ThemedText type="body" colorName={modelStatus.color} style={styles.statusText}>
         {modelStatus.label}
       </ThemedText>
     </View>
@@ -221,6 +221,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexShrink: 1,
     gap: LAYOUT.SPACING.SMALL,
+  },
+  statusText: {
+    flexShrink: 1,
   },
   footer: {
     paddingTop: LAYOUT.SPACING.LARGE,

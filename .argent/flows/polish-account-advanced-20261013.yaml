@@ -1,0 +1,10 @@
+executionPrerequisite: Explore visible in signed-in QA account with downloaded voice model ready, dark layout, no active playback. Does not change voice settings or remove the model.
+steps:
+  - tap: { text: Account }
+  - scroll-to: { target: { text: Voice grading, role: Button } }
+  - tap: { text: Voice grading, role: Button }
+  - await: { visible: { text: Speech-to-text, role: StaticText } }
+  - await: { visible: { text: Ready, role: StaticText } }
+  - await: { visible: { text: Energy gate, role: Switch } }
+  - tap: { text: Navigate up, role: Button }
+  - await: { visible: { text: Voice grading, role: Button } }

@@ -1,0 +1,9 @@
+executionPrerequisite: Android reusable QA account on Practice; voice enabled, hands-free currently enabled. This flow turns hands-free off; restore it after testing.
+steps:
+  - tap: { text: Account }
+  - await: { visible: { text: Answer hands-free } }
+  - await: { idle: true }
+  - tap: { text: Answer hands-free, role: Switch }
+  - tap: { text: { matches: '^Practice, ' }, after: { text: Answer hands-free } }
+  - await: { visible: { text: 'Reviews this week.' } }
+  - await: { idle: true }

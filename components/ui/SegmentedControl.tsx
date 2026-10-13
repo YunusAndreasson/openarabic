@@ -13,6 +13,8 @@ export interface SegmentedControlOption<T extends string> {
   label: string;
   /** Trailing glyph shown only on the active option (e.g. a sort direction). */
   activeIcon?: IoniconName;
+  /** Full spoken label for the selected option, including any icon meaning. */
+  activeAccessibilityLabel?: string;
 }
 
 interface SegmentedControlProps<T extends string> {
@@ -60,7 +62,10 @@ function SegmentedControlComponent<T extends string>({
           <Pressable
             key={option.value}
             accessibilityRole="radio"
-            accessibilityState={{ selected: isActive }}
+            accessibilityLabel={
+              isActive ? (option.activeAccessibilityLabel ?? option.label) : option.label
+            }
+            accessibilityState={{ selected: isActive, checked: isActive }}
             hitSlop={LAYOUT.HIT_SLOP.SMALL}
             style={styles.option}
             onPress={() => {
@@ -76,6 +81,8 @@ function SegmentedControlComponent<T extends string>({
             </ThemedText>
             {isActive && option.activeIcon ? (
               <Ionicons
+                accessible={false}
+                importantForAccessibility="no"
                 color={colors.secondaryText}
                 name={option.activeIcon}
                 size={ACTIVE_ICON_SIZE}

@@ -26,17 +26,35 @@ interface ChartTooltipProps {
 
 export const ChartTooltipData = memo<ChartTooltipProps>(({ tooltip, maxWidth }) => {
   const colors = useColors();
+  const [tooltipWidth, setTooltipWidth] = useState(0);
+  const edgePadding = LAYOUT.SPACING.SMALL;
+  const translateX = Math.max(
+    0,
+    Math.min(tooltip.x - tooltipWidth / 2 - edgePadding, maxWidth - tooltipWidth - edgePadding * 2),
+  );
 
   if (!tooltip.visible) return null;
 
   return (
     <View
+      testID="chart-tooltip"
+      accessible
+      accessibilityRole="text"
+      accessibilityLabel={`${tooltip.label}, ${tooltip.value}`}
+      accessibilityLiveRegion="polite"
+      importantForAccessibility="yes"
+      pointerEvents="none"
+      onLayout={event => setTooltipWidth(event.nativeEvent.layout.width)}
       style={[
         styles.tooltip,
         getElevation(colors, 'HAIRLINE'),
         {
-          left: Math.max(8, Math.min(tooltip.x - 40, maxWidth - 88)),
-          top: Math.max(8, tooltip.y),
+          // Measure at a fixed left edge so changing the anchor cannot squeeze
+          // the text. The transform positions the measured bubble inside the chart.
+          left: edgePadding,
+          maxWidth: maxWidth - edgePadding * 2,
+          transform: [{ translateX }],
+          top: Math.max(edgePadding, tooltip.y),
           backgroundColor: colors.elevation3,
           borderColor: colors.wordTooltipBorder, // Distinct from elevation3 bg (border === elevation3 in dark mode)
         },
@@ -133,6 +151,8 @@ export const DataPointOverlay = memo<DataPointOverlayProps>(({ x, y, value, labe
 
   return (
     <AnimatedPressable
+      accessibilityRole="button"
+      accessibilityLabel={`${label}, ${value}`}
       style={[touchableStyle, animatedStyle]}
       onPress={handlePress}
       onPressIn={handlePressIn}

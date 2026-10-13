@@ -1,0 +1,10 @@
+executionPrerequisite: Prayer During Illness reader visible with the وَالنَّاسُ word button on screen, no sheet open, QA dark theme and standard display scale.
+steps:
+  - tap: { text: وَالنَّاسُ, role: Button }
+  - await: { visible: { text: وَالنَّاسُ, role: StaticText } }
+  - await: { visible: { text: and the people } }
+  - await: { idle: true }
+  - tool: button
+    args: { button: back }
+  - await: { hidden: { text: وَالنَّاسُ, role: StaticText } }
+  - await: { idle: true }

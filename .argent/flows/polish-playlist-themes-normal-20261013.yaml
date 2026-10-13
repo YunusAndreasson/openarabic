@@ -1,0 +1,282 @@
+steps:
+  - tap:
+      text: Theme, Dark
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Birches in Spring
+        role: RadioButton
+      timeoutMs: 10000
+  - tap:
+      text: Birches in Spring
+      role: RadioButton
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Theme, Light
+        role: Button
+      timeoutMs: 10000
+  - tool: button
+    args:
+      button: back
+  - tool: await-ui-element
+    args:
+      condition: hidden
+      selector:
+        text: Birches in Spring
+        role: RadioButton
+      timeoutMs: 10000
+  - tap:
+      text: Playlist
+      role: FrameLayout
+  - tap:
+      text: Edit list
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Done editing
+        role: Button
+      timeoutMs: 10000
+  - await:
+      visible:
+        text: Remove Adam and the Rebel from playlist
+        role: Button
+  - await:
+      idle: true
+  - tool: run-sequence
+    args:
+      steps:
+        - tool: gesture-swipe
+          args:
+            fromX: 0.5
+            fromY: 0.8
+            toX: 0.5
+            toY: 0.3
+            durationMs: 400
+            momentum: false
+        - tool: gesture-swipe
+          args:
+            fromX: 0.5
+            fromY: 0.8
+            toX: 0.5
+            toY: 0.3
+            durationMs: 400
+            momentum: false
+  - await:
+      visible:
+        text: Remove The Secret Migration from playlist
+        role: Button
+      timeout: 10000
+  - tap:
+      text: Done editing
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Edit list
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: Account
+      role: FrameLayout
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Theme, Light
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: Theme, Light
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Autumn Leaves
+        role: RadioButton
+      timeoutMs: 10000
+  - tap:
+      text: Autumn Leaves
+      role: RadioButton
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Theme, Sepia
+        role: Button
+      timeoutMs: 10000
+  - tool: button
+    args:
+      button: back
+  - tool: await-ui-element
+    args:
+      condition: hidden
+      selector:
+        text: Autumn Leaves
+        role: RadioButton
+      timeoutMs: 10000
+  - tap:
+      text: Playlist
+      role: FrameLayout
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Edit list
+        role: Button
+      timeoutMs: 10000
+  - tool: run-sequence
+    args:
+      steps:
+        - tool: gesture-swipe
+          args:
+            fromX: 0.5
+            fromY: 0.8
+            toX: 0.5
+            toY: 0.3
+            durationMs: 400
+            momentum: false
+        - tool: gesture-swipe
+          args:
+            fromX: 0.5
+            fromY: 0.8
+            toX: 0.5
+            toY: 0.3
+            durationMs: 400
+            momentum: false
+  - await:
+      visible:
+        text: The Secret Migration
+        role: Button
+      timeout: 10000
+  - tap:
+      text: Edit list
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Done editing
+        role: Button
+      timeoutMs: 10000
+  - await:
+      visible:
+        text: Remove Adam and the Rebel from playlist
+        role: Button
+  - await:
+      idle: true
+  - tool: run-sequence
+    args:
+      steps:
+        - tool: gesture-swipe
+          args:
+            fromX: 0.5
+            fromY: 0.8
+            toX: 0.5
+            toY: 0.3
+            durationMs: 400
+            momentum: false
+        - tool: gesture-swipe
+          args:
+            fromX: 0.5
+            fromY: 0.8
+            toX: 0.5
+            toY: 0.3
+            durationMs: 400
+            momentum: false
+        - tool: gesture-swipe
+          args:
+            fromX: 0.5
+            fromY: 0.8
+            toX: 0.5
+            toY: 0.3
+            durationMs: 400
+            momentum: false
+  - await:
+      visible:
+        text: Remove The Secret Migration from playlist
+        role: Button
+      timeout: 10000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Remove The Secret Migration from playlist
+        role: Button
+      timeoutMs: 10000
+  - tool: gesture-swipe
+    args:
+      fromX: 0.5
+      fromY: 0.4
+      toX: 0.5
+      toY: 0.7
+      durationMs: 400
+      momentum: false
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Account
+        role: FrameLayout
+      timeoutMs: 10000
+  - tap:
+      text: Done editing
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Edit list
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: Account
+      role: FrameLayout
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Theme, Sepia
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: Theme, Sepia
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Midnight Summer
+        role: RadioButton
+      timeoutMs: 10000
+  - tap:
+      text: Midnight Summer
+      role: RadioButton
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Theme, Dark
+        role: Button
+      timeoutMs: 10000
+  - tool: button
+    args:
+      button: back
+  - tool: await-ui-element
+    args:
+      condition: hidden
+      selector:
+        text: Midnight Summer
+        role: RadioButton
+      timeoutMs: 10000
+executionPrerequisite: Account root with Theme, Dark row fully visible, normal
+  density420/fontScale1; QA playlist11 items ending The Secret Migration;
+  playlist normal mode/top, no playback. Theme/edit navigation only, no reorder
+  or deletion. Restores dark.

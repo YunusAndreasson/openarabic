@@ -60,8 +60,22 @@ jest.mock('@/hooks/theme/useColors', () =>
 jest.mock('@/hooks/theme/useThemeDetection', () =>
   require('@/__tests__/helpers/componentMocks').useThemeDetectionMockFactory(),
 );
-jest.mock('@/components/primitives/ThemedText', () => ({ ThemedText: () => null }));
-jest.mock('@/components/review/WordDisplay', () => ({ WordDisplay: () => null }));
+// Renders its children as plain text. It used to render nothing, which made
+// every assertion about the card's copy unable to fail in either direction: a
+// line that should be there could never be found, and a line that should be
+// held back was "absent" whether the card held it back or not.
+jest.mock('@/components/primitives/ThemedText', () => {
+  const { createElement } = require('react');
+  const { Text } = require('react-native');
+  return {
+    ThemedText: ({ children }: { children?: unknown }) => createElement(Text, null, children),
+  };
+});
+// The word itself is not under test, but the answer, the transcript and the
+// voice slot are all its children, so it has to hand them through.
+jest.mock('@/components/review/WordDisplay', () => ({
+  WordDisplay: ({ children }: { children?: unknown }) => children ?? null,
+}));
 
 beforeEach(() => {
   mockFlipValue = 0;
@@ -100,6 +114,23 @@ describe('ReviewFlipCard rejected-grade recovery', () => {
 });
 
 describe('ReviewFlipCard face synchronization', () => {
+  test('exposes only the active face to accessibility', () => {
+    const props = {
+      word: 'كتاب',
+      answer: 'book',
+      onReveal: jest.fn(),
+      opacityStyle: {},
+      wordKey: 'word-1',
+    };
+    const view = render(<ReviewFlipCard {...props} revealed={false} />);
+    expect(view.queryByText('Book')).toBeNull();
+    expect(view.getByLabelText('Show answer')).toBeTruthy();
+
+    view.rerender(<ReviewFlipCard {...props} revealed />);
+    expect(view.getByText('Book')).toBeTruthy();
+    expect(view.queryByLabelText('Show answer')).toBeNull();
+  });
+
   test('keeps an already revealed card on its answer face after mounting', () => {
     render(
       <ReviewFlipCard
@@ -128,5 +159,32 @@ describe('ReviewFlipCard face synchronization', () => {
     expect(mockFlipProgress.get()).toBe(1);
     rerender(<ReviewFlipCard {...props} wordKey="word-2" revealed={false} />);
     expect(mockFlipProgress.get()).toBe(0);
+  });
+});
+
+// A voice miss is graded from the card: the answer and what the recognizer
+// heard sit together under the Arabic. The heard line used to live in the
+// action band, which reserved a line for it in every state.
+describe('ReviewFlipCard voice miss', () => {
+  const props = {
+    word: 'كتاب',
+    answer: 'book',
+    revealed: false,
+    onReveal: jest.fn(),
+    opacityStyle: {},
+    wordKey: 'word-1',
+  };
+  const heard = 'You said “boot”';
+
+  test('shows what was heard under the disclosed answer', () => {
+    const view = render(<ReviewFlipCard {...props} discloseAnswer discloseCaption={heard} />);
+
+    expect(view.getByText(heard)).toBeTruthy();
+  });
+
+  test('holds the heard line back while the answer is not disclosed', () => {
+    const view = render(<ReviewFlipCard {...props} discloseCaption={heard} />);
+
+    expect(view.queryByText(heard)).toBeNull();
   });
 });

@@ -1,0 +1,20 @@
+executionPrerequisite: QA account signed in, Everything root 6149 saved, portrait standard or compact 200% display, no playback. Reader navigation naturally advances reading progress; no practice mutations.
+steps:
+  - tool: open-url
+    args: { url: 'open-arabic://practice/word?rootId=6149' }
+  - await: { visible: { identifier: dictionary-word-content }, timeout: 15000 }
+  - scroll-to:
+      {
+        target: { text: "Read this sentence in Luqman's Response to Injustice" },
+        within: { identifier: dictionary-word-content },
+      }
+  - tap: { text: "Read this sentence in Luqman's Response to Injustice" }
+  - await: { visible: { text: Close article, role: Button }, timeout: 15000 }
+  - await: { visible: { text: 'Your eyes, gouge them out', role: StaticText }, timeout: 15000 }
+  - tap: { text: جَمِيعَ, role: Button }
+  - await: { visible: { text: In practice, role: Button } }
+  - tool: button
+    args: { button: back }
+  - await: { hidden: { text: In practice, role: Button } }
+  - tap: { text: Close article, role: Button }
+  - await: { visible: { text: Your words, role: Button }, timeout: 15000 }

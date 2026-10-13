@@ -70,7 +70,7 @@ describe('WordExampleBlock', () => {
     const label = STRINGS.WORD_EXAMPLE_OPEN_A11Y.replace('{title}', 'Bedouin Manners');
     fireEvent.press(getByLabelText(label));
 
-    expect(onOpenArticle).toHaveBeenCalledWith({ id: 3, title: 'Bedouin Manners' });
+    expect(onOpenArticle).toHaveBeenCalledWith({ id: 3, title: 'Bedouin Manners' }, 10);
   });
 
   test('still renders the example when there is no article to attribute it to', () => {

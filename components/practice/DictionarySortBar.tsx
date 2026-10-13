@@ -94,6 +94,10 @@ const DictionarySortBarComponent = ({
         value: field,
         label,
         activeIcon: sortDirection === 'desc' ? 'arrow-down' : 'arrow-up',
+        activeAccessibilityLabel: STRINGS.SORT_OPTION_A11Y.replace('{label}', label).replace(
+          '{direction}',
+          sortDirection === 'desc' ? STRINGS.SORT_DESCENDING : STRINGS.SORT_ASCENDING,
+        ),
       })),
     [sortDirection],
   );
@@ -147,7 +151,11 @@ const DictionarySortBarComponent = ({
         style={styles.scopeButton}
         onPress={handlePressScope}
       >
-        <ThemedText colorName={isScoped ? 'tint' : 'subtleLabelText'} type="caption">
+        <ThemedText
+          colorName={isScoped ? 'tint' : 'subtleLabelText'}
+          type="caption"
+          style={styles.scopeLabel}
+        >
           {countLabel}
         </ThemedText>
         <Ionicons
@@ -156,6 +164,7 @@ const DictionarySortBarComponent = ({
           // affordance is never guessed from the label alone.
           name={isNarrowFilter ? 'close-circle' : 'chevron-down'}
           size={CHEVRON_SIZE}
+          style={styles.scopeIcon}
         />
       </Pressable>
     </View>
@@ -165,6 +174,7 @@ const DictionarySortBarComponent = ({
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: LAYOUT.SPACING.SMALL,
@@ -177,6 +187,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: LAYOUT.SPACING.TINY,
+    flexShrink: 0,
+    maxWidth: '100%',
+    marginLeft: 'auto',
+  },
+  scopeLabel: {
+    flexShrink: 1,
+  },
+  scopeIcon: {
     flexShrink: 0,
   },
 });

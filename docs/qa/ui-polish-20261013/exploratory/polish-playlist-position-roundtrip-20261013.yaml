@@ -1,0 +1,89 @@
+# REJECTED CANDIDATE / DIAGNOSTIC: restoration implementation reverted.
+steps:
+  - await:
+      visible:
+        text: Adam and the Rebel, Ibn
+        role: Button
+      timeout: 10000
+  - await:
+      idle: true
+  - echo: Scroll down to test keeping the playlist position.
+  - tool: gesture-swipe
+    args:
+      fromX: 0.5
+      fromY: 0.8
+      toX: 0.5
+      toY: 0.3
+      durationMs: 400
+      momentum: false
+  - await:
+      visible:
+        text: The Secret Migration, al
+        role: Button
+      timeout: 10000
+  - await:
+      idle: true
+  - tap:
+      text: Edit list
+      role: Button
+  - await:
+      visible:
+        text: Remove The Secret Migration from playlist
+        role: Button
+      timeout: 10000
+  - await:
+      idle: true
+  - tap:
+      text: Done editing
+      role: Button
+  - await:
+      visible:
+        text: The Secret Migration, al
+        role: Button
+      timeout: 10000
+  - await:
+      idle: true
+  - await:
+      hidden:
+        text: Adam and the Rebel, Ibn
+        role: Button
+      timeout: 10000
+  - echo: Scroll up to restore the starting position and navigation.
+  - tool: gesture-swipe
+    args:
+      fromX: 0.5
+      fromY: 0.3
+      toX: 0.5
+      toY: 0.8
+      durationMs: 400
+      momentum: false
+  - await:
+      visible:
+        text: Adam and the Rebel, Ibn
+        role: Button
+      timeout: 10000
+  - await:
+      idle: true
+  - tap:
+      text: Edit list
+      role: Button
+  - await:
+      visible:
+        text: Remove Adam and the Rebel from playlist
+        role: Button
+      timeout: 10000
+  - await:
+      idle: true
+  - tap:
+      text: Done editing
+      role: Button
+  - await:
+      visible:
+        text: Adam and the Rebel, Ibn
+        role: Button
+      timeout: 10000
+  - await:
+      idle: true
+executionPrerequisite: QA playlist11, normal dark, normal mode/top with Adam and
+  the Rebel card rendered, no playback. Offset restore Edit/Done without
+  reorder/delete; ends normal/top.

@@ -15,7 +15,6 @@ import {
 import { ThemedButton } from '@/components/primitives/ThemedButton';
 import { IconButton } from '@/components/ui';
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { ThemedView } from '@/components/primitives/ThemedView';
 import { FONTS } from '@/constants/fonts';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -40,6 +39,15 @@ export const FeedbackForm = memo(() => {
   });
 
   const characterCount = message.trim().length;
+  const characterHint =
+    characterCount < MIN_CHARACTERS
+      ? characterCount === MIN_CHARACTERS - 1
+        ? STRINGS.FEEDBACK_CHARACTER_NEEDED
+        : STRINGS.FEEDBACK_CHARACTERS_NEEDED.replace(
+            '{count}',
+            String(MIN_CHARACTERS - characterCount),
+          )
+      : STRINGS.FEEDBACK_CHARACTER_COUNT.replace('{count}', String(characterCount));
 
   const characterCountColor = useMemo(() => {
     if (characterCount === 0) return colors.textTertiary;
@@ -171,8 +179,9 @@ export const FeedbackForm = memo(() => {
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
-          <ThemedView style={styles.content}>
+          <View style={styles.content}>
             <TextInput
+              accessibilityLabel={STRINGS.FEEDBACK_MESSAGE_LABEL}
               style={[
                 styles.textInput,
                 {
@@ -212,6 +221,7 @@ export const FeedbackForm = memo(() => {
               </View>
             ) : (
               <ThemedButton
+                allowTitleWrap
                 fullWidth
                 icon="image"
                 style={styles.addScreenshotButton}
@@ -221,17 +231,19 @@ export const FeedbackForm = memo(() => {
               />
             )}
 
-            <ThemedView style={styles.metaRow}>
+            <View style={styles.metaRow}>
               <ThemedText type="caption" colorName="textTertiary" style={styles.hint}>
-                Your email ({user?.email || 'not available'}) will be included
+                {user?.email
+                  ? STRINGS.FEEDBACK_EMAIL_INCLUDED.replace('{email}', user.email)
+                  : STRINGS.FEEDBACK_EMAIL_UNAVAILABLE}
               </ThemedText>
               <ThemedText
                 type="caption"
                 style={[styles.characterCount, { color: characterCountColor }]}
               >
-                {characterCount}/{MIN_CHARACTERS}
+                {characterHint}
               </ThemedText>
-            </ThemedView>
+            </View>
 
             <ThemedButton
               title={isSubmitting ? STRINGS.FEEDBACK_SENDING : STRINGS.FEEDBACK_SUBMIT}
@@ -240,7 +252,7 @@ export const FeedbackForm = memo(() => {
               variant={characterCount < MIN_CHARACTERS ? 'outlined' : 'filled'}
               style={styles.submitButton}
             />
-          </ThemedView>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </>
@@ -262,7 +274,6 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
     paddingBottom: LAYOUT.SPACING.XLARGE,
   },
   textInput: {
@@ -275,18 +286,14 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.SMALL,
   },
   metaRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    gap: LAYOUT.SPACING.SMALL,
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   hint: {
-    flex: 1,
     fontStyle: 'italic',
   },
   characterCount: {
     fontFamily: FONTS.ENGLISH_SEMIBOLD,
-    marginLeft: LAYOUT.SPACING.SMALL,
   },
   // Dashed edge marks this as a drop/pick target rather than a committing
   // action. Everything else — height, radius, press feel — is the outlined

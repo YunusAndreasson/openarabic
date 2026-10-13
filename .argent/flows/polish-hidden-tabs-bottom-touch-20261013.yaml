@@ -1,0 +1,6 @@
+executionPrerequisite: Account main settings visible, dark theme, density 540/font scale 2.0, native tabs hidden by scrolling; Help center button fully visible with center between y=0.85 and y=0.94. This position places it in the old tab-bar bounds. Position must be inspected before replay; fragment deliberately does not scroll it out of the affected strip.
+steps:
+  - tap: { text: Help center, role: Button }
+  - await: { visible: { text: Search help, role: TextField }, timeout: 10000 }
+  - tap: { text: Navigate up, role: Button }
+  - await: { visible: { text: Account, role: StaticText } }

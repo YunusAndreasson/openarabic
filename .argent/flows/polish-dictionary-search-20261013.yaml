@@ -1,0 +1,18 @@
+executionPrerequisite: Your words dictionary visible at top with Reviewed once filter (335 words), native Search closed. Normal display, QA signed in with Thank in this band. Search changes only; no learner mutations.
+steps:
+  - tap: { identifier: 'com.edenmind.OpenArabic:id/search_button' }
+  - tap: { identifier: 'com.edenmind.OpenArabic:id/search_src_text' }
+  - tool: keyboard
+    args: { text: thank }
+  - await: { text: { in: { text: Reviewed once, role: Button }, equals: 'Reviewed once · 1' } }
+  - tap: { identifier: 'com.edenmind.OpenArabic:id/search_close_btn' }
+  - await: { text: { in: { text: Reviewed once, role: Button }, equals: 'Reviewed once · 335' } }
+  - tap: { identifier: 'com.edenmind.OpenArabic:id/search_src_text' }
+  - tool: keyboard
+    args: { text: zzqmissingword }
+  - await: { visible: { text: No words match your search, role: StaticText } }
+  - tap: { identifier: 'com.edenmind.OpenArabic:id/search_close_btn' }
+  - await: { text: { in: { text: Reviewed once, role: Button }, equals: 'Reviewed once · 335' } }
+  - tap: { identifier: 'com.edenmind.OpenArabic:id/search_close_btn' }
+  - await: { visible: { text: Your words, role: StaticText } }
+  - await: { visible: { text: 'Reviewed once · 335', role: Button } }

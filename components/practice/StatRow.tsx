@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, useWindowDimensions } from 'react-native';
 
 // Direct path, matching the rest of this folder's imports from `common`: both
 // callers already pull the `common` barrel in for other components (`ListRow`
@@ -8,6 +8,7 @@ import { StyleSheet } from 'react-native';
 import { ListRow } from '@/components/common/ListRow';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import type { SolidColorName } from '@/constants/colors';
+import { INLINE_VALUE_MIN_WIDTH, LAYOUT } from '@/constants/layout';
 
 interface StatRowProps {
   label: string;
@@ -29,16 +30,20 @@ interface StatRowProps {
  * that reads differently depending on which one you opened is the drift this
  * whole row style exists to prevent.
  */
-export const StatRow = ({ label, value, colorName }: StatRowProps) => (
-  <ListRow divider style={styles.row}>
-    <ThemedText colorName="secondaryText" type="body">
-      {label}
-    </ThemedText>
-    <ThemedText colorName={colorName} type="bodyBold">
-      {value}
-    </ThemedText>
-  </ListRow>
-);
+export const StatRow = ({ label, value, colorName }: StatRowProps) => {
+  const { width, fontScale } = useWindowDimensions();
+  const stackValue = width / fontScale < INLINE_VALUE_MIN_WIDTH;
+  return (
+    <ListRow divider style={stackValue ? styles.stackedRow : styles.row}>
+      <ThemedText colorName="secondaryText" type="body">
+        {label}
+      </ThemedText>
+      <ThemedText colorName={colorName} style={styles.value} type="bodyBold">
+        {value}
+      </ThemedText>
+    </ListRow>
+  );
+};
 
 StatRow.displayName = 'StatRow';
 
@@ -47,5 +52,13 @@ const styles = StyleSheet.create({
   // label and value to opposite edges.
   row: {
     justifyContent: 'space-between',
+  },
+  stackedRow: {
+    alignItems: 'flex-start',
+    flexDirection: 'column',
+    gap: LAYOUT.SPACING.TINY,
+  },
+  value: {
+    flexShrink: 1,
   },
 });

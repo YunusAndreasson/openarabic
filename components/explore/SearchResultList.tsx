@@ -1,4 +1,4 @@
-import { EmptyState, ListSeparator } from '@/components/common';
+import { EmptyState, ListSeparator, LoadingState } from '@/components/common';
 import { FlashList } from '@shopify/flash-list';
 import { type JSX, useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -134,22 +134,31 @@ export const SearchResultList = ({
   const ListEmptyComponent = useMemo(
     () => (
       <View style={styles.emptyContainer}>
-        {hasQuery ? (
-          <EmptyState
-            icon="search-outline"
-            title={STRINGS.SEARCH_TEXTS_NO_RESULTS_TITLE}
-            hint={STRINGS.SEARCH_TEXTS_NO_RESULTS_HINT}
-          />
-        ) : (
+        {!hasQuery ? (
           <EmptyState
             icon="library-outline"
             title={STRINGS.SEARCH_TEXTS_IDLE_TITLE}
             hint={STRINGS.SEARCH_TEXTS_IDLE_HINT}
           />
+        ) : isBodyLoading ? (
+          <LoadingState message={STRINGS.SEARCH_TEXTS_BODY_LOADING} />
+        ) : isBodyError ? (
+          <EmptyState
+            icon="cloud-offline-outline"
+            title={STRINGS.SEARCH_TEXTS_INCOMPLETE_TITLE}
+            hint={STRINGS.SEARCH_TEXTS_INCOMPLETE_HINT}
+            action={{ label: STRINGS.RETRY, onPress: onRetryBody }}
+          />
+        ) : (
+          <EmptyState
+            icon="search-outline"
+            title={STRINGS.SEARCH_TEXTS_NO_RESULTS_TITLE}
+            hint={STRINGS.SEARCH_TEXTS_NO_RESULTS_HINT}
+          />
         )}
       </View>
     ),
-    [hasQuery],
+    [hasQuery, isBodyLoading, isBodyError, onRetryBody],
   );
 
   return (

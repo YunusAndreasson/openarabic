@@ -27,7 +27,7 @@ import { useAuthFormFields } from '@/hooks/auth/useAuthFormFields';
  */
 export function SignUpForm(): JSX.Element {
   const fields = useAuthFormFields();
-  const { password, loading, signUpWithEmail } = fields;
+  const { password, passwordError, loading, signUpWithEmail } = fields;
 
   const handleSignIn = useCallback(() => {
     router.push(ROUTE_PATHS.AUTH_SIGN_IN);
@@ -40,7 +40,9 @@ export function SignUpForm(): JSX.Element {
         onPasswordSubmit={() => void signUpWithEmail()}
         isSignUp
       >
-        <PasswordStrengthMeter password={password} />
+        {/* The field already explains a rejected password. Keep the strength hint
+            for typing, rather than repeating the minimum-length error. */}
+        {passwordError ? null : <PasswordStrengthMeter password={password} />}
       </AuthCredentialFields>
 
       <ThemedButton

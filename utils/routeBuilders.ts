@@ -12,6 +12,7 @@ export const getArticleRoute = (
   id: ArticleId,
   headerTitle?: string,
   disableAutoScroll?: boolean,
+  sentenceId?: number,
 ): string => {
   const base = `${ARTICLE_ROUTE_PREFIX}${id}`;
   const params: string[] = [];
@@ -22,6 +23,9 @@ export const getArticleRoute = (
 
   if (disableAutoScroll) {
     params.push('disableAutoScroll=true');
+  }
+  if (sentenceId !== undefined) {
+    params.push(`sentenceId=${sentenceId}`);
   }
 
   if (params.length === 0) return base;

@@ -4,7 +4,7 @@ import { FeedbackForm } from '@/components/account';
 
 // `padded={false}`: FeedbackForm carries its own gutters.
 const FeedbackScreen = () => (
-  <ScreenScaffold padded={false}>
+  <ScreenScaffold padded={false} scrollable={false}>
     <FeedbackForm />
   </ScreenScaffold>
 );

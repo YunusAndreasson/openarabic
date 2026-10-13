@@ -1,0 +1,240 @@
+steps:
+  - tap:
+      text: Account
+      role: FrameLayout
+  - await:
+      visible:
+        text: Account
+        role: StaticText
+  - scroll-to:
+      target:
+        text: Theme
+        role: Button
+  - await:
+      idle: true
+  - tap:
+      text: Theme, Dark
+      role: Button
+  - await:
+      visible:
+        text: Birches in Spring
+        role: RadioButton
+  - tap:
+      text: Birches in Spring
+      role: RadioButton
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Theme, Light
+        role: Button
+      timeoutMs: 10000
+  - tool: button
+    args:
+      button: back
+  - await:
+      hidden:
+        text: Birches in Spring
+        role: RadioButton
+  - tool: gesture-swipe
+    args:
+      fromX: 0.5
+      fromY: 0.4
+      toX: 0.5
+      toY: 0.7
+      durationMs: 400
+      momentum: false
+  - tap:
+      text: Practice
+      role: FrameLayout
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Memory horizon.
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: Reviews done, 7594. Opens the breakdown by how often each word has come
+        up.
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 2–4 times, 194 words
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: 2–4 times, 194 words, still bedding in. Opens them in your dictionary.
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Reviewed 2–4 times · 194
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: Close
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Your words
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: Account
+      role: FrameLayout
+  - await:
+      visible:
+        text: Account
+        role: StaticText
+  - scroll-to:
+      target:
+        text: Theme
+        role: Button
+  - await:
+      idle: true
+  - tap:
+      text: Theme, Light
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Autumn Leaves
+        role: RadioButton
+      timeoutMs: 10000
+  - tap:
+      text: Autumn Leaves
+      role: RadioButton
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Theme, Sepia
+        role: Button
+      timeoutMs: 10000
+  - tool: button
+    args:
+      button: back
+  - tool: await-ui-element
+    args:
+      condition: hidden
+      selector:
+        text: Autumn Leaves
+        role: RadioButton
+      timeoutMs: 10000
+  - tool: gesture-swipe
+    args:
+      fromX: 0.5
+      fromY: 0.4
+      toX: 0.5
+      toY: 0.7
+      durationMs: 400
+      momentum: false
+  - tap:
+      text: Practice
+      role: FrameLayout
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Memory horizon.
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: Memory horizon. You can recall about 813 of 1200 practised words right
+        now. 585 for days, 386 for weeks, 229 for months. Opens the breakdown by
+        band. each dot is 7 words.
+      role: Button
+  - await:
+      visible:
+        text: Weeks, 386 words
+        role: Button
+  - tap:
+      text: Weeks, 386 words, holds a week to a month. Opens them in your dictionary.
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Holds for weeks · 386
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: Close
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Your words
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: Account
+      role: FrameLayout
+  - await:
+      visible:
+        text: Account
+        role: StaticText
+  - scroll-to:
+      target:
+        text: Theme
+        role: Button
+  - await:
+      idle: true
+  - tap:
+      text: Theme, Sepia
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Midnight Summer
+        role: RadioButton
+      timeoutMs: 10000
+  - tap:
+      text: Midnight Summer
+      role: RadioButton
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Theme, Dark
+        role: Button
+      timeoutMs: 10000
+  - tool: button
+    args:
+      button: back
+  - tool: await-ui-element
+    args:
+      condition: hidden
+      selector:
+        text: Midnight Summer
+        role: RadioButton
+      timeoutMs: 10000
+  - tool: gesture-swipe
+    args:
+      fromX: 0.5
+      fromY: 0.4
+      toX: 0.5
+      toY: 0.7
+      durationMs: 400
+      momentum: false
+  - tap:
+      text: Practice
+      role: FrameLayout
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Your words
+        role: Button
+      timeoutMs: 10000
+executionPrerequisite: Practice root, QA signed in, dark theme, normal
+  density420/fontScale1. Theme navigation only, no learner writes.

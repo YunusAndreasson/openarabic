@@ -14,6 +14,7 @@ import { useAuth } from '@/hooks/auth';
 import { useColors } from '@/hooks/theme';
 import { useIsTabBarHidden } from '@/hooks/ui/useTabBarAutoHide';
 import { useDueWordsCount } from '@/hooks/vocabulary/useFSRSQueries';
+import { formatDueCount } from '@/utils/dueCountText';
 
 // Tab roots that are not the home tab — hardware back returns to Explore from
 // these instead of exiting the app (standard Android back pattern). Nested
@@ -153,8 +154,11 @@ export default function TabLayout(): JSX.Element {
               }}
             />
             <NativeTabs.Trigger.Label>{screen.title}</NativeTabs.Trigger.Label>
+            {/* Spelled by the same function as the practice screen's lead card,
+                so the number a learner follows into the tab is the number they
+                find there — including the "+" once the due query clips. */}
             {screen.name === 'practice' && dueWordsCount > 0 && (
-              <NativeTabs.Trigger.Badge>{String(dueWordsCount)}</NativeTabs.Trigger.Badge>
+              <NativeTabs.Trigger.Badge>{formatDueCount(dueWordsCount)}</NativeTabs.Trigger.Badge>
             )}
           </NativeTabs.Trigger>
         ))}

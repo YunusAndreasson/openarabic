@@ -41,6 +41,5 @@ export const PERSISTED_SLICES = [
   'theme',
   'settings',
   'playlist',
-  'editMode',
   'voiceAliases',
 ] as const satisfies readonly (keyof RootStateShape)[];

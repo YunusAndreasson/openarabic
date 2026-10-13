@@ -1,0 +1,92 @@
+steps:
+  - tap:
+      text: Help center
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: What is OpenArabic?
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: Why is Arabic text colored in the app?
+      role: Button
+  - scroll-to:
+      target:
+        text: with my book
+        role: StaticText
+  - await:
+      idle: true
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: with my book
+        role: StaticText
+      timeoutMs: 10000
+  - scroll-to:
+      target:
+        text: to the Muslims
+        role: StaticText
+  - await:
+      idle: true
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: to the Muslims
+        role: StaticText
+      timeoutMs: 10000
+  - scroll-to:
+      target:
+        text: Contact support
+        role: Button
+  - await:
+      idle: true
+  - tap:
+      text: Contact support
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Message
+        role: TextField
+      timeoutMs: 10000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Send feedback
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: Navigate up
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Still need help?
+        role: StaticText
+      timeoutMs: 10000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Contact support
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: Navigate up
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Help center
+        role: Button
+      timeoutMs: 10000
+executionPrerequisite: Account Help/About section, dark density420/fontScale1,
+  no playback. Help has empty query. No feedback will be submitted.

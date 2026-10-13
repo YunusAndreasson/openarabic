@@ -1,0 +1,11 @@
+executionPrerequisite: This week forecast sheet visible on signed-in QA account with due words, device date Oct 13 2026. Normal portrait display, density 420/font scale 1.0, no audio. Read-only chart inspection.
+steps:
+  - tap: { text: 'Oct 13, 1,907', role: Button }
+  - await: { text: { in: { identifier: chart-tooltip }, equals: 'Oct 13, 1,907' } }
+  - tap: { text: 'Oct 19, 1,919 · +3 new', role: Button }
+  - await: { text: { in: { identifier: chart-tooltip }, equals: 'Oct 19, 1,919 · +3 new' } }
+  - tap: { identifier: chart-background }
+  - await: { hidden: { identifier: chart-tooltip } }
+  - tool: button
+    args: { button: back }
+  - await: { hidden: { text: This week, role: StaticText } }

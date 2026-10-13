@@ -161,22 +161,17 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
 
       {/* User Info */}
       <View style={styles.userInfo}>
-        <ThemedText type="heading2" style={styles.userName} numberOfLines={1}>
+        <ThemedText type="heading2" style={styles.userName}>
           {firstName}
         </ThemedText>
         {/* The email, not just the name derived from it. A settings screen
               has to answer "which account am I signed in to?" — and this one
               received the address all along without ever showing it. */}
-        <ThemedText type="caption" colorName="textTertiary" numberOfLines={1}>
+        <ThemedText type="caption" colorName="textTertiary">
           {userEmail}
         </ThemedText>
         {memberSince && (
-          <ThemedText
-            type="caption"
-            colorName="textTertiary"
-            style={styles.memberSince}
-            numberOfLines={1}
-          >
+          <ThemedText type="caption" colorName="textTertiary" style={styles.memberSince}>
             {memberSince}
           </ThemedText>
         )}

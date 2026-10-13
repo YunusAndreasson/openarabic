@@ -91,6 +91,26 @@ const scaleFor = (counts: readonly number[]): number =>
 const todayOnly = (counts: readonly number[]): number[] =>
   counts.map((count, index) => (index === 0 ? count : 0));
 
+type PathPair = [SkPath, SkPath];
+
+const MORPH_RANGE = [0, 1];
+
+/** The whole week and today's column alone, on one shared vertical scale. */
+function buildPaths(counts: readonly number[]): { week: SkPath; today: SkPath } {
+  const scale = scaleFor(counts);
+  return {
+    week: buildWeekPath(counts, scale),
+    today: buildWeekPath(todayOnly(counts), scale),
+  };
+}
+
+/**
+ * Belt and braces. Even with a fixed verb sequence, an unexpected build must
+ * degrade to "no morph" rather than throw on the app's most-visited screen.
+ */
+const interpolatable = (pair: PathPair): PathPair =>
+  pair[0].isInterpolatable(pair[1]) ? pair : [pair[1], pair[1]];
+
 interface WeekAheadBarsProps {
   /** Due-word count per day, today first. Length 7. */
   counts: readonly number[];
@@ -116,33 +136,39 @@ export function WeekAheadBars({ counts }: WeekAheadBarsProps): JSX.Element {
   // paints. Doing the same work in an effect would set state after paint and
   // cascade an extra render.
   const [pathState, setPathState] = useState(() => {
-    const initial = buildWeekPath(counts, scaleFor(counts));
-    return { signature, pair: [initial, initial] as [SkPath, SkPath] };
+    const paths = buildPaths(counts);
+    return {
+      signature,
+      week: [paths.week, paths.week] as PathPair,
+      today: [paths.today, paths.today] as PathPair,
+    };
   });
   const morph = useSharedValue(1);
 
   if (pathState.signature !== signature) {
-    const target = buildWeekPath(counts, scaleFor(counts));
-    setPathState({ signature, pair: [pathState.pair[1], target] });
+    const paths = buildPaths(counts);
+    setPathState({
+      signature,
+      week: [pathState.week[1], paths.week],
+      today: [pathState.today[1], paths.today],
+    });
   }
 
+  // The count's own duration, so the numeral beside these bars and the bar that
+  // IS that numeral finish together.
   useEffect(() => {
     morph.set(0);
-    morph.set(withTiming(1, TIMING_CONFIG.SLOW));
+    morph.set(withTiming(1, TIMING_CONFIG.COUNT));
   }, [signature, morph]);
 
-  // Belt and braces. Even with a fixed verb sequence, an unexpected build must
-  // degrade to "no morph" rather than throw on the app's most-visited screen.
-  const pathPair = pathState.pair;
-  const safePair: [SkPath, SkPath] = pathPair[0].isInterpolatable(pathPair[1])
-    ? pathPair
-    : [pathPair[1], pathPair[1]];
-
-  const morphedPath = usePathInterpolation(morph, [0, 1], safePair);
-  const todayPath = buildWeekPath(todayOnly(counts), scaleFor(counts));
+  const morphedPath = usePathInterpolation(morph, MORPH_RANGE, interpolatable(pathState.week));
+  // Today's column morphs with the rest. It used to be rebuilt from the current
+  // counts on every render, so the solid bar — the due count itself, drawn —
+  // snapped to its new height while the week around it eased there.
+  const todayPath = usePathInterpolation(morph, MORPH_RANGE, interpolatable(pathState.today));
 
   // Entrance grows the row off the baseline as one transform, offset from the
-  // hero so the two charts never start animating on the same frame.
+  // recall chart so the two never start animating on the same frame.
   const growth = useSharedValue(0);
   useEffect(() => {
     growth.set(0);

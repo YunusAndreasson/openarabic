@@ -1,0 +1,30 @@
+steps:
+  - launch: com.edenmind.OpenArabic
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Due today
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Continue reading
+  - echo: Open Practice from Explore; expect the due dashboard
+  - tap:
+      x: 0.625
+      y: 0.93
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Due today
+  - echo: Start review; expect Show answer
+  - tap:
+      text: Review
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Show answer
+      timeoutMs: 20000

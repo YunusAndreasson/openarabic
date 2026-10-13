@@ -90,6 +90,8 @@ export const ArabicColoringExamples = memo(() => {
             />
           </View>
           <ThemedText type="caption" colorName="textTertiary" style={styles.explanation}>
+            {/* English formulas start LTR even when their first term is Arabic. */}
+            {'\u200e'}
             {example.breakdown}
           </ThemedText>
         </View>

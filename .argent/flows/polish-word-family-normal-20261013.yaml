@@ -1,0 +1,50 @@
+steps:
+  - tool: open-url
+    args:
+      url: open-arabic://practice/word?rootId=6149
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        identifier: dictionary-word-content
+      timeoutMs: 15000
+  - scroll-to:
+      target:
+        text: جَمَعَ, jamaʿa, gather, assemble
+        role: Button
+      within:
+        identifier: dictionary-word-content
+  - await:
+      idle: true
+  - tap:
+      text: جَمَعَ, jamaʿa, gather, assemble
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Verb
+        role: StaticText
+      timeoutMs: 15000
+  - tool: button
+    args:
+      button: back
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: جَمِيعٌ, jamīʿ, all of, every one of
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: Close
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: hidden
+      selector:
+        identifier: dictionary-word-content
+      timeoutMs: 10000
+executionPrerequisite: QA signed in, Everything root6149 saved, normal dark
+  density420/fontScale1, no audio. Word/family navigation only; no
+  add/remove/grade.

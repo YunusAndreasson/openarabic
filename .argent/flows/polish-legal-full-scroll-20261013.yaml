@@ -1,0 +1,139 @@
+steps:
+  - tap:
+      text: Account
+      role: FrameLayout
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Account
+        role: StaticText
+      timeoutMs: 10000
+  - scroll-to:
+      target:
+        text: Terms of Service
+        role: Button
+  - await:
+      idle: true
+  - tap:
+      text: Terms of Service
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 1. Our Service
+        role: View
+      timeoutMs: 10000
+  - scroll-to:
+      target:
+        text: 10. Contact
+        role: View
+  - await:
+      idle: true
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 10. Contact
+        role: View
+      timeoutMs: 10000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: yunus+openarabic@edenmind.com
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: Navigate up
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Privacy Policy
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: Privacy Policy
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 1. Information We Collect
+        role: View
+      timeoutMs: 10000
+  - scroll-to:
+      target:
+        text: 8. Contact Us
+        role: View
+  - await:
+      idle: true
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 8. Contact Us
+        role: View
+      timeoutMs: 10000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: We'll respond as soon as possible.
+        role: StaticText
+      timeoutMs: 10000
+  - tap:
+      text: Navigate up
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Legal & attributions
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: Legal & attributions
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Audio generation
+        role: View
+      timeoutMs: 10000
+  - scroll-to:
+      target:
+        text: Open source libraries
+        role: View
+  - await:
+      idle: true
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Open source libraries
+        role: View
+      timeoutMs: 10000
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Full license details in the app repository.
+        role: StaticText
+      timeoutMs: 10000
+  - tap:
+      text: Navigate up
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Legal & attributions
+        role: Button
+      timeoutMs: 10000
+executionPrerequisite: Practice root dark, normal density420/fontScale1, no
+  playback. Document reading only; no external link activation.

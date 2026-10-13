@@ -38,7 +38,7 @@ export const OptionCard = ({
     <BaseCard
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="radio"
-      accessibilityState={{ selected }}
+      accessibilityState={{ checked: selected }}
       style={[
         styles.card,
         {

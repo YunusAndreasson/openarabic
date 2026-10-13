@@ -44,6 +44,7 @@ let capture: {
   close: jest.Mock;
   cancelWindow: jest.Mock;
   onStreamError: jest.Mock;
+  beginWindow: jest.Mock;
 };
 
 beforeEach(() => {
@@ -88,6 +89,7 @@ beforeEach(() => {
     }),
     cancelWindow: jest.fn(),
     onStreamError: jest.fn(),
+    beginWindow: jest.fn(),
   };
   jest
     .mocked(VoiceCaptureSession)
@@ -128,6 +130,50 @@ beforeEach(() => {
               : 'grant',
       );
     });
+});
+
+test('an interruption ending during an armed window settles the attempt before reopening and allows retry', async () => {
+  const { result, release } = await reviewAfterPrompt();
+  await act(async () => result.current.setPlaybackPriority(false));
+  let windowStarted!: () => void;
+  const started = new Promise<void>(resolve => {
+    windowStarted = resolve;
+  });
+  capture.beginWindow.mockImplementation(() => windowStarted());
+  const settled = jest.fn();
+  await act(async () => {
+    void result.current.arm().then(settled);
+    await started;
+  });
+  expect(settled).not.toHaveBeenCalled();
+  const interruption = jest
+    .mocked(AudioManager.addSystemEventListener)
+    .mock.calls.find(([event]) => event === 'interruption')?.[1];
+  expect(interruption).toBeDefined();
+  await act(async () => {
+    interruption?.({ type: 'ended' } as never);
+    // Join the signal's queued rebuild, just as the next attempt does.
+    await result.current.setPlaybackPriority(false);
+  });
+
+  expect(settled).toHaveBeenCalledWith({
+    ok: false,
+    reason: 'error',
+    message: 'input stream reopening',
+  });
+  expect(result.current.isMicStreamOpen()).toBe(true);
+  expect(capture.close).toHaveBeenCalledWith({ releaseSession: true });
+  const startsBeforeRetry = capture.beginWindow.mock.calls.length;
+  await act(async () => {
+    void result.current.arm();
+    await result.current.setPlaybackPriority(false);
+  });
+  expect(capture.beginWindow).toHaveBeenCalledTimes(startsBeforeRetry + 1);
+  await act(async () => {
+    await result.current.cancel();
+    release();
+    await result.current.setPlaybackPriority(true);
+  });
 });
 
 async function reviewAfterPrompt() {

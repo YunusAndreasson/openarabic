@@ -1,0 +1,19 @@
+executionPrerequisite: Android reusable QA account on Practice, voice enabled, model ready, hands-free disabled, emulator mic silent, at least two due cards.
+steps:
+  - tap: { text: Review }
+  - await: { visible: { text: Voice answer }, timeout: 20000 }
+  - await: { idle: true }
+  - tap: { text: Voice answer, role: Button }
+  - await: { visible: { text: Try again }, timeout: 30000 }
+  - await: { idle: true }
+  - tap: { text: Try again }
+  - await: { visible: { text: Done }, timeout: 10000 }
+  - tap: { text: Done, role: Button }
+  - await: { visible: { text: Try again }, timeout: 20000 }
+  - await: { idle: true }
+  - tap: { text: 'No, I missed it' }
+  - await: { visible: { id: review-restudy-continue } }
+  - await: { idle: true }
+  - tap: { id: review-restudy-continue }
+  - await: { visible: { id: review-show-answer } }
+  - await: { idle: true }

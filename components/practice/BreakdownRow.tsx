@@ -1,11 +1,11 @@
 import type { JSX } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { ListRow, ProgressBar } from '@/components/common';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { Ionicons } from '@/components/ui';
 import { getMeterTrackColor, useChartColors } from '@/constants/chartColors';
-import { LAYOUT } from '@/constants/layout';
+import { INLINE_VALUE_MIN_WIDTH, LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { formatCount } from '@/utils/stringUtils';
@@ -98,6 +98,8 @@ export function BreakdownRow({
 }: BreakdownRowProps): JSX.Element {
   const colors = useColors();
   const chartColors = useChartColors();
+  const { width, fontScale } = useWindowDimensions();
+  const stackMetrics = width / fontScale < INLINE_VALUE_MIN_WIDTH;
 
   // The same ink the practice charts draw their data in, so a row and the
   // column it came from are visibly the same data. Rows that are not on the
@@ -110,43 +112,47 @@ export function BreakdownRow({
 
   return (
     <ListRow divider density="compact" onPress={onPress} accessibilityLabel={accessibilityLabel}>
-      <View style={styles.labelColumn}>
-        <ThemedText type="body" colorName={count > 0 ? 'text' : 'textTertiary'}>
-          {label}
-        </ThemedText>
-        <ThemedText type="caption" colorName="textTertiary" numberOfLines={1}>
-          {caption}
-        </ThemedText>
-      </View>
+      <View style={[styles.body, stackMetrics && styles.stackedBody]}>
+        <View style={[styles.labelColumn, stackMetrics && styles.stackedLabel]}>
+          <ThemedText type="body" colorName={count > 0 ? 'text' : 'textTertiary'}>
+            {label}
+          </ThemedText>
+          <ThemedText type="caption" colorName="textTertiary">
+            {caption}
+          </ThemedText>
+        </View>
 
-      {/* A length, and only a length — the row says the count out loud beside it
+        {/* A length, and only a length — the row says the count out loud beside it
           and again in its spoken label, so nothing here is carried by pixels
           alone. */}
-      <View style={styles.meter}>
-        {fraction != null && (
-          <ProgressBar
-            backgroundColor={trackColor}
-            fillColor={fillColor}
-            height={LAYOUT.PROGRESS_BAR.HEIGHT}
-            progress={fraction * 100}
-          />
-        )}
-      </View>
+        <View style={[styles.metrics, stackMetrics && styles.stackedMetrics]}>
+          <View style={[styles.meter, stackMetrics && styles.stackedMeter]}>
+            {fraction != null && (
+              <ProgressBar
+                backgroundColor={trackColor}
+                fillColor={fillColor}
+                height={LAYOUT.PROGRESS_BAR.HEIGHT}
+                progress={fraction * 100}
+              />
+            )}
+          </View>
 
-      <ThemedText
-        type="bodyBold"
-        colorName={count > 0 ? 'text' : 'textTertiary'}
-        style={styles.count}
-        numberOfLines={1}
-      >
-        {formatCount(count)}
-      </ThemedText>
+          <ThemedText
+            type="bodyBold"
+            colorName={count > 0 ? 'text' : 'textTertiary'}
+            style={[styles.count, { width: COUNT_WIDTH * fontScale }]}
+            numberOfLines={1}
+          >
+            {formatCount(count)}
+          </ThemedText>
 
-      {/* Only rows that lead somewhere claim to. */}
-      <View style={styles.chevron}>
-        {onPress && (
-          <Ionicons color={colors.textTertiary} name="chevron-forward" size={CHEVRON_SIZE} />
-        )}
+          {/* Only rows that lead somewhere claim to. */}
+          <View style={styles.chevron}>
+            {onPress && (
+              <Ionicons color={colors.textTertiary} name="chevron-forward" size={CHEVRON_SIZE} />
+            )}
+          </View>
+        </View>
       </View>
     </ListRow>
   );
@@ -155,6 +161,32 @@ export function BreakdownRow({
 BreakdownRow.displayName = 'BreakdownRow';
 
 const styles = StyleSheet.create({
+  body: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: LAYOUT.SPACING.MEDIUM,
+  },
+  stackedBody: {
+    alignItems: 'stretch',
+    flexDirection: 'column',
+    gap: LAYOUT.SPACING.SMALL,
+  },
+  metrics: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: LAYOUT.SPACING.MEDIUM,
+  },
+  stackedMetrics: {
+    alignSelf: 'stretch',
+  },
+  stackedMeter: {
+    flex: 1,
+    width: undefined,
+  },
+  stackedLabel: {
+    flex: 0,
+  },
   labelColumn: {
     flex: 1,
     gap: LAYOUT.SPACING.TINY,

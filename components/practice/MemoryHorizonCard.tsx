@@ -1,11 +1,10 @@
 import type { JSX } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { AnimatedCount, BaseCard } from '@/components/common';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { Ionicons } from '@/components/ui';
-import { FONTS } from '@/constants/fonts';
-import { LAYOUT, LETTER_SPACING } from '@/constants/layout';
+import { INLINE_VALUE_MIN_WIDTH, LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { MemoryHorizonDistribution } from '@/hooks/vocabulary/useMemoryHorizonDistribution';
@@ -24,8 +23,11 @@ interface MemoryHorizonCardProps {
 }
 
 /**
- * The practice screen's hero: what the learner can recall right now, and how
- * deeply it sits.
+ * What the learner can recall right now, and how deeply it sits.
+ *
+ * Second on the practice screen, under the due count. It led the screen until
+ * the tab badge made the case against that: the badge promises a number, and
+ * the first card a learner met answered a different question.
  *
  * This replaced a card that led with "Words in practice" — an inventory number
  * over a line built from `created_at` that contained no FSRS data at all, could
@@ -40,6 +42,8 @@ export function MemoryHorizonCard({
   onPress,
 }: MemoryHorizonCardProps): JSX.Element {
   const colors = useColors();
+  const { width, fontScale } = useWindowDimensions();
+  const stackHeadline = width / fontScale < INLINE_VALUE_MIN_WIDTH;
   const { bands, medianLabel, medianFraction, practisedCount, hasDistribution } = distribution;
 
   // The dot scale is a real caveat — a unit chart whose dot has quietly stopped
@@ -66,13 +70,17 @@ export function MemoryHorizonCard({
           {STRINGS.PRACTICE_RECALL_NOW_LABEL}
         </ThemedText>
 
-        <View style={styles.headline}>
+        <View style={[styles.headline, stackHeadline && styles.stackedHeadline]}>
           <AnimatedCount
             value={recallableWords}
             // Nothing practised is not a measurement of zero. "0" here would
             // tell someone who has just built a word list that they would
             // remember none of it.
             placeholder={hasMeasuredMemory ? undefined : STRINGS.EMPTY_METRIC}
+            // One step below the due count above it. At the same 32pt this card
+            // also had the chart, so it outweighed the number the screen leads
+            // with and the two read as rival headlines.
+            type="heading2"
             style={styles.value}
             // The card announces the whole story in one sentence; a second
             // reading of the bare number would only repeat part of it.
@@ -100,21 +108,17 @@ export function MemoryHorizonCard({
           wordsPerDot={distribution.wordsPerDot}
           medianFraction={medianFraction}
           hasDistribution={hasDistribution}
+          horizonByRootId={distribution.horizonByRootId}
         />
       </View>
 
-      {/* The footer line and the chevron share one row, so the card gains its
-          disclosure without gaining a millimetre of height. Same signifier, same
-          ink and the same right edge as the week-ahead card below it — this card
-          was the largest tappable surface on the screen with nothing to say it
-          was one. */}
+      {/* The footer and chevron share one row; the text can wrap as it grows.
+          Same signifier, same
+          ink and the same right edge as the due card above it — this card was
+          the largest tappable surface on the screen with nothing to say it was
+          one. */}
       <View style={styles.footer}>
-        <ThemedText
-          type="caption"
-          colorName="captionText"
-          numberOfLines={1}
-          style={styles.footerText}
-        >
+        <ThemedText type="caption" colorName="captionText" style={styles.footerText}>
           {hasDistribution
             ? STRINGS.PRACTICE_TYPICAL_HORIZON.replace('{horizon}', medianLabel)
             : STRINGS.PRACTICE_RECALL_EMPTY}
@@ -149,14 +153,16 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.SMALL,
   },
   value: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * 1.15,
-    fontFamily: FONTS.ENGLISH_BOLD,
-    letterSpacing: LETTER_SPACING.TIGHT,
     includeFontPadding: false,
   },
   denominator: {
+    flexShrink: 1,
     paddingBottom: LAYOUT.SPACING.TINY,
+  },
+  stackedHeadline: {
+    alignItems: 'flex-start',
+    flexDirection: 'column',
+    gap: LAYOUT.SPACING.TINY,
   },
   // Full-bleed: the canvas is exactly the card's own width, so it must not sit
   // inside horizontal padding or it overflows the rounded corners.

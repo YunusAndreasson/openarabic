@@ -4,9 +4,11 @@ import { StyleSheet, View } from 'react-native';
 // own barrel would pull in every sibling and close an import cycle.
 import { ListRow } from '@/components/common/ListRow';
 import { ThemedText } from '@/components/primitives/ThemedText';
+import { Ionicons } from '@/components/ui/Icon';
 import { LAYOUT, getCompactArabicFontSize } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useDebouncedArabicFontSize } from '@/hooks/theme/useDebouncedArabicFontSize';
+import { useColors } from '@/hooks/theme/useColors';
 import type { RootId } from '@/types/branded.types';
 import type { RootEnrichment, RootFamilyMember } from '@/types/rootEnrichment.types';
 
@@ -16,7 +18,7 @@ import type { RootEnrichment, RootFamilyMember } from '@/types/rootEnrichment.ty
  * One axis rather than separate flags, because they never vary independently —
  * they are one decision about which surface you are on.
  *
- * Nothing is behind a chevron on either surface any more. The sheet deferred the
+ * Root explanations and family lists are inline on both surfaces. The sheet deferred the
  * family list to stay short, and that was the wrong thing to protect: what a
  * word is built from is why the panel exists, and a learner who tapped a word to
  * ask what it is should not have to ask twice. The sheet scrolls.
@@ -239,6 +241,7 @@ interface FamilyRowProps {
  * list". Unlinkable members stay plain text, which is honest.
  */
 const FamilyRow = ({ member, arabicFontSize, onOpen, canOpen }: FamilyRowProps) => {
+  const colors = useColors();
   const { rootId } = member;
   const isLinkable = rootId != null && !!onOpen && (canOpen?.(rootId) ?? true);
 
@@ -288,6 +291,13 @@ const FamilyRow = ({ member, arabicFontSize, onOpen, canOpen }: FamilyRowProps) 
   return (
     <ListRow density="compact" divider hapticType="selection" onPress={() => onOpen(rootId)}>
       {content}
+      <Ionicons
+        accessible={false}
+        importantForAccessibility="no"
+        color={colors.textTertiary}
+        name="chevron-forward"
+        size={LAYOUT.BUTTON.ICON_SIZE.DISCLOSURE}
+      />
     </ListRow>
   );
 };

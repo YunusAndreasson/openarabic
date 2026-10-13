@@ -20,7 +20,7 @@ interface WordExampleBlockProps {
    * Opens the source article. Omitted — or passed a sentence with no article —
    * and the block is inert, exactly as it was before attribution existed.
    */
-  onOpenArticle?: (article: SentenceArticle) => void;
+  onOpenArticle?: (article: SentenceArticle, sentenceId: number) => void;
 }
 
 /**
@@ -107,7 +107,7 @@ const WordExampleBlockComponent = ({
       accessibilityRole="link"
       android_ripple={{ color: colors.navigationRipple, borderless: false }}
       style={blockStyle}
-      onPress={() => onOpenArticle(article)}
+      onPress={() => onOpenArticle(article, sentence.id)}
     >
       {body}
     </Pressable>

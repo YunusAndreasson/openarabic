@@ -1,0 +1,12 @@
+{
+  "columns": ["offset_dp", "viewport_height_dp", "tab_bar_hidden"],
+  "observed": [
+    [316.4444580078125, 593.1851806640625, 0],
+    [358.8148193359375, 500.7407531738281, 0],
+    [408.8888854980469, 500.7407531738281, 1],
+    [316.4444580078125, 593.1851806640625, 1]
+  ],
+  "cause": "Tab bar hide grows the viewport from 500.74075 to 593.18518 dp, clamps bottom offset from 408.88889 to 316.44446 dp, and the direction-only hook previously revealed navigation on this layout adjustment.",
+  "fix": "Ignore offset changes accompanying a viewport height change; re-anchor the direction run at the new position.",
+  "scope": "Android regular ScrollView callers. DraggableFlatList bare-offset callback does not include viewport height and remains separately unverified."
+}

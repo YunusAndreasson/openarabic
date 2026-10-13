@@ -76,11 +76,13 @@ export const DueWordsPrognosisChart = memo<DueWordsPrognosisChartProps>(
         const newlyDue = dueWordsData[index]?.newlyDue ?? 0;
         // Days after today break out how many of the due words are new that day
         const newSuffix =
-          index > 0 && newlyDue > 0 ? ` · +${newlyDue} ${STRINGS.NEWLY_DUE_SUFFIX}` : '';
+          index > 0 && newlyDue > 0
+            ? ` · +${formatCount(newlyDue)} ${STRINGS.NEWLY_DUE_SUFFIX}`
+            : '';
         return {
           x: point.x,
           y: point.y,
-          value: `${point.dueWords}${newSuffix}`,
+          value: `${formatCount(point.dueWords)}${newSuffix}`,
           label: formatMonthDay(point.date),
           data: {
             date: point.date,

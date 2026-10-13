@@ -1,0 +1,133 @@
+steps:
+  - tap:
+      text: Your words
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 1,993 words
+        role: Button
+      timeoutMs: 10000
+  - tool: gesture-swipe
+    args:
+      fromX: 0.5
+      fromY: 0.75
+      toX: 0.5
+      toY: 0.3
+      durationMs: 400
+      momentum: false
+  - tap:
+      id: com.edenmind.OpenArabic:id/search_button
+  - tap:
+      id: com.edenmind.OpenArabic:id/search_src_text
+  - tool: keyboard
+    args:
+      text: thank
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Thank,
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      id: com.edenmind.OpenArabic:id/search_close_btn
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 1,993 words
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      id: com.edenmind.OpenArabic:id/search_src_text
+  - tool: paste
+    args:
+      text: حمد
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Thank,
+        role: Button
+      timeoutMs: 10000
+  - tool: await-ui-element
+    args:
+      condition: text
+      selector:
+        text: 5 words
+        role: Button
+      expectedText: 5 words
+      textMatch: equals
+      timeoutMs: 10000
+  - tap:
+      id: com.edenmind.OpenArabic:id/search_close_btn
+  - tool: await-ui-element
+    args:
+      condition: text
+      selector:
+        text: 1,993 words
+        role: Button
+      expectedText: 1,993 words
+      textMatch: equals
+      timeoutMs: 10000
+  - tap:
+      id: com.edenmind.OpenArabic:id/search_close_btn
+  - tap:
+      text: 1,993 words
+      role: Button
+  - tap:
+      text: Due now. 1,907 words
+      role: RadioButton
+  - tool: await-ui-element
+    args:
+      condition: text
+      selector:
+        text: Due now · 1907
+        role: Button
+      expectedText: Due now · 1907
+      textMatch: equals
+      timeoutMs: 10000
+  - tap:
+      text: Due now · 1907
+      role: Button
+  - tap:
+      text: Struggling. 263 words
+      role: RadioButton
+  - tool: await-ui-element
+    args:
+      condition: text
+      selector:
+        text: Struggling · 263
+        role: Button
+      expectedText: Struggling · 263
+      textMatch: equals
+      timeoutMs: 10000
+  - tap:
+      text: Struggling · 263
+      role: Button
+  - tap:
+      text: All words. 1,993 words
+      role: RadioButton
+  - tool: await-ui-element
+    args:
+      condition: text
+      selector:
+        text: 1,993 words
+        role: Button
+      expectedText: 1,993 words
+      textMatch: equals
+      timeoutMs: 10000
+  - tap:
+      text: Close
+      role: Button
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Your words
+        role: Button
+      timeoutMs: 10000
+executionPrerequisite: Practice dashboard at top, QA 1993 words, normal
+  density420/fontScale1. Search only; no learner-data writes.

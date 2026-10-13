@@ -1,0 +1,6 @@
+executionPrerequisite: Android QA account signed in with Explore visible and native tab bar present.
+steps:
+  - assert: { visible: { text: Practice } }
+  - tap: { text: Practice }
+  - await: { visible: { text: 'Reviews this week.' } }
+  - await: { idle: true }

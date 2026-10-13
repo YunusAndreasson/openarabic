@@ -1,0 +1,20 @@
+executionPrerequisite: Explore visible, QA account has Everything in Hardest words rail with 10 reviews and 6 forgotten. Portrait emulator at standard or compact 200% text. No active playback. Does not change practice state.
+steps:
+  - scroll-to: { target: { text: Everything, role: Button }, within: { identifier: explore-feed } }
+  - tap: { text: Everything, role: Button }
+  - await: { visible: { text: Memory, role: StaticText }, timeout: 15000 }
+  - tool: gesture-swipe
+    args: { fromX: 0.5, fromY: 0.85, toX: 0.5, toY: 0.5, durationMs: 400, momentum: false }
+  - scroll-to:
+      { target: { text: Next review, role: StaticText }, within: { identifier: word-detail-body } }
+  - await: { visible: { text: Next review, role: StaticText } }
+  - scroll-to:
+      {
+        target: { text: 10 · 6 forgotten, role: StaticText },
+        within: { identifier: word-detail-body },
+      }
+  - await: { visible: { text: 10 · 6 forgotten, role: StaticText } }
+  - tool: button
+    args: { button: back }
+  - await: { hidden: { text: Memory, role: StaticText } }
+  - await: { visible: { text: Search texts, role: Button } }

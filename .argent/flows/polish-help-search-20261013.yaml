@@ -1,0 +1,15 @@
+executionPrerequisite: Help center visible, empty search, first What is OpenArabic? FAQ collapsed, dark theme, no playback.
+steps:
+  - tap: { text: What is OpenArabic?, role: Button }
+  - await: { visible: { text: OpenArabic is a free, role: StaticText }, timeout: 15000 }
+  - tap: { text: What is OpenArabic?, role: Button }
+  - await: { hidden: { text: OpenArabic is a free, role: StaticText } }
+  - tap: { text: Search help, role: TextField }
+  - tool: keyboard
+    args: { text: qzxnomatch987 }
+  - await: { visible: { text: No results found, role: StaticText } }
+  - tap: { text: Clear search, role: Button }
+  - tool: button
+    args: { button: back }
+  - await: { visible: { text: What is OpenArabic?, role: Button } }
+  - await: { hidden: { text: No results found, role: StaticText } }

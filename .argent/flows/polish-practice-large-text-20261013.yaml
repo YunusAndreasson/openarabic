@@ -1,0 +1,32 @@
+executionPrerequisite: QA account has measured practice memory, reviewed words today and a day streak. Practice root visible, standard or compact 200% portrait display, no playback. Read-only dashboard/navigation checks; no review grades.
+steps:
+  - scroll-to:
+      {
+        target: { text: Reviews this week., role: Button },
+        direction: up,
+        within: { identifier: practice-dashboard },
+      }
+  - await: { visible: { text: words reviewed today, role: StaticText } }
+  - scroll-to:
+      {
+        target: { text: Typical word holds for, role: StaticText },
+        within: { identifier: practice-dashboard },
+      }
+  - await: { visible: { text: Typical word holds for, role: StaticText } }
+  - tap: { text: Memory horizon., role: Button }
+  - await: { visible: { text: How long each practised word holds, role: StaticText } }
+  - tool: button
+    args: { button: back }
+  - await: { hidden: { text: How long each practised word holds, role: StaticText } }
+  - scroll-to:
+      { target: { text: 'Day streak,', role: Button }, within: { identifier: practice-dashboard } }
+  - scroll-to:
+      {
+        target: { text: 'Reviews done,', role: Button },
+        within: { identifier: practice-dashboard },
+      }
+  - tap: { text: 'Reviews done,', role: Button }
+  - await: { visible: { text: Every grade you have given, role: StaticText } }
+  - tool: button
+    args: { button: back }
+  - await: { hidden: { text: Every grade you have given, role: StaticText } }

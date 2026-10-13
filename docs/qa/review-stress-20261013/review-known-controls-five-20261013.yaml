@@ -1,0 +1,7 @@
+steps:
+  - run: review-known-controls-20261013.yaml
+  - run: review-known-controls-20261013.yaml
+  - run: review-known-controls-20261013.yaml
+  - run: review-known-controls-20261013.yaml
+  - run: review-known-controls-20261013.yaml
+executionPrerequisite: Android QA account in unrevealed review with more than five pending words.

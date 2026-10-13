@@ -761,7 +761,7 @@ describe('useArticleScreen Hook', () => {
       ).not.toThrow();
     });
 
-    test('waits two animation frames before restoring the saved reading position', () => {
+    test('waits two frames and restores the saved sentence below the floating toolbar', () => {
       jest.mocked(useReadingProgress).mockReturnValue({
         updateProgress: mockUpdateProgress,
         scheduleProgressUpdate: mockUpdateProgress,
@@ -797,6 +797,8 @@ describe('useArticleScreen Hook', () => {
         index: 5,
         animated: true,
         viewPosition: 0,
+        // The safe-area mock supplies 44pt; the toolbar is 44pt plus an 8pt gap.
+        viewOffset: -96,
       });
       expect(mockShowToast).toHaveBeenCalledWith(
         expect.stringContaining('60'),

@@ -3,6 +3,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LAYOUT } from '@/constants/layout';
 import { useShouldShowMiniPlayer } from '@/hooks/audio/useShouldShowMiniPlayer';
+import { useMiniPlayerHeight } from '@/hooks/audio/useMiniPlayerHeight';
 
 /**
  * Bottom content padding a scrolling tab screen must reserve so its last row
@@ -24,11 +25,10 @@ import { useShouldShowMiniPlayer } from '@/hooks/audio/useShouldShowMiniPlayer';
 export function useMiniPlayerClearance(): number {
   const insets = useSafeAreaInsets();
   const shouldShowMiniPlayer = useShouldShowMiniPlayer();
+  const playerHeight = useMiniPlayerHeight();
 
   const bottomInsetClearance = Platform.OS === 'android' ? 0 : insets.bottom;
-  const miniPlayerClearance = shouldShowMiniPlayer
-    ? LAYOUT.CARD.HEIGHT.MINI_PLAYER + LAYOUT.SPACING.SMALL
-    : 0;
+  const miniPlayerClearance = shouldShowMiniPlayer ? playerHeight + LAYOUT.SPACING.SMALL : 0;
 
   return bottomInsetClearance + miniPlayerClearance + LAYOUT.SPACING.LARGE;
 }

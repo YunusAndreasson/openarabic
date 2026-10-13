@@ -1,0 +1,39 @@
+steps:
+  - tap: { text: Account }
+  - await: { visible: { text: Arabic text } }
+  - await: { idle: true }
+  - tap:
+      text: Arabic text
+  - await: { visible: { text: Font size } }
+  - await: { idle: true }
+  - echo: Test slider drag at standard 411x914 logical geometry; points discovered from Font size SeekBar frame.
+  - tool: gesture-swipe
+    args:
+      fromX: 0.4935
+      fromY: 0.197
+      toX: 0.88
+      toY: 0.197
+      durationMs: 600
+      momentum: false
+  - await: { visible: { text: 44px } }
+  - echo: Slider drag reaches maximum 44; restore the original 32 after checking
+      preview readability.
+  - tool: gesture-swipe
+    args:
+      fromX: 0.85
+      fromY: 0.197
+      toX: 0.544
+      toY: 0.197
+      durationMs: 600
+      momentum: false
+  - await: { visible: { text: 32px } }
+  - tap: { text: Madina. Modern & clean, role: RadioButton }
+  - await: { visible: { text: Madina. Modern & clean }, timeout: 15000 }
+  - tap: { text: Noto Sans. Simple, role: RadioButton }
+  - await: { visible: { text: Noto Sans. Simple }, timeout: 15000 }
+  - tool: button
+    args:
+      button: back
+  - await: { visible: { text: Noto Sans · 32 } }
+  - await: { idle: true }
+executionPrerequisite: QA account signed in, Explore visible, standard display scale and dark theme.

@@ -259,6 +259,7 @@ export function WordDetailsBottomSheet({
           the sheet to the content while everything is collapsed, so the common
           case is unchanged; only the overflowing case gains a scroll. */}
       <BottomSheetScrollView
+        testID="reader-word-details-content"
         /* iOS hands a pageSheet's interactive dismissal to any scroll view it
            contains: at contentOffset 0, a downward drag stops being a scroll and
            becomes a drag on the presented view controller. The reader IS such a
@@ -381,8 +382,8 @@ export function WordDetailsBottomSheet({
               {/* Where the word comes from — the Lane's-grounded account of the
                   root, leading. It is the stronger of the two explanations and
                   the one the learner cannot get anywhere else in the reader, so
-                  it goes first and its usage note is not hidden. Only the
-                  family list is behind a chevron; see RootExplanation.
+                  it goes first and its usage note and family list remain
+                  visible in the scrolling sheet; see RootExplanation.
 
                   Absent entirely for a word we have no entry for. No
                   placeholder: a row that exists only to say it has nothing

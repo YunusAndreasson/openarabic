@@ -24,6 +24,12 @@ export const SCREEN_HEIGHT = SCREEN_DIMENSIONS?.height ?? 812;
 // Base scale for systematic sizing
 const BASE_UNIT = 4;
 
+/** Minimum screen width in unscaled text points for inline label/value rows. */
+export const INLINE_VALUE_MIN_WIDTH = BASE_UNIT * 80;
+/** Scrollable practice detail sheets reserve a visible strip of the screen above. */
+export const SCROLLABLE_SHEET_DETENT = 0.85;
+export const TOPIC_GRID_MIN_COLUMN_WIDTH = BASE_UNIT * 36;
+
 /** One corner treatment for both native form sheets and Gorhom bottom sheets. */
 const SHEET_CORNER_RADIUS = BASE_UNIT * 6;
 
@@ -353,19 +359,20 @@ export const LAYOUT = {
      * The review screen's bottom action band, fixed for every state it can
      * hold: "Show answer", the self-grade row, the restudy prompt and the
      * voice-miss row. Fixed because the card above it is `flex: 1` — with an
-     * intrinsically-sized band, the ~184px difference between the voice result
-     * and the grade bar resized the card and jerked the Arabic hero upward on
-     * every voice miss.
+     * intrinsically-sized band, a state of a different height would resize the
+     * card and jerk the Arabic hero on every swap.
      *
-     * Button row (48 + 12) + gap (8) + a one-line detail slot (24) = 92.
+     * It is the button row and nothing else: 48 + 12 = 60, the min-height of a
+     * `ReviewActionButton`.
      *
-     * Only the voice-miss row fills the detail slot (with what was heard); the
-     * other three states are the button row alone, bottom-anchored, and leave
-     * it empty. That is the slot doing its job — it exists so the band is the
-     * same height whichever state is in it.
+     * It used to be 92, reserving a one-line slot above the buttons for what the
+     * recognizer heard on a voice miss. Only that one state filled it; in the
+     * other three the slot was 32pt of air between the card and the buttons it
+     * belongs to, which is why the band sat visibly detached from the card.
+     * That line is on the card now, under the disclosed answer (see
+     * `discloseCaption` on `ReviewFlipCard`).
      */
-    ACTION_SLOT_HEIGHT:
-      TOUCH_TARGETS.LARGE + SPACING_SCALE.MEDIUM + SPACING_SCALE.SMALL + SPACING_SCALE.XLARGE, // 92
+    ACTION_SLOT_HEIGHT: TOUCH_TARGETS.LARGE + SPACING_SCALE.MEDIUM, // 60
     COMPLETION: {
       ICON_DEFAULT_SIZE: BASE_UNIT * 25, // 100 - responsive to base unit
       CONTENT_MAX_WIDTH: BASE_UNIT * 87.5, // 350 - responsive to base unit

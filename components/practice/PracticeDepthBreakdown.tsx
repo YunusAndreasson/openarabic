@@ -1,7 +1,7 @@
 import type { JSX } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 
-import { MetricCard } from '@/components/common';
+import { MetricCardGrid } from '@/components/common/MetricCardGrid';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useStudyStreak } from '@/hooks/practice/useStudyStreak';
@@ -127,11 +127,7 @@ export function PracticeDepthBreakdown({ studyWords }: { studyWords: StudyWord[]
           for a tile that leads somewhere. These are the same card at the same
           size as the pressable ones on the practice screen, which is exactly why
           the signifier has to distinguish them. */}
-      <View style={styles.metricsRow}>
-        {metrics.map(metric => (
-          <MetricCard key={metric.id} value={metric.value} label={metric.label} />
-        ))}
-      </View>
+      <MetricCardGrid metrics={metrics} style={styles.metricsRow} />
 
       <BandBreakdown
         bands={rows}
@@ -145,9 +141,6 @@ PracticeDepthBreakdown.displayName = 'PracticeDepthBreakdown';
 
 const styles = StyleSheet.create({
   metricsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: LAYOUT.SPACING.SMALL,
     marginBottom: LAYOUT.SPACING.SMALL,
   },
 });

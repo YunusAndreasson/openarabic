@@ -1,0 +1,17 @@
+executionPrerequisite: Account visible above Listening section, QA account, audio language English + Arabic, no active playback.
+steps:
+  - scroll-to: { target: { text: Audio language, role: Button } }
+  - tap: { text: Audio language, role: Button }
+  - await: { visible: { text: Arabic only, role: RadioButton }, timeout: 15000 }
+  - tap: { text: Arabic only, role: RadioButton }
+  - tool: button
+    args: { button: back }
+  - await: { visible: { text: Audio language, role: Button } }
+  - assert: { visible: { text: Arabic only, role: Button } }
+  - tap: { text: Audio language, role: Button }
+  - await: { visible: { text: English + Arabic, role: RadioButton }, timeout: 15000 }
+  - tap: { text: English + Arabic, role: RadioButton }
+  - tool: button
+    args: { button: back }
+  - await: { hidden: { text: English + Arabic, role: RadioButton } }
+  - assert: { visible: { text: English + Arabic, role: Button } }

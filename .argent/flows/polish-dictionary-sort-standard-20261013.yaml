@@ -1,0 +1,6 @@
+executionPrerequisite: Your words dictionary visible with Reviewed once filter, Strength ascending selected. Normal portrait display. Two sort toggles restore original ordering; no learner writes.
+steps:
+  - tap: { text: 'Strength, ascending', role: RadioButton }
+  - await: { visible: { text: 'Strength, descending', role: RadioButton } }
+  - tap: { text: 'Strength, descending', role: RadioButton }
+  - await: { visible: { text: 'Strength, ascending', role: RadioButton } }

@@ -1,0 +1,10 @@
+executionPrerequisite: Account Review reminders switch visible and off in QA account, notification permission already granted, reminder time 19:00, standard dark display.
+steps:
+  - tap: { text: Review reminders, role: Switch }
+  - await: { visible: { text: '19:00', role: Button }, timeout: 15000 }
+  - tap: { text: '19:00', role: Button }
+  - await: { visible: { text: Cancel }, timeout: 15000 }
+  - tap: { text: Cancel }
+  - await: { visible: { text: '19:00', role: Button } }
+  - tap: { text: Review reminders, role: Switch }
+  - await: { hidden: { text: '19:00', role: Button } }

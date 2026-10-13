@@ -1,0 +1,14 @@
+executionPrerequisite: Contact support visible with empty Message field, QA account, no attachment, dark theme. Never press Send feedback. Draft discarded by Navigate up at end.
+steps:
+  - tap: { text: Message, role: TextField }
+  - tool: keyboard
+    args: { text: abcde }
+  - await: { visible: { text: 5 more characters needed, role: StaticText } }
+  - tool: keyboard
+    args: { text: abcd }
+  - await: { visible: { text: 1 more character needed, role: StaticText } }
+  - tool: keyboard
+    args: { text: x }
+  - await: { visible: { text: 10 characters, role: StaticText } }
+  - tap: { text: Navigate up, role: Button }
+  - await: { visible: { text: Contact support, role: Button } }

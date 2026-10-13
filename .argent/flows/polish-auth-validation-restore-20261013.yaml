@@ -1,0 +1,83 @@
+# DIAGNOSTIC / UNVERIFIED: hidden requirement substring also matches inline error.
+steps:
+  - tap:
+      text: Create account with email
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        identifier: create-account-button
+      timeoutMs: 10000
+  - tap:
+      id: password-input
+  - tool: keyboard
+    args:
+      text: test
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: At least 8 characters
+        role: StaticText
+      timeoutMs: 10000
+  - tap:
+      text: Create account
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Use at least 8 characters
+        role: StaticText
+      timeoutMs: 10000
+  - tool: await-ui-element
+    args:
+      condition: hidden
+      selector:
+        text: At least 8 characters
+        role: StaticText
+      timeoutMs: 5000
+  - tap:
+      role: StaticText
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        identifier: navigate-to-sign-in-button
+      timeoutMs: 10000
+  - tap:
+      text: Sign in with email
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        identifier: email-input
+      timeoutMs: 10000
+  - tap:
+      id: email-input
+  - tool: run-sequence
+    args:
+      steps:
+        - tool: keyboard
+          args:
+            text: '{{secret:OPEN_ARABIC_TEST_EMAIL}}'
+        - tool: keyboard
+          args:
+            key: enter
+          delayMs: 800
+        - tool: keyboard
+          args:
+            text: '{{secret:OPEN_ARABIC_TEST_PASSWORD}}'
+        - tool: keyboard
+          args:
+            key: enter
+          delayMs: 500
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Explore
+        role: StaticText
+      timeoutMs: 15000
+executionPrerequisite: QA signed out on normal dark auth landing. Validate short
+  password with blank email; restore existing QA account using secrets. No new
+  account/reset message.

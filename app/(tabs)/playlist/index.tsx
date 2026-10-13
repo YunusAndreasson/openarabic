@@ -128,8 +128,15 @@ PlaylistListItem.displayName = 'PlaylistListItem';
 export default function PlaylistScreen(): JSX.Element {
   const miniPlayerClearance = useMiniPlayerClearance();
   const tabBarAutoHide = useTabBarAutoHide();
+  const { onScrollOffset } = tabBarAutoHide;
   const { editMode, reset } = useEditMode('playlist');
   const { showToast } = useToast();
+
+  useEffect(() => {
+    // Switching list implementations mounts at the top, which may not emit
+    // a scroll event. Restore navigation to match that resting position.
+    onScrollOffset(0);
+  }, [editMode, onScrollOffset]);
 
   // Reset edit mode when screen loses focus
   useFocusEffect(
@@ -248,6 +255,7 @@ export default function PlaylistScreen(): JSX.Element {
       // as working and the tab bar simply never hides in edit mode. This is the
       // library's supported way in.
       onScrollOffsetChange={tabBarAutoHide.onScrollOffset}
+      onContainerLayout={({ layout }) => tabBarAutoHide.onViewportHeightChange(layout.height)}
       data={sortedReadingList}
       keyExtractor={memoizedKeyExtractor}
       renderItem={renderItem}

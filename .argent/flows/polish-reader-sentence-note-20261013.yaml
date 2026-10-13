@@ -1,0 +1,19 @@
+executionPrerequisite: Reader article 291 is open at sentence 1853, portrait standard or compact 200% display, no playback. Read-only word sheet inspection; no practice grading or toggles.
+steps:
+  - tap: { text: جَمِيعَ, role: Button }
+  - await: { visible: { identifier: reader-word-details-content }, timeout: 10000 }
+  - scroll-to:
+      {
+        target: { text: In this sentence, role: StaticText },
+        within: { identifier: reader-word-details-content },
+      }
+  - await: { visible: { text: In this sentence, role: StaticText } }
+  - scroll-to:
+      {
+        target: { text: Object here., role: StaticText },
+        within: { identifier: reader-word-details-content },
+      }
+  - await: { visible: { text: Object here., role: StaticText } }
+  - tool: button
+    args: { button: back }
+  - await: { hidden: { text: In this sentence, role: StaticText } }

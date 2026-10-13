@@ -88,13 +88,13 @@ describe('ReviewHeader', () => {
         <ReviewHeader progress={5} maxProgress={10} onClose={mockOnClose} />,
       );
 
-      expect(getByTestId('icon-close')).toBeTruthy();
+      expect(getByTestId('icon-close-outline')).toBeTruthy();
     });
 
     test('does not render close button when onClose is not provided', () => {
       const { queryByTestId } = render(<ReviewHeader progress={5} maxProgress={10} />);
 
-      expect(queryByTestId('icon-close')).toBeNull();
+      expect(queryByTestId('icon-close-outline')).toBeNull();
     });
   });
 
@@ -119,7 +119,7 @@ describe('ReviewHeader', () => {
       );
 
       // Find the pressable that contains the close icon
-      const closeIcon = getByTestId('icon-close');
+      const closeIcon = getByTestId('icon-close-outline');
       const pressable = closeIcon.parent;
 
       expect(pressable).not.toBeNull();
@@ -133,7 +133,7 @@ describe('ReviewHeader', () => {
     // buzzed Continue twice in one tick, hidden only by the 50ms debounce.
     // This bare Pressable has no press feedback of its own, so it needs this.
     //
-    // Selection, not GlassIconButton's default Light: leaving the session is
+    // Selection, not Light: leaving the session is
     // navigation, and tier 0 in utils/haptics is everything that only moves the
     // UI. A chrome button that lands as hard as a grade leaves the grade
     // nothing to be louder than.
@@ -143,7 +143,7 @@ describe('ReviewHeader', () => {
         <ReviewHeader progress={5} maxProgress={10} onClose={mockOnClose} />,
       );
 
-      const pressable = getByTestId('icon-close').parent;
+      const pressable = getByTestId('icon-close-outline').parent;
       expect(pressable).toBeTruthy();
       fireEvent.press(pressable!);
 

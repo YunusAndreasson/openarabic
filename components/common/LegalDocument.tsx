@@ -38,6 +38,7 @@ export const DocHeading = ({
     // `bodyBold` is body at semibold — the same thing the documents were
     // spelling as `type="body" weight="semibold"` on every subsection.
     <ThemedText
+      accessibilityRole="header"
       style={isSection ? styles.sectionTitle : styles.subsectionTitle}
       type={isSection ? 'heading3' : 'bodyBold'}
     >

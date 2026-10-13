@@ -1,0 +1,30 @@
+steps:
+  - tap:
+      x: 0.875
+      y: 0.93
+  - tool: gesture-swipe
+    args:
+      fromX: 0.5
+      fromY: 0.8
+      toX: 0.5
+      toY: 0.3
+      momentum: false
+  - tool: gesture-swipe
+    args:
+      fromX: 0.5
+      fromY: 0.8
+      toX: 0.5
+      toY: 0.3
+      momentum: false
+  - tap:
+      text: Theme
+  - tap:
+      text: Birches in Spring
+  - tool: gesture-swipe
+    args:
+      fromX: 0.5
+      fromY: 0.3
+      toX: 0.5
+      toY: 0.8
+      momentum: false
+executionPrerequisite: Android QA account on Practice, dark theme; voice enabled, hands-free disabled.

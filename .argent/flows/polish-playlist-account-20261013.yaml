@@ -1,0 +1,22 @@
+steps:
+  - echo: Start the current development bundle with the QA account already signed in.
+  - launch: com.edenmind.OpenArabic
+  - tool: open-url
+    args:
+      url: open-arabic://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081
+  - await: { visible: { text: Continue reading }, timeout: 60000 }
+  - await: { idle: true }
+  - echo: Open Account using its label; the Android native tab IDs are duplicated.
+  - tap: { text: Account }
+  - await: { visible: { text: Arabic text } }
+  - await: { idle: true }
+  - echo: Scroll to Practice settings and open the daily word limit picker.
+  - scroll-to: { target: { text: New words per day, role: Button } }
+  - await: { visible: { text: New words per day, role: Button } }
+  - tap: { text: New words per day, role: Button }
+  - await: { visible: { text: Recommended, role: RadioButton } }
+  - await: { idle: true }
+  - tool: button
+    args: { button: back }
+  - await: { visible: { text: New words per day, role: Button } }
+  - await: { idle: true }

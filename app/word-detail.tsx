@@ -35,7 +35,7 @@ export default function WordDetailSheet(): JSX.Element {
   // word screen (always pushed with a known-good id) — a missing or malformed
   // param needs a distinct message from "removed from another screen", not the
   // same WORD_NOT_FOUND claim about a link that never carried a valid id.
-  const hasValidRootId = Number.isFinite(rootId);
+  const hasValidRootId = Number.isSafeInteger(rootId) && rootId > 0;
 
   return <WordDetailContent hasValidRootId={hasValidRootId} rootId={rootId} />;
 }

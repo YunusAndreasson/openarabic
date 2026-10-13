@@ -45,6 +45,11 @@ import { store } from '@/store/store';
  *                                                dead mic, silent prompt.
  *   —       session scale    successFeedback     rare by construction. One per
  *                                                completed session.
+ *   —       session echo     selectionFeedback   the practice constellation
+ *                            then commitFeedback replaying a session: a tick per
+ *                                                dot landing, bounded by time
+ *                                                and not by words, closed by one
+ *                                                commit. See `planTravelHaptics`.
  *
  * Adding a haptic to a control? Start at tier 0 and only climb if you can say
  * what outcome it reports.

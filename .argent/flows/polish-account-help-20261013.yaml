@@ -1,0 +1,6 @@
+executionPrerequisite: Account main settings visible above Help section, QA account, no playback or sheets. Opens Help center with empty search.
+steps:
+  - scroll-to: { target: { text: Show tutorials again, role: Button } }
+  - tap: { text: Help center, role: Button }
+  - await: { visible: { text: Search help, role: TextField }, timeout: 15000 }
+  - await: { visible: { text: What is OpenArabic?, role: Button }, timeout: 15000 }

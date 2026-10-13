@@ -1,0 +1,15 @@
+executionPrerequisite: Account main settings visible above About section, standard dark theme, no playback. Only open and close documents; no external links.
+steps:
+  - scroll-to: { target: { text: Terms of Service, role: Button } }
+  - tap: { text: Terms of Service, role: Button }
+  - await: { visible: { text: 1. Our Service, role: View } }
+  - tap: { text: Navigate up, role: Button }
+  - scroll-to: { target: { text: Privacy Policy, role: Button } }
+  - tap: { text: Privacy Policy, role: Button }
+  - await: { visible: { text: 1. Information We Collect, role: View } }
+  - tap: { text: Navigate up, role: Button }
+  - scroll-to: { target: { text: Legal & attributions, role: Button } }
+  - tap: { text: Legal & attributions, role: Button }
+  - await: { visible: { text: Audio generation, role: View } }
+  - tap: { text: Navigate up, role: Button }
+  - await: { visible: { text: Legal & attributions, role: Button } }

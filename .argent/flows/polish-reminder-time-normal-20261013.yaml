@@ -1,0 +1,51 @@
+# EXPERIMENTAL / UNVERIFIED: contains failed readiness wait and duplicate toggle.
+# Settings restored off at 19:00; time selection/save not confirmed.
+steps:
+  - tap:
+      x: 0.875
+      y: 0.93
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: Account
+        role: StaticText
+      timeoutMs: 10000
+  - tool: gesture-swipe
+    args:
+      fromX: 0.5
+      fromY: 0.3
+      toX: 0.5
+      toY: 0.7
+      durationMs: 400
+      momentum: false
+  - tool: gesture-swipe
+    args:
+      fromX: 0.5
+      fromY: 0.8
+      toX: 0.5
+      toY: 0.3
+      durationMs: 400
+      momentum: false
+  - tap:
+      text: Review reminders
+  - tool: await-ui-element
+    args:
+      condition: visible
+      selector:
+        text: 19:00
+        role: Button
+      timeoutMs: 10000
+  - tap:
+      text: Review reminders
+  - tap:
+      text: Time
+  - tap:
+      text: 20 hours
+  - tap:
+      text: Cancel
+  - tap:
+      text: Review reminders
+executionPrerequisite: Practice root, QA reminders off and time19:00,
+  notification permission granted, normal dark density420/fontScale1. Restore
+  reminder settings after checking time save/cancel.

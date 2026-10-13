@@ -1,0 +1,15 @@
+executionPrerequisite: Android QA account signed in; Account visible with native tabs and a populated playlist containing Adam and the Rebel near the top. Standard display scale.
+steps:
+  - echo: Open Playlist by its label; native Android tab IDs are duplicated.
+  - tap: { text: Playlist }
+  - await: { visible: { text: Play all, role: Button } }
+  - await: { idle: true }
+  - tap: { text: Edit list, role: Button }
+  - await: { visible: { text: Done editing, role: Button } }
+  - await: { idle: true }
+  - await: { visible: { text: Remove Adam and the Rebel from playlist, role: Button } }
+  - await: { visible: { text: Reorder Adam and the Rebel, role: Button } }
+  - tap: { text: Done editing, role: Button }
+  - await: { hidden: { text: Reorder Adam and the Rebel, role: Button } }
+  - await: { visible: { text: Edit list, role: Button } }
+  - await: { idle: true }

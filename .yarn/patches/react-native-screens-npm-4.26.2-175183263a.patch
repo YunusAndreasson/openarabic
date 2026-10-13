@@ -1,0 +1,30 @@
+diff --git a/android/src/main/java/com/swmansion/rnscreens/gamma/tabs/container/CustomBottomNavigationView.kt b/android/src/main/java/com/swmansion/rnscreens/gamma/tabs/container/CustomBottomNavigationView.kt
+index cd55bf78e26a31a25a619ee1709aa4ca7840f490..83dd6cb8597f219edc2a0804e6d532c129bd1d23 100644
+--- a/android/src/main/java/com/swmansion/rnscreens/gamma/tabs/container/CustomBottomNavigationView.kt
++++ b/android/src/main/java/com/swmansion/rnscreens/gamma/tabs/container/CustomBottomNavigationView.kt
+@@ -2,15 +2,24 @@ package com.swmansion.rnscreens.gamma.tabs.container
+ 
+ import android.annotation.SuppressLint
+ import android.content.Context
++import androidx.core.view.isVisible
++import com.facebook.react.uimanager.PointerEvents
++import com.facebook.react.uimanager.ReactPointerEventsView
+ import com.google.android.material.bottomnavigation.BottomNavigationView
+ 
+ @SuppressLint("ViewConstructor") // Should not be restored & should only be constructed by us.
+ class CustomBottomNavigationView(
+     context: Context,
+     val container: TabsContainer,
+-) : BottomNavigationView(context) {
++) : BottomNavigationView(context),
++    ReactPointerEventsView {
+     private var actionOrigin: TabsActionOrigin? = null
+ 
++    // A GONE bar retains its old bounds. RN hit-testing ignores visibility, so
++    // explicitly opt out while hidden. Upstream fix: react-native-screens#4489.
++    override val pointerEvents: PointerEvents
++        get() = if (isVisible) PointerEvents.AUTO else PointerEvents.NONE
++
+     internal fun setSelectedItemIdWithActionOrigin(
+         itemId: Int,
+         actionOrigin: TabsActionOrigin,

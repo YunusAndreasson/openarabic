@@ -258,12 +258,12 @@ const STATIC_STYLES = StyleSheet.create({
   },
   // Content-sized, like answerBody: WordDisplay's trailer owns the slack below
   // the block now, so neither face's body may grow into it.
-  // No `gap`: the slot resolves to exactly one node (see `questionBody` in the
-  // component), so there is never a second child to space against. It carried
-  // one back when the slot also held a replay button to fall back to.
+  // The gap spaces the one pair the slot can hold: the disclosed answer and the
+  // "you said" line under it. Every other occupant is a single node.
   questionBody: {
     width: '100%',
     alignItems: 'center',
+    gap: LAYOUT.SPACING.SMALL,
     paddingTop: LAYOUT.SPACING.XLARGE,
   },
   meaning: {
@@ -357,6 +357,11 @@ interface ReviewFlipCardProps {
    * nothing to say.
    */
   discloseAnswer?: boolean;
+  /**
+   * One quiet line under the disclosed answer: what the recognizer heard on a
+   * voice miss. Only shown with `discloseAnswer`.
+   */
+  discloseCaption?: string;
   testID?: string;
 }
 
@@ -390,6 +395,7 @@ export function ReviewFlipCard({
   answerSlot,
   questionSlot,
   discloseAnswer = false,
+  discloseCaption,
   testID,
 }: ReviewFlipCardProps) {
   const colors = useColors();
@@ -699,9 +705,24 @@ export function ReviewFlipCard({
   // have neither, which is the case the face has to collapse for.
   const questionBody =
     discloseAnswer && answer ? (
-      <ThemedText type="heading2" colorName="englishText" style={STATIC_STYLES.meaning}>
-        {capitalizeFirstLetter(answer)}
-      </ThemedText>
+      <>
+        <ThemedText type="heading2" colorName="englishText" style={STATIC_STYLES.meaning}>
+          {capitalizeFirstLetter(answer)}
+        </ThemedText>
+        {/* The transcript, next to the answer it is compared against. It used
+            to sit in the action band, on a line the band reserved in every
+            state for the one state that used it. */}
+        {discloseCaption ? (
+          <ThemedText
+            type="caption"
+            colorName="secondaryText"
+            numberOfLines={2}
+            style={STATIC_STYLES.meaning}
+          >
+            {discloseCaption}
+          </ThemedText>
+        ) : null}
+      </>
     ) : (
       questionSlot
     );
@@ -734,6 +755,8 @@ export function ReviewFlipCard({
               {/* Answer face: the same Arabic, its meaning, and the evidence. */}
               <Animated.View
                 pointerEvents={revealed ? 'auto' : 'none'}
+                accessibilityElementsHidden={!revealed}
+                importantForAccessibility={revealed ? 'auto' : 'no-hide-descendants'}
                 style={[STATIC_STYLES.face, surfaceStyle, backStyle]}
               >
                 {/* During a restudy hold the whole face is the continue target,
@@ -767,6 +790,8 @@ export function ReviewFlipCard({
                   it. Tap anywhere that isn't an interactive child to reveal. */}
               <Animated.View
                 pointerEvents={revealed ? 'none' : 'auto'}
+                accessibilityElementsHidden={revealed}
+                importantForAccessibility={revealed ? 'no-hide-descendants' : 'auto'}
                 style={[STATIC_STYLES.face, surfaceStyle, frontStyle]}
               >
                 <Pressable
