@@ -18,7 +18,16 @@
  */
 
 import React from 'react';
-import type { ImageProps, ScrollViewProps, TextProps, ViewProps } from 'react-native';
+import type {
+  ImageInstance,
+  ImageProps,
+  ScrollViewInstance,
+  ScrollViewProps,
+  TextInstance,
+  TextProps,
+  ViewInstance,
+  ViewProps,
+} from 'react-native';
 import { View, Text, ScrollView, Image } from 'react-native';
 
 // ============================================================================
@@ -161,16 +170,16 @@ export const createReanimatedMock = () => {
   return {
     __esModule: true,
     default: {
-      View: React.forwardRef<View, ViewProps>((props, ref) =>
+      View: React.forwardRef<ViewInstance, ViewProps>((props, ref) =>
         React.createElement(View, { ...props, ref }),
       ),
-      Text: React.forwardRef<Text, TextProps>((props, ref) =>
+      Text: React.forwardRef<TextInstance, TextProps>((props, ref) =>
         React.createElement(Text, { ...props, ref }),
       ),
-      ScrollView: React.forwardRef<ScrollView, ScrollViewProps>((props, ref) =>
+      ScrollView: React.forwardRef<ScrollViewInstance, ScrollViewProps>((props, ref) =>
         React.createElement(ScrollView, { ...props, ref }),
       ),
-      Image: React.forwardRef<Image, ImageProps>((props, ref) =>
+      Image: React.forwardRef<ImageInstance, ImageProps>((props, ref) =>
         React.createElement(Image, { ...props, ref }),
       ),
       createAnimatedComponent: <T extends React.ComponentType<P>, P extends object>(component: T) =>

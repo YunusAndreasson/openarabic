@@ -5,8 +5,9 @@ import { BackHandler, Platform } from 'react-native';
 
 import { router, usePathname } from 'expo-router';
 
-import { NativeTabs } from 'expo-router/unstable-native-tabs';
+import { NativeTabs } from 'expo-router/native-tabs';
 
+import { ScreenErrorFallback } from '@/components/common';
 import { PRACTICE_DUE_WORDS_LIMIT } from '@/constants/queries';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { TAB_SCREENS } from '@/constants/tabs';
@@ -71,6 +72,14 @@ export default function TabLayout(): JSX.Element {
     <>
       {Platform.OS === 'android' && <AndroidTabBackHandler />}
       <NativeTabs
+        // React Activity for the tabs (SDK 58): a tab that loses focus is hidden
+        // with its state kept, and its effects clean up until it is shown again,
+        // so three covered tabs stop running timers, listeners and refetch
+        // subscriptions behind the one in view.
+        activityEnabled
+        // A tab that throws shows a Refresh state in place of itself while the
+        // tab bar and the other tabs keep working.
+        unstable_screenErrorBoundary={ScreenErrorFallback}
         tintColor={colors.tint}
         // Scrolled-away tab bar. Two mechanisms for one behaviour, because only
         // iOS has a native one:

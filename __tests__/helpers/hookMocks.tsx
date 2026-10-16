@@ -205,22 +205,6 @@ export const createOpacityAnimationMock = (
 // SETUP HELPERS
 // ============================================================================
 
-/**
- * Creates InteractionManager mock that executes callbacks immediately
- */
-export const setupInteractionManagerMock = () => {
-  const { InteractionManager } = require('react-native');
-  // `require('react-native')` is untyped here, so the spy's implementation is
-  // checked against `(...args: unknown[]) => any`.
-  jest
-    .spyOn(InteractionManager, 'runAfterInteractions')
-    .mockImplementation((...args: unknown[]) => {
-      const callback = args[0] as (() => void) | undefined;
-      void Promise.resolve().then(callback);
-      return { cancel: jest.fn() };
-    });
-};
-
 // ============================================================================
 // TEST WRAPPERS
 // ============================================================================

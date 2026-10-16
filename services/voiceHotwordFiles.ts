@@ -48,8 +48,8 @@ export async function prepareHotwordFiles(
   dir.create({ intermediates: true, idempotent: true });
   const bpeVocab = new File(dir, 'bpe.vocab');
   const hotwordsFile = new File(dir, 'hotwords.txt');
-  if (!bpeVocab.exists) bpeVocab.write(parakeetBpeVocab(await tokens.text()));
-  hotwordsFile.write(hotwords);
+  if (!bpeVocab.exists) await bpeVocab.write(parakeetBpeVocab(await tokens.text()));
+  await hotwordsFile.write(hotwords);
   return {
     modelingUnit: 'bpe',
     bpeVocab: toPath(bpeVocab),

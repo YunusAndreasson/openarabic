@@ -1,13 +1,8 @@
 import { router } from 'expo-router';
 import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
-import {
-  AppState,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
-  type ViewToken,
-} from 'react-native';
+import { AppState, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 
-import type { FlashListRef } from '@shopify/flash-list';
+import type { FlashListRef, ViewToken } from '@shopify/flash-list';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
@@ -193,7 +188,7 @@ export function useArticleScreen({
 
   // Handle viewable items changed to track current sentence
   const handleViewableItemsChanged = useCallback(
-    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+    ({ viewableItems }: { viewableItems: ViewToken<unknown>[] }) => {
       if (viewableItems.length === 0) return;
 
       const totalSentences = sortedSentences?.length ?? 0;

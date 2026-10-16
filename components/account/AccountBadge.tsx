@@ -137,7 +137,7 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
                 style={styles.profilePhoto}
                 contentFit="cover"
                 cachePolicy="memory-disk"
-                transition={200}
+                transition={{ duration: 200, skipOnCacheHit: 'all' }}
                 priority="high"
               />
             ) : (

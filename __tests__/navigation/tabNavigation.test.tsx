@@ -11,8 +11,8 @@ jest
   );
 Object.defineProperty(Platform, 'OS', { get: () => 'android' });
 
-// Mock expo-router/unstable-native-tabs before it's imported by TabLayout
-jest.mock('expo-router/unstable-native-tabs', () => {
+// Mock expo-router/native-tabs before it's imported by TabLayout
+jest.mock('expo-router/native-tabs', () => {
   const React = require('react');
   const { Text, TouchableOpacity } = require('react-native');
   // Lazy: the tabs layout imports expo-router modules whose mock factories
@@ -116,7 +116,6 @@ jest.mock('expo-router/react-navigation', () => {
   const React = require('react');
   const { Text } = require('react-native');
   return {
-    NavigationContainer: ({ children }: { children: React.ReactNode }) => <>{children}</>,
     useFocusEffect: jest.fn(),
     PlatformPressable: ({
       onPress,
@@ -128,7 +127,6 @@ jest.mock('expo-router/react-navigation', () => {
   };
 });
 
-import { NavigationContainer } from 'expo-router/react-navigation';
 import { QueryClientProvider } from '@tanstack/react-query';
 import TestStoreProvider from '../helpers/testStore';
 
@@ -233,8 +231,6 @@ jest.mock('expo-router', () => {
   };
 });
 
-// expo-blur is not installed, so we skip the mock - tests using it should mock inline if needed
-
 jest.mock('../../app/(tabs)/explore/index.tsx', () => {
   const React = require('react');
   const { Text } = require('react-native');
@@ -308,9 +304,7 @@ const createWrapper = () => {
   const queryClient = createTestQueryClient();
   return ({ children }: { children: React.ReactNode }) => (
     <TestStoreProvider>
-      <QueryClientProvider client={queryClient}>
-        <NavigationContainer>{children}</NavigationContainer>
-      </QueryClientProvider>
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     </TestStoreProvider>
   );
 };

@@ -1,4 +1,4 @@
-const { withStringsXml } = require('@expo/config-plugins');
+const { withStringsXml } = require('expo/config-plugins');
 
 const MATERIAL_BADGE_PLURAL = 'mtrl_badge_content_description';
 

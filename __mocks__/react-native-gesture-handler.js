@@ -39,6 +39,9 @@ module.exports = {
     Pan: () => createChain(),
     Tap: () => createChain(),
   },
+  // Hook API (Gesture Handler 3): a plain function, not a jest.fn, so
+  // `resetMocks` cannot strip it. Tests reach the callbacks through `_config`.
+  useTapGesture: config => ({ _config: config ?? {} }),
   GestureDetector: ({ children }) => children,
   State: {
     BEGAN: 'BEGAN',

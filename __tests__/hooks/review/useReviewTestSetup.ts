@@ -18,7 +18,6 @@ import {
   createAudioPreloaderMock,
   createTimerCleanupMock,
   createOpacityAnimationMock,
-  setupInteractionManagerMock,
 } from '@/__tests__/helpers/hookMocks';
 
 // Re-exported because useReview.test.tsx builds its FSRS state through this module.
@@ -122,9 +121,6 @@ export function setupUseReviewMocks(): UseReviewMockRefs {
   const { useAudioPreloader } = require('@/hooks/review/useAudioPreloader');
   const { useTimerCleanup } = require('@/hooks/utils/useTimerCleanup');
   const { useOpacityAnimation } = require('@/hooks/animations/useOpacityAnimation');
-
-  // Setup InteractionManager mock
-  setupInteractionManagerMock();
 
   // Mock auth
   useAuth.mockReturnValue(createAuthMock());

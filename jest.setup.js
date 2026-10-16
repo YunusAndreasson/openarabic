@@ -102,7 +102,6 @@ jest.mock('expo-router/react-navigation', () => {
       return typeof cleanup === 'function' ? cleanup : undefined;
     }),
     useHeaderHeight: jest.fn(() => 44),
-    NavigationContainer: ({ children }) => children,
     DarkTheme: { dark: true, colors: {} },
     DefaultTheme: { dark: false, colors: {} },
     ThemeProvider: ({ children }) => children,
@@ -204,10 +203,11 @@ jest.mock('expo-file-system', () => ({
       uri: 'file:///mock/document/',
     },
   },
-  // The Directory/File API is SYNCHRONOUS — these methods return values and
-  // throw; they never resolve or reject. Mocking them as async lets a test pass
+  // create/delete/list/info are SYNCHRONOUS — they return values and throw;
+  // they never resolve or reject. Mocking them as async lets a test pass
   // against behaviour the real module cannot produce, which is exactly how an
-  // unhandled rejection hid here before. `exists` is a getter, not a method.
+  // unhandled rejection hid here before. write/text/copy/move are the async
+  // ones (write since SDK 58). `exists` is a getter, not a method.
   Directory: {
     create: jest.fn(),
     delete: jest.fn(),
@@ -461,16 +461,6 @@ jest.mock('react-native-reanimated', () => {
 // Enhanced React Native mock with comprehensive API coverage
 jest.mock('react-native', () => {
   return {
-    // Interaction manager
-    InteractionManager: {
-      runAfterInteractions: jest.fn(cb => {
-        try {
-          if (typeof cb === 'function') cb();
-        } catch {
-          // ignore
-        }
-      }),
-    },
     // App state management
     AppState: {
       addEventListener: jest.fn((_event, _callback) => ({
@@ -616,9 +606,7 @@ jest.mock('react-native', () => {
     // Status bar
     StatusBar: {
       setBarStyle: jest.fn(),
-      setBackgroundColor: jest.fn(),
       setHidden: jest.fn(),
-      setTranslucent: jest.fn(),
       currentHeight: 20,
     },
 

@@ -1,4 +1,4 @@
-// Mock for expo-router/unstable-native-tabs
+// Mock for expo-router/native-tabs
 const React = require('react');
 
 const NativeTabs = ({ children }) => React.createElement('View', null, children);

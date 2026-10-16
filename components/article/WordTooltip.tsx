@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
+import type { ViewInstance } from 'react-native';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
@@ -100,14 +101,14 @@ export function WordTooltip({
   onOpenWordDetails,
 }: WordTooltipProps) {
   const colors = useColors();
-  const containerRef = useRef<View>(null);
+  const containerRef = useRef<ViewInstance>(null);
   const [containerOffset, setContainerOffset] = useState({ x: 0, y: 0 });
 
   // Measure the container's window position to correct coordinate system differences on Android
   const handleLayout = useCallback(() => {
     if (Platform.OS !== 'android') return;
     containerRef.current?.measureInWindow((x, y) => {
-      if (x !== undefined && y !== undefined) {
+      if (Number.isFinite(x) && Number.isFinite(y)) {
         setContainerOffset({ x, y });
       }
     });

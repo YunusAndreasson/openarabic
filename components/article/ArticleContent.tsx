@@ -1,8 +1,8 @@
-import type { FlashListProps, FlashListRef } from '@shopify/flash-list';
+import type { FlashListProps, FlashListRef, ViewToken } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
 import { useQueryClient } from '@tanstack/react-query';
 import { memo, useCallback, type ComponentType, type ReactElement, type RefObject } from 'react';
-import type { NativeScrollEvent, NativeSyntheticEvent, ViewToken } from 'react-native';
+import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -128,7 +128,7 @@ interface ArticleContentProps {
     index: number;
   }) => ReactElement | null;
   handleScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
-  handleViewableItemsChanged: (info: { viewableItems: ViewToken[] }) => void;
+  handleViewableItemsChanged: (info: { viewableItems: ViewToken<unknown>[] }) => void;
   handleScrollEnd: () => void;
   colors: ThemeColors;
   scrollViewRef: RefObject<FlashListRef<Tables<'article_sentences'>>>;

@@ -353,8 +353,12 @@
       [
         "expo-build-properties",
         {
-          "_comment_deployment_target": "react-native-executorch's ExecutorchLib.xcframework declares :ios => '17.0', which is above the SDK 57 default, so CocoaPods refuses to integrate it without this. It is the FSMN voice-activity detector behind hands-free answering (hooks/voice/useSpeechGate.ts) that pulls it in. The cost is real and deliberate: iOS 16 devices no longer get updates. Removing the VAD is what it takes to lower this again.",
+          "_comment_deployment_target": "react-native-executorch's ExecutorchLib.xcframework declares :ios => '17.0', which is above the Expo default (16.4 as of SDK 58), so CocoaPods refuses to integrate it without this. It is the FSMN voice-activity detector behind hands-free answering (hooks/voice/useSpeechGate.ts) that pulls it in. The cost is real and deliberate: iOS 16 devices no longer get updates. Removing the VAD is what it takes to lower this again.",
           "_comment": "MMKV/MMKVCore arrive transitively via @kesha-antonov/react-native-background-downloader, whose podspec floats 'MMKV >= 1.2.0'. With no Podfile.lock in the repo (CNG), every EAS build re-resolves pods, so on 2026-08-02 it picked up MMKVCore 2.4.1 (published 2026-07-30), which calls memset_s — C11 Annex K, which Apple's libc does not implement — and the iOS build failed to compile AESCrypt.cpp. Pinning BOTH is required: MMKV 2.4.0 declares 'MMKVCore ~> 2.4.0', which would still admit 2.4.1. Drop this once upstream ships a fix.",
+          "_comment_android_r8": "SDK 58 turns on R8 minification for release builds. Every native dependency ships its own consumer keep rules except @kesha-antonov/react-native-background-downloader, which persists RNBGDTaskConfig with Gson reflection (a TypeToken over Map<Long, RNBGDTaskConfig>); R8 would rename those fields and strip the generic signature, so saved downloads would fail to restore after a restart.",
+          "android": {
+            "extraProguardRules": "-keep class com.eko.** { *; }\n-keepattributes Signature\n-keep class * extends com.google.gson.reflect.TypeToken"
+          },
           "ios": {
             "deploymentTarget": "17.0",
             "extraPods": [
@@ -382,10 +386,11 @@
       }
     },
     "owner": "edenmind",
-    "runtimeVersion": "1448.4.5",
+    "runtimeVersion": "1448.5.3",
     "updates": {
       "url": "https://u.expo.dev/644480e0-3ac0-4ce6-b6ca-b950f62ca438",
-      "enableBsdiffPatchSupport": true
+      "enableBsdiffPatchSupport": true,
+      "excludeFromBackup": true
     }
   }
 }

@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react';
-import type { TextInput } from 'react-native';
+import type { TextInputInstance } from 'react-native';
 
 import { useAuthForm } from '@/hooks/auth/useAuthForm';
 
@@ -17,7 +17,7 @@ import { useAuthForm } from '@/hooks/auth/useAuthForm';
  * memoisation.
  */
 export function useAuthFormFields() {
-  const passwordInputRef = useRef<TextInput>(null);
+  const passwordInputRef = useRef<TextInputInstance>(null);
   const form = useAuthForm();
 
   const {

@@ -1,0 +1,14 @@
+diff --git a/android/build.gradle.kts b/android/build.gradle.kts
+index f5af7ee6a4c79c25f3fb212643b100cdabfbeec0..6b055928298070bd866531c957fe7adba17339e6 100644
+--- a/android/build.gradle.kts
++++ b/android/build.gradle.kts
+@@ -114,7 +114,8 @@ android {
+         // ships a library its linker is not guaranteed to be able to load. The
+         // default was 21, which let such a build through to fail on the device.
+         minSdk = (getExtOrDefault("minSdkVersion", 26) as Number).toInt()
+-        targetSdk = (getExtOrDefault("targetSdkVersion", 34) as Number).toInt()
++        // No targetSdk: AGP 9 removed it from library modules, where it never
++        // affected the app (the app module sets its own).
+         consumerProguardFiles("consumer-proguard-rules.pro")
+ 
+         externalNativeBuild {

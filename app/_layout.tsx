@@ -33,7 +33,7 @@ import interRegular from '@/assets/fonts/Inter-Regular.ttf';
 import interSemiBold from '@/assets/fonts/Inter-SemiBold.ttf';
 import interBold from '@/assets/fonts/Inter-Bold.ttf';
 import { AudioErrorBoundary, GlobalMiniPlayer } from '@/components/audio';
-import { AppErrorFallback } from '@/components/common';
+import { AppErrorFallback, ScreenErrorFallback } from '@/components/common';
 import {
   AuthProvider,
   FSRSDataProvider,
@@ -45,6 +45,7 @@ import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TIMING_CONSTANTS } from '@/constants/animation';
 import { Theme } from '@/constants/colors';
 import { QUERY_DEFAULTS, studyStreakQueries } from '@/constants/queries';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { useAppBadge } from '@/hooks/app/useAppBadge';
 import { useUpdateReady } from '@/hooks/app/useUpdateReady';
 import { useSmartNotifications } from '@/hooks/notifications/useSmartNotifications';
@@ -83,8 +84,8 @@ try {
   // expo-notifications unavailable in Expo Go on Android (SDK 53+)
 }
 
-const TAB_ROUTE_OPTIONS = { animation: 'fade', freezeOnBlur: false } as const;
-const AUTH_ROUTE_OPTIONS = { animation: 'fade', freezeOnBlur: false } as const;
+const TAB_ROUTE_OPTIONS = { animation: 'fade' } as const;
+const AUTH_ROUTE_OPTIONS = { animation: 'fade' } as const;
 const ROOT_SCREEN_LISTENERS = {
   transitionEnd: (event: { data: { closing: boolean } }) => {
     if (event.data.closing) flushPendingSheetNavigation();
@@ -247,6 +248,11 @@ Sentry.init({
   enableNative: true, // CRITICAL: Enable native crash reporting
   enableNativeCrashHandling: true, // Catch native crashes
   enableAutoSessionTracking: true, // Track sessions
+  // iOS 15+: forward the OS's own MetricKit diagnostics — CPU-exception,
+  // disk-write and hang reports. Those are what the system acts on when it
+  // kills an app for resource use, which the in-process handlers cannot see
+  // (the voice watchdog termination behind build 274 was one).
+  enableMetricKit: true,
 
   beforeSend(event) {
     // Add environment diagnostic context to all events
@@ -582,9 +588,10 @@ function AppContent() {
   }, []);
 
   // Auth-gated navigation is handled declaratively below via <Stack.Protected>
-  // guards on the route groups. The runtime redirects users to the next
-  // available unprotected route when a guard flips, and enforces guards on
-  // deep links automatically — no imperative router.replace needed.
+  // guards on the route groups. Guarded routes stay registered; while a guard
+  // fails they render a redirect to the group's `redirectTo`, so a guard flip
+  // and a deep link into the other group both land where app/index.tsx would
+  // send them — no imperative router.replace needed.
 
   const containerStyle = useMemo(
     () => [styles.container, { backgroundColor: colors.background }],
@@ -595,7 +602,6 @@ function AppContent() {
       headerShown: false,
       headerTitle: '',
       headerShadowVisible: false,
-      freezeOnBlur: true,
       contentStyle: { backgroundColor: colors.background },
     }),
     [colors.background],
@@ -616,6 +622,9 @@ function AppContent() {
             <GlobalAudioStateProvider>
               <Stack
                 screenOptions={rootScreenOptions}
+                // A screen that throws is replaced by this on its own, instead of the
+                // root boundary replacing the whole app. The tabs carry their own.
+                unstable_screenErrorBoundary={ScreenErrorFallback}
                 // Opportunistic, not the mechanism — see `sheetNavigation`.
                 //
                 // A sheet that navigates somewhere on its way out cannot present
@@ -631,8 +640,8 @@ function AppContent() {
                 // only ever filled immediately before a dismissal.
                 screenListeners={ROOT_SCREEN_LISTENERS}
               >
-                {/* Authenticated routes — guard flips on sign-out, router unmounts these */}
-                <Stack.Protected guard={isAuthenticated}>
+                {/* Authenticated routes — on sign-out these redirect to auth */}
+                <Stack.Protected guard={isAuthenticated} redirectTo={ROUTE_PATHS.AUTH}>
                   {/* Animation re-enabled after Stack.Protected migration. The
                       previous `animation: 'none'` worked around a black-screen
                       bug caused by imperative router.replace racing with mount.
@@ -644,7 +653,6 @@ function AppContent() {
                     name="article/[id]"
                     options={createNavigationOptions(colors, {
                       headerShown: false,
-                      freezeOnBlur: true, // Optimize article screen when backgrounded
                       /*
                        * Full screen, not the app's usual pageSheet — the reader
                        * is the one modal that hosts a bottom sheet.
@@ -679,7 +687,6 @@ function AppContent() {
                     name="review"
                     options={createNavigationOptions(colors, {
                       headerShown: false,
-                      freezeOnBlur: true,
                     })}
                   />
                   <Stack.Screen name="sleep-timer" options={createSheetOptions(colors, [0.4])} />
@@ -708,8 +715,8 @@ function AppContent() {
                   <Stack.Screen name="word-detail" options={createSheetOptions(colors, [0.6, 1])} />
                 </Stack.Protected>
 
-                {/* Unauthenticated routes — guard flips on sign-in, router unmounts auth */}
-                <Stack.Protected guard={!isAuthenticated}>
+                {/* Unauthenticated routes — on sign-in auth redirects to Explore */}
+                <Stack.Protected guard={!isAuthenticated} redirectTo={ROUTE_PATHS.EXPLORE_TAB}>
                   <Stack.Screen name="auth" options={AUTH_ROUTE_OPTIONS} />
                 </Stack.Protected>
 

@@ -95,7 +95,7 @@ export function ArticleCard({
   // A native gradient, not a Skia canvas: this card repeats down a list, and a
   // canvas per row is a GPU surface per row for what is a static scrim.
   const gradientStyle = {
-    experimental_backgroundImage: `linear-gradient(to bottom, ${colors.cardGradient.join(', ')})`,
+    backgroundImage: `linear-gradient(to bottom, ${colors.cardGradient.join(', ')})`,
   };
 
   // Full metadata: Author · Category · Reading time

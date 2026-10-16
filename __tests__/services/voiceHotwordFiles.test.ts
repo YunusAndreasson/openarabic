@@ -26,8 +26,9 @@ jest.mock('expo-file-system', () => {
     text(): Promise<string> {
       return Promise.resolve(mockFiles.get(this.uri) ?? '');
     }
-    write(content: string): void {
+    write(content: string): Promise<void> {
       mockFiles.set(this.uri, content);
+      return Promise.resolve();
     }
   }
 

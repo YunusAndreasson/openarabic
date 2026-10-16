@@ -47,7 +47,11 @@ const loadSharedFontManager = (): Promise<void> => {
   if (!fontLoadPromise) {
     fontLoadPromise = Promise.all(
       Object.entries(FONT_SOURCES).map(async ([familyName, source]) => {
-        const data = await Skia.Data.fromURI(Image.resolveAssetSource(source).uri);
+        const asset = Image.resolveAssetSource(source);
+        if (!asset) {
+          throw new Error(`Couldn't resolve the font asset for ${familyName}`);
+        }
+        const data = await Skia.Data.fromURI(asset.uri);
         const typeface = Skia.Typeface.MakeFreeTypeFaceFromData(data);
         if (!typeface) {
           throw new Error(`Couldn't create typeface for ${familyName}`);

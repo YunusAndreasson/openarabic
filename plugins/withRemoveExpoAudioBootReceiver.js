@@ -1,4 +1,4 @@
-const { withAndroidManifest } = require('@expo/config-plugins');
+const { withAndroidManifest } = require('expo/config-plugins');
 
 const BOOT_RELATED_ACTIONS = new Set([
   'android.intent.action.BOOT_COMPLETED',
@@ -157,7 +157,11 @@ const withRemoveExpoAudioBootReceiver = config => {
       ],
     );
 
-    addReceiverBootActionRemovals(application, 'expo.modules.taskManager.TaskBroadcastReceiver', [
+    // `taskmanager`, all lower case, since SDK 58 (it was `taskManager`). The name
+    // has to match the library's receiver exactly: a stale one makes this overlay
+    // declare a NEW receiver with an intent-filter and no android:exported, which
+    // fails the manifest merge for any app targeting Android 12+.
+    addReceiverBootActionRemovals(application, 'expo.modules.taskmanager.TaskBroadcastReceiver', [
       'android.intent.action.BOOT_COMPLETED',
       'android.intent.action.LOCKED_BOOT_COMPLETED',
     ]);

@@ -39,6 +39,12 @@ const styles = StyleSheet.create({
  * centered title on scroll, with the nav bar background fading from transparent
  * to opaque as content slides under it (the iOS HIG Mail/Photos pattern).
  *
+ * iOS 26+: Expo Router (SDK 58) gives a header with no `headerStyle.backgroundColor`
+ * the system appearance — a transparent Liquid Glass bar that content scrolls
+ * under — so these tab roots get glass there and the fade below applies to
+ * iOS < 26 only. The recipe is unchanged either way: the automatic content
+ * inset is what keeps the first row out from under the glass.
+ *
  * Recipe — all three are required:
  *   1. `headerLargeTitle: true` on the Stack.Screen.
  *   2. A native string `title` (NOT a custom `headerTitle` JSX — UIKit can't

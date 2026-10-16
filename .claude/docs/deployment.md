@@ -76,10 +76,11 @@ eas config
 
 ## OTA Pre-flight Checklist
 
-Native dependency updates and the Android tab hit-testing patch require a new
-binary. Runtime `1448.4.5` separates this native update from iOS build 274
-(`1448.4.3`) and older Android builds (`1448.3.12`). Publish its production OTA
-only after the corresponding native builds succeed.
+Native dependency updates require a new binary. Runtime `1448.5.3` separates
+the Expo SDK 58 / React Native 0.88 binaries from every SDK 57 build (runtime
+`1448.4.5` and older). Publish a production OTA for it only after the
+corresponding native builds have shipped; until then `yarn ota` reaches no one
+on 1448.5.3 and must not be aimed at the older runtime.
 
 Before publishing an OTA, verify:
 

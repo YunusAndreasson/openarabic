@@ -1,7 +1,7 @@
 import { Ionicons } from '@/components/ui/Icon';
 import type { ComponentProps, Ref } from 'react';
 import { useCallback, useMemo, useState } from 'react';
-import type { GestureResponderEvent, TextInputProps } from 'react-native';
+import type { GestureResponderEvent, TextInputInstance, TextInputProps } from 'react-native';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
@@ -17,7 +17,7 @@ interface ThemedInputProps extends TextInputProps {
   hint?: string;
   onRightIconPress?: (e: GestureResponderEvent) => void;
   style?: TextInputProps['style'];
-  ref?: Ref<TextInput>;
+  ref?: Ref<TextInputInstance>;
 }
 
 const InputIcon = ({

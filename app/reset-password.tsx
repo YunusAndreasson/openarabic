@@ -2,7 +2,7 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import type { TextInput } from 'react-native';
+import type { TextInputInstance } from 'react-native';
 
 import { ThemedButton } from '@/components/primitives/ThemedButton';
 import { ThemedInput } from '@/components/primitives/ThemedInput';
@@ -28,7 +28,7 @@ export default function ResetPasswordScreen(): JSX.Element {
   // running (the usual case: "Forgot password", switch to Mail, tap the link)
   // was never read, and the screen bounced to /auth as "invalid or expired".
   const { token, type } = useLocalSearchParams<{ token?: string; type?: string }>();
-  const confirmPasswordRef = useRef<TextInput>(null);
+  const confirmPasswordRef = useRef<TextInputInstance>(null);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');

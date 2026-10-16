@@ -199,7 +199,9 @@ export const DictionaryWordRow = memo<DictionaryWordRowProps>(
         // Past halfway to open, snap back below it.
         rightThreshold={ACTION_WIDTH}
         overshootRight={false}
-        dragOffsetFromRightEdge={SWIPE_ACTIVATION_DISTANCE}
+        // A left swipe travels in the negative direction, so Gesture Handler 3
+        // takes this offset signed (its default is -10).
+        dragOffsetFromRight={-SWIPE_ACTIVATION_DISTANCE}
         onSwipeableOpenStartDrag={handleOpenStartDrag}
         onSwipeableClose={handleClose}
         renderRightActions={renderRightActions}

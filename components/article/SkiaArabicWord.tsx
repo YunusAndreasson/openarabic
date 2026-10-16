@@ -19,7 +19,6 @@ import {
   buildSimpleParagraph,
   measureParagraphCanvas,
 } from '@/utils/skiaParagraphBuilder';
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /**
  * Clear space between the deepest descender and the marker rule.
@@ -90,7 +89,7 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
   const isMountedRef = useRef(true);
 
   // The word measures itself to place the tooltip over its own frame.
-  const pressableRef = useRef<ComponentRef<typeof Pressable>>(null);
+  const pressableRef = useRef<ComponentRef<typeof View>>(null);
 
   // Active word opacity — derived from SharedValue on UI thread, no React re-renders
   const wordId = word.id;
@@ -308,9 +307,13 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
   return (
     <View style={wrapperStyle}>
       {isInteractive ? (
-        <AnimatedPressable
+        // Gesture Handler 3's Pressable is a native button, not an animatable
+        // host view, so the active-word opacity rides on the content inside it.
+        // The Pressable keeps the container box, which is what the tooltip
+        // measures.
+        <Pressable
           ref={pressableRef}
-          style={[CONTAINER_STYLE, activeStyle]}
+          style={CONTAINER_STYLE}
           testID={testID}
           onPress={handlePress}
           onLongPress={onWordLongPress ? handleLongPress : undefined}
@@ -323,8 +326,8 @@ const SkiaArabicWordInternal = function SkiaArabicWord({
             if (event.nativeEvent.actionName === 'longpress') handleLongPress();
           }}
         >
-          {canvas}
-        </AnimatedPressable>
+          <Animated.View style={activeStyle}>{canvas}</Animated.View>
+        </Pressable>
       ) : (
         <Animated.View
           style={[CONTAINER_STYLE, activeStyle]}

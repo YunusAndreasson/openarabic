@@ -1,6 +1,6 @@
 import type { ReactNode, RefObject } from 'react';
 import { useCallback, useState } from 'react';
-import type { TextInput } from 'react-native';
+import type { TextInputInstance } from 'react-native';
 import { View, StyleSheet } from 'react-native';
 
 import { ThemedInput } from '@/components/primitives/ThemedInput';
@@ -24,7 +24,7 @@ interface AuthPasswordInputProps {
   error?: string;
   isSignUp?: boolean;
   testID?: string;
-  inputRef?: RefObject<TextInput | null>;
+  inputRef?: RefObject<TextInputInstance | null>;
 }
 
 export interface AuthCredentialFieldState {
@@ -32,7 +32,7 @@ export interface AuthCredentialFieldState {
   password: string;
   emailError?: string;
   passwordError?: string;
-  passwordInputRef: RefObject<TextInput | null>;
+  passwordInputRef: RefObject<TextInputInstance | null>;
   handleEmailChange: (text: string) => void;
   handlePasswordChange: (text: string) => void;
   handleEmailBlur: () => void;

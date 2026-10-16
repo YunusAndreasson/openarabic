@@ -30,7 +30,9 @@ export function EnhancedImage({
         recyclingKey={recyclingKey}
         source={source}
         style={styles.image}
-        transition={transition}
+        // An image already in either cache appears at once instead of fading
+        // in again on every remount — FlashList recycling, tab switches.
+        transition={{ duration: transition, skipOnCacheHit: 'all' }}
       />
     </View>
   );

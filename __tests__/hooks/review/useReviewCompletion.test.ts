@@ -70,15 +70,6 @@ jest.mock('@/utils/haptics', () => ({
   errorFeedback: jest.fn(),
 }));
 
-jest.mock('react-native', () => ({
-  InteractionManager: {
-    runAfterInteractions: jest.fn((callback: () => void) => {
-      if (typeof callback === 'function') callback();
-      return { cancel: jest.fn() };
-    }),
-  },
-}));
-
 import { useReviewCompletion } from '@/hooks/review/useReviewCompletion';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useQueryClient } from '@tanstack/react-query';
@@ -89,7 +80,6 @@ import { recordSessionCompleted } from '@/utils/notificationPromptStorage';
 import { appendSession } from '@/utils/recallSignalStorage';
 import { recordStudyDay } from '@/utils/studyDayLedger';
 import { fsrsQueries, studyStreakQueries } from '@/constants/queries';
-import { InteractionManager } from 'react-native';
 
 const mockUseAuth = jest.mocked(useAuth);
 const mockUseQueryClient = jest.mocked(useQueryClient);
@@ -105,10 +95,6 @@ describe('useReviewCompletion', () => {
       invalidateQueries: jest.fn(),
       setQueryData: jest.fn(),
     } as never);
-    jest.mocked(InteractionManager.runAfterInteractions).mockImplementation(callback => {
-      if (typeof callback === 'function') callback();
-      return { cancel: jest.fn() } as never;
-    });
   });
 
   afterEach(() => {

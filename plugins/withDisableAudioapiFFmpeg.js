@@ -1,4 +1,4 @@
-const { withGradleProperties } = require('@expo/config-plugins');
+const { withGradleProperties } = require('expo/config-plugins');
 
 /**
  * Sets the `disableAudioapiFFmpeg` Gradle property so react-native-audio-api does

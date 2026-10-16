@@ -81,16 +81,14 @@ export function useArticleWordInteractions({
   }, [showTooltipFirst]);
 
   // The article screen wraps the whole reading area in a background-dismiss
-  // Pressable so tapping away from an open tooltip closes it. A tap that lands
-  // on a word fires BOTH that word's own onPress AND, in the same gesture
-  // dispatch, the background wrapper's onPress — and the wrapper fires last,
-  // so its unconditional close would stomp the word's own switch-to-this-word
-  // update. Set synchronously here and consumed by handleBackgroundPress in
-  // the same tick so a word tap can tell the wrapper "already handled, don't
-  // also close." The timeout is a safety net, not the primary path: if some
-  // future gesture change ever fires a word press without the paired
-  // background press right behind it, the flag still self-clears almost
-  // immediately instead of silently swallowing the next, unrelated tap.
+  // Tap gesture so tapping away from an open tooltip closes it. A word's own
+  // native button normally cancels that Tap, but if a word tap ever completes
+  // both, the background close lands last and would stomp the word's own
+  // switch-to-this-word update. Set synchronously here and consumed by
+  // handleBackgroundPress in the same tick so a word tap can tell the
+  // background "already handled, don't also close." The timeout clears the
+  // flag when no background press follows — the usual case since Gesture
+  // Handler 3 — so it never swallows the next, unrelated tap.
   const wordPressHandledRef = useRef(false);
 
   /**

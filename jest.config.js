@@ -65,11 +65,13 @@ module.exports = {
       '<rootDir>/__mocks__/react-native-vector-icons-ionicons.js',
 
     // Expo Router native tabs mock
-    'expo-router/unstable-native-tabs': '<rootDir>/__mocks__/expo-router-native-tabs.js',
+    'expo-router/native-tabs': '<rootDir>/__mocks__/expo-router-native-tabs.js',
 
     // @expo/ui ships untranspiled TS source, so a real import pulls
     // expo/src/Expo.fx.tsx (and an undefined EXDevLauncher) into the module graph.
     '@expo/ui/community/datetime-picker': '<rootDir>/__mocks__/expo-ui-datetime-picker.js',
+    // Same failure for expo-blur since SDK 58: it imports from 'expo'.
+    '^expo-blur$': '<rootDir>/__mocks__/expo-blur.js',
 
     // Enhanced mocks for critical dependencies
     'expo-haptics': '<rootDir>/__mocks__/expo-haptics.js',

@@ -1,4 +1,4 @@
-import type { PressableAndroidRippleConfig, ViewStyle } from 'react-native';
+import type { PressableAndroidRippleConfig } from 'react-native';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import type { ThemeColors } from '@/types/ui/theme.types';
@@ -33,49 +33,38 @@ interface SpacingOptions {
   all?: SpacingScale;
 }
 
+type SpacingProperty = 'padding' | 'margin';
+type SpacingEdge = '' | 'Horizontal' | 'Vertical' | 'Top' | 'Bottom' | 'Left' | 'Right';
+
+/**
+ * Only the padding or margin properties a helper below can set. Typed as its
+ * own record rather than as `ViewStyle`: since RN 0.88 `ViewStyle` is an
+ * interface Expo widens for web (`userSelect?: string`, …), and spreading a
+ * whole `ViewStyle` into `StyleSheet.create` carries those widened fields into
+ * a text style, where they no longer type-check.
+ */
+type SpacingStyle = Partial<Record<`${SpacingProperty}${SpacingEdge}`, number>>;
+
 /**
  * Generic helper to create spacing styles (padding or margin)
  * @param options - Spacing configuration
  * @param type - Type of spacing ('padding' or 'margin')
- * @returns ViewStyle with spacing
+ * @returns Style with only the spacing properties set
  */
-const createSpacing = (options: SpacingOptions, type: 'padding' | 'margin'): ViewStyle => {
-  const style: ViewStyle = {};
+const createSpacing = (options: SpacingOptions, type: SpacingProperty): SpacingStyle => {
+  const style: SpacingStyle = {};
 
   if (options.all) {
     style[type] = SPACING_MAP[options.all];
     return style;
   }
 
-  if (options.horizontal) {
-    const horizontalKey = `${type}Horizontal` as keyof ViewStyle;
-    style[horizontalKey] = SPACING_MAP[options.horizontal] as never;
-  }
-
-  if (options.vertical) {
-    const verticalKey = `${type}Vertical` as keyof ViewStyle;
-    style[verticalKey] = SPACING_MAP[options.vertical] as never;
-  }
-
-  if (options.top) {
-    const topKey = `${type}Top` as keyof ViewStyle;
-    style[topKey] = SPACING_MAP[options.top] as never;
-  }
-
-  if (options.bottom) {
-    const bottomKey = `${type}Bottom` as keyof ViewStyle;
-    style[bottomKey] = SPACING_MAP[options.bottom] as never;
-  }
-
-  if (options.left) {
-    const leftKey = `${type}Left` as keyof ViewStyle;
-    style[leftKey] = SPACING_MAP[options.left] as never;
-  }
-
-  if (options.right) {
-    const rightKey = `${type}Right` as keyof ViewStyle;
-    style[rightKey] = SPACING_MAP[options.right] as never;
-  }
+  if (options.horizontal) style[`${type}Horizontal`] = SPACING_MAP[options.horizontal];
+  if (options.vertical) style[`${type}Vertical`] = SPACING_MAP[options.vertical];
+  if (options.top) style[`${type}Top`] = SPACING_MAP[options.top];
+  if (options.bottom) style[`${type}Bottom`] = SPACING_MAP[options.bottom];
+  if (options.left) style[`${type}Left`] = SPACING_MAP[options.left];
+  if (options.right) style[`${type}Right`] = SPACING_MAP[options.right];
 
   return style;
 };
@@ -83,18 +72,18 @@ const createSpacing = (options: SpacingOptions, type: 'padding' | 'margin'): Vie
 /**
  * Creates padding styles with consistent spacing
  * @param options - Padding configuration
- * @returns ViewStyle with padding
+ * @returns Style with padding
  */
-export const createPadding = (options: SpacingOptions): ViewStyle => {
+export const createPadding = (options: SpacingOptions): SpacingStyle => {
   return createSpacing(options, 'padding');
 };
 
 /**
  * Creates margin styles with consistent spacing
  * @param options - Margin configuration
- * @returns ViewStyle with margin
+ * @returns Style with margin
  */
-export const createMargin = (options: SpacingOptions): ViewStyle => {
+export const createMargin = (options: SpacingOptions): SpacingStyle => {
   return createSpacing(options, 'margin');
 };
 

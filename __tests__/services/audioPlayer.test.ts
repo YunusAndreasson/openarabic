@@ -40,18 +40,18 @@ jest.mock('expo-audio', () => ({
   clearAllPreloadedSources: () => Promise.resolve(undefined),
 }));
 
-jest.mock(
-  'react-native',
-  () => {
-    return {
-      Platform: { OS: 'ios' },
-      AppState: {
-        addEventListener: jest.fn(() => ({ remove: jest.fn() })),
-      },
-    };
-  },
-  { virtual: true },
-);
+// Not `{ virtual: true }`: alongside jest.setup.js's own react-native mock, the
+// virtual one was not reliably the module the service received — in a full
+// parallel run the service could end up with the setup mock, and a test that
+// switches Platform.OS then changed an object the service never read.
+jest.mock('react-native', () => {
+  return {
+    Platform: { OS: 'ios' },
+    AppState: {
+      addEventListener: jest.fn(() => ({ remove: jest.fn() })),
+    },
+  };
+});
 
 jest.mock('@/utils/errorHandling', () => ({
   handleError: jest.fn(),

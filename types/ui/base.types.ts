@@ -25,7 +25,7 @@ export interface PressableLikeProps {
   style?: StyleProp<ViewStyle>;
   hitSlop?: number | Insets;
   disabled?: boolean;
-  android_ripple?: PressableAndroidRippleConfig | null;
+  android_ripple?: PressableAndroidRippleConfig;
   accessibilityLabel?: string;
   accessibilityRole?: AccessibilityRole;
   accessibilityState?: AccessibilityState;
