@@ -1,177 +1,136 @@
-# OpenArabic - Claude Code Development Guide
+# OpenArabic — mobile app
 
-React Native Arabic language learning app with spaced repetition, audio features, and intelligent article filtering.
+React Native (Expo) app for learning Arabic by reading: articles with word-level
+grammar colour-coding, FSRS spaced repetition, audio playlists and voice review.
 
-## Codebase Scope
+## Scope
 
-This CLAUDE.md applies to the **React Native mobile app only**.
+This file covers the mobile app, which is the repo root. The repo also holds
+separate projects with their own languages, package managers and docs:
 
-**Ignore these directories** (separate projects with their own tooling):
+| Directory                  | What it is                                                              |
+| -------------------------- | ----------------------------------------------------------------------- |
+| `admin-dashboard/`         | Website (openarabic.io) and admin panel: Next.js, pnpm, own `CLAUDE.md` |
+| `translate/`               | Python pipeline that translates and analyses articles into the database |
+| `social/`, `publish/`      | Social media card rendering and posting                                 |
+| `brand/`, `store-listing/` | Generators for the app mark and the App Store / Play listing assets     |
 
-- `admin-dashboard/` - Next.js admin panel
-- `translate/` - Python translation pipeline
-- `publish/` - Python social media scripts
+Mobile work needs nothing from these directories. No import crosses the boundary
+in either direction, and the app's TypeScript, ESLint, Prettier and knip configs
+already exclude the website and the pipeline. So for an app task, don't read,
+search or edit them, and keep them out of repo-wide greps. Go into one only when
+the task is about that project, and follow its own README or `CLAUDE.md` there.
 
-## Core Principles
+The one thing all of them share is the Supabase database. Its content is owned by
+the pipeline, so treat it as read-only from the app: propose schema or data
+changes instead of running them.
 
-### Investigation-First Development
+## Commands
 
-- **ALWAYS** search for existing implementations before creating new code
-- Check for related components, hooks, or utilities
-- Review relevant tests to understand expected behavior
-- Look for established patterns in the same domain
+Run these directly, without asking.
 
-### Simplicity & Reliability
-
-- Strive to reduce complexity while maintaining reliability
-- Focus on understanding root causes, not implementing workarounds
-- Reuse existing functionality before creating new functions
-- Place business logic in hooks, not components
-- Remove obsolete code when introducing new features
-
-### Command Execution Workflow
-
-**CRITICAL: NEVER run validation during development** - Make all changes first, then validate once at the very end.
-
-**Correct pattern:**
-
-```
-✅ Make edit 1 → Make edit 2 → Make edit 3 → (user confirms done) → yarn validate once
-```
-
-**Commands** (run directly without asking):
-
-- `yarn validate` - Fast validation (changed files only, ~5-6s)
-- `yarn validate:full` - Full validation (all files)
-- `yarn verify` - Full validation + all tests (alias for `yarn ci`)
-- `yarn prettier:fix` - Auto-format (always use this, never manually fix formatting)
-- `yarn test` - Run tests on changed files
-
-## Essential Files & Constants
-
-### Critical Constants Files
-
-- **[database.types.ts](types/database.types.ts)** - Supabase table types
-- **[colors.ts](constants/colors.ts)** - Theme system, semantic colors
-- **[layout.ts](constants/layout.ts)** - Typography, spacing, shadows
-- **[strings.ts](constants/strings.ts)** - All user-facing text
-- **[fsrs.ts](constants/fsrs.ts)** - Spaced repetition constants
-- **[routes.ts](constants/routes.ts)** - Route path constants
-- **[animation.ts](constants/animation.ts)** - Timing configurations
-- **[arabicWordComponents.ts](constants/arabicWordComponents.ts)** - Arabic language rules
-- **[queries.ts](constants/queries.ts)** - TanStack Query factories and cache config
-- **[analytics.ts](constants/analytics.ts)** - Mixpanel event names
-- **[tabs.ts](constants/tabs.ts)** - Tab navigation configuration
-
-### Required Usage
-
-- **Typography**: Use `TYPOGRAPHY_HIERARCHY` and `LAYOUT.TYPOGRAPHY.SCALE`
-- **Spacing**: Use `LAYOUT.SPACING` (TINY=4px, SMALL=8px, MEDIUM=12px, LARGE=16px)
-- **Colors**: Use semantic names from Colors.ts (no hardcoded hex)
-- **Strings**: Use `STRINGS.*` for all user-facing text
-- **Routes**: Use `ROUTE_PATHS` with `/(tabs)` prefix
-
-## Technical Stack
-
-- **React Native**: 0.86.2 with React 19.2.3
-- **Expo SDK**: 57 with New Architecture enabled
-- **Navigation**: Expo Router v57
-- **Compiler**: React Compiler enabled — don't hand-write `memo`/`useMemo`/`useCallback`
-- **State**: Redux Toolkit + TanStack Query + React Context
-- **UI**: @shopify/flash-list, @gorhom/bottom-sheet, react-native-reanimated
-- **Backend**: Supabase JS client
-
-## TypeScript Requirements
-
-- `strict: true` - All strict type checking enabled
-- `noImplicitAny: true` - No implicit any types
-- Never use `any` in production code
-- Use `import type` for type-only imports
-- Prefix unused params with `_`
-
-## Directory Structure
-
-```
-app/
-├── (tabs)/              # Main tab navigation
-│   ├── explore/         # Article discovery + reading
-│   ├── playlist/        # Audio playlists
-│   └── practice/        # Vocabulary practice + review
-├── auth/                # Authentication
-└── article/             # Article detail screens
-
-hooks/                   # Custom React hooks
-components/              # Reusable UI components
-├── primitives/          # ThemedText/View/Button/Input — no barrel, import directly
-├── ui/                  # Interactive controls and form primitives (barrel)
-├── common/              # Layout, state and composition primitives (barrel)
-├── providers/           # Context providers
-├── audio/               # Audio components
-├── article/             # Article components
-└── ...
-constants/               # App constants
-services/                # Supabase API
-store/                   # Redux slices
-types/                   # TypeScript types
-utils/                   # Helper functions
+```bash
+yarn dev             # Android dev launcher (scripts/dev-android.sh)
+yarn start           # Metro with a cleared cache
+yarn validate        # typecheck, lint and format check on changed files (~5s)
+yarn validate:full   # all files: typecheck (source + tests), lint, knip
+yarn test            # jest on changed files
+yarn verify          # validate:full plus the whole test suite
+yarn prettier:fix    # auto-format
+yarn types:db        # regenerate types/database.types.ts from Supabase
 ```
 
-## Bug Fixing
+## Workflow
 
-- **CRITICAL**: Always fix the root cause, never implement workarounds
-- Understand the problem completely before fixing
-- Trace execution flow to identify exact failure point
-- Fix only what's broken - don't refactor unrelated code
+- Make every edit first, then run `yarn validate` once at the end. Re-running
+  tsc or eslint after each edit is the slow path.
+- Don't run tests during development. Run them when I ask you to commit.
+- Fix formatting with `yarn prettier:fix`, never by hand.
+- Before a release or an OTA update, read [deployment.md](.claude/docs/deployment.md).
+  OTA updates go through the `yarn ota*` scripts only.
 
-## Arabic Text (CRITICAL)
+## Stack
 
-Single English words should **NEVER** have grammar color-coding applied. Color-coding is only educational for multi-word phrases. Always check: `text.trim().split(/\s+/).length === 1`
+- Expo SDK 58, React Native 0.88, React 19.3, New Architecture, Expo Router.
+  Yarn 4 via Corepack.
+- React Compiler is on. Write new code without `memo`, `useMemo` or
+  `useCallback`, and leave the existing ones in place: removing them changes the
+  compiled output.
+- State is split between Redux Toolkit, TanStack Query and React Context. See
+  [state-management.md](.claude/docs/state-management.md) for which one a new
+  piece of state belongs in.
+- Supabase JS client, FlashList, `@gorhom/bottom-sheet`, Reanimated, Skia.
 
-## Component Layering
+## Layout
 
-Three shared buckets, in dependency order. A new shared component goes in the
-first one that fits:
+```
+app/           Expo Router routes; (tabs)/ holds explore, practice, playlist, account
+components/    primitives/ → ui/ → common/, then one directory per feature
+hooks/         business logic lives here, not in components
+services/      Supabase queries and device services
+store/         Redux slices
+constants/     strings, colours, layout, routes, query factories, FSRS, analytics
+__tests__/     mirrors the source tree; own tsconfig.test.json and eslint.tests.config.mjs
+```
 
-1. **`components/primitives/`** — `ThemedText`, `ThemedView`, `ThemedButton`,
-   `ThemedInput`. Deliberately has **no `index.ts`**: both `ui` and `common`
-   import these, so they sit below both and cannot join an import cycle.
-2. **`components/ui/`** — interactive controls and form primitives (barrel).
-3. **`components/common/`** — layout, state and composition primitives (barrel).
+## Conventions
 
-Feature directories (`article/`, `review/`, `practice/`, …) may import any barrel.
+- Look for an existing hook, component or util before writing a new one, and
+  delete the code a change makes obsolete.
+- No hardcoded values. User-facing text comes from `STRINGS`
+  ([strings.ts](constants/strings.ts)), colours from the semantic names in
+  [colors.ts](constants/colors.ts) (no hex), spacing from `LAYOUT.SPACING`, and
+  font sizes from `ThemedText`'s `type` variants or `LAYOUT.TYPOGRAPHY.SCALE`
+  ([layout.ts](constants/layout.ts)). Check `constants/` for the rest: routes,
+  query keys, animation timings, FSRS parameters, analytics event names.
+- TypeScript is strict, with `noUncheckedIndexedAccess` and
+  `verbatimModuleSyntax`: no `any`, `import type` for type-only imports, and a
+  `_` prefix on unused parameters.
+- [database.types.ts](types/database.types.ts) is generated. Regenerate it with
+  `yarn types:db`; never edit it by hand.
+- Fix the root cause of a bug, not its symptom, and change only what is broken.
 
-**Inside `ui` / `common` / `providers` / `primitives`, import siblings by direct
-path, never through a barrel.** A barrel pulls in every sibling and closes a cycle
-(`ui/index` → `SettingsPicker` → `common/index` → `EmptyState` → `ui/index`) that
-resolves to `undefined` at module-init time — a blank component at runtime, not a
+## Component layering
+
+A new shared component goes in the first bucket that fits:
+
+1. `components/primitives/`: `ThemedText`, `ThemedView`, `ThemedButton`,
+   `ThemedInput`. It has no `index.ts` on purpose, so it can sit below the other
+   two without joining an import cycle.
+2. `components/ui/`: interactive controls and form primitives (barrel).
+3. `components/common/`: layout, state and composition primitives (barrel).
+
+Feature directories may import any barrel. Inside `ui`, `common`, `providers` and
+`primitives`, import siblings by direct path and never through a barrel. A barrel
+pulls in every sibling and closes a cycle that resolves to `undefined` at
+module-init time, which shows up as a blank component at runtime and not as a
 build error. `no-restricted-imports` in `eslint.config.mjs` enforces this.
 
 ## Navigation
 
-- **CRITICAL**: Always use `/(tabs)` prefix: `/(tabs)/explore/article/[id]` not `/article/[id]`
-- Use `ROUTE_PATHS` constants from routes.ts
+Build routes from `ROUTE_PATHS` ([routes.ts](constants/routes.ts)) and the
+builders in [routeBuilders.ts](utils/routeBuilders.ts), never from string
+literals. Screens inside a tab carry the `/(tabs)` prefix
+(`/(tabs)/practice/dictionary`). Screens that present over any tab live at the
+root and have no prefix: the article reader (`/article/[id]`), `/review`,
+`/word-detail` and the practice detail sheets.
 
-## Success Criteria
+## Arabic text
 
-- ✅ Zero TypeScript/ESLint errors
-- ✅ All tests pass
-- ✅ Constants used (no hardcoded values)
-- ✅ Type safety maintained (no `any`)
-- ✅ Arabic text follows single-word rules
-- ✅ Navigation uses `/(tabs)` prefix
+Grammar colour-coding applies to multi-word phrases only. A single English word
+never gets it, because the colours teach how the parts of a phrase map onto each
+other and one word has nothing to map. Gate on
+`text.trim().split(/\s+/).length === 1`. The full rules are in
+[arabic-grammar.md](.claude/docs/arabic-grammar.md).
 
-## Detailed Documentation
+## Reference docs
 
-For comprehensive patterns and guidelines, see `.claude/docs/`:
+Read the one that matches the task; they are not loaded by default.
 
-- **[patterns.md](.claude/docs/patterns.md)** - TypeScript patterns, branded IDs, performance
-- **[state-management.md](.claude/docs/state-management.md)** - Redux/Query/Context decision tree
-- **[ui-guidelines.md](.claude/docs/ui-guidelines.md)** - Design system, colors, spacing
-- **[arabic-grammar.md](.claude/docs/arabic-grammar.md)** - Grammar color coding rules
-- **[bottom-sheets.md](.claude/docs/bottom-sheets.md)** - @gorhom/bottom-sheet patterns
-- **[deployment.md](.claude/docs/deployment.md)** - EAS/GitHub Actions commands
-- **[testing.md](.claude/docs/testing.md)** - Validation workflow
-
----
-
-_Only run tests before I instruct you to commit to speed up development._
+- [patterns.md](.claude/docs/patterns.md): branded IDs, TypeScript and performance patterns
+- [state-management.md](.claude/docs/state-management.md): Redux, Query or Context decision tree
+- [ui-guidelines.md](.claude/docs/ui-guidelines.md): design system, buttons, screen scaffolding
+- [arabic-grammar.md](.claude/docs/arabic-grammar.md): grammar colour-coding rules
+- [bottom-sheets.md](.claude/docs/bottom-sheets.md): sizing and FlashList inside a sheet
+- [deployment.md](.claude/docs/deployment.md): EAS builds, GitHub Actions releases, OTA
+- [testing.md](.claude/docs/testing.md): validation and test commands in detail
