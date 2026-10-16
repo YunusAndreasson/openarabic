@@ -12,3 +12,62 @@ index f5af7ee6a4c79c25f3fb212643b100cdabfbeec0..6b055928298070bd866531c957fe7adb
          consumerProguardFiles("consumer-proguard-rules.pro")
  
          externalNativeBuild {
+diff --git a/ios/RnExecutorch.mm b/ios/RnExecutorch.mm
+index d73302592ab9488ff2cc27a9c5b8433316fac9ac..c7e55ff11b9f423a4db008b2e0be6fc303f33cb2 100644
+--- a/ios/RnExecutorch.mm
++++ b/ios/RnExecutorch.mm
+@@ -1,14 +1,22 @@
+ #import "RnExecutorch.h"
+ #import "../cpp/RnExecutorch.h"
+-#import <React/RCTBridge+Private.h>
++#import <ReactCommon/RCTTurboModuleWithJSIBindings.h>
+ #import <jsi/jsi.h>
+ 
++// React Native 0.87 removed `RCTCxxBridge`, which this module used to cast
++// `self.bridge` to in order to reach the JS runtime. The New Architecture way
++// is `RCTTurboModuleWithJSIBindings`: the TurboModule manager calls
++// `installJSIBindingsWithRuntime:` with the runtime right after it creates the
++// module, before JS gets the module back — so by the time JS calls
++// `install()`, the bindings are already in place and `install()` only reports
++// whether that happened.
++@interface RnExecutorch () <RCTTurboModuleWithJSIBindings>
++@end
++
+ @implementation RnExecutorch {
+-    __weak RCTBridge *_bridge;
++    BOOL _installed;
+ }
+ 
+-@synthesize bridge = _bridge;
+-
+ RCT_EXPORT_MODULE()
+ 
+ - (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:
+@@ -16,20 +24,14 @@ RCT_EXPORT_MODULE()
+     return std::make_shared<facebook::react::NativeRnExecutorchSpecJSI>(params);
+ }
+ 
+-RCT_EXPORT_SYNCHRONOUS_TYPED_METHOD(NSNumber *, install) {
+-    RCTCxxBridge *cxxBridge = (RCTCxxBridge *)self.bridge;
+-
+-    if (cxxBridge == nil)
+-        return @NO;
+-
+-    facebook::jsi::Runtime *jsiRuntime = (facebook::jsi::Runtime *)cxxBridge.runtime;
+-
+-    if (jsiRuntime == nil)
+-        return @NO;
+-
+-    rnexecutorch::install(*jsiRuntime);
++- (void)installJSIBindingsWithRuntime:(facebook::jsi::Runtime &)runtime
++                          callInvoker:(const std::shared_ptr<facebook::react::CallInvoker> &)callInvoker {
++    rnexecutorch::install(runtime);
++    _installed = YES;
++}
+ 
+-    return @YES;
++RCT_EXPORT_SYNCHRONOUS_TYPED_METHOD(NSNumber *, install) {
++    return @(_installed);
+ }
+ 
+ @end

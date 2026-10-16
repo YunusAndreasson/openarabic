@@ -12428,7 +12428,7 @@ __metadata:
 
 "react-native-executorch@patch:react-native-executorch@npm%3A0.10.5#~/.yarn/patches/react-native-executorch-npm-0.10.5-ed40f33766.patch":
   version: 0.10.5
-  resolution: "react-native-executorch@patch:react-native-executorch@npm%3A0.10.5#~/.yarn/patches/react-native-executorch-npm-0.10.5-ed40f33766.patch::version=0.10.5&hash=e0a7c5"
+  resolution: "react-native-executorch@patch:react-native-executorch@npm%3A0.10.5#~/.yarn/patches/react-native-executorch-npm-0.10.5-ed40f33766.patch::version=0.10.5&hash=b8b5a7"
   dependencies:
     "@huggingface/jinja": "npm:^0.5.9"
     jsonrepair: "npm:^3.12.0"
@@ -12444,7 +12444,7 @@ __metadata:
   peerDependenciesMeta:
     "@kesha-antonov/react-native-background-downloader":
       optional: true
-  checksum: 10c0/3dc942dcc6093e2028a2fafcecd25f03ee405f3d76a6f2c1dddc8a65dc6cc7b98c1e30d0894fb05a016c278dec2acdd8ab1cf3beccdc7ef9d3edd901476cd713
+  checksum: 10c0/23caa0c7f88774e81cdfc33e7588324cc958e81b002653949ffdc8ece878c634b2eba824e6d735468f74665978284bc15737b0cf9774978aaa5536453135e8a1
   languageName: node
   linkType: hard
 
