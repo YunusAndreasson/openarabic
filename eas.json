@@ -5,8 +5,7 @@
   },
   "build": {
     "base": {
-      "node": "22.23.1",
-      "corepack": true
+      "node": "22.23.1"
     },
     "development": {
       "developmentClient": true,
@@ -43,7 +42,6 @@
     },
     "production": {
       "node": "22.23.1",
-      "corepack": true,
       "channel": "production",
       "environment": "production",
       "ios": {
