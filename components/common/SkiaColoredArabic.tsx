@@ -3,8 +3,11 @@ import { useWindowDimensions, View } from 'react-native';
 
 import { Canvas, Paragraph as SkiaParagraph, TextDirection } from 'react-native-skia';
 
+import { ThemedText } from '@/components/primitives/ThemedText';
+import { LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useSkiaFonts } from '@/hooks/theme/useSkiaFonts';
+import { useSkiaGpuAvailable } from '@/hooks/theme/useSkiaGpuAvailable';
 import type { ColoredSegment } from '@/types/vocabulary.types';
 import {
   PARAGRAPH_LAYOUT_WIDTH,
@@ -35,7 +38,7 @@ interface SkiaColoredArabicProps {
  *
  * Skia shapes the whole string first and applies the colour runs to the shaped
  * glyphs, which is why the article body has always rendered correctly. This is
- * that same path, without the tap/marker behaviour of `SkiaArabicWord`.
+ * that same path, without the tap/marker behaviour of `SkiaSentenceWords`.
  */
 const SkiaColoredArabicInternal = function SkiaColoredArabic({
   text,
@@ -44,6 +47,7 @@ const SkiaColoredArabicInternal = function SkiaColoredArabic({
   color,
 }: SkiaColoredArabicProps) {
   const colors = useColors();
+  const gpuAvailable = useSkiaGpuAvailable();
   const { fontSize: readingFontSize, fontFamily, fontManager } = useSkiaFonts();
   // Skia sizes glyphs in raw pixels, so it is the one text path in the app that
   // ignores the OS "Larger Text" setting — nothing here passes
@@ -112,6 +116,24 @@ const SkiaColoredArabicInternal = function SkiaColoredArabic({
     }),
     [canvas.width, canvas.height, canvas.inkLeft, canvas.inkRight],
   );
+
+  // No GPU, so a canvas would stay blank. One Text in one colour: a single
+  // span is a single shaping run, so the word still joins. It loses the
+  // grammar colours, not the Arabic. Text applies the OS font scale itself.
+  if (!gpuAvailable) {
+    const fallbackStyle = fontSizeOverride
+      ? {
+          color: baseColor,
+          fontSize: fontSizeOverride,
+          lineHeight: Math.round(fontSizeOverride * LINE_HEIGHT_MULTIPLIERS.ARABIC),
+        }
+      : { color: baseColor };
+    return (
+      <ThemedText type="arabic" style={fallbackStyle} accessibilityLanguage="ar">
+        {text}
+      </ThemedText>
+    );
+  }
 
   // Nothing to paint yet: hold the height so the surrounding layout does not
   // jump when the fonts land a frame later.

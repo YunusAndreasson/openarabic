@@ -1,6 +1,7 @@
 module.exports = {
   // Use jest.fn() so tests can verify errors are captured
   captureException: jest.fn(),
+  captureMessage: jest.fn(),
   addBreadcrumb: jest.fn(),
   withScope: callback =>
     callback({
