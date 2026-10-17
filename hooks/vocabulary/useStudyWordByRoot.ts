@@ -16,8 +16,7 @@ import type { StudyWord } from '@/types/vocabulary.types';
  *
  * The `select` is wrapped in `useCallback` on purpose, and it is not a React
  * Compiler violation: TanStack re-runs `select` whenever its identity changes,
- * so an inline arrow would recompute on every render. `useArabicWord` already
- * establishes the pattern for the same reason. `find` hands back the cached
+ * so an inline arrow would recompute on every render. `find` hands back the cached
  * object itself, so the result stays referentially stable across cache writes
  * that do not touch this word.
  */

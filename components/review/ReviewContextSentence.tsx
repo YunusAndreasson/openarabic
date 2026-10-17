@@ -66,10 +66,10 @@ const STATIC_STYLES = StyleSheet.create({
   word: {
     paddingHorizontal: LAYOUT.SPACING.HALF_TINY,
     // Clears Arabic descenders (ي ج ن) from the marker rule below — same
-    // reasoning as SkiaArabicWord's MARKER_UNDERLINE_GAP.
+    // reasoning as sentenceWordLayout's MARKER_UNDERLINE_GAP.
     paddingBottom: LAYOUT.SPACING.TINY,
   },
-  // Same visual channel as SkiaArabicWord's marker rule — a saved word in the
+  // Same visual channel as the reader's marker rule (SkiaSentenceWords) — a saved word in the
   // reader, a highlighted word in onboarding, and the practised word here are
   // all "this word is yours" in one language. Painted as an absolutely
   // positioned bar, not a `borderBottomWidth`: Android draws a bottom-only
@@ -118,7 +118,7 @@ interface Props {
  * that a single-English-word gloss is never colour-coded.
  *
  * The practised word is marked by the same tint-coloured underline the reader
- * uses for a saved word and onboarding uses to point at one (SkiaArabicWord's
+ * uses for a saved word and onboarding uses to point at one (SkiaSentenceWords'
  * marker rule) — not a background fill, and not the glyph colour itself:
  * hue is spoken for, since in this palette `tint` is the same hue as the
  * grammar palette's `possessive` AND as `success` ("Knew it"), so painting the

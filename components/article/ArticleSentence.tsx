@@ -10,7 +10,7 @@ import type { SharedValue } from 'react-native-reanimated';
 
 import { BaseCard } from '@/components/common';
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { SkiaArabicWord as ArabicWord } from '@/components/article/SkiaArabicWord';
+import { SkiaSentenceWords } from '@/components/article/SkiaSentenceWords';
 import { FONTS } from '@/constants/fonts';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -109,40 +109,6 @@ const ArticleSentenceInternal = function ArticleSentence({
     [colors.englishText],
   );
 
-  // Memoize rendered words to prevent unnecessary recreations.
-  // Position-based keys keep word instances reusable when FlashList recycles
-  // this sentence for another one (words measure themselves via an internal ref).
-  const renderedWords = useMemo(() => {
-    return words.map((word, index) => {
-      // Highlight the first word when tutorial is showing
-      const isFirstWord = index === 0;
-
-      // Check if this word is the target word (for dictionary sentence examples)
-      const isTargetWord = highlightRootId != null && word.root_id === highlightRootId;
-
-      return (
-        <ArabicWord
-          key={`word-${word.position}`}
-          word={word}
-          onTooltipOpen={onWordPress}
-          onWordLongPress={onWordLongPress}
-          isHighlighted={isFirstWord && showTutorialCard}
-          activeWordIdSV={activeWordIdSV}
-          isTargetWord={isTargetWord}
-          isSelected={selectedRootIds === undefined ? undefined : selectedRootIds.has(word.root_id)}
-        />
-      );
-    });
-  }, [
-    words,
-    onWordPress,
-    onWordLongPress,
-    showTutorialCard,
-    activeWordIdSV,
-    highlightRootId,
-    selectedRootIds,
-  ]);
-
   return (
     <View style={[styles.container, containerStyle]}>
       {sentence.english && <ThemedText style={englishTextStyle}>{sentence.english}</ThemedText>}
@@ -194,7 +160,15 @@ const ArticleSentenceInternal = function ArticleSentence({
         </View>
       )}
 
-      <View style={styles.wordsContainer}>{renderedWords}</View>
+      <SkiaSentenceWords
+        words={words}
+        onWordPress={onWordPress}
+        onWordLongPress={onWordLongPress}
+        highlightFirstWord={showTutorialCard}
+        activeWordIdSV={activeWordIdSV}
+        highlightRootId={highlightRootId}
+        selectedRootIds={selectedRootIds}
+      />
     </View>
   );
 };
@@ -243,17 +217,5 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BUTTON.ICON_SIZE.XLARGE / 2,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  wordsContainer: {
-    alignItems: 'center',
-    flexDirection: 'row-reverse',
-    flexWrap: 'wrap',
-    gap: LAYOUT.SPACING.HALF_TINY, // Breathing room between words (2px)
-    justifyContent: 'flex-start',
-    minHeight: LAYOUT.SPACING.XLARGE * 1.5,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingTop: 0, // No gap - English and Arabic belong together
-    paddingBottom: LAYOUT.SPACING.SMALL, // Minimal bottom, separation handled by next English's paddingTop
-    width: '100%',
   },
 });

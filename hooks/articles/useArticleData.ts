@@ -46,7 +46,7 @@ export const useArticleData = (
   );
 
   // Fetch study words with optimized caching
-  // CRITICAL: Use same query as useArabicWord and useArticleWordInteractions for DRY consistency
+  // CRITICAL: Use same query as useSentenceSelectedRoots and useArticleWordInteractions for DRY consistency
   const studyWordsQuery = useQuery({
     ...gated(fsrsQueries.all, userId),
     refetchOnMount: false, // Only refetch via cache invalidation or pull-to-refresh

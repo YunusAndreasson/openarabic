@@ -595,12 +595,15 @@ jest.mock('react-native', () => {
       dismiss: jest.fn(),
     },
 
-    // Layout measurement
+    // Layout measurement. Plain functions, not `jest.fn()`: `resetMocks` strips
+    // a jest.fn's implementation before every test, so `roundToNearestPixel`
+    // returned undefined and every position snapped through it vanished.
     PixelRatio: {
-      get: jest.fn(() => 2),
-      getFontScale: jest.fn(() => 1),
-      getPixelSizeForLayoutSize: jest.fn(size => size * 2),
-      roundToNearestPixel: jest.fn(size => Math.round(size)),
+      get: () => 2,
+      getFontScale: () => 1,
+      getPixelSizeForLayoutSize: size => size * 2,
+      // Snaps to the device-pixel grid of a 2x screen, as the real one does.
+      roundToNearestPixel: size => Math.round(size * 2) / 2,
     },
 
     // Status bar

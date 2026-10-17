@@ -293,7 +293,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
       }
 
       // Preload user's FSRS data if available. The bare due entry (no cooldown,
-      // no limit) is what useArabicWord/useArticlesByDueWords and the
+      // no limit) is what useSentenceSelectedRoots/useArticlesByDueWords and the
       // due-backlog gate read; fsrsQueries.all feeds the word lists.
       if (user?.id) {
         try {

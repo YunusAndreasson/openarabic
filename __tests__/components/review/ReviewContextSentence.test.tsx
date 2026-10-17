@@ -8,7 +8,7 @@
  *   form against the sentence text. The old split-on-the-form approach marked
  *   EVERY occurrence, so a sentence using the word twice lit up twice and a form
  *   that was a substring of a longer word lit up inside it.
- * - the mark is the same tint-coloured underline SkiaArabicWord uses for a
+ * - the mark is the same tint-coloured underline SkiaSentenceWords uses for a
  *   saved word, never a text colour: in this palette `tint` is the same hue as
  *   the grammar palette's "possessive" and as `success` ("Knew it"), so a
  *   tinted word would read as a role or as a verdict.
