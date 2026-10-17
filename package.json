@@ -120,6 +120,7 @@
     "@anthropic-ai/sdk": "^0.133.0",
     "@eslint/compat": "^2.1.1",
     "@eslint/js": "^10.0.1",
+    "@expo/agent-cli": "^1.0.19",
     "@jest/globals": "30.4.1",
     "@react-native/jest-preset": "0.88.0",
     "@swmansion/argent": "^0.28.0",

@@ -1304,6 +1304,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@expo/agent-cli@npm:^1.0.19":
+  version: 1.0.19
+  resolution: "@expo/agent-cli@npm:1.0.19"
+  bin:
+    expo-agent-cli: bin/cli.js
+  checksum: 10c0/a099d63e35cffd996fdce1eec503dbcb6d197b1bbbd2b395e458c93a5db6752fc6f476ca9d0fdf5d7980ea3ca611a9b7b4d5760b8614b67c7d08b6919c75f29e
+  languageName: node
+  linkType: hard
+
 "@expo/cli@npm:^58.1.11":
   version: 58.1.11
   resolution: "@expo/cli@npm:58.1.11"
@@ -4204,21 +4213,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@supabase/auth-js@npm:2.117.3":
-  version: 2.117.3
-  resolution: "@supabase/auth-js@npm:2.117.3"
+"@supabase/auth-js@npm:2.118.0":
+  version: 2.118.0
+  resolution: "@supabase/auth-js@npm:2.118.0"
   dependencies:
     tslib: "npm:2.8.1"
-  checksum: 10c0/528e827eeb7512afe7d0c79d7ff1dba88155b883ad2b6bc5d3ed27a28a876c692a07a33e5e9613ed02e9ced456d6ef71793076a20b311de996454183937b6258
+  checksum: 10c0/df0349732f296365bcb49b59adc267025bec2872be9fbd07a8d768c89456308b68719a23f5ee2ab3d53a6558282a04d614ba3c5c8093c11ae3ee3f332eab02f1
   languageName: node
   linkType: hard
 
-"@supabase/functions-js@npm:2.117.3":
-  version: 2.117.3
-  resolution: "@supabase/functions-js@npm:2.117.3"
+"@supabase/functions-js@npm:2.118.0":
+  version: 2.118.0
+  resolution: "@supabase/functions-js@npm:2.118.0"
   dependencies:
     tslib: "npm:2.8.1"
-  checksum: 10c0/6deecba16ab0ac49a3a223ad1e3a29f1c78608c6480c9df1fb96b5c6a6ee8ad35bd99e556b81c3b03ff54a9a28b1fdaea46a58981391f2376c874eebb9141e3b
+  checksum: 10c0/0a6140381b4d3ac49d12f81f4b04655ad6c037bc45151794bd62ac3328fc22bca1a67a98e531f8414d75cab1a4bf52febc2adc089271cbe935113e7dd54e32ee
   languageName: node
   linkType: hard
 
@@ -4229,50 +4238,50 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@supabase/postgrest-js@npm:2.117.3":
-  version: 2.117.3
-  resolution: "@supabase/postgrest-js@npm:2.117.3"
+"@supabase/postgrest-js@npm:2.118.0":
+  version: 2.118.0
+  resolution: "@supabase/postgrest-js@npm:2.118.0"
   dependencies:
     tslib: "npm:2.8.1"
-  checksum: 10c0/e1e9705bd39e1cb250f29ea05490fe1d3dd96eac5ce42b9d416fe726207babe76b68cf504d68c80b8903265c7a93bc838d6536a00b2264ef9c135f2d7bbe1a91
+  checksum: 10c0/1992cd552fe2b4046bd871ebca1cce91ef644dbd0686d4a49ae0d19ba938bdbffbb468f653a7c242a70807111ef52610928f1d85f24685e91b5d08b9d9a5ce1a
   languageName: node
   linkType: hard
 
-"@supabase/realtime-js@npm:2.117.3":
-  version: 2.117.3
-  resolution: "@supabase/realtime-js@npm:2.117.3"
+"@supabase/realtime-js@npm:2.118.0":
+  version: 2.118.0
+  resolution: "@supabase/realtime-js@npm:2.118.0"
   dependencies:
     "@supabase/phoenix": "npm:0.4.5"
     tslib: "npm:2.8.1"
-  checksum: 10c0/bbb9e6a41bdc0d2f803980f7cc2993eb8a7709ada4af13b1fced4bd61c809ec8ad4f2086a9cabfed728211c60320778371ac33d5736ca92a0bd0026711aa0f0c
+  checksum: 10c0/f4653916a249c9783ce9b51ceebf58e5c91939920d8c0b6834e7220c57741759a0fc4e20ea2213806c71b4fb84b6692b16aa43aec94c7c0902b127c284569694
   languageName: node
   linkType: hard
 
-"@supabase/storage-js@npm:2.117.3":
-  version: 2.117.3
-  resolution: "@supabase/storage-js@npm:2.117.3"
+"@supabase/storage-js@npm:2.118.0":
+  version: 2.118.0
+  resolution: "@supabase/storage-js@npm:2.118.0"
   dependencies:
     iceberg-js: "npm:^0.8.1"
     tslib: "npm:2.8.1"
-  checksum: 10c0/d6f5367778a96775f24a19e2b32b51db77933166b9cfd87a3415f61fd25ee116349b04b19caaac12a221c27f85cf423e5a0778d1d69dd1da0c803fdc084c7f6f
+  checksum: 10c0/e1f4cca459e561d84116c2ca643600dac71efd9f14f8852fff9fa5cd37bccf6e89b736b841b8a56415912f85811eaff456cb29c2d522d2bf84d8ce32f44a2339
   languageName: node
   linkType: hard
 
 "@supabase/supabase-js@npm:^2.117.3":
-  version: 2.117.3
-  resolution: "@supabase/supabase-js@npm:2.117.3"
+  version: 2.118.0
+  resolution: "@supabase/supabase-js@npm:2.118.0"
   dependencies:
-    "@supabase/auth-js": "npm:2.117.3"
-    "@supabase/functions-js": "npm:2.117.3"
-    "@supabase/postgrest-js": "npm:2.117.3"
-    "@supabase/realtime-js": "npm:2.117.3"
-    "@supabase/storage-js": "npm:2.117.3"
+    "@supabase/auth-js": "npm:2.118.0"
+    "@supabase/functions-js": "npm:2.118.0"
+    "@supabase/postgrest-js": "npm:2.118.0"
+    "@supabase/realtime-js": "npm:2.118.0"
+    "@supabase/storage-js": "npm:2.118.0"
   peerDependencies:
     "@opentelemetry/api": ">=1.0.0"
   peerDependenciesMeta:
     "@opentelemetry/api":
       optional: true
-  checksum: 10c0/b77ff68afc8296dac8947ae8ecc9beebf0d9b5d2dadfccbd354b2a55c69e455fa1a7c3cc0a7508def16ad8ff8329d41f63179905a0751886889c7666949339f1
+  checksum: 10c0/b504d6649afc215b7a78eb8fb20048f78291662fc3298f39696f3b307acac0f9f66d044df657ff7cb31cefa89b2de37dc5e71c1c52da751192e37f6107e93968
   languageName: node
   linkType: hard
 
@@ -4300,51 +4309,59 @@ __metadata:
   linkType: hard
 
 "@tanstack/query-async-storage-persister@npm:^5.104.1":
-  version: 5.104.2
-  resolution: "@tanstack/query-async-storage-persister@npm:5.104.2"
+  version: 5.104.4
+  resolution: "@tanstack/query-async-storage-persister@npm:5.104.4"
   dependencies:
-    "@tanstack/query-core": "npm:5.104.2"
-    "@tanstack/query-persist-client-core": "npm:5.104.2"
-  checksum: 10c0/e939d6820d181c81ac837f9227a627bceca1a86f80b82e9c8934b32c8070c2669384cbfb1a4daf1632349b387af9630bda2735459f1e2cacba3b9dfa465c3eb9
+    "@tanstack/query-core": "npm:5.104.4"
+    "@tanstack/query-persist-client-core": "npm:5.104.4"
+  checksum: 10c0/4e524aa92fb12a656f197788ae0d0c6e24a41befcb2297ebea515fd3fbc5e5da7ead84dbfa1639e293eb6c5895d2432568e097d44d66703278f339c2abe0a85a
   languageName: node
   linkType: hard
 
-"@tanstack/query-core@npm:5.104.2":
-  version: 5.104.2
-  resolution: "@tanstack/query-core@npm:5.104.2"
-  checksum: 10c0/240b551de7dbc23cae1342da562f2001e748312fceb5c00284ccc238ac3e8491ebb37fcad3f54f7d8da854edc1eb81886f28305c67055a15a77bcf7d7662fc0a
+"@tanstack/query-core@npm:5.104.4":
+  version: 5.104.4
+  resolution: "@tanstack/query-core@npm:5.104.4"
+  checksum: 10c0/059587b4eec5abc186e9361b23ede4b5ecf0b0899e0e10154d70793f2b00ce4fd168e5d9636cdacabca464bb6c882372d2866a4bfd354ec3d2fd4b0ba6ef1110
   languageName: node
   linkType: hard
 
-"@tanstack/query-persist-client-core@npm:5.104.2":
-  version: 5.104.2
-  resolution: "@tanstack/query-persist-client-core@npm:5.104.2"
+"@tanstack/query-persist-client-core@npm:5.104.4":
+  version: 5.104.4
+  resolution: "@tanstack/query-persist-client-core@npm:5.104.4"
   dependencies:
-    "@tanstack/query-core": "npm:5.104.2"
-  checksum: 10c0/2de0e027cb59941e8e1fd20d44ec8d34dbd9c6b872e7bc9565a47a5599842a399621222e39f557895a9c43250d0b0af06dca464448d8c29e513f62f707be005e
+    "@tanstack/query-core": "npm:5.104.4"
+  checksum: 10c0/72a03c198809d910b0ba3073bed521e1afed55d9769d05d27b631e3484e6c095e18f81e4bf1f7c8813f6867fa474acba0f9c85ba4e394754d844b3c338f081a8
   languageName: node
   linkType: hard
 
 "@tanstack/react-query-persist-client@npm:^5.104.1":
-  version: 5.104.2
-  resolution: "@tanstack/react-query-persist-client@npm:5.104.2"
+  version: 5.104.4
+  resolution: "@tanstack/react-query-persist-client@npm:5.104.4"
   dependencies:
-    "@tanstack/query-persist-client-core": "npm:5.104.2"
+    "@tanstack/query-persist-client-core": "npm:5.104.4"
   peerDependencies:
-    "@tanstack/react-query": ^5.104.2
+    "@tanstack/react-query": ^5.104.4
+    "@types/react": ^18 || ^19
     react: ^18 || ^19
-  checksum: 10c0/b61403dc7c4eed34d3ed201ea735a8a0509c440b25f1216a4a7039a650788d116d32d5c97d6b9597666b19bc678c5b2ce5dd09fc9054a69b3589a66284cb9b93
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+  checksum: 10c0/a6e37aef1bd172d31af5119e6a76c2b1c42e20ece910a35348a6c4722b135cf10ecd7a83fa3edc6ea94ef8d5b52ca2804865717a83a4931d2dd549dbdcacdd65
   languageName: node
   linkType: hard
 
 "@tanstack/react-query@npm:^5.104.1":
-  version: 5.104.2
-  resolution: "@tanstack/react-query@npm:5.104.2"
+  version: 5.104.4
+  resolution: "@tanstack/react-query@npm:5.104.4"
   dependencies:
-    "@tanstack/query-core": "npm:5.104.2"
+    "@tanstack/query-core": "npm:5.104.4"
   peerDependencies:
+    "@types/react": ^18 || ^19
     react: ^18 || ^19
-  checksum: 10c0/67d3600a02b6bc216784b73c402c4b0e8bce8b7641f6b8f3597b24e02589158fab0718bb59622e860cecd3130bc5015ee7944c68b4f51dabdc563986d8b7d935
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+  checksum: 10c0/c4999d44e59de7849dcb9e54ecff5670e9bbfb31f4eba82d4dcac6855171e1dce64e436a0192dddc669a9e2aa1f658bb836b1cd9026074268a4c28197dad54a3
   languageName: node
   linkType: hard
 
@@ -5028,6 +5045,7 @@ __metadata:
     "@dr.pogodin/react-native-fs": "npm:^2.40.3"
     "@eslint/compat": "npm:^2.1.1"
     "@eslint/js": "npm:^10.0.1"
+    "@expo/agent-cli": "npm:^1.0.19"
     "@expo/metro-runtime": "npm:~58.0.14"
     "@expo/ui": "npm:~58.0.20"
     "@gorhom/bottom-sheet": "npm:^5.2.14"

@@ -125,3 +125,13 @@ google-service-account.json
 # Scratch credential file — a service_role key pasted in for a one-off seed.
 # Never commit: it bypasses RLS entirely.
 /key
+# @generated expo skills start
+.agents/skills/argent-ios-device-interact
+.agents/skills/argent-ios-device-setup
+.agents/skills/dotenv
+.agents/skills/dotenvx
+.claude/skills/argent-ios-device-interact
+.claude/skills/argent-ios-device-setup
+.claude/skills/dotenv
+.claude/skills/dotenvx
+# @generated expo skills end

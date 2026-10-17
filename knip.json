@@ -21,6 +21,7 @@
   "jest": false,
   "ignore": ["admin-dashboard/**", "types/database.types.ts", "jest.setup.js", "jest.polyfills.js"],
   "ignoreDependencies": [
+    "@expo/agent-cli",
     "babel-preset-expo",
     "babel-jest",
     "@babel/plugin-transform-react-jsx",
