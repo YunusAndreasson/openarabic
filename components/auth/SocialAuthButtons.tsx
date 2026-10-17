@@ -1,10 +1,10 @@
 import type { JSX } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { ListSeparator } from '@/components/common';
 import { ThemedButton } from '@/components/primitives/ThemedButton';
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
+import { AUTH_CONTENT_MAX_WIDTH_RATIO, LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import type { UseAppleAuthReturn } from '@/hooks/auth/useAppleAuth';
 import type { UseGoogleAuthReturn } from '@/hooks/auth/useGoogleAuth';
@@ -39,9 +39,10 @@ export function SocialAuthButtons({ appleAuth, googleAuth }: SocialAuthButtonsPr
   const { signInWithApple, loading: appleLoading } = appleAuth;
   const { signInWithGoogle, loading: googleLoading } = googleAuth;
   const colors = useColors();
+  const { width } = useWindowDimensions();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { maxWidth: width * AUTH_CONTENT_MAX_WIDTH_RATIO }]}>
       {/* Apple Sign In Button - iOS only */}
       {isIOS && (
         <ThemedButton
@@ -98,7 +99,6 @@ export function SocialAuthButtons({ appleAuth, googleAuth }: SocialAuthButtonsPr
 const styles = StyleSheet.create({
   container: {
     gap: LAYOUT.SPACING.SMALL, // Tighter grouping between social buttons (proximity)
-    maxWidth: SCREEN_WIDTH * 0.9,
     width: '100%',
   },
   dividerContainer: {

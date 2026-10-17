@@ -6,6 +6,7 @@ import { ThemedText } from '@/components/primitives/ThemedText';
 import { Ionicons, Toggle } from '@/components/ui';
 import { INLINE_VALUE_MIN_WIDTH, LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import { selectionFeedback } from '@/utils/haptics';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -76,26 +77,23 @@ export const SettingsCard = memo((props: SettingsCardProps) => {
   } = props;
 
   const cardStyle = backgroundColor ? [styles.card, { backgroundColor }] : styles.card;
+  // A fixed-width slot centres the glyph, so a chevron and the wider
+  // open-in-new symbol line up down the list.
   const navigationIndicator = (
-    <Ionicons
-      color={colors.secondaryMetadataText}
-      name={props.rightType === 'external' ? 'open-outline' : 'chevron-forward'}
-      size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-      style={styles.chevron}
-    />
+    <View style={styles.chevron}>
+      <Ionicons
+        color={colors.secondaryMetadataText}
+        name={props.rightType === 'external' ? 'open-outline' : 'chevron-forward'}
+        size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+      />
+    </View>
   );
 
   // Render right side based on type
   const renderRight = () => {
     switch (props.rightType) {
       case 'toggle':
-        return (
-          <Toggle
-            accessibilityLabel={label}
-            value={props.toggleValue}
-            onValueChange={props.onToggleChange}
-          />
-        );
+        return <Toggle value={props.toggleValue} />;
 
       case 'text-chevron':
         if (stackValue) return navigationIndicator;
@@ -121,8 +119,25 @@ export const SettingsCard = memo((props: SettingsCardProps) => {
     }
   };
 
+  // A toggle row is one control: a tap anywhere on it flips the switch, and it
+  // is announced as a switch with its state. The switch at its end only draws
+  // that state (see Toggle), so nothing handles the tap twice.
+  const isToggleRow = props.rightType === 'toggle';
+  const handleToggleRowPress = () => {
+    if (props.rightType !== 'toggle') return;
+    selectionFeedback();
+    props.onToggleChange(!props.toggleValue);
+  };
+
   return (
-    <BaseCard elevation="none" style={cardStyle} onPress={onPress}>
+    <BaseCard
+      elevation="none"
+      style={cardStyle}
+      onPress={isToggleRow ? handleToggleRowPress : onPress}
+      accessibilityRole={isToggleRow ? 'switch' : undefined}
+      accessibilityState={props.rightType === 'toggle' ? { checked: props.toggleValue } : undefined}
+      accessibilityLabel={isToggleRow ? label : undefined}
+    >
       <View style={styles.content}>
         <View style={styles.left}>
           <View style={styles.iconContainer}>
@@ -193,7 +208,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   chevron: {
+    alignItems: 'center',
     minWidth: LAYOUT.SPACING.XLARGE,
-    textAlign: 'center',
   },
 });

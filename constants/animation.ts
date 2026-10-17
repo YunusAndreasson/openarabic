@@ -6,11 +6,6 @@ import type { ReanimatedCSSAnimationStyle } from '@/types/ui/base.types';
  * Timing configuration presets for animations
  */
 export const TIMING_CONFIG = {
-  /** Short, bounded travel for opening and dismissing app-owned sheets. */
-  BOTTOM_SHEET: {
-    duration: 180,
-    easing: Easing.out(Easing.exp),
-  },
   FAST: {
     duration: 120, // Faster for more responsive feel
     easing: Easing.out(Easing.cubic), // More natural easing
@@ -261,6 +256,21 @@ export const HORIZON_TRAVEL = {
  * Spring configuration presets for common animations
  */
 export const SPRING_CONFIG = {
+  /**
+   * App-owned sheets. A spring, not a timing curve: gorhom hands a released
+   * drag's velocity to the animation, and its `animate` util routes any config
+   * holding `duration` or `easing` to `withTiming`, which drops that velocity —
+   * a slow release used to lurch away at the curve's ~7x opening speed.
+   * Damping ratio ~0.89 with clamping: no bounce, settled in about 200ms.
+   * Physics parameters on purpose; a `{ duration, dampingRatio }` spring would
+   * match the `duration` check and fall back to timing.
+   */
+  BOTTOM_SHEET: {
+    stiffness: 500,
+    damping: 40,
+    mass: 1,
+    overshootClamping: true,
+  },
   BUTTON: {
     damping: 18, // Higher damping for smoother, less bouncy feel
     stiffness: 180, // Higher stiffness for more responsive feel
@@ -273,13 +283,6 @@ export const SPRING_CONFIG = {
     stiffness: 400, // Very high stiffness - instant response
     mass: 0.4, // Light mass - snappy
     overshootClamping: true, // No overshoot
-    energyThreshold: 0.01,
-  },
-  TOGGLE: {
-    damping: 18, // Higher damping for smoother feel
-    stiffness: 140, // Higher stiffness for more responsive feel
-    mass: 0.4, // Lighter mass for snappier toggle feel
-    overshootClamping: false,
     energyThreshold: 0.01,
   },
 } as const;

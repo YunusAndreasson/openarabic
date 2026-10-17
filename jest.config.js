@@ -70,6 +70,9 @@ module.exports = {
     // @expo/ui ships untranspiled TS source, so a real import pulls
     // expo/src/Expo.fx.tsx (and an undefined EXDevLauncher) into the module graph.
     '@expo/ui/community/datetime-picker': '<rootDir>/__mocks__/expo-ui-datetime-picker.js',
+    '^@expo/ui/swift-ui$': '<rootDir>/__mocks__/expo-ui-swift-ui.js',
+    '^@expo/ui/swift-ui/modifiers$': '<rootDir>/__mocks__/expo-ui-swift-ui-modifiers.js',
+    '^@expo/ui/jetpack-compose$': '<rootDir>/__mocks__/expo-ui-jetpack-compose.js',
     // Same failure for expo-blur since SDK 58: it imports from 'expo'.
     '^expo-blur$': '<rootDir>/__mocks__/expo-blur.js',
 

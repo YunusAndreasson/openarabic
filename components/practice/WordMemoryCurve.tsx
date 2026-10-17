@@ -1,10 +1,10 @@
 import { Canvas, Circle, DashPathEffect, Line, Path, Skia } from 'react-native-skia';
 import { memo, useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { CHART_OPACITY, getChartColors } from '@/constants/chartColors';
 import { CHART_VISUAL } from '@/constants/chartConstants';
-import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { MemoryCurve } from '@/hooks/vocabulary/useWordMemory';
 
@@ -47,8 +47,9 @@ export const WordMemoryCurve = memo<WordMemoryCurveProps>(
   ({ curve, accessibilityLabel, width }) => {
     const colors = useColors();
     const chartColors = getChartColors(colors);
+    const { width: windowWidth } = useWindowDimensions();
 
-    const plotWidth = width ?? SCREEN_WIDTH - LAYOUT.SCREEN_HORIZONTAL_PADDING * 2;
+    const plotWidth = width ?? windowWidth - LAYOUT.SCREEN_HORIZONTAL_PADDING * 2;
 
     const geometry = useMemo(() => {
       const { points, spanDays, floorRetrievability } = curve;

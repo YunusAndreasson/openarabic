@@ -18,11 +18,14 @@ import { Provider } from 'react-redux';
 
 import { setupTestStore } from '@/__tests__/helpers/testStore';
 import { createTestQueryClient } from '@/__tests__/helpers/testUtils';
+import { STRINGS } from '@/constants/strings';
 import { useReadingListMutations } from '@/hooks/articles/useReadingListMutations';
 import type { ArticleId } from '@/types/branded.types';
+import { ToastType } from '@/types/enums';
 
 // Mock modules at top level
 const mockRouterReplace = jest.fn();
+const mockShowToast = jest.fn();
 const mockCheckAuthentication = jest.fn(async (..._args: unknown[]) => ({
   user: { id: 'test-user-id' },
 }));
@@ -38,6 +41,10 @@ jest.mock('expo-router', () => {
     router: mockRouter,
   };
 });
+
+jest.mock('@/components/providers', () => ({
+  useToast: () => ({ showToast: (...args: unknown[]) => mockShowToast(...args) }),
+}));
 
 jest.mock('@/services/supabase', () => ({
   checkAuthentication: () => mockCheckAuthentication(),
@@ -115,18 +122,27 @@ describe('useReadingListMutations', () => {
       expect(mockCheckAuthentication).toHaveBeenCalled();
     });
 
-    test('redirects to auth when not authenticated', async () => {
+    test('keeps the reader in place and asks to sign in when the session check fails', async () => {
       mockCheckAuthentication.mockRejectedValue(new Error('Not authenticated'));
 
       const { result } = renderHook(() => useReadingListMutations(mockRefetchReadingListStatus), {
         wrapper,
       });
 
+      let succeeded: boolean | undefined;
       await act(async () => {
-        await result.current.handleToggleReadingList(1 as ArticleId, false);
+        succeeded = await result.current.handleToggleReadingList(1 as ArticleId, false);
       });
 
-      expect(mockRouterReplace).toHaveBeenCalled();
+      expect(succeeded).toBe(false);
+      // The Stack.Protected guards own auth navigation; a redirect here bounced to Explore.
+      expect(mockRouterReplace).not.toHaveBeenCalled();
+      expect(mockShowToast).toHaveBeenCalledWith(
+        STRINGS.PLEASE_SIGN_IN_TO_SAVE_ARTICLES,
+        undefined,
+        ToastType.INFO,
+      );
+      expect(mockAddToReadingList).not.toHaveBeenCalled();
     });
 
     test('calls addToReadingList when not in reading list', async () => {

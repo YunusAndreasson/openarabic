@@ -1,6 +1,6 @@
 import { EnhancedImage } from '@/components/ui';
 import { memo, useMemo } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, useWindowDimensions } from 'react-native';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -10,7 +10,6 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Canvas, LinearGradient, Rect, vec } from 'react-native-skia';
 
-import { SCREEN_WIDTH } from '@/constants/layout';
 import type { Article } from '@/types/articles.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import {
@@ -68,11 +67,12 @@ const ParallaxHeaderComparison = (
  */
 const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors, scrollY }) => {
   const insets = useSafeAreaInsets();
+  const { width: windowWidth } = useWindowDimensions();
 
   // Calculate dynamic height including safe area for proper image display
   const headerHeight = useMemo(() => {
-    return calculateHeaderHeight(insets.top);
-  }, [insets.top]);
+    return calculateHeaderHeight(insets.top, windowWidth);
+  }, [insets.top, windowWidth]);
 
   // Container with absolute positioning and fixed height
   const containerStyle = useMemo(
@@ -143,14 +143,14 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors, scr
             Image gradient covers the bottom 60% for summary legibility; the background
             transition gradient draws on top across the full header. */}
         <Canvas style={STATIC_STYLES.gradientOverlay} pointerEvents="none">
-          <Rect x={0} y={headerHeight * 0.4} width={SCREEN_WIDTH} height={headerHeight * 0.6}>
+          <Rect x={0} y={headerHeight * 0.4} width={windowWidth} height={headerHeight * 0.6}>
             <LinearGradient
               start={vec(0, headerHeight * 0.4)}
               end={vec(0, headerHeight)}
               colors={[...imageGradientColors]}
             />
           </Rect>
-          <Rect x={0} y={0} width={SCREEN_WIDTH} height={headerHeight}>
+          <Rect x={0} y={0} width={windowWidth} height={headerHeight}>
             <LinearGradient
               start={vec(0, 0)}
               end={vec(0, headerHeight)}

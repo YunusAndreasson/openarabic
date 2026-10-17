@@ -2,7 +2,7 @@ import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import { useBottomSheet } from '@gorhom/bottom-sheet';
 import { BlurView } from 'expo-blur';
 import { memo, useCallback, useMemo, useState } from 'react';
-import { Dimensions, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { GestureDetector, useTapGesture } from 'react-native-gesture-handler';
 import Animated, {
   Extrapolation,
@@ -13,9 +13,6 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { useBlurProps } from '@/hooks/ui/useBlurProps';
-
-// Calculate screen height for maxDynamicContentSize
-const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 const BACKDROP_OPACITY = 0.4;
 const APPEARS_ON_INDEX = 0;
@@ -147,12 +144,15 @@ const styles = StyleSheet.create({
 });
 
 /**
- * Common props shared across inline BottomSheet instances.
- * maxDynamicContentSize prevents sheets from exceeding 85% of screen height.
+ * Common props shared across inline BottomSheet instances. The height cap
+ * (`SHEET_MAX_HEIGHT_RATIO`) is applied where the sheet renders, against the
+ * live window height.
  */
 export const COMMON_BOTTOM_SHEET_PROPS = {
   enablePanDownToClose: true,
   enableOverDrag: false,
   activeOffsetY: [-10, 10] as [number, number],
-  maxDynamicContentSize: SCREEN_HEIGHT * 0.85,
 } as const;
+
+/** A dynamically sized sheet never grows past this share of the window's height. */
+export const SHEET_MAX_HEIGHT_RATIO = 0.85;

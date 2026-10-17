@@ -1300,6 +1300,7 @@ export const STRINGS = {
   // Sign-in requirements - clearer and shorter
   PLEASE_SIGN_IN_TO_ADD_WORDS: 'Sign in to add words',
   PLEASE_SIGN_IN_TO_ADD_ROOTS: 'Sign in to add roots',
+  PLEASE_SIGN_IN_TO_SAVE_ARTICLES: 'Sign in to save articles',
   ERROR_EMPTY_EMAIL: 'Enter your email address',
   HELP_SEARCH_PLACEHOLDER: 'Search help',
   HELP_SEARCH_CLEAR: 'Clear search',

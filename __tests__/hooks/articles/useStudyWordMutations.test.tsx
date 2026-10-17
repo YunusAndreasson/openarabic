@@ -150,6 +150,8 @@ describe('useStudyWordMutations', () => {
 
       expect(returned).toBeUndefined();
       expect(mockShowToast).toHaveBeenCalled();
+      // The Stack.Protected guards own auth navigation; a redirect here bounced to Explore.
+      expect(mockRouterReplace).not.toHaveBeenCalled();
     });
 
     test('allows removing existing word regardless of daily limit', async () => {

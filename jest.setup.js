@@ -310,6 +310,7 @@ jest.mock('react-native-reanimated', () => {
     chain.delay = () => chain;
     chain.springify = () => chain;
     chain.damping = () => chain;
+    chain.dampingRatio = () => chain;
     chain.stiffness = () => chain;
     chain.withCallback = () => chain;
     return chain;

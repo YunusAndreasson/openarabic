@@ -137,12 +137,19 @@ jest.mock('@/constants/strings', () => ({
 }));
 
 // Mock queries
+const mockFetchReadingList = jest.fn(async (): Promise<unknown[]> => []);
 jest.mock('@/constants/queries', () => ({
   readingProgressQueries: {
+    // Mirrors the real factory's `placeholderData: []`. Without it this mock
+    // never had the state the app has — v5 reporting success before the first
+    // fetch — and the loading test passed while the screen showed a false
+    // "empty playlist".
     readingList: (userId: string) => ({
       queryKey: ['readingList', userId],
-      queryFn: async () => [],
+      queryFn: () => mockFetchReadingList(),
       staleTime: Infinity,
+      placeholderData: [],
+      retry: false,
     }),
     keys: {
       readingList: (userId: string) => ['readingList', userId],
@@ -194,6 +201,8 @@ describe('usePlaylistScreen', () => {
   };
 
   beforeEach(() => {
+    // resetMocks strips the implementation before every test.
+    mockFetchReadingList.mockImplementation(async () => []);
     jest.clearAllMocks();
     const { getCurrentArticleId, isAudioBusy } = require('@/utils/audioUtils');
     jest.mocked(getCurrentArticleId).mockReturnValue(null);
@@ -679,6 +688,20 @@ describe('usePlaylistScreen', () => {
       });
 
       expect(result.current.shouldShowInitialLoading).toBe(true);
+    });
+
+    test('reports a failed first load instead of an empty playlist', async () => {
+      mockFetchReadingList.mockRejectedValueOnce(new Error('offline'));
+
+      const { result } = renderHook(() => usePlaylistScreen(), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => {
+        expect(result.current.readingListLoadFailed).toBe(true);
+      });
+      expect(result.current.shouldShowInitialLoading).toBe(false);
+      expect(result.current.sortedReadingList).toEqual([]);
     });
 
     test('hides initial loading when data is cached', async () => {

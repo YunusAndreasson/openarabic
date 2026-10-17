@@ -3,7 +3,7 @@ import { FlashList } from '@shopify/flash-list';
 import { useQueryClient } from '@tanstack/react-query';
 import { memo, useCallback, type ComponentType, type ReactElement, type RefObject } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -167,7 +167,8 @@ const ArticleContentInternal = function ArticleContent({
   const insets = useSafeAreaInsets();
 
   // React Compiler auto-memoizes
-  const headerHeight = calculateHeaderHeight(insets.top);
+  const { width: windowWidth } = useWindowDimensions();
+  const headerHeight = calculateHeaderHeight(insets.top, windowWidth);
 
   // High-performance scroll handler - runs on UI thread (no cross-thread calls)
   const { scrollY, onScrollAnimated } = useArticleScrollHandler();

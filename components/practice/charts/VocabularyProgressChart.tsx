@@ -1,7 +1,7 @@
 import { BaseCard } from '@/components/common';
 import { Canvas, Circle, Group, Path, Skia } from 'react-native-skia';
 import { memo, useEffect, useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
@@ -9,7 +9,7 @@ import { TIMING_CONFIG, TIMING_CONSTANTS } from '@/constants/animation';
 import { useChartColors } from '@/constants/chartColors';
 import { CHART_VISUAL } from '@/constants/chartConstants';
 import { FONTS } from '@/constants/fonts';
-import { LAYOUT, LETTER_SPACING, SCREEN_WIDTH } from '@/constants/layout';
+import { LAYOUT, LETTER_SPACING } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useVocabularyGrowthChart } from '@/hooks/vocabulary/useVocabularyGrowthChart';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -20,10 +20,13 @@ import { formatCount } from '@/utils/stringUtils';
  * chart is now an aside rather than a hero, so it is sized to the space left
  * over by the number it accompanies.
  */
-const CARD_WIDTH = SCREEN_WIDTH - LAYOUT.SCREEN_HORIZONTAL_PADDING * 2;
 const LABEL_COLUMN_WIDTH = 120;
-const CHART_WIDTH =
-  CARD_WIDTH - LABEL_COLUMN_WIDTH - LAYOUT.SPACING.LARGE * 2 - LAYOUT.SPACING.MEDIUM;
+/** Everything in the card's row that is not the chart. */
+const CHART_WIDTH_INSET =
+  LAYOUT.SCREEN_HORIZONTAL_PADDING * 2 +
+  LABEL_COLUMN_WIDTH +
+  LAYOUT.SPACING.LARGE * 2 +
+  LAYOUT.SPACING.MEDIUM;
 const CHART_HEIGHT = 44;
 
 interface VocabularyProgressChartProps {
@@ -45,9 +48,12 @@ interface VocabularyProgressChartProps {
 export const VocabularyProgressChart = memo<VocabularyProgressChartProps>(
   ({ studyWords = [], onPress }) => {
     const chartColors = useChartColors();
+    // From the live window: an Android 16 tablet or foldable resizes under a
+    // running app, and a launch-time width would leave the chart stranded.
+    const chartWidth = useWindowDimensions().width - CHART_WIDTH_INSET;
     const { linePath, areaPath, endPoint, totalWords, monthChange } = useVocabularyGrowthChart(
       studyWords,
-      CHART_WIDTH,
+      chartWidth,
       CHART_HEIGHT,
     );
 
@@ -95,7 +101,7 @@ export const VocabularyProgressChart = memo<VocabularyProgressChartProps>(
             importantForAccessibility="no-hide-descendants"
           >
             {skLinePath && (
-              <Canvas style={styles.canvas} pointerEvents="none">
+              <Canvas style={[styles.canvas, { width: chartWidth }]} pointerEvents="none">
                 <Group opacity={settleOpacity}>
                   <Path path={areaPath} color={chartColors.areaWash} />
                 </Group>
@@ -168,7 +174,6 @@ const styles = StyleSheet.create({
   },
   canvas: {
     height: CHART_HEIGHT,
-    width: CHART_WIDTH,
   },
   delta: {
     marginTop: LAYOUT.SPACING.TINY,

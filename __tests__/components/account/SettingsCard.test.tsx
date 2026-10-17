@@ -180,6 +180,30 @@ describe('SettingsCard', () => {
       expect(mockOnToggleChange).toHaveBeenCalledTimes(1);
       expect(mockOnToggleChange).toHaveBeenCalledWith(true);
     });
+
+    test('flips the switch from anywhere on the row, with the selection haptic', () => {
+      const { selectionFeedback } = require('@/utils/haptics');
+      const { getByLabelText, getByTestId } = render(
+        <SettingsCard
+          icon="notifications"
+          label="Notifications"
+          rightType="toggle"
+          toggleValue={true}
+          onToggleChange={mockOnToggleChange}
+        />,
+      );
+
+      // The row is the control; the switch inside it only draws the state.
+      expect(getByLabelText('Notifications').props.accessibilityRole).toBe('switch');
+      expect(
+        getByTestId('native-switch', { includeHiddenElements: true }).props.nativeSwitchValue,
+      ).toBe(true);
+
+      fireEvent.press(getByLabelText('Notifications'));
+
+      expect(mockOnToggleChange).toHaveBeenCalledWith(false);
+      expect(selectionFeedback).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('Custom Styling', () => {

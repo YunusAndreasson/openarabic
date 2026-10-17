@@ -1,12 +1,10 @@
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
-import { router } from 'expo-router';
 import { useCallback } from 'react';
 
 import { useToast } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { REFUSAL_TOAST_DURATION } from '@/constants/animation';
 import { fsrsQueries } from '@/constants/queries';
-import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useDailyWordLimit } from '@/hooks/vocabulary';
 import { analytics } from '@/services/analytics';
@@ -310,8 +308,11 @@ export const useStudyWordMutations = (
           const { user } = await checkAuthentication();
           currentUserId = user.id;
         } catch {
+          // No redirect: the Stack.Protected guards own auth navigation. While
+          // the app still holds a session they bounce `/auth` to Explore, which
+          // dropped the reader's place; a session that is really gone flips the
+          // guard on SIGNED_OUT and navigates by itself.
           showToast(STRINGS.PLEASE_SIGN_IN_TO_ADD_ROOTS, undefined, ToastType.INFO);
-          router.replace(ROUTE_PATHS.AUTH);
           return undefined;
         }
 

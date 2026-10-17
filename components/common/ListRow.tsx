@@ -85,7 +85,9 @@ export const ListRow = ({
       accessibilityLabel={accessibilityLabel}
       accessibilityRole={accessibilityRole}
       android_ripple={rippleConfig}
-      style={rowStyle}
+      // The ripple is Android-only; without a pressed fill an iOS row gave no
+      // sign it was touched. Same fill as WordListRow.
+      style={({ pressed }) => [rowStyle, pressed && { backgroundColor: colors.elevation2 }]}
       onPress={handlePress}
     >
       {children}

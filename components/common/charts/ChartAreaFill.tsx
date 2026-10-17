@@ -1,4 +1,4 @@
-import { GRAPH_HEIGHT_LARGE } from '@/constants/chartConstants';
+import { useGraphHeight } from '@/constants/chartConstants';
 import { createAreaFillPath } from '@/utils/chartDataUtils';
 import { Group, Path } from 'react-native-skia';
 import { memo, useEffect, useMemo } from 'react';
@@ -19,9 +19,10 @@ interface ChartAreaFillProps {
  * draw-in lands so the wash appears beneath a finished line.
  */
 export const ChartAreaFill = memo<ChartAreaFillProps>(({ path, graphWidth, chartColors }) => {
+  const graphHeight = useGraphHeight();
   const areaPath = useMemo(
-    () => (path ? createAreaFillPath(path, GRAPH_HEIGHT_LARGE, undefined, graphWidth) : ''),
-    [path, graphWidth],
+    () => (path ? createAreaFillPath(path, graphHeight, undefined, graphWidth) : ''),
+    [path, graphHeight, graphWidth],
   );
 
   const opacity = useSharedValue(0);

@@ -13,5 +13,3 @@ export {
   PRESS_ANIMATION_WIDE,
   usePressAnimation,
 } from './usePressAnimation';
-
-export { useToggleAnimation } from './useToggleAnimation';

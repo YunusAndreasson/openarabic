@@ -17,6 +17,9 @@ import {
   type TooltipLayout,
 } from '@/utils/positioningUtils';
 
+// The window width the callers pass (jest.setup's useWindowDimensions stub).
+const WINDOW_WIDTH = 375;
+
 describe('Positioning Utilities', () => {
   describe('TOOLTIP_CONSTANTS', () => {
     test('should have correct constant values', () => {
@@ -41,7 +44,13 @@ describe('Positioning Utilities', () => {
     };
 
     test('should calculate dimensions for simple text without bookmark', () => {
-      const result = calculateTooltipDimensions(mockLayout, 'Hello', false);
+      const result = calculateTooltipDimensions(
+        mockLayout,
+        'Hello',
+        false,
+        undefined,
+        WINDOW_WIDTH,
+      );
 
       expect(result.tooltipTop).toBe(156); // 200 - 44
       expect(result.tooltipWidth).toBeGreaterThanOrEqual(TOOLTIP_CONSTANTS.MIN_WIDTH);
@@ -50,7 +59,7 @@ describe('Positioning Utilities', () => {
     });
 
     test('should calculate dimensions for text with bookmark', () => {
-      const result = calculateTooltipDimensions(mockLayout, 'Hello', true);
+      const result = calculateTooltipDimensions(mockLayout, 'Hello', true, undefined, WINDOW_WIDTH);
 
       expect(result.tooltipTop).toBe(156);
       expect(result.tooltipWidth).toBeGreaterThanOrEqual(TOOLTIP_CONSTANTS.MIN_WIDTH);
@@ -59,7 +68,13 @@ describe('Positioning Utilities', () => {
 
     test('should handle long text', () => {
       const longText = 'This is a very long text that should increase the tooltip width';
-      const result = calculateTooltipDimensions(mockLayout, longText, false);
+      const result = calculateTooltipDimensions(
+        mockLayout,
+        longText,
+        false,
+        undefined,
+        WINDOW_WIDTH,
+      );
 
       expect(result.tooltipWidth).toBeGreaterThan(TOOLTIP_CONSTANTS.MIN_WIDTH);
     });
@@ -72,16 +87,8 @@ describe('Positioning Utilities', () => {
         height: 30,
       };
 
-      const result = calculateTooltipDimensions(edgeLayout, 'Test', false);
+      const result = calculateTooltipDimensions(edgeLayout, 'Test', false, undefined, WINDOW_WIDTH);
       expect(result.tooltipLeft).toBe(TOOLTIP_CONSTANTS.SCREEN_MARGIN);
-    });
-
-    test('should handle default container width', () => {
-      const result = calculateTooltipDimensions(mockLayout, 'Test', false, undefined, 0);
-
-      // Should position normally when using default container width (SCREEN_WIDTH)
-      expect(result.tooltipTop).toBe(156);
-      expect(result.tooltipWidth).toBeGreaterThanOrEqual(TOOLTIP_CONSTANTS.MIN_WIDTH);
     });
 
     test('should respect screen margin on left edge', () => {
@@ -92,7 +99,7 @@ describe('Positioning Utilities', () => {
         height: 30,
       };
 
-      const result = calculateTooltipDimensions(edgeLayout, 'Test', false);
+      const result = calculateTooltipDimensions(edgeLayout, 'Test', false, undefined, WINDOW_WIDTH);
 
       // Tooltip should respect SCREEN_MARGIN (16px)
       expect(result.tooltipLeft).toBeGreaterThanOrEqual(TOOLTIP_CONSTANTS.SCREEN_MARGIN);
@@ -137,21 +144,18 @@ describe('Positioning Utilities', () => {
       expect(rightEdge).toBeLessThanOrEqual(319);
     });
 
-    test('should fallback to SCREEN_WIDTH when containerWidth is 0', () => {
-      const layout: TooltipLayout = {
-        x: 300,
-        y: 200,
-        width: 50,
-        height: 30,
-      };
+    test('caps a long tooltip at 90% of the window it is given', () => {
+      const narrowWindow = 300;
+      const longText = 'An English gloss long enough to outgrow any narrow window';
+      const result = calculateTooltipDimensions(
+        mockLayout,
+        longText,
+        false,
+        undefined,
+        narrowWindow,
+      );
 
-      const containerWidth = 0; // Not provided
-      const result = calculateTooltipDimensions(layout, 'Test', false, undefined, containerWidth);
-
-      // When containerWidth is 0, falls back to SCREEN_WIDTH (375px)
-      // Right boundary at 375 - 16 = 359px
-      const rightEdge = result.tooltipLeft + result.tooltipWidth;
-      expect(rightEdge).toBeLessThanOrEqual(359);
+      expect(result.tooltipWidth).toBeLessThanOrEqual(narrowWindow * 0.9);
     });
   });
 });

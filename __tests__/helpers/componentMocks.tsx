@@ -152,6 +152,7 @@ export const createReanimatedMock = () => {
     delay: () => mockAnimation,
     springify: () => mockAnimation,
     damping: () => mockAnimation,
+    dampingRatio: () => mockAnimation,
     stiffness: () => mockAnimation,
     withCallback: () => mockAnimation,
   };
@@ -294,13 +295,6 @@ export const createAnimationHooksMock = () => ({
     setOpacity: jest.fn(),
     fadeIn: jest.fn(),
     fadeOut: jest.fn(),
-  }),
-  useToggleAnimation: () => ({
-    containerAnimatedStyle: {},
-    handleAnimatedStyle: {},
-    translateX: { value: 0 },
-    toggleScale: { value: 1 },
-    forceAnimateToInitialState: jest.fn(),
   }),
   // Re-export animation configs as empty objects (tests rarely need actual values)
   SPRING_CONFIG: {},

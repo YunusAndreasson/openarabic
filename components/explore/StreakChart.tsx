@@ -1,11 +1,11 @@
 import { Canvas, Group, Path, type SkPath } from 'react-native-skia';
 import { memo, useEffect, useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useDerivedValue, useSharedValue, withDelay, withSpring } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { SPRING_CONFIG } from '@/constants/animation';
-import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { DailyReadingActivity, StreakPeriod } from '@/services/studyStreak';
@@ -86,11 +86,12 @@ StreakBar.displayName = 'StreakBar';
 
 export const StreakChart = memo<StreakChartProps>(({ dailyActivity, streakPeriods }) => {
   const colors = useColors();
+  const { width: windowWidth } = useWindowDimensions();
 
   // Memoize expensive calculations
   const chartData = useMemo(() => {
-    // Calculate available width (screen width minus padding)
-    const availableWidth = SCREEN_WIDTH - LAYOUT.SPACING.XLARGE * 2;
+    // Calculate available width (window width minus padding)
+    const availableWidth = windowWidth - LAYOUT.SPACING.XLARGE * 2;
 
     // Calculate bar width to fit all bars without scrolling
     const calculatedBarWidth =
@@ -141,7 +142,7 @@ export const StreakChart = memo<StreakChartProps>(({ dailyActivity, streakPeriod
       chartWidth,
       bars,
     };
-  }, [dailyActivity, streakPeriods, colors.warning, colors.chartGrid]);
+  }, [dailyActivity, streakPeriods, colors.warning, colors.chartGrid, windowWidth]);
 
   return (
     <View style={[styles.container, { height: CHART_HEIGHT }]}>

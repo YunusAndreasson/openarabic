@@ -1,5 +1,5 @@
 import { memo, useMemo } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, useWindowDimensions } from 'react-native';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -9,7 +9,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Canvas, LinearGradient, Rect, vec } from 'react-native-skia';
 
-import { LAYOUT, MIN_TOUCH_TARGET, SCREEN_WIDTH } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import { withOpacity } from '@/utils/colorUtils';
 
@@ -52,6 +52,7 @@ interface HeaderScrimProps {
  *   under an opaque band instead.
  */
 const HeaderScrimInternal = memo<HeaderScrimProps>(({ colors, scrollY, headerHeight }) => {
+  const { width: windowWidth } = useWindowDimensions();
   const insets = useSafeAreaInsets();
 
   // Must track FloatingActionButtons exactly — this band exists to keep those
@@ -99,7 +100,7 @@ const HeaderScrimInternal = memo<HeaderScrimProps>(({ colors, scrollY, headerHei
     <>
       <Animated.View style={[opaqueLayerStyle, opaqueStyle]} pointerEvents="none" />
       <Canvas style={containerStyle} pointerEvents="none">
-        <Rect x={0} y={0} width={SCREEN_WIDTH} height={scrimHeight}>
+        <Rect x={0} y={0} width={windowWidth} height={scrimHeight}>
           <LinearGradient
             start={vec(0, 0)}
             end={vec(0, scrimHeight)}

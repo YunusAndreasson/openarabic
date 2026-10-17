@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { calculateDataPointPositions } from '@/constants/chartConstants';
+import { calculateDataPointPositions, useGraphWidth } from '@/constants/chartConstants';
 import { formatWeekday } from '@/utils/chartDataUtils';
 
 /**
@@ -8,12 +8,13 @@ import { formatWeekday } from '@/utils/chartDataUtils';
  * Both values are individually memoized to minimize downstream re-renders.
  */
 export function useChartAxisLabels(data: readonly { date: Date }[]) {
+  const graphWidth = useGraphWidth();
   const xLabels = useMemo(() => data.map(d => formatWeekday(d.date)), [data]);
 
   const xLabelPositions = useMemo(() => {
-    const allDayPositions = calculateDataPointPositions(data.length);
+    const allDayPositions = calculateDataPointPositions(data.length, graphWidth);
     return data.map((_, index) => allDayPositions[index] || 0);
-  }, [data]);
+  }, [data, graphWidth]);
 
   return { xLabels, xLabelPositions };
 }
