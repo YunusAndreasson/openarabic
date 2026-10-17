@@ -1,4 +1,4 @@
-import type { ScaledSize, TextStyle } from 'react-native';
+import type { DisplayMetrics, TextStyle } from 'react-native';
 import { Dimensions, Platform, StyleSheet } from 'react-native';
 
 import { FONTS } from '@/constants/fonts';
@@ -7,12 +7,12 @@ import { FONTS } from '@/constants/fonts';
 
 // For mobile-only apps, screen width doesn't change during runtime
 // Use static width instead of dynamic useWindowDimensions
-// `Dimensions.get` is TYPED as always returning a ScaledSize, but returns
+// `Dimensions.get` is TYPED as always returning a DisplayMetrics, but returns
 // undefined under Jest — so the fallbacks below are real, and the cast is what
 // makes the type say so. Without it the optional chain and `??` read as dead
 // code to type-aware lint, which is why this used to carry four warnings for
 // two lines that are both load-bearing.
-const SCREEN_DIMENSIONS = Dimensions.get('window') as ScaledSize | undefined;
+const SCREEN_DIMENSIONS = Dimensions.get('window') as DisplayMetrics | undefined;
 export const SCREEN_WIDTH = SCREEN_DIMENSIONS?.width ?? 375;
 /**
  * Static height, same reasoning as the width above. Used for the one coarse

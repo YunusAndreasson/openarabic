@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
  * inset is what keeps the first row out from under the glass.
  *
  * Recipe — all three are required:
- *   1. `headerLargeTitle: true` on the Stack.Screen.
+ *   1. `headerLargeTitleEnabled: true` on the Stack.Screen.
  *   2. A native string `title` (NOT a custom `headerTitle` JSX — UIKit can't
  *      drive a collapse animation against a React Element).
  *   3. The screen's content scrollable sets
@@ -92,7 +92,7 @@ export function createTabHeaderOptions({
 }: TabHeaderOptions): NativeStackNavigationOptions {
   const base: NativeStackNavigationOptions = {
     title,
-    headerLargeTitle: Platform.OS === 'ios',
+    headerLargeTitleEnabled: Platform.OS === 'ios',
     headerLargeTitleShadowVisible: false,
     headerShadowVisible: false,
     headerBackButtonDisplayMode: 'minimal',

@@ -31,8 +31,8 @@ export function convertToFSRSCard(word: StudyWord): Card {
     stability: word.fsrs_stability ?? 0,
     difficulty: word.fsrs_difficulty ?? DEFAULT_FSRS_DIFFICULTY,
     // elapsed_days is recomputed by fsrs.next()/fsrs.repeat() from last_review +
-    // now (and is deprecated for removal in ts-fsrs v6); what we pass here is
-    // overwritten either way.
+    // now; what we pass here is overwritten either way.
+    // deprecated-api-allowed: ts-fsrs 5's Card still requires it; drop at ts-fsrs 6.
     elapsed_days: 0,
     scheduled_days: word.fsrs_scheduled_days ?? 0,
     learning_steps: word.fsrs_learning_steps ?? 0,

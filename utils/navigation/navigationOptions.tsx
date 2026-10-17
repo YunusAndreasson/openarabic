@@ -32,7 +32,7 @@ export function createNavigationOptions(
     isRegularScreen?: boolean;
     /**
      * When true, leave the title as a plain string so UIKit / Material can
-     * render it natively. Required for iOS `headerLargeTitle` collapse-on-scroll
+     * render it natively. Required for iOS `headerLargeTitleEnabled` collapse-on-scroll
      * (UIKit can't animate a custom React element). Defaults to false, which
      * keeps the left-aligned custom JSX title used everywhere else.
      */

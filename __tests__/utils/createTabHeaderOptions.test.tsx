@@ -71,9 +71,9 @@ describe('createTabHeaderOptions', () => {
 
   test('the iOS large title is opt-in per platform', () => {
     Platform.OS = 'android';
-    expect(createTabHeaderOptions({ title: 'Explore' }).headerLargeTitle).toBe(false);
+    expect(createTabHeaderOptions({ title: 'Explore' }).headerLargeTitleEnabled).toBe(false);
 
     Platform.OS = 'ios';
-    expect(createTabHeaderOptions({ title: 'Explore' }).headerLargeTitle).toBe(true);
+    expect(createTabHeaderOptions({ title: 'Explore' }).headerLargeTitleEnabled).toBe(true);
   });
 });
