@@ -8,7 +8,7 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Canvas, LinearGradient, Rect, vec } from '@shopify/react-native-skia';
+import { Canvas, LinearGradient, Rect, vec } from 'react-native-skia';
 
 import { SCREEN_WIDTH } from '@/constants/layout';
 import type { Article } from '@/types/articles.types';

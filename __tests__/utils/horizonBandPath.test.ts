@@ -17,7 +17,7 @@ import { describe, expect, jest, test } from '@jest/globals';
 // undefined. Substitute a real (tiny) recording builder: plain closures survive
 // resetMocks, and the emitted verb sequence is genuine, which is the whole point
 // of the assertions below. Same technique as the practice chart truth harness.
-jest.mock('@shopify/react-native-skia', () => {
+jest.mock('react-native-skia', () => {
   const makePathBuilder = () => {
     const segments: string[] = [];
     const builder = {

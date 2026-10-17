@@ -95,8 +95,8 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   // Track if user manually dismissed the tutorial card
   const [isTutorialCardDismissed, setIsTutorialCardDismissed] = useState(false);
 
-  // SharedValue for active word ID — drives per-word opacity on UI thread
-  // without causing React re-renders across all sentences
+  // SharedValue for active word ID — each sentence narrows it to its own words
+  // on the UI runtime, so the dim re-renders only the sentence it lands in
   const activeWordIdSV = useSharedValue<string | number | null>(null);
   useEffect(() => {
     activeWordIdSV.set(activeTooltip?.word.id ?? null);

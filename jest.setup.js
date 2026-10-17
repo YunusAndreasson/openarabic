@@ -361,10 +361,17 @@ jest.mock('react-native-reanimated', () => {
     useReducedMotion: () => false,
     useAnimatedProps: callback => callback(),
     useAnimatedReaction: (prepare, react) => {
-      // Execute the reaction immediately in tests
+      // Execute the reaction on every render. `previous` is what Reanimated
+      // passes: null on the first run, then the last prepared value. Passing
+      // `prepared` twice made every `current !== previous` guard false, so a
+      // reaction that only acts on a change never ran under test.
+      const React = require('react');
+      const previousRef = React.useRef(null);
       try {
         const prepared = prepare();
-        react(prepared, prepared);
+        const previous = previousRef.current;
+        previousRef.current = prepared;
+        react(prepared, previous);
       } catch {
         // Ignore errors in test environment
       }
@@ -595,12 +602,15 @@ jest.mock('react-native', () => {
       dismiss: jest.fn(),
     },
 
-    // Layout measurement
+    // Layout measurement. Plain functions, not `jest.fn()`: `resetMocks` strips
+    // a jest.fn's implementation before every test, so `roundToNearestPixel`
+    // returned undefined and every position snapped through it vanished.
     PixelRatio: {
-      get: jest.fn(() => 2),
-      getFontScale: jest.fn(() => 1),
-      getPixelSizeForLayoutSize: jest.fn(size => size * 2),
-      roundToNearestPixel: jest.fn(size => Math.round(size)),
+      get: () => 2,
+      getFontScale: () => 1,
+      getPixelSizeForLayoutSize: size => size * 2,
+      // Snaps to the device-pixel grid of a 2x screen, as the real one does.
+      roundToNearestPixel: size => Math.round(size * 2) / 2,
     },
 
     // Status bar

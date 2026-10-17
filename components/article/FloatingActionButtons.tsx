@@ -7,7 +7,7 @@ import { View } from 'react-native';
 // against descendants that use the JS responder system, so these buttons —
 // close, listen, add-to-playlist — silently stopped responding to every tap.
 // RNGH children compose with it instead, which is why tapping a word kept
-// working: SkiaArabicWord already imports Pressable from here.
+// working: SkiaSentenceWords already imports Pressable from here.
 import { Pressable } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 

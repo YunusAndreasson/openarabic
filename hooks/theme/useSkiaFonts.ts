@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import { Image } from 'react-native';
 
-import { Skia, type SkTypefaceFontProvider } from '@shopify/react-native-skia';
+import { Skia, type SkTypefaceFontProvider } from 'react-native-skia';
 
 import amiriFont from '@/assets/fonts/Amiri.ttf';
 import madinaFont from '@/assets/fonts/Madina.otf';

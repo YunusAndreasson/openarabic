@@ -1,4 +1,4 @@
-import { Skia, type SkPath } from '@shopify/react-native-skia';
+import { Skia, type SkPath } from 'react-native-skia';
 
 import { LAYOUT, SCREEN_HEIGHT, SCREEN_WIDTH } from '@/constants/layout';
 import { getHorizonFraction } from '@/utils/memoryHorizon';

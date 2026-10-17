@@ -38,7 +38,7 @@ jest.mock('expo-router', () => ({
   })),
 }));
 
-// LinearGradient is now from @shopify/react-native-skia, not expo-linear-gradient
+// LinearGradient is now from react-native-skia, not expo-linear-gradient
 // The mock is handled in jest.config.js transformIgnorePatterns
 
 // Use shared mock factories from componentMocks.tsx

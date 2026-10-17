@@ -4,7 +4,7 @@ module.exports = {
 
   // Transform ES modules that Jest can't handle
   transformIgnorePatterns: [
-    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|@shopify/react-native-skia|@tanstack/.*|immer))',
+    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|react-native-skia|@tanstack/.*|immer))',
   ],
 
   // Optimized timeouts for AI agent efficiency
@@ -52,7 +52,7 @@ module.exports = {
     '^immer/(.*)$': '<rootDir>/__mocks__/immer.js',
 
     // Core React Native mocks
-    '@shopify/react-native-skia': '<rootDir>/__mocks__/react-native-skia.js',
+    'react-native-skia': '<rootDir>/__mocks__/react-native-skia.js',
     'react-native-gesture-handler': '<rootDir>/__mocks__/react-native-gesture-handler.js',
     // NOTE: react-native-reanimated is intentionally NOT mapped here. It is mocked
     // in jest.setup.js, which is the richer of the two mocks that used to coexist

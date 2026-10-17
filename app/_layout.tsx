@@ -53,6 +53,7 @@ import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { GlobalAudioStateProvider } from '@/hooks/audio/useGlobalAudioState';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
+import { getSkiaGpuContext } from '@/hooks/theme/useSkiaGpuAvailable';
 import { useSystemUITheme } from '@/hooks/theme/useSystemUITheme';
 import { useSmartDueWordsCalculator } from '@/hooks/vocabulary/useSmartDueWordsCalculator';
 import { analytics } from '@/services/analytics';
@@ -256,6 +257,7 @@ Sentry.init({
 
   beforeSend(event) {
     // Add environment diagnostic context to all events
+    const skiaGpu = getSkiaGpuContext();
     event.contexts = {
       ...event.contexts,
       env_vars: {
@@ -265,7 +267,11 @@ Sentry.init({
         google_web_client_id_present: !!process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
         google_ios_client_id_present: !!process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
       },
+      // Read per event, not once at startup: a GPU lost mid-session is what
+      // turns canvases blank, and the report should say so.
+      skia_gpu: skiaGpu,
     };
+    event.tags = { ...event.tags, skia_backend: skiaGpu.backend || 'none' };
     return event;
   },
 });

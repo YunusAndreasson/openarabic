@@ -28,7 +28,7 @@ import { afterAll, beforeAll, describe, expect, jest, test } from '@jest/globals
 // undefined and every chart hook throws. Substitute a real (tiny) SVG path
 // builder instead of a stub: plain closures survive resetMocks, and the emitted
 // path string is genuine, so geometry assertions below actually mean something.
-jest.mock('@shopify/react-native-skia', () => {
+jest.mock('react-native-skia', () => {
   const makePathBuilder = () => {
     const segments: string[] = [];
     const builder = {

@@ -1,5 +1,5 @@
 import type { BottomSheetHandleProps } from '@gorhom/bottom-sheet';
-import { BlurMask, Canvas, RoundedRect } from '@shopify/react-native-skia';
+import { BlurMask, Canvas, RoundedRect } from 'react-native-skia';
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 

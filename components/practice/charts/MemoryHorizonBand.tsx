@@ -11,7 +11,7 @@ import {
   useTexture,
   vec,
   type SkRect,
-} from '@shopify/react-native-skia';
+} from 'react-native-skia';
 import type { JSX } from 'react';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';

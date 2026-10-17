@@ -1,4 +1,4 @@
-import { Line, vec } from '@shopify/react-native-skia';
+import { Line, vec } from 'react-native-skia';
 import type { JSX } from 'react';
 import { StyleSheet } from 'react-native';
 

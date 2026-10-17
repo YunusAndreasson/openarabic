@@ -1,4 +1,4 @@
-export * from './useArabicWord';
+export * from './useSentenceSelectedRoots';
 export * from './useArabicWordAnalysis';
 export * from './useDailyWordLimit';
 export * from './useDictionaryList';

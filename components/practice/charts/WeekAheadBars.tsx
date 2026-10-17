@@ -6,7 +6,7 @@ import {
   usePathInterpolation,
   vec,
   type SkPath,
-} from '@shopify/react-native-skia';
+} from 'react-native-skia';
 import type { JSX } from 'react';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';

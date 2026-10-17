@@ -1,6 +1,6 @@
 import { GRAPH_HEIGHT_LARGE } from '@/constants/chartConstants';
 import { createAreaFillPath } from '@/utils/chartDataUtils';
-import { Group, Path } from '@shopify/react-native-skia';
+import { Group, Path } from 'react-native-skia';
 import { memo, useEffect, useMemo } from 'react';
 import { useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 

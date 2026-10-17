@@ -11,7 +11,7 @@
 import { describe, expect, jest, test } from '@jest/globals';
 import { renderHook } from '@testing-library/react-native';
 
-jest.mock('@shopify/react-native-skia', () => {
+jest.mock('react-native-skia', () => {
   const makePathBuilder = () => {
     const builder = {
       moveTo: () => builder,

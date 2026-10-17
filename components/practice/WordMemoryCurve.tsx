@@ -1,4 +1,4 @@
-import { Canvas, Circle, DashPathEffect, Line, Path, Skia } from '@shopify/react-native-skia';
+import { Canvas, Circle, DashPathEffect, Line, Path, Skia } from 'react-native-skia';
 import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 

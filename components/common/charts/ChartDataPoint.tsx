@@ -1,5 +1,5 @@
 import { CHART_VISUAL } from '@/constants/chartConstants';
-import { Circle, Group } from '@shopify/react-native-skia';
+import { Circle, Group } from 'react-native-skia';
 import { memo, useEffect } from 'react';
 import { useDerivedValue, useSharedValue, withDelay, withSpring } from 'react-native-reanimated';
 

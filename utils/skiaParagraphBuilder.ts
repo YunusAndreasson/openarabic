@@ -4,10 +4,10 @@ import {
   type SkTypefaceFontProvider,
   TextAlign,
   TextDirection,
-} from '@shopify/react-native-skia';
+} from 'react-native-skia';
 
 import type { SkiaFontFamily } from '@/constants/fonts';
-import type { ColoredSegment } from '@/types/vocabulary.types';
+import type { ColoredSegment, SentenceWord } from '@/types/vocabulary.types';
 
 /** Strut height multiplier for consistent Arabic diacritics spacing */
 const STRUT_HEIGHT_MULTIPLIER = 1.8;
@@ -290,4 +290,70 @@ export const buildSimpleParagraph = (config: SimpleParagraphConfig): SkParagraph
     return null;
   }
   return buildParagraphFromSegments([{ text: config.text, color: config.color }], config);
+};
+
+/** The two theme colours a reader word is painted in when it carries no grammar colour. */
+interface WordParagraphColors {
+  text: string;
+  arabicText: string;
+}
+
+interface WordParagraphConfig {
+  word: Pick<SentenceWord, 'word_form' | 'coloredSegments'>;
+  colors: WordParagraphColors;
+  fontSize: number;
+  fontFamily: SkiaFontFamily;
+  fontManager?: SkTypefaceFontProvider | null;
+}
+
+/**
+ * The paragraph for one reader word: grammar-coloured when its segments carry
+ * a colour, a single run in `arabicText` otherwise.
+ *
+ * Selection is never carried by the glyph colour: repainting a saved word in
+ * the brand tint both shouted and overwrote the grammar colours it covered. The
+ * marker rule under the word is the only channel that says "saved".
+ *
+ * Null until the shared font manager has loaded: native `ParagraphBuilder.Make`
+ * throws without a font provider, so words fill in a frame later.
+ */
+export const buildWordParagraph = ({
+  word,
+  colors,
+  fontSize,
+  fontFamily,
+  fontManager,
+}: WordParagraphConfig): SkParagraph | null => {
+  if (!fontManager) {
+    return null;
+  }
+
+  const segments = word.coloredSegments ?? [];
+  // A segment set painted only in the plain text colours is the same picture as
+  // plain text: build the cheaper single-run paragraph for it.
+  const hasComponents = segments.some(
+    seg => seg.color !== colors.text && seg.color !== colors.arabicText,
+  );
+
+  if (hasComponents) {
+    return buildColoredParagraph({
+      segments,
+      fontSize,
+      fontFamily,
+      fontManager,
+      textDirection: TextDirection.RTL,
+      maxWidth: PARAGRAPH_LAYOUT_WIDTH,
+      letterSpacing: 0,
+    });
+  }
+
+  return buildSimpleParagraph({
+    text: word.word_form,
+    fontSize,
+    color: colors.arabicText,
+    fontFamily,
+    fontManager,
+    textDirection: TextDirection.RTL,
+    maxWidth: PARAGRAPH_LAYOUT_WIDTH,
+  });
 };
