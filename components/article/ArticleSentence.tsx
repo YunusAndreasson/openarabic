@@ -34,7 +34,7 @@ export interface ArticleSentenceProps {
   containerStyle?: StyleProp<ViewStyle>;
   showTutorialCard?: boolean;
   onDismissTutorial?: () => void;
-  /** SharedValue tracking the active word ID — drives opacity on UI thread without re-renders */
+  /** SharedValue tracking the active word ID — dims that word without re-rendering other sentences */
   activeWordIdSV?: SharedValue<string | number | null>;
   /** Root ID to highlight as target word (used in dictionary sentence examples) */
   highlightRootId?: RootId | null;

@@ -126,6 +126,17 @@ const createMockRSXform = (scos = 1, ssin = 0, tx = 0, ty = 0) => {
 // Mock Skia API
 export const Skia = {
   Color: color => color,
+  // Plain functions, not jest.fn(): `resetMocks` would strip a mock's
+  // implementation and leave the alpha unreadable.
+  Paint: () => {
+    let alpha = 1;
+    return {
+      setAlphaf: value => {
+        alpha = value;
+      },
+      getAlphaf: () => alpha,
+    };
+  },
   ParagraphBuilder: {
     Make: () => createMockParagraphBuilder(),
   },

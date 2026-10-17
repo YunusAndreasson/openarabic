@@ -361,10 +361,17 @@ jest.mock('react-native-reanimated', () => {
     useReducedMotion: () => false,
     useAnimatedProps: callback => callback(),
     useAnimatedReaction: (prepare, react) => {
-      // Execute the reaction immediately in tests
+      // Execute the reaction on every render. `previous` is what Reanimated
+      // passes: null on the first run, then the last prepared value. Passing
+      // `prepared` twice made every `current !== previous` guard false, so a
+      // reaction that only acts on a change never ran under test.
+      const React = require('react');
+      const previousRef = React.useRef(null);
       try {
         const prepared = prepare();
-        react(prepared, prepared);
+        const previous = previousRef.current;
+        previousRef.current = prepared;
+        react(prepared, previous);
       } catch {
         // Ignore errors in test environment
       }

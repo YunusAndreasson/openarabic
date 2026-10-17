@@ -18,7 +18,7 @@ import {
 import { Pressable } from 'react-native-gesture-handler';
 import {
   Easing,
-  useDerivedValue,
+  useAnimatedReaction,
   useSharedValue,
   withRepeat,
   withTiming,
@@ -29,8 +29,11 @@ import {
   Group,
   Paragraph as SkiaParagraph,
   Rect,
+  Skia,
+  type SkPaint,
   type SkParagraph,
 } from 'react-native-skia';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { LAYOUT } from '@/constants/layout';
@@ -60,6 +63,24 @@ const HIGHLIGHT_PULSE_EASING = Easing.bezier(0.42, 0, 0.58, 1); // CSS ease-in-o
 /** The id type of the reader's `activeWordIdSV` (`ArticleSentenceProps`). */
 type WordId = string | number;
 
+let activeWordLayer: SkPaint | null = null;
+
+/**
+ * The layer paint that dims the word whose tooltip is open. A `Paragraph`
+ * paints with its own text-style paints and ignores the canvas paint, so a
+ * Group's `opacity` never reaches it; only a save-layer with an alpha paint
+ * fades it. The layer is given to the active word alone: Skia 3 saves a layer
+ * for any `layer` value it is handed, `false` included, and a layer on every
+ * word would be one offscreen pass per word on every frame.
+ */
+const getActiveWordLayer = () => {
+  if (!activeWordLayer) {
+    activeWordLayer = Skia.Paint();
+    activeWordLayer.setAlphaf(LAYOUT.OPACITY.HIGH);
+  }
+  return activeWordLayer;
+};
+
 export interface SkiaSentenceWordsProps {
   words: SentenceWord[];
   /** Tap: open the word's tooltip, anchored on the frame passed. */
@@ -68,7 +89,7 @@ export interface SkiaSentenceWordsProps {
   onWordLongPress?: (word: SentenceWord, layout?: LayoutRectangle) => void;
   /** Pulses the first word's marker to draw attention (the reader tutorial). */
   highlightFirstWord?: boolean;
-  /** SharedValue tracking the active word ID; dims that word on the UI thread. */
+  /** SharedValue tracking the active word ID (the open tooltip); dims that word. */
   activeWordIdSV?: SharedValue<WordId | null>;
   /** Root to mark as the looked-up word (dictionary sentence examples). */
   highlightRootId?: RootId | null;
@@ -104,9 +125,10 @@ const getMarkerHeight = (isHighlighted: boolean, isTarget: boolean, isSelected: 
  *
  * - React records the sentence once per commit. Saving a word re-renders one
  *   sentence, which means one re-record.
- * - The active-word dim and the tutorial pulse are shared values. Skia's UI
- *   runtime applies them to the recorded scene, with no React commit and no
- *   re-record.
+ * - The tutorial pulse is a shared value: Skia's UI runtime applies it to the
+ *   recorded scene, with no React commit and no re-record. The active-word dim
+ *   is a save-layer, so opening a tooltip re-records the one sentence it opens
+ *   in (`getActiveWordLayer`).
  * - The taps stay native: one transparent Pressable per word sits over its
  *   box, carrying the press, long-press, tooltip measurement and screen-reader
  *   label each word had before. These are plain views with no GPU surface.
@@ -130,6 +152,24 @@ const SentenceWordsInternal = function SkiaSentenceWords({
 
   const blockRef = useRef<ComponentRef<typeof View>>(null);
   const [availableWidth, setAvailableWidth] = useState<number | null>(null);
+
+  // The dim is a save-layer on the active word (see `getActiveWordLayer`), so
+  // the sentence that holds the active word re-records. Each sentence narrows
+  // the reader-wide id to its own words on the UI runtime, so a tap re-renders
+  // only the sentence the tooltip opens in and the one it left.
+  const [activeWordId, setActiveWordId] = useState<WordId | null>(null);
+  const wordIds = words.map(word => word.id);
+  useAnimatedReaction(
+    () => {
+      const active = activeWordIdSV?.get() ?? null;
+      return active !== null && wordIds.some(id => id === active) ? active : null;
+    },
+    (current, previous) => {
+      if (current !== previous) {
+        scheduleOnRN(setActiveWordId, current);
+      }
+    },
+  );
 
   // Read the block's width before the first paint, so the words never draw at a
   // provisional layout and then jump. Fabric has laid the view out by the time
@@ -277,8 +317,7 @@ const SentenceWordsInternal = function SkiaSentenceWords({
                   metrics={metrics}
                   x={boxes[index]?.x ?? 0}
                   y={boxes[index]?.y ?? 0}
-                  wordId={word.id}
-                  activeWordIdSV={activeWordIdSV}
+                  dimmed={word.id === activeWordId}
                   markerHeight={markerHeights[index] ?? 0}
                   markerColor={colors.tint}
                   markerOpacity={highlightFirstWord && index === 0 ? markerPulse : undefined}
@@ -314,8 +353,8 @@ interface SentenceWordPaintProps {
   /** Top-left of the word's box in the canvas. */
   x: number;
   y: number;
-  wordId: WordId;
-  activeWordIdSV?: SharedValue<WordId | null>;
+  /** The word's tooltip is open. */
+  dimmed: boolean;
   markerHeight: number;
   markerColor: string;
   /** The tutorial pulse, for the one word that carries it. */
@@ -333,16 +372,11 @@ function SentenceWordPaint({
   metrics,
   x,
   y,
-  wordId,
-  activeWordIdSV,
+  dimmed,
   markerHeight,
   markerColor,
   markerOpacity,
 }: SentenceWordPaintProps) {
-  const opacity = useDerivedValue(() =>
-    activeWordIdSV?.get() === wordId ? LAYOUT.OPACITY.HIGH : LAYOUT.OPACITY.FULL,
-  );
-
   if (!paragraph) {
     return null;
   }
@@ -350,7 +384,7 @@ function SentenceWordPaint({
   const glyphLeft = x + WORD_PADDING;
   return (
     <>
-      <Group opacity={opacity}>
+      <Group layer={dimmed ? getActiveWordLayer() : undefined}>
         <SkiaParagraph
           paragraph={paragraph}
           x={glyphLeft}

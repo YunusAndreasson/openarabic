@@ -11,6 +11,8 @@
 
 import { fireEvent, render, type RenderResult } from '@testing-library/react-native';
 import React from 'react';
+import type { SharedValue } from 'react-native-reanimated';
+import { Canvas, Group, type SkPaint } from 'react-native-skia';
 
 import { SkiaSentenceWords } from '@/components/article/SkiaSentenceWords';
 import type { SentenceWord } from '@/types/vocabulary.types';
@@ -29,6 +31,12 @@ jest.mock('@/hooks/theme/useSkiaFonts', () => ({
     fontFamily: 'Noto Sans Arabic',
     fontManager: {},
   }),
+}));
+
+// A plain function: the shared jest.fn() in jest.setup loses its implementation
+// to `resetMocks`, and the active-word reaction would never reach React.
+jest.mock('react-native-worklets', () => ({
+  scheduleOnRN: (callback: (...args: unknown[]) => void, ...args: unknown[]) => callback(...args),
 }));
 
 jest.mock('@/hooks/theme/useSkiaGpuAvailable', () => ({
@@ -109,6 +117,55 @@ describe('SkiaSentenceWords', () => {
       const third = flatStyle(screen.getByTestId('sentence-word-2'));
 
       expect(third.top).toBeGreaterThan(first.top);
+    });
+  });
+
+  describe('the word whose tooltip is open', () => {
+    // The canvas renders nothing under the reset Skia mock; pass its children
+    // through so the per-word groups are recorded.
+    beforeEach(() => {
+      jest.mocked(Canvas).mockImplementation(({ children }) => <>{children}</>);
+      jest.mocked(Group).mockImplementation(({ children }) => <>{children}</>);
+    });
+
+    const activeWord = (id: number | null) =>
+      ({ value: id, get: () => id }) as unknown as SharedValue<string | number | null>;
+
+    /** The `layer` of each word's group in the latest draw, in word order. */
+    const latestLayers = () =>
+      jest
+        .mocked(Group)
+        .mock.calls.slice(-WORDS.length)
+        .map(([props]) => (props as { layer?: SkPaint }).layer);
+
+    test('is dimmed through a layer of its own, since a paragraph ignores group opacity', () => {
+      const screen = render(
+        <SkiaSentenceWords
+          words={WORDS}
+          selectedRootIds={NO_SELECTION}
+          activeWordIdSV={activeWord(WORDS[1]!.id)}
+        />,
+      );
+      layOut(screen);
+
+      const [first, active, last] = latestLayers();
+
+      expect(active?.getAlphaf()).toBe(0.7);
+      expect(first).toBeUndefined();
+      expect(last).toBeUndefined();
+    });
+
+    test('leaves the sentence without a layer when the tooltip is in another sentence', () => {
+      const screen = render(
+        <SkiaSentenceWords
+          words={WORDS}
+          selectedRootIds={NO_SELECTION}
+          activeWordIdSV={activeWord(999)}
+        />,
+      );
+      layOut(screen);
+
+      expect(latestLayers()).toEqual([undefined, undefined, undefined]);
     });
   });
 
