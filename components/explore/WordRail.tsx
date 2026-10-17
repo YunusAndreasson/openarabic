@@ -3,7 +3,7 @@ import { StyleSheet, useWindowDimensions } from 'react-native';
 
 import { BaseCard, SnapRail } from '@/components/common';
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { Ionicons } from '@/components/ui';
+import { Icon } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
@@ -62,7 +62,7 @@ const SeeAllCard = ({ count, onPress }: SeeAllTarget) => {
       <ThemedText align="center" colorName="secondaryText" numberOfLines={2} type="caption">
         {label}
       </ThemedText>
-      <Ionicons
+      <Icon
         color={colors.textTertiary}
         name="chevron-forward"
         size={LAYOUT.BUTTON.ICON_SIZE.DISCLOSURE}

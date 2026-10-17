@@ -1,5 +1,5 @@
-import { Ionicons } from '@/components/ui/Icon';
-import type { ComponentProps, Ref } from 'react';
+import { Icon, type IconName } from '@/components/ui/Icon';
+import type { Ref } from 'react';
 import { useCallback, useMemo, useState } from 'react';
 import type { GestureResponderEvent, TextInputInstance, TextInputProps } from 'react-native';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
@@ -9,8 +9,8 @@ import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
 interface ThemedInputProps extends TextInputProps {
-  icon?: ComponentProps<typeof Ionicons>['name'];
-  rightIcon?: ComponentProps<typeof Ionicons>['name'];
+  icon?: IconName;
+  rightIcon?: IconName;
   /** What the right icon does, for screen readers — it has no text to fall back on. */
   rightIconAccessibilityLabel?: string;
   error?: string;
@@ -26,12 +26,12 @@ const InputIcon = ({
   error,
   colors,
 }: {
-  name: ComponentProps<typeof Ionicons>['name'];
+  name: IconName;
   isFocused: boolean;
   error?: string;
   colors: ReturnType<typeof useColors>;
 }) => (
-  <Ionicons
+  <Icon
     color={error ? colors.error : isFocused ? colors.tint : colors.icon}
     name={name}
     size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
@@ -47,7 +47,7 @@ const RightInputIcon = ({
   onPress,
   accessibilityLabel,
 }: {
-  name: ComponentProps<typeof Ionicons>['name'];
+  name: IconName;
   isFocused: boolean;
   error?: string;
   colors: ReturnType<typeof useColors>;
@@ -61,7 +61,7 @@ const RightInputIcon = ({
     onPress={onPress}
     style={({ pressed }) => [styles.rightIcon, pressed && styles.rightIconPressed]}
   >
-    <Ionicons
+    <Icon
       color={error ? colors.error : isFocused ? colors.tint : colors.icon}
       name={name}
       size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}

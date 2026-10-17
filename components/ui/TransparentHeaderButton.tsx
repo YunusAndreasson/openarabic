@@ -1,13 +1,13 @@
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
-import { type IoniconName } from '@/components/ui/Icon';
+import type { IconName } from '@/components/ui/Icon';
 import { memo } from 'react';
 
 import type { IconButtonSize } from '@/constants/iconButton';
 import { useColors } from '@/hooks/theme/useColors';
 
 export interface TransparentHeaderButtonProps {
-  /** Icon name from Ionicons */
-  icon: IoniconName;
+  /** Icon name (see constants/icons.ts) */
+  icon: IconName;
   /** What the button does, for screen readers — it is icon-only. */
   accessibilityLabel: string;
   /** Press handler */

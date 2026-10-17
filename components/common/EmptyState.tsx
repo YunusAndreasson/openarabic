@@ -1,4 +1,4 @@
-import { Ionicons, type IoniconName } from '@/components/ui/Icon';
+import { Icon, type IconName } from '@/components/ui/Icon';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedButton } from '@/components/primitives/ThemedButton';
@@ -9,13 +9,13 @@ import { useColors } from '@/hooks/theme/useColors';
 interface EmptyStateAction {
   label: string;
   onPress: () => void;
-  icon?: IoniconName;
+  icon?: IconName;
   loading?: boolean;
   disabled?: boolean;
 }
 
 interface EmptyStateProps {
-  icon: IoniconName;
+  icon: IconName;
   title: string;
   hint: string;
   iconSize?: number;
@@ -42,7 +42,7 @@ export function EmptyState({
   return (
     <View style={styles.container}>
       <View style={styles.iconContainer}>
-        <Ionicons name={icon} size={iconSize} color={colors.textTertiary} />
+        <Icon name={icon} size={iconSize} color={colors.textTertiary} />
       </View>
 
       <ThemedText type="heading3" style={styles.title}>

@@ -1,4 +1,4 @@
-import { Ionicons, type IoniconName } from '@/components/ui/Icon';
+import { Icon, type IconName } from '@/components/ui/Icon';
 import { memo, useMemo } from 'react';
 import { Platform, Pressable, StyleSheet } from 'react-native';
 
@@ -13,8 +13,8 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useButtonPress } from '@/hooks/ui/useButtonPress';
 
 export interface HeaderIconButtonProps {
-  /** Icon name from Ionicons */
-  icon: IoniconName;
+  /** Icon name (see constants/icons.ts) */
+  icon: IconName;
   /**
    * What the button does, for screen readers.
    *
@@ -126,7 +126,7 @@ export const HeaderIconButton = memo<HeaderIconButtonProps>(
         onLongPress={onLongPress}
         onPress={handlePress}
       >
-        <Ionicons color={finalIconColor} name={icon} size={iconSize} />
+        <Icon color={finalIconColor} name={icon} size={iconSize} />
       </Pressable>
     );
   },

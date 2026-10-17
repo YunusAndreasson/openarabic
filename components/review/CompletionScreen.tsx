@@ -1,4 +1,4 @@
-import { Ionicons } from '@/components/ui';
+import { Icon } from '@/components/ui';
 import { Link } from 'expo-router';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 import Animated, { FadeIn, FadeInUp, FadeOut, ZoomIn } from 'react-native-reanimated';
@@ -152,7 +152,7 @@ export const CompletionScreen = ({
     <View style={[styles.contentContainer, contentStyle]}>
       {/* Success Icon - Primary visual element */}
       <Animated.View entering={ENTERING_ICON} style={styles.iconContainer}>
-        <Ionicons color={colors.completionSuccess} name="checkmark-circle" size={iconSize} />
+        <Icon color={colors.completionSuccess} name="checkmark-circle" size={iconSize} />
       </Animated.View>
 
       {/* Title Group - Closely grouped for Gestalt proximity */}
@@ -190,7 +190,7 @@ export const CompletionScreen = ({
                     { backgroundColor: mixColors(colors.card, metric.color, METRIC_ICON_TINT) },
                   ]}
                 >
-                  <Ionicons
+                  <Icon
                     color={metric.color}
                     name={metric.icon}
                     size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}

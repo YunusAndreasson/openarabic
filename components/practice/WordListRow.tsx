@@ -10,7 +10,7 @@ import { StyleSheet, View } from 'react-native';
 import { Pressable } from 'react-native-gesture-handler';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { Ionicons } from '@/components/ui';
+import { Icon } from '@/components/ui';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
@@ -129,7 +129,7 @@ const WordListRowComponent = ({
       <View style={styles.trailing}>
         {trailing}
         {onPress ? (
-          <Ionicons name="chevron-forward" size={CHEVRON_SIZE} color={colors.textTertiary} />
+          <Icon name="chevron-forward" size={CHEVRON_SIZE} color={colors.textTertiary} />
         ) : null}
       </View>
     </Pressable>

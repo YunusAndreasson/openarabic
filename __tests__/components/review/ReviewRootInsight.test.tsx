@@ -15,7 +15,7 @@ jest.mock('@/hooks/theme/useColors', () =>
 jest.mock('@/components/ui', () => {
   const React = require('react');
   const { View } = require('react-native');
-  return { Ionicons: () => React.createElement(View) };
+  return { Icon: () => React.createElement(View) };
 });
 
 describe('ReviewRootInsight', () => {

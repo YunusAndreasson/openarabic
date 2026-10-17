@@ -233,6 +233,10 @@ jest.mock('expo-file-system', () => ({
 // Mini-player visibility hook is a thin wrapper over useGlobalAudioState which
 // pulls in the full audio + playlist + toast stack. Tests don't exercise the
 // player; stub it to false so layouts that gate on it stay inert.
+// Icons render as `mock-icon-<name>` text everywhere (see __mocks__/app-icon.js);
+// __tests__/components/ui/Icon.test.tsx tests the real component.
+jest.mock('@/components/ui/Icon', () => require('./__mocks__/app-icon.js'));
+
 jest.mock('@/hooks/audio/useShouldShowMiniPlayer', () => ({
   useShouldShowMiniPlayer: () => false,
 }));

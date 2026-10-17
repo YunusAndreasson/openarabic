@@ -3,7 +3,7 @@ import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { AnimatedCount, BaseCard } from '@/components/common';
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { Ionicons } from '@/components/ui';
+import { Icon } from '@/components/ui';
 import { INLINE_VALUE_MIN_WIDTH, LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
@@ -129,7 +129,7 @@ export function MemoryHorizonCard({
             the mirror image of the tile that swallowed a press, and a rule this
             card would otherwise be the one place breaking. */}
         {onPress && (
-          <Ionicons
+          <Icon
             name="chevron-forward"
             size={LAYOUT.BUTTON.ICON_SIZE.DISCLOSURE}
             color={colors.textTertiary}

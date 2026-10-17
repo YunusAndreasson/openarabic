@@ -1,5 +1,5 @@
 import { BrandedBottomSheet } from '@/components/ui/BrandedBottomSheet';
-import { Ionicons, type IoniconName } from '@/components/ui/Icon';
+import { Icon, type IconName } from '@/components/ui/Icon';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,7 +14,7 @@ export interface SettingsPickerOption<T> {
   id: T;
   title: string;
   subtitle?: string;
-  icon: IoniconName;
+  icon: IconName;
 }
 
 export interface SettingsPickerProps<T> {
@@ -68,7 +68,7 @@ function SettingsPickerComponent<T>({
                 <View style={styles.cardContent}>
                   <View style={styles.cardLeft}>
                     <View style={styles.cardIconContainer}>
-                      <Ionicons
+                      <Icon
                         name={option.icon}
                         size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                         color={colors.text}

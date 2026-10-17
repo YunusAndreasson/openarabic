@@ -1,4 +1,4 @@
-import { Ionicons } from '@/components/ui';
+import { Icon } from '@/components/ui';
 import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -102,7 +102,7 @@ export function PasswordStrengthMeter({ password }: PasswordStrengthMeterProps) 
       <View style={styles.requirementsList}>
         {requirements.map(req => (
           <View key={req.label} style={styles.requirementItem}>
-            <Ionicons
+            <Icon
               name={req.met ? 'checkmark-circle' : 'ellipse-outline'}
               size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
               color={req.met ? colors.success : colors.textTertiary}

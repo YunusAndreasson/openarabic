@@ -1,3 +1,5 @@
+import type { AndroidSymbol, SFSymbol } from 'expo-symbols';
+
 import { AppTab } from '@/types/enums';
 
 /**
@@ -14,66 +16,39 @@ const TAB_ORDER = ['explore', 'playlist', 'practice', 'account'] as const;
 type TabName = (typeof TAB_ORDER)[number];
 
 /**
- * SF Symbol configuration for iOS native tabs
- */
-interface SFSymbolConfig {
-  readonly default: string;
-  readonly selected: string;
-}
-
-/**
- * Ionicons name pair used for the Android NativeTabs `src` slot
- * (rendered through NativeTabs.Trigger.VectorIcon)
- */
-interface IoniconsConfig {
-  readonly default: string;
-  readonly selected: string;
-}
-
-/**
- * Tab icon configuration with Ionicons and SF Symbols
+ * Tab icons: each platform's own symbol set, like every icon in the app
+ * (constants/icons.ts).
+ * - `sf` → SF Symbols, default and selected, for iOS NativeTabs.
+ * - `md` → Material Symbols for Android NativeTabs. One name for both states:
+ *   NativeTabs draws `md` from the outlined font only and these four symbols
+ *   have no `_filled` variant, so the selected tab is marked by the Material
+ *   active-indicator pill alone.
  */
 interface TabIconDefinition {
-  readonly filled: string;
-  readonly outline: string;
-  readonly sf: SFSymbolConfig;
-  readonly ion: IoniconsConfig;
+  readonly sf: { readonly default: SFSymbol; readonly selected: SFSymbol };
+  readonly md: AndroidSymbol;
 }
 
-/**
- * Tab icon mapping for consistent icons across the app
- * - `sf`  → SF Symbols, used by iOS NativeTabs (liquid glass)
- * - `ion` → Ionicons, used by Android NativeTabs via VectorIcon
- * - `filled`/`outline` → kept for any non-tab Ionicons usage in the app
- */
 const TAB_ICONS = {
   explore: {
-    filled: 'compass',
-    outline: 'compass-outline',
     sf: { default: 'safari', selected: 'safari.fill' },
-    ion: { default: 'compass-outline', selected: 'compass' },
+    md: 'explore',
   },
   playlist: {
-    filled: 'headset',
-    outline: 'headset-outline',
     sf: { default: 'headphones', selected: 'headphones' },
-    ion: { default: 'headset-outline', selected: 'headset' },
+    md: 'headphones',
   },
   practice: {
-    filled: 'school',
-    outline: 'school-outline',
     sf: { default: 'graduationcap', selected: 'graduationcap.fill' },
-    ion: { default: 'school-outline', selected: 'school' },
+    md: 'school',
   },
   // Rightmost by convention: settings is where a user looks last, and both
   // platforms park it there (iOS Settings/Music "More", Material's trailing
   // destination). It used to be an avatar in the Explore header, which put the
   // one screen a learner needs least in the corner hardest to reach.
   account: {
-    filled: 'settings',
-    outline: 'settings-outline',
     sf: { default: 'gearshape', selected: 'gearshape.fill' },
-    ion: { default: 'settings-outline', selected: 'settings' },
+    md: 'settings',
   },
   // Keyed by the tab's own route segment, not by free string and not by an
   // uppercased variant of it: the key IS the name the screen list looks up, so

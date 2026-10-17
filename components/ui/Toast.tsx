@@ -1,4 +1,4 @@
-import { Ionicons } from '@/components/ui/Icon';
+import { Icon } from '@/components/ui/Icon';
 import { useEffect, useEffectEvent, useRef } from 'react';
 import { AccessibilityInfo, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp, FadeOutDown, FadeOutUp } from 'react-native-reanimated';
@@ -156,7 +156,7 @@ export function Toast({
           },
         ]}
       >
-        <Ionicons name={config.icon} size={ICON_SIZE} color={textColor} style={styles.icon} />
+        <Icon name={config.icon} size={ICON_SIZE} color={textColor} style={styles.icon} />
         <ThemedText
           skipDefaultColor
           ellipsizeMode="tail"

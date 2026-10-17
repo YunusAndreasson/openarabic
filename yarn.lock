@@ -1304,6 +1304,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@expo-google-fonts/material-symbols@npm:^0.4.1, @expo-google-fonts/material-symbols@npm:^0.4.50":
+  version: 0.4.50
+  resolution: "@expo-google-fonts/material-symbols@npm:0.4.50"
+  checksum: 10c0/e5d7aca0fd9b1eb35c04f61c5744e7ed559236e0b9b48327a6d4decb2ff0376eba4f2eebf0cc13820942fe61f3cb5ea0302f6e374c39efcabf7482f58a5d43d0
+  languageName: node
+  linkType: hard
+
 "@expo/agent-cli@npm:^1.0.19":
   version: 1.0.19
   resolution: "@expo/agent-cli@npm:1.0.19"
@@ -3464,25 +3471,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-native-community/datetimepicker@npm:9.2.1":
-  version: 9.2.1
-  resolution: "@react-native-community/datetimepicker@npm:9.2.1"
-  dependencies:
-    invariant: "npm:^2.2.4"
-  peerDependencies:
-    expo: ">=52.0.0"
-    react: "*"
-    react-native: "*"
-    react-native-windows: "*"
-  peerDependenciesMeta:
-    expo:
-      optional: true
-    react-native-windows:
-      optional: true
-  checksum: 10c0/6d6c4703506d6c3e8f933461094fcb23227a88481af2de13179004aa54537fd7d74ae4566860f90a784b5636516bbd463b8af844543fb85db5dc9cdfc4c0381e
-  languageName: node
-  linkType: hard
-
 "@react-native-community/netinfo@npm:12.0.1":
   version: 12.0.1
   resolution: "@react-native-community/netinfo@npm:12.0.1"
@@ -5017,6 +5005,7 @@ __metadata:
     "@dr.pogodin/react-native-fs": "npm:^2.40.3"
     "@eslint/compat": "npm:^2.1.1"
     "@eslint/js": "npm:^10.0.1"
+    "@expo-google-fonts/material-symbols": "npm:^0.4.50"
     "@expo/agent-cli": "npm:^1.0.19"
     "@expo/metro-runtime": "npm:~58.0.14"
     "@expo/ui": "npm:~58.0.20"
@@ -5025,7 +5014,6 @@ __metadata:
     "@jest/globals": "npm:30.4.1"
     "@kesha-antonov/react-native-background-downloader": "npm:^4.6.3"
     "@react-native-async-storage/async-storage": "npm:2.2.0"
-    "@react-native-community/datetimepicker": "npm:9.2.1"
     "@react-native-community/netinfo": "npm:12.0.1"
     "@react-native-community/slider": "npm:5.2.1"
     "@react-native-google-signin/google-signin": "npm:^16.1.5"
@@ -5078,6 +5066,7 @@ __metadata:
     expo-splash-screen: "npm:~58.0.10"
     expo-status-bar: "npm:~58.0.3"
     expo-store-review: "npm:~58.0.2"
+    expo-symbols: "npm:~58.0.4"
     expo-system-ui: "npm:~58.0.6"
     expo-task-manager: "npm:~58.0.12"
     expo-updates: "npm:~58.0.17"
@@ -7942,6 +7931,21 @@ __metadata:
   version: 58.0.1
   resolution: "expo-structured-headers@npm:58.0.1"
   checksum: 10c0/d2961b8d737149c68d138d90ea0b15f399f9d7c5945bfe336ff33e1af9f8f2595529584930dce2d86868322960757a7dffa6c77b14e96a6f8f2fad908fbaa087
+  languageName: node
+  linkType: hard
+
+"expo-symbols@npm:~58.0.4":
+  version: 58.0.4
+  resolution: "expo-symbols@npm:58.0.4"
+  dependencies:
+    "@expo-google-fonts/material-symbols": "npm:^0.4.1"
+    sf-symbols-typescript: "npm:^2.0.0"
+  peerDependencies:
+    expo: "*"
+    expo-font: "*"
+    react: "*"
+    react-native: "*"
+  checksum: 10c0/fd74782eca429c4be835b24133254b1178bb899ff617506705ed0c7fe95e1d6967b542f0ebc40e2f3e030316c91c265785f586476e546e7fdcf8f674795f4030
   languageName: node
   linkType: hard
 
@@ -13261,7 +13265,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sf-symbols-typescript@npm:^2.1.0, sf-symbols-typescript@npm:^2.2.0":
+"sf-symbols-typescript@npm:^2.0.0, sf-symbols-typescript@npm:^2.1.0, sf-symbols-typescript@npm:^2.2.0":
   version: 2.2.0
   resolution: "sf-symbols-typescript@npm:2.2.0"
   checksum: 10c0/3f3bbf33aaad19e619d6f169899b39e9fe9c5fd21f0d6d511100e36887606ad349109ddc6ff82933f2b8cbf437dd7105c2ae6b0059b291dc47f143b30c2074cc

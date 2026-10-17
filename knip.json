@@ -22,6 +22,7 @@
   "ignore": ["admin-dashboard/**", "types/database.types.ts", "jest.setup.js", "jest.polyfills.js"],
   "ignoreDependencies": [
     "@expo/agent-cli",
+    "@expo-google-fonts/material-symbols",
     "babel-preset-expo",
     "babel-jest",
     "@babel/plugin-transform-react-jsx",

@@ -33,7 +33,7 @@ jest.mock('@/components/ui/Icon', () => {
   const React = require('react');
   const { Text } = require('react-native');
   return {
-    Ionicons: ({ name, testID }: { name: string; testID?: string }) => (
+    Icon: ({ name, testID }: { name: string; testID?: string }) => (
       <Text testID={testID || 'icon'}>{name}</Text>
     ),
   };

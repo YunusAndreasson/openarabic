@@ -1,4 +1,4 @@
-import { Ionicons } from '@/components/ui';
+import { Icon } from '@/components/ui';
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -153,7 +153,7 @@ export function AccountBadge({ userEmail, userId, createdAt }: AccountBadgeProps
 
             {/* Edit Icon Overlay */}
             <View style={dynamicStyles.editIconContainer}>
-              <Ionicons name="camera" size={14} color={colors.background} />
+              <Icon name="camera" size={14} color={colors.background} />
             </View>
           </View>
         </Animated.View>

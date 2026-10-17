@@ -1,14 +1,12 @@
-import { memo, type ComponentProps, type ReactNode } from 'react';
+import { memo, type ReactNode } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { BaseCard } from '@/components/common';
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { Ionicons, Toggle } from '@/components/ui';
+import { Icon, type IconName, Toggle } from '@/components/ui';
 import { INLINE_VALUE_MIN_WIDTH, LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { selectionFeedback } from '@/utils/haptics';
-
-type IconName = ComponentProps<typeof Ionicons>['name'];
 
 interface BaseSettingsCardProps {
   icon: IconName;
@@ -81,7 +79,7 @@ export const SettingsCard = memo((props: SettingsCardProps) => {
   // open-in-new symbol line up down the list.
   const navigationIndicator = (
     <View style={styles.chevron}>
-      <Ionicons
+      <Icon
         color={colors.secondaryMetadataText}
         name={props.rightType === 'external' ? 'open-outline' : 'chevron-forward'}
         size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
@@ -141,7 +139,7 @@ export const SettingsCard = memo((props: SettingsCardProps) => {
       <View style={styles.content}>
         <View style={styles.left}>
           <View style={styles.iconContainer}>
-            <Ionicons color={iconColor} name={icon} size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM} />
+            <Icon color={iconColor} name={icon} size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM} />
           </View>
           <View style={styles.textContainer}>
             <ThemedText type="body" colorName={textColor === 'error' ? 'error' : 'text'}>

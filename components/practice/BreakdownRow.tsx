@@ -3,7 +3,7 @@ import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { ListRow, ProgressBar } from '@/components/common';
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { Ionicons } from '@/components/ui';
+import { Icon } from '@/components/ui';
 import { getMeterTrackColor, useChartColors } from '@/constants/chartColors';
 import { INLINE_VALUE_MIN_WIDTH, LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -149,7 +149,7 @@ export function BreakdownRow({
           {/* Only rows that lead somewhere claim to. */}
           <View style={styles.chevron}>
             {onPress && (
-              <Ionicons color={colors.textTertiary} name="chevron-forward" size={CHEVRON_SIZE} />
+              <Icon color={colors.textTertiary} name="chevron-forward" size={CHEVRON_SIZE} />
             )}
           </View>
         </View>

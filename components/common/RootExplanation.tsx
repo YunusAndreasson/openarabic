@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 // own barrel would pull in every sibling and close an import cycle.
 import { ListRow } from '@/components/common/ListRow';
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { Ionicons } from '@/components/ui/Icon';
+import { Icon } from '@/components/ui/Icon';
 import { LAYOUT, getCompactArabicFontSize } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useDebouncedArabicFontSize } from '@/hooks/theme/useDebouncedArabicFontSize';
@@ -291,7 +291,7 @@ const FamilyRow = ({ member, arabicFontSize, onOpen, canOpen }: FamilyRowProps) 
   return (
     <ListRow density="compact" divider hapticType="selection" onPress={() => onOpen(rootId)}>
       {content}
-      <Ionicons
+      <Icon
         accessible={false}
         importantForAccessibility="no"
         color={colors.textTertiary}

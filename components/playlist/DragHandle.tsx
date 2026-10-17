@@ -1,4 +1,4 @@
-import { Ionicons } from '@/components/ui';
+import { Icon } from '@/components/ui';
 import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
 import { TIMING_CONFIG } from '@/constants/animation';
@@ -35,7 +35,7 @@ export const DragHandle = ({
       android_ripple={createAndroidRipple(colors)}
       testID={testID}
     >
-      <Ionicons
+      <Icon
         name="reorder-three"
         size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
         color={colors.secondaryText}

@@ -1,5 +1,5 @@
 // External Libraries
-import { Ionicons } from '@/components/ui';
+import { Icon } from '@/components/ui';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Fragment, memo, useCallback, useMemo } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
@@ -73,7 +73,7 @@ const FAQItemComponent = memo(
             >
               {item.question}
             </ThemedText>
-            <Ionicons
+            <Icon
               accessible={false}
               importantForAccessibility="no"
               name={isExpanded ? 'chevron-up' : 'chevron-down'}
@@ -189,7 +189,7 @@ const HelpScreen = () => {
             { backgroundColor: colors.card, borderColor: colors.cardBorder },
           ]}
         >
-          <Ionicons
+          <Icon
             name="search"
             size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
             color={colors.textTertiary}
@@ -215,7 +215,7 @@ const HelpScreen = () => {
               hitSlop={LAYOUT.HIT_SLOP.SMALL}
             >
               {({ pressed }) => (
-                <Ionicons
+                <Icon
                   name="close-circle"
                   size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                   color={colors.textTertiary}

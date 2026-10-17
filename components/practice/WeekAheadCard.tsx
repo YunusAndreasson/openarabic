@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { AnimatedCount, BaseCard } from '@/components/common';
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { Ionicons } from '@/components/ui';
+import { Icon } from '@/components/ui';
 import { FONTS } from '@/constants/fonts';
 import { LAYOUT, LETTER_SPACING } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -117,7 +117,7 @@ export function WeekAheadCard({
         {/* Same guard as every other disclosure: `onPress` is optional, and a
             chevron on a card that does not navigate is a promise it cannot keep. */}
         {onPress && (
-          <Ionicons
+          <Icon
             name="chevron-forward"
             size={LAYOUT.BUTTON.ICON_SIZE.DISCLOSURE}
             color={colors.textTertiary}

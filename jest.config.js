@@ -73,6 +73,7 @@ module.exports = {
     '^@expo/ui/swift-ui$': '<rootDir>/__mocks__/expo-ui-swift-ui.js',
     '^@expo/ui/swift-ui/modifiers$': '<rootDir>/__mocks__/expo-ui-swift-ui-modifiers.js',
     '^@expo/ui/jetpack-compose$': '<rootDir>/__mocks__/expo-ui-jetpack-compose.js',
+    '^expo-symbols$': '<rootDir>/__mocks__/expo-symbols.js',
     // Same failure for expo-blur since SDK 58: it imports from 'expo'.
     '^expo-blur$': '<rootDir>/__mocks__/expo-blur.js',
 

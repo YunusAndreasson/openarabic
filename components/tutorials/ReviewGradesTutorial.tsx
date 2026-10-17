@@ -9,7 +9,7 @@
  * the name followed the content here rather than the other way round.
  */
 
-import type { IoniconName } from '@/components/ui';
+import type { IconName } from '@/components/ui';
 import { useCallback, useState, type ComponentType } from 'react';
 
 import { STRINGS } from '@/constants/strings';
@@ -27,7 +27,7 @@ interface ReviewGradesTutorialProps {
 }
 
 interface ReviewTutorialStepConfig {
-  icon: IoniconName;
+  icon: IconName;
   title: string;
   body: string;
   /** Optional extra visual rendered under the body */

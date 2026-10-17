@@ -18,7 +18,7 @@ jest.mock('@shopify/flash-list', () => {
 
 // Mock vector icons to avoid loading native fonts
 jest.mock('@/components/ui/Icon', () => ({
-  Ionicons: () => null,
+  Icon: () => null,
 }));
 
 // Mock BookmarksScreen with basic controls that respect bookmark list state

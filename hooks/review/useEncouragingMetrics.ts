@@ -1,5 +1,4 @@
-import type { Ionicons } from '@/components/ui';
-import type { ComponentProps } from 'react';
+import type { IconName } from '@/components/ui';
 import { useMemo, useState } from 'react';
 
 import { STRINGS } from '@/constants/strings';
@@ -8,7 +7,7 @@ import type { ThemeColors } from '@/types/ui/theme.types';
 
 export interface EncouragingMetric {
   text: string;
-  icon: ComponentProps<typeof Ionicons>['name'];
+  icon: IconName;
   color: string;
   type: 'due' | 'duration' | 'daily_streak' | 'mastery';
 }

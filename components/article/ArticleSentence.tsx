@@ -1,4 +1,4 @@
-import { Ionicons } from '@/components/ui';
+import { Icon } from '@/components/ui';
 import { memo, useMemo } from 'react';
 import type { LayoutRectangle, StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
@@ -153,7 +153,7 @@ const ArticleSentenceInternal = function ArticleSentence({
                 accessibilityRole="button"
                 accessibilityLabel={STRINGS.ONBOARDING_SKIP}
               >
-                <Ionicons name="close" size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={colors.onTint} />
+                <Icon name="close" size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={colors.onTint} />
               </Pressable>
             )}
           </BaseCard>

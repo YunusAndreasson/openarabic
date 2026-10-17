@@ -76,14 +76,17 @@ eas config
 
 ## OTA Pre-flight Checklist
 
-Native dependency updates require a new binary. Runtime `1448.5.6` separates
-the Skia 3 (`react-native-skia`, Graphite) binaries from the Skia 2 builds of
-runtime `1448.5.3` (Expo SDK 58 / React Native 0.88), which in turn separates
-SDK 58 from every SDK 57 build (runtime `1448.4.5` and older). Publish a
-production OTA for 1448.5.6 only after the corresponding native builds have
-shipped; until then `yarn ota` reaches no one on it. JS that imports
-`react-native-skia` must never be aimed at 1448.5.3, whose binaries link
-`@shopify/react-native-skia`.
+Native dependency updates require a new binary. Runtime `1448.5.7` adds the
+native symbols (`expo-symbols`, the Android Material Symbols fonts and the
+native `@expo/ui` switch) and drops `@react-native-community/datetimepicker`;
+JS that renders `Icon` must never be aimed at `1448.5.6`, which lacks them.
+Runtime `1448.5.6` separates the Skia 3 (`react-native-skia`, Graphite)
+binaries from the Skia 2 builds of runtime `1448.5.3` (Expo SDK 58 / React
+Native 0.88), which in turn separates SDK 58 from every SDK 57 build (runtime
+`1448.4.5` and older). Publish a production OTA for a runtime only after its
+native builds have shipped; until then `yarn ota` reaches no one on it. JS that
+imports `react-native-skia` must never be aimed at 1448.5.3, whose binaries
+link `@shopify/react-native-skia`.
 
 Before publishing an OTA, verify:
 

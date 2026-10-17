@@ -1,4 +1,4 @@
-import { Ionicons } from '@/components/ui/Icon';
+import { Icon } from '@/components/ui/Icon';
 import type { JSX } from 'react';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -150,7 +150,7 @@ export function ThemedButton({
       {loading ? (
         <ActivityIndicator color={textColor} size="small" />
       ) : icon ? (
-        <Ionicons color={textColor} name={icon} size={iconSize} />
+        <Icon color={textColor} name={icon} size={iconSize} />
       ) : null}
     </View>
   ) : null;

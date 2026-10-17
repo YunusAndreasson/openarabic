@@ -1,4 +1,4 @@
-import { Ionicons, type IoniconName } from '@/components/ui/Icon';
+import { Icon, type IconName } from '@/components/ui/Icon';
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import type { ComponentType } from 'react';
 import type { AccessibilityState, Insets, StyleProp, ViewStyle } from 'react-native';
@@ -22,7 +22,7 @@ const AnimatedView = Animated.createAnimatedComponent(View);
 
 export interface GlassIconButtonProps {
   /** Icon name from Ionicons */
-  icon: IoniconName;
+  icon: IconName;
   /**
    * What the button does. Required, not optional: this control is icon-only, so
    * there is no text for a screen reader to fall back on.
@@ -134,13 +134,13 @@ export const GlassIconButton = ({
           isInteractive
           {...(clear && { glassEffectStyle: 'clear' as const })}
         >
-          <Ionicons color={resolvedIconColor} name={icon} size={iconSize} />
+          <Icon color={resolvedIconColor} name={icon} size={iconSize} />
         </GlassView>
       ) : (
         <AnimatedView
           style={[ICON_BUTTON_SIZES.medium.container, styles.button, surfaceStyle, animatedStyle]}
         >
-          <Ionicons color={resolvedIconColor} name={icon} size={iconSize} />
+          <Icon color={resolvedIconColor} name={icon} size={iconSize} />
         </AnimatedView>
       )}
     </PressableComponent>

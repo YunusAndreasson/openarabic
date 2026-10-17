@@ -14,7 +14,7 @@
  *   card instead of clipping it
  */
 
-import { Ionicons, type IoniconName } from '@/components/ui';
+import { Icon, type IconName } from '@/components/ui';
 import { type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -30,7 +30,7 @@ export type TutorialStepTone = 'tint' | 'error' | 'success';
 
 interface TutorialStepLayoutProps {
   /** Hero icon shown above the title */
-  icon?: IoniconName;
+  icon?: IconName;
   /** Semantic colour for the icon and its halo (default: tint) */
   tone?: TutorialStepTone;
   title?: string;
@@ -66,7 +66,7 @@ export function TutorialStepLayout({
               { backgroundColor: withOpacity(toneColor, LAYOUT.OPACITY.FAINT) },
             ]}
           >
-            <Ionicons name={icon} size={TUTORIAL_VISUALS.ICON_SIZE} color={toneColor} />
+            <Icon name={icon} size={TUTORIAL_VISUALS.ICON_SIZE} color={toneColor} />
           </View>
         )}
 
