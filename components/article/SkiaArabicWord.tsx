@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { type SharedValue, useAnimatedStyle } from 'react-native-reanimated';
 
 import { Pressable } from 'react-native-gesture-handler';
-import { Canvas, Paragraph as SkiaParagraph, TextDirection } from '@shopify/react-native-skia';
+import { Canvas, Paragraph as SkiaParagraph, TextDirection } from 'react-native-skia';
 
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';

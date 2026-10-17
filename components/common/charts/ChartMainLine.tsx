@@ -1,5 +1,5 @@
 import { CHART_VISUAL } from '@/constants/chartConstants';
-import { Path, Skia } from '@shopify/react-native-skia';
+import { Path, Skia } from 'react-native-skia';
 import { memo, useEffect, useMemo } from 'react';
 import { useSharedValue, withTiming } from 'react-native-reanimated';
 

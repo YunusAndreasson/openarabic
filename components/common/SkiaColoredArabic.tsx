@@ -1,7 +1,7 @@
 import { memo, useMemo } from 'react';
 import { useWindowDimensions, View } from 'react-native';
 
-import { Canvas, Paragraph as SkiaParagraph, TextDirection } from '@shopify/react-native-skia';
+import { Canvas, Paragraph as SkiaParagraph, TextDirection } from 'react-native-skia';
 
 import { useColors } from '@/hooks/theme/useColors';
 import { useSkiaFonts } from '@/hooks/theme/useSkiaFonts';

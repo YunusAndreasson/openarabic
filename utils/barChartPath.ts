@@ -1,4 +1,4 @@
-import { Skia, type SkPath, type SkPathBuilder } from '@shopify/react-native-skia';
+import { Skia, type SkPath, type SkPathBuilder } from 'react-native-skia';
 
 /**
  * Rounded-top bar geometry, shared by the two bar charts in the app.

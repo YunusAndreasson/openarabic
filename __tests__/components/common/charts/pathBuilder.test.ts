@@ -11,7 +11,7 @@
 // PathBuilder API (Skia.PathBuilder.Make().moveTo(...).cubicTo(...).build())
 // so the mock returns a chainable builder whose build() yields an object with
 // toSVGString() reflecting the calls.
-jest.mock('@shopify/react-native-skia', () => ({
+jest.mock('react-native-skia', () => ({
   Skia: {
     PathBuilder: {
       Make: () => {

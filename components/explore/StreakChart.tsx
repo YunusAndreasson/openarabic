@@ -1,4 +1,4 @@
-import { Canvas, Group, Path, type SkPath } from '@shopify/react-native-skia';
+import { Canvas, Group, Path, type SkPath } from 'react-native-skia';
 import { memo, useEffect, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useDerivedValue, useSharedValue, withDelay, withSpring } from 'react-native-reanimated';

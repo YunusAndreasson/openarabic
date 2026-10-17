@@ -1,5 +1,5 @@
 /**
- * Mock for @shopify/react-native-skia
+ * Mock for react-native-skia
  * Provides test doubles for Skia Canvas, Paragraph, and font APIs
  */
 
@@ -138,6 +138,17 @@ export const Skia = {
   },
   RSXform: (scos, ssin, tx, ty) => createMockRSXform(scos, ssin, tx, ty),
   XYWHRect: (x, y, width, height) => ({ x, y, width, height }),
+  // Skia 3's GPU probe. A plain object, so a test can flip `isAvailable` to
+  // exercise the Text fallback (restore it afterwards: it is module state).
+  gpu: {
+    isAvailable: true,
+    backend: 'Metal',
+    vendor: 'apple',
+    architecture: '',
+    device: 'Apple GPU',
+    description: '',
+    error: null,
+  },
 };
 
 // Mock Canvas component

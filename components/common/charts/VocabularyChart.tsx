@@ -9,7 +9,7 @@ import { ChartCanvas } from './ChartCanvas';
 import { ChartDataPoint } from './ChartDataPoint';
 import { ChartGrid } from './ChartGrid';
 import { ChartMainLine } from './ChartMainLine';
-import { Group } from '@shopify/react-native-skia';
+import { Group } from 'react-native-skia';
 import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 

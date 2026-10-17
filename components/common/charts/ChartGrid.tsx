@@ -1,4 +1,4 @@
-import { Group, Line } from '@shopify/react-native-skia';
+import { Group, Line } from 'react-native-skia';
 import { StyleSheet } from 'react-native';
 
 import { ChartBaseline } from './ChartBaseline';

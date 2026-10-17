@@ -4,7 +4,7 @@ import {
   type SkTypefaceFontProvider,
   TextAlign,
   TextDirection,
-} from '@shopify/react-native-skia';
+} from 'react-native-skia';
 
 import type { SkiaFontFamily } from '@/constants/fonts';
 import type { ColoredSegment } from '@/types/vocabulary.types';

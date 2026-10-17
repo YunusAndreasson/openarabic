@@ -76,11 +76,14 @@ eas config
 
 ## OTA Pre-flight Checklist
 
-Native dependency updates require a new binary. Runtime `1448.5.3` separates
-the Expo SDK 58 / React Native 0.88 binaries from every SDK 57 build (runtime
-`1448.4.5` and older). Publish a production OTA for it only after the
-corresponding native builds have shipped; until then `yarn ota` reaches no one
-on 1448.5.3 and must not be aimed at the older runtime.
+Native dependency updates require a new binary. Runtime `1448.5.6` separates
+the Skia 3 (`react-native-skia`, Graphite) binaries from the Skia 2 builds of
+runtime `1448.5.3` (Expo SDK 58 / React Native 0.88), which in turn separates
+SDK 58 from every SDK 57 build (runtime `1448.4.5` and older). Publish a
+production OTA for 1448.5.6 only after the corresponding native builds have
+shipped; until then `yarn ota` reaches no one on it. JS that imports
+`react-native-skia` must never be aimed at 1448.5.3, whose binaries link
+`@shopify/react-native-skia`.
 
 Before publishing an OTA, verify:
 

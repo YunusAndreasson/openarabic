@@ -1,4 +1,4 @@
-import { Canvas, Group } from '@shopify/react-native-skia';
+import { Canvas, Group } from 'react-native-skia';
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';

@@ -1,5 +1,5 @@
 import { BaseCard } from '@/components/common';
-import { Canvas, Circle, Group, Path, Skia } from '@shopify/react-native-skia';
+import { Canvas, Circle, Group, Path, Skia } from 'react-native-skia';
 import { memo, useEffect, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSharedValue, withDelay, withTiming } from 'react-native-reanimated';

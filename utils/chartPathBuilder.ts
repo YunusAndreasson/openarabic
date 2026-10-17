@@ -1,4 +1,4 @@
-import { Skia } from '@shopify/react-native-skia';
+import { Skia } from 'react-native-skia';
 
 /**
  * Options for building a smooth chart path with cubic bezier curves

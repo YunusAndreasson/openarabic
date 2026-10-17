@@ -7,7 +7,7 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Canvas, LinearGradient, Rect, vec } from '@shopify/react-native-skia';
+import { Canvas, LinearGradient, Rect, vec } from 'react-native-skia';
 
 import { LAYOUT, MIN_TOUCH_TARGET, SCREEN_WIDTH } from '@/constants/layout';
 import type { ThemeColors } from '@/types/ui/theme.types';
