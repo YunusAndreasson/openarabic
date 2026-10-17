@@ -21,8 +21,8 @@ export { EnhancedImage } from './EnhancedImage';
 // by direct path (see the cycle note above).
 export { GlassIconButton } from './GlassIconButton';
 export { HeaderTextButton } from './HeaderTextButton';
-export { Ionicons } from './Icon';
-export type { IoniconName } from './Icon';
+export { Icon } from './Icon';
+export type { IconName } from './Icon';
 export { IconButton } from './IconButton';
 export { PulsatingLoader } from './PulsatingLoader';
 export { SegmentedControl } from './SegmentedControl';

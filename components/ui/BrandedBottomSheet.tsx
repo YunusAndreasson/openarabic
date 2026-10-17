@@ -1,11 +1,16 @@
-import BottomSheet, { useBottomSheetTimingConfigs } from '@gorhom/bottom-sheet';
+import BottomSheet, { useBottomSheetSpringConfigs } from '@gorhom/bottom-sheet';
 import { useImperativeHandle, type ReactNode, type Ref } from 'react';
+import { useWindowDimensions } from 'react-native';
 
 import { BrandedBottomSheetHandle } from '@/components/ui/BrandedBottomSheetHandle';
-import { TIMING_CONFIG } from '@/constants/animation';
+import { SPRING_CONFIG } from '@/constants/animation';
 import { useBottomSheetDynamicStyles } from '@/hooks/ui/useBottomSheetDynamicStyles';
 import { useBottomSheetVisibility } from '@/hooks/ui/useBottomSheetVisibility';
-import { BottomSheetBackdrop, COMMON_BOTTOM_SHEET_PROPS } from '@/utils/bottomSheetUtils';
+import {
+  BottomSheetBackdrop,
+  COMMON_BOTTOM_SHEET_PROPS,
+  SHEET_MAX_HEIGHT_RATIO,
+} from '@/utils/bottomSheetUtils';
 
 export interface BrandedBottomSheetMethods {
   close: () => void;
@@ -22,7 +27,8 @@ interface BrandedBottomSheetProps {
 export function BrandedBottomSheet({ ref, isVisible, onClose, children }: BrandedBottomSheetProps) {
   const bottomSheetRef = useBottomSheetVisibility(isVisible);
   const dynamicStyles = useBottomSheetDynamicStyles();
-  const animationConfigs = useBottomSheetTimingConfigs(TIMING_CONFIG.BOTTOM_SHEET);
+  const animationConfigs = useBottomSheetSpringConfigs(SPRING_CONFIG.BOTTOM_SHEET);
+  const { height: windowHeight } = useWindowDimensions();
 
   // Request the animation without clearing the caller's content. onClose is
   // the completion notification for buttons, back, backdrop and swipe alike.
@@ -35,6 +41,7 @@ export function BrandedBottomSheet({ ref, isVisible, onClose, children }: Brande
       ref={bottomSheetRef}
       index={-1}
       {...COMMON_BOTTOM_SHEET_PROPS}
+      maxDynamicContentSize={windowHeight * SHEET_MAX_HEIGHT_RATIO}
       // gorhom defaults the content wrapper to accessible="true" (label "Bottom
       // Sheet", role "adjustable"). On iOS that collapses the whole sheet into
       // ONE VoiceOver element, so nothing inside it — "Add to practice", every

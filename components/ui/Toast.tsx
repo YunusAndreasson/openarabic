@@ -1,6 +1,6 @@
-import { Ionicons } from '@/components/ui/Icon';
+import { Icon } from '@/components/ui/Icon';
 import { useEffect, useEffectEvent, useRef } from 'react';
-import { AccessibilityInfo, StyleSheet, View } from 'react-native';
+import { AccessibilityInfo, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp, FadeOutDown, FadeOutUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -8,7 +8,7 @@ import { ThemedText } from '@/components/primitives/ThemedText';
 import { DEFAULT_TOAST_DURATION, TIMING_CONFIG } from '@/constants/animation';
 import { FONTS } from '@/constants/fonts';
 import { getElevation } from '@/constants/elevation';
-import { LAYOUT, LINE_HEIGHT_MULTIPLIERS, SCREEN_WIDTH } from '@/constants/layout';
+import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { ToastType } from '@/types/enums';
 
@@ -73,6 +73,7 @@ export function Toast({
 }: ToastProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const { width: windowWidth } = useWindowDimensions();
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closeToast = useEffectEvent(onClose);
@@ -115,7 +116,7 @@ export function Toast({
     : colors.elevation2; // Use elevated surface so info toast doesn't blend with screen background
   const textColor = config.colorKey ? colors.white : colors.text;
 
-  const maxToastWidth = SCREEN_WIDTH * MAX_TOAST_WIDTH_RATIO;
+  const maxToastWidth = windowWidth * MAX_TOAST_WIDTH_RATIO;
 
   // Position: sit close to the nav bar / bottom edge
   const containerStyle = {
@@ -155,7 +156,7 @@ export function Toast({
           },
         ]}
       >
-        <Ionicons name={config.icon} size={ICON_SIZE} color={textColor} style={styles.icon} />
+        <Icon name={config.icon} size={ICON_SIZE} color={textColor} style={styles.icon} />
         <ThemedText
           skipDefaultColor
           ellipsizeMode="tail"

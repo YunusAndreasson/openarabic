@@ -1,4 +1,4 @@
-import { Ionicons } from '@/components/ui';
+import { Icon } from '@/components/ui';
 import { useRouter } from 'expo-router';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -158,14 +158,10 @@ const GetStartedChecklistComponent = ({
             >
               {item.done ? (
                 <Animated.View entering={ZoomIn.springify()}>
-                  <Ionicons name="checkmark-circle" size={CHECK_ICON_SIZE} color={colors.success} />
+                  <Icon name="checkmark-circle" size={CHECK_ICON_SIZE} color={colors.success} />
                 </Animated.View>
               ) : (
-                <Ionicons
-                  name="ellipse-outline"
-                  size={CHECK_ICON_SIZE}
-                  color={colors.textTertiary}
-                />
+                <Icon name="ellipse-outline" size={CHECK_ICON_SIZE} color={colors.textTertiary} />
               )}
               <ThemedText
                 colorName={item.done ? 'secondaryText' : 'text'}
@@ -175,7 +171,7 @@ const GetStartedChecklistComponent = ({
                 {item.label}
               </ThemedText>
               {!item.done && (
-                <Ionicons
+                <Icon
                   name="chevron-forward"
                   size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
                   color={colors.textTertiary}

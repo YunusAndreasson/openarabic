@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
+import { useWindowDimensions } from 'react-native';
 import type { SharedValue } from 'react-native-reanimated';
 import { cancelAnimation, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 
 import { CARD_EXIT_DRAW_BACK_RATIO, TIMING_CONFIG } from '@/constants/animation';
-import { SCREEN_WIDTH } from '@/constants/layout';
 
 export interface SwipeGestureResult {
   translateX: SharedValue<number>;
@@ -56,7 +56,10 @@ export const useSwipeGesture = (): SwipeGestureResult => {
   const translateX = useSharedValue(0);
   const isAnimatingRef = useSharedValue(false);
 
-  const swipeThreshold = SCREEN_WIDTH * CARD_EXIT_DRAW_BACK_RATIO;
+  // The live window, not the launch width: on an Android 16 tablet or unfolded
+  // foldable a launch-time width would stop the throw short of the edge.
+  const { width: windowWidth } = useWindowDimensions();
+  const swipeThreshold = windowWidth * CARD_EXIT_DRAW_BACK_RATIO;
 
   const commitTo = useCallback(
     (direction: 'left' | 'right', holdMs = 0) => {
@@ -77,7 +80,7 @@ export const useSwipeGesture = (): SwipeGestureResult => {
       cancelAnimation(translateX);
       isAnimatingRef.set(true);
 
-      const throwOut = withTiming(sign * SCREEN_WIDTH, TIMING_CONFIG.CARD_EXIT, finished => {
+      const throwOut = withTiming(sign * windowWidth, TIMING_CONFIG.CARD_EXIT, finished => {
         'worklet';
         // The `finished` guard is load-bearing, not defensive: assigning to a
         // shared value that still holds a RUNNING animation cancels it, which
@@ -112,7 +115,7 @@ export const useSwipeGesture = (): SwipeGestureResult => {
         ),
       );
     },
-    [isAnimatingRef, translateX, swipeThreshold],
+    [isAnimatingRef, translateX, swipeThreshold, windowWidth],
   );
 
   return {

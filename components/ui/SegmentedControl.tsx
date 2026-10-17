@@ -1,4 +1,4 @@
-import { Ionicons, type IoniconName } from '@/components/ui/Icon';
+import { Icon, type IconName } from '@/components/ui/Icon';
 import { memo } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -12,7 +12,7 @@ export interface SegmentedControlOption<T extends string> {
   value: T;
   label: string;
   /** Trailing glyph shown only on the active option (e.g. a sort direction). */
-  activeIcon?: IoniconName;
+  activeIcon?: IconName;
   /** Full spoken label for the selected option, including any icon meaning. */
   activeAccessibilityLabel?: string;
 }
@@ -80,7 +80,7 @@ function SegmentedControlComponent<T extends string>({
               {option.label}
             </ThemedText>
             {isActive && option.activeIcon ? (
-              <Ionicons
+              <Icon
                 accessible={false}
                 importantForAccessibility="no"
                 color={colors.secondaryText}

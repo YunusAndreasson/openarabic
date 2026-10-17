@@ -11,14 +11,16 @@ import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import { act, renderHook } from '@testing-library/react-native';
 
 import { CARD_EXIT_DRAW_BACK_RATIO, TIMING_CONFIG } from '@/constants/animation';
-import { SCREEN_WIDTH } from '@/constants/layout';
 import { useSwipeGesture } from '@/hooks/gestures/useSwipeGesture';
 
 const reanimated = require('react-native-reanimated') as {
   withTiming: (value: number, config?: unknown, callback?: (finished?: boolean) => void) => number;
 };
 
-const DRAW_BACK = SCREEN_WIDTH * CARD_EXIT_DRAW_BACK_RATIO;
+// The width jest.setup's useWindowDimensions stub reports; the hook reads the
+// live window, not a launch-time constant.
+const WINDOW_WIDTH = 375;
+const DRAW_BACK = WINDOW_WIDTH * CARD_EXIT_DRAW_BACK_RATIO;
 
 /**
  * Every test runs against a captured `withTiming` so the exit's completion
@@ -52,7 +54,7 @@ describe('review card exit', () => {
 
       act(() => result.current.commitTo('right'));
 
-      expect(result.current.translateX.get()).toBe(SCREEN_WIDTH);
+      expect(result.current.translateX.get()).toBe(WINDOW_WIDTH);
       expect(result.current.isAnimatingRef.get()).toBe(true);
     });
 
@@ -61,7 +63,7 @@ describe('review card exit', () => {
 
       act(() => result.current.commitTo('left'));
 
-      expect(result.current.translateX.get()).toBe(-SCREEN_WIDTH);
+      expect(result.current.translateX.get()).toBe(-WINDOW_WIDTH);
     });
 
     test('the draw-back distance is where the wash reaches full strength', () => {
@@ -82,7 +84,7 @@ describe('review card exit', () => {
       // because the throw starts on the very same frame.
       expect(setSpy).toHaveBeenCalledTimes(2);
       expect(setSpy).toHaveBeenNthCalledWith(1, DRAW_BACK);
-      expect(setSpy).toHaveBeenNthCalledWith(2, SCREEN_WIDTH);
+      expect(setSpy).toHaveBeenNthCalledWith(2, WINDOW_WIDTH);
     });
 
     test('a beat glides the card out to the draw-back point before the throw', () => {
@@ -100,7 +102,7 @@ describe('review card exit', () => {
         duration: 140,
         easing: TIMING_CONFIG.MEDIUM.easing,
       });
-      expect(timings.some(t => t.value === SCREEN_WIDTH)).toBe(true);
+      expect(timings.some(t => t.value === WINDOW_WIDTH)).toBe(true);
     });
 
     test('a card already flying off cannot be re-thrown', () => {
@@ -111,7 +113,7 @@ describe('review card exit', () => {
 
       // The second call is dropped entirely rather than reversing the card
       // mid-flight.
-      expect(result.current.translateX.get()).toBe(SCREEN_WIDTH);
+      expect(result.current.translateX.get()).toBe(WINDOW_WIDTH);
       expect(result.current.isAnimatingRef.get()).toBe(true);
     });
 
@@ -119,7 +121,7 @@ describe('review card exit', () => {
       const { result } = renderHook(() => useSwipeGesture());
 
       act(() => result.current.commitTo('right'));
-      const throwOut = timings.find(t => t.value === SCREEN_WIDTH);
+      const throwOut = timings.find(t => t.value === WINDOW_WIDTH);
       act(() => throwOut?.callback?.(true));
 
       // Recentring under the advance fade is what stops a frame of the outgoing
@@ -132,14 +134,14 @@ describe('review card exit', () => {
       const { result } = renderHook(() => useSwipeGesture());
 
       act(() => result.current.commitTo('right'));
-      const throwOut = timings.find(t => t.value === SCREEN_WIDTH);
+      const throwOut = timings.find(t => t.value === WINDOW_WIDTH);
       act(() => throwOut?.callback?.(false));
 
       // The `finished` guard is load-bearing: assigning over a still-running
       // animation cancels it, which re-enters this same callback. Recentring
       // here would recurse until the stack blew, and the next card's own
       // recentre cancels this exit every single time.
-      expect(result.current.translateX.get()).toBe(SCREEN_WIDTH);
+      expect(result.current.translateX.get()).toBe(WINDOW_WIDTH);
       expect(result.current.isAnimatingRef.get()).toBe(false);
     });
 
@@ -147,10 +149,10 @@ describe('review card exit', () => {
       const { result } = renderHook(() => useSwipeGesture());
 
       act(() => result.current.commitTo('right'));
-      act(() => timings.find(t => t.value === SCREEN_WIDTH)?.callback?.(true));
+      act(() => timings.find(t => t.value === WINDOW_WIDTH)?.callback?.(true));
       act(() => result.current.commitTo('left'));
 
-      expect(result.current.translateX.get()).toBe(-SCREEN_WIDTH);
+      expect(result.current.translateX.get()).toBe(-WINDOW_WIDTH);
       expect(result.current.isAnimatingRef.get()).toBe(true);
     });
   });

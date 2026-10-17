@@ -75,31 +75,30 @@ export const useAppPreloader = (): AppPreloaderResult => {
     }
 
     try {
-      // Use ensureQueryData to prioritize cache for immutable articles
-      const allArticles = await queryClient.query({
-        ...articleQueries.all(),
-        ...OFFLINE_FIRST,
-        staleTime: 'static',
-      });
+      // The three inputs are read together. The preloader has already started
+      // all of them, so these join those fetches (or hit the cache) instead of
+      // queueing one round trip behind another.
+      const [allArticles, allStudyWords, dueWords] = await Promise.all([
+        queryClient.query({
+          ...articleQueries.all(),
+          ...OFFLINE_FIRST,
+          staleTime: 'static',
+        }),
+        queryClient.query({
+          ...fsrsQueries.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
+          ...OFFLINE_FIRST,
+          staleTime: 'static',
+        }),
+        queryClient.query({
+          ...fsrsQueries.due(user.id),
+          ...OFFLINE_FIRST,
+          staleTime: 'static',
+        }),
+      ]);
 
       if (!allArticles || allArticles.length === 0) return false;
 
-      // Get user's study words to determine selection strategy
-      // Use ensureQueryData to reuse cached data from useAppBadge/preloader
-      const allStudyWords = await queryClient.query({
-        ...fsrsQueries.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
-        ...OFFLINE_FIRST,
-        staleTime: 'static',
-      });
-
       const hasAnyStudyWords = allStudyWords.length > 0;
-
-      // Get due words for intelligent selection (already cached from preloader)
-      const dueWords = await queryClient.query({
-        ...fsrsQueries.due(user.id),
-        ...OFFLINE_FIRST,
-        staleTime: 'static',
-      });
 
       const dueWordRootIds = new Set(dueWords.map(word => word.root_id));
 
@@ -192,6 +191,35 @@ export const useAppPreloader = (): AppPreloaderResult => {
             })
             .catch(() => undefined)
         : Promise.resolve();
+
+      // The user's word queries start now, alongside the critical ones, rather
+      // than after them: the splash waits for both, and running them in series
+      // cost two to three extra round trips on every cold start. The bare due
+      // entry (no cooldown, no limit) is what useSentenceSelectedRoots,
+      // useArticlesByDueWords and the due-backlog gate read; fsrsQueries.all
+      // feeds the word lists; allWithCooldown feeds the featured selection.
+      const userWordsReady = user?.id
+        ? Promise.all([
+            queryClient.query({
+              ...fsrsQueries.due(user.id),
+              ...OFFLINE_FIRST,
+              staleTime: 'static',
+            }),
+            queryClient.query({
+              ...fsrsQueries.all(user.id),
+              ...OFFLINE_FIRST,
+              staleTime: 'static',
+            }),
+            queryClient.query({
+              ...fsrsQueries.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
+              ...OFFLINE_FIRST,
+              staleTime: 'static',
+            }),
+          ])
+        : null;
+      // Awaited below; a handler now keeps an early failure from surfacing as an
+      // unhandled rejection before that await is reached.
+      userWordsReady?.catch(() => undefined);
 
       // Wait for BOTH articles AND reading progress to complete
       const [_categories, _articles] = await Promise.all([
@@ -292,21 +320,10 @@ export const useAppPreloader = (): AppPreloaderResult => {
         });
       }
 
-      // Preload user's FSRS data if available. The bare due entry (no cooldown,
-      // no limit) is what useSentenceSelectedRoots/useArticlesByDueWords and the
-      // due-backlog gate read; fsrsQueries.all feeds the word lists.
-      if (user?.id) {
+      // The user's FSRS data, started above alongside the critical queries.
+      if (userWordsReady) {
         try {
-          await queryClient.query({
-            ...fsrsQueries.due(user.id),
-            ...OFFLINE_FIRST,
-            staleTime: 'static',
-          });
-          await queryClient.query({
-            ...fsrsQueries.all(user.id),
-            ...OFFLINE_FIRST,
-            staleTime: 'static',
-          });
+          await userWordsReady;
 
           // Preload featured articles to prevent glitching when library loads
           try {

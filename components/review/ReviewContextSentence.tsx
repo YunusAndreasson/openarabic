@@ -1,4 +1,4 @@
-import { Ionicons } from '@/components/ui';
+import { Icon } from '@/components/ui';
 import { memo, useMemo } from 'react';
 import type { TextStyle } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -229,7 +229,7 @@ export const ReviewContextSentence = memo(({ example, onPlay }: Props) => {
           {/* Same reasoning as the card's replay glyph: an audio control on this
               screen is secondary to the word, so it takes the icon token rather
               than a near-white text one. */}
-          <Ionicons name="play" size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={colors.icon} />
+          <Icon name="play" size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={colors.icon} />
           <ThemedText type="caption" colorName="secondaryText">
             {STRINGS.PLAY_SENTENCE_AUDIO}
           </ThemedText>

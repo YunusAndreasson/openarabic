@@ -1,15 +1,16 @@
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
-import { router } from 'expo-router';
 import { useCallback } from 'react';
 
+import { useToast } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { audioQueries, readingProgressQueries } from '@/constants/queries';
-import { ROUTE_PATHS } from '@/constants/routes';
+import { STRINGS } from '@/constants/strings';
 import { analytics } from '@/services/analytics';
 import { bookmarkService } from '@/services/bookmark';
 import { checkAuthentication } from '@/services/supabase';
 import { useAppSelector } from '@/store/hooks';
 import type { ArticleId } from '@/types/branded.types';
+import { ToastType } from '@/types/enums';
 import { handleError } from '@/utils/errorHandling';
 
 interface ReadingListMutationsResult {
@@ -42,6 +43,7 @@ export const useReadingListMutations = (
   refetchReadingListStatus: () => void,
 ): ReadingListMutationsResult => {
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
   const audioPreference = useAppSelector(state => state.settings.audioLanguagePreference);
 
   /**
@@ -118,7 +120,11 @@ export const useReadingListMutations = (
         const { user } = await checkAuthentication();
         userId = user.id;
       } catch {
-        router.replace(ROUTE_PATHS.AUTH);
+        // No redirect: the Stack.Protected guards own auth navigation. While the
+        // app still holds a session they bounce `/auth` to Explore, which dropped
+        // the reader's place; a session that is really gone flips the guard on
+        // SIGNED_OUT and navigates by itself.
+        showToast(STRINGS.PLEASE_SIGN_IN_TO_SAVE_ARTICLES, undefined, ToastType.INFO);
         return false;
       }
 
@@ -138,7 +144,7 @@ export const useReadingListMutations = (
         return false;
       }
     },
-    [addToReadingListMutation, removeFromReadingListMutation],
+    [addToReadingListMutation, removeFromReadingListMutation, showToast],
   );
 
   return {

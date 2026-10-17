@@ -29,6 +29,10 @@ export const KEYBOARD_AWARE_SCROLL_PROPS = {
   keyboardShouldPersistTaps: 'handled',
   showsVerticalScrollIndicator: false,
   keyboardDismissMode: 'interactive',
+  // iOS: inset the content by the keyboard's height, so the focused field and
+  // the submit button below it can scroll clear instead of sitting under the
+  // keyboard on small phones. Android resizes the window itself (adjustResize).
+  automaticallyAdjustKeyboardInsets: true,
 } as const;
 
 export function ThemedView({

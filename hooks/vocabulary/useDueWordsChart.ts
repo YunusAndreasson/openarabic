@@ -3,6 +3,8 @@ import {
   CHART_VISUAL,
   DAYS_7,
   getEffectiveChartHeight,
+  useGraphHeight,
+  useGraphWidth,
 } from '@/constants/chartConstants';
 import { buildSmoothChartPath } from '@/utils/chartPathBuilder';
 import { getNiceAxisMax } from '@/utils/chartUtils';
@@ -43,6 +45,8 @@ export interface UseDueWordsChartResult {
  * Calculate due words forecast and chart metrics for vocabulary words.
  */
 export function useDueWordsChart(studyWords: StudyWord[]): UseDueWordsChartResult {
+  const graphWidth = useGraphWidth();
+  const graphHeight = useGraphHeight();
   const dueWordsData = useMemo<DueWordsForecast[]>(() => {
     return calculateDueWordsForecast(studyWords, DAYS_7);
   }, [studyWords]);
@@ -61,8 +65,8 @@ export function useDueWordsChart(studyWords: StudyWord[]): UseDueWordsChartResul
     const maxDueWords = getDueWordsAxisMax(dueWordsData);
 
     // Create smooth curve using shared path builder utility
-    const chartHeight = getEffectiveChartHeight();
-    const dataPointPositions = calculateDataPointPositions(dueWordsData.length);
+    const chartHeight = getEffectiveChartHeight(graphHeight);
+    const dataPointPositions = calculateDataPointPositions(dueWordsData.length, graphWidth);
 
     const { path: dueWordsPath, points } = buildSmoothChartPath({
       data: dueWordsData,
@@ -86,7 +90,7 @@ export function useDueWordsChart(studyWords: StudyWord[]): UseDueWordsChartResul
         currentDue,
       },
     };
-  }, [dueWordsData, studyWords?.length]);
+  }, [dueWordsData, studyWords?.length, graphWidth, graphHeight]);
 
   return { dueWordsData, chartData };
 }

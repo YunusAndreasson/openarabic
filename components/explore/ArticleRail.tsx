@@ -1,14 +1,14 @@
 import { memo } from 'react';
+import { useWindowDimensions } from 'react-native';
 
 import { SnapRail } from '@/components/common';
 import { PlaylistItemCard } from '@/components/playlist/PlaylistItemCard';
-import { SCREEN_WIDTH } from '@/constants/layout';
 import { useArticlePrefetch } from '@/hooks/articles/useArticlePrefetch';
 import type { Article } from '@/types/articles.types';
 import { generateStorageUrl } from '@/utils/storageUtils';
 import { getArticleMetadataWithoutCategory } from '@/utils/stringUtils';
 
-const CARD_WIDTH = SCREEN_WIDTH * 0.7;
+const CARD_WIDTH_RATIO = 0.7;
 
 export interface ArticleRailItem {
   article: Article;
@@ -32,9 +32,10 @@ interface ArticleRailProps {
  */
 const ArticleRailComponent = ({ items, keyPrefix, onArticlePress }: ArticleRailProps) => {
   const prefetchArticle = useArticlePrefetch();
+  const { width } = useWindowDimensions();
 
   return (
-    <SnapRail itemWidth={CARD_WIDTH}>
+    <SnapRail itemWidth={width * CARD_WIDTH_RATIO}>
       {items.map(({ article, progress }) => (
         <PlaylistItemCard
           key={`${keyPrefix}-${article.id}`}

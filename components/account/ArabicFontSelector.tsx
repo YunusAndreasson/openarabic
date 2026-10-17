@@ -4,7 +4,7 @@
 // setFontSize); driving that from onValueChange would write to redux-persist on
 // every frame and re-render every Arabic sample with it. The community package
 // is not deprecated — revisit only if @expo/ui grows a release event.
-import { Ionicons } from '@/components/ui';
+import { Icon } from '@/components/ui';
 import Slider from '@react-native-community/slider';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -48,7 +48,7 @@ function FontPreviewCard({ option, isSelected, fontSize, onSelect }: FontPreview
             {option.displayName}
           </ThemedText>
           {isSelected && (
-            <Ionicons
+            <Icon
               name="checkmark-circle"
               size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
               color={colors.tint}

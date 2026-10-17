@@ -5,8 +5,11 @@ import { FONTS } from '@/constants/fonts';
 
 // Removed platform-specific constants - using unified values for simplicity
 
-// For mobile-only apps, screen width doesn't change during runtime
-// Use static width instead of dynamic useWindowDimensions
+// The window size AT LAUNCH. Not for layout: on Android 16 a large screen
+// ignores the portrait lock, so a tablet rotates and a foldable unfolds under a
+// running app — read `useWindowDimensions()` instead. The one remaining user is
+// the memory-horizon band (utils/horizonBandPath.ts), whose bin count and dot
+// grid are fixed module geometry shared with its data bucketing.
 // `Dimensions.get` is TYPED as always returning a DisplayMetrics, but returns
 // undefined under Jest — so the fallbacks below are real, and the cast is what
 // makes the type say so. Without it the optional chain and `??` read as dead
@@ -15,7 +18,7 @@ import { FONTS } from '@/constants/fonts';
 const SCREEN_DIMENSIONS = Dimensions.get('window') as DisplayMetrics | undefined;
 export const SCREEN_WIDTH = SCREEN_DIMENSIONS?.width ?? 375;
 /**
- * Static height, same reasoning as the width above. Used for the one coarse
+ * Launch height, same caveat as the width above. Used for the one coarse
  * breakpoint the practice charts have — a taller phone gets a taller canvas.
  * Not for laying out anything that must respond to rotation or a split view.
  */
@@ -26,6 +29,8 @@ const BASE_UNIT = 4;
 
 /** Minimum screen width in unscaled text points for inline label/value rows. */
 export const INLINE_VALUE_MIN_WIDTH = BASE_UNIT * 80;
+/** The auth screens' content keeps a margin of the window on narrow phones. */
+export const AUTH_CONTENT_MAX_WIDTH_RATIO = 0.9;
 /** Scrollable practice detail sheets reserve a visible strip of the screen above. */
 export const SCROLLABLE_SHEET_DETENT = 0.85;
 export const TOPIC_GRID_MIN_COLUMN_WIDTH = BASE_UNIT * 36;

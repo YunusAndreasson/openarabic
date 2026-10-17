@@ -1,124 +1,53 @@
 /**
- * Toggle Component Tests
+ * Toggle: the native switch drawn at the end of a settings row.
  *
- * Tests toggle switch with on/off states and animations.
- *
- * Modern Jest 29 Patterns:
- * - ✅ @jest/globals explicit imports
+ * It only shows state. The row owns the tap and the screen-reader role
+ * (SettingsCard.test.tsx covers that), so these tests pin the other half of the
+ * contract: what the switch draws, and that it neither takes touches nor
+ * announces itself, which is what keeps a tap from being handled twice.
  */
 
-import { fireEvent, render } from '@testing-library/react-native';
-import { beforeEach, describe, expect, jest, test } from '@jest/globals';
+import { render } from '@testing-library/react-native';
+import { describe, expect, jest, test } from '@jest/globals';
 import React from 'react';
-import { View } from 'react-native';
 
 import { Toggle } from '@/components/ui/Toggle';
-
-// Use shared mock factories from componentMocks.tsx
-jest.mock('react-native-reanimated', () =>
-  require('@/__tests__/helpers/componentMocks').createReanimatedMock(),
-);
 
 jest.mock('@/hooks/theme/useColors', () =>
   require('@/__tests__/helpers/componentMocks').useColorsMockFactory(),
 );
 
-jest.mock('@/hooks/animations', () =>
-  require('@/__tests__/helpers/componentMocks').createAnimationHooksMock(),
-);
+// The switch is hidden from accessibility on purpose; queries skip such
+// elements unless asked.
+const HIDDEN = { includeHiddenElements: true };
 
-jest.mock('@/utils/haptics', () => ({
-  lightFeedback: jest.fn(),
-  mediumFeedback: jest.fn(),
-  successFeedback: jest.fn(),
-  selectionFeedback: jest.fn(),
-  errorFeedback: jest.fn(),
-}));
+// jest.setup mocks StyleSheet.flatten, and resetMocks leaves it returning
+// undefined; merge the style here instead.
+function flattenStyle(style: unknown): Record<string, unknown> {
+  if (Array.isArray(style)) {
+    return style.reduce<Record<string, unknown>>(
+      (merged, entry) => ({ ...merged, ...flattenStyle(entry) }),
+      {},
+    );
+  }
+  return style && typeof style === 'object' ? (style as Record<string, unknown>) : {};
+}
 
 describe('Toggle', () => {
-  const mockOnValueChange = jest.fn();
+  test('draws the native switch in the state it is given', () => {
+    const { getByTestId, rerender } = render(<Toggle value={false} />);
+    expect(getByTestId('native-switch', HIDDEN).props.nativeSwitchValue).toBe(false);
 
-  beforeEach(() => {
-    jest.clearAllMocks();
+    rerender(<Toggle value={true} />);
+    expect(getByTestId('native-switch', HIDDEN).props.nativeSwitchValue).toBe(true);
   });
 
-  describe('Rendering', () => {
-    test('exposes its label and checked state to accessibility services', () => {
-      const { getByLabelText, rerender } = render(
-        <Toggle
-          accessibilityLabel="Smart reminders"
-          value={false}
-          onValueChange={mockOnValueChange}
-        />,
-      );
+  test('takes no touches and stays out of the accessibility tree, leaving both to its row', () => {
+    const { getByTestId } = render(<Toggle value={false} testID="toggle" />);
+    const wrapper = getByTestId('toggle', HIDDEN);
 
-      expect(getByLabelText('Smart reminders').props.accessibilityState).toEqual({
-        checked: false,
-      });
-
-      rerender(
-        <Toggle
-          accessibilityLabel="Smart reminders"
-          value={true}
-          onValueChange={mockOnValueChange}
-        />,
-      );
-      expect(getByLabelText('Smart reminders').props.accessibilityState).toEqual({ checked: true });
-    });
-  });
-
-  describe('Interactions', () => {
-    test('calls onValueChange with true when toggled from off', () => {
-      const { getByTestId } = render(
-        <Toggle value={false} onValueChange={mockOnValueChange} testID="toggle" />,
-      );
-
-      fireEvent.press(getByTestId('toggle'));
-
-      expect(mockOnValueChange).toHaveBeenCalledWith(true);
-    });
-
-    test('calls onValueChange with false when toggled from on', () => {
-      const { getByTestId } = render(
-        <Toggle value={true} onValueChange={mockOnValueChange} testID="toggle" />,
-      );
-
-      fireEvent.press(getByTestId('toggle'));
-
-      expect(mockOnValueChange).toHaveBeenCalledWith(false);
-    });
-
-    test('triggers haptic feedback on press', () => {
-      const { selectionFeedback } = require('@/utils/haptics');
-
-      const { getByTestId } = render(
-        <Toggle value={false} onValueChange={mockOnValueChange} testID="toggle" />,
-      );
-
-      fireEvent.press(getByTestId('toggle'));
-
-      expect(selectionFeedback).toHaveBeenCalled();
-    });
-  });
-
-  describe('Visual States', () => {
-    test('switches the track and handle to their on-state colors', () => {
-      const { UNSAFE_getAllByType, rerender } = render(
-        <Toggle value={false} onValueChange={mockOnValueChange} />,
-      );
-      const backgroundColors = () =>
-        UNSAFE_getAllByType(View).map(view => {
-          const styles = Array.isArray(view.props.style)
-            ? view.props.style.flat(Number.POSITIVE_INFINITY)
-            : [view.props.style];
-          return Object.assign({}, ...styles.filter(Boolean)).backgroundColor;
-        });
-
-      expect(backgroundColors()).toEqual(expect.arrayContaining(['#DDDDDD', '#EEEEEE']));
-
-      rerender(<Toggle value={true} onValueChange={mockOnValueChange} />);
-
-      expect(backgroundColors()).toEqual(expect.arrayContaining(['#4a7c59', '#FFFFFF']));
-    });
+    expect(flattenStyle(wrapper.props.style).pointerEvents).toBe('none');
+    expect(wrapper.props.accessibilityElementsHidden).toBe(true);
+    expect(wrapper.props.importantForAccessibility).toBe('no-hide-descendants');
   });
 });

@@ -1,13 +1,13 @@
 import { useRouter } from 'expo-router';
 
 import { EmptyState } from '@/components/common/EmptyState';
-import type { IoniconName } from '@/components/ui/Icon';
+import type { IconName } from '@/components/ui/Icon';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 
 interface SeededContentEmptyStateProps {
   source: 'playlist' | 'practice';
-  icon: IoniconName;
+  icon: IconName;
   title: string;
   hint: string;
   seedLabel: string;

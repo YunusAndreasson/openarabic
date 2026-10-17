@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { Ionicons } from '@/components/ui';
+import { Icon } from '@/components/ui';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -32,11 +32,7 @@ export const ReviewRootInsight = memo(({ explanation }: Props) => {
       testID="review-root-insight"
     >
       <View style={styles.heading}>
-        <Ionicons
-          name="sparkles-outline"
-          size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-          color={colors.tint}
-        />
+        <Icon name="sparkles-outline" size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={colors.tint} />
         <ThemedText colorName="tint" type="overline">
           {STRINGS.REVIEW_ROOT_INSIGHT_TITLE}
         </ThemedText>

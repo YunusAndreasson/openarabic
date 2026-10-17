@@ -1,9 +1,9 @@
 import { EnhancedImage } from '@/components/ui';
 import type { JSX } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
+import { AUTH_CONTENT_MAX_WIDTH_RATIO, LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useAppleAuth } from '@/hooks/auth/useAppleAuth';
 import { useGoogleAuth } from '@/hooks/auth/useGoogleAuth';
@@ -31,6 +31,7 @@ export function Auth(): JSX.Element {
   // Auth hooks lifted here for unified loading state
   const appleAuth = useAppleAuth();
   const googleAuth = useGoogleAuth();
+  const { width } = useWindowDimensions();
 
   return (
     <View style={styles.container}>
@@ -58,7 +59,7 @@ export function Auth(): JSX.Element {
       </View>
 
       {/* Content Container */}
-      <View style={styles.contentContainer}>
+      <View style={[styles.contentContainer, { maxWidth: width * AUTH_CONTENT_MAX_WIDTH_RATIO }]}>
         {/* Social Authentication Buttons */}
         <SocialAuthButtons appleAuth={appleAuth} googleAuth={googleAuth} />
 
@@ -78,7 +79,6 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   contentContainer: {
-    maxWidth: SCREEN_WIDTH * 0.9,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     width: '100%',
   },

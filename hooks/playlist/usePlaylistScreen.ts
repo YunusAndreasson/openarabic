@@ -79,7 +79,12 @@ export const usePlaylistScreen = () => {
           enabled: false,
         },
   );
-  const { data: readingList = [], isLoading: isReadingListLoading } = readingListQuery;
+  const { data: readingList = [] } = readingListQuery;
+  // The query's `placeholderData: []` makes v5 report success before the first
+  // fetch lands, so `isLoading` never turns true and an empty placeholder reads
+  // as an empty playlist. While the placeholder is what's showing, the real list
+  // is not known yet.
+  const isReadingListLoading = readingListQuery.isPlaceholderData;
 
   const sortedReadingList = useMemo(() => {
     if (!readingList?.length) return [];
@@ -100,10 +105,6 @@ export const usePlaylistScreen = () => {
       (a, b) => sortByDateDesc(a.added_at, b.added_at),
     );
   }, [readingList, customOrder]);
-
-  const isDataCached = Boolean(
-    user?.id && queryClient.getQueryData(readingProgressQueries.readingList(user.id).queryKey),
-  );
 
   const enhancedTracksQuery = useQuery(
     user?.id
@@ -126,8 +127,13 @@ export const usePlaylistScreen = () => {
   }, [enhancedTracks, sortedReadingList]);
 
   const shouldShowInitialLoading = useMemo(() => {
-    return !isDataCached && isReadingListLoading && sortedReadingList.length === 0;
-  }, [isDataCached, isReadingListLoading, sortedReadingList.length]);
+    return isReadingListLoading && sortedReadingList.length === 0;
+  }, [isReadingListLoading, sortedReadingList.length]);
+
+  // A failed first load has nothing to show. Without this it fell through to
+  // the empty state and its "add beginner articles" seed.
+  const readingListLoadFailed = readingListQuery.isError && sortedReadingList.length === 0;
+  const retryReadingList = readingListQuery.refetch;
 
   // Refetch on screen focus using official React Query pattern
   // Automatically respects staleTime (5 minutes) - no manual throttling needed
@@ -380,6 +386,8 @@ export const usePlaylistScreen = () => {
     sortedEnhancedTracks,
     shouldShowInitialLoading,
     isReadingListLoading,
+    readingListLoadFailed,
+    retryReadingList,
     playbackMode,
     handlePlayAll,
     handlePlayAllArabicOnly,

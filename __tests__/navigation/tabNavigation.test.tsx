@@ -66,7 +66,7 @@ jest.mock('expo-router/native-tabs', () => {
       const badgeChild = kids.find((c: any) => isChildOfType(c, Trigger.Badge)) as
         React.ReactElement<{ children: React.ReactNode }> | undefined;
       const iconChild = kids.find((c: any) => isChildOfType(c, Trigger.Icon)) as
-        React.ReactElement<{ sf?: { default: string } }> | undefined;
+        React.ReactElement<{ sf?: { default: string }; md?: string }> | undefined;
 
       return React.createElement(
         TouchableOpacity,
@@ -81,7 +81,7 @@ jest.mock('expo-router/native-tabs', () => {
           ? React.createElement(
               Text,
               { testID: `tab-icon-${child.props.name}` },
-              iconChild.props.sf?.default ?? '',
+              `${iconChild.props.sf?.default ?? ''} ${iconChild.props.md ?? ''}`,
             )
           : null,
         badgeChild,
@@ -141,7 +141,7 @@ jest.mock('@/hooks/vocabulary/useFSRSQueries', () => ({
 }));
 
 jest.mock('@/components/ui/Icon', () => ({
-  Ionicons: () => null,
+  Icon: () => null,
 }));
 
 jest.mock('expo-router', () => {
@@ -312,10 +312,10 @@ const createWrapper = () => {
 // Asserted rather than read back from TAB_SCREENS: a test that looks up the same
 // table the layout does would pass even if the table itself were wrong.
 const TAB_ICONS_BY_TAB = {
-  explore: 'safari',
-  playlist: 'headphones',
-  practice: 'graduationcap',
-  account: 'gearshape',
+  explore: 'safari explore',
+  playlist: 'headphones headphones',
+  practice: 'graduationcap school',
+  account: 'gearshape settings',
 } as const;
 
 describe('Tab navigation', () => {

@@ -37,7 +37,7 @@ describe('gradientUtils', () => {
   describe('calculateHeaderHeight', () => {
     test('should calculate header height with safe area', () => {
       const safeAreaTop = 50;
-      const result = calculateHeaderHeight(safeAreaTop);
+      const result = calculateHeaderHeight(safeAreaTop, 375);
 
       // Should be positive and include safe area
       expect(result).toBeGreaterThan(safeAreaTop);
@@ -45,8 +45,13 @@ describe('gradientUtils', () => {
     });
 
     test('should handle zero safe area', () => {
-      const result = calculateHeaderHeight(0);
+      const result = calculateHeaderHeight(0, 375);
       expect(result).toBeGreaterThan(0);
+    });
+
+    test('follows the window width: the image is the width over the golden ratio', () => {
+      expect(calculateHeaderHeight(0, 375)).toBe(Math.round(375 / 1.618));
+      expect(calculateHeaderHeight(0, 800)).toBe(Math.round(800 / 1.618));
     });
   });
 

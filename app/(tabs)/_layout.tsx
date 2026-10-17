@@ -1,4 +1,3 @@
-import { Ionicons } from '@/components/ui';
 import type { JSX } from 'react';
 import { useEffect, useMemo } from 'react';
 import { BackHandler, Platform } from 'react-native';
@@ -143,25 +142,7 @@ export default function TabLayout(): JSX.Element {
                 `filterAllowedChildrenElements`). It never renders them, so a
                 wrapper component — even one that returns the right element —
                 is silently dropped and the tab loses its icon entirely. */}
-            <NativeTabs.Trigger.Icon
-              sf={screen.icon.sf}
-              // Hoisting or memoising this buys nothing: the VectorIcon elements
-              // inside are new on every render either way, the tab bar renders once
-              // rather than per row, and restructuring risks the identity check
-              // described above.
-              // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop
-              src={{
-                default: (
-                  <NativeTabs.Trigger.VectorIcon family={Ionicons} name={screen.icon.ion.default} />
-                ),
-                selected: (
-                  <NativeTabs.Trigger.VectorIcon
-                    family={Ionicons}
-                    name={screen.icon.ion.selected}
-                  />
-                ),
-              }}
-            />
+            <NativeTabs.Trigger.Icon sf={screen.icon.sf} md={screen.icon.md} />
             <NativeTabs.Trigger.Label>{screen.title}</NativeTabs.Trigger.Label>
             {/* Spelled by the same function as the practice screen's lead card,
                 so the number a learner follows into the tab is the number they

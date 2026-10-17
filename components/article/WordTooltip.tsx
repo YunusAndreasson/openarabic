@@ -1,12 +1,12 @@
 import { useCallback, useRef, useState } from 'react';
 import type { ViewInstance } from 'react-native';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { FONTS } from '@/constants/fonts';
 import { getElevation } from '@/constants/elevation';
-import { LAYOUT, LINE_HEIGHT_MULTIPLIERS, SCREEN_WIDTH } from '@/constants/layout';
+import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
 import { PRESS_ANIMATION_BUTTON } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useButtonPress } from '@/hooks/ui/useButtonPress';
@@ -101,6 +101,7 @@ export function WordTooltip({
   onOpenWordDetails,
 }: WordTooltipProps) {
   const colors = useColors();
+  const { width: windowWidth } = useWindowDimensions();
   const containerRef = useRef<ViewInstance>(null);
   const [containerOffset, setContainerOffset] = useState({ x: 0, y: 0 });
 
@@ -145,7 +146,7 @@ export function WordTooltip({
 
   const dimensions = (() => {
     if (!layout) return DEFAULT_DIMENSIONS;
-    if (layout.x < 0 || layout.y < 0 || layout.x > SCREEN_WIDTH) return DEFAULT_DIMENSIONS;
+    if (layout.x < 0 || layout.y < 0 || layout.x > windowWidth) return DEFAULT_DIMENSIONS;
 
     // Convert window coordinates to container-relative coordinates (fixes Android offset)
     const adjustedLayout: TooltipLayout = {
@@ -156,13 +157,7 @@ export function WordTooltip({
     };
 
     const displayedText = coloredSegments.map(s => s.text).join('');
-    return calculateTooltipDimensions(
-      adjustedLayout,
-      displayedText,
-      false,
-      undefined,
-      SCREEN_WIDTH,
-    );
+    return calculateTooltipDimensions(adjustedLayout, displayedText, false, undefined, windowWidth);
   })();
 
   // `TOOLTIP_CONSTANTS.HEIGHT` already is the touch-target floor, and the

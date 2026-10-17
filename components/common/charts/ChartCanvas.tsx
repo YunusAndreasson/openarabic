@@ -11,7 +11,7 @@ import { LAYOUT, STATUS_INDICATOR } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { DataPoint } from '@/types/ui/chart.types';
 
-import { CHART_VISUAL, GRAPH_HEIGHT_LARGE, useGraphWidth } from '@/constants/chartConstants';
+import { CHART_VISUAL, useGraphHeight, useGraphWidth } from '@/constants/chartConstants';
 
 import { ChartTooltipData, DataPointOverlay, useChartTooltip } from './ChartInteractivity';
 
@@ -27,13 +27,10 @@ interface ChartCanvasProps {
  * across all vocabulary charts including tooltips and data point overlays.
  * Height includes bottom padding to prevent data point clipping.
  */
-export function ChartCanvas({
-  children,
-  width,
-  height = GRAPH_HEIGHT_LARGE + CHART_VISUAL.CHART_BOTTOM_PADDING,
-  dataPoints = [],
-}: ChartCanvasProps) {
+export function ChartCanvas({ children, width, height, dataPoints = [] }: ChartCanvasProps) {
   const graphWidth = useGraphWidth();
+  const graphHeight = useGraphHeight();
+  const resolvedHeight = height ?? graphHeight + CHART_VISUAL.CHART_BOTTOM_PADDING;
   const resolvedWidth = width ?? graphWidth;
   const { tooltip, showTooltip, hideTooltip } = useChartTooltip();
   const colors = useColors();
@@ -58,7 +55,7 @@ export function ChartCanvas({
       !Number.isNaN(point.y),
   );
 
-  const canvasStyle = { width: resolvedWidth, height };
+  const canvasStyle = { width: resolvedWidth, height: resolvedHeight };
 
   // Active cursor (React Compiler auto-memoizes)
   let activeCursor = null;
@@ -71,7 +68,7 @@ export function ChartCanvas({
           styles.cursor,
           {
             left: x,
-            height,
+            height: resolvedHeight,
             backgroundColor: colors.chartAccent,
             opacity: CHART_OPACITY.LOW,
           },
@@ -81,7 +78,7 @@ export function ChartCanvas({
   }
 
   return (
-    <View style={[styles.container, { width: resolvedWidth, height }]}>
+    <View style={[styles.container, { width: resolvedWidth, height: resolvedHeight }]}>
       {/* Main Chart Canvas */}
       <Pressable
         testID="chart-background"

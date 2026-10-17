@@ -1,4 +1,4 @@
-import { CHART_VISUAL, GRAPH_HEIGHT_LARGE } from '@/constants/chartConstants';
+import { CHART_VISUAL, useGraphHeight } from '@/constants/chartConstants';
 import type { DataPoint } from '@/types/ui/chart.types';
 import { getChartColors } from '@/constants/chartColors';
 
@@ -93,7 +93,7 @@ export const VocabularyChart = memo<VocabularyChartProps<unknown>>(
     // Emphasized point: today — index 0 on forecasts, last index on history
     const emphasisIndex = isFuturePrediction ? 0 : dataPoints.length - 1;
 
-    const contentHeight = GRAPH_HEIGHT_LARGE + CHART_VISUAL.CHART_BOTTOM_PADDING;
+    const contentHeight = useGraphHeight() + CHART_VISUAL.CHART_BOTTOM_PADDING;
 
     const hasChartData = Boolean(path) && dataPoints.length > 0;
 

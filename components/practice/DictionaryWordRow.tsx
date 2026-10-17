@@ -1,4 +1,4 @@
-import { Ionicons } from '@/components/ui';
+import { Icon } from '@/components/ui';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 // Gesture-handler's Pressable, NOT react-native's, for the action panels — see
@@ -73,7 +73,7 @@ function RowActions({ drag, onReset, onRemove }: RowActionsProps) {
         accessibilityRole="button"
         accessibilityLabel={STRINGS.RESET_PROGRESS_ACTION}
       >
-        <Ionicons name="refresh" size={ACTION_ICON_SIZE} color={colors.onTint} />
+        <Icon name="refresh" size={ACTION_ICON_SIZE} color={colors.onTint} />
       </Pressable>
       <Pressable
         onPress={onRemove}
@@ -81,7 +81,7 @@ function RowActions({ drag, onReset, onRemove }: RowActionsProps) {
         accessibilityRole="button"
         accessibilityLabel={STRINGS.REMOVE_FROM_PRACTICE_ACTION}
       >
-        <Ionicons name="trash" size={ACTION_ICON_SIZE} color={colors.onTint} />
+        <Icon name="trash" size={ACTION_ICON_SIZE} color={colors.onTint} />
       </Pressable>
     </Animated.View>
   );

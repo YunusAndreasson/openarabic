@@ -1,4 +1,4 @@
-import { Ionicons } from '@/components/ui';
+import { Icon } from '@/components/ui';
 import { Link } from 'expo-router';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 import Animated, { FadeIn, FadeInUp, FadeOut, ZoomIn } from 'react-native-reanimated';
@@ -31,11 +31,17 @@ import { createMargin, createPadding, COMMON_STYLES } from '@/utils/layoutUtils'
 /** How much of a metric's hue is mixed into the card behind its icon. */
 const METRIC_ICON_TINT = 0.12;
 
+/** A small pop with no wobble: Reanimated's own "gentle" ratio. */
+const ICON_DAMPING_RATIO = 0.75;
+
 // Layout animation builders hoisted to module level per Reanimated best practices
 // Success haptic fires from the checkmark's completion callback so it lands on the
 // exact frame the zoom-in settles (no estimated setTimeout offset).
-const ENTERING_ICON = ZoomIn.duration(TIMING_CONFIG.FAST.duration)
-  .springify()
+// The duration goes INTO springify: a bare `.springify()` resets the duration
+// set before it, which ran the default physics spring for ~0.8s and landed the
+// haptic half a second after the pop. A perceptual 120ms ends at ~180ms.
+const ENTERING_ICON = ZoomIn.springify(TIMING_CONFIG.FAST.duration)
+  .dampingRatio(ICON_DAMPING_RATIO)
   .withCallback(finished => {
     'worklet';
     if (finished) {
@@ -146,7 +152,7 @@ export const CompletionScreen = ({
     <View style={[styles.contentContainer, contentStyle]}>
       {/* Success Icon - Primary visual element */}
       <Animated.View entering={ENTERING_ICON} style={styles.iconContainer}>
-        <Ionicons color={colors.completionSuccess} name="checkmark-circle" size={iconSize} />
+        <Icon color={colors.completionSuccess} name="checkmark-circle" size={iconSize} />
       </Animated.View>
 
       {/* Title Group - Closely grouped for Gestalt proximity */}
@@ -184,7 +190,7 @@ export const CompletionScreen = ({
                     { backgroundColor: mixColors(colors.card, metric.color, METRIC_ICON_TINT) },
                   ]}
                 >
-                  <Ionicons
+                  <Icon
                     color={metric.color}
                     name={metric.icon}
                     size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}

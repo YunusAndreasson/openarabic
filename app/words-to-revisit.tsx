@@ -7,7 +7,7 @@ import { BottomSheetHeader, BottomSheetStateHandler, ListRow } from '@/component
 import { WordListRow } from '@/components/practice';
 import { WordDetailContent } from '@/components/practice/WordDetailContent';
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { Ionicons } from '@/components/ui';
+import { Icon } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -121,7 +121,7 @@ function SeeAllRow({ total, shown }: { total: number; shown: number }): JSX.Elem
         </ThemedText>
       </View>
 
-      <Ionicons
+      <Icon
         color={colors.textTertiary}
         name="chevron-forward"
         size={LAYOUT.BUTTON.ICON_SIZE.DISCLOSURE}

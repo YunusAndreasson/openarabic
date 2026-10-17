@@ -38,7 +38,7 @@ jest.mock('@/components/ui/Icon', () => {
   const { View } = require('react-native');
   const React = require('react');
   return {
-    Ionicons: ({ name, color }: { name: string; color: string }) =>
+    Icon: ({ name, color }: { name: string; color: string }) =>
       React.createElement(View, { testID: `icon-${name}`, accessibilityHint: color }),
   };
 });

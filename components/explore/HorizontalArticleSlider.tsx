@@ -1,7 +1,8 @@
 import { memo } from 'react';
+import { useWindowDimensions } from 'react-native';
 
 import { SnapRail } from '@/components/common';
-import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { MAX_FEATURED_ARTICLES } from '@/hooks/articles/useMultipleFeaturedArticles';
 
 import { ArticleCard } from './ArticleCard';
@@ -14,7 +15,7 @@ interface HorizontalArticleSliderProps {
 
 // Calculate card width based on screen width and spacing. The gap between cards
 // and the snap interval come from `SnapRail`, which owns both.
-const CARD_WIDTH = SCREEN_WIDTH * 0.8; // 80% of screen width for better visibility
+const CARD_WIDTH_RATIO = 0.8; // 80% of the window width for better visibility
 // Fixed height for article cards in horizontal slider.
 // Title/author overlay the image, so content area only needs to fit the summary
 // (caption type, ~4 lines) plus vertical padding. 5.5 × XXXLARGE (48px) = 264px
@@ -37,12 +38,13 @@ const SLIDER_CARD_STYLE = {
  * Snaps by a single interval, since every card is the same width.
  */
 const HorizontalArticleSliderComponent = ({ articles }: HorizontalArticleSliderProps) => {
+  const { width } = useWindowDimensions();
   if (!articles.length) return null;
 
   const displayArticles = articles.slice(0, MAX_FEATURED_ARTICLES);
 
   return (
-    <SnapRail itemWidth={CARD_WIDTH} itemHeight={CARD_HEIGHT}>
+    <SnapRail itemWidth={width * CARD_WIDTH_RATIO} itemHeight={CARD_HEIGHT}>
       {displayArticles.map(article => (
         <ArticleCard
           key={`featured-${article.id}`}

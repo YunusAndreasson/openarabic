@@ -9,7 +9,7 @@ import {
   RootExplanation,
 } from '@/components/common';
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { Ionicons, TransparentHeaderButton } from '@/components/ui';
+import { Icon, TransparentHeaderButton } from '@/components/ui';
 import { LAYOUT, getArabicHeroFontSize, getArabicHeroTextStyle } from '@/constants/layout';
 import { getPracticeWordRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -219,7 +219,7 @@ export const WordDetailContent = ({
             <ThemedText style={styles.openLabel} type="body">
               {STRINGS.WORD_SHEET_OPEN_IN_DICTIONARY}
             </ThemedText>
-            <Ionicons
+            <Icon
               color={colors.textTertiary}
               name="chevron-forward"
               size={LAYOUT.BUTTON.ICON_SIZE.DISCLOSURE}

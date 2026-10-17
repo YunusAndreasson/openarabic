@@ -1,4 +1,4 @@
-import { MIN_TOUCH_TARGET, SCREEN_WIDTH } from '@/constants/layout';
+import { MIN_TOUCH_TARGET } from '@/constants/layout';
 
 // ===== TOOLTIP CONSTANTS =====
 export const TOOLTIP_CONSTANTS = {
@@ -53,8 +53,9 @@ export const calculateTooltipDimensions = (
   layout: TooltipLayout,
   text: string,
   hasBookmark: boolean,
-  measuredWidth?: number,
-  containerWidth: number = 0,
+  measuredWidth: number | undefined,
+  /** The live window width: the right edge to keep clear of, and the cap's basis. */
+  containerWidth: number,
 ): TooltipDimensions => {
   const {
     ARROW_SIZE,
@@ -85,7 +86,7 @@ export const calculateTooltipDimensions = (
 
   // Use measured width if available, but cap it at a reasonable maximum
   // CRITICAL: Allow wider tooltips for long English words to prevent truncation
-  const maxReasonableWidth = Math.min(SCREEN_WIDTH * 0.9, 400); // Increased to 90% of screen or 400px for long words
+  const maxReasonableWidth = Math.min(containerWidth * 0.9, 400); // 90% of the window or 400px for long words
   const baseWidth =
     measuredWidth && measuredWidth > 0 && measuredWidth <= maxReasonableWidth
       ? measuredWidth
@@ -108,7 +109,7 @@ export const calculateTooltipDimensions = (
   // Handle screen boundaries with simple, direct logic
   // Use window coordinates directly - no container offset conversion needed
   const effectiveScreenMargin = SCREEN_MARGIN;
-  const effectiveScreenWidth = containerWidth > 0 ? containerWidth : SCREEN_WIDTH;
+  const effectiveScreenWidth = containerWidth;
   const tooltipRight = tooltipLeft + finalTooltipWidth;
 
   if (tooltipLeft < effectiveScreenMargin) {

@@ -7,7 +7,7 @@ import { ThemedText } from '@/components/primitives/ThemedText';
 // Direct path, not the `@/components/ui` barrel: `common` sits above `ui`, and
 // pulling the barrel in from here closes the import cycle `eslint.config.mjs`
 // bans. Precedent: `components/common/EmptyState.tsx`.
-import { Ionicons } from '@/components/ui/Icon';
+import { Icon } from '@/components/ui/Icon';
 import { FONTS } from '@/constants/fonts';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
@@ -124,7 +124,7 @@ export const MetricCard = memo<MetricCardProps>(
 
             {/* Only tiles that lead somewhere claim to. */}
             {onPress && (
-              <Ionicons
+              <Icon
                 color={colors.textTertiary}
                 name="chevron-forward"
                 size={LAYOUT.BUTTON.ICON_SIZE.DISCLOSURE}

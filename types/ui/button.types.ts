@@ -1,6 +1,6 @@
 import type { GestureResponderEvent, PressableProps } from 'react-native';
 
-import type { IoniconName } from '@/components/ui/Icon';
+import type { IconName } from '@/components/ui/Icon';
 import type { HapticType } from '@/hooks/ui/useButtonPress';
 
 import type { BaseAnimatedStyleProps } from './base.types';
@@ -73,8 +73,8 @@ interface BaseButtonProps
  * `IconButton` component — that has its own, different, local interface.
  */
 interface ButtonIconProps {
-  /** Optional Ionicons icon name to display alongside the title */
-  icon?: IoniconName;
+  /** Optional icon name to display alongside the title */
+  icon?: IconName;
   /** Which side of the label the icon sits on (default: 'leading') */
   iconPosition?: ButtonIconPosition;
 }

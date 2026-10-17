@@ -1,9 +1,9 @@
 import type { JSX, ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { KEYBOARD_AWARE_SCROLL_PROPS, ThemedView } from '@/components/primitives/ThemedView';
-import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
+import { AUTH_CONTENT_MAX_WIDTH_RATIO, LAYOUT } from '@/constants/layout';
 
 interface AuthScreenShellProps {
   /** The line under the header explaining what this screen is for. */
@@ -23,6 +23,8 @@ interface AuthScreenShellProps {
  * sheet wants.
  */
 export function AuthScreenShell({ subtitle, children }: AuthScreenShellProps): JSX.Element {
+  const { width } = useWindowDimensions();
+
   return (
     <ThemedView
       scrollable
@@ -36,7 +38,9 @@ export function AuthScreenShell({ subtitle, children }: AuthScreenShellProps): J
           {subtitle}
         </ThemedText>
 
-        <View style={styles.formContainer}>{children}</View>
+        <View style={[styles.formContainer, { maxWidth: width * AUTH_CONTENT_MAX_WIDTH_RATIO }]}>
+          {children}
+        </View>
       </View>
     </ThemedView>
   );
@@ -52,7 +56,6 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     marginBottom: LAYOUT.SPACING.XLARGE,
-    maxWidth: SCREEN_WIDTH * 0.9,
     width: '100%',
   },
   scrollContent: {

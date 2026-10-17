@@ -179,7 +179,7 @@
       [
         "expo-font",
         {
-          "_comment": "iOS registers fonts under their PostScript names, so plain paths are enough. Android registers string-entry fonts under their FILENAME ('NotoSans.ttf' -> 'NotoSans'), which does not match the names the app uses - hence the object form below, which calls ReactFontManager.addCustomFont(<fontFamily>) in MainApplication.onCreate(). Keep every fontFamily here in sync with constants/fonts.ts and RUNTIME_FONT_MAP in app/_layout.tsx.",
+          "_comment": "iOS registers fonts under their PostScript names, so plain paths are enough. Android registers string-entry fonts under their FILENAME ('NotoSans.ttf' -> 'NotoSans'), which does not match the names the app uses - hence the object form below, which calls ReactFontManager.addCustomFont(<fontFamily>) in MainApplication.onCreate(). Keep every fontFamily here in sync with constants/fonts.ts and RUNTIME_FONT_MAP in app/_layout.tsx. The two MaterialSymbols families are Android-only: they draw the Material Symbols icons (components/ui/Icon.android.tsx, names in constants/icons.ts), while iOS draws SF Symbols natively, so they are not in the iOS list or RUNTIME_FONT_MAP.",
           "ios": {
             "fonts": [
               "./assets/fonts/NotoSans.ttf",
@@ -265,6 +265,24 @@
                     "weight": 400
                   }
                 ]
+              },
+              {
+                "fontFamily": "MaterialSymbols-Regular",
+                "fontDefinitions": [
+                  {
+                    "path": "./node_modules/@expo-google-fonts/material-symbols/400Regular/MaterialSymbols_400Regular.ttf",
+                    "weight": 400
+                  }
+                ]
+              },
+              {
+                "fontFamily": "MaterialSymbols-Filled",
+                "fontDefinitions": [
+                  {
+                    "path": "./node_modules/@expo-google-fonts/material-symbols/400Regular_Filled/MaterialSymbols_400Regular_Filled.ttf",
+                    "weight": 400
+                  }
+                ]
               }
             ]
           }
@@ -324,7 +342,6 @@
           "iosUrlScheme": "com.googleusercontent.apps.989500653316-f244cgfpisfpmhpgedcs3sdof3sirgdv"
         }
       ],
-      "@react-native-community/datetimepicker",
       "@sentry/react-native",
       "expo-asset",
       "expo-background-task",
@@ -388,7 +405,7 @@
       }
     },
     "owner": "edenmind",
-    "runtimeVersion": "1448.5.6",
+    "runtimeVersion": "1448.5.7",
     "updates": {
       "url": "https://u.expo.dev/644480e0-3ac0-4ce6-b6ca-b950f62ca438",
       "enableBsdiffPatchSupport": true,

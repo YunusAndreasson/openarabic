@@ -1,10 +1,10 @@
 import { memo } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, useWindowDimensions } from 'react-native';
 
 import { BaseCard, SnapRail } from '@/components/common';
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { Ionicons } from '@/components/ui';
-import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
+import { Icon } from '@/components/ui';
+import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -16,7 +16,7 @@ import { WordRailCard } from './WordRailCard';
  * and a short gloss. At ~2.3 cards to a screen the rail reads as
  * something to swipe rather than as a row that happens to overflow.
  */
-const CARD_WIDTH = SCREEN_WIDTH * 0.44;
+const CARD_WIDTH_RATIO = 0.44;
 
 interface SeeAllTarget {
   /** The uncapped leech count, not the number of cards shown. */
@@ -62,7 +62,7 @@ const SeeAllCard = ({ count, onPress }: SeeAllTarget) => {
       <ThemedText align="center" colorName="secondaryText" numberOfLines={2} type="caption">
         {label}
       </ThemedText>
-      <Ionicons
+      <Icon
         color={colors.textTertiary}
         name="chevron-forward"
         size={LAYOUT.BUTTON.ICON_SIZE.DISCLOSURE}
@@ -89,15 +89,19 @@ SeeAllCard.displayName = 'SeeAllCard';
  * and cards scroll under the screen edges. Padding the container instead would
  * clip the rail 12px early.
  */
-const WordRailComponent = ({ words, onWordPress, seeAll }: WordRailProps) => (
-  <SnapRail itemWidth={CARD_WIDTH}>
-    {words.map(word => (
-      <WordRailCard key={word.root_id} word={word} onPress={() => onWordPress(word)} />
-    ))}
+const WordRailComponent = ({ words, onWordPress, seeAll }: WordRailProps) => {
+  const { width } = useWindowDimensions();
 
-    {seeAll ? <SeeAllCard count={seeAll.count} onPress={seeAll.onPress} /> : null}
-  </SnapRail>
-);
+  return (
+    <SnapRail itemWidth={width * CARD_WIDTH_RATIO}>
+      {words.map(word => (
+        <WordRailCard key={word.root_id} word={word} onPress={() => onWordPress(word)} />
+      ))}
+
+      {seeAll ? <SeeAllCard count={seeAll.count} onPress={seeAll.onPress} /> : null}
+    </SnapRail>
+  );
+};
 
 const styles = StyleSheet.create({
   /**

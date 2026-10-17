@@ -1,15 +1,14 @@
-import { GOLDEN_RATIO, SCREEN_WIDTH } from '@/constants/layout';
+import { GOLDEN_RATIO } from '@/constants/layout';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import { withOpacity } from '@/utils/colorUtils';
 
-// Extract constants outside component to prevent recreation
-const BASE_HEADER_HEIGHT = Math.round(SCREEN_WIDTH / GOLDEN_RATIO);
-
 /**
- * Calculate header height including safe area for proper image display
+ * Calculate header height including safe area for proper image display: the
+ * image is the window's width over the golden ratio. Takes the live window
+ * width, because an Android 16 tablet or foldable resizes under a running app.
  */
-export function calculateHeaderHeight(safeAreaTop: number): number {
-  return BASE_HEADER_HEIGHT + safeAreaTop;
+export function calculateHeaderHeight(safeAreaTop: number, windowWidth: number): number {
+  return Math.round(windowWidth / GOLDEN_RATIO) + safeAreaTop;
 }
 
 /**

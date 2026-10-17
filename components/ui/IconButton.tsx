@@ -1,4 +1,4 @@
-import { Ionicons, type IoniconName } from '@/components/ui/Icon';
+import { Icon, type IconName } from '@/components/ui/Icon';
 import { Pressable } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -12,9 +12,9 @@ import type { ButtonTone } from '@/types/ui/button.types';
 
 interface IconButtonProps {
   /**
-   * The icon name from Ionicons
+   * The icon name (see constants/icons.ts)
    */
-  icon: IoniconName;
+  icon: IconName;
 
   /**
    * Callback when button is pressed
@@ -134,7 +134,7 @@ export const IconButton = ({
           },
         ]}
       >
-        <Ionicons color={resolvedIconColor} name={icon} size={iconSize ?? config.iconSize} />
+        <Icon color={resolvedIconColor} name={icon} size={iconSize ?? config.iconSize} />
       </Animated.View>
     </Pressable>
   );

@@ -2,7 +2,7 @@ import { memo, useCallback, useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { Ionicons, SegmentedControl, type SegmentedControlOption } from '@/components/ui';
+import { Icon, SegmentedControl, type SegmentedControlOption } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
@@ -158,7 +158,7 @@ const DictionarySortBarComponent = ({
         >
           {countLabel}
         </ThemedText>
-        <Ionicons
+        <Icon
           color={isScoped ? colors.tint : colors.textTertiary}
           // The icon says which of the two things the control does, so the
           // affordance is never guessed from the label alone.

@@ -2,11 +2,11 @@ import { EnhancedImage } from '@/components/ui';
 import { BaseCard } from '@/components/common';
 import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { TIMING_CONSTANTS } from '@/constants/animation';
-import { LAYOUT, LINE_HEIGHT_MULTIPLIERS, SCREEN_WIDTH, TEXT_STYLES } from '@/constants/layout';
+import { GOLDEN_RATIO, LAYOUT, LINE_HEIGHT_MULTIPLIERS, TEXT_STYLES } from '@/constants/layout';
 import { getArticleRoute } from '@/constants/routes';
 import { useArticlePrefetch } from '@/hooks/articles/useArticlePrefetch';
 import { useColors } from '@/hooks/theme/useColors';
@@ -15,9 +15,8 @@ import type { BaseCardProps } from '@/types/ui/card.types';
 import { getArticleMetadata } from '@/utils/stringUtils';
 
 // Static constants - computed once at module load
-const CARD_WIDTH = SCREEN_WIDTH - LAYOUT.SCREEN_HORIZONTAL_PADDING * 2;
-const IMAGE_HEIGHT = Math.round(CARD_WIDTH / 1.618); // Golden ratio
-const GRADIENT_HEIGHT = Math.round(IMAGE_HEIGHT * 0.6);
+/** The scrim covers the lower part of the image, behind the overlaid title. */
+const GRADIENT_HEIGHT_RATIO = 0.6;
 
 type ArticleCardProps = Omit<
   BaseCardProps,
@@ -38,7 +37,6 @@ const styles = StyleSheet.create({
   },
   gradientOverlay: {
     bottom: 0,
-    height: GRADIENT_HEIGHT,
     left: 0,
     position: 'absolute',
     right: 0,
@@ -50,7 +48,6 @@ const styles = StyleSheet.create({
   imageContainer: {
     borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    height: IMAGE_HEIGHT,
     position: 'relative',
     width: '100%',
   },
@@ -91,6 +88,15 @@ export function ArticleCard({
   const colors = useColors();
   const router = useRouter();
   const prefetchArticle = useArticlePrefetch();
+  const { width: windowWidth } = useWindowDimensions();
+
+  // Sized from the full-width card even inside the narrower slider, so every
+  // article image has the same height. From the live window, not the launch
+  // width: an Android 16 tablet or foldable resizes under a running app.
+  const imageHeight = Math.round(
+    (windowWidth - LAYOUT.SCREEN_HORIZONTAL_PADDING * 2) / GOLDEN_RATIO,
+  );
+  const gradientHeight = Math.round(imageHeight * GRADIENT_HEIGHT_RATIO);
 
   // A native gradient, not a Skia canvas: this card repeats down a list, and a
   // canvas per row is a GPU surface per row for what is a static scrim.
@@ -121,14 +127,17 @@ export function ArticleCard({
       onPress={handlePress}
       onPressIn={handlePressIn}
     >
-      <View style={styles.imageContainer}>
+      <View style={[styles.imageContainer, { height: imageHeight }]}>
         <EnhancedImage
           style={styles.image}
           source={imageUrl}
           recyclingKey={`article-${article.id}`}
           transition={TIMING_CONSTANTS.TRANSITION_DELAY}
         />
-        <View style={[styles.gradientOverlay, gradientStyle]} pointerEvents="none" />
+        <View
+          style={[styles.gradientOverlay, { height: gradientHeight }, gradientStyle]}
+          pointerEvents="none"
+        />
 
         <View style={styles.overlayTextContainer}>
           <ThemedText

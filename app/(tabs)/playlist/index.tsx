@@ -1,4 +1,4 @@
-import { ListSeparator, LoadingState } from '@/components/common';
+import { ErrorState, ListSeparator, LoadingState } from '@/components/common';
 import { useFocusEffect } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import type { JSX } from 'react';
@@ -155,6 +155,8 @@ export default function PlaylistScreen(): JSX.Element {
     sortedReadingList,
     isReadingListLoading,
     shouldShowInitialLoading,
+    readingListLoadFailed,
+    retryReadingList,
     handleArticlePlay,
     handleDelete,
     enhancedTracksError,
@@ -174,7 +176,8 @@ export default function PlaylistScreen(): JSX.Element {
     }
   }, [enhancedTracksError, showToast]);
 
-  const shouldShowEmpty = !hasArticles && canShowEmpty && !isReadingListLoading;
+  const shouldShowEmpty =
+    !hasArticles && canShowEmpty && !isReadingListLoading && !readingListLoadFailed;
 
   const listContainerStyle = useMemo(
     () => ({
@@ -235,6 +238,17 @@ export default function PlaylistScreen(): JSX.Element {
     return (
       <ThemedView useSafeArea={false} style={styles.container}>
         <LoadingState />
+      </ThemedView>
+    );
+  }
+
+  if (readingListLoadFailed) {
+    return (
+      <ThemedView useSafeArea={false} style={styles.container}>
+        <ErrorState
+          message={STRINGS.FAILED_TO_LOAD_BOOKMARKS}
+          onRetry={() => void retryReadingList()}
+        />
       </ThemedView>
     );
   }

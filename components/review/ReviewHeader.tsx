@@ -1,4 +1,4 @@
-import { Ionicons } from '@/components/ui';
+import { Icon } from '@/components/ui';
 import { ProgressBar } from '@/components/common';
 import { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -188,7 +188,7 @@ export const ReviewHeader = ({
           style={({ pressed }) => [STATIC_STYLES.close, pressed && STATIC_STYLES.closePressed]}
           onPress={handleClose}
         >
-          <Ionicons
+          <Icon
             color={colors.secondaryText}
             // The outline cut: Ionicons' plain `close` is the filled, heavy-stroke
             // variant, which without a circle around it reads as a bold mark.
