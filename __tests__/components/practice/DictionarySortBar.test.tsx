@@ -4,13 +4,10 @@
  * The count on the right of this bar does three jobs: it says how many words are
  * below it, it names the active scope, and it is the control that changes both.
  *
- * It DOES restate the growth card's headline while the list is unfiltered. An
- * attempt to suppress that was reverted: the card's number comes from a 30-day
- * series of parsed `created_at`s and can legitimately be smaller than the number
- * of rows, so hiding this one would hide the discrepancy too. The visible text
- * and the accessible name are therefore always the same string — a control whose
- * accessible name does not contain its visible label cannot be reached by voice
- * input (WCAG 2.5.3).
+ * It is the screen's only word count now that the growth card above it is gone,
+ * and it is always shown, filtered or not. The visible text and the accessible
+ * name are always the same string — a control whose accessible name does not
+ * contain its visible label cannot be reached by voice input (WCAG 2.5.3).
  */
 
 import { fireEvent, render } from '@testing-library/react-native';

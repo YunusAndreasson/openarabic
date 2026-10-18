@@ -21,6 +21,8 @@ import {
   TEXT_STYLES,
 } from '@/constants/layout';
 import { useArticleScrollHandler } from '@/hooks/articles/useArticleScrollHandler';
+import { useMiniPlayerHeight } from '@/hooks/audio/useMiniPlayerHeight';
+import { useShouldShowMiniPlayer } from '@/hooks/audio/useShouldShowMiniPlayer';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
@@ -106,8 +108,9 @@ const styles = StyleSheet.create({
   bookText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     letterSpacing: TEXT_STYLES.AUTHOR_BYLINE.letterSpacing,
+    // No `fontStyle: 'italic'`: no Inter italic face is bundled, so it rendered
+    // as the platform's synthesised slant of the regular face.
     marginTop: LAYOUT.SPACING.TINY,
-    fontStyle: 'italic',
   },
 });
 
@@ -254,10 +257,20 @@ const ArticleContentInternal = function ArticleContent({
   // React Compiler auto-memoizes
   const footerComponent = <RelatedArticlesSection article={article} articlesData={articlesData} />;
 
+  // The reader hosts its own MiniPlayer (app/article/[id].tsx), floating at
+  // `insets.bottom + SMALL` and at least 112pt tall. With only the reading space
+  // below the list, the end of every article — the last related card, or with
+  // none the last Arabic line — sat under the player for as long as anything
+  // played. Same arithmetic as `useMiniPlayerClearance`, which is for tab
+  // screens and drops the Android inset the tab bar owns; a modal has no tab bar.
+  const shouldShowMiniPlayer = useShouldShowMiniPlayer();
+  const miniPlayerHeight = useMiniPlayerHeight();
+  const miniPlayerClearance = shouldShowMiniPlayer ? miniPlayerHeight + LAYOUT.SPACING.SMALL : 0;
+
   // React Compiler auto-memoizes
   const contentContainerStyle = {
     paddingTop: headerHeight,
-    paddingBottom: insets.bottom + COMFORTABLE_READING_SPACE,
+    paddingBottom: insets.bottom + miniPlayerClearance + COMFORTABLE_READING_SPACE,
   };
 
   // React Compiler auto-memoizes

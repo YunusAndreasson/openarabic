@@ -152,46 +152,16 @@ describe('ReviewHeader', () => {
     });
   });
 
-  // The run counter is the only thing in the session that rewards the learner
-  // while they are still in it, and it was visual-only — a caption fading in
-  // beside a progress bar nobody looks at mid-answer.
-  describe('Recall run milestones', () => {
-    test('the run being worth showing is also worth feeling', () => {
+  // The "N in a row" counter is gone: a scoreboard beside the progress bar, a
+  // flattering count (re-asks and "Barely" included) and a second haptic for a
+  // grade already felt. The header says how far through the session you are,
+  // and nothing else.
+  describe('No run counter', () => {
+    test('the header carries progress and the way out, nothing else', () => {
       const { lightFeedback } = require('@/utils/haptics');
-      const { rerender } = render(<ReviewHeader progress={1} maxProgress={10} recallRun={2} />);
-      // Two right answers is just Tuesday — nothing is shown, nothing fires.
-      expect(lightFeedback).not.toHaveBeenCalled();
+      const { queryByText } = render(<ReviewHeader progress={50} maxProgress={50} />);
 
-      rerender(<ReviewHeader progress={2} maxProgress={10} recallRun={3} />);
-      expect(lightFeedback).toHaveBeenCalledTimes(1);
-    });
-
-    // Buzzing every correct card turns the reward into wallpaper, and it would
-    // land right behind the grade haptic that caused it.
-    test('every card in a run does not buzz', () => {
-      const { lightFeedback } = require('@/utils/haptics');
-      const { rerender } = render(<ReviewHeader progress={1} maxProgress={10} recallRun={3} />);
-      jest.mocked(lightFeedback).mockClear();
-
-      rerender(<ReviewHeader progress={2} maxProgress={10} recallRun={4} />);
-      rerender(<ReviewHeader progress={3} maxProgress={10} recallRun={5} />);
-      expect(lightFeedback).not.toHaveBeenCalled();
-
-      // ...but the fifth beyond the first milestone is an event again.
-      rerender(<ReviewHeader progress={4} maxProgress={10} recallRun={8} />);
-      expect(lightFeedback).toHaveBeenCalledTimes(1);
-    });
-
-    // A run that breaks and a remount mid-session must not re-congratulate a
-    // milestone the learner already felt.
-    test('only a rising run fires', () => {
-      const { lightFeedback } = require('@/utils/haptics');
-      const { rerender } = render(<ReviewHeader progress={1} maxProgress={10} recallRun={3} />);
-      jest.mocked(lightFeedback).mockClear();
-
-      rerender(<ReviewHeader progress={2} maxProgress={10} recallRun={0} />);
-      rerender(<ReviewHeader progress={3} maxProgress={10} recallRun={0} />);
-
+      expect(queryByText(/in a row/)).toBeNull();
       expect(lightFeedback).not.toHaveBeenCalled();
     });
   });

@@ -1,17 +1,18 @@
 /**
  * The sheet under the practice screen's "Reviews done" tile.
  *
- * Two things are worth guarding, and neither is about layout:
+ * What is worth guarding is not layout:
  *
- *  1. the three headline numbers say what they mean — the total is exact, the
- *     two averages are marked as averages, and an average with no denominator
- *     is the empty metric rather than a division by zero rendered as NaN or 0;
- *  2. a pending or failed streak fetch shows "—", not a per-day average
- *     computed against zero study days. That is the same rule the streak tile
- *     on the screen above already follows, and for the same reason.
+ *  1. the two headline numbers say what they mean — the total is exact, the
+ *     per-word average is marked as an average, and a zero is printed bare
+ *     rather than as an approximation of nothing;
+ *  2. there is no per-study-day average. It was divided by a study-day ledger
+ *     that undercounts by a multiple, so it could be wrong by ten times;
+ *  3. the copy reads the count for what it is — every grade, right or wrong —
+ *     and never as mastery.
  */
 
-import { describe, expect, jest, test } from '@jest/globals';
+import { describe, expect, test } from '@jest/globals';
 import { render, type RenderResult } from '@testing-library/react-native';
 import { State } from 'ts-fsrs';
 
@@ -19,33 +20,7 @@ import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
 import { rootId } from '@/__tests__/helpers/ids';
 import { PracticeDepthBreakdown } from '@/components/practice/PracticeDepthBreakdown';
 import { STRINGS } from '@/constants/strings';
-import type { StudyStreak } from '@/services/studyStreak';
 import type { StudyWord } from '@/types/vocabulary.types';
-
-/**
- * The `mock` prefix is what lets babel-plugin-jest-hoist reference this from
- * inside the factory below, which is hoisted above every other statement in the
- * file. A plain closure over a mutable object — no `require` of this file from
- * inside itself, which would tie the mock to the file's own path and break the
- * moment it is renamed.
- */
-const mockStreak: { streak: StudyStreak | null } = { streak: null };
-
-jest.mock('@/hooks/practice/useStudyStreak', () => ({
-  useStudyStreak: () => mockStreak,
-}));
-
-const setStreak = (totalReadingDays: number | null): void => {
-  mockStreak.streak =
-    totalReadingDays === null
-      ? null
-      : {
-          currentStreak: 1,
-          longestStreak: 1,
-          lastReadingDate: new Date(),
-          totalReadingDays,
-        };
-};
 
 const withReps = (id: number, reps: number): StudyWord =>
   createTestWord({
@@ -92,61 +67,68 @@ function renderedTextInOrder(view: RenderResult): string[] {
 }
 
 describe('PracticeDepthBreakdown', () => {
-  test('the headline is the exact total, and the two averages are marked as such', () => {
-    setStreak(3);
+  test('the headline is the exact total, and the per-word average is marked as one', () => {
     const view = render(<PracticeDepthBreakdown studyWords={words} />);
 
     // 15 + 6 + 2 + 1 = 24 grades given. Exact, so printed bare.
     expect(view.getByText('24')).toBeTruthy();
-    // 24 over 3 study days, and 24 over all 5 saved words — including the one
-    // with no reviews, because the rows below count it too. Both are means, so
-    // both carry the marker that distinguishes them from the exact count.
-    expect(view.getByText(average(8))).toBeTruthy();
+    // 24 over all 5 saved words — including the one with no reviews, because
+    // the rows below count it too. A mean, so it carries the marker that
+    // distinguishes it from the exact count.
     expect(view.getByText(average(5))).toBeTruthy();
   });
 
-  test('an unread streak shows the empty metric, never an average over zero days', () => {
-    setStreak(null);
+  test('there is no per-study-day average', () => {
+    // Its denominator undercounted by a multiple; `≈` could not make it true.
     const view = render(<PracticeDepthBreakdown studyWords={words} />);
 
-    expect(view.getByText(STRINGS.EMPTY_METRIC)).toBeTruthy();
-    // The exact numbers are unaffected by a failed streak fetch.
-    expect(view.getByText('24')).toBeTruthy();
-    expect(view.getByText(average(5))).toBeTruthy();
+    expect(view.queryByText(average(8))).toBeNull();
+    // Two readouts: Total and Per word.
+    expect(view.getByText(STRINGS.DEPTH_METRIC_TOTAL)).toBeTruthy();
+    expect(view.getByText(STRINGS.DEPTH_METRIC_PER_WORD)).toBeTruthy();
   });
 
-  test('a vocabulary with no reviews divides by nothing and says so', () => {
-    setStreak(0);
+  test('a vocabulary with no reviews prints exact zeros, not approximations', () => {
     const view = render(<PracticeDepthBreakdown studyWords={[withReps(1, 0)]} />);
 
-    // Per study day has no denominator at all and says so. Per word divides by a
-    // real word, so its answer is an exact zero — printed bare, matching the
-    // Total tile beside it rather than claiming to approximate something.
-    expect(view.getAllByText(STRINGS.EMPTY_METRIC)).toHaveLength(1);
+    // Per word divides by a real word, so its answer is an exact zero — printed
+    // bare, matching the Total tile beside it rather than claiming to
+    // approximate something.
+    expect(view.queryByText(STRINGS.EMPTY_METRIC)).toBeNull();
     expect(view.queryByText(average(0))).toBeNull();
     expect(view.queryByText('NaN')).toBeNull();
     expect(view.getByText(STRINGS.DEPTH_EMPTY)).toBeTruthy();
   });
 
   test('a real average below a half says so, rather than rounding to zero', () => {
-    // One review across three study days. `≈0` beside a Total of `1` reads as a
-    // contradiction, and this is the first-week account the sheet should be
+    // One review across three saved words. `≈0` beside a Total of `1` reads as
+    // a contradiction, and this is the first-week account the sheet should be
     // least discouraging to.
-    setStreak(3);
     const view = render(
       <PracticeDepthBreakdown studyWords={[withReps(1, 1), withReps(2, 0), withReps(3, 0)]} />,
     );
 
-    // Both averages are real and both are under a half: 1 ÷ 3 days, 1 ÷ 3 words.
-    expect(view.getAllByText(STRINGS.DEPTH_AVERAGE_UNDER_ONE)).toHaveLength(2);
+    expect(view.getByText(STRINGS.DEPTH_AVERAGE_UNDER_ONE)).toBeTruthy();
     expect(view.queryByText(average(0))).toBeNull();
     expect(view.queryByText(STRINGS.EMPTY_METRIC)).toBeNull();
+  });
+
+  test('the copy reads a review count as grades given, never as mastery', () => {
+    // `fsrs_reps` counts Again as well as Good, so a word forgotten again and
+    // again sits in the deepest band. Nothing on this sheet may call that band
+    // easy, reliable or "drilled".
+    const view = render(<PracticeDepthBreakdown studyWords={words} />);
+    const text = renderedTextInOrder(view).join(' ').toLowerCase();
+
+    for (const claim of ['reliabl', 'drilled', 'ask least', 'bedding in', 'mastered', 'easy']) {
+      expect(text).not.toContain(claim);
+    }
+    expect(view.getByText(STRINGS.DEPTH_EXPLAINER)).toBeTruthy();
   });
 
   test('"per word" counts every saved word, not only the practised ones', () => {
     // The bug: dividing by reviewed words alone printed "≈12 per word" directly
     // above a row saying 3 of the 4 words had never been reviewed.
-    setStreak(2);
     const view = render(
       <PracticeDepthBreakdown
         studyWords={[withReps(1, 12), withReps(2, 0), withReps(3, 0), withReps(4, 0)]}
@@ -158,7 +140,6 @@ describe('PracticeDepthBreakdown', () => {
   });
 
   test('every band is named, and each carries its own count', () => {
-    setStreak(4);
     const view = render(<PracticeDepthBreakdown studyWords={words} />);
 
     for (const label of [
@@ -187,7 +168,6 @@ describe('PracticeDepthBreakdown', () => {
     // Asserted against literal labels rather than DEPTH_BAND_KEYS: the hook
     // builds its bands BY mapping that constant, so an assertion that references
     // it passes whichever way the constant is pointing.
-    setStreak(4);
     const view = render(<PracticeDepthBreakdown studyWords={words} />);
 
     const order = renderedTextInOrder(view).filter(text =>
@@ -211,11 +191,10 @@ describe('PracticeDepthBreakdown', () => {
     ]);
   });
 
-  test('the three headline tiles are readouts, so none of them claims a disclosure', () => {
+  test('the two headline tiles are readouts, so neither claims a disclosure', () => {
     // These are the same `MetricCard` at the same size as the pressable tiles on
     // the practice screen. Every band row below them that has words is a link and
     // carries a chevron; the tiles are not, so they must not.
-    setStreak(4);
     const view = render(<PracticeDepthBreakdown studyWords={words} />);
 
     // Five bands, one word in each, so five linked rows — and nothing else.
@@ -223,7 +202,6 @@ describe('PracticeDepthBreakdown', () => {
   });
 
   test('a band with words leads somewhere; an empty band does not claim to', () => {
-    setStreak(4);
     // Nothing has been reviewed 10+ times here, so that row must not be a link.
     const view = render(<PracticeDepthBreakdown studyWords={[withReps(1, 3)]} />);
 

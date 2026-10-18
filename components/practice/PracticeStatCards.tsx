@@ -4,7 +4,7 @@
  * The practice home's surface, deliberately shallow, in the order a learner
  * asks about it:
  *
- *   1. what is due today — the number the tab badge shows, directly under the
+ *   1. what is due now — the number the tab badge shows, directly under the
  *      header's Review action, with the week's shape beside it;
  *   2. what you can recall right now, and how deeply it sits;
  *   3. two habit numbers, as tiles.
@@ -20,8 +20,8 @@
  * get deleted, it got put where it can be read properly: the horizon breakdown
  * — the hero's own constellation as bands, each one a door into those words —
  * in /memory-retention; the labelled per-day forecast and the week's slipping
- * counts in /due-words; the growth series on the dictionary screen it
- * describes.
+ * counts in /due-words. (The growth series went further: it could only ever
+ * rise, and it was later removed from the dictionary header too.)
  */
 import { MetricCardGrid } from '@/components/common/MetricCardGrid';
 import { StyleSheet, View } from 'react-native';
@@ -122,7 +122,7 @@ export function PracticeStatCards({
 
   return (
     <View style={styles.container}>
-      {/* Cost: what is due today, and what the week ahead asks of you */}
+      {/* Cost: what is due now, and what each day ahead adds */}
       <WeekAheadCard
         forecast={forecast}
         dueCount={dueWords}

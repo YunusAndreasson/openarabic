@@ -1,31 +1,26 @@
 /**
  * Hook Tests - useEncouragingMetrics
  *
+ * The completion screen's rows. Every row is something the session measured;
+ * the hook assigns no colour and no icon (the screen renders them in one ink),
+ * and there is no encouragement paragraph — its pools asserted intervals that
+ * nothing computed.
+ *
  * Modern Jest 29 Patterns:
  * - @jest/globals explicit imports
  * - renderHook from @testing-library/react-native
  */
 
-import { describe, expect, it, jest, beforeEach, afterEach } from '@jest/globals';
+import { afterEach, beforeEach, describe, expect, jest, test } from '@jest/globals';
 import { renderHook } from '@testing-library/react-native';
 
 import { STRINGS } from '@/constants/strings';
 import { useEncouragingMetrics } from '@/hooks/review/useEncouragingMetrics';
 import type { SessionMetrics } from '@/types/review.types';
-import type { ThemeColors } from '@/types/ui/theme.types';
 
-// Fix Date.now for deterministic pool selection (dayIndex = 0 → pool[0])
 const FIXED_NOW = 0;
 
 describe('useEncouragingMetrics', () => {
-  const mockColors: Partial<ThemeColors> = {
-    error: '#FF0000',
-    tint: '#22AA66',
-    warning: '#FFAA00',
-    success: '#00FF00',
-    info: '#0088FF',
-  };
-
   const baseMetrics: SessionMetrics = {
     firstAttemptKnown: 4,
     firstAttemptUnknown: 1,
@@ -43,199 +38,138 @@ describe('useEncouragingMetrics', () => {
 
   beforeEach(() => {
     dateNowSpy = jest.spyOn(Date, 'now').mockReturnValue(FIXED_NOW);
-    // Messages rotate by LOCAL day; pin the zone to UTC so the fixed instants
-    // below mean the same day on every machine.
-    jest.spyOn(Date.prototype, 'getTimezoneOffset').mockReturnValue(0);
   });
 
   afterEach(() => {
     dateNowSpy.mockRestore();
   });
 
-  describe('Returns null for invalid inputs', () => {
+  describe('Returns null when there is nothing to report', () => {
     test('should return null when sessionMetrics is undefined', () => {
-      const { result } = renderHook(() =>
-        useEncouragingMetrics(undefined, mockColors as ThemeColors, 5),
-      );
-      expect(result.current).toBeNull();
-    });
-
-    test('should return null when colors is undefined', () => {
-      const { result } = renderHook(() => useEncouragingMetrics(baseMetrics, undefined, 5));
+      const { result } = renderHook(() => useEncouragingMetrics(undefined, 5));
       expect(result.current).toBeNull();
     });
 
     test('should return null when wordsReviewed is 0', () => {
       const emptyMetrics: SessionMetrics = { ...baseMetrics, wordsReviewed: 0 };
-      const { result } = renderHook(() =>
-        useEncouragingMetrics(emptyMetrics, mockColors as ThemeColors, 5),
-      );
+      const { result } = renderHook(() => useEncouragingMetrics(emptyMetrics, 5));
       expect(result.current).toBeNull();
     });
   });
 
-  describe('Traffic light metrics structure', () => {
-    test('should return 3 metrics when session duration is 0', () => {
-      const { result } = renderHook(() =>
-        useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 5),
-      );
+  describe('Row structure', () => {
+    test('should return 3 rows when session duration is 0', () => {
+      const { result } = renderHook(() => useEncouragingMetrics(baseMetrics, 5));
 
-      expect(result.current?.metrics).toHaveLength(3);
-      expect(result.current?.metrics[0].type).toBe('due');
-      expect(result.current?.metrics[1].type).toBe('daily_streak');
-      expect(result.current?.metrics[2].type).toBe('mastery');
+      expect(result.current?.map(row => row.type)).toEqual(['due', 'daily_streak', 'mastery']);
     });
 
-    test('should return 4 metrics including duration when session has elapsed time', () => {
+    test('should return 4 rows including duration when session has elapsed time', () => {
       // startTime 2 minutes ago
       const metricsWithDuration: SessionMetrics = { ...baseMetrics, startTime: -120000 };
-      const { result } = renderHook(() =>
-        useEncouragingMetrics(metricsWithDuration, mockColors as ThemeColors, 5),
-      );
+      const { result } = renderHook(() => useEncouragingMetrics(metricsWithDuration, 5));
 
-      expect(result.current?.metrics).toHaveLength(4);
-      expect(result.current?.metrics[0].type).toBe('due');
-      expect(result.current?.metrics[1].type).toBe('duration');
-      expect(result.current?.metrics[2].type).toBe('daily_streak');
-      expect(result.current?.metrics[3].type).toBe('mastery');
+      expect(result.current?.map(row => row.type)).toEqual([
+        'due',
+        'duration',
+        'daily_streak',
+        'mastery',
+      ]);
     });
 
-    test('should use correct colors for each metric type', () => {
-      const metricsWithDuration: SessionMetrics = { ...baseMetrics, startTime: -120000 };
-      const { result } = renderHook(() =>
-        useEncouragingMetrics(metricsWithDuration, mockColors as ThemeColors, 5),
-      );
+    // One ink: the rows used to carry a hue and an icon each (a rainbow of
+    // tinted squares). What a row looks like is the screen's decision.
+    test('rows carry text and kind only — no colour, no icon', () => {
+      const { result } = renderHook(() => useEncouragingMetrics(baseMetrics, 5));
 
-      expect(result.current?.metrics[0].color).toBe(mockColors.tint);
-      expect(result.current?.metrics[1].color).toBe(mockColors.info);
-      expect(result.current?.metrics[2].color).toBe(mockColors.warning);
-      expect(result.current?.metrics[3].color).toBe(mockColors.success);
+      for (const row of result.current ?? []) {
+        expect(Object.keys(row).sort()).toEqual(['text', 'type']);
+      }
     });
   });
 
-  describe('Due words metric (RED)', () => {
+  describe('Words reviewed', () => {
     test('should show singular "word" for 1 word reviewed', () => {
       const singleWordMetrics: SessionMetrics = { ...baseMetrics, wordsReviewed: 1 };
-      const { result } = renderHook(() =>
-        useEncouragingMetrics(singleWordMetrics, mockColors as ThemeColors, 0),
-      );
+      const { result } = renderHook(() => useEncouragingMetrics(singleWordMetrics, 0));
 
-      expect(result.current?.metrics[0].text).toBe('1 word reviewed');
+      expect(result.current?.[0]?.text).toBe('1 word reviewed');
     });
 
     test('should show plural "words" for multiple words reviewed', () => {
-      const { result } = renderHook(() =>
-        useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 0),
-      );
+      const { result } = renderHook(() => useEncouragingMetrics(baseMetrics, 0));
 
-      expect(result.current?.metrics[0].text).toBe('5 words reviewed');
-    });
-
-    test('should mark the due metric as done', () => {
-      const { result } = renderHook(() =>
-        useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 0),
-      );
-
-      expect(result.current?.metrics[0].icon).toBe('checkmark-done');
+      expect(result.current?.[0]?.text).toBe(STRINGS.METRIC_WORDS_REVIEWED(5));
+      expect(result.current?.[0]?.text).toBe('5 words reviewed');
     });
   });
 
-  describe('Duration metric (BLUE)', () => {
+  describe('Duration', () => {
     test('should show formatted duration for a 2-minute session', () => {
       const metricsWithDuration: SessionMetrics = { ...baseMetrics, startTime: -120000 };
-      const { result } = renderHook(() =>
-        useEncouragingMetrics(metricsWithDuration, mockColors as ThemeColors, 0),
-      );
+      const { result } = renderHook(() => useEncouragingMetrics(metricsWithDuration, 0));
 
-      expect(result.current?.metrics[1].text).toBe('2m session');
-      expect(result.current?.metrics[1].icon).toBe('hourglass-outline');
+      expect(result.current?.[1]?.text).toBe('2m session');
     });
 
     test('should show seconds only for short sessions', () => {
       const metricsWithDuration: SessionMetrics = { ...baseMetrics, startTime: -45000 };
-      const { result } = renderHook(() =>
-        useEncouragingMetrics(metricsWithDuration, mockColors as ThemeColors, 0),
-      );
+      const { result } = renderHook(() => useEncouragingMetrics(metricsWithDuration, 0));
 
-      expect(result.current?.metrics[1].text).toBe('45s session');
+      expect(result.current?.[1]?.text).toBe('45s session');
     });
 
     test('should show minutes and seconds for mixed duration', () => {
       const metricsWithDuration: SessionMetrics = { ...baseMetrics, startTime: -150000 };
-      const { result } = renderHook(() =>
-        useEncouragingMetrics(metricsWithDuration, mockColors as ThemeColors, 0),
-      );
+      const { result } = renderHook(() => useEncouragingMetrics(metricsWithDuration, 0));
 
-      expect(result.current?.metrics[1].text).toBe('2m 30s session');
+      expect(result.current?.[1]?.text).toBe('2m 30s session');
     });
 
-    test('should skip duration metric when session duration is 0', () => {
-      const { result } = renderHook(() =>
-        useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 0),
-      );
+    test('should skip the duration row when session duration is 0', () => {
+      const { result } = renderHook(() => useEncouragingMetrics(baseMetrics, 0));
 
-      const durationMetric = result.current?.metrics.find(m => m.type === 'duration');
-      expect(durationMetric).toBeUndefined();
+      expect(result.current?.find(row => row.type === 'duration')).toBeUndefined();
     });
   });
 
-  describe('Daily streak metric (YELLOW)', () => {
-    test('should show "First session today!" when dailyStreak is 0', () => {
-      const { result } = renderHook(() =>
-        useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 0),
-      );
+  describe('Daily streak', () => {
+    test('should say it is the first session today when dailyStreak is 0', () => {
+      const { result } = renderHook(() => useEncouragingMetrics(baseMetrics, 0));
 
-      expect(result.current?.metrics[1].text).toBe('First session today!');
+      expect(result.current?.[1]?.text).toBe(STRINGS.METRIC_FIRST_SESSION_TODAY);
     });
 
-    test('should show "Streak started!" when dailyStreak is 1', () => {
-      const { result } = renderHook(() =>
-        useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 1),
-      );
+    test('should say the streak started when dailyStreak is 1', () => {
+      const { result } = renderHook(() => useEncouragingMetrics(baseMetrics, 1));
 
-      expect(result.current?.metrics[1].text).toBe('Streak started!');
+      expect(result.current?.[1]?.text).toBe(STRINGS.METRIC_STREAK_STARTED);
     });
 
     test('should show "X-day streak" when dailyStreak is greater than 1', () => {
-      const { result } = renderHook(() =>
-        useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 7),
-      );
+      const { result } = renderHook(() => useEncouragingMetrics(baseMetrics, 7));
 
-      expect(result.current?.metrics[1].text).toBe('7-day streak');
-    });
-
-    test('should have flame icon for streak metric', () => {
-      const { result } = renderHook(() =>
-        useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 5),
-      );
-
-      expect(result.current?.metrics[1].icon).toBe('flame');
+      expect(result.current?.[1]?.text).toBe('7-day streak');
     });
   });
 
-  describe('Mastery metric (GREEN)', () => {
+  describe('Mastered / strengthened', () => {
     // Counts the words FSRS actually rewarded — recalled cleanly on the first
     // attempt — not every word the session touched. baseMetrics is 4 clean of 5
     // reviewed, so the miss must not be counted as strengthened.
     test('should show cleanly recalled words strengthened when no words are mastered', () => {
-      const noMasteryMetrics: SessionMetrics = {
-        ...baseMetrics,
-        masteredWords: 0,
-      };
-      const { result } = renderHook(() =>
-        useEncouragingMetrics(noMasteryMetrics, mockColors as ThemeColors, 0),
-      );
+      const noMasteryMetrics: SessionMetrics = { ...baseMetrics, masteredWords: 0 };
+      const { result } = renderHook(() => useEncouragingMetrics(noMasteryMetrics, 0));
 
-      expect(result.current?.metrics[2].text).toBe('4 words strengthened');
-      expect(result.current?.metrics[2].icon).toBe('trending-up');
+      expect(result.current?.[2]?.text).toBe('4 words strengthened');
     });
 
     // A session where nothing was recalled has no strengthened words to report,
-    // so the green slot is dropped rather than claiming the whole session.
-    // Telling a learner who missed all five that they strengthened five is
-    // contradicted by the session they just sat through, and by FSRS, which
-    // lowered stability on every one of them.
-    test('should omit the strengthened metric when nothing was recalled', () => {
+    // so the row is dropped rather than claiming the whole session. Telling a
+    // learner who missed all five that they strengthened five is contradicted
+    // by the session they just sat through, and by FSRS, which lowered
+    // stability on every one of them.
+    test('should omit the strengthened row when nothing was recalled', () => {
       const noKnownMetrics: SessionMetrics = {
         ...baseMetrics,
         masteredWords: 0,
@@ -245,174 +179,15 @@ describe('useEncouragingMetrics', () => {
         firstAttemptKnown: 0,
         firstAttemptUnknown: 5,
       };
-      const { result } = renderHook(() =>
-        useEncouragingMetrics(noKnownMetrics, mockColors as ThemeColors, 0),
-      );
+      const { result } = renderHook(() => useEncouragingMetrics(noKnownMetrics, 0));
 
-      expect(result.current?.metrics.some(metric => metric.type === 'mastery')).toBe(false);
+      expect(result.current?.some(row => row.type === 'mastery')).toBe(false);
     });
 
-    test('should show singular "word mastered" for 1 word', () => {
-      const { result } = renderHook(() =>
-        useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 0),
-      );
-
-      expect(result.current?.metrics[2].text).toBe('1 word mastered');
-    });
-
-    test('should show plural "words mastered" for multiple words', () => {
-      const multiMasteryMetrics: SessionMetrics = { ...baseMetrics, masteredWords: 3 };
-      const { result } = renderHook(() =>
-        useEncouragingMetrics(multiMasteryMetrics, mockColors as ThemeColors, 0),
-      );
-
-      expect(result.current?.metrics[2].text).toBe('3 words mastered');
-    });
-
-    test('should have trophy icon for mastery metric', () => {
-      const { result } = renderHook(() =>
-        useEncouragingMetrics(baseMetrics, mockColors as ThemeColors, 0),
-      );
-
-      expect(result.current?.metrics[2].icon).toBe('trophy');
-    });
-  });
-
-  describe('Contextual educational text', () => {
-    test('should return strong pool text when known ratio >= 70%', () => {
-      const strongMetrics: SessionMetrics = {
-        ...baseMetrics,
-        firstAttemptKnown: 8,
-        firstAttemptUnknown: 2,
-        wordsReviewed: 10,
-        wordsKnown: 8,
-        wordsUnknown: 2,
-      };
-      const { result } = renderHook(() =>
-        useEncouragingMetrics(strongMetrics, mockColors as ThemeColors, 0),
-      );
-
-      expect(result.current?.educationalText).toBe(STRINGS.SESSION_ED_STRONG_POOL[0]);
-    });
-
-    test('should return struggle pool text when known ratio < 40%', () => {
-      const weakMetrics: SessionMetrics = {
-        ...baseMetrics,
-        firstAttemptKnown: 3,
-        firstAttemptUnknown: 7,
-        wordsReviewed: 10,
-        wordsKnown: 3,
-        wordsUnknown: 7,
-      };
-      const { result } = renderHook(() =>
-        useEncouragingMetrics(weakMetrics, mockColors as ThemeColors, 0),
-      );
-
-      expect(result.current?.educationalText).toBe(STRINGS.SESSION_ED_STRUGGLE_POOL[0]);
-    });
-
-    test('should return default pool text for moderate performance', () => {
-      const moderateMetrics: SessionMetrics = {
-        ...baseMetrics,
-        firstAttemptKnown: 5,
-        firstAttemptUnknown: 5,
-        wordsReviewed: 10,
-        wordsKnown: 5,
-        wordsUnknown: 5,
-      };
-      const { result } = renderHook(() =>
-        useEncouragingMetrics(moderateMetrics, mockColors as ThemeColors, 0),
-      );
-
-      expect(result.current?.educationalText).toBe(STRINGS.SESSION_ED_DEFAULT_POOL[0]);
-    });
-
-    test('should return perfect session text for flawless session with 5+ words', () => {
-      const perfectMetrics: SessionMetrics = {
-        ...baseMetrics,
-        firstAttemptKnown: 8,
-        firstAttemptUnknown: 0,
-        wordsReviewed: 8,
-        wordsKnown: 8,
-        wordsUnknown: 0,
-        longestStreak: 8, // matches wordsReviewed (perfect)
-      };
-      const { result } = renderHook(() =>
-        useEncouragingMetrics(perfectMetrics, mockColors as ThemeColors, 0),
-      );
-
-      expect(result.current?.educationalText).toBe(STRINGS.SESSION_ED_PERFECT);
-    });
-
-    test('should return big stability jump text when average stability increase is high', () => {
-      const bigJumpMetrics: SessionMetrics = {
-        ...baseMetrics,
-        firstAttemptKnown: 8,
-        firstAttemptUnknown: 2,
-        wordsReviewed: 10,
-        wordsKnown: 8,
-        wordsUnknown: 2,
-        averageStabilityIncrease: 4.0,
-        longestStreak: 5, // not perfect (5 !== 10)
-      };
-      const { result } = renderHook(() =>
-        useEncouragingMetrics(bigJumpMetrics, mockColors as ThemeColors, 0),
-      );
-
-      expect(result.current?.educationalText).toBe(STRINGS.SESSION_ED_BIG_STABILITY_JUMP);
-    });
-
-    test('should rotate messages on different days', () => {
-      const strongMetrics: SessionMetrics = {
-        ...baseMetrics,
-        firstAttemptKnown: 8,
-        firstAttemptUnknown: 2,
-        wordsReviewed: 10,
-        wordsKnown: 8,
-        wordsUnknown: 2,
-      };
-
-      // Day 0 -> pool[0]
-      dateNowSpy.mockReturnValue(0);
-      const { result: result1 } = renderHook(() =>
-        useEncouragingMetrics(strongMetrics, mockColors as ThemeColors, 0),
-      );
-
-      // Day 1 -> pool[1]
-      dateNowSpy.mockReturnValue(86400000);
-      const { result: result2 } = renderHook(() =>
-        useEncouragingMetrics(strongMetrics, mockColors as ThemeColors, 0),
-      );
-
-      expect(result1.current?.educationalText).toBe(STRINGS.SESSION_ED_STRONG_POOL[0]);
-      expect(result2.current?.educationalText).toBe(STRINGS.SESSION_ED_STRONG_POOL[1]);
-    });
-
-    test('keeps the same message across UTC midnight within one local evening', () => {
-      const strongMetrics: SessionMetrics = {
-        ...baseMetrics,
-        firstAttemptKnown: 8,
-        firstAttemptUnknown: 2,
-        wordsReviewed: 10,
-        wordsKnown: 8,
-        wordsUnknown: 2,
-      };
-      // New York in October (UTC-4): 19:30 and 20:30 local straddle UTC midnight.
-      jest.spyOn(Date.prototype, 'getTimezoneOffset').mockReturnValue(240);
-
-      dateNowSpy.mockReturnValue(Date.UTC(2026, 9, 1, 23, 30));
-      const { result: early } = renderHook(() =>
-        useEncouragingMetrics(strongMetrics, mockColors as ThemeColors, 0),
-      );
-      dateNowSpy.mockReturnValue(Date.UTC(2026, 9, 2, 0, 30));
-      const { result: late } = renderHook(() =>
-        useEncouragingMetrics(strongMetrics, mockColors as ThemeColors, 0),
-      );
-
-      expect(late.current?.educationalText).toBe(early.current?.educationalText);
-    });
-
-    test('uses first attempts for recall copy when a missed word is drilled', () => {
+    // The word was missed and then drilled back. `wordsKnown` counts two recall
+    // events for it, but a miss resets stability before the re-ask builds off
+    // the lower value — nothing here was strengthened.
+    test('does not count a missed-then-drilled word as strengthened', () => {
       const drilledMetrics: SessionMetrics = {
         ...baseMetrics,
         wordsReviewed: 1,
@@ -423,46 +198,37 @@ describe('useEncouragingMetrics', () => {
         masteredWords: 0,
         longestStreak: 2,
       };
+      const { result } = renderHook(() => useEncouragingMetrics(drilledMetrics, 0));
 
-      const { result } = renderHook(() =>
-        useEncouragingMetrics(drilledMetrics, mockColors as ThemeColors, 0),
-      );
+      expect(result.current?.some(row => row.type === 'mastery')).toBe(false);
+    });
 
-      // The word was missed and then drilled back. `wordsKnown` counts two
-      // recall events for it, but a miss resets stability before the re-ask
-      // builds off the lower value — nothing here was strengthened, so the
-      // session cannot both read as a struggle and claim a strengthened word.
-      expect(result.current?.metrics.some(metric => metric.type === 'mastery')).toBe(false);
-      expect(result.current?.educationalText).toBe(STRINGS.SESSION_ED_STRUGGLE_POOL[0]);
+    test('should show singular "word mastered" for 1 word', () => {
+      const { result } = renderHook(() => useEncouragingMetrics(baseMetrics, 0));
+
+      expect(result.current?.[2]?.text).toBe('1 word mastered');
+    });
+
+    test('should show plural "words mastered" for multiple words', () => {
+      const multiMasteryMetrics: SessionMetrics = { ...baseMetrics, masteredWords: 3 };
+      const { result } = renderHook(() => useEncouragingMetrics(multiMasteryMetrics, 0));
+
+      expect(result.current?.[2]?.text).toBe('3 words mastered');
     });
   });
 
   describe('Memoization', () => {
     test('should return same reference when inputs unchanged', () => {
       const { result, rerender } = renderHook(
-        ({
-          metrics,
-          colors,
-          streak,
-        }: {
-          metrics: SessionMetrics;
-          colors: ThemeColors;
-          streak: number;
-        }) => useEncouragingMetrics(metrics, colors, streak),
-        {
-          initialProps: {
-            metrics: baseMetrics,
-            colors: mockColors as ThemeColors,
-            streak: 5,
-          },
-        },
+        ({ metrics, streak }: { metrics: SessionMetrics; streak: number }) =>
+          useEncouragingMetrics(metrics, streak),
+        { initialProps: { metrics: baseMetrics, streak: 5 } },
       );
 
       const firstResult = result.current;
-      rerender({ metrics: baseMetrics, colors: mockColors as ThemeColors, streak: 5 });
-      const secondResult = result.current;
+      rerender({ metrics: baseMetrics, streak: 5 });
 
-      expect(firstResult).toBe(secondResult);
+      expect(result.current).toBe(firstResult);
     });
   });
 });

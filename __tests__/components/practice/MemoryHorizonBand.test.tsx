@@ -1,35 +1,23 @@
+/**
+ * The memory constellation moves its dots when a session changes the field, and
+ * that is all it does. It used to tick a haptic for every landing dot and close
+ * on a commit beat — feedback on a stats screen for no decision the learner
+ * made, right after a session whose every card had already been felt. These
+ * tests hold that the travel, the regrow and the plain re-render stay silent.
+ */
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
-import { act, render } from '@testing-library/react-native';
-import * as Reanimated from 'react-native-reanimated';
+import { render } from '@testing-library/react-native';
 
 import { rootId } from '@/__tests__/helpers/ids';
 import { MemoryHorizonBand } from '@/components/practice/charts/MemoryHorizonBand';
-import { commitFeedback, selectionFeedback } from '@/utils/haptics';
+import { commitFeedback, lightFeedback, selectionFeedback, successFeedback } from '@/utils/haptics';
 import { BIN_COUNT, getHorizonBinIndex } from '@/utils/horizonBandPath';
-
-interface Reaction {
-  prepare: () => number | boolean;
-  react: (current: number | boolean, previous: number | boolean | null) => void;
-}
-
-const mockReactions: Reaction[] = [];
-const mockPendingFeedback: (() => void)[] = [];
-const mockIsFocused = jest.fn(() => true);
-
-jest.mock('expo-router', () => ({
-  useIsFocused: () => true,
-  useNavigation: () => ({ isFocused: mockIsFocused }),
-}));
-
-jest.mock('react-native-worklets', () => ({
-  scheduleOnRN: (callback: (...args: unknown[]) => void, ...args: unknown[]) => {
-    mockPendingFeedback.push(() => callback(...args));
-  },
-}));
 
 jest.mock('@/utils/haptics', () => ({
   commitFeedback: jest.fn(),
+  lightFeedback: jest.fn(),
   selectionFeedback: jest.fn(),
+  successFeedback: jest.fn(),
 }));
 
 function field(days: number | null) {
@@ -47,53 +35,29 @@ function field(days: number | null) {
   };
 }
 
-function queueBeat(kind: 'landing' | 'travel commit' | 'redraw commit') {
-  const view = render(<MemoryHorizonBand {...field(kind === 'redraw commit' ? null : 1)} />);
-  view.rerender(<MemoryHorizonBand {...field(30)} />);
-
-  // Drive an animation frame, then leave the RN callback queued to reproduce
-  // navigation covering Practice between the landing and its feedback.
-  const reaction = mockReactions.at(kind === 'redraw commit' ? -1 : -2);
-  if (!reaction) throw new Error('expected a constellation animation reaction');
-  act(() => {
-    if (kind === 'redraw commit') reaction.react(true, false);
-    else if (kind === 'landing') reaction.react(1, 0);
-    else reaction.react(reaction.prepare(), 0);
-  });
-  expect(mockPendingFeedback).toHaveLength(1);
-}
+const expectSilence = () => {
+  expect(commitFeedback).not.toHaveBeenCalled();
+  expect(lightFeedback).not.toHaveBeenCalled();
+  expect(selectionFeedback).not.toHaveBeenCalled();
+  expect(successFeedback).not.toHaveBeenCalled();
+};
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockReactions.length = 0;
-  mockPendingFeedback.length = 0;
-  mockIsFocused.mockReturnValue(true);
-  jest.spyOn(Reanimated, 'useAnimatedReaction').mockImplementation((prepare, react) => {
-    mockReactions.push({ prepare, react } as Reaction);
-  });
 });
 
-describe('constellation feedback focus', () => {
-  test.each(['landing', 'travel commit', 'redraw commit'] as const)(
-    '%s stays silent if Practice is covered before feedback executes',
-    kind => {
-      queueBeat(kind);
-      mockIsFocused.mockReturnValue(false);
-      act(() => mockPendingFeedback.forEach(callback => callback()));
+describe('constellation stays silent', () => {
+  test('dots travelling to new horizons fire no haptics', () => {
+    const view = render(<MemoryHorizonBand {...field(1)} />);
+    view.rerender(<MemoryHorizonBand {...field(30)} />);
 
-      expect(selectionFeedback).not.toHaveBeenCalled();
-      expect(commitFeedback).not.toHaveBeenCalled();
-    },
-  );
+    expectSilence();
+  });
 
-  test.each(['landing', 'travel commit', 'redraw commit'] as const)(
-    '%s still provides feedback while Practice is focused',
-    kind => {
-      queueBeat(kind);
-      act(() => mockPendingFeedback.forEach(callback => callback()));
+  test('a field regrown out of an empty axis fires no haptics', () => {
+    const view = render(<MemoryHorizonBand {...field(null)} />);
+    view.rerender(<MemoryHorizonBand {...field(30)} />);
 
-      expect(kind === 'landing' ? selectionFeedback : commitFeedback).toHaveBeenCalledTimes(1);
-      expect(kind === 'landing' ? commitFeedback : selectionFeedback).not.toHaveBeenCalled();
-    },
-  );
+    expectSilence();
+  });
 });

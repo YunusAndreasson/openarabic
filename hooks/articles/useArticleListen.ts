@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { OnboardingStep } from '@/constants/onboarding';
+import { isArticleAudioPaused } from '@/hooks/audio/articleAudioStatus';
 import { useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
 import { analytics } from '@/services/analytics';
 import { simpleAudioService } from '@/services/audioPlayer';
@@ -14,7 +15,6 @@ import { useAppSelector } from '@/store/hooks';
 import type { ArticleId } from '@/types/branded.types';
 import { isAudioBusy } from '@/utils/audioUtils';
 import { handleError } from '@/utils/errorHandling';
-import { selectionFeedback } from '@/utils/haptics';
 import { markOnboardingStep } from '@/utils/onboardingStorage';
 
 /**
@@ -43,14 +43,21 @@ export function useArticleListen(
   const handleToggleListen = useCallback(async () => {
     if (!articleId || isAudioBusy()) return;
 
+    // No haptic here: the reader's Listen button fires the press's own
+    // selection tick, and one decision gets one haptic.
     if (isListeningToThisArticle) {
-      selectionFeedback();
       await simpleAudioService.stop();
       return;
     }
 
+    // Paused on this article (by the MiniPlayer, the lock screen or a call):
+    // Listen carries on from where it stopped rather than starting over.
+    if (isCurrentAudioForThisArticle && isArticleAudioPaused(simpleAudioService.getStatus())) {
+      await simpleAudioService.resume();
+      return;
+    }
+
     try {
-      selectionFeedback();
       const track = await enhancedAudioService.generateEnhancedAudioTrack(
         articleId,
         audioPreference,
@@ -75,7 +82,14 @@ export function useArticleListen(
     } catch (error) {
       void handleError(error);
     }
-  }, [articleId, articleTitle, audioPreference, article, isListeningToThisArticle]);
+  }, [
+    articleId,
+    articleTitle,
+    audioPreference,
+    article,
+    isListeningToThisArticle,
+    isCurrentAudioForThisArticle,
+  ]);
 
   return {
     isListeningToThisArticle,

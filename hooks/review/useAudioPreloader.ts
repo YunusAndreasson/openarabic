@@ -47,8 +47,6 @@ function releasePreloadedSources(paths: Set<string>): void {
 interface UseAudioPreloaderReturn {
   /** True only while the first card's audio is being fetched. Blocks the UI. */
   isPreloading: boolean;
-  /** Percentage across the first card's blocking audio files. */
-  progress: number;
   /**
    * The session may start: the first card's audio is cached (or gave up).
    * The remaining files keep downloading in the background, so this is NOT
@@ -102,14 +100,13 @@ function audioUrlsForWord(word: StudyWord): string[] {
  *
  * @param wordQueue - Array of words in the current session
  * @param isSessionComplete - Whether the practice session is complete
- * @returns Preloading state and progress
+ * @returns Preloading state
  */
 export const useAudioPreloader = (
   wordQueue: StudyWord[],
   isSessionComplete: boolean,
 ): UseAudioPreloaderReturn => {
   const [isPreloading, setIsPreloading] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [isReady, setIsReady] = useState(false);
 
   // Track if audio has been preloaded to prevent infinite loops
@@ -230,7 +227,6 @@ export const useAudioPreloader = (
 
       setIsPreloading(true);
       setIsReady(false);
-      setProgress(0);
 
       // Collect all unique audio URLs, first word first — the priority slice
       // below relies on that ordering. A Set does the de-duplication: the
@@ -252,17 +248,9 @@ export const useAudioPreloader = (
       const priority = new Set(priorityUrls);
       const backgroundUrls = audioUrls.filter(url => !priority.has(url));
 
-      // React state reflects only work that can keep the loading screen visible.
-      // Background files are deliberately absent: publishing each completion
-      // would rerender the review screen after the session had already started.
-      let priorityCompleted = 0;
-      let isBlockingFirstCard = true;
-      const trackPriorityProgress = (): void => {
-        priorityCompleted++;
-        if (!isStale() && isBlockingFirstCard) {
-          setProgress((priorityCompleted / priorityUrls.length) * 100);
-        }
-      };
+      // No per-file progress is published. The loading screen used to show a
+      // percentage over these files — two of them, so it read 0 → 50 → 100 —
+      // and publishing each completion only ever bought a rerender.
 
       diagMark('preload.start', {
         words: words.length,
@@ -282,13 +270,10 @@ export const useAudioPreloader = (
         });
         try {
           await Promise.race([
-            Promise.all(
-              priorityUrls.map(url => cacheOne(url, isStale).then(trackPriorityProgress)),
-            ),
+            Promise.all(priorityUrls.map(url => cacheOne(url, isStale))),
             deadline,
           ]);
         } finally {
-          isBlockingFirstCard = false;
           if (deadlineTimer) clearTimeout(deadlineTimer);
         }
       }
@@ -325,8 +310,8 @@ export const useAudioPreloader = (
    * word past the first chunk would reach the screen with nothing cached and
    * fall back to the play-time network path.
    *
-   * Deliberately does NOT bump `runIdRef` or touch `isPreloading` / `isReady` /
-   * `progress`. It shares the session's run id so it dies with the session, and
+   * Deliberately does NOT bump `runIdRef` or touch `isPreloading` / `isReady`.
+   * It shares the session's run id so it dies with the session, and
    * nothing is waiting on it — the loading gate belongs to the first card alone
    * and must not reappear because the queue topped itself up.
    */
@@ -442,7 +427,6 @@ export const useAudioPreloader = (
 
   return {
     isPreloading,
-    progress,
     isReady,
     resolveCached,
     forgetCached,

@@ -261,10 +261,22 @@ const autumnOKLCH = {
 /**
  * Autumn Paper - Parchment backgrounds
  * Hue range: 40-74° (warm sepia)
+ *
+ * `raised` and `outline` exist because the sepia ladder used to run backwards.
+ * Its elevation1 was `light` (L 0.9319), DARKER than the page it sat on
+ * (`lighter`, L 0.9406), so every surface the other two themes raise — inputs,
+ * app-owned sheets, the word tooltip — sank into the page in sepia. And `border`
+ * was that same `light`, so an input's resting edge was painted in its own fill
+ * colour and did not exist. `raised` sits between the page and `lightest` at the
+ * same ~1.03:1 step the light theme takes from page to elevation1; `outline` is
+ * the dedicated border, darker than every surface it outlines (1.13:1 on the
+ * page, 1.17:1 on `raised`), the sepia counterpart of `sage.outline`.
  */
 const autumnPaperOKLCH = {
+  outline: { l: 0.9, c: 0.033, h: 73 }, // Borders — below every sepia surface
   light: { l: 0.9319, c: 0.0301, h: 73.9 }, // #F5E6D3
-  lighter: { l: 0.9406, c: 0.0273, h: 72.8 }, // #F7E9D8
+  lighter: { l: 0.9406, c: 0.0273, h: 72.8 }, // #F7E9D8 — the page
+  raised: { l: 0.951, c: 0.0222, h: 70.2 }, // elevation1 — one step above the page
   lightest: { l: 0.9602, c: 0.0171, h: 67.6 }, // #FAF0E6
 } as const;
 
@@ -292,14 +304,24 @@ const autumnSemanticOKLCH = {
 /**
  * Text Hierarchy - Perceptually uniform progressions
  * Dark mode: Even 6% lightness steps with consistent chroma for harmony
+ *
+ * The receding light and sepia tiers are pinned by contrast, not by taste.
+ * `tertiary`, `secondaryMetadata` and `subtleLabel` used to sit at L 0.58-0.63
+ * (light) and 0.53-0.58 (sepia), between 3.2:1 and 4.4:1 on the page — under
+ * the 4.5:1 AA floor for the 13pt captions they mostly set. Each is now the
+ * lightest value that clears 4.5:1 on its theme's DARKEST text surface (the
+ * page: light L 0.9715, sepia L 0.9406), with a little headroom for hex
+ * rounding. They can recede no further than this; raise any of them only with
+ * the ratio rechecked. Dark already cleared AA everywhere and is unchanged.
  */
 const textHierarchyOKLCH = {
   light: {
     subtitle: { l: 0.3767, c: 0.0256, h: 164.7 }, // #35463E (unchanged)
-    metadata: { l: 0.5229, c: 0.0276, h: 162.4 }, // #5C6F65 (unchanged)
-    secondaryMetadata: { l: 0.6295, c: 0.0309, h: 158.2 }, // #7A8F82 (unchanged)
-    caption: { l: 0.5326, c: 0.0284, h: 163.7 }, // #5E7268 - readable content
-    subtleLabel: { l: 0.62, c: 0.028, h: 160.0 }, // Subtle labels that should recede
+    metadata: { l: 0.5229, c: 0.0276, h: 162.4 }, // #5C6F65 (unchanged) — 4.95:1 on the page
+    secondaryMetadata: { l: 0.54, c: 0.0309, h: 158.2 }, // 4.62:1 on the page (was 0.6295, 3.19:1)
+    caption: { l: 0.5326, c: 0.0284, h: 163.7 }, // #5E7268 - readable content, 4.75:1
+    subtleLabel: { l: 0.54, c: 0.028, h: 160.0 }, // 4.60:1 on the page (was 0.62, 3.31:1)
+    tertiary: { l: 0.535, c: 0.0315, h: 158.1 }, // textTertiary — 4.71:1 (was forest.light, 3.96:1)
   },
   dark: {
     // Even 6% lightness steps so each tier is perceptually distinct.
@@ -313,9 +335,10 @@ const textHierarchyOKLCH = {
   sepia: {
     subtitle: { l: 0.3337, c: 0.0476, h: 51.1 }, // #4A2F1F
     metadata: { l: 0.4287, c: 0.0619, h: 49.4 }, // #6B4530
-    secondaryMetadata: { l: 0.5495, c: 0.0624, h: 65.0 }, // #8B6A4A
+    secondaryMetadata: { l: 0.52, c: 0.0624, h: 65.0 }, // 4.66:1 on the page (was 0.5495, 4.13:1)
     caption: { l: 0.4742, c: 0.0668, h: 51.9 }, // #7A5138 - readable content
-    subtleLabel: { l: 0.58, c: 0.055, h: 55.0 }, // Subtle labels that should recede
+    subtleLabel: { l: 0.52, c: 0.055, h: 55.0 }, // 4.68:1 on the page (was 0.58, 3.65:1)
+    tertiary: { l: 0.515, c: 0.0702, h: 60.0 }, // textTertiary — 4.80:1 (was autumn.light, 4.44:1)
   },
 } as const;
 
@@ -418,7 +441,9 @@ const elevation = {
   },
   sepia: {
     level0: basePalette.autumn.paper.lighter,
-    level1: basePalette.autumn.paper.light,
+    // Above the page, as in the other two themes. This was `paper.light`, which
+    // sits BELOW `lighter` — see `autumnPaperOKLCH`.
+    level1: basePalette.autumn.paper.raised,
     level2: basePalette.autumn.paper.lightest,
     level3: basePalette.sepiaPure.white,
   },
@@ -471,7 +496,9 @@ const lightColors: ThemeColors = {
   background: basePalette.sage.lighter,
   text: basePalette.forest.darkest,
   secondaryText: basePalette.forest.medium,
-  textTertiary: basePalette.forest.light,
+  // Its own value rather than `forest.light` (3.96:1 on the page), which stays
+  // the light theme's `icon`: a glyph needs 3:1, a 13pt caption needs 4.5:1.
+  textTertiary: textHierarchy.light.tertiary,
   border: basePalette.sage.light,
   card: basePalette.pure.white,
   cardBorder: basePalette.sage.light,
@@ -500,6 +527,7 @@ const lightColors: ThemeColors = {
   tintBackground: withAlpha(basePalette.tint.primary, opacity.medium),
   onTint: basePalette.pure.white, // Text/icon color on tint backgrounds
   onError: basePalette.pure.white, // Text/icon on an `error` fill (destructive buttons)
+  onWarning: basePalette.forest.darkest, // Glyph on a `warning` fill: 4.54:1 (white is 3.27)
   // `forest.lighter` measured 2.1:1 against the light tab bar (elevation1,
   // #F8FAF9) — below the 3:1 floor for a glyph, let alone the 4.5:1 the label
   // beside it needs. `medium` reads 6.9:1, which is where Material 3 puts
@@ -566,7 +594,11 @@ const lightColors: ThemeColors = {
 
 const darkColors: ThemeColors = {
   // Core brand colors
-  secondary: basePalette.forest.light, // Lower L = less contrast on dark bg = correctly less prominent
+  // The most recessive tier of the dark text ladder. It was `forest.light`, a
+  // mid-tone that set body and caption text at 3.53:1 on elevation3 and 4.31:1
+  // on a card — under AA. `subtleLabel` is 5.50:1 at worst and still reads as
+  // the quietest ink on the screen.
+  secondary: textHierarchy.dark.subtleLabel,
   background: basePalette.sage.darkest,
   text: basePalette.pure.white,
   secondaryText: textHierarchy.dark.subtitle,
@@ -599,6 +631,7 @@ const darkColors: ThemeColors = {
   tintBackground: withAlpha(basePalette.tint.primaryDark, opacity.medium),
   onTint: basePalette.pure.black, // Dark text/icon on lighter tint in dark mode
   onError: basePalette.pure.black, // Dark error is light enough that black outreads white on it
+  onWarning: basePalette.pure.black, // 9.75:1 on dark warning (white is 2.15)
   // Raised a second rung (medium → light → lighter) now that the label reads off
   // this token too. `forest.light` is 4.6:1 on the dark bar, which the icon could
   // carry but which would have *dimmed* the label: it was inheriting the platform
@@ -669,10 +702,14 @@ const sepiaColors: ThemeColors = {
   background: basePalette.autumn.paper.lighter,
   text: basePalette.autumn.darkest,
   secondaryText: basePalette.autumn.medium,
-  textTertiary: basePalette.autumn.light,
-  border: basePalette.autumn.paper.light,
+  // Its own value rather than `autumn.light` (4.44:1 on the page), which stays
+  // the sepia `icon`.
+  textTertiary: textHierarchy.sepia.tertiary,
+  // `paper.outline`, not `paper.light`: `light` was also elevation1, so an
+  // input's resting border was its own fill colour. See `autumnPaperOKLCH`.
+  border: basePalette.autumn.paper.outline,
   card: basePalette.sepiaPure.white,
-  cardBorder: basePalette.autumn.paper.light,
+  cardBorder: basePalette.autumn.paper.outline,
 
   // Semantic colors
   error: basePalette.autumn.semantic.error,
@@ -698,15 +735,16 @@ const sepiaColors: ThemeColors = {
   tintBackground: withAlpha(basePalette.autumn.accent.primary, opacity.medium),
   onTint: basePalette.sepiaPure.white, // Light text/icon on warm tint backgrounds
   onError: basePalette.sepiaPure.white, // Text/icon on an `error` fill (destructive buttons)
-  // Same correction as the light theme: `autumn.lighter` is 2.3:1 on the sepia
-  // tab bar (autumn.paper.light), `autumn.medium` is 8.2:1. See the light
-  // theme's `tabIconDefault` for why the step is two rungs and not one.
+  onWarning: basePalette.autumn.darkest, // 5.78:1 on sepia warning (white is 2.94)
+  // Same correction as the light theme: `autumn.lighter` is 2.5:1 on the sepia
+  // tab bar (elevation1, `paper.raised`), `autumn.medium` is 8.7:1. See the
+  // light theme's `tabIconDefault` for why the step is two rungs and not one.
   tabIconDefault: basePalette.autumn.medium,
   tabIconSelected: basePalette.autumn.accent.primary,
   // The one theme where the selected label cannot be the tint: the sepia accent
-  // is 3.86:1 on its own tab bar, the last sub-AA text left in the navigation.
+  // is 4.10:1 on its own tab bar, the last sub-AA text left in the navigation.
   // Deepening `autumn.accent.primary` itself would have reached every tinted
-  // surface in the theme, so the label steps to the ink ramp instead — 11.6:1,
+  // surface in the theme, so the label steps to the ink ramp instead — 12.3:1,
   // and still darker than the unselected `autumn.medium` beside it, so selection
   // continues to read as weight. The tint stays where it belongs, on the filled
   // pill and the icon directly above.
@@ -730,7 +768,9 @@ const sepiaColors: ThemeColors = {
   // Reading experience
   toastBorder: basePalette.pure.transparent, // No border needed in sepia mode
   gradientOverlay: basePalette.autumn.paper.lighter, // Warm base for image/background gradients
-  wordTooltipBorder: basePalette.autumn.paper.light,
+  // Same value as `border`, as in the light theme. The tooltip fills with
+  // elevation1, which used to BE `paper.light`, so this edge was invisible.
+  wordTooltipBorder: basePalette.autumn.paper.outline,
 
   // Navigation
   navigationRipple: withAlpha(basePalette.autumn.accent.primary, opacity.strong),

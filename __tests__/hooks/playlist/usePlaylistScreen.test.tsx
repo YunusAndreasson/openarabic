@@ -57,12 +57,6 @@ jest.mock('@/hooks/app/useAppPreloader', () => ({
   useAppPreloader: () => ({ prefetchArticle: mockPrefetchArticle }),
 }));
 
-// Mock useToast
-const mockShowToast = jest.fn();
-jest.mock('@/components/providers', () => ({
-  useToast: () => ({ showToast: mockShowToast }),
-}));
-
 // Mock services - define inline to avoid hoisting issues
 jest.mock('@/services/audioPlayer', () => ({
   simpleAudioService: {
@@ -126,14 +120,7 @@ jest.mock('@/utils/onboardingStorage', () => ({
 
 // Mock constants
 jest.mock('@/constants/animation', () => ({
-  DEFAULT_TOAST_DURATION: 3000,
   TIMING_CONSTANTS: { QUICK_DELAY: 100 },
-}));
-
-jest.mock('@/constants/strings', () => ({
-  STRINGS: {
-    PLAYING_ARABIC_ONLY_THIS_SESSION: 'Playing Arabic only this session',
-  },
 }));
 
 // Mock queries
@@ -257,7 +244,6 @@ describe('usePlaylistScreen', () => {
       });
 
       expect(typeof result.current.handlePlayAll).toBe('function');
-      expect(typeof result.current.handlePlayAllArabicOnly).toBe('function');
       expect(typeof result.current.handleArticlePlay).toBe('function');
       expect(typeof result.current.handleDelete).toBe('function');
     });
@@ -426,68 +412,6 @@ describe('usePlaylistScreen', () => {
           source: 'listen_tab',
         }),
       );
-    });
-  });
-
-  // ============================================================================
-  // ARABIC ONLY PLAYBACK TESTS
-  // ============================================================================
-
-  describe('handlePlayAllArabicOnly', () => {
-    test('shows a toast but does not start an empty Arabic-only playlist', async () => {
-      const tracks = [createEnhancedAudioTrackMock({ articleId: 1 as ArticleId })];
-
-      queryClient.setQueryData(
-        ['enhancedAudioTracks', mockUser.id, AudioLanguage.ARABIC_ONLY],
-        tracks,
-      );
-
-      const { result } = renderHook(() => usePlaylistScreen(), {
-        wrapper: createWrapper(),
-      });
-
-      await waitFor(() => {
-        expect(result.current.sortedEnhancedTracks.length).toBe(1);
-      });
-
-      await act(async () => {
-        await result.current.handlePlayAllArabicOnly();
-      });
-
-      expect(mockShowToast).toHaveBeenCalledWith(
-        'Playing Arabic only this session',
-        expect.any(Number),
-        expect.any(String),
-        'bottom',
-      );
-      expect(mockSimpleAudioService.playPlaylist).not.toHaveBeenCalled();
-      const { analytics } = require('@/services/analytics');
-      expect(analytics.track).not.toHaveBeenCalled();
-      expect(result.current.playbackMode).toBe('none');
-    });
-
-    test('triggers haptic feedback', async () => {
-      const { mediumFeedback } = require('@/utils/haptics');
-      const tracks = [createEnhancedAudioTrackMock({ articleId: 1 as ArticleId })];
-
-      queryClient.setQueryData(
-        ['enhancedAudioTracks', mockUser.id, AudioLanguage.ARABIC_ONLY],
-        tracks,
-      );
-
-      const { result } = renderHook(() => usePlaylistScreen(), {
-        wrapper: createWrapper(),
-      });
-
-      await waitFor(() => {
-        expect(result.current.sortedEnhancedTracks.length).toBe(1);
-      });
-
-      await act(async () => {
-        await result.current.handlePlayAllArabicOnly();
-      });
-
-      expect(mediumFeedback).toHaveBeenCalled();
     });
   });
 

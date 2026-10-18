@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { ColorCodedText, Dot } from '@/components/common';
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 
 /**
@@ -14,18 +15,30 @@ import { useColors } from '@/hooks/theme/useColors';
  * and had the two commonest cases backwards: ال is a prefix painted in the
  * article's colour, ـه is a suffix painted in the possessive's.
  *
+ * Every `grammar.*` colour the reader paints has a row: this is
+ * `GRAMMATICAL_ROLE_COLORS` (constants/arabicWordComponents.ts) read from the
+ * colour's side. It used to stop at eight, so particles (إن، قد), question
+ * words (ما، كم), "this/that" (هذا، ذلك) and the future (سـ، سوف) all appeared
+ * in articles with no name. Two roles borrow a colour there and are named with
+ * it: standalone pronouns (هو، نحن) are painted in the verb-ending colour, and
+ * case endings in the particle colour.
+ *
  * Keys index `colors.grammar`, so the swatches cannot drift from the paint.
  */
 const LEGEND = [
-  { role: 'definiteArticle', label: 'The (ال)' },
-  { role: 'preposition', label: 'Preposition' },
-  { role: 'conjunction', label: 'Joining word' },
-  { role: 'possessive', label: 'Possessive' },
-  { role: 'subjectPrefix', label: 'Subject marker' },
-  { role: 'verbConjugation', label: 'Verb ending' },
-  { role: 'plural', label: 'Plural' },
-  { role: 'negation', label: 'Negation' },
-] as const;
+  'definiteArticle',
+  'preposition',
+  'conjunction',
+  'particle',
+  'possessive',
+  'subjectPrefix',
+  'verbConjugation',
+  'plural',
+  'negation',
+  'interrogative',
+  'demonstrative',
+  'futureTense',
+] as const satisfies readonly (keyof typeof STRINGS.GRAMMAR_LEGEND)[];
 
 /** One worked phrase per combination of parts the legend names. */
 const EXAMPLES = [
@@ -55,14 +68,14 @@ export const ArabicColoringExamples = memo(() => {
       {/* Color Legend */}
       <View style={styles.legendContainer}>
         <ThemedText type="caption" weight="semibold" style={styles.legendTitle}>
-          Color Guide:
+          {STRINGS.GRAMMAR_LEGEND_TITLE}
         </ThemedText>
         <View style={styles.legendRow}>
-          {LEGEND.map(entry => (
-            <View key={entry.label} style={styles.legendItem}>
-              <Dot color={colors.grammar[entry.role]} />
+          {LEGEND.map(role => (
+            <View key={role} style={styles.legendItem}>
+              <Dot color={colors.grammar[role]} />
               <ThemedText type="caption" colorName="textTertiary">
-                {entry.label}
+                {STRINGS.GRAMMAR_LEGEND[role]}
               </ThemedText>
             </View>
           ))}
@@ -100,8 +113,7 @@ export const ArabicColoringExamples = memo(() => {
       {/* Note about single words */}
       <View style={[styles.noteContainer, { borderTopColor: colors.border }]}>
         <ThemedText type="caption" colorName="textTertiary" style={styles.noteText}>
-          Note: Single words like "house" are not colored, only multi-word phrases where component
-          analysis adds educational value.
+          {STRINGS.GRAMMAR_LEGEND_SINGLE_WORD_NOTE}
         </ThemedText>
       </View>
     </View>
@@ -142,7 +154,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start', // Left-align English text
   },
   explanation: {
-    fontStyle: 'italic',
     marginTop: LAYOUT.SPACING.TINY,
   },
   noteContainer: {
@@ -151,7 +162,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
   },
   noteText: {
-    fontStyle: 'italic',
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.4,
   },
 });

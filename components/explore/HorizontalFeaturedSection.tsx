@@ -2,40 +2,29 @@ import type { JSX } from 'react';
 
 import { SectionLabel } from '@/components/common';
 import { STRINGS } from '@/constants/strings';
-import { useMultipleFeaturedArticles } from '@/hooks/articles/useMultipleFeaturedArticles';
-
-import { HorizontalArticleSlider } from './HorizontalArticleSlider';
 import type { Article } from '@/types/articles.types';
 
+import { HorizontalArticleSlider } from './HorizontalArticleSlider';
+
 interface HorizontalFeaturedSectionProps {
+  /** Chosen by `useExploreRails`, already free of texts another rail shows */
+  articles: Article[];
   /**
-   * Articles to select from (can be all articles or filtered subset)
+   * First section under the header or the checklist — the 12px lead-in rather
+   * than the 24px section gap. True when there is no lead rail above it.
    */
-  articlesData: Article[];
-
-  /**
-   * Key to trigger new selections
-   */
-  refreshKey: number;
-
-  /**
-   * Scope identifier for caching ('global', 'category-{id}', etc.)
-   */
-  scope?: string;
+  isFirst?: boolean;
 }
 
 export function HorizontalFeaturedSection({
-  articlesData,
-  refreshKey,
-  scope = 'global',
+  articles,
+  isFirst = false,
 }: HorizontalFeaturedSectionProps): JSX.Element | null {
-  const { articles } = useMultipleFeaturedArticles(articlesData, refreshKey, scope);
-
   if (articles.length === 0) return null;
 
   return (
     <>
-      <SectionLabel title={STRINGS.SECTION_FEATURED} />
+      <SectionLabel title={STRINGS.SECTION_FEATURED} density={isFirst ? 'first' : 'comfortable'} />
       <HorizontalArticleSlider articles={articles} />
     </>
   );

@@ -26,7 +26,18 @@ export interface RetrievabilityForecast {
 
 export interface DueWordsForecast {
   date: Date;
+  /**
+   * The running backlog: every word due by this bucket if NOTHING is reviewed in
+   * between. Non-decreasing by construction, so it is a projection, not a
+   * schedule — draw `newlyDue` for "how much does each day ask".
+   */
   dueWords: number;
+  /**
+   * What this bucket adds. Day 0 is everything due now, overdue included; every
+   * later day is only the words that fall due after the previous bucket and by
+   * this one — so a word due later tonight lands on tomorrow, the day a learner
+   * who reviews once a day will meet it. This is the series the charts draw.
+   */
   newlyDue: number;
   totalWords: number;
 }
@@ -84,10 +95,10 @@ export function timeUntilRetrievability(stabilityDays: number, threshold: number
  * Internal helper function for calculateRetrievabilityForecast and calculateDueWordsForecast
  */
 function generateForecastDates(days: number = 7, now: Date = new Date()): Date[] {
-  // The first bucket is NOW, not the end of today. Both charts label it
-  // "Today" and read as a statement about this moment — the due chart's
-  // "<N> to review today" sits beside a CTA that counts what is due right now,
-  // and the retention gauge says "if quizzed right now". Anchoring the bucket
+  // The first bucket is NOW, not the end of today. Both readers treat it as a
+  // statement about this moment — the due chart's first column is labelled
+  // "Now" and sits beside a CTA that counts what is due right now, and the
+  // recall figure says "right now". Anchoring the bucket
   // at 23:59 made the first one count words that only fall due tonight and the
   // second one charge a full day of extra decay against today's score.
   const dates: Date[] = [now];
@@ -162,7 +173,9 @@ export function calculateRetrievabilityForecast(
 // forward-only forecast cannot describe a direction the learner is moving in.
 
 /**
- * Calculate due words forecast for the next 7 days
+ * Due-words forecast for the next `days` days: per bucket, the running backlog
+ * (`dueWords`) and what that bucket adds (`newlyDue`). See `DueWordsForecast`
+ * for which one a chart should draw.
  * Optimized: Pre-computes word data once, then iterates dates
  */
 export function calculateDueWordsForecast(

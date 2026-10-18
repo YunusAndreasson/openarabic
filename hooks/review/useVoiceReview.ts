@@ -67,8 +67,10 @@ import {
 import { getVoiceModelSnapshot } from '@/services/voiceModelStore';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import {
+  selectVoiceDebugEnabled,
   selectVoiceEnergyGateEnabled,
   selectVoiceGainNormalizeEnabled,
+  selectVoiceIosRawMode,
 } from '@/store/settingsSlice';
 import { rememberAlias } from '@/store/voiceAliasesSlice';
 import { isAliasStorable } from '@/utils/voiceAliases';
@@ -231,8 +233,11 @@ interface UseVoiceReviewArgs {
   /** Called after a clean miss (recognized real word that's clearly different
    *  from the expected) — caller should advance the card as Unknown. */
   onUnknownAuto: () => void;
-  /** Called after an ambiguous miss / hallucination / silence — caller should
-   *  reveal the English meaning and let the user pick Known or Unknown. */
+  /** Called after a miss the recognizer actually HEARD — a real word that was
+   *  not the answer — so the caller should disclose the English meaning and
+   *  let the user pick Known or Unknown. Not called for silence or a
+   *  hallucinated transcript: that is the app failing to hear, and giving the
+   *  answer away there would turn "Try again" into reading it aloud. */
   onRevealAnswer: () => void;
   /**
    * Called the moment a REAL word was heard and it was not the answer — before
@@ -246,8 +251,8 @@ interface UseVoiceReviewArgs {
    *
    * Deliberately NOT fired for silence or a hallucinated transcript. Those are
    * the app failing to hear, not the learner being wrong, and marking the card
-   * red would score our failure against them (`onRevealAnswer` still runs, and
-   * the warning haptic still says "we're back, nothing landed").
+   * red would score our failure against them (the warning haptic still says
+   * "we're back, nothing landed", and the answer stays hidden).
    */
   onMissHeard: () => void;
 }
@@ -356,8 +361,10 @@ export function useVoiceReview({
   // Advanced dev toggles — snapshotted into each telemetry attempt's `meta`.
   const energyGateEnabled = useAppSelectorShallow(selectVoiceEnergyGateEnabled);
   const gainNormalizeEnabled = useAppSelectorShallow(selectVoiceGainNormalizeEnabled);
-  const iosRawMode = useAppSelectorShallow(state => state.settings.voiceIosRawMode);
-  const debugEnabled = useAppSelectorShallow(state => state.settings.voiceDebugEnabled);
+  // Developer knobs resolve to their shipped values outside development, so a
+  // flag persisted while the Advanced screen was public cannot linger.
+  const iosRawMode = useAppSelectorShallow(selectVoiceIosRawMode);
+  const debugEnabled = useAppSelectorShallow(selectVoiceDebugEnabled);
   // The learner's own accept-list. Selected as the whole map (shallow-compared,
   // so only a genuine write re-renders) and indexed per card, because the root
   // changes on every card and a per-root selector would rebuild each time.
@@ -436,6 +443,14 @@ export function useVoiceReview({
   const [handsFreeExhausted, setHandsFreeExhausted] = useState<string | null>(null);
   /** The card hands-free has already opened once, so it opens exactly once. */
   const autoArmedForKeyRef = useRef<string | null>(null);
+  /**
+   * The card whose answer a voice miss has disclosed. A match on that card
+   * afterwards is the learner repeating what they were just shown and played,
+   * not a recall, so it is credited as `vague` at most — never "Knew it". The
+   * result panel's own "Got it" is a separate, explicit self-grade and keeps
+   * its meaning.
+   */
+  const disclosedForKeyRef = useRef<string | null>(null);
 
   // Stable refs for callback identity.
   const onKnownAutoRef = useRef(onKnownAuto);
@@ -786,7 +801,11 @@ export function useVoiceReview({
             // the button that changes caption. Without this the only way to
             // know when to start speaking is to watch the UI — which is the one
             // thing a spoken-answer exercise should not require.
-            lightFeedback();
+            //
+            // Tapped windows only. Hands-free opens the mic itself after every
+            // prompt, so the cue there is the word ending and the meter moving;
+            // a buzz too put an unasked-for haptic on every single card.
+            if (!handsFreeWindowRef.current) lightFeedback();
           }
         },
       });
@@ -1015,6 +1034,9 @@ export function useVoiceReview({
           expected: match.normalizedExpected,
         },
       }));
+      // Whether an earlier miss on THIS card already showed and played the
+      // answer. A retry after that cannot earn "Knew it" (see the match below).
+      const answerDisclosed = disclosedForKeyRef.current === currentWordKey;
       // Snapshot everything loggable except the resolution. The auto-known path
       // logs immediately; a miss stores it so accept/reject/retry can log with
       // the user's verdict.
@@ -1046,6 +1068,8 @@ export function useVoiceReview({
           tapToCapturingMs: tapToCapturingRef.current,
           armAttempts: armFailuresRef.current,
           armTrigger: armTriggerRef.current,
+          // A retry after the answer was shown: its match is capped at vague.
+          answerDisclosed,
           // Where the ~1.1 s between the tap and the microphone went. Only
           // ~150 ms of it is the recorder; the rest was unattributed until this.
           armStages: getArmStages(),
@@ -1103,7 +1127,13 @@ export function useVoiceReview({
         // them would be the model's mistake charged to them. A toast names what
         // was heard, because silently passing an answer the learner knows they
         // fumbled is its own kind of wrong.
-        const vague = match.credit === 'vague';
+        //
+        // A match on a card whose answer was already disclosed is the learner
+        // saying what they were just shown — credited, but never above vague.
+        // No toast for that one: the near-match line names a mishearing, and
+        // there was none.
+        const nearMatch = match.credit === 'vague';
+        const vague = nearMatch || answerDisclosed;
         attemptCtxRef.current = buildAttemptCtx(null);
         void logVoiceAttempt({
           ...attemptCtxRef.current,
@@ -1116,7 +1146,7 @@ export function useVoiceReview({
         // and fires on the frame the colour lands rather than a JS hop ahead of
         // it. Keeping a tick here would buzz one answer twice.
         if (vague) {
-          showToast(STRINGS.VOICE_NEAR_MATCH_TEMPLATE(match.normalizedSpoken));
+          if (nearMatch) showToast(STRINGS.VOICE_NEAR_MATCH_TEMPLATE(match.normalizedSpoken));
           onVagueAutoRef.current();
         } else {
           onKnownAutoRef.current();
@@ -1176,7 +1206,12 @@ export function useVoiceReview({
         suggestion,
       });
       setPhase('result');
-      onRevealAnswerRef.current();
+      // Disclose only what was genuinely a wrong answer. A hearing failure keeps
+      // the answer hidden (and unspoken), so "Try again" stays a real retry.
+      if (heardReliable) {
+        disclosedForKeyRef.current = currentWordKey;
+        onRevealAnswerRef.current();
+      }
     };
 
     void run();

@@ -1,6 +1,5 @@
 import { ResponsiveSheetScreen } from '@/components/common/ResponsiveSheetScreen';
 import type { JSX } from 'react';
-import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { BottomSheetHeader, BottomSheetStateHandler, SheetExplainer } from '@/components/common';
@@ -16,15 +15,9 @@ export default function StudyStreakScreen(): JSX.Element {
     isError: isStreakError,
   } = useStudyStreakHistory();
 
-  const subtitle = useMemo(() => {
-    if (!streakHistory?.metrics) {
-      return STRINGS.STUDY_STREAK_INACTIVE_SUBTITLE;
-    }
-    const hasActiveStreak = streakHistory.metrics.currentStreak > 0;
-    return hasActiveStreak
-      ? STRINGS.STUDY_STREAK_ACTIVE_SUBTITLE
-      : STRINGS.STUDY_STREAK_INACTIVE_SUBTITLE;
-  }, [streakHistory]);
+  // The solid bars need a legend only while there are solid bars to explain —
+  // read off the same periods the chart paints them from.
+  const hasLiveRun = streakHistory?.streakPeriods.some(period => period.isActive) ?? false;
 
   return (
     <ResponsiveSheetScreen testID="study-streak-sheet">
@@ -36,7 +29,10 @@ export default function StudyStreakScreen(): JSX.Element {
         errorMessage={STRINGS.FAILED_TO_LOAD_STREAK}
         emptyMessage={STRINGS.STUDY_STREAK_EMPTY_STATE}
       >
-        <BottomSheetHeader title={STRINGS.STREAK_LABEL} subtitle={subtitle} />
+        {/* A definition, the same with or without a live run — what every other
+            practice sheet's subtitle is. It used to coach ("Keep the momentum
+            going" / "Start your practice habit"). */}
+        <BottomSheetHeader title={STRINGS.STREAK_LABEL} subtitle={STRINGS.STUDY_STREAK_SUBTITLE} />
 
         {streakHistory?.metrics && (
           <View style={styles.streakMetricsContainer}>
@@ -56,7 +52,13 @@ export default function StudyStreakScreen(): JSX.Element {
               dailyActivity={streakHistory.dailyActivity}
               streakPeriods={streakHistory.streakPeriods}
             />
-            <SheetExplainer text={STRINGS.STUDY_STREAK_CHART_DESCRIPTION} />
+            <SheetExplainer
+              text={
+                hasLiveRun
+                  ? STRINGS.STUDY_STREAK_CHART_CURRENT_RUN
+                  : STRINGS.STUDY_STREAK_CHART_DESCRIPTION
+              }
+            />
           </>
         )}
       </BottomSheetStateHandler>

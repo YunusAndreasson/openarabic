@@ -1,9 +1,12 @@
 /**
  * RelatedArticlesByFilter Component Tests
  *
- * The "More from ..." rows in the article reader's footer. Both things locked
- * down here are the bug that made them dead: they could not be pressed at all,
- * and the handler behind them navigated as if the reader were a modal.
+ * The "More from ..." rows in the article reader's footer. Two things here are
+ * the bug that made them dead: they could not be pressed at all, and the
+ * handler behind them navigated as if the reader were a modal. The third is a
+ * subtitle that repeated the heading on every card.
+ *
+ * Which texts the list holds is `useRelatedArticles`' job and has its own suite.
  *
  * Modern Jest 29 Patterns:
  * - ✅ @jest/globals explicit imports
@@ -44,17 +47,6 @@ jest.mock('@/components/playlist', () => ({
   PlaylistItemCard: (props: Record<string, unknown>) => mockPlaylistItemCard(props),
 }));
 
-const mockUseMultipleFeaturedArticles = jest.fn((..._args: unknown[]) => ({
-  articles: [RELATED_ARTICLE],
-}));
-jest.mock('@/hooks/articles/useMultipleFeaturedArticles', () => ({
-  useMultipleFeaturedArticles: (...args: unknown[]) => mockUseMultipleFeaturedArticles(...args),
-}));
-
-jest.mock('@/hooks/articles/useReadingProgress', () => ({
-  useBulkReadingProgress: () => ({ data: new Map() }),
-}));
-
 // Reaches for the Supabase storage client, which this test has no business
 // standing up just to turn a filename into a URL.
 jest.mock('@/utils/storageUtils', () => ({
@@ -71,23 +63,28 @@ const RELATED_ARTICLE = {
   image_url: 'second.jpg',
   author: { name: 'Ibn Kathir' },
   category: { name: 'tafsir' },
+  // 8 sentences at 4 a minute
+  article_sentences: Array.from({ length: 8 }, (_, index) => ({ id: index })),
 };
 
-const renderSection = () =>
+const renderSection = (
+  filterType: 'author' | 'category' = 'author',
+  articles: unknown[] = [RELATED_ARTICLE],
+) =>
   render(
     <RelatedArticlesByFilter
-      currentArticleId={1}
-      articlesData={[RELATED_ARTICLE] as never}
-      filterType="author"
-      filterId={7}
-      filterName="Ibn Kathir"
+      filterType={filterType}
+      filterName={filterType === 'author' ? 'Ibn Kathir' : 'tafsir'}
+      articles={articles as never}
+      progressMap={new Map()}
     />,
   );
+
+const firstCardProps = () => mockPlaylistItemCard.mock.calls[0]?.[0] as Record<string, unknown>;
 
 describe('RelatedArticlesByFilter', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseMultipleFeaturedArticles.mockReturnValue({ articles: [RELATED_ARTICLE] });
   });
 
   test('gives each card the gesture-handler Pressable', () => {
@@ -98,8 +95,7 @@ describe('RelatedArticlesByFilter', () => {
     renderSection();
 
     expect(mockPlaylistItemCard).toHaveBeenCalledTimes(1);
-    const props = mockPlaylistItemCard.mock.calls[0][0] as { PressableComponent: unknown };
-    expect(props.PressableComponent).toBe(GestureHandlerPressable);
+    expect(firstCardProps().PressableComponent).toBe(GestureHandlerPressable);
   });
 
   test('pushes the next article rather than popping the reader first', () => {
@@ -108,18 +104,34 @@ describe('RelatedArticlesByFilter', () => {
     // and raced a push into the pop animation.
     renderSection();
 
-    const props = mockPlaylistItemCard.mock.calls[0][0] as { onPress: () => void };
-    props.onPress();
+    (firstCardProps().onPress as () => void)();
 
     expect(mockBack).not.toHaveBeenCalled();
     expect(mockPush).toHaveBeenCalledTimes(1);
     expect(mockPush).toHaveBeenCalledWith('/article/42?headerTitle=The%20Second%20Article');
   });
 
-  test('renders nothing when no related article survives filtering', () => {
-    mockUseMultipleFeaturedArticles.mockReturnValue({ articles: [] });
+  // Under "More from Ibn Kathīr" every card used to say "Ibn Kathīr", and under
+  // "More in Tafsīr" every card said "Tafsīr".
+  test('leaves the author off the cards under "More from {author}"', () => {
+    renderSection('author');
 
-    const { toJSON } = renderSection();
+    const subtitle = String(firstCardProps().secondaryText);
+    expect(subtitle).toMatch(/Tafs/i);
+    expect(subtitle).toMatch(/2 min$/);
+    expect(subtitle).not.toMatch(/Kath/);
+  });
+
+  test('leaves the category off the cards under "More in {category}"', () => {
+    renderSection('category');
+
+    const subtitle = String(firstCardProps().secondaryText);
+    expect(subtitle).toMatch(/Kath/);
+    expect(subtitle).not.toMatch(/Tafs/i);
+  });
+
+  test('renders nothing for an empty list', () => {
+    const { toJSON } = renderSection('author', []);
 
     expect(toJSON()).toBeNull();
     expect(mockPlaylistItemCard).not.toHaveBeenCalled();

@@ -14,6 +14,7 @@ import React from 'react';
 import { ThemedButton } from '@/components/primitives/ThemedButton';
 import { PRESS_LOCK_WINDOW_MS } from '@/constants/animation';
 import { tonalSurface } from '@/utils/colorUtils';
+import { lightFeedback, selectionFeedback } from '@/utils/haptics';
 
 /**
  * jest.setup stubs `StyleSheet.flatten` as the identity function, so calling it
@@ -46,6 +47,11 @@ jest.mock('@/hooks/theme/useThemeDetection', () =>
 jest.mock('@/hooks/animations', () =>
   require('@/__tests__/helpers/componentMocks').createAnimationHooksMock(),
 );
+
+jest.mock('@/utils/haptics', () => ({
+  lightFeedback: jest.fn(),
+  selectionFeedback: jest.fn(),
+}));
 
 describe('ThemedButton', () => {
   const mockOnPress = jest.fn();
@@ -190,6 +196,32 @@ describe('ThemedButton', () => {
       fireEvent.press(getByText('Disabled'));
 
       expect(mockOnPress).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Haptics', () => {
+    // A plain press is tier 0 of the ladder in utils/haptics. The default used
+    // to be `light` — tier 1, an outcome — so every button outweighed the result
+    // it led to.
+    test('a plain press fires the selection tick, not an outcome', () => {
+      const { getByText } = render(<ThemedButton title="Continue" onPress={mockOnPress} />);
+
+      fireEvent.press(getByText('Continue'));
+
+      expect(selectionFeedback).toHaveBeenCalledTimes(1);
+      expect(lightFeedback).not.toHaveBeenCalled();
+      expect(mockOnPress).toHaveBeenCalledTimes(1);
+    });
+
+    test('a caller can still ask for the outcome tier', () => {
+      const { getByText } = render(
+        <ThemedButton hapticType="light" title="Save" onPress={mockOnPress} />,
+      );
+
+      fireEvent.press(getByText('Save'));
+
+      expect(lightFeedback).toHaveBeenCalledTimes(1);
+      expect(selectionFeedback).not.toHaveBeenCalled();
     });
   });
 

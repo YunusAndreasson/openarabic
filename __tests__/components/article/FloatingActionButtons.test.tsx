@@ -109,6 +109,47 @@ describe('FloatingActionButtons', () => {
     });
   });
 
+  describe('Listen Button', () => {
+    test('starts playback from the play button while nothing is playing', () => {
+      const { getByTestId } = render(
+        <FloatingActionButtons
+          isInReadingList={false}
+          onToggleReadingList={mockOnToggleReadingList}
+          onClose={mockOnClose}
+          isListening={false}
+          isListenLoading={false}
+          onToggleListen={mockOnToggleListen}
+        />,
+      );
+
+      fireEvent.press(getByTestId('icon-play').parent!.parent!);
+      expect(mockOnToggleListen).toHaveBeenCalledTimes(1);
+    });
+
+    // The MiniPlayer owns stop once this article plays; a second stop up here
+    // duplicated it on the same screen.
+    test.each([
+      ['playing', { isListening: true, isListenLoading: false }],
+      ['loading', { isListening: false, isListenLoading: true }],
+    ])('leaves no listen control in the header while this article is %s', (_state, flags) => {
+      const { queryByTestId, getByTestId } = render(
+        <FloatingActionButtons
+          isInReadingList={false}
+          onToggleReadingList={mockOnToggleReadingList}
+          onClose={mockOnClose}
+          onToggleListen={mockOnToggleListen}
+          {...flags}
+        />,
+      );
+
+      expect(queryByTestId('icon-play')).toBeNull();
+      expect(queryByTestId('icon-stop')).toBeNull();
+      // The playlist toggle and the close button stay
+      expect(getByTestId('icon-headset-outline')).toBeTruthy();
+      expect(getByTestId('icon-close')).toBeTruthy();
+    });
+  });
+
   describe('Close Button', () => {
     test('calls onClose when close button is pressed', () => {
       const { getByTestId } = render(

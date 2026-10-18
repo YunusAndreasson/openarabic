@@ -5,6 +5,7 @@ import { useVoiceReview } from '@/hooks/review/useVoiceReview';
 import { __resetMicPermissionForTests } from '@/lib/voice/recording';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import type { RootState } from '@/store/store';
+import { lightFeedback } from '@/utils/haptics';
 
 jest.mock('@/components/providers', () => ({ useToast: jest.fn(), useVoiceGrading: jest.fn() }));
 jest.mock('@/store/hooks', () => ({ useAppDispatch: jest.fn(), useAppSelectorShallow: jest.fn() }));
@@ -136,6 +137,128 @@ test('advancing from a pending open allows an explicit tap on the next card', ()
   expect(voice.arm).toHaveBeenCalledTimes(2);
 });
 
+/** A capture that opened and returned some audio for the recognizer. */
+const capturedSpeech = (): Awaited<ReturnType<Voice['arm']>> => ({
+  ok: true,
+  result: {
+    gateUsed: 'vad',
+    waveform: new Float32Array(1600),
+    sampleRate: 16000,
+    durationMs: 1200,
+    heardSpeech: true,
+    peakRms: 0.04,
+    noiseFloorDb: -58,
+    speechMs: 600,
+    levelsDb: [],
+    bufferCount: 12,
+    stopReason: 'silence',
+    firstBufferMs: 40,
+    stopDecidedAtMs: 1200,
+  },
+});
+
+test('a tapped window going live gives the "go" tick', async () => {
+  jest.mocked(voice.arm).mockImplementationOnce(options => {
+    options?.onCapturing?.();
+    return new Promise(() => undefined);
+  });
+  const { result } = renderReview();
+
+  await act(async () => result.current.speakNow());
+
+  expect(lightFeedback).toHaveBeenCalledTimes(1);
+});
+
+/**
+ * Disclosure honesty. A miss that shows and plays the English has ended the
+ * recall test, so a retry on that card can repeat the answer but cannot earn
+ * "Knew it" with it; and a hearing failure is the app's fault, so it must not
+ * give the answer away at all.
+ */
+describe('disclosure', () => {
+  test('a hearing failure keeps the answer hidden', async () => {
+    jest.mocked(voice.transcribe).mockResolvedValueOnce('');
+    jest.mocked(voice.arm).mockResolvedValueOnce(capturedSpeech());
+    const { result } = renderReview();
+
+    await act(async () => result.current.speakNow());
+
+    expect(result.current.phase).toBe('result');
+    expect(result.current.result?.heard).toBe('');
+    expect(callbacks.onRevealAnswer).not.toHaveBeenCalled();
+    expect(callbacks.onMissHeard).not.toHaveBeenCalled();
+  });
+
+  test('a retry after a hearing failure can still earn "Knew it"', async () => {
+    jest.mocked(voice.transcribe).mockResolvedValueOnce('').mockResolvedValueOnce('book');
+    jest
+      .mocked(voice.arm)
+      .mockResolvedValueOnce(capturedSpeech())
+      .mockResolvedValueOnce(capturedSpeech());
+    const { result } = renderReview();
+
+    await act(async () => result.current.speakNow());
+    await act(async () => result.current.retry());
+
+    expect(callbacks.onKnownAuto).toHaveBeenCalledTimes(1);
+    expect(callbacks.onVagueAuto).not.toHaveBeenCalled();
+  });
+
+  test('a heard wrong word discloses the answer', async () => {
+    jest.mocked(voice.transcribe).mockResolvedValueOnce('table');
+    jest.mocked(voice.arm).mockResolvedValueOnce(capturedSpeech());
+    const { result } = renderReview();
+
+    await act(async () => result.current.speakNow());
+
+    expect(result.current.result?.heard).toBe('table');
+    expect(callbacks.onMissHeard).toHaveBeenCalledTimes(1);
+    expect(callbacks.onRevealAnswer).toHaveBeenCalledTimes(1);
+  });
+
+  test('a retry after the answer was disclosed is credited as vague, never Knew it', async () => {
+    jest.mocked(voice.transcribe).mockResolvedValueOnce('table').mockResolvedValueOnce('book');
+    jest
+      .mocked(voice.arm)
+      .mockResolvedValueOnce(capturedSpeech())
+      .mockResolvedValueOnce(capturedSpeech());
+    const { result } = renderReview();
+
+    await act(async () => result.current.speakNow());
+    await act(async () => result.current.retry());
+
+    expect(callbacks.onVagueAuto).toHaveBeenCalledTimes(1);
+    expect(callbacks.onKnownAuto).not.toHaveBeenCalled();
+  });
+
+  test('"Got it" after a disclosure keeps its meaning', async () => {
+    jest.mocked(voice.transcribe).mockResolvedValueOnce('table');
+    jest.mocked(voice.arm).mockResolvedValueOnce(capturedSpeech());
+    const { result } = renderReview();
+
+    await act(async () => result.current.speakNow());
+    act(() => result.current.accept());
+
+    expect(callbacks.onKnownAuto).toHaveBeenCalledTimes(1);
+  });
+
+  test('the cap belongs to the card that was disclosed', async () => {
+    jest.mocked(voice.transcribe).mockResolvedValueOnce('table').mockResolvedValueOnce('book');
+    jest
+      .mocked(voice.arm)
+      .mockResolvedValueOnce(capturedSpeech())
+      .mockResolvedValueOnce(capturedSpeech());
+    const view = renderReview({ key: 'first' });
+
+    await act(async () => view.result.current.speakNow());
+    await act(async () => view.rerender({ key: 'second' }));
+    await act(async () => view.result.current.speakNow());
+
+    expect(callbacks.onKnownAuto).toHaveBeenCalledTimes(1);
+    expect(callbacks.onVagueAuto).not.toHaveBeenCalled();
+  });
+});
+
 test('a transient open failure still retries automatically', async () => {
   jest.useFakeTimers();
   jest.mocked(voice.arm).mockResolvedValueOnce({ ok: false, reason: 'error' });
@@ -205,6 +328,20 @@ describe('hands-free arming', () => {
     });
     // Re-arming would throw away audio the learner has already spoken.
     expect(voice.arm).toHaveBeenCalledTimes(1);
+  });
+
+  test('a self-opened window going live does not buzz', async () => {
+    // Hands-free opens the mic after every prompt; the word ending and the
+    // meter moving are the cue. A haptic too would land on every single card.
+    jest.mocked(voice.arm).mockImplementationOnce(options => {
+      options?.onCapturing?.();
+      return new Promise(() => undefined);
+    });
+
+    await arriveAndFinishPrompt();
+
+    expect(voice.arm).toHaveBeenCalledTimes(1);
+    expect(lightFeedback).not.toHaveBeenCalled();
   });
 
   test('tells the provider to widen the window it is opening', async () => {

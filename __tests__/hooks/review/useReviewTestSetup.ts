@@ -179,7 +179,6 @@ export function setupUseReviewMocks(): UseReviewMockRefs {
   useAudioPreloader.mockReturnValue(
     createAudioPreloaderMock({
       isPreloading: false,
-      progress: 100,
     }),
   );
 

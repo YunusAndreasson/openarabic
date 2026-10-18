@@ -3,7 +3,6 @@ import { SettingsPicker, TimePicker } from '@/components/ui';
 import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 
-import { AccountBadge } from '@/components/account';
 import {
   AboutSection,
   AccountSection,
@@ -37,7 +36,7 @@ import { formatBytes } from '@/utils/cacheUtils';
 type ActivePicker = 'theme' | 'audioLanguage' | 'dailyWordLimit' | null;
 
 /**
- * Account settings.
+ * Settings (the `account` tab).
  *
  * Composition only: every group is a section component that reads the slice
  * fields it needs. What lives here is the state those groups share — which
@@ -167,14 +166,6 @@ const AccountScreen = () => {
         showsVerticalScrollIndicator
         contentContainerStyle={scrollContentStyle}
       >
-        {user && (
-          <AccountBadge
-            userEmail={user.email || STRINGS.NO_EMAIL}
-            userId={user.id}
-            createdAt={user.created_at}
-          />
-        )}
-
         <ReadingSection />
 
         <PracticeSection
@@ -189,7 +180,8 @@ const AccountScreen = () => {
 
         <AppSection
           onThemePress={handleThemePress}
-          onClearCachePress={() => void handleClearCache()}
+          // With nothing cached the row is a statement, not a button.
+          onClearCachePress={cacheSize > 0 ? () => void handleClearCache() : undefined}
           cacheSizeText={formattedCacheSize}
         />
 
@@ -199,6 +191,7 @@ const AccountScreen = () => {
         <AboutSection />
 
         <AccountSection
+          email={user?.email || STRINGS.NO_EMAIL}
           onSignOut={handleSignOut}
           onResetReadingProgress={handleResetReadingProgress}
         />

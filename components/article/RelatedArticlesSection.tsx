@@ -1,8 +1,9 @@
-import { memo, useMemo } from 'react';
+import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { RelatedArticlesByFilter } from '@/components/article/RelatedArticlesByFilter';
 import { LAYOUT } from '@/constants/layout';
+import { useRelatedArticles } from '@/hooks/articles/useRelatedArticles';
 import type { Article } from '@/types/articles.types';
 
 interface RelatedArticlesSectionProps {
@@ -20,51 +21,48 @@ interface RelatedArticlesSectionProps {
 /**
  * Related Articles Section Component
  *
- * Displays two sections of intelligently selected related articles:
+ * Two lists at the foot of the reader:
  * - More from [author name]
- * - More from [category name]
+ * - More in [category name]
  *
- * Shows only unread or low-progress articles (< 20%) to always offer fresh content.
- * Uses existing article selection logic for consistency and efficiency.
+ * A text by this author in this category qualifies for both. It is shown once,
+ * in the author list: the category list leaves out what the author list chose.
  */
 export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
   ({ article, articlesData }) => {
-    // Memoize article IDs for efficient comparison
-    const currentArticleId = article.id;
-    const authorId = article.author_id;
-    const categoryId = article.category_id;
+    const byAuthor = useRelatedArticles({
+      currentArticleId: article.id,
+      articlesData,
+      filterType: 'author',
+      filterId: article.author_id,
+    });
 
-    // Quick check to see if we have any matching articles (avoid empty container)
-    // Memoized to prevent recalculation on every render
-    const hasAuthorArticles = useMemo(() => {
-      return articlesData.some(a => a.id !== currentArticleId && a.author_id === authorId);
-    }, [articlesData, currentArticleId, authorId]);
+    const byCategory = useRelatedArticles({
+      currentArticleId: article.id,
+      articlesData,
+      filterType: 'category',
+      filterId: article.category_id,
+      excludeIds: new Set(byAuthor.articles.map(related => related.id)),
+    });
 
-    const hasCategoryArticles = useMemo(() => {
-      return articlesData.some(a => a.id !== currentArticleId && a.category_id === categoryId);
-    }, [articlesData, currentArticleId, categoryId]);
-
-    // Early return if no matching articles
-    if (!hasAuthorArticles && !hasCategoryArticles) {
+    // Nothing to recommend: no empty container
+    if (byAuthor.articles.length === 0 && byCategory.articles.length === 0) {
       return null;
     }
 
-    // Render both sections - they will return null internally if no articles found after filtering
     return (
       <View style={styles.container}>
         <RelatedArticlesByFilter
-          currentArticleId={currentArticleId}
-          articlesData={articlesData}
           filterType="author"
-          filterId={authorId}
           filterName={article.author.name}
+          articles={byAuthor.articles}
+          progressMap={byAuthor.progressMap}
         />
         <RelatedArticlesByFilter
-          currentArticleId={currentArticleId}
-          articlesData={articlesData}
           filterType="category"
-          filterId={categoryId}
           filterName={article.category.name}
+          articles={byCategory.articles}
+          progressMap={byCategory.progressMap}
         />
       </View>
     );

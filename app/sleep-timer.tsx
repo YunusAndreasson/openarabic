@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BottomSheetHeader } from '@/components/common';
+import { BottomSheetHeader, OptionCard } from '@/components/common';
 import { ThemedButton } from '@/components/primitives/ThemedButton';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { ThemedView } from '@/components/primitives/ThemedView';
@@ -15,7 +15,6 @@ import { useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
 import { useColors } from '@/hooks/theme/useColors';
 import { analytics } from '@/services/analytics';
 import { formatSecondsToClock } from '@/utils/dateTimeUtils';
-import { lightFeedback, successFeedback } from '@/utils/haptics';
 
 const TIMER_OPTIONS = [5, 10, 15, 30, 45, 60] as const;
 const DEFAULT_SELECTED_MINUTES = 15;
@@ -52,8 +51,9 @@ export default function SleepTimerScreen(): JSX.Element {
     return () => clearInterval(interval);
   }, [isTimerActive, sleepTimerEndTime]);
 
+  // One haptic per decision, and the button that takes the decision already
+  // gives it: neither handler adds a second one on top.
   const handleSetTimer = useCallback(() => {
-    successFeedback();
     void analytics.track(ANALYTICS_EVENTS.SLEEP_TIMER_SET, {
       duration_minutes: selectedMinutes,
     });
@@ -62,7 +62,6 @@ export default function SleepTimerScreen(): JSX.Element {
   }, [onSleepTimerSet, router, selectedMinutes]);
 
   const handleCancelTimer = useCallback(() => {
-    lightFeedback();
     onSleepTimerCancel();
     router.back();
   }, [onSleepTimerCancel, router]);
@@ -87,19 +86,28 @@ export default function SleepTimerScreen(): JSX.Element {
 
       {!isTimerActive ? (
         <>
+          {/* A choice, drawn as one: radio cards with the shared selected
+              state. They used to be buttons, and the chosen one a FILLED
+              button, so the sheet showed two primary actions — the duration
+              and "Set timer" — of which only one acts. */}
           <View accessibilityRole="radiogroup" style={styles.optionsGrid}>
-            {TIMER_OPTIONS.map(minutes => (
-              <View key={minutes} style={styles.optionContainer}>
-                <ThemedButton
-                  title={`${minutes} min`}
-                  accessibilityRole="radio"
-                  accessibilityState={{ checked: selectedMinutes === minutes }}
-                  variant={selectedMinutes === minutes ? 'filled' : 'outlined'}
-                  onPress={handleOptionSelect(minutes)}
-                  fullWidth
-                />
-              </View>
-            ))}
+            {TIMER_OPTIONS.map(minutes => {
+              const label = STRINGS.SLEEP_TIMER_MINUTES.replace('{minutes}', String(minutes));
+              return (
+                <View key={minutes} style={styles.optionContainer}>
+                  <OptionCard
+                    accessibilityLabel={label}
+                    selected={selectedMinutes === minutes}
+                    style={styles.optionCard}
+                    onPress={handleOptionSelect(minutes)}
+                  >
+                    <ThemedText type="body" style={styles.optionLabel}>
+                      {label}
+                    </ThemedText>
+                  </OptionCard>
+                </View>
+              );
+            })}
           </View>
 
           <View style={styles.buttonContainer}>
@@ -137,6 +145,13 @@ const styles = StyleSheet.create({
     width: '50%',
     paddingHorizontal: LAYOUT.SPACING.TINY,
     paddingVertical: LAYOUT.SPACING.TINY,
+  },
+  // OptionCard draws the selected state (fill and edge); this is only its box.
+  optionCard: {
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+  },
+  optionLabel: {
+    textAlign: 'center',
   },
   activeTimerContainer: {
     alignItems: 'center',

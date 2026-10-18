@@ -219,12 +219,33 @@ export const selectAdaptiveNewWordPacingEnabled = selectDefaultTrueSetting(
  * persisted `settings` predates the fields, `undefined` overwrites the shipped
  * `true` — the energy gate and gain normalization run off, and the Advanced
  * toggles render off to match. Route every read through these.
+ *
+ * These four recording knobs are developer controls: the Advanced screen that
+ * sets them exists only in development builds. A production build therefore
+ * reads the shipped value whatever is persisted, so a learner who flipped one
+ * while the screen was public is not stuck with it and has no way back. The
+ * stored value is left alone; a development build still sees it.
  */
-export const selectVoiceEnergyGateEnabled = selectDefaultTrueSetting('voiceEnergyGateEnabled');
+const selectEnergyGateAsStored = selectDefaultTrueSetting('voiceEnergyGateEnabled');
+const selectGainNormalizeAsStored = selectDefaultTrueSetting('voiceGainNormalizeEnabled');
 
-export const selectVoiceGainNormalizeEnabled = selectDefaultTrueSetting(
-  'voiceGainNormalizeEnabled',
-);
+export const selectVoiceEnergyGateEnabled = (state: RehydratedSettingsState): boolean =>
+  __DEV__ ? selectEnergyGateAsStored(state) : initialState.voiceEnergyGateEnabled;
+
+export const selectVoiceGainNormalizeEnabled = (state: RehydratedSettingsState): boolean =>
+  __DEV__ ? selectGainNormalizeAsStored(state) : initialState.voiceGainNormalizeEnabled;
+
+interface DeveloperVoiceSettingsState {
+  settings: Partial<Pick<SettingsState, 'voiceIosRawMode' | 'voiceDebugEnabled'>>;
+}
+
+/** iOS 'measurement' capture mode. Off (the shipped value) outside development. */
+export const selectVoiceIosRawMode = (state: DeveloperVoiceSettingsState): boolean =>
+  __DEV__ ? state.settings.voiceIosRawMode === true : initialState.voiceIosRawMode;
+
+/** The in-review voice debug HUD. Off (the shipped value) outside development. */
+export const selectVoiceDebugEnabled = (state: DeveloperVoiceSettingsState): boolean =>
+  __DEV__ ? state.settings.voiceDebugEnabled === true : initialState.voiceDebugEnabled;
 
 /**
  * And once more for hands-free, which ships on. Every install that predates it

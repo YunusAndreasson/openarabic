@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
 import { TIMING_CONSTANTS } from '@/constants/animation';
-import { simpleAudioService, type AudioStatus } from '@/services/audioPlayer';
+import { isArticleAudioActive } from '@/hooks/audio/articleAudioStatus';
+import { simpleAudioService } from '@/services/audioPlayer';
 
 function subscribeToAudioTransport(onStoreChange: () => void): () => void {
   return simpleAudioService.subscribe(() => onStoreChange());
 }
 
 /**
- * The mini player belongs to article audio only. Review prompts, word previews,
- * and practice clips intentionally omit `articleId` from their tracks.
+ * The mini player shows while an article track is loaded — playing, buffering
+ * or paused (see `isArticleAudioActive`).
  *
  * Returning a primitive snapshot is important: the audio service still calls
  * this subscription for every transport transition, but React skips the render
@@ -17,12 +18,6 @@ function subscribeToAudioTransport(onStoreChange: () => void): () => void {
  * `false`. Reading the full GlobalAudioState context here used to re-render the
  * mounted Practice and Playlist tab trees for every review clip transition.
  */
-export function isArticleAudioActive(status: AudioStatus): boolean {
-  const hasArticle = status.currentTrack?.articleId !== undefined;
-  const isLoading = status.currentTrack !== null && (!status.isLoaded || status.isBuffering);
-  return hasArticle && (status.playing || isLoading);
-}
-
 function getIsArticleAudioActive(): boolean {
   return isArticleAudioActive(simpleAudioService.getStatus());
 }
@@ -30,8 +25,8 @@ function getIsArticleAudioActive(): boolean {
 /**
  * MiniPlayer visibility with mount/unmount stabilization.
  *
- * Show immediately when audio becomes active; hide with a short delay so rapid
- * play/pause toggles or transitions don't cause UI flicker.
+ * Show immediately when an article track loads; hide with a short delay so a
+ * track change inside a playlist doesn't cause UI flicker.
  */
 export function useShouldShowMiniPlayer(): boolean {
   const rawShouldShow = useSyncExternalStore(

@@ -66,16 +66,21 @@ describe('MiniPlayer', () => {
     image_url: 'https://example.com/image.jpg',
   };
 
-  const mockOnPlayPause = jest.fn();
+  const mockOnTogglePause = jest.fn();
+  const mockOnStop = jest.fn();
   const mockOnTimerPress = jest.fn();
+  const mockOnOpenArticle = jest.fn();
 
   const defaultProps = {
     article: mockArticle,
     isTimerActive: false,
     position: 30,
     duration: 180,
-    onPlayPause: mockOnPlayPause,
+    isPlaying: true,
+    onTogglePause: mockOnTogglePause,
+    onStop: mockOnStop,
     onTimerPress: mockOnTimerPress,
+    onOpenArticle: mockOnOpenArticle,
   };
 
   beforeEach(() => {
@@ -167,6 +172,56 @@ describe('MiniPlayer', () => {
 
       // Visual representation should differ based on timer state
       expect(inactiveSnapshot).not.toBe(activeSnapshot);
+    });
+
+    test('a running timer is painted in the tint, never the warning colour', () => {
+      const { toJSON } = render(<MiniPlayer {...defaultProps} isTimerActive={true} />);
+      const snapshot = JSON.stringify(toJSON());
+
+      expect(snapshot).toContain('#4a7c59'); // mock tint
+      expect(snapshot).not.toContain('#FF9800'); // mock warning
+    });
+  });
+
+  describe('Playback controls', () => {
+    test('while playing, the primary control pauses and the timer sits beside it', () => {
+      const { getByLabelText, queryByLabelText } = render(<MiniPlayer {...defaultProps} />);
+
+      fireEvent.press(getByLabelText('Pause'));
+      expect(mockOnTogglePause).toHaveBeenCalledTimes(1);
+      expect(getByLabelText('Sleep timer')).toBeTruthy();
+      expect(queryByLabelText('Stop listening')).toBeNull();
+    });
+
+    test('while paused, the primary control resumes and Stop replaces the timer', () => {
+      const { getByLabelText, queryByLabelText } = render(
+        <MiniPlayer {...defaultProps} isPlaying={false} />,
+      );
+
+      fireEvent.press(getByLabelText('Resume'));
+      expect(mockOnTogglePause).toHaveBeenCalledTimes(1);
+
+      fireEvent.press(getByLabelText('Stop listening'));
+      expect(mockOnStop).toHaveBeenCalledTimes(1);
+      expect(queryByLabelText('Sleep timer')).toBeNull();
+    });
+  });
+
+  describe('Opening the article', () => {
+    test('the artwork and title open the playing article', () => {
+      const { getByTestId } = render(<MiniPlayer {...defaultProps} />);
+
+      fireEvent.press(getByTestId('mini-player-open-article'));
+      expect(mockOnOpenArticle).toHaveBeenCalledTimes(1);
+    });
+
+    test('on its own reader the body is not a button', () => {
+      const { queryByTestId, getByText } = render(
+        <MiniPlayer {...defaultProps} onOpenArticle={undefined} />,
+      );
+
+      expect(queryByTestId('mini-player-open-article')).toBeNull();
+      expect(getByText('Test Article Title')).toBeTruthy();
     });
   });
 

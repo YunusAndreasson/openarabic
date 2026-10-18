@@ -17,9 +17,9 @@ export default function FilterScreen(): JSX.Element {
   const filterId = parseInt(id ?? '', 10);
 
   const {
-    data: articles = [],
-    isFetching,
-    error,
+    data: articles,
+    isPending,
+    isError,
     refetch,
   } = useQuery({
     ...articleQueries.all(),
@@ -33,12 +33,16 @@ export default function FilterScreen(): JSX.Element {
     router.push(getArticleRoute(article.id, article.title));
   }, []);
 
-  if (error) {
-    return <ErrorState message={STRINGS.FAILED_TO_LOAD_ARTICLES} onRetry={() => void refetch()} />;
+  // Both states stand in for a list that does not exist yet. Gated on
+  // `isFetching`, a reconnect or an Explore pull-to-refresh swapped a list the
+  // learner was scrolling for a spinner and threw away their place; a failed
+  // background refetch likewise keeps the cached list on screen.
+  if (isPending) {
+    return <LoadingState />;
   }
 
-  if (isFetching) {
-    return <LoadingState />;
+  if (isError && articles === undefined) {
+    return <ErrorState message={STRINGS.FAILED_TO_LOAD_ARTICLES} onRetry={() => void refetch()} />;
   }
 
   return <FilteredArticleView articles={articles} onArticlePress={handleArticlePress} />;

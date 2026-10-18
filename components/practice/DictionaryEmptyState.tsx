@@ -13,7 +13,7 @@ export function DictionaryEmptyState() {
   const router = useRouter();
 
   const handleBrowse = useCallback(() => {
-    router.navigate({ pathname: ROUTE_PATHS.EXPLORE_TAB, params: { from: 'practice' } });
+    router.navigate(ROUTE_PATHS.EXPLORE_TAB);
   }, [router]);
   const action = useMemo(
     () => ({

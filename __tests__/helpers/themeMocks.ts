@@ -41,6 +41,7 @@ export const createThemeColorsMock = (overrides: Partial<ThemeColors> = {}): The
   tintBackground: '#E8F5EF',
   onTint: '#FFFFFF',
   onError: '#FFFFFF',
+  onWarning: '#000000',
   tabIconDefault: '#9CA3AF',
   tabIconSelected: '#4A9B6F',
   tabLabelSelected: '#4A9B6F',

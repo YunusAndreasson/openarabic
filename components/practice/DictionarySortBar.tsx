@@ -118,15 +118,9 @@ const DictionarySortBarComponent = ({
 
   const isScoped = scope !== 'all';
   // Scoped, the count leads with the scope's name ("Due now · 24"); unscoped it
-  // is the plain total. Either way the line describes exactly what is below it.
-  //
-  // This DOES restate the growth card's headline when the list is unfiltered,
-  // and an attempt to suppress it was reverted: the card's number is the last
-  // point of a 30-day series built from parsed `created_at`s, so a word the
-  // list counts can be missing from it (unparseable timestamp, or saved after
-  // the series' last date). They coincide on a healthy account and are not the
-  // same quantity. This one counts the rows below it, which is the one the
-  // control acts on.
+  // is the plain total. Either way the line describes exactly what is below it,
+  // and it is always shown: it counts the rows the control acts on, and it is
+  // the screen's one word count.
   const countLabel = isScoped
     ? STRINGS.SCOPE_COUNT_TEMPLATE.replace('{scope}', SCOPE_LABELS[scope]).replace(
         '{count}',

@@ -1,6 +1,12 @@
 import { BaseCard, ProgressBar } from '@/components/common';
 import { memo, useMemo } from 'react';
-import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  View,
+  type LayoutChangeEvent,
+  type PressableStateCallbackType,
+} from 'react-native';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -53,9 +59,18 @@ export interface MiniPlayerProps {
     current: number;
     total: number;
   };
-  /** Playback controls */
-  onPlayPause: () => void;
+  /** True while the track is playing or still loading — the primary control reads Pause. */
+  isPlaying: boolean;
+  /** Pause the track in place, or resume it. */
+  onTogglePause: () => void;
+  /** Stop and clear the queue. Offered while paused, in the sleep timer's place. */
+  onStop: () => void;
   onTimerPress: () => void;
+  /**
+   * Open the playing article. Absent when that article's reader is the screen
+   * this player sits on, so the body is not a button that leads back to itself.
+   */
+  onOpenArticle?: () => void;
 }
 
 // Layout constants
@@ -70,7 +85,10 @@ function handleMiniPlayerLayout(event: LayoutChangeEvent): void {
 // skip re-renders for sub-second position changes (position updates 2x/sec but display shows seconds)
 const MiniPlayerComparison = (prev: MiniPlayerProps, next: MiniPlayerProps): boolean => {
   if (prev.article.id !== next.article.id) return false;
+  if (prev.article.title !== next.article.title) return false;
   if (prev.placement !== next.placement) return false;
+  if (prev.isPlaying !== next.isPlaying) return false;
+  if ((prev.onOpenArticle === undefined) !== (next.onOpenArticle === undefined)) return false;
   if (prev.isTimerActive !== next.isTimerActive) return false;
   if (prev.duration !== next.duration) return false;
   if (Math.floor(prev.position) !== Math.floor(next.position)) return false;
@@ -90,8 +108,11 @@ const MiniPlayerComponent = ({
   position,
   duration,
   queuePosition,
-  onPlayPause,
+  isPlaying,
+  onTogglePause,
+  onStop,
   onTimerPress,
+  onOpenArticle,
 }: MiniPlayerProps) => {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -118,12 +139,68 @@ const MiniPlayerComponent = ({
       ? `${queuePosition.current}/${queuePosition.total}`
       : null;
 
-  const timerButtonColor = isTimerActive ? colors.warning : withAlpha(colors.tint, 0.12);
-  const timerIconColor = isTimerActive ? colors.white : colors.tint;
-  const stopButtonColor = withAlpha(colors.tint, 0.12);
+  // A running timer is a setting that is on, not a warning: it fills with the
+  // tint rather than the warning colour.
+  const quietButtonColor = withAlpha(colors.tint, 0.12);
+  const timerButtonColor = isTimerActive ? colors.tint : quietButtonColor;
+  const timerIconColor = isTimerActive ? colors.onTint : colors.tint;
   const containerStyle = useMemo(
     () => [styles.container, { bottom: containerBottom }],
     [containerBottom],
+  );
+
+  const nowPlaying = (
+    <>
+      {/* Artwork Thumbnail */}
+      <View style={styles.artworkContainer}>
+        <EnhancedImage
+          source={imageUrl}
+          style={styles.artwork}
+          transition={TIMING_CONSTANTS.TRANSITION_DELAY}
+          recyclingKey={`miniplayer-${article.id}`}
+        />
+      </View>
+
+      {/* Text Content Column */}
+      <View style={styles.textColumn}>
+        <ThemedText
+          colorName="headingText"
+          style={styles.title}
+          type="heading3"
+          numberOfLines={2}
+          ellipsizeMode="tail"
+        >
+          {article.title}
+        </ThemedText>
+
+        <ThemedText
+          colorName="secondaryText"
+          style={styles.artist}
+          type="caption"
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
+          {formatAuthorCategory(article.author, article.category)}
+        </ThemedText>
+
+        {/* Time and queue position */}
+        <View style={styles.timeAndQueueRow}>
+          <ThemedText colorName="textTertiary" style={styles.timeDisplay} type="caption">
+            {timeDisplay}
+          </ThemedText>
+          {queueDisplay && (
+            <View style={styles.queueInfo}>
+              <ThemedText colorName="textTertiary" type="caption">
+                •
+              </ThemedText>
+              <ThemedText colorName="textTertiary" style={styles.queuePosition} type="caption">
+                {queueDisplay}
+              </ThemedText>
+            </View>
+          )}
+        </View>
+      </View>
+    </>
   );
 
   const inner = (
@@ -136,79 +213,60 @@ const MiniPlayerComponent = ({
     <BaseCard testID="mini-player-surface" surface="elevation2" elevation="floating" bordered>
       {/* Main Content Row */}
       <View style={styles.contentRow}>
-        {/* Artwork Thumbnail */}
-        <View style={styles.artworkContainer}>
-          <EnhancedImage
-            source={imageUrl}
-            style={styles.artwork}
-            transition={TIMING_CONSTANTS.TRANSITION_DELAY}
-            recyclingKey={`miniplayer-${article.id}`}
-          />
-        </View>
-
-        {/* Text Content Column */}
-        <View style={styles.textColumn}>
-          <ThemedText
-            colorName="headingText"
-            style={styles.title}
-            type="heading3"
-            numberOfLines={2}
-            ellipsizeMode="tail"
+        {/* The artwork and text open the article. Only they do: making the
+            whole card the button would fold the two controls into it for a
+            screen reader. On the article's own reader there is nowhere to go,
+            so it is plain content there. */}
+        {onOpenArticle ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={article.title}
+            accessibilityHint={STRINGS.MINI_PLAYER_OPEN_ARTICLE_HINT}
+            onPress={onOpenArticle}
+            style={nowPlayingPressableStyle}
+            testID="mini-player-open-article"
           >
-            {article.title}
-          </ThemedText>
+            {nowPlaying}
+          </Pressable>
+        ) : (
+          <View style={styles.nowPlaying}>{nowPlaying}</View>
+        )}
 
-          <ThemedText
-            colorName="secondaryText"
-            style={styles.artist}
-            type="caption"
-            numberOfLines={1}
-            ellipsizeMode="tail"
-          >
-            {formatAuthorCategory(article.author, article.category)}
-          </ThemedText>
-
-          {/* Time and queue position */}
-          <View style={styles.timeAndQueueRow}>
-            <ThemedText colorName="textTertiary" style={styles.timeDisplay} type="caption">
-              {timeDisplay}
-            </ThemedText>
-            {queueDisplay && (
-              <View style={styles.queueInfo}>
-                <ThemedText colorName="textTertiary" type="caption">
-                  •
-                </ThemedText>
-                <ThemedText colorName="textTertiary" style={styles.queuePosition} type="caption">
-                  {queueDisplay}
-                </ThemedText>
-              </View>
-            )}
-          </View>
-        </View>
-
-        {/* Controls */}
+        {/* Controls. The bottom slot is always the play/pause toggle. The top
+            slot is the sleep timer while sound is playing, and Stop once it is
+            paused — the moment a listener may want to put it away. */}
         <View style={styles.controlsContainer}>
+          {isPlaying ? (
+            <IconButton
+              icon="timer"
+              onPress={onTimerPress}
+              backgroundColor={timerButtonColor}
+              iconColor={timerIconColor}
+              iconSize={LAYOUT.BUTTON.ICON_SIZE.LARGE}
+              hapticType="light"
+              accessibilityLabel={STRINGS.SLEEP_TIMER}
+            />
+          ) : (
+            <IconButton
+              icon="stop"
+              onPress={onStop}
+              backgroundColor={quietButtonColor}
+              iconColor={colors.tint}
+              iconSize={LAYOUT.BUTTON.ICON_SIZE.LARGE}
+              hapticType="light"
+              accessibilityLabel={STRINGS.ARTICLE_STOP_LISTENING_A11Y}
+            />
+          )}
           <IconButton
-            icon="timer"
-            onPress={onTimerPress}
-            backgroundColor={timerButtonColor}
-            iconColor={timerIconColor}
-            iconSize={LAYOUT.BUTTON.ICON_SIZE.LARGE}
-            hapticType="light"
-            accessibilityLabel={STRINGS.SLEEP_TIMER}
-          />
-          <IconButton
-            // There is no pause/resume in this player — onPlayPause always stops
-            // and clears the queue (see useGlobalAudioState's handlePlayPause).
-            // A "pause" glyph promised a resumable pause that didn't exist, so a
-            // tap here silently threw away a listener's place in the playlist.
-            icon="stop"
-            onPress={onPlayPause}
-            backgroundColor={stopButtonColor}
+            icon={isPlaying ? 'pause' : 'play'}
+            onPress={onTogglePause}
+            backgroundColor={quietButtonColor}
             iconColor={colors.tint}
             iconSize={LAYOUT.BUTTON.ICON_SIZE.LARGE}
             hapticType="light"
-            accessibilityLabel={STRINGS.ARTICLE_STOP_LISTENING_A11Y}
+            accessibilityLabel={
+              isPlaying ? STRINGS.MINI_PLAYER_PAUSE_A11Y : STRINGS.MINI_PLAYER_RESUME_A11Y
+            }
           />
         </View>
       </View>
@@ -259,6 +317,17 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.SMALL,
   },
 
+  nowPlaying: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    minWidth: 0,
+  },
+
+  pressed: {
+    opacity: LAYOUT.OPACITY.PRESSED,
+  },
+
   textColumn: {
     flex: 1,
     justifyContent: 'center',
@@ -279,13 +348,11 @@ const styles = StyleSheet.create({
 
   queuePosition: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    opacity: LAYOUT.OPACITY.HIGH,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY + LAYOUT.SPACING.HALF_TINY,
   },
 
   timeDisplay: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    opacity: LAYOUT.OPACITY.HIGH,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY + LAYOUT.SPACING.HALF_TINY,
     fontVariant: ['tabular-nums'],
     textAlign: 'left',
@@ -328,3 +395,8 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
 });
+
+const nowPlayingPressableStyle = ({ pressed }: PressableStateCallbackType) => [
+  styles.nowPlaying,
+  pressed && styles.pressed,
+];

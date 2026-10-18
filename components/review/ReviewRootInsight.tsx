@@ -1,14 +1,11 @@
 import { memo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { Icon } from '@/components/ui';
 import { TIMING_CONFIG } from '@/constants/animation';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { useColors } from '@/hooks/theme/useColors';
-import { withOpacity } from '@/utils/colorUtils';
 
 interface Props {
   explanation: string;
@@ -18,9 +15,13 @@ interface Props {
  * The recovery lesson after “Forgot”. This is intentionally not the app's full
  * root reference panel: review needs one memorable paragraph, not senses,
  * citations and a family list competing for attention before the next card.
+ *
+ * A plain caption and the paragraph, on the card's own surface. It used to sit
+ * in a tint box at 8% alpha behind a sparkles glyph and a tint eyebrow: the
+ * glyph said nothing the caption did not, and an alpha fill composites against
+ * whatever is behind it, which on the dark card collapses to a grey smudge.
  */
 export const ReviewRootInsight = memo(({ explanation }: Props) => {
-  const colors = useColors();
   const accessibilityLabel = `${STRINGS.REVIEW_ROOT_INSIGHT_TITLE}. ${explanation}`;
 
   return (
@@ -28,15 +29,12 @@ export const ReviewRootInsight = memo(({ explanation }: Props) => {
       accessible
       accessibilityLabel={accessibilityLabel}
       entering={FadeIn.duration(TIMING_CONFIG.MEDIUM.duration)}
-      style={[styles.container, { backgroundColor: withOpacity(colors.tint, 0.08) }]}
+      style={styles.container}
       testID="review-root-insight"
     >
-      <View style={styles.heading}>
-        <Icon name="sparkles-outline" size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={colors.tint} />
-        <ThemedText colorName="tint" type="overline">
-          {STRINGS.REVIEW_ROOT_INSIGHT_TITLE}
-        </ThemedText>
-      </View>
+      <ThemedText colorName="secondaryText" type="caption">
+        {STRINGS.REVIEW_ROOT_INSIGHT_TITLE}
+      </ThemedText>
       <ThemedText colorName="secondaryText" type="body" style={styles.explanation}>
         {explanation}
       </ThemedText>
@@ -50,17 +48,11 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     marginTop: LAYOUT.SPACING.XLARGE,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
-    gap: LAYOUT.SPACING.SMALL,
-  },
-  heading: {
-    flexDirection: 'row',
     alignItems: 'center',
     gap: LAYOUT.SPACING.TINY,
   },
   explanation: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.55,
+    textAlign: 'center',
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.LOOSE,
   },
 });

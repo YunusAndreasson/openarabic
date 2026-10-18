@@ -48,9 +48,9 @@ const WordRailCardComponent = ({ word, onPress }: WordRailCardProps) => {
       // Explicit, because `BaseCard` has no default and the label no longer says
       // "Opens the word" — the role is what carries that now.
       accessibilityRole="button"
-      bordered
+      // BaseCard's default elevation and no stroke — the same card as the topic
+      // tiles and article rails on this tab. It was the one bordered card here.
       contentStyle={styles.content}
-      elevation="hairline"
       // Fills the slot the rail stretched for it, so a two-line gloss cannot
       // leave the card beside it short. See the note on `WordRail.styles.card`.
       style={styles.card}

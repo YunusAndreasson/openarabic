@@ -6,7 +6,6 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 
 interface SeededContentEmptyStateProps {
-  source: 'playlist' | 'practice';
   icon: IconName;
   title: string;
   hint: string;
@@ -18,7 +17,6 @@ interface SeededContentEmptyStateProps {
 
 /** Empty content state with the app's shared seed-first, browse-second path. */
 export function SeededContentEmptyState({
-  source,
   icon,
   title,
   hint,
@@ -43,8 +41,9 @@ export function SeededContentEmptyState({
       }}
       secondaryAction={{
         label: STRINGS.BROWSE_ARTICLES,
-        onPress: () =>
-          router.navigate({ pathname: ROUTE_PATHS.EXPLORE_TAB, params: { from: source } }),
+        // No `from` param: Explore used to read it to toast this empty
+        // state's own hint back at the learner on arrival.
+        onPress: () => router.navigate(ROUTE_PATHS.EXPLORE_TAB),
         icon: 'compass-outline',
       }}
     />

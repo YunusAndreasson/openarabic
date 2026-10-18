@@ -1270,6 +1270,67 @@ class SimpleAudioService {
   }
 
   /**
+   * Pause the current article track where it is, keeping the player, the queue
+   * and the lock-screen entry, so resume() carries on from the same place.
+   *
+   * Article tracks only. Review prompts, word previews and practice clips carry
+   * no `articleId`; their lanes gate the microphone on end-of-clip and own their
+   * own stop, so nothing here may hold one of them half-played.
+   *
+   * `playing` is deliberately not written here. The native player reports the
+   * change itself (iOS's periodic observer fires whenever the rate changes,
+   * Android's listener on every play-state change), and that same native update
+   * is what refreshes the lock-screen entry — so the app, the lock screen and
+   * the headphone buttons all read one source instead of two that can race.
+   */
+  pause(): void {
+    const player = this.currentPlayer;
+    if (!player || this.currentTrack?.articleId === undefined) return;
+    try {
+      player.pause();
+    } catch (pauseError) {
+      throw new Error(`Failed to pause audio playback: ${toError(pauseError).message}`);
+    }
+  }
+
+  /**
+   * Continue the paused article track from where it stopped.
+   *
+   * The audio session is re-activated first, exactly as play() does: a pause —
+   * ours, the lock screen's, or the OS's for a phone call — can leave it
+   * inactive (expo-audio deactivates it on every iOS pause), and iOS refuses a
+   * play() on an inactive session without saying so.
+   *
+   * Resolves `false` when there is nothing to resume: no article track, a track
+   * that has already ended, a playlist mid-way between tracks (the next play()
+   * owns the player), or a stop()/play() that superseded this call while the
+   * session was activating. Like pause(), it lets the native status report the
+   * new `playing` state.
+   */
+  async resume(): Promise<boolean> {
+    const player = this.currentPlayer;
+    if (!player || this.currentTrack?.articleId === undefined) return false;
+    if (this.status.playbackState === 'ended' || this.isAdvancingTrack) return false;
+
+    const generation = this.playGeneration;
+    try {
+      await this.safeActivateAudioSession({
+        location: 'resume',
+        playing: true,
+        isPlaylistMode: this.isPlaylistMode,
+      });
+      // A media-services reset or a return to the foreground clears the
+      // configured flag; this re-applies the category before playing again.
+      await this.configureAudioSession();
+      if (generation !== this.playGeneration || player !== this.currentPlayer) return false;
+      player.play();
+      return true;
+    } catch (resumeError) {
+      throw new Error(`Failed to resume audio playback: ${toError(resumeError).message}`);
+    }
+  }
+
+  /**
    * Get current status.
    *
    * Returns the live snapshot, not a copy. `updateStatus` never mutates in

@@ -61,7 +61,7 @@ const DeleteAccountScreen = () => {
       {/* Show Current Email */}
       <View style={styles.emailContainer}>
         <ThemedText type="caption" colorName="textTertiary" style={styles.signedInLabel}>
-          {STRINGS.DELETE_ACCOUNT_SIGNED_IN_AS}
+          {STRINGS.SIGNED_IN_AS}
         </ThemedText>
         <ThemedText type="body" style={styles.emailText}>
           {userEmail || STRINGS.NO_EMAIL}
@@ -76,7 +76,10 @@ const DeleteAccountScreen = () => {
         <ThemedInput
           value={confirmationText}
           onChangeText={setConfirmationText}
-          placeholder={STRINGS.DELETE_ACCOUNT_CONFIRMATION_PLACEHOLDER}
+          // The word itself, not the label's sentence again. The sentence is
+          // still the field's spoken name, since the placeholder no longer is.
+          accessibilityLabel={STRINGS.DELETE_ACCOUNT_ENTER_CONFIRMATION}
+          placeholder={STRINGS.DELETE_ACCOUNT_CONFIRMATION_WORD}
           autoCapitalize="characters"
           autoCorrect={false}
           editable={!loading}

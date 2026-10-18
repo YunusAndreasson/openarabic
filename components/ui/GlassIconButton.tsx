@@ -31,24 +31,22 @@ export interface GlassIconButtonProps {
   onPress: () => void;
   /**
    * Emphasised state — a toggle that is currently on. Lifts the surface a level
-   * and raises its opacity so an active control reads as pressed-in.
+   * and turns the glyph to the tint.
    */
   active?: boolean;
   /** Defaults to `secondaryText` (or `tint` when `active`). */
   iconColor?: string;
   iconSize?: number;
-  /** Haptic weight fired on press (default: 'light'). */
+  /**
+   * Haptic fired on press. Defaults to 'selection', like ThemedButton,
+   * IconButton and HeaderTextButton: the utils/haptics ladder keeps 'light'
+   * for outcomes, and a press on this button is a choice.
+   */
   hapticType?: HapticType;
   hitSlop?: number | Insets;
   accessibilityState?: AccessibilityState;
   /** Positioning for the outer pressable — where the button sits on screen. */
   style?: StyleProp<ViewStyle>;
-  /**
-   * Use the `clear` liquid-glass style rather than the default. Chrome that
-   * floats over content (headers) wants `clear`; controls that sit on a busy
-   * image read better with the default.
-   */
-  clear?: boolean;
   /**
    * Pressable implementation. Defaults to react-native's.
    *
@@ -64,12 +62,11 @@ export interface GlassIconButtonProps {
 
 /**
  * A circular icon button on a liquid-glass surface, for chrome that floats over
- * content — the article reader's close/listen/playlist controls and the review
- * header's mic/close.
+ * content — the article reader's close/listen/playlist controls.
  *
- * Both of those built this independently, down to a byte-identical
- * `GLASS_AVAILABLE`/`GlassContainer` pair, the same six-property circle style
- * and the same non-glass fallback. Neither labelled its close button.
+ * One glass style for every instance. The reader's close button used to take
+ * `clear` glass while Listen and Playlist beside it, over the same image, took
+ * the default, so one row of controls drew as two kinds of object.
  */
 export const GlassIconButton = ({
   icon,
@@ -78,11 +75,10 @@ export const GlassIconButton = ({
   active = false,
   iconColor,
   iconSize = LAYOUT.BUTTON.ICON_SIZE.LARGE,
-  hapticType = 'light',
+  hapticType = 'selection',
   hitSlop,
   accessibilityState,
   style,
-  clear = false,
   PressableComponent = RNPressable,
   testID,
 }: GlassIconButtonProps) => {
@@ -98,9 +94,8 @@ export const GlassIconButton = ({
 
   // On iOS 26 the glass container answers the press itself (`isInteractive`).
   // Everywhere else the fallback is a plain View, which for a long time meant
-  // this button — the article reader's floating controls and the review
-  // header's mic and close — gave no visual response to a tap at all. The
-  // scale only runs on the fallback path so the two never double up.
+  // this button gave no visual response to a tap at all. The scale only runs
+  // on the fallback path so the two never double up.
   const { handlePress, animatedStyle, handlePressIn, handlePressOut } = useButtonPress({
     onPress,
     hapticType,
@@ -110,9 +105,12 @@ export const GlassIconButton = ({
   // Fallback background for platforms without liquid glass — and for a user on
   // Reduce Transparency, where it is what the button is made of. On the glass
   // path the effect paints over this; everywhere else it IS the button.
-  const surfaceStyle = active
-    ? { backgroundColor: colors.elevation2, opacity: LAYOUT.OPACITY.ACTIVE }
-    : { backgroundColor: colors.elevation1, opacity: LAYOUT.OPACITY.PRESSED };
+  //
+  // No `opacity` on either state. It used to be 0.6 at rest (the PRESSED token)
+  // and 0.75 when on, and opacity on this view reaches the glyph too, so every
+  // control in the row drew at a pressed/disabled strength. The state is
+  // carried by the surface level and the glyph colour instead.
+  const surfaceStyle = { backgroundColor: active ? colors.elevation2 : colors.elevation1 };
 
   const resolvedIconColor = iconColor ?? (active ? colors.tint : colors.secondaryText);
 
@@ -132,7 +130,6 @@ export const GlassIconButton = ({
         <GlassView
           style={[ICON_BUTTON_SIZES.medium.container, styles.button, surfaceStyle]}
           isInteractive
-          {...(clear && { glassEffectStyle: 'clear' as const })}
         >
           <Icon color={resolvedIconColor} name={icon} size={iconSize} />
         </GlassView>

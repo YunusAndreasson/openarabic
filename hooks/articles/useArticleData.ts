@@ -1,4 +1,4 @@
-import { useQuery, type QueryObserverResult } from '@tanstack/react-query';
+import { useQuery, useQueryClient, type QueryObserverResult } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 
 import { articleQueries, fsrsQueries, gated, readingProgressQueries } from '@/constants/queries';
@@ -12,7 +12,13 @@ const EMPTY_STUDY_WORDS: StudyWord[] = [];
 
 interface ArticleDataResult {
   article: Article | undefined;
+  /** Fetching an article there is nothing of yet, a retry after a failure included */
   isLoadingArticle: boolean;
+  /** The fetch failed, nothing is cached, and the article may well exist: retryable */
+  isArticleError: boolean;
+  /** The fetch failed for an article the published catalogue does not list */
+  isArticleMissing: boolean;
+  refetchArticle: () => void;
   isInReadingList: boolean;
   refetchReadingListStatus: () => void;
   selectedWordIds: Set<number>;
@@ -34,11 +40,37 @@ export const useArticleData = (
   // Get theme colors for pre-computing word color analysis
   const colors = useColors();
 
+  const queryClient = useQueryClient();
+
   // Fetch article data with optimized caching
-  const { data: article, isLoading: isLoadingArticle } = useQuery({
+  const {
+    data: article,
+    isLoading,
+    isError,
+    isFetching,
+    refetch,
+  } = useQuery({
     ...articleQueries.detail(articleId ?? (0 as ArticleId)),
     refetchOnMount: false, // Don't refetch on mount if we have data
   });
+
+  // A failed fetch only matters while there is no article to show. Reading
+  // only `isLoading` used to send every failure — a dropped connection
+  // included — to "Article not found ... It may have been removed", with no
+  // retry. A retry after a failure counts as loading again.
+  const hasFailed = isError && !article;
+  const isLoadingArticle = isLoading || (hasFailed && isFetching);
+
+  // `getArticleById` throws for a row that does not exist as well as for a
+  // request that failed, so the error alone cannot tell them apart. The
+  // published catalogue can: an id it does not list is gone, and retrying will
+  // not bring it back. With no catalogue cached it stays a retryable failure.
+  const catalogue = hasFailed
+    ? queryClient.getQueryData<Article[]>(articleQueries.all().queryKey)
+    : undefined;
+  const isArticleMissing =
+    hasFailed && catalogue !== undefined && !catalogue.some(entry => entry.id === articleId);
+  const isArticleError = hasFailed && !isFetching && !isArticleMissing;
 
   // Check if article is in user's reading list
   const { data: isInReadingList = false, refetch: refetchReadingListStatus } = useQuery(
@@ -133,6 +165,9 @@ export const useArticleData = (
   return {
     article,
     isLoadingArticle,
+    isArticleError,
+    isArticleMissing,
+    refetchArticle: () => void refetch(),
     isInReadingList,
     refetchReadingListStatus: refetchReadingListStatusVoid,
     selectedWordIds,

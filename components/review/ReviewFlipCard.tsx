@@ -6,7 +6,6 @@ import type { AnimatedStyle as ReanimatedAnimatedStyle } from 'react-native-rean
 import Animated, {
   cancelAnimation,
   interpolate,
-  interpolateColor,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -18,7 +17,7 @@ import { TIMING_CONFIG, VERDICT } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useSwipeGesture } from '@/hooks/gestures/useSwipeGesture';
-import { useCardVerdict, VERDICT_TONE } from '@/hooks/review/useCardVerdict';
+import { useCardVerdict, VERDICT_TONE, type VerdictJudge } from '@/hooks/review/useCardVerdict';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { WordConfidence } from '@/types/review.types';
@@ -26,14 +25,11 @@ import type {
   AnimatedStyleProp as AppAnimatedStyleProp,
   ReanimatedCSSAnimationStyle,
 } from '@/types/ui/base.types';
-import { withOpacity } from '@/utils/colorUtils';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 import { WordDisplay } from './WordDisplay';
 
 const CARD_CONSTANTS = {
-  /** Peak tint of the wash, reached exactly AT the card's draw-back distance. */
-  FLASH_OPACITY: 0.22,
   /**
    * Verdict ring thickness. The card has no resting border to recolour, so the
    * ring has to read as its own edge-lighting-up event on a plain face —
@@ -185,8 +181,8 @@ const STATIC_STYLES = StyleSheet.create({
   // entrance (entranceLayer). Three separate nodes because three separate
   // things animate the card's transform and none of them may share a value:
   // the throw owns translateX, the entrance owns CSS keyframes, and the verdict
-  // owns the pop and the shake. Putting the shake on translateX would have the
-  // wince fight the left exit a restudy continue starts on the same tap.
+  // owns the shake. Putting the shake on translateX would have the wince fight
+  // the left exit a restudy continue starts on the same tap.
   verdictLayer: {
     flex: 1,
     width: '100%',
@@ -222,18 +218,6 @@ const STATIC_STYLES = StyleSheet.create({
   facePressable: {
     flex: 1,
     width: '100%',
-  },
-  // The wash. Lives INSIDE the card (matched radius, no clipping needed)
-  // instead of washing the whole screen — with a real surface the tint reads as
-  // the card being marked, not the app changing colour.
-  flashOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    // Kept in lockstep with `face`'s radius — see the comment there.
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   // Each face owns a verdict ring so feedback follows its rotation. Keeping
   // it separate from the surface lets verdict and face opacity multiply.
@@ -280,14 +264,15 @@ export interface ReviewCardHandle {
    */
   commitTo: (direction: 'left' | 'right', holdMs?: number) => void;
   /**
-   * Show an outcome — ring, wash, and the haptic that goes with them.
+   * Show an outcome — the ring and the haptic that goes with it.
    *
    * Called for a grade that commits, and also for a voice mishear, which is an
-   * outcome the learner can still overturn. Showing the same outcome twice is a
+   * outcome the learner can still overturn and the one call that passes
+   * `'recognizer'` (see `VerdictJudge`). Showing the same outcome twice is a
    * no-op, so a mishear followed by the grade that agrees with it marks the card
    * once.
    */
-  playVerdict: (confidence: WordConfidence) => void;
+  playVerdict: (confidence: WordConfidence, judge?: VerdictJudge) => void;
   /**
    * Take an outcome back off the card without replacing it. For a voice retry:
    * the attempt that produced the mark is being discarded.
@@ -323,10 +308,19 @@ interface ReviewFlipCardProps {
    * Omitted, not disabled, when a replay would be wrong — the screen leaves it
    * out while the microphone is capturing, because the audio session refuses to
    * leave a live window, so the word would play on the quiet record-capable
-   * route and straight into the recording. The word then takes no press and the
-   * tap falls through to the face, which is what it did before.
+   * route and straight into the recording. See `replayHeld` for that window.
    */
   onReplayAudio?: () => void;
+  /**
+   * The microphone holds the audio session, so the word must not replay — and
+   * must not let the tap fall through to the face either, because on the
+   * question face that tap reveals the answer. Hands-free opens the mic right
+   * after every prompt, which is exactly when a learner reaches for the word to
+   * hear it again; a fall-through there ended the recall test they were in the
+   * middle of. While this is up the word takes the press and does nothing, with
+   * no replay hint and no pressed state.
+   */
+  replayHeld?: boolean;
   /** Fade style applied during a grade advance (useReview.transparentStyle). */
   opacityStyle: ReanimatedAnimatedStyle<ViewStyle> | AppAnimatedStyleProp<ViewStyle>;
   /** Recentres the card and clears its verdict on a new word, without
@@ -347,19 +341,23 @@ interface ReviewFlipCardProps {
    */
   questionSlot?: ReactNode;
   /**
-   * Show the English under the Arabic on the QUESTION face, at the size the
-   * answer face gives it. For a voice miss, which discloses the answer without
-   * flipping the card — a retry has to stay on the question face, and it is the
-   * word the learner just failed to recall, so it belongs next to the Arabic
-   * rather than in a caption below the card.
+   * A voice result is up: show it on the QUESTION face, under the Arabic.
+   *
+   * The English appears there only once it has been disclosed — `answer` is
+   * empty until then — at the size the answer face gives it. A voice miss
+   * discloses without flipping the card: a retry has to stay on the question
+   * face, and it is the word the learner just failed to recall, so it belongs
+   * next to the Arabic rather than in a caption below the card. A hearing
+   * failure ("Didn't catch that") discloses nothing, so its retry is a real
+   * one; the caption then stands alone.
    *
    * Outranks `questionSlot`: when a result is up the microphone is idle and has
    * nothing to say.
    */
   discloseAnswer?: boolean;
   /**
-   * One quiet line under the disclosed answer: what the recognizer heard on a
-   * voice miss. Only shown with `discloseAnswer`.
+   * One quiet line for the voice result: what the recognizer heard, or that it
+   * heard nothing usable. Only shown with `discloseAnswer`.
    */
   discloseCaption?: string;
   testID?: string;
@@ -377,8 +375,8 @@ interface ReviewFlipCardProps {
  * things it carries are what justify it.
  *
  * Tap the front to flip to the answer face; the grade bar below owns the three
- * grades. The card's own job on a grade is to confirm it — ring, wash, and the
- * throw for the two grades that leave sideways.
+ * grades. The card's own job on a grade is to confirm it with the verdict ring,
+ * then leave.
  */
 export function ReviewFlipCard({
   ref,
@@ -388,6 +386,7 @@ export function ReviewFlipCard({
   revealed,
   onReveal,
   onReplayAudio,
+  replayHeld = false,
   opacityStyle,
   wordKey,
   restudying = false,
@@ -401,7 +400,7 @@ export function ReviewFlipCard({
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
 
-  const { translateX, isAnimatingRef, swipeThreshold, commitTo } = useSwipeGesture();
+  const { translateX, isAnimatingRef, commitTo } = useSwipeGesture();
 
   const { verdictTone, verdictLevel, verdictShakePhase, playVerdict, resetVerdict } =
     useCardVerdict();
@@ -420,7 +419,8 @@ export function ReviewFlipCard({
     ref,
     () => ({
       commitTo,
-      playVerdict: (confidence: WordConfidence) => playVerdict(confidence, wordKey ?? ''),
+      playVerdict: (confidence: WordConfidence, judge?: VerdictJudge) =>
+        playVerdict(confidence, wordKey ?? '', judge),
       clearVerdict: () => resetVerdict(wordKey ?? ''),
       resetGradePresentation: () => {
         cancelAnimation(translateX);
@@ -567,24 +567,6 @@ export function ReviewFlipCard({
     resetVerdict(wordKey ?? '');
   }, [wordKey, translateX, isAnimatingRef, resetVerdict]);
 
-  const flashColors = useMemo(
-    () => ({
-      error: [
-        withOpacity(colors.error, 0),
-        withOpacity(colors.error, CARD_CONSTANTS.FLASH_OPACITY),
-      ] as [string, string],
-      warning: [
-        withOpacity(colors.warning, 0),
-        withOpacity(colors.warning, CARD_CONSTANTS.FLASH_OPACITY),
-      ] as [string, string],
-      success: [
-        withOpacity(colors.success, 0),
-        withOpacity(colors.success, CARD_CONSTANTS.FLASH_OPACITY),
-      ] as [string, string],
-    }),
-    [colors.error, colors.warning, colors.success],
-  );
-
   // The ring's three hues, resolved in JS and picked per-frame on the UI thread
   // (the chart components do the same). Opacity carries the animation, so these
   // are the solid colours.
@@ -596,46 +578,6 @@ export function ReviewFlipCard({
     }),
     [colors.error, colors.warning, colors.success],
   );
-
-  // The wash takes its COLOUR from the verdict and its STRENGTH from whichever
-  // of the verdict and the card's displacement is currently leading.
-  //
-  // The colour used to be arbitrated too: a drag could name it, because while a
-  // finger was down the wash was predictive ("release now and it counts") and no
-  // verdict existed yet. With the swipe gone the card only ever moves on a
-  // committed grade — right for "Knew it", left for the restudy continue — so
-  // the direction and the verdict can no longer disagree, and the tone is the
-  // single source of the hue.
-  //
-  // The STRENGTH arbitration is still load-bearing. A leaving card's verdict
-  // ignites over IGNITE, holds out the rest of BEAT, then decays across
-  // CARD_EXIT — while the throw pins displacement at full for that same exit.
-  // Taking the max is what holds the tint at full strength as the card flies
-  // off; on the verdict alone the wash would fade out from under it.
-  const washStyle = useAnimatedStyle(() => {
-    'worklet';
-    const tx = translateX.get();
-    const throwProgress = Math.min(Math.abs(tx) / swipeThreshold, 1);
-    const displacement = 1 - (1 - throwProgress) ** 2; // quadratic ease-out
-    const verdict = verdictLevel.get();
-    const tone = verdictTone.get();
-
-    const t = Math.max(displacement, verdict);
-    if (t === 0) {
-      return { backgroundColor: colors.transparent };
-    }
-
-    if (tone === VERDICT_TONE.CORRECT) {
-      return { backgroundColor: interpolateColor(t, [0, 1], flashColors.success) };
-    }
-    if (tone === VERDICT_TONE.ALMOST) {
-      return { backgroundColor: interpolateColor(t, [0, 1], flashColors.warning) };
-    }
-    if (tone === VERDICT_TONE.WRONG) {
-      return { backgroundColor: interpolateColor(t, [0, 1], flashColors.error) };
-    }
-    return { backgroundColor: colors.transparent };
-  });
 
   // The ring is the verdict alone — it never responds to the card's
   // displacement, so it decays with the outcome rather than with the throw.
@@ -656,9 +598,10 @@ export function ReviewFlipCard({
     };
   });
 
-  // The verdict's own transform: a small lift on a pass, a decaying wince on a
-  // miss. Separate from cardSlideStyle so it composes with the throw and with
-  // the spring home rather than overwriting either.
+  // The verdict's own transform: a decaying wince on a miss the recognizer
+  // judged, and nothing for any other outcome — the ring already says which
+  // grade it was, and a scale pop or draw-in said it a second time. Separate
+  // from cardSlideStyle so it composes with the throw rather than overwriting it.
   //
   // The wince is a damped sine sampled from one linear phase, not a sequence of
   // fixed offsets — see VERDICT.SHAKE. Translation and tilt share the phase AND
@@ -667,26 +610,14 @@ export function ReviewFlipCard({
   // special-cased when the verdict is cleared.
   const verdictTransformStyle = useAnimatedStyle(() => {
     'worklet';
-    const tone = verdictTone.get();
-    const level = verdictLevel.get();
     const phase = verdictShakePhase.get();
     const envelope = Math.exp(-VERDICT.SHAKE.DAMPING * phase);
     const swing = envelope * Math.sin(phase * VERDICT.SHAKE.CYCLES * 2 * Math.PI);
-
-    // Both outcomes now move: a pass swells, a miss draws in. Only one of the
-    // two can be showing, and NONE leaves the card at rest.
-    const scale =
-      tone === VERDICT_TONE.CORRECT
-        ? 1 + (VERDICT.POP_SCALE - 1) * level
-        : tone === VERDICT_TONE.WRONG
-          ? 1 + (VERDICT.WINCE_SCALE - 1) * level
-          : 1;
 
     return {
       transform: [
         { translateX: VERDICT.SHAKE.AMPLITUDE * swing },
         { rotateZ: `${VERDICT.SHAKE.TILT_DEG * swing}deg` },
-        { scale },
       ],
     };
   });
@@ -700,15 +631,19 @@ export function ReviewFlipCard({
     return { transform: [{ translateX: translateX.get() }] };
   });
 
-  // The question face's one slot, resolved once: the disclosed English outranks
-  // the microphone (a result is up only when the mic is idle), and most cards
-  // have neither, which is the case the face has to collapse for.
+  // The question face's one slot, resolved once: a voice result outranks the
+  // microphone (a result is up only when the mic is idle), and most cards have
+  // neither, which is the case the face has to collapse for. Within a result
+  // the English shows only once disclosed — a hearing failure leaves `answer`
+  // empty and shows its caption alone.
   const questionBody =
-    discloseAnswer && answer ? (
+    discloseAnswer && (answer || discloseCaption) ? (
       <>
-        <ThemedText type="heading2" colorName="englishText" style={STATIC_STYLES.meaning}>
-          {capitalizeFirstLetter(answer)}
-        </ThemedText>
+        {answer ? (
+          <ThemedText type="heading2" colorName="englishText" style={STATIC_STYLES.meaning}>
+            {capitalizeFirstLetter(answer)}
+          </ThemedText>
+        ) : null}
         {/* The transcript, next to the answer it is compared against. It used
             to sit in the action band, on a line the band reserved in every
             state for the one state that used it. */}
@@ -728,18 +663,15 @@ export function ReviewFlipCard({
     );
 
   // Feedback belongs to the face so its geometry and seam opacity follow the
-  // turn; ring opacity remains independent. Both faces draw the same pair.
+  // turn; ring opacity remains independent. Both faces draw the same ring.
   const faceFeedback = (
-    <>
-      <Animated.View style={[STATIC_STYLES.flashOverlay, washStyle]} pointerEvents="none" />
-      <Animated.View style={[STATIC_STYLES.verdictRing, verdictRingStyle]} pointerEvents="none" />
-    </>
+    <Animated.View style={[STATIC_STYLES.verdictRing, verdictRingStyle]} pointerEvents="none" />
   );
 
   return (
     <Animated.View style={STATIC_STYLES.centered}>
       <Animated.View style={[STATIC_STYLES.cardBox, cardSlideStyle, opacityStyle]}>
-        {/* Verdict motion. Its own node so the pop and the shake compose with
+        {/* Verdict motion. Its own node so the mishear's shake composes with
               the throw above and the entrance below instead of overwriting
               either — three animations, three transforms, one card. */}
         <Animated.View style={[STATIC_STYLES.verdictLayer, verdictTransformStyle]}>
@@ -770,7 +702,12 @@ export function ReviewFlipCard({
                   accessibilityRole={restudying ? 'button' : undefined}
                   accessibilityLabel={restudying ? STRINGS.RESTUDY_CONTINUE : undefined}
                 >
-                  <WordDisplay word={word} wordType={wordType} onWordPress={onReplayAudio}>
+                  <WordDisplay
+                    word={word}
+                    wordType={wordType}
+                    onWordPress={onReplayAudio}
+                    holdWordPress={replayHeld}
+                  >
                     <View style={STATIC_STYLES.answerBody}>
                       <ThemedText
                         type="heading2"
@@ -801,8 +738,10 @@ export function ReviewFlipCard({
                   accessibilityLabel={STRINGS.SHOW_ANSWER}
                 >
                   {/* The word is the replay control on this face too, exactly
-                      as it is on the answer face — `onReplayAudio` is simply
-                      absent while a replay would be wrong (see the prop).
+                      as it is on the answer face. While the microphone holds
+                      the audio session it takes the press and does nothing
+                      (`replayHeld`): falling through to this face would reveal
+                      the answer in the middle of the recall it is testing.
 
                       It used to have its own speaker button below the Arabic,
                       which was worse than having nothing: the button's slot is
@@ -821,7 +760,7 @@ export function ReviewFlipCard({
                       the face the recall is tested on. WordDisplay reserves the
                       band regardless of content, which is what holds the Arabic
                       at an identical y through the flip. */}
-                  <WordDisplay word={word} onWordPress={onReplayAudio}>
+                  <WordDisplay word={word} onWordPress={onReplayAudio} holdWordPress={replayHeld}>
                     {/* One slot, two occupants. While the mic is working it
                         shows what it is doing; after a voice miss it shows the
                         English. Both belong here rather than under the card,

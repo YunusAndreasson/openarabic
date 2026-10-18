@@ -116,6 +116,13 @@ interface Props {
    *  then takes no press of its own and the tap falls through to whatever the
    *  face does with it. */
   onWordPress?: () => void;
+  /**
+   * Take the word's press and do nothing with it: no replay, no hint, no
+   * pressed state. For a moment when replaying is wrong but a fall-through to
+   * the face would be worse (the review card's question face reveals the
+   * answer on a tap).
+   */
+  holdWordPress?: boolean;
   /** Grammatical class ("Verb", "Noun"), when the corpus knows one. Optional by
    *  design — it comes from the example-sentence join, which not every root has. */
   wordType?: string | null;
@@ -123,6 +130,9 @@ interface Props {
    *  on the answer face, the voice channel on the question face). */
   children?: ReactNode;
 }
+
+/** What a held word does with its press. */
+const absorbPress = (): void => undefined;
 
 /**
  * The shared top of both card faces: an optional word-class label and the
@@ -133,7 +143,14 @@ interface Props {
  * Arabic actually rendered, left ~130px of dead space between the two, and
  * collided once a word wrapped to two lines.
  */
-export function WordDisplay({ word, style, onWordPress, wordType, children }: Props) {
+export function WordDisplay({
+  word,
+  style,
+  onWordPress,
+  holdWordPress = false,
+  wordType,
+  children,
+}: Props) {
   const readerFontSize = useDebouncedArabicFontSize(100);
 
   const heroFontSize = useMemo(() => {
@@ -143,6 +160,8 @@ export function WordDisplay({ word, style, onWordPress, wordType, children }: Pr
     if (letters >= HERO.STEP_DOWN_AT) return Math.round(base * 0.8);
     return Math.round(base);
   }, [readerFontSize, word]);
+
+  const replays = onWordPress !== undefined && !holdWordPress;
 
   // No drop shadow on the glyphs, deliberately: it reads as dated on its own
   // and actively muddies vocalized Arabic — a shadow under a kasra is visual
@@ -171,14 +190,16 @@ export function WordDisplay({ word, style, onWordPress, wordType, children }: Pr
         <Pressable
           style={({ pressed }) => [
             STATIC_STYLES.heroPressable,
-            pressed ? STATIC_STYLES.heroPressed : null,
+            pressed && replays ? STATIC_STYLES.heroPressed : null,
           ]}
-          onPress={onWordPress}
-          disabled={!onWordPress}
-          accessibilityRole={onWordPress ? 'button' : undefined}
+          // A held word still takes the press (a handler, not undefined), so
+          // the tap stops here instead of reaching the face underneath.
+          onPress={replays ? onWordPress : absorbPress}
+          disabled={!replays && !holdWordPress}
+          accessibilityRole={replays ? 'button' : undefined}
           // A hint, not a label: the label is the Arabic itself, which is the
           // one thing a screen reader must still announce here.
-          accessibilityHint={onWordPress ? STRINGS.REPLAY_WORD_AUDIO : undefined}
+          accessibilityHint={replays ? STRINGS.REPLAY_WORD_AUDIO : undefined}
         >
           <ThemedText type="arabic" colorName="arabicText" align="center" style={heroTextStyle}>
             {word}

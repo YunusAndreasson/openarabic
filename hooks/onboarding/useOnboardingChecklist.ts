@@ -27,6 +27,22 @@ export interface ChecklistItem {
 }
 
 /**
+ * The learner's own "not now". It writes the same permanent suppression an
+ * established account gets at first evaluation, so the card does not return
+ * on the next launch — only Account → Reset tutorials brings it back.
+ *
+ * The card used to have no way out short of finishing all four steps, so a
+ * learner who never wanted one of them (listening, say) kept it at the top of
+ * the landing tab indefinitely.
+ */
+const dismissChecklist = () => {
+  void analytics.track(ANALYTICS_EVENTS.ONBOARDING_CHECKLIST_SUPPRESSED, {
+    reason: 'user_dismissed',
+  });
+  void initializeOnboarding({ dismissed: true });
+};
+
+/**
  * Drives the "Get started" checklist on Explore and gates the welcome intro.
  *
  * Completion per item is `local flag || server signal` so progress survives
@@ -174,6 +190,8 @@ export function useOnboardingChecklist(articlesData: Article[]) {
       allDone,
       /** Persist completion after the collapse animation (idempotent) */
       finalizeCompletion,
+      /** Hide the checklist for good, at the learner's request */
+      dismiss: dismissChecklist,
     }),
     [isEligible, isChecklistVisible, items, doneCount, allDone, finalizeCompletion],
   );

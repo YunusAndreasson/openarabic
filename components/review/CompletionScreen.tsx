@@ -1,18 +1,16 @@
 import { Icon } from '@/components/ui';
 import { Link } from 'expo-router';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
-import Animated, { FadeIn, FadeInUp, FadeOut, ZoomIn } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, ZoomIn } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { BaseCard } from '@/components/common';
 import { NotificationPrimingCard } from '@/components/review/NotificationPrimingCard';
 import { VoicePrimingCard } from '@/components/review/VoicePrimingCard';
 import { ThemedButton } from '@/components/primitives/ThemedButton';
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { TIMING_CONFIG, TIMING_CONSTANTS } from '@/constants/animation';
+import { TIMING_CONFIG } from '@/constants/animation';
 
-import { FONTS } from '@/constants/fonts';
-import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import {
@@ -24,12 +22,7 @@ import {
 import { useStudyStreak } from '@/hooks/practice';
 import { useColors } from '@/hooks/theme/useColors';
 import type { SessionMetrics } from '@/types/review.types';
-import { mixColors } from '@/utils/colorUtils';
 import { successFeedback } from '@/utils/haptics';
-import { createMargin, createPadding, COMMON_STYLES } from '@/utils/layoutUtils';
-
-/** How much of a metric's hue is mixed into the card behind its icon. */
-const METRIC_ICON_TINT = 0.12;
 
 /** A small pop with no wobble: Reanimated's own "gentle" ratio. */
 const ICON_DAMPING_RATIO = 0.75;
@@ -48,28 +41,15 @@ const ENTERING_ICON = ZoomIn.springify(TIMING_CONFIG.FAST.duration)
       scheduleOnRN(successFeedback);
     }
   });
-const ENTERING_TITLE = FadeInUp.delay(TIMING_CONSTANTS.STAGGER.BASE).duration(
-  TIMING_CONFIG.FAST.duration,
-);
-const ENTERING_EDUCATIONAL = FadeInUp.delay(TIMING_CONSTANTS.STAGGER.MEDIUM).duration(
-  TIMING_CONFIG.FAST.duration,
-);
-const ENTERING_BUTTON_WITH_METRICS = FadeIn.delay(
-  TIMING_CONSTANTS.STAGGER.BUTTON_WITH_METRICS,
-).duration(TIMING_CONFIG.FAST.duration);
-const ENTERING_BUTTON_WITHOUT_METRICS = FadeIn.delay(
-  TIMING_CONSTANTS.STAGGER.BUTTON_WITHOUT_METRICS,
-).duration(TIMING_CONFIG.FAST.duration);
-// Pre-build metric entering animations for indices 0-4 (typical max metrics count)
-const ENTERING_METRICS = Array.from({ length: 5 }, (_, index) =>
-  FadeInUp.delay(
-    TIMING_CONSTANTS.STAGGER.SLOW + index * TIMING_CONSTANTS.STAGGER.INCREMENT,
-  ).duration(TIMING_CONFIG.FAST.duration),
-);
-// Priming card lands after the metric stagger (metrics are capped at 2 when it shows)
-const ENTERING_PRIMING = FadeInUp.delay(
-  TIMING_CONSTANTS.STAGGER.SLOW + 3 * TIMING_CONSTANTS.STAGGER.INCREMENT,
-).duration(TIMING_CONFIG.FAST.duration);
+// Nothing else on this screen animates in. The title, the rows and the button
+// used to arrive in a staggered cascade (seven delays, up to 320ms) — motion
+// performing a celebration rather than telling the learner anything. The
+// checkmark keeps its pop because it carries the session's one success haptic.
+//
+// The priming card keeps a plain fade: its eligibility is an async read, so it
+// can arrive after the rest of the screen, and a card that pops in unannounced
+// reads as a layout jump.
+const ENTERING_PRIMING = FadeIn.duration(TIMING_CONFIG.FAST.duration);
 const EXITING_PRIMING = FadeOut.duration(TIMING_CONFIG.FAST.duration);
 // Small screens: cap metric rows while the priming card is visible so the
 // Continue button never gets crowded off.
@@ -111,7 +91,7 @@ export const CompletionScreen = ({
   // Handle review completion logic (query invalidation, analytics, haptics)
   useReviewCompletion(sessionMetrics);
 
-  const encouragingResult = useEncouragingMetrics(sessionMetrics, colors, currentDailyStreak);
+  const sessionRows = useEncouragingMetrics(sessionMetrics, currentDailyStreak);
 
   // Primed notification ask — stands aside for the voice offer on a learner's
   // first completions, then shows once, and at most once more after a gap.
@@ -145,7 +125,7 @@ export const CompletionScreen = ({
   // disagree with itself.
   const showAnyPriming = showPrimingCard || showVoiceCard;
 
-  const metrics = encouragingResult?.metrics ?? [];
+  const metrics = sessionRows ?? [];
   const visibleMetrics = showAnyPriming ? metrics.slice(0, MAX_METRICS_WITH_PRIMING) : metrics;
 
   const Content = (
@@ -155,54 +135,20 @@ export const CompletionScreen = ({
         <Icon color={colors.completionSuccess} name="checkmark-circle" size={iconSize} />
       </Animated.View>
 
-      {/* Title Group - Closely grouped for Gestalt proximity */}
-      <View style={styles.titleGroup}>
-        <Animated.View entering={ENTERING_TITLE}>
-          <ThemedText colorName="headingText" style={styles.titleText} type="heading1">
-            {title}
-          </ThemedText>
-        </Animated.View>
+      <ThemedText colorName="headingText" style={styles.titleText} type="heading1">
+        {title}
+      </ThemedText>
 
-        {/* Educational text - contextual based on session performance */}
-        <Animated.View entering={ENTERING_EDUCATIONAL}>
-          <ThemedText colorName="secondary" style={styles.educationalText} type="body">
-            {encouragingResult?.educationalText ?? STRINGS.SESSION_ED_DEFAULT_POOL[0]}
-          </ThemedText>
-        </Animated.View>
-      </View>
-
-      {/* Metrics Section - Separated group for visual hierarchy */}
+      {/* What the session measured, one plain line each, in one ink. These
+          used to be cards with an icon in a tinted square, each in its own hue
+          (tint, info, warning, success) with a trophy and a flame, under a
+          rotating paragraph of encouragement whose claims were not computed. */}
       {visibleMetrics.length > 0 && (
         <View style={styles.metricsContainer}>
-          {visibleMetrics.map((metric, index) => (
-            <Animated.View key={metric.type + metric.text} entering={ENTERING_METRICS[index]}>
-              <BaseCard
-                contentStyle={styles.metricContent}
-                elevation="hairline"
-                style={styles.metricItem}
-              >
-                <View
-                  style={[
-                    styles.metricIconContainer,
-                    // Mixed into the card rather than laid over it: a hue at 12%
-                    // alpha composites against the near-black review background
-                    // in dark mode and collapses to a grey smudge.
-                    { backgroundColor: mixColors(colors.card, metric.color, METRIC_ICON_TINT) },
-                  ]}
-                >
-                  <Icon
-                    color={metric.color}
-                    name={metric.icon}
-                    size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                  />
-                </View>
-                <View style={styles.metricTextContainer}>
-                  <ThemedText style={styles.metricText} type="body">
-                    {metric.text}
-                  </ThemedText>
-                </View>
-              </BaseCard>
-            </Animated.View>
+          {visibleMetrics.map(metric => (
+            <ThemedText key={metric.type} type="body" style={styles.metricText}>
+              {metric.text}
+            </ThemedText>
           ))}
         </View>
       )}
@@ -227,12 +173,7 @@ export const CompletionScreen = ({
       <View style={styles.spacer} />
 
       {/* Action Button - Anchored to bottom */}
-      <Animated.View
-        entering={
-          encouragingResult ? ENTERING_BUTTON_WITH_METRICS : ENTERING_BUTTON_WITHOUT_METRICS
-        }
-        style={styles.buttonContainer}
-      >
+      <View style={styles.buttonContainer}>
         {/* `onContinue` (useReview's handleClose) stops audio, settles pending
             grade writes, invalidates the FSRS queries and then navigates — the
             same path the close button takes. The Link fallbacks only apply when
@@ -259,7 +200,7 @@ export const CompletionScreen = ({
             <ThemedButton fullWidth title={STRINGS.CONTINUE} hapticType="selection" />
           </Link>
         )}
-      </Animated.View>
+      </View>
     </View>
   );
 
@@ -301,58 +242,19 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.XLARGE,
   },
 
-  // Title group - tightly grouped for Gestalt proximity
-  titleGroup: {
-    alignItems: 'center',
-    width: '100%',
-    marginBottom: LAYOUT.SPACING.XXXLARGE, // Large gap before metrics
-  },
-
   titleText: {
     textAlign: 'center',
-    marginBottom: LAYOUT.SPACING.SMALL,
+    marginBottom: LAYOUT.SPACING.XLARGE,
   },
 
-  educationalText: {
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-    textAlign: 'center',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.LOOSE,
-  },
-
-  // Metrics section - separated from title group
   metricsContainer: {
+    alignItems: 'center',
     gap: LAYOUT.SPACING.SMALL,
     width: '100%',
   },
 
-  // BaseCard supplies the radius and the surface; this is only its padding.
-  metricItem: {
-    ...createPadding({ horizontal: 'LARGE', vertical: 'TINY' }),
-  },
-
-  metricContent: {
-    ...COMMON_STYLES.row,
-    ...createPadding({ vertical: 'TINY' }),
-  },
-
-  metricIconContainer: {
-    ...COMMON_STYLES.centeredRow,
-    ...COMMON_STYLES.roundedMedium,
-    height: LAYOUT.BUTTON.ICON_SIZE.XLARGE + LAYOUT.SPACING.MEDIUM,
-    ...createMargin({ right: 'MEDIUM' }),
-    width: LAYOUT.BUTTON.ICON_SIZE.XLARGE + LAYOUT.SPACING.MEDIUM,
-  },
-
-  metricTextContainer: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-
   metricText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontFamily: FONTS.ENGLISH_SEMIBOLD,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.NORMAL,
-    textAlign: 'left',
+    textAlign: 'center',
   },
 
   // Priming card sits below the metrics, above the flexible spacer

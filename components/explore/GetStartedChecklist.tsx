@@ -33,6 +33,16 @@ const CHECK_ICON_SIZE = 22;
 // instead of popping in behind the closing modal.
 const MOUNT_FADE_IN_STYLE = fadeInStyle(TIMING_CONFIG.SLOW.duration, 'forwards');
 
+/** A small pop with no wobble — the ratio CompletionScreen's check uses. */
+const CHECK_DAMPING_RATIO = 0.75;
+
+// The duration goes INTO springify: a bare `.springify()` runs Reanimated's
+// default physics spring for ~0.8s, a long wobble for a tick that should land
+// while the learner is still looking at the row.
+const ENTERING_CHECK = ZoomIn.springify(TIMING_CONFIG.FAST.duration).dampingRatio(
+  CHECK_DAMPING_RATIO,
+);
+
 interface GetStartedChecklistProps {
   articlesData: Article[];
   /** Owned by the Explore screen so eligibility is evaluated exactly once */
@@ -43,10 +53,11 @@ interface GetStartedChecklistProps {
 
 /**
  * "Get started" checklist shown at the top of Explore for new users.
- * Three rows track the hallmark actions (read a text, save a word, listen to
- * bilingual audio) with real completion state; tapping an undone row lands the
- * user in a starter article where all three actions live. Once everything is
- * done the card pauses, collapses away, and never returns.
+ * Four rows track the hallmark actions (read a text, save a word, listen to
+ * bilingual audio, practise a word) with real completion state; tapping an
+ * undone row lands the user where that action lives. Once everything is done
+ * the card pauses, collapses away, and never returns. The close glyph in its
+ * header puts it away for good before then.
  */
 const GetStartedChecklistComponent = ({
   articlesData,
@@ -55,7 +66,7 @@ const GetStartedChecklistComponent = ({
 }: GetStartedChecklistProps) => {
   const colors = useColors();
   const router = useRouter();
-  const { isChecklistVisible, items, doneCount, allDone, finalizeCompletion } = checklist;
+  const { isChecklistVisible, items, doneCount, allDone, finalizeCompletion, dismiss } = checklist;
 
   const articleIds = useMemo(() => articlesData.map(a => a.id), [articlesData]);
   const { data: progressMap } = useBulkReadingProgress(articleIds);
@@ -140,10 +151,23 @@ const GetStartedChecklistComponent = ({
       >
         <BaseCard contentStyle={styles.cardContent}>
           <View style={styles.headerRow}>
-            <ThemedText type="bodyBold">{STRINGS.CHECKLIST_TITLE}</ThemedText>
+            <ThemedText style={styles.title} type="bodyBold">
+              {STRINGS.CHECKLIST_TITLE}
+            </ThemedText>
             <ThemedText type="caption" colorName="secondaryText">
               {progressLabel}
             </ThemedText>
+            {/* A bare glyph, not a filled button: putting the card away is the
+                least important thing on it, and it should look it. */}
+            <Pressable
+              accessibilityLabel={STRINGS.CHECKLIST_DISMISS_A11Y}
+              accessibilityRole="button"
+              hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
+              style={({ pressed }) => pressed && styles.pressed}
+              onPress={dismiss}
+            >
+              <Icon name="close" size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={colors.textTertiary} />
+            </Pressable>
           </View>
 
           {items.map(item => (
@@ -157,7 +181,7 @@ const GetStartedChecklistComponent = ({
               accessibilityState={{ checked: item.done }}
             >
               {item.done ? (
-                <Animated.View entering={ZoomIn.springify()}>
+                <Animated.View entering={ENTERING_CHECK}>
                   <Icon name="checkmark-circle" size={CHECK_ICON_SIZE} color={colors.success} />
                 </Animated.View>
               ) : (
@@ -200,9 +224,15 @@ const styles = StyleSheet.create({
   },
   headerRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: LAYOUT.SPACING.MEDIUM,
     paddingBottom: LAYOUT.SPACING.TINY,
+  },
+  title: {
+    flex: 1,
+  },
+  pressed: {
+    opacity: LAYOUT.OPACITY.PRESSED,
   },
   row: {
     flexDirection: 'row',

@@ -4,7 +4,6 @@ import { StyleSheet } from 'react-native';
 import { MetricCardGrid } from '@/components/common/MetricCardGrid';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { useStudyStreak } from '@/hooks/practice/useStudyStreak';
 import { DEPTH_BAND_SCOPES } from '@/hooks/vocabulary/useDictionaryList';
 import { useReviewDepthDistribution } from '@/hooks/vocabulary/useReviewDepthDistribution';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -24,7 +23,7 @@ import { BandBreakdown, type BreakdownBand } from './BandBreakdown';
  * A real mean below a half gets `<1` rather than `≈0`. Rounding it would put a
  * zero next to a non-zero total on the same row, which reads as a contradiction
  * rather than as an average — and that is precisely the first-week case (one
- * review across three study days) this sheet should not open with.
+ * review across three saved words) this sheet should not open with.
  *
  * A mean of exactly zero is not an approximation of anything, so it drops the
  * marker and prints bare, matching the exact `0` the Total tile shows beside it
@@ -41,9 +40,16 @@ function formatAverage(total: number, divisor: number): string {
 }
 
 /**
- * The sheet under the practice screen's "Reviews done" tile: the total, its two
- * useful normalisations, and the distribution the second of those averages
- * summarises.
+ * The sheet under the practice screen's "Reviews done" tile: the total, its
+ * per-word average, and the distribution that average summarises.
+ *
+ * **Why there is no per-study-day average.** There was one, divided by the
+ * streak's study-day ledger. That ledger structurally under-counts history —
+ * the server-derived half holds at most one day-key per reviewed word, and the
+ * local half is lost on reinstall (see `utils/studyDayLedger`) — so its error
+ * was a MULTIPLE, not a rounding: fifteen words, thousands of grades and a fresh
+ * install could read "≈200 per study day". An `≈` cannot make a number that can
+ * be off by ten times honest, so it went. It needs a `review_logs` table.
  *
  * **Why there is no per-day chart here.** The obvious detail view for a review
  * count is a bar per day, and the data to draw one honestly does not exist:
@@ -62,23 +68,6 @@ function formatAverage(total: number, divisor: number): string {
 export function PracticeDepthBreakdown({ studyWords }: { studyWords: StudyWord[] }): JSX.Element {
   const { bands, maxBandCount, totalReviews, totalWords } = useReviewDepthDistribution(studyWords);
 
-  // Already warm: the practice screen mounts this same query for its streak
-  // tile, so opening the sheet reads the cache rather than the network.
-  //
-  // `totalReadingDays` is the app's own definition of a study day — the number
-  // the streak sheet prints as "Total" one tap away — so this average and that
-  // count are the same fact, and a second denominator invented here would only
-  // make the two surfaces disagree.
-  //
-  // Be clear about what it costs. That ledger structurally under-counts history:
-  // the server-derived half holds at most one day-key per reviewed word, and the
-  // local half is lost on reinstall (see `utils/studyDayLedger`). So the error
-  // here is a MULTIPLE, not a rounding — a learner with fifteen words, thousands
-  // of grades and a fresh install can be told "≈200 per study day". The `≈` is
-  // what keeps it from being read as a measurement; the honest fix is a
-  // `review_logs` table, which is a backend change.
-  const { streak } = useStudyStreak();
-
   const metrics = [
     {
       id: 'total',
@@ -86,12 +75,6 @@ export function PracticeDepthBreakdown({ studyWords }: { studyWords: StudyWord[]
       // `0` rather than "—": no reviews is a MEASURED fact for a new learner,
       // and the same reasoning the tile itself uses.
       value: totalReviews,
-    },
-    {
-      id: 'per-day',
-      label: STRINGS.DEPTH_METRIC_PER_DAY,
-      // A pending or failed streak fetch is not a study history of zero days.
-      value: streak ? formatAverage(totalReviews, streak.totalReadingDays) : STRINGS.EMPTY_METRIC,
     },
     {
       id: 'per-word',

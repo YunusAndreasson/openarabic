@@ -13,7 +13,6 @@ export function PracticeEmptyState() {
 
   return (
     <SeededContentEmptyState
-      source="practice"
       icon="school-outline"
       title={STRINGS.STUDY_LIST_EMPTY_TITLE}
       hint={STRINGS.STUDY_LIST_EMPTY_HINT}

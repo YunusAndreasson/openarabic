@@ -2,6 +2,7 @@ import { describe, expect, jest, test } from '@jest/globals';
 import { render, waitFor } from '@testing-library/react-native';
 
 import { ROUTE_PATHS } from '@/constants/routes';
+import { STRINGS } from '@/constants/strings';
 
 jest.mock('expo-router', () => ({
   router: { push: jest.fn(), replace: jest.fn(), dismiss: jest.fn() },
@@ -61,7 +62,7 @@ jest.mock('@/hooks/tutorials/useTutorial', () => ({
 }));
 
 jest.mock('@/hooks/theme/useColors', () => ({
-  useColors: () => ({ background: '#000', secondaryText: '#888', success: '#0f0' }),
+  useColors: () => ({ background: '#000' }),
 }));
 
 jest.mock('@/store/hooks', () => ({
@@ -117,7 +118,6 @@ jest.mock('@/hooks/review', () => ({
     restudying: false,
     continueFromRestudy: jest.fn(),
     isAudioPreloading: false,
-    audioPreloadProgress: 0,
     isAudioReady: false,
     revealMeaningPassive: jest.fn(),
     stopAudio: jest.fn(),
@@ -155,9 +155,13 @@ const mockReplace = jest.mocked(router.replace);
 
 describe('empty review route', () => {
   test('returns to Practice without rendering completion UI', async () => {
-    const { queryByTestId, getByTestId } = render(<ReviewScreen />);
+    const { queryByTestId, getByTestId, getByText, queryByText } = render(<ReviewScreen />);
 
     expect(getByTestId('review-loader')).toBeTruthy();
+    // One loading line for every pre-session wait: no percentage, no second
+    // string for the audio stretch.
+    expect(getByText(STRINGS.PREPARING_PRACTICE_SESSION)).toBeTruthy();
+    expect(queryByText(/% complete/)).toBeNull();
     expect(queryByTestId('completion-screen')).toBeNull();
     expect(mockSubscribeDiag).not.toHaveBeenCalled();
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith(ROUTE_PATHS.PRACTICE_TAB));

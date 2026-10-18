@@ -223,7 +223,6 @@ const styles = StyleSheet.create({
   fontDescription: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LINE_HEIGHT_MULTIPLIERS.NORMAL,
     textAlign: 'center',
-    opacity: LAYOUT.OPACITY.HOVER,
   },
   previewText: {
     textAlign: 'center',

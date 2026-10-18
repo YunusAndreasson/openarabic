@@ -32,54 +32,68 @@ interface VoiceResultPanelProps {
   onReject: () => void;
   /** Re-open the mic for another attempt on the same card. */
   onRetry: () => void;
+  /**
+   * The card is already marked wrong — the recognizer heard a different word —
+   * so "Missed it" commits an outcome the learner has already felt, and the
+   * verdict layer will not replay it. False after a hearing failure, where
+   * nothing has been marked and "Missed it" plays its own verdict.
+   */
+  missMarked: boolean;
 }
 
-export const VoiceResultPanel = memo(({ onAccept, onReject, onRetry }: VoiceResultPanelProps) => {
-  return (
-    <Animated.View entering={FadeIn.duration(TIMING_CONFIG.MEDIUM.duration)} style={styles.panel}>
-      <ReviewChoiceRow
-        choices={[
-          {
-            tone: 'intermediate',
-            label: STRINGS.VOICE_RESULT_RETRY,
-            onPress: () => {
-              // Grades nothing, so no verdict is coming and this tap would
-              // otherwise land in silence.
-              selectionFeedback();
-              onRetry();
+/**
+ * Fail on the left, pass on the right — the grade bar's order — with "Try
+ * again" between them in a neutral ink. It used to lead the row in amber, which
+ * put a non-grade in "Forgot"'s slot wearing "Barely"'s colour, and moved the
+ * red miss into the middle where the grade bar keeps a pass.
+ */
+export const VoiceResultPanel = memo(
+  ({ onAccept, onReject, onRetry, missMarked }: VoiceResultPanelProps) => {
+    return (
+      <Animated.View entering={FadeIn.duration(TIMING_CONFIG.MEDIUM.duration)} style={styles.panel}>
+        <ReviewChoiceRow
+          choices={[
+            {
+              tone: 'negative',
+              label: STRINGS.VOICE_RESULT_REJECT_SHORT,
+              accessibilityLabel: STRINGS.VOICE_RESULT_REJECT,
+              onPress: () => {
+                // One decision, one haptic. When the card is already red the
+                // verdict layer suppresses a replay, so this tap would land in
+                // silence: a quiet tick acknowledges it without restating a
+                // conclusion the learner has already felt. When nothing was
+                // marked, the verdict this commits supplies the haptic itself.
+                if (missMarked) selectionFeedback();
+                onReject();
+              },
             },
-          },
-          {
-            tone: 'negative',
-            label: STRINGS.VOICE_RESULT_REJECT_SHORT,
-            accessibilityLabel: STRINGS.VOICE_RESULT_REJECT,
-            onPress: () => {
-              // Agreeing with the verdict already on the card. The card went red
-              // the moment the mishear landed and fired its error haptic then,
-              // and the grade this commits is the same outcome — so the verdict
-              // layer suppresses a replay and this tap would otherwise land in
-              // silence. A quiet tick acknowledges the press without restating
-              // a conclusion the learner has already felt.
-              selectionFeedback();
-              onReject();
+            {
+              tone: 'neutral',
+              label: STRINGS.VOICE_RESULT_RETRY,
+              onPress: () => {
+                // Grades nothing, so no verdict is coming and this tap would
+                // otherwise land in silence.
+                selectionFeedback();
+                onRetry();
+              },
             },
-          },
-          {
-            tone: 'positive',
-            label: STRINGS.VOICE_RESULT_ACCEPT_SHORT,
-            accessibilityLabel: STRINGS.VOICE_RESULT_ACCEPT,
-            // No tick here. This overturns the red already on the card, and the
-            // green verdict that replaces it fires its own haptic on the frame
-            // the colour lands — a press tick as well would buzz the reversal
-            // twice, the earlier of the two saying nothing about which way it
-            // went.
-            onPress: onAccept,
-          },
-        ]}
-      />
-    </Animated.View>
-  );
-});
+            {
+              tone: 'positive',
+              label: STRINGS.VOICE_RESULT_ACCEPT_SHORT,
+              accessibilityLabel: STRINGS.VOICE_RESULT_ACCEPT,
+              // No tick here. This overturns the red already on the card, and the
+              // green verdict that replaces it fires its own haptic on the frame
+              // the colour lands — a press tick as well would buzz the reversal
+              // twice, the earlier of the two saying nothing about which way it
+              // went.
+              onPress: onAccept,
+            },
+          ]}
+        />
+      </Animated.View>
+    );
+  },
+);
 
 VoiceResultPanel.displayName = 'VoiceResultPanel';
 

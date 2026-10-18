@@ -356,7 +356,6 @@ describe('useReview Hook - Session Management', () => {
     test('should wait for audio preloading before playing audio', () => {
       useAudioPreloader.mockReturnValue({
         isPreloading: true,
-        progress: 30,
         isReady: false,
       });
 
@@ -372,7 +371,6 @@ describe('useReview Hook - Session Management', () => {
     it('should play audio after preloading completes', async () => {
       useAudioPreloader.mockReturnValue({
         isPreloading: true,
-        progress: 50,
         isReady: false,
         resolveCached: jest.fn(() => undefined),
         forgetCached: jest.fn(),
@@ -388,7 +386,6 @@ describe('useReview Hook - Session Management', () => {
 
       useAudioPreloader.mockReturnValue({
         isPreloading: false,
-        progress: 100,
         isReady: true,
         resolveCached: jest.fn(() => undefined),
         forgetCached: jest.fn(),
@@ -407,7 +404,6 @@ describe('useReview Hook - Session Management', () => {
     test('should expose audio preloader state', () => {
       useAudioPreloader.mockReturnValue({
         isPreloading: true,
-        progress: 65,
         isReady: false,
       });
 
@@ -418,7 +414,6 @@ describe('useReview Hook - Session Management', () => {
       const { result } = renderHook(() => useReview(), { wrapper });
 
       expect(result.current.isAudioPreloading).toBeTruthy();
-      expect(result.current.audioPreloadProgress).toBe(65);
       expect(result.current.isAudioReady).toBeFalsy();
     });
   });

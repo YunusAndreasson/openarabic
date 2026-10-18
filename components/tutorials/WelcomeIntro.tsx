@@ -28,7 +28,6 @@ import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { STRINGS } from '@/constants/strings';
 import { analytics } from '@/services/analytics';
 import { metaEvents } from '@/services/metaEvents';
-import { lightFeedback } from '@/utils/haptics';
 
 import { TutorialCard } from './TutorialCard';
 import { TutorialOverlay } from './TutorialOverlay';
@@ -125,7 +124,6 @@ export function WelcomeIntro({ visible, onDismiss, onOpenFirstText }: WelcomeInt
     if (isLastStep) {
       if (completed) return;
       setCompleted(true);
-      lightFeedback();
       void analytics.track(ANALYTICS_EVENTS.ONBOARDING_INTRO_COMPLETED, { cta: 'open_first_text' });
       metaEvents.logTutorialComplete();
       onDismiss();

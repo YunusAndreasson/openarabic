@@ -2,23 +2,21 @@ import { useMemo } from 'react';
 import type { StyleProp, TextStyle } from 'react-native';
 import { StyleSheet, Text } from 'react-native';
 
+import type { SolidColorName } from '@/constants/colors';
 import { FONTS, resolveArabicFont } from '@/constants/fonts';
 import {
   LAYOUT,
   LETTER_SPACING,
   LINE_HEIGHT_MULTIPLIERS,
-  TEXT_OPACITY,
   TEXT_STYLES,
   getArabicTextStyle,
   getCompactArabicTextStyle,
-  getEnhancedOpacity,
 } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useDebouncedArabicFontSize } from '@/hooks/theme/useDebouncedArabicFontSize';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { useAppSelector } from '@/store/hooks';
 import type { RootState } from '@/store/store';
-import type { ThemedTextProps } from '@/types/ui/text.types';
+import type { TextTypeName, ThemedTextProps } from '@/types/ui/text.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 
 // Extract selector outside component to avoid recreation on every render
@@ -28,11 +26,30 @@ import type { ThemeColors } from '@/types/ui/theme.types';
 const selectArabicFont = (state: RootState) => resolveArabicFont(state.settings.arabicFont);
 
 /**
+ * The ink a type takes when the caller names none.
+ *
+ * Emphasis lives in colour, not in opacity. These three types used to render
+ * `text` at 75–90% opacity, plus a theme "boost" of +0.05/+0.08 on top, so the
+ * declared values never rendered and the resulting grey was a blend of the ink
+ * and whatever surface the text happened to sit on. Each now names the theme
+ * ink closest to what that blend produced on the page — `captionText` for the
+ * 75% caption, `subtitleText` for the 85–90% label and overline — which is a
+ * fixed colour with a known contrast (≥4.5:1 on every surface, all themes)
+ * rather than a different grey on every background.
+ */
+const DEFAULT_COLOR_BY_TYPE: Partial<Record<TextTypeName, SolidColorName>> = {
+  caption: 'captionText',
+  label: 'subtitleText',
+  overline: 'subtitleText',
+};
+
+/**
  * Enhanced text color function with semantic color support
  * Extracted to module level for performance optimization
  */
 const getTextColor = (
   colors: ThemeColors,
+  type: TextTypeName,
   colorName?: ThemedTextProps['colorName'],
   skipDefaultColor?: boolean,
 ): string | undefined => {
@@ -40,7 +57,8 @@ const getTextColor = (
   // by construction — the old runtime `typeof color === 'string'` guard silently
   // rendered uncoloured text when someone passed `cardGradient` or `grammar`.
   if (colorName) return colors[colorName];
-  return !skipDefaultColor ? colors.text : undefined;
+  if (skipDefaultColor) return undefined;
+  return colors[DEFAULT_COLOR_BY_TYPE[type] ?? 'text'];
 };
 
 // Enhanced typography styles with micro-adjustments and semantic relationships
@@ -50,49 +68,43 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     letterSpacing: LETTER_SPACING.SLIGHT_POSITIVE,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.NORMAL,
-    opacity: TEXT_OPACITY.PRIMARY,
   },
   bodyBold: {
     fontFamily: FONTS.ENGLISH_SEMIBOLD,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     letterSpacing: LETTER_SPACING.TIGHT,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LINE_HEIGHT_MULTIPLIERS.NORMAL,
-    opacity: TEXT_OPACITY.PRIMARY,
   },
+  // Secondary by colour (`captionText` — see DEFAULT_COLOR_BY_TYPE), not opacity.
   caption: {
     fontFamily: FONTS.ENGLISH,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     letterSpacing: LETTER_SPACING.SLIGHT_POSITIVE, // 0.1 - MD3 body-small standard for mixed-case
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LINE_HEIGHT_MULTIPLIERS.LOOSE,
-    opacity: LAYOUT.OPACITY.HIGH, // Secondary text best practice (~70%)
   },
   heading1: {
     fontFamily: FONTS.ENGLISH_BOLD,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
     letterSpacing: LETTER_SPACING.DISPLAY,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * LINE_HEIGHT_MULTIPLIERS.TIGHT,
-    opacity: TEXT_OPACITY.PRIMARY,
   },
   heading2: {
     fontFamily: FONTS.ENGLISH_BOLD,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
     letterSpacing: TEXT_STYLES.SECTION_HEADER.letterSpacing,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * TEXT_STYLES.SECTION_HEADER.lineHeightMultiplier,
-    opacity: TEXT_OPACITY.PRIMARY,
   },
   heading3: {
     fontFamily: FONTS.ENGLISH_SEMIBOLD,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     letterSpacing: TEXT_STYLES.CARD_TITLE.letterSpacing,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * TEXT_STYLES.CARD_TITLE.lineHeightMultiplier,
-    opacity: TEXT_OPACITY.PRIMARY,
   },
   label: {
     fontFamily: FONTS.ENGLISH_SEMIBOLD,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     letterSpacing: LETTER_SPACING.RELAXED,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LINE_HEIGHT_MULTIPLIERS.NORMAL,
-    opacity: TEXT_OPACITY.SECONDARY,
   },
   // A quiet section label. It used to be 11pt ALL CAPS at +1.0 tracking — about
   // +0.09em, four times the magnitude of the tightest heading and in the
@@ -106,7 +118,6 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     letterSpacing: LETTER_SPACING.SLIGHT_POSITIVE,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LINE_HEIGHT_MULTIPLIERS.NORMAL,
-    opacity: LAYOUT.OPACITY.HOVER, // Auxiliary labels - visible but not competing with primary content
   },
 });
 
@@ -159,7 +170,6 @@ export function ThemedText({
   ...rest
 }: ThemedTextProps) {
   const colors = useColors();
-  const isDarkMode = useIsDarkMode();
   const selectedArabicFont = useAppSelector(selectArabicFont);
   const isArabic = type === 'arabic' || type === 'arabicCompact';
   // Only use debounced font size for Arabic text to prevent flickering during slider changes
@@ -167,7 +177,7 @@ export function ThemedText({
 
   // Memoize style computation to prevent unnecessary recalculations
   const finalStyle = useMemo((): StyleProp<TextStyle> => {
-    const textColor = getTextColor(colors, colorName, skipDefaultColor);
+    const textColor = getTextColor(colors, type, colorName, skipDefaultColor);
 
     if (isArabic) {
       const fontSize = debouncedArabicFontSize || LAYOUT.TYPOGRAPHY.SCALE.LARGE;
@@ -187,14 +197,11 @@ export function ThemedText({
 
     const baseStyle = BASE_STYLE_MAP[type] || BASE_STYLE_MAP.body;
 
-    // When an explicit color is provided, the semantic color already encodes the
-    // hierarchy — skip the type's built-in opacity to avoid double-dimming.
-    // Opacity-based hierarchy only applies to default-colored text.
-    const baseOpacity = colorName ? TEXT_OPACITY.PRIMARY : baseStyle.opacity;
-
+    // No opacity layer: the hierarchy is carried by the ink alone (see
+    // DEFAULT_COLOR_BY_TYPE), so a colour handed in through `colorName` or
+    // `style` renders at the contrast it was chosen for.
     return [
       baseStyle,
-      { opacity: getEnhancedOpacity(baseOpacity, isDarkMode) },
       textColor && { color: textColor },
       weight && { fontFamily: WEIGHT_FONT_MAP[weight] },
       align && { textAlign: align },
@@ -211,7 +218,6 @@ export function ThemedText({
     weight,
     align,
     style,
-    isDarkMode,
   ]);
 
   return (

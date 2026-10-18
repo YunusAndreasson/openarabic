@@ -73,7 +73,7 @@ function RowActions({ drag, onReset, onRemove }: RowActionsProps) {
         accessibilityRole="button"
         accessibilityLabel={STRINGS.RESET_PROGRESS_ACTION}
       >
-        <Icon name="refresh" size={ACTION_ICON_SIZE} color={colors.onTint} />
+        <Icon name="refresh" size={ACTION_ICON_SIZE} color={colors.onWarning} />
       </Pressable>
       <Pressable
         onPress={onRemove}

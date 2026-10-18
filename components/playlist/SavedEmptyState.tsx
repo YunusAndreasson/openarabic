@@ -13,7 +13,6 @@ export function SavedEmptyState() {
 
   return (
     <SeededContentEmptyState
-      source="playlist"
       icon="headset-outline"
       title={STRINGS.BOOKMARKS_EMPTY_TITLE}
       hint={STRINGS.BOOKMARKS_EMPTY_HINT}

@@ -74,42 +74,35 @@ export const FAQ_DATA: FAQCategoryData[] = [
         id: 'word-difficulty',
         question: 'How is word difficulty determined?',
         answer:
-          "There are no fixed difficulty levels. Each word's difficulty adapts to you based on how quickly you recall it, how consistent your responses are, and how much time has passed since your last review.",
+          "There are no fixed difficulty levels. Each word's difficulty adapts to you from the grades you give it (Forgot, Barely or Knew it) and how much time had passed since you last saw it.",
         category: FAQCategoryEnum.FEATURES,
       },
       {
         id: 'why-review-before-adding',
         question: 'Why should I review before adding more words?',
         answer:
-          'Your brain can only consolidate so much at once. Adding too many new words without reviewing existing ones leads to forgetting and wasted effort.\n\nFinish your Due reviews before adding new vocabulary—this strengthens what you already know and prevents having to relearn forgotten words. Aim for at least 75% Memory Strength before adding more.',
+          'Your brain can only consolidate so much at once. Adding too many new words without reviewing existing ones leads to forgetting and wasted effort.\n\nClear the words due today before adding new ones—this strengthens what you already know and saves relearning words you have forgotten. If too many reviews are waiting, the app asks you to clear some first, and Adaptive pacing (in Settings) pauses new words while your recall is low.',
         category: FAQCategoryEnum.FEATURES,
       },
       {
-        id: 'understanding-memory-strength',
-        question: 'How does Memory Strength work?',
+        id: 'words-you-would-recall',
+        question: 'What does "Words you\'d recall right now" mean?',
         answer:
-          "Memory Strength shows the percentage of words you're expected to remember right now across all your vocabulary.\n\nDue words are scheduled just before you'd forget them. Reviewing on time keeps your memory fresh and sets the right interval for next time.\n\nLearned words have entered long-term memory. They still need regular review, but intervals grow longer after each successful recall.\n\nMastered words have been reviewed consistently enough that intervals stretch to months or years—while keeping retention above 90%.",
+          "It is an estimate, worked out from each word's review history, of how many of your practised words you would remember if asked right now. Words still waiting for their first review are not counted.\n\nEvery practised word also has a memory horizon: how long it holds before recall drops to 90%. Every review you get right pushes it further out, so the typical word's horizon grows from days to weeks to months.\n\nWords come up for review when their horizon runs out. Reviewing them on the day they are due keeps the estimate high.",
         category: FAQCategoryEnum.FEATURES,
       },
       {
         id: 'how-spaced-repetition-works-detailed',
         question: 'How does the spacing algorithm work?',
         answer:
-          "Your memory follows a predictable curve—new information fades quickly at first, then more slowly over time. Spaced repetition uses this to show words just before you'd forget them.\n\nEach successful review strengthens the memory and pushes the next review further out. Easy words appear less often, harder words more often.\n\nThe algorithm adapts to your personal learning patterns based on response speed, consistency, and history. Try to complete your Due reviews daily—missing even a few days creates backlogs that are harder to catch up on.",
+          "Your memory follows a predictable curve—new information fades quickly at first, then more slowly over time. Spaced repetition uses this to show words just before you'd forget them.\n\nEach successful review strengthens the memory and pushes the next review further out. Easy words appear less often, harder words more often.\n\nThe algorithm adapts to you from the grades you give each word and the time between reviews. Try to clear the words due each day—missing even a few days creates backlogs that are harder to catch up on.",
         category: FAQCategoryEnum.FEATURES,
       },
       {
         id: 'arabic-text-coloring',
-        question: 'Why is Arabic text colored in the app?',
+        question: 'Why is Arabic text coloured in the app?',
         answer:
-          'Arabic text is color-coded so you can see how words are built from smaller parts at a glance.\n\nThe color tells you what a part does, not where it sits in the word. ال (the) keeps its own color whether it starts the word or follows a preposition; possessive endings like ي (my), ك (your) and ه (his) share a different one. The English translation is colored to match, so each Arabic part lines up with the English word it becomes. The color guide below names them.\n\nWhy only multi-word phrases? A single word like "house" doesn\'t benefit from color-coding. But "and the house" shows how و (and) + ال (the) attach to the root word—helping you understand Arabic grammar naturally as you read.\n\nA word in [brackets] was added to the English. Arabic writes "the" in places where English leaves it out, so the brackets mark a word supplied to show you the match.\n\nSee the colored examples below.',
-        category: FAQCategoryEnum.FEATURES,
-      },
-      {
-        id: 'play-all-long-press',
-        question: 'How do I temporarily play Arabic-only audio?',
-        answer:
-          'Long-press the "Play all" button in your Playlist to switch to Arabic-only audio for the current session. Your regular language setting returns automatically when playback ends.\n\nUseful when you want to practice listening without English, even if your default includes both languages.',
+          'Arabic text is colour-coded so you can see how words are built from smaller parts at a glance.\n\nThe colour tells you what a part does, not where it sits in the word. ال (the) keeps its own colour whether it starts the word or follows a preposition; possessive endings like ي (my), ك (your) and ه (his) share a different one. The English translation is coloured to match, so each Arabic part lines up with the English word it becomes. The colour guide below names them.\n\nWhy only multi-word phrases? A single word like "house" doesn\'t benefit from colour-coding. But "and the house" shows how و (and) + ال (the) attach to the root word—helping you understand Arabic grammar naturally as you read.\n\nA word in [brackets] was added to the English. Arabic writes "the" in places where English leaves it out, so the brackets mark a word supplied to show you the match.\n\nSee the coloured examples below.',
         category: FAQCategoryEnum.FEATURES,
       },
     ],
@@ -166,7 +159,7 @@ export const FAQ_DATA: FAQCategoryData[] = [
         id: 'privacy-data',
         question: 'What data do you store?',
         answer:
-          'Your email, vocabulary and review history, reading list, and preferences. No ads, no third-party analytics. Crash diagnostics are collected to fix bugs—nothing else.',
+          'Your email, vocabulary and review history, playlist and preferences, so your progress syncs across devices. There are no ads.\n\nThree outside services see some of it. Mixpanel receives product analytics: events such as signing in or finishing a practice session. Sentry receives crash diagnostics so bugs can be fixed. If you installed OpenArabic from a Facebook or Instagram ad, Meta receives a few app events so we can tell whether the ad worked—never your name, your email or what you study.\n\nThe Privacy Policy, under About in Settings, has the full detail.',
         category: FAQCategoryEnum.PRIVACY_DATA,
       },
     ],

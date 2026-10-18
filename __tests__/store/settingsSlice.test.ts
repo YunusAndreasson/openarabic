@@ -10,6 +10,10 @@
 import reducer, {
   type ArabicFontName,
   selectAdaptiveNewWordPacingEnabled,
+  selectVoiceDebugEnabled,
+  selectVoiceEnergyGateEnabled,
+  selectVoiceGainNormalizeEnabled,
+  selectVoiceIosRawMode,
   setAdaptiveNewWordPacingEnabled,
   setArabicFont,
   setArabicFontSize,
@@ -175,6 +179,57 @@ describe('settingsSlice reducers', () => {
       // predates the field. A bare truthiness read silently disables pacing;
       // the selector must fall back to the documented `true` default instead.
       expect(selectAdaptiveNewWordPacingEnabled({ settings: {} })).toBe(true);
+    });
+  });
+
+  // The Advanced screen that sets these exists only in development builds, so a
+  // production build must read the shipped values whatever was persisted while
+  // the screen was public — otherwise a learner who flipped one is stuck.
+  describe('developer voice knobs', () => {
+    const flipped = {
+      settings: {
+        voiceEnergyGateEnabled: false,
+        voiceGainNormalizeEnabled: false,
+        voiceIosRawMode: true,
+        voiceDebugEnabled: true,
+      },
+    };
+    const globals = globalThis as unknown as { __DEV__: boolean };
+    let originalDev: boolean;
+
+    beforeEach(() => {
+      originalDev = globals.__DEV__;
+    });
+
+    afterEach(() => {
+      globals.__DEV__ = originalDev;
+    });
+
+    test('a development build reads what is stored', () => {
+      globals.__DEV__ = true;
+
+      expect(selectVoiceEnergyGateEnabled(flipped)).toBe(false);
+      expect(selectVoiceGainNormalizeEnabled(flipped)).toBe(false);
+      expect(selectVoiceIosRawMode(flipped)).toBe(true);
+      expect(selectVoiceDebugEnabled(flipped)).toBe(true);
+    });
+
+    test('a production build reads the shipped defaults instead', () => {
+      globals.__DEV__ = false;
+      const shipped = reducer(undefined, { type: '@@INIT' });
+
+      expect(selectVoiceEnergyGateEnabled(flipped)).toBe(shipped.voiceEnergyGateEnabled);
+      expect(selectVoiceGainNormalizeEnabled(flipped)).toBe(shipped.voiceGainNormalizeEnabled);
+      expect(selectVoiceIosRawMode(flipped)).toBe(shipped.voiceIosRawMode);
+      expect(selectVoiceDebugEnabled(flipped)).toBe(shipped.voiceDebugEnabled);
+      // And those defaults are the opposite of every flipped value above, so
+      // the assertions cannot pass by echoing the stored state.
+      expect(shipped).toMatchObject({
+        voiceEnergyGateEnabled: true,
+        voiceGainNormalizeEnabled: true,
+        voiceIosRawMode: false,
+        voiceDebugEnabled: false,
+      });
     });
   });
 

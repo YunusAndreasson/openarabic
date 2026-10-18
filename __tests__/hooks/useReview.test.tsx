@@ -185,7 +185,6 @@ describe('useReview Hook', () => {
 
       useAudioPreloader.mockReturnValue({
         isPreloading: false,
-        progress: 100,
         isReady: true,
         resolveCached: jest.fn((candidate: string) =>
           candidate === url ? '/cache/kitab.mp3' : undefined,
@@ -224,7 +223,6 @@ describe('useReview Hook', () => {
 
       useAudioPreloader.mockReturnValue({
         isPreloading: true,
-        progress: 50,
         isReady: false,
         resolveCached,
         forgetCached: jest.fn(),
@@ -280,7 +278,6 @@ describe('useReview Hook', () => {
     test('should not play audio during preloading', () => {
       useAudioPreloader.mockReturnValue({
         isPreloading: true,
-        progress: 50,
         isReady: false,
       });
 

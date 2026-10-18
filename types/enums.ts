@@ -49,7 +49,8 @@ export const AppTab = {
   EXPLORE: 'Explore',
   PLAYLIST: 'Playlist',
   PRACTICE: 'Practice',
-  ACCOUNT: 'Account',
+  // The key stays ACCOUNT (route `account`); the label says what the screen is.
+  ACCOUNT: 'Settings',
 } as const;
 
 export type AppTab = (typeof AppTab)[keyof typeof AppTab];

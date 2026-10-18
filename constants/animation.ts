@@ -58,17 +58,6 @@ export const TIMING_CONFIG = {
 } as const;
 
 /**
- * How far a graded card is drawn out, as a fraction of screen width, before it
- * throws — and the distance the colour wash is scaled to, so the tint reaches
- * full strength exactly where the throw begins.
- *
- * Roughly a quarter of the screen. Small values read as a twitch rather than a
- * decision; the wash was once scaled to 0.8 of screen width, a distance the card
- * never travelled, so it stayed faint and told the user nothing.
- */
-export const CARD_EXIT_DRAW_BACK_RATIO = 0.22;
-
-/**
  * The verdict beat: the moment a graded review card confirms the outcome before
  * it leaves.
  *
@@ -84,6 +73,10 @@ export const CARD_EXIT_DRAW_BACK_RATIO = 0.22;
  * roughly 30% opacity 60ms in, so anything drawn there was gone before it
  * finished drawing. Hence BEAT: the card holds at full verdict strength first,
  * and only then does the existing exit run.
+ *
+ * The verdict is the ring and its haptic, nothing else. A colour wash over the
+ * face and a scale pop / wince used to ride the same level; both repeated what
+ * the ring already said, and the wash was a leftover of the removed swipe.
  */
 export const VERDICT = {
   /**
@@ -119,7 +112,9 @@ export const VERDICT = {
    */
   RESIDUAL: 0.35,
   /**
-   * Micro-shake on a miss. Small and decaying — a wince, not a tantrum.
+   * Micro-shake on a miss the APP judged — a voice answer heard as another
+   * word. Small and decaying — a wince, not a tantrum. A "Forgot" the learner
+   * reported themselves does not shake: that is an honest answer, not an error.
    *
    * A damped sine rather than a sequence of timings between fixed offsets. The
    * four-step version (+5, −4, +2, 0 at 50ms each) put a corner on the velocity
@@ -168,17 +163,6 @@ export const VERDICT = {
    * removed once.
    */
   HAPTIC_AT: 0.6,
-  /** Scale pop on a correct answer. Barely there on purpose. */
-  POP_SCALE: 1.025,
-  /**
-   * The miss's counterpart to POP_SCALE: the card draws in very slightly.
-   *
-   * A pass had a transform and a miss did not, so the two outcomes were not
-   * symmetrical — one lifted, the other only changed colour and rattled. Rides
-   * `verdictLevel` exactly as the pop does, so it settles with the ring to the
-   * held RESIDUAL level instead of snapping back the moment the shake ends.
-   */
-  WINCE_SCALE: 0.99,
 } as const;
 
 /**
@@ -228,28 +212,6 @@ export const HORIZON_TRAVEL = {
    * not a session, and that many arcs at once is noise rather than a story.
    */
   MAX_MOVERS: 160,
-  /**
-   * How far through its own travel a dot counts as landed, for the tick that
-   * goes with it. The last tenth of the ease-out moves a dot a point or two, so
-   * a tick held for the true end would arrive after the eye had already seen
-   * the dot seat.
-   */
-  LANDED_AT: 0.9,
-  /**
-   * Shortest gap between two landing ticks, in ms. This, and not the number of
-   * words, is what bounds the haptic: the landings are spread over a fixed
-   * share of the sweep, so a session of five words is five separate taps and a
-   * session of a hundred and fifty is the same handful of ticks run together
-   * into a roll. Kept clear of the 50ms same-pattern debounce in
-   * `utils/haptics`, which would otherwise eat every other tick.
-   */
-  HAPTIC_MIN_GAP: 70,
-  /**
-   * How much of its height a regrown field has reached when it counts as
-   * landed. Its ease-out spends the last quarter of its time on the last two
-   * percent.
-   */
-  REGROWN_AT: 0.98,
 } as const;
 
 /**
@@ -368,9 +330,6 @@ export const REFUSAL_TOAST_DURATION = 6000;
  * General timing constants for delays, timeouts, and intervals
  */
 export const TIMING_CONSTANTS = {
-  /** Delay before navigation to allow press animation to complete */
-  NAVIGATION_DELAY: 60, // TIMING_CONFIG.FAST.duration / 2
-
   /** Quick delays for UI feedback */
   QUICK_DELAY: 100,
 
@@ -394,6 +353,14 @@ export const TIMING_CONSTANTS = {
    */
   SHEET_DISMISS_FALLBACK: 1000,
 
+  /**
+   * How long the article reader keeps the display on after the learner's last
+   * touch (a scroll, a word tap) — 10 minutes. Learners read slowly: parsing a
+   * sentence and recalling its words can pass well beyond the OS idle timeout
+   * without a touch. Playback of the article holds the display on its own.
+   */
+  READER_KEEP_AWAKE_WINDOW: 10 * 60 * 1000,
+
   /** Animation transition delays */
   TRANSITION_DELAY: 150,
 
@@ -406,14 +373,7 @@ export const TIMING_CONSTANTS = {
   /** Stagger animation delays for sequential reveals */
   STAGGER: {
     BASE: 50,
-    INCREMENT: 40,
     FAST: 100,
-    MEDIUM: 120,
-    SLOW: 180,
-    /** Completion screen button delay with metrics shown */
-    BUTTON_WITH_METRICS: 320,
-    /** Completion screen button delay without metrics */
-    BUTTON_WITHOUT_METRICS: 220,
   },
 } as const;
 

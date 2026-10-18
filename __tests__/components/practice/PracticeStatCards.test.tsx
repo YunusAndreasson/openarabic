@@ -56,13 +56,51 @@ describe('PracticeStatCards order', () => {
 
     // Document order of the three labels, read off the rendered tree.
     const tree = JSON.stringify(view.toJSON());
-    const due = tree.indexOf(STRINGS.DUE_TODAY_LABEL);
+    const due = tree.indexOf(STRINGS.DUE_NOW_LABEL);
     const recall = tree.indexOf(STRINGS.PRACTICE_RECALL_NOW_LABEL);
     const streak = tree.indexOf(STRINGS.STREAK_LABEL);
 
     expect(due).toBeGreaterThan(-1);
     expect(due).toBeLessThan(recall);
     expect(recall).toBeLessThan(streak);
+  });
+});
+
+describe('PracticeStatCards memory constellation', () => {
+  test('a rescaled dot says so on screen, not only to a screen reader', () => {
+    // Past ~20 words in one column each dot stands for several. A unit chart
+    // that changes its unit silently overstates every sparse column.
+    const view = render(
+      <PracticeStatCards
+        distribution={{
+          ...distribution,
+          wordsPerDot: 4,
+          medianLabel: '3 weeks',
+          practisedCount: 120,
+          hasDistribution: true,
+        }}
+        recallableWords={100}
+        {...handlers()}
+      />,
+    );
+
+    const typical = STRINGS.PRACTICE_TYPICAL_HORIZON.replace('{horizon}', '3 weeks');
+    const scale = STRINGS.PRACTICE_DOT_SCALE.replace('{count}', '4');
+    expect(view.getByText(`${typical} · ${scale}`)).toBeTruthy();
+  });
+
+  test('one word per dot needs no note', () => {
+    const view = render(
+      <PracticeStatCards
+        distribution={{ ...distribution, medianLabel: '3 weeks', hasDistribution: true }}
+        recallableWords={10}
+        {...handlers()}
+      />,
+    );
+
+    expect(
+      view.getByText(STRINGS.PRACTICE_TYPICAL_HORIZON.replace('{horizon}', '3 weeks')),
+    ).toBeTruthy();
   });
 });
 

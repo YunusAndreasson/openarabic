@@ -1,5 +1,6 @@
 import { memo, useCallback } from 'react';
-import { Alert } from 'react-native';
+import { Alert, Linking, Platform } from 'react-native';
+import * as Application from 'expo-application';
 import { router } from 'expo-router';
 import * as StoreReview from 'expo-store-review';
 
@@ -8,8 +9,25 @@ import { useTutorialContext } from '@/components/providers';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { handleError } from '@/utils/errorHandling';
-import { errorFeedback, lightFeedback, successFeedback } from '@/utils/haptics';
+import { errorFeedback, successFeedback } from '@/utils/haptics';
 import { resetOnboarding } from '@/utils/onboardingStorage';
+
+/**
+ * Where "Rate OpenArabic" goes: the App Store's write-a-review page on iOS (the
+ * listing URL from app.json plus `action=write-review`), the Play listing on
+ * Android, which opens in the Play Store app with its rating control. Null —
+ * and no row — if neither is known, rather than a row that does nothing.
+ */
+function getWriteReviewUrl(): string | null {
+  if (Platform.OS === 'ios') {
+    const listingUrl = StoreReview.storeUrl();
+    return listingUrl ? `${listingUrl}?action=write-review` : null;
+  }
+  const packageName = Application.applicationId;
+  return packageName ? STRINGS.PLAY_STORE_LISTING_URL.replace('{package}', packageName) : null;
+}
+
+const WRITE_REVIEW_URL = getWriteReviewUrl();
 
 interface SupportSectionProps {
   /** Open the feedback form */
@@ -51,31 +69,19 @@ export const SupportSection = memo<SupportSectionProps>(({ onContactSupportPress
     ]);
   }, [resetAllTutorials]);
 
-  const handleRequestReview = useCallback(async () => {
+  const handleRateApp = async (url: string) => {
     try {
-      const isAvailable = await StoreReview.isAvailableAsync();
-      if (!isAvailable) {
-        void handleError(new Error('StoreReview not available'), {
-          analyticsEventName: 'Store_Review_Not_Available',
-          sentryTags: { location: 'account', action: 'store_review' },
-          sentryExtra: { storeUrl: StoreReview.storeUrl() },
-          sentrySeverity: 'info',
-          showToast: false,
-        });
-        return;
-      }
-      await new Promise<void>(resolve => setTimeout(resolve, 100));
-      await StoreReview.requestReview();
-      lightFeedback();
+      await Linking.openURL(url);
     } catch (error) {
       void handleError(error, {
         analyticsEventName: 'Store_Review_Request_Failed',
         sentryTags: { location: 'account', action: 'store_review' },
+        sentryExtra: { url },
         showToast: true,
         sentrySeverity: 'warning',
       });
     }
-  }, []);
+  };
 
   return (
     <SettingsSection title={STRINGS.HELP_SECTION}>
@@ -94,18 +100,21 @@ export const SupportSection = memo<SupportSectionProps>(({ onContactSupportPress
       <SettingsCard
         icon="school"
         label={STRINGS.RESET_TUTORIALS}
-        subtitle={STRINGS.RESET_TUTORIALS_SUBTITLE}
         rightType="none"
         onPress={handleResetTutorials}
       />
-      {/* Hands off to the OS review sheet, so it carries the leaving-the-app
-          glyph rather than looking inert. */}
-      <SettingsCard
-        icon="star"
-        label={STRINGS.RATE_APP}
-        rightType="external"
-        onPress={() => void handleRequestReview()}
-      />
+      {/* Opens the store's review page, so the leaving-the-app glyph is true.
+          It used to ask for the in-app review sheet, which iOS and Android
+          both ration and may simply not show — Apple says not to call it from
+          a button for exactly that reason — so a tap could do nothing at all. */}
+      {WRITE_REVIEW_URL && (
+        <SettingsCard
+          icon="star"
+          label={STRINGS.RATE_APP}
+          rightType="external"
+          onPress={() => void handleRateApp(WRITE_REVIEW_URL)}
+        />
+      )}
     </SettingsSection>
   );
 });

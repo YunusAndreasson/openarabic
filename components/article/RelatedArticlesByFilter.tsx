@@ -15,102 +15,45 @@ import { PlaylistItemCard } from '@/components/playlist';
 import { LAYOUT } from '@/constants/layout';
 import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
-import { useMultipleFeaturedArticles } from '@/hooks/articles/useMultipleFeaturedArticles';
-import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import type { Article } from '@/types/articles.types';
 import type { ArticleId } from '@/types/branded.types';
-import { deduplicateArticlesByImage } from '@/utils/articleUtils';
 import { generateStorageUrl } from '@/utils/storageUtils';
-import { getArticleProgressPercentage } from '@/utils/progressUtils';
+import { getArticleProgressPercentage, type ReadingProgressLookup } from '@/utils/progressUtils';
 import {
-  getArticleMetadata,
+  getArticleMetadataWithoutAuthor,
+  getArticleMetadataWithoutCategory,
   getAuthorDisplayName,
   getCategoryDisplayName,
 } from '@/utils/stringUtils';
 
 interface RelatedArticlesByFilterProps {
-  /**
-   * The current article ID to exclude from recommendations
-   */
-  currentArticleId: number;
-
-  /**
-   * The articles data to select from
-   */
-  articlesData: Article[];
-
-  /**
-   * Filter type: 'author' or 'category'
-   */
+  /** Which list this is — it decides the heading, and what the subtitles leave out */
   filterType: 'author' | 'category';
-
-  /**
-   * The ID to filter by (author_id or category_id)
-   */
-  filterId: number;
-
-  /**
-   * The name to display in the section title (author name or category name)
-   */
+  /** The author or category name the heading names */
   filterName: string;
-
-  /**
-   * Maximum number of related articles to show (default: 5)
-   */
-  maxArticles?: number;
+  /** Chosen by `useRelatedArticles` */
+  articles: Article[];
+  progressMap: ReadingProgressLookup;
 }
 
 /**
- * Related Articles By Filter Component
- *
- * Displays intelligently selected related articles filtered by author or category.
- * Shows only unread or low-progress articles (< 20%) to always offer fresh content.
- * Uses existing article selection logic for consistency and efficiency.
+ * The subtitle under a related card, minus whatever the heading already says.
+ * Every card used to carry "Author · Category · N min", so under "More from
+ * Ibn Kathīr" each one repeated "Ibn Kathīr", and under "More in Tafsīr" each
+ * one repeated "Tafsīr".
+ */
+const getSubtitle = (article: Article, filterType: 'author' | 'category') =>
+  filterType === 'author'
+    ? getArticleMetadataWithoutAuthor(article)
+    : getArticleMetadataWithoutCategory(article);
+
+/**
+ * One "More from …" list at the foot of the reader: a heading and its cards.
+ * Which texts, and in which list, is `useRelatedArticles`' decision.
  */
 export const RelatedArticlesByFilter = memo<RelatedArticlesByFilterProps>(
-  ({ currentArticleId, articlesData, filterType, filterId, filterName, maxArticles = 5 }) => {
+  ({ filterType, filterName, articles, progressMap }) => {
     const router = useRouter();
-
-    // Filter articles by author or category, excluding current article
-    // Optimized: use early return pattern and single filter condition
-    const filteredArticles = useMemo(() => {
-      if (!articlesData.length) return [];
-
-      // Use single filter with optimized condition based on filterType
-      if (filterType === 'author') {
-        return articlesData.filter(
-          article => article.id !== currentArticleId && article.author_id === filterId,
-        );
-      }
-      return articlesData.filter(
-        article => article.id !== currentArticleId && article.category_id === filterId,
-      );
-    }, [articlesData, currentArticleId, filterType, filterId]);
-
-    // Use existing intelligent selection logic for consistency
-    const { articles: selectedArticles } = useMultipleFeaturedArticles(
-      filteredArticles,
-      0, // No refresh for stability in article context
-      `article-${currentArticleId}-${filterType}-${filterId}`, // Unique scope per filter for cache consistency
-    );
-
-    // Fetch bulk reading progress for selected articles
-    const selectedArticleIds = useMemo(() => selectedArticles.map(a => a.id), [selectedArticles]);
-    const { data: progressMap } = useBulkReadingProgress(selectedArticleIds);
-
-    // Filter to only show unread or low-progress articles (< 20%)
-    const unreadOrLowProgressArticles = useMemo(() => {
-      if (!selectedArticles.length) return selectedArticles;
-      // Unread reads as 0%, so one comparison covers both cases.
-      return selectedArticles.filter(
-        article => getArticleProgressPercentage(progressMap, article.id) < 20,
-      );
-    }, [selectedArticles, progressMap]);
-
-    // Limit to requested number of unread/low-progress articles, deduplicating by image
-    const relatedArticles = useMemo(() => {
-      return deduplicateArticlesByImage(unreadOrLowProgressArticles).slice(0, maxArticles);
-    }, [unreadOrLowProgressArticles, maxArticles]);
 
     // Push the next article, exactly like every other article link in the app.
     //
@@ -128,14 +71,14 @@ export const RelatedArticlesByFilter = memo<RelatedArticlesByFilterProps>(
 
     // Memoize the article cards to prevent unnecessary re-renders
     const articleCards = useMemo(() => {
-      return relatedArticles.map((article, index) => {
+      return articles.map((article, index) => {
         const progressPercentage = getArticleProgressPercentage(progressMap, article.id);
 
         return (
           <View key={article.id} style={index > 0 ? styles.articleSpacing : undefined}>
             <PlaylistItemCard
               title={article.title}
-              secondaryText={getArticleMetadata(article)}
+              secondaryText={getSubtitle(article, filterType)}
               imageUrl={generateStorageUrl('images', article.image_url)}
               articleId={article.id}
               progressPercentage={progressPercentage}
@@ -145,7 +88,7 @@ export const RelatedArticlesByFilter = memo<RelatedArticlesByFilterProps>(
           </View>
         );
       });
-    }, [relatedArticles, progressMap, handleArticlePress]);
+    }, [articles, progressMap, filterType, handleArticlePress]);
 
     // Format section title based on filter type
     // Capitalize category name for consistency with rest of app
@@ -158,7 +101,7 @@ export const RelatedArticlesByFilter = memo<RelatedArticlesByFilterProps>(
     }, [filterType, filterName]);
 
     // Early return if no articles to show
-    if (relatedArticles.length === 0) {
+    if (articles.length === 0) {
       return null;
     }
 

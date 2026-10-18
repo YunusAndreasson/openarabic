@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import * as Sentry from '@sentry/react-native';
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -49,11 +49,11 @@ export const FeedbackForm = memo(() => {
           )
       : STRINGS.FEEDBACK_CHARACTER_COUNT.replace('{count}', String(characterCount));
 
-  const characterCountColor = useMemo(() => {
-    if (characterCount === 0) return colors.textTertiary;
-    if (characterCount < MIN_CHARACTERS) return colors.error;
-    return colors.tint;
-  }, [characterCount, colors.textTertiary, colors.error, colors.tint]);
+  // Never error ink. A message still being typed is not a mistake, and the
+  // count used to turn red from the first character until the tenth; there is
+  // no upper limit to go over, so there is no error state to show at all. The
+  // disabled Send button already says the message is not ready.
+  const characterCountColor = characterCount < MIN_CHARACTERS ? colors.textTertiary : colors.tint;
 
   const handleSubmit = useCallback(async () => {
     if (!message || message.trim().length === 0) {
@@ -232,7 +232,7 @@ export const FeedbackForm = memo(() => {
             )}
 
             <View style={styles.metaRow}>
-              <ThemedText type="caption" colorName="textTertiary" style={styles.hint}>
+              <ThemedText type="caption" colorName="textTertiary">
                 {user?.email
                   ? STRINGS.FEEDBACK_EMAIL_INCLUDED.replace('{email}', user.email)
                   : STRINGS.FEEDBACK_EMAIL_UNAVAILABLE}
@@ -288,9 +288,6 @@ const styles = StyleSheet.create({
   metaRow: {
     gap: LAYOUT.SPACING.SMALL,
     marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  hint: {
-    fontStyle: 'italic',
   },
   characterCount: {
     fontFamily: FONTS.ENGLISH_SEMIBOLD,

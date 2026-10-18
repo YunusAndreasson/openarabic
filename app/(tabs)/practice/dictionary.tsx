@@ -16,7 +16,6 @@ import {
   DictionaryWordRow,
   SCOPE_LABELS,
 } from '@/components/practice';
-import { VocabularyProgressChart } from '@/components/practice/charts/VocabularyProgressChart';
 import { SettingsPicker, TextLink } from '@/components/ui';
 import type { SettingsPickerOption } from '@/components/ui/SettingsPicker';
 import { LIST_DRAW_DISTANCE_MULTIPLIER, TIMING_CONFIG, fadeInStyle } from '@/constants/animation';
@@ -293,34 +292,29 @@ export default function DictionaryScreen(): JSX.Element {
    * `ListEmptyComponent` (the list would never be empty). Not worth it for a
    * layout bug; re-pinning wants a proper header-height offset instead.
    */
-  /**
-   * The vocabulary-growth chart moved here from the practice home.
-   *
-   * It is the one genuinely historical series the app has — `created_at` is the
-   * only timestamp never overwritten — but it carries no FSRS data, it can only
-   * rise, and leading the practice tab with it rewarded *adding* words, which
-   * argues with the app's own intake pacing. It describes the dictionary, so it
-   * lives above the dictionary, and scrolls away like the header it is.
+  /*
+   * No growth tile above the bar any more. A "Words in practice" card with a
+   * 30-day line used to lead this header: a series built from `created_at` that
+   * carried no FSRS data and could only rise, so its shape was known before it
+   * was drawn — and it stayed on screen describing all of the learner's words
+   * above a list narrowed to a band of twelve. The count it led with is the
+   * sort bar's own, which counts the rows below it.
    */
   const ListHeaderComponent = useMemo(
     () =>
       totalCount > 0 ? (
-        <>
-          <VocabularyProgressChart studyWords={studyWords ?? []} />
-          <DictionarySortBar
-            scope={scope}
-            sortField={sortField}
-            sortDirection={sortDirection}
-            onPressScope={handleOpenScopePicker}
-            onClearScope={handleShowAllWords}
-            onSelectField={handleSelectField}
-            wordCount={words.length}
-          />
-        </>
+        <DictionarySortBar
+          scope={scope}
+          sortField={sortField}
+          sortDirection={sortDirection}
+          onPressScope={handleOpenScopePicker}
+          onClearScope={handleShowAllWords}
+          onSelectField={handleSelectField}
+          wordCount={words.length}
+        />
       ) : null,
     [
       totalCount,
-      studyWords,
       scope,
       sortField,
       sortDirection,

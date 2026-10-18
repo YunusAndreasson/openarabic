@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
@@ -22,11 +22,11 @@ import { STRINGS } from '@/constants/strings';
 import { TutorialId } from '@/constants/tutorials';
 import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { useExploreRails } from '@/hooks/explore/useExploreRails';
 import { useOnboardingChecklist } from '@/hooks/onboarding/useOnboardingChecklist';
 import { useTutorial } from '@/hooks/tutorials/useTutorial';
 import { useMiniPlayerClearance } from '@/hooks/audio/useMiniPlayerClearance';
 import { useTabBarAutoHide } from '@/hooks/ui/useTabBarAutoHide';
-import { useToast } from '@/components/providers/ToastProvider';
 import type { CategoryId } from '@/types/branded.types';
 import { pickStarterArticle } from '@/utils/articleUtils';
 import { handleError } from '@/utils/errorHandling';
@@ -49,8 +49,6 @@ function buildEntitiesWithCounts<T extends { id: number; name: string }>(
 export default function ExploreScreen(): JSX.Element {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const { showToast } = useToast();
-  const { from } = useLocalSearchParams<{ from?: string }>();
   const tabBarAutoHide = useTabBarAutoHide();
   // The feed used to end on a brand footer whose dimmed ring logo read as a
   // stalled loading spinner under the last rail. It now ends on the same
@@ -58,18 +56,9 @@ export default function ExploreScreen(): JSX.Element {
   // under the mini player — Explore was the one tab that let it cover content.
   const miniPlayerClearance = useMiniPlayerClearance();
 
-  // Show welcome toast when navigating from empty states
-  const hasShownWelcomeRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (from && from !== hasShownWelcomeRef.current) {
-      hasShownWelcomeRef.current = from;
-      if (from === 'playlist') {
-        showToast(STRINGS.EXPLORE_WELCOME_FROM_PLAYLIST, 4000);
-      } else if (from === 'practice') {
-        showToast(STRINGS.STUDY_LIST_EMPTY_HINT, 4000);
-      }
-    }
-  }, [from, showToast]);
+  // No welcome toast on arrival from an empty state. The Playlist and Practice
+  // empty states each send the learner here with their hint already read, and
+  // the toast repeated that hint word for word four seconds later.
 
   const { data: categoriesData = [] } = useQuery(articleQueries.categories());
   // Ref for stable callback access to latest categoriesData
@@ -78,13 +67,28 @@ export default function ExploreScreen(): JSX.Element {
     categoriesDataRef.current = categoriesData;
   });
 
-  const { data: articlesData = [] } = useQuery({
+  const {
+    data: articlesData = [],
+    isPending: isCatalogPending,
+    isError: isCatalogError,
+    isFetching: isCatalogFetching,
+    refetch: refetchCatalog,
+  } = useQuery({
     ...articleQueries.all(),
     refetchOnMount: false, // Don't refetch on mount if we have data
   });
 
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // The feed is built from the catalogue, so with no catalogue there is no feed —
+  // and every section used to return null, which left a blank tab under the
+  // title with nothing to say why. A retry after a failure counts as loading
+  // again; a pull-to-refresh already has its own spinner, so it doesn't.
+  const hasCatalog = articlesData.length > 0;
+  const isCatalogLoading =
+    !hasCatalog && !isRefreshing && (isCatalogPending || (isCatalogError && isCatalogFetching));
+  const hasCatalogFailed = !hasCatalog && isCatalogError && !isCatalogLoading;
 
   // First-run onboarding: "Get started" checklist + one-shot welcome intro
   const checklist = useOnboardingChecklist(articlesData);
@@ -95,6 +99,9 @@ export default function ExploreScreen(): JSX.Element {
       triggerIntro();
     }
   }, [checklist.isEligible, triggerIntro]);
+
+  // Every article rail on the tab, chosen together so no text appears twice
+  const rails = useExploreRails(articlesData, refreshKey, checklist.isChecklistVisible);
 
   const starterArticleIds = useMemo(() => articlesData.map(a => a.id), [articlesData]);
   const { data: starterProgressMap } = useBulkReadingProgress(starterArticleIds);
@@ -180,17 +187,14 @@ export default function ExploreScreen(): JSX.Element {
       />,
     );
 
-    // Continue Reading / Getting Started section (adaptive based on user progress)
-    sections.push(<ContinueReadingSection key="continue-reading" articlesData={articlesData} />);
+    // Continue reading, or Getting started — absent while the checklist is up
+    if (rails.lead) {
+      sections.push(<ContinueReadingSection key="continue-reading" rail={rails.lead} />);
+    }
 
     // Featured articles (intelligent selection of unread articles)
     sections.push(
-      <HorizontalFeaturedSection
-        key="featured"
-        articlesData={articlesData}
-        refreshKey={refreshKey}
-        scope="global"
-      />,
+      <HorizontalFeaturedSection key="featured" articles={rails.featured} isFirst={!rails.lead} />,
     );
 
     // Categories section
@@ -213,17 +217,10 @@ export default function ExploreScreen(): JSX.Element {
     sections.push(<HardestWordsSection key="hardest-words" />);
 
     // Discovery sections (compact horizontal cards: beginner, short reads, long reads, advanced)
-    sections.push(<DiscoverySections key="discovery" articlesData={articlesData} />);
+    sections.push(<DiscoverySections key="discovery" rails={rails.discovery} />);
 
     return sections;
-  }, [
-    articlesData,
-    refreshKey,
-    categoriesWithArticles,
-    handleSelectFilter,
-    checklist,
-    intro.isVisible,
-  ]);
+  }, [articlesData, rails, categoriesWithArticles, handleSelectFilter, checklist, intro.isVisible]);
 
   return (
     <>
@@ -234,6 +231,9 @@ export default function ExploreScreen(): JSX.Element {
         // UIKit reads this same scroll view itself. See `useTabBarAutoHide`.
         {...tabBarAutoHide}
         isRefreshing={isRefreshing}
+        isLoading={isCatalogLoading}
+        isError={hasCatalogFailed}
+        onRetry={() => void refetchCatalog()}
         ListHeaderComponent={<>{headerSections}</>}
         contentContainerStyle={{ paddingBottom: miniPlayerClearance }}
         progressViewOffset={LAYOUT.SPACING.XLARGE}

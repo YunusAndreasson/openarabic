@@ -25,7 +25,6 @@ export const CHART_OPACITY = {
   LOW: 0.35, // Subtle presence for background elements
   ZONE: 0.18, // Band washes behind a plotted range (crisp, no blur)
   TRACK: 0.16, // Gauge/bar track washes — lighter step of the fill's own hue
-  WASH: 0.1, // Flat area fill under the data line
 } as const;
 
 /**
@@ -62,13 +61,9 @@ export const getChartColors = (colors: ThemeColors): ChartColors => {
   return {
     // Chart UI elements - optimized for data visualization contrast
     ui: {
-      background: colors.background,
       grid: colors.chartGrid, // Consistent subtle grid lines
-      border: withOpacity(colors.border, CHART_OPACITY.HIGH),
       accent: colors.chartAccent, // Vivid azure for interactive elements
       dataLine: colors.chartAccent, // All data lines use the chart accent
-      shadow: withOpacity(colors.shadow, CHART_OPACITY.LOW),
-      tooltip: withOpacity(colors.card, 0.98),
       threshold: colors.chartThreshold, // Reference lines for targets
     },
 
@@ -80,9 +75,6 @@ export const getChartColors = (colors: ThemeColors): ChartColors => {
 
     // Helper functions
     withOpacity: (color: string, opacity: number) => withOpacity(color, opacity),
-
-    // Flat low-opacity wash under the data line (no gradient, no blur)
-    areaWash: withOpacity(colors.chartAccent, CHART_OPACITY.WASH),
   };
 };
 

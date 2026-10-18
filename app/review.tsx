@@ -54,7 +54,7 @@ import {
 import { useColors } from '@/hooks/theme/useColors';
 import { useTutorial } from '@/hooks/tutorials/useTutorial';
 import { useAppSelectorShallow } from '@/store/hooks';
-import { selectVoiceHandsFree } from '@/store/settingsSlice';
+import { selectVoiceDebugEnabled, selectVoiceHandsFree } from '@/store/settingsSlice';
 import { getDiagSnapshot, subscribeDiag } from '@/utils/reviewDiagnostics';
 
 const baseStyles = StyleSheet.create({
@@ -107,11 +107,6 @@ const baseStyles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     textAlign: 'center',
   },
-  loadingSubtext: {
-    marginTop: LAYOUT.SPACING.SMALL,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    textAlign: 'center',
-  },
   headerPadding: {
     paddingTop: LAYOUT.SPACING.LARGE,
   },
@@ -140,32 +135,22 @@ const ACTION_EXITING = FadeOut.duration(TIMING_CONFIG.FAST.duration);
 /** Stable identity for a card with no corpus glosses yet (or none at all). */
 const EMPTY_GLOSSES: string[] = [];
 
-/** Reusable loading state component for review screen */
-function ReviewLoadingState({
-  message,
-  progress,
-  successMessage,
-}: {
-  message: string;
-  progress?: number;
-  successMessage?: string;
-}) {
+/**
+ * Every wait before the first card — store hydration, the grades tutorial's
+ * backdrop, the word fetch and the first card's audio — is one wait to the
+ * learner, so it says one thing. It used to switch from "Preparing session…"
+ * to "Loading session…" partway through, under a percentage measured over the
+ * two audio files that gate the first card (0 → 50 → 100), and kept a green
+ * "Audio ready" line that could never render: the preloader drops `isPreloading`
+ * in the same batch that raises `isReady`.
+ */
+function ReviewLoadingState() {
   const colors = useColors();
   return (
     <View style={[baseStyles.container, { backgroundColor: colors.background }]}>
       <View style={baseStyles.containerCentered}>
         <PulsatingLoader size={64} />
-        <ThemedText style={baseStyles.loadingText}>{message}</ThemedText>
-        {progress !== undefined && (
-          <ThemedText style={[baseStyles.loadingSubtext, { color: colors.secondaryText }]}>
-            {Math.round(progress)}% complete
-          </ThemedText>
-        )}
-        {successMessage && (
-          <ThemedText style={[baseStyles.loadingText, { color: colors.success }]}>
-            {successMessage}
-          </ThemedText>
-        )}
+        <ThemedText style={baseStyles.loadingText}>{STRINGS.PREPARING_PRACTICE_SESSION}</ThemedText>
       </View>
     </View>
   );
@@ -263,9 +248,11 @@ function ReviewDebugHud({
 function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element {
   const insets = useSafeAreaInsets();
   const colors = useColors();
-  const voiceDebugEnabled = useAppSelectorShallow(state => state.settings.voiceDebugEnabled);
+  // The voice debug HUD is a development surface. The selector returns the
+  // shipped `false` outside __DEV__, so a flag persisted from an older build
+  // cannot put raw recorder telemetry over a learner's card in a store build.
+  const voiceDebugEnabled = useAppSelectorShallow(selectVoiceDebugEnabled);
   const voiceHandsFree = useAppSelectorShallow(selectVoiceHandsFree);
-  const diagnosticsEnabled = __DEV__ || voiceDebugEnabled;
 
   // Read before useReview: the review hook takes `setPlaybackPriority` from
   // here so the Arabic prompt can claim a full-volume playback session.
@@ -291,7 +278,6 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     sessionMetrics,
     handleReplayAudio,
     isAudioPreloading,
-    audioPreloadProgress,
     isAudioReady,
     isLoading,
     wordQueue,
@@ -307,7 +293,6 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     fromRemember,
     setPlaybackPriority: voice.setPlaybackPriority,
     isMicStreamOpen: voice.isMicStreamOpen,
-    diagnosticsEnabled,
   });
 
   // A card is read, thought about, and sometimes spoken to — all of which the
@@ -498,10 +483,13 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   // answer" alone. With hands-free off (Account → Practice) the band carries a
   // tap-to-speak button beside it and the mic opens only on that press.
   //
-  // Correct match → advance as "Knew it". Miss → mark the card wrong on the
-  // spot, play the English audio, and show the result row (transcript + answer
-  // + Missed it/Try again/Got it); that row is the answer surface for voice, so
-  // the card is NOT flipped (a retry stays clean on the question face).
+  // Correct match → advance as "Knew it" — or "Barely" when an earlier miss on
+  // this card already showed the answer. A heard wrong word → mark the card
+  // wrong on the spot, disclose the English (text and audio) and show the
+  // result row (Missed it / Try again / Got it); that row is the answer surface
+  // for voice, so the card is NOT flipped (a retry stays on the question face).
+  // A hearing failure shows the same row without disclosing anything, so its
+  // retry is a real one.
   const {
     phase: voicePhase,
     debug: voiceDebug,
@@ -534,23 +522,30 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     // colour — the card simply stopped existing. It now pops green and throws
     // right like every other correct grade.
     onKnownAuto: () => gradeWithVerdict('known', { fromVoice: true }),
-    // Sounded like the answer but transcribed as something else → Guessed. The
+    // Sounded like the answer but transcribed as something else → Barely. The
     // learner is credited (Hard is a pass) and the word returns sooner, which is
-    // the right hedge when the transcript is what we're unsure about.
+    // the right hedge when the transcript is what we're unsure about. Also the
+    // ceiling for a match after a miss disclosed the answer: saying what you
+    // were just shown is not a clean recall.
     onVagueAuto: () => gradeWithVerdict('vague', { fromVoice: true }),
-    // Voice result panel "No, I missed it" → Forgot. The card is already red by
-    // then (see onMissHeard), and the verdict layer will not replay a verdict it
-    // is already showing, so this commits the grade without shaking the card a
-    // second time.
+    // Voice result panel "No, I missed it" → Forgot. After a heard miss the card
+    // is already red (see onMissHeard), and the verdict layer will not replay a
+    // verdict it is already showing, so this commits the grade without marking
+    // the card a second time. After a hearing failure nothing was marked, and
+    // this plays the learner's own Forgot: the ring and a commit haptic.
     onUnknownAuto: () => gradeWithVerdict('unknown', { fromVoice: true }),
-    // Miss → play the English audio (the panel shows the answer text + override).
+    // A heard miss → disclose the English: its text under the Arabic, and its
+    // audio. Never called for a hearing failure.
     onRevealAnswer: revealMeaningPassive,
     // Said a real word and it wasn't the answer → mark the card wrong straight
     // away, while the panel is still asking. Provisional, not a grade: nothing
     // is written, and "I knew it" repaints the same card green and throws it
     // right. Red-then-green is not a contradiction here — it is the learner
     // overruling the recognizer, which is exactly what that button means.
-    onMissHeard: () => cardRef.current?.playVerdict('unknown'),
+    //
+    // The one verdict the RECOGNIZER hands down, so the one that winces and
+    // buzzes as an error; a learner's own "Forgot" commits quietly.
+    onMissHeard: () => cardRef.current?.playVerdict('unknown', 'recognizer'),
   });
 
   // A wrong answer reddens the card and shows the interactive result panel in
@@ -622,8 +617,8 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
 
   // Replay is the word itself now, on both faces — offered whenever the
   // microphone is not holding the audio session (see `micHoldsAudioSession`).
-  // Outside that window the word takes the press; inside it the word takes no
-  // press at all and the tap reveals, as every other part of the face does.
+  // Inside that window the word still takes the press but plays nothing: a
+  // tap that fell through to the face would reveal the answer mid-recall.
   //
   // Read from the PHASE, not from `indicatorState` above. The two agree on the
   // three phases that matter, but `indicatorState` is additionally suppressed
@@ -631,7 +626,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   // handover — and a grade commit sets `isUpdating` while the mic can still be
   // live, so a gate built on it would open in exactly the window it exists to
   // close.
-  const canReplayAudio = !micHoldsAudioSession(voicePhase);
+  const replayHeld = micHoldsAudioSession(voicePhase);
 
   // "Forgot" from the bar never exits here: it opens a restudy hold, so the
   // card is staying put and throwing it off screen would be a lie. Its left
@@ -667,7 +662,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
 
   // Keep the route visually neutral for the brief frame before replace lands.
   if (isEmpty) {
-    return <ReviewLoadingState message={STRINGS.PREPARING_PRACTICE_SESSION} />;
+    return <ReviewLoadingState />;
   }
 
   // `isComplete` now means every word the session started with is done — the
@@ -687,20 +682,14 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   // Show beautiful loader while practice session is loading words or initializing
   // This takes precedence over audio preloading during initial load
   if (isLoading || (wordQueue.length === 0 && !isComplete && currentWord === null)) {
-    return <ReviewLoadingState message={STRINGS.PREPARING_PRACTICE_SESSION} />;
+    return <ReviewLoadingState />;
   }
 
-  // Show audio preloading indicator (only when not in initial loading phase).
-  // This now covers just the first card's audio — the rest of the session's
-  // files keep downloading behind the live session.
+  // The first card's audio. The rest of the session's files keep downloading
+  // behind the live session, so this is the same short wait as the one above
+  // and says the same thing.
   if (isAudioPreloading) {
-    return (
-      <ReviewLoadingState
-        message={STRINGS.LOADING_AUDIO_ELLIPSIS}
-        progress={audioPreloadProgress}
-        successMessage={isAudioReady ? STRINGS.AUDIO_READY : undefined}
-      />
-    );
+    return <ReviewLoadingState />;
   }
 
   return (
@@ -713,7 +702,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
       <View
         style={[baseStyles.headerPadding, Platform.OS === 'android' && { paddingTop: insets.top }]}
       >
-        {/* Progress, the run counter and the way out — nothing else. The mic
+        {/* Progress and the way out — nothing else. The mic
             that used to sit beside the close button is gone: speaking is
             offered by the bottom band, where the learner is already choosing
             how to answer, and a second mic up here was a control for a
@@ -722,7 +711,6 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
           maxProgress={maxProgress}
           progress={progress}
           onClose={handleClose}
-          recallRun={sessionMetrics.currentStreak}
           wordsDone={sessionMetrics.wordsReviewed}
         />
       </View>
@@ -741,7 +729,12 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
           wordType={currentExample?.wordType}
           revealed={revealed}
           onReveal={revealAnswer}
-          onReplayAudio={canReplayAudio ? () => void handleReplayAudio() : undefined}
+          onReplayAudio={() => void handleReplayAudio()}
+          // While the mic holds the session the word takes the tap and does
+          // nothing. It used to take no press at all, so the tap fell through to
+          // the face and revealed the answer — in hands-free, exactly when a
+          // learner reaches for the word to hear it again.
+          replayHeld={replayHeld}
           opacityStyle={transparentStyle}
           testID="review-card"
           restudying={restudying}
@@ -887,6 +880,9 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
                   onAccept={voiceAccept}
                   onReject={voiceReject}
                   onRetry={handleVoiceRetry}
+                  // A heard word already marked the card (onMissHeard); a
+                  // hearing failure marked nothing.
+                  missMarked={voiceResult.heard.length > 0}
                 />
               </Animated.View>
             ) : revealed ? (
@@ -976,9 +972,9 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
         </View>
       </Animated.View>
 
-      {/* Voice debug HUD — gated on the Advanced "Voice debug HUD" toggle so
-          the user can see exactly what the pipeline is doing without leaving
-          the screen. */}
+      {/* Voice debug HUD — development builds only (see voiceDebugEnabled),
+          behind the Advanced "Voice debug HUD" toggle, so the pipeline can be
+          watched without leaving the screen. */}
       {voiceDebugEnabled && (
         <ReviewDebugHud
           insetTop={insets.top}
@@ -1066,14 +1062,14 @@ export default function ReviewScreen(): JSX.Element {
   // and then pop the tutorial over it a moment later. In practice this is
   // already resolved at app root — at most a frame.
   if (!areTutorialsLoaded) {
-    return <ReviewLoadingState message={STRINGS.PREPARING_PRACTICE_SESSION} />;
+    return <ReviewLoadingState />;
   }
 
   // Show tutorial with simple background if needed (before session starts)
   if (needsTutorial && !tutorialDismissed) {
     return (
       <>
-        <ReviewLoadingState message={STRINGS.PREPARING_PRACTICE_SESSION} />
+        <ReviewLoadingState />
         <ReviewGradesTutorial visible={isGradesTutorialVisible} onDismiss={handleTutorialDismiss} />
       </>
     );

@@ -4,21 +4,16 @@ import { useWindowDimensions } from 'react-native';
 import { SnapRail } from '@/components/common';
 import { PlaylistItemCard } from '@/components/playlist/PlaylistItemCard';
 import { useArticlePrefetch } from '@/hooks/articles/useArticlePrefetch';
+import type { ArticleRailItem } from '@/hooks/explore/useExploreRails';
 import type { Article } from '@/types/articles.types';
 import { generateStorageUrl } from '@/utils/storageUtils';
 import { getArticleMetadataWithoutCategory } from '@/utils/stringUtils';
 
 const CARD_WIDTH_RATIO = 0.7;
 
-export interface ArticleRailItem {
-  article: Article;
-  /** Reading progress 0-100 — rendered as the card's bottom progress bar */
-  progress?: number;
-}
-
 interface ArticleRailProps {
   items: ArticleRailItem[];
-  /** Namespaces card keys so the same article can appear in multiple rails */
+  /** Namespaces card keys by rail */
   keyPrefix: string;
   onArticlePress: (article: Article) => void;
 }

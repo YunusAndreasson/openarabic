@@ -11,8 +11,6 @@ export * from './useStudyWordByRoot';
 export * from './useWordMemory';
 export * from './useWordsToRevisit';
 
-export * from './useChartAxisLabels';
-export * from './useDueWordsChart';
 export * from './useMemoryHorizonDistribution';
 export * from './useMemoryInsights';
 export * from './useReviewDepthDistribution';

@@ -10,9 +10,10 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import React from 'react';
-import { Text } from 'react-native';
+import { Pressable, Text } from 'react-native';
 
 import { WordDisplay } from '@/components/review/WordDisplay';
+import { STRINGS } from '@/constants/strings';
 
 // Mock reanimated
 jest.mock('react-native-reanimated', () =>
@@ -134,6 +135,38 @@ describe('WordDisplay', () => {
       // Should not throw
       fireEvent.press(getByText('كتب'));
       expect(mockOnWordPress).not.toHaveBeenCalled();
+    });
+
+    // The review card's question face reveals the answer on a tap. While the
+    // microphone holds the audio session the word cannot replay, and letting
+    // the tap fall through to that face ended the recall mid-answer.
+    test('a held word swallows the tap: no replay, and nothing underneath fires', () => {
+      const mockFacePress = jest.fn();
+      const { getByText } = render(
+        <Pressable onPress={mockFacePress}>
+          <WordDisplay word="كتب" onWordPress={mockOnWordPress} holdWordPress />
+        </Pressable>,
+      );
+
+      fireEvent.press(getByText('كتب'));
+
+      expect(mockOnWordPress).not.toHaveBeenCalled();
+      expect(mockFacePress).not.toHaveBeenCalled();
+    });
+
+    test('a held word drops the replay hint', () => {
+      const { getByText, queryByHintText } = render(
+        <WordDisplay word="كتب" onWordPress={mockOnWordPress} holdWordPress />,
+      );
+
+      expect(getByText('كتب')).toBeTruthy();
+      expect(queryByHintText(STRINGS.REPLAY_WORD_AUDIO)).toBeNull();
+    });
+
+    test('an unheld word announces its replay', () => {
+      const { getByHintText } = render(<WordDisplay word="كتب" onWordPress={mockOnWordPress} />);
+
+      expect(getByHintText(STRINGS.REPLAY_WORD_AUDIO)).toBeTruthy();
     });
   });
 

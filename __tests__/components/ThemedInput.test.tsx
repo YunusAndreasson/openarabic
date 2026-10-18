@@ -12,6 +12,7 @@ import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import React from 'react';
 
 import { ThemedInput } from '@/components/primitives/ThemedInput';
+import { FONTS } from '@/constants/fonts';
 
 // Use shared mock factory from componentMocks.tsx
 jest.mock('@/hooks/theme/useColors', () =>
@@ -137,6 +138,22 @@ describe('ThemedInput', () => {
       fireEvent.press(getByLabelText('Show password'));
 
       expect(onRightIconPress).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('Typography', () => {
+    // A TextInput inherits no font family, so typed text fell back to SF Pro /
+    // Roboto while every other English string in the app is Inter.
+    test('sets typed text in the English face', () => {
+      const { getByPlaceholderText } = render(<ThemedInput placeholder="email" />);
+
+      const style = [getByPlaceholderText('email').props.style]
+        .flat(Infinity)
+        .reduce<Record<string, unknown>>(
+          (acc, entry) => (entry && typeof entry === 'object' ? { ...acc, ...entry } : acc),
+          {},
+        );
+      expect(style.fontFamily).toBe(FONTS.ENGLISH);
     });
   });
 

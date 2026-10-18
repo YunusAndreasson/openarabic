@@ -1,8 +1,7 @@
 import { TransparentHeaderButton } from '@/components/ui/TransparentHeaderButton';
 import { router } from 'expo-router';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback } from 'react';
 
-import { TIMING_CONSTANTS } from '@/constants/animation';
 import { STRINGS } from '@/constants/strings';
 
 interface CloseButtonProps {
@@ -20,27 +19,20 @@ interface CloseButtonProps {
  *
  * This used to delegate to a `NavigationHeaderButton` that took an
  * `action: 'close' | 'done'`. The `done` branch had no callers, so that layer
- * existed to give this one component one prop; the deferred `router.back()`
- * it contributed now lives here directly.
+ * existed to give this one component one prop.
+ *
+ * `router.back()` runs on the press itself. It used to wait 60ms "so the press
+ * animation lands", but `HeaderIconButton` deliberately has no press animation —
+ * its feedback is an instant pressed opacity — so the delay was latency spent
+ * waiting for nothing.
  */
 export const CloseButton = ({ onPress, accessibilityLabel }: CloseButtonProps) => {
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, []);
-
   const handlePress = useCallback(() => {
     if (onPress) {
       onPress();
       return;
     }
-    // Deferred so the press animation lands before the screen tears down.
-    timeoutRef.current = setTimeout(() => {
-      router.back();
-    }, TIMING_CONSTANTS.NAVIGATION_DELAY);
+    router.back();
   }, [onPress]);
 
   return (

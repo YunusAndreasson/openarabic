@@ -19,15 +19,31 @@ const SERVICES: { section: string; name: string; description: string; url: strin
   },
 ];
 
+/**
+ * Every face in `assets/fonts`, credited as its own name table states it.
+ * Noto Sans Arabic leads because it is the default reading face.
+ */
 const ARABIC_FONTS: { name: string; description: string }[] = [
-  { name: STRINGS.LEGAL_FONT_SCHEHERAZADE, description: STRINGS.LEGAL_FONT_SCHEHERAZADE_DESC },
+  {
+    name: STRINGS.LEGAL_FONT_NOTO_SANS_ARABIC,
+    description: STRINGS.LEGAL_FONT_NOTO_SANS_ARABIC_DESC,
+  },
   { name: STRINGS.LEGAL_FONT_AMIRI, description: STRINGS.LEGAL_FONT_AMIRI_DESC },
   { name: STRINGS.LEGAL_FONT_MADINA, description: STRINGS.LEGAL_FONT_MADINA_DESC },
+  { name: STRINGS.LEGAL_FONT_SCHEHERAZADE, description: STRINGS.LEGAL_FONT_SCHEHERAZADE_DESC },
   { name: STRINGS.LEGAL_FONT_NASTALIQ, description: STRINGS.LEGAL_FONT_NASTALIQ_DESC },
 ];
 
 const ENGLISH_FONTS: { name: string; description: string }[] = [
-  { name: STRINGS.LEGAL_FONT_NOTO_SANS, description: STRINGS.LEGAL_FONT_NOTO_SANS_DESC },
+  { name: STRINGS.LEGAL_FONT_INTER, description: STRINGS.LEGAL_FONT_INTER_DESC },
+];
+
+/** Android draws its icons from this font (`app.json`); iOS uses the system's SF Symbols. */
+const ICON_FONTS: { name: string; description: string }[] = [
+  {
+    name: STRINGS.LEGAL_FONT_MATERIAL_SYMBOLS,
+    description: STRINGS.LEGAL_FONT_MATERIAL_SYMBOLS_DESC,
+  },
 ];
 
 /**
@@ -59,7 +75,10 @@ const LegalAttributionsScreen = () => (
       <DocCredit key={font.name} description={font.description} name={font.name} />
     ))}
 
-    <DocParagraph>{STRINGS.LEGAL_FONTS_SYSTEM_NOTE}</DocParagraph>
+    <DocHeading level="subsection">{STRINGS.LEGAL_FONTS_ICONS_TITLE}</DocHeading>
+    {ICON_FONTS.map(font => (
+      <DocCredit key={font.name} description={font.description} name={font.name} />
+    ))}
 
     <DocHeading>{STRINGS.LEGAL_LICENSE_INFO}</DocHeading>
     <DocHeading level="subsection">{STRINGS.LEGAL_SIL_OFL_TITLE}</DocHeading>

@@ -41,6 +41,11 @@ jest.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ user: { id: 'user-1', email: 'qa@example.com' } }),
 }));
 
+const mockShowToast = jest.fn();
+jest.mock('@/components/providers', () => ({
+  useToast: () => ({ showToast: mockShowToast }),
+}));
+
 jest.mock('@/hooks/audio/useAudioCache', () => ({
   useAudioCache: () => ({ clearCache: mockClearCache, getCacheSize: mockGetCacheSize }),
 }));
@@ -180,6 +185,13 @@ describe('useAccountScreen', () => {
     expect(mockDeleteAllProgress).toHaveBeenCalledWith('user-1');
     expect(mockRemoveQueries).toHaveBeenCalledTimes(2);
     expect(mockRefetchQueries).toHaveBeenCalledTimes(1);
+    // Confirmed with a toast, not a second dialog after the confirmation one.
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'Reading progress reset',
+      undefined,
+      expect.any(String),
+    );
+    expect(alertSpy).toHaveBeenCalledTimes(1);
   });
 
   test('clears audio, in-memory query, and persisted query caches after confirmation', async () => {
@@ -199,5 +211,22 @@ describe('useAccountScreen', () => {
     expect(mockQueryClear).toHaveBeenCalledTimes(1);
     expect(mockClearPersistedQueryCache).toHaveBeenCalledTimes(1);
     expect(mockHandleError).not.toHaveBeenCalled();
+    // The row's size line turning into "Nothing to clear" is the confirmation;
+    // no "Success" dialog follows the confirmation one.
+    expect(alertSpy).toHaveBeenCalledTimes(1);
+    expect(result.current.cacheSize).toBe(0);
+  });
+
+  test('does nothing at all when there is no cache to clear', async () => {
+    mockGetCacheSize.mockResolvedValue(0);
+    const { result } = renderHook(() => useAccountScreen());
+    await waitFor(() => expect(mockGetCacheSize).toHaveBeenCalled());
+
+    await act(async () => {
+      await result.current.handleClearCache();
+    });
+
+    expect(alertSpy).not.toHaveBeenCalled();
+    expect(mockClearCache).not.toHaveBeenCalled();
   });
 });

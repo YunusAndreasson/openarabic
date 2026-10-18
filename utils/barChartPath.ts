@@ -1,9 +1,10 @@
-import { Skia, type SkPath, type SkPathBuilder } from 'react-native-skia';
+import type { SkPathBuilder } from 'react-native-skia';
 
 /**
- * Rounded-top bar geometry, shared by the two bar charts in the app.
+ * Rounded-top bar geometry, shared by the bar charts in the app.
  *
- * Both the week-ahead sparkbar and the 40-day streak chart draw the same column:
+ * The week-ahead bars (card and sheet) and the 40-day streak chart draw the
+ * same column:
  * square on the baseline, rounded where the data ends. They had each written the
  * seven verbs out — `moveTo → lineTo → quadTo → lineTo → quadTo → lineTo →
  * close` — with their own copy of the corner radius and their own clamp.
@@ -53,9 +54,4 @@ export function appendRoundedTopBar(
     .quadTo(x + width, top, x + width, top + corner)
     .lineTo(x + width, baseline)
     .close();
-}
-
-/** One column as a path of its own, for callers that animate bars individually. */
-export function roundedTopBarPath(geometry: BarGeometry): SkPath {
-  return appendRoundedTopBar(Skia.PathBuilder.Make(), geometry).build();
 }

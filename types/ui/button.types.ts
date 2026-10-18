@@ -64,7 +64,7 @@ interface BaseButtonProps
   shape?: ButtonShape;
   /** Stretch to fill the available width instead of hugging the label */
   fullWidth?: boolean;
-  /** Haptic weight fired on press (default: 'light') */
+  /** Haptic weight fired on press (default: 'selection', the ladder's tier for a plain press) */
   hapticType?: HapticType;
 }
 

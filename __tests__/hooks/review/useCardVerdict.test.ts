@@ -75,10 +75,9 @@ describe('fireVerdictFeedback', () => {
     jest.clearAllMocks();
   });
 
-  // A miss should feel heavier than a clean recall, the same way the session's
-  // other feedback is weighted. If these ever collapse to one texture, three
-  // different outcomes feel identical again.
-  test('weights each outcome differently', () => {
+  // A clean recall and a scraped one must not feel the same: "Barely" is held
+  // lightly, "Knew it" firmly.
+  test('weights a pass by how clean it was', () => {
     fireVerdictFeedback(VERDICT_TONE.CORRECT);
     expect(haptics.commitFeedback).toHaveBeenCalledTimes(1);
     expect(haptics.lightFeedback).not.toHaveBeenCalled();
@@ -86,9 +85,33 @@ describe('fireVerdictFeedback', () => {
 
     fireVerdictFeedback(VERDICT_TONE.ALMOST);
     expect(haptics.lightFeedback).toHaveBeenCalledTimes(1);
+  });
 
+  // "Forgot" is the learner's own honest report. It commits like any other
+  // decision; the Error texture would score it against them, which pushes
+  // self-grading toward "Barely" — the bias FSRS can least afford.
+  test('a miss the learner reported commits without the error texture', () => {
     fireVerdictFeedback(VERDICT_TONE.WRONG);
+
+    expect(haptics.commitFeedback).toHaveBeenCalledTimes(1);
+    expect(haptics.errorFeedback).not.toHaveBeenCalled();
+  });
+
+  // The recognizer hearing another word is the app's verdict, handed down
+  // unasked — the one miss that still buzzes as an error.
+  test('a miss the recognizer judged buzzes as an error', () => {
+    fireVerdictFeedback(VERDICT_TONE.WRONG, true);
+
     expect(haptics.errorFeedback).toHaveBeenCalledTimes(1);
+    expect(haptics.commitFeedback).not.toHaveBeenCalled();
+  });
+
+  // The judge only changes what a MISS feels like; a pass is a pass.
+  test('the judge does not change how a pass feels', () => {
+    fireVerdictFeedback(VERDICT_TONE.CORRECT, true);
+
+    expect(haptics.commitFeedback).toHaveBeenCalledTimes(1);
+    expect(haptics.errorFeedback).not.toHaveBeenCalled();
   });
 
   // Selection is tier 0 in utils/haptics — what every press in the session now
@@ -98,6 +121,7 @@ describe('fireVerdictFeedback', () => {
     fireVerdictFeedback(VERDICT_TONE.CORRECT);
     fireVerdictFeedback(VERDICT_TONE.ALMOST);
     fireVerdictFeedback(VERDICT_TONE.WRONG);
+    fireVerdictFeedback(VERDICT_TONE.WRONG, true);
 
     expect(haptics.selectionFeedback).not.toHaveBeenCalled();
   });
@@ -159,19 +183,32 @@ describe('useCardVerdict', () => {
   // The wince used to be a withSequence between fixed offsets that ended where
   // it started, so under a mock that collapses a sequence to its last frame a
   // miss and a pass both read 0 and there was nothing to assert. As a 0 → 1
-  // phase there is: the mock collapses the timing to its target, so a miss rests
-  // at 1 (a fully spent wobble) and everything else at 0 (never started).
-  test('only a miss runs the wince', () => {
+  // phase there is: the mock collapses the timing to its target, so a wince
+  // rests at 1 (a fully spent wobble) and everything else at 0 (never started).
+  test('only a miss the recognizer judged runs the wince', () => {
     const { result } = renderHook(() => useCardVerdict());
     act(() => result.current.resetVerdict('card-1'));
 
-    act(() => result.current.playVerdict('unknown', 'card-1'));
+    act(() => result.current.playVerdict('unknown', 'card-1', 'recognizer'));
     expect(result.current.verdictShakePhase.get()).toBe(1);
 
     act(() => result.current.playVerdict('known', 'card-1'));
     expect(result.current.verdictShakePhase.get()).toBe(0);
 
     act(() => result.current.playVerdict('vague', 'card-1'));
+    expect(result.current.verdictShakePhase.get()).toBe(0);
+  });
+
+  // A grade-bar "Forgot" keeps its ring — and holds it for the restudy — but
+  // the card does not flinch at an honest answer.
+  test('a miss the learner reported holds its ring without the wince', () => {
+    const { result } = renderHook(() => useCardVerdict());
+    act(() => result.current.resetVerdict('card-1'));
+
+    act(() => result.current.playVerdict('unknown', 'card-1'));
+
+    expect(result.current.verdictTone.get()).toBe(VERDICT_TONE.WRONG);
+    expect(result.current.verdictLevel.get()).toBe(VERDICT.RESIDUAL);
     expect(result.current.verdictShakePhase.get()).toBe(0);
   });
 
@@ -182,9 +219,11 @@ describe('useCardVerdict', () => {
     const { result } = renderHook(() => useCardVerdict());
     act(() => result.current.resetVerdict('card-1'));
 
-    act(() => result.current.playVerdict('unknown', 'card-1'));
+    act(() => result.current.playVerdict('unknown', 'card-1', 'recognizer'));
     // Prove the second call is a no-op by moving the value first: a replay
-    // would drive it back to RESIDUAL, a suppressed one leaves it alone.
+    // would drive it back to RESIDUAL, a suppressed one leaves it alone. The
+    // second call is the learner agreeing ("Missed it"), which is the same
+    // outcome however it was reached.
     act(() => result.current.verdictLevel.set(0.5));
     act(() => result.current.playVerdict('unknown', 'card-1'));
 
@@ -199,7 +238,7 @@ describe('useCardVerdict', () => {
     const { result } = renderHook(() => useCardVerdict());
     act(() => result.current.resetVerdict('card-1'));
 
-    act(() => result.current.playVerdict('unknown', 'card-1'));
+    act(() => result.current.playVerdict('unknown', 'card-1', 'recognizer'));
     expect(result.current.verdictTone.get()).toBe(VERDICT_TONE.WRONG);
 
     act(() => result.current.playVerdict('known', 'card-1'));
@@ -216,7 +255,7 @@ describe('useCardVerdict', () => {
     const { result } = renderHook(() => useCardVerdict());
     act(() => result.current.resetVerdict('card-1'));
 
-    act(() => result.current.playVerdict('unknown', 'card-1'));
+    act(() => result.current.playVerdict('unknown', 'card-1', 'recognizer'));
     expect(result.current.verdictLevel.get()).toBe(VERDICT.RESIDUAL);
 
     act(() => result.current.resetVerdict('card-2'));
