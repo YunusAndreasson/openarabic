@@ -15,20 +15,8 @@ import {
 import type { JSX } from 'react';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
-import { useIsFocused, useNavigation } from 'expo-router';
-import {
-  useAnimatedReaction,
-  useDerivedValue,
-  useSharedValue,
-  withDelay,
-  withTiming,
-} from 'react-native-reanimated';
-import { scheduleOnRN } from 'react-native-worklets';
+import { useDerivedValue, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 
-// Direct path, not the `charts` barrel: that barrel also re-exports
-// `VocabularyChart`, and Metro does not tree-shake — importing it here
-// would evaluate the whole line-chart stack on the practice tab's first
-// render for a component that draws no line chart.
 import { ChartBaseline } from '@/components/common/charts/ChartBaseline';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { HORIZON_TRAVEL, TIMING_CONFIG } from '@/constants/animation';
@@ -36,7 +24,6 @@ import { CHART_OPACITY, getChartColors, getMeterTrackColor } from '@/constants/c
 import { INLINE_VALUE_MIN_WIDTH, LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { RootId } from '@/types/branded.types';
-import { commitFeedback, selectionFeedback } from '@/utils/haptics';
 import {
   departureShare,
   layOutDots,
@@ -53,7 +40,6 @@ import {
   PLOT_HEIGHT,
   TRACK_PATH,
 } from '@/utils/horizonBandPath';
-import { planTravelHaptics, type TravelHapticBeat } from '@/utils/horizonTravelHaptics';
 import { getHorizonFraction, HORIZON_BAND_KEYS, HORIZON_BAND_LABELS } from '@/utils/memoryHorizon';
 
 /**
@@ -76,6 +62,12 @@ import { getHorizonFraction, HORIZON_BAND_KEYS, HORIZON_BAND_LABELS } from '@/ut
  * column and was simply present in another. Now the dots a change touched
  * travel — see `planDotTravel` for which those are — while the rest of the field
  * dims and holds still, so what moved is the only thing moving.
+ *
+ * Seen, not felt. The travel used to tick a haptic for every dot that landed
+ * and close on a firmer beat — a roll of feedback, on a stats screen, for no
+ * decision the learner made, straight after a session whose cards had each
+ * already been felt. One decision gets one haptic; returning to a tab is not
+ * one.
  *
  * Two `Atlas` calls draw everything. The dots that stay are positioned once; the
  * dots that travel are positioned in a worklet off one shared sweep, so a
@@ -128,7 +120,6 @@ const MEDIAN_BOTTOM = vec(0, BAND_HEIGHT);
 const TRAVEL_STAGGER = HORIZON_TRAVEL.STAGGER;
 const TRAVEL_ARC_LIFT = HORIZON_TRAVEL.ARC_LIFT;
 const TRAVEL_DIM_RAMP = HORIZON_TRAVEL.DIM_RAMP;
-const REGROWN_AT = HORIZON_TRAVEL.REGROWN_AT;
 
 /**
  * How far the dots that are NOT travelling step back while the others do. The
@@ -138,7 +129,6 @@ const REGROWN_AT = HORIZON_TRAVEL.REGROWN_AT;
 const RESTING_FIELD_OPACITY = CHART_OPACITY.LOW;
 
 const NO_MOVERS: DotMover[] = [];
-const NO_BEATS: TravelHapticBeat[] = [];
 
 interface MemoryHorizonBandProps {
   /** Practised-word count per column. Length is BIN_COUNT. */
@@ -168,10 +158,6 @@ interface FieldState {
   travels: number;
   /** Redraws so far. The grow-from-baseline entrance plays once for each. */
   redraws: number;
-  /** What the travel feels like as its dots land; empty when nothing is felt. */
-  beats: TravelHapticBeat[];
-  /** Whether this field was regrown in view, and so lands with a beat. */
-  settlesOnRedraw: boolean;
 }
 
 /**
@@ -203,16 +189,8 @@ function MemoryHorizonBandComponent({
       movers: NO_MOVERS,
       travels: 0,
       redraws: 0,
-      beats: NO_BEATS,
-      settlesOnRedraw: false,
     };
   });
-
-  // A change is felt only if it is seen. The tab stays mounted under whatever
-  // covers it, and the figures above this are held while it is covered — but
-  // not before its first showing, when a field changing out of view would
-  // otherwise tick away under another screen.
-  const isFocused = useIsFocused();
 
   // The map's identity is the change signal — it is rebuilt only when the word
   // list is.
@@ -224,11 +202,9 @@ function MemoryHorizonBandComponent({
       stayers: plan?.stayers ?? layOutDots(field),
       movers: plan?.movers ?? NO_MOVERS,
       travels: fieldState.travels + (plan && plan.movers.length > 0 ? 1 : 0),
-      redraws: fieldState.redraws + (plan ? 0 : 1),
-      beats: plan && isFocused ? planTravelHaptics(plan.movers) : NO_BEATS,
-      // A field that could not travel still arrived: a first session grows in
+      // A field that could not travel still arrives: a first session grows in
       // out of an empty axis, and a very large one is past MAX_MOVERS.
-      settlesOnRedraw: !plan && isFocused && horizonByRootId.size > 0,
+      redraws: fieldState.redraws + (plan ? 0 : 1),
     });
   }
 
@@ -238,8 +214,6 @@ function MemoryHorizonBandComponent({
       movers={fieldState.movers}
       travels={fieldState.travels}
       redraws={fieldState.redraws}
-      beats={fieldState.beats}
-      settlesOnRedraw={fieldState.settlesOnRedraw}
       medianFraction={medianFraction}
       hasDistribution={hasDistribution}
     />
@@ -251,8 +225,6 @@ interface HorizonBandCanvasProps {
   movers: DotMover[];
   travels: number;
   redraws: number;
-  beats: TravelHapticBeat[];
-  settlesOnRedraw: boolean;
   medianFraction: number;
   hasDistribution: boolean;
 }
@@ -262,12 +234,9 @@ function HorizonBandCanvasComponent({
   movers,
   travels,
   redraws,
-  beats,
-  settlesOnRedraw,
   medianFraction,
   hasDistribution,
 }: HorizonBandCanvasProps): JSX.Element {
-  const navigation = useNavigation();
   const colors = useColors();
   const { width, fontScale } = useWindowDimensions();
   // Fewer ticks keep the log axis readable when text grows. The data and
@@ -377,40 +346,6 @@ function HorizonBandCanvasComponent({
     return 1 - (1 - RESTING_FIELD_OPACITY) * Math.max(0, ramp);
   });
 
-  // The landings, felt. Fired off the sweep itself and never from a JS timer
-  // started beside it: those are two clocks, and they drift under load (see
-  // `VERDICT.HAPTIC_AT`). A frame that crosses several beats fires only the
-  // last of them, so a starved device — or reduced motion, where the sweep
-  // lands in one step — gets the closing beat at most, never a burst.
-  function fireFocusedFeedback(shouldCommit: boolean): void {
-    // Check when the queued RN callback runs: Practice may have been covered
-    // since the animation crossed its beat, even before React renders the blur.
-    if (!navigation.isFocused()) return;
-    if (shouldCommit) commitFeedback();
-    else selectionFeedback();
-  }
-
-  useAnimatedReaction(
-    () => {
-      'worklet';
-      const sweep = Math.min(1, Math.max(0, travel.get() - (travels - 1)));
-      let passed = 0;
-      for (const beat of beats) {
-        if (beat.at > sweep) break;
-        passed += 1;
-      }
-      return passed;
-    },
-    (passed, previous) => {
-      'worklet';
-      if (previous === null || passed <= previous) return;
-      // Tier 0 for a landing, the faintest thing available, because there can
-      // be several a second. The close is the texture a recalled card commits
-      // with: the session's own beat, once more, for the session as a whole.
-      scheduleOnRN(fireFocusedFeedback, beats[passed - 1]?.settle === true);
-    },
-  );
-
   // Grow the whole field off the baseline as one transform.
   const growth = useSharedValue(0);
   const settle = useSharedValue(0);
@@ -424,25 +359,9 @@ function HorizonBandCanvasComponent({
     growth.set(0);
     settle.set(0);
     growth.set(withTiming(1, TIMING_CONFIG.PROGRESS));
-    // The median rule annotates the shape, so it lands after the shape does —
-    // the same settle idiom the vocabulary sparkline uses.
+    // The median rule annotates the shape, so it lands after the shape does.
     settle.set(withDelay(TIMING_CONFIG.PROGRESS.duration, withTiming(1, TIMING_CONFIG.ENTRANCE)));
   }, [growth, settle, redraws]);
-
-  // A regrown field lands with the same closing beat a travel does. Rising
-  // edge only, and never for the entrance on mount, which reports nothing.
-  useAnimatedReaction(
-    () => {
-      'worklet';
-      return growth.get() >= REGROWN_AT;
-    },
-    (hasLanded, hadLanded) => {
-      'worklet';
-      if (settlesOnRedraw && hasLanded && hadLanded === false) {
-        scheduleOnRN(fireFocusedFeedback, true);
-      }
-    },
-  );
 
   // The rule slides with the dots: the typical word moved because they did. A
   // redrawn field is the exception — its rule fades in where it belongs, having

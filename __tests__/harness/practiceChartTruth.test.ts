@@ -3,8 +3,8 @@
  * ================================
  *
  * The Practice tab renders several numbers-bearing surfaces off one array of
- * `StudyWord`s: the memory horizon constellation, the vocabulary sparkline,
- * the due-words prognosis, the retrievability forecast, and the stat cards.
+ * `StudyWord`s: the memory horizon constellation, the due-words prognosis,
+ * the retrievability forecast, and the stat cards.
  *
  * Existing unit tests for those hooks mock out the layer that does the
  * counting, so nothing else checks that the numbers on screen describe the
@@ -22,6 +22,7 @@
 
 import { renderHook } from '@testing-library/react-native';
 import { afterAll, beforeAll, describe, expect, jest, test } from '@jest/globals';
+import { State } from 'ts-fsrs';
 
 // The repo-wide Skia mock is built from jest.fn()s, and jest.config sets
 // `resetMocks: true` — so by the time a test runs, PathBuilder.Make() returns
@@ -68,7 +69,6 @@ jest.mock('react-native-skia', () => {
 
 import { useMemoryHorizonDistribution } from '@/hooks/vocabulary/useMemoryHorizonDistribution';
 import { useMemoryInsights } from '@/hooks/vocabulary/useMemoryInsights';
-import { useVocabularyGrowthChart } from '@/hooks/vocabulary/useVocabularyGrowthChart';
 import type { StudyWord } from '@/types/vocabulary.types';
 import {
   calculateDueWordsForecast,
@@ -78,7 +78,7 @@ import {
 import { getMemoryHorizonDays } from '@/utils/memoryHorizon';
 import { countReviewedToday, isDueWord, isMasteredWord } from '@/utils/wordClassification';
 import { normalizeTimestamp, parseSupabaseTimestamp } from '@/utils/dateTimeUtils';
-import { DAYS_30, DAYS_7 } from '@/constants/chartConstants';
+import { DAYS_7 } from '@/constants/chartConstants';
 
 // The screen counts by mapping the shared predicate over its list — there is no
 // separate aggregate function, deliberately, so a headline can never drift from
@@ -204,12 +204,6 @@ const TRUTH = {
   totalWords: 14,
   /** state 2 AND stability >= 5 → ids 1,2,3,4,5,14 */
   masteredWords: 6,
-  /**
-   * Added strictly inside the 30-day window. The window's first bucket sits 29
-   * days back, so id 10 (created 30 days ago) is part of the baseline, not the
-   * delta: ids 6,7,8,9,11,12,13,14.
-   */
-  addedInLast30Days: 8,
 } as const;
 
 // ===========================================================================
@@ -221,43 +215,36 @@ describe('sanity: the fixture says what it claims', () => {
 });
 
 // ===========================================================================
-describe('vocabulary sparkline (hero card)', () => {
-  test('headline total equals the number of words in the practice list', () => {
-    const { result } = renderHook(() => useVocabularyGrowthChart(WORDS, 300, 60));
-    expect(result.current.totalWords).toBe(TRUTH.totalWords);
-  });
-
-  test('month delta equals the words added inside the 30-day window', () => {
-    const { result } = renderHook(() => useVocabularyGrowthChart(WORDS, 300, 60));
-    // The window's first bucket is 29 days back, so words added on or before
-    // that day are already counted in the baseline; the delta is everything
-    // added after it.
-    const windowStart = new Date(NOW.getTime() - (DAYS_30 - 1) * DAY);
-    const addedInsideWindow = WORDS.filter(w => {
-      const created = parseSupabaseTimestamp(w.created_at);
-      return created !== null && created > windowStart;
-    }).length;
-    expect(result.current.monthChange).toBe(addedInsideWindow);
-    expect(result.current.monthChange).toBe(TRUTH.addedInLast30Days);
-  });
-
-  test('the sparkline is drawn (non-empty path) when words exist', () => {
-    const { result } = renderHook(() => useVocabularyGrowthChart(WORDS, 300, 60));
-    expect(result.current.linePath.length).toBeGreaterThan(0);
-    expect(result.current.endPoint).not.toBeNull();
-  });
-});
-
-// ===========================================================================
 describe('due-words prognosis', () => {
-  test('"today" on the chart equals the due count the Practice tab acts on', () => {
-    // The prognosis subtitle reads "<N> to review today" and the bottom
-    // summary repeats it as "Today: <N>". The pinned CTA on the same screen
-    // reads "Review <M> words". N and M describe the same queue.
+  test('"now" on the chart equals the due count the Practice tab acts on', () => {
+    // The chart's first column is labelled "Now" and the card beside the
+    // Review action reads "Due now". Both describe the same queue — and the
+    // column the charts DRAW is `newlyDue`, so that is the one held to it.
     const forecast = calculateDueWordsForecast(WORDS, DAYS_7);
-    const chartToday = forecast[0]?.dueWords ?? 0;
     const screenDueCount = calculateDueWords(WORDS);
-    expect(chartToday).toBe(screenDueCount);
+    expect(forecast[0]?.dueWords ?? 0).toBe(screenDueCount);
+    expect(forecast[0]?.newlyDue ?? 0).toBe(screenDueCount);
+  });
+
+  test('each later column is only what that day adds — every word lands on exactly one day', () => {
+    // The charts draw this per-day series. It used to be the running backlog,
+    // which can only rise; here each word with a due date inside the window is
+    // counted in exactly ONE column — the first bucket whose instant has reached
+    // its due time — so the columns partition the words rather than re-count
+    // them, and nothing forces the last day to be the "busiest".
+    const forecast = calculateDueWordsForecast(WORDS, DAYS_7);
+    const bucketEnds = forecast.map(day => day.date.getTime());
+    const expected = new Array<number>(DAYS_7).fill(0);
+    for (const word of WORDS) {
+      const dueMs =
+        word.fsrs_state === State.New
+          ? Number.NEGATIVE_INFINITY
+          : (parseSupabaseTimestamp(word.fsrs_due)?.getTime() ?? Number.POSITIVE_INFINITY);
+      const bucket = bucketEnds.findIndex(end => dueMs <= end);
+      if (bucket >= 0) expected[bucket] = (expected[bucket] ?? 0) + 1;
+    }
+    expect(forecast.map(day => day.newlyDue)).toEqual(expected);
+    forecast.forEach(day => expect(day.newlyDue).toBeGreaterThanOrEqual(0));
   });
 
   test('a word that falls due later tonight is not already "due today"', () => {
@@ -633,20 +620,19 @@ describe('memory horizon constellation', () => {
 // ===========================================================================
 describe('empty and degenerate vocabularies', () => {
   test('no words → every headline reads zero, nothing renders as NaN', () => {
-    const { result: growth } = renderHook(() => useVocabularyGrowthChart([], 300, 60));
-    expect(growth.current.totalWords).toBe(0);
-    expect(growth.current.monthChange).toBe(0);
-
     expect(calculateMasteredWords([])).toBe(0);
 
     const due = calculateDueWordsForecast([], DAYS_7);
-    due.forEach(day => expect(day.dueWords).toBe(0));
+    due.forEach(day => {
+      expect(day.dueWords).toBe(0);
+      expect(day.newlyDue).toBe(0);
+    });
 
     const retention = calculateRetrievabilityForecast([], DAYS_7);
     retention.forEach(day => expect(Number.isNaN(day.averageRetrievability)).toBe(false));
   });
 
-  test('a word with null fsrs_due is still part of the vocabulary count', () => {
+  test('a word with null fsrs_due is never forecast due, on any day', () => {
     const noDue = [
       makeWord({
         id: 50,
@@ -657,9 +643,10 @@ describe('empty and degenerate vocabularies', () => {
         dueInHours: null,
       }),
     ];
-    const { result } = renderHook(() => useVocabularyGrowthChart(noDue, 300, 60));
-    expect(result.current.totalWords).toBe(1);
-    // ...and must not be forecast as due, since it has no due date at all.
-    expect(calculateDueWordsForecast(noDue, DAYS_7)[0]?.dueWords).toBe(0);
+    // It has no due date at all, so no column of either series may count it.
+    calculateDueWordsForecast(noDue, DAYS_7).forEach(day => {
+      expect(day.dueWords).toBe(0);
+      expect(day.newlyDue).toBe(0);
+    });
   });
 });

@@ -4,7 +4,6 @@ import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { LAYOUT, TOPIC_GRID_MIN_COLUMN_WIDTH } from '@/constants/layout';
-import { useColors } from '@/hooks/theme/useColors';
 import { getCategoryDisplayName, getCategorySubtitle } from '@/utils/stringUtils';
 import { formatTextCount } from '@/utils/wordCountText';
 
@@ -56,10 +55,6 @@ function CompactNavCard({
   count?: number;
   onPress: () => void;
 }) {
-  const colors = useColors();
-
-  const subtitleStyle = [compactCardStyles.subtitle, { color: colors.secondaryText }];
-
   // Read in the order that makes sense aloud, with the count given its noun: on
   // its own the number between the two names was just "forty-three".
   const countLabel = count === undefined ? undefined : formatTextCount(count);
@@ -84,8 +79,10 @@ function CompactNavCard({
           </ThemedText>
         )}
       </View>
+      {/* The ink carries the hierarchy. A local 0.7 opacity on top of it pushed
+          the subtitle under AA contrast. */}
       {subtitle && (
-        <ThemedText skipDefaultColor style={subtitleStyle} type="caption">
+        <ThemedText colorName="secondaryText" type="caption">
           {subtitle}
         </ThemedText>
       )}
@@ -113,9 +110,6 @@ const compactCardStyles = StyleSheet.create({
   // Tabular so the counts in a column end on the same edge digit for digit.
   count: {
     fontVariant: ['tabular-nums'],
-  },
-  subtitle: {
-    opacity: LAYOUT.OPACITY.HIGH,
   },
 });
 

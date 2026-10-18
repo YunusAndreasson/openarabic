@@ -65,15 +65,15 @@ const styles = StyleSheet.create({
     paddingTop: LAYOUT.SPACING.XXXLARGE, // 48px - clear separation from content
     paddingBottom: LAYOUT.SPACING.XLARGE, // 24px - breathing room below logo
   },
+  // No local `opacity` on either line: the textTertiary ink carries the
+  // hierarchy, and 0.7 on top of it fell under AA contrast.
   version: {
-    opacity: LAYOUT.OPACITY.HIGH,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     letterSpacing: LETTER_SPACING.WIDE,
     textAlign: 'center',
     marginBottom: LAYOUT.SPACING.TINY,
   },
   copyright: {
-    opacity: LAYOUT.OPACITY.HIGH,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     letterSpacing: LETTER_SPACING.WIDE,
     textAlign: 'center',

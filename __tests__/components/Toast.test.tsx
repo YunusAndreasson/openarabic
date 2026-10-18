@@ -25,6 +25,20 @@ import { AccessibilityInfo } from 'react-native';
 import { Toast } from '@/components/ui/Toast';
 import { ToastType } from '@/types/enums';
 
+/**
+ * jest.setup stubs `StyleSheet.flatten` as the identity function, so a style
+ * array has to be merged here for an assertion on its values to mean anything.
+ */
+const flattenStyle = (style: unknown): Record<string, unknown> => {
+  if (Array.isArray(style)) {
+    return style.reduce<Record<string, unknown>>(
+      (acc, entry) => ({ ...acc, ...flattenStyle(entry) }),
+      {},
+    );
+  }
+  return style && typeof style === 'object' ? (style as Record<string, unknown>) : {};
+};
+
 // Use shared mock factories from componentMocks.tsx
 jest.mock('react-native-reanimated', () =>
   require('@/__tests__/helpers/componentMocks').createReanimatedMock(),
@@ -175,6 +189,33 @@ describe('Toast', () => {
 
     expect(getByText(expectedContent)).toBeDefined();
   });
+
+  test.each([
+    { type: ToastType.SUCCESS, icon: 'checkmark-circle', hue: '#4CAF50' },
+    { type: ToastType.ERROR, icon: 'alert-circle', hue: '#F44336' },
+    { type: ToastType.IMPORTANT, icon: 'warning', hue: '#FF9800' },
+    { type: ToastType.INFO, icon: 'information-circle', hue: '#000000' },
+  ])(
+    'a $type toast keeps its message in body ink; only the icon takes the hue',
+    ({ type, icon, hue }) => {
+      // Status toasts used to fill with the status colour and set `white` on it,
+      // which fell to 2.1-3.6:1 in the dark theme. The surface is now the same
+      // elevated one for every type, and the hue marks the icon alone.
+      const { getByText, getByTestId } = render(
+        <Toast visible={true} message="Saved" type={type} onClose={mockOnClose} />,
+      );
+
+      expect(flattenStyle(getByText('Saved').props.style).color).toBe('#000000');
+      expect(getByTestId(`mock-icon-${icon}`)).toHaveProp('color', hue);
+
+      // The nearest ancestor that paints a background is the toast's own surface.
+      let node = getByText('Saved').parent;
+      while (node && flattenStyle(node.props.style).backgroundColor === undefined) {
+        node = node.parent;
+      }
+      expect(flattenStyle(node?.props.style).backgroundColor).toBe('#EEEEEE');
+    },
+  );
 
   test('should handle long messages with ellipsis', () => {
     const longMessage =

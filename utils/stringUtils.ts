@@ -202,6 +202,21 @@ export function getArticleMetadata(article: {
 }
 
 /**
+ * Formats article metadata with category and reading time only (no author)
+ * Use when the author is shown elsewhere in the UI, e.g. under "More from {author}"
+ * @param article - Article object with category and article_sentences
+ * @returns Formatted string like "Category Name · 3 min"
+ */
+export function getArticleMetadataWithoutAuthor(article: {
+  category: { name: string };
+  article_sentences?: unknown[];
+}): string {
+  const readingTime = calculateReadingTime(article.article_sentences?.length || 0);
+
+  return `${getCategoryDisplayName(article.category.name)} ${METADATA_SEPARATOR} ${readingTime}`;
+}
+
+/**
  * Formats article metadata with author and reading time only (no category)
  * Use when category is shown elsewhere in the UI
  * @param article - Article object with author and article_sentences
@@ -219,26 +234,6 @@ export function getArticleMetadataWithoutCategory(article: {
 
   return `${getAuthorDisplayName(article.author.name)} ${METADATA_SEPARATOR} ${readingTime}`;
 }
-
-/**
- * Extracts and formats the first name from an email address
- * @param email - The email address to extract the name from
- * @returns The formatted first name or 'User' as fallback
- */
-export const getFirstNameFromEmail = (email: string): string => {
-  if (!email) return 'User';
-
-  const localPart = email.split('@')[0];
-  if (!localPart) return 'User';
-
-  // Handle common separators and capitalize
-  const cleanName = localPart
-    .split(/[._-]/)
-    .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
-    .join(' ');
-
-  return cleanName.split(' ')[0] || 'User';
-};
 
 /**
  * Removes punctuation characters from word text for clean display

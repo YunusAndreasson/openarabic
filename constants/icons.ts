@@ -217,6 +217,7 @@ export const ICON_SYMBOLS = {
     ios: 'iphone.radiowaves.left.and.right',
     android: { name: 'vibration', codepoint: 0xe62d, filled: false },
   },
+  pause: { ios: 'pause.fill', android: { name: 'pause', codepoint: 0xe034, filled: true } },
   play: { ios: 'play.fill', android: { name: 'play_arrow', codepoint: 0xe037, filled: true } },
   refresh: {
     ios: 'arrow.counterclockwise',

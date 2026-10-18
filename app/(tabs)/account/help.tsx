@@ -1,7 +1,7 @@
 // External Libraries
 import { Icon } from '@/components/ui';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Fragment, memo, useCallback, useMemo } from 'react';
+import { Fragment, memo, useCallback } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
@@ -14,7 +14,7 @@ import { type FAQCategoryData, type FAQItem } from '@/constants/faq';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
-import { getFAQItemKey, useFAQSearch } from '@/hooks/account';
+import { useFAQSearch } from '@/hooks/account';
 import { useColors } from '@/hooks/theme/useColors';
 import { parseTextWithEmails } from '@/utils/textUtils';
 
@@ -23,92 +23,69 @@ interface FAQItemComponentProps {
   item: FAQItem;
   isExpanded: boolean;
   onToggle: (id: string) => void;
-  uniqueKey: string; // Unique key for expand/collapse state (supports duplicate questions)
 }
 
 // Minimal, robust FAQ item component
-const FAQItemComponent = memo(
-  ({ item, isExpanded, onToggle, uniqueKey }: FAQItemComponentProps) => {
-    const colors = useColors();
+const FAQItemComponent = memo(({ item, isExpanded, onToggle }: FAQItemComponentProps) => {
+  const colors = useColors();
 
-    const handlePress = useCallback(() => {
-      onToggle(uniqueKey);
-    }, [uniqueKey, onToggle]);
+  const handlePress = useCallback(() => {
+    onToggle(item.id);
+  }, [item.id, onToggle]);
 
-    const buttonStyle = useMemo(
-      () => [
-        styles.faqButton,
-        {
-          borderColor: isExpanded ? colors.tint : colors.cardBorder,
-        },
-      ],
-      [colors.tint, colors.cardBorder, isExpanded],
-    );
-
-    // Border only. The surface, the radius and the elevation now come from
-    // BaseCard — this panel used to hand-roll all three, and spread the raw
-    // elevation token, so it was one of only two surfaces in the app still
-    // casting a shadow in dark mode. It also painted itself `background` while
-    // the question above it painted `card`, which split one accordion across
-    // two surfaces.
-    const answerBorderStyle = useMemo(
-      () => [styles.faqAnswerContainer, { borderColor: colors.cardBorder }],
-      [colors.cardBorder],
-    );
-
-    return (
-      <View>
-        <BaseCard
-          style={buttonStyle}
-          onPress={handlePress}
-          accessibilityRole="button"
-          accessibilityLabel={item.question}
-          accessibilityState={{ expanded: isExpanded }}
-        >
-          <View style={styles.faqButtonContent}>
-            <ThemedText
-              type="body"
-              colorName={isExpanded ? 'tint' : 'text'}
-              style={styles.faqQuestionText}
-            >
-              {item.question}
-            </ThemedText>
-            <Icon
-              accessible={false}
-              importantForAccessibility="no"
-              name={isExpanded ? 'chevron-up' : 'chevron-down'}
-              size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-              color={isExpanded ? colors.tint : colors.textTertiary}
-            />
-          </View>
-        </BaseCard>
-        {isExpanded && (
-          <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)}>
-            <BaseCard
-              elevation="hairline"
-              style={answerBorderStyle}
-              contentStyle={styles.faqAnswerContent}
-            >
-              {item.answer.split('\n\n').map((paragraph, index) => (
-                <ThemedText
-                  // eslint-disable-next-line react/no-array-index-key
-                  key={`${item.id}-paragraph-${index}`}
-                  type="body"
-                  colorName="metadataText"
-                  style={index > 0 ? styles.paragraphSpacing : undefined}
-                >
-                  {parseTextWithEmails(paragraph, 'body')}
-                </ThemedText>
-              ))}
-              {/* Render colored examples for Arabic text coloring FAQ */}
-              {item.id === 'arabic-text-coloring' && <ArabicColoringExamples />}
-            </BaseCard>
-          </Animated.View>
-        )}
-      </View>
-    );
-  },
-);
+  // No strokes, and one signal for "open". Cards separate by elevation, so the
+  // question and the answer carry no border; and the chevron alone says the
+  // item is open — it used to be said three times over, by a tint border,
+  // tint question text and a tint chevron. The surface, radius and elevation
+  // all come from BaseCard.
+  return (
+    <View>
+      <BaseCard
+        style={styles.faqButton}
+        onPress={handlePress}
+        accessibilityRole="button"
+        accessibilityLabel={item.question}
+        accessibilityState={{ expanded: isExpanded }}
+      >
+        <View style={styles.faqButtonContent}>
+          <ThemedText type="body" style={styles.faqQuestionText}>
+            {item.question}
+          </ThemedText>
+          <Icon
+            accessible={false}
+            importantForAccessibility="no"
+            name={isExpanded ? 'chevron-up' : 'chevron-down'}
+            size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+            color={colors.textTertiary}
+          />
+        </View>
+      </BaseCard>
+      {isExpanded && (
+        <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)}>
+          <BaseCard
+            elevation="hairline"
+            style={styles.faqAnswerContainer}
+            contentStyle={styles.faqAnswerContent}
+          >
+            {item.answer.split('\n\n').map((paragraph, index) => (
+              <ThemedText
+                // eslint-disable-next-line react/no-array-index-key
+                key={`${item.id}-paragraph-${index}`}
+                type="body"
+                colorName="metadataText"
+                style={index > 0 ? styles.paragraphSpacing : undefined}
+              >
+                {parseTextWithEmails(paragraph, 'body')}
+              </ThemedText>
+            ))}
+            {/* Render colored examples for Arabic text coloring FAQ */}
+            {item.id === 'arabic-text-coloring' && <ArabicColoringExamples />}
+          </BaseCard>
+        </Animated.View>
+      )}
+    </View>
+  );
+});
 FAQItemComponent.displayName = 'FAQItemComponent';
 
 // FAQ Category Section component props
@@ -117,28 +94,24 @@ interface FAQCategorySectionProps {
   items: FAQItem[];
   expandedItems: Set<string>;
   onToggle: (id: string) => void;
-  keyPrefix?: string; // Prefix for unique keys (e.g., 'popular' for popular questions)
 }
 
-// Reusable FAQ category section with header and items
+// Reusable FAQ category section with header and items. Each question appears
+// once on the screen, so its id is its key and its expanded-state key.
 const FAQCategorySection = memo(
-  ({ title, items, expandedItems, onToggle, keyPrefix }: FAQCategorySectionProps) => {
+  ({ title, items, expandedItems, onToggle }: FAQCategorySectionProps) => {
     return (
       <Fragment>
         <SectionLabel title={title} />
         <View style={styles.categoryContainer}>
-          {items.map(item => {
-            const uniqueKey = getFAQItemKey(item.id, keyPrefix);
-            return (
-              <FAQItemComponent
-                key={uniqueKey}
-                uniqueKey={uniqueKey}
-                isExpanded={expandedItems.has(uniqueKey)}
-                item={item}
-                onToggle={onToggle}
-              />
-            );
-          })}
+          {items.map(item => (
+            <FAQItemComponent
+              key={item.id}
+              isExpanded={expandedItems.has(item.id)}
+              item={item}
+              onToggle={onToggle}
+            />
+          ))}
         </View>
       </Fragment>
     );
@@ -161,8 +134,6 @@ const HelpScreen = () => {
     filteredFAQData,
     totalResults,
     hasResults,
-    showPopularQuestions,
-    popularQuestions,
   } = useFAQSearch({ initialExpandedItem: params.expandItem });
 
   const handleClearSearch = useCallback(() => {
@@ -259,17 +230,6 @@ const HelpScreen = () => {
           />
         ) : (
           <>
-            {/* Popular Questions Section */}
-            {showPopularQuestions && popularQuestions.length > 0 && (
-              <FAQCategorySection
-                title={STRINGS.HELP_POPULAR_QUESTIONS}
-                items={popularQuestions}
-                expandedItems={expandedItems}
-                onToggle={handleToggleItem}
-                keyPrefix="popular"
-              />
-            )}
-
             {filteredFAQData.map((category: FAQCategoryData) => (
               <FAQCategorySection
                 key={category.name}
@@ -357,7 +317,6 @@ const styles = StyleSheet.create({
   },
   // BaseCard supplies the radius and the surface; this is only its padding.
   faqButton: {
-    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     minHeight: LAYOUT.BUTTON.HEIGHT.LARGE, // 48dp minimum per Fitts' Law
@@ -371,10 +330,9 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: LAYOUT.SPACING.MEDIUM,
   },
-  // BaseCard supplies the radius and the surface; these are the panel's border
-  // and its offset from the question above it.
+  // BaseCard supplies the radius and the surface; this is only the panel's
+  // offset from the question above it.
   faqAnswerContainer: {
-    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
     marginTop: LAYOUT.SPACING.SMALL,
   },
   faqAnswerContent: {

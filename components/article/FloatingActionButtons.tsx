@@ -18,10 +18,58 @@ export interface FloatingActionButtonsProps {
   isInReadingList: boolean;
   onToggleReadingList: () => Promise<void>;
   onClose: () => void;
+  /** This article is playing through the MiniPlayer */
   isListening: boolean;
+  /** This article's audio is loading into the MiniPlayer */
   isListenLoading: boolean;
   onToggleListen: () => void;
 }
+
+interface ReaderCloseButtonProps {
+  onClose: () => void;
+}
+
+/**
+ * The reader's way out, top left.
+ *
+ * Its own export because the reader's loading and error states need it too: the
+ * reader is a `fullScreenModal` with its swipe-down exit turned off, so on iOS a
+ * state without this button had no way out at all.
+ */
+export const ReaderCloseButton = ({ onClose }: ReaderCloseButtonProps) => {
+  const insets = useSafeAreaInsets();
+
+  // Clear of the status bar on both platforms.
+  //
+  // iOS used to hardcode a 16px offset here, on the reasoning that these sit
+  // at the screen corners while the dynamic island is centred. That only held
+  // while the reader was a pageSheet — the sheet is itself inset below the
+  // status bar, so 16px from ITS top was already clear. The reader is now
+  // `fullScreenModal` (it had to be, so the word card could scroll without
+  // dragging the article away), and 16px from the true screen top put Close,
+  // Listen and Add-to-playlist underneath the status bar — with the swipe-down
+  // exit gone too, that left no way out of an article at all.
+  const closeButtonStyle = {
+    position: 'absolute' as const,
+    top: insets.top,
+    left: LAYOUT.SPACING.LARGE,
+    zIndex: LAYOUT.Z_INDEX.OVERLAY,
+  };
+
+  return (
+    <GlassIconButton
+      accessibilityLabel={STRINGS.ARTICLE_CLOSE_A11Y}
+      hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
+      icon="close"
+      iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+      PressableComponent={Pressable}
+      style={closeButtonStyle}
+      onPress={onClose}
+    />
+  );
+};
+
+ReaderCloseButton.displayName = 'ReaderCloseButton';
 
 /**
  * Floating action buttons component positioned over parallax header
@@ -38,28 +86,11 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
     onToggleListen,
   }) => {
     const insets = useSafeAreaInsets();
-    // Clear of the status bar on both platforms.
-    //
-    // iOS used to hardcode a 16px offset here, on the reasoning that these sit
-    // at the screen corners while the dynamic island is centred. That only held
-    // while the reader was a pageSheet — the sheet is itself inset below the
-    // status bar, so 16px from ITS top was already clear. The reader is now
-    // `fullScreenModal` (it had to be, so the word card could scroll without
-    // dragging the article away), and 16px from the true screen top put Close,
-    // Listen and Add-to-playlist underneath the status bar — with the swipe-down
-    // exit gone too, that left no way out of an article at all.
-    const buttonTop = insets.top;
 
-    const closeButtonStyle = {
-      position: 'absolute' as const,
-      top: buttonTop,
-      left: LAYOUT.SPACING.LARGE,
-      zIndex: LAYOUT.Z_INDEX.OVERLAY,
-    };
-
+    // Level with ReaderCloseButton, which explains the offset
     const actionButtonsStyle = {
       position: 'absolute' as const,
-      top: buttonTop,
+      top: insets.top,
       right: LAYOUT.SPACING.LARGE,
       zIndex: LAYOUT.Z_INDEX.OVERLAY,
       flexDirection: 'row' as const,
@@ -82,42 +113,30 @@ export const FloatingActionButtons = memo<FloatingActionButtonsProps>(
       });
     };
 
-    const handleClose = () => {
-      onClose();
-    };
-
-    const isListenActive = isListening || isListenLoading;
+    // Listen only starts playback. Once this article is loading or playing, the
+    // MiniPlayer at the foot of the reader is the control — it has the stop,
+    // the progress and the sleep timer. This button used to turn into a second
+    // stop at the top of the same screen, beside the MiniPlayer's own.
+    const isPlayingHere = isListening || isListenLoading;
 
     return (
       <>
-        {/* Close button - top left */}
-        <GlassIconButton
-          clear
-          accessibilityLabel={STRINGS.ARTICLE_CLOSE_A11Y}
-          hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-          icon="close"
-          iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-          PressableComponent={Pressable}
-          style={closeButtonStyle}
-          onPress={handleClose}
-        />
+        <ReaderCloseButton onClose={onClose} />
 
         {/* Action buttons - top right: [Listen] [Add to playlist] */}
         <View style={actionButtonsStyle}>
           {/* No hitSlop on the paired buttons: 12px slop would overlap the 4px
               gap and let the later sibling claim taps on its neighbour's edge.
               Both buttons already meet the 44px minimum touch target. */}
-          <GlassIconButton
-            accessibilityLabel={
-              isListening ? STRINGS.ARTICLE_STOP_LISTENING_A11Y : STRINGS.ARTICLE_LISTEN_A11Y
-            }
-            accessibilityState={{ selected: isListening }}
-            active={isListenActive}
-            icon={isListenActive ? 'stop' : 'play'}
-            iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-            PressableComponent={Pressable}
-            onPress={onToggleListen}
-          />
+          {!isPlayingHere && (
+            <GlassIconButton
+              accessibilityLabel={STRINGS.ARTICLE_LISTEN_A11Y}
+              icon="play"
+              iconSize={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+              PressableComponent={Pressable}
+              onPress={onToggleListen}
+            />
+          )}
 
           <GlassIconButton
             accessibilityLabel={

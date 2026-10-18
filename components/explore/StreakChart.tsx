@@ -1,15 +1,15 @@
-import { Canvas, Group, Path, type SkPath } from 'react-native-skia';
+import { Canvas, Group, Path, Skia, vec } from 'react-native-skia';
 import { memo, useEffect, useMemo } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
-import { useDerivedValue, useSharedValue, withDelay, withSpring } from 'react-native-reanimated';
+import { useDerivedValue, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { SPRING_CONFIG } from '@/constants/animation';
+import { TIMING_CONFIG } from '@/constants/animation';
+import { CHART_OPACITY, useChartColors } from '@/constants/chartColors';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { useColors } from '@/hooks/theme/useColors';
 import type { DailyReadingActivity, StreakPeriod } from '@/services/studyStreak';
-import { roundedTopBarPath } from '@/utils/barChartPath';
+import { appendRoundedTopBar } from '@/utils/barChartPath';
 import { withOpacity } from '@/utils/colorUtils';
 
 interface StreakChartProps {
@@ -21,17 +21,7 @@ const CHART_HEIGHT = LAYOUT.CHART.HEIGHT; // 60 via constants
 const BAR_HEIGHT = LAYOUT.BUTTON.HEIGHT.LARGE / 2; // ~24 via constants
 const BAR_GAP = LAYOUT.CHART.BAR_GAP; // 2 via constants
 const INACTIVE_STUB_HEIGHT = Math.round(BAR_HEIGHT * 0.25); // Short baseline stubs
-const STAGGER_PER_BAR_MS = 30;
-
-// Sequential single-hue ramp (warning gold) — intensity carries recency,
-// geometry carries activity. No second hue, no glow.
-const ACTIVE_STREAK_OPACITY = 1;
-const PAST_STREAK_OPACITY = 0.55;
-const ISOLATED_DAY_OPACITY = 0.35;
-
-/** Bar with a rounded top and a square baseline — see `utils/barChartPath`. */
-const buildBarPath = (x: number, width: number, height: number): SkPath =>
-  roundedTopBarPath({ x, width, height, baseline: BAR_HEIGHT });
+const GROW_ORIGIN = vec(0, BAR_HEIGHT);
 
 // Extract expensive calculations outside component
 const createStreakMap = (streakPeriods: StreakPeriod[]): Map<string, StreakPeriod> => {
@@ -53,39 +43,24 @@ const createStreakMap = (streakPeriods: StreakPeriod[]): Map<string, StreakPerio
   return map;
 };
 
-interface StreakBarProps {
-  path: SkPath;
-  color: string;
-  index: number;
-  animated: boolean;
-}
-
-const StreakBar = memo<StreakBarProps>(({ path, color, index, animated }) => {
-  const grow = useSharedValue(animated ? 0 : 1);
-
-  useEffect(() => {
-    if (animated) {
-      grow.set(withDelay(index * STAGGER_PER_BAR_MS, withSpring(1, SPRING_CONFIG.CARD)));
-    }
-  }, [grow, index, animated]);
-
-  // Grow from the baseline: scaleY pivoted at the bottom of the canvas
-  const transform = useDerivedValue(() => {
-    'worklet';
-    return [{ scaleY: grow.get() }];
-  });
-
-  return (
-    <Group transform={transform} origin={{ x: 0, y: BAR_HEIGHT }}>
-      <Path path={path} color={color} />
-    </Group>
-  );
-});
-
-StreakBar.displayName = 'StreakBar';
-
+/**
+ * One bar per day for the last 40 days: a practised day is a full bar, a day
+ * without practice a short stub on the baseline.
+ *
+ * Two levels of the one chart accent, the same distinction the week-ahead bars
+ * draw: the current run solid, every other practised day muted. It used to be
+ * painted in `warning` gold — a status colour, reserved for meaning, on a habit
+ * chart where nothing was wrong — at three opacities (current run, past runs,
+ * isolated days) with nothing on screen saying which was which. The sheet's
+ * closing caption is the legend for the solid run, and only appears when there
+ * is one.
+ *
+ * The bars grow in as one group off the baseline. They used to spring in one at
+ * a time on a 30 ms stagger, a forty-bar cascade that took well over a second to
+ * say "here are some days".
+ */
 export const StreakChart = memo<StreakChartProps>(({ dailyActivity, streakPeriods }) => {
-  const colors = useColors();
+  const chartColors = useChartColors();
   const { width: windowWidth } = useWindowDimensions();
 
   // Memoize expensive calculations
@@ -103,46 +78,52 @@ export const StreakChart = memo<StreakChartProps>(({ dailyActivity, streakPeriod
     // Calculate actual chart width used
     const chartWidth = dailyActivity.length * barWidth + (dailyActivity.length - 1) * BAR_GAP;
 
-    // Create streak map
     const streakMap = createStreakMap(streakPeriods);
 
-    // Generate bars for each day with X positions
-    const bars = dailyActivity.map((activity, index) => {
-      const hasActivity = activity.hasActivity;
-      const streakPeriod = streakMap.get(activity.date);
-      const isInStreak = Boolean(streakPeriod);
-      const isActiveStreak = streakPeriod?.isActive || false;
+    // Three paths, one per ink: the stubs, the muted practised days, the run.
+    const stubs = Skia.PathBuilder.Make();
+    const practised = Skia.PathBuilder.Make();
+    const currentRun = Skia.PathBuilder.Make();
 
-      // Single-hue ramp: active streak loudest, past streaks mid, isolated
-      // days faint. Inactive days are short grid-colored stubs — activity
-      // pops via bar height (CVD-safe), not color alone.
-      let color: string;
-      if (!hasActivity) {
-        color = colors.chartGrid;
-      } else if (isActiveStreak) {
-        color = withOpacity(colors.warning, ACTIVE_STREAK_OPACITY);
-      } else if (isInStreak) {
-        color = withOpacity(colors.warning, PAST_STREAK_OPACITY);
-      } else {
-        color = withOpacity(colors.warning, ISOLATED_DAY_OPACITY);
-      }
-
+    dailyActivity.forEach((activity, index) => {
       const x = index * (barWidth + BAR_GAP);
-      const height = hasActivity ? BAR_HEIGHT : INACTIVE_STUB_HEIGHT;
-
-      return {
-        key: activity.date,
-        path: buildBarPath(x, barWidth, height),
-        color,
-        animated: hasActivity,
-      };
+      if (!activity.hasActivity) {
+        appendRoundedTopBar(stubs, {
+          x,
+          width: barWidth,
+          height: INACTIVE_STUB_HEIGHT,
+          baseline: BAR_HEIGHT,
+        });
+        return;
+      }
+      const isCurrentRun = streakMap.get(activity.date)?.isActive === true;
+      appendRoundedTopBar(isCurrentRun ? currentRun : practised, {
+        x,
+        width: barWidth,
+        height: BAR_HEIGHT,
+        baseline: BAR_HEIGHT,
+      });
     });
 
     return {
       chartWidth,
-      bars,
+      stubs: stubs.build(),
+      practised: practised.build(),
+      currentRun: currentRun.build(),
     };
-  }, [dailyActivity, streakPeriods, colors.warning, colors.chartGrid, windowWidth]);
+  }, [dailyActivity, streakPeriods, windowWidth]);
+
+  // Grow the practised days off the baseline as one transform.
+  const growth = useSharedValue(0);
+  useEffect(() => {
+    growth.set(0);
+    growth.set(withTiming(1, TIMING_CONFIG.PROGRESS));
+  }, [growth, chartData]);
+
+  const growTransform = useDerivedValue(() => {
+    'worklet';
+    return [{ scaleY: growth.get() }];
+  });
 
   return (
     <View style={[styles.container, { height: CHART_HEIGHT }]}>
@@ -153,15 +134,16 @@ export const StreakChart = memo<StreakChartProps>(({ dailyActivity, streakPeriod
             height: BAR_HEIGHT,
           }}
         >
-          {chartData.bars.map((bar, index) => (
-            <StreakBar
-              key={bar.key}
-              path={bar.path}
-              color={bar.color}
-              index={index}
-              animated={bar.animated}
+          {/* Days without practice: static grid-ink stubs, so the absence of a
+              bar is drawn rather than left as a gap. */}
+          <Path path={chartData.stubs} color={chartColors.ui.grid} />
+          <Group transform={growTransform} origin={GROW_ORIGIN}>
+            <Path
+              path={chartData.practised}
+              color={withOpacity(chartColors.ui.dataLine, CHART_OPACITY.MEDIUM)}
             />
-          ))}
+            <Path path={chartData.currentRun} color={chartColors.ui.dataLine} />
+          </Group>
         </Canvas>
         <View style={[styles.axisRow, { width: chartData.chartWidth }]}>
           <ThemedText type="caption" colorName="subtleLabelText" style={styles.axisLabel}>

@@ -61,6 +61,7 @@ const mockColors = {
   error: '#F44336',
   onError: '#ffffff',
   warning: '#FF9800',
+  onWarning: '#000000',
   success: '#4CAF50',
   info: '#2196F3',
 

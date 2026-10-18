@@ -10,17 +10,17 @@
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import { act, renderHook } from '@testing-library/react-native';
 
-import { CARD_EXIT_DRAW_BACK_RATIO, TIMING_CONFIG } from '@/constants/animation';
+import { TIMING_CONFIG } from '@/constants/animation';
 import { useSwipeGesture } from '@/hooks/gestures/useSwipeGesture';
 
 const reanimated = require('react-native-reanimated') as {
   withTiming: (value: number, config?: unknown, callback?: (finished?: boolean) => void) => number;
+  withDelay: (delay: number, animation: number) => number;
 };
 
 // The width jest.setup's useWindowDimensions stub reports; the hook reads the
 // live window, not a launch-time constant.
 const WINDOW_WIDTH = 375;
-const DRAW_BACK = WINDOW_WIDTH * CARD_EXIT_DRAW_BACK_RATIO;
 
 /**
  * Every test runs against a captured `withTiming` so the exit's completion
@@ -66,43 +66,42 @@ describe('review card exit', () => {
       expect(result.current.translateX.get()).toBe(-WINDOW_WIDTH);
     });
 
-    test('the draw-back distance is where the wash reaches full strength', () => {
+    test('a fresh card rests at centre with the exit unlocked', () => {
       const { result } = renderHook(() => useSwipeGesture());
 
-      expect(result.current.swipeThreshold).toBe(DRAW_BACK);
       expect(result.current.translateX.get()).toBe(0);
       expect(result.current.isAnimatingRef.get()).toBe(false);
     });
 
-    test('without a beat the card is placed at the draw-back point and thrown on the same frame', () => {
+    test('without a beat the throw starts from where the card rests', () => {
       const { result } = renderHook(() => useSwipeGesture());
       const setSpy = jest.spyOn(result.current.translateX, 'set');
+      const delaySpy = jest.spyOn(reanimated, 'withDelay');
 
       act(() => result.current.commitTo('right', 0));
 
-      // Two assignments, no animation between them: the placement is invisible
-      // because the throw starts on the very same frame.
-      expect(setSpy).toHaveBeenCalledTimes(2);
-      expect(setSpy).toHaveBeenNthCalledWith(1, DRAW_BACK);
-      expect(setSpy).toHaveBeenNthCalledWith(2, WINDOW_WIDTH);
+      // One assignment and no placement before it: there is no draw-back point
+      // to jump to any more, so the card leaves from rest.
+      expect(setSpy).toHaveBeenCalledTimes(1);
+      expect(setSpy).toHaveBeenCalledWith(WINDOW_WIDTH);
+      expect(delaySpy).not.toHaveBeenCalled();
+      expect(timings.map(t => t.value)).toEqual([WINDOW_WIDTH]);
+      expect(timings[0]?.config).toBe(TIMING_CONFIG.CARD_EXIT);
     });
 
-    test('a beat glides the card out to the draw-back point before the throw', () => {
+    test('a beat holds the card still, then throws', () => {
       const { result } = renderHook(() => useSwipeGesture());
       const setSpy = jest.spyOn(result.current.translateX, 'set');
+      const delaySpy = jest.spyOn(reanimated, 'withDelay');
 
       act(() => result.current.commitTo('right', 140));
 
-      // One assignment — the whole thing is a sequence, so the card is never
-      // teleported to the draw-back point.
+      // One assignment: the beat is a delay inside the animation, and the only
+      // timing is the throw itself — no glide to an intermediate point.
       expect(setSpy).toHaveBeenCalledTimes(1);
-
-      const drawBack = timings.find(t => t.value === DRAW_BACK);
-      expect(drawBack?.config).toEqual({
-        duration: 140,
-        easing: TIMING_CONFIG.MEDIUM.easing,
-      });
-      expect(timings.some(t => t.value === WINDOW_WIDTH)).toBe(true);
+      expect(delaySpy).toHaveBeenCalledTimes(1);
+      expect(delaySpy.mock.calls[0]?.[0]).toBe(140);
+      expect(timings.map(t => t.value)).toEqual([WINDOW_WIDTH]);
     });
 
     test('a card already flying off cannot be re-thrown', () => {

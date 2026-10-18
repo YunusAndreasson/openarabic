@@ -10,10 +10,9 @@ import { DragHandle, type DragHandleProps } from './DragHandle';
 import { TIMING_CONSTANTS } from '@/constants/animation';
 import { STRINGS } from '@/constants/strings';
 import { FONTS } from '@/constants/fonts';
-import { getEnhancedOpacity, LAYOUT, TEXT_OPACITY, TEXT_STYLES } from '@/constants/layout';
+import { LAYOUT, TEXT_STYLES } from '@/constants/layout';
 import { useEditModeCardAnimation } from '@/hooks/cards';
 import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { PressableLikeProps } from '@/types/ui/base.types';
 
 // Bookmarks thumbnail size with 4:3 ratio for optimal vertical space in portrait mobile
@@ -41,6 +40,8 @@ interface PlaylistItemCardProps {
   // Pressable implementation, forwarded to BaseCard. Rows rendered inside the
   // article reader must pass react-native-gesture-handler's — see BaseCardProps.
   PressableComponent?: ComponentType<PressableLikeProps>;
+  /** The article the audio player is on: its title takes the tint. */
+  isNowPlaying?: boolean;
 }
 
 export const PlaylistItemCard = memo(
@@ -58,8 +59,8 @@ export const PlaylistItemCard = memo(
     progressPercentage,
     compact = false,
     PressableComponent,
+    isNowPlaying = false,
   }: PlaylistItemCardProps) => {
-    const isDarkMode = useIsDarkMode();
     const colors = useColors();
     const { fontScale } = useWindowDimensions();
     // Larger system text is a request for readability; keep the article's full
@@ -71,15 +72,6 @@ export const PlaylistItemCard = memo(
       editMode,
       isBeingDragged,
     });
-
-    // Enhanced title and secondary text styles with semantic colors
-    const titleOpacity = getEnhancedOpacity(TEXT_OPACITY.PRIMARY, isDarkMode);
-    const secondaryOpacity = getEnhancedOpacity(TEXT_OPACITY.SECONDARY, isDarkMode);
-
-    // Dynamic styles
-    const titleTextStyle = [styles.titleText, { opacity: titleOpacity }];
-
-    const secondaryTextStyle = [styles.secondaryText, { opacity: secondaryOpacity }];
 
     return (
       <Animated.View style={[styles.cardContainer, compact && styles.railContainer, animatedStyle]}>
@@ -117,9 +109,11 @@ export const PlaylistItemCard = memo(
 
               <View style={styles.contentWrapper}>
                 <View style={styles.textContent}>
+                  {/* Ink only, no opacity: a faded heading slips under AA. The
+                      tint marks the article the player is on. */}
                   <ThemedText
-                    colorName="headingText"
-                    style={titleTextStyle}
+                    colorName={isNowPlaying ? 'tint' : 'headingText'}
+                    style={styles.titleText}
                     type={compact ? 'body' : 'heading3'}
                     weight={compact ? 'semibold' : undefined}
                     numberOfLines={wrapText ? undefined : 2}
@@ -133,7 +127,7 @@ export const PlaylistItemCard = memo(
                       colorName="authorText"
                       numberOfLines={wrapText ? undefined : 1}
                       ellipsizeMode="tail"
-                      style={secondaryTextStyle}
+                      style={styles.secondaryText}
                       type="label"
                     >
                       {secondaryText}

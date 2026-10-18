@@ -110,7 +110,7 @@ export default function TabLayout(): JSX.Element {
         // label now takes the same token as the icon beside it, so a tab is one
         // color rather than two. `selected` is spelled out rather than left to
         // expo-router's fallback to `tintColor`, because in the sepia theme that
-        // tint is 3.86:1 on its own bar — see `tabLabelSelected`.
+        // tint is 4.10:1 on its own bar — see `tabLabelSelected`.
         labelStyle={labelStyle}
         // Material hides the labels of unselected tabs by default, which left
         // three of the four destinations as a bare compass, headphones and

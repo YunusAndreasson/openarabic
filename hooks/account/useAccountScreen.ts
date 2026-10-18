@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Linking } from 'react-native';
 
+import { useToast } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { readingProgressQueries } from '@/constants/queries';
 import { ROUTE_PATHS } from '@/constants/routes';
@@ -15,9 +16,10 @@ import { simpleAudioService } from '@/services/audioPlayer';
 import { ensurePermissions } from '@/services/notificationService';
 import { ReadingProgressService } from '@/services/readingProgress';
 import { supabase } from '@/services/supabase';
+import { ToastType } from '@/types/enums';
 import { formatBytes } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
-import { lightFeedback, errorFeedback } from '@/utils/haptics';
+import { lightFeedback } from '@/utils/haptics';
 import { recordAccepted } from '@/utils/notificationPromptStorage';
 import { clearPersistedQueryCache } from '@/utils/queryPersistence';
 
@@ -29,39 +31,17 @@ function showEnableNotificationsAlert(): void {
   ]);
 }
 
-const useUserWithCreationDate = () => {
-  const { user } = useAuth();
-  const [userWithCreatedAt, setUserWithCreatedAt] = useState<typeof user>(user);
-
-  useEffect(() => {
-    const fetchUserData = async () => {
-      if (user?.id) {
-        try {
-          const { data, error } = await supabase.auth.getUser();
-          if (error) {
-            void handleError(error, { showToast: false });
-          } else if (data.user) {
-            setUserWithCreatedAt(data.user);
-          }
-        } catch (error) {
-          void handleError(error, { showToast: false });
-        }
-      }
-    };
-
-    void fetchUserData();
-  }, [user?.id]);
-
-  return userWithCreatedAt;
-};
-
 export const useAccountScreen = () => {
   const { reminderTime, updateReminderTime, formatReminderTime } = useReminders();
   const { clearCache, getCacheSize } = useAudioCache();
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [cacheSize, setCacheSize] = useState<number>(0);
-  const user = useUserWithCreationDate();
+  // The session's user is enough: the screen shows only which address is
+  // signed in. A fresh `getUser()` round trip used to run on every visit, for
+  // the "member since" date the account card no longer shows.
+  const { user } = useAuth();
 
   // Load cache size on component mount
   useEffect(() => {
@@ -77,12 +57,11 @@ export const useAccountScreen = () => {
     void loadCacheSize();
   }, [getCacheSize]);
 
-  // Clear all caches: audio files, query data, and persisted storage
+  // Clear all caches: audio files, query data, and persisted storage. With
+  // nothing cached the row is not pressable at all (see AppSection), so the
+  // guard only covers a stale caller.
   const handleClearCache = useCallback(async () => {
-    if (cacheSize === 0) {
-      Alert.alert(STRINGS.NO_CACHE, STRINGS.NO_CACHED_FILES);
-      return;
-    }
+    if (cacheSize === 0) return;
 
     Alert.alert(
       STRINGS.CLEAR_CACHE,
@@ -108,8 +87,9 @@ export const useAccountScreen = () => {
                 // Clear React Query persisted AsyncStorage cache
                 await clearPersistedQueryCache();
 
+                // No success dialog: the row's own size line already turns
+                // into "Nothing to clear", which is the confirmation.
                 lightFeedback();
-                Alert.alert(STRINGS.SUCCESS, STRINGS.CLEAR_CACHE_SUCCESS);
               } catch (error) {
                 Alert.alert(STRINGS.ERROR, STRINGS.FAILED_TO_CLEAR_OFFLINE_CACHE);
                 void handleError(error, { showToast: false });
@@ -164,7 +144,8 @@ export const useAccountScreen = () => {
       return;
     }
 
-    errorFeedback();
+    // No haptic here: opening a confirmation is not an error. The alert's red
+    // button carries the warning.
     Alert.alert(
       STRINGS.RESET_READING_PROGRESS,
       STRINGS.THIS_WILL_DELETE_ALL_READING_PROGRESS,
@@ -196,8 +177,14 @@ export const useAccountScreen = () => {
                   queryKey: readingProgressQueries.bulk(user.id).queryKey,
                 });
 
+                // A toast, not a dialog: there is nothing to answer, and the
+                // settings screen itself shows no reading position to update.
                 lightFeedback();
-                Alert.alert(STRINGS.SUCCESS, STRINGS.READING_PROGRESS_RESET_SUCCESSFULLY);
+                showToast(
+                  STRINGS.READING_PROGRESS_RESET_SUCCESSFULLY,
+                  undefined,
+                  ToastType.SUCCESS,
+                );
               } catch (error) {
                 Alert.alert(STRINGS.ERROR, STRINGS.FAILED_TO_RESET_READING_PROGRESS);
                 void handleError(error, { showToast: false });

@@ -1,121 +1,127 @@
-import { memo, useMemo } from 'react';
+import type { JSX } from 'react';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
-import { VocabularyChart } from '@/components/common/charts';
-import type { DataPoint } from '@/types/ui/chart.types';
-import { EMPTY_STATE_MESSAGES } from '@/constants/chartMessages';
-import { useGraphWidth } from '@/constants/chartConstants';
+import { ThemedText } from '@/components/primitives/ThemedText';
+import { DAYS_7 } from '@/constants/chartConstants';
+import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { formatMonthDay, formatWeekday } from '@/utils/chartDataUtils';
-import { useChartAxisLabels } from '@/hooks/vocabulary/useChartAxisLabels';
-import { getDueWordsAxisMax, useDueWordsChart } from '@/hooks/vocabulary/useDueWordsChart';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { formatWeekday } from '@/utils/chartDataUtils';
+import { calculateDueWordsForecast } from '@/utils/fsrsUtils';
 import { formatCount } from '@/utils/stringUtils';
+
+import { WeekAheadBars } from './WeekAheadBars';
+
+/** Tall enough to compare seven columns by eye; the sheet fits itself to it. */
+const BAR_HEIGHT = 96;
+/** Shared by the bars and the label rows under them, so each label sits under its column. */
+const COLUMN_GAP = LAYOUT.SPACING.SMALL;
 
 interface DueWordsPrognosisChartProps {
   studyWords: StudyWord[];
 }
 
-interface DueWordsRecord {
-  date: Date;
-  dueWords: number;
-  newlyDue: number;
-  totalWords: number;
+/**
+ * The /due-words sheet's chart: the practice card's week-ahead bars at full
+ * width, each column labelled with its count and its day.
+ *
+ * The same drawing as the card's sparkbar, on purpose — one series, one form,
+ * at two sizes. This used to be a smoothed spline with an area wash, seven
+ * spring-staggered dots and a scrubbing tooltip, inside a card on the sheet: the
+ * form the card's own bars were chosen to avoid, because a spline implies
+ * values between days that do not exist. With every column carrying its number
+ * there is no axis to read, no grid to draw and nothing to scrub.
+ *
+ * The series is per day (`newlyDue`): the first column is everything due now,
+ * every later column only what that day adds. It used to be the running backlog
+ * if nothing were ever reviewed, which only rose, so its "busiest day" was
+ * always the last one.
+ */
+export function DueWordsPrognosisChart({ studyWords }: DueWordsPrognosisChartProps): JSX.Element {
+  const { width: windowWidth } = useWindowDimensions();
+  // The sheet's content width: SheetScreen and its large-text scroll fallback
+  // both inset by the screen padding on each side.
+  const width = windowWidth - LAYOUT.SCREEN_HORIZONTAL_PADDING * 2;
+
+  const days = calculateDueWordsForecast(studyWords, DAYS_7).map((day, index) => ({
+    key: day.date.toISOString(),
+    label: index === 0 ? STRINGS.DUE_WORDS_NOW_COLUMN : formatWeekday(day.date),
+    count: day.newlyDue,
+  }));
+
+  const accessibilityLabel = STRINGS.DUE_WORDS_WEEK_A11Y.replace(
+    '{days}',
+    days
+      .map(day =>
+        STRINGS.DUE_WORDS_DAY_A11Y.replace('{day}', day.label).replace(
+          '{count}',
+          formatCount(day.count),
+        ),
+      )
+      .join('; '),
+  );
+
+  return (
+    // One drawing, read through one sentence — never as fourteen loose numbers
+    // and weekday fragments.
+    <View accessible accessibilityRole="image" accessibilityLabel={accessibilityLabel}>
+      <WeekAheadBars
+        counts={days.map(day => day.count)}
+        width={width}
+        height={BAR_HEIGHT}
+        gap={COLUMN_GAP}
+      />
+
+      <View style={[styles.labelRow, styles.countRow, { width }]}>
+        {days.map((day, index) => (
+          <ThemedText
+            key={day.key}
+            type="bodyBold"
+            // The measured column in full ink, the projection one step down —
+            // the same two levels the bars above are painted in.
+            colorName={index === 0 ? 'text' : 'secondaryText'}
+            align="center"
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            style={styles.cell}
+          >
+            {formatCount(day.count)}
+          </ThemedText>
+        ))}
+      </View>
+
+      <View style={[styles.labelRow, { width }]}>
+        {days.map(day => (
+          <ThemedText
+            key={day.key}
+            type="caption"
+            colorName="subtleLabelText"
+            align="center"
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            style={styles.cell}
+          >
+            {day.label}
+          </ThemedText>
+        ))}
+      </View>
+    </View>
+  );
 }
 
-/**
- * Whole words, no decimals. Hoisted rather than written inline at the call site
- * because VocabularyChart's memo comparator holds every prop to reference
- * equality, and an arrow rebuilt on each render would re-render the chart on
- * every parent render for a function that never changes.
- */
-/**
- * Axis ticks only. The gutter holds four characters, so a grouped "2,000" was
- * cut to "2,00"; a tick is a scale mark rather than a reading, and "2k" says the
- * same thing in the room there is. The exact counts are in the summary below.
- */
-const THOUSAND = 1000;
-const formatAxisTick = (value: number): string =>
-  value >= THOUSAND ? `${Number((value / THOUSAND).toFixed(1))}k` : `${value}`;
-
-export const DueWordsPrognosisChart = memo<DueWordsPrognosisChartProps>(
-  ({ studyWords = [] }: DueWordsPrognosisChartProps) => {
-    const graphWidth = useGraphWidth();
-    const { dueWordsData, chartData } = useDueWordsChart(studyWords);
-    const { xLabels, xLabelPositions } = useChartAxisLabels(dueWordsData);
-
-    // No title or subtitle: this chart only ever renders inside the /due-words
-    // sheet, which states both in its own header. It used to pass them anyway
-    // with `hideTitle` defaulting to true, so a subtitle was built on every
-    // render for a header that could not draw.
-
-    // The busiest upcoming day — the actionable fact in this forecast
-    const bottomSummary = useMemo(() => {
-      const { currentDue } = chartData.insights;
-      const busiest = dueWordsData.reduce(
-        (max, day) => (day.dueWords > max.dueWords ? day : max),
-        dueWordsData[0] ?? { date: new Date(), dueWords: 0, newlyDue: 0, totalWords: 0 },
-      );
-      const busiestLabel =
-        busiest.date.toDateString() === new Date().toDateString()
-          ? STRINGS.SUMMARY_TODAY
-          : formatWeekday(busiest.date);
-
-      return [
-        { label: STRINGS.SUMMARY_TODAY, value: formatCount(currentDue) },
-        {
-          label: STRINGS.SUMMARY_BUSIEST_DAY,
-          value: `${busiestLabel} (${formatCount(busiest.dueWords)})`,
-        },
-      ];
-    }, [chartData.insights, dueWordsData]);
-
-    // Prepare data points for interactive tooltips — newlyDue comes from the
-    // forecast data (same index order as the chart points)
-    const dataPoints: DataPoint<DueWordsRecord>[] = useMemo(() => {
-      return chartData.dataPoints.map((point, index) => {
-        const newlyDue = dueWordsData[index]?.newlyDue ?? 0;
-        // Days after today break out how many of the due words are new that day
-        const newSuffix =
-          index > 0 && newlyDue > 0
-            ? ` · +${formatCount(newlyDue)} ${STRINGS.NEWLY_DUE_SUFFIX}`
-            : '';
-        return {
-          x: point.x,
-          y: point.y,
-          value: `${formatCount(point.dueWords)}${newSuffix}`,
-          label: formatMonthDay(point.date),
-          data: {
-            date: point.date,
-            dueWords: point.dueWords,
-            newlyDue,
-            totalWords: studyWords.length,
-          },
-        };
-      });
-    }, [chartData.dataPoints, dueWordsData, studyWords.length]);
-
-    // Calculate the maximum Y value for better scaling
-    const yMax = useMemo(() => getDueWordsAxisMax(dueWordsData), [dueWordsData]);
-
-    // 🚀 Unified chart with due words progression:
-    return (
-      <VocabularyChart
-        path={chartData.dueWordsPath}
-        dataPoints={chartData.dataPoints}
-        tooltipDataPoints={dataPoints}
-        xLabels={xLabels} // Show all 7 days
-        xLabelPositions={xLabelPositions}
-        yMax={yMax}
-        topPadding={16}
-        graphWidth={graphWidth}
-        hasData={chartData.hasData}
-        isFuturePrediction={true} // Today is leftmost for future predictions
-        emptyStateText={EMPTY_STATE_MESSAGES.dueWords}
-        yLabelFormatter={formatAxisTick}
-        bottomSummary={bottomSummary}
-      />
-    );
-  },
-);
-
 DueWordsPrognosisChart.displayName = 'DueWordsPrognosisChart';
+
+const styles = StyleSheet.create({
+  // Seven equal cells with the bars' own gap: (width − 6·gap) / 7 each, which is
+  // exactly a bar's width, so every label is centred under its column.
+  labelRow: {
+    flexDirection: 'row',
+    gap: COLUMN_GAP,
+  },
+  countRow: {
+    marginTop: LAYOUT.SPACING.SMALL,
+  },
+  cell: {
+    flex: 1,
+  },
+});

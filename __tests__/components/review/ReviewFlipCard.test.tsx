@@ -38,7 +38,6 @@ jest.mock('@/hooks/gestures/useSwipeGesture', () => ({
   useSwipeGesture: () => ({
     translateX: mockTranslateX,
     isAnimatingRef: mockIsAnimating,
-    swipeThreshold: 80,
     commitTo: jest.fn(),
   }),
 }));
@@ -186,5 +185,18 @@ describe('ReviewFlipCard voice miss', () => {
     const view = render(<ReviewFlipCard {...props} discloseCaption={heard} />);
 
     expect(view.queryByText(heard)).toBeNull();
+  });
+
+  // A hearing failure discloses nothing, so "Try again" is a real retry. The
+  // card says the app missed it and keeps the English to itself — `answer`
+  // stays empty until something actually discloses it.
+  test('a hearing failure shows its caption without the answer', () => {
+    const notHeard = "Didn't catch that";
+    const view = render(
+      <ReviewFlipCard {...props} answer="" discloseAnswer discloseCaption={notHeard} />,
+    );
+
+    expect(view.getByText(notHeard)).toBeTruthy();
+    expect(view.queryByText('Book')).toBeNull();
   });
 });

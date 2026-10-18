@@ -12,6 +12,7 @@ import React from 'react';
 
 import { OnboardingStep } from '@/constants/onboarding';
 import { ROUTE_PATHS } from '@/constants/routes';
+import { STRINGS } from '@/constants/strings';
 import type { Article } from '@/types/articles.types';
 
 const mockPush = jest.fn();
@@ -54,6 +55,7 @@ const buildChecklist = (overrides: Partial<ChecklistProp> = {}): ChecklistProp =
     doneCount: 0,
     allDone: false,
     finalizeCompletion: jest.fn(),
+    dismiss: jest.fn(),
     items: [
       { step: OnboardingStep.READ_TEXT, label: 'Read your first text', done: false },
       { step: OnboardingStep.SAVE_WORD, label: 'Save a word to practice', done: false },
@@ -97,6 +99,19 @@ describe('GetStartedChecklist', () => {
 
     expect(mockPush).toHaveBeenCalledTimes(1);
     expect(String(mockPush.mock.calls[0]?.[0])).toContain('/article/7');
+  });
+
+  it('puts the card away from the close glyph in its header, without opening anything', () => {
+    const dismiss = jest.fn();
+    const { getByLabelText } = render(
+      <GetStartedChecklist articlesData={ARTICLES} checklist={buildChecklist({ dismiss })} />,
+    );
+
+    fireEvent.press(getByLabelText(STRINGS.CHECKLIST_DISMISS_A11Y));
+
+    expect(dismiss).toHaveBeenCalledTimes(1);
+    expect(mockPush).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 
   it('renders nothing while the welcome intro is on screen', () => {

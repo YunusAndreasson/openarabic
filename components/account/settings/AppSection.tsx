@@ -9,8 +9,11 @@ import { selectHapticsEnabled, setHapticsEnabled } from '@/store/settingsSlice';
 interface AppSectionProps {
   /** Open the theme picker */
   onThemePress: () => void;
-  /** Clear cached audio, articles and query data */
-  onClearCachePress: () => void;
+  /**
+   * Clear cached audio, articles and query data. Absent when there is nothing
+   * to clear: the row then only reports "Nothing to clear" and takes no press.
+   */
+  onClearCachePress?: () => void;
   /** Formatted cache size, or the "nothing to clear" copy */
   cacheSizeText: string;
 }

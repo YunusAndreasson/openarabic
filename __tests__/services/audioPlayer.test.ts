@@ -502,6 +502,64 @@ describe('audioPlayer service', () => {
     });
   });
 
+  describe('Pause and resume', () => {
+    test('pause holds an article track in place without disposing it', async () => {
+      await audioService.playPlaylist([testTrack, testTrack2]);
+      mockPlayer.pause.mockClear();
+
+      audioService.pause();
+
+      expect(mockPlayer.pause).toHaveBeenCalledTimes(1);
+      expect(mockPlayer.remove).not.toHaveBeenCalled();
+      expect(mockPlayer.clearLockScreenControls).not.toHaveBeenCalled();
+      expect(audioService.getStatus().currentTrack?.id).toBe(testTrack.id);
+      expect(audioService.getPlaylistInfo().isPlaylistMode).toBe(true);
+    });
+
+    test('pause and resume never touch a track without an article', async () => {
+      const reviewClip: EnhancedAudioTrack = {
+        id: 'review-1',
+        audioUrl: 'file:///review.mp3',
+        title: 'Review clip',
+      };
+      await audioService.play(reviewClip);
+      mockPlayer.pause.mockClear();
+      mockPlayer.play.mockClear();
+
+      audioService.pause();
+      const resumed = await audioService.resume();
+
+      expect(mockPlayer.pause).not.toHaveBeenCalled();
+      expect(mockPlayer.play).not.toHaveBeenCalled();
+      expect(resumed).toBe(false);
+    });
+
+    test('resume re-activates the audio session before playing again', async () => {
+      await audioService.playPlaylist([testTrack]);
+      audioService.pause();
+      mockSetIsAudioActiveAsync.mockClear();
+      mockPlayer.play.mockClear();
+
+      const resumed = await audioService.resume();
+
+      expect(resumed).toBe(true);
+      expect(mockSetIsAudioActiveAsync).toHaveBeenCalledWith(true);
+      expect(mockPlayer.play).toHaveBeenCalledTimes(1);
+      const activationOrder = mockSetIsAudioActiveAsync.mock.invocationCallOrder[0] ?? Infinity;
+      const playOrder = mockPlayer.play.mock.invocationCallOrder[0] ?? -Infinity;
+      expect(activationOrder).toBeLessThan(playOrder);
+    });
+
+    test('resume does nothing once the track has been stopped', async () => {
+      await audioService.playPlaylist([testTrack]);
+      await audioService.stop();
+      mockPlayer.play.mockClear();
+
+      expect(await audioService.resume()).toBe(false);
+      expect(mockPlayer.play).not.toHaveBeenCalled();
+    });
+  });
+
   describe('Playlist Mode', () => {
     test('should start playlist with first track', async () => {
       const success = await audioService.playPlaylist([testTrack, testTrack2, testTrack3]);

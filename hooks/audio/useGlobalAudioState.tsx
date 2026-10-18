@@ -4,7 +4,9 @@ import { createContext, use, useCallback, useEffect, useMemo, useRef, type React
 
 import { AUDIO_STATES } from '@/constants/audio';
 import { ROUTE_PATHS } from '@/constants/routes';
+import { STRINGS } from '@/constants/strings';
 import { useAudioProgressSubscription } from '@/hooks/audio/useAudioSubscription';
+import { isArticleAudioActive, isArticleAudioPaused } from '@/hooks/audio/articleAudioStatus';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -12,6 +14,7 @@ import { usePlaylistScreen } from '@/hooks/playlist/usePlaylistScreen';
 import { simpleAudioService } from '@/services/audioPlayer';
 import type { Article } from '@/types/articles.types';
 import type { BookmarkItem } from '@/types/bookmark.types';
+import { handleError } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
 import { useTimerCleanup } from '@/hooks/utils/useTimerCleanup';
 
@@ -42,7 +45,10 @@ export interface GlobalAudioState {
   sleepTimerEndTime: number;
 
   // Actions
-  onPlayPause: () => void;
+  /** Pause the loaded article track, or resume it from where it stopped. */
+  onTogglePause: () => void;
+  /** Stop playback and clear the queue. */
+  onStop: () => void;
   onTimerPress: () => void;
   onSleepTimerSet: (minutes: number) => void;
   onSleepTimerCancel: () => void;
@@ -86,6 +92,14 @@ function useGlobalAudioStateInternal(): GlobalAudioState {
     // This allows the current track to finish naturally while preventing playlist progression
     simpleAudioService.markSleepTimerExpired();
 
+    // A paused track has no end coming to wait for, and the 30-second check
+    // below would find it not playing and leave it loaded, so a resume much
+    // later would carry on past the timer. The timer ran out: end the session.
+    if (isArticleAudioPaused(simpleAudioService.getStatus())) {
+      void stopAudio();
+      return;
+    }
+
     // Force stop after a reasonable delay (30 seconds)
     // This ensures we don't get stuck if audio never stops naturally
     //
@@ -100,12 +114,17 @@ function useGlobalAudioStateInternal(): GlobalAudioState {
         // nothing for a single (non-"Play All") track: playCore's single-
         // track didJustFinish branch never checks sleepTimerExpired, so
         // nothing else was going to stop it either — the countdown would
-        // reach zero and the article would just keep playing. Checking live
-        // playing status instead covers both lanes; a track that already
-        // finished naturally within the 30s grace window is a no-op here
-        // either way.
+        // reach zero and the article would just keep playing. Checking the
+        // live track instead covers both lanes; a track that already finished
+        // naturally within the 30s grace window is a no-op here either way.
+        // Loaded, not just playing: a pause inside the grace window would
+        // otherwise survive the timer and resume past it later.
         const status = simpleAudioService.getStatus();
-        if (status.playing && status.currentTrack?.id === trackAtExpiry) {
+        if (
+          trackAtExpiry !== undefined &&
+          status.currentTrack?.id === trackAtExpiry &&
+          isArticleAudioActive(status)
+        ) {
           void stopAudio();
         }
       },
@@ -253,11 +272,31 @@ function useGlobalAudioStateInternal(): GlobalAudioState {
     audioPlayer.isLoading,
   ]);
 
-  // Action handlers
-  // MiniPlayer only shows when playing, so this only needs to handle stop
-  const handlePlayPause = useCallback(() => {
-    // Stop behavior: stops playback and clears current track (hides MiniPlayer)
-    // Note: Play is only initiated via PLAY ALL from Listen tab
+  // Action handlers. Both are useCallback for the reason the `state` memo below
+  // gives: this hook is a compiler bail-out, and the context value must keep
+  // its identity between transport changes.
+
+  // Pause or resume the loaded article track in place. "Playing" includes a
+  // track still buffering, because that is what the button shows as Pause.
+  const handleTogglePause = useCallback(() => {
+    const status = simpleAudioService.getStatus();
+    const isLoading = !status.isLoaded || status.isBuffering;
+    try {
+      if (status.playing || isLoading) {
+        simpleAudioService.pause();
+        return;
+      }
+    } catch (error) {
+      void handleError(error, { toastMessage: STRINGS.AUDIO_PAUSE_FAILED });
+      return;
+    }
+    simpleAudioService.resume().catch((error: unknown) => {
+      void handleError(error, { toastMessage: STRINGS.AUDIO_RESUME_FAILED });
+    });
+  }, []);
+
+  // Stops playback and clears the queue, which hides the MiniPlayer.
+  const handleStop = useCallback(() => {
     void stopAudio();
   }, [stopAudio]);
 
@@ -297,7 +336,8 @@ function useGlobalAudioStateInternal(): GlobalAudioState {
       queuePosition: enhancedQueuePosition,
       isTimerActive: sleepTimer.state.isActive,
       sleepTimerEndTime: sleepTimer.state.endTime,
-      onPlayPause: handlePlayPause,
+      onTogglePause: handleTogglePause,
+      onStop: handleStop,
       onTimerPress: handleTimerPress,
       onSleepTimerSet: handleSleepTimerSet,
       onSleepTimerCancel: handleSleepTimerCancel,
@@ -310,7 +350,8 @@ function useGlobalAudioStateInternal(): GlobalAudioState {
       enhancedQueuePosition,
       sleepTimer.state.isActive,
       sleepTimer.state.endTime,
-      handlePlayPause,
+      handleTogglePause,
+      handleStop,
       handleTimerPress,
       handleSleepTimerSet,
       handleSleepTimerCancel,

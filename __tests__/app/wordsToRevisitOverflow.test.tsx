@@ -184,7 +184,7 @@ describe('Words to revisit — overflow into the dictionary', () => {
 
     test('opening a word from the dictionary hop still goes through the practice tab', () => {
       // The one hop this refactor did not remove: from the inline word detail,
-      // "open in your dictionary" still leaves this sheet's tab entirely, so it
+      // "Open in Your words" still leaves this sheet's tab entirely, so it
       // keeps paying iOS's dismiss-before-present cost.
       givenLeeches(3);
       mockNavigate.mockClear();

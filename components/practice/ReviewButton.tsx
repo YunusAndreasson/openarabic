@@ -14,7 +14,7 @@ import { useDueWordsCount, useHasStudyWords } from '@/hooks/vocabulary/useFSRSQu
  * Was a full-width pill pinned above the tab bar; the label carried the
  * workload ("Review 12 words") because it had the room. Up here it is one word,
  * and the count it used to spell out is already on the tab badge and the "Due
- * today" card directly below — the same fact at three sizes was never worth the
+ * now" card directly below — the same fact at three sizes was never worth the
  * header width,
  * and a label that changes length as the session drains would make the header
  * twitch.
@@ -40,12 +40,8 @@ export function ReviewButton(): JSX.Element | null {
     router.push(getPracticeReviewRoute());
   }, []);
 
-  // Matches the empty state's secondary CTA, including the `from` param Explore
-  // reads to show its hint toast.
-  const handleBrowseArticles = useCallback(
-    () => router.navigate({ pathname: ROUTE_PATHS.EXPLORE_TAB, params: { from: 'practice' } }),
-    [],
-  );
+  // Matches the empty state's secondary CTA.
+  const handleBrowseArticles = useCallback(() => router.navigate(ROUTE_PATHS.EXPLORE_TAB), []);
 
   // No words saved yet — the screen is showing its empty state, which carries
   // its own call to action. A second one in the header would compete with it.

@@ -1,18 +1,13 @@
 import { Icon } from '@/components/ui';
 import { ProgressBar } from '@/components/common';
-import { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
-
-import { ThemedText } from '@/components/primitives/ThemedText';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { useButtonPress } from '@/hooks/ui/useButtonPress';
 import { mixColors } from '@/utils/colorUtils';
-import { lightFeedback } from '@/utils/haptics';
 
 // Close is a bare glyph in a 44pt box — the Apple HIG minimum tap target
 // (Material prefers 48dp) — so the box needs no hitSlop and paints nothing.
@@ -28,27 +23,16 @@ import { lightFeedback } from '@/utils/haptics';
 // asked for at the moment they were trying to recall a word. Voice is now
 // entirely a bottom-band act: "Speak to answer" opens the mic when it is
 // tapped, and not tapping it is the mute. Nothing was left for a second glyph
-// to say, so the chrome is a progress bar, an occasional run counter, and the
-// way out.
+// to say, so the chrome is a progress bar and the way out.
+//
+// There used to be a third thing: an "N in a row" run counter in success green,
+// with a haptic at 3, 8, 13… It re-animated on every correct card, counted
+// re-asks of words just restudied and "Barely" passes as part of the run, and
+// buzzed a second time for a grade already felt. A scoreboard beside the
+// progress bar, reporting a flattering number — gone.
 
 /** Tint mixed into the elevation surface to make the progress track visible. */
 const TRACK_TINT = 0.15;
-
-/** Below this a "run" is noise — two right answers is just Tuesday. */
-const MIN_RECALL_RUN = 3;
-
-/**
- * How often a run gets a haptic after the first one. The counter itself updates
- * on every correct card, but buzzing each time turns a reward into wallpaper —
- * and it would land right behind the grade haptic that caused it. Marking the
- * run's arrival and then every fifth keeps it an event.
- */
-const RECALL_RUN_HAPTIC_INTERVAL = 5;
-
-/** Whether this run length is one worth feeling, not just seeing. */
-const isRecallRunMilestone = (run: number): boolean =>
-  run === MIN_RECALL_RUN ||
-  (run > MIN_RECALL_RUN && (run - MIN_RECALL_RUN) % RECALL_RUN_HAPTIC_INTERVAL === 0);
 
 const STATIC_STYLES = StyleSheet.create({
   header: {
@@ -65,9 +49,6 @@ const STATIC_STYLES = StyleSheet.create({
   progressContainer: {
     flex: 1,
     marginRight: LAYOUT.SPACING.LARGE,
-  },
-  runContainer: {
-    marginRight: LAYOUT.SPACING.MEDIUM,
   },
   close: {
     alignItems: 'center',
@@ -87,8 +68,6 @@ interface ReviewHeaderProps {
   progress: number;
   maxProgress: number;
   onClose?: () => void;
-  /** Consecutive recalls this session (useSessionMetrics.currentStreak). */
-  recallRun?: number;
   /** Unique words answered this session (useSessionMetrics.wordsReviewed).
    *  Announced in the progress bar's accessible label only — the bar itself is
    *  the visual count, so there is no on-screen tally beside it. */
@@ -99,30 +78,11 @@ export const ReviewHeader = ({
   progress,
   maxProgress,
   onClose,
-  recallRun = 0,
   wordsDone = 0,
 }: ReviewHeaderProps) => {
   const colors = useColors();
 
   const displayProgress = Math.max(progress, maxProgress);
-
-  // A run is the one moment in the session that rewards the learner while they
-  // are still in it, and it was visual-only — a caption fading in beside a
-  // progress bar nobody is looking at mid-answer. The tick lands 100–300ms
-  // after the grade haptic (the metrics update runs behind the FSRS write), so
-  // it reads as a distinct second beat — "right… and that's three in a row" —
-  // rather than smearing into the grade.
-  //
-  // Keyed off a rising edge rather than the render, so a remount mid-session
-  // doesn't re-congratulate a run the learner already felt.
-  const lastRunRef = useRef(recallRun);
-  useEffect(() => {
-    const previous = lastRunRef.current;
-    lastRunRef.current = recallRun;
-    if (recallRun > previous && isRecallRunMilestone(recallRun)) {
-      lightFeedback();
-    }
-  }, [recallRun]);
 
   // The close haptic lives on the button rather than in useReview's handleClose:
   // that exit is also reached from the completion screen's ThemedButtons, which
@@ -163,23 +123,6 @@ export const ReviewHeader = ({
           backgroundColor={mixColors(colors.elevation2, colors.tint, TRACK_TINT)}
         />
       </View>
-      {/* A quiet run counter, from metrics the session already tracks. All the
-          reward in this loop used to be deferred to the completion screen, so a
-          good run felt like nothing until it was over. Appears only once the
-          run is worth noticing and re-enters on each new milestone (keyed), so
-          it reads as a nod rather than a scoreboard. No confetti, no glow. */}
-      {recallRun >= MIN_RECALL_RUN && (
-        <Animated.View
-          key={recallRun}
-          entering={FadeIn.duration(TIMING_CONFIG.MEDIUM.duration)}
-          exiting={FadeOut.duration(TIMING_CONFIG.FAST.duration)}
-          style={STATIC_STYLES.runContainer}
-        >
-          <ThemedText type="caption" colorName="success" numberOfLines={1}>
-            {STRINGS.RECALL_RUN(recallRun)}
-          </ThemedText>
-        </Animated.View>
-      )}
       {onClose && (
         <Pressable
           accessibilityLabel={STRINGS.REVIEW_CLOSE_A11Y}

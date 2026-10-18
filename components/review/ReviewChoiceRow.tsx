@@ -5,7 +5,12 @@ import { ReviewActionButton } from '@/components/review/ReviewActionButton';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
-type ReviewChoiceTone = 'negative' | 'intermediate' | 'positive';
+/**
+ * `neutral` is for a choice that is not an outcome at all ("Try again" grades
+ * nothing), so it must not borrow a grade's hue: amber means "Barely" in the
+ * grade bar that occupies this same band.
+ */
+type ReviewChoiceTone = 'negative' | 'intermediate' | 'positive' | 'neutral';
 
 type ReviewChoice = Omit<
   ComponentProps<typeof ReviewActionButton>,
@@ -30,13 +35,19 @@ const styles = StyleSheet.create({
   },
 });
 
-/** Shared quiet red, amber and green choices for manual and voice review. */
+/**
+ * Shared quiet choices for manual and voice review: red, amber and green for
+ * outcomes, secondary ink for a choice that grades nothing. Both rows keep fail
+ * on the left and pass on the right, so a thumb that learned one band is not
+ * sent to the opposite outcome by the other.
+ */
 export const ReviewChoiceRow = ({ choices }: ReviewChoiceRowProps) => {
   const colors = useColors();
   const toneColors: Record<ReviewChoiceTone, string> = {
     negative: colors.error,
     intermediate: colors.warning,
     positive: colors.success,
+    neutral: colors.secondaryText,
   };
 
   return (

@@ -80,8 +80,6 @@ interface ReviewStateRefs {
 interface UseReviewProps {
   fromRemember?: boolean;
   onClose?: () => void;
-  /** Snapshot for this session; controls timeline collection and the optional HUD. */
-  diagnosticsEnabled?: boolean;
   /**
    * Hands the audio session to playback for the prompt and gives it back
    * afterwards, so the Arabic is not played through the quieter
@@ -173,7 +171,6 @@ interface UseReviewReturn {
   /** Leave the restudy hold and commit the pending "Forgot". */
   continueFromRestudy: () => void;
   isAudioPreloading: boolean;
-  audioPreloadProgress: number;
   /** The first card's audio is cached — the session may run. Later cards keep
    *  preloading in the background (see useAudioPreloader). */
   isAudioReady: boolean;
@@ -262,7 +259,6 @@ const TRANSITION_DELAYS = {
 export function useReview({
   fromRemember,
   onClose,
-  diagnosticsEnabled = __DEV__,
   setPlaybackPriority,
   isMicStreamOpen,
 }: UseReviewProps = {}): UseReviewReturn {
@@ -273,10 +269,12 @@ export function useReview({
   // before every other effect in this hook so the first card's cache lookups
   // and audio-session setup already fall inside the window; it is closed (and
   // its report printed) by the unmount cleanup at the bottom, which runs last.
+  //
+  // Development builds only, like the HUD that reads it.
   useEffect(() => {
-    setDiagnosticsEnabled(diagnosticsEnabled);
+    setDiagnosticsEnabled(__DEV__);
     startDiagSession({ fromRemember: fromRemember ?? false });
-  }, [diagnosticsEnabled, fromRemember]);
+  }, [fromRemember]);
 
   // Talks to the audio service directly rather than through
   // useSimpleAudioPlayer. This hook only ever *commands* playback — play, stop,
@@ -471,7 +469,6 @@ export function useReview({
   // Audio preloading hook (must come after wordQueue/isComplete from useFSRS)
   const {
     isPreloading: isAudioPreloading,
-    progress: audioPreloadProgress,
     isReady: isAudioReady,
     resolveCached,
     forgetCached,
@@ -1565,7 +1562,6 @@ export function useReview({
     restudying,
     continueFromRestudy,
     isAudioPreloading,
-    audioPreloadProgress,
     isAudioReady,
     revealMeaningPassive,
     stopAudio: stopAudioSafely,

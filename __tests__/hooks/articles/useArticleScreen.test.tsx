@@ -284,7 +284,9 @@ describe('useArticleScreen Hook', () => {
 
       expect(mockHandleToggleReadingList).toHaveBeenCalledWith(1, false);
       expect(mockShowToast).toHaveBeenCalledWith(expect.any(String), 3000, ToastType.INFO);
-      expect(selectionFeedback).toHaveBeenCalled();
+      // The button that calls this fires the press haptic; a second one here
+      // would buzz the same decision twice.
+      expect(selectionFeedback).not.toHaveBeenCalled();
     });
 
     test('does not toggle without article ID', async () => {

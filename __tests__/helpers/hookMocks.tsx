@@ -78,7 +78,6 @@ export const createAudioPlayerMock = (
  */
 const createAudioPreloaderMockDefaults = () => ({
   isPreloading: false,
-  progress: 100,
   // The first card's audio is cached — later files may still be downloading.
   isReady: true,
   // Defaults to a miss so the play path exercises its audioCache fallback;

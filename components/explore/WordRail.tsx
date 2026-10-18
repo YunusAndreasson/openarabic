@@ -48,9 +48,7 @@ const SeeAllCard = ({ count, onPress }: SeeAllTarget) => {
     <BaseCard
       accessibilityLabel={STRINGS.HARDEST_WORDS_SEE_ALL_A11Y.replace('{count}', String(count))}
       accessibilityRole="button"
-      bordered
       contentStyle={styles.seeAllContent}
-      elevation="hairline"
       style={styles.card}
       surface="card"
       onPress={onPress}

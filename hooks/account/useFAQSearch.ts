@@ -1,14 +1,6 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
 
-import { FAQ_DATA, type FAQCategoryData, type FAQItem } from '@/constants/faq';
-
-/** IDs of popular questions to show at the top */
-const POPULAR_QUESTION_IDS = [
-  'what-is-app',
-  'arabic-text-coloring',
-  'how-spaced-repetition-works-detailed',
-  'learning-speed',
-] as const;
+import { FAQ_DATA, type FAQCategoryData } from '@/constants/faq';
 
 interface UseFAQSearchOptions {
   /** Item ID to auto-expand on mount (from URL params) */
@@ -32,18 +24,7 @@ interface UseFAQSearchResult {
   totalResults: number;
   /** Whether there are any results */
   hasResults: boolean;
-  /** Whether to show popular questions (when not searching) */
-  showPopularQuestions: boolean;
-  /** Popular questions for quick access */
-  popularQuestions: FAQItem[];
 }
-
-/**
- * Helper: Generate unique key for FAQ items.
- * Popular questions use prefix to avoid conflicts with category duplicates.
- */
-export const getFAQItemKey = (itemId: string, prefix?: string): string =>
-  prefix ? `${prefix}-${itemId}` : itemId;
 
 /**
  * Hook for managing FAQ search, filtering, and expand/collapse state.
@@ -51,8 +32,10 @@ export const getFAQItemKey = (itemId: string, prefix?: string): string =>
  * Features:
  * - Deferred search using React 19's useDeferredValue for performance
  * - Expand/collapse state with layout animations
- * - Popular questions extraction
  * - Auto-expand from URL params
+ *
+ * There is no "popular questions" list any more: it repeated four questions
+ * that then appeared again in their own categories directly below it.
  *
  * @example
  * ```tsx
@@ -65,8 +48,6 @@ export const getFAQItemKey = (itemId: string, prefix?: string): string =>
  *   filteredFAQData,
  *   totalResults,
  *   hasResults,
- *   showPopularQuestions,
- *   popularQuestions,
  * } = useFAQSearch({ initialExpandedItem: params.expandItem });
  * ```
  */
@@ -133,17 +114,6 @@ export function useFAQSearch({
 
   const hasResults = totalResults > 0;
 
-  // Get popular questions for quick access
-  const popularQuestions = useMemo(() => {
-    const allQuestions = FAQ_DATA.flatMap(category => category.items);
-    return POPULAR_QUESTION_IDS.map(id => allQuestions.find(q => q.id === id)).filter(
-      Boolean,
-    ) as FAQItem[];
-  }, []);
-
-  // Only show popular questions when not searching
-  const showPopularQuestions = !deferredSearchQuery.trim();
-
   return {
     searchQuery,
     setSearchQuery,
@@ -153,7 +123,5 @@ export function useFAQSearch({
     filteredFAQData,
     totalResults,
     hasResults,
-    showPopularQuestions,
-    popularQuestions,
   };
 }

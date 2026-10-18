@@ -93,11 +93,6 @@ const createHitSlop = (size: number) => ({ top: size, bottom: size, left: size, 
 // the resolved theme colours, so there is nothing left to bypass.
 
 const TYPOGRAPHY_HIERARCHY = {
-  COLOR_HIERARCHY: {
-    PRIMARY: 1.0,
-    SECONDARY: 0.85,
-  },
-
   /**
    * Tracking, in points, per role.
    *
@@ -148,11 +143,6 @@ const TYPOGRAPHY_HIERARCHY = {
       },
     },
   },
-
-  OPACITY_BOOST: {
-    LIGHT_THEME: 0.05,
-    DARK_THEME: 0.08,
-  },
 } as const;
 
 // ===== FLAT EXPORTS FOR SIMPLIFIED IMPORTS =====
@@ -163,9 +153,6 @@ export const LINE_HEIGHT_MULTIPLIERS = TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLI
 
 /** Letter spacing constants */
 export const LETTER_SPACING = TYPOGRAPHY_HIERARCHY.LETTER_SPACING;
-
-/** Text opacity values for hierarchy */
-export const TEXT_OPACITY = TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY;
 
 /** Pre-computed text style configurations for content types */
 export const TEXT_STYLES = TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES;
@@ -347,7 +334,7 @@ export const LAYOUT = {
         borderTopRightRadius: SHEET_CORNER_RADIUS,
       },
       // No `indicator` here: every sheet renders `BrandedBottomSheetHandle`
-      // (a Skia pill) via `handleComponent`, so a 36x4 token had no consumer.
+      // (a plain pill View) via `handleComponent`, so a 36x4 token had no consumer.
       // Shared text styles for bottom sheet headers (DRY)
       title: {
         marginBottom: SPACING_SCALE.TINY, // 4px - tight coupling with subtitle
@@ -569,23 +556,3 @@ export const getArabicHeroFontSize = (readingFontSize: number): number =>
       Math.round(clampArabicFontSize(readingFontSize) * 1.2),
     ),
   );
-
-export const getEnhancedOpacity = (
-  baseOpacity: number,
-  isDarkMode: boolean = false,
-  isInteractive: boolean = false,
-): number => {
-  let adjustedOpacity = baseOpacity;
-
-  if (isDarkMode) {
-    adjustedOpacity += TYPOGRAPHY_HIERARCHY.OPACITY_BOOST.DARK_THEME;
-  } else {
-    adjustedOpacity += TYPOGRAPHY_HIERARCHY.OPACITY_BOOST.LIGHT_THEME;
-  }
-
-  if (isInteractive) {
-    adjustedOpacity += TYPOGRAPHY_HIERARCHY.OPACITY_BOOST.LIGHT_THEME; // 0.05
-  }
-
-  return Math.min(1.0, Math.max(0.0, adjustedOpacity));
-};

@@ -2,46 +2,59 @@
 
 ## Color Theory & Palette
 
-- **MANDATORY**: Use semantic colors from Colors.ts only
+- Use semantic colors from `constants/colors.ts` only
 - **Primary palette**: `colors.tint` (sage green) for primary actions
 - **Never use hardcoded hex values** - always reference theme colors
-- **Green tint preference**: Avoid pure white, use subtle green tints for elevations
+- **Green tint preference**: light surfaces carry a faint green tint (the light
+  theme's "white" is `#FCFFFD`), never pure `#FFFFFF`
 
 ## Typography Hierarchy
 
-- **MANDATORY**: Follow `TYPOGRAPHY_HIERARCHY` constants exactly
+- Use `ThemedText`'s `type` variants first; below that, `LAYOUT.TYPOGRAPHY.SCALE`
+  and the `TEXT_STYLES`, `LINE_HEIGHT_MULTIPLIERS` and `LETTER_SPACING` exports
+  from layout.ts
 - **Arabic text**: Special handling with diacritics preservation
-- **Scaling**: Use systematic progression (TINY → SMALL → MEDIUM → LARGE → HUGE)
+- **Scaling**: the eight English roles in `ThemedText` use five sizes (13, 16, 18,
+  24, 32). A size outside them needs a reason, not just a `fontSize`
 
 ## Spacing Grid System
 
-- **MANDATORY**: Use `LAYOUT.SPACING` constants from layout.ts
-- **Base unit**: 4pt system
+- Use `LAYOUT.SPACING` constants from layout.ts
+- **Base unit**: 4pt system, nine steps
+  - MICRO = 1px, HALF_TINY = 2px
   - TINY = 4px
   - SMALL = 8px
   - MEDIUM = 12px
   - LARGE = 16px
   - XLARGE = 24px
+  - XXLARGE = 32px, XXXLARGE = 48px
 - **No ad-hoc pixel values** - if you need a size, add it to the constants
-- **Touch targets**: Minimum 48dp using `MIN_TOUCH_TARGET` constants
+- **Touch targets**: 32 (compact, with hit slop), 44 (standard; the default
+  `ThemedButton`), 48 (primary) via `MIN_TOUCH_TARGET`. See
+  [DESIGN_SYSTEM.md](../../docs/DESIGN_SYSTEM.md#foundations)
 
 ## Elevation System
 
-- **MANDATORY**: Resolve shadows through `getElevation(colors, role)` from
+- Resolve shadows through `getElevation(colors, role)` from
   `constants/elevation.ts`. There is no spreadable raw token, deliberately —
   eleven call sites used to spread one and skip the theme-aware path, which made
   them the only surfaces still casting a shadow in dark mode.
 - **Roles, not sizes**: `HAIRLINE` → `CARD` → `FLOATING` → `MODAL`
-- **Consistency**: Reference BaseCard.tsx for proper elevation usage
+- **Consistency**: Reference `components/common/BaseCard.tsx` for proper elevation usage
 
 ## UX Laws (Apply to All UI Work)
 
 - **Tesler's Law**: Shift complexity to system design, not users
 - **Hick's Law**: Limit choices to reduce decision time
-- **Fitts' Law**: Large touch targets (48dp minimum), position frequently-used controls nearby
+- **Fitts' Law**: Large touch targets (44pt standard, 48 for primary actions), position frequently-used controls nearby
 - **Miller's Law**: Group information in 5-9 item chunks
 - **Jakob's Law**: Leverage familiar mobile patterns
-- **Norman's Law**: Design should clearly communicate possible actions
+- **Dieter Rams, _less, but better_**: As little design as possible; a colour,
+  border or control earns its place or goes
+- **Don Norman, _The Design of Everyday Things_**: A control signals what it
+  does, answers when used, and fits the learner's model of the app
+
+Both are set out in [DESIGN_SYSTEM.md](../../docs/DESIGN_SYSTEM.md#lineage).
 
 ## Performance Targets
 
@@ -51,17 +64,18 @@
 
 ## Critical Constants Files
 
-- **[Colors.ts](constants/Colors.ts)** - Complete theme system
-- **[layout.ts](constants/layout.ts)** - Typography, spacing, shadows
-- **[strings.ts](constants/strings.ts)** - All user-facing text
-- **[animation.ts](constants/animation.ts)** - Timing configurations
+- **[colors.ts](../../constants/colors.ts)** - Complete theme system
+- **[layout.ts](../../constants/layout.ts)** - Typography, spacing, touch targets
+- **[elevation.ts](../../constants/elevation.ts)** - Shadows (`getElevation`)
+- **[strings.ts](../../constants/strings.ts)** - All user-facing text
+- **[animation.ts](../../constants/animation.ts)** - Timing configurations
 
 ## Required Usage Patterns
 
-- **Typography**: Use `TYPOGRAPHY_HIERARCHY` and `LAYOUT.TYPOGRAPHY.SCALE`
+- **Typography**: Use `ThemedText` types, `LAYOUT.TYPOGRAPHY.SCALE` and `TEXT_STYLES`
 - **Spacing**: Use `LAYOUT.SPACING` scale
 - **Elevation**: Use `getElevation(colors, 'HAIRLINE' | 'CARD' | 'FLOATING' | 'MODAL')`
-- **Colors**: Use semantic color names from Colors.ts
+- **Colors**: Use semantic color names from colors.ts
 - **Strings**: Use `STRINGS.*` constants for all user-facing text
 - **Animations**: Use `TIMING_CONFIG` and `SPRING_CONFIG` presets
 
@@ -84,19 +98,19 @@ import { COMMON_STYLES } from '@/utils/layoutUtils';
 
 ## TEXT_STYLES Usage
 
-Use pre-computed text styles from `layout.ts` for consistent typography:
+`TEXT_STYLES` in `layout.ts` holds micro-adjustments, not styles: a
+`letterSpacing` and a `lineHeightMultiplier` per content type (`CARD_TITLE`,
+`SECTION_HEADER`, `AUTHOR_BYLINE`). `ThemedText`'s `heading2` and `heading3`
+already apply them, so reach for the type first. When a local style must match
+one, read the field; never spread the object, because `lineHeightMultiplier` is
+not a style prop:
 
 ```typescript
 import { TEXT_STYLES } from '@/constants/layout';
 
-// Card titles
-<ThemedText style={{ ...TEXT_STYLES.CARD_TITLE }}>
-
-// Section headers
-<ThemedText style={{ ...TEXT_STYLES.SECTION_HEADER }}>
-
-// Author bylines
-<ThemedText style={{ ...TEXT_STYLES.AUTHOR_BYLINE }}>
+const styles = StyleSheet.create({
+  title: { letterSpacing: TEXT_STYLES.CARD_TITLE.letterSpacing },
+});
 ```
 
 ## Theme-Aware Shadows
@@ -130,14 +144,17 @@ Use unified `PRESS_SCALE` from `animation.ts`:
 ```typescript
 import { PRESS_SCALE } from '@/constants/animation';
 
-// Default press (buttons, cards)
-withTiming(PRESS_SCALE.DEFAULT); // 0.96
+// Default press (buttons)
+withTiming(PRESS_SCALE.BUTTON); // 0.96
 
-// Moderate press (toggles, interactive words)
+// Edit-mode resting scale (cards while the list is being reordered)
 withTiming(PRESS_SCALE.MODERATE); // 0.95
 
 // Strong press (icon buttons)
 withTiming(PRESS_SCALE.STRONG); // 0.9
+
+// Wide press (full-width or pill CTAs, every card)
+withTiming(PRESS_SCALE.WIDE); // 0.99
 
 // Drag feedback (scale up)
 withTiming(PRESS_SCALE.DRAG_UP); // 1.05
@@ -184,8 +201,8 @@ shape: 'rounded' | 'pill'; // which silhouette
 - `outlined` — a peer alongside a filled one
 - `ghost` — tertiary: "Not now", "Skip"
 
-`shape="pill"` is reserved for a standalone prominent CTA with no peer beside it
-(`PinnedActionButton`). Two shapes in one row read as two unrelated controls, so
+`shape="pill"` is reserved for a standalone prominent CTA with no peer beside it.
+Two shapes in one row read as two unrelated controls, so
 loudness inside a row is carried by the fill, never by the radius.
 
 Sizes are `small | medium | large`, and the size alone decides the font (13 / 16
@@ -211,6 +228,7 @@ Two press idioms, and one rule for choosing between them:
 | The element…                           | Idiom                                              |
 | -------------------------------------- | -------------------------------------------------- |
 | has its own surface **and** layout box | `useButtonPress` — spring scale + haptic + ripple  |
+| is a full-width list row or band slot  | pressed background fill (`ListRow`)                |
 | is a run of text or a bare glyph       | `({ pressed }) => opacity: LAYOUT.OPACITY.PRESSED` |
 
 Gesture-driven animation is a Reanimated worklet (`usePressAnimation`);
@@ -222,7 +240,7 @@ still down — a tap holds contact for 60–120ms, and `SPRING_CONFIG.BUTTON` ne
 Icon-only controls, by where they live:
 
 ```typescript
-import { IconButton, HeaderIconButton, GlassIconButton, TextLink } from '@/components/ui';
+import { IconButton, CloseButton, GlassIconButton, TextLink } from '@/components/ui';
 
 <IconButton icon="trash" tone="destructive" accessibilityLabel="Delete" onPress={...} />
 <CloseButton />                                    // headerRight of every modal
@@ -247,22 +265,19 @@ Three scaffolds, and the choice is decided by how the screen is presented:
 header, and bottom padding that clears the home indicator. Do not re-derive
 `insets.bottom` per screen.
 
-## Bottom Sheet Dynamic Styles
+## Bottom Sheets
 
-Use `useBottomSheetDynamicStyles` for the sheet background, and
-`BrandedBottomSheetHandle` for the grabber:
+Wrap an app-owned sheet in `BrandedBottomSheet` (`@/components/ui`). It applies
+the themed background (`useBottomSheetDynamicStyles`), the
+`BrandedBottomSheetHandle` grabber, the backdrop, dynamic sizing and the spring
+config, and owns the visibility lifecycle:
 
 ```typescript
-import { useBottomSheetDynamicStyles } from '@/hooks/ui/useBottomSheetDynamicStyles';
-import { BrandedBottomSheetHandle } from '@/components/ui';
+import { BrandedBottomSheet } from '@/components/ui';
 
-const dynamicStyles = useBottomSheetDynamicStyles();
-
-<BottomSheet
-  backgroundStyle={dynamicStyles.bottomSheet}
-  handleComponent={BrandedBottomSheetHandle}
+<BrandedBottomSheet isVisible={isVisible} onClose={onClose}>
   ...
-/>
+</BrandedBottomSheet>
 ```
 
 Sheet titles go through `BottomSheetHeader` (`components/common`), not a

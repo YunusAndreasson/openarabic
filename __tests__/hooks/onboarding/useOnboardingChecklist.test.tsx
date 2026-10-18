@@ -7,7 +7,7 @@
  * underneath it did.
  */
 
-import { renderHook, waitFor } from '@testing-library/react-native';
+import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
 import { OnboardingStep } from '@/constants/onboarding';
@@ -87,6 +87,22 @@ describe('useOnboardingChecklist', () => {
       await waitFor(() => expect(result.current.isEligible).toBe(true));
       expect(result.current.isChecklistVisible).toBe(true);
       expect(mockCompleteTutorial).not.toHaveBeenCalled();
+    });
+
+    // The card had no way out short of finishing every step
+    it('hides the checklist for good when the learner dismisses it', async () => {
+      const { result } = renderHook(() => useOnboardingChecklist(ARTICLES));
+      await waitFor(() => expect(result.current.isChecklistVisible).toBe(true));
+
+      act(() => {
+        result.current.dismiss();
+      });
+
+      await waitFor(() => expect(result.current.isChecklistVisible).toBe(false));
+      expect(result.current.isEligible).toBe(false);
+
+      // Persisted, not just hidden for this session
+      expect((await loadOnboardingState()).dismissed).toBe(true);
     });
 
     it('suppresses an account older than the established-age threshold', async () => {

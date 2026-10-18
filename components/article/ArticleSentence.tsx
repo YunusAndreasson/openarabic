@@ -15,7 +15,6 @@ import { FONTS } from '@/constants/fonts';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
-import { withAlpha } from '@/utils/colorUtils';
 import type { RootId } from '@/types/branded.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
@@ -111,54 +110,34 @@ const ArticleSentenceInternal = function ArticleSentence({
 
   return (
     <View style={[styles.container, containerStyle]}>
-      {sentence.english && <ThemedText style={englishTextStyle}>{sentence.english}</ThemedText>}
-
-      {/* Tutorial card below summary */}
+      {/* The word-tap hint, ABOVE the first sentence pair. It used to sit
+          between the first English line and its Arabic, splitting a
+          translation from the text it translates, and as a tint-filled card
+          with bold white type it was the loudest thing on the reading surface.
+          Now an ordinary card in the body's own quiet register: the pulsing
+          marker on the first word is what points, this only explains it. */}
       {showTutorialCard && (
-        <View style={styles.tutorialContainer}>
-          {/*
-            A BaseCard with a tint fill. `style` lands after BaseCard's own
-            surface in the style array, so the tint wins without needing a
-            `surface` value for a colour only this one card uses.
-          */}
-          <BaseCard
-            style={[styles.tutorialCard, { backgroundColor: colors.tint }]}
-            contentStyle={styles.tutorialCardContent}
-          >
-            <ThemedText
-              type="body"
-              weight="bold"
-              // `onTint` is the token for content ON the tint colour. This used
-              // to use `background`, which only looked right by coincidence —
-              // in dark the two are within a shade of each other, but in light
-              // `background` is a tinted off-white rather than the white this
-              // needs.
-              style={[styles.tutorialText, { color: colors.onTint }]}
-            >
-              {STRINGS.TUTORIAL_WORD_TAP_CTA}
-            </ThemedText>
+        <BaseCard style={styles.tutorialCard} contentStyle={styles.tutorialCardContent}>
+          <ThemedText colorName="secondaryText" style={styles.tutorialText} type="body">
+            {STRINGS.TUTORIAL_WORD_TAP_CTA}
+          </ThemedText>
 
-            {onDismissTutorial && (
-              <Pressable
-                onPress={onDismissTutorial}
-                // A circular scrim of the foreground colour, so the affordance
-                // reads the same in both themes. It was a hand-built
-                // `${colors.background}20` string, which composed a near-black
-                // disc on the tint in dark mode and a near-white one in light.
-                style={[styles.closeButton, { backgroundColor: withAlpha(colors.onTint, 0.18) }]}
-                // 28px button + 8px slop was a 44px target only on the diagonal.
-                // This is the control the learner reaches for to get the banner
-                // out of the way, so it gets a real one.
-                hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-                accessibilityRole="button"
-                accessibilityLabel={STRINGS.ONBOARDING_SKIP}
-              >
-                <Icon name="close" size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={colors.onTint} />
-              </Pressable>
-            )}
-          </BaseCard>
-        </View>
+          {onDismissTutorial && (
+            <Pressable
+              onPress={onDismissTutorial}
+              // The glyph is small; the target is not. This is the control the
+              // learner reaches for to get the hint out of the way.
+              hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
+              accessibilityRole="button"
+              accessibilityLabel={STRINGS.ONBOARDING_SKIP}
+            >
+              <Icon name="close" size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={colors.textTertiary} />
+            </Pressable>
+          )}
+        </BaseCard>
       )}
+
+      {sentence.english && <ThemedText style={englishTextStyle}>{sentence.english}</ThemedText>}
 
       <SkiaSentenceWords
         words={words}
@@ -188,34 +167,19 @@ const styles = StyleSheet.create({
     paddingBottom: LAYOUT.SPACING.TINY, // Small gap before its Arabic text
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
-  tutorialContainer: {
-    // No alignment - let card fill width naturally
-  },
-  // BaseCard supplies the radius and the elevation; this is the card's margin.
+  // BaseCard supplies the radius, surface and elevation; this is the card's
+  // margin. Inset like the sentence text it sits above.
   tutorialCard: {
     marginHorizontal: LAYOUT.SPACING.MEDIUM,
-    marginTop: LAYOUT.SPACING.MEDIUM,
+    marginTop: LAYOUT.SPACING.SMALL,
   },
-  // The padded box the close button anchors against. It fills the card exactly,
-  // so `closeButton`'s absolute inset still measures from the card's own edge.
   tutorialCardContent: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: LAYOUT.SPACING.MEDIUM,
     padding: LAYOUT.SPACING.MEDIUM,
-    position: 'relative',
   },
   tutorialText: {
-    textAlign: 'center',
-    paddingRight: LAYOUT.SPACING.XLARGE, // Space for close button
-  },
-  closeButton: {
-    position: 'absolute',
-    top: LAYOUT.SPACING.SMALL,
-    right: LAYOUT.SPACING.SMALL,
-    width: LAYOUT.BUTTON.ICON_SIZE.XLARGE,
-    height: LAYOUT.BUTTON.ICON_SIZE.XLARGE,
-    // A real circle. At radius 16 on a 28px box the corners were flattened
-    // just enough to read as a rounded square that could not decide.
-    borderRadius: LAYOUT.BUTTON.ICON_SIZE.XLARGE / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
+    flex: 1,
   },
 });

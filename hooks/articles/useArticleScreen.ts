@@ -23,7 +23,6 @@ import type { Tables } from '@/types/database.types';
 import { ToastType } from '@/types/enums';
 import { stopNonPlaylistAudioSafely } from '@/utils/audioUtils';
 import { handleError } from '@/utils/errorHandling';
-import { selectionFeedback } from '@/utils/haptics';
 import { markOnboardingStep } from '@/utils/onboardingStorage';
 
 export interface UseArticleScreenOptions {
@@ -61,6 +60,8 @@ export function useArticleScreen({
   const {
     article,
     isLoadingArticle,
+    isArticleError,
+    refetchArticle,
     sortedSentences,
     sentenceWordsMap,
     selectedWordIds,
@@ -123,10 +124,10 @@ export function useArticleScreen({
     [closeTooltipOnScroll],
   );
 
-  // Handlers with feedback
+  // Handlers with feedback. No haptic here: the GlassIconButton that calls this
+  // fires the press's own selection tick, and one decision gets one haptic.
   const handleToggleReadingListWithFeedback = useCallback(async () => {
     if (!articleId) return;
-    selectionFeedback();
     const succeeded = await handleToggleReadingList(articleId, isInReadingList);
     if (!succeeded) return;
     showToast(
@@ -345,6 +346,10 @@ export function useArticleScreen({
 
   return {
     isLoadingArticle,
+    // A request that failed for an article that may well exist — retryable.
+    // One the catalogue does not list stays `!article`, i.e. "not found".
+    isArticleError,
+    refetchArticle,
     // A malformed or missing `id` route param (articleId undefined) is a
     // broken link, never a real article — distinct from a well-formed id
     // that simply doesn't resolve to a row. Lets the screen tell the two

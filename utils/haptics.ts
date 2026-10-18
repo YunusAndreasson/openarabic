@@ -38,18 +38,17 @@ import { store } from '@/store/store';
  *                                                live, which is the app saying
  *                                                "go" rather than "heard you".
  *   tier 2  outcome, firm    commitFeedback      a decision now fact — a card
- *                                                recalled cleanly.
- *   tier 3  outcome, adverse errorFeedback       scored against the user — a
- *                                                miss.
+ *                                                recalled cleanly, or a
+ *                                                "Forgot" the learner reported
+ *                                                honestly; the ring carries
+ *                                                which, not the buzz.
+ *   tier 3  outcome, adverse errorFeedback       scored against the user by the
+ *                                                app — a voice answer the
+ *                                                recognizer judged a miss.
  *   —       app's fault      warningFeedback     not the user's outcome at all:
  *                                                dead mic, silent prompt.
  *   —       session scale    successFeedback     rare by construction. One per
  *                                                completed session.
- *   —       session echo     selectionFeedback   the practice constellation
- *                            then commitFeedback replaying a session: a tick per
- *                                                dot landing, bounded by time
- *                                                and not by words, closed by one
- *                                                commit. See `planTravelHaptics`.
  *
  * Adding a haptic to a control? Start at tier 0 and only climb if you can say
  * what outcome it reports.

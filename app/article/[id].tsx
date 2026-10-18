@@ -10,18 +10,19 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
   ArticleSentence,
+  ReaderCloseButton,
   WordDetailsBottomSheet,
   WordTooltip,
   ArticleContent,
 } from '@/components/article';
 import { AudioErrorBoundary, GlobalMiniPlayer } from '@/components/audio';
-import { ComponentErrorBoundary, EmptyState, LoadingState } from '@/components/common';
+import { ComponentErrorBoundary, EmptyState, ErrorState, LoadingState } from '@/components/common';
 import { ToastProvider, useTutorialContext, useToast } from '@/components/providers';
 import { STRINGS } from '@/constants/strings';
 import { TutorialId } from '@/constants/tutorials';
 import { useArticleListen } from '@/hooks/articles/useArticleListen';
 import { useArticleScreen } from '@/hooks/articles/useArticleScreen';
-import { useKeepScreenAwake } from '@/hooks/common/useKeepScreenAwake';
+import { useReaderKeepAwake } from '@/hooks/articles/useReaderKeepAwake';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Tables } from '@/types/database.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
@@ -52,6 +53,8 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   // Extract all business logic into hook
   const {
     isLoadingArticle,
+    isArticleError,
+    refetchArticle,
     hasValidArticleId,
     article,
     sortedSentences,
@@ -84,6 +87,12 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     // Hand over the already-loaded article so tapping Listen doesn't refetch it
     article,
   );
+
+  // The display stays on while this article plays, or for a reading window
+  // after the last touch — not for as long as the reader happens to be open.
+  // Held from here rather than the route so it can see playback; the window
+  // opens on mount, so the loading state is covered too.
+  const markReaderActivity = useReaderKeepAwake(isListeningToThisArticle);
 
   // Tutorial management
   const { shouldShowTutorial, completeTutorial } = useTutorialContext();
@@ -247,15 +256,34 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     },
   });
 
-  // Show loader while article is loading
+  // The reader is a full-screen modal with its swipe-down exit turned off, so a
+  // state without the close button had no way out on iOS: a slow fetch with
+  // retries held the learner on a spinner until it gave up.
   if (isLoadingArticle) {
-    return <LoadingState />;
+    return (
+      <View style={FLEX_ONE_STYLE}>
+        <LoadingState />
+        <ReaderCloseButton onClose={() => void handleClose()} />
+      </View>
+    );
+  }
+
+  // A request that failed for an article that may well exist. It used to land
+  // on "Article not found ... It may have been removed", which told someone on
+  // a dropped connection that the text was gone, and offered no retry.
+  if (!article && isArticleError) {
+    return (
+      <View style={FLEX_ONE_STYLE}>
+        <ErrorState message={STRINGS.FAILED_TO_LOAD_ARTICLE} onRetry={refetchArticle} />
+        <ReaderCloseButton onClose={() => void handleClose()} />
+      </View>
+    );
   }
 
   // A malformed/missing id never resolves to an article, and a well-formed id
-  // can point at nothing (deleted, or never existed) — either way `article`
-  // stays undefined once loading settles. Screen has no header, so this is the
-  // only in-app way out other than the Android back gesture.
+  // can point at nothing the catalogue lists (deleted, or never existed) —
+  // either way `article` stays undefined once loading settles. Its own "Go
+  // back" action is the way out.
   if (!article) {
     return (
       <EmptyState
@@ -271,7 +299,10 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   }
 
   return (
-    <View style={FLEX_ONE_STYLE}>
+    // Any touch — a scroll, a word, a button, the word card — reopens the
+    // keep-awake reading window. `onTouchStart` sees touches that a native
+    // gesture goes on to claim, which a press handler would not.
+    <View style={FLEX_ONE_STYLE} onTouchStart={markReaderActivity}>
       {/* scrollViewRef is forwarded to ArticleContent (which attaches it imperatively); lint sees it as ref-read-in-render. */}
       {/* Dismiss the tooltip on any tap that doesn't land on a word or the
           tooltip bubble itself — without this, WordTooltip's box-none overlay
@@ -317,22 +348,9 @@ export default function ArticleScreen(): JSX.Element {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
 
-  // Held for the whole route, the loading state included — a reader waiting on
-  // a slow fetch is still a reader.
-  //
-  // Unconditional, unlike the review route, and the one state worth arguing
-  // about is audio playback: the article does NOT follow the audio (the
-  // highlight is driven by the tooltip and the only auto-scroll is the
-  // resume-position jump), so a learner who starts playback and puts the phone
-  // down holds the display for the whole clip. Gating on
-  // `isListeningToThisArticle` would fix that and break the commoner case —
-  // listening WHILE following the Arabic on screen, which is most of why the
-  // audio exists. Dimming the page out from under a learner reading along is
-  // the exact complaint this change was made to fix, so the battery cost is
-  // taken deliberately. Leaving the reader unmounts it and releases the lock;
-  // the MiniPlayer keeps the audio going without one.
-  useKeepScreenAwake();
-
+  // The wake lock lives in ArticleScreenContent (`useReaderKeepAwake`), which
+  // can see playback. Leaving the reader unmounts it and releases the lock; the
+  // MiniPlayer keeps the audio going without one.
   const containerStyle = [FLEX_ONE_STYLE, { backgroundColor: colors.background }];
 
   return (

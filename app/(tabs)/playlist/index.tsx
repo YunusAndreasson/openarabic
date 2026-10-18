@@ -15,6 +15,7 @@ import { TIMING_CONFIG, fadeInStyle } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useMiniPlayerClearance } from '@/hooks/audio/useMiniPlayerClearance';
+import { useNowPlayingArticleId } from '@/hooks/audio/useNowPlayingArticleId';
 import { usePlaylistScreen, usePlaylistUI } from '@/hooks/playlist';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import { useTabBarAutoHide } from '@/hooks/ui/useTabBarAutoHide';
@@ -56,6 +57,7 @@ const PlaylistListItem = memo(
     onArticlePress,
     drag,
     _isBeingDragged,
+    isNowPlaying,
   }: {
     item: BookmarkItem;
     editMode: boolean;
@@ -63,6 +65,7 @@ const PlaylistListItem = memo(
     onArticlePress: (articleId: ArticleId, title: string) => void;
     drag?: () => void;
     _isBeingDragged?: boolean;
+    isNowPlaying: boolean;
   }) => {
     // Memoize event handlers to prevent inline function creation
     const handleDelete = useCallback(() => {
@@ -104,6 +107,7 @@ const PlaylistListItem = memo(
             imageUrl={generateStorageUrl('images', item.articles.image_url)}
             articleId={item.article_id}
             dragHandleProps={dragHandleProps}
+            isNowPlaying={isNowPlaying}
           />
         </Animated.View>
       </Animated.View>
@@ -113,6 +117,7 @@ const PlaylistListItem = memo(
     // Optimized comparison: only check props that actually change
     if (prevProps.editMode !== nextProps.editMode) return false;
     if (prevProps._isBeingDragged !== nextProps._isBeingDragged) return false;
+    if (prevProps.isNowPlaying !== nextProps.isNowPlaying) return false;
     // The handlers too. They are memoized upstream, so they only change when
     // what a tap does changes — the tracks or the audio language. Skipping
     // them kept each row on the closure it mounted with: after switching the
@@ -131,6 +136,9 @@ export default function PlaylistScreen(): JSX.Element {
   const { onScrollOffset } = tabBarAutoHide;
   const { editMode, reset } = useEditMode('playlist');
   const { showToast } = useToast();
+  // A row tap plays that article, so the row of the article the player is on
+  // says so — otherwise nothing in the list tells you which one you hear.
+  const nowPlayingArticleId = useNowPlayingArticleId();
 
   useEffect(() => {
     // Switching list implementations mounts at the top, which may not emit
@@ -225,10 +233,11 @@ export default function PlaylistScreen(): JSX.Element {
           onArticlePress={handleArticlePress}
           drag={drag}
           _isBeingDragged={isDragging}
+          isNowPlaying={item.article_id === nowPlayingArticleId}
         />
       );
     },
-    [editMode, handleDeletePress, handleArticlePress],
+    [editMode, handleDeletePress, handleArticlePress, nowPlayingArticleId],
   );
 
   // keyExtractor is a module-level constant, already stable.
@@ -271,6 +280,8 @@ export default function PlaylistScreen(): JSX.Element {
       onScrollOffsetChange={tabBarAutoHide.onScrollOffset}
       onContainerLayout={({ layout }) => tabBarAutoHide.onViewportHeightChange(layout.height)}
       data={sortedReadingList}
+      // The now-playing row is not in `data`; this is what re-renders it.
+      extraData={nowPlayingArticleId}
       keyExtractor={memoizedKeyExtractor}
       renderItem={renderItem}
       onDragEnd={handleDragEnd}
@@ -299,6 +310,8 @@ export default function PlaylistScreen(): JSX.Element {
       // stayed hidden after the user had already scrolled back up.
       {...tabBarAutoHide}
       data={sortedReadingList}
+      // The now-playing row is not in `data`; this is what re-renders it.
+      extraData={nowPlayingArticleId}
       drawDistance={ITEM_HEIGHT * 3}
       keyExtractor={memoizedKeyExtractor}
       // iOS best practice: Allow natural bounce behavior for tactile feedback

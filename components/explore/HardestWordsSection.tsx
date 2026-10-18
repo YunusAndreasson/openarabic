@@ -35,8 +35,8 @@ const HARDEST_RAIL_LIMIT = 10;
  * are shown. That hook filters the shared FSRS cache client-side, so this
  * section costs no network round-trip of its own.
  *
- * **Self-contained, like `HorizontalFeaturedSection`** — no props, its own
- * hooks. The Explore screen memoises its header sections against article data,
+ * **Self-contained** — no props, its own hooks, and outside `useExploreRails`,
+ * which only places texts. The Explore screen memoises its header sections against article data,
  * which this has nothing to do with; owning the query here means a cache write
  * re-renders the rail without the screen having to know why.
  *

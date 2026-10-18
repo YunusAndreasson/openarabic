@@ -11,7 +11,7 @@
 jest.unmock('@tanstack/react-query');
 
 import type { QueryClient } from '@tanstack/react-query';
-import { renderHook, waitFor } from '@testing-library/react-native';
+import { act, renderHook, waitFor } from '@testing-library/react-native';
 
 import { createTestQueryClient } from '@/__tests__/helpers/testUtils';
 import { createTestWord } from '@/__tests__/helpers/fsrsTestHelpers';
@@ -271,5 +271,49 @@ describe('useArticleData', () => {
     // Verify retry configuration (articleQueryOptions.detail has retry: 2)
     // This means 3 total attempts: 1 initial + 2 retries
     expect(mockArticlesService.getArticleById).toHaveBeenCalledTimes(3);
+
+    // No catalogue cached, so the failure cannot be told apart from a removed
+    // article — it is offered as retryable, not announced as "not found".
+    expect(result.current.isArticleError).toBe(true);
+    expect(result.current.isArticleMissing).toBe(false);
+  });
+
+  test('reports an article the published catalogue does not list as missing, not as a failure', async () => {
+    mockArticlesService.getArticleById.mockRejectedValue(new Error('Article not found: 99'));
+    mockBookmarkService.isInReadingList.mockResolvedValue(false);
+    mockStudyWordsFSRSService.getFSRSWords.mockResolvedValue([]);
+    // The catalogue lists article 1 only. Kept past the test client's gcTime 0,
+    // since nothing observes it here.
+    queryClient.setQueryDefaults(['articles'], { gcTime: Infinity });
+    queryClient.setQueryData(['articles'], [{ id: articleId(1) }]);
+
+    const { result } = renderHook(() => useArticleData(articleId(99), 'u1'), { wrapper });
+
+    await waitFor(() => expect(result.current.isLoadingArticle).toBe(false), { timeout: 5000 });
+
+    expect(result.current.isArticleMissing).toBe(true);
+    expect(result.current.isArticleError).toBe(false);
+  });
+
+  test('treats a failed fetch of a listed article as retryable, and a retry as loading', async () => {
+    mockArticlesService.getArticleById.mockRejectedValue(new Error('Network request failed'));
+    mockBookmarkService.isInReadingList.mockResolvedValue(false);
+    mockStudyWordsFSRSService.getFSRSWords.mockResolvedValue([]);
+    queryClient.setQueryDefaults(['articles'], { gcTime: Infinity });
+    queryClient.setQueryData(['articles'], [{ id: articleId(1) }]);
+
+    const { result } = renderHook(() => useArticleData(articleId(1), 'u1'), { wrapper });
+
+    await waitFor(() => expect(result.current.isArticleError).toBe(true), { timeout: 5000 });
+    expect(result.current.isArticleMissing).toBe(false);
+
+    // The retry is in flight: loading again, not still an error
+    mockArticlesService.getArticleById.mockReturnValue(new Promise(() => undefined));
+    act(() => {
+      result.current.refetchArticle();
+    });
+
+    await waitFor(() => expect(result.current.isLoadingArticle).toBe(true));
+    expect(result.current.isArticleError).toBe(false);
   });
 });

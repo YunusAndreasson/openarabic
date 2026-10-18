@@ -37,11 +37,8 @@ interface WordMemoryCurveProps {
  * value; this states the *model* — why the word is due when it is due — which is
  * the one thing an adjective can never do.
  *
- * Deliberately not built on the shared `VocabularyChart` stack: those components
- * all take `studyWords: StudyWord[]` and are aggregate, week-bucketed charts with
- * a card shell, axes and tooltips. This is one continuous function over a domain
- * measured in a single word's days, so it draws itself, following
- * MemoryRetentionGauge's precedent — build the paths once, hand them to Skia.
+ * One continuous function over a domain measured in a single word's days, so
+ * it draws itself — build the paths once, hand them to Skia.
  */
 export const WordMemoryCurve = memo<WordMemoryCurveProps>(
   ({ curve, accessibilityLabel, width }) => {
@@ -74,15 +71,12 @@ export const WordMemoryCurve = memo<WordMemoryCurveProps>(
         if (index === 0) builder.moveTo(x, y);
         else builder.lineTo(x, y);
       });
-      // `build()` snapshots without resetting, so the builder can keep growing.
       const line = builder.build();
 
-      // Same outline closed down to the baseline for the wash beneath it.
-      const area = builder
-        .lineTo(toX(spanDays), PLOT_HEIGHT)
-        .lineTo(0, PLOT_HEIGHT)
-        .close()
-        .build();
+      // No wash under the line. A filled area reads as a quantity measured up
+      // from zero, and this axis does not start at zero — it is fitted to the
+      // word's own decay, roughly 100% down to the mid-80s — so the fill made a
+      // ten-point fall look like most of the word draining away.
 
       const at = (days: number): { x: number; y: number } => {
         const clamped = Math.min(spanDays, Math.max(0, days));
@@ -95,7 +89,6 @@ export const WordMemoryCurve = memo<WordMemoryCurveProps>(
 
       return {
         line,
-        area,
         targetY: toY(curve.targetRetrievability),
         now: at(curve.nowDays),
         due: curve.dueDays == null ? null : at(curve.dueDays),
@@ -110,8 +103,6 @@ export const WordMemoryCurve = memo<WordMemoryCurveProps>(
         style={styles.container}
       >
         <Canvas style={{ width: plotWidth, height: PLOT_HEIGHT }}>
-          <Path color={chartColors.areaWash} path={geometry.area} style="fill" />
-
           {/* The scheduler's target recall. Dashed so it reads as a rule rather
               than as a second series. */}
           <Line

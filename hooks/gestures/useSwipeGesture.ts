@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 import { useWindowDimensions } from 'react-native';
 import type { SharedValue } from 'react-native-reanimated';
-import { cancelAnimation, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
+import { cancelAnimation, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 
-import { CARD_EXIT_DRAW_BACK_RATIO, TIMING_CONFIG } from '@/constants/animation';
+import { TIMING_CONFIG } from '@/constants/animation';
 
 export interface SwipeGestureResult {
   translateX: SharedValue<number>;
@@ -14,20 +14,19 @@ export interface SwipeGestureResult {
    */
   isAnimatingRef: SharedValue<boolean>;
   /**
-   * How far the card is drawn out before it throws, in points. Exposed because
-   * the colour wash is driven by the SAME number, so the tint reaches full
-   * strength exactly where the throw begins.
-   */
-  swipeThreshold: number;
-  /**
    * Play a graded card's exit.
    *
-   * `holdMs` decides how the card reaches the draw-back point. At 0 it is
-   * placed there instantly, which is invisible because the throw starts on the
-   * same frame. Above 0 it GLIDES there over that time instead: the beat exists
-   * so a grade has something to watch, and a card that teleports a fifth of the
-   * way across the screen and then sits still reads as a glitch rather than a
-   * decision.
+   * `holdMs` keeps the card exactly where it is for that long before the throw
+   * starts — the verdict beat, so a grade is read on a card that is standing
+   * still rather than one already sliding away. The delay lives inside the
+   * animation (`withDelay`), not in a timer, so the throw and the advance fade
+   * (which waits out the same beat) share one clock.
+   *
+   * Both exits throw from wherever the card is resting. They used to start from
+   * a draw-back point a fifth of the screen out — reached by a glide during the
+   * beat, or placed there instantly without one — because a colour wash was
+   * scaled to that distance. The wash is gone, and with it the reason for
+   * either.
    *
    * Ignored while a committed card is already flying off.
    *
@@ -48,9 +47,9 @@ export interface SwipeGestureResult {
  * that drift apart under load.
  *
  * NAME: this hook used to own a pan-to-commit swipe as well, which is where the
- * file and its `swipeThreshold` got their names. The gesture is gone — only the
- * exit it shared with the tap path remains. The names are stale and a rename to
- * `useCardExit` is a mechanical follow-up whenever it is wanted.
+ * file got its name. The gesture is gone — only the exit it shared with the tap
+ * path remains. A rename to `useCardExit` is a mechanical follow-up whenever it
+ * is wanted.
  */
 export const useSwipeGesture = (): SwipeGestureResult => {
   const translateX = useSharedValue(0);
@@ -59,7 +58,6 @@ export const useSwipeGesture = (): SwipeGestureResult => {
   // The live window, not the launch width: on an Android 16 tablet or unfolded
   // foldable a launch-time width would stop the throw short of the edge.
   const { width: windowWidth } = useWindowDimensions();
-  const swipeThreshold = windowWidth * CARD_EXIT_DRAW_BACK_RATIO;
 
   const commitTo = useCallback(
     (direction: 'left' | 'right', holdMs = 0) => {
@@ -90,38 +88,22 @@ export const useSwipeGesture = (): SwipeGestureResult => {
         // there is no animation left to cancel, so the assignment is inert.
         //
         // Recentring here rather than leaving the card parked off screen is what
-        // stops a frame of the outgoing position (and its full-strength wash)
-        // showing as the next card fades in. It lands under an opacity of ~0, so
-        // it is never seen.
+        // stops a frame of the outgoing position showing as the next card fades
+        // in. It lands under an opacity of ~0, so it is never seen.
         if (finished) {
           translateX.set(0);
         }
         isAnimatingRef.set(false);
       });
 
-      if (holdMs <= 0) {
-        translateX.set(sign * swipeThreshold);
-        translateX.set(throwOut);
-        return;
-      }
-
-      translateX.set(
-        withSequence(
-          withTiming(sign * swipeThreshold, {
-            duration: holdMs,
-            easing: TIMING_CONFIG.MEDIUM.easing,
-          }),
-          throwOut,
-        ),
-      );
+      translateX.set(holdMs > 0 ? withDelay(holdMs, throwOut) : throwOut);
     },
-    [isAnimatingRef, translateX, swipeThreshold, windowWidth],
+    [isAnimatingRef, translateX, windowWidth],
   );
 
   return {
     translateX,
     isAnimatingRef,
-    swipeThreshold,
     commitTo,
   };
 };

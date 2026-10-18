@@ -18,7 +18,6 @@ import {
   getAuthorDisplayName,
   getCategoryDisplayName,
   getCategorySubtitle,
-  getFirstNameFromEmail,
 } from '../../utils/stringUtils';
 
 describe('stringUtils', () => {
@@ -64,47 +63,6 @@ describe('stringUtils', () => {
     test('should handle null/undefined values', () => {
       expect(capitalizeFirstLetter(null as any)).toBe('');
       expect(capitalizeFirstLetter(undefined as any)).toBe('');
-    });
-  });
-
-  describe('getFirstNameFromEmail', () => {
-    test('should extract first name from simple email', () => {
-      expect(getFirstNameFromEmail('john@example.com')).toBe('John');
-      expect(getFirstNameFromEmail('mary@example.com')).toBe('Mary');
-    });
-
-    test('should handle emails with dots', () => {
-      expect(getFirstNameFromEmail('john.doe@example.com')).toBe('John');
-      expect(getFirstNameFromEmail('mary.jane@example.com')).toBe('Mary');
-    });
-
-    test('should handle emails with underscores', () => {
-      expect(getFirstNameFromEmail('john_doe@example.com')).toBe('John');
-      expect(getFirstNameFromEmail('mary_jane@example.com')).toBe('Mary');
-    });
-
-    test('should handle emails with hyphens', () => {
-      expect(getFirstNameFromEmail('john-doe@example.com')).toBe('John');
-      expect(getFirstNameFromEmail('mary-jane@example.com')).toBe('Mary');
-    });
-
-    test('should handle emails with multiple separators', () => {
-      expect(getFirstNameFromEmail('john.doe_smith@example.com')).toBe('John');
-    });
-
-    test('should return User for invalid emails', () => {
-      expect(getFirstNameFromEmail('')).toBe('User');
-      expect(getFirstNameFromEmail('@example.com')).toBe('User');
-      expect(getFirstNameFromEmail(null as any)).toBe('User');
-      expect(getFirstNameFromEmail(undefined as any)).toBe('User');
-    });
-
-    test('should extract from non-standard formats', () => {
-      expect(getFirstNameFromEmail('example.com')).toBe('Example'); // No @, treats as localPart
-    });
-
-    test('should handle emails with numbers', () => {
-      expect(getFirstNameFromEmail('john123@example.com')).toBe('John123');
     });
   });
 

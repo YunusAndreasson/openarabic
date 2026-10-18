@@ -1,4 +1,5 @@
 import { memo, useCallback, useMemo } from 'react';
+import { Alert } from 'react-native';
 import { router } from 'expo-router';
 
 import { SettingsCard, SettingsSection } from '@/components/account';
@@ -7,7 +8,9 @@ import { DAILY_WORD_LIMIT_UNLIMITED } from '@/constants/dailyWordLimitOptions';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useDailyWordLimitSummary } from '@/hooks/account';
+import { useColors } from '@/hooks/theme/useColors';
 import { useVoiceModel } from '@/hooks/voice/useVoiceModel';
+import { deleteVoiceModel } from '@/services/voiceModelStore';
 import { voiceReadiness } from '@/utils/voiceReadiness';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import {
@@ -35,10 +38,13 @@ interface PracticeSectionProps {
  * Practice settings — the pace of new words, how answers are graded, and when
  * to be nudged.
  *
- * Two rows are conditional, and both sit at the tail of the pair they belong
- * to, so switching one on appends a row rather than displacing everything
- * beneath it. "Voice grading" in particular used to live in its own section
- * five groups further down, nowhere near the toggle that makes it relevant.
+ * The conditional rows sit at the tail of the group they belong to, so
+ * switching one on appends a row rather than displacing everything beneath it:
+ * hands-free and "Remove voice model" after the voice toggle (the second only
+ * while the model is on disk; Advanced only in development builds), reminder
+ * time after the reminder toggle. The voice rows used to live in their own
+ * section five groups further down, nowhere near the toggle that makes them
+ * relevant.
  */
 export const PracticeSection = memo<PracticeSectionProps>(
   ({
@@ -49,6 +55,7 @@ export const PracticeSection = memo<PracticeSectionProps>(
     formatReminderTime,
   }) => {
     const dispatch = useAppDispatch();
+    const colors = useColors();
     const voice = useVoiceGrading();
     const model = useVoiceModel();
 
@@ -137,6 +144,31 @@ export const PracticeSection = memo<PracticeSectionProps>(
       router.push(ROUTE_PATHS.ACCOUNT_ADVANCED);
     }, []);
 
+    // Nothing else in the app reclaims the ~100 MB, and with voice on by default
+    // that would otherwise be permanent for every learner.
+    //
+    // Removing also turns voice OFF, and that is the whole reason it works: the
+    // prefetch is gated on `voiceEnabled`, so leaving it on would download the
+    // model again within seconds and reclaim nothing. Turning "Speak the
+    // answer" back on fetches it again.
+    const handleRemoveModel = () => {
+      Alert.alert(
+        STRINGS.ADVANCED_MODEL_REMOVE_CONFIRM_TITLE,
+        STRINGS.ADVANCED_MODEL_REMOVE_CONFIRM_BODY,
+        [
+          { text: STRINGS.CANCEL, style: 'cancel' },
+          {
+            text: STRINGS.ADVANCED_MODEL_REMOVE,
+            style: 'destructive',
+            onPress: () => {
+              dispatch(setVoiceEnabled(false));
+              void deleteVoiceModel();
+            },
+          },
+        ],
+      );
+    };
+
     return (
       <SettingsSection
         title={STRINGS.PRACTICE_SECTION}
@@ -176,13 +208,27 @@ export const PracticeSection = memo<PracticeSectionProps>(
             onToggleChange={handleHandsFreeToggle}
           />
         )}
-        {voiceEnabled && (
+        {/* Development builds only: the recording knobs behind it are for
+            testing capture on a device, and production reads their shipped
+            values whatever is stored. */}
+        {__DEV__ && voiceEnabled && (
           <SettingsCard
             icon="construct"
             label={STRINGS.ADVANCED_VOICE_GRADING}
             subtitle={STRINGS.ADVANCED_VOICE_GRADING_SUBTITLE}
             rightType="chevron"
             onPress={handleAdvancedPress}
+          />
+        )}
+        {/* The one voice control a learner needs beyond the toggle: getting the
+            ~100 MB back. Only while the model is actually on disk. */}
+        {model.state === 'ready' && (
+          <SettingsCard
+            icon="trash"
+            label={STRINGS.ADVANCED_MODEL_REMOVE}
+            iconColor={colors.error}
+            textColor="error"
+            onPress={handleRemoveModel}
           />
         )}
         <SettingsCard

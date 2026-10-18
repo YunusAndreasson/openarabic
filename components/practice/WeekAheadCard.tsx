@@ -15,7 +15,7 @@ import { formatWordCount } from '@/utils/wordCountText';
 import { WeekAheadBars } from './charts/WeekAheadBars';
 
 interface WeekAheadCardProps {
-  /** Seven days of due counts, today first. */
+  /** Seven days of forecast, today first. The bars draw each day's `newlyDue`. */
   forecast: DueWordsForecast[];
   /** The due count the tab badge shows and the Review action works through. */
   dueCount: number;
@@ -25,7 +25,7 @@ interface WeekAheadCardProps {
 }
 
 /**
- * What is due today, with the shape of the week beside it. The practice
+ * What is due now, with the shape of the week beside it. The practice
  * screen's lead card.
  *
  * It leads because the tab badge points here. The badge puts a number on the
@@ -36,8 +36,8 @@ interface WeekAheadCardProps {
  * action, labelled, and the largest numeral on the screen: the recall card below
  * uses the same label-over-numeral grammar one size down.
  *
- * The detail is still one tap away: which day peaks and how many words slip are
- * drawn properly in the /due-words sheet this opens.
+ * The detail is still one tap away: each day's count and how many words slip
+ * are drawn properly in the /due-words sheet this opens.
  */
 export function WeekAheadCard({
   forecast,
@@ -47,7 +47,10 @@ export function WeekAheadCard({
 }: WeekAheadCardProps): JSX.Element {
   const colors = useColors();
 
-  const counts = forecast.map(day => day.dueWords);
+  // Per day, not the running total: the first column is everything due now and
+  // every later one only what that day adds. `newlyDue[0]` IS the backlog, so
+  // the solid column is still the number beside it.
+  const counts = forecast.map(day => day.newlyDue);
 
   // The same spelling the tab badge uses. The bars come from the uncapped
   // forecast over the full word list while this number comes from the clipped
@@ -66,8 +69,11 @@ export function WeekAheadCard({
       ? (reviewedLine ?? STRINGS.TODAY_NOTHING_REVIEWED)
       : [STRINGS.TODAY_ALL_CAUGHT_UP, reviewedLine].filter(Boolean).join(' · ');
 
-  const peak = counts.reduce((max, count) => Math.max(max, count), 0);
-  const accessibilityLabel = STRINGS.WEEK_AHEAD_A11Y.replace('{today}', displayCount).replace(
+  // The most any LATER day adds — off the same series the bars draw, so the
+  // sentence describes the drawing. Today's column is the due count already
+  // said in the same sentence.
+  const peak = counts.slice(1).reduce((max, count) => Math.max(max, count), 0);
+  const accessibilityLabel = STRINGS.WEEK_AHEAD_A11Y.replace('{now}', displayCount).replace(
     '{peak}',
     String(peak),
   );
@@ -76,7 +82,7 @@ export function WeekAheadCard({
     <BaseCard onPress={onPress} accessibilityLabel={accessibilityLabel}>
       <View style={styles.body}>
         <ThemedText type="caption" colorName="subtleLabelText">
-          {STRINGS.DUE_TODAY_LABEL}
+          {STRINGS.DUE_NOW_LABEL}
         </ThemedText>
 
         <View style={styles.valueRow}>

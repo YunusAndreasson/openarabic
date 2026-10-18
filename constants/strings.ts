@@ -146,7 +146,6 @@ export const STRINGS = {
   // Solo button in its row, filled/primary like "Show answer" alone — "Tap to"
   // was naming the gesture every button already asks for.
   RESTUDY_CONTINUE: 'Continue',
-  RECALL_RUN: (count: number) => `${count} in a row`,
   // Says out loud what the bar can only draw: how far into this sitting you are,
   // and how many words the whole session has actually put behind you.
   SESSION_PROGRESS_A11Y: (percent: number, done: number) =>
@@ -193,10 +192,10 @@ export const STRINGS = {
   DAILY_LIMIT_HIGH_SUBTITLE: 'More reviews to keep up with',
   DAILY_LIMIT_UNLIMITED: 'Unlimited',
   DAILY_LIMIT_UNLIMITED_SUBTITLE: 'Reviews can pile up quickly',
-  DAILY_LIMIT_REACHED: 'Daily limit reached. You can increase it in Account settings.',
+  DAILY_LIMIT_REACHED: 'Daily limit reached. You can increase it in Settings.',
   /** Same message when a finite limit is set, so the number can be named. */
   DAILY_LIMIT_REACHED_COUNT:
-    'Daily limit of {count} words reached. You can increase it in Account settings.',
+    'Daily limit of {count} words reached. You can increase it in Settings.',
   /** Summary value on the Daily-word-limit row for a finite limit. */
   DAILY_LIMIT_WORDS_COUNT: '{count} words',
   DAILY_LIMIT_PAUSED_LOW_RECALL:
@@ -211,7 +210,6 @@ export const STRINGS = {
   WORD_TAP_PREVIEW: 'Word preview',
   WORD_TAP_PREVIEW_SUBTITLE: 'Show a popup instead of the full word card',
   RESET_TUTORIALS: 'Show tutorials again',
-  RESET_TUTORIALS_SUBTITLE: 'Resets the intro tips and checklist',
   RESET_TUTORIALS_TITLE: 'Reset tutorials?',
   RESET_TUTORIALS_MESSAGE: 'Tips will show again as you use the app.',
   RESET_TUTORIALS_FAILED: 'Failed to reset tutorials',
@@ -260,7 +258,8 @@ export const STRINGS = {
   FEEDBACK_SUBMIT: 'Send feedback',
   // Account section titles - now imported directly from enums in components
   ACCOUNT: 'Account',
-  ACCOUNT_A11Y_CHANGE_PHOTO: 'Change profile photo',
+  /** The account row in Settings, and the caption above the address on Delete account. */
+  SIGNED_IN_AS: 'Signed in as',
   PLAYLIST_A11Y_REORDER: 'Reorder track',
   PLAYLIST_A11Y_REORDER_ARTICLE: 'Reorder {title}',
   PLAYLIST_A11Y_REMOVE_ARTICLE: 'Remove {title} from playlist',
@@ -281,10 +280,6 @@ export const STRINGS = {
   APP_SECTION: 'App',
   HELP_SECTION: 'Help',
   ABOUT_SECTION: 'About',
-  // "Start fresh with all articles" read like a feature. It deletes every
-  // reading position, so it says so.
-  RESET_READING_PROGRESS_DESCRIPTION: "Clears every article's reading position",
-  DELETE_ACCOUNT_DESCRIPTION: 'Permanently remove your account and data',
   // Social Media
   FOLLOW_US: 'Follow OpenArabic',
   TWITTER: 'X',
@@ -300,6 +295,7 @@ export const STRINGS = {
   MAKER_PROJECTS_URL: 'https://andreassonphoto.com/projects',
   // App Store Review
   RATE_APP: 'Rate OpenArabic',
+  PLAY_STORE_LISTING_URL: 'https://play.google.com/store/apps/details?id={package}',
   // Theme names
   THEME_BIRCHES: 'Birches in Spring',
   THEME_MIDNIGHT: 'Midnight Summer',
@@ -307,14 +303,21 @@ export const STRINGS = {
   SOMETHING_WENT_WRONG: 'Something went wrong',
   PLEASE_TRY_AGAIN: tryAgain,
   LOADING_ARTICLES: 'Loading articles…',
-  LOADING_AUDIO_ELLIPSIS: 'Loading session…',
   LOADING_GENERIC: 'Loading…',
-  AUDIO_READY: 'Audio ready',
   PREPARING_PRACTICE_SESSION: 'Preparing session…',
   REVIEW_GRADE_FAILED: "Couldn't save that review. Please try again.",
+  // Mini player. The primary control pauses and resumes in place; Stop (shown
+  // while paused) is "Stop listening", the same words the reader uses.
+  MINI_PLAYER_PAUSE_A11Y: 'Pause',
+  MINI_PLAYER_RESUME_A11Y: 'Resume',
+  /** A hint, not a label: the title is what is announced, this says what a tap does. */
+  MINI_PLAYER_OPEN_ARTICLE_HINT: 'Opens the article',
+  AUDIO_PAUSE_FAILED: "Couldn't pause audio. " + tryAgain,
+  AUDIO_RESUME_FAILED: "Couldn't resume audio. " + tryAgain,
   // Timer controls
   SLEEP_TIMER: 'Sleep timer',
   SET_TIMER: 'Set timer',
+  SLEEP_TIMER_MINUTES: '{minutes} min',
   // Welcome & onboarding
   WELCOME_TITLE: 'OpenArabic',
   SIGN_UP_WELCOME: 'Welcome to OpenArabic. Your account is ready.',
@@ -355,6 +358,8 @@ export const STRINGS = {
   CHECKLIST_SAVE: 'Save a word to practice',
   CHECKLIST_LISTEN: 'Listen to bilingual audio',
   CHECKLIST_PRACTICE: 'Practice your first word',
+  /** Names the checklist's close glyph; hiding it is permanent until tutorials are reset. */
+  CHECKLIST_DISMISS_A11Y: 'Hide the Get started checklist',
   // Sign In screen
   SIGN_IN_TITLE: 'Sign in',
   SIGN_IN_SUBTITLE: 'Welcome back',
@@ -470,38 +475,25 @@ export const STRINGS = {
   /** While the sentence corpus is still downloading; title matches show already. */
   SEARCH_TEXTS_BODY_LOADING: 'Still searching inside the texts…',
   SEARCH_TEXTS_BODY_FAILED: "Couldn't search inside the texts. " + tryAgain,
-  // Welcome toasts when navigating from empty states
-  EXPLORE_WELCOME_FROM_PLAYLIST: 'Tap the headphones on any article to add it to your playlist',
   // Success toasts for empty state actions
   WORDS_ADDED_SUCCESS: 'Ready for your first practice session',
   ARTICLES_ADDED_SUCCESS: 'Ready for your first listen',
   ERROR_LOADING_DATA: "Couldn't load data. " + tryAgain,
   // Success messages - encouraging and celebration-focused
   SESSION_COMPLETE: 'Session complete',
-  // Completion screen educational text pools (teach SRS concepts based on session performance)
-  SESSION_ED_STRONG_POOL: [
-    "Strong recall means your intervals are growing. Some of these words won't need review for weeks.",
-    "When you remember a word easily, the algorithm pushes the next review further out — that's how it becomes permanent.",
-    'Your brain just proved it can retrieve these words under pressure. That act of retrieval is what builds long-term memory.',
-    "Successful recall is more powerful than re-reading. You're training your brain to find these words when you need them.",
-  ] as const,
-  SESSION_ED_DEFAULT_POOL: [
-    'A mix of known and forgotten is ideal. Struggling to recall makes the memory stronger than getting it right easily.',
-    'Words you forgot will come back sooner. Words you knew get more time off. The system adapts to exactly where you are.',
-    "Every word you couldn't recall is now scheduled for an earlier return. That's the algorithm protecting you from forgetting.",
-    "Forgetting isn't failure — it's information. The system uses it to find the perfect moment for your next review.",
-  ] as const,
-  SESSION_ED_STRUGGLE_POOL: [
-    'Difficult sessions build the strongest memories. Words you struggled with will get shorter intervals until they stick.',
-    "Your brain is working hard, and that's exactly what learning looks like. These words will come back sooner for extra practice.",
-    'The algorithm noticed these words need more repetition and will schedule more frequent reviews. That extra practice is what makes them stick.',
-    "Every time you see a word again after forgetting, the memory trace gets deeper. You're building foundations right now.",
-  ] as const,
-  SESSION_ED_PERFECT:
-    "Perfect session. The algorithm will space your next reviews further apart — you've earned longer breaks.",
-  SESSION_ED_BIG_STABILITY_JUMP:
-    'Your words grew significantly stronger this session. Some jumped from days to weeks between reviews.',
-  METRIC_FIRST_SESSION_TODAY: 'First session today!',
+  // Completion screen rows. Each one is a count the session measured; there is
+  // no encouragement paragraph under the title, because the pools that filled
+  // it asserted intervals ("won't need review for weeks") nothing computed.
+  METRIC_WORDS_REVIEWED: (count: number) => `${count} ${count === 1 ? 'word' : 'words'} reviewed`,
+  /** `duration` is pre-formatted by METRIC_DURATION_* below. */
+  METRIC_SESSION_DURATION: (duration: string) => `${duration} session`,
+  METRIC_DURATION_SECONDS: (seconds: number) => `${seconds}s`,
+  METRIC_DURATION_MINUTES: (minutes: number) => `${minutes}m`,
+  METRIC_DURATION_MINUTES_SECONDS: (minutes: number, seconds: number) => `${minutes}m ${seconds}s`,
+  METRIC_DAY_STREAK: (days: number) => `${days}-day streak`,
+  METRIC_STREAK_STARTED: 'Streak started',
+  METRIC_FIRST_SESSION_TODAY: 'First session today',
+  METRIC_WORDS_MASTERED: (count: number) => `${count} ${count === 1 ? 'word' : 'words'} mastered`,
   METRIC_WORDS_IMPROVING: (count: number) =>
     `${count} ${count === 1 ? 'word' : 'words'} strengthened`,
   ADDED_TO_BOOKMARKS: 'Added to playlist',
@@ -516,7 +508,6 @@ export const STRINGS = {
   WORD_QUICK_SAVED: 'Saved to practice — long-press to undo',
   WORD_QUICK_REMOVED: 'Removed from practice',
   CHECK_EMAIL_CONFIRMATION: 'Check your email to confirm',
-  SUCCESS: 'Success',
   SELECTED_TO_HELP_PRACTICE_DUE: "Contains words you're practicing",
   CHOSEN_TO_REINFORCE_CHALLENGING: 'Helps reinforce challenging words',
   // Auth - shortened and clearer
@@ -705,9 +696,13 @@ export const STRINGS = {
   // `utils/practiceDepth`.
   REVIEW_DEPTH_TITLE: 'Reviews done',
   REVIEW_DEPTH_SUBTITLE: 'Every grade you have given, and where the effort went',
-  /** Three readings of one quantity, so all three are counts of reviews. */
+  /**
+   * Two readings of one quantity, both counts of reviews. There was a third,
+   * "Per study day", divided by a study-day ledger that undercounts by a
+   * multiple (one day-key per word, lost on reinstall) — an average that could
+   * be off by 10× is not one to print beside an exact total.
+   */
   DEPTH_METRIC_TOTAL: 'Total',
-  DEPTH_METRIC_PER_DAY: 'Per study day',
   /** Reviews ÷ EVERY saved word, matching the rows below, which partition all of them. */
   DEPTH_METRIC_PER_WORD: 'Per word',
   /** Marks a mean, so it cannot be read as one of the exact counts beside it. */
@@ -715,8 +710,8 @@ export const STRINGS = {
   /**
    * A real but sub-unit mean. `≈0` beside a Total of `1` reads as a
    * contradiction rather than as an average, and that is exactly the first-week
-   * case — one review spread over three study days — where the sheet is meant to
-   * be encouraging. An inequality claims no precision it does not have.
+   * case — one review spread over three saved words — where the sheet is meant
+   * to be encouraging. An inequality claims no precision it does not have.
    */
   DEPTH_AVERAGE_UNDER_ONE: '<1',
   /** Bands by rep count. The label IS the range — see DEPTH_BAND_HINT_* below. */
@@ -726,35 +721,52 @@ export const STRINGS = {
   DEPTH_BAND_ONCE: 'Once',
   DEPTH_BAND_NONE: 'Not yet',
   /**
-   * What the band MEANS. The opposite of HORIZON_BAND_HINT_*, which have to
-   * spell out a span because "Weeks" does not: "5–9 times" already has, so
-   * repeating the range here would spend a caption line saying nothing.
+   * The band in plain words, and nothing more. The opposite of
+   * HORIZON_BAND_HINT_*, which have to spell out a span because "Weeks" does
+   * not: "5–9 times" already has, so these only say it as passes.
+   *
+   * Deliberately neutral. `fsrs_reps` counts EVERY grade — ts-fsrs increments
+   * it on Again as well as Good — so a word forgotten again and again climbs
+   * these bands as fast as one that is known. Captions that read the count as
+   * mastery ("your most drilled words", "coming back reliably") put the
+   * hardest words under the most flattering label.
    */
-  DEPTH_BAND_HINT_DEEP: 'your most drilled words',
-  DEPTH_BAND_HINT_SOLID: 'coming back reliably',
-  DEPTH_BAND_HINT_FEW: 'still bedding in',
+  DEPTH_BAND_HINT_DEEP: 'many passes',
+  DEPTH_BAND_HINT_SOLID: 'several passes',
+  DEPTH_BAND_HINT_FEW: 'a few passes',
   DEPTH_BAND_HINT_ONCE: 'one pass so far',
   DEPTH_BAND_HINT_NONE: 'saved, never reviewed',
   /**
-   * The reason depth is worth showing at all, stated once: FSRS grows a word's
-   * stability on every successful review, so the count is not a tally of effort
-   * but the thing that bought the interval.
-   */
-  /**
-   * States the mechanism WITHOUT pointing at a position in the list. It used to
-   * say "the words highest on this list", which was true only while the bands
-   * ran most-drilled first — so the copy silently encoded the row order, and
-   * bound itself to break the moment that order was made to match the memory
-   * sheet's. Say what a review does; let the rows show where each word is.
+   * What a review count IS, stated once, and what it is not. It used to read
+   * "the most-reviewed words are the ones that now ask least of you", which is
+   * false for exactly the words that need the most help: a missed grade counts
+   * as a review too. Says nothing about a position in the list either — the
+   * rows show where each word is.
    */
   DEPTH_EXPLAINER:
-    'Every pass you get right pushes a word further out, so the most-reviewed words are the ones that now ask least of you.',
+    'Every grade counts as one review, right or wrong — so a word you keep missing gathers reviews as fast as one you know.',
   DEPTH_EMPTY: 'Nothing reviewed yet — your first session fills this in',
-  DUE_WORDS_FORECAST_SUBTITLE: 'How many words come up for review each day',
+  /**
+   * Describes the series as it is drawn: the first column is everything due
+   * NOW (overdue included), every later column only what that day ADDS. The
+   * series used to be the running total — the backlog if nothing were ever
+   * reviewed — under this same "each day" wording, so it could only rise and
+   * its "busiest day" was always the last.
+   */
+  DUE_WORDS_FORECAST_SUBTITLE: 'What is due now, and how many more come due each day',
   DUE_WORDS_FORECAST: 'This week',
-  // Due-today card (the practice screen's lead)
-  /** The label over the number the tab badge shows. */
-  DUE_TODAY_LABEL: 'Due today',
+  /** One column, read out: "Thu, 12". */
+  DUE_WORDS_DAY_A11Y: '{day}, {count}',
+  /** The whole forecast chart as one sentence; `{days}` is the column list. */
+  DUE_WORDS_WEEK_A11Y: 'Due now, then what each day adds: {days}.',
+  // Due-now card (the practice screen's lead)
+  /**
+   * The label over the number the tab badge shows. "Now", not "today": the
+   * count is the words due at this instant — the same bucket the forecast's
+   * first column and the dictionary's "Due now" scope count — so a word that
+   * falls due tonight is not in it yet.
+   */
+  DUE_NOW_LABEL: 'Due now',
   TODAY_ALL_CAUGHT_UP: 'All caught up',
   /** Holds the footer line while words are due and none has been reviewed yet. */
   TODAY_NOTHING_REVIEWED: 'Nothing reviewed yet today',
@@ -805,15 +817,12 @@ export const STRINGS = {
   HORIZON_BAND_A11Y:
     'Memory horizon. You can recall about {recall} of {total} practised words right now. {breakdown}. Opens the breakdown by band.',
   HORIZON_BAND_A11Y_EMPTY: 'Memory horizon. Nothing practised yet. Opens the breakdown by band.',
-  WEEK_AHEAD_A11Y:
-    'Reviews this week. {today} due today, {peak} at the busiest. Opens the weekly forecast.',
   /**
-   * Two variants because this card has two homes. On the dictionary it IS the
-   * dictionary, so promising to open one is wrong; only the (currently unused)
-   * pressable placement navigates anywhere.
+   * `{now}` is the due count; `{peak}` is the most that any LATER day adds — the
+   * same per-day series the bars draw, so the sentence and the drawing agree.
    */
-  VOCABULARY_GROWTH_A11Y: '{count} words in practice.',
-  VOCABULARY_GROWTH_A11Y_LINK: '{count} words in practice. Opens your dictionary.',
+  WEEK_AHEAD_A11Y:
+    'Reviews this week. {now} due now, and at most {peak} more come due on any later day. Opens the weekly forecast.',
   // Practice stat tiles
   /** Grades given, not words seen — distinct from "words reviewed today" above. */
   REVIEWS_LABEL: 'Reviews done',
@@ -832,14 +841,14 @@ export const STRINGS = {
     'Reviews done, {count}. Opens the breakdown by how often each word has come up.',
   /** Stat-tile placeholder for a metric with nothing to measure yet. */
   EMPTY_METRIC: '—',
-  VOCABULARY_GROWTH_LABEL: 'Words in practice',
-  // Chart bottom summaries
-  SUMMARY_TODAY: 'Today',
-  SUMMARY_BUSIEST_DAY: 'Busiest day',
-  SUMMARY_THIS_MONTH: 'This month',
-  NEWLY_DUE_SUFFIX: 'new',
+  /**
+   * The forecast chart's first column. "Now", not "Today": it holds what is due
+   * at this instant, and a word falling due tonight is counted in tomorrow's
+   * column — the day a once-a-day learner will actually meet it.
+   */
+  DUE_WORDS_NOW_COLUMN: 'Now',
   // The whole label, not a prefix: the due count it used to carry ("Review 12
-  // words") is on the tab badge and the "Due today" card directly below, now
+  // words") is on the tab badge and the "Due now" card directly below, now
   // that this is a navigation-bar action.
   REVIEW_CTA: 'Review',
   // Streak chart axis captions
@@ -848,11 +857,20 @@ export const STRINGS = {
   // Study Streak
   STREAK_LABEL: 'Day streak',
   // Study Streak Bottom Sheet
-  STUDY_STREAK_ACTIVE_SUBTITLE: 'Keep the momentum going',
-  STUDY_STREAK_INACTIVE_SUBTITLE: 'Start your practice habit',
+  /**
+   * A definition, like every other practice sheet's subtitle, and the same in
+   * both states. It used to coach instead — "Keep the momentum going" with a
+   * run, "Start your practice habit" without — the one sheet in the tab that
+   * told the learner what to do rather than what they were looking at.
+   */
+  STUDY_STREAK_SUBTITLE: 'Days with at least one review',
   STUDY_STREAK_CURRENT: 'Current',
   STUDY_STREAK_LONGEST: 'Longest',
-  STUDY_STREAK_TOTAL: 'Total',
+  /**
+   * Named in its own unit. A bare "Total" beside Current and Longest read as a
+   * third streak length, and the review-depth sheet's "Total" counts reviews.
+   */
+  STUDY_STREAK_TOTAL: 'Days practised',
   /**
    * The streak sheet's closing caption. It used to be the subtitle of a SECOND
    * `BottomSheetHeader` mid-sheet, whose title read "Last 40 days" directly above
@@ -860,6 +878,8 @@ export const STRINGS = {
    * own drawing and the sheet was the only one in the tab with two headers.
    */
   STUDY_STREAK_CHART_DESCRIPTION: 'Each bar is a day you practised',
+  /** Appended only while a run is live — it is the legend for the solid bars. */
+  STUDY_STREAK_CHART_CURRENT_RUN: 'Each bar is a day you practised; the current run is solid',
   LOADING_STREAK: 'Loading streak…',
   FAILED_TO_LOAD_STREAK: "Couldn't load streak. Try again",
   STUDY_STREAK_EMPTY_STATE: 'Complete a review to start your streak',
@@ -1111,16 +1131,18 @@ export const STRINGS = {
    * inflected forms, the example sentences, reset and remove. Named for the
    * destination rather than the action ("Open full details") because it lands on
    * another tab, and a row that changes tabs should say where it is going.
+   *
+   * Names that place the way its own title does — "Your words"
+   * (PRACTICE_WORDS_TITLE). "Your dictionary" was a name no screen carried.
    */
-  WORD_SHEET_OPEN_IN_DICTIONARY: 'Open in your dictionary',
-  WORD_SHEET_OPEN_IN_DICTIONARY_A11Y: 'Open {word} in your dictionary',
+  WORD_SHEET_OPEN_IN_DICTIONARY: 'Open in Your words',
+  WORD_SHEET_OPEN_IN_DICTIONARY_A11Y: 'Open {word} in Your words',
   RESET_PROGRESS_ACTION: 'Reset progress',
   REMOVE_FROM_PRACTICE_ACTION: 'Remove from practice',
   REMOVE_WORD_TITLE: 'Remove word?',
   REMOVE_WORD_CONFIRM: 'The word and its review progress are removed from practice.',
   REMOVE: 'Remove',
   // Chart Empty States (action + outcome, concise)
-  EMPTY_STATE_DUE_WORDS: 'Add words to see your upcoming reviews',
   // Word Sentences Bottom Sheet (dictionary sentence examples)
   NO_SENTENCE_EXAMPLES: 'No sentence examples yet',
   PLAY_AUDIO: 'Play audio',
@@ -1128,16 +1150,13 @@ export const STRINGS = {
   HELP_CENTER: 'Help center',
   CONTACT_SUPPORT: 'Contact support',
   NO_EMAIL: 'No email',
-  ACCOUNT_MEMBER_SINCE: 'Member since {date}',
   BYTE_UNITS: ['Bytes', 'KB', 'MB', 'GB'] as const,
   ERROR_PRIORITY_QUEUE_LENGTH_MISMATCH: 'Items and priorities arrays must have the same length',
   // Cache management - clearer and more actionable
   CLEAR_CACHE: 'Clear cache',
-  NO_CACHE: 'No cache',
   NO_CACHED_FILES: 'Nothing to clear',
   CLEAR_CACHE_CONFIRMATION:
     'This removes {size} of cached audio, articles, and app data. Everything reloads when needed.',
-  CLEAR_CACHE_SUCCESS: 'Cache cleared',
   // Reading progress management
   RESET_READING_PROGRESS: 'Reset reading progress',
   THIS_WILL_DELETE_ALL_READING_PROGRESS:
@@ -1162,37 +1181,43 @@ export const STRINGS = {
   // is that speaking is harder to fake than tapping "Knew it"; the size and the
   // on-device fact are what a learner needs to decide. No em-dashes, no
   // "entirely", no third sentence restating the second.
+  // The answer spoken is the ENGLISH meaning, so this must not promise
+  // pronunciation practice — it used to, and that was never true.
   VOICE_PRIMING_BODY:
-    'Say answers out loud instead of tapping. Harder to fool yourself, and you practice pronunciation. Runs on your device, 100 MB.',
+    'Say answers out loud instead of tapping. Harder to fool yourself. Runs on your device, 100 MB.',
   VOICE_PRIMING_ACCEPT: 'Turn it on',
   VOICE_PRIMING_DECLINE: 'No thanks',
-  // Smart reminder notifications (selection logic in utils/notificationCopy.ts)
+  // Smart reminder notifications (selection logic in utils/notificationCopy.ts).
+  //
+  // Every line says only what the scheduler knows: which words are due, that a
+  // successful recall moves the next review further out, and that a word is
+  // near the point where recall drops. No line promises a duration ("about a
+  // minute"), a multiplier ("roughly doubles") or a best moment ("the sweet
+  // spot", "when memory strengthens most") — nothing measures those.
   NOTIFICATION_DUE_TITLE_POOL: [
     'Your words are ready',
     'Right on time for review',
-    'A few words are due',
+    'Some words are due',
     'Your review window is open',
-    'Time for a short review',
+    'Time for a review',
   ] as const,
   NOTIFICATION_DUE_FEW_BODY_POOL: [
     (count: number) =>
-      `Just ${count} ${count === 1 ? 'word' : 'words'} today. A minute of recall keeps ${count === 1 ? 'it' : 'them'} moving toward long-term memory.`,
+      `Just ${count} ${count === 1 ? 'word' : 'words'} today. A review keeps ${count === 1 ? 'it' : 'them'} on schedule.`,
+    (count: number) => `${count} ${count === 1 ? 'word is' : 'words are'} due for review today.`,
     (count: number) =>
-      `${count} ${count === 1 ? 'word is' : 'words are'} at the ideal recall point. Short sessions count the same as long ones.`,
+      `${count} ${count === 1 ? 'word is' : 'words are'} starting to fade. Recall ${count === 1 ? 'it' : 'them'} now and the next review moves further out.`,
     (count: number) =>
-      `${count} ${count === 1 ? 'word is' : 'words are'} starting to fade. Reviewing now resets ${count === 1 ? 'its' : 'their'} clock for days.`,
-    (count: number) =>
-      `A light day — ${count} ${count === 1 ? 'word' : 'words'}, about a minute. Consistency is what builds the memory.`,
+      `A light day: ${count} ${count === 1 ? 'word' : 'words'} due. A little review each day is what builds the memory.`,
   ] as const,
   NOTIFICATION_DUE_MANY_BODY_POOL: [
     (count: number) =>
-      `${count} words have reached their review point. Recalling them now is when memory strengthens most.`,
+      `${count} words have reached their review point. Each one you recall is scheduled further out.`,
     (count: number) =>
       `${count} words are due — each successful recall pushes its next review further out.`,
+    (count: number) => `${count} words, all timed for today.`,
     (count: number) =>
-      `${count} words, all timed for today. A session now catches them at the right moment.`,
-    (count: number) =>
-      `Your ${count} due words are just starting to fade — the sweet spot for recall practice.`,
+      `Your ${count} due words are just starting to fade. Reviewing them today keeps them on schedule.`,
   ] as const,
   NOTIFICATION_SLIPPING_TITLE_POOL: [
     'Some words are fading',
@@ -1202,13 +1227,13 @@ export const STRINGS = {
   ] as const,
   NOTIFICATION_SLIPPING_BODY_POOL: [
     (count: number) =>
-      `${count} ${count === 1 ? 'word is' : 'words are'} close to the forgetting point. One pass brings ${count === 1 ? 'it' : 'them'} back to full strength.`,
+      `${count} ${count === 1 ? 'word is' : 'words are'} close to the forgetting point. A review now is how to keep ${count === 1 ? 'it' : 'them'}.`,
     (count: number) =>
-      `Memory fades on a curve — ${count} of your words ${count === 1 ? 'is' : 'are'} near the drop. A short review flattens it.`,
+      `Memory fades on a curve — ${count} of your words ${count === 1 ? 'is' : 'are'} near the drop. A review you get right flattens it.`,
     (count: number) =>
-      `${count} ${count === 1 ? 'word' : 'words'} you worked for ${count === 1 ? 'is' : 'are'} slipping. Recalling ${count === 1 ? 'it' : 'them'} now builds the strongest trace.`,
+      `${count} ${count === 1 ? 'word' : 'words'} you worked for ${count === 1 ? 'is' : 'are'} slipping. Recalling ${count === 1 ? 'it' : 'them'} now holds on to that work.`,
     (count: number) =>
-      `${count} ${count === 1 ? 'word is' : 'words are'} below ${count === 1 ? 'its' : 'their'} usual strength. ${count === 1 ? 'It comes' : 'They come'} back fastest if you review today.`,
+      `${count} ${count === 1 ? 'word is' : 'words are'} below ${count === 1 ? 'its' : 'their'} usual strength. Today is a good day to review ${count === 1 ? 'it' : 'them'}.`,
   ] as const,
   NOTIFICATION_WORD_TITLE_POOL: [
     (word: string) => `Remember ${word}?`,
@@ -1218,15 +1243,13 @@ export const STRINGS = {
   ] as const,
   NOTIFICATION_WORD_BODY_POOL: [
     (word: string, _others: number) =>
-      `${word} is nearing its forgetting point. Recalling it now roughly doubles how long it lasts.`,
+      `${word} is nearing its forgetting point. Recall it now and its next review moves further out.`,
     (word: string, _others: number) =>
-      `If the meaning of ${word} just surfaced, that was retrieval — the exact practice that makes it stick.`,
+      `If the meaning of ${word} just surfaced, that was retrieval — the practice that makes a word stick.`,
     (word: string, others: number) =>
-      others > 0
-        ? `${word} and ${others} more are due. Reviewing at this moment is when the memory strengthens most.`
-        : `${word} is due. Reviewing at this moment is when the memory strengthens most.`,
+      others > 0 ? `${word} and ${others} more are due for review.` : `${word} is due for review.`,
     (word: string, _others: number) =>
-      `You've been building ${word} for a while — this is the review that locks it in for longer.`,
+      `You've been building ${word} for a while. Recall it now and it holds for longer.`,
   ] as const,
   RECOMMENDED: 'Recommended',
   // Error messages - actionable with next steps
@@ -1253,7 +1276,6 @@ export const STRINGS = {
   FAILED_TO_GENERATE_AUDIO_TRACK: "Couldn't generate track. " + tryAgain,
   FAILED_TO_GET_ENHANCED_AUDIO_TRACKS: "Couldn't get tracks. " + tryAgain,
   FAILED_TO_LOAD_AUDIO_TRACKS: "Couldn't load audio tracks. " + tryAgain,
-  PLAYING_ARABIC_ONLY_THIS_SESSION: 'Playing Arabic-only for this session',
   FAILED_TO_STOP_AUDIO_ON_CLOSE: "Couldn't stop audio on close. " + tryAgain,
   // Playlist errors
   FAILED_TO_LOAD_BOOKMARKS: "Couldn't load playlist. " + tryAgain,
@@ -1289,9 +1311,9 @@ export const STRINGS = {
     'App preferences and settings',
   ] as const,
   DELETE_ACCOUNT_PERMANENT: 'This action cannot be undone.',
-  DELETE_ACCOUNT_SIGNED_IN_AS: 'Signed in as:',
-  DELETE_ACCOUNT_ENTER_CONFIRMATION: 'Type DELETE to confirm:',
-  DELETE_ACCOUNT_CONFIRMATION_PLACEHOLDER: 'Type DELETE to confirm',
+  // The label gives the instruction; the field shows only the word to type, so
+  // the two never say the same sentence twice.
+  DELETE_ACCOUNT_ENTER_CONFIRMATION: 'Type DELETE to confirm',
   DELETE_ACCOUNT_CONFIRMATION_WORD: 'DELETE',
   DELETE_ACCOUNT_CONFIRMATION_MISMATCH: 'Type DELETE exactly as shown',
   DELETE_ACCOUNT_SUCCESS: 'Account deleted',
@@ -1302,17 +1324,37 @@ export const STRINGS = {
   PLEASE_SIGN_IN_TO_ADD_ROOTS: 'Sign in to add roots',
   PLEASE_SIGN_IN_TO_SAVE_ARTICLES: 'Sign in to save articles',
   ERROR_EMPTY_EMAIL: 'Enter your email address',
+  // Help centre: the grammar colour guide under "Why is Arabic text coloured?"
+  GRAMMAR_LEGEND_TITLE: 'Colour guide',
+  /**
+   * One name per colour the reader paints, keyed by `colors.grammar` role. Two
+   * roles borrow a colour in GRAMMATICAL_ROLE_COLORS: standalone pronouns are
+   * painted in the verb-ending colour, so that row names both.
+   */
+  GRAMMAR_LEGEND: {
+    definiteArticle: 'The (ال)',
+    preposition: 'Preposition',
+    conjunction: 'Joining word',
+    particle: 'Particle',
+    possessive: 'Possessive',
+    subjectPrefix: 'Subject marker',
+    verbConjugation: 'Verb ending or pronoun',
+    plural: 'Plural',
+    negation: 'Negation',
+    interrogative: 'Question word',
+    demonstrative: 'This / that',
+    futureTense: 'Future (سـ)',
+  },
+  GRAMMAR_LEGEND_SINGLE_WORD_NOTE:
+    'A single word like "house" is never coloured: the colours show how the parts of a phrase line up with its English, and one word has nothing to line up.',
   HELP_SEARCH_PLACEHOLDER: 'Search help',
   HELP_SEARCH_CLEAR: 'Clear search',
   HELP_SEARCH_RESULTS_SINGULAR: 'result',
   HELP_SEARCH_RESULTS_PLURAL: 'results',
   HELP_NO_RESULTS_TITLE: 'No results found',
   HELP_NO_RESULTS_DESCRIPTION: 'Try different keywords or clear your search to browse all topics',
-  HELP_POPULAR_QUESTIONS: 'Popular questions',
   HELP_STILL_NEED_HELP_TITLE: 'Still need help?',
   HELP_STILL_NEED_HELP_DESCRIPTION: 'We typically respond within 24 hours',
-  // Chart empty states
-  CHART_EMPTY_STATE: 'Add words to see your progress chart',
   // Legal & Attributions
   LEGAL_ATTRIBUTIONS: 'Legal & attributions',
   LEGAL_INTRO:
@@ -1328,22 +1370,27 @@ export const STRINGS = {
   LEGAL_FONTS_TITLE: 'Typefaces',
   LEGAL_FONTS_ARABIC_TITLE: 'Arabic fonts',
   LEGAL_FONTS_ENGLISH_TITLE: 'English fonts',
-  LEGAL_FONT_SCHEHERAZADE: 'Scheherazade New',
-  LEGAL_FONT_SCHEHERAZADE_DESC: 'SIL Open Font License 1.1',
+  LEGAL_FONTS_ICONS_TITLE: 'Icons on Android',
+  // One entry per font file in assets/fonts, named and credited as each file's
+  // own name table states it. The licence goes where the licence belongs.
+  LEGAL_FONT_NOTO_SANS_ARABIC: 'Noto Sans Arabic',
+  LEGAL_FONT_NOTO_SANS_ARABIC_DESC: 'SIL Open Font License 1.1 · The Noto Project Authors',
   LEGAL_FONT_AMIRI: 'Amiri',
-  LEGAL_FONT_AMIRI_DESC: 'SIL Open Font License 1.1',
-  LEGAL_FONT_MADINA: 'Madina',
-  LEGAL_FONT_MADINA_DESC: 'Custom Arabic font',
-  LEGAL_FONT_NASTALIQ: 'Nastaliq',
-  LEGAL_FONT_NASTALIQ_DESC: 'Traditional calligraphic Arabic script',
-  LEGAL_FONT_NOTO_SANS: 'Noto Sans',
-  LEGAL_FONT_NOTO_SANS_DESC: 'SIL Open Font License 1.1 by Google',
-  LEGAL_FONTS_SYSTEM_NOTE:
-    'English text uses system fonts (SF Pro on iOS, Roboto on Android) for a native feel.',
+  LEGAL_FONT_AMIRI_DESC: 'SIL Open Font License 1.1 · The Amiri Project Authors',
+  LEGAL_FONT_MADINA: 'DigitalKhatt New Madina',
+  LEGAL_FONT_MADINA_DESC: 'SIL Open Font License 1.1 · Amine Anane',
+  LEGAL_FONT_SCHEHERAZADE: 'Scheherazade New',
+  LEGAL_FONT_SCHEHERAZADE_DESC: 'SIL Open Font License 1.1 · SIL Global',
+  LEGAL_FONT_NASTALIQ: 'Noto Nastaliq Urdu',
+  LEGAL_FONT_NASTALIQ_DESC: 'SIL Open Font License 1.1 · The Noto Project Authors',
+  LEGAL_FONT_INTER: 'Inter',
+  LEGAL_FONT_INTER_DESC: 'SIL Open Font License 1.1 · The Inter Project Authors',
+  LEGAL_FONT_MATERIAL_SYMBOLS: 'Material Symbols',
+  LEGAL_FONT_MATERIAL_SYMBOLS_DESC: 'Apache License 2.0 · Google',
   LEGAL_OPEN_SOURCE_TITLE: 'Open source libraries',
   LEGAL_OPEN_SOURCE_DESC:
-    'Built with React Native, Expo, and many open source libraries. Full license details in the app repository.',
-  LEGAL_LICENSE_INFO: 'License information',
+    'Built with React Native, Expo, and many open source libraries. Full licence details in the app repository.',
+  LEGAL_LICENSE_INFO: 'Licence information',
   LEGAL_SIL_OFL_TITLE: 'SIL Open Font License 1.1',
   LEGAL_SIL_OFL_DESC:
     'Fonts under SIL OFL are free to use, modify, and distribute. Full text at scripts.sil.org/OFL',

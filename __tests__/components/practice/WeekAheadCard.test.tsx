@@ -31,7 +31,7 @@ describe('WeekAheadCard', () => {
   test('shows the due count as a labelled numeral, not inside a sentence', () => {
     const view = renderCard({ dueCount: 23 });
 
-    expect(view.getByText(STRINGS.DUE_TODAY_LABEL)).toBeTruthy();
+    expect(view.getByText(STRINGS.DUE_NOW_LABEL)).toBeTruthy();
     // Exact match: the count is its own text node, so it can be set large.
     expect(view.getByText('23', NUMERAL)).toBeTruthy();
   });
@@ -77,6 +77,34 @@ describe('WeekAheadCard', () => {
 
       expect(view.getByText('1 word reviewed today')).toBeTruthy();
     });
+  });
+
+  test('the spoken peak is the most any later day adds, never the running backlog', () => {
+    // The bars draw `newlyDue`; the running `dueWords` only ever rises, and its
+    // maximum is just the last day. The sentence must describe the drawing.
+    const day = (dueWords: number, newlyDue: number) => ({
+      date: new Date(),
+      dueWords,
+      newlyDue,
+      totalWords: 30,
+    });
+    const forecast = [
+      day(10, 10),
+      day(14, 4),
+      day(21, 7),
+      day(23, 2),
+      day(23, 0),
+      day(26, 3),
+      day(30, 4),
+    ];
+
+    const view = render(
+      <WeekAheadCard forecast={forecast} dueCount={10} reviewedToday={0} onPress={jest.fn()} />,
+    );
+
+    expect(
+      view.getByLabelText(STRINGS.WEEK_AHEAD_A11Y.replace('{now}', '10').replace('{peak}', '7')),
+    ).toBeTruthy();
   });
 
   test('shows the chevron only when it leads somewhere', () => {

@@ -5,6 +5,7 @@ import type { GestureResponderEvent, TextInputInstance, TextInputProps } from 'r
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
+import { FONTS } from '@/constants/fonts';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
@@ -190,6 +191,9 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
+    // A TextInput inherits no family, so without this the one place the
+    // learner writes was set in SF Pro / Roboto beside Inter everywhere else.
+    fontFamily: FONTS.ENGLISH,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     height: '100%',
     paddingVertical: 0,

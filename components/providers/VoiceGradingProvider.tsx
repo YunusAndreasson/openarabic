@@ -62,6 +62,7 @@ import { useAppSelectorShallow } from '@/store/hooks';
 import {
   selectVoiceEnergyGateEnabled,
   selectVoiceGainNormalizeEnabled,
+  selectVoiceIosRawMode,
 } from '@/store/settingsSlice';
 import { mark as diagMark, span as diagSpan } from '@/utils/reviewDiagnostics';
 import { voiceBreadcrumb } from '@/utils/errorHandling';
@@ -321,7 +322,7 @@ export const VoiceGradingProvider = ({ children }: { children: ReactNode }) => {
   // identity flows into the context value consumed by the review screen).
   const energyGateEnabled = useAppSelectorShallow(selectVoiceEnergyGateEnabled);
   const gainNormalizeEnabled = useAppSelectorShallow(selectVoiceGainNormalizeEnabled);
-  const iosRawMode = useAppSelectorShallow(state => state.settings.voiceIosRawMode);
+  const iosRawMode = useAppSelectorShallow(selectVoiceIosRawMode);
   const recordingConfigRef = useRef<RecordingConfig>(DEFAULT_RECORDING_CONFIG);
   useEffect(() => {
     recordingConfigRef.current = {

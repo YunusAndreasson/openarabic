@@ -26,7 +26,15 @@ const MAX_TOAST_WIDTH_RATIO = 0.9;
 const TOAST_ANIMATION_DURATION = TIMING_CONFIG.SLOW.duration; // 300ms — deliberate enough to notice
 const ICON_SIZE = LAYOUT.BUTTON.ICON_SIZE.MEDIUM; // 20
 
-// Toast type configuration — icon + color key in one place
+/**
+ * Toast type configuration — icon + color key in one place.
+ *
+ * The status colour marks the icon and nothing else. Every toast sits on the
+ * same elevated surface in body ink; a status toast used to fill itself with
+ * its status colour and set `white` on it, which measured 2.1–3.6:1 in the dark
+ * theme (white on a light status hue) and 2.9–4.1:1 in sepia — an error that
+ * could not be read.
+ */
 const TOAST_CONFIG = {
   success: { icon: 'checkmark-circle' as const, colorKey: 'success' as const },
   error: { icon: 'alert-circle' as const, colorKey: 'error' as const },
@@ -111,10 +119,7 @@ export function Toast({
   }, [visible, duration, type]);
 
   const config = TOAST_CONFIG[type];
-  const backgroundColor = config.colorKey
-    ? colors[config.colorKey] || colors.tint
-    : colors.elevation2; // Use elevated surface so info toast doesn't blend with screen background
-  const textColor = config.colorKey ? colors.white : colors.text;
+  const iconColor = config.colorKey ? colors[config.colorKey] : colors.text;
 
   const maxToastWidth = windowWidth * MAX_TOAST_WIDTH_RATIO;
 
@@ -150,18 +155,19 @@ export function Toast({
           getElevation(colors, 'MODAL'),
           {
             maxWidth: maxToastWidth,
-            backgroundColor,
+            // Elevated so the toast never blends into the screen behind it.
+            backgroundColor: colors.elevation2,
             borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
             borderColor: colors.toastBorder,
           },
         ]}
       >
-        <Icon name={config.icon} size={ICON_SIZE} color={textColor} style={styles.icon} />
+        <Icon name={config.icon} size={ICON_SIZE} color={iconColor} style={styles.icon} />
         <ThemedText
-          skipDefaultColor
+          colorName="text"
           ellipsizeMode="tail"
           numberOfLines={2}
-          style={[styles.toastText, { color: textColor }]}
+          style={styles.toastText}
         >
           {message}
         </ThemedText>

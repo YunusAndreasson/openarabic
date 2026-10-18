@@ -3,9 +3,19 @@
  * load state and the recording knobs that otherwise only live in
  * DEFAULT_RECORDING_CONFIG, so quiet-capture issues (notably iOS raw mode) can
  * be A/B tested on-device without a rebuild. No sliders — toggles only.
+ *
+ * Development builds only. The row that opens it is gated the same way
+ * (Settings → Practice), the knobs read their shipped values in production
+ * whatever is persisted (see the selectors in store/settingsSlice), and a deep
+ * link to this route in production lands back on Settings. The one control a
+ * learner needs from here, removing the model, lives in the Practice section.
+ *
+ * Because no learner reaches it, the model row keeps the raw library error on
+ * failure: the exact message is the reason to open this screen.
  */
+import { Redirect } from 'expo-router';
 import { useCallback, useMemo } from 'react';
-import { Alert, Platform, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { SettingsCard, SettingsSection } from '@/components/account';
@@ -13,16 +23,17 @@ import { useVoiceGrading } from '@/components/providers';
 import { ScreenScaffold, SectionLabel } from '@/components/common';
 import { PulsatingLoader } from '@/components/ui';
 import { LAYOUT } from '@/constants/layout';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useVoiceModel } from '@/hooks/voice/useVoiceModel';
-import { deleteVoiceModel } from '@/services/voiceModelStore';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import { voiceReadiness } from '@/utils/voiceReadiness';
 import {
+  selectVoiceDebugEnabled,
   selectVoiceEnergyGateEnabled,
   selectVoiceGainNormalizeEnabled,
+  selectVoiceIosRawMode,
   setVoiceDebugEnabled,
-  setVoiceEnabled,
   setVoiceEnergyGateEnabled,
   setVoiceGainNormalizeEnabled,
   setVoiceIosRawMode,
@@ -44,8 +55,8 @@ const AdvancedScreen = () => {
 
   const energyGateEnabled = useAppSelectorShallow(selectVoiceEnergyGateEnabled);
   const gainNormalizeEnabled = useAppSelectorShallow(selectVoiceGainNormalizeEnabled);
-  const iosRawMode = useAppSelectorShallow(state => state.settings.voiceIosRawMode);
-  const debugEnabled = useAppSelectorShallow(state => state.settings.voiceDebugEnabled);
+  const iosRawMode = useAppSelectorShallow(selectVoiceIosRawMode);
+  const debugEnabled = useAppSelectorShallow(selectVoiceDebugEnabled);
 
   // Shares `voiceReadiness` with the Practice row and the review screen, so the
   // three cannot drift apart again. This screen keeps the raw error string,
@@ -95,31 +106,6 @@ const AdvancedScreen = () => {
     }
   }, [voice.enabled, voice.error, voice.isReady, voice.isWarming, model]);
 
-  // Nothing else in the app reclaims the ~100 MB, and with voice on by default
-  // that would otherwise be permanent for every learner.
-  //
-  // Removing also turns voice OFF, and that is the whole reason the button
-  // works: the prefetch is gated on `voiceEnabled`, so leaving it on would
-  // re-download the model within seconds and the learner would have reclaimed
-  // nothing. Turning it back on in Account → Practice fetches it again.
-  const handleRemoveModel = useCallback(() => {
-    Alert.alert(
-      STRINGS.ADVANCED_MODEL_REMOVE_CONFIRM_TITLE,
-      STRINGS.ADVANCED_MODEL_REMOVE_CONFIRM_BODY,
-      [
-        { text: STRINGS.CANCEL, style: 'cancel' },
-        {
-          text: STRINGS.ADVANCED_MODEL_REMOVE,
-          style: 'destructive',
-          onPress: () => {
-            dispatch(setVoiceEnabled(false));
-            void deleteVoiceModel();
-          },
-        },
-      ],
-    );
-  }, [dispatch]);
-
   const makeToggleHandler = useCallback(
     (action: (value: boolean) => { type: string; payload: boolean }) => (value: boolean) => {
       dispatch(action(value));
@@ -161,13 +147,6 @@ const AdvancedScreen = () => {
           rightType="custom"
           rightComponent={modelRight}
         />
-        {model.state === 'ready' ? (
-          <SettingsCard
-            icon="trash"
-            label={STRINGS.ADVANCED_MODEL_REMOVE}
-            onPress={handleRemoveModel}
-          />
-        ) : null}
       </SettingsSection>
 
       <SettingsSection title={STRINGS.ADVANCED_RECORDING_SECTION}>
@@ -232,4 +211,7 @@ const styles = StyleSheet.create({
 
 AdvancedScreen.displayName = 'AdvancedScreen';
 
-export default AdvancedScreen;
+const AdvancedRoute = () =>
+  __DEV__ ? <AdvancedScreen /> : <Redirect href={ROUTE_PATHS.ACCOUNT} />;
+
+export default AdvancedRoute;

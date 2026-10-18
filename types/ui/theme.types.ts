@@ -27,6 +27,7 @@ export interface ThemeColors {
   tintBackground: string;
   onTint: string;
   onError: string;
+  onWarning: string;
   tabIconDefault: string;
   tabIconSelected: string;
   tabLabelSelected: string;

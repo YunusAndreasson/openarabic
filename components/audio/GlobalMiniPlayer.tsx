@@ -1,7 +1,9 @@
-import { usePathname } from 'expo-router';
+import { router, usePathname } from 'expo-router';
 import { memo } from 'react';
 
 import { ARTICLE_ROUTE_PREFIX, ROUTE_PATHS } from '@/constants/routes';
+import type { ArticleId } from '@/types/branded.types';
+import { getArticleRoute } from '@/utils/routeBuilders';
 import { useAudioProgress, useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
 import { useShouldShowMiniPlayer } from '@/hooks/audio/useShouldShowMiniPlayer';
 
@@ -60,16 +62,27 @@ export const GlobalMiniPlayer = memo(function GlobalMiniPlayer({
     return null;
   }
 
+  const article = globalAudioState.currentArticle;
+  // On the playing article's own reader the body has nowhere to go. Any other
+  // screen — another article's reader included — opens it.
+  const isOnArticleReader = pathname === `${ARTICLE_ROUTE_PREFIX}${article.id}`;
+  const handleOpenArticle = () => {
+    router.push(getArticleRoute(article.id as ArticleId, article.title));
+  };
+
   return (
     <MiniPlayer
       placement={placement}
-      article={globalAudioState.currentArticle}
+      article={article}
       isTimerActive={globalAudioState.isTimerActive}
       position={position}
       duration={duration}
       queuePosition={globalAudioState.queuePosition}
-      onPlayPause={globalAudioState.onPlayPause}
+      isPlaying={globalAudioState.playing || globalAudioState.isLoading}
+      onTogglePause={globalAudioState.onTogglePause}
+      onStop={globalAudioState.onStop}
       onTimerPress={globalAudioState.onTimerPress}
+      onOpenArticle={isOnArticleReader ? undefined : handleOpenArticle}
     />
   );
 });

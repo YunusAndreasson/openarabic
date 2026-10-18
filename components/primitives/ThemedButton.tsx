@@ -50,7 +50,11 @@ export function ThemedButton({
   fullWidth = false,
   allowTitleWrap = false,
   shape = 'rounded',
-  hapticType = 'light',
+  // Tier 0 of the ladder in utils/haptics: a press is the user asking, so it
+  // takes the faintest pattern. `light` is tier 1, an outcome, and as the
+  // default it made every plain button outweigh the result it led to. A button
+  // that reports an outcome itself can still pass `hapticType="light"`.
+  hapticType = 'selection',
   accessibilityRole = 'button',
   accessibilityState,
   ...props

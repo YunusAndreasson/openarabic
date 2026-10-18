@@ -46,16 +46,26 @@ export function MemoryHorizonCard({
   const stackHeadline = width / fontScale < INLINE_VALUE_MIN_WIDTH;
   const { bands, medianLabel, medianFraction, practisedCount, hasDistribution } = distribution;
 
-  // The dot scale is a real caveat — a unit chart whose dot has quietly stopped
-  // meaning one word overstates itself — but it is a FOOTNOTE, not headline
-  // content. It rides in the spoken label and in the memory sheet rather than
-  // taking a line on the card. Same for the slipping and not-started counts:
-  // this card answers "how much do I know, and how deep is it", and every extra
-  // caption pulled attention off that one sentence.
-  const dotScaleNote =
+  // The dot scale, whenever a dot stops meaning one word. A unit chart whose dot
+  // has quietly started standing for four words tells "count the dots" as a
+  // false instruction, and above about twenty words in one column — an ordinary
+  // collection — that is every learner's chart. It used to be spoken only (the
+  // comment here claimed the memory sheet showed it too; that sheet lists bands
+  // and has no dots to scale), so a sighted learner was never told. It now rides
+  // at the end of the footer caption under the drawing it qualifies, and in the
+  // spoken label. The slipping and not-started counts still stay off this card:
+  // it answers "how much do I know, and how deep is it".
+  const dotScale =
     distribution.wordsPerDot > 1
-      ? ` ${STRINGS.PRACTICE_DOT_SCALE.replace('{count}', String(distribution.wordsPerDot))}.`
-      : '';
+      ? STRINGS.PRACTICE_DOT_SCALE.replace('{count}', String(distribution.wordsPerDot))
+      : null;
+  const dotScaleNote = dotScale ? ` ${dotScale}.` : '';
+
+  const footer = hasDistribution
+    ? [STRINGS.PRACTICE_TYPICAL_HORIZON.replace('{horizon}', medianLabel), dotScale]
+        .filter(Boolean)
+        .join(' · ')
+    : STRINGS.PRACTICE_RECALL_EMPTY;
 
   const accessibilityLabel = hasMeasuredMemory
     ? STRINGS.HORIZON_BAND_A11Y.replace('{recall}', String(recallableWords))
@@ -119,9 +129,7 @@ export function MemoryHorizonCard({
           one. */}
       <View style={styles.footer}>
         <ThemedText type="caption" colorName="captionText" style={styles.footerText}>
-          {hasDistribution
-            ? STRINGS.PRACTICE_TYPICAL_HORIZON.replace('{horizon}', medianLabel)
-            : STRINGS.PRACTICE_RECALL_EMPTY}
+          {footer}
         </ThemedText>
         {/* Guarded on `onPress`, exactly as `MetricCard` and `BreakdownRow`
             guard theirs. `onPress` is optional here, so an unguarded chevron

@@ -13,9 +13,26 @@ import React from 'react';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
 
-// Use shared mock factories from componentMocks.tsx
+/**
+ * jest.setup stubs `StyleSheet.flatten` as the identity function, so a style
+ * array has to be merged here for an assertion on its values to mean anything.
+ */
+const flattenStyle = (style: unknown): Record<string, unknown> => {
+  if (Array.isArray(style)) {
+    return style.reduce<Record<string, unknown>>(
+      (acc, entry) => ({ ...acc, ...flattenStyle(entry) }),
+      {},
+    );
+  }
+  return style && typeof style === 'object' ? (style as Record<string, unknown>) : {};
+};
+
+// Use shared mock factories from componentMocks.tsx. `captionText` is not in
+// the shared palette; the caption type's default ink needs a value to assert.
 jest.mock('@/hooks/theme/useColors', () =>
-  require('@/__tests__/helpers/componentMocks').useColorsMockFactory(),
+  require('@/__tests__/helpers/componentMocks').useColorsMockFactory({
+    captionText: '#5e7268',
+  }),
 );
 
 jest.mock('@/hooks/theme/useThemeDetection', () =>
@@ -131,6 +148,49 @@ describe('ThemedText', () => {
       const element = getByText('Secondary text');
       // Secondary variant uses secondaryText color (#666666)
       expect(element).toHaveStyle({ color: '#666666' });
+    });
+  });
+
+  describe('Default ink by type', () => {
+    // Hierarchy is carried by colour alone. These types used to render `text`
+    // at 70-85% opacity (plus a theme boost), which made the contrast depend on
+    // whatever surface the text sat on.
+    test.each([
+      ['body', '#000000'],
+      ['caption', '#5e7268'],
+      ['label', '#4a4a4a'],
+      ['overline', '#4a4a4a'],
+      ['heading1', '#000000'],
+    ] as const)('a %s with no colorName takes its own ink at full opacity', (type, ink) => {
+      const { getByText } = render(<ThemedText type={type}>Ink</ThemedText>);
+
+      const style = flattenStyle(getByText('Ink').props.style);
+      expect(style.color).toBe(ink);
+      expect(style).not.toHaveProperty('opacity');
+    });
+
+    test('a named colour is never dimmed by the type it is set in', () => {
+      const { getByText } = render(
+        <ThemedText colorName="textTertiary" type="caption">
+          Quiet
+        </ThemedText>,
+      );
+
+      const style = flattenStyle(getByText('Quiet').props.style);
+      expect(style.color).toBe('#999999');
+      expect(style).not.toHaveProperty('opacity');
+    });
+
+    test('a colour supplied through style is not dimmed either', () => {
+      const { getByText } = render(
+        <ThemedText skipDefaultColor style={{ color: '#123456' }} type="caption">
+          Styled
+        </ThemedText>,
+      );
+
+      const style = flattenStyle(getByText('Styled').props.style);
+      expect(style.color).toBe('#123456');
+      expect(style).not.toHaveProperty('opacity');
     });
   });
 

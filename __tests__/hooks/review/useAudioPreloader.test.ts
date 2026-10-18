@@ -87,7 +87,6 @@ describe('useAudioPreloader', () => {
       const { result } = renderHook(() => useAudioPreloader([], false));
 
       expect(result.current.isPreloading).toBeFalsy();
-      expect(result.current.progress).toBe(0);
       expect(result.current.isReady).toBeFalsy();
     });
 
@@ -102,18 +101,15 @@ describe('useAudioPreloader', () => {
       const { result } = renderHook(() => useAudioPreloader([], false));
 
       expect(result.current).toHaveProperty('isPreloading');
-      expect(result.current).toHaveProperty('progress');
       expect(result.current).toHaveProperty('isReady');
+      // No percentage: the loading screen that read it showed 0 → 50 → 100
+      // over the first card's two files, which is not progress worth quoting.
+      expect(result.current).not.toHaveProperty('progress');
     });
 
     test('should return boolean for isPreloading', () => {
       const { result } = renderHook(() => useAudioPreloader([], false));
       expect(typeof result.current.isPreloading).toBe('boolean');
-    });
-
-    test('should return number for progress', () => {
-      const { result } = renderHook(() => useAudioPreloader([], false));
-      expect(typeof result.current.progress).toBe('number');
     });
   });
 
@@ -174,8 +170,8 @@ describe('useAudioPreloader', () => {
     });
   });
 
-  describe('Progress isolation', () => {
-    test('reports progress only for the first card blocking files', async () => {
+  describe('Render isolation', () => {
+    test('the session waits for every one of the first card blocking files', async () => {
       const arabic = deferred<string>();
       const english = deferred<string>();
       mockAudioCache.getAudio.mockImplementation(url => {
@@ -191,14 +187,15 @@ describe('useAudioPreloader', () => {
       expect(result.current.isPreloading).toBe(true);
 
       await act(async () => arabic.resolve('/cache/audio1.mp3'));
-      await waitFor(() => expect(result.current.progress).toBe(50));
+      expect(result.current.isPreloading).toBe(true);
+      expect(result.current.isReady).toBe(false);
 
       await act(async () => english.resolve('/cache/audio1-en.mp3'));
       await waitFor(() => expect(result.current.isReady).toBe(true));
-      expect(result.current.progress).toBe(100);
+      expect(result.current.isPreloading).toBe(false);
     });
 
-    test('does not publish progress or rerender when background files finish', async () => {
+    test('does not rerender when background files finish', async () => {
       const background = deferred<string>();
       mockAudioCache.getAudio.mockImplementation(url => {
         if (url.endsWith('audio2.mp3')) return background.promise;
@@ -216,17 +213,15 @@ describe('useAudioPreloader', () => {
 
       await waitFor(() => expect(result.current.isReady).toBe(true));
       await waitFor(() => expect(mockAudioCache.getAudio).toHaveBeenCalledTimes(2));
-      expect(result.current.progress).toBe(100);
       const rendersAfterSessionReady = renderCount;
 
       await act(async () => background.resolve('/cache/audio2.mp3'));
       await waitFor(() => expect(mockPreload).toHaveBeenCalledWith('/cache/audio2.mp3'));
 
-      expect(result.current.progress).toBe(100);
       expect(renderCount).toBe(rendersAfterSessionReady);
     });
 
-    test('does not publish late first-card progress after the loading deadline', async () => {
+    test('does not rerender when a first-card file lands after the loading deadline', async () => {
       jest.useFakeTimers();
       const audio = deferred<string>();
       mockAudioCache.getAudio.mockReturnValue(audio.promise);
@@ -241,12 +236,10 @@ describe('useAudioPreloader', () => {
         expect(result.current.isPreloading).toBe(true);
         await act(async () => jest.advanceTimersByTimeAsync(10_000));
         expect(result.current.isReady).toBe(true);
-        expect(result.current.progress).toBe(0);
         const rendersAfterDeadline = renderCount;
 
         await act(async () => audio.resolve('/cache/audio1.mp3'));
 
-        expect(result.current.progress).toBe(0);
         expect(renderCount).toBe(rendersAfterDeadline);
       } finally {
         jest.useRealTimers();

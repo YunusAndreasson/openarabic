@@ -191,8 +191,9 @@ export default function PracticeScreen(): JSX.Element {
     [studyWords],
   );
 
-  // Seven days of due counts for the week-ahead card. The same series the
-  // /due-words sheet plots — one fact at two resolutions, never two facts.
+  // Seven days of forecast for the week-ahead card: due now, then what each day
+  // adds. The same series the /due-words sheet plots — one fact at two
+  // resolutions, never two facts.
   const forecast = useMemo(
     () => calculateDueWordsForecast(studyWords, DAYS_7, new Date(now)),
     [studyWords, now],

@@ -14,7 +14,6 @@ import { useCallback, useState, type ComponentType } from 'react';
 
 import { STRINGS } from '@/constants/strings';
 import { ReviewTutorialStep } from '@/constants/tutorials';
-import { lightFeedback } from '@/utils/haptics';
 
 import { TutorialGradesStep } from './steps';
 import { TutorialCard } from './TutorialCard';
@@ -62,7 +61,6 @@ export function ReviewGradesTutorial({ visible, onDismiss }: ReviewGradesTutoria
 
   const handleNext = useCallback(() => {
     if (isLastStep) {
-      lightFeedback();
       setCurrentStep(ReviewTutorialStep.INTRO);
       onDismiss();
     } else {

@@ -44,6 +44,8 @@ jest.mock('@/services/audioPlayer', () => ({
     // status the rest of the provider uses.
     getStatus: jest.fn((..._args: unknown[]) => ({ currentTime: 0, duration: 0 })),
     subscribe: jest.fn((..._args: unknown[]) => jest.fn()),
+    pause: jest.fn(),
+    resume: jest.fn(async (..._args: unknown[]) => true),
   },
 }));
 
@@ -192,12 +194,59 @@ describe('useGlobalAudioState', () => {
   });
 
   describe('Actions', () => {
-    test('should provide onPlayPause action', () => {
+    test('onTogglePause pauses a playing article track in place', () => {
+      mockSimpleAudioService.getStatus.mockReturnValue({
+        currentTime: 12,
+        duration: 60,
+        playing: true,
+        isLoaded: true,
+        isBuffering: false,
+      } as never);
       const { result } = renderHook(() => useGlobalAudioState(), {
         wrapper: GlobalAudioStateProvider,
       });
 
-      expect(typeof result.current.onPlayPause).toBe('function');
+      act(() => {
+        result.current.onTogglePause();
+      });
+
+      expect(mockSimpleAudioService.pause).toHaveBeenCalledTimes(1);
+      expect(mockSimpleAudioService.resume).not.toHaveBeenCalled();
+      expect(mockAudioPlayer.stop).not.toHaveBeenCalled();
+    });
+
+    test('onTogglePause resumes a paused track instead of restarting it', () => {
+      mockSimpleAudioService.getStatus.mockReturnValue({
+        currentTime: 12,
+        duration: 60,
+        playing: false,
+        isLoaded: true,
+        isBuffering: false,
+      } as never);
+      // resetMocks strips the factory's implementation before every test.
+      mockSimpleAudioService.resume.mockResolvedValue(true);
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
+
+      act(() => {
+        result.current.onTogglePause();
+      });
+
+      expect(mockSimpleAudioService.resume).toHaveBeenCalledTimes(1);
+      expect(mockSimpleAudioService.pause).not.toHaveBeenCalled();
+    });
+
+    test('onStop stops playback and clears the queue', () => {
+      const { result } = renderHook(() => useGlobalAudioState(), {
+        wrapper: GlobalAudioStateProvider,
+      });
+
+      act(() => {
+        result.current.onStop();
+      });
+
+      expect(mockAudioPlayer.stop).toHaveBeenCalledTimes(1);
     });
 
     test('should provide onTimerPress that navigates to the sleep-timer route', () => {
