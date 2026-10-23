@@ -434,9 +434,15 @@ export const VoiceGradingProvider = ({ children }: { children: ReactNode }) => {
   const playbackPriorityRef = useRef(false);
   /** Latched on the first failure to restore — see setPlaybackPriority. */
   const playbackPriorityBrokenRef = useRef(false);
-  // Any forced input recovery disables deferral for this provider's life.
-  // Recovery keeps the established Expo grant + deactivate/rebuild sequence.
+  // Any forced input recovery disables deferral for the rest of the review
+  // session (reset on release). Recovery keeps the established Expo grant +
+  // deactivate/rebuild sequence.
   const recordingGrantRequiredRef = useRef(false);
+  // The direct restore itself failed on this device (the session reset was
+  // refused, or the stream did not open). That is a property of the device, not
+  // of the session, so unlike the latch above it holds for the provider's life:
+  // a new session must not pay for the same failed attempt again.
+  const directRestoreBrokenRef = useRef(false);
   /** Serializes every playback/record handoff. A same-direction caller must also
    * join the active transition: `playbackPriorityRef` describes the completed
    * native state, not merely the most recently requested state. */
@@ -627,7 +633,10 @@ export const VoiceGradingProvider = ({ children }: { children: ReactNode }) => {
         markRestoreStart();
         try {
           const directRestore =
-            Platform.OS === 'ios' && !recordingGrantRequiredRef.current && !reopenOwedRef.current;
+            Platform.OS === 'ios' &&
+            !recordingGrantRequiredRef.current &&
+            !directRestoreBrokenRef.current &&
+            !reopenOwedRef.current;
           if (directRestore) {
             // audio-api caches both desired options and activation. After Expo
             // playback, both can look unchanged even though the actual category
@@ -641,6 +650,7 @@ export const VoiceGradingProvider = ({ children }: { children: ReactNode }) => {
               // A reset we cannot confirm must not take the direct path. Unlike
               // close({releaseSession:true}), this await surfaces rejection.
               recordingGrantRequiredRef.current = true;
+              directRestoreBrokenRef.current = true;
               diagMark('mic.session.directRestore.resetFailed');
             }
           }
@@ -656,6 +666,7 @@ export const VoiceGradingProvider = ({ children }: { children: ReactNode }) => {
           await openCapture(owed);
           if (!capture.isOpen) {
             recordingGrantRequiredRef.current = true;
+            if (directRestore) directRestoreBrokenRef.current = true;
             diagMark('mic.session.directRestore.failed');
             // One forced retry, then give up on the mechanism entirely rather
             // than leave the learner tapping a mic that will never open.
@@ -762,6 +773,12 @@ export const VoiceGradingProvider = ({ children }: { children: ReactNode }) => {
         await simpleAudioService.setRecordingSessionEnabled(false, { force: true });
         playbackPriorityRef.current = false;
         playbackPriorityBrokenRef.current = false;
+        // The provider lives for the whole app, so a latch left set here outlives
+        // the session that tripped it. One forced reopen (a foreground resume, an
+        // interruption, a deaf window) used to put every later session of the
+        // launch on the Expo-grant restore: ~1.3 s to the microphone instead of
+        // ~0.3 s, on every card, until the app was killed.
+        recordingGrantRequiredRef.current = false;
         // A debt owed to a session that no longer exists is not owed.
         reopenOwedRef.current = false;
       })();
