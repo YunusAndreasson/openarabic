@@ -49,10 +49,7 @@ export const useArticleData = (
     isError,
     isFetching,
     refetch,
-  } = useQuery({
-    ...articleQueries.detail(articleId ?? (0 as ArticleId)),
-    refetchOnMount: false, // Don't refetch on mount if we have data
-  });
+  } = useQuery(articleQueries.detail(articleId ?? (0 as ArticleId)));
 
   // A failed fetch only matters while there is no article to show. Reading
   // only `isLoading` used to send every failure — a dropped connection
@@ -79,10 +76,11 @@ export const useArticleData = (
 
   // Fetch study words with optimized caching
   // CRITICAL: Use same query as useSentenceSelectedRoots and useArticleWordInteractions for DRY consistency
+  // Refetched only by cache invalidation or pull-to-refresh: not on mount (the
+  // app-wide default) and not on reconnect.
   const studyWordsQuery = useQuery({
     ...gated(fsrsQueries.all, userId),
-    refetchOnMount: false, // Only refetch via cache invalidation or pull-to-refresh
-    refetchOnReconnect: false, // Only refetch via pull-to-refresh
+    refetchOnReconnect: false,
     placeholderData: old => old,
   });
 
@@ -90,7 +88,6 @@ export const useArticleData = (
   // but subscribe once for the screen instead of once per mounted word.
   const dueWordsQuery = useQuery({
     ...gated(fsrsQueries.due, userId),
-    refetchOnMount: false,
     refetchOnReconnect: false,
     placeholderData: old => old,
   });

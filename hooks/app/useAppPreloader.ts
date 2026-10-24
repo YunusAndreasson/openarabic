@@ -14,7 +14,6 @@ import {
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { articlesService } from '@/services/articles';
-import { readingProgressService } from '@/services/readingProgress';
 import type { Article } from '@/types/articles.types';
 import type { ArticleId } from '@/types/branded.types';
 import {
@@ -28,14 +27,20 @@ import { generateStorageUrl } from '@/utils/storageUtils';
 import { MAX_FEATURED_ARTICLES } from '@/hooks/articles/useMultipleFeaturedArticles';
 
 /**
- * Applied to every AWAITED query on the appReady-blocking path. The global
- * networkMode is 'online', under which an offline cold start PAUSES fetches
- * indefinitely (the promise never settles) and the splash never hides.
- * 'offlineFirst' always runs the first attempt; the app's global retry
- * function returns false while offline, so the fetch rejects fast and the
- * existing catch paths proceed to setIsLoaded(true).
+ * Applied to every AWAITED query on the appReady-blocking path, so each one
+ * settles — resolves or rejects — on its first attempt.
+ *
+ * The global networkMode is 'online', under which a fetch started offline
+ * PAUSES until the connection returns; 'offlineFirst' always runs the first
+ * attempt instead. `retry: false` matters just as much: under ANY retry the
+ * retryer sleeps after a failure and then pauses for as long as the device is
+ * offline (or the app backgrounded), so the awaited promise never settled and
+ * the splash stayed up until the network came back. The factories each carry a
+ * retry policy, and a factory's `retry` is what `query()` uses, so it has to be
+ * overridden here rather than left to the client default. Each query's own
+ * observers still retry under the factory's policy once a screen mounts it.
  */
-const OFFLINE_FIRST = { networkMode: 'offlineFirst' } as const;
+const SPLASH_GATE = { networkMode: 'offlineFirst', retry: false } as const;
 
 interface AppPreloaderResult {
   isPreloading: boolean;
@@ -81,17 +86,17 @@ export const useAppPreloader = (): AppPreloaderResult => {
       const [allArticles, allStudyWords, dueWords] = await Promise.all([
         queryClient.query({
           ...articleQueries.all(),
-          ...OFFLINE_FIRST,
+          ...SPLASH_GATE,
           staleTime: 'static',
         }),
         queryClient.query({
           ...fsrsQueries.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
-          ...OFFLINE_FIRST,
+          ...SPLASH_GATE,
           staleTime: 'static',
         }),
         queryClient.query({
           ...fsrsQueries.due(user.id),
-          ...OFFLINE_FIRST,
+          ...SPLASH_GATE,
           staleTime: 'static',
         }),
       ]);
@@ -169,25 +174,22 @@ export const useAppPreloader = (): AppPreloaderResult => {
       const criticalPromises = [
         queryClient.query({
           ...articleQueries.categories(),
-          ...OFFLINE_FIRST,
+          ...SPLASH_GATE,
           staleTime: 'static',
         }),
-        queryClient.query({ ...articleQueries.all(), ...OFFLINE_FIRST, staleTime: 'static' }),
+        queryClient.query({ ...articleQueries.all(), ...SPLASH_GATE, staleTime: 'static' }),
       ];
 
       // CRITICAL FIX: Load reading progress synchronously with articles
       // This prevents race condition where filtered view renders before progress data is available
-      // (this must SETTLE, never reject — hence OFFLINE_FIRST and the .catch
+      // (this must SETTLE, never reject — hence SPLASH_GATE and the .catch
       // below: it is awaited in the Promise.all that gates the whole preload)
       const readingProgressPromise = user?.id
         ? queryClient
             .query({
-              queryKey: readingProgressQueries.bulk(user.id).queryKey,
-              queryFn: () => readingProgressService.getBulkProgress(user.id, []),
+              ...readingProgressQueries.bulk(user.id),
               staleTime: 0, // CRITICAL: Always fetch fresh data on app startup to prevent stale cache from blocking updates
-              gcTime: 1000 * 60 * 60 * 24, // Keep in memory for 24 hours
-              retry: 2,
-              ...OFFLINE_FIRST,
+              ...SPLASH_GATE,
             })
             .catch(() => undefined)
         : Promise.resolve();
@@ -202,17 +204,17 @@ export const useAppPreloader = (): AppPreloaderResult => {
         ? Promise.all([
             queryClient.query({
               ...fsrsQueries.due(user.id),
-              ...OFFLINE_FIRST,
+              ...SPLASH_GATE,
               staleTime: 'static',
             }),
             queryClient.query({
               ...fsrsQueries.all(user.id),
-              ...OFFLINE_FIRST,
+              ...SPLASH_GATE,
               staleTime: 'static',
             }),
             queryClient.query({
               ...fsrsQueries.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
-              ...OFFLINE_FIRST,
+              ...SPLASH_GATE,
               staleTime: 'static',
             }),
           ])

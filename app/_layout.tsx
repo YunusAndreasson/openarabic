@@ -1,6 +1,6 @@
 import NetInfo, { type NetInfoState } from '@react-native-community/netinfo';
 import * as Sentry from '@sentry/react-native';
-import { QueryClient, onlineManager } from '@tanstack/react-query';
+import { QueryClient, focusManager, onlineManager } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { useFonts } from 'expo-font';
@@ -74,6 +74,7 @@ import { handleError } from '@/utils/errorHandling';
 import { registerMutationDefaults } from '@/utils/mutationDefaults';
 import { createNavigationOptions, createSheetOptions } from '@/utils/navigation';
 import { flushPersistedQueryCache, PERSISTENCE_OPTIONS } from '@/utils/queryPersistence';
+import { retryWhileOnline } from '@/utils/queryRetry';
 import { flushPendingSheetNavigation } from '@/utils/sheetNavigation';
 import type * as NotificationsModule from 'expo-notifications';
 
@@ -148,16 +149,18 @@ NetInfo.fetch()
     // onlineManager listener above covers the steady state.
   });
 
-// Optimized retry logic that stops when offline
-const createRetryFunction = (maxRetries: number) => (failureCount: number, error: unknown) => {
-  if (!onlineManager.isOnline()) return false;
-  // Don't retry on 4xx errors (client errors)
-  if (error && typeof error === 'object' && 'status' in error) {
-    const status = (error as { status: number }).status;
-    if (status >= 400 && status < 500) return false;
-  }
-  return failureCount < maxRetries;
-};
+// The documented React Native wiring for focus: the app is "focused" while it
+// is in the foreground. TanStack reads this to pause a query's retries while
+// the app is backgrounded (they continue on return instead of burning the
+// radio in the background) and to resume paused mutations when the app comes
+// back. Window-focus refetching stays off (the `refetchOnWindowFocus` default
+// below); the resume refresh in AppContent is what refreshes data on return.
+focusManager.setEventListener(handleFocus => {
+  const subscription = AppState.addEventListener('change', state => {
+    handleFocus(state === 'active');
+  });
+  return () => subscription.remove();
+});
 
 // Move queryClient outside component scope for better performance
 const queryClient = new QueryClient({
@@ -167,14 +170,16 @@ const queryClient = new QueryClient({
       gcTime: QUERY_DEFAULTS.GC_TIME,
       refetchOnMount: false,
       refetchOnReconnect: true,
-      refetchOnWindowFocus: false, // Disable for mobile
+      // Focus is wired above, but a return to the foreground refreshes through
+      // AppContent's resume pass rather than refetching every mounted query.
+      refetchOnWindowFocus: false,
       networkMode: 'online',
-      retry: createRetryFunction(QUERY_DEFAULTS.MAX_RETRIES),
+      retry: retryWhileOnline(QUERY_DEFAULTS.MAX_RETRIES),
       retryDelay: attemptIndex =>
         Math.min(1000 * 2 ** attemptIndex, QUERY_DEFAULTS.MAX_RETRY_DELAY),
     },
     mutations: {
-      retry: createRetryFunction(QUERY_DEFAULTS.MUTATION_MAX_RETRIES),
+      retry: retryWhileOnline(QUERY_DEFAULTS.MUTATION_MAX_RETRIES),
       networkMode: 'online',
       gcTime: 0, // Don't cache mutation results
     },

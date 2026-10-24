@@ -5,15 +5,19 @@
  *
  * Modern Jest 29 Patterns:
  * - ✅ jest.mocked() for type-safe mocking
- * - ✅ test.concurrent() for parallel execution
  * - ✅ @jest/globals explicit imports
  */
 
 import { beforeEach, describe, expect, test, jest } from '@jest/globals';
+import type { PostgrestError, PostgrestSingleResponse } from '@supabase/supabase-js';
 
 import { checkAuthentication } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
-import { executeAuthenticatedQuery, executeQuery } from '@/utils/supabaseHelpers';
+import {
+  executeAuthenticatedQuery,
+  executeQuery,
+  SupabaseRequestError,
+} from '@/utils/supabaseHelpers';
 import {
   createPostgrestErrorMock,
   createSessionMock,
@@ -32,18 +36,51 @@ jest.mock('@/services/supabase', () => ({
 const handleErrorMock = jest.mocked(handleError);
 const checkAuthenticationMock = jest.mocked(checkAuthentication);
 
+/** A successful supabase-js response, shaped exactly as the client resolves one. */
+function ok<T>(data: T): PostgrestSingleResponse<T> {
+  return { data, error: null, count: null, status: 200, statusText: 'OK', success: true };
+}
+
+/** A failed supabase-js response: the error object, with the status beside it. */
+function failed(error: PostgrestError, status = 400): PostgrestSingleResponse<never> {
+  return { data: null, error, count: null, status, statusText: '', success: false };
+}
+
 describe('supabaseHelpers', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
+  describe('SupabaseRequestError', () => {
+    test('keeps the PostgREST fields and the HTTP status on a real Error', () => {
+      const error = new SupabaseRequestError(
+        createPostgrestErrorMock('permission denied', {
+          code: '42501',
+          details: 'RLS',
+          hint: 'GRANT …',
+        }),
+        403,
+      );
+
+      expect(error).toBeInstanceOf(Error);
+      expect(error.message).toBe('permission denied');
+      expect(error.status).toBe(403);
+      expect(error.code).toBe('42501');
+      expect(error.details).toBe('RLS');
+      expect(error.hint).toBe('GRANT …');
+    });
+
+    // Sentry groups by exception type; these were always reported as `Error`.
+    test('keeps Error as its name so existing Sentry issues keep grouping', () => {
+      const error = new SupabaseRequestError(createPostgrestErrorMock('x'), 500);
+      expect(error.name).toBe('Error');
+    });
+  });
+
   describe('executeQuery', () => {
     test('should return data when query succeeds', async () => {
       const mockData = { id: 1, name: 'Test' };
-      const mockQueryFn = jest.fn(async (..._args: unknown[]) => ({
-        data: mockData,
-        error: null,
-      }));
+      const mockQueryFn = jest.fn(async () => ok(mockData));
 
       const result = await executeQuery(mockQueryFn);
 
@@ -52,24 +89,28 @@ describe('supabaseHelpers', () => {
       expect(handleErrorMock).not.toHaveBeenCalled();
     });
 
-    test('should call handleError and throw when query fails', async () => {
-      const mockError = createPostgrestErrorMock('Database error');
-      const mockQueryFn = jest.fn(async (..._args: unknown[]) => ({
-        data: null,
-        error: mockError,
-      }));
+    test('throws a SupabaseRequestError carrying the response status', async () => {
+      const mockQueryFn = jest.fn(async () =>
+        failed(createPostgrestErrorMock('Database error', { code: 'PGRST116' }), 406),
+      );
 
-      await expect(executeQuery(mockQueryFn)).rejects.toEqual(mockError);
+      const thrown = await executeQuery(mockQueryFn).catch((error: unknown) => error);
 
-      expect(handleErrorMock).toHaveBeenCalledWith(new Error('Database error'), {});
+      expect(thrown).toBeInstanceOf(SupabaseRequestError);
+      expect(thrown).toMatchObject({ message: 'Database error', status: 406, code: 'PGRST116' });
+    });
+
+    test('reports the same error it throws, with the config', async () => {
+      const mockQueryFn = jest.fn(async () => failed(createPostgrestErrorMock('Database error')));
+
+      const thrown = await executeQuery(mockQueryFn).catch((error: unknown) => error);
+
+      expect(handleErrorMock).toHaveBeenCalledTimes(1);
+      expect(handleErrorMock).toHaveBeenCalledWith(thrown, {});
     });
 
     test('should pass custom error config to handleError', async () => {
-      const mockError = createPostgrestErrorMock('Custom error');
-      const mockQueryFn = jest.fn(async (..._args: unknown[]) => ({
-        data: null,
-        error: mockError,
-      }));
+      const mockQueryFn = jest.fn(async () => failed(createPostgrestErrorMock('Custom error')));
 
       const errorConfig = {
         toastMessage: 'Failed to load data',
@@ -79,10 +120,10 @@ describe('supabaseHelpers', () => {
         showToast: false,
       };
 
-      await expect(executeQuery(mockQueryFn, errorConfig)).rejects.toEqual(mockError);
+      await expect(executeQuery(mockQueryFn, errorConfig)).rejects.toThrow('Custom error');
 
       expect(handleErrorMock).toHaveBeenCalledWith(
-        new Error('Custom error'),
+        expect.any(SupabaseRequestError),
         expect.objectContaining({
           toastMessage: 'Failed to load data',
           analyticsEventName: 'Data_Load_Error',
@@ -100,22 +141,15 @@ describe('supabaseHelpers', () => {
     // config untouched, so what is worth asserting here is exactly that — no
     // key invented, none dropped.
     test('forwards the error config verbatim, inventing no defaults of its own', async () => {
-      const mockError = createPostgrestErrorMock('Error');
-      const mockQueryFn = jest.fn(async (..._args: unknown[]) => ({
-        data: null,
-        error: mockError,
-      }));
+      const mockQueryFn = jest.fn(async () => failed(createPostgrestErrorMock('Error')));
 
-      await expect(executeQuery(mockQueryFn, { toastMessage: 'Nope' })).rejects.toEqual(mockError);
+      await expect(executeQuery(mockQueryFn, { toastMessage: 'Nope' })).rejects.toThrow('Error');
 
       expect(handleErrorMock).toHaveBeenCalledWith(expect.any(Error), { toastMessage: 'Nope' });
     });
 
     test('should handle null data without error', async () => {
-      const mockQueryFn = jest.fn(async (..._args: unknown[]) => ({
-        data: null,
-        error: null,
-      }));
+      const mockQueryFn = jest.fn(async () => ok(null));
 
       const result = await executeQuery(mockQueryFn);
 
@@ -125,10 +159,7 @@ describe('supabaseHelpers', () => {
 
     test('should handle array data', async () => {
       const mockData = [{ id: 1 }, { id: 2 }];
-      const mockQueryFn = jest.fn(async (..._args: unknown[]) => ({
-        data: mockData,
-        error: null,
-      }));
+      const mockQueryFn = jest.fn(async () => ok(mockData));
 
       const result = await executeQuery(mockQueryFn);
 
@@ -139,10 +170,7 @@ describe('supabaseHelpers', () => {
   describe('executeAuthenticatedQuery', () => {
     test('should check authentication before executing query', async () => {
       const mockData = { id: 1, name: 'Test' };
-      const mockQueryFn = jest.fn(async (..._args: unknown[]) => ({
-        data: mockData,
-        error: null,
-      }));
+      const mockQueryFn = jest.fn(async () => ok(mockData));
 
       checkAuthenticationMock.mockResolvedValue({
         session: createSessionMock(),
@@ -159,10 +187,7 @@ describe('supabaseHelpers', () => {
       const authError = new Error('Not authenticated');
       checkAuthenticationMock.mockRejectedValue(authError);
 
-      const mockQueryFn = jest.fn(async (..._args: unknown[]) => ({
-        data: null,
-        error: null,
-      }));
+      const mockQueryFn = jest.fn(async () => ok(null));
 
       await expect(executeAuthenticatedQuery('user-123', mockQueryFn)).rejects.toThrow(
         'Not authenticated',
@@ -173,11 +198,7 @@ describe('supabaseHelpers', () => {
     });
 
     test('should pass error config through to executeQuery', async () => {
-      const mockError = createPostgrestErrorMock('Query error');
-      const mockQueryFn = jest.fn(async (..._args: unknown[]) => ({
-        data: null,
-        error: mockError,
-      }));
+      const mockQueryFn = jest.fn(async () => failed(createPostgrestErrorMock('Query error')));
 
       checkAuthenticationMock.mockResolvedValue({
         session: createSessionMock(),
@@ -189,9 +210,9 @@ describe('supabaseHelpers', () => {
         analyticsEventName: 'Fetch_Error',
       };
 
-      await expect(executeAuthenticatedQuery('user-123', mockQueryFn, errorConfig)).rejects.toEqual(
-        mockError,
-      );
+      await expect(
+        executeAuthenticatedQuery('user-123', mockQueryFn, errorConfig),
+      ).rejects.toBeInstanceOf(SupabaseRequestError);
 
       expect(handleErrorMock).toHaveBeenCalledWith(
         expect.any(Error),
@@ -204,10 +225,7 @@ describe('supabaseHelpers', () => {
 
     test('should work with different user IDs', async () => {
       const mockData = { data: 'test' };
-      const mockQueryFn = jest.fn(async (..._args: unknown[]) => ({
-        data: mockData,
-        error: null,
-      }));
+      const mockQueryFn = jest.fn(async () => ok(mockData));
 
       checkAuthenticationMock.mockResolvedValue({
         session: createSessionMock(),

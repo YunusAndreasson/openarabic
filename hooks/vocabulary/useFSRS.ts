@@ -150,8 +150,6 @@ export function useFSRS({
   const { data: dueWords, isLoading } = useQuery({
     ...gated(id => fsrsQueries.due(id, _sessionCooldownHours), userId),
     refetchOnMount: true,
-    refetchOnWindowFocus: false, // Mobile-only: no window focus concept
-    refetchOnReconnect: true,
   });
 
   // Helper function to get next available word with proper spacing

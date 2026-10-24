@@ -38,6 +38,7 @@ import { sentencesService } from '@/services/sentences';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { ArticleId, RootId } from '@/types/branded.types';
 import { MILLISECONDS_PER_HOUR } from '@/utils/dateTimeUtils';
+import { retryWhileOnline } from '@/utils/queryRetry';
 
 /**
  * Predicate for invalidateQueries: skip queries whose queryFn is `skipToken`.
@@ -138,7 +139,7 @@ export const fsrsQueries = {
       queryFn: () => studyWordsFSRSService.getFSRSWords(userId, { forStats: false }),
       enabled: !!userId,
       ...CACHE_TIMES.MEDIUM,
-      retry: 3,
+      retry: retryWhileOnline(3),
     }),
 
   /**
@@ -156,7 +157,7 @@ export const fsrsQueries = {
         }),
       enabled: !!userId,
       ...CACHE_TIMES.MEDIUM,
-      retry: 3,
+      retry: retryWhileOnline(3),
     }),
 
   /**
@@ -192,7 +193,7 @@ export const fsrsQueries = {
       },
       enabled: !!userId,
       ...CACHE_TIMES.SHORT,
-      retry: 2,
+      retry: retryWhileOnline(2),
     }),
 
   /**
@@ -234,8 +235,7 @@ export const articleQueries = {
       queryKey: ['articles'] as const,
       queryFn: () => articlesService.getArticles(),
       ...CACHE_TIMES.ARTICLES, // Infinity staleTime
-      retry: 3,
-      refetchOnWindowFocus: false,
+      retry: retryWhileOnline(3),
       placeholderData: old => old,
     }),
 
@@ -249,7 +249,7 @@ export const articleQueries = {
       queryFn: () => articlesService.getArticleById(articleId),
       ...CACHE_TIMES.ARTICLES, // Infinity staleTime
       enabled: !!articleId,
-      retry: 2,
+      retry: retryWhileOnline(2),
       placeholderData: old => old,
     }),
 
@@ -262,7 +262,7 @@ export const articleQueries = {
       queryKey: ['articles', 'with-word-stats'] as const,
       queryFn: () => articlesService.getArticlesWithWordStats(),
       ...CACHE_TIMES.ARTICLES,
-      retry: 3,
+      retry: retryWhileOnline(3),
     }),
 
   /**
@@ -279,9 +279,7 @@ export const articleQueries = {
       queryKey: ['articles', 'search-corpus'] as const,
       queryFn: () => articlesService.getSearchCorpus(),
       ...CACHE_TIMES.ARTICLES, // Sentences never change (infinite staleTime)
-      retry: 2,
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
+      retry: retryWhileOnline(2),
     }),
 
   /**
@@ -293,9 +291,7 @@ export const articleQueries = {
       queryKey: ['categories'] as const,
       queryFn: () => categoriesService.getCategories(),
       ...CACHE_TIMES.STATIC, // 48 hours
-      retry: 3,
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
+      retry: retryWhileOnline(3),
     }),
 
   /**
@@ -307,9 +303,7 @@ export const articleQueries = {
       queryKey: ['authors'] as const,
       queryFn: () => authorsService.getUniqueAuthors(),
       ...CACHE_TIMES.STATIC, // 48 hours
-      retry: 3,
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
+      retry: retryWhileOnline(3),
     }),
 
   /**
@@ -340,7 +334,7 @@ export const readingProgressQueries = {
       queryFn: () => bookmarkService.getReadingList(userId),
       enabled: !!userId,
       ...CACHE_TIMES.MEDIUM,
-      retry: 2,
+      retry: retryWhileOnline(2),
       placeholderData: [],
     }),
 
@@ -355,7 +349,6 @@ export const readingProgressQueries = {
       enabled: !!userId,
       staleTime: 10000, // 10 seconds
       gcTime: 1000 * 60 * 60 * 24, // 24 hours
-      refetchOnMount: false,
       refetchOnReconnect: false,
       placeholderData: new Map(),
     }),
@@ -370,7 +363,6 @@ export const readingProgressQueries = {
       queryFn: () => bookmarkService.isInReadingList(userId, articleId),
       enabled: !!userId && !!articleId,
       ...CACHE_TIMES.MEDIUM,
-      refetchOnMount: false,
     }),
 
   /**
@@ -436,9 +428,7 @@ export const studyStreakQueries = {
       queryFn: () => StudySessionStreakService.getStudySessionStreak(userId),
       enabled: !!userId,
       ...CACHE_TIMES.CRITICAL, // 30 seconds (time-sensitive)
-      retry: 2,
-      refetchOnMount: false,
-      refetchOnWindowFocus: false,
+      retry: retryWhileOnline(2),
     }),
 
   /**
@@ -451,9 +441,8 @@ export const studyStreakQueries = {
       queryFn: () => StudySessionStreakService.getStudySessionHistory(userId, days),
       enabled: !!userId,
       ...CACHE_TIMES.CRITICAL, // 30 seconds (match streak counter for consistent UX)
-      retry: 2,
+      retry: retryWhileOnline(2),
       refetchOnMount: 'always', // Always refetch when chart opens to show fresh data
-      refetchOnWindowFocus: false,
     }),
 
   /**
@@ -493,7 +482,7 @@ export const sentenceQueries = {
       queryFn: () => sentencesService.getSentencesByRootId(rootId, limit),
       ...CACHE_TIMES.ARTICLES, // Sentences never change (infinite staleTime)
       enabled: !!rootId,
-      retry: 2,
+      retry: retryWhileOnline(2),
     }),
 } as const;
 
@@ -518,6 +507,6 @@ export const rootEnrichmentQueries = {
       queryKey: ['root-enrichment', rootId] as const,
       queryFn: rootId ? () => rootEnrichmentService.getByRootId(rootId) : skipToken,
       ...CACHE_TIMES.STATIC,
-      retry: 1,
+      retry: retryWhileOnline(1),
     }),
 } as const;

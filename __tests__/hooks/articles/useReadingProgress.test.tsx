@@ -79,14 +79,12 @@ describe('useReadingProgress', () => {
   };
 
   describe('Query Configuration', () => {
-    // These two options are observer options, not query options: they live on
+    // An observer option, not a query option: it lives on
     // `readingProgressQueries.bulk()`, and a cached `Query`'s `.options` never
-    // carries them. Reading them off the cache entry (as this suite used to)
-    // compared `undefined` to falsy and could not fail.
-    test('bulk progress does not refetch on mount', () => {
-      expect(readingProgressQueries.bulk(testUserId).refetchOnMount).toBe(false);
-    });
-
+    // carries it. Reading it off the cache entry (as this suite used to)
+    // compared `undefined` to falsy and could not fail. (Not refetching on
+    // mount is the app-wide default — app/_layout.tsx — so the factory no
+    // longer restates it.)
     test('bulk progress does not refetch on reconnect', () => {
       expect(readingProgressQueries.bulk(testUserId).refetchOnReconnect).toBe(false);
     });
