@@ -1,8 +1,9 @@
 import { act, renderHook } from '@testing-library/react-native';
 
 import { useToast, useVoiceGrading } from '@/components/providers';
-import { useVoiceReview } from '@/hooks/review/useVoiceReview';
+import { armRetryDelay, useVoiceReview } from '@/hooks/review/useVoiceReview';
 import { __resetMicPermissionForTests } from '@/lib/voice/recording';
+import { logVoiceArmFailure, logVoiceAttempt } from '@/services/voiceTelemetry';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import type { RootState } from '@/store/store';
 import { lightFeedback } from '@/utils/haptics';
@@ -11,6 +12,10 @@ jest.mock('@/components/providers', () => ({ useToast: jest.fn(), useVoiceGradin
 jest.mock('@/store/hooks', () => ({ useAppDispatch: jest.fn(), useAppSelectorShallow: jest.fn() }));
 jest.mock('@/services/analytics', () => ({ analytics: { track: jest.fn() } }));
 jest.mock('@/services/voiceTelemetry', () => ({
+  // The real row builder: it is pure, and every graded attempt goes through it.
+  buildVoiceAttemptLog: jest.requireActual<typeof import('@/services/voiceTelemetry')>(
+    '@/services/voiceTelemetry',
+  ).buildVoiceAttemptLog,
   logVoiceArmFailure: jest.fn(),
   logVoiceAttempt: jest.fn(),
 }));
@@ -329,6 +334,63 @@ test('the debug HUD picks up the latest attempt when it is switched on mid-sessi
   expect(view.result.current.debug.recorder).toMatchObject({ bufferCount: 12, gateUsed: 'vad' });
   // The recorder stats, not the capture itself.
   expect(view.result.current.debug.recorder).not.toHaveProperty('waveform');
+});
+
+test('a tapped, correct answer writes its row as an auto-pass', async () => {
+  jest.mocked(voice.transcribe).mockResolvedValueOnce('book');
+  jest.mocked(voice.arm).mockResolvedValueOnce(capturedSpeech());
+  const { result } = renderReview();
+
+  await act(async () => result.current.speakNow());
+
+  expect(logVoiceAttempt).toHaveBeenCalledTimes(1);
+  expect(logVoiceAttempt).toHaveBeenCalledWith(
+    expect.objectContaining({
+      resolution: 'auto_known',
+      transcript: 'book',
+      matched: true,
+      matchMethod: 'exact',
+      durationMs: 1200,
+      bufferCount: 12,
+      meta: expect.objectContaining({
+        armTrigger: 'tap',
+        answerDisclosed: false,
+        gate: { used: 'vad', noiseFloorDb: -58, speechMs: 600, levelsDb: [] },
+      }),
+    }),
+  );
+});
+
+test('a card that never gets a microphone writes one row, after the whole ladder', async () => {
+  jest.useFakeTimers();
+  jest.mocked(voice.arm).mockResolvedValue({ ok: false, reason: 'error', message: 'stream dead' });
+  try {
+    const { result, unmount } = renderReview();
+    await act(async () => result.current.speakNow());
+    for (const backoff of [250, 500, 750]) {
+      await act(async () => {
+        jest.advanceTimersByTime(backoff);
+      });
+    }
+    expect(voice.arm).toHaveBeenCalledTimes(4);
+    expect(logVoiceArmFailure).toHaveBeenCalledTimes(1);
+    expect(logVoiceArmFailure).toHaveBeenCalledWith(
+      expect.objectContaining({
+        attemptIndex: 3,
+        reason: 'error',
+        message: 'stream dead',
+        meta: expect.objectContaining({ phase: 'gave-up' }),
+      }),
+    );
+    unmount();
+  } finally {
+    jest.useRealTimers();
+  }
+});
+
+test('the arm ladder backs off 250, 500 and 750 ms, then gives up', () => {
+  // A microphone that needs four goes is broken, not slow.
+  expect([0, 1, 2, 3].map(failures => armRetryDelay(failures))).toEqual([250, 500, 750, null]);
 });
 
 test('a transient open failure still retries automatically', async () => {

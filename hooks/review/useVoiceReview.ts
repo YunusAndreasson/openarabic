@@ -53,28 +53,22 @@ import { useToast, useVoiceGrading } from '@/components/providers';
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { STRINGS } from '@/constants/strings';
 import { useResumeFromBackground } from '@/hooks/app/useResumeFromBackground';
-import {
-  PARAKEET_MODEL_ID,
-  VOICE_DECODING_METHOD,
-  VOICE_HOTWORD_DECODING_METHOD,
-} from '@/constants/voiceModel';
-import {
-  DEFAULT_RECORDING_CONFIG,
-  forgetMicPermissionRefusal,
-  getMicPermissionStatus,
-} from '@/lib/voice/recording';
-import type { RecordingStopReason, SpeechGateKind } from '@/lib/voice/recording';
+import { forgetMicPermissionRefusal, getMicPermissionStatus } from '@/lib/voice/recording';
+import type { RecordingResult } from '@/lib/voice/recording';
 import type { RootId } from '@/types/branded.types';
 import { analytics } from '@/services/analytics';
 import {
+  buildVoiceAttemptLog,
   logVoiceArmFailure,
   logVoiceAttempt,
+  type VoiceArmTrigger,
   type VoiceAttemptLog,
 } from '@/services/voiceTelemetry';
 import { getVoiceModelSnapshot } from '@/services/voiceModelStore';
 import { useAppDispatch, useAppSelectorShallow } from '@/store/hooks';
 import {
   selectVoiceDebugEnabled,
+  selectVoiceEnabled,
   selectVoiceEnergyGateEnabled,
   selectVoiceGainNormalizeEnabled,
   selectVoiceIosRawMode,
@@ -88,6 +82,7 @@ import { countDiag, mark as diagMark, span as diagSpan } from '@/utils/reviewDia
 import { matchSingleWord, suggestAfterMiss } from '@/utils/voiceMatching';
 import type { MatchMethod, VoiceSuggestion } from '@/utils/voiceMatching';
 import { voiceBreadcrumb } from '@/utils/errorHandling';
+import { withTimeout } from '@/utils/async';
 
 /**
  * `arming` is the window between asking for the mic and the mic actually
@@ -153,6 +148,15 @@ export interface VoiceResult {
   suggestion: VoiceSuggestion;
 }
 
+/**
+ * What the HUD shows of one recording: everything the recorder measured except
+ * the capture itself. Derived from RecordingResult — whose fields document
+ * which detector decided (`gateUsed`) and why a dead microphone reports a null
+ * room rather than a quiet one (`noiseFloorDb`) — instead of re-declared by
+ * hand beside it.
+ */
+type VoiceRecorderStats = Omit<RecordingResult, 'waveform' | 'sampleRate' | 'levelsDb'>;
+
 /** Last-recording diagnostics surfaced to the on-screen voice HUD. */
 export interface VoiceDebug {
   /** Trimmed Parakeet output for the most recent recording, '' if none. */
@@ -166,27 +170,7 @@ export interface VoiceDebug {
     expected: string;
   } | null;
   /** Raw recorder stats from the most recent stop. */
-  recorder: {
-    durationMs: number;
-    bufferCount: number;
-    stopReason: RecordingStopReason;
-    /** Which detector decided this window. The config says only what was
-     *  ASKED for: the VAD is skipped before its model lands and handed back
-     *  mid-window on a bad capture rate, and a stop that looks wrong reads
-     *  completely differently depending on which one took it. */
-    gateUsed: SpeechGateKind;
-    heardSpeech: boolean;
-    peakRms: number;
-    /** The room the gate judged this answer against, and how much of the
-     *  window cleared it. A stop that looks wrong is almost always one of
-     *  these two being wrong, and neither is visible from `peakRms`.
-     *  `null` when no buffer ever arrived — a dead mic has measured nothing,
-     *  and must not read as a quiet room. */
-    noiseFloorDb: number | null;
-    speechMs: number;
-    firstBufferMs: number | null;
-    stopDecidedAtMs: number;
-  } | null;
+  recorder: VoiceRecorderStats | null;
   /** Last terminal arm() outcome (permission / busy / error / etc.). */
   armError: string | null;
 }
@@ -274,6 +258,16 @@ const MAX_ARM_RETRIES = 3;
 /** Backoff between arm retries, multiplied by the attempt number. Long enough
  *  for a previous recorder's native teardown to complete. */
 const ARM_RETRY_BASE_MS = 250;
+
+/**
+ * How long to wait before re-arming after a transient failure, given how many
+ * this card has already had — 250, 500, then 750 ms — or `null` once the
+ * ladder is out of rungs and the card gives up on the microphone.
+ */
+export function armRetryDelay(failuresSoFar: number): number | null {
+  return failuresSoFar < MAX_ARM_RETRIES ? ARM_RETRY_BASE_MS * (failuresSoFar + 1) : null;
+}
+
 /** Ceiling on a single transcription. The native call has no timeout of its
  *  own, so a hung ONNX session left the card stuck on "Grading…" with no way
  *  out but advancing. Measured on the Android emulator: 2949 ms cold (ONNX warm
@@ -281,25 +275,19 @@ const ARM_RETRY_BASE_MS = 250;
  *  observed case — it only ever fires on a genuine hang. */
 const TRANSCRIBE_TIMEOUT_MS = 15000;
 
-/** Resolves to `null` if the transcription outlives its budget, so the caller
- *  falls through to the "didn't catch that" panel instead of hanging. The
+/** Resolves as `timedOut` if the transcription outlives its budget, so the
+ *  caller falls through to the "didn't catch that" panel instead of hanging. The
  *  native promise is abandoned, not cancelled — sherpa exposes no cancel — but
  *  a late resolution is harmless: `cancelled` already guards the continuation. */
-async function transcribeWithTimeout(
+function transcribeWithTimeout(
   run: Promise<string | null>,
   timeoutMs: number = TRANSCRIBE_TIMEOUT_MS,
 ): Promise<{ transcript: string; timedOut: boolean }> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const timeout = new Promise<null>(resolve => {
-    timer = setTimeout(() => resolve(null), timeoutMs);
-  });
-  try {
-    const winner = await Promise.race([run.then(value => ({ value })), timeout]);
-    if (winner === null) return { transcript: '', timedOut: true };
-    return { transcript: winner.value ?? '', timedOut: false };
-  } finally {
-    clearTimeout(timer);
-  }
+  return withTimeout(
+    run.then(transcript => ({ transcript: transcript ?? '', timedOut: false })),
+    timeoutMs,
+    () => ({ transcript: '', timedOut: true }),
+  );
 }
 
 export function useVoiceReview({
@@ -352,7 +340,7 @@ export function useVoiceReview({
    */
   handsFreeActive: boolean;
 } {
-  const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
+  const voiceEnabled = useAppSelectorShallow(selectVoiceEnabled);
   // Advanced dev toggles — snapshotted into each telemetry attempt's `meta`.
   const energyGateEnabled = useAppSelectorShallow(selectVoiceEnergyGateEnabled);
   const gainNormalizeEnabled = useAppSelectorShallow(selectVoiceGainNormalizeEnabled);
@@ -419,7 +407,7 @@ export function useVoiceReview({
    * (`tapAtRef` was cleared and read, never assigned), so it proved nothing.
    * A row with an arm and a null trigger is an arm nobody asked for.
    */
-  const armTriggerRef = useRef<'tap' | 'auto' | 'retry' | 'ladder' | null>(null);
+  const armTriggerRef = useRef<VoiceArmTrigger | null>(null);
   /**
    * Whether the window currently being graded was one the learner opened.
    *
@@ -542,10 +530,12 @@ export function useVoiceReview({
     [],
   );
 
-  // Both effects below depend on the individual callbacks rather than the whole
-  // `voice` context value: that object's identity changes whenever any of its
-  // state does, so depending on it would tear the session down and rebuild it.
-  const { prewarmPermission, acquireSession, acquireEngine, offerHotwordGlosses } = voice;
+  // The effects and handlers below depend on the individual callbacks rather
+  // than the whole `voice` context value: that object's identity changes
+  // whenever any of its state does, so depending on it would tear the session
+  // down and rebuild it.
+  const { prewarmPermission, acquireSession, acquireEngine, offerHotwordGlosses, stopListening } =
+    voice;
 
   // Bias the recogniser toward this session's answers — all of them, so the
   // list never says which one the current card wants. Keyed on the sorted
@@ -814,6 +804,17 @@ export function useVoiceReview({
       if (!outcome.ok) {
         countDiag({ micArmFailures: 1 });
         diagMark('mic.arm.failed', { reason: outcome.reason, message: outcome.message });
+        // The one row a card that never got a microphone writes.
+        const logArmFailure = (phase: 'denied' | 'gave-up'): void => {
+          void logVoiceArmFailure({
+            rootId: rootId ?? null,
+            expected,
+            attemptIndex: armFailuresRef.current,
+            reason: outcome.reason,
+            message: outcome.message ?? null,
+            meta: { settings: readSettings(), phase, prompt: getPromptSnapshot(currentWordKey) },
+          });
+        };
         if (outcome.reason === 'permission') {
           void analytics.track(ANALYTICS_EVENTS.VOICE_MIC_DENIED);
           voiceBreadcrumb('voice.mic.denied', undefined, 'warning');
@@ -831,23 +832,7 @@ export function useVoiceReview({
           publishDebug(d => ({ ...d, armError: 'permission' }));
           // Still always worth a row: it ends this card's voice attempt, and
           // the rate of it is how we know whether the ask is landing.
-          void logVoiceArmFailure({
-            rootId: rootId ?? null,
-            expected,
-            attemptIndex: armFailuresRef.current,
-            reason: 'permission',
-            message: outcome.message ?? null,
-            stopReason: null,
-            durationMs: null,
-            bufferCount: null,
-            tapToCapturingMs: null,
-            streamRefreshed: false,
-            meta: {
-              settings: readSettings(),
-              phase: 'denied',
-              prompt: getPromptSnapshot(currentWordKey),
-            },
-          });
+          logArmFailure('denied');
           setMicPermission('denied');
           setPhase('denied');
           return;
@@ -868,10 +853,13 @@ export function useVoiceReview({
         // the failure we are trying to measure. Only the terminal outcome below
         // is written: one row per card that never got a microphone, carrying
         // how many attempts it took to give up.
-        if (armFailuresRef.current < MAX_ARM_RETRIES) {
+        const retryDelay = armRetryDelay(armFailuresRef.current);
+        if (retryDelay !== null) {
           armFailuresRef.current += 1;
-          const delay = ARM_RETRY_BASE_MS * armFailuresRef.current;
-          diagMark('mic.arm.retry-scheduled', { attempt: armFailuresRef.current, delay });
+          diagMark('mic.arm.retry-scheduled', {
+            attempt: armFailuresRef.current,
+            delay: retryDelay,
+          });
           armedForKeyRef.current = null;
           // Still the learner's original request — finish it rather than making
           // them tap again for a native hiccup they never saw. The trigger stays
@@ -881,27 +869,11 @@ export function useVoiceReview({
           armRetryTimerRef.current = setTimeout(() => {
             armRetryTimerRef.current = null;
             setAttempt(a => a + 1);
-          }, delay);
+          }, retryDelay);
           return;
         }
         diagMark('mic.arm.gave-up', { attempts: armFailuresRef.current });
-        void logVoiceArmFailure({
-          rootId: rootId ?? null,
-          expected,
-          attemptIndex: armFailuresRef.current,
-          reason: outcome.reason,
-          message: outcome.message ?? null,
-          stopReason: null,
-          durationMs: null,
-          bufferCount: null,
-          tapToCapturingMs: null,
-          streamRefreshed: false,
-          meta: {
-            settings: readSettings(),
-            phase: 'gave-up',
-            prompt: getPromptSnapshot(currentWordKey),
-          },
-        });
+        logArmFailure('gave-up');
         // The ladder is out of rungs: this card never got a microphone. The
         // button goes quietly back to "Speak to answer", which is
         // indistinguishable from it never having been pressed — so the one
@@ -926,22 +898,9 @@ export function useVoiceReview({
 
       countDiag({ micArms: 1 });
       setPhase('checking');
-      publishDebug(d => ({
-        ...d,
-        armError: null,
-        recorder: {
-          durationMs: outcome.result.durationMs,
-          bufferCount: outcome.result.bufferCount,
-          stopReason: outcome.result.stopReason,
-          gateUsed: outcome.result.gateUsed,
-          heardSpeech: outcome.result.heardSpeech,
-          peakRms: outcome.result.peakRms,
-          noiseFloorDb: outcome.result.noiseFloorDb,
-          speechMs: outcome.result.speechMs,
-          firstBufferMs: outcome.result.firstBufferMs,
-          stopDecidedAtMs: outcome.result.stopDecidedAtMs,
-        },
-      }));
+      // The HUD gets the recorder's measurements, not the capture itself.
+      const { waveform, sampleRate, levelsDb, ...recorder } = outcome.result;
+      publishDebug(d => ({ ...d, armError: null, recorder }));
       // A self-opened window that ran its whole budget without hearing anyone
       // is not a wrong answer — it is a card the learner never chose to speak
       // to. Grading it would put a transcript panel (or worse, a mark) on a
@@ -1032,83 +991,25 @@ export function useVoiceReview({
       // Snapshot everything loggable except the resolution. The auto-known path
       // logs immediately; a miss stores it so accept/reject/retry can log with
       // the user's verdict.
-      const settings = readSettings();
       const buildAttemptCtx = (
         sug: VoiceResult['suggestion'],
-      ): Omit<VoiceAttemptLog, 'resolution'> => ({
-        rootId: rootId ?? null,
-        expected: match.normalizedExpected,
-        transcript,
-        normalizedSpoken: match.normalizedSpoken,
-        matched: match.matched,
-        matchMethod: match.method,
-        similarity: match.similarity,
-        suggestion: sug,
-        attemptIndex: attempt,
-        durationMs: outcome.result.durationMs,
-        stopReason: outcome.result.stopReason,
-        heardSpeech: outcome.result.heardSpeech,
-        peakRms: outcome.result.peakRms,
-        bufferCount: outcome.result.bufferCount,
-        firstBufferMs: outcome.result.firstBufferMs,
-        stopDecidedAtMs: outcome.result.stopDecidedAtMs,
-        modelId: PARAKEET_MODEL_ID,
-        meta: {
-          // Free: this row is written anyway, one per resolved attempt. Adds no
-          // volume and gives the latency distribution the HUD can only show one
-          // card at a time — `tapToCapturingMs` is what the learner waits,
-          // where `first_buffer_ms` starts counting only once the window opens.
+      ): Omit<VoiceAttemptLog, 'resolution'> =>
+        buildVoiceAttemptLog({
+          rootId: rootId ?? null,
+          transcript,
+          match,
+          suggestion: sug,
+          attemptIndex: attempt,
+          recording: outcome.result,
           tapToCapturingMs: tapToCapturingRef.current,
           armAttempts: armFailuresRef.current,
           armTrigger: armTriggerRef.current,
-          // A retry after the answer was shown: its match is capped at vague.
           answerDisclosed,
-          // Where the ~1.1 s between the tap and the microphone went. Only
-          // ~150 ms of it is the recorder; the rest was unattributed until this.
           armStages: getArmStages(),
-          streamRefreshed: false,
-          // What the learner actually heard before answering. A miss on a card
-          // whose prompt was cut (or never played) is not a mishearing — it is
-          // a question that was never asked, and until this landed the two were
-          // indistinguishable in the table.
           prompt: getPromptSnapshot(currentWordKey),
-          settings,
-          recordingConfig: {
-            ...DEFAULT_RECORDING_CONFIG,
-            energyGateEnabled: settings.energyGateEnabled,
-            gainNormalizeEnabled: settings.gainNormalizeEnabled,
-            iosRawMode: settings.iosRawMode,
-          },
-          // What the energy gate actually saw. `peak_rms` is one number for a
-          // whole window, and three separate gate regressions each needed a
-          // fresh device session to diagnose because of it — the envelope and
-          // the room measurement are what make a row self-explaining. Rounded
-          // integers, ~160 of them at most.
-          gate: {
-            // WHICH detector decided, never inferred from the config: the VAD is
-            // skipped before its model lands and handed back mid-window on a bad
-            // capture rate, so a row that assumed 'vad' would be a guess.
-            used: outcome.result.gateUsed,
-            // Null travels as null: a dead-mic row must stay distinguishable
-            // from one that measured a quiet room. See RecordingResult.
-            noiseFloorDb:
-              outcome.result.noiseFloorDb === null ? null : Math.round(outcome.result.noiseFloorDb),
-            speechMs: outcome.result.speechMs,
-            levelsDb: outcome.result.levelsDb,
-          },
-          // Rows written before 2026-08-17 claim `modified_beam_search` here. That
-          // was never true — see the decoding note in useSherpaStt.ts. Treat the
-          // field as valid only from this value onward.
-          //
-          // `hotwords` is the phrase count the engine that produced THIS
-          // transcript was built with, which is what a bias-on / bias-off
-          // comparison has to segment on.
-          decoding: {
-            method: voice.hotwordCount > 0 ? VOICE_HOTWORD_DECODING_METHOD : VOICE_DECODING_METHOD,
-            hotwords: voice.hotwordCount,
-          },
-        },
-      });
+          settings: readSettings(),
+          hotwordCount: voice.hotwordCount,
+        });
 
       if (match.matched) {
         // Correct → log the auto-pass, then proceed. Blank the indicator before
@@ -1213,7 +1114,7 @@ export function useVoiceReview({
       // The recording this phase described is gone; leaving "Listening…" up
       // would keep inviting an answer nothing is capturing. A later run sets
       // its own phase, and 'result' belongs to the panel, so leave that alone.
-      setPhase(p => (p === 'arming' || p === 'listening' || p === 'checking' ? 'idle' : p));
+      setPhase(p => (micHoldsAudioSession(p) ? 'idle' : p));
       // Cancel is a no-op when nothing is in flight.
       void voice.cancel();
     };
@@ -1222,18 +1123,7 @@ export function useVoiceReview({
     // harmful: tapping during the prompt makes speakNow stop the clip, the
     // watcher then reports the prompt finished, this effect re-runs — and its
     // cleanup cancels the recording the tap had just started.
-  }, [
-    voiceEnabled,
-    voice,
-    ready,
-    result,
-    expected,
-    currentWordKey,
-    rootId,
-    attempt,
-    dispatch,
-    showToast,
-  ]);
+  }, [voiceEnabled, voice, ready, result, expected, currentWordKey, rootId, attempt, showToast]);
 
   const accept = useCallback((): void => {
     const ctx = attemptCtxRef.current;
@@ -1297,12 +1187,7 @@ export function useVoiceReview({
   const speakNow = useCallback((): void => {
     // A mic that is already open (or grading) is not something to take over —
     // re-arming here would throw away audio the learner has already spoken.
-    if (
-      phaseRef.current === 'arming' ||
-      phaseRef.current === 'listening' ||
-      phaseRef.current === 'checking'
-    )
-      return;
+    if (micHoldsAudioSession(phaseRef.current)) return;
     if (!voice.isReady) return;
     // Claim the tap before React commits: another press must not cancel and
     // restart the native open already requested by this one.
@@ -1343,8 +1228,8 @@ export function useVoiceReview({
    */
   const stopSpeaking = useCallback((): void => {
     if (phaseRef.current !== 'listening') return;
-    voice.stopListening();
-  }, [voice]);
+    stopListening();
+  }, [stopListening]);
 
   return {
     micDenied: micPermission === 'denied',
