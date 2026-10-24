@@ -149,7 +149,6 @@ const sessionMetricsDefaults = (metrics: Partial<SessionMetrics> = {}) => ({
     ...metrics,
   },
   updateMetrics: jest.fn(),
-  resetMetrics: jest.fn(),
 });
 
 export const createSessionMetricsMock = (

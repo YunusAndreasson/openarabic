@@ -21,7 +21,7 @@ const model = (
 });
 
 const engine = (
-  overrides: Partial<{ isReady: boolean; isWarming: boolean; error: Error | null }>,
+  overrides: Partial<{ isReady: boolean; isWarming: boolean; error: string | null }>,
 ) => ({
   isReady: false,
   isWarming: false,
@@ -124,6 +124,19 @@ describe('voiceReadiness', () => {
         engine: engine({}),
       }),
     ).toEqual({ kind: 'waiting-wifi' });
+  });
+
+  it('reports a recognizer that failed to build, whatever the bytes say', () => {
+    // The provider hands over the build error as its message; any message is a
+    // failure, and the model being on disk does not make it usable.
+    expect(
+      voiceReadiness({
+        voiceEnabled: true,
+        micDenied: false,
+        model: model('ready'),
+        engine: engine({ error: 'Voice engine did not load within 45 seconds' }),
+      }),
+    ).toEqual({ kind: 'failed', reason: 'unknown' });
   });
 
   it('carries the failure reason so the copy can be actionable', () => {

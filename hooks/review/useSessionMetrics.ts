@@ -24,7 +24,7 @@ function createSessionMetrics(startTime: number): SessionMetrics {
  * Handles all session statistics including streaks, accuracy, and stability improvements
  *
  * @example
- * const { metrics, updateMetrics, resetMetrics } = useSessionMetrics();
+ * const { metrics, updateMetrics } = useSessionMetrics();
  * updateMetrics('known', { rootId, oldStability: 4.5, newStability: 6.2 });
  * console.log(metrics.wordsKnown, metrics.currentStreak);
  */
@@ -56,23 +56,17 @@ export const useSessionMetrics = () => {
       // what FSRS scores and with the drill (which re-asks only on Forgot).
       const recalled = RECALLED_CONFIDENCE.has(confidence);
 
-      // Track unique words reviewed (count each word only once per session)
-      if (wordData?.rootId) {
-        if (!reviewedWordsSet.current.has(wordData.rootId)) {
-          reviewedWordsSet.current.add(wordData.rootId);
-          metrics.wordsReviewed++;
-          // First-attempt-per-word recall signal for adaptive pacing. Recorded
-          // only on a word's first grade this session, so in-session re-asks
-          // (spacing / drilling) don't inflate the rate.
-          if (recalled) {
-            metrics.firstAttemptKnown++;
-          } else {
-            metrics.firstAttemptUnknown++;
-          }
-        }
-      } else {
-        // Fallback for backwards compatibility if no rootId provided
+      // Track unique words reviewed (count each word only once per session).
+      // Without a rootId every grade counts as a word's first — the session
+      // always passes one; the fallback is for callers that cannot.
+      const rootId = wordData?.rootId;
+      const isFirstGrade = !rootId || !reviewedWordsSet.current.has(rootId);
+      if (isFirstGrade) {
+        if (rootId) reviewedWordsSet.current.add(rootId);
         metrics.wordsReviewed++;
+        // First-attempt-per-word recall signal for adaptive pacing. Recorded
+        // only on a word's first grade this session, so in-session re-asks
+        // (spacing / drilling) don't inflate the rate.
         if (recalled) {
           metrics.firstAttemptKnown++;
         } else {
@@ -119,23 +113,12 @@ export const useSessionMetrics = () => {
     [],
   );
 
-  /**
-   * Reset all metrics to initial state
-   * Useful when starting a new session
-   */
-  const resetMetrics = useCallback(() => {
-    Object.assign(metricsRef.current, createSessionMetrics(Date.now()));
-    reviewedWordsSet.current.clear();
-    stabilitySampleCountRef.current = 0;
-  }, []);
-
-  // metricsRef is mutated imperatively in updateMetrics/resetMetrics so consumers
-  // read the latest values when their own state changes trigger re-render.
+  // metricsRef is mutated imperatively in updateMetrics so consumers read the
+  // latest values when their own state changes trigger re-render.
   // eslint-disable-next-line react-hooks/refs
   return {
     // eslint-disable-next-line react-hooks/refs
     metrics: metricsRef.current,
     updateMetrics,
-    resetMetrics,
   };
 };

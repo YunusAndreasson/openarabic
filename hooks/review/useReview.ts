@@ -21,6 +21,7 @@ import { STRINGS } from '@/constants/strings';
 import { analytics } from '@/services/analytics';
 import { logPromptSilent } from '@/services/voiceTelemetry';
 import { useAppSelectorShallow } from '@/store/hooks';
+import { selectVoiceEnabled } from '@/store/settingsSlice';
 
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useAuth } from '@/hooks/auth';
@@ -414,7 +415,7 @@ export function useReview({
   // about to open on a word that was never read. Read through an Effect Event
   // (below) so the prompt effect doesn't re-run just because a setting
   // changed mid-card.
-  const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
+  const voiceEnabled = useAppSelectorShallow(selectVoiceEnabled);
   // Defaults to a no-op so a caller that does not care (and every test) needs
   // no provider. Plain closure — safe for the non-effect callers below
   // (revealMeaningPassive, enterRestudy, handleReplayAudio), which already

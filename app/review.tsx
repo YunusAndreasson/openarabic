@@ -35,6 +35,7 @@ import { useVoiceModel } from '@/hooks/voice/useVoiceModel';
 import { allowMeteredVoiceModelDownload } from '@/services/voiceModelStore';
 import { voiceReadiness } from '@/utils/voiceReadiness';
 import type { WordConfidence } from '@/types/review.types';
+import type { StudyWord } from '@/types/vocabulary.types';
 import { ReviewGradesTutorial } from '@/components/tutorials/ReviewGradesTutorial';
 import { PulsatingLoader } from '@/components/ui';
 import { TIMING_CONFIG, VERDICT } from '@/constants/animation';
@@ -135,6 +136,10 @@ const ACTION_EXITING = FadeOut.duration(TIMING_CONFIG.FAST.duration);
 
 /** Stable identity for a card with no corpus glosses yet (or none at all). */
 const EMPTY_GLOSSES: string[] = [];
+
+/** The English answers these words carry — the ones that have one. */
+const glossesOf = (words: readonly StudyWord[]): string[] =>
+  words.flatMap(word => word.root?.meaning || []);
 
 /**
  * Every wait before the first card — store hydration, the grades tutorial's
@@ -451,10 +456,9 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   // heap, and a missed word waiting out its drill lag is held outside it and
   // served straight back — so the very words being drilled, the likeliest to be
   // said by mistake, were the ones missing from the veto.
-  const otherGlosses = sessionWords
-    .filter(word => word.root_id !== currentWord?.root_id)
-    .map(word => word.root?.meaning)
-    .filter((meaning): meaning is string => Boolean(meaning));
+  const otherGlosses = glossesOf(
+    sessionWords.filter(word => word.root_id !== currentWord?.root_id),
+  );
 
   // The recogniser's hotwords: every answer due this session, known once at the
   // start. Not `wordQueue` — that is a 20-word working heap that refills, and
@@ -470,11 +474,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   // — which retained the engine and started the unbiased build this exists to
   // prevent. A session with no words has no card to grade either.
   const sessionGlosses =
-    isLoading || sessionWords.length === 0
-      ? undefined
-      : sessionWords
-          .map(word => word.root?.meaning)
-          .filter((meaning): meaning is string => Boolean(meaning));
+    isLoading || sessionWords.length === 0 ? undefined : glossesOf(sessionWords);
 
   // Voice grading — the microphone opens itself once the Arabic prompt has
   // played and the learner simply answers, so the action band carries "Show
@@ -550,7 +550,8 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
   // place of the standard action buttons; a correct answer just proceeds (no
   // result).
   const voiceShowResult = voicePhase === 'result' && voiceResult !== null;
-  const voiceEnabled = useAppSelectorShallow(state => state.settings.voiceEnabled);
+  // The provider's mirror of the setting, read in the same render as the store.
+  const voiceEnabled = voice.enabled;
 
   // The two halves of the voice UI, and the split between them: the BUTTON is
   // the action ("Speak to answer" / "Done"), the CARD is the state (a meter that
@@ -570,11 +571,7 @@ function ReviewContent({ fromRemember }: { fromRemember: boolean }): JSX.Element
     voiceEnabled,
     micDenied: micDenied || voicePhase === 'denied',
     model: voiceModel,
-    engine: {
-      isReady: voice.isReady,
-      isWarming: voice.isWarming,
-      error: voice.error ? new Error(voice.error) : null,
-    },
+    engine: { isReady: voice.isReady, isWarming: voice.isWarming, error: voice.error },
   });
 
   // NO mid-card latch, and that is a deliberate simplification. The worry was a
@@ -1008,8 +1005,8 @@ const voiceDebugStyles = StyleSheet.create({
 });
 
 export default function ReviewScreen(): JSX.Element {
-  const params = useLocalSearchParams();
-  const fromRemember = params['fromRemember'] === 'true';
+  const { fromRemember: fromRememberParam } = useLocalSearchParams<{ fromRemember?: string }>();
+  const fromRemember = fromRememberParam === 'true';
 
   // Check if tutorial needs to be shown before starting session.
   // `shouldShowTutorial` returns false for BOTH "already seen" and "store hasn't
