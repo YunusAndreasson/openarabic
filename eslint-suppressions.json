@@ -1,0 +1,302 @@
+{
+  "app/article/[id].tsx": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 2
+    }
+  },
+  "app/review.tsx": {
+    "react-hooks/capitalized-calls": {
+      "count": 1
+    }
+  },
+  "app/study-streak.tsx": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 2
+    }
+  },
+  "components/account/FeedbackForm.tsx": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    }
+  },
+  "components/article/ArticleSentence.tsx": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    }
+  },
+  "components/article/SkiaSentenceWords.tsx": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 4
+    }
+  },
+  "components/audio/GlobalMiniPlayer.tsx": {
+    "react-perf/jsx-no-new-function-as-prop": {
+      "count": 1
+    }
+  },
+  "components/explore/FilterSection.tsx": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    }
+  },
+  "components/explore/FilteredArticleView.tsx": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    }
+  },
+  "components/primitives/ThemedText.tsx": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    }
+  },
+  "components/providers/VoiceGradingProvider.tsx": {
+    "react-hooks/memo-dependencies": {
+      "count": 2
+    }
+  },
+  "components/review/ReviewHeader.tsx": {
+    "react-hooks/capitalized-calls": {
+      "count": 1
+    }
+  },
+  "components/review/VoiceAnswerButton.tsx": {
+    "react-hooks/capitalized-calls": {
+      "count": 1
+    }
+  },
+  "hooks/app/useAppPreloader.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    },
+    "react-hooks/memo-dependencies": {
+      "count": 1
+    }
+  },
+  "hooks/articles/useArticleData.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 2
+    }
+  },
+  "hooks/articles/useArticleScreen.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 7
+    }
+  },
+  "hooks/articles/useArticleWordInteractions.ts": {
+    "react-hooks/exhaustive-deps": {
+      "count": 2
+    },
+    "react-hooks/memo-dependencies": {
+      "count": 2
+    }
+  },
+  "hooks/articles/useFilteredArticles.ts": {
+    "react-hooks/exhaustive-deps": {
+      "count": 2
+    }
+  },
+  "hooks/articles/useMultipleFeaturedArticles.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    },
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    },
+    "react-hooks/memo-dependencies": {
+      "count": 1
+    }
+  },
+  "hooks/articles/useReadingProgress.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    }
+  },
+  "hooks/articles/useStudyWordMutations.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 2
+    }
+  },
+  "hooks/audio/useGlobalAudioState.tsx": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    },
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    },
+    "react-hooks/memo-dependencies": {
+      "count": 2
+    }
+  },
+  "hooks/audio/useSimpleAudioPlayer.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 7
+    }
+  },
+  "hooks/audio/useSleepTimer.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    }
+  },
+  "hooks/audio/useWordAudioPlayback.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    }
+  },
+  "hooks/onboarding/useOnboardingChecklist.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 4
+    }
+  },
+  "hooks/playlist/usePlaylistScreen.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    }
+  },
+  "hooks/review/useAudioPreloader.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 2
+    },
+    "react-hooks/memo-dependencies": {
+      "count": 1
+    }
+  },
+  "hooks/review/useNotificationPriming.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    }
+  },
+  "hooks/review/useReview.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 4
+    },
+    "react-hooks/exhaustive-deps": {
+      "count": 2
+    },
+    "react-hooks/memo-dependencies": {
+      "count": 1
+    }
+  },
+  "hooks/review/useVoiceReview.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    }
+  },
+  "hooks/ui/useBottomSheetVisibility.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    }
+  },
+  "hooks/utils/useTimerCleanup.ts": {
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    }
+  },
+  "hooks/vocabulary/useDictionaryList.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 10
+    }
+  },
+  "hooks/vocabulary/useFSRS.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 2
+    },
+    "react-hooks/memo-dependencies": {
+      "count": 1
+    }
+  },
+  "hooks/vocabulary/useSentencesByWord.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    }
+  },
+  "hooks/vocabulary/useSmartDueWordsCalculator.ts": {
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    }
+  },
+  "hooks/voice/useSherpaStt.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 2
+    }
+  },
+  "services/analytics.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    }
+  },
+  "services/audioCache.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 3
+    }
+  },
+  "services/audioPlayer.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    }
+  },
+  "services/backgroundTasks.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    }
+  },
+  "services/sentences.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 2
+    }
+  },
+  "services/studyWordsFSRS.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    }
+  },
+  "utils/arabicAnalysis/colorSegments.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 2
+    }
+  },
+  "utils/arabicAnalysis/componentDetection.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    }
+  },
+  "utils/arabicAnalysis/englishMatching.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 2
+    }
+  },
+  "utils/arabicAnalysis/prefixDetection.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 2
+    }
+  },
+  "utils/arabicWordAnalysis.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 3
+    }
+  },
+  "utils/colorCodedTextUtils.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    }
+  },
+  "utils/colorUtils.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 9
+    }
+  },
+  "utils/errorHandling.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 2
+    }
+  },
+  "utils/priorityQueue.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    }
+  },
+  "utils/toError.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 2
+    }
+  }
+}

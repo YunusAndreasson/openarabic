@@ -7,3 +7,5 @@ translate
 publish
 social
 .venv_diagnostic/
+# Written by eslint --suppress-all / --prune-suppressions (no final newline)
+eslint-suppressions.json

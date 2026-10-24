@@ -1,5 +1,5 @@
 import { fixupPluginRules } from '@eslint/compat';
-import { defineConfig } from 'eslint/config';
+import { defineConfig, globalIgnores } from 'eslint/config';
 import expoConfig from 'eslint-config-expo/flat.js';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactNative from 'eslint-plugin-react-native';
@@ -23,6 +23,15 @@ const patchedExpoConfig = expoConfig.map(item => {
   return item;
 });
 
+const HERMES_V1_MISSING =
+  'Missing from the Hermes v1 VM RN 0.88 ships — typechecks and passes jest, crashes on device;';
+
+// Rules whose every hit needs a human call (the "backlog" rules below) are
+// errors anyway: their existing hits are recorded per file and rule in
+// eslint-suppressions.json (ESLint bulk suppressions). A NEW hit fails lint;
+// fixing an old one makes lint fail until `eslint . --prune-suppressions`
+// lowers the recorded count, so the backlog can only shrink. Never use
+// `--suppress-all` to get a new hit through.
 export default defineConfig([
   // Base Expo config (includes React, React Hooks, TypeScript)
   patchedExpoConfig,
@@ -67,9 +76,9 @@ export default defineConfig([
   // .ts/.tsx only and cost more than syntactic rules — `eslint --cache` absorbs it.
   //
   // Split by how mechanical the fix is:
-  //   error — provably redundant, autofixable, no judgment needed.
-  //   warn  — real signal but each hit needs a human call, so it must not block CI
-  //           while the existing backlog is burned down. Do not let these grow.
+  //   mechanical — provably redundant, autofixable, no judgment needed.
+  //   backlog    — real signal but each hit needs a human call, so the existing
+  //                hits are bulk-suppressed (see the top of this file).
   {
     files: ['**/*.ts', '**/*.tsx'],
     languageOptions: {
@@ -118,17 +127,19 @@ export default defineConfig([
       // code, so stop guarding against impossible states". When it fires, the fix
       // is either to delete the guard or to correct the type that claims a value
       // can never be null — both are wins, but only a human can tell which.
-      '@typescript-eslint/no-unnecessary-condition': 'warn',
+      // Backlog: bulk-suppressed.
+      '@typescript-eslint/no-unnecessary-condition': 'error',
 
       // Unhandled rejections were the single largest source of production errors.
       // Fire-and-forget is fine, but it must be spelled `void promise` on purpose.
-      '@typescript-eslint/no-floating-promises': 'warn',
-      '@typescript-eslint/no-misused-promises': 'warn',
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-misused-promises': 'error',
 
       // Deprecated APIs are the landmines that detonate on the next SDK bump —
       // this is the cheapest early warning we get for them (runAfterInteractions,
-      // runOnJS, appOwnership, MediaTypeOptions, blurOnSubmit all already fire).
-      '@typescript-eslint/no-deprecated': 'warn',
+      // runOnJS, appOwnership, MediaTypeOptions and blurOnSubmit were all burned
+      // down to zero before this became an error).
+      '@typescript-eslint/no-deprecated': 'error',
 
       // `require-await` was evaluated 2026-08-02 and deliberately NOT enabled.
       // All 12 hits were async-by-contract, not dropped awaits: `loadModule`
@@ -139,8 +150,8 @@ export default defineConfig([
 
       // `${unknown}` silently renders "[object Object]" into user-facing strings
       // and Sentry titles.
-      '@typescript-eslint/restrict-template-expressions': 'warn',
-      '@typescript-eslint/no-base-to-string': 'warn',
+      '@typescript-eslint/restrict-template-expressions': 'error',
+      '@typescript-eslint/no-base-to-string': 'error',
     },
   },
 
@@ -177,78 +188,25 @@ export default defineConfig([
   // All 17 measured at 0 violations repo-wide, so it changes no current output.
   //
   // Placed BEFORE the React block below so that block's deliberate
-  // `exhaustive-deps: 'warn'` keeps winning over the preset's own setting.
+  // `exhaustive-deps` setting keeps winning over the preset's own one.
   reactHooks.configs.flat['recommended-latest'],
 
-  // Performance checks used for the global audio/miniplayer render path. These
-  // intentionally stay targeted: each hit requires profiling-backed judgment,
-  // and enabling them repo-wide would turn this optimization into backlog churn.
+  // Performance checks, scoped to measured hot paths: each hit requires
+  // profiling-backed judgment, and enabling them repo-wide would turn the
+  // pre-existing chart and dictionary backlog into churn. Backlog: bulk-suppressed.
   {
     files: [
+      // The global audio/miniplayer render path.
       'components/audio/{GlobalMiniPlayer,MiniPlayer}.{js,jsx,ts,tsx}',
       'hooks/audio/useGlobalAudioState.tsx',
       'hooks/audio/useShouldShowMiniPlayer.ts',
-    ],
-    plugins: {
-      'react-native': fixupPluginRules(reactNative),
-      'react-perf': fixupPluginRules(reactPerf),
-    },
-    rules: {
-      'react-perf/jsx-no-new-object-as-prop': 'warn',
-      'react-perf/jsx-no-new-array-as-prop': 'warn',
-      'react-perf/jsx-no-new-function-as-prop': 'warn',
-      'react-perf/jsx-no-jsx-as-prop': 'warn',
-      'react/jsx-no-bind': 'warn',
-      'react/jsx-no-constructed-context-values': 'warn',
-      'react/no-unstable-nested-components': 'warn',
-      'react/no-object-type-as-default-prop': 'warn',
-      'react-native/no-inline-styles': 'warn',
-      'react-native/no-unused-styles': 'warn',
-      'react-native/no-color-literals': 'warn',
-      'react-native/no-single-element-style-arrays': 'warn',
-      'react-hooks/exhaustive-deps': 'warn',
-      'react-hooks/rules-of-hooks': 'error',
-      'no-empty': ['error', { allowEmptyCatch: false }],
-    },
-  },
-
-  // Performance checks for the Practice surfaces changed by this optimization.
-  // Keep the scope to measured files so enabling the rules does not turn the
-  // pre-existing chart and dictionary backlog into new lint-budget debt.
-  {
-    files: [
+      // The Practice surfaces changed by the Practice optimization pass.
       'app/(tabs)/practice/index.tsx',
       'components/practice/charts/MemoryHorizonBand.tsx',
       'hooks/vocabulary/useMemoryInsights.ts',
-    ],
-    plugins: {
-      'react-native': fixupPluginRules(reactNative),
-      'react-perf': fixupPluginRules(reactPerf),
-    },
-    rules: {
-      'react-perf/jsx-no-new-object-as-prop': 'warn',
-      'react-perf/jsx-no-new-array-as-prop': 'warn',
-      'react-perf/jsx-no-new-function-as-prop': 'warn',
-      'react-perf/jsx-no-jsx-as-prop': 'warn',
-      'react/jsx-no-bind': 'warn',
-      'react/jsx-no-constructed-context-values': 'warn',
-      'react/no-unstable-nested-components': 'warn',
-      'react/no-object-type-as-default-prop': 'warn',
-      'react-native/no-inline-styles': 'warn',
-      'react-native/no-unused-styles': 'warn',
-      'react-native/no-color-literals': 'warn',
-      'react-native/no-single-element-style-arrays': 'warn',
-      'react-hooks/exhaustive-deps': 'warn',
-      'react-hooks/rules-of-hooks': 'error',
-      'no-empty': ['error', { allowEmptyCatch: false }],
-    },
-  },
-
-  // Performance checks for the routing shell itself. Navigation layouts stay
-  // mounted for most of the session, so an unstable option, header factory, or
-  // tab descriptor here propagates through every screen transition.
-  {
-    files: [
+      // The routing shell itself. Navigation layouts stay mounted for most of the
+      // session, so an unstable option, header factory, or tab descriptor here
+      // propagates through every screen transition.
       'app/_layout.tsx',
       'app/index.tsx',
       'app/(tabs)/**/_layout.tsx',
@@ -260,39 +218,38 @@ export default defineConfig([
       'react-perf': fixupPluginRules(reactPerf),
     },
     rules: {
-      'react-perf/jsx-no-new-object-as-prop': 'warn',
-      'react-perf/jsx-no-new-array-as-prop': 'warn',
-      'react-perf/jsx-no-new-function-as-prop': 'warn',
-      'react-perf/jsx-no-jsx-as-prop': 'warn',
-      'react/jsx-no-bind': 'warn',
-      'react/jsx-no-constructed-context-values': 'warn',
-      'react/no-unstable-nested-components': 'warn',
-      'react/no-object-type-as-default-prop': 'warn',
-      'react-native/no-inline-styles': 'warn',
-      'react-native/no-unused-styles': 'warn',
-      'react-native/no-color-literals': 'warn',
-      'react-native/no-single-element-style-arrays': 'warn',
-      'react-hooks/exhaustive-deps': 'warn',
+      'react-perf/jsx-no-new-object-as-prop': 'error',
+      'react-perf/jsx-no-new-array-as-prop': 'error',
+      'react-perf/jsx-no-new-function-as-prop': 'error',
+      'react-perf/jsx-no-jsx-as-prop': 'error',
+      'react/jsx-no-bind': 'error',
+      'react/jsx-no-constructed-context-values': 'error',
+      'react/no-unstable-nested-components': 'error',
+      'react/no-object-type-as-default-prop': 'error',
+      'react-native/no-inline-styles': 'error',
+      'react-native/no-unused-styles': 'error',
+      'react-native/no-color-literals': 'error',
+      'react-native/no-single-element-style-arrays': 'error',
+      'react-hooks/exhaustive-deps': 'error',
       'react-hooks/rules-of-hooks': 'error',
       'no-empty': ['error', { allowEmptyCatch: false }],
     },
   },
 
   // The rules that actually add signal: NOT in the preset and NOT in expo's config,
-  // and unlike everything above these have real hits (+21). Same error/warn split as
-  // the type-aware block: each needs a human call per site, so they surface without
-  // blocking CI. Do not let them grow.
+  // and unlike everything above these have real hits. Same treatment as the
+  // type-aware backlog: each needs a human call per site, so the existing hits are
+  // bulk-suppressed and only a new one fails.
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
     rules: {
-      // 16 hits. Incomplete/extra dep arrays stop the compiler from tracking data
-      // flow, and the "missing" half is a stale-closure bug waiting to happen —
-      // concentrated in useGlobalAudioState (4), useReview (2), useAppPreloader (2).
-      'react-hooks/memo-dependencies': 'warn',
-      // 5 hits. A capitalized call that isn't a component is either a mis-named
-      // helper or a component being invoked as a function (which silently drops its
-      // state). Both need reading the call site to tell apart.
-      'react-hooks/capitalized-calls': 'warn',
+      // Incomplete/extra dep arrays stop the compiler from tracking data flow, and
+      // the "missing" half is a stale-closure bug waiting to happen.
+      'react-hooks/memo-dependencies': 'error',
+      // A capitalized call that isn't a component is either a mis-named helper or a
+      // component being invoked as a function (which silently drops its state). Both
+      // need reading the call site to tell apart.
+      'react-hooks/capitalized-calls': 'error',
     },
   },
 
@@ -356,38 +313,90 @@ export default defineConfig([
     rules: {
       'react/no-array-index-key': 'error',
       // Was 'off'. Stale closures from missing deps have already shipped real bugs
-      // (the foreground due-words refresh). 'warn' so the existing hits surface
-      // without blocking CI — suppress deliberate omissions per-line, don't re-disable.
-      'react-hooks/exhaustive-deps': 'warn',
+      // (the foreground due-words refresh). Backlog: bulk-suppressed — suppress a
+      // deliberate omission per-line, don't re-disable.
+      'react-hooks/exhaustive-deps': 'error',
       'react/no-unescaped-entities': 'off',
       'import/no-duplicates': 'error', // Consolidate imports for easier refactoring
       'import/first': 'off', // Type imports after regular imports allowed
     },
   },
 
-  // Global ignores
+  // Hermes v1 guard. TypeScript's ESNext lib types these and jest runs them on
+  // Node, so a call passes both and then throws on device — `toSorted` already
+  // shipped that way once. App source only: scripts and tests run on Node.
+  // Deliberately absent because Hermes v1 has them: Object.groupBy, the ES2025 Set
+  // methods, String#isWellFormed — and structuredClone, which Expo's winter
+  // runtime polyfills (expo/src/winter/runtime.native.ts).
   {
-    ignores: [
-      'node_modules/',
-      'dist/',
-      '.expo/',
-      '*.d.ts',
-      'types/database.types.ts', // Supabase-generated; regenerated, never hand-edited
-      '.github/',
-      '__mocks__/',
-      '__tests__/',
-      '**/*.test.*',
-      '**/*.spec.*',
-      'translate/',
-      'admin-dashboard/',
-      'social/',
-      'scripts/',
-      'coverage/',
-      'jest.setup.js',
-      'jest.config.js',
-      'jest.polyfills.js',
-    ],
+    files: ['{app,components,hooks,services,store,constants,utils,lib}/**/*.{js,jsx,ts,tsx}'],
+    rules: {
+      'no-restricted-properties': [
+        'error',
+        // No `object`, so it matches every receiver, `a?.toSorted()` and
+        // `const { toSorted } = a` included.
+        { property: 'toSorted', message: `${HERMES_V1_MISSING} use [...array].sort().` },
+        {
+          object: 'Array',
+          property: 'fromAsync',
+          message: `${HERMES_V1_MISSING} use Promise.all() or a for await...of loop.`,
+        },
+        {
+          object: 'Map',
+          property: 'groupBy',
+          message: `${HERMES_V1_MISSING} build the Map in a loop (Object.groupBy is fine).`,
+        },
+        {
+          object: 'Promise',
+          property: 'try',
+          message: `${HERMES_V1_MISSING} use new Promise(resolve => resolve(fn())).`,
+        },
+      ],
+      'no-restricted-globals': [
+        'error',
+        { name: 'DisposableStack', message: `${HERMES_V1_MISSING} use try/finally.` },
+        { name: 'AsyncDisposableStack', message: `${HERMES_V1_MISSING} use try/finally.` },
+      ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "VariableDeclaration[kind='using']",
+          message: `\`using\`: ${HERMES_V1_MISSING} use try/finally.`,
+        },
+        {
+          selector: "VariableDeclaration[kind='await using']",
+          message: `\`await using\`: ${HERMES_V1_MISSING} use try/finally.`,
+        },
+      ],
+    },
   },
+
+  globalIgnores([
+    'node_modules/',
+    'dist/',
+    '.expo/',
+    '*.d.ts',
+    'types/database.types.ts', // Supabase-generated; regenerated, never hand-edited
+    '.github/',
+    '__mocks__/',
+    '__tests__/',
+    '**/*.test.*',
+    '**/*.spec.*',
+    // Separate projects with their own tooling (see AGENTS.md)
+    'translate/',
+    'admin-dashboard/',
+    'social/',
+    'publish/',
+    'brand/',
+    'store-listing/',
+    // Agent config, plus the per-agent checkouts under .claude/worktrees
+    '.claude/',
+    'scripts/',
+    'coverage/',
+    'jest.setup.js',
+    'jest.config.js',
+    'jest.polyfills.js',
+  ]),
 
   // Prettier must be last
   prettierConfig,
