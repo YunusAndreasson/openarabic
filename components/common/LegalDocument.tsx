@@ -1,5 +1,5 @@
 import { ScreenScaffold } from '@/components/common/ScreenScaffold';
-import type { ReactNode } from 'react';
+import { Fragment, type ReactNode } from 'react';
 import { StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
@@ -88,6 +88,35 @@ export const DocLink = ({ url }: { url: string }) => (
       });
     }}
   />
+);
+
+/** A section of a document given as data: a body, labelled subsections, or both. */
+export interface DocSection {
+  title: string;
+  body?: string;
+  subsections?: readonly { title: string; body: string }[];
+}
+
+/**
+ * The run of data-driven sections that makes up most of a legal document. The
+ * privacy policy and the terms each mapped their own list through this same
+ * heading-and-paragraph shape.
+ */
+export const DocSections = ({ sections }: { sections: readonly DocSection[] }) => (
+  <>
+    {sections.map(({ title, body, subsections }) => (
+      <Fragment key={title}>
+        <DocHeading>{title}</DocHeading>
+        {body ? <DocParagraph>{body}</DocParagraph> : null}
+        {subsections?.map(subsection => (
+          <Fragment key={subsection.title}>
+            <DocHeading level="subsection">{subsection.title}</DocHeading>
+            <DocParagraph>{subsection.body}</DocParagraph>
+          </Fragment>
+        ))}
+      </Fragment>
+    ))}
+  </>
 );
 
 /** A credited item — a font, a library — with its one-line description. */

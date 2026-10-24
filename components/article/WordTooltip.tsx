@@ -27,15 +27,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 const ENTER_ANIMATION = FadeIn.duration(100);
 
 const STATIC_STYLES = StyleSheet.create({
-  overlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    width: '100%',
-    height: '100%',
-  },
+  overlay: StyleSheet.absoluteFill,
   tooltip: {
     position: 'absolute',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
