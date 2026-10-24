@@ -49,7 +49,7 @@ import {
 import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TIMING_CONSTANTS } from '@/constants/animation';
 import { QUERY_DEFAULTS, studyStreakQueries } from '@/constants/queries';
-import { ROUTE_PATHS } from '@/constants/routes';
+import { ROUTE_PATHS, SHEET_ROUTES } from '@/constants/routes';
 import { useAppBadge } from '@/hooks/app/useAppBadge';
 import { useUpdateReady } from '@/hooks/app/useUpdateReady';
 import { useNotificationResponseRouting } from '@/hooks/notifications/useNotificationResponseRouting';
@@ -656,30 +656,17 @@ function AppContent() {
                       headerShown: false,
                     })}
                   />
-                  <Stack.Screen name="sleep-timer" options={createSheetOptions(colors, [0.4])} />
-                  {/* These four fit their contents: fixed-height charts, or a
-                      handful of rows, under a short header — no scrolling. See
-                      createSheetOptions for what 'fitToContents' requires of the
-                      screen's content. */}
-                  <Stack.Screen name="due-words" options={createSheetOptions(colors)} />
-                  <Stack.Screen name="memory-retention" options={createSheetOptions(colors)} />
-                  <Stack.Screen name="study-streak" options={createSheetOptions(colors)} />
-                  <Stack.Screen name="review-depth" options={createSheetOptions(colors)} />
-                  {/* The odd one out: up to 20 leech rows never fit their
-                      contents, so this sheet scrolls and needs a fixed detent.
-                      Its screen owns the sheet background because the scroll
-                      view has to be a direct child — the route file documents
-                      the layout react-native-screens requires. */}
-                  <Stack.Screen
-                    name="words-to-revisit"
-                    options={createSheetOptions(colors, [0.6, 1])}
-                  />
-                  {/* One saved word, root-level so the Explore rail can present
-                      it without changing tabs. Fixed detents for the same reason
-                      as the sheet above: a memory panel, a stat block and a root
-                      explanation do not fit their contents, so this one scrolls
-                      and its screen owns the two-child layout that requires. */}
-                  <Stack.Screen name="word-detail" options={createSheetOptions(colors, [0.6, 1])} />
+                  {/* The form sheets, from the one table that also tells the
+                      MiniPlayer to stand down (SHEET_ROUTES). Stack.Protected
+                      walks its children with Children.forEach, so the array
+                      flattens like any other children. */}
+                  {Object.entries(SHEET_ROUTES).map(([name, detents]) => (
+                    <Stack.Screen
+                      key={name}
+                      name={name}
+                      options={createSheetOptions(colors, detents)}
+                    />
+                  ))}
                 </Stack.Protected>
 
                 {/* Unauthenticated routes — on sign-in auth redirects to Explore */}
