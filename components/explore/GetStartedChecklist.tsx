@@ -1,6 +1,6 @@
 import { GlyphButton, Icon } from '@/components/ui';
 import { useRouter } from 'expo-router';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -16,14 +16,13 @@ import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import { TIMING_CONFIG, fadeInStyle } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { ONBOARDING_CONFIG, OnboardingStep } from '@/constants/onboarding';
-import { getArticleRoute, ROUTE_PATHS } from '@/constants/routes';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import type { OnboardingChecklistState } from '@/hooks/onboarding/useOnboardingChecklist';
-import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
+import { useOpenStarterArticle } from '@/hooks/onboarding/useOpenStarterArticle';
 import { useColors } from '@/hooks/theme/useColors';
 import { analytics } from '@/services/analytics';
 import type { Article } from '@/types/articles.types';
-import { pickStarterArticle } from '@/utils/articleUtils';
 import { selectionFeedback } from '@/utils/haptics';
 
 const CHECK_ICON_SIZE = 22;
@@ -68,8 +67,7 @@ const GetStartedChecklistComponent = ({
   const router = useRouter();
   const { isChecklistVisible, items, doneCount, allDone, finalizeCompletion, dismiss } = checklist;
 
-  const articleIds = useMemo(() => articlesData.map(a => a.id), [articlesData]);
-  const { data: progressMap } = useBulkReadingProgress(articleIds);
+  const openStarterArticle = useOpenStarterArticle(articlesData);
 
   // Collapse animation: measured height + opacity → 0, then persist completion.
   // Height-based (not reanimated `exiting`) because the card lives inside a
@@ -126,12 +124,9 @@ const GetStartedChecklistComponent = ({
         return;
       }
 
-      const starter = pickStarterArticle(articlesData, progressMap);
-      if (starter) {
-        router.push(getArticleRoute(starter.id, starter.title, true));
-      }
+      openStarterArticle();
     },
-    [articlesData, progressMap, router],
+    [openStarterArticle, router],
   );
 
   if (!isChecklistVisible || isSuppressedByIntro) {
