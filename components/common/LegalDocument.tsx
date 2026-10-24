@@ -1,10 +1,11 @@
 import { ScreenScaffold } from '@/components/common/ScreenScaffold';
 import type { ReactNode } from 'react';
-import { Linking, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { TextLink } from '@/components/ui/TextLink';
 import { LAYOUT, LINE_HEIGHT_MULTIPLIERS } from '@/constants/layout';
+import { openExternalUrl } from '@/utils/openExternalUrl';
 
 /**
  * The terms, privacy and attribution screens are long-form prose under a
@@ -69,6 +70,8 @@ export const DocParagraph = ({
  * This used to hand-roll a tint-coloured `ThemedText` inside a `Pressable` with
  * a pressed-opacity style callback — a verbatim copy of the very pattern
  * `TextLink` exists to have deleted. It also picked up a hit slop it never had.
+ *
+ * A URL the system refuses is reported, not left as an unhandled rejection.
  */
 export const DocLink = ({ url }: { url: string }) => (
   <TextLink
@@ -77,7 +80,12 @@ export const DocLink = ({ url }: { url: string }) => (
     style={styles.linkContainer}
     type="body"
     onPress={() => {
-      void Linking.openURL(url);
+      void openExternalUrl(url, {
+        analyticsEventName: 'Legal_Link_Failed',
+        sentryTags: { location: 'legal_document', action: 'open_url' },
+        showToast: false,
+        sentrySeverity: 'info',
+      });
     }}
   />
 );
