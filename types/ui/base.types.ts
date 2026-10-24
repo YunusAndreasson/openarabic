@@ -15,14 +15,16 @@ import type { AnimatedStyle, CSSStyle } from 'react-native-reanimated';
  * react-native-gesture-handler's differ (their press and hover event types are
  * unrelated), so a prop typed as either one rejects the other component
  * outright. Naming only what is used keeps both assignable, which is the whole
- * point — see the `PressableComponent` prop on `BaseCard` and `GlassIconButton`.
+ * point — see the `PressableComponent` prop on `BaseCard`, `GlassIconButton`
+ * and `ListRow`.
  */
 export interface PressableLikeProps {
   children?: React.ReactNode;
   onPress?: () => void;
   onPressIn?: () => void;
   onPressOut?: () => void;
-  style?: StyleProp<ViewStyle>;
+  /** Either form both pressables accept, the pressed-state callback included. */
+  style?: StyleProp<ViewStyle> | ((state: { pressed: boolean }) => StyleProp<ViewStyle>);
   hitSlop?: number | Insets;
   disabled?: boolean;
   android_ripple?: PressableAndroidRippleConfig;

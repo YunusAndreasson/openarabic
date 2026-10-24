@@ -1,13 +1,14 @@
 import type { JSX } from 'react';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { ListRow, ProgressBar } from '@/components/common';
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { Icon } from '@/components/ui';
+import { DisclosureChevron } from '@/components/ui';
 import { getMeterTrackColor, useChartColors } from '@/constants/chartColors';
-import { INLINE_VALUE_MIN_WIDTH, LAYOUT } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
+import { useTextLayout } from '@/hooks/ui/useTextLayout';
 import { formatCount } from '@/utils/stringUtils';
 
 /**
@@ -38,8 +39,6 @@ export function breakdownRowLabel({
     .replace('{count}', String(count))
     .replace('{clause}', clause);
 }
-
-const CHEVRON_SIZE = LAYOUT.BUTTON.ICON_SIZE.DISCLOSURE;
 
 /**
  * Wide enough to compare bars at a glance, fixed so they share one left and one
@@ -98,8 +97,7 @@ export function BreakdownRow({
 }: BreakdownRowProps): JSX.Element {
   const colors = useColors();
   const chartColors = useChartColors();
-  const { width, fontScale } = useWindowDimensions();
-  const stackMetrics = width / fontScale < INLINE_VALUE_MIN_WIDTH;
+  const { crowded: stackMetrics, fontScale } = useTextLayout();
 
   // The same ink the practice charts draw their data in, so a row and the
   // column it came from are visibly the same data. Rows that are not on the
@@ -147,11 +145,7 @@ export function BreakdownRow({
           </ThemedText>
 
           {/* Only rows that lead somewhere claim to. */}
-          <View style={styles.chevron}>
-            {onPress && (
-              <Icon color={colors.textTertiary} name="chevron-forward" size={CHEVRON_SIZE} />
-            )}
-          </View>
+          <View style={styles.chevron}>{onPress && <DisclosureChevron />}</View>
         </View>
       </View>
     </ListRow>
@@ -199,8 +193,10 @@ const styles = StyleSheet.create({
     width: COUNT_WIDTH,
     textAlign: 'right',
   },
+  // DisclosureChevron's own size, reserved on every row — pressable or not — so
+  // the counts keep one right edge.
   chevron: {
-    width: CHEVRON_SIZE,
+    width: LAYOUT.BUTTON.ICON_SIZE.DISCLOSURE,
     alignItems: 'center',
   },
 });

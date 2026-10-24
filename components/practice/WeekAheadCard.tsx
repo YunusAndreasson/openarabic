@@ -3,16 +3,15 @@ import { StyleSheet, View } from 'react-native';
 
 import { AnimatedCount, BaseCard } from '@/components/common';
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { Icon } from '@/components/ui';
 import { FONTS } from '@/constants/fonts';
 import { LAYOUT, LETTER_SPACING } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { useColors } from '@/hooks/theme/useColors';
 import { formatDueCount, isDueCountCapped } from '@/utils/dueCountText';
 import type { DueWordsForecast } from '@/utils/fsrsUtils';
 import { formatWordCount } from '@/utils/wordCountText';
 
 import { WeekAheadBars } from './charts/WeekAheadBars';
+import { PracticeCardBody, PracticeCardFooter } from './PracticeSummaryCard';
 
 interface WeekAheadCardProps {
   /** Seven days of forecast, today first. The bars draw each day's `newlyDue`. */
@@ -45,8 +44,6 @@ export function WeekAheadCard({
   reviewedToday,
   onPress,
 }: WeekAheadCardProps): JSX.Element {
-  const colors = useColors();
-
   // Per day, not the running total: the first column is everything due now and
   // every later one only what that day adds. `newlyDue[0]` IS the backlog, so
   // the solid column is still the number beside it.
@@ -80,7 +77,7 @@ export function WeekAheadCard({
 
   return (
     <BaseCard onPress={onPress} accessibilityLabel={accessibilityLabel}>
-      <View style={styles.body}>
+      <PracticeCardBody>
         <ThemedText type="caption" colorName="subtleLabelText">
           {STRINGS.DUE_NOW_LABEL}
         </ThemedText>
@@ -114,35 +111,20 @@ export function WeekAheadCard({
             <WeekAheadBars counts={counts} />
           </View>
         </View>
-      </View>
+      </PracticeCardBody>
 
-      <View style={styles.footer}>
-        <ThemedText type="caption" colorName="captionText" style={styles.footerText}>
-          {footer}
-        </ThemedText>
-        {/* Same guard as every other disclosure: `onPress` is optional, and a
-            chevron on a card that does not navigate is a promise it cannot keep. */}
-        {onPress && (
-          <Icon
-            name="chevron-forward"
-            size={LAYOUT.BUTTON.ICON_SIZE.DISCLOSURE}
-            color={colors.textTertiary}
-          />
-        )}
-      </View>
+      {/* Same guard as every other disclosure: `onPress` is optional, and a
+          chevron on a card that does not navigate is a promise it cannot keep. */}
+      <PracticeCardFooter text={footer} showDisclosure={onPress != null} />
     </BaseCard>
   );
 }
 
 WeekAheadCard.displayName = 'WeekAheadCard';
 
-// Padding and footer match `MemoryHorizonCard`, which sits directly below: the
-// two cards share a left edge, a label line and a chevron column.
+// Padding and footer are `PracticeSummaryCard`'s, shared with `MemoryHorizonCard`
+// directly below: the two cards keep one left edge, label line and chevron column.
 const styles = StyleSheet.create({
-  body: {
-    paddingTop: LAYOUT.SPACING.LARGE,
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-  },
   valueRow: {
     alignItems: 'flex-end',
     flexDirection: 'row',
@@ -163,16 +145,5 @@ const styles = StyleSheet.create({
   // above the digits.
   bars: {
     paddingBottom: LAYOUT.SPACING.SMALL - LAYOUT.SPACING.HALF_TINY,
-  },
-  footer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: LAYOUT.SPACING.SMALL,
-    paddingBottom: LAYOUT.SPACING.LARGE,
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-    paddingTop: LAYOUT.SPACING.SMALL,
-  },
-  footerText: {
-    flex: 1,
   },
 });

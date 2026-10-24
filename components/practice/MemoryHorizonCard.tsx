@@ -1,17 +1,17 @@
 import type { JSX } from 'react';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { AnimatedCount, BaseCard } from '@/components/common';
 import { ThemedText } from '@/components/primitives/ThemedText';
-import { Icon } from '@/components/ui';
-import { INLINE_VALUE_MIN_WIDTH, LAYOUT } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { useColors } from '@/hooks/theme/useColors';
+import { useTextLayout } from '@/hooks/ui/useTextLayout';
 import type { MemoryHorizonDistribution } from '@/hooks/vocabulary/useMemoryHorizonDistribution';
 import { getHorizonBandsAccessibilityLabel } from '@/utils/memoryHorizon';
 import { formatCount } from '@/utils/stringUtils';
 
 import { MemoryHorizonBand } from './charts/MemoryHorizonBand';
+import { PracticeCardBody, PracticeCardFooter } from './PracticeSummaryCard';
 
 interface MemoryHorizonCardProps {
   /** Expected words recallable right now — Σ of every measured word's recall. */
@@ -41,9 +41,7 @@ export function MemoryHorizonCard({
   distribution,
   onPress,
 }: MemoryHorizonCardProps): JSX.Element {
-  const colors = useColors();
-  const { width, fontScale } = useWindowDimensions();
-  const stackHeadline = width / fontScale < INLINE_VALUE_MIN_WIDTH;
+  const { crowded: stackHeadline } = useTextLayout();
   const { bands, medianLabel, medianFraction, practisedCount, hasDistribution } = distribution;
 
   // The dot scale, whenever a dot stops meaning one word. A unit chart whose dot
@@ -75,7 +73,7 @@ export function MemoryHorizonCard({
 
   return (
     <BaseCard onPress={onPress} accessibilityLabel={accessibilityLabel}>
-      <View style={styles.body}>
+      <PracticeCardBody>
         <ThemedText type="caption" colorName="subtleLabelText">
           {STRINGS.PRACTICE_RECALL_NOW_LABEL}
         </ThemedText>
@@ -102,7 +100,7 @@ export function MemoryHorizonCard({
             </ThemedText>
           )}
         </View>
-      </View>
+      </PracticeCardBody>
 
       {/* Canvas + its axis labels are one drawing, so they are hidden from the
           accessibility tree wholesale. Without this, VoiceOver reads the four
@@ -123,27 +121,14 @@ export function MemoryHorizonCard({
       </View>
 
       {/* The footer and chevron share one row; the text can wrap as it grows.
-          Same signifier, same
-          ink and the same right edge as the due card above it — this card was
-          the largest tappable surface on the screen with nothing to say it was
-          one. */}
-      <View style={styles.footer}>
-        <ThemedText type="caption" colorName="captionText" style={styles.footerText}>
-          {footer}
-        </ThemedText>
-        {/* Guarded on `onPress`, exactly as `MetricCard` and `BreakdownRow`
-            guard theirs. `onPress` is optional here, so an unguarded chevron
-            would make a STATIC card advertise a destination it does not have —
-            the mirror image of the tile that swallowed a press, and a rule this
-            card would otherwise be the one place breaking. */}
-        {onPress && (
-          <Icon
-            name="chevron-forward"
-            size={LAYOUT.BUTTON.ICON_SIZE.DISCLOSURE}
-            color={colors.textTertiary}
-          />
-        )}
-      </View>
+          Same signifier, same ink and the same right edge as the due card above
+          it — this card was the largest tappable surface on the screen with
+          nothing to say it was one. The chevron is guarded on `onPress`, exactly
+          as `MetricCard` and `BreakdownRow` guard theirs: `onPress` is optional
+          here, so an unguarded chevron would make a STATIC card advertise a
+          destination it does not have — the mirror image of the tile that
+          swallowed a press. */}
+      <PracticeCardFooter text={footer} showDisclosure={onPress != null} />
     </BaseCard>
   );
 }
@@ -151,10 +136,6 @@ export function MemoryHorizonCard({
 MemoryHorizonCard.displayName = 'MemoryHorizonCard';
 
 const styles = StyleSheet.create({
-  body: {
-    paddingTop: LAYOUT.SPACING.LARGE,
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-  },
   headline: {
     alignItems: 'baseline',
     flexDirection: 'row',
@@ -176,16 +157,5 @@ const styles = StyleSheet.create({
   // inside horizontal padding or it overflows the rounded corners.
   band: {
     marginTop: LAYOUT.SPACING.MEDIUM,
-  },
-  footer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: LAYOUT.SPACING.SMALL,
-    paddingBottom: LAYOUT.SPACING.LARGE,
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-    paddingTop: LAYOUT.SPACING.SMALL,
-  },
-  footerText: {
-    flex: 1,
   },
 });

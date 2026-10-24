@@ -1,4 +1,4 @@
-import { StyleSheet, useWindowDimensions } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 // Direct path, matching the rest of this folder's imports from `common`: both
 // callers already pull the `common` barrel in for other components (`ListRow`
@@ -8,7 +8,8 @@ import { StyleSheet, useWindowDimensions } from 'react-native';
 import { ListRow } from '@/components/common/ListRow';
 import { ThemedText } from '@/components/primitives/ThemedText';
 import type { SolidColorName } from '@/constants/colors';
-import { INLINE_VALUE_MIN_WIDTH, LAYOUT } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
+import { useTextLayout } from '@/hooks/ui/useTextLayout';
 
 interface StatRowProps {
   label: string;
@@ -31,8 +32,7 @@ interface StatRowProps {
  * whole row style exists to prevent.
  */
 export const StatRow = ({ label, value, colorName }: StatRowProps) => {
-  const { width, fontScale } = useWindowDimensions();
-  const stackValue = width / fontScale < INLINE_VALUE_MIN_WIDTH;
+  const { crowded: stackValue } = useTextLayout();
   return (
     <ListRow divider style={stackValue ? styles.stackedRow : styles.row}>
       <ThemedText colorName="secondaryText" type="body">

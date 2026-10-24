@@ -72,9 +72,22 @@ describe('WordListRow', () => {
     const { getByLabelText } = renderRow();
 
     const row = getByLabelText('كتب, To write');
-    expect(row.props.disabled).toBe(true);
+    expect(row.props.onPress).toBeUndefined();
     // And it does not claim to be a button it is not.
     expect(row.props.accessibilityRole).toBeUndefined();
+  });
+
+  // The row used to be a copy of ListRow on gesture-handler's Pressable, and
+  // the copy skipped ListRow's press lock: a double-tap pushed the word screen
+  // twice. It is ListRow now, so the lock comes with it.
+  test('a double-tap opens the word once', () => {
+    const onPress = jest.fn();
+    const { getByLabelText } = renderRow({ onPress });
+
+    fireEvent.press(getByLabelText('كتب, To write'));
+    fireEvent.press(getByLabelText('كتب, To write'));
+
+    expect(onPress).toHaveBeenCalledTimes(1);
   });
 
   test('renders whatever the caller puts in the trailing slot', () => {
