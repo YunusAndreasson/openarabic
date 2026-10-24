@@ -1,24 +1,23 @@
-import { EmptyState, ListSeparator, LoadingState } from '@/components/common';
+import { EmptyState, LoadingState } from '@/components/common';
 import { FlashList } from '@shopify/flash-list';
 import { type JSX, useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/primitives/ThemedText';
 import { ThemedView } from '@/components/primitives/ThemedView';
-import { PlaylistItemCard } from '@/components/playlist';
 import { TextLink } from '@/components/ui';
-import { LIST_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { useArticlePrefetch } from '@/hooks/articles/useArticlePrefetch';
 import type { ArticleSearchResult } from '@/hooks/articles/useArticleSearch';
 import type { Article } from '@/types/articles.types';
-import { generateStorageUrl } from '@/utils/storageUtils';
-import { getArticleMetadataWithoutCategory } from '@/utils/stringUtils';
 import { formatTextCount } from '@/utils/wordCountText';
 
-const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.LIST_ITEM;
+import {
+  ARTICLE_LIST_DRAW_DISTANCE,
+  ArticleRow,
+  ArticleRowSeparator,
+  useArticleListContentStyle,
+} from './ArticleRow';
 
 const styles = StyleSheet.create({
   container: {
@@ -35,8 +34,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
-
-const SeparatorComponent = () => <ListSeparator height={LAYOUT.SPACING.SMALL} />;
 
 // Stable at module scope: FlashList v2 re-renders every visible cell when a
 // list callback's identity changes.
@@ -76,38 +73,19 @@ export const SearchResultList = ({
   onRetryBody,
   onArticlePress,
 }: SearchResultListProps) => {
-  const insets = useSafeAreaInsets();
-  const prefetchArticle = useArticlePrefetch();
+  const listContentStyle = useArticleListContentStyle();
 
-  const listContentStyle = useMemo(
-    () => ({
-      paddingTop: LAYOUT.SPACING.MEDIUM,
-      paddingBottom: LAYOUT.SCREEN_PADDING.bottomDefault + insets.bottom,
-      paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
-    }),
-    [insets.bottom],
-  );
-
+  // A body hit says why it is in the list; everything else keeps the
+  // catalogue's own subtitle, as the rest of the app shows it.
   const renderItem = useCallback(
-    ({ item }: { item: ArticleSearchResult }): JSX.Element => {
-      const { article, bodySnippet } = item;
-
-      // A body hit says why it is in the list; everything else keeps the
-      // catalogue's own subtitle, as the rest of the app shows it.
-      const secondaryText = bodySnippet ?? getArticleMetadataWithoutCategory(article);
-
-      return (
-        <PlaylistItemCard
-          title={article.title}
-          secondaryText={secondaryText}
-          imageUrl={generateStorageUrl('images', article.image_url)}
-          articleId={article.id}
-          onPress={() => onArticlePress(article)}
-          onPressIn={() => prefetchArticle(article.id)}
-        />
-      );
-    },
-    [onArticlePress, prefetchArticle],
+    ({ item }: { item: ArticleSearchResult }): JSX.Element => (
+      <ArticleRow
+        article={item.article}
+        secondaryText={item.bodySnippet}
+        onPress={onArticlePress}
+      />
+    ),
+    [onArticlePress],
   );
 
   const ListHeaderComponent = useMemo(() => {
@@ -169,13 +147,13 @@ export const SearchResultList = ({
         keyExtractor={keyExtractor}
         ListHeaderComponent={ListHeaderComponent}
         ListEmptyComponent={ListEmptyComponent}
-        ItemSeparatorComponent={SeparatorComponent}
+        ItemSeparatorComponent={ArticleRowSeparator}
         contentContainerStyle={listContentStyle}
         contentInsetAdjustmentBehavior="automatic"
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={true}
-        drawDistance={ITEM_HEIGHT * LIST_DRAW_DISTANCE_MULTIPLIER}
+        drawDistance={ARTICLE_LIST_DRAW_DISTANCE}
       />
     </ThemedView>
   );

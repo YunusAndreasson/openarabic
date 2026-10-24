@@ -11,13 +11,11 @@ import { StyleSheet, View } from 'react-native';
 import { Pressable } from 'react-native-gesture-handler';
 
 import { SectionLabel } from '@/components/common';
-import { PlaylistItemCard } from '@/components/playlist';
+import { ArticleRow } from '@/components/explore/ArticleRow';
 import { LAYOUT } from '@/constants/layout';
 import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import type { Article } from '@/types/articles.types';
-import type { ArticleId } from '@/types/branded.types';
-import { generateStorageUrl } from '@/utils/storageUtils';
 import { getArticleProgressPercentage, type ReadingProgressLookup } from '@/utils/progressUtils';
 import {
   getArticleMetadataWithoutAuthor,
@@ -63,31 +61,25 @@ export const RelatedArticlesByFilter = memo<RelatedArticlesByFilterProps>(
     // the reader back to Explore and then raced a push into the middle of the
     // pop animation, with an uncancelled timer left to fire after unmount.
     const handleArticlePress = useCallback(
-      (articleId: ArticleId, title: string) => {
-        router.push(getArticleRoute(articleId, title));
+      (article: Article) => {
+        router.push(getArticleRoute(article.id, article.title));
       },
       [router],
     );
 
     // Memoize the article cards to prevent unnecessary re-renders
     const articleCards = useMemo(() => {
-      return articles.map((article, index) => {
-        const progressPercentage = getArticleProgressPercentage(progressMap, article.id);
-
-        return (
-          <View key={article.id} style={index > 0 ? styles.articleSpacing : undefined}>
-            <PlaylistItemCard
-              title={article.title}
-              secondaryText={getSubtitle(article, filterType)}
-              imageUrl={generateStorageUrl('images', article.image_url)}
-              articleId={article.id}
-              progressPercentage={progressPercentage}
-              onPress={() => handleArticlePress(article.id, article.title)}
-              PressableComponent={Pressable}
-            />
-          </View>
-        );
-      });
+      return articles.map((article, index) => (
+        <View key={article.id} style={index > 0 ? styles.articleSpacing : undefined}>
+          <ArticleRow
+            article={article}
+            secondaryText={getSubtitle(article, filterType)}
+            progressPercentage={getArticleProgressPercentage(progressMap, article.id)}
+            onPress={handleArticlePress}
+            PressableComponent={Pressable}
+          />
+        </View>
+      ));
     }, [articles, progressMap, filterType, handleArticlePress]);
 
     // Format section title based on filter type

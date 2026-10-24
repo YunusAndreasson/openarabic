@@ -47,6 +47,11 @@ jest.mock('@/components/playlist', () => ({
   PlaylistItemCard: (props: Record<string, unknown>) => mockPlaylistItemCard(props),
 }));
 
+const mockPrefetchArticle = jest.fn();
+jest.mock('@/hooks/articles/useArticlePrefetch', () => ({
+  useArticlePrefetch: () => mockPrefetchArticle,
+}));
+
 // Reaches for the Supabase storage client, which this test has no business
 // standing up just to turn a filename into a URL.
 jest.mock('@/utils/storageUtils', () => ({
@@ -109,6 +114,16 @@ describe('RelatedArticlesByFilter', () => {
     expect(mockBack).not.toHaveBeenCalled();
     expect(mockPush).toHaveBeenCalledTimes(1);
     expect(mockPush).toHaveBeenCalledWith('/article/42?headerTitle=The%20Second%20Article');
+  });
+
+  // The one list a learner goes from one text straight to the next was the one
+  // that never warmed the next text's cache; every other article list did.
+  test('warms the next article on press-in, like every other article list', () => {
+    renderSection();
+
+    (firstCardProps().onPressIn as () => void)();
+
+    expect(mockPrefetchArticle).toHaveBeenCalledWith(42);
   });
 
   // Under "More from Ibn Kathīr" every card used to say "Ibn Kathīr", and under
