@@ -1,8 +1,14 @@
-import { useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
 
 import { WordDetailContent } from '@/components/practice/WordDetailContent';
 import type { RootId } from '@/types/branded.types';
+import { useRootIdParam } from '@/utils/routeParams';
+
+/**
+ * Matches no saved word, so a link without a usable id falls through to the
+ * content's empty state — which `hasValidRootId={false}` words as a broken link.
+ */
+const NO_ROOT_ID = Number.NaN as RootId;
 
 /**
  * One saved word, as a sheet that can present over any tab.
@@ -29,13 +35,11 @@ import type { RootId } from '@/types/branded.types';
  * parsing a real deep link needs.
  */
 export default function WordDetailSheet(): JSX.Element {
-  const { rootId: rootIdParam } = useLocalSearchParams<{ rootId?: string }>();
-  const rootId = Number(rootIdParam) as RootId;
-  // The route is reachable by a real external deep link, unlike the practice
-  // word screen (always pushed with a known-good id) — a missing or malformed
-  // param needs a distinct message from "removed from another screen", not the
-  // same WORD_NOT_FOUND claim about a link that never carried a valid id.
-  const hasValidRootId = Number.isSafeInteger(rootId) && rootId > 0;
+  // The route is reachable by a real external deep link — a missing or
+  // malformed param needs a distinct message from "removed from another
+  // screen", not the same WORD_NOT_FOUND claim about a link that never carried
+  // a valid id.
+  const rootId = useRootIdParam();
 
-  return <WordDetailContent hasValidRootId={hasValidRootId} rootId={rootId} />;
+  return <WordDetailContent hasValidRootId={rootId !== undefined} rootId={rootId ?? NO_ROOT_ID} />;
 }

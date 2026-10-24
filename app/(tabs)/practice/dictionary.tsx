@@ -2,7 +2,6 @@ import { FlashList } from '@shopify/flash-list';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,17 +19,16 @@ import { SettingsPicker, TextLink } from '@/components/ui';
 import type { SettingsPickerOption } from '@/components/ui/SettingsPicker';
 import { LIST_DRAW_DISTANCE_MULTIPLIER, TIMING_CONFIG, fadeInStyle } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
-import { rootEnrichmentQueries } from '@/constants/queries';
 import { STRINGS } from '@/constants/strings';
 import { useStudyWordMutations } from '@/hooks/articles/useStudyWordMutations';
-import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useDictionaryList, useFSRSQueries, useResetWordProgress } from '@/hooks/vocabulary';
 import { isDictionaryScope, isNarrowScope } from '@/hooks/vocabulary/useDictionaryList';
 import type { DictionaryScope, PickerScope } from '@/hooks/vocabulary/useDictionaryList';
+import { useRootEnrichmentPrefetch } from '@/hooks/vocabulary/useRootEnrichmentPrefetch';
+import { simpleAudioService } from '@/services/audioPlayer';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { handleError } from '@/utils/errorHandling';
 import { getPracticeWordRoute } from '@/utils/routeBuilders';
 import { formatWordCount } from '@/utils/wordCountText';
 
@@ -67,23 +65,23 @@ const DISABLED_SCROLL_ANCHORING = { disabled: true };
 export default function DictionaryScreen(): JSX.Element {
   const { user } = useAuth();
   const router = useRouter();
-  const queryClient = useQueryClient();
+  const prefetchRootEnrichment = useRootEnrichmentPrefetch();
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { preconfigureAudioSession } = useSimpleAudioPlayer();
 
-  // Preconfigure audio session on mount for instant audio playback
+  // Preconfigure audio session on mount for instant audio playback. A command
+  // only, so it goes to the service: the player hook would subscribe this
+  // screen to playback status it never reads.
   useEffect(() => {
-    preconfigureAudioSession().catch(() => {
+    simpleAudioService.preconfigureAudioSession().catch(() => {
       // Silent fail - audio will try to configure on first play
     });
-  }, [preconfigureAudioSession]);
+  }, []);
 
   const { allWords: studyWords, isLoading } = useFSRSQueries({ userId: user?.id });
 
   // No refetch callback needed - mutation's onSuccess handles invalidation
-  const { toggleRootMutation } = useStudyWordMutations();
-  const toggleRoot = toggleRootMutation.mutateAsync;
+  const { handleRootPress } = useStudyWordMutations();
   const { confirmReset } = useResetWordProgress();
 
   // The memory-horizon, review-depth and words-to-revisit sheets open this
@@ -196,43 +194,17 @@ export default function DictionaryScreen(): JSX.Element {
 
   const handleWordPress = useCallback(
     (word: StudyWord) => {
-      // Warm the root explanation before the push, not after the screen mounts.
-      // It renders directly under the hero there, so an arrival one beat late
-      // would shove the memory panel and stats down mid-read. Fetching on the
-      // tap buys the navigation transition as head start, and the infinite
-      // staleTime means it is only ever paid once per word.
-      // query() rejects where prefetchQuery swallowed — keep this fire-and-forget.
-      void queryClient.query(rootEnrichmentQueries.detail(word.root_id)).catch(() => undefined);
+      // Warm the root explanation before the push, not after the screen mounts:
+      // it renders directly under the hero there.
+      prefetchRootEnrichment(word.root_id);
       router.push(getPracticeWordRoute(word.root_id));
     },
-    [queryClient, router],
+    [prefetchRootEnrichment, router],
   );
 
   // Stable identity per word so recycling, deletions, and sort flips keep
   // rows anchored (maintainVisibleContentPosition anchors by key).
   const keyExtractor = useCallback((word: StudyWord) => String(word.root_id), []);
-
-  const handleRemoveWord = useCallback(
-    async (word: StudyWord) => {
-      if (!user?.id) return;
-      try {
-        // Explicit intent: a delete must never flip into a re-add when the
-        // cached study list is stale
-        await toggleRoot({
-          userId: user.id,
-          rootId: word.root_id,
-          intent: 'remove',
-        });
-      } catch (error) {
-        await handleError(error, {
-          showToast: true,
-          toastMessage: STRINGS.FAILED_TO_DELETE_WORD,
-          captureSentry: !__DEV__,
-        });
-      }
-    },
-    [user, toggleRoot],
-  );
 
   const handleResetProgress = useCallback(
     (word: StudyWord) => {
@@ -256,12 +228,15 @@ export default function DictionaryScreen(): JSX.Element {
           sortField={sortField}
           nowMs={nowMs}
           onPress={handleWordPress}
-          onRemove={word => void handleRemoveWord(word)}
+          // Explicit intent: a delete must never flip into a re-add when the
+          // cached study list is stale. A failure is reported once, by the
+          // mutation's own onError.
+          onRemove={word => void handleRootPress(word.root_id, 'remove')}
           onResetProgress={handleResetProgress}
         />
       </Animated.View>
     ),
-    [sortField, nowMs, handleWordPress, handleRemoveWord, handleResetProgress],
+    [sortField, nowMs, handleWordPress, handleRootPress, handleResetProgress],
   );
 
   // A hairline rule, not a gap: the rows are flat, so the line is what

@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import { AppState, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 
@@ -25,6 +24,7 @@ import { ToastType } from '@/types/enums';
 import { stopNonPlaylistAudioSafely } from '@/utils/audioUtils';
 import { handleError } from '@/utils/errorHandling';
 import { markOnboardingStep } from '@/utils/onboardingStorage';
+import { dismissOrReplace } from '@/utils/sheetNavigation';
 
 export interface UseArticleScreenOptions {
   id: string;
@@ -141,12 +141,9 @@ export function useArticleScreen({
       void handleError(error, { toastMessage: STRINGS.FAILED_TO_STOP_AUDIO_ON_CLOSE });
     }
 
-    // Dismiss the modal screen, or navigate to library home if not dismissible
-    if (router.canDismiss()) {
-      router.dismiss();
-    } else {
-      router.push(ROUTE_PATHS.EXPLORE_TAB);
-    }
+    // Dismiss the modal screen, or land on library home when it is the only
+    // screen (a cold deep link into the reader)
+    dismissOrReplace(ROUTE_PATHS.EXPLORE_TAB);
   }, []);
 
   // Reading progress

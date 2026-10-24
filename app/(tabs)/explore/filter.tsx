@@ -4,7 +4,9 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, type JSX } from 'react';
 
 import type { Article } from '@/types/articles.types';
+import type { CategoryId } from '@/types/branded.types';
 import type { FilterParams } from '@/types/navigation.types';
+import { parsePositiveIntParam } from '@/utils/routeParams';
 
 import { FilteredArticleView } from '@/components/explore';
 import { articleQueries } from '@/constants/queries';
@@ -13,8 +15,7 @@ import { STRINGS } from '@/constants/strings';
 
 export default function FilterScreen(): JSX.Element {
   const searchParams = useLocalSearchParams<FilterParams>();
-  const { id } = searchParams;
-  const filterId = parseInt(id ?? '', 10);
+  const filterId = parsePositiveIntParam<CategoryId>(searchParams.id);
 
   const {
     data: articles,
@@ -23,7 +24,8 @@ export default function FilterScreen(): JSX.Element {
     refetch,
   } = useQuery({
     ...articleQueries.all(),
-    select: data => (filterId > 0 ? data.filter(article => article.category.id === filterId) : []),
+    select: data =>
+      filterId === undefined ? [] : data.filter(article => article.category.id === filterId),
     refetchOnMount: false,
     refetchOnReconnect: true,
   });

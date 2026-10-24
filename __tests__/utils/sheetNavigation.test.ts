@@ -25,6 +25,8 @@ jest.mock('expo-router', () => ({
   router: {
     back: jest.fn(),
     push: jest.fn(),
+    replace: jest.fn(),
+    dismiss: jest.fn(),
     dismissAll: jest.fn(),
     canDismiss: jest.fn(() => true),
   },
@@ -34,6 +36,7 @@ import { router } from 'expo-router';
 
 import {
   dismissAllThenNavigate,
+  dismissOrReplace,
   dismissSheetThenNavigate,
   flushPendingSheetNavigation,
 } from '@/utils/sheetNavigation';
@@ -89,6 +92,27 @@ describe('sheetNavigation', () => {
       jest.runOnlyPendingTimers();
 
       expect(mockRouter.push).toHaveBeenCalledWith('/article/1');
+    });
+  });
+
+  describe('dismissOrReplace', () => {
+    test('dismisses when there is a screen to go back to', () => {
+      dismissOrReplace('/(tabs)/practice');
+
+      expect(mockRouter.dismiss).toHaveBeenCalledTimes(1);
+      expect(mockRouter.replace).not.toHaveBeenCalled();
+    });
+
+    test('replaces itself with the fallback when it is the only screen', () => {
+      // Opened cold from a notification or a link: `dismiss()` does nothing,
+      // and a push would leave this screen in history under the fallback.
+      mockRouter.canDismiss.mockReturnValue(false);
+
+      dismissOrReplace('/(tabs)/practice');
+
+      expect(mockRouter.dismiss).not.toHaveBeenCalled();
+      expect(mockRouter.push).not.toHaveBeenCalled();
+      expect(mockRouter.replace).toHaveBeenCalledWith('/(tabs)/practice');
     });
   });
 

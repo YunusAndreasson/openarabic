@@ -228,7 +228,7 @@ export default function WordsToRevisitScreen(): JSX.Element {
 const styles = StyleSheet.create({
   header: {
     // Clears the OS grabber pill, which otherwise draws through the title.
-    paddingTop: LAYOUT.SPACING.XLARGE,
+    paddingTop: LAYOUT.BOTTOM_SHEET.GRABBER_CLEARANCE,
     paddingHorizontal: LAYOUT.SCREEN_HORIZONTAL_PADDING,
   },
   list: {

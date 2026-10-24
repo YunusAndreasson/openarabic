@@ -1,20 +1,21 @@
 import { EmptyState } from '@/components/common';
-import { useRouter } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
+import { dismissAllThenNavigate } from '@/utils/sheetNavigation';
 
 /**
  * Empty state for the Dictionary screen.
  * Includes a CTA that takes the user to Explore so they can start saving words.
  */
 export function DictionaryEmptyState() {
-  const router = useRouter();
-
+  // The dictionary is a modal stack over the Practice tab. Leaving it for
+  // another tab has to empty that stack first, or on iOS the dictionary stays
+  // presented over the destination — see `dismissAllThenNavigate`.
   const handleBrowse = useCallback(() => {
-    router.navigate(ROUTE_PATHS.EXPLORE_TAB);
-  }, [router]);
+    dismissAllThenNavigate(ROUTE_PATHS.EXPLORE_TAB);
+  }, []);
   const action = useMemo(
     () => ({
       label: STRINGS.BROWSE_ARTICLES,

@@ -84,6 +84,26 @@ export function dismissAllThenNavigate(href: Href): void {
   });
 }
 
+/**
+ * Close a root-level modal, or recover when it is the only screen there is.
+ *
+ * `canDismiss` is false when the modal opened the app — a reminder
+ * notification, or a link followed while the app was closed. `dismiss()` is a
+ * no-op there, which left the close button doing nothing at all.
+ *
+ * `replace`, not `push`: a pushed fallback left the modal in history under the
+ * tabs, so back from the tab reopened the screen the learner had just closed.
+ * There is no tab stack to lose here, unlike the sheet case above — this only
+ * runs when the modal is all there is.
+ */
+export function dismissOrReplace(fallback: Href): void {
+  if (router.canDismiss()) {
+    router.dismiss();
+    return;
+  }
+  router.replace(fallback);
+}
+
 function queueThenDismiss(href: Href, dismiss: () => void): void {
   pendingHref = href;
   clearFallback();
