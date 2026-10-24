@@ -111,7 +111,7 @@ describe('MiniPlayer', () => {
 
     test('renders formatted author and category', () => {
       const { getByText } = render(<MiniPlayer {...defaultProps} />);
-      // formatAuthorCategory combines author and category
+      // formatArticleMetadata combines author and category
       expect(getByText(/Test Author/)).toBeTruthy();
     });
 

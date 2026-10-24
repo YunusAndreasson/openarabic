@@ -22,7 +22,7 @@ import { updateMiniPlayerHeight } from '@/hooks/audio/useMiniPlayerHeight';
 import { mixColors } from '@/utils/colorUtils';
 import { formatSecondsToClock, safePercent } from '@/utils/dateTimeUtils';
 import { generateStorageUrl } from '@/utils/storageUtils';
-import { formatAuthorCategory } from '@/utils/stringUtils';
+import { formatArticleMetadata } from '@/utils/stringUtils';
 
 /**
  * Where the player card is mounted.
@@ -189,7 +189,7 @@ const MiniPlayerComponent = ({
           numberOfLines={1}
           ellipsizeMode="tail"
         >
-          {formatAuthorCategory(article.author, article.category)}
+          {formatArticleMetadata(article.author, article.category)}
         </ThemedText>
 
         {/* Time and queue position */}

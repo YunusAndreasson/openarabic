@@ -143,10 +143,10 @@ export const READING_LIST_TRACKS_ERROR_REPORT = { ...errorConfig.playlist, showT
 /**
  * The enhanced audio tracks for a reading list, in its order.
  *
- * Metadata only — this never downloads. It runs from an app-wide query (see
- * useGlobalAudioState → usePlaylistScreen), so caching here would mean
- * downloading every saved article's audio at app start and on every reading
- * list / preference invalidation, competing for bandwidth with whatever the
+ * Metadata only — this never downloads. It backs the persisted tracks query
+ * the Playlist screen observes, so caching here would mean downloading every
+ * saved article's audio whenever that query refetches (every reading-list or
+ * audio-preference invalidation), competing for bandwidth with whatever the
  * user actually tapped. Tracks resolve to cached paths when present and
  * stream otherwise; whichever one the user plays is warmed by the play path
  * via warmTrackCache.

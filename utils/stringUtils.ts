@@ -140,13 +140,6 @@ function articleReadingTime(article: { article_sentences?: unknown[] }): string 
 }
 
 /**
- * `formatArticleMetadata` without a reading time: "Ibn Kathīr · Tafsīr".
- */
-export function formatAuthorCategory(author: string, category: string): string {
-  return formatArticleMetadata(author, category);
-}
-
-/**
  * Formats article metadata (author, category, and optionally reading time) for display
  * @param author - Author name
  * @param category - Category name (will be capitalized)
