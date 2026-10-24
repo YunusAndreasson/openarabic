@@ -19,7 +19,8 @@ export interface UserSession {
 
 /**
  * Authentication hook result
- * Provides auth state and session management functions
+ * Provides auth state. Session refresh is supabase-js's own job
+ * (`autoRefreshToken`, started and stopped with the app's foreground state).
  */
 export interface AuthResult {
   /** Current user session (null if not authenticated) */
@@ -28,10 +29,6 @@ export interface AuthResult {
   user: UserSession['user'];
   /** Whether auth state is still loading */
   isLoading: boolean;
-  /** Authentication error if any */
-  authError: Error | null;
-  /** Function to manually refresh the session */
-  refreshSession: () => Promise<UserSession | null>;
   /** Computed boolean - true if user is authenticated */
   isAuthenticated: boolean;
 }

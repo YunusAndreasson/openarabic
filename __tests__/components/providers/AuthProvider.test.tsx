@@ -29,8 +29,6 @@ jest.mock('@/hooks/auth/useProvideAuth', () => ({
     session: null,
     user: null,
     isLoading: false,
-    authError: null,
-    refreshSession: jest.fn(),
     isAuthenticated: false,
   }),
 }));
